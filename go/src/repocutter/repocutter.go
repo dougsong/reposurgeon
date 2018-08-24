@@ -59,7 +59,7 @@ which began life as 'svncutter' in 2009.  The obsolete
 
 var debug bool = false
 
-var oneliners = map[string]string {
+var oneliners = map[string]string{
 	//"squash":     "Squashing revisions",
 	"select":     "Selecting revisions",
 	"propdel":    "Deleting revision properties",
@@ -173,22 +173,22 @@ the display name is changed to make them easier to see.
 
 // Baton - ship progress indications to stderr
 type Baton struct {
-	stream  *os.File
-	count int
+	stream *os.File
+	count  int
 	endmsg string
-	time time.Time
-}	
+	time   time.Time
+}
 
 func NewBaton(prompt string, endmsg string) *Baton {
 	var baton Baton
-	baton.stream  = os.Stderr
-        baton.stream.Write([]byte(prompt + "..."))
-        if isatty.IsTerminal(baton.stream.Fd()){
+	baton.stream = os.Stderr
+	baton.stream.Write([]byte(prompt + "..."))
+	if isatty.IsTerminal(baton.stream.Fd()) {
 		baton.stream.Write([]byte(" \010"))
 	}
-        //baton.stream.Flush()
-        baton.endmsg = endmsg
-        baton.time = time.Now()
+	//baton.stream.Flush()
+	baton.endmsg = endmsg
+	baton.time = time.Now()
 	return &baton
 }
 
@@ -196,15 +196,15 @@ func (baton *Baton) Twirl(ch string) {
 	if baton.stream == nil {
 		return
 	}
-        if isatty.IsTerminal(baton.stream.Fd()) {
+	if isatty.IsTerminal(baton.stream.Fd()) {
 		if ch != "" {
 			baton.stream.Write([]byte(ch))
 		} else {
-			baton.stream.Write([]byte{"-/|\\"[baton.count % 4]})
+			baton.stream.Write([]byte{"-/|\\"[baton.count%4]})
 			baton.stream.Write([]byte("\010"))
 		}
 	}
-        baton.count++
+	baton.count++
 }
 
 func (baton *Baton) End(msg string) {
@@ -213,14 +213,14 @@ func (baton *Baton) End(msg string) {
 	}
 	fmt.Fprintf(baton.stream, "...(%s) %s.\n", time.Since(baton.time), msg)
 }
-	
+
 // LineBufferedSource - Generic class for line-buffered input with pushback.
 type LineBufferedSource struct {
-        Linebuffer []byte
-	source io.Reader
-        reader *bufio.Reader
-	stream *os.File
-        linenumber int
+	Linebuffer []byte
+	source     io.Reader
+	reader     *bufio.Reader
+	stream     *os.File
+	linenumber int
 }
 
 func NewLineBufferedSource(source io.Reader) LineBufferedSource {
@@ -276,7 +276,7 @@ func (lbs *LineBufferedSource) Readline() []byte {
 	}
 	return line
 }
-	
+
 // Read a line, require it to have a specified prefix.
 func (lbs *LineBufferedSource) Require(prefix string) []byte {
 	line := lbs.Readline()
@@ -289,7 +289,7 @@ func (lbs *LineBufferedSource) Require(prefix string) []byte {
 	//}
 	return line
 }
-	
+
 // Straight read from underlying file, no buffering.
 func (lbs *LineBufferedSource) Read(rlen int) []byte {
 	if len(lbs.Linebuffer) != 0 {
@@ -346,15 +346,15 @@ func (lbs *LineBufferedSource) Push(line []byte) {
 	}
 	lbs.Linebuffer = []byte(line)
 }
-	
-func (lbs *LineBufferedSource) HasLineBuffered() bool { 
+
+func (lbs *LineBufferedSource) HasLineBuffered() bool {
 	return len(lbs.Linebuffer) != 0
 }
 
 // Properties -- represent revision or node properties
 type Properties struct {
-        properties map[string]string
-        propkeys []string
+	properties map[string]string
+	propkeys   []string
 }
 
 func NewProperties(source *DumpfileSource) Properties {
@@ -375,13 +375,13 @@ func NewProperties(source *DumpfileSource) Properties {
 		props.properties[key] = value
 		props.propkeys = append(props.propkeys, key)
 	}
-        source.Lbs.Flush()
+	source.Lbs.Flush()
 	return props
 }
 
 func (props *Properties) Stringer() string {
-        st := ""
-        for i := range props.propkeys {
+	st := ""
+	for i := range props.propkeys {
 		key := props.propkeys[i]
 		if props.properties[key] != "" {
 			st += fmt.Sprintf("K %d%s", len(key), linesep)
@@ -391,7 +391,7 @@ func (props *Properties) Stringer() string {
 		}
 	}
 	st += "PROPS-END\n"
-        return st
+	return st
 }
 
 func (props *Properties) Contains(key string) bool {
@@ -415,9 +415,9 @@ func init() {
 
 // DumpfileSource - This class knows about Subversion dumpfile format.
 type DumpfileSource struct {
-	Lbs LineBufferedSource
-	Baton *Baton
-	Revision int
+	Lbs              LineBufferedSource
+	Baton            *Baton
+	Revision         int
 	EmittedRevisions map[string]bool
 }
 
@@ -425,37 +425,37 @@ func NewDumpfileSource(rd io.Reader, baton *Baton) DumpfileSource {
 	var ds DumpfileSource
 	ds.Lbs = NewLineBufferedSource(rd)
 	ds.Baton = baton
-        ds.Revision = 0
-        ds.EmittedRevisions = make(map[string]bool)
-	//runtime.SetFinalizer(&ds, func (s DumpfileSource) {s.Baton.End("")}) 
+	ds.Revision = 0
+	ds.EmittedRevisions = make(map[string]bool)
+	//runtime.SetFinalizer(&ds, func (s DumpfileSource) {s.Baton.End("")})
 	return ds
 }
 
 func SetLength(header string, data []byte, val int) []byte {
 	re := regexp.MustCompile("(" + header + "-length:) ([0-9]+)")
-	return re.ReplaceAll(data, []byte("$1 " + strconv.Itoa(val)))
+	return re.ReplaceAll(data, []byte("$1 "+strconv.Itoa(val)))
 }
 
 // Read a revision header, parsing its properties.
 func (ds *DumpfileSource) ReadRevisionHeader(PropertyHook func(*Properties)) ([]byte, map[string]string) {
-        stash := ds.Lbs.Require("Revision-number:")
+	stash := ds.Lbs.Require("Revision-number:")
 	rev := string(bytes.Fields(stash)[1])
-        rval, err := strconv.Atoi(rev)
+	rval, err := strconv.Atoi(rev)
 	if err != nil {
 		fmt.Printf("repocutter: invalid revision number %s at line %d\n", rev, ds.Lbs.linenumber)
 		os.Exit(1)
 	}
 	ds.Revision = rval
-        stash = append(stash, ds.Lbs.Require("Prop-content-length:")...)
-        stash = append(stash, ds.Lbs.Require("Content-length:")...)
-        stash = append(stash, ds.Lbs.Require(linesep)...)
-        props := NewProperties(ds)
-        if PropertyHook != nil {
+	stash = append(stash, ds.Lbs.Require("Prop-content-length:")...)
+	stash = append(stash, ds.Lbs.Require("Content-length:")...)
+	stash = append(stash, ds.Lbs.Require(linesep)...)
+	props := NewProperties(ds)
+	if PropertyHook != nil {
 		PropertyHook(&props)
 		stash = SetLength("Prop-content", stash, len(props.Stringer()))
 		stash = SetLength("Content", stash, len(props.Stringer()))
 	}
-        stash = append(stash, []byte(props.Stringer())...)
+	stash = append(stash, []byte(props.Stringer())...)
 	if debug {
 		fmt.Fprintf(os.Stderr, "<after append: %d>\n", ds.Lbs.linenumber)
 	}
@@ -473,7 +473,7 @@ func (ds *DumpfileSource) ReadRevisionHeader(PropertyHook func(*Properties)) ([]
 		fmt.Fprintf(os.Stderr, "<ReadRevisionHeader %d: returns stash=%s>\n",
 			ds.Lbs.linenumber, vis(stash))
 	}
-        return stash, props.properties
+	return stash, props.properties
 }
 
 // Read a node header and body.
@@ -481,8 +481,8 @@ func (ds *DumpfileSource) ReadNode(PropertyHook func(*Properties)) ([]byte, []by
 	if debug {
 		fmt.Fprintf(os.Stderr, "<READ NODE BEGINS>\n")
 	}
-        header := ds.Lbs.Require("Node-")
-        for {
+	header := ds.Lbs.Require("Node-")
+	for {
 		line := ds.Lbs.Readline()
 		if len(line) == 0 {
 			fmt.Fprintf(os.Stderr, "repocutter: unexpected EOF in node header\n")
@@ -510,19 +510,19 @@ func (ds *DumpfileSource) ReadNode(PropertyHook func(*Properties)) ([]byte, []by
 		}
 		properties = props.Stringer()
 	}
-        // Using a read() here allows us to handle binary content
-        content := []byte("")
-        cl := TextContentLength.FindSubmatch(header)
-        if len(cl) > 1 {
+	// Using a read() here allows us to handle binary content
+	content := []byte("")
+	cl := TextContentLength.FindSubmatch(header)
+	if len(cl) > 1 {
 		n, _ := strconv.Atoi(string(cl[1]))
 		content = append(content, ds.Lbs.Read(n)...)
 	}
 	if debug {
 		fmt.Fprintf(os.Stderr, "<READ NODE ENDS>\n")
 	}
-        if PropertyHook != nil {
+	if PropertyHook != nil {
 		header = SetLength("Prop-content", header, len(properties))
-		header = SetLength("Content", header, len(properties) + len(content))
+		header = SetLength("Content", header, len(properties)+len(content))
 	}
 	return header, []byte(properties), content
 }
@@ -532,8 +532,8 @@ func (ds *DumpfileSource) ReadUntilNext(prefix string, revmap map[int]int) []byt
 	if debug {
 		fmt.Fprintf(os.Stderr, "<ReadUntilNext: until %s>\n", prefix)
 	}
-        stash := []byte("")
-        for {
+	stash := []byte("")
+	for {
 		line := ds.Lbs.Readline()
 		if debug {
 			fmt.Fprintf(os.Stderr, "<ReadUntilNext: sees %s>\n", vis(line))
@@ -571,10 +571,10 @@ func (ds *DumpfileSource) ReadUntilNext(prefix string, revmap map[int]int) []byt
 
 func (ds *DumpfileSource) say(text []byte) {
 	matches := RevisionLine.FindSubmatch(text)
-        if len(matches) > 1 {
+	if len(matches) > 1 {
 		ds.EmittedRevisions[string(matches[1])] = true
 	}
-        os.Stdout.Write(text)
+	os.Stdout.Write(text)
 }
 
 type SubversionRange struct {
@@ -582,7 +582,7 @@ type SubversionRange struct {
 }
 
 func NewSubversionRange(txt string) SubversionRange {
-	var s SubversionRange 
+	var s SubversionRange
 	s.intervals = make([][2]int, 0)
 	for _, item := range strings.Split(txt, ",") {
 		var parts [2]int
@@ -592,7 +592,7 @@ func NewSubversionRange(txt string) SubversionRange {
 			if fields[0] == "HEAD" {
 				panic("repocutter: can't accept HEAD as lower bound of a range.")
 			}
-		    	parts[0], _ = strconv.Atoi(fields[0])
+			parts[0], _ = strconv.Atoi(fields[0])
 			if fields[1] == "HEAD" {
 				// Be on safe side - could be a 32-bit machine
 				parts[1] = math.MaxInt32
@@ -600,8 +600,8 @@ func NewSubversionRange(txt string) SubversionRange {
 				parts[1], _ = strconv.Atoi(fields[1])
 			}
 		} else {
-		    	parts[0], _ = strconv.Atoi(item)
-		    	parts[1], _ = strconv.Atoi(item)
+			parts[0], _ = strconv.Atoi(item)
+			parts[1], _ = strconv.Atoi(item)
 		}
 		if parts[0] >= upperbound {
 			upperbound = parts[0]
@@ -619,7 +619,7 @@ func (s *SubversionRange) Contains(rev int) bool {
 			return true
 		}
 	}
-        return false
+	return false
 }
 
 // What is the uppermost revision in the spec?
@@ -629,9 +629,9 @@ func (s *SubversionRange) Upperbound() int {
 
 // Report a filtered portion of content.
 func (ds *DumpfileSource) Report(selection SubversionRange,
-		nodehook func(header []byte, properties []byte, content []byte) []byte,
-		prophook func(properties *Properties),
-		passthrough bool, passempty bool) {
+	nodehook func(header []byte, properties []byte, content []byte) []byte,
+	prophook func(properties *Properties),
+	passthrough bool, passempty bool) {
 	emit := passthrough && selection.intervals[0][0] == 0
 	stash := ds.ReadUntilNext("Revision-number:", nil)
 	if emit {
@@ -721,14 +721,14 @@ func (ds *DumpfileSource) Report(selection SubversionRange,
 
 type Logentry struct {
 	author []byte
-	date []byte
-	text []byte
+	date   []byte
+	text   []byte
 }
 
 // Logfile represents the state of a logfile
 type Logfile struct {
-        comments map[int]Logentry
-        source LineBufferedSource
+	comments map[int]Logentry
+	source   LineBufferedSource
 }
 
 // Contains - Does the logfile contain an entry for a specified revision
@@ -744,11 +744,11 @@ func NewLogfile(readable io.Reader, restrict *SubversionRange) *Logfile {
 	lf.comments = make(map[int]Logentry, 0)
 	lf.source = NewLineBufferedSource(readable)
 	state := "awaiting_header"
-        author := []byte("")
+	author := []byte("")
 	date := []byte("")
-        logentry := []byte("")
-        lineno := 0
-        rev := -1
+	logentry := []byte("")
+	lineno := 0
+	rev := -1
 	re := regexp.MustCompile("^r[0-9]+")
 	var line []byte
 	for {
@@ -787,7 +787,7 @@ func NewLogfile(readable io.Reader, restrict *SubversionRange) *Logfile {
 					author = bytes.TrimSpace(fields[1])
 					date = bytes.TrimSpace(fields[2])
 					//lc := bytes.TrimSpace(fields[3])
-					revstr = revstr[1:]	// strip off leaing 'r'
+					revstr = revstr[1:] // strip off leaing 'r'
 					rev, _ = strconv.Atoi(string(revstr))
 					state = "in_logentry"
 				}
@@ -799,16 +799,15 @@ func NewLogfile(readable io.Reader, restrict *SubversionRange) *Logfile {
 
 // Extract content of  a specified header
 func payload(hd string, header []byte) []byte {
-	offs := bytes.Index(header, []byte(hd + ": "))
+	offs := bytes.Index(header, []byte(hd+": "))
 	if offs == -1 {
 		return nil
 	} else {
 		offs += len(hd) + 2
 		end := bytes.Index(header[offs:], []byte("\n"))
-		return header[offs:offs+end]
+		return header[offs : offs+end]
 	}
 }
-	
 
 // Select a portion of the dump file defined by a revision selection.
 func sselect(source DumpfileSource, selection SubversionRange) {
@@ -850,7 +849,7 @@ func dumpall(header []byte, properties []byte, content []byte) []byte {
 	all = append(all, header...)
 	all = append(all, properties...)
 	all = append(all, content...)
-        return all
+	return all
 }
 
 // propdel - Delete properties
@@ -918,12 +917,12 @@ func getAuthor(props map[string]string) string {
 
 // Extract a given field from a header string
 func get_header(txt []byte, hdr string) []byte {
-        for _, line := range bytes.Split(txt, []byte("\n")) {
-		if bytes.HasPrefix(line, []byte(hdr + ": ")){
-		    return line[len(hdr)+2:]
-	    }
+	for _, line := range bytes.Split(txt, []byte("\n")) {
+		if bytes.HasPrefix(line, []byte(hdr+": ")) {
+			return line[len(hdr)+2:]
+		}
 	}
-        return nil
+	return nil
 }
 
 func SVNTimeParse(rdate string) time.Time {
@@ -938,11 +937,11 @@ func SVNTimeParse(rdate string) time.Time {
 
 // Extract log entries
 func log(source DumpfileSource, selection SubversionRange) {
-	prophook := func (prop *Properties) {
-		props := prop.properties 
+	prophook := func(prop *Properties) {
+		props := prop.properties
 		logentry := props["svn:log"]
 		// This test implicitly excludes r0 metadata from being dumped.
-		// It is not certain this is the right thing.  
+		// It is not certain this is the right thing.
 		if logentry == "" {
 			return
 		} else {
@@ -1012,7 +1011,7 @@ func strip(source DumpfileSource, selection SubversionRange, patterns []string) 
 			}
 		}
 		if ok {
-			if content != nil && len(content) > 0  {
+			if content != nil && len(content) > 0 {
 				tell := fmt.Sprintf("Revision is %d, file path is %s.\n\n\n",
 					source.Revision, get_header(header, "Node-path"))
 				// Avoid replacing symlinks, a reposurgeon sanity check barfs.
@@ -1072,10 +1071,10 @@ func doreduce(source DumpfileSource) {
 		return false
 	}
 	for _, item := range interesting {
-		if integerIn(item-1, interesting) || integerIn(item, interesting) ||integerIn(item+1, interesting) {
-		selection += fmt.Sprintf("%d,", item) 
+		if integerIn(item-1, interesting) || integerIn(item, interesting) || integerIn(item+1, interesting) {
+			selection += fmt.Sprintf("%d,", item)
 		}
-	}	
+	}
 	source.Lbs.Rewind()
 	// -2 is to trim off trailing comma
 	sselect(source, NewSubversionRange(selection[0:len(selection)-2]))
@@ -1107,7 +1106,7 @@ func expunge(source DumpfileSource, selection SubversionRange, patterns []string
 	}
 	source.Report(selection, __expunge, nil, true, true)
 }
-	
+
 // Sift for ops defined by a revision selection and a path regexp.
 func sift(source DumpfileSource, selection SubversionRange, patterns []string) {
 	__sift := func(header []byte, properties []byte, content []byte) []byte {
@@ -1134,7 +1133,7 @@ func sift(source DumpfileSource, selection SubversionRange, patterns []string) {
 	}
 	source.Report(selection, __sift, nil, true, false)
 }
-	
+
 // Hack paths by applying a regexp transformation.
 func pathrename(source DumpfileSource, selection SubversionRange, patterns []string) {
 	revhook := func(props *Properties) {
@@ -1170,7 +1169,7 @@ func pathrename(source DumpfileSource, selection SubversionRange, patterns []str
 	}
 	source.Report(selection, nodehook, revhook, true, true)
 }
-	
+
 // Renumber all revisions.
 func renumber(source DumpfileSource) {
 	renumbering := make(map[string]int, 0)
@@ -1219,7 +1218,7 @@ func see(source DumpfileSource, selection SubversionRange) {
 	source.Report(selection, __seenode, nil, false, true)
 }
 
-var swaplatch = false	// Ugh...
+var swaplatch = false // Ugh...
 
 // Hack paths by swapping the top two components.
 func swap(source DumpfileSource, selection SubversionRange) {
@@ -1317,21 +1316,21 @@ PROPS-END
 	source.Report(selection, nodehook, revhook, true, true)
 }
 
-func main () {
-        selection := NewSubversionRange("0:HEAD")
-        var quiet bool
-        var logpatch string
+func main() {
+	selection := NewSubversionRange("0:HEAD")
+	var quiet bool
+	var logpatch string
 	var rangestr string
 	var infile string
 	input := os.Stdin
-	flag.BoolVar(&debug,      "d", false, "enable debug messages")
-	flag.BoolVar(&debug,      "debug", false, "enable debug messages")
-	flag.StringVar(&infile,   "i", "", "set input file")
-	flag.StringVar(&infile,   "infile", "", "set input file")
+	flag.BoolVar(&debug, "d", false, "enable debug messages")
+	flag.BoolVar(&debug, "debug", false, "enable debug messages")
+	flag.StringVar(&infile, "i", "", "set input file")
+	flag.StringVar(&infile, "infile", "", "set input file")
 	flag.StringVar(&logpatch, "l", "", "pass in log patch")
 	flag.StringVar(&logpatch, "logpatch", "", "pass in log patch")
-	flag.BoolVar(&quiet,      "q", false, "disable progress messages")
-	flag.BoolVar(&quiet,      "quiet", false, "disable progress messages")
+	flag.BoolVar(&quiet, "q", false, "disable progress messages")
+	flag.BoolVar(&quiet, "quiet", false, "disable progress messages")
 	flag.StringVar(&rangestr, "r", "", "set selection range")
 	flag.StringVar(&rangestr, "range", "", "set selection range")
 	flag.Parse()
@@ -1349,70 +1348,70 @@ func main () {
 	if debug {
 		fmt.Fprintf(os.Stderr, "<selection: %v>\n", selection)
 	}
-	
-        if flag.NArg() == 0 {
+
+	if flag.NArg() == 0 {
 		fmt.Fprint(os.Stderr, "Type 'repocutter help' for usage.\n")
 		os.Exit(1)
 	} else if debug {
 		fmt.Fprintf(os.Stderr, "<command=%s>\n", flag.Arg(0))
 	}
-        var baton *Baton
-        if flag.Arg(0) != "help" {
+	var baton *Baton
+	if flag.Arg(0) != "help" {
 		if !quiet {
 			baton = NewBaton(oneliners[flag.Arg(0)], "done")
 		} else {
 			baton = nil
 		}
-        }
+	}
 	if flag.Arg(0) == "propdel" {
 		propdel(NewDumpfileSource(input, baton), flag.Args()[1:], selection)
-        } else if flag.Arg(0) == "propset" {
+	} else if flag.Arg(0) == "propset" {
 		propset(NewDumpfileSource(input, baton), flag.Args()[1:], selection)
-        } else if flag.Arg(0) == "proprename" {
+	} else if flag.Arg(0) == "proprename" {
 		proprename(NewDumpfileSource(input, baton), flag.Args()[1:], selection)
-        } else if flag.Arg(0) == "select" {
+	} else if flag.Arg(0) == "select" {
 		sselect(NewDumpfileSource(input, baton), selection)
-        } else if flag.Arg(0) == "log" {
+	} else if flag.Arg(0) == "log" {
 		log(NewDumpfileSource(input, baton), selection)
-        } else if flag.Arg(0) == "setlog" {
+	} else if flag.Arg(0) == "setlog" {
 		if logpatch == "" {
 			fmt.Fprintf(os.Stderr, "repocutter: setlog requires a log entries file.\n")
 			os.Exit(1)
 		}
 		setlog(NewDumpfileSource(input, baton), logpatch, selection)
-        } else if flag.Arg(0) == "strip" {
+	} else if flag.Arg(0) == "strip" {
 		strip(NewDumpfileSource(input, baton), selection, flag.Args()[1:])
-        } else if flag.Arg(0) == "pathrename" {
+	} else if flag.Arg(0) == "pathrename" {
 		pathrename(NewDumpfileSource(input, baton), selection, flag.Args()[1:])
-        } else if flag.Arg(0) == "expunge" {
+	} else if flag.Arg(0) == "expunge" {
 		expunge(NewDumpfileSource(input, baton), selection, flag.Args()[1:])
-        } else if flag.Arg(0) == "sift" {
+	} else if flag.Arg(0) == "sift" {
 		sift(NewDumpfileSource(input, baton), selection, flag.Args()[1:])
-        } else if flag.Arg(0) == "renumber" {
+	} else if flag.Arg(0) == "renumber" {
 		renumber(NewDumpfileSource(input, baton))
-        } else if flag.Arg(0) == "reduce" {
+	} else if flag.Arg(0) == "reduce" {
 		f, err := os.Open(flag.Args()[1])
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "repocutter: can't open stream ro reduce\n")
 			os.Exit(1)
 		}
 		doreduce(NewDumpfileSource(f, baton))
-        } else if flag.Arg(0) == "see" {
+	} else if flag.Arg(0) == "see" {
 		see(NewDumpfileSource(input, baton), selection)
-        } else if flag.Arg(0) == "swap" {
+	} else if flag.Arg(0) == "swap" {
 		swap(NewDumpfileSource(input, baton), selection)
-        } else if flag.Arg(0) == "help" {
+	} else if flag.Arg(0) == "help" {
 		if len(flag.Args()) == 1 {
 			os.Stdout.Write(doc)
 		} else {
 			fmt.Fprintf(os.Stderr, "repocutter: no such command\n")
 			os.Exit(1)
 		}
-        } else {
+	} else {
 		fmt.Fprintf(os.Stderr, "repocutter: \"%s\": unknown subcommand\n", flag.Arg(0))
 		os.Exit(1)
 	}
-        if baton != nil {
+	if baton != nil {
 		baton.End("")
 	}
 }

@@ -10,29 +10,29 @@ import (
 	"log"
 	"os"
 	"regexp"
-	"strings"
 	"sort"
+	"strings"
 )
 
 /* Associate a username with a DVCS-style ID. */
 type Contributor struct {
-        name string
-        fullname string
-        email string
-        tz string
+	name     string
+	fullname string
+	email    string
+	tz       string
 }
 
 /* Does this entry need completion? */
 func (cb *Contributor) incomplete() bool {
-        return cb.name == cb.fullname || strings.Index(cb.email, "@") == -1
+	return cb.name == cb.fullname || strings.Index(cb.email, "@") == -1
 }
 
 func (cb *Contributor) Stringer() string {
-        out := fmt.Sprintf("%s = %s <%s>", cb.name, cb.fullname, cb.email)
+	out := fmt.Sprintf("%s = %s <%s>", cb.name, cb.fullname, cb.email)
 	if cb.tz != "" {
 		out += " " + cb.tz
 	}
-        out += "\n"
+	out += "\n"
 	return out
 }
 
@@ -43,17 +43,17 @@ type ContribMap map[string]Contributor
 func bylines(fn string, hook func(string)) {
 	file, err := os.Open(fn)
 	if err != nil {
-	    log.Fatal(err)
+		log.Fatal(err)
 	}
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-	    hook(scanner.Text())
+		hook(scanner.Text())
 	}
 
 	if err := scanner.Err(); err != nil {
-	    log.Fatal(err)
+		log.Fatal(err)
 	}
 }
 
@@ -72,7 +72,7 @@ func NewContribMap(fn string) ContribMap {
 		v.fullname = strings.Trim(string(firstmatch[2]), " \t")
 		v.email = string(firstmatch[3])
 		v.tz = string(firstmatch[4])
-		cm[string(v.name)] = v 
+		cm[string(v.name)] = v
 	}
 	bylines(fn, digest)
 	return cm
@@ -80,22 +80,22 @@ func NewContribMap(fn string) ContribMap {
 
 /* Add an address suffix to entries lacking one.*/
 func (cm *ContribMap) Suffix(addr string) {
-        for k, obj := range *cm {
+	for k, obj := range *cm {
 		if strings.Index(obj.email, "@") == -1 {
 			obj.email += "@" + addr
-			(*cm)[k] = obj 
+			(*cm)[k] = obj
 		}
 	}
 }
 
 /* Write the current state of this contrib map. */
 func (cm *ContribMap) Write(fp *os.File, incomplete bool) {
-        keys := make([]string, 0)
+	keys := make([]string, 0)
 	for k, _ := range *cm {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)	
-        for _, name := range keys {
+	sort.Strings(keys)
+	for _, name := range keys {
 		item := (*cm)[name]
 		if incomplete && !item.incomplete() {
 			continue
@@ -105,10 +105,10 @@ func (cm *ContribMap) Write(fp *os.File, incomplete bool) {
 }
 
 // Manifest constants describning the Unix password DSV format
-const FLDSEP   =	":"	// field separator
-const NAME     =	0	// field index of username
-const GECOS    =	4	// field index of fullname
-const FLDCOUNT =	7	// required number of fields
+const FLDSEP = ":" // field separator
+const NAME = 0     // field index of username
+const GECOS = 4    // field index of fullname
+const FLDCOUNT = 7 // required number of fields
 
 func main() {
 	var host string
@@ -116,13 +116,13 @@ func main() {
 	var updatefile string
 	var incomplete bool
 
-	flag.StringVar(&host,       "h", "", "set host for suffixing")
+	flag.StringVar(&host, "h", "", "set host for suffixing")
 	flag.StringVar(&passwdfile, "p", "", "specify password file")
 	flag.StringVar(&updatefile, "u", "", "specify update file")
-	flag.BoolVar(&incomplete,   "i", false, "dump incomplete entries")
+	flag.BoolVar(&incomplete, "i", false, "dump incomplete entries")
 	flag.Parse()
 
-        if flag.NArg() == 0 {
+	if flag.NArg() == 0 {
 		fmt.Fprintf(os.Stderr,
 			"repomapper: requires a contrib-map file argument.\n")
 		os.Exit(1)
@@ -145,7 +145,7 @@ func main() {
 				fmt.Fprintf(os.Stderr,
 					"repomapper: ill-formed passwd line\n")
 				os.Exit(1)
-			}		
+			}
 			name := fields[NAME]
 			gecos := fields[GECOS]
 			if strings.Index(gecos, ",") != 1 {
@@ -154,7 +154,7 @@ func main() {
 			passwd[name] = gecos
 		}
 		bylines(passwdfile, eatline)
-			
+
 		// Attempt to fill in the contribmap
 		for name, obj := range contribmap {
 			_, ok := passwd[name]
@@ -172,7 +172,7 @@ func main() {
 			}
 		}
 
-	        // Now dump the result
+		// Now dump the result
 		contribmap.Write(os.Stdout, false)
 		os.Exit(0)
 	}
@@ -196,4 +196,3 @@ func main() {
 }
 
 // end
-
