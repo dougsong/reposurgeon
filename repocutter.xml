@@ -115,15 +115,6 @@ specified range. See the embedded help for syntax
 details.</para></listitem>
 </varlistentry>
 <varlistentry>
-<term>squash</term>
-<listitem><para>The 'squash' subcommand merges adjacent commits that
-have the same author and log text and were made within 5 minutes of
-each other.  This can be helpful in cleaning up after migrations from
-file-oriented revision control systems, or if a developer has been
-using a pre-2006 version of Emacs VC. See the embedded help for syntax
-details.</para></listitem>
-</varlistentry>
-<varlistentry>
 <term>strip</term>
 <listitem><para>Replace content with unique generated cookies on all node paths
 matching the specified regular expressions; if no expressions are
@@ -192,9 +183,8 @@ Subversion distribution. It had functional overlap with
 because it was directly ancestral to that code. It was moved to the 
 <citerefentry><refentrytitle>reposurgeon</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 distribution in January 2016.</para>
-
-<para>
-</para>
+<para>This program was ported from Python to Go in Aygust 2018, at
+which time the obsolete "squash" command was retired.</para>
 </refsect1>
 
 
