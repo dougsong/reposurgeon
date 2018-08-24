@@ -1,6 +1,6 @@
 = reposurgeon project news =
 
-Repository head:
+3.45: 2018-08-24::
      Repaired the distribution maker to again include README.adoc, NEWS, TODO.
      Executable bits are now correctly propagated across SVN branch copies.
      Tests fall back to (c-)python if pypy is not available.
