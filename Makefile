@@ -21,7 +21,6 @@ SOURCES += docbook-extra.xml nofooter.conf
 SOURCES += \
 	reposurgeon reposurgeon.xml \
 	repotool repotool.xml \
-	repodiffer repodiffer.xml \
 	src/*/*.go \
 	repomapper.xml repocutter.xml \
 	reporting-bugs.adoc features.adoc dvcs-migration-guide.adoc \
@@ -33,8 +32,8 @@ DOCS = README.adoc NEWS TODO
 .PHONY: all install clean uninstall version pylint check zip release refresh \
     docker-build docker-check docker-check-noscm
 
-BINARIES = reposurgeon repotool repodiffer repomapper go/repocutter
-MANPAGES = reposurgeon.1 repotool.1 repodiffer.1 repomapper.1 repocutter.1
+BINARIES = reposurgeon repotool repomapper repocutter
+MANPAGES = reposurgeon.1 repotool.1 repomapper.1 repocutter.1
 HTMLFILES = $(MANPAGES:.1=.html) \
             dvcs-migration-guide.html features.html reporting-bugs.html
 SHARED    = $(DOCS) reposurgeon-git-aliases $(HTMLFILES)
@@ -108,10 +107,8 @@ COMMON_PYLINT = --rcfile=/dev/null --reports=n \
 	--msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" \
 	--dummy-variables-rgx='^_'
 PYLINTOPTS1 = "C0103,C0111,C0301,C0302,C0322,C0324,C0325,C0321,C0323,C0330,C0410,C0411,C0412,C0413,C1001,C1801,R0201,R0101,R0204,R0902,R0903,R0904,R0911,R0912,R0913,R0914,R0915,R1705,W0108,W0110,W0123,W0122,W0141,W0142,W0212,W0221,W0232,W0233,W0603,W0632,W0633,W0640,W0511,W0611,E0611,E1101,E1103,E1124,E1133,I0011,F0401"
-PYLINTOPTS2 = "C0103,C0111,C0325,C0301,C0326,C0330,C0410,C1001,W0603,W0621,E1101,E1103,R0401,R0902,R0903,R0912,R0914,R0915,R1705"
 pylint:
 	@$(PYLINT) $(COMMON_PYLINT) --disable=$(PYLINTOPTS1) reposurgeon
-	@$(PYLINT) $(COMMON_PYLINT) --disable=$(PYLINTOPTS2) repodiffer
 
 check:
 	make all; cd test; $(MAKE) --quiet check
@@ -150,7 +147,7 @@ docker-check-noscm: docker-check-only-bzr docker-check-only-cvs \
 reposurgeon-$(VERS).tar.xz: $(SOURCES) $(DOCS)
 	tar --transform='s:^:reposurgeon-$(VERS)/:' --show-transformed-names -cJf reposurgeon-$(VERS).tar.xz $(SOURCES) $(DOCS) test
 
-dist: reposurgeon-$(VERS).tar.xz reposurgeon.1 repotool.1 repodiffer.1
+dist: reposurgeon-$(VERS).tar.xz reposurgeon.1 repocutter.1 repotool.1 repomapper.1
 
 reposurgeon-$(VERS).md5: reposurgeon-$(VERS).tar.xz
 	@md5sum reposurgeon-$(VERS).tar.xz >reposurgeon-$(VERS).md5
@@ -158,8 +155,8 @@ reposurgeon-$(VERS).md5: reposurgeon-$(VERS).tar.xz
 zip: $(SOURCES) $(DOCS)
 	zip -r reposurgeon-$(VERS).zip $(SOURCES) $(DOCS)
 
-release: reposurgeon-$(VERS).tar.xz reposurgeon-$(VERS).md5 reposurgeon.html repodiffer.html repocutter.html reporting-bugs.html dvcs-migration-guide.html features.html
+release: reposurgeon-$(VERS).tar.xz reposurgeon-$(VERS).md5 reposurgeon.html repocutter.html repomapper.html reporting-bugs.html dvcs-migration-guide.html features.html
 	shipper version=$(VERS) | sh -e -x
 
-refresh: reposurgeon.html repodiffer.html reporting-bugs.html features.html
+refresh: reposurgeon.html repocutter.html repomapper.html reporting-bugs.html features.html
 	shipper -N -w version=$(VERS) | sh -e -x

@@ -1,7 +1,0 @@
-13 equal pairs.
-L only: :29
-3 equal pairs.
-changed: :31 -> :31 in parents.
- parents: :25, :29 -> :25, :27
-statistics: 16 equal, 0 of 17 inserted, 1 of 18 deleted, 1 changed.
-Tag 'refs/heads/alternate': different in referent.

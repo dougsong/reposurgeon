@@ -16,13 +16,7 @@ be analyzed at a rate of upwards of ten thousand commits per minute,
 though that rate can fall significantly on extremely large
 repositories.
 
-`repodiffer` is a program that reports differences between repository
-histories. It uses a `diff(1)`-like algorithm to identify spans of
-identical revisions, and to pick out revisions that have been
-changed or deleted or inserted. It may be useful for comparing the
-output of different repository-conversion tools in detail.
-
-Another auxiliary program, `repotool`, performs various useful
+An auxiliary program, `repotool`, performs various useful
 operations such as checkouts and tag listing in a VCS-independent
 manner.  Yet another, `repomapper`, assists in automatically preparing
 contributor maps of CVS and SVN repositories.

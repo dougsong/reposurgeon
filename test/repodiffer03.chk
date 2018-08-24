@@ -1,7 +1,0 @@
-2 equal pairs.
-changed: :6 -> :6 in tree.
-Differing files:
-  foo/bar/junk
-:8 -> :8: same differences as for :6 -> :6.
-:10 -> :10: same differences as for :6 -> :6.
-statistics: 15 equal, 0 of 18 inserted, 0 of 18 deleted, 3 changed.

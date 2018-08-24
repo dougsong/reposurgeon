@@ -11,7 +11,6 @@ REPOSURGEON := reposurgeon
 REPOCUTTER := repocutter 
 REPOTOOL := repotool 
 REPOMAPPER := repomapper
-REPODIFFER := repodiffer
 
 # Defeat annoying behavior under Mac OS X - builtin echo doesn't do -n
 ECHO := /bin/echo
@@ -38,7 +37,7 @@ portcheck: check
 all: listcheck roundtrip roundtrip-compress mailboxing fi-regress coalesce \
 		git-regress git-regress-branches git-regress-merges git-regress-tags \
 		hg-extractor svnload-regress liftcheck-regress legacy-regress svndump-regress \
-		repodiffer-regress repomapper-regress \
+		repomapper-regress \
 		repotool-regress repocutter-regress svncheck-regress
 	@echo "=== No diff output is good news."
 
@@ -55,7 +54,7 @@ hg-extractor: hg-regress hg-regress-branches hg-regress-merges \
 	$(REPOSURGEON) "read <$<" "legacy write -" >$@
 
 buildregress: fi-buildregress svnload-buildregress legacy-buildregress \
-	svndump-buildregress repodiffer-buildregress repomapper-buildregress \
+	svndump-buildregress repomapper-buildregress \
 	repotool-buildregress repocutter-buildregress hg-buildregress-branches \
 	hg-buildregress-patho svncheck-buildregress
 
@@ -441,29 +440,7 @@ svncheck:
 	@make --quiet clean
 	@rm -f /tmp/prestripped$$$$ /tmp/stripped$$$$ /tmp/checkstripped$$$$
 
-# Regression-testing of repodiffer; look at the *.sh and
-# corresponding *.chk files to see which tests this runs.
-REPODIFFER := $(shell ls -1 repodiffer*.sh | sed '/.sh/s///')
-repodiffer-buildregress:
-	@for file in $(REPODIFFER); do \
-	    echo "Remaking $${file}.chk"; \
-	    $(SHELL) $${file}.sh >$${file}.chk || exit 1; \
-	done
-repodiffer-regress:
-	@echo "=== Running repodiffer tests:"
-	@if command -v git >/dev/null 2>&1 ; \
-	then \
-	    status=0; \
-	    for file in $(REPODIFFER); do \
-		$(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
-		$(SHELL) $${file}.sh | diff --text -u $${file}.chk - || status=1; \
-	    done; \
-	    exit $${status}; \
-	else echo "    Skipped, git missing."; exit 0; \
-	fi
-	@rm -f /tmp/regress$$$$
-
-# Regression-testing of repomapper; look at the *.sh and
+# Regressio-testing of repomapper; look at the *.sh and
 # corresponding *.chk files to see which tests this runs.
 MAPPERTESTS := $(shell ls -1 repomapper*.sh | sed '/.sh/s///')
 repomapper-buildregress:

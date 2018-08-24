@@ -60,12 +60,6 @@ from the repo root.
 Take a named Subversion dump and compare a checkout of it with
 its git conversion at all tags and branches.
 
-== convert-check ==
-
-Take a Subversion dump on stdin and convert it two different ways,
-once with reposurgeon and then with git-svn.  Compare the results
-using repodiffer.
-
 == The tests ==
 
 Keeping live Subversion repos under version control doesn't work very well; 
@@ -353,22 +347,6 @@ svncutter -q -r 0:4,6,8,56,58,61,65,350,355,356,543:546 select <nut.svn \
 >reduced.svn
 
 It captures the most serious pathologies in the NUT repo.
-
-== The repodiffer test loads ==
-
-sample1.fi::
-   A small sample repository with branches and tags.  Started out identical
-   to svnfodder.fi
-
-sample2.fi::
-   Identical to sample1.fi, except for the change comment in the third commit.
-
-sample3.fi::
-   Identical to sample1.fi, except for one changed blob in the third commit.
-
-sample4.fi::
-   Identical to sample1.fi, except :29 (the second commit on the alternate 
-   branch) has been removed.
 
 == Sporadic tests ==
 
