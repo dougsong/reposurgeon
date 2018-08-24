@@ -1,6 +1,7 @@
 #
 # makefile for reposurgeon
 #
+GOPATH=$(shell pwd)
 
 INSTALL=install
 XMLTO=xmlto
@@ -21,7 +22,7 @@ SOURCES += \
 	reposurgeon reposurgeon.xml \
 	repotool repotool.xml \
 	repodiffer repodiffer.xml \
-	go/src/*/*.go \
+	src/*/*.go \
 	repomapper.xml repocutter.xml \
 	reporting-bugs.adoc features.adoc dvcs-migration-guide.adoc \
 	reposurgeon-mode.el
@@ -39,7 +40,8 @@ HTMLFILES = $(MANPAGES:.1=.html) \
 SHARED    = $(DOCS) reposurgeon-git-aliases $(HTMLFILES)
 
 all:  $(MANPAGES) $(HTMLFILES)
-	cd go; make
+	GOPATH=$(GOPATH) go build repocutter
+	GOPATH=$(GOPATH) go build repomapper
 
 %.1: %.xml
 	$(XMLTO) $(XMLTOOPTS) man $<
@@ -50,6 +52,21 @@ all:  $(MANPAGES) $(HTMLFILES)
 dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc -f nofooter.conf
 %.html: %.adoc
 	$(ASCIIDOC) $(ASCIIDOC_ARGS) $<
+
+#
+# Auxilary Go productions
+#
+
+gotest:
+	GOPATH=$(GOPATH) go test
+
+goformat:
+	gofmt -w src/repocutter/
+	gofmt -w src/repomapper/
+
+golint:
+	@golint src/repocutter 2>&1
+	@golint src/repomapper 2>&1
 
 #
 # Installation
@@ -64,6 +81,7 @@ install: all
 	$(INSTALL) -m 644 $(MANPAGES) "$(target)/$(mandir)/man1"
 
 clean:
+	rm -fr repocutter repomapper
 	rm -fr  *~ *.1 *.html *.tar.xz MANIFEST *.md5
 	rm -fr .rs .rs* test/.rs test/.rs*
 	rm -f typescript test/typescript *.pyc

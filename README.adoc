@@ -48,8 +48,8 @@ have pypy installed.  The performance difference is dramatic on large
 repositories.
 
 We are in the process of moving this suite of tools from Python to Go
-for large performance increases.  The subdirectory 'go' contains the
-Go source.  Do your builds through go/Makefile, which sets the GOPATH
+for large performance increases.  The subdirectory 'src' contains the
+Go source.  Do your builds through the Makefile, which sets the GOPATH
 variable to work around it not being embedded in a normal Go
 workspace.
 

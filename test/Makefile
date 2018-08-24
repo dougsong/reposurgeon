@@ -6,7 +6,7 @@
 # Use absolute path so tests that change working directory still use 
 # scripts from parent directory.  Note that using $PWD seems to fail
 # here under Gitlab's CI environment.
-PATH := $(realpath ..):$(realpath .):$(realpath ../go):${PATH}
+PATH := $(realpath ..):$(realpath .):${PATH}
 REPOSURGEON := reposurgeon 
 REPOCUTTER := repocutter 
 REPOTOOL := repotool 
