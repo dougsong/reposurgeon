@@ -1,11 +1,12 @@
 = reposurgeon project news =
 
 Repository head:
-     Repaired the distribution maker to once again include README.md, NEWS, TODO.
+     Repaired the distribution maker to again include README.adoc, NEWS, TODO.
      Executable bits are now correctly propagated across SVN branch copies.
      Tests fall back to (c-)python if pypy is not available.
      Various minor testsuite and port fixes. Tests now work on Mac OS X.
      repocutter ported to Go for 40x speedup (more on large repos).
+     repomapper ported to Go.
 
 3.44: 20-18-04-29::
      New 'setperm' command for patching file path permissions.
