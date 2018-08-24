@@ -7,7 +7,8 @@ GOPATH=$(shell pwd)
 default: build
 
 build:
-	GOPATH=$(GOPATH) go build repocutter repomapper
+	GOPATH=$(GOPATH) go build repocutter
+	GOPATH=$(GOPATH) go build repomapper
 
 test:
 	GOPATH=$(GOPATH) go test

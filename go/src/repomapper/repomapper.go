@@ -39,7 +39,7 @@ func (cb *Contributor) Stringer() string {
 /* A map of contributors. */
 type ContribMap map[string]Contributor
 
-/* apply a soecified function to each line of a file */
+/* apply a specified function to each line of a file */
 func bylines(fn string, hook func(string)) {
 	file, err := os.Open(fn)
 	if err != nil {
@@ -69,7 +69,7 @@ func NewContribMap(fn string) ContribMap {
 		v := *new(Contributor)
 		firstmatch := groups[0]
 		v.name = string(firstmatch[1])
-		v.fullname = string(firstmatch[2])
+		v.fullname = strings.Trim(string(firstmatch[2]), " \t")
 		v.email = string(firstmatch[3])
 		v.tz = string(firstmatch[4])
 		cm[string(v.name)] = v 
@@ -80,9 +80,10 @@ func NewContribMap(fn string) ContribMap {
 
 /* Add an address suffix to entries lacking one.*/
 func (cm *ContribMap) Suffix(addr string) {
-        for _, obj := range *cm {
+        for k, obj := range *cm {
 		if strings.Index(obj.email, "@") == -1 {
 			obj.email += "@" + addr
+			(*cm)[k] = obj 
 		}
 	}
 }
@@ -95,10 +96,11 @@ func (cm *ContribMap) Write(fp *os.File, incomplete bool) {
 	}
 	sort.Strings(keys)	
         for _, name := range keys {
-		if incomplete && !cm[name].incomplete() {
+		item := (*cm)[name]
+		if incomplete && !item.incomplete() {
 			continue
 		}
-		fmt.Print(cm[name].Stringer())
+		fmt.Print(item.Stringer())
 	}
 }
 
@@ -160,7 +162,9 @@ func main() {
 				fmt.Fprintf(os.Stderr,
 					"repomapper: %s not in password file.\n", name)
 			} else if obj.fullname == name {
-				contribmap[name].fullname = passwd[name]
+				item := contribmap[name]
+				item.fullname = passwd[name]
+				contribmap[name] = item
 			} else {
 				fmt.Fprintf(os.Stderr,
 					"repomapper: %s -> %s should be %s.\n",
