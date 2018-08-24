@@ -25,7 +25,7 @@ SOURCES += \
 	repomapper.xml repocutter.xml \
 	reporting-bugs.adoc features.adoc dvcs-migration-guide.adoc \
 	reposurgeon-mode.el
-SOURCES += Makefile go/Makefile control reposturgeon.png reposurgeon-git-aliases
+SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
 SOURCES += Dockerfile ci/prepare.sh ci/Makefile ci/requirements.txt
 DOCS = README.adoc NEWS TODO
 
