@@ -21,8 +21,8 @@ SOURCES += \
 	reposurgeon reposurgeon.xml \
 	repotool repotool.xml \
 	repodiffer repodiffer.xml \
-	repomapper repomapper.xml \
-	go/src/repocutter/repocutter.go repocutter.xml \
+	go/src/*/*.go \
+	repomapper.xml repocutter.xml \
 	reporting-bugs.adoc features.adoc dvcs-migration-guide.adoc \
 	reposurgeon-mode.el
 SOURCES += Makefile go/Makefile control reposturgeon.png reposurgeon-git-aliases

@@ -7,16 +7,18 @@ GOPATH=$(shell pwd)
 default: build
 
 build:
-	GOPATH=$(GOPATH) go build repocutter
+	GOPATH=$(GOPATH) go build repocutter repomapper
 
 test:
 	GOPATH=$(GOPATH) go test
 
 format:
 	gofmt -w src/repocutter/
+	gofmt -w src/repomapper/
 
 lint:
 	@golint src/repocutter 2>&1
+	@golint src/repomapper 2>&1
 
 clean:
-	rm -fr src/repocutter/repocutter
+	rm -fr repocutter repomapper

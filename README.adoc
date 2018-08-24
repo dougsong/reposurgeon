@@ -50,12 +50,17 @@ repositories.
 We are in the process of moving this suite of tools from Python to Go
 for large performance increases.  The subdirectory 'go' contains the
 Go source.  Do your builds through go/Makefile, which sets the GOPATH
-variable to work aeound it not being embedded in a normal Go workspace.
+variable to work around it not being embedded in a normal Go
+workspace.
+
+To build the Go tools, simply run "make" in the toplevel directory.
+This also builds the suite documentation.
 
 There is an extensive regression-test suite in the `test/` directory.
-To test the correctness of this software, ensure that `pypy` and `pylint`
-are installed and then type `make check`.  For a portability check that
-includes Python 2 and Python 3 as well, do "make portcheck". 
+To test the correctness of this software, ensure that `pypy` and
+`pylint` and `golang` are installed and then type `make check`.  For a
+portability check that includes Python 2 and Python 3 as well, do
+"make portcheck".
 
 See `reporting-bugs.asc` for advice on how to troubleshoot problems
 with `reposurgeon` and report bugs.
