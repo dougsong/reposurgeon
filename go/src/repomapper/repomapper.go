@@ -1,4 +1,4 @@
-/* repomapper - update and manipulate contributor maps */
+// Package repomapper - update and manipulate contributor maps
 package main
 
 // SPDX-License-Identifier: BSD-2-Clause
@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-/* Associate a username with a DVCS-style ID. */
+// Contributor - ssociate a username with a DVCS-style ID
 type Contributor struct {
 	name     string
 	fullname string
@@ -22,11 +22,12 @@ type Contributor struct {
 	tz       string
 }
 
-/* Does this entry need completion? */
+// Does this entry need completion?
 func (cb *Contributor) incomplete() bool {
 	return cb.name == cb.fullname || strings.Index(cb.email, "@") == -1
 }
 
+// Stringer - render a Contributor in rereadable form
 func (cb *Contributor) Stringer() string {
 	out := fmt.Sprintf("%s = %s <%s>", cb.name, cb.fullname, cb.email)
 	if cb.tz != "" {
@@ -36,7 +37,7 @@ func (cb *Contributor) Stringer() string {
 	return out
 }
 
-/* A map of contributors. */
+// ContribMap - a map of contributors.
 type ContribMap map[string]Contributor
 
 /* apply a specified function to each line of a file */
@@ -57,6 +58,7 @@ func bylines(fn string, hook func(string)) {
 	}
 }
 
+// NewContribMap - initialize a new contributor map from a file */
 func NewContribMap(fn string) ContribMap {
 	re := regexp.MustCompile("([^ ]+) *= ([^<]+)*<([^<]+)> *(.*)")
 	cm := make(map[string]Contributor)
@@ -78,7 +80,7 @@ func NewContribMap(fn string) ContribMap {
 	return cm
 }
 
-/* Add an address suffix to entries lacking one.*/
+// Suffix - add an address suffix to entries lacking one.
 func (cm *ContribMap) Suffix(addr string) {
 	for k, obj := range *cm {
 		if strings.Index(obj.email, "@") == -1 {
@@ -91,7 +93,7 @@ func (cm *ContribMap) Suffix(addr string) {
 /* Write the current state of this contrib map. */
 func (cm *ContribMap) Write(fp *os.File, incomplete bool) {
 	keys := make([]string, 0)
-	for k, _ := range *cm {
+	for k := range *cm {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
@@ -105,10 +107,10 @@ func (cm *ContribMap) Write(fp *os.File, incomplete bool) {
 }
 
 // Manifest constants describning the Unix password DSV format
-const FLDSEP = ":" // field separator
-const NAME = 0     // field index of username
-const GECOS = 4    // field index of fullname
-const FLDCOUNT = 7 // required number of fields
+const pwdFLDSEP = ":" // field separator
+const pwdNAME = 0     // field index of username
+const pwdGECOS = 4    // field index of fullname
+const pwdFLDCOUNT = 7 // required number of fields
 
 func main() {
 	var host string
@@ -140,14 +142,14 @@ func main() {
 	if passwdfile != "" {
 		passwd := make(map[string]string)
 		eatline := func(line string) {
-			fields := strings.Split(line, FLDSEP)
-			if len(fields) != FLDCOUNT {
+			fields := strings.Split(line, pwdFLDSEP)
+			if len(fields) != pwdFLDCOUNT {
 				fmt.Fprintf(os.Stderr,
 					"repomapper: ill-formed passwd line\n")
 				os.Exit(1)
 			}
-			name := fields[NAME]
-			gecos := fields[GECOS]
+			name := fields[pwdNAME]
+			gecos := fields[pwdGECOS]
 			if strings.Index(gecos, ",") != 1 {
 				gecos = strings.Split(gecos, ",")[0]
 			}

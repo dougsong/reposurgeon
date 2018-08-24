@@ -20,7 +20,7 @@ import (
 
 const linesep = "\n"
 
-var doc []byte = []byte(`repocutter - stream surgery on SVN dump files
+var doc = []byte(`repocutter - stream surgery on SVN dump files
 general usage: repocutter [-q] [-r SELECTION] SUBCOMMAND
 
 In all commands, the -r (or --range) option limits the selection of revisions
@@ -57,7 +57,7 @@ which began life as 'svncutter' in 2009.  The obsolete
 'squash' command has been omitted.
 `)
 
-var debug bool = false
+var debug = false
 
 var oneliners = map[string]string{
 	//"squash":     "Squashing revisions",
@@ -179,6 +179,7 @@ type Baton struct {
 	time   time.Time
 }
 
+// NewBaton - create a new Baton object with specifued start and end messages
 func NewBaton(prompt string, endmsg string) *Baton {
 	var baton Baton
 	baton.stream = os.Stderr
@@ -192,6 +193,7 @@ func NewBaton(prompt string, endmsg string) *Baton {
 	return &baton
 }
 
+// Twirl - twirl the baton indicating progress
 func (baton *Baton) Twirl(ch string) {
 	if baton.stream == nil {
 		return
@@ -207,6 +209,7 @@ func (baton *Baton) Twirl(ch string) {
 	baton.count++
 }
 
+// End - operation is done
 func (baton *Baton) End(msg string) {
 	if msg == "" {
 		msg = baton.endmsg
@@ -223,6 +226,7 @@ type LineBufferedSource struct {
 	linenumber int
 }
 
+// NewLineBufferedSource - create a new source
 func NewLineBufferedSource(source io.Reader) LineBufferedSource {
 	if debug {
 		fmt.Fprintf(os.Stderr, "<setting up NewLineBufferedSource>\n")
@@ -238,6 +242,7 @@ func NewLineBufferedSource(source io.Reader) LineBufferedSource {
 	return lbs
 }
 
+// Rewind - reset source to its beginning, only works when seekable 
 func (lbs *LineBufferedSource) Rewind() {
 	lbs.reader.Reset(lbs.reader)
 	if lbs.stream != nil {
@@ -252,7 +257,7 @@ func vis(line []byte) string {
 	return strconv.Quote(string(line))
 }
 
-// Line-buffered readline.  Return "" on EOF.
+// Readline - line-buffered readline.  Return "" on EOF.
 func (lbs *LineBufferedSource) Readline() []byte {
 	var line []byte
 	var err error
@@ -277,7 +282,7 @@ func (lbs *LineBufferedSource) Readline() []byte {
 	return line
 }
 
-// Read a line, require it to have a specified prefix.
+// Require - read a line, requiring it to have a specified prefix.
 func (lbs *LineBufferedSource) Require(prefix string) []byte {
 	line := lbs.Readline()
 	if !strings.HasPrefix(string(line), prefix) {
@@ -330,7 +335,7 @@ func (lbs *LineBufferedSource) Peek() []byte {
 	return lbs.Linebuffer
 }
 
-// Get the contents of the line buffer, clearing it.
+// Flush - get the contents of the line buffer, clearing it.
 func (lbs *LineBufferedSource) Flush() []byte {
 	//assert(lbs.Linebuffer is not None)
 	line := lbs.Linebuffer
@@ -347,6 +352,7 @@ func (lbs *LineBufferedSource) Push(line []byte) {
 	lbs.Linebuffer = []byte(line)
 }
 
+// HasLineBuffered - do we have one ready to go?
 func (lbs *LineBufferedSource) HasLineBuffered() bool {
 	return len(lbs.Linebuffer) != 0
 }
@@ -357,6 +363,7 @@ type Properties struct {
 	propkeys   []string
 }
 
+// NewProperties - create a new Properties object for a revision or node
 func NewProperties(source *DumpfileSource) Properties {
 	var props Properties
 	newprops := make(map[string]string)
@@ -379,6 +386,7 @@ func NewProperties(source *DumpfileSource) Properties {
 	return props
 }
 
+// Stringer - return a representation of properties that can round-trip
 func (props *Properties) Stringer() string {
 	st := ""
 	for i := range props.propkeys {
@@ -394,6 +402,7 @@ func (props *Properties) Stringer() string {
 	return st
 }
 
+// Contains - does a Properties object contain a specified key? 
 func (props *Properties) Contains(key string) bool {
 	_, ok := props.properties[key]
 	return ok
@@ -401,19 +410,17 @@ func (props *Properties) Contains(key string) bool {
 
 // Dumpfile parsing machinery goes here
 
-var NodeLeader *regexp.Regexp
-var RevisionLine *regexp.Regexp
-var TextContentLength *regexp.Regexp
-var NodeCopyfrom *regexp.Regexp
+var revisionLine *regexp.Regexp
+var textContentLength *regexp.Regexp
+var nodeCopyfrom *regexp.Regexp
 
 func init() {
-	NodeLeader = regexp.MustCompile("Node-")
-	RevisionLine = regexp.MustCompile("Revision-number: ([0-9])")
-	TextContentLength = regexp.MustCompile("Text-content-length: ([1-9][0-9]*)")
-	NodeCopyfrom = regexp.MustCompile("Node-copyfrom-rev: ([1-9][0-9]*)")
+	revisionLine = regexp.MustCompile("Revision-number: ([0-9])")
+	textContentLength = regexp.MustCompile("Text-content-length: ([1-9][0-9]*)")
+	nodeCopyfrom = regexp.MustCompile("Node-copyfrom-rev: ([1-9][0-9]*)")
 }
 
-// DumpfileSource - This class knows about Subversion dumpfile format.
+// DumpfileSource - this class knows about Subversion dumpfile format.
 type DumpfileSource struct {
 	Lbs              LineBufferedSource
 	Baton            *Baton
@@ -421,6 +428,7 @@ type DumpfileSource struct {
 	EmittedRevisions map[string]bool
 }
 
+// NewDumpfileSource - declare a new dumpfile source object with implied parsing
 func NewDumpfileSource(rd io.Reader, baton *Baton) DumpfileSource {
 	var ds DumpfileSource
 	ds.Lbs = NewLineBufferedSource(rd)
@@ -431,12 +439,13 @@ func NewDumpfileSource(rd io.Reader, baton *Baton) DumpfileSource {
 	return ds
 }
 
+// SetLength - alter the length field of a specified header
 func SetLength(header string, data []byte, val int) []byte {
 	re := regexp.MustCompile("(" + header + "-length:) ([0-9]+)")
 	return re.ReplaceAll(data, []byte("$1 "+strconv.Itoa(val)))
 }
 
-// Read a revision header, parsing its properties.
+// ReadRevisionHeader - ead a revision header, parsing its properties.
 func (ds *DumpfileSource) ReadRevisionHeader(PropertyHook func(*Properties)) ([]byte, map[string]string) {
 	stash := ds.Lbs.Require("Revision-number:")
 	rev := string(bytes.Fields(stash)[1])
@@ -476,7 +485,7 @@ func (ds *DumpfileSource) ReadRevisionHeader(PropertyHook func(*Properties)) ([]
 	return stash, props.properties
 }
 
-// Read a node header and body.
+// ReadNode - read a node header and body.
 func (ds *DumpfileSource) ReadNode(PropertyHook func(*Properties)) ([]byte, []byte, []byte) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "<READ NODE BEGINS>\n")
@@ -488,7 +497,7 @@ func (ds *DumpfileSource) ReadNode(PropertyHook func(*Properties)) ([]byte, []by
 			fmt.Fprintf(os.Stderr, "repocutter: unexpected EOF in node header\n")
 			os.Exit(1)
 		}
-		m := NodeCopyfrom.Find(line)
+		m := nodeCopyfrom.Find(line)
 		if len(m) > 0 {
 			r := string(m[1])
 			if !ds.EmittedRevisions[r] {
@@ -512,7 +521,7 @@ func (ds *DumpfileSource) ReadNode(PropertyHook func(*Properties)) ([]byte, []by
 	}
 	// Using a read() here allows us to handle binary content
 	content := []byte("")
-	cl := TextContentLength.FindSubmatch(header)
+	cl := textContentLength.FindSubmatch(header)
 	if len(cl) > 1 {
 		n, _ := strconv.Atoi(string(cl[1]))
 		content = append(content, ds.Lbs.Read(n)...)
@@ -527,7 +536,7 @@ func (ds *DumpfileSource) ReadNode(PropertyHook func(*Properties)) ([]byte, []by
 	return header, []byte(properties), content
 }
 
-// Accumulate lines until the next matches a specified prefix.
+// ReadUntilNext - accumulate lines until the next matches a specified prefix.
 func (ds *DumpfileSource) ReadUntilNext(prefix string, revmap map[int]int) []byte {
 	if debug {
 		fmt.Fprintf(os.Stderr, "<ReadUntilNext: until %s>\n", prefix)
@@ -570,23 +579,25 @@ func (ds *DumpfileSource) ReadUntilNext(prefix string, revmap map[int]int) []byt
 }
 
 func (ds *DumpfileSource) say(text []byte) {
-	matches := RevisionLine.FindSubmatch(text)
+	matches := revisionLine.FindSubmatch(text)
 	if len(matches) > 1 {
 		ds.EmittedRevisions[string(matches[1])] = true
 	}
 	os.Stdout.Write(text)
 }
 
+// SubversionRange - represent a polyrange of Subversion commit numbers
 type SubversionRange struct {
 	intervals [][2]int
 }
 
+// NewSubversionRange - create a new polyrange object
 func NewSubversionRange(txt string) SubversionRange {
 	var s SubversionRange
 	s.intervals = make([][2]int, 0)
 	for _, item := range strings.Split(txt, ",") {
 		var parts [2]int
-		var upperbound int = 0
+		var upperbound int
 		if strings.Index(item, ":") != -1 {
 			fields := strings.Split(item, ":")
 			if fields[0] == "HEAD" {
@@ -613,6 +624,7 @@ func NewSubversionRange(txt string) SubversionRange {
 	return s
 }
 
+// Contains - does this range contain a specified revision?
 func (s *SubversionRange) Contains(rev int) bool {
 	for _, interval := range s.intervals {
 		if rev >= interval[0] && rev <= interval[1] {
@@ -622,7 +634,7 @@ func (s *SubversionRange) Contains(rev int) bool {
 	return false
 }
 
-// What is the uppermost revision in the spec?
+// Upperbound - what is the uppermost revision in the spec?
 func (s *SubversionRange) Upperbound() int {
 	return s.intervals[len(s.intervals)-1][1]
 }
@@ -681,7 +693,7 @@ func (ds *DumpfileSource) Report(selection SubversionRange,
 				nodecount = 0
 				break
 			} else if strings.HasPrefix(string(line), "Node-") {
-				nodecount += 1
+				nodecount++
 				ds.Lbs.Push(line)
 				header, properties, content := ds.ReadNode(prophook)
 				if debug {
@@ -719,6 +731,7 @@ func (ds *DumpfileSource) Report(selection SubversionRange,
 	}
 }
 
+// Logentry - parsed form of a Subversion log entry for a revision
 type Logentry struct {
 	author []byte
 	date   []byte
@@ -739,6 +752,7 @@ func (lf *Logfile) Contains(revision int) bool {
 
 const delim = "------------------------------------------------------------------------"
 
+// NewLogfile - initialize a new logfilr object from an input source
 func NewLogfile(readable io.Reader, restrict *SubversionRange) *Logfile {
 	var lf Logfile
 	lf.comments = make(map[int]Logentry, 0)
@@ -752,7 +766,7 @@ func NewLogfile(readable io.Reader, restrict *SubversionRange) *Logfile {
 	re := regexp.MustCompile("^r[0-9]+")
 	var line []byte
 	for {
-		lineno += 1
+		lineno++
 		line = lf.source.Readline()
 		if state == "in_logentry" {
 			if len(line) == 0 || bytes.HasPrefix(line, []byte(delim)) {
@@ -802,11 +816,10 @@ func payload(hd string, header []byte) []byte {
 	offs := bytes.Index(header, []byte(hd+": "))
 	if offs == -1 {
 		return nil
-	} else {
-		offs += len(hd) + 2
-		end := bytes.Index(header[offs:], []byte("\n"))
-		return header[offs : offs+end]
 	}
+	offs += len(hd) + 2
+	end := bytes.Index(header[offs:], []byte("\n"))
+	return header[offs : offs+end]
 }
 
 // Select a portion of the dump file defined by a revision selection.
@@ -825,27 +838,26 @@ func sselect(source DumpfileSource, selection SubversionRange) {
 		}
 		if !source.Lbs.HasLineBuffered() {
 			return
+		}
+		fields := bytes.Fields(source.Lbs.Linebuffer)
+		// Error already checked during source parsing
+		revision, _ := strconv.Atoi(string(fields[1]))
+		emit = selection.Contains(revision)
+		if debug {
+			fmt.Fprintf(os.Stderr, "<%s:%b>\n", revision, emit)
+		}
+		if emit {
+			os.Stdout.Write(source.Lbs.Flush())
+		} else if revision == selection.Upperbound()+1 {
+			return
 		} else {
-			fields := bytes.Fields(source.Lbs.Linebuffer)
-			// Error already checked during source parsing
-			revision, _ := strconv.Atoi(string(fields[1]))
-			emit = selection.Contains(revision)
-			if debug {
-				fmt.Fprintf(os.Stderr, "<%s:%b>\n", revision, emit)
-			}
-			if emit {
-				os.Stdout.Write(source.Lbs.Flush())
-			} else if revision == selection.Upperbound()+1 {
-				return
-			} else {
-				source.Lbs.Flush()
-			}
+			source.Lbs.Flush()
 		}
 	}
 }
 
 func dumpall(header []byte, properties []byte, content []byte) []byte {
-	var all []byte = make([]byte, 0)
+	all := make([]byte, 0)
 	all = append(all, header...)
 	all = append(all, properties...)
 	all = append(all, content...)
@@ -915,8 +927,8 @@ func getAuthor(props map[string]string) string {
 	return author
 }
 
-// Extract a given field from a header string
-func get_header(txt []byte, hdr string) []byte {
+// getHeader - extract a given field from a header string
+func getHeader(txt []byte, hdr string) []byte {
 	for _, line := range bytes.Split(txt, []byte("\n")) {
 		if bytes.HasPrefix(line, []byte(hdr+": ")) {
 			return line[len(hdr)+2:]
@@ -925,6 +937,7 @@ func get_header(txt []byte, hdr string) []byte {
 	return nil
 }
 
+// SVNTimeParse - parse a date in the Subversion variant of RFC3339 format
 func SVNTimeParse(rdate string) time.Time {
 	// An example date in SVN format is '2011-11-30T16:40:02.180831Z'
 	date, ok := time.Parse(time.RFC3339Nano, rdate)
@@ -944,9 +957,8 @@ func log(source DumpfileSource, selection SubversionRange) {
 		// It is not certain this is the right thing.
 		if logentry == "" {
 			return
-		} else {
-			os.Stdout.Write([]byte(delim + "\n"))
 		}
+		os.Stdout.Write([]byte(delim + "\n"))
 		author := getAuthor(props)
 		date := SVNTimeParse(props["svn:date"])
 		drep := date.Format("2006-01-02 15:04:05 +0000 (Mon, 02 Jan 2006)")
@@ -984,7 +996,7 @@ func setlog(source DumpfileSource, logpath string, selection SubversionRange) {
 // Strip a portion of the dump file defined by a revision selection.
 func strip(source DumpfileSource, selection SubversionRange, patterns []string) {
 	innerstrip := func(header []byte, properties []byte, content []byte) []byte {
-		set_length := func(hd []byte, name string, val int) []byte {
+		setLength := func(hd []byte, name string, val int) []byte {
 			r := regexp.MustCompile(name + ": ([0-9]*)")
 			m := r.FindSubmatchIndex([]byte(hd))
 			if len(m) != 4 {
@@ -1013,16 +1025,16 @@ func strip(source DumpfileSource, selection SubversionRange, patterns []string) 
 		if ok {
 			if content != nil && len(content) > 0 {
 				tell := fmt.Sprintf("Revision is %d, file path is %s.\n\n\n",
-					source.Revision, get_header(header, "Node-path"))
+					source.Revision, getHeader(header, "Node-path"))
 				// Avoid replacing symlinks, a reposurgeon sanity check barfs.
 				if bytes.HasPrefix(content, []byte("link ")) {
 					content = append(content, []byte(tell)...)
 				} else {
 					content = []byte(tell)
 				}
-				header = set_length(header,
+				header = setLength(header,
 					"Text-content-length", len(content)-2)
-				header = set_length(header,
+				header = setLength(header,
 					"Content-length", len(properties)+len(content)-2)
 			}
 			r1 := regexp.MustCompile("Text-content-md5:.*\n")
@@ -1035,7 +1047,7 @@ func strip(source DumpfileSource, selection SubversionRange, patterns []string) 
 			header = r4.ReplaceAll(header, []byte(""))
 		}
 
-		var all []byte = make([]byte, 0)
+		all := make([]byte, 0)
 		all = append(all, header...)
 		all = append(all, properties...)
 		all = append(all, content...)
@@ -1047,11 +1059,11 @@ func strip(source DumpfileSource, selection SubversionRange, patterns []string) 
 // Topologically reduce a dump, removing spans of plain file modifications.
 func doreduce(source DumpfileSource) {
 	interesting := make([]int, 0)
-	__reduce := func(header []byte, properties []byte, _content []byte) []byte {
-		if !(string(get_header(header, "Node-kind")) == "file" && string(get_header(header, "Node-action")) == "change") || (properties != nil && len(properties) > 0) {
+	reducehook := func(header []byte, properties []byte, _content []byte) []byte {
+		if !(string(getHeader(header, "Node-kind")) == "file" && string(getHeader(header, "Node-action")) == "change") || (properties != nil && len(properties) > 0) {
 			interesting = append(interesting, source.Revision)
 		}
-		copysource := get_header(header, "Node-copyfrom-rev")
+		copysource := getHeader(header, "Node-copyfrom-rev")
 		if copysource != nil {
 			n, err := strconv.Atoi(string(copysource))
 			if err == nil {
@@ -1060,7 +1072,7 @@ func doreduce(source DumpfileSource) {
 		}
 		return nil
 	}
-	source.Report(NewSubversionRange("0:HEAD"), __reduce, nil, false, true)
+	source.Report(NewSubversionRange("0:HEAD"), reducehook, nil, false, true)
 	var selection string
 	integerIn := func(n int, v []int) bool {
 		for _, i := range v {
@@ -1082,7 +1094,7 @@ func doreduce(source DumpfileSource) {
 
 // Strip out ops defined by a revision selection and a path regexp.
 func expunge(source DumpfileSource, selection SubversionRange, patterns []string) {
-	__expunge := func(header []byte, properties []byte, content []byte) []byte {
+	expungehook := func(header []byte, properties []byte, content []byte) []byte {
 		matched := false
 		nodepath := payload("Node-path", header)
 		if nodepath != nil {
@@ -1095,21 +1107,20 @@ func expunge(source DumpfileSource, selection SubversionRange, patterns []string
 			}
 		}
 		if !matched {
-			var all []byte = make([]byte, 0)
+			all := make([]byte, 0)
 			all = append(all, header...)
 			all = append(all, properties...)
 			all = append(all, content...)
 			return all
-		} else {
-			return []byte("")
-		}
+		} 
+		return []byte("")
 	}
-	source.Report(selection, __expunge, nil, true, true)
+	source.Report(selection, expungehook, nil, true, true)
 }
 
 // Sift for ops defined by a revision selection and a path regexp.
 func sift(source DumpfileSource, selection SubversionRange, patterns []string) {
-	__sift := func(header []byte, properties []byte, content []byte) []byte {
+	sifthook := func(header []byte, properties []byte, content []byte) []byte {
 		matched := false
 		nodepath := payload("Node-path", header)
 		if nodepath != nil {
@@ -1122,16 +1133,15 @@ func sift(source DumpfileSource, selection SubversionRange, patterns []string) {
 			}
 		}
 		if matched {
-			var all []byte = make([]byte, 0)
+			all := make([]byte, 0)
 			all = append(all, header...)
 			all = append(all, properties...)
 			all = append(all, content...)
 			return all
-		} else {
-			return []byte("")
 		}
+		return []byte("")
 	}
-	source.Report(selection, __sift, nil, true, false)
+	source.Report(selection, sifthook, nil, true, false)
 }
 
 // Hack paths by applying a regexp transformation.
@@ -1161,7 +1171,7 @@ func pathrename(source DumpfileSource, selection SubversionRange, patterns []str
 				header = append(header, after...)
 			}
 		}
-		var all []byte = make([]byte, 0)
+		all := make([]byte, 0)
 		all = append(all, header...)
 		all = append(all, properties...)
 		all = append(all, content...)
@@ -1182,7 +1192,7 @@ func renumber(source DumpfileSource) {
 		} else if p = payload("Revision-number", line); p != nil {
 			fmt.Printf("Revision-number: %d\n", counter)
 			renumbering[string(p)] = counter
-			counter += 1
+			counter++
 		} else if p = payload("Node-copyfrom-rev:", line); p != nil {
 			fmt.Printf("Node-copyfrom-rev: %s\n", p)
 		} else {
@@ -1193,7 +1203,7 @@ func renumber(source DumpfileSource) {
 
 // Strip out ops defined by a revision selection and a path regexp.
 func see(source DumpfileSource, selection SubversionRange) {
-	__seenode := func(header []byte, _properties []byte, _content []byte) []byte {
+	seenode := func(header []byte, _properties []byte, _content []byte) []byte {
 		if debug {
 			fmt.Fprintf(os.Stderr, "<header: %s>\n", vis(header))
 		}
@@ -1215,7 +1225,7 @@ func see(source DumpfileSource, selection SubversionRange) {
 		fmt.Printf("%-5d %-8s %s\n", source.Revision, action, path)
 		return nil
 	}
-	source.Report(selection, __seenode, nil, false, true)
+	source.Report(selection, seenode, nil, false, true)
 }
 
 var swaplatch = false // Ugh...
@@ -1233,12 +1243,11 @@ func swap(source DumpfileSource, selection SubversionRange) {
 			// explicit trunk/ directory creation is ever done as
 			// long as some trunk subdirectory *is* created.
 			return nil
-		} else {
-			tp := parts[0]
-			parts[0] = parts[1]
-			parts[1] = tp
-			return bytes.Join(parts, []byte("/"))
 		}
+		tp := parts[0]
+		parts[0] = parts[1]
+		parts[1] = tp
+		return bytes.Join(parts, []byte("/"))
 	}
 	revhook := func(props *Properties) {
 		var mergepath []byte
@@ -1261,7 +1270,7 @@ func swap(source DumpfileSource, selection SubversionRange) {
 		// of r1 is the directory creation for the first project.
 		// Replace it with synthetic nodes that create normal directory
 		// structure.
-		var swap_header = `Node-path: branches
+		const swapHeader = `Node-path: branches
 Node-kind: dir
 Node-action: add
 Prop-content-length: 10
@@ -1290,7 +1299,7 @@ PROPS-END
 `
 		if source.Revision == 1 && !swaplatch {
 			swaplatch = true
-			return []byte(swap_header)
+			return []byte(swapHeader)
 		}
 		for _, htype := range []string{"Node-path: ", "Node-copyfrom-path: "} {
 			offs := bytes.Index(header, []byte(htype))
@@ -1307,7 +1316,7 @@ PROPS-END
 				header = []byte(string(before) + string(pathline) + string(after))
 			}
 		}
-		var all []byte = make([]byte, 0)
+		all := make([]byte, 0)
 		all = append(all, header...)
 		all = append(all, properties...)
 		all = append(all, content...)
