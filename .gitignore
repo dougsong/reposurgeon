@@ -1,5 +1,8 @@
+goreposurgeon
 repocutter
 repomapper
+pkg
+golang.org
 *.1
 *.html
 MANIFEST

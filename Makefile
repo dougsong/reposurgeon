@@ -38,9 +38,11 @@ HTMLFILES = $(MANPAGES:.1=.html) \
             dvcs-migration-guide.html features.html reporting-bugs.html
 SHARED    = $(DOCS) reposurgeon-git-aliases $(HTMLFILES)
 
+GOFLAGS=-gcflags '-N -l'
 all:  $(MANPAGES) $(HTMLFILES)
-	GOPATH=$(GOPATH) go build repocutter
-	GOPATH=$(GOPATH) go build repomapper
+	GOPATH=$(GOPATH) go build $(GOFLAGS) repocutter
+	GOPATH=$(GOPATH) go build $(GOFLAGS) repomapper
+	GOPATH=$(GOPATH) go build $(GOFLAGS) goreposurgeon
 
 %.1: %.xml
 	$(XMLTO) $(XMLTOOPTS) man $<
@@ -56,16 +58,21 @@ dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc -f nofooter.conf
 # Auxilary Go productions
 #
 
+gosetup:
+	GOPATH=$(GOPATH) go get golang.org/x/crypto/ssh/terminal
+
 gotest:
-	GOPATH=$(GOPATH) go test
+	GOPATH=$(GOPATH) go test goreposurgeon
 
 goformat:
 	gofmt -w src/repocutter/
 	gofmt -w src/repomapper/
+	gofmt -w src/goreposurgeon/
 
 golint:
 	@golint src/repocutter 2>&1
 	@golint src/repomapper 2>&1
+	@golint src/goreposurgeon 2>&1
 
 #
 # Installation
@@ -80,7 +87,7 @@ install: all
 	$(INSTALL) -m 644 $(MANPAGES) "$(target)/$(mandir)/man1"
 
 clean:
-	rm -fr repocutter repomapper
+	rm -fr goreposurgeon repocutter repomapper
 	rm -fr  *~ *.1 *.html *.tar.xz MANIFEST *.md5
 	rm -fr .rs .rs* test/.rs test/.rs*
 	rm -f typescript test/typescript *.pyc

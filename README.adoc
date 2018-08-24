@@ -48,7 +48,8 @@ variable to work around it not being embedded in a normal Go
 workspace.
 
 To build the Go tools, simply run "make" in the toplevel directory.
-This also builds the suite documentation.
+This also builds the suite documentation.  Before running it the
+*first* time, run "make gosetup" to install package dependencies.
 
 There is an extensive regression-test suite in the `test/` directory.
 To test the correctness of this software, ensure that `pypy` and

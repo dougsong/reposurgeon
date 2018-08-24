@@ -242,7 +242,7 @@ func NewLineBufferedSource(source io.Reader) LineBufferedSource {
 	return lbs
 }
 
-// Rewind - reset source to its beginning, only works when seekable 
+// Rewind - reset source to its beginning, only works when seekable
 func (lbs *LineBufferedSource) Rewind() {
 	lbs.reader.Reset(lbs.reader)
 	if lbs.stream != nil {
@@ -402,7 +402,7 @@ func (props *Properties) Stringer() string {
 	return st
 }
 
-// Contains - does a Properties object contain a specified key? 
+// Contains - does a Properties object contain a specified key?
 func (props *Properties) Contains(key string) bool {
 	_, ok := props.properties[key]
 	return ok
@@ -1112,7 +1112,7 @@ func expunge(source DumpfileSource, selection SubversionRange, patterns []string
 			all = append(all, properties...)
 			all = append(all, content...)
 			return all
-		} 
+		}
 		return []byte("")
 	}
 	source.Report(selection, expungehook, nil, true, true)
