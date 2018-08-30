@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -128,7 +130,12 @@ Committer: Ralf Schlatterbeck <rsc@runtux.com>
 Committer-Date: Thu 01 Jan 1970 00:00:10 +0000
 Check-Text: Second commit.
 
-Second commit.
+Second commit. This one tests byte stuffing.
+
+.------------------------------------------------------------------------------
+
+Magic cookie.
+
 ------------------------------------------------------------------------------
 `
 
@@ -167,6 +174,14 @@ Second commit.
 	if !strings.HasPrefix(saw, expected) {
 		t.Errorf("Unexpected body content %s while expecting %s",
 			strconv.Quote(saw), strconv.Quote(expected))
+	}
+
+	// Test the byte stuffing
+	if strings.Index(saw, "\n----------------------------------") == -1 {
+		t.Error("Failure to remove byte-stuffing prefix")
+	}
+	if strings.Index(saw, "Magic cookie") == -1 {
+		t.Error("False match on bye-stuffed delimiter")
 	}
 
 	saw = msg.String()
@@ -305,6 +320,30 @@ func TestRemapAttribution(t *testing.T) {
 	if zone != "EST" {
 		t.Errorf("Zone was %s (%d) after remapping.", zone, offset)
 	}
+}
+
+func TestBlobfile(t *testing.T) {
+	assertEqual := func(a string, b string) {
+		if a != b {
+			t.Errorf("assertEqual: expected %v = %v",
+				strconv.Quote(a), strconv.Quote(b))
+		}
+	}
+	repo := newRepository("fubar")
+	repo.basedir = "foo"
+	expectdir := fmt.Sprintf("foo/.rs%d-fubar/blobs/", os.Getpid())
+
+	blob1 := newBlob(repo)
+	assertEqual(blob1.getBlobfile(false), expectdir + "000/000/000")
+	blob2 := newBlob(repo)
+	assertEqual(blob2.getBlobfile(false), expectdir + "000/000/001")
+
+	nuke("foo", "")	// In case last unit test didn't execute cleanly
+	const sampleContent = "Abracadabra!"
+	blob1.setContent(sampleContent, 0)
+	saw := blob1.getContent()
+	assertEqual(sampleContent, saw)
+	repo.cleanup()
 }
 
 // end
