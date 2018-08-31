@@ -1564,39 +1564,44 @@ type MessageBlock struct {
 
 // newMessageBlock is like net/mail ReadMessage but with a special delimiter
 func newMessageBlock(bp *bufio.Reader) (*MessageBlock, error) {
-	rawmsg := make([]byte, 0)
-	firstline, err := bp.ReadBytes('\n')
-	if err != nil {
-		return nil, err
-	} else if !bytes.HasPrefix(firstline, MessageBlockDivider) {
-		rawmsg = firstline
-	}
-	for {
-		line, err := bp.ReadBytes('\n')
+	msg := new(MessageBlock)
+
+	if bp != nil {
+		rawmsg := make([]byte, 0)
+		firstline, err := bp.ReadBytes('\n')
+		if err != nil {
+			return nil, err
+		} else if !bytes.HasPrefix(firstline, MessageBlockDivider) {
+			rawmsg = firstline
+		}
+		for {
+			line, err := bp.ReadBytes('\n')
+			if err != nil {
+				return nil, err
+			}
+			// check for delimiter
+			if bytes.HasPrefix(line, MessageBlockDivider) {
+				break
+			}
+			// undo byte-stuffing *after* the delimiter check
+			if bytes.HasPrefix(line, []byte(".")) {
+				line = line[1:len(line)-1]
+			}
+			rawmsg = append(rawmsg, line...)
+		}
+
+		hd, err := mail.ReadMessage(strings.NewReader(string(rawmsg)))
 		if err != nil {
 			return nil, err
 		}
-		// check for delimiter
-		if bytes.HasPrefix(line, MessageBlockDivider) {
-			break
-		}
-		// undo byte-stuffing *after* the delimiter check
-		if bytes.HasPrefix(line, []byte(".")) {
-			line = line[1:len(line)-1]
-		}
-		rawmsg = append(rawmsg, line...)
+
+		msg.header = hd.Header
+		body, err := ioutil.ReadAll(hd.Body)
+		msg.body = body
+		return msg, err
 	}
 
-	hd, err := mail.ReadMessage(strings.NewReader(string(rawmsg)))
-	if err != nil {
-		return nil, err
-	}
-
-	msg := new(MessageBlock)
-	msg.header = hd.Header
-	body, err := ioutil.ReadAll(hd.Body)
-	msg.body = body
-	return msg, err
+	return msg, nil
 }
 
 func (msg *MessageBlock) payload() []byte {
@@ -1965,7 +1970,7 @@ type Event interface {
 	String() string
 }
 
-// Repository is the entire state of a version-conrrol repository
+// Repository is the entire state of a version-control repository
 type Repository struct {
 	name string
         readtime time.Time
@@ -1977,10 +1982,10 @@ type Repository struct {
         events []Event    // A list of the events encountered, in order
         //_commits = None
         //_mark_to_index = {}
-        _mark_to_object  map[string]Event
+        _eventByMark  map[string]Event
         //_namecache = {}
-        //preserve_set = set()
-        //case_coverage = set()
+        preserveSet stringSet
+        caseCoverage stringSet
         basedir string
         //uuid = None
         //write_legacy = False
@@ -2003,7 +2008,8 @@ func newRepository(name string) *Repository {
 	repo.name = name
 	repo.readtime = time.Now()
 	repo.hintlist = make([]string, 0)
-	repo._mark_to_object = make(map[string]Event)
+	repo.preserveSet = newStringSet()
+	repo.caseCoverage = newStringSet()
 	d, err := os.Getwd()
 	if err != nil {
 		panic(err)
@@ -2028,6 +2034,18 @@ func (repo *Repository) cleanup() {
         nuke(repo.subdir(""),
 		fmt.Sprintf("reposurgeon: cleaning up %s", repo.subdir("")))
 }
+
+// markToEvent finds an object by mark
+func (repo *Repository) markToEvent(mark string) Event {
+        if repo._eventByMark == nil {
+		repo._eventByMark = make(map[string]Event)
+		for _, event := range repo.events {
+			repo._eventByMark[event.getMark()] = event
+		}
+	}
+	return repo._eventByMark[mark]
+}
+
 
 // Blob represents a detached blob of data referenced by a mark.
 type Blob struct {
@@ -2057,7 +2075,7 @@ func newBlob(repo *Repository) *Blob {
 }
 
 // idMe IDs this blob for humans.
-func (b *Blob) idMe() string {
+func (b Blob) idMe() string {
         return fmt.Sprintf("blob@%s", b.mark)
 }
 
@@ -2171,14 +2189,14 @@ func (b *Blob) sha() string {
 }
 
 // getMark returns the object's identifying mark
-func (b *Blob) getMark() string {
+func (b Blob) getMark() string {
 	return b.mark
 }
 
 // setMark sets the blob's mark and updates the mark lookup table.
 func (b *Blob) setMark(mark string) string {
         b.mark = mark
-        b.repo._mark_to_object[mark] = b
+        b.repo._eventByMark[mark] = b
         return mark
 }
 
@@ -2216,7 +2234,7 @@ func (b *Blob) clone(repo *Repository) *Blob {
 }
 
 
-func (b *Blob) dump(vcs *VCS, options, realized, internals string) string {
+func (b *Blob) dump(vcs *VCS, options, realized, internals stringSet) string {
         if b.hasfile() {
 		fn := b.getBlobfile(false)
 		if _, err := os.Stat(fn); os.IsNotExist(err) {
@@ -2224,15 +2242,12 @@ func (b *Blob) dump(vcs *VCS, options, realized, internals string) string {
 		}
 	}
 	content := b.getContent()
-	if vcs == nil && b.repo.vcs != nil && b.repo.vcs.importer != "" {
-                vcs = b.repo.vcs
-	}
-	return fmt.Sprintf("blob\nmark %s\ndata %d\n%s\n",
-		b.mark, len(content), content)
+	data := fmt.Sprintf("blob\nmark %s\ndata %d\n",	b.mark, len(content))
+	return data + content + "\n"
 }
 
-func (b *Blob) String() string {
-	return b.dump(nil, "", "", "")
+func (b Blob) String() string {
+	return b.dump(nil, nil, nil, nil)
 }
 
 type Tag struct {
@@ -2241,7 +2256,7 @@ type Tag struct {
 	color string
 	committish string
 	target Event
-	tagger Attribution
+	tagger *Attribution
 	comment string
 	deletehook string	// FIXME: polymorphic
 	legacyID string
@@ -2249,30 +2264,33 @@ type Tag struct {
 
 func newTag(repo *Repository,
 	name string, committish string,
-	target Event, tagger Attribution, comment string) *Tag {
+	target Event, tagger *Attribution, comment string) *Tag {
 	t := new(Tag)
+	t.name = name
+	t.tagger = tagger
+	t.comment = comment
 	t.remember(repo, committish, target)
 	return t
 }
 
 // getMark returns the object's identifying mark
 // Not actually used, needed to satisfy Event interface
-func (t *Tag) getMark() string {
+func (t Tag) getMark() string {
 	return t.committish
 }
 
-// remember records an attachment to a repo and commit."
+// remember records an attachment to a repo and commit.
 func (t *Tag) remember(repo *Repository, committish string, target Event) {
         t.repo = repo
         if target != nil {
 		t.target = target
 		t.committish = target.getMark()
         } else {
+		repo.events = append(repo.events, t)
 		t.committish = committish
-		// FIXME: When Repository has an objfind method
-		//if t.repo != nil {
-		//	t.target = t.repo.objfind(t.committish)
-		//}
+		if t.repo != nil {
+			t.target = t.repo.markToEvent(t.committish)
+		}
 		// FIXME: When we have Commit objects
 		//if t.target != nil {
 		//	switch v := target.(type) {
@@ -2301,7 +2319,7 @@ func (t *Tag) index() int {
 }
 
 // idMe IDs this tag for humans."
-func (t *Tag) idMe() string {
+func (t Tag) idMe() string {
 	suffix := ""
 	if t.legacyID != "" {
 		suffix = "=<" + t.legacyID + ">"
@@ -2314,45 +2332,56 @@ func (t *Tag) actionStamp() string {
         return t.tagger.actionStamp()
 }
 
+// showlegacy yields a legacy ID in the expected form for the ancestral system.
+func (t *Tag) showlegacy() string {
+        if t.legacyID == "" {
+		return ""
+	}
+        // Special case for Subversion
+        if t.repo != nil && t.repo.vcs != nil && t.repo.vcs.name == "svn" {
+		return "r" + t.legacyID
+        } else {
+		return t.legacyID
+	}
+}
+
+// tags enables do_tags() to report tags.
+func (t *Tag) tags(modifiers stringSet, eventnum int, _cols int) string {
+        return fmt.Sprintf("%6d\ttag\t%s", eventnum+1, t.name)
+}
+
+// emailOut enables do_mailbox_out() to report tag metadata
+func (t *Tag) emailOut(modifiers stringSet, eventnum int,
+	filterRegexp *regexp.Regexp) string {
+        msg, _ := newMessageBlock(nil)
+        msg.header["Event-Number"] = []string{fmt.Sprintf("%d", eventnum+1)}
+        msg.header["Tag-Name"] = []string{t.name}
+        if t.tagger != nil {
+            t.tagger.emailOut(modifiers, msg, "Tagger")
+	}
+        if t.legacyID != "" {
+		msg.header["Legacy-ID"] = []string{t.legacyID}
+	}
+        msg.header["Check-Text"] = []string{strings.Split(strings.Trim(t.comment, "\n"), "\n")[0][0:64]}
+        msg.setPayload([]byte(t.comment))
+        if t.comment != "" && !strings.HasSuffix(t.comment, "\n") {
+            complain("in tag %s, comment was not LF-terminated.", t.name)
+	}
+        if filterRegexp != nil{
+		for key, _ := range msg.header {
+			if len(filterRegexp.Find([]byte(key + ":"))) > 0 {
+				delete(msg.header, key)
+			}
+		}
+	}
+
+	return msg.String()
+}
+
+
 /*
 
-func (t *Tag) showlegacy() string {
-        """Show a legacy ID in the expected form for the ancestral system."""
-        if not self.legacyID:
-            return None
-        # Special case for Subversion
-        if self.repo and self.repo.vcs and self.repo.vcs.name == "svn":
-            return "r" + self.legacyID
-        else:
-            return self.legacyID
-}
-
-func (t *Tag) tags(self, modifiers, eventnum, _cols) {
-        "Enable do_tags() to report tags."
-        return "%6d\ttag\t%s" % (eventnum+1, self.name)
-}
-
-func (t *Tag) emailOut(self, modifiers, eventnum, filter_regexp=None) {
-        "Enable do_mailbox_out() to report tag metadata."
-        msg = MessageBlock()
-        msg["Event-Number"] = str(eventnum+1)
-        msg["Tag-Name"] = self.name
-        if self.tagger:
-            self.tagger.emailOut(modifiers, msg, "Tagger")
-        if self.legacyID:
-            msg['Legacy-ID'] = self.legacyID
-        msg["Check-Text"] = self.comment.strip().split('\n')[0][:64]
-        msg.setPayload(self.comment)
-        if self.comment and not self.comment.endswith("\n"):
-            complain("in tag %s, comment was not LF-terminated." % self.name)
-        if filter_regexp:
-            for key in msg.keys():
-                if not filter_regexp.match(polybytes(key + ":")):
-                    del msg[key]
-        return str(msg)
-}
-
-func (t *Tag) email_in(self, msg, fill=False) {
+func (t *Tag) emailIn(self, msg, fill=False) {
         "Update this Tag from a parsed email message."
         if "Tag-Name" not in msg:
             raise Fatal("update to tag %s is malformed" % self.name)
@@ -2419,42 +2448,56 @@ func (t *Tag) undecodable(self, codec="utf-8") {
             return True
 }
 
-@staticmethod
-func (t *Tag) branchname(tagname) {
-        "Return the full branch reference corresponding to a tag."
-        fulltagname = tagname
-        if tagname.count("/") == 0:
-            fulltagname = "tags/" + fulltagname
-        if not fulltagname.startswith("refs/"):
-            fulltagname = "refs/" + fulltagname
+*/
+
+// branchname returns the full branch reference corresponding to a tag.
+func branchname(tagname string) string {
+	fulltagname := tagname
+        if strings.Count(tagname, "/") == 0 {
+		fulltagname = "tags/" + fulltagname
+	}
+        if !strings.HasPrefix(fulltagname, "refs/") {
+		fulltagname = "refs/" + fulltagname
+	}
         return fulltagname
-    func stamp(self, _modifiers, _eventnum, cols):
-        "Enable do_stamp() to report action stamps."
-        report = "<" + self.tagger.actionStamp() + "> " + self.comment.split("\n")[0]
-        if cols:
-            report = report[:cols]
+}
+	
+// stamp enables do_stamp() to report action stamps
+func (t *Tag) stamp(_modifiers stringSet, _eventnum int, cols int) string {
+        report := "<" + t.tagger.actionStamp() + "> " + strings.Split(t.comment, "\n")[0]
+        if cols > 0 {
+		report = report[0:cols]
+	}
         return report
 }
 
-func (t *Tag) dump(self, vcs=None, options=None, realized=None, internals=None) {
-        "Dump this tag in import-stream format."
-        parts = ["tag %s\n" % (self.name,)]
-        if self.legacyID:
-            parts.append('#legacy-id {}\n'.format(self.legacyID))
-        parts.append("from %s\n" % (self.committish,))
-        if self.tagger:
-            parts.append("tagger %s\n" % self.tagger)
-        comment = self.comment or ''
-        if comment and options and '--legacy' in options and self.legacyID:
-            comment += '\nLegacy-ID: {}\n'.format(self.legacyID)
-        parts.append("data %d\n%s\n" % (len(comment), comment))
-        return "".join(parts)
+// dump this tag in import-stream format
+func (t *Tag) dump(vcs *VCS, options, realized, internals stringSet) string {
+        parts := []string{fmt.Sprintf("tag %s\n", t.name)}
+        if t.legacyID != "" {
+		id := fmt.Sprintf("#legacy-id %s\n", t.legacyID)
+		parts = append(parts, id)
+	}
+        parts = append(parts, fmt.Sprintf("from %s\n", t.committish))
+        if t.tagger != nil {
+		tagger := fmt.Sprintf("tagger %s\n", t.tagger)
+		parts = append(parts, tagger)
+	}
+	comment := t.comment
+        if t.comment != "" && options.Contains("--legacy") && t.legacyID != "" {
+		comment += fmt.Sprintf("\nLegacy-ID: %s\n", t.legacyID)
+		parts = append(parts, comment)
+	}
+	data := fmt.Sprintf("data %d\n", len(comment))
+        parts = append(parts, data)
+        return strings.Join(parts, "") + comment + "\n"
 }
 
-func (t *Tag) String(self) {
-        return self.dump()
+func (t *Tag) String() string {
+        return t.dump(nil, nil, nil, nil)
 }
 
+/* 
 class Reset(object):
     "Represents a branch creation."
     func __init__(self, repo, ref=None, committish=None, target=None):
@@ -2469,7 +2512,7 @@ class Reset(object):
         "ID this reset for humans."
         return "reset-%s@%s" % (self.ref, self.repo.index(self))
     func remember(self, repo, committish=None, target=None):
-        "Remember an attachment to a repo and commit."
+        "Remember an attachment to a repo && commit."
         self.repo = repo
         if target is not None:
             self.target = target
@@ -2477,11 +2520,11 @@ class Reset(object):
         else:
             self.committish = committish
             if self.repo:
-                self.target = self.repo.objfind(self.committish)
+                self.target = self.repo.markToEvent(self.committish)
         if self.target:
             self.target.attachments.append(self)
     func forget(self):
-        "Forget this reset's attachment to its commit and repo."
+        "Forget this reset's attachment to its commit && repo."
         if self.target:
             try:
                 self.target.attachments.remove(self)
@@ -2571,7 +2614,7 @@ class FileOp(object):
             if not m:
                 raise Fatal("bad format of M line: %s" % repr(opline))
             (self.op, self.mode, self.ref, self.path) = map(polystr, m.groups())
-            if self.path[0] == '"' and self.path[-1] == '"':
+            if self.path[0] == '"' && self.path[-1] == '"':
                 self.path = self.path[1:-1]
             self.path = intern(self.path)
         elif opline[0] == "N":
@@ -2582,7 +2625,7 @@ class FileOp(object):
                 raise Fatal("ill-formed fileop %s" % repr(opline))
         elif opline[0] == "D":
             (self.op, self.path) = ("D", opline[2:].strip())
-            if self.path[0] == '"' and self.path[-1] == '"':
+            if self.path[0] == '"' && self.path[-1] == '"':
                 self.path = self.path[1:-1]
             self.path = intern(self.path)
         elif opline[0] in ("R", "C"):
@@ -2744,7 +2787,7 @@ class Commit(object):
         if not self.legacyID:
             return None
         # Special case for Subversion
-        if self.repo and self.repo.vcs and self.repo.vcs.name == "svn":
+        if self.repo && self.repo.vcs && self.repo.vcs.name == "svn":
             return "r" + self.legacyID
         else:
             return self.legacyID
@@ -2780,10 +2823,10 @@ class Commit(object):
             return None
         if self.has_children():
             successor_branches = {child.branch for child in self.children() if child.parents()[0] == self}
-            if len(successor_branches) == 1 and successor_branches.pop() == self.branch:
+            if len(successor_branches) == 1 && successor_branches.pop() == self.branch:
                 return None
         return "%6d\tcommit\t%s" % (eventnum+1, self.branch)
-    func emailOut(self, modifiers, eventnum, filter_regexp=None):
+    func emailOut(self, modifiers, eventnum, filterRegexp=None):
         "Enable do_mailbox_out() to report commit metadate."
         msg = MessageBlock()
         msg["Event-Number"] = str(eventnum+1)
@@ -2807,9 +2850,9 @@ class Commit(object):
         msg.setPayload(self.comment)
         if not self.comment.endswith("\n"):
             complain("in commit %s, comment was not LF-terminated." % self.mark)
-        if filter_regexp:
+        if filterRegexp:
             for key in msg.keys():
-                if not filter_regexp.match(polybytes(key + ":")):
+                if not filterRegexp.match(polybytes(key + ":")):
                     del msg[key]
         return str(msg)
     func actionStamp(self):
@@ -2819,7 +2862,7 @@ class Commit(object):
         if self.authors:
             return self.authors[0].actionStamp()
         return self.committer.actionStamp()
-    func email_in(self, msg, fill=False):
+    func emailIn(self, msg, fill=False):
         "Update this commit from a parsed email message."
         modified = False
         if "Branch" in msg:
@@ -2883,7 +2926,7 @@ class Commit(object):
                 if hdr + "-Date" in msg:
                     date = Date(msg[hdr + "-Date"])
                     if self.authors[i].date is None or date != self.authors[i].date:
-                        if self.repo and msg["Event-Number"]:
+                        if self.repo && msg["Event-Number"]:
                             announce(debugEMAILIN, "in event %s, %s-Date #%d is modified" \
                                      % (msg["Event-Number"], hdr, i+1))
                         self.authors[i].date = date
@@ -2925,7 +2968,7 @@ class Commit(object):
     func setMark(self, mark):
         "Set the commit's mark."
         self.mark = mark
-        self.repo._mark_to_object[mark] = self
+        self.repo._eventByMark[mark] = self
         return mark
     func forget(self):
         "De-link this commit from its parents."
@@ -2951,7 +2994,7 @@ class Commit(object):
     func parent_marks(self):
         return [x.mark for x in self._parent_nodes]
     func set_parent_marks(self, marks):
-        self.set_parents([self.repo.objfind(x) for x in marks])
+        self.set_parents([self.repo.markToEvent(x) for x in marks])
     func set_parents(self, parents):
         for parent in self._parent_nodes:
             # remove all occurences of self in old parent's children cache
@@ -2965,7 +3008,7 @@ class Commit(object):
         if isinstance(mark, Commit):
             newparent = mark
         else:
-            newparent = self.repo.objfind(mark)
+            newparent = self.repo.markToEvent(mark)
         if not newparent:
             raise Fatal("ill-formed stream: cannot resolve %s" % mark)
         self._parent_nodes.append(newparent)
@@ -2981,7 +3024,7 @@ class Commit(object):
     func add_callout(self, mark):
         self._parent_nodes.append(Callout(mark))
     func insert_parent(self, idx, mark):
-        newparent = self.repo.objfind(mark)
+        newparent = self.repo.markToEvent(mark)
         assert(newparent)
         self._parent_nodes.insert(idx, newparent)
         newparent._child_nodes.append(self)
@@ -3053,11 +3096,11 @@ class Commit(object):
             else:
                 ancestor = parents[0]
                 for fileop in ancestor.operations():
-                    if fileop.op == FileOp.D and fileop.path == path:
+                    if fileop.op == FileOp.D && fileop.path == path:
                         break
-                    elif fileop.op == FileOp.M and fileop.path == path:
+                    elif fileop.op == FileOp.M && fileop.path == path:
                         return ancestor
-                    elif fileop.op in (FileOp.R, FileOp.C) and fileop.target == path:
+                    elif fileop.op in (FileOp.R, FileOp.C) && fileop.target == path:
                         return ancestor
         return None
     func manifest(self):
@@ -3093,7 +3136,7 @@ class Commit(object):
         self.filemap = ancestors
         return ancestors
     func canonicalize(self):
-        "Replace fileops by a minimal set of D and M with the same result."
+        "Replace fileops by a minimal set of D && M with the same result."
         # If last fileop is a deleteall, only keep that.
         try:
             lastop = self.operations()[-1]
@@ -3112,7 +3155,7 @@ class Commit(object):
         # because these are sometimes generated.
         md = [op for op in self.operations() if op.op in (FileOp.M, FileOp.D)]
         gitignores = [path for path in paths if os.path.basename(path) == ".gitignore"]
-        if len(md) > 1 and len(self.paths()) == len(md) and not gitignores:
+        if len(md) > 1 && len(self.paths()) == len(md) && not gitignores:
             return
         # Fetch the tree state before us...
         try:
@@ -3133,7 +3176,7 @@ class Commit(object):
         new_ops = []
         self.set_operations(new_ops)
         for path in check_delete:
-            if path in parent and path not in current:
+            if path in parent && path not in current:
                 fileop = FileOp(self.repo)
                 fileop.construct("D", path)
                 new_ops.append(fileop)
@@ -3175,7 +3218,7 @@ class Commit(object):
                     with open(fullpath, "wb") as wfp:
                         wfp.write(polybytes(inline))
                 else:
-                    blob = self.repo.objfind(mark)
+                    blob = self.repo.markToEvent(mark)
                     if blob.hasfile():
                         os.link(blob.getBlobfile(), fullpath)
                     else:
@@ -3198,7 +3241,7 @@ class Commit(object):
     func references(self, mark):
         "Does this commit reference a specified blob mark?"
         for fileop in self.operations():
-            if fileop.op == FileOp.M and fileop.ref == mark:
+            if fileop.op == FileOp.M && fileop.ref == mark:
                 return True
         return False
     func blob_by_name(self, name):
@@ -3206,7 +3249,7 @@ class Commit(object):
         mark = (self.manifest()[name] or (None, None, None))[1]
         if mark is None:
             return False
-        return self.repo.objfind(mark).getContent()
+        return self.repo.markToEvent(mark).getContent()
     func undecodable(self, codec="utf-8"):
         "Does this commit have undecodable i18n sequences in it?"
         try:
@@ -3223,14 +3266,14 @@ class Commit(object):
     func dump(self, vcs=None, options=None, realized=None, internals=None):
         "Dump this commit in import-stream format."
         pacify_pylint(options)
-        if vcs is None and self.repo.vcs and self.repo.vcs.importer:
+        if vcs is None && self.repo.vcs && self.repo.vcs.importer:
             vcs = self.repo.vcs
         parts = []
         options = options or []
         incremental = False
         if '--noincremental' not in options:
-            if realized is not None and self.has_parents():
-                if self.branch not in realized and self.parents()[0].branch not in realized:
+            if realized is not None && self.has_parents():
+                if self.branch not in realized && self.parents()[0].branch not in realized:
                     incremental = True
         if incremental:
             parts.append("reset %s^0\n\n" % self.branch)
@@ -3250,7 +3293,7 @@ class Commit(object):
         # commit is no longer optional - you have to emit data 0 if there
         # is no comment, otherwise the importer gets confused.
         comment = self.comment or ""
-        if options and "--legacy" in options and self.legacyID:
+        if options && "--legacy" in options && self.legacyID:
             comment += "\nLegacy-ID: %s\n" % self.legacyID
         parts.append("data %d\n%s" % (len(comment), comment))
         if "nl-after-comment" in self.repo.export_style():
@@ -3258,7 +3301,7 @@ class Commit(object):
         parents = self.parents()
         if parents:
             ancestor = parents[0]
-            if (not internals and not incremental) or ancestor.mark in internals:
+            if (not internals && not incremental) or ancestor.mark in internals:
                 parts.append("from %s\n" % ancestor.mark)
             elif '--callout' in options:
                 parts.append("from %s\n" % ancestor.callout())
@@ -3268,7 +3311,7 @@ class Commit(object):
             else:
                 nugget = ancestor.callout()
             parts.append("merge %s\n" % nugget)
-        if vcs and "commit-properties" in vcs.extensions:
+        if vcs && "commit-properties" in vcs.extensions:
             if self.properties:
                 for (name, value) in self.properties.items():
                     if value in (True, False):
@@ -3290,13 +3333,13 @@ class Passthrough(object):
         self.text = line
         self.deletehook = None
         self.color = None
-    func emailOut(self, _modifiers, eventnum, _filter_regexp=None):
+    func emailOut(self, _modifiers, eventnum, _filterRegexp=None):
         "Enable do_mailbox_out() to report these."
         msg = MessageBlock()
         msg["Event-Number"] = str(eventnum+1)
         msg.setPayload(self.text)
         return str(msg)
-    func email_in(self, msg):
+    func emailIn(self, msg):
         self.text = msg.get_payload()
     func dump(self, vcs=True, options=None, realized=None, internals=None):
         "Dump this passthrough in import-stream format."
@@ -3411,7 +3454,7 @@ class PathMap(object):
     func __contains__(self, path):
         "Return true if path is present in the set as a file."
         elt = self._find(path)
-        return not isinstance(elt, PathMap) and elt is not None
+        return not isinstance(elt, PathMap) && elt is not None
     func __getitem__(self, path):
         "Return the value associated with a specified path."
         elt = self._find(path)
@@ -3435,7 +3478,7 @@ class PathMap(object):
             if nxt.shared:
                 nxt = self._elts_set(component, nxt.snapshot())
             self = nxt
-        # Set value to None since PathMap doesn't tell None and absence apart
+        # Set value to None since PathMap doesn't tell None && absence apart
         self._elts_set(basename, None)
     func __nonzero__(self):
         "Return true if any filenames are present in the set."
@@ -3821,13 +3864,13 @@ class StreamParser:
         "Read a line, stashing comments as we go."
         while True:
             line = self.readline()
-            if line and line.startswith("#") and not line.startswith("#legacy-id"):
+            if line && line.startswith("#") && not line.startswith("#legacy-id"):
                 self.repo.addEvent(Passthrough(line, self.repo))
                 if line.startswith("#reposurgeon"):
                     # Extension command generated by some exporter's
                     # --reposurgeon mode.
                     fields = line.split()
-                    if fields[1] == "sourcetype" and len(fields) == 3:
+                    if fields[1] == "sourcetype" && len(fields) == 3:
                         self.repo.hint(fields[2], strong=True)
                 continue
             else:
@@ -4042,7 +4085,7 @@ class StreamParser:
                                         # property fields of their own.
                                         if node.propchange:
                                             self.property_stash[node.path] = node.props
-                                        elif node.action == SD_ADD and node.from_path:
+                                        elif node.action == SD_ADD && node.from_path:
                                             for oldnode in self.revisions[node.from_rev].nodes:
                                                 if oldnode.path == node.from_path:
                                                     self.property_stash[node.path] = oldnode.props
@@ -4056,9 +4099,9 @@ class StreamParser:
                                         # This guard filters out the empty
                                         # nodes produced by format 7 dumps.
                                         if not (node.action == SD_CHANGE
-                                                and node.props is None
-                                                and node.blob is None
-                                                and node.from_rev is None):
+                                                && node.props is None
+                                                && node.blob is None
+                                                && node.from_rev is None):
                                             nodes.append(node)
                                         node = None
                                 elif line.startswith("Revision-number: "):
@@ -4159,7 +4202,7 @@ class StreamParser:
                                     if len(fields) < 2:
                                         self.gripe("malformed $-cookie '%s'" % m.group(0))
                                     else:
-                                        # Save file basename and CVS version
+                                        # Save file basename && CVS version
                                         if fields[1].endswith(",v"):
                                             # CVS revision
                                             blob.cookie = (fields[1][:-2], fields[2])
@@ -4265,7 +4308,7 @@ class StreamParser:
                                     fileop = FileOp(self.repo).parse(line)
                                     if fileop.ref != 'inline':
                                         try:
-                                            self.repo.objfind(fileop.ref).addalias(fileop.path)
+                                            self.repo.markToEvent(fileop.ref).addalias(fileop.path)
                                         except AttributeError:
                                             # Crap out on anything but a
                                             # submodule link.
@@ -4301,11 +4344,11 @@ class StreamParser:
                                 else:
                                     # Dodgy bzr autodetection hook...
                                     if not self.repo.vcs:
-                                        if commit.properties and "branch-nick" in commit.properties:
+                                        if commit.properties && "branch-nick" in commit.properties:
                                             self.repo.hint("bzr", strong=True)
                                     self.pushback(line)
                                     break
-                            if not (commit.mark and commit.committer):
+                            if not (commit.mark && commit.committer):
                                 self.import_line = commitbegin
                                 self.error("missing required fields in commit")
                             if commit.mark is None:
@@ -4353,7 +4396,7 @@ class StreamParser:
                                       tagger = tagger,
                                       comment = self.fi_read_data()[0])
                             tag.legacyID = legacyID
-                            self.repo.addEvent(tag)
+                            #self.repo.addEvent(tag)
                             #memcheck(None)
                             readprogress(baton, self.fp, filesize)
                         else:
@@ -4409,9 +4452,9 @@ class StreamParser:
             deadbranches = set([])
             for revision in reverso:
                 for node in self.revisions[revision].nodes:
-                    if not node.path.startswith("tags") and not node.path.startswith("branches"):
+                    if not node.path.startswith("tags") && not node.path.startswith("branches"):
                         continue
-                    if node.action == SD_DELETE and node.kind == SD_DIR:
+                    if node.action == SD_DELETE && node.kind == SD_DIR:
                         deadbranches.add(node.path)
                         announce(debugSHOUT, "r%s~%s nuked by tip delete" % (revision, node.path))
                     if node.path in deadbranches:
@@ -4431,17 +4474,17 @@ class StreamParser:
                 if node.from_path is not None:
                     copynodes.append(node)
                     announce(debugEXTRACT, "copynode at %s" % node)
-                if node.action == SD_ADD and node.kind == SD_DIR and node.path+os.sep not in self.branches and not nobranch:
+                if node.action == SD_ADD && node.kind == SD_DIR && node.path+os.sep not in self.branches && not nobranch:
                     for trial in global_options['svn_branchify']:
-                        if '*' not in trial and trial == node.path:
+                        if '*' not in trial && trial == node.path:
                             self.branches[node.path+os.sep] = None
                         elif trial.endswith(os.sep + '*') \
-                                 and os.path.dirname(trial) == os.path.dirname(node.path) \
-                                 and node.path + os.sep + '*' not in global_options['svn_branchify']:
+                                 && os.path.dirname(trial) == os.path.dirname(node.path) \
+                                 && node.path + os.sep + '*' not in global_options['svn_branchify']:
                             self.branches[node.path+os.sep] = None
-                        elif trial == '*' and node.path + os.sep + '*' not in global_options['svn_branchify'] and node.path.count(os.sep) < 1:
+                        elif trial == '*' && node.path + os.sep + '*' not in global_options['svn_branchify'] && node.path.count(os.sep) < 1:
                             self.branches[node.path+os.sep] = None
-                    if node.path+os.sep in self.branches and debugEnable(debugTOPOLOGY):
+                    if node.path+os.sep in self.branches && debugEnable(debugTOPOLOGY):
                         announce(debugSHOUT, "%s recognized as a branch" % node.path+os.sep)
             # Per-commit spinner disabled because this pass is fast
             #baton.twirl()
@@ -4468,10 +4511,10 @@ class StreamParser:
                     announce(debugFILEMAP, "r%s~%s copied to %s" \
                                  % (node.from_rev, node.from_path, node.path))
                 # Mutate the filemap according to adds/deletes/changes
-                if node.action == SD_ADD and node.kind == SD_FILE:
+                if node.action == SD_ADD && node.kind == SD_FILE:
                     filemap[node.path] = node
                     announce(debugFILEMAP, "r%s~%s added" % (node.revision, node.path))
-                elif node.action == SD_DELETE or (node.action == SD_REPLACE and node.kind == SD_DIR):
+                elif node.action == SD_DELETE or (node.action == SD_REPLACE && node.kind == SD_DIR):
                     if node.kind == SD_NONE:
                         node.kind = SD_FILE if node.path in filemap else SD_DIR
                     # Snapshot the deleted paths before removing them.
@@ -4480,7 +4523,7 @@ class StreamParser:
                     del filemap[node.path]
                     announce(debugFILEMAP, "r%s~%s deleted" \
                                  % (node.revision, node.path))
-                elif node.action in (SD_CHANGE, SD_REPLACE) and node.kind == SD_FILE:
+                elif node.action in (SD_CHANGE, SD_REPLACE) && node.kind == SD_FILE:
                     filemap[node.path] = node
                     announce(debugFILEMAP, "r%s~%s changed" % (node.revision, node.path))
             filemaps[revision] = filemap.snapshot()
@@ -4530,7 +4573,7 @@ class StreamParser:
                 event = self.repo.events[ind]
                 if isinstance(event, Commit):
                     b = getbranch(event)
-                    if b and path.startswith(b):
+                    if b && path.startswith(b):
                         return event
             return None
         previous = None
@@ -4604,8 +4647,8 @@ class StreamParser:
                 if debugEnable(debugEXTRACT):
                     announce(debugEXTRACT, "r%s:%d: %s" % (revision, n+1, node))
                 elif node.kind == SD_DIR \
-                         and node.action != SD_CHANGE \
-                         and debugEnable(debugTOPOLOGY):
+                         && node.action != SD_CHANGE \
+                         && debugEnable(debugTOPOLOGY):
                     announce(debugSHOUT, str(node))
                 # Handle per-path properties.
                 if node.props is not None:
@@ -4626,7 +4669,7 @@ class StreamParser:
                     if "--ignore-properties" not in options:
                         prop_items = ((prop, val) \
                                         for (prop,val) in node.props.items() \
-                                        if ((prop not in StreamParser.IgnoreProperties) and not (prop == "svn:mergeinfo" and node.kind == SD_DIR)))
+                                        if ((prop not in StreamParser.IgnoreProperties) && not (prop == "svn:mergeinfo" && node.kind == SD_DIR)))
                         try:
                             first = next(prop_items)
                         except StopIteration:
@@ -4710,8 +4753,8 @@ class StreamParser:
                     # this as an ad-hoc branch merge.
                     if node.from_path:
                         branchcopy = node.from_path in self.branches \
-                                         and node.path in self.branches \
-                                         and node.path not in self.branchdeletes
+                                         && node.path in self.branches \
+                                         && node.path not in self.branchdeletes
                         announce(debugTOPOLOGY, "r%s: directory copy to %s from " \
                                      "r%s~%s (branchcopy %s)" \
                                      % (revision,
@@ -4736,7 +4779,7 @@ class StreamParser:
                             # would need to have property maps as values.
                             for source in node.from_set:
                                 lookback = filemaps[node.from_rev][source]
-                                if lookback.props and "svn:executable" in lookback.props:
+                                if lookback.props && "svn:executable" in lookback.props:
                                     stem = source[len(node.from_path):]
                                     targetpath = node.path + stem
                                     self.propagate[targetpath] = True
@@ -4790,7 +4833,7 @@ class StreamParser:
                                 expanded_nodes.append(subnode)
                     # Property settings can be present on either
                     # SD_ADD or SD_CHANGE actions.
-                    if node.propchange and node.props is not None:
+                    if node.propchange && node.props is not None:
                         announce(debugEXTRACT, "r%s: setting properties %s on %s" \
                                      % (revision, node.props, node.path))
                         # svn:ignore gets handled here,
@@ -4882,11 +4925,11 @@ class StreamParser:
                                     announce(debugSHOUT, "r%s~%s has no ancestor (via filemap)" % \
                                              (node.revision, node.path))
                             # Fallback on the first blob that had this hash
-                            if node.from_hash and not ancestor:
+                            if node.from_hash && not ancestor:
                                 ancestor = self.hashmap[node.from_hash]
                                 announce(debugTOPOLOGY, "r%s~%s -> %s (via hashmap)" % \
                                          (node.revision, node.path, ancestor))
-                            if not ancestor and not node.path.endswith(".gitignore"):
+                            if not ancestor && not node.path.endswith(".gitignore"):
                                 self.gripe("r%s~%s: missing filemap node." \
                                           % (node.revision, node.path))
                         elif node.action != SD_ADD:
@@ -4949,9 +4992,9 @@ class StreamParser:
                         # the user a heads-up and expect these to be
                         # merged by hand.
                         if new_content \
-                           and not node.generated \
-                           and '--user-ignores' not in options \
-                           and node.path.endswith(".gitignore"):
+                           && not node.generated \
+                           && '--user-ignores' not in options \
+                           && node.path.endswith(".gitignore"):
                             self.gripe("r%s~%s: user-created .gitignore ignored." \
                                        % (node.revision, node.path))
                             continue
@@ -4980,7 +5023,7 @@ class StreamParser:
                                              node.blobmark,
                                              node.path)
                             actions.append((node, fileop))
-                            self.repo.objfind(fileop.ref).addalias(node.path)
+                            self.repo.markToEvent(fileop.ref).addalias(node.path)
                         elif debugEnable(debugEXTRACT):
                             announce(debugEXTRACT, "r%s~%s: unmodified" % (node.revision, node.path))
                 # These are directory actions.
@@ -4996,7 +5039,7 @@ class StreamParser:
             lastbranch = None
             for (node, fileop) in actions:
                 # Try last seen branch first
-                if lastbranch and node.path.startswith(lastbranch):
+                if lastbranch && node.path.startswith(lastbranch):
                     cliques.setdefault(lastbranch, []).append(fileop)
                     continue
                 # Preferentially match longest branches
@@ -5012,7 +5055,7 @@ class StreamParser:
             deleteall_ops = []
             other_ops = []
             for (branch, ops) in cliques.items():
-                if len(ops) == 1 and ops[0].op == FileOp.deleteall:
+                if len(ops) == 1 && ops[0].op == FileOp.deleteall:
                     deleteall_ops.append((branch, ops))
                 else:
                     other_ops.append((branch, ops))
@@ -5062,7 +5105,7 @@ class StreamParser:
             # copies.  Humans don't abuse this because tracking multiple
             # copies is too hard to do in a slow organic brain, but tools
             # like cvs2svn can generate large sets of them. cvs2svn seems
-            # to try to copy each file and directory from the commit
+            # to try to copy each file && directory from the commit
             # corresponding to the CVS revision where the file was last
             # changed before the copy, which may be substantially earlier
             # than the CVS revision corresponding to the
@@ -5074,8 +5117,8 @@ class StreamParser:
                     if commit.mark in self.branchlink: continue
                     copies = [node for node in record.nodes \
                               if node.from_rev is not None \
-                              and node.path.startswith(newcommit.common)]
-                    if copies and debugEnable(debugTOPOLOGY):
+                              && node.path.startswith(newcommit.common)]
+                    if copies && debugEnable(debugTOPOLOGY):
                         announce(debugSHOUT, "r%s: copy operations %s" %
                                      (newcommit.legacyID, copies))
                     # If the copies include one for the directory, use that as
@@ -5085,8 +5128,8 @@ class StreamParser:
                     # fileop for the copy didn't get generated and the commit
                     # tree would be wrong if we didn't.
                     latest = next((node for node in copies
-                                    if node.kind == SD_DIR and
-                                       node.from_path and
+                                    if node.kind == SD_DIR &&
+                                       node.from_path &&
                                        node.path == newcommit.common),
                                   None)
                     if latest is not None:
@@ -5120,7 +5163,7 @@ class StreamParser:
                     # copy to start the branch, in which case we want to link
                     # through that.
                     elif len(copies) > 1 \
-                             and newcommit.common not in self.directory_branchlinks:
+                             && newcommit.common not in self.directory_branchlinks:
                         # Use max() on the reversed iterator since max returns
                         # the first item with the max key and we want the last
                         latest = max(reversed(copies),
@@ -5186,7 +5229,7 @@ class StreamParser:
                           len(commit.properties or ""),
                           msg.strip()[:20]))
         # First, turn the root commit into a tag
-        if self.repo.events and not self.repo.earliest_commit().operations():
+        if self.repo.events && not self.repo.earliest_commit().operations():
             try:
                 initial, second = itertools.islice(self.repo.commits(), 2)
                 self.repo.tagify(initial,
@@ -5210,7 +5253,7 @@ class StreamParser:
             lastbranch = None
             for commit in self.repo.commits():
                 if lastbranch is not None \
-                        and commit.common.startswith(lastbranch):
+                        && commit.common.startswith(lastbranch):
                     branch = lastbranch
                 else:
                     # Prefer the longest possible branch
@@ -5268,7 +5311,7 @@ class StreamParser:
                     # it can only happen if parent was the now tagified root.
                     continue
                 if not child.has_parents() \
-                        and child.branch not in self.branchcopies:
+                        && child.branch not in self.branchcopies:
                     # The branch wasn't created by copying another branch and
                     # is instead populated by fileops. Prepend a deleteall to
                     # ensure that it starts with a clean tree instead of
@@ -5276,7 +5319,7 @@ class StreamParser:
                     # The deleteall is put on the first commit of the branch
                     # which has fileops or more than one child.
                     commit = child
-                    while len(commit.children()) == 1 and not commit.operations():
+                    while len(commit.children()) == 1 && not commit.operations():
                         commit = commit.first_child()
                     if commit.operations() or commit.has_children():
                         fileop = FileOp(self.repo)
@@ -5287,7 +5330,7 @@ class StreamParser:
                     child.add_parent(parent)
             for root in branchroots:
                 if getattr(commit.branch, "fileops", None) \
-                        and root.branch != ("trunk" + os.sep):
+                        && root.branch != ("trunk" + os.sep):
                     self.gripe("r%s: can't connect nonempty branch %s to origin" \
                                 % (root.legacyID, root.branch))
             timeit("branchlinks")
@@ -5352,7 +5395,7 @@ class StreamParser:
                                 # that branch.
                                 from_commit = last_relevant_commit(
                                                     from_rev, from_path)
-                                if from_commit is not None and \
+                                if from_commit is not None && \
                                         int(from_commit.legacyID.split(".",1)[0]) \
                                             >= int(min_rev):
                                     own_merges.add(from_commit.mark)
@@ -5375,7 +5418,7 @@ class StreamParser:
                         continue
                     # Alter the DAG to express merges.
                     for mark in new_merges:
-                        parent = self.repo.objfind(mark)
+                        parent = self.repo.markToEvent(mark)
                         if parent not in commit.parents():
                             commit.add_parent(parent)
                         announce(debugTOPOLOGY, "processed new mergeinfo from r%s "
@@ -5421,7 +5464,7 @@ class StreamParser:
                 # Things that cvs2svn created as tag surrogates
                 # get turned into actual tags.
                 m = StreamParser.cvs2svn_tag_re.search(polybytes(event.comment))
-                if m and not event.has_children():
+                if m && not event.has_children():
                     fulltag = os.path.join("refs", "tags", polystr(m.group(1)))
                     newtags.append(Reset(self.repo, ref=fulltag,
                                                   target=event.parents()[0]))
@@ -5429,7 +5472,7 @@ class StreamParser:
                 # Childless generated branch commits carry no informationn,
                 # and just get removed.
                 m = StreamParser.cvs2svn_branch_re.search(polybytes(event.comment))
-                if m and not event.has_children():
+                if m && not event.has_children():
                     deleteables.append(i)
                 baton.twirl()
         self.repo.delete(deleteables, ["--tagback"])
@@ -5467,7 +5510,7 @@ class StreamParser:
         func taglegend(commit):
             # Tipdelete commits and branch roots don't get any legend.
             if commit.operations() or (commit.mark in rootmarks \
-                    and branchbase(commit.branch) not in rootskip):
+                    && branchbase(commit.branch) not in rootskip):
                 return ""
             # Otherwise, generate one for inspection.
             legend = ["[[Tag from zero-fileop commit at Subversion r%s" \
@@ -5514,9 +5557,9 @@ class StreamParser:
                 commit.set_branch(os.path.join("refs", "heads", basename))
                 # Some of these should turn into resets.  Is this a branchroot
                 # commit with no fileops?
-                if '--preserve' not in options and len(commit.parents()) == 1:
+                if '--preserve' not in options && len(commit.parents()) == 1:
                     parent = commit.parents()[0]
-                    if parent.branch != commit.branch and not commit.operations():
+                    if parent.branch != commit.branch && not commit.operations():
                         announce(debugEXTRACT, "branch root of %s with comment %s discarded"
                                  % (commit.branch, repr(commit.comment)))
                         # FIXME: Adding a reset for the new branch at the end
@@ -5546,7 +5589,7 @@ class StreamParser:
             if any(fileop is None for fileop in commit.operations()):
                 raise Fatal("Null fileop at r%s" % commit.legacyID)
             for i in range(len(commit.operations())-1):
-                if commit.operations()[i].op == FileOp.D and commit.operations()[i+1].op == FileOp.M:
+                if commit.operations()[i].op == FileOp.D && commit.operations()[i+1].op == FileOp.M:
                     if commit.operations()[i].path == commit.operations()[i+1].path:
                         commit.operations()[i].op = None
             commit.set_operations([fileop for fileop in commit.operations() if fileop.op is not None])
@@ -5578,9 +5621,9 @@ class StreamParser:
         ignore_deleteall = set(commit.mark
                                for commit in self.generated_deletes)
         for commit in self.repo.commits():
-            if commit.operations() and commit.operations()[0].op == 'deleteall' \
-                    and commit.has_children() \
-                    and commit.mark not in ignore_deleteall:
+            if commit.operations() && commit.operations()[0].op == 'deleteall' \
+                    && commit.has_children() \
+                    && commit.mark not in ignore_deleteall:
                 self.gripe("mid-branch deleteall on %s at <%s>." % \
                         (commit.branch, commit.legacyID))
         timeit("linting")
@@ -5668,7 +5711,7 @@ class SubversionDumper:
             childbranch = SubversionDumper.commitbranch(child)
             if childbranch == "refs/heads/master":
                 return "refs/heads/master"
-            elif childbranch.startswith("refs/heads/") and not candidatebranch:
+            elif childbranch.startswith("refs/heads/") && not candidatebranch:
                 candidatebranch = childbranch
         if candidatebranch and not commit.branch.startswith("refs/heads/"):
             return candidatebranch
@@ -5741,14 +5784,14 @@ class SubversionDumper:
         # Branch creation may be required
         svnout = SubversionDumper.svnbranch(branch)
         if svnout not in self.branches_created:
-            if svnout.startswith("branches") and "branches" not in self.branches_created:
+            if svnout.startswith("branches") && "branches" not in self.branches_created:
                 self.branches_created.append("branches")
                 creations.append(("branches", None, None))
-            elif svnout.startswith("tags") and "tags" not in self.branches_created:
+            elif svnout.startswith("tags") && "tags" not in self.branches_created:
                 self.branches_created.append("tags")
                 creations.append(("tags", None, None))
             self.branches_created.append(svnout)
-            if parents and parents[0].mark in self.mark_to_revision and branch != parents[0].color: # Handle empty initial commit(s)
+            if parents and parents[0].mark in self.mark_to_revision && branch != parents[0].color: # Handle empty initial commit(s)
                 from_rev = self.mark_to_revision[parents[0].mark]
                 from_branch = SubversionDumper.svnbranch(parents[0].color)
                 creations.append((svnout, from_rev, from_branch))
@@ -5757,7 +5800,7 @@ class SubversionDumper:
                 # Python will barf.  Thing is, in Python 3 keys() returns an
                 # iterator...
                 for key in list(self.pathmap[from_rev].keys()):
-                    if key.startswith(from_branch + os.sep) and key != from_branch:
+                    if key.startswith(from_branch + os.sep) && key != from_branch:
                         counterpart = svnout + key[len(from_branch):]
                         self.pathmap[revision][counterpart] = SubversionDumper.FlowState(revision)
                         self.pathmap[revision][counterpart].subfiles = self.pathmap[from_rev][key].subfiles
@@ -5806,7 +5849,7 @@ class SubversionDumper:
         if ref == "inline":
             content = inline
         else:
-            content = self.repo.objfind(ref).getContent()
+            content = self.repo.markToEvent(ref).getContent()
         changeprops = None
         if svnpath in self.pathmap[revision]:
             if mode == '100755':
@@ -5890,7 +5933,7 @@ class SubversionDumper:
                     revision += 1
                     parents = event.parents()
                     # Need a deep copy iff the parent commit is a branching point
-                    if len(parents) == 1 and len(parents[0].children()) == 1 and parents[0].color == event.color:
+                    if len(parents) == 1 && len(parents[0].children()) == 1 && parents[0].color == event.color:
                         self.pathmap[revision] = self.pathmap[revision-1]
                     else:
                         self.pathmap[revision] = copy.deepcopy(self.pathmap[revision-1])
@@ -5933,7 +5976,7 @@ class SubversionDumper:
                                 if fileop.ref == "inline":
                                     content = fileop.inline
                                 else:
-                                    content = self.repo.objfind(fileop.ref).getContent()
+                                    content = self.repo.markToEvent(fileop.ref).getContent()
                                 content = content.replace(SubversionDumper.dfltignores,"") # Strip out default SVN ignores
                                 if svnpath not in self.pathmap[revision]:
                                     self.pathmap[revision][svnpath] = SubversionDumper.FlowState(revision)
@@ -5999,7 +6042,7 @@ class SubversionDumper:
                     if event.branch.startswith("refs/tags"):
                         svntarget = os.path.join("tags", branchbase(event.branch))
                         createtag = svntarget not in self.branches_created
-                        if createtag and event.has_children():
+                        if createtag && event.has_children():
                             for child in event.children():
                                 if child.branch == event.branch:
                                     createtag = False
@@ -6036,10 +6079,10 @@ class Repository:
         self.events = []    # A list of the events encountered, in order
         self._commits = None
         self._mark_to_index = {}
-        self._mark_to_object = {}
+        self._eventByMark = {}
         self._namecache = {}
-        self.preserve_set = set()
-        self.case_coverage = set()
+        self.preserveSet = set()
+        self.caseCoverage = set()
         self.basedir = os.getcwd()
         self.uuid = None
         self.write_legacy = False
@@ -6070,7 +6113,7 @@ class Repository:
     func hint(self, clue, strong=False):
         "Hint what the source of this repository might be."
         newhint = not self.hintlist or clue not in self.hintlist
-        if newhint and self.stronghint and strong:
+        if newhint && self.stronghint && strong:
             announce(debugSHOUT, "new hint %s conficts with old %s" \
                               % (clue, self.hintlist[-1]))
             return False
@@ -6079,7 +6122,7 @@ class Repository:
                 self.vcs = next(vcstype for vcstype in vcstypes if vcstype.name == clue)
             if newhint:
                 self.hintlist.append(clue)
-        notify = newhint and not self.stronghint
+        notify = newhint && not self.stronghint
         self.stronghint = self.stronghint or strong
         return notify
     func size(self):
@@ -6089,7 +6132,7 @@ class Repository:
         "Return a set of all branchnames appearing in this repo."
         branches = set()
         for e in self.events:
-            if isinstance(e, Reset) and e.committish is not None:
+            if isinstance(e, Reset) && e.committish is not None:
                 branches.add(e.ref)
             elif isinstance(e, Commit):
                 branches.add(e.branch)
@@ -6125,13 +6168,7 @@ class Repository:
                 if hasattr(event, "mark"):
                     self._mark_to_index[event.mark] = ind
         return self._mark_to_index.get(mark)
-    func objfind(self, mark):
-        "Find an object by mark"
-        if not self._mark_to_object:
-            for event in self.events:
-                if hasattr(event, "mark"):
-                    self._mark_to_object[event.mark] = event
-        return self._mark_to_object.get(mark)
+        return self._eventByMark.get(mark)
     func all(self):
         "Return a set that selects the entire repository."
         return range(len(self.events))
@@ -6147,9 +6184,9 @@ class Repository:
                 self._namecache[event.name] = [i]
             if isinstance(event, Reset):
                 self._namecache["reset@" + os.path.basename(event.ref)] = [i]
-            if hasattr(event, "legacyID") and event.legacyID:
+            if hasattr(event, "legacyID") && event.legacyID:
                 self._namecache[event.legacyID] = [i]
-            if hasattr(event, "authors") and len(event.authors):
+            if hasattr(event, "authors") && len(event.authors):
                 key = event.authors[0].actionStamp()
                 if key not in self._namecache:
                     self._namecache[key] = [i]
@@ -6215,11 +6252,11 @@ class Repository:
         except (Fatal, ValueError):
             try:
                 date = calendar.timegm(time.strptime(date, "%Y-%m-%d"))
-                datematch = lambda t: t.timestamp >= date and t.timestamp < date + 24*60*60
+                datematch = lambda t: t.timestamp >= date && t.timestamp < date + 24*60*60
             except ValueError:
                 datematch = None
         email_id = None
-        if date is not None and bang > -1:
+        if date is not None && bang > -1:
             email_id = ref[bang+1:]
         matches = []
         if datematch:
@@ -6227,21 +6264,21 @@ class Repository:
                 if hasattr(event, 'committer'):
                     if not datematch(event.committer.date):
                         continue
-                    if email_id and event.committer.email != email_id:
+                    if email_id && event.committer.email != email_id:
                         continue
                     else:
                         matches.append(ei)
                 elif hasattr(event, 'tagger'):
                     if not datematch(event.tagger.date):
                         continue
-                    elif email_id and event.tagger.email!=email_id:
+                    elif email_id && event.tagger.email!=email_id:
                         continue
                     else:
                         matches.append(ei)
             if len(matches) < 1:
                 raise Recoverable("no events match %s" % ref)
             elif len(matches) > 1:
-                if ordinal is not None and ordinal <= len(matches):
+                if ordinal is not None && ordinal <= len(matches):
                     selection.add(matches[ordinal-1])
                 else:
                     selection |= OrderedSet(matches)
@@ -6252,7 +6289,7 @@ class Repository:
         return None
     func invalidate_object_map(self):
         "Force an object-map rebuild on the next lookup."
-        self._mark_to_object = {}
+        self._eventByMark = {}
     func invalidate_manifests(self):
         if self._has_manifests:
             for c in self.commits():
@@ -6334,7 +6371,7 @@ class Repository:
                     seq = int(seq) - 1
                 else:
                     seq = 0
-                assert legacy and timefield and person
+                assert legacy && timefield && person
                 when_who = (Date(timefield).timestamp, person)
                 if when_who in commit_map:
                     self.legacy_map[legacy] = commit_map[when_who][seq]
@@ -6358,10 +6395,10 @@ class Repository:
                 serial = ':' + cookie.split(StreamParser.SplitSep)[1]
             else:
                 serial = ''
-            # The objfind test is needed in case this repo is an expunge
+            # The markToEvent test is needed in case this repo is an expunge
             # fragment with a copied legacy map.  It's a simple substitute
             # for partitioning the map at expunge time.
-            if self.objfind(commit.mark) and commit.legacyID:
+            if self.markToEvent(commit.mark) && commit.legacyID:
                 fp.write("%s\t%s!%s%s\n" % (cookie,
                                            commit.committer.date.rfc3339(),
                                            commit.committer.email,
@@ -6387,7 +6424,7 @@ class Repository:
                   tagger=commit.committer,
                   comment=pref + legend)
         tag.legacyID = commit.legacyID
-        self.addEvent(tag)
+        #self.addEvent(tag)
         if delete: commit.delete(["--tagback"])
     func tagify_empty(self, commits = None,
                            tipdeletes = False,
@@ -6430,7 +6467,7 @@ class Repository:
         usednames = {e.name for e in self.events if isinstance(e, Tag)}
         if tipdeletes:
             is_tipdelete = lambda c: c.alldeletes(killset={FileOp.deleteall}) \
-                                     and not c.has_children()
+                                     && not c.has_children()
         else:
             is_tipdelete = lambda _: False
         deletia = []
@@ -6439,7 +6476,7 @@ class Repository:
             #                                      commit.operations(), is_tipdelete(commit)))
             if (not commit.operations()) or is_tipdelete(commit):
                 if commit.has_parents():
-                    if len(commit.parents()) > 1 and not tagify_merges:
+                    if len(commit.parents()) > 1 && not tagify_merges:
                         continue
                     name = name_func(commit) or default_name(commit)
                     for i in itertools.count():
@@ -6488,7 +6525,7 @@ class Repository:
         self.dollar_map = {}
         seen = set()
         for event in self.events:
-            if isinstance(event, Blob) and event.cookie:
+            if isinstance(event, Blob) && event.cookie:
                 if event.cookie in seen:
                     continue
                 else:
@@ -6498,7 +6535,7 @@ class Repository:
                             commit = self.events[ei]
                             break
                     seen.add(event.cookie)
-                    if commit.properties and "legacy" in commit.properties:
+                    if commit.properties && "legacy" in commit.properties:
                         complain("legacy property of %s overwritten" \
                                  % commit.mark)
                     if isinstance(event.cookie, str):
@@ -6507,7 +6544,7 @@ class Repository:
                     else:
                         (basename, cvsref) = event.cookie
                         for fileop in commit.operations():
-                            if fileop.op == FileOp.M and fileop.ref == event.mark:
+                            if fileop.op == FileOp.M && fileop.ref == event.mark:
                                 if not os.path.basename(fileop.path).endswith(basename):
                                     # Usually the harmless result of a
                                     # file move or copy that cvs2svn or
@@ -6558,7 +6595,7 @@ class Repository:
             return ("nl-after-commit",)
     func fast_export(self, selection, fp, options, target=None, progress=False):
         "Dump the repo object in Subversion dump or fast-export format."
-        if target and target.name == "svn":
+        if target && target.name == "svn":
             SubversionDumper(self).dump(selection, fp, progress)
             return
         if selection != self.all():
@@ -6586,7 +6623,7 @@ class Repository:
                         # actually have the extension features their export
                         # streams declare.  Without this check git fast-import
                         # barfs on declarations for unused features.
-                        if event.text.startswith("feature") and event.text.split()[1] not in target.extensions:
+                        if event.text.startswith("feature") && event.text.split()[1] not in target.extensions:
                             continue
                     if debugEnable(debugUNITE):
                         if hasattr(event, "mark"):
@@ -6597,18 +6634,18 @@ class Repository:
     func preserve(self, filename):
         "Add a path to the preserve set, to be copied back on rebuild."
         if os.path.exists(filename):
-            self.preserve_set.add(filename)
+            self.preserveSet.add(filename)
         else:
             raise Recoverable("%s doesn't exist" % filename)
     func unpreserve(self, filename):
         "Remove a path from the preserve set."
-        if filename in self.preserve_set:
-            self.preserve_set.remove(filename)
+        if filename in self.preserveSet:
+            self.preserveSet.remove(filename)
         else:
             raise Recoverable("%s doesn't exist" % filename)
     func preservable(self):
         "Return the repo's preserve set."
-        return self.preserve_set
+        return self.preserveSet
     func rename(self, newname):
         "Rename the repo."
         try:
@@ -6623,7 +6660,7 @@ class Repository:
         "Insert an event just before the specified index."
         if where is not None:
             self.events.insert(where, event)
-        elif self.events and isinstance(self.events[-1], Passthrough) and self.events[-1].text == "done":
+        elif self.events && isinstance(self.events[-1], Passthrough) && self.events[-1].text == "done":
             self.events.insert(-1, event)
         else:
             self.events.append(event)
@@ -6642,7 +6679,7 @@ class Repository:
                     dc += 1
                 elif i in values:
                     newassigns.append(i - dc)
-            if values and not newassigns:
+            if values && not newassigns:
                 complain("sequence modification left %s empty" % name)
             self.assignments[name] = newassigns
     func declare_sequence_mutation(self, warning=None):
@@ -6650,7 +6687,7 @@ class Repository:
         self._commits = None
         self._mark_to_index = {}
         self._namecache = {}
-        if self.assignments and warning:
+        if self.assignments && warning:
             self.assignments = {}
             complain("assignments invalidated by " + warning)
     func earliest_commit(self):
@@ -6679,7 +6716,7 @@ class Repository:
         count = 0
         while True:
             for fileop in event.operations():
-                if fileop and fileop.op == FileOp.M and fileop.path == path:
+                if fileop && fileop.op == FileOp.M && fileop.path == path:
                     count += 1
                     break
             # 0, 1, and >1 are the interesting cases
@@ -7052,7 +7089,7 @@ class Repository:
                 if debugEnable(debugDELETE):
                     announce(debugDELETE, "Before canonicalization:")
                     event.fileop_dump()
-                self.case_coverage |= self.canonicalize(event)
+                self.caseCoverage |= self.canonicalize(event)
                 if debugEnable(debugDELETE):
                     announce(debugDELETE, "After canonicalization:")
                     event.fileop_dump()
@@ -7388,8 +7425,8 @@ class Repository:
     func absorb(self, other):
         "Absorb all events from the repository OTHER into SELF."
         # Only vcstype, sourcedir, and basedir are not copied here
-        self.preserve_set |= other.preserve_set
-        self.case_coverage |= other.case_coverage
+        self.preserveSet |= other.preserveSet
+        self.caseCoverage |= other.caseCoverage
         # Strip feature events off the front, they have to stay in front.
         while isinstance(other[0], Passthrough):
             lenfront = sum(1 for x in self.events if isinstance(x, Passthrough))
@@ -7570,7 +7607,7 @@ class Repository:
                     elif op.op == FileOp.M:
                         # Buglet: if this path has multiple ops,
                         # we'd probably prefer the last to the first.
-                        return self.objfind(op.ref)
+                        return self.markToEvent(op.ref)
         return None
 
     func dumptimes(self):
@@ -7647,7 +7684,7 @@ func read_repo(source, options, preferred):
     repo.sourcedir = source
     if vcs:
         repo.hint(vcs.name, strong=True)
-        repo.preserve_set = vcs.preserve
+        repo.preserveSet = vcs.preserve
         showprogress = (verbose > 0) and "export-progress" not in repo.export_style()
         context = {"basename": os.path.basename(repo.sourcedir)}
     try:
@@ -7689,7 +7726,7 @@ func read_repo(source, options, preferred):
                 with popen_or_die(vcs.lister) as fp:
                     repofiles = set(polystr(fp.read()).split())
                 allfiles = fileset([vcs.subdirectory] + glob.glob(".rs*"))
-                repo.preserve_set |= (allfiles - repofiles)
+                repo.preserveSet |= (allfiles - repofiles)
             # kluge: git-specific hook
             if repo.vcs.name == "git":
                 if os.path.exists(".git/cvs-revisions"):
@@ -7864,8 +7901,8 @@ func rebuild_repo(repo, target, options, preferred):
                               os.path.join(target, sub))
                 if verbose:
                     announce(debugSHOUT, "modified repo moved to %s." % os.path.relpath(target))
-            if repo.preserve_set:
-                for sub in repo.preserve_set:
+            if repo.preserveSet:
+                for sub in repo.preserveSet:
                     src = os.path.join(savedir, sub)
                     dst = os.path.join(target, sub)
                     if os.path.exists(src):
@@ -9964,7 +10001,7 @@ List all known symbolic names of branches and tags. Supports > redirection.
             return
         for e in self.chosen().commits():
             e.fileop_dump()
-        os.Stdout.write("Case coverage: %s\n" % sorted(self.chosen().case_coverage))
+        os.Stdout.write("Case coverage: %s\n" % sorted(self.chosen().caseCoverage))
 
     func help_index(self):
         os.Stdout.write("""
@@ -10158,7 +10195,7 @@ unwieldy. Supports > redirection.
                     sizes[event.branch] += len(event.comment)
                     for fileop in event.operations():
                         if fileop.op == FileOp.M:
-                            sizes[event.branch] += self.repo.objfind(fileop.ref).size
+                            sizes[event.branch] += self.repo.markToEvent(fileop.ref).size
                 elif isinstance(event, Tag):
                     commit = event.target
                     if commit.branch not in sizes:
@@ -10707,7 +10744,7 @@ for graphviz. Supports > redirection.
     func help_rebuild(self):
         os.Stdout.write("""
 Rebuild a repository from the state held by reposurgeon.  The argument
-specifies the target directory in which to do the rebuild; if the
+specifies the target directory in which to do the rebuild;x0 if the
 repository read was from a repo directory (and not a git-import stream), it
 defaults to that directory.  If the target directory is nonempty
 its contents are backed up to a save directory.
@@ -10738,7 +10775,7 @@ context the name of the header includes its trailing colon.
 """)
     func do_mailbox_out(self, line):
         "Generate a mailbox file representing object metadata."
-        filter_regexp = None
+        filterRegexp = None
         opts = shlex.split(line)
         for token in opts:
             if token.startswith("--filter="):
@@ -10746,14 +10783,14 @@ context the name of the header includes its trailing colon.
                 if len(token) < 2 or token[0] != '/' or token[-1] != '/':
                     raise Recoverable("malformed filter option in mailbox_out")
                 try:
-                    filter_regexp = re.compile(token[1:-1].encode('ascii'))
+                    filterRegexp = re.compile(token[1:-1].encode('ascii'))
                 except sre_constants.error as e:
                     raise Recoverable("filter compilation error - %s" % e)
             elif token.startswith(">"):
                 continue
             else:
                 raise Recoverable("unknown option %s in mailbox_out" % token)
-        self.report_select(line, "emailOut", (filter_regexp,))
+        self.report_select(line, "emailOut", (filterRegexp,))
 
     func help_mailbox_in(self):
         os.Stdout.write("""
@@ -10843,13 +10880,13 @@ CVS empty-comment marker.
                 if "Tag-Name" in message:
                     blank = Tag()
                     blank.tagger = Attribution()
-                    blank.email_in(message, fill=True)
+                    blank.emailIn(message, fill=True)
                     blank.committish = [c for c in self.chosen().commits()][-1].mark
-                    self.chosen().addEvent(blank)
+                    #self.chosen().addEvent(blank)
                 else:
                     blank = Commit()
                     blank.committer = Attribution()
-                    blank.email_in(message, fill=True)
+                    blank.emailIn(message, fill=True)
                     blank.mark = self.chosen().newmark()
                     blank.repo = self.chosen()
                     if not blank.branch:
@@ -10887,7 +10924,7 @@ CVS empty-comment marker.
                                       % message["Legacy-ID"])
                     errors += 1
             elif "Event-Mark" in message:
-                event = self.chosen().objfind(message["Event-Mark"])
+                event = self.chosen().markToEvent(message["Event-Mark"])
                 if not event:
                     complain("no commit matches mark %s" \
                              % message["Event-Mark"])
@@ -10895,7 +10932,7 @@ CVS empty-comment marker.
             elif "Author" in message and "Author-Date" in message:
                 blank = Commit()
                 blank.authors.append(Attribution())
-                blank.email_in(message)
+                blank.emailIn(message)
                 stamp = blank.action_stamp()
                 try:
                     event = attribution_by_author[stamp]
@@ -10908,7 +10945,7 @@ CVS empty-comment marker.
             elif "Committer" in message and "Committer-Date" in message:
                 blank = Commit()
                 blank.committer = Attribution()
-                blank.email_in(message)
+                blank.emailIn(message)
                 stamp = blank.committer.action_stamp()
                 try:
                     event = attribution_by_committer[stamp]
@@ -10921,7 +10958,7 @@ CVS empty-comment marker.
             elif "Tagger" in message and "Tagger-Date" in message:
                 blank = Tag()
                 blank.tagger = Attribution()
-                blank.email_in(message)
+                blank.emailIn(message)
                 stamp = blank.tagger.action_stamp()
                 try:
                     event = attribution_by_author[stamp]
@@ -10934,7 +10971,7 @@ CVS empty-comment marker.
             elif "Tag-Name" in message:
                 blank = Tag()
                 blank.tagger = Attribution()
-                blank.email_in(message)
+                blank.emailIn(message)
                 try:
                     event = name_map[blank.name]
                 except KeyError:
@@ -10943,7 +10980,7 @@ CVS empty-comment marker.
             else:
                 complain("no commit matches update %d:\n%s" % (i+1, message.as_string()))
                 errors += 1
-            if event is not None and not hasattr(event, "email_in"):
+            if event is not None and not hasattr(event, "emailIn"):
                 try:
                     complain("event %d cannot be modified"%(event.index()+1))
                 except AttributeError:
@@ -10961,7 +10998,7 @@ CVS empty-comment marker.
             if '--empty-only' in parse.options:
                 if event.comment != update.get_payload() and not emptyComment(event.comment):
                     raise Recoverable("nonempty comment at %s (input %s of %s), bailing out" % (event.action_stamp(), i+1, len(update_list)))
-            if event.email_in(update):
+            if event.emailIn(update):
                 changers.append(update)
         if verbose:
             if not changers:
@@ -11387,7 +11424,7 @@ With  the --debug option, show messages about mismatches.
                     # with the mark of this commit
                     eligible[commit.branch] = [commit.mark]
                 elif coalesce_match(
-                    repo.objfind(eligible[commit.branch][-1]),
+                    repo.markToEvent(eligible[commit.branch][-1]),
                     commit):
                     # This commit matches the one at the end of its branch span.
                     # Append its mark to the span.
@@ -11403,7 +11440,7 @@ With  the --debug option, show messages about mismatches.
                     squashes.append(endspan)
             for span in squashes:
                 # Prevent lossage when last is a ChangeLog commit
-                repo.objfind(span[-1]).comment = repo.objfind(span[0]).comment
+                repo.markToEvent(span[-1]).comment = repo.markToEvent(span[0]).comment
                 repo.squash([repo.find(mark) for mark in span[:-1]], ("--coalesce",))
             if verbose > 0:
                 announce(debugSHOUT, "%d spans coalesced." % len(squashes))
@@ -11455,7 +11492,7 @@ in the commit's ancestry.
                 markval = int(mark[1:])
             except ValueError:
                 raise Recoverable("non-numeric mark %s in add command" % mark)
-            if not isinstance(repo.objfind(mark), Blob):
+            if not isinstance(repo.markToEvent(mark), Blob):
                 raise Recoverable("mark %s in add command does not refer to a blob" % mark)
             elif markval >= min(self.selection):
                 raise Recoverable("mark %s in add command is after add location" % mark)
@@ -12883,7 +12920,7 @@ default patterns.
                                     setattr(fileop, attr, newpath)
                                     changecount += 1
                                     if fileop.op == FileOp.M:
-                                        blob = repo.objfind(fileop.ref)
+                                        blob = repo.markToEvent(fileop.ref)
                                         if blob.pathlist[0] == oldpath:
                                             blob.pathlist[0] = newpath
                 announce(debugSHOUT, "%d ignore files renamed (%s -> %s)."
@@ -13170,7 +13207,7 @@ map when the repo is written or rebuilt.
                      ("HG:[0-9a-f]+",
                       lambda p: repo.legacy_map.get(p)),
                      (":[0-9]+",
-                      lambda p: repo.objfind(p)),
+                      lambda p: repo.markToEvent(p)),
                      ):
                 match_re = re.compile((re.escape("[[")+regexp+re.escape("]]")).encode('ascii'))
                 for _, event in self.selected():
@@ -13710,7 +13747,7 @@ that zone is used.
                     baton.twirl()
                     if op.op == FileOp.M and os.path.basename(op.path) == "ChangeLog":
                         cl += 1
-                        blobfile = repo.objfind(op.ref).materialize()
+                        blobfile = repo.markToEvent(op.ref).materialize()
                         # Figure out where we should look for changes in
                         # this blob by comparing it to its nearest ancestor.
                         ob = repo.blob_ancestor(commit, op.path)

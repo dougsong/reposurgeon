@@ -265,36 +265,29 @@ func TestDateComparison(t *testing.T) {
 	assertBool(d2.timestamp.After(d1.timestamp), true)
 }
 
-func TestParseAttributionLine(t *testing.T) {
-	assertEqual := func(a string, b string) {
-		if a != b {
-			t.Errorf("assertEqual: expected %v = %v",
-				strconv.Quote(a), strconv.Quote(b))
-		}
+func assertEqual (t *testing.T, a string, b string) {
+	if a != b {
+		t.Errorf("assertEqual: expected %v = %v",
+			strconv.Quote(a), strconv.Quote(b))
 	}
+}
 
+func TestParseAttributionLine(t *testing.T) {
 	sample := []byte("J. Random Hacker <jrh@foobar.com> 1456976347 -0500")
 	name, addr, date := parseAttributionLine(sample)
-	assertEqual(name, "J. Random Hacker")
-	assertEqual(addr, "jrh@foobar.com")
-	assertEqual(date, "1456976347 -0500")
+	assertEqual(t, name, "J. Random Hacker")
+	assertEqual(t, addr, "jrh@foobar.com")
+	assertEqual(t, date, "1456976347 -0500")
 
 	attr := newAttribution(sample)
 	n, a := attr.address()
-	assertEqual(n, "J. Random Hacker")
-	assertEqual(a, "jrh@foobar.com")
+	assertEqual(t, n, "J. Random Hacker")
+	assertEqual(t, a, "jrh@foobar.com")
 
-	assertEqual(attr.String(), string(sample))
+	assertEqual(t, attr.String(), string(sample))
 }
 
 func TestRemapAttribution(t *testing.T) {
-	assertEqual := func(a string, b string) {
-		if a != b {
-			t.Errorf("assertEqual: expected %v = %v",
-				strconv.Quote(a), strconv.Quote(b))
-		}
-	}
-
 	authormap := map[string]authorEntry{
 		"jrh": {name: "J. Random Hacker", email: "jrh@foobar.com"},
 		"esr": {name: "Eric S. Raymond", email: "esr@thyrsus.com", timezone: "America/New_York"},
@@ -302,9 +295,9 @@ func TestRemapAttribution(t *testing.T) {
 
 	// Verify name remapping
 	attr1 := newAttribution([]byte("jrh <jrh> 1456976347 -0500"))
-	assertEqual(attr1.email, "jrh")
+	assertEqual(t, attr1.email, "jrh")
 	attr1.remap(authormap)
-	assertEqual(attr1.email, "jrh@foobar.com")
+	assertEqual(t, attr1.email, "jrh@foobar.com")
 
 	attr2 := newAttribution([]byte("esr <esr> 1456976347 +0000"))
 	zone, offset := attr2.date.timestamp.Zone()
@@ -323,27 +316,43 @@ func TestRemapAttribution(t *testing.T) {
 }
 
 func TestBlobfile(t *testing.T) {
-	assertEqual := func(a string, b string) {
-		if a != b {
-			t.Errorf("assertEqual: expected %v = %v",
-				strconv.Quote(a), strconv.Quote(b))
-		}
-	}
 	repo := newRepository("fubar")
 	repo.basedir = "foo"
 	expectdir := fmt.Sprintf("foo/.rs%d-fubar/blobs/", os.Getpid())
 
 	blob1 := newBlob(repo)
-	assertEqual(blob1.getBlobfile(false), expectdir + "000/000/000")
+	assertEqual(t, blob1.getBlobfile(false), expectdir + "000/000/000")
 	blob2 := newBlob(repo)
-	assertEqual(blob2.getBlobfile(false), expectdir + "000/000/001")
+	assertEqual(t, blob2.getBlobfile(false), expectdir + "000/000/001")
 
 	nuke("foo", "")	// In case last unit test didn't execute cleanly
 	const sampleContent = "Abracadabra!"
 	blob1.setContent(sampleContent, 0)
 	saw := blob1.getContent()
-	assertEqual(sampleContent, saw)
+	assertEqual(t, sampleContent, saw)
 	repo.cleanup()
+}
+
+func TestTag(t *testing.T) {
+	repo := newRepository("fubar")
+	repo.basedir = "foo"
+	attr1 := newAttribution([]byte("jrh <jrh> 1456976347 -0500"))
+	t1 := newTag(repo, ":2", "sample1", nil, attr1, "Sample tag #1\n")
+	repo.events = append(repo.events, t1)
+	//FIXME: When we have object dumping
+	//rep := t1.String()
+	if strings.Index(t1.comment, "Sample") == -1 {
+		t.Error("mark not found in tag dump")
+	}
+	u1 := repo.markToEvent(t1.getMark())
+	if u1 == nil {
+		t.Error("test lookup of event by mark failed")
+	}
+	assertEqual(t, t1.getMark(), u1.getMark())
+	// verify that events are passed by reference,
+	// so the one in the map is an alias of the one in the event list
+	t1.comment = "modified"
+	assertEqual(t, t1.comment, u1.(*Tag).comment)
 }
 
 // end
