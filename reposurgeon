@@ -2174,7 +2174,7 @@ class Tag(object):
     def id_me(self):
         "ID this tag for humans."
         return "tag@%s%s (%s)" % (
-            self.mark,
+            self.committish,
             ('=<%s>' % self.legacy_id) if self.legacy_id else '',
             self.name)
     def action_stamp(self):
