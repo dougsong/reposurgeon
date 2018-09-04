@@ -25,6 +25,17 @@ func TestContains(t *testing.T) {
 	}
 }
 
+func TestEqual(t *testing.T) {
+	ts2 := newStringSet("c", "b", "a")
+	if !ts.Equal(ts2) {
+		t.Error("Equality check failed when pass expected.")
+	}
+	ts3 := newStringSet("c", "b", "d")
+	if ts.Equal(ts3) {
+		t.Error("Equality check suceeded when fail expected.")
+	}
+}
+
 func TestString(t *testing.T) {
 	expect := `{"a", "b", "c"}`
 	get := ts.String()
@@ -117,7 +128,7 @@ Event-Mark: :2
 Branch: refs/heads/master
 Parents: 
 Committer: Ralf Schlatterbeck <rsc@runtux.com>
-Committer-Date: Thu 01 Jan 1970 00:00:00 +0000
+Committer-Date: 1970-01-01T00:00:00Z
 Check-Text: First commit.
 
 First commit.
@@ -127,7 +138,7 @@ Event-Mark: :4
 Branch: refs/heads/master
 Parents: :2
 Committer: Ralf Schlatterbeck <rsc@runtux.com>
-Committer-Date: Thu 01 Jan 1970 00:00:10 +0000
+Committer-Date: 1970-01-01T00:00:10Z
 Check-Text: Second commit.
 
 Second commit. This one tests byte stuffing.
@@ -145,17 +156,17 @@ Magic cookie.
 		log.Fatalf("On first read: %v", err)
 	}
 
-	saw := msg.header.Get("Event-Mark")
+	saw := msg.getHeader("Event-Mark")
 	expected := ":2"
 	if saw != expected {
-		t.Errorf("While parsing first message saw %s when expecting %s",
+		t.Errorf("While parsing first message saw %q when expecting %q",
 			saw, expected)
 	}
 	expected = "First commit.\n"
 	saw = string(msg.body)
 	if saw != expected {
-		t.Errorf("Unexpected body content %s while expecting %s",
-			strconv.Quote(saw), strconv.Quote(expected))
+		t.Errorf("Unexpected body content %q while expecting %q",
+			saw, expected)
 	}
 
 	msg, err = newMessageBlock(r)
@@ -163,17 +174,17 @@ Magic cookie.
 		log.Fatalf("On second read: %v", err)
 	}
 
-	saw = msg.header.Get("Event-mark")
+	saw = msg.getHeader("Event-Mark")
 	expected = ":4"
 	if saw != expected {
-		t.Errorf("While parsing second message saw %s when expecting %s",
+		t.Errorf("While parsing second message saw %q when expecting %q",
 			saw, expected)
 	}
 	expected = "Second commit."
 	saw = string(msg.body)
 	if !strings.HasPrefix(saw, expected) {
-		t.Errorf("Unexpected body content %s while expecting %s",
-			strconv.Quote(saw), strconv.Quote(expected))
+		t.Errorf("Unexpected body content %q while expecting %q",
+			saw, expected)
 	}
 
 	// Test the byte stuffing
@@ -332,16 +343,32 @@ func TestBlobfile(t *testing.T) {
 	repo.cleanup()
 }
 
+func TestUndecodable(t *testing.T) {
+	var TestTable = []struct {
+		text string
+		codec string
+		expected bool
+	}{
+		{"Potrzebie", "US-ASCII", true},
+		{"Potr\x8fzebie", "US-ASCII", false},
+	}
+	for _, item := range TestTable {
+		_, ok, err := ianaDecode(item.text, item.codec)
+		if ok != item.expected {
+			t.Errorf("decodability of %q: expected %v saw %v: %v",
+				item.text, item.expected, ok, err)
+		}
+	}
+}
+
 func TestTag(t *testing.T) {
 	repo := newRepository("fubar")
 	repo.basedir = "foo"
 	attr1 := newAttribution([]byte("jrh <jrh> 1456976347 -0500"))
-	t1 := newTag(repo, ":2", "sample1", nil, attr1, "Sample tag #1\n")
+	t1 := newTag(repo, "sample1", ":2", nil, attr1, "Sample tag #1\n")
 	repo.events = append(repo.events, t1)
-	//FIXME: When we have object dumping
-	//rep := t1.String()
 	if strings.Index(t1.comment, "Sample") == -1 {
-		t.Error("mark not found in tag dump")
+		t.Error("expected string not found in tag comment")
 	}
 	u1 := repo.markToEvent(t1.getMark())
 	if u1 == nil {
@@ -350,13 +377,36 @@ func TestTag(t *testing.T) {
 	assertEqual(t, t1.getMark(), u1.getMark())
 	// verify that events are passed by reference,
 	// so the one in the map is an alias of the one in the event list
-	t1.comment = "modified"
+	t1.comment = "modified\n"
 	assertEqual(t, t1.comment, u1.(*Tag).comment)
 
 	assertEqual(t, t1.actionStamp(), "2016-03-03T03:39:07Z!jrh")
 	assertEqual(t, t1.emailOut(nil, 42, nil),
-		"Event-Number: 43\nTag-Name: :2\nTagger: jrh <jrh>\nTagger-Date: Thu, 03 Mar 2016 03:39:07 +0000\n\nmodified")
+		"Event-Number: 43\nTag-Name: sample1\nTarget-Mark: :2\nTagger: jrh <jrh>\nTagger-Date: 2016-03-03T03:39:07Z\nCheck-Text: modified\n\nmodified")
+	assertEqual(t, t1.String(),
+		"tag sample1\nfrom :2\ntagger jrh <jrh> 1456976347 -0500\ndata 9\nmodified\n\n")
 
+	inboxTag := `Event-Number: 45
+Tag-Name: sample2
+Target-Mark: :2317
+Tagger: J. Random Hacker <jrh@foobar.com>
+Tagger-Date: 2018-06-05T05:37:00Z
+Check-Text: Test to be sure
+
+Test to be sure we can read in a tag in inbox format.
+`
+	r := bufio.NewReader(strings.NewReader(inboxTag))
+	msg, err := newMessageBlock(r)
+	if err != nil {
+		log.Fatalf("On first read: %v", err)
+	}
+	var t2 Tag
+	t2.tagger = newAttribution(nil)
+	t2.emailIn(*msg, false)
+
+	assertEqual(t, "sample2", t2.name, )
+	assertEqual(t, ":2317", t2.committish)
+	
 	if t1.undecodable("US-ASCII") {
 		t.Errorf("%q was expected to be decodable, is not", t1.String())
 		
@@ -365,6 +415,112 @@ func TestTag(t *testing.T) {
 
 func TestBranchname(t *testing.T) {
 	assertEqual(t, branchname("dubious"), "refs/tags/dubious")
+}
+
+func (s stringSet) Equal(other stringSet) bool {
+	if len(s) != len(other) {
+		return false
+	}
+	// Naive O(n**2) method - don't use on large sets if you care about speed
+	for _, item := range s {
+		if !other.Contains(item) {
+			return false
+		}
+	}
+	return true
+}
+
+
+func TestFileOp(t *testing.T) {
+	fileop1 := newFileOp(nil).construct("M", "100644", ":1", "README")
+	assertEqual(t, "M", fileop1.op)
+	assertEqual(t, "100644", fileop1.mode)
+	assertEqual(t, ":1", fileop1.ref)
+	assertEqual(t, "README", fileop1.path)
+	if !fileop1.paths(nil).Equal(stringSet{"README"}) {
+		t.Error("fileop1 path extraction failed equality check")
+	}
+	
+	fileop2 := newFileOp(nil).construct("M", "100755", ":2", "DRINKME")
+	assertEqual(t, "M", fileop2.op)
+	assertEqual(t, "100755", fileop2.mode)
+	assertEqual(t, ":2", fileop2.ref)
+	assertEqual(t, "DRINKME", fileop2.path)
+	if !fileop2.paths(nil).Equal(stringSet{"DRINKME"}) {
+		t.Error("fileop2 path extraction failed equality check")
+	}
+
+	fileop3 := newFileOp(nil).construct("D", "DRINKME")
+	assertEqual(t, "D", fileop3.op)
+	assertEqual(t, "DRINKME", fileop3.path)
+	if !fileop3.paths(nil).Equal(stringSet{"DRINKME"}) {
+		t.Error("fileop3 path extraction failed equality check")
+	}
+
+	fileop4 := newFileOp(nil).construct("R", "DRINKME", "EATME")
+	assertEqual(t, "R", fileop4.op)
+	assertEqual(t, "DRINKME", fileop4.source)
+	assertEqual(t, "EATME", fileop4.target)
+	if !fileop4.paths(nil).Equal(stringSet{"EATME", "DRINKME"}) {
+		t.Error("fileop4 path extraction failed equality check")
+	}
+
+	fileop5 := newFileOp(nil).construct("C", "DRINKME", "EATME")
+	assertEqual(t, "C", fileop5.op)
+	assertEqual(t, "DRINKME", fileop5.source)
+	assertEqual(t, "EATME", fileop5.target)
+	if !fileop5.paths(nil).Equal(stringSet{"EATME", "DRINKME"}) {
+		t.Error("fileop5 path extraction failed equality check")
+	}
+
+	fileop6 := newFileOp(nil).construct("N", ":3", "EATME")
+	assertEqual(t, "N", fileop6.op)
+	assertEqual(t, ":3", fileop6.ref)
+	assertEqual(t, "EATME", fileop6.path)
+	if !fileop6.paths(nil).Equal(stringSet{"EATME"}) {
+		t.Error("fileop6 path extraction failed equality check")
+	}
+
+	fileop7 := newFileOp(nil).construct("deleteall")
+	assertEqual(t, "deleteall", fileop7.op)
+	if !fileop7.paths(nil).Equal(stringSet{}) {
+		t.Error("fileop7 path extraction failed equality check")
+	}
+
+	fileop8 := newFileOp(nil).parse("M 100644 :4 COPYING")
+	assertEqual(t, "M", fileop8.op)
+	assertEqual(t, "100644", fileop8.mode)
+	assertEqual(t, ":4", fileop8.ref)
+	assertEqual(t, "COPYING", fileop8.path)
+
+	fileop9 := newFileOp(nil).parse("M 100755 :5 runme.sh")
+	assertEqual(t, "M", fileop9.op)
+	assertEqual(t, "100755", fileop9.mode)
+	assertEqual(t, ":5", fileop9.ref)
+	assertEqual(t, "runme.sh", fileop9.path)
+
+	fileop10 := newFileOp(nil).parse("D deleteme")
+	assertEqual(t, "D", fileop10.op)
+	assertEqual(t, "deleteme", fileop10.path)
+
+	fileop11 := newFileOp(nil).parse("R DRINKME EATME")
+	assertEqual(t, "R", fileop11.op)
+	assertEqual(t, "DRINKME", fileop11.source)
+	assertEqual(t, "EATME", fileop11.target)
+
+	fileop12 := newFileOp(nil).parse("C DRINKME EATME")
+	assertEqual(t, "C", fileop12.op)
+	assertEqual(t, "DRINKME", fileop12.source)
+	assertEqual(t, "EATME", fileop12.target)
+
+	fileop13 := newFileOp(nil).parse("N :6 EATME")
+	assertEqual(t, "N", fileop13.op)
+	assertEqual(t, ":6", fileop13.ref)
+	assertEqual(t, "EATME", fileop13.path)
+
+	fileop14 := newFileOp(nil).parse("deleteall")
+	assertEqual(t, "deleteall", fileop14.op)
+
 }
 
 // end

@@ -63,7 +63,7 @@ gosetup:
 	GOPATH=$(GOPATH) go get golang.org/x/text/encoding/ianaindex
 
 gotest:
-	GOPATH=$(GOPATH) go test goreposurgeon
+	GOPATH=$(GOPATH) GOCACHE=off go test goreposurgeon
 
 goformat:
 	gofmt -w src/repocutter/
