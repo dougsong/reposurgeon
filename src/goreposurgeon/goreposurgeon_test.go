@@ -267,8 +267,7 @@ func TestDateComparison(t *testing.T) {
 
 func assertEqual (t *testing.T, a string, b string) {
 	if a != b {
-		t.Errorf("assertEqual: expected %v = %v",
-			strconv.Quote(a), strconv.Quote(b))
+		t.Errorf("assertEqual: expected %q = %q", a, b)
 	}
 }
 
@@ -353,6 +352,10 @@ func TestTag(t *testing.T) {
 	// so the one in the map is an alias of the one in the event list
 	t1.comment = "modified"
 	assertEqual(t, t1.comment, u1.(*Tag).comment)
+
+	assertEqual(t, t1.actionStamp(), "2016-03-03T03:39:07Z!jrh")
+	assertEqual(t, t1.emailOut(nil, 42, nil),
+		"Event-Number: 43\nTag-Name: :2\nTagger: jrh <jrh>\nTagger-Date: Thu, 03 Mar 2016 03:39:07 +0000\n\nmodified")
 }
 
 // end

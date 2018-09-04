@@ -82,7 +82,8 @@ import (
 	"time"
 
 	terminal "golang.org/x/crypto/ssh/terminal" // For GetSize()
-
+	ianaindex "golang.org/x/text/encoding/ianaindex"
+	
 	"isatty"
 )
 
@@ -1566,7 +1567,10 @@ type MessageBlock struct {
 func newMessageBlock(bp *bufio.Reader) (*MessageBlock, error) {
 	msg := new(MessageBlock)
 
-	if bp != nil {
+	if bp == nil {
+		msg.header =  map[string][]string{}
+		msg.body = make([]byte, 0)
+	} else {
 		rawmsg := make([]byte, 0)
 		firstline, err := bp.ReadBytes('\n')
 		if err != nil {
@@ -2362,7 +2366,11 @@ func (t *Tag) emailOut(modifiers stringSet, eventnum int,
         if t.legacyID != "" {
 		msg.header["Legacy-ID"] = []string{t.legacyID}
 	}
-        msg.header["Check-Text"] = []string{strings.Split(strings.Trim(t.comment, "\n"), "\n")[0][0:64]}
+	check := strings.Split(strings.Trim(t.comment, "\n"), "\n")[0]
+	if len(check) > 64 {
+		check = check[0:64]
+	}
+        msg.header["Check-Text"] = []string{}
         msg.setPayload([]byte(t.comment))
         if t.comment != "" && !strings.HasSuffix(t.comment, "\n") {
             complain("in tag %s, comment was not LF-terminated.", t.name)
@@ -2379,13 +2387,17 @@ func (t *Tag) emailOut(modifiers stringSet, eventnum int,
 }
 
 
-/*
+// emailIn updates this Tag from a parsed email message.
+func (t *Tag) emailIn(msg MessageBlock, fill bool) bool {
+        if _, ok := msg.header["Tag-Name"]; !ok  {
+		errmsg := fmt.Sprintf("update to tag %s is malformed", t.name)
+		panic(errmsg)
+	}
+        modified := false
+	return modified
+}
 
-func (t *Tag) emailIn(self, msg, fill=False) {
-        "Update this Tag from a parsed email message."
-        if "Tag-Name" not in msg:
-            raise Fatal("update to tag %s is malformed" % self.name)
-        modified = False
+/*
         newname = msg["Tag-Name"]
         if self.name != newname:
             announce(debugEMAILIN, "in tag %s, Tag-Name is modified %s -> %s" \
@@ -2434,21 +2446,59 @@ func (t *Tag) emailIn(self, msg, fill=False) {
                 self.tagger.date = Date(None)
             if self.tagger.name is None:
                 (self.tagger.name, self.tagger.email) = whoami()
-        return modified
-}
-
-func (t *Tag) undecodable(self, codec="utf-8") {
-        "Does this tag have undecodable i18n sequences in it?"
-        try:
-            polybytes(self.name).decode(codec, "strict")
-            polybytes(self.tagger.name).decode(codec, "strict")
-            polybytes(self.comment).decode(codec, "strict")
-            return False
-        except UnicodeError:
-            return True
-}
-
 */
+
+// ianaDecode tells if a string has undecodable i18n sequences in it.
+// http://www.iana.org/assignments/character-sets/character-sets.xhtml
+func ianaDecode (data, codec string) (string, bool, error) {
+	// This works around a bug in the ianaindex package.
+	// It should return a copying decoder if the name is a synonym for ASCII
+	// but does not.
+	var asciiNames = stringSet{
+		"US-ASCII",
+		"iso-ir-6",
+		"ANSI_X3.4-1968",
+		"ANSI_X3.4-1986",
+		"ISO_646.irv:1991",
+		"ISO646-US",
+		"us",
+		"IBM367",
+		"cp367",
+		"csASCII",
+		"ascii",	// Unaccountably not an IANA name
+	}
+	if asciiNames.Contains(codec) {
+		for _, c := range data {
+			if c > 127 {
+				return data, false, nil
+			}
+		}
+		return data, true, nil
+	}
+	enc, err1 := ianaindex.IANA.Encoding(codec)
+	if err1 != nil {
+		return data, false, err1
+	}
+	dec := enc.NewDecoder()
+	decoded, err2 := dec.Bytes([]byte(data))
+	return string(decoded), err2 == nil, err2
+}
+
+func (t *Tag) undecodable(codec string) bool {
+	_, f1, err1 := ianaDecode(t.name, codec)
+	if !f1 || err1 == nil {
+		return false
+	}
+	_, f2, err2 := ianaDecode(t.tagger.name, codec)
+	if !f2 || err2 == nil {
+		return false
+	}
+	_, f3, err3 := ianaDecode(t.comment, codec)
+	if !f3 || err3 == nil {
+		return false
+	}
+	return true
+}
 
 // branchname returns the full branch reference corresponding to a tag.
 func branchname(tagname string) string {
