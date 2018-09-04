@@ -83,8 +83,6 @@ import (
 
 	terminal "golang.org/x/crypto/ssh/terminal" // For GetSize()
 	ianaindex "golang.org/x/text/encoding/ianaindex"
-	
-	"isatty"
 )
 
 // Change these in the unlikely the event this is ported to Windows
@@ -1332,7 +1330,7 @@ func newBaton(prompt string, endmsg string, enable bool) *Baton {
 }
 
 func (baton *Baton) isatty() bool {
-	return isatty.IsTerminal(baton.stream.Fd())
+	return terminal.IsTerminal(int(baton.stream.Fd()))
 }
 
 func (baton *Baton) enter() *Baton {

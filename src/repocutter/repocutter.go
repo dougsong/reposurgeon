@@ -8,14 +8,14 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"isatty"
 	"math"
 	"os"
 	"regexp"
-	//"runtime"
 	"strconv"
 	"strings"
 	"time"
+
+	terminal "golang.org/x/crypto/ssh/terminal" // For GetSize()
 )
 
 const linesep = "\n"
@@ -184,7 +184,7 @@ func NewBaton(prompt string, endmsg string) *Baton {
 	var baton Baton
 	baton.stream = os.Stderr
 	baton.stream.Write([]byte(prompt + "..."))
-	if isatty.IsTerminal(baton.stream.Fd()) {
+	if terminal.IsTerminal(int(baton.stream.Fd())) {
 		baton.stream.Write([]byte(" \010"))
 	}
 	//baton.stream.Flush()
@@ -198,7 +198,7 @@ func (baton *Baton) Twirl(ch string) {
 	if baton.stream == nil {
 		return
 	}
-	if isatty.IsTerminal(baton.stream.Fd()) {
+	if terminal.IsTerminal(int(baton.stream.Fd())) {
 		if ch != "" {
 			baton.stream.Write([]byte(ch))
 		} else {

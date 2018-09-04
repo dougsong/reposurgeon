@@ -356,6 +356,15 @@ func TestTag(t *testing.T) {
 	assertEqual(t, t1.actionStamp(), "2016-03-03T03:39:07Z!jrh")
 	assertEqual(t, t1.emailOut(nil, 42, nil),
 		"Event-Number: 43\nTag-Name: :2\nTagger: jrh <jrh>\nTagger-Date: Thu, 03 Mar 2016 03:39:07 +0000\n\nmodified")
+
+	if t1.undecodable("US-ASCII") {
+		t.Errorf("%q was expected to be decodable, is not", t1.String())
+		
+	}
+}
+
+func TestBranchname(t *testing.T) {
+	assertEqual(t, branchname("dubious"), "refs/tags/dubious")
 }
 
 // end
