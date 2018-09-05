@@ -2414,7 +2414,7 @@ class FileOp(object):
         elif opargs[0] == "D":
             (self.op, self.path) = opargs
         elif opargs[0] == "N":
-            (self.op, self.ref, self.committish) = opargs
+            (self.op, self.ref, self.path) = opargs
         elif opargs[0] in ("R", "C"):
             (self.op, self.source, self.target) = opargs
         elif opargs[0] == "deleteall":
@@ -2436,7 +2436,7 @@ class FileOp(object):
         elif opline[0] == "N":
             try:
                 opline = opline.replace("'", r"\'")
-                (self.op, self.ref, self.committish) = shlex.split(opline)
+                (self.op, self.ref, self.path) = shlex.split(opline)
             except ValueError:
                 raise Fatal("ill-formed fileop %s" % repr(opline))
         elif opline[0] == "D":
@@ -2465,11 +2465,11 @@ class FileOp(object):
             pathtype = set((FileOp.M, FileOp.D, FileOp.R, FileOp.C, FileOp.N))
         if self.op not in pathtype:
             return set()
-        if self.op in (FileOp.M, FileOp.D): return {self.path}
+        if self.op in (FileOp.M, FileOp.D, FileOp.N): return {self.path}
         if self.op in (FileOp.R, FileOp.C): return {self.source, self.target}
         # Ugh...this isn't right for deleteall, but since we don't expect
         # to see that except at branch tips we'll ignore it for now.
-        if self.op in (FileOp.N, FileOp.deleteall): return set()
+        if self.op == FileOp.deleteall: return set()
         raise Fatal("unknown fileop type")
     def relevant(self, other):
         "Do two fileops touch the same file(s)?"
@@ -2493,7 +2493,7 @@ class FileOp(object):
             if self.ref == 'inline':
                 parts.append("\ndata %d\n%s" % (len(self.inline), self.inline))
         elif self.op == FileOp.N:
-            parts = [" ".join((self.op, self.ref, self.committish)), "\n"]
+            parts = [" ".join((self.op, self.ref, self.path)), "\n"]
             if self.ref == 'inline':
                 parts.append("data %d\n%s" % (len(self.inline), self.inline))
         elif self.op == FileOp.D:
