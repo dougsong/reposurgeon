@@ -56,6 +56,11 @@ package main
 // an extractor it sets the repository type to point to the corresponding
 // VCS instance.
 
+// This code was translated from Python. It retains, for internal
+// documentation purposes the Pyton convention of using leading
+// underscores on field names to flag fields tht should never be
+// referenced ouside a method of the associated struct.
+
 // Differences from the Python version
 // 1. whoami() does not read .lynxrc files
 // 2. No Python plugins.
@@ -81,7 +86,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -91,7 +98,6 @@ import (
 )
 
 // Change these in the unlikely the event this is ported to Windows
-const pathsep = "/"
 const userReadWriteMode = 0777
 
 type stringSet []string
@@ -104,6 +110,19 @@ func newStringSet(elements ...string) stringSet {
 func (s stringSet) Contains(item string) bool {
 	for _, el := range s {
 		if item == el {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *stringSet) Remove(item string) bool {
+	for i, el := range *s {
+		if item == el {
+			// Zero out the deleted element so it's GCed
+			copy((*s)[i:], (*s)[i+1:])
+			(*s)[len(*s)-1] = ""
+			*s = (*s)[:len(*s)-1]
 			return true
 		}
 	}
@@ -130,6 +149,17 @@ func (s *stringSet) String() string {
 		rep += "\", "
 	}
 	return rep[0:len(rep)-2] + "}"
+}
+
+func (s stringSet) Intersection(other stringSet) stringSet {
+	// Naive O(n**2) method - don't use on large sets if you care about speed
+	var intersection stringSet
+	for _, item := range s {
+		if other.Contains(item) {
+			intersection = append(intersection, item)
+		}
+	}
+	return intersection
 }
 
 /*
@@ -1550,6 +1580,46 @@ func emptyComment(c string) bool {
 	return false
 }
 
+// OrderedMap is a map witn preserved key order
+type OrderedMap struct {
+	keys []string
+	dict map[string]string
+}
+
+func newOrderedMap() OrderedMap {
+	d := new(OrderedMap)
+	d.keys = make([]string, 0)
+	d.dict = make(map[string]string)
+	return *d
+}
+
+func (d *OrderedMap) get(hd string) string {
+	payload, ok := d.dict[hd]
+	if !ok {
+		return ""
+	}
+	return payload
+}
+
+func (d *OrderedMap) set(hd string, data string) {
+	d.dict[hd] = data
+	d.keys = append(d.keys, hd)
+}
+
+func (d *OrderedMap) delete(hd string) bool {
+	delete(d.dict, hd)
+	for i, el := range d.keys {
+		if hd == el {
+			// Zero out the deleted element so it's GCed
+			copy(d.keys[i:], d.keys[i+1:])
+			d.keys[len(d.keys)-1] = ""
+			d.keys = d.keys[:len(d.keys)-1]
+			return true
+		}
+	}
+	return false
+}
+
 /*
  * RFC2822 message blocks
  *
@@ -1562,7 +1632,7 @@ var MessageBlockDivider = bytes.Repeat([]byte("-"), 78)
 // MessageBlock is similar to net/mail's type, but the body is pulled inboard
 // as a string.  This is appropriate because change comments are normally short.
 type MessageBlock struct {
-	hdnames []string
+	hdnames stringSet
 	header map[string]string
 	body   string
 }
@@ -1627,7 +1697,7 @@ func newMessageBlock(bp *bufio.Reader) (*MessageBlock, error) {
 	return msg, nil
 }
 
-func (msg *MessageBlock) payload() string {
+func (msg *MessageBlock) getPayload() string {
 	return msg.body
 }
 
@@ -1648,6 +1718,11 @@ func (msg *MessageBlock) setHeader(hd string, data string) {
 	msg.hdnames = append(msg.hdnames, hd)
 }
 
+func (msg *MessageBlock) deleteHeader(hd string) {
+	delete(msg.header, hd)
+	msg.hdnames.Remove(hd)
+}
+
 func (msg *MessageBlock) String() string {
 	hd := ""
 	for _, k := range msg.hdnames {
@@ -1663,9 +1738,9 @@ func (msg *MessageBlock) String() string {
 		if strings.HasPrefix(line, ".") || strings.HasPrefix(line, string(MessageBlockDivider)) {
 			body += "."
 		}
-		body += line
+		body += line + "\n"
 	}
-	return hd + "\n" + body
+	return hd + "\n" + body[0:len(body)-1]
 }
 
 /*
@@ -1823,17 +1898,21 @@ func (date *Date) clone() Date {
 	return out
 }
 
-func (date *Date) rfc3339() string {
+func (date Date) rfc3339() string {
 	return rfc3339(date.timestamp)
 }
 
-func (date *Date) gitlog() string {
+func (date Date) gitlog() string {
 	return date.timestamp.Format(GitLogFormat)
 }
 
-func (date *Date) rfc2822() string {
+func (date Date) rfc2822() string {
 	// Alas, the format Go calls RFC822 is archaic
 	return date.timestamp.Format(time.RFC1123Z)
+}
+
+func (date Date) delta(other Date) time.Duration {
+	return other.timestamp.Sub(date.timestamp)
 }
 
 // String formats a Date object as an internal Git date (Unix time in seconds
@@ -2006,6 +2085,14 @@ type Event interface {
 	String() string
 }
 
+// Contributor - ssociate a username with a DVCS-style ID and timezone
+type Contributor struct {
+	name     string
+	fullname string
+	email    string
+	tz       string
+}
+
 // Repository is the entire state of a version-control repository
 type Repository struct {
 	name string
@@ -2017,24 +2104,24 @@ type Repository struct {
         seekstream *os.File
         events []Event    // A list of the events encountered, in order
         //_commits = None
-        //_mark_to_index = {}
-        _eventByMark  map[string]Event
+        _markToIndex map[string]int
+        _eventByMark map[string]Event
         //_namecache = {}
         preserveSet stringSet
         caseCoverage stringSet
         basedir string
-        //uuid = None
-        //write_legacy = False
+        uuid string
+        write_legacy bool
         //dollar_map = None        // From dollar cookies in files
         //legacy_map = {}    // From anything that doesn't survive rebuild
         //legacy_count = None
         //timings = []
         //assignments = {}
-        //_has_manifests = False
-        //inlines = 0
+        //_hasManifests bool
+        inlines int
         //uniqueness = None
-        //markseq = 0
-        //authormap = {}
+        markseq int
+        authormap map[string]Contributor
         //tzmap = {}
         //aliases = {}
 	realized map[string]bool
@@ -2078,13 +2165,16 @@ func (repo *Repository) markToEvent(mark string) Event {
         if repo._eventByMark == nil {
 		repo._eventByMark = make(map[string]Event)
 		for _, event := range repo.events {
-			repo._eventByMark[event.getMark()] = event
+			key := event.getMark()
+			if key != "" {
+				repo._eventByMark[key] = event
+			}
 		}
 	}
 	return repo._eventByMark[mark]
 }
 
-// inex returms the index of the specified object in the main even list
+// index returns the index of the specified object in the main even list
 func (repo *Repository) index(obj Event) int {
 	for ind, event := range repo.events {
                 if event == obj {
@@ -2095,6 +2185,21 @@ func (repo *Repository) index(obj Event) int {
         panic(errmsg)
 }
 
+// find gets an object index by mark
+func (repo *Repository) find(mark string) int {
+        if repo._markToIndex == nil {
+		repo._markToIndex = make(map[string]int)
+		for ind, event := range repo.events {
+			mark = event.getMark()
+			if mark != "" {
+				repo._markToIndex[mark] = ind+1
+			}
+		}
+	}
+	// return -1 if not found
+	// Python version returned None
+        return repo._markToIndex[mark]-1
+}
 
 // Blob represents a detached blob of data referenced by a mark.
 type Blob struct {
@@ -2107,7 +2212,7 @@ type Blob struct {
 	start      int64
 	size       int64
 	abspath    string
-	deletehook bool		// FIXME: Polymorphic.
+	deletehook bool
 }
 
 var blobseq int
@@ -2237,7 +2342,7 @@ func (b *Blob) sha() string {
 	return fmt.Sprintf("%x", sha1.Sum([]byte(b.getContent())))
 }
 
-// getMark returns the object's identifying mark
+// getMark returns the blob's identifying mark
 func (b Blob) getMark() string {
 	return b.mark
 }
@@ -2245,7 +2350,6 @@ func (b Blob) getMark() string {
 // setMark sets the blob's mark and updates the mark lookup table.
 func (b *Blob) setMark(mark string) string {
         b.mark = mark
-        b.repo._eventByMark[mark] = b
         return mark
 }
 
@@ -2300,16 +2404,16 @@ type Tag struct {
 	name string
 	color string
 	committish string
-	target Event
+	target *Commit
 	tagger *Attribution
 	comment string
-	deletehook string	// FIXME: polymorphic
+	deletehook bool
 	legacyID string
 }
 
 func newTag(repo *Repository,
 	name string, committish string,
-	target Event, tagger *Attribution, comment string) *Tag {
+	target *Commit, tagger *Attribution, comment string) *Tag {
 	t := new(Tag)
 	t.name = name
 	t.tagger = tagger
@@ -2318,39 +2422,31 @@ func newTag(repo *Repository,
 	return t
 }
 
-// getMark returns the object's identifying mark
+// getMark returns the tag's identifying mark
 // Not actually used, needed to satisfy Event interface
 func (t Tag) getMark() string {
-	return t.committish
+	return ""
 }
 
 // remember records an attachment to a repo and commit.
-func (t *Tag) remember(repo *Repository, committish string, target Event) {
+func (t *Tag) remember(repo *Repository, committish string, target *Commit) {
         t.repo = repo
-        if target != nil {
-		t.target = target
+	t.target = target
+	repo.events = append(repo.events, t)
+        if t.target != nil {
 		t.committish = target.getMark()
         } else {
-		repo.events = append(repo.events, t)
 		t.committish = committish
-		if t.repo != nil {
-			t.target = t.repo.markToEvent(t.committish)
-		}
-		// FIXME: When we have Commit objects
-		//if t.target != nil {
-		//	switch v := target.(type) {
-		//	case Commit:
-		//		t.target.attachments.append(t)
-		//	}
-		//}
+	}
+	if t.target != nil {
+		t.target.attach(t)
 	}
 }
 
 // forget removes this tag's attachment to its commit and repo.
 func (t *Tag) forget() {
         if t.target != nil {
-		//FIXME: When we have Commit objects
-                //t.target.attachments.remove(t)
+                t.target.detach(t)
 		t.target = nil
 	}
         t.repo = nil
@@ -2358,9 +2454,7 @@ func (t *Tag) forget() {
 
 // index returns our 0-origin index in our repo.
 func (t *Tag) index() int {
-	// FIXME: When we have index()
-        //return t.repo.index(self)
-	return 0
+        return t.repo.index(t)
 }
 
 // idMe IDs this tag for humans."
@@ -2420,7 +2514,7 @@ func (t *Tag) emailOut(modifiers stringSet, eventnum int,
         if filterRegexp != nil{
 		for key, _ := range msg.header {
 			if len(filterRegexp.Find([]byte(key + ":"))) > 0 {
-				delete(msg.header, key)
+				msg.deleteHeader(key)
 			}
 		}
 	}
@@ -2430,7 +2524,7 @@ func (t *Tag) emailOut(modifiers stringSet, eventnum int,
 
 
 // emailIn updates this Tag from a parsed message block.
-func (t *Tag) emailIn(msg MessageBlock, fill bool) bool {
+func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
         tagname := msg.getHeader("Tag-Name")
         if tagname == ""  {
 		errmsg := fmt.Sprintf("update to tag %s is malformed", t.name)
@@ -2485,7 +2579,7 @@ func (t *Tag) emailIn(msg MessageBlock, fill bool) bool {
                 modified = true
 		t.legacyID = legacy
 	}
-        newcomment := msg.payload()
+        newcomment := msg.getPayload()
         if globalOptions.Contains("canonicalize") {
 		newcomment = strings.TrimSpace(newcomment)
 		newcomment = strings.Replace(newcomment, "\r\n", "\n", 1)
@@ -2580,7 +2674,7 @@ func (t *Tag) stamp(_modifiers stringSet, _eventnum int, cols int) string {
 }
 
 // String dumps this tag in import-stream format
-func (t *Tag) String() string {
+func (t Tag) String() string {
         parts := []string{fmt.Sprintf("tag %s\n", t.name)}
         if t.legacyID != "" {
 		id := fmt.Sprintf("#legacy-id %s\n", t.legacyID)
@@ -2606,12 +2700,12 @@ type Reset struct {
         repo *Repository
         ref string
         committish string
-        target Event
-        deletehook string
+        target *Commit
+        deletehook bool
         color string
 }
 
-func newReset(repo *Repository, ref string, committish string, target Event) *Reset {
+func newReset(repo *Repository, ref string, committish string, target *Commit) *Reset {
 	reset := new(Reset)
 	reset.repo = repo
 	reset.ref = ref
@@ -2626,14 +2720,14 @@ func (reset *Reset) idMe() string {
         return fmt.Sprintf("reset-%s@%d", reset.ref, reset.repo.index(reset))
 }
 
-// getMark returns the object's identifying mark
+// getMark returns the reset's identifying mark
 // Not actually used, needed to satisfy Event interface
 func (reset Reset) getMark() string {
-	return reset.committish
+	return ""
 }
 
 // remember records an attachment to a repo and commit.
-func (reset *Reset) remember(repo *Repository, committish string, target Event) {
+func (reset *Reset) remember(repo *Repository, committish string, target *Commit) {
         reset.repo = repo
         if target != nil {
 		reset.target = target
@@ -2641,19 +2735,18 @@ func (reset *Reset) remember(repo *Repository, committish string, target Event) 
         } else {
 		reset.committish = committish
 		if reset.repo != nil {
-			reset.target = reset.repo.markToEvent(reset.committish)
+			reset.target = reset.repo.markToEvent(reset.committish).(*Commit)
 		}
 	}
 	if reset.target != nil {
-		//reset.target.attachments.append(self)
+		reset.target.attach(reset)
 	}
 }
 
 // forget loses this reset's attachment to its commit and repo.
 func (reset *Reset) forget() {
         if reset.target != nil {
-		//FIXME: When we have Commit objects
-		//reset.target.attachments.remove(reset)
+		reset.target.detach(reset)
 		reset.target = nil
 	}
         reset.repo = nil
@@ -2708,19 +2801,6 @@ func (fileop *FileOp) setOp(op string) {
 	fileop.op = op
 }
 
-/*
-    func sortkey(fileop):
-        "Compute a key suited for sorting FileOps as git fast-export does."
-	const sortkeySentinel = "@"
-        # As it says, 'Handle files below a directory first, in case they are
-        # all deleted and the directory changes to a file or symlink.'
-        # First sort the renames last, then sort lexicographically
-        # We append a sentinel to make sure "a/b/c" < "a/b" < "a".
-        return (fileop.op == intern("R"),
-                (fileop.path or fileop.source or "") + \
-                        fileop.sortkey_sentinel)
-*/
-
 // Thiis is a space-optimization hack.  We count on the compiler to
 // put this in the text segment and pass around just one reference to it
 // If we ever think the implementation has changed to falsify this assumption,
@@ -2763,6 +2843,8 @@ func (fileop *FileOp) construct(opargs ...string) *FileOp {
 
 var modifyRE = regexp.MustCompile(`(M) ([0-9]+) (\S+) (.*)`)
 
+// parse interprets a fileop dump line
+// FIXME: We don't yet interpret all cases of quoted strings in M/N/R/C correctly
 func (fileop *FileOp) parse(opline string) *FileOp {
 	shlex := func(text string) (string, string) {
 		opline = strings.TrimSpace(opline)
@@ -2774,7 +2856,15 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 			opline = strings.Replace(opline, `" "`, "\x00", 1)
 			fields := strings.Split(opline, "\x00")
 			if len(fields) == 2 {
-				return fields[0], fields[1]
+				fld1, err1 := strconv.Unquote(fields[0])
+				if err1 != nil {
+					panic(err1)
+				}
+				fld2, err2 := strconv.Unquote(fields[1])
+				if err2 != nil {
+					panic(err2)
+				}
+				return fld1, fld2
 			}
 		}
 		// FIXME: Parse lines with just one pair of string quotes
@@ -2789,18 +2879,26 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 		fileop.mode = string(m[2])
 		fileop.ref = string(m[3])
 		fileop.path = string(m[4])
-		if fileop.path[0] == '"' && fileop.path[len(fileop.path)-1] == '"' {
-			fileop.path = fileop.path[1:len(fileop.path)-1]
-			fileop.path = intern(fileop.path)
+		if fileop.path[0] == '"' {
+			path, err := strconv.Unquote(fileop.path)
+			if err != nil {
+				panic(err)
+			}
+			fileop.path = path
 		}
+		fileop.path = intern(fileop.path)
 	} else if opline[0] == 'N' {
 		fileop.op = opN
 		fileop.ref, fileop.path = shlex(opline)
 	} else if opline[0] == 'D' {
 		fileop.op = opD
 		fileop.path = strings.TrimSpace(opline[2:len(opline)])
-		if fileop.path[0] == '"' && fileop.path[len(fileop.path)-1] == '"' {
-			fileop.path = fileop.path[1:len(fileop.path)-1]
+		if fileop.path[0] == '"' {
+			path, err := strconv.Unquote(fileop.path)
+			if err != nil {
+				panic(err)
+			}
+			fileop.path = path
 		}
 		fileop.path = intern(fileop.path)
 	} else if opline[0] == 'R' {
@@ -2843,473 +2941,833 @@ func (fileop *FileOp) paths(pathtype stringSet) stringSet {
         panic ("unknown fileop type" + fileop.op)
 }
 
+// relevant tells if two fileops touch any of the same filesthe same file(s)
+func (fileop *FileOp) relevant(other *FileOp) bool {
+        if fileop.op == deleteall || other.op == deleteall {
+		return true
+	}
+	return len(fileop.paths(nil).Intersection(other.paths(nil))) > 0
+}
+
+// String dumps this fileop in import-stream format
+func (fileop *FileOp) String() string {
+	quotifyIfNeeded := func(path string) string {
+		if len(strings.Split(path, " \t")) > 1 {
+			return strconv.Quote(path)
+		} else {
+			return path
+		}
+	}
+        if fileop.op == opM {
+		parts := fileop.op + " " + fileop.mode + " " + fileop.ref
+		parts += " " + quotifyIfNeeded(fileop.path) + "\n"
+		if fileop.ref == "inline" {
+			parts += fmt.Sprintf("data %d\n", len(fileop.inline))
+			parts += fileop.inline + "\n"
+		}
+		return parts
+        } else if fileop.op == opN {
+		parts := "N " + fileop.ref 
+		parts += " " + quotifyIfNeeded(fileop.path) + "\n"
+		if fileop.ref == "inline" {
+			parts += fmt.Sprintf("data %d\n", len(fileop.inline))
+			parts += fileop.inline + "\n"
+		}
+		return parts
+        } else if fileop.op == opD {
+		return "D " + quotifyIfNeeded(fileop.path) + "\n"
+	} else if fileop.op == opR || fileop.op == opC {
+		return fmt.Sprintf(`%s %s %s`, fileop.op,
+			quotifyIfNeeded(fileop.source),
+			quotifyIfNeeded(fileop.target)) + "\n"
+        } else if fileop.op == deleteall {
+		return fileop.op + "\n"
+        } else {
+		panic(fmt.Sprintf("unexpected op %s while writing", fileop.op))
+	}
+}
+
+
+// Callout is a stub object for callout marks in incomplete repository segments.
+type Callout struct {
+	mark string
+	branch string
+	_childNodes []string
+}
+
+func newCallout(mark string) *Callout {
+	callout := new(Callout)
+        callout.mark = mark
+        callout._childNodes = make([]string, 0)
+	return callout
+}
+
+func (callout *Callout) callout() string {
+        return callout.mark
+}
+
+func (callout Callout) getMark() string {
+        return callout.mark
+}
+
+func (callout Callout) idMe() string {
+        return fmt.Sprintf("callout-%s", callout.mark)
+}
+
+// Stub to satisfy Event interface - should never be used
+func (callout Callout) String() string {
+        return fmt.Sprintf("callout-%s", callout.mark)
+}
+
+// Commit represents a commit event in a fast-export stream
+type Commit struct {
+        repo *Repository
+        mark string             // Mark name of commit (may be None)
+        authors []Attribution   // Authors of commit
+        committer Attribution   // Person responsible for committing it.
+        comment string          // Commit comment
+        branch string           // branch name
+        fileops []FileOp        // blob and file operation list
+        properties OrderedMap	// commit properties (extension)
+        //filemap = None
+        color string
+        legacyID string         // Commit's ID in an alien system
+        //common = None         // Used only by the Subversion parser
+        deleteflag bool         // Flag used during deletion operations
+        attachments []Event     // Tags and Resets pointing at this commit
+        _parentNodes []Event    // list of parent nodes (Commits and Callouts)
+        _childNodes []Event     // list of child nodes
+        _pathset stringSet
+}
+
+func (commit Commit) getMark() string {
+        return commit.mark
+}
+
+func (commit Commit) String() string {
+        return ""	// FIXME: Stub to satify Event interface
+}
+
+func newCommit(repo *Repository) *Commit {
+	commit := new(Commit)
+	commit.repo = repo
+	commit.authors = make([]Attribution, 0)
+	commit.fileops = make([]FileOp, 0)
+	commit.properties = newOrderedMap()
+	commit.attachments = make([]Event, 0)
+	commit._childNodes = make([]Event, 0)
+	commit._parentNodes = make([]Event, 0)
+	//commit._pathset = nil
+	if repo != nil {
+		repo.events = append(repo.events, commit)
+	}
+	return commit
+}
+
+func (commit *Commit) detach(event Event) bool {
+	for i, el := range commit.attachments {
+		if event == el {
+			// Zero out the deleted element so it's GCed
+			copy(commit.attachments[i:], commit.attachments[i+1:])
+			commit.attachments[len(commit.attachments)-1] = nil
+			commit.attachments = commit.attachments[:len(commit.attachments)-1]
+			return true
+		}
+	}
+	return false
+}
+
+func (commit *Commit) attach(event Event) {
+	commit.attachments = append(commit.attachments, event)
+}
+
+// index gives the commit's 0-origin index in our repo.
+func (commit *Commit) index() int {
+        return commit.repo.index(commit)
+}
+
+// idMe IDs this commit for humans.
+func (commit Commit) idMe() string {
+        myid := fmt.Sprintf("commit@%s", commit.mark)
+        if commit.legacyID != "" {
+		myid += fmt.Sprintf("=<%s>", commit.legacyID)
+	}
+        return myid
+}
+
+// when returns an imputed timestamp for sorting after unites.
+func (commit *Commit) when() time.Time {
+        return commit.committer.date.timestamp
+}
+
+// date returns the commit date, for purpose of display and reference
+func (commit *Commit) date() Date {
+        if commit.authors != nil {
+		return commit.authors[0].date
+	}
+        return commit.committer.date
+}
+
+// setBranch sets the repo's branch field.
+func (commit *Commit) setBranch(branch string) {
+        commit.branch = intern(branch)
+}
+
+// operations returns a list of ileops associated with this commit;
+// it hides how this is represented.
+func (commit *Commit) operations() []FileOp {
+        return commit.fileops
+}
+
+// setOperations replaces the set of fileops associated with this commit.
+func (commit *Commit) setOperations(ops []FileOp) {
+        commit.fileops = ops
+}
+
+// appendOperation appends to the set of fileops associated with this commit.
+func (commit *Commit) appendOperation(op FileOp) {
+        commit.fileops = append(commit.fileops, op)
+}
+
+// prependOperation prepends to the set of fileops associated with this commit.
+func (commit *Commit) prependOperation(op FileOp) {
+        commit.fileops = append([]FileOp{op}, commit.fileops...)
+}
+
+// sortOperations sorts fileops on a commit the same way git-fast-export does
+func (commit *Commit) sortOperations() {
+	const sortkeySentinel = "@"
+	pathpart := func(fileop FileOp) string {
+		if fileop.path != "" {
+			return fileop.path
+		}
+		if fileop.source != "" {
+			return fileop.path
+		}
+		return ""
+	}
+        // As it says, 'Handle files below a directory first, in case they are
+        // all deleted and the directory changes to a file or symlink.'
+        // First sort the renames last, then sort lexicographically
+        // We append a sentinel to make sure "a/b/c" < "a/b" < "a".
+	lessthan :=  func(i, j int) bool {
+		if commit.fileops[i].op != "R" && commit.fileops[j].op == "R" {
+			return true
+		}
+		left := pathpart(commit.fileops[i]) + sortkeySentinel
+		right := pathpart(commit.fileops[j]) + sortkeySentinel
+		return left < right
+	}
+        sort.Slice(commit.fileops, lessthan)
+}
+
+// bump increments the timestamps on this commit to avoid time collisions.
+func (commit *Commit) bump(i int) {
+	delta := time.Second * time.Duration(i)
+        commit.committer.date.timestamp.Add(delta)
+        for _, author := range commit.authors {
+		author.date.timestamp.Add(delta)
+	}
+}
+
+// clone replicates this commit, without its fileops, color, children, or tags.
+func (commit *Commit) clone(repo *Repository) *Commit {
+        c := newCommit(repo)
+        c.committer = commit.committer
+        c.authors = make([]Attribution, len(commit.authors))
+	copy(c.authors, commit.authors)
+	c.comment = commit.comment
+	c.mark = commit.mark
+	c.branch = commit.branch
+        return c
+}
+
+// showlegacy returns a legacy ID in the expected form for the ancestral system.
+func (commit *Commit) showlegacy() string {
+        if commit.legacyID == "" {
+		return ""
+	}
+        // Special case for Subversion
+        if commit.repo != nil && commit.repo.vcs != nil && commit.repo.vcs.name == "svn" {
+		return "r" + commit.legacyID
+	}
+	return commit.legacyID
+}
+
+// lister enables do_list() to report commits.
+func (commit *Commit) lister(_modifiers stringSet, eventnum int, cols int) string {
+        topline := strings.Split(commit.comment, "\n")[0]
+        summary := fmt.Sprintf("%6d %s %6s ",
+		eventnum+1, commit.date().rfc3339(), commit.mark)
+        if commit.legacyID != "" {
+		legacy := fmt.Sprintf("<%s>", commit.legacyID)
+		summary += fmt.Sprintf("%6s ", legacy)
+	}
+        report := summary + topline
+        if cols > 0 {
+		report = report[:cols]
+	}
+        return report
+}
+
+// stamp enables do_stamp() to report action stamps.
+func (commit *Commit) stamp(modifiers stringSet, _eventnum int, cols int) string {
+        report := "<" + commit.actionStamp() + "> " + strings.Split(commit.comment, "\n")[0]
+        if cols > 0 {
+		report = report[:cols]
+	}
+        return report
+}
+
+// tags enables do_tags() to report tag tip commits.
+func (commit *Commit) tags(_modifiers stringSet, eventnum int, _cols int) string {
+        if commit.branch == "" || strings.Index(commit.branch, "/tags/") == -1 {
+		return ""
+	}
+	if commit.hasChildren() {
+		successorBranches := newStringSet()
+		for _, child := range commit.children() {
+			switch child.(type) {
+			case Commit:
+				successorBranches.Add(child.(Commit).branch)
+			case Callout:
+				complain("internal error: callouts do not have branches: %s",
+					child.idMe())
+			}
+		}
+		if len(successorBranches) == 1 && successorBranches[0] == commit.branch {
+			return ""
+		}
+	}
+        return fmt.Sprintf("%6d\tcommit\t%s", eventnum+1, commit.branch)
+}
+
+// emailOut enables do_mailbox_out() to report commit metadata.
+func (commit *Commit) emailOut(modifiers stringSet,
+	eventnum int, filterRegexp *regexp.Regexp) string {
+        msg, _ := newMessageBlock(nil)
+        msg.setHeader("Event-Number", fmt.Sprintf("%d", eventnum+1))
+        msg.setHeader("Event-Mark", commit.mark)
+        msg.setHeader("Branch", commit.branch)
+        msg.setHeader("Parents", strings.Join(commit.parentMarks(), " "))
+        if commit.authors != nil && len(commit.authors) > 0 {
+		commit.authors[0].emailOut(modifiers, msg, "Author")
+		for i, coauthor := range commit.authors[1:] {
+			coauthor.emailOut(modifiers, msg, "Author" + fmt.Sprintf("%d", 2+i))
+		}
+		commit.committer.emailOut(modifiers, msg, "Committer")
+	}
+        if commit.legacyID != "" {
+		msg.setHeader("Legacy-ID", commit.legacyID)
+	}
+        if len(commit.properties.keys) > 0 {
+		for _, name := range commit.properties.keys {
+			hdr := ""
+			for _, s := range strings.Split(name, "-") {
+				hdr += strings.Title(s)
+			}
+			value := commit.properties.get(name)
+			value = strings.Replace(value, "\n", `\n`, 0)
+			value = strings.Replace(value, "\t", `\t`, 0)
+			msg.setHeader("Property-" + hdr, value)
+		}
+	}
+	check := strings.Split(commit.comment, "\n")[0]
+	if len(check) > 54 {
+		check = check[0:54]
+	}
+        msg.setHeader("Check-Text", check)
+        msg.setPayload(commit.comment)
+        if !strings.HasSuffix(commit.comment, "\n") {
+		complain("in commit %s, comment was not LF-terminated.",
+			commit.mark)
+	}
+        if filterRegexp != nil {
+		for _, key := range msg.hdnames {
+			if len(filterRegexp.Find([]byte(key + ":"))) > 0 {
+			msg.deleteHeader(key)
+		}
+	    }
+	}
+	return msg.String()
+}
+
+// actionStamp controls how a commit stamp is made.
+func (commit *Commit) actionStamp() string {
+        // Prefer the author stamp because that doesn't change when patches
+        // are replayed onto a repository, while the commit stamp will.
+        if commit.authors != nil && len(commit.authors) > 0 {
+		return commit.authors[0].actionStamp()
+	}
+        return commit.committer.actionStamp()
+}
+
+func stringSliceEqual(a, b []string) bool {
+	// If one is nil, the other must also be nil.
+	if (a == nil) != (b == nil) { 
+		return false; 
+	}
+
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+var authorRE = regexp.MustCompile("Author[0-9]*$")
+
+// emailIn updates this commit from a parsed email message.
+func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
+        modified := false
+	newbranch := msg.getHeader("Branch")
+        if newbranch != "" && commit.branch != newbranch {
+		modified = true
+		commit.setBranch(newbranch)
+	}
+	newparents := msg.getHeader("Parents") 
+        if newparents != "" {
+		newParentList := strings.Split(newparents, " ")
+		if !stringSliceEqual(commit.parentMarks(), newParentList) {
+			modified = true
+			commit.setParentMarks(newParentList)
+		}
+	}
+	c := &commit.committer
+	newcommitter := msg.getHeader("Committer")
+        if newcommitter != "" {
+                newname, newemail, _ := parseAttributionLine([]byte(newcommitter))
+                if c.name != newname || c.email != newemail {
+			c.name, c.email = newname, newemail
+			if commit.repo != nil {
+				announce(debugEMAILIN, "in %s, Committer is modified", commit.idMe())
+			}
+			modified = true
+		}
+	}
+	newcommitdate, err := newDate(msg.getHeader("Committer-Date"))
+	if err != nil {
+		panic(fmt.Sprintf("bad Committer-Date: %v", err))
+	}
+        if newcommitdate.isZero() && !newcommitdate.Equal(c.date) {
+                if commit.repo != nil {
+			announce(debugEMAILIN, "in %s, Committer-Date is modified '%s' -> '%s' (delta %d)",
+				commit.idMe(),
+				c.date, newcommitdate,
+				c.date.delta(newcommitdate))
+		}
+                c.date = newcommitdate
+                modified = true
+	}
+	newauthor := msg.getHeader("Author")
+        if  newauthor != "" {
+		authorkeys := []string{} 
+		for _, hd := range msg.hdnames {
+			if len(authorRE.Find([]byte(hd))) > 0 {
+				authorkeys = append(authorkeys, hd)
+			}
+		}
+		// Potential minor bug here if > 10 authors;
+		// lexicographic sort order doesn't match numeric
+		// msg is *not* a dict so the .keys() is correct
+		sort.Strings(authorkeys)
+		for i := 0; i < len(authorkeys) - len(commit.authors); i++ {
+			commit.authors = append(commit.authors, *newAttribution(nil))
+		}
+		// Another potential minor bug: permuting the set of authors
+		// will look like a modification, as old and new authors are
+		// compaired pairwise rather than set equality being checked.
+		// Possibly a feature if one thinks order is significant, but
+		// I just did it this way because it was easier.
+		for i, hdr := range authorkeys {
+			c := &commit.authors[i]
+			newname, newemail, _ := parseAttributionLine([]byte(msg.getHeader(hdr)))
+			if c.name != newname || c.email != newemail {
+				c.name, c.email = newname, newemail
+				announce(debugEMAILIN,
+					"in commit %s, Author #%d is modified",
+					msg.getHeader("Event-Number"), i+1)
+				modified = true
+			}
+			newdate := msg.getHeader(hdr + "-Date")
+			if newdate != "" {
+				date, err := newDate(newdate)
+				if err != nil {
+					panic(fmt.Sprintf("bad Author-Date: %v", err))
+				}
+				if c.date.isZero() || !date.Equal(c.date) {
+					eventnum := msg.getHeader("Event-Number")
+					if commit.repo != nil && eventnum != "" {
+						announce(debugEMAILIN,
+							"in event %s, %s-Date #%d is modified",
+							eventnum, hdr, i+1)
+					}
+					c.date = date
+					modified = true
+				}
+			}
+		}
+	}
+	newlegacy := msg.getHeader("Legacy-ID")
+        if newlegacy != "" && newlegacy != commit.legacyID {
+                modified = true
+                commit.legacyID = newlegacy
+	}
+        newprops := newOrderedMap()
+        for _, prophdr := range msg.hdnames {
+		if !strings.HasPrefix(prophdr, "Property-") {
+			continue
+		}
+		propkey := strings.ToLower(prophdr[9:])
+		propval := msg.getHeader(prophdr)
+		if propval == "True" || propval == "False" {
+			newprops.set(propkey, propval)
+		} else {
+			newprops.set(propkey, strconv.Quote(propval))
+		}
+	}
+	propsModified := !reflect.DeepEqual(newprops, commit.properties)
+	if propsModified {
+		commit.properties = newprops
+		modified = true
+	}
+        newcomment := msg.getPayload()
+	if globalOptions.Contains("canonicalize") {
+		newcomment = strings.TrimSpace(newcomment)
+		newcomment = strings.Replace(newcomment, "\r\n", "\n", 1)
+		newcomment += "\n"
+	}
+        if newcomment != commit.comment {
+		announce(debugEMAILIN, "in %s, comment is modified %q -> %q",
+			commit.idMe(), commit.comment, newcomment)
+		modified = true
+		commit.comment = newcomment
+	}
+        if fill {
+		modified = true
+		if commit.committer.date.isZero() {
+			d, _ := newDate("")
+			commit.committer.date = d
+		}
+		if commit.committer.name == "" {
+			commit.committer.name, commit.committer.email = whoami()
+		}
+	}
+        return modified
+}
+
+// setMark sets the commit's mark.
+func (commit *Commit) setMark(mark string) string {
+        commit.mark = mark
+        return mark
+}
+
+// forget de-links this commit from its parents.
+func (commit *Commit) forget() {
+        commit.setParents([]Event{})
+        for _, fileop := range commit.operations() {
+            if fileop.op == opN {
+		    commit.repo.inlines -=1
+	    }
+	}
+        commit.repo = nil
+}
+
+// moveto changes the repo this commit is associated with.
+func (commit *Commit) moveto(repo *Repository) {
+        for _, fileop := range commit.operations() {
+		fileop.repo = repo
+		if fileop.op == opN {
+			commit.repo.inlines -=1
+			repo.inlines += 1
+		}
+	}
+        commit.repo = repo
+}
+
+// parents gets a list of this commit's parents.
+func (commit *Commit) parents() []Event {
+        return commit._parentNodes
+}
+
+// parentMarks hides the parent list behind a wrapper, so that we
+// can memoize the computation, which is very expensive and frequently
+// performed.
+func (commit *Commit) parentMarks() []string {
+	var out []string
+	for _, x := range commit._parentNodes {
+		out = append(out, x.getMark())
+	}
+	return out
+}
+
+// commitRemove removes all instances of a commit/callout pointer from a list
+func commitRemove(commitlist []Event, event Event) []Event {
+	for i, el := range commitlist {
+		if event == el {
+			// Zero out the deleted element so it's GCed
+			copy(commitlist[i:], commitlist[i+1:])
+			commitlist[len(commitlist)-1] = nil
+			commitlist = commitlist[:len(commitlist)-1]
+		}
+	}
+	return commitlist
+}
+
+func (commit *Commit) setParents(parents []Event) {
+        for _, parent := range commit._parentNodes {
+		// remove all occurrences of self in old parent's children cache
+		switch parent.(type) {
+		case (Commit):
+			parent.(*Commit)._childNodes = commitRemove(parent.(*Commit)._childNodes, commit)
+		case (Callout):
+			complain("not removing callout %s", parent.(Callout).mark)
+		}
+	}
+        commit._parentNodes = parents
+        for _, parent := range commit._parentNodes {
+		switch parent.(type) {
+		case Commit:
+			parent.(*Commit)._childNodes = append(parent.(*Commit)._childNodes, commit)
+		case Callout:
+			/* do nothing */
+		}
+	}
+        //commit.repo.invalidateManifests()	//FIXME: Method nonexistent 
+}
+
+func (commit *Commit) setParentMarks(marks []string) {
+	var clist []*Commit
+	for _, m := range marks {
+		clist = append(clist, commit.repo.markToEvent(m).(*Commit)) 
+	}
+}
+
+func (commit *Commit) addParentCommit(newparent *Commit) {
+        commit._parentNodes = append(commit._parentNodes, newparent)
+        newparent._childNodes = append(newparent._childNodes, commit)
+        //commit.repo.invalidateManifests() FIXME
+}
+
+func (commit *Commit) addParentByMark(mark string) {
+	newparent := commit.repo.markToEvent(mark).(*Commit)
+        if newparent == nil {
+		panic("ill-formed stream: cannot resolve " + mark)
+	}
+	commit.addParentCommit(newparent)
+}
+
+
+// callout generates a callout cookie for this commit.
+func (commit *Commit) callout() string {
+        return commit.actionStamp()
+}
+
+// is_callot tells if the specified mark field a callout?"
+func isCallout(mark string) bool {
+        return strings.Index(mark, "!") != -1
+}
+
+func (commit *Commit) addCallout(mark string) {
+        commit._parentNodes = append(commit._parentNodes, newCallout(mark))
+}
+
+func (commit *Commit) insertParent(idx int, mark string) {
+        newparent := commit.repo.markToEvent(mark)
+	// Stupid slice tricks: https://github.com/golang/go/wiki/SliceTricks
+        commit._parentNodes = append(commit._parentNodes[:idx], append([]Event{newparent}, commit._parentNodes[idx:]...)...)
+	switch newparent.(type) {
+	case Commit:
+		newparent.(*Commit)._childNodes = append(newparent.(*Commit)._childNodes, commit)
+	}
+        //commit.repo.invalidateManifests() FIXME
+}
+
+func (commit *Commit) removeParent(event *Commit) {
+        // remove *all* occurences of event in parents
+        commit._parentNodes = commitRemove(commit._parentNodes, event)
+        // and all occurences of self in event's children
+        event._childNodes = commitRemove(event._childNodes, commit)
+        // commit.repo.invalidateManifests() FIXME
+}
+
+func (commit *Commit) replace_parent(e1, e2 *Commit) {
+	for i, item := range commit._parentNodes {
+		if item == e1 {
+			commit._parentNodes[i] = e2
+			commitRemove(e1._childNodes, commit)
+			e2._childNodes = append(e2._childNodes, commit)
+			// commit.repo.invalidateManifests() FIXME
+			return
+		}
+	}
+}
+
+func (commit *Commit) hasParents() bool {
+	    return len(commit._parentNodes) > 0
+}
+
+func (commit *Commit) hasCallouts() bool {
+	for _, c := range commit._parentNodes {
+		switch c.(type) {
+		case Callout:
+			return true
+		}
+	}
+		
+	return false
+}
+
+// children gets a list of this commit's children (Commits or Callouts)."
+func (commit *Commit) children() []Event {
+        return commit._childNodes	
+}
+
+func (commit *Commit) childMarks() []string {
+	var out []string
+	for _, x := range commit._childNodes {
+		out = append(out, x.getMark())
+	}
+	return out
+}
+
+// hasChildren is a predicate - does this commit have children?"
+func (commit *Commit) hasChildren() bool {
+	return len(commit._childNodes) > 0
+}
+
+// firstChild gets the first child of this commit, or None if not hasChildren()."
+func (commit *Commit) firstChild() *Commit {
+	if len(commit._childNodes) == 0 {
+		return nil
+	}
+        return commit._childNodes[0].(*Commit)
+}
+
+// descendedFrom tells if this commit a descendent of the specified other?
+func (commit *Commit) descendedFrom(other *Commit) bool {
+        if !commit.hasParents() {
+            return false
+	}
+	for _, item := range commit.parents() {
+		if item == other {
+			return true
+		}
+	}
+	for _, item := range commit.parents() {
+		switch item.(type) {
+		case Commit:
+			if item.(*Commit).descendedFrom(other) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// cliques returns a dictionary mapping filenames to associated M cliques.
+// Change in behavior from Python: the map keys are not ordered.
+func (commit *Commit) cliques() map[string][]int {
+	cliques := make(map[string][]int)
+        for i, fileop := range commit.operations() {
+		if fileop.op == opM {
+			_, ok := cliques[fileop.path]
+			if !ok {
+				cliques[fileop.path] = make([]int, 0)
+			}
+			cliques[fileop.path] = append(cliques[fileop.path], i)
+		}
+	}
+        return cliques
+}
+
+// fileopDump reports file ops without data or inlines; used for debugging only.
+func (commit *Commit) fileopDump() {
+	banner := fmt.Sprintf("commit %d, mark %s:\n", commit.repo.find(commit.mark)+1, commit.mark)
+        os.Stdout.Write([]byte(banner))
+	for i, op := range commit.operations() {
+		report := fmt.Sprintf("%d: %-20s\n", i, op.String())
+		os.Stdout.Write([]byte(report))
+	}
+}
+
+
+// paths returns the set of all paths touched by this commit.
+func (commit *Commit) paths(pathtype stringSet) stringSet {
+        if commit._pathset == nil {
+		commit._pathset = newStringSet()
+		for _, fileop := range commit.operations() {
+			for _, item := range fileop.paths(pathtype) {
+				commit._pathset.Add(item)
+					
+			}
+		}
+	}
+        return commit._pathset
+}
+
+// invalidatePathsetCache gorce a rebuild on the next call to paths().
+func (commit *Commit) invalidatePathsetCache() {
+        commit._pathset = nil
+}
+
+// visible tells if a path is modified and not deleted in the ancestors
+func (commit *Commit) visible(path string) *Commit {
+        ancestor := commit
+        for {
+		parents := ancestor.parents()
+		if len(parents) == 0 {
+			break
+		}  else {
+			switch parents[0].(type) {
+			case Callout:
+				break
+			}
+			ancestor = parents[0].(*Commit)
+			for _, fileop := range ancestor.operations() {
+				if fileop.op == opD && fileop.path == path {
+					break
+				} else if fileop.op == opM && fileop.path == path {
+					return ancestor
+				} else if (fileop.op == opR || fileop.op == opC) && fileop.target == path {
+					return ancestor
+				}
+			}
+		}
+	}
+	return nil
+}
 
 /*
-    func (fileop *FileOp) relevant(self, other):
-        "Do two fileops touch the same file(s)?"
-        if fileop.op == FileOp.deleteall or other.op == FileOp.deleteall:
-            return True
-        else:
-            return fileop.paths() & other.paths()
-    func (fileop *FileOp) dump(self, vcs=None, options=None):
-        "Dump this fileop in import-stream format."
-        pacify_pylint(vcs)
-        pacify_pylint(options)
-        if fileop.op == opM:
-            showmode = fileop.mode
-            if isinstance(fileop.mode, int):
-                showmode = "%06o" % fileop.mode
-            parts = [" ".join((fileop.op, showmode, fileop.ref)), " "]
-            if len(fileop.path.split()) > 1:
-                parts.extend(('"', fileop.path, '"'))
-            else:
-                parts.append(fileop.path)
-            if fileop.ref == 'inline':
-                parts.append("\ndata %d\n%s" % (len(fileop.inline), fileop.inline))
-        else if fileop.op == opN:
-            parts = [" ".join((fileop.op, fileop.ref, fileop.path)), "\n"]
-            if fileop.ref == 'inline':
-                parts.append("data %d\n%s" % (len(fileop.inline), fileop.inline))
-        else if fileop.op == opD:
-            parts = ["D "]
-            if len(fileop.path.split()) > 1:
-                parts.extend(('"', fileop.path, '"'))
-            else:
-                parts.append(fileop.path)
-        else if fileop.op in (opR, opC):
-            parts = ['%s "%s" "%s"' %  (fileop.op, fileop.source, fileop.target)]
-        else if fileop.op == FileOp.deleteall:
-            parts = [fileop.op]
-        else:
-            raise Fatal("unexpected fileop %s while writing" % fileop.op)
-        return "".join(parts)
-    func (fileop *FileOp) String(self):
-        return fileop.dump(fileop.repo.vcs)
 
-class Callout(object):
-    "Stub object for callout marks in incomplete repository segments."
-    func __init__(self, mark):
-        self.mark = mark
-        self.branch = None
-        self._child_nodes = []
-    func callout(self):
-        return self.mark
+// FIXME: Can't translate these yet due to the dreaded PathMap
 
-class Commit(object):
-    "Generic commit object."
-    func __init__(self, repo=None):
-        self.repo = repo
-        self.mark = None             # Mark name of commit (may be None)
-        self.authors = []            # Authors of commit
-        self.committer = None        # Person responsible for committing it.
-        self.comment = None          # Commit comment
-        self.branch = None           # branch name
-        self.fileops = []            # blob and file operation list
-        self.properties = None	     # commit properties (extension)
-        self.filemap = None
-        self.color = None
-        self.legacyID = None        # Commit's ID in an alien system
-        self.common = None           # Used only by the Subversion parser
-        self.deletehook = None       # Hook used during deletion operations
-        self.attachments = []        # Tags pointing at this commit
-        self._parent_nodes = []      # list of parent nodes
-        self._child_nodes = []       # list of child nodes
-        self._pathset = None
-    func index(self):
-        "Our 0-origin index in our repo."
-        return self.repo.index(self)
-    func idMe(self):
-        "ID this commit for humans."
-        myid = "commit@%s" % self.mark
-        if self.legacyID:
-            myid += "=<%s>" % self.legacyID
-        return myid
-    func when(self):
-        "Imputed timestamp for sorting after unites."
-        return self.committer.date.timestamp
-    func date(self):
-        "Commit date, for purpose of display and reference"
-        if self.authors:
-            return self.authors[0].date
-        return self.committer.date
-    func set_branch(self, branch):
-        "Set the repo's branch field."
-        self.branch = intern(branch)
-    func operations(self):
-        "Fileops associated with this commit; hides how this is represented."
-        return self.fileops
-    func set_operations(self, ops):
-        "Replace the set of fileops associated with this commit."
-        self.fileops = ops
-    func append_operation(self, op):
-        "Append to the set of fileops associated with this commit."
-        self.fileops.append(op)
-    func prepend_operation(self, op):
-        "Prepend to the set of fileops associated with this commit."
-        self.fileops.insert(0, op)
-    func sort_operations(self):
-        "Sort fileops the same way git-fast-export does."
-        self.fileops.sort(key=FileOp.sortkey)
-    func bump(self, i=1):
-        "Bump the timestamps on this commit."
-        self.committer.date.timestamp += i
-        for author in self.authors:
-            author.date.timestamp += i
-    func clone(self, repo=None):
-        "Clone this commit, without its fileops, color and children."
-        c = copy.copy(self)
-        c.committer = copy.deepcopy(self.committer)
-        c.authors = copy.deepcopy(self.authors)
-        c.set_operations([])
-        c.filemap = None
-        c._pathset = None
-        c.color = None
-        if repo is not None:
-            c.repo = repo
-        c._child_nodes = []
-        # use the encapsulation to set parents instead of relying
-        # on the copy, so that Commit can do its bookkeeping.
-        c._parent_nodes = [] # avoid confusing set_parents()
-        c.set_parents(list(self.parents()))
-        return c
-    func showlegacy(self):
-        "Show a legacy ID in the expected form for the ancestral system."
-        if not self.legacyID:
-            return None
-        # Special case for Subversion
-        if self.repo && self.repo.vcs && self.repo.vcs.name == "svn":
-            return "r" + self.legacyID
-        else:
-            return self.legacyID
-    func lister(self, _modifiers, eventnum, cols):
-        "Enable do_list() to report commits."
-        topline = self.comment.split("\n")[0]
-        summary = "%6d %s %6s " % \
-                      (eventnum+1, self.date().rfc3339(), self.mark)
-        if self.legacyID:
-            legacy = "<%s>" % self.legacyID
-            summary += "%6s " % legacy
-        report = (summary + topline)
-        if cols:
-            report = report[:cols]
-        return report
-    func tip(self, _modifiers, eventnum, cols):
-        "Enable do_tip() to report deduced branch tips."
-        summary = "%6d %s %6s " % \
-                      (eventnum+1, self.date().rfc3339(), self.mark)
-        report = (summary + self.head())
-        if cols:
-            report = report[:cols]
-        return report
-    func stamp(self, _modifiers, _eventnum, cols):
-        "Enable do_stamp() to report action stamps."
-        report = "<" + self.actionStamp() + "> " + self.comment.split("\n")[0]
-        if cols:
-            report = report[:cols]
-        return report
-    func tags(self, _modifiers, eventnum, _cols):
-        "Enable do_tags() to report tag tip commits."
-        if not self.branch or "/tags/" not in self.branch:
-            return None
-        if self.has_children():
-            successor_branches = {child.branch for child in self.children() if child.parents()[0] == self}
-            if len(successor_branches) == 1 && successor_branches.pop() == self.branch:
-                return None
-        return "%6d\tcommit\t%s" % (eventnum+1, self.branch)
-    func emailOut(self, modifiers, eventnum, filterRegexp=None):
-        "Enable do_mailbox_out() to report commit metadate."
-        msg = MessageBlock()
-        msg["Event-Number"] = str(eventnum+1)
-        msg["Event-Mark"] = self.mark
-        msg["Branch"] = self.branch
-        msg["Parents"] = " ".join(self.parent_marks())
-        if self.authors:
-            self.authors[0].emailOut(modifiers, msg, "Author")
-            for (i, coauthor) in enumerate(self.authors[1:]):
-                coauthor.emailOut(msg, "Author" + repr(2+i))
-        self.committer.emailOut(modifiers, msg, "Committer")
-        if self.legacyID:
-            msg["Legacy-ID"] = self.legacyID
-        if self.properties:
-            for (name, value) in self.properties.items():
-                hdr = "-".join(s.capitalize() for s in name.split("-"))
-                value = value.replace("\n", r"\n")
-                value = value.replace("\t", r"\t")
-                msg["Property-" + hdr] = value
-        msg["Check-Text"] = self.comment.strip().split('\n')[0][:54]
-        msg.setPayload(self.comment)
-        if not self.comment.endswith("\n"):
-            complain("in commit %s, comment was not LF-terminated." % self.mark)
-        if filterRegexp:
-            for key in msg.keys():
-                if not filterRegexp.match(polybytes(key + ":")):
-                    del msg[key]
-        return str(msg)
-    func actionStamp(self):
-        "Control how a commit stamp is made."
-        # Prefer the author stamp because that doesn't change when patches
-        # are replayed onto a repository, while the commit stamp will.
-        if self.authors:
-            return self.authors[0].actionStamp()
-        return self.committer.actionStamp()
-    func emailIn(self, msg, fill=False):
-        "Update this commit from a parsed email message."
-        modified = False
-        if "Branch" in msg:
-            if self.branch != msg["Branch"]:
-                modified = True
-            self.set_branch(msg["Branch"])
-        if "Parents" in msg:
-            if self.parent_marks() != msg["Parents"].split():
-                modified = True
-            self.set_parent_marks(msg["Parents"].split())
-        if "Committer" in msg:
-            try:
-                (newname, newemail, _extra) = Attribution.parseaddr(msg["Committer"])
-
-            except ValueError:
-                raise Fatal("malformed Committer field")
-            if not newemail:
-                raise Fatal("can't recognize address in Committer: %s" % msg["Committer"])
-            else:
-                if self.committer.name != newname or self.committer.email != newemail:
-                    (self.committer.name, self.committer.email) = (newname, newemail)
-                    if self.repo:
-                        announce(debugEMAILIN, "in %s, Committer is modified" % self.idMe())
-                    modified = True
-        if "Committer-Date" in msg:
-            date = Date(msg["Committer-Date"])
-            if self.committer.date is None or date != self.committer.date:
-                if self.repo:
-                    announce(debugEMAILIN, "in %s, Committer-Date is modified '%s' -> '%s' (delta %d)" \
-                          % (self.idMe(),
-                             self.committer.date, date,
-                             self.committer.date.delta(date)))
-                self.committer.date = date
-                modified = True
-        if "Author" in msg:
-            author_re = re.compile(r"Author[0-9]*$".encode('ascii'))
-            # Potential minor bug here if > 10 authors;
-            # lexicographic sort order doesn't match numeric
-            # msg is *not* a dict so the .keys() is correct
-            authorkeys = sorted(map(polystr, filter(author_re.match, map(polybytes, msg.keys()))))
-            for i in range(len(authorkeys) - len(self.authors)):
-                self.authors.append(Attribution())
-            # Another potential minor bug: permuting the set of authors
-            # will look like a modification, as old and new authors are
-            # compaired pairwise rather than set equality being checked.
-            # Possibly a feature if one thinks order is significant, but
-            # I just did it this way because it was easier.
-            for (i, hdr) in enumerate(authorkeys):
-                try:
-                    (newname, newemail, _extra) = Attribution.parseaddr(msg[hdr])
-                except ValueError:
-                    raise Fatal("malformed Author field")
-                if not newemail:
-                    raise Fatal("can't recognize address in %s: %s" % (hdr, msg[hdr]))
-                else:
-                    if self.authors[i].name != newname or self.authors[i].email != newemail:
-                        (self.authors[i].name, self.authors[i].email) = (newname, newemail)
-                        announce(debugEMAILIN, "in commit %s, Author #%d is modified" \
-                                  % (msg["Event-Number"], i+1))
-                        modified = True
-                if hdr + "-Date" in msg:
-                    date = Date(msg[hdr + "-Date"])
-                    if self.authors[i].date is None or date != self.authors[i].date:
-                        if self.repo && msg["Event-Number"]:
-                            announce(debugEMAILIN, "in event %s, %s-Date #%d is modified" \
-                                     % (msg["Event-Number"], hdr, i+1))
-                        self.authors[i].date = date
-                        modified = True
-        if "Legacy-ID" in msg:
-            if msg["Legacy-ID"] != self.legacyID:
-                modified = True
-                self.legacyID = msg["Legacy-ID"]
-        newprops = collections.OrderedDict()
-        for prophdr in msg.keys():
-            if not prophdr.startswith("Property-"): continue
-            propkey = prophdr[9:].lower()
-            propval = msg[prophdr]
-            if propval == "True":
-                propval = True
-            else if propval == "False":
-                propval = False
-            else:
-                propval = propval.replace(r"\n", "\n")
-                propval = propval.replace(r"\t", "\t")
-            newprops[propkey] = propval
-        modified |= (newprops != self.properties)
-        self.properties = newprops
-        newcomment = msg.get_payload()
-        if global_options["canonicalize"]:
-            newcomment = newcomment.strip() + '\n'
-        if newcomment != self.comment:
-            announce(debugEMAILIN, "in %s, comment is modified %s -> %s" \
-                      % (self.idMe(), repr(self.comment), repr(newcomment)))
-            modified = True
-            self.comment = newcomment
-        if fill:
-            modified = True
-            if self.committer.date is None:
-                self.committer.date = Date(None)
-            if self.committer.name is None:
-                (self.committer.name, self.committer.email) = whoami()
-        return modified
-    func setMark(self, mark):
-        "Set the commit's mark."
-        self.mark = mark
-        self.repo._eventByMark[mark] = self
-        return mark
-    func forget(self):
-        "De-link this commit from its parents."
-        self.set_parents([])
-        for fileop in self.operations():
-            if fileop.op == opN:
-                self.repo.inlines -=1
-        self.repo = None
-    func moveto(self, repo):
-        "Change the repo this commit is associated with."
-        for fileop in self.operations():
-            fileop.repo = repo
-            if fileop.op == opN:
-                self.repo.inlines -=1
-                repo.inlines += 1
-        self.repo = repo
-    # Hide the parent list behind an interface, so that we can memoize
-    # the computation, which is very expensive and frequently
-    # performed.
-    func parents(self):
-        "Get a list of this commit's parents."
-        return self._parent_nodes
-    func parent_marks(self):
-        return [x.mark for x in self._parent_nodes]
-    func set_parent_marks(self, marks):
-        self.set_parents([self.repo.markToEvent(x) for x in marks])
-    func set_parents(self, parents):
-        for parent in self._parent_nodes:
-            # remove all occurences of self in old parent's children cache
-            parent._child_nodes = [n for n in parent._child_nodes if n is not self]
-        self._parent_nodes = parents
-        assert all(self._parent_nodes)
-        for parent in self._parent_nodes:
-            parent._child_nodes.append(self)
-        self.repo.invalidate_manifests()
-    func add_parent(self, mark):
-        if isinstance(mark, Commit):
-            newparent = mark
-        else:
-            newparent = self.repo.markToEvent(mark)
-        if not newparent:
-            raise Fatal("ill-formed stream: cannot resolve %s" % mark)
-        self._parent_nodes.append(newparent)
-        newparent._child_nodes.append(self)
-        self.repo.invalidate_manifests()
-    func callout(self):
-        "Generate a callout for this commit."
-        return self.actionStamp()
-    @staticmethod
-    func is_callout(mark):
-        "Is the specified mark field a callout?"
-        return "!" in mark
-    func add_callout(self, mark):
-        self._parent_nodes.append(Callout(mark))
-    func insert_parent(self, idx, mark):
-        newparent = self.repo.markToEvent(mark)
-        assert(newparent)
-        self._parent_nodes.insert(idx, newparent)
-        newparent._child_nodes.append(self)
-        self.repo.invalidate_manifests()
-    func remove_parent(self, event):
-        # remove *all* occurences of event in parents
-        self._parent_nodes = [n for n in self._parent_nodes if n is not event]
-        # and all occurences of self in events children
-        event._child_nodes = [n for n in event._child_nodes if n is not self]
-        self.repo.invalidate_manifests()
-    func replace_parent(self, e1, e2):
-        self._parent_nodes[self._parent_nodes.index(e1)] = e2
-        e1._child_nodes.remove(self)
-        e2._child_nodes.append(self)
-        self.repo.invalidate_manifests()
-    func has_parents(self):
-        return bool(self._parent_nodes)
-    func has_callouts(self):
-        return bool([c for c in self._parent_nodes if isinstance(c, Callout)])
-    func children(self):
-        "Get a list of this commit's children."
-        return self._child_nodes
-    func child_marks(self):
-        return [x.mark for x in self._child_nodes]
-    func has_children(self):
-        "Predicate - does this commit have children?"
-        return bool(self._child_nodes)
-    func first_child(self):
-        "Get the first child of this commit, or None if not has_children()."
-        return self._child_nodes[0]
-    func descended_from(self, other):
-        "Is this commit a descendent of the specified other?"
-        if not self.has_parents():
-            return False
-        else if other in self.parents():
-            return True
-        else:
-            return any(parent.descended_from(other) \
-                        for parent in self.parents())
-    func cliques(self):
-        "Return a dictionary mapping filenames to associated M cliques."
-        cliques = collections.OrderedDict()
-        for (i, fileop) in enumerate(self.operations()):
-            if fileop.op == opM: cliques.setdefault(fileop.path, []).append(i)
-        return cliques
-    func fileop_dump(self):
-        "Dump file ops without data or inlines; used for debugging only."
-        os.Stdout.write("commit %d, mark %s:\n" % (self.repo.find(self.mark)+1, self.mark))
-        for (i, op) in enumerate(self.operations()):
-            if op is not None:
-                os.Stdout.write("%d: %-20s\n" % (i, str(op)))
-    func paths(self, pathtype=None):
-        "Return the set of all paths touched by this commit."
-        if self._pathset is None:
-            self._pathset = set()
-            for fileop in self.operations():
-                self._pathset |= fileop.paths(pathtype)
-        return self._pathset
-    func invalidate_pathset_cache(self):
-        "Force a rebuild on the next call to paths()."
-        self._pathset = None
-    func visible(self, path):
-        "Is the specified path modified and not deleted in the ancestors?"
-        ancestor = self
-        while True:
-            parents = ancestor.parents()
-            if not parents:
-                break
-            else:
-                ancestor = parents[0]
-                for fileop in ancestor.operations():
-                    if fileop.op == opD && fileop.path == path:
-                        break
-                    else if fileop.op == opM && fileop.path == path:
-                        return ancestor
-                    else if fileop.op in (opR, opC) && fileop.target == path:
-                        return ancestor
-        return None
-    func manifest(self):
+func (commit *Commit) manifest() {
         "Return a map from paths to marks for files existing at this commit."
-        self.repo._has_manifests = True
+        commit.repo._hasManifests = true
         sys.setrecursionlimit(max(
                 sys.getrecursionlimit(),
-                len(self.repo.events) * 2))
-        return self._manifest()
-    func _manifest(self):
-        if self.filemap is not None:
-            return self.filemap
-        # Get the first parent manifest, or an empty one.
+                len(commit.repo.events) * 2))
+        return commit._manifest()
+}
+
+func (commit *Commit) _manifest() {
+        if commit.filemap is not None:
+            return commit.filemap
+        // Get the first parent manifest, or an empty one.
         try:
-            ancestors = self.parents()[0]._manifest().snapshot()
+            ancestors = commit.parents()[0]._manifest().snapshot()
         except IndexError:
             ancestors = PathMap()
-        # Take own fileops into account.
-        for fileop in self.operations():
+        // Take own fileops into account.
+        for fileop in commit.operations():
             if fileop.op == opM:
                 ancestors[fileop.path] = (fileop.mode, fileop.ref, fileop.inline)
             else if fileop.op == opD:
@@ -3323,82 +3781,88 @@ class Commit(object):
                     del ancestors[fileop.source]
             else if fileop.op == 'deleteall':
                 ancestors = PathMap()
-        self.filemap = ancestors
+        commit.filemap = ancestors
         return ancestors
-    func canonicalize(self):
+}
+
+func (commit *Commit) canonicalize() {
         "Replace fileops by a minimal set of D && M with the same result."
-        # If last fileop is a deleteall, only keep that.
+        // If last fileop is a deleteall, only keep that.
         try:
-            lastop = self.operations()[-1]
+            lastop = commit.operations()[-1]
         except IndexError:
             return
         else:
             if lastop.op == FileOp.deleteall:
-                self.set_operations([lastop])
+                commit.setOperations([lastop])
                 return
-        # Get paths touched by non-deleteall operations.
-        paths = self.paths()
-        # Full canonicalization is very expensive on large
-        # repositories. Try an inexpensive check for cases it needn't
-        # be done. If all ops are Ms and Ds, and every path in an op
-        # is unique, don't do it.  The .gitignores guard is required
-        # because these are sometimes generated.
-        md = [op for op in self.operations() if op.op in (opM, opD)]
+        // Get paths touched by non-deleteall operations.
+        paths = commit.paths()
+        // Full canonicalization is very expensive on large
+        // repositories. Try an inexpensive check for cases it needn't
+        // be done. If all ops are Ms and Ds, and every path in an op
+        // is unique, don't do it.  The .gitignores guard is required
+        // because these are sometimes generated.
+        md = [op for op in commit.operations() if op.op in (opM, opD)]
         gitignores = [path for path in paths if os.path.basename(path) == ".gitignore"]
-        if len(md) > 1 && len(self.paths()) == len(md) && not gitignores:
+        if len(md) > 1 && len(commit.paths()) == len(md) && not gitignores:
             return
-        # Fetch the tree state before us...
+        // Fetch the tree state before us...
         try:
-            parent = self.parents()[0]
+            parent = commit.parents()[0]
         except IndexError:
             parent = PathMap()
         else:
             parent = parent.manifest()
-        # ... and after our file operations have been applied.
-        current = self.manifest()
-        # Generate needed D fileops.
-        if any(op.op == FileOp.deleteall for op in self.operations()):
-            # Any file in the parent tree might disappear.
+        // ... and after our file operations have been applied.
+        current = commit.manifest()
+        // Generate needed D fileops.
+        if any(op.op == FileOp.deleteall for op in commit.operations()):
+            // Any file in the parent tree might disappear.
             check_delete = parent
         else:
-            # Only files touched by non-deleteall ops might disappear.
+            // Only files touched by non-deleteall ops might disappear.
             check_delete = paths
         new_ops = []
-        self.set_operations(new_ops)
+        commit.setOperations(new_ops)
         for path in check_delete:
             if path in parent && path not in current:
-                fileop = FileOp(self.repo)
+                fileop = FileOp(commit.repo)
                 fileop.construct("D", path)
                 new_ops.append(fileop)
-        # Generate needed M fileops.
-        # Only paths touched by non-deleteall ops can be changed.
+        // Generate needed M fileops.
+        // Only paths touched by non-deleteall ops can be changed.
         for path in paths:
             try:
                 mode, mark, inline = current[path]
             except TypeError:
                 continue
             if (mode, mark, inline) != parent[path]:
-                fileop = FileOp(self.repo)
+                fileop = FileOp(commit.repo)
                 fileop.construct(opM, mode, mark, path)
                 if mark == "inline":
                     fileop.inline = inline
                 new_ops.append(fileop)
-        # Finishing touches:
-        self.sort_operations()
-        self._pathset = None
-    func alldeletes(self, killset=None):
+        // Finishing touches:
+        commit.sortOperations()
+        commit._pathset = nil
+}
+
+func (commit *Commit) alldeletes(killset=None) {
         "Is this an all-deletes commit?"
         if killset is None:
             killset = {opD, FileOp.deleteall}
-        return all(fileop.op in killset for fileop in self.operations())
-    func checkout(self, directory=None):
+        return all(fileop.op in killset for fileop in commit.operations())
+}
+
+func (commit *Commit) checkout(directory=None) {
         "Make a directory with links to files in a specified checkout."
         if not directory:
-            directory = os.path.join(self.repo.subdir(), self.mark)
+            directory = os.path.join(commit.repo.subdir(), commit.mark)
         try:
             if not os.path.exists(directory):
                 os.mkdir(directory)
-            for (path, (_, mark, inline)) in self.manifest().items():
+            for (path, (_, mark, inline)) in commit.manifest().items():
                 fullpath = os.path.join(directory, path)
                 fulldir = os.path.dirname(fullpath)
                 if not os.path.exists(fulldir):
@@ -3408,7 +3872,7 @@ class Commit(object):
                     with open(fullpath, "wb") as wfp:
                         wfp.write(polybytes(inline))
                 else:
-                    blob = self.repo.markToEvent(mark)
+                    blob = commit.repo.markToEvent(mark)
                     if blob.hasfile():
                         os.link(blob.getBlobfile(), fullpath)
                     else:
@@ -3417,30 +3881,67 @@ class Commit(object):
         except OSError:
             raise Recoverable("could not create checkout directory or files.")
         return directory
-    func head(self):
-        "Return the branch to which this commit belongs."
-        if self.branch.startswith("refs/heads/") or not self.has_children():
-            return self.branch
-        rank = 0; child = None # pacify pylint
-        for rank, child in enumerate(self.children()):
-            if child.branch == self.branch:
-                return child.head()
-        if rank == 0:
-            return child.head() # there was only one child
-        raise Recoverable("can't deduce a branch head for %s" % self.mark)
-    func references(self, mark):
+}
+
+*/
+
+// head returns the branch to which this commit belongs.
+func (commit *Commit) head() string {
+        if strings.HasPrefix(commit.branch, "refs/heads/") || !commit.hasChildren() {
+		return commit.branch
+	}
+        rank := 0
+	var child Event
+	for rank, child = range commit.children() {
+		switch child.(type) {
+		case Commit:
+			if child.(*Commit).branch == commit.branch {
+				return child.(*Commit).head()
+			}
+		case Callout:
+			complain("internal error: callouts do not have branches: %s",
+				child.idMe())
+		}
+	}
+        if rank == 0 {
+		switch child.(type) {
+		case Commit:
+			child.(*Commit).head() // there was only one child
+		case Callout:
+			complain("internal error: callouts do not have branches: %s",
+				child.idMe())
+		}
+	}
+	// FIXME: This wants to be recoverable
+        panic(fmt.Sprintf("can't deduce a branch head for %s", commit.mark))
+}
+
+// tip enables do_tip() to report deduced branch tips.
+func (commit *Commit) tip(_modifiers stringSet, eventnum int, cols int) string {
+        summary := fmt.Sprintf("%6d %s %6s ",
+		eventnum+1, commit.date().rfc3339(), commit.mark)
+        report := summary + commit.head()
+        if cols > 0 {
+		report = report[:cols]
+	}
+        return report
+}
+
+/*
+
+    func references(mark):
         "Does this commit reference a specified blob mark?"
         for fileop in self.operations():
             if fileop.op == opM && fileop.ref == mark:
-                return True
+                return true
         return False
-    func blob_by_name(self, name):
+    func blobByName(name):
         "Look up file content by name."
         mark = (self.manifest()[name] or (None, None, None))[1]
         if mark is None:
             return False
         return self.repo.markToEvent(mark).getContent()
-    func undecodable(self, codec="utf-8"):
+    func undecodable(codec="utf-8"):
         "Does this commit have undecodable i18n sequences in it?"
         try:
             polybytes(str(self.committer)).decode(codec, "strict")
@@ -3449,11 +3950,11 @@ class Commit(object):
             polybytes(self.comment).decode(codec, "strict")
             return False
         except UnicodeError:
-            return True
-    func delete(self, policy=None):
+            return true
+    func delete(policy=None):
         "Delete this commit from its repository."
         self.repo.delete([self.index()], policy)
-    func dump(self, vcs=None, options=None, realized=None, internals=None):
+    func dump(vcs=None, options=None, realized=None, internals=None):
         "Dump this commit in import-stream format."
         pacify_pylint(options)
         if vcs is None && self.repo.vcs && self.repo.vcs.importer:
@@ -3462,16 +3963,16 @@ class Commit(object):
         options = options or []
         incremental = False
         if '--noincremental' not in options:
-            if realized is not None && self.has_parents():
+            if realized is not None && self.hasParents():
                 if self.branch not in realized && self.parents()[0].branch not in realized:
-                    incremental = True
+                    incremental = true
         if incremental:
             parts.append("reset %s^0\n\n" % self.branch)
         parts.append("commit %s\n" % self.branch)
         if self.legacyID:
             parts.append("#legacy-id %s\n" % self.legacyID)
         if realized is not None:
-            realized[self.branch] = True
+            realized[self.branch] = true
         if self.mark:
             parts.append("mark %s\n" % self.mark)
         if self.authors:
@@ -3479,9 +3980,9 @@ class Commit(object):
                 parts.append("author %s\n" % author)
         if self.committer:
             parts.append("committer %s\n" % self.committer)
-        # As of git 2.13.6 (possibly earlier) the comment fields of
-        # commit is no longer optional - you have to emit data 0 if there
-        # is no comment, otherwise the importer gets confused.
+        // As of git 2.13.6 (possibly earlier) the comment fields of
+        // commit is no longer optional - you have to emit data 0 if there
+        // is no comment, otherwise the importer gets confused.
         comment = self.comment or ""
         if options && "--legacy" in options && self.legacyID:
             comment += "\nLegacy-ID: %s\n" % self.legacyID
@@ -3504,46 +4005,71 @@ class Commit(object):
         if vcs && "commit-properties" in vcs.extensions:
             if self.properties:
                 for (name, value) in self.properties.items():
-                    if value in (True, False):
+                    if value in (true, False):
                         if value:
                             parts.append("property %s\n" % name)
                     else:
                         parts.append("property %s %d %s\n" % (name, len(str(value)), str(value)))
-        parts.extend(op.dump(vcs) + "\n" for op in self.operations())
+        parts.extend(op.dump(vcs) for op in self.operations())
         if "no-nl-after-commit" not in self.repo.export_style():
             parts.append("\n")
         return "".join(parts)
-    func String(self):
+    func String():
         return self.dump()
 
-class Passthrough(object):
-    "Represents a passthrough line."
-    func __init__(self, line, repo=None):
-        self.repo = repo
-        self.text = line
-        self.deletehook = None
-        self.color = None
-    func emailOut(self, _modifiers, eventnum, _filterRegexp=None):
-        "Enable do_mailbox_out() to report these."
-        msg = MessageBlock()
-        msg["Event-Number"] = str(eventnum+1)
-        msg.setPayload(self.text)
-        return str(msg)
-    func emailIn(self, msg):
-        self.text = msg.get_payload()
-    func dump(self, vcs=True, options=None, realized=None, internals=None):
-        "Dump this passthrough in import-stream format."
-        pacify_pylint(vcs)
-        pacify_pylint(options)
-        pacify_pylint(realized)
-        pacify_pylint(internals)
-        return self.text
-    func idMe(self):
-        "ID this passthrough for humans."
-        return "passthrough@%s" % (self.repo.index(self))
-    func String(self):
-        return self.dump()
+*/
 
+//Passthrough represents a passthrough line.
+type Passthrough struct {
+	repo *Repository
+	text string
+	deleteflag bool
+	color string
+}
+
+func newPassthrough(repo *Repository, line string) {
+	p := new(Passthrough)
+        p.repo = repo
+        p.text = line
+	// Don't do this!  These sometimes need to be added to the front.
+	//if repo != nil {
+	//	repo.events = append(repo.events, p)
+	//}
+}
+
+// emailOut enables do_mailbox_out() to report these.
+func (p *Passthrough) emailOut(_modifiers stringSet,
+	eventnum int, _filterRegexp *regexp.Regexp) string {
+        msg, _ := newMessageBlock(nil)
+        msg.setHeader("Event-Number", fmt.Sprintf("%d", eventnum+1))
+        msg.setPayload(p.text)
+        return msg.String()
+}
+
+func (p *Passthrough) emailIn(msg *MessageBlock) {
+        p.text = msg.getPayload()
+}
+
+// dump reports this passthrough in import-stream format.
+func (p *Passthrough) dump(_vcs *VCS, options stringSet) string {
+        return p.text
+}
+	
+// idMe IDs this passthrough for humans."
+func (p Passthrough) idMe() string {
+        return fmt.Sprintf("passthrough@%d", p.repo.index(p))
+}
+
+//getMark is a stub required for the Event interface
+func (p Passthrough) getMark() string {
+        return ""
+}
+
+func (p Passthrough) String() string {
+        return p.dump(nil, nil)
+}
+	
+/*
 // Generic extractor code begins here
 
 class signature:
@@ -3556,28 +4082,28 @@ class signature:
             with open(path, "rb") as fp:
                 self.hashval = hashlib.sha1(fp.read()).hexdigest()
             self.perms = os.stat(path).st_mode
-            # Map to the restricted set of modes that are allowed in
-            # the stream format.
+            // Map to the restricted set of modes that are allowed in
+            // the stream format.
             if self.perms & 0o100700 == 0o100700:
                 self.perms = 0o100755
             else if self.perms & 0o100600 == 0o100600:
                 self.perms = 0o100644
     func __eq__(self, other):
-        #if debugEnable(debugEXTRACT):
-        #    announce(debugSHOUT, "%s == %s -> %s" % (str(self),
-        #                                 str(other),
-        #                                 self.__dict__ == other.__dict__))
+        //if debugEnable(debugEXTRACT):
+        //    announce(debugSHOUT, "%s == %s -> %s" % (str(),
+        //                                 str(other),
+        //                                 self.__dict__ == other.__dict__))
         return self.__dict__ == other.__dict__
     func __ne__(self, other):
         return not signature.__eq__(self, other)
-    func String(self):
+    func String():
         return "<%s:%s:%s>" % (self.path, "%6o" % self.perms, self.hashval[:4])
 
 func capture(command):
     "Run a specified command, capturing the output."
     announce(debugCOMMANDS, "%s: capturing %s" % (rfc3339(time.time()), command))
     try:
-        content = subprocess.check_output(command, shell=True, stderr=os.Stderr)
+        content = subprocess.check_output(command, shell=true, stderr=os.Stderr)
     except (subprocess.CalledProcessError, OSError) as oe:
         raise Fatal("execution of '%s' failed: %s" % (command, oe))
     if debugEnable(debugCOMMANDS):
@@ -3591,56 +4117,79 @@ func branchbase(branch):
             return branch[len(p):]
     return os.path.basename(branch)
 
-class PathMap(object):
-    """Represent the set of filenames visible in a Subversion
-    revision, using copy-on-write to keep the size of the structure in
-    line with the size of the Subversion repository metadata."""
-    _self_value = object()
-    func __init__(self, other = None):
-        # The instance may be a child of several other PathMaps if |shared|
-        # is True. |snapid| is an integer unique among related PathMaps,
-        # and |maxid| is a list (for reference sharing) whose only value is
-        # the maximum |snapid| of the collection. |store| is a dict mapping
-        # single-component names to lists of values indexed by snapids. The
-        # values which can be other PathMaps (for directories) or anything
-        # except PathMaps and None (for files).
-        if not isinstance(other, PathMap):
-            self.store = {}
-            self.maxid = [0]
-            self.snapid = 0
-        else:
-            self.store = other.store
-            self.maxid = other.maxid
-            self.snapid = self.maxid[0] = self.maxid[0] + 1
-        self.shared = False
-    func snapshot(self):
-        "Return a copy-on-write snapshot of the set."
-        r = PathMap(self)
-        if self.snapid < r.snapid - 1:
-            # Late snapshot of an "old" PathMap. Restore values which may
-            # have changed since. This is uncommon, don't over-optimize.
-            for component in self.store: # _elt_items() would skip None
+*/
+
+/*
+ * Represent the set of filenames visible in a Subversion
+ * revision, using copy-on-write to keep the size of the structure in
+ * line with the size of the Subversion repository metadata.
+ */
+type PathMap struct {
+	store map[string]interface{}
+	maxid []int
+	snapid int
+	shared bool
+}
+
+//_self_value = object()
+func newPathMap(other interface{}) *PathMap {
+	p := new(PathMap)
+        // The instance may be a child of several other PathMaps if |shared|
+        // is true. |snapid| is an integer unique among related PathMaps,
+        // and |maxid| is a list (for reference sharing) whose only value is
+        // the maximum |snapid| of the collection. |store| is a dict mapping
+        // single-component names to lists of values indexed by snapids. The
+        // values which can be other PathMaps (for directories) or anything
+        // except PathMaps and None (for files).
+	switch other.(type) {
+	case PathMap:
+		o := other.(*PathMap)
+		p.store = o.store
+		p.maxid = o.maxid
+		p.maxid[0] = p.maxid[0] + 1
+		p.snapid = p.maxid[0]
+		p.shared = false
+	default:
+		p.store = make(map[string]interface{})
+		p.maxid = make([]int, 1)
+		p.snapid = 0
+	}
+	return p
+}
+
+/* 
+// snapshot returns a copy-on-write snapshot of the set.
+func (p *Pathmap) snapshot() *PathMap {
+        r := newPathMap(p)
+        if self.snapid < r.snapid - 1 {
+            // Late snapshot of an "old" PathMap. Restore values which may
+            // have changed since. This is uncommon, don't over-optimize.
+            for component in self.store: // _elt_items() would skip None
                 r._elts_set(component, self._elts_get(component))
-        for _, v in r._elts_items():
+	}
+        for _, v in r._elts_items() {
             if isinstance(v, PathMap):
-                v.shared = True
+                v.shared = true
+	}
         return r
+}
+
     func copy_from(self, target_path, source_pathset, source_path):
         "Insert, at target_path, a snapshot of source_path in source_pathset."
         source_obj = source_pathset._find(source_path)
         if source_obj is None:
             return
         if source_obj is source_pathset:
-            # Do not share toplevel instances, only inner ones
+            // Do not share toplevel instances, only inner ones
             source_obj = source_obj.snapshot()
         else if isinstance(source_obj, PathMap):
-            source_obj.shared = True
+            source_obj.shared = true
         self._insert(target_path, source_obj)
     func ls_R(self, path):
         elt = self._find(path)
         if isinstance(elt, PathMap):
             return iter(elt)
-        return iter(()) # empty iterator
+        return iter(()) // empty iterator
     func __contains__(self, path):
         "Return true if path is present in the set as a file."
         elt = self._find(path)
@@ -3649,7 +4198,7 @@ class PathMap(object):
         "Return the value associated with a specified path."
         elt = self._find(path)
         if elt is None or isinstance(elt, PathMap):
-            # This is not quite like indexing, which would throw IndexError
+            // This is not quite like indexing, which would throw IndexError
             return None
         return elt
     func __setitem__(self, path, value):
@@ -3668,32 +4217,32 @@ class PathMap(object):
             if nxt.shared:
                 nxt = self._elts_set(component, nxt.snapshot())
             self = nxt
-        # Set value to None since PathMap doesn't tell None && absence apart
+        // Set value to None since PathMap doesn't tell None && absence apart
         self._elts_set(basename, None)
-    func __nonzero__(self):
+    func __nonzero__():
         "Return true if any filenames are present in the set."
         return any(v for _, v in self._elts_items())
-    __bool__ = __nonzero__  # for Python 3
-    func __len__(self):
+    __bool__ = __nonzero__  // for Python 3
+    func __len__():
         "Return the number of files in the set."
         return sum(len(v) if isinstance(v, PathMap) else 1
                 for _, v in self._elts_items())
-    func items(self):
+    func items():
         for (name, value) in sorted(self._elts_items()):
             if isinstance(value, PathMap):
                 for path, v in value.items():
                     yield (os.path.join(name, path), v)
             else if value is not None:
                 yield (name, value)
-    func __iter__(self):
+    func __iter__():
         return itertools.imap(operator.itemgetter(0), self.items())
-    func String(self):
-        return '<PathMap: {}>'.format(' '.join(self))
-    # Return the current value associated with the component in the store
+    func String():
+        return '<PathMap: {}>'.format(' '.join())
+    // Return the current value associated with the component in the store
     func _elts_get(self, component):
         snaplist = self.store.get(component) or [None]
         return snaplist[min(self.snapid, len(snaplist) - 1)]
-    # Set the current value associated with the component in the store
+    // Set the current value associated with the component in the store
     func _elts_set(self, component, value):
         snaplist = self.store.setdefault(component, [None])
         needed = min(self.maxid[0], self.snapid + 1) + 1
@@ -3702,14 +4251,14 @@ class PathMap(object):
             snaplist.extend(last for _ in range(len(snaplist), needed))
         snaplist[self.snapid] = value
         return value
-    # Iterate through (component, current values) pairs
-    func _elts_items(self):
+    // Iterate through (component, current values) pairs
+    func _elts_items():
         snapid = self.snapid
         for component, snaplist in self.store.items():
             if component is self._self_value: continue
             val = snaplist[min(snapid, len(snaplist) - 1)]
             if val is not None: yield (component, val)
-    # Insert obj at the location given by components.
+    // Insert obj at the location given by components.
     func _insert(self, path, obj):
         basename, components = self._split_path(path)
         if not basename:
@@ -3723,10 +4272,10 @@ class PathMap(object):
                 nxt = self._elts_set(component, nxt.snapshot())
             self = nxt
         self._elts_set(basename, obj)
-    # Return the object at the location given by components--either
-    # the associated value if it's present as a filename, or a PathMap
-    # containing the descendents if it's a directory name.  Return
-    # None if the location does not exist in the set.
+    // Return the object at the location given by components--either
+    // the associated value if it's present as a filename, or a PathMap
+    // containing the descendents if it's a directory name.  Return
+    // None if the location does not exist in the set.
     func _find(self, path):
         basename, components = self._split_path(path)
         if not basename:
@@ -3736,7 +4285,7 @@ class PathMap(object):
             if not isinstance(self, PathMap):
                 return None
         return self._elts_get(basename)
-    # Return a list of the components in path in reverse order.
+    // Return a list of the components in path in reverse order.
     @staticmethod
     func _split_path(path):
         if isinstance(path, str):
@@ -3745,6 +4294,8 @@ class PathMap(object):
         else:
             return (PathMap._self_value,
                     [f for f in os.path.normpath(path[0]).split(os.sep) if f])
+
+/*
 
 class RepoStreamer:
     "Repository factory driver class for all repo analyzers."
@@ -3756,12 +4307,12 @@ class RepoStreamer:
         self.hash_to_mark = {}
         self.baton = None
         self.extractor = extractor
-    func extract(self, repo, progress=True):
+    func extract(self, repo, progress=true):
         if not self.extractor.isclean():
             raise Recoverable("directory %s has unsaved changes." % os.getcwd())
         repo.makedir()
         with Baton(prompt="Extracting", enable=progress) as self.baton:
-            repo.addEvent(Passthrough("#reposurgeon sourcetype %s\n" \
+            repo.AddEvent(Passthrough("#reposurgeon sourcetype %s\n" \
                                       % self.extractor.vcstype.name, repo), where=0)
             self.extractor.analyze(self.baton)
             self.extractor.pre_extract(repo)
@@ -3776,8 +4327,8 @@ class RepoStreamer:
                 commit.committer = Attribution(self.extractor.get_committer(revision))
                 commit.authors = [Attribution(a) \
                                   for a in self.extractor.get_authors(revision)]
-                commit.set_parents([self.commit_map[rev] for rev in parents])
-                commit.set_branch(self.extractor.get_branch(revision))
+                commit.setParents([self.commit_map[rev] for rev in parents])
+                commit.setBranch(self.extractor.get_branch(revision))
                 commit.comment = self.extractor.get_comment(revision)
                 if debugEnable(debugEXTRACT):
                     msg = commit.comment
@@ -3823,12 +4374,12 @@ class RepoStreamer:
                                         if oldpath in removed:
                                             op = FileOp(repo)
                                             op.construct('R', oldpath, path)
-                                            commit.append_operation(op)
+                                            commit.appendOperation(op)
                                             del self.filemap[revision][oldpath]
                                         else if oldpath != path:
                                             op = FileOp(self.repo)
                                             op.construct('C', oldpath, path)
-                                            commit.append_operation(op)
+                                            commit.appendOperation(op)
                                         break
                                 else:
                                     op = FileOp(repo)
@@ -3836,7 +4387,7 @@ class RepoStreamer:
                                                  newsig.perms,
                                                  self.hash_to_mark[newsig.hashval],
                                                  path)
-                                    commit.append_operation(op)
+                                    commit.appendOperation(op)
                         else:
                             # Content hash doesn't match any existing blobs
                             announce(debugEXTRACT, "r%s: %s has new hash" \
@@ -3846,33 +4397,33 @@ class RepoStreamer:
                             # Actual content enters the representation
                             blob = Blob(repo)
                             blob.setMark(blobmark)
-                            shutil.copyfile(path, blob.getBlobfile(create=True))
+                            shutil.copyfile(path, blob.getBlobfile(create=true))
                             blob.addalias(path)
                             repo.addEvent(blob)
                             # Its new fileop is added to the commit
                             op = FileOp(repo)
                             op.construct('M', newsig.perms, blobmark, path)
-                            commit.append_operation(op)
+                            commit.appendOperation(op)
                         self.filemap[revision][path] = newsig
                     for tbd in removed:
                         op = FileOp(repo)
                         op.construct('D', tbd)
-                        commit.append_operation(op)
+                        commit.appendOperation(op)
                         del self.filemap[revision][tbd]
-                self.extractor.cleanup(revision, True)
+                self.extractor.cleanup(revision, true)
                 if not parents: #and commit.branch != "refs/heads/master":
                     reset = Reset(repo)
                     reset.ref = commit.branch
                     repo.addEvent(reset)
-                commit.sort_operations()
+                commit.sortOperations()
                 commit.legacyID = revision
                 if commit.properties is None:
-                    commit.properties = collections.OrderedDict()
+                    commit.properties = newOrderedMap()
                 commit.properties.update(self.extractor.get_properties(revision))
                 commit.setMark(repo.newmark())
                 self.commit_map[revision] = commit
                 announce(debugEXTRACT, "r%s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.operations())))
-                repo.addEvent(commit)
+                //repo.addEvent(commit)
             # Now append reset objects
             # Note: we sort the resets by the mark number of their associated revisions; this
             # is to ensure that the ordering is (a) deterministic, and (b) easily understood.
@@ -3922,7 +4473,7 @@ class StreamParser:
         # If these don't match the constants above, havoc will ensue
         ActionValues = ("add", "delete", "change", "replace")
         PathTypeValues = ("none", "file", "dir", "ILLEGAL-TYPE")
-        func __init__(self):
+        func __init__():
             # These are set during parsing
             self.revision = None
             self.path = None
@@ -3939,8 +4490,8 @@ class StreamParser:
             self.from_set = None
             self.blobmark = None
             self.generated = False
-        func String(self):
-            # Prefer dict's repr() to OrderedDict's verbose one
+        func String():
+            # Prefer dict's repr() to OrderedMap's verbose one
             fmt = dict.__repr__ if isinstance(self.props, dict) else repr
             return "<NodeAction: r{rev} {action} {kind} '{path}'" \
                     "{from_rev}{from_set}{generated}{props}>".format(
@@ -4007,8 +4558,8 @@ class StreamParser:
         self.branchdeletes = set()
         self.branchcopies = set()
         self.generated_deletes = []
-        self.revisions = collections.OrderedDict()
-        self.copycounts = collections.OrderedDict()
+        self.revisions = newOrderedMap()
+        self.copycounts = newOrderedMap()
         self.hashmap = {}
         self.property_stash = {}
         self.fileop_branchlinks  = set()
@@ -4031,7 +4582,7 @@ class StreamParser:
             self.warnings.append(msg)
         else:
             complain(msg)
-    func readline(self):
+    func readline():
         if self.linebuffers:
             line = self.linebuffers.pop()
         else:
@@ -4039,7 +4590,7 @@ class StreamParser:
         self.ccount += len(line)
         self.import_line += 1
         return line
-    func tell(self):
+    func tell():
         "Return the current read offset in the source stream."
         try:
             return self.fp.tell()
@@ -4050,9 +4601,9 @@ class StreamParser:
         self.import_line -= 1
         self.linebuffers.append(line)
     # Helpers for import-stream files
-    func fi_readline(self):
+    func fi_readline():
         "Read a line, stashing comments as we go."
-        while True:
+        while true:
             line = self.readline()
             if line && line.startswith("#") && not line.startswith("#legacy-id"):
                 self.repo.addEvent(Passthrough(line, self.repo))
@@ -4061,7 +4612,7 @@ class StreamParser:
                     # --reposurgeon mode.
                     fields = line.split()
                     if fields[1] == "sourcetype" && len(fields) == 3:
-                        self.repo.hint(fields[2], strong=True)
+                        self.repo.hint(fields[2], strong=true)
                 continue
             else:
                 return line
@@ -4073,7 +4624,7 @@ class StreamParser:
             delim = line[7:]
             data = ""
             start = self.tell()
-            while True:
+            while true:
                 dataline = self.readline()
                 if dataline == delim:
                     break
@@ -4121,7 +4672,7 @@ class StreamParser:
         if not line.startswith(hdr):
             self.error('required %s header missing' % hdr)
         return StreamParser.sd_body(line)
-    func sd_require_spacer(self):
+    func sd_require_spacer():
         line = self.readline()
         if line.strip():
             self.error('found %s expecting blank line' % repr(line))
@@ -4134,8 +4685,8 @@ class StreamParser:
         self.ccount += len(content) + 1
         return content
     func sd_read_props(self, target, checklength):
-        # Parse a Subversion properties section, return as an OrderedDict.
-        props = collections.OrderedDict()
+        # Parse a Subversion properties section, return as an OrderedMap.
+        props = newOrderedMap()
         self.ccount = 0
         while self.ccount < checklength:
             line = self.readline()
@@ -4160,7 +4711,7 @@ class StreamParser:
                 announce(debugSVNPARSE, "readprops: on %s, setting %s = %s"\
                              % (target, key, repr(value)))
         return props
-    func branchlist(self):
+    func branchlist():
         "The branch list in deterministic order, most specific branches first."
         return sorted(self.branches, key=lambda x: (-len(x), x))
     #
@@ -4194,7 +4745,7 @@ class StreamParser:
                         raise Fatal("unsupported dump format version %s" \
                                     % StreamParser.sd_body(line))
                     # Beginning of Subversion dump parsing
-                    while True:
+                    while true:
                         line = self.readline()
                         if not line:
                             break
@@ -4218,7 +4769,7 @@ class StreamParser:
                             nodes = []
                             plen = tlen = -1
                             # Node list parsing begins
-                            while True:
+                            while true:
                                 line = self.readline()
                                 announce(debugSVNPARSE, "node list parsing, line %d: %s" % \
                                              (self.import_line, repr(line)))
@@ -4230,7 +4781,7 @@ class StreamParser:
                                     else:
                                         if plen > -1:
                                             node.props = self.sd_read_props(node.path, plen)
-                                            node.propchange = True
+                                            node.propchange = true
                                         if tlen > -1:
                                             start = self.tell()
                                             # This is a crock. It is
@@ -4371,7 +4922,7 @@ class StreamParser:
                     self.pushback(line)
                     # Beginning of fast-import stream parsing
                     commitcount = 0
-                    while True:
+                    while true:
                         line = self.fi_readline()
                         if not line:
                             break
@@ -4421,8 +4972,8 @@ class StreamParser:
                             baton.twirl()
                             commitbegin = self.import_line
                             commit = Commit(self.repo)
-                            commit.set_branch(line.split()[1])
-                            while True:
+                            commit.setBranch(line.split()[1])
+                            while true:
                                 line = self.fi_readline()
                                 if not line:
                                     break
@@ -4451,12 +5002,12 @@ class StreamParser:
                                     except ValueError:
                                         self.error("malformed committer line")
                                 else if line.startswith("property"):
-                                    commit.properties = collections.OrderedDict()
+                                    commit.properties = newOrderedMap()
                                     fields = line.split(" ")
                                     if len(fields) < 3:
                                         self.error("malformed property line")
                                     else if len(fields) == 3:
-                                        commit.properties[fields[1]] = True
+                                        commit.properties[fields[1]] = true
                                     else:
                                         name = fields[1]
                                         length = int(fields[2])
@@ -4475,7 +5026,7 @@ class StreamParser:
                                         if name == "cvs-revisions":
                                             if not self.repo.stronghint:
                                                 announce(debugSHOUT, "cvs_revisions property hints at CVS.")
-                                            self.repo.hint("cvs",strong=True)
+                                            self.repo.hint("cvs",strong=true)
                                             for line in value.split('\n'):
                                                 if line:
                                                     self.repo.legacy_map["CVS:"+line] = commit
@@ -4485,15 +5036,15 @@ class StreamParser:
                                         commit.comment = commit.comment.strip().replace("\r\n", "\n") + '\n'
                                 else if line.startswith("from") or line.startswith("merge"):
                                     mark = line.split()[1]
-                                    if Commit.is_callout(mark):
-                                        commit.add_callout(mark)
+                                    if Commit.isCallout(mark):
+                                        commit.addCallout(mark)
                                     else:
-                                        commit.add_parent(mark)
+                                        commit.addParentByMark(mark)
                                 # Handling of file ops begins.
                                 else if line[0] in ("C", "D", "R"):
-                                    commit.append_operation(FileOp(self.repo).parse(line))
+                                    commit.appendOperation(FileOp(self.repo).parse(line))
                                 else if line == "deleteall\n":
-                                    commit.append_operation(FileOp(self.repo).parse(deleteall))
+                                    commit.appendOperation(FileOp(self.repo).parse(deleteall))
                                 else if line[0] == opM:
                                     fileop = FileOp(self.repo).parse(line)
                                     if fileop.ref != 'inline':
@@ -4504,7 +5055,7 @@ class StreamParser:
                                             # submodule link.
                                             if fileop.mode != "160000":
                                                 self.error("ref %s could not be resolved" % fileop.ref)
-                                    commit.append_operation(fileop)
+                                    commit.appendOperation(fileop)
                                     if fileop.mode == "160000":
                                         # This is a submodule link.  The ref
                                         # field is a SHA1 hash and the path
@@ -4517,7 +5068,7 @@ class StreamParser:
                                         self.fi_parse_fileop(fileop)
                                 else if line[0] == "N":
                                     fileop = FileOp(self.repo).parse(line)
-                                    commit.append_operation(fileop)
+                                    commit.appendOperation(fileop)
                                     self.fi_parse_fileop(fileop)
                                     self.repo.inlines += 1
                                 # Handling of file ops ends.
@@ -4535,7 +5086,7 @@ class StreamParser:
                                     # Dodgy bzr autodetection hook...
                                     if not self.repo.vcs:
                                         if commit.properties && "branch-nick" in commit.properties:
-                                            self.repo.hint("bzr", strong=True)
+                                            self.repo.hint("bzr", strong=true)
                                     self.pushback(line)
                                     break
                             if not (commit.mark && commit.committer):
@@ -4543,7 +5094,7 @@ class StreamParser:
                                 self.error("missing required fields in commit")
                             if commit.mark is None:
                                 self.warn("unmarked commit")
-                            self.repo.addEvent(commit)
+                            //self.repo.addEvent(commit)
                             commitcount += 1
                             baton.twirl()
                         else if line.startswith("reset"):
@@ -4638,7 +5189,7 @@ class StreamParser:
             # we preseume to be some kind of operator error that needs
             # to show up under lint and be manually corrected
             reverso = list(self.revisions.keys())
-            reverso.sort(reverse=True)
+            reverso.sort(reverse=true)
             deadbranches = set([])
             for revision in reverso:
                 for node in self.revisions[revision].nodes:
@@ -4770,7 +5321,7 @@ class StreamParser:
         # If the repo is large, we'll give up on some diagnostic info in order
         # to reduce the working set size.
         if len(self.revisions.keys()) > 50000:
-            self.large = True
+            self.large = true
         for (revision, record) in self.revisions.items():
             announce(debugEXTRACT, "Revision %s:" % revision)
             for node in record.nodes:
@@ -4850,7 +5401,7 @@ class StreamParser:
                     # Remove blank lines from svn:ignore property values.
                     if "svn:ignore" in node.props:
                         old_ignore = node.props["svn:ignore"]
-                        ignore_lines = [line for line in old_ignore.splitlines(True) if line != "\n"]
+                        ignore_lines = [line for line in old_ignore.splitlines(true) if line != "\n"]
                         new_ignore = "".join(ignore_lines)
                         if new_ignore == "":
                             del node.props["svn:ignore"]
@@ -4915,7 +5466,7 @@ class StreamParser:
                                     newnode.revision = revision
                                     newnode.action = SD_DELETE
                                     newnode.kind = SD_FILE
-                                    newnode.generated = True
+                                    newnode.generated = true
                                     expanded_nodes.append(newnode)
                             # Emit delete actions for the .gitignore files we
                             # have generated. Note that even with a directory
@@ -4929,7 +5480,7 @@ class StreamParser:
                                 newnode.revision = revision
                                 newnode.action = SD_DELETE
                                 newnode.kind = SD_FILE
-                                newnode.generated = True
+                                newnode.generated = true
                                 expanded_nodes.append(newnode)
                                 del self.active_gitignores[ignorepath]
                     # Handle directory copies.  If this is a copy
@@ -4972,7 +5523,7 @@ class StreamParser:
                                 if lookback.props && "svn:executable" in lookback.props:
                                     stem = source[len(node.from_path):]
                                     targetpath = node.path + stem
-                                    self.propagate[targetpath] = True
+                                    self.propagate[targetpath] = true
                                     announce(debugTOPOLOGY, "r%s: exec-mark %s" \
                                              % (revision, targetpath))
                         else:
@@ -4996,7 +5547,7 @@ class StreamParser:
                                     subnode.blob = blob
                                     subnode.content_hash = \
                                             hashlib.md5(polybytes(ignore)).hexdigest()
-                                    subnode.generated = True
+                                    subnode.generated = true
                                     expanded_nodes.append(subnode)
                             # Now generate copies for all files in the source
                             for source in node.from_set:
@@ -5019,7 +5570,7 @@ class StreamParser:
                                                 subnode.from_rev,
                                                 subnode.from_path,
                                                 subnode.path))
-                                subnode.generated = True
+                                subnode.generated = true
                                 expanded_nodes.append(subnode)
                     # Property settings can be present on either
                     # SD_ADD or SD_CHANGE actions.
@@ -5065,7 +5616,7 @@ class StreamParser:
                                 # Must append rather than simply performing.
                                 # Otherwise when the property is unset we
                                 # won't have the right thing happen.
-                                newnode.generated = True
+                                newnode.generated = true
                                 expanded_nodes.append(newnode)
                                 self.active_gitignores[gitignore_path] = ignore
                             else if gitignore_path in self.active_gitignores:
@@ -5075,7 +5626,7 @@ class StreamParser:
                                 newnode.action = SD_DELETE
                                 newnode.kind = SD_FILE
                                 announce(debugIGNORES, "r%s: queuing up %s deletion." % (revision, newnode.path))
-                                newnode.generated = True
+                                newnode.generated = true
                                 expanded_nodes.append(newnode)
                                 del self.active_gitignores[gitignore_path]
             # Ugh.  Because cvs2svn is brain-dead and issues D/M pairs
@@ -5225,7 +5776,7 @@ class StreamParser:
             # Time to generate commits from actions and fileops.
             announce(debugEXTRACT, "r%s: %d actions" % (revision, len(actions)))
             # First, break the file operations into branch cliques
-            cliques = collections.OrderedDict()
+            cliques = newOrderedMap()
             lastbranch = None
             for (node, fileop) in actions:
                 # Try last seen branch first
@@ -5259,8 +5810,8 @@ class StreamParser:
                 self.repo.legacy_map["SVN:%s" % commit.legacyID] = commit
                 try:
                     commit.common, stage = next(oplist)
-                    commit.set_operations(stage)
-                    commit.invalidate_pathset_cache()
+                    commit.setOperations(stage)
+                    commit.invalidatePathsetCache()
                 except StopIteration:
                     commit.common = os.path.commonprefix([node.path for node in record.nodes])
                 commit.setMark(self.repo.newmark())
@@ -5279,8 +5830,8 @@ class StreamParser:
                     split.comment = ""
                 split.comment += "\n[[Split portion of a mixed commit.]]\n"
                 split.setMark(self.repo.newmark())
-                split.set_operations(fileops)
-                split.invalidate_pathset_cache()
+                split.setOperations(fileops)
+                split.invalidatePathsetCache()
                 newcommits.append(split)
             # The revision is truly mixed if there is more than one clique
             # not consisting entirely of deleteall operations.
@@ -5289,7 +5840,7 @@ class StreamParser:
                 split_commits[revision] = split.legacyID
             # Sort fileops according to git rules
             for newcommit in newcommits:
-                newcommit.sort_operations()
+                newcommit.sortOperations()
             # Deduce links between branches on the basis of copies. This
             # is tricky because a revision can be the target of multiple
             # copies.  Humans don't abuse this because tracking multiple
@@ -5434,8 +5985,8 @@ class StreamParser:
         if not self.branches or nobranch:
             last = None
             for commit in self.repo.commits():
-                commit.set_branch(os.path.join("refs", "heads", "master") + os.sep)
-                if last is not None: commit.set_parents([last])
+                commit.setBranch(os.path.join("refs", "heads", "master") + os.sep)
+                if last is not None: commit.setParents([last])
                 last = commit
         else:
             # Instead, determine a branch for each commit...
@@ -5451,16 +6002,16 @@ class StreamParser:
                                   if commit.common.startswith(b)),
                                   None)
                 if branch is not None:
-                    commit.set_branch(branch)
+                    commit.setBranch(branch)
                     for fileop in commit.operations():
                         if fileop.op in (opM, opD):
                             fileop.path = fileop.path[len(branch):]
                         else if fileop.op in (opR, opC):
                             fileop.source = fileop.source[len(branch):]
                             fileop.target = fileop.target[len(branch):]
-                    commit.invalidate_pathset_cache()
+                    commit.invalidatePathsetCache()
                 else:
-                    commit.set_branch("root")
+                    commit.setBranch("root")
                     self.branches["root"] = None
                 lastbranch = branch
                 baton.twirl()
@@ -5469,9 +6020,9 @@ class StreamParser:
             for commit in self.repo.commits():
                 if self.branches[commit.branch] is None:
                     branchroots.append(commit)
-                    commit.set_parents([])
+                    commit.setParents([])
                 else:
-                    commit.set_parents([self.branches[commit.branch]])
+                    commit.setParents([self.branches[commit.branch]])
                 self.branches[commit.branch] = commit
                 # Per-commit spinner disabled because this pass is fast
                 #baton.twirl()
@@ -5500,7 +6051,7 @@ class StreamParser:
                     # The parent has been deleted since, don't add the link;
                     # it can only happen if parent was the now tagified root.
                     continue
-                if not child.has_parents() \
+                if not child.hasParents() \
                         && child.branch not in self.branchcopies:
                     # The branch wasn't created by copying another branch and
                     # is instead populated by fileops. Prepend a deleteall to
@@ -5510,14 +6061,14 @@ class StreamParser:
                     # which has fileops or more than one child.
                     commit = child
                     while len(commit.children()) == 1 && not commit.operations():
-                        commit = commit.first_child()
-                    if commit.operations() or commit.has_children():
+                        commit = commit.firstChild()
+                    if commit.operations() or commit.hasChildren():
                         fileop = FileOp(self.repo)
                         fileop.construct("deleteall")
-                        commit.prepend_operation(fileop)
+                        commit.prependOperation(fileop)
                         self.generated_deletes.append(commit)
                 if parent not in child.parents():
-                    child.add_parent(parent)
+                    child.addParentCommit(parent)
             for root in branchroots:
                 if getattr(commit.branch, "fileops", None) \
                         && root.branch != ("trunk" + os.sep):
@@ -5610,7 +6161,7 @@ class StreamParser:
                     for mark in new_merges:
                         parent = self.repo.markToEvent(mark)
                         if parent not in commit.parents():
-                            commit.add_parent(parent)
+                            commit.addParentCommit(parent)
                         announce(debugTOPOLOGY, "processed new mergeinfo from r%s "
                                      "to r%s." % (parent.legacyID,
                                                   commit.legacyID))
@@ -5654,7 +6205,7 @@ class StreamParser:
                 # Things that cvs2svn created as tag surrogates
                 # get turned into actual tags.
                 m = StreamParser.cvs2svn_tag_re.search(polybytes(event.comment))
-                if m && not event.has_children():
+                if m && not event.hasChildren():
                     fulltag = os.path.join("refs", "tags", polystr(m.group(1)))
                     newtags.append(Reset(self.repo, ref=fulltag,
                                                   target=event.parents()[0]))
@@ -5662,7 +6213,7 @@ class StreamParser:
                 # Childless generated branch commits carry no informationn,
                 # and just get removed.
                 m = StreamParser.cvs2svn_branch_re.search(polybytes(event.comment))
-                if m && not event.has_children():
+                if m && not event.hasChildren():
                     deleteables.append(i)
                 baton.twirl()
         self.repo.delete(deleteables, ["--tagback"])
@@ -5727,24 +6278,24 @@ class StreamParser:
             for regex, replace in compiled_mapping:
                 result, substitutions = regex.subn(replace,polybytes(commit.branch))
                 if substitutions == 1:
-                    matched = True
-                    commit.set_branch(os.path.join("refs",polystr(result)))
+                    matched = true
+                    commit.setBranch(os.path.join("refs",polystr(result)))
                     break
             if matched:
                 continue
             if commit.branch == "root":
-                commit.set_branch(os.path.join("refs", "heads", "root"))
+                commit.setBranch(os.path.join("refs", "heads", "root"))
             else if commit.branch.startswith("tags" + os.sep):
                 branch = commit.branch
                 if branch.endswith(os.sep):
                     branch = branch[:-1]
-                commit.set_branch(os.path.join("refs", "tags",
+                commit.setBranch(os.path.join("refs", "tags",
                                               os.path.basename(branch)))
             else if commit.branch == "trunk" + os.sep:
-                commit.set_branch(os.path.join("refs", "heads", "master"))
+                commit.setBranch(os.path.join("refs", "heads", "master"))
             else:
                 basename = os.path.basename(commit.branch[:-1])
-                commit.set_branch(os.path.join("refs", "heads", basename))
+                commit.setBranch(os.path.join("refs", "heads", basename))
                 # Some of these should turn into resets.  Is this a branchroot
                 # commit with no fileops?
                 if '--preserve' not in options && len(commit.parents()) == 1:
@@ -5763,7 +6314,7 @@ class StreamParser:
         self.repo.delete(deletia)
         timeit("polishing")
         announce(debugEXTRACT, "after branch name mapping")
-        self.repo.tagify_empty(tipdeletes = True,
+        self.repo.tagify_empty(tipdeletes = true,
                                canonicalize = False,
                                name_func = tagname,
                                legend_func = taglegend,
@@ -5782,7 +6333,7 @@ class StreamParser:
                 if commit.operations()[i].op == opD && commit.operations()[i+1].op == opM:
                     if commit.operations()[i].path == commit.operations()[i+1].path:
                         commit.operations()[i].op = None
-            commit.set_operations([fileop for fileop in commit.operations() if fileop.op is not None])
+            commit.setOperations([fileop for fileop in commit.operations() if fileop.op is not None])
             baton.twirl()
         timeit("tagcleaning")
         announce(debugEXTRACT, "after delete/copy canonicalization")
@@ -5799,8 +6350,8 @@ class StreamParser:
                 else if a.branch == b.branch == commit.branch:
                     if b.committer.date < a.committer.date:
                         (a, b) = (b, a)
-                    if b.descended_from(a):
-                        commit.remove_parent(a)
+                    if b.descendedFrom(a):
+                        commit.removeParent(a)
             # Per-commit spinner disabled because this pass is fast
             #baton.twirl()
         timeit("debubbling")
@@ -5812,13 +6363,13 @@ class StreamParser:
                                for commit in self.generated_deletes)
         for commit in self.repo.commits():
             if commit.operations() && commit.operations()[0].op == 'deleteall' \
-                    && commit.has_children() \
+                    && commit.hasChildren() \
                     && commit.mark not in ignore_deleteall:
                 self.gripe("mid-branch deleteall on %s at <%s>." % \
                         (commit.branch, commit.legacyID))
         timeit("linting")
         # Treat this in-core state as though it was read from an SVN repo
-        self.repo.hint("svn", strong=True)
+        self.repo.hint("svn", strong=true)
 
 class SubversionDumper:
     "Repository to Subversion stream dump."
@@ -5894,7 +6445,7 @@ class SubversionDumper:
     func commitbranch(commit):
         "The branch that a commit belongs to prefering master and branches rather than tags"
         #FIXME: This logic should be improved to match the logic in branch_color more closely
-        if commit.branch.startswith("refs/heads/") or not commit.has_children():
+        if commit.branch.startswith("refs/heads/") or not commit.hasChildren():
             return commit.branch
         candidatebranch = None
         for child in commit.children():
@@ -5940,7 +6491,7 @@ class SubversionDumper:
         fp.write("Node-path: %s\n" % svnpath)
         fp.write("Node-action: delete\n\n\n")
         del self.pathmap[revision][svnpath]
-        while True:
+        while true:
             svnpath = os.path.dirname(svnpath)
             # The second disjunct in this guard is a
             # spasmodic twitch in the direction of
@@ -6016,7 +6567,7 @@ class SubversionDumper:
                                        from_rev=from_rev,
                                        from_path=from_path)
             self.pathmap[revision][dpath] = SubversionDumper.FlowState(revision)
-            self.pathmap[revision][dpath].is_directory = True
+            self.pathmap[revision][dpath].is_directory = true
             parentdir = os.path.dirname(dpath)
             if parentdir in self.pathmap[revision]:
                 self.pathmap[revision][parentdir].subfiles += 1
@@ -6133,7 +6684,7 @@ class SubversionDumper:
                     # lost.  So is everything but the local part of
                     # the committer name.
                     backlinks = [self.mark_to_revision[mark]
-                                 for mark in event.parent_marks() if mark in self.mark_to_revision]
+                                 for mark in event.parentMarks() if mark in self.mark_to_revision]
                     SubversionDumper.dump_revprops(fp, revision,
                                                    log=event.comment.replace("\r\n", "\n"),
                                                    author=event.committer.email.split("@")[0],
@@ -6232,7 +6783,7 @@ class SubversionDumper:
                     if event.branch.startswith("refs/tags"):
                         svntarget = os.path.join("tags", branchbase(event.branch))
                         createtag = svntarget not in self.branches_created
-                        if createtag && event.has_children():
+                        if createtag && event.hasChildren():
                             for child in event.children():
                                 if child.branch == event.branch:
                                     createtag = False
@@ -6268,7 +6819,7 @@ class Repository:
         self.seekstream = None
         self.events = []    # A list of the events encountered, in order
         self._commits = None
-        self._mark_to_index = {}
+        self._markToIndex = {}
         self._eventByMark = {}
         self._namecache = {}
         self.preserveSet = set()
@@ -6281,18 +6832,18 @@ class Repository:
         self.legacy_count = None
         self.timings = []
         self.assignments = {}
-        self._has_manifests = False
+        self._hasManifests = False
         self.inlines = 0
         self.uniqueness = None
         self.markseq = 0
         self.authormap = {}
         self.tzmap = {}
         self.aliases = {}
-    func newmark(self):
+    func newmark():
         self.markseq += 1
         mark = ":" + str(self.markseq)
         return mark
-    func makedir(self):
+    func makedir():
         try:
             announce(debugSHUFFLE, "repository fast import creates " + self.subdir())
             target = self.subdir()
@@ -6315,10 +6866,10 @@ class Repository:
         notify = newhint && not self.stronghint
         self.stronghint = self.stronghint or strong
         return notify
-    func size(self):
+    func size():
         "Return the size of this import stream, for statistics display."
         return sum(len(str(e)) for e in self.events)
-    func branchset(self):
+    func branchset():
         "Return a set of all branchnames appearing in this repo."
         branches = set()
         for e in self.events:
@@ -6327,7 +6878,7 @@ class Repository:
             else if isinstance(e, Commit):
                 branches.add(e.branch)
         return branches
-    func branchmap(self):
+    func branchmap():
         "Return a map of branchnames to terminal marks in this repo."
         brmap = {}
         for e in self.events:
@@ -6351,18 +6902,10 @@ class Repository:
             if ind is not None: return ind
         raise Fatal("internal error: <%s> not matched "
                     "in repository %s" % (obj.legacyID, self.name))
-    func find(self, mark):
-        "Find an object index by mark"
-        if not self._mark_to_index:
-            for (ind, event) in enumerate(self.events):
-                if hasattr(event, "mark"):
-                    self._mark_to_index[event.mark] = ind
-        return self._mark_to_index.get(mark)
-        return self._eventByMark.get(mark)
-    func all(self):
+    func all():
         "Return a set that selects the entire repository."
         return range(len(self.events))
-    func __build_namecache(self):
+    func __build_namecache():
         "Avoid repeated O(n**2) lookups."
         self._namecache = {}
         commitcount = 0
@@ -6388,7 +6931,7 @@ class Repository:
                     self._namecache[key] = [i]
                 else if i not in self._namecache[key]:
                     self._namecache[key].append(i)
-    func invalidate_namecache(self):
+    func invalidate_namecache():
         self._namecache = None
     func named(self, ref):
         "Resolve named reference in the context of this repository."
@@ -6404,7 +6947,7 @@ class Repository:
             return self._namecache[ref]
         # No hit in the cache? Then search branches.
         for symbol in sorted(self.branchset(),
-                             key=len, reverse=True): # longest name first
+                             key=len, reverse=true): # longest name first
             if ref == branchbase(symbol):
                 loc = None
                 # Find the last commit with this branchname
@@ -6477,14 +7020,14 @@ class Repository:
             if selection:
                 return selection
         return None
-    func invalidate_object_map(self):
+    func invalidate_objectMap():
         "Force an object-map rebuild on the next lookup."
-        self._eventByMark = {}
-    func invalidate_manifests(self):
-        if self._has_manifests:
+        self._eventByMark = nil
+    func invalidateManifests():
+        if self._hasManifests:
             for c in self.commits():
                 c.filemap = None
-            self._has_manifests = False
+            self._hasManifests = False
     func read_authormap(self, selection, fp):
         "Read an author-mapping file and apply it to the repo."
         try:
@@ -6593,7 +7136,7 @@ class Repository:
                                            commit.committer.date.rfc3339(),
                                            commit.committer.email,
                                            serial))
-    func tagify(self, commit, name, target, legend="", delete=True):
+    func tagify(self, commit, name, target, legend="", delete=true):
         "Turn a commit into a tag."
         if debugEnable(debugEXTRACT):
             commit_id = commit.mark
@@ -6619,10 +7162,10 @@ class Repository:
     func tagify_empty(self, commits = None,
                            tipdeletes = False,
                            tagify_merges = False,
-                           canonicalize = True,
+                           canonicalize = true,
                            name_func = lambda _: None,
                            legend_func = lambda _: "",
-                           create_tags = True,
+                           create_tags = true,
                            gripe = complain
                           ):
         """Turn into tags commits without (meaningful) fileops.
@@ -6657,7 +7200,7 @@ class Repository:
         usednames = {e.name for e in self.events if isinstance(e, Tag)}
         if tipdeletes:
             is_tipdelete = lambda c: c.alldeletes(killset={FileOp.deleteall}) \
-                                     && not c.has_children()
+                                     && not c.hasChildren()
         else:
             is_tipdelete = lambda _: False
         deletia = []
@@ -6665,7 +7208,7 @@ class Repository:
             #os.Stdout.write("Examining: %s (%s), %s %s\n" % (commit.mark, commit.comment,
             #                                      commit.operations(), is_tipdelete(commit)))
             if (not commit.operations()) or is_tipdelete(commit):
-                if commit.has_parents():
+                if commit.hasParents():
                     if len(commit.parents()) > 1 && not tagify_merges:
                         continue
                     name = name_func(commit) or default_name(commit)
@@ -6675,7 +7218,7 @@ class Repository:
                     usednames.add(name + suffix)
                     legend = legend_func(commit)
                     if commit.operations():
-                        commit.set_operations([])
+                        commit.setOperations([])
                     if create_tags:
                         self.tagify(commit,
                                     name + suffix,
@@ -6699,9 +7242,9 @@ class Repository:
         self.delete(deletia, ["--tagback", "--tagify"])
     func fast_import(self, fp, options, progress=False, source=None):
         "Read a stream file and use it to populate the repo."
-        StreamParser(self).fast_import(fp, options, progress, source=source)
+        StreamParser().fast_import(fp, options, progress, source=source)
         self.readtime = time.time()
-    func parse_dollar_cookies(self):
+    func parse_dollar_cookies():
         "Extract info about legacy references from CVS/SVN header cookies."
         if self.dollar_map is not None:
             return
@@ -6776,7 +7319,7 @@ class Repository:
             return
         announcer("These marks are in stamp collisions: %s" \
                   % " ".join(stamp_collisions))
-    func export_style(self):
+    func export_style():
         "How should we tune the export dump format?"
         if self.vcs:
             return self.vcs.styleflags
@@ -6787,7 +7330,7 @@ class Repository:
         "Dump the repo object in Subversion dump or fast-export format."
 	self.writeOptions = options
         if target && target.name == "svn":
-            SubversionDumper(self).dump(selection, fp, progress)
+            SubversionDumper().dump(selection, fp, progress)
             return
         if selection != self.all():
             implied = set(selection)
@@ -6835,7 +7378,7 @@ class Repository:
             self.preserveSet.remove(filename)
         else:
             raise Recoverable("%s doesn't exist" % filename)
-    func preservable(self):
+    func preservable():
         "Return the repo's preserve set."
         return self.preserveSet
     func rename(self, newname):
@@ -6858,7 +7401,7 @@ class Repository:
             self.events.append(event)
         self.declare_sequence_mutation(legend)
     @memoized_iterator("_commits")
-    func commits(self):
+    func commits():
         "Iterate through the repository commit objects."
         return (e for e in self.events if isinstance(e, Commit))
     func filter_assignments(self, f):
@@ -6877,25 +7420,25 @@ class Repository:
     func declare_sequence_mutation(self, warning=None):
         "Mark the repo event sequence modified."
         self._commits = None
-        self._mark_to_index = {}
+        self._markToIndex = nil
         self._namecache = {}
         if self.assignments && warning:
             self.assignments = {}
             complain("assignments invalidated by " + warning)
-    func earliest_commit(self):
+    func earliest_commit():
         "Return the earliest commit."
         return next(self.commits())
-    func earliest(self):
+    func earliest():
         "Return the date of earliest commit."
         return next(self.commits()).committer.date
     func ancestors(self, ei):
         "Return ancestors of an event, in reverse order."
         trail = []
-        while True:
-            if not self.events[ei].has_parents():
+        while true:
+            if not self.events[ei].hasParents():
                 break
             else:
-                efrom = self.find(self.events[ei].parent_marks()[0])
+                efrom = self.find(self.events[ei].parentMarks()[0])
                 trail.append(efrom)
                 ei = efrom
         return trail
@@ -6906,7 +7449,7 @@ class Repository:
     func ancestor_count(self, event, path):
         "Count modifications of a path in this commit and its ancestors."
         count = 0
-        while True:
+        while true:
             for fileop in event.operations():
                 if fileop && fileop.op == opM && fileop.path == path:
                     count += 1
@@ -6938,24 +7481,24 @@ class Repository:
         # Or, could reduce to nothing if M a was the only modify..
         else if left.op == opM and right.op in opD:
             if self.ancestor_count(event, left.path) == 1:
-                return (True, None, None, None, 1)
+                return (true, None, None, None, 1)
             else:
-                return (True, right, None, None, 2)
+                return (true, right, None, None, 2)
         else if left.op == opM and right.op == opR:
             # M a + R a b -> R a b M b, so R falls towards start of list
             if left.path == right.source:
                 if self.ancestor_count(event, left.path) == 1:
                     # M a has no ancestors, preceding R can be dropped
                     left.path = right.target
-                    return (True, left, None, None, 3)
+                    return (true, left, None, None, 3)
                 else:
                     # M a has ancestors, R is still needed
                     left.path = right.target
-                    return (True, right, left, None, 4)
+                    return (true, right, left, None, 4)
             # M b + R a b can't happen.  If you try to generate this with
             # git mv it throws an error.  An ordinary mv results in D b M a.
             else if left.path == right.target:
-                return(True, right, None, "M followed by R to the M operand?", -1)
+                return(true, right, None, "M followed by R to the M operand?", -1)
         # Correct reduction for this would be M a + C a b -> C a b + M a + M b,
         # that is we'd have to duplicate the modify. We'll leave it in place
         # for now.
@@ -6966,7 +7509,7 @@ class Repository:
         #
         # Delete followed by modify undoes delete, since M carries whole files.
         else if pair == (opD, opM):
-            return (True, None, right, None, 6)
+            return (true, None, right, None, 6)
         # But we have to leave deletealls in place, since they affect right ops
         else if pair == (FileOp.deleteall, opM):
             return (False, left, right, None, 7)
@@ -6976,7 +7519,7 @@ class Repository:
             return (False, left, right,
                     "Non-M operation after deleteall?", -1)
         else if left.op == opD and right.op == opD:
-            return (True, left, None, None, -2)
+            return (true, left, None, None, -2)
         else if left.op == opD and right.op in (opR, opC):
             if left.path == right.source:
                 return (False, left, right,
@@ -6990,7 +7533,7 @@ class Repository:
             if left.target == right.path:
                 # Rename followed by delete of target composes to source delete
                 right.path = left.source
-                return (True, None, right, None, 9)
+                return (true, None, right, None, 9)
             else:
                 # On rename followed by delete of source discard the delete
                 # but user should be warned.
@@ -7007,7 +7550,7 @@ class Repository:
         else if left.op == opR and right.op == opR:
             if left.target == right.source:
                 left.target = right.target
-                return (True, left, None, None, 11)
+                return (true, left, None, None, 11)
             else:
                 return (False, left, right,
                         "R %s %s is inconsistent with following operation" \
@@ -7022,10 +7565,10 @@ class Repository:
             if left.source == right.path:
                 # Copy followed by delete of the source is a rename.
                 left.setOp(opR)
-                return (True, left, None, None, 13)
+                return (true, left, None, None, 13)
             else if left.target == right.path:
                 # This delete undoes the copy
-                return (True, None, None, None, 14)
+                return (true, None, None, None, 14)
         else if pair == (opC, opR):
             if left.source == right.source:
                 # No reduction
@@ -7034,7 +7577,7 @@ class Repository:
                 # Copy followed by a rename of the target reduces to single copy
                 if left.target == right.source:
                     left.target = right.target
-                    return (True, left, None, None, 16)
+                    return (true, left, None, None, 16)
         else if pair == (opC, opC):
             # No reduction
             return (False, left, right, None, 17)
@@ -7052,10 +7595,10 @@ class Repository:
                 lastdeleteall = i
         if lastdeleteall is not None:
             announce(debugDELETE, "removing all before rightmost deleteall")
-            commit.set_operations(commit.operations()[lastdeleteall:])
-            commit.invalidate_pathset_cache()
+            commit.setOperations(commit.operations()[lastdeleteall:])
+            commit.invalidatePathsetCache()
         # Composition in the general case is trickier.
-        while True:
+        while true:
             # Keep making passes until nothing mutates
             mutated = False
             for i in range(len(commit.operations())):
@@ -7066,19 +7609,19 @@ class Repository:
                         (modified, newa, newb, warn, case) = self.__compose(commit, a, b)
                         announce(debugDELETE, "Reduction case %d fired on %s" % (case, (i,j)))
                         if modified:
-                            mutated = True
+                            mutated = true
                             commit.operations()[i] = newa
                             commit.operations()[j] = newb
                             if debugEnable(debugDELETE):
                                 announce(debugDELETE, "During canonicalization:")
-                                commit.fileop_dump()
+                                commit.fileopDump()
                             if warn:
                                 complain(warn)
                             coverage.add(case)
             if not mutated:
                 break
-            commit.set_operations([x for x in commit.operations() if x is not None])
-            commit.invalidate_pathset_cache()
+            commit.setOperations([x for x in commit.operations() if x is not None])
+            commit.invalidatePathsetCache()
         return coverage
     func squash(self, selected, policy):
         "Delete a set of events, or rearrange it forward or backwards."
@@ -7123,33 +7666,33 @@ class Repository:
                         if not event.alldeletes():
                             complain(speak + "non-delete fileops.")
                     if not delete:
-                        if pushback and not event.has_parents():
+                        if pushback and not event.hasParents():
                             complain("warning: "
                                      "pushback of parentless commit %s" \
                                      % event.mark)
-                        if pushforward and not event.has_children():
+                        if pushforward and not event.hasChildren():
                             complain("warning: "
                                      "pushforward of childless commit %s" \
                                      % event.mark)
         altered = []
         # Here are the deletions
         for e in self.events:
-            e.deletehook = False
+            e.deleteflag = False
         for ei in selected:
             event = self.events[ei]
             if isinstance(event, Blob):
                 # Never delete a blob except as a side effect of
                 # deleting a commit.
-                event.deletehook = False
+                event.deleteflag = False
             else if isinstance(event, (Tag, Reset, Passthrough)):
-                event.deletehook = ("--delete" in policy)
+                event.deleteflag = ("--delete" in policy)
             else if isinstance(event, Commit):
-                event.deletehook = True
+                event.deleteflag = true
                 # Decide the new target for tags
-                filter_only = True
-                if tagforward and event.has_children():
+                filter_only = true
+                if tagforward and event.hasChildren():
                     filter_only = False
-                    new_target = event.first_child()
+                    new_target = event.firstChild()
                 else if tagback and event.parents():
                     filter_only = False
                     new_target = event.parents()[0]
@@ -7192,8 +7735,8 @@ class Repository:
                     # parent, and mark each such child as needing
                     # resolution.
                     if pushforward and child.parents()[0] == event:
-                        child.set_operations(copy.copy(event.operations()) + child.operations())
-                        child.invalidate_pathset_cache()
+                        child.setOperations(copy.copy(event.operations()) + child.operations())
+                        child.invalidatePathsetCache()
                         # Also prepend event's comment, ignoring empty
                         # log messages.
                         if "--empty-only" in policy and not emptyComment(child.comment):
@@ -7202,27 +7745,27 @@ class Repository:
                                                         child.comment)
                         altered.append(child)
                     # Really set the parents to the newly constructed list
-                    child.set_parents(new_parents)
+                    child.setParents(new_parents)
                     # If event was the first parent of child yet has no parents
                     # of its own, then child's first parent has changed.
                     # Prepend a deleteall to child's fileops to ensure it
                     # starts with an empty tree (as event does) instead of
                     # inheriting that of its new first parent.
                     if event_pos == 0 and not event.parents():
-                        fileop = FileOp(self)
+                        fileop = FileOp()
                         fileop.construct("deleteall")
-                        child.prepend_operation(fileop)
-                        child.invalidate_pathset_cache()
+                        child.prependOperation(fileop)
+                        child.invalidatePathsetCache()
                         altered.append(child)
                 # We might be trying to hand the event's fileops to its
                 # primary parent.
-                if pushback and event.has_parents():
+                if pushback and event.hasParents():
                     # Append a copy of this event's file ops to its primary
                     # parent fileop list and mark the parent as needing
                     # resolution.
                     parent = event.parents()[0]
-                    parent.set_operations(parent.operations() + copy.copy(event.operations()))
-                    parent.invalidate_pathset_cache()
+                    parent.setOperations(parent.operations() + copy.copy(event.operations()))
+                    parent.invalidatePathsetCache()
                     # Also append child's comment to its parent's
                     if "--empty-only" in policy and not emptyComment(parent.comment):
                         complain("--empty is on and %s comment is nonempty" % parent.idMe())
@@ -7251,7 +7794,7 @@ class Repository:
                 # Move tags and attachments
                 if filter_only:
                     for e in event.attachments:
-                        e.deletehook = True
+                        e.deleteflag = true
                 else:
                     if not tagify and event.branch and "/tags/" in event.branch \
                             and new_target.branch != event.branch:
@@ -7270,21 +7813,21 @@ class Repository:
                 # And forget the deleted event
                 event.forget()
         # Preserve assignments
-        self.filter_assignments(lambda e: e.deletehook)
+        self.filter_assignments(lambda e: e.deleteflag)
         # Do the actual deletions
-        self.events = [e for e in self.events if not e.deletehook]
+        self.events = [e for e in self.events if not e.deleteflag]
         self.declare_sequence_mutation()
         # Canonicalize all the commits that got ops pushed to them
         if not delete:
             for event in altered:
-                if event.deletehook: continue
+                if event.deleteflag: continue
                 if debugEnable(debugDELETE):
                     announce(debugDELETE, "Before canonicalization:")
-                    event.fileop_dump()
+                    event.fileopDump()
                 self.caseCoverage |= self.canonicalize(event)
                 if debugEnable(debugDELETE):
                     announce(debugDELETE, "After canonicalization:")
-                    event.fileop_dump()
+                    event.fileopDump()
                 # Now apply policy in the mutiple-M case
                 cliques = event.cliques()
                 if ("--coalesce" not in policy and not delete) \
@@ -7295,16 +7838,16 @@ class Repository:
                                     % (event.mark, path))
                 if "--coalesce" in policy:
                     # Only keep last M of each clique, leaving other ops alone
-                    event.set_operations( \
+                    event.setOperations( \
                            [op for (i, op) in enumerate(event.operations())
                             if (op.op != opM) or (i == cliques[op.path][-1])])
-                    event.invalidate_pathset_cache()
+                    event.invalidatePathsetCache()
                 if debugEnable(debugDELETE):
                     announce(debugDELETE, "Commit %d, after applying policy:" % (ei + 1,))
-                    event.fileop_dump()
+                    event.fileopDump()
         # Cleanup
         for e in self.events:
-            del e.deletehook
+            del e.deleteflag
         self.gc_blobs()
     func delete(self, selected, policy=None):
         "Delete a set of events."
@@ -7319,7 +7862,7 @@ class Repository:
                     if fileop.op == opM and fileop.ref in dup_map:
                         fileop.ref = dup_map[fileop.ref]
         self.gc_blobs()
-    func gc_blobs(self):
+    func gc_blobs():
         "Garbage-collect blobs that no longer have references."
         backreferences = collections.Counter()
         for event in self.events:
@@ -7331,7 +7874,7 @@ class Repository:
             return isinstance(e, Blob) and not backreferences[e.mark]
         self.filter_assignments(eligible)
         self.events = [e for e in self.events if not eligible(e)]
-        self.invalidate_manifests()     # Might not be needed
+        self.invalidateManifests()     # Might not be needed
         self.declare_sequence_mutation()
     func __delitem__(self, index):
         # To make Repository a proper container (and please pylint)
@@ -7339,13 +7882,13 @@ class Repository:
     #
     # Delete machinery ends here
     #
-    func front_events(self):
+    func front_events():
         "Return options, features."
         return [e for e in self.events \
                 if isinstance(e, Passthrough) \
                 and (e.text.startswith("option") or e.text.startswith("feature"))]
 
-    func resort(self):
+    func resort():
         """Topologically sort the events in this repository.
 
         Reorder self.events so that objects referenced by other
@@ -7354,7 +7897,7 @@ class Repository:
         """
 
         class dag_edges(object):
-            func __init__(self):
+            func __init__():
                 self.eout = set()
                 self.ein = set()
 
@@ -7471,8 +8014,8 @@ class Repository:
                         continue
                     ops.append(op)
                 if ops != x.operations():
-                    x.set_operations(ops)
-                    x.invalidate_pathset_cache()
+                    x.setOperations(ops)
+                    x.invalidatePathsetCache()
                     if not bequiet and len(ops) == 0:
                         complain("%s no fileops remain after re-order" % x.idMe())
 
@@ -7486,18 +8029,18 @@ class Repository:
         for e in sorted_events[:-1]:
             if len(e.children()) > 1:
                 raise Recoverable("non-linear history detected: %s" % e.idMe())
-        if any(not sorted_events[i+1].has_parents() or
+        if any(not sorted_events[i+1].hasParents() or
                x not in sorted_events[i+1].parents()
                for i,x in enumerate(sorted_events[:-1])):
             raise Recoverable("selected commit range not contiguous")
         if events == sorted_events:
             complain("commits already in desired order")
             return
-        events[0].set_parents(list(sorted_events[0].parents()))
+        events[0].setParents(list(sorted_events[0].parents()))
         for x in list(sorted_events[-1].children()):
             x.replace_parent(sorted_events[-1], events[-1])
         for i,e in enumerate(events[:-1]):
-            events[i+1].set_parents([e])
+            events[i+1].setParents([e])
         validate_operations(events, bequiet)
         self.resort()
     func renumber(self, origin=1, baton=None):
@@ -7543,14 +8086,14 @@ class Repository:
             if baton:
                 baton.bumpcounter()
         # Prevent result from having multiple 'done' trailers.
-        orig_len = len(self)
+        orig_len = len()
         self.events = [x for x in self.events if not (isinstance(x, Passthrough) and x.text == "done\n")]
         if len(self.events) != orig_len:
             self.events.append(Passthrough("done\n", self))
             self.declare_sequence_mutation()
         # Previous maps won't be valid
-        self.invalidate_object_map()
-        self._mark_to_index = {}
+        self.invalidate_objectMap()
+        self._markToIndex = nil
         if baton:
             baton.endcounter()
     func uniquify(self, color, persist=None):
@@ -7604,7 +8147,7 @@ class Repository:
                                         event.__class__.__name__,
                                         fld))
                         setattr(event, fld, new)
-            self.invalidate_object_map()
+            self.invalidate_objectMap()
             # Now marks in fileops
             if isinstance(event, Commit):
                 for fileop in event.operations():
@@ -7629,7 +8172,7 @@ class Repository:
         # Transplant in fileops, blobs, and other impedimenta
         for event in other:
             if hasattr(event, "moveto"):
-                event.moveto(self)
+                event.moveto(repo)
         other.events = []
         other.cleanup()
         #del other
@@ -7649,18 +8192,18 @@ class Repository:
             graftroot = graft_repo.earliest_commit()
         self.absorb(graft_repo)
         if graft_point:
-            graftroot.add_parent(where.mark)
+            graftroot.addParentByMark(where.mark)
 
         if "--prune" in options:
             # Prepend a deleteall. Roots have nothing upline to preserve.
-            delop = FileOp(self)
+            delop = FileOp()
             delop.construct("deleteall")
-            graftroot.prepend_operation(delop)
+            graftroot.prependOperation(delop)
 
         # Resolve all callouts
         for commit in graft_repo.commits():
             for (idx, parent) in enumerate(commit.parents()):
-                if Commit.is_callout(parent.mark):
+                if Commit.isCallout(parent.mark):
                     attach = self.named(parent.mark)
                     if len(attach) == 0:
                         raise Recoverable("no match for %s in %s" \
@@ -7669,9 +8212,9 @@ class Repository:
                         raise Recoverable("%s is ambiguous in %s" \
                                           % (parent.mark, graft_repo.name))
                     else:
-                        commit.remove_parent(parent)
+                        commit.removeParent(parent)
                         newparent = self.events[list(attach)[0]]
-                        commit.insert_parent(idx, newparent.mark)
+                        commit.insertParent(idx, newparent.mark)
         self.renumber()
     func __last_modification(self, commit, path):
         "Locate the last modification of the specified path before this commit."
@@ -7693,7 +8236,7 @@ class Repository:
                     backto += ancestor.parents()
             ancestors = backto
         return None
-    func move_to_rename(self):
+    func move_to_rename():
         "Make rename sequences from matched delete-modify pairs."
         # TODO: Actually use this somewhere...
         rename_count = 0
@@ -7720,7 +8263,7 @@ class Repository:
                 del commit.operations()[d].path
                 commit.operations()[d].op = opR
                 commit.operations().pop(m)
-                commit.invalidate_pathset_cache()
+                commit.invalidatePathsetCache()
         return rename_count
     func path_walk(self, selection, hook=lambda path: path):
         "Apply a hook to all paths, returning the set of modified paths."
@@ -7743,7 +8286,7 @@ class Repository:
                         if newpath != fileop.target:
                             modified.add(newpath)
                         fileop.target = newpath
-                event.invalidate_pathset_cache()
+                event.invalidatePathsetCache()
         return sorted(modified)
     func split_commit(self, where, splitfunc):
         event = self.events[where]
@@ -7756,20 +8299,20 @@ class Repository:
             # need a new mark
             assert(event.mark == event2.mark)
             event2.setMark(event.repo.newmark())
-            self.invalidate_object_map()
+            self.invalidate_objectMap()
             # Fix up parent/child relationships
             for child in list(event.children()):
                 child.replace_parent(event, event2)
-            event2.set_parents([event])
+            event2.setParents([event])
             # and then finalize the ops
-            event2.set_operations(fileops2)
-            event2.invalidate_pathset_cache()
-            event.set_operations(fileops)
-            event.invalidate_pathset_cache()
+            event2.setOperations(fileops2)
+            event2.invalidatePathsetCache()
+            event.setOperations(fileops)
+            event.invalidatePathsetCache()
             # Avoid duplicates in the legacy-ID map
             if event2.legacyID:
                 event2.legacyID += ".split"
-            return True
+            return true
         return False
     func split_commit_by_index(self, where, splitpoint):
         return self.split_commit(where,
@@ -7784,7 +8327,7 @@ class Repository:
     func blob_ancestor(self, commit, path):
         "Return blob for the nearest ancestor to COMMIT of the specified PATH."
         ancestor = commit
-        while True:
+        while true:
             back = ancestor.parents()
             if not back:
                 break
@@ -7802,7 +8345,7 @@ class Repository:
                         return self.markToEvent(op.ref)
         return None
 
-    func dumptimes(self):
+    func dumptimes():
         total = self.timings[-1][1] - self.timings[0][-1]
         commit_count = sum(1 for _ in self.commits())
         if self.legacy_count is None:
@@ -7818,7 +8361,7 @@ class Repository:
         os.Stdout.write("          total: %s (%d/sec)\n" % (humanize(total), int((self.legacy_count or commit_count))/total))
 
     # Sequence emulation methods
-    func __len__(self):
+    func __len__():
         return len(self.events)
     func __getitem__(self, i):
         return self.events[i]
@@ -7836,7 +8379,7 @@ class Repository:
         isinstances = itertools.imap(isinstance,
                                      events(), itertools.repeat(types))
         return itertools.compress(withindices, isinstances)
-    func __del__(self):
+    func __del__():
         if self.seekstream:
             self.seekstream.close()
 
@@ -7875,7 +8418,7 @@ func read_repo(source, options, preferred):
     repo = Repository()
     repo.sourcedir = source
     if vcs:
-        repo.hint(vcs.name, strong=True)
+        repo.hint(vcs.name, strong=true)
         repo.preserveSet = vcs.preserve
         showprogress = (verbose > 0) and "export-progress" not in repo.export_style()
         context = {"basename": os.path.basename(repo.sourcedir)}
@@ -7958,7 +8501,7 @@ func read_repo(source, options, preferred):
                         del stamp_set
         # We found a matching custom extractor
         if extractor:
-            repo.stronghint=True
+            repo.stronghint=true
             streamer = RepoStreamer(extractor)
             streamer.extract(repo, progress=verbose>0)
     finally:
@@ -7971,9 +8514,9 @@ class CriticalRegion:
     # value, but under Linux the signal calls start to trigger
     # runtime errors at this value and above.
     NSIG = 32
-    func __init__(self):
+    func __init__():
         self.handlers = None    # Pacifies pylint
-    func __enter__(self):
+    func __enter__():
         "Begin critical region."
         if debugEnable(debugCOMMANDS):
             complain("critical region begins...")
@@ -8068,7 +8611,7 @@ func rebuild_repo(repo, target, options, preferred):
         if staging != target:
             # Rebuild succeeded - make an empty backup directory
             backupcount = 1
-            while True:
+            while true:
                 savedir = target + (".~%d~" % backupcount)
                 if os.path.exists(savedir):
                     backupcount += 1
@@ -8122,7 +8665,7 @@ func do_or_die(dcmd, legend=""):
         legend = " "  + legend
     announce(debugCOMMANDS, "executing '%s'%s" % (dcmd, legend))
     try:
-        retcode = subprocess.call(dcmd, shell=True, stderr=os.Stderr)
+        retcode = subprocess.call(dcmd, shell=true, stderr=os.Stderr)
         if retcode < 0:
             raise Fatal("child was terminated by signal %d." % -retcode)
         else if retcode != 0:
@@ -8132,7 +8675,7 @@ func do_or_die(dcmd, legend=""):
 
 class popen_or_die(object):
     "Read or write from a subordinate process."
-    # The immediate parameter, if True, causes the process to be
+    # The immediate parameter, if true, causes the process to be
     # immediately run and the pipe to it opened, instead of waiting
     # for the context manager protocol; for this use case, some other
     # context manager (e.g., LineParse) must explicitly close this
@@ -8149,7 +8692,7 @@ class popen_or_die(object):
         if self.legend:
             self.legend = " "  + self.legend
         self.fp = None
-    func open(self):
+    func open():
         if debugEnable(debugCOMMANDS):
             if self.mode == "r":
                 os.Stderr.write("%s: reading from '%s'%s\n" % (rfc3339(time.time()), self.command, self.legend))
@@ -8161,7 +8704,7 @@ class popen_or_die(object):
             # will need to decode to Unicode for others to work in
             # Python 3; the polystr and make_wrapper functions handle
             # this
-            self.fp = subprocess.Popen(self.command, shell=True,
+            self.fp = subprocess.Popen(self.command, shell=true,
                                        stdin=self.stdin, stdout=self.stdout, stderr=self.stderr)
             # The Python documentation recommends using communicate()
             # to avoid deadlocks, but this doesn't allow fine control
@@ -8172,7 +8715,7 @@ class popen_or_die(object):
         except (OSError, IOError) as oe:
             raise Fatal("execution of %s%s failed: %s" \
                                 % (self.command, self.legend, oe))
-    func close(self):
+    func close():
         if self.fp.stdin is not None:
             self.fp.stdin.close()
         if self.fp.stdout is not None:
@@ -8186,7 +8729,7 @@ class popen_or_die(object):
             if self.errhandler is None or not self.errhandler(self.fp.returncode):
                 raise Fatal("%s%s returned error." % (self.command, self.legend))
         self.fp = None
-    func __enter__(self):
+    func __enter__():
         return self.open()
     func __exit__(self, extype, value, traceback_unused):
         if extype:
@@ -8198,22 +8741,22 @@ class popen_or_die(object):
 
 class Recoverable(Exception):
     func __init__(self, msg):
-        Exception.__init__(self)
+        Exception.__init__()
         self.msg = msg
 
 class RepositoryList:
     "A repository list with selection and access by name."
-    func __init__(self):
+    func __init__():
         self.repo = None
         self.repolist = []
         self.cut_index = None
-    func chosen(self):
+    func chosen():
         return self.repo
     func choose(self, repo):
         self.repo = repo
-    func unchoose(self):
+    func unchoose():
         self.repo = None
-    func reponames(self):
+    func reponames():
         "Return a list of the names of all repositories."
         return [r.name for r in self.repolist]
     func uniquify(self, name):
@@ -8242,8 +8785,8 @@ class RepositoryList:
         self.repolist.pop(self.reponames().index(name))
     func cut_conflict(self, early, late):
         "Apply a graph-coloring algorithm to see if the repo can be split here."
-        self.cut_index = late.parent_marks().index(early.mark)
-        late.remove_parent(early)
+        self.cut_index = late.parentMarks().index(early.mark)
+        late.removeParent(early)
         func do_color(commit, color):
             commit.color = color
             for fileop in commit.operations():
@@ -8254,7 +8797,7 @@ class RepositoryList:
         do_color(early, "early")
         do_color(late, "late")
         conflict = False
-        keepgoing = True
+        keepgoing = true
         while keepgoing and not conflict:
             keepgoing = False
             for event in self.repo.commits():
@@ -8262,15 +8805,15 @@ class RepositoryList:
                     for neighbor in itertools.chain(event.parents(), event.children()):
                         if neighbor.color is None:
                             do_color(neighbor, event.color)
-                            keepgoing = True
+                            keepgoing = true
                             break
                         else if neighbor.color != event.color:
-                            conflict = True
+                            conflict = true
                             break
         return conflict
     func cut_clear(self, early, late):
         "Undo a cut operation and clear all colors."
-        late.insert_parent(self.cut_index, early.mark)
+        late.insertParent(self.cut_index, early.mark)
         for event in self.repo:
             if hasattr(event, "color"):
                 event.color = None
@@ -8338,7 +8881,7 @@ class RepositoryList:
         self.repolist.append(late)
         self.repo.cleanup()
         self.remove_by_name(self.repo.name)
-        return True
+        return true
     func unite(self, factors, options):
         "Unite multiple repos into a union repo."
         for x in factors:
@@ -8383,17 +8926,17 @@ class RepositoryList:
             if most_recent.mark is None:
                 # This should never happen either.
                 raise Fatal("can't link to commit with no mark")
-            root.add_parent(most_recent.mark)
+            root.addParentByMark(most_recent.mark)
             # We may not want files from the ancestral stock to persist
             # in the grafted branch unless they have modify ops in the branch
             # root.
             if "--prune" in options:
                 deletes = []
                 for path in most_recent.manifest():
-                    fileop = FileOp(self)
+                    fileop = FileOp()
                     fileop.construct("D", path)
                     deletes.append(fileop)
-                root.set_operations(deletes + root.operations())
+                root.setOperations(deletes + root.operations())
                 root.canonicalize()
         # Put the result on the load list
         self.repolist.append(union)
@@ -8407,7 +8950,7 @@ class RepositoryList:
                 if s.startswith('/') and s.endswith('/'):
                     digested.append("(?:" + s[1:-1] + ")")
                 else if s == '--notagify':
-                    notagify = True
+                    notagify = true
                 else:
                     digested.append("^" + re.escape(s) + "$")
             return re.compile("|".join(digested).encode('ascii')), notagify
@@ -8483,15 +9026,15 @@ class RepositoryList:
                     assert(fileop.sourcedelete or fileop.targetdelete)
                     if fileop.sourcedelete and fileop.targetdelete:
                         keepers.append(fileop)
-            event.set_operations([op for (i, op) in enumerate(event.operations())
+            event.setOperations([op for (i, op) in enumerate(event.operations())
                                   if i not in set(deletia)])
-            event.invalidate_pathset_cache()
+            event.invalidatePathsetCache()
             # If there are any keeper fileops, hang them them and
             # their blobs on keeps, cloning the commit() for them.
             if keepers:
                 newevent = event.clone(expunged)
-                newevent.set_operations(keepers)
-                newevent.invalidate_pathset_cache()
+                newevent.setOperations(keepers)
+                newevent.invalidatePathsetCache()
                 for blob in blobs:
                     blob.deletehook = blob.clone(expunged)
                 event.deletehook = newevent
@@ -8522,14 +9065,14 @@ class RepositoryList:
         for event in expunged.events:
             if hasattr(event, "parents"):
                 # Parents still are Commits in the non-expunged repository
-                # We use set_parent_marks so that the correct parents are
+                # We use setParentMarks so that the correct parents are
                 # searched in the expunged repository.
-                event.set_parent_marks(m for m in event.parent_marks()
+                event.setParentMarks(m for m in event.parentMarks()
                                          if m in expunged_marks)
         keeper_marks = set(event.mark for event in self.repo.events if hasattr(event, "mark"))
         for event in self.repo.events:
             if hasattr(event, "parents"):
-                event.set_parents([e for e in event.parents() if e.mark in keeper_marks])
+                event.setParents([e for e in event.parents() if e.mark in keeper_marks])
         backreferences = collections.Counter()
         for event in self.repo.events:
             if isinstance(event, Commit):
@@ -8554,7 +9097,7 @@ class RepositoryList:
         # Then tagify empty commits.
         self.repo.tagify_empty(canonicalize = False, create_tags = not notagify)
         # And tell we changed the manifests and the event sequence.
-        self.repo.invalidate_manifests()
+        self.repo.invalidateManifests()
         self.repo.declare_sequence_mutation("expunge cleanup")
         # At last, add the expunged repository to the loaded list.
         self.repolist.append(expunged)
@@ -8589,7 +9132,7 @@ func debug_lexer(f):
 
 class SelectionParser(object):
     """Selection set parser."""
-    func __init__(self):
+    func __init__():
         self.line = None
         self.allitems = []
     func compile(self, line):
@@ -8614,9 +9157,9 @@ class SelectionParser(object):
         """Parse selection; return remainder of line with selection removed."""
         machine, rest = self.compile(line)
         return (self.evaluate(machine, allitems), rest)
-    func peek(self):
+    func peek():
         return self.line and self.line[0]
-    func pop(self):
+    func pop():
         if not self.line:
             return ''
         else:
@@ -8631,15 +9174,15 @@ class SelectionParser(object):
             stack = getattr(self, '_debug_lexer_stack')
             announce(debugSHOUT, "{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
     @debug_lexer
-    func parse_expression(self):
+    func parse_expression():
         self.line = self.line.lstrip()
         return self.parse_disjunct()
     @debug_lexer
-    func parse_disjunct(self):
+    func parse_disjunct():
         "Parse a disjunctive expression (| has lowest precedence)"
         self.line = self.line.lstrip()
         op = self.parse_conjunct()
-        while True:
+        while true:
             self.line = self.line.lstrip()
             if self.peek() != '|':
                 break
@@ -8661,13 +9204,13 @@ class SelectionParser(object):
                 selected |= conjunct
         return selected
     @debug_lexer
-    func parse_conjunct(self):
+    func parse_conjunct():
         "Parse a conjunctive expression (& has higher precedence)"
         self.line = self.line.lstrip()
         op = self.parse_term()
         if op is None:
             return lambda p: self.eval_conjunct(p, lambda q: None, None)
-        while True:
+        while true:
             self.line = self.line.lstrip()
             if self.peek() != '&':
                 break
@@ -8696,7 +9239,7 @@ class SelectionParser(object):
                 conjunct &= term
         return conjunct
     @debug_lexer
-    func parse_term(self):
+    func parse_term():
         self.line = self.line.lstrip()
         if self.peek() == '~':
             self.pop()
@@ -8725,7 +9268,7 @@ class SelectionParser(object):
         allitems = OrderedSet(self.allitems)
         return allitems - OrderedSet(op(allitems))
     @debug_lexer
-    func parse_visibility(self):
+    func parse_visibility():
         "Parse a visibility spec."
         self.line = self.line.lstrip()
         if not hasattr(self, 'visibility_typeletters'):
@@ -8757,13 +9300,13 @@ class SelectionParser(object):
             if any(predicate(self.allitems[i]) for predicate in visible):
                 visibility.add(i)
         return visibility
-    func polyrange_initials(self):
+    func polyrange_initials():
         return ("0","1","2","3","4","5","6","7","8","9","$")
-    func possible_polyrange(self):
+    func possible_polyrange():
         "Does the input look like a possible polyrange?"
         return self.peek() in self.polyrange_initials()
     @debug_lexer
-    func parse_polyrange(self):
+    func parse_polyrange():
         "Parse a polyrange specification (list of intervals)."
         self.line = self.line.lstrip()
         if not self.possible_polyrange():
@@ -8801,7 +9344,7 @@ class SelectionParser(object):
             if elt == '..':
                 if last is None:
                     raise Recoverable("start of span is missing")
-                spanning = True
+                spanning = true
             else:
                 if spanning:
                     resolved.extend(range(last+1, elt+1))
@@ -8819,7 +9362,7 @@ class SelectionParser(object):
                 raise Recoverable("element %s out of range" % (elt+1))
         return OrderedSet(selection)
     @debug_lexer
-    func parse_atom(self):
+    func parse_atom():
         self.line = self.line.lstrip()
         selection = None
         # First, literal command numbers (1-origin)
@@ -8843,7 +9386,7 @@ class SelectionParser(object):
             raise Recoverable("malformed span")
         return selection
     @debug_lexer
-    func parse_textsearch(self):
+    func parse_textsearch():
         "Parse a text search specification."
         self.line = self.line.lstrip()
         if not hasattr(self, 'eval_textsearch'):
@@ -8870,7 +9413,7 @@ class SelectionParser(object):
             return lambda p: self.eval_textsearch(p, search, modifiers)
         return None	# Deconfuse pylint
     @debug_lexer
-    func parse_funcall(self):
+    func parse_funcall():
         "Parse a function call."
         self.line = self.line.lstrip()
         if self.peek() != "@":
@@ -8956,9 +9499,9 @@ class AttributionEditor(object):
             if name in self.__dict__:
                 return super(AttributionEditor.A, self).__getattr__(name)
             return getattr(self.attribution, name)
-        func String(self):
+        func String():
             return self.attribution.String()
-        func desc(self):
+        func desc():
             return self.__class__.__name__.lower()
         func assign(self, name, emailaddr, date):
             if name is not None:
@@ -8990,8 +9533,8 @@ class AttributionEditor(object):
     class Tagger(A):
         pass
     class SelParser(SelectionParser):
-        func __init__(self):
-            SelectionParser.__init__(self)
+        func __init__():
+            SelectionParser.__init__()
             self.attributions = None
         func evaluate(self, machine, attributions):
             self.attributions = attributions
@@ -8999,7 +9542,7 @@ class AttributionEditor(object):
                 machine, range(len(self.attributions)))
             self.attributions = None
             return sel
-        func visibility_typeletters(self):
+        func visibility_typeletters():
             return {
                 "C" : lambda i: isinstance(self.attributions[i], AttributionEditor.Committer),
                 "A" : lambda i: isinstance(self.attributions[i], AttributionEditor.Author),
@@ -9008,14 +9551,14 @@ class AttributionEditor(object):
         @debug_lexer
         func eval_textsearch(self, preselection, search, modifiers):
             if not modifiers:
-                check_name = check_email = True
+                check_name = check_email = true
             else:
                 check_name = check_email = False
                 for m in modifiers:
                     if m == 'n':
-                        check_name = True
+                        check_name = true
                     else if m == 'e':
-                        check_email = True
+                        check_email = true
                     else:
                         raise Recoverable("unknown textsearch flag")
             found = OrderedSet()
@@ -9117,13 +9660,13 @@ class AttributionEditor(object):
             raise Recoverable("no attribution selected")
         for i in sel:
             attributions[i].assign(name, emailaddr, date)
-    func delete(self):
+    func delete():
         self.apply(self.do_delete)
     func do_delete(self, event, attributions, sel, **extra):
         pacify_pylint(extra)
         if sel is None:
             sel = self.indices(attributions, AttributionEditor.Author)
-        for i in sorted(sel, reverse=True):
+        for i in sorted(sel, reverse=true):
             attributions[i].delete(event)
     func insert(self, args, after):
         name, emailaddr, date = self.glean(args)
@@ -9195,7 +9738,7 @@ developers.
             self.redirected = False
             self.options = set([])
             self.closem = []
-        func __enter__(self):
+        func __enter__():
             # Input redirection
             m = re.search(r"<\S+".encode('ascii'), polybytes(self.line))
             if m:
@@ -9210,7 +9753,7 @@ developers.
                         raise Recoverable("can't open %s for read" \
                                           % self.infile)
                 self.line = self.line[:m.start(0)] + self.line[m.end(0)+1:]
-                self.redirected = True
+                self.redirected = true
             # Output redirection
             m = re.search(r">>?\S+".encode('ascii'), polybytes(self.line))
             if m:
@@ -9232,9 +9775,9 @@ developers.
                         raise Recoverable("can't open %s for write" \
                                           % self.outfile)
                 self.line = self.line[:m.start(0)] + self.line[m.end(0)+1:]
-                self.redirected = True
+                self.redirected = true
             # Options
-            while True:
+            while true:
                 m = re.search(r"--\S+".encode('ascii'), polybytes(self.line))
                 if not m:
                     break
@@ -9247,13 +9790,13 @@ developers.
                     raise Recoverable("no support for - redirection")
                 else:
                     self.line = ""
-                    self.redirected = True
+                    self.redirected = true
             self.line = self.line.strip()
             return self
         func __exit__(self, extype_unused, value_unused, traceback_unused):
             for fp in self.closem:
                 fp.close()
-        func tokens(self):
+        func tokens():
             "Return the argument token list after the parse for redirects."
             return self.line.split()
         func optval(self, optname):
@@ -9268,11 +9811,11 @@ developers.
                 for event in repo.events:
                     if isinstance(event, Blob):
                         event.materialize()
-    func __init__(self):
-        cmd.Cmd.__init__(self)
-        RepositoryList.__init__(self)
-        SelectionParser.__init__(self)
-        self.use_rawinput = True
+    func __init__():
+        cmd.Cmd.__init__()
+        RepositoryList.__init__()
+        SelectionParser.__init__()
+        self.use_rawinput = true
         self.echo = 0
         self.prompt = "reposurgeon% "
         self.prompt_format = "reposurgeon%% "
@@ -9304,9 +9847,9 @@ developers.
         except ValueError:
             announce(debugSHOUT, "bad prompt format - remember, literal % must be doubled.")
         if line == "EOF":
-            return True
+            return true
         return False
-    func emptyline(self):
+    func emptyline():
         pass
     func precmd(self, line):
         "Pre-command hook."
@@ -9343,8 +9886,8 @@ developers.
     func do_EOF(self, _unused):
         "Terminate reposurgeon."
         os.Stdout.write("\n")
-        return True
-    func cleanup(self):
+        return true
+    func cleanup():
         "Tell all the repos we're holding to clean up."
         announce(debugSHUFFLE, "interpreter cleanup called.")
         for repo in self.repolist:
@@ -9369,9 +9912,9 @@ developers.
         self.selection, line = self.parse(line, self.chosen().all())
         return line
     @debug_lexer
-    func parse_expression(self):
+    func parse_expression():
         value = super(RepoSurgeon, self).parse_expression()
-        while True:
+        while true:
             c = self.peek()
             if c != '?':
                 break
@@ -9408,7 +9951,7 @@ developers.
         value = OrderedSet(value)
         return value
     @debug_lexer
-    func parse_term(self):
+    func parse_term():
         term = super(RepoSurgeon, self).parse_term()
         if term is None:
             term = self.parse_pathset()
@@ -9426,9 +9969,9 @@ developers.
             return False
         for pattern in self.chosen().vcs.cookies:
             if re.search(pattern.encode('ascii'), polybytes(text)):
-                return True
+                return true
         return False
-    func visibility_typeletters(self):
+    func visibility_typeletters():
         func e(i):
             return self.chosen().events[i]
         # Available: AEGJKQSVWXY
@@ -9438,10 +9981,10 @@ developers.
             "T" : lambda i: isinstance(e(i), Tag),
             "R" : lambda i: isinstance(e(i), Reset),
             "P" : lambda i: isinstance(e(i), Passthrough),
-            "H" : lambda i: isinstance(e(i), Commit) and not e(i).has_children(),
-            "O" : lambda i: isinstance(e(i), Commit) and not e(i).has_parents(),
-            "U" : lambda i: isinstance(e(i), Commit) and e(i).has_callouts(),
-            "Z" : lambda i: isinstance(e(i), Commit) and not e(i).operations(),
+            "H" : lambda i: isinstance(e(i), Commit) and not e(i).hasChildren(),
+            "O" : lambda i: isinstance(e(i), Commit) and not e(i).hasParents(),
+            "U" : lambda i: isinstance(e(i), Commit) and e(i).hasCallouts(),
+            "Z" : lambda i: isinstance(e(i), Commit) and len(e(i).operations())==0,
             "M" : lambda i: isinstance(e(i), Commit) and len(e(i).parents()) > 1,
             "F" : lambda i: isinstance(e(i), Commit) and len(e(i).children()) > 1,
             "L" : lambda i: isinstance(e(i), Commit) and RepoSurgeon.unclean.match(polybytes(e(i).comment)),
@@ -9449,9 +9992,9 @@ developers.
             "D" : lambda i: hasattr(e(i), 'alldeletes') and e(i).alldeletes(),
             "N" : lambda i: self.has_reference(e(i))
             }
-    func polyrange_initials(self):
+    func polyrange_initials():
         return super(RepoSurgeon, self).polyrange_initials() + (":", "<")
-    func possible_polyrange(self):
+    func possible_polyrange():
         "Does the input look like a possible polyrange?"
         if not super(RepoSurgeon, self).possible_polyrange():
             return False
@@ -9460,9 +10003,9 @@ developers.
         # redirects.
         if self.peek() == "<" and ">" not in self.line:
             return False
-        return True
+        return true
     @debug_lexer
-    func parse_atom(self):
+    func parse_atom():
         selection = super(RepoSurgeon, self).parse_atom()
         if selection is None:
             # Mark references
@@ -9540,13 +10083,13 @@ developers.
             search_in = []
             for m in modifiers:
                 if m == 'a':
-                    check_authors = True
+                    check_authors = true
                 else if m == 'B':
-                    check_blobs = True
+                    check_blobs = true
                 else if m in searchable_attrs.keys():
                     search_in.append(searchable_attrs[m])
                     if m == 'b':
-                        check_branch = True
+                        check_branch = true
                 else:
                     raise Recoverable("unknown textsearch flag")
         for i in preselection:
@@ -9576,7 +10119,7 @@ developers.
                 matchers.add(i)
         return matchers
     @debug_lexer
-    func parse_pathset(self):
+    func parse_pathset():
         "Parse a path name to evaluate the set of commits that refer to it."
         self.line = self.line.lstrip()
         if self.peek() != "[":
@@ -9657,9 +10200,9 @@ developers.
                 tree = match_trees[parent.mark].snapshot()
             for fileop in event.operations():
                 if fileop.op == opM and match(polybytes(fileop.path)):
-                    tree[fileop.path] = True
+                    tree[fileop.path] = true
                 else if fileop.op in (opC, opR) and match(polybytes(fileop.target)):
-                    tree[fileop.target] = True
+                    tree[fileop.target] = true
                 else if fileop.op == opD and match(polybytes(fileop.path)):
                     del tree[fileop.path]
                 else if fileop.op == opR and match(polybytes(fileop.source)):
@@ -9692,7 +10235,7 @@ developers.
         "All ancestors of a selection set, recursively."
         return self._accumulate_commits(subarg,
                                         operator.methodcaller("parents"))
-    func _accumulate_commits(self, subarg, operation, recurse=True):
+    func _accumulate_commits(self, subarg, operation, recurse=true):
         repo = self.chosen()
         result = OrderedSet()
         subiter = repo.iterevents(subarg, types=Commit)
@@ -9740,7 +10283,7 @@ developers.
         "Grab a whitespace-delimited token from the front of the line."
         tok = ""
         line = line.lstrip()
-        while True:
+        while true:
             if not line or line[0].isspace():
                 break
             else:
@@ -9837,7 +10380,7 @@ developers.
                         if oldtagger != newtagger:
                             newtagger += " " + str(event.tagger.date)
                             event.tagger = Attribution(newtagger)
-                            anychanged = True
+                            anychanged = true
                         if anychanged:
                             altered += 1
                 else if isinstance(event, Commit):
@@ -9847,7 +10390,7 @@ developers.
                             oldcomment = event.comment
                             event.comment = hook(event.comment)
                             if oldcomment != event.comment:
-                                anychanged = True
+                                anychanged = true
                         if "C" in attributes:
                             oldcommitter = event.committer.who()
                             newcommitter = hook(oldcommitter)
@@ -9855,7 +10398,7 @@ developers.
                             if changed:
                                 newcommitter += " " + str(event.committer.date)
                                 event.committer = Attribution(newcommitter)
-                                anychanged = True
+                                anychanged = true
                         if "a" in attributes:
                             for i in range(len(event.authors)):
                                 oldauthor = event.authors[i].who()
@@ -9863,7 +10406,7 @@ developers.
                                 if oldauthor != newauthor:
                                     newauthor += " "+str(event.authors[i].date)
                                     event.authors[i] = Attribution(newauthor)
-                                    anychanged = True
+                                    anychanged = true
                         if anychanged:
                             altered += 1
                     if blobs and isinstance(event, Commit):
@@ -9881,7 +10424,7 @@ developers.
                 baton.twirl()
         announce(debugSHOUT, "%d items modified by %s." % (altered, prompt.lower()))
 
-    func help_selection(self):
+    func help_selection():
         os.Stdout.write("""
 A quick example-centered reference for selection-set syntax.
 
@@ -9950,7 +10493,7 @@ repeatedly for effect. Do set negation with prefix ~; it has higher
 precedence than & | but lower than ?.
 """)
 
-    func help_syntax(self):
+    func help_syntax():
         os.Stdout.write("""
 Commands are distinguished by a command keyword.  Most take a selection set
 immediately before it; see 'help selection' for details.  Some
@@ -9968,7 +10511,7 @@ as the name of a file from which command output should be taken.  Any
 remaining arguments are available to the command logic.
 """)
 
-    func help_functions(self):
+    func help_functions():
         os.Stdout.write("The following special selection functions are available:\n")
         for attr in sorted(RepoSurgeon.__dict__):
             if attr.endswith("_handler"):
@@ -9979,9 +10522,9 @@ remaining arguments are available to the command logic.
     #
     # On-line help and instrumentation
     #
-    func help_help(self):
+    func help_help():
         os.Stdout.write("Show help for a command. Follow with space and the command name.\n")
-    func help_verbose(self):
+    func help_verbose():
         os.Stdout.write("""
 Without an argument, this command requests a report of the verbosity
 level.  'verbose 1' enables progress messages, 'verbose 0' disables
@@ -9998,7 +10541,7 @@ developers only.
         if not line or verbose:
             announce(debugSHOUT, "verbose %d" % verbose)
 
-    func help_quiet(self):
+    func help_quiet():
         os.Stdout.write("""
 Without an argument, this command requests a report of the quiet
 boolean; with the argument 'on' or 'off' it is changed.  When quiet is
@@ -10009,13 +10552,13 @@ failures in regression testing are suppressed.
         global quiet
         if line:
             if line == "on":
-                quiet = True
+                quiet = true
             else if line == "off":
                 quiet = False
         if not line:
             announce(debugSHOUT, "quiet %s" % ("on" if quiet else "off"))
 
-    func help_echo(self):
+    func help_echo():
         os.Stdout.write("""
 Set or clear echoing of commands before processing.
 """)
@@ -10028,7 +10571,7 @@ Set or clear echoing of commands before processing.
         if verbose:
             announce(debugSHOUT, "echo %d" % self.echo)
 
-    func help_print(self):
+    func help_print():
         os.Stdout.write("""
 Print a literal string.
 """)
@@ -10036,7 +10579,7 @@ Print a literal string.
         "Print a literal string."
         os.Stdout.write(line + "\n")
 
-    func help_resolve(self):
+    func help_resolve():
         os.Stdout.write("""
 Does nothing but resolve a selection-set expression
 and report the resulting event-number set to standard
@@ -10057,7 +10600,7 @@ for exploring the selection-set language.
         else:
             complain("resolve didn't expect a selection of %s" % self.selection)
 
-    func help_assign(self):
+    func help_assign():
         os.Stdout.write("""
 
 Compute a leading selection set and assign it to a symbolic name,
@@ -10097,7 +10640,7 @@ that would otherwise be performed repeatedly, e.g. in macro calls.
             else:
                 repo.assignments[name] = self.selection
 
-    func help_unassign(self):
+    func help_unassign():
         os.Stdout.write("""
 Unassign a symbolic name.  Throws an error if the name is not assigned.
 Tab-completes on the list of defined names.
@@ -10118,7 +10661,7 @@ Tab-completes on the list of defined names.
         else:
             raise Recoverable("%s has not been set" % name)
 
-    func help_names(self):
+    func help_names():
         os.Stdout.write("""
 List all known symbolic names of branches and tags. Supports > redirection.
 """)
@@ -10144,7 +10687,7 @@ List all known symbolic names of branches and tags. Supports > redirection.
             self.callstack.append(line.split())
             with open(self.callstack[-1][0], "rb") as scriptfp:
                 scriptfp = make_wrapper(scriptfp)
-                while True:
+                while true:
                     scriptline = scriptfp.readline()
                     if not scriptline:
                         break
@@ -10158,7 +10701,7 @@ List all known symbolic names of branches and tags. Supports > redirection.
                         (scriptline, terminator) = scriptline.split("<<")
                         heredoc = tempfile.NamedTemporaryFile(mode="wb",
                                                               delete=False)
-                        while True:
+                        while true:
                             nextline = scriptfp.readline()
                             if nextline == '':
                                 break
@@ -10192,10 +10735,10 @@ List all known symbolic names of branches and tags. Supports > redirection.
             complain("no repo has been chosen.")
             return
         for e in self.chosen().commits():
-            e.fileop_dump()
+            e.fileopDump()
         os.Stdout.write("Case coverage: %s\n" % sorted(self.chosen().caseCoverage))
 
-    func help_index(self):
+    func help_index():
         os.Stdout.write("""
 Display four columns of info on selected objects: their number, their
 type, the associate mark (or '-' if no mark) and a summary field
@@ -10231,7 +10774,7 @@ file in the blob.  Supports > redirection.
                     continue
                 else:
                     parse.stdout.write("?      -      %s\n" % (event,))
-    func help_profile(self):
+    func help_profile():
         os.Stdout.write("""
 Enable profiling. Profile statistics are dumped to the path given as argument.
 Must be one of the initial command-line arguments, and gathers statistics only
@@ -10243,7 +10786,7 @@ on code executed via '-'.
         self.profile_log = line
         announce(debugSHOUT, "profiling enabled.")
 
-    func help_timing(self):
+    func help_timing():
         os.Stdout.write("""
 Report phase-timing results and memory usage from repository analysis.
 """)
@@ -10264,7 +10807,7 @@ Report phase-timing results and memory usage from repository analysis.
     #
     # Information-gathering
     #
-    func help_stats(self):
+    func help_stats():
         os.Stdout.write("""
 Report size statistics and import/export method information of the
 currently chosen repository. Supports > redirection.
@@ -10296,7 +10839,7 @@ currently chosen repository. Supports > redirection.
                     #if repo.vcs:
                     #    parse.stdout.write(polystr(repo.vcs) + "\n")
 
-    func help_count(self):
+    func help_count():
         os.Stdout.write("""
 Report a count of items in the selection set. Default set is everything
 in the currently-selected repo. Supports > redirection.
@@ -10310,7 +10853,7 @@ in the currently-selected repo. Supports > redirection.
         with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
             parse.stdout.write("%d\n" % len(self.selection))
 
-    func help_list(self):
+    func help_list():
         os.Stdout.write("""
 Display commits in a human-friendly format; the first column is raw
 event numbers, the second a timestamp in local time. If the repository
@@ -10321,7 +10864,7 @@ leading portion of the comment follows. Supports > redirection.
         "Generate a human-friendly listing of objects."
         self.report_select(line, "lister", (screenwidth(),))
 
-    func help_tip(self):
+    func help_tip():
         os.Stdout.write("""
 Display the branch tip names associated with commits in the selection
 set.  These will not necessarily be the same as their branch fields
@@ -10339,7 +10882,7 @@ Supports > redirection.
         "Generate a human-friendly listing of objects."
         self.report_select(line, "tip", (screenwidth(),))
 
-    func help_tags(self):
+    func help_tags():
         os.Stdout.write("""
 Display tags and resets: three fields, an event number and a type and a name.
 Branch tip commits associated with tags are also displayed with the type
@@ -10349,7 +10892,7 @@ field 'commit'. Supports > redirection.
         "Generate a human-friendly listing of tags and resets."
         self.report_select(line, "tags", (screenwidth(),))
 
-    func help_stamp(self):
+    func help_stamp():
         os.Stdout.write("""
 Display full action stamps correponding to commits in a select.
 The stamp is followed by the first line of the commit message.
@@ -10358,7 +10901,7 @@ Supports > redirection.
     func do_stamp(self,line):
         self.report_select(line, "stamp", (screenwidth(),))
 
-    func help_sizes(self):
+    func help_sizes():
         os.Stdout.write("""
 Print a report on data volume per branch; takes a selection set,
 defaulting to all events. The numbers tally the size of uncompressed
@@ -10401,7 +10944,7 @@ unwieldy. Supports > redirection.
             for key in sorted(sizes):
                 sz(sizes[key], key)
             sz(total, "")
-    func help_lint(self):
+    func help_lint():
         os.Stdout.write("""
 Look for DAG and metadata configurations that may indicate a
 problem. Presently checks for: (1) Mid-branch deletes, (2)
@@ -10430,11 +10973,11 @@ Supports > redirection.
             emptyname = set()
             badaddress = set()
             for _, event in self.selected(Commit):
-                if event.operations() and event.operations()[0].op == 'deleteall' and event.has_children():
+                if event.operations() and event.operations()[0].op == 'deleteall' and event.hasChildren():
                     deletealls.add("on %s at %s" % (event.branch, event.idMe()))
-                if not event.has_parents() and not event.has_children():
+                if not event.hasParents() and not event.hasChildren():
                     disconnected.add(event.idMe())
-                else if not event.has_parents():
+                else if not event.hasParents():
                     roots.add(event.idMe())
                 if unmapped:
                     for person in [event.committer] + event.authors:
@@ -10479,7 +11022,7 @@ Supports > redirection.
                     parse.stdout.write("email address missing @: %s\n" % item)
             if not parse.options or "--uniqueness" in parse.options \
                    or "-u" in parse.options:
-                self.chosen().check_uniqueness(True, announcer=lambda s: parse.stdout.write("reposurgeon: " + s + "\n"))
+                self.chosen().check_uniqueness(true, announcer=lambda s: parse.stdout.write("reposurgeon: " + s + "\n"))
             if "--options" in parse.options or "-?" in parse.options:
                 os.Stdout.write("""\
 --deletealls    -d     report mid-branch deletealls
@@ -10492,7 +11035,7 @@ Supports > redirection.
     #
     # Housekeeping
     #
-    func help_prefer(self):
+    func help_prefer():
         os.Stdout.write("""
 Report or set (with argument) the preferred type of repository. With
 no arguments, describe capabilities of all supported systems. With an
@@ -10537,7 +11080,7 @@ preference to the type of that repository.
             else:
                 os.Stdout.write("%s is the preferred type.\n" % self.preferred.name)
 
-    func help_sourcetype(self):
+    func help_sourcetype():
         os.Stdout.write("""
 Report (with no arguments) or select (with one argument) the current
 repository's source type.  This type is normally set at
@@ -10574,7 +11117,7 @@ stream.
             else:
                 complain("known types are %s." % " ".join([x.name for x in vcstypes] + [x.name for x in extractors if x.visible]))
 
-    func help_choose(self):
+    func help_choose():
         os.Stdout.write("""
 Choose a named repo on which to operate.  The name of a repo is
 normally the basename of the directory or file it was loaded from, but
@@ -10617,7 +11160,7 @@ With an argument, the command tab-completes on the above list.
             else:
                 complain("no such repo as %s" % line)
 
-    func help_drop(self):
+    func help_drop():
         os.Stdout.write("""
 Drop a repo named by the argument from reposurgeon's list, freeing the memory
 used for its metadata and deleting on-disk blobs. With no argument, drops the
@@ -10650,7 +11193,7 @@ currently chosen repo. Tab-completes on the list of loaded repositories.
             # Emit listing of remaining repos
             self.do_choose('')
 
-    func help_rename(self):
+    func help_rename():
         os.Stdout.write("""
 Rename the currently chosen repo; requires an argument.  Won't do it
 if there is already one by the new name.
@@ -10666,7 +11209,7 @@ if there is already one by the new name.
         else:
             self.chosen().rename(line)
 
-    func help_preserve(self):
+    func help_preserve():
         os.Stdout.write("""
 Add (presumably untracked) files or directories to the repo's list of
 paths to be restored from the backup directory after a rebuild. Each
@@ -10684,7 +11227,7 @@ list is displayed afterwards.
             self.chosen().preserve(filename)
         announce(debugSHOUT, "preserving %s." % list(self.chosen().preservable()))
 
-    func help_unpreserve(self):
+    func help_unpreserve():
         os.Stdout.write("""
 Remove (presumably untracked) files or directories to the repo's list
 of paths to be restored from the backup directory after a
@@ -10705,7 +11248,7 @@ current preserve list is displayed afterwards.
     #
     # Serialization and de-serialization.
     #
-    func help_read(self):
+    func help_read():
         os.Stdout.write("""
 A read command with no arguments is treated as 'read .', operating on the
 current directory.
@@ -10763,7 +11306,7 @@ For a list of supported types, invoke the 'prefer' command.
         if verbose:
             self.do_choose('')
 
-    func help_write(self):
+    func help_write():
         os.Stdout.write("""
 Dump a fast-import stream representing selected events to standard
 output (if second argument is empty or '-') or via > redirect to a file.
@@ -10811,7 +11354,7 @@ For a list of supported types, invoke the 'prefer' command.
             else:
                 raise Recoverable("write no longer takes a filename argument - use > redirection instead")
 
-    func help_inspect(self):
+    func help_inspect():
         os.Stdout.write("""
 Dump a fast-import stream representing selected events to standard
 output or via > redirect to a file.  Just like a write, except (1) the
@@ -10838,7 +11381,7 @@ before each event dump.
                 else:
                     parse.stdout.write(str(event))
 
-    func help_strip(self):
+    func help_strip():
         os.Stdout.write("""
 Replace the blobs in the selected repository with self-identifying stubs;
 and/or strip out topologically uninteresting commits.  The modifiers for
@@ -10884,14 +11427,14 @@ This is intended for producing reduced test cases from large repositories.
             neighbors = set()
             for event in repo.events:
                 if isinstance(event, Commit) and event.mark in interesting:
-                    neighbors |= set(event.parent_marks())
-                    neighbors |= set(event.child_marks())
+                    neighbors |= set(event.parentMarks())
+                    neighbors |= set(event.childMarks())
             interesting |= neighbors
             oldlen = len(repo.events)
             repo.delete([i for i in range(len(repo.events)) \
                          if isinstance(event, Commit) and event.mark not in interesting])
             announce(debugSHOUT, "From %d to %d events." % (oldlen, len(repo.events)))
-    func help_graph(self):
+    func help_graph():
         os.Stdout.write("""
 Dump a graph representing selected events to standard output in DOT markup
 for graphviz. Supports > redirection.
@@ -10907,7 +11450,7 @@ for graphviz. Supports > redirection.
             parse.stdout.write("digraph {\n")
             for _, event in self.selected():
                 if isinstance(event, Commit):
-                    for parent in event.parent_marks():
+                    for parent in event.parentMarks():
                         if self.chosen().find(parent) in self.selection:
                             parse.stdout.write('\t%s -> %s;\n' \
                                                % (parent[1:], event.mark[1:]))
@@ -10933,7 +11476,7 @@ for graphviz. Supports > redirection.
                                        % (event.name, event.name, summary))
             parse.stdout.write("}\n")
 
-    func help_rebuild(self):
+    func help_rebuild():
         os.Stdout.write("""
 Rebuild a repository from the state held by reposurgeon.  The argument
 specifies the target directory in which to do the rebuild;x0 if the
@@ -10954,7 +11497,7 @@ its contents are backed up to a save directory.
     #
     # Editing commands
     #
-    func help_mailbox_out(self):
+    func help_mailbox_out():
         os.Stdout.write("""
 Emit a mailbox file of messages in RFC822 format representing the
 contents of repository metadata. Takes a selection set; members of the set
@@ -10984,7 +11527,7 @@ context the name of the header includes its trailing colon.
                 raise Recoverable("unknown option %s in mailbox_out" % token)
         self.report_select(line, "emailOut", (filterRegexp,))
 
-    func help_mailbox_in(self):
+    func help_mailbox_in():
         os.Stdout.write("""
 Accept a mailbox file of messages in RFC822 format representing the
 contents of the metadata in selected commits and annotated tags. Takes
@@ -11030,7 +11573,7 @@ CVS empty-comment marker.
             return
         with RepoSurgeon.LineParse(self, line, capabilities=["stdin","stdout"]) as parse:
             update_list = []
-            while True:
+            while true:
                 var msg MessageBlock
                 err = msg.readMessage(parse.stdin)
                 if err != nil:
@@ -11072,13 +11615,13 @@ CVS empty-comment marker.
                 if "Tag-Name" in message:
                     blank = Tag()
                     blank.tagger = Attribution()
-                    blank.emailIn(message, fill=True)
+                    blank.emailIn(message, fill=true)
                     blank.committish = [c for c in self.chosen().commits()][-1].mark
                     #self.chosen().addEvent(blank)
                 else:
                     blank = Commit()
                     blank.committer = Attribution()
-                    blank.emailIn(message, fill=True)
+                    blank.emailIn(message, fill=true)
                     blank.mark = self.chosen().newmark()
                     blank.repo = self.chosen()
                     if not blank.branch:
@@ -11088,7 +11631,7 @@ CVS empty-comment marker.
                         self.chosen().addEvent(blank)
                     else:
                         event = self.chosen().events[self.selection[0]]
-                        blank.set_parents([event])
+                        blank.setParents([event])
                         self.chosen().addEvent(blank, where=self.selection[0]+1)
             self.chosen().declare_sequence_mutation("event creation")
             return
@@ -11202,7 +11745,7 @@ CVS empty-comment marker.
                 for update in changers:
                     parse.stdout.write(MessageBlockDivider + "\n" + update.as_string(unixfrom=False))
 
-    func help_edit(self):
+    func help_edit():
         os.Stdout.write("""
 Report the selection set of events to a tempfile as mailbox_out does,
 call an editor on it, and update from the result as mailbox_in does.
@@ -11228,7 +11771,7 @@ Supports < and > redirection.
                               if hasattr(o2, "emailOut")]
         self.edit(self.selection, line)
 
-    func help_filter(self):
+    func help_filter():
         os.Stdout.write("""
 Run blobs, commit comments and committer/author names, or tag comments
 and tag committer names in the selection set through the filter
@@ -11371,7 +11914,7 @@ With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
                            attributes=filterhook.attributes,
                            safety=not line.startswith('--dedos'))
 
-    func help_transcode(self):
+    func help_transcode():
         os.Stdout.write("""
 Transcode blobs, commit comments and committer/author names, or tag
 comments and tag committer names in the selection set to UTF-8 from
@@ -11402,11 +11945,11 @@ repository objects in a damaged state.
             self.data_traverse(prompt="Transcoding",
                                hook=transcode,
                                attributes={"c", "a", "C"},
-                               safety=True)
+                               safety=true)
         except UnicodeError:
             raise Fatal("UnicodeError during transcoding")
 
-    func help_setfield(self):
+    func help_setfield():
         os.Stdout.write("""
 In the selected objects (defaulting to none) set every instance of a
 named field to a string value.  The string may be quoted to include
@@ -11456,7 +11999,7 @@ address.
             else if field == "authdate" and isinstance(event, Commit):
                 event.authors[0].date = Date(value)
 
-    func help_setperm(self):
+    func help_setperm():
         os.Stdout.write("""
 For the selected objects (defaulting to none) take the first argument as an
 octal literal describing permissions.  All subsequent arguments are paths.
@@ -11483,7 +12026,7 @@ paths, patch the permission field to the first argument value.
                         op.mode = perm
                 baton.twirl()
 
-    func help_append(self):
+    func help_append():
         os.Stdout.write("""
 Append text to the comments of commits and tags in the specified
 selection set. The text is the first token of the command and may
@@ -11510,7 +12053,7 @@ the new text is appended.
                     event.comment = event.comment.rstrip()
                 event.comment += line
 
-    func help_squash(self):
+    func help_squash():
         os.Stdout.write("""
 Combine a selection set of events; this may mean deleting them or
 pushing their content forward or back onto a target commit just
@@ -11529,7 +12072,7 @@ removal of fileops associated with commits requires this.
             self.selection = []
         with RepoSurgeon.LineParse(self, line) as parse:
             self.chosen().squash(self.selection, parse.options)
-    func help_delete(self):
+    func help_delete():
         os.Stdout.write("""
 Delete a selection set of events.  The default selection set for this
 command is empty.  Tags, resets, and passthroughs are deleted with no
@@ -11550,7 +12093,7 @@ squash with the --delete flag.
         with RepoSurgeon.LineParse(self, line) as parse:
             self.chosen().squash(self.selection, set(["--delete"]) | parse.options)
 
-    func help_coalesce(self):
+    func help_coalesce():
         os.Stdout.write("""
 Scan the selection set (defaulting to all) for runs of commits with
 identical comments close to each other in time (this is a common form
@@ -11602,12 +12145,12 @@ With  the --debug option, show messages about mismatches.
                         complain("time fuzz exceeded at %s" % cnext.idMe())
                     return False
                 if changelog and not is_clog(cthis) and is_clog(cnext):
-                    return True
+                    return true
                 if cthis.comment != cnext.comment:
                     if verbose >= debugDELETE or '--debug' in parse.options:
                         complain("comment mismatch at %s" % cnext.idMe())
                     return False
-                return True
+                return true
             eligible = {}
             squashes = []
             for (_i, commit) in self.selected(Commit):
@@ -11636,7 +12179,7 @@ With  the --debug option, show messages about mismatches.
                 repo.squash([repo.find(mark) for mark in span[:-1]], ("--coalesce",))
             if verbose > 0:
                 announce(debugSHOUT, "%d spans coalesced." % len(squashes))
-    func help_add(self):
+    func help_add():
         os.Stdout.write("""
 From a specified commit, add a specified fileop. The syntax is
 
@@ -11708,7 +12251,7 @@ in the commit's ancestry.
         else:
             raise Recoverable("unknown operation type %s in add command" % optype)
         for _, event in self.selected(Commit):
-            event.invalidate_pathset_cache()
+            event.invalidatePathsetCache()
             fileop = FileOp(self.chosen())
             if optype == "D":
                 fileop.construct("D", path)
@@ -11716,9 +12259,9 @@ in the commit's ancestry.
                 fileop.construct(opM, perms, mark, path)
             else if optype in (opR, "C"):
                 fileop.construct(optype, source, target)
-            event.append_operation(fileop)
+            event.appendOperation(fileop)
 
-    func help_blob(self):
+    func help_blob():
         os.Stdout.write("""
 Syntax:
 
@@ -11743,7 +12286,7 @@ used with the add command to patch data into a repository.
         repo.declare_sequence_mutation("adding blob")
         repo.invalidate_namecache()
 
-    func help_remove(self):
+    func help_remove():
         os.Stdout.write("""
 From a specified commit, remove a specified fileop. The syntax is:
 
@@ -11778,9 +12321,9 @@ change in a future release.
             optypes = opindex
             (opindex, line) = RepoSurgeon.pop_token(line)
         for ie, event in self.selected(Commit):
-            event.invalidate_pathset_cache()
+            event.invalidatePathsetCache()
             if opindex == "deletes":
-                event.set_operations([e for e in event.operations() if e.op != opD])
+                event.setOperations([e for e in event.operations() if e.op != opD])
                 return
             for (ind, op) in enumerate(event.operations()):
                 if hasattr(op, "op") and getattr(op, "op") not in optypes:
@@ -11808,7 +12351,7 @@ change in a future release.
             try:
                 removed = event.operations().pop(ind)
                 if target:
-                    repo.events[target].append_operation(removed)
+                    repo.events[target].appendOperation(removed)
                     # Blob might have to move, too - we need to keep the
                     # relocated op from having an unresolvable forward
                     # mark reference.
@@ -11821,7 +12364,7 @@ change in a future release.
                 complain("out-of-range fileop index %s" % ind)
                 return
 
-    func help_renumber(self):
+    func help_renumber():
         os.Stdout.write("""
 Renumber the marks in a repository, from :1 up to <n> where <n> is the
 count of the last mark. Just in case an importer ever cares about mark
@@ -11835,7 +12378,7 @@ ordering or gaps in the sequence.
             return
         self.repo.renumber()
 
-    func help_dedup(self):
+    func help_dedup():
         os.Stdout.write("""
 Deduplicate blobs in the selection set.  If multiple blobs in the selection
 set have the same SHA1, throw away all but the first, and change fileops
@@ -11861,7 +12404,7 @@ referencing them to instead reference the (kept) first blob.
         self.chosen().dedup(dup_map)
         return
 
-    func help_timeoffset(self):
+    func help_timeoffset():
         os.Stdout.write("""
 Apply a time offset to all time/date stamps in the selected set.  An offset
 argument is required; it may be in the form [+-]ss, [+-]mm:ss or [+-]hh:mm:ss.
@@ -11919,7 +12462,7 @@ an offset literal of +0 or -0.
                     if len(args) > 1:
                         author.date.orig_tz_string = args[1]
 
-    func help_when(self):
+    func help_when():
         os.Stdout.write("""
 Interconvert between git timestamps (integer Unix time plus TZ) and
 RFC3339 format.  Takes one argument, autodetects the format.  Useful
@@ -11937,7 +12480,7 @@ date format and converts to RFC3339.
         else:
             os.Stdout.write(d.rfc3339() + "\n")
 
-    func help_divide(self):
+    func help_divide():
         os.Stdout.write("""
 Attempt to partition a repo by cutting the parent-child link
 between two specified commits (they must be adjacent). Does not take a
@@ -11981,7 +12524,7 @@ branch 'qux', the branch segments are renamed 'qux-early' and
             if not isinstance(late, Commit):
                 complain("last element of selection is not a commit")
                 return
-            if early.mark not in late.parent_marks():
+            if early.mark not in late.parentMarks():
                 complain("not a parent-child pair")
                 return
         else if len(self.selection) > 2:
@@ -11990,7 +12533,7 @@ branch 'qux', the branch segments are renamed 'qux-early' and
         # Try the topological cut first
         if not self.cut(early, late):
             # If that failed, cut anyway and rename the branch segments
-            late.remove_parent(early)
+            late.removeParent(early)
             if early.branch != late.branch:
                 announce(debugSHOUT, "no branch renames were required")
             else:
@@ -12006,7 +12549,7 @@ branch 'qux', the branch segments are renamed 'qux-early' and
         if verbose:
             self.do_choose("")
 
-    func help_expunge(self):
+    func help_expunge():
         os.Stdout.write("""
 Expunge files from the selected portion of the repo history; the
 default is the entire history.  The arguments to this command may be
@@ -12044,7 +12587,7 @@ file path matches.
             self.selection = self.chosen().all()
         self.expunge(self.selection, line.split())
 
-    func help_split(self):
+    func help_split():
         os.Stdout.write("""
 Split a specified commit in two, the opposite of squash.
 
@@ -12104,7 +12647,7 @@ file operations in the original commit.
         if verbose:
             announce(debugSHOUT, "new commits are events %s and %s." % (where+1, where+2))
 
-    func help_unite(self):
+    func help_unite():
         os.Stdout.write("""
 Unite repositories. Name any number of loaded repositories; they will
 be united into one union repo and removed from the load list.  The
@@ -12143,7 +12686,7 @@ branch being grafted on.
         if verbose:
             self.do_choose('')
 
-    func help_graft(self):
+    func help_graft():
         os.Stdout.write("""
 For when unite doesn't give you enough control. This command may have
 either of two forms, selected by the size of the selection set.  The
@@ -12175,13 +12718,13 @@ of the grafted repository.
                 graft_repo = self.repo_by_name(parse.line)
             else:
                 raise Recoverable("no such repo as %s" % parse.line)
-            require_graft_point = True
+            require_graft_point = true
             if self.selection is not None and len(self.selection) == 1:
                 graft_point = self.selection[0]
             else:
                 for commit in graft_repo.commits():
                     for parent in commit.parents():
-                        if Commit.is_callout(parent.mark):
+                        if Commit.isCallout(parent.mark):
                             require_graft_point = False
                 if not require_graft_point:
                     graft_point = None
@@ -12191,7 +12734,7 @@ of the grafted repository.
             self.chosen().graft(graft_repo, graft_point, parse.options)
             self.remove_by_name(graft_repo.name)
 
-    func help_debranch(self):
+    func help_debranch():
         os.Stdout.write("""
 Takes one or two arguments which must be the names of source and target
 branches; if the second (target) argument is omitted it defaults to 'master'.
@@ -12250,20 +12793,20 @@ source branch are removed.
                 for fileop in repo.events[ci].operations():
                     if fileop.op in (opD, opM):
                         fileop.path = os.path.join(pref, fileop.path)
-                        found = True
+                        found = true
                     else if fileop.op in (opR, opC):
                         fileop.source = os.path.join(pref, fileop.source)
                         fileop.target = os.path.join(pref, fileop.target)
-                        found = True
+                        found = true
                 if found:
-                    repo.events[ci].invalidate_pathset_cache()
+                    repo.events[ci].invalidatePathsetCache()
             merged = sorted(set(scommits + tcommits))
             source_reset = None
             for i in merged:
                 event = repo.events[i]
                 if last_parent is not None:
-                    event.set_parent_marks(last_parent + event.parent_marks()[1:])
-                event.set_branch(target)
+                    event.setParentMarks(last_parent + event.parentMarks()[1:])
+                event.setBranch(target)
                 last_parent = [event.mark]
             for (i, event) in enumerate(self.repo.events):
                 if isinstance(event, Reset) and event.ref == source:
@@ -12272,7 +12815,7 @@ source branch are removed.
                 del repo.events[source_reset]
             repo.declare_sequence_mutation("debranch operation")
 
-    func help_path(self):
+    func help_path():
         os.Stdout.write("""
 Rename a path in every fileop of every selected commit.  The
 default selection set is all commits. The first argument is interpreted as a
@@ -12314,16 +12857,16 @@ in the ancestry of the commit, this command throws an error.  With the
                                         raise Recoverable("rename at %s failed, %s exists there" % (commit.idMe(), newpath))
                                     else:
                                         actions.append((fileop, attr, newpath))
-                                        touched = True
+                                        touched = true
                     if touched:
-                        commit.invalidate_pathset_cache()
+                        commit.invalidatePathsetCache()
                 # All checks must pass before any renames
                 for (fileop, attr, newpath) in actions:
                     setattr(fileop, attr, newpath)
             else:
                 raise Recoverable("unknown verb '%s' in path command." % verb)
 
-    func help_paths(self):
+    func help_paths():
         os.Stdout.write("""
 Without a modifier, list all paths touched by fileops in
 the selection set (which defaults to the entire repo). This
@@ -12370,9 +12913,9 @@ with no argument, strip the first directory component from every path.
                 modified = self.chosen().path_walk(self.selection,
                                                lambda f: f[len(prefix):] if f.startswith(prefix) else f)
                 os.Stdout.write("\n".join(modified) + "\n")
-        self.chosen().invalidate_manifests()
+        self.chosen().invalidateManifests()
 
-    func help_manifest(self):
+    func help_manifest():
         os.Stdout.write("""
 Print commit path lists. Takes an optional selection set argument
 defaulting to all commits, and an optional Python regular expression.
@@ -12418,7 +12961,7 @@ This command supports > redirection.
                             if filter_func(polybytes(path))))
                 parse.stdout.write("\n")
 
-    func help_tagify(self):
+    func help_tagify():
         os.Stdout.write("""
 Search for empty commits and turn them into tags. Takes an optional selection
 set argument defaulting to all commits. For each commit in the selection set,
@@ -12465,7 +13008,7 @@ merge link is moved to the tagified commit's parent.
             after = len([c for c in repo.commits()])
             announce(debugSHOUT, "%d commits tagified." % (before - after))
 
-    func help_merge(self):
+    func help_merge():
         os.Stdout.write("""
 Create a merge link. Takes a selection set argument, ignoring all but
 the lowest (source) and highest (target) members.  Creates a merge link
@@ -12483,12 +13026,12 @@ from the highest member (child) to the lowest (parent).
         except (TypeError, ValueError):
             raise Recoverable("merge requires a selection set "
                               "with at least two commits.")
-        later.add_parent(earlier)
+        later.addParentCommit(earlier)
         #earlier_id = "%s (%s)" % (earlier.mark, earlier.branch)
         #later_id = "%s (%s)" % (later.mark, later.branch)
         #announce(debugSHOUT, "%s added as a parent of %s" % (earlier_id, later_id))
 
-    func help_unmerge(self):
+    func help_unmerge():
         os.Stdout.write("""
 Linearizes a commit. Takes a selection set argument, which must resolve to a
 single commit, and removes all its parents except for the first. It is
@@ -12506,9 +13049,9 @@ commit's first parent, but doesn't need you to find the first parent yourself.
             (_, commit), = self.selected(Commit)
         except (TypeError, ValueError):
             raise Recoverable("unmerge requires a single commit.")
-        commit.set_parents(commit.parents()[:1])
+        commit.setParents(commit.parents()[:1])
 
-    func help_reparent(self):
+    func help_reparent():
         os.Stdout.write("""
 Changes the parent list of a commit.  Takes a selection set, zero or
 more option arguments, and an optional policy argument.
@@ -12607,7 +13150,7 @@ Policy:
                                               for x in selected[0:-1])
             parents = [x[1] for x in selected[0:-1]]
             child = selected[-1][1]
-            if do_resort and any(p.descended_from(child) for p in parents):
+            if do_resort and any(p.descendedFrom(child) for p in parents):
                 raise Recoverable('reparenting a commit to its own descendant' \
                                   + ' would introduce a cycle')
             if "--rebase" not in parse.options:
@@ -12622,12 +13165,12 @@ Policy:
                         f.inline = inline
                     newops.append(f)
                 newops.extend(child.operations())
-                child.set_operations(newops)
-            child.set_parents(parents)
+                child.setOperations(newops)
+            child.setParents(parents)
             if do_resort:
                 repo.resort()
 
-    func help_reorder(self):
+    func help_reorder():
         os.Stdout.write("""
 Re-order a contiguous range of commits.
 
@@ -12691,7 +13234,7 @@ after the operation.
                 raise Recoverable("'reorder' takes no arguments")
             repo.reorder_commits(sel, '--quiet' in parse.options)
 
-    func help_branch(self):
+    func help_branch():
         os.Stdout.write("""
 Rename or delete a branch (and any associated resets).  First argument
 must be an existing branch name; second argument must one of the verbs
@@ -12730,7 +13273,7 @@ is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
             for event in repo:
                 if isinstance(event, Commit):
                     if event.branch == branchname:
-                        event.set_branch(newname)
+                        event.setBranch(newname)
                 else if isinstance(event, Reset):
                     if event.ref == branchname:
                         event.ref = newname
@@ -12742,7 +13285,7 @@ is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
         else:
             raise Recoverable("unknown verb '%s' in branch command." % verb)
 
-    func help_tag(self):
+    func help_tag():
         os.Stdout.write("""
 Create, move, rename, or delete a tag.
 
@@ -12772,7 +13315,7 @@ Tag names may use backslash escapes interpreted by the Python
 string-escape codec, such as \\s.
 
 The behavior of this command is complex because features which present
-as tags may be any of three things: (1) True tag objects, (2)
+as tags may be any of three things: (1) true tag objects, (2)
 lightweight tags, actually sequences of commits with a common
 branchname beginning with 'refs/tags' - in this case the tag is
 considered to point to the last commit in the sequence, (3) Reset
@@ -12919,7 +13462,7 @@ fields are changed and a warning is issued.
         else:
             raise Recoverable("unknown verb '%s' in tag command." % verb)
 
-    func help_reset(self):
+    func help_reset():
         os.Stdout.write("""
 Create, move, rename, or delete a reset. Create is a special case; it
 requires a singleton selection which is the associate commit for the
@@ -13032,7 +13575,7 @@ moved, no branch fields are changed.
         else:
             raise Recoverable("unknown verb '%s' in reset command." % verb)
 
-    func help_ignores(self):
+    func help_ignores():
         os.Stdout.write("""Intelligent handling of ignore-pattern files.
 This command fails if no repository has been selected or no preferred write
 type has been set for the repository.  It does not take a selection set.
@@ -13095,7 +13638,7 @@ default patterns.
                         repo.declare_sequence_mutation("ignore creation")
                         newop = FileOp(self.chosen())
                         newop.construct("M", 0o100644, ":insert", self.ignorename)
-                        earliest.append_operation(newop)
+                        earliest.appendOperation(newop)
                         repo.renumber()
                         announce(debugSHOUT, "initial %s created." % self.ignorename)
                 announce(debugSHOUT, "%d %s blobs modified." % (changecount, self.ignorename))
@@ -13132,7 +13675,7 @@ default patterns.
             else:
                 raise Recoverable("unknown verb %s in ignores line" % verb)
 
-    func help_attribution(self):
+    func help_attribution():
         os.Stdout.write("""
 Inspect, modify, add, and remove commit and tag attributions.
 
@@ -13261,7 +13804,7 @@ Available actions are:
                 if action == 'prepend':
                     ed.insert(args, False)
                 else if action == 'append':
-                    ed.insert(args, True)
+                    ed.insert(args, true)
             else if action == 'resolve':
                 ed.resolve(parse.stdout, ' '.join(args) if args else None)
             else:
@@ -13270,7 +13813,7 @@ Available actions are:
     #
     # Artifact removal
     #
-    func help_authors(self):
+    func help_authors():
         os.Stdout.write("""
 Apply or dump author-map information for the specified selection
 set, defaulting to all events.
@@ -13325,7 +13868,7 @@ part to the right of an equals sign will need editing.
     #
     # Reference lifting
     #
-    func help_legacy(self):
+    func help_legacy():
         os.Stdout.write("""
 Apply or list legacy-reference information. Does not take a
 selection set. The 'read' variant reads from standard input or a
@@ -13351,7 +13894,7 @@ output or a >-redirected filename.
                     raise Recoverable("legacy read does not take a filename argument - use < redirection instead")
                 self.chosen().read_legacymap(parse.stdin)
 
-    func help_references(self):
+    func help_references():
         os.Stdout.write("""
 With the 'list' modifier, produces a listing of events that may have
 Subversion or CVS commit references in them.  This version
@@ -13410,7 +13953,7 @@ map when the repo is written or rebuilt.
                         event.comment = polystr(event.comment)
                         hits += new_hits
             announce(debugSHOUT, "%d references resolved." % hits)
-            repo.write_legacy = True
+            repo.write_legacy = true
         else:
             self.selection = [e for e in range(len(repo.events)) if self.has_reference(repo.events[e])]
             if self.selection:
@@ -13425,7 +13968,7 @@ map when the repo is written or rebuilt.
                                 if summary:
                                     parse.stdout.write(summary + "\n")
 
-    func help_gitify(self):
+    func help_gitify():
         os.Stdout.write("""
 Attempt to massage comments into a git-friendly form with a blank
 separator line after a summary line.  This code assumes it can insert
@@ -13461,7 +14004,7 @@ Takes a selection set, defaulting to all commits and tags.
     #
     # Examining tree states
     #
-    func help_checkout(self):
+    func help_checkout():
         os.Stdout.write("""
 Check out files for a specified commit into a directory.  The selection
 set must resolve to a singleton commit.
@@ -13484,7 +14027,7 @@ set must resolve to a singleton commit.
             raise Recoverable("a singleton selection set is required.")
         commit.checkout(line)
 
-    func help_diff(self):
+    func help_diff():
         os.Stdout.write("""
 Display the difference between commits. Takes a selection-set argument which
 must resolve to exactly two commits. Supports > redirection.
@@ -13511,8 +14054,8 @@ must resolve to exactly two commits. Supports > redirection.
                 if path in dir1 and path in dir2:
                     # FIXME: Can we detect binary files and do something
                     # more useful here?
-                    fromtext = bounds[0].blob_by_name(path)
-                    totext = bounds[1].blob_by_name(path)
+                    fromtext = bounds[0].blobByName(path)
+                    totext = bounds[1].blobByName(path)
                     # Don't list identical files
                     if fromtext != totext:
                         lines0 = fromtext.split('\n')
@@ -13534,7 +14077,7 @@ must resolve to exactly two commits. Supports > redirection.
     #
     # Setting paths to branchify
     #
-    func help_branchify(self):
+    func help_branchify():
         os.Stdout.write("""
 Specify the list of directories to be treated as potential branches (to
 become tags if there are no modifications after the creation copies)
@@ -13563,7 +14106,7 @@ to re-set it.
     #
     # Setting branch name rewriting
     #
-    func help_branchify_map(self):
+    func help_branchify_map():
         os.Stdout.write("""
 Specify the list of regular expressions used for mapping the svn branches that
 are detected by branchify. If none of the expressions match, the default behavior
@@ -13624,7 +14167,7 @@ to re-set it.
     #
     # Setting options
     #
-    func help_set(self):
+    func help_set():
         os.Stdout.write("""
 Set a (tab-completed) boolean option to control reposurgeon's
 behavior.  With no arguments, displays the state of all flags and
@@ -13643,8 +14186,8 @@ options. The following flags and options are defined:
                 if option not in dict(RepoSurgeon.OptionFlags):
                     complain("no such option flag as '%s'" % option)
                 else:
-                    global_options[option] = True
-    func help_clear(self):
+                    global_options[option] = true
+    func help_clear():
         os.Stdout.write("""
 Clear a (tab-completed) boolean option to control reposurgeon's
 behavior.  With no arguments, displays the state of all flags. The
@@ -13667,7 +14210,7 @@ following flags and options are defined:
     #
     # Macros and custom extensions
     #
-    func help_define(self):
+    func help_define():
         os.Stdout.write("""
 Define a macro.  The first whitespace-separated token is the name; the
 remainder of the line is the body, unless it is '{', which begins a
@@ -13698,7 +14241,7 @@ A later 'do' call can invoke this macro.
         else:
             self.capture = self.definitions[name] = []
 
-    func help_do(self):
+    func help_do():
         os.Stdout.write("""
 Expand and perform a macro.  The first whitespace-separated token is
 the name of the macro to be called; remaining tokens replace {0},
@@ -13737,7 +14280,7 @@ the command generated by the expansion.
             # Call the base method so RecoverableExceptions
             # won't be caught; we want them to abort macros.
             self.onecmd(expansion)
-    func help_undefine(self):
+    func help_undefine():
         os.Stdout.write("""
 Undefine the macro named in this command's first argument.
 """)
@@ -13754,7 +14297,7 @@ Undefine the macro named in this command's first argument.
         else:
             del self.definitions[name]
 
-    func help_exec(self):
+    func help_exec():
         os.Stdout.write("""
 Execute custom code from standard input (normally a file via < redirection).
 
@@ -13775,7 +14318,7 @@ defined are accessible to later 'eval' calls.
             except IOError:
                 raise Recoverable("I/O error, can't find or open input source")
 
-    func help_eval(self):
+    func help_eval():
         os.Stdout.write("""
 Evaluate a line of code in the current interpreter context.
 Typically this will be a call to a function defined by a previous exec.
@@ -13797,7 +14340,7 @@ Note that '_selection' will be a list of integers, not objects.
     #
     # Timequakes and bumping
     #
-    func help_timequake(self):
+    func help_timequake():
         os.Stdout.write("""
 Attempt to hack committer and author time stamps to make all action
 stamps in the selection set (defaulting to all commits in the
@@ -13834,7 +14377,7 @@ action-stamp ID for each commit.
                 baton.twirl()
             announce(debugSHOUT, "%d events modified" % modified)
         repo.invalidate_namecache()
-    func help_timebump(self):
+    func help_timebump():
         os.Stdout.write("""
 Bump the committer and author timestamps of commits in the selection
 set (defaulting to empty) by one second.  With following integer agument,
@@ -13857,7 +14400,7 @@ language can count on having a unique action-stamp ID for each commit.
     #
     # Changelog processing
     #
-    func help_changelogs(self):
+    func help_changelogs():
         os.Stdout.write("""
 Mine the ChangeLog files for authorship data.
 
@@ -13950,7 +14493,7 @@ that zone is used.
                             then = ""
                         with open(blobfile) as newblob:
                             now = newblob.read().splitlines()
-                        before = True
+                        before = true
                         inherited = new = None
                         #print("Analyzing Changelog at %s." % commit.mark)
                         for diffline in differ.compare(then, now):
@@ -14022,7 +14565,7 @@ that zone is used.
     #
     # Tarball incorporation
     #
-    func help_incorporate(self):
+    func help_incorporate():
         os.Stdout.write("""
 Insert the contents of a specified tarball as a commit.  The tarball name is
 given as an argument.  It may be a gzipped or bzipped tarball.  The initial
@@ -14105,7 +14648,7 @@ not optimal, and may in particular contain duplicate blobs.
                             repo.addEvent(b, where=loc)
                             loc += 1
                             repo.declare_sequence_mutation()
-                            repo.invalidate_object_map()
+                            repo.invalidate_objectMap()
                             b.setMark(repo.newmark())
                             #b.size = tarinfo.size
                             b.setBlobfile(os.path.join(self.repo.subdir(), tarinfo.name))
@@ -14115,9 +14658,9 @@ not optimal, and may in particular contain duplicate blobs.
                             if tarinfo.mode & IXANY:
                                 mode = 0o100755
                             op.construct("M", mode, b.mark, fn)
-                            blank.append_operation(op)
+                            blank.appendOperation(op)
                 repo.declare_sequence_mutation()
-                repo.invalidate_object_map()
+                repo.invalidate_objectMap()
                 if not global_options["testmode"]:
                     blank.committer.date = Date(rfc3339(newest))
             except IOError:
@@ -14125,10 +14668,10 @@ not optimal, and may in particular contain duplicate blobs.
             # Link it into the repository
             if "--after" not in parse.options:
                 repo.addEvent(blank, where=loc)
-                blank.set_parents(commit.parents())
-                commit.set_parents([blank])
+                blank.setParents(commit.parents())
+                commit.setParents([blank])
             else:
-                blank.set_parents([commit])
+                blank.setParents([commit])
                 for offspring in commit.children():
                     offspring.replace_parent(commit, blank)
                 repo.addEvent(blank, where=loc)
@@ -14148,18 +14691,18 @@ not optimal, and may in particular contain duplicate blobs.
                     if path not in child.paths():
                         op = FileOp(repo)
                         op.construct("D", path)
-                        child.append_operation(op)
+                        child.appendOperation(op)
             for parent in blank.parents():
                 for leaker in parent.paths():
                     if leaker not in blank_path_list:
                         op = FileOp(repo)
                         op.construct("D", leaker)
-                        blank.append_operation(op)
+                        blank.appendOperation(op)
 
     #
     # Version binding
     #
-    func help_version(self):
+    func help_version():
         os.Stdout.write("""
 With no argument, display the reposurgeon version and supported VCSes.
 With argument, declare the major version (single digit) or full
@@ -14188,14 +14731,14 @@ means the surgical language is not backwards compatible).
     #
     # Exiting (in case EOT has been rebound)
     #
-    func help_elapsed(self):
+    func help_elapsed():
         os.Stdout.write("""
 Desplay elapsed time since start.
 """)
     func do_elapsed(self, _line):
         announce(debugSHOUT, "elapsed time %s." % humanize(time.time() - self.start_time))
 
-    func help_exit(self):
+    func help_exit():
         os.Stdout.write("""
 Exit the program cleanly, emitting a goodbye message.
 
@@ -14208,7 +14751,7 @@ Typing EOT (usually Ctrl-D) will exit quietly.
     #
     # Prompt customization
     #
-    func help_prompt(self):
+    func help_prompt():
         os.Stdout.write("""
 Set the command prompt format to the value of the command line; with
 an empty command line, display it. The prompt format is evaluated in Python
@@ -14237,14 +14780,14 @@ of tokens, so that spaces can be included.
 class OrderedSet(collections.MutableSet):
 
     func __init__(self, iterable=None):
-        collections.MutableSet.__init__(self)
+        collections.MutableSet.__init__()
         self.end = end = []
         end += [None, end, end]         # sentinel node for doubly linked list
         self.map = {}                   # key --> [key, prev, next]
         if iterable is not None:
             self |= iterable
 
-    func __len__(self):
+    func __len__():
         return len(self.map)
 
     func __contains__(self, key):
@@ -14262,35 +14805,35 @@ class OrderedSet(collections.MutableSet):
             prev[2] = nxt
             nxt[1] = prev
 
-    func __iter__(self):
+    func __iter__():
         end = self.end
         curr = end[2]
         while curr is not end:
             yield curr[0]
             curr = curr[2]
 
-    func __reversed__(self):
+    func __reversed__():
         end = self.end
         curr = end[1]
         while curr is not end:
             yield curr[0]
             curr = curr[1]
 
-    func pop(self):
+    func pop():
         if not self:
             raise KeyError('set is empty')
         key = self.end[1][0]
         self.discard(key)
         return key
 
-    func __repr__(self):
+    func __repr__():
         if not self:
             return '%s()' % (self.__class__.__name__,)
-        return '%s(%r)' % (self.__class__.__name__, list(self))
+        return '%s(%r)' % (self.__class__.__name__, list())
 
     func __eq__(self, other):
         if isinstance(other, OrderedSet):
-            return len(self) == len(other) and list(self) == list(other)
+            return len() == len(other) and list() == list(other)
         if other is None:
             return False
         return set(self) == set(other)
@@ -14303,7 +14846,7 @@ func main():
     try:
         func interactive():
             global verbose
-            interpreter.use_rawinput = True
+            interpreter.use_rawinput = true
             if verbose == 0:
                 verbose = 1
             interpreter.cmdloop()

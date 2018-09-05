@@ -5,50 +5,121 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
 )
 
-var ts stringSet
-
-func init() {
-	ts = newStringSet("a", "b", "c")
+func assertBool(t *testing.T, see bool, expect bool) {
+	if see != expect {
+		t.Errorf("assertBool: expected %v saw %v", expect, see)
+	}
 }
 
-func TestContains(t *testing.T) {
+func assertEqual(t *testing.T, a string, b string) {
+	if a != b {
+		t.Errorf("assertEqual: expected %q == %q", a, b)
+	}
+}
+
+func TestStringSet(t *testing.T) {
+	ts := newStringSet("a", "b", "c")
+
 	if ts.Contains("d") {
 		t.Error("Contain check failed on \"d\", expected false.")
 	}
 	if !ts.Contains("a") {
 		t.Error("Contain check failed on \"a\", expected true.")
 	}
-}
 
-func TestEqual(t *testing.T) {
 	ts2 := newStringSet("c", "b", "a")
 	if !ts.Equal(ts2) {
 		t.Error("Equality check failed when pass expected.")
 	}
+
 	ts3 := newStringSet("c", "b", "d")
 	if ts.Equal(ts3) {
-		t.Error("Equality check suceeded when fail expected.")
+		t.Error("Equality check succeeded when fail expected.")
 	}
-}
 
-func TestString(t *testing.T) {
+	ts4 := newStringSet("c", "b", "a")
+	if !ts.Equal(ts.Intersection(ts4)) {
+		t.Error("Intersection computation failed. (1)")
+	}
+
+	ts5 := newStringSet("c", "b", "d")
+	expected5 := stringSet{"c", "b"}
+	saw5 := ts.Intersection(ts5)
+	if !saw5.Equal(expected5) {
+		t.Error("Intersection computation failed. (2)")
+	}
+
+	ts6 := newStringSet("x", "y", "z")
+	expected4 := stringSet{}
+	saw6 := ts.Intersection(ts6)
+	if !saw6.Equal(expected4) {
+		t.Error("Intersection computation failed. (3)")
+	}
+
+	ts7 := newStringSet("c", "b", "a")
+	ts7.Remove("b")
+	expected7 := stringSet{"c", "a"}
+	if !ts7.Equal(expected7) {
+		t.Error("Remove computation failed.")
+	}
+
 	expect := `{"a", "b", "c"}`
 	get := ts.String()
 	if expect != get {
 		t.Errorf("Stringer check failed, expected %s got %s.",
 			expect, get)
 	}
-}
 
-func TestAdd(t *testing.T) {
 	ts.Add("d")
 	if !ts.Contains("d") {
 		t.Error("string set add failed.")
+	}
+}
+
+func TestOrderedMap(t *testing.T) {
+	m := newOrderedMap()
+
+	m.set("foo", "bar")
+	expect1 := "bar"
+	get1 := m.get("foo")
+	if expect1 != get1 {
+		t.Errorf("OrderedMap retrieval failed, expected %s got %s.",
+			expect1, get1)
+	}
+
+	m.set("hugger", "mugger")
+	expect2 := "mugger"
+	get2 := m.get("hugger")
+	if expect2 != get2 {
+		t.Errorf("OrderedMap retrieval failed, expected %s got %s.",
+			expect2, get2)
+	}
+
+	if !reflect.DeepEqual(m.keys, []string{"foo", "hugger"}) {
+		t.Errorf("keys value ot as expected")
+	}
+
+	// Should be false as key is not present
+	assertBool(t, m.delete("bargle"), false)
+
+	// Should be true as key is present
+	assertBool(t, m.delete("foo"), true)
+
+	expect3 := ""
+	get3 := m.get("foo")
+	if expect3 != get3 {
+		t.Errorf("OrderedMap retrieval failed, expected %s got %s.",
+			expect3, get3)
+	}
+
+	if !reflect.DeepEqual(m.keys, []string{"hugger"}) {
+		t.Errorf("keys value not as expected after deletion")
 	}
 }
 
@@ -256,30 +327,19 @@ func TestDateFormats(t *testing.T) {
 }
 
 func TestDateComparison(t *testing.T) {
-	assertBool := func(see bool, expect bool) {
-		if see != expect {
-			t.Errorf("assertBool: expected %v saw %v", expect, see)
-		}
-	}
 	d1, _ := newDate("2010-10-27T18:43:32Z")
 	d2, _ := newDate("1288205012 +0000")
-	assertBool(d1.timestamp.Equal(d2.timestamp), true)
+	assertBool(t, d1.timestamp.Equal(d2.timestamp), true)
 	d1, _ = newDate("2010-10-27T18:43:32Z")
 	d2, _ = newDate("2010-10-27T18:43:33Z")
-	assertBool(d1.timestamp.Equal(d2.timestamp), false)
-	assertBool(d1.timestamp.Before(d2.timestamp), true)
-	assertBool(d2.timestamp.After(d1.timestamp), true)
+	assertBool(t, d1.timestamp.Equal(d2.timestamp), false)
+	assertBool(t, d1.timestamp.Before(d2.timestamp), true)
+	assertBool(t, d2.timestamp.After(d1.timestamp), true)
 	d1, _ = newDate("1288205012 +0000")
 	d2, _ = newDate("1288205013 +0000")
-	assertBool(d1.timestamp.Equal(d2.timestamp), false)
-	assertBool(d1.timestamp.Before(d2.timestamp), true)
-	assertBool(d2.timestamp.After(d1.timestamp), true)
-}
-
-func assertEqual (t *testing.T, a string, b string) {
-	if a != b {
-		t.Errorf("assertEqual: expected %q = %q", a, b)
-	}
+	assertBool(t, d1.timestamp.Equal(d2.timestamp), false)
+	assertBool(t, d1.timestamp.Before(d2.timestamp), true)
+	assertBool(t, d2.timestamp.After(d1.timestamp), true)
 }
 
 func TestParseAttributionLine(t *testing.T) {
@@ -370,21 +430,17 @@ func TestTag(t *testing.T) {
 	if strings.Index(t1.comment, "Sample") == -1 {
 		t.Error("expected string not found in tag comment")
 	}
-	u1 := repo.markToEvent(t1.getMark())
-	if u1 == nil {
-		t.Error("test lookup of event by mark failed")
+
+	// Verify that tag index works - would be -1 on failure
+	if t1.index() != 0 {
+		t.Error("test index of tag failed")
 	}
-	assertEqual(t, t1.getMark(), u1.getMark())
-	// verify that events are passed by reference,
-	// so the one in the map is an alias of the one in the event list
-	t1.comment = "modified\n"
-	assertEqual(t, t1.comment, u1.(*Tag).comment)
 
 	assertEqual(t, t1.actionStamp(), "2016-03-03T03:39:07Z!jrh")
 	assertEqual(t, t1.emailOut(nil, 42, nil),
-		"Event-Number: 43\nTag-Name: sample1\nTarget-Mark: :2\nTagger: jrh <jrh>\nTagger-Date: 2016-03-03T03:39:07Z\nCheck-Text: modified\n\nmodified")
+		"Event-Number: 43\nTag-Name: sample1\nTarget-Mark: :2\nTagger: jrh <jrh>\nTagger-Date: 2016-03-03T03:39:07Z\nCheck-Text: Sample tag #1\n\nSample tag #1\n")
 	assertEqual(t, t1.String(),
-		"tag sample1\nfrom :2\ntagger jrh <jrh> 1456976347 -0500\ndata 9\nmodified\n\n")
+		"tag sample1\nfrom :2\ntagger jrh <jrh> 1456976347 -0500\ndata 14\nSample tag #1\n\n")
 
 	inboxTag := `Event-Number: 45
 Tag-Name: sample2
@@ -398,11 +454,11 @@ Test to be sure we can read in a tag in inbox format.
 	r := bufio.NewReader(strings.NewReader(inboxTag))
 	msg, err := newMessageBlock(r)
 	if err != nil {
-		log.Fatalf("On first read: %v", err)
+		t.Fatalf("On first read: %v", err)
 	}
 	var t2 Tag
 	t2.tagger = newAttribution(nil)
-	t2.emailIn(*msg, false)
+	t2.emailIn(msg, false)
 
 	assertEqual(t, "sample2", t2.name, )
 	assertEqual(t, ":2317", t2.committish)
@@ -487,40 +543,158 @@ func TestFileOp(t *testing.T) {
 		t.Error("fileop7 path extraction failed equality check")
 	}
 
-	fileop8 := newFileOp(nil).parse("M 100644 :4 COPYING")
+	line8 := "M 100644 :4 COPYING"
+	fileop8 := newFileOp(nil).parse(line8)
 	assertEqual(t, "M", fileop8.op)
 	assertEqual(t, "100644", fileop8.mode)
 	assertEqual(t, ":4", fileop8.ref)
 	assertEqual(t, "COPYING", fileop8.path)
+	assertEqual(t, line8 + "\n", fileop8.String())
 
-	fileop9 := newFileOp(nil).parse("M 100755 :5 runme.sh")
+	line9 := "M 100755 :5 runme.sh"
+	fileop9 := newFileOp(nil).parse(line9)
 	assertEqual(t, "M", fileop9.op)
 	assertEqual(t, "100755", fileop9.mode)
 	assertEqual(t, ":5", fileop9.ref)
 	assertEqual(t, "runme.sh", fileop9.path)
+	assertEqual(t, line9 + "\n", fileop9.String())
 
-	fileop10 := newFileOp(nil).parse("D deleteme")
+	line10 := "D deleteme"
+	fileop10 := newFileOp(nil).parse(line10)
 	assertEqual(t, "D", fileop10.op)
 	assertEqual(t, "deleteme", fileop10.path)
+	assertEqual(t, line10 + "\n", fileop10.String())
 
-	fileop11 := newFileOp(nil).parse("R DRINKME EATME")
+	line11 := `R DRINKME EATME`
+	fileop11 := newFileOp(nil).parse(line11)
 	assertEqual(t, "R", fileop11.op)
 	assertEqual(t, "DRINKME", fileop11.source)
 	assertEqual(t, "EATME", fileop11.target)
+	assertEqual(t, line11 + "\n", fileop11.String())
 
-	fileop12 := newFileOp(nil).parse("C DRINKME EATME")
+	line12 := `C DRINKME EATME`
+	fileop12 := newFileOp(nil).parse(line12)
 	assertEqual(t, "C", fileop12.op)
 	assertEqual(t, "DRINKME", fileop12.source)
 	assertEqual(t, "EATME", fileop12.target)
+	assertEqual(t, line12 + "\n", fileop12.String())
 
-	fileop13 := newFileOp(nil).parse("N :6 EATME")
+	line13 := "N :6 EATME"
+	fileop13 := newFileOp(nil).parse(line13)
 	assertEqual(t, "N", fileop13.op)
 	assertEqual(t, ":6", fileop13.ref)
 	assertEqual(t, "EATME", fileop13.path)
+	assertEqual(t, line13 + "\n", fileop13.String())
 
-	fileop14 := newFileOp(nil).parse("deleteall")
+	line14 := "deleteall"
+	fileop14 := newFileOp(nil).parse(line14)
 	assertEqual(t, "deleteall", fileop14.op)
+	assertEqual(t, line14 + "\n", fileop14.String())
 
+	if fileop1.relevant(fileop2) {
+		t.Error("relevance check succeed where failure expected")
+	}
+	if !fileop2.relevant(fileop3) {
+		t.Error("relevance check failed where success expected")
+	}
+
+	repo := newRepository("fubar")
+	commit := newCommit(repo)
+	// Appending these in opposite order from how they should sort
+	commit.appendOperation(*fileop1)	// README
+	commit.appendOperation(*fileop2)	// DRINKME
+	commit.sortOperations()
+	assertEqual(t, commit.fileops[0].path, "DRINKME")
+	assertEqual(t, commit.fileops[1].path, "README")
+}
+
+func TestCommitMethods(t *testing.T) {
+	repo := newRepository("fubar")
+	commit := newCommit(repo)
+	committer := []byte("J. Random Hacker <jrh@foobar.com> 1456976347 -0500")
+	commit.committer = *newAttribution(committer)
+	author := newAttribution([]byte("esr <esr@thyrsus.com> 1457998347 +0000"))
+	commit.authors = append(commit.authors, *author)
+	commit.comment = "Example commit for unit testing\n"
+
+	// Check for actual cloning. rather than just copying a reference 
+	copied := commit.clone(repo)
+	copied.committer.name = "J. Fred Muggs"
+	if commit.committer.name == copied.committer.name {
+		t.Fatal("unexpected pass by reference of committer attribution")
+	}
+	copied.authors[0].name = "I am legion"
+	if commit.authors[0].name == copied.authors[0].name {
+		t.Fatal("unexpected pass by reference of authot attribution")
+	}
+
+	// Check that various reports look sane, at least matching each other
+	assertEqual(t, commit.lister(nil, 42, 0),
+		"    43 2016-03-14T23:32:27Z        Example commit for unit testing")
+	assertEqual(t, commit.actionStamp(),
+		"2016-03-14T23:32:27Z!esr@thyrsus.com")
+	assertEqual(t, commit.showlegacy(), "")
+	assertEqual(t, commit.stamp(nil, 42, 0),
+		"<2016-03-14T23:32:27Z!esr@thyrsus.com> Example commit for unit testing")
+	expectout := `Event-Number: 43
+Author: esr <esr@thyrsus.com>
+Author-Date: 2016-03-14T23:32:27Z
+Committer: J. Random Hacker <jrh@foobar.com>
+Committer-Date: 2016-03-03T03:39:07Z
+Check-Text: Example commit for unit testing
+
+Example commit for unit testing
+`
+	assertEqual(t, commit.emailOut(nil, 42, nil), expectout)
+	hackheader := `Event-Number: 43
+Author: Tim the Enchanter <esr@thyrsus.com>
+
+Example commit for unit testing, modified.
+`
+	r := bufio.NewReader(strings.NewReader(hackheader))
+	msg, err := newMessageBlock(r)
+	if err != nil {
+		log.Fatalf("On first read: %v", err)
+	}
+	commit.emailIn(msg, false)
+	hackcheck := `Event-Number: 43
+Author: Tim the Enchanter <esr@thyrsus.com>
+Author-Date: 2016-03-14T23:32:27Z
+Committer: J. Random Hacker <jrh@foobar.com>
+Committer-Date: 2016-03-03T03:39:07Z
+Check-Text: Example commit for unit testing, modified.
+
+Example commit for unit testing, modified.
+`
+	assertEqual(t, commit.emailOut(nil, 42, nil), hackcheck)
+
+	attr1 := newAttribution([]byte("jrh <jrh> 1456976347 -0500"))
+	newTag(repo, "sample1", ":2", commit, attr1, "Sample tag #1\n")
+
+	if len(commit.attachments) != 1 {
+		t.Errorf("tag attachment failed: %d", len(commit.attachments))
+	}
+}
+
+func TestParentChildMethods(t *testing.T) {
+	repo := newRepository("fubar")
+	commit1 := newCommit(repo)
+	committer1 := []byte("J. Random Hacker <jrh@foobar.com> 1456976347 -0500")
+	commit1.committer = *newAttribution(committer1)
+	author1 := newAttribution([]byte("esr <esr@thyrsus.com> 1457998347 +0000"))
+	commit1.authors = append(commit1.authors, *author1)
+	commit1.comment = "Example commit for unit testing\n"
+	commit1.setMark(":1")
+
+	commit2 := newCommit(repo)
+	committer2 := []byte("J. Random Hacker <jrh@foobar.com> 1456976347 -0500")
+	commit2.committer = *newAttribution(committer2)
+	author2 := newAttribution([]byte("esr <esr@thyrsus.com> 1457998347 +0000"))
+	commit2.authors = append(commit2.authors, *author2)
+	commit2.comment = "Second example commit for unit testing\n"
+	commit2.setMark(":2")
+
+	commit2.addParentByMark(":1")
 }
 
 // end
