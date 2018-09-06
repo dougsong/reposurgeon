@@ -1,0 +1,380 @@
+= Notes on the Go translation of Reposurgeon =
+
+The reposurgeon codebase is moving from Python to Go because the
+Python implementation is too slow on really large repositories. The
+GCC history at over 259K commits is the straw that broke the camel's
+back; using PyPy with every optimization on semi-custom hardware tuned
+for this job still yielded test conversion times of over 9 hours,
+which is death on one's recipe-debugging cycle.  A test translation of
+the auxiliary repocutter tool suggested that we could expect a 40x
+speedup, which is in line with published Python vs. Go comparative
+benchmarks.
+
+The problem directed the choice of Go, not the other way around.  I
+seriously considered OCaml or a compiled Lisp as alternatives.
+
+This is an experience report on the translation, written in attempted
+conformance with the Go community's practice for grounding language
+enhancement requests not in it-would-be-nice-to-have abstractions but
+rather in a description of real-world problems. The scale driver of
+this real-world problem is that, while at 14KLOC reposurgeon is not
+expecially large, it is very *dense* - algorithmically complex,
+bristling with graph theory, FSMs, parsing, tricky data structures,
+and three different operator-composition algebras.
+
+Accordingly, reposurgeon would be a challenge to the expressiveness of
+any language it were implemented in.  It makes a good test of the
+relative expressiveness of Python and Go, and an effective way to
+audit for places where moving to Go hinders concision and readability.
+
+The skillset I approached this problem with is: Go novice, Python and
+C expert; old Unix hand; Lisp hacker of ancient vintage;
+ex-mathematician with strength in graph theory, group theory and
+combinatorics; lots of experience as a systems programmer, lots of
+exposure to odd languages, and lots of domain knowledge about
+version-control systems.  Adjust bias compensators accordingly.
+
+== Expected problems that weren't ==
+
+Semantic distance. In general, the translation gap between Python and
+Go is narrower than I initially expected, especially considering the
+dynamic-vs-static type-system difference.  On reflection, I think it
+turns out that GC and the existence of maps as first-class types do
+more to narrow that gap than the divergence in type systems does to
+widen it.
+
+Polymorphic lists.  The principal data structure of a repository's
+representation in reposurgeon is a list of events - data structures
+representing modification operations on sets of files.  The list is
+necessarily polymorphic because (for example) a change commit and a
+tag creation are different kinds of things.  Translating this to
+static typing using interfaces proved less arduous than I had feared,
+though the process revealed a documentation issue that I will discuss
+later in this essay.
+
+Operator overloading.  Good style in Python, but surprisingly easy to
+relinquish in Go.  I went in thinking that they'd be on my want list
+for Go before I was done, but no - not even at reposurgeon's
+complexity scale.
+
+The positive part of my summation is that hand-translation of Python
+to Go even at this scale and complexity is not horrible.  (I did
+examine the automated tools out there but rejected them because the
+generated Go code would have been a maintainability disaster.)  It's
+not *easy*, exactly, but quite doable.  It is however time-intensive;
+counting time to build the required unit tests in Go, I managed about
+150-200 lines a day.
+
+== Problems that are ==
+
+=== Keyword arguments ===
+
+The problem that obtruded on me most was quite unexpected: absence of
+keyword arguments.  In Python one can write a function signature like
+this
+
+----------------------------------------------------------------------
+    def EuclideanDistance(x, y):
+----------------------------------------------------------------------
+
+and then call it like this:
+
+----------------------------------------------------------------------
+    d = EuclideanDistance(x=3.0, y=9.6)
+----------------------------------------------------------------------
+
+I used keyword arguments extensively in the Python, especially in
+object-creation functions where it is often required to pass in
+multiple parameters that won't fit neatly into a single data
+structure.
+
+Go presently has no such feature. This is probably the single most
+serious readability hit my translation took; it got *significantly* more
+difficult to grasp what was going on at all those callsites.
+
+=== Absence of "with" and try/finally context-manager idioms ===
+
+This is a real expressiveness problem, not just a readability issue.
+In Python I can do this:
+
+----------------------------------------------------------------------
+class CriticalRegion:
+    "Encapsulate operations to try and make us un-interruptible."
+    NSIG = 32
+    def __enter__(self):
+        "Begin critical region."
+        if debug_enable(DEBUG_COMMANDS):
+            complain("critical region begins...")
+        # Alas that we lack sigblock support
+        self.handlers = [None]*(CriticalRegion.NSIG+1)
+        for sig in range(1, CriticalRegion.NSIG):
+            if sig not in (signal.SIGKILL, signal.SIGSTOP):
+                self.handlers[sig] = signal.signal(sig, signal.SIG_IGN)
+    def __exit__(self, extype_unused, value_unused, traceback_unused):
+        "End critical region."
+        for sig in range(1, CriticalRegion.NSIG):
+            if sig not in (signal.SIGKILL, signal.SIGSTOP):
+                signal.signal(sig, self.handlers[sig])
+        if debug_enable(DEBUG_COMMANDS):
+            complain("critical region ends.")
+        return False
+----------------------------------------------------------------------
+
+I can then say 
+
+----------------------------------------------------------------------
+            with CriticalRegion():
+	        doUninterruptibleStuff()
+----------------------------------------------------------------------
+
+having a guarantee that __enter__() will run at the start of the
+with block scope and __exit__() will run at the end.
+
+This ability to create a bounded context with enter and exit hooks that
+are guaranteed to fire even on, e.g., a signal interrupt, is a
+*really valuable* idiom and I miss it extremely in Go.
+
+The Go defer statement is a valiant effort to do something
+interesting in this direction but it's not good enough by itself.
+One reason is that it enforces a cohesion between critical-region
+boundaries and function boundaries, with attendent consequences
+in name scoping.  This is an orthogonality violation in the
+language design.
+
+The problem is easily illustrated via Python-like pseudocode:
+
+----------------------------------------------------------------------
+def exampleFunction():
+    a = "Hello world"
+    with CriticalRegion():
+        a = doUninterruptibleStuff(a)
+    print(a)
+----------------------------------------------------------------------
+
+If I try to translate this to Go I'm almost forced to end up with
+something like this:
+
+----------------------------------------------------------------------
+func exampleFunction() {
+    a := "Hello world"
+    a = innerFunction(a)
+    fmt.Print(a)
+}
+
+func innerFunction(a string) string {
+    c := newCriticalRegion()
+    c.__enter__()
+    defer c.__exit__()
+    return doUninterruptibleStuff(a)
+}
+
+----------------------------------------------------------------------
+
+About the latter I can only say "Readability and expressiveness
+FAIL!".  I say "almost" forced because it is possible to improve
+on this slightly using a closure:
+
+----------------------------------------------------------------------
+func exampleFunction() {
+    a := "Hello world"
+    innerFunction := func(a string) {
+        c := newCriticalRegion()
+        c.__enter__()
+        defer c.__exit__()
+        return doUninterruptibleStuff(a)
+    }
+    a = innerFunction(a)
+    fmt.Print(a)
+}
+----------------------------------------------------------------------
+
+I hope nobody is so foolish as to try to tell me this isn't a
+substantial maintainability hit relative to the Python. The clutter is
+irritating in this toy example, and going to be worse at scale; I have
+a particular nasty example in mind from around line 7737 of reposurgeon.
+
+A try/finally syntax on the Python and Java model would be some improvement:
+
+----------------------------------------------------------------------
+func exampleFunction() {
+    a := "Hello world"
+    c := newCriticalRegion()
+    try {
+        c.__enter__()
+        a = doUninterruptibleStuff(a)
+    } finally {
+        c.__exit__()
+    }
+    a = innerFunction(a)
+    fmt.Print(a)
+}
+----------------------------------------------------------------------
+
+Or, in parallel with condition setup in if statements:
+
+----------------------------------------------------------------------
+func exampleFunction() {
+    a := "Hello world"
+    try c := newCriticalRegion() {
+        c.__enter__()
+        a = doUninterruptibleStuff(a)
+    } finally {
+        c.__exit__()
+    }
+    a = innerFunction(a)
+    fmt.Print(a)
+}
+----------------------------------------------------------------------
+
+This is still a bit grubby, however.  Notably, c has to be exposed in
+the outer scope.  But I don't see any way to get what I really want -
+the Python context-manager protocol - without introducing a very
+un-Go-like form of magic structure-member naming, so I'd settle
+for try/finally.
+
+Note that this proposal is *not* try/catch, not an effort to get
+around the Go way of error handling.
+
+=== No map over slices ===
+
+Translating Python map() calls and comprehensions produces code that
+is ugly and bulky, existing dummy variables that don't need to exist.
+
+If one graded Go point extensions by a figure of merit in which the
+numerator is "how much Python expressiveness this keeps" and the
+denominator is "how simple and self-contained the Go feature would be"
+I think this one would be top of list.
+
+So: map as a functional builtin takes two arguments, one x = []T and a
+second f = func(T)T. The expression map(x, f) yields a new slice in
+which for each element of x, f(x) is appended.
+
+This proposal can be discarded if generics are implemented, as any
+reasonable implementation of generics would make it trivial to
+implement in Go itself.
+
+=== Limitations on const ===
+
+Inability to apply const to variables with structure, map, or slice
+initializers is annoying in these ways:
+
+1. Compiler can't enforce noli mi tangere
+
+2. const functions as a declaration of programmer intent that is
+   valuable at scale.
+
+In Python one can often get a similar effect by using tuples.  I used
+this as a form of internal documentation hint.  I want it back in Go.
+
+Any extension in the scope of const, even a relatively conservartive
+one like only allowing const structures with compile-time constant
+members, would have significant benefits.
+
+=== Absence of lookbehind in Go regexps ===
+
+This is a small point problem, easily fixed, that was far more
+annoying in practice than it should have been in theory.
+
+Python regexps have negative lookbehind clauses.  The following
+expression looks for possible Subversion revision designators in
+comments, excluding bug references:
+
+"(?<!bug )[0-9]+"
+
+Go translation reveals that it is remarkably unpleasant, verging on
+"too painful to be worth it" to do that filtering without lookbehinds.
+
+This is the only real problem I have identified in moving from Python
+regexps to Go ones.  Take that "real" seriously, because regexps are a
+Swiss-army knife I use heavily.
+
+=== Hieratic documentation ===
+
+Figuring out how to do type-safe polymorphism in the event list was
+more difficult than it should have been.  The problem here wasn't the
+Go language, it was the official (and unofficial) documentation.
+
+There are two problems here, one of organization and one of style.
+
+The organization problem is that there isn't one.  The official Go
+documentation seems to center on the library API docs, the specification, the
+the Tour, and a couple of "official" essays written for it. It also
+includes a corona of white papers and blog posts.  Often these are
+valuable deep dives into specific aspects of the language even when
+they are notionally obsolete.  Some of them are outside the boundaries
+of the official documentation site.
+
+For example, I got substantial help understanding interfaces from an
+old blog post by Ian Lance Taylor (one of the Go devs) that was
+offsite, dated from 2009, and contained obsolete implementation
+details.
+
+The high-level problem is that while the devs have done a praiseworthy
+and unusually effective job of documenting their language considering
+the usual limitations of documentation-by-developers, finding things
+in the corona is *hard*.  And knowing what's current is *hard*.
+
+Style. Go has a problem that is common to new languages with opinionated
+developers (this is part of "the usual limitations" above).  There are
+one or two exceptions, but the documentation is predominantly written
+in a terse, hieratic style that implicitly assumes the reader already
+inhabits the mindset of a Go developer.
+
+It is not very good at providing an entry path into that mindset.  Not
+even for me, and I'm an extreme case of the sort of person for whom it
+*should* do an effective job if it can do that for anyone.  Most
+newbies are not nearly so well equipped as I, and will have a
+correspondingly larger entry problem that it is less able to meet.
+
+There is a fix for both problems.  It is not magic, but it is doable.
+
+The Go dev team should bring in a documentation specialist with no
+initial knowledge of Go and a directive to try to maintain an
+outside-in view of the language as he or she learns.  That specialist
+needs to be full-time on the following tasks:
+
+(1) Edit for accessibility - a less hieratic style
+
+(2) Maintain a documentation portal that attempts to provide a
+reasonable map of where everything is and how to find it.
+
+(3) Curate links to third-party documents (for example notable Stack
+Overflow postings), with dates and attached notes on what parts might
+be obsolete and when the document was last reviewed for correctness.
+
+== Accentuating the positive ==
+
+I think the Go translation of reposurgeon is going to be better - more
+maintainable - code than the Python original, not just faster.  And this
+is not because I'm rewriting or refactoring as I go; in fact I'm
+trying very hard to avoid that.  A wise person in a situation like
+this performs as linear and literal a translation as possible; to do
+otherwise is to risk a complexity explosion as you try to cross the
+semantic gap and rethink the design at the same time.
+
+I see a maintainability benefit from the static typing. The Go type
+system does what a type system is supposed to do, which is express
+program invariants and assist understanding of its operational
+semantics.
+
+I also see a maintainability benefit from how easy Go makes it to
+write unit tests in parallel with code.  I am fully exploiting this,
+and expect it to make life much less painful when I get to end-to-end
+testing of the translation and have to debug it in the large.
+
+Now that I've seen Go strings...holy hell, Python 3 unicode strings
+sure look like a nasty botch in retrospect. Good work not falling into
+that trap.
+
+== Envoi: Actionable recommendations, in priority order ==
+
+1. Keyword arguments should be added to the language.
+
+2. A technical writer with an outside-in view of the language should
+   be hired on to do an edit pass and reorganization of the documents.
+
+3. try/finally should be added to the language.
+
+4. Lookbehinds should be added to the regexp library.
+
+5. If generics don't fly, a map-over-slice intrinsic sould be added.
