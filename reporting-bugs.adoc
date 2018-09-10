@@ -43,7 +43,7 @@ $ ls
 conf  db  format  hooks  locks  README.txt
 ----------------------------------------------------------------------
 
-Then run "repotool dump", capturing the output.
+Then run "repotool export", capturing the output.
 
 The commands you will use for test-case reduction are reposurgeon and,
 on Subversion dumps, repocutter.
