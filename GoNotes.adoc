@@ -25,10 +25,11 @@ and three different operator-composition algebras.
 Accordingly, reposurgeon would be a challenge to the expressiveness of
 any language it were implemented in.  It makes a good test of the
 relative expressiveness of Python and Go, and an effective way to
-audit for places where moving to Go hinders concision and readability.
+audit for places where moving from Python to Go hinders concision and
+readability.
 
 The skillset I approached this problem with is: Go novice, Python and
-C expert; old Unix hand; Lisp hacker of ancient vintage;
+C expert; old Unix hand; Lisp hacker of even more ancient vintage;
 ex-mathematician with strength in graph theory, group theory and
 combinatorics; lots of experience as a systems programmer, lots of
 exposure to odd languages, and lots of domain knowledge about
@@ -238,7 +239,8 @@ around the Go way of error handling.
 === No map over slices ===
 
 Translating Python map() calls and comprehensions produces code that
-is ugly and bulky, existing dummy variables that don't need to exist.
+is ugly and bulky, forcing the declaration of dummy variables that
+don't need to exist.
 
 If one graded Go point extensions by a figure of merit in which the
 numerator is "how much Python expressiveness this keeps" and the
@@ -377,4 +379,4 @@ that trap.
 
 4. Lookbehinds should be added to the regexp library.
 
-5. If generics don't fly, a map-over-slice intrinsic sould be added.
+5. If generics don't fly, a map-over-slice intrinsic should be added.
