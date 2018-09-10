@@ -59,8 +59,8 @@ dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc -f nofooter.conf
 #
 
 gosetup:
-	GOPATH=$(GOPATH) go get golang.org/x/crypto/ssh/terminal
-	GOPATH=$(GOPATH) go get golang.org/x/text/encoding/ianaindex
+	GOPATH=$(GOPATH) go get -u golang.org/x/crypto/ssh/terminal
+	GOPATH=$(GOPATH) go get -u golang.org/x/text/encoding/ianaindex
 
 gotest:
 	GOPATH=$(GOPATH) GOCACHE=off go test goreposurgeon
