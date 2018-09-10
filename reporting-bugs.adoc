@@ -31,6 +31,20 @@ some tactics you can use to reduce the bulk of the test case you send
 me. Also, a well-reduced dump can become a regression test to ensure
 the bug does not recur.
 
+How to make dumps in Git: cd to your git repository and capture the
+output of "repotool export".
+
+How to make dumps in Subversion: cd to the toplevel directory of the
+repository master - not a checkout of it, you can tell you're
+in the right place if you see this:
+
+----------------------------------------------------------------------
+$ ls
+conf  db  format  hooks  locks  README.txt
+----------------------------------------------------------------------
+
+Then run "repotool dump", capturing the output.
+
 The commands you will use for test-case reduction are reposurgeon and,
 on Subversion dumps, repocutter.
 
