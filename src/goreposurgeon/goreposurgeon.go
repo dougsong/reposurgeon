@@ -3775,7 +3775,7 @@ func (commit *Commit) _manifest() {
         // Take own fileops into account.
         for fileop in commit.operations():
             if fileop.op == opM:
-                ancestors[fileop.path] = (fileop.mode, fileop.ref, fileop.inline)
+                ancestors[fileop.path] = MapVal{fileop.mode, fileop.ref, fileop.inline}
             else if fileop.op == opD:
                 if fileop.path in ancestors:
                     del ancestors[fileop.path]
@@ -4056,11 +4056,6 @@ func (p *Passthrough) emailIn(msg *MessageBlock) {
         p.text = msg.getPayload()
 }
 
-// dump reports this passthrough in import-stream format.
-func (p *Passthrough) dump(_vcs *VCS, options stringSet) string {
-        return p.text
-}
-	
 // idMe IDs this passthrough for humans."
 func (p Passthrough) idMe() string {
         return fmt.Sprintf("passthrough@%d", p.repo.index(p))
@@ -4071,8 +4066,9 @@ func (p Passthrough) getMark() string {
         return ""
 }
 
+// String reports this passthrough in import-stream format.
 func (p Passthrough) String() string {
-        return p.dump(nil, nil)
+        return p.text
 }
 	
 /*
@@ -4126,15 +4122,21 @@ func branchbase(branch):
 */
 
 /*
- * Represent the set of filenames visible in a Subversion
- * revision, using copy-on-write to keep the size of the structure in
- * line with the size of the Subversion repository metadata.
- */
+
+// Represent the set of filenames visible in a Subversion
+// revision, using copy-on-write to keep the size of the structure in
+// line with the size of the Subversion repository metadata.
 type PathMap struct {
 	store map[string]interface{}
 	maxid []int
 	snapid int
 	shared bool
+}
+
+type MapVal struct {
+	mode string
+	ref string
+	inline string
 }
 
 //_self_value = object()
@@ -4145,7 +4147,7 @@ func newPathMap(other interface{}) *PathMap {
         // and |maxid| is a list (for reference sharing) whose only value is
         // the maximum |snapid| of the collection. |store| is a dict mapping
         // single-component names to lists of values indexed by snapids. The
-        // values which can be other PathMaps (for directories) or anything
+        // values of which can be other PathMaps (for directories) or anything
         // except PathMaps and None (for files).
 	switch other.(type) {
 	case PathMap:
@@ -4163,143 +4165,211 @@ func newPathMap(other interface{}) *PathMap {
 	return p
 }
 
-/* 
 // snapshot returns a copy-on-write snapshot of the set.
-func (p *Pathmap) snapshot() *PathMap {
-        r := newPathMap(p)
-        if self.snapid < r.snapid - 1 {
-            // Late snapshot of an "old" PathMap. Restore values which may
-            // have changed since. This is uncommon, don't over-optimize.
-            for component in self.store: // _elt_items() would skip None
-                r._elts_set(component, self._elts_get(component))
+func (pm *PathMap) snapshot() *PathMap {
+        r := newPathMap(pm)
+        if pm.snapid < r.snapid - 1 {
+		// Late snapshot of an "old" PathMap. Restore values which may
+		// have changed since. This is uncommon, don't over-optimize.
+		for _, component := range pm.store { // _elt_items() would skip None
+			r._elts_set(component, pm._elts_get(component))
+		}
 	}
-        for _, v in r._elts_items() {
-            if isinstance(v, PathMap):
-                v.shared = true
+        for _, v := range r._elts_items() {
+		switch v.(type) {
+		case PathMap:
+			v.(*PathMap).shared = true
+		}
 	}
         return r
 }
 
-    func copy_from(self, target_path, source_pathset, source_path):
-        "Insert, at target_path, a snapshot of source_path in source_pathset."
-        source_obj = source_pathset._find(source_path)
-        if source_obj is None:
-            return
-        if source_obj is source_pathset:
-            // Do not share toplevel instances, only inner ones
-            source_obj = source_obj.snapshot()
-        else if isinstance(source_obj, PathMap):
-            source_obj.shared = true
-        self._insert(target_path, source_obj)
-    func ls_R(self, path):
+// copyFrom inserts, at targetPath, a snapshot of sourcePath in sourcePathset.
+func (pm *PathMap) copyFrom(targetPath string, sourcePathset interface{}, sourcePath string) {
+        sourceObj := sourcePathset._find(sourcePath)
+	if sourceObj == nil {
+		return
+	}
+        if sourceObj == sourcePathset {
+		// Do not share toplevel instances, only inner ones
+		sourceObj = sourceObj.snapshot()
+	} else if isinstance(sourceObj, PathMap) {
+		sourceObj.shared = true
+	}
+	pm._insert(targetPath, sourceObj)
+}
+	 
+//    func ls_R(self, path):
+//       elt = self._find(path)
+//       if isinstance(elt, PathMap):
+//            return iter(elt)
+//        return iter(()) // empty iterator
+
+// contains returns true if path is present in the set as a file.
+func (pm *PathMap) contains(path string) {
+        elt := pm._find(path)
+	if elt == nil {
+		return false
+	}
+	switch elt.(type) {
+	case PathMap:
+		return false
+	case MapVal:
+		return true
+	default:
+		panic(fmt.Sprintf("unexpected type %v in PathMap contain call", elt.(type)))
+	}
+}
+
+// get returns the value associated with a specified (nondirectory) path.
+func (pm *PathMap) get(path) interface{} *MapVal {
         elt = self._find(path)
-        if isinstance(elt, PathMap):
-            return iter(elt)
-        return iter(()) // empty iterator
-    func __contains__(self, path):
-        "Return true if path is present in the set as a file."
-        elt = self._find(path)
-        return not isinstance(elt, PathMap) && elt is not None
-    func __getitem__(self, path):
-        "Return the value associated with a specified path."
-        elt = self._find(path)
-        if elt is None or isinstance(elt, PathMap):
-            // This is not quite like indexing, which would throw IndexError
-            return None
+        if elt = nil {
+		return nil
+	}
+	switch elt.(type) {
+	case PathMap:
+		return nil
+	}
         return elt
-    func __setitem__(self, path, value):
-        "Add a filename to the set, with associated value (not None)."
-        assert value is not None
+}
+	
+// set adds a filename to the set, with associated value (not nil)."
+func (pm *PathMap) set(path string, value *MapVal) {
+        //assert value is not None
         self._insert(path, value)
-    func __delitem__(self, path):
-        """Remove a filename, or all descendents of a directory name,
-        from the set."""
-        basename, components = self._split_path(path)
-        assert(not self.shared)
-        for component in components:
-            nxt = self._elts_get(component)
-            if not isinstance(nxt, PathMap):
-                return
-            if nxt.shared:
-                nxt = self._elts_set(component, nxt.snapshot())
-            self = nxt
-        // Set value to None since PathMap doesn't tell None && absence apart
-        self._elts_set(basename, None)
-    func __nonzero__():
-        "Return true if any filenames are present in the set."
-        return any(v for _, v in self._elts_items())
-    __bool__ = __nonzero__  // for Python 3
-    func __len__():
-        "Return the number of files in the set."
-        return sum(len(v) if isinstance(v, PathMap) else 1
-                for _, v in self._elts_items())
-    func items():
-        for (name, value) in sorted(self._elts_items()):
-            if isinstance(value, PathMap):
-                for path, v in value.items():
-                    yield (os.path.join(name, path), v)
-            else if value is not None:
-                yield (name, value)
-    func __iter__():
-        return itertools.imap(operator.itemgetter(0), self.items())
-    func String():
-        return '<PathMap: {}>'.format(' '.join())
-    // Return the current value associated with the component in the store
-    func _elts_get(self, component):
-        snaplist = self.store.get(component) or [None]
+}
+	
+// del removes a filename, or all descendents of a directory name, from the set.
+func (pm *PathMap) del(path) {
+        basename, components = pm._splitPath(path)
+        //assert(not pm.shared)
+	for _, component in components {
+		nxt := pm._elts_get(component)
+		switch nxt.(type) {
+		case PathMap:
+			return
+		}
+		if nxt.shared {
+			nxt = pm._elts_set(component, nxt.snapshot())
+		}
+		pm = nxt
+	}
+        // Set value to nil since PathMap doesn't tell nil && absence apart
+        pm._elts_set(basename, nil)
+}
+
+// nonempty return true if any filenames are present in the set.
+func (pm *PathMap) nonempty() {
+	for _, := range in pm._elts_items() {
+		if v != nil {
+			return true
+		}
+	}
+        return false
+}
+
+// len returns the number of files in the set.
+func (pm *PathMap) len() {
+	count := 0
+	for _, v in self._elts_items() {
+		switch v.(type) {
+		case PathMap:
+			count += v.len()
+		default:
+			count++
+		}
+	}
+	return count
+}
+
+
+//    def items(self):
+//        for (name, value) in sorted(self._elts_items()):
+//            if isinstance(value, PathMap):
+//                for path, v in value.items():
+//                    yield (os.path.join(name, path), v)
+//            elif value is not None:
+//                yield (name, value)
+
+// _elts_get returns the current value associated with the component in the store
+func (pm * PathMap) _elts_get(self, component) *MapVal {
+        snaplist := self.store.get(component)
+	if snaplist == nil {
+		snaplist = [nil]
+	}
         return snaplist[min(self.snapid, len(snaplist) - 1)]
-    // Set the current value associated with the component in the store
-    func _elts_set(self, component, value):
+}
+
+// _elts_set sets the current value associated with the component in the store
+func (pm * PathMap) _elts_set(self, component, value) {
         snaplist = self.store.setdefault(component, [None])
         needed = min(self.maxid[0], self.snapid + 1) + 1
-        if len(snaplist) < needed:
-            last = snaplist[-1]
-            snaplist.extend(last for _ in range(len(snaplist), needed))
+        if len(snaplist) < needed {
+		last = snaplist[-1]
+		snaplist.extend(last for _ in range(len(snaplist), needed))
+	}
         snaplist[self.snapid] = value
         return value
-    // Iterate through (component, current values) pairs
-    func _elts_items():
-        snapid = self.snapid
-        for component, snaplist in self.store.items():
-            if component is self._self_value: continue
-            val = snaplist[min(snapid, len(snaplist) - 1)]
-            if val is not None: yield (component, val)
-    // Insert obj at the location given by components.
-    func _insert(self, path, obj):
-        basename, components = self._split_path(path)
-        if not basename:
-            return
-        assert(not self.shared)
-        for component in components:
-            nxt = self._elts_get(component)
-            if not isinstance(nxt, PathMap):
-                nxt = self._elts_set(component, PathMap())
-            else if nxt.shared:
-                nxt = self._elts_set(component, nxt.snapshot())
-            self = nxt
-        self._elts_set(basename, obj)
-    // Return the object at the location given by components--either
-    // the associated value if it's present as a filename, or a PathMap
-    // containing the descendents if it's a directory name.  Return
-    // None if the location does not exist in the set.
-    func _find(self, path):
-        basename, components = self._split_path(path)
-        if not basename:
-            return self
-        for component in components:
-            self = self._elts_get(component)
-            if not isinstance(self, PathMap):
-                return None
+}
+
+// _elts_items iterate through (component, current values) pairs
+//func (pm *PathMap) _elts_items() {
+//        snapid = self.snapid
+//        for component, snaplist in self.store.items():
+//            if component is self._self_value: continue
+//            val = snaplist[min(snapid, len(snaplist) - 1)]
+//            if val is not None: yield (component, val)
+//}
+
+// Insert obj at the location given by components.
+func (pm  *PathMap) _insert(path string, obj *Mapval) {
+        basename, components = pm._splitPath(path)
+        if len(basename) == 0 {
+		return
+	}
+        //assert(not pm.shared)
+	for _, component := range components {
+		nxt :== pm._elts_get(component)
+		if not isinstance(nxt, PathMap) {
+			nxt = pm._elts_set(component, PathMap())
+		} else if nxt.shared {
+			nxt = pm._elts_set(component, nxt.snapshot())
+			pm = nxt
+		}
+	}
+        pm._elts_set(basename, obj)
+}
+
+// Return the object at the location given by components--either
+// the associated value if it's present as a filename, or a PathMap
+// containing the descendents if it's a directory name.  Return
+// nil if the location does not exist in the set.
+func (pm  *PathMap) _find(path) {
+        basename, components = _splitPath(path)
+        if not basename {
+		return self
+	}
+        for component in components {
+		self = self._elts_get(component)
+		if not isinstance(self, PathMap) {
+			return None
+		}
+	}
         return self._elts_get(basename)
-    // Return a list of the components in path in reverse order.
-    @staticmethod
-    func _split_path(path):
+}
+
+// Return a list of the components in path in reverse order.
+func _splitPath(path string) {
         if isinstance(path, str):
             components = [f for f in os.path.normpath(path).split(os.sep) if f]
             return (components.pop() if components else None, components)
         else:
             return (PathMap._self_value,
                     [f for f in os.path.normpath(path[0]).split(os.sep) if f])
+}
+
+*/
 
 /*
 
@@ -5253,7 +5323,7 @@ class StreamParser:
                 # Mutate the filemap according to copies
                 if node.from_rev:
                     assert int(node.from_rev) < int(revision)
-                    filemap.copy_from(node.path, filemaps[node.from_rev],
+                    filemap.copyFrom(node.path, filemaps[node.from_rev],
                                       node.from_path)
                     announce(debugFILEMAP, "r%s~%s copied to %s" \
                                  % (node.from_rev, node.from_path, node.path))
@@ -5266,7 +5336,7 @@ class StreamParser:
                         node.kind = SD_FILE if node.path in filemap else SD_DIR
                     # Snapshot the deleted paths before removing them.
                     node.from_set = PathMap()
-                    node.from_set.copy_from(node.path, filemap, node.path)
+                    node.from_set.copyFrom(node.path, filemap, node.path)
                     del filemap[node.path]
                     announce(debugFILEMAP, "r%s~%s deleted" \
                                  % (node.revision, node.path))
@@ -5290,7 +5360,7 @@ class StreamParser:
                 announce(debugFILEMAP, "r%s copynode filemap is %s" \
                          % (copynode.from_rev, filemaps[copynode.from_rev]))
             copynode.from_set = PathMap()
-            copynode.from_set.copy_from(copynode.from_path,
+            copynode.from_set.copyFrom(copynode.from_path,
                                         filemaps[copynode.from_rev],
                                         copynode.from_path)
             baton.twirl()
@@ -6090,7 +6160,7 @@ class StreamParser:
                     # Mutate the mergeinfo according to copies
                     if node.from_rev:
                         assert int(node.from_rev) < int(revision)
-                        mergeinfo.copy_from(
+                        mergeinfo.copyFrom(
                                 node.path,
                                 mergeinfos.get(node.from_rev) or PathMap(),
                                 node.from_path)
