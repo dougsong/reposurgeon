@@ -1,4 +1,4 @@
-image: buildpack-deps:jessie
+image: golang:1.9
 
 before_script:
   - source ci/prepare.sh
