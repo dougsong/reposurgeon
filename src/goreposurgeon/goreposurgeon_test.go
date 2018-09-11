@@ -695,6 +695,32 @@ func TestParentChildMethods(t *testing.T) {
 	commit2.setMark(":2")
 
 	commit2.addParentByMark(":1")
+	if len(commit1.children()) != 1 || commit1.children()[0].getMark() != ":2" {
+		t.Errorf("parent addition failed")
+	}
+
+	// should complain but not crash; complaint won't be visible
+	// unless some other unit test fails.
+	commit2.insertParent(0, ":0")
+
+	commit3 := newCommit(repo)
+	committer3 := []byte("J. Random Hacker <jrh@foobar.com> 1456976447 -0500")
+	commit3.committer = *newAttribution(committer3)
+	author3 := newAttribution([]byte("esr <esr@thyrsus.com> 1457998447 +0000"))
+	commit3.authors = append(commit3.authors, *author3)
+	commit3.comment = "Third example commit for unit testing\n"
+	commit3.setMark(":3")
+
+	commit3.addParentByMark(":2")
+	commit3.insertParent(0, ":1")
+	if len(commit3.parents()) != 2 || commit3.parents()[0].getMark() != ":1" {
+		t.Errorf("parent insertion :1 before :2 in :3 failed")
+	}
+
+	commit3.removeParent(commit1)
+	if len(commit3.parents()) != 1 || commit3.parents()[0].getMark() != ":2" {
+		t.Errorf("parent deletion of :1 in :3 failed")
+	}
 }
 
 // end

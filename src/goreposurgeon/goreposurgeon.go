@@ -3175,6 +3175,8 @@ func (commit *Commit) clone(repo *Repository) *Commit {
         c := newCommit(repo)
         c.committer = commit.committer
         c.authors = make([]Attribution, len(commit.authors))
+	// FIXME: Test this against Python, which does a deeper copy.
+	// It might alter the behavior of the split operation.
 	copy(c.authors, commit.authors)
 	c.comment = commit.comment
 	c.mark = commit.mark
@@ -3580,6 +3582,10 @@ func (commit *Commit) addCallout(mark string) {
 
 func (commit *Commit) insertParent(idx int, mark string) {
         newparent := commit.repo.markToEvent(mark)
+	if newparent == nil {
+		complain("invalid mark %s passed to insertParent", mark)
+		return
+	}
 	// Stupid slice tricks: https://github.com/golang/go/wiki/SliceTricks
         commit._parentNodes = append(commit._parentNodes[:idx], append([]Event{newparent}, commit._parentNodes[idx:]...)...)
 	switch newparent.(type) {
@@ -3597,7 +3603,7 @@ func (commit *Commit) removeParent(event *Commit) {
         // commit.repo.invalidateManifests() FIXME
 }
 
-func (commit *Commit) replace_parent(e1, e2 *Commit) {
+func (commit *Commit) replaceParent(e1, e2 *Commit) {
 	for i, item := range commit._parentNodes {
 		if item == e1 {
 			commit._parentNodes[i] = e2
@@ -3713,7 +3719,7 @@ func (commit *Commit) paths(pathtype stringSet) stringSet {
         return commit._pathset
 }
 
-// invalidatePathsetCache gorce a rebuild on the next call to paths().
+// invalidatePathsetCache forces a rebuild on the next call to paths().
 func (commit *Commit) invalidatePathsetCache() {
         commit._pathset = nil
 }
@@ -8038,7 +8044,7 @@ class Repository:
             return
         events[0].setParents(list(sorted_events[0].parents()))
         for x in list(sorted_events[-1].children()):
-            x.replace_parent(sorted_events[-1], events[-1])
+            x.replaceParent(sorted_events[-1], events[-1])
         for i,e in enumerate(events[:-1]):
             events[i+1].setParents([e])
         validate_operations(events, bequiet)
@@ -8302,7 +8308,7 @@ class Repository:
             self.invalidate_objectMap()
             # Fix up parent/child relationships
             for child in list(event.children()):
-                child.replace_parent(event, event2)
+                child.replaceParent(event, event2)
             event2.setParents([event])
             # and then finalize the ops
             event2.setOperations(fileops2)
@@ -14673,7 +14679,7 @@ not optimal, and may in particular contain duplicate blobs.
             else:
                 blank.setParents([commit])
                 for offspring in commit.children():
-                    offspring.replace_parent(commit, blank)
+                    offspring.replaceParent(commit, blank)
                 repo.addEvent(blank, where=loc)
             # We get here if incorporation worked OK.
             for opt in parse.options:
