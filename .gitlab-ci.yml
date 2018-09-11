@@ -6,6 +6,3 @@ before_script:
 test:
   script:
   - make -k check
-    # Test HgExtractor again with hglib installed (for hg command server)
-  - make -C ci install-hglib
-  - make -C test hg-extractor
