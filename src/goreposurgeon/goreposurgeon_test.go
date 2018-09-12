@@ -721,6 +721,111 @@ func TestParentChildMethods(t *testing.T) {
 	if len(commit3.parents()) != 1 || commit3.parents()[0].getMark() != ":2" {
 		t.Errorf("parent deletion of :1 in :3 failed")
 	}
+
+	assertBool(t, commit1.descendedFrom(commit3), false)
+	assertBool(t, commit2.descendedFrom(commit1), true)
+	assertBool(t, commit3.descendedFrom(commit2), true)
+	assertBool(t, commit3.descendedFrom(commit1), true)
+
+	// Set up some fileops so we can test things like manifests
+	addop := func(commit *Commit, line string) {
+		commit.appendOperation(*newFileOp(repo).parse(line))
+	}
+	assertPathsAre := func(commit *Commit, expected []string) {
+		saw := commit.paths(nil)
+		if !stringSliceEqual(saw, expected) {
+			t.Errorf("pathset equality check failed, expected %v saw %v",
+				expected, saw)
+		}
+	}
+
+	addop(commit1, "M 100644 :4 README")
+	assertPathsAre(commit1, []string{"README"})
+	addop(commit1, "M 100644 :5 COPYING")
+	assertPathsAre(commit1, []string{"README", "COPYING"})
+	assertBool(t, commit3.visible("README")!=nil, true)
+	assertBool(t, commit3.visible("nosuchfile")!=nil, false)
+	addop(commit2, "D README")
+	assertBool(t, commit3.visible("README")!=nil, false)
+	addop(commit2, "M 100644 :6 randomness")
+	m := commit3.manifest()
+	if len(m) != 2 {
+		t.Errorf("expected manifest length 2 at :3, saw %d", len(m))
+	}
+	ce, ok := m["COPYING"]
+	if !ok {
+		t.Errorf("expected COPYING in manifest at :3.")
+	}
+	if ce.ref != ":5" {
+		t.Errorf("expected COPYING in manifest at :3 to trace to :5, saw %q", ce.ref)
+	}
+	commit1.canonicalize()
+	p1 := commit1.paths(nil)
+	if len(p1) != 2 || p1[0] != "COPYING" || p1[1] != "README" {
+		t.Errorf("unexpected content at :1 after canonicalization: %v",
+			p1)
+	}
+	addop(commit3, "M 100644 :6 vat")
+	addop(commit3, "M 100644 :7 rat")
+	addop(commit3, "M 100644 :8 cat")
+	commit3.canonicalize()
+	p3 := commit3.paths(nil)
+	if len(p3) != 3 || p3[0] != "cat" || p3[1] != "rat" {
+		t.Errorf("unexpected content at :3 after 1st canonicalization: %v",
+			p3)
+	}
+
+	addop(commit3, "M 100644 :9 rat")
+	commit3.canonicalize()
+	p4 := commit3.paths(nil)
+	if len(p4) != 3 || p4[0] != "cat" || p4[1] != "rat" {
+		t.Errorf("unexpected content at :3 after 2nd canonicalization: %v",
+			p4)
+
+	}
+
+	commit3.setBranch("refs/heads/master")
+	assertEqual(t, commit3.head(), "refs/heads/master")
+
+	assertBool(t, commit1.references(":6"), false)
+	assertBool(t, commit3.references(":6"), true)
+
+	saw := commit3.String()
+	expected := "commit refs/heads/master\nmark :3\nauthor esr <esr@thyrsus.com> 1457998447 +0000\ncommitter J. Random Hacker <jrh@foobar.com> 1456976447 -0500\ndata 38\nThird example commit for unit testing\nfrom :2\nM 100644 :8 cat\nM 100644 :9 rat\nM 100644 :6 vat\n\n"
+	assertEqual(t, saw, expected)
 }
 
+func TestAlldeletes(t *testing.T) {
+	repo := newRepository("fubar")
+	commit1 := newCommit(repo)
+	committer1 := []byte("J. Random Hacker <jrh@foobar.com> 1456976347 -0500")
+	commit1.committer = *newAttribution(committer1)
+	author1 := newAttribution([]byte("esr <esr@thyrsus.com> 1457998347 +0000"))
+	commit1.authors = append(commit1.authors, *author1)
+	commit1.comment = "Example commit for unit testing\n"
+	commit1.setMark(":1")
+
+	// Set up some fileops so we can test things like manifests
+	addop := func(commit *Commit, line string) {
+		commit.appendOperation(*newFileOp(repo).parse(line))
+	}
+
+	addop(commit1, "deleteall")
+	assertBool(t, commit1.alldeletes(nil), true)
+	addop(commit1, "D README")
+	assertBool(t, commit1.alldeletes(nil), true)
+	addop(commit1, "M 100644 :2 COPYING")
+	assertBool(t, commit1.alldeletes(nil), false)
+}
+
+func TestBranchbase(t *testing.T) {
+	assertEqual(t, branchbase("refs/heads/gronk"), "gronk")
+	assertEqual(t, branchbase("refs/heads/grink"), "grink")
+	assertEqual(t, branchbase("refs/random"), "random")
+}
+
+func TestCapture(t *testing.T) {
+	assertEqual(t, capture("echo stdout; echo 1>&2 stderr"), "stdout\nstderr\n")
+}
+	
 // end
