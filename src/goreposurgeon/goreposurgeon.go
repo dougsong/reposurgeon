@@ -2117,7 +2117,6 @@ type Repository struct {
         //legacy_count = None
         //timings = []
         //assignments = {}
-        //_hasManifests bool
         inlines int
         //uniqueness = None
         markseq int
@@ -3019,6 +3018,12 @@ func (callout Callout) String() string {
         return fmt.Sprintf("callout-%s", callout.mark)
 }
 
+type ManifestEntry struct {
+	mode string
+	ref string
+	inline string
+}
+
 // Commit represents a commit event in a fast-export stream
 type Commit struct {
         repo *Repository
@@ -3029,7 +3034,7 @@ type Commit struct {
         branch string           // branch name
         fileops []FileOp        // blob and file operation list
         properties OrderedMap	// commit properties (extension)
-        //filemap = None
+        filemap map[string]*ManifestEntry
         color string
         legacyID string         // Commit's ID in an alien system
         //common = None         // Used only by the Subversion parser
@@ -3751,45 +3756,60 @@ func (commit *Commit) visible(path string) *Commit {
 	return nil
 }
 
+// manifest returns a map from all pathnames visible at this commit
+// to ManifestEntry structures. The map contents is shared as much as
+// possible with manifests from previous commits to keep working-set
+// size to a minimum.  Note, if the working set blows up horribly
+// anyway, the map overhead is thing to suspect here - we might
+// have to something like the copy-on-write structure in the ancestral
+// Python.
+func (commit *Commit) manifest() map[string]*ManifestEntry {
+	// yeah, baby this operation is *so* memoized...
+        if commit.filemap != nil {
+		return commit.filemap
+	}
+	commit.filemap = make(map[string]*ManifestEntry)
+	if !commit.hasParents() {
+		p := commit.parents()[0]
+		switch p.(type) {
+		case Commit:
+			// Magic recursion, force fetch or recompute
+			// of manifest back to the root commit.
+			// FIXME: Verify *hard* that we should only
+			// recurse through first parent.
+			m := p.(*Commit).manifest()
+			for k, v := range m {
+				// map entries are pointers so that
+				// generations will share the actual
+				// entries.
+				commit.filemap[k] = v
+			}
+		case Callout:
+			complain("internal error: can't get through a callout")
+		default:
+			panic("manifest() found unexpected type in parent list")
+		}
+	}
+        // Take own fileops into account.
+        for _, fileop := range commit.operations() {
+		if fileop.op == opM {
+			commit.filemap[fileop.path] = &ManifestEntry{fileop.mode, fileop.ref, fileop.inline}
+		} else if fileop.op == opD {
+			delete(commit.filemap, fileop.path)
+		} else if fileop.op == opC {
+			commit.filemap[fileop.target] = commit.filemap[fileop.source]
+		} else if fileop.op == opR {
+			commit.filemap[fileop.target] = commit.filemap[fileop.source]
+			delete(commit.filemap, fileop.source)
+		} else if fileop.op == "deleteall" {
+			commit.filemap = make(map[string]*ManifestEntry)
+		}
+	}
+        return commit.filemap
+}
+
 /*
 
-// FIXME: Can't translate these yet due to the dreaded PathMap
-
-func (commit *Commit) manifest() {
-        "Return a map from paths to marks for files existing at this commit."
-        commit.repo._hasManifests = true
-        sys.setrecursionlimit(max(
-                sys.getrecursionlimit(),
-                len(commit.repo.events) * 2))
-        return commit._manifest()
-}
-
-func (commit *Commit) _manifest() {
-        if commit.filemap is not None:
-            return commit.filemap
-        // Get the first parent manifest, or an empty one.
-        try:
-            ancestors = commit.parents()[0]._manifest().snapshot()
-        except IndexError:
-            ancestors = PathMap()
-        // Take own fileops into account.
-        for fileop in commit.operations():
-            if fileop.op == opM:
-                ancestors[fileop.path] = MapVal{fileop.mode, fileop.ref, fileop.inline}
-            else if fileop.op == opD:
-                if fileop.path in ancestors:
-                    del ancestors[fileop.path]
-            else if fileop.op == opC:
-                ancestors[fileop.target] = ancestors[fileop.source]
-            else if fileop.op == opR:
-                ancestors[fileop.target] = ancestors[fileop.source]
-                if fileop.source in ancestors:
-                    del ancestors[fileop.source]
-            else if fileop.op == 'deleteall':
-                ancestors = PathMap()
-        commit.filemap = ancestors
-        return ancestors
-}
 
 func (commit *Commit) canonicalize() {
         "Replace fileops by a minimal set of D && M with the same result."
@@ -4131,12 +4151,6 @@ type PathMap struct {
 	maxid []int
 	snapid int
 	shared bool
-}
-
-type MapVal struct {
-	mode string
-	ref string
-	inline string
 }
 
 //_self_value = object()
