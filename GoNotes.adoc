@@ -13,7 +13,11 @@ benchmarks.
 The problem directed the choice of Go, not the other way around.  I
 seriously considered OCaml or a compiled Lisp as alternatives.
 
-This is an experience report on the translation, written in attempted
+I did examine the automated tools for Python to Go, but rejected them
+because the generated Go code would have been a maintainability
+disaster.  Thus, translation by hand.
+
+This is an experience report on that translation, written in attempted
 conformance with the Go community's practice for grounding language
 enhancement requests not in it-would-be-nice-to-have abstractions but
 rather in a description of real-world problems. The scale driver of
@@ -50,8 +54,8 @@ representing modification operations on sets of files.  The list is
 necessarily polymorphic because (for example) a change commit and a
 tag creation are different kinds of things.  Translating this to
 static typing using interfaces proved less arduous than I had feared,
-though the process revealed a documentation issue that I will discuss
-later in this essay.
+though the process revealed a documentation issue and a problem
+with absence of sum types; I will return to both points.
 
 Operator overloading.  Good style in Python, but surprisingly easy to
 relinquish in Go.  I went in thinking that they'd be on my want list
@@ -59,9 +63,7 @@ for Go before I was done, but no - not even at reposurgeon's
 complexity scale.
 
 The positive part of my summation is that hand-translation of Python
-to Go even at this scale and complexity is not horrible.  (I did
-examine the automated tools out there but rejected them because the
-generated Go code would have been a maintainability disaster.)  It's
+to Go even at this scale and complexity is not horrible.  It's
 not *easy*, exactly, but quite doable.  It is however time-intensive;
 counting time to build the required unit tests in Go, I managed about
 150-200 lines a day.
@@ -290,6 +292,44 @@ This is the only real problem I have identified in moving from Python
 regexps to Go ones.  Take that "real" seriously, because regexps are a
 Swiss-army knife I use heavily.
 
+=== Absence of sum/discriminated union types ===
+
+I have read issue #19412 and am aware of the objections to adding sum
+types to Go.
+
+Nevertheless, I found their absence was something of a pain point in my
+translation.  Because reposurgeon events can have any one of a set of
+types (Blob, Tag, Commit, Callout, Passthrough, Reset) I found myself
+writing a lot of stupid boilerplate code like this:
+
+--------------------------------------------------------------------
+    for _, child := range commit.children() {
+	    switch child.(type) {
+	    case *Commit:
+		    successorBranches.Add(child.(Commit).branch)
+	    case *Callout:
+		    complain("internal error: callouts do not have branches: %s",
+			    child.idMe())
+	    default:
+		    panic("in tags method, unexpected type in child list")
+	    }
+    }
+--------------------------------------------------------------------
+
+Besides being inelegant, the requirement for a runtime check to
+exhaust all cases is a defect attractor.  It's way to easy to forget
+to write the default case and wind up with silent errors.
+
+Thus, absence of discriminated-sum types is an actual hole in the
+language that compromises its goal of enforcing strong invariants
+through type safety.
+
+This will especially tend to become an issue when translating from
+a languge like Python with fully dynamic typing.
+
+I don't have a concrete proposal to fix this yet. If these notes
+are well received I may write one.
+
 === Hieratic documentation ===
 
 Figuring out how to do type-safe polymorphism in the event list was
@@ -380,3 +420,7 @@ that trap.
 4. Lookbehinds should be added to the regexp library.
 
 5. If generics don't fly, a map-over-slice intrinsic should be added.
+
+Not quite actionable yet:
+
+* Absence of sum types is an actual hole in the language.
