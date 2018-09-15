@@ -187,6 +187,14 @@ distribution in January 2016.</para>
 which time the obsolete "squash" command was retired.</para>
 </refsect1>
 
+<refsect1 id='BUGS'><title>BUGS</title>
+
+<para>There is one regression since the Python version: repocutter no
+longer recognizes Macintosh-syle line endings consisting of a carriage
+return only. This may be addressed in a future version.</para>
+
+</refsect1>
+
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
 

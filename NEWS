@@ -1,5 +1,8 @@
 = reposurgeon project news =
 
+Repository head:
+     Added bug warning about repocutter not handling Mac line terminations.
+
 3.45: 2018-08-24::
      Repaired the distribution maker to again include README.adoc, NEWS, TODO.
      Executable bits are now correctly propagated across SVN branch copies.
