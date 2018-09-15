@@ -99,6 +99,42 @@ import (
 // Change these in the unlikely the event this is ported to Windows
 const userReadWriteMode = 0777
 
+func exists(pathname string) bool {
+	_, err := os.Stat(pathname)
+	return !os.IsNotExist(err)
+}
+
+func isdir(pathname string) bool {
+	st, err := os.Stat(pathname)
+	return err == nil && st.IsDir()
+}
+
+// filecopy does what it says, returning bytes copied and an error indication
+func filecopy(src, dst string) (int64, error) {
+        sourceFileStat, err := os.Stat(src)
+        if err != nil {
+                return 0, err
+        }
+
+        if !sourceFileStat.Mode().IsRegular() {
+                return 0, fmt.Errorf("%s is not a regular file", src)
+        }
+
+        source, err := os.Open(src)
+        if err != nil {
+                return 0, err
+        }
+        defer source.Close()
+
+        destination, err := os.Create(dst)
+        if err != nil {
+                return 0, err
+        }
+        defer destination.Close()
+        nBytes, err := io.Copy(destination, source)
+        return nBytes, err
+}
+
 type stringSet []string
 
 func newStringSet(elements ...string) stringSet {
@@ -137,17 +173,18 @@ func (s *stringSet) Add(item string) {
 	*s = append(*s, item)
 }
 
-func (s *stringSet) String() string {
-	if len(*s) == 0 {
-		return "{}"
+func (s stringSet) Subtract(other ... string) stringSet {
+	var diff stringSet
+	for _, outer := range s {
+		for _, inner := range other {
+			if outer == inner {
+				goto dontadd
+			}
+		}
+		diff = append(diff, outer)
+	dontadd:
 	}
-	rep := "{"
-	for _, el := range *s {
-		rep += "\""
-		rep += el
-		rep += "\", "
-	}
-	return rep[0:len(rep)-2] + "}"
+	return diff
 }
 
 func (s stringSet) Intersection(other stringSet) stringSet {
@@ -159,6 +196,19 @@ func (s stringSet) Intersection(other stringSet) stringSet {
 		}
 	}
 	return intersection
+}
+
+func (s *stringSet) String() string {
+	if len(*s) == 0 {
+		return "{}"
+	}
+	rep := "{"
+	for _, el := range *s {
+		rep += "\""
+		rep += el
+		rep += "\", "
+	}
+	return rep[0:len(rep)-2] + "}"
 }
 
 /*
@@ -351,9 +401,6 @@ bzr-orphans
 
 If there is no branch named 'master' in a repo when it is read, the hg 'default'
 branch is renamed to 'master'.
-
-The extractor for the 'read' command will be much faster if the 'hglib' Python
-library is installed.  See <https://mercurial.selenic.com/wiki/PythonHglib>.
 `,
 		},
 		{
@@ -429,7 +476,7 @@ config.status
 *.revdep-rebuild.*
 # generated dependencies
 .depend
-### verion control
+### version control
 # darcs
 _darcs
 .darcsrepo
@@ -697,7 +744,7 @@ var fileFilters = map[string]struct {
 //
 // Clone one of the existing ones and mutate.
 //
-// Significant fact: None of the get_* methods for extracting information about
+// Significant fact: None of the get* methods for extracting information about
 // a revision is called until after checkout has been called on that revision.
 //
 // Most methods take a native revision ID as argument. The value and type of the
@@ -709,265 +756,292 @@ var fileFilters = map[string]struct {
 // it can consume.  If the visible member is false, the 'read' command
 // will ignore the existence of the extractor.
 //
-// The strings returned by get_committer() and get_authors() should look like
+// The strings returned by getCommitter() and getAuthors() should look like
 //
 // J. Random User <random@foobar> 2011-11-29T10:13:32Z
 //
 // that is, a free text name followed by an email ID followed by a date.
 // The date specification can be anything Attribution() can parse; in
-// particular, RFC3339 dates are good, so are RFC822 (email) dates,
-// and so is git's native integer-Unix-timestamp/timezone pairs.
+// particular, RFC3339 dates are good. and so is git's native
+// integer-Unix-timestamp/timezone pairs.
 
-type ExtractorCommon struct {
-	name string
-	subdirectory string
-	visible bool
-	properties bool
-	ignorename string
+
+type ExtractorMeta struct {
+	ci string
+	ai string
+	branch string
 }
+
+type ExtractorBlock struct {
+	name string			// extractor name
+	vcs *VCS			// underlying VCS
+	visible bool			// should it be selectable?
+}
+
+type Extractor interface {
+	// Return meta-information about an extractor.
+	getBlock() ExtractorBlock
+        // Gather the topologically-ordered lists of revisions and the parent map
+	// (revlist and parent members)
+	gatherRevisionIDs(*ExtractorBase, *Baton) error
+        // Gather all other per-commit data except branch IDs
+	// (ai and ci members in self.meta list elements)
+	gatherCommitData(*ExtractorBase, *Baton) error
+        // Gather all branch heads and tags (refs and tags members)
+	gatherAllReferences(*ExtractorBase, *Baton) error
+	// Color commits with their branch names
+	colorBranches(*Baton) error
+	// Gather mapping of commit hash -> timestamp (timestamps nembers)
+	getCommitTimestamps() error
+        // Hook for any cleanup actions required after streaming.
+	postExtract(*Repository)
+        // Return true if repo has no unsaved changes.
+	isClean() bool
+	// Check the directory out to a specified revision, return a manifest.	
+	checkout(string, map[string]map[string]signature) stringSet
+        // Return a commit's change comment as a string.
+	getComment(string) string
+}
+
+// ExtractorBase is a composition class for repository extractors.
+// Written around commonalities between git and hg; extending further
+// might need structural changes.
+type ExtractorBase struct {
+	m ExtractorMeta
+	// Revision history properties
+        revlist []string		// commit identifiers, oldest first
+        parents map[string][]string	// commit -> [parent-commit, ...]
+        meta map[string]*ExtractorMeta	// commit -> committer/author/branch
+        refs OrderedMap			// 'refs/class/name' -> commit
+        tags []Tag			// Tag objects (annotated tags only)
+}
+
+func (be *ExtractorBase) extractorBaseInit() {
+        be.revlist = make([]string, 0)
+        be.parents = make(map[string][]string)
+        be.meta = make(map[string]*ExtractorMeta)
+        be.refs = newOrderedMap()
+        be.tags = make([]Tag, 0)
+}
+
+func (be *ExtractorBase) getMeta() ExtractorMeta {
+	return be.m
+}
+
+// getRevlist return a list of commit ID strings in commit timestamp order
+func (be *ExtractorBase) getRevlist() []string {
+        return be.revlist
+}
+
+// getTaglist returns a list of tag name strings.
+func (be *ExtractorBase) getTaglist() []Tag {
+        return be.tags
+}
+
+// getParents returns the list of commit IDs of a commit's parents.
+func (be *ExtractorBase) getParents(rev string) []string {
+        return be.parents[rev]
+}
+
+// isTag ia a previcate; does rev refer to a tag?
+func (be *ExtractorBase) isTag(rev string) bool {
+        return strings.HasPrefix(be.meta[rev].branch, "refs/tags/")
+}
+
+// getCommitter returns the committer's ID/date as a string.
+func (be *ExtractorBase) getCommitter(rev string) string {
+        return be.meta[rev].ci
+}
+
+// getAuthors returns a string list of the authors' names and email addresses.
+func (be *ExtractorBase) getAuthors(rev string) []string {
+        return []string{be.meta[rev].ai}
+}
+
+type MixerCapable interface {
+	gatherCommitTimestamps() map[string]time.Time
+	gatherChildTimestamps() map[string]time.Time
+}
+
+
+// ColorMixer is a mixin class for simulating the git branch-coloring algorithm
+type ColorMixer struct {
+	base *ExtractorBase
+        commitStamps map[string]time.Time	// icommit -> timestamp
+        childStamps map[string]time.Time	// commit -> timestamp of latest child
+}
+
+func (cm *ColorMixer) colorMixerInit(base *ExtractorBase) {
+	cm.base = base
+	cm.commitStamps = make(map[string]time.Time)
+        cm.childStamps = make(map[string]time.Time)
+}
+
+// simulateGitColoring colors branches in the order the tips occur.
+func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *ExtractorBase) {
+        // This algorithm is intended to emulate git's coloring algorithm;
+        // note that this includes emulating the fact that git's algorithm
+        // is not lossless--that is, it is possible to construct a git
+        // fast-import stream that git cannot reproduce on output with
+        // git fast-export
+        // First retrieve the commit timestamps, they are used in
+	// branchColor below
+        cm.commitStamps = mc.gatherCommitTimestamps()
+        if cm.commitStamps  == nil {
+		panic("Could not retrieve commit timestamps.")
+	}
+        // This will be used in _branchColor below
+        cm.childStamps = mc.gatherChildTimestamps()
+        for refname, refobj := range base.refs.dict {
+		cm._branchColor(refobj, refname)
+	}
+}
+
+// Exact value of this constant is unimportant, it just needs to be
+// absurdly far in the future so no commit can have a committer date
+// that's greater.  In fact it is 292277026596-12-04 10:30:07 -0500 EST
+var farFuture = time.Unix(1<<63-1, 0)
+
+func (cm *ColorMixer) _branchColor(rev, color string) {
+        // This ensures that a branch tip rev never gets colored over
+        if _, ok := cm.childStamps[rev]; !ok {
+		cm.childStamps[rev] = farFuture
+	}
+        // This is used below to ensure that a branch color is never colored
+        // back to a tag
+        isBranch := strings.HasPrefix(color, "refs/heads/")
+        // No need for a condition here because we will only be starting
+        // this while loop from an initial call with a branch tip or from
+        // a recursive call with a parent we know we want to color; the
+        // loop exit is controlled by filtering out the parents that are
+        // already colored properly
+	timestamp := cm.commitStamps[rev]
+	cm.base.meta[rev].branch = color
+	// We only want to color back to parents that don't have a branch
+	// assigned or whose assigned branch was from an earlier commit
+	// than the one we're coloring from now; this emulates the git
+	// algorithm that assigns the color of the latest child commit to
+	// a parent that has multiple children; note also that tags take
+	// precedence over branches, so we never color back to a tag with
+	// a branch color
+	var parents []string
+	for _, p := range cm.base.getParents(rev) {
+		if cm.base.meta[p].branch == "" || ((!(isBranch && cm.base.isTag(p))) && (cm.childStamps[p].Before(timestamp))) {
+			parents = append(parents, p)
+		}
+	}
+
+	for _, parent := range parents {
+		// Mark each parent with the timestamp of the child it is
+		// being colored from
+		cm.childStamps[parent] = timestamp
+		cm._branchColor(parent, color)
+	}
+}
+
+func findVCS(name string) *VCS {
+	for _, vcs := range vcstypes {
+		if vcs.name == name {
+			return &vcs
+		}
+	}
+	panic("reposurgeon: failed to find " + name + " in VCS types")
+}
+
+func lineByLine(eb *ExtractorBase, cmd string, errfmt string, baton *Baton,
+	hook func(string, *ExtractorBase) error) error {
+        r, err1 := readFromProcess(cmd)
+	if err1 != nil {
+		return err1
+	}
+	for {
+		line, err2 := r.ReadString(byte('\n'))
+		if err2 == io.EOF {
+			break
+		} else {
+			return fmt.Errorf(errfmt, err2)
+		}
+		hook(line, eb)
+	}
+	return nil
+}
+
+// Repository extractor for the git version-control system/
+type GitExtractor struct {
+	ExtractorBlock
+}
+
+func newGitExtractor() *GitExtractor {
+	// Regardless of what revision and branch was current at start,
+	// after the git extractor runs the head revision on the master branch
+	// will be checked out.
+	//
+	// The git extractor does not attempt to recover N ops,
+	// symbolic links, gitlinks, or directory fileops.
+	//
+	// To be streamed, a git repo must have *local*
+	// refs to all branches - in particular, local tracking branches
+	// corresponding to all remotes.
+	//
+	// Some of these limitations could be fixed, but the git extractor
+	// is not intended to replace git-fast-export; it only exists as a
+	// test for the generic RepoStreamer code and a model for future
+	// extractors.
+	ge := new(GitExtractor)
+	ge.name = "git-extractor"
+	ge.vcs = findVCS("git")
+	ge.visible = false
+	return ge
+}
+
+func (ge *GitExtractor) gatherRevisionIDs(eb *ExtractorBase, baton *Baton) error {
+	hook := func(line string, eb *ExtractorBase) error {
+		fields := strings.Fields(line)
+                eb.revlist = append(eb.revlist, fields[0])
+                eb.parents[fields[0]] = fields[1:]
+		return nil
+	}
+	return lineByLine(eb,
+		"git log --all --date-order --reverse --format='%H %P'",
+		"git's gatherRevisionIDs: %v",
+		baton, hook)
+}
+
+func (ge *GitExtractor) gatherCommitData(eb *ExtractorBase, baton *Baton) error {
+	hook := func(line string, eb *ExtractorBase) error {
+		line = strings.Trim(line, "\n")
+		fields := strings.Split(line, "|")
+                eb.meta[fields[0]].ci = fields[1]
+                eb.meta[fields[0]].ai = fields[2]
+		return nil
+	}
+	return lineByLine(eb,
+		"git log --all --reverse --date=raw --format='%H|%cn <%ce> %cd|%an <%ae> %ad'",
+		"git's gatherCommitData: %v",
+		baton, hook)
+}
+
 
 /*
 
-class Extractor(object):
-    "Base class for repository extractors."
-    # Written around commonalities between git and hg; extending further
-    # might need structural changes.
-    name = "extractor-base"
-    subdirectory = None # for use in detecting corresponding VCS
-    visible = False # report in list of extractors; use even if not preferred
-    properties = False # does this VCS support commit properties?
-    ignorename = None
-    def __init__(self):
-        self.revlist = [] # commit identifiers, oldest first
-        self.parents = {} # commit -> [parent-commit, ...]
-        self.meta = {} # commit -> {'ci':committer, 'ai':author, 'branch':color}
-        self.refs = collections.OrderedDict() # 'refs/class/name' -> commit
-        self.tags = [] # Tag objects (annotated tags only)
-        self.timestamps = None # if used, commit -> Unix timestamp
-        self.child_timestamps = None # if used, commit -> timestamp of latest child (used for coloring)
-    def analyze(self, baton):
-        "Analyze a repository for streaming."
-        self.findRevisionIDs(baton)
-        baton.twirl()
-        self.findCommitData(baton)
-        baton.twirl()
-        self.findAllReferences(baton)
-        baton.twirl()
-        self.colorBranches(baton)
-        baton.twirl()
-    def findRevisionIDs(self, baton):
-        "Get the topologically-ordered list of revisions and parents"
-        # fill in self.revlist
-        # fill in self.parents
-    def findCommitData(self, baton):
-        "Get all other per-commit data except branch IDs"
-        # fill in self.meta[]['ci']
-        # fill in self.meta[]['ai']
-        assert baton is not None # pacify pylint
-    def findAllReferences(self, baton):
-        "Find all branch heads and tags"
-        # fill in self.refs
-        # fill in self.tags
-    def colorBranches(self, baton):
-        "Color all commits with their branch name."
-        color_items = self._branchColorItems()
-        if color_items is not None:
-            # If the repo will give us a complete list of (commit
-            # hash, branch name) pairs, use that to do the coloring
-            # (this will be the case for git)
-            for h, color in color_items:
-                self.meta[h]['branch'] = color
-        else:
-            # Otherwise we have to emulate the git coloring algorithm
-            self._colorBranches()
-        uncolored = [revision for revision in self.revlist if 'branch' not in self.meta[revision]]
-        if uncolored:
-            if verbose >= 1:
-                raise Fatal("missing branch attribute for: %s" % uncolored)
-            else:
-                raise Fatal("some branches do not have local ref names.")
-        assert baton is not None # pacify pylint
-    def _branchColorItems(self):
-        """Return iterable of (commit hash, branch name) pairs"""
-        # The default is that this information is not retrievable directly
-        # from the repo; if it is (e.g., for git), this method should be
-        # overridden to retrieve it--note that every commit in the repo must
-        # be included
-        return None
-    def _colorBranches(self):
-        """Color branches in the order the tips occur."""
-        # This algorithm is intended to emulate git's coloring algorithm;
-        # note that this includes emulating the fact that git's algorithm
-        # is not lossless--that is, it is possible to construct a git
-        # fast-import stream that git cannot reproduce on output with
-        # git fast-export
-        # First retrieve the commit timestamps, they are used in _branch_color below
-        self.timestamps = self.getCommitTimestamps()
-        if not self.timestamps:
-            raise Fatal("Could not retrieve commit timestamps.")
-        # This will be used in _branch_color below
-        self.child_timestamps = self._initChildTimestamps()
-        for refname, refobj in sorted(self.refs.items(),
-                                      key=lambda ref: self.revlist.index(ref[1])):
-            self._branch_color(refobj, refname)
-    def getCommitTimestamps(self):
-        """Return mapping of commit hash -> Unix timestamp"""
-        # If _branchColorItems above is not overridden, this method
-        # must be (e.g., for hg)
-        return None
-    def _initChildTimestamps(self):
-        "Return initial mapping of commit hash -> timestamp of child it is colored from"
-        # This method should only be overridden if it is needed to enforce a
-        # commit coloring that might not match the git algorithm (e.g., in hg
-        # when actual hg branches are present)
-        return {}
-    def _branchColor(self, rev, color):
-        # This ensures that a branch tip rev never gets colored over
-        if rev not in self.child_timestamps:
-            self.child_timestamps[rev] = sys.maxsize
-        # This is used below to ensure that a branch color is never colored
-        # back to a tag
-        is_branch = color.startswith('refs/heads/')
-        # No need for a condition here because we will only be starting
-        # this while loop from an initial call with a branch tip or from
-        # a recursive call with a parent we know we want to color; the
-        # loop exit is controlled by filtering out the parents that are
-        # already colored properly
-        while True:
-            timestamp = self.timestamps[rev]
-            self.meta[rev]['branch'] = color
-            # We only want to color back to parents that don't have a branch
-            # assigned or whose assigned branch was from an earlier commit
-            # than the one we're coloring from now; this emulates the git
-            # algorithm that assigns the color of the latest child commit to
-            # a parent that has multiple children; note also that tags take
-            # precedence over branches, so we never color back to a tag with
-            # a branch color
-            parents = [p for p in self.get_parents(rev)
-                       if ('branch' not in self.meta[p])
-                       or ((not (is_branch and self.meta[p]['branch'].startswith('refs/tags/')))
-                           and (self.child_timestamps.get(p, 0) < timestamp))]
-            if not parents:
-                break
-            elif len(parents) == 1:
-                # This case avoids blowing Python's stack by recursing
-                # too deep on large repos.
-                rev = parents[0]
-                # Mark the parent with the timestamp of the child it is
-                # being colored from
-                self.child_timestamps[rev] = timestamp
-            else:
-                for parent in parents:
-                    # Mark each parent with the timestamp of the child it is
-                    # being colored from
-                    self.child_timestamps[parent] = timestamp
-                    self._branchColor(parent, color)
-                break
-    def preExtract(self, repo):
-        "Hook for any setup actions required before streaming."
-        assert repo is not None  # Pacify pylint
-    def postExtract(self, repo):
-        "Hook for any cleanup actions required after streaming."
-        if not self.properties:
-            for event in repo.commits():
-                event.properties = None
-    def isClean(self):
-        "Return True if repo has no unsaved changes."
-        return True
-    def getRevlist(self):
-        "Return a list of commit ID strings in commit timestamp order."
-        return self.revlist
-    def getTaglist(self):
-        "Return a list of tag name strings."
-        return self.tags
-    def getResetList(self):
-        "Return an iterator yielding (reset name, revision) pairs."
-        return (item for item in self.refs.items() if "/tags/" not in item[0])
-    def checkout(self, rev, filemap):
-        "Check the directory out to a specified revision, return a manifest."
-        assert filemap is not None # pacify pylint
-        assert rev is not None # pacify pylint
-        return []
-    def cleanup(self, rev, issued):
-        "Cleanup after checkout."
-        assert rev and (issued is not None) # Pacify pylint
-    def getParents(self, rev):
-        "Return the list of commit IDs of a commit's parents."
-        return self.parents[rev]
-    def getBranch(self, rev):
-        return self.meta[rev]['branch']
-    def getComment(self, rev):
-        "Return a commit's change comment as a string."
-        assert rev is not None # pacify pylint
-        return None
-    def getCommitter(self, rev):
-        "Return the committer's ID/date as a string."
-        return self.meta[rev]['ci']
-    def getAuthors(self, rev):
-        "Return the author's name and email address as a string."
-        return [self.meta[rev]['ai']]
-    def getProperties(self, rev):
-        "Return a list of properties for the commit."
-        assert rev is not None # Pacify pylint
-        if self.properties:
-            raise NotImplementedError()
-        else:
-            return newOrderedMap()
-
-class GitExtractor(Extractor):
-    "Repository extractor for the git version-control system."
-    # Regardless of what revision and branch was current at start,
-    # after the git extractor runs the head revision on the master branch
-    # will be checked out.
-    #
-    # The git extractor does not attempt to recover N ops,
-    # symbolic links, gitlinks, or directory fileops.
-    #
-    # To be streamed, a git repo must have *local*
-    # refs to all branches - in particular, local tracking branches
-    # corresponding to all remotes.
-    #
-    # Some of these limitations could be fixed, but the git extractor
-    # is not intended to replace git-fast-export; it only exists as a
-    # test for the generic RepoStreamer code and a model for future
-    # extractors.
-    name = "git-extractor"
-    vcstype = next(vcstype for vcstype in vcstypes if vcstype.name == "git")
-    subdirectory = ".git"
-    visible = False
-    properties = False
-    ignorename = ".gitignore"
-    def findRevisionIDs(self, baton):
-        assert baton is not None # pacify pylint
-        with popen_or_die("git log --all --date-order --reverse --format='%H %P'") as fp:
-            for line in fp:
-                fields = polystr(line).strip().split()
-                self.revlist.append(fields[0])
-                self.parents[fields[0]] = fields[1:]
-    def findCommitData(self, baton):
-        assert baton is not None # pacify pylint
-        with popen_or_die("git log --all --reverse --date=raw --format='%H|%cn <%ce> %cd|%an <%ae> %ad'") as fp:
-            for line in fp:
-                (h, ci, ai) = polystr(line).strip().split('|')
-                self.meta[h] = {'ci':ci, 'ai':ai}
-    def findAllReferences(self, baton):
+func (ge *GitExtractor) gatherAllReferences(*Baton) {
         for root, dirs, files in os.walk(".git/refs"):
             for leaf in files:
                 assert dirs is not None  # Pacify pylint
                 ref = os.path.join(root, leaf)
                 with open(ref, "rb") as fp:
-                    self.refs[ref[5:]] = polystr(fp.read()).strip()
+                    ge.refs[ref[5:]] = polystr(fp.read()).strip()
         baton.twirl()
-        with popen_or_die("git tag -l") as fp:
+        with popenOrDie("git tag -l") as fp:
             for fline in fp:
                 tag = polystr(fline).strip()
-                with popen_or_die("git rev-parse %s" % tag) as fp:
+                with popenOrDie("git rev-parse %s" % tag) as fp:
                     taghash = polystr(fp.read()).strip()
-                # Annotated tags are first-class objects with their
-                # own hashes.  The hash of a lightweight tag is just
-                # the commit it points to. Handle both cases.
+                // Annotated tags are first-class objects with their
+                // own hashes.  The hash of a lightweight tag is just
+                // the commit it points to. Handle both cases.
                 objecthash = taghash
-                with popen_or_die("git cat-file -p %s" % tag) as fp:
+                with popenOrDie("git cat-file -p %s" % tag) as fp:
                     comment = None
                     tagger = None
                     for line in fp:
@@ -981,25 +1055,38 @@ class GitExtractor(Extractor):
                         elif isinstance(comment, str):
                             comment += line + "\n"
                             if objecthash != taghash:
-                                # committish isn't a mark; we'll fix that later
-                                self.tags.append(Tag(None,
+                                // committish isn't a mark; we'll fix that later
+                                ge.tags.append(Tag(None,
                                                      name=tag,
                                                      tagger=Attribution(tagger),
                                                      comment=comment,
                                                      committish=objecthash))
-                    self.refs["refs/tags/" + tag] = objecthash
-    def _branchColorItems(self):
-        # This is really cheating since fast-export could give us the
-        # whole repo, but it's the only way I've found to get the correct
-        # mapping of commits to branches, and we still want to test the
-        # rest of the extractor logic independently, so here goes
+                    ge.refs["refs/tags/" + tag] = objecthash
+}
+
+func (ge *GitExtractor) colorBranches(*Baton) {
+        "Color all commits with their branch name."
+        color_items = ge._branchColorItems()
+        if color_items is not None:
+            // If the repo will give us a complete list of (commit
+            // hash, branch name) pairs, use that to do the coloring
+            // (this will be the case for git)
+            for h, color in color_items:
+                ge.meta[h]['branch'] = color
+}
+
+func (ge *GitExtractor) _branchColorItems(self) {
+        // This is really cheating since fast-export could give us the
+        // whole repo, but it's the only way I've found to get the correct
+        // mapping of commits to branches, and we still want to test the
+        // rest of the extractor logic independently, so here goes
         data = marks = None
         tfp, fname = tempfile.mkstemp()
         try:
-            with popen_or_die("git fast-export --all --export-marks=%s" % fname) as fp:
-                # We can't iterate line by line here because we need to be sure that
-                # the entire fast-export process is complete so the marks file is
-                # written and closed
+            with popenOrDie("git fast-export --all --export-marks=%s" % fname) as fp:
+                // We can't iterate line by line here because we need to be sure that
+                // the entire fast-export process is complete so the marks file is
+                // written and closed
                 data = fp.read()
             with open(fname, "rb") as fp:
                 marks = dict(polystr(line).strip().split() for line in fp)
@@ -1012,55 +1099,70 @@ class GitExtractor(Extractor):
         for line in data.splitlines():
             fields = polystr(line).strip().split()
             if len(fields) != 2:
-                # The lines we're interested in will always have exactly 2 fields:
-                # commit <ref> or mark <id>; so all other lines can be ignored
+                // The lines we're interested in will always have exactly 2 fields:
+                // commit <ref> or mark <id>; so all other lines can be ignored
                 continue
             elif fields[0] == "commit":
                 assert branch is None
                 branch = fields[1]
             elif (fields[0] == "mark") and (branch is not None):
                 h = marks[fields[1]]
-                # This is a valid (commit hash, branch name) pair
+                // This is a valid (commit hash, branch name) pair
                 yield (h, branch)
                 branch = None
             elif branch is not None:
-                # The mark line for a commit should always be the next line after
-                # the commit line, so this should never happen, but we put it in
-                # just in case
+                // The mark line for a commit should always be the next line after
+                // the commit line, so this should never happen, but we put it in
+                // just in case
                 raise Fatal("could not parse branch information")
-    def __metadata(self, rev, fmt):
-        with popen_or_die("git log -1 --format='%s' %s" % (fmt, rev)) as fp:
+}
+
+
+func (ge *GitExtractor) __metadata(self, rev, fmt) {
+        with popenOrDie("git log -1 --format='%s' %s" % (fmt, rev)) as fp:
             return polystr(fp.read())[:-1]
-    def postExtract(self, repo):
-        super(GitExtractor, self).postExtract(repo)
-        os.system("git checkout --quiet master")
-    def isClean(self):
-        "Return True if repo has no unsaved changes."
-        return not capture("git ls-files --modified")
-    def checkout(self, rev, filemap):
+}
+*/
+
+func (ge *GitExtractor) postExtract(_repo *Repository) {
+        exec.Command("git checkout --quiet master").Run()
+}
+
+// isClean is a predicate;  return True if repo has no unsaved changes.
+func (ge *GitExtractor) isClean() bool {
+        return capture("git ls-files --modified") == ""
+}
+
+/*
+
+func (ge *GitExtractor) checkout(self, rev, filemap) {
         "Check the directory out to a specified revision."
-        assert filemap is not None # pacify pylint
+        assert filemap is not None // pacify pylint
         os.system("git checkout --quiet %s" % rev)
         manifest = list(map(polystr, capture("git ls-files").split()))
         return manifest
-    def getComment(self, rev):
+}
+
+func (ge *GitExtractor) getComment(self, rev) {
         "Return a commit's change comment as a string."
-        return self.__metadata(rev, "%B")
+        return ge.__metadata(rev, "%B")
+}
 
 class HgExtractor(Extractor):
     "Repository extractor for the hg version-control system."
-    # Regardless of what revision and branch was current at start,
-    # after the hg extractor runs the tip (most recent revision on any branch)
-    # will be checked out.
+    // Regardless of what revision and branch was current at start,
+    // after the hg extractor runs the tip (most recent revision on any branch)
+    // will be checked out.
     name = "hg-extractor"
     vcstype = next(vcstype for vcstype in vcstypes if vcstype.name == "hg")
     subdirectory = ".hg"
     visible = True
     properties = False
     ignorename = ".hgignore"
+
+
     def __init__(self):
         super(HgExtractor, self).__init__()
-        self.hgclient = None
         self.tags_found = False
         self.bookmarks_found = False
     class _hg_or_die:
@@ -1085,84 +1187,67 @@ class HgExtractor(Extractor):
                     raise Fatal("%s returned error." % (self.cmdline,))
             return False
     def hg_or_die(self, *cmdline):
-        if hglib is not None and self.hgclient is not None:
-            return self._hg_or_die(self.hgclient, *cmdline)
-        else:
-            # We know this quoting is sufficient, because the only variables
-            # we ever pass into this function are revision IDs, which are
-            # shell-safe.  It'd be nice to use pipes.quote or shlex.quote, but
-            # pipes.quote is deprecated in 2.7 and shlex.quote doesn't appear
-            # until 3.3.
-            return popen_or_die("hg "+" ".join(["'%s'"%(s,) for s in cmdline]))
-    def _hg_with_err(self, *cmdline):
+	// We know this quoting is sufficient, because the only variables
+	// we ever pass into this function are revision IDs, which are
+	// shell-safe.  It'd be nice to use pipes.quote or shlex.quote, but
+	// pipes.quote is deprecated in 2.7 and shlex.quote doesn't appear
+	// until 3.3.
+	return popenOrDie("hg "+" ".join(["'%s'"%(s,) for s in cmdline]))
+    def hg_with_err(self, *cmdline):
         "Call hg and collect the error code. Returns the data directly, not a stream."
         errcode = []
         output = ""
-        # Since we must read the entire data before we know the error return,
-        # read it all into memory and return the block.
-        with popen_or_die("hg "+" ".join(["'%s'"%(s,) for s in cmdline]),
+        // Since we must read the entire data before we know the error return,
+        // read it all into memory and return the block.
+        with popenOrDie("hg "+" ".join(["'%s'"%(s,) for s in cmdline]),
                                          errhandler=lambda e: [errcode.append(e), True][1]
                                          ) as fp:
             output = polystr(fp.read())
         return (output, errcode[0] if len(errcode) > 0 else 0)
-    def hg_with_err(self, *cmdline):
-        if hglib is not None and self.hgclient is not None:
-            errcode = []
-            with self._hg_or_die(self.hgclient, *cmdline,
-                                 errhandler=lambda e: errcode.append(e)
-                                 ) as fp:
-                output = polystr(fp.read())
-            return (output, errcode[0] if len(errcode) > 0 else 0)
-        else:
-            return self._hg_with_err(*cmdline)
     def hg_capture(self, *cmdline):
         with self.hg_or_die(*cmdline) as fp:
             output = polystr(fp.read())
         return output
-    def analyze(self, baton):
-        if hglib is not None:
-            self.hgclient = hglib.open(os.curdir)
-        super(HgExtractor, self).analyze(baton)
-    def findRevisionIDs(self, baton):
+    def gatherRevisionIDs(*Baton):
         "Get the topologically-ordered list of revisions and parents"
-        assert baton is not None # pacify pylint
-        # hg changesets can only have up to two parents
-        # we have to use short (12-nibble) hashes because that's all "hg tags"
-        # and "hg branches" give us.  Hg's CLI is rubbish
+        assert baton is not None // pacify pylint
+        // hg changesets can only have up to two parents
+        // we have to use short (12-nibble) hashes because that's all "hg tags"
+        // and "hg branches" give us.  Hg's CLI is rubbish
         with self.hg_or_die("log", "--template", "{node|short} {p1node|short} {p2node|short}\\n") as fp:
             for line in fp:
                 fields = polystr(line).strip().split()
                 self.revlist.append(fields[0])
-                # non-existent parents are given all-0s hashes.
-                # Did I mention that Hg's CLI is rubbish?
+                // non-existent parents are given all-0s hashes.
+                // Did I mention that Hg's CLI is rubbish?
                 self.parents[fields[0]] = [f for f in fields[1:] if f != '0'*12]
         self.revlist = list(reversed(self.revlist))
-    def findCommitData(self, baton):
+    def gatherCommitData(*Baton):
         "Get all other per-commit data except branch IDs"
-        assert baton is not None # pacify pylint
+        assert baton is not None // pacify pylint
         with self.hg_or_die("log", "--template", '{node|short}|{sub(r"<([^>]*)>", "", author|person)} <{author|email}> {date|rfc822date}\\n') as fp:
             for line in fp:
                 (h, ci) = polystr(line).strip().split('|')
-                # Because hg doesn't store separate author and committer info,
-                # we just use the committer for both.
+                // Because hg doesn't store separate author and committer info,
+                // we just use the committer for both.
                 self.meta[h] = {'ci':ci, 'ai':ci}
-    def findAllReferences(self, baton):
+    def gatherAllReferences(*Baton):
         "Find all branch heads and tags"
-        assert baton is not None # pacify pylint
+        assert baton is not None // pacify pylint
 
-        # Some versions of mercurial can return an error for showconfig
-        # when the config is not present. This isn't an error.
+        // Some versions of mercurial can return an error for showconfig
+        // when the config is not present. This isn't an error.
         bookmark_ref, code = self.hg_with_err("showconfig", "reposurgeon.bookmarks")
         if code != 0:
             bookmark_ref = ""
         else:
             bookmark_ref = bookmark_ref.strip()
 
-        # both branches and tags output "name      num:hash" lines
-        # branches may also append " (inactive)"
-        # NOTE: All regular expression matching must be done on byte strings,
-        # not Unicode, to avoid errors in handling non-ASCII data; the ascii
-        # encode of the match string ensures this
+        // both branches and tags output "name      num:hash" lines
+        // branches may also append " (inactive)"
+        // NOTE: All regular expression matching must be done on byte strings,
+        // not Unicode, to avoid errors in handling non-ASCII data; the ascii
+        // encode of the match string ensures this
         ref_re = re.compile(r'\s*(?:\*\s+)?(\S+)\s+\d+:([0-9a-fA-F]+)(?: \(inactive|closed\))?'.encode('ascii'))
         with self.hg_or_die("branches", "--closed") as fp:
             for line in fp:
@@ -1184,14 +1269,14 @@ class HgExtractor(Extractor):
                             "--template={tags}\t{node}\n") as fp:
             for line in fp:
                 n, h = tuple(map(polystr, line.strip().rsplit(b'\t', 1)))
-                if n == 'tip': # pseudo-tag for most recent commit
-                    continue # We don't want it
+                if n == 'tip': // pseudo-tag for most recent commit
+                    continue // We don't want it
                 self.refs['refs/tags/%s'%n] = h[:12]
                 self.tags_found = True
-        # We have no annotated tags, so self.tags = []
-        # Conceivably it might be better to treat the commit message that
-        # creates the tag as an annotation, but that's a job for the surgeon
-        # later, not the extractor now.
+        // We have no annotated tags, so self.tags = []
+        // Conceivably it might be better to treat the commit message that
+        // creates the tag as an annotation, but that's a job for the surgeon
+        // later, not the extractor now.
     def _hg_branch_items(self):
         with self.hg_or_die("log", "--template", "{node|short} {branch}\\n") as fp:
             for line in fp:
@@ -1199,20 +1284,20 @@ class HgExtractor(Extractor):
                 yield (h, "refs/heads/" + branch)
     def _branchColorItems(self):
         if not self.tags_found and not self.bookmarks_found:
-            # If we didn't find any tags or bookmarks, we can safely color all
-            # commits using hg branch names, since hg stores them with commit
-            # metadata; note, however, that the coloring this will produce
-            # might not be reproducible if the repo is written to a fast-import
-            # stream and used to construct a git repo, because hg branches can
-            # store colorings that do not match the git coloring algorithm
+            // If we didn't find any tags or bookmarks, we can safely color all
+            // commits using hg branch names, since hg stores them with commit
+            // metadata; note, however, that the coloring this will produce
+            // might not be reproducible if the repo is written to a fast-import
+            // stream and used to construct a git repo, because hg branches can
+            // store colorings that do not match the git coloring algorithm
             return self._hg_branch_items()
-        # Otherwise we have to use the emulated git algorithm to color
-        # any commits that are tags or the ancestors of tags, since git
-        # prioritizes tags over branches when coloring; we will color
-        # commits that are not in the ancestor tree of any tag in
-        # _initChildTimestamps below, using the hg branch names
+        // Otherwise we have to use the emulated git algorithm to color
+        // any commits that are tags or the ancestors of tags, since git
+        // prioritizes tags over branches when coloring; we will color
+        // commits that are not in the ancestor tree of any tag in
+        // gatherChildTimestamps below, using the hg branch names
         return None
-    def getCommitTimestamps(self):
+    def gatherCommitTimestamps(self):
         """Return mapping of commit hash -> Unix timestamp"""
         timestamps = {}
         with self.hg_or_die("log", "--template", "{node|short} {date|hgdate}\\n") as fp:
@@ -1220,30 +1305,32 @@ class HgExtractor(Extractor):
                 fields = polystr(line).strip().split()
                 timestamps[fields[0]] = int(fields[1])
         return timestamps
-    def _initChildTimestamps(self):
+    def gatherChildTimestamps(self):
         """Return initial mapping of commit hash -> timestamp of child it is colored from"""
         results = {}
         for h, branch in self._hg_branch_items():
-            # Fill in the branch as a default; this will ensure that any commit that
-            # is not in the ancestor tree of a tag will get the correct hg branch name,
-            # even if the hg branch coloring is not compatible with the git coloring
-            # algorithm
+            // Fill in the branch as a default; this will ensure that any commit that
+            // is not in the ancestor tree of a tag will get the correct hg branch name,
+            // even if the hg branch coloring is not compatible with the git coloring
+            // algorithm
             self.meta[h]['branch'] = branch
-            # Fill in the branch tips with child timestamps to ensure that they can't
-            # be over-colored (other commits in the ancestor tree of a branch can be
-            # over-colored if they are in a tag's ancestor tree, so we don't fill in
-            # any child timestamp for them here)
+            // Fill in the branch tips with child timestamps to ensure that they can't
+            // be over-colored (other commits in the ancestor tree of a branch can be
+            // over-colored if they are in a tag's ancestor tree, so we don't fill in
+            // any child timestamp for them here)
             if self.refs[branch] == h:
                 results[h] = sys.maxsize
         return results
     def _branchColor(self, rev, color):
-        # Branches are not colored here (they already were in initChildTimestamps above)
+        // Branches are not colored here (they already were in initChildTimestamps above)
         if color.startswith('refs/heads/'):
             return
-        # This takes care of coloring tags and their ancestors
+        // This takes care of coloring tags and their ancestors
         Extractor._branchColor(self, rev, color)
+    def colorBranches(*Baton):
+        // Otherwise we have to emulate the git coloring algorithm
+        simulateGitColoring(self)
     def postExtract(self, repo):
-        super(HgExtractor, self).postExtract(repo)
         self.checkout("tip", {})
         if "refs/heads/master" not in repo.branchset():
             for event in repo:
@@ -1253,31 +1340,27 @@ class HgExtractor(Extractor):
                 elif isinstance(event, Reset):
                     if event.ref == "refs/heads/default":
                         event.ref = "refs/heads/master"
-        if self.hgclient is not None:
-            # make sure we don't pick it up again later, since the cwd may change
-            self.hgclient.close()
-            self.hgclient = None
     def isClean(self):
         "Return True if repo has no unsaved changes."
         return not self.hg_capture("status", "--modified")
     def checkout(self, rev, filemap):
         "Check the directory out to a specified revision, return a manifest."
-        assert filemap is not None # pacify pylint
+        assert filemap is not None // pacify pylint
         pwd = os.getcwd()
         errcode = self.hg_with_err("update", "-C", rev)[1]
-        # 'hg update -C' can delete and recreate the current working
-        # directory, so cd to what should be the current directory
+        // 'hg update -C' can delete and recreate the current working
+        // directory, so cd to what should be the current directory
         os.chdir(pwd)
 
-        # Sometimes, hg update can fail because of missing subrepos. When that
-        # happens, try really hard to fake it. This is safe because subrepos
-        # don't work in any case, so it's always safe to ignore them.
-        #
-        # There are tons of problems with this parsing. It doesn't safely
-        # handle subrepositories with special chars like spaces, quotes or that
-        # sort of thing. It also doesn't handle comments or other rarely used
-        # stuff in .hgsub files. This is documented poorly at best so it's
-        # unclear how things should work ideally.
+        // Sometimes, hg update can fail because of missing subrepos. When that
+        // happens, try really hard to fake it. This is safe because subrepos
+        // don't work in any case, so it's always safe to ignore them.
+        //
+        // There are tons of problems with this parsing. It doesn't safely
+        // handle subrepositories with special chars like spaces, quotes or that
+        // sort of thing. It also doesn't handle comments or other rarely used
+        // stuff in .hgsub files. This is documented poorly at best so it's
+        // unclear how things should work ideally.
         if errcode != 0:
             subrepo_txt, subcat_err = self.hg_with_err("cat", "-r", rev, ".hgsub")
 
@@ -1290,25 +1373,25 @@ class HgExtractor(Extractor):
                         subrepo_args.append("--exclude")
                         subrepo_args.append(parsed[0].strip())
 
-            # Since all is not well, clear everything and try from zero. This
-            # sidesteps some issues with problematic checkins.
-            self.hg_capture("update", "-C", "null") # Remove checked in files.
+            // Since all is not well, clear everything and try from zero. This
+            // sidesteps some issues with problematic checkins.
+            self.hg_capture("update", "-C", "null") // Remove checked in files.
             os.chdir(pwd)
-            self.hg_capture("purge", "--config", "extensions.purge=", "--all") # Remove extraneous files.
+            self.hg_capture("purge", "--config", "extensions.purge=", "--all") // Remove extraneous files.
             os.chdir(pwd)
 
-            # Remove everything else. Purge is supposed to do this, but doesn't.
+            // Remove everything else. Purge is supposed to do this, but doesn't.
             for (dirpath, dirnames, filenames) in os.walk(pwd):
                 if dirpath == pwd:
                     while ".hg" in dirnames:
-                        dirnames.remove(".hg") # Don't remove the very first .hg
+                        dirnames.remove(".hg") // Don't remove the very first .hg
                 for filename in filenames:
                     os.remove(os.path.join(dirpath,filename))
                 if len(dirnames) == 0:
                     os.removedirs(dirpath)
 
-            # If there are subrepos, use revert to fake an update, but exclude
-            # the subrepo paths, which are probably borken.
+            // If there are subrepos, use revert to fake an update, but exclude
+            // the subrepo paths, which are probably borken.
             if len(subrepo_args) > 0:
                 self.hg_capture("revert", "--all", "--no-backup", "-r", rev, *subrepo_args)
                 os.chdir(pwd)
@@ -1328,9 +1411,263 @@ class HgExtractor(Extractor):
         "Return a commit's change comment as a string."
         return self.hg_capture("log", "-r", rev, "--template", "{desc}\\n")
 
+*/
+
+// Repository factory driver class for all repo analyzers.
+type RepoStreamer struct {
+	base ExtractorBase
+        tagseq int
+        commitMap map[string]*Commit
+        filemap map[string]map[string]signature
+        hashToMark map[[sha1.Size]byte]string
+        baton *Baton
+	extractor Extractor
+}
+
+func newRepoStreamer(extractor Extractor) *RepoStreamer {
+	rs := new(RepoStreamer)
+	rs.base.extractorBaseInit()
+        rs.tagseq = 0
+        rs.commitMap = make(map[string]*Commit)
+        rs.filemap = make(map[string]map[string]signature)
+        rs.hashToMark = make(map[[sha1.Size]byte]string)
+	rs.extractor = extractor
+	return rs
+}
+
+func (rs *RepoStreamer) fileSetAt(revision string) stringSet {
+	var fs stringSet
+	for key, _ := range rs.filemap[revision] {
+		fs.Add(key)
+	}
+	// Warning: order is nondeterministic 
+	return fs
+}
+
+
+func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, error) {
+        if !rs.extractor.isClean() {
+		return nil, fmt.Errorf("repository directory has unsaved changes.")
+	}
+	meta := rs.extractor.getBlock()
+        repo.makedir()
+	front := fmt.Sprintf("#reposurgeon sourcetype %s\n", meta.vcs.name)
+	repo.addEvent(*newPassthrough(repo, front))
+
+	baton := newBaton("Extracting", "", progress)
+	var err error
+	err = rs.extractor.gatherRevisionIDs(&rs.base, baton)
+	if err != nil {
+		return nil, fmt.Errorf("while gathering revisions: %v", err)
+	}
+	baton.twirl("")
+	err = rs.extractor.gatherCommitData(&rs.base, baton)
+	if err != nil {
+		return nil, fmt.Errorf("while gathering commit data: %v", err)
+	}
+	baton.twirl("")
+	err = rs.extractor.gatherAllReferences(&rs.base, baton)
+	if err != nil {
+		return nil, fmt.Errorf("while gathering tag/branch refs: %v", err)
+	}
+	baton.twirl("")
+	// Sort branch/tag references by target revision ID, earliest first
+	// Needs to be done before branch coloring because the simu;ation
+	// of the Git branch-coloring alorithm needs it.  Also controls the
+	// order in which annotated tags and resets are output.
+	rs.base.refs.valueLess = func(a string, b string) bool {
+		for _, item := range rs.base.revlist {
+			if item == a {
+				return true
+			} else if item == b {
+				return false
+			}
+		}
+		panic("did not find revision IDs in revlist")
+	}
+	sort.Sort(rs.base.refs)
+	baton.twirl("")
+	rs.extractor.colorBranches(baton)
+
+	var uncolored []string
+	for _, revision := range rs.base.revlist {
+		if rs.base.meta[revision].branch == "" {
+			uncolored = append(uncolored, revision)
+		}
+	}
+
+        if len(uncolored) > 0 {
+		if verbose >= 1 {
+			return nil, fmt.Errorf("missing branch attribute for %v", uncolored)
+		} else {
+			return nil, fmt.Errorf("some branches do not have local ref names.")
+		}
+	}
+	baton.twirl("")
+
+	consume := make([]string, len(rs.base.getRevlist()))
+	copy(consume, rs.base.getRevlist())
+	for _, revision  := range consume {
+                commit := newCommit(repo)
+                baton.twirl("")
+                present := rs.extractor.checkout(revision, rs.filemap)
+                parents := rs.base.getParents(revision)
+		commit.committer = *newAttribution(rs.base.getCommitter(revision))
+		for _, a := range rs.base.getAuthors(revision) {
+			commit.authors = append(commit.authors,
+				*newAttribution(a))
+		}
+		for _, rev := range parents{
+			commit.addParentCommit(rs.commitMap[rev])
+		}
+                commit.setBranch(rs.base.meta[revision].branch)
+                commit.comment = rs.extractor.getComment(revision)
+                if debugEnable(debugEXTRACT) {
+			msg := strconv.Quote(commit.comment)
+			announce(debugEXTRACT,
+				"r%s: comment '%s'", revision, msg)
+		}
+                // Git fast-import constructs the tree from the first parent only
+                // for a merge commit; fileops from all other parents have to be
+                // added explicitly
+                for _, rev := range parents[:1] {
+			for k,v := range rs.filemap[rev] {
+				rs.filemap[revision][k] = v
+			}
+		}
+
+                if len(present) > 0 {
+			removed := rs.fileSetAt(revision).Subtract(present...)
+			for _, pathname := range present {
+				if isdir(pathname) {
+					continue
+				}
+				if !exists(pathname) {
+					complain("r%s: expected path %s does not exist!",
+						revision, pathname)
+					continue
+				}
+				newsig := newSignature(pathname)
+				if rs.hashToMark[newsig.hashval] == "" {
+					//if debugEnable(debugEXTRACT) {
+					//    announce(debugSHOUT, "r%s: %s has old hash",
+					//             revision, pathname)
+					// }
+					// The file's hash corresponds
+					// to an existing blob;
+					// generate modify, copy, or
+					// rename as appropriate.
+					if _, ok := rs.filemap[revision][pathname]; !ok || rs.filemap[revision][pathname]!=*newsig {
+						announce(debugEXTRACT, "r%s: update for %s", revision, pathname)
+						found := false
+						// FIXME: may fail on R case due
+						// to deleting dict items while walking the list
+						for oldpath, oldsig := range rs.filemap[revision] {
+							if oldsig == *newsig {
+								found = true		
+								if removed.Contains(oldpath) {
+									op := newFileOp(repo)
+									op.construct("R", oldpath, pathname)
+									commit.appendOperation(*op)
+									delete(rs.filemap[revision], oldpath)
+								} else if oldpath != pathname {
+									op := newFileOp(repo)
+									op.construct("C", oldpath, pathname)
+									commit.appendOperation(*op)
+								}
+								break
+							}
+						}
+						if found {
+							op := newFileOp(repo)
+							op.construct("M",
+								newsig.perms,
+								rs.hashToMark[newsig.hashval],
+								pathname)
+							commit.appendOperation(*op)
+						}
+					}
+				} else {
+					// Content hash doesn't match
+					// any existing blobs
+					announce(debugEXTRACT, "r%s: %s has new hash",
+						revision, pathname)
+					blobmark := repo.newmark()
+					rs.hashToMark[newsig.hashval] = blobmark
+					// Actual content enters the representation
+					blob := newBlob(repo)
+					blob.setMark(blobmark)
+					filecopy(blob.getBlobfile(true),pathname)
+					blob.addalias(pathname)
+					repo.addEvent(blob)
+					// Its new fileop is added to the commit
+					op := newFileOp(repo)
+					op.construct("M", newsig.perms, blobmark, pathname)
+					commit.appendOperation(*op)
+				}
+				rs.filemap[revision][pathname] = *newsig
+			}
+			for _, tbd := range removed {
+				op := newFileOp(repo)
+				op.construct("D", tbd)
+				commit.appendOperation(*op)
+				delete(rs.filemap[revision], tbd)
+			}
+                }
+                if len(parents) == 0 { // && commit.branch != "refs/heads/master"
+			reset := newReset(repo, commit.branch, "", commit)
+			repo.addEvent(reset)
+                }
+		commit.sortOperations()
+		commit.legacyID = revision
+		commit.properties = newOrderedMap()
+		commit.setMark(repo.newmark())
+		rs.commitMap[revision] = commit
+		announce(debugEXTRACT, "r%s: gets mark %s (%d ops)", revision, commit.mark, len(commit.operations()))
+	}
+	// Now append reset objects
+	// Note: we time-sorted the resets when they were picked up;
+	// this is to ensure that the ordering is (a) deterministic,
+	// and (b) easily understood.
+	for resetname, revision := range rs.base.refs.dict {
+		if strings.Index(resetname, "/tags/") == -1 {
+			// FIXME: what if revision is unknown?
+			// keep previous behavior for now
+			reset := newReset(repo, resetname, "", rs.commitMap[revision])
+			reset.ref = resetname
+			repo.addEvent(reset)
+		}
+	}
+	// Last, append tag objects.
+	// FIXME: Sort by tagger-date
+	for _, tag := range rs.base.getTaglist() {
+		// Hashes produced by the GitExtractor are turned into proper
+		// committish marks here.
+		c, ok := rs.commitMap[tag.committish]
+		if !ok {
+			tag.remember(repo, "", c)
+		} else {
+			return nil, fmt.Errorf("no commit corresponds to %s", tag.committish)
+		}
+	}
+	rs.extractor.postExtract(repo)
+	// FIXME: Conditional clear of properties.
+	//if not rs.retractor.properties {
+	//	for _, event in repo.commits() {
+	//		event.properties = nil
+	//	}
+	//}
+	repo.vcs = meta.vcs
+	baton.exit()
+	return repo, nil
+}
+
+/*
+
 // More extractors go here
 
-extractors = [newGitExtractor(), newHgExtractor()]
+
+extractors = []Extractor{newGitExtractor(), newHgExtractor()}
 
 */
 
@@ -1583,6 +1920,7 @@ func emptyComment(c string) bool {
 type OrderedMap struct {
 	keys []string
 	dict map[string]string
+	valueLess func(string, string) bool
 }
 
 func newOrderedMap() OrderedMap {
@@ -1619,6 +1957,23 @@ func (d *OrderedMap) delete(hd string) bool {
 	return false
 }
 
+func (d OrderedMap) Len() int {
+	return len(d.keys)
+}
+
+// Less returns true if the sort method says the value for key i is
+// less than the value for key j. Useful with the Go library sort.
+func (d OrderedMap) Less(i int, j int) bool {
+	return d.valueLess(d.dict[d.keys[i]], d.dict[d.keys[j]])
+}
+
+// Swap interchanges key i and j. Useful with the Go library sort.
+func (d OrderedMap) Swap(i int, j int) {
+	keep := d.keys[j]
+	d.keys[j] = d.keys[i]
+	d.keys[i] = keep
+}
+
 /*
  * RFC2822 message blocks
  *
@@ -1648,7 +2003,6 @@ func newMessageBlock(bp *bufio.Reader) (*MessageBlock, error) {
 			return false
 		}
 		colon := strings.Index(data, ":")
-		// FIXME: Should allow continuations here
 		if colon == -1 {
 			panic("ill-formed line in mail message")
 		}
@@ -1979,8 +2333,8 @@ type Attribution struct {
 var attributionRE = regexp.MustCompile(`([^<]*\s*)<([^>]*)>(\s*.*)`)
 
 // parseAttributionLine parses a Git attribution line into its fields
-func parseAttributionLine(line []byte) (string, string, string) {
-	m := attributionRE.FindSubmatch(bytes.Trim(line, " \t\n"))
+func parseAttributionLine(line string) (string, string, string) {
+	m := attributionRE.FindSubmatch(bytes.Trim([]byte(line), " \t\n"))
 	if m != nil {
 		name := string(bytes.Trim(m[1], " \t\n"))
 		address := string(bytes.Trim(m[2], " \t\n"))
@@ -1996,10 +2350,10 @@ func (attr *Attribution) address() (string, string) {
 }
 
 // newAttribution makes an Attribution from an author or committer line
-func newAttribution(attrline []byte) *Attribution {
+func newAttribution(attrline string) *Attribution {
 	attr := new(Attribution)
 
-	if attrline != nil {
+	if attrline != "" {
 		name, email, datestamp := parseAttributionLine(attrline)
 		parsed, err := newDate(datestamp)
 		if err != nil {
@@ -2023,7 +2377,7 @@ func (attr Attribution) String() string {
 }
 
 func (attr *Attribution) clone() *Attribution {
-	mycopy := newAttribution(nil)
+	mycopy := newAttribution("")
 	mycopy.name = attr.name
 	mycopy.email = attr.email
 	mycopy.date = attr.date.clone()
@@ -2414,7 +2768,7 @@ func (b *Blob) clone(repo *Repository) *Blob {
 func (b Blob) String() string {
         if b.hasfile() {
 		fn := b.getBlobfile(false)
-		if _, err := os.Stat(fn); os.IsNotExist(err) {
+		if !exists(fn)  {
 			return ""
 		}
 	}
@@ -2456,7 +2810,9 @@ func (t Tag) getMark() string {
 func (t *Tag) remember(repo *Repository, committish string, target *Commit) {
         t.repo = repo
 	t.target = target
-	repo.events = append(repo.events, t)
+	if repo != nil {
+		repo.events = append(repo.events, t)
+	}
         if t.target != nil {
 		t.committish = target.getMark()
         } else {
@@ -2567,7 +2923,7 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 		t.committish = target
 	}
 	if newtagger := msg.getHeader("Tagger"); newtagger != "" {
-                newname, newemail, _ := parseAttributionLine([]byte(newtagger))
+                newname, newemail, _ := parseAttributionLine(newtagger)
 		if newname == "" || newemail == "" {
 			panic("can't recognize address in Tagger: " + newtagger)
 		} else if t.tagger.name != newname || t.tagger.email != newemail {
@@ -3388,7 +3744,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 	c := &commit.committer
 	newcommitter := msg.getHeader("Committer")
         if newcommitter != "" {
-                newname, newemail, _ := parseAttributionLine([]byte(newcommitter))
+                newname, newemail, _ := parseAttributionLine(newcommitter)
                 if c.name != newname || c.email != newemail {
 			c.name, c.email = newname, newemail
 			if commit.repo != nil {
@@ -3424,7 +3780,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 		// msg is *not* a dict so the .keys() is correct
 		sort.Strings(authorkeys)
 		for i := 0; i < len(authorkeys) - len(commit.authors); i++ {
-			commit.authors = append(commit.authors, *newAttribution(nil))
+			commit.authors = append(commit.authors, *newAttribution(authorkeys[i]))
 		}
 		// Another potential minor bug: permuting the set of authors
 		// will look like a modification, as old and new authors are
@@ -3433,7 +3789,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 		// I just did it this way because it was easier.
 		for i, hdr := range authorkeys {
 			c := &commit.authors[i]
-			newname, newemail, _ := parseAttributionLine([]byte(msg.getHeader(hdr)))
+			newname, newemail, _ := parseAttributionLine(msg.getHeader(hdr))
 			if c.name != newname || c.email != newemail {
 				c.name, c.email = newname, newemail
 				announce(debugEMAILIN,
@@ -3834,8 +4190,7 @@ func (commit *Commit) manifest() map[string]*ManifestEntry {
 		case *Commit:
 			// Magic recursion, force fetch or recompute
 			// of manifest back to the root commit.
-			// FIXME: Verify *hard* that we should only
-			// recurse through first parent.
+			// Git only inherits files from the first parent. 
 			m := p.(*Commit).manifest()
 			for k, v := range m {
 				// map entries are pointers so that
@@ -3978,7 +4333,7 @@ func (commit *Commit) checkout(directory string) string {
         if directory == "" {
 		directory = filepath.FromSlash(commit.repo.subdir("") + "/" + commit.mark)
 	}
-	if _, err := os.Stat(directory); os.IsNotExist(err) {
+	if !exists(directory) {
 		os.Mkdir(directory, 077)
 	}
 
@@ -3991,7 +4346,7 @@ func (commit *Commit) checkout(directory string) string {
 	for cpath, entry := range commit.manifest() {
                 fullpath := filepath.FromSlash(directory +
 			"/" + cpath + "/" + entry.ref)
-                if _, err := os.Stat(path.Dir(fullpath)); os.IsNotExist(err) {
+                if !exists(fullpath) {
 			parts := strings.Split(fullpath, "/")
 			// os.MkdirAll is broken and rpike says they
 			// won't fix it.
@@ -4247,7 +4602,7 @@ type Passthrough struct {
 	color string
 }
 
-func newPassthrough(repo *Repository, line string) {
+func newPassthrough(repo *Repository, line string) *Passthrough {
 	p := new(Passthrough)
         p.repo = repo
         p.text = line
@@ -4255,6 +4610,7 @@ func newPassthrough(repo *Repository, line string) {
 	//if repo != nil {
 	//	repo.events = append(repo.events, p)
 	//}
+	return p
 }
 
 // emailOut enables do_mailbox_out() to report these.
@@ -4287,11 +4643,11 @@ func (p Passthrough) String() string {
 	
 // Generic extractor code begins here
 
-// sifbature is a file signature - path, hash value of content and permissions."
+// signature is a file signature - path, hash value of content and permissions."
 type signature struct {
 	pathname string
 	hashval [sha1.Size]byte
-	perms os.FileMode
+	perms string
 }
 
 func newSignature(path string) *signature {
@@ -4314,20 +4670,21 @@ func newSignature(path string) *signature {
 		if _, err := io.Copy(h, file); err != nil {
 			log.Fatal(err)
 		}
-		ps.perms = st.Mode()
+		perms := st.Mode()
 		// Map to the restricted set of modes that are allowed in
 		// the stream format.
-		if (ps.perms & 0100700) == 0100700 {
-			ps.perms = 0100755
-		} else if (ps.perms & 0100600) == 0100600 {
-			ps.perms = 0100644
+		if (perms & 0100700) == 0100700 {
+			perms = 0100755
+		} else if (perms & 0100600) == 0100600 {
+			perms = 0100644
 		}
+		ps.perms = fmt.Sprintf("%6o", perms)
 	}
 	return ps
 }
 
 func (s signature) String() string {
-        return fmt.Sprintf("<%s:%6o:%s>",
+        return fmt.Sprintf("<%s:%s:%s>",
 		s.pathname, s.perms, s.hashval)
 }
 
@@ -4361,161 +4718,6 @@ func branchbase(branch string) string {
 	return filepath.Base(branch)
 }
 
-/*
-
-class RepoStreamer:
-    "Repository factory driver class for all repo analyzers."
-    func __init__(self, extractor):
-        self.tagseq = 0
-        self.commits = {}
-        self.commit_map = {}
-        self.filemap = {}
-        self.hash_to_mark = {}
-        self.baton = None
-        self.extractor = extractor
-    func extract(self, repo, progress=true):
-        if not self.extractor.isClean():
-            raise Recoverable("directory %s has unsaved changes." % os.getcwd())
-        repo.makedir()
-        with Baton(prompt="Extracting", enable=progress) as self.baton:
-            repo.AddEvent(Passthrough("#reposurgeon sourcetype %s\n" \
-                                      % self.extractor.vcstype.name, repo), where=0)
-            self.extractor.analyze(self.baton)
-            self.extractor.preExtract(repo)
-            #saved_umask = os.umask(0)
-            consume = copy.copy(self.extractor.getRevlist())
-            while consume:
-                revision = consume.pop(0)
-                commit = Commit(repo)
-                self.baton.twirl()
-                present = self.extractor.checkout(revision, self.filemap)
-                parents = self.extractor.getParents(revision)
-                commit.committer = Attribution(self.extractor.getCommitter(revision))
-                commit.authors = [Attribution(a) \
-                                  for a in self.extractor.getAuthors(revision)]
-                commit.setParents([self.commit_map[rev] for rev in parents])
-                commit.setBranch(self.extractor.getBranch(revision))
-                commit.comment = self.extractor.getComment(revision)
-                if debugEnable(debugEXTRACT):
-                    msg = commit.comment
-                    if msg is None:
-                        msg = ""
-                    announce(debugEXTRACT, "r%s: comment '%s'" % (revision, msg.strip()))
-                self.filemap[revision] = {}
-                # Git fast-import constructs the tree from the first parent only
-                # for a merge commit; fileops from all other parents have to be
-                # added explicitly
-                for rev in parents[:1]:
-                    self.filemap[revision].update(self.filemap[rev])
-                if present:
-                    removed = set(self.filemap[revision]) - set(present)
-                    for path in present:
-                        if os.path.isdir(path):
-                            continue
-                        if not os.path.exists(path):
-                            complain("r%s: expected path %s does not exist!" % \
-                                     (revision, path))
-                            continue
-                        newsig = signature(path)
-                        if newsig.hashval in self.hash_to_mark:
-                            #if debugEnable(debugEXTRACT):
-                            #    announce(debugSHOUT, "r%s: %s has old hash" \
-                            #             % (revision, path))
-                            # The file's hash corresponds to an existing
-                            # blob; generate modify, copy, or rename as
-                            # appropriate.
-                            if path not in self.filemap[revision] \
-                                   or self.filemap[revision][path]!=newsig:
-                                announce(debugEXTRACT, "r%s: update for %s" % (revision, path))
-                                # Iterating through dict items (with
-                                # items() or itemsview() for
-                                # instance) while mutating the
-                                # underlying dict is not supported by
-                                # Python 2. The following loop thus uses
-                                # list(items()), which returns a new
-                                # independent list containing the
-                                # (key,value) pairs.
-                                for (oldpath, oldsig) in list(self.filemap[revision].items()):
-                                    if oldsig == newsig:
-                                        if oldpath in removed:
-                                            op = FileOp(repo)
-                                            op.construct('R', oldpath, path)
-                                            commit.appendOperation(op)
-                                            del self.filemap[revision][oldpath]
-                                        else if oldpath != path:
-                                            op = FileOp(self.repo)
-                                            op.construct('C', oldpath, path)
-                                            commit.appendOperation(op)
-                                        break
-                                else:
-                                    op = FileOp(repo)
-                                    op.construct('M',
-                                                 newsig.perms,
-                                                 self.hash_to_mark[newsig.hashval],
-                                                 path)
-                                    commit.appendOperation(op)
-                        else:
-                            # Content hash doesn't match any existing blobs
-                            announce(debugEXTRACT, "r%s: %s has new hash" \
-                                         % (revision, path))
-                            blobmark = repo.newmark()
-                            self.hash_to_mark[newsig.hashval] = blobmark
-                            # Actual content enters the representation
-                            blob = Blob(repo)
-                            blob.setMark(blobmark)
-                            shutil.copyfile(path, blob.getBlobfile(create=true))
-                            blob.addalias(path)
-                            repo.addEvent(blob)
-                            # Its new fileop is added to the commit
-                            op = FileOp(repo)
-                            op.construct('M', newsig.perms, blobmark, path)
-                            commit.appendOperation(op)
-                        self.filemap[revision][path] = newsig
-                    for tbd in removed:
-                        op = FileOp(repo)
-                        op.construct('D', tbd)
-                        commit.appendOperation(op)
-                        del self.filemap[revision][tbd]
-                self.extractor.cleanup(revision, true)
-                if not parents: #and commit.branch != "refs/heads/master":
-                    reset = Reset(repo)
-                    reset.ref = commit.branch
-                    repo.addEvent(reset)
-                commit.sortOperations()
-                commit.legacyID = revision
-                if commit.properties is None:
-                    commit.properties = newOrderedMap()
-                commit.properties.update(self.extractor.getProperties(revision))
-                commit.setMark(repo.newmark())
-                self.commit_map[revision] = commit
-                announce(debugEXTRACT, "r%s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.operations())))
-                //repo.addEvent(commit)
-            # Now append reset objects
-            # Note: we sort the resets by the mark number of their associated revisions; this
-            # is to ensure that the ordering is (a) deterministic, and (b) easily understood.
-            for (resetname, revision) in sorted(self.extractor.getResetList(),
-                                                key=lambda item: int(self.commit_map[item[1]].mark[1:])):
-                # FIXME: what if revision is unknown ? keep previous behavior for now
-                reset = Reset(repo, target=self.commit_map[revision])
-                reset.ref = resetname
-                repo.addEvent(reset)
-            # Last, append tag objects.
-            for tag in sorted(self.extractor.getTaglist(),
-                              key=operator.attrgetter("tagger.date")):
-                # Hashes produced by the GitExtractor are turned into proper
-                # committish marks here.
-                c = self.commit_map.get(tag.committish)
-                if c is None:
-                    # FIXME: we should probably error here, keep previous
-                    # behavior for now
-                    tag.remember(repo, committish=None)
-                else:
-                    tag.remember(repo, target=c)
-                repo.addEvent(tag)
-            self.extractor.postExtract(repo)
-        repo.vcs = self.extractor.vcstype
-        return repo
-
 // Stream parsing
 //
 // The Subversion dumpfile format is documented at
@@ -4524,15 +4726,16 @@ class RepoStreamer:
 
 // Use numeric codes rather than (un-interned) strings
 // to reduce working-set size.
-SD_NONE = 0
-SD_FILE = 1
-SD_DIR = 2
-SD_ADD = 0
-SD_DELETE = 1
-SD_CHANGE = 2
-SD_REPLACE = 3
-SD_NUKE = 4	# Not part of the Subversion data model
+const sdNONE = 0
+const sdFILE = 1
+const sdDIR = 2
+const sdADD = 0
+const sdDELETE = 1
+const sdCHANGE = 2
+const sdREPLACE = 3
+const sdNUKE = 4	// Not part of the Subversion data model
 
+/*
 class StreamParser:
     "Parse a fast-import stream or Subversion dump to populate a Repository."
     class NodeAction(object):
@@ -4543,7 +4746,7 @@ class StreamParser:
             # These are set during parsing
             self.revision = None
             self.path = None
-            self.kind = SD_NONE
+            self.kind = sdNONE
             self.action = None
             self.from_rev = None
             self.from_path = None
@@ -4892,12 +5095,12 @@ class StreamParser:
                                         # property fields of their own.
                                         if node.propchange:
                                             self.property_stash[node.path] = node.props
-                                        else if node.action == SD_ADD && node.from_path:
+                                        else if node.action == sdADD && node.from_path:
                                             for oldnode in self.revisions[node.from_rev].nodes:
                                                 if oldnode.path == node.from_path:
                                                     self.property_stash[node.path] = oldnode.props
                                             #os.Stderr.write("Copy node %s:%s stashes %s\n" % (node.revision, node.path, self.property_stash[node.path]))
-                                        if node.action == SD_DELETE:
+                                        if node.action == sdDELETE:
                                             if node.path in self.property_stash:
                                                 del self.property_stash[node.path]
                                         else:
@@ -4905,7 +5108,7 @@ class StreamParser:
                                             node.props = self.property_stash.get(node.path)
                                         # This guard filters out the empty
                                         # nodes produced by format 7 dumps.
-                                        if not (node.action == SD_CHANGE
+                                        if not (node.action == sdCHANGE
                                                 && node.props is None
                                                 && node.blob is None
                                                 && node.from_rev is None):
@@ -4939,7 +5142,7 @@ class StreamParser:
                                     if node.action is None:
                                         self.error("unknown action %s" \
                                                    % node.action)
-                                    if node.action == SD_DELETE:
+                                    if node.action == sdDELETE:
                                         if node.path in track_symlinks:
                                             track_symlinks.remove(node.path)
                                 else if line.startswith("Node-copyfrom-rev: "):
@@ -5031,11 +5234,11 @@ class StreamParser:
                             else:
                                 self.error("missing mark after blob")
                             self.repo.addEvent(blob)
-                            baton.twirl()
+                            baton.twirl("")
                         else if line.startswith("data"):
                             self.error("unexpected data object")
                         else if line.startswith("commit"):
-                            baton.twirl()
+                            baton.twirl("")
                             commitbegin = self.import_line
                             commit = Commit(self.repo)
                             commit.setBranch(line.split()[1])
@@ -5162,7 +5365,7 @@ class StreamParser:
                                 self.warn("unmarked commit")
                             //self.repo.addEvent(commit)
                             commitcount += 1
-                            baton.twirl()
+                            baton.twirl("")
                         else if line.startswith("reset"):
                             reset = Reset(self.repo)
                             reset.ref = line[6:].strip()
@@ -5172,7 +5375,7 @@ class StreamParser:
                             else:
                                 self.pushback(line)
                             self.repo.addEvent(reset)
-                            baton.twirl()
+                            baton.twirl("")
                         else if line.startswith("tag"):
                             tagger = None
                             tagname = line[4:].strip()
@@ -5261,17 +5464,17 @@ class StreamParser:
                 for node in self.revisions[revision].nodes:
                     if not node.path.startswith("tags") && not node.path.startswith("branches"):
                         continue
-                    if node.action == SD_DELETE && node.kind == SD_DIR:
+                    if node.action == sdDELETE && node.kind == sdDIR:
                         deadbranches.add(node.path)
                         announce(debugSHOUT, "r%s~%s nuked by tip delete" % (revision, node.path))
                     if node.path in deadbranches:
-                        node.action = SD_NUKE
+                        node.action = sdNUKE
                     for deadwood in deadbranches:
                         if node.path.startswith(deadwood + os.sep):
-                            node.action = SD_NUKE
+                            node.action = sdNUKE
                             break
             for (revision, record) in self.revisions.items():
-                record.nodes = [node for node in record.nodes if node.action != SD_NUKE]
+                record.nodes = [node for node in record.nodes if node.action != sdNUKE]
         # Find all copy sources and compute the set of branches
         announce(debugEXTRACT, "Pass 1")
         nobranch = '--nobranch' in options
@@ -5281,7 +5484,7 @@ class StreamParser:
                 if node.from_path is not None:
                     copynodes.append(node)
                     announce(debugEXTRACT, "copynode at %s" % node)
-                if node.action == SD_ADD && node.kind == SD_DIR && node.path+os.sep not in self.branches && not nobranch:
+                if node.action == sdADD && node.kind == sdDIR && node.path+os.sep not in self.branches && not nobranch:
                     for trial in global_options['svn_branchify']:
                         if '*' not in trial && trial == node.path:
                             self.branches[node.path+os.sep] = None
@@ -5294,14 +5497,14 @@ class StreamParser:
                     if node.path+os.sep in self.branches && debugEnable(debugTOPOLOGY):
                         announce(debugSHOUT, "%s recognized as a branch" % node.path+os.sep)
             # Per-commit spinner disabled because this pass is fast
-            #baton.twirl()
+            #baton.twirl("")
         copynodes.sort(key=operator.attrgetter("from_rev"))
         func timeit(tag):
             self.repo.timings.append([tag, time.time()])
             if global_options["bigprofile"]:
                 baton.twirl("%s:%.3fs..." % (tag, self.repo.timings[-1][1] - self.repo.timings[-2][1]))
             else:
-                baton.twirl()
+                baton.twirl("")
             #memcheck(self.repo)
         timeit("copynodes")
         # Build filemaps.
@@ -5318,23 +5521,23 @@ class StreamParser:
                     announce(debugFILEMAP, "r%s~%s copied to %s" \
                                  % (node.from_rev, node.from_path, node.path))
                 # Mutate the filemap according to adds/deletes/changes
-                if node.action == SD_ADD && node.kind == SD_FILE:
+                if node.action == sdADD && node.kind == sdFILE:
                     filemap[node.path] = node
                     announce(debugFILEMAP, "r%s~%s added" % (node.revision, node.path))
-                else if node.action == SD_DELETE or (node.action == SD_REPLACE && node.kind == SD_DIR):
-                    if node.kind == SD_NONE:
-                        node.kind = SD_FILE if node.path in filemap else SD_DIR
+                else if node.action == sdDELETE or (node.action == sdREPLACE && node.kind == sdDIR):
+                    if node.kind == sdNONE:
+                        node.kind = sdFILE if node.path in filemap else sdDIR
                     # Snapshot the deleted paths before removing them.
                     node.from_set = PathMap()
                     node.from_set.copyFrom(node.path, filemap, node.path)
                     del filemap[node.path]
                     announce(debugFILEMAP, "r%s~%s deleted" \
                                  % (node.revision, node.path))
-                else if node.action in (SD_CHANGE, SD_REPLACE) && node.kind == SD_FILE:
+                else if node.action in (sdCHANGE, sdREPLACE) && node.kind == sdFILE:
                     filemap[node.path] = node
                     announce(debugFILEMAP, "r%s~%s changed" % (node.revision, node.path))
             filemaps[revision] = filemap.snapshot()
-            baton.twirl()
+            baton.twirl("")
         del filemap
         timeit("filemaps")
         # Blows up huge on large repos...
@@ -5353,7 +5556,7 @@ class StreamParser:
             copynode.from_set.copyFrom(copynode.from_path,
                                         filemaps[copynode.from_rev],
                                         copynode.from_path)
-            baton.twirl()
+            baton.twirl("")
         timeit("copysets")
         # Build commits
         # This code can eat your processor, so we make it give up
@@ -5400,15 +5603,15 @@ class StreamParser:
                 # if node.props is None, no property section.
                 # if node.blob is None, no text section.
                 try:
-                    assert node.action in (SD_CHANGE, SD_ADD, SD_DELETE, SD_REPLACE)
+                    assert node.action in (sdCHANGE, sdADD, sdDELETE, sdREPLACE)
                     assert node.blob is not None or \
                            node.props is not None or \
                            node.from_rev or \
-                           node.action in (SD_ADD, SD_DELETE)
+                           node.action in (sdADD, sdDELETE)
                     assert (node.from_rev is None) == (node.from_path is None)
-                    assert node.kind in (SD_FILE, SD_DIR)
-                    assert node.kind != SD_NONE or node.action == SD_DELETE
-                    assert node.action in (SD_ADD, SD_REPLACE) or not node.from_rev
+                    assert node.kind in (sdFILE, sdDIR)
+                    assert node.kind != sdNONE or node.action == sdDELETE
+                    assert node.action in (sdADD, sdREPLACE) or not node.from_rev
                 except AssertionError:
                     raise Fatal("forbidden operation in dump stream at r%s: %s" \
                                 % (revision, node))
@@ -5459,8 +5662,8 @@ class StreamParser:
             for (n, node) in enumerate(record.nodes):
                 if debugEnable(debugEXTRACT):
                     announce(debugEXTRACT, "r%s:%d: %s" % (revision, n+1, node))
-                else if node.kind == SD_DIR \
-                         && node.action != SD_CHANGE \
+                else if node.kind == sdDIR \
+                         && node.action != sdCHANGE \
                          && debugEnable(debugTOPOLOGY):
                     announce(debugSHOUT, str(node))
                 # Handle per-path properties.
@@ -5482,7 +5685,7 @@ class StreamParser:
                     if "--ignore-properties" not in options:
                         prop_items = ((prop, val) \
                                         for (prop,val) in node.props.items() \
-                                        if ((prop not in StreamParser.IgnoreProperties) && not (prop == "svn:mergeinfo" && node.kind == SD_DIR)))
+                                        if ((prop not in StreamParser.IgnoreProperties) && not (prop == "svn:mergeinfo" && node.kind == sdDIR)))
                         try:
                             first = next(prop_items)
                         except StopIteration:
@@ -5496,15 +5699,15 @@ class StreamParser:
                             for prop, val in itertools.chain((first,), prop_items):
                                 self.gripe("\t%s = '%s'" % (prop, val))
                             has_properties.add(node.path)
-                if node.kind == SD_FILE:
+                if node.kind == sdFILE:
                     expanded_nodes.append(node)
-                else if node.kind == SD_DIR:
+                else if node.kind == sdDIR:
                     # os.sep is appended to avoid collisions with path
                     # prefixes.
                     node.path += os.sep
                     if node.from_path:
                         node.from_path += os.sep
-                    if node.action in (SD_ADD, SD_CHANGE):
+                    if node.action in (sdADD, sdCHANGE):
                         if node.path in self.branches:
                             if not node.props: node.props = {}
                             startwith = next(vcs.dfltignores for vcs in vcstypes if vcs.name == "svn")
@@ -5516,7 +5719,7 @@ class StreamParser:
                             except KeyError:
                                 ignore = startwith
                             node.props["svn:ignore"] = ignore
-                    else if node.action in (SD_DELETE, SD_REPLACE):
+                    else if node.action in (sdDELETE, sdREPLACE):
                         if node.path in self.branches:
                             self.branchdeletes.add(node.path)
                             expanded_nodes.append(node)
@@ -5536,8 +5739,8 @@ class StreamParser:
                                     newnode = StreamParser.NodeAction()
                                     newnode.path = child
                                     newnode.revision = revision
-                                    newnode.action = SD_DELETE
-                                    newnode.kind = SD_FILE
+                                    newnode.action = sdDELETE
+                                    newnode.kind = sdFILE
                                     newnode.generated = true
                                     expanded_nodes.append(newnode)
                             # Emit delete actions for the .gitignore files we
@@ -5550,8 +5753,8 @@ class StreamParser:
                                 newnode = StreamParser.NodeAction()
                                 newnode.path = ignorepath
                                 newnode.revision = revision
-                                newnode.action = SD_DELETE
-                                newnode.kind = SD_FILE
+                                newnode.action = sdDELETE
+                                newnode.kind = sdFILE
                                 newnode.generated = true
                                 expanded_nodes.append(newnode)
                                 del self.active_gitignores[ignorepath]
@@ -5614,8 +5817,8 @@ class StreamParser:
                                     subnode = StreamParser.NodeAction()
                                     subnode.path = gipath
                                     subnode.revision = revision
-                                    subnode.action = SD_ADD
-                                    subnode.kind = SD_FILE
+                                    subnode.action = sdADD
+                                    subnode.kind = sdFILE
                                     subnode.blob = blob
                                     subnode.content_hash = \
                                             hashlib.md5(polybytes(ignore)).hexdigest()
@@ -5635,8 +5838,8 @@ class StreamParser:
                                 subnode.from_rev = lookback.revision
                                 subnode.from_hash = lookback.content_hash
                                 subnode.props = lookback.props
-                                subnode.action = SD_ADD
-                                subnode.kind = SD_FILE
+                                subnode.action = sdADD
+                                subnode.kind = sdFILE
                                 announce(debugTOPOLOGY, "r%s: generated copy r%s~%s -> %s" \
                                              % (revision,
                                                 subnode.from_rev,
@@ -5645,7 +5848,7 @@ class StreamParser:
                                 subnode.generated = true
                                 expanded_nodes.append(subnode)
                     # Property settings can be present on either
-                    # SD_ADD or SD_CHANGE actions.
+                    # sdADD or sdCHANGE actions.
                     if node.propchange && node.props is not None:
                         announce(debugEXTRACT, "r%s: setting properties %s on %s" \
                                      % (revision, node.props, node.path))
@@ -5679,8 +5882,8 @@ class StreamParser:
                                 newnode = StreamParser.NodeAction()
                                 newnode.path = gitignore_path
                                 newnode.revision = revision
-                                newnode.action = SD_ADD
-                                newnode.kind = SD_FILE
+                                newnode.action = sdADD
+                                newnode.kind = sdFILE
                                 newnode.blob = blob
                                 newnode.content_hash = \
                                         hashlib.md5(polybytes(ignore)).hexdigest()
@@ -5695,8 +5898,8 @@ class StreamParser:
                                 newnode = StreamParser.NodeAction()
                                 newnode.path = gitignore_path
                                 newnode.revision = revision
-                                newnode.action = SD_DELETE
-                                newnode.kind = SD_FILE
+                                newnode.action = sdDELETE
+                                newnode.kind = sdFILE
                                 announce(debugIGNORES, "r%s: queuing up %s deletion." % (revision, newnode.path))
                                 newnode.generated = true
                                 expanded_nodes.append(newnode)
@@ -5708,7 +5911,7 @@ class StreamParser:
             # unmodified and only the D will be issued.
             seen = set()
             for node in reversed(expanded_nodes):
-                if node.action == SD_DELETE and node.path in seen:
+                if node.action == sdDELETE and node.path in seen:
                     node.action = None
                 seen.add(node.path)
             # Create actions corresponding to both
@@ -5717,14 +5920,14 @@ class StreamParser:
             ancestor_nodes = {}
             for node in expanded_nodes:
                 if node.action is None: continue
-                if node.kind == SD_FILE:
-                    if node.action == SD_DELETE:
+                if node.kind == sdFILE:
+                    if node.action == sdDELETE:
                         assert node.blob is None
                         fileop = FileOp(self.repo)
                         fileop.construct("D", node.path)
                         actions.append((node, fileop))
                         ancestor_nodes[node.path] = None
-                    else if node.action in (SD_ADD, SD_CHANGE, SD_REPLACE):
+                    else if node.action in (sdADD, sdCHANGE, sdREPLACE):
                         # Try to figure out who the ancestor of
                         # this node is.
                         if node.from_path or node.from_hash:
@@ -5745,7 +5948,7 @@ class StreamParser:
                             if not ancestor && not node.path.endswith(".gitignore"):
                                 self.gripe("r%s~%s: missing filemap node." \
                                           % (node.revision, node.path))
-                        else if node.action != SD_ADD:
+                        else if node.action != sdADD:
                             # Ordinary inheritance, no node copy.  For
                             # robustness, we don't assume revisions are
                             # consecutive numbers.
@@ -5840,7 +6043,7 @@ class StreamParser:
                         else if debugEnable(debugEXTRACT):
                             announce(debugEXTRACT, "r%s~%s: unmodified" % (node.revision, node.path))
                 # These are directory actions.
-                else if node.action in (SD_DELETE, SD_REPLACE):
+                else if node.action in (sdDELETE, sdREPLACE):
                     announce(debugEXTRACT, "r%s: deleteall %s" % (revision,node.path))
                     fileop = FileOp(self.repo)
                     fileop.construct("deleteall", node.path[:-1])
@@ -5941,7 +6144,7 @@ class StreamParser:
                     # fileop for the copy didn't get generated and the commit
                     # tree would be wrong if we didn't.
                     latest = next((node for node in copies
-                                    if node.kind == SD_DIR &&
+                                    if node.kind == sdDIR &&
                                        node.from_path &&
                                        node.path == newcommit.common),
                                   None)
@@ -6006,7 +6209,7 @@ class StreamParser:
             self.repo.declare_sequence_mutation()
             # Report progress, and give up our scheduler slot
             # so as not to eat the processor.
-            baton.twirl()
+            baton.twirl("")
             time.sleep(0)
             previous = revision
             # End of processing for this Subversion revision.  If the
@@ -6016,7 +6219,7 @@ class StreamParser:
             # What we give up is some detail in the diagnostic messages
             # on zero-fileop commits.
             if self.large:
-                record.nodes = [n for n in record.nodes if n.kind == SD_DIR]
+                record.nodes = [n for n in record.nodes if n.kind == sdDIR]
                 self.revisions[revision] = record
         # Filemaps are no longer needed
         del filemaps
@@ -6086,7 +6289,7 @@ class StreamParser:
                     commit.setBranch("root")
                     self.branches["root"] = None
                 lastbranch = branch
-                baton.twirl()
+                baton.twirl("")
             timeit("branches")
             # ...then rebuild parent links so they follow the branches
             for commit in self.repo.commits():
@@ -6097,9 +6300,9 @@ class StreamParser:
                     commit.setParents([self.branches[commit.branch]])
                 self.branches[commit.branch] = commit
                 # Per-commit spinner disabled because this pass is fast
-                #baton.twirl()
+                #baton.twirl("")
             self.repo.timings.append(["parents", time.time()])
-            baton.twirl()
+            baton.twirl("")
             # The root branch is special. It wasn't made by a copy, so
             # we didn't get the information to connect it to trunk in the
             # last phase.
@@ -6152,7 +6355,7 @@ class StreamParser:
             mergeinfos = {}
             for (revision, record) in self.revisions.items():
                 for node in record.nodes:
-                    if node.kind != SD_DIR: continue
+                    if node.kind != sdDIR: continue
                     # Mutate the mergeinfo according to copies
                     if node.from_rev:
                         assert int(node.from_rev) < int(revision)
@@ -6238,7 +6441,7 @@ class StreamParser:
                                      "to r%s." % (parent.legacyID,
                                                   commit.legacyID))
                 mergeinfos[revision] = mergeinfo.snapshot()
-                baton.twirl()
+                baton.twirl("")
             del mergeinfo, mergeinfos
             timeit("mergeinfo")
             if debugEnable(debugEXTRACT):
@@ -6254,12 +6457,12 @@ class StreamParser:
                               len(commit.operations()),
                               len(commit.properties or ""),
                               commit.branch))
-        baton.twirl()
+        baton.twirl("")
         # Code controlled by --nobranch option ends.
         # Canonicalize all commits to ensure all ops actually do something.
         for commit in self.repo.commits():
             commit.canonicalize()
-            baton.twirl()
+            baton.twirl("")
         timeit("canonicalize")
         announce(debugEXTRACT, "after canonicalization")
         # Now clean up junk commits generated by cvs2svn.
@@ -6287,10 +6490,10 @@ class StreamParser:
                 m = StreamParser.cvs2svn_branch_re.search(polybytes(event.comment))
                 if m && not event.hasChildren():
                     deleteables.append(i)
-                baton.twirl()
+                baton.twirl("")
         self.repo.delete(deleteables, ["--tagback"])
         self.repo.events += newtags
-        baton.twirl()
+        baton.twirl("")
         timeit("junk")
         announce(debugEXTRACT, "after cvs2svn artifact removal")
         # Now we need to tagify all other commits without fileops, because git
@@ -6382,7 +6585,7 @@ class StreamParser:
                         #self.repo.addEvent(Reset(self.repo, ref=commit.branch,
                         #                          target=parent))
                         deletia.append(index)
-            baton.twirl()
+            baton.twirl("")
         self.repo.delete(deletia)
         timeit("polishing")
         announce(debugEXTRACT, "after branch name mapping")
@@ -6392,7 +6595,7 @@ class StreamParser:
                                legend_func = taglegend,
                                gripe = self.gripe)
         self.repo.timings.append(["tagifying", time.time()])
-        baton.twirl()
+        baton.twirl("")
         announce(debugEXTRACT, "after tagification")
         # cvs2svn likes to crap out sequences of deletes followed by
         # filecopies on the same node when it's generating tag commits.
@@ -6406,7 +6609,7 @@ class StreamParser:
                     if commit.operations()[i].path == commit.operations()[i+1].path:
                         commit.operations()[i].op = None
             commit.setOperations([fileop for fileop in commit.operations() if fileop.op is not None])
-            baton.twirl()
+            baton.twirl("")
         timeit("tagcleaning")
         announce(debugEXTRACT, "after delete/copy canonicalization")
         # Remove spurious parent links caused by random cvs2svn file copies.
@@ -6425,7 +6628,7 @@ class StreamParser:
                     if b.descendedFrom(a):
                         commit.removeParent(a)
             # Per-commit spinner disabled because this pass is fast
-            #baton.twirl()
+            #baton.twirl("")
         timeit("debubbling")
         self.repo.renumber(baton=baton)
         timeit("renumbering")
@@ -6725,7 +6928,7 @@ class SubversionDumper:
                 SubversionDumper.dump_revprops(fp,
                                                revision=0,
                                                date=Date(rfc3339(time.time())))
-                baton.twirl()
+                baton.twirl("")
                 revision = 0
                 self.pathmap[revision] = {}
                 for i in selection:
@@ -6911,18 +7114,28 @@ class Repository:
         self.authormap = {}
         self.tzmap = {}
         self.aliases = {}
-    func newmark():
-        self.markseq += 1
-        mark = ":" + str(self.markseq)
+*/
+
+func (repo *Repository) newmark() string {
+        repo.markseq++
+        mark := ":" + fmt.Sprintf("%d", repo.markseq)
         return mark
-    func makedir():
-        try:
-            announce(debugSHUFFLE, "repository fast import creates " + self.subdir())
-            target = self.subdir()
-            if not os.path.exists(target):
-                os.mkdir(target)
-        except OSError:
-            raise Fatal("can't create operating directory")
+}
+
+func (repo *Repository) makedir() {
+	target := repo.subdir("")
+	announce(debugSHUFFLE, "repository fast import creates " + target)
+	if _, err := os.Stat(target); os.IsNotExist(err) {
+                err := os.Mkdir(target, 077)
+		if err != nil {
+			panic("can't create repository directory")
+		}
+	} else if err != nil {
+		panic(err)
+	}
+}
+
+/*
     func hint(self, clue, strong=False):
         "Hint what the source of this repository might be."
         newhint = not self.hintlist or clue not in self.hintlist
@@ -7155,12 +7368,12 @@ class Repository:
             fp.write("%s = %s\n" % (userid, cid))
     func read_legacymap(self, fp):
         "Read a legacy-references dump and initialize the repo's legacy map."
-        commit_map = {}
+        commitMap = {}
         for event in self.commits():
             key = (event.committer.date.timestamp, event.committer.email)
-            if key not in commit_map:
-                commit_map[key] = []
-            commit_map[key].append(event)
+            if key not in commitMap:
+                commitMap[key] = []
+            commitMap[key].append(event)
         try:
             matched = unmatched = 0
             for line in fp:
@@ -7173,17 +7386,17 @@ class Repository:
                     seq = 0
                 assert legacy && timefield && person
                 when_who = (Date(timefield).timestamp, person)
-                if when_who in commit_map:
-                    self.legacy_map[legacy] = commit_map[when_who][seq]
+                if when_who in commitMap:
+                    self.legacy_map[legacy] = commitMap[when_who][seq]
                     if legacy.startswith("SVN:"):
-                        commit_map[when_who][seq].legacyID = legacy[4:]
+                        commitMap[when_who][seq].legacyID = legacy[4:]
                     matched += 1
                 else:
                     unmatched += 1
             if verbose >= 1:
                 announce(debugSHOUT, "%d matched, %d unmatched, %d total"\
                          % (matched, unmatched, matched+unmatched))
-            del commit_map
+            del commitMap
         except ValueError:
             raise Recoverable("bad syntax in legacy map.")
     func write_legacymap(self, fp):
@@ -7425,7 +7638,7 @@ func (repo *Repository) exportStyle() stringSet {
                 selection_marks = [self.events[i].mark for i in selection if hasattr(self.events[i], "mark")]
 		self.internals = selection.marks
                 for ei in selection:
-                    baton.twirl()
+                    baton.twirl("")
                     event = self.events[ei]
                     if isinstance(event, Passthrough):
                         # Support writing bzr repos to plain git if they don't
@@ -7465,7 +7678,7 @@ func (repo *Repository) exportStyle() stringSet {
         except OSError as e:
             raise Fatal("repo rename %s -> %s failed: %s"
                                        % (self.subdir(), self.subdir(newname), e))
-    func addEvent(self, event, where=None, legend=""):
+    func insertEvent(self, event, where=None, legend=""):
         "Insert an event just before the specified index."
         if where is not None:
             self.events.insert(where, event)
@@ -7474,6 +7687,14 @@ func (repo *Repository) exportStyle() stringSet {
         else:
             self.events.append(event)
         self.declare_sequence_mutation(legend)
+*/
+
+func (repo *Repository) addEvent(event Event) {
+	// insertEvent(event, 0, "")
+}
+
+/*
+
     @memoized_iterator("_commits")
     func commits():
         "Iterate through the repository commit objects."
@@ -8513,7 +8734,7 @@ func read_repo(source, options, preferred):
                     os.remove(tfname)
                     os.close(tfdesc)
             else:
-                with popen_or_die(repo.vcs.exporter % context, "repository export") as tp:
+                with popenOrDie(repo.vcs.exporter % context, "repository export") as tp:
                     repo.fast_import(make_wrapper(tp), options, progress=showprogress, source=source)
             if repo.vcs.authormap and os.path.exists(repo.vcs.authormap):
                 announce(debugSHOUT, "reading author map.")
@@ -8532,7 +8753,7 @@ func read_repo(source, options, preferred):
                             if exdir in dirs:
                                 dirs.remove(exdir)
                     return set(allfiles)
-                with popen_or_die(vcs.lister) as fp:
+                with popenOrDie(vcs.lister) as fp:
                     repofiles = set(polystr(fp.read()).split())
                 allfiles = fileset([vcs.subdirectory] + glob.glob(".rs*"))
                 repo.preserveSet |= (allfiles - repofiles)
@@ -8549,7 +8770,7 @@ func read_repo(source, options, preferred):
                     # Pass 2: get git's hash to (time,person) mapping
                     hash_to_action = {}
                     stamp_set = set({})
-                    with popen_or_die("git log --all --format='%H %ct %ce'", "r") as fp:
+                    with popenOrDie("git log --all --format='%H %ct %ce'", "r") as fp:
                         for line in fp:
                             (hashv, ctime, cperson) = polystr(line).split()
                             stamp = (int(ctime), cperson)
@@ -8576,7 +8797,7 @@ func read_repo(source, options, preferred):
         # We found a matching custom extractor
         if extractor:
             repo.stronghint=true
-            streamer = RepoStreamer(extractor)
+            streamer = newRepoStreamer(extractor)
             streamer.extract(repo, progress=verbose>0)
     finally:
         os.chdir(here)
@@ -8660,7 +8881,7 @@ func rebuild_repo(repo, target, options, preferred):
                 os.remove(tfname)
                 os.close(tfdesc)
         else:
-            with popen_or_die(vcs.importer % parameters, "import", mode="w") as tp:
+            with popenOrDie(vcs.importer % parameters, "import", mode="w") as tp:
                 repo.fast_export(range(len(repo)), make_wrapper(tp), options,
                                  target=preferred,
                                  progress=verbose>0)
@@ -8747,76 +8968,27 @@ func do_or_die(dcmd, legend=""):
     except (OSError, IOError) as e:
         raise Fatal("execution of %s%s failed: %s" % (dcmd, legend, e))
 
-class popen_or_die(object):
-    "Read or write from a subordinate process."
-    # The immediate parameter, if true, causes the process to be
-    # immediately run and the pipe to it opened, instead of waiting
-    # for the context manager protocol; for this use case, some other
-    # context manager (e.g., LineParse) must explicitly close this
-    # object to ensure that the subprocess shuts down cleanly
-    func __init__(self, command, legend="", mode="r", errhandler=None, stderrcapture=False):
-        assert mode in ("r", "w")
-        self.command = command
-        self.legend = legend
-        self.mode = mode
-        self.errhandler = errhandler
-        self.stdin = (subprocess.PIPE if mode == "w" else None)
-        self.stdout = (subprocess.PIPE if mode == "r" else None)
-        self.stderr = (subprocess.STDOUT if (stderrcapture and mode == "r") else None)
-        if self.legend:
-            self.legend = " "  + self.legend
-        self.fp = None
-    func open():
-        if debugEnable(debugCOMMANDS):
-            if self.mode == "r":
-                os.Stderr.write("%s: reading from '%s'%s\n" % (rfc3339(time.time()), self.command, self.legend))
-            else:
-                os.Stderr.write("%s: writing to '%s'%s\n" % (rfc3339(time.time()), self.command, self.legend))
-        try:
-            # NOTE: the I/O streams for the subprocess are always
-            # bytes; this is what we want for some operations, but we
-            # will need to decode to Unicode for others to work in
-            # Python 3; the polystr and make_wrapper functions handle
-            # this
-            self.fp = subprocess.Popen(self.command, shell=true,
-                                       stdin=self.stdin, stdout=self.stdout, stderr=self.stderr)
-            # The Python documentation recommends using communicate()
-            # to avoid deadlocks, but this doesn't allow fine control
-            # over reading the data; since we are not trying to both
-            # read from and write to the same process, this should be
-            # OK
-            return self.fp.stdout if self.mode == "r" else self.fp.stdin
-        except (OSError, IOError) as oe:
-            raise Fatal("execution of %s%s failed: %s" \
-                                % (self.command, self.legend, oe))
-    func close():
-        if self.fp.stdin is not None:
-            self.fp.stdin.close()
-        if self.fp.stdout is not None:
-            # This avoids a deadlock in wait() below if the OS pipe
-            # buffer was filled because we didn't read all of the data
-            # before exiting the context mgr (shouldn't happen but
-            # this makes sure)
-            self.fp.stdout.read()
-        self.fp.wait()
-        if self.fp.returncode != 0:
-            if self.errhandler is None or not self.errhandler(self.fp.returncode):
-                raise Fatal("%s%s returned error." % (self.command, self.legend))
-        self.fp = None
-    func __enter__():
-        return self.open()
-    func __exit__(self, extype, value, traceback_unused):
-        if extype:
-            if verbose:
-                raise extype(value)
-            raise Fatal("fatal exception in popen_or_die.")
-        self.close()
-        return False
+*/
 
-class Recoverable(Exception):
-    func __init__(self, msg):
-        Exception.__init__()
-        self.msg = msg
+func readFromProcess(command string) (*bufio.Reader, error) {
+	cmd := exec.Command("sh", "-c", command + " 2>&1")
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	r := bufio.NewReader(stdout)
+	if debugEnable(debugCOMMANDS) {
+		fmt.Fprintf(os.Stderr, "%s: reading from '%s'\n",
+			rfc3339(time.Now()), command)
+	}
+	err = cmd.Start()
+	if err != nil {
+		return nil, err
+	}
+	return r, err
+}
+
+/*
 
 class RepositoryList:
     "A repository list with selection and access by name."
@@ -10495,7 +10667,7 @@ developers.
                     if content != modified:
                         event.setContent(modified)
                     altered += (content != modified)
-                baton.twirl()
+                baton.twirl("")
         announce(debugSHOUT, "%d items modified by %s." % (altered, prompt.lower()))
 
     func help_selection():
@@ -11357,7 +11529,7 @@ For a list of supported types, invoke the 'prefer' command.
                             # parse is redirected so this must be something besides sys.stdin, so
                             # we can close it and substitute another redirect
                             parse.stdin.close()
-                            parse.stdin = make_wrapper(popen_or_die(infilter % srcname, mode="r").open())
+                            parse.stdin = make_wrapper(popenOrDie(infilter % srcname, mode="r").open())
                         except KeyError:
                             raise Recoverable("unrecognized --format")
                         break
@@ -11418,7 +11590,7 @@ For a list of supported types, invoke the 'prefer' command.
                             # something besides os.Stdout, so we can
                             # close it and substitute another redirect
                             parse.stdout.close()
-                            parse.stdout = make_wrapper(popen_or_die(outfilter % dstname, mode="w").open())
+                            parse.stdout = make_wrapper(popenOrDie(outfilter % dstname, mode="w").open())
                         except KeyError:
                             raise Recoverable("unrecognized --format")
                         break
@@ -12098,7 +12270,7 @@ paths, patch the permission field to the first argument value.
                 for op in event.operations():
                     if op.op == opM and op.path in fields:
                         op.mode = perm
-                baton.twirl()
+                baton.twirl("")
 
     func help_append():
         os.Stdout.write("""
@@ -14074,7 +14246,7 @@ Takes a selection set, defaulting to all commits and tags.
                         event.comment = event.comment[:firsteol] + \
                                         '\n' + \
                                         event.comment[firsteol:]
-                baton.twirl()
+                baton.twirl("")
     #
     # Examining tree states
     #
@@ -14448,7 +14620,7 @@ action-stamp ID for each commit.
                     if event.committer.date.timestamp == parents[0].committer.date.timestamp:
                         event.bump()
                         modified += 1
-                baton.twirl()
+                baton.twirl("")
             announce(debugSHOUT, "%d events modified" % modified)
         repo.invalidate_namecache()
     func help_timebump():
@@ -14553,7 +14725,7 @@ that zone is used.
                         if op.op==opM and not os.path.basename(op.path).startswith("ChangeLog")]:
                     continue
                 for op in commit.operations():
-                    baton.twirl()
+                    baton.twirl("")
                     if op.op == opM and os.path.basename(op.path) == "ChangeLog":
                         cl += 1
                         blobfile = repo.markToEvent(op.ref).materialize()

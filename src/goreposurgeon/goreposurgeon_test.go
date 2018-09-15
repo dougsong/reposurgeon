@@ -3,9 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -80,6 +82,13 @@ func TestStringSet(t *testing.T) {
 	if !ts.Contains("d") {
 		t.Error("string set add failed.")
 	}
+
+	ts8 := newStringSet("a", "b", "c", "d")
+	ts9 := newStringSet("b", "e")
+	diff := ts8.Subtract(ts9...)
+	if diff[0]!="a"  || diff[1]!="c" || diff[2]!="d" || len(diff)!=3{
+		t.Errorf("unexpected result of set difference: %v", diff)
+	}
 }
 
 func TestOrderedMap(t *testing.T) {
@@ -121,6 +130,21 @@ func TestOrderedMap(t *testing.T) {
 	if !reflect.DeepEqual(m.keys, []string{"hugger"}) {
 		t.Errorf("keys value not as expected after deletion")
 	}
+
+	assertBool(t, m.delete("hugger"), true)
+
+	m.set("a", "z")
+	m.set("b", "y")
+	m.set("c", "x")
+	fmt.Printf("I see: %v", m.keys)
+	assertBool(t, m.Len() == 3, true)
+	m.valueLess = func(s1, s2 string) bool {
+		return s1 < s2
+	}
+	sort.Sort(m)
+	assertEqual(t, m.keys[0], "c")
+	assertEqual(t, m.keys[1], "b")
+	assertEqual(t, m.keys[2], "a")
 }
 
 func GetVCS(name string) VCS {
@@ -343,7 +367,7 @@ func TestDateComparison(t *testing.T) {
 }
 
 func TestParseAttributionLine(t *testing.T) {
-	sample := []byte("J. Random Hacker <jrh@foobar.com> 1456976347 -0500")
+	sample := "J. Random Hacker <jrh@foobar.com> 1456976347 -0500"
 	name, addr, date := parseAttributionLine(sample)
 	assertEqual(t, name, "J. Random Hacker")
 	assertEqual(t, addr, "jrh@foobar.com")
@@ -364,12 +388,12 @@ func TestRemapAttribution(t *testing.T) {
 	}
 
 	// Verify name remapping
-	attr1 := newAttribution([]byte("jrh <jrh> 1456976347 -0500"))
+	attr1 := newAttribution("jrh <jrh> 1456976347 -0500")
 	assertEqual(t, attr1.email, "jrh")
 	attr1.remap(authormap)
 	assertEqual(t, attr1.email, "jrh@foobar.com")
 
-	attr2 := newAttribution([]byte("esr <esr> 1456976347 +0000"))
+	attr2 := newAttribution("esr <esr> 1456976347 +0000")
 	zone, offset := attr2.date.timestamp.Zone()
 	if offset != 0 {
 		t.Errorf("Zone was +0000 but computed offset is %d", offset)
@@ -424,7 +448,7 @@ func TestUndecodable(t *testing.T) {
 func TestTag(t *testing.T) {
 	repo := newRepository("fubar")
 	repo.basedir = "foo"
-	attr1 := newAttribution([]byte("jrh <jrh> 1456976347 -0500"))
+	attr1 := newAttribution("jrh <jrh> 1456976347 -0500")
 	t1 := newTag(repo, "sample1", ":2", nil, attr1, "Sample tag #1\n")
 	repo.events = append(repo.events, t1)
 	if strings.Index(t1.comment, "Sample") == -1 {
@@ -457,7 +481,7 @@ Test to be sure we can read in a tag in inbox format.
 		t.Fatalf("On first read: %v", err)
 	}
 	var t2 Tag
-	t2.tagger = newAttribution(nil)
+	t2.tagger = newAttribution("")
 	t2.emailIn(msg, false)
 
 	assertEqual(t, "sample2", t2.name, )
@@ -611,9 +635,9 @@ func TestFileOp(t *testing.T) {
 func TestCommitMethods(t *testing.T) {
 	repo := newRepository("fubar")
 	commit := newCommit(repo)
-	committer := []byte("J. Random Hacker <jrh@foobar.com> 1456976347 -0500")
+	committer := "J. Random Hacker <jrh@foobar.com> 1456976347 -0500"
 	commit.committer = *newAttribution(committer)
-	author := newAttribution([]byte("esr <esr@thyrsus.com> 1457998347 +0000"))
+	author := newAttribution("esr <esr@thyrsus.com> 1457998347 +0000")
 	commit.authors = append(commit.authors, *author)
 	commit.comment = "Example commit for unit testing\n"
 
@@ -668,7 +692,7 @@ Example commit for unit testing, modified.
 `
 	assertEqual(t, commit.emailOut(nil, 42, nil), hackcheck)
 
-	attr1 := newAttribution([]byte("jrh <jrh> 1456976347 -0500"))
+	attr1 := newAttribution("jrh <jrh> 1456976347 -0500")
 	newTag(repo, "sample1", ":2", commit, attr1, "Sample tag #1\n")
 
 	if len(commit.attachments) != 1 {
@@ -679,17 +703,17 @@ Example commit for unit testing, modified.
 func TestParentChildMethods(t *testing.T) {
 	repo := newRepository("fubar")
 	commit1 := newCommit(repo)
-	committer1 := []byte("J. Random Hacker <jrh@foobar.com> 1456976347 -0500")
+	committer1 := "J. Random Hacker <jrh@foobar.com> 1456976347 -0500"
 	commit1.committer = *newAttribution(committer1)
-	author1 := newAttribution([]byte("esr <esr@thyrsus.com> 1457998347 +0000"))
+	author1 := newAttribution("esr <esr@thyrsus.com> 1457998347 +0000")
 	commit1.authors = append(commit1.authors, *author1)
 	commit1.comment = "Example commit for unit testing\n"
 	commit1.setMark(":1")
 
 	commit2 := newCommit(repo)
-	committer2 := []byte("J. Random Hacker <jrh@foobar.com> 1456976347 -0500")
+	committer2 := "J. Random Hacker <jrh@foobar.com> 1456976347 -0500"
 	commit2.committer = *newAttribution(committer2)
-	author2 := newAttribution([]byte("esr <esr@thyrsus.com> 1457998347 +0000"))
+	author2 := newAttribution("esr <esr@thyrsus.com> 1457998347 +0000")
 	commit2.authors = append(commit2.authors, *author2)
 	commit2.comment = "Second example commit for unit testing\n"
 	commit2.setMark(":2")
@@ -704,9 +728,9 @@ func TestParentChildMethods(t *testing.T) {
 	commit2.insertParent(0, ":0")
 
 	commit3 := newCommit(repo)
-	committer3 := []byte("J. Random Hacker <jrh@foobar.com> 1456976447 -0500")
+	committer3 := "J. Random Hacker <jrh@foobar.com> 1456976447 -0500"
 	commit3.committer = *newAttribution(committer3)
-	author3 := newAttribution([]byte("esr <esr@thyrsus.com> 1457998447 +0000"))
+	author3 := newAttribution("esr <esr@thyrsus.com> 1457998447 +0000")
 	commit3.authors = append(commit3.authors, *author3)
 	commit3.comment = "Third example commit for unit testing\n"
 	commit3.setMark(":3")
@@ -798,9 +822,9 @@ func TestParentChildMethods(t *testing.T) {
 func TestAlldeletes(t *testing.T) {
 	repo := newRepository("fubar")
 	commit1 := newCommit(repo)
-	committer1 := []byte("J. Random Hacker <jrh@foobar.com> 1456976347 -0500")
+	committer1 := "J. Random Hacker <jrh@foobar.com> 1456976347 -0500"
 	commit1.committer = *newAttribution(committer1)
-	author1 := newAttribution([]byte("esr <esr@thyrsus.com> 1457998347 +0000"))
+	author1 := newAttribution("esr <esr@thyrsus.com> 1457998347 +0000")
 	commit1.authors = append(commit1.authors, *author1)
 	commit1.comment = "Example commit for unit testing\n"
 	commit1.setMark(":1")
@@ -826,6 +850,21 @@ func TestBranchbase(t *testing.T) {
 
 func TestCapture(t *testing.T) {
 	assertEqual(t, capture("echo stdout; echo 1>&2 stderr"), "stdout\nstderr\n")
+
+	r, err1 := readFromProcess("echo arglebargle")
+	if err1 != nil {
+		t.Fatalf("error while spawning process: %v", err1)
+	}
+	ln, err2 := r.ReadString(byte('\n'))
+	assertEqual(t, ln, "arglebargle\n")
+	if err2 != nil {
+		t.Fatalf("error while reading from process: %v", err2)
+	}
+	_, errend := r.ReadString(byte('\n'))
+	if errend != io.EOF {
+		t.Fatalf("EOF not seen when expected: %v", errend)
+	}
+
 }
 	
 // end
