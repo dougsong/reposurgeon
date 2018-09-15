@@ -5429,7 +5429,13 @@ class StreamParser:
                 # This is a thing that happens occasionally.  A DVCS-style
                 # attribution (name + email) gets stuffed in a Subversion
                 # author field
-                attribution = au + " " + ad
+                # First, check to see if it's a fully-formed address
+                if au.count("<") == 1 and au.count(">") == 1 and au.count(" ") > 0:
+                    attribution = au + " " + ad
+                else:
+                    # Punt...
+                    (au, ah) = au.split("@")
+                    attribution = au + " <" + au  + "@" + ah  + "> " + ad
             else if '--use-uuid' in options:
                 attribution = "%s <%s@%s> %s" % (au, au, self.repo.uuid, ad)
             else:

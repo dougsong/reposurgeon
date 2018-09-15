@@ -2,6 +2,7 @@
 
 Repository head:
      Added bug warning about repocutter not handling Mac line terminations.
+     Fix for GitLab issue #117: malformed attribution.
 
 3.45: 2018-08-24::
      Repaired the distribution maker to again include README.adoc, NEWS, TODO.
