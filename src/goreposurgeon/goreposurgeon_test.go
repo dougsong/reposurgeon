@@ -153,15 +153,6 @@ func TestOrderedMap(t *testing.T) {
 	}
 }
 
-func GetVCS(name string) VCS {
-	for _, vcs := range vcstypes {
-		if vcs.name == name {
-			return vcs
-		}
-	}
-	panic("Unknown VCS name: " + name)
-}
-
 func TestHasReferences(t *testing.T) {
 	type vcsTestEntry struct {
 		vcs      string
@@ -177,7 +168,7 @@ func TestHasReferences(t *testing.T) {
 		{"cvs", false, " 42 "},
 	}
 	for _, tst := range vcsTestTable {
-		vcs := GetVCS(tst.vcs)
+		vcs := findVCS(tst.vcs)
 		match := vcs.hasReference([]byte(tst.comment))
 		if match != tst.expected {
 			t.Errorf("%s ID in '%s' unexpectedly %v (%v).",
@@ -857,7 +848,7 @@ func TestBranchbase(t *testing.T) {
 func TestCapture(t *testing.T) {
 	assertEqual(t, capture("echo stdout; echo 1>&2 stderr"), "stdout\nstderr\n")
 
-	r, err1 := readFromProcess("echo arglebargle")
+	r, cmd, err1 := readFromProcess("echo arglebargle")
 	if err1 != nil {
 		t.Fatalf("error while spawning process: %v", err1)
 	}
@@ -870,6 +861,7 @@ func TestCapture(t *testing.T) {
 	if errend != io.EOF {
 		t.Fatalf("EOF not seen when expected: %v", errend)
 	}
+	cmd.Wait()
 
 }
 	

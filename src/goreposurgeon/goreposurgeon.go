@@ -321,6 +321,7 @@ func (vcs VCS) hasReference(comment []byte) bool {
 }
 
 var vcstypes []VCS
+var extractors []Extractor
 
 func init() {
 	vcstypes = []VCS{
@@ -722,6 +723,9 @@ core
 			notes: "Bitkeeper's importer is flaky and incomplete as of 7.3.1ce.",
 		},
 	}
+
+	// More extractors go in this list
+	extractors = []Extractor{*newGitExtractor()}
 }
 
 // Import and export filter methods for VCSes that use magic files rather
@@ -790,15 +794,15 @@ type Extractor interface {
         // Gather all branch heads and tags (refs and tags members)
 	gatherAllReferences(*ExtractorBase, *Baton) error
 	// Color commits with their branch names
-	colorBranches(*Baton) error
-	// Gather mapping of commit hash -> timestamp (timestamps nembers)
+	colorBranches(*ExtractorBase, *Baton) error
+	// Gather mapping of commit hash -> timestamp (timestamps members)
 	getCommitTimestamps() error
         // Hook for any cleanup actions required after streaming.
 	postExtract(*Repository)
         // Return true if repo has no unsaved changes.
 	isClean() bool
 	// Check the directory out to a specified revision, return a manifest.	
-	checkout(string, map[string]map[string]signature) stringSet
+	checkout(string) stringSet
         // Return a commit's change comment as a string.
 	getComment(string) string
 }
@@ -948,15 +952,19 @@ func findVCS(name string) *VCS {
 	panic("reposurgeon: failed to find " + name + " in VCS types")
 }
 
-func lineByLine(eb *ExtractorBase, cmd string, errfmt string, baton *Baton,
+func lineByLine(eb *ExtractorBase, command string, errfmt string, baton *Baton,
 	hook func(string, *ExtractorBase) error) error {
-        r, err1 := readFromProcess(cmd)
+        r, cmd, err1 := readFromProcess(command)
 	if err1 != nil {
 		return err1
 	}
+	//defer r.Close()
 	for {
 		line, err2 := r.ReadString(byte('\n'))
 		if err2 == io.EOF {
+			if cmd != nil {
+				cmd.Wait()
+			}
 			break
 		} else {
 			return fmt.Errorf(errfmt, err2)
@@ -966,9 +974,9 @@ func lineByLine(eb *ExtractorBase, cmd string, errfmt string, baton *Baton,
 	return nil
 }
 
-// Repository extractor for the git version-control system/
+// Repository extractor for the git version-control system
 type GitExtractor struct {
-	ExtractorBlock
+	b ExtractorBlock
 }
 
 func newGitExtractor() *GitExtractor {
@@ -988,13 +996,21 @@ func newGitExtractor() *GitExtractor {
 	// test for the generic RepoStreamer code and a model for future
 	// extractors.
 	ge := new(GitExtractor)
-	ge.name = "git-extractor"
-	ge.vcs = findVCS("git")
-	ge.visible = false
+	ge.b.name = "git-extractor"
+	ge.b.vcs = findVCS("git")
+	ge.b.visible = false
 	return ge
 }
 
-func (ge *GitExtractor) gatherRevisionIDs(eb *ExtractorBase, baton *Baton) error {
+func (ge GitExtractor) getBlock() ExtractorBlock {
+	return ge.b
+}
+
+func (ge GitExtractor) getCommitTimestamps() error {
+	return nil
+}
+
+func (ge GitExtractor) gatherRevisionIDs(eb *ExtractorBase, baton *Baton) error {
 	hook := func(line string, eb *ExtractorBase) error {
 		fields := strings.Fields(line)
                 eb.revlist = append(eb.revlist, fields[0])
@@ -1007,7 +1023,7 @@ func (ge *GitExtractor) gatherRevisionIDs(eb *ExtractorBase, baton *Baton) error
 		baton, hook)
 }
 
-func (ge *GitExtractor) gatherCommitData(eb *ExtractorBase, baton *Baton) error {
+func (ge GitExtractor) gatherCommitData(eb *ExtractorBase, baton *Baton) error {
 	hook := func(line string, eb *ExtractorBase) error {
 		line = strings.Trim(line, "\n")
 		fields := strings.Split(line, "|")
@@ -1022,177 +1038,227 @@ func (ge *GitExtractor) gatherCommitData(eb *ExtractorBase, baton *Baton) error 
 }
 
 
-/*
+func (ge GitExtractor) gatherAllReferences(eb *ExtractorBase, baton *Baton) error {
+	err := filepath.Walk(".git/refs", func(pathname string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		data, err := ioutil.ReadFile(pathname)
+		if err != nil {
+			return fmt.Errorf("while waling the refs tree: %v", err) 
+		}
+		// 5: strips off the.git/ prefix
+		eb.refs.set(pathname[5:], strings.Trim(string(data), "\n"))
+		return nil
+	})
+        baton.twirl("")
 
-func (ge *GitExtractor) gatherAllReferences(*Baton) {
-        for root, dirs, files in os.walk(".git/refs"):
-            for leaf in files:
-                assert dirs is not None  # Pacify pylint
-                ref = os.path.join(root, leaf)
-                with open(ref, "rb") as fp:
-                    ge.refs[ref[5:]] = polystr(fp.read()).strip()
-        baton.twirl()
-        with popenOrDie("git tag -l") as fp:
-            for fline in fp:
-                tag = polystr(fline).strip()
-                with popenOrDie("git rev-parse %s" % tag) as fp:
-                    taghash = polystr(fp.read()).strip()
-                // Annotated tags are first-class objects with their
-                // own hashes.  The hash of a lightweight tag is just
-                // the commit it points to. Handle both cases.
-                objecthash = taghash
-                with popenOrDie("git cat-file -p %s" % tag) as fp:
-                    comment = None
-                    tagger = None
-                    for line in fp:
-                        line = polystr(line).strip()
-                        if line.startswith("tagger "):
-                            tagger = line[len("tagger "):]
-                        elif line.startswith("object"):
-                            objecthash = line.split()[1]
-                        elif comment is None and not line:
-                            comment = ""
-                        elif isinstance(comment, str):
-                            comment += line + "\n"
-                            if objecthash != taghash:
-                                // committish isn't a mark; we'll fix that later
-                                ge.tags.append(Tag(None,
-                                                     name=tag,
-                                                     tagger=Attribution(tagger),
-                                                     comment=comment,
-                                                     committish=objecthash))
-                    ge.refs["refs/tags/" + tag] = objecthash
+        rf, cmd, err1 := readFromProcess("git tag -l")
+	if err1 != nil {
+		return fmt.Errorf("while listing tags: %v", err)
+	}
+	//defer rf.Close()
+	for {
+		fline, err2 := rf.ReadString(byte('\n'))
+		if err2 == io.EOF {
+			if cmd != nil {
+				cmd.Wait()
+			}
+			break
+		} else if err2 != nil {
+			return err2
+		}
+		tag := strings.Trim(fline, "\n")
+		taghash := capture("git rev-parse " + tag)
+		taghash = strings.Trim(taghash, "\n")
+		// Annotated tags are first-class objects with their
+		// own hashes.  The hash of a lightweight tag is just
+		// the commit it points to. Handle both cases.
+		objecthash := taghash
+		cf, cmd, err3 := readFromProcess("git cat-file -p " + tag)
+		if err3 != nil {
+			return fmt.Errorf("while auditing tag %q: %v", tag, err)
+		}
+		tagger := ""
+		comment := ""
+		for {
+			line, err3 := cf.ReadString(byte('\n'))
+			if err3 == io.EOF {
+				if cmd != nil {
+					cmd.Wait()
+				}
+				break
+			} else if err3 != nil {
+				return err3
+			}
+			comment = ""
+			tagger = ""
+			inBody := false
+			line = strings.Trim(line, "\n")
+			if strings.HasPrefix(line, "tagger ") {
+				tagger = line[len("tagger "):]
+			} else if strings.HasPrefix(line, "object") {
+				objecthash = strings.Fields(line)[1]
+			} else if comment == "" && line == "" {
+				inBody = true
+			} else if inBody {
+				comment += line + "\n"
+			}
+		}
+		eb.refs.set("refs/tags/" + tag, objecthash)
+		if objecthash != taghash {
+			// committish isn't a mark; we'll fix that later
+			tagobj := *newTag(nil, tag, objecthash, nil, 
+				newAttribution(tagger),
+				comment)
+			eb.tags = append(eb.tags, tagobj)
+		}
+		baton.twirl("")
+	}
+	return nil
 }
 
-func (ge *GitExtractor) colorBranches(*Baton) {
-        "Color all commits with their branch name."
-        color_items = ge._branchColorItems()
-        if color_items is not None:
-            // If the repo will give us a complete list of (commit
-            // hash, branch name) pairs, use that to do the coloring
-            // (this will be the case for git)
-            for h, color in color_items:
-                ge.meta[h]['branch'] = color
-}
-
-func (ge *GitExtractor) _branchColorItems(self) {
+// colorBranches colors all commits with their branch name.
+func (ge GitExtractor) colorBranches(eb *ExtractorBase, baton *Baton) error {
         // This is really cheating since fast-export could give us the
         // whole repo, but it's the only way I've found to get the correct
         // mapping of commits to branches, and we still want to test the
-        // rest of the extractor logic independently, so here goes
-        data = marks = None
-        tfp, fname = tempfile.mkstemp()
-        try:
-            with popenOrDie("git fast-export --all --export-marks=%s" % fname) as fp:
-                // We can't iterate line by line here because we need to be sure that
-                // the entire fast-export process is complete so the marks file is
-                // written and closed
-                data = fp.read()
-            with open(fname, "rb") as fp:
-                marks = dict(polystr(line).strip().split() for line in fp)
-        finally:
-            os.close(tfp)
-            os.remove(fname)
-        if not (marks and data):
-            raise Fatal("could not get branch information")
-        branch = None
-        for line in data.splitlines():
-            fields = polystr(line).strip().split()
-            if len(fields) != 2:
-                // The lines we're interested in will always have exactly 2 fields:
-                // commit <ref> or mark <id>; so all other lines can be ignored
-                continue
-            elif fields[0] == "commit":
-                assert branch is None
-                branch = fields[1]
-            elif (fields[0] == "mark") and (branch is not None):
-                h = marks[fields[1]]
-                // This is a valid (commit hash, branch name) pair
-                yield (h, branch)
-                branch = None
-            elif branch is not None:
-                // The mark line for a commit should always be the next line after
-                // the commit line, so this should never happen, but we put it in
-                // just in case
-                raise Fatal("could not parse branch information")
+        // rest of the extractor logic independently, so here goes...
+	file, err1 := ioutil.TempFile(".", "rse")
+	if err1 != nil {
+	    return err1
+	}
+	defer os.Remove(file.Name())
+	markfile, err2 := os.Open(file.Name())
+	if err2 != nil {
+	    return err1
+	}
+	data := capture("git fast-export --all --export-marks=" + file.Name())
+	rf := bufio.NewReader(markfile)
+	baton.twirl("")
+	marks := make(map[string]string)
+	for {
+		fline, err3 := rf.ReadString(byte('\n'))
+		if err3 == io.EOF {
+			break
+		} else if err3 != nil {
+			return err3
+		}
+		fields := strings.Fields(fline)
+		marks[fields[0]] = fields[1]
+	}
+        branch := ""
+        for _, line := range strings.Split(data, "\n") {
+		fields := strings.Fields(line)
+		if len(fields) != 2 {
+			// The lines we're interested in will always have
+			// exactly 2 fields: commit <ref> or mark <id>; so
+			// all other lines can be ignored
+			continue
+		} else if fields[0] == "commit" {
+			branch = fields[1]
+		} else if (fields[0] == "mark") && (branch != "") {
+			h := marks[fields[1]]
+			// This is a valid (commit hash, branch name) pair
+			eb.meta[h].branch = branch
+			branch = ""
+		} else if branch != "" {
+			// The mark line for a commit should always be the
+			// next line after the commit line, so this should
+			// never happen, but we put it in just in case
+			panic("could not parse branch information")
+		}
+	}
+	return nil
 }
 
-
-func (ge *GitExtractor) __metadata(self, rev, fmt) {
-        with popenOrDie("git log -1 --format='%s' %s" % (fmt, rev)) as fp:
-            return polystr(fp.read())[:-1]
+func (ge GitExtractor) _metadata(rev string, format string) string {
+        line := capture(fmt.Sprintf("git log -1 --format='%s' %s", format, rev))
+	if line[len(line)-1] == '\n' {
+		line = line[:len(line)-1]
+	}
+	return line
 }
-*/
 
-func (ge *GitExtractor) postExtract(_repo *Repository) {
-        exec.Command("git checkout --quiet master").Run()
+func (ge GitExtractor) postExtract(_repo *Repository) {
+        exec.Command("git", "checkout", "--quiet", "master").Run()
 }
 
 // isClean is a predicate;  return True if repo has no unsaved changes.
-func (ge *GitExtractor) isClean() bool {
+func (ge GitExtractor) isClean() bool {
         return capture("git ls-files --modified") == ""
 }
 
+// checkout checks the repository out to a specified revision.
+func (ge GitExtractor) checkout(rev string) stringSet {
+        exec.Command("git", "checkout", "--quiet",  rev).Run()
+        manifest := strings.Split(capture("git ls-files"), "\n")
+	if manifest[len(manifest)-1] == "" {
+		manifest = manifest[:len(manifest)-1]
+	}
+        return newStringSet(manifest...)
+}
+
+// getComment returns a commit's change comment as a string.
+func (ge GitExtractor) getComment(rev string) string {
+        return ge._metadata(rev, "%B")
+}
+
+// Repository extractor for the hg version-control system
+type HgExtractor struct {
+	b ExtractorBlock
+        tagsFound bool
+        bookmarksFound bool
+}
+
+func newHgExtractor() *HgExtractor {
+	// Regardless of what revision and branch was current at
+	// start, after the hg extractor runs the tip (most recent
+	// revision on any branch) will be checked out.
+	ge := new(HgExtractor)
+	ge.b.name = "hg-extractor"
+	ge.b.vcs = findVCS("hg")
+	ge.b.visible = true
+	return ge
+}
+
+func (he HgExtractor) getBlock() ExtractorBlock {
+	return he.b
+}
+
+//gatherRevisionIDs gets the topologically-ordered list of revisions and parents.
+func gatherRevisionIDs(eb *ExtractorBase, baton *Baton) error {
+        // hg changesets can only have up to two parents
+        // we have to use short (12-nibble) hashes because that's all "hg tags"
+        // and "hg branches" give us.  Hg's CLI is rubbish.
+	hook := func(line string, eb *ExtractorBase) error {
+		fields := strings.Fields(line)
+		eb.revlist = append(eb.revlist, fields[0])
+                // non-existent parents are given all-0s hashes.
+                // Did I mention that the Hg CLI is rubbish?
+		parents := make([]string, 0)
+		for _, f := range fields[1:] {
+			if f != "000000000000" {
+				parents = append(parents, f)
+			}
+		}
+		eb.parents[fields[0]] = parents
+		return nil
+	}
+	err := lineByLine(eb,
+		"hg log --template {node|short} {p1node|short} {p2node|short}\\n",
+		"hg's gatherRevisionIDs: %v",
+		baton, hook)
+	// No way to reverse the log order, so it has to be done here
+	for i := len(eb.revlist)/2-1; i >= 0; i-- {
+		opp := len(eb.revlist)-1-i
+		eb.revlist[i], eb.revlist[opp] = eb.revlist[opp], eb.revlist[i]
+	}
+	
+	return err	
+}
+
 /*
-
-func (ge *GitExtractor) checkout(self, rev, filemap) {
-        "Check the directory out to a specified revision."
-        assert filemap is not None // pacify pylint
-        os.system("git checkout --quiet %s" % rev)
-        manifest = list(map(polystr, capture("git ls-files").split()))
-        return manifest
-}
-
-func (ge *GitExtractor) getComment(self, rev) {
-        "Return a commit's change comment as a string."
-        return ge.__metadata(rev, "%B")
-}
-
-class HgExtractor(Extractor):
-    "Repository extractor for the hg version-control system."
-    // Regardless of what revision and branch was current at start,
-    // after the hg extractor runs the tip (most recent revision on any branch)
-    // will be checked out.
-    name = "hg-extractor"
-    vcstype = next(vcstype for vcstype in vcstypes if vcstype.name == "hg")
-    subdirectory = ".hg"
-    visible = True
-    properties = False
-    ignorename = ".hgignore"
-
-
-    def __init__(self):
-        super(HgExtractor, self).__init__()
-        self.tags_found = False
-        self.bookmarks_found = False
-    class _hg_or_die:
-        def __init__(self, client, *cmdline, **kwargs):
-            self.client = client
-            self.cmdline = cmdline
-            if self.cmdline[0] == "hg":
-                self.cmdline.pop(0)
-            self.errhandler = kwargs.get('errhandler')
-            self.fp = io.BytesIO(self.client.rawcommand(self.cmdline, eh=lambda rc, out, err: self.errhandler(rc)))
-        def __enter__(self):
-            return self.fp
-        def __exit__(self, extype, value, traceback_unused):
-            if extype:
-                if verbose:
-                    complain("fatal exception in _hg_or_die.")
-            rc = self.fp.close()
-            if rc is not None:
-                if self.errhandler:
-                    self.errhandler(rc)
-                elif not extype:
-                    raise Fatal("%s returned error." % (self.cmdline,))
-            return False
-    def hg_or_die(self, *cmdline):
-	// We know this quoting is sufficient, because the only variables
-	// we ever pass into this function are revision IDs, which are
-	// shell-safe.  It'd be nice to use pipes.quote or shlex.quote, but
-	// pipes.quote is deprecated in 2.7 and shlex.quote doesn't appear
-	// until 3.3.
-	return popenOrDie("hg "+" ".join(["'%s'"%(s,) for s in cmdline]))
     def hg_with_err(self, *cmdline):
         "Call hg and collect the error code. Returns the data directly, not a stream."
         errcode = []
@@ -1204,40 +1270,22 @@ class HgExtractor(Extractor):
                                          ) as fp:
             output = polystr(fp.read())
         return (output, errcode[0] if len(errcode) > 0 else 0)
-    def hg_capture(self, *cmdline):
-        with self.hg_or_die(*cmdline) as fp:
-            output = polystr(fp.read())
-        return output
-    def gatherRevisionIDs(*Baton):
-        "Get the topologically-ordered list of revisions and parents"
-        assert baton is not None // pacify pylint
-        // hg changesets can only have up to two parents
-        // we have to use short (12-nibble) hashes because that's all "hg tags"
-        // and "hg branches" give us.  Hg's CLI is rubbish
-        with self.hg_or_die("log", "--template", "{node|short} {p1node|short} {p2node|short}\\n") as fp:
-            for line in fp:
-                fields = polystr(line).strip().split()
-                self.revlist.append(fields[0])
-                // non-existent parents are given all-0s hashes.
-                // Did I mention that Hg's CLI is rubbish?
-                self.parents[fields[0]] = [f for f in fields[1:] if f != '0'*12]
-        self.revlist = list(reversed(self.revlist))
     def gatherCommitData(*Baton):
         "Get all other per-commit data except branch IDs"
         assert baton is not None // pacify pylint
-        with self.hg_or_die("log", "--template", '{node|short}|{sub(r"<([^>]*)>", "", author|person)} <{author|email}> {date|rfc822date}\\n') as fp:
+        with he.hg_or_die("log", "--template", '{node|short}|{sub(r"<([^>]*)>", "", author|person)} <{author|email}> {date|rfc822date}\\n') as fp:
             for line in fp:
                 (h, ci) = polystr(line).strip().split('|')
                 // Because hg doesn't store separate author and committer info,
                 // we just use the committer for both.
-                self.meta[h] = {'ci':ci, 'ai':ci}
+                he.meta[h] = {'ci':ci, 'ai':ci}
     def gatherAllReferences(*Baton):
         "Find all branch heads and tags"
         assert baton is not None // pacify pylint
 
         // Some versions of mercurial can return an error for showconfig
         // when the config is not present. This isn't an error.
-        bookmark_ref, code = self.hg_with_err("showconfig", "reposurgeon.bookmarks")
+        bookmark_ref, code = he.hg_with_err("showconfig", "reposurgeon.bookmarks")
         if code != 0:
             bookmark_ref = ""
         else:
@@ -1249,48 +1297,48 @@ class HgExtractor(Extractor):
         // not Unicode, to avoid errors in handling non-ASCII data; the ascii
         // encode of the match string ensures this
         ref_re = re.compile(r'\s*(?:\*\s+)?(\S+)\s+\d+:([0-9a-fA-F]+)(?: \(inactive|closed\))?'.encode('ascii'))
-        with self.hg_or_die("branches", "--closed") as fp:
+        with he.hg_or_die("branches", "--closed") as fp:
             for line in fp:
                 m = ref_re.match(line)
                 if m is None:
                     raise Recoverable("Unreadable 'hg branches' line: %r" % line)
                 n, h = tuple(map(polystr, m.groups()))
-                self.refs['refs/heads/%s'%n] = h
+                he.refs['refs/heads/%s'%n] = h
         if bookmark_ref != "":
-            with self.hg_or_die("bookmarks") as fp:
+            with he.hg_or_die("bookmarks") as fp:
                 for line in fp:
                     m = ref_re.match(line)
                     if m is None:
                         raise Recoverable("Unreadable 'hg bookmarks' line: %r" % line)
                     n, h = tuple(map(polystr, m.groups()))
-                    self.refs['refs/%s%s' % (bookmark_ref, n)] = h
-                    self.bookmarks_found = True
-        with self.hg_or_die("log", "--rev=tag()",
+                    he.refs['refs/%s%s' % (bookmark_ref, n)] = h
+                    he.bookmarksFound = True
+        with he.hg_or_die("log", "--rev=tag()",
                             "--template={tags}\t{node}\n") as fp:
             for line in fp:
                 n, h = tuple(map(polystr, line.strip().rsplit(b'\t', 1)))
                 if n == 'tip': // pseudo-tag for most recent commit
                     continue // We don't want it
-                self.refs['refs/tags/%s'%n] = h[:12]
-                self.tags_found = True
-        // We have no annotated tags, so self.tags = []
+                he.refs['refs/tags/%s'%n] = h[:12]
+                he.tagsFound = True
+        // We have no annotated tags, so he.tags = []
         // Conceivably it might be better to treat the commit message that
         // creates the tag as an annotation, but that's a job for the surgeon
         // later, not the extractor now.
     def _hg_branch_items(self):
-        with self.hg_or_die("log", "--template", "{node|short} {branch}\\n") as fp:
+        with he.hg_or_die("log", "--template", "{node|short} {branch}\\n") as fp:
             for line in fp:
                 h, branch = polystr(line).strip().split()
                 yield (h, "refs/heads/" + branch)
     def _branchColorItems(self):
-        if not self.tags_found and not self.bookmarks_found:
+        if not he.tagsFound and not he.bookmarksFound:
             // If we didn't find any tags or bookmarks, we can safely color all
             // commits using hg branch names, since hg stores them with commit
             // metadata; note, however, that the coloring this will produce
             // might not be reproducible if the repo is written to a fast-import
             // stream and used to construct a git repo, because hg branches can
             // store colorings that do not match the git coloring algorithm
-            return self._hg_branch_items()
+            return he._hg_branch_items()
         // Otherwise we have to use the emulated git algorithm to color
         // any commits that are tags or the ancestors of tags, since git
         // prioritizes tags over branches when coloring; we will color
@@ -1300,7 +1348,7 @@ class HgExtractor(Extractor):
     def gatherCommitTimestamps(self):
         """Return mapping of commit hash -> Unix timestamp"""
         timestamps = {}
-        with self.hg_or_die("log", "--template", "{node|short} {date|hgdate}\\n") as fp:
+        with he.hg_or_die("log", "--template", "{node|short} {date|hgdate}\\n") as fp:
             for line in fp:
                 fields = polystr(line).strip().split()
                 timestamps[fields[0]] = int(fields[1])
@@ -1308,17 +1356,17 @@ class HgExtractor(Extractor):
     def gatherChildTimestamps(self):
         """Return initial mapping of commit hash -> timestamp of child it is colored from"""
         results = {}
-        for h, branch in self._hg_branch_items():
+        for h, branch in he._hg_branch_items():
             // Fill in the branch as a default; this will ensure that any commit that
             // is not in the ancestor tree of a tag will get the correct hg branch name,
             // even if the hg branch coloring is not compatible with the git coloring
             // algorithm
-            self.meta[h]['branch'] = branch
+            he.meta[h]['branch'] = branch
             // Fill in the branch tips with child timestamps to ensure that they can't
             // be over-colored (other commits in the ancestor tree of a branch can be
             // over-colored if they are in a tag's ancestor tree, so we don't fill in
             // any child timestamp for them here)
-            if self.refs[branch] == h:
+            if he.refs[branch] == h:
                 results[h] = sys.maxsize
         return results
     def _branchColor(self, rev, color):
@@ -1331,23 +1379,27 @@ class HgExtractor(Extractor):
         // Otherwise we have to emulate the git coloring algorithm
         simulateGitColoring(self)
     def postExtract(self, repo):
-        self.checkout("tip", {})
+        he.checkout("tip")
         if "refs/heads/master" not in repo.branchset():
             for event in repo:
                 if isinstance(event, Commit):
                     if event.branch == "refs/heads/default":
                         event.set_branch("refs/heads/master")
-                elif isinstance(event, Reset):
+                else if isinstance(event, Reset):
                     if event.ref == "refs/heads/default":
                         event.ref = "refs/heads/master"
-    def isClean(self):
-        "Return True if repo has no unsaved changes."
-        return not self.hg_capture("status", "--modified")
+*/
+
+// isClean returns True if repo has no unsaved changes
+func (he HgExtractor) isClean() bool {
+        return capture("hg status --modified") == ""
+}
+
+/*
     def checkout(self, rev, filemap):
         "Check the directory out to a specified revision, return a manifest."
-        assert filemap is not None // pacify pylint
         pwd = os.getcwd()
-        errcode = self.hg_with_err("update", "-C", rev)[1]
+        errcode = he.hg_with_err("update", "-C", rev)[1]
         // 'hg update -C' can delete and recreate the current working
         // directory, so cd to what should be the current directory
         os.chdir(pwd)
@@ -1362,7 +1414,7 @@ class HgExtractor(Extractor):
         // stuff in .hgsub files. This is documented poorly at best so it's
         // unclear how things should work ideally.
         if errcode != 0:
-            subrepo_txt, subcat_err = self.hg_with_err("cat", "-r", rev, ".hgsub")
+            subrepo_txt, subcat_err = he.hg_with_err("cat", "-r", rev, ".hgsub")
 
             subrepo_args = []
             if subcat_err == 0:
@@ -1375,9 +1427,9 @@ class HgExtractor(Extractor):
 
             // Since all is not well, clear everything and try from zero. This
             // sidesteps some issues with problematic checkins.
-            self.hg_capture("update", "-C", "null") // Remove checked in files.
+            he.hg_capture("update", "-C", "null") // Remove checked in files.
             os.chdir(pwd)
-            self.hg_capture("purge", "--config", "extensions.purge=", "--all") // Remove extraneous files.
+            he.hg_capture("purge", "--config", "extensions.purge=", "--all") // Remove extraneous files.
             os.chdir(pwd)
 
             // Remove everything else. Purge is supposed to do this, but doesn't.
@@ -1393,25 +1445,26 @@ class HgExtractor(Extractor):
             // If there are subrepos, use revert to fake an update, but exclude
             // the subrepo paths, which are probably borken.
             if len(subrepo_args) > 0:
-                self.hg_capture("revert", "--all", "--no-backup", "-r", rev, *subrepo_args)
+                he.hg_capture("revert", "--all", "--no-backup", "-r", rev, *subrepo_args)
                 os.chdir(pwd)
-                self.hg_capture("debugsetparents", rev)
+                he.hg_capture("debugsetparents", rev)
                 os.chdir(pwd)
-                self.hg_capture("debugrebuilddirstate")
+                he.hg_capture("debugrebuilddirstate")
                 os.chdir(pwd)
             else:
-                reup_txt, reup_err = self.hg_with_err("update", "-C", rev)
+                reup_txt, reup_err = he.hg_with_err("update", "-C", rev)
                 if reup_err != 0:
                     raise Fatal("Failed to update to revision %s: %s" % (rev, reup_txt))
                 os.chdir(pwd)
 
-        manifest = self.hg_capture("manifest").rstrip("\n").split("\n")
+        manifest = he.hg_capture("manifest").rstrip("\n").split("\n")
         return manifest
-    def getComment(self, rev):
-        "Return a commit's change comment as a string."
-        return self.hg_capture("log", "-r", rev, "--template", "{desc}\\n")
-
 */
+
+// getComment returns a commit's change comment as a string.
+func (he HgExtractor) getComment(rev string) string {
+        return capture("log -r " + rev + " --template {desc}\\n")
+}
 
 // Repository factory driver class for all repo analyzers.
 type RepoStreamer struct {
@@ -1487,7 +1540,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 	}
 	sort.Sort(rs.base.refs)
 	baton.twirl("")
-	rs.extractor.colorBranches(baton)
+	rs.extractor.colorBranches(&rs.base, baton)
 
 	var uncolored []string
 	for _, revision := range rs.base.revlist {
@@ -1510,7 +1563,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 	for _, revision  := range consume {
                 commit := newCommit(repo)
                 baton.twirl("")
-                present := rs.extractor.checkout(revision, rs.filemap)
+                present := rs.extractor.checkout(revision)
                 parents := rs.base.getParents(revision)
 		commit.committer = *newAttribution(rs.base.getCommitter(revision))
 		for _, a := range rs.base.getAuthors(revision) {
@@ -1661,15 +1714,6 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 	baton.exit()
 	return repo, nil
 }
-
-/*
-
-// More extractors go here
-
-
-extractors = []Extractor{newGitExtractor(), newHgExtractor()}
-
-*/
 
 // No user-serviceable parts below this line
 
@@ -4503,7 +4547,7 @@ func (commit *Commit) undecodable(codec string) bool {
 
 // delete severs this commit from its repository.
 func (commit *Commit) delete(policy stringSet) {
-        //self.repo.delete([]int{commit.index()}, policy)	FIXME
+        //commit.repo.delete([]int{commit.index()}, policy)	FIXME
 }
 
 // dump reports this commit in import-stream format.
@@ -8990,11 +9034,11 @@ func do_or_die(dcmd, legend=""):
 
 */
 
-func readFromProcess(command string) (*bufio.Reader, error) {
+func readFromProcess(command string) (*bufio.Reader, *exec.Cmd, error) {
 	cmd := exec.Command("sh", "-c", command + " 2>&1")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	r := bufio.NewReader(stdout)
 	if debugEnable(debugCOMMANDS) {
@@ -9003,9 +9047,10 @@ func readFromProcess(command string) (*bufio.Reader, error) {
 	}
 	err = cmd.Start()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return r, err
+	// Pass back cmd so we can call Wait on it and get the error status.
+	return r, cmd, err
 }
 
 /*
