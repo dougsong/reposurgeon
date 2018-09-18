@@ -136,7 +136,6 @@ func TestOrderedMap(t *testing.T) {
 	m.set("a", "z")
 	m.set("b", "y")
 	m.set("c", "x")
-	fmt.Printf("I see: %v", m.keys)
 	assertBool(t, m.Len() == 3, true)
 	m.valueLess = func(s1, s2 string) bool {
 		return s1 < s2
@@ -145,6 +144,13 @@ func TestOrderedMap(t *testing.T) {
 	assertEqual(t, m.keys[0], "c")
 	assertEqual(t, m.keys[1], "b")
 	assertEqual(t, m.keys[2], "a")
+
+	expected := "{c:x,b:y,a:z}"
+	saw := m.String()
+	if expected != saw {
+		t.Errorf("in OrderedMap String() test, expected %s saw %s",
+			expected, saw)
+	}
 }
 
 func GetVCS(name string) VCS {

@@ -1961,6 +1961,14 @@ func (d OrderedMap) Len() int {
 	return len(d.keys)
 }
 
+func (d OrderedMap) String() string {
+	var out = "{"
+	for _, el := range d.keys {
+		out += el + ":" + d.dict[el] + ","
+	}
+	return out[:len(out)-1] + "}"
+}
+
 // Less returns true if the sort method says the value for key i is
 // less than the value for key j. Useful with the Go library sort.
 func (d OrderedMap) Less(i int, j int) bool {
@@ -4726,7 +4734,7 @@ func branchbase(branch string) string {
 
 // Use numeric codes rather than (un-interned) strings
 // to reduce working-set size.
-const sdNONE = 0
+const sdNONE = 0	// Must be integer zero
 const sdFILE = 1
 const sdDIR = 2
 const sdADD = 0
@@ -4735,84 +4743,96 @@ const sdCHANGE = 2
 const sdREPLACE = 3
 const sdNUKE = 4	// Not part of the Subversion data model
 
+// If these don't match the constants above, havoc will ensue
+var ActionValues = []string{"add", "delete", "change", "replace"}
+var PathTypeValues = []string{"none", "file", "dir", "ILLEGAL-TYPE"}
+
+// Native Subversion properties that we don't suppress: svn:externals
+// The reason for these suppressions is to avoid a huge volume of
+// junk file properties - cvs2svn in particular generates them like
+// mad.  We want to let through other properties that might carry
+// useful information.
+var IgnoreProperties = []string {
+	"svn:executable",  // We special-case this one elsewhere
+	"svn:ignore",      // We special-case this one elsewhere
+	"svn:special",     // We special-case this one elsewhere
+	"svn:mime-type",
+	"svn:keywords",
+	"svn:needs-lock",
+	"svn:eol-style",   // Don't want to suppress, but cvs2svn floods these.
+}
+
+type NodeAction struct {
+	// These are set during parsing
+	revision string
+	path string
+	kind int
+	action int	// initially sdNONE
+	fromRev string
+	fromPath string
+	contentHash [sha1.Size]byte
+	fromHash [sha1.Size]byte
+	blob *Blob
+	props OrderedMap
+	propchange bool
+	// These are set during the analysis phase
+	//fromSet = None FIXME: PathMap
+	blobmark string
+	generated bool
+}
+
+func (action NodeAction) String() string {
+	out := "<NodeAction: "
+	out += "r" + action.revision
+	out += " " + ActionValues[action.action]
+	out += " " + PathTypeValues[action.kind]
+	out += " '" + action.path + "'"
+	if action.fromRev != "" {
+		out += action.fromRev + "~" + action.fromPath
+	}
+	//if len(action.fromSet) > 0 {
+	//	out += "sources=" + action.fromSet.String()
+	//}
+	if action.generated {
+		out += " generated"
+	}
+	if action.props.Len() > 0 {
+		out += action.props.String()
+	}
+	return out + ">"
+}
+
+type RevisionRecord struct {
+	nodes []NodeAction
+	log string
+	date string
+	author string
+	props OrderedMap
+}
+
+func newRevisionRecord(nodes []NodeAction, props OrderedMap) *RevisionRecord {
+	rr := new(RevisionRecord)
+	rr.nodes = nodes
+	// Following four members are so we can avoid having a hash
+	// object in every single node instance...those are expensive.
+	rr.log = props.get("svn:log")
+	props.delete("svn:log")
+	rr.author = props.get("svn:author")
+	props.delete("svn:author")
+	rr.date = props.get("svn:date")
+	props.delete("svn:date")
+	rr.props = props
+	return rr
+}
+
+// Cruft recognizers
+var cvs2svnTagRE = regexp.MustCompile("This commit was manufactured by cvs2svn to create tag.*'([^']*)'")
+var cvs2svnBranchRE = regexp.MustCompile("This commit was manufactured by cvs2svn to create branch.*'([^']*)'")
+
 /*
+
 class StreamParser:
     "Parse a fast-import stream or Subversion dump to populate a Repository."
-    class NodeAction(object):
-        # If these don't match the constants above, havoc will ensue
-        ActionValues = ("add", "delete", "change", "replace")
-        PathTypeValues = ("none", "file", "dir", "ILLEGAL-TYPE")
-        func __init__():
-            # These are set during parsing
-            self.revision = None
-            self.path = None
-            self.kind = sdNONE
-            self.action = None
-            self.from_rev = None
-            self.from_path = None
-            self.content_hash = None
-            self.from_hash = None
-            self.blob = None
-            self.props = None
-            self.propchange = False
-            # These are set during the analysis phase
-            self.from_set = None
-            self.blobmark = None
-            self.generated = False
-        func String():
-            # Prefer dict's repr() to OrderedMap's verbose one
-            fmt = dict.__repr__ if isinstance(self.props, dict) else repr
-            return "<NodeAction: r{rev} {action} {kind} '{path}'" \
-                    "{from_rev}{from_set}{generated}{props}>".format(
-                    rev = self.revision,
-                    action = "ILLEGAL-ACTION" if self.action is None else StreamParser.NodeAction.ActionValues[self.action],
-                    kind = StreamParser.NodeAction.PathTypeValues[self.kind or -1],
-                    path = self.path,
-                    from_rev = " from=%s~%s" % (self.from_rev, self.from_path)
-                                    if self.from_rev else "",
-                    from_set = " sources=%s" % self.from_set
-                                    if self.from_set else "",
-                    generated = " generated" if self.generated else "",
-                    props = " properties=%s" % fmt(self.props)
-                                    if self.props else "")
-        __repr__ = String
-    class RevisionRecord(object):
-        func __init__(self, nodes, props):
-            self.nodes = nodes
-            # Following four members are so we can avoid having a hash
-            # object in every single node instance...those are expensive.
-            try:
-                self.log = props.pop("svn:log")
-            except KeyError:
-                self.log = None
-            try:
-                self.author = props.pop("svn:author")
-            except KeyError:
-                self.author = None
-            try:
-                self.date = props.pop("svn:date")
-            except KeyError:
-                self.date = None
-            if len(props) > 0:
-                self.props = props
-            else:
-                self.props = None
-    # Native Subversion properties that we don't suppress: svn:externals
-    # The reason for these suppressions is to avoid a huge volume of
-    # junk file properties - cvs2svn in particular generates them like
-    # mad.  We want to let through other properties that might carry
-    # useful information.
-    IgnoreProperties = {
-        "svn:executable",  # We special-case this one elsewhere
-        "svn:ignore",      # We special-case this one elsewhere
-        "svn:special",     # We special-case this one elsewhere
-        "svn:mime-type",
-        "svn:keywords",
-        "svn:needs-lock",
-        "svn:eol-style",   # Don't want to suppress, but cvs2svn floods these.
-        }
-    cvs2svn_tag_re = re.compile(r"This commit was manufactured by cvs2svn to create tag.*'([^']*)'".encode('ascii'))
-    cvs2svn_branch_re = re.compile(r"This commit was manufactured by cvs2svn to create branch.*'([^']*)'".encode('ascii'))
     SplitSep = '.'
     func __init__(self, repo):
         self.repo = repo
@@ -5095,9 +5115,9 @@ class StreamParser:
                                         # property fields of their own.
                                         if node.propchange:
                                             self.property_stash[node.path] = node.props
-                                        else if node.action == sdADD && node.from_path:
-                                            for oldnode in self.revisions[node.from_rev].nodes:
-                                                if oldnode.path == node.from_path:
+                                        else if node.action == sdADD && node.fromPath:
+                                            for oldnode in self.revisions[node.fromRev].nodes:
+                                                if oldnode.path == node.fromPath:
                                                     self.property_stash[node.path] = oldnode.props
                                             #os.Stderr.write("Copy node %s:%s stashes %s\n" % (node.revision, node.path, self.property_stash[node.path]))
                                         if node.action == sdDELETE:
@@ -5111,7 +5131,7 @@ class StreamParser:
                                         if not (node.action == sdCHANGE
                                                 && node.props is None
                                                 && node.blob is None
-                                                && node.from_rev is None):
+                                                && node.fromRev is None):
                                             nodes.append(node)
                                         node = None
                                 else if line.startswith("Revision-number: "):
@@ -5148,17 +5168,17 @@ class StreamParser:
                                 else if line.startswith("Node-copyfrom-rev: "):
                                     if node is None:
                                         node = StreamParser.NodeAction()
-                                    node.from_rev = StreamParser.sd_body(line)
+                                    node.fromRev = StreamParser.sd_body(line)
                                 else if line.startswith("Node-copyfrom-path: "):
                                     if node is None:
                                         node = StreamParser.NodeAction()
-                                    node.from_path = intern(StreamParser.sd_body(line))
+                                    node.fromPath = intern(StreamParser.sd_body(line))
                                 else if line.startswith("Text-copy-source-md5: "):
                                     if node is None:
                                         node = StreamParser.NodeAction()
-                                    node.from_hash = StreamParser.sd_body(line)
+                                    node.fromHash = StreamParser.sd_body(line)
                                 else if line.startswith("Text-content-md5: "):
-                                    node.content_hash = StreamParser.sd_body(line)
+                                    node.contentHash = StreamParser.sd_body(line)
                                 else if line.startswith("Text-content-sha1: "):
                                     continue
                                 else if line.startswith("Text-content-length: "):
@@ -5481,7 +5501,7 @@ class StreamParser:
         copynodes = []
         for (revision, record) in self.revisions.items():
             for node in record.nodes:
-                if node.from_path is not None:
+                if node.fromPath is not None:
                     copynodes.append(node)
                     announce(debugEXTRACT, "copynode at %s" % node)
                 if node.action == sdADD && node.kind == sdDIR && node.path+os.sep not in self.branches && not nobranch:
@@ -5498,7 +5518,7 @@ class StreamParser:
                         announce(debugSHOUT, "%s recognized as a branch" % node.path+os.sep)
             # Per-commit spinner disabled because this pass is fast
             #baton.twirl("")
-        copynodes.sort(key=operator.attrgetter("from_rev"))
+        copynodes.sort(key=operator.attrgetter("fromRev"))
         func timeit(tag):
             self.repo.timings.append([tag, time.time()])
             if global_options["bigprofile"]:
@@ -5514,12 +5534,12 @@ class StreamParser:
         for (revision, record) in self.revisions.items():
             for node in record.nodes:
                 # Mutate the filemap according to copies
-                if node.from_rev:
-                    assert int(node.from_rev) < int(revision)
-                    filemap.copyFrom(node.path, filemaps[node.from_rev],
-                                      node.from_path)
+                if node.fromRev:
+                    assert int(node.fromRev) < int(revision)
+                    filemap.copyFrom(node.path, filemaps[node.fromRev],
+                                      node.fromPath)
                     announce(debugFILEMAP, "r%s~%s copied to %s" \
-                                 % (node.from_rev, node.from_path, node.path))
+                                 % (node.fromRev, node.fromPath, node.path))
                 # Mutate the filemap according to adds/deletes/changes
                 if node.action == sdADD && node.kind == sdFILE:
                     filemap[node.path] = node
@@ -5528,8 +5548,8 @@ class StreamParser:
                     if node.kind == sdNONE:
                         node.kind = sdFILE if node.path in filemap else sdDIR
                     # Snapshot the deleted paths before removing them.
-                    node.from_set = PathMap()
-                    node.from_set.copyFrom(node.path, filemap, node.path)
+                    node.fromSet = PathMap()
+                    node.fromSet.copyFrom(node.path, filemap, node.path)
                     del filemap[node.path]
                     announce(debugFILEMAP, "r%s~%s deleted" \
                                  % (node.revision, node.path))
@@ -5551,11 +5571,11 @@ class StreamParser:
                 # slice can be expensive enough to look like a hang forever
                 # on a sufficiently large repository - GCC was the type case.
                 announce(debugFILEMAP, "r%s copynode filemap is %s" \
-                         % (copynode.from_rev, filemaps[copynode.from_rev]))
-            copynode.from_set = PathMap()
-            copynode.from_set.copyFrom(copynode.from_path,
-                                        filemaps[copynode.from_rev],
-                                        copynode.from_path)
+                         % (copynode.fromRev, filemaps[copynode.fromRev]))
+            copynode.fromSet = PathMap()
+            copynode.fromSet.copyFrom(copynode.fromPath,
+                                        filemaps[copynode.fromRev],
+                                        copynode.fromPath)
             baton.twirl("")
         timeit("copysets")
         # Build commits
@@ -5606,12 +5626,12 @@ class StreamParser:
                     assert node.action in (sdCHANGE, sdADD, sdDELETE, sdREPLACE)
                     assert node.blob is not None or \
                            node.props is not None or \
-                           node.from_rev or \
+                           node.fromRev or \
                            node.action in (sdADD, sdDELETE)
-                    assert (node.from_rev is None) == (node.from_path is None)
+                    assert (node.fromRev is None) == (node.fromPath is None)
                     assert node.kind in (sdFILE, sdDIR)
                     assert node.kind != sdNONE or node.action == sdDELETE
-                    assert node.action in (sdADD, sdREPLACE) or not node.from_rev
+                    assert node.action in (sdADD, sdREPLACE) or not node.fromRev
                 except AssertionError:
                     raise Fatal("forbidden operation in dump stream at r%s: %s" \
                                 % (revision, node))
@@ -5705,8 +5725,8 @@ class StreamParser:
                     # os.sep is appended to avoid collisions with path
                     # prefixes.
                     node.path += os.sep
-                    if node.from_path:
-                        node.from_path += os.sep
+                    if node.fromPath:
+                        node.fromPath += os.sep
                     if node.action in (sdADD, sdCHANGE):
                         if node.path in self.branches:
                             if not node.props: node.props = {}
@@ -5732,8 +5752,8 @@ class StreamParser:
                             # A delete or replace with no from set
                             # can occur if the directory is empty.
                             # We can just ignore this case.
-                            if node.from_set is not None:
-                                for child in node.from_set:
+                            if node.fromSet is not None:
+                                for child in node.fromSet:
                                     announce(debugEXTRACT, "r%s: deleting %s" \
                                                  % (revision, child))
                                     newnode = StreamParser.NodeAction()
@@ -5767,24 +5787,24 @@ class StreamParser:
                     # Exception: If the target branch has been
                     # deleted, perform a normal copy and interpret
                     # this as an ad-hoc branch merge.
-                    if node.from_path:
-                        branchcopy = node.from_path in self.branches \
+                    if node.fromPath:
+                        branchcopy = node.fromPath in self.branches \
                                          && node.path in self.branches \
                                          && node.path not in self.branchdeletes
                         announce(debugTOPOLOGY, "r%s: directory copy to %s from " \
                                      "r%s~%s (branchcopy %s)" \
                                      % (revision,
                                         node.path,
-                                        node.from_rev,
-                                        node.from_path,
+                                        node.fromRev,
+                                        node.fromPath,
                                         branchcopy))
                         # Update our .gitignore list so that it includes those
                         # in the newly created copy, to ensure they correctly
                         # get deleted during a future directory deletion.
-                        l = len(node.from_path)
+                        l = len(node.fromPath)
                         for sourcegi, value in list((gi,v) for (gi,v) in
                                     self.active_gitignores.items()
-                                    if gi.startswith(node.from_path)):
+                                    if gi.startswith(node.fromPath)):
                             destgi = node.path + sourcegi[l:]
                             self.active_gitignores[destgi] = value
                         if branchcopy:
@@ -5793,10 +5813,10 @@ class StreamParser:
                             # executable bits across branch copies. If we needed
                             # to preserve any other properties, self.propagate
                             # would need to have property maps as values.
-                            for source in node.from_set:
-                                lookback = filemaps[node.from_rev][source]
+                            for source in node.fromSet:
+                                lookback = filemaps[node.fromRev][source]
                                 if lookback.props && "svn:executable" in lookback.props:
-                                    stem = source[len(node.from_path):]
+                                    stem = source[len(node.fromPath):]
                                     targetpath = node.path + stem
                                     self.propagate[targetpath] = true
                                     announce(debugTOPOLOGY, "r%s: exec-mark %s" \
@@ -5820,30 +5840,30 @@ class StreamParser:
                                     subnode.action = sdADD
                                     subnode.kind = sdFILE
                                     subnode.blob = blob
-                                    subnode.content_hash = \
+                                    subnode.contentHash = \
                                             hashlib.md5(polybytes(ignore)).hexdigest()
                                     subnode.generated = true
                                     expanded_nodes.append(subnode)
                             # Now generate copies for all files in the source
-                            for source in node.from_set:
-                                lookback = filemaps[node.from_rev][source]
+                            for source in node.fromSet:
+                                lookback = filemaps[node.fromRev][source]
                                 if lookback is None:
                                     raise Fatal("r%s: can't find ancestor %s" \
                                              % (revision, source))
                                 subnode = StreamParser.NodeAction()
                                 subnode.path = node.path + \
-                                        source[len(node.from_path):]
+                                        source[len(node.fromPath):]
                                 subnode.revision = revision
-                                subnode.from_path = lookback.path
-                                subnode.from_rev = lookback.revision
-                                subnode.from_hash = lookback.content_hash
+                                subnode.fromPath = lookback.path
+                                subnode.fromRev = lookback.revision
+                                subnode.fromHash = lookback.contentHash
                                 subnode.props = lookback.props
                                 subnode.action = sdADD
                                 subnode.kind = sdFILE
                                 announce(debugTOPOLOGY, "r%s: generated copy r%s~%s -> %s" \
                                              % (revision,
-                                                subnode.from_rev,
-                                                subnode.from_path,
+                                                subnode.fromRev,
+                                                subnode.fromPath,
                                                 subnode.path))
                                 subnode.generated = true
                                 expanded_nodes.append(subnode)
@@ -5885,7 +5905,7 @@ class StreamParser:
                                 newnode.action = sdADD
                                 newnode.kind = sdFILE
                                 newnode.blob = blob
-                                newnode.content_hash = \
+                                newnode.contentHash = \
                                         hashlib.md5(polybytes(ignore)).hexdigest()
                                 announce(debugIGNORES, "r%s: queuing up %s generation with:\n%s." % (revision, newnode.path, node.props["svn:ignore"]))
                                 # Must append rather than simply performing.
@@ -5930,9 +5950,9 @@ class StreamParser:
                     else if node.action in (sdADD, sdCHANGE, sdREPLACE):
                         # Try to figure out who the ancestor of
                         # this node is.
-                        if node.from_path or node.from_hash:
-                            # Try first via from_path
-                            ancestor = filemaps[node.from_rev][node.from_path]
+                        if node.fromPath or node.fromHash:
+                            # Try first via fromPath
+                            ancestor = filemaps[node.fromRev][node.fromPath]
                             if debugEnable(debugTOPOLOGY):
                                 if ancestor:
                                     announce(debugSHOUT, "r%s~%s -> %s (via filemap)" % \
@@ -5941,8 +5961,8 @@ class StreamParser:
                                     announce(debugSHOUT, "r%s~%s has no ancestor (via filemap)" % \
                                              (node.revision, node.path))
                             # Fallback on the first blob that had this hash
-                            if node.from_hash && not ancestor:
-                                ancestor = self.hashmap[node.from_hash]
+                            if node.fromHash && not ancestor:
+                                ancestor = self.hashmap[node.fromHash]
                                 announce(debugTOPOLOGY, "r%s~%s -> %s (via hashmap)" % \
                                          (node.revision, node.path, ancestor))
                             if not ancestor && not node.path.endswith(".gitignore"):
@@ -5960,16 +5980,16 @@ class StreamParser:
                             ancestor = None
                         # Time for fileop generation
                         if node.blob is not None:
-                            if node.content_hash in self.hashmap:
+                            if node.contentHash in self.hashmap:
                                 # Blob matches an existing one -
                                 # node was created by a
                                 # non-Subversion copy followed by
                                 # add.  Get the ancestry right,
                                 # otherwise parent pointers won't
                                 # be computed properly.
-                                ancestor = self.hashmap[node.content_hash]
-                                node.from_path = ancestor.from_path
-                                node.from_rev = ancestor.from_rev
+                                ancestor = self.hashmap[node.contentHash]
+                                node.fromPath = ancestor.fromPath
+                                node.fromRev = ancestor.fromRev
                                 node.blobmark = ancestor.blobmark
                             else:
                                 # An entirely new blob
@@ -5980,8 +6000,8 @@ class StreamParser:
                                 # content hash.  Don't record
                                 # them, otherwise they'll all
                                 # collide :-)
-                                if node.content_hash:
-                                    self.hashmap[node.content_hash] = node
+                                if node.contentHash:
+                                    self.hashmap[node.contentHash] = node
                         else if ancestor:
                             node.blobmark = ancestor.blobmark
                         else:
@@ -6027,7 +6047,7 @@ class StreamParser:
                         # we need to generate a modify with an old mark
                         # but new permissions.
                         generated_file_copy = node.generated
-                        subversion_file_copy = (node.from_hash is not None)
+                        subversion_file_copy = (node.fromHash is not None)
                         if (new_content or
                             generated_file_copy or
                             subversion_file_copy or
@@ -6132,7 +6152,7 @@ class StreamParser:
                 for newcommit in newcommits:
                     if commit.mark in self.branchlink: continue
                     copies = [node for node in record.nodes \
-                              if node.from_rev is not None \
+                              if node.fromRev is not None \
                               && node.path.startswith(newcommit.common)]
                     if copies && debugEnable(debugTOPOLOGY):
                         announce(debugSHOUT, "r%s: copy operations %s" %
@@ -6145,7 +6165,7 @@ class StreamParser:
                     # tree would be wrong if we didn't.
                     latest = next((node for node in copies
                                     if node.kind == sdDIR &&
-                                       node.from_path &&
+                                       node.fromPath &&
                                        node.path == newcommit.common),
                                   None)
                     if latest is not None:
@@ -6155,7 +6175,7 @@ class StreamParser:
                     # Use may have botched a branch creation by doing a
                     # non-Subversion directory copy followed by a bunch of
                     # Subversion adds. Blob hashes will match existing files,
-                    # but from_rev and from_path won't be set at parse time.
+                    # but fromRev and fromPath won't be set at parse time.
                     # Our code detects this case and makes file
                     # backlinks, but can't deduce the directory copy.
                     # Thus, we have to treat multiple file copies as
@@ -6183,10 +6203,10 @@ class StreamParser:
                         # Use max() on the reversed iterator since max returns
                         # the first item with the max key and we want the last
                         latest = max(reversed(copies),
-                                     key=lambda node: int(node.from_rev))
+                                     key=lambda node: int(node.fromRev))
                     if latest is not None:
                         prev = last_relevant_commit(
-                                latest.from_rev, latest.from_path,
+                                latest.fromRev, latest.fromPath,
                                 operator.attrgetter("common"))
                         if prev is None:
                             if debugEnable(debugTOPOLOGY):
@@ -6200,7 +6220,7 @@ class StreamParser:
                                          (newcommit.legacyID,
                                           newcommit.mark,
                                           newcommit.common,
-                                          latest.from_rev,
+                                          latest.fromRev,
                                           prev.mark,
                                           prev.common
                                           ))
@@ -6357,14 +6377,14 @@ class StreamParser:
                 for node in record.nodes:
                     if node.kind != sdDIR: continue
                     # Mutate the mergeinfo according to copies
-                    if node.from_rev:
-                        assert int(node.from_rev) < int(revision)
+                    if node.fromRev:
+                        assert int(node.fromRev) < int(revision)
                         mergeinfo.copyFrom(
                                 node.path,
-                                mergeinfos.get(node.from_rev) or PathMap(),
-                                node.from_path)
+                                mergeinfos.get(node.fromRev) or PathMap(),
+                                node.fromPath)
                         announce(debugEXTRACT, "r%s~%s mergeinfo copied to %s" \
-                                % (node.from_rev, node.from_path, node.path))
+                                % (node.fromRev, node.fromPath, node.path))
                     # Mutate the filemap according to current mergeinfo.
                     # The general case is multiline: each line may describe
                     # multiple spans merging to this revision; we only consider
@@ -6384,22 +6404,22 @@ class StreamParser:
                     else:
                         for line in info.split('\n'):
                             try:
-                                from_path, ranges = line.split(":", 1)
+                                fromPath, ranges = line.split(":", 1)
                             except ValueError:
                                 continue
                             for span in ranges.split(","):
                                 # Ignore single-rev fields, they are cherry-picks.
                                 # TODO: maybe we should even test if min_rev
-                                # corresponds to some from_rev + 1 to ensure no
+                                # corresponds to some fromRev + 1 to ensure no
                                 # commit has been skipped.
                                 try:
-                                    min_rev, from_rev = span.split("-", 1)
+                                    min_rev, fromRev = span.split("-", 1)
                                 except ValueError:
-                                    min_rev = from_rev = None
-                                if (not min_rev) or (not from_rev): continue
+                                    min_rev = fromRev = None
+                                if (not min_rev) or (not fromRev): continue
                                 # Import mergeinfo from merged branches
                                 try:
-                                    past_merges = mergeinfos[from_rev][(from_path,)]
+                                    past_merges = mergeinfos[fromRev][(fromPath,)]
                                 except KeyError:
                                     pass
                                 else:
@@ -6407,10 +6427,10 @@ class StreamParser:
                                         existing_merges.update(past_merges)
                                 # Svn doesn't fit the merge range to commits on
                                 # the source branch; we need to find the latest
-                                # commit between min_rev and from_rev made on
+                                # commit between min_rev and fromRev made on
                                 # that branch.
                                 from_commit = last_relevant_commit(
-                                                    from_rev, from_path)
+                                                    fromRev, fromPath)
                                 if from_commit is not None && \
                                         int(from_commit.legacyID.split(".",1)[0]) \
                                             >= int(min_rev):
@@ -6418,7 +6438,7 @@ class StreamParser:
                                 else:
                                     self.gripe("cannot resolve mergeinfo "
                                                "source from revision %s for "
-                                               "path %s." % (from_rev,
+                                               "path %s." % (fromRev,
                                                              node.path))
                     mergeinfo[(node.path,)] = own_merges
                     new_merges = own_merges - existing_merges
@@ -6479,7 +6499,7 @@ class StreamParser:
                     continue
                 # Things that cvs2svn created as tag surrogates
                 # get turned into actual tags.
-                m = StreamParser.cvs2svn_tag_re.search(polybytes(event.comment))
+                m = StreamParser.cvs2svnTagRE.search(polybytes(event.comment))
                 if m && not event.hasChildren():
                     fulltag = os.path.join("refs", "tags", polystr(m.group(1)))
                     newtags.append(Reset(self.repo, ref=fulltag,
@@ -6487,7 +6507,7 @@ class StreamParser:
                     deleteables.append(i)
                 # Childless generated branch commits carry no informationn,
                 # and just get removed.
-                m = StreamParser.cvs2svn_branch_re.search(polybytes(event.comment))
+                m = StreamParser.cvs2svnBranchRE.search(polybytes(event.comment))
                 if m && not event.hasChildren():
                     deleteables.append(i)
                 baton.twirl("")
@@ -6542,7 +6562,7 @@ class StreamParser:
         #Pre compile the regex mappings for the next step
         func compile_regex (mapping):
             regex, replace = mapping
-            return re.compile(regex.encode('ascii')), polybytes(replace)
+            return regexp.MustCompile(regex.encode('ascii')), polybytes(replace)
         compiled_mapping = list(map(compile_regex, global_options["svn_branchify_mapping"]))
         # Now pretty up the branch names
         deletia = []
@@ -6692,16 +6712,16 @@ class SubversionDumper:
         fp.write(revprops)
     @staticmethod
     func dump_node(fp, path, kind, action, content="",
-                  from_rev=None, from_path=None,
+                  fromRev=None, fromPath=None,
                   props=None):
         "Emit a Node record describing versioned properties and content."
         fp.write("Node-path: %s\n" % path)
         fp.write("Node-kind: %s\n" % kind)
         fp.write("Node-action: %s\n" % action)
-        if from_rev:
-            fp.write("Node-copyfrom-rev: %s\n" % from_rev)
-        if from_path:
-            fp.write("Node-copyfrom-path: %s\n" % from_path)
+        if fromRev:
+            fp.write("Node-copyfrom-rev: %s\n" % fromRev)
+        if fromPath:
+            fp.write("Node-copyfrom-path: %s\n" % fromPath)
         nodeprops = SubversionDumper.svnprops(props or {}) + "PROPS-END\n"
         fp.write("Prop-content-length: %d\n" % len(nodeprops))
         if content:
@@ -6808,19 +6828,19 @@ class SubversionDumper:
                 creations.append(("tags", None, None))
             self.branches_created.append(svnout)
             if parents and parents[0].mark in self.mark_to_revision && branch != parents[0].color: # Handle empty initial commit(s)
-                from_rev = self.mark_to_revision[parents[0].mark]
+                fromRev = self.mark_to_revision[parents[0].mark]
                 from_branch = SubversionDumper.svnbranch(parents[0].color)
-                creations.append((svnout, from_rev, from_branch))
+                creations.append((svnout, fromRev, from_branch))
                 # Careful about the following - the path map gets mutated in
                 # this loop, you need to get a list of the keys up front or
                 # Python will barf.  Thing is, in Python 3 keys() returns an
                 # iterator...
-                for key in list(self.pathmap[from_rev].keys()):
+                for key in list(self.pathmap[fromRev].keys()):
                     if key.startswith(from_branch + os.sep) && key != from_branch:
                         counterpart = svnout + key[len(from_branch):]
                         self.pathmap[revision][counterpart] = SubversionDumper.FlowState(revision)
-                        self.pathmap[revision][counterpart].subfiles = self.pathmap[from_rev][key].subfiles
-                        self.pathmap[revision][counterpart].is_directory = self.pathmap[from_rev][key].is_directory
+                        self.pathmap[revision][counterpart].subfiles = self.pathmap[fromRev][key].subfiles
+                        self.pathmap[revision][counterpart].is_directory = self.pathmap[fromRev][key].is_directory
             else:
                 creations.append((svnout, None, None))
         # Create all directory segments required
@@ -6834,13 +6854,13 @@ class SubversionDumper:
                 fullpath = os.path.join(svnout, parentdir)
                 if fullpath not in self.pathmap[revision]:
                     creations.append((fullpath, None, None))
-        for (dpath, from_rev, from_path) in creations:
+        for (dpath, fromRev, fromPath) in creations:
             SubversionDumper.dump_node(fp,
                                        path=dpath,
                                        kind="dir",
                                        action="add",
-                                       from_rev=from_rev,
-                                       from_path=from_path)
+                                       fromRev=fromRev,
+                                       fromPath=fromPath)
             self.pathmap[revision][dpath] = SubversionDumper.FlowState(revision)
             self.pathmap[revision][dpath].is_directory = true
             parentdir = os.path.dirname(dpath)
@@ -6903,8 +6923,8 @@ class SubversionDumper:
                                    path=svntarget,
                                    kind="file",
                                    action="add",
-                                   from_path=svnsource,
-                                   from_rev=flow.rev)
+                                   fromPath=svnsource,
+                                   fromRev=flow.rev)
     func make_tag(self, fp, revision, name, log, author, parents):
         announce(debugSVNDUMP, "make_tag%s" % repr((revision, name, log, str(author))))
         tagrefpath = os.path.join("refs/tags", name)
@@ -9199,7 +9219,7 @@ class RepositoryList:
                     notagify = true
                 else:
                     digested.append("^" + re.escape(s) + "$")
-            return re.compile("|".join(digested).encode('ascii')), notagify
+            return regexp.MustCompile("|".join(digested).encode('ascii')), notagify
         try:
             # First pass: compute fileop deletions
             alterations = []
@@ -9648,7 +9668,7 @@ class SelectionParser(object):
                 match =  self.line[:endat]
                 if str is not bytes:
                     match = match.encode(master_encoding)
-                search = re.compile(match).search
+                search = regexp.MustCompile(match).search
             except re.error:
                 raise Recoverable("invalid regular expression")
             self.line = self.line[endat+1:]
@@ -9970,7 +9990,7 @@ Extra profiling for large repositories.  Mainly of interest to reposurgeon
 developers.
 """),
         )
-    unclean = re.compile(r"[^\n]*\n[^\n]".encode('ascii'))
+    unclean = regexp.MustCompile("[^\n]*\n[^\n]".encode('ascii'))
     class LineParse:
         "Parse a command line implementing shell-like syntax."
         func __init__(self, interpreter, line, capabilities=None):
@@ -10111,7 +10131,7 @@ developers.
         self.selection = None
         if line.startswith("#"):
             return ""
-        m = re.compile(r"\s+#".encode('ascii'))
+        m = regexp.MustCompile("\s+#".encode('ascii'))
         if m:
             line = polystr(m.split(polybytes(line))[0])
         # This is the only place in the implementation that knows
@@ -10391,7 +10411,7 @@ developers.
             if matcher[-1] != '/':
                 raise Recoverable("regexp matcher missing trailing /")
             try:
-                search = re.compile(matcher[1:-1].encode('ascii')).search
+                search = regexp.MustCompile(matcher[1:-1].encode('ascii')).search
             except re.error:
                 raise Recoverable("invalid regular expression")
             return lambda p: self.eval_pathset_regex(p, search, flags)
@@ -11210,7 +11230,7 @@ Supports > redirection.
         if self.selection is None:
             self.selection = self.chosen().all()
         with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
-            unmapped = re.compile(("[^@]*$|[^@]*@" + str(self.chosen().uuid) + "$").encode('ascii'))
+            unmapped = regexp.MustCompile(("[^@]*$|[^@]*@" + str(self.chosen().uuid) + "$").encode('ascii'))
             shortset = set()
             deletealls = set()
             disconnected = set()
@@ -11764,7 +11784,7 @@ context the name of the header includes its trailing colon.
                 if len(token) < 2 or token[0] != '/' or token[-1] != '/':
                     raise Recoverable("malformed filter option in mailbox_out")
                 try:
-                    filterRegexp = re.compile(token[1:-1].encode('ascii'))
+                    filterRegexp = regexp.MustCompile(token[1:-1].encode('ascii'))
                 except sre_constants.error as e:
                     raise Recoverable("filter compilation error - %s" % e)
             else if token.startswith(">"):
@@ -12114,7 +12134,7 @@ With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
                                 pattern = parts[1]
                                 if str is not bytes:
                                     pattern = pattern.encode(master_encoding)
-                                self.regex = re.compile(pattern)
+                                self.regex = regexp.MustCompile(pattern)
                             except sre_constants.error as e:
                                 raise Recoverable("filter compilation error - %s" % e)
                             self.sub = lambda s: polystr(self.regex.sub(polybytes(parts[2]),
@@ -13182,7 +13202,7 @@ This command supports > redirection.
             line = parse.line.strip()
             if line:
                 try:
-                    filter_func = re.compile(line.encode('ascii')).search
+                    filter_func = regexp.MustCompile(line.encode('ascii')).search
                 except re.error:
                     raise Recoverable("invalid regular expression")
             for ei, event in self.selected(Commit):
@@ -13630,7 +13650,7 @@ fields are changed and a warning is issued.
             commits = []
             if tagname[0] == '/' and tagname[-1] == '/':
                 # Regexp - can refer to a list of tags matched
-                tagre = re.compile(tagname[1:-1])
+                tagre = regexp.MustCompile(tagname[1:-1])
                 for event in repo.events:
                     if isinstance(event, Tag) and tagre.search(event.name):
                         tags.append(event)
@@ -14190,7 +14210,7 @@ map when the repo is written or rebuilt.
                      (":[0-9]+",
                       lambda p: repo.markToEvent(p)),
                      ):
-                match_re = re.compile((re.escape("[[")+regexp+re.escape("]]")).encode('ascii'))
+                match_re = regexp.MustCompile((re.escape("[[")+regexp+re.escape("]]")).encode('ascii'))
                 for _, event in self.selected():
                     if isinstance(event, (Commit, Tag)):
                         event.comment, new_hits = match_re.subn(
@@ -14708,7 +14728,7 @@ that zone is used.
                 # Doesn't matter that TZ is wrong here, we're only going
                 # to use the day part at most.
                 calendar.timegm(time.strptime(possible_date, "%a %b %d %H:%M:%S %Y"))
-                skipre = re.compile(r'\s+'.join(line.split()[:5]))
+                skipre = regexp.MustCompile("\s+".join(line.split()[:5]))
                 m = skipre.match(line)
                 addr = line[len(m.group(0)):].strip()
                 return addr
