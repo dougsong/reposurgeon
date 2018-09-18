@@ -131,11 +131,16 @@ I can then say
 ----------------------------------------------------------------------
 
 having a guarantee that __enter__() will run at the start of the
-with block scope and __exit__() will run at the end.
+'with' block scope and __exit__() will run at the end.
 
-This ability to create a bounded context with enter and exit hooks that
-are guaranteed to fire even on, e.g., a signal interrupt, is a
-*really valuable* idiom and I miss it extremely in Go.
+This ability to create a bounded context with enter and exit hooks
+that are guaranteed to fire even if there's a panic or terminating
+signal inside the context is a *really valuable* idiom and I miss
+it extremely in Go.
+
+Without it, I have to do spooky-action-at-a-distance things.
+That's a readability/maintainability hit which I think is against the
+spirit of Go, insofar as I understand it.
 
 The Go defer statement is a valiant effort to do something
 interesting in this direction but it's not good enough by itself.
@@ -203,26 +208,26 @@ func exampleFunction() {
     a := "Hello world"
     c := newCriticalRegion()
     try {
-        c.__enter__()
+        c.enter()
         a = doUninterruptibleStuff(a)
     } finally {
-        c.__exit__()
+        c.exit()
     }
     a = innerFunction(a)
     fmt.Print(a)
 }
 ----------------------------------------------------------------------
 
-Or, in parallel with condition setup in if statements:
+Or, in parallel with condition setup in Go if statements:
 
 ----------------------------------------------------------------------
 func exampleFunction() {
     a := "Hello world"
     try c := newCriticalRegion() {
-        c.__enter__()
+        c.enter()
         a = doUninterruptibleStuff(a)
     } finally {
-        c.__exit__()
+        c.exit()
     }
     a = innerFunction(a)
     fmt.Print(a)
@@ -234,9 +239,6 @@ the outer scope.  But I don't see any way to get what I really want -
 the Python context-manager protocol - without introducing a very
 un-Go-like form of magic structure-member naming, so I'd settle
 for try/finally.
-
-Note that this proposal is *not* try/catch, not an effort to get
-around the Go way of error handling.
 
 === No map over slices ===
 
@@ -290,7 +292,8 @@ Go translation reveals that it is remarkably unpleasant, verging on
 
 This is the only real problem I have identified in moving from Python
 regexps to Go ones.  Take that "real" seriously, because regexps are a
-Swiss-army knife I use heavily.
+Swiss-army knife I use heavily; Go is doing well to have only this
+problem.
 
 === Absence of sum/discriminated union types ===
 
@@ -317,7 +320,7 @@ writing a lot of stupid boilerplate code like this:
 --------------------------------------------------------------------
 
 Besides being inelegant, the requirement for a runtime check to
-exhaust all cases is a defect attractor.  It's way to easy to forget
+exhaust all cases is a defect attractor.  It's way too easy to forget
 to write the default case and wind up with silent errors.
 
 Thus, absence of discriminated-sum types is an actual hole in the
@@ -329,6 +332,58 @@ a languge like Python with fully dynamic typing.
 
 I don't have a concrete proposal to fix this yet. If these notes
 are well received I may write one.
+
+=== Absence of structured exceptions ===
+
+Most of this report was written at about the 12% percent point the
+translation. By twice that far in, 23%, another problem about which I
+had not originally been intending to complain became obtrusive. That
+is absence of structured exceptions.
+
+Yes, I'm familiar with all the reasons throw/catch wasn't included in
+Go 1.  Including the laudable goal of forcing programmers to be
+explicit bout error handling and how they propagate errors up their
+call stack.  And I understand that defer/recover was an attempt to
+provide a tractable subset of catchable exceptions that would minimize
+the temptation to sin. Unfortunately the resulting design is slightly
+too weak for my purposes.
+
+Here's my use case. Reposurgeon is an interpreter for a DSL.
+Situations in which I want to panic out and die are rare and mostly
+occur at initialization time. Usually what I want to do instead of
+panicking on error is throw control back to the read/eval loop,
+executing some kind of local cleanup hook on the way out.  Analogous
+situations will frequently occur in, for example, network servers.
+
+To someone used to Lisp's labeled throw/catch or Python's try/except
+with type-valued exceptions this seems unreasonably difficult to do in
+Go. Here's why: In a language with labeled try/catch, or class-valued
+exceptions, I can explicitly target an exception to some level of the
+call stack above me.  In reposurgeon, for example, there are usually
+two levels of interest.  One is the read-eval loop. The other is the
+outermost scope; if an exception gets there I want to call hooks to
+gracefully remove working directories (blob storage associated with
+repository commits) before exiting.
+
+In Go, I don't seem to have a clean option for this.  Yes, panic will
+fire defer hooks up the stack from the function in which it was fired,
+and a recover in one of them can catch it.  This implies that I can
+write a chain of recover/conditional-panic calls, with each level picking
+off the errors of interest to it and passing others upward.
+
+At present, however, panic can only throw a string. So the only way
+for me to declare a catch label (or diagnostic information) is to put
+it in the string, and for every call level that does any catches at
+all to re-panic errors it doesn't want to handle.
+
+There's an obvious point fix to this: change error from a type to
+an interface that requires String().  Allow panickers to throw
+structures upwards, so that (a) recover() can do type-case matches,
+and (b) the recovering level can get diagnostic information that
+is out-of-band of the error message.
+
+I'm aware this would rrause a compatibility issue.  It seems like the
+sort of thing gofix could patch.
 
 === Hieratic documentation ===
 
@@ -417,9 +472,12 @@ that trap.
 
 3. try/finally should be added to the language.
 
-4. Lookbehinds should be added to the regexp library.
+4. The error type should become an interface that only requires String(),
+   allowing panickers to throw structs up the stack.
 
-5. If generics don't fly, a map-over-slice intrinsic should be added.
+5. Lookbehinds should be added to the regexp library.
+
+6. If generics don't fly, a map-over-slice intrinsic should be added.
 
 Not quite actionable yet:
 
