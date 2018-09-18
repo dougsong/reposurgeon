@@ -382,7 +382,7 @@ structures upwards, so that (a) recover() can do type-case matches,
 and (b) the recovering level can get diagnostic information that
 is out-of-band of the error message.
 
-I'm aware this would rrause a compatibility issue.  It seems like the
+I'm aware this would cause a compatibility issue.  It seems like the
 sort of thing gofix could patch.
 
 === Hieratic documentation ===
