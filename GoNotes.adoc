@@ -419,9 +419,7 @@ inhabits the mindset of a Go developer.
 
 It is not very good at providing an entry path into that mindset.  Not
 even for me, and I'm an extreme case of the sort of person for whom it
-*should* do an effective job if it can do that for anyone.  Most
-newbies are not nearly so well equipped as I, and will have a
-correspondingly larger entry problem that it is less able to meet.
+*should* do an effective job if it can do that for anyone.
 
 There is a fix for both problems.  It is not magic, but it is doable.
 
@@ -438,6 +436,8 @@ reasonable map of where everything is and how to find it.
 (3) Curate links to third-party documents (for example notable Stack
 Overflow postings), with dates and attached notes on what parts might
 be obsolete and when the document was last reviewed for correctness.
+
+(4) Bring the very best third-party stuff inside, onto https://golang.org/doc/.
 
 == Accentuating the positive ==
 
