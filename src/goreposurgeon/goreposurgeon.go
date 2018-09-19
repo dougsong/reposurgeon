@@ -60,7 +60,7 @@ package main
 // documentation purposes the Pyton convention of using leading
 // underscores on field names to flag fields tht should never be
 // referenced ouside a method of the associated struct.
-
+//
 // Differences from the Python version
 // 1. whoami() does not read .lynxrc files
 // 2. No Python plugins.
@@ -95,6 +95,60 @@ import (
 	terminal "golang.org/x/crypto/ssh/terminal"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
 )
+
+// Go's panic/defer/recover feature is a weak primitive for catchable
+// exceptions, but it's all we have. So we write a throw/catch pair;
+// throw() must pass its exception payload to panic(), catch() can only be
+// called in a defer hook either at the current level or further up the
+// call stack and must take recover() as its second argument.
+//
+// Here are the defined error classes:
+//
+// parse = malformed fast-import stream or Subversion dump.  Recover
+// by aborting the parse and backing out whatever operation relied on it.
+//
+// command = general command failure, no specific cleanup required, abort
+// to interpreter read-eval loop.
+//
+// extractor = unexpected VCS command behavior inside an extractor class.
+// Abort the attempt to build a repo.
+//
+// mailbox = malformed mailbox-style input.  Abort merging those changes.
+//
+// Unlabeled panics are presumed to be unrecoverable and intended to be
+// full aborts indicating a serious internal error.  These will call a defer
+// hook that nukes the on-disk storage for repositories.
+
+type exception struct {
+	class string
+	message string
+}
+
+func (e exception) Error() string {
+	return e.message
+}
+
+func throw(class string, msg string, args ...interface{}) *exception {
+	// We could call panic() in here but we leave it at the callsite
+	// to clue the compiler in that no return after is required.
+	e := new(exception)
+	e.class = class
+	e.message = fmt.Sprintf(msg, args...)
+	return e
+}
+
+func catch(accept string, x interface{}) *exception {
+	// Because recover() returns interface{}.
+	// Return us to the world of type safety.
+	if x == nil {
+		return nil
+	}
+	err := x.(*exception)
+	if err.class == accept {
+		return err
+	}
+	panic(x)
+}
 
 // Change these in the unlikely the event this is ported to Windows
 const userReadWriteMode = 0777
@@ -770,13 +824,13 @@ var fileFilters = map[string]struct {
 // integer-Unix-timestamp/timezone pairs.
 
 
-type ExtractorMeta struct {
+type CommitMeta struct {
 	ci string
 	ai string
 	branch string
 }
 
-type ExtractorBlock struct {
+type ExtractorMeta struct {
 	name string			// extractor name
 	vcs *VCS			// underlying VCS
 	visible bool			// should it be selectable?
@@ -784,19 +838,19 @@ type ExtractorBlock struct {
 
 type Extractor interface {
 	// Return meta-information about an extractor.
-	getBlock() ExtractorBlock
+	getMeta() ExtractorMeta
         // Gather the topologically-ordered lists of revisions and the parent map
 	// (revlist and parent members)
-	gatherRevisionIDs(*ExtractorBase, *Baton) error
+	gatherRevisionIDs(*RepoStreamer) error
         // Gather all other per-commit data except branch IDs
 	// (ai and ci members in self.meta list elements)
-	gatherCommitData(*ExtractorBase, *Baton) error
+	gatherCommitData(*RepoStreamer) error
         // Gather all branch heads and tags (refs and tags members)
-	gatherAllReferences(*ExtractorBase, *Baton) error
+	gatherAllReferences(*RepoStreamer) error
 	// Color commits with their branch names
-	colorBranches(*ExtractorBase, *Baton) error
+	colorBranches(*RepoStreamer) error
 	// Gather mapping of commit hash -> timestamp (timestamps members)
-	getCommitTimestamps() error
+	gatherCommitTimestamps(*RepoStreamer) error
         // Hook for any cleanup actions required after streaming.
 	postExtract(*Repository)
         // Return true if repo has no unsaved changes.
@@ -807,61 +861,6 @@ type Extractor interface {
 	getComment(string) string
 }
 
-// ExtractorBase is a composition class for repository extractors.
-// Written around commonalities between git and hg; extending further
-// might need structural changes.
-type ExtractorBase struct {
-	m ExtractorMeta
-	// Revision history properties
-        revlist []string		// commit identifiers, oldest first
-        parents map[string][]string	// commit -> [parent-commit, ...]
-        meta map[string]*ExtractorMeta	// commit -> committer/author/branch
-        refs OrderedMap			// 'refs/class/name' -> commit
-        tags []Tag			// Tag objects (annotated tags only)
-}
-
-func (be *ExtractorBase) extractorBaseInit() {
-        be.revlist = make([]string, 0)
-        be.parents = make(map[string][]string)
-        be.meta = make(map[string]*ExtractorMeta)
-        be.refs = newOrderedMap()
-        be.tags = make([]Tag, 0)
-}
-
-func (be *ExtractorBase) getMeta() ExtractorMeta {
-	return be.m
-}
-
-// getRevlist return a list of commit ID strings in commit timestamp order
-func (be *ExtractorBase) getRevlist() []string {
-        return be.revlist
-}
-
-// getTaglist returns a list of tag name strings.
-func (be *ExtractorBase) getTaglist() []Tag {
-        return be.tags
-}
-
-// getParents returns the list of commit IDs of a commit's parents.
-func (be *ExtractorBase) getParents(rev string) []string {
-        return be.parents[rev]
-}
-
-// isTag ia a previcate; does rev refer to a tag?
-func (be *ExtractorBase) isTag(rev string) bool {
-        return strings.HasPrefix(be.meta[rev].branch, "refs/tags/")
-}
-
-// getCommitter returns the committer's ID/date as a string.
-func (be *ExtractorBase) getCommitter(rev string) string {
-        return be.meta[rev].ci
-}
-
-// getAuthors returns a string list of the authors' names and email addresses.
-func (be *ExtractorBase) getAuthors(rev string) []string {
-        return []string{be.meta[rev].ai}
-}
-
 type MixerCapable interface {
 	gatherCommitTimestamps() map[string]time.Time
 	gatherChildTimestamps() map[string]time.Time
@@ -870,19 +869,19 @@ type MixerCapable interface {
 
 // ColorMixer is a mixin class for simulating the git branch-coloring algorithm
 type ColorMixer struct {
-	base *ExtractorBase
+	base *RepoStreamer
         commitStamps map[string]time.Time	// icommit -> timestamp
         childStamps map[string]time.Time	// commit -> timestamp of latest child
 }
 
-func (cm *ColorMixer) colorMixerInit(base *ExtractorBase) {
+func (cm *ColorMixer) colorMixerInit(base *RepoStreamer) {
 	cm.base = base
 	cm.commitStamps = make(map[string]time.Time)
         cm.childStamps = make(map[string]time.Time)
 }
 
 // simulateGitColoring colors branches in the order the tips occur.
-func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *ExtractorBase) {
+func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
         // This algorithm is intended to emulate git's coloring algorithm;
         // note that this includes emulating the fact that git's algorithm
         // is not lossless--that is, it is possible to construct a git
@@ -892,7 +891,7 @@ func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *ExtractorBase) 
 	// branchColor below
         cm.commitStamps = mc.gatherCommitTimestamps()
         if cm.commitStamps  == nil {
-		panic("Could not retrieve commit timestamps.")
+		panic(throw("extractor", "Could not retrieve commit timestamps."))
 	}
         // This will be used in _branchColor below
         cm.childStamps = mc.gatherChildTimestamps()
@@ -952,8 +951,8 @@ func findVCS(name string) *VCS {
 	panic("reposurgeon: failed to find " + name + " in VCS types")
 }
 
-func lineByLine(eb *ExtractorBase, command string, errfmt string, baton *Baton,
-	hook func(string, *ExtractorBase) error) error {
+func lineByLine(rs *RepoStreamer, command string, errfmt string,
+	hook func(string, *RepoStreamer) error) error {
         r, cmd, err1 := readFromProcess(command)
 	if err1 != nil {
 		return err1
@@ -969,14 +968,14 @@ func lineByLine(eb *ExtractorBase, command string, errfmt string, baton *Baton,
 		} else {
 			return fmt.Errorf(errfmt, err2)
 		}
-		hook(line, eb)
+		hook(line, rs)
 	}
 	return nil
 }
 
 // Repository extractor for the git version-control system
 type GitExtractor struct {
-	b ExtractorBlock
+	b ExtractorMeta
 }
 
 func newGitExtractor() *GitExtractor {
@@ -1002,56 +1001,56 @@ func newGitExtractor() *GitExtractor {
 	return ge
 }
 
-func (ge GitExtractor) getBlock() ExtractorBlock {
+func (ge GitExtractor) getMeta() ExtractorMeta {
 	return ge.b
 }
 
-func (ge GitExtractor) getCommitTimestamps() error {
+func (ge GitExtractor) gatherCommitTimestamps(*RepoStreamer) error {
 	return nil
 }
 
-func (ge GitExtractor) gatherRevisionIDs(eb *ExtractorBase, baton *Baton) error {
-	hook := func(line string, eb *ExtractorBase) error {
+func (ge GitExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
+	hook := func(line string, rs *RepoStreamer) error {
 		fields := strings.Fields(line)
-                eb.revlist = append(eb.revlist, fields[0])
-                eb.parents[fields[0]] = fields[1:]
+                rs.revlist = append(rs.revlist, fields[0])
+                rs.parents[fields[0]] = fields[1:]
 		return nil
 	}
-	return lineByLine(eb,
+	return lineByLine(rs,
 		"git log --all --date-order --reverse --format='%H %P'",
 		"git's gatherRevisionIDs: %v",
-		baton, hook)
+		hook)
 }
 
-func (ge GitExtractor) gatherCommitData(eb *ExtractorBase, baton *Baton) error {
-	hook := func(line string, eb *ExtractorBase) error {
+func (ge GitExtractor) gatherCommitData(rs *RepoStreamer) error {
+	hook := func(line string, rs *RepoStreamer) error {
 		line = strings.Trim(line, "\n")
 		fields := strings.Split(line, "|")
-                eb.meta[fields[0]].ci = fields[1]
-                eb.meta[fields[0]].ai = fields[2]
+                rs.meta[fields[0]].ci = fields[1]
+                rs.meta[fields[0]].ai = fields[2]
 		return nil
 	}
-	return lineByLine(eb,
+	return lineByLine(rs,
 		"git log --all --reverse --date=raw --format='%H|%cn <%ce> %cd|%an <%ae> %ad'",
 		"git's gatherCommitData: %v",
-		baton, hook)
+		hook)
 }
 
 
-func (ge GitExtractor) gatherAllReferences(eb *ExtractorBase, baton *Baton) error {
+func (ge GitExtractor) gatherAllReferences(rs *RepoStreamer) error {
 	err := filepath.Walk(".git/refs", func(pathname string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
 		data, err := ioutil.ReadFile(pathname)
 		if err != nil {
-			return fmt.Errorf("while waling the refs tree: %v", err) 
+			return fmt.Errorf("while walking the refs tree: %v", err) 
 		}
 		// 5: strips off the.git/ prefix
-		eb.refs.set(pathname[5:], strings.Trim(string(data), "\n"))
+		rs.refs.set(pathname[5:], strings.Trim(string(data), "\n"))
 		return nil
 	})
-        baton.twirl("")
+        rs.baton.twirl("")
 
         rf, cmd, err1 := readFromProcess("git tag -l")
 	if err1 != nil {
@@ -1069,7 +1068,10 @@ func (ge GitExtractor) gatherAllReferences(eb *ExtractorBase, baton *Baton) erro
 			return err2
 		}
 		tag := strings.Trim(fline, "\n")
-		taghash := capture("git rev-parse " + tag)
+		taghash, terr := captureFromProcess("git rev-parse " + tag)
+		if terr != nil {
+			panic(throw("extractor", "Could not spawn git rev-parse: %v", terr))
+		}
 		taghash = strings.Trim(taghash, "\n")
 		// Annotated tags are first-class objects with their
 		// own hashes.  The hash of a lightweight tag is just
@@ -1105,21 +1107,21 @@ func (ge GitExtractor) gatherAllReferences(eb *ExtractorBase, baton *Baton) erro
 				comment += line + "\n"
 			}
 		}
-		eb.refs.set("refs/tags/" + tag, objecthash)
+		rs.refs.set("refs/tags/" + tag, objecthash)
 		if objecthash != taghash {
 			// committish isn't a mark; we'll fix that later
 			tagobj := *newTag(nil, tag, objecthash, nil, 
 				newAttribution(tagger),
 				comment)
-			eb.tags = append(eb.tags, tagobj)
+			rs.tags = append(rs.tags, tagobj)
 		}
-		baton.twirl("")
+		rs.baton.twirl("")
 	}
 	return nil
 }
 
 // colorBranches colors all commits with their branch name.
-func (ge GitExtractor) colorBranches(eb *ExtractorBase, baton *Baton) error {
+func (ge GitExtractor) colorBranches(rs *RepoStreamer) error {
         // This is really cheating since fast-export could give us the
         // whole repo, but it's the only way I've found to get the correct
         // mapping of commits to branches, and we still want to test the
@@ -1133,9 +1135,12 @@ func (ge GitExtractor) colorBranches(eb *ExtractorBase, baton *Baton) error {
 	if err2 != nil {
 	    return err1
 	}
-	data := capture("git fast-export --all --export-marks=" + file.Name())
+	data, err3 := captureFromProcess("git fast-export --all --export-marks=" + file.Name())
+	if err3 != nil {
+		panic(throw("extractor", "Couldn't spawn git-fast-export: %v", err3))
+	}
 	rf := bufio.NewReader(markfile)
-	baton.twirl("")
+	rs.baton.twirl("")
 	marks := make(map[string]string)
 	for {
 		fline, err3 := rf.ReadString(byte('\n'))
@@ -1160,20 +1165,23 @@ func (ge GitExtractor) colorBranches(eb *ExtractorBase, baton *Baton) error {
 		} else if (fields[0] == "mark") && (branch != "") {
 			h := marks[fields[1]]
 			// This is a valid (commit hash, branch name) pair
-			eb.meta[h].branch = branch
+			rs.meta[h].branch = branch
 			branch = ""
 		} else if branch != "" {
 			// The mark line for a commit should always be the
 			// next line after the commit line, so this should
 			// never happen, but we put it in just in case
-			panic("could not parse branch information")
+			panic(throw("extractor", "Could not parse branch information"))
 		}
 	}
 	return nil
 }
 
 func (ge GitExtractor) _metadata(rev string, format string) string {
-        line := capture(fmt.Sprintf("git log -1 --format='%s' %s", format, rev))
+        line, err := captureFromProcess(fmt.Sprintf("git log -1 --format='%s' %s", format, rev))
+	if err != nil {
+		panic(throw("extractor", "Couldn't spawn git log: %v", err))
+	}
 	if line[len(line)-1] == '\n' {
 		line = line[:len(line)-1]
 	}
@@ -1186,13 +1194,21 @@ func (ge GitExtractor) postExtract(_repo *Repository) {
 
 // isClean is a predicate;  return True if repo has no unsaved changes.
 func (ge GitExtractor) isClean() bool {
-        return capture("git ls-files --modified") == ""
+        data, err := captureFromProcess("git ls-files --modified")
+	if err != nil {
+		panic(throw("extractor", "Couldn't spawn git ls-files --modified: %v", err))
+	}
+	return data == ""
 }
 
 // checkout checks the repository out to a specified revision.
 func (ge GitExtractor) checkout(rev string) stringSet {
         exec.Command("git", "checkout", "--quiet",  rev).Run()
-        manifest := strings.Split(capture("git ls-files"), "\n")
+        data, err := captureFromProcess("git ls-files")
+	if err != nil {
+		panic(throw("extractor", "Couldn't spawn git ls-files in checkout: %v", err))
+	}
+        manifest := strings.Split(data, "\n")
 	if manifest[len(manifest)-1] == "" {
 		manifest = manifest[:len(manifest)-1]
 	}
@@ -1206,7 +1222,7 @@ func (ge GitExtractor) getComment(rev string) string {
 
 // Repository extractor for the hg version-control system
 type HgExtractor struct {
-	b ExtractorBlock
+	b ExtractorMeta
         tagsFound bool
         bookmarksFound bool
 }
@@ -1222,18 +1238,18 @@ func newHgExtractor() *HgExtractor {
 	return ge
 }
 
-func (he HgExtractor) getBlock() ExtractorBlock {
+func (he HgExtractor) getMeta() ExtractorMeta {
 	return he.b
 }
 
 //gatherRevisionIDs gets the topologically-ordered list of revisions and parents.
-func gatherRevisionIDs(eb *ExtractorBase, baton *Baton) error {
+func gatherRevisionIDs(rs *RepoStreamer) error {
         // hg changesets can only have up to two parents
         // we have to use short (12-nibble) hashes because that's all "hg tags"
         // and "hg branches" give us.  Hg's CLI is rubbish.
-	hook := func(line string, eb *ExtractorBase) error {
+	hook := func(line string, rs *RepoStreamer) error {
 		fields := strings.Fields(line)
-		eb.revlist = append(eb.revlist, fields[0])
+		rs.revlist = append(rs.revlist, fields[0])
                 // non-existent parents are given all-0s hashes.
                 // Did I mention that the Hg CLI is rubbish?
 		parents := make([]string, 0)
@@ -1242,46 +1258,47 @@ func gatherRevisionIDs(eb *ExtractorBase, baton *Baton) error {
 				parents = append(parents, f)
 			}
 		}
-		eb.parents[fields[0]] = parents
+		rs.parents[fields[0]] = parents
 		return nil
 	}
-	err := lineByLine(eb,
+	err := lineByLine(rs,
 		"hg log --template {node|short} {p1node|short} {p2node|short}\\n",
 		"hg's gatherRevisionIDs: %v",
-		baton, hook)
+		hook)
 	// No way to reverse the log order, so it has to be done here
-	for i := len(eb.revlist)/2-1; i >= 0; i-- {
-		opp := len(eb.revlist)-1-i
-		eb.revlist[i], eb.revlist[opp] = eb.revlist[opp], eb.revlist[i]
+	for i := len(rs.revlist)/2-1; i >= 0; i-- {
+		opp := len(rs.revlist)-1-i
+		rs.revlist[i], rs.revlist[opp] = rs.revlist[opp], rs.revlist[i]
 	}
 	
 	return err	
 }
 
-/*
-    def hg_with_err(self, *cmdline):
-        "Call hg and collect the error code. Returns the data directly, not a stream."
-        errcode = []
-        output = ""
-        // Since we must read the entire data before we know the error return,
-        // read it all into memory and return the block.
-        with popenOrDie("hg "+" ".join(["'%s'"%(s,) for s in cmdline]),
-                                         errhandler=lambda e: [errcode.append(e), True][1]
-                                         ) as fp:
-            output = polystr(fp.read())
-        return (output, errcode[0] if len(errcode) > 0 else 0)
-    def gatherCommitData(*Baton):
-        "Get all other per-commit data except branch IDs"
-        assert baton is not None // pacify pylint
-        with he.hg_or_die("log", "--template", '{node|short}|{sub(r"<([^>]*)>", "", author|person)} <{author|email}> {date|rfc822date}\\n') as fp:
-            for line in fp:
-                (h, ci) = polystr(line).strip().split('|')
+// gatherCommitData gets all other per-commit data except branch IDs
+func gatherCommitData(rs *RepoStreamer) error {
+	hook := func(line string, rs *RepoStreamer) error {
+		fields := strings.Fields(line)
+		hash := fields[0]
+		ci := fields[1]
                 // Because hg doesn't store separate author and committer info,
-                // we just use the committer for both.
-                he.meta[h] = {'ci':ci, 'ai':ci}
-    def gatherAllReferences(*Baton):
+                // we just use the committer for both.  Alternate possibility,
+		// just set the committer - I (ESR) believe git does that
+		// defaulting itself.  But let's not count on it, since we
+		// might be handing the history stream to somebody's importer
+		// that handles that edge case differently.
+		rs.meta[hash].ci = ci
+		rs.meta[hash].ai = ci
+		return nil
+	}
+	return lineByLine(rs,
+		`{node|short}|{sub(r"<([^>]*)>", "", author|person)} <{author|email}> {date|rfc822date}\n`,
+		"hg's gatherCommitData: %v",
+		hook)
+}
+
+/*
+    def gatherAllReferences():
         "Find all branch heads and tags"
-        assert baton is not None // pacify pylint
 
         // Some versions of mercurial can return an error for showconfig
         // when the config is not present. This isn't an error.
@@ -1392,11 +1409,15 @@ func gatherRevisionIDs(eb *ExtractorBase, baton *Baton) error {
 
 // isClean returns True if repo has no unsaved changes
 func (he HgExtractor) isClean() bool {
-        return capture("hg status --modified") == ""
+        data, err := captureFromProcess("hg status --modified")
+	if err != nil {
+		panic(throw("extractor", "Couldn't spawn hg status --modified: %v", err))
+	}
+	return data == ""
 }
 
 /*
-    def checkout(self, rev, filemap):
+    def checkout(self, rev, visibleFiles):
         "Check the directory out to a specified revision, return a manifest."
         pwd = os.getcwd()
         errcode = he.hg_with_err("update", "-C", rev)[1]
@@ -1427,9 +1448,9 @@ func (he HgExtractor) isClean() bool {
 
             // Since all is not well, clear everything and try from zero. This
             // sidesteps some issues with problematic checkins.
-            he.hg_capture("update", "-C", "null") // Remove checked in files.
+            he.hg_captureFromProcess("update", "-C", "null") // Remove checked in files.
             os.chdir(pwd)
-            he.hg_capture("purge", "--config", "extensions.purge=", "--all") // Remove extraneous files.
+            he.hg_captureFromProcess("purge", "--config", "extensions.purge=", "--all") // Remove extraneous files.
             os.chdir(pwd)
 
             // Remove everything else. Purge is supposed to do this, but doesn't.
@@ -1445,11 +1466,11 @@ func (he HgExtractor) isClean() bool {
             // If there are subrepos, use revert to fake an update, but exclude
             // the subrepo paths, which are probably borken.
             if len(subrepo_args) > 0:
-                he.hg_capture("revert", "--all", "--no-backup", "-r", rev, *subrepo_args)
+                he.hg_captureFromProcess("revert", "--all", "--no-backup", "-r", rev, *subrepo_args)
                 os.chdir(pwd)
-                he.hg_capture("debugsetparents", rev)
+                he.hg_captureFromProcess("debugsetparents", rev)
                 os.chdir(pwd)
-                he.hg_capture("debugrebuilddirstate")
+                he.hg_captureFromProcess("debugrebuilddirstate")
                 os.chdir(pwd)
             else:
                 reup_txt, reup_err = he.hg_with_err("update", "-C", rev)
@@ -1457,21 +1478,29 @@ func (he HgExtractor) isClean() bool {
                     raise Fatal("Failed to update to revision %s: %s" % (rev, reup_txt))
                 os.chdir(pwd)
 
-        manifest = he.hg_capture("manifest").rstrip("\n").split("\n")
+        manifest = he.hg_captureFromProcess("manifest").rstrip("\n").split("\n")
         return manifest
 */
 
 // getComment returns a commit's change comment as a string.
 func (he HgExtractor) getComment(rev string) string {
-        return capture("log -r " + rev + " --template {desc}\\n")
+        data, err := captureFromProcess("hg log -r " + rev + " --template {desc}\\n")
+	if err != nil {
+		panic(throw("extractor", "Couldn't spawn hg log: %v", err))
+	}
+	return data
 }
 
 // Repository factory driver class for all repo analyzers.
 type RepoStreamer struct {
-	base ExtractorBase
+        revlist []string		// commit identifiers, oldest first
+        parents map[string][]string	// commit -> [parent-commit, ...]
+        meta map[string]*CommitMeta	// commit -> committer/author/branch
+        refs OrderedMap			// 'refs/class/name' -> commit
+        tags []Tag			// Tag objects (annotated tags only)
         tagseq int
         commitMap map[string]*Commit
-        filemap map[string]map[string]signature
+        visibleFiles map[string]map[string]signature
         hashToMark map[[sha1.Size]byte]string
         baton *Baton
 	extractor Extractor
@@ -1479,18 +1508,53 @@ type RepoStreamer struct {
 
 func newRepoStreamer(extractor Extractor) *RepoStreamer {
 	rs := new(RepoStreamer)
-	rs.base.extractorBaseInit()
+        rs.revlist = make([]string, 0)
+        rs.parents = make(map[string][]string)
+        rs.meta = make(map[string]*CommitMeta)
+        rs.refs = newOrderedMap()
+        rs.tags = make([]Tag, 0)
         rs.tagseq = 0
         rs.commitMap = make(map[string]*Commit)
-        rs.filemap = make(map[string]map[string]signature)
+        rs.visibleFiles = make(map[string]map[string]signature)
         rs.hashToMark = make(map[[sha1.Size]byte]string)
 	rs.extractor = extractor
 	return rs
 }
 
+// getRevlist return a list of commit ID strings in commit timestamp order
+func (be *RepoStreamer) getRevlist() []string {
+        return be.revlist
+}
+
+// getTaglist returns a list of tag name strings.
+func (be *RepoStreamer) getTaglist() []Tag {
+        return be.tags
+}
+
+// getParents returns the list of commit IDs of a commit's parents.
+func (be *RepoStreamer) getParents(rev string) []string {
+        return be.parents[rev]
+}
+
+// isTag ia a previcate; does rev refer to a tag?
+func (be *RepoStreamer) isTag(rev string) bool {
+        return strings.HasPrefix(be.meta[rev].branch, "refs/tags/")
+}
+
+// getCommitter returns the committer's ID/date as a string.
+func (be *RepoStreamer) getCommitter(rev string) string {
+        return be.meta[rev].ci
+}
+
+// getAuthors returns a string list of the authors' names and email addresses.
+func (be *RepoStreamer) getAuthors(rev string) []string {
+        return []string{be.meta[rev].ai}
+}
+
+// fileSetAt returns the set of all files visible at a revision
 func (rs *RepoStreamer) fileSetAt(revision string) stringSet {
 	var fs stringSet
-	for key, _ := range rs.filemap[revision] {
+	for key, _ := range rs.visibleFiles[revision] {
 		fs.Add(key)
 	}
 	// Warning: order is nondeterministic 
@@ -1502,49 +1566,61 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
         if !rs.extractor.isClean() {
 		return nil, fmt.Errorf("repository directory has unsaved changes.")
 	}
-	meta := rs.extractor.getBlock()
+
+	rs.baton = newBaton("Extracting", "", progress)
+	defer rs.baton.exit()
+
+	var err error
+	defer func() {
+		if thrown := catch("extractor", recover()); thrown != nil {
+			if strings.HasPrefix(thrown.class, "extractor") {
+				complain(thrown.message)
+				err = errors.New(thrown.message)
+			}
+		}
+	}()
+
+	meta := rs.extractor.getMeta()
         repo.makedir()
 	front := fmt.Sprintf("#reposurgeon sourcetype %s\n", meta.vcs.name)
 	repo.addEvent(*newPassthrough(repo, front))
 
-	baton := newBaton("Extracting", "", progress)
-	var err error
-	err = rs.extractor.gatherRevisionIDs(&rs.base, baton)
+	err = rs.extractor.gatherRevisionIDs(rs)
 	if err != nil {
 		return nil, fmt.Errorf("while gathering revisions: %v", err)
 	}
-	baton.twirl("")
-	err = rs.extractor.gatherCommitData(&rs.base, baton)
+	rs.baton.twirl("")
+	err = rs.extractor.gatherCommitData(rs)
 	if err != nil {
 		return nil, fmt.Errorf("while gathering commit data: %v", err)
 	}
-	baton.twirl("")
-	err = rs.extractor.gatherAllReferences(&rs.base, baton)
+	rs.baton.twirl("")
+	err = rs.extractor.gatherAllReferences(rs)
 	if err != nil {
 		return nil, fmt.Errorf("while gathering tag/branch refs: %v", err)
 	}
-	baton.twirl("")
+	rs.baton.twirl("")
 	// Sort branch/tag references by target revision ID, earliest first
 	// Needs to be done before branch coloring because the simu;ation
 	// of the Git branch-coloring alorithm needs it.  Also controls the
 	// order in which annotated tags and resets are output.
-	rs.base.refs.valueLess = func(a string, b string) bool {
-		for _, item := range rs.base.revlist {
+	rs.refs.valueLess = func(a string, b string) bool {
+		for _, item := range rs.revlist {
 			if item == a {
 				return true
 			} else if item == b {
 				return false
 			}
 		}
-		panic("did not find revision IDs in revlist")
+		panic(throw("extractor", "Did not find revision IDs in revlist"))
 	}
-	sort.Sort(rs.base.refs)
-	baton.twirl("")
-	rs.extractor.colorBranches(&rs.base, baton)
+	sort.Sort(rs.refs)
+	rs.baton.twirl("")
+	rs.extractor.colorBranches(rs)
 
 	var uncolored []string
-	for _, revision := range rs.base.revlist {
-		if rs.base.meta[revision].branch == "" {
+	for _, revision := range rs.revlist {
+		if rs.meta[revision].branch == "" {
 			uncolored = append(uncolored, revision)
 		}
 	}
@@ -1556,24 +1632,24 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 			return nil, fmt.Errorf("some branches do not have local ref names.")
 		}
 	}
-	baton.twirl("")
+	rs.baton.twirl("")
 
-	consume := make([]string, len(rs.base.getRevlist()))
-	copy(consume, rs.base.getRevlist())
+	consume := make([]string, len(rs.getRevlist()))
+	copy(consume, rs.getRevlist())
 	for _, revision  := range consume {
                 commit := newCommit(repo)
-                baton.twirl("")
+                rs.baton.twirl("")
                 present := rs.extractor.checkout(revision)
-                parents := rs.base.getParents(revision)
-		commit.committer = *newAttribution(rs.base.getCommitter(revision))
-		for _, a := range rs.base.getAuthors(revision) {
+                parents := rs.getParents(revision)
+		commit.committer = *newAttribution(rs.getCommitter(revision))
+		for _, a := range rs.getAuthors(revision) {
 			commit.authors = append(commit.authors,
 				*newAttribution(a))
 		}
 		for _, rev := range parents{
 			commit.addParentCommit(rs.commitMap[rev])
 		}
-                commit.setBranch(rs.base.meta[revision].branch)
+                commit.setBranch(rs.meta[revision].branch)
                 commit.comment = rs.extractor.getComment(revision)
                 if debugEnable(debugEXTRACT) {
 			msg := strconv.Quote(commit.comment)
@@ -1584,8 +1660,8 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
                 // for a merge commit; fileops from all other parents have to be
                 // added explicitly
                 for _, rev := range parents[:1] {
-			for k,v := range rs.filemap[rev] {
-				rs.filemap[revision][k] = v
+			for k,v := range rs.visibleFiles[rev] {
+				rs.visibleFiles[revision][k] = v
 			}
 		}
 
@@ -1610,19 +1686,19 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 					// to an existing blob;
 					// generate modify, copy, or
 					// rename as appropriate.
-					if _, ok := rs.filemap[revision][pathname]; !ok || rs.filemap[revision][pathname]!=*newsig {
+					if _, ok := rs.visibleFiles[revision][pathname]; !ok || rs.visibleFiles[revision][pathname]!=*newsig {
 						announce(debugEXTRACT, "r%s: update for %s", revision, pathname)
 						found := false
 						// FIXME: may fail on R case due
 						// to deleting dict items while walking the list
-						for oldpath, oldsig := range rs.filemap[revision] {
+						for oldpath, oldsig := range rs.visibleFiles[revision] {
 							if oldsig == *newsig {
 								found = true		
 								if removed.Contains(oldpath) {
 									op := newFileOp(repo)
 									op.construct("R", oldpath, pathname)
 									commit.appendOperation(*op)
-									delete(rs.filemap[revision], oldpath)
+									delete(rs.visibleFiles[revision], oldpath)
 								} else if oldpath != pathname {
 									op := newFileOp(repo)
 									op.construct("C", oldpath, pathname)
@@ -1658,13 +1734,13 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 					op.construct("M", newsig.perms, blobmark, pathname)
 					commit.appendOperation(*op)
 				}
-				rs.filemap[revision][pathname] = *newsig
+				rs.visibleFiles[revision][pathname] = *newsig
 			}
 			for _, tbd := range removed {
 				op := newFileOp(repo)
 				op.construct("D", tbd)
 				commit.appendOperation(*op)
-				delete(rs.filemap[revision], tbd)
+				delete(rs.visibleFiles[revision], tbd)
 			}
                 }
                 if len(parents) == 0 { // && commit.branch != "refs/heads/master"
@@ -1682,7 +1758,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 	// Note: we time-sorted the resets when they were picked up;
 	// this is to ensure that the ordering is (a) deterministic,
 	// and (b) easily understood.
-	for resetname, revision := range rs.base.refs.dict {
+	for resetname, revision := range rs.refs.dict {
 		if strings.Index(resetname, "/tags/") == -1 {
 			// FIXME: what if revision is unknown?
 			// keep previous behavior for now
@@ -1693,7 +1769,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 	}
 	// Last, append tag objects.
 	// FIXME: Sort by tagger-date
-	for _, tag := range rs.base.getTaglist() {
+	for _, tag := range rs.getTaglist() {
 		// Hashes produced by the GitExtractor are turned into proper
 		// committish marks here.
 		c, ok := rs.commitMap[tag.committish]
@@ -1711,8 +1787,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 	//	}
 	//}
 	repo.vcs = meta.vcs
-	baton.exit()
-	return repo, nil
+	return repo, err
 }
 
 // No user-serviceable parts below this line
@@ -1740,25 +1815,18 @@ func newBaton(prompt string, endmsg string, enable bool) *Baton {
 	me.endmsg = endmsg
 	if enable {
 		me.stream = os.Stdout
+		me.stream.Write([]byte(me.prompt + "...[\b"))
+		if me.isatty() {
+			me.stream.Write([]byte(" \b"))
+		}
+		me.counter = 0
+		me.starttime = time.Now()
 	}
 	return me
 }
 
 func (baton *Baton) isatty() bool {
 	return terminal.IsTerminal(int(baton.stream.Fd()))
-}
-
-func (baton *Baton) enter() *Baton {
-	if baton.stream != nil {
-		baton.stream.Write([]byte(baton.prompt + "...[\b"))
-		if baton.isatty() {
-			baton.stream.Write([]byte(" \b"))
-		}
-		//baton.stream.Flush()
-		baton.counter = 0
-		baton.starttime = time.Now()
-	}
-	return baton
 }
 
 func (baton *Baton) startcounter(countfmt string, initial int) {
@@ -1823,7 +1891,6 @@ func (baton *Baton) twirl(ch string) {
 			} else {
 				baton.stream.Write([]byte{"-/|\\"[baton.counter%4]})
 				baton.erase = true
-				//baton.stream.flush()
 				baton.counter++
 			}
 		}
@@ -1839,13 +1906,6 @@ func (baton *Baton) exit() {
 		baton.stream.Write([]byte(fmt.Sprintf("]\b...(%s) %s.\n",
 			time.Since(baton.starttime), baton.endmsg)))
 	}
-}
-
-func (baton *Baton) wraps(hook func(baton *Baton)) {
-	// FIXME: Fancy this up to call exit on signal
-	defer baton.exit()
-	baton.enter()
-	hook(baton)
 }
 
 func (baton *Baton) readprogress(fp *os.File, filesize int) {
@@ -1930,10 +1990,10 @@ func debugEnable(level int) bool {
 
 // nuke removed a (large) directory, reporting elapsed time.
 func nuke(directory string, legend string) {
-	newBaton(legend, "", debugEnable(debugSHUFFLE)).wraps(func(b *Baton) {
-		// FIXME: Redo with filepath.Walk and a more granular baton
-		os.RemoveAll(directory)
-	})
+	baton := newBaton(legend, "", debugEnable(debugSHUFFLE))
+	defer baton.exit()
+	// FIXME: Redo with filepath.Walk and a more granular baton
+	os.RemoveAll(directory)
 }
 
 func complain(msg string, args ...interface{}) {
@@ -1948,12 +2008,13 @@ func announce(lvl int, msg string, args ...interface{}) {
 	}
 }
 
-// emptyComment says swhether comment info should be considered disposable?
+// emptyComment says whether comment info should be considered disposable?
 func emptyComment(c string) bool {
 	if c == "" {
 		return true
 	}
 	c = strings.Trim(c, " \t\n")
+	// A CVS artifact from ancient times.
 	if c == "" || c == "*** empty log message ***" {
 		return true
 	}
@@ -2056,7 +2117,7 @@ func newMessageBlock(bp *bufio.Reader) (*MessageBlock, error) {
 		}
 		colon := strings.Index(data, ":")
 		if colon == -1 {
-			panic("ill-formed line in mail message")
+			panic(throw("mailbox", "Ill-formed line in mail message"))
 		}
 		key := data[0:colon]
 		payload := strings.TrimSpace(data[colon+1:len(data)])
@@ -2393,8 +2454,7 @@ func parseAttributionLine(line string) (string, string, string) {
 		date := string(bytes.Trim(m[3], " \t\n"))
 		return name, address, date
 	}
-	errmsg := fmt.Sprintf("malformed attribution '%s'\n", line)
-	panic(errmsg)
+	panic(throw("parse", "Malformed attribution '%s'\n", line))
 }
 
 func (attr *Attribution) address() (string, string) {
@@ -2409,9 +2469,8 @@ func newAttribution(attrline string) *Attribution {
 		name, email, datestamp := parseAttributionLine(attrline)
 		parsed, err := newDate(datestamp)
 		if err != nil {
-			errmsg := fmt.Sprintf("malformed attribution date '%s' in '%s': %v",
-				datestamp, attrline, err)
-			panic(errmsg)
+			panic(throw("parse", "Malformed attribution date '%s' in '%s': %v",
+				datestamp, attrline, err))
 		}
 		// Deal with a cvs2svn artifact
 		if name == "(no author)" {
@@ -2559,7 +2618,7 @@ func newRepository(name string) *Repository {
 	repo.caseCoverage = newStringSet()
 	d, err := os.Getwd()
 	if err != nil {
-		panic(err)
+		panic(throw("command", "During repository creation: %v", err))
 	}
 	repo.basedir = d
 	return repo
@@ -2603,8 +2662,7 @@ func (repo *Repository) index(obj Event) int {
 			return ind
 		}
 	}
-	errmsg := fmt.Sprintf("internal error: %s not matched in repository %s", obj.idMe(), repo.name)
-        panic(errmsg)
+	panic(throw("Internal error: %s not matched in repository %s", obj.idMe(), repo.name))
 }
 
 // find gets an object index by mark
@@ -2692,7 +2750,7 @@ func (b *Blob) getBlobfile(create bool) string {
 			cpath = filepath.FromSlash(strings.Join(parts[0:i+1], "/"))
 			err := os.Mkdir(cpath, userReadWriteMode)
 			if err != nil {
-				panic(err)
+				panic(fmt.Errorf("Blob creation: %v", err))
 			}
 		}
 	}
@@ -2710,7 +2768,7 @@ func (b *Blob) getContent() string {
 		var data = make([]byte, b.size)
 		_, err := b.repo.seekstream.ReadAt(data, b.start)
 		if err != nil {
-			panic(err)
+			panic(fmt.Errorf("Blob fetch: %v", err))
 		}
 		return string(data)
 	}
@@ -2723,12 +2781,12 @@ func (b *Blob) getContent() string {
 		file, err = os.Open(b.getBlobfile(false))
 	}
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("Blob creation: %v", err))
 	}
 	defer file.Close()
         data, err := ioutil.ReadAll(file)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("Blob write: %v", err))
 	}
 	return string(data)
 }
@@ -2748,12 +2806,12 @@ func (b *Blob) setContent(text string, tell int64) {
 				os.O_WRONLY | os.O_CREATE, userReadWriteMode)
 		}
 		if err != nil {
-			panic(err)
+			panic(fmt.Errorf("Blob update: %v", err))
 		}
 		defer file.Close()
 		_, err = io.WriteString(file, text)
 		if err != nil {
-			panic(err)
+			panic(fmt.Errorf("Blob write: %v", err))
 		}
 	}
 }
@@ -2810,7 +2868,7 @@ func (b *Blob) clone(repo *Repository) *Blob {
 			"blob clone for %s (%s) calls os.Link(): %s -> %s", b.mark, b.pathlist, b.getBlobfile(false), c.getBlobfile(false))
 		err := os.Link(b.getBlobfile(false), c.getBlobfile(true))
 		if err != nil {
-			panic(err)
+			panic(fmt.Errorf("Blob clone: %v", err))
 		}
 	}
         return c
@@ -2959,8 +3017,7 @@ func (t *Tag) emailOut(modifiers stringSet, eventnum int,
 func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
         tagname := msg.getHeader("Tag-Name")
         if tagname == ""  {
-		errmsg := fmt.Sprintf("update to tag %s is malformed", t.name)
-		panic(errmsg)
+		panic(throw("mailbox", "update to tag %s is malformed", t.name))
 	}
         modified := false
         if t.name != tagname {
@@ -2977,7 +3034,7 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 	if newtagger := msg.getHeader("Tagger"); newtagger != "" {
                 newname, newemail, _ := parseAttributionLine(newtagger)
 		if newname == "" || newemail == "" {
-			panic("can't recognize address in Tagger: " + newtagger)
+			panic(throw("mailbox", "Can't recognize address in Tagger: " + newtagger))
 		} else if t.tagger.name != newname || t.tagger.email != newemail {
 			t.tagger.name, t.tagger.email = newname, newemail
 			announce(debugEMAILIN,
@@ -2989,9 +3046,8 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 			candidate := msg.getHeader("Tagger-Date")
 			date, err := newDate(candidate)
 			if err != nil {
-				errmsg := fmt.Sprintf("malformed date %s in tag message: %v",
-					candidate, err)
-				panic(errmsg)
+				panic(throw("mailbox", "Malformed date %s in tag message: %v",
+					candidate, err))
 			}
 			if t.tagger.date.isZero() || !date.timestamp.Equal(t.tagger.date.timestamp) {
 				// Yes, display this unconditionally
@@ -3272,7 +3328,7 @@ func (fileop *FileOp) construct(opargs ...string) *FileOp {
         } else if opargs[0] == "deleteall" {
 		fileop.op = deleteall
         } else {
-		panic("unexpected fileop " + opargs[0])
+		panic(throw("parse", "unexpected fileop " + opargs[0]))
 	}
         return fileop
 }
@@ -3294,22 +3350,22 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 			if len(fields) == 2 {
 				fld1, err1 := strconv.Unquote(fields[0])
 				if err1 != nil {
-					panic(err1)
+					panic(throw("parse", "In opline: %v", err1))
 				}
 				fld2, err2 := strconv.Unquote(fields[1])
 				if err2 != nil {
-					panic(err2)
+					panic(throw("parse", "In opline: %v", err2))
 				}
 				return fld1, fld2
 			}
 		}
 		// FIXME: Parse lines with just one pair of string quotes
-		panic(fmt.Sprintf("ill-formed fileop %q", opline))
+		panic(throw("parse", "Ill-formed fileop %q", opline))
 	}
         if strings.HasPrefix(opline, "M") {
 		m := modifyRE.FindSubmatch([]byte(opline))
 		if m == nil || len(m) == 0 {
-			panic(fmt.Sprintf("bad format of M line: %q", opline))
+			panic(throw("parse", "Bad format of M line: %q", opline))
 		}
 		fileop.op = opM
 		fileop.mode = string(m[2])
@@ -3318,7 +3374,7 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 		if fileop.path[0] == '"' {
 			cpath, err := strconv.Unquote(fileop.path)
 			if err != nil {
-				panic(err)
+				panic(throw("parse", "Bad quoted string in M: %v", err))
 			}
 			fileop.path = cpath
 		}
@@ -3332,7 +3388,7 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 		if fileop.path[0] == '"' {
 			cpath, err := strconv.Unquote(fileop.path)
 			if err != nil {
-				panic(err)
+				panic(throw("parse", "Bad quoted string in D: %v", err))
 			}
 			fileop.path = cpath
 		}
@@ -3350,7 +3406,7 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 	} else if opline == "deleteall" {
 		fileop.op = deleteall
 	} else {
-		panic(fmt.Sprintf("unexpected fileop %q while parsing", opline))
+		panic(throw("parse", "Unexpected fileop while parsing %q", opline))
 	}
         return fileop
 }
@@ -3374,7 +3430,7 @@ func (fileop *FileOp) paths(pathtype stringSet) stringSet {
         if fileop.op == deleteall {
 		return stringSet{}
 	}
-        panic ("unknown fileop type" + fileop.op)
+        panic("Unknown fileop type " + fileop.op)
 }
 
 // relevant tells if two fileops touch any of the same filesthe same file(s)
@@ -3419,7 +3475,7 @@ func (fileop FileOp) String() string {
         } else if fileop.op == deleteall {
 		return fileop.op + "\n"
         } else {
-		panic(fmt.Sprintf("unexpected op %s while writing", fileop.op))
+		panic(throw("Unexpected op %s while writing", fileop.op))
 	}
 }
 
@@ -3686,7 +3742,7 @@ func (commit *Commit) tags(_modifiers stringSet, eventnum int, _cols int) string
 				complain("internal error: callouts do not have branches: %s",
 					child.idMe())
 			default:
-				panic("in rags method, unexpected type in child list")
+				panic("In tags method, unexpected type in child list")
 			}
 		}
 		if len(successorBranches) == 1 && successorBranches[0] == commit.branch {
@@ -3807,7 +3863,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 	}
 	newcommitdate, err := newDate(msg.getHeader("Committer-Date"))
 	if err != nil {
-		panic(fmt.Sprintf("bad Committer-Date: %v", err))
+		panic(throw("mailbox", "Bad Committer-Date: %v", err))
 	}
         if newcommitdate.isZero() && !newcommitdate.Equal(c.date) {
                 if commit.repo != nil {
@@ -3853,7 +3909,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 			if newdate != "" {
 				date, err := newDate(newdate)
 				if err != nil {
-					panic(fmt.Sprintf("bad Author-Date: %v", err))
+					panic(throw("mailbox", "Bad Author-Date: %v", err))
 				}
 				if c.date.isZero() || !date.Equal(c.date) {
 					eventnum := msg.getHeader("Event-Number")
@@ -3960,7 +4016,7 @@ func (commit *Commit) invalidateManifests() {
 		case *Callout:
 			/* do nothing */
 		default:
-			panic("invalidateManists found unexpected type in child list")
+			panic("InvalidateManifests found unexpected type in child list")
 		}
 	}
 }
@@ -4028,7 +4084,7 @@ func (commit *Commit) addParentCommit(newparent *Commit) {
 func (commit *Commit) addParentByMark(mark string) {
 	newparent := commit.repo.markToEvent(mark).(*Commit)
         if newparent == nil {
-		panic("ill-formed stream: cannot resolve " + mark)
+		panic("Ill-formed stream: cannot resolve " + mark)
 	}
 	commit.addParentCommit(newparent)
 }
@@ -4408,7 +4464,7 @@ func (commit *Commit) checkout(directory string) string {
 				dpath = filepath.FromSlash(strings.Join(parts[:i], "/"))
 				err := os.Mkdir(dpath, userReadWriteMode)
 				if err != nil {
-					panic(err)
+					panic(fmt.Errorf("Directory creation failed during checkout: %v", err))
 				}
 
 			}
@@ -4422,7 +4478,7 @@ func (commit *Commit) checkout(directory string) string {
 				file, err3 := os.OpenFile(blob.getBlobfile(true),
 					os.O_WRONLY | os.O_CREATE, mode)
 				if err3 != nil {
-					panic(err3)
+					panic(fmt.Errorf("File creation for inline failed during checkout: %v", err3))
 				}
 				file.Write([]byte(entry.inline))
 				file.Close()
@@ -4433,7 +4489,7 @@ func (commit *Commit) checkout(directory string) string {
 					file, err4 := os.OpenFile(blob.getBlobfile(true),
 						os.O_WRONLY | os.O_CREATE, mode)
 					if err4 != nil {
-						panic(err4)
+						panic(fmt.Errorf("File creation failed during checkout: %v", err4))
 					}
 					file.Write([]byte(blob.getContent()))
 					file.Close()
@@ -4472,8 +4528,7 @@ func (commit *Commit) head() string {
 				child.idMe())
 		}
 	}
-	// FIXME: This wants to be recoverable
-        panic(fmt.Sprintf("can't deduce a branch head for %s", commit.mark))
+        panic(throw("command", "Can't deduce a branch head for %s", commit.mark))
 }
 
 // tip enables do_tip() to report deduced branch tips.
@@ -4512,7 +4567,7 @@ func (commit *Commit) blobByName(pathname string) (string, bool) {
 	case *Blob:
 		return retrieved.(*Blob).getContent(), true
 	default:
-		errmsg := fmt.Sprintf("unexpected type while attempting to fetch %s content at %s", pathname, entry.ref)
+		errmsg := fmt.Sprintf("Unexpected type while attempting to fetch %s content at %s", pathname, entry.ref)
 		panic(errmsg)
 	}
 }
@@ -4706,13 +4761,11 @@ func newSignature(path string) *signature {
 	file, err1 := os.Open(path)
 	defer file.Close()
 	if err1 != nil {
-		errmsg := fmt.Sprintf("can't open %q\n", path)
-		panic(errmsg)
+		panic(throw("extractor", "Can't open %q\n", path))
 	}
 	st, err2 := file.Stat()
 	if err2 != nil {
-		errmsg := fmt.Sprintf("can't stat %q\n", path)
-		panic(errmsg)
+		panic(throw("extractor", "Can't stat %q\n", path))
 	}
 
 	ps := new(signature)
@@ -4747,17 +4800,14 @@ func (s signature) Equal(other signature) bool {
 }
 
 // capture runs a specified command, capturing the output.
-func capture(command string) string {
+func captureFromProcess(command string) (string, error) {
 	announce(debugCOMMANDS, "%s: capturing %s", rfc3339(time.Now()), command)
 	cmd := exec.Command("sh", "-c", command)
 	content, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Fatal(err)
-	}
 	if debugEnable(debugCOMMANDS) {
 		os.Stderr.Write([]byte(content))
 	}
-	return string(content)
+	return string(content), err
 }
 
 // branchbase returns the branch minus refs/heads or refs/tags.
@@ -7189,13 +7239,13 @@ func (repo *Repository) newmark() string {
 func (repo *Repository) makedir() {
 	target := repo.subdir("")
 	announce(debugSHUFFLE, "repository fast import creates " + target)
-	if _, err := os.Stat(target); os.IsNotExist(err) {
-                err := os.Mkdir(target, 077)
-		if err != nil {
-			panic("can't create repository directory")
+	if _, err1 := os.Stat(target); os.IsNotExist(err1) {
+                err2 := os.Mkdir(target, 077)
+		if err2 != nil {
+			panic("Can't create repository directory")
 		}
-	} else if err != nil {
-		panic(err)
+	} else if err1 != nil {
+		panic(fmt.Errorf("Can't stat %s: %v", target, err1))
 	}
 }
 
@@ -12208,7 +12258,7 @@ With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
                         assert indesc > -1 and outdesc > -1    # pacify pylint
                         with open(intmp, "wb") as wfp:
                             wfp.write(polybytes(content))
-                        return polystr(capture("%s <%s" % (filtercmd, intmp)))
+                        return polystr(captureFromProcess("%s <%s" % (filtercmd, intmp)))
                     finally:
                         os.remove(intmp)
                         os.close(indesc)

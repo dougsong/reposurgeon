@@ -45,8 +45,8 @@ Semantic distance. In general, the translation gap between Python and
 Go is narrower than I initially expected, especially considering the
 dynamic-vs-static type-system difference.  On reflection, I think it
 turns out that GC and the existence of maps as first-class types do
-more to narrow that gap than the divergence in type systems does to
-widen it.
+more to narrow that gap than the static/dynamic divergence in type
+systems does to widen it.
 
 Polymorphic lists.  The principal data structure of a repository's
 representation in reposurgeon is a list of events - data structures
@@ -68,11 +68,16 @@ not *easy*, exactly, but quite doable.  It is however time-intensive;
 counting time to build the required unit tests in Go, I managed about
 150-200 lines a day.
 
+The pain points are mainly around a handful of advanced Python
+features: iterators, generators, comprehensions, and class-valued
+exceptions.  Fortunately, even in quite advanced Python code like
+reposurgeon these tend out to not be very common on a per-KLOC basis.
+
 == Problems that are ==
 
 === Keyword arguments ===
 
-The problem that obtruded on me most was quite unexpected: absence of
+The problem that obtruded on me first was quite unexpected: absence of
 keyword arguments.  In Python one can write a function signature like
 this
 
@@ -270,7 +275,8 @@ initializers is annoying in these ways:
    valuable at scale.
 
 In Python one can often get a similar effect by using tuples.  I used
-this as a form of internal documentation hint.  I want it back in Go.
+this as a form of internal documentation hint inn the original Python.
+I want it back in Go.
 
 Any extension in the scope of const, even a relatively conservartive
 one like only allowing const structures with compile-time constant
@@ -291,9 +297,9 @@ Go translation reveals that it is remarkably unpleasant, verging on
 "too painful to be worth it" to do that filtering without lookbehinds.
 
 This is the only real problem I have identified in moving from Python
-regexps to Go ones.  Take that "real" seriously, because regexps are a
-Swiss-army knife I use heavily; Go is doing well to have only this
-problem.
+regexps to Go ones.  Take that "only" seriously, because regexps are a
+Swiss-army knife I use heavily; Go regexps are doing well to have no
+limits that are more annoying.
 
 === Absence of sum/discriminated union types ===
 
@@ -328,62 +334,258 @@ language that compromises its goal of enforcing strong invariants
 through type safety.
 
 This will especially tend to become an issue when translating from
-a languge like Python with fully dynamic typing.
+a language like Python with fully dynamic typing.
 
 I don't have a concrete proposal to fix this yet. If these notes
 are well received I may write one.
 
-=== Absence of structured exceptions ===
+===  Catchable exceptions require silly contortions ===
 
 Most of this report was written at about the 12% percent point the
 translation. By twice that far in, 23%, another problem about which I
 had not originally been intending to complain became obtrusive. That
-is absence of structured exceptions.
+is absence of a general facility for structured exceptions.
 
 Yes, I'm familiar with all the reasons throw/catch wasn't included in
 Go 1.  Including the laudable goal of forcing programmers to be
-explicit bout error handling and how they propagate errors up their
+explicit about error handling and how they propagate errors up their
 call stack.  And I understand that defer/recover was an attempt to
 provide a tractable subset of catchable exceptions that would minimize
-the temptation to sin. Unfortunately the resulting design is slightly
-too weak for my purposes.
+the temptation to sin.
+
+Because I broadly agree with this set of goals, I was actively
+intending whem I started this translation not to complain about the lack
+of general catchable exceptions, or ship any related RFEs, in spite of
+having a presentiment that they would be a problem.  That is, until
+I hit a wall in the real world and had to rethink.
 
 Here's my use case. Reposurgeon is an interpreter for a DSL.
-Situations in which I want to panic out and die are rare and mostly
-occur at initialization time. Usually what I want to do instead of
-panicking on error is throw control back to the read/eval loop,
+Situations in which I can tolerate panic-out and die are rare and
+mostly occur at initialization time. Usually what I want to do instead
+of panicking on error is throw control back to the read/eval loop,
 executing some kind of local cleanup hook on the way out.  Analogous
 situations will frequently occur in, for example, network servers.
 
-To someone used to Lisp's labeled throw/catch or Python's try/except
-with type-valued exceptions this seems unreasonably difficult to do in
-Go. Here's why: In a language with labeled try/catch, or class-valued
-exceptions, I can explicitly target an exception to some level of the
-call stack above me.  In reposurgeon, for example, there are usually
-two levels of interest.  One is the read-eval loop. The other is the
-outermost scope; if an exception gets there I want to call hooks to
-gracefully remove working directories (blob storage associated with
-repository commits) before exiting.
+In a language with labeled throw/catch, or class-valued exceptions, I
+can address this by explicitly target an exception to some level of
+the call stack above the point it's raised.  In reposurgeon, for
+example, there are usually two levels of interest.  One is the
+read-eval loop. The other is the outermost scope; if an exception gets
+there I want to call hooks to gracefully remove working directories
+(blob storage associated with the repository-history structures being
+edited) before exiting the program.
 
-In Go, I don't seem to have a clean option for this.  Yes, panic will
-fire defer hooks up the stack from the function in which it was fired,
-and a recover in one of them can catch it.  This implies that I can
-write a chain of recover/conditional-panic calls, with each level picking
-off the errors of interest to it and passing others upward.
+In Go, I didn't seem to have a clean option for this.  Which was a
+problem on two levels....
 
-At present, however, panic can only throw a string. So the only way
-for me to declare a catch label (or diagnostic information) is to put
-it in the string, and for every call level that does any catches at
-all to re-panic errors it doesn't want to handle.
+1. Reposurgeon is 14 KLOC of *dense* code.  At that scale, any prudent
+person in a situation like this will perform as linear and literal a
+translation as possible; to do otherwise is to risk a complexity
+explosion as you try to cross the semantic gap and rethink the design
+at the same time.  Absence of class-valued exceptions was far and away
+the biggest technical blocker.  "First make it work, then make it
+right"; the least risky path seemed to be to shim in exceptions with
+the intention of removing them later.
 
-There's an obvious point fix to this: change error from a type to
-an interface that requires String().  Allow panickers to throw
-structures upwards, so that (a) recover() can do type-case matches,
-and (b) the recovering level can get diagnostic information that
-is out-of-band of the error message.
+Eventually, after beating on the panic/recover feature for a while, I
+found this kludge:
 
-I'm aware this would cause a compatibility issue.  It seems like the
-sort of thing gofix could patch.
+---------------------------------------------------------------------
+package main
+
+import "fmt"
+
+type exception struct {
+	class string
+	message string
+}
+
+func (e exception) Error() string {
+	return e.message
+}
+
+func throw(class string, msg string, args ...interface{}) *exception {
+	// We could call panic() in here but we leave it at the callsite
+	// to clue the compiler in that no return after is required.
+	e := new(exception)
+	e.class = class
+	e.message = fmt.Sprintf(msg, args...)
+	return e
+}
+
+func catch(accept string, x interface{}) *exception {
+	// Because recover() returns interface{}.
+	// Return us to the world of type safety.
+	if x == nil {
+		return nil
+	}
+	err := x.(*exception)
+	if err.class == accept {
+		return err
+	}
+	panic(x)
+}
+
+func main() {
+	defer println("Defer 1")
+	defer println("Defer 2")
+	defer println("Defer 3")
+
+	defer func() {
+		fmt.Println("Recover:", catch("recoverable", recover()))
+	}()
+	panic(throw("recoverable", "Don't Panic!!!"))
+
+	fmt.Println("Unreachable.")
+}
+
+
+---------------------------------------------------------------------
+
+This works, and it works if you change the class to something other
+than "recoverable"; you get the expected rethrow and panic. But
+it is unreasonably ugly.  So why am I bringing it forward? Because...
+
+2. The translation experience reduced my disposition to think that Go is
+right to be narrow and prescriptive on this issue.  Two kinds of
+doubts grew on me:
+
+* Pragmatic doubt. Trying to be a good citizen, I kept looking at
+places where existing nonlocal control transfers in Python could
+be replaced by explicit Go-style passing upwards of an error status.
+I noticed that there were a significant percentage of cases in which
+doing this made the code more difficult to follow rather than easier.
+
+A simple representative example is a call chain of several data
+transformations in which each stage has its own failure condition and
+any failure aborts the transformation.  If we there were no error
+cases we might write, in a Pythonoid sort of notation:
+
+----------------------------------------------------------------
+ sink = transform3(transform2(transform1(source)))
+----------------------------------------------------------------
+
+If a stage can error out, we might have these structural alternatives to
+consider.  One is Go style:
+
+---------------------------------------------------------------
+(fail1, result1) = transform1(source)
+if fail1 == true:
+     status = Exception1
+else:
+     (fail2, result2) = transform2(result1)
+     if fail2 == true:
+         status = Exception2
+     else:
+         (fail3, result3) = transform3(result1)
+         if fail3 == true:
+	     status = Exception3
+	 else:
+	     sink = result3
+	     status = OK
+---------------------------------------------------------------
+
+The other style is with a catchable exception:
+---------------------------------------------------------------
+
+status = OK
+try:
+    sink = transform3(transform2(transform1(source)))
+except (Exception1, Exception2, Exception3) as err:
+    status = err
+---------------------------------------------------------------
+
+I don't think there's even a colorable argument that the Go structure is
+better in a case like this. Look at all those extra variables, that
+eye-confusing ladder structure, the defect-prone near-but-not-quite
+repetition of code.
+
+My problem was that I kept finding analogous situations in my
+translation.  In these cases moving to Go style produced a serious
+loss of clarity.  And a rising feeling that I wanted my exceptions
+back.  Which leads to this:
+
+* Aesthetic doubt. I've never written a general-purpose language, 
+but I have designed way more than my share of DSLs and declarative
+markups, and from this I have learned a heuristic for doing engineering
+that I won't regret.  For any given capability X:
+
+Being able to express X elegantly is a good place to be.  Leaving out X
+entirely for safety and verifiability can be a good choice, and is
+at least defensible on those grounds.  But if you implement X in
+a half-hearted, weak way that requires ugly code  and fails to actually
+foreclose the conceptual problems you were trying to dodge, that's
+a bad place to be.
+
+That bad place is where Go is right now with respect to nonlocal
+control transfers, and why I had to write my kludge.
+
+Interestingly, I was also able to come up with a very minimalist
+solution.  No new syntax, two minor new compilation rules.
+
+To motivate it, let's set the goal of being able to rewrite my example
+like this:
+
+---------------------------------------------------------------
+package main
+
+import "fmt"
+
+type exception struct {
+	class string
+	message string
+}
+
+func (e exception) Error() string {
+	return e.message
+}
+
+func throw(class string, msg string, args ...interface{}) {
+	e := new(exception)
+	e.class = class
+	e.message = fmt.Sprintf(msg, args...)
+	panic(e)
+}
+
+func catch(accept string) *exception {
+	if x := recover(); x == nil {
+		return nil
+	}
+	err := x.(*exception)
+	if err.class == accept {
+		return err
+	}
+	panic(x)
+}
+
+func main() {
+	defer println("Defer 1")
+	defer println("Defer 2")
+	defer println("Defer 3")
+
+	defer func() {
+		fmt.Println("Recover:", catch("recoverable"))
+	}()
+	throw("recoverable", "Don't Panic!!!")
+
+	fmt.Println("Unreachable.")
+}
+---------------------------------------------------------------
+
+That is rather less ugly, actually pretty reasonable if the
+implementations of throw and catch aren't starging you in the face.
+And all it would take to get there is two minor loosenings of
+restrictions.
+
+1. The panic function has a new property, "terminating". If the
+compiler can prove that all exit paths from a function invoke
+terminating functions, it is marked "terminating".  The effect of
+this property is to suppress "missing return" errors on any code path
+from call of a terminating function to exit of its caller, *but not on
+other paths to exit*.
+
+2. A recover() call is no longer required to be within the lexical
+frame of a defer(). It can be in a helper called by the defer clause.
 
 === Hieratic documentation ===
 
@@ -443,11 +645,9 @@ be obsolete and when the document was last reviewed for correctness.
 
 I think the Go translation of reposurgeon is going to be better - more
 maintainable - code than the Python original, not just faster.  And this
-is not because I'm rewriting or refactoring as I go; in fact I'm
-trying very hard to avoid that.  A wise person in a situation like
-this performs as linear and literal a translation as possible; to do
-otherwise is to risk a complexity explosion as you try to cross the
-semantic gap and rethink the design at the same time.
+is not because I'm rewriting or refactoring as I go; I've explained that
+I'm trying very hard to avoid that. It's that Go's mimalistic approch
+actually...works.
 
 I see a maintainability benefit from the static typing. The Go type
 system does what a type system is supposed to do, which is express
@@ -458,6 +658,11 @@ I also see a maintainability benefit from how easy Go makes it to
 write unit tests in parallel with code.  I am fully exploiting this,
 and expect it to make life much less painful when I get to end-to-end
 testing of the translation and have to debug it in the large.
+
+I have to call out the Go time library as a particularly good piece of
+work. Having the basic timestamp property be location-aware with its
+presentation modified by the implied zone offset simplified a lot
+of cruft out of the handling of commiter/author dates in Python.
 
 Now that I've seen Go strings...holy hell, Python 3 unicode strings
 sure look like a nasty botch in retrospect. Good work not falling into
@@ -472,8 +677,8 @@ that trap.
 
 3. try/finally should be added to the language.
 
-4. The error type should become an interface that only requires String(),
-   allowing panickers to throw structs up the stack.
+4. Yes, throw()/catch() needs to be in the language.  Two minimal
+   relaxations of compilation rules make writing it possible.
 
 5. Lookbehinds should be added to the regexp library.
 

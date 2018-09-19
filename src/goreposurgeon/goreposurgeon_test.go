@@ -846,7 +846,11 @@ func TestBranchbase(t *testing.T) {
 }
 
 func TestCapture(t *testing.T) {
-	assertEqual(t, capture("echo stdout; echo 1>&2 stderr"), "stdout\nstderr\n")
+	data, err0 := captureFromProcess("echo stdout; echo 1>&2 stderr")
+	if err0 != nil {
+		t.Fatalf("error while spawning process: %v", err0)
+	}
+	assertEqual(t, data, "stdout\nstderr\n")
 
 	r, cmd, err1 := readFromProcess("echo arglebargle")
 	if err1 != nil {
