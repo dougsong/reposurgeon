@@ -1,4 +1,5 @@
 = Notes on the Go translation of Reposurgeon =
+version 1.3, 2018-90-20
 
 The reposurgeon codebase is moving from Python to Go because the
 Python implementation is too slow on really large repositories. The
@@ -24,7 +25,8 @@ rather in a description of real-world problems. The scale driver of
 this real-world problem is that, while at 14KLOC reposurgeon is not
 expecially large, it is very *dense* - algorithmically complex,
 bristling with graph theory, FSMs, parsing, tricky data structures,
-and three different operator-composition algebras.
+two robot harnesses driving other other tools, and three different
+operator-composition algebras.
 
 Accordingly, reposurgeon would be a challenge to the expressiveness of
 any language it were implemented in.  It makes a good test of the
@@ -71,7 +73,7 @@ counting time to build the required unit tests in Go, I managed about
 The pain points are mainly around a handful of advanced Python
 features: iterators, generators, comprehensions, and class-valued
 exceptions.  Fortunately, even in quite advanced Python code like
-reposurgeon these tend out to not be very common on a per-KLOC basis.
+reposurgeon these turn out to not be very common on a per-KLOC basis.
 
 == Problems that are ==
 
@@ -275,7 +277,7 @@ initializers is annoying in these ways:
    valuable at scale.
 
 In Python one can often get a similar effect by using tuples.  I used
-this as a form of internal documentation hint inn the original Python.
+this as a form of internal documentation hint in the original Python.
 I want it back in Go.
 
 Any extension in the scope of const, even a relatively conservartive
@@ -287,9 +289,9 @@ members, would have significant benefits.
 This is a small point problem, easily fixed, that was far more
 annoying in practice than it should have been in theory.
 
-Python regexps have negative lookbehind clauses.  The following
-expression looks for possible Subversion revision designators in
-comments, excluding bug references:
+Python regexps have both positive and negative lookbehind clauses.
+The following expression looks for possible Subversion revision
+designators in comments, excluding bug references:
 
 "(?<!bug )[0-9]+"
 
@@ -341,7 +343,7 @@ are well received I may write one.
 
 ===  Catchable exceptions require silly contortions ===
 
-Most of this report was written at about the 12% percent point the
+Most of this report was written at about the 12% point of the
 translation. By twice that far in, 23%, another problem about which I
 had not originally been intending to complain became obtrusive. That
 is absence of a general facility for structured exceptions.
@@ -354,7 +356,7 @@ provide a tractable subset of catchable exceptions that would minimize
 the temptation to sin.
 
 Because I broadly agree with this set of goals, I was actively
-intending whem I started this translation not to complain about the lack
+intending when I started this translation not to complain about the lack
 of general catchable exceptions, or ship any related RFEs, in spite of
 having a presentiment that they would be a problem.  That is, until
 I hit a wall in the real world and had to rethink.
@@ -501,9 +503,16 @@ eye-confusing ladder structure, the defect-prone near-but-not-quite
 repetition of code.
 
 My problem was that I kept finding analogous situations in my
-translation.  In these cases moving to Go style produced a serious
+translation.  The specific one that motivated the above pseudocode
+was in a feature called "extractor classes".  There are little
+bots that run the client tools of a VCS to mine the output for its
+metadata.  It's actually a five- or six-stage process wherein
+any command failure requires an abort.  
+
+In these cases moving to Go style produced a serious
 loss of clarity.  And a rising feeling that I wanted my exceptions
-back.  Which leads to this:
+back (and in fact the extractor-class code now contains the one real
+instance of my exceptions kludge).  Which leads to this:
 
 * Aesthetic doubt. I've never written a general-purpose language, 
 but I have designed way more than my share of DSLs and declarative
@@ -573,7 +582,7 @@ func main() {
 ---------------------------------------------------------------
 
 That is rather less ugly, actually pretty reasonable if the
-implementations of throw and catch aren't starging you in the face.
+implementations of throw and catch aren't staring you in the face.
 And all it would take to get there is two minor loosenings of
 restrictions.
 
@@ -585,7 +594,10 @@ from call of a terminating function to exit of its caller, *but not on
 other paths to exit*.
 
 2. A recover() call is no longer required to be within the lexical
-frame of a defer(). It can be in a helper called by the defer clause.
+frame of a defer(). It can be in a helper called by the defer clause
+(but still within the call scope of a defer). For safety we'd need
+an additional rule that a go clause in the helper puts the code it
+runs out of scope for purposes of this check.
 
 === Hieratic documentation ===
 
@@ -596,12 +608,12 @@ Go language, it was the official (and unofficial) documentation.
 There are two problems here, one of organization and one of style.
 
 The organization problem is that there isn't one.  The official Go
-documentation seems to center on the library API docs, the specification, the
-the Tour, and a couple of "official" essays written for it. It also
-includes a corona of white papers and blog posts.  Often these are
-valuable deep dives into specific aspects of the language even when
-they are notionally obsolete.  Some of them are outside the boundaries
-of the official documentation site.
+documentation seems to center on the library API docs, the
+specification, the Tour, and a couple of "official" essays written for
+it. It also includes a corona of white papers and blog posts.  Often
+these are valuable deep dives into specific aspects of the language
+even when they are notionally obsolete.  Some of them are outside the
+boundaries of the official documentation site.
 
 For example, I got substantial help understanding interfaces from an
 old blog post by Ian Lance Taylor (one of the Go devs) that was
@@ -641,6 +653,20 @@ be obsolete and when the document was last reviewed for correctness.
 
 (4) Bring the very best third-party stuff inside, onto https://golang.org/doc/.
 
+Note: After writing this, I had an even worse time digging up and
+fixing in my mind all the details of how defer/panic/recover works.
+It's all documented somewhere, and in fact there's a very helpful blog
+post on the topic.  But the blog post leaves out the crucial detail
+that recover returns interface {}, not error; this tripped me up when
+I was writing my kludge, and I ended up on IRC getting referred to the
+formal Go specification.
+
+This is all too typical. Everything makes sense once you know it, but
+before you know it critical details are often lurking in places you
+have no way of knowing you should look.
+
+Attention to the problem and a good techical writer/editor can fix this.
+
 == Accentuating the positive ==
 
 I think the Go translation of reposurgeon is going to be better - more
@@ -677,8 +703,8 @@ that trap.
 
 3. try/finally should be added to the language.
 
-4. Yes, throw()/catch() needs to be in the language.  Two minimal
-   relaxations of compilation rules make writing it possible.
+4. Yes, throw()/catch() needs to be writeable in the language.  Two
+   minimal relaxations of compilation rules make writing it possible.
 
 5. Lookbehinds should be added to the regexp library.
 
@@ -686,4 +712,5 @@ that trap.
 
 Not quite actionable yet:
 
-* Absence of sum types is an actual hole in the language.
+* Absence of sum types creates an actual hole in the type-safety of
+  the language.
