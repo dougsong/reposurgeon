@@ -502,6 +502,35 @@ better in a case like this. Look at all those extra variables, that
 eye-confusing ladder structure, the defect-prone near-but-not-quite
 repetition of code.
 
+An early reviewer pointed out that if the Go code were an entire
+function it could be expressed something like this:
+
+---------------------------------------------------------------
+
+func pipeline(source T)  {
+{
+	result1, err1 := transform1(source)
+	if err1 != nil {
+	  return err
+	}
+
+	result2, err2 := transform2(result1)
+	if err2 != nil {
+	  return err
+	}
+
+	result3, err3 := transform3(result2)
+	if err3 != nil {
+	  return err
+
+	return nil
+}
+
+---------------------------------------------------------------
+
+That's still a lot of eyeball friction compared to functional-style with
+exceptions. And it gets worse faster as the number of stages rises.
+
 My problem was that I kept finding analogous situations in my
 translation.  The specific one that motivated the above pseudocode
 was in a feature called "extractor classes".  There are little

@@ -779,7 +779,7 @@ core
 	}
 
 	// More extractors go in this list
-	extractors = []Extractor{*newGitExtractor()}
+	extractors = []Extractor{*newGitExtractor(), *newHgExtractor()}
 }
 
 // Import and export filter methods for VCSes that use magic files rather
@@ -849,8 +849,6 @@ type Extractor interface {
 	gatherAllReferences(*RepoStreamer) error
 	// Color commits with their branch names
 	colorBranches(*RepoStreamer) error
-	// Gather mapping of commit hash -> timestamp (timestamps members)
-	gatherCommitTimestamps(*RepoStreamer) error
         // Hook for any cleanup actions required after streaming.
 	postExtract(*Repository)
         // Return true if repo has no unsaved changes.
@@ -862,8 +860,8 @@ type Extractor interface {
 }
 
 type MixerCapable interface {
-	gatherCommitTimestamps() map[string]time.Time
-	gatherChildTimestamps() map[string]time.Time
+	gatherCommitTimestamps() error
+	gatherChildTimestamps(*RepoStreamer) map[string]time.Time
 }
 
 
@@ -889,12 +887,12 @@ func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
         // git fast-export
         // First retrieve the commit timestamps, they are used in
 	// branchColor below
-        cm.commitStamps = mc.gatherCommitTimestamps()
+        mc.gatherCommitTimestamps()	// FIXME: Check error return
         if cm.commitStamps  == nil {
 		panic(throw("extractor", "Could not retrieve commit timestamps."))
 	}
         // This will be used in _branchColor below
-        cm.childStamps = mc.gatherChildTimestamps()
+        cm.childStamps = mc.gatherChildTimestamps(base)
         for refname, refobj := range base.refs.dict {
 		cm._branchColor(refobj, refname)
 	}
@@ -1005,10 +1003,6 @@ func (ge GitExtractor) getMeta() ExtractorMeta {
 	return ge.b
 }
 
-func (ge GitExtractor) gatherCommitTimestamps(*RepoStreamer) error {
-	return nil
-}
-
 func (ge GitExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
 	hook := func(line string, rs *RepoStreamer) error {
 		fields := strings.Fields(line)
@@ -1039,6 +1033,10 @@ func (ge GitExtractor) gatherCommitData(rs *RepoStreamer) error {
 
 func (ge GitExtractor) gatherAllReferences(rs *RepoStreamer) error {
 	err := filepath.Walk(".git/refs", func(pathname string, info os.FileInfo, err error) error {
+		if err != nil {
+			// Prevent panic by handling failure accessing a path
+			return err
+		}
 		if info.IsDir() {
 			return nil
 		}
@@ -1223,6 +1221,7 @@ func (ge GitExtractor) getComment(rev string) string {
 // Repository extractor for the hg version-control system
 type HgExtractor struct {
 	b ExtractorMeta
+	ColorMixer
         tagsFound bool
         bookmarksFound bool
 }
@@ -1243,7 +1242,7 @@ func (he HgExtractor) getMeta() ExtractorMeta {
 }
 
 //gatherRevisionIDs gets the topologically-ordered list of revisions and parents.
-func gatherRevisionIDs(rs *RepoStreamer) error {
+func (he HgExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
         // hg changesets can only have up to two parents
         // we have to use short (12-nibble) hashes because that's all "hg tags"
         // and "hg branches" give us.  Hg's CLI is rubbish.
@@ -1275,7 +1274,7 @@ func gatherRevisionIDs(rs *RepoStreamer) error {
 }
 
 // gatherCommitData gets all other per-commit data except branch IDs
-func gatherCommitData(rs *RepoStreamer) error {
+func (he HgExtractor) gatherCommitData(rs *RepoStreamer) error {
 	hook := func(line string, rs *RepoStreamer) error {
 		fields := strings.Fields(line)
 		hash := fields[0]
@@ -1296,117 +1295,219 @@ func gatherCommitData(rs *RepoStreamer) error {
 		hook)
 }
 
-/*
-    def gatherAllReferences():
-        "Find all branch heads and tags"
+// gatherCommitTimestamps updates the ColorMixer mapping of hash -> timestamp
+func (he HgExtractor) gatherCommitTimestamps() error {
+	hook := func(line string, rs *RepoStreamer) error {
+		fields := strings.Fields(line)
+		d, err := newDate(fields[1] + " " + fields[2])
+		if err != nil {
+			panic(throw("unrecognized date format in %q: %v", line, err))
+		}
+		he.commitStamps[fields[0]] = d.timestamp
+		return nil
+	}
 
-        // Some versions of mercurial can return an error for showconfig
-        // when the config is not present. This isn't an error.
-        bookmark_ref, code = he.hg_with_err("showconfig", "reposurgeon.bookmarks")
-        if code != 0:
-            bookmark_ref = ""
-        else:
-            bookmark_ref = bookmark_ref.strip()
+	return lineByLine(nil,
+		"log --template {node|short} {date|hgdate}\\n",
+		"hg's gatherCommitTimestamps",
+		hook)
+}
 
-        // both branches and tags output "name      num:hash" lines
-        // branches may also append " (inactive)"
-        // NOTE: All regular expression matching must be done on byte strings,
-        // not Unicode, to avoid errors in handling non-ASCII data; the ascii
-        // encode of the match string ensures this
-        ref_re = re.compile(r'\s*(?:\*\s+)?(\S+)\s+\d+:([0-9a-fA-F]+)(?: \(inactive|closed\))?'.encode('ascii'))
-        with he.hg_or_die("branches", "--closed") as fp:
-            for line in fp:
-                m = ref_re.match(line)
-                if m is None:
-                    raise Recoverable("Unreadable 'hg branches' line: %r" % line)
-                n, h = tuple(map(polystr, m.groups()))
-                he.refs['refs/heads/%s'%n] = h
-        if bookmark_ref != "":
-            with he.hg_or_die("bookmarks") as fp:
-                for line in fp:
-                    m = ref_re.match(line)
-                    if m is None:
-                        raise Recoverable("Unreadable 'hg bookmarks' line: %r" % line)
-                    n, h = tuple(map(polystr, m.groups()))
-                    he.refs['refs/%s%s' % (bookmark_ref, n)] = h
-                    he.bookmarksFound = True
-        with he.hg_or_die("log", "--rev=tag()",
-                            "--template={tags}\t{node}\n") as fp:
-            for line in fp:
-                n, h = tuple(map(polystr, line.strip().rsplit(b'\t', 1)))
-                if n == 'tip': // pseudo-tag for most recent commit
-                    continue // We don't want it
-                he.refs['refs/tags/%s'%n] = h[:12]
-                he.tagsFound = True
+// gatherAllReferences finds all branch heads and tags
+func (he HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
+	// Some versions of mercurial can return an error for showconfig
+	// when the config is not present. This isn't an error.
+	bookmarkRef, errcode := captureFromProcess("hg showconfig reposurgeon.bookmarks")
+	if errcode != nil {
+		bookmarkRef = ""
+	} else {
+		bookmarkRef = strings.Trim(bookmarkRef, " \n\t")
+	}
+
+	// both branches and tags output "name      num:hash" lines
+	// branches may also append " (inactive)"
+	hook1 := func(line string, rs *RepoStreamer) error {
+		fields := strings.Fields(line)
+		if len(fields[0]) < 1 {
+			panic(throw("extractor",
+				"Empty 'hg branches' line: %q", line))
+		}
+		n := string(fields[0])
+		seqref := strings.Split(fields[1], ":")
+		if len(fields[0]) < 2 {
+			panic(throw("extractor",
+				"Missing colon in 'hg branches' line: %q", line))
+		}
+		h := string(seqref[1])
+		rs.refs.set("refs/heads/" + n, h)
+		return nil
+	}
+	err := lineByLine(rs, 
+		"hg branches --closed",
+		"fetching hg branches",
+		hook1)
+	if err != nil {
+		panic(throw("extractor", "while fetching hg branches: %v", err))
+	}
+
+	if bookmarkRef != "" {
+		hook2 := func(line string, rs *RepoStreamer) error {
+			fields := strings.Fields(line)
+			if len(fields[0]) < 1 {
+				panic(throw("extractor",
+					"Empty 'hg bookmarks' line: %q", line))
+			}
+			n := string(fields[0])
+			seqref := strings.Split(fields[1], ":")
+			if len(fields[0]) < 2 {
+				panic(throw("extractor",
+					"Missing colon in 'hg bookmarks' line: %q", line))
+			}
+			h := string(seqref[1])
+			rs.refs.set("refs/" + bookmarkRef + n, h)
+			he.bookmarksFound = true
+			return nil
+		}
+		err = lineByLine(rs, 
+			"hg bookmarks",
+			"fetching hg bookmarks",
+			hook2)
+		if err != nil {
+			panic(throw("extractor", "while fetching hg bookmarks: %v", err))
+		}
+	}
+	hook3 := func(line string, rs *RepoStreamer) error {
+		// In Python this was:
+		/* n, h = tuple(map(polystr, line.strip().rsplit(b'\t', 1))) */
+		line = strings.Trim(line, " \t\n")
+		fields := strings.Split(line, "\t")
+		h := fields[len(fields)-1]
+		n := strings.Join(fields[:len(fields)-1], "\t")
+                if n == "tip" {		// pseudo-tag for most recent commit
+			return	nil	// We don't want it
+		}
+		rs.refs.set("refs/tags/" + n, h[:12])
+		return nil
+	}
+	he.tagsFound = true
+	err = lineByLine(rs,
+		"log --rev=tag() --template={tags}\t{node}\n",
+		"fetching hg tags",
+		hook3)
+	if err != nil {
+		panic(throw("extractor", "while fetching hg tags: %v", err))
+	}
         // We have no annotated tags, so he.tags = []
         // Conceivably it might be better to treat the commit message that
         // creates the tag as an annotation, but that's a job for the surgeon
         // later, not the extractor now.
-    def _hg_branch_items(self):
-        with he.hg_or_die("log", "--template", "{node|short} {branch}\\n") as fp:
-            for line in fp:
-                h, branch = polystr(line).strip().split()
-                yield (h, "refs/heads/" + branch)
-    def _branchColorItems(self):
-        if not he.tagsFound and not he.bookmarksFound:
-            // If we didn't find any tags or bookmarks, we can safely color all
-            // commits using hg branch names, since hg stores them with commit
-            // metadata; note, however, that the coloring this will produce
-            // might not be reproducible if the repo is written to a fast-import
-            // stream and used to construct a git repo, because hg branches can
-            // store colorings that do not match the git coloring algorithm
-            return he._hg_branch_items()
+	return nil
+}
+
+func (he HgExtractor) _hg_branch_items() map[string]string {
+	out := make(map[string]string)
+	err := lineByLine(nil, 
+		"hg log --template {node|short} {branch}\\n",
+		"in _hg_branch_items: %v",
+		func(line string, rs *RepoStreamer) error {
+			fields := strings.Fields(line)
+			out[fields[0]] = "refs/heads/" + fields[1]
+			return nil
+		})
+	if err != nil {
+		panic(throw("extractor", "in _hg_branch_items: %v", err))
+	}
+	return out
+}
+
+// Return initial mapping of commit hash -> timestamp of child it is colored from
+func (he HgExtractor) gatherChildTimestamps(rs *RepoStreamer) map[string]time.Time {
+        results := make(map[string]time.Time)
+        for h, branch := range he._hg_branch_items() {
+		// Fill in the branch as a default; this will ensure
+		// that any commit that is not in the ancestor tree of
+		// a tag will get the correct hg branch name, even if
+		// the hg branch coloring is not compatible with the
+		// git coloring algorithm
+		rs.meta[h].branch = branch
+		// Fill in the branch tips with child timestamps to
+		// ensure that they can't be over-colored (other
+		// commits in the ancestor tree of a branch can be
+		// over-colored if they are in a tag's ancestor tree,
+		// so we don't fill in any child timestamp for them
+		// here)
+		if rs.refs.get(branch) == h {
+			results[h] = farFuture
+		}
+	}
+        return results
+}
+
+
+func (he HgExtractor) _branchColorItems() map[string]string {
+        if !he.tagsFound && !he.bookmarksFound {
+		// If we didn't find any tags or bookmarks, we can
+		// safely color all commits using hg branch names,
+		// since hg stores them with commit metadata; note,
+		// however, that the coloring this will produce might
+		// not be reproducible if the repo is written to a
+		// fast-import stream and used to construct a git
+		// repo, because hg branches can store colorings that
+		// do not match the git coloring algorithm
+		return he._hg_branch_items()
+	}
         // Otherwise we have to use the emulated git algorithm to color
         // any commits that are tags or the ancestors of tags, since git
         // prioritizes tags over branches when coloring; we will color
         // commits that are not in the ancestor tree of any tag in
         // gatherChildTimestamps below, using the hg branch names
-        return None
-    def gatherCommitTimestamps(self):
-        """Return mapping of commit hash -> Unix timestamp"""
-        timestamps = {}
-        with he.hg_or_die("log", "--template", "{node|short} {date|hgdate}\\n") as fp:
-            for line in fp:
-                fields = polystr(line).strip().split()
-                timestamps[fields[0]] = int(fields[1])
-        return timestamps
-    def gatherChildTimestamps(self):
-        """Return initial mapping of commit hash -> timestamp of child it is colored from"""
-        results = {}
-        for h, branch in he._hg_branch_items():
-            // Fill in the branch as a default; this will ensure that any commit that
-            // is not in the ancestor tree of a tag will get the correct hg branch name,
-            // even if the hg branch coloring is not compatible with the git coloring
-            // algorithm
-            he.meta[h]['branch'] = branch
-            // Fill in the branch tips with child timestamps to ensure that they can't
-            // be over-colored (other commits in the ancestor tree of a branch can be
-            // over-colored if they are in a tag's ancestor tree, so we don't fill in
-            // any child timestamp for them here)
-            if he.refs[branch] == h:
-                results[h] = sys.maxsize
-        return results
+	return nil
+}
+
+/*
+
     def _branchColor(self, rev, color):
         // Branches are not colored here (they already were in initChildTimestamps above)
         if color.startswith('refs/heads/'):
             return
         // This takes care of coloring tags and their ancestors
         Extractor._branchColor(self, rev, color)
-    def colorBranches(*Baton):
-        // Otherwise we have to emulate the git coloring algorithm
-        simulateGitColoring(self)
-    def postExtract(self, repo):
-        he.checkout("tip")
-        if "refs/heads/master" not in repo.branchset():
-            for event in repo:
-                if isinstance(event, Commit):
-                    if event.branch == "refs/heads/default":
-                        event.set_branch("refs/heads/master")
-                else if isinstance(event, Reset):
-                    if event.ref == "refs/heads/default":
-                        event.ref = "refs/heads/master"
+
 */
 
+// colorBanches assigns branches to commits in an extracted repository
+func (he HgExtractor) colorBranches(rs *RepoStreamer) error {
+        color_items := he._branchColorItems()
+        if color_items != nil {
+		// If the repo will give us a complete list of (commit
+		// hash, branch name) pairs, use that to do the coloring
+		for h, color := range color_items {
+			rs.meta[h].branch = color
+		}
+        } else {
+		// Otherwise we have to emulate the git coloring algorithm
+		he.simulateGitColoring(he, rs)
+	}
+	return nil
+}
+
+
+func (he HgExtractor) postExtract(repo *Repository) {
+        he.checkout("tip")
+        if !repo.branchset().Contains("refs/heads/master") { 
+		for _, event := range repo.events {
+			switch event.(type) {
+			case *Commit:
+				if event.(*Commit).branch == "refs/heads/default" {
+					event.(*Commit).branch = "refs/heads/master"
+				}
+			case *Reset:
+				event.(*Reset).ref = "refs/heads/master"
+			}
+		}
+	}
+}
+			
 // isClean returns True if repo has no unsaved changes
 func (he HgExtractor) isClean() bool {
         data, err := captureFromProcess("hg status --modified")
@@ -1416,15 +1517,39 @@ func (he HgExtractor) isClean() bool {
 	return data == ""
 }
 
-/*
-    def checkout(self, rev, visibleFiles):
-        "Check the directory out to a specified revision, return a manifest."
-        pwd = os.getcwd()
-        errcode = he.hg_with_err("update", "-C", rev)[1]
+func mustChdir(directory string, errorclass string) {
+	err := os.Chdir(directory)
+	if err != nil {
+		panic(throw(errorclass,
+			"In %s, could not change working directory to %s: %v",
+			errorclass, directory, err))
+	}
+}
+
+func mustCaptureFromProcess(command string, errorclass string) string {
+	data, err := captureFromProcess(command)
+	if err != nil {
+		panic(throw(errorclass,
+			"In %s, command %s failed: %v",
+			errorclass, command, err))
+	}
+	return data
+}
+
+// checkout checka the directory out to a specified revision, return a manifest.
+func (he HgExtractor) checkout(rev string) stringSet {
+        pwd, err := os.Getwd()
+	if err != nil {
+		panic(throw("extractor", "Could not get working directory: %v", err))
+	}
+        _, errcode := captureFromProcess("hg update -C " + rev)
+	if errcode != nil {
+		panic(throw("extractor", "Could not check out: %v", errcode))
+	}
         // 'hg update -C' can delete and recreate the current working
         // directory, so cd to what should be the current directory
-        os.chdir(pwd)
-
+	mustChdir(pwd, "extractor") 
+	
         // Sometimes, hg update can fail because of missing subrepos. When that
         // happens, try really hard to fake it. This is safe because subrepos
         // don't work in any case, so it's always safe to ignore them.
@@ -1434,53 +1559,63 @@ func (he HgExtractor) isClean() bool {
         // sort of thing. It also doesn't handle comments or other rarely used
         // stuff in .hgsub files. This is documented poorly at best so it's
         // unclear how things should work ideally.
-        if errcode != 0:
-            subrepo_txt, subcat_err = he.hg_with_err("cat", "-r", rev, ".hgsub")
+        if errcode != nil {
+		subrepoTxt, subcatErr := captureFromProcess("hg cat -r" + rev + " .hgsub")
+		subrepoArgs := make([]string, 0)
+		if subcatErr == nil {
+			// If there's a subrepository file, try to parse the
+			// names from it.
+			for _, subrepoLine := range strings.Split(subrepoTxt, "\n") {
+				parsed := strings.SplitN(subrepoLine, "=", 1)
+				if len(parsed) > 1 {
+					subrepoArgs = append(subrepoArgs, "--exclude")
+					subrepoArgs = append(subrepoArgs, strings.Trim(parsed[0], " \t\n"))
+				}
+			}
+		}
+		// Since all is not well, clear everything and try from zero.
+		// Sidesteps some issues with problematic checkins.
+		// Remove checked in files.
+		captureFromProcess("hg update -C null")
+		mustChdir(pwd, "extractor")
+		// Remove extraneous files.
+		captureFromProcess("hg purge --config extensions.purge= --all")
+		mustChdir(pwd, "extractor") 
 
-            subrepo_args = []
-            if subcat_err == 0:
-                # If there's a subrepository file, try to parse the names from it.
-                for subrepo_line in subrepo_txt.splitlines():
-                    parsed = subrepo_line.split("=", 1)
-                    if len(parsed) > 1:
-                        subrepo_args.append("--exclude")
-                        subrepo_args.append(parsed[0].strip())
+		// The Python version of this code had a section
+		// beginning with the comment "Remove everything
+		// else. Purge is supposed to do this, but doesn't."
+		// But I tested under hg 4.5.3 and it seems to actually
+		// do that now. Which is good because the way Go's
+		// filepath.Walk interface is designed it would have been a
+		// been a serious PITA to replicate the old behavior:
+		// nuke everything *including directories* except the top
+		// level .hg/.  The issue is that filepath.Walk just walks
+		// the tree in lexical order, which means directories
+		// are at inconvenient places in the sequence.
 
-            // Since all is not well, clear everything and try from zero. This
-            // sidesteps some issues with problematic checkins.
-            he.hg_captureFromProcess("update", "-C", "null") // Remove checked in files.
-            os.chdir(pwd)
-            he.hg_captureFromProcess("purge", "--config", "extensions.purge=", "--all") // Remove extraneous files.
-            os.chdir(pwd)
-
-            // Remove everything else. Purge is supposed to do this, but doesn't.
-            for (dirpath, dirnames, filenames) in os.walk(pwd):
-                if dirpath == pwd:
-                    while ".hg" in dirnames:
-                        dirnames.remove(".hg") // Don't remove the very first .hg
-                for filename in filenames:
-                    os.remove(os.path.join(dirpath,filename))
-                if len(dirnames) == 0:
-                    os.removedirs(dirpath)
-
-            // If there are subrepos, use revert to fake an update, but exclude
-            // the subrepo paths, which are probably borken.
-            if len(subrepo_args) > 0:
-                he.hg_captureFromProcess("revert", "--all", "--no-backup", "-r", rev, *subrepo_args)
-                os.chdir(pwd)
-                he.hg_captureFromProcess("debugsetparents", rev)
-                os.chdir(pwd)
-                he.hg_captureFromProcess("debugrebuilddirstate")
-                os.chdir(pwd)
-            else:
-                reup_txt, reup_err = he.hg_with_err("update", "-C", rev)
-                if reup_err != 0:
-                    raise Fatal("Failed to update to revision %s: %s" % (rev, reup_txt))
-                os.chdir(pwd)
-
-        manifest = he.hg_captureFromProcess("manifest").rstrip("\n").split("\n")
-        return manifest
-*/
+		// If there are subrepos, use revert to fake an
+		// update, but exclude the subrepo paths, which are
+		// probably borken.
+		if len(subrepoArgs) > 0 {
+			captureFromProcess("hg revert --all --no-backup -r " + rev + strings.Join(subrepoArgs, " "))
+			mustChdir(pwd, "extractor")
+			mustCaptureFromProcess("hg debugsetparents " + rev, "extracror")
+			mustChdir(pwd, "extractor")
+			mustCaptureFromProcess("hg debugrebuilddirstate", "extractor")
+			mustChdir(pwd, "extractor")
+		} else {
+			reupTxt, reupErr := captureFromProcess("update -C" + rev)
+			if reupErr != nil {
+				panic(throw("extractor", "Failed to update to revision %s: %s", rev, reupTxt))
+			}
+			mustChdir(pwd, "extractor")
+		}
+        }
+	data := mustCaptureFromProcess("hg manifest", "extractor")
+        manifest := strings.Trim(data, "\n")
+        return newStringSet(strings.Split(manifest, "\n")...)
+}
 
 // getComment returns a commit's change comment as a string.
 func (he HgExtractor) getComment(rev string) string {
@@ -1571,14 +1706,15 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 	defer rs.baton.exit()
 
 	var err error
-	defer func() {
+	defer func(r **Repository, e *error) {
 		if thrown := catch("extractor", recover()); thrown != nil {
 			if strings.HasPrefix(thrown.class, "extractor") {
 				complain(thrown.message)
-				err = errors.New(thrown.message)
+				*e = errors.New(thrown.message)
+				*r = nil
 			}
 		}
-	}()
+	}(&repo, &err)
 
 	meta := rs.extractor.getMeta()
         repo.makedir()
@@ -2606,7 +2742,7 @@ type Repository struct {
 	preferred *VCS			// overrides vcs slot for writes
 	realized map[string]bool	// clear this before each dump
 	writeOptions stringSet		// options requested on this write
-	internals stringSet		// export code computes itself
+	internals stringSet		// export code computes this itself
 }
 
 func newRepository(name string) *Repository {
@@ -7268,15 +7404,28 @@ func (repo *Repository) makedir() {
     func size():
         "Return the size of this import stream, for statistics display."
         return sum(len(str(e)) for e in self.events)
-    func branchset():
-        "Return a set of all branchnames appearing in this repo."
-        branches = set()
-        for e in self.events:
-            if isinstance(e, Reset) && e.committish is not None:
-                branches.add(e.ref)
-            else if isinstance(e, Commit):
-                branches.add(e.branch)
-        return branches
+*/
+
+// branchset returns a set of all branchnames appearing in this repo.
+func (repo *Repository) branchset() stringSet {
+        branches := newStringSet()
+        for _, e := range repo.events {
+		switch e.(type) {
+		case *Reset:
+			if e.(*Reset).committish != "" {
+				branches.Add(e.(*Reset).ref)
+			}
+		case *Commit:
+			branches.Add(e.(*Commit).branch)
+		default:
+			panic("unexpected type in event list")
+		}
+	}
+	return branches
+}
+
+/*
+
     func branchmap():
         "Return a map of branchnames to terminal marks in this repo."
         brmap = {}
@@ -8833,7 +8982,7 @@ func read_repo(source, options, preferred):
         context = {"basename": os.path.basename(repo.sourcedir)}
     try:
         here = os.getcwd()
-        os.chdir(repo.sourcedir)
+        os.Chdir(repo.sourcedir)
         # We found a matching VCS type
         if vcs:
             if "%(tempfile)s" in repo.vcs.exporter:
@@ -8914,7 +9063,7 @@ func read_repo(source, options, preferred):
             streamer = newRepoStreamer(extractor)
             streamer.extract(repo, progress=verbose>0)
     finally:
-        os.chdir(here)
+        os.Chdir(here)
     return repo
 
 class CriticalRegion:
@@ -8979,7 +9128,7 @@ func rebuild_repo(repo, target, options, preferred):
     # Try the rebuild in the empty staging directory
     here = os.getcwd()
     try:
-        os.chdir(staging)
+        os.Chdir(staging)
         if vcs.initializer:
             do_or_die(vcs.initializer, "repository initialization")
         parameters = {"basename": os.path.basename(target)}
@@ -9016,7 +9165,7 @@ func rebuild_repo(repo, target, options, preferred):
         if verbose:
             announce(debugSHOUT, "rebuild is complete.")
 
-        os.chdir(here)
+        os.Chdir(here)
         if staging != target:
             # Rebuild succeeded - make an empty backup directory
             backupcount = 1
@@ -9064,7 +9213,7 @@ func rebuild_repo(repo, target, options, preferred):
             else if verbose:
                 announce(debugSHOUT, "no preservations.")
     finally:
-        os.chdir(here)
+        os.Chdir(here)
         if staging != target:
             nuke(staging, "reposurgeon: removing staging directory")
 
@@ -14990,9 +15139,9 @@ not optimal, and may in particular contain duplicate blobs.
                 newest = 0
                 here = os.getcwd()
                 with tarfile.open(parse.line) as tarball:
-                    os.chdir(repo.subdir())
+                    os.Chdir(repo.subdir())
                     tarball.extractall()
-                    os.chdir(here)
+                    os.Chdir(here)
                 IXANY = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
                 with tarfile.open(parse.line) as tarball:
                     # Pre-sorting avoids an indeterminacy bug in tarfile
