@@ -824,12 +824,16 @@ var fileFilters = map[string]struct {
 // integer-Unix-timestamp/timezone pairs.
 
 
+// Commit-Meta is the extractor;s idea of per-commit metadata
 type CommitMeta struct {
 	ci string
 	ai string
 	branch string
 }
 
+// ExtractorMeta meeds to be composed into each extractor class as the
+// place where its common data lives. The methods that have to be common
+// to extractors are specified by the Extractor interface, next up.
 type ExtractorMeta struct {
 	name string			// extractor name
 	vcs *VCS			// underlying VCS
@@ -858,6 +862,12 @@ type Extractor interface {
         // Return a commit's change comment as a string.
 	getComment(string) string
 }
+
+// How these are structured: RepoStreamer is the common code that
+// sequences extractions. It expects to be able to call a VCS-specific 
+// extractor class. Each of these extractors has the option of using
+// ColorMixin, which can simulate Git's algorithm for branch-coloring
+// commits.
 
 type MixerCapable interface {
 	gatherCommitTimestamps() error
