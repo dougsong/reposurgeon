@@ -904,6 +904,9 @@ func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
         // This will be used in _branchColor below
         cm.childStamps = mc.gatherChildTimestamps(base)
         for refname, refobj := range base.refs.dict {
+		if base.branchesAreColored && strings.HasPrefix(refname, "refs/heads/") {
+			return
+		}
 		cm._branchColor(refobj, refname)
 	}
 }
@@ -1450,6 +1453,7 @@ func (he HgExtractor) gatherChildTimestamps(rs *RepoStreamer) map[string]time.Ti
 			results[h] = farFuture
 		}
 	}
+	rs.branchesAreColored = true
         return results
 }
 
@@ -1473,17 +1477,6 @@ func (he HgExtractor) _branchColorItems() map[string]string {
         // gatherChildTimestamps below, using the hg branch names
 	return nil
 }
-
-/*
-
-    def _branchColor(self, rev, color):
-        // Branches are not colored here (they already were in initChildTimestamps above)
-        if color.startswith('refs/heads/'):
-            return
-        // This takes care of coloring tags and their ancestors
-        Extractor._branchColor(self, rev, color)
-
-*/
 
 // colorBanches assigns branches to commits in an extracted repository
 func (he HgExtractor) colorBranches(rs *RepoStreamer) error {
@@ -1647,6 +1640,7 @@ type RepoStreamer struct {
         commitMap map[string]*Commit
         visibleFiles map[string]map[string]signature
         hashToMark map[[sha1.Size]byte]string
+	branchesAreColored bool
         baton *Baton
 	extractor Extractor
 }
@@ -5068,8 +5062,36 @@ func newRevisionRecord(nodes []NodeAction, props OrderedMap) *RevisionRecord {
 // Cruft recognizers
 var cvs2svnTagRE = regexp.MustCompile("This commit was manufactured by cvs2svn to create tag.*'([^']*)'")
 var cvs2svnBranchRE = regexp.MustCompile("This commit was manufactured by cvs2svn to create branch.*'([^']*)'")
+const SplitSep = '.'
 
 /*
+
+// StreamParser parses a fast-import stream or Subversion dump to
+// populate a Repository.
+type StreamParser struct {
+        repo *Repository
+        fp *bufio.Reader
+        importLine int
+        ccount int
+        linebuffers []string
+        warnings []string
+        // Everything below here is Subversion-specific
+        branches map[string]string
+        branchlink = {}
+        branchdeletes = set()
+        branchcopies = set()
+        generated_deletes = []
+        revisions OrderedMap
+        copycounts OrderedMap
+        hashmap = {}
+        property_stash = {}
+        fileop_branchlinks  = set()
+        directory_branchlinks  = set()
+        active_gitignores = {}
+        large = False
+        propagate = {}
+
+
 
 class StreamParser:
     "Parse a fast-import stream or Subversion dump to populate a Repository."
@@ -5077,7 +5099,7 @@ class StreamParser:
     func __init__(self, repo):
         self.repo = repo
         self.fp = None
-        self.import_line = 0
+        self.importLine = 0
         self.ccount = 0
         self.linebuffers = []
         self.warnings = []
@@ -5098,11 +5120,11 @@ class StreamParser:
         self.propagate = {}
     func error(self, msg):
         "Throw fatal error during parsing."
-        raise Fatal(msg + " at line " + repr(self.import_line))
+        raise Fatal(msg + " at line " + repr(self.importLine))
     func warn(self, msg):
         "Display a parse warning associated with a line."
-        if self.import_line:
-            complain(msg + " at line " + repr(self.import_line))
+        if self.importLine:
+            complain(msg + " at line " + repr(self.importLine))
         else:
             complain(msg)
     func gripe(self, msg):
@@ -5117,7 +5139,7 @@ class StreamParser:
         else:
             line = self.fp.readline()
         self.ccount += len(line)
-        self.import_line += 1
+        self.importLine += 1
         return line
     func tell():
         "Return the current read offset in the source stream."
@@ -5127,7 +5149,7 @@ class StreamParser:
             return None
     func pushback(self, line):
         self.ccount -= len(line)
-        self.import_line -= 1
+        self.importLine -= 1
         self.linebuffers.append(line)
     # Helpers for import-stream files
     func fi_readline():
@@ -5210,7 +5232,7 @@ class StreamParser:
         content = self.fp.read(length)
         if self.fp.read(1) != '\n':
             self.error("EOL not seen where expected, Content-Length incorrect")
-        self.import_line += content.count('\n') + 1
+        self.importLine += content.count('\n') + 1
         self.ccount += len(content) + 1
         return content
     func sd_read_props(self, target, checklength):
@@ -5220,7 +5242,7 @@ class StreamParser:
         while self.ccount < checklength:
             line = self.readline()
             announce(debugSVNPARSE, "readprops, line %d: %s" % \
-                         (self.import_line, repr(line)))
+                         (self.importLine, repr(line)))
             if line.startswith("PROPS-END"):
                 # This test should be !=, but I get random off-by-ones from
                 # real dumpfiles - I don't know why.
@@ -5265,7 +5287,7 @@ class StreamParser:
                 filesize = os.path.getsize(self.fp.name)
             source = source or os.path.relpath(fp.name)
             with Baton("reposurgeon: from %s" % source, enable=progress) as baton:
-                self.import_line = self.repo.legacy_count = 0
+                self.importLine = self.repo.legacy_count = 0
                 self.linebuffers = []
                 # First, determine the input type
                 line = self.readline()
@@ -5287,7 +5309,7 @@ class StreamParser:
                         else if line.startswith("Revision-number: "):
                             # Begin Revision processing
                             announce(debugSVNPARSE, "revision parsing, line %d: begins" % \
-                                     (self.import_line))
+                                     (self.importLine))
                             revision = StreamParser.sd_body(line)
                             plen = int(self.sd_require_header("Prop-content-length"))
                             self.sd_require_header("Content-length")
@@ -5301,7 +5323,7 @@ class StreamParser:
                             while true:
                                 line = self.readline()
                                 announce(debugSVNPARSE, "node list parsing, line %d: %s" % \
-                                             (self.import_line, repr(line)))
+                                             (self.importLine, repr(line)))
                                 if not line:
                                     break
                                 else if not line.strip():
@@ -5429,14 +5451,14 @@ class StreamParser:
                                     continue
                                 else:
                                     announce(debugSVNPARSE, "node list parsing, line %d: uninterpreted line %s" % \
-                                             (self.import_line, repr(line)))
+                                             (self.importLine, repr(line)))
                                     continue
                                 # Node processing ends
                             # Node list parsing ends
                             self.revisions[revision] = StreamParser.RevisionRecord(nodes, props)
                             self.repo.legacy_count += 1
                             announce(debugSVNPARSE, "revision parsing, line %d: ends" % \
-                                         (self.import_line))
+                                         (self.importLine))
                             # End Revision processing
                             #memcheck(None)
                             readprogress(baton, self.fp, filesize)
@@ -5499,7 +5521,7 @@ class StreamParser:
                             self.error("unexpected data object")
                         else if line.startswith("commit"):
                             baton.twirl("")
-                            commitbegin = self.import_line
+                            commitbegin = self.importLine
                             commit = Commit(self.repo)
                             commit.setBranch(line.split()[1])
                             while true:
@@ -5619,7 +5641,7 @@ class StreamParser:
                                     self.pushback(line)
                                     break
                             if not (commit.mark && commit.committer):
-                                self.import_line = commitbegin
+                                self.importLine = commitbegin
                                 self.error("missing required fields in commit")
                             if commit.mark is None:
                                 self.warn("unmarked commit")
@@ -5678,7 +5700,7 @@ class StreamParser:
                         baton.twirl("%d %s commits" % (commitcount, self.repo.vcs.name))
                     else:
                         baton.twirl("%d commits" % commitcount)
-                self.import_line = 0
+                self.importLine = 0
                 if not self.repo.events:
                     raise Recoverable("ignoring empty repository")
             if self.warnings:
