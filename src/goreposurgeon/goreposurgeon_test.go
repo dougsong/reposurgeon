@@ -868,5 +868,33 @@ func TestCapture(t *testing.T) {
 	cmd.Wait()
 
 }
-	
+
+func TestParse(t *testing.T) {
+	saw := sdBody("Content-Length: 23\n")
+	expected := "23"
+	assertEqual(t, saw, expected)
+
+	rawmsg :=`K 7
+svn:log
+V 79
+A vanilla repository - standard layout, linear history, no tags, no branches. 
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2011-11-30T16:41:55.154754Z
+PROPS-END
+`	
+	sp := newStreamParser(nil)
+	sp.fp = *bufio.NewReader(strings.NewReader(rawmsg))
+	om := sp.sdReadProps("test", len(rawmsg))
+	expected = "{svn:log:A vanilla repository - standard layout, linear history, no tags, no branches. \n,svn:author:esr,svn:date:2011-11-30T16:41:55.154754Z}"
+	saw = om.String()
+	assertEqual(t, saw, expected)
+}
+
 // end
