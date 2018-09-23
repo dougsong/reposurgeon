@@ -1660,16 +1660,6 @@ func newRepoStreamer(extractor Extractor) *RepoStreamer {
 	return rs
 }
 
-// getRevlist return a list of commit ID strings in commit timestamp order
-func (be *RepoStreamer) getRevlist() []string {
-        return be.revlist
-}
-
-// getTaglist returns a list of tag name strings.
-func (be *RepoStreamer) getTaglist() []Tag {
-        return be.tags
-}
-
 // getParents returns the list of commit IDs of a commit's parents.
 func (be *RepoStreamer) getParents(rev string) []string {
         return be.parents[rev]
@@ -1774,8 +1764,8 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 	}
 	rs.baton.twirl("")
 
-	consume := make([]string, len(rs.getRevlist()))
-	copy(consume, rs.getRevlist())
+	consume := make([]string, len(rs.revlist))
+	copy(consume, rs.revlist)
 	for _, revision  := range consume {
                 commit := newCommit(repo)
                 rs.baton.twirl("")
@@ -1829,8 +1819,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 					if _, ok := rs.visibleFiles[revision][pathname]; !ok || rs.visibleFiles[revision][pathname]!=*newsig {
 						announce(debugEXTRACT, "r%s: update for %s", revision, pathname)
 						found := false
-						// FIXME: may fail on R case due
-						// to deleting dict items while walking the list
+						var deletia []string
 						for oldpath, oldsig := range rs.visibleFiles[revision] {
 							if oldsig == *newsig {
 								found = true		
@@ -1838,7 +1827,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 									op := newFileOp(repo)
 									op.construct("R", oldpath, pathname)
 									commit.appendOperation(*op)
-									delete(rs.visibleFiles[revision], oldpath)
+									deletia = append(deletia, oldpath)
 								} else if oldpath != pathname {
 									op := newFileOp(repo)
 									op.construct("C", oldpath, pathname)
@@ -1846,6 +1835,13 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 								}
 								break
 							}
+						}
+						// Avoid deleting
+						// items from map
+						// while iterating
+						// through it.
+						for _, item := range deletia {
+							delete(rs.visibleFiles[revision], item)
 						}
 						if found {
 							op := newFileOp(repo)
@@ -1907,9 +1903,11 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 			repo.addEvent(reset)
 		}
 	}
-	// Last, append tag objects.
-	// FIXME: Sort by tagger-date
-	for _, tag := range rs.getTaglist() {
+	// Last, append tag objects. Sort by tagger-date first
+	sort.Slice(rs.tags, func(i, j int) bool {
+		return rs.tags[i].tagger.date.Before(rs.tags[j].tagger.date) 
+	})
+	for _, tag := range rs.tags {
 		// Hashes produced by the GitExtractor are turned into proper
 		// committish marks here.
 		c, ok := rs.commitMap[tag.committish]
@@ -1920,12 +1918,6 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 		}
 	}
 	rs.extractor.postExtract(repo)
-	// FIXME: Conditional clear of properties.
-	//if not rs.retractor.properties {
-	//	for _, event in repo.commits() {
-	//		event.properties = nil
-	//	}
-	//}
 	repo.vcs = meta.vcs
 	return repo, err
 }
@@ -4712,7 +4704,7 @@ func (commit *Commit) blobByName(pathname string) (string, bool) {
 	}
 }
 
-// undecodable tells whether this commit have undecodable i18n sequences in it?
+// undecodable tells whether this commit has undecodable i18n sequences in it?
 // FIXME: Needs unit test
 func (commit *Commit) undecodable(codec string) bool {
 	_, f1, err1 := ianaDecode(commit.committer.name, codec)
