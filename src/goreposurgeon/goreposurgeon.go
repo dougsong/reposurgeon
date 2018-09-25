@@ -94,7 +94,9 @@ import (
 	"strings"
 	"time"
 	"unicode"
+	"unicode/utf8"
 
+	orderedset "github.com/emirpasic/gods/sets/linkedhashset"
 	kommandant "gitlab.com/ianbruene/Kommandant"
 	terminal "golang.org/x/crypto/ssh/terminal"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
@@ -9214,11 +9216,37 @@ func debug_lexer(f):
         return ret
     return wrapper
 
+*/
+
+// SelectionParser parses the selection set language
+type SelectionParser struct {
+	line   string
+	nitems int
+}
+
+type selEvaluator func(*SelectionParser, *orderedset.Set) *orderedset.Set
+
+func (p *SelectionParser) nItems() int { return p.nitems }
+
+func (p *SelectionParser) allItems() *orderedset.Set {
+	s := orderedset.New()
+	for i := 0; i < p.nitems; i++ {
+		s.Add(i)
+	}
+	return s
+}
+
+func eatWS(s string) string {
+	return strings.TrimLeft(s, " \t")
+}
+
+func (p *SelectionParser) eatWS() {
+	p.line = eatWS(p.line)
+}
+
+/*
+
 class SelectionParser(object):
-    """Selection set parser."""
-    func __init__():
-        self.line = None
-        self.allitems = []
     func compile(self, line str):
         "Compile expression; return remainder of line with expression removed."
         orig_line = line
@@ -9241,22 +9269,6 @@ class SelectionParser(object):
         """Parse selection; return remainder of line with selection removed."""
         machine, rest = self.compile(line)
         return (self.evaluate(machine, allitems), rest)
-    func peek():
-        return self.line and self.line[0]
-    func pop():
-        if not self.line:
-            return ''
-        else:
-            c = self.line[0]
-            self.line = self.line[1:]
-            return c
-    # this should only be called from a @debug_lexer function (it
-    # depends on state set up by that decorator)
-    func _debug_lexer(self, msg):
-        """log a debug message from a lexer function"""
-        if debugEnable(debugLEXER):
-            stack = getattr(self, '_debug_lexer_stack')
-            announce(debugSHOUT, "{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
     @debug_lexer
     func parse_expression():
         self.line = self.line.lstrip()
@@ -9276,6 +9288,36 @@ class SelectionParser(object):
                 break
             op = lambda p, lop=op, rop=op2: self.eval_disjunct(p, lop, rop)
         return op
+
+*/
+
+func (p *SelectionParser) peek() rune {
+	if len(p.line) == 0 {
+		return utf8.RuneError
+	}
+	r, _ := utf8.DecodeRuneInString(p.line)
+	return r
+}
+
+func (p *SelectionParser) pop() rune {
+	if len(p.line) == 0 {
+		return utf8.RuneError
+	}
+	r, n := utf8.DecodeRuneInString(p.line)
+	p.line = p.line[n:]
+	return r
+}
+
+/*
+
+class SelectionParser(object):
+    # this should only be called from a @debug_lexer function (it
+    # depends on state set up by that decorator)
+    func _debug_lexer(self, msg):
+       if debugEnable(debugLEXER):
+           stack = getattr(self, '_debug_lexer_stack')
+           announce(debugSHOUT, "{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
+
     @debug_lexer
     func eval_disjunct(self, preselection, op1, op2):
         "Evaluate a disjunctive expression"
