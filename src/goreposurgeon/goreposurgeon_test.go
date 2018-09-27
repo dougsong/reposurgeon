@@ -896,7 +896,7 @@ V 27
 PROPS-END
 `	
 	sp := newStreamParser(nil)
-	sp.fp = *bufio.NewReader(strings.NewReader(rawmsg))
+	sp.fp = strings.NewReader(rawmsg)
 	om := sp.sdReadProps("test", len(rawmsg))
 	expected = "{svn:log:A vanilla repository - standard layout, linear history, no tags, no branches. \n,svn:author:esr,svn:date:2011-11-30T16:41:55.154754Z}"
 	saw = om.String()
