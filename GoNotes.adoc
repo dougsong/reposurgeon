@@ -1,5 +1,5 @@
 = Notes on the Go translation of Reposurgeon =
-version 1.3, 2018-90-20
+version 1.4, 2018-09-28
 
 The reposurgeon codebase is moving from Python to Go because the
 Python implementation is too slow on really large repositories. The
@@ -16,7 +16,9 @@ seriously considered OCaml or a compiled Lisp as alternatives.
 
 I did examine the automated tools for Python to Go, but rejected them
 because the generated Go code would have been a maintainability
-disaster.  Thus, translation by hand.
+disaster.  Thus, translation by hand.  Though at about 22% in I wrote
+https://gitlab.com/esr/pytogo[a fast, crude, incomplete Python-to-Go
+translator] to assist the process.
 
 This is an experience report on that translation, written in attempted
 conformance with the Go community's practice for grounding language
@@ -68,7 +70,8 @@ The positive part of my summation is that hand-translation of Python
 to Go even at this scale and complexity is not horrible.  It's
 not *easy*, exactly, but quite doable.  It is however time-intensive;
 counting time to build the required unit tests in Go, I managed about
-150-200 lines a day.
+150-200 lines a day before writing pytogo and 500-600 lines per
+day afterwards.
 
 The pain points are mainly around a handful of advanced Python
 features: iterators, generators, comprehensions, and class-valued
@@ -654,6 +657,11 @@ and unusually effective job of documenting their language considering
 the usual limitations of documentation-by-developers, finding things
 in the corona is *hard*.  And knowing what's current is *hard*.
 
+The documentation is organized in such a way that it's difficult to
+know what you still don't know after reading a Tour page or blog entry
+or white paper. There should be more "But see here for a dangerous
+detail" links, in particular to the language specification.
+
 Style. Go has a problem that is common to new languages with opinionated
 developers (this is part of "the usual limitations" above).  There are
 one or two exceptions, but the documentation is predominantly written
@@ -684,8 +692,10 @@ be obsolete and when the document was last reviewed for correctness.
 
 Note: After writing this, I had an even worse time digging up and
 fixing in my mind all the details of how defer/panic/recover works.
-It's all documented somewhere, and in fact there's a very helpful blog
-post on the topic.  But the blog post leaves out the crucial detail
+It's almost all documented somewhere, though Peter Seebach and I ended
+up writing a FAQ on how to set local variables from a defer clause to
+clear up minir confusion. There's a very helpful blog
+post on the general topic.  But the blog post leaves out the crucial detail
 that recover returns interface {}, not error; this tripped me up when
 I was writing my kludge, and I ended up on IRC getting referred to the
 formal Go specification.

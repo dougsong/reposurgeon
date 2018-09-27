@@ -189,6 +189,9 @@ func filecopy(src, dst string) (int64, error) {
         return nBytes, err
 }
 
+// This representation optimizes for small memory footprint at the expense
+// of speed.  To make the opposite trade we would do the obvious thing with
+// map[string] bool.
 type stringSet []string
 
 func newStringSet(elements ...string) stringSet {
@@ -227,7 +230,7 @@ func (s *stringSet) Add(item string) {
 	*s = append(*s, item)
 }
 
-func (s stringSet) Subtract(other ... string) stringSet {
+func (s stringSet) Subtract(other stringSet) stringSet {
 	var diff stringSet
 	for _, outer := range s {
 		for _, inner := range other {
@@ -250,6 +253,18 @@ func (s stringSet) Intersection(other stringSet) stringSet {
 		}
 	}
 	return intersection
+}
+
+func (s stringSet) Union(other stringSet) stringSet {
+	// Naive O(n**2) method - don't use on large sets if you care about speed
+	var union stringSet
+	union = s[:]
+	for _, item := range other {
+		if !s.Contains(item) {
+			union = append(union, item)
+		}
+	}
+	return union
 }
 
 func (s *stringSet) String() string {
@@ -1796,7 +1811,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 		}
 
                 if len(present) > 0 {
-			removed := rs.fileSetAt(revision).Subtract(present...)
+			removed := rs.fileSetAt(revision).Subtract(present)
 			for _, pathname := range present {
 				if isdir(pathname) {
 					continue

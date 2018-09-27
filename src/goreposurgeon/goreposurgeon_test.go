@@ -85,10 +85,16 @@ func TestStringSet(t *testing.T) {
 
 	ts8 := newStringSet("a", "b", "c", "d")
 	ts9 := newStringSet("b", "e")
-	diff := ts8.Subtract(ts9...)
+	diff := ts8.Subtract(ts9)
 	if diff[0]!="a"  || diff[1]!="c" || diff[2]!="d" || len(diff)!=3{
 		t.Errorf("unexpected result of set difference: %v", diff)
 	}
+
+	sum := ts8.Union(ts9)
+	if sum[0]!="a"  || sum[1]!="b" || sum[2]!="c" || sum[4] != "e" || len(sum)!=5{
+		t.Errorf("unexpected result of set union: %v", sum)
+	}
+
 }
 
 func TestOrderedMap(t *testing.T) {
