@@ -943,7 +943,13 @@ M 100644 :3 README
 	assertBool(t, repo.events[3].getMark() == ":4", true)
 	assertEqual(t, repo.markToEvent(":3").(*Blob).getContent(), "0123456789012345678\n")
 	assertEqual(t, repo.markToEvent(":2").(*Commit).comment, "First commit.\n")
-
+	commit2 := repo.events[3].(*Commit)
+	assertEqual(t, commit2.String(), rawdump[len(rawdump)-len(commit2.String()):])
+	d, _ := commit2.blobByName("README")
+	assertEqual(t, d, "0123456789012345678\n")
+	
+	sp.repo.cleanup()
+	
 	//FIXME: write test with a garbled data count and with dos.fi;
 	//it seemed to confuse the stream reader.
 }

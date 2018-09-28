@@ -4723,7 +4723,6 @@ func (commit *Commit) references(mark string) bool {
 }
 
 // blobByName looks up file content by name
-//FIXME: Need unit test for this function
 func (commit *Commit) blobByName(pathname string) (string, bool) {
 	entry, ok := commit.manifest()[pathname]
         if !ok {
