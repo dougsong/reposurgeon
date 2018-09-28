@@ -3378,7 +3378,7 @@ func newReset(repo *Repository, ref string, committish string, target *Commit) *
 }
 
 // idMe IDs this reset for humans.
-func (reset *Reset) idMe() string {
+func (reset Reset) idMe() string {
         return fmt.Sprintf("reset-%s@%d", reset.ref, reset.repo.index(reset))
 }
 
@@ -3396,7 +3396,7 @@ func (reset *Reset) remember(repo *Repository, committish string, target *Commit
 		reset.committish = target.getMark()
         } else {
 		reset.committish = committish
-		if reset.repo != nil {
+		if reset.repo != nil && committish != ""{
 			reset.target = reset.repo.markToEvent(reset.committish).(*Commit)
 		}
 	}
@@ -3420,12 +3420,12 @@ func (reset *Reset) moveto(repo *Repository) {
 }
 
 // tags enables do_tags() to report resets."
-func (reset *Reset) tags(modifiers stringSet, eventnum int, _cols int) string {
+func (reset Reset) tags(modifiers stringSet, eventnum int, _cols int) string {
         return fmt.Sprintf("%6d\treset\t%s", eventnum+1, reset.ref)
 }
 
 // String dumps this reset in import-stream format
-func (reset *Reset) String() string {
+func (reset Reset) String() string {
         if reset.repo.realized != nil {
 		var branch string = reset.ref
 		if strings.Index(reset.ref, "^") != -1 {
