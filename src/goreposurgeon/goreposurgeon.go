@@ -163,6 +163,21 @@ func isdir(pathname string) bool {
 	return err == nil && st.IsDir()
 }
 
+func isfile(pathname string) bool {
+	// FIXME: Doesn't fly in 1.10
+	//st, err := os.Stat(pathname)
+	//return err == nil && st.IsRegular()
+	return !isdir(pathname)
+}
+
+func getsize(pathname string) int64 {
+	st, err := os.Stat(pathname)
+	if err != nil {
+		return -1
+	}
+	return st.Size()
+}
+
 // filecopy does what it says, returning bytes copied and an error indication
 func filecopy(src, dst string) (int64, error) {
         sourceFileStat, err := os.Stat(src)
@@ -1712,7 +1727,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 	}
 
 	rs.baton = newBaton("Extracting", "", progress)
-	defer rs.baton.exit()
+	defer rs.baton.exit("")
 
 	var err error
 	defer func(r **Repository, e *error) {
@@ -2044,11 +2059,10 @@ func (baton *Baton) twirl(ch string) {
 	}
 }
 
-func (baton *Baton) exit() {
-	//if extype == KeyboardInterrupt:
-	//    baton.endmsg = "interrupted"
-	//if extype == Fatal:
-	//    baton.endmsg = "aborted by error"
+func (baton *Baton) exit(override string) {
+	if override != "" {
+		baton.endmsg = override
+	}
 	if baton.stream != nil {
 		baton.stream.Write([]byte(fmt.Sprintf("]\b...(%s) %s.\n",
 			time.Since(baton.starttime), baton.endmsg)))
@@ -2135,7 +2149,7 @@ func debugEnable(level int) bool {
 // nuke removed a (large) directory, reporting elapsed time.
 func nuke(directory string, legend string) {
 	baton := newBaton(legend, "", debugEnable(debugSHUFFLE))
-	defer baton.exit()
+	defer baton.exit("")
 	// FIXME: Redo with filepath.Walk and a more granular baton
 	os.RemoveAll(directory)
 }
@@ -2888,7 +2902,7 @@ func (b *Blob) setBlobfile(argpath string) {
         b.abspath = argpath
 }
 
-// getBlobfile returns the path where the blob's content lives.
+// getBloobfile returns the path where the blob's content lives.
 func (b *Blob) getBlobfile(create bool) string {
         if b.abspath != "" {
 		return b.abspath
@@ -5929,92 +5943,119 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			tag := newTag(sp.repo, tagname, referent, nil, tagger, d)
 			tag.legacyID = legacyID
 			//sp.repo.addEvent(tag)
-			//memcheck(nil)
-			baton.readProgress(sp.ccount, filesize)
 		} else {
 			// Simply pass through any line we don't understand.
 			sp.repo.addEvent(newPassthrough(sp.repo, line))
 		}
+		baton.readProgress(sp.ccount, filesize)
 	}
 }
 
-/*
 
-    #
-    # The main event
-    #
-    func (sp *StreamParser) fast_import(fp, options, progress=false, source=None):
-        "Initialize the repo from a fast-import stream or Subversion dump."
-        sp.repo.makedir()
-        sp.timeMark("start")
-        try:
-            filesize = None
-            sp.fp = fp
-            # Optimization: if we're reading from a plain file,
-            # no need to clone all the blobs.
-            if os.path.isfile(sp.fp.name):
-                # We can't just pass the input file object here, it
-                # leads to bad results when fast_import is called
-                # within a with clause.  Alas, this is a potential
-                # resource leak.
-                sp.repo.seekstream = make_wrapper(open(sp.fp.name, "rb"))
-                filesize = os.path.getsize(sp.fp.name)
-		sp.ccount = 0
-            source = source or os.path.relpath(fp.name)
-            with Baton("reposurgeon: from %s" % source, enable=progress) as baton:
-                sp.importLine = sp.repo.legacyCount = 0
-                sp.linebuffers = []
-                # First, determine the input type
-                line = sp.readline()
-                if line.startswith("SVN-fs-dump-format-version: "):
-                    if sdBody(line) not in ("1", "2"):
-                        raise Fatal("unsupported dump format version %s" \
-                                    % sdBody(line))
-                    # Beginning of Subversion dump parsing
-		    sp.parseSubversion(options, baton)
-                    # End of Subversion dump parsing
-                    sp.timeMark("parsing")
-                    sp.svn_process(options, baton)
-                    elapsed = time.time() - baton.time
-                    baton.twirl("...%d svn revisions (%d/s)" %
-                                 (sp.repo.legacyCount,
-                                  parseInt(sp.repo.legacyCount/elapsed)))
-                else:
-                    sp.pushback(line)
-		    sp.parseFastImport()
-                    sp.timeMark("parsing")
-                    if sp.repo.stronghint:
-                        baton.twirl("%d %s commits" % (commitcount, sp.repo.vcs.name))
-                    else:
-                        baton.twirl("%d commits" % commitcount)
-                sp.importLine = 0
-                if not sp.repo.events:
-                    raise Recoverable("ignoring empty repository")
-            if sp.warnings:
-                for warning in sp.warnings:
-                    complain(warning)
-        except KeyboardInterrupt:
-            nuke(sp.repo.subdir(), "reposurgeon: import interrupted, removing %s" % sp.repo.subdir())
-            raise KeyboardInterrupt
-    #
-    # The rendezvous between parsing and object building for import
-    # streams is pretty trivial and best done inline in the parser
-    # because reposurgeon's internal structures are designed to match
-    # those entities. For Subversion dumpfiles, on the other hand,
-    # there's a fair bit of impedance-matching required.  That happens
-    # in the following functions.
-    #
-    @staticmethod
-    func (sp *StreamParser)  node_permissions(node):
-        "Fileop permissions from node properties"
-        if node.props:
-            if "svn:executable" in node.props:
-                return 0o100755
-            else if "svn:special" in node.props:
-                # Map to git symlink, which behaves the same way.
-                # Blob contents is the path the link should resolve to.
-                return 0o120000
-        return 0o100644
+//
+// The main event
+//
+// FIXME: When we have signal notifications, fire the defer on signal.
+
+func (sp *StreamParser) fastImport(fp io.Reader,
+	options stringSet, progress bool, source string) {
+	// Initialize the repo from a fast-import stream or Subversion dump.
+	sp.repo.makedir()
+	sp.timeMark("start")
+	var filesize int64 = -1
+	sp.fp = fp
+	fileobj, ok := fp.(*os.File)
+	// Optimization: if we're reading from a plain stream dump,
+	// no need to clone all the blobs.
+	if ok && isfile(fileobj.Name()) {
+		sp.repo.seekstream = fileobj
+		filesize = getsize(sp.repo.seekstream.Name())
+	}
+        pwd, err := os.Getwd()
+	if err != nil {
+		sp.error(fmt.Sprintf("Could not get working directory: %v", err))
+	}
+	if source == "" {
+		source, err = filepath.Rel(pwd, sp.repo.seekstream.Name())
+		if err != nil {
+			sp.error(fmt.Sprintf("Could not compute relative path: %v", err))
+		}
+	}
+	baton := newBaton(fmt.Sprintf("reposurgeon: from %s", source), "", progress)
+	commitcount := 0
+	sp.repo.legacyCount = 0
+	// First, determine the input type
+	line := sp.readline()
+	if strings.HasPrefix(line, "SVN-fs-dump-format-version: ") {
+		body := sdBody(line)
+		if body != "1" && body !="2" {
+			sp.error("unsupported dump format version " + body)
+		}
+		// Beginning of Subversion dump parsing
+		sp.parseSubversion(options, baton, filesize)
+		// End of Subversion dump parsing
+		sp.timeMark("parsing")
+		//sp.svn_process(options, baton) // FIXME
+		elapsed := time.Since(baton.starttime)
+		baton.twirl(fmt.Sprintf("...%d svn revisions (%d/s)",
+			sp.repo.legacyCount,
+			int(sp.repo.legacyCount/int(elapsed))))
+	} else {
+		sp.pushback(line)
+		sp.parseFastImport(options, baton, filesize)
+		sp.timeMark("parsing")
+		if sp.repo.stronghint {
+			baton.twirl(fmt.Sprintf("%d %s commits", commitcount, sp.repo.vcs.name))
+		} else {
+			baton.twirl(fmt.Sprintf("%d commits", commitcount))
+		}
+	}
+	baton.exit("")
+	baton = nil
+	sp.importLine = 0
+	if len(sp.repo.events) == 0 {
+		sp.error("ignoring empty repository")
+	}
+	for _, warning := range sp.warnings {
+		complain(warning)
+	}
+
+	// FIXME: When we have signal notifications, fire the defer on signal.
+	defer func() {
+		if e := catch("parse", recover()); e != nil {
+			if baton != nil {
+				baton.exit("interrupted by error")
+			}
+			complain(e.message)
+			nuke(sp.repo.subdir(""), fmt.Sprintf("import interrupted, removing %s", sp.repo.subdir("")))
+		}
+		if sp.repo.seekstream != nil {
+			sp.repo.seekstream.Close()
+		}
+	}()
+}
+	
+//
+// The rendezvous between parsing && object building for import
+// streams is pretty trivial && best done inline in the parser
+// because reposurgeon's internal structures are designed to match
+// those entities. For Subversion dumpfiles, on the other hand,
+// there's a fair bit of impedance-matching required.  That happens
+// in the following functions.
+//
+func nodePermissions(node NodeAction) string {
+    // Fileop permissions from node properties
+	if node.props.has("svn:executable") {
+		return "100755"
+	} else if node.props.has("svn:special") {
+	    // Map to git symlink, which behaves the same way.
+	    // Blob contents is the path the link should resolve to.
+	    return "120000"
+    }
+    return "100644"
+}
+
+/*
     func (sp *StreamParser) svn_process(options, baton):
         "Subversion actions to import-stream commits."
         sp.repo.addEvent(Passthrough("#reposurgeon sourcetype svn\n", sp.repo))
@@ -6565,7 +6606,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
                         ancestor_nodes[node.path] = node
                         assert node.blobmark
                         # Time for fileop generation.
-                        perms = sp.node_permissions(node)
+                        perms = sp.nodePermissions(node)
                         if node.path in sp.propagate:
                             perms = 0o100755
                             del sp.propagate[node.path]
@@ -8117,9 +8158,9 @@ func (repo *Repository) branchset() stringSet {
                     gripe(" ".join(msg))
                     deletia.append(index)
         self.delete(deletia, ["--tagback", "--tagify"])
-    func fast_import(self, fp, options, progress=false, source=None):
+    func fastImport(self, fp, options, progress=false, source=None):
         "Read a stream file and use it to populate the repo."
-        StreamParser().fast_import(fp, options, progress, source=source)
+        StreamParser().fastImport(fp, options, progress, source=source)
         self.readtime = time.time()
     func parse_dollar_cookies():
         "Extract info about legacy references from CVS/SVN header cookies."
@@ -9326,13 +9367,13 @@ func read_repo(source, options, preferred):
                     context["tempfile"] = tfname
                     do_or_die(repo.vcs.exporter % context, "repository export")
                     with open(tfname, "rb") as tp:
-                        repo.fast_import(tp, options, progress=showprogress, source=source)
+                        repo.fastImport(tp, options, progress=showprogress, source=source)
                 finally:
                     os.remove(tfname)
                     os.close(tfdesc)
             else:
                 with popenOrDie(repo.vcs.exporter % context, "repository export") as tp:
-                    repo.fast_import(make_wrapper(tp), options, progress=showprogress, source=source)
+                    repo.fastImport(make_wrapper(tp), options, progress=showprogress, source=source)
             if repo.vcs.authormap and os.path.exists(repo.vcs.authormap):
                 announce(debugSHOUT, "reading author map.")
                 with open(repo.vcs.authormap, "rb") as fp:
@@ -12131,7 +12172,7 @@ For a list of supported types, invoke the 'prefer' command.
                         except KeyError:
                             raise Recoverable("unrecognized --format")
                         break
-                repo.fast_import(parse.stdin, parse.options, progress=(verbose==1 and not quiet))
+                repo.fastImport(parse.stdin, parse.options, progress=(verbose==1 and not quiet))
             # This is slightly asymmetrical with the write side, which
             # interprets an empty argument list as '-'
             else if not parse.line or parse.line == '.':
