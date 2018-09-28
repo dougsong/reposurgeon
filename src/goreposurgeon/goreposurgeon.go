@@ -6032,8 +6032,8 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 }
 	
 //
-// The rendezvous between parsing && object building for import
-// streams is pretty trivial && best done inline in the parser
+// The rendezvous between parsing and object building for import
+// streams is pretty trivial and best done inline in the parser
 // because reposurgeon's internal structures are designed to match
 // those entities. For Subversion dumpfiles, on the other hand,
 // there's a fair bit of impedance-matching required.  That happens
@@ -6044,9 +6044,9 @@ func nodePermissions(node NodeAction) string {
 	if node.props.has("svn:executable") {
 		return "100755"
 	} else if node.props.has("svn:special") {
-	    // Map to git symlink, which behaves the same way.
-	    // Blob contents is the path the link should resolve to.
-	    return "120000"
+		// Map to git symlink, which behaves the same way.
+		// Blob contents is the path the link should resolve to.
+		return "120000"
     }
     return "100644"
 }
