@@ -160,14 +160,12 @@ func exists(pathname string) bool {
 
 func isdir(pathname string) bool {
 	st, err := os.Stat(pathname)
-	return err == nil && st.IsDir()
+	return err == nil && st.Mode().IsDir()
 }
 
 func isfile(pathname string) bool {
-	// FIXME: Doesn't fly in 1.10
-	//st, err := os.Stat(pathname)
-	//return err == nil && st.IsRegular()
-	return !isdir(pathname)
+	st, err := os.Stat(pathname)
+	return err == nil && st.Mode().IsRegular()
 }
 
 func getsize(pathname string) int64 {
@@ -927,9 +925,9 @@ func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
         // git fast-export
         // First retrieve the commit timestamps, they are used in
 	// branchColor below
-        mc.gatherCommitTimestamps()	// FIXME: Check error return
-        if cm.commitStamps  == nil {
-		panic(throw("extractor", "Could not retrieve commit timestamps."))
+        err := mc.gatherCommitTimestamps()
+        if err != nil || cm.commitStamps  == nil {
+		panic(throw("extractor", "Could not retrieve commit timestamps: %v", err))
 	}
         // This will be used in _branchColor below
         cm.childStamps = mc.gatherChildTimestamps(base)
@@ -2769,11 +2767,11 @@ type Repository struct {
         //uniqueness = None
         markseq int
         authormap map[string]Contributor
-        //tzmap = {}
+        tzmap map[string]*time.Location	// most recent email address to timezone
         //aliases = {}
 	// Write control - set, if required, before each dump
 	preferred *VCS			// overrides vcs slot for writes
-	realized map[string]bool	// clear this before each dump
+	realized map[string]bool	// clear and remake this before each dump
 	writeOptions stringSet		// options requested on this write
 	internals stringSet		// export code computes this itself
 }
@@ -2786,6 +2784,9 @@ func newRepository(name string) *Repository {
 	repo.preserveSet = newStringSet()
 	repo.caseCoverage = newStringSet()
         repo.legacyMap = make(map[string]*Commit)
+	repo.timings = make([]TimeMark, 0)
+	repo.authormap = make(map[string]Contributor)
+	repo.tzmap = make(map[string]*time.Location)
 	d, err := os.Getwd()
 	if err != nil {
 		panic(throw("command", "During repository creation: %v", err))
@@ -2822,8 +2823,11 @@ func (repo *Repository) markToEvent(mark string) Event {
 			}
 		}
 	}
-	// FIXME: must return nil for not found  
-	return repo._eventByMark[mark]
+	d, ok := repo._eventByMark[mark]
+	if ok {
+		return d
+	}
+	return nil
 }
 
 // index returns the index of the specified object in the main even list
@@ -5427,9 +5431,8 @@ func (sp *StreamParser) timeMark(label string) {
 }
 
 func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesize int64) {
-	// FIXME: bounds-check this
 	hashcopy := func(hash *[sha1.Size]byte, src string) {
-		for i := 0; i < sha1.Size; i++ {
+		for i := 0; i < sha1.Size && i < len(src); i++ {
 			hash[i] = src[i]
 		}
 	}
@@ -5772,12 +5775,11 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				} else if strings.HasPrefix(line, "author") {
 					attrib := *newAttribution(line[7:])
 					commit.authors = append(commit.authors, attrib)
-					// FIXME: Initialize from the Date object
-					//sp.repo.tzmap[attrib.email] = attrib.date.orig_tz_string
+					sp.repo.tzmap[attrib.email] = attrib.date.timestamp.Location()
 				} else if strings.HasPrefix(line, "committer") {
-					commit.committer = *newAttribution(line[10:])
-					// FIXME: Initialize from the Date object
-					//sp.repo.tzmap[commit.committer.email] = commit.committer.date.orig_tz_string
+					attrib := *newAttribution(line[10:])
+					commit.committer = attrib
+					sp.repo.tzmap[attrib.email] = attrib.date.timestamp.Location()
 				} else if strings.HasPrefix(line, "property") {
 					commit.properties = newOrderedMap()
 					fields := strings.Split(line, " ")
