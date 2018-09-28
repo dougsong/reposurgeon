@@ -627,6 +627,7 @@ func TestFileOp(t *testing.T) {
 
 	repo := newRepository("fubar")
 	commit := newCommit(repo)
+	repo.addEvent(commit)
 	// Appending these in opposite order from how they should sort
 	commit.appendOperation(*fileop1)	// README
 	commit.appendOperation(*fileop2)	// DRINKME
@@ -638,6 +639,7 @@ func TestFileOp(t *testing.T) {
 func TestCommitMethods(t *testing.T) {
 	repo := newRepository("fubar")
 	commit := newCommit(repo)
+	repo.addEvent(commit)
 	committer := "J. Random Hacker <jrh@foobar.com> 1456976347 -0500"
 	commit.committer = *newAttribution(committer)
 	author := newAttribution("esr <esr@thyrsus.com> 1457998347 +0000")
@@ -706,6 +708,7 @@ Example commit for unit testing, modified.
 func TestParentChildMethods(t *testing.T) {
 	repo := newRepository("fubar")
 	commit1 := newCommit(repo)
+	repo.addEvent(commit1)
 	committer1 := "J. Random Hacker <jrh@foobar.com> 1456976347 -0500"
 	commit1.committer = *newAttribution(committer1)
 	author1 := newAttribution("esr <esr@thyrsus.com> 1457998347 +0000")
@@ -714,6 +717,7 @@ func TestParentChildMethods(t *testing.T) {
 	commit1.setMark(":1")
 
 	commit2 := newCommit(repo)
+	repo.addEvent(commit2)
 	committer2 := "J. Random Hacker <jrh@foobar.com> 1456976347 -0500"
 	commit2.committer = *newAttribution(committer2)
 	author2 := newAttribution("esr <esr@thyrsus.com> 1457998347 +0000")
@@ -731,6 +735,7 @@ func TestParentChildMethods(t *testing.T) {
 	commit2.insertParent(0, ":0")
 
 	commit3 := newCommit(repo)
+	repo.addEvent(commit3)
 	committer3 := "J. Random Hacker <jrh@foobar.com> 1456976447 -0500"
 	commit3.committer = *newAttribution(committer3)
 	author3 := newAttribution("esr <esr@thyrsus.com> 1457998447 +0000")
@@ -825,6 +830,7 @@ func TestParentChildMethods(t *testing.T) {
 func TestAlldeletes(t *testing.T) {
 	repo := newRepository("fubar")
 	commit1 := newCommit(repo)
+	repo.addEvent(commit1)
 	committer1 := "J. Random Hacker <jrh@foobar.com> 1456976347 -0500"
 	commit1.committer = *newAttribution(committer1)
 	author1 := newAttribution("esr <esr@thyrsus.com> 1457998347 +0000")
@@ -901,6 +907,45 @@ PROPS-END
 	expected = "{svn:log:A vanilla repository - standard layout, linear history, no tags, no branches. \n,svn:author:esr,svn:date:2011-11-30T16:41:55.154754Z}"
 	saw = om.String()
 	assertEqual(t, saw, expected)
+
+	rawdump := `blob
+mark :1
+data 20
+1234567890123456789
+
+commit refs/heads/master
+mark :2
+committer Ralf Schlatterbeck <rsc@runtux.com> 0 +0000
+data 14
+First commit.
+M 100644 :1 README
+
+blob
+mark :3
+data 20
+0123456789012345678
+
+commit refs/heads/master
+mark :4
+committer Ralf Schlatterbeck <rsc@runtux.com> 10 +0000
+data 15
+Second commit.
+from :2
+M 100644 :3 README
+
+`
+	repo := newRepository("test")
+	sp = newStreamParser(repo)
+	r := strings.NewReader(rawdump)
+	sp.fastImport(r, nil, false, "synthetic test load")
+
+	assertBool(t, len(repo.events) == 4, true)
+	assertBool(t, repo.events[3].getMark() == ":4", true)
+	assertEqual(t, repo.markToEvent(":3").(*Blob).getContent(), "0123456789012345678\n")
+	assertEqual(t, repo.markToEvent(":2").(*Commit).comment, "First commit.\n")
+
+	//FIXME: write test with a garbled data count and with dos.fi;
+	//it seemed to confuse the stream reader.
 }
 
 // end

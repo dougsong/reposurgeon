@@ -8325,7 +8325,6 @@ func (repo *Repository) exportStyle() stringSet {
 */
 
 func (repo *Repository) addEvent(event Event) {
-	complain("Bump")
 	repo.events = append(repo.events, event)
 }
 
