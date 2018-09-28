@@ -1741,7 +1741,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 	meta := rs.extractor.getMeta()
         repo.makedir()
 	front := fmt.Sprintf("#reposurgeon sourcetype %s\n", meta.vcs.name)
-	repo.addEvent(*newPassthrough(repo, front))
+	repo.addEvent(newPassthrough(repo, front))
 
 	err = rs.extractor.gatherRevisionIDs(rs)
 	if err != nil {
@@ -1796,6 +1796,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 	copy(consume, rs.revlist)
 	for _, revision  := range consume {
                 commit := newCommit(repo)
+		commit.setMark(repo.newmark())
                 rs.baton.twirl("")
                 present := rs.extractor.checkout(revision)
                 parents := rs.getParents(revision)
@@ -1914,7 +1915,6 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 		commit.sortOperations()
 		commit.legacyID = revision
 		commit.properties = newOrderedMap()
-		commit.setMark(repo.newmark())
 		rs.commitMap[revision] = commit
 		announce(debugEXTRACT, "r%s: gets mark %s (%d ops)", revision, commit.mark, len(commit.operations()))
 	}
@@ -2918,15 +2918,10 @@ func (b *Blob) getBlobfile(create bool) string {
 	parts = append(parts,  		
 		[]string{"blobs", stem[0:3], stem[3:6], stem[6:len(stem)]}...)
 	if create {
-		// os.MkdirAll is broken and rpike says they won't fix it.
-		// https://github.com/golang/go/issues/22323
-		var cpath string
-		for i, _ := range parts[0:len(parts)-1] {
-			cpath = filepath.FromSlash(strings.Join(parts[0:i+1], "/"))
-			err := os.Mkdir(cpath, userReadWriteMode)
-			if err != nil {
-				panic(fmt.Errorf("Blob creation: %v", err))
-			}
+		dir := strings.Join(parts[0:len(parts)-1], "/")
+		err := os.MkdirAll(filepath.FromSlash(dir), userReadWriteMode)
+		if err != nil {
+			panic(fmt.Errorf("Blob creation: %v", err))
 		}
 	}
 	return filepath.FromSlash(strings.Join(parts[0:len(parts)], "/"))
@@ -3010,9 +3005,12 @@ func (b Blob) getMark() string {
 	return b.mark
 }
 
-// setMark sets the blob's mark and updates the mark lookup table.
+// setMark sets the blob's mark and clears the mark lookup cache.
 func (b *Blob) setMark(mark string) string {
         b.mark = mark
+	if b.repo != nil {
+		b.repo._eventByMark = nil
+	}
         return mark
 }
 
@@ -3095,9 +3093,6 @@ func (t Tag) getMark() string {
 func (t *Tag) remember(repo *Repository, committish string, target *Commit) {
         t.repo = repo
 	t.target = target
-	if repo != nil {
-		repo.events = append(repo.events, t)
-	}
         if t.target != nil {
 		t.committish = target.getMark()
         } else {
@@ -3732,9 +3727,6 @@ func newCommit(repo *Repository) *Commit {
 	commit._childNodes = make([]CommitLike, 0)
 	commit._parentNodes = make([]CommitLike, 0)
 	//commit._pathset = nil
-	if repo != nil {
-		repo.events = append(repo.events, commit)
-	}
 	return commit
 }
 
@@ -4147,9 +4139,12 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
         return modified
 }
 
-// setMark sets the commit's mark.
+// setMark sets the commit's mark and clears the lookup cache.
 func (commit *Commit) setMark(mark string) string {
         commit.mark = mark
+	if commit.repo != nil {
+		commit.repo._eventByMark = nil
+	}
         return mark
 }
 
@@ -5152,7 +5147,7 @@ func newStreamParser(repo *Repository) *StreamParser {
 
 func (sp *StreamParser) error(msg string) {
         // Throw fatal error during parsing.
-        panic(throw("%s at line %q", msg, sp.importLine))
+        panic(throw("parse", "%s at line %d", msg, sp.importLine))
 }
 
 func (sp *StreamParser)  warn(msg string) {
@@ -5901,7 +5896,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			if commit.mark == "" {
 				sp.warn("unmarked commit")
 			}
-			//sp.repo.addEvent(commit)
+			sp.repo.addEvent(commit)
 			commitcount += 1
 			baton.twirl("")
 		} else if strings.HasPrefix(line, "reset") {
@@ -5944,7 +5939,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			d, _ := sp.fiReadData("")
 			tag := newTag(sp.repo, tagname, referent, nil, tagger, d)
 			tag.legacyID = legacyID
-			//sp.repo.addEvent(tag)
+			sp.repo.addEvent(tag)
 		} else {
 			// Simply pass through any line we don't understand.
 			sp.repo.addEvent(newPassthrough(sp.repo, line))
@@ -8330,7 +8325,8 @@ func (repo *Repository) exportStyle() stringSet {
 */
 
 func (repo *Repository) addEvent(event Event) {
-	// insertEvent(event, 0, "")
+	complain("Bump")
+	repo.events = append(repo.events, event)
 }
 
 /*
