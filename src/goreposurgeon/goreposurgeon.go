@@ -5973,7 +5973,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
                     # Beginning of Subversion dump parsing
 		    sp.parseSubversion(options, baton)
                     # End of Subversion dump parsing
-                    sp.repo.timings.append(("parsing", time.time()))
+                    sp.timeMark("parsing")
                     sp.svn_process(options, baton)
                     elapsed = time.time() - baton.time
                     baton.twirl("...%d svn revisions (%d/s)" %
@@ -5982,7 +5982,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
                 else:
                     sp.pushback(line)
 		    sp.parseFastImport()
-                    sp.repo.timings.append(("parsing", time.time()))
+                    sp.timeMark("parsing")
                     if sp.repo.stronghint:
                         baton.twirl("%d %s commits" % (commitcount, sp.repo.vcs.name))
                     else:
@@ -6870,7 +6870,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
                 sp.branches[commit.branch] = commit
                 # Per-commit spinner disabled because this pass is fast
                 #baton.twirl("")
-            sp.repo.timings.append(["parents", time.time()])
+            sp.timeMark("parents")
             baton.twirl("")
             # The root branch is special. It wasn't made by a copy, so
             # we didn't get the information to connect it to trunk in the
@@ -7163,7 +7163,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
                                name_func = tagname,
                                legend_func = taglegend,
                                gripe = sp.gripe)
-        sp.repo.timings.append(["tagifying", time.time()])
+        sp.timeMark("tagifying")
         baton.twirl("")
         announce(debugEXTRACT, "after tagification")
         # cvs2svn likes to crap out sequences of deletes followed by
