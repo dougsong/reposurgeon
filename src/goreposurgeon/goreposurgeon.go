@@ -151,7 +151,7 @@ func catch(accept string, x interface{}) *exception {
 }
 
 // Change these in the unlikely the event this is ported to Windows
-const userReadWriteMode = 0777
+const userReadWriteMode = 0775	// rwxrwxr-x
 
 func exists(pathname string) bool {
 	_, err := os.Stat(pathname)
@@ -4617,7 +4617,7 @@ func (commit *Commit) checkout(directory string) string {
 		directory = filepath.FromSlash(commit.repo.subdir("") + "/" + commit.mark)
 	}
 	if !exists(directory) {
-		os.Mkdir(directory, 077)
+		os.Mkdir(directory, userReadWriteMode)
 	}
 
 	defer func () {
@@ -5272,9 +5272,9 @@ func (sp *StreamParser) fiReadData(line string) (string, int64) {
 			}
 		}
         } else if strings.HasPrefix(line, "data") {
-                count, err := strconv.Atoi(line[5:])
+                count, err := strconv.Atoi(strings.TrimSpace(line[5:]))
 		if err != nil{
-			sp.error("bad count in data")
+			sp.error("bad count in data: " + line[5:])
 		}
                 start = sp.tell()
 		buf := make([]byte, count)
@@ -5288,7 +5288,7 @@ func (sp *StreamParser) fiReadData(line string) (string, int64) {
 		line = line[9:]                    // Skip this token
 		line = line[strings.Index(line, " "):]      // Skip the property name
 		nextws := strings.Index(line, " ")
-		count, err := strconv.Atoi(line[:nextws-1])
+		count, err := strconv.Atoi(strings.TrimSpace(line[:nextws-1]))
 		if err != nil{
 			sp.error("bad count in property")
 		}
@@ -5977,7 +5977,7 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 	if err != nil {
 		sp.error(fmt.Sprintf("Could not get working directory: %v", err))
 	}
-	if source == "" {
+	if source == "" && sp.repo.seekstream != nil {
 		source, err = filepath.Rel(pwd, sp.repo.seekstream.Name())
 		if err != nil {
 			sp.error(fmt.Sprintf("Could not compute relative path: %v", err))
@@ -7738,7 +7738,7 @@ func (repo *Repository) makedir() {
 	target := repo.subdir("")
 	announce(debugSHUFFLE, "repository fast import creates " + target)
 	if _, err1 := os.Stat(target); os.IsNotExist(err1) {
-                err2 := os.Mkdir(target, 077)
+                err2 := os.Mkdir(target, userReadWriteMode)
 		if err2 != nil {
 			panic("Can't create repository directory")
 		}
