@@ -513,6 +513,25 @@ func (s stringSet) Equal(other stringSet) bool {
 	return true
 }
 
+func TestStringScan(t *testing.T) {
+	type testEntry struct {
+		input string
+		tokens []string
+	}
+	var testTable = []testEntry{
+		{"abab cdecde", []string{"abab", "cdecde"}},
+		{"\"xy zzy\" zorkmid", []string{"xy zzy", "zorkmid"}},
+		{"xyzzy \"zorkmid\"", []string{"xyzzy", "zorkmid"}},
+		{"\"bubble\" \"squeak\"", []string{"bubble", "squeak"}},
+	}
+	
+	for _, item := range testTable {
+		trial := stringScan(item.input)
+		if !stringSliceEqual(trial, item.tokens) {
+			t.Errorf("%q -> %v (expected %v)\n", item.input, trial, item.tokens)
+		}
+	}
+}
 
 func TestFileOp(t *testing.T) {
 	fileop1 := newFileOp(nil).construct("M", "100644", ":1", "README")

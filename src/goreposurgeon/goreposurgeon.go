@@ -91,6 +91,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	terminal "golang.org/x/crypto/ssh/terminal"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
@@ -3503,76 +3504,118 @@ func (fileop *FileOp) construct(opargs ...string) *FileOp {
         return fileop
 }
 
+
+// stringScan extracts tokens from a text line.  Tokens maky be
+// "-quoted, in which the bounding quotes are stripped and C-style
+// backslashes interpreted in the interior. Meant to mimic the
+// behavior of git-fast-import.
+func stringScan(input string) []string {
+	bufs := make([][]byte, 0)
+	state := 0
+	tokenStart := func() {
+		//fmt.Fprintf(os.Stderr, "New token\n")
+		bufs = append(bufs, make([]byte, 0))
+	}
+	tokenContinue := func(c byte) {
+		//fmt.Fprintf(os.Stderr, "%c: appending\n", c)
+		bufs[len(bufs)-1] = append(bufs[len(bufs)-1], c)
+	}
+	toState := func(c byte, i int) int {
+		//fmt.Fprintf(os.Stderr, "%c: %d -> %d\n", c, state, i)
+		return i
+	}
+	for i, _ := range input {
+		c := input[i]
+		//fmt.Fprintf(os.Stderr, "State %d, byte %c\n", state, c)
+		switch state {
+		case 0:	// ground state, in whitespace
+			if unicode.IsSpace(rune(c)) {
+				continue
+			} else if c == '"' {
+				state = toState(c, 2)
+				tokenStart()
+				tokenContinue(c)
+			} else {
+				state = toState(c, 1)
+				tokenStart()
+				tokenContinue(c)
+			}
+		case 1:	// in token
+			if unicode.IsSpace(rune(c)) {
+				state = toState(c, 0)
+			} else {
+				tokenContinue(c)
+			}
+		case 2:	// in string
+			if c == '"' {
+				tokenContinue(c)
+				state = toState(c, 0)
+			} else if c == '\\' {
+				state = toState(c, 3)
+			} else {
+				tokenContinue(c)
+			}
+		case 3:	// after \ in string
+			state = toState(c, 2)
+			tokenContinue(c)
+		}
+	}
+	
+
+	out := make([]string, len(bufs))
+	for i, tok := range(bufs) {
+		s := string(tok)
+		if s[0] == '"' {
+			s, _ = strconv.Unquote(s)
+		}
+		out[i] = s
+	}
+	return out
+}
+
 var modifyRE = regexp.MustCompile(`(M) ([0-9]+) (\S+) (.*)`)
 
 // parse interprets a fileop dump line
-// FIXME: We don't yet interpret all cases of quoted strings in M/N/R/C correctly
 func (fileop *FileOp) parse(opline string) *FileOp {
-	shlex := func(text string) (string, string) {
-		opline = strings.TrimSpace(opline)
-		if strings.Index(opline, `"`) == -1 {
-			fields := strings.Fields(opline)
-			return fields[1], fields[2]
-		} else if strings.Count(opline, `"`) == 4 && opline[0] == '"' && opline[len(opline)-1] == '"' {
-			opline = opline[1:len(opline)-1]
-			opline = strings.Replace(opline, `" "`, "\x00", 1)
-			fields := strings.Split(opline, "\x00")
-			if len(fields) == 2 {
-				fld1, err1 := strconv.Unquote(fields[0])
-				if err1 != nil {
-					panic(throw("parse", "In opline: %v", err1))
-				}
-				fld2, err2 := strconv.Unquote(fields[1])
-				if err2 != nil {
-					panic(throw("parse", "In opline: %v", err2))
-				}
-				return fld1, fld2
-			}
-		}
-		// FIXME: Parse lines with just one pair of string quotes
-		panic(throw("parse", "Ill-formed fileop %q", opline))
+	fields := stringScan(opline)
+	if len(fields) == 0 {
+		panic(throw("parse", "Empty fileop line %q", opline))
 	}
-        if strings.HasPrefix(opline, "M") {
-		m := modifyRE.FindSubmatch([]byte(opline))
-		if m == nil || len(m) == 0 {
+        if strings.HasPrefix(opline, "M ") {
+		if len(fields) != 4 {
 			panic(throw("parse", "Bad format of M line: %q", opline))
 		}
 		fileop.op = opM
-		fileop.mode = string(m[2])
-		fileop.ref = string(m[3])
-		fileop.path = string(m[4])
-		if fileop.path[0] == '"' {
-			cpath, err := strconv.Unquote(fileop.path)
-			if err != nil {
-				panic(throw("parse", "Bad quoted string in M: %v", err))
-			}
-			fileop.path = cpath
+		fileop.mode = string(fields[1])
+		fileop.ref = string(fields[2])
+		fileop.path = intern(string(fields[3]))
+	} else if strings.HasPrefix(opline, "N ") {
+		if len(fields) != 3 {
+			panic(throw("parse", "Bad format of N line: %q", opline))
 		}
-		fileop.path = intern(fileop.path)
-	} else if opline[0] == 'N' {
 		fileop.op = opN
-		fileop.ref, fileop.path = shlex(opline)
-	} else if opline[0] == 'D' {
-		fileop.op = opD
-		fileop.path = strings.TrimSpace(opline[2:len(opline)])
-		if fileop.path[0] == '"' {
-			cpath, err := strconv.Unquote(fileop.path)
-			if err != nil {
-				panic(throw("parse", "Bad quoted string in D: %v", err))
-			}
-			fileop.path = cpath
+		fileop.ref = string(fields[1])
+		fileop.path = intern(string(fields[2]))
+	} else if strings.HasPrefix(opline, "D ") {
+		if len(fields) != 2 {
+			panic(throw("parse", "Bad format of D line: %q", opline))
 		}
-		fileop.path = intern(fileop.path)
-	} else if opline[0] == 'R' {
+		fileop.op = opD
+		fileop.path = intern(string(fields[1]))
+	} else if strings.HasPrefix(opline, "R ") {
+		if len(fields) != 3 {
+			panic(throw("parse", "Bad format of R line: %q", opline))
+		}
 		fileop.op = opR
-                fileop.source, fileop.target = shlex(opline)
-		fileop.source = intern(fileop.source)
-		fileop.target = intern(fileop.target)
-	} else if opline[0] == 'C' {
+		fileop.source = intern(fields[1])
+		fileop.target = intern(fields[2])
+	} else if strings.HasPrefix(opline, "C ") {
+		if len(fields) != 3 {
+			panic(throw("parse", "Bad format of C line: %q", opline))
+		}
 		fileop.op = opC
-                fileop.source, fileop.target = shlex(opline)
-		fileop.source = intern(fileop.source)
-		fileop.target = intern(fileop.target)
+		fileop.source = intern(fields[1])
+		fileop.target = intern(fields[2])
 	} else if opline == "deleteall" {
 		fileop.op = deleteall
 	} else {
