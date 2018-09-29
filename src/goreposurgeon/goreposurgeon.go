@@ -5070,11 +5070,11 @@ var IgnoreProperties = []string {
 
 type NodeAction struct {
 	// These are set during parsing.  Can all initially have zero values
-	revision string
+	revision int
 	path string
 	kind int
 	action int	// initially sdNONE
-	fromRev string
+	fromRev int
 	fromPath string
 	contentHash [sha1.Size]byte
 	fromHash [sha1.Size]byte
@@ -5089,12 +5089,12 @@ type NodeAction struct {
 
 func (action NodeAction) String() string {
 	out := "<NodeAction: "
-	out += "r" + action.revision
+	out += fmt.Sprintf("%d", action.revision)
 	out += " " + ActionValues[action.action]
 	out += " " + PathTypeValues[action.kind]
 	out += " '" + action.path + "'"
-	if action.fromRev != "" {
-		out += action.fromRev + "~" + action.fromPath
+	if action.fromRev != 0 {
+		out += fmt.Sprintf("%d", action.fromRev) + "~" + action.fromPath
 	}
 	//if len(action.fromSet) > 0 {
 	//	out += "sources=" + action.fromSet.String()
@@ -5151,8 +5151,7 @@ type StreamParser struct {
         branchdeletes stringSet
         branchcopies stringSet
         generatedDeletes []*Commit
-        revisions map[string]RevisionRecord
-        copycounts OrderedMap
+        revisions []RevisionRecord
         hashmap map[string]string
         propertyStash map[string]OrderedMap
         fileopBranchlinks stringSet
@@ -5176,8 +5175,7 @@ func newStreamParser(repo *Repository) *StreamParser {
         sp.branchdeletes = newStringSet()
         sp.branchcopies = newStringSet()
         sp.generatedDeletes = make([]*Commit, 0)
-        sp.revisions = make(map[string]RevisionRecord)
-        sp.copycounts = newOrderedMap()
+        sp.revisions = make([]RevisionRecord, 0)
         sp.hashmap = make(map[string]string)
         sp.propertyStash = make(map[string]OrderedMap)
         sp.fileopBranchlinks = newStringSet()
@@ -5488,7 +5486,10 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 		} else if strings.HasPrefix(line, "Revision-number: ") {
 			// Begin Revision processing
 			announce(debugSVNPARSE, "revision parsing, line %d: begins", sp.importLine)
-			revision := sdBody(line)
+			revision, rerr := strconv.Atoi(sdBody(line))
+			if rerr != nil {
+				panic(throw("parse", "ill-formed revision number: " + line))
+			}
 			plen := parseInt(sp.sdRequireHeader("Prop-content-length"))
 			sp.sdRequireHeader("Content-length")
 			sp.sdRequireSpacer()
@@ -5638,7 +5639,7 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 						// out the empty nodes
 						// produced by format
 						// 7 dumps.
-						if !(node.action == sdCHANGE && len(node.props.keys) == 0 && node.blob == nil && node.fromRev == "") {
+						if !(node.action == sdCHANGE && len(node.props.keys) == 0 && node.blob == nil && node.fromRev == 0) {
 							nodes = append(nodes, *node)
 						}
 						node = nil
@@ -5692,7 +5693,7 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 					if node == nil {
 						node = new(NodeAction)
 					}
-					node.fromRev = sdBody(line)
+					node.fromRev = parseInt(sdBody(line))
 				} else if strings.HasPrefix(line, "Node-copyfrom-path: ") {
 					if node == nil {
 						node = new(NodeAction)
@@ -6034,7 +6035,7 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 		sp.parseSubversion(options, baton, filesize)
 		// End of Subversion dump parsing
 		sp.timeMark("parsing")
-		//sp.svn_process(options, baton) // FIXME
+		sp.svnProcess(options, baton)
 		elapsed := time.Since(baton.starttime)
 		baton.twirl(fmt.Sprintf("...%d svn revisions (%d/s)",
 			sp.repo.legacyCount,
@@ -6094,38 +6095,57 @@ func nodePermissions(node NodeAction) string {
     return "100644"
 }
 
+func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
+        // Subversion actions to import-stream commits.
+        sp.repo.addEvent(newPassthrough(sp.repo, "#reposurgeon sourcetype svn\n"))
+        announce(debugEXTRACT, "Pass 0: dead-branch deletion")
+        if !options.Contains("--preserve") {
+		// Identify Subversion tag/branch directories with
+		// tipdeletes && nuke them.  Happens well before tip
+		// deletes are tagified, the behavior if --preserve is on.
+		// This pass doesn't touch trunk - any tipdelete on trunk
+		// we presume to be some kind of operator error that needs
+		// to show up under lint && be manually corrected
+		deadbranches := newStringSet()
+		for i, _ := range sp.revisions {
+			backup := len(sp.revisions) - i
+			for i, _ := range sp.revisions[backup].nodes {
+				node := &sp.revisions[backup].nodes[i]
+				if !strings.HasPrefix(node.path, "tags") && !strings.HasPrefix(node.path, "branches") {
+					continue
+				}
+				if node.action == sdDELETE && node.kind == sdDIR {
+					deadbranches = append(deadbranches, node.path)
+					announce(debugSHOUT, fmt.Sprintf("r%d~%s nuked by tip delete", backup, node.path))
+				}
+				if deadbranches.Contains(node.path) {
+					node.action = sdNUKE
+				}
+				for _, deadwood := range deadbranches {
+					if strings.HasPrefix(node.path, deadwood + "/") {
+						node.action = sdNUKE
+						break
+					}
+				}
+			}
+		}
+		// Actual deletion logic
+		for revision, record := range sp.revisions {
+			newnodes := make([]NodeAction, 0)
+			for _, node := range record.nodes {
+				if node.action != sdNUKE {
+					newnodes = append(newnodes, node)
+				}
+			}
+			sp.revisions[revision].nodes = newnodes 
+		}
+        }
+	// no-preserve ends begins here
+}
+
 /*
-    func (sp *StreamParser) svn_process(options, baton):
-        "Subversion actions to import-stream commits."
-        sp.repo.addEvent(Passthrough("#reposurgeon sourcetype svn\n", sp.repo))
-        announce(debugEXTRACT, "Pass 0")
-        if '--preserve' not in options:
-            # Identify Subversion tag/branch directories with
-            # tipdeletes and nuke them.  Happens well before tip
-            # deletes are tagified, the behavior if --preserve is on.
-            # This pass doesn't touch trunk - any tipdelete on trunk
-            # we preseume to be some kind of operator error that needs
-            # to show up under lint and be manually corrected
-            reverso = list(sp.revisions.keys())
-            reverso.sort(reverse=true)
-            deadbranches = set([])
-            for revision in reverso:
-                for node in sp.revisions[revision].nodes:
-                    if not node.path.startswith("tags") && not node.path.startswith("branches"):
-                        continue
-                    if node.action == sdDELETE && node.kind == sdDIR:
-                        deadbranches.add(node.path)
-                        announce(debugSHOUT, "r%s~%s nuked by tip delete" % (revision, node.path))
-                    if node.path in deadbranches:
-                        node.action = sdNUKE
-                    for deadwood in deadbranches:
-                        if node.path.startswith(deadwood + os.sep):
-                            node.action = sdNUKE
-                            break
-            for (revision, record) in sp.revisions.items():
-                record.nodes = [node for node in record.nodes if node.action != sdNUKE]
         # Find all copy sources and compute the set of branches
-        announce(debugEXTRACT, "Pass 1")
+        announce(debugEXTRACT, "Pass 1: compute copy sets and branches")
         nobranch = '--nobranch' in options
         copynodes = []
         for (revision, record) in sp.revisions.items():
@@ -6149,7 +6169,7 @@ func nodePermissions(node NodeAction) string {
             #baton.twirl("")
         copynodes.sort(key=operator.attrgetter("fromRev"))
         func (sp *StreamParser)  timeit(tag):
-            sp.timeMark(tag)
+            sp.timeMark("tag")
             if global_options["bigprofile"]:
                 baton.twirl("%s:%.3fs..." % (tag, sp.repo.timings[-1][1] - sp.repo.timings[-2][1]))
             else:
@@ -6167,12 +6187,12 @@ func nodePermissions(node NodeAction) string {
                     assert parseInt(node.fromRev) < parseInt(revision)
                     filemap.copyFrom(node.path, filemaps[node.fromRev],
                                       node.fromPath)
-                    announce(debugFILEMAP, "r%s~%s copied to %s" \
+                    announce(debugFILEMAP, "r%d~%s copied to %s" \
                                  % (node.fromRev, node.fromPath, node.path))
                 # Mutate the filemap according to adds/deletes/changes
                 if node.action == sdADD && node.kind == sdFILE:
                     filemap[node.path] = node
-                    announce(debugFILEMAP, "r%s~%s added" % (node.revision, node.path))
+                    announce(debugFILEMAP, "r%d~%s added" % (node.revision, node.path))
                 else if node.action == sdDELETE or (node.action == sdREPLACE && node.kind == sdDIR):
                     if node.kind == sdNONE:
                         node.kind = sdFILE if node.path in filemap else sdDIR
@@ -6180,11 +6200,11 @@ func nodePermissions(node NodeAction) string {
                     node.fromSet = PathMap()
                     node.fromSet.copyFrom(node.path, filemap, node.path)
                     del filemap[node.path]
-                    announce(debugFILEMAP, "r%s~%s deleted" \
+                    announce(debugFILEMAP, "r%d~%s deleted" \
                                  % (node.revision, node.path))
                 else if node.action in (sdCHANGE, sdREPLACE) && node.kind == sdFILE:
                     filemap[node.path] = node
-                    announce(debugFILEMAP, "r%s~%s changed" % (node.revision, node.path))
+                    announce(debugFILEMAP, "r%d~%s changed" % (node.revision, node.path))
             filemaps[revision] = filemap.snapshot()
             baton.twirl("")
         del filemap
@@ -6339,11 +6359,11 @@ func nodePermissions(node NodeAction) string {
                             first = next(prop_items)
                         except StopIteration:
                             if node.path in has_properties:
-                                sp.gripe("r%s~%s: properties cleared." \
+                                sp.gripe("r%d~%s: properties cleared." \
                                              % (node.revision, node.path))
                                 has_properties.discard(node.path)
                         else:
-                            sp.gripe("r%s~%s properties set:" \
+                            sp.gripe("r%d~%s properties set:" \
                                                    % (node.revision, node.path))
                             for prop, val in itertools.chain((first,), prop_items):
                                 sp.gripe("\t%s = '%s'" % (prop, val))
@@ -6421,7 +6441,7 @@ func nodePermissions(node NodeAction) string {
                                          && node.path in sp.branches \
                                          && node.path not in sp.branchdeletes
                         announce(debugTOPOLOGY, "r%s: directory copy to %s from " \
-                                     "r%s~%s (branchcopy %s)" \
+                                     "r%d~%s (branchcopy %s)" \
                                      % (revision,
                                         node.path,
                                         node.fromRev,
@@ -6489,7 +6509,7 @@ func nodePermissions(node NodeAction) string {
                                 subnode.props = lookback.props
                                 subnode.action = sdADD
                                 subnode.kind = sdFILE
-                                announce(debugTOPOLOGY, "r%s: generated copy r%s~%s -> %s" \
+                                announce(debugTOPOLOGY, "r%s: generated copy r%d~%s -> %s" \
                                              % (revision,
                                                 subnode.fromRev,
                                                 subnode.fromPath,
@@ -6584,18 +6604,18 @@ func nodePermissions(node NodeAction) string {
                             ancestor = filemaps[node.fromRev][node.fromPath]
                             if debugEnable(debugTOPOLOGY):
                                 if ancestor:
-                                    announce(debugSHOUT, "r%s~%s -> %s (via filemap)" % \
+                                    announce(debugSHOUT, "r%d~%s -> %s (via filemap)" % \
                                              (node.revision, node.path, ancestor))
                                 else:
-                                    announce(debugSHOUT, "r%s~%s has no ancestor (via filemap)" % \
+                                    announce(debugSHOUT, "r%d~%s has no ancestor (via filemap)" % \
                                              (node.revision, node.path))
                             # Fallback on the first blob that had this hash
                             if node.fromHash && not ancestor:
                                 ancestor = sp.hashmap[node.fromHash]
-                                announce(debugTOPOLOGY, "r%s~%s -> %s (via hashmap)" % \
+                                announce(debugTOPOLOGY, "r%d~%s -> %s (via hashmap)" % \
                                          (node.revision, node.path, ancestor))
                             if not ancestor && not node.path.endswith(".gitignore"):
-                                sp.gripe("r%s~%s: missing filemap node." \
+                                sp.gripe("r%d~%s: missing filemap node." \
                                           % (node.revision, node.path))
                         else if node.action != sdADD:
                             # Ordinary inheritance, no node copy.  For
@@ -6639,7 +6659,7 @@ func nodePermissions(node NodeAction) string {
                             # way to figure out what mark to use
                             # in a fileop.
                             if not node.path.endswith(".gitignore"):
-                                sp.gripe("r%s~%s: permission information may be lost." \
+                                sp.gripe("r%d~%s: permission information may be lost." \
                                            % (node.revision, node.path))
                             continue
                         ancestor_nodes[node.path] = node
@@ -6660,7 +6680,7 @@ func nodePermissions(node NodeAction) string {
                            && not node.generated \
                            && '--user-ignores' not in options \
                            && node.path.endswith(".gitignore"):
-                            sp.gripe("r%s~%s: user-created .gitignore ignored." \
+                            sp.gripe("r%d~%s: user-created .gitignore ignored." \
                                        % (node.revision, node.path))
                             continue
                         # This ugly nasty guard is critically important.
@@ -6690,7 +6710,7 @@ func nodePermissions(node NodeAction) string {
                             actions.append((node, fileop))
                             sp.repo.markToEvent(fileop.ref).addalias(node.path)
                         else if debugEnable(debugEXTRACT):
-                            announce(debugEXTRACT, "r%s~%s: unmodified" % (node.revision, node.path))
+                            announce(debugEXTRACT, "r%d~%s: unmodified" % (node.revision, node.path))
                 # These are directory actions.
                 else if node.action in (sdDELETE, sdREPLACE):
                     announce(debugEXTRACT, "r%s: deleteall %s" % (revision,node.path))
@@ -7012,7 +7032,7 @@ func nodePermissions(node NodeAction) string {
                                 node.path,
                                 mergeinfos.get(node.fromRev) or PathMap(),
                                 node.fromPath)
-                        announce(debugEXTRACT, "r%s~%s mergeinfo copied to %s" \
+                        announce(debugEXTRACT, "r%d~%s mergeinfo copied to %s" \
                                 % (node.fromRev, node.fromPath, node.path))
                     # Mutate the filemap according to current mergeinfo.
                     # The general case is multiline: each line may describe
