@@ -5146,7 +5146,7 @@ type StreamParser struct {
         linebuffers []string
         warnings []string
         // Everything below here is Subversion-specific
-        branches map[string]string
+        branches map[string]*Commit	// Points to branch root commits
         branchlink stringSet
         branchdeletes stringSet
         branchcopies stringSet
@@ -5170,7 +5170,7 @@ func newStreamParser(repo *Repository) *StreamParser {
         sp.warnings = make([]string, 0)
 	sp.ccount = -1
         // Everything below here is Subversion-specific
-        sp.branches = make(map[string]string)
+        sp.branches = make(map[string]*Commit)
         sp.branchlink = newStringSet()
         sp.branchdeletes = newStringSet()
         sp.branchcopies = newStringSet()
@@ -6095,6 +6095,10 @@ func nodePermissions(node NodeAction) string {
     return "100644"
 }
 
+// Path separator as found in Subversion dump files. Isolated because
+// it might be "\" on OSes not to be mentioned in polite company. 
+const svnSep = "/"
+
 func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
         // Subversion actions to import-stream commits.
         sp.repo.addEvent(newPassthrough(sp.repo, "#reposurgeon sourcetype svn\n"))
@@ -6153,24 +6157,24 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 if node.fromPath is not None:
                     copynodes.append(node)
                     announce(debugEXTRACT, "copynode at %s" % node)
-                if node.action == sdADD && node.kind == sdDIR && node.path+os.sep not in sp.branches && not nobranch:
-                    for trial in global_options['svn_branchify']:
+                if node.action == sdADD && node.kind == sdDIR && node.path+svnSep not in sp.branches && not nobranch:
+                    for trial in globalOptions['svn_branchify']:
                         if '*' not in trial && trial == node.path:
-                            sp.branches[node.path+os.sep] = None
-                        else if trial.endswith(os.sep + '*') \
+                            sp.branches[node.path+svnSep] = None
+                        else if trial.endswith(svnSep + '*') \
                                  && os.path.dirname(trial) == os.path.dirname(node.path) \
-                                 && node.path + os.sep + '*' not in global_options['svn_branchify']:
-                            sp.branches[node.path+os.sep] = None
-                        else if trial == '*' && node.path + os.sep + '*' not in global_options['svn_branchify'] && node.path.count(os.sep) < 1:
-                            sp.branches[node.path+os.sep] = None
-                    if node.path+os.sep in sp.branches && debugEnable(debugTOPOLOGY):
-                        announce(debugSHOUT, "%s recognized as a branch" % node.path+os.sep)
+                                 && node.path + svnSep + '*' not in globalOptions['svn_branchify']:
+                            sp.branches[node.path+svnSep] = None
+                        else if trial == '*' && node.path + svnSep + '*' not in globalOptions['svn_branchify'] && node.path.count(svnSep) < 1:
+                            sp.branches[node.path+svnSep] = None
+                    if node.path+svnSep in sp.branches && debugEnable(debugTOPOLOGY):
+                        announce(debugSHOUT, "%s recognized as a branch" % node.path+svnSep)
             # Per-commit spinner disabled because this pass is fast
             #baton.twirl("")
         copynodes.sort(key=operator.attrgetter("fromRev"))
         func (sp *StreamParser)  timeit(tag):
             sp.timeMark("tag")
-            if global_options["bigprofile"]:
+            if globalOptions["bigprofile"]:
                 baton.twirl("%s:%.3fs..." % (tag, sp.repo.timings[-1][1] - sp.repo.timings[-2][1]))
             else:
                 baton.twirl("")
@@ -6237,7 +6241,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                  getbranch = operator.attrgetter("branch")):
             # Make path look like a branch
             if path[0] == "/": path = path[1:]
-            if path[-1] != os.sep: path = path + os.sep
+            if path[-1] != svnSep: path = path + svnSep
             # If the revision is split, try from the last split commit
             try:
                 max_rev = split_commits[max_rev]
@@ -6315,7 +6319,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
             commit.committer = Attribution(attribution)
             # Use this with just-generated input streams
             # that have wall times in them.
-            if global_options["testmode"]:
+            if globalOptions["testmode"]:
                 commit.committer.name = "Fred J. Foonly"
                 commit.committer.email = "foonly@foo.com"
                 commit.committer.date.timestamp = parseInt(revision) * 360
@@ -6371,11 +6375,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 if node.kind == sdFILE:
                     expanded_nodes.append(node)
                 else if node.kind == sdDIR:
-                    # os.sep is appended to avoid collisions with path
+                    # svnSep is appended to avoid collisions with path
                     # prefixes.
-                    node.path += os.sep
+                    node.path += svnSep
                     if node.fromPath:
-                        node.fromPath += os.sep
+                        node.fromPath += svnSep
                     if node.action in (sdADD, sdCHANGE):
                         if node.path in sp.branches:
                             if not node.props: node.props = {}
@@ -6523,7 +6527,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                      % (revision, node.props, node.path))
                         # svn:ignore gets handled here,
                         if '--user-ignores' not in options:
-                            if node.path == os.sep:
+                            if node.path == svnSep:
                                 gitignore_path = ".gitignore"
                             else:
                                 gitignore_path = os.path.join(node.path,
@@ -6898,7 +6902,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
         except StopIteration:
             raise Recoverable("empty stream or repository.")
         # Warn about dubious branch links
-        sp.fileopBranchlinks.discard("trunk" + os.sep)
+        sp.fileopBranchlinks.discard("trunk" + svnSep)
         if sp.fileopBranchlinks - sp.directoryBranchlinks:
             sp.gripe("branch links detected by file ops only: %s" % " ".join(sorted(sp.fileopBranchlinks - sp.directoryBranchlinks)))
         timeit("commits")
@@ -6929,7 +6933,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
         if not sp.branches or nobranch:
             last = None
             for commit in sp.repo.commits():
-                commit.setBranch(os.path.join("refs", "heads", "master") + os.sep)
+                commit.setBranch(os.path.join("refs", "heads", "master") + svnSep)
                 if last is not None: commit.setParents([last])
                 last = commit
         else:
@@ -7015,7 +7019,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                     child.addParentCommit(parent)
             for root in branchroots:
                 if getattr(commit.branch, "fileops", None) \
-                        && root.branch != ("trunk" + os.sep):
+                        && root.branch != ("trunk" + svnSep):
                     sp.gripe("r%s: can't connect nonempty branch %s to origin" \
                                 % (root.legacyID, root.branch))
             timeit("branchlinks")
@@ -7180,7 +7184,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
         # * All other commits without fileops get turned into an annotated tag
         #   with name "emptycommit-<revision>".
         rootmarks = {root.mark for root in branchroots} # empty if nobranch
-        rootskip = {"trunk"+os.sep, "root"}
+        rootskip = {"trunk"+svnSep, "root"}
         func (sp *StreamParser)  tagname(commit):
             # Give branch and tag roots a special name, except for "trunk" and
             # "root" which do not come from a regular branch copy.
@@ -7212,7 +7216,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
         func (sp *StreamParser)  compile_regex (mapping):
             regex, replace = mapping
             return regexp.MustCompile(regex.encode('ascii')), polybytes(replace)
-        compiled_mapping = list(map(compile_regex, global_options["svn_branchify_mapping"]))
+        compiled_mapping = list(map(compile_regex, globalOptions["svn_branchify_mapping"]))
         # Now pretty up the branch names
         deletia = []
         for (index, commit) in enumerate(sp.repo.events):
@@ -7229,13 +7233,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 continue
             if commit.branch == "root":
                 commit.setBranch(os.path.join("refs", "heads", "root"))
-            else if commit.branch.startswith("tags" + os.sep):
+            else if commit.branch.startswith("tags" + svnSep):
                 branch = commit.branch
-                if branch.endswith(os.sep):
+                if branch.endswith(svnSep):
                     branch = branch[:-1]
                 commit.setBranch(os.path.join("refs", "tags",
                                               os.path.basename(branch)))
-            else if commit.branch == "trunk" + os.sep:
+            else if commit.branch == "trunk" + svnSep:
                 commit.setBranch(os.path.join("refs", "heads", "master"))
             else:
                 basename = os.path.basename(commit.branch[:-1])
@@ -7405,7 +7409,7 @@ class SubversionDumper:
     @staticmethod
     func svnbranch(branch):
         "The branch directory corresponding to a specified git branch."
-        segments = branch.split(os.sep)
+        segments = branch.split(svnSep)
         if segments[0] == "HEAD":
             return "trunk"
         assert segments[0] == "refs"
@@ -7458,7 +7462,7 @@ class SubversionDumper:
         branchdir = self.svnbranch(branch)
         # Here again the object is mutated, so a copy list must be used.
         for path in self.pathmap[revision].keys():
-            if path.startswith(branchdir + os.sep):
+            if path.startswith(branchdir + svnSep):
                 del self.pathmap[revision][path]
         self.branches_created.remove(branchdir)
         fp.write("Node-path: %s\n" % branchdir)
@@ -7485,7 +7489,7 @@ class SubversionDumper:
                 # Python will barf.  Thing is, in Python 3 keys() returns an
                 # iterator...
                 for key in list(self.pathmap[fromRev].keys()):
-                    if key.startswith(from_branch + os.sep) && key != from_branch:
+                    if key.startswith(from_branch + svnSep) && key != from_branch:
                         counterpart = svnout + key[len(from_branch):]
                         self.pathmap[revision][counterpart] = SubversionDumper.FlowState(revision)
                         self.pathmap[revision][counterpart].subfiles = self.pathmap[fromRev][key].subfiles
@@ -7495,9 +7499,9 @@ class SubversionDumper:
         # Create all directory segments required
         # to get down to the level where we can
         # create the file.
-        parts = os.path.dirname(path).split(os.sep)
+        parts = os.path.dirname(path).split(svnSep)
         if parts[0]:
-            parents = [os.sep.join(parts[:i+1])
+            parents = [svnSep.join(parts[:i+1])
                                    for i in range(len(parts))]
             for parentdir in parents:
                 fullpath = os.path.join(svnout, parentdir)
@@ -8161,7 +8165,7 @@ func (repo *Repository) branchset() stringSet {
         func default_name(commit):
             if commit.operations():
                 branch = commit.branch
-                if branch[-1] == os.sep: branch = branch[:-1]
+                if branch[-1] == svnSep: branch = branch[:-1]
                 return "tipdelete-" + branchbase(branch)
             if commit.legacyID:
                 return "emptycommit-" + commit.legacyID
@@ -10773,9 +10777,9 @@ developers.
         self.capture = None
         self.start_time = time.time()
         for option in dict(RepoSurgeon.OptionFlags):
-            global_options[option] = false
-        global_options['svn_branchify'] = ['trunk', 'tags/*', 'branches/*', '*']
-        global_options['svn_branchify_mapping'] = []
+            globalOptions[option] = false
+        globalOptions['svn_branchify'] = ['trunk', 'tags/*', 'branches/*', '*']
+        globalOptions['svn_branchify_mapping'] = []
     #
     # Housekeeping hooks.
     #
@@ -15045,8 +15049,8 @@ to re-set it.
         if self.selection is not None:
             raise Recoverable("branchify does not take a selection set")
         if line.strip():
-            global_options['svn_branchify'] = line.strip().split()
-        announce(debugSHOUT, "branchify " + " ".join(global_options['svn_branchify']))
+            globalOptions['svn_branchify'] = line.strip().split()
+        announce(debugSHOUT, "branchify " + " ".join(globalOptions['svn_branchify']))
     #
     # Setting branch name rewriting
     #
@@ -15089,7 +15093,7 @@ to re-set it.
             raise Recoverable("branchify_map does not take a selection set")
         line = line.strip()
         if line == "reset":
-            global_options['svn_branchify_mapping'] = []
+            globalOptions['svn_branchify_mapping'] = []
         else if line:
             func split_regex(regex):
                 separator = regex[0]
@@ -15099,11 +15103,11 @@ to re-set it.
                 if not replace or not match:
                     raise Recoverable("Regex '%s' has an empty search or replace part" % regex)
                 return match ,replace
-            global_options['svn_branchify_mapping'] = \
+            globalOptions['svn_branchify_mapping'] = \
                     list(map(split_regex, line.split()))
-        if global_options['svn_branchify_mapping']:
+        if globalOptions['svn_branchify_mapping']:
             announce(debugSHOUT, "branchify_map, regex -> branch name:")
-            for match, replace in global_options['svn_branchify_mapping']:
+            for match, replace in globalOptions['svn_branchify_mapping']:
                 announce(debugSHOUT,  "\t" + match + " -> " + replace)
         else:
             complain("branchify_map is empty.")
@@ -15124,13 +15128,13 @@ options. The following flags and options are defined:
     func do_set(self, line):
         if not line.strip():
             for (opt, _expl) in RepoSurgeon.OptionFlags:
-                os.Stdout.write("\t%s = %s\n" % (opt, global_options.get(opt, false)))
+                os.Stdout.write("\t%s = %s\n" % (opt, globalOptions.get(opt, false)))
         else:
             for option in line.split():
                 if option not in dict(RepoSurgeon.OptionFlags):
                     complain("no such option flag as '%s'" % option)
                 else:
-                    global_options[option] = true
+                    globalOptions[option] = true
     func help_clear():
         os.Stdout.write("""
 Clear a (tab-completed) boolean option to control reposurgeon's
@@ -15143,13 +15147,13 @@ following flags and options are defined:
     func do_clear(self, line):
         if not line.strip():
             for opt in dict(RepoSurgeon.OptionFlags):
-                os.Stdout.write("\t%s = %s\n" % (opt, global_options.get(opt, false)))
+                os.Stdout.write("\t%s = %s\n" % (opt, globalOptions.get(opt, false)))
         else:
             for option in line.split():
                 if option not in dict(RepoSurgeon.OptionFlags):
                     complain("no such option flag as '%s'" % option)
                 else:
-                    global_options[option] = false
+                    globalOptions[option] = false
 
     #
     # Macros and custom extensions
@@ -15605,7 +15609,7 @@ not optimal, and may in particular contain duplicate blobs.
                             blank.appendOperation(op)
                 repo.declare_sequence_mutation()
                 repo.invalidate_objectMap()
-                if not global_options["testmode"]:
+                if not globalOptions["testmode"]:
                     blank.committer.date = Date(rfc3339(newest))
             except IOError:
                 raise Recoverable("open or read failed on %s" % parse.line)
