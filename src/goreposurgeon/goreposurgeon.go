@@ -2098,11 +2098,27 @@ const debugUNITE = 5    // Debug mark assignments in merging
 const debugLEXER = 6    // Debug selection-language parsing
 var quiet = false
 
-var globalOptions stringSet
+// Boolean option false is represented by key not in option map,
+// true is represented by an empty stringlist value. 
+var globalOptions map[string]stringSet
+
+func haveGlobalOption(name string) bool {
+	_, ok := globalOptions[name]
+	return ok
+}
+
+func globalOption(name string) stringSet {
+	d, _ := globalOptions[name]
+	return d	// Should be nil if not present
+}
+
+func setGlobalOption(name string, value stringSet) {
+	globalOptions[name] = value
+}
 
 // whoami - ask various programs that keep track of who you are
 func whoami() (string, string) {
-	if globalOptions.Contains("testmode") {
+	if haveGlobalOption("testmode") {
 		return "Fred J. Foonly", "foonly@foo.com"
 	}
 	// Git version-control system
@@ -2946,7 +2962,7 @@ func (b *Blob) getContent() string {
 	var file io.ReadCloser
 	var err error
 	var buf bytes.Buffer
-        if globalOptions.Contains("compressblobs") {
+        if haveGlobalOption("compressblobs") {
 		file, err = gzip.NewReader(&buf)
 	} else {
 		file, err = os.Open(b.getBlobfile(false))
@@ -2970,7 +2986,7 @@ func (b *Blob) setContent(text string, tell int64) {
 		var file io.WriteCloser
 		var err error
 		var buf bytes.Buffer
-		if globalOptions.Contains("compressblobs") {
+		if haveGlobalOption("compressblobs") {
 			file = gzip.NewWriter(&buf)
 		} else {
 			file, err = os.OpenFile(b.getBlobfile(true),
@@ -3239,7 +3255,7 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 		t.legacyID = legacy
 	}
         newcomment := msg.getPayload()
-        if globalOptions.Contains("canonicalize") {
+        if haveGlobalOption("canonicalize") {
 		newcomment = strings.TrimSpace(newcomment)
 		newcomment = strings.Replace(newcomment, "\r\n", "\n", 1)
 		newcomment += "\n"
@@ -4158,7 +4174,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 		modified = true
 	}
         newcomment := msg.getPayload()
-	if globalOptions.Contains("canonicalize") {
+	if haveGlobalOption("canonicalize") {
 		newcomment = strings.TrimSpace(newcomment)
 		newcomment = strings.Replace(newcomment, "\r\n", "\n", 1)
 		newcomment += "\n"
@@ -5859,7 +5875,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				} else if strings.HasPrefix(line, "data") {
 					d, _ := sp.fiReadData(line)
 					commit.comment = d
-					if globalOptions.Contains("canonicalize") {
+					if haveGlobalOption("canonicalize") {
 						commit.comment = strings.Replace(strings.TrimSpace(commit.comment), "\r\n", "\n", -1) + "\n"
 					}
 				} else if strings.HasPrefix(line, "from") || strings.HasPrefix(line, "merge") {
@@ -6158,14 +6174,14 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                     copynodes.append(node)
                     announce(debugEXTRACT, "copynode at %s" % node)
                 if node.action == sdADD && node.kind == sdDIR && node.path+svnSep not in sp.branches && not nobranch:
-                    for trial in globalOptions['svn_branchify']:
+                    for trial in globalOption("svn_branchify"):
                         if '*' not in trial && trial == node.path:
                             sp.branches[node.path+svnSep] = None
                         else if trial.endswith(svnSep + '*') \
                                  && os.path.dirname(trial) == os.path.dirname(node.path) \
-                                 && node.path + svnSep + '*' not in globalOptions['svn_branchify']:
+                                 && !globalOption('svn_branchify').Contains(node.path + svnSep + "*"):
                             sp.branches[node.path+svnSep] = None
-                        else if trial == '*' && node.path + svnSep + '*' not in globalOptions['svn_branchify'] && node.path.count(svnSep) < 1:
+                        else if trial == '*' && !globalOption('svn_branchify').Contains(node.path + svnSep + '*') && node.path.count(svnSep) < 1:
                             sp.branches[node.path+svnSep] = None
                     if node.path+svnSep in sp.branches && debugEnable(debugTOPOLOGY):
                         announce(debugSHOUT, "%s recognized as a branch" % node.path+svnSep)
@@ -6174,7 +6190,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
         copynodes.sort(key=operator.attrgetter("fromRev"))
         func (sp *StreamParser)  timeit(tag):
             sp.timeMark("tag")
-            if globalOptions["bigprofile"]:
+            if haveGlobalOptions("bigprofile"):
                 baton.twirl("%s:%.3fs..." % (tag, sp.repo.timings[-1][1] - sp.repo.timings[-2][1]))
             else:
                 baton.twirl("")
@@ -6319,7 +6335,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
             commit.committer = Attribution(attribution)
             # Use this with just-generated input streams
             # that have wall times in them.
-            if globalOptions["testmode"]:
+            if haveGlobalOptions("testmode"):
                 commit.committer.name = "Fred J. Foonly"
                 commit.committer.email = "foonly@foo.com"
                 commit.committer.date.timestamp = parseInt(revision) * 360
@@ -7216,7 +7232,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
         func (sp *StreamParser)  compile_regex (mapping):
             regex, replace = mapping
             return regexp.MustCompile(regex.encode('ascii')), polybytes(replace)
-        compiled_mapping = list(map(compile_regex, globalOptions["svn_branchify_mapping"]))
+        compiled_mapping = list(map(compile_regex, globalOption("svn_branchify_mapping")))
         # Now pretty up the branch names
         deletia = []
         for (index, commit) in enumerate(sp.repo.events):
@@ -10777,7 +10793,7 @@ developers.
         self.capture = None
         self.start_time = time.time()
         for option in dict(RepoSurgeon.OptionFlags):
-            globalOptions[option] = false
+            globalOptions[option] = []
         globalOptions['svn_branchify'] = ['trunk', 'tags/*', 'branches/*', '*']
         globalOptions['svn_branchify_mapping'] = []
     #
