@@ -6268,11 +6268,14 @@ func (repo *Repository) hint(clue1 string, clue2 string, strong bool) bool {
         return notify
 }
 	
-/*
-    func size():
-        "Return the size of this import stream, for statistics display."
-        return sum(len(str(e)) for e in repo.events)
-*/
+func (repo *Repository) size() int {
+	// Return the size of this import stream, for statistics display.
+	var sz int
+	for _, e := range repo.events {
+		sz += len(e.String())
+	}
+	return sz
+}
 
 // branchset returns a set of all branchnames appearing in this repo.
 func (repo *Repository) branchset() stringSet {
@@ -6285,27 +6288,31 @@ func (repo *Repository) branchset() stringSet {
 			}
 		case *Commit:
 			branches.Add(e.(*Commit).branch)
-		default:
-			panic("unexpected type in event list")
 		}
 	}
 	return branches
 }
 
+func (repo *Repository) branchmap() map[string]string {
+	// Return a map of branchnames to terminal marks in this repo.
+	brmap := make(map[string]string)
+	for _, e := range repo.events {
+		switch e.(type) {
+		case *Reset:
+			if e.(*Reset).committish == "" {
+				delete(brmap, e.(*Reset).ref)
+			} else {
+				brmap[e.(*Reset).ref] = e.(*Reset).committish
+			}
+		case *Commit:
+			brmap[e.(*Commit).branch] = e.(*Commit).mark
+		}
+	}
+	return brmap
+}
+
 /*
 
-    func branchmap():
-        "Return a map of branchnames to terminal marks in this repo."
-        brmap = {}
-        for e in self.events:
-            if isinstance(e, Reset):
-                if e.committish is None:
-                    brmap.pop(e.ref, None)
-                else:
-                    brmap[e.ref] = e.committish
-            else if isinstance(e, Commit):
-                brmap[e.branch] = e.mark
-        return brmap
     func index(self, obj):
         "Index of the specified object."
         try:

@@ -25,6 +25,12 @@ func assertEqual(t *testing.T, a string, b string) {
 	}
 }
 
+func assertIntEqual(t *testing.T, a int, b int) {
+	if a != b {
+		t.Errorf("assertIntEqual: expected %d == %d", a, b)
+	}
+}
+
 func TestStringSet(t *testing.T) {
 	ts := newStringSet("a", "b", "c")
 
@@ -966,7 +972,18 @@ M 100644 :3 README
 	assertEqual(t, commit2.String(), rawdump[len(rawdump)-len(commit2.String()):])
 	d, _ := commit2.blobByName("README")
 	assertEqual(t, d, "0123456789012345678\n")
-	
+	assertIntEqual(t, repo.size(), len(rawdump))
+	saw2 := repo.branchset()
+	exp2 := []string{"refs/heads/master"}
+	if !stringSliceEqual(saw2, exp2) {
+		t.Errorf("saw branchset %v, expected %v", saw2, exp2)
+	}
+	saw3 := repo.branchmap()
+	exp3 := map[string]string{"refs/heads/master":":4"}
+	if !reflect.DeepEqual(saw3, exp3) {
+		t.Errorf("saw branchmap %v, expected %v", saw3, exp3)
+	}
+
 	sp.repo.cleanup()
 
 	rawdump = `blob
