@@ -6365,7 +6365,7 @@ func (repo *Repository) invalidateNamecache() {
 /*
 func named(repo, ref):
         "Resolve named reference in the context of this repository."
-        selection = OrderedSet()
+        selection = OrderedIntSet()
         # For matches that require iterating across the entire event
         # sequence, building an entire name lookup table is not much
         # more expensive in time than doing a single lookup. Avoid
@@ -6388,7 +6388,7 @@ func named(repo, ref):
                 if loc is None:
                     raise Recoverable("branch name %s points to hyperspace" % symbol)
                 else:
-                    return OrderedSet([loc])
+                    return OrderedIntSet([loc])
         # Next, assignments
         lookup = repo.assignments.get(ref)
         if lookup:
@@ -6444,7 +6444,7 @@ func named(repo, ref):
                 if ordinal is not None && ordinal <= len(matches):
                     selection.add(matches[ordinal-1])
                 else:
-                    selection |= OrderedSet(matches)
+                    selection |= OrderedIntSet(matches)
             else:
                 selection.add(matches[0])
             if selection:
@@ -8541,7 +8541,7 @@ class SelectionParser(object):
         """Evaluate a pre-compiled selection query against item list."""
         if machine is not None:
             self.allitems = allitems
-            selection = list(machine(OrderedSet(self.allitems)))
+            selection = list(machine(OrderedIntSet(self.allitems)))
             self.allitems = None
             return selection
         return None
@@ -8587,7 +8587,7 @@ class SelectionParser(object):
     @debug_lexer
     func eval_disjunct(self, preselection, op1, op2):
         "Evaluate a disjunctive expression"
-        selected = OrderedSet()
+        selected = OrderedIntSet()
         conjunct = op1(preselection)
         if conjunct is not None:
             selected |= conjunct
@@ -8657,8 +8657,8 @@ class SelectionParser(object):
     @debug_lexer
     func eval_term_negate(self, preselection, op):
         pacify_pylint(preselection)
-        allitems = OrderedSet(self.allitems)
-        return allitems - OrderedSet(op(allitems))
+        allitems = OrderedIntSet(self.allitems)
+        return allitems - OrderedIntSet(op(allitems))
     @debug_lexer
     func parse_visibility():
         "Parse a visibility spec."
@@ -8687,7 +8687,7 @@ class SelectionParser(object):
         self._debug_lexer("visibility set is %s" % visible)
         typeletters = self.visibility_typeletters()
         visible = [typeletters[c] for c in visible]
-        visibility = OrderedSet()
+        visibility = OrderedIntSet()
         for i in preselection:
             if any(predicate(self.allitems[i]) for predicate in visible):
                 visibility.add(i)
@@ -8752,7 +8752,7 @@ class SelectionParser(object):
         for elt in selection:
             if elt < 0 or elt > len(self.allitems)-1:
                 raise Recoverable("element %s out of range" % (elt+1))
-        return OrderedSet(selection)
+        return OrderedIntSet(selection)
     @debug_lexer
     func parse_atom():
         self.line = self.line.lstrip()
@@ -8843,41 +8843,41 @@ class SelectionParser(object):
     func min_handler(self, subarg):
         "Minimum member of a selection set."
         try:
-            return OrderedSet([min(subarg)])
+            return OrderedIntSet([min(subarg)])
         except ValueError:
             raise Recoverable("cannot take minimum of empty set")
     @debug_lexer
     func max_handler(self, subarg):
         "Maximum member of a selection set."
         try:
-            return OrderedSet([max(subarg)])
+            return OrderedIntSet([max(subarg)])
         except ValueError:
             raise Recoverable("cannot take maximum of empty set")
     @debug_lexer
     func amp_handler(self, subarg):
         "Amplify - map empty set to empty, nonempty set to all."
         if subarg:
-            return OrderedSet(self.allitems)
+            return OrderedIntSet(self.allitems)
         else:
             return subarg
     @debug_lexer
     func pre_handler(self, subarg):
         "Predecessors function; all elements previous to argument set."
         if not subarg or min(subarg) == 0:
-            return OrderedSet()
+            return OrderedIntSet()
         else:
-            return OrderedSet(range(0, min(subarg)))
+            return OrderedIntSet(range(0, min(subarg)))
     @debug_lexer
     func suc_handler(self, subarg):
         "Successors function; all elements following argument set."
         if not subarg or max(subarg) >= len(self.allitems) - 1:
-            return OrderedSet()
+            return OrderedIntSet()
         else:
-            return OrderedSet(range(max(subarg)+1, len(self.allitems)))
+            return OrderedIntSet(range(max(subarg)+1, len(self.allitems)))
     @debug_lexer
     func srt_handler(self, subarg):
         "Sort the argument set."
-        return OrderedSet(sorted(subarg))
+        return OrderedIntSet(sorted(subarg))
     func rev_handler(self, subarg):
         "Reverse the argument set."
         return list(reversed(subarg))
@@ -8953,7 +8953,7 @@ class AttributionEditor(object):
                         check_email = true
                     else:
                         raise Recoverable("unknown textsearch flag")
-            found = OrderedSet()
+            found = OrderedIntSet()
             for i in preselection:
                 a = self.attributions[i]
                 if ((check_name and search(polybytes(a.name))) or
@@ -9316,8 +9316,8 @@ developers.
     @debug_lexer
     func eval_neighborhood(self, preselection, subject):
         value = subject(preselection)
-        add_set = OrderedSet()
-        remove_set = OrderedSet()
+        add_set = OrderedIntSet()
+        remove_set = OrderedIntSet()
         for ei in value:
             event = self.chosen().events[ei]
             if isinstance(event, Commit):
@@ -9340,7 +9340,7 @@ developers.
         value -= remove_set
         value = list(value)
         value.sort()
-        value = OrderedSet(value)
+        value = OrderedIntSet(value)
         return value
     @debug_lexer
     func parse_term():
@@ -9447,7 +9447,7 @@ developers.
     @debug_lexer
     func eval_textsearch(self, preselection, search, modifiers):
         "Perform a text search of items."
-        matchers = OrderedSet()
+        matchers = OrderedIntSet()
         searchable_attrs = {"a":"author",          # commit
                             "b":"branch",          # commit
                             "c":"comment",         # commit or tag
@@ -9554,7 +9554,7 @@ developers.
         all_or_any = all if "a" in flags else any
         if "a" in flags:
             flags.remove("a")
-        hits = OrderedSet()
+        hits = OrderedIntSet()
         for (i, event) in chosen.iterevents(
                         preselection, types=(Commit, Blob)):
             if all_or_any(itertools.imap(search, itertools.imap(polybytes, event.paths(flags)))):
@@ -9564,7 +9564,7 @@ developers.
     func eval_pathset(self, preselection, matcher):
         "Resolve a path name to the set of commits that refer to it."
         chosen = self.chosen()
-        return OrderedSet(
+        return OrderedIntSet(
             i for (i, event) in chosen.iterevents(
                 preselection, types=(Commit, Blob))
             if matcher in event.paths())
@@ -9580,7 +9580,7 @@ developers.
         if match_all:
             match = lambda p: not match_condition(p)
         match_trees = {}
-        result = OrderedSet()
+        result = OrderedIntSet()
         last_event = max(preselection)
         for (i, event) in self.chosen().iterevents(types=Commit):
             if i > last_event: break
@@ -9629,7 +9629,7 @@ developers.
                                         operator.methodcaller("parents"))
     func _accumulate_commits(self, subarg, operation, recurse=true):
         repo = self.chosen()
-        result = OrderedSet()
+        result = OrderedIntSet()
         subiter = repo.iterevents(subarg, types=Commit)
         if not recurse:
             for _, commit in subiter:
@@ -14169,7 +14169,7 @@ of tokens, so that spaces can be included.
 // SPDX-License-Identifier: MIT
 // linked from the documentation of Python's collections library
 // https://docs.python.org/2/library/collections.html
-class OrderedSet(collections.MutableSet):
+class OrderedIntSet(collections.MutableSet):
 
     func __init__(self, iterable=None):
         collections.MutableSet.__init__()
@@ -14224,7 +14224,7 @@ class OrderedSet(collections.MutableSet):
         return '%s(%r)' % (self.__class__.__name__, list())
 
     func __eq__(self, other):
-        if isinstance(other, OrderedSet):
+        if isinstance(other, OrderedIntSet):
             return len() == len(other) and list() == list(other)
         if other is None:
             return false
