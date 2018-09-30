@@ -6115,7 +6115,7 @@ type Repository struct {
         //_commits = None
         _markToIndex map[string]int
         _eventByMark map[string]Event
-        //_namecache = {}
+        _namecache map[string][]int
         preserveSet stringSet
         caseCoverage stringSet
         basedir string
@@ -6200,7 +6200,7 @@ func (repo *Repository) index(obj Event) int {
 			return ind
 		}
 	}
-	panic(throw("Internal error: %s not matched in repository %s", obj.idMe(), repo.name))
+	panic(throw("Internal error: object not matched in repository %s", repo.name))
 }
 
 // find gets an object index by mark
@@ -6277,8 +6277,9 @@ func (repo *Repository) size() int {
 	return sz
 }
 
-// branchset returns a set of all branchnames appearing in this repo.
+
 func (repo *Repository) branchset() stringSet {
+	// branchset returns a set of all branchnames appearing in this repo.
         branches := newStringSet()
         for _, e := range repo.events {
 		switch e.(type) {
@@ -6311,52 +6312,58 @@ func (repo *Repository) branchmap() map[string]string {
 	return brmap
 }
 
-/*
+func (repo *Repository) all() []int {
+        // Return a set that selects the entire repository.
+	s := make([]int, len(repo.events))
+        for i, _ := range repo.events {
+		s[i] = i
+	}
+	return s
+}
 
-    func index(self, obj):
-        "Index of the specified object."
-        try:
-            mark = obj.mark
-        except AttributeError:
-            for (ind, event) in enumerate(self.events):
-                if event == obj: return ind
-        else:
-            ind = self.find(mark)
-            if ind is not None: return ind
-        raise Fatal("internal error: <%s> not matched "
-                    "in repository %s" % (obj.legacyID, self.name))
-    func all():
-        "Return a set that selects the entire repository."
-        return range(len(self.events))
-    func __build_namecache():
-        "Avoid repeated O(n**2) lookups."
-        self._namecache = {}
-        commitcount = 0
-        for (i, event) in enumerate(self.events):
-            if isinstance(event, Commit):
-                commitcount += 1
-                self._namecache["#%d" % commitcount] = [i]
-            if isinstance(event, Tag):
-                self._namecache[event.name] = [i]
-            if isinstance(event, Reset):
-                self._namecache["reset@" + os.path.basename(event.ref)] = [i]
-            if hasattr(event, "legacyID") && event.legacyID:
-                self._namecache[event.legacyID] = [i]
-            if hasattr(event, "authors") && len(event.authors):
-                key = event.authors[0].actionStamp()
-                if key not in self._namecache:
-                    self._namecache[key] = [i]
-                else if i not in self._namecache[key]:
-                    self._namecache[key].append(i)
-            if hasattr(event, "committer"):
-                key = event.committer.actionStamp()
-                if key not in self._namecache:
-                    self._namecache[key] = [i]
-                else if i not in self._namecache[key]:
-                    self._namecache[key].append(i)
-    func invalidate_namecache():
-        self._namecache = None
-    func named(self, ref):
+func (repo *Repository) __buildNamecache() {
+	// Avoid repeated O(n**2) lookups.
+	repo._namecache = make(map[string][]int) 
+	commitcount := 0
+	for i, event := range repo.events {
+		switch event.(type) {
+		case *Commit:
+			commitcount += 1
+			repo._namecache[fmt.Sprintf("#%d", commitcount)] = []int{i}
+			commit := event.(*Commit)
+			legacyID := commit.legacyID
+			if legacyID != "" {
+				repo._namecache[legacyID] = []int{i}
+			}
+			var key string
+			if len(commit.authors) > 0 {
+				key = commit.authors[0].actionStamp()
+				if _, ok := repo._namecache[key]; !ok {
+					repo._namecache[key] = []int{i}
+				} else {
+					repo._namecache[key] = append(repo._namecache[key], i)
+				}
+			}
+			key = commit.committer.actionStamp()
+			if _, ok := repo._namecache[key]; !ok {
+				repo._namecache[key] = []int{i}
+			} else{
+				repo._namecache[key] = append(repo._namecache[key], i)
+			}
+		case *Tag:
+			repo._namecache[event.(*Tag).name] = []int{i}
+		case *Reset:
+			repo._namecache["reset@" + filepath.Base(event.(*Reset).ref)] = []int{i}
+		}
+	}
+}
+
+func (repo *Repository) invalidateNamecache() {
+    repo._namecache = nil
+}
+
+/*
+func named(repo, ref):
         "Resolve named reference in the context of this repository."
         selection = OrderedSet()
         # For matches that require iterating across the entire event
@@ -6364,17 +6371,17 @@ func (repo *Repository) branchmap() map[string]string {
         # more expensive in time than doing a single lookup. Avoid
         # lots of O(n**2) searches by building a lookup cache, at the
         # expense of increased working set for the hash table.
-        if not self._namecache:
-            self.__build_namecache()
-        if ref in self._namecache:
-            return self._namecache[ref]
+        if not repo._namecache:
+            repo.__buildNamecache()
+        if ref in repo._namecache:
+            return repo._namecache[ref]
         # No hit in the cache? Then search branches.
-        for symbol in sorted(self.branchset(),
+        for symbol in sorted(repo.branchset(),
                              key=len, reverse=true): # longest name first
             if ref == branchbase(symbol):
                 loc = None
                 # Find the last commit with this branchname
-                for (i, event) in enumerate(self.events):
+                for (i, event) in enumerate(repo.events):
                     if isinstance(event, Commit):
                         if event.branch == symbol:
                             loc = i
@@ -6383,7 +6390,7 @@ func (repo *Repository) branchmap() map[string]string {
                 else:
                     return OrderedSet([loc])
         # Next, assignments
-        lookup = self.assignments.get(ref)
+        lookup = repo.assignments.get(ref)
         if lookup:
             return lookup
         # Might be a date or action stamp (though action stamps should
@@ -6416,7 +6423,7 @@ func (repo *Repository) branchmap() map[string]string {
             email_id = ref[bang+1:]
         matches = []
         if datematch:
-            for (ei, event) in enumerate(self.events):
+            for (ei, event) in enumerate(repo.events):
                 if hasattr(event, 'committer'):
                     if not datematch(event.committer.date):
                         continue
@@ -6445,8 +6452,8 @@ func (repo *Repository) branchmap() map[string]string {
         return None
     func invalidate_objectMap():
         "Force an object-map rebuild on the next lookup."
-        self._eventByMark = nil
-    func read_authormap(self, selection, fp):
+        repo._eventByMark = nil
+    func read_authormap(repo, selection, fp):
         "Read an author-mapping file and apply it to the repo."
         try:
             for line in fp:
@@ -6463,17 +6470,17 @@ func (repo *Repository) branchmap() map[string]string {
                         if not mail:
                             raise Fatal("can't recognize address in '%s'" % netwide)
                         if timezone:
-                            self.tzmap[mail] = timezone
-                        self.authormap[local.strip().lower()] = (name,mail,timezone)
+                            repo.tzmap[mail] = timezone
+                        repo.authormap[local.strip().lower()] = (name,mail,timezone)
                     except ValueError:
                         raise Fatal("malformed author-map line")
                 # Process aliases that may show up in Changelog entries
                 if line[0] == '+':
                     try:
                         (aname, amail, atimezone) = Attribution.parseaddr(line[1:].strip())
-                        self.aliases[(aname, amail)] = (name, mail)
+                        repo.aliases[(aname, amail)] = (name, mail)
                         if timezone:
-                            self.tzmap[amail] = atimezone
+                            repo.tzmap[amail] = atimezone
                     except ValueError:
                         raise Fatal("malformed author-map line")
         except IOError:
@@ -6481,21 +6488,21 @@ func (repo *Repository) branchmap() map[string]string {
         except ValueError:
             raise Recoverable("bad author map syntax: %s" % repr(line))
         for ei in selection:
-            event = self.events[ei]
+            event = repo.events[ei]
             if isinstance(event, Commit):
-                event.committer.remap(self.authormap)
+                event.committer.remap(repo.authormap)
                 for author in event.authors:
-                    author.remap(self.authormap)
+                    author.remap(repo.authormap)
             else if isinstance(event, Tag):
-                event.tagger.remap(self.authormap)
+                event.tagger.remap(repo.authormap)
         # Email addresses have changed.
         # Force rebuild of action-stamp mapping on next lookup
-        self.invalidate_namecache()
+        repo.invalidateNamecache()
     func write_authormap(self, selection, fp):
         "List the identifiers we need."
         contributors = {}
         for ei in selection:
-            event = self.events[ei]
+            event = repo.events[ei]
             if isinstance(event, Commit):
                 contributors[event.committer.userid()] = event.committer.who()
                 for author in event.authors:
@@ -6504,7 +6511,7 @@ func (repo *Repository) branchmap() map[string]string {
                 contributors[event.tagger.userid()] = event.tagger.who()
         for (userid, cid) in contributors.items():
             fp.write("%s = %s\n" % (userid, cid))
-    func read_legacymap(self, fp):
+    func read_legacymap(fp):
         "Read a legacy-references dump and initialize the repo's legacy map."
         commitMap = {}
         for event in self.commits():
@@ -11669,7 +11676,7 @@ used with the add command to patch data into a repository.
         with RepoSurgeon.LineParse(self, line, capabilities=["stdin"]) as parse:
             blob.setContent(parse.stdin.read())
         repo.declare_sequence_mutation("adding blob")
-        repo.invalidate_namecache()
+        repo.invalidateNamecache()
 
     func help_remove():
         os.Stdout.write("""
@@ -13761,7 +13768,7 @@ action-stamp ID for each commit.
                         modified += 1
                 baton.twirl("")
             announce(debugSHOUT, "%d events modified" % modified)
-        repo.invalidate_namecache()
+        repo.invalidateNamecache()
     func help_timebump():
         os.Stdout.write("""
 Bump the committer and author timestamps of commits in the selection
@@ -13943,7 +13950,7 @@ that zone is used.
                                 if not commit.authors and newattr.address() not in [x.address for x in commit.authors]:
                                     commit.authors.append(newattr)
                                     cd += 1
-        repo.invalidate_namecache()
+        repo.invalidateNamecache()
         announce(debugSHOUT, "fills %d of %d authorships, changing %s, from %d ChangeLogs." \
                  % (cm, cc, cd, cl))
 
