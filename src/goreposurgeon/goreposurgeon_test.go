@@ -459,10 +459,13 @@ func TestDateComparison(t *testing.T) {
 
 func TestParseAttributionLine(t *testing.T) {
 	sample := "J. Random Hacker <jrh@foobar.com> 1456976347 -0500"
-	name, addr, date := parseAttributionLine(sample)
+	name, addr, date, err := parseAttributionLine(sample)
 	assertEqual(t, name, "J. Random Hacker")
 	assertEqual(t, addr, "jrh@foobar.com")
 	assertEqual(t, date, "1456976347 -0500")
+	if err != nil {
+		t.Errorf("Parse error on %q where none expected: %v", sample, err)
+	}
 
 	attr := newAttribution(sample)
 	n, a := attr.address()
@@ -473,9 +476,9 @@ func TestParseAttributionLine(t *testing.T) {
 }
 
 func TestRemapAttribution(t *testing.T) {
-	authormap := map[string]authorEntry{
-		"jrh": {name: "J. Random Hacker", email: "jrh@foobar.com"},
-		"esr": {name: "Eric S. Raymond", email: "esr@thyrsus.com", timezone: "America/New_York"},
+	authormap := map[string]Contributor{
+		"jrh": {fullname: "J. Random Hacker", email: "jrh@foobar.com"},
+		"esr": {fullname: "Eric S. Raymond", email: "esr@thyrsus.com", timezone: "America/New_York"},
 	}
 
 	// Verify name remapping
@@ -755,12 +758,12 @@ func TestCommitMethods(t *testing.T) {
 
 	// Check for actual cloning. rather than just copying a reference 
 	copied := commit.clone(repo)
-	copied.committer.name = "J. Fred Muggs"
-	if commit.committer.name == copied.committer.name {
+	copied.committer.fullname = "J. Fred Muggs"
+	if commit.committer.fullname == copied.committer.fullname {
 		t.Fatal("unexpected pass by reference of committer attribution")
 	}
-	copied.authors[0].name = "I am legion"
-	if commit.authors[0].name == copied.authors[0].name {
+	copied.authors[0].fullname = "I am legion"
+	if commit.authors[0].fullname == copied.authors[0].fullname {
 		t.Fatal("unexpected pass by reference of authot attribution")
 	}
 
@@ -1157,6 +1160,64 @@ this is a test tag
 
 	//FIXME: write test with a garbled data count and with dos.fi;
 	//it seemed to confuse the stream reader.
+}
+
+func TestReadAuthorMap(t *testing.T) {
+	input := `
+# comment
+foo=foobar <smorp@zoop> EST
+COW= boofar <proms@pooz> -0500
+
+woc = wocwoc <woc@cow>
++ bozo <b@clown.com> +0100
+`
+	people := []struct{ local, fullname, email, tz string }{
+		{"foo", "foobar", "smorp@zoop", "-0500"},
+		{"cow", "boofar", "proms@pooz", "-0500"},
+		{"woc", "wocwoc", "woc@cow", ""},
+	}
+	aliases := []struct{ aliasFullname, aliasEmail, fullname, email, tz string }{
+		{"bozo", "b@clown.com", "wocwoc", "woc@cow", "+0100"},
+	}
+
+	repo := newRepository("test")
+
+	err := repo.readAuthorMap(newOrderedIntSet(), strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(repo.authormap) != len(people) {
+		t.Fatalf("expected %d people but got %d",
+			len(people), len(repo.authormap))
+	}
+	for _, x := range people {
+		if a, ok := repo.authormap[x.local]; !ok {
+			t.Errorf("authormap[%s] lookup failed", x.local)
+			continue
+		} else {
+			if a.fullname != x.fullname || a.email != x.email {
+				t.Errorf("authormap[%s] entry contents unexpected: %v", x.local, a)
+				continue
+			}
+		}
+	}
+
+	if len(repo.aliases) != len(aliases) {
+		t.Errorf("expected %d aliases but got %d",
+			len(aliases), len(repo.aliases))
+	}
+	for _, x := range aliases {
+		k := ContributorID{x.aliasFullname, x.aliasEmail}
+		if a, ok := repo.aliases[k]; !ok {
+			t.Errorf("aliases[%v] lookup failed", k)
+			continue
+		} else if a.fullname != x.fullname {
+			t.Errorf("alias[%v] entry contents unexpected: %v", x, a)
+		}
+	}
+
+	repo.cleanup()
 }
 
 // end

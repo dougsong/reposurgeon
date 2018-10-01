@@ -177,6 +177,13 @@ func getsize(pathname string) int64 {
 	return st.Size()
 }
 
+func min(a, b int) int {
+    if a < b {
+        return a
+    }
+    return b
+}
+
 // filecopy does what it says, returning bytes copied and an error indication
 func filecopy(src, dst string) (int64, error) {
         sourceFileStat, err := os.Stat(src)
@@ -2702,7 +2709,7 @@ func (date *Date) After(other Date) bool {
 
 // Attribution represents pins a reposiory event to a person and time.
 type Attribution struct {
-	name  string
+	fullname  string
 	email string
 	date  Date
 }
@@ -2710,19 +2717,20 @@ type Attribution struct {
 var attributionRE = regexp.MustCompile(`([^<]*\s*)<([^>]*)>(\s*.*)`)
 
 // parseAttributionLine parses a Git attribution line into its fields
-func parseAttributionLine(line string) (string, string, string) {
+func parseAttributionLine(line string) (string, string, string, error) {
 	m := attributionRE.FindSubmatch(bytes.TrimSpace([]byte(line)))
 	if m != nil {
 		name := string(bytes.TrimSpace(m[1]))
 		address := string(bytes.TrimSpace(m[2]))
 		date := string(bytes.TrimSpace(m[3]))
-		return name, address, date
+		return name, address, date, nil
 	}
-	panic(throw("parse", "Malformed attribution '%s'\n", line))
+	err := fmt.Errorf("Malformed attribution on '%s'\n", line)
+	return "", "", "", err
 }
 
 func (attr *Attribution) address() (string, string) {
-	return attr.name, attr.email
+	return attr.fullname, attr.email
 }
 
 // newAttribution makes an Attribution from an author or committer line
@@ -2730,17 +2738,20 @@ func newAttribution(attrline string) *Attribution {
 	attr := new(Attribution)
 
 	if attrline != "" {
-		name, email, datestamp := parseAttributionLine(attrline)
-		parsed, err := newDate(datestamp)
-		if err != nil {
+		fullname, email, datestamp, err1 := parseAttributionLine(attrline)
+		if err1 != nil {
+			panic(throw("parse", "in neWAttribution: %v", err1))
+		}
+		parsed, err2 := newDate(datestamp)
+		if err2 != nil {
 			panic(throw("parse", "Malformed attribution date '%s' in '%s': %v",
-				datestamp, attrline, err))
+				datestamp, attrline, err2))
 		}
 		// Deal with a cvs2svn artifact
-		if name == "(no author)" {
-			name = "no-author"
+		if fullname == "(no author)" {
+			fullname = "no-author"
 		}
-		attr.name = intern(name)
+		attr.fullname = intern(fullname)
 		attr.email = intern(email)
 		attr.date = parsed
 	}
@@ -2748,12 +2759,12 @@ func newAttribution(attrline string) *Attribution {
 }
 
 func (attr Attribution) String() string {
-	return attr.name + " <" + attr.email + "> " + attr.date.String()
+	return attr.fullname + " <" + attr.email + "> " + attr.date.String()
 }
 
 func (attr *Attribution) clone() *Attribution {
 	mycopy := newAttribution("")
-	mycopy.name = attr.name
+	mycopy.fullname = attr.fullname
 	mycopy.email = attr.email
 	mycopy.date = attr.date.clone()
 	return mycopy
@@ -2762,13 +2773,13 @@ func (attr *Attribution) clone() *Attribution {
 // emailOut updates a message-block object with a representation of this
 // attribution object.
 func (attr *Attribution) emailOut(modifiers stringSet, msg *MessageBlock, hdr string) {
-	msg.setHeader(hdr, attr.name+" <"+attr.email+">")
+	msg.setHeader(hdr, attr.fullname+" <"+attr.email+">")
 	msg.setHeader(hdr+"-Date", attr.date.rfc3339())
 }
 
 // Equal compares attributions
 func (attr *Attribution) Equal(other *Attribution) bool {
-	return attr.name == other.name && attr.email == other.email && attr.date.Equal(other.date)
+	return attr.fullname == other.fullname && attr.email == other.email && attr.date.Equal(other.date)
 }
 
 func (attr *Attribution) actionStamp() string {
@@ -2780,26 +2791,20 @@ func (attr *Attribution) userid() string {
 }
 
 func (attr *Attribution) who() string {
-	return attr.name + " <" + attr.email + ">"
+	return attr.fullname + " <" + attr.email + ">"
 }
 
-type authorEntry struct {
-	name     string
-	email    string
-	timezone string
-}
-
-// Remap changes the attribution name/email according to a map of author entries.
-func (attr *Attribution) remap(authors map[string]authorEntry) {
-	matches := func(attr *Attribution, local string, ae authorEntry) bool {
-		nlower := strings.ToLower(attr.name)
+// Remap changes the attribution fullname/email according to a map of author entries.
+func (attr *Attribution) remap(authors map[string]Contributor) {
+	matches := func(attr *Attribution, local string, ae Contributor) bool {
+		nlower := strings.ToLower(attr.fullname)
 		elower := strings.ToLower(attr.email)
 		return strings.HasPrefix(elower, local+"@") || elower == local || (attr.email == "" && nlower == local)
 	}
 
 	for local, ae := range authors {
 		if matches(attr, local, ae) {
-			attr.name = intern(ae.name)
+			attr.fullname = intern(ae.fullname)
 			attr.email = intern(ae.email)
 			if ae.timezone != "" {
 				attr.date.setTZ(ae.timezone)
@@ -3159,11 +3164,11 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 		t.committish = target
 	}
 	if newtagger := msg.getHeader("Tagger"); newtagger != "" {
-                newname, newemail, _ := parseAttributionLine(newtagger)
-		if newname == "" || newemail == "" {
+                newname, newemail, _, err := parseAttributionLine(newtagger)
+		if err != nil || newname == "" || newemail == "" {
 			panic(throw("mailbox", "Can't recognize address in Tagger: " + newtagger))
-		} else if t.tagger.name != newname || t.tagger.email != newemail {
-			t.tagger.name, t.tagger.email = newname, newemail
+		} else if t.tagger.fullname != newname || t.tagger.email != newemail {
+			t.tagger.fullname, t.tagger.email = newname, newemail
 			announce(debugEMAILIN,
 				"in tag %s, Tagger is modified",
 				msg.getHeader("Event-Number"))
@@ -3207,8 +3212,8 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 		t.comment = newcomment
 	}
 
-        if fill && t.tagger.name == "" {
-		t.tagger.name, t.tagger.email = whoami()
+        if fill && t.tagger.fullname == "" {
+		t.tagger.fullname, t.tagger.email = whoami()
 		modified = true
 	}
 	
@@ -3256,7 +3261,7 @@ func (t *Tag) undecodable(codec string) bool {
 	if !f1 || err1 == nil {
 		return false
 	}
-	_, f2, err2 := ianaDecode(t.tagger.name, codec)
+	_, f2, err2 := ianaDecode(t.tagger.fullname, codec)
 	if !f2 || err2 == nil {
 		return false
 	}
@@ -4018,9 +4023,13 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 	c := &commit.committer
 	newcommitter := msg.getHeader("Committer")
         if newcommitter != "" {
-                newname, newemail, _ := parseAttributionLine(newcommitter)
-                if c.name != newname || c.email != newemail {
-			c.name, c.email = newname, newemail
+		var err2 error
+                newfullname, newemail, _, err2 := parseAttributionLine(newcommitter)
+		if err2 != nil {
+			panic(throw("mailbox", "bad attribution: %v", err2))
+		}
+                if c.fullname != newfullname || c.email != newemail {
+			c.fullname, c.email = newfullname, newemail
 			if commit.repo != nil {
 				announce(debugEMAILIN, "in %s, Committer is modified", commit.idMe())
 			}
@@ -4063,9 +4072,12 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 		// I just did it this way because it was easier.
 		for i, hdr := range authorkeys {
 			c := &commit.authors[i]
-			newname, newemail, _ := parseAttributionLine(msg.getHeader(hdr))
-			if c.name != newname || c.email != newemail {
-				c.name, c.email = newname, newemail
+			newfullname, newemail, _, err := parseAttributionLine(msg.getHeader(hdr))
+			if err != nil {
+				panic(throw("mailbox", "bad attribution: %v", err))
+			}
+			if c.fullname != newfullname || c.email != newemail {
+				c.fullname, c.email = newfullname, newemail
 				announce(debugEMAILIN,
 					"in commit %s, Author #%d is modified",
 					msg.getHeader("Event-Number"), i+1)
@@ -4131,8 +4143,8 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 			d, _ := newDate("")
 			commit.committer.date = d
 		}
-		if commit.committer.name == "" {
-			commit.committer.name, commit.committer.email = whoami()
+		if commit.committer.fullname == "" {
+			commit.committer.fullname, commit.committer.email = whoami()
 		}
 	}
         return modified
@@ -4743,7 +4755,7 @@ func (commit *Commit) blobByName(pathname string) (string, bool) {
 // undecodable tells whether this commit has undecodable i18n sequences in it?
 // FIXME: Needs unit test
 func (commit *Commit) undecodable(codec string) bool {
-	_, f1, err1 := ianaDecode(commit.committer.name, codec)
+	_, f1, err1 := ianaDecode(commit.committer.fullname, codec)
 	if !f1 || err1 == nil {
 		return false
 	}
@@ -4752,7 +4764,7 @@ func (commit *Commit) undecodable(codec string) bool {
 		return false
 	}
 	for _, attr := range commit.authors {
-		_, f2, err2 := ianaDecode(attr.name, codec)
+		_, f2, err2 := ianaDecode(attr.fullname, codec)
 		if !f2 || err2 == nil {
 			return false
 		}
@@ -4813,7 +4825,7 @@ func (commit Commit) String() string {
 			parts = append(parts, fmt.Sprintf("author %s\n", author))
 		}
 	}
-        if commit.committer.name != ""{
+        if commit.committer.fullname != ""{
 		parts = append(parts, fmt.Sprintf("committer %s\n", commit.committer))
 	}
         // As of git 2.13.6 (possibly earlier) the comment fields of
@@ -5888,7 +5900,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 					break
 				}
 			}
-			if !(commit.mark != "" && commit.committer.name != "") {
+			if !(commit.mark != "" && commit.committer.fullname != "") {
 				sp.importLine = commitbegin
 				sp.error("missing required fields in commit")
 			}
@@ -6176,10 +6188,20 @@ type CommitLike interface {
 
 // Contributor - associate a username with a DVCS-style ID and timezone
 type Contributor struct {
-	name     string
+	local     string
 	fullname string
 	email    string
-	tz       string
+	timezone string
+}
+
+// ContributorID identifies a contributor for purposes of aliasing
+type ContributorID struct {
+	fullname     string
+	email        string
+}
+
+func (c Contributor) isEmpty() bool {
+	return c.local == ""
 }
 
 // Time mark for profiling
@@ -6211,13 +6233,13 @@ type Repository struct {
         legacyMap map[string]*Commit    // From anything that doesn't survive rebuild
         legacyCount int
         timings []TimeMark
-        //assignments = {}
+        assignments map[string]orderedIntSet
         inlines int
         //uniqueness = None
         markseq int
         authormap map[string]Contributor
         tzmap map[string]*time.Location	// most recent email address to timezone
-        //aliases = {}
+        aliases map[ContributorID]ContributorID
 	// Write control - set, if required, before each dump
 	preferred *VCS			// overrides vcs slot for writes
 	realized map[string]bool	// clear and remake this before each dump
@@ -6233,9 +6255,11 @@ func newRepository(name string) *Repository {
 	repo.preserveSet = newStringSet()
 	repo.caseCoverage = newStringSet()
         repo.legacyMap = make(map[string]*Commit)
+	repo.assignments = make(map[string]orderedIntSet)
 	repo.timings = make([]TimeMark, 0)
 	repo.authormap = make(map[string]Contributor)
 	repo.tzmap = make(map[string]*time.Location)
+	repo.aliases = make(map[ContributorID]ContributorID)
 	d, err := os.Getwd()
 	if err != nil {
 		panic(throw("command", "During repository creation: %v", err))
@@ -6448,143 +6472,219 @@ func (repo *Repository) invalidateNamecache() {
     repo._namecache = nil
 }
 
+// FIXME: Needs more unit tests, can't do yet withot assignment logic 
+func (repo *Repository) named(ref string) orderedIntSet {
+        // Resolve named reference in the context of this repository.
+        selection := newOrderedIntSet()
+        // For matches that require iterating across the entire event
+        // sequence, building an entire name lookup table is !much
+        // more expensive in time than doing a single lookup. Avoid
+        // lots of O(n**2) searches by building a lookup cache, at the
+        // expense of increased working set for the hash table.
+        lookup, ok := repo.assignments[ref]
+        if ok {
+		return lookup
+        }
+        if repo._namecache == nil {
+		repo.__buildNamecache()
+        }
+        if v, ok := repo._namecache[ref]; ok {
+		return v
+        }
+        // No hit in the name cache or assignments? Then search branches.
+        for _, symbol := range repo.branchset() {
+		if ref == branchbase(symbol) {
+			loc := -1
+			// Find the last commit with this branchname
+			for i, event := range repo.events {
+				switch event.(type) {
+				case *Commit:
+					if event.(*Commit).branch == symbol {
+						loc = i
+					}
+				}
+			}
+			if loc == -1 {
+				panic(throw("command", "branch name %s points to hyperspace", symbol))
+				return nil
+			} else {
+				return newOrderedIntSet(loc)
+			}
+                }
+	}
+        // Might be a date or action stamp (though action stamps should
+        // be in the name cache already).  First, peel off an optional
+	// ordinal suffix.
+	var ordinal int = -1
+	stamp := ref
+	m := regexp.MustCompile("#[0-9]+$").Find([]byte(ref))
+	if m != nil {
+		n, _ := strconv.Atoi(string(m[1:]))
+		ordinal = n
+		stamp = ref[:len(ref)- len(m)]
+	}
+	// Now look for action stamp or date
+	dateEnd := len(stamp)
+	bang := strings.Index(stamp, "!")
+	if bang >= 0 {
+		dateEnd = min(bang, dateEnd)
+	}
+	datestr := ref[:dateEnd]
+	date, err2 := newDate(datestr)
+	var datematch func(u Date) bool 
+	if err2 == nil {
+		datematch = func(u Date) bool {
+			return u.timestamp.Equal(date.timestamp)
+		}
+	} else {
+		daymark, err3 := time.Parse("2006-01-02", datestr)
+		if err3 != nil {
+			datematch = func(u Date) bool {
+				d := daymark.Sub(u.timestamp).Hours()
+				return d < -24 || d > 24
+			}
+		} else {
+			complain("unparseable date in " + ref)
+			return nil
+		}
+	}
+	emailID := ""
+	if err2 == nil && bang > -1 {
+		emailID = ref[bang+1:]
+	}
+	matches := newOrderedIntSet()
+	if datematch !=  nil {
+		for ei, event := range repo.events {
+			switch event.(type) {
+			case *Commit:
+				commit := event.(*Commit)
+				if !datematch(commit.committer.date) {
+					continue
+				}
+				// FIXME: Recognize aliases here
+				if commit.committer.email != emailID {
+					continue
+				} else {
+					matches.Add(ei)
+				}
+			case *Tag:
+				tag := event.(*Tag)
+				// FIXME: Recognize aliases here
+				if !datematch(tag.tagger.date) {
+					continue
+				} else if tag.tagger.email != emailID {
+					continue
+				} else {
+					matches = append(matches, ei)
+				}
+			}
+		}
+		if len(matches) < 1 {
+			complain("no events match %s", ref)
+			return nil
+		} else if len(matches) > 1 {
+			if ordinal != -1 && ordinal <= len(matches) {
+				selection.Add(matches[ordinal-1])
+			} else {
+				selection = selection.Union(matches)
+			}
+		} else {
+			selection.Add(matches[0])
+		}
+		if len(selection) > 0 {
+			return selection
+		}
+	}
+	// More named-reference formats can go here.
+	// Otherwise, return nil to signal invalid selection.
+	return nil
+}
+
+func (repo *Repository) invalidateObjectMap() {
+    // Force an object-map rebuild on the next lookup.
+    repo._eventByMark = nil
+}
+
+func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) error {
+	// Read an author-mapping file and apply it to the repo.
+	scanner := bufio.NewScanner(fp)
+	var principal Contributor
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line  == "" ||  strings.HasPrefix(line, "#") {
+			continue
+		}
+		if strings.Index(line, "=") > -1 {
+			fields := strings.Split(line, "=")
+			local := strings.TrimSpace(fields[0])
+			netwide := strings.TrimSpace(fields[1])
+			name, mail, timezone, err := parseAttributionLine(netwide)
+			if err != nil {
+				return fmt.Errorf("in readAuthorMap: %v", err)
+			}
+			if mail == "" {
+				return fmt.Errorf("can't recognize address in '%s'", netwide)
+			}
+			if timezone != "" {
+				loc, err2 := time.LoadLocation(timezone)
+				if err2 != nil {
+					loc, err2 = locationFromZoneOffset(timezone)
+					if err2 != nil {
+						return fmt.Errorf("in readAuthorMap entry lookup: %v", err2)
+					}
+				}
+				repo.tzmap[mail] = loc
+			}
+			key := strings.ToLower(local)
+			principal = Contributor{local,name,mail,timezone}
+			repo.authormap[key] = principal
+		}
+		// Process aliases gathered from Changelog entries
+		if line[0] == '+' {
+			if principal.isEmpty() {
+				return fmt.Errorf("alias entry before any principal")
+			}
+			line = strings.TrimSpace(line[1:])
+			aname, aemail, atimezone, aerr := parseAttributionLine(line)
+			if aerr != nil {
+				return fmt.Errorf("bad contributor alias: %v", aerr)
+			}
+			repo.aliases[ContributorID{aname, aemail}] = ContributorID{principal.fullname, principal.email}
+			if atimezone != "" {
+				loc, err2 := time.LoadLocation(atimezone)
+				if err2 != nil {
+					loc, err2 = locationFromZoneOffset(atimezone)
+					if err2 != nil {
+						return fmt.Errorf("in readAuthorMap alias lookup: %v", err2)
+					}
+				}
+				repo.tzmap[aemail] = loc
+			}
+		}
+	}
+
+	for _, ei := range selection {
+		event := repo.events[ei]
+		switch event.(type) {
+		case *Commit:
+			event.(*Commit).committer.remap(repo.authormap)
+			for _, author := range event.(*Commit).authors {
+				author.remap(repo.authormap)
+			}
+		case *Tag:
+			event.(*Tag).tagger.remap(repo.authormap)
+		}
+	}
+	// Email addresses have changed.
+	// Force rebuild of action-stamp mapping on next lookup
+	repo.invalidateNamecache()
+
+	return nil
+}
+
 /*
-func named(repo, ref):
-        "Resolve named reference in the context of this repository."
-        selection = orderedIntSet()
-        # For matches that require iterating across the entire event
-        # sequence, building an entire name lookup table is not much
-        # more expensive in time than doing a single lookup. Avoid
-        # lots of O(n**2) searches by building a lookup cache, at the
-        # expense of increased working set for the hash table.
-        if not repo._namecache:
-            repo.__buildNamecache()
-        if ref in repo._namecache:
-            return repo._namecache[ref]
-        # No hit in the cache? Then search branches.
-        for symbol in sorted(repo.branchset(),
-                             key=len, reverse=true): # longest name first
-            if ref == branchbase(symbol):
-                loc = None
-                # Find the last commit with this branchname
-                for (i, event) in enumerate(repo.events):
-                    if isinstance(event, Commit):
-                        if event.branch == symbol:
-                            loc = i
-                if loc is None:
-                    raise Recoverable("branch name %s points to hyperspace" % symbol)
-                else:
-                    return orderedIntSet([loc])
-        # Next, assignments
-        lookup = repo.assignments.get(ref)
-        if lookup:
-            return lookup
-        # Might be a date or action stamp (though action stamps should
-        # be in the name cache already)
-        ordinal = None
-        m = re.search("#[0-9]+$".encode('ascii'), polybytes(ref))
-        if m:
-            try:
-                ordinal = int(m.group(0)[1:])
-                ref = polystr(polybytes(ref)[:-len(m.group(0))])
-            except ValueError:
-                raise Recoverable("ill-formed date")
-        bang = ref.find('!')
-        date_end = len(ref)
-        if bang >= 0:
-            date_end = min(bang, date_end)
-        date = ref[:date_end]
-        datematch = None
-        try:
-            date = Date(date)
-            datematch = lambda t: t == date
-        except (Fatal, ValueError):
-            try:
-                date = calendar.timegm(time.strptime(date, "%Y-%m-%d"))
-                datematch = lambda t: t.timestamp >= date && t.timestamp < date + 24*60*60
-            except ValueError:
-                datematch = None
-        email_id = None
-        if date is not None && bang > -1:
-            email_id = ref[bang+1:]
-        matches = []
-        if datematch:
-            for (ei, event) in enumerate(repo.events):
-                if hasattr(event, 'committer'):
-                    if not datematch(event.committer.date):
-                        continue
-                    if email_id && event.committer.email != email_id:
-                        continue
-                    else:
-                        matches.append(ei)
-                else if hasattr(event, 'tagger'):
-                    if not datematch(event.tagger.date):
-                        continue
-                    else if email_id && event.tagger.email!=email_id:
-                        continue
-                    else:
-                        matches.append(ei)
-            if len(matches) < 1:
-                raise Recoverable("no events match %s" % ref)
-            else if len(matches) > 1:
-                if ordinal is not None && ordinal <= len(matches):
-                    selection.add(matches[ordinal-1])
-                else:
-                    selection |= orderedIntSet(matches)
-            else:
-                selection.add(matches[0])
-            if selection:
-                return selection
-        return None
-    func invalidate_objectMap():
-        "Force an object-map rebuild on the next lookup."
-        repo._eventByMark = nil
-    func read_authormap(repo, selection, fp):
-        "Read an author-mapping file and apply it to the repo."
-        try:
-            for line in fp:
-                line = line.strip()
-                if not line:
-                    continue
-                if line.startswith('#'):
-                    continue
-                if '=' in line:
-                    (local, netwide) = line.strip().split('=')
-                    try:
-                        mail = None
-                        (name, mail, timezone) = Attribution.parseaddr(netwide.strip())
-                        if not mail:
-                            raise Fatal("can't recognize address in '%s'" % netwide)
-                        if timezone:
-                            repo.tzmap[mail] = timezone
-                        repo.authormap[local.strip().lower()] = (name,mail,timezone)
-                    except ValueError:
-                        raise Fatal("malformed author-map line")
-                # Process aliases that may show up in Changelog entries
-                if line[0] == '+':
-                    try:
-                        (aname, amail, atimezone) = Attribution.parseaddr(line[1:].strip())
-                        repo.aliases[(aname, amail)] = (name, mail)
-                        if timezone:
-                            repo.tzmap[amail] = atimezone
-                    except ValueError:
-                        raise Fatal("malformed author-map line")
-        except IOError:
-            raise Recoverable("couldn't open author-map file")
-        except ValueError:
-            raise Recoverable("bad author map syntax: %s" % repr(line))
-        for ei in selection:
-            event = repo.events[ei]
-            if isinstance(event, Commit):
-                event.committer.remap(repo.authormap)
-                for author in event.authors:
-                    author.remap(repo.authormap)
-            else if isinstance(event, Tag):
-                event.tagger.remap(repo.authormap)
-        # Email addresses have changed.
-        # Force rebuild of action-stamp mapping on next lookup
-        repo.invalidateNamecache()
-    func write_authormap(self, selection, fp):
+
+func writeAuthorMap(self, selection, fp):
         "List the identifiers we need."
         contributors = {}
         for ei in selection:
@@ -7618,7 +7718,7 @@ func (repo *Repository) addEvent(event Event) {
             self.events.append(Passthrough("done\n", self))
             self.declare_sequence_mutation()
         # Previous maps won't be valid
-        self.invalidate_objectMap()
+        self.invalidateObjectMap()
         self._markToIndex = nil
         if baton:
             baton.endcounter()
@@ -7673,7 +7773,7 @@ func (repo *Repository) addEvent(event Event) {
                                         event.__class__.__name__,
                                         fld))
                         setattr(event, fld, new)
-            self.invalidate_objectMap()
+            self.invalidateObjectMap()
             # Now marks in fileops
             if isinstance(event, Commit):
                 for fileop in event.operations():
@@ -7825,7 +7925,7 @@ func (repo *Repository) addEvent(event Event) {
             # need a new mark
             assert(event.mark == event2.mark)
             event2.setMark(event.repo.newmark())
-            self.invalidate_objectMap()
+            self.invalidateObjectMap()
             # Fix up parent/child relationships
             for child in list(event.children()):
                 child.replaceParent(event, event2)
@@ -7970,7 +8070,7 @@ func read_repo(source, options, preferred):
             if repo.vcs.authormap and os.path.exists(repo.vcs.authormap):
                 announce(debugSHOUT, "reading author map.")
                 with open(repo.vcs.authormap, "rb") as fp:
-                    repo.read_authormap(range(len(repo.events)), make_wrapper(fp))
+                    repo.readAuthorMap(range(len(repo.events)), make_wrapper(fp))
             legacyMap = os.path.join(vcs.subdirectory, "legacy_map")
             if os.path.exists(legacy_map):
                 with open(legacyMap, "rb") as rfp:
@@ -13334,14 +13434,14 @@ part to the right of an equals sign will need editing.
             with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
                 if parse.tokens():
                     raise Recoverable("authors write no longer takes a filename argument - use > redirection instead")
-                self.chosen().write_authormap(self.selection, parse.stdout)
+                self.chosen().writeAuthorMap(self.selection, parse.stdout)
         else:
             if line.startswith("read"):
                 line = line[4:].strip()
             with RepoSurgeon.LineParse(self, line, capabilities=["stdin"]) as parse:
                 if parse.tokens():
                     raise Recoverable("authors read no longer takes a filename argument - use < redirection instead")
-                self.chosen().read_authormap(self.selection, parse.stdin)
+                self.chosen().readAuthorMap(self.selection, parse.stdin)
 
     #
     # Reference lifting
@@ -14126,7 +14226,7 @@ not optimal, and may in particular contain duplicate blobs.
                             repo.addEvent(b, where=loc)
                             loc += 1
                             repo.declare_sequence_mutation()
-                            repo.invalidate_objectMap()
+                            repo.invalidateObjectMap()
                             b.setMark(repo.newmark())
                             #b.size = tarinfo.size
                             b.setBlobfile(os.path.join(self.repo.subdir(), tarinfo.name))
@@ -14138,7 +14238,7 @@ not optimal, and may in particular contain duplicate blobs.
                             op.construct("M", mode, b.mark, fn)
                             blank.appendOperation(op)
                 repo.declare_sequence_mutation()
-                repo.invalidate_objectMap()
+                repo.invalidateObjectMap()
                 if not globalOptions["testmode"]:
                     blank.committer.date = Date(rfc3339(newest))
             except IOError:
