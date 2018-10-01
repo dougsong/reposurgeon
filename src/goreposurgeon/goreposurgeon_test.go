@@ -100,7 +100,89 @@ func TestStringSet(t *testing.T) {
 	if sum[0]!="a"  || sum[1]!="b" || sum[2]!="c" || sum[4] != "e" || len(sum)!=5{
 		t.Errorf("unexpected result of set union: %v", sum)
 	}
+}
 
+func (s orderedIntSet) Equal(other orderedIntSet) bool {
+	if len(s) != len(other) {
+		return false
+	}
+	// Naive O(n**2) method - don't use on large sets if you care about speed
+	for _, item := range s {
+		if !other.Contains(item) {
+			return false
+		}
+	}
+	return true
+}
+
+func TestOrderedIntSet(t *testing.T) {
+	ts := newOrderedIntSet(1, 2, 3) 
+	if ts.Contains(4) {
+		t.Error("Contain check failed on \"d\", expected false.")
+	}
+	if !ts.Contains(1) {
+		t.Error("Contain check failed on \"a\", expected true.")
+	}
+
+	ts2 := newOrderedIntSet(3, 2, 1)
+	if !ts.Equal(ts2) {
+		t.Error("Equality check failed when pass expected.")
+	}
+
+	ts3 := newOrderedIntSet(3, 2, 4)
+	if ts.Equal(ts3) {
+		t.Error("Equality check succeeded when fail expected.")
+	}
+
+	ts4 := newOrderedIntSet(3, 2, 1)
+	if !ts.Equal(ts.Intersection(ts4)) {
+		t.Error("Intersection computation failed. (1)")
+	}
+
+	ts5 := newOrderedIntSet(3, 2, 4)
+	expected5 := orderedIntSet{3, 2}
+	saw5 := ts.Intersection(ts5)
+	if !saw5.Equal(expected5) {
+		t.Error("Intersection computation failed. (2)")
+	}
+
+	ts6 := newOrderedIntSet(24, 25, 26)
+	expected4 := orderedIntSet{}
+	saw6 := ts.Intersection(ts6)
+	if !saw6.Equal(expected4) {
+		t.Error("Intersection computation failed. (3)")
+	}
+
+	ts7 := newOrderedIntSet(3, 2, 1)
+	ts7.Remove(2)
+	expected7 := orderedIntSet{3, 1}
+	if !ts7.Equal(expected7) {
+		t.Error("Remove computation failed.")
+	}
+
+	expect := `{1, 2, 3}`
+	get := ts.String()
+	if expect != get {
+		t.Errorf("Stringer check failed, expected %s got %s.",
+			expect, get)
+	}
+
+	ts.Add(4)
+	if !ts.Contains(4) {
+		t.Error("string set add failed.")
+	}
+
+	ts8 := newOrderedIntSet(1, 2, 3, 4)
+	ts9 := newOrderedIntSet(2, 5)
+	diff := ts8.Subtract(ts9)
+	if diff[0]!=1  || diff[1]!=3 || diff[2]!=4 || len(diff)!=3{
+		t.Errorf("unexpected result of set difference: %v", diff)
+	}
+
+	sum := ts8.Union(ts9)
+	if sum[0]!=1  || sum[1]!=2 || sum[2]!=3 || sum[4] != 5 || len(sum)!=5{
+		t.Errorf("unexpected result of set union: %v", sum)
+	}
 }
 
 func TestOrderedMap(t *testing.T) {
