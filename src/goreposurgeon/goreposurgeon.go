@@ -6682,55 +6682,65 @@ func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) err
 	return nil
 }
 
+// List the identities we know.
+func (repo *Repository) writeAuthorMap(selection orderedIntSet, fp io.Writer) {
+        contributors := make(map[string]string)
+        for _, ei := range selection {
+		event := repo.events[ei]
+		switch event.(type) {
+		case *Commit:
+			commit := event.(*Commit)
+			contributors[commit.committer.userid()] = commit.committer.who()
+			for _, author := range commit.authors {
+				contributors[author.userid()] = author.who()
+			}
+		case *Tag:
+			tag := event.(*Tag)
+			contributors[tag.tagger.userid()] = tag.tagger.who()
+		}
+        }
+        for userid, cid := range contributors {
+		fp.Write([]byte(fmt.Sprintf("%s = %s\n", userid, cid)))
+        }
+}
+
 /*
 
-func writeAuthorMap(self, selection, fp):
-        "List the identifiers we need."
-        contributors = {}
-        for ei in selection:
-            event = repo.events[ei]
-            if isinstance(event, Commit):
-                contributors[event.committer.userid()] = event.committer.who()
-                for author in event.authors:
-                    contributors[author.userid()] = author.who()
-            else if isinstance(event, Tag):
-                contributors[event.tagger.userid()] = event.tagger.who()
-        for (userid, cid) in contributors.items():
-            fp.write("%s = %s\n" % (userid, cid))
-    func read_legacymap(fp):
-        "Read a legacy-references dump and initialize the repo's legacy map."
-        commitMap = {}
-        for event in self.commits():
-            key = (event.committer.date.timestamp, event.committer.email)
-            if key not in commitMap:
-                commitMap[key] = []
-            commitMap[key].append(event)
-        try:
-            matched = unmatched = 0
-            for line in fp:
-                (legacy, stamp) = line.split()
-                (timefield, person) = stamp.split('!')
-                if ':' in person:
-                    (person, seq) = person.split(':')
-                    seq = int(seq) - 1
-                else:
-                    seq = 0
-                assert legacy && timefield && person
-                when_who = (Date(timefield).timestamp, person)
-                if when_who in commitMap:
-                    self.legacyMap[legacy] = commitMap[when_who][seq]
-                    if legacy.startswith("SVN:"):
-                        commitMap[when_who][seq].legacyID = legacy[4:]
-                    matched += 1
-                else:
-                    unmatched += 1
-            if verbose >= 1:
-                announce(debugSHOUT, "%d matched, %d unmatched, %d total"\
-                         % (matched, unmatched, matched+unmatched))
-            del commitMap
-        except ValueError:
-            raise Recoverable("bad syntax in legacy map.")
-    func write_legacymap(self, fp):
+func readLegacyMap(fp):
+    "Read a legacy-references dump and initialize the repo's legacy map."
+    commitMap = {}
+    for event in self.commits():
+	key = (event.committer.date.timestamp, event.committer.email)
+	if key not in commitMap:
+	    commitMap[key] = []
+	commitMap[key].append(event)
+    try:
+	matched = unmatched = 0
+	for line in fp:
+	    (legacy, stamp) = line.split()
+	    (timefield, person) = stamp.split('!')
+	    if ':' in person:
+		(person, seq) = person.split(':')
+		seq = int(seq) - 1
+	    else:
+		seq = 0
+	    assert legacy && timefield && person
+	    when_who = (Date(timefield).timestamp, person)
+	    if when_who in commitMap:
+		self.legacyMap[legacy] = commitMap[when_who][seq]
+		if legacy.startswith("SVN:"):
+		    commitMap[when_who][seq].legacyID = legacy[4:]
+		matched += 1
+	    else:
+		unmatched += 1
+	if verbose >= 1:
+	    announce(debugSHOUT, "%d matched, %d unmatched, %d total"\
+		     % (matched, unmatched, matched+unmatched))
+	del commitMap
+    except ValueError:
+	raise Recoverable("bad syntax in legacy map.")
+
+    func writeLegacyMap(self, fp):
         "Dump legacy references."
         for cookie, commit in sorted(
                 self.legacyMap.items(),
@@ -8074,7 +8084,7 @@ func read_repo(source, options, preferred):
             legacyMap = os.path.join(vcs.subdirectory, "legacy_map")
             if os.path.exists(legacy_map):
                 with open(legacyMap, "rb") as rfp:
-                    repo.read_legacymap(make_wrapper(rfp))
+                    repo.readLegacyMap(make_wrapper(rfp))
             if vcs.lister:
                 func fileset(exclude):
                     allfiles = []
@@ -8220,7 +8230,7 @@ func rebuild_repo(repo, target, options, preferred):
             try:
                 legacyfile = os.path.join(vcs.subdirectory, "legacy-map")
                 with open(legacyfile, "wb") as wfp:
-                    repo.write_legacymap(make_wrapper(wfp))
+                    repo.writeLegacyMap(make_wrapper(wfp))
             except IOError:
                 raise Recoverable("legacy-map file %s could not be written." \
                                   % legacyfile)
@@ -13463,14 +13473,14 @@ output or a >-redirected filename.
             with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
                 if parse.tokens():
                     raise Recoverable("legacy write does not take a filename argument - use > redirection instead")
-                self.chosen().write_legacymap(parse.stdout)
+                self.chosen().writeLegacyMap(parse.stdout)
         else:
             if line.startswith("read"):
                 line = line[4:].strip()
             with RepoSurgeon.LineParse(self, line, capabilities=["stdin"]) as parse:
                 if parse.tokens():
                     raise Recoverable("legacy read does not take a filename argument - use < redirection instead")
-                self.chosen().read_legacymap(parse.stdin)
+                self.chosen().readLegacyMap(parse.stdin)
 
     func help_references():
         os.Stdout.write("""

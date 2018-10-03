@@ -13,6 +13,19 @@ import (
 	"testing"
 )
 
+/*
+
+Things that still need unit tests:
+
+* Author map writing.
+
+* Fast-import and svn streams with garbled data counts; we need to verify
+  that the panic is caught properly.
+
+* tests/dos.fi; it seemed to confuse the stream reader.
+
+*/
+
 func assertBool(t *testing.T, see bool, expect bool) {
 	if see != expect {
 		t.Errorf("assertBool: expected %v saw %v", expect, see)
@@ -991,7 +1004,7 @@ func TestCapture(t *testing.T) {
 
 }
 
-func TestParse(t *testing.T) {
+func TestSVNParse(t *testing.T) {
 	saw := sdBody("Content-Length: 23\n")
 	expected := "23"
 	assertEqual(t, saw, expected)
@@ -1018,6 +1031,9 @@ PROPS-END
 	saw = om.String()
 	assertEqual(t, saw, expected)
 
+}
+
+func TestFastImportParse1(t *testing.T) {
 	rawdump := `blob
 mark :1
 data 20
@@ -1049,7 +1065,7 @@ M 100644 :3 README
 
 `
 	repo := newRepository("test")
-	sp = newStreamParser(repo)
+	sp := newStreamParser(repo)
 	r := strings.NewReader(rawdump)
 	sp.fastImport(r, nil, false, "synthetic test load")
 
@@ -1084,8 +1100,68 @@ M 100644 :3 README
 	assertBool(t, commit2.undecodable("UTF-8"), false)
 
 	sp.repo.cleanup()
+}
 
-	rawdump = `blob
+func TestReadAuthorMap(t *testing.T) {
+	input := `
+# comment
+foo=foobar <smorp@zoop> EST
+COW= boofar <proms@pooz> -0500
+
+woc = wocwoc <woc@cow>
++ bozo <b@clown.com> +0100
+`
+	people := []struct{ local, fullname, email, tz string }{
+		{"foo", "foobar", "smorp@zoop", "-0500"},
+		{"cow", "boofar", "proms@pooz", "-0500"},
+		{"woc", "wocwoc", "woc@cow", ""},
+	}
+	aliases := []struct{ aliasFullname, aliasEmail, fullname, email, tz string }{
+		{"bozo", "b@clown.com", "wocwoc", "woc@cow", "+0100"},
+	}
+
+	repo := newRepository("test")
+
+	err := repo.readAuthorMap(newOrderedIntSet(), strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(repo.authormap) != len(people) {
+		t.Fatalf("expected %d people but got %d",
+			len(people), len(repo.authormap))
+	}
+	for _, x := range people {
+		if a, ok := repo.authormap[x.local]; !ok {
+			t.Errorf("authormap[%s] lookup failed", x.local)
+			continue
+		} else {
+			if a.fullname != x.fullname || a.email != x.email {
+				t.Errorf("authormap[%s] entry contents unexpected: %v", x.local, a)
+				continue
+			}
+		}
+	}
+
+	if len(repo.aliases) != len(aliases) {
+		t.Errorf("expected %d aliases but got %d",
+			len(aliases), len(repo.aliases))
+	}
+	for _, x := range aliases {
+		k := ContributorID{x.aliasFullname, x.aliasEmail}
+		if a, ok := repo.aliases[k]; !ok {
+			t.Errorf("aliases[%v] lookup failed", k)
+			continue
+		} else if a.fullname != x.fullname {
+			t.Errorf("alias[%v] entry contents unexpected: %v", x, a)
+		}
+	}
+
+	repo.cleanup()
+}
+
+func TestFastImportParse2(t *testing.T) {
+	rawdump := `blob
 mark :1
 data 23
 This is a sample file.
@@ -1160,9 +1236,9 @@ data 19
 this is a test tag
 
 `
-	repo = newRepository("test")
-	sp = newStreamParser(repo)
-	r = strings.NewReader(rawdump)
+	repo := newRepository("test")
+	sp := newStreamParser(repo)
+	r := strings.NewReader(rawdump)
 	sp.fastImport(r, nil, false, "synthetic test load")
 
 	testTag, ok1 := repo.events[len(repo.events)-1].(*Tag)
@@ -1172,64 +1248,17 @@ this is a test tag
 	assertBool(t, ok2, true)
 	assertEqual(t, "refs/heads/master", testReset.ref)
 
-	//FIXME: write test with a garbled data count and with dos.fi;
-	//it seemed to confuse the stream reader.
-}
-
-func TestReadAuthorMap(t *testing.T) {
-	input := `
-# comment
-foo=foobar <smorp@zoop> EST
-COW= boofar <proms@pooz> -0500
-
-woc = wocwoc <woc@cow>
-+ bozo <b@clown.com> +0100
-`
-	people := []struct{ local, fullname, email, tz string }{
-		{"foo", "foobar", "smorp@zoop", "-0500"},
-		{"cow", "boofar", "proms@pooz", "-0500"},
-		{"woc", "wocwoc", "woc@cow", ""},
-	}
-	aliases := []struct{ aliasFullname, aliasEmail, fullname, email, tz string }{
-		{"bozo", "b@clown.com", "wocwoc", "woc@cow", "+0100"},
-	}
-
-	repo := newRepository("test")
-
-	err := repo.readAuthorMap(newOrderedIntSet(), strings.NewReader(input))
+	authordump := "esr = Eric S. Raymond <esr@thyrsus.com>"
+	
+	err := repo.readAuthorMap(newOrderedIntSet(), strings.NewReader(authordump))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if len(repo.authormap) != len(people) {
-		t.Fatalf("expected %d people but got %d",
-			len(people), len(repo.authormap))
-	}
-	for _, x := range people {
-		if a, ok := repo.authormap[x.local]; !ok {
-			t.Errorf("authormap[%s] lookup failed", x.local)
-			continue
-		} else {
-			if a.fullname != x.fullname || a.email != x.email {
-				t.Errorf("authormap[%s] entry contents unexpected: %v", x.local, a)
-				continue
-			}
-		}
-	}
-
-	if len(repo.aliases) != len(aliases) {
-		t.Errorf("expected %d aliases but got %d",
-			len(aliases), len(repo.aliases))
-	}
-	for _, x := range aliases {
-		k := ContributorID{x.aliasFullname, x.aliasEmail}
-		if a, ok := repo.aliases[k]; !ok {
-			t.Errorf("aliases[%v] lookup failed", k)
-			continue
-		} else if a.fullname != x.fullname {
-			t.Errorf("alias[%v] entry contents unexpected: %v", x, a)
-		}
-	}
+	commit1 := repo.events[2].(*Commit)
+	assertEqual(t, commit1.committer.fullname, "esr")
+	commit1.committer.remap(repo.authormap)
+	assertEqual(t, commit1.committer.fullname, "Eric S. Raymond")
 
 	repo.cleanup()
 }
