@@ -496,6 +496,35 @@ func TestParseAttributionLine(t *testing.T) {
 	assertEqual(t, attr.String(), string(sample))
 }
 
+func TestParseAttribution(t *testing.T) {
+	// Eric Sunshine's tests, minus the date formats we don't care about.
+	tests := []struct{ s, name, email, date, err string }{
+		{" ", "", "", "", "Malformed attribution on ' '"},
+		{"name", "", "", "", "Malformed attribution on 'name'"},
+		{"name<email>1262347994 +0000", "name", "email", "1262347994 +0000", ""},
+		{"name <email> 1262347994 +0000", "name", "email", "1262347994 +0000", ""},
+		{"(no-author) <> 1262347994 +0000", "(no-author)", "", "1262347994 +0000", ""},
+	}
+	for _, x := range tests {
+		fullname, email, date, err := parseAttributionLine(x.s)
+		if err != nil {
+			if len(x.err) == 0 {
+				t.Errorf("unexpected error: %v", err)
+			} else if !strings.Contains(err.Error(), x.err) {
+				t.Errorf("expected error %q but got %v",
+					x.err, err)
+			}
+			continue
+		}
+		v := []string{x.name, x.email, x.date}
+		for i, q := range []string{fullname, email, date} {
+			if q != v[i] {
+				t.Errorf("expected %q but got %q", v[i], q)
+			}
+		}
+	}
+}
+
 func TestRemapAttribution(t *testing.T) {
 	authormap := map[string]Contributor{
 		"jrh": {fullname: "J. Random Hacker", email: "jrh@foobar.com"},
