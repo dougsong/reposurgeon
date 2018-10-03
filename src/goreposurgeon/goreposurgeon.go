@@ -3238,6 +3238,7 @@ func ianaDecode (data, codec string) (string, bool, error) {
 		"cp367",
 		"csASCII",
 		"ascii",	// Unaccountably not an IANA name
+		"ASCII",	// Unaccountably not an IANA name
 	}
 	if asciiNames.Contains(codec) {
 		for _, c := range data {
@@ -3258,22 +3259,22 @@ func ianaDecode (data, codec string) (string, bool, error) {
 
 func (t *Tag) undecodable(codec string) bool {
 	_, f1, err1 := ianaDecode(t.name, codec)
-	if !f1 || err1 == nil {
-		return false
+	if !f1 || err1 != nil {
+		return true
 	}
-	_, f2, err2 := ianaDecode(t.tagger.fullname, codec)
-	if !f2 || err2 == nil {
-		return false
+	_, f2, _ := ianaDecode(t.tagger.fullname, codec)
+	if !f2 {
+		return true
 	}
-	_, f2, err2 = ianaDecode(t.tagger.email, codec)
-	if !f2 || err2 == nil {
-		return false
+	_, f2, _ = ianaDecode(t.tagger.email, codec)
+	if !f2 {
+		return true
 	}
-	_, f3, err3 := ianaDecode(t.comment, codec)
-	if !f3 || err3 == nil {
-		return false
+	_, f3, _ := ianaDecode(t.comment, codec)
+	if !f3 {
+		return true
 	}
-	return true
+	return false
 }
 
 // branchname returns the full branch reference corresponding to a tag.
@@ -4753,31 +4754,30 @@ func (commit *Commit) blobByName(pathname string) (string, bool) {
 }
 
 // undecodable tells whether this commit has undecodable i18n sequences in it?
-// FIXME: Needs unit test
 func (commit *Commit) undecodable(codec string) bool {
 	_, f1, err1 := ianaDecode(commit.committer.fullname, codec)
-	if !f1 || err1 == nil {
-		return false
+	if !f1 || err1 != nil {
+		return true
 	}
 	_, f1, err1 = ianaDecode(commit.committer.email, codec)
-	if !f1 || err1 == nil {
-		return false
+	if !f1 {
+		return true
 	}
 	for _, attr := range commit.authors {
-		_, f2, err2 := ianaDecode(attr.fullname, codec)
-		if !f2 || err2 == nil {
-			return false
+		_, f2, _ := ianaDecode(attr.fullname, codec)
+		if !f2 {
+			return true
 		}
-		_, f3, err3 := ianaDecode(attr.email, codec)
-		if !f3 || err3 == nil {
-			return false
+		_, f3, _ := ianaDecode(attr.email, codec)
+		if !f3 {
+			return true
 		}
 	}
-	_, f4, err4 := ianaDecode(commit.comment, codec)
-	if !f4 || err4 == nil {
-		return false
+	_, f4, _ := ianaDecode(commit.comment, codec)
+	if !f4 {
+		return true
 	}
-	return true
+	return false
 }
 
 // delete severs this commit from its repository.

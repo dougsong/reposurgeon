@@ -1038,8 +1038,12 @@ data 20
 commit refs/heads/master
 mark :4
 committer Ralf Schlatterbeck <rsc@runtux.com> 10 +0000
-data 15
-Second commit.
+data 262
+From https://unicodebook.readthedocs.io/encodings.html
+
+When a byte string is decoded, the decoder may fail to decode a
+specific byte sequence. For example, 'bacx' (0x61 0x62 0x63 0xE9) is not
+decodable from ASCII nor UTF-8, but it is decodable from ISO 8859-1.
 from :2
 M 100644 :3 README
 
@@ -1068,6 +1072,16 @@ M 100644 :3 README
 	if !reflect.DeepEqual(saw3, exp3) {
 		t.Errorf("saw branchmap %v, expected %v", saw3, exp3)
 	}
+
+	// Hack in illegal UTF-8 sequence - can't do this in Go source text,
+	// the compiler doesn't like it.
+	assertBool(t, commit2.undecodable("ASCII"), false)
+	assertIntEqual(t, int(commit2.comment[161]), 120)
+	commit2.comment = strings.Replace(commit2.comment, "bacx", "bac\xe9", 1)
+	assertIntEqual(t, int(commit2.comment[161]), 0xe9)
+	assertBool(t, commit2.undecodable("ASCII"), true)
+	assertBool(t, commit2.undecodable("ISO-8859-1"), false)
+	assertBool(t, commit2.undecodable("UTF-8"), false)
 
 	sp.repo.cleanup()
 
