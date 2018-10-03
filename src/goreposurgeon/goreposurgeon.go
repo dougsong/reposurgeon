@@ -6700,41 +6700,95 @@ func (repo *Repository) writeAuthorMap(selection orderedIntSet, fp io.Writer) {
         }
 }
 
-/*
+func (repo *Repository) byCommit(hook func (commit *Commit)) {
+	for _, event := range repo.events {
+		switch event.(type) {
+		case *Commit:
+			hook(event.(*Commit))
+		}
+       }
+}
 
-func readLegacyMap(fp):
-    "Read a legacy-references dump and initialize the repo's legacy map."
-    commitMap = {}
-    for event in self.commits():
-	key = (event.committer.date.timestamp, event.committer.email)
-	if key not in commitMap:
-	    commitMap[key] = []
-	commitMap[key].append(event)
-    try:
-	matched = unmatched = 0
-	for line in fp:
-	    (legacy, stamp) = line.split()
-	    (timefield, person) = stamp.split('!')
-	    if ':' in person:
-		(person, seq) = person.split(':')
-		seq = int(seq) - 1
-	    else:
-		seq = 0
-	    assert legacy && timefield && person
-	    when_who = (Date(timefield).timestamp, person)
-	    if when_who in commitMap:
-		self.legacyMap[legacy] = commitMap[when_who][seq]
-		if legacy.startswith("SVN:"):
-		    commitMap[when_who][seq].legacyID = legacy[4:]
-		matched += 1
-	    else:
-		unmatched += 1
-	if verbose >= 1:
-	    announce(debugSHOUT, "%d matched, %d unmatched, %d total"\
-		     % (matched, unmatched, matched+unmatched))
-	del commitMap
-    except ValueError:
-	raise Recoverable("bad syntax in legacy map.")
+// Read a legacy-references dump and use it to initialize the repo's legacy map.
+func (repo *Repository) readLegacyMap(fp io.Reader) error {
+	type dyad struct {a string; b string}
+	commitMap := make(map[dyad][]*Commit)
+	repo.byCommit(func (commit *Commit) {
+		key := dyad{commit.committer.date.timestamp.String(), commit.committer.email}
+		if _, ok := commitMap[key]; !ok {
+			commitMap[key] = make([]*Commit, 0)
+		}
+		commitMap[key] = append(commitMap[key], commit)
+	})
+
+	linecount := 0
+	matched := 0
+	unmatched := 0
+
+	
+	scanner := bufio.NewScanner(fp)
+	for scanner.Scan() {
+		linecount++
+		line := scanner.Text()
+
+		lineError := func(legend string) error {
+			return fmt.Errorf(legend + ": line %d %q\n", linecount, line)
+		}
+
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		fields := strings.Fields(line)
+		if len(fields) != 2 {
+			return lineError("bad line syntax in legacy map")
+		}
+		legacy, stamp := fields[0], fields[1]
+		parts := strings.Split(stamp, "!")
+		if len(fields) != 2 {
+			return lineError("bad action stamp syntax in legacy map.")
+		}
+		var seq int
+		var person, seqstr string
+		timefield, person := parts[0], parts[1] 
+		if strings.Index(person, ":") > -1  {
+			fields = strings.Split(person, ":")
+			person, seqstr = fields[0], fields[1]
+			d, err := strconv.Atoi(seqstr)
+			if err != nil {
+				lineError("bad sequence number")
+			}
+			seq = d - 1
+		} else {
+			seq = 0
+		}
+		if legacy == "" || timefield == "" || person == "" {
+			lineError("entry has blank fields")
+		}
+		when, err2 := newDate(timefield)
+		if err2 != nil {
+			return lineError(err2.Error())
+		}
+		whenWho := dyad{when.timestamp.String(), person}
+		if _, ok := commitMap[whenWho]; ok {
+			repo.legacyMap[legacy] = commitMap[whenWho][seq]
+			if strings.HasPrefix(legacy, "SVN:") {
+				commitMap[whenWho][seq].legacyID = legacy[4:]
+			}
+			matched += 1
+		} else {
+			unmatched += 1
+		}
+	}
+
+	if verbose >= 1 {
+		announce(debugSHOUT, "%d matched, %d unmatched, %d total",
+			matched, unmatched, matched+unmatched)
+	}
+
+	return nil
+}
+
+/*
 
     func writeLegacyMap(self, fp):
         "Dump legacy references."

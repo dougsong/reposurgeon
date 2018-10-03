@@ -32,6 +32,8 @@ Things that still need unit tests:
 
 * parsing of inline fileops.
 
+* legacy-map reading and writing
+
 */
 
 func assertBool(t *testing.T, see bool, expect bool) {
