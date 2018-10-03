@@ -4618,7 +4618,6 @@ func (commit *Commit) alldeletes(killset stringSet) bool {
 }
 
 // checkout makes a directory with links to files in a specified checkout.
-// FIXME: function needs unit test.
 func (commit *Commit) checkout(directory string) string {
         if directory == "" {
 		directory = filepath.FromSlash(commit.repo.subdir("") + "/" + commit.mark)
@@ -4687,7 +4686,6 @@ func (commit *Commit) head() string {
         if strings.HasPrefix(commit.branch, "refs/heads/") || !commit.hasChildren() {
 		return commit.branch
 	}
-	// FIXME: We need a unit test for the nontrivial case
         rank := 0
 	var child Event
 	for rank, child = range commit.children() {
@@ -5319,7 +5317,6 @@ func (sp *StreamParser) fiParseFileop(fileop *FileOp) {
 		return
         } else if fileop.ref == "inline" {
 		data, _ := sp.fiReadData("")
-		// FIXME: Python said data[0] here - probably a bug, test it.
 		fileop.inline = data
         } else {
 		sp.error("unknown content type in filemodify")
@@ -6472,7 +6469,6 @@ func (repo *Repository) invalidateNamecache() {
     repo._namecache = nil
 }
 
-// FIXME: Needs more unit tests, can't do yet withot assignment logic 
 func (repo *Repository) named(ref string) orderedIntSet {
         // Resolve named reference in the context of this repository.
         selection := newOrderedIntSet()

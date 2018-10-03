@@ -24,6 +24,14 @@ Things that still need unit tests:
 
 * tests/dos.fi; it seemed to confuse the stream reader.
 
+* commit checkout method
+
+* nontrivial case of commit head method
+
+* repository named() lookup - can't test yet without assignment logic 
+
+* parsing of inline fileops.
+
 */
 
 func assertBool(t *testing.T, see bool, expect bool) {
