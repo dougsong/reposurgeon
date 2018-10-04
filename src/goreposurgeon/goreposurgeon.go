@@ -2018,7 +2018,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 	// this is to ensure that the ordering is (a) deterministic,
 	// and (b) easily understood.
 	for resetname, revision := range rs.refs.dict {
-		if strings.Index(resetname, "/tags/") == -1 {
+		if !strings.Contains(resetname, "/tags/") {
 			// FIXME: what if revision is unknown?
 			// keep previous behavior for now
 			reset := newReset(repo, resetname, "", rs.commitMap[revision])
@@ -2130,7 +2130,7 @@ func (baton *Baton) twirl(ch string) {
 			baton.lastlen = len(ch)
 			baton.stream.Write([]byte(ch))
 			//baton.stream.Flush()
-			baton.erase = strings.Index(ch, "%") != -1
+			baton.erase = strings.Contains(ch, "%")
 			if baton.erase {
 				time.Sleep(100 * time.Millisecond)
 			}
@@ -3392,7 +3392,7 @@ func (reset Reset) tags(modifiers stringSet, eventnum int, _cols int) string {
 func (reset Reset) String() string {
         if reset.repo.realized != nil {
 		var branch string = reset.ref
-		if strings.Index(reset.ref, "^") != -1 {
+		if strings.Contains(reset.ref, "^") {
 			branch = strings.Split(reset.ref, "^")[0]
 		}
 		reset.repo.realized[branch] = true
@@ -3902,7 +3902,7 @@ func (commit *Commit) stamp(modifiers stringSet, _eventnum int, cols int) string
 
 // tags enables do_tags() to report tag tip commits.
 func (commit *Commit) tags(_modifiers stringSet, eventnum int, _cols int) string {
-        if commit.branch == "" || strings.Index(commit.branch, "/tags/") == -1 {
+        if commit.branch == "" || !strings.Contains(commit.branch, "/tags/") {
 		return ""
 	}
 	if commit.hasChildren() {
@@ -4280,7 +4280,7 @@ func (commit Commit) callout() string {
 
 // is_callot tells if the specified mark field a callout?"
 func isCallout(mark string) bool {
-        return strings.Index(mark, "!") != -1
+        return strings.Contains(mark, "!")
 }
 
 func (commit *Commit) addCallout(mark string) {
@@ -5739,7 +5739,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				}
 				for _, m := range dollarRevision.FindAllStringSubmatch(blobcontent, 0) {
 					rev := strings.TrimSpace(m[1])
-					if strings.Index(rev, ".") == -1 {
+					if !strings.Contains(rev, ".") {
 						// Subversion revision
 						blob.cookie = [2]string{rev, ""}
 						if sp.repo.hint("$Revision$", "svn", false) {
@@ -6132,7 +6132,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			np := node.path + svnSep
 			if node.action == sdADD && node.kind == sdDIR &&  !sp.isBranch(np) && !nobranch {
 				for _, trial := range globalOption("svn_branchify") {
-					if strings.Index(trial, "*") != -1 && trial == node.path {
+					if strings.Contains(trial, "*") && trial == node.path {
 						sp.branches[np] = nil
 					} else if strings.HasSuffix(trial, svnSep + "*") && filepath.Dir(trial) == filepath.Dir(node.path) && !globalOption("svn_branchify").Contains(np + "*") {
 						sp.branches[np] = nil
@@ -6611,7 +6611,7 @@ func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) err
 		if line  == "" ||  strings.HasPrefix(line, "#") {
 			continue
 		}
-		if strings.Index(line, "=") > -1 {
+		if strings.Contains(line, "=") {
 			fields := strings.Split(line, "=")
 			local := strings.TrimSpace(fields[0])
 			netwide := strings.TrimSpace(fields[1])
@@ -6751,7 +6751,7 @@ func (repo *Repository) readLegacyMap(fp io.Reader) error {
 		var seq int
 		var person, seqstr string
 		timefield, person := parts[0], parts[1] 
-		if strings.Index(person, ":") > -1  {
+		if strings.Contains(person, ":") {
 			fields = strings.Split(person, ":")
 			person, seqstr = fields[0], fields[1]
 			d, err := strconv.Atoi(seqstr)
@@ -6789,6 +6789,29 @@ func (repo *Repository) readLegacyMap(fp io.Reader) error {
 	return nil
 }
 
+// commits returns a slice of the commits in a specified selection set
+// or all commits if the selection set is nil. 
+func (repo *Repository) commits(selection orderedIntSet) []*Commit {
+	out := make([]*Commit, 0)
+	if selection == nil {
+		for _, event := range repo.events {
+			commit, ok := event.(*Commit)
+			if ok {
+				out = append(out, commit)
+			}
+		}
+	} else {
+		for _, idx := range selection {
+			event := repo.events[idx]
+			commit, ok := event.(*Commit)
+			if ok {
+				out = append(out, commit)
+			}
+		}
+	}
+	return out
+}
+
 // Dump legacy references.
 func (repo *Repository) writeLegacyMap(fp io.Writer) {
 	keylist := make([]string, 0) 
@@ -6807,7 +6830,7 @@ func (repo *Repository) writeLegacyMap(fp io.Writer) {
 	for _, cookie := range keylist {
 		commit := repo.legacyMap[cookie]
 		var serial string
-		if strings.Index(cookie, "SVN") > -1 && strings.Index(cookie, SplitSep) > -1  {
+		if strings.Contains(cookie, "SVN") && strings.Contains(cookie, SplitSep)  {
 			serial = ":" + strings.Split(cookie, SplitSep)[1]
 		} else {
 			serial = ""
@@ -6825,112 +6848,152 @@ func (repo *Repository) writeLegacyMap(fp io.Writer) {
 	}
 }
 
-/*
+// Turn a commit into a tag.
+func (self *Repository) tagify(commit *Commit, name string, target string, legend string, delete bool) {
+	if debugEnable(debugEXTRACT) {
+		commitID := commit.mark
+		if commit.legacyID != "" {
+			commitID += fmt.Sprintf(" <%s>", commit.legacyID)
+		}
+		announce(debugSHOUT, fmt.Sprintf("tagifying: %s -> %s", commitID, name))
+	}
+	if len(commit.operations()) > 0 {
+		panic("Attempting to tagify a commit with fileops.")
+	}
+	var pref string
+	if commit.comment == "" {
+		pref = ""
+	} else {
+		pref = commit.comment
+		if legend != "" || !strings.HasSuffix(pref, "\n") {
+			pref += "\n"
+		}
+	}
+	tag := newTag(commit.repo, name, target, nil, &commit.committer, pref + legend)
+	tag.legacyID = commit.legacyID
+	//self.addEvent(tag)
+	if delete {
+		commit.delete([]string{"--tagback"})
+	}
+}
 
-    func tagify(self, commit, name, target, legend="", delete=true):
-        "Turn a commit into a tag."
-        if debugEnable(debugEXTRACT):
-            commit_id = commit.mark
-            if commit.legacyID:
-                commit_id += " <%s>" % commit.legacyID
-            announce(debugSHOUT, "tagifying: %s -> %s" % (commit_id, name))
-        if commit.operations():
-            raise Fatal("Attempting to tagify a commit with fileops.")
-        if not commit.comment:
-            pref = ""
-        else:
-            pref = commit.comment
-            if legend or not pref.endswith("\n"):
-                pref += "\n"
-        tag = Tag(commit.repo,
-                  name=name,
-                  target=target,
-                  tagger=commit.committer,
-                  comment=pref + legend)
-        tag.legacyID = commit.legacyID
-        #self.addEvent(tag)
-        if delete: commit.delete(["--tagback"])
-    func tagify_empty(self, commits = None,
+// Default scheme to name tags generated from empty commits
+func defaultEmptyTagName(commit *Commit) string {
+	if len(commit.operations()) > 0 {
+		branch := commit.branch
+		if strings.HasSuffix(branch, svnSep) {
+			branch = branch[:len(branch)-1]
+		}
+		return "tipdelete-" + branchbase(branch)
+	}
+	if commit.legacyID != "" {
+		return "emptycommit-" + commit.legacyID
+	} else if commit.mark != ""{
+		return "emptycommit-mark" + commit.mark[1:]
+	} else {
+		return fmt.Sprintf("emptycommit-index%d", commit.index())
+	}
+}
+
+
+/*
+    func tagifyEmpty(self, commits = nil,
                            tipdeletes = false,
-                           tagify_merges = false,
+                           tagifyMerges = false,
                            canonicalize = true,
-                           name_func = lambda _: None,
-                           legend_func = lambda _: "",
+                           name_func = lambda _: nil,
+                           legendFunc = lambda _: "",
                            create_tags = true,
                            gripe = complain
                           ):
-        """Turn into tags commits without (meaningful) fileops.
-            Arguments: * commits:       None, or an iterable of event indices
-                                        tagify_empty() ignores non-commits
+            Arguments: * commits:       nil, or a set of event indices
+                                        tagifyEmpty() ignores non-commits
                        * tipdeletes:    whether tipdeletes should be tagified
                        * canonicalize:  whether to canonicalize fileops first
-                       * name_func:     custom function for choosing the tag
+                       * nameFunc:      custom function for choosing the tag
                                         name; if it returns a false value like
-                                        None, a default scheme is used
-                       * legend_func:   custom function for choosing the legend
+                                        nil, a default scheme is used
+                       * legendFunc:    custom function for choosing the legend
                                         of a tag; no fallback is provided. By
                                         default it always returns "".
-                       * create_tags    whether to create tags."""
-        # Default scheme for tag names
-        func default_name(commit):
-            if commit.operations():
-                branch = commit.branch
-                if branch[-1] == svnSep: branch = branch[:-1]
-                return "tipdelete-" + branchbase(branch)
-            if commit.legacyID:
-                return "emptycommit-" + commit.legacyID
-            else if commit.mark:
-                return "emptycommit-mark" + commit.mark[1:]
-            else:
-                return "emptycommit-index" + commit.index()
-        # Use a separate loop because delete() invalidates manifests.
-        if canonicalize:
-            for _, commit in self.iterevents(commits, types=Commit):
-                commit.canonicalize()
-        # Tagify commits without fileops
-        usednames = {e.name for e in self.events if isinstance(e, Tag)}
-        if tipdeletes:
-            is_tipdelete = lambda c: c.alldeletes(killset={FileOp.deleteall}) \
-                                     && not c.hasChildren()
-        else:
-            is_tipdelete = lambda _: false
-        deletia = []
-        for index, commit in self.iterevents(commits, types=Commit):
-            #os.Stdout.write("Examining: %s (%s), %s %s\n" % (commit.mark, commit.comment,
-            #                                      commit.operations(), is_tipdelete(commit)))
-            if (not commit.operations()) or is_tipdelete(commit):
-                if commit.hasParents():
-                    if len(commit.parents()) > 1 && not tagify_merges:
-                        continue
-                    name = name_func(commit) or default_name(commit)
-                    for i in itertools.count():
-                        suffix = ".{}".format(i) if i else ""
-                        if name + suffix not in usednames: break
-                    usednames.add(name + suffix)
-                    legend = legend_func(commit)
-                    if commit.operations():
-                        commit.setOperations([])
-                    if create_tags:
-                        self.tagify(commit,
-                                    name + suffix,
-                                    commit.parents()[0],
-                                    legend,
-                                    delete = false)
-                    deletia.append(index)
-                else:
-                    msg = []
-                    if commit.legacyID:
-                        msg.append("r%s:" % commit.legacyID)
-                    else if commit.mark:
-                        msg.append("'%s':" % commit.mark)
-                    msg.append("deleting parentless")
-                    if commit.operations():
-                        msg.append("tip delete of %s." % commit.branch)
-                    else:
-                        msg.append("zero-op commit on %s." % commit.branch)
-                    gripe(" ".join(msg))
-                    deletia.append(index)
-        self.delete(deletia, ["--tagback", "--tagify"])
+                       * createTags    whether to create tags."""
+*/
+
+/*
+FIXME: Cannot be committeed until repo has delete method. 
+
+func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, tagifyMerges bool, canonicalize bool, nameFunc func(*Commit) string, legendFunc func(*Commit) string, createTags bool, gripe func(string)) {
+	// Turn into tags commits without (meaningful) fileops.
+	// Use a separate loop because delete() invalidates manifests.
+	if canonicalize {
+		for _, commit := range repo.commits(selection) {
+			commit.canonicalize()
+		}
+	}
+	// Tagify commits without fileops
+	var isTipdelete = func(commit *Commit) bool {return false}
+	if tipdeletes {
+		isTipdelete := func(c *Commit) bool {
+			return c.alldeletes(stringSet{deleteall}) && !c.hasChildren()
+		}
+	}
+	deletia := make([]int, 0)
+	for index, commit := range repo.commits(selection) {
+		var name string
+		if len(commit.operations()) == 0 || isTipdelete(commit) {
+			if commit.hasParents() {
+				if len(commit.parents()) > 1 && !tagifyMerges {
+					continue
+				}
+				if nameFunc != nil {
+					name = nameFunc(commit)
+				} else {
+					name = defaultEmptyTagName(commit)
+				}
+				for repo.named(name) != nil {
+					name += "-displaced"
+				}
+			}
+			legend := ""
+			if legendFunc != nil{
+				legend := legendFunc(commit)
+			}
+			commit.setOperations(nil)
+			if createTags {
+				repo.tagify(commit,
+					name,
+					commit.parents()[0].getMark(),
+					legend,
+					false)
+			}
+			deletia = append(deletia, index)
+		} else {
+			msg := ""
+			if commit.legacyID != "" {
+				// FIXME: Subversion assumption 
+				msg += fmt.Sprintf(" r%s:", commit.legacyID)
+			} else if commit.mark != ""{
+				msg += fmt.Sprintf(" '%s':", commit.mark)
+			}
+			msg += "deleting parentless"
+			if len(commit.operations()) > 0 {
+				msg += fmt.Sprintf("tip delete of %s.", commit.branch)
+			} else {
+				msg += fmt.Sprintf(" zero-op commit on %s.", commit.branch)
+			}
+			if gripe != nil {
+				gripe(msg[1:])
+			}
+			deletia = append(deletia, index)
+		}
+	}
+	repo.delete(deletia, []string{"--tagback", "--tagify"})
+}
+
+*/
+
+/*
+
     func fastImport(self, fp, options, progress=false, source=None):
         "Read a stream file and use it to populate the repo."
         StreamParser().fastImport(fp, options, progress, source=source)
@@ -7097,19 +7160,16 @@ func (repo *Repository) exportStyle() stringSet {
             self.events.insert(-1, event)
         else:
             self.events.append(event)
-        self.declare_sequence_mutation(legend)
+        self.declareSequenceMutation(legend)
 */
 
 func (repo *Repository) addEvent(event Event) {
 	repo.events = append(repo.events, event)
+        //repo.declareSequenceMutation("")
 }
 
 /*
 
-    @memoized_iterator("_commits")
-    func commits():
-        "Iterate through the repository commit objects."
-        return (e for e in self.events if isinstance(e, Commit))
     func filter_assignments(self, f):
         "Filter assignments, warning if any of them goes empty."
         for (name, values) in self.assignments.items():
@@ -7123,7 +7183,7 @@ func (repo *Repository) addEvent(event Event) {
             if values && not newassigns:
                 complain("sequence modification left %s empty" % name)
             self.assignments[name] = newassigns
-    func declare_sequence_mutation(self, warning=None):
+    func declareSequenceMutation(self, warning=None):
         "Mark the repo event sequence modified."
         self._commits = None
         self._markToIndex = nil
@@ -7496,7 +7556,7 @@ func (repo *Repository) addEvent(event Event) {
                                          range(earliest, last+1)) )
                         self.events[earliest:last+1] = list(map(
                                 self.events.__getitem__, neworder))
-                        self.declare_sequence_mutation("squash pushback")
+                        self.declareSequenceMutation("squash pushback")
                 # Move tags and attachments
                 if filter_only:
                     for e in event.attachments:
@@ -7522,7 +7582,7 @@ func (repo *Repository) addEvent(event Event) {
         self.filter_assignments(lambda e: e.deleteflag)
         # Do the actual deletions
         self.events = [e for e in self.events if not e.deleteflag]
-        self.declare_sequence_mutation()
+        self.declareSequenceMutation()
         # Canonicalize all the commits that got ops pushed to them
         if not delete:
             for event in altered:
@@ -7581,7 +7641,7 @@ func (repo *Repository) addEvent(event Event) {
         self.filter_assignments(eligible)
         self.events = [e for e in self.events if not eligible(e)]
         self.invalidateManifests()     # Might not be needed
-        self.declare_sequence_mutation()
+        self.declareSequenceMutation()
     func __delitem__(self, index):
         # To make Repository a proper container (and please pylint)
         self.squash([index], ["--delete", "--quiet", "--tagback"])
@@ -7692,9 +7752,9 @@ func (repo *Repository) addEvent(event Event) {
             if verbose:
                 announce(debugSHOUT, 're-sorted events')
             # assignments will be fixed so don't pass anything to
-            # declare_sequence_mutation() to tell it to warn about
+            # declareSequenceMutation() to tell it to warn about
             # invalidated assignments
-            self.declare_sequence_mutation()
+            self.declareSequenceMutation()
             self.assignments = {
                 name:[old_index_to_new[i] for i in selection]
                 for name, selection in self.assignments.items()}
@@ -7796,7 +7856,7 @@ func (repo *Repository) addEvent(event Event) {
         self.events = [x for x in self.events if not (isinstance(x, Passthrough) and x.text == "done\n")]
         if len(self.events) != orig_len:
             self.events.append(Passthrough("done\n", self))
-            self.declare_sequence_mutation()
+            self.declareSequenceMutation()
         # Previous maps won't be valid
         self.invalidateObjectMap()
         self._markToIndex = nil
@@ -7874,7 +7934,7 @@ func (repo *Repository) addEvent(event Event) {
             self.events.insert(lenfront, other.events.pop(0))
         # Merge in the non-feature events and blobs
         self.events += other.events
-        self.declare_sequence_mutation("absorb")
+        self.declareSequenceMutation("absorb")
         # Transplant in fileops, blobs, and other impedimenta
         for event in other:
             if hasattr(event, "moveto"):
@@ -7922,7 +7982,7 @@ func (repo *Repository) addEvent(event Event) {
                         newparent = self.events[list(attach)[0]]
                         commit.insertParent(idx, newparent.mark)
         self.renumber()
-    func __last_modification(self, commit, path):
+    func __last_modification(self, commit *Commit, path):
         "Locate the last modification of the specified path before this commit."
         ancestors = commit.parents()
         while ancestors:
@@ -8000,7 +8060,7 @@ func (repo *Repository) addEvent(event Event) {
         (fileops, fileops2) = splitfunc(event.operations())
         if fileops and fileops2:
             self.events.insert(where+1, event.clone())
-            self.declare_sequence_mutation("commit split")
+            self.declareSequenceMutation("commit split")
             event2 = self.events[where+1]
             # need a new mark
             assert(event.mark == event2.mark)
@@ -8030,7 +8090,7 @@ func (repo *Repository) addEvent(event Event) {
                                               [op for op in ops if (op.path or op.target) and
                                                                    (op.path or op.target).startswith(prefix)]))
 
-    func blob_ancestor(self, commit, path):
+    func blob_ancestor(self, commit *Commit, path):
         "Return blob for the nearest ancestor to COMMIT of the specified PATH."
         ancestor = commit
         while true:
@@ -8445,7 +8505,7 @@ class RepositoryList:
         "Apply a graph-coloring algorithm to see if the repo can be split here."
         self.cut_index = late.parentMarks().index(early.mark)
         late.removeParent(early)
-        func do_color(commit, color):
+        func do_color(commit *Commit, color):
             commit.color = color
             for fileop in commit.operations():
                 if fileop.op == opM and fileop.ref != "inline":
@@ -8533,7 +8593,7 @@ class RepositoryList:
                     raise Fatal("coloring algorithm failed on %s" % event)
         # Options and features may need to be copied to the late fragment.
         late.events = copy.copy(early.front_events()) + late.events
-        late.declare_sequence_mutation("cut operation")
+        late.declareSequenceMutation("cut operation")
         # Add the split results to the repo list.
         self.repolist.append(early)
         self.repolist.append(late)
@@ -8698,7 +8758,7 @@ class RepositoryList:
                 event.deletehook = newevent
         # Build the new repo and hook it into the load list
         expunged.events = copy.copy(self.repo.front_events())
-        expunged.declare_sequence_mutation("expunge operation")
+        expunged.declareSequenceMutation("expunge operation")
         expunged_branches = expunged.branchset()
         for event in self.repo:
             if event.deletehook:
@@ -8753,10 +8813,10 @@ class RepositoryList:
                               if (not isinstance(e, Blob))
                               or backreferences[e.mark]]
         # Then tagify empty commits.
-        self.repo.tagify_empty(canonicalize = false, create_tags = not notagify)
+        self.repo.tagifyEmpty(canonicalize = false, createTags = not notagify)
         # And tell we changed the manifests and the event sequence.
         self.repo.invalidateManifests()
-        self.repo.declare_sequence_mutation("expunge cleanup")
+        self.repo.declareSequenceMutation("expunge cleanup")
         # At last, add the expunged repository to the loaded list.
         self.repolist.append(expunged)
 
@@ -8793,7 +8853,7 @@ class SelectionParser(object):
     func __init__():
         self.line = None
         self.allitems = []
-    func compile(self, line):
+    func compile(self, line str):
         "Compile expression; return remainder of line with expression removed."
         orig_line = line
         self.line = line
@@ -9493,7 +9553,7 @@ developers.
     #
     # Housekeeping hooks.
     #
-    func onecmd(self, line):
+    func onecmd(self, line str):
         "Execute one command, fielding interrupts for recoverable exceptions."
         try:
             cmd.Cmd.onecmd(self, line)
@@ -9509,7 +9569,7 @@ developers.
         return false
     func emptyline():
         pass
-    func precmd(self, line):
+    func precmd(self, line str):
         "Pre-command hook."
         if self.capture is not None:
             if line.startswith("}"):
@@ -9535,7 +9595,7 @@ developers.
                 complain(e.msg)
                 line = ""
         return line
-    func do_shell(self, line):
+    func do_shell(self, line str):
         "Execute a shell command."
         os.Stdout.Flush()
         os.Stderr.Flush()
@@ -9556,7 +9616,7 @@ developers.
     #
     # The selection-language parsing code starts here.
     #
-    func set_selection_set(self, line):
+    func set_selection_set(self, line str):
         "Implement object-selection syntax."
         # Returns the line with the selection removed
         self.selection = None
@@ -10189,7 +10249,7 @@ level.  'verbose 1' enables progress messages, 'verbose 0' disables
 them. Higher levels of verbosity are available but intended for
 developers only.
 """)
-    func do_verbose(self, line):
+    func do_verbose(self, line str):
         global verbose
         if line:
             try:
@@ -10206,7 +10266,7 @@ boolean; with the argument 'on' or 'off' it is changed.  When quiet is
 on, time-varying report fields which would otherwise cause spurious
 failures in regression testing are suppressed.
 """)
-    func do_quiet(self, line):
+    func do_quiet(self, line str):
         global quiet
         if line:
             if line == "on":
@@ -10220,7 +10280,7 @@ failures in regression testing are suppressed.
         os.Stdout.write("""
 Set or clear echoing of commands before processing.
 """)
-    func do_echo(self, line):
+    func do_echo(self, line str):
         "Set or clear echoing commands before processing."
         try:
             self.echo = int(line)
@@ -10233,7 +10293,7 @@ Set or clear echoing of commands before processing.
         os.Stdout.write("""
 Print a literal string.
 """)
-    func do_print(self, line):
+    func do_print(self, line str):
         "Print a literal string."
         os.Stdout.write(line + "\n")
 
@@ -10247,7 +10307,7 @@ as a label for the output.
 Implemented mainly for regression testing, but may be useful
 for exploring the selection-set language.
 """)
-    func do_resolve(self, line):
+    func do_resolve(self, line str):
         "Display the set of event numbers generated by a selection set."
         if self.selection is None:
             os.Stdout.write("No selection\n")
@@ -10275,7 +10335,7 @@ if the selection set is not a singleton.
 Use this to optimize out location and selection computations
 that would otherwise be performed repeatedly, e.g. in macro calls.
 """)
-    func do_assign(self, line):
+    func do_assign(self, line str):
         repo = self.chosen()
         if not repo:
             complain("no repo has been chosen.")
@@ -10306,7 +10366,7 @@ Tab-completes on the list of defined names.
     func complete_unassign(self, text, _line, _begidx, _endidx):
         repo = self.chosen()
         return sorted([x for x in repo.assignments.keys() if x.startswith(text)])
-    func do_unassign(self, line):
+    func do_unassign(self, line str):
         repo = self.chosen()
         if not repo:
             complain("no repo has been chosen.")
@@ -10323,7 +10383,7 @@ Tab-completes on the list of defined names.
         os.Stdout.write("""
 List all known symbolic names of branches and tags. Supports > redirection.
 """)
-    func do_names(self, line):
+    func do_names(self, line str):
         if not self.chosen():
             complain("no repo has been chosen.")
             return
@@ -10336,7 +10396,7 @@ List all known symbolic names of branches and tags. Supports > redirection.
                 if isinstance(event, Tag):
                     parse.stdout.write("tag    %s\n" % event.name)
 
-    func do_script(self, line):
+    func do_script(self, line str):
         "Read and execute commands from a named file."
         if not line:
             complain("script requires a file argument")
@@ -10404,7 +10464,7 @@ varying by type.  For a branch or tag it's the reference; for a commit
 it's the commit branch; for a blob it's the repository path of the
 file in the blob.  Supports > redirection.
 """)
-    func do_index(self, line):
+    func do_index(self, line str):
         "Generate a summary listing of objects."
         if not self.chosen():
             complain("no repo has been chosen.")
@@ -10438,7 +10498,7 @@ Enable profiling. Profile statistics are dumped to the path given as argument.
 Must be one of the initial command-line arguments, and gathers statistics only
 on code executed via '-'.
 """)
-    func do_profile(self, line):
+    func do_profile(self, line str):
         "Enable profiling."
         assert line is not None # Pacify pylint
         self.profile_log = line
@@ -10448,7 +10508,7 @@ on code executed via '-'.
         os.Stdout.write("""
 Report phase-timing results and memory usage from repository analysis.
 """)
-    func do_timing(self, line):
+    func do_timing(self, line str):
         "Report repo-analysis times and memory usage."
         if not self.chosen():
             complain("no repo has been chosen.")
@@ -10470,7 +10530,7 @@ Report phase-timing results and memory usage from repository analysis.
 Report size statistics and import/export method information of the
 currently chosen repository. Supports > redirection.
 """)
-    func do_stats(self, line):
+    func do_stats(self, line str):
         "Report information on repositories."
         with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
             if not parse.line:
@@ -10502,7 +10562,7 @@ currently chosen repository. Supports > redirection.
 Report a count of items in the selection set. Default set is everything
 in the currently-selected repo. Supports > redirection.
 """)
-    func do_count(self, line):
+    func do_count(self, line str):
         if not self.chosen():
             complain("no repo has been chosen.")
             return
@@ -10518,7 +10578,7 @@ event numbers, the second a timestamp in local time. If the repository
 has legacy IDs, they will be displayed in the third column. The
 leading portion of the comment follows. Supports > redirection.
 """)
-    func do_list(self, line):
+    func do_list(self, line str):
         "Generate a human-friendly listing of objects."
         self.report_select(line, "lister", (screenwidth(),))
 
@@ -10536,7 +10596,7 @@ child's tip.  Otherwise this function throws a recoverable error.
 
 Supports > redirection.
 """)
-    func do_tip(self, line):
+    func do_tip(self, line str):
         "Generate a human-friendly listing of objects."
         self.report_select(line, "tip", (screenwidth(),))
 
@@ -10546,7 +10606,7 @@ Display tags and resets: three fields, an event number and a type and a name.
 Branch tip commits associated with tags are also displayed with the type
 field 'commit'. Supports > redirection.
 """)
-    func do_tags(self, line):
+    func do_tags(self, line str):
         "Generate a human-friendly listing of tags and resets."
         self.report_select(line, "tags", (screenwidth(),))
 
@@ -10569,7 +10629,7 @@ storage size: intended mainly as a way to get information on how to
 efficiently partition a repository that has become large enough to be
 unwieldy. Supports > redirection.
 """)
-    func do_sizes(self, line):
+    func do_sizes(self, line str):
         "Report branch relative sizes."
         if not self.chosen():
             complain("no repo has been chosen.")
@@ -10614,7 +10674,7 @@ action-stamp collisions.
 
 Supports > redirection.
 """)
-    func do_lint(self, line):
+    func do_lint(self, line str):
         "Look for lint in a repo."
         if not self.chosen():
             complain("no repo has been chosen.")
@@ -10714,7 +10774,7 @@ preference to the type of that repository.
 """)
     func complete_prefer(self, text, _line, _begidx, _endidx):
         return sorted([x.name for x in vcstypes if x.importer and x.name.startswith(text)])
-    func do_prefer(self, line):
+    func do_prefer(self, line str):
         "Report or select the preferred repository type."
         if not line:
             for vcs in vcstypes:
@@ -10756,7 +10816,7 @@ stream.
 """)
     func complete_sourcetype(self, text, _line, _begidx, _endidx):
         return sorted([x.name for x in vcstypes if x.exporter and x.name.startswith(text)])
-    func do_sourcetype(self, line):
+    func do_sourcetype(self, line str):
         "Report or select the current repository's source type."
         if not self.chosen():
             complain("no repo has been chosen.")
@@ -10793,7 +10853,7 @@ With an argument, the command tab-completes on the above list.
         if not self.repolist:
             return None
         return sorted([x.name for x in self.repolist if x.name.startswith(text)])
-    func do_choose(self, line):
+    func do_choose(self, line str):
         "Choose a named repo on which to operate."
         if self.selection is not None:
             raise Recoverable("choose does not take a selection set")
@@ -10825,7 +10885,7 @@ used for its metadata and deleting on-disk blobs. With no argument, drops the
 currently chosen repo. Tab-completes on the list of loaded repositories.
 """)
     complete_drop = complete_choose
-    func do_drop(self, line):
+    func do_drop(self, line str):
         "Drop a repo from reposurgeon's list."
         if not self.reponames():
             if verbose:
@@ -10856,7 +10916,7 @@ currently chosen repo. Tab-completes on the list of loaded repositories.
 Rename the currently chosen repo; requires an argument.  Won't do it
 if there is already one by the new name.
 """)
-    func do_rename(self, line):
+    func do_rename(self, line str):
         "Rename a repository."
         if self.selection is not None:
             raise Recoverable("rename does not take a selection set")
@@ -10874,7 +10934,7 @@ paths to be restored from the backup directory after a rebuild. Each
 argument, if any, is interpreted as a pathname.  The current preserve
 list is displayed afterwards.
 """)
-    func do_preserve(self, line):
+    func do_preserve(self, line str):
         "Add files and subdirectories to the preserve set."
         if self.selection is not None:
             raise Recoverable("preserve does not take a selection set")
@@ -10892,7 +10952,7 @@ of paths to be restored from the backup directory after a
 rebuild. Each argument, if any, is interpreted as a pathname.  The
 current preserve list is displayed afterwards.
 """)
-    func do_unpreserve(self, line):
+    func do_unpreserve(self, line str):
         "Remove files and subdirectories from the preserve set."
         if self.selection is not None:
             raise Recoverable("unpreserve does not take a selection set")
@@ -10925,7 +10985,7 @@ constructed with command-line arguments).
 The --format option can be used to read in binary repository dump files.
 For a list of supported types, invoke the 'prefer' command.
 """)
-    func do_read(self, line):
+    func do_read(self, line str):
         "Read in a repository for surgery."
         if self.selection is not None:
             raise Recoverable("read does not take a selection set")
@@ -10979,7 +11039,7 @@ preferred repository type cannot digest them.
 The --fossil option can be used to write out binary repository dump files.
 For a list of supported types, invoke the 'prefer' command.
 """)
-    func do_write(self, line):
+    func do_write(self, line str):
         "Stream out the results of repo surgery."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -11019,7 +11079,7 @@ output or via > redirect to a file.  Just like a write, except (1) the
 progress meter is disabled, and (2) there is an identifying header
 before each event dump.
 """)
-    func do_inspect(self, line):
+    func do_inspect(self, line str):
         "Dump raw events."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -11052,7 +11112,7 @@ This is intended for producing reduced test cases from large repositories.
 """)
     func complete_strip(self, _text, _line, _begidx, _endidx):
         return ["blobs", "reduce"]
-    func do_strip(self, line):
+    func do_strip(self, line str):
         "Drop content to produce a reduced test case."
         repo = self.chosen()
         if repo is None:
@@ -11097,7 +11157,7 @@ This is intended for producing reduced test cases from large repositories.
 Dump a graph representing selected events to standard output in DOT markup
 for graphviz. Supports > redirection.
 """)
-    func do_graph(self, line):
+    func do_graph(self, line str):
         "Dump a commit graph."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -11142,7 +11202,7 @@ repository read was from a repo directory (and not a git-import stream), it
 defaults to that directory.  If the target directory is nonempty
 its contents are backed up to a save directory.
 """)
-    func do_rebuild(self, line):
+    func do_rebuild(self, line str):
         "Rebuild a repository from the edited state."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -11166,7 +11226,7 @@ May have an option --filter, followed by = and a /-enclosed regular expression.
 If this is given, only headers with names matching it are emitted.  In this
 context the name of the header includes its trailing colon.
 """)
-    func do_mailbox_out(self, line):
+    func do_mailbox_out(self, line str):
         "Generate a mailbox file representing object metadata."
         filterRegexp = None
         opts = shlex.split(line)
@@ -11224,7 +11284,7 @@ If the option --empty-only is given, this command will throw a recoverable error
 if it tries to alter a message body that is neither empty nor consists of the
 CVS empty-comment marker.
 """)
-    func do_mailbox_in(self, line):
+    func do_mailbox_in(self, line str):
         "Accept a mailbox file representing object metadata and update from it."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -11291,7 +11351,7 @@ CVS empty-comment marker.
                         event = self.chosen().events[self.selection[0]]
                         blank.setParents([event])
                         self.chosen().addEvent(blank, where=self.selection[0]+1)
-            self.chosen().declare_sequence_mutation("event creation")
+            self.chosen().declareSequenceMutation("event creation")
             return
         # Normal case - no --create
         for (i, message) in enumerate(update_list):
@@ -11419,7 +11479,7 @@ blob, your editor will be called on the blob file.
 
 Supports < and > redirection.
 """)
-    func do_edit(self, line):
+    func do_edit(self, line str):
         "Edit metadata interactively."
         if not self.chosen():
             complain("no repo is loaded")
@@ -11467,7 +11527,7 @@ not interpreted as regular expressions. (This is slighly faster).
 
 With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
 """)
-    func do_filter(self, line):
+    func do_filter(self, line str):
         if not self.chosen():
             complain("no repo is loaded")
             return
@@ -11590,7 +11650,7 @@ standard codecs library. In particular, 'latin-1' is a valid codec name.
 Errors in this command are fatal, because an error may leave
 repository objects in a damaged state.
 """)
-    func do_transcode(self, line):
+    func do_transcode(self, line str):
         if not self.chosen():
             complain("no repo is loaded")
             return
@@ -11626,7 +11686,7 @@ the value can be parsed for both), copying the committer
 timestamp. The author's timezone may be deduced from the email
 address.
 """)
-    func do_setfield(self, line):
+    func do_setfield(self, line str):
         "Set an object field from a string."
         if not self.chosen():
             complain("no repo is loaded")
@@ -11664,7 +11724,7 @@ octal literal describing permissions.  All subsequent arguments are paths.
 For each M fileop in the selection set and exactly matching one of the
 paths, patch the permission field to the first argument value.
 """)
-    func do_setperm(self, line):
+    func do_setperm(self, line str):
         "Set permissions on M fileops matching a path list."
         if not self.chosen():
             complain("no repo is loaded")
@@ -11694,7 +11754,7 @@ interpreted using Python's string_decode codec.
 If the option --rstrip is given, the comment is right-stripped before
 the new text is appended.
 """)
-    func do_append(self, line):
+    func do_append(self, line str):
         "Append a line to comments in the specified selection set."
         if not self.chosen():
             complain("no repo is loaded")
@@ -11721,7 +11781,7 @@ The default selection set for this command is empty.  Blobs cannot be
 directly affected by this command; they move or are deleted only when
 removal of fileops associated with commits requires this.
 """)
-    func do_squash(self, line):
+    func do_squash(self, line str):
         "Squash events in the specified selection set."
         if not self.chosen():
             complain("no repo is loaded")
@@ -11741,7 +11801,7 @@ When a commit is deleted, what becomes of tags and fileops attached to
 it is controlled by policy flags.  A delete is equivalent to a
 squash with the --delete flag.
 """)
-    func do_delete(self, line):
+    func do_delete(self, line str):
         "Delete events in the specified selection set."
         if not self.chosen():
             complain("no repo is loaded")
@@ -11772,7 +11832,7 @@ a convention used by Free Software Foundation projects.
 
 With  the --debug option, show messages about mismatches.
 """)
-    func do_coalesce(self, line):
+    func do_coalesce(self, line str):
         "Coalesce events in the specified selection set."
         repo = self.chosen()
         if not repo:
@@ -11851,7 +11911,7 @@ operation to be valid, there must be an M operation for the source
 in the commit's ancestry.
 
 """)
-    func do_add(self, line):
+    func do_add(self, line str):
         "Add a fileop to a specified commit."
         if not self.chosen():
             complain("no repo is loaded")
@@ -11929,7 +11989,7 @@ Create a blob at mark :1 after renumbering other marks starting from
 :2.  Data is taken from stdin, which may be a here-doc.  This can be
 used with the add command to patch data into a repository.
 """)
-    func do_blob(self, line):
+    func do_blob(self, line str):
         "Add a fileop to a specified commit."
         if not self.chosen():
             complain("no repo is loaded")
@@ -11941,7 +12001,7 @@ used with the add command to patch data into a repository.
         repo.addEvent(blob, where=0)
         with RepoSurgeon.LineParse(self, line, capabilities=["stdin"]) as parse:
             blob.setContent(parse.stdin.read())
-        repo.declare_sequence_mutation("adding blob")
+        repo.declareSequenceMutation("adding blob")
         repo.invalidateNamecache()
 
     func help_remove():
@@ -11963,7 +12023,7 @@ Note that this command does not attempt to scavenge blobs even if the
 deleted fileop might be the only reference to them. This behavior may
 change in a future release.
 """)
-    func do_remove(self, line):
+    func do_remove(self, line str):
         "Delete a fileop from a specified commit."
         repo =  self.chosen()
         if not repo:
@@ -12016,7 +12076,7 @@ change in a future release.
                     if removed.ref is not None and target < ie:
                         blob = repo.events.pop(repo.find(removed.ref))
                         repo.addEvent(blob, target)
-                        repo.declare_sequence_mutation("blob move")
+                        repo.declareSequenceMutation("blob move")
                     # FIXME: Scavenge blobs left with no references
             except IndexError:
                 complain("out-of-range fileop index %s" % ind)
@@ -12042,7 +12102,7 @@ Deduplicate blobs in the selection set.  If multiple blobs in the selection
 set have the same SHA1, throw away all but the first, and change fileops
 referencing them to instead reference the (kept) first blob.
 """)
-    func do_dedup(self, line):
+    func do_dedup(self, line str):
         "Deduplicate identical (up to SHA1) blobs within the selection set"
         pacify_pylint(line)
         if self.chosen() is None:
@@ -12072,7 +12132,7 @@ Optionally you may also specify another argument in the form [+-]hhmm, a
 timeone literal to apply.  To apply a timezone without an offset, use
 an offset literal of +0 or -0.
 """)
-    func do_timeoffset(self, line):
+    func do_timeoffset(self, line str):
         "Apply a time offset to all dates in selected events."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -12127,7 +12187,7 @@ RFC3339 format.  Takes one argument, autodetects the format.  Useful
 when eyeballing export streams.  Also accepts any other supported
 date format and converts to RFC3339.
 """)
-    func do_when(self, line):
+    func do_when(self, line str):
         "Interconvert between integer Unix time and RFC3339 format."
         if not line:
             complain("a timestamp in either integer or RFC3339 form is required.")
@@ -12236,7 +12296,7 @@ repository named after the old one with the suffix "-expunges" added.
 Thus, this command can be used to carve a repository into sections by
 file path matches.
 """)
-    func do_expunge(self, line):
+    func do_expunge(self, line str):
         "Expunge files from the chosen repository."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -12270,7 +12330,7 @@ by the split argument - are moved forward from the original commit
 into the new one.  Legal indices are 2-n, where n is the number of
 file operations in the original commit.
 """)
-    func do_split(self, line):
+    func do_split(self, line str):
         "Split a commit."
         if self.chosen() is None:
             raise Recoverable("no repo has been chosen.")
@@ -12327,7 +12387,7 @@ With the option --prune, at each join generate D ops for every
 file that doesn't have a modify operation in the root commit of the
 branch being grafted on.
 """)
-    func do_unite(self, line):
+    func do_unite(self, line str):
         "Unite repos together."
         self.unchoose()
         factors = []
@@ -12364,7 +12424,7 @@ named repo is removed from the load list.
 With the option --prune, prepend a deleteall operation into the root
 of the grafted repository.
 """)
-    func do_graft(self, line):
+    func do_graft(self, line str):
         "Graft a named repo onto the selected one."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -12402,7 +12462,7 @@ branch. Any trailing segment of a branch name is accepted as a synonym for
 it; thus 'master' is the same as 'refs/heads/master'.  Any resets of the
 source branch are removed.
 """)
-    func do_debranch(self, line):
+    func do_debranch(self, line str):
         "Turn a branch into a subdirectory."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -12471,7 +12531,7 @@ source branch are removed.
                     source_reset = i
             if source_reset is not None:
                 del repo.events[source_reset]
-            repo.declare_sequence_mutation("debranch operation")
+            repo.declareSequenceMutation("debranch operation")
 
     func help_path():
         os.Stdout.write("""
@@ -12484,7 +12544,7 @@ Ordinarily, if the target path already exists in the fileops, or is visible
 in the ancestry of the commit, this command throws an error.  With the
 --force option, these checks are skipped.
 """)
-    func do_path(self, line):
+    func do_path(self, line str):
         "Rename paths in the history."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -12535,7 +12595,7 @@ name and prepend it to every path. With the 'sup' modifier, strip
 any directory argument from the start of the path if it appears there;
 with no argument, strip the first directory component from every path.
 """ )
-    func do_paths(self, line):
+    func do_paths(self, line str):
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
@@ -12583,7 +12643,7 @@ would be created in a checkout of the commit. If a regular expression
 is given, only print "path -> mark" lines for paths matching it.
 This command supports > redirection.
 """)
-    func do_manifest(self, line):
+    func do_manifest(self, line str):
         "Print all files (matching the regex) in the selected commits trees."
         if self.chosen() is None:
             raise Recoverable("no repo has been chosen")
@@ -12647,7 +12707,7 @@ The third option is '--tagify-merges' that makes reposurgeon also
 tagify merge commits that have no fileops.  When this is done the
 merge link is moved to the tagified commit's parent.
 """)
-    func do_tagify(self, line):
+    func do_tagify(self, line str):
         "Search for empty commits and turn them into tags."
         repo = self.chosen()
         if repo is None:
@@ -12658,11 +12718,11 @@ merge link is moved to the tagified commit's parent.
             if parse.line:
                 raise Recoverable("too many arguments for tagify.")
             before = len([c for c in repo.commits()])
-            repo.tagify_empty(
+            repo.tagifyEmpty(
                     commits = self.selection,
                     canonicalize = "--canonicalize" in parse.options,
                     tipdeletes = "--tipdeletes" in parse.options,
-                    tagify_merges = "--tagify-merges" in parse.options)
+                    tagifyMerges = "--tagify-merges" in parse.options)
             after = len([c for c in repo.commits()])
             announce(debugSHOUT, "%d commits tagified." % (before - after))
 
@@ -12782,7 +12842,7 @@ Policy:
         the tree contents of all descendents can be modified as a
         result.
 """)
-    func do_reparent(self, line):
+    func do_reparent(self, line str):
         repo = self.chosen()
         if repo is None:
             complain("no repo has been chosen.")
@@ -12874,7 +12934,7 @@ descendants, and blobs must appear before commits which reference them. This
 means that events within the specified range will have different event numbers
 after the operation.
 """)
-    func do_reorder(self, line):
+    func do_reorder(self, line str):
         "Re-order a contiguous range of commits."
         repo = self.chosen()
         if repo is None:
@@ -12906,7 +12966,7 @@ no third argument is required.
 For either name, if it does not contain a '/' the prefix 'heads/'
 is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
 """)
-    func do_branch(self, line):
+    func do_branch(self, line str):
         "Rename a branch or delete it."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -12992,7 +13052,7 @@ branch fields are changed to match the branch of the unique descendent
 of the tagged commit, if there is one.  When a tag is moved, no branch
 fields are changed and a warning is issued.
 """)
-    func do_tag(self, line):
+    func do_tag(self, line str):
         "Move a tag to point to a specified commit, or rename it, or delete it."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -13103,12 +13163,12 @@ fields are changed and a warning is issued.
                 tag.forget()
                 repo.events.remove(tag)
             if len(tags) > 0:
-                repo.declare_sequence_mutation("tag deletion")
+                repo.declareSequenceMutation("tag deletion")
             for reset in resets:
                 reset.forget()
                 repo.events.remove(reset)
             if len(resets) > 0:
-                repo.declare_sequence_mutation("reset deletion")
+                repo.declareSequenceMutation("reset deletion")
             if commits:
                 successors = {child.branch for child in commits[-1].children() if child.parents()[0] == commits[-1]}
                 if len(successors) == 1:
@@ -13150,7 +13210,7 @@ fields are changed to match the branch of the unique descendent of the
 tip commit of the associated branch, if there is one.  When a reset is
 moved, no branch fields are changed.
 """)
-    func do_reset(self, line):
+    func do_reset(self, line str):
         "Move a reset to point to a specified commit, or rename it, or delete it."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -13178,7 +13238,7 @@ moved, no branch fields are changed.
             reset = Reset(repo, ref=resetname)
             repo.addEvent(reset)
             reset.remember(repo, target=target[1])
-            repo.declare_sequence_mutation("reset create")
+            repo.declareSequenceMutation("reset create")
         else if verb == "move":
             if not resets:
                 raise Recoverable("no such reset as %s" % resetname)
@@ -13195,7 +13255,7 @@ moved, no branch fields are changed.
                 raise Recoverable("reset move requires a singleton commit set.")
             reset.forget()
             reset.remember(repo, target=target)
-            repo.declare_sequence_mutation("reset move")
+            repo.declareSequenceMutation("reset move")
         else if verb == "rename":
             if not resets:
                 raise Recoverable("no such reset as %s" % resetname)
@@ -13229,7 +13289,7 @@ moved, no branch fields are changed.
             for reset in resets:
                 reset.forget()
                 repo.events.remove(reset)
-            repo.declare_sequence_mutation("reset delete")
+            repo.declareSequenceMutation("reset delete")
         else:
             raise Recoverable("unknown verb '%s' in reset command." % verb)
 
@@ -13255,7 +13315,7 @@ that have no default ignore patterns (git and hg, in particular).  It
 will also error out when it knows the import tool has already set
 default patterns.
 """)
-    func do_ignores(self, line):
+    func do_ignores(self, line str):
         "Manipulate ignore patterns in the repo."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -13293,7 +13353,7 @@ default patterns.
                         blob.setContent(self.preferred.dfltignores)
                         blob.mark = ":insert"
                         repo.events.insert(repo.index(earliest), blob)
-                        repo.declare_sequence_mutation("ignore creation")
+                        repo.declareSequenceMutation("ignore creation")
                         newop = FileOp(self.chosen())
                         newop.construct("M", 0o100644, ":insert", self.ignorename)
                         earliest.appendOperation(newop)
@@ -13421,7 +13481,7 @@ Available actions are:
     Implemented mainly for regression testing, but may be useful for exploring
     the selection-set language.
 """)
-    func do_attribution(self, line):
+    func do_attribution(self, line str):
         "Inspect, modify, add, and remove commit and tag attributions."
         repo = self.chosen()
         if repo is None:
@@ -13502,7 +13562,7 @@ author, and tagger (to standard output or a >-redirected file). This
 may be helpful as a start on building an authors file, though each
 part to the right of an equals sign will need editing.
 """)
-    func do_authors(self, line):
+    func do_authors(self, line str):
         "Apply or dump author-mapping file."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -13533,7 +13593,7 @@ selection set. The 'read' variant reads from standard input or a
 <-redirected filename; the 'write' variant writes to standard
 output or a >-redirected filename.
 """)
-    func do_legacy(self, line):
+    func do_legacy(self, line str):
         "Apply a reference-mapping file."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -13569,7 +13629,7 @@ by ']]'. An action stamp pointing at the corresponding commit is
 substituted when possible.  Enables writing of the legacy-reference
 map when the repo is written or rebuilt.
 """)
-    func do_references(self, line):
+    func do_references(self, line str):
         "Look for things that might be CVS or Subversion revision references."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -13667,7 +13727,7 @@ Takes a selection set, defaulting to all commits and tags.
 Check out files for a specified commit into a directory.  The selection
 set must resolve to a singleton commit.
 """)
-    func do_checkout(self, line):
+    func do_checkout(self, line str):
         "Check out files for a specified commit into a directory."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -13755,7 +13815,7 @@ of any individual repository, and will persist across Subversion
 dumpfile reads. This may lead to unexpected results if you forget
 to re-set it.
 """)
-    func do_branchify(self, line):
+    func do_branchify(self, line str):
         if self.selection is not None:
             raise Recoverable("branchify does not take a selection set")
         if line.strip():
@@ -13798,7 +13858,7 @@ not of any individual repository, and will persist across Subversion
 dumpfile reads. This may lead to unexpected results if you forget
 to re-set it.
 """)
-    func do_branchify_map(self, line):
+    func do_branchify_map(self, line str):
         if self.selection is not None:
             raise Recoverable("branchify_map does not take a selection set")
         line = line.strip()
@@ -13835,7 +13895,7 @@ options. The following flags and options are defined:
             os.Stdout.write(opt + ":\n" + expl + "\n")
     func complete_set(self, text, _line, _begidx, _endidx):
         return sorted([x for (x, _) in RepoSurgeon.OptionFlags if x.startswith(text)])
-    func do_set(self, line):
+    func do_set(self, line str):
         if not line.strip():
             for (opt, _expl) in RepoSurgeon.OptionFlags:
                 os.Stdout.write("\t%s = %s\n" % (opt, globalOptions.get(opt, false)))
@@ -13854,7 +13914,7 @@ following flags and options are defined:
         for (opt, expl) in RepoSurgeon.OptionFlags:
             os.Stdout.write(opt + ":\n" + expl + "\n")
     complete_clear = complete_set
-    func do_clear(self, line):
+    func do_clear(self, line str):
         if not line.strip():
             for opt in dict(RepoSurgeon.OptionFlags):
                 os.Stdout.write("\t%s = %s\n" % (opt, globalOptions.get(opt, false)))
@@ -13878,7 +13938,7 @@ A later 'do' call can invoke this macro.
 
 'define' by itself without a name or body produces a macro list.
 """)
-    func do_define(self, line):
+    func do_define(self, line str):
         "Define a macro"
         try:
             name = line.split()[0]
@@ -13910,7 +13970,7 @@ If the macro expansion does not itself begin with a selection set,
 whatever set was specified before the 'do' keyword is available to
 the command generated by the expansion.
 """)
-    func do_do(self, line):
+    func do_do(self, line str):
         "Do a macro."
         try:
             name = line.split()[0]
@@ -13944,7 +14004,7 @@ Undefine the macro named in this command's first argument.
 """)
     func complete_undefine(self, text, _line, _begidx, _endidx):
         return sorted([x for x in self.definitions if x.startswith(text)])
-    func do_undefine(self, line):
+    func do_undefine(self, line str):
         try:
             name = line.split()[0]
         except IndexError:
@@ -13963,7 +14023,7 @@ Use this to set up custom extension functions for later calls. The
 code has full access to all internal data structures. Functions
 defined are accessible to later 'eval' calls.
 """)
-    func do_exec(self, line):
+    func do_exec(self, line str):
         "Execute custom python code."
         with RepoSurgeon.LineParse(self, line, capabilities=["stdin"]) as parse:
             try:
@@ -13983,7 +14043,7 @@ Typically this will be a call to a function defined by a previous exec.
 The variables '_repository' and '_selection' will have the obvious values.
 Note that '_selection' will be a list of integers, not objects.
 """)
-    func do_eval(self, line):
+    func do_eval(self, line str):
         "Call a function from custom python code."
         if self.selection is None:
             os.Stdout.write("no selection\n")
@@ -14045,7 +14105,7 @@ The normal use case for this command is early in converting CVS or Subversion
 repositories, cleaning up after 'timequake', to ensure that the surgical
 language can count on having a unique action-stamp ID for each commit.
 """)
-    func do_timebump(self, line):
+    func do_timebump(self, line str):
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
@@ -14082,7 +14142,7 @@ attribution header is discarded and the committer date is used.
 However, if the nam is an author-map alias with an associated timezone,
 that zone is used.
 """)
-    func do_changelogs(self, line):
+    func do_changelogs(self, line str):
         "Mine repository changelogs for authorship data."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -14246,7 +14306,7 @@ is generated.  A comment recording the tarball name is generated.
 Note that the import stream generated by this command is - while correct -
 not optimal, and may in particular contain duplicate blobs.
 """)
-    func do_incorporate(self, line):
+    func do_incorporate(self, line str):
         "Create a new commit from a tarball."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -14260,7 +14320,7 @@ not optimal, and may in particular contain duplicate blobs.
                 raise Recoverable("not a commit.")
         else:
             raise Recoverable("a singleton selection set is required.")
-        with RepoSurgeon.LineParse(self, line) as parse:
+        with RepoSurgeon.LineParse(self, line string) as parse:
             if not parse.line:
                 raise Recoverable("no tarball specified.")
             # Create new commit to carry the new content
@@ -14305,7 +14365,7 @@ not optimal, and may in particular contain duplicate blobs.
                             b = Blob(repo)
                             repo.addEvent(b, where=loc)
                             loc += 1
-                            repo.declare_sequence_mutation()
+                            repo.declareSequenceMutation()
                             repo.invalidateObjectMap()
                             b.setMark(repo.newmark())
                             #b.size = tarinfo.size
@@ -14317,7 +14377,7 @@ not optimal, and may in particular contain duplicate blobs.
                                 mode = 0o100755
                             op.construct("M", mode, b.mark, fn)
                             blank.appendOperation(op)
-                repo.declare_sequence_mutation()
+                repo.declareSequenceMutation()
                 repo.invalidateObjectMap()
                 if not globalOptions["testmode"]:
                     blank.committer.date = Date(rfc3339(newest))
@@ -14368,7 +14428,7 @@ version (major.minor) under which the enclosing script was developed.
 The program will error out if the major version has changed (which
 means the surgical language is not backwards compatible).
 """)
-    func do_version(self, line):
+    func do_version(self, line str):
         if not line:
             announce(debugSHOUT, "reposurgeon " + version + " supporting " + " ".join(x.name for x in (vcstypes+extractors)))
         else:
@@ -14423,7 +14483,7 @@ More format items may be added in the future.  The default prompt corresponds
 to the format 'reposurgeon%% '. The format line is evaluated with shell quotng
 of tokens, so that spaces can be included.
 """)
-    func do_prompt(self, line):
+    func do_prompt(self, line str):
         if line:
             self.prompt_format = " ".join(shlex.split(line))
         else:
@@ -15201,7 +15261,7 @@ func main() {
                                           ))
             # We're done, add all the new commits
             sp.repo.events += newcommits
-            sp.repo.declare_sequence_mutation()
+            sp.repo.declareSequenceMutation()
             # Report progress, and give up our scheduler slot
             # so as not to eat the processor.
             baton.twirl("")
@@ -15246,7 +15306,8 @@ func main() {
                 sp.repo.tagify(initial,
                                  "root",
                                  second,
-                                 "[[Tag from root commit at Subversion r%s]]\n" % initial.legacyID)
+                                 "[[Tag from root commit at Subversion r%s]]\n" % initial.legacyID
+				True)
             except ValueError: # sp.repo has less than two commits
                 sp.gripe("could not tagify root commit.")
         timeit("rootcommit")
@@ -15584,10 +15645,10 @@ func main() {
         sp.repo.delete(deletia)
         timeit("polishing")
         announce(debugEXTRACT, "after branch name mapping")
-        sp.repo.tagify_empty(tipdeletes = true,
+        sp.repo.tagifyEmpty(tipdeletes = true,
                                canonicalize = false,
-                               name_func = tagname,
-                               legend_func = taglegend,
+                               nameFunc = tagname,
+                               legendFunc = taglegend,
                                gripe = sp.gripe)
         sp.timeMark("tagifying")
         baton.twirl("")
