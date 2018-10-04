@@ -95,6 +95,7 @@ import (
 
 	terminal "golang.org/x/crypto/ssh/terminal"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
+	kommandant "gitlab.com/ianbruene/Kommandant"
 )
 
 // Go's panic/defer/recover feature is a weak primitive for catchable
@@ -14428,52 +14429,69 @@ of tokens, so that spaces can be included.
         else:
             os.Stdout.write("prompt = %s\n" % self.prompt_format)
 
-func main():
-    try:
-        func interactive():
-            global verbose
-            interpreter.use_rawinput = true
-            if verbose == 0:
-                verbose = 1
-            interpreter.cmdloop()
-            interpreter.use_rawinput = false
-        interpreter = RepoSurgeon()
-        interpreter.use_rawinput = false
-        if not sys.argv[1:]:
-            sys.argv.append("-")
-        try:
-            for arg in sys.argv[1:]:
-                for acmd in arg.split(";"):
-                    if acmd == '-':
-                        if interpreter.profile_log is None:
-                            interactive()
-                        else if interpreter.profile_log:
-                            cProfile.run('interactive()', \
-                                         interpreter.profile_log)
-                        else:
-                            cProfile.run('interactive()')
-                    else:
-                        # A minor concession to people used to GNU conventions.
-                        # Makes "reposurgeon --help" and "reposurgeon --version"
-                        # work as expected.
-                        if acmd.startswith("--"):
-                            acmd = acmd[2:]
-                        # Call the base method so RecoverableExceptions
-                        # won't be caught; we want them to abort scripting.
-                        cmd.Cmd.onecmd(interpreter, interpreter.precmd(acmd))
-        finally:
-            interpreter.cleanup()
-    except (Recoverable, Fatal) as xe:
-        complain(xe.msg)
-        sys.exit(1)
-    except KeyboardInterrupt:
-        os.Stdout.write("\n")
-
 */
 
+type Reposurgeon struct {
+	core *kommandant.Kmdt
+}
+func (rs *Reposurgeon) SetCore(k *kommandant.Kmdt) {
+	rs.core = k
+}
+func (rs *Reposurgeon) DoEOF(lineIn string) (stopOut bool) {
+	return true
+}
+func (rs *Reposurgeon) DoQuit(lineIn string) (stopOut bool) {
+	return true
+}
+func (rs *Reposurgeon) DoFoo(lineIn string) (stopOut bool) {
+	rs.core.Output("The Foodogs of War have slipped!\n" + lineIn + "\n")
+	return false
+}
+func (rs *Reposurgeon) HelpFoo() {
+	rs.core.Output("SCHUUUULLLTZ!!!!!!\n")
+}
+func (rs *Reposurgeon) cleanup() {
+	rs.core.Output("Cleanup time.\n")
+}
+
 func main() {
-	if false {
-		fmt.Print(vcstypes[1])
+	rs := new(Reposurgeon)
+	interpreter := kommandant.NewKommandant(rs, "", nil, nil)
+
+	defer func() {
+		if e := recover(); e != nil {
+			fmt.Println("reposurgeon: panic recovery: ", e)
+		}
+		go rs.cleanup()
+	}()
+
+	interpreter.Prompt = "%% "
+        if len(os.Args[1:]) == 0 {
+		os.Args = append(os.Args, "-")
+        }
+	for _, arg := range os.Args[1:] {
+		for _, acmd := range strings.Split(arg, ";") {
+			if acmd == "-" {
+				if verbose == 0 {
+					verbose = 1
+				}
+				interpreter.CmdLoop("")
+			} else {
+				// A minor concession to people used
+				// to GNU conventions.  Makes
+				// "reposurgeon --help" and
+				// "reposurgeon --version" work as
+				// expected.
+				if strings.HasPrefix(acmd, "--") {
+					acmd = acmd[2:]
+				}
+				// Call the base method so
+				// RecoverableExceptions will not be
+				// caught; we want them to abort
+				// scripting.
+				//cmd.Cmd.onecmd(interpreter, interpreter.precmd(acmd))
+			}
+		}
 	}
 }
 
