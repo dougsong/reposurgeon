@@ -5100,7 +5100,7 @@ func newRevisionRecord(nodes []NodeAction, props OrderedMap) *RevisionRecord {
 // Cruft recognizers
 var cvs2svnTagRE = regexp.MustCompile("This commit was manufactured by cvs2svn to create tag.*'([^']*)'")
 var cvs2svnBranchRE = regexp.MustCompile("This commit was manufactured by cvs2svn to create branch.*'([^']*)'")
-const SplitSep = '.'
+const SplitSep = "."
 
 // StreamParser parses a fast-import stream or Subversion dump to
 // populate a Repository.
@@ -6788,25 +6788,44 @@ func (repo *Repository) readLegacyMap(fp io.Reader) error {
 	return nil
 }
 
+// Dump legacy references.
+func (repo *Repository) writeLegacyMap(fp io.Writer) {
+	keylist := make([]string, 0) 
+	for key, _ := range repo.legacyMap {
+		keylist = append(keylist, key)
+	}
+	sort.Slice(keylist, func(i, j int) bool {
+		if repo.legacyMap[keylist[i]].committer.date.Before(repo.legacyMap[keylist[i]].committer.date) {
+			return true
+		} else if keylist[i] < keylist[j] {
+			return true
+		}
+		return false
+	})
+
+	for _, cookie := range keylist {
+		commit := repo.legacyMap[cookie]
+		var serial string
+		if strings.Index(cookie, "SVN") > -1 && strings.Index(cookie, SplitSep) > -1  {
+			serial = ":" + strings.Split(cookie, SplitSep)[1]
+		} else {
+			serial = ""
+		}
+		// The markToEvent test is needed in case this
+		// repo is an expunge fragment with a copied
+		// legacy map.  It's a simple substitute for
+		// partitioning the map at expunge time.
+		if repo.markToEvent(commit.mark) != nil && commit.legacyID != "" {
+			fmt.Fprintf(fp, "%s\t%s!%s%s\n", cookie,
+				commit.committer.date.rfc3339(),
+				commit.committer.email,
+				serial)
+		}
+	}
+}
+
 /*
 
-    func writeLegacyMap(self, fp):
-        "Dump legacy references."
-        for cookie, commit in sorted(
-                self.legacyMap.items(),
-                key=lambda f: (f[1].committer.date.timestamp, f[0])):
-            if "SVN" in cookie and StreamParser.SplitSep in cookie:
-                serial = ':' + cookie.split(StreamParser.SplitSep)[1]
-            else:
-                serial = ''
-            # The markToEvent test is needed in case this repo is an expunge
-            # fragment with a copied legacy map.  It's a simple substitute
-            # for partitioning the map at expunge time.
-            if self.markToEvent(commit.mark) && commit.legacyID:
-                fp.write("%s\t%s!%s%s\n" % (cookie,
-                                           commit.committer.date.rfc3339(),
-                                           commit.committer.email,
-                                           serial))
     func tagify(self, commit, name, target, legend="", delete=true):
         "Turn a commit into a tag."
         if debugEnable(debugEXTRACT):
