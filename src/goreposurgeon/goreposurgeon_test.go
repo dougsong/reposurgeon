@@ -34,6 +34,10 @@ Things that still need unit tests:
 
 * dollar cookie parsing to autodetect repo type.
 
+* uniqueness test on a repo with time collisions.
+
+* Eric Sunshine's tests with malformed author lines.
+
 */
 
 func assertBool(t *testing.T, see bool, expect bool) {
@@ -123,19 +127,6 @@ func TestStringSet(t *testing.T) {
 	if sum[0]!="a"  || sum[1]!="b" || sum[2]!="c" || sum[4] != "e" || len(sum)!=5{
 		t.Errorf("unexpected result of set union: %v", sum)
 	}
-}
-
-func (s orderedIntSet) Equal(other orderedIntSet) bool {
-	if len(s) != len(other) {
-		return false
-	}
-	// Naive O(n**2) method - don't use on large sets if you care about speed
-	for _, item := range s {
-		if !other.Contains(item) {
-			return false
-		}
-	}
-	return true
 }
 
 func TestOrderedIntSet(t *testing.T) {
@@ -1287,27 +1278,59 @@ this is a test tag
 	assertBool(t, ok2, true)
 	assertEqual(t, "refs/heads/master", testReset.ref)
 
-	authordump := "esr = Eric S. Raymond <esr@thyrsus.com>"
+	// Check roundtripping via fastExport
+	var a strings.Builder
+	if err := repo.fastExport(repo.all(), &a,
+		newStringSet(), nil, false); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	assertEqual(t, rawdump, a.String())
+
+	onecommit := `blob
+mark :3
+data 68
+This is a sample file.
+
+This is our first line of modified content.
+
+reset refs/heads/master^0
+
+commit refs/heads/master
+mark :4
+committer esr <esr> 1322671521 +0000
+data 17
+Second revision.
+M 100644 :3 README
+
+`
+	a.Reset()
+	// Check partial export - Event 4 is the second commit 
+	if err := repo.fastExport(newOrderedIntSet(4), &a,
+		newStringSet(), nil, false); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	assertEqual(t, onecommit, a.String())
+
+	repo.checkUniqueness(false, nil)
+	assertEqual(t, repo.uniqueness, "committer_date")
 	
+	authordump := "esr = Eric S. Raymond <esr@thyrsus.com>"	
 	err := repo.readAuthorMap(newOrderedIntSet(), strings.NewReader(authordump))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-
 	commit1 := repo.events[2].(*Commit)
 	assertEqual(t, commit1.committer.fullname, "esr")
 	commit1.committer.remap(repo.authormap)
 	assertEqual(t, commit1.committer.fullname, "Eric S. Raymond")
 
 	var b strings.Builder
-
 	mapped := orderedIntSet{repo.index(commit1)}
 	if err := repo.writeAuthorMap(mapped, &b); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	expect := "esr = Eric S. Raymond <esr@thyrsus.com>\n"
 	assertEqual(t, expect, b.String())
-
 	if err = repo.writeAuthorMap(repo.all(), &b); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

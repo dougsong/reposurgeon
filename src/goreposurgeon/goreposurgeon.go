@@ -366,6 +366,19 @@ func (s orderedIntSet) Intersection(other orderedIntSet) orderedIntSet {
 	return intersection
 }
 
+func (s orderedIntSet) Equal(other orderedIntSet) bool {
+	if len(s) != len(other) {
+		return false
+	}
+	// Naive O(n**2) method - don't use on large sets if you care about speed
+	for _, item := range s {
+		if !other.Contains(item) {
+			return false
+		}
+	}
+	return true
+}
+
 func (s orderedIntSet) Union(other orderedIntSet) orderedIntSet {
 	// Naive O(n**2) method - don't use on large sets if you care about speed
 	var union orderedIntSet
@@ -376,6 +389,10 @@ func (s orderedIntSet) Union(other orderedIntSet) orderedIntSet {
 		}
 	}
 	return union
+}
+
+func (s orderedIntSet) Sort() {
+	sort.Slice(s, func(i, j int) bool {return s[i] < s[j]}) 
 }
 
 func (s *orderedIntSet) String() string {
@@ -6254,7 +6271,7 @@ type Repository struct {
         timings []TimeMark
         assignments map[string]orderedIntSet
         inlines int
-        //uniqueness = None
+        uniqueness string		// "committer_date", "committer_stamp", or ""
         markseq int
         authormap map[string]Contributor
         tzmap map[string]*time.Location	// most recent email address to timezone
@@ -6337,9 +6354,9 @@ func (repo *Repository) find(mark string) int {
         if repo._markToIndex == nil {
 		repo._markToIndex = make(map[string]int)
 		for ind, event := range repo.events {
-			mark = event.getMark()
+			innermark := event.getMark()
 			if mark != "" {
-				repo._markToIndex[mark] = ind+1
+				repo._markToIndex[innermark] = ind+1
 			}
 		}
 	}
@@ -7076,41 +7093,65 @@ func (repo *Repository) parseDollarCookies() {
 	}
 }
 
-/*
-    func check_uniqueness(self, verbosely, announcer=announce):
-        "Audit the repository for uniqueness properties."
-        self.uniqueness = None
-        timecheck = {}
-        time_collisions = {}
-        for event in self.commits():
-            when = event.when()
-            if when in timecheck:
-                if when not in time_collisions:
-                    time_collisions[when] = [timecheck[when]]
-                time_collisions[when].append(event)
-            timecheck[when] = event
-        if not time_collisions:
-            self.uniqueness = "committer_date"
-            if verbosely:
-                announcer("All commit times in this repository are unique.")
-            return
-        announcer("These timestamps have multiple commits: %s" \
-                 % " ".join(map(rfc3339, time_collisions.keys())))
-        stamp_collisions = set()
-        for clique in time_collisions.values():
-            stampcheck = {}
-            for event in clique:
-                if event.actionStamp() in stampcheck:
-                    stamp_collisions.add(stampcheck[event.actionStamp()])
-                    stamp_collisions.add(event.mark)
-                stampcheck[event.actionStamp()] = event.mark
-        if not stamp_collisions:
-            self.uniqueness = "committer_stamp"
-            announcer("All commit stamps in this repository are unique.")
-            return
-        announcer("These marks are in stamp collisions: %s" \
-                  % " ".join(stamp_collisions))
-*/
+// Audit the repository for uniqueness properties.
+func (self *Repository) checkUniqueness(verbosely bool, announcer func(...string)) {
+	self.uniqueness = ""
+	timecheck := make(map[string]Event)
+	timeCollisions := make(map[string][]Event)
+	commits := self.commits(nil)
+	for _, event := range commits {
+		when := event.when().String()
+		if _, recorded := timecheck[when]; recorded {
+			if _, ok := timeCollisions[when]; !ok {
+				timeCollisions[when] = []Event{}
+			}
+			timeCollisions[when] = append(timeCollisions[when], event)
+		}
+		timecheck[when] = event
+	}
+	if len(timeCollisions) == 0 {
+		self.uniqueness = "committer_date"
+		if verbosely {
+			announcer("All commit times in this repository are unique.")
+		}
+		return
+	}
+	if announcer != nil {
+		reps := make([]string, 0)
+		for k := range timeCollisions {
+			reps = append(reps, k)
+		}
+		announcer("These timestamps have multiple commits: %s", 
+			strings.Join(reps, " "))
+	}
+	stampCollisions := newStringSet()
+	for _, clique := range timeCollisions {
+		stampcheck := make(map[string]string)
+		for _, event := range clique {
+			commit, ok := event.(*Commit)
+			if !ok {
+				continue
+			}
+			stamp, ok := stampcheck[commit.actionStamp()]
+			if ok {
+				stampCollisions.Add(stamp)
+				//stampCollisions.Add(commit.mark)
+			}
+			stampcheck[stamp] = commit.mark
+		}
+	}
+	if len(stampCollisions) == 0 {
+		self.uniqueness = "committer_stamp"
+		if announcer != nil {
+			announcer("All commit stamps in this repository are unique.")
+		}
+		return
+	}
+	if announcer != nil {
+		announcer("These marks are in stamp collisions: %v", 
+			strings.Join(stampCollisions, " "))
+	}
+}
 
 // exportStyle says how we should we tune the export dump format.
 func (repo *Repository) exportStyle() stringSet {
@@ -7121,49 +7162,71 @@ func (repo *Repository) exportStyle() stringSet {
 	return stringSet{"nl-after-commit"}
 }
 
+// Dump the repo object in Subversion dump or fast-export format.
+func (repo *Repository) fastExport(selection orderedIntSet,
+	fp io.Writer, options stringSet, target *VCS, progress bool) error {
+	repo.writeOptions = options
+	repo.preferred = target
+	if target != nil && target.name == "svn" {
+		//return SubversionDumper().dump(selection, fp, progress)	FIXME
+	}
+	// Select all blobs implied by the commits in the range. If we ever
+	// go to reptesentation where fileops are inline this logic will need
+	// to be modified.
+	repo.internals = newStringSet()
+	if !selection.Equal(repo.all()) {
+		for _, ei := range selection {
+			event := repo.events[ei]
+			if mark := event.getMark(); mark != "" {
+				repo.internals.Add(mark)
+			}
+			if commit, ok := event.(*Commit); ok {
+				fmt.Printf("I see: %s\n", commit.String())
+				for _, fileop := range commit.operations() {
+					if fileop.op == opM {
+						idx := repo.find(fileop.ref)
+						if fileop.ref != "inline" {
+							selection.Add(idx)
+						}
+					}
+				}
+				for _, tag := range commit.attachments {
+					selection.Add(repo.index(tag))
+				}
+			}
+		}
+		selection.Sort()
+	}
+	repo.realized = make(map[string]bool)	// Track what branches are made
+	baton := newBaton("reposurgeon: exporting", "", progress)
+	for _, ei := range selection {
+		baton.twirl("")
+		event := repo.events[ei]
+		if passthrough, ok := event.(*Passthrough); ok {
+			// Support writing bzr repos to plain git if they don't
+			// actually have the extension features their export
+			// streams declare.  Without this check git fast-import
+			// barfs on declarations for unused features.
+			if strings.HasPrefix(passthrough.text, "feature") && !target.extensions.Contains(strings.Fields(passthrough.text)[1]) {
+				continue
+			}
+		}
+		if debugEnable(debugUNITE) {
+			if event.getMark() != "" {
+				announce(debugSHOUT, fmt.Sprintf("writing %d %s", ei, event.getMark()))
+			}
+                }
+		_, err := fp.Write([]byte(event.String()))
+		if err != nil {
+			fmt.Errorf("export error: %s", err)
+		}
+	}
+	baton.exit("")
+	return nil
+}
+
 /*
-    func fast_export(self, selection, fp, options, target=None, progress=false):
-        "Dump the repo object in Subversion dump or fast-export format."
-	self.writeOptions = options
-	self.preferred = target
-        if target && target.name == "svn":
-            SubversionDumper().dump(selection, fp, progress)
-            return
-        if selection != self.all():
-            implied = set(selection)
-            for ei in selection:
-                event = self.events[ei]
-                if isinstance(event, Commit):
-                    for fileop in event.operations():
-                        if fileop.op == opM:
-                            if fileop.ref != "inline":
-                                implied.add(self.find(fileop.ref))
-                    for tag in event.attachments:
-                        implied.add(self.find(tag.committish))
-            selection = list(implied)
-            selection.sort()
-	self.realized = make(map[string]bool)	// Track what branches are made 
-        with Baton("reposurgeon: exporting", enable=progress) as baton:
-            try:
-                self.realized = {}
-                selection_marks = [self.events[i].mark for i in selection if hasattr(self.events[i], "mark")]
-		self.internals = selection.marks
-                for ei in selection:
-                    baton.twirl("")
-                    event = self.events[ei]
-                    if isinstance(event, Passthrough):
-                        # Support writing bzr repos to plain git if they don't
-                        # actually have the extension features their export
-                        # streams declare.  Without this check git fast-import
-                        # barfs on declarations for unused features.
-                        if event.text.startswith("feature") && event.text.split()[1] not in target.extensions:
-                            continue
-                    if debugEnable(debugUNITE):
-                        if hasattr(event, "mark"):
-                            announce(debugSHOUT, "writing %d %s %s" % (ei, event.mark, event.__class__.__name__))
-                    fp.write(event.String())
-            except IOError as e:
-                raise Fatal("export error: %s" % e)
+
     func preserve(self, filename):
         "Add a path to the preserve set, to be copied back on rebuild."
         if os.path.exists(filename):
@@ -8382,7 +8445,7 @@ func rebuild_repo(repo, target, options, preferred):
                 (tfdesc, tfname) = tempfile.mkstemp()
                 assert tfdesc > -1    # pacify pylint
                 with open(tfname, "wb") as tp:
-                    repo.fast_export(range(len(repo)), make_wrapper(tp), options, progress=verbose>0, target=preferred)
+                    repo.fastExport(range(len(repo)), make_wrapper(tp), options, progress=verbose>0, target=preferred)
                 parameters["tempfile"] = tfname
                 do_or_die(vcs.importer % parameters, "import")
             finally:
@@ -8390,7 +8453,7 @@ func rebuild_repo(repo, target, options, preferred):
                 os.close(tfdesc)
         else:
             with popenOrDie(vcs.importer % parameters, "import", mode="w") as tp:
-                repo.fast_export(range(len(repo)), make_wrapper(tp), options,
+                repo.fastExport(range(len(repo)), make_wrapper(tp), options,
                                  target=preferred,
                                  progress=verbose>0)
         if repo.write_legacy:
@@ -10777,7 +10840,7 @@ Supports > redirection.
                     parse.stdout.write("email address missing @: %s\n" % item)
             if not parse.options or "--uniqueness" in parse.options \
                    or "-u" in parse.options:
-                self.chosen().check_uniqueness(true, announcer=lambda s: parse.stdout.write("reposurgeon: " + s + "\n"))
+                self.chosen().checkUniqueness(true, announcer=lambda s: parse.stdout.write("reposurgeon: " + s + "\n"))
             if "--options" in parse.options or "-?" in parse.options:
                 os.Stdout.write("""\
 --deletealls    -d     report mid-branch deletealls
@@ -11103,7 +11166,7 @@ For a list of supported types, invoke the 'prefer' command.
                         except KeyError:
                             raise Recoverable("unrecognized --format")
                         break
-                self.chosen().fast_export(self.selection, parse.stdout, parse.options, progress=(verbose==1 and not quiet), target=self.preferred)
+                self.chosen().fastExport(self.selection, parse.stdout, parse.options, progress=(verbose==1 and not quiet), target=self.preferred)
             else if os.path.isdir(parse.line):
                 rebuild_repo(self.chosen(), parse.line, parse.options, self.preferred)
             else:
