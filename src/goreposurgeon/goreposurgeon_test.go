@@ -17,8 +17,6 @@ import (
 
 Things that still need unit tests:
 
-* Author map writing.
-
 * Fast-import and svn streams with garbled data counts; we need to verify
   that the panic is caught properly.
 
@@ -1298,6 +1296,22 @@ this is a test tag
 	assertEqual(t, commit1.committer.fullname, "esr")
 	commit1.committer.remap(repo.authormap)
 	assertEqual(t, commit1.committer.fullname, "Eric S. Raymond")
+
+	var b strings.Builder
+
+	mapped := orderedIntSet{repo.index(commit1)}
+	if err := repo.writeAuthorMap(mapped, &b); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	expect := "esr = Eric S. Raymond <esr@thyrsus.com>\n"
+	assertEqual(t, expect, b.String())
+
+	if err = repo.writeAuthorMap(repo.all(), &b); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// FIXME; Dubious behavior - is this what we actually want?
+	expect = "esr = Eric S. Raymond <esr@thyrsus.com>\nesr = esr <esr>\n"
+	assertEqual(t, expect, b.String())
 
 	repo.cleanup()
 }
