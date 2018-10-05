@@ -69,6 +69,7 @@ package main
 // 4. Go and Python disagree on what RFC822 format is, and neither is compatible
 //    with the Git log date format, which claims to be RFC822 but isn't.  So
 //    screw it - we always dump timestamps in RFC3339 now.
+// 5. We now interpret Subversion $Rev$ and $LastChangedRev$ cookie.
 
 import (
 	"bufio"
@@ -2819,6 +2820,24 @@ func (attr *Attribution) remap(authors map[string]Contributor) {
  * Repository objects.  All satisfy the Event interface.
  */
 
+type Cookie struct {
+	path string
+	rev string
+}
+
+func (c Cookie) isEmpty() bool {
+	return c.path == "" && c.rev == ""
+}
+
+func (c Cookie) implies() string {
+	// This is historically dubious - could be RCS, but there's no way
+	// to distingish that from CVS
+	if strings.Contains(c.rev, ".") {
+		return "CVS"
+	}
+	return "svn"
+}
+
 // Blob represents a detached blob of data referenced by a mark.
 type Blob struct {
 	repo       *Repository
@@ -2826,7 +2845,7 @@ type Blob struct {
 	mark       string
 	pathlist   []string	// In-repo paths associated with this blob
 	colors     []string	// Scratch space for grapg coloring algorithms
-	cookie     [2]string	// CVS/SVN cookie analyzed out of this file
+	cookie     Cookie	// CVS/SVN cookie analyzed out of this file
 	start      int64	// Seek start if this blob refers into a dump
 	size       int64	// length start if this blob refers into a dump
 	abspath    string
@@ -3010,6 +3029,40 @@ func (b *Blob) clone(repo *Repository) *Blob {
         return c
 }
 
+// Examples of embedded VCS headers:
+// RCS, CVS: $Revision: 1.4 $
+// SVN:      $Revision: 144 $
+// RCS, CVS: $Id: lofs.h,v 1.8 1992/05/30 10:05:43 jsp Exp jsp $
+// SVN:      $Id: calc.c 148 2006-07-28 21:30:43Z sally $
+// Note that the SVN formats are distinguished from the CVS ones by the
+// absence of a dot in the revision.  The Subversion book says Revision
+// can also appear under the alias "Rev" or "LastChangedRev".
+var dollarId = regexp.MustCompile(`\$Id *: *([^$]+) *\$`)
+var dollarRevision = regexp.MustCompile(`\$Rev(?:ision) *: *([^$]*) *\$`)
+var dollarLastChanged = regexp.MustCompile(`\$LatChangedRev *: *([^$]*) *\$`)
+
+func (blob *Blob) parseCookie(content string) Cookie{
+	// Parse CVS && Subversion $-headers
+	// There'd better not be more than one of these per blob.
+	for _, m := range dollarId.FindAllStringSubmatch(content, 0) {
+		fields := strings.Fields(m[0])
+		if len(fields) == 2 {
+			if strings.HasSuffix(fields[1], ",v") {
+				blob.cookie.path = fields[1][:len(fields[1])-2]
+			} else {
+				blob.cookie.path = fields[1]
+			}
+			blob.cookie.rev = fields[2]
+		}
+	}
+	for _, m := range dollarRevision.FindAllStringSubmatch(content, 0) {
+		blob.cookie.rev = strings.TrimSpace(m[1])
+	}
+	for _, m := range dollarLastChanged.FindAllStringSubmatch(content, 0) {
+		blob.cookie.rev = strings.TrimSpace(m[1])
+	}
+	return blob.cookie  
+}
 
 func (b Blob) String() string {
         if b.hasfile() {
@@ -3144,7 +3197,6 @@ func (t *Tag) emailOut(modifiers stringSet, eventnum int,
 
 	return msg.String()
 }
-
 
 // emailIn updates this Tag from a parsed message block.
 func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
@@ -5112,6 +5164,7 @@ type StreamParser struct {
         ccount int64
         linebuffers []string
         warnings []string
+	lastcookie Cookie
         // Everything below here is Subversion-specific
         branches map[string]*Commit	// Points to branch root commits
         branchlink stringSet
@@ -5531,7 +5584,7 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 							// puts "link
 							// " in front
 							// of the path
-							// && the
+							// and the
 							// loader (or
 							// at least
 							// git-svn)
@@ -5696,9 +5749,6 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 	}
 }
 
-var dollarId = regexp.MustCompile(`\$Id *:([^$]+)\$`)
-var dollarRevision = regexp.MustCompile(`\$Revision *: *([^$]*)\$`)
-
 func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesize int64) {
 	// Beginning of fast-import stream parsing
 	commitcount := 0
@@ -5715,39 +5765,8 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				sp.repo.markseq += 1
 				blob.setMark(strings.TrimSpace(line[5:]))
 				blobcontent, blobstart := sp.fiReadData("")
-				// Parse CVS && Subversion $-headers
-				// There'd better not be more than one of these.
-				for _, m := range dollarId.FindAllStringSubmatch(blobcontent, 0) {
-					fields := strings.Fields(m[0])
-					if len(fields) < 2 {
-						sp.gripe(fmt.Sprintf("malformed $-cookie '%s'", m[0]))
-					} else {
-						// Save file basename && CVS version
-						if strings.HasSuffix(fields[1], ",v") {
-							// CVS revision
-							rid := fields[1]
-							blob.cookie = [2]string{rid[:len(rid)-2], fields[2]}
-							sp.repo.hint("$Id$", "cvs", false)
-						} else {
-							// Subversion revision
-							blob.cookie = [2]string{fields[1], ""}
-							if sp.repo.hint("$Id$", "svn", false) {
-								announce(debugSHOUT, "$Id$ header hints at svn.")
-							}
-						}
-					}
-				}
-				for _, m := range dollarRevision.FindAllStringSubmatch(blobcontent, 0) {
-					rev := strings.TrimSpace(m[1])
-					if !strings.Contains(rev, ".") {
-						// Subversion revision
-						blob.cookie = [2]string{rev, ""}
-						if sp.repo.hint("$Revision$", "svn", false) {
-							announce(debugSHOUT, "$Revision$ header hints at svn.")
-						}
-					}
-				}
 				blob.setContent(blobcontent, blobstart)
+				sp.lastcookie = blob.parseCookie(blobcontent)
 			} else {
 				sp.error("missing mark after blob")
 			}
@@ -5954,6 +5973,9 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			sp.repo.addEvent(newPassthrough(sp.repo, line))
 		}
 		baton.readProgress(sp.ccount, filesize)
+	}
+	if !sp.lastcookie.isEmpty() {
+		sp.repo.hint("", sp.lastcookie.implies(), false)
 	}
 }
 
@@ -6218,7 +6240,6 @@ type Repository struct {
         sourcedir string
         seekstream *os.File
         events []Event    // A list of the events encountered, in order
-        //_commits = None
         _markToIndex map[string]int
         _eventByMark map[string]Event
         _namecache map[string][]int
@@ -6227,7 +6248,7 @@ type Repository struct {
         basedir string
         uuid string
         write_legacy bool
-        //dollarMap = None        // From dollar cookies in files
+        dollarMap map[string]*Commit	// From dollar cookies in files
         legacyMap map[string]*Commit    // From anything that doesn't survive rebuild
         legacyCount int
         timings []TimeMark
@@ -6351,6 +6372,7 @@ type Hint struct {
 	vcs string
 }
 
+// FIXME: no longer called from the blob parser.
 func (repo *Repository) hint(clue1 string, clue2 string, strong bool) bool {
         // Hint what the source of this repository might be.
 	newhint := false
@@ -6680,7 +6702,7 @@ func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) err
 }
 
 // List the identities we know.
-func (repo *Repository) writeAuthorMap(selection orderedIntSet, fp io.Writer) {
+func (repo *Repository) writeAuthorMap(selection orderedIntSet, fp io.Writer) error {
         contributors := make(map[string]string)
         for _, ei := range selection {
 		event := repo.events[ei]
@@ -6697,8 +6719,12 @@ func (repo *Repository) writeAuthorMap(selection orderedIntSet, fp io.Writer) {
 		}
         }
         for userid, cid := range contributors {
-		fp.Write([]byte(fmt.Sprintf("%s = %s\n", userid, cid)))
+		_, err := fp.Write([]byte(fmt.Sprintf("%s = %s\n", userid, cid)))
+		if err != nil {
+			return fmt.Errorf("in writeAuthorMap: %v", err)
+		}
         }
+	return nil
 }
 
 func (repo *Repository) byCommit(hook func (commit *Commit)) {
@@ -6992,54 +7018,65 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 
 */
 
-/*
 
-    func fastImport(self, fp, options, progress=false, source=None):
-        "Read a stream file and use it to populate the repo."
-        StreamParser().fastImport(fp, options, progress, source=source)
-        self.readtime = time.time()
-    func parse_dollar_cookies():
-        "Extract info about legacy references from CVS/SVN header cookies."
-        if self.dollarMap is not None:
-            return
-        # The goal here is to throw away CVS and Subversion header
-        # information still fossilized into $Id$ and $Subversion$
-        # headers after conversion to a later version. For each
-        # cookie, all but the earliest blob containing it has it
-        # as a fossil which should be removed.  Then, the earliest
-        # commit referencing that blob gets a legacy property set;
-        # later references will be branching artifacts.
-        self.dollarMap = {}
-        seen = set()
-        for event in self.events:
-            if isinstance(event, Blob) && event.cookie:
-                if event.cookie in seen:
-                    continue
-                else:
-                    # The first commit immediately after this blob
-                    for ei in range(self.find(event.mark), len(self.events)):
-                        if isinstance(self.events[ei], Commit):
-                            commit = self.events[ei]
-                            break
-                    seen.add(event.cookie)
-                    if commit.properties && "legacy" in commit.properties:
-                        complain("legacy property of %s overwritten" \
-                                 % commit.mark)
-                    if isinstance(event.cookie, str):
-                        svnkey = "SVN:" + event.cookie
-                        self.dollarMap[svnkey] = commit
-                    else:
-                        (basename, cvsref) = event.cookie
-                        for fileop in commit.operations():
-                            if fileop.op == opM && fileop.ref == event.mark:
-                                if not os.path.basename(fileop.path).endswith(basename):
-                                    # Usually the harmless result of a
-                                    # file move or copy that cvs2svn or
-                                    # git-svn didn't pick up on.
-                                    complain("mismatched CVS header path '%s' in %s vs '%s' in %s"
-                                             % (fileop.path, commit.mark, basename, event.mark))
-                                cvskey = "CVS:%s:%s" % (fileop.path, cvsref)
-                                self.dollarMap[cvskey] = commit
+// Read a stream file and use it to populate the repo.
+func (repo *Repository) fastImport(fp io.Reader, options stringSet,
+	progress bool, source string) {
+	newStreamParser(repo).fastImport(fp, options, progress, source)
+	repo.readtime = time.Now()
+}
+
+// Extract info about legacy references from CVS/SVN header cookies.
+func (repo *Repository) parseDollarCookies() {
+	if repo.dollarMap != nil {
+		return
+	}
+	// Set commit legacy properties from $Id$ && $Subversion$
+	// cookies in blobs. In order to throw away stale headers from
+	// after, e.g., a CVS-to-SVN or SVN-to-git conversion, we
+	// ignore duplicat keys - note this assumes commits are
+	// time-ordered, wjich is true for SVN but maye not for
+	// CVS. Might be we should explcitly time-check in the latter
+	// case, but CVS timestamps aren't reliable so it might not
+	// include conversion quality any.
+	repo.dollarMap = make(map[string]*Commit)
+	for _, commit := range repo.commits(nil) {
+		for _, fileop := range commit.operations() {
+			if fileop.op != opM {			
+				continue
+			}
+			blob := repo.markToEvent(fileop.ref).(*Blob)
+			if commit.properties.get("legacy") != "" {
+				complain("legacy property of %s overwritten",
+					commit.mark)
+			}
+
+			if blob.cookie.implies() == "SVN" {
+				svnkey := "SVN:" + blob.cookie.rev
+				if _, ok := repo.dollarMap[svnkey]; !ok {
+					repo.dollarMap[svnkey] = commit
+				}
+			} else {
+				if filepath.Base(fileop.path) != blob.cookie.path {
+					// Usually the
+					// harmless result of
+					// a file move or copy
+					// that cvs2svn or
+					// git-svn didn't pick
+					// up on.
+					complain("mismatched CVS header path '%s' in %s vs '%s' in %s",
+						fileop.path, commit.mark, blob.cookie.path, blob.mark)
+				}
+				cvskey := fmt.Sprintf("CVS:%s:%s", fileop.path, blob.cookie.path)
+				if _, ok := repo.dollarMap[cvskey]; !ok {
+					repo.dollarMap[cvskey] = commit
+				}
+			}
+		}
+	}
+}
+
+/*
     func check_uniqueness(self, verbosely, announcer=announce):
         "Audit the repository for uniqueness properties."
         self.uniqueness = None
@@ -9676,7 +9713,7 @@ developers.
         return term
     func has_reference(self, event):
         "Does an event contain something that looks like a legacy reference?"
-        self.chosen().parse_dollar_cookies()
+        self.chosen().parseDollarCookies()
         if hasattr(event, "comment"):
             text = event.comment
         else if hasattr(event, "text"):
@@ -13638,7 +13675,7 @@ map when the repo is written or rebuilt.
         if self.selection is None:
             self.selection = self.chosen().all()
         if "lift" in line:
-            self.chosen().parse_dollar_cookies()
+            self.chosen().parseDollarCookies()
             hits = 0
             func substitute(getter, matchobj):
                 payload = polystr(matchobj.group(0)[2:-2])

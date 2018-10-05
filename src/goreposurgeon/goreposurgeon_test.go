@@ -32,6 +32,8 @@ Things that still need unit tests:
 
 * legacy-map reading and writing
 
+* dollar cookie parsing to autodetect repo type.
+
 */
 
 func assertBool(t *testing.T, see bool, expect bool) {
