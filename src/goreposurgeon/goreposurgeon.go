@@ -7357,443 +7357,574 @@ func (repo *Repository) ancestors(ei int) orderedIntSet {
 	return trail
 }
 
+//
+// Delete machinery begins here
+//
+// Count modifications of a path in this commit && its ancestors.
+func (commit *Commit) ancestorCount(path string) int {
+	count := 0
+	for {
+		for _, fileop := range commit.operations() {
+			if fileop.op == opM && fileop.path == path {
+				count += 1
+				break
+			}
+		}
+		// 0, 1, && >1 are the interesting cases
+		if count > 1 {
+			return count
+		}
+		if commit.hasParents() {
+			event := commit.parents()[0]
+			lst, ok := event.(*Commit)
+			if !ok {
+				// Could be a Callout object
+				break
+			}
+			commit = lst
+		} else {
+			break
+		}
+	}
+	return count
+}
+
+var nilOp FileOp	// Zero fileop, to be used as a deletion marker
+
+// Compose two relevant fileops.
+// Here's what the fields in the return value mean:
+// 0: Was this a modification
+// 1: Op to replace the first with (nil means delete)
+// 2: Op to replace the second with (nil means delete)
+// 3: string: if nomempty, a warning to emit
+// 4: Case number, for coverage analysis
+func (self *Repository) __compose(commit *Commit, left FileOp, right FileOp) (bool, FileOp, FileOp, string, int) {
+	pair := [2]string{left.op, right.op}
+	//
+	// First op M
+	//
+	if pair == [2]string{opM, opM} {
+		// Leave these in place, they get handled later.
+		return false, left, right, "", 0
+	} else if left.op == opM && right.op == opD {
+		// M a + D a -> D a
+		// Or, could reduce to nothing if M a was the only modify..
+		if commit.ancestorCount(left.path) == 1 {
+			return true, nilOp, nilOp, "", 1
+		} else {
+			return true, right, nilOp, "", 2
+		}
+	} else if left.op == opM && right.op == opR {
+		// M a + R a b -> R a b M b, so R falls towards start of list
+		if left.path == right.source {
+			if commit.ancestorCount(left.path) == 1 {
+				// M a has no ancestors, preceding R can be dropped
+				left.path = right.target
+				return true, left, nilOp, "", 3
+			} else {
+				// M a has ancestors, R is still needed
+				left.path = right.target
+				return true, right, left, "", 4
+			}
+		} else if left.path == right.target {
+			// M b + R a b can't happen.  If you try to
+			// generate this with git mv it throws an
+			// error.  An ordinary mv results in D b M a.
+			return true, right, nilOp, "M followed by R to the M operand?", -1
+		}
+	} else if left.op == opM && right.op == opC {
+		// Correct reduction for this would be M a + C a b ->
+		// C a b + M a + M b, that is we'd have to duplicate
+		// the modify. We'll leave it in place for now.
+		return false, left, right, "", 5
+	} else if pair == [2]string{opD, opM} {
+		//
+		// First op D || deleteall
+		//
+		// Delete followed by modify undoes delete, since M
+		// carries whole files.
+		return true, nilOp, right, "", 6
+	} else if pair == [2]string{deleteall, opM} {
+		// But we have to leave deletealls in place, since
+		// they affect right ops
+		return false, left, right, "", 7
+	} else if left.op == deleteall && right.op != opM {
+		// These cases should be impossible.  But cvs2svn
+		// actually generates adjacent deletes into Subversion
+		// dumpfiles which turn into (D, D).
+		return false, left, right,
+			"Non-M operation after deleteall?", -1
+	} else if left.op == opD && right.op == opD {
+		return true, left, nilOp, "", -2
+	} else if left.op == opD && (right.op == opR || right.op == opC) {
+		if left.path == right.source {
+			return false, left, right,
+				fmt.Sprintf("R or C of %s after deletion?", left.path), -3
+		} else {
+			return false, left, right, "", 8
+		}
+	} else if pair == [2]string{opR, opD} {
+		//
+		// First op R
+		//
+		if left.target == right.path {
+			// Rename followed by delete of target
+			// composes to source delete
+			right.path = left.source
+			return true, nilOp, right, "", 9
+		} else {
+			// On rename followed by delete of source
+			// discard the delete but user should be
+			// warned.
+			return false, left, nilOp,
+				fmt.Sprintf("delete of %s after renaming to %s?", right.path, left.source), -4
+		}
+	} else if pair == [2]string{opR, deleteall} && left.target == right.path {
+		// Rename followed by deleteall shouldn't be possible
+		return false, nilOp, right,
+			"rename before deleteall not removed?", -5
+	} else if pair == [2]string{opR, opM} || pair == [2]string{opC, opM} {
+		// Leave rename || copy followed by modify alone
+		return false, left, right, "", 10
+	} else if left.op == opR && right.op == opR {
+		// Compose renames where possible
+		if left.target == right.source {
+			left.target = right.target
+			return true, left, nilOp, "", 11
+		} else {
+			return false, left, right,
+			fmt.Sprintf("R %s %s is inconsistent with following operation", left.source, left.target), -6
+		}
+	}
+	// We could do R a b + C b c -> C a c + R a b, but why?
+	if left.op == opR && right.op == opC {
+		return false, left, right, "", 12
+	} else if pair == [2]string{opC, opD} {
+		//
+		// First op C
+		//
+		if left.source == right.path {
+			// Copy followed by delete of the source is a rename.
+			left.setOp(opR)
+			return true, left, nilOp, "", 13
+		} else if left.target == right.path {
+			// This delete undoes the copy
+			return true, nilOp, nilOp, "", 14
+		}
+	} else if pair == [2]string{opC, opR} {
+		if left.source == right.source {
+			// No reduction
+			return false, left, right, "", 15
+		} else {
+			// Copy followed by a rename of the target reduces to single copy
+			if left.target == right.source {
+				left.target = right.target
+				return true, left, nilOp, "", 16
+			}
+		}
+	} else if pair == [2]string{opC, opC} {
+		// No reduction
+		return false, left, right, "", 17
+	}
+	//
+	// Case not covered
+	//
+	panic(throw("command", "in %s, can't compose op '%s' and '%s'", commit.idMe(), left, right))
+}
+
+// Canonicalize the list of file operations in this commit.
+func (self *Repository) canonicalize(commit *Commit) orderedIntSet {
+	// Doesn't need to be ordered, but I'm not going to write a whole
+	// 'nother set class just for this.
+	coverage := newOrderedIntSet()
+	// Handling deleteall operations is simple
+	lastdeleteall := -1
+	for i, a := range commit.operations() {
+		if a.op == deleteall {
+			lastdeleteall = i
+		}
+	}
+	if lastdeleteall != -1 {
+		announce(debugDELETE, "removing all before rightmost deleteall")
+		commit.setOperations(commit.operations()[lastdeleteall:])
+		commit.invalidatePathsetCache()
+	}
+	// Composition in the general case is trickier.
+	for {
+		// Keep making passes until nothing mutates
+		mutated := false
+		for i := range commit.operations() {
+			for j := i+1; j < len(commit.operations()); j++ {
+				a := commit.operations()[i]
+				b := commit.operations()[j]
+				if a != nilOp && b != nilOp && a.relevant(&b) {
+					modified, newa, newb, warn, cn := self.__compose(commit, a, b)
+					announce(debugDELETE, fmt.Sprintf("Reduction case %d fired on (%d, %d)", cn, i,j))
+					if modified {
+						mutated = true
+						commit.operations()[i] = newa
+						commit.operations()[j] = newb
+						if debugEnable(debugDELETE) {
+							announce(debugDELETE, "During canonicalization:")
+							commit.fileopDump()
+						}
+						if warn != "" {
+							complain(warn)
+						}
+						coverage.Add(cn)
+					}
+				}
+			}
+		}
+		if !mutated {
+			break
+		}
+		newOps := make([]FileOp, 0)
+		for _, x := range commit.operations() {
+			if x != nilOp {
+				newOps = append(newOps, x)
+			}
+		}
+		commit.setOperations(newOps)
+		commit.invalidatePathsetCache()
+	}
+	return coverage
+}
+
+var allPolicies = stringSet{
+	"--complain",
+	"--coalesce",
+	"--delete",
+	"--empty-only",
+	"--pushback",
+	"--pushforward",
+	"--tagify",
+	"--tagback",
+	"--tagforward",
+	"--quiet",
+}
+
 /*
-    #
-    # Delete machinery begins here
-    #
-    func ancestor_count(self, event, path):
-        "Count modifications of a path in this commit and its ancestors."
-        count = 0
-        while true:
-            for fileop in event.operations():
-                if fileop && fileop.op == opM && fileop.path == path:
-                    count += 1
-                    break
-            # 0, 1, and >1 are the interesting cases
-            if count > 1:
-                return count
-            try:
-                event = event.parents()[0]
-            except IndexError:
-                break
-        return count
-    func __compose(self, event, left, right):
-        "Compose two relevant fileops."
-        # Here's what the fields in the return value mean:
-        # 0: Was this a modification
-        # 1: Op to replace the first with (None means delete)
-        # 2: Op to replace the second with (None means delete)
-        # 3: If not None, a warning to emit
-        # 4: Case number, for coverage analysis
-        pair = (left.op, right.op)
-        #
-        # First op M
-        #
-        if pair == (opM, opM):
-            # Leave these in place, they get handled later.
-            return (false, left, right, None, 0)
-        # M a + D a -> D a
-        # Or, could reduce to nothing if M a was the only modify..
-        else if left.op == opM and right.op in opD:
-            if self.ancestor_count(event, left.path) == 1:
-                return (true, None, None, None, 1)
-            else:
-                return (true, right, None, None, 2)
-        else if left.op == opM and right.op == opR:
-            # M a + R a b -> R a b M b, so R falls towards start of list
-            if left.path == right.source:
-                if self.ancestor_count(event, left.path) == 1:
-                    # M a has no ancestors, preceding R can be dropped
-                    left.path = right.target
-                    return (true, left, None, None, 3)
-                else:
-                    # M a has ancestors, R is still needed
-                    left.path = right.target
-                    return (true, right, left, None, 4)
-            # M b + R a b can't happen.  If you try to generate this with
-            # git mv it throws an error.  An ordinary mv results in D b M a.
-            else if left.path == right.target:
-                return(true, right, None, "M followed by R to the M operand?", -1)
-        # Correct reduction for this would be M a + C a b -> C a b + M a + M b,
-        # that is we'd have to duplicate the modify. We'll leave it in place
-        # for now.
-        else if left.op == opM and right.op == opC:
-            return (false, left, right, None, 5)
-        #
-        # First op D or deleteall
-        #
-        # Delete followed by modify undoes delete, since M carries whole files.
-        else if pair == (opD, opM):
-            return (true, None, right, None, 6)
-        # But we have to leave deletealls in place, since they affect right ops
-        else if pair == (FileOp.deleteall, opM):
-            return (false, left, right, None, 7)
-        # These cases should be impossible.  But cvs2svn actually generates
-        # adjacent deletes into Subversion dumpfiles which turn into (D, D).
-        else if left.op == FileOp.deleteall and right.op != opM:
-            return (false, left, right,
-                    "Non-M operation after deleteall?", -1)
-        else if left.op == opD and right.op == opD:
-            return (true, left, None, None, -2)
-        else if left.op == opD and right.op in (opR, opC):
-            if left.path == right.source:
-                return (false, left, right,
-                        "R or C of %s after deletion?" % left.path, -3)
-            else:
-                return (false, left, right, None, 8)
-        #
-        # First op R
-        #
-        else if pair == (opR, opD):
-            if left.target == right.path:
-                # Rename followed by delete of target composes to source delete
-                right.path = left.source
-                return (true, None, right, None, 9)
-            else:
-                # On rename followed by delete of source discard the delete
-                # but user should be warned.
-                return (false, left, None,
-                        "delete of %s after renaming to %s?" % (right.path, left.source), -4)
-        # Rename followed by deleteall shouldn't be possible
-        else if pair == (opR, FileOp.deleteall) and left.target == right.path:
-            return (false, None, right,
-                    "rename before deleteall not removed?", -5)
-        # Leave rename or copy followed by modify alone
-        else if pair == (opR, opM) or pair == (opC, opM):
-            return (false, left, right, None, 10)
-        # Compose renames where possible
-        else if left.op == opR and right.op == opR:
-            if left.target == right.source:
-                left.target = right.target
-                return (true, left, None, None, 11)
-            else:
-                return (false, left, right,
-                        "R %s %s is inconsistent with following operation" \
-                        % (left.source, left.target), -6)
-        # We could do R a b + C b c -> C a c + R a b, but why?
-        if left.op == opR and right.op == opC:
-            return (false, left, right, None, 12)
-        #
-        # First op C
-        #
-        else if pair == (opC, opD):
-            if left.source == right.path:
-                # Copy followed by delete of the source is a rename.
-                left.setOp(opR)
-                return (true, left, None, None, 13)
-            else if left.target == right.path:
-                # This delete undoes the copy
-                return (true, None, None, None, 14)
-        else if pair == (opC, opR):
-            if left.source == right.source:
-                # No reduction
-                return (false, left, right, None, 15)
-            else:
-                # Copy followed by a rename of the target reduces to single copy
-                if left.target == right.source:
-                    left.target = right.target
-                    return (true, left, None, None, 16)
-        else if pair == (opC, opC):
-            # No reduction
-            return (false, left, right, None, 17)
-        #
-        # Case not covered
-        #
-        raise Fatal("can't compose op '%s' and '%s'" % (left, right))
-    func canonicalize(self, commit):
-        "Canonicalize the list of file operations in this commit."
-        coverage = set()
-        # Handling deleteall operations is simple
-        lastdeleteall = None
-        for (i, a) in enumerate(commit.operations()):
-            if a.op == FileOp.deleteall:
-                lastdeleteall = i
-        if lastdeleteall is not None:
-            announce(debugDELETE, "removing all before rightmost deleteall")
-            commit.setOperations(commit.operations()[lastdeleteall:])
-            commit.invalidatePathsetCache()
-        # Composition in the general case is trickier.
-        while true:
-            # Keep making passes until nothing mutates
-            mutated = false
-            for i in range(len(commit.operations())):
-                for j in range(i+1, len(commit.operations())):
-                    a = commit.operations()[i]
-                    b = commit.operations()[j]
-                    if a is not None and b is not None and a.relevant(b):
-                        (modified, newa, newb, warn, case) = self.__compose(commit, a, b)
-                        announce(debugDELETE, "Reduction case %d fired on %s" % (case, (i,j)))
-                        if modified:
-                            mutated = true
-                            commit.operations()[i] = newa
-                            commit.operations()[j] = newb
-                            if debugEnable(debugDELETE):
-                                announce(debugDELETE, "During canonicalization:")
-                                commit.fileopDump()
-                            if warn:
-                                complain(warn)
-                            coverage.add(case)
-            if not mutated:
-                break
-            commit.setOperations([x for x in commit.operations() if x is not None])
-            commit.invalidatePathsetCache()
-        return coverage
-    func squash(self, selected, policy):
-        "Delete a set of events, or rearrange it forward or backwards."
-        announce(debugDELETE, "Deletion list is %s" % [self.events[x].idMe() for x in selected])
-        for qualifier in policy:
-            if qualifier not in ["--complain",
-                                 "--coalesce",
-                                 "--delete",
-                                 "--empty-only",
-                                 "--pushback",
-                                 "--pushforward",
-                                 "--tagify",
-                                 "--tagback",
-                                 "--tagforward",
-                                 "--quiet"]:
-                raise Recoverable("no such deletion modifier as " + qualifier)
-        # For --pushback, it is critical that deletions take place from lowest
-        # event number to highest since --pushback often involves re-ordering
-        # events even as it is iterating over the 'selected' list (see
-        # 'swap_indices' below). Only events earlier than the event currently
-        # being processed are re-ordered, however, so the operation is safe as
-        # long as events are visited lowest to highest. (For --pushforward,
-        # iteration order is immaterial since it does no event re-ordering and
-        # actual deletion is delayed until after iteration is finished.)
-        selected = sorted(selected)
-        dquiet = "--quiet" in policy
-        delete = "--delete" in policy
-        tagify = "--tagify" in policy
-        tagback = "--tagback" in policy
-        tagforward = "--tagforward" in policy or (not delete and not tagback)
-        pushback = "--pushback" in policy
-        pushforward = "--pushforward" in policy or (not delete and not pushback)
-        # Sanity checks
-        if not dquiet:
-            for ei in selected:
-                event = self.events[ei]
-                if  isinstance(event, Commit):
-                    if delete:
-                        speak = "warning: commit %s to be deleted has " % event.mark
-                        if '/' in event.branch and '/heads/' not in event.branch:
-                            complain(speak + "non-head branch attribute %s" % event.branch)
-                        if not event.alldeletes():
-                            complain(speak + "non-delete fileops.")
-                    if not delete:
-                        if pushback and not event.hasParents():
-                            complain("warning: "
-                                     "pushback of parentless commit %s" \
-                                     % event.mark)
-                        if pushforward and not event.hasChildren():
-                            complain("warning: "
-                                     "pushforward of childless commit %s" \
-                                     % event.mark)
-        altered = []
-        # Here are the deletions
-        for e in self.events:
-            e.deleteflag = false
-        for ei in selected:
-            event = self.events[ei]
-            if isinstance(event, Blob):
-                # Never delete a blob except as a side effect of
-                # deleting a commit.
-                event.deleteflag = false
-            else if isinstance(event, (Tag, Reset, Passthrough)):
-                event.deleteflag = ("--delete" in policy)
-            else if isinstance(event, Commit):
-                event.deleteflag = true
-                # Decide the new target for tags
-                filter_only = true
-                if tagforward and event.hasChildren():
-                    filter_only = false
-                    new_target = event.firstChild()
-                else if tagback and event.parents():
-                    filter_only = false
-                    new_target = event.parents()[0]
-                # Reparent each child
-                func compose_comment(a, b):
-                    "Concatenate comments, ignoring empty-log-message markers."
-                    if a == b:
-                        return a
-                    a_empty = emptyComment(a)
-                    b_empty = emptyComment(b)
-                    if a_empty and b_empty:
-                        return ""
-                    else if a_empty and not b_empty:
-                        return b
-                    else if not a_empty and b_empty:
-                        return a
-                    else:
-                        return a + '\n' + b
-                for child in list(event.children()):
-                    # Insert event's parents in place of event in child's
-                    # parent list. We keep existing duplicates in case they
-                    # are wanted, but ensure we don't introduce new ones.
-                    old_parents = list(child.parents())
-                    event_pos = old_parents.index(event)
-                    # Start with existing parents before us,
-                    # including existing duplicates
-                    new_parents = old_parents[:event_pos]
-                    # Add our parents, with possible duplicates, but not if
-                    # already present before.
-                    to_add = [p for p in event.parents() if p not in new_parents]
-                    new_parents.extend(to_add)
-                    # Avoid duplicates due to event.parents() insertion.
-                    new_parents.extend(
-                            p
-                            for p in itertools.islice(old_parents,
-                                                      event_pos+1, None)
-                            if p not in to_add)
-                    # Prepend a copy of this event's file ops to
-                    # all children with the event as their first
-                    # parent, and mark each such child as needing
-                    # resolution.
-                    if pushforward and child.parents()[0] == event:
-                        child.setOperations(copy.copy(event.operations()) + child.operations())
-                        child.invalidatePathsetCache()
-                        # Also prepend event's comment, ignoring empty
-                        # log messages.
-                        if "--empty-only" in policy and not emptyComment(child.comment):
-                            complain("--empty is on and %s comment is nonempty" % child.idMe())
-                        child.comment = compose_comment(event.comment,
-                                                        child.comment)
-                        altered.append(child)
-                    # Really set the parents to the newly constructed list
-                    child.setParents(new_parents)
-                    # If event was the first parent of child yet has no parents
-                    # of its own, then child's first parent has changed.
-                    # Prepend a deleteall to child's fileops to ensure it
-                    # starts with an empty tree (as event does) instead of
-                    # inheriting that of its new first parent.
-                    if event_pos == 0 and not event.parents():
-                        fileop = FileOp()
-                        fileop.construct("deleteall")
-                        child.prependOperation(fileop)
-                        child.invalidatePathsetCache()
-                        altered.append(child)
-                # We might be trying to hand the event's fileops to its
-                # primary parent.
-                if pushback and event.hasParents():
-                    # Append a copy of this event's file ops to its primary
-                    # parent fileop list and mark the parent as needing
-                    # resolution.
-                    parent = event.parents()[0]
-                    parent.setOperations(parent.operations() + copy.copy(event.operations()))
-                    parent.invalidatePathsetCache()
-                    # Also append child's comment to its parent's
-                    if "--empty-only" in policy and not emptyComment(parent.comment):
-                        complain("--empty is on and %s comment is nonempty" % parent.idMe())
-                    parent.comment = compose_comment(parent.comment,
-                                                     event.comment)
-                    altered.append(parent)
-                    # We need to ensure all fileop blobs are defined before the
-                    # corresponding fileop, in other words ensure that the blobs
-                    # appear before the primary parent in the stream.
-                    earliest = parent.index()
-                    swap_indices = set()
-                    for fileop in event.operations():
-                        if fileop.op == opM:
-                            blob_index = self.find(fileop.ref)
-                            if blob_index > earliest: swap_indices.add(blob_index)
-                    if swap_indices:
-                        last = max(swap_indices)
-                        neworder = itertools.chain(
-                                swap_indices, # first take the blobs
-                                # then all others
-                                itertools.ifilterfalse(swap_indices.__contains__,
-                                         range(earliest, last+1)) )
-                        self.events[earliest:last+1] = list(map(
-                                self.events.__getitem__, neworder))
-                        self.declareSequenceMutation("squash pushback")
-                # Move tags and attachments
-                if filter_only:
-                    for e in event.attachments:
-                        e.deleteflag = true
-                else:
-                    if not tagify and event.branch and "/tags/" in event.branch \
-                            and new_target.branch != event.branch:
-                        # By deleting the commit, we would lose the fact that
-                        # it moves its branch (to create a lightweight tag for
-                        # instance): replace it by a Reset which will save this
-                        # very information. The following loop will take care
-                        # of moving the attachment to the new target.
-                        reset = Reset(self, ref = event.branch,
-                                            target = event)
-                        self.events[ei] = reset
-                    # use a copy of attachments since it will be mutated
-                    for t in list(event.attachments):
-                        t.forget()
-                        t.remember(self, target=new_target)
-                # And forget the deleted event
-                event.forget()
-        # Preserve assignments
-        self.filterAssignments(lambda e: e.deleteflag)
-        # Do the actual deletions
-        self.events = [e for e in self.events if not e.deleteflag]
-        self.declareSequenceMutation()
-        # Canonicalize all the commits that got ops pushed to them
-        if not delete:
-            for event in altered:
-                if event.deleteflag: continue
-                if debugEnable(debugDELETE):
-                    announce(debugDELETE, "Before canonicalization:")
-                    event.fileopDump()
-                self.caseCoverage |= self.canonicalize(event)
-                if debugEnable(debugDELETE):
-                    announce(debugDELETE, "After canonicalization:")
-                    event.fileopDump()
-                # Now apply policy in the mutiple-M case
-                cliques = event.cliques()
-                if ("--coalesce" not in policy and not delete) \
-                        or debugEnable(debugDELETE):
-                    for (path, oplist) in cliques.items():
-                        if len(oplist) > 1 and not dquiet:
-                            complain("commit %s has multiple Ms for %s"
-                                    % (event.mark, path))
-                if "--coalesce" in policy:
-                    # Only keep last M of each clique, leaving other ops alone
-                    event.setOperations( \
-                           [op for (i, op) in enumerate(event.operations())
-                            if (op.op != opM) or (i == cliques[op.path][-1])])
-                    event.invalidatePathsetCache()
-                if debugEnable(debugDELETE):
-                    announce(debugDELETE, "Commit %d, after applying policy:" % (ei + 1,))
-                    event.fileopDump()
-        # Cleanup
-        for e in self.events:
-            del e.deleteflag
-        self.gc_blobs()
-    func delete(self, selected, policy=None):
-        "Delete a set of events."
-        policy = policy or []
-        self.squash(selected, ["--delete", "--quiet"] + policy)
-    func dedup(self, dup_map):
-        """Replace references to duplicate blobs according to the given dup_map,
-        which maps marks of duplicate blobs to canonical marks"""
-        for event in self.events:
-            if isinstance(event, Commit):
-                for fileop in event.operations():
-                    if fileop.op == opM and fileop.ref in dup_map:
-                        fileop.ref = dup_map[fileop.ref]
-        self.gc_blobs()
-    func gc_blobs():
-        "Garbage-collect blobs that no longer have references."
-        backreferences = collections.Counter()
-        for event in self.events:
-            if isinstance(event, Commit):
-                for fileop in event.operations():
-                    if fileop.op == opM:
-                        backreferences[fileop.ref] += 1
-        func eligible(e):
-            return isinstance(e, Blob) and not backreferences[e.mark]
-        self.filterAssignments(eligible)
-        self.events = [e for e in self.events if not eligible(e)]
-        self.invalidateManifests()     # Might not be needed
-        self.declareSequenceMutation()
+
+// Delete a set of events, or rearrange it forward or backwards.
+func (repo *Repository) squash(selected orderedIntSet, policy stringSet) string {
+	announce(debugDELETE, "Deletion list is %s" % [repo.events[x].idMe() for x in selected])
+	for _, qualifier := range policy {
+		if qualifier !in s {
+				raise Recoverable("no such deletion modifier as " + qualifier)
+			}
+	}
+	// For --pushback, it is critical that deletions take place from lowest
+	// event number to highest since --pushback often involves re-ordering
+	// events even as it is iterating over the "selected" list (see
+	// "swap_indices" below). Only events earlier than the event currently
+	// being processed are re-ordered, however, so the operation is safe as
+	// long as events are visited lowest to highest. (For --pushforward,
+	// iteration order is immaterial since it does no event re-ordering and
+	// actual deletion is delayed until after iteration is finished.)
+	selected.Sort()
+	dquiet := "--quiet" in policy
+	delete := "--delete" in policy
+	tagify := "--tagify" in policy
+	tagback := "--tagback" in policy
+	tagforward := "--tagforward" in policy || (!delete && !tagback)
+	pushback := "--pushback" in policy
+	pushforward := "--pushforward" in policy || (!delete && !pushback)
+	// Sanity checks
+	if !dquiet {
+		for _, ei := range selected {
+			event = repo.events[ei]
+			if  isinstance(event, Commit) {
+				if delete {
+					speak := fmt.Sprintf("warning: commit %s to be deleted has ", event.mark)
+					if "/" in event.branch && "/heads/" !in event.branch {
+						complain(speak + fmt.Sprintf("non-head branch attribute %s", event.branch))
+					}
+					if !event.alldeletes() {
+						complain(speak + "non-delete fileops.")
+					}
+				}
+				if !delete {
+					if pushback && !event.hasParents() {
+						complain("warning: "
+							"pushback of parentless commit %s" 
+							% event.mark)
+					}
+					if pushforward && !event.hasChildren() {
+						complain("warning: "
+							"pushforward of childless commit %s" 
+							% event.mark)
+					}
+				}
+			}
+		}
+	}
+	altered = []
+	// Here are the deletions
+	for _, e := range repo.events {
+		e.deleteflag = false
+	}
+	for _, ei := range selected {
+		event = repo.events[ei]
+		if isinstance(event, Blob) {
+			// Never delete a blob except as a side effect of
+			// deleting a commit.
+			event.deleteflag = false
+		} else if isinstance(event, (Tag, Reset, Passthrough)) {
+			event.deleteflag = ("--delete" in policy)
+		} else if isinstance(event, Commit) {
+			event.deleteflag = true
+			// Decide the new target for tags
+			filter_only = true
+			if tagforward && event.hasChildren() {
+				filter_only = false
+				new_target := event.firstChild()
+			} else if tagback && event.parents() {
+				filter_only = false
+				new_target := event.parents()[0]
+			}
+			// Reparent each child
+			// Concatenate comments, ignoring empty-log-message markers.
+			func compose_comment(a, b) stringinging {
+				if a == b {
+					return a
+				}
+				a_empty := emptyComment(a)
+				b_empty := emptyComment(b)
+				if a_empty && b_empty {
+					return ""
+				} else if a_empty && !b_empty {
+					return b
+				} else if !a_empty && b_empty {
+					return a
+				} else {
+					return a + "\n" + b
+				}
+			}
+			for _, child := range list(event.children()) {
+				// Insert event"s parents in place of event in child"s
+				// parent list. We keep existing duplicates in case they
+				// are wanted, but ensure we don't introduce new ones.
+				old_parents := list(child.parents())
+				event_pos := old_parents.index(event)
+				// Start with existing parents before us,
+				// including existing duplicates
+				new_parents := old_parents[:event_pos]
+				// Add our parents, with possible duplicates, but !if
+				// already present before.
+				to_add := [p for p in event.parents() if p !in new_parents]
+				new_parents.extend(to_add)
+				// Avoid duplicates due to event.parents() insertion.
+				new_parents.extend(
+					p
+					for _, p := range itertools.islice(old_parents,
+						event_pos+1, nil)
+				}
+				if p !in to_add)
+		}
+		// Prepend a copy of this event's file ops to
+		// all children with the event as their first
+		// parent, && mark each such child as needing
+		// resolution.
+		if pushforward && child.parents()[0] == event {
+			child.setOperations(copy.copy(event.operations()) + child.operations())
+			child.invalidatePathsetCache()
+			// Also prepend event's comment, ignoring empty
+			// log messages.
+			if "--empty-only" in policy && !emptyComment(child.comment) {
+				complain(fmt.Sprintf("--empty is on and %s comment is nonempty", child.id)Me())
+			}
+			child.comment = compose_comment(event.comment,
+				child.comment)
+			altered = append(altered, child)
+		}
+		// Really set the parents to the newly constructed list
+		child.setParents(new_parents)
+		// If event was the first parent of child yet has no parents
+		// of its own, then child's first parent has changed.
+		// Prepend a deleteall to child's fileops to ensure it
+		// starts with an empty tree (as event does) instead of
+		// inheriting that of its new first parent.
+		if event_pos :== 0 && !event.parents() {
+			fileop := FileOp()
+			fileop.construct("deleteall")
+			child.prependOperation(fileop)
+			child.invalidatePathsetCache()
+			altered = append(altered, child)
+		}
+	}
+	// We might be trying to hand the event's fileops to its
+	// primary parent.
+	if pushback && event.hasParents() {
+		// Append a copy of this event's file ops to its primary
+		// parent fileop list && mark the parent as needing
+		// resolution.
+		parent := event.parents()[0]
+		parent.setOperations(parent.operations() + copy.copy(event.operations()))
+		parent.invalidatePathsetCache()
+		// Also append child"s comment to its parent"s
+		if "--empty-only" in policy && !emptyComment(parent.comment) {
+			complain(fmt.Sprintf("--empty is on and %s comment is nonempty", parent.id)Me())
+		}
+		parent.comment = compose_comment(parent.comment,
+			event.comment)
+		altered = append(altered, parent)
+		// We need to ensure all fileop blobs are defined before the
+		// corresponding fileop, in other words ensure that the blobs
+		// appear before the primary parent in the stream.
+		earliest := parent.index()
+		swap_indices := set()
+		for _, fileop := range event.operations() {
+			if fileop.op == opM {
+				blob_index := strings.Index(repo, fileop.ref)
+				if blob_index > earliest: swap_indices.add(blob_index)
+			}
+		}
+	}
+	if swap_indices {
+		last := max(swap_indices)
+		neworder := itertools.chain(
+			swap_indices, // first take the blobs
+			// then all others
+			itertools.ifilterfalse(swap_indices.__contains__,
+				range(earliest, last+1)) )
+		repo.events[earliest:last+1] = list(map(
+			repo.events.__getitem__, neworder))
+		repo.declareSequenceMutation("squash pushback")
+	}
+}
+	    // Move tags && attachments
+	    if filter_only {
+		for _, e := range event.attachments {
+		    e.deleteflag = true
+		}
+	    } else {
+		if !tagify && event.branch && "/tags/" in event.branch 
+			&& new_target.branch != event.branch {
+		    // By deleting the commit, we would lose the fact that
+		    // it moves its branch (to create a lightweight tag for
+		    // instance): replace it by a Reset which will save this
+		    // very information. The following loop will take care
+		    // of moving the attachment to the new target.
+		    reset := Reset(repo, ref = event.branch,
+					target := event)
+		    repo.events[ei] = reset
+		}
+		// use a copy of attachments since it will be mutated
+		for _, t := range list(event.attachments) {
+		    t.forget()
+		    t.remember(repo, target=new_target)
+		}
+	    }
+	    // And forget the deleted event
+	    event.forget()
+	}
+    }
+    // Preserve assignments
+    repo.filterAssignments(lambda e: e.deleteflag)
+    // Do the actual deletions
+    repo.events = [e for e in repo.events if !e.deleteflag]
+    repo.declareSequenceMutation()
+    // Canonicalize all the commits that got ops pushed to them
+    if !delete {
+	for _, event := range altered {
+	    if event.deleteflag: continue
+	    }
+	    if debugEnable(debugDELETE) {
+		announce(debugDELETE, "Before canonicalization:")
+		event.fileopDump()
+	    }
+	    repo.caseCoverage |= repo.canonicalize(event)
+	    if debugEnable(debugDELETE) {
+		announce(debugDELETE, "After canonicalization:")
+		event.fileopDump()
+	    }
+	    // Now apply policy in the mutiple-M case
+	    cliques := event.cliques()
+	    if ("--coalesce" !in policy && !delete) 
+		    || debugEnable(debugDELETE) {
+		for path, oplist := range cliques {
+		    if len(oplist) > 1 && !dquiet {
+			complain("commit %s has multiple Ms for %s"
+				% (event.mark, path))
+		    }
+		}
+	    }
+	    if "--coalesce" in policy {
+		// Only keep last M of each clique, leaving other ops alone
+		event.setOperations( 
+		       [op for (i, op) in enumerate(event.operations())
+			if (op.op != opM) || (i == cliques[op.path][-1])])
+			}
+		event.invalidatePathsetCache()
+	    }
+	    if debugEnable(debugDELETE) {
+		announce(debugDELETE, fmt.Sprintf("Commit %d, after applying policy:", ei + 1,))
+		event.fileopDump()
+	    }
+	}
+    }
+    // Cleanup
+    for _, e := range repo.events {
+	del e.deleteflag
+    }
+    repo.gcBlobs()
+}
+
+// Delete a set of events.
+func (self *Repository) delete(selected orderedIntSet, policy stringSet) {
+    policy := policy || []
+    self.squash(selected, ["--delete", "--quiet"] + policy)
+}
+
+*/
+
+
+// Replace references to duplicate blobs according to the given dup_map,
+// which maps marks of duplicate blobs to canonical marks`
+func (self *Repository) dedup(dupMap map[string]string) {
+	for _, commit := range self.commits(nil) {
+		for _, fileop := range commit.operations() {
+			if fileop.op == opM && dupMap[fileop.ref] != "" {
+				fileop.ref = dupMap[fileop.ref]
+			}
+		}
+	}
+	self.gcBlobs()
+}
+
+// Garbage-collect blobs that no longer have references.
+func (repo *Repository) gcBlobs() {
+	backreferences := make(map[string]bool)
+        for _, commit := range repo.commits(nil) {
+		for _, fileop := range commit.operations() {
+			if fileop.op == opM {
+				backreferences[fileop.ref] = true
+			}
+		}
+	}
+        eligible := func(event Event) bool {
+		blob, ok := event.(*Blob)
+		return ok && !backreferences[blob.mark]
+        }
+        repo.filterAssignments(eligible)
+	// Apply the filter-without-allocate hack from Slice Tricks
+	newEvents := repo.events[:0]
+	for _, x := range repo.events {
+		if !eligible(x) {
+			newEvents = append(newEvents, x)
+		}
+	}
+	repo.events = newEvents
+        //repo.invalidateManifests()     // Might not be needed FIXME
+        repo.declareSequenceMutation("GC")
+}
+
+/*
     func __delitem__(self, index):
         # To make Repository a proper container (and please pylint)
         self.squash([index], ["--delete", "--quiet", "--tagback"])
+
     #
     # Delete machinery ends here
     #
@@ -11234,7 +11365,7 @@ This is intended for producing reduced test cases from large repositories.
                         interesting.add(event.mark)
                     else:
                         for op in event.operations():
-                            if op.op != opM or repo.ancestor_count(event.parents()[0], op.path) == 0:
+                            if op.op != opM or event.parents()[0].ancestorCount(op.path) == 0:
                                 interesting.add(event.mark)
                                 break
             neighbors = set()
@@ -12024,7 +12155,7 @@ in the commit's ancestry.
                 if path in event.paths():
                     raise Recoverable("%s already has an op for %s" \
                                       % (event.mark, path))
-                if repo.ancestor_count(event, path) == 0:
+                if event.ancestorCount(path) == 0:
                     raise Recoverable("no previous M for %s" % path)
         else if optype == "M":
             if len(fields) != 4:
@@ -12059,7 +12190,7 @@ in the commit's ancestry.
                 if source in event.paths() or target in event.paths():
                     raise Recoverable("%s already has an op for %s or %s" \
                                       % (event.mark, source, target))
-                if repo.ancestor_count(event, source) == 0:
+                if event.ancestorCount(source) == 0:
                     raise Recoverable("no previous M for %s" % source)
         else:
             raise Recoverable("unknown operation type %s in add command" % optype)
