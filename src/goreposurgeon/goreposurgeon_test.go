@@ -38,8 +38,6 @@ Things that still need unit tests:
 
 * Eric Sunshine's tests with malformed author lines.
 
-* insertEvent(), AddEvent() with "done" at repo end.
-
 */
 
 func assertBool(t *testing.T, see bool, expect bool) {
@@ -1339,6 +1337,21 @@ M 100644 :3 README
 	// FIXME; Dubious behavior - is this what we actually want?
 	expect = "esr = Eric S. Raymond <esr@thyrsus.com>\nesr = esr <esr>\n"
 	assertEqual(t, expect, b.String())
+
+	// Test appending a done marker
+	assertIntEqual(t, len(repo.events), 11)
+	repo.addEvent(newPassthrough(repo, "done"))
+	assertIntEqual(t, len(repo.events), 12)
+
+	// Test appending passthrough to make sure it's inserted before "done"
+	repo.addEvent(newPassthrough(repo, "boogabooga"))
+	assertIntEqual(t, len(repo.events), 13)
+	isPassthrough := func(event Event, payload string) bool {
+		passthrough, ok := event.(*Passthrough)
+		return ok && passthrough.text == payload
+	}
+	assertBool(t, isPassthrough(repo.events[12], "done"), true)
+	assertBool(t, isPassthrough(repo.events[11], "boogabooga"), true)
 
 	repo.cleanup()
 }
