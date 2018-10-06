@@ -7262,22 +7262,22 @@ func (repo *Repository) rename(newname string) error {
 	return nil
 }
 
-/*
 // Insert an event just before the specified index.
-func (repo *Repository) insertEvent(event, where=nil, legend="") {
-	if where != nil {
-		repo.events.insert(where, event)
-	} else if repo.events && isinstance(repo.events[-1], Passthrough) && repo.events[-1].text == "done" {
-		repo.events.insert(-1, event)
+func (repo *Repository) insertEvent(event Event, where int, legend string) {
+	repo.events = append(repo.events[:where], append([]Event{event}, repo.events[where:]...)...)
+	repo.declareSequenceMutation(legend)
+}
+
+func (repo *Repository) addEvent(event Event) {
+	isDone := func(event Event) bool {
+		passthrough, ok := event.(*Passthrough)
+		return ok && passthrough.text == "done"
+	}
+	if len(repo.events) > 0 && isDone(repo.events[len(repo.events)-1]) {
+		repo.insertEvent(event, len(repo.events)-1, "")
 	} else {
 		repo.events = append(repo.events, event)
 	}
-	repo.declareSequenceMutation(legend)
-}
-*/
-
-func (repo *Repository) addEvent(event Event) {
-	repo.events = append(repo.events, event)
         repo.declareSequenceMutation("")
 }
 

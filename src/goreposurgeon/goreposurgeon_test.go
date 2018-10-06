@@ -38,6 +38,8 @@ Things that still need unit tests:
 
 * Eric Sunshine's tests with malformed author lines.
 
+* insertEvent(), AddEvent() with "done" at repo end.
+
 */
 
 func assertBool(t *testing.T, see bool, expect bool) {
