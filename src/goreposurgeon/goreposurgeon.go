@@ -7181,7 +7181,6 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 				repo.internals.Add(mark)
 			}
 			if commit, ok := event.(*Commit); ok {
-				fmt.Printf("I see: %s\n", commit.String())
 				for _, fileop := range commit.operations() {
 					if fileop.op == opM {
 						idx := repo.find(fileop.ref)
@@ -7281,22 +7280,33 @@ func (repo *Repository) addEvent(event Event) {
         repo.declareSequenceMutation("")
 }
 
-/*
 
-    func filter_assignments(self, f):
-        "Filter assignments, warning if any of them goes empty."
-        for (name, values) in self.assignments.items():
-            newassigns = []
-            dc = 0
-            for (i, e) in enumerate(self.events):
-                if f(e):
-                    dc += 1
-                else if i in values:
-                    newassigns.append(i - dc)
-            if values && not newassigns:
-                complain("sequence modification left %s empty" % name)
-            self.assignments[name] = newassigns
-*/
+// Filter assignments, warning if any of them goes empty.
+func (self *Repository) filterAssignments(f func(Event) bool) {
+	intContains := func (list []int, val int) bool {
+		for _, v := range list {
+			if v == val {
+				return true
+			}
+		}
+		return false 
+	}	
+	for name, values := range self.assignments {
+		newassigns := make([]int, 0)
+		dc := 0
+		for i, e := range self.events {
+			if f(e) {
+				dc += 1
+			} else if intContains(values, i) {
+				newassigns = append(newassigns, i - dc)
+			}
+		}
+		if len(values) > 0 && len(newassigns) == 0 {
+			complain(fmt.Sprintf("sequence modification left %s empty", name))
+		}
+		self.assignments[name] = newassigns
+	}
+}
 
 // Mark the repo event sequence modified.
 func (repo *Repository) declareSequenceMutation(warning string) {
@@ -7308,25 +7318,43 @@ func (repo *Repository) declareSequenceMutation(warning string) {
         }
 }
 
-/*
-    func earliest_commit():
-        "Return the earliest commit."
-        return next(self.commits())
-    func earliest():
-        "Return the date of earliest commit."
-        return next(self.commits()).committer.date
-    func ancestors(self, ei):
-        "Return ancestors of an event, in reverse order."
-        trail = []
-        while true:
-            if not self.events[ei].hasParents():
-                break
-            else:
-                efrom = self.find(self.events[ei].parentMarks()[0])
-                trail.append(efrom)
-                ei = efrom
-        return trail
+// Return the earliest commit.
+func (repo *Repository) earliestCommit() *Commit {
+	for _, event := range repo.events {
+		commit, ok := event.(*Commit)
+		if ok {
+			return commit
+		}
+	}
+	panic(throw("command", "repository has no commits"))
+	return nil
+}
 
+// Return the date of earliest commit.
+func (repo *Repository) earliest() Date {
+	return repo.earliestCommit().committer.date
+}
+
+// Return ancestors of an event, in reverse order.
+func (repo *Repository) ancestors(ei int) orderedIntSet {
+	trail := newOrderedIntSet()
+	for {
+		commit, ok := repo.events[ei].(*Commit)
+		if !ok {
+			panic(throw("command", "ancestors() reached non-commit event %d", ei))
+		}
+		if !commit.hasParents() {
+			break
+		} else {
+			efrom := repo.find(commit.parentMarks()[0])
+			trail.Add(efrom)
+			ei = efrom
+		}
+	}
+	return trail
+}
+
+/*
     #
     # Delete machinery begins here
     #
@@ -7697,7 +7725,7 @@ func (repo *Repository) declareSequenceMutation(warning string) {
                 # And forget the deleted event
                 event.forget()
         # Preserve assignments
-        self.filter_assignments(lambda e: e.deleteflag)
+        self.filterAssignments(lambda e: e.deleteflag)
         # Do the actual deletions
         self.events = [e for e in self.events if not e.deleteflag]
         self.declareSequenceMutation()
@@ -7756,7 +7784,7 @@ func (repo *Repository) declareSequenceMutation(warning string) {
                         backreferences[fileop.ref] += 1
         func eligible(e):
             return isinstance(e, Blob) and not backreferences[e.mark]
-        self.filter_assignments(eligible)
+        self.filterAssignments(eligible)
         self.events = [e for e in self.events if not eligible(e)]
         self.invalidateManifests()     # Might not be needed
         self.declareSequenceMutation()
@@ -8073,7 +8101,7 @@ func (repo *Repository) declareSequenceMutation(warning string) {
         # Errors aren't recoverable after this
         graft_repo.uniquify(graft_repo.name, persist)
         if graft_point is not None:
-            graftroot = graft_repo.earliest_commit()
+            graftroot = graft_repo.earliestCommit()
         self.absorb(graft_repo)
         if graft_point:
             graftroot.addParentByMark(where.mark)
@@ -8724,7 +8752,7 @@ class RepositoryList:
             if not list(x.commits()):
                 raise Recoverable("empty factor %s" % x.name)
         factors.sort(key=operator.methodcaller("earliest"))
-        roots = [x.earliest_commit() for x in factors]
+        roots = [x.earliestCommit() for x in factors]
         union = Repository("+".join(r.name for r in factors))
         os.mkdir(union.subdir())
         factors.reverse()
@@ -8748,7 +8776,7 @@ class RepositoryList:
         # commits.
         for root in roots[1:]:
             # Get last commit such that it and all before it are earlier.
-            # Never raises IndexError since union.earliest_commit() is root[0]
+            # Never raises IndexError since union.earliestCommit() is root[0]
             # which satisfies earlier() thanks to factors sorting.
             eligible = collections.deque(
                 itertools.takewhile(lambda e: root.when() > e.when(), union.commits()),
@@ -8758,7 +8786,7 @@ class RepositoryList:
             else:
                 # Weird case - can arise if you unite two or more copies
                 # of the same commit.
-                most_recent = union.earliest_commit()
+                most_recent = union.earliestCommit()
             if most_recent.mark is None:
                 # This should never happen either.
                 raise Fatal("can't link to commit with no mark")
@@ -13410,7 +13438,7 @@ default patterns.
                             changecount += 1
                     # Create an early ignore file if required.
                     # Don't move this before the modification pass!
-                    earliest = repo.earliest_commit()
+                    earliest = repo.earliestCommit()
                     if not [fileop for fileop in earliest.operations() if fileop.op == opM and fileop.path.endswith(self.ignorename)]:
                         blob = Blob(repo)
                         blob.addalias(self.ignorename)
@@ -14377,7 +14405,7 @@ not optimal, and may in particular contain duplicate blobs.
             return
         repo = self.chosen()
         if self.selection is None:
-            self.selection = [repo.find(repo.earliest_commit().mark)]
+            self.selection = [repo.find(repo.earliestCommit().mark)]
         if len(self.selection) == 1:
             commit = repo.events[self.selection[0]]
             if not isinstance(commit, Commit):
@@ -15432,7 +15460,7 @@ func main() {
         del filemaps
         # Bail out if we have read no commits
         try:
-            sp.repo.earliest_commit()
+            sp.repo.earliestCommit()
         except StopIteration:
             raise Recoverable("empty stream or repository.")
         # Warn about dubious branch links
@@ -15452,7 +15480,7 @@ func main() {
                           len(commit.properties or ""),
                           msg.strip()[:20]))
         # First, turn the root commit into a tag
-        if sp.repo.events && not sp.repo.earliest_commit().operations():
+        if sp.repo.events && not sp.repo.earliestCommit().operations():
             try:
                 initial, second = itertools.islice(sp.repo.commits(), 2)
                 sp.repo.tagify(initial,
@@ -15520,7 +15548,7 @@ func main() {
             except StopIteration:
                 pass
             else:
-                earliest = sp.repo.earliest_commit()
+                earliest = sp.repo.earliestCommit()
                 if commit != earliest:
                     sp.branchlink[commit.mark] = (commit, earliest)
             timeit("root")

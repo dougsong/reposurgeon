@@ -1353,6 +1353,12 @@ M 100644 :3 README
 	assertBool(t, isPassthrough(repo.events[12], "done"), true)
 	assertBool(t, isPassthrough(repo.events[11], "boogabooga"), true)
 
+	assertEqual(t, repo.earliestCommit().comment, "First revision.\n")
+	allcommits := repo.commits(nil)
+	lastcommit := repo.index(allcommits[len(allcommits)-1])
+	ancestors := repo.ancestors(lastcommit)
+	assertBool(t, ancestors.Equal(orderedIntSet{4, 2}), true)
+	
 	repo.cleanup()
 }
 
