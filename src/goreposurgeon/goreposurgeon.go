@@ -7225,47 +7225,60 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 	return nil
 }
 
-/*
+// Add a path to the preserve set, to be copied back on rebuild.
+func (repo *Repository) preserve(filename string) error {
+	if exists(filename) {
+		repo.preserveSet.Add(filename)
+	} else {
+		return fmt.Errorf("%s doesn't exist", filename)
+	}
+	return nil
+}
 
-    func preserve(self, filename):
-        "Add a path to the preserve set, to be copied back on rebuild."
-        if os.path.exists(filename):
-            self.preserveSet.add(filename)
-        else:
-            raise Recoverable("%s doesn't exist" % filename)
-    func unpreserve(self, filename):
-        "Remove a path from the preserve set."
-        if filename in self.preserveSet:
-            self.preserveSet.remove(filename)
-        else:
-            raise Recoverable("%s doesn't exist" % filename)
-    func preservable():
-        "Return the repo's preserve set."
-        return self.preserveSet
-    func rename(self, newname):
-        "Rename the repo."
-        try:
-            # Can fail if the target directory exists.
-            announce(debugSHUFFLE, "repository rename %s->%s calls os.rename(%s, %s)" % (self.name, newname, repr(self.subdir()), repr(self.subdir(newname))))
-            os.rename(self.subdir(), self.subdir(newname))
-            self.name = newname
-        except OSError as e:
-            raise Fatal("repo rename %s -> %s failed: %s"
-                                       % (self.subdir(), self.subdir(newname), e))
-    func insertEvent(self, event, where=None, legend=""):
-        "Insert an event just before the specified index."
-        if where is not None:
-            self.events.insert(where, event)
-        else if self.events && isinstance(self.events[-1], Passthrough) && self.events[-1].text == "done":
-            self.events.insert(-1, event)
-        else:
-            self.events.append(event)
-        self.declareSequenceMutation(legend)
+// Remove a path from the preserve set.
+func (repo *Repository) unpreserve(filename string) error {
+	if repo.preserveSet.Contains(filename) {
+		repo.preserveSet.Remove(filename)
+	} else {
+		return fmt.Errorf("%s is not preserved", filename)
+	}
+	return nil
+}
+
+// Return the repo's preserve set.
+func (repo *Repository) preservable() stringSet {
+	return repo.preserveSet
+}
+
+// Rename the repo.
+func (repo *Repository) rename(newname string) error {
+	// Can fail if the target directory exists.
+	announce(debugSHUFFLE, fmt.Sprintf("repository rename %s->%s calls os.Rename(%q, %q)", repo.name, newname, repo.subdir(""), repo.subdir(newname)))
+	err := os.Rename(repo.subdir(""), repo.subdir(newname))
+	if err != nil {
+		return fmt.Errorf("repo rename %s -> %s failed: %s", repo.subdir(""), repo.subdir(newname), err)
+	}
+	repo.name = newname
+	return nil
+}
+
+/*
+// Insert an event just before the specified index.
+func (repo *Repository) insertEvent(event, where=nil, legend="") {
+	if where != nil {
+		repo.events.insert(where, event)
+	} else if repo.events && isinstance(repo.events[-1], Passthrough) && repo.events[-1].text == "done" {
+		repo.events.insert(-1, event)
+	} else {
+		repo.events = append(repo.events, event)
+	}
+	repo.declareSequenceMutation(legend)
+}
 */
 
 func (repo *Repository) addEvent(event Event) {
 	repo.events = append(repo.events, event)
-        //repo.declareSequenceMutation("")
+        repo.declareSequenceMutation("")
 }
 
 /*
@@ -7283,14 +7296,19 @@ func (repo *Repository) addEvent(event Event) {
             if values && not newassigns:
                 complain("sequence modification left %s empty" % name)
             self.assignments[name] = newassigns
-    func declareSequenceMutation(self, warning=None):
-        "Mark the repo event sequence modified."
-        self._commits = None
-        self._markToIndex = nil
-        self._namecache = {}
-        if self.assignments && warning:
-            self.assignments = {}
-            complain("assignments invalidated by " + warning)
+*/
+
+// Mark the repo event sequence modified.
+func (repo *Repository) declareSequenceMutation(warning string) {
+        repo._markToIndex = nil
+        repo._namecache = nil
+        if len(repo.assignments) > 0 && warning != "" {
+		repo.assignments = nil
+		complain("assignments invalidated by " + warning)
+        }
+}
+
+/*
     func earliest_commit():
         "Return the earliest commit."
         return next(self.commits())
