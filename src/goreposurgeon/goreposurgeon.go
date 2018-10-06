@@ -7263,7 +7263,10 @@ func (repo *Repository) rename(newname string) error {
 
 // Insert an event just before the specified index.
 func (repo *Repository) insertEvent(event Event, where int, legend string) {
-	repo.events = append(repo.events[:where], append([]Event{event}, repo.events[where:]...)...)
+	// No-alloc insert: https://github.com/golang/go/wiki/SliceTricks
+	repo.events = append(repo.events, nil)
+	copy(repo.events[where+1:], repo.events[where:])
+	repo.events[where] = event
 	repo.declareSequenceMutation(legend)
 }
 
