@@ -14629,6 +14629,10 @@ func main() {
         if len(os.Args[1:]) == 0 {
 		os.Args = append(os.Args, "-")
         }
+	if interpreter.PreLoop != nil {
+		interpreter.PreLoop()
+	}
+	stop := false
 	for _, arg := range os.Args[1:] {
 		for _, acmd := range strings.Split(arg, ";") {
 			if acmd == "-" {
@@ -14645,14 +14649,23 @@ func main() {
 				if strings.HasPrefix(acmd, "--") {
 					acmd = acmd[2:]
 				}
-				// Call the base method so
-				// RecoverableExceptions will not be
-				// caught; we want them to abort
-				// scripting.
-				//cmd.Cmd.onecmd(interpreter, interpreter.precmd(acmd))
+				if interpreter.PreCommand != nil {
+					acmd = interpreter.PreCommand(acmd)
+				}
+				stop = interpreter.OneCmd(acmd)
+				if interpreter.PostCommand != nil {
+					stop = interpreter.PostCommand(stop, acmd)
+				}
+				if stop {
+					break;
+				}
 			}
 		}
 	}
+	if interpreter.PostLoop != nil {
+		interpreter.PostLoop()
+	}
+
 }
 
 /*
