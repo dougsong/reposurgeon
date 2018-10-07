@@ -10389,14 +10389,6 @@ Set or clear echoing of commands before processing.
         if verbose:
             announce(debugSHOUT, "echo %d" % self.echo)
 
-    func help_print():
-        os.Stdout.write("""
-Print a literal string.
-""")
-    func do_print(self, line str):
-        "Print a literal string."
-        os.Stdout.write(line + "\n")
-
     func help_resolve():
         os.Stdout.write("""
 Does nothing but resolve a selection-set expression
@@ -14602,6 +14594,14 @@ func (rs *Reposurgeon) DoEOF(lineIn string) (stopOut bool) {
 }
 func (rs *Reposurgeon) DoQuit(lineIn string) (stopOut bool) {
 	return true
+}
+func (rs *Reposurgeon) HelpPrint() {
+	rs.core.Output("Print a literal string.\n")
+}
+func (rs *Reposurgeon) DoPrint(lineIn string) (stopOut bool) {
+	rs.core.Output(lineIn)
+	rs.core.Output("\n")
+	return false
 }
 func (rs *Reposurgeon) DoFoo(lineIn string) (stopOut bool) {
 	rs.core.Output("The Foodogs of War have slipped!\n" + lineIn + "\n")
