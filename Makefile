@@ -63,6 +63,11 @@ gosetup:
 	GOPATH=$(GOPATH) go get -u golang.org/x/text/encoding/ianaindex
 	GOPATH=$(GOPATH) go get -u gitlab.com/ianbruene/Kommandant
 
+govet:
+	GOPATH=$(GOPATH) go vet repocutter
+	GOPATH=$(GOPATH) go vet repomapper
+	GOPATH=$(GOPATH) go vet goreposurgeon
+
 gotest:
 	GOPATH=$(GOPATH) GOCACHE=off go test goreposurgeon
 
