@@ -9611,6 +9611,7 @@ func (p *SelectionParser) parsePolyrange() selEvaluator {
 }
 
 const polyrangeRange = math.MinInt64
+const polyrangeDollar = math.MaxInt64
 
 // evalPolyrange evaluates a polyrange specification (list of intervals)
 func (p *SelectionParser) evalPolyrange(state selEvalState,
@@ -9632,6 +9633,9 @@ func (p *SelectionParser) evalPolyrange(state selEvalState,
 	spanning := false
 	for _, elt := range selection.Values() {
 		i := elt.(int)
+		if i == polyrangeDollar { // "$"
+			i = state.nItems() - 1
+		}
 		if i == polyrangeRange { // ".."
 			if last == math.MinInt64 {
 				panic(throw("command", "start of span is missing"))
