@@ -10342,52 +10342,6 @@ remaining arguments are available to the command logic.
     #
     func help_help():
         os.Stdout.write("Show help for a command. Follow with space and the command name.\n")
-    func help_verbose():
-        os.Stdout.write("""
-Without an argument, this command requests a report of the verbosity
-level.  'verbose 1' enables progress messages, 'verbose 0' disables
-them. Higher levels of verbosity are available but intended for
-developers only.
-""")
-    func do_verbose(self, line str):
-        global verbose
-        if line:
-            try:
-                verbose = int(line)
-            except ValueError:
-                complain("verbosity value must be an integer")
-        if not line or verbose:
-            announce(debugSHOUT, "verbose %d" % verbose)
-
-    func help_quiet():
-        os.Stdout.write("""
-Without an argument, this command requests a report of the quiet
-boolean; with the argument 'on' or 'off' it is changed.  When quiet is
-on, time-varying report fields which would otherwise cause spurious
-failures in regression testing are suppressed.
-""")
-    func do_quiet(self, line str):
-        global quiet
-        if line:
-            if line == "on":
-                quiet = true
-            else if line == "off":
-                quiet = false
-        if not line:
-            announce(debugSHOUT, "quiet %s" % ("on" if quiet else "off"))
-
-    func help_echo():
-        os.Stdout.write("""
-Set or clear echoing of commands before processing.
-""")
-    func do_echo(self, line str):
-        "Set or clear echoing commands before processing."
-        try:
-            self.echo = int(line)
-        except ValueError:
-            complain("echo value must be an integer")
-        if verbose:
-            announce(debugSHOUT, "echo %d" % self.echo)
 
     func help_resolve():
         os.Stdout.write("""
@@ -14585,6 +14539,9 @@ of tokens, so that spaces can be included.
 
 type Reposurgeon struct {
 	core *kommandant.Kmdt
+	verbose int
+	quiet bool
+	echo int
 }
 func (rs *Reposurgeon) SetCore(k *kommandant.Kmdt) {
 	rs.core = k
@@ -14594,6 +14551,67 @@ func (rs *Reposurgeon) DoEOF(lineIn string) (stopOut bool) {
 }
 func (rs *Reposurgeon) DoQuit(lineIn string) (stopOut bool) {
 	return true
+}
+func (rs *Reposurgeon) HelpVerbose() {
+	rs.core.Output(`
+Without an argument, this command requests a report of the verbosity
+level.  'verbose 1' enables progress messages, 'verbose 0' disables
+them. Higher levels of verbosity are available but intended for
+developers only.
+`)
+}
+func (rs *Reposurgeon) DoVerbose(lineIn string) (stopOut bool) {
+	if len(lineIn) != 0 {
+		verbose, err := strconv.Atoi(lineIn)
+		if err != nil {
+			rs.core.Output("verbosity value must be an integer\n")
+		} else {
+			rs.verbose = verbose
+		}
+	}
+	if len(lineIn) == 0 || rs.verbose > 0 {
+		rs.core.Output(fmt.Sprintf("verbose %d\n", rs.verbose))
+	}
+	return false
+}
+func (rs *Reposurgeon) HelpQuiet() {
+	rs.core.Output(`
+Without an argument, this command requests a report of the quiet
+boolean; with the argument 'on' or 'off' it is changed.  When quiet is
+on, time-varying report fields which would otherwise cause spurious
+failures in regression testing are suppressed.
+`)
+}
+func (rs *Reposurgeon) DoQuiet(lineIn string) (stopOut bool) {
+	if lineIn == "" {
+		if rs.quiet {
+			rs.core.Output("quiet on\n")
+		} else {
+			rs.core.Output("quiet off\n")
+		}
+	} else {
+		rs.quiet = lineIn == "on"
+	}
+	return false
+}
+func (rs *Reposurgeon) HelpEcho() {
+	rs.core.Output(`
+Set or clear echoing of commands before processing.
+`)
+}
+func (rs *Reposurgeon) DoEcho(lineIn string) (stopOut bool) {
+	if len(lineIn) != 0 {
+		echo, err := strconv.Atoi(lineIn)
+		if err != nil {
+			rs.core.Output("echo value must be an integer\n")
+		} else {
+			rs.echo = echo
+		}
+	}
+	if rs.verbose > 0 {
+		rs.core.Output(fmt.Sprintf("echo %d\n", rs.echo))
+	}
+	return false
 }
 func (rs *Reposurgeon) HelpPrint() {
 	rs.core.Output("Print a literal string.\n")
