@@ -14552,6 +14552,9 @@ func (rs *Reposurgeon) DoEOF(lineIn string) (stopOut bool) {
 func (rs *Reposurgeon) DoQuit(lineIn string) (stopOut bool) {
 	return true
 }
+func (rs * Reposurgeon) HelpHelp() {
+	rs.core.Output("Show help for a command. Follow with space and the command name.\n")
+}
 func (rs *Reposurgeon) HelpVerbose() {
 	rs.core.Output(`
 Without an argument, this command requests a report of the verbosity
