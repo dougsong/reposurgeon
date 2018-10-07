@@ -507,8 +507,8 @@ func reMake(patterns ...string) []regexp.Regexp {
 }
 
 func (vcs VCS) hasReference(comment []byte) bool {
-	for _, v := range vcs.cookies {
-		if v.Find(comment) != nil {
+	for i := range vcs.cookies {
+		if vcs.cookies[i].Find(comment) != nil {
 			return true
 		}
 	}
