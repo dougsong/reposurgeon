@@ -5447,7 +5447,7 @@ func (sp *StreamParser) sdReadProps(target string, checklength int) OrderedMap {
         start := sp.ccount
         for sp.ccount - start < int64(checklength) {
 		line := sp.readline()
-		announce(debugSVNPARSE, "readprops, line %d: %r",
+		announce(debugSVNPARSE, "readprops, line %d: %q",
 			sp.importLine, line)
 		if strings.HasPrefix(line, "PROPS-END") {
 			// This test should be !=, but I get random
