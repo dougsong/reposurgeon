@@ -9416,36 +9416,67 @@ func (p *SelectionParser) evalConjunct(preselection *orderedset.Set,
 }
 
 func (p *SelectionParser) parseTerm() selEvaluator {
+	// FIXME: @debug_lexer
+	var term selEvaluator
+	p.eatWS()
+	if p.peek() == '~' {
+		p.pop()
+		op := p.parseExpression()
+		term = func(x *SelectionParser, s *orderedset.Set) *orderedset.Set {
+			return x.evalTermNegate(s, op)
+		}
+	} else if p.peek() == '(' {
+		p.pop()
+		term = p.parseExpression()
+		p.eatWS()
+		if p.peek() != ')' {
+			panic(throw("command", "trailing junk on inner expression"))
+		} else {
+			p.pop()
+		}
+	} else {
+		term = p.parseVisibility()
+		if term == nil {
+			term = p.parsePolyrange()
+			if term == nil {
+				term = p.parseTextSearch()
+				if term == nil {
+					term = p.parseFuncall()
+				}
+			}
+		}
+	}
+	return term
+}
+
+func (p *SelectionParser) evalTermNegate(preselection *orderedset.Set,
+	op selEvaluator) *orderedset.Set {
+	return preselection
+}
+
+// parseVisibility parses a visibility spec
+func (p *SelectionParser) parseVisibility() selEvaluator {
+	return func(x *SelectionParser, s *orderedset.Set) *orderedset.Set { return s }
+}
+
+// parsePolyrange parses a polyrange specification (list of intervals)
+func (p *SelectionParser) parsePolyrange() selEvaluator {
+	return func(x *SelectionParser, s *orderedset.Set) *orderedset.Set { return s }
+}
+
+// parseTextSearch parses a text search specification
+func (p *SelectionParser) parseTextSearch() selEvaluator {
+	return func(x *SelectionParser, s *orderedset.Set) *orderedset.Set { return s }
+}
+
+// parseFuncall parses a function call
+func (p *SelectionParser) parseFuncall() selEvaluator {
 	return func(x *SelectionParser, s *orderedset.Set) *orderedset.Set { return s }
 }
 
 /*
 
 class SelectionParser(object):
-    @debug_lexer
-    func parse_term():
-        self.line = self.line.lstrip()
-        if self.peek() == '~':
-            self.pop()
-            op = self.parse_expression()
-            term = lambda p: self.eval_term_negate(p, op)
-        else if self.peek() == '(':
-            self.pop()
-            term = self.parse_expression()
-            self.line = self.line.lstrip()
-            if self.peek() != ')':
-                raise Recoverable("trailing junk on inner expression")
-            else:
-                self.pop()
-        else:
-            term = self.parse_visibility()
-            if term is None:
-                term = self.parse_polyrange()
-                if term is None:
-                    term = self.parse_textsearch()
-                    if term is None:
-                        term = self.parse_funcall()
-        return term
     @debug_lexer
     func eval_term_negate(self, preselection, op):
         pacify_pylint(preselection)
