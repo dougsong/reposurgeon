@@ -3,6 +3,7 @@ repocutter
 repomapper
 pkg
 golang.org
+gitlab.com
 *.1
 *.html
 MANIFEST
