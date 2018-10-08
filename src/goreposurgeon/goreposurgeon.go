@@ -10575,51 +10575,6 @@ List all known symbolic names of branches and tags. Supports > redirection.
                 if isinstance(event, Tag):
                     parse.stdout.write("tag    %s\n" % event.name)
 
-    func do_script(self, line str):
-        "Read and execute commands from a named file."
-        if not line:
-            complain("script requires a file argument")
-            return
-        try:
-            self.callstack.append(line.split())
-            with open(self.callstack[-1][0], "rb") as scriptfp:
-                scriptfp = make_wrapper(scriptfp)
-                while true:
-                    scriptline = scriptfp.readline()
-                    if not scriptline:
-                        break
-                    # Handle multiline commands
-                    while scriptline.endswith("\\\n"):
-                        scriptline = scriptline[:-2] + scriptfp.readline()
-                    # Simulate shell here-document processing
-                    if '<<' not in scriptline:
-                        heredoc = None
-                    else:
-                        (scriptline, terminator) = scriptline.split("<<")
-                        heredoc = tempfile.NamedTemporaryFile(mode="wb",
-                                                              delete=false)
-                        while true:
-                            nextline = scriptfp.readline()
-                            if nextline == '':
-                                break
-                            else if nextline == terminator:
-                                break
-                            else:
-                                heredoc.write(polybytes(nextline))
-                        heredoc.close()
-                        # Note: the command must accept < redirection!
-                        scriptline += "<" + heredoc.name
-                    # End of heredoc simulation
-                    for i in range(len(self.callstack[-1])):
-                        scriptline = scriptline.replace('$' + str(i), self.callstack[-1][i])
-                    scriptline =  scriptline.replace('$$', str(os.getpid()))
-                    self.onecmd(self.precmd(scriptline))
-                    if heredoc:
-                        os.remove(heredoc.name)
-            self.callstack.pop()
-        except IOError as e:
-            complain("script failure on '%s': %s" % (line, e))
-
     func do_history(self, _line):
         "Dump your command list from this session so far."
         for line in self.history:
@@ -14675,6 +14630,7 @@ type Reposurgeon struct {
 	verbose int
 	quiet   bool
 	echo    int
+	callstack [][]string
 }
 
 func (rs *Reposurgeon) SetCore(k *kommandant.Kmdt) {
@@ -14877,6 +14833,84 @@ func (rs *Reposurgeon) DoPrint(lineIn string) (stopOut bool) {
 	rs.core.Output("\n")
 	return false
 }
+
+func (rs *Reposurgeon) HelpScript() {
+	rs.core.Output("Read and Execute commands from a named file.\n")
+}
+func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
+	if len(lineIn) == 0 {
+		rs.core.Output("script requires a file argument\n")
+		return
+	}
+	words := strings.Split(lineIn, " ")
+	rs.callstack = append(rs.callstack, words)
+	fname, vars := words[0], words[1:]
+	scriptfp, err := os.Open(fname)
+	if err != nil {
+		rs.core.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
+		return
+	}
+	defer scriptfp.Close()
+
+	scanner := bufio.NewScanner(scriptfp)
+	for scanner.Scan() {
+		scriptline := scanner.Text()
+		// Handle multiline commands
+		for strings.HasSuffix(scriptline, "\\\n") {
+			scriptline = scriptline[:len(scriptline)-2] + scanner.Text()
+		}
+
+		// Simulate shell here-document processing
+		if strings.Contains(scriptline, "<<") {
+			heredoc, err := ioutil.TempFile("", "reposurgeon-")
+			if err != nil {
+				rs.core.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
+				return
+			}
+			//defer os.Remove(heredoc.Name())
+
+			stuff := strings.Split(scriptline, "<<")
+			scriptline = stuff[0]
+			terminator := stuff[1]
+			for true {
+				scanner.Scan()
+				nextline := scanner.Text()
+				if nextline == "" {
+					break
+				} else if nextline == terminator {
+					break
+				} else {
+					_, err := heredoc.WriteString(nextline + "\n") // unnecessary copy
+					if err != nil {
+						rs.core.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
+						return
+					}
+				}
+			}
+
+			heredoc.Close()
+			// Note: the command must accept < redirection!
+			scriptline += "<" + heredoc.Name()
+		}
+		// End of heredoc simulation
+
+		// Positional variables
+		// TODO: double check to see if the +1 is correct
+		for i, v := range vars {
+			ref := "$"+strconv.FormatInt(int64(i), 10)
+			scriptline = strings.Replace(scriptline, ref, v, -1)
+		}
+		scriptline = strings.Replace(scriptline, "$$", strconv.FormatInt(int64(os.Getpid()), 10), -1)
+		rs.core.OneCmd(scriptline)
+	}
+	if err := scanner.Err(); err != nil {
+		rs.core.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
+	}
+
+	rs.callstack = rs.callstack[:len(rs.callstack)-1]
+	return false
+}
+
 func (rs *Reposurgeon) DoFoo(lineIn string) (stopOut bool) {
 	rs.core.Output("The Foodogs of War have slipped!\n" + lineIn + "\n")
 	return false
