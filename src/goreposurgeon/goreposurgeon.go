@@ -9451,7 +9451,15 @@ func (p *SelectionParser) parseTerm() selEvaluator {
 
 func (p *SelectionParser) evalTermNegate(preselection *orderedset.Set,
 	op selEvaluator) *orderedset.Set {
-	return preselection
+	// FIXME: @debug_lexer
+	negated := op(p, p.allItems())
+	remainder := orderedset.New()
+	for i, n := 0, p.nItems(); i < n; i++ {
+		if !negated.Contains(i) {
+			remainder.Add(i)
+		}
+	}
+	return remainder
 }
 
 // parseVisibility parses a visibility spec
@@ -9477,11 +9485,6 @@ func (p *SelectionParser) parseFuncall() selEvaluator {
 /*
 
 class SelectionParser(object):
-    @debug_lexer
-    func eval_term_negate(self, preselection, op):
-        pacify_pylint(preselection)
-        allitems = orderedIntSet(self.allitems)
-        return allitems - orderedIntSet(op(allitems))
     @debug_lexer
     func parse_visibility():
         "Parse a visibility spec."
