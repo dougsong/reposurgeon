@@ -26,7 +26,7 @@ Things that still need unit tests:
 
 * nontrivial case of commit head method
 
-* repository named() lookup - can't test yet without assignment logic 
+* repository named() lookup - can't test yet without assignment logic
 
 * parsing of inline fileops.
 
@@ -119,18 +119,18 @@ func TestStringSet(t *testing.T) {
 	ts8 := newStringSet("a", "b", "c", "d")
 	ts9 := newStringSet("b", "e")
 	diff := ts8.Subtract(ts9)
-	if diff[0]!="a"  || diff[1]!="c" || diff[2]!="d" || len(diff)!=3{
+	if diff[0] != "a" || diff[1] != "c" || diff[2] != "d" || len(diff) != 3 {
 		t.Errorf("unexpected result of set difference: %v", diff)
 	}
 
 	sum := ts8.Union(ts9)
-	if sum[0]!="a"  || sum[1]!="b" || sum[2]!="c" || sum[4] != "e" || len(sum)!=5{
+	if sum[0] != "a" || sum[1] != "b" || sum[2] != "c" || sum[4] != "e" || len(sum) != 5 {
 		t.Errorf("unexpected result of set union: %v", sum)
 	}
 }
 
 func TestOrderedIntSet(t *testing.T) {
-	ts := newOrderedIntSet(1, 2, 3) 
+	ts := newOrderedIntSet(1, 2, 3)
 	if ts.Contains(4) {
 		t.Error("Contain check failed on \"d\", expected false.")
 	}
@@ -189,12 +189,12 @@ func TestOrderedIntSet(t *testing.T) {
 	ts8 := newOrderedIntSet(1, 2, 3, 4)
 	ts9 := newOrderedIntSet(2, 5)
 	diff := ts8.Subtract(ts9)
-	if diff[0]!=1  || diff[1]!=3 || diff[2]!=4 || len(diff)!=3{
+	if diff[0] != 1 || diff[1] != 3 || diff[2] != 4 || len(diff) != 3 {
 		t.Errorf("unexpected result of set difference: %v", diff)
 	}
 
 	sum := ts8.Union(ts9)
-	if sum[0]!=1  || sum[1]!=2 || sum[2]!=3 || sum[4] != 5 || len(sum)!=5{
+	if sum[0] != 1 || sum[1] != 2 || sum[2] != 3 || sum[4] != 5 || len(sum) != 5 {
 		t.Errorf("unexpected result of set union: %v", sum)
 	}
 }
@@ -552,11 +552,11 @@ func TestBlobfile(t *testing.T) {
 	expectdir := fmt.Sprintf("foo/.rs%d-fubar/blobs/", os.Getpid())
 
 	blob1 := newBlob(repo)
-	assertEqual(t, blob1.getBlobfile(false), expectdir + "000/000/000")
+	assertEqual(t, blob1.getBlobfile(false), expectdir+"000/000/000")
 	blob2 := newBlob(repo)
-	assertEqual(t, blob2.getBlobfile(false), expectdir + "000/000/001")
+	assertEqual(t, blob2.getBlobfile(false), expectdir+"000/000/001")
 
-	nuke("foo", "")	// In case last unit test didn't execute cleanly
+	nuke("foo", "") // In case last unit test didn't execute cleanly
 	const sampleContent = "Abracadabra!"
 	blob1.setContent(sampleContent, 0)
 	saw := blob1.getContent()
@@ -566,8 +566,8 @@ func TestBlobfile(t *testing.T) {
 
 func TestUndecodable(t *testing.T) {
 	var TestTable = []struct {
-		text string
-		codec string
+		text     string
+		codec    string
 		expected bool
 	}{
 		{"Potrzebie", "US-ASCII", true},
@@ -621,12 +621,12 @@ Test to be sure we can read in a tag in inbox format.
 	t2.tagger = newAttribution("")
 	t2.emailIn(msg, false)
 
-	assertEqual(t, "sample2", t2.name, )
+	assertEqual(t, "sample2", t2.name)
 	assertEqual(t, ":2317", t2.committish)
-	
+
 	if t1.undecodable("US-ASCII") {
 		t.Errorf("%q was expected to be decodable, is not", t1.String())
-		
+
 	}
 }
 
@@ -649,7 +649,7 @@ func (s stringSet) Equal(other stringSet) bool {
 
 func TestStringScan(t *testing.T) {
 	type testEntry struct {
-		input string
+		input  string
 		tokens []string
 	}
 	var testTable = []testEntry{
@@ -658,7 +658,7 @@ func TestStringScan(t *testing.T) {
 		{"xyzzy \"zorkmid\"", []string{"xyzzy", "zorkmid"}},
 		{"\"bubble\" \"squeak\"", []string{"bubble", "squeak"}},
 	}
-	
+
 	for _, item := range testTable {
 		trial := stringScan(item.input)
 		if !stringSliceEqual(trial, item.tokens) {
@@ -676,7 +676,7 @@ func TestFileOp(t *testing.T) {
 	if !fileop1.paths(nil).Equal(stringSet{"README"}) {
 		t.Error("fileop1 path extraction failed equality check")
 	}
-	
+
 	fileop2 := newFileOp(nil).construct("M", "100755", ":2", "DRINKME")
 	assertEqual(t, "M", fileop2.op)
 	assertEqual(t, "100755", fileop2.mode)
@@ -729,7 +729,7 @@ func TestFileOp(t *testing.T) {
 	assertEqual(t, "100644", fileop8.mode)
 	assertEqual(t, ":4", fileop8.ref)
 	assertEqual(t, "COPYING", fileop8.path)
-	assertEqual(t, line8 + "\n", fileop8.String())
+	assertEqual(t, line8+"\n", fileop8.String())
 
 	line9 := "M 100755 :5 runme.sh"
 	fileop9 := newFileOp(nil).parse(line9)
@@ -737,39 +737,39 @@ func TestFileOp(t *testing.T) {
 	assertEqual(t, "100755", fileop9.mode)
 	assertEqual(t, ":5", fileop9.ref)
 	assertEqual(t, "runme.sh", fileop9.path)
-	assertEqual(t, line9 + "\n", fileop9.String())
+	assertEqual(t, line9+"\n", fileop9.String())
 
 	line10 := "D deleteme"
 	fileop10 := newFileOp(nil).parse(line10)
 	assertEqual(t, "D", fileop10.op)
 	assertEqual(t, "deleteme", fileop10.path)
-	assertEqual(t, line10 + "\n", fileop10.String())
+	assertEqual(t, line10+"\n", fileop10.String())
 
 	line11 := `R DRINKME EATME`
 	fileop11 := newFileOp(nil).parse(line11)
 	assertEqual(t, "R", fileop11.op)
 	assertEqual(t, "DRINKME", fileop11.source)
 	assertEqual(t, "EATME", fileop11.target)
-	assertEqual(t, line11 + "\n", fileop11.String())
+	assertEqual(t, line11+"\n", fileop11.String())
 
 	line12 := `C DRINKME EATME`
 	fileop12 := newFileOp(nil).parse(line12)
 	assertEqual(t, "C", fileop12.op)
 	assertEqual(t, "DRINKME", fileop12.source)
 	assertEqual(t, "EATME", fileop12.target)
-	assertEqual(t, line12 + "\n", fileop12.String())
+	assertEqual(t, line12+"\n", fileop12.String())
 
 	line13 := "N :6 EATME"
 	fileop13 := newFileOp(nil).parse(line13)
 	assertEqual(t, "N", fileop13.op)
 	assertEqual(t, ":6", fileop13.ref)
 	assertEqual(t, "EATME", fileop13.path)
-	assertEqual(t, line13 + "\n", fileop13.String())
+	assertEqual(t, line13+"\n", fileop13.String())
 
 	line14 := "deleteall"
 	fileop14 := newFileOp(nil).parse(line14)
 	assertEqual(t, "deleteall", fileop14.op)
-	assertEqual(t, line14 + "\n", fileop14.String())
+	assertEqual(t, line14+"\n", fileop14.String())
 
 	if fileop1.relevant(fileop2) {
 		t.Error("relevance check succeed where failure expected")
@@ -782,8 +782,8 @@ func TestFileOp(t *testing.T) {
 	commit := newCommit(repo)
 	repo.addEvent(commit)
 	// Appending these in opposite order from how they should sort
-	commit.appendOperation(*fileop1)	// README
-	commit.appendOperation(*fileop2)	// DRINKME
+	commit.appendOperation(*fileop1) // README
+	commit.appendOperation(*fileop2) // DRINKME
 	commit.sortOperations()
 	assertEqual(t, commit.fileops[0].path, "DRINKME")
 	assertEqual(t, commit.fileops[1].path, "README")
@@ -799,7 +799,7 @@ func TestCommitMethods(t *testing.T) {
 	commit.authors = append(commit.authors, *author)
 	commit.comment = "Example commit for unit testing\n"
 
-	// Check for actual cloning. rather than just copying a reference 
+	// Check for actual cloning. rather than just copying a reference
 	copied := commit.clone(repo)
 	copied.committer.fullname = "J. Fred Muggs"
 	if commit.committer.fullname == copied.committer.fullname {
@@ -928,10 +928,10 @@ func TestParentChildMethods(t *testing.T) {
 	assertPathsAre(commit1, []string{"README"})
 	addop(commit1, "M 100644 :5 COPYING")
 	assertPathsAre(commit1, []string{"README", "COPYING"})
-	assertBool(t, commit3.visible("README")!=nil, true)
-	assertBool(t, commit3.visible("nosuchfile")!=nil, false)
+	assertBool(t, commit3.visible("README") != nil, true)
+	assertBool(t, commit3.visible("nosuchfile") != nil, false)
 	addop(commit2, "D README")
-	assertBool(t, commit3.visible("README")!=nil, false)
+	assertBool(t, commit3.visible("README") != nil, false)
 	addop(commit2, "M 100644 :6 randomness")
 	m := commit3.manifest()
 	if len(m) != 2 {
@@ -1039,7 +1039,7 @@ func TestSVNParse(t *testing.T) {
 	expected := "23"
 	assertEqual(t, saw, expected)
 
-	rawmsg :=`K 7
+	rawmsg := `K 7
 svn:log
 V 79
 A vanilla repository - standard layout, linear history, no tags, no branches. 
@@ -1053,7 +1053,7 @@ svn:date
 V 27
 2011-11-30T16:41:55.154754Z
 PROPS-END
-`	
+`
 	sp := newStreamParser(nil)
 	sp.fp = strings.NewReader(rawmsg)
 	om := sp.sdReadProps("test", len(rawmsg))
@@ -1114,7 +1114,7 @@ M 100644 :3 README
 		t.Errorf("saw branchset %v, expected %v", saw2, exp2)
 	}
 	saw3 := repo.branchmap()
-	exp3 := map[string]string{"refs/heads/master":":4"}
+	exp3 := map[string]string{"refs/heads/master": ":4"}
 	if !reflect.DeepEqual(saw3, exp3) {
 		t.Errorf("saw branchmap %v, expected %v", saw3, exp3)
 	}
@@ -1304,7 +1304,7 @@ M 100644 :3 README
 
 `
 	a.Reset()
-	// Check partial export - Event 4 is the second commit 
+	// Check partial export - Event 4 is the second commit
 	if err := repo.fastExport(newOrderedIntSet(4), &a,
 		newStringSet(), nil, false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1313,8 +1313,8 @@ M 100644 :3 README
 
 	repo.checkUniqueness(false, nil)
 	assertEqual(t, repo.uniqueness, "committer_date")
-	
-	authordump := "esr = Eric S. Raymond <esr@thyrsus.com>"	
+
+	authordump := "esr = Eric S. Raymond <esr@thyrsus.com>"
 	err := repo.readAuthorMap(newOrderedIntSet(), strings.NewReader(authordump))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1358,7 +1358,7 @@ M 100644 :3 README
 	lastcommit := repo.index(allcommits[len(allcommits)-1])
 	ancestors := repo.ancestors(lastcommit)
 	assertBool(t, ancestors.Equal(orderedIntSet{4, 2}), true)
-	
+
 	repo.cleanup()
 }
 

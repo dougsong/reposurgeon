@@ -94,9 +94,9 @@ import (
 	"time"
 	"unicode"
 
+	kommandant "gitlab.com/ianbruene/Kommandant"
 	terminal "golang.org/x/crypto/ssh/terminal"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
-	kommandant "gitlab.com/ianbruene/Kommandant"
 )
 
 // Go's panic/defer/recover feature is a weak primitive for catchable
@@ -123,7 +123,7 @@ import (
 // hook that nukes the on-disk storage for repositories.
 
 type exception struct {
-	class string
+	class   string
 	message string
 }
 
@@ -154,7 +154,7 @@ func catch(accept string, x interface{}) *exception {
 }
 
 // Change these in the unlikely the event this is ported to Windows
-const userReadWriteMode = 0775	// rwxrwxr-x
+const userReadWriteMode = 0775 // rwxrwxr-x
 
 func exists(pathname string) bool {
 	_, err := os.Stat(pathname)
@@ -180,36 +180,36 @@ func getsize(pathname string) int64 {
 }
 
 func min(a, b int) int {
-    if a < b {
-        return a
-    }
-    return b
+	if a < b {
+		return a
+	}
+	return b
 }
 
 // filecopy does what it says, returning bytes copied and an error indication
 func filecopy(src, dst string) (int64, error) {
-        sourceFileStat, err := os.Stat(src)
-        if err != nil {
-                return 0, err
-        }
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return 0, err
+	}
 
-        if !sourceFileStat.Mode().IsRegular() {
-                return 0, fmt.Errorf("%s is not a regular file", src)
-        }
+	if !sourceFileStat.Mode().IsRegular() {
+		return 0, fmt.Errorf("%s is not a regular file", src)
+	}
 
-        source, err := os.Open(src)
-        if err != nil {
-                return 0, err
-        }
-        defer source.Close()
+	source, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer source.Close()
 
-        destination, err := os.Create(dst)
-        if err != nil {
-                return 0, err
-        }
-        defer destination.Close()
-        nBytes, err := io.Copy(destination, source)
-        return nBytes, err
+	destination, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer destination.Close()
+	nBytes, err := io.Copy(destination, source)
+	return nBytes, err
 }
 
 // This representation optimizes for small memory footprint at the expense
@@ -392,7 +392,7 @@ func (s orderedIntSet) Union(other orderedIntSet) orderedIntSet {
 }
 
 func (s orderedIntSet) Sort() {
-	sort.Slice(s, func(i, j int) bool {return s[i] < s[j]}) 
+	sort.Slice(s, func(i, j int) bool { return s[i] < s[j] })
 }
 
 func (s *orderedIntSet) String() string {
@@ -964,11 +964,10 @@ var fileFilters = map[string]struct {
 // particular, RFC3339 dates are good. and so is git's native
 // integer-Unix-timestamp/timezone pairs.
 
-
 // Commit-Meta is the extractor;s idea of per-commit metadata
 type CommitMeta struct {
-	ci string
-	ai string
+	ci     string
+	ai     string
 	branch string
 }
 
@@ -976,36 +975,36 @@ type CommitMeta struct {
 // place where its common data lives. The methods that have to be common
 // to extractors are specified by the Extractor interface, next up.
 type ExtractorMeta struct {
-	name string			// extractor name
-	vcs *VCS			// underlying VCS
-	visible bool			// should it be selectable?
+	name    string // extractor name
+	vcs     *VCS   // underlying VCS
+	visible bool   // should it be selectable?
 }
 
 type Extractor interface {
 	// Return meta-information about an extractor.
 	getMeta() ExtractorMeta
-        // Gather the topologically-ordered lists of revisions and the parent map
+	// Gather the topologically-ordered lists of revisions and the parent map
 	// (revlist and parent members)
 	gatherRevisionIDs(*RepoStreamer) error
-        // Gather all other per-commit data except branch IDs
+	// Gather all other per-commit data except branch IDs
 	// (ai and ci members in self.meta list elements)
 	gatherCommitData(*RepoStreamer) error
-        // Gather all branch heads and tags (refs and tags members)
+	// Gather all branch heads and tags (refs and tags members)
 	gatherAllReferences(*RepoStreamer) error
 	// Color commits with their branch names
 	colorBranches(*RepoStreamer) error
-        // Hook for any cleanup actions required after streaming.
+	// Hook for any cleanup actions required after streaming.
 	postExtract(*Repository)
-        // Return true if repo has no unsaved changes.
+	// Return true if repo has no unsaved changes.
 	isClean() bool
-	// Check the directory out to a specified revision, return a manifest.	
+	// Check the directory out to a specified revision, return a manifest.
 	checkout(string) stringSet
-        // Return a commit's change comment as a string.
+	// Return a commit's change comment as a string.
 	getComment(string) string
 }
 
 // How these are structured: RepoStreamer is the common code that
-// sequences extractions. It expects to be able to call a VCS-specific 
+// sequences extractions. It expects to be able to call a VCS-specific
 // extractor class. Each of these extractors has the option of using
 // ColorMixin, which can simulate Git's algorithm for branch-coloring
 // commits.
@@ -1015,36 +1014,35 @@ type MixerCapable interface {
 	gatherChildTimestamps(*RepoStreamer) map[string]time.Time
 }
 
-
 // ColorMixer is a mixin class for simulating the git branch-coloring algorithm
 type ColorMixer struct {
-	base *RepoStreamer
-        commitStamps map[string]time.Time	// icommit -> timestamp
-        childStamps map[string]time.Time	// commit -> timestamp of latest child
+	base         *RepoStreamer
+	commitStamps map[string]time.Time // icommit -> timestamp
+	childStamps  map[string]time.Time // commit -> timestamp of latest child
 }
 
 func (cm *ColorMixer) colorMixerInit(base *RepoStreamer) {
 	cm.base = base
 	cm.commitStamps = make(map[string]time.Time)
-        cm.childStamps = make(map[string]time.Time)
+	cm.childStamps = make(map[string]time.Time)
 }
 
 // simulateGitColoring colors branches in the order the tips occur.
 func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
-        // This algorithm is intended to emulate git's coloring algorithm;
-        // note that this includes emulating the fact that git's algorithm
-        // is not lossless--that is, it is possible to construct a git
-        // fast-import stream that git cannot reproduce on output with
-        // git fast-export
-        // First retrieve the commit timestamps, they are used in
+	// This algorithm is intended to emulate git's coloring algorithm;
+	// note that this includes emulating the fact that git's algorithm
+	// is not lossless--that is, it is possible to construct a git
+	// fast-import stream that git cannot reproduce on output with
+	// git fast-export
+	// First retrieve the commit timestamps, they are used in
 	// branchColor below
-        err := mc.gatherCommitTimestamps()
-        if err != nil || cm.commitStamps  == nil {
+	err := mc.gatherCommitTimestamps()
+	if err != nil || cm.commitStamps == nil {
 		panic(throw("extractor", "Could not retrieve commit timestamps: %v", err))
 	}
-        // This will be used in _branchColor below
-        cm.childStamps = mc.gatherChildTimestamps(base)
-        for refname, refobj := range base.refs.dict {
+	// This will be used in _branchColor below
+	cm.childStamps = mc.gatherChildTimestamps(base)
+	for refname, refobj := range base.refs.dict {
 		if base.branchesAreColored && strings.HasPrefix(refname, "refs/heads/") {
 			return
 		}
@@ -1058,18 +1056,18 @@ func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
 var farFuture = time.Unix(1<<63-1, 0)
 
 func (cm *ColorMixer) _branchColor(rev, color string) {
-        // This ensures that a branch tip rev never gets colored over
-        if _, ok := cm.childStamps[rev]; !ok {
+	// This ensures that a branch tip rev never gets colored over
+	if _, ok := cm.childStamps[rev]; !ok {
 		cm.childStamps[rev] = farFuture
 	}
-        // This is used below to ensure that a branch color is never colored
-        // back to a tag
-        isBranch := strings.HasPrefix(color, "refs/heads/")
-        // No need for a condition here because we will only be starting
-        // this while loop from an initial call with a branch tip or from
-        // a recursive call with a parent we know we want to color; the
-        // loop exit is controlled by filtering out the parents that are
-        // already colored properly
+	// This is used below to ensure that a branch color is never colored
+	// back to a tag
+	isBranch := strings.HasPrefix(color, "refs/heads/")
+	// No need for a condition here because we will only be starting
+	// this while loop from an initial call with a branch tip or from
+	// a recursive call with a parent we know we want to color; the
+	// loop exit is controlled by filtering out the parents that are
+	// already colored properly
 	timestamp := cm.commitStamps[rev]
 	cm.base.meta[rev].branch = color
 	// We only want to color back to parents that don't have a branch
@@ -1105,7 +1103,7 @@ func findVCS(name string) *VCS {
 
 func lineByLine(rs *RepoStreamer, command string, errfmt string,
 	hook func(string, *RepoStreamer) error) error {
-        r, cmd, err1 := readFromProcess(command)
+	r, cmd, err1 := readFromProcess(command)
 	if err1 != nil {
 		return err1
 	}
@@ -1160,8 +1158,8 @@ func (ge GitExtractor) getMeta() ExtractorMeta {
 func (ge GitExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
 	hook := func(line string, rs *RepoStreamer) error {
 		fields := strings.Fields(line)
-                rs.revlist = append(rs.revlist, fields[0])
-                rs.parents[fields[0]] = fields[1:]
+		rs.revlist = append(rs.revlist, fields[0])
+		rs.parents[fields[0]] = fields[1:]
 		return nil
 	}
 	return lineByLine(rs,
@@ -1174,8 +1172,8 @@ func (ge GitExtractor) gatherCommitData(rs *RepoStreamer) error {
 	hook := func(line string, rs *RepoStreamer) error {
 		line = strings.Trim(line, "\n")
 		fields := strings.Split(line, "|")
-                rs.meta[fields[0]].ci = fields[1]
-                rs.meta[fields[0]].ai = fields[2]
+		rs.meta[fields[0]].ci = fields[1]
+		rs.meta[fields[0]].ai = fields[2]
 		return nil
 	}
 	return lineByLine(rs,
@@ -1183,7 +1181,6 @@ func (ge GitExtractor) gatherCommitData(rs *RepoStreamer) error {
 		"git's gatherCommitData: %v",
 		hook)
 }
-
 
 func (ge GitExtractor) gatherAllReferences(rs *RepoStreamer) error {
 	err := filepath.Walk(".git/refs", func(pathname string, info os.FileInfo, err error) error {
@@ -1196,15 +1193,15 @@ func (ge GitExtractor) gatherAllReferences(rs *RepoStreamer) error {
 		}
 		data, err := ioutil.ReadFile(pathname)
 		if err != nil {
-			return fmt.Errorf("while walking the refs tree: %v", err) 
+			return fmt.Errorf("while walking the refs tree: %v", err)
 		}
 		// 5: strips off the.git/ prefix
 		rs.refs.set(pathname[5:], strings.Trim(string(data), "\n"))
 		return nil
 	})
-        rs.baton.twirl("")
+	rs.baton.twirl("")
 
-        rf, cmd, err1 := readFromProcess("git tag -l")
+	rf, cmd, err1 := readFromProcess("git tag -l")
 	if err1 != nil {
 		return fmt.Errorf("while listing tags: %v", err)
 	}
@@ -1259,10 +1256,10 @@ func (ge GitExtractor) gatherAllReferences(rs *RepoStreamer) error {
 				comment += line + "\n"
 			}
 		}
-		rs.refs.set("refs/tags/" + tag, objecthash)
+		rs.refs.set("refs/tags/"+tag, objecthash)
 		if objecthash != taghash {
 			// committish isn't a mark; we'll fix that later
-			tagobj := *newTag(nil, tag, objecthash, nil, 
+			tagobj := *newTag(nil, tag, objecthash, nil,
 				newAttribution(tagger),
 				comment)
 			rs.tags = append(rs.tags, tagobj)
@@ -1274,18 +1271,18 @@ func (ge GitExtractor) gatherAllReferences(rs *RepoStreamer) error {
 
 // colorBranches colors all commits with their branch name.
 func (ge GitExtractor) colorBranches(rs *RepoStreamer) error {
-        // This is really cheating since fast-export could give us the
-        // whole repo, but it's the only way I've found to get the correct
-        // mapping of commits to branches, and we still want to test the
-        // rest of the extractor logic independently, so here goes...
+	// This is really cheating since fast-export could give us the
+	// whole repo, but it's the only way I've found to get the correct
+	// mapping of commits to branches, and we still want to test the
+	// rest of the extractor logic independently, so here goes...
 	file, err1 := ioutil.TempFile(".", "rse")
 	if err1 != nil {
-	    return err1
+		return err1
 	}
 	defer os.Remove(file.Name())
 	markfile, err2 := os.Open(file.Name())
 	if err2 != nil {
-	    return err1
+		return err1
 	}
 	data, err3 := captureFromProcess("git fast-export --all --export-marks=" + file.Name())
 	if err3 != nil {
@@ -1304,8 +1301,8 @@ func (ge GitExtractor) colorBranches(rs *RepoStreamer) error {
 		fields := strings.Fields(fline)
 		marks[fields[0]] = fields[1]
 	}
-        branch := ""
-        for _, line := range strings.Split(data, "\n") {
+	branch := ""
+	for _, line := range strings.Split(data, "\n") {
 		fields := strings.Fields(line)
 		if len(fields) != 2 {
 			// The lines we're interested in will always have
@@ -1330,7 +1327,7 @@ func (ge GitExtractor) colorBranches(rs *RepoStreamer) error {
 }
 
 func (ge GitExtractor) _metadata(rev string, format string) string {
-        line, err := captureFromProcess(fmt.Sprintf("git log -1 --format='%s' %s", format, rev))
+	line, err := captureFromProcess(fmt.Sprintf("git log -1 --format='%s' %s", format, rev))
 	if err != nil {
 		panic(throw("extractor", "Couldn't spawn git log: %v", err))
 	}
@@ -1341,12 +1338,12 @@ func (ge GitExtractor) _metadata(rev string, format string) string {
 }
 
 func (ge GitExtractor) postExtract(_repo *Repository) {
-        exec.Command("git", "checkout", "--quiet", "master").Run()
+	exec.Command("git", "checkout", "--quiet", "master").Run()
 }
 
 // isClean is a predicate;  return true if repo has no unsaved changes.
 func (ge GitExtractor) isClean() bool {
-        data, err := captureFromProcess("git ls-files --modified")
+	data, err := captureFromProcess("git ls-files --modified")
 	if err != nil {
 		panic(throw("extractor", "Couldn't spawn git ls-files --modified: %v", err))
 	}
@@ -1355,29 +1352,29 @@ func (ge GitExtractor) isClean() bool {
 
 // checkout checks the repository out to a specified revision.
 func (ge GitExtractor) checkout(rev string) stringSet {
-        exec.Command("git", "checkout", "--quiet",  rev).Run()
-        data, err := captureFromProcess("git ls-files")
+	exec.Command("git", "checkout", "--quiet", rev).Run()
+	data, err := captureFromProcess("git ls-files")
 	if err != nil {
 		panic(throw("extractor", "Couldn't spawn git ls-files in checkout: %v", err))
 	}
-        manifest := strings.Split(data, "\n")
+	manifest := strings.Split(data, "\n")
 	if manifest[len(manifest)-1] == "" {
 		manifest = manifest[:len(manifest)-1]
 	}
-        return newStringSet(manifest...)
+	return newStringSet(manifest...)
 }
 
 // getComment returns a commit's change comment as a string.
 func (ge GitExtractor) getComment(rev string) string {
-        return ge._metadata(rev, "%B")
+	return ge._metadata(rev, "%B")
 }
 
 // Repository extractor for the hg version-control system
 type HgExtractor struct {
 	b ExtractorMeta
 	ColorMixer
-        tagsFound bool
-        bookmarksFound bool
+	tagsFound      bool
+	bookmarksFound bool
 }
 
 func newHgExtractor() *HgExtractor {
@@ -1397,14 +1394,14 @@ func (he HgExtractor) getMeta() ExtractorMeta {
 
 //gatherRevisionIDs gets the topologically-ordered list of revisions and parents.
 func (he HgExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
-        // hg changesets can only have up to two parents
-        // we have to use short (12-nibble) hashes because that's all "hg tags"
-        // and "hg branches" give us.  Hg's CLI is rubbish.
+	// hg changesets can only have up to two parents
+	// we have to use short (12-nibble) hashes because that's all "hg tags"
+	// and "hg branches" give us.  Hg's CLI is rubbish.
 	hook := func(line string, rs *RepoStreamer) error {
 		fields := strings.Fields(line)
 		rs.revlist = append(rs.revlist, fields[0])
-                // non-existent parents are given all-0s hashes.
-                // Did I mention that the Hg CLI is rubbish?
+		// non-existent parents are given all-0s hashes.
+		// Did I mention that the Hg CLI is rubbish?
 		parents := make([]string, 0)
 		for _, f := range fields[1:] {
 			if f != "000000000000" {
@@ -1419,12 +1416,12 @@ func (he HgExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
 		"hg's gatherRevisionIDs: %v",
 		hook)
 	// No way to reverse the log order, so it has to be done here
-	for i := len(rs.revlist)/2-1; i >= 0; i-- {
-		opp := len(rs.revlist)-1-i
+	for i := len(rs.revlist)/2 - 1; i >= 0; i-- {
+		opp := len(rs.revlist) - 1 - i
 		rs.revlist[i], rs.revlist[opp] = rs.revlist[opp], rs.revlist[i]
 	}
-	
-	return err	
+
+	return err
 }
 
 // gatherCommitData gets all other per-commit data except branch IDs
@@ -1433,8 +1430,8 @@ func (he HgExtractor) gatherCommitData(rs *RepoStreamer) error {
 		fields := strings.Fields(line)
 		hash := fields[0]
 		ci := fields[1]
-                // Because hg doesn't store separate author and committer info,
-                // we just use the committer for both.  Alternate possibility,
+		// Because hg doesn't store separate author and committer info,
+		// we just use the committer for both.  Alternate possibility,
 		// just set the committer - I (ESR) believe git does that
 		// defaulting itself.  But let's not count on it, since we
 		// might be handing the history stream to somebody's importer
@@ -1493,10 +1490,10 @@ func (he HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
 				"Missing colon in 'hg branches' line: %q", line))
 		}
 		h := string(seqref[1])
-		rs.refs.set("refs/heads/" + n, h)
+		rs.refs.set("refs/heads/"+n, h)
 		return nil
 	}
-	err := lineByLine(rs, 
+	err := lineByLine(rs,
 		"hg branches --closed",
 		"fetching hg branches",
 		hook1)
@@ -1518,11 +1515,11 @@ func (he HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
 					"Missing colon in 'hg bookmarks' line: %q", line))
 			}
 			h := string(seqref[1])
-			rs.refs.set("refs/" + bookmarkRef + n, h)
+			rs.refs.set("refs/"+bookmarkRef+n, h)
 			he.bookmarksFound = true
 			return nil
 		}
-		err = lineByLine(rs, 
+		err = lineByLine(rs,
 			"hg bookmarks",
 			"fetching hg bookmarks",
 			hook2)
@@ -1537,10 +1534,10 @@ func (he HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
 		fields := strings.Split(line, "\t")
 		h := fields[len(fields)-1]
 		n := strings.Join(fields[:len(fields)-1], "\t")
-                if n == "tip" {		// pseudo-tag for most recent commit
-			return	nil	// We don't want it
+		if n == "tip" { // pseudo-tag for most recent commit
+			return nil // We don't want it
 		}
-		rs.refs.set("refs/tags/" + n, h[:12])
+		rs.refs.set("refs/tags/"+n, h[:12])
 		return nil
 	}
 	he.tagsFound = true
@@ -1551,16 +1548,16 @@ func (he HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
 	if err != nil {
 		panic(throw("extractor", "while fetching hg tags: %v", err))
 	}
-        // We have no annotated tags, so he.tags = []
-        // Conceivably it might be better to treat the commit message that
-        // creates the tag as an annotation, but that's a job for the surgeon
-        // later, not the extractor now.
+	// We have no annotated tags, so he.tags = []
+	// Conceivably it might be better to treat the commit message that
+	// creates the tag as an annotation, but that's a job for the surgeon
+	// later, not the extractor now.
 	return nil
 }
 
 func (he HgExtractor) _hg_branch_items() map[string]string {
 	out := make(map[string]string)
-	err := lineByLine(nil, 
+	err := lineByLine(nil,
 		"hg log --template {node|short} {branch}\\n",
 		"in _hg_branch_items: %v",
 		func(line string, rs *RepoStreamer) error {
@@ -1576,8 +1573,8 @@ func (he HgExtractor) _hg_branch_items() map[string]string {
 
 // Return initial mapping of commit hash -> timestamp of child it is colored from
 func (he HgExtractor) gatherChildTimestamps(rs *RepoStreamer) map[string]time.Time {
-        results := make(map[string]time.Time)
-        for h, branch := range he._hg_branch_items() {
+	results := make(map[string]time.Time)
+	for h, branch := range he._hg_branch_items() {
 		// Fill in the branch as a default; this will ensure
 		// that any commit that is not in the ancestor tree of
 		// a tag will get the correct hg branch name, even if
@@ -1595,12 +1592,11 @@ func (he HgExtractor) gatherChildTimestamps(rs *RepoStreamer) map[string]time.Ti
 		}
 	}
 	rs.branchesAreColored = true
-        return results
+	return results
 }
 
-
 func (he HgExtractor) _branchColorItems() map[string]string {
-        if !he.tagsFound && !he.bookmarksFound {
+	if !he.tagsFound && !he.bookmarksFound {
 		// If we didn't find any tags or bookmarks, we can
 		// safely color all commits using hg branch names,
 		// since hg stores them with commit metadata; note,
@@ -1611,34 +1607,33 @@ func (he HgExtractor) _branchColorItems() map[string]string {
 		// do not match the git coloring algorithm
 		return he._hg_branch_items()
 	}
-        // Otherwise we have to use the emulated git algorithm to color
-        // any commits that are tags or the ancestors of tags, since git
-        // prioritizes tags over branches when coloring; we will color
-        // commits that are not in the ancestor tree of any tag in
-        // gatherChildTimestamps below, using the hg branch names
+	// Otherwise we have to use the emulated git algorithm to color
+	// any commits that are tags or the ancestors of tags, since git
+	// prioritizes tags over branches when coloring; we will color
+	// commits that are not in the ancestor tree of any tag in
+	// gatherChildTimestamps below, using the hg branch names
 	return nil
 }
 
 // colorBanches assigns branches to commits in an extracted repository
 func (he HgExtractor) colorBranches(rs *RepoStreamer) error {
-        color_items := he._branchColorItems()
-        if color_items != nil {
+	color_items := he._branchColorItems()
+	if color_items != nil {
 		// If the repo will give us a complete list of (commit
 		// hash, branch name) pairs, use that to do the coloring
 		for h, color := range color_items {
 			rs.meta[h].branch = color
 		}
-        } else {
+	} else {
 		// Otherwise we have to emulate the git coloring algorithm
 		he.simulateGitColoring(he, rs)
 	}
 	return nil
 }
 
-
 func (he HgExtractor) postExtract(repo *Repository) {
-        he.checkout("tip")
-        if !repo.branchset().Contains("refs/heads/master") { 
+	he.checkout("tip")
+	if !repo.branchset().Contains("refs/heads/master") {
 		for _, event := range repo.events {
 			switch event.(type) {
 			case *Commit:
@@ -1651,10 +1646,10 @@ func (he HgExtractor) postExtract(repo *Repository) {
 		}
 	}
 }
-			
+
 // isClean returns true if repo has no unsaved changes
 func (he HgExtractor) isClean() bool {
-        data, err := captureFromProcess("hg status --modified")
+	data, err := captureFromProcess("hg status --modified")
 	if err != nil {
 		panic(throw("extractor", "Couldn't spawn hg status --modified: %v", err))
 	}
@@ -1682,28 +1677,28 @@ func mustCaptureFromProcess(command string, errorclass string) string {
 
 // checkout checka the directory out to a specified revision, return a manifest.
 func (he HgExtractor) checkout(rev string) stringSet {
-        pwd, err := os.Getwd()
+	pwd, err := os.Getwd()
 	if err != nil {
 		panic(throw("extractor", "Could not get working directory: %v", err))
 	}
-        _, errcode := captureFromProcess("hg update -C " + rev)
+	_, errcode := captureFromProcess("hg update -C " + rev)
 	if errcode != nil {
 		panic(throw("extractor", "Could not check out: %v", errcode))
 	}
-        // 'hg update -C' can delete and recreate the current working
-        // directory, so cd to what should be the current directory
-	mustChdir(pwd, "extractor") 
-	
-        // Sometimes, hg update can fail because of missing subrepos. When that
-        // happens, try really hard to fake it. This is safe because subrepos
-        // don't work in any case, so it's always safe to ignore them.
-        //
-        // There are tons of problems with this parsing. It doesn't safely
-        // handle subrepositories with special chars like spaces, quotes or that
-        // sort of thing. It also doesn't handle comments or other rarely used
-        // stuff in .hgsub files. This is documented poorly at best so it's
-        // unclear how things should work ideally.
-        if errcode != nil {
+	// 'hg update -C' can delete and recreate the current working
+	// directory, so cd to what should be the current directory
+	mustChdir(pwd, "extractor")
+
+	// Sometimes, hg update can fail because of missing subrepos. When that
+	// happens, try really hard to fake it. This is safe because subrepos
+	// don't work in any case, so it's always safe to ignore them.
+	//
+	// There are tons of problems with this parsing. It doesn't safely
+	// handle subrepositories with special chars like spaces, quotes or that
+	// sort of thing. It also doesn't handle comments or other rarely used
+	// stuff in .hgsub files. This is documented poorly at best so it's
+	// unclear how things should work ideally.
+	if errcode != nil {
 		subrepoTxt, subcatErr := captureFromProcess("hg cat -r" + rev + " .hgsub")
 		subrepoArgs := make([]string, 0)
 		if subcatErr == nil {
@@ -1724,7 +1719,7 @@ func (he HgExtractor) checkout(rev string) stringSet {
 		mustChdir(pwd, "extractor")
 		// Remove extraneous files.
 		captureFromProcess("hg purge --config extensions.purge= --all")
-		mustChdir(pwd, "extractor") 
+		mustChdir(pwd, "extractor")
 
 		// The Python version of this code had a section
 		// beginning with the comment "Remove everything
@@ -1744,7 +1739,7 @@ func (he HgExtractor) checkout(rev string) stringSet {
 		if len(subrepoArgs) > 0 {
 			captureFromProcess("hg revert --all --no-backup -r " + rev + strings.Join(subrepoArgs, " "))
 			mustChdir(pwd, "extractor")
-			mustCaptureFromProcess("hg debugsetparents " + rev, "extracror")
+			mustCaptureFromProcess("hg debugsetparents "+rev, "extracror")
 			mustChdir(pwd, "extractor")
 			mustCaptureFromProcess("hg debugrebuilddirstate", "extractor")
 			mustChdir(pwd, "extractor")
@@ -1755,15 +1750,15 @@ func (he HgExtractor) checkout(rev string) stringSet {
 			}
 			mustChdir(pwd, "extractor")
 		}
-        }
+	}
 	data := mustCaptureFromProcess("hg manifest", "extractor")
-        manifest := strings.Trim(data, "\n")
-        return newStringSet(strings.Split(manifest, "\n")...)
+	manifest := strings.Trim(data, "\n")
+	return newStringSet(strings.Split(manifest, "\n")...)
 }
 
 // getComment returns a commit's change comment as a string.
 func (he HgExtractor) getComment(rev string) string {
-        data, err := captureFromProcess("hg log -r " + rev + " --template {desc}\\n")
+	data, err := captureFromProcess("hg log -r " + rev + " --template {desc}\\n")
 	if err != nil {
 		panic(throw("extractor", "Couldn't spawn hg log: %v", err))
 	}
@@ -1772,53 +1767,53 @@ func (he HgExtractor) getComment(rev string) string {
 
 // Repository factory driver class for all repo analyzers.
 type RepoStreamer struct {
-        revlist []string		// commit identifiers, oldest first
-        parents map[string][]string	// commit -> [parent-commit, ...]
-        meta map[string]*CommitMeta	// commit -> committer/author/branch
-        refs OrderedMap			// 'refs/class/name' -> commit
-        tags []Tag			// Tag objects (annotated tags only)
-        tagseq int
-        commitMap map[string]*Commit
-        visibleFiles map[string]map[string]signature
-        hashToMark map[[sha1.Size]byte]string
+	revlist            []string               // commit identifiers, oldest first
+	parents            map[string][]string    // commit -> [parent-commit, ...]
+	meta               map[string]*CommitMeta // commit -> committer/author/branch
+	refs               OrderedMap             // 'refs/class/name' -> commit
+	tags               []Tag                  // Tag objects (annotated tags only)
+	tagseq             int
+	commitMap          map[string]*Commit
+	visibleFiles       map[string]map[string]signature
+	hashToMark         map[[sha1.Size]byte]string
 	branchesAreColored bool
-        baton *Baton
-	extractor Extractor
+	baton              *Baton
+	extractor          Extractor
 }
 
 func newRepoStreamer(extractor Extractor) *RepoStreamer {
 	rs := new(RepoStreamer)
-        rs.revlist = make([]string, 0)
-        rs.parents = make(map[string][]string)
-        rs.meta = make(map[string]*CommitMeta)
-        rs.refs = newOrderedMap()
-        rs.tags = make([]Tag, 0)
-        rs.tagseq = 0
-        rs.commitMap = make(map[string]*Commit)
-        rs.visibleFiles = make(map[string]map[string]signature)
-        rs.hashToMark = make(map[[sha1.Size]byte]string)
+	rs.revlist = make([]string, 0)
+	rs.parents = make(map[string][]string)
+	rs.meta = make(map[string]*CommitMeta)
+	rs.refs = newOrderedMap()
+	rs.tags = make([]Tag, 0)
+	rs.tagseq = 0
+	rs.commitMap = make(map[string]*Commit)
+	rs.visibleFiles = make(map[string]map[string]signature)
+	rs.hashToMark = make(map[[sha1.Size]byte]string)
 	rs.extractor = extractor
 	return rs
 }
 
 // getParents returns the list of commit IDs of a commit's parents.
 func (be *RepoStreamer) getParents(rev string) []string {
-        return be.parents[rev]
+	return be.parents[rev]
 }
 
 // isTag ia a previcate; does rev refer to a tag?
 func (be *RepoStreamer) isTag(rev string) bool {
-        return strings.HasPrefix(be.meta[rev].branch, "refs/tags/")
+	return strings.HasPrefix(be.meta[rev].branch, "refs/tags/")
 }
 
 // getCommitter returns the committer's ID/date as a string.
 func (be *RepoStreamer) getCommitter(rev string) string {
-        return be.meta[rev].ci
+	return be.meta[rev].ci
 }
 
 // getAuthors returns a string list of the authors' names and email addresses.
 func (be *RepoStreamer) getAuthors(rev string) []string {
-        return []string{be.meta[rev].ai}
+	return []string{be.meta[rev].ai}
 }
 
 // fileSetAt returns the set of all files visible at a revision
@@ -1827,13 +1822,12 @@ func (rs *RepoStreamer) fileSetAt(revision string) stringSet {
 	for key, _ := range rs.visibleFiles[revision] {
 		fs.Add(key)
 	}
-	// Warning: order is nondeterministic 
+	// Warning: order is nondeterministic
 	return fs
 }
 
-
 func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, error) {
-        if !rs.extractor.isClean() {
+	if !rs.extractor.isClean() {
 		return nil, fmt.Errorf("repository directory has unsaved changes.")
 	}
 
@@ -1852,7 +1846,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 	}(&repo, &err)
 
 	meta := rs.extractor.getMeta()
-        repo.makedir()
+	repo.makedir()
 	front := fmt.Sprintf("#reposurgeon sourcetype %s\n", meta.vcs.name)
 	repo.addEvent(newPassthrough(repo, front))
 
@@ -1896,7 +1890,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 		}
 	}
 
-        if len(uncolored) > 0 {
+	if len(uncolored) > 0 {
 		if verbose >= 1 {
 			return nil, fmt.Errorf("missing branch attribute for %v", uncolored)
 		} else {
@@ -1907,37 +1901,37 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 
 	consume := make([]string, len(rs.revlist))
 	copy(consume, rs.revlist)
-	for _, revision  := range consume {
-                commit := newCommit(repo)
+	for _, revision := range consume {
+		commit := newCommit(repo)
 		commit.setMark(repo.newmark())
-                rs.baton.twirl("")
-                present := rs.extractor.checkout(revision)
-                parents := rs.getParents(revision)
+		rs.baton.twirl("")
+		present := rs.extractor.checkout(revision)
+		parents := rs.getParents(revision)
 		commit.committer = *newAttribution(rs.getCommitter(revision))
 		for _, a := range rs.getAuthors(revision) {
 			commit.authors = append(commit.authors,
 				*newAttribution(a))
 		}
-		for _, rev := range parents{
+		for _, rev := range parents {
 			commit.addParentCommit(rs.commitMap[rev])
 		}
-                commit.setBranch(rs.meta[revision].branch)
-                commit.comment = rs.extractor.getComment(revision)
-                if debugEnable(debugEXTRACT) {
+		commit.setBranch(rs.meta[revision].branch)
+		commit.comment = rs.extractor.getComment(revision)
+		if debugEnable(debugEXTRACT) {
 			msg := strconv.Quote(commit.comment)
 			announce(debugEXTRACT,
 				"r%s: comment '%s'", revision, msg)
 		}
-                // Git fast-import constructs the tree from the first parent only
-                // for a merge commit; fileops from all other parents have to be
-                // added explicitly
-                for _, rev := range parents[:1] {
-			for k,v := range rs.visibleFiles[rev] {
+		// Git fast-import constructs the tree from the first parent only
+		// for a merge commit; fileops from all other parents have to be
+		// added explicitly
+		for _, rev := range parents[:1] {
+			for k, v := range rs.visibleFiles[rev] {
 				rs.visibleFiles[revision][k] = v
 			}
 		}
 
-                if len(present) > 0 {
+		if len(present) > 0 {
 			removed := rs.fileSetAt(revision).Subtract(present)
 			for _, pathname := range present {
 				if isdir(pathname) {
@@ -1958,13 +1952,13 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 					// to an existing blob;
 					// generate modify, copy, or
 					// rename as appropriate.
-					if _, ok := rs.visibleFiles[revision][pathname]; !ok || rs.visibleFiles[revision][pathname]!=*newsig {
+					if _, ok := rs.visibleFiles[revision][pathname]; !ok || rs.visibleFiles[revision][pathname] != *newsig {
 						announce(debugEXTRACT, "r%s: update for %s", revision, pathname)
 						found := false
 						var deletia []string
 						for oldpath, oldsig := range rs.visibleFiles[revision] {
 							if oldsig == *newsig {
-								found = true		
+								found = true
 								if removed.Contains(oldpath) {
 									op := newFileOp(repo)
 									op.construct("R", oldpath, pathname)
@@ -2004,7 +1998,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 					// Actual content enters the representation
 					blob := newBlob(repo)
 					blob.setMark(blobmark)
-					filecopy(blob.getBlobfile(true),pathname)
+					filecopy(blob.getBlobfile(true), pathname)
 					blob.addalias(pathname)
 					repo.addEvent(blob)
 					// Its new fileop is added to the commit
@@ -2020,11 +2014,11 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 				commit.appendOperation(*op)
 				delete(rs.visibleFiles[revision], tbd)
 			}
-                }
-                if len(parents) == 0 { // && commit.branch != "refs/heads/master"
+		}
+		if len(parents) == 0 { // && commit.branch != "refs/heads/master"
 			reset := newReset(repo, commit.branch, "", commit)
 			repo.addEvent(reset)
-                }
+		}
 		commit.sortOperations()
 		commit.legacyID = revision
 		commit.properties = newOrderedMap()
@@ -2046,7 +2040,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 	}
 	// Last, append tag objects. Sort by tagger-date first
 	sort.Slice(rs.tags, func(i, j int) bool {
-		return rs.tags[i].tagger.date.Before(rs.tags[j].tagger.date) 
+		return rs.tags[i].tagger.date.Before(rs.tags[j].tagger.date)
 	})
 	for _, tag := range rs.tags {
 		// Hashes produced by the GitExtractor are turned into proper
@@ -2211,7 +2205,7 @@ const debugLEXER = 6    // Debug selection-language parsing
 var quiet = false
 
 // Boolean option false is represented by key not in option map,
-// true is represented by an empty stringlist value. 
+// true is represented by an empty stringlist value.
 var globalOptions map[string]stringSet
 
 func haveGlobalOption(name string) bool {
@@ -2221,7 +2215,7 @@ func haveGlobalOption(name string) bool {
 
 func globalOption(name string) stringSet {
 	d, _ := globalOptions[name]
-	return d	// Should be nil if not present
+	return d // Should be nil if not present
 }
 
 func setGlobalOption(name string, value stringSet) {
@@ -2308,8 +2302,8 @@ func emptyComment(c string) bool {
 
 // OrderedMap is a map witn preserved key order
 type OrderedMap struct {
-	keys []string
-	dict map[string]string
+	keys      []string
+	dict      map[string]string
 	valueLess func(string, string) bool
 }
 
@@ -2390,8 +2384,8 @@ var MessageBlockDivider = bytes.Repeat([]byte("-"), 78)
 // as a string.  This is appropriate because change comments are normally short.
 type MessageBlock struct {
 	hdnames stringSet
-	header map[string]string
-	body   string
+	header  map[string]string
+	body    string
 }
 
 // newMessageBlock is like net/mail ReadMessage but with a special delimiter.
@@ -2410,12 +2404,12 @@ func newMessageBlock(bp *bufio.Reader) (*MessageBlock, error) {
 			panic(throw("mailbox", "Ill-formed line in mail message"))
 		}
 		key := data[0:colon]
-		payload := strings.TrimSpace(data[colon+1:len(data)])
+		payload := strings.TrimSpace(data[colon+1 : len(data)])
 		msg.hdnames = append(msg.hdnames, key)
 		msg.header[key] = payload
 		return true
 	}
-	
+
 	if bp != nil {
 		inBody := false
 		firstline, err := bp.ReadBytes('\n')
@@ -2436,7 +2430,7 @@ func newMessageBlock(bp *bufio.Reader) (*MessageBlock, error) {
 				if len(msg.hdnames) >= 1 {
 					lasthdr := msg.hdnames[len(msg.hdnames)-1]
 					msg.setHeader(lasthdr,
-						msg.getHeader(lasthdr) + string(line))
+						msg.getHeader(lasthdr)+string(line))
 				}
 			} else if !inBody && !headerize(string(line)) {
 				inBody = true
@@ -2448,7 +2442,7 @@ func newMessageBlock(bp *bufio.Reader) (*MessageBlock, error) {
 				}
 				// undo byte-stuffing *after* the delimiter check
 				if bytes.HasPrefix(line, []byte(".")) {
-					line = line[1:len(line)-1]
+					line = line[1 : len(line)-1]
 				}
 				msg.body += string(line)
 			}
@@ -2707,17 +2701,17 @@ func (date *Date) setTZ(zone string) {
 	}
 }
 
-// Equal tests equality of Date objects 
+// Equal tests equality of Date objects
 func (date *Date) Equal(other Date) bool {
 	return date.timestamp.Equal(other.timestamp)
 }
 
-// Before tests time ordering of Date objects 
+// Before tests time ordering of Date objects
 func (date *Date) Before(other Date) bool {
 	return date.timestamp.Before(other.timestamp)
 }
 
-// After tests rime ordering of Date objects 
+// After tests rime ordering of Date objects
 func (date *Date) After(other Date) bool {
 	return date.timestamp.After(other.timestamp)
 }
@@ -2728,9 +2722,9 @@ func (date *Date) After(other Date) bool {
 
 // Attribution represents pins a reposiory event to a person and time.
 type Attribution struct {
-	fullname  string
-	email string
-	date  Date
+	fullname string
+	email    string
+	date     Date
 }
 
 var attributionRE = regexp.MustCompile(`([^<]*\s*)<([^>]*)>(\s*.*)`)
@@ -2839,7 +2833,7 @@ func (attr *Attribution) remap(authors map[string]Contributor) {
 
 type Cookie struct {
 	path string
-	rev string
+	rev  string
 }
 
 func (c Cookie) isEmpty() bool {
@@ -2857,15 +2851,15 @@ func (c Cookie) implies() string {
 
 // Blob represents a detached blob of data referenced by a mark.
 type Blob struct {
-	repo       *Repository
-	blobseq	   int
-	mark       string
-	pathlist   []string	// In-repo paths associated with this blob
-	colors     []string	// Scratch space for grapg coloring algorithms
-	cookie     Cookie	// CVS/SVN cookie analyzed out of this file
-	start      int64	// Seek start if this blob refers into a dump
-	size       int64	// length start if this blob refers into a dump
-	abspath    string
+	repo     *Repository
+	blobseq  int
+	mark     string
+	pathlist []string // In-repo paths associated with this blob
+	colors   []string // Scratch space for grapg coloring algorithms
+	cookie   Cookie   // CVS/SVN cookie analyzed out of this file
+	start    int64    // Seek start if this blob refers into a dump
+	size     int64    // length start if this blob refers into a dump
+	abspath  string
 	deleteme bool
 }
 
@@ -2874,7 +2868,7 @@ var blobseq int
 func newBlob(repo *Repository) *Blob {
 	b := new(Blob)
 	b.repo = repo
-	b.pathlist = make([]string, 0)	// These have an implied sequence.
+	b.pathlist = make([]string, 0) // These have an implied sequence.
 	b.colors = newStringSet()
 	b.start = -1
 	b.blobseq = blobseq
@@ -2888,12 +2882,12 @@ func (b Blob) getDelFlag() bool {
 
 // idMe IDs this blob for humans.
 func (b Blob) idMe() string {
-        return fmt.Sprintf("blob@%s", b.mark)
+	return fmt.Sprintf("blob@%s", b.mark)
 }
 
 // pathlist is implemented for uniformity with commits and fileops."
 func (b *Blob) paths(_pathtype string) []string {
-        return b.pathlist
+	return b.pathlist
 }
 
 func (b *Blob) addalias(argpath string) {
@@ -2906,19 +2900,19 @@ func (b *Blob) addalias(argpath string) {
 }
 
 func (b *Blob) setBlobfile(argpath string) {
-        b.abspath = argpath
+	b.abspath = argpath
 }
 
 // getBloobfile returns the path where the blob's content lives.
 func (b *Blob) getBlobfile(create bool) string {
-        if b.abspath != "" {
+	if b.abspath != "" {
 		return b.abspath
 	}
 	stem := fmt.Sprintf("%09d", b.blobseq)
 	// The point of the breaking up the ID into multiple sections is to use
 	// the filesystem to speed up lookup time.
 	parts := strings.Split(filepath.FromSlash(b.repo.subdir("")), "/")
-	parts = append(parts,  		
+	parts = append(parts,
 		[]string{"blobs", stem[0:3], stem[3:6], stem[6:len(stem)]}...)
 	if create {
 		dir := strings.Join(parts[0:len(parts)-1], "/")
@@ -2929,15 +2923,15 @@ func (b *Blob) getBlobfile(create bool) string {
 	}
 	return filepath.FromSlash(strings.Join(parts[0:len(parts)], "/"))
 }
-	
+
 // hasfile answers the question: "Does this blob have its own file?"
-func (b *Blob)  hasfile() bool {
-        return b.repo.seekstream != nil || b.start != -1
+func (b *Blob) hasfile() bool {
+	return b.repo.seekstream != nil || b.start != -1
 }
 
 // getContent gets the content of the blob as a string.
 func (b *Blob) getContent() string {
-        if !b.hasfile() {
+	if !b.hasfile() {
 		var data = make([]byte, b.size)
 		_, err := b.repo.seekstream.ReadAt(data, b.start)
 		if err != nil {
@@ -2948,7 +2942,7 @@ func (b *Blob) getContent() string {
 	var file io.ReadCloser
 	var err error
 	var buf bytes.Buffer
-        if haveGlobalOption("compressblobs") {
+	if haveGlobalOption("compressblobs") {
 		file, err = gzip.NewReader(&buf)
 	} else {
 		file, err = os.Open(b.getBlobfile(false))
@@ -2957,7 +2951,7 @@ func (b *Blob) getContent() string {
 		panic(fmt.Errorf("Blob creation: %v", err))
 	}
 	defer file.Close()
-        data, err := ioutil.ReadAll(file)
+	data, err := ioutil.ReadAll(file)
 	if err != nil {
 		panic(fmt.Errorf("Blob write: %v", err))
 	}
@@ -2966,9 +2960,9 @@ func (b *Blob) getContent() string {
 
 // setContent sets the content of the blob from a string.
 func (b *Blob) setContent(text string, tell int64) {
-        b.start = tell
-        b.size = int64(len(text))
-        if b.hasfile() {
+	b.start = tell
+	b.size = int64(len(text))
+	if b.hasfile() {
 		var file io.WriteCloser
 		var err error
 		var buf bytes.Buffer
@@ -2976,7 +2970,7 @@ func (b *Blob) setContent(text string, tell int64) {
 			file = gzip.NewWriter(&buf)
 		} else {
 			file, err = os.OpenFile(b.getBlobfile(true),
-				os.O_WRONLY | os.O_CREATE, userReadWriteMode)
+				os.O_WRONLY|os.O_CREATE, userReadWriteMode)
 		}
 		if err != nil {
 			panic(fmt.Errorf("Blob update: %v", err))
@@ -2991,10 +2985,10 @@ func (b *Blob) setContent(text string, tell int64) {
 
 // materialize stores this content as a separate file, if it isn't already.
 func (b *Blob) materialize() string {
-        if !b.hasfile() {
+	if !b.hasfile() {
 		b.setContent(b.getContent(), 0)
 	}
-        return b.getBlobfile(false)
+	return b.getBlobfile(false)
 }
 
 // sha returns the SHA-1 hash of the blob content. Used only for indexing,
@@ -3010,16 +3004,16 @@ func (b Blob) getMark() string {
 
 // setMark sets the blob's mark and clears the mark lookup cache.
 func (b *Blob) setMark(mark string) string {
-        b.mark = mark
+	b.mark = mark
 	if b.repo != nil {
 		b.repo._eventByMark = nil
 	}
-        return mark
+	return mark
 }
 
 // forget de-links this commit from its repo.
 func (b *Blob) forget() {
-        b.repo = nil
+	b.repo = nil
 }
 
 // moveto changes the repo this blob is associated with."
@@ -3032,14 +3026,14 @@ func (b *Blob) moveto(repo *Repository) *Blob {
 			"blob rename calls os.rename(%s, %s)", oldloc, newloc)
 		os.Rename(oldloc, newloc)
 	}
-        return b
+	return b
 }
 
 // clone makes a copy of this blob, pointing at the same file."
 func (b *Blob) clone(repo *Repository) *Blob {
-        c := newBlob(repo)
-        c.colors = newStringSet()
-        if b.hasfile() {
+	c := newBlob(repo)
+	c.colors = newStringSet()
+	if b.hasfile() {
 		announce(debugSHUFFLE,
 			"blob clone for %s (%s) calls os.Link(): %s -> %s", b.mark, b.pathlist, b.getBlobfile(false), c.getBlobfile(false))
 		err := os.Link(b.getBlobfile(false), c.getBlobfile(true))
@@ -3047,7 +3041,7 @@ func (b *Blob) clone(repo *Repository) *Blob {
 			panic(fmt.Errorf("Blob clone: %v", err))
 		}
 	}
-        return c
+	return c
 }
 
 // Examples of embedded VCS headers:
@@ -3062,7 +3056,7 @@ var dollarId = regexp.MustCompile(`\$Id *: *([^$]+) *\$`)
 var dollarRevision = regexp.MustCompile(`\$Rev(?:ision) *: *([^$]*) *\$`)
 var dollarLastChanged = regexp.MustCompile(`\$LatChangedRev *: *([^$]*) *\$`)
 
-func (blob *Blob) parseCookie(content string) Cookie{
+func (blob *Blob) parseCookie(content string) Cookie {
 	// Parse CVS && Subversion $-headers
 	// There'd better not be more than one of these per blob.
 	for _, m := range dollarId.FindAllStringSubmatch(content, 0) {
@@ -3082,31 +3076,31 @@ func (blob *Blob) parseCookie(content string) Cookie{
 	for _, m := range dollarLastChanged.FindAllStringSubmatch(content, 0) {
 		blob.cookie.rev = strings.TrimSpace(m[1])
 	}
-	return blob.cookie  
+	return blob.cookie
 }
 
 func (b Blob) String() string {
-        if b.hasfile() {
+	if b.hasfile() {
 		fn := b.getBlobfile(false)
-		if !exists(fn)  {
+		if !exists(fn) {
 			return ""
 		}
 	}
 	content := b.getContent()
-	data := fmt.Sprintf("blob\nmark %s\ndata %d\n",	b.mark, len(content))
+	data := fmt.Sprintf("blob\nmark %s\ndata %d\n", b.mark, len(content))
 	return data + content + "\n"
 }
 
 type Tag struct {
-	repo *Repository
-	name string
-	color string
+	repo       *Repository
+	name       string
+	color      string
 	committish string
-	target *Commit
-	tagger *Attribution
-	comment string
-	legacyID string
-	deleteme bool
+	target     *Commit
+	tagger     *Attribution
+	comment    string
+	legacyID   string
+	deleteme   bool
 }
 
 func newTag(repo *Repository,
@@ -3132,11 +3126,11 @@ func (t Tag) getMark() string {
 
 // remember records an attachment to a repo and commit.
 func (t *Tag) remember(repo *Repository, committish string, target *Commit) {
-        t.repo = repo
+	t.repo = repo
 	t.target = target
-        if t.target != nil {
+	if t.target != nil {
 		t.committish = target.getMark()
-        } else {
+	} else {
 		t.committish = committish
 	}
 	if t.target != nil {
@@ -3146,16 +3140,16 @@ func (t *Tag) remember(repo *Repository, committish string, target *Commit) {
 
 // forget removes this tag's attachment to its commit and repo.
 func (t *Tag) forget() {
-        if t.target != nil {
-                t.target.detach(t)
+	if t.target != nil {
+		t.target.detach(t)
 		t.target = nil
 	}
-        t.repo = nil
+	t.repo = nil
 }
 
 // index returns our 0-origin index in our repo.
 func (t *Tag) index() int {
-        return t.repo.index(t)
+	return t.repo.index(t)
 }
 
 // idMe IDs this tag for humans."
@@ -3164,57 +3158,57 @@ func (t Tag) idMe() string {
 	if t.legacyID != "" {
 		suffix = "=<" + t.legacyID + ">"
 	}
-        return fmt.Sprintf("tag@%s%s (%s)", t.committish, suffix, t.name)
+	return fmt.Sprintf("tag@%s%s (%s)", t.committish, suffix, t.name)
 }
 
 // actionStamp controls how a tag stamp is made
 func (t *Tag) actionStamp() string {
-        return t.tagger.actionStamp()
+	return t.tagger.actionStamp()
 }
 
 // showlegacy yields a legacy ID in the expected form for the ancestral system.
 func (t *Tag) showlegacy() string {
-        if t.legacyID == "" {
+	if t.legacyID == "" {
 		return ""
 	}
-        // Special case for Subversion
-        if t.repo != nil && t.repo.vcs != nil && t.repo.vcs.name == "svn" {
+	// Special case for Subversion
+	if t.repo != nil && t.repo.vcs != nil && t.repo.vcs.name == "svn" {
 		return "r" + t.legacyID
-        } else {
+	} else {
 		return t.legacyID
 	}
 }
 
 // tags enables do_tags() to report tags.
 func (t *Tag) tags(modifiers stringSet, eventnum int, _cols int) string {
-        return fmt.Sprintf("%6d\ttag\t%s", eventnum+1, t.name)
+	return fmt.Sprintf("%6d\ttag\t%s", eventnum+1, t.name)
 }
 
 // emailOut enables do_mailbox_out() to report tag metadata
 func (t *Tag) emailOut(modifiers stringSet, eventnum int,
 	filterRegexp *regexp.Regexp) string {
-        msg, _ := newMessageBlock(nil)
-        msg.setHeader("Event-Number", fmt.Sprintf("%d", eventnum+1))
+	msg, _ := newMessageBlock(nil)
+	msg.setHeader("Event-Number", fmt.Sprintf("%d", eventnum+1))
 	msg.setHeader("Tag-Name", t.name)
 	msg.setHeader("Target-Mark", t.committish)
-        if t.tagger != nil {
-            t.tagger.emailOut(modifiers, msg, "Tagger")
+	if t.tagger != nil {
+		t.tagger.emailOut(modifiers, msg, "Tagger")
 	}
-        if t.legacyID != "" {
+	if t.legacyID != "" {
 		msg.setHeader("Legacy-ID", t.legacyID)
 	}
 	check := strings.Split(t.comment, "\n")[0]
 	if len(check) > 64 {
 		check = check[0:64]
 	}
-        msg.setHeader("Check-Text", check)
-        msg.setPayload(t.comment)
-        if t.comment != "" && !strings.HasSuffix(t.comment, "\n") {
-            complain("in tag %s, comment was not LF-terminated.", t.name)
+	msg.setHeader("Check-Text", check)
+	msg.setPayload(t.comment)
+	if t.comment != "" && !strings.HasSuffix(t.comment, "\n") {
+		complain("in tag %s, comment was not LF-terminated.", t.name)
 	}
-        if filterRegexp != nil{
+	if filterRegexp != nil {
 		for key, _ := range msg.header {
-			if len(filterRegexp.Find([]byte(key + ":"))) > 0 {
+			if len(filterRegexp.Find([]byte(key+":"))) > 0 {
 				msg.deleteHeader(key)
 			}
 		}
@@ -3225,26 +3219,26 @@ func (t *Tag) emailOut(modifiers stringSet, eventnum int,
 
 // emailIn updates this Tag from a parsed message block.
 func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
-        tagname := msg.getHeader("Tag-Name")
-        if tagname == ""  {
+	tagname := msg.getHeader("Tag-Name")
+	if tagname == "" {
 		panic(throw("mailbox", "update to tag %s is malformed", t.name))
 	}
-        modified := false
-        if t.name != tagname {
+	modified := false
+	if t.name != tagname {
 		announce(debugEMAILIN,
 			"in tag %s, Tag-Name is modified %q -> %q",
 			msg.getHeader("Event-Number"), t.name, tagname)
 		t.name = tagname
 		modified = true
 	}
-        if target := msg.getHeader("Target-Mark"); target != "" && target != t.committish {
-                modified = true
+	if target := msg.getHeader("Target-Mark"); target != "" && target != t.committish {
+		modified = true
 		t.committish = target
 	}
 	if newtagger := msg.getHeader("Tagger"); newtagger != "" {
-                newname, newemail, _, err := parseAttributionLine(newtagger)
+		newname, newemail, _, err := parseAttributionLine(newtagger)
 		if err != nil || newname == "" || newemail == "" {
-			panic(throw("mailbox", "Can't recognize address in Tagger: " + newtagger))
+			panic(throw("mailbox", "Can't recognize address in Tagger: "+newtagger))
 		} else if t.tagger.fullname != newname || t.tagger.email != newemail {
 			t.tagger.fullname, t.tagger.email = newname, newemail
 			announce(debugEMAILIN,
@@ -3273,34 +3267,34 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 		}
 	}
 
-        if legacy := msg.getHeader("Legacy-ID"); legacy != "" && legacy != t.legacyID {
-                modified = true
+	if legacy := msg.getHeader("Legacy-ID"); legacy != "" && legacy != t.legacyID {
+		modified = true
 		t.legacyID = legacy
 	}
-        newcomment := msg.getPayload()
-        if haveGlobalOption("canonicalize") {
+	newcomment := msg.getPayload()
+	if haveGlobalOption("canonicalize") {
 		newcomment = strings.TrimSpace(newcomment)
 		newcomment = strings.Replace(newcomment, "\r\n", "\n", 1)
 		newcomment += "\n"
 	}
-        if newcomment != t.comment {
+	if newcomment != t.comment {
 		announce(debugEMAILIN, "in tag %s, comment is modified %q -> %q",
 			msg.getHeader("Event-Number"), t.comment, newcomment)
 		modified = true
 		t.comment = newcomment
 	}
 
-        if fill && t.tagger.fullname == "" {
+	if fill && t.tagger.fullname == "" {
 		t.tagger.fullname, t.tagger.email = whoami()
 		modified = true
 	}
-	
+
 	return modified
 }
 
 // ianaDecode tells if a string has undecodable i18n sequences in it.
 // http://www.iana.org/assignments/character-sets/character-sets.xhtml
-func ianaDecode (data, codec string) (string, bool, error) {
+func ianaDecode(data, codec string) (string, bool, error) {
 	// This works around a bug in the ianaindex package.
 	// It should return a copying decoder if the name is a synonym for ASCII
 	// but does not.
@@ -3315,8 +3309,8 @@ func ianaDecode (data, codec string) (string, bool, error) {
 		"IBM367",
 		"cp367",
 		"csASCII",
-		"ascii",	// Unaccountably not an IANA name
-		"ASCII",	// Unaccountably not an IANA name
+		"ascii", // Unaccountably not an IANA name
+		"ASCII", // Unaccountably not an IANA name
 	}
 	if asciiNames.Contains(codec) {
 		for _, c := range data {
@@ -3358,54 +3352,54 @@ func (t *Tag) undecodable(codec string) bool {
 // branchname returns the full branch reference corresponding to a tag.
 func branchname(tagname string) string {
 	fulltagname := tagname
-        if strings.Count(tagname, "/") == 0 {
+	if strings.Count(tagname, "/") == 0 {
 		fulltagname = "tags/" + fulltagname
 	}
-        if !strings.HasPrefix(fulltagname, "refs/") {
+	if !strings.HasPrefix(fulltagname, "refs/") {
 		fulltagname = "refs/" + fulltagname
 	}
-        return fulltagname
+	return fulltagname
 }
-	
+
 // stamp enables do_stamp() to report action stamps
 func (t *Tag) stamp(_modifiers stringSet, _eventnum int, cols int) string {
-        report := "<" + t.tagger.actionStamp() + "> " + strings.Split(t.comment, "\n")[0]
-        if cols > 0 {
+	report := "<" + t.tagger.actionStamp() + "> " + strings.Split(t.comment, "\n")[0]
+	if cols > 0 {
 		report = report[0:cols]
 	}
-        return report
+	return report
 }
 
 // String dumps this tag in import-stream format
 func (t Tag) String() string {
-        parts := []string{fmt.Sprintf("tag %s\n", t.name)}
-        if t.legacyID != "" {
+	parts := []string{fmt.Sprintf("tag %s\n", t.name)}
+	if t.legacyID != "" {
 		id := fmt.Sprintf("#legacy-id %s\n", t.legacyID)
 		parts = append(parts, id)
 	}
-        parts = append(parts, fmt.Sprintf("from %s\n", t.committish))
-        if t.tagger != nil {
+	parts = append(parts, fmt.Sprintf("from %s\n", t.committish))
+	if t.tagger != nil {
 		tagger := fmt.Sprintf("tagger %s\n", t.tagger)
 		parts = append(parts, tagger)
 	}
 	comment := t.comment
-        if t.comment != "" && t.repo.writeOptions.Contains("--legacy") && t.legacyID != "" {
+	if t.comment != "" && t.repo.writeOptions.Contains("--legacy") && t.legacyID != "" {
 		comment += fmt.Sprintf("\nLegacy-ID: %s\n", t.legacyID)
 		parts = append(parts, comment)
 	}
 	data := fmt.Sprintf("data %d\n", len(comment))
-        parts = append(parts, data)
-        return strings.Join(parts, "") + comment + "\n"
+	parts = append(parts, data)
+	return strings.Join(parts, "") + comment + "\n"
 }
 
 // Reset represents a branch creation."
 type Reset struct {
-        repo *Repository
-        ref string
-        committish string
-        target *Commit
-        color string
-        deleteme bool
+	repo       *Repository
+	ref        string
+	committish string
+	target     *Commit
+	color      string
+	deleteme   bool
 }
 
 func newReset(repo *Repository, ref string, committish string, target *Commit) *Reset {
@@ -3424,7 +3418,7 @@ func (reset Reset) getDelFlag() bool {
 
 // idMe IDs this reset for humans.
 func (reset Reset) idMe() string {
-        return fmt.Sprintf("reset-%s@%d", reset.ref, reset.repo.index(reset))
+	return fmt.Sprintf("reset-%s@%d", reset.ref, reset.repo.index(reset))
 }
 
 // getMark returns the reset's identifying mark
@@ -3435,13 +3429,13 @@ func (reset Reset) getMark() string {
 
 // remember records an attachment to a repo and commit.
 func (reset *Reset) remember(repo *Repository, committish string, target *Commit) {
-        reset.repo = repo
-        if target != nil {
+	reset.repo = repo
+	if target != nil {
 		reset.target = target
 		reset.committish = target.getMark()
-        } else {
+	} else {
 		reset.committish = committish
-		if reset.repo != nil && committish != ""{
+		if reset.repo != nil && committish != "" {
 			reset.target = reset.repo.markToEvent(reset.committish).(*Commit)
 		}
 	}
@@ -3452,11 +3446,11 @@ func (reset *Reset) remember(repo *Repository, committish string, target *Commit
 
 // forget loses this reset's attachment to its commit and repo.
 func (reset *Reset) forget() {
-        if reset.target != nil {
+	if reset.target != nil {
 		reset.target.detach(reset)
 		reset.target = nil
 	}
-        reset.repo = nil
+	reset.repo = nil
 }
 
 // moveto changes the repo this reset is associated with."
@@ -3466,37 +3460,36 @@ func (reset *Reset) moveto(repo *Repository) {
 
 // tags enables do_tags() to report resets."
 func (reset Reset) tags(modifiers stringSet, eventnum int, _cols int) string {
-        return fmt.Sprintf("%6d\treset\t%s", eventnum+1, reset.ref)
+	return fmt.Sprintf("%6d\treset\t%s", eventnum+1, reset.ref)
 }
 
 // String dumps this reset in import-stream format
 func (reset Reset) String() string {
-        if reset.repo.realized != nil {
+	if reset.repo.realized != nil {
 		var branch string = reset.ref
 		if strings.Contains(reset.ref, "^") {
 			branch = strings.Split(reset.ref, "^")[0]
 		}
 		reset.repo.realized[branch] = true
 	}
-        st := fmt.Sprintf("reset %s\n", reset.ref)
-        if reset.committish == "" {
+	st := fmt.Sprintf("reset %s\n", reset.ref)
+	if reset.committish == "" {
 		return st
 	}
-        return st + fmt.Sprintf("from %s\n\n", reset.committish)
+	return st + fmt.Sprintf("from %s\n\n", reset.committish)
 }
 
 type FileOp struct {
-        repo *Repository
-        op string
-        committish string
-        source string
-        target string
-        mode string
-        path string
-        ref string
-        inline string
+	repo       *Repository
+	op         string
+	committish string
+	source     string
+	target     string
+	mode       string
+	path       string
+	ref        string
+	inline     string
 }
-
 
 func newFileOp(repo *Repository) *FileOp {
 	op := new(FileOp)
@@ -3512,42 +3505,41 @@ func (fileop *FileOp) setOp(op string) {
 // put each of these in the text segment and pass around just one reference each.
 // If we ever think the implementation has changed to falsify this assumption,
 // we'll change these to var declarations and intern these strings explicitly.
-const opM	= "M"
-const opD	= "D"
-const opR	= "R"
-const opC	= "C"
-const opN	= "N"
+const opM = "M"
+const opD = "D"
+const opR = "R"
+const opC = "C"
+const opN = "N"
 const deleteall = "deleteall"
 
 func (fileop *FileOp) construct(opargs ...string) *FileOp {
-        if opargs[0] == "M" {
+	if opargs[0] == "M" {
 		fileop.op = opM
 		fileop.mode = opargs[1]
 		fileop.ref = opargs[2]
 		fileop.path = opargs[3]
-        } else if opargs[0] == "D" {
+	} else if opargs[0] == "D" {
 		fileop.op = opD
 		fileop.path = opargs[1]
-        } else if opargs[0] == "N" {
+	} else if opargs[0] == "N" {
 		fileop.op = opN
 		fileop.ref = opargs[1]
 		fileop.path = opargs[2]
-        } else if opargs[0] == "R" {
+	} else if opargs[0] == "R" {
 		fileop.op = opR
 		fileop.source = opargs[1]
 		fileop.target = opargs[2]
-        } else if opargs[0] == "C" {
+	} else if opargs[0] == "C" {
 		fileop.op = opC
 		fileop.source = opargs[1]
 		fileop.target = opargs[2]
-        } else if opargs[0] == "deleteall" {
+	} else if opargs[0] == "deleteall" {
 		fileop.op = deleteall
-        } else {
-		panic(throw("parse", "unexpected fileop " + opargs[0]))
+	} else {
+		panic(throw("parse", "unexpected fileop "+opargs[0]))
 	}
-        return fileop
+	return fileop
 }
-
 
 // stringScan extracts tokens from a text line.  Tokens maky be
 // "-quoted, in which the bounding quotes are stripped and C-style
@@ -3572,7 +3564,7 @@ func stringScan(input string) []string {
 		c := input[i]
 		//fmt.Fprintf(os.Stderr, "State %d, byte %c\n", state, c)
 		switch state {
-		case 0:	// ground state, in whitespace
+		case 0: // ground state, in whitespace
 			if unicode.IsSpace(rune(c)) {
 				continue
 			} else if c == '"' {
@@ -3584,13 +3576,13 @@ func stringScan(input string) []string {
 				tokenStart()
 				tokenContinue(c)
 			}
-		case 1:	// in token
+		case 1: // in token
 			if unicode.IsSpace(rune(c)) {
 				state = toState(c, 0)
 			} else {
 				tokenContinue(c)
 			}
-		case 2:	// in string
+		case 2: // in string
 			if c == '"' {
 				tokenContinue(c)
 				state = toState(c, 0)
@@ -3599,15 +3591,14 @@ func stringScan(input string) []string {
 			} else {
 				tokenContinue(c)
 			}
-		case 3:	// after \ in string
+		case 3: // after \ in string
 			state = toState(c, 2)
 			tokenContinue(c)
 		}
 	}
-	
 
 	out := make([]string, len(bufs))
-	for i, tok := range(bufs) {
+	for i, tok := range bufs {
 		s := string(tok)
 		if s[0] == '"' {
 			s, _ = strconv.Unquote(s)
@@ -3625,7 +3616,7 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 	if len(fields) == 0 {
 		panic(throw("parse", "Empty fileop line %q", opline))
 	}
-        if strings.HasPrefix(opline, "M ") {
+	if strings.HasPrefix(opline, "M ") {
 		if len(fields) != 4 {
 			panic(throw("parse", "Bad format of M line: %q", opline))
 		}
@@ -3665,34 +3656,34 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 	} else {
 		panic(throw("parse", "Unexpected fileop while parsing %q", opline))
 	}
-        return fileop
+	return fileop
 }
 
 // paths returns the set of all paths touched by this file op
 func (fileop *FileOp) paths(pathtype stringSet) stringSet {
-        if pathtype == nil {
+	if pathtype == nil {
 		pathtype = stringSet{opM, opD, opR, opC, opN}
 	}
-        if !pathtype.Contains(fileop.op) {
+	if !pathtype.Contains(fileop.op) {
 		return stringSet{}
 	}
-        if fileop.op == opM || fileop.op == opD || fileop.op == opN {
+	if fileop.op == opM || fileop.op == opD || fileop.op == opN {
 		return stringSet{fileop.path}
 	}
-        if fileop.op == opR || fileop.op == opC {
+	if fileop.op == opR || fileop.op == opC {
 		return stringSet{fileop.source, fileop.target}
 	}
-        // Ugh...this isn't right for deleteall, but since we don't expect
-        // to see that except at branch tips we'll ignore it for now.
-        if fileop.op == deleteall {
+	// Ugh...this isn't right for deleteall, but since we don't expect
+	// to see that except at branch tips we'll ignore it for now.
+	if fileop.op == deleteall {
 		return stringSet{}
 	}
-        panic("Unknown fileop type " + fileop.op)
+	panic("Unknown fileop type " + fileop.op)
 }
 
 // relevant tells if two fileops touch any of the same filesthe same file(s)
 func (fileop *FileOp) relevant(other *FileOp) bool {
-        if fileop.op == deleteall || other.op == deleteall {
+	if fileop.op == deleteall || other.op == deleteall {
 		return true
 	}
 	return len(fileop.paths(nil).Intersection(other.paths(nil))) > 0
@@ -3707,7 +3698,7 @@ func (fileop FileOp) String() string {
 			return cpath
 		}
 	}
-        if fileop.op == opM {
+	if fileop.op == opM {
 		parts := fileop.op + " " + fileop.mode + " " + fileop.ref
 		parts += " " + quotifyIfNeeded(fileop.path) + "\n"
 		if fileop.ref == "inline" {
@@ -3715,40 +3706,39 @@ func (fileop FileOp) String() string {
 			parts += fileop.inline + "\n"
 		}
 		return parts
-        } else if fileop.op == opN {
-		parts := "N " + fileop.ref 
+	} else if fileop.op == opN {
+		parts := "N " + fileop.ref
 		parts += " " + quotifyIfNeeded(fileop.path) + "\n"
 		if fileop.ref == "inline" {
 			parts += fmt.Sprintf("data %d\n", len(fileop.inline))
 			parts += fileop.inline + "\n"
 		}
 		return parts
-        } else if fileop.op == opD {
+	} else if fileop.op == opD {
 		return "D " + quotifyIfNeeded(fileop.path) + "\n"
 	} else if fileop.op == opR || fileop.op == opC {
 		return fmt.Sprintf(`%s %s %s`, fileop.op,
 			quotifyIfNeeded(fileop.source),
 			quotifyIfNeeded(fileop.target)) + "\n"
-        } else if fileop.op == deleteall {
+	} else if fileop.op == deleteall {
 		return fileop.op + "\n"
-        } else {
+	} else {
 		panic(throw("Unexpected op %s while writing", fileop.op))
 	}
 }
 
-
 // Callout is a stub object for callout marks in incomplete repository segments.
 type Callout struct {
-	mark string
-	branch string
+	mark        string
+	branch      string
 	_childNodes []string
-	deleteme bool
+	deleteme    bool
 }
 
 func newCallout(mark string) *Callout {
 	callout := new(Callout)
-        callout.mark = mark
-        callout._childNodes = make([]string, 0)
+	callout.mark = mark
+	callout._childNodes = make([]string, 0)
 	return callout
 }
 
@@ -3757,25 +3747,25 @@ func (callout Callout) getDelFlag() bool {
 }
 
 func (callout Callout) callout() string {
-        return callout.mark
+	return callout.mark
 }
 
 func (callout Callout) getMark() string {
-        return callout.mark
+	return callout.mark
 }
 
 func (callout Callout) idMe() string {
-        return fmt.Sprintf("callout-%s", callout.mark)
+	return fmt.Sprintf("callout-%s", callout.mark)
 }
 
 // Stub to satisfy Event interface - should never be used
 func (callout Callout) String() string {
-        return fmt.Sprintf("callout-%s", callout.mark)
+	return fmt.Sprintf("callout-%s", callout.mark)
 }
 
 type ManifestEntry struct {
-	mode string
-	ref string
+	mode   string
+	ref    string
 	inline string
 }
 
@@ -3786,23 +3776,23 @@ func (m ManifestEntry) String() string {
 
 // Commit represents a commit event in a fast-export stream
 type Commit struct {
-        repo *Repository
-        mark string                 // Mark name of commit (may be None)
-        authors []Attribution       // Authors of commit
-        committer Attribution       // Person responsible for committing it.
-        comment string              // Commit comment
-        branch string               // branch name
-        fileops []FileOp            // blob and file operation list
-        properties OrderedMap	    // commit properties (extension)
-        _manifest map[string]*ManifestEntry
-        color string                // Scratch storage for graph-coloring 
-        legacyID string             // Commit's ID in an alien system
-        common string               // Used only by the Subversion parser
-        deleteme bool             // Flag used during deletion operations
-        attachments []Event         // Tags and Resets pointing at this commit
-        _parentNodes []CommitLike   // list of parent nodes
-        _childNodes []CommitLike    // list of child nodes
-        _pathset stringSet
+	repo         *Repository
+	mark         string        // Mark name of commit (may be None)
+	authors      []Attribution // Authors of commit
+	committer    Attribution   // Person responsible for committing it.
+	comment      string        // Commit comment
+	branch       string        // branch name
+	fileops      []FileOp      // blob and file operation list
+	properties   OrderedMap    // commit properties (extension)
+	_manifest    map[string]*ManifestEntry
+	color        string       // Scratch storage for graph-coloring
+	legacyID     string       // Commit's ID in an alien system
+	common       string       // Used only by the Subversion parser
+	deleteme     bool         // Flag used during deletion operations
+	attachments  []Event      // Tags and Resets pointing at this commit
+	_parentNodes []CommitLike // list of parent nodes
+	_childNodes  []CommitLike // list of child nodes
+	_pathset     stringSet
 }
 
 func (commit Commit) getDelFlag() bool {
@@ -3810,7 +3800,7 @@ func (commit Commit) getDelFlag() bool {
 }
 
 func (commit Commit) getMark() string {
-        return commit.mark
+	return commit.mark
 }
 
 func newCommit(repo *Repository) *Commit {
@@ -3845,60 +3835,60 @@ func (commit *Commit) attach(event Event) {
 
 // index gives the commit's 0-origin index in our repo.
 func (commit *Commit) index() int {
-        return commit.repo.index(commit)
+	return commit.repo.index(commit)
 }
 
 // idMe IDs this commit for humans.
 func (commit Commit) idMe() string {
-        myid := fmt.Sprintf("commit@%s", commit.mark)
-        if commit.legacyID != "" {
+	myid := fmt.Sprintf("commit@%s", commit.mark)
+	if commit.legacyID != "" {
 		myid += fmt.Sprintf("=<%s>", commit.legacyID)
 	}
-        return myid
+	return myid
 }
 
 // when returns an imputed timestamp for sorting after unites.
 func (commit *Commit) when() time.Time {
-        return commit.committer.date.timestamp
+	return commit.committer.date.timestamp
 }
 
 // date returns the commit date, for purpose of display and reference
 func (commit *Commit) date() Date {
-        if commit.authors != nil {
+	if commit.authors != nil {
 		return commit.authors[0].date
 	}
-        return commit.committer.date
+	return commit.committer.date
 }
 
 // setBranch sets the repo's branch field.
 func (commit *Commit) setBranch(branch string) {
-        commit.branch = intern(branch)
+	commit.branch = intern(branch)
 }
 
 // operations returns a list of ileops associated with this commit;
 // it hides how this is represented.
 func (commit *Commit) operations() []FileOp {
-        return commit.fileops
+	return commit.fileops
 }
 
 // setOperations replaces the set of fileops associated with this commit.
 func (commit *Commit) setOperations(ops []FileOp) {
-        commit.fileops = ops
-        commit.invalidatePathsetCache()
+	commit.fileops = ops
+	commit.invalidatePathsetCache()
 	commit.invalidateManifests()
 }
 
 // appendOperation appends to the set of fileops associated with this commit.
 func (commit *Commit) appendOperation(op FileOp) {
-        commit.fileops = append(commit.fileops, op)
-        commit.invalidatePathsetCache()
+	commit.fileops = append(commit.fileops, op)
+	commit.invalidatePathsetCache()
 	commit.invalidateManifests()
 }
 
 // prependOperation prepends to the set of fileops associated with this commit.
 func (commit *Commit) prependOperation(op FileOp) {
-        commit.fileops = append([]FileOp{op}, commit.fileops...)
-        commit.invalidatePathsetCache()
+	commit.fileops = append([]FileOp{op}, commit.fileops...)
+	commit.invalidatePathsetCache()
 	commit.invalidateManifests()
 }
 
@@ -3914,11 +3904,11 @@ func (commit *Commit) sortOperations() {
 		}
 		return ""
 	}
-        // As it says, 'Handle files below a directory first, in case they are
-        // all deleted and the directory changes to a file or symlink.'
-        // First sort the renames last, then sort lexicographically
-        // We append a sentinel to make sure "a/b/c" < "a/b" < "a".
-	lessthan :=  func(i, j int) bool {
+	// As it says, 'Handle files below a directory first, in case they are
+	// all deleted and the directory changes to a file or symlink.'
+	// First sort the renames last, then sort lexicographically
+	// We append a sentinel to make sure "a/b/c" < "a/b" < "a".
+	lessthan := func(i, j int) bool {
 		if commit.fileops[i].op != "R" && commit.fileops[j].op == "R" {
 			return true
 		}
@@ -3926,40 +3916,40 @@ func (commit *Commit) sortOperations() {
 		right := pathpart(commit.fileops[j]) + sortkeySentinel
 		return left < right
 	}
-        sort.Slice(commit.fileops, lessthan)
-        commit.invalidatePathsetCache()
+	sort.Slice(commit.fileops, lessthan)
+	commit.invalidatePathsetCache()
 }
 
 // bump increments the timestamps on this commit to avoid time collisions.
 func (commit *Commit) bump(i int) {
 	delta := time.Second * time.Duration(i)
-        commit.committer.date.timestamp.Add(delta)
-        for _, author := range commit.authors {
+	commit.committer.date.timestamp.Add(delta)
+	for _, author := range commit.authors {
 		author.date.timestamp.Add(delta)
 	}
 }
 
 // clone replicates this commit, without its fileops, color, children, or tags.
 func (commit *Commit) clone(repo *Repository) *Commit {
-        c := newCommit(repo)
-        c.committer = commit.committer
-        c.authors = make([]Attribution, len(commit.authors))
+	c := newCommit(repo)
+	c.committer = commit.committer
+	c.authors = make([]Attribution, len(commit.authors))
 	// FIXME: Test this against Python, which does a deeper copy.
 	// It might alter the behavior of the split operation.
 	copy(c.authors, commit.authors)
 	c.comment = commit.comment
 	c.mark = commit.mark
 	c.branch = commit.branch
-        return c
+	return c
 }
 
 // showlegacy returns a legacy ID in the expected form for the ancestral system.
 func (commit *Commit) showlegacy() string {
-        if commit.legacyID == "" {
+	if commit.legacyID == "" {
 		return ""
 	}
-        // Special case for Subversion
-        if commit.repo != nil && commit.repo.vcs != nil && commit.repo.vcs.name == "svn" {
+	// Special case for Subversion
+	if commit.repo != nil && commit.repo.vcs != nil && commit.repo.vcs.name == "svn" {
 		return "r" + commit.legacyID
 	}
 	return commit.legacyID
@@ -3967,32 +3957,32 @@ func (commit *Commit) showlegacy() string {
 
 // lister enables do_list() to report commits.
 func (commit *Commit) lister(_modifiers stringSet, eventnum int, cols int) string {
-        topline := strings.Split(commit.comment, "\n")[0]
-        summary := fmt.Sprintf("%6d %s %6s ",
+	topline := strings.Split(commit.comment, "\n")[0]
+	summary := fmt.Sprintf("%6d %s %6s ",
 		eventnum+1, commit.date().rfc3339(), commit.mark)
-        if commit.legacyID != "" {
+	if commit.legacyID != "" {
 		legacy := fmt.Sprintf("<%s>", commit.legacyID)
 		summary += fmt.Sprintf("%6s ", legacy)
 	}
-        report := summary + topline
-        if cols > 0 {
+	report := summary + topline
+	if cols > 0 {
 		report = report[:cols]
 	}
-        return report
+	return report
 }
 
 // stamp enables do_stamp() to report action stamps.
 func (commit *Commit) stamp(modifiers stringSet, _eventnum int, cols int) string {
-        report := "<" + commit.actionStamp() + "> " + strings.Split(commit.comment, "\n")[0]
-        if cols > 0 {
+	report := "<" + commit.actionStamp() + "> " + strings.Split(commit.comment, "\n")[0]
+	if cols > 0 {
 		report = report[:cols]
 	}
-        return report
+	return report
 }
 
 // tags enables do_tags() to report tag tip commits.
 func (commit *Commit) tags(_modifiers stringSet, eventnum int, _cols int) string {
-        if commit.branch == "" || !strings.Contains(commit.branch, "/tags/") {
+	if commit.branch == "" || !strings.Contains(commit.branch, "/tags/") {
 		return ""
 	}
 	if commit.hasChildren() {
@@ -4012,28 +4002,28 @@ func (commit *Commit) tags(_modifiers stringSet, eventnum int, _cols int) string
 			return ""
 		}
 	}
-        return fmt.Sprintf("%6d\tcommit\t%s", eventnum+1, commit.branch)
+	return fmt.Sprintf("%6d\tcommit\t%s", eventnum+1, commit.branch)
 }
 
 // emailOut enables do_mailbox_out() to report commit metadata.
 func (commit *Commit) emailOut(modifiers stringSet,
 	eventnum int, filterRegexp *regexp.Regexp) string {
-        msg, _ := newMessageBlock(nil)
-        msg.setHeader("Event-Number", fmt.Sprintf("%d", eventnum+1))
-        msg.setHeader("Event-Mark", commit.mark)
-        msg.setHeader("Branch", commit.branch)
-        msg.setHeader("Parents", strings.Join(commit.parentMarks(), " "))
-        if commit.authors != nil && len(commit.authors) > 0 {
+	msg, _ := newMessageBlock(nil)
+	msg.setHeader("Event-Number", fmt.Sprintf("%d", eventnum+1))
+	msg.setHeader("Event-Mark", commit.mark)
+	msg.setHeader("Branch", commit.branch)
+	msg.setHeader("Parents", strings.Join(commit.parentMarks(), " "))
+	if commit.authors != nil && len(commit.authors) > 0 {
 		commit.authors[0].emailOut(modifiers, msg, "Author")
 		for i, coauthor := range commit.authors[1:] {
-			coauthor.emailOut(modifiers, msg, "Author" + fmt.Sprintf("%d", 2+i))
+			coauthor.emailOut(modifiers, msg, "Author"+fmt.Sprintf("%d", 2+i))
 		}
 		commit.committer.emailOut(modifiers, msg, "Committer")
 	}
-        if commit.legacyID != "" {
+	if commit.legacyID != "" {
 		msg.setHeader("Legacy-ID", commit.legacyID)
 	}
-        if len(commit.properties.keys) > 0 {
+	if len(commit.properties.keys) > 0 {
 		for _, name := range commit.properties.keys {
 			hdr := ""
 			for _, s := range strings.Split(name, "-") {
@@ -4042,43 +4032,43 @@ func (commit *Commit) emailOut(modifiers stringSet,
 			value := commit.properties.get(name)
 			value = strings.Replace(value, "\n", `\n`, 0)
 			value = strings.Replace(value, "\t", `\t`, 0)
-			msg.setHeader("Property-" + hdr, value)
+			msg.setHeader("Property-"+hdr, value)
 		}
 	}
 	check := strings.Split(commit.comment, "\n")[0]
 	if len(check) > 54 {
 		check = check[0:54]
 	}
-        msg.setHeader("Check-Text", check)
-        msg.setPayload(commit.comment)
-        if !strings.HasSuffix(commit.comment, "\n") {
+	msg.setHeader("Check-Text", check)
+	msg.setPayload(commit.comment)
+	if !strings.HasSuffix(commit.comment, "\n") {
 		complain("in commit %s, comment was not LF-terminated.",
 			commit.mark)
 	}
-        if filterRegexp != nil {
+	if filterRegexp != nil {
 		for _, key := range msg.hdnames {
-			if len(filterRegexp.Find([]byte(key + ":"))) > 0 {
-			msg.deleteHeader(key)
+			if len(filterRegexp.Find([]byte(key+":"))) > 0 {
+				msg.deleteHeader(key)
+			}
 		}
-	    }
 	}
 	return msg.String()
 }
 
 // actionStamp controls how a commit stamp is made.
 func (commit *Commit) actionStamp() string {
-        // Prefer the author stamp because that doesn't change when patches
-        // are replayed onto a repository, while the commit stamp will.
-        if commit.authors != nil && len(commit.authors) > 0 {
+	// Prefer the author stamp because that doesn't change when patches
+	// are replayed onto a repository, while the commit stamp will.
+	if commit.authors != nil && len(commit.authors) > 0 {
 		return commit.authors[0].actionStamp()
 	}
-        return commit.committer.actionStamp()
+	return commit.committer.actionStamp()
 }
 
 func stringSliceEqual(a, b []string) bool {
 	// If one is nil, the other must also be nil.
-	if (a == nil) != (b == nil) { 
-		return false; 
+	if (a == nil) != (b == nil) {
+		return false
 	}
 
 	if len(a) != len(b) {
@@ -4098,14 +4088,14 @@ var authorRE = regexp.MustCompile("Author[0-9]*$")
 
 // emailIn updates this commit from a parsed email message.
 func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
-        modified := false
+	modified := false
 	newbranch := msg.getHeader("Branch")
-        if newbranch != "" && commit.branch != newbranch {
+	if newbranch != "" && commit.branch != newbranch {
 		modified = true
 		commit.setBranch(newbranch)
 	}
-	newparents := msg.getHeader("Parents") 
-        if newparents != "" {
+	newparents := msg.getHeader("Parents")
+	if newparents != "" {
 		newParentList := strings.Split(newparents, " ")
 		if !stringSliceEqual(commit.parentMarks(), newParentList) {
 			modified = true
@@ -4114,13 +4104,13 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 	}
 	c := &commit.committer
 	newcommitter := msg.getHeader("Committer")
-        if newcommitter != "" {
+	if newcommitter != "" {
 		var err2 error
-                newfullname, newemail, _, err2 := parseAttributionLine(newcommitter)
+		newfullname, newemail, _, err2 := parseAttributionLine(newcommitter)
 		if err2 != nil {
 			panic(throw("mailbox", "bad attribution: %v", err2))
 		}
-                if c.fullname != newfullname || c.email != newemail {
+		if c.fullname != newfullname || c.email != newemail {
 			c.fullname, c.email = newfullname, newemail
 			if commit.repo != nil {
 				announce(debugEMAILIN, "in %s, Committer is modified", commit.idMe())
@@ -4132,19 +4122,19 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 	if err != nil {
 		panic(throw("mailbox", "Bad Committer-Date: %v", err))
 	}
-        if newcommitdate.isZero() && !newcommitdate.Equal(c.date) {
-                if commit.repo != nil {
+	if newcommitdate.isZero() && !newcommitdate.Equal(c.date) {
+		if commit.repo != nil {
 			announce(debugEMAILIN, "in %s, Committer-Date is modified '%s' -> '%s' (delta %d)",
 				commit.idMe(),
 				c.date, newcommitdate,
 				c.date.delta(newcommitdate))
 		}
-                c.date = newcommitdate
-                modified = true
+		c.date = newcommitdate
+		modified = true
 	}
 	newauthor := msg.getHeader("Author")
-        if  newauthor != "" {
-		authorkeys := []string{} 
+	if newauthor != "" {
+		authorkeys := []string{}
 		for _, hd := range msg.hdnames {
 			if len(authorRE.Find([]byte(hd))) > 0 {
 				authorkeys = append(authorkeys, hd)
@@ -4154,7 +4144,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 		// lexicographic sort order doesn't match numeric
 		// msg is *not* a dict so the .keys() is correct
 		sort.Strings(authorkeys)
-		for i := 0; i < len(authorkeys) - len(commit.authors); i++ {
+		for i := 0; i < len(authorkeys)-len(commit.authors); i++ {
 			commit.authors = append(commit.authors, *newAttribution(authorkeys[i]))
 		}
 		// Another potential minor bug: permuting the set of authors
@@ -4195,12 +4185,12 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 		}
 	}
 	newlegacy := msg.getHeader("Legacy-ID")
-        if newlegacy != "" && newlegacy != commit.legacyID {
-                modified = true
-                commit.legacyID = newlegacy
+	if newlegacy != "" && newlegacy != commit.legacyID {
+		modified = true
+		commit.legacyID = newlegacy
 	}
-        newprops := newOrderedMap()
-        for _, prophdr := range msg.hdnames {
+	newprops := newOrderedMap()
+	for _, prophdr := range msg.hdnames {
 		if !strings.HasPrefix(prophdr, "Property-") {
 			continue
 		}
@@ -4217,19 +4207,19 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 		commit.properties = newprops
 		modified = true
 	}
-        newcomment := msg.getPayload()
+	newcomment := msg.getPayload()
 	if haveGlobalOption("canonicalize") {
 		newcomment = strings.TrimSpace(newcomment)
 		newcomment = strings.Replace(newcomment, "\r\n", "\n", 1)
 		newcomment += "\n"
 	}
-        if newcomment != commit.comment {
+	if newcomment != commit.comment {
 		announce(debugEMAILIN, "in %s, comment is modified %q -> %q",
 			commit.idMe(), commit.comment, newcomment)
 		modified = true
 		commit.comment = newcomment
 	}
-        if fill {
+	if fill {
 		modified = true
 		if commit.committer.date.isZero() {
 			d, _ := newDate("")
@@ -4239,44 +4229,44 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 			commit.committer.fullname, commit.committer.email = whoami()
 		}
 	}
-        return modified
+	return modified
 }
 
 // setMark sets the commit's mark and clears the lookup cache.
 func (commit *Commit) setMark(mark string) string {
-        commit.mark = mark
+	commit.mark = mark
 	if commit.repo != nil {
 		commit.repo._eventByMark = nil
 	}
-        return mark
+	return mark
 }
 
 // forget de-links this commit from its parents.
 func (commit *Commit) forget() {
-        commit.setParents([]CommitLike{})
-        for _, fileop := range commit.operations() {
-            if fileop.op == opN {
-		    commit.repo.inlines -=1
-	    }
+	commit.setParents([]CommitLike{})
+	for _, fileop := range commit.operations() {
+		if fileop.op == opN {
+			commit.repo.inlines -= 1
+		}
 	}
-        commit.repo = nil
+	commit.repo = nil
 }
 
 // moveto changes the repo this commit is associated with.
 func (commit *Commit) moveto(repo *Repository) {
-        for _, fileop := range commit.operations() {
+	for _, fileop := range commit.operations() {
 		fileop.repo = repo
 		if fileop.op == opN {
-			commit.repo.inlines -=1
+			commit.repo.inlines -= 1
 			repo.inlines += 1
 		}
 	}
-        commit.repo = repo
+	commit.repo = repo
 }
 
 // parents gets a list of this commit's parents.
 func (commit *Commit) parents() []CommitLike {
-        return commit._parentNodes
+	return commit._parentNodes
 }
 
 // invalidateManifests cleans out manifess in this commit and all descendants
@@ -4319,7 +4309,7 @@ func commitRemove(commitlist []CommitLike, event Event) []CommitLike {
 }
 
 func (commit *Commit) setParents(parents []CommitLike) {
-        for _, parent := range commit._parentNodes {
+	for _, parent := range commit._parentNodes {
 		// remove all occurrences of self in old parent's children cache
 		switch parent.(type) {
 		case (Commit):
@@ -4328,8 +4318,8 @@ func (commit *Commit) setParents(parents []CommitLike) {
 			complain("not removing callout %s", parent.(Callout).mark)
 		}
 	}
-        commit._parentNodes = parents
-        for _, parent := range commit._parentNodes {
+	commit._parentNodes = parents
+	for _, parent := range commit._parentNodes {
 		switch parent.(type) {
 		case *Commit:
 			parent.(*Commit)._childNodes = append(parent.(*Commit)._childNodes, commit)
@@ -4337,67 +4327,66 @@ func (commit *Commit) setParents(parents []CommitLike) {
 			/* do nothing */
 		}
 	}
-        commit.invalidateManifests()
+	commit.invalidateManifests()
 }
 
 func (commit *Commit) setParentMarks(marks []string) {
 	var clist []CommitLike
 	for _, m := range marks {
-		clist = append(clist, commit.repo.markToEvent(m).(CommitLike)) 
+		clist = append(clist, commit.repo.markToEvent(m).(CommitLike))
 	}
 	commit.setParents(clist)
 }
 
 func (commit *Commit) addParentCommit(newparent *Commit) {
-        commit._parentNodes = append(commit._parentNodes, newparent)
-        newparent._childNodes = append(newparent._childNodes, commit)
-        commit.invalidateManifests()
+	commit._parentNodes = append(commit._parentNodes, newparent)
+	newparent._childNodes = append(newparent._childNodes, commit)
+	commit.invalidateManifests()
 }
 
 func (commit *Commit) addParentByMark(mark string) {
 	newparent := commit.repo.markToEvent(mark).(*Commit)
-        if newparent == nil {
+	if newparent == nil {
 		panic("Ill-formed stream: cannot resolve " + mark)
 	}
 	commit.addParentCommit(newparent)
 }
 
-
 // callout generates a callout cookie for this commit.
 func (commit Commit) callout() string {
-        return commit.actionStamp()
+	return commit.actionStamp()
 }
 
 // is_callot tells if the specified mark field a callout?"
 func isCallout(mark string) bool {
-        return strings.Contains(mark, "!")
+	return strings.Contains(mark, "!")
 }
 
 func (commit *Commit) addCallout(mark string) {
-        commit._parentNodes = append(commit._parentNodes, newCallout(mark))
+	commit._parentNodes = append(commit._parentNodes, newCallout(mark))
 }
 
 func (commit *Commit) insertParent(idx int, mark string) {
-        newparent := commit.repo.markToEvent(mark)
+	newparent := commit.repo.markToEvent(mark)
 	if newparent == nil {
 		complain("invalid mark %s passed to insertParent", mark)
 		return
 	}
 	// Stupid slice tricks: https://github.com/golang/go/wiki/SliceTricks
-        commit._parentNodes = append(commit._parentNodes[:idx], append([]CommitLike{newparent.(*Commit)}, commit._parentNodes[idx:]...)...)
+	commit._parentNodes = append(commit._parentNodes[:idx], append([]CommitLike{newparent.(*Commit)}, commit._parentNodes[idx:]...)...)
 	switch newparent.(type) {
 	case *Commit:
 		newparent.(*Commit)._childNodes = append(newparent.(*Commit)._childNodes, commit)
 	}
-        commit.invalidateManifests()
+	commit.invalidateManifests()
 }
 
 func (commit *Commit) removeParent(event *Commit) {
-        // remove *all* occurences of event in parents
-        commit._parentNodes = commitRemove(commit._parentNodes, event)
-        // and all occurences of self in event's children
-        event._childNodes = commitRemove(event._childNodes, commit)
-        commit.invalidateManifests()
+	// remove *all* occurences of event in parents
+	commit._parentNodes = commitRemove(commit._parentNodes, event)
+	// and all occurences of self in event's children
+	event._childNodes = commitRemove(event._childNodes, commit)
+	commit.invalidateManifests()
 }
 
 func (commit *Commit) replaceParent(e1, e2 *Commit) {
@@ -4410,11 +4399,11 @@ func (commit *Commit) replaceParent(e1, e2 *Commit) {
 			return
 		}
 	}
-        commit.invalidateManifests()
+	commit.invalidateManifests()
 }
 
 func (commit *Commit) hasParents() bool {
-	    return len(commit._parentNodes) > 0
+	return len(commit._parentNodes) > 0
 }
 
 func (commit *Commit) hasCallouts() bool {
@@ -4424,13 +4413,13 @@ func (commit *Commit) hasCallouts() bool {
 			return true
 		}
 	}
-		
+
 	return false
 }
 
 // children gets a list of this commit's children (Commits or Callouts)."
 func (commit *Commit) children() []CommitLike {
-        return commit._childNodes	
+	return commit._childNodes
 }
 
 func (commit *Commit) childMarks() []string {
@@ -4451,13 +4440,13 @@ func (commit *Commit) firstChild() *Commit {
 	if len(commit._childNodes) == 0 {
 		return nil
 	}
-        return commit._childNodes[0].(*Commit)
+	return commit._childNodes[0].(*Commit)
 }
 
 // descendedFrom tells if this commit a descendent of the specified other?
 func (commit *Commit) descendedFrom(other *Commit) bool {
-        if !commit.hasParents() {
-            return false
+	if !commit.hasParents() {
+		return false
 	}
 	for _, item := range commit.parents() {
 		if item == other {
@@ -4480,7 +4469,7 @@ func (commit *Commit) descendedFrom(other *Commit) bool {
 // Change in behavior from Python: the map keys are not ordered.
 func (commit *Commit) cliques() map[string][]int {
 	cliques := make(map[string][]int)
-        for i, fileop := range commit.operations() {
+	for i, fileop := range commit.operations() {
 		if fileop.op == opM {
 			_, ok := cliques[fileop.path]
 			if !ok {
@@ -4489,47 +4478,46 @@ func (commit *Commit) cliques() map[string][]int {
 			cliques[fileop.path] = append(cliques[fileop.path], i)
 		}
 	}
-        return cliques
+	return cliques
 }
 
 // fileopDump reports file ops without data or inlines; used for debugging only.
 func (commit *Commit) fileopDump() {
 	banner := fmt.Sprintf("commit %d, mark %s:\n", commit.repo.find(commit.mark)+1, commit.mark)
-        os.Stdout.Write([]byte(banner))
+	os.Stdout.Write([]byte(banner))
 	for i, op := range commit.operations() {
 		report := fmt.Sprintf("%d: %-20s\n", i, op.String())
 		os.Stdout.Write([]byte(report))
 	}
 }
 
-
 // paths returns the set of all paths touched by this commit.
 func (commit *Commit) paths(pathtype stringSet) stringSet {
-        if commit._pathset == nil {
+	if commit._pathset == nil {
 		commit._pathset = newStringSet()
 		for _, fileop := range commit.operations() {
 			for _, item := range fileop.paths(pathtype) {
 				commit._pathset.Add(item)
-					
+
 			}
 		}
 	}
-        return commit._pathset
+	return commit._pathset
 }
 
 // invalidatePathsetCache forces a rebuild on the next call to paths().
 func (commit *Commit) invalidatePathsetCache() {
-        commit._pathset = nil
+	commit._pathset = nil
 }
 
 // visible tells if a path is modified and not deleted in the ancestors
 func (commit *Commit) visible(argpath string) *Commit {
-        ancestor := commit
-        for {
+	ancestor := commit
+	for {
 		parents := ancestor.parents()
 		if len(parents) == 0 {
 			break
-		}  else {
+		} else {
 			switch parents[0].(type) {
 			case *Callout:
 				break
@@ -4561,7 +4549,7 @@ func (commit *Commit) visible(argpath string) *Commit {
 // Python.
 func (commit *Commit) manifest() map[string]*ManifestEntry {
 	// yeah, baby this operation is *so* memoized...
-        if commit._manifest != nil {
+	if commit._manifest != nil {
 		return commit._manifest
 	}
 	commit._manifest = make(map[string]*ManifestEntry)
@@ -4571,7 +4559,7 @@ func (commit *Commit) manifest() map[string]*ManifestEntry {
 		case *Commit:
 			// Magic recursion, force fetch or recompute
 			// of manifest back to the root commit.
-			// Git only inherits files from the first parent. 
+			// Git only inherits files from the first parent.
 			m := p.(*Commit).manifest()
 			for k, v := range m {
 				// map entries are pointers so that
@@ -4585,8 +4573,8 @@ func (commit *Commit) manifest() map[string]*ManifestEntry {
 			panic("manifest() found unexpected type in parent list")
 		}
 	}
-        // Take own fileops into account.
-        for _, fileop := range commit.operations() {
+	// Take own fileops into account.
+	for _, fileop := range commit.operations() {
 		if fileop.op == opM {
 			commit._manifest[fileop.path] = &ManifestEntry{fileop.mode, fileop.ref, fileop.inline}
 		} else if fileop.op == opD {
@@ -4600,7 +4588,7 @@ func (commit *Commit) manifest() map[string]*ManifestEntry {
 			commit._manifest = make(map[string]*ManifestEntry)
 		}
 	}
-        return commit._manifest
+	return commit._manifest
 }
 
 // canonicalize replaces fileops by a minimal set of D and M with same result.
@@ -4612,21 +4600,21 @@ func (commit *Commit) canonicalize() {
 	lastdel := 0
 	for i, op := range commit.operations() {
 		if op.op == deleteall {
-			lastdel = i 
+			lastdel = i
 		}
 	}
 	commit.fileops = commit.fileops[lastdel:len(commit.fileops)]
 	if len(commit.fileops) < 2 {
 		return
 	}
-        // Get paths touched by non-deleteall operations.
+	// Get paths touched by non-deleteall operations.
 	commit.invalidatePathsetCache()
-        paths := commit.paths(nil)
-        // Full canonicalization is very expensive on large
-        // repositories. Try an inexpensive check for cases it needn't
-        // be done. If all ops are Ms and Ds, and every path in a commit
-        // is unique, don't do it.  The .gitignores guard is required
-        // because these are sometimes generated.
+	paths := commit.paths(nil)
+	// Full canonicalization is very expensive on large
+	// repositories. Try an inexpensive check for cases it needn't
+	// be done. If all ops are Ms and Ds, and every path in a commit
+	// is unique, don't do it.  The .gitignores guard is required
+	// because these are sometimes generated.
 	md := 0
 	for _, op := range commit.operations() {
 		if op.op == opM || op.op == opD {
@@ -4641,7 +4629,7 @@ func (commit *Commit) canonicalize() {
 			gi++
 		}
 	}
-        if md > 1 && (all != md || gi > 0){
+	if md > 1 && (all != md || gi > 0) {
 		// Fetch the tree state before us...
 		var previous map[string]*ManifestEntry
 		if !commit.hasParents() {
@@ -4689,14 +4677,14 @@ func (commit *Commit) canonicalize() {
 		}
 		commit.setOperations(newops)
 	}
-        // Finishing touches.  Sorting always has to be done
-        commit.sortOperations()
-        commit._pathset = nil
+	// Finishing touches.  Sorting always has to be done
+	commit.sortOperations()
+	commit._pathset = nil
 }
 
 // alldeletes is a predicate: is this an all-deletes commit?
 func (commit *Commit) alldeletes(killset stringSet) bool {
-        if killset == nil {
+	if killset == nil {
 		killset = stringSet{opD, deleteall}
 	}
 	for _, fileop := range commit.operations() {
@@ -4704,35 +4692,35 @@ func (commit *Commit) alldeletes(killset stringSet) bool {
 			return false
 		}
 	}
-	
-        return true
+
+	return true
 }
 
 // checkout makes a directory with links to files in a specified checkout.
 func (commit *Commit) checkout(directory string) string {
-        if directory == "" {
+	if directory == "" {
 		directory = filepath.FromSlash(commit.repo.subdir("") + "/" + commit.mark)
 	}
 	if !exists(directory) {
 		os.Mkdir(directory, userReadWriteMode)
 	}
 
-	defer func () {
+	defer func() {
 		if r := recover(); r != nil {
 			complain("could not create checkout directory or files: %v.", r)
 		}
 	}()
 
 	for cpath, entry := range commit.manifest() {
-                fullpath := filepath.FromSlash(directory +
+		fullpath := filepath.FromSlash(directory +
 			"/" + cpath + "/" + entry.ref)
-                if !exists(fullpath) {
+		if !exists(fullpath) {
 			parts := strings.Split(fullpath, "/")
 			// os.MkdirAll is broken and rpike says they
 			// won't fix it.
 			// https://github.com/golang/go/issues/22323
 			var dpath string
-			for i, _ := range parts[0:len(parts)-1] {
+			for i, _ := range parts[0 : len(parts)-1] {
 				dpath = filepath.FromSlash(strings.Join(parts[:i], "/"))
 				err := os.Mkdir(dpath, userReadWriteMode)
 				if err != nil {
@@ -4748,7 +4736,7 @@ func (commit *Commit) checkout(directory string) string {
 			blob := commit.repo.markToEvent(entry.ref).(*Blob)
 			if entry.ref == "inline" {
 				file, err3 := os.OpenFile(blob.getBlobfile(true),
-					os.O_WRONLY | os.O_CREATE, mode)
+					os.O_WRONLY|os.O_CREATE, mode)
 				if err3 != nil {
 					panic(fmt.Errorf("File creation for inline failed during checkout: %v", err3))
 				}
@@ -4759,7 +4747,7 @@ func (commit *Commit) checkout(directory string) string {
 					os.Link(blob.getBlobfile(false), fullpath)
 				} else {
 					file, err4 := os.OpenFile(blob.getBlobfile(true),
-						os.O_WRONLY | os.O_CREATE, mode)
+						os.O_WRONLY|os.O_CREATE, mode)
 					if err4 != nil {
 						panic(fmt.Errorf("File creation failed during checkout: %v", err4))
 					}
@@ -4774,10 +4762,10 @@ func (commit *Commit) checkout(directory string) string {
 
 // head returns the branch to which this commit belongs.
 func (commit *Commit) head() string {
-        if strings.HasPrefix(commit.branch, "refs/heads/") || !commit.hasChildren() {
+	if strings.HasPrefix(commit.branch, "refs/heads/") || !commit.hasChildren() {
 		return commit.branch
 	}
-        rank := 0
+	rank := 0
 	var child Event
 	for rank, child = range commit.children() {
 		switch child.(type) {
@@ -4790,7 +4778,7 @@ func (commit *Commit) head() string {
 				child.idMe())
 		}
 	}
-        if rank == 0 {
+	if rank == 0 {
 		switch child.(type) {
 		case *Commit:
 			child.(*Commit).head() // there was only one child
@@ -4799,35 +4787,35 @@ func (commit *Commit) head() string {
 				child.idMe())
 		}
 	}
-        panic(throw("command", "Can't deduce a branch head for %s", commit.mark))
+	panic(throw("command", "Can't deduce a branch head for %s", commit.mark))
 }
 
 // tip enables do_tip() to report deduced branch tips.
 func (commit *Commit) tip(_modifiers stringSet, eventnum int, cols int) string {
-        summary := fmt.Sprintf("%6d %s %6s ",
+	summary := fmt.Sprintf("%6d %s %6s ",
 		eventnum+1, commit.date().rfc3339(), commit.mark)
-        report := summary + commit.head()
-        if cols > 0 {
+	report := summary + commit.head()
+	if cols > 0 {
 		report = report[:cols]
 	}
-        return report
+	return report
 }
 
 // reference answers whether this commit references a specified blob mark.
 func (commit *Commit) references(mark string) bool {
-        for _, fileop := range commit.operations() {
+	for _, fileop := range commit.operations() {
 		if fileop.op == opM && fileop.ref == mark {
 			return true
 		}
 	}
-        return false
+	return false
 }
 
 // blobByName looks up file content by name
 func (commit *Commit) blobByName(pathname string) (string, bool) {
 	entry, ok := commit.manifest()[pathname]
-        if !ok {
-		 return "", false
+	if !ok {
+		return "", false
 	}
 	if entry.ref == "inline" {
 		return entry.inline, true
@@ -4871,19 +4859,19 @@ func (commit *Commit) undecodable(codec string) bool {
 
 // delete severs this commit from its repository.
 func (commit *Commit) delete(policy stringSet) {
-        commit.repo.delete([]int{commit.index()}, policy)
+	commit.repo.delete([]int{commit.index()}, policy)
 }
 
 // dump reports this commit in import-stream format.
 func (commit Commit) String() string {
 	vcs := commit.repo.preferred
-        if vcs == nil && commit.repo.vcs != nil && commit.repo.vcs.importer != "" {
+	if vcs == nil && commit.repo.vcs != nil && commit.repo.vcs.importer != "" {
 		vcs = commit.repo.vcs
 	}
-        parts := make([]string, 0)
-        incremental := false
-        if !commit.repo.writeOptions.Contains("--noincremental") {
-		if commit.repo.realized != nil  && commit.hasParents() {
+	parts := make([]string, 0)
+	incremental := false
+	if !commit.repo.writeOptions.Contains("--noincremental") {
+		if commit.repo.realized != nil && commit.hasParents() {
 			if _, ok := commit.repo.realized[commit.branch]; !ok {
 				parent := commit.parents()[0]
 				switch parent.(type) {
@@ -4896,40 +4884,40 @@ func (commit Commit) String() string {
 			}
 		}
 	}
-        if incremental {
+	if incremental {
 		parts = append(parts, fmt.Sprintf("reset %s^0\n\n", commit.branch))
 	}
-        parts = append(parts, fmt.Sprintf("commit %s\n", commit.branch))
-        if commit.legacyID != "" {
+	parts = append(parts, fmt.Sprintf("commit %s\n", commit.branch))
+	if commit.legacyID != "" {
 		parts = append(parts, fmt.Sprintf("#legacy-id %s\n", commit.legacyID))
 	}
-        if commit.repo.realized != nil {
+	if commit.repo.realized != nil {
 		commit.repo.realized[commit.branch] = true
 	}
-        if commit.mark != "" {
+	if commit.mark != "" {
 		parts = append(parts, fmt.Sprintf("mark %s\n", commit.mark))
 	}
-        if len(commit.authors) > 0 {
+	if len(commit.authors) > 0 {
 		for _, author := range commit.authors {
 			parts = append(parts, fmt.Sprintf("author %s\n", author))
 		}
 	}
-        if commit.committer.fullname != ""{
+	if commit.committer.fullname != "" {
 		parts = append(parts, fmt.Sprintf("committer %s\n", commit.committer))
 	}
-        // As of git 2.13.6 (possibly earlier) the comment fields of
-        // commit is no longer optional - you have to emit data 0 if there
-        // is no comment, otherwise the importer gets confused.
-        comment := commit.comment
-        if commit.repo.writeOptions.Contains("--legacy") && commit.legacyID != "" {
+	// As of git 2.13.6 (possibly earlier) the comment fields of
+	// commit is no longer optional - you have to emit data 0 if there
+	// is no comment, otherwise the importer gets confused.
+	comment := commit.comment
+	if commit.repo.writeOptions.Contains("--legacy") && commit.legacyID != "" {
 		comment += fmt.Sprintf("\nLegacy-ID: %s\n", commit.legacyID)
 	}
-        parts = append(parts, fmt.Sprintf("data %d\n%s", len(comment), comment))
-        if commit.repo.exportStyle().Contains("nl-after-comment") {
+	parts = append(parts, fmt.Sprintf("data %d\n%s", len(comment), comment))
+	if commit.repo.exportStyle().Contains("nl-after-comment") {
 		parts = append(parts, "\n")
 	}
-        parents := commit.parents()
-        if len(parents) > 0 {
+	parents := commit.parents()
+	if len(parents) > 0 {
 		ancestor := parents[0]
 		if !incremental || commit.repo.internals.Contains(ancestor.getMark()) {
 			parts = append(parts, fmt.Sprintf("from %s\n", ancestor.getMark()))
@@ -4964,17 +4952,17 @@ func (commit Commit) String() string {
 	for _, op := range commit.operations() {
 		parts = append(parts, op.String())
 	}
-        if !commit.repo.exportStyle().Contains("no-nl-after-commit") {
+	if !commit.repo.exportStyle().Contains("no-nl-after-commit") {
 		parts = append(parts, "\n")
 	}
-        return strings.Join(parts, "")
+	return strings.Join(parts, "")
 }
 
 //Passthrough represents a passthrough line.
 type Passthrough struct {
-	repo *Repository
-	text string
-	color string
+	repo     *Repository
+	text     string
+	color    string
 	deleteme bool
 }
 
@@ -4984,8 +4972,8 @@ func (p Passthrough) getDelFlag() bool {
 
 func newPassthrough(repo *Repository, line string) *Passthrough {
 	p := new(Passthrough)
-        p.repo = repo
-        p.text = line
+	p.repo = repo
+	p.text = line
 	// Don't do this!  These sometimes need to be added to the front.
 	//if repo != nil {
 	//	repo.events = append(repo.events, p)
@@ -4996,38 +4984,38 @@ func newPassthrough(repo *Repository, line string) *Passthrough {
 // emailOut enables do_mailbox_out() to report these.
 func (p *Passthrough) emailOut(_modifiers stringSet,
 	eventnum int, _filterRegexp *regexp.Regexp) string {
-        msg, _ := newMessageBlock(nil)
-        msg.setHeader("Event-Number", fmt.Sprintf("%d", eventnum+1))
-        msg.setPayload(p.text)
-        return msg.String()
+	msg, _ := newMessageBlock(nil)
+	msg.setHeader("Event-Number", fmt.Sprintf("%d", eventnum+1))
+	msg.setPayload(p.text)
+	return msg.String()
 }
 
 func (p *Passthrough) emailIn(msg *MessageBlock) {
-        p.text = msg.getPayload()
+	p.text = msg.getPayload()
 }
 
 // idMe IDs this passthrough for humans."
 func (p Passthrough) idMe() string {
-        return fmt.Sprintf("passthrough@%d", p.repo.index(p))
+	return fmt.Sprintf("passthrough@%d", p.repo.index(p))
 }
 
 //getMark is a stub required for the Event interface
 func (p Passthrough) getMark() string {
-        return ""
+	return ""
 }
 
 // String reports this passthrough in import-stream format.
 func (p Passthrough) String() string {
-        return p.text
+	return p.text
 }
-	
+
 // Generic extractor code begins here
 
 // signature is a file signature - path, hash value of content and permissions."
 type signature struct {
 	pathname string
-	hashval [sha1.Size]byte
-	perms string
+	hashval  [sha1.Size]byte
+	perms    string
 }
 
 func newSignature(path string) *signature {
@@ -5042,7 +5030,7 @@ func newSignature(path string) *signature {
 	}
 
 	ps := new(signature)
-        ps.pathname = path
+	ps.pathname = path
 	if !st.IsDir() {
 		h := sha1.New()
 		if _, err := io.Copy(h, file); err != nil {
@@ -5062,7 +5050,7 @@ func newSignature(path string) *signature {
 }
 
 func (s signature) String() string {
-        return fmt.Sprintf("<%s:%s:%s>",
+	return fmt.Sprintf("<%s:%s:%s>",
 		s.pathname, s.perms, s.hashval)
 }
 
@@ -5101,14 +5089,14 @@ func branchbase(branch string) string {
 
 // Use numeric codes rather than (un-interned) strings
 // to reduce working-set size.
-const sdNONE = 0	// Must be integer zero
+const sdNONE = 0 // Must be integer zero
 const sdFILE = 1
 const sdDIR = 2
 const sdADD = 1
 const sdDELETE = 3
 const sdCHANGE = 4
 const sdREPLACE = 5
-const sdNUKE = 6	// Not part of the Subversion data model
+const sdNUKE = 6 // Not part of the Subversion data model
 
 // If these don't match the constants above, havoc will ensue
 var ActionValues = []string{"none", "add", "delete", "change", "replace"}
@@ -5119,31 +5107,31 @@ var PathTypeValues = []string{"none", "file", "dir", "ILLEGAL-TYPE"}
 // junk file properties - cvs2svn in particular generates them like
 // mad.  We want to let through other properties that might carry
 // useful information.
-var IgnoreProperties = []string {
-	"svn:executable",  // We special-case this one elsewhere
-	"svn:ignore",      // We special-case this one elsewhere
-	"svn:special",     // We special-case this one elsewhere
+var IgnoreProperties = []string{
+	"svn:executable", // We special-case this one elsewhere
+	"svn:ignore",     // We special-case this one elsewhere
+	"svn:special",    // We special-case this one elsewhere
 	"svn:mime-type",
 	"svn:keywords",
 	"svn:needs-lock",
-	"svn:eol-style",   // Don't want to suppress, but cvs2svn floods these.
+	"svn:eol-style", // Don't want to suppress, but cvs2svn floods these.
 }
 
 type NodeAction struct {
 	// These are set during parsing.  Can all initially have zero values
-	revision int
-	path string
-	kind int
-	action int	// initially sdNONE
-	fromRev int
-	fromPath string
+	revision    int
+	path        string
+	kind        int
+	action      int // initially sdNONE
+	fromRev     int
+	fromPath    string
 	contentHash [sha1.Size]byte
-	fromHash [sha1.Size]byte
-	blob *Blob
-	props OrderedMap
-	propchange bool
+	fromHash    [sha1.Size]byte
+	blob        *Blob
+	props       OrderedMap
+	propchange  bool
 	// These are set during the analysis phase
-	blobmark string
+	blobmark  string
 	generated bool
 }
 
@@ -5169,11 +5157,11 @@ func (action NodeAction) String() string {
 }
 
 type RevisionRecord struct {
-	nodes []NodeAction
-	log string
-	date string
+	nodes  []NodeAction
+	log    string
+	date   string
 	author string
-	props OrderedMap
+	props  OrderedMap
 }
 
 func newRevisionRecord(nodes []NodeAction, props OrderedMap) *RevisionRecord {
@@ -5194,79 +5182,79 @@ func newRevisionRecord(nodes []NodeAction, props OrderedMap) *RevisionRecord {
 // Cruft recognizers
 var cvs2svnTagRE = regexp.MustCompile("This commit was manufactured by cvs2svn to create tag.*'([^']*)'")
 var cvs2svnBranchRE = regexp.MustCompile("This commit was manufactured by cvs2svn to create branch.*'([^']*)'")
+
 const SplitSep = "."
 
 // StreamParser parses a fast-import stream or Subversion dump to
 // populate a Repository.
 type StreamParser struct {
-        repo *Repository
-        fp io.Reader		// Can't be os.File, unit tests will fail
-        importLine int
-        ccount int64
-        linebuffers []string
-        warnings []string
-	lastcookie Cookie
-        // Everything below here is Subversion-specific
-        branches map[string]*Commit	// Points to branch root commits
-        branchlink stringSet
-        branchdeletes stringSet
-        branchcopies stringSet
-        generatedDeletes []*Commit
-        revisions []RevisionRecord
-        hashmap map[string]string
-        propertyStash map[string]OrderedMap
-        fileopBranchlinks stringSet
-        directoryBranchlinks stringSet
-        activeGitignores map[string]string
-        large bool
-        propagate map[string]string
+	repo        *Repository
+	fp          io.Reader // Can't be os.File, unit tests will fail
+	importLine  int
+	ccount      int64
+	linebuffers []string
+	warnings    []string
+	lastcookie  Cookie
+	// Everything below here is Subversion-specific
+	branches             map[string]*Commit // Points to branch root commits
+	branchlink           stringSet
+	branchdeletes        stringSet
+	branchcopies         stringSet
+	generatedDeletes     []*Commit
+	revisions            []RevisionRecord
+	hashmap              map[string]string
+	propertyStash        map[string]OrderedMap
+	fileopBranchlinks    stringSet
+	directoryBranchlinks stringSet
+	activeGitignores     map[string]string
+	large                bool
+	propagate            map[string]string
 }
-
 
 // newSteamParser parses a fast-import stream or Subversion dump to a Repository.
 func newStreamParser(repo *Repository) *StreamParser {
 	sp := new(StreamParser)
-        sp.repo = repo
-        sp.linebuffers = make([]string, 0)
-        sp.warnings = make([]string, 0)
+	sp.repo = repo
+	sp.linebuffers = make([]string, 0)
+	sp.warnings = make([]string, 0)
 	sp.ccount = -1
-        // Everything below here is Subversion-specific
-        sp.branches = make(map[string]*Commit)
-        sp.branchlink = newStringSet()
-        sp.branchdeletes = newStringSet()
-        sp.branchcopies = newStringSet()
-        sp.generatedDeletes = make([]*Commit, 0)
-        sp.revisions = make([]RevisionRecord, 0)
-        sp.hashmap = make(map[string]string)
-        sp.propertyStash = make(map[string]OrderedMap)
-        sp.fileopBranchlinks = newStringSet()
-        sp.directoryBranchlinks = newStringSet()
-        sp.activeGitignores = make(map[string]string)
-        sp.propagate = make(map[string]string)
+	// Everything below here is Subversion-specific
+	sp.branches = make(map[string]*Commit)
+	sp.branchlink = newStringSet()
+	sp.branchdeletes = newStringSet()
+	sp.branchcopies = newStringSet()
+	sp.generatedDeletes = make([]*Commit, 0)
+	sp.revisions = make([]RevisionRecord, 0)
+	sp.hashmap = make(map[string]string)
+	sp.propertyStash = make(map[string]OrderedMap)
+	sp.fileopBranchlinks = newStringSet()
+	sp.directoryBranchlinks = newStringSet()
+	sp.activeGitignores = make(map[string]string)
+	sp.propagate = make(map[string]string)
 	return sp
 }
 
 func (sp *StreamParser) error(msg string) {
-        // Throw fatal error during parsing.
-        panic(throw("parse", "%s at line %d", msg, sp.importLine))
+	// Throw fatal error during parsing.
+	panic(throw("parse", "%s at line %d", msg, sp.importLine))
 }
 
-func (sp *StreamParser)  warn(msg string) {
-        // Display a parse warning associated with a line.
-        if sp.importLine > 0 {
+func (sp *StreamParser) warn(msg string) {
+	// Display a parse warning associated with a line.
+	if sp.importLine > 0 {
 		complain("%s at line %d", msg, sp.importLine)
-        } else {
+	} else {
 		complain(msg)
-        }
+	}
 }
 
 func (sp *StreamParser) gripe(msg string) {
-        // Display or queue up an error message.
-        if verbose < 2 {
+	// Display or queue up an error message.
+	if verbose < 2 {
 		sp.warnings = append(sp.warnings, msg)
-        } else {
+	} else {
 		complain(msg)
-        }
+	}
 }
 
 func (sp *StreamParser) read(n int) string {
@@ -5280,16 +5268,16 @@ func (sp *StreamParser) read(n int) string {
 	}
 	sp.ccount += int64(n)
 	sp.importLine = bytes.Count(cs, []byte{'\n'})
-        return string(cs)	
+	return string(cs)
 }
 
 func (sp *StreamParser) readline() string {
 	// Read a newline-terminated string, returning "" at EOF
 	var line []byte
-        if len(sp.linebuffers) > 0 {
+	if len(sp.linebuffers) > 0 {
 		line = []byte(sp.linebuffers[0])
 		sp.linebuffers = sp.linebuffers[1:]
-        } else {
+	} else {
 		cs := make([]byte, 1)
 		for {
 			_, err := sp.fp.Read(cs)
@@ -5306,28 +5294,28 @@ func (sp *StreamParser) readline() string {
 				break
 			}
 		}
-        }
-        sp.ccount += int64(len(line))
-        sp.importLine++
-        return string(line)
+	}
+	sp.ccount += int64(len(line))
+	sp.importLine++
+	return string(line)
 }
 
 func (sp *StreamParser) tell() int64 {
-        // Return the current read offset in the source stream.
+	// Return the current read offset in the source stream.
 	return sp.ccount
 }
 
-func (sp *StreamParser)  pushback(line string) {
-        sp.ccount -= int64(len(line))
-        sp.importLine--
-        sp.linebuffers = append(sp.linebuffers, line)
-    }
+func (sp *StreamParser) pushback(line string) {
+	sp.ccount -= int64(len(line))
+	sp.importLine--
+	sp.linebuffers = append(sp.linebuffers, line)
+}
 
-    // Helpers for import-stream files
+// Helpers for import-stream files
 
 func (sp *StreamParser) fiReadline() string {
-        // Read a line, stashing comments as we go.
-        for {
+	// Read a line, stashing comments as we go.
+	for {
 		line := sp.readline()
 		if len(line) > 0 && strings.HasPrefix(line, "#") && !strings.HasPrefix(line, "#legacy-id") {
 			sp.repo.addEvent(newPassthrough(sp.repo, line))
@@ -5343,17 +5331,17 @@ func (sp *StreamParser) fiReadline() string {
 		} else {
 			return line
 		}
-        }
+	}
 }
 
 func (sp *StreamParser) fiReadData(line string) (string, int64) {
-        // Read a fast-import data section.
-        if line == "" {
+	// Read a fast-import data section.
+	if line == "" {
 		line = sp.fiReadline()
-        }
+	}
 	var data string
 	var start int64
-        if strings.HasPrefix(line, "data <<") {
+	if strings.HasPrefix(line, "data <<") {
 		delim := line[7:]
 		data = ""
 		start = sp.tell()
@@ -5367,12 +5355,12 @@ func (sp *StreamParser) fiReadData(line string) (string, int64) {
 				data += dataline
 			}
 		}
-        } else if strings.HasPrefix(line, "data") {
-                count, err := strconv.Atoi(strings.TrimSpace(line[5:]))
-		if err != nil{
+	} else if strings.HasPrefix(line, "data") {
+		count, err := strconv.Atoi(strings.TrimSpace(line[5:]))
+		if err != nil {
 			sp.error("bad count in data: " + line[5:])
 		}
-                start = sp.tell()
+		start = sp.tell()
 		buf := make([]byte, count)
 		var n int
 		n, err = sp.fp.Read(buf)
@@ -5380,40 +5368,40 @@ func (sp *StreamParser) fiReadData(line string) (string, int64) {
 			sp.error("bad read in data")
 		}
 		data = string(buf)
-        } else if strings.HasPrefix(line, "property") {
-		line = line[9:]                    // Skip this token
-		line = line[strings.Index(line, " "):]      // Skip the property name
+	} else if strings.HasPrefix(line, "property") {
+		line = line[9:]                        // Skip this token
+		line = line[strings.Index(line, " "):] // Skip the property name
 		nextws := strings.Index(line, " ")
 		count, err := strconv.Atoi(strings.TrimSpace(line[:nextws-1]))
-		if err != nil{
+		if err != nil {
 			sp.error("bad count in property")
 		}
 		start = sp.tell()
-		buf := make([]byte, count) 
+		buf := make([]byte, count)
 		var n int
 		n, err = sp.fp.Read(buf)
 		if err != nil || n != count {
 			sp.error("bad read in property")
 		}
 		data = line[nextws:] + string(buf)
-        } else {
+	} else {
 		sp.error("malformed data header")
-        }
-        line = sp.readline()
-        if line != "\n" {
+	}
+	line = sp.readline()
+	if line != "\n" {
 		sp.pushback(line) // Data commands optionally end with LF
-        }
-        return data, start
+	}
+	return data, start
 }
 
 func (sp *StreamParser) fiParseFileop(fileop *FileOp) {
-        // Read a fast-import fileop
-        if fileop.ref[0] == ':' {
+	// Read a fast-import fileop
+	if fileop.ref[0] == ':' {
 		return
-        } else if fileop.ref == "inline" {
+	} else if fileop.ref == "inline" {
 		data, _ := sp.fiReadData("")
 		fileop.inline = data
-        } else {
+	} else {
 		sp.error("unknown content type in filemodify")
 	}
 }
@@ -5425,51 +5413,51 @@ func parseInt(s string) int {
 	if err != nil {
 		panic(throw("parse", "malformed integer literal: %v", err))
 	}
-	return n		
+	return n
 }
 
 // Helpers for Subversion dumpfiles
 
 func sdBody(line string) string {
-        // Parse the body from a Subversion header line
-        return strings.TrimSpace(strings.SplitN(line, ":", 2)[1])
+	// Parse the body from a Subversion header line
+	return strings.TrimSpace(strings.SplitN(line, ":", 2)[1])
 }
 
 func (sp *StreamParser) sdRequireHeader(hdr string) string {
-        // Consume a required header line
-        line := sp.readline()
-        sp.ccount += int64(len(line))
-        if !strings.HasPrefix(line, hdr) {
+	// Consume a required header line
+	line := sp.readline()
+	sp.ccount += int64(len(line))
+	if !strings.HasPrefix(line, hdr) {
 		sp.error("required header missing: " + hdr)
-        }
-        return sdBody(line)
+	}
+	return sdBody(line)
 }
 
 func (sp *StreamParser) sdRequireSpacer() {
-        line := sp.readline()
-        if strings.TrimSpace(line)!= "" {
-		sp.error("found "+strconv.Quote(line)+" expecting blank line" )
-        }
+	line := sp.readline()
+	if strings.TrimSpace(line) != "" {
+		sp.error("found " + strconv.Quote(line) + " expecting blank line")
+	}
 }
 
-func (sp *StreamParser)  sdReadBlob(length int) string {
-        // Read a Subversion file-content blob.
+func (sp *StreamParser) sdReadBlob(length int) string {
+	// Read a Subversion file-content blob.
 	buf := make([]byte, length+1)
-        n, _ := sp.fp.Read(buf)
-        if n != length + 1 || buf[length] != '\n' {
-            sp.error("EOL not seen where expected, Content-Length incorrect")
-        }
+	n, _ := sp.fp.Read(buf)
+	if n != length+1 || buf[length] != '\n' {
+		sp.error("EOL not seen where expected, Content-Length incorrect")
+	}
 	content := string(buf[:length])
-        sp.importLine += strings.Count(content, "\n") + 1
-        sp.ccount += int64(len(content)) + 1
-        return content
+	sp.importLine += strings.Count(content, "\n") + 1
+	sp.ccount += int64(len(content)) + 1
+	return content
 }
 
 func (sp *StreamParser) sdReadProps(target string, checklength int) OrderedMap {
-        // Parse a Subversion properties section, return as an OrderedMap.
-        props := newOrderedMap()
-        start := sp.ccount
-        for sp.ccount - start < int64(checklength) {
+	// Parse a Subversion properties section, return as an OrderedMap.
+	props := newOrderedMap()
+	start := sp.ccount
+	for sp.ccount-start < int64(checklength) {
 		line := sp.readline()
 		announce(debugSVNPARSE, "readprops, line %d: %q",
 			sp.importLine, line)
@@ -5477,9 +5465,9 @@ func (sp *StreamParser) sdReadProps(target string, checklength int) OrderedMap {
 			// This test should be !=, but I get random
 			// off-by-ones from real dumpfiles - I don't
 			// know why.
-			if sp.ccount - start < int64(checklength) {
+			if sp.ccount-start < int64(checklength) {
 				sp.error(fmt.Sprintf("expected %d property chars, got %d",
-					checklength, sp.ccount - start))
+					checklength, sp.ccount-start))
 
 			}
 			break
@@ -5502,12 +5490,11 @@ func (sp *StreamParser) sdReadProps(target string, checklength int) OrderedMap {
 				target, key, value)
 		}
 	}
-        return props
+	return props
 }
 
-	
-func (sp *StreamParser) branchlist() []string  {
-        //The branch list in deterministic order, most specific branches first.
+func (sp *StreamParser) branchlist() []string {
+	//The branch list in deterministic order, most specific branches first.
 	out := make([]string, 0)
 	for key, _ := range sp.branches {
 		out = append(out, key)
@@ -5516,9 +5503,9 @@ func (sp *StreamParser) branchlist() []string  {
 		if len(out[i]) > len(out[j]) {
 			return true
 		}
-		return out[i] > out [j]
+		return out[i] > out[j]
 	})
-        return out
+	return out
 }
 
 func (sp *StreamParser) timeMark(label string) {
@@ -5531,7 +5518,7 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 			hash[i] = src[i]
 		}
 	}
-        trackSymlinks := newStringSet()
+	trackSymlinks := newStringSet()
 	for {
 		line := sp.readline()
 		if line == "" {
@@ -5548,7 +5535,7 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 			announce(debugSVNPARSE, "revision parsing, line %d: begins", sp.importLine)
 			revision, rerr := strconv.Atoi(sdBody(line))
 			if rerr != nil {
-				panic(throw("parse", "ill-formed revision number: " + line))
+				panic(throw("parse", "ill-formed revision number: "+line))
 			}
 			plen := parseInt(sp.sdRequireHeader("Prop-content-length"))
 			sp.sdRequireHeader("Content-length")
@@ -5660,7 +5647,7 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 								if node.props.has("svn:special") {
 									trackSymlinks.Add(node.path)
 								}
-							if trackSymlinks.Contains(node.path)  {
+								if trackSymlinks.Contains(node.path) {
 									node.blob.setContent(
 										text[5:], start+5)
 								}
@@ -5783,7 +5770,7 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 			// Node list parsing ends
 			sp.revisions[revision] = *newRevisionRecord(nodes, props)
 			sp.repo.legacyCount += 1
-			announce(debugSVNPARSE, "revision parsing, line %d: ends",  sp.importLine)
+			announce(debugSVNPARSE, "revision parsing, line %d: ends", sp.importLine)
 			// End Revision processing
 			baton.readProgress(sp.ccount, filesize)
 		}
@@ -5829,7 +5816,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 					// be immediately after "commit" if present
 					commit.legacyID = strings.Fields(line)[1]
 					if sp.repo.vcs != nil {
-						sp.repo.legacyMap[strings.ToUpper(sp.repo.vcs.name) + ":" + commit.legacyID] = commit
+						sp.repo.legacyMap[strings.ToUpper(sp.repo.vcs.name)+":"+commit.legacyID] = commit
 					} else {
 						sp.repo.legacyMap[commit.legacyID] = commit
 					}
@@ -5856,11 +5843,11 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 						length := parseInt(fields[2])
 						value := strings.Join(fields[3:], " ")
 						if len(value) < length {
-							value += sp.read(length-len(value))
+							value += sp.read(length - len(value))
 							if sp.read(1) != "\n" {
 								sp.error("trailing junk on property value")
 							}
-						} else if len(value) == length + 1 {
+						} else if len(value) == length+1 {
 							value = value[:len(value)-1] // Trim '\n'
 						} else {
 							value += sp.read(length - len(value))
@@ -5895,7 +5882,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 					} else {
 						commit.addParentByMark(mark)
 					}
-				} else if line[0]=='C' || line[0]=='D' || line[0]=='R' {
+				} else if line[0] == 'C' || line[0] == 'D' || line[0] == 'R' {
 					commit.appendOperation(*newFileOp(sp.repo).parse(line))
 				} else if line == "deleteall\n" {
 					commit.appendOperation(*newFileOp(sp.repo).parse(deleteall))
@@ -6020,7 +6007,6 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 	}
 }
 
-
 //
 // The main event
 //
@@ -6040,7 +6026,7 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 		sp.repo.seekstream = fileobj
 		filesize = getsize(sp.repo.seekstream.Name())
 	}
-        pwd, err := os.Getwd()
+	pwd, err := os.Getwd()
 	if err != nil {
 		sp.error(fmt.Sprintf("Could not get working directory: %v", err))
 	}
@@ -6057,7 +6043,7 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 	line := sp.readline()
 	if strings.HasPrefix(line, "SVN-fs-dump-format-version: ") {
 		body := sdBody(line)
-		if body != "1" && body !="2" {
+		if body != "1" && body != "2" {
 			sp.error("unsupported dump format version " + body)
 		}
 		// Beginning of Subversion dump parsing
@@ -6103,7 +6089,7 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 		}
 	}()
 }
-	
+
 //
 // The rendezvous between parsing and object building for import
 // streams is pretty trivial and best done inline in the parser
@@ -6113,15 +6099,15 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 // in the following functions.
 //
 func nodePermissions(node NodeAction) string {
-    // Fileop permissions from node properties
+	// Fileop permissions from node properties
 	if node.props.has("svn:executable") {
 		return "100755"
 	} else if node.props.has("svn:special") {
 		// Map to git symlink, which behaves the same way.
 		// Blob contents is the path the link should resolve to.
 		return "120000"
-    }
-    return "100644"
+	}
+	return "100644"
 }
 
 func (sp *StreamParser) isBranch(pathname string) bool {
@@ -6129,16 +6115,15 @@ func (sp *StreamParser) isBranch(pathname string) bool {
 	return ok
 }
 
-
 // Path separator as found in Subversion dump files. Isolated because
-// it might be "\" on OSes not to be mentioned in polite company. 
+// it might be "\" on OSes not to be mentioned in polite company.
 const svnSep = "/"
 
 func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
-        // Subversion actions to import-stream commits.
-        sp.repo.addEvent(newPassthrough(sp.repo, "#reposurgeon sourcetype svn\n"))
-        announce(debugEXTRACT, "Pass 0: dead-branch deletion")
-        if !options.Contains("--preserve") {
+	// Subversion actions to import-stream commits.
+	sp.repo.addEvent(newPassthrough(sp.repo, "#reposurgeon sourcetype svn\n"))
+	announce(debugEXTRACT, "Pass 0: dead-branch deletion")
+	if !options.Contains("--preserve") {
 		// Identify Subversion tag/branch directories with
 		// tipdeletes && nuke them.  Happens well before tip
 		// deletes are tagified, the behavior if --preserve is on.
@@ -6161,7 +6146,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					node.action = sdNUKE
 				}
 				for _, deadwood := range deadbranches {
-					if strings.HasPrefix(node.path, deadwood + "/") {
+					if strings.HasPrefix(node.path, deadwood+"/") {
 						node.action = sdNUKE
 						break
 					}
@@ -6177,29 +6162,29 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					newnodes = append(newnodes, node)
 				}
 			}
-			sp.revisions[revision].nodes = newnodes 
+			sp.revisions[revision].nodes = newnodes
 		}
-        }
+	}
 	// no-preserve ends begins here
 
-        // Find all copy sources && compute the set of branches
-        announce(debugEXTRACT, "Pass 1: compute copy sets and branches")
-        nobranch := options.Contains("--nobranch")
-        copynodes := make([]*NodeAction, 0)
-        for i, record := range sp.revisions {
+	// Find all copy sources && compute the set of branches
+	announce(debugEXTRACT, "Pass 1: compute copy sets and branches")
+	nobranch := options.Contains("--nobranch")
+	copynodes := make([]*NodeAction, 0)
+	for i, record := range sp.revisions {
 		for j, node := range record.nodes {
 			if node.fromPath != "" {
 				copynodes = append(copynodes, &sp.revisions[i].nodes[j])
 				announce(debugEXTRACT, fmt.Sprintf("copynode at %s", node))
 			}
 			np := node.path + svnSep
-			if node.action == sdADD && node.kind == sdDIR &&  !sp.isBranch(np) && !nobranch {
+			if node.action == sdADD && node.kind == sdDIR && !sp.isBranch(np) && !nobranch {
 				for _, trial := range globalOption("svn_branchify") {
 					if strings.Contains(trial, "*") && trial == node.path {
 						sp.branches[np] = nil
-					} else if strings.HasSuffix(trial, svnSep + "*") && filepath.Dir(trial) == filepath.Dir(node.path) && !globalOption("svn_branchify").Contains(np + "*") {
+					} else if strings.HasSuffix(trial, svnSep+"*") && filepath.Dir(trial) == filepath.Dir(node.path) && !globalOption("svn_branchify").Contains(np+"*") {
 						sp.branches[np] = nil
-					} else if trial == "*" && !globalOption("svn_branchify").Contains(np + "*") && strings.Count(node.path, svnSep) < 1 {
+					} else if trial == "*" && !globalOption("svn_branchify").Contains(np+"*") && strings.Count(node.path, svnSep) < 1 {
 						sp.branches[np] = nil
 					}
 				}
@@ -6210,22 +6195,22 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 		// Per-commit spinner disabled because this pass is fast
 		//baton.twirl("")
-        }
-        sort.Slice(copynodes, func(i int, j int) bool {
+	}
+	sort.Slice(copynodes, func(i int, j int) bool {
 		return copynodes[i].fromRev < copynodes[j].fromRev
 	})
 
-	timeit := func (tag string) {
+	timeit := func(tag string) {
 		sp.timeMark("tag")
 		if haveGlobalOption("bigprofile") {
-			e := len(sp.repo.timings)-1
+			e := len(sp.repo.timings) - 1
 			baton.twirl(fmt.Sprintf("%s:%v...", tag, sp.repo.timings[e].stamp.Sub(sp.repo.timings[e-1].stamp)))
 		} else {
 			baton.twirl("")
 		}
 	}
 
-        timeit("copynodes")
+	timeit("copynodes")
 
 	/* FIXME: Most of this function is not yet translated.  See near EOF. */
 }
@@ -6251,7 +6236,7 @@ type CommitLike interface {
 
 // Contributor - associate a username with a DVCS-style ID and timezone
 type Contributor struct {
-	local     string
+	local    string
 	fullname string
 	email    string
 	timezone string
@@ -6259,8 +6244,8 @@ type Contributor struct {
 
 // ContributorID identifies a contributor for purposes of aliasing
 type ContributorID struct {
-	fullname     string
-	email        string
+	fullname string
+	email    string
 }
 
 func (c Contributor) isEmpty() bool {
@@ -6275,38 +6260,38 @@ type TimeMark struct {
 
 // Repository is the entire state of a version-control repository
 type Repository struct {
-	name string
-        readtime time.Time
-        vcs *VCS
-        stronghint bool
-        hintlist []Hint
-        sourcedir string
-        seekstream *os.File
-        events []Event    // A list of the events encountered, in order
-        _markToIndex map[string]int
-        _eventByMark map[string]Event
-        _namecache map[string][]int
-        preserveSet stringSet
-        caseCoverage orderedIntSet
-        basedir string
-        uuid string
-        write_legacy bool
-        dollarMap map[string]*Commit	// From dollar cookies in files
-        legacyMap map[string]*Commit    // From anything that doesn't survive rebuild
-        legacyCount int
-        timings []TimeMark
-        assignments map[string]orderedIntSet
-        inlines int
-        uniqueness string		// "committer_date", "committer_stamp", or ""
-        markseq int
-        authormap map[string]Contributor
-        tzmap map[string]*time.Location	// most recent email address to timezone
-        aliases map[ContributorID]ContributorID
+	name         string
+	readtime     time.Time
+	vcs          *VCS
+	stronghint   bool
+	hintlist     []Hint
+	sourcedir    string
+	seekstream   *os.File
+	events       []Event // A list of the events encountered, in order
+	_markToIndex map[string]int
+	_eventByMark map[string]Event
+	_namecache   map[string][]int
+	preserveSet  stringSet
+	caseCoverage orderedIntSet
+	basedir      string
+	uuid         string
+	write_legacy bool
+	dollarMap    map[string]*Commit // From dollar cookies in files
+	legacyMap    map[string]*Commit // From anything that doesn't survive rebuild
+	legacyCount  int
+	timings      []TimeMark
+	assignments  map[string]orderedIntSet
+	inlines      int
+	uniqueness   string // "committer_date", "committer_stamp", or ""
+	markseq      int
+	authormap    map[string]Contributor
+	tzmap        map[string]*time.Location // most recent email address to timezone
+	aliases      map[ContributorID]ContributorID
 	// Write control - set, if required, before each dump
-	preferred *VCS			// overrides vcs slot for writes
-	realized map[string]bool	// clear and remake this before each dump
-	writeOptions stringSet		// options requested on this write
-	internals stringSet		// export code computes this itself
+	preferred    *VCS            // overrides vcs slot for writes
+	realized     map[string]bool // clear and remake this before each dump
+	writeOptions stringSet       // options requested on this write
+	internals    stringSet       // export code computes this itself
 }
 
 func newRepository(name string) *Repository {
@@ -6316,7 +6301,7 @@ func newRepository(name string) *Repository {
 	repo.hintlist = make([]Hint, 0)
 	repo.preserveSet = newStringSet()
 	repo.caseCoverage = newOrderedIntSet()
-        repo.legacyMap = make(map[string]*Commit)
+	repo.legacyMap = make(map[string]*Commit)
 	repo.assignments = make(map[string]orderedIntSet)
 	repo.timings = make([]TimeMark, 0)
 	repo.authormap = make(map[string]Contributor)
@@ -6331,25 +6316,25 @@ func newRepository(name string) *Repository {
 }
 
 func (repo *Repository) subdir(name string) string {
-        if name == "" {
+	if name == "" {
 		name = repo.name
-        }
+	}
 	head := fmt.Sprintf("%s/.rs%d", repo.basedir, os.Getpid())
 	if name != "" {
 		head += "-" + name
-        }
+	}
 	return filepath.FromSlash(head)
 }
 
 // cleanup releases disk storage associated with this repo
 func (repo *Repository) cleanup() {
-        nuke(repo.subdir(""),
+	nuke(repo.subdir(""),
 		fmt.Sprintf("reposurgeon: cleaning up %s", repo.subdir("")))
 }
 
 // markToEvent finds an object by mark
 func (repo *Repository) markToEvent(mark string) Event {
-        if repo._eventByMark == nil {
+	if repo._eventByMark == nil {
 		repo._eventByMark = make(map[string]Event)
 		for _, event := range repo.events {
 			key := event.getMark()
@@ -6368,7 +6353,7 @@ func (repo *Repository) markToEvent(mark string) Event {
 // index returns the index of the specified object in the main even list
 func (repo *Repository) index(obj Event) int {
 	for ind, event := range repo.events {
-                if event == obj {
+		if event == obj {
 			return ind
 		}
 	}
@@ -6377,31 +6362,31 @@ func (repo *Repository) index(obj Event) int {
 
 // find gets an object index by mark
 func (repo *Repository) find(mark string) int {
-        if repo._markToIndex == nil {
+	if repo._markToIndex == nil {
 		repo._markToIndex = make(map[string]int)
 		for ind, event := range repo.events {
 			innermark := event.getMark()
 			if mark != "" {
-				repo._markToIndex[innermark] = ind+1
+				repo._markToIndex[innermark] = ind + 1
 			}
 		}
 	}
 	// return -1 if not found
 	// Python version returned None
-        return repo._markToIndex[mark]-1
+	return repo._markToIndex[mark] - 1
 }
 
 func (repo *Repository) newmark() string {
-        repo.markseq++
-        mark := ":" + fmt.Sprintf("%d", repo.markseq)
-        return mark
+	repo.markseq++
+	mark := ":" + fmt.Sprintf("%d", repo.markseq)
+	return mark
 }
 
 func (repo *Repository) makedir() {
 	target := repo.subdir("")
-	announce(debugSHUFFLE, "repository fast import creates " + target)
+	announce(debugSHUFFLE, "repository fast import creates "+target)
 	if _, err1 := os.Stat(target); os.IsNotExist(err1) {
-                err2 := os.Mkdir(target, userReadWriteMode)
+		err2 := os.Mkdir(target, userReadWriteMode)
 		if err2 != nil {
 			panic("Can't create repository directory")
 		}
@@ -6412,11 +6397,11 @@ func (repo *Repository) makedir() {
 
 type Hint struct {
 	cookie string
-	vcs string
+	vcs    string
 }
 
 func (repo *Repository) hint(clue1 string, clue2 string, strong bool) bool {
-        // Hint what the source of this repository might be.
+	// Hint what the source of this repository might be.
 	newhint := false
 	for _, item := range repo.hintlist {
 		if item.cookie == clue1 && item.vcs == clue2 {
@@ -6424,22 +6409,22 @@ func (repo *Repository) hint(clue1 string, clue2 string, strong bool) bool {
 			break
 		}
 	}
-        if newhint && repo.stronghint && strong {
+	if newhint && repo.stronghint && strong {
 		announce(debugSHOUT, "new hint %s conficts with old %s",
 			clue1, repo.hintlist[len(repo.hintlist)-1])
-            return false
-        }
-        if !repo.stronghint {
-                repo.vcs = findVCS(clue2)
+		return false
+	}
+	if !repo.stronghint {
+		repo.vcs = findVCS(clue2)
 	}
 	if newhint {
 		repo.hintlist = append(repo.hintlist, Hint{clue1, clue2})
 	}
-        notify := newhint && !repo.stronghint
-        repo.stronghint = repo.stronghint || strong
-        return notify
+	notify := newhint && !repo.stronghint
+	repo.stronghint = repo.stronghint || strong
+	return notify
 }
-	
+
 func (repo *Repository) size() int {
 	// Return the size of this import stream, for statistics display.
 	var sz int
@@ -6449,11 +6434,10 @@ func (repo *Repository) size() int {
 	return sz
 }
 
-
 func (repo *Repository) branchset() stringSet {
 	// branchset returns a set of all branchnames appearing in this repo.
-        branches := newStringSet()
-        for _, e := range repo.events {
+	branches := newStringSet()
+	for _, e := range repo.events {
 		switch e.(type) {
 		case *Reset:
 			if e.(*Reset).committish != "" {
@@ -6485,9 +6469,9 @@ func (repo *Repository) branchmap() map[string]string {
 }
 
 func (repo *Repository) all() []int {
-        // Return a set that selects the entire repository.
+	// Return a set that selects the entire repository.
 	s := make([]int, len(repo.events))
-        for i, _ := range repo.events {
+	for i, _ := range repo.events {
 		s[i] = i
 	}
 	return s
@@ -6495,7 +6479,7 @@ func (repo *Repository) all() []int {
 
 func (repo *Repository) __buildNamecache() {
 	// Avoid repeated O(n**2) lookups.
-	repo._namecache = make(map[string][]int) 
+	repo._namecache = make(map[string][]int)
 	commitcount := 0
 	for i, event := range repo.events {
 		switch event.(type) {
@@ -6519,41 +6503,41 @@ func (repo *Repository) __buildNamecache() {
 			key = commit.committer.actionStamp()
 			if _, ok := repo._namecache[key]; !ok {
 				repo._namecache[key] = []int{i}
-			} else{
+			} else {
 				repo._namecache[key] = append(repo._namecache[key], i)
 			}
 		case *Tag:
 			repo._namecache[event.(*Tag).name] = []int{i}
 		case *Reset:
-			repo._namecache["reset@" + filepath.Base(event.(*Reset).ref)] = []int{i}
+			repo._namecache["reset@"+filepath.Base(event.(*Reset).ref)] = []int{i}
 		}
 	}
 }
 
 func (repo *Repository) invalidateNamecache() {
-    repo._namecache = nil
+	repo._namecache = nil
 }
 
 func (repo *Repository) named(ref string) orderedIntSet {
-        // Resolve named reference in the context of this repository.
-        selection := newOrderedIntSet()
-        // For matches that require iterating across the entire event
-        // sequence, building an entire name lookup table is !much
-        // more expensive in time than doing a single lookup. Avoid
-        // lots of O(n**2) searches by building a lookup cache, at the
-        // expense of increased working set for the hash table.
-        lookup, ok := repo.assignments[ref]
-        if ok {
+	// Resolve named reference in the context of this repository.
+	selection := newOrderedIntSet()
+	// For matches that require iterating across the entire event
+	// sequence, building an entire name lookup table is !much
+	// more expensive in time than doing a single lookup. Avoid
+	// lots of O(n**2) searches by building a lookup cache, at the
+	// expense of increased working set for the hash table.
+	lookup, ok := repo.assignments[ref]
+	if ok {
 		return lookup
-        }
-        if repo._namecache == nil {
+	}
+	if repo._namecache == nil {
 		repo.__buildNamecache()
-        }
-        if v, ok := repo._namecache[ref]; ok {
+	}
+	if v, ok := repo._namecache[ref]; ok {
 		return v
-        }
-        // No hit in the name cache or assignments? Then search branches.
-        for _, symbol := range repo.branchset() {
+	}
+	// No hit in the name cache or assignments? Then search branches.
+	for _, symbol := range repo.branchset() {
 		if ref == branchbase(symbol) {
 			loc := -1
 			// Find the last commit with this branchname
@@ -6570,10 +6554,10 @@ func (repo *Repository) named(ref string) orderedIntSet {
 			} else {
 				return newOrderedIntSet(loc)
 			}
-                }
+		}
 	}
-        // Might be a date or action stamp (though action stamps should
-        // be in the name cache already).  First, peel off an optional
+	// Might be a date or action stamp (though action stamps should
+	// be in the name cache already).  First, peel off an optional
 	// ordinal suffix.
 	var ordinal int = -1
 	stamp := ref
@@ -6581,7 +6565,7 @@ func (repo *Repository) named(ref string) orderedIntSet {
 	if m != nil {
 		n, _ := strconv.Atoi(string(m[1:]))
 		ordinal = n
-		stamp = ref[:len(ref)- len(m)]
+		stamp = ref[:len(ref)-len(m)]
 	}
 	// Now look for action stamp or date
 	dateEnd := len(stamp)
@@ -6591,7 +6575,7 @@ func (repo *Repository) named(ref string) orderedIntSet {
 	}
 	datestr := ref[:dateEnd]
 	date, err2 := newDate(datestr)
-	var datematch func(u Date) bool 
+	var datematch func(u Date) bool
 	if err2 == nil {
 		datematch = func(u Date) bool {
 			return u.timestamp.Equal(date.timestamp)
@@ -6613,7 +6597,7 @@ func (repo *Repository) named(ref string) orderedIntSet {
 		emailID = ref[bang+1:]
 	}
 	matches := newOrderedIntSet()
-	if datematch !=  nil {
+	if datematch != nil {
 		for ei, event := range repo.events {
 			switch event.(type) {
 			case *Commit:
@@ -6661,8 +6645,8 @@ func (repo *Repository) named(ref string) orderedIntSet {
 }
 
 func (repo *Repository) invalidateObjectMap() {
-    // Force an object-map rebuild on the next lookup.
-    repo._eventByMark = nil
+	// Force an object-map rebuild on the next lookup.
+	repo._eventByMark = nil
 }
 
 func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) error {
@@ -6671,7 +6655,7 @@ func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) err
 	var principal Contributor
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-		if line  == "" ||  strings.HasPrefix(line, "#") {
+		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
 		if strings.Contains(line, "=") {
@@ -6696,7 +6680,7 @@ func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) err
 				repo.tzmap[mail] = loc
 			}
 			key := strings.ToLower(local)
-			principal = Contributor{local,name,mail,timezone}
+			principal = Contributor{local, name, mail, timezone}
 			repo.authormap[key] = principal
 		}
 		// Process aliases gathered from Changelog entries
@@ -6744,8 +6728,8 @@ func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) err
 
 // List the identities we know.
 func (repo *Repository) writeAuthorMap(selection orderedIntSet, fp io.Writer) error {
-        contributors := make(map[string]string)
-        for _, ei := range selection {
+	contributors := make(map[string]string)
+	for _, ei := range selection {
 		event := repo.events[ei]
 		switch event.(type) {
 		case *Commit:
@@ -6758,30 +6742,33 @@ func (repo *Repository) writeAuthorMap(selection orderedIntSet, fp io.Writer) er
 			tag := event.(*Tag)
 			contributors[tag.tagger.userid()] = tag.tagger.who()
 		}
-        }
-        for userid, cid := range contributors {
+	}
+	for userid, cid := range contributors {
 		_, err := fp.Write([]byte(fmt.Sprintf("%s = %s\n", userid, cid)))
 		if err != nil {
 			return fmt.Errorf("in writeAuthorMap: %v", err)
 		}
-        }
+	}
 	return nil
 }
 
-func (repo *Repository) byCommit(hook func (commit *Commit)) {
+func (repo *Repository) byCommit(hook func(commit *Commit)) {
 	for _, event := range repo.events {
 		switch event.(type) {
 		case *Commit:
 			hook(event.(*Commit))
 		}
-       }
+	}
 }
 
 // Read a legacy-references dump and use it to initialize the repo's legacy map.
 func (repo *Repository) readLegacyMap(fp io.Reader) error {
-	type dyad struct {a string; b string}
+	type dyad struct {
+		a string
+		b string
+	}
 	commitMap := make(map[dyad][]*Commit)
-	repo.byCommit(func (commit *Commit) {
+	repo.byCommit(func(commit *Commit) {
 		key := dyad{commit.committer.date.timestamp.String(), commit.committer.email}
 		if _, ok := commitMap[key]; !ok {
 			commitMap[key] = make([]*Commit, 0)
@@ -6793,14 +6780,13 @@ func (repo *Repository) readLegacyMap(fp io.Reader) error {
 	matched := 0
 	unmatched := 0
 
-	
 	scanner := bufio.NewScanner(fp)
 	for scanner.Scan() {
 		linecount++
 		line := scanner.Text()
 
 		lineError := func(legend string) error {
-			return fmt.Errorf(legend + ": line %d %q\n", linecount, line)
+			return fmt.Errorf(legend+": line %d %q\n", linecount, line)
 		}
 
 		if strings.HasPrefix(line, "#") {
@@ -6817,7 +6803,7 @@ func (repo *Repository) readLegacyMap(fp io.Reader) error {
 		}
 		var seq int
 		var person, seqstr string
-		timefield, person := parts[0], parts[1] 
+		timefield, person := parts[0], parts[1]
 		if strings.Contains(person, ":") {
 			fields = strings.Split(person, ":")
 			person, seqstr = fields[0], fields[1]
@@ -6857,7 +6843,7 @@ func (repo *Repository) readLegacyMap(fp io.Reader) error {
 }
 
 // commits returns a slice of the commits in a specified selection set
-// or all commits if the selection set is nil. 
+// or all commits if the selection set is nil.
 func (repo *Repository) commits(selection orderedIntSet) []*Commit {
 	out := make([]*Commit, 0)
 	if selection == nil {
@@ -6881,7 +6867,7 @@ func (repo *Repository) commits(selection orderedIntSet) []*Commit {
 
 // Dump legacy references.
 func (repo *Repository) writeLegacyMap(fp io.Writer) {
-	keylist := make([]string, 0) 
+	keylist := make([]string, 0)
 	for key, _ := range repo.legacyMap {
 		keylist = append(keylist, key)
 	}
@@ -6897,7 +6883,7 @@ func (repo *Repository) writeLegacyMap(fp io.Writer) {
 	for _, cookie := range keylist {
 		commit := repo.legacyMap[cookie]
 		var serial string
-		if strings.Contains(cookie, "SVN") && strings.Contains(cookie, SplitSep)  {
+		if strings.Contains(cookie, "SVN") && strings.Contains(cookie, SplitSep) {
 			serial = ":" + strings.Split(cookie, SplitSep)[1]
 		} else {
 			serial = ""
@@ -6936,7 +6922,7 @@ func (self *Repository) tagify(commit *Commit, name string, target string, legen
 			pref += "\n"
 		}
 	}
-	tag := newTag(commit.repo, name, target, nil, &commit.committer, pref + legend)
+	tag := newTag(commit.repo, name, target, nil, &commit.committer, pref+legend)
 	tag.legacyID = commit.legacyID
 	//self.addEvent(tag)
 	if delete {
@@ -6955,35 +6941,34 @@ func defaultEmptyTagName(commit *Commit) string {
 	}
 	if commit.legacyID != "" {
 		return "emptycommit-" + commit.legacyID
-	} else if commit.mark != ""{
+	} else if commit.mark != "" {
 		return "emptycommit-mark" + commit.mark[1:]
 	} else {
 		return fmt.Sprintf("emptycommit-index%d", commit.index())
 	}
 }
 
-
 /*
-    func tagifyEmpty(self, commits = nil,
-                           tipdeletes = false,
-                           tagifyMerges = false,
-                           canonicalize = true,
-                           name_func = lambda _: nil,
-                           legendFunc = lambda _: "",
-                           create_tags = true,
-                           gripe = complain
-                          ):
-            Arguments: * commits:       nil, or a set of event indices
-                                        tagifyEmpty() ignores non-commits
-                       * tipdeletes:    whether tipdeletes should be tagified
-                       * canonicalize:  whether to canonicalize fileops first
-                       * nameFunc:      custom function for choosing the tag
-                                        name; if it returns a false value like
-                                        nil, a default scheme is used
-                       * legendFunc:    custom function for choosing the legend
-                                        of a tag; no fallback is provided. By
-                                        default it always returns "".
-                       * createTags    whether to create tags."""
+   func tagifyEmpty(self, commits = nil,
+                          tipdeletes = false,
+                          tagifyMerges = false,
+                          canonicalize = true,
+                          name_func = lambda _: nil,
+                          legendFunc = lambda _: "",
+                          create_tags = true,
+                          gripe = complain
+                         ):
+           Arguments: * commits:       nil, or a set of event indices
+                                       tagifyEmpty() ignores non-commits
+                      * tipdeletes:    whether tipdeletes should be tagified
+                      * canonicalize:  whether to canonicalize fileops first
+                      * nameFunc:      custom function for choosing the tag
+                                       name; if it returns a false value like
+                                       nil, a default scheme is used
+                      * legendFunc:    custom function for choosing the legend
+                                       of a tag; no fallback is provided. By
+                                       default it always returns "".
+                      * createTags    whether to create tags."""
 */
 
 func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, tagifyMerges bool, canonicalize bool, nameFunc func(*Commit) string, legendFunc func(*Commit) string, createTags bool, gripe func(string)) {
@@ -6995,7 +6980,7 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 		}
 	}
 	// Tagify commits without fileops
-	var isTipdelete = func(commit *Commit) bool {return false}
+	var isTipdelete = func(commit *Commit) bool { return false }
 	if tipdeletes {
 		isTipdelete = func(c *Commit) bool {
 			return c.alldeletes(stringSet{deleteall}) && !c.hasChildren()
@@ -7019,7 +7004,7 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 				}
 			}
 			legend := ""
-			if legendFunc != nil{
+			if legendFunc != nil {
 				legend = legendFunc(commit)
 			}
 			commit.setOperations(nil)
@@ -7034,9 +7019,9 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 		} else {
 			msg := ""
 			if commit.legacyID != "" {
-				// FIXME: Subversion assumption 
+				// FIXME: Subversion assumption
 				msg += fmt.Sprintf(" r%s:", commit.legacyID)
-			} else if commit.mark != ""{
+			} else if commit.mark != "" {
 				msg += fmt.Sprintf(" '%s':", commit.mark)
 			}
 			msg += "deleting parentless"
@@ -7077,7 +7062,7 @@ func (repo *Repository) parseDollarCookies() {
 	repo.dollarMap = make(map[string]*Commit)
 	for _, commit := range repo.commits(nil) {
 		for _, fileop := range commit.operations() {
-			if fileop.op != opM {			
+			if fileop.op != opM {
 				continue
 			}
 			blob := repo.markToEvent(fileop.ref).(*Blob)
@@ -7139,7 +7124,7 @@ func (self *Repository) checkUniqueness(verbosely bool, announcer func(...string
 		for k := range timeCollisions {
 			reps = append(reps, k)
 		}
-		announcer("These timestamps have multiple commits: %s", 
+		announcer("These timestamps have multiple commits: %s",
 			strings.Join(reps, " "))
 	}
 	stampCollisions := newStringSet()
@@ -7166,16 +7151,16 @@ func (self *Repository) checkUniqueness(verbosely bool, announcer func(...string
 		return
 	}
 	if announcer != nil {
-		announcer("These marks are in stamp collisions: %v", 
+		announcer("These marks are in stamp collisions: %v",
 			strings.Join(stampCollisions, " "))
 	}
 }
 
 // exportStyle says how we should we tune the export dump format.
 func (repo *Repository) exportStyle() stringSet {
-        if repo.vcs != nil {
-            return repo.vcs.styleflags
-        }
+	if repo.vcs != nil {
+		return repo.vcs.styleflags
+	}
 	// Default to git style
 	return stringSet{"nl-after-commit"}
 }
@@ -7214,7 +7199,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 		}
 		selection.Sort()
 	}
-	repo.realized = make(map[string]bool)	// Track what branches are made
+	repo.realized = make(map[string]bool) // Track what branches are made
 	baton := newBaton("reposurgeon: exporting", "", progress)
 	for _, ei := range selection {
 		baton.twirl("")
@@ -7232,7 +7217,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 			if event.getMark() != "" {
 				announce(debugSHOUT, fmt.Sprintf("writing %d %s", ei, event.getMark()))
 			}
-                }
+		}
 		_, err := fp.Write([]byte(event.String()))
 		if err != nil {
 			panic(fmt.Errorf("export error: %s", err))
@@ -7298,20 +7283,19 @@ func (repo *Repository) addEvent(event Event) {
 	} else {
 		repo.events = append(repo.events, event)
 	}
-        repo.declareSequenceMutation("")
+	repo.declareSequenceMutation("")
 }
-
 
 // Filter assignments, warning if any of them goes empty.
 func (self *Repository) filterAssignments(f func(Event) bool) {
-	intContains := func (list []int, val int) bool {
+	intContains := func(list []int, val int) bool {
 		for _, v := range list {
 			if v == val {
 				return true
 			}
 		}
-		return false 
-	}	
+		return false
+	}
 	for name, values := range self.assignments {
 		newassigns := make([]int, 0)
 		dc := 0
@@ -7319,7 +7303,7 @@ func (self *Repository) filterAssignments(f func(Event) bool) {
 			if f(e) {
 				dc += 1
 			} else if intContains(values, i) {
-				newassigns = append(newassigns, i - dc)
+				newassigns = append(newassigns, i-dc)
 			}
 		}
 		if len(values) > 0 && len(newassigns) == 0 {
@@ -7331,12 +7315,12 @@ func (self *Repository) filterAssignments(f func(Event) bool) {
 
 // Mark the repo event sequence modified.
 func (repo *Repository) declareSequenceMutation(warning string) {
-        repo._markToIndex = nil
-        repo._namecache = nil
-        if len(repo.assignments) > 0 && warning != "" {
+	repo._markToIndex = nil
+	repo._namecache = nil
+	if len(repo.assignments) > 0 && warning != "" {
 		repo.assignments = nil
 		complain("assignments invalidated by " + warning)
-        }
+	}
 }
 
 // Return the earliest commit.
@@ -7406,7 +7390,7 @@ func (commit *Commit) ancestorCount(path string) int {
 	return count
 }
 
-var nilOp FileOp	// Zero fileop, to be used as a deletion marker
+var nilOp FileOp // Zero fileop, to be used as a deletion marker
 
 // Compose two relevant fileops.
 // Here's what the fields in the return value mean:
@@ -7510,7 +7494,7 @@ func (self *Repository) __compose(commit *Commit, left FileOp, right FileOp) (bo
 			return true, left, nilOp, "", 11
 		} else {
 			return false, left, right,
-			fmt.Sprintf("R %s %s is inconsistent with following operation", left.source, left.target), -6
+				fmt.Sprintf("R %s %s is inconsistent with following operation", left.source, left.target), -6
 		}
 	}
 	// We could do R a b + C b c -> C a c + R a b, but why?
@@ -7571,12 +7555,12 @@ func (self *Repository) canonicalize(commit *Commit) orderedIntSet {
 		// Keep making passes until nothing mutates
 		mutated := false
 		for i := range commit.operations() {
-			for j := i+1; j < len(commit.operations()); j++ {
+			for j := i + 1; j < len(commit.operations()); j++ {
 				a := commit.operations()[i]
 				b := commit.operations()[j]
 				if a != nilOp && b != nilOp && a.relevant(&b) {
 					modified, newa, newb, warn, cn := self.__compose(commit, a, b)
-					announce(debugDELETE, fmt.Sprintf("Reduction case %d fired on (%d, %d)", cn, i,j))
+					announce(debugDELETE, fmt.Sprintf("Reduction case %d fired on (%d, %d)", cn, i, j))
 					if modified {
 						mutated = true
 						commit.operations()[i] = newa
@@ -7739,7 +7723,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 			for _, cchild := range commit.children() {
 				child, ok := cchild.(*Commit)
 				if !ok {
-					continue	// Ignore callouts
+					continue // Ignore callouts
 				}
 				// Insert commit's parents in place of
 				// commit in child's parent list. We
@@ -7759,15 +7743,15 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				// Start with existing parents before us,
 				// including existing duplicates
 				new_parents := old_parents[:event_pos]
-				// Add our parents. The Python version 
+				// Add our parents. The Python version
 				// tossed out duplicates of preceding
 				// parents.  Skip callouts.
 				for _, ancestor := range commit.parents() {
-					cparent, ok := ancestor.(*Commit) 
+					cparent, ok := ancestor.(*Commit)
 					if ok {
 						new_parents = append(new_parents, cparent)
 					}
-				}		
+				}
 				// In Python, we "Avoid duplicates due to
 				// commit.parents() insertion." Requires some
 				// odd contortions in Go so we won't do it
@@ -7824,9 +7808,9 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				cparent := commit.parents()[0]
 				parent, ok := cparent.(*Commit)
 				if !ok {
-					continue	// Ignore callouts
+					continue // Ignore callouts
 				}
-				parent.fileops = append(parent.fileops, commit.fileops...) 
+				parent.fileops = append(parent.fileops, commit.fileops...)
 				parent.invalidatePathsetCache()
 				// Also append child"s comment to its parent"s
 				if policy.Contains("--empty-only") && !emptyComment(parent.comment) {
@@ -7895,7 +7879,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 		}
 	}
 	// Preserve assignments
-	repo.filterAssignments(func(e Event) bool {return e.getDelFlag()})
+	repo.filterAssignments(func(e Event) bool { return e.getDelFlag() })
 	// Do the actual deletions
 	survivors := make([]Event, 0)
 	for _, e := range repo.events {
@@ -7983,18 +7967,18 @@ func (repo *Repository) dedup(dupMap map[string]string) {
 // Garbage-collect blobs that no longer have references.
 func (repo *Repository) gcBlobs() {
 	backreferences := make(map[string]bool)
-        for _, commit := range repo.commits(nil) {
+	for _, commit := range repo.commits(nil) {
 		for _, fileop := range commit.operations() {
 			if fileop.op == opM {
 				backreferences[fileop.ref] = true
 			}
 		}
 	}
-        eligible := func(event Event) bool {
+	eligible := func(event Event) bool {
 		blob, ok := event.(*Blob)
 		return ok && !backreferences[blob.mark]
-        }
-        repo.filterAssignments(eligible)
+	}
+	repo.filterAssignments(eligible)
 	// Apply the filter-without-allocate hack from Slice Tricks
 	newEvents := repo.events[:0]
 	for _, x := range repo.events {
@@ -8003,8 +7987,8 @@ func (repo *Repository) gcBlobs() {
 		}
 	}
 	repo.events = newEvents
-        //repo.invalidateManifests()     // Might not be needed FIXME
-        repo.declareSequenceMutation("GC")
+	//repo.invalidateManifests()     // Might not be needed FIXME
+	repo.declareSequenceMutation("GC")
 }
 
 /*
@@ -8783,7 +8767,7 @@ func do_or_die(dcmd, legend=""):
 */
 
 func readFromProcess(command string) (*bufio.Reader, *exec.Cmd, error) {
-	cmd := exec.Command("sh", "-c", command + " 2>&1")
+	cmd := exec.Command("sh", "-c", command+" 2>&1")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, nil, err
@@ -14779,11 +14763,12 @@ of tokens, so that spaces can be included.
 */
 
 type Reposurgeon struct {
-	core *kommandant.Kmdt
+	core    *kommandant.Kmdt
 	verbose int
-	quiet bool
-	echo int
+	quiet   bool
+	echo    int
 }
+
 func (rs *Reposurgeon) SetCore(k *kommandant.Kmdt) {
 	rs.core = k
 }
@@ -14793,7 +14778,7 @@ func (rs *Reposurgeon) DoEOF(lineIn string) (stopOut bool) {
 func (rs *Reposurgeon) DoQuit(lineIn string) (stopOut bool) {
 	return true
 }
-func (rs * Reposurgeon) HelpHelp() {
+func (rs *Reposurgeon) HelpHelp() {
 	rs.core.Output("Show help for a command. Follow with space and the command name.\n")
 }
 func (rs *Reposurgeon) HelpVerbose() {
@@ -14888,9 +14873,9 @@ func main() {
 	}()
 
 	interpreter.Prompt = "%% "
-        if len(os.Args[1:]) == 0 {
+	if len(os.Args[1:]) == 0 {
 		os.Args = append(os.Args, "-")
-        }
+	}
 	if interpreter.PreLoop != nil {
 		interpreter.PreLoop()
 	}
@@ -14919,7 +14904,7 @@ func main() {
 					stop = interpreter.PostCommand(stop, acmd)
 				}
 				if stop {
-					break;
+					break
 				}
 			}
 		}
