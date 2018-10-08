@@ -9668,8 +9668,39 @@ func (p *SelectionParser) evalPolyrange(state selEvalState,
 	return resolved
 }
 
+var atomNumRE = regexp.MustCompile(`[0-9]+`)
+
 func (p *SelectionParser) parseAtom() selEvaluator {
-	return func(x selEvalState, s *orderedset.Set) *orderedset.Set { return s }
+	// FIXME: @debug_lexer
+	p.eatWS()
+	var op selEvaluator
+	// First, literal command numbers (1-origin)
+	match := atomNumRE.FindString(p.line)
+	if len(match) > 0 {
+		number, err := strconv.Atoi(match)
+		if err != nil {
+			panic(throw("command", fmt.Sprintf("Atoi(%q) failed: %v", match, err)))
+		}
+		op = func(selEvalState, *orderedset.Set) *orderedset.Set {
+			return orderedset.New(number - 1)
+		}
+		p.line = p.line[len(match):]
+	} else if p.peek() == '$' { // $ means last commit, a la ed(1).
+		op = func(selEvalState, *orderedset.Set) *orderedset.Set {
+			return orderedset.New(polyrangeDollar)
+		}
+		p.pop()
+	} else if p.peek() == ',' { // Comma just delimits a location spec
+		p.pop()
+	} else if strings.HasPrefix(p.line, "..") { // Following ".." means a span
+		op = func(selEvalState, *orderedset.Set) *orderedset.Set {
+			return orderedset.New(polyrangeRange)
+		}
+		p.line = p.line[len(".."):]
+	} else if p.peek() == '.' {
+		panic(throw("command", "malformed span"))
+	}
+	return op
 }
 
 // parseTextSearch parses a text search specification
@@ -9685,30 +9716,6 @@ func (p *SelectionParser) parseFuncall() selEvaluator {
 /*
 
 class SelectionParser(object):
-    @debug_lexer
-    func parse_atom():
-        self.line = self.line.lstrip()
-        selection = None
-        # First, literal command numbers (1-origin)
-        match = re.match(r"[0-9]+".encode('ascii'), polybytes(self.line))
-        if match:
-            number = polystr(match.group())
-            selection = lambda p: [int(number)-1]
-            self.line = self.line[len(number):]
-        # $ means last commit, a la ed(1).
-        else if self.peek() == "$":
-            selection = lambda p: [len(self.allitems)-1]
-            self.pop()
-        # Comma just delimits a location spec
-        else if self.peek() == ",":
-            self.pop()
-        # Following ".." means a span
-        else if self.line[:2] == "..":
-            selection = lambda p: [".."]
-            self.line = self.line[2:]
-        else if self.peek() == ".":
-            raise Recoverable("malformed span")
-        return selection
     @debug_lexer
     func parse_textsearch():
         "Parse a text search specification."
