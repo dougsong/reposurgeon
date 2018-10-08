@@ -14977,7 +14977,18 @@ func main() {
 }
 
 /*
-	FIXME: This is the rest of svnProcess()
+	FIXME: This is the rest of svnProcess()  Be sure to audit for
+	the bug described below.
+
+http://esr.ibiblio.org/?p=4861#comment-397256
+
+Actually that [COW] code wasn’t mine. Somebody named Greg Hudson wrote
+it in an attempt to reduce memory footprint, and in so doing enabled
+me to solved a fiendishly subtle bug in branch processing that had
+stalled the completion of the Subversion reader for six months. To
+invoke it, the repository had to contain a Subversion branch creation,
+followed by a deletion, followed by a move of another branch to the
+deleted name.
 
         # Build filemaps.
         announce(debugEXTRACT, "Pass 2")
