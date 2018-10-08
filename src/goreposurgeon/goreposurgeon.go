@@ -9744,47 +9744,62 @@ func (p *SelectionParser) parseTextSearch() selEvaluator {
 
 // parseFuncall parses a function call
 func (p *SelectionParser) parseFuncall() selEvaluator {
-	return func(x selEvalState, s *orderedset.Set) *orderedset.Set { return s }
+	// FIXME: @debug_lexer
+	p.eatWS()
+	if p.peek() != '@' {
+		return nil
+	}
+	p.pop()
+	var funname strings.Builder
+	for p.peek() == '_' || unicode.IsLetter(p.peek()) {
+		funname.WriteRune(p.pop())
+	}
+	if funname.Len() == 0 || p.peek() != '(' {
+		return nil
+	}
+	// The "(" && ")" after the function name are different than
+	// the parentheses used to override operator precedence, so we
+	// must handle them here.  If we let parse_expression() handle
+	// the parentheses, it will process characters beyond the
+	// closing parenthesis as if they were part of the function's
+	// argument.  For example, if we let parse_expression() handle
+	// the parentheses, then the following expression:
+	//     @max(~$)|$
+	// would be processed as if this was the argument to max():
+	//     (~$)|$
+	// when the actual argument is:
+	//     ~$
+	p.pop()
+	subarg := p.imp().parseExpression()
+	p.eatWS()
+	if p.peek() != ')' {
+		panic(throw("command", "missing close parenthesis for function call"))
+	}
+	p.pop()
+
+	type extraFuncs interface {
+		functions() map[string]selEvaluator
+	}
+	var op selEvaluator
+	if q, ok := p.subclass.(extraFuncs); ok {
+		op = q.functions()[funname.String()]
+	}
+	if op == nil {
+		op = selFuncs[funname.String()]
+	}
+	if op == nil {
+		panic(throw("command", "no such function @%s()", funname.String()))
+	}
+	return func(x selEvalState, s *orderedset.Set) *orderedset.Set {
+		return op(x, subarg(x, s))
+	}
 }
+
+var selFuncs = map[string]selEvaluator{}
 
 /*
 
 class SelectionParser(object):
-    @debug_lexer
-    func parse_funcall():
-        "Parse a function call."
-        self.line = self.line.lstrip()
-        if self.peek() != "@":
-            return None
-        self.pop()
-        funname = ""
-        while self.peek().isalpha() or self.peek() == '_':
-            funname += self.pop()
-        if not funname or self.peek() != '(':
-            return None
-        # The '(' and ')' after the function name are different than
-        # the parentheses used to override operator precedence, so we
-        # must handle them here.  If we let parse_expression() handle
-        # the parentheses, it will process characters beyond the
-        # closing parenthesis as if they were part of the function's
-        # argument.  For example, if we let parse_expression() handle
-        # the parentheses, then the following expression:
-        #     @max(~$)|$
-        # would be processed as if this was the argument to max():
-        #     (~$)|$
-        # when the actual argument is:
-        #     ~$
-        self.pop()
-        subarg = self.parse_expression()
-        self.line = self.line.lstrip()
-        if self.peek() != ')':
-            raise Recoverable("missing close parenthesis for function call")
-        self.pop()
-        try:
-            func = getattr(self, funname + "_handler")
-        except AttributeError:
-            raise Recoverable("no such function as @%s()" % funname)
-        return lambda p: func(subarg(p))
     @debug_lexer
     func min_handler(self, subarg):
         "Minimum member of a selection set."
