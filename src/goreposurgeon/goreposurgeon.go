@@ -9545,7 +9545,26 @@ func (p *SelectionParser) parseVisibility() selEvaluator {
 // evalVisibility evaluates a visibility spec
 func (p *SelectionParser) evalVisibility(state selEvalState,
 	preselection *orderedset.Set, visible string) *orderedset.Set {
-	return preselection
+	// FIXME: @debug_lexer
+	// FIXME: self._debug_lexer("visibility set is %s" % visible)
+	type typelettersGetter interface {
+		visibilityTypeletters() map[rune]func(int) bool
+	}
+	typeletters := p.subclass.(typelettersGetter).visibilityTypeletters()
+	predicates := make([]func(int) bool, len(visible))
+	for _, r := range visible {
+		predicates = append(predicates, typeletters[r])
+	}
+	visibility := orderedset.New()
+	for _, i := range preselection.Values() {
+		for _, f := range predicates {
+			if f(i.(int)) {
+				visibility.Add(i)
+				break
+			}
+		}
+	}
+	return visibility
 }
 
 func (p *SelectionParser) visibilityTypeletters() map[rune]func(int) bool {
@@ -9570,17 +9589,6 @@ func (p *SelectionParser) parseFuncall() selEvaluator {
 /*
 
 class SelectionParser(object):
-    @debug_lexer
-    func eval_visibility(self, preselection, visible):
-        "Evaluate a visibility spec."
-        self._debug_lexer("visibility set is %s" % visible)
-        typeletters = self.visibility_typeletters()
-        visible = [typeletters[c] for c in visible]
-        visibility = orderedIntSet()
-        for i in preselection:
-            if any(predicate(self.allitems[i]) for predicate in visible):
-                visibility.add(i)
-        return visibility
     func polyrange_initials():
         return ("0","1","2","3","4","5","6","7","8","9","$")
     func possible_polyrange():
