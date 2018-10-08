@@ -9239,6 +9239,10 @@ type selParser interface {
 	parseVisibility() selEvaluator
 	evalVisibility(selEvalState, *orderedset.Set, string) *orderedset.Set
 	parsePolyrange() selEvaluator
+	polyrangeInitials() string
+	possiblePolyrange() bool
+	evalPolyrange(selEvalState, *orderedset.Set, []selEvaluator) *orderedset.Set
+	parseAtom() selEvaluator
 	parseTextSearch() selEvaluator
 	parseFuncall() selEvaluator
 }
@@ -9571,8 +9575,47 @@ func (p *SelectionParser) visibilityTypeletters() map[rune]func(int) bool {
 	return nil
 }
 
+func (p *SelectionParser) polyrangeInitials() string {
+	return "0123456789$"
+}
+
+// Does the input look like a possible polyrange?
+func (p *SelectionParser) possiblePolyrange() bool {
+	return strings.ContainsRune(p.imp().polyrangeInitials(), p.peek())
+}
+
 // parsePolyrange parses a polyrange specification (list of intervals)
 func (p *SelectionParser) parsePolyrange() selEvaluator {
+	// FIXME: @debug_lexer
+	var polyrange selEvaluator
+	p.eatWS()
+	if !p.imp().possiblePolyrange() {
+		polyrange = nil
+	} else {
+		var ops []selEvaluator
+		polychars := p.imp().polyrangeInitials() + ".,"
+		for {
+			if !strings.ContainsRune(polychars, p.peek()) {
+				break
+			}
+			if op := p.imp().parseAtom(); op != nil {
+				ops = append(ops, op)
+			}
+		}
+		polyrange = func(x selEvalState, s *orderedset.Set) *orderedset.Set {
+			return p.imp().evalPolyrange(x, s, ops)
+		}
+	}
+	return polyrange
+}
+
+// evalPolyrange evaluates a polyrange specification (list of intervals)
+func (p *SelectionParser) evalPolyrange(state selEvalState,
+	preselection *orderedset.Set, ops []selEvaluator) *orderedset.Set {
+	return preselection
+}
+
+func (p *SelectionParser) parseAtom() selEvaluator {
 	return func(x selEvalState, s *orderedset.Set) *orderedset.Set { return s }
 }
 
@@ -9589,31 +9632,6 @@ func (p *SelectionParser) parseFuncall() selEvaluator {
 /*
 
 class SelectionParser(object):
-    func polyrange_initials():
-        return ("0","1","2","3","4","5","6","7","8","9","$")
-    func possible_polyrange():
-        "Does the input look like a possible polyrange?"
-        return self.peek() in self.polyrange_initials()
-    @debug_lexer
-    func parse_polyrange():
-        "Parse a polyrange specification (list of intervals)."
-        self.line = self.line.lstrip()
-        if not self.possible_polyrange():
-            polyrange = None
-        else:
-            selection = []
-            while self.peek() in self.polyrange_initials() + (".", ","):
-                sel = self.parse_atom()
-                if sel is not None:
-                    selection.append(sel)
-            # Sanity checks
-            if selection:
-                if selection[0] == '..':
-                    raise Recoverable("start of span is missing")
-                if selection[-1] == '..':
-                    raise Recoverable("incomplete range expression.")
-            polyrange = lambda p: self.eval_polyrange(p, selection)
-        return polyrange
     @debug_lexer
     func eval_polyrange(self, _preselection, ops):
         "Evaluate a polyrange specification (list of intervals)."
