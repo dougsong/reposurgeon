@@ -1117,7 +1117,7 @@ func lineByLine(rs *RepoStreamer, command string, errfmt string,
 				cmd.Wait()
 			}
 			break
-		} else {
+		} else if err2 != nil {
 			return fmt.Errorf(errfmt, err2)
 		}
 		hook(line, rs)
