@@ -9283,10 +9283,6 @@ func (p *SelectionParser) parse(line string, nitems int) ([]int, string) {
 
 class SelectionParser(object):
     @debug_lexer
-    func parse_expression():
-        self.line = self.line.lstrip()
-        return self.parse_disjunct()
-    @debug_lexer
     func parse_disjunct():
         "Parse a disjunctive expression (| has lowest precedence)"
         self.line = self.line.lstrip()
@@ -9334,6 +9330,13 @@ class SelectionParser(object):
 */
 
 func (p *SelectionParser) parseExpression() selEvaluator {
+	// FIXME: @debug_lexer
+	p.eatWS()
+	return p.parseDisjunct()
+}
+
+// parseDisjunct parses a disjunctive expression (| has lowest precedence)
+func (p *SelectionParser) parseDisjunct() selEvaluator {
 	return func(x *SelectionParser, s *orderedset.Set) *orderedset.Set { return s }
 }
 
