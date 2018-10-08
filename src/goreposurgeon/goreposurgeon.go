@@ -9244,19 +9244,23 @@ func (p *SelectionParser) eatWS() {
 	p.line = eatWS(p.line)
 }
 
+// compile compiles expression and return remainder of line with expression
+// removed
+func (p *SelectionParser) compile(line string) (selEvaluator, string) {
+	orig := line
+	p.line = line
+	machine := p.parseExpression()
+	line = eatWS(p.line)
+	p.line = ""
+	if line == eatWS(orig) {
+		machine = nil
+	}
+	return machine, line
+}
+
 /*
 
 class SelectionParser(object):
-    func compile(self, line str):
-        "Compile expression; return remainder of line with expression removed."
-        orig_line = line
-        self.line = line
-        machine = self.parse_expression()
-        line = self.line.lstrip()
-        self.line = None
-        if line == orig_line.lstrip():
-            machine = None
-        return (machine, line)
     func evaluate(self, machine, allitems):
         """Evaluate a pre-compiled selection query against item list."""
         if machine is not None:
@@ -9317,6 +9321,14 @@ class SelectionParser(object):
        if debugEnable(debugLEXER):
            stack = getattr(self, '_debug_lexer_stack')
            announce(debugSHOUT, "{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
+
+*/
+
+func (p *SelectionParser) parseExpression() selEvaluator {
+	return func(x *SelectionParser, s *orderedset.Set) *orderedset.Set { return s }
+}
+
+/*
 
     @debug_lexer
     func eval_disjunct(self, preselection, op1, op2):
