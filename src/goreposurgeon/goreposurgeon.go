@@ -2681,7 +2681,7 @@ func (date Date) delta(other Date) time.Duration {
 // String formats a Date object as an internal Git date (Unix time in seconds
 // and a hhmm offset).  The tricky part here is what we do if the
 // time's location is not already a +-hhmm string.
-func (date *Date) String() string {
+func (date Date) String() string {
 	var hhmm string
 	loc := date.timestamp.Location()
 	zone := loc.String()
