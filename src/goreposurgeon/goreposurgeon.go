@@ -82,6 +82,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/mail"
 	"os"
 	"os/exec"
@@ -9609,10 +9610,58 @@ func (p *SelectionParser) parsePolyrange() selEvaluator {
 	return polyrange
 }
 
+const polyrangeRange = math.MinInt64
+
 // evalPolyrange evaluates a polyrange specification (list of intervals)
 func (p *SelectionParser) evalPolyrange(state selEvalState,
 	preselection *orderedset.Set, ops []selEvaluator) *orderedset.Set {
-	return preselection
+	// FIXME: @debug_lexer
+	// preselection is not used since it is perfectly legal to have range
+	// bounds be outside of the reduced set.
+	selection := orderedset.New()
+	for _, op := range ops {
+		sel := op(state, preselection)
+		if sel != nil {
+			selection.Add(sel.Values()...)
+		}
+	}
+	// FIXME: self._debug_lexer(fmt.Sprintf("location list is %s", selection))
+	// Resolve spans
+	resolved := orderedset.New()
+	last := int(math.MinInt64)
+	spanning := false
+	for _, elt := range selection.Values() {
+		i := elt.(int)
+		if i == polyrangeRange { // ".."
+			if last == math.MinInt64 {
+				panic(throw("command", "start of span is missing"))
+			}
+			spanning = true
+		} else {
+			if spanning {
+				for j := last + 1; j < i+1; j++ {
+					resolved.Add(j)
+				}
+				spanning = false
+			} else {
+				resolved.Add(i)
+			}
+			last = i
+		}
+	}
+	// FIXME: self._debug_lexer(fmt.Sprintf("resolved list is %s", selection))
+	// Sanity checks
+	if spanning {
+		panic(throw("command", "incomplete range expression"))
+	}
+	lim := state.nItems() - 1
+	for _, elt := range resolved.Values() {
+		i := elt.(int)
+		if i < 0 || i > lim {
+			panic(throw("command", fmt.Sprintf("element %d out of range", i+1)))
+		}
+	}
+	return resolved
 }
 
 func (p *SelectionParser) parseAtom() selEvaluator {
@@ -9632,42 +9681,6 @@ func (p *SelectionParser) parseFuncall() selEvaluator {
 /*
 
 class SelectionParser(object):
-    @debug_lexer
-    func eval_polyrange(self, _preselection, ops):
-        "Evaluate a polyrange specification (list of intervals)."
-        # preselection is not used since it is perfectly legal to have range
-        # bounds be outside of the reduced set.
-        selection = []
-        for op in ops:
-            sel = op(_preselection)
-            if sel is not None:
-                selection.extend(sel)
-        self._debug_lexer("location list is %s" % selection)
-        # Resolve spans
-        resolved = []
-        last = None
-        spanning = false
-        for elt in selection:
-            if elt == '..':
-                if last is None:
-                    raise Recoverable("start of span is missing")
-                spanning = true
-            else:
-                if spanning:
-                    resolved.extend(range(last+1, elt+1))
-                    spanning = false
-                else:
-                    resolved.append(elt)
-                last = elt
-        selection = resolved
-        self._debug_lexer("resolved list is %s" % selection)
-        # Sanity checks
-        if spanning:
-            raise Recoverable("incomplete range expression.")
-        for elt in selection:
-            if elt < 0 or elt > len(self.allitems)-1:
-                raise Recoverable("element %s out of range" % (elt+1))
-        return orderedIntSet(selection)
     @debug_lexer
     func parse_atom():
         self.line = self.line.lstrip()
