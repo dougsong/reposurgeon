@@ -7712,8 +7712,11 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				filterOnly = false
 				newTarget = commit.firstChild()
 			} else if tagback && commit.hasParents() {
-				filterOnly = false
-				//newTarget = commit.parents()[0]	FIXME
+				noncallout, ok := commit.parents()[0].(*Commit)
+				if ok {
+					filterOnly = false
+					newTarget = noncallout
+				}
 			}
 			// Reparent each child.  Concatenate comments,
 			// ignoring empty-log-message markers.
@@ -7904,41 +7907,51 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 	repo.declareSequenceMutation("")
 	// Canonicalize all the commits that got ops pushed to them
 	if !delete {
-		for _, event := range altered {
-			if event.getDelFlag() {
+		for _, commit := range altered {
+			if commit.getDelFlag() {
 				continue
 			}
 			if debugEnable(debugDELETE) {
 				announce(debugDELETE, "Before canonicalization:")
-				event.fileopDump()
+				commit.fileopDump()
 			}
-			repo.caseCoverage = repo.caseCoverage.Union(repo.canonicalize(event))
+			repo.caseCoverage = repo.caseCoverage.Union(repo.canonicalize(commit))
 			if debugEnable(debugDELETE) {
 				announce(debugDELETE, "After canonicalization:")
-				event.fileopDump()
+				commit.fileopDump()
 			}
 			// Now apply policy in the multiple-M case
-			cliques := event.cliques()
+			cliques := commit.cliques()
 			if (!policy.Contains("--coalesce") && !delete) || debugEnable(debugDELETE) {
 				for path, oplist := range cliques {
 					if len(oplist) > 1 && !dquiet {
-						complain("commit %s has multiple Ms for %s", event.mark, path)
+						complain("commit %s has multiple Ms for %s", commit.mark, path)
 					}
 				}
 			}
-/*
+
 			if policy.Contains("--coalesce") {
 				// Only keep last M of each clique,
 				// leaving other ops alone
-				event.setOperations( 
-					[op for (i, op) in enumerate(event.operations())
-						if (op.op != opM) || (i == cliques[op.path][-1])])
+				newOps := make([]FileOp, 0)
+				for i, op := range commit.operations() {
+					if op.op != opM {
+						newOps = append(newOps, op)
+						continue
+					}
+					myclique := cliques[op.path]
+					if i == myclique[len(myclique)-1] {
+						newOps = append(newOps, op)
+						continue
+					}
+				}
+				commit.setOperations(newOps)
 			}
-*/
-			event.invalidatePathsetCache()
+
+			commit.invalidatePathsetCache()
 			if debugEnable(debugDELETE) {
-				announce(debugDELETE, fmt.Sprintf("%s, after applying policy:", event.idMe()))
-				event.fileopDump()
+				announce(debugDELETE, fmt.Sprintf("%s, after applying policy:", commit.idMe()))
+				commit.fileopDump()
 			}
 		}
 	}
