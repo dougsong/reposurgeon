@@ -9279,27 +9279,6 @@ func (p *SelectionParser) parse(line string, nitems int) ([]int, string) {
 	return p.evaluate(machine, nitems), rest
 }
 
-/*
-
-class SelectionParser(object):
-    @debug_lexer
-    func parse_disjunct():
-        "Parse a disjunctive expression (| has lowest precedence)"
-        self.line = self.line.lstrip()
-        op = self.parse_conjunct()
-        while true:
-            self.line = self.line.lstrip()
-            if self.peek() != '|':
-                break
-            self.pop()
-            op2 = self.parse_conjunct()
-            if op2 is None:
-                break
-            op = lambda p, lop=op, rop=op2: self.eval_disjunct(p, lop, rop)
-        return op
-
-*/
-
 func (p *SelectionParser) peek() rune {
 	if len(p.line) == 0 {
 		return utf8.RuneError
@@ -9337,11 +9316,41 @@ func (p *SelectionParser) parseExpression() selEvaluator {
 
 // parseDisjunct parses a disjunctive expression (| has lowest precedence)
 func (p *SelectionParser) parseDisjunct() selEvaluator {
+	// FIXME: @debug_lexer
+	p.eatWS()
+	op := p.parseConjunct()
+	for {
+		p.eatWS()
+		if p.peek() != '|' {
+			break
+		}
+		p.pop()
+		op2 := p.parseConjunct()
+		if op2 == nil {
+			break
+		}
+		op1 := op
+		op = func(x *SelectionParser, s *orderedset.Set) *orderedset.Set {
+			return x.evalDisjunct(s, op1, op2)
+		}
+	}
+	return op
+}
+
+// evalDisjunct evaluates a disjunctive expression
+func (p *SelectionParser) evalDisjunct(preselection *orderedset.Set,
+	op1, op2 selEvaluator) *orderedset.Set {
+	return preselection
+}
+
+// parseConjunct parses a conjunctive expression (& has higher precedence)
+func (p *SelectionParser) parseConjunct() selEvaluator {
 	return func(x *SelectionParser, s *orderedset.Set) *orderedset.Set { return s }
 }
 
 /*
 
+class SelectionParser(object):
     @debug_lexer
     func eval_disjunct(self, preselection, op1, op2):
         "Evaluate a disjunctive expression"
