@@ -10467,98 +10467,6 @@ developers.
                 baton.twirl("")
         announce(debugSHOUT, "%d items modified by %s." % (altered, prompt.lower()))
 
-    func help_selection():
-        os.Stdout.write("""
-A quick example-centered reference for selection-set syntax.
-
-First, these ways of constructing singleton sets:
-
-123        event numbered 123 (1-origin)
-:345       event with mark 345
-<456>      commit with legacy-ID 456 (probably a Subversion revsion)
-<foo>      the tag named 'foo', or failing that the tip commit of branch foo
-
-You can select commits and tags by date, or by date and committer:
-
-<2011-05-25>                  all commits and tags with this date
-<2011-05-25!esr>              all with this date and committer
-<2011-05-25T07:30:37Z>        all commits and tags with this date and time
-<2011-05-25T07:30:37Z!esr>    all with this date and time and committer
-<2011-05-25T07:30:37Z!esr#2>  event #2 (1-origin) in the above set
-
-More ways to construct event sets:
-
-/foo/      all commits and tags containing the string 'foo' in text or metadata
-           suffix letters: a=author, b=branch, c=comment in commit or tag,
-                           C=committer, r=committish, p=text, t=tagger, n=name,
-                           B=blob content in blobs.
-           A 'b' search also finds blobs and tags attached to commits on
-           matching branches.
-[foo]      all commits and blobs touching the file named 'foo'.
-[/bar/]    all commits and blobs touching a file matching the regexp 'bar'.
-           Suffix flags: a=all fileops must match other selectors, not just
-           any one; c=match against checkout paths, DMRCN=match only against
-           given fileop types (no-op when used with 'c').
-=C         all commits
-=H         all head (branch tip) commits
-=T         all tags
-=B         all blobs
-=R         all resets
-=P         all passthroughs
-=O         all orphan (parentless) commits
-=U         all commits with callouts as parents
-=Z         all commits with no fileops
-=M         all merge commits
-=F         all fork (multiple-child) commits
-=L         all commits with unclean multi-line comments
-=I         all commits not decodable to UTF-8
-=D         all commits in which every fileop is a D or deleteall
-=N         all commits and tags matching a cookie (legacy-ID) format.
-
-@min()     create singleton set of the least element in the argument
-@max()     create singleton set of the greatest element in the argument
-
-Other special functions are available: do 'help functions' for more.
-
-You can compose sets as follows:
-
-:123,<foo>     the event marked 123 and the event referenced by 'foo'.
-:123..<foo>    the range of events from mark 123 to the reference 'foo'
-
-Selection sets are ordered: elements remain in the order they were added,
-unless sorted by the ? suffix.
-
-Sets can be composed with | (union) and & (intersection). | has lower
-precedence than &, but set expressions can be grouped with (
-). Postfixing a ? to a selection expression widens it to include all
-immediate neighbors of the selection and sorts it; you can do this
-repeatedly for effect. Do set negation with prefix ~; it has higher
-precedence than & | but lower than ?.
-""")
-
-    func help_syntax():
-        os.Stdout.write("""
-Commands are distinguished by a command keyword.  Most take a selection set
-immediately before it; see 'help selection' for details.  Some
-commands take additional modifier arguments after the command keyword.
-
-Most report-generation commands support output redirection. When
-arguments for these are parsed, any argument beginning with '>' is
-extracted and interpreted as the name of a file to which command
-output should be redirected.  Any remaining arguments are available to
-the command logic.
-
-Some commands support input redirection. When arguments for these are
-parsed, any argument beginning with '<' is extracted and interpreted
-as the name of a file from which command output should be taken.  Any
-remaining arguments are available to the command logic.
-""")
-
-    func help_functions():
-        os.Stdout.write("The following special selection functions are available:\n")
-        for attr in sorted(RepoSurgeon.__dict__):
-            if attr.endswith("_handler"):
-                os.Stdout.write("@%s()\t%s\n" % (attr[:-8], getattr(RepoSurgeon, attr).__doc__))
     ##
     ## Command implementation begins here
     ##
@@ -14772,15 +14680,134 @@ type Reposurgeon struct {
 func (rs *Reposurgeon) SetCore(k *kommandant.Kmdt) {
 	rs.core = k
 }
+
+//#
+//# Command implementation begins here
+//#
 func (rs *Reposurgeon) DoEOF(lineIn string) (stopOut bool) {
 	return true
 }
 func (rs *Reposurgeon) DoQuit(lineIn string) (stopOut bool) {
 	return true
 }
+
+//
+// On-line help and instrumentation
+//
 func (rs *Reposurgeon) HelpHelp() {
 	rs.core.Output("Show help for a command. Follow with space and the command name.\n")
 }
+func (rs *Reposurgeon) HelpSelection() {
+	rs.core.Output(`
+A quick example-centered reference for selection-set syntax.
+
+First, these ways of constructing singleton sets:
+
+123        event numbered 123 (1-origin)
+:345       event with mark 345
+<456>      commit with legacy-ID 456 (probably a Subversion revsion)
+<foo>      the tag named 'foo', or failing that the tip commit of branch foo
+
+You can select commits and tags by date, or by date and committer:
+
+<2011-05-25>                  all commits and tags with this date
+<2011-05-25!esr>              all with this date and committer
+<2011-05-25T07:30:37Z>        all commits and tags with this date and time
+<2011-05-25T07:30:37Z!esr>    all with this date and time and committer
+<2011-05-25T07:30:37Z!esr#2>  event #2 (1-origin) in the above set
+
+More ways to construct event sets:
+
+/foo/      all commits and tags containing the string 'foo' in text or metadata
+           suffix letters: a=author, b=branch, c=comment in commit or tag,
+                           C=committer, r=committish, p=text, t=tagger, n=name,
+                           B=blob content in blobs.
+           A 'b' search also finds blobs and tags attached to commits on
+           matching branches.
+[foo]      all commits and blobs touching the file named 'foo'.
+[/bar/]    all commits and blobs touching a file matching the regexp 'bar'.
+           Suffix flags: a=all fileops must match other selectors, not just
+           any one; c=match against checkout paths, DMRCN=match only against
+           given fileop types (no-op when used with 'c').
+=C         all commits
+=H         all head (branch tip) commits
+=T         all tags
+=B         all blobs
+=R         all resets
+=P         all passthroughs
+=O         all orphan (parentless) commits
+=U         all commits with callouts as parents
+=Z         all commits with no fileops
+=M         all merge commits
+=F         all fork (multiple-child) commits
+=L         all commits with unclean multi-line comments
+=I         all commits not decodable to UTF-8
+=D         all commits in which every fileop is a D or deleteall
+=N         all commits and tags matching a cookie (legacy-ID) format.
+
+@min()     create singleton set of the least element in the argument
+@max()     create singleton set of the greatest element in the argument
+
+Other special functions are available: do 'help functions' for more.
+
+You can compose sets as follows:
+
+:123,<foo>     the event marked 123 and the event referenced by 'foo'.
+:123..<foo>    the range of events from mark 123 to the reference 'foo'
+
+Selection sets are ordered: elements remain in the order they were added,
+unless sorted by the ? suffix.
+
+Sets can be composed with | (union) and & (intersection). | has lower
+precedence than &, but set expressions can be grouped with (
+). Postfixing a ? to a selection expression widens it to include all
+immediate neighbors of the selection and sorts it; you can do this
+repeatedly for effect. Do set negation with prefix ~; it has higher
+precedence than & | but lower than ?.
+`)
+}
+func (rs *Reposurgeon) HelpSyntax() {
+	rs.core.Output(`
+Commands are distinguished by a command keyword.  Most take a selection set
+immediately before it; see 'help selection' for details.  Some
+commands take additional modifier arguments after the command keyword.
+
+Most report-generation commands support output redirection. When
+arguments for these are parsed, any argument beginning with '>' is
+extracted and interpreted as the name of a file to which command
+output should be redirected.  Any remaining arguments are available to
+the command logic.
+
+Some commands support input redirection. When arguments for these are
+parsed, any argument beginning with '<' is extracted and interpreted
+as the name of a file from which command output should be taken.  Any
+remaining arguments are available to the command logic.
+`)
+}
+func (rs *Reposurgeon) HelpFunctions() {
+	docstrings := map[string]string { "foo": "this is just a test function; it doesn't actually do anything" }
+	rs.core.Output("The following special selection functions are available:\n")
+	t := reflect.TypeOf(rs)
+	for i := 0; i < t.NumMethod(); i++ {
+		tm := t.Method(i)
+		if strings.HasSuffix(tm.Name, "Handler") {
+			shortname := strings.ToLower(tm.Name[:len(tm.Name)-7])
+			docstring, present := docstrings[shortname]
+			if !present {
+				docstring = "(sorry, this function is currently undocumented)"
+			}
+			rs.core.Output(fmt.Sprintf("@%s()\t%s\n", shortname, docstring))
+		}
+	}
+}
+// TODO(db48x): remove these once we have some real handlers to show in the help message
+func (rs *Reposurgeon) FooHandler() {
+	
+}
+func (rs *Reposurgeon) BarHandler() {
+	
+}
+
 func (rs *Reposurgeon) HelpVerbose() {
 	rs.core.Output(`
 Without an argument, this command requests a report of the verbosity
