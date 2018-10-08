@@ -6542,7 +6542,6 @@ func (repo *Repository) named(ref string) orderedIntSet {
 			}
 			if loc == -1 {
 				panic(throw("command", "branch name %s points to hyperspace", symbol))
-				return nil
 			} else {
 				return newOrderedIntSet(loc)
 			}
@@ -7330,7 +7329,6 @@ func (repo *Repository) earliestCommit() *Commit {
 		}
 	}
 	panic(throw("command", "repository has no commits"))
-	return nil
 }
 
 // Return the date of earliest commit.
