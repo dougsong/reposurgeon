@@ -5143,7 +5143,6 @@ type NodeAction struct {
 	props OrderedMap
 	propchange bool
 	// These are set during the analysis phase
-	//fromSet = None FIXME: PathMap
 	blobmark string
 	generated bool
 }
@@ -6416,7 +6415,6 @@ type Hint struct {
 	vcs string
 }
 
-// FIXME: no longer called from the blob parser.
 func (repo *Repository) hint(clue1 string, clue2 string, strong bool) bool {
         // Hint what the source of this repository might be.
 	newhint := false
