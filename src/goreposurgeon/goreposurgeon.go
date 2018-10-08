@@ -7216,7 +7216,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
                 }
 		_, err := fp.Write([]byte(event.String()))
 		if err != nil {
-			fmt.Errorf("export error: %s", err)
+			panic(fmt.Errorf("export error: %s", err))
 		}
 	}
 	baton.exit("")
