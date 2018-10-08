@@ -844,7 +844,7 @@ func sselect(source DumpfileSource, selection SubversionRange) {
 		revision, _ := strconv.Atoi(string(fields[1]))
 		emit = selection.Contains(revision)
 		if debug {
-			fmt.Fprintf(os.Stderr, "<%s:%b>\n", revision, emit)
+			fmt.Fprintf(os.Stderr, "<%d:%t>\n", revision, emit)
 		}
 		if emit {
 			os.Stdout.Write(source.Lbs.Flush())
@@ -984,7 +984,7 @@ func setlog(source DumpfileSource, logpath string, selection SubversionRange) {
 		if haslog && logpatch.Contains(source.Revision) {
 			logentry := logpatch.comments[source.Revision]
 			if string(logentry.author) != getAuthor(prop.properties) {
-				fmt.Fprintf(os.Stderr, "repocutter: author of revision %s doesn't look right, aborting!\n", source.Revision)
+				fmt.Fprintf(os.Stderr, "repocutter: author of revision %d doesn't look right, aborting!\n", source.Revision)
 				os.Exit(1)
 			}
 			prop.properties["svn:log"] = string(logentry.text)
