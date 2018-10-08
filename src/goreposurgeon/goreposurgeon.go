@@ -9705,7 +9705,41 @@ func (p *SelectionParser) parseAtom() selEvaluator {
 
 // parseTextSearch parses a text search specification
 func (p *SelectionParser) parseTextSearch() selEvaluator {
-	return func(x selEvalState, s *orderedset.Set) *orderedset.Set { return s }
+	// FIXME: @debug_lexer
+	p.eatWS()
+	type textSearcher interface {
+		evalTextSearch(selEvalState, *orderedset.Set, *regexp.Regexp, string) *orderedset.Set
+	}
+	searcher, ok := p.subclass.(textSearcher)
+	if !ok {
+		return nil
+	} else if p.peek() != '/' {
+		return nil
+	} else if !strings.ContainsRune(p.line[1:], '/') {
+		panic(throw("command", "malformed text search specifier"))
+	} else {
+		p.pop() // skip opening "/"
+		endat := strings.IndexRune(p.line, '/')
+		pattern := p.line[:endat]
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			panic(throw("command", fmt.Sprintf(
+				"invalid regular expression: /%s/ (%v)",
+				pattern, err)))
+		}
+		p.line = p.line[endat+1:]
+		seen := make(map[rune]struct{})
+		for unicode.IsLetter(p.peek()) {
+			seen[p.pop()] = struct{}{}
+		}
+		var modifiers strings.Builder
+		for x := range seen {
+			modifiers.WriteRune(x)
+		}
+		return func(x selEvalState, s *orderedset.Set) *orderedset.Set {
+			return searcher.evalTextSearch(x, s, re, modifiers.String())
+		}
+	}
 }
 
 // parseFuncall parses a function call
@@ -9716,33 +9750,6 @@ func (p *SelectionParser) parseFuncall() selEvaluator {
 /*
 
 class SelectionParser(object):
-    @debug_lexer
-    func parse_textsearch():
-        "Parse a text search specification."
-        self.line = self.line.lstrip()
-        if not hasattr(self, 'eval_textsearch'):
-            return None
-        if self.peek() != '/':
-            return None
-        else if '/' not in self.line[1:]:
-            raise Recoverable("malformed text search specifier")
-        else:
-            assert(self.pop() == '/')
-            endat = self.line.index('/')
-            try:
-                match =  self.line[:endat]
-                if str is not bytes:
-                    match = match.encode(master_encoding)
-                search = regexp.MustCompile(match).search
-            except re.error:
-                raise Recoverable("invalid regular expression")
-            self.line = self.line[endat+1:]
-            modifiers = set()
-            while self.line and self.line[0].isalpha():
-                modifiers.add(self.line[0])
-                self.line = self.line[1:]
-            return lambda p: self.eval_textsearch(p, search, modifiers)
-        return None	# Deconfuse pylint
     @debug_lexer
     func parse_funcall():
         "Parse a function call."
