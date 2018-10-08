@@ -9340,7 +9340,17 @@ func (p *SelectionParser) parseDisjunct() selEvaluator {
 // evalDisjunct evaluates a disjunctive expression
 func (p *SelectionParser) evalDisjunct(preselection *orderedset.Set,
 	op1, op2 selEvaluator) *orderedset.Set {
-	return preselection
+	// FIXME: @debug_lexer
+	selected := orderedset.New()
+	conjunct := op1(p, preselection)
+	if conjunct != nil {
+		selected.Add(conjunct.Values()...)
+		conjunct = op2(p, preselection)
+		if conjunct != nil {
+			selected.Add(conjunct.Values()...)
+		}
+	}
+	return selected
 }
 
 // parseConjunct parses a conjunctive expression (& has higher precedence)
@@ -9351,17 +9361,6 @@ func (p *SelectionParser) parseConjunct() selEvaluator {
 /*
 
 class SelectionParser(object):
-    @debug_lexer
-    func eval_disjunct(self, preselection, op1, op2):
-        "Evaluate a disjunctive expression"
-        selected = orderedIntSet()
-        conjunct = op1(preselection)
-        if conjunct is not None:
-            selected |= conjunct
-            conjunct = op2(preselection)
-            if conjunct is not None:
-                selected |= conjunct
-        return selected
     @debug_lexer
     func parse_conjunct():
         "Parse a conjunctive expression (& has higher precedence)"
