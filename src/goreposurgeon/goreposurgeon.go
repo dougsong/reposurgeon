@@ -9258,17 +9258,24 @@ func (p *SelectionParser) compile(line string) (selEvaluator, string) {
 	return machine, line
 }
 
+// evaluate evaluates a pre-compiled selection query against item list
+func (p *SelectionParser) evaluate(machine selEvaluator, nitems int) []int {
+	if machine == nil {
+		return nil
+	}
+	p.nitems = nitems
+	crunched := machine(p, p.allItems())
+	p.nitems = 0
+	selection := make([]int, crunched.Size())
+	for i, x := range crunched.Values() {
+		selection[i] = x.(int)
+	}
+	return selection
+}
+
 /*
 
 class SelectionParser(object):
-    func evaluate(self, machine, allitems):
-        """Evaluate a pre-compiled selection query against item list."""
-        if machine is not None:
-            self.allitems = allitems
-            selection = list(machine(orderedIntSet(self.allitems)))
-            self.allitems = None
-            return selection
-        return None
     func parse(self, line, allitems):
         """Parse selection; return remainder of line with selection removed."""
         machine, rest = self.compile(line)
