@@ -2866,7 +2866,7 @@ type Blob struct {
 	start      int64	// Seek start if this blob refers into a dump
 	size       int64	// length start if this blob refers into a dump
 	abspath    string
-	deleteflag bool
+	deleteme bool
 }
 
 var blobseq int
@@ -2880,6 +2880,10 @@ func newBlob(repo *Repository) *Blob {
 	b.blobseq = blobseq
 	blobseq++
 	return b
+}
+
+func (b Blob) getDelFlag() bool {
+	return b.deleteme
 }
 
 // idMe IDs this blob for humans.
@@ -3102,7 +3106,7 @@ type Tag struct {
 	tagger *Attribution
 	comment string
 	legacyID string
-	deletehook bool
+	deleteme bool
 }
 
 func newTag(repo *Repository,
@@ -3114,6 +3118,10 @@ func newTag(repo *Repository,
 	t.comment = comment
 	t.remember(repo, committish, target)
 	return t
+}
+
+func (t Tag) getDelFlag() bool {
+	return t.deleteme
 }
 
 // getMark returns the tag's identifying mark
@@ -3397,7 +3405,7 @@ type Reset struct {
         committish string
         target *Commit
         color string
-        deleteflag bool
+        deleteme bool
 }
 
 func newReset(repo *Repository, ref string, committish string, target *Commit) *Reset {
@@ -3408,6 +3416,10 @@ func newReset(repo *Repository, ref string, committish string, target *Commit) *
 	reset.target = target
 	reset.remember(repo, committish, target)
 	return reset
+}
+
+func (reset Reset) getDelFlag() bool {
+	return reset.deleteme
 }
 
 // idMe IDs this reset for humans.
@@ -3730,6 +3742,7 @@ type Callout struct {
 	mark string
 	branch string
 	_childNodes []string
+	deleteme bool
 }
 
 func newCallout(mark string) *Callout {
@@ -3737,6 +3750,10 @@ func newCallout(mark string) *Callout {
         callout.mark = mark
         callout._childNodes = make([]string, 0)
 	return callout
+}
+
+func (callout Callout) getDelFlag() bool {
+	return callout.deleteme
 }
 
 func (callout Callout) callout() string {
@@ -3781,11 +3798,15 @@ type Commit struct {
         color string                // Scratch storage for graph-coloring 
         legacyID string             // Commit's ID in an alien system
         common string               // Used only by the Subversion parser
-        deleteflag bool             // Flag used during deletion operations
+        deleteme bool             // Flag used during deletion operations
         attachments []Event         // Tags and Resets pointing at this commit
         _parentNodes []CommitLike   // list of parent nodes
         _childNodes []CommitLike    // list of child nodes
         _pathset stringSet
+}
+
+func (commit Commit) getDelFlag() bool {
+	return commit.deleteme
 }
 
 func (commit Commit) getMark() string {
@@ -4850,7 +4871,7 @@ func (commit *Commit) undecodable(codec string) bool {
 
 // delete severs this commit from its repository.
 func (commit *Commit) delete(policy stringSet) {
-        //commit.repo.delete([]int{commit.index()}, policy)	FIXME
+        commit.repo.delete([]int{commit.index()}, policy)
 }
 
 // dump reports this commit in import-stream format.
@@ -4954,7 +4975,11 @@ type Passthrough struct {
 	repo *Repository
 	text string
 	color string
-	deleteflag bool
+	deleteme bool
+}
+
+func (p Passthrough) getDelFlag() bool {
+	return p.deleteme
 }
 
 func newPassthrough(repo *Repository, line string) *Passthrough {
@@ -6213,6 +6238,7 @@ type Event interface {
 	idMe() string
 	getMark() string
 	String() string
+	getDelFlag() bool
 }
 
 // CommitLike is a Commit or Callout
@@ -6221,6 +6247,7 @@ type CommitLike interface {
 	getMark() string
 	callout() string
 	String() string
+	getDelFlag() bool
 }
 
 // Contributor - associate a username with a DVCS-style ID and timezone
@@ -6261,7 +6288,7 @@ type Repository struct {
         _eventByMark map[string]Event
         _namecache map[string][]int
         preserveSet stringSet
-        caseCoverage stringSet
+        caseCoverage orderedIntSet
         basedir string
         uuid string
         write_legacy bool
@@ -6289,7 +6316,7 @@ func newRepository(name string) *Repository {
 	repo.readtime = time.Now()
 	repo.hintlist = make([]Hint, 0)
 	repo.preserveSet = newStringSet()
-	repo.caseCoverage = newStringSet()
+	repo.caseCoverage = newOrderedIntSet()
         repo.legacyMap = make(map[string]*Commit)
 	repo.assignments = make(map[string]orderedIntSet)
 	repo.timings = make([]TimeMark, 0)
@@ -6961,9 +6988,6 @@ func defaultEmptyTagName(commit *Commit) string {
                        * createTags    whether to create tags."""
 */
 
-/*
-FIXME: Cannot be committeed until repo has delete method. 
-
 func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, tagifyMerges bool, canonicalize bool, nameFunc func(*Commit) string, legendFunc func(*Commit) string, createTags bool, gripe func(string)) {
 	// Turn into tags commits without (meaningful) fileops.
 	// Use a separate loop because delete() invalidates manifests.
@@ -6975,7 +6999,7 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 	// Tagify commits without fileops
 	var isTipdelete = func(commit *Commit) bool {return false}
 	if tipdeletes {
-		isTipdelete := func(c *Commit) bool {
+		isTipdelete = func(c *Commit) bool {
 			return c.alldeletes(stringSet{deleteall}) && !c.hasChildren()
 		}
 	}
@@ -6998,7 +7022,7 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 			}
 			legend := ""
 			if legendFunc != nil{
-				legend := legendFunc(commit)
+				legend = legendFunc(commit)
 			}
 			commit.setOperations(nil)
 			if createTags {
@@ -7031,9 +7055,6 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 	}
 	repo.delete(deletia, []string{"--tagback", "--tagify"})
 }
-
-*/
-
 
 // Read a stream file and use it to populate the repo.
 func (repo *Repository) fastImport(fp io.Reader, options stringSet,
@@ -7602,23 +7623,23 @@ var allPolicies = stringSet{
 	"--quiet",
 }
 
-/*
 // Delete a set of events, or rearrange it forward or backwards.
 func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 	announce(debugDELETE, "Deletion list is %v", selected)
 	for _, qualifier := range policy {
-		if qualifier !in s {
-				return errors.New("no such deletion modifier as " + qualifier)
-			}
+		if !allPolicies.Contains(qualifier) {
+			return errors.New("no such deletion modifier as " + qualifier)
+		}
 	}
-	// For --pushback, it is critical that deletions take place from lowest
-	// event number to highest since --pushback often involves re-ordering
-	// events even as it is iterating over the "selected" list (see
-	// "swap_indices" below). Only events earlier than the event currently
-	// being processed are re-ordered, however, so the operation is safe as
-	// long as events are visited lowest to highest. (For --pushforward,
-	// iteration order is immaterial since it does no event re-ordering and
-	// actual deletion is delayed until after iteration is finished.)
+	// For --pushback, it is critical that deletions take place
+	// from lowest event number to highest since --pushback often
+	// involves re-ordering events even as it is iterating over
+	// the "selected" list. Only events earlier than the event
+	// currently being processed are re-ordered, however, so the
+	// operation is safe as long as events are visited lowest to
+	// highest. (For --pushforward, iteration order is immaterial
+	// since it does no event re-ordering and actual deletion is
+	// delayed until after iteration is finished.)
 	selected.Sort()
 	dquiet := policy.Contains("--quiet")
 	delete := policy.Contains("--delete")
@@ -7630,7 +7651,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 	// Sanity checks
 	if !dquiet {
 		for _, ei := range selected {
-			event = self.events[ei]
+			event := repo.events[ei]
 			commit, ok := event.(*Commit)
 			if !ok {
 				continue
@@ -7649,61 +7670,76 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 					complain("warning: pushback of parentless commit %s", commit.mark)
 				}
 				if pushforward && !commit.hasChildren() {
-					complain("warning: pushforward of childless commit %s" commit.mark)
+					complain("warning: pushforward of childless commit %s", commit.mark)
 				}
 			}
 		}
 	}
-	altered = []*Commit
+	altered := make([]*Commit, 0)
 	// Here are the deletions
-	for _, e := range repo.events {
-		e.deleteflag = false
+	for _, event := range repo.events {
+		switch event.(type) {
+		case *Blob:
+			event.(*Blob).deleteme = false
+		case *Tag:
+			event.(*Tag).deleteme = false
+		case *Reset:
+			event.(*Reset).deleteme = false
+		case *Passthrough:
+			event.(*Passthrough).deleteme = false
+		case *Commit:
+			event.(*Commit).deleteme = false
+		}
 	}
-	var new_target *Commit
+	var newTarget *Commit
 	for _, ei := range selected {
-		event = repo.events[ei]
+		event := repo.events[ei]
 		switch event.(type) {
 		case *Blob:
 			// Never delete a blob except as a side effect of
 			// deleting a commit.
-			event.(*Blob).deleteflag = false
+			event.(*Blob).deleteme = false
 		case *Tag:
-			event.(*Tag).deleteflag = delete
+			event.(*Tag).deleteme = delete
 		case *Reset:
-			event.(*Reset).deleteflag = delete
+			event.(*Reset).deleteme = delete
 		case *Passthrough:
-			event.(*Passthrough).deleteflag = delete
+			event.(*Passthrough).deleteme = delete
 		case *Commit:
 			commit := event.(*Commit)
-			commit.deleteflag = true
+			commit.deleteme = true
 			// Decide the new target for tags
-			filter_only := true
+			filterOnly := true
 			if tagforward && commit.hasChildren() {
-				filter_only = false
-				new_target = commit.firstChild()
-			} else if tagback && commit.parents() {
-				filter_only = false
-				new_target = commit.parents()[0]
+				filterOnly = false
+				newTarget = commit.firstChild()
+			} else if tagback && commit.hasParents() {
+				filterOnly = false
+				//newTarget = commit.parents()[0]	FIXME
 			}
 			// Reparent each child.  Concatenate comments,
 			// ignoring empty-log-message markers.
-			func compose_comment(a string, b string) string {
+			compose_comment := func(a string, b string) string {
 				if a == b {
 					return a
 				}
-				a_empty := emptyComment(a)
-				b_empty := emptyComment(b)
-				if a_empty && b_empty {
+				aEmpty := emptyComment(a)
+				bEmpty := emptyComment(b)
+				if aEmpty && bEmpty {
 					return ""
-				} else if a_empty && !b_empty {
+				} else if aEmpty && !bEmpty {
 					return b
-				} else if !a_empty && b_empty {
+				} else if !aEmpty && bEmpty {
 					return a
 				} else {
 					return a + "\n" + b
 				}
 			}
-			for _, child := range commit.children() {
+			for _, cchild := range commit.children() {
+				child, ok := cchild.(*Commit)
+				if !ok {
+					continue	// Ignore callouts
+				}
 				// Insert commit's parents in place of
 				// commit in child's parent list. We
 				// keep existing duplicates in case
@@ -7724,10 +7760,13 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				new_parents := old_parents[:event_pos]
 				// Add our parents. The Python version 
 				// tossed out duplicates of preceding
-				// parents.
-				for _, p in commit.parents() {
-					new_parents = append(new_parents, p)
-				}
+				// parents.  Skip callouts.
+				for _, ancestor := range commit.parents() {
+					cparent, ok := ancestor.(*Commit) 
+					if ok {
+						new_parents = append(new_parents, cparent)
+					}
+				}		
 				// In Python, we "Avoid duplicates due to
 				// commit.parents() insertion." Requires some
 				// odd contortions in Go so we won't do it
@@ -7739,9 +7778,9 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				// parent,and mark each such child as needing
 				// resolution.
 				if pushforward && child.parents()[0] == commit {
-					newops := make([]FileOp, len(commit.opertations))
+					newops := make([]FileOp, len(commit.operations()))
 					copy(newops, commit.operations())
-					newops = append(newops, child.operations())
+					newops = append(newops, child.operations()...)
 					child.setOperations(newops)
 					child.invalidatePathsetCache()
 					// Also prepend event's
@@ -7765,10 +7804,10 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				// with an empty tree (as event does)
 				// instead of inheriting that of its
 				// new first parent.
-				if event_pos == 0 && !commit.parents() {
-					fileop := FileOp()
+				if event_pos == 0 && !commit.hasParents() {
+					fileop := newFileOp(repo)
 					fileop.construct("deleteall")
-					child.prependOperation(fileop)
+					child.prependOperation(*fileop)
 					child.invalidatePathsetCache()
 					altered = append(altered, child)
 				}
@@ -7781,11 +7820,15 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				// ops to its primary parent fileop
 				// list and mark the parent as needing
 				// resolution.
-				parent := commit.parents()[0]
+				cparent := commit.parents()[0]
+				parent, ok := cparent.(*Commit)
+				if !ok {
+					continue	// Ignore callouts
+				}
 				parent.fileops = append(parent.fileops, commit.fileops...) 
 				parent.invalidatePathsetCache()
 				// Also append child"s comment to its parent"s
-				if "--empty-only" in policy && !emptyComment(parent.comment) {
+				if policy.Contains("--empty-only") && !emptyComment(parent.comment) {
 					complain(fmt.Sprintf("--empty is on and %s comment is nonempty", parent.idMe()))
 				}
 				parent.comment = compose_comment(parent.comment,
@@ -7802,109 +7845,128 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				// parent kust before commit.
 				earliest := parent.index()
 				latest := commit.index()
-				for i = earliest; i < latest; i++ {
+				for i := earliest; i < latest; i++ {
 					repo.events[i] = repo.events[i+1]
 				}
 				repo.events[latest-1] = parent
 				repo.declareSequenceMutation("squash pushback")
 			}
+
+			// Move tags && attachments
+			if filterOnly {
+				for _, e := range commit.attachments {
+					switch e.(type) {
+					case *Tag:
+						e.(*Tag).deleteme = false
+					case *Reset:
+						e.(*Reset).deleteme = false
+					}
+				}
+			} else {
+				if !tagify && strings.Contains(commit.branch, "/tags/") && newTarget.branch != commit.branch {
+					// By deleting the commit, we would
+					// lose the fact that it moves its
+					// branch (to create a lightweight tag
+					// for instance): replace it by a
+					// Reset which will save this very
+					// information. The following loop
+					// will take care of moving the
+					// attachment to the new target.
+					reset := newReset(repo,
+						commit.branch, "", commit)
+					repo.events[ei] = reset
+				}
+				// use a copy of attachments since it
+				// will be mutated
+				for _, e := range commit.attachments {
+					switch event.(type) {
+					case *Tag:
+						e.(*Tag).forget()
+						e.(*Reset).remember(repo, "", newTarget)
+					case *Reset:
+						e.(*Tag).forget()
+						e.(*Reset).remember(repo, "", newTarget)
+					}
+				}
+			}
+			// And forget the deleted event
+			commit.forget()
 		}
-		// Move tags && attachments
-		if filter_only {
-			for _, e := range commit.attachments {
-				e.deleteflag = true
-			}
-		} else {
-			if !tagify && commit.branch != ""
-			&& commit.branch.Contains("/tags/") 
-			&& new_target.branch != commit.branch {
-				// By deleting the commit, we would
-				// lose the fact that it moves its
-				// branch (to create a lightweight tag
-				// for instance): replace it by a
-				// Reset which will save this very
-				// information. The following loop
-				// will take care of moving the
-				// attachment to the new target.
-				reset := newReset(repo, ref = commit.branch,
-					target := commit)
-				repo.commits[ei] = reset
-			}
-			// use a copy of attachments since it will be mutated
-			for _, t := range list(commit.attachments) {
-				t.forget()
-				t.remember(repo, target=new_target)
-			}
-		}
-		// And forget the deleted event
-		commit.forget()
 	}
 	// Preserve assignments
-	repo.filterAssignments(lambda e: e.deleteflag)
+	repo.filterAssignments(func(e Event) bool {return e.getDelFlag()})
 	// Do the actual deletions
-	repo.events = [e for e in repo.events if !e.deleteflag]
-	repo.declareSequenceMutation()
+	survivors := make([]Event, 0)
+	for _, e := range repo.events {
+		if !e.getDelFlag() {
+			survivors = append(survivors, e)
+		}
+	}
+	repo.events = survivors
+	repo.declareSequenceMutation("")
 	// Canonicalize all the commits that got ops pushed to them
 	if !delete {
 		for _, event := range altered {
-			if event.deleteflag: continue
-		}
-		if debugEnable(debugDELETE) {
-			announce(debugDELETE, "Before canonicalization:")
-			event.fileopDump()
-		}
-		repo.caseCoverage |= repo.canonicalize(event)
-		if debugEnable(debugDELETE) {
-			announce(debugDELETE, "After canonicalization:")
-			event.fileopDump()
-		}
-		// Now apply policy in the mutiple-M case
-		cliques := event.cliques()
-		if ("--coalesce" !in policy && !delete) 
-		|| debugEnable(debugDELETE) {
-			for path, oplist := range cliques {
-				if len(oplist) > 1 && !dquiet {
-					complain("commit %s has multiple Ms for %s"
-						% (event.mark, path))
+			if event.getDelFlag() {
+				continue
+			}
+			if debugEnable(debugDELETE) {
+				announce(debugDELETE, "Before canonicalization:")
+				event.fileopDump()
+			}
+			repo.caseCoverage = repo.caseCoverage.Union(repo.canonicalize(event))
+			if debugEnable(debugDELETE) {
+				announce(debugDELETE, "After canonicalization:")
+				event.fileopDump()
+			}
+			// Now apply policy in the multiple-M case
+			cliques := event.cliques()
+			if (!policy.Contains("--coalesce") && !delete) || debugEnable(debugDELETE) {
+				for path, oplist := range cliques {
+					if len(oplist) > 1 && !dquiet {
+						complain("commit %s has multiple Ms for %s", event.mark, path)
+					}
 				}
 			}
+/*
+			if policy.Contains("--coalesce") {
+				// Only keep last M of each clique,
+				// leaving other ops alone
+				event.setOperations( 
+					[op for (i, op) in enumerate(event.operations())
+						if (op.op != opM) || (i == cliques[op.path][-1])])
+			}
+*/
+			event.invalidatePathsetCache()
+			if debugEnable(debugDELETE) {
+				announce(debugDELETE, fmt.Sprintf("%s, after applying policy:", event.idMe()))
+				event.fileopDump()
+			}
 		}
-		if "--coalesce" in policy {
-			// Only keep last M of each clique, leaving other ops alone
-			event.setOperations( 
-				[op for (i, op) in enumerate(event.operations())
-					if (op.op != opM) || (i == cliques[op.path][-1])])
-		}
-		event.invalidatePathsetCache()
 	}
-		if debugEnable(debugDELETE) {
-		    announce(debugDELETE, fmt.Sprintf("Commit %d, after applying policy:", ei + 1,))
-		    event.fileopDump()
-		}
-	    }
-	}
+
 	// Cleanup
 	repo.gcBlobs()
+	return nil
 }
 
 // Delete a set of events.
-func (self *Repository) delete(selected orderedIntSet, policy stringSet) {
-    policy := policy || []
-    self.squash(selected, ["--delete", "--quiet"] + policy)
+func (repo *Repository) delete(selected orderedIntSet, policy stringSet) {
+	options := append(stringSet{"--delete", "--quiet"}, policy...)
+	repo.squash(selected, options)
 }
-*/
 
 // Replace references to duplicate blobs according to the given dup_map,
 // which maps marks of duplicate blobs to canonical marks`
-func (self *Repository) dedup(dupMap map[string]string) {
-	for _, commit := range self.commits(nil) {
+func (repo *Repository) dedup(dupMap map[string]string) {
+	for _, commit := range repo.commits(nil) {
 		for _, fileop := range commit.operations() {
 			if fileop.op == opM && dupMap[fileop.ref] != "" {
 				fileop.ref = dupMap[fileop.ref]
 			}
 		}
 	}
-	self.gcBlobs()
+	repo.gcBlobs()
 }
 
 // Garbage-collect blobs that no longer have references.
@@ -7937,7 +7999,7 @@ func (repo *Repository) gcBlobs() {
 /*
     func __delitem__(self, index):
         # To make Repository a proper container (and please pylint)
-        self.squash([index], ["--delete", "--quiet", "--tagback"])
+        self.squash[i(ndex], ["--delete", "--quiet", "--tagback"])
 
     #
     # Delete machinery ends here
