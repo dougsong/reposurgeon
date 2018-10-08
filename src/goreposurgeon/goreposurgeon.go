@@ -9237,6 +9237,7 @@ type selParser interface {
 	parseTerm() selEvaluator
 	evalTermNegate(selEvalState, *orderedset.Set, selEvaluator) *orderedset.Set
 	parseVisibility() selEvaluator
+	evalVisibility(selEvalState, *orderedset.Set, string) *orderedset.Set
 	parsePolyrange() selEvaluator
 	parseTextSearch() selEvaluator
 	parseFuncall() selEvaluator
@@ -9501,7 +9502,54 @@ func (p *SelectionParser) evalTermNegate(state selEvalState,
 
 // parseVisibility parses a visibility spec
 func (p *SelectionParser) parseVisibility() selEvaluator {
-	return func(x selEvalState, s *orderedset.Set) *orderedset.Set { return s }
+	// FIXME: @debug_lexer
+	p.eatWS()
+	var visibility selEvaluator
+	type typelettersGetter interface {
+		visibilityTypeletters() map[rune]func(int) bool
+	}
+	getter, ok := p.subclass.(typelettersGetter)
+	if !ok {
+		visibility = nil
+	} else if p.peek() != '=' {
+		visibility = nil
+	} else {
+		var visible string
+		p.pop()
+		typeletters := getter.visibilityTypeletters()
+		for {
+			if _, ok := typeletters[p.peek()]; !ok {
+				break
+			}
+			c := p.pop()
+			if !strings.ContainsRune(visible, c) {
+				visible += string(c)
+			}
+		}
+		// We need a special check here because these expressions
+		// could otherwise run onto the text part of the command.
+		if !strings.ContainsRune("()|& ", p.peek()) {
+			panic(throw("command",
+				fmt.Sprintf("garbled type mask at %s", p.line)))
+		}
+		// FIXME: port debugger to Go
+		// p._debug_lexer("visibility set is %s with %s left" % (
+		//     visible, repr(p.line)))
+		visibility = func(x selEvalState, s *orderedset.Set) *orderedset.Set {
+			return p.imp().evalVisibility(x, s, visible)
+		}
+	}
+	return visibility
+}
+
+// evalVisibility evaluates a visibility spec
+func (p *SelectionParser) evalVisibility(state selEvalState,
+	preselection *orderedset.Set, visible string) *orderedset.Set {
+	return preselection
+}
+
+func (p *SelectionParser) visibilityTypeletters() map[rune]func(int) bool {
+	return nil
 }
 
 // parsePolyrange parses a polyrange specification (list of intervals)
@@ -9522,28 +9570,6 @@ func (p *SelectionParser) parseFuncall() selEvaluator {
 /*
 
 class SelectionParser(object):
-    @debug_lexer
-    func parse_visibility():
-        "Parse a visibility spec."
-        self.line = self.line.lstrip()
-        if not hasattr(self, 'visibility_typeletters'):
-            visibility = None
-        else if self.peek() != "=":
-            visibility = None
-        else:
-            typeletters = self.visibility_typeletters()
-            visible = set()
-            self.pop()
-            while self.peek() in typeletters:
-                visible.add(self.pop())
-            # We need a special check here because these expressions
-            # could otherwise run onto the text part of the command.
-            if self.peek() not in "()|& ":
-                raise Recoverable("garbled type mask at %s" % repr(self.line))
-            self._debug_lexer("visibility set is %s with %s left" % (
-                visible, repr(self.line)))
-            visibility = lambda p: self.eval_visibility(p, visible)
-        return visibility
     @debug_lexer
     func eval_visibility(self, preselection, visible):
         "Evaluate a visibility spec."
