@@ -9795,53 +9795,128 @@ func (p *SelectionParser) parseFuncall() selEvaluator {
 	}
 }
 
-var selFuncs = map[string]selEvaluator{}
+var selFuncs = map[string]selEvaluator{
+	"min": minHandler,
+	"max": maxHandler,
+	"amp": ampHandler,
+	"pre": preHandler,
+	"suc": sucHandler,
+	"srt": srtHandler,
+	"rev": revHandler,
+}
+
+func selMin(s *orderedset.Set) int {
+	if s.Size() == 0 {
+		panic(throw("command", "cannot take minimum of empty set"))
+	}
+	var n interface{}
+	for _, x := range s.Values() {
+		if n == nil || x.(int) < n.(int) {
+			n = x
+		}
+	}
+	return n.(int)
+}
+
+func selMax(s *orderedset.Set) int {
+	if s.Size() == 0 {
+		panic(throw("command", "cannot take maximum of empty set"))
+	}
+	var n interface{}
+	for _, x := range s.Values() {
+		if n == nil || x.(int) > n.(int) {
+			n = x
+		}
+	}
+	return n.(int)
+}
+
+// Minimum member of a selection set.
+func minHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
+	// FIXME: @debug_lexer
+	return orderedset.New(selMin(subarg))
+}
+
+// Maximum member of a selection set.
+func maxHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
+	// FIXME: @debug_lexer
+	return orderedset.New(selMax(subarg))
+}
+
+// Amplify - map empty set to empty, nonempty set to all.
+func ampHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
+	// FIXME: @debug_lexer
+	if subarg.Size() != 0 {
+		return state.allItems()
+	}
+	return orderedset.New()
+}
+
+// Predecessors function; all elements previous to argument set.
+func preHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
+	// FIXME: @debug_lexer
+	pre := orderedset.New()
+	if subarg.Size() == 0 {
+		return pre
+	}
+	n := selMin(subarg)
+	if n == 0 {
+		return pre
+	}
+	for i := 0; i < n; i++ {
+		pre.Add(i)
+	}
+	return pre
+}
+
+// Successors function; all elements following argument set.
+func sucHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
+	// FIXME: @debug_lexer
+	suc := orderedset.New()
+	if subarg.Size() == 0 {
+		return suc
+	}
+	nitems := state.nItems()
+	n := selMax(subarg)
+	if n >= nitems-1 {
+		return suc
+	}
+	for i := n + 1; i < nitems; i++ {
+		suc.Add(i)
+	}
+	return suc
+}
+
+func selMutate(s *orderedset.Set, f func([]int) []int) *orderedset.Set {
+	v := make([]int, s.Size())
+	for i, n := range s.Values() {
+		v[i] = n.(int)
+	}
+	sel := orderedset.New()
+	for _, n := range f(v) {
+		sel.Add(n)
+	}
+	return sel
+}
+
+// Sort the argument set.
+func srtHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
+	// FIXME: @debug_lexer
+	return selMutate(subarg, func(x []int) []int {
+		sort.Sort(sort.IntSlice(x))
+		return x
+	})
+}
+
+// Reverse the argument set.
+func revHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
+	// FIXME: @debug_lexer
+	return selMutate(subarg, func(x []int) []int {
+		return sort.Reverse(sort.IntSlice(x)).(sort.IntSlice)
+	})
+}
 
 /*
-
-class SelectionParser(object):
-    @debug_lexer
-    func min_handler(self, subarg):
-        "Minimum member of a selection set."
-        try:
-            return orderedIntSet([min(subarg)])
-        except ValueError:
-            raise Recoverable("cannot take minimum of empty set")
-    @debug_lexer
-    func max_handler(self, subarg):
-        "Maximum member of a selection set."
-        try:
-            return orderedIntSet([max(subarg)])
-        except ValueError:
-            raise Recoverable("cannot take maximum of empty set")
-    @debug_lexer
-    func amp_handler(self, subarg):
-        "Amplify - map empty set to empty, nonempty set to all."
-        if subarg:
-            return orderedIntSet(self.allitems)
-        else:
-            return subarg
-    @debug_lexer
-    func pre_handler(self, subarg):
-        "Predecessors function; all elements previous to argument set."
-        if not subarg or min(subarg) == 0:
-            return orderedIntSet()
-        else:
-            return orderedIntSet(range(0, min(subarg)))
-    @debug_lexer
-    func suc_handler(self, subarg):
-        "Successors function; all elements following argument set."
-        if not subarg or max(subarg) >= len(self.allitems) - 1:
-            return orderedIntSet()
-        else:
-            return orderedIntSet(range(max(subarg)+1, len(self.allitems)))
-    @debug_lexer
-    func srt_handler(self, subarg):
-        "Sort the argument set."
-        return orderedIntSet(sorted(subarg))
-    func rev_handler(self, subarg):
-        "Reverse the argument set."
-        return list(reversed(subarg))
 
 class AttributionEditor(object):
     "Inspect and edit committer, author, tagger attributions."
