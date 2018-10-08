@@ -9273,13 +9273,15 @@ func (p *SelectionParser) evaluate(machine selEvaluator, nitems int) []int {
 	return selection
 }
 
+// parse parses selection and returns remainder of line with selection removed
+func (p *SelectionParser) parse(line string, nitems int) ([]int, string) {
+	machine, rest := p.compile(line)
+	return p.evaluate(machine, nitems), rest
+}
+
 /*
 
 class SelectionParser(object):
-    func parse(self, line, allitems):
-        """Parse selection; return remainder of line with selection removed."""
-        machine, rest = self.compile(line)
-        return (self.evaluate(machine, allitems), rest)
     @debug_lexer
     func parse_expression():
         self.line = self.line.lstrip()
