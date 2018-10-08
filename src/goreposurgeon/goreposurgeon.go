@@ -9386,7 +9386,33 @@ func (p *SelectionParser) parseConjunct() selEvaluator {
 // evalConjunct evaluates a conjunctive expression
 func (p *SelectionParser) evalConjunct(preselection *orderedset.Set,
 	op1, op2 selEvaluator) *orderedset.Set {
-	return preselection
+	// FIXME: @debug_lexer
+	// assign term before intersecting with preselection so
+	// that the order specified by the user's first term is
+	// preserved
+	conjunct := op1(p, preselection)
+	if conjunct == nil {
+		conjunct = preselection
+	} else {
+		intersect := func(s1, s2 *orderedset.Set) *orderedset.Set {
+			s := orderedset.New()
+			for _, x := range s1.Values() {
+				if s2.Contains(x) {
+					s.Add(x)
+				}
+			}
+			return s
+		}
+		// this line is necessary if the user specified only
+		// polyranges because evalPolyrange() ignores the
+		// preselection
+		conjunct = intersect(conjunct, preselection)
+		term := op2(p, preselection)
+		if term != nil {
+			conjunct = intersect(conjunct, term)
+		}
+	}
+	return conjunct
 }
 
 func (p *SelectionParser) parseTerm() selEvaluator {
@@ -9396,24 +9422,6 @@ func (p *SelectionParser) parseTerm() selEvaluator {
 /*
 
 class SelectionParser(object):
-    @debug_lexer
-    func eval_conjunct(self, preselection, op1, op2):
-        "Evaluate a conjunctive expression"
-        # assign term before intersecting with preselection so
-        # that the order specified by the user's first term is
-        # preserved
-        conjunct = op1(preselection)
-        if conjunct is None:
-            conjunct = preselection
-        else:
-            # this line is necessary if the user specified only
-            # polyranges because eval_polyrange() ignores the
-            # preselection
-            conjunct &= preselection
-            term = op2(preselection)
-            if term is not None:
-                conjunct &= term
-        return conjunct
     @debug_lexer
     func parse_term():
         self.line = self.line.lstrip()
