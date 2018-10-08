@@ -9355,29 +9355,47 @@ func (p *SelectionParser) evalDisjunct(preselection *orderedset.Set,
 
 // parseConjunct parses a conjunctive expression (& has higher precedence)
 func (p *SelectionParser) parseConjunct() selEvaluator {
+	// FIXME: @debug_lexer
+	p.eatWS()
+	op := p.parseTerm()
+	if op == nil {
+		return func(x *SelectionParser, s *orderedset.Set) *orderedset.Set {
+			noop := func(*SelectionParser, *orderedset.Set) *orderedset.Set { return nil }
+
+			return x.evalConjunct(s, noop, nil)
+		}
+	}
+	for {
+		p.eatWS()
+		if p.peek() != '&' {
+			break
+		}
+		p.pop()
+		op2 := p.parseTerm()
+		if op2 == nil {
+			break
+		}
+		op1 := op
+		op = func(x *SelectionParser, s *orderedset.Set) *orderedset.Set {
+			return x.evalConjunct(s, op1, op2)
+		}
+	}
+	return op
+}
+
+// evalConjunct evaluates a conjunctive expression
+func (p *SelectionParser) evalConjunct(preselection *orderedset.Set,
+	op1, op2 selEvaluator) *orderedset.Set {
+	return preselection
+}
+
+func (p *SelectionParser) parseTerm() selEvaluator {
 	return func(x *SelectionParser, s *orderedset.Set) *orderedset.Set { return s }
 }
 
 /*
 
 class SelectionParser(object):
-    @debug_lexer
-    func parse_conjunct():
-        "Parse a conjunctive expression (& has higher precedence)"
-        self.line = self.line.lstrip()
-        op = self.parse_term()
-        if op is None:
-            return lambda p: self.eval_conjunct(p, lambda q: None, None)
-        while true:
-            self.line = self.line.lstrip()
-            if self.peek() != '&':
-                break
-            self.pop()
-            op2 = self.parse_term()
-            if op2 is None:
-                break
-            op = lambda p, lop=op, rop=op2: self.eval_conjunct(p, lop, rop)
-        return op
     @debug_lexer
     func eval_conjunct(self, preselection, op1, op2):
         "Evaluate a conjunctive expression"
