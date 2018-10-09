@@ -42,6 +42,8 @@ Things that still need unit tests:
 
 * frontEvents(), when there are some.
 
+* resort()
+
 */
 
 func assertBool(t *testing.T, see bool, expect bool) {

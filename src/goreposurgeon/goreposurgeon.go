@@ -75,6 +75,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"container/heap"
 	"crypto/sha1"
 	"errors"
 	"fmt"
@@ -404,6 +405,25 @@ func (s *orderedIntSet) String() string {
 		rep += fmt.Sprintf("%d, ", el)
 	}
 	return rep[0:len(rep)-2] + "}"
+}
+
+// Satisfy the heap interface
+func (s orderedIntSet) Len() int           { return len(s) }
+func (s orderedIntSet) Less(i, j int) bool { return s[i] < s[j] }
+func (s orderedIntSet) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+
+func (s orderedIntSet) Push(x interface{}) {
+	// Push and Pop use pointer receivers because they modify the
+	// slice's length, not just its contents.
+	s = append(s, x.(int))
+}
+
+func (s orderedIntSet) Pop() interface{} {
+	old := s
+	n := len(old)
+	x := old[n-1]
+	s = old[0 : n-1]
+	return x
 }
 
 /*
@@ -6475,7 +6495,7 @@ func (repo *Repository) branchmap() map[string]string {
 	return brmap
 }
 
-func (repo *Repository) all() []int {
+func (repo *Repository) all() orderedIntSet {
 	// Return a set that selects the entire repository.
 	s := make([]int, len(repo.events))
 	for i := range repo.events {
@@ -8014,112 +8034,135 @@ func (repo *Repository) frontEvents() []Event {
 	return front
 }
 
+// resort topologically sorts the events in this repository.
+// It reorders self.events so that objects referenced by other objects
+// appear first.  The sort is stable to avoid unnecessary churn.
+type DAGedges struct {
+	eout orderedIntSet
+	ein orderedIntSet
+}
+type DAG map[int]*DAGedges
+func (d *DAG) setdefault(key int, e *DAGedges) *DAGedges {
+	_, ok := (*d)[key]
+	if !ok {
+		(*d)[key] = e
+	}
+	return (*d)[key]
+}
+
+func (repo *Repository) resort() {
+	var dag DAG = make(map[int]*DAGedges)
+        start := repo.all()
+
+        // helper for constructing the dag
+        handle := func(x int, ymark string) {
+		//assert(ymark != nil)
+		if ymark == "inline" {
+			return
+		}
+		//assert(ymark[0] == ":")
+		y := repo.find(ymark)
+		//assert(y != nil)
+		//assert(x != y)
+		start.Remove(x)
+		dag.setdefault(x, new(DAGedges)).eout.Add(y)
+		dag.setdefault(y, new(DAGedges)).ein.Add(x)
+        }
+
+        // construct the DAG
+        for n, node := range repo.events {
+		edges := dag.setdefault(n, new(DAGedges))
+		switch node.(type) {
+		case *Commit:
+			commit := node.(*Commit)
+			for _, parent := range commit.parents() {
+				p := repo.index(parent)
+				//assert(n != p)
+				start.Remove(n)
+				edges.eout.Add(p)
+				dag.setdefault(p, new(DAGedges)).ein.Add(n)
+			}
+			for _, o := range commit.operations() {
+				if o.op == opM {
+					handle(n, o.ref)
+				} else if o.op == opN {
+					handle(n, o.ref)
+					handle(n, o.committish)
+				}
+			}
+		case *Blob:
+			continue
+		case *Tag:
+			handle(n, node.(*Tag).committish)
+		case *Reset:
+			reset := node.(*Reset)
+			if reset.target != nil {
+				t := repo.index(reset.target)
+				//assert(n != t)
+				start.Remove(n)
+				edges.eout.Add(t)
+				dag.setdefault(t, new(DAGedges)).ein.Add(n)
+			}
+		case *Passthrough:
+			continue
+		default:
+			panic("unexpected event type")
+
+		}
+        }
+        // now topologically sort the dag, using a priority queue to
+        // provide a stable topological sort (each event's priority is
+        // its original index)
+        tsorted := newOrderedIntSet()
+        oldIndexToNew := make(map[int]int) 
+	heap.Init(&start)
+        for start.Len() > 0 {
+		n := heap.Pop(start).(int)
+		//assert n  not in oldIndexToNew
+		oldIndexToNew[n] = len(tsorted)
+		tsorted.Add(n)
+		ein := dag[n].ein
+		for len(ein) > 0 {
+			m := ein.Pop().(int)
+			medges := dag[m]
+			medges.eout.Remove(n)
+			if len(medges.eout) == 0 {
+				heap.Push(start, m)
+			}
+		}
+        }
+        orig := repo.all()
+	//assert len(t) == len(tsorted)
+        if !tsorted.Equal(orig) {
+		//assert len(t - o) == 0
+		leftout := orig.Subtract(tsorted)
+		if len(leftout) > 0 {
+			complain("event re-sort failed due to one or more dependency cycles involving the following events: %v", leftout)
+			return
+		}
+		newEvents := make([]Event, len(repo.events))
+		for i, j := range tsorted {
+			newEvents[i] = repo.events[j]
+		}
+		repo.events = newEvents
+		if verbose > 0 {
+			announce(debugSHOUT, "re-sorted events")
+		}
+		// assignments will be fixed so don't pass anything to
+		// declareSequenceMutation() to tell it to warn about
+		// invalidated assignments
+		repo.declareSequenceMutation("")
+		for k, v := range repo.assignments {
+			old := v
+			repo.assignments[k] = make([]int, len(v))
+			for i := range v {
+				repo.assignments[k][i] = oldIndexToNew[old[i]]
+			}
+		}
+	}
+}
+
 /*
-    func resort():
-        """Topologically sort the events in this repository.
-
-        Reorder self.events so that objects referenced by other
-        objects appear first.  The sort is stable to avoid unnecessary
-        churn.
-        """
-
-        class dag_edges(object):
-            func __init__():
-                self.eout = set()
-                self.ein = set()
-
-        dag = {}
-        start = set(range(len(self.events)))
-
-        # helper for constructing the dag
-        func handle(x, ymark):
-            assert(ymark is not None)
-            if ymark == 'inline':
-                return
-            assert(ymark[0] == ':')
-            if ymark is not None and ymark[0] == ':':
-                y = self.find(ymark)
-                assert(y is not None)
-                assert(x != y)
-                start.discard(x)
-                dag.setdefault(x, dag_edges()).eout.add(y)
-                dag.setdefault(y, dag_edges()).ein.add(x)
-
-        # construct the dag
-        for n, node in enumerate(self.events):
-            edges = dag.setdefault(n, dag_edges())
-            if isinstance(node, Commit):
-                for parent in node.parents():
-                    p = self.index(parent)
-                    assert(n != p)
-                    start.discard(n)
-                    edges.eout.add(p)
-                    dag.setdefault(p, dag_edges()).ein.add(n)
-                for o in node.operations():
-                    if o.op == opM:
-                        handle(n, o.ref)
-                    else if o.op == opN:
-                        handle(n, o.ref)
-                        handle(n, o.committish)
-            else if isinstance(node, Blob):
-                pass
-            else if isinstance(node, Tag):
-                handle(n, node.committish)
-            else if isinstance(node, Reset):
-                if node.target is not None:
-                    t = self.index(node.target)
-                    assert(n != t)
-                    start.discard(n)
-                    edges.eout.add(t)
-                    dag.setdefault(t, dag_edges()).ein.add(n)
-            else if isinstance(node, Passthrough):
-                pass
-            else:
-                raise ValueError('unexpected event type')
-
-        # now topologically sort the dag, using a priority queue to
-        # provide a stable topological sort (each event's priority is
-        # its original index)
-        s = list(start)
-        heapq.heapify(s)
-        tsorted = []
-        old_index_to_new = {}
-        while len(s):
-            n = heapq.heappop(s)
-            assert n not in old_index_to_new
-            old_index_to_new[n] = len(tsorted)
-            tsorted.append(n)
-            ein = dag[n].ein
-            while len(ein):
-                m = ein.pop()
-                medges = dag[m]
-                medges.eout.remove(n)
-                if not len(medges.eout):
-                    heapq.heappush(s, m)
-
-        orig = range(len(self.events))
-        if tsorted != orig:
-            t = set(tsorted)
-            assert len(t) == len(tsorted)
-            o = set(orig)
-            assert len(t - o) == 0
-            leftout = o - t
-            if (len(leftout)):
-                complain('event re-sort failed due to one or more dependency' \
-                         + ' cycles involving the following events: ' \
-                         + ', '.join(str(x+1) for x in sorted(leftout)))
-                return
-            self.events = [self.events[i] for i in tsorted]
-            if verbose:
-                announce(debugSHOUT, 're-sorted events')
-            # assignments will be fixed so don't pass anything to
-            # declareSequenceMutation() to tell it to warn about
-            # invalidated assignments
-            self.declareSequenceMutation()
-            self.assignments = {
-                name:[old_index_to_new[i] for i in selection]
-                for name, selection in self.assignments.items()}
-
     func reorder_commits(self, v, bequiet):
         "Re-order a contiguous range of commits."
         func validate_operations(events, bequiet):
