@@ -40,6 +40,8 @@ Things that still need unit tests:
 
 * Deletion cases other than default (--tagforward pushforward).
 
+* frontEvents(), when there are some.
+
 */
 
 func assertBool(t *testing.T, see bool, expect bool) {
@@ -1318,6 +1320,9 @@ M 100644 :3 README
 	repo.checkUniqueness(false, nil)
 	assertEqual(t, repo.uniqueness, "committer_date")
 
+	// Check for no false positives on front events */
+	assertIntEqual(t, len(repo.frontEvents()), 0)
+	
 	authordump := "esr = Eric S. Raymond <esr@thyrsus.com>"
 	err := repo.readAuthorMap(newOrderedIntSet(), strings.NewReader(authordump))
 	if err != nil {
