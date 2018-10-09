@@ -9809,85 +9809,131 @@ developers.
 """),
         )
     unclean = regexp.MustCompile("[^\n]*\n[^\n]".encode('ascii'))
-    class LineParse:
-        "Parse a command line implementing shell-like syntax."
-        func __init__(self, interpreter, line, capabilities=None):
-            self.interpreter = interpreter
-            self.line = line
-            self.capabilities = capabilities or []
-            self.stdin = sys.stdin
-            self.infile = None
-            self.stdout = os.Stdout
-            self.outfile = None
-            self.redirected = false
-            self.options = set([])
-            self.closem = []
-        func __enter__():
-            # Input redirection
-            m = re.search(r"<\S+".encode('ascii'), polybytes(self.line))
-            if m:
-                if "stdin" not in self.capabilities:
-                    raise Recoverable("no support for < redirection")
-                self.infile = polystr(m.group(0)[1:])
-                if self.infile and self.infile != '-':
-                    try:
-                        self.stdin = make_wrapper(open(self.infile, "rb"))
-                        self.closem.append(self.stdin)
-                    except (IOError, OSError):
-                        raise Recoverable("can't open %s for read" \
-                                          % self.infile)
-                self.line = self.line[:m.start(0)] + self.line[m.end(0)+1:]
-                self.redirected = true
-            # Output redirection
-            m = re.search(r">>?\S+".encode('ascii'), polybytes(self.line))
-            if m:
-                if "stdout" not in self.capabilities:
-                    raise Recoverable("no support for > redirection")
-                self.outfile = polystr(m.group(0)[m.group(0).count(b'>'):])
-                if self.outfile and self.outfile != '-':
-                    if os.path.exists(self.outfile) and os.path.isdir(self.outfile):
-                        raise Recoverable("can't redirect output to directory")
-                    try:
-                        RepoSurgeon.write_notify(self.interpreter, self.outfile)
-                        if m.group(0).count(b'>') > 1:
-                            mode = "ab"
-                        else:
-                            mode = "wb"
-                        self.stdout = make_wrapper(open(self.outfile, mode))
-                        self.closem.append(self.stdout)
-                    except (IOError, OSError):
-                        raise Recoverable("can't open %s for write" \
-                                          % self.outfile)
-                self.line = self.line[:m.start(0)] + self.line[m.end(0)+1:]
-                self.redirected = true
-            # Options
-            while true:
-                m = re.search(r"--\S+".encode('ascii'), polybytes(self.line))
-                if not m:
-                    break
-                else:
-                    self.options.add(polystr(m.group(0).strip()))
-                    self.line = polystr(polybytes(self.line)[:m.start(0)] + polybytes(self.line)[m.end(0)+1:])
-            # Dash redirection
-            if not self.redirected and self.line.strip() == '-':
-                if "stdin" not in self.capabilities and "stdout" not in self.capabilities:
-                    raise Recoverable("no support for - redirection")
-                else:
-                    self.line = ""
-                    self.redirected = true
-            self.line = self.line.strip()
-            return self
-        func __exit__(self, extype_unused, value_unused, traceback_unused):
-            for fp in self.closem:
-                fp.close()
-        func tokens():
-            "Return the argument token list after the parse for redirects."
-            return self.line.split()
-        func optval(self, optname):
-            for option in self.options:
-                if option.startswith(optname + "="):
-                    return int(option.split("=")[0])
-            return None
+*/
+
+type LineParse struct {
+	write_callback func(filename string)
+	line string
+	capabilities []string
+	stdin *os.File
+	stdout *os.File
+	infile string
+	outfile string
+	redirected bool
+	options []string
+	closem []*os.File
+}
+func NewLineParse(line string, wc (func(filename string)), capabilities []string) (*LineParse, error) {
+	caps := make(map[string]bool)
+	for _, cap := range(capabilities) {
+		caps[cap] = true
+	}
+	lp := LineParse{write_callback: wc,
+		line: line,
+		capabilities: capabilities,
+		stdin: os.Stdin,
+		stdout: os.Stdout,
+		redirected: false,
+		options: make([]string, 0),
+		closem: make([]*os.File, 0),
+	}
+	var err error
+	// Input redirection
+	match := regexp.MustCompile("<[^ ]+").FindStringIndex(lp.line)
+	if match != nil {
+		if !caps["stdin"] {
+			return nil, errors.New("no support for < redirection")
+		}
+		lp.infile = lp.line[match[0]+1:match[1]]
+		if lp.infile != "" && lp.infile != "-" {
+			lp.stdin, err = os.Open(lp.infile)
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("can't open %s for read", lp.infile))
+			}
+			lp.closem = append(lp.closem, lp.stdin)
+		}
+		lp.line = lp.line[:match[0]] + lp.line[match[1]:]
+		lp.redirected = true
+	}
+	// Output redirection
+	match = regexp.MustCompile("(>>?)([^ ]+)").FindStringSubmatchIndex(lp.line)
+	if match != nil {
+		if !caps["stdout"] {
+			return nil, errors.New("no support for > redirection")
+		}
+		lp.outfile = lp.line[match[2*2+0]:match[2*2+1]]
+		if lp.outfile != "" && lp.outfile != "-" {
+			info, err := os.Stat(lp.outfile)
+			if err == nil {
+				if info.Mode().IsDir() {
+					return nil, errors.New(fmt.Sprintf("can't redirect output to %s, which is a directory", lp.outfile))
+				}
+			}
+			wc(lp.outfile) // flush the outfile, if it happens to be a file that Reposurgeon has already opened
+			mode := os.O_WRONLY
+			if match[2*1+1] - match[2*1+0] > 1 {
+				mode |= os.O_APPEND
+			} else {
+				mode |= os.O_CREATE
+			}
+			lp.stdout, err = os.OpenFile(lp.outfile, mode, 0644)
+			if err != nil {
+				return nil, errors.New(fmt.Sprintf("can't open %s for writing", lp.outfile))
+			}
+			lp.closem = append(lp.closem, lp.stdout)
+		}
+		lp.line = lp.line[:match[2*0+0]] + lp.line[match[2*0+1]:]
+		lp.redirected = true
+	}
+	// Options
+	for true {
+		match := regexp.MustCompile("--([^ ]+)").FindStringSubmatchIndex(lp.line)
+		if match == nil {
+			break
+		} else {
+			lp.options = append(lp.options, lp.line[match[2]:match[3]])
+			lp.line = lp.line[:match[2]-2] + lp.line[match[3]:]
+		}
+	}
+	// strip excess whitespace
+	lp.line = strings.TrimSpace(lp.line)
+	// Dash redirection
+	if !lp.redirected && lp.line == "-" {
+		if !caps["stdout"] && !caps["stdin"] {
+			return nil, errors.New("no support for - redirection")
+		} else {
+			lp.line = ""
+			lp.redirected = true
+		}
+	}
+	return &lp, nil
+}
+// Return the argument token list after the parse for redirects.
+func (lp *LineParse) Tokens() []string {
+	return strings.Fields(lp.line)
+}
+func (lp *LineParse) OptVal() (val int) {
+	for _, option := range lp.options {
+		if strings.HasPrefix(option, option + "=") {
+			i, err := strconv.Atoi(strings.Split(option, "=")[1])
+			if err != nil {
+				return 0
+			} else {
+				return i
+			}
+		}
+	}
+	return 0
+}
+func (lp *LineParse) Closem() {
+	for _, f := range(lp.closem) {
+		if f != nil {
+			f.Close()
+		}
+	}
+}
+
+/*
     func write_notify(self, filename):
         "Unstreamify any repo about to be written."
         for repo in self.repolist:
@@ -14873,8 +14919,14 @@ func (rs *Reposurgeon) HelpPrint() {
 	rs.core.Output("Print a literal string.\n")
 }
 func (rs *Reposurgeon) DoPrint(lineIn string) (stopOut bool) {
-	rs.core.Output(lineIn)
-	rs.core.Output("\n")
+	wc := func(filename string) { }
+	parse, err := NewLineParse(lineIn, wc, []string{"stdout"})
+	if err != nil {
+		rs.core.Output(err.Error() +"\n")
+		return
+	}
+	defer parse.Closem()
+	fmt.Fprintf(parse.stdout, "%s\n", parse.line)
 	return false
 }
 
