@@ -1380,7 +1380,6 @@ func TestDelete(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-
 	dtrimmed := `blob
 mark :1
 data 23
