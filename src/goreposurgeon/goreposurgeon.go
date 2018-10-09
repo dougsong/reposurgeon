@@ -9218,13 +9218,50 @@ func debug_lexer(f):
 
 */
 
-// SelectionParser parses the selection set language
-type SelectionParser struct {
-	line   string
-	nitems int
+type selEvalState interface {
+	nItems() int
+	allItems() *orderedset.Set
 }
 
-type selEvaluator func(*SelectionParser, *orderedset.Set) *orderedset.Set
+type selEvaluator func(selEvalState, *orderedset.Set) *orderedset.Set
+
+type selParser interface {
+	compile(line string) (selEvaluator, string)
+	evaluate(selEvaluator, int) []int
+	parse(line string, nitems int) ([]int, string)
+	parseExpression() selEvaluator
+	parseDisjunct() selEvaluator
+	evalDisjunct(selEvalState, *orderedset.Set, selEvaluator, selEvaluator) *orderedset.Set
+	parseConjunct() selEvaluator
+	evalConjunct(selEvalState, *orderedset.Set, selEvaluator, selEvaluator) *orderedset.Set
+	parseTerm() selEvaluator
+	evalTermNegate(selEvalState, *orderedset.Set, selEvaluator) *orderedset.Set
+	parseVisibility() selEvaluator
+	parsePolyrange() selEvaluator
+	parseTextSearch() selEvaluator
+	parseFuncall() selEvaluator
+}
+
+// SelectionParser parses the selection set language
+type SelectionParser struct {
+	subclass selParser
+	line     string
+	nitems   int
+}
+
+func (p *SelectionParser) imp() selParser {
+	if p.subclass != nil {
+		return p.subclass
+	}
+	return p
+}
+
+func (p *SelectionParser) evalState() selEvalState {
+	if x, ok := p.subclass.(selEvalState); ok {
+		return x
+	}
+	return p
+}
 
 func (p *SelectionParser) nItems() int { return p.nitems }
 
@@ -9249,7 +9286,7 @@ func (p *SelectionParser) eatWS() {
 func (p *SelectionParser) compile(line string) (selEvaluator, string) {
 	orig := line
 	p.line = line
-	machine := p.parseExpression()
+	machine := p.imp().parseExpression()
 	line = eatWS(p.line)
 	p.line = ""
 	if line == eatWS(orig) {
@@ -9264,7 +9301,7 @@ func (p *SelectionParser) evaluate(machine selEvaluator, nitems int) []int {
 		return nil
 	}
 	p.nitems = nitems
-	crunched := machine(p, p.allItems())
+	crunched := machine(p.evalState(), p.allItems())
 	p.nitems = 0
 	selection := make([]int, crunched.Size())
 	for i, x := range crunched.Values() {
@@ -9275,8 +9312,8 @@ func (p *SelectionParser) evaluate(machine selEvaluator, nitems int) []int {
 
 // parse parses selection and returns remainder of line with selection removed
 func (p *SelectionParser) parse(line string, nitems int) ([]int, string) {
-	machine, rest := p.compile(line)
-	return p.evaluate(machine, nitems), rest
+	machine, rest := p.imp().compile(line)
+	return p.imp().evaluate(machine, nitems), rest
 }
 
 func (p *SelectionParser) peek() rune {
@@ -9311,41 +9348,41 @@ class SelectionParser(object):
 func (p *SelectionParser) parseExpression() selEvaluator {
 	// FIXME: @debug_lexer
 	p.eatWS()
-	return p.parseDisjunct()
+	return p.imp().parseDisjunct()
 }
 
 // parseDisjunct parses a disjunctive expression (| has lowest precedence)
 func (p *SelectionParser) parseDisjunct() selEvaluator {
 	// FIXME: @debug_lexer
 	p.eatWS()
-	op := p.parseConjunct()
+	op := p.imp().parseConjunct()
 	for {
 		p.eatWS()
 		if p.peek() != '|' {
 			break
 		}
 		p.pop()
-		op2 := p.parseConjunct()
+		op2 := p.imp().parseConjunct()
 		if op2 == nil {
 			break
 		}
 		op1 := op
-		op = func(x *SelectionParser, s *orderedset.Set) *orderedset.Set {
-			return x.evalDisjunct(s, op1, op2)
+		op = func(x selEvalState, s *orderedset.Set) *orderedset.Set {
+			return p.imp().evalDisjunct(x, s, op1, op2)
 		}
 	}
 	return op
 }
 
 // evalDisjunct evaluates a disjunctive expression
-func (p *SelectionParser) evalDisjunct(preselection *orderedset.Set,
-	op1, op2 selEvaluator) *orderedset.Set {
+func (p *SelectionParser) evalDisjunct(state selEvalState,
+	preselection *orderedset.Set, op1, op2 selEvaluator) *orderedset.Set {
 	// FIXME: @debug_lexer
 	selected := orderedset.New()
-	conjunct := op1(p, preselection)
+	conjunct := op1(state, preselection)
 	if conjunct != nil {
 		selected.Add(conjunct.Values()...)
-		conjunct = op2(p, preselection)
+		conjunct = op2(state, preselection)
 		if conjunct != nil {
 			selected.Add(conjunct.Values()...)
 		}
@@ -9357,12 +9394,12 @@ func (p *SelectionParser) evalDisjunct(preselection *orderedset.Set,
 func (p *SelectionParser) parseConjunct() selEvaluator {
 	// FIXME: @debug_lexer
 	p.eatWS()
-	op := p.parseTerm()
+	op := p.imp().parseTerm()
 	if op == nil {
-		return func(x *SelectionParser, s *orderedset.Set) *orderedset.Set {
-			noop := func(*SelectionParser, *orderedset.Set) *orderedset.Set { return nil }
+		return func(x selEvalState, s *orderedset.Set) *orderedset.Set {
+			noop := func(selEvalState, *orderedset.Set) *orderedset.Set { return nil }
 
-			return x.evalConjunct(s, noop, nil)
+			return p.imp().evalConjunct(x, s, noop, nil)
 		}
 	}
 	for {
@@ -9371,26 +9408,26 @@ func (p *SelectionParser) parseConjunct() selEvaluator {
 			break
 		}
 		p.pop()
-		op2 := p.parseTerm()
+		op2 := p.imp().parseTerm()
 		if op2 == nil {
 			break
 		}
 		op1 := op
-		op = func(x *SelectionParser, s *orderedset.Set) *orderedset.Set {
-			return x.evalConjunct(s, op1, op2)
+		op = func(x selEvalState, s *orderedset.Set) *orderedset.Set {
+			return p.imp().evalConjunct(x, s, op1, op2)
 		}
 	}
 	return op
 }
 
 // evalConjunct evaluates a conjunctive expression
-func (p *SelectionParser) evalConjunct(preselection *orderedset.Set,
-	op1, op2 selEvaluator) *orderedset.Set {
+func (p *SelectionParser) evalConjunct(state selEvalState,
+	preselection *orderedset.Set, op1, op2 selEvaluator) *orderedset.Set {
 	// FIXME: @debug_lexer
 	// assign term before intersecting with preselection so
 	// that the order specified by the user's first term is
 	// preserved
-	conjunct := op1(p, preselection)
+	conjunct := op1(state, preselection)
 	if conjunct == nil {
 		conjunct = preselection
 	} else {
@@ -9407,7 +9444,7 @@ func (p *SelectionParser) evalConjunct(preselection *orderedset.Set,
 		// polyranges because evalPolyrange() ignores the
 		// preselection
 		conjunct = intersect(conjunct, preselection)
-		term := op2(p, preselection)
+		term := op2(state, preselection)
 		if term != nil {
 			conjunct = intersect(conjunct, term)
 		}
@@ -9421,13 +9458,13 @@ func (p *SelectionParser) parseTerm() selEvaluator {
 	p.eatWS()
 	if p.peek() == '~' {
 		p.pop()
-		op := p.parseExpression()
-		term = func(x *SelectionParser, s *orderedset.Set) *orderedset.Set {
-			return x.evalTermNegate(s, op)
+		op := p.imp().parseExpression()
+		term = func(x selEvalState, s *orderedset.Set) *orderedset.Set {
+			return p.imp().evalTermNegate(x, s, op)
 		}
 	} else if p.peek() == '(' {
 		p.pop()
-		term = p.parseExpression()
+		term = p.imp().parseExpression()
 		p.eatWS()
 		if p.peek() != ')' {
 			panic(throw("command", "trailing junk on inner expression"))
@@ -9435,13 +9472,13 @@ func (p *SelectionParser) parseTerm() selEvaluator {
 			p.pop()
 		}
 	} else {
-		term = p.parseVisibility()
+		term = p.imp().parseVisibility()
 		if term == nil {
-			term = p.parsePolyrange()
+			term = p.imp().parsePolyrange()
 			if term == nil {
-				term = p.parseTextSearch()
+				term = p.imp().parseTextSearch()
 				if term == nil {
-					term = p.parseFuncall()
+					term = p.imp().parseFuncall()
 				}
 			}
 		}
@@ -9449,12 +9486,12 @@ func (p *SelectionParser) parseTerm() selEvaluator {
 	return term
 }
 
-func (p *SelectionParser) evalTermNegate(preselection *orderedset.Set,
-	op selEvaluator) *orderedset.Set {
+func (p *SelectionParser) evalTermNegate(state selEvalState,
+	preselection *orderedset.Set, op selEvaluator) *orderedset.Set {
 	// FIXME: @debug_lexer
-	negated := op(p, p.allItems())
+	negated := op(state, state.allItems())
 	remainder := orderedset.New()
-	for i, n := 0, p.nItems(); i < n; i++ {
+	for i, n := 0, state.nItems(); i < n; i++ {
 		if !negated.Contains(i) {
 			remainder.Add(i)
 		}
@@ -9464,22 +9501,22 @@ func (p *SelectionParser) evalTermNegate(preselection *orderedset.Set,
 
 // parseVisibility parses a visibility spec
 func (p *SelectionParser) parseVisibility() selEvaluator {
-	return func(x *SelectionParser, s *orderedset.Set) *orderedset.Set { return s }
+	return func(x selEvalState, s *orderedset.Set) *orderedset.Set { return s }
 }
 
 // parsePolyrange parses a polyrange specification (list of intervals)
 func (p *SelectionParser) parsePolyrange() selEvaluator {
-	return func(x *SelectionParser, s *orderedset.Set) *orderedset.Set { return s }
+	return func(x selEvalState, s *orderedset.Set) *orderedset.Set { return s }
 }
 
 // parseTextSearch parses a text search specification
 func (p *SelectionParser) parseTextSearch() selEvaluator {
-	return func(x *SelectionParser, s *orderedset.Set) *orderedset.Set { return s }
+	return func(x selEvalState, s *orderedset.Set) *orderedset.Set { return s }
 }
 
 // parseFuncall parses a function call
 func (p *SelectionParser) parseFuncall() selEvaluator {
-	return func(x *SelectionParser, s *orderedset.Set) *orderedset.Set { return s }
+	return func(x selEvalState, s *orderedset.Set) *orderedset.Set { return s }
 }
 
 /*
