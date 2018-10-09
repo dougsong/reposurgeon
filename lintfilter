@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+# Some of golint's warnings are useful.  Some are just annoying.
+# Throw out the annoying ones
+
+sed -e \
+       "/if block ends with a return statement, so drop this else and outdent its block/d" \
+    -e "/exported method .* should have comment or be unexported/d" \
+    -e "/comment on exported method .* should be of the form/d" \
+
+
+
