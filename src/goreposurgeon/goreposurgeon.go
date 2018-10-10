@@ -8228,59 +8228,122 @@ func (repo *Repository) resort() {
             events[i+1].setParents([e])
         validate_operations(events, bequiet)
         self.resort()
-    func renumber(self, origin=1, baton=None):
-        "Renumber the marks in a repo starting from a specified origin."
-        markmap = {}
-        func remark(m, e):
-            try:
-                return ":" + repr(markmap[m])
-            except KeyError:
-                raise Fatal("unknown mark %s in %s cannot be renumbered!" % \
-                            (m, e.idMe()))
-        if baton:
-            count = len(self.events)
-            baton.startcounter(" %%%dd of %s" % (len(str(count)), count))
-        self.markseq = 0
-        for event in self.events:
-            if hasattr(event, "mark"):
-                if event.mark is None:
-                    continue
-                else if not event.mark.startswith(":"):
-                    raise Fatal("field not in mark format")
-                else:
-                    markmap[event.mark] = origin + self.markseq
-                    self.markseq++
-        for event in self.events:
-            for fld in ("mark", "committish"):
-                try:
-                    old = getattr(event, fld)
-                    if old is not None:
-                        new = remark(old, event)
-                        announce(debugUNITE, "renumbering %s -> %s in %s.%s" % (old, new,
-                                                                        event.__class__.__name__,
-                                                                        fld))
-                        setattr(event, fld, new)
-                except AttributeError:
-                    pass
-        for commit in self.commits():
-            for fileop in commit.operations():
-                if fileop.op == opM and fileop.ref.startswith(":"):
-                    new = remark(fileop.ref, fileop)
-                    announce(debugUNITE, "renumbering %s -> %s in fileop" % (fileop.ref, new))
-                    fileop.ref = new
-            if baton:
-                baton.bumpcounter()
-        # Prevent result from having multiple 'done' trailers.
-        orig_len = len()
-        self.events = [x for x in self.events if not (isinstance(x, Passthrough) and x.text == "done\n")]
-        if len(self.events) != orig_len:
-            self.events.append(Passthrough("done\n", self))
-            self.declareSequenceMutation()
-        # Previous maps won't be valid
-        self.invalidateObjectMap()
-        self._markToIndex = nil
-        if baton:
-            baton.endcounter()
+
+*/
+
+// Renumber the marks in a repo starting from a specified origin.
+func (repo *Repository) renumber(origin int, baton *Baton) {
+	markmap := make(map[string]int)
+	remark := func(m string, id string) string {
+		_, ok := markmap[m]
+		if ok {
+			return fmt.Sprintf(":%d", markmap[m])
+		} else {
+			panic(fmt.Sprintf("unknown mark %s in %s cannot be renumbered!", m, id))
+		}
+	}
+	if baton != nil {
+		count := len(repo.events)
+		baton.startcounter(" %d of " + fmt.Sprintf("%d", count), 0)
+	}
+	repo.markseq = 0
+	for _, event := range repo.events {
+		switch event.(type) {
+		case *Blob:
+			blob := event.(*Blob)
+			if blob.mark == "" {
+				continue
+			} else if !strings.HasPrefix(blob.mark, ":") {
+				panic("field not in mark format")
+			} else {
+				markmap[blob.mark] = origin + repo.markseq
+				repo.markseq++
+			}
+		case *Commit:
+			commit := event.(*Commit)
+			if commit.mark == "" {
+				continue
+			} else if !strings.HasPrefix(commit.mark, ":") {
+				panic("field not in mark format")
+			} else {
+				markmap[commit.mark] = origin + repo.markseq
+				repo.markseq++
+			}
+		}
+	}
+	var old string
+	var newmark string
+	for _, event := range repo.events {
+		switch event.(type) {
+		case *Blob:
+			blob := event.(*Blob)
+			old = blob.mark
+			if old != "" {
+				newmark := remark(old, event.idMe())
+				announce(debugUNITE, "renumbering %s -> %s in blob mark", old, newmark)
+				blob.mark = newmark
+			}
+		case *Commit:
+			commit := event.(*Commit)
+			old = commit.mark
+			if old != "" {
+				newmark := remark(old, event.idMe())
+				announce(debugUNITE, "renumbering %s -> %s in commit mark", old, newmark)
+				commit.mark = newmark
+			}
+		case *Tag:
+			tag := event.(*Tag)
+			old = tag.committish
+			if old != "" {
+				newmark := remark(old, event.idMe())
+				announce(debugUNITE, "renumbering %s -> %s in tag committish", old, newmark)
+				tag.committish = newmark
+			}
+		case *Reset:
+			reset := event.(*Reset)
+			old = reset.committish
+			if old != "" {
+				newmark := remark(old, event.idMe())
+				announce(debugUNITE, "renumbering %s -> %s in reset committish", old, newmark)
+				reset.committish = newmark
+			}
+		}
+	}
+	for _, commit := range repo.commits(nil) {
+		for i, fileop := range commit.operations() {
+			if fileop.op == opM && strings.HasPrefix(fileop.ref, ":") {
+				newmark = remark(fileop.ref, "fileop")
+				announce(debugUNITE, fmt.Sprintf("renumbering %s -> %s in fileop", fileop.ref, newmark))
+				commit.fileops[i].ref = newmark
+			}
+		}
+		if baton != nil {
+			baton.bumpcounter()
+		}
+	}
+	// Prevent result from having multiple 'done' trailers.
+	origLen := len(repo.events)
+	var newEvents = make([]Event, 0)
+	for _, event := range repo.events {
+		passthrough, ok := event.(*Passthrough)
+		if ok && passthrough.text == "done\n" {
+			continue
+		}
+		newEvents = append(newEvents, event)
+	}
+	if len(repo.events) != origLen {
+		repo.events = append(repo.events, newPassthrough(repo, "done\n"))
+		repo.declareSequenceMutation("")
+	}
+	// Previous maps won't be valid
+	repo.invalidateObjectMap()
+	repo._markToIndex = nil
+	if baton != nil {
+		baton.endcounter()
+	}
+}
+
+/*
     func uniquify(self, color, persist=None):
         "Disambiguate branches, tags, and marks using the specified label."
         for event in self.events:

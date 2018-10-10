@@ -1470,5 +1470,99 @@ func TestResort(t *testing.T) {
 	}
 	//assertEqual(t, "", a.String())
 }
+
+func TestRenumber(t *testing.T) {
+	// doubled is a version of rawdymp with all blob mumbers doubled
+	doubled :=`blob
+mark :2
+data 23
+This is a sample file.
+
+reset refs/heads/master
+commit refs/heads/master
+mark :4
+committer esr <esr> 1322671432 +0000
+data 16
+First revision.
+M 100644 :2 README
+
+blob
+mark :6
+data 68
+This is a sample file.
+
+This is our first line of modified content.
+
+commit refs/heads/master
+mark :8
+committer esr <esr> 1322671521 +0000
+data 17
+Second revision.
+from :4
+M 100644 :6 README
+
+blob
+mark :10
+data 114
+This is a sample file.
+
+This is our first line of modified content.
+
+This is our second line of modified content.
+
+commit refs/heads/master
+mark :12
+committer esr <esr> 1322671565 +0000
+data 16
+Third revision.
+from :8
+M 100644 :10 README
+
+tag root
+from :4
+tagger esr <esr> 1322671315 +0000
+data 122
+A vanilla repository - standard layout, linear history, no tags, no branches. 
+
+[[Tag from root commit at Subversion r1]]
+
+tag emptycommit-5
+from :12
+tagger esr <esr> 1323084440 +0000
+data 151
+Adding a property setting.
+
+[[Tag from zero-fileop commit at Subversion r5:
+<NodeAction: r5 change file 'trunk/README' properties=[('foo', 'bar')]>
+]]
+
+tag no-comment
+from :8
+tagger esr <esr> 1322671316 +0000
+data 0
+
+tag with-comment
+from :12
+tagger esr <esr> 1322671317 +0000
+data 19
+this is a test tag
+
+`
+	repo := newRepository("test")
+	sp := newStreamParser(repo)
+	r := strings.NewReader(doubled)
+	sp.fastImport(r, nil, false, "synthetic test load")
+
+	//verbose = debugUNITE
+	repo.renumber(1, nil)
+
+	var a strings.Builder
+	if err := repo.fastExport(repo.all(), &a,
+		newStringSet(), nil, false); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	
+	assertEqual(t, a.String(), rawdump) 
+}
+
 // end
