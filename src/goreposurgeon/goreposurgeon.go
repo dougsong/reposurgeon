@@ -9460,7 +9460,7 @@ func (p *SelectionParser) evalDisjunct(state selEvalState,
 	return selected
 }
 
-// parseConjunct parses a conjunctive expression (& has higher precedence)
+// parseConjunct parses a conjunctive expression (and has higher precedence)
 func (p *SelectionParser) parseConjunct() selEvaluator {
 	// FIXME: @debug_lexer
 	p.eatWS()
@@ -10474,10 +10474,6 @@ developers.
         os.Stderr.Flush()
         if os.system(line):
             raise Recoverable("'shell %s' returned error." % line)
-    func do_EOF(self, _unused):
-        "Terminate reposurgeon."
-        os.Stdout.write("\n")
-        return true
     func cleanup():
         "Tell all the repos we're holding to clean up."
         announce(debugSHUFFLE, "interpreter cleanup called.")
@@ -12875,25 +12871,33 @@ an offset literal of +0 or -0.
                     author.date.timestamp += offset
                     if len(args) > 1:
                         author.date.orig_tz_string = args[1]
+*/
 
-    func help_when():
-        os.Stdout.write("""
+func (rs *Reposurgeon) HelpWhen() {
+	rs.helpOutput(`
 Interconvert between git timestamps (integer Unix time plus TZ) and
 RFC3339 format.  Takes one argument, autodetects the format.  Useful
 when eyeballing export streams.  Also accepts any other supported
 date format and converts to RFC3339.
-""")
-    func do_when(self, line str):
-        "Interconvert between integer Unix time and RFC3339 format."
-        if not line:
-            complain("a timestamp in either integer or RFC3339 form is required.")
-            return
-        d = Date(line, Recoverable)
-        if 'Z' in line:
-            os.Stdout.write(polystr(d) + "\n")
-        else:
-            os.Stdout.write(d.rfc3339() + "\n")
+`)
+}
+func (rs *Reposurgeon) DoWhen(LineIn string) (StopOut bool) {
+	if LineIn == "" {
+		complain("a timestamp in either integer or RFC3339 form is required.")
+		return false
+	}
+	d, err := newDate(LineIn)
+	if err != nil {
+		complain("unrecognized date format")
+	} else if strings.Contains(LineIn, "Z")  {
+		fmt.Println(d.String())
+	} else {
+		fmt.Println(d.rfc3339())
+	}
+	return false
+}
 
+/*
     func help_divide():
         os.Stdout.write("""
 Attempt to partition a repo by cutting the parent-child link
