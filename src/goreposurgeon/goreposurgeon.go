@@ -9821,7 +9821,7 @@ type LineParse struct {
 	outfile string
 	redirected bool
 	options []string
-	closem []*os.File
+	closem []*io.Closer
 }
 func NewLineParse(line string, wc (func(filename string)), capabilities []string) (*LineParse, error) {
 	caps := make(map[string]bool)
@@ -9835,7 +9835,7 @@ func NewLineParse(line string, wc (func(filename string)), capabilities []string
 		stdout: os.Stdout,
 		redirected: false,
 		options: make([]string, 0),
-		closem: make([]*os.File, 0),
+		closem: make([]*io.Closer, 0),
 	}
 	var err error
 	// Input redirection
@@ -9924,6 +9924,16 @@ func (lp *LineParse) OptVal() (val int) {
 		}
 	}
 	return 0
+}
+func (lp *LineParse) RedirectInput(reader io.Closer) {
+	lp.stdin.Close()
+	for i, f := range(lp.closem) {
+		if f == lp.stdin {
+			lp.closem[i] = reader
+			return
+		}
+	}
+	lp.closem = append(lp.closem, reader)
 }
 func (lp *LineParse) Closem() {
 	for _, f := range(lp.closem) {
