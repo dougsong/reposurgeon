@@ -7173,7 +7173,7 @@ class Repository:
                             (m, e.id_me()))
         if baton:
             count = len(self.events)
-            baton.startcounter(" %d of " + fmt.Sprintf("%d", count))
+            baton.startcounter(" %%%dd of %s" % (len(str(count)), count))
         self.markseq = 0
         for event in self.events:
             if hasattr(event, "mark"):
