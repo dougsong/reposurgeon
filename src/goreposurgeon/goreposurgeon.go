@@ -11072,6 +11072,7 @@ file in the blob.  Supports > redirection.
                     continue
                 else:
                     parse.stdout.write("?      -      %s\n" % (event,))
+    # See https://blog.golang.org/profiling-go-programs
     func help_profile():
         os.Stdout.write("""
 Enable profiling. Profile statistics are dumped to the path given as argument.
@@ -15085,10 +15086,20 @@ func (rs *Reposurgeon) SetCore(k *kommandant.Kmdt) {
 	rs.core = k
 }
 
+// helpOutput handles Go multiline literals that may have a leading \n
+// to make them more readable in source. It just clips off any leading \n.
+func (rs *Reposurgeon) helpOutput(help string) {
+	if help[0] == '\n' {
+		help = help[1:]
+	}
+	rs.core.Output(help)
+}
+
 //
 // Command implementation begins here
 //
 func (rs *Reposurgeon) DoEOF(lineIn string) (stopOut bool) {
+	os.Stdout.Write([]byte{'\n'})
 	return true
 }
 func (rs *Reposurgeon) DoQuit(lineIn string) (stopOut bool) {
@@ -15099,10 +15110,10 @@ func (rs *Reposurgeon) DoQuit(lineIn string) (stopOut bool) {
 // On-line help and instrumentation
 //
 func (rs *Reposurgeon) HelpHelp() {
-	rs.core.Output("Show help for a command. Follow with space and the command name.\n")
+	rs.helpOutput("Show help for a command. Follow with space and the command name.\n")
 }
 func (rs *Reposurgeon) HelpSelection() {
-	rs.core.Output(`
+	rs.helpOutput(`
 A quick example-centered reference for selection-set syntax.
 
 First, these ways of constructing singleton sets:
@@ -15171,7 +15182,7 @@ precedence than & | but lower than ?.
 `)
 }
 func (rs *Reposurgeon) HelpSyntax() {
-	rs.core.Output(`
+	rs.helpOutput(`
 Commands are distinguished by a command keyword.  Most take a selection set
 immediately before it; see 'help selection' for details.  Some
 commands take additional modifier arguments after the command keyword.
@@ -15190,7 +15201,7 @@ remaining arguments are available to the command logic.
 }
 func (rs *Reposurgeon) HelpFunctions() {
 	docstrings := map[string]string{"foo": "this is just a test function; it doesn't actually do anything"}
-	rs.core.Output("The following special selection functions are available:\n")
+	rs.helpOutput("The following special selection functions are available:\n")
 	t := reflect.TypeOf(rs)
 	for i := 0; i < t.NumMethod(); i++ {
 		tm := t.Method(i)
@@ -15200,21 +15211,13 @@ func (rs *Reposurgeon) HelpFunctions() {
 			if !present {
 				docstring = "(sorry, this function is currently undocumented)"
 			}
-			rs.core.Output(fmt.Sprintf("@%s()\t%s\n", shortname, docstring))
+			rs.helpOutput(fmt.Sprintf("@%s()\t%s\n", shortname, docstring))
 		}
 	}
 }
 
-// TODO(db48x): remove these once we have some real handlers to show in the help message
-func (rs *Reposurgeon) FooHandler() {
-
-}
-func (rs *Reposurgeon) BarHandler() {
-
-}
-
 func (rs *Reposurgeon) HelpVerbose() {
-	rs.core.Output(`
+	rs.helpOutput(`
 Without an argument, this command requests a report of the verbosity
 level.  'verbose 1' enables progress messages, 'verbose 0' disables
 them. Higher levels of verbosity are available but intended for
@@ -15225,18 +15228,18 @@ func (rs *Reposurgeon) DoVerbose(lineIn string) (stopOut bool) {
 	if len(lineIn) != 0 {
 		verbose, err := strconv.Atoi(lineIn)
 		if err != nil {
-			rs.core.Output("verbosity value must be an integer\n")
+			rs.helpOutput("verbosity value must be an integer\n")
 		} else {
 			rs.verbose = verbose
 		}
 	}
 	if len(lineIn) == 0 || rs.verbose > 0 {
-		rs.core.Output(fmt.Sprintf("verbose %d\n", rs.verbose))
+		rs.helpOutput(fmt.Sprintf("verbose %d\n", rs.verbose))
 	}
 	return false
 }
 func (rs *Reposurgeon) HelpQuiet() {
-	rs.core.Output(`
+	rs.helpOutput(`
 Without an argument, this command requests a report of the quiet
 boolean; with the argument 'on' or 'off' it is changed.  When quiet is
 on, time-varying report fields which would otherwise cause spurious
@@ -15246,9 +15249,9 @@ failures in regression testing are suppressed.
 func (rs *Reposurgeon) DoQuiet(lineIn string) (stopOut bool) {
 	if lineIn == "" {
 		if rs.quiet {
-			rs.core.Output("quiet on\n")
+			rs.helpOutput("quiet on\n")
 		} else {
-			rs.core.Output("quiet off\n")
+			rs.helpOutput("quiet off\n")
 		}
 	} else {
 		rs.quiet = lineIn == "on"
@@ -15256,7 +15259,7 @@ func (rs *Reposurgeon) DoQuiet(lineIn string) (stopOut bool) {
 	return false
 }
 func (rs *Reposurgeon) HelpEcho() {
-	rs.core.Output(`
+	rs.helpOutput(`
 Set or clear echoing of commands before processing.
 `)
 }
@@ -15275,8 +15278,9 @@ func (rs *Reposurgeon) DoEcho(lineIn string) (stopOut bool) {
 	return false
 }
 func (rs *Reposurgeon) HelpPrint() {
-	rs.core.Output("Print a literal string.\n")
+	rs.helpOutput("Print a literal string.\n")
 }
+
 func (rs *Reposurgeon) DoPrint(lineIn string) (stopOut bool) {
 	wc := func(filename string) {}
 	parse, err := NewLineParse(lineIn, wc, []string{"stdout"})
@@ -15290,7 +15294,7 @@ func (rs *Reposurgeon) DoPrint(lineIn string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpScript() {
-	rs.core.Output("Read and Execute commands from a named file.\n")
+	rs.helpOutput("Read and execute commands from a named file.\n")
 }
 func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 	if len(lineIn) == 0 {
@@ -15366,15 +15370,9 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 	return false
 }
 
-func (rs *Reposurgeon) DoFoo(lineIn string) (stopOut bool) {
-	rs.core.Output("The Foodogs of War have slipped!\n" + lineIn + "\n")
-	return false
-}
-func (rs *Reposurgeon) HelpFoo() {
-	rs.core.Output("SCHUUUULLLTZ!!!!!!\n")
-}
 func (rs *Reposurgeon) cleanup() {
-	rs.core.Output("Cleanup time.\n")
+	// FIXME: Implement for real  when RepositoryList is ready
+	rs.helpOutput("Cleanup time.\n")
 }
 
 func main() {
@@ -15388,7 +15386,7 @@ func main() {
 		go rs.cleanup()
 	}()
 
-	interpreter.Prompt = "%% "
+	interpreter.Prompt = "reposurgeon% "
 	if len(os.Args[1:]) == 0 {
 		os.Args = append(os.Args, "-")
 	}
