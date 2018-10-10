@@ -8896,36 +8896,64 @@ func readFromProcess(command string) (io.ReadCloser, *exec.Cmd, error) {
 	return stdout, cmd, err
 }
 
+
+// A RepositoryList is a repository list with selection and access by name.
+type RepositoryList struct {
+	repo *Repository
+	repolist []*Repository
+	cutIndex int
+}
+
+func (rl *RepositoryList) chosen() *Repository {
+    return rl.repo
+}
+
+func (rl *RepositoryList) choose(repo *Repository) {
+    rl.repo = repo
+}
+
+func (rl *RepositoryList) unchoose() {
+    rl.repo = nil
+}
+
+// Return a list of the names of all repositories.
+func (rl *RepositoryList) reponames() []string {
+	var lst = make([]string, len(rl.repolist))
+	for i, repo := range rl.repolist {
+		lst[i] = repo.name
+	}
+	return lst
+}
+
+// Uniquify a repo name in the repo list.
+func (rl *RepositoryList) uniquify(name string) string{
+	if strings.HasSuffix(name, ".fi") {
+		name = name[:len(name)-3]
+	} else if strings.HasSuffix(name, ".svn") {
+		name = name[:len(name)-4]
+	}
+	// repo "foo" is #1
+	for seq := 1; ; seq++ {
+		var trial string
+		if seq == 1 {
+			trial = name
+		} else {
+			trial = name + fmt.Sprintf("%d", seq)
+		}
+		collision := false
+		for _, repo := range rl.repolist {
+			if repo.name == trial {
+				collision = true
+			}
+		}
+		if !collision {
+			return trial
+		}
+	}
+}
+
 /*
 
-class RepositoryList:
-    "A repository list with selection and access by name."
-    func __init__():
-        self.repo = None
-        self.repolist = []
-        self.cut_index = None
-    func chosen():
-        return self.repo
-    func choose(self, repo):
-        self.repo = repo
-    func unchoose():
-        self.repo = None
-    func reponames():
-        "Return a list of the names of all repositories."
-        return [r.name for r in self.repolist]
-    func uniquify(self, name):
-        "Uniquify a repo name in the repo list."
-        if name.endswith(".fi"):
-            name = name[:-3]
-        else if name.endswith(".svn"):
-            name = name[:-4]
-        if name in self.reponames():
-            # repo "foo" is #1
-            seq = 2
-            while name + str(seq) in self.reponames():
-                seq++
-            return name + str(seq)
-        return name
     func repo_by_name(self, name):
         "Retrieve a repo by name."
         try:
@@ -8939,7 +8967,7 @@ class RepositoryList:
         self.repolist.pop(self.reponames().index(name))
     func cut_conflict(self, early, late):
         "Apply a graph-coloring algorithm to see if the repo can be split here."
-        self.cut_index = late.parentMarks().index(early.mark)
+        self.cutIndex = late.parentMarks().index(early.mark)
         late.removeParent(early)
         func do_color(commit *Commit, color):
             commit.color = color
@@ -8967,7 +8995,7 @@ class RepositoryList:
         return conflict
     func cut_clear(self, early, late):
         "Undo a cut operation and clear all colors."
-        late.insertParent(self.cut_index, early.mark)
+        late.insertParent(self.cutIndex, early.mark)
         for event in self.repo:
             if hasattr(event, "color"):
                 event.color = None
@@ -10335,7 +10363,8 @@ func (lp *LineParse) Closem() {
 
 // Reposurgeon tells Kommandant what our local commands are
 type Reposurgeon struct {
-	core      *kommandant.Kmdt
+	cmd      *kommandant.Kmdt
+	RepositoryList
 	verbose   int
 	quiet     bool
 	echo      int
@@ -10345,7 +10374,7 @@ type Reposurgeon struct {
 
 // SetCore is a Kommandant housekeeping hook, not yet used
 func (rs *Reposurgeon) SetCore(k *kommandant.Kmdt) {
-	rs.core = k
+	rs.cmd = k
 }
 
 // helpOutput handles Go multiline literals that may have a leading \n
@@ -10354,7 +10383,7 @@ func (rs *Reposurgeon) helpOutput(help string) {
 	if help[0] == '\n' {
 		help = help[1:]
 	}
-	rs.core.Output(help)
+	rs.cmd.Output(help)
 }
 
 //
@@ -15355,13 +15384,13 @@ func (rs *Reposurgeon) DoEcho(lineIn string) (stopOut bool) {
 	if len(lineIn) != 0 {
 		echo, err := strconv.Atoi(lineIn)
 		if err != nil {
-			rs.core.Output("echo value must be an integer\n")
+			rs.cmd.Output("echo value must be an integer\n")
 		} else {
 			rs.echo = echo
 		}
 	}
 	if rs.verbose > 0 {
-		rs.core.Output(fmt.Sprintf("echo %d\n", rs.echo))
+		rs.cmd.Output(fmt.Sprintf("echo %d\n", rs.echo))
 	}
 	return false
 }
@@ -15373,7 +15402,7 @@ func (rs *Reposurgeon) DoPrint(lineIn string) (stopOut bool) {
 	wc := func(filename string) {}
 	parse, err := NewLineParse(lineIn, wc, []string{"stdout"})
 	if err != nil {
-		rs.core.Output(err.Error() + "\n")
+		rs.cmd.Output(err.Error() + "\n")
 		return
 	}
 	defer parse.Closem()
@@ -15386,7 +15415,7 @@ func (rs *Reposurgeon) HelpScript() {
 }
 func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 	if len(lineIn) == 0 {
-		rs.core.Output("script requires a file argument\n")
+		rs.cmd.Output("script requires a file argument\n")
 		return
 	}
 	words := strings.Split(lineIn, " ")
@@ -15394,7 +15423,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 	fname, vars := words[0], words[1:]
 	scriptfp, err := os.Open(fname)
 	if err != nil {
-		rs.core.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
+		rs.cmd.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
 		return
 	}
 	defer scriptfp.Close()
@@ -15411,7 +15440,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 		if strings.Contains(scriptline, "<<") {
 			heredoc, err := ioutil.TempFile("", "reposurgeon-")
 			if err != nil {
-				rs.core.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
+				rs.cmd.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
 				return
 			}
 			//defer os.Remove(heredoc.Name())
@@ -15429,7 +15458,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 				} else {
 					_, err := heredoc.WriteString(nextline + "\n") // unnecessary copy
 					if err != nil {
-						rs.core.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
+						rs.cmd.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
 						return
 					}
 				}
@@ -15448,10 +15477,10 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 			scriptline = strings.Replace(scriptline, ref, v, -1)
 		}
 		scriptline = strings.Replace(scriptline, "$$", strconv.FormatInt(int64(os.Getpid()), 10), -1)
-		rs.core.OneCmd(scriptline)
+		rs.cmd.OneCmd(scriptline)
 	}
 	if err := scanner.Err(); err != nil {
-		rs.core.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
+		rs.cmd.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
 	}
 
 	rs.callstack = rs.callstack[:len(rs.callstack)-1]
