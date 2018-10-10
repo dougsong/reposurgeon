@@ -9813,29 +9813,30 @@ developers.
 
 type LineParse struct {
 	write_callback func(filename string)
-	line string
-	capabilities []string
-	stdin *os.File
-	stdout *os.File
-	infile string
-	outfile string
-	redirected bool
-	options []string
-	closem []*io.Closer
+	line           string
+	capabilities   []string
+	stdin          *os.File
+	stdout         *os.File
+	infile         string
+	outfile        string
+	redirected     bool
+	options        []string
+	closem         []*io.Closer
 }
-func NewLineParse(line string, wc (func(filename string)), capabilities []string) (*LineParse, error) {
+
+func NewLineParse(line string, wc func(filename string), capabilities []string) (*LineParse, error) {
 	caps := make(map[string]bool)
-	for _, cap := range(capabilities) {
+	for _, cap := range capabilities {
 		caps[cap] = true
 	}
 	lp := LineParse{write_callback: wc,
-		line: line,
+		line:         line,
 		capabilities: capabilities,
-		stdin: os.Stdin,
-		stdout: os.Stdout,
-		redirected: false,
-		options: make([]string, 0),
-		closem: make([]*io.Closer, 0),
+		stdin:        os.Stdin,
+		stdout:       os.Stdout,
+		redirected:   false,
+		options:      make([]string, 0),
+		closem:       make([]*io.Closer, 0),
 	}
 	var err error
 	// Input redirection
@@ -9844,7 +9845,7 @@ func NewLineParse(line string, wc (func(filename string)), capabilities []string
 		if !caps["stdin"] {
 			return nil, errors.New("no support for < redirection")
 		}
-		lp.infile = lp.line[match[0]+1:match[1]]
+		lp.infile = lp.line[match[0]+1 : match[1]]
 		if lp.infile != "" && lp.infile != "-" {
 			lp.stdin, err = os.Open(lp.infile)
 			if err != nil {
@@ -9871,7 +9872,7 @@ func NewLineParse(line string, wc (func(filename string)), capabilities []string
 			}
 			wc(lp.outfile) // flush the outfile, if it happens to be a file that Reposurgeon has already opened
 			mode := os.O_WRONLY
-			if match[2*1+1] - match[2*1+0] > 1 {
+			if match[2*1+1]-match[2*1+0] > 1 {
 				mode |= os.O_APPEND
 			} else {
 				mode |= os.O_CREATE
@@ -9908,6 +9909,7 @@ func NewLineParse(line string, wc (func(filename string)), capabilities []string
 	}
 	return &lp, nil
 }
+
 // Return the argument token list after the parse for redirects.
 func (lp *LineParse) Tokens() []string {
 	return strings.Fields(lp.line)
@@ -9927,7 +9929,7 @@ func (lp *LineParse) OptVal() (val string) {
 }
 func (lp *LineParse) RedirectInput(reader io.Closer) {
 	lp.stdin.Close()
-	for i, f := range(lp.closem) {
+	for i, f := range lp.closem {
 		if f == lp.stdin {
 			lp.closem[i] = reader
 			return
@@ -9936,7 +9938,7 @@ func (lp *LineParse) RedirectInput(reader io.Closer) {
 	lp.closem = append(lp.closem, reader)
 }
 func (lp *LineParse) Closem() {
-	for _, f := range(lp.closem) {
+	for _, f := range lp.closem {
 		if f != nil {
 			f.Close()
 		}
@@ -14929,10 +14931,10 @@ func (rs *Reposurgeon) HelpPrint() {
 	rs.core.Output("Print a literal string.\n")
 }
 func (rs *Reposurgeon) DoPrint(lineIn string) (stopOut bool) {
-	wc := func(filename string) { }
+	wc := func(filename string) {}
 	parse, err := NewLineParse(lineIn, wc, []string{"stdout"})
 	if err != nil {
-		rs.core.Output(err.Error() +"\n")
+		rs.core.Output(err.Error() + "\n")
 		return
 	}
 	defer parse.Closem()
