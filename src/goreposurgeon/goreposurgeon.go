@@ -9912,18 +9912,18 @@ func NewLineParse(line string, wc (func(filename string)), capabilities []string
 func (lp *LineParse) Tokens() []string {
 	return strings.Fields(lp.line)
 }
-func (lp *LineParse) OptVal() (val int) {
+func (lp *LineParse) OptVal() (val string) {
 	for _, option := range lp.options {
-		if strings.HasPrefix(option, option + "=") {
-			i, err := strconv.Atoi(strings.Split(option, "=")[1])
-			if err != nil {
-				return 0
+		if strings.Contains(option, "=") {
+			parts := strings.Split(option, "=")[1]
+			if len(parts) > 1 {
+				return parts[1]
 			} else {
-				return i
+				return ""
 			}
 		}
 	}
-	return 0
+	return ""
 }
 func (lp *LineParse) RedirectInput(reader io.Closer) {
 	lp.stdin.Close()
