@@ -90,6 +90,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"runtime/pprof"
 	"sort"
 	"strconv"
 	"strings"
@@ -10127,32 +10128,6 @@ class AttributionEditor(object):
         stdout.write("%6d %6s %s\n" %
                      (eventno+1, self.mark(event), [x+1 for x in sel]))
 
-class RepoSurgeon(cmd.Cmd, RepositoryList, SelectionParser):
-    "Repository surgeon command interpreter."
-    OptionFlags = (
-        ("canonicalize", """\
-    If set, import stream reads and mailbox_in and edit will canonicalize
-comments by replacing CR-LF with LF, stripping leading and trailing whitespace,
-and then appending a LF.
-"""),
-        ("compressblobs", """\
-    Use compression for on-disk copies of blobs. Accepts an increase
-in repository read and write time in order to reduce the amount of
-disk space required while editing; this may be useful for large
-repositories. No effect if the edit input was a dump stream; in that
-case, reposurgeon doesn't make on-disk blob copies at all (it points
-into sections of the input stream instead).
-"""),
-        ("testmode", """\
-Disable some features that cause output to be vary depending on wall time
-and the ID of the invoking user. Use in regression-test loads.
-"""),
-        ("bigprofile", """\
-Extra profiling for large repositories.  Mainly of interest to reposurgeon
-developers.
-"""),
-        )
-    unclean = regexp.MustCompile("[^\n]*\n[^\n]".encode('ascii'))
 */
 
 type LineParse struct {
@@ -10292,6 +10267,71 @@ func (lp *LineParse) Closem() {
 	}
 }
 
+// Reposurgeon tells Kommandant what our local commands are
+type Reposurgeon struct {
+	core      *kommandant.Kmdt
+	verbose   int
+	quiet     bool
+	echo      int
+	callstack [][]string
+        profileLog string
+}
+
+// SetCore is a Kommandant housekeeping hook, not yet used
+func (rs *Reposurgeon) SetCore(k *kommandant.Kmdt) {
+	rs.core = k
+}
+
+// helpOutput handles Go multiline literals that may have a leading \n
+// to make them more readable in source. It just clips off any leading \n.
+func (rs *Reposurgeon) helpOutput(help string) {
+	if help[0] == '\n' {
+		help = help[1:]
+	}
+	rs.core.Output(help)
+}
+
+//
+// Command implementation begins here
+//
+func (rs *Reposurgeon) DoEOF(lineIn string) (stopOut bool) {
+	os.Stdout.Write([]byte{'\n'})
+	return true
+}
+func (rs *Reposurgeon) DoQuit(lineIn string) (stopOut bool) {
+	return true
+}
+
+/*
+
+class RepoSurgeon(cmd.Cmd, RepositoryList, SelectionParser):
+    "Repository surgeon command interpreter."
+    OptionFlags = (
+        ("canonicalize", """\
+    If set, import stream reads and mailbox_in and edit will canonicalize
+comments by replacing CR-LF with LF, stripping leading and trailing whitespace,
+and then appending a LF.
+"""),
+        ("compressblobs", """\
+    Use compression for on-disk copies of blobs. Accepts an increase
+in repository read and write time in order to reduce the amount of
+disk space required while editing; this may be useful for large
+repositories. No effect if the edit input was a dump stream; in that
+case, reposurgeon doesn't make on-disk blob copies at all (it points
+into sections of the input stream instead).
+"""),
+        ("testmode", """\
+Disable some features that cause output to be vary depending on wall time
+and the ID of the invoking user. Use in regression-test loads.
+"""),
+        ("bigprofile", """\
+Extra profiling for large repositories.  Mainly of interest to reposurgeon
+developers.
+"""),
+        )
+    unclean = regexp.MustCompile("[^\n]*\n[^\n]".encode('ascii'))
+*/
+
 /*
     func write_notify(self, filename):
         "Unstreamify any repo about to be written."
@@ -10314,7 +10354,6 @@ func (lp *LineParse) Closem() {
         self.history = []
         self.callstack = []
         self.definitions = {}
-        self.profile_log = None
         self.capture = None
         self.start_time = time.time()
         for option in dict(RepoSurgeon.OptionFlags):
@@ -11072,19 +11111,32 @@ file in the blob.  Supports > redirection.
                     continue
                 else:
                     parse.stdout.write("?      -      %s\n" % (event,))
-    # See https://blog.golang.org/profiling-go-programs
-    func help_profile():
-        os.Stdout.write("""
-Enable profiling. Profile statistics are dumped to the path given as argument.
-Must be one of the initial command-line arguments, and gathers statistics only
-on code executed via '-'.
-""")
-    func do_profile(self, line str):
-        "Enable profiling."
-        assert line is not None # Pacify pylint
-        self.profile_log = line
-        announce(debugSHOUT, "profiling enabled.")
+*/
 
+func (rs *Reposurgeon)  HelpProfile() {
+        rs.helpOutput(`
+Enable profiling. Profile statistics are dumped to the path given as argument.
+`)
+}
+
+func (rs *Reposurgeon) DoProfile(line string) bool {
+        rs.profileLog = line
+	if rs.profileLog == "" {
+		pprof.StopCPUProfile()
+		announce(debugSHOUT, "profiling disabled.")
+	} else {
+		// Recipe from https://blog.golang.org/profiling-go-programs
+		f, err := os.Create(rs.profileLog)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		announce(debugSHOUT, "profiling enabled.")
+	}
+	return false
+}
+
+/*
     func help_timing():
         os.Stdout.write("""
 Report phase-timing results and memory usage from repository analysis.
@@ -15071,40 +15123,6 @@ of tokens, so that spaces can be included.
             os.Stdout.write("prompt = %s\n" % self.prompt_format)
 
 */
-
-// Reposurgeon tells Kommandant what our local commands are
-type Reposurgeon struct {
-	core      *kommandant.Kmdt
-	verbose   int
-	quiet     bool
-	echo      int
-	callstack [][]string
-}
-
-// SetCore is a Kommandant housekeeping hook, not yet used
-func (rs *Reposurgeon) SetCore(k *kommandant.Kmdt) {
-	rs.core = k
-}
-
-// helpOutput handles Go multiline literals that may have a leading \n
-// to make them more readable in source. It just clips off any leading \n.
-func (rs *Reposurgeon) helpOutput(help string) {
-	if help[0] == '\n' {
-		help = help[1:]
-	}
-	rs.core.Output(help)
-}
-
-//
-// Command implementation begins here
-//
-func (rs *Reposurgeon) DoEOF(lineIn string) (stopOut bool) {
-	os.Stdout.Write([]byte{'\n'})
-	return true
-}
-func (rs *Reposurgeon) DoQuit(lineIn string) (stopOut bool) {
-	return true
-}
 
 //
 // On-line help and instrumentation
