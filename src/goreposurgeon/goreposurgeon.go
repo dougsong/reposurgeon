@@ -9821,7 +9821,7 @@ type LineParse struct {
 	outfile        string
 	redirected     bool
 	options        []string
-	closem         []*io.Closer
+	closem         []io.Closer
 }
 
 func NewLineParse(line string, wc func(filename string), capabilities []string) (*LineParse, error) {
@@ -9836,7 +9836,7 @@ func NewLineParse(line string, wc func(filename string), capabilities []string) 
 		stdout:       os.Stdout,
 		redirected:   false,
 		options:      make([]string, 0),
-		closem:       make([]*io.Closer, 0),
+		closem:       make([]io.Closer, 0),
 	}
 	var err error
 	// Input redirection
@@ -9914,11 +9914,12 @@ func NewLineParse(line string, wc func(filename string), capabilities []string) 
 func (lp *LineParse) Tokens() []string {
 	return strings.Fields(lp.line)
 }
-func (lp *LineParse) OptVal() (val string) {
+
+func (lp *LineParse) OptVal(opt string) (val string) {
 	for _, option := range lp.options {
 		if strings.Contains(option, "=") {
-			parts := strings.Split(option, "=")[1]
-			if len(parts) > 1 {
+			parts := strings.Split(option, "=")
+			if len(parts) > 1 && parts[0] == opt{
 				return parts[1]
 			} else {
 				return ""
@@ -9927,6 +9928,7 @@ func (lp *LineParse) OptVal() (val string) {
 	}
 	return ""
 }
+
 func (lp *LineParse) RedirectInput(reader io.Closer) {
 	lp.stdin.Close()
 	for i, f := range lp.closem {
@@ -9937,6 +9939,7 @@ func (lp *LineParse) RedirectInput(reader io.Closer) {
 	}
 	lp.closem = append(lp.closem, reader)
 }
+
 func (lp *LineParse) Closem() {
 	for _, f := range lp.closem {
 		if f != nil {
