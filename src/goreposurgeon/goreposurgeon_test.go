@@ -1448,4 +1448,27 @@ this is a test tag
 	assertEqual(t, a.String(), dtrimmed)
 }
 
+func TestResort(t *testing.T) {
+	repo := newRepository("test")
+	sp := newStreamParser(repo)
+	r := strings.NewReader(rawdump)
+	sp.fastImport(r, nil, false, "synthetic test load")
+
+	// Reverse the event array, trick from SliceTricks
+	for i := len(repo.events)/2-1; i >= 0; i-- {
+		opp := len(repo.events)-1-i
+		repo.events[i], repo.events[opp] = repo.events[opp], repo.events[i]
+	}
+
+	// This should reorder it.
+	//repo.resort()
+
+	var a strings.Builder
+	if err := repo.fastExport(repo.all(), &a,
+		newStringSet(), nil, false); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	//assertEqual(t, "", a.String())
+}
+	
 // end

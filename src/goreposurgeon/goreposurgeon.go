@@ -75,7 +75,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
-	"container/heap"
+	//"container/heap"
 	"crypto/sha1"
 	"errors"
 	"fmt"
@@ -407,6 +407,7 @@ func (s *orderedIntSet) String() string {
 	return rep[0:len(rep)-2] + "}"
 }
 
+/*
 // Satisfy the heap interface
 func (s orderedIntSet) Len() int           { return len(s) }
 func (s orderedIntSet) Less(i, j int) bool { return s[i] < s[j] }
@@ -425,6 +426,7 @@ func (s orderedIntSet) Pop() interface{} {
 	s = old[0 : n-1]
 	return x
 }
+*/
 
 /*
  * Encapsulation of VCS capabilities starts here
@@ -8037,10 +8039,15 @@ func (repo *Repository) frontEvents() []Event {
 // resort topologically sorts the events in this repository.
 // It reorders self.events so that objects referenced by other objects
 // appear first.  The sort is stable to avoid unnecessary churn.
+// FIXME: resort doesn't work.
 type DAGedges struct {
 	eout orderedIntSet
 	ein orderedIntSet
 }
+func (d DAGedges) String() string {
+	return fmt.Sprintf("<%v | %v>", d.ein, d.eout)
+}
+
 type DAG map[int]*DAGedges
 func (d *DAG) setdefault(key int, e *DAGedges) *DAGedges {
 	_, ok := (*d)[key]
@@ -8049,7 +8056,7 @@ func (d *DAG) setdefault(key int, e *DAGedges) *DAGedges {
 	}
 	return (*d)[key]
 }
-
+	
 func (repo *Repository) resort() {
 	var dag DAG = make(map[int]*DAGedges)
         start := repo.all()
@@ -8110,30 +8117,34 @@ func (repo *Repository) resort() {
 
 		}
         }
-        // now topologically sort the dag, using a priority queue to
-        // provide a stable topological sort (each event's priority is
-        // its original index)
+	fmt.Printf("The DAG is: %v\n", dag)
+        // Now topologically sort the DAG.
+	// FIXME: The Python version used a priority queue to provide
+	// a stable topological sort (each event's priority is its
+	// original index)  In theory this should be possible using
+	// the Go heap code.
         tsorted := newOrderedIntSet()
         oldIndexToNew := make(map[int]int) 
-	heap.Init(&start)
-        for start.Len() > 0 {
-		n := heap.Pop(start).(int)
+        for len(start) > 0 {
+		n := start[len(start)-1]
+		start = start[:len(start)-1]
 		//assert n  not in oldIndexToNew
 		oldIndexToNew[n] = len(tsorted)
 		tsorted.Add(n)
-		ein := dag[n].ein
-		for len(ein) > 0 {
-			m := ein.Pop().(int)
+		for len(dag[n].ein) > 0 {
+			m := dag[n].ein[len(dag[n].ein)-1]
+			dag[n].ein = dag[n].ein[:len(dag[n].ein)-1]
 			medges := dag[m]
 			medges.eout.Remove(n)
 			if len(medges.eout) == 0 {
-				heap.Push(start, m)
+				start = append(start, m)
 			}
 		}
         }
         orig := repo.all()
 	//assert len(t) == len(tsorted)
         if !tsorted.Equal(orig) {
+		//fmt.Sprintf("Sort order: %v\n", tsorted)
 		//assert len(t - o) == 0
 		leftout := orig.Subtract(tsorted)
 		if len(leftout) > 0 {
