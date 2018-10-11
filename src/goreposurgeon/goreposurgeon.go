@@ -10234,8 +10234,8 @@ type LineParse struct {
 	write_callback func(filename string)
 	line           string
 	capabilities   []string
-	stdin          io.Reader
-	stdout         io.Writer
+	stdin          io.ReadCloser
+	stdout         io.WriteCloser
 	infile         string
 	outfile        string
 	redirected     bool
@@ -10271,9 +10271,7 @@ func newLineParseInner(line string, wc func(filename string), capabilities strin
 			if err != nil {
 				return nil, errors.New(fmt.Sprintf("can't open %s for read", lp.infile))
 			}
-			if _, ok := lp.stdin.(*os.File); ok {
-				lp.closem = append(lp.closem, lp.stdin.(*os.File))
-			}
+			lp.closem = append(lp.closem, lp.stdin)
 		}
 		lp.line = lp.line[:match[0]] + lp.line[match[1]:]
 		lp.redirected = true
@@ -10303,9 +10301,7 @@ func newLineParseInner(line string, wc func(filename string), capabilities strin
 			if err != nil {
 				return nil, errors.New(fmt.Sprintf("can't open %s for writing", lp.outfile))
 			}
-			if _, ok := lp.stdout.(*os.File); ok {
-				lp.closem = append(lp.closem, lp.stdout.(*os.File))
-			}
+			lp.closem = append(lp.closem, lp.stdout)
 		}
 		lp.line = lp.line[:match[2*0+0]] + lp.line[match[2*0+1]:]
 		lp.redirected = true
@@ -11794,13 +11790,13 @@ func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 				srcname := "unknown"
 				if f, ok := parse.stdin.(*os.File); ok {
 					srcname = f.Name()
-					// parse is redirected so this
-					// must be something besides
-					// os.Stdin, so we can close
-					// it and substitute another
-					// redirect
-					f.Close()
 				}
+				// parse is redirected so this
+				// must be something besides
+				// os.Stdin, so we can close
+				// it and substitute another
+				// redirect
+				parse.stdin.Close()
 				command := fmt.Sprintf(infilter.importer, srcname)
 				reader, _, err := readFromProcess(command)
 				if err != nil {

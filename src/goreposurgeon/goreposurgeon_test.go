@@ -1027,12 +1027,13 @@ func TestCapture(t *testing.T) {
 	if err1 != nil {
 		t.Fatalf("error while spawning process: %v", err1)
 	}
-	ln, err2 := r.ReadString(byte('\n'))
+	b := bufio.NewReader(r)
+	ln, err2 := b.ReadString(byte('\n'))
 	assertEqual(t, ln, "arglebargle\n")
 	if err2 != nil {
 		t.Fatalf("error while reading from process: %v", err2)
 	}
-	_, errend := r.ReadString(byte('\n'))
+	_, errend := b.ReadString(byte('\n'))
 	if errend != io.EOF {
 		t.Fatalf("EOF not seen when expected: %v", errend)
 	}
