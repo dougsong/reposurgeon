@@ -6062,15 +6062,8 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 		sp.repo.seekstream = fileobj
 		filesize = getsize(sp.repo.seekstream.Name())
 	}
-	pwd, err := os.Getwd()
-	if err != nil {
-		sp.error(fmt.Sprintf("Could not get working directory: %v", err))
-	}
 	if source == "" && sp.repo.seekstream != nil {
-		source, err = filepath.Rel(pwd, sp.repo.seekstream.Name())
-		if err != nil {
-			sp.error(fmt.Sprintf("Could not compute relative path: %v", err))
-		}
+		source = sp.repo.seekstream.Name()
 	}
 	baton := newBaton(fmt.Sprintf("reposurgeon: from %s", source), "", progress)
 	commitcount := 0
