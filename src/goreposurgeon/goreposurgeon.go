@@ -8920,7 +8920,7 @@ func (rl *RepositoryList) unchoose() {
 }
 
 // Return a list of the names of all repositories.
-func (rl *RepositoryList) reponames() []string {
+func (rl *RepositoryList) reponames() stringSet {
 	var lst = make([]string, len(rl.repolist))
 	for i, repo := range rl.repolist {
 		lst[i] = repo.name
@@ -8965,12 +8965,21 @@ func (rl *RepositoryList) repoByName(name string) *Repository {
 	panic(throw("command", "no repository named %s is loaded.", name))
 }
 
+// Remove a repo by name.
+func (rs *RepositoryList) removeByName(name string) {
+	if rs.repo != nil && rs.repo.name == name {
+		rs.unchoose()
+	}
+	newList := make([]*Repository, 0)
+	for _, repo := range rs.repolist {
+		if repo.name != name {
+			newList = append(newList, repo)
+		}
+	}
+	rs.repolist = newList
+}
+
 /*
-    func remove_by_name(self, name):
-        "Remove a repo by name."
-        if self.repo and self.repo.name == name:
-            self.unchoose()
-        self.repolist.pop(self.reponames().index(name))
     func cut_conflict(self, early, late):
         "Apply a graph-coloring algorithm to see if the repo can be split here."
         self.cutIndex = late.parentMarks().index(early.mark)
@@ -10411,6 +10420,10 @@ func (rs *Reposurgeon) DoEOF(lineIn string) (stopOut bool) {
 	os.Stdout.Write([]byte{'\n'})
 	return true
 }
+
+func (rs *Reposurgeon) HelpQuit() {
+	rs.helpOutput("Terminate reposurgeon cleanly.\n")
+}
 func (rs *Reposurgeon) DoQuit(lineIn string) (stopOut bool) {
 	return true
 }
@@ -11623,7 +11636,7 @@ With an argument, the command tab-completes on the above list.
 */
 
 // Choose a named repo on which to operate.
-func (rs *Reposurgeon) DoChoose(line string) bool {
+func (rs *Reposurgeon) DoChoose(line string) (stopOut bool) {
 	if rs.selection != nil {
 		panic(throw("command", "choose does not take a selection set"))
 	}
@@ -11659,97 +11672,123 @@ func (rs *Reposurgeon) DoChoose(line string) bool {
 	return false
 }
 
-/*
-    func help_drop():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpDrop() {
+        rs.helpOutput(`
 Drop a repo named by the argument from reposurgeon's list, freeing the memory
 used for its metadata and deleting on-disk blobs. With no argument, drops the
 currently chosen repo. Tab-completes on the list of loaded repositories.
-""")
-    complete_drop = complete_choose
-    func do_drop(self, line str):
-        "Drop a repo from reposurgeon's list."
-        if not self.reponames():
-            if verbose:
-                complain("no repositories are loaded.")
-                return
-        if self.selection is not None:
-            raise Recoverable("drop does not take a selection set")
-        if not line:
-            if not self.chosen():
-                complain("no repo has been chosen.")
-                return
-            line = self.chosen().name
-        if line in self.reponames():
-            if self.chosen() and line == self.chosen().name:
-                self.unchoose()
-            holdrepo = self.repoByName(line)
-            holdrepo.cleanup()
-            self.remove_by_name(line)
-            del holdrepo
-        else:
-            complain("no such repo as %s" % line)
-        if verbose:
-            # Emit listing of remaining repos
-            self.do_choose('')
+`)
+    }
+    //complete_drop = complete_choose
 
-    func help_rename():
-        rs.helpOutput("""
+// Drop a repo from reposurgeon's list.
+func (rs *Reposurgeon) DoDrop(line string) (stopOut bool) {
+	if len(rs.reponames()) == 0 {
+		if verbose > 0{
+			complain("no repositories are loaded.")
+			return false
+		}
+	}
+	if rs.selection != nil {
+		panic(throw("command", "drop does not take a selection set"))
+	}
+	if line == "" {
+		if rs.chosen() == nil {
+			complain("no repo has been chosen.")
+			return false
+		}
+		line = rs.chosen().name
+	}
+	if rs.reponames().Contains(line) {
+		if rs.chosen() != nil && line == rs.chosen().name {
+			rs.unchoose()
+		}
+		holdrepo := rs.repoByName(line)
+		holdrepo.cleanup()
+		rs.removeByName(line)
+	} else {
+		complain(fmt.Sprintf("no such repo as %s", line))
+	}
+	if verbose > 0 {
+		// Emit listing of remaining repos
+		rs.DoChoose("")
+	}
+	return false
+}
+
+func (rs *Reposurgeon) HelpRename() {
+    rs.helpOutput(`
 Rename the currently chosen repo; requires an argument.  Won't do it
 if there is already one by the new name.
-""")
-    func do_rename(self, line str):
-        "Rename a repository."
-        if self.selection is not None:
-            raise Recoverable("rename does not take a selection set")
-        if line in self.reponames():
-            complain("there is already a repo named %s." % line)
-        else if not self.chosen():
-            complain("no repository is currently chosen.")
-        else:
-            self.chosen().rename(line)
+`)
+}
+// Rename a repository.
+func (rs *Reposurgeon) DoRename(line string) (stopOut bool) {
+	if rs.selection != nil {
+		panic(throw("command", "rename does not take a selection set"))
+	}
+	if rs.reponames().Contains(line) {
+		complain(fmt.Sprintf("there is already a repo named %s.", line))
+	} else if rs.chosen() == nil {
+		complain("no repository is currently chosen.")
+	} else {
+		rs.chosen().rename(line)
 
-    func help_preserve():
-        rs.helpOutput("""
+	}
+	return false
+}
+
+func (rs *Reposurgeon) HelpPreserve() {
+    rs.helpOutput(`
 Add (presumably untracked) files or directories to the repo's list of
 paths to be restored from the backup directory after a rebuild. Each
 argument, if any, is interpreted as a pathname.  The current preserve
 list is displayed afterwards.
-""")
-    func do_preserve(self, line str):
-        "Add files and subdirectories to the preserve set."
-        if self.selection is not None:
-            raise Recoverable("preserve does not take a selection set")
-        if not self.chosen():
-            complain("no repo has been chosen.")
-            return
-        for filename in line.split():
-            self.chosen().preserve(filename)
-        announce(debugSHOUT, "preserving %s." % list(self.chosen().preservable()))
+`)
+}
+// Add files and subdirectories to the preserve set.
+func (rs *Reposurgeon) DoPreserve(line string) (stopOut bool) {
+	if rs.selection != nil {
+		panic(throw("command", "preserve does not take a selection set"))
+	}
+	if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+	}
+	for _, filename := range strings.Fields(line) {
+		rs.chosen().preserve(filename)
+	}
+	announce(debugSHOUT, fmt.Sprintf("preserving %s.", rs.chosen().preservable()))
+	return false
+}
 
-    func help_unpreserve():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpUnpreserve() {
+    rs.helpOutput(`
 Remove (presumably untracked) files or directories to the repo's list
 of paths to be restored from the backup directory after a
 rebuild. Each argument, if any, is interpreted as a pathname.  The
 current preserve list is displayed afterwards.
-""")
-    func do_unpreserve(self, line str):
-        "Remove files and subdirectories from the preserve set."
-        if self.selection is not None:
-            raise Recoverable("unpreserve does not take a selection set")
-        if not self.chosen():
-            complain("no repo has been chosen.")
-            return
-        for filename in line.split():
-            self.chosen().unpreserve(filename)
-        announce(debugSHOUT, "preserving %s." % list(self.chosen().preservable()))
+`)
+}
+// Remove files and subdirectories from the preserve set.
+func (rs *Reposurgeon) DoUnpreserve(line string) (stopOut bool) {
+	if rs.selection != nil {
+		panic(throw("command", "unpreserve does not take a selection set"))
+	}
+	if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+	}
+	for _, filename := range strings.Fields(line) {
+		rs.chosen().unpreserve(filename)
+	}
+	announce(debugSHOUT, fmt.Sprintf("preserving %s.", rs.chosen().preservable()))
+	return false
+}
 
-*/
-
-    //
-    // Serialization and de-serialization.
-    //
+//
+// Serialization and de-serialization.
+//
 func (rs *Reposurgeon)HelpRead() {
     rs.helpOutput(`
 A read command with no arguments is treated as 'read .', operating on the
@@ -12026,7 +12065,7 @@ its contents are backed up to a save directory.
             complain("no repo has been chosen.")
             return
         if self.selection is not None:
-            raise Recoverable("rebuild does not take a selection set")
+            panic(throw("command", "rebuild does not take a selection set"))
         with RepoSurgeon.LineParse(self, line) as parse:
             rebuild_repo(self.chosen(), parse.line, parse.options, self.preferred)
 
@@ -14643,7 +14682,7 @@ to re-set it.
 """)
     func do_branchify(self, line str):
         if self.selection is not None:
-            raise Recoverable("branchify does not take a selection set")
+            panic(throw("command", "branchify does not take a selection set"))
         if line.strip():
             globalOptions['svn_branchify'] = line.strip().split()
         announce(debugSHOUT, "branchify " + " ".join(globalOptions['svn_branchify']))
@@ -14686,7 +14725,7 @@ to re-set it.
 """)
     func do_branchify_map(self, line str):
         if self.selection is not None:
-            raise Recoverable("branchify_map does not take a selection set")
+            panic(throw("command", "branchify_map does not take a selection set"))
         line = line.strip()
         if line == "reset":
             globalOptions['svn_branchify_mapping'] = []
