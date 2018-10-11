@@ -11779,7 +11779,6 @@ func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 	var repo *Repository
 	if parse.redirected {
 		repo = newRepository("")
-/* FIXME
 		for _, option := range parse.options {
 			if strings.HasPrefix(option, "--format=") {
 				vcs := strings.Split(option, "=")[1]
@@ -11797,13 +11796,12 @@ func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 				command := fmt.Sprintf(infilter.importer, srcname)
 				reader, _, err := readFromProcess(command)
 				if err != nil {
-					panic(throw("command", "can'r open filter: %v"))
+					panic(throw("command", "can't open filter: %v"))
 				}
-				parse.stdin = reader
+				//parse.stdin = reader	FIXME
 				break
 			}
 		}
-*/
 		repo.fastImport(parse.stdin, parse.options, (verbose==1 && !quiet), "")
 	}
 /*
@@ -11831,8 +11829,7 @@ func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 				name = "unnamed"
 			}
 		}
-		// FIXME: apply self.uniquify()
-		rs.chosen().rename(filepath.Base(name))
+		rs.chosen().rename(rs.uniquify(filepath.Base(name)))
 	}
 	if verbose > 0 {
 		rs.DoChoose("")
