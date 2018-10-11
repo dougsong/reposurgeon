@@ -6077,7 +6077,6 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 		source = sp.repo.seekstream.Name()
 	}
 	baton := newBaton(fmt.Sprintf("reposurgeon: from %s", source), "", progress)
-	commitcount := 0
 	sp.repo.legacyCount = 0
 	// First, determine the input type
 	line := sp.readline()
@@ -6100,9 +6099,9 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 		sp.parseFastImport(options, baton, filesize)
 		sp.timeMark("parsing")
 		if sp.repo.stronghint {
-			baton.twirl(fmt.Sprintf("%d %s commits", commitcount, sp.repo.vcs.name))
+			baton.twirl(fmt.Sprintf("%d %s events", len(sp.repo.events), sp.repo.vcs.name))
 		} else {
-			baton.twirl(fmt.Sprintf("%d commits", commitcount))
+			baton.twirl(fmt.Sprintf("%d events", len(sp.repo.events)))
 		}
 	}
 	baton.exit("")
@@ -11290,15 +11289,25 @@ func (self *Reposurgeon) DoStats(line string) bool {
 		if repo == nil {
 			panic(throw("command", "no such repo as %s", name))
 		} else {
-/* FIXME
-		func count(otype) {
-		    return sum(1 for x in repo.events if isinstance(x,otype))
-		}
-		parse.stdout.WriteString("%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s.\n" %
-		      (repo.name, repo.size() / 1000.0, len(repo),
-		       count(Blob), count(Commit), count(Tag), count(Reset),
-		       rfc3339(repo.readtime)))
-*/
+			var blobs, commits, tags, resets, passthroughs int
+			for _, event := range repo.events {
+				switch event.(type) {
+				case *Blob:
+					blobs++
+				case *Tag:
+					tags++
+				case *Reset:
+					resets++
+				case *Passthrough:
+					passthroughs++
+				case *Commit:
+					commits++
+				}
+			}
+			fmt.Fprintf(parse.stdout,"%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s.\n",
+				repo.name, float64(repo.size()) / 1000.0, len(repo.events),
+				blobs, commits, tags, resets,
+				rfc3339(repo.readtime))
 			if repo.sourcedir != "" {
 				parse.stdout.WriteString(fmt.Sprintf("  Loaded from %s\n", repo.sourcedir))
 			}
