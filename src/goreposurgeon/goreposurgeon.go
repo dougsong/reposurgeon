@@ -8601,18 +8601,18 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
         total = self.timings[-1][1] - self.timings[0][-1]
         commit_count = sum(1 for _ in self.commits())
         if self.legacyCount is None:
-            os.Stdout.write("        commits: %d\n" % commit_count)
+            os.Stdout.WriteString("        commits: %d\n" % commit_count)
         else:
-            os.Stdout.write("        commits: %d (from %d)\n" % (commit_count, self.legacyCount))
+            os.Stdout.WriteString("        commits: %d (from %d)\n" % (commit_count, self.legacyCount))
         for (i, (phase, _interval)) in enumerate(self.timings):
             if i > 0:
                 interval = self.timings[i][1] - self.timings[i-1][1]
-                os.Stdout.write("%15s: %s (%2.2f%%)\n" % (phase,
+                os.Stdout.WriteString("%15s: %s (%2.2f%%)\n" % (phase,
                                               humanize(interval),
                                               (interval * 100)/total))
-        os.Stdout.write("          total: %s (%d/sec)\n" % (humanize(total), int((self.legacyCount or commit_count))/total))
+        os.Stdout.WriteString("          total: %s (%d/sec)\n" % (humanize(total), int((self.legacyCount or commit_count))/total))
 
-func read_repo(source, options, preferred):
+func readRepo(source, options, preferred):
     "Read a repository using fast-import."
     if debugEnable(debugSHUFFLE):
         if preferred:
@@ -8952,14 +8952,17 @@ func (rl *RepositoryList) uniquify(name string) string{
 	}
 }
 
-/*
+// Retrieve a repo by name.
+func (rl *RepositoryList) repoByName(name string) *Repository {
+	for _, repo := range rl.repolist {
+		if repo.name == name {
+			return repo
+		}
+	}
+	panic(throw("command", "no repository named %s is loaded.", name))
+}
 
-    func repo_by_name(self, name):
-        "Retrieve a repo by name."
-        try:
-            return self.repolist[self.reponames().index(name)]
-        except ValueError:
-            raise Recoverable("no repository named %s is loaded." % name)
+/*
     func remove_by_name(self, name):
         "Remove a repo by name."
         if self.repo and self.repo.name == name:
@@ -9146,7 +9149,7 @@ func (rl *RepositoryList) uniquify(name string) string{
                 if hasattr(event, "fileops"):
                     for (i, fileop) in enumerate(event.operations()):
                         if debugEnable(debugDELETE):
-                            os.Stdout.write(polystr(fileop) + "\n")
+                            os.Stdout.WriteString(polystr(fileop) + "\n")
                         if fileop.op in "DM":
                             if expunge.search(polybytes(fileop.path)):
                                 deletia.append(i)
@@ -10237,7 +10240,7 @@ type LineParse struct {
 	closem         []io.Closer
 }
 
-func NewLineParse(line string, wc func(filename string), capabilities []string) (*LineParse, error) {
+func newLineParseInner(line string, wc func(filename string), capabilities stringSet) (*LineParse, error) {
 	caps := make(map[string]bool)
 	for _, cap := range capabilities {
 		caps[cap] = true
@@ -10251,6 +10254,7 @@ func NewLineParse(line string, wc func(filename string), capabilities []string) 
 		options:      make([]string, 0),
 		closem:       make([]io.Closer, 0),
 	}
+	
 	var err error
 	// Input redirection
 	match := regexp.MustCompile("<[^ ]+").FindStringIndex(lp.line)
@@ -10323,6 +10327,15 @@ func NewLineParse(line string, wc func(filename string), capabilities []string) 
 	return &lp, nil
 }
 
+
+func newLineParse(line string, wc func(filename string), capabilities stringSet) *LineParse {
+	lp, err := newLineParseInner(line, wc, capabilities)
+	if err != nil {
+		panic(throw("command", "duringLineParse: %v", err))
+	}
+	return lp
+}
+
 // Return the argument token list after the parse for redirects.
 func (lp *LineParse) Tokens() []string {
 	return strings.Fields(lp.line)
@@ -10370,6 +10383,7 @@ type Reposurgeon struct {
 	echo      int
 	callstack [][]string
         profileLog string
+	selection orderedIntSet
 }
 
 // SetCore is a Kommandant housekeeping hook, not yet used
@@ -10484,7 +10498,7 @@ developers.
             return ""
         self.history.append(line.rstrip())
         if self.echo:
-            os.Stdout.write(line.rstrip()+"\n")
+            os.Stdout.WriteString(line.rstrip()+"\n")
         self.selection = None
         if line.startswith("#"):
             return ""
@@ -10884,7 +10898,7 @@ developers.
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
+        with newLineParse(self, line, nil, stringSet{"stdout"}) as parse:
             if self.selection is None and parse.line.strip():
                 parse.line = self.set_selection_set(parse.line)
             else if self.selection is None:
@@ -10894,9 +10908,9 @@ developers.
                     summary = getattr(event, method)(*((parse, i,)+optargs))
                     if summary:
                         if summary.endswith("\n"):
-                            parse.stdout.write(summary)
+                            parse.stdout.WriteString(summary)
                         else:
-                            parse.stdout.write(summary + "\n")
+                            parse.stdout.WriteString(summary + "\n")
     @staticmethod
     func pop_token(line):
         "Grab a whitespace-delimited token from the front of the line."
@@ -10913,7 +10927,7 @@ developers.
     func edit(self, selection, line):
         # Mailboxize and edit the non-blobs in the selection
         # Assumes that self.chosen() and selection are not None
-        with RepoSurgeon.LineParse(self, line, capabilities=["stdin", "stdout"]) as parse:
+        with newLineParse(self, line, capabilities=["stdin", "stdout"]) as parse:
             editor = parse.line or os.getenv("EDITOR")
             if not editor:
                 complain("you have not specified an editor and $EDITOR is not set")
@@ -11050,10 +11064,10 @@ developers.
     # On-line help and instrumentation
     #
     func help_help():
-        os.Stdout.write("Show help for a command. Follow with space and the command name.\n")
+        rs.helpOutput("Show help for a command. Follow with space and the command name.\n")
 
     func help_resolve():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Does nothing but resolve a selection-set expression
 and report the resulting event-number set to standard
 output. The remainder of the line after the command is used
@@ -11065,16 +11079,16 @@ for exploring the selection-set language.
     func do_resolve(self, line str):
         "Display the set of event numbers generated by a selection set."
         if self.selection is None:
-            os.Stdout.write("No selection\n")
+            os.Stdout.WriteString("No selection\n")
         else if isinstance(self.selection, list):
             if line:
-                os.Stdout.write("%s: " % line)
-            os.Stdout.write(str([x+1 for x in self.selection]) + "\n")
+                os.Stdout.WriteString("%s: " % line)
+            os.Stdout.WriteString(str([x+1 for x in self.selection]) + "\n")
         else:
             complain("resolve didn't expect a selection of %s" % self.selection)
 
     func help_assign():
-        os.Stdout.write("""
+        rs.helpOutput("""
 
 Compute a leading selection set and assign it to a symbolic name,
 which must follow the assign keyword. It is an error to assign to a
@@ -11102,7 +11116,7 @@ that would otherwise be performed repeatedly, e.g. in macro calls.
                 for n, v in repo.assignments.items():
                     announce(debugSHOUT, "%s = %s" % (n, v))
                 return
-        with RepoSurgeon.LineParse(repo, line) as parse:
+        with newLineParse(repo, line, nil, nil) as parse:
             name = parse.line.strip()
             if name in repo.assignments:
                 raise Recoverable("%s has already been set" % name)
@@ -11114,7 +11128,7 @@ that would otherwise be performed repeatedly, e.g. in macro calls.
                 repo.assignments[name] = self.selection
 
     func help_unassign():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Unassign a symbolic name.  Throws an error if the name is not assigned.
 Tab-completes on the list of defined names.
 """)
@@ -11135,26 +11149,26 @@ Tab-completes on the list of defined names.
             raise Recoverable("%s has not been set" % name)
 
     func help_names():
-        os.Stdout.write("""
+        rs.helpOutput("""
 List all known symbolic names of branches and tags. Supports > redirection.
 """)
     func do_names(self, line str):
         if not self.chosen():
             complain("no repo has been chosen.")
             return
-        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
+        with newLineParse(self, line, nil, stringSet{"stdout"}) as parse:
             branches = list(self.chosen().branchset())
             branches.sort()
             for branch in branches:
-                parse.stdout.write("branch %s\n" % branch)
+                parse.stdout.WriteString("branch %s\n" % branch)
             for event in self.chosen():
                 if isinstance(event, Tag):
-                    parse.stdout.write("tag    %s\n" % event.name)
+                    parse.stdout.WriteString("tag    %s\n" % event.name)
 
     func do_history(self, _line):
         "Dump your command list from this session so far."
         for line in self.history:
-            os.Stdout.write(line + "\n")
+            os.Stdout.WriteString(line + "\n")
 
     func do_coverage(self, unused):
         "Display the coverage-case set (developer instrumentation)."
@@ -11164,10 +11178,10 @@ List all known symbolic names of branches and tags. Supports > redirection.
             return
         for e in self.chosen().commits():
             e.fileopDump()
-        os.Stdout.write("Case coverage: %s\n" % sorted(self.chosen().caseCoverage))
+        os.Stdout.WriteString("Case coverage: %s\n" % sorted(self.chosen().caseCoverage))
 
     func help_index():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Display four columns of info on selected objects: their number, their
 type, the associate mark (or '-' if no mark) and a summary field
 varying by type.  For a branch or tag it's the reference; for a commit
@@ -11186,22 +11200,22 @@ file in the blob.  Supports > redirection.
         # we can maintain columnation.
         if self.selection is None:
             self.selection = [n for n, o1 in enumerate(self.chosen()) if not isinstance(o1, Blob)]
-        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
+        with newLineParse(self, line, nil stringSet{"stdout"}) as parse:
             for i, event in self.selected():
                 if isinstance(event, Blob):
-                    parse.stdout.write("%6d blob   %6s    %s\n" % (i+1, event.mark," ".join(event.paths())))
+                    parse.stdout.WriteString("%6d blob   %6s    %s\n" % (i+1, event.mark," ".join(event.paths())))
                     continue
                 if isinstance(event, Commit):
-                    parse.stdout.write("%6d commit %6s    %s\n" % (i+1, event.mark or '-', event.branch))
+                    parse.stdout.WriteString("%6d commit %6s    %s\n" % (i+1, event.mark or '-', event.branch))
                     continue
                 if isinstance(event, Tag):
-                    parse.stdout.write("%6d tag    %6s    %4s\n" % (i+1, event.committish, repr(event.name),))
+                    parse.stdout.WriteString("%6d tag    %6s    %4s\n" % (i+1, event.committish, repr(event.name),))
                     continue
                 if isinstance(event, Reset):
-                    parse.stdout.write("%6d branch %6s    %s\n" % (i+1, event.committish or '-', event.ref))
+                    parse.stdout.WriteString("%6d branch %6s    %s\n" % (i+1, event.committish or '-', event.ref))
                     continue
                 else:
-                    parse.stdout.write("?      -      %s\n" % (event,))
+                    parse.stdout.WriteString("?      -      %s\n" % (event,))
 */
 
 func (rs *Reposurgeon)  HelpProfile() {
@@ -11229,7 +11243,7 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 
 /*
     func help_timing():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Report phase-timing results and memory usage from repository analysis.
 """)
     func do_timing(self, line str):
@@ -11245,44 +11259,55 @@ Report phase-timing results and memory usage from repository analysis.
         else:
             mem = psutil.virtual_memory()
             announce(debugSHOUT, repr(mem))
+*/
 
-    #
-    # Information-gathering
-    #
-    func help_stats():
-        os.Stdout.write("""
+    //
+    // Information-gathering
+    //
+func (rs *Reposurgeon) HelpStats() {
+        rs.helpOutput(`
 Report size statistics and import/export method information of the
 currently chosen repository. Supports > redirection.
-""")
-    func do_stats(self, line str):
-        "Report information on repositories."
-        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
-            if not parse.line:
-                if not self.chosen():
-                    complain("no repo has been chosen.")
-                    return
-                parse.line = self.chosen().name
-                if parse.line is None:
-                    complain("no repo has been chosen.")
-                    return
-            for name in parse.tokens():
-                repo = self.repo_by_name(name)
-                if repo is None:
-                    raise Recoverable("no such repo as %s" % name)
-                else:
-                    func count(otype):
-                        return sum(1 for x in repo.events if isinstance(x,otype))
-                    parse.stdout.write("%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s.\n" % \
-                          (repo.name, repo.size() / 1000.0, len(repo),
-                           count(Blob), count(Commit), count(Tag), count(Reset),
-                           rfc3339(repo.readtime)))
-                    if repo.sourcedir:
-                        parse.stdout.write("  Loaded from %s\n" % repo.sourcedir)
-                    #if repo.vcs:
-                    #    parse.stdout.write(polystr(repo.vcs) + "\n")
+`)
+}
+// Report information on repositories.
+func (self *Reposurgeon) DoStats(line string) bool {
+	parse := newLineParse(line, nil, stringSet{"stdout"})
+	defer parse.Closem()
+	if parse.line == "" {
+		    if self.chosen() == nil{
+			    complain("no repo has been chosen.")
+			    return false
+		    }
+		    parse.line = self.chosen().name
+	}
+	for _, name := range parse.Tokens() {
+		repo := self.repoByName(name)
+		if repo == nil {
+			panic(throw("command", "no such repo as %s", name))
+		} else {
+/* FIXME
+		func count(otype) {
+		    return sum(1 for x in repo.events if isinstance(x,otype))
+		}
+		parse.stdout.WriteString("%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s.\n" %
+		      (repo.name, repo.size() / 1000.0, len(repo),
+		       count(Blob), count(Commit), count(Tag), count(Reset),
+		       rfc3339(repo.readtime)))
+*/
+			if repo.sourcedir != "" {
+				parse.stdout.WriteString(fmt.Sprintf("  Loaded from %s\n", repo.sourcedir))
+			}
+			//if repo.vcs {
+			//    parse.stdout.WriteString(polystr(repo.vcs) + "\n")
+		}
+	}
+	return false
+}
 
+/*
     func help_count():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Report a count of items in the selection set. Default set is everything
 in the currently-selected repo. Supports > redirection.
 """)
@@ -11292,11 +11317,11 @@ in the currently-selected repo. Supports > redirection.
             return
         else if self.selection is None:
             self.selection = self.chosen().all()
-        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
-            parse.stdout.write("%d\n" % len(self.selection))
+parse := newLineParse(self, line, nil stringSet{"stdout"}) as parse:
+            parse.stdout.WriteString("%d\n" % len(self.selection))
 
     func help_list():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Display commits in a human-friendly format; the first column is raw
 event numbers, the second a timestamp in local time. If the repository
 has legacy IDs, they will be displayed in the third column. The
@@ -11307,7 +11332,7 @@ leading portion of the comment follows. Supports > redirection.
         self.report_select(line, "lister", (screenwidth(),))
 
     func help_tip():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Display the branch tip names associated with commits in the selection
 set.  These will not necessarily be the same as their branch fields
 (which will often be tag names if the repo contains either annotated
@@ -11325,7 +11350,7 @@ Supports > redirection.
         self.report_select(line, "tip", (screenwidth(),))
 
     func help_tags():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Display tags and resets: three fields, an event number and a type and a name.
 Branch tip commits associated with tags are also displayed with the type
 field 'commit'. Supports > redirection.
@@ -11335,7 +11360,7 @@ field 'commit'. Supports > redirection.
         self.report_select(line, "tags", (screenwidth(),))
 
     func help_stamp():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Display full action stamps correponding to commits in a select.
 The stamp is followed by the first line of the commit message.
 Supports > redirection.
@@ -11344,7 +11369,7 @@ Supports > redirection.
         self.report_select(line, "stamp", (screenwidth(),))
 
     func help_sizes():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Print a report on data volume per branch; takes a selection set,
 defaulting to all events. The numbers tally the size of uncompressed
 blobs, commit and tag comments, and other metadata strings (a blob is
@@ -11361,7 +11386,7 @@ unwieldy. Supports > redirection.
         if self.selection is None:
             self.selection = self.chosen().all()
         sizes = {}
-        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
             for _, event in self.selected():
                 if isinstance(event, Commit):
                     if event.branch not in sizes:
@@ -11381,13 +11406,13 @@ unwieldy. Supports > redirection.
                     sizes[commit.branch] += len(event.comment)
             total = sum(sizes.values())
             func sz(n, s):
-                parse.stdout.write("%9d\t%2.2f%%\t%s\n" \
+                parse.stdout.WriteString("%9d\t%2.2f%%\t%s\n" \
                                    % (n, (n * 100.0) / total, s))
             for key in sorted(sizes):
                 sz(sizes[key], key)
             sz(total, "")
     func help_lint():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Look for DAG and metadata configurations that may indicate a
 problem. Presently checks for: (1) Mid-branch deletes, (2)
 disconnected commits, (3) parentless commits, (4) the existance of
@@ -11405,7 +11430,7 @@ Supports > redirection.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
             unmapped = regexp.MustCompile(("[^@]*$|[^@]*@" + str(self.chosen().uuid) + "$").encode('ascii'))
             shortset = set()
             deletealls = set()
@@ -11443,30 +11468,30 @@ Supports > redirection.
             if not parse.options or "--deletealls" in parse.options \
                    or "-d" in parse.options:
                 for item in sorted(deletealls):
-                    parse.stdout.write("mid-branch delete: %s\n" % item)
+                    parse.stdout.WriteString("mid-branch delete: %s\n" % item)
             if not parse.options or "--connected" in parse.options \
                    or "-c" in parse.options:
                 for item in sorted(disconnected):
-                    parse.stdout.write("disconnected commit: %s\n" % item)
+                    parse.stdout.WriteString("disconnected commit: %s\n" % item)
             if not parse.options or "--roots" in parse.options \
                    or "-r" in parse.options:
                 if len(roots) > 1:
-                    parse.stdout.write("multiple root commits: %s\n" % sorted(roots))
+                    parse.stdout.WriteString("multiple root commits: %s\n" % sorted(roots))
             if not parse.options or "--names" in parse.options \
                    or "-n" in parse.options:
                 for item in sorted(shortset):
-                    parse.stdout.write("unknown shortname: %s\n" % item)
+                    parse.stdout.WriteString("unknown shortname: %s\n" % item)
                 for item in sorted(emptyaddr):
-                    parse.stdout.write("empty committer address: %s\n" % item)
+                    parse.stdout.WriteString("empty committer address: %s\n" % item)
                 for item in sorted(emptyname):
-                    parse.stdout.write("empty committer name: %s\n" % item)
+                    parse.stdout.WriteString("empty committer name: %s\n" % item)
                 for item in sorted(badaddress):
-                    parse.stdout.write("email address missing @: %s\n" % item)
+                    parse.stdout.WriteString("email address missing @: %s\n" % item)
             if not parse.options or "--uniqueness" in parse.options \
                    or "-u" in parse.options:
-                self.chosen().checkUniqueness(true, announcer=lambda s: parse.stdout.write("reposurgeon: " + s + "\n"))
+                self.chosen().checkUniqueness(true, announcer=lambda s: parse.stdout.WriteString("reposurgeon: " + s + "\n"))
             if "--options" in parse.options or "-?" in parse.options:
-                os.Stdout.write("""\
+                os.Stdout.WriteString("""\
 --deletealls    -d     report mid-branch deletealls
 --connected     -c     report disconnected commits
 --roots         -r     report on multiple roots
@@ -11478,7 +11503,7 @@ Supports > redirection.
     # Housekeeping
     #
     func help_prefer():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Report or set (with argument) the preferred type of repository. With
 no arguments, describe capabilities of all supported systems. With an
 argument (which must be the name of a supported version-control
@@ -11502,12 +11527,12 @@ preference to the type of that repository.
         "Report or select the preferred repository type."
         if not line:
             for vcs in vcstypes:
-                os.Stdout.write(str(vcs) + "\n")
-            for option in file_filters:
-                os.Stdout.write("read and write have a --format=%s option that supports %s files.\n"
+                os.Stdout.WriteString(str(vcs) + "\n")
+            for option in fileFilters:
+                os.Stdout.WriteString("read and write have a --format=%s option that supports %s files.\n"
                       % (option, option.capitalize()))
             if any(ext.visible and not ext.vcstype for ext in extractors):
-                os.Stdout.write("Other systems supported for read only: %s\n\n" \
+                os.Stdout.WriteString("Other systems supported for read only: %s\n\n" \
                       % " ".join(ext.name for ext in extractors if ext.visible))
         else:
             for repotype in vcstypes + extractors:
@@ -11518,12 +11543,12 @@ preference to the type of that repository.
                 complain("known types are %s." % " ".join([x.name for x in vcstypes] + [x.name for x in extractors if x.visible]))
         if verbose:
             if not self.preferred:
-                os.Stdout.write("No preferred type has been set.\n")
+                os.Stdout.WriteString("No preferred type has been set.\n")
             else:
-                os.Stdout.write("%s is the preferred type.\n" % self.preferred.name)
+                os.Stdout.WriteString("%s is the preferred type.\n" % self.preferred.name)
 
     func help_sourcetype():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Report (with no arguments) or select (with one argument) the current
 repository's source type.  This type is normally set at
 repository-read time, but may remain unset if the source was a stream
@@ -11548,9 +11573,9 @@ stream.
         repo = self.chosen()
         if not line:
             if self.chosen().vcs:
-                os.Stdout.write("%s: %s\n" % (repo.name, repo.vcs.name))
+                os.Stdout.WriteString("%s: %s\n" % (repo.name, repo.vcs.name))
             else:
-                os.Stdout.write("%s: no preferred type.\n" % repo.name)
+                os.Stdout.WriteString("%s: no preferred type.\n" % repo.name)
         else:
             for repotype in vcstypes + extractors:
                 if line.lower() == repotype.name:
@@ -11558,9 +11583,10 @@ stream.
                     break
             else:
                 complain("known types are %s." % " ".join([x.name for x in vcstypes] + [x.name for x in extractors if x.visible]))
+*/
 
-    func help_choose():
-        os.Stdout.write("""
+func (rs *Reposurgeon) HelpChoose() {
+        rs.helpOutput(`
 Choose a named repo on which to operate.  The name of a repo is
 normally the basename of the directory or file it was loaded from, but
 repos loaded from standard input are 'unnamed'. The program will add
@@ -11572,38 +11598,56 @@ and their load times.  The second column is '*' for the currently selected
 repository, '-' for others.
 
 With an argument, the command tab-completes on the above list.
-""")
+`)
+}
+
+/*
     func complete_choose(self, text, _line, _begidx, _endidx):
         if not self.repolist:
             return None
         return sorted([x.name for x in self.repolist if x.name.startswith(text)])
-    func do_choose(self, line str):
-        "Choose a named repo on which to operate."
-        if self.selection is not None:
-            raise Recoverable("choose does not take a selection set")
-        if not self.repolist:
-            if verbose > 0:
-                complain("no repositories are loaded.")
-                return
-        self.repolist.sort(key=operator.attrgetter("name"))
-        if not line:
-            for repo in self.repolist:
-                status =  '-'
-                if self.chosen() and repo == self.chosen():
-                    status = '*'
-                if not quiet:
-                    os.Stdout.write(rfc3339(repo.readtime) + " ")
-                os.Stdout.write("%s %s\n" % (status, repo.name))
-        else:
-            if line in self.reponames():
-                self.choose(self.repo_by_name(line))
-                if verbose:
-                    self.do_stats(line)
-            else:
-                complain("no such repo as %s" % line)
+*/
 
+// Choose a named repo on which to operate.
+func (rs *Reposurgeon) DoChoose(line string) bool {
+	if rs.selection != nil {
+		panic(throw("command", "choose does not take a selection set"))
+	}
+	if len(rs.repolist) == 0 {
+		if verbose > 0 {
+			complain("no repositories are loaded.")
+			return false
+		}
+	}
+	//FIXME: Load order is OK for now
+	//rs.repolist.sort(key=operator.attrgetter("name"))
+	if line == "" {
+		for _, repo := range rs.repolist {
+			status :=  "-"
+			if rs.chosen() != nil && repo == rs.chosen() {
+				status = "*"
+			}
+			if !quiet {
+				os.Stdout.WriteString(rfc3339(repo.readtime) + " ")
+			}
+			os.Stdout.WriteString(fmt.Sprintf("%s %s\n", status, repo.name))
+		}
+	} else {
+		if newStringSet(rs.reponames()...).Contains(line) {
+			rs.choose(rs.repoByName(line))
+			if verbose < 0 {
+				rs.DoStats(line)
+			}
+		} else {
+			complain(fmt.Sprintf("no such repo as %s", line))
+		}
+	}
+	return false
+}
+
+/*
     func help_drop():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Drop a repo named by the argument from reposurgeon's list, freeing the memory
 used for its metadata and deleting on-disk blobs. With no argument, drops the
 currently chosen repo. Tab-completes on the list of loaded repositories.
@@ -11625,7 +11669,7 @@ currently chosen repo. Tab-completes on the list of loaded repositories.
         if line in self.reponames():
             if self.chosen() and line == self.chosen().name:
                 self.unchoose()
-            holdrepo = self.repo_by_name(line)
+            holdrepo = self.repoByName(line)
             holdrepo.cleanup()
             self.remove_by_name(line)
             del holdrepo
@@ -11636,7 +11680,7 @@ currently chosen repo. Tab-completes on the list of loaded repositories.
             self.do_choose('')
 
     func help_rename():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Rename the currently chosen repo; requires an argument.  Won't do it
 if there is already one by the new name.
 """)
@@ -11652,7 +11696,7 @@ if there is already one by the new name.
             self.chosen().rename(line)
 
     func help_preserve():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Add (presumably untracked) files or directories to the repo's list of
 paths to be restored from the backup directory after a rebuild. Each
 argument, if any, is interpreted as a pathname.  The current preserve
@@ -11670,7 +11714,7 @@ list is displayed afterwards.
         announce(debugSHOUT, "preserving %s." % list(self.chosen().preservable()))
 
     func help_unpreserve():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Remove (presumably untracked) files or directories to the repo's list
 of paths to be restored from the backup directory after a
 rebuild. Each argument, if any, is interpreted as a pathname.  The
@@ -11687,11 +11731,13 @@ current preserve list is displayed afterwards.
             self.chosen().unpreserve(filename)
         announce(debugSHOUT, "preserving %s." % list(self.chosen().preservable()))
 
-    #
-    # Serialization and de-serialization.
-    #
-    func help_read():
-        os.Stdout.write("""
+*/
+
+    //
+    // Serialization and de-serialization.
+    //
+func (rs *Reposurgeon)HelpRead() {
+    rs.helpOutput(`
 A read command with no arguments is treated as 'read .', operating on the
 current directory.
 
@@ -11708,48 +11754,82 @@ constructed with command-line arguments).
 
 The --format option can be used to read in binary repository dump files.
 For a list of supported types, invoke the 'prefer' command.
-""")
-    func do_read(self, line str):
-        "Read in a repository for surgery."
-        if self.selection is not None:
-            raise Recoverable("read does not take a selection set")
-        with RepoSurgeon.LineParse(self, line, capabilities=["stdin"]) as parse:
-            if parse.redirected:
-                repo = Repository()
-                for option in parse.options:
-                    if option.startswith("--format="):
-                        vcs = option.split("=")[1]
-                        try:
-                            infilter = file_filters[vcs][0]
-                            srcname = parse.stdin.name
-                            # parse is redirected so this must be something besides sys.stdin, so
-                            # we can close it and substitute another redirect
-                            parse.stdin.close()
-                            parse.stdin = make_wrapper(popenOrDie(infilter % srcname, mode="r").open())
-                        except KeyError:
-                            raise Recoverable("unrecognized --format")
-                        break
-                repo.fastImport(parse.stdin, parse.options, progress=(verbose==1 and not quiet))
-            # This is slightly asymmetrical with the write side, which
-            # interprets an empty argument list as '-'
-            else if not parse.line or parse.line == '.':
-                repo = read_repo(os.getcwd(), parse.options, self.preferred)
-            else if os.path.isdir(parse.line):
-                repo = read_repo(parse.line, parse.options, self.preferred)
-            else:
-                raise Recoverable("read no longer takes a filename argument - use < redirection instead")
-        self.repolist.append(repo)
-        self.choose(repo)
-        if self.chosen():
-            if self.chosen().vcs:
-                self.preferred = self.chosen().vcs
-            name = self.uniquify(os.path.basename(self.chosen().sourcedir or parse.infile or "unnamed"))
-            self.chosen().rename(name)
-        if verbose:
-            self.do_choose('')
+`)
+}
+// Read in a repository for surgery.
+func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
+	if rs.selection != nil {
+		panic(throw("command", "read does not take a selection set"))
+	}
+	parse := newLineParse(line, nil, []string{"stdin"})
+	defer parse.Closem()
+	var repo *Repository
+	if parse.redirected {
+		repo = newRepository("")
+/* FIXME
+		for _, option := range parse.options {
+			if strings.HasPrefix(option, "--format=") {
+				vcs := strings.Split(option, "=")[1]
+				infilter, ok := fileFilters[vcs]
+				if !ok {
+					panic(throw("command", "unrecognized --format"))
+				}
+				srcname := parse.stdin.Name
+				// parse is redirected so this
+				// must be something besides
+				// os.Stdin, so we can close
+				// it and substitute another
+				// redirect
+				parse.stdin.Close()
+				command := fmt.Sprintf(infilter.importer, srcname)
+				reader, _, err := readFromProcess(command)
+				if err != nil {
+					panic(throw("command", "can'r open filter: %v"))
+				}
+				parse.stdin = reader
+				break
+			}
+		}
+*/
+		repo.fastImport(parse.stdin, parse.options, (verbose==1 && !quiet), "")
+	}
+/*
+	FIXME: This needs readRepo
+	// This is slightly asymmetrical with the write side, which
+	// interprets an empty argument list as '-'
+	else if !parse.line || parse.line == "." {
+		repo = readRepo(os.Getwd(), parse.options, rs.preferred)
+	} else if os.path.isdir(parse.line) {
+		repo = readRepo(parse.line, parse.options, rs.preferred)
+	} else {
+		raise Recoverable("read no longer takes a filename argument - use < redirection instead")
+	}
+*/
+	rs.repolist = append(rs.repolist, repo)
+	rs.choose(repo)
+	if rs.chosen() != nil {
+		if rs.chosen().vcs != nil {
+			repo.preferred = rs.chosen().vcs
+		}
+		name := rs.chosen().sourcedir
+		if name == "" {
+			name = parse.infile
+			if name == "" {
+				name = "unnamed"
+			}
+		}
+		// FIXME: apply self.uniquify()
+		rs.chosen().rename(filepath.Base(name))
+	}
+	if verbose > 0 {
+		rs.DoChoose("")
+	}
+	return false
+}
 
+/*
     func help_write():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Dump a fast-import stream representing selected events to standard
 output (if second argument is empty or '-') or via > redirect to a file.
 Alternatively, if there ia no redirect and the argument names a
@@ -11772,7 +11852,7 @@ For a list of supported types, invoke the 'prefer' command.
             self.selection = self.chosen().all()
         if line:
             line = os.path.expanduser(line)
-        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
             # This is slightly asymmetrical with the read side, which
             # interprets an empty argument list as '.'
             if parse.redirected or not parse.line:
@@ -11780,7 +11860,7 @@ For a list of supported types, invoke the 'prefer' command.
                     if option.startswith("--format="):
                         vcs = option.split("=")[1]
                         try:
-                            outfilter = file_filters[vcs][1]
+                            outfilter = fileFilters[vcs][1]
                             dstname = parse.stdout.name
                             # parse is redirected so this must be
                             # something besides os.Stdout, so we can
@@ -11797,7 +11877,7 @@ For a list of supported types, invoke the 'prefer' command.
                 raise Recoverable("write no longer takes a filename argument - use > redirection instead")
 
     func help_inspect():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Dump a fast-import stream representing selected events to standard
 output or via > redirect to a file.  Just like a write, except (1) the
 progress meter is disabled, and (2) there is an identifying header
@@ -11808,7 +11888,7 @@ before each event dump.
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
             if self.selection is None and parse.line.strip():
                 parse.line = self.set_selection_set(parse.line)
             else if self.selection is None:
@@ -11817,14 +11897,14 @@ before each event dump.
                 header = "Event %s, " % repr(ei+1)
                 header = header[:-2]
                 header += " " + ((72 - len(header)) * "=") + "\n"
-                parse.stdout.write(header)
+                parse.stdout.WriteString(header)
                 if isinstance(event, Commit):
-                    parse.stdout.write(event.dump())
+                    parse.stdout.WriteString(event.dump())
                 else:
-                    parse.stdout.write(str(event))
+                    parse.stdout.WriteString(str(event))
 
     func help_strip():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Replace the blobs in the selected repository with self-identifying stubs;
 and/or strip out topologically uninteresting commits.  The modifiers for
 this are 'blobs' and 'reduce' respectively; the default is 'blobs'.
@@ -11877,7 +11957,7 @@ This is intended for producing reduced test cases from large repositories.
                          if isinstance(event, Commit) and event.mark not in interesting])
             announce(debugSHOUT, "From %d to %d events." % (oldlen, len(repo.events)))
     func help_graph():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Dump a graph representing selected events to standard output in DOT markup
 for graphviz. Supports > redirection.
 """)
@@ -11888,18 +11968,18 @@ for graphviz. Supports > redirection.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
-            parse.stdout.write("digraph {\n")
+        with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
+            parse.stdout.WriteString("digraph {\n")
             for _, event in self.selected():
                 if isinstance(event, Commit):
                     for parent in event.parentMarks():
                         if self.chosen().find(parent) in self.selection:
-                            parse.stdout.write('\t%s -> %s;\n' \
+                            parse.stdout.WriteString('\t%s -> %s;\n' \
                                                % (parent[1:], event.mark[1:]))
                 if isinstance(event, Tag):
-                    parse.stdout.write('\t"%s" -> "%s" [style=dotted];\n' \
+                    parse.stdout.WriteString('\t"%s" -> "%s" [style=dotted];\n' \
                                        % (event.name, event.committish[1:], ))
-                    parse.stdout.write('\t{rank=same; "%s"; "%s"}\n' \
+                    parse.stdout.WriteString('\t{rank=same; "%s"; "%s"}\n' \
                                        % (event.name, event.committish[1:], ))
             for _, event in self.selected():
                 if isinstance(event, Commit):
@@ -11907,19 +11987,19 @@ for graphviz. Supports > redirection.
                     cid = event.mark
                     if event.legacyID:
                         cid = event.showlegacy() + " &rarr; " + cid
-                    parse.stdout.write('\t%s [shape=box,width=5,label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
+                    parse.stdout.WriteString('\t%s [shape=box,width=5,label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
                                        % (event.mark[1:], cid, summary))
                     if all(event.branch != child.branch for child in event.children()):
-                        parse.stdout.write('\t"%s" [shape=oval,width=2];\n' % event.branch)
-                        parse.stdout.write('\t"%s" -> "%s" [style=dotted];\n' % (event.mark[1:], event.branch))
+                        parse.stdout.WriteString('\t"%s" [shape=oval,width=2];\n' % event.branch)
+                        parse.stdout.WriteString('\t"%s" -> "%s" [style=dotted];\n' % (event.mark[1:], event.branch))
                 if isinstance(event, Tag):
                     summary = cgi.escape(event.comment.split('\n')[0][:32])
-                    parse.stdout.write('\t"%s" [label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
+                    parse.stdout.WriteString('\t"%s" [label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
                                        % (event.name, event.name, summary))
-            parse.stdout.write("}\n")
+            parse.stdout.WriteString("}\n")
 
     func help_rebuild():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Rebuild a repository from the state held by reposurgeon.  The argument
 specifies the target directory in which to do the rebuild;x0 if the
 repository read was from a repo directory (and not a git-import stream), it
@@ -11940,7 +12020,7 @@ its contents are backed up to a save directory.
     # Editing commands
     #
     func help_mailbox_out():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Emit a mailbox file of messages in RFC822 format representing the
 contents of repository metadata. Takes a selection set; members of the set
 other than commits, annotated tags, and passthroughs are ignored (that
@@ -11970,7 +12050,7 @@ context the name of the header includes its trailing colon.
         self.report_select(line, "emailOut", (filterRegexp,))
 
     func help_mailbox_in():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Accept a mailbox file of messages in RFC822 format representing the
 contents of the metadata in selected commits and annotated tags. Takes
 no selection set. If there is an argument it will be taken as the name
@@ -12185,10 +12265,10 @@ CVS empty-comment marker.
         if parse.stdout != os.Stdout:
             if "--changed" in parse.options:
                 for update in changers:
-                    parse.stdout.write(MessageBlockDivider + "\n" + update.as_string(unixfrom=false))
+                    parse.stdout.WriteString(MessageBlockDivider + "\n" + update.as_string(unixfrom=false))
 
     func help_edit():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Report the selection set of events to a tempfile as mailbox_out does,
 call an editor on it, and update from the result as mailbox_in does.
 If you do not specify an editor name as second argument, it will be
@@ -12214,7 +12294,7 @@ Supports < and > redirection.
         self.edit(self.selection, line)
 
     func help_filter():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Run blobs, commit comments and committer/author names, or tag comments
 and tag committer names in the selection set through the filter
 specified on the command line.
@@ -12357,7 +12437,7 @@ With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
                            safety=not line.startswith('--dedos'))
 
     func help_transcode():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Transcode blobs, commit comments and committer/author names, or tag
 comments and tag committer names in the selection set to UTF-8 from
 the character encoding specified on the command line.
@@ -12392,7 +12472,7 @@ repository objects in a damaged state.
             raise Fatal("UnicodeError during transcoding")
 
     func help_setfield():
-        os.Stdout.write("""
+        rs.helpOutput("""
 In the selected objects (defaulting to none) set every instance of a
 named field to a string value.  The string may be quoted to include
 whitespace, and use backslash escapes interpreted by the Python
@@ -12442,7 +12522,7 @@ address.
                 event.authors[0].date = Date(value)
 
     func help_setperm():
-        os.Stdout.write("""
+        rs.helpOutput("""
 For the selected objects (defaulting to none) take the first argument as an
 octal literal describing permissions.  All subsequent arguments are paths.
 For each M fileop in the selection set and exactly matching one of the
@@ -12469,7 +12549,7 @@ paths, patch the permission field to the first argument value.
                 baton.twirl("")
 
     func help_append():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Append text to the comments of commits and tags in the specified
 selection set. The text is the first token of the command and may
 be a quoted string. C-style escape sequences in the string are
@@ -12496,7 +12576,7 @@ the new text is appended.
                 event.comment += line
 
     func help_squash():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Combine a selection set of events; this may mean deleting them or
 pushing their content forward or back onto a target commit just
 outside the selection range, depending on policy flags.
@@ -12515,7 +12595,7 @@ removal of fileops associated with commits requires this.
         with RepoSurgeon.LineParse(self, line) as parse:
             self.chosen().squash(self.selection, parse.options)
     func help_delete():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Delete a selection set of events.  The default selection set for this
 command is empty.  Tags, resets, and passthroughs are deleted with no
 side effects.  Blobs cannot be directly deleted with this command; they
@@ -12536,7 +12616,7 @@ squash with the --delete flag.
             self.chosen().squash(self.selection, set(["--delete"]) | parse.options)
 
     func help_coalesce():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Scan the selection set (defaulting to all) for runs of commits with
 identical comments close to each other in time (this is a common form
 of scar tissues in repository up-conversions from older file-oriented
@@ -12622,7 +12702,7 @@ With  the --debug option, show messages about mismatches.
             if verbose > 0:
                 announce(debugSHOUT, "%d spans coalesced." % len(squashes))
     func help_add():
-        os.Stdout.write("""
+        rs.helpOutput("""
 From a specified commit, add a specified fileop. The syntax is
 
      add {D path | M perm mark path | R source target | C source target}
@@ -12704,7 +12784,7 @@ in the commit's ancestry.
             event.appendOperation(fileop)
 
     func help_blob():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Syntax:
 
      blob
@@ -12723,13 +12803,13 @@ used with the add command to patch data into a repository.
         blob = Blob(repo)
         blob.setMark(":1")
         repo.addEvent(blob, where=0)
-        with RepoSurgeon.LineParse(self, line, capabilities=["stdin"]) as parse:
+        with RepoSurgeon.LineParse(self, line, []strings{"stdin"}) as parse:
             blob.setContent(parse.stdin.read())
         repo.declareSequenceMutation("adding blob")
         repo.invalidateNamecache()
 
     func help_remove():
-        os.Stdout.write("""
+        rs.helpOutput("""
 From a specified commit, remove a specified fileop. The syntax is:
 
      remove [DMRCN] OP [to COMMIT]
@@ -12807,7 +12887,7 @@ change in a future release.
                 return
 
     func help_renumber():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Renumber the marks in a repository, from :1 up to <n> where <n> is the
 count of the last mark. Just in case an importer ever cares about mark
 ordering or gaps in the sequence.
@@ -12821,7 +12901,7 @@ ordering or gaps in the sequence.
         self.repo.renumber()
 
     func help_dedup():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Deduplicate blobs in the selection set.  If multiple blobs in the selection
 set have the same SHA1, throw away all but the first, and change fileops
 referencing them to instead reference the (kept) first blob.
@@ -12847,7 +12927,7 @@ referencing them to instead reference the (kept) first blob.
         return
 
     func help_timeoffset():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Apply a time offset to all time/date stamps in the selected set.  An offset
 argument is required; it may be in the form [+-]ss, [+-]mm:ss or [+-]hh:mm:ss.
 The leading sign is required to distingush it from a selection expression.
@@ -12931,7 +13011,7 @@ func (rs *Reposurgeon) DoWhen(LineIn string) (StopOut bool) {
 
 /*
     func help_divide():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Attempt to partition a repo by cutting the parent-child link
 between two specified commits (they must be adjacent). Does not take a
 general selection-set argument.  It is only necessary to specify the
@@ -13000,7 +13080,7 @@ branch 'qux', the branch segments are renamed 'qux-early' and
             self.do_choose("")
 
     func help_expunge():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Expunge files from the selected portion of the repo history; the
 default is the entire history.  The arguments to this command may be
 paths or Python regular expressions matching paths (regexps must
@@ -13038,7 +13118,7 @@ file path matches.
         self.expunge(self.selection, line.split())
 
     func help_split():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Split a specified commit in two, the opposite of squash.
 
     split at M
@@ -13098,7 +13178,7 @@ file operations in the original commit.
             announce(debugSHOUT, "new commits are events %s and %s." % (where+1, where+2))
 
     func help_unite():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Unite repositories. Name any number of loaded repositories; they will
 be united into one union repo and removed from the load list.  The
 union repo will be selected.
@@ -13125,7 +13205,7 @@ branch being grafted on.
         factors = []
         with RepoSurgeon.LineParse(self, line) as parse:
             for name in parse.line.split():
-                repo = self.repo_by_name(name)
+                repo = self.repoByName(name)
                 if repo is None:
                     raise Recoverable("no such repo as %s" % name)
                 else:
@@ -13137,7 +13217,7 @@ branch being grafted on.
             self.do_choose('')
 
     func help_graft():
-        os.Stdout.write("""
+        rs.helpOutput("""
 For when unite doesn't give you enough control. This command may have
 either of two forms, selected by the size of the selection set.  The
 first argument is always required to be the name of a loaded repo.
@@ -13165,7 +13245,7 @@ of the grafted repository.
             raise Recoverable("no repositories are loaded.")
         with RepoSurgeon.LineParse(self, line) as parse:
             if parse.line in self.reponames():
-                graft_repo = self.repo_by_name(parse.line)
+                graft_repo = self.repoByName(parse.line)
             else:
                 raise Recoverable("no such repo as %s" % parse.line)
             require_graft_point = true
@@ -13185,7 +13265,7 @@ of the grafted repository.
             self.remove_by_name(graft_repo.name)
 
     func help_debranch():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Takes one or two arguments which must be the names of source and target
 branches; if the second (target) argument is omitted it defaults to 'master'.
 The history of the source branch is merged into the history of the target
@@ -13266,7 +13346,7 @@ source branch are removed.
             repo.declareSequenceMutation("debranch operation")
 
     func help_path():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Rename a path in every fileop of every selected commit.  The
 default selection set is all commits. The first argument is interpreted as a
 Python regular expression to match against paths; the second may contain
@@ -13317,7 +13397,7 @@ in the ancestry of the commit, this command throws an error.  With the
                 raise Recoverable("unknown verb '%s' in path command." % verb)
 
     func help_paths():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Without a modifier, list all paths touched by fileops in
 the selection set (which defaults to the entire repo). This
 variant does > redirection.
@@ -13334,11 +13414,11 @@ with no argument, strip the first directory component from every path.
         if self.selection is None:
             self.selection = self.chosen().all()
         if not line.startswith(("sub", "sup")):
-            with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
+            with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
                 allpaths = set()
                 for _, event in self.selected(Commit):
                     allpaths.update(event.paths())
-                parse.stdout.write("\n".join(sorted(allpaths)) + "\n")
+                parse.stdout.WriteString("\n".join(sorted(allpaths)) + "\n")
                 return
         fields = line.split()
         if fields[0] == "sub":
@@ -13347,13 +13427,13 @@ with no argument, strip the first directory component from every path.
             prefix = fields[1]
             modified = self.chosen().path_walk(self.selection,
                                                lambda f: os.path.join(prefix,f))
-            os.Stdout.write("\n".join(modified) + "\n")
+            os.Stdout.WriteString("\n".join(modified) + "\n")
         else if fields[0] == "sup":
             if len(fields) == 1:
                 try:
                     modified = self.chosen().path_walk(self.selection,
                                                    lambda f: f[f.find(os.sep)+1:])
-                    os.Stdout.write("\n".join(modified) + "\n")
+                    os.Stdout.WriteString("\n".join(modified) + "\n")
                 except IndexError:
                     raise Recoverable("no / in sup path.")
             else:
@@ -13362,11 +13442,11 @@ with no argument, strip the first directory component from every path.
                     prefix = prefix + os.sep
                 modified = self.chosen().path_walk(self.selection,
                                                lambda f: f[len(prefix):] if f.startswith(prefix) else f)
-                os.Stdout.write("\n".join(modified) + "\n")
+                os.Stdout.WriteString("\n".join(modified) + "\n")
         self.chosen().invalidateManifests()
 
     func help_manifest():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Print commit path lists. Takes an optional selection set argument
 defaulting to all commits, and an optional Python regular expression.
 For each commit in the selection set, print the mapping of all paths in
@@ -13381,7 +13461,7 @@ This command supports > redirection.
             raise Recoverable("no repo has been chosen")
         if self.selection is None:
             self.selection = self.chosen().all()
-        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
             filter_func = None
             line = parse.line.strip()
             if line:
@@ -13393,26 +13473,26 @@ This command supports > redirection.
                 header = "Event %s, " % repr(ei+1)
                 header = header[:-2]
                 header += " " + ((72 - len(header)) * "=") + "\n"
-                parse.stdout.write(header)
+                parse.stdout.WriteString(header)
                 if event.legacyID:
-                    parse.stdout.write("# Legacy-ID: %s\n" % event.legacyID)
-                parse.stdout.write("commit %s\n" % event.branch)
+                    parse.stdout.WriteString("# Legacy-ID: %s\n" % event.legacyID)
+                parse.stdout.WriteString("commit %s\n" % event.branch)
                 if event.mark:
-                    parse.stdout.write("mark %s\n" % event.mark)
-                parse.stdout.write("\n")
+                    parse.stdout.WriteString("mark %s\n" % event.mark)
+                parse.stdout.WriteString("\n")
                 if filter_func is None:
-                    parse.stdout.write("\n".join("%s -> %s" % (path, mark)
+                    parse.stdout.WriteString("\n".join("%s -> %s" % (path, mark)
                             for path, (mode, mark, _)
                             in event.manifest().items()))
                 else:
-                    parse.stdout.write("\n".join("%s -> %s" % (path, mark)
+                    parse.stdout.WriteString("\n".join("%s -> %s" % (path, mark)
                             for path, (mode, mark, _)
                             in event.manifest().items()
                             if filter_func(polybytes(path))))
-                parse.stdout.write("\n")
+                parse.stdout.WriteString("\n")
 
     func help_tagify():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Search for empty commits and turn them into tags. Takes an optional selection
 set argument defaulting to all commits. For each commit in the selection set,
 turn it into a tag with the same message and author information if it has no
@@ -13459,7 +13539,7 @@ merge link is moved to the tagified commit's parent.
             announce(debugSHOUT, "%d commits tagified." % (before - after))
 
     func help_merge():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Create a merge link. Takes a selection set argument, ignoring all but
 the lowest (source) and highest (target) members.  Creates a merge link
 from the highest member (child) to the lowest (parent).
@@ -13482,7 +13562,7 @@ from the highest member (child) to the lowest (parent).
         #announce(debugSHOUT, "%s added as a parent of %s" % (earlier_id, later_id))
 
     func help_unmerge():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Linearizes a commit. Takes a selection set argument, which must resolve to a
 single commit, and removes all its parents except for the first. It is
 equivalent to reparent --rebase {first parent},{commit}, where {commit} is the
@@ -13502,7 +13582,7 @@ commit's first parent, but doesn't need you to find the first parent yourself.
         commit.setParents(commit.parents()[:1])
 
     func help_reparent():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Changes the parent list of a commit.  Takes a selection set, zero or
 more option arguments, and an optional policy argument.
 
@@ -13621,7 +13701,7 @@ Policy:
                 repo.resort()
 
     func help_reorder():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Re-order a contiguous range of commits.
 
 Older revision control systems tracked change history on a per-file basis,
@@ -13685,7 +13765,7 @@ after the operation.
             repo.reorder_commits(sel, '--quiet' in parse.options)
 
     func help_branch():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Rename or delete a branch (and any associated resets).  First argument
 must be an existing branch name; second argument must one of the verbs
 'rename' or 'delete'. The branchname may use backslash escapes
@@ -13736,7 +13816,7 @@ is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
             raise Recoverable("unknown verb '%s' in branch command." % verb)
 
     func help_tag():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Create, move, rename, or delete a tag.
 
 Creation is a special case.  First argument is a name, which must not
@@ -13913,7 +13993,7 @@ fields are changed and a warning is issued.
             raise Recoverable("unknown verb '%s' in tag command." % verb)
 
     func help_reset():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Create, move, rename, or delete a reset. Create is a special case; it
 requires a singleton selection which is the associate commit for the
 reset, takes as a first argument the name of the reset (which must not
@@ -14026,7 +14106,7 @@ moved, no branch fields are changed.
             raise Recoverable("unknown verb '%s' in reset command." % verb)
 
     func help_ignores():
-        os.Stdout.write("""Intelligent handling of ignore-pattern files.
+        rs.helpOutput("""Intelligent handling of ignore-pattern files.
 This command fails if no repository has been selected or no preferred write
 type has been set for the repository.  It does not take a selection set.
 
@@ -14126,7 +14206,7 @@ default patterns.
                 raise Recoverable("unknown verb %s in ignores line" % verb)
 
     func help_attribution():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Inspect, modify, add, and remove commit and tag attributions.
 
 Attributions upon which to operate are selected in much the same way as events
@@ -14220,7 +14300,7 @@ Available actions are:
             raise Recoverable("no repo has been chosen")
         selparser = AttributionEditor.SelParser()
         machine, rest = selparser.compile(line)
-        with RepoSurgeon.LineParse(self, rest, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, rest, stringSet{"stdout"}) as parse:
             try:
                 fields = shlex.split(parse.line)
             except ValueError as e:
@@ -14264,7 +14344,7 @@ Available actions are:
     # Artifact removal
     #
     func help_authors():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Apply or dump author-map information for the specified selection
 set, defaulting to all events.
 
@@ -14303,14 +14383,14 @@ part to the right of an equals sign will need editing.
             self.selection = self.chosen().all()
         if line.startswith("write"):
             line = line[5:].strip()
-            with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
+            with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
                 if parse.tokens():
                     raise Recoverable("authors write no longer takes a filename argument - use > redirection instead")
                 self.chosen().writeAuthorMap(self.selection, parse.stdout)
         else:
             if line.startswith("read"):
                 line = line[4:].strip()
-            with RepoSurgeon.LineParse(self, line, capabilities=["stdin"]) as parse:
+            with RepoSurgeon.LineParse(self, line, []strings{"stdin"}) as parse:
                 if parse.tokens():
                     raise Recoverable("authors read no longer takes a filename argument - use < redirection instead")
                 self.chosen().readAuthorMap(self.selection, parse.stdin)
@@ -14319,7 +14399,7 @@ part to the right of an equals sign will need editing.
     # Reference lifting
     #
     func help_legacy():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Apply or list legacy-reference information. Does not take a
 selection set. The 'read' variant reads from standard input or a
 <-redirected filename; the 'write' variant writes to standard
@@ -14332,20 +14412,20 @@ output or a >-redirected filename.
             return
         if line.startswith("write"):
             line = line[5:].strip()
-            with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
+            with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
                 if parse.tokens():
                     raise Recoverable("legacy write does not take a filename argument - use > redirection instead")
                 self.chosen().writeLegacyMap(parse.stdout)
         else:
             if line.startswith("read"):
                 line = line[4:].strip()
-            with RepoSurgeon.LineParse(self, line, capabilities=["stdin"]) as parse:
+            with RepoSurgeon.LineParse(self, line, []strings{"stdin"}) as parse:
                 if parse.tokens():
                     raise Recoverable("legacy read does not take a filename argument - use < redirection instead")
                 self.chosen().readLegacyMap(parse.stdin)
 
     func help_references():
-        os.Stdout.write("""
+        rs.helpOutput("""
 With the 'list' modifier, produces a listing of events that may have
 Subversion or CVS commit references in them.  This version
 of the command supports >-redirection.  Equivalent to '=N list'.
@@ -14410,16 +14490,16 @@ map when the repo is written or rebuilt.
                 if line.startswith("edit"):
                     self.edit(self.selection, line[4:].strip())
                 else:
-                    with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
+                    with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
                         for ei in self.selection:
                             event = repo.events[ei]
                             if hasattr(event, "lister"):
                                 summary = event.lister(None, ei, screenwidth())
                                 if summary:
-                                    parse.stdout.write(summary + "\n")
+                                    parse.stdout.WriteString(summary + "\n")
 
     func help_gitify():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Attempt to massage comments into a git-friendly form with a blank
 separator line after a summary line.  This code assumes it can insert
 a blank line if the first line of the comment ends with '.', ',', ':',
@@ -14455,7 +14535,7 @@ Takes a selection set, defaulting to all commits and tags.
     # Examining tree states
     #
     func help_checkout():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Check out files for a specified commit into a directory.  The selection
 set must resolve to a singleton commit.
 """)
@@ -14478,7 +14558,7 @@ set must resolve to a singleton commit.
         commit.checkout(line)
 
     func help_diff():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Display the difference between commits. Takes a selection-set argument which
 must resolve to exactly two commits. Supports > redirection.
 """)
@@ -14499,7 +14579,7 @@ must resolve to exactly two commits. Supports > redirection.
         dir2 = set(bounds[1].manifest())
         allpaths = list(dir1 | dir2)
         allpaths.sort()
-        with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
+        with RepoSurgeon.LineParse(self, line, stringSoet{"stdout"}) as parse:
             for path in allpaths:
                 if path in dir1 and path in dir2:
                     # FIXME: Can we detect binary files and do something
@@ -14516,11 +14596,11 @@ must resolve to exactly two commits. Supports > redirection.
                                                          fromfile=file0,
                                                          tofile=file1,
                                                          lineterm=""):
-                            parse.stdout.write(diffline + "\n")
+                            parse.stdout.WriteString(diffline + "\n")
                 else if path in dir1:
-                    parse.stdout.write("%s: removed\n" % path)
+                    parse.stdout.WriteString("%s: removed\n" % path)
                 else if path in dir2:
-                    parse.stdout.write("%s: added\n" % path)
+                    parse.stdout.WriteString("%s: added\n" % path)
                 else:
                     raise Recoverable("internal error - missing path in diff")
 
@@ -14528,7 +14608,7 @@ must resolve to exactly two commits. Supports > redirection.
     # Setting paths to branchify
     #
     func help_branchify():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Specify the list of directories to be treated as potential branches (to
 become tags if there are no modifications after the creation copies)
 when analyzing a Subversion repo. This list is ignored when reading
@@ -14557,7 +14637,7 @@ to re-set it.
     # Setting branch name rewriting
     #
     func help_branchify_map():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Specify the list of regular expressions used for mapping the svn branches that
 are detected by branchify. If none of the expressions match, the default behavior
 applies. This maps a branch to the name of the last directory, except for trunk
@@ -14618,19 +14698,19 @@ to re-set it.
     # Setting options
     #
     func help_set():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Set a (tab-completed) boolean option to control reposurgeon's
 behavior.  With no arguments, displays the state of all flags and
 options. The following flags and options are defined:
 """)
         for (opt, expl) in RepoSurgeon.OptionFlags:
-            os.Stdout.write(opt + ":\n" + expl + "\n")
+            os.Stdout.WriteString(opt + ":\n" + expl + "\n")
     func complete_set(self, text, _line, _begidx, _endidx):
         return sorted([x for (x, _) in RepoSurgeon.OptionFlags if x.startswith(text)])
     func do_set(self, line str):
         if not line.strip():
             for (opt, _expl) in RepoSurgeon.OptionFlags:
-                os.Stdout.write("\t%s = %s\n" % (opt, globalOptions.get(opt, false)))
+                os.Stdout.WriteString("\t%s = %s\n" % (opt, globalOptions.get(opt, false)))
         else:
             for option in line.split():
                 if option not in dict(RepoSurgeon.OptionFlags):
@@ -14638,18 +14718,18 @@ options. The following flags and options are defined:
                 else:
                     globalOptions[option] = true
     func help_clear():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Clear a (tab-completed) boolean option to control reposurgeon's
 behavior.  With no arguments, displays the state of all flags. The
 following flags and options are defined:
 """)
         for (opt, expl) in RepoSurgeon.OptionFlags:
-            os.Stdout.write(opt + ":\n" + expl + "\n")
+            os.Stdout.WriteString(opt + ":\n" + expl + "\n")
     complete_clear = complete_set
     func do_clear(self, line str):
         if not line.strip():
             for opt in dict(RepoSurgeon.OptionFlags):
-                os.Stdout.write("\t%s = %s\n" % (opt, globalOptions.get(opt, false)))
+                os.Stdout.WriteString("\t%s = %s\n" % (opt, globalOptions.get(opt, false)))
         else:
             for option in line.split():
                 if option not in dict(RepoSurgeon.OptionFlags):
@@ -14661,7 +14741,7 @@ following flags and options are defined:
     # Macros and custom extensions
     #
     func help_define():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Define a macro.  The first whitespace-separated token is the name; the
 remainder of the line is the body, unless it is '{', which begins a
 multi-line macro terminated by a line beginning with '}'.
@@ -14680,19 +14760,19 @@ A later 'do' call can invoke this macro.
         if not body:
             for (name, body) in self.definitions.items():
                 if len(body) == 1:
-                    os.Stdout.write("define %s %s\n" % (name, body[0]))
+                    os.Stdout.WriteString("define %s %s\n" % (name, body[0]))
                 else:
-                    os.Stdout.write("define %s {\n" % name)
+                    os.Stdout.WriteString("define %s {\n" % name)
                     for bodyline in body:
-                        os.Stdout.write(bodyline)
-                    os.Stdout.write("}\n")
+                        os.Stdout.WriteString(bodyline)
+                    os.Stdout.WriteString("}\n")
         else if body[0] != '{':
             self.definitions[name] = [body]
         else:
             self.capture = self.definitions[name] = []
 
     func help_do():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Expand and perform a macro.  The first whitespace-separated token is
 the name of the macro to be called; remaining tokens replace {0},
 {1}... in the macro definition (the conventions used are those of the
@@ -14731,7 +14811,7 @@ the command generated by the expansion.
             # won't be caught; we want them to abort macros.
             self.onecmd(expansion)
     func help_undefine():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Undefine the macro named in this command's first argument.
 """)
     func complete_undefine(self, text, _line, _begidx, _endidx):
@@ -14748,7 +14828,7 @@ Undefine the macro named in this command's first argument.
             del self.definitions[name]
 
     func help_exec():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Execute custom code from standard input (normally a file via < redirection).
 
 Use this to set up custom extension functions for later calls. The
@@ -14757,19 +14837,19 @@ defined are accessible to later 'eval' calls.
 """)
     func do_exec(self, line str):
         "Execute custom python code."
-        with RepoSurgeon.LineParse(self, line, capabilities=["stdin"]) as parse:
+        with RepoSurgeon.LineParse(self, line, []strings{"stdin"}) as parse:
             try:
                 # The additional args are required to make the function
                 # visible to a later eval.
-                with open(parse.stdin.name, 'rb') as fp:
-                    exec(compile(polystr(fp.read()), parse.stdin.name, 'exec'), locals(), globals())
+                with open(parse.stdin.Name, 'rb') as fp:
+                    exec(compile(polystr(fp.read()), parse.stdin.Name, 'exec'), locals(), globals())
             except SyntaxError as e:
                 raise Recoverable("extension function - %s\n%s" % (e, e.text))
             except IOError:
                 raise Recoverable("I/O error, can't find or open input source")
 
     func help_eval():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Evaluate a line of code in the current interpreter context.
 Typically this will be a call to a function defined by a previous exec.
 The variables '_repository' and '_selection' will have the obvious values.
@@ -14778,7 +14858,7 @@ Note that '_selection' will be a list of integers, not objects.
     func do_eval(self, line str):
         "Call a function from custom python code."
         if self.selection is None:
-            os.Stdout.write("no selection\n")
+            os.Stdout.WriteString("no selection\n")
         else:
             _selection = self.selection
             _repository = self.chosen()
@@ -14791,7 +14871,7 @@ Note that '_selection' will be a list of integers, not objects.
     # Timequakes and bumping
     #
     func help_timequake():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Attempt to hack committer and author time stamps to make all action
 stamps in the selection set (defaulting to all commits in the
 repository) to be unique.  Works by identifying collisions between parent
@@ -14828,7 +14908,7 @@ action-stamp ID for each commit.
             announce(debugSHOUT, "%d events modified" % modified)
         repo.invalidateNamecache()
     func help_timebump():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Bump the committer and author timestamps of commits in the selection
 set (defaulting to empty) by one second.  With following integer agument,
 that many seconds.  Argument may be negative.
@@ -14851,7 +14931,7 @@ language can count on having a unique action-stamp ID for each commit.
     # Changelog processing
     #
     func help_changelogs():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Mine the ChangeLog files for authorship data.
 
 Assume such files have basenam 'ChangeLog', and that they are in the
@@ -15016,7 +15096,7 @@ that zone is used.
     # Tarball incorporation
     #
     func help_incorporate():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Insert the contents of a specified tarball as a commit.  The tarball name is
 given as an argument.  It may be a gzipped or bzipped tarball.  The initial
 segment of each path is assumed to be a version directory and stripped off.
@@ -15153,7 +15233,7 @@ not optimal, and may in particular contain duplicate blobs.
     # Version binding
     #
     func help_version():
-        os.Stdout.write("""
+        rs.helpOutput("""
 With no argument, display the reposurgeon version and supported VCSes.
 With argument, declare the major version (single digit) or full
 version (major.minor) under which the enclosing script was developed.
@@ -15182,14 +15262,14 @@ means the surgical language is not backwards compatible).
     # Exiting (in case EOT has been rebound)
     #
     func help_elapsed():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Desplay elapsed time since start.
 """)
     func do_elapsed(self, _line):
         announce(debugSHOUT, "elapsed time %s." % humanize(time.time() - self.start_time))
 
     func help_exit():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Exit the program cleanly, emitting a goodbye message.
 
 Typing EOT (usually Ctrl-D) will exit quietly.
@@ -15202,7 +15282,7 @@ Typing EOT (usually Ctrl-D) will exit quietly.
     # Prompt customization
     #
     func help_prompt():
-        os.Stdout.write("""
+        rs.helpOutput("""
 Set the command prompt format to the value of the command line; with
 an empty command line, display it. The prompt format is evaluated in Python
 after each command with the following dictionary substitutions:
@@ -15219,7 +15299,7 @@ of tokens, so that spaces can be included.
         if line:
             self.prompt_format = " ".join(shlex.split(line))
         else:
-            os.Stdout.write("prompt = %s\n" % self.prompt_format)
+            os.Stdout.WriteString("prompt = %s\n" % self.prompt_format)
 
 */
 
@@ -15400,11 +15480,7 @@ func (rs *Reposurgeon) HelpPrint() {
 
 func (rs *Reposurgeon) DoPrint(lineIn string) (stopOut bool) {
 	wc := func(filename string) {}
-	parse, err := NewLineParse(lineIn, wc, []string{"stdout"})
-	if err != nil {
-		rs.cmd.Output(err.Error() + "\n")
-		return
-	}
+	parse := newLineParse(lineIn, wc, []string{"stdout"})
 	defer parse.Closem()
 	fmt.Fprintf(parse.stdout, "%s\n", parse.line)
 	return false
