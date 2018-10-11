@@ -2863,7 +2863,7 @@ func (attr *Attribution) remap(authors map[string]Contributor) {
  * Repository objects.  All satisfy the Event interface.
  */
 
-// Cookie describes a VCS magic cookie embedded in a source file. 
+// Cookie describes a VCS magic cookie embedded in a source file.
 type Cookie struct {
 	path string
 	rev  string
@@ -3792,7 +3792,7 @@ func (callout Callout) String() string {
 	return fmt.Sprintf("callout-%s", callout.mark)
 }
 
-// ManifestEntry is visibility data about a file at a commit where it has no M  
+// ManifestEntry is visibility data about a file at a commit where it has no M
 type ManifestEntry struct {
 	mode   string
 	ref    string
@@ -5187,7 +5187,7 @@ func (action NodeAction) String() string {
 	return out + ">"
 }
 
-// RevisionRecord is a list of NodeActions at a rev in a Subversion dump  
+// RevisionRecord is a list of NodeActions at a rev in a Subversion dump
 type RevisionRecord struct {
 	nodes  []NodeAction
 	log    string
@@ -6314,7 +6314,7 @@ type Repository struct {
 	caseCoverage orderedIntSet
 	basedir      string
 	uuid         string
-	writeLegacy bool
+	writeLegacy  bool
 	dollarMap    map[string]*Commit // From dollar cookies in files
 	legacyMap    map[string]*Commit // From anything that doesn't survive rebuild
 	legacyCount  int
@@ -8053,13 +8053,15 @@ func (repo *Repository) frontEvents() []Event {
 // FIXME: resort doesn't work.
 type DAGedges struct {
 	eout orderedIntSet
-	ein orderedIntSet
+	ein  orderedIntSet
 }
+
 func (d DAGedges) String() string {
 	return fmt.Sprintf("<%v | %v>", d.ein, d.eout)
 }
 
 type DAG map[int]*DAGedges
+
 func (d *DAG) setdefault(key int, e *DAGedges) *DAGedges {
 	_, ok := (*d)[key]
 	if !ok {
@@ -8067,13 +8069,13 @@ func (d *DAG) setdefault(key int, e *DAGedges) *DAGedges {
 	}
 	return (*d)[key]
 }
-	
+
 func (repo *Repository) resort() {
 	var dag DAG = make(map[int]*DAGedges)
-        start := repo.all()
+	start := repo.all()
 
-        // helper for constructing the dag
-        handle := func(x int, ymark string) {
+	// helper for constructing the dag
+	handle := func(x int, ymark string) {
 		//assert(ymark != nil)
 		if ymark == "inline" {
 			return
@@ -8085,10 +8087,10 @@ func (repo *Repository) resort() {
 		start.Remove(x)
 		dag.setdefault(x, new(DAGedges)).eout.Add(y)
 		dag.setdefault(y, new(DAGedges)).ein.Add(x)
-        }
+	}
 
-        // construct the DAG
-        for n, node := range repo.events {
+	// construct the DAG
+	for n, node := range repo.events {
 		edges := dag.setdefault(n, new(DAGedges))
 		switch node.(type) {
 		case *Commit:
@@ -8127,16 +8129,16 @@ func (repo *Repository) resort() {
 			panic("unexpected event type")
 
 		}
-        }
+	}
 	fmt.Printf("The DAG is: %v\n", dag)
-        // Now topologically sort the DAG.
+	// Now topologically sort the DAG.
 	// FIXME: The Python version used a priority queue to provide
 	// a stable topological sort (each event's priority is its
 	// original index)  In theory this should be possible using
 	// the Go heap code.
-        tsorted := newOrderedIntSet()
-        oldIndexToNew := make(map[int]int) 
-        for len(start) > 0 {
+	tsorted := newOrderedIntSet()
+	oldIndexToNew := make(map[int]int)
+	for len(start) > 0 {
 		n := start[len(start)-1]
 		start = start[:len(start)-1]
 		//assert n  not in oldIndexToNew
@@ -8151,10 +8153,10 @@ func (repo *Repository) resort() {
 				start = append(start, m)
 			}
 		}
-        }
-        orig := repo.all()
+	}
+	orig := repo.all()
 	//assert len(t) == len(tsorted)
-        if !tsorted.Equal(orig) {
+	if !tsorted.Equal(orig) {
 		//fmt.Sprintf("Sort order: %v\n", tsorted)
 		//assert len(t - o) == 0
 		leftout := orig.Subtract(tsorted)
@@ -8185,56 +8187,56 @@ func (repo *Repository) resort() {
 }
 
 /*
-    func reorder_commits(self, v, bequiet):
-        "Re-order a contiguous range of commits."
-        func validate_operations(events, bequiet):
-            "Check if fileops still make sense after re-ordering events."
-            # Also check events one level beyond re-ordered range; anything
-            # beyond that is the user's responsibility.
-            for x in events + events[-1].children():
-                ops = []
-                for op in x.operations():
-                    path = None
-                    if op.op == opD:
-                        path = op.path
-                    else if op.op in (opR, opC):
-                        path = op.source
-                    if path is not None and not x.visible(path):
-                        if not bequiet:
-                            complain("%s '%s' fileop references non-existent '%s' after re-order" %
-                                     (x.idMe(), op.op, path))
-                        continue
-                    ops.append(op)
-                if ops != x.operations():
-                    x.setOperations(ops)
-                    x.invalidatePathsetCache()
-                    if not bequiet and len(ops) == 0:
-                        complain("%s no fileops remain after re-order" % x.idMe())
+   func reorder_commits(self, v, bequiet):
+       "Re-order a contiguous range of commits."
+       func validate_operations(events, bequiet):
+           "Check if fileops still make sense after re-ordering events."
+           # Also check events one level beyond re-ordered range; anything
+           # beyond that is the user's responsibility.
+           for x in events + events[-1].children():
+               ops = []
+               for op in x.operations():
+                   path = None
+                   if op.op == opD:
+                       path = op.path
+                   else if op.op in (opR, opC):
+                       path = op.source
+                   if path is not None and not x.visible(path):
+                       if not bequiet:
+                           complain("%s '%s' fileop references non-existent '%s' after re-order" %
+                                    (x.idMe(), op.op, path))
+                       continue
+                   ops.append(op)
+               if ops != x.operations():
+                   x.setOperations(ops)
+                   x.invalidatePathsetCache()
+                   if not bequiet and len(ops) == 0:
+                       complain("%s no fileops remain after re-order" % x.idMe())
 
-        if len(v) <= 1:
-            return
-        events = [self.events[i] for i in v]
-        sorted_events = [self.events[i] for i in sorted(v)]
-        for e in sorted_events[1:]:
-            if len(e.parents()) > 1:
-                raise Recoverable("non-linear history detected: %s" % e.idMe())
-        for e in sorted_events[:-1]:
-            if len(e.children()) > 1:
-                raise Recoverable("non-linear history detected: %s" % e.idMe())
-        if any(not sorted_events[i+1].hasParents() or
-               x not in sorted_events[i+1].parents()
-               for i,x in enumerate(sorted_events[:-1])):
-            raise Recoverable("selected commit range not contiguous")
-        if events == sorted_events:
-            complain("commits already in desired order")
-            return
-        events[0].setParents(list(sorted_events[0].parents()))
-        for x in list(sorted_events[-1].children()):
-            x.replaceParent(sorted_events[-1], events[-1])
-        for i,e in enumerate(events[:-1]):
-            events[i+1].setParents([e])
-        validate_operations(events, bequiet)
-        self.resort()
+       if len(v) <= 1:
+           return
+       events = [self.events[i] for i in v]
+       sorted_events = [self.events[i] for i in sorted(v)]
+       for e in sorted_events[1:]:
+           if len(e.parents()) > 1:
+               raise Recoverable("non-linear history detected: %s" % e.idMe())
+       for e in sorted_events[:-1]:
+           if len(e.children()) > 1:
+               raise Recoverable("non-linear history detected: %s" % e.idMe())
+       if any(not sorted_events[i+1].hasParents() or
+              x not in sorted_events[i+1].parents()
+              for i,x in enumerate(sorted_events[:-1])):
+           raise Recoverable("selected commit range not contiguous")
+       if events == sorted_events:
+           complain("commits already in desired order")
+           return
+       events[0].setParents(list(sorted_events[0].parents()))
+       for x in list(sorted_events[-1].children()):
+           x.replaceParent(sorted_events[-1], events[-1])
+       for i,e in enumerate(events[:-1]):
+           events[i+1].setParents([e])
+       validate_operations(events, bequiet)
+       self.resort()
 
 */
 
@@ -8251,7 +8253,7 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
 	}
 	if baton != nil {
 		count := len(repo.events)
-		baton.startcounter(" %d of " + fmt.Sprintf("%d", count), 0)
+		baton.startcounter(" %d of "+fmt.Sprintf("%d", count), 0)
 	}
 	repo.markseq = 0
 	for _, event := range repo.events {
@@ -8899,24 +8901,23 @@ func readFromProcess(command string) (io.ReadCloser, *exec.Cmd, error) {
 	return stdout, cmd, err
 }
 
-
 // A RepositoryList is a repository list with selection and access by name.
 type RepositoryList struct {
-	repo *Repository
+	repo     *Repository
 	repolist []*Repository
 	cutIndex int
 }
 
 func (rl *RepositoryList) chosen() *Repository {
-    return rl.repo
+	return rl.repo
 }
 
 func (rl *RepositoryList) choose(repo *Repository) {
-    rl.repo = repo
+	rl.repo = repo
 }
 
 func (rl *RepositoryList) unchoose() {
-    rl.repo = nil
+	rl.repo = nil
 }
 
 // Return a list of the names of all repositories.
@@ -8929,7 +8930,7 @@ func (rl *RepositoryList) reponames() stringSet {
 }
 
 // Uniquify a repo name in the repo list.
-func (rl *RepositoryList) uniquify(name string) string{
+func (rl *RepositoryList) uniquify(name string) string {
 	if strings.HasSuffix(name, ".fi") {
 		name = name[:len(name)-3]
 	} else if strings.HasSuffix(name, ".svn") {
@@ -10266,7 +10267,7 @@ func newLineParseInner(line string, wc func(filename string), capabilities strin
 		options:      make([]string, 0),
 		closem:       make([]io.Closer, 0),
 	}
-	
+
 	var err error
 	// Input redirection
 	match := regexp.MustCompile("<[^ ]+").FindStringIndex(lp.line)
@@ -10339,7 +10340,6 @@ func newLineParseInner(line string, wc func(filename string), capabilities strin
 	return &lp, nil
 }
 
-
 func newLineParse(line string, wc func(filename string), capabilities stringSet) *LineParse {
 	lp, err := newLineParseInner(line, wc, capabilities)
 	if err != nil {
@@ -10357,7 +10357,7 @@ func (lp *LineParse) OptVal(opt string) (val string) {
 	for _, option := range lp.options {
 		if strings.Contains(option, "=") {
 			parts := strings.Split(option, "=")
-			if len(parts) > 1 && parts[0] == opt{
+			if len(parts) > 1 && parts[0] == opt {
 				return parts[1]
 			} else {
 				return ""
@@ -10389,14 +10389,14 @@ func (lp *LineParse) Closem() {
 
 // Reposurgeon tells Kommandant what our local commands are
 type Reposurgeon struct {
-	cmd      *kommandant.Kmdt
+	cmd *kommandant.Kmdt
 	RepositoryList
-	verbose   int
-	quiet     bool
-	echo      int
-	callstack [][]string
-        profileLog string
-	selection orderedIntSet
+	verbose    int
+	quiet      bool
+	echo       int
+	callstack  [][]string
+	profileLog string
+	selection  orderedIntSet
 }
 
 // SetCore is a Kommandant housekeeping hook, not yet used
@@ -11235,14 +11235,14 @@ file in the blob.  Supports > redirection.
                     parse.stdout.WriteString("?      -      %s\n" % (event,))
 */
 
-func (rs *Reposurgeon)  HelpProfile() {
-        rs.helpOutput(`
+func (rs *Reposurgeon) HelpProfile() {
+	rs.helpOutput(`
 Enable profiling. Profile statistics are dumped to the path given as argument.
 `)
 }
 
 func (rs *Reposurgeon) DoProfile(line string) bool {
-        rs.profileLog = line
+	rs.profileLog = line
 	if rs.profileLog == "" {
 		pprof.StopCPUProfile()
 		announce(debugSHOUT, "profiling disabled.")
@@ -11278,25 +11278,26 @@ Report phase-timing results and memory usage from repository analysis.
             announce(debugSHOUT, repr(mem))
 */
 
-    //
-    // Information-gathering
-    //
+//
+// Information-gathering
+//
 func (rs *Reposurgeon) HelpStats() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Report size statistics and import/export method information of the
 currently chosen repository. Supports > redirection.
 `)
 }
+
 // Report information on repositories.
 func (self *Reposurgeon) DoStats(line string) bool {
 	parse := newLineParse(line, nil, stringSet{"stdout"})
 	defer parse.Closem()
 	if parse.line == "" {
-		    if self.chosen() == nil{
-			    complain("no repo has been chosen.")
-			    return false
-		    }
-		    parse.line = self.chosen().name
+		if self.chosen() == nil {
+			complain("no repo has been chosen.")
+			return false
+		}
+		parse.line = self.chosen().name
 	}
 	for _, name := range parse.Tokens() {
 		repo := self.repoByName(name)
@@ -11318,8 +11319,8 @@ func (self *Reposurgeon) DoStats(line string) bool {
 					commits++
 				}
 			}
-			fmt.Fprintf(parse.stdout,"%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s.\n",
-				repo.name, float64(repo.size()) / 1000.0, len(repo.events),
+			fmt.Fprintf(parse.stdout, "%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s.\n",
+				repo.name, float64(repo.size())/1000.0, len(repo.events),
 				blobs, commits, tags, resets,
 				rfc3339(repo.readtime))
 			if repo.sourcedir != "" {
@@ -11613,7 +11614,7 @@ stream.
 */
 
 func (rs *Reposurgeon) HelpChoose() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Choose a named repo on which to operate.  The name of a repo is
 normally the basename of the directory or file it was loaded from, but
 repos loaded from standard input are 'unnamed'. The program will add
@@ -11629,10 +11630,10 @@ With an argument, the command tab-completes on the above list.
 }
 
 /*
-    func complete_choose(self, text, _line, _begidx, _endidx):
-        if not self.repolist:
-            return None
-        return sorted([x.name for x in self.repolist if x.name.startswith(text)])
+   func complete_choose(self, text, _line, _begidx, _endidx):
+       if not self.repolist:
+           return None
+       return sorted([x.name for x in self.repolist if x.name.startswith(text)])
 */
 
 // Choose a named repo on which to operate.
@@ -11650,7 +11651,7 @@ func (rs *Reposurgeon) DoChoose(line string) (stopOut bool) {
 	//rs.repolist.sort(key=operator.attrgetter("name"))
 	if line == "" {
 		for _, repo := range rs.repolist {
-			status :=  "-"
+			status := "-"
 			if rs.chosen() != nil && repo == rs.chosen() {
 				status = "*"
 			}
@@ -11673,18 +11674,19 @@ func (rs *Reposurgeon) DoChoose(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpDrop() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Drop a repo named by the argument from reposurgeon's list, freeing the memory
 used for its metadata and deleting on-disk blobs. With no argument, drops the
 currently chosen repo. Tab-completes on the list of loaded repositories.
 `)
-    }
-    //complete_drop = complete_choose
+}
+
+//complete_drop = complete_choose
 
 // Drop a repo from reposurgeon's list.
 func (rs *Reposurgeon) DoDrop(line string) (stopOut bool) {
 	if len(rs.reponames()) == 0 {
-		if verbose > 0{
+		if verbose > 0 {
 			complain("no repositories are loaded.")
 			return false
 		}
@@ -11717,11 +11719,12 @@ func (rs *Reposurgeon) DoDrop(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpRename() {
-    rs.helpOutput(`
+	rs.helpOutput(`
 Rename the currently chosen repo; requires an argument.  Won't do it
 if there is already one by the new name.
 `)
 }
+
 // Rename a repository.
 func (rs *Reposurgeon) DoRename(line string) (stopOut bool) {
 	if rs.selection != nil {
@@ -11739,13 +11742,14 @@ func (rs *Reposurgeon) DoRename(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpPreserve() {
-    rs.helpOutput(`
+	rs.helpOutput(`
 Add (presumably untracked) files or directories to the repo's list of
 paths to be restored from the backup directory after a rebuild. Each
 argument, if any, is interpreted as a pathname.  The current preserve
 list is displayed afterwards.
 `)
 }
+
 // Add files and subdirectories to the preserve set.
 func (rs *Reposurgeon) DoPreserve(line string) (stopOut bool) {
 	if rs.selection != nil {
@@ -11763,13 +11767,14 @@ func (rs *Reposurgeon) DoPreserve(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpUnpreserve() {
-    rs.helpOutput(`
+	rs.helpOutput(`
 Remove (presumably untracked) files or directories to the repo's list
 of paths to be restored from the backup directory after a
 rebuild. Each argument, if any, is interpreted as a pathname.  The
 current preserve list is displayed afterwards.
 `)
 }
+
 // Remove files and subdirectories from the preserve set.
 func (rs *Reposurgeon) DoUnpreserve(line string) (stopOut bool) {
 	if rs.selection != nil {
@@ -11789,8 +11794,8 @@ func (rs *Reposurgeon) DoUnpreserve(line string) (stopOut bool) {
 //
 // Serialization and de-serialization.
 //
-func (rs *Reposurgeon)HelpRead() {
-    rs.helpOutput(`
+func (rs *Reposurgeon) HelpRead() {
+	rs.helpOutput(`
 A read command with no arguments is treated as 'read .', operating on the
 current directory.
 
@@ -11809,6 +11814,7 @@ The --format option can be used to read in binary repository dump files.
 For a list of supported types, invoke the 'prefer' command.
 `)
 }
+
 // Read in a repository for surgery.
 func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 	if rs.selection != nil {
@@ -11845,20 +11851,20 @@ func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 				break
 			}
 		}
-		repo.fastImport(parse.stdin, parse.options, (verbose==1 && !quiet), "")
+		repo.fastImport(parse.stdin, parse.options, (verbose == 1 && !quiet), "")
 	}
-/*
-	FIXME: This needs readRepo
-	// This is slightly asymmetrical with the write side, which
-	// interprets an empty argument list as '-'
-	else if !parse.line || parse.line == "." {
-		repo = readRepo(os.Getwd(), parse.options, rs.preferred)
-	} else if os.path.isdir(parse.line) {
-		repo = readRepo(parse.line, parse.options, rs.preferred)
-	} else {
-		raise Recoverable("read no longer takes a filename argument - use < redirection instead")
-	}
-*/
+	/*
+		FIXME: This needs readRepo
+		// This is slightly asymmetrical with the write side, which
+		// interprets an empty argument list as '-'
+		else if !parse.line || parse.line == "." {
+			repo = readRepo(os.Getwd(), parse.options, rs.preferred)
+		} else if os.path.isdir(parse.line) {
+			repo = readRepo(parse.line, parse.options, rs.preferred)
+		} else {
+			raise Recoverable("read no longer takes a filename argument - use < redirection instead")
+		}
+	*/
 	rs.repolist = append(rs.repolist, repo)
 	rs.choose(repo)
 	if rs.chosen() != nil {
@@ -13054,7 +13060,7 @@ func (rs *Reposurgeon) DoWhen(LineIn string) (StopOut bool) {
 	d, err := newDate(LineIn)
 	if err != nil {
 		complain("unrecognized date format")
-	} else if strings.Contains(LineIn, "Z")  {
+	} else if strings.Contains(LineIn, "Z") {
 		fmt.Println(d.String())
 	} else {
 		fmt.Println(d.rfc3339())

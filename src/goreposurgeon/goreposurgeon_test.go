@@ -1325,7 +1325,7 @@ M 100644 :3 README
 
 	// Check for no false positives on front events */
 	assertIntEqual(t, len(repo.frontEvents()), 0)
-	
+
 	authordump := "esr = Eric S. Raymond <esr@thyrsus.com>"
 	err := repo.readAuthorMap(newOrderedIntSet(), strings.NewReader(authordump))
 	if err != nil {
@@ -1456,8 +1456,8 @@ func TestResort(t *testing.T) {
 	sp.fastImport(r, nil, false, "synthetic test load")
 
 	// Reverse the event array, trick from SliceTricks
-	for i := len(repo.events)/2-1; i >= 0; i-- {
-		opp := len(repo.events)-1-i
+	for i := len(repo.events)/2 - 1; i >= 0; i-- {
+		opp := len(repo.events) - 1 - i
 		repo.events[i], repo.events[opp] = repo.events[opp], repo.events[i]
 	}
 
@@ -1474,7 +1474,7 @@ func TestResort(t *testing.T) {
 
 func TestRenumber(t *testing.T) {
 	// doubled is a version of rawdymp with all blob mumbers doubled
-	doubled :=`blob
+	doubled := `blob
 mark :2
 data 23
 This is a sample file.
@@ -1562,8 +1562,8 @@ this is a test tag
 		newStringSet(), nil, false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	
-	assertEqual(t, a.String(), rawdump) 
+
+	assertEqual(t, a.String(), rawdump)
 }
 
 // end
