@@ -1132,11 +1132,12 @@ func findVCS(name string) *VCS {
 
 func lineByLine(rs *RepoStreamer, command string, errfmt string,
 	hook func(string, *RepoStreamer) error) error {
-	r, cmd, err1 := readFromProcess(command)
+	stdout, cmd, err1 := readFromProcess(command)
 	if err1 != nil {
 		return err1
 	}
-	//defer r.Close()
+	defer stdout.Close()
+	r := bufio.NewReader(stdout)
 	for {
 		line, err2 := r.ReadString(byte('\n'))
 		if err2 == io.EOF {
@@ -1231,12 +1232,13 @@ func (ge GitExtractor) gatherAllReferences(rs *RepoStreamer) error {
 	rs.baton.twirl("")
 
 	rf, cmd, err1 := readFromProcess("git tag -l")
+	tl := bufio.NewReader(rf)
 	if err1 != nil {
 		return fmt.Errorf("while listing tags: %v", err)
 	}
-	//defer rf.Close()
+	defer rf.Close()
 	for {
-		fline, err2 := rf.ReadString(byte('\n'))
+		fline, err2 := tl.ReadString(byte('\n'))
 		if err2 == io.EOF {
 			if cmd != nil {
 				cmd.Wait()
@@ -1255,10 +1257,12 @@ func (ge GitExtractor) gatherAllReferences(rs *RepoStreamer) error {
 		// own hashes.  The hash of a lightweight tag is just
 		// the commit it points to. Handle both cases.
 		objecthash := taghash
-		cf, cmd, err3 := readFromProcess("git cat-file -p " + tag)
+		cfout, cmd, err3 := readFromProcess("git cat-file -p " + tag)
 		if err3 != nil {
 			return fmt.Errorf("while auditing tag %q: %v", tag, err)
 		}
+		defer cfout.Close()
+		cf := bufio.NewReader(cfout)
 		tagger := ""
 		comment := ""
 		for {
@@ -8874,13 +8878,12 @@ func do_or_die(dcmd, legend=""):
 
 */
 
-func readFromProcess(command string) (*bufio.Reader, *exec.Cmd, error) {
+func readFromProcess(command string) (io.ReadCloser, *exec.Cmd, error) {
 	cmd := exec.Command("sh", "-c", command+" 2>&1")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, nil, err
 	}
-	r := bufio.NewReader(stdout)
 	if debugEnable(debugCOMMANDS) {
 		fmt.Fprintf(os.Stderr, "%s: reading from '%s'\n",
 			rfc3339(time.Now()), command)
@@ -8890,7 +8893,7 @@ func readFromProcess(command string) (*bufio.Reader, *exec.Cmd, error) {
 		return nil, nil, err
 	}
 	// Pass back cmd so we can call Wait on it and get the error status.
-	return r, cmd, err
+	return stdout, cmd, err
 }
 
 /*
