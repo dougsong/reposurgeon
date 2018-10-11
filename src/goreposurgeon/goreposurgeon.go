@@ -10234,8 +10234,8 @@ type LineParse struct {
 	write_callback func(filename string)
 	line           string
 	capabilities   []string
-	stdin          *os.File
-	stdout         *os.File
+	stdin          io.Reader
+	stdout         io.Writer
 	infile         string
 	outfile        string
 	redirected     bool
@@ -10271,7 +10271,9 @@ func newLineParseInner(line string, wc func(filename string), capabilities strin
 			if err != nil {
 				return nil, errors.New(fmt.Sprintf("can't open %s for read", lp.infile))
 			}
-			lp.closem = append(lp.closem, lp.stdin)
+			if _, ok := lp.stdin.(*os.File); ok {
+				lp.closem = append(lp.closem, lp.stdin.(*os.File))
+			}
 		}
 		lp.line = lp.line[:match[0]] + lp.line[match[1]:]
 		lp.redirected = true
@@ -10301,7 +10303,9 @@ func newLineParseInner(line string, wc func(filename string), capabilities strin
 			if err != nil {
 				return nil, errors.New(fmt.Sprintf("can't open %s for writing", lp.outfile))
 			}
-			lp.closem = append(lp.closem, lp.stdout)
+			if _, ok := lp.stdout.(*os.File); ok {
+				lp.closem = append(lp.closem, lp.stdout.(*os.File))
+			}
 		}
 		lp.line = lp.line[:match[2*0+0]] + lp.line[match[2*0+1]:]
 		lp.redirected = true
@@ -10359,14 +10363,15 @@ func (lp *LineParse) OptVal(opt string) (val string) {
 }
 
 func (lp *LineParse) RedirectInput(reader io.Closer) {
-	lp.stdin.Close()
-	for i, f := range lp.closem {
-		if f == lp.stdin {
-			lp.closem[i] = reader
-			return
+	if fp, ok := lp.stdin.(io.Closer); ok {
+		for i, f := range lp.closem {
+			if f == fp {
+				lp.closem[i] = fp
+				return
+			}
 		}
+		lp.closem = append(lp.closem, reader)
 	}
-	lp.closem = append(lp.closem, reader)
 }
 
 func (lp *LineParse) Closem() {
@@ -11309,7 +11314,7 @@ func (self *Reposurgeon) DoStats(line string) bool {
 				blobs, commits, tags, resets,
 				rfc3339(repo.readtime))
 			if repo.sourcedir != "" {
-				parse.stdout.WriteString(fmt.Sprintf("  Loaded from %s\n", repo.sourcedir))
+				io.WriteString(parse.stdout, fmt.Sprintf("  Loaded from %s\n", repo.sourcedir))
 			}
 			//if repo.vcs {
 			//    parse.stdout.WriteString(polystr(repo.vcs) + "\n")
@@ -11786,19 +11791,22 @@ func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 				if !ok {
 					panic(throw("command", "unrecognized --format"))
 				}
-				srcname := parse.stdin.Name
-				// parse is redirected so this
-				// must be something besides
-				// os.Stdin, so we can close
-				// it and substitute another
-				// redirect
-				parse.stdin.Close()
+				srcname := "unknown"
+				if f, ok := parse.stdin.(*os.File); ok {
+					srcname = f.Name()
+					// parse is redirected so this
+					// must be something besides
+					// os.Stdin, so we can close
+					// it and substitute another
+					// redirect
+					f.Close()
+				}
 				command := fmt.Sprintf(infilter.importer, srcname)
 				reader, _, err := readFromProcess(command)
 				if err != nil {
 					panic(throw("command", "can't open filter: %v"))
 				}
-				//parse.stdin = reader	FIXME
+				parse.stdin = reader
 				break
 			}
 		}
