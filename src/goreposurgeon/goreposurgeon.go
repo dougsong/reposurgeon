@@ -3468,9 +3468,6 @@ func (reset *Reset) remember(repo *Repository, committish string, target *Commit
 		reset.committish = target.getMark()
 	} else {
 		reset.committish = committish
-		if reset.repo != nil && committish != "" {
-			reset.target = reset.repo.markToEvent(reset.committish).(*Commit)
-		}
 	}
 	if reset.target != nil {
 		reset.target.attach(reset)
@@ -6033,10 +6030,24 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			tag.legacyID = legacyID
 			sp.repo.addEvent(tag)
 		} else {
-			// Simply pass through any line we don't understand.
+			// Simply pass through any line we do not understand.
 			sp.repo.addEvent(newPassthrough(sp.repo, line))
 		}
 		baton.readProgress(sp.ccount, filesize)
+	}
+	for _, event := range sp.repo.events {
+		switch event.(type) {
+		case Reset:
+			reset := event.(*Reset)
+			if reset.committish != "" && reset.target == nil {
+				reset.target = sp.repo.markToEvent(reset.committish).(*Commit)
+			}
+		case Tag:
+			tag := event.(*Tag)
+			if tag.committish != "" && tag.target == nil {
+				tag.target = sp.repo.markToEvent(tag.committish).(*Commit)
+			}
+		}
 	}
 	if !sp.lastcookie.isEmpty() {
 		sp.repo.hint("", sp.lastcookie.implies(), false)
