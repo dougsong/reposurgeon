@@ -64,6 +64,7 @@ gosetup:
 	GOPATH=$(GOPATH) go get -u golang.org/x/text/encoding/ianaindex
 	GOPATH=$(GOPATH) go get -u gitlab.com/ianbruene/Kommandant
 	GOPATH=$(GOPATH) go get -u github.com/emirpasic/gods/sets/linkedhashset
+	GOPATH=$(GOPATH) go get -u github.com/anmitsu/go-shlex
 
 govet:
 	GOPATH=$(GOPATH) go vet repocutter
