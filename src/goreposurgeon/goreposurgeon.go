@@ -11551,17 +11551,34 @@ func (self *Reposurgeon) DoTip(lineIn string) bool {
 	return false
 }
 
-/*
-    func help_tags():
-        rs.helpOutput("""
+func (self *Reposurgeon) HelpTags() {
+	self.helpOutput(`
 Display tags and resets: three fields, an event number and a type and a name.
 Branch tip commits associated with tags are also displayed with the type
 field 'commit'. Supports > redirection.
-""")
-    func do_tags(self, line: str):
-        "Generate a human-friendly listing of tags and resets."
-        self.report_select(line, "tags", (screenwidth(),))
+`)
+}
 
+func (self *Reposurgeon) DoTags(lineIn string) bool {
+	f := func(p *LineParse, i int, e Event) string {
+		// this is pretty stupid; pretend you didn't see it
+		switch v := e.(type) {
+		case *Commit:
+			return v.tags(stringSet{}, i, 80) // screenwidth()
+		case *Reset:
+			return v.tags(stringSet{}, i, 80) // screenwidth()
+		case *Tag:
+			return v.tags(stringSet{}, i, 80) // screenwidth()
+		default:
+			return ""
+		}
+		return ""
+	}
+	self.reportSelect(lineIn, f)
+	return false
+}
+
+/*
     func help_stamp():
         rs.helpOutput("""
 Display full action stamps correponding to commits in a select.
