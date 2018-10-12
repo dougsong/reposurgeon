@@ -11013,8 +11013,8 @@ func (self *Reposurgeon) reportSelect(lineIn string, display func(*LineParse, in
 			self.selection, parse.line = selparser.parse(lineIn, len(repo.events))
 		}
 	}
-	for i, eventid := range self.selection {
-		summary := display(parse, i, repo.events[eventid])
+	for _, eventid := range self.selection {
+		summary := display(parse, eventid, repo.events[eventid])
 		if summary != "" {
 			if strings.HasSuffix(summary, "\n") {
 				fmt.Fprint(parse.stdout, summary)
