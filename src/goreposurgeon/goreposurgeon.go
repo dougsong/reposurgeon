@@ -4830,7 +4830,7 @@ func (commit *Commit) tip(_modifiers stringSet, eventnum int, cols int) string {
 	summary := fmt.Sprintf("%6d %s %6s ",
 		eventnum+1, commit.date().rfc3339(), commit.mark)
 	report := summary + commit.head()
-	if cols > 0 {
+	if cols > 0 && len(report) > cols {
 		report = report[:cols]
 	}
 	return report
@@ -11521,9 +11521,9 @@ func (self *Reposurgeon) DoList(lineIn string) bool {
 	self.reportSelect(lineIn, f)
 	return false
 }
-/*
-    func help_tip():
-        rs.helpOutput("""
+
+func (self *Reposurgeon) HelpTip() {
+	self.helpOutput(`
 Display the branch tip names associated with commits in the selection
 set.  These will not necessarily be the same as their branch fields
 (which will often be tag names if the repo contains either annotated
@@ -11535,11 +11535,23 @@ then if there is a child with a matching branch name its tip is the
 child's tip.  Otherwise this function throws a recoverable error.
 
 Supports > redirection.
-""")
-    func do_tip(self, line: str):
-        "Generate a human-friendly listing of objects."
-        self.report_select(line, "tip", (screenwidth(),))
+`)
+}
+// Generate a human-friendly listing of objects.
+func (self *Reposurgeon) DoTip(lineIn string) bool {
+	f := func(p *LineParse, i int, e Event) string {
+		c, ok := e.(*Commit)
+		if ok {
+			return c.tip(stringSet{}, i, 80) // screenwidth()
+		} else {
+			return ""
+		}
+	}
+	self.reportSelect(lineIn, f)
+	return false
+}
 
+/*
     func help_tags():
         rs.helpOutput("""
 Display tags and resets: three fields, an event number and a type and a name.
