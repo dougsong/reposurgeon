@@ -11466,20 +11466,25 @@ func (self *Reposurgeon) DoStats(line string) bool {
 	return false
 }
 
-/*
-    func help_count():
-        rs.helpOutput("""
+func (self *Reposurgeon) HelpCount() {
+	self.helpOutput(`
 Report a count of items in the selection set. Default set is everything
 in the currently-selected repo. Supports > redirection.
-""")
-    func do_count(self, line str):
-        if not self.chosen():
-            complain("no repo has been chosen.")
-            return
-        else if self.selection is None:
-            self.selection = self.chosen().all()
-parse := newLineParse(self, line, nil stringSet{"stdout"}) as parse:
-            parse.stdout.WriteString("%d\n" % len(self.selection))
+`)
+}
+func (self *Reposurgeon) DoCount(lineIn string) bool {
+	if self.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+	}
+	if self.selection == nil {
+		self.selection = self.chosen().all()
+	}
+	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+	defer parse.Closem()
+	fmt.Fprintf(parse.stdout, "%d\n", len(self.selection))
+	return false
+}
 
     func help_list():
         rs.helpOutput("""
