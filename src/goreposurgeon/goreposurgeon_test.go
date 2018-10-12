@@ -751,14 +751,14 @@ func TestFileOp(t *testing.T) {
 	assertEqual(t, "deleteme", fileop10.path)
 	assertEqual(t, line10+"\n", fileop10.String())
 
-	line11 := `R DRINKME EATME`
+	line11 := `R "DRINKME" "EATME"`
 	fileop11 := newFileOp(nil).parse(line11)
 	assertEqual(t, "R", fileop11.op)
 	assertEqual(t, "DRINKME", fileop11.source)
 	assertEqual(t, "EATME", fileop11.target)
 	assertEqual(t, line11+"\n", fileop11.String())
 
-	line12 := `C DRINKME EATME`
+	line12 := `C "DRINKME" "EATME"`
 	fileop12 := newFileOp(nil).parse(line12)
 	assertEqual(t, "C", fileop12.op)
 	assertEqual(t, "DRINKME", fileop12.source)

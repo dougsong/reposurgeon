@@ -86,6 +86,7 @@ import (
 	"net/mail"
 	"os"
 	"os/exec"
+	"os/user"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -3723,7 +3724,7 @@ func (fileop *FileOp) relevant(other *FileOp) bool {
 // String dumps this fileop in import-stream format
 func (fileop FileOp) String() string {
 	quotifyIfNeeded := func(cpath string) string {
-		if len(strings.Split(cpath, " \t")) > 1 {
+		if len(strings.Fields(cpath)) > 1 {
 			return strconv.Quote(cpath)
 		}
 		return cpath
@@ -3747,9 +3748,8 @@ func (fileop FileOp) String() string {
 	} else if fileop.op == opD {
 		return "D " + quotifyIfNeeded(fileop.path) + "\n"
 	} else if fileop.op == opR || fileop.op == opC {
-		return fmt.Sprintf(`%s %s %s`, fileop.op,
-			quotifyIfNeeded(fileop.source),
-			quotifyIfNeeded(fileop.target)) + "\n"
+		return fmt.Sprintf(`%s %q %q`, fileop.op,
+			fileop.source, fileop.target) + "\n"
 	} else if fileop.op == deleteall {
 		return fileop.op + "\n"
 	}
@@ -8742,7 +8742,7 @@ func readRepo(source, options, preferred):
         os.Chdir(here)
     return repo
 
-func rebuild_repo(repo, target, options, preferred):
+func rebuildRepo(repo, target, options, preferred):
     "Rebuild a repository from the captured state."
     if not target and repo.sourcedir:
         target = repo.sourcedir
@@ -8891,6 +8891,24 @@ func readFromProcess(command string) (io.ReadCloser, *exec.Cmd, error) {
 	}
 	if debugEnable(debugCOMMANDS) {
 		fmt.Fprintf(os.Stderr, "%s: reading from '%s'\n",
+			rfc3339(time.Now()), command)
+	}
+	err = cmd.Start()
+	if err != nil {
+		return nil, nil, err
+	}
+	// Pass back cmd so we can call Wait on it and get the error status.
+	return stdout, cmd, err
+}
+
+func writeToProcess(command string) (io.WriteCloser, *exec.Cmd, error) {
+	cmd := exec.Command("sh", "-c", command+" 2>&1")
+	stdout, err := cmd.StdinPipe()
+	if err != nil {
+		return nil, nil, err
+	}
+	if debugEnable(debugCOMMANDS) {
+		fmt.Fprintf(os.Stderr, "%s: writing to '%s'\n",
 			rfc3339(time.Now()), command)
 	}
 	err = cmd.Start()
@@ -10300,7 +10318,9 @@ func newLineParseInner(line string, wc func(filename string), capabilities strin
 					return nil, errors.New(fmt.Sprintf("can't redirect output to %s, which is a directory", lp.outfile))
 				}
 			}
-			wc(lp.outfile) // flush the outfile, if it happens to be a file that Reposurgeon has already opened
+			if wc != nil {
+				wc(lp.outfile) // flush the outfile, if it happens to be a file that Reposurgeon has already opened
+			}
 			mode := os.O_WRONLY
 			if match[2*1+1]-match[2*1+0] > 1 {
 				mode |= os.O_APPEND
@@ -10397,6 +10417,8 @@ type Reposurgeon struct {
 	callstack  [][]string
 	profileLog string
 	selection  orderedIntSet
+	history    []string
+	preferred  *VCS
 }
 
 // SetCore is a Kommandant housekeeping hook, not yet used
@@ -11164,29 +11186,48 @@ Tab-completes on the list of defined names.
             del repo.assignments[name]
         else:
             raise Recoverable("%s has not been set" % name)
+*/
 
-    func help_names():
-        rs.helpOutput("""
+func (rs *Reposurgeon) help_names() {
+    rs.helpOutput(`
 List all known symbolic names of branches and tags. Supports > redirection.
-""")
-    func do_names(self, line str):
-        if not self.chosen():
-            complain("no repo has been chosen.")
-            return
-        with newLineParse(self, line, nil, stringSet{"stdout"}) as parse:
-            branches = list(self.chosen().branchset())
-            branches.sort()
-            for branch in branches:
-                parse.stdout.WriteString("branch %s\n" % branch)
-            for event in self.chosen():
-                if isinstance(event, Tag):
-                    parse.stdout.WriteString("tag    %s\n" % event.name)
+`)
+}
+func (rs *Reposurgeon)  DoNames(line string) (stopOut bool) {
+	if rs.chosen() == nil{
+		complain("no repo has been chosen.")
+		return
+	}
+	parse := newLineParse(line, nil, stringSet{"stdout"})
+	defer parse.Closem()
+	branches := rs.chosen().branchset()
+	//sortbranches.Sort()
+	for _, branch := range branches {
+		fmt.Fprintf(parse.stdout, "branch %s\n", branch)
+	}
+	for _, event := range rs.chosen().events {
+		if tag, ok := event.(*Tag); ok {
+			fmt.Fprintf(parse.stdout, "tag    %s\n", tag.name)
 
-    func do_history(self, _line):
-        "Dump your command list from this session so far."
-        for line in self.history:
-            os.Stdout.WriteString(line + "\n")
+		}
+	}
+	return false
+}
 
+func (rs *Reposurgeon) HelpHistory() {
+	rs.helpOutput(`
+Dump your command list from this session so far.
+`)
+}
+// FIXME: Needs real post-command hook.
+func (rs *Reposurgeon) DoHistory(_line string) (stopOut bool) {
+	for _, line := range rs.history {
+		os.Stdout.WriteString(line + "\n")
+	}
+	return false
+}
+
+/*
     func do_coverage(self, unused):
         "Display the coverage-case set (developer instrumentation)."
         assert unused is not None   # pacify pylint
@@ -11355,7 +11396,7 @@ event numbers, the second a timestamp in local time. If the repository
 has legacy IDs, they will be displayed in the third column. The
 leading portion of the comment follows. Supports > redirection.
 """)
-    func do_list(self, line str):
+    func do_list(self, line: str):
         "Generate a human-friendly listing of objects."
         self.report_select(line, "lister", (screenwidth(),))
 
@@ -11373,7 +11414,7 @@ child's tip.  Otherwise this function throws a recoverable error.
 
 Supports > redirection.
 """)
-    func do_tip(self, line str):
+    func do_tip(self, line: str):
         "Generate a human-friendly listing of objects."
         self.report_select(line, "tip", (screenwidth(),))
 
@@ -11383,7 +11424,7 @@ Display tags and resets: three fields, an event number and a type and a name.
 Branch tip commits associated with tags are also displayed with the type
 field 'commit'. Supports > redirection.
 """)
-    func do_tags(self, line str):
+    func do_tags(self, line: str):
         "Generate a human-friendly listing of tags and resets."
         self.report_select(line, "tags", (screenwidth(),))
 
@@ -11406,7 +11447,7 @@ storage size: intended mainly as a way to get information on how to
 efficiently partition a repository that has become large enough to be
 unwieldy. Supports > redirection.
 """)
-    func do_sizes(self, line str):
+    func do_sizes(self, line: str):
         "Report branch relative sizes."
         if not self.chosen():
             complain("no repo has been chosen.")
@@ -11451,7 +11492,7 @@ action-stamp collisions.
 
 Supports > redirection.
 """)
-    func do_lint(self, line str):
+    func do_lint(self, line: str):
         "Look for lint in a repo."
         if not self.chosen():
             complain("no repo has been chosen.")
@@ -11551,7 +11592,7 @@ preference to the type of that repository.
 """)
     func complete_prefer(self, text, _line, _begidx, _endidx):
         return sorted([x.name for x in vcstypes if x.importer and x.name.startswith(text)])
-    func do_prefer(self, line str):
+    func do_prefer(self, line: str):
         "Report or select the preferred repository type."
         if not line:
             for vcs in vcstypes:
@@ -11593,7 +11634,7 @@ stream.
 """)
     func complete_sourcetype(self, text, _line, _begidx, _endidx):
         return sorted([x.name for x in vcstypes if x.exporter and x.name.startswith(text)])
-    func do_sourcetype(self, line str):
+    func do_sourcetype(self, line: str):
         "Report or select the current repository's source type."
         if not self.chosen():
             complain("no repo has been chosen.")
@@ -11832,7 +11873,7 @@ func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 				if !ok {
 					panic(throw("command", "unrecognized --format"))
 				}
-				srcname := "unknown"
+				srcname := "unknown-in"
 				if f, ok := parse.stdin.(*os.File); ok {
 					srcname = f.Name()
 				}
@@ -11886,9 +11927,8 @@ func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 	return false
 }
 
-/*
-    func help_write():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpWrite() {
+        rs.helpOutput(`
 Dump a fast-import stream representing selected events to standard
 output (if second argument is empty or '-') or via > redirect to a file.
 Alternatively, if there ia no redirect and the argument names a
@@ -11901,40 +11941,66 @@ preferred repository type cannot digest them.
 
 The --fossil option can be used to write out binary repository dump files.
 For a list of supported types, invoke the 'prefer' command.
-""")
-    func do_write(self, line str):
-        "Stream out the results of repo surgery."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        if self.selection is None:
-            self.selection = self.chosen().all()
-        if line:
-            line = os.path.expanduser(line)
-        with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
-            # This is slightly asymmetrical with the read side, which
-            # interprets an empty argument list as '.'
-            if parse.redirected or not parse.line:
-                for option in parse.options:
-                    if option.startswith("--format="):
-                        vcs = option.split("=")[1]
-                        try:
-                            outfilter = fileFilters[vcs][1]
-                            dstname = parse.stdout.name
-                            # parse is redirected so this must be
-                            # something besides os.Stdout, so we can
-                            # close it and substitute another redirect
-                            parse.stdout.close()
-                            parse.stdout = make_wrapper(popenOrDie(outfilter % dstname, mode="w").open())
-                        except KeyError:
-                            raise Recoverable("unrecognized --format")
-                        break
-                self.chosen().fastExport(self.selection, parse.stdout, parse.options, progress=(verbose==1 and not quiet), target=self.preferred)
-            else if os.path.isdir(parse.line):
-                rebuild_repo(self.chosen(), parse.line, parse.options, self.preferred)
-            else:
-                raise Recoverable("write no longer takes a filename argument - use > redirection instead")
+`)
+    }
+// Stream out the results of repo surgery.
+func (rs *Reposurgeon) DoWrite(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+	}
+	if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+	}
+	// Python also handled prefix ~user
+	if strings.HasPrefix(line, "~/") {
+		usr, err := user.Current()
+		if err == nil {
+			line = usr.HomeDir  + line[1:]
+		}
+	}
+	parse := newLineParse(line, nil, stringSet{"stdout"})
+	defer parse.Closem()
+	// This is slightly asymmetrical with the read side, which
+	// interprets an empty argument list as '.'
+	if parse.redirected || parse.line == ""{
+		for _, option := range parse.options {
+			if strings.HasPrefix(option, "--format=") {
+				vcs := strings.Split(option, "=")[1]
+				outfilter, ok := fileFilters[vcs]
+				if !ok {
+					panic(throw("command", "unrecognized --format"))
+				}
+				srcname := "unknown-out"
+				if f, ok := parse.stdout.(*os.File); ok {
+					srcname = f.Name()
+				}
+				// parse is redirected so this
+				// must be something besides
+				// os.Stdout, so we can close
+				// it and substitute another
+				// redirect
+				parse.stdout.Close()
+				command := fmt.Sprintf(outfilter.exporter, srcname)
+				writer, _, err := writeToProcess(command)
+				if err != nil {
+					panic(throw("command", "can't open output filter: %v"))
+				}
+				parse.stdout = writer
+				break
+			}
+		}
+		rs.chosen().fastExport(rs.selection, parse.stdout, parse.options, rs.preferred, (verbose==1 && !quiet))
+		// FIXME: Needs rebuildRepo
+	//} else if os.path.isdir(parse.line) {
+	//	rebuildRepo(rs.chosen(), parse.line, parse.options, rs.preferred)
+	} else {
+		panic(throw("command", "write no longer takes a filename argument - use > redirection instead"))
+	}
+	return false
+}
 
+/*
     func help_inspect():
         rs.helpOutput("""
 Dump a fast-import stream representing selected events to standard
@@ -12073,7 +12139,7 @@ its contents are backed up to a save directory.
         if self.selection is not None:
             panic(throw("command", "rebuild does not take a selection set"))
         with RepoSurgeon.LineParse(self, line) as parse:
-            rebuild_repo(self.chosen(), parse.line, parse.options, self.preferred)
+            rebuildRepo(self.chosen(), parse.line, parse.options, self.preferred)
 
     #
     # Editing commands
@@ -15631,12 +15697,13 @@ func main() {
 	rs := new(Reposurgeon)
 	interpreter := kommandant.NewKommandant(rs, "", nil, nil)
 
-	defer func() {
-		if e := recover(); e != nil {
-			fmt.Println("reposurgeon: panic recovery: ", e)
-		}
-		go rs.cleanup()
-	}()
+	// FIXME: restore this when code is more stable
+	//defer func() {
+	//	if e := recover(); e != nil {
+	//		fmt.Println("reposurgeon: panic recovery: ", e)
+	//	}
+	//	go rs.cleanup()
+	//}()
 
 	interpreter.Prompt = "reposurgeon% "
 	if len(os.Args[1:]) == 0 {
