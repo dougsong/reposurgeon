@@ -20,7 +20,7 @@ import (
 
 const linesep = "\n"
 
-var doc = []byte(`repocutter - stream surgery on SVN dump files
+var doc = `repocutter - stream surgery on SVN dump files
 general usage: repocutter [-q] [-r SELECTION] SUBCOMMAND
 
 In all commands, the -r (or --range) option limits the selection of revisions
@@ -55,7 +55,7 @@ Available subcommands:
 Translated from the 2017-12-13 version of repocutter,
 which began life as 'svncutter' in 2009.  The obsolete 
 'squash' command has been omitted.
-`)
+`
 
 var debug = false
 
@@ -1411,7 +1411,9 @@ func main() {
 		swap(NewDumpfileSource(input, baton), selection)
 	} else if flag.Arg(0) == "help" {
 		if len(flag.Args()) == 1 {
-			os.Stdout.Write(doc)
+			os.Stdout.WriteString(doc)
+		} else if cdoc, ok := helpdict[flag.Arg(1)]; ok {
+			os.Stdout.WriteString(cdoc)
 		} else {
 			fmt.Fprintf(os.Stderr, "repocutter: no such command\n")
 			os.Exit(1)
