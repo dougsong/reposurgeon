@@ -10997,20 +10997,18 @@ func (self *Reposurgeon) PostCommand(stop bool, lineIn string) bool {
 //
 
 // Generate a repository report on all objects with a specified display method.
-func (self *Reposurgeon) reportSelect(lineIn string, display func(*LineParse, int, Event) string) {
+func (self *Reposurgeon) reportSelect(parse *LineParse, display func(*LineParse, int, Event) string) {
 	if self.chosen() == nil {
 		self.cmd.Output("no repo has been chosen.")
 		return
 	}
-	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
-	defer parse.Closem()
 	repo := self.chosen()
 	if self.selection == nil {
 		if parse.line == "" {
 			self.selection = repo.all()
 		} else if self.selection == nil {
 			selparser := new(SelectionParser)
-			self.selection, parse.line = selparser.parse(lineIn, len(repo.events))
+			self.selection, parse.line = selparser.parse(parse.line, len(repo.events))
 		}
 	}
 	for _, eventid := range self.selection {
@@ -11510,6 +11508,8 @@ leading portion of the comment follows. Supports > redirection.
 }
 // Generate a human-friendly listing of objects.
 func (self *Reposurgeon) DoList(lineIn string) bool {
+	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+	defer parse.Closem()
 	f := func(p *LineParse, i int, e Event) string {
 		c, ok := e.(*Commit)
 		if ok {
@@ -11518,7 +11518,7 @@ func (self *Reposurgeon) DoList(lineIn string) bool {
 			return ""
 		}
 	}
-	self.reportSelect(lineIn, f)
+	self.reportSelect(parse, f)
 	return false
 }
 
@@ -11539,6 +11539,8 @@ Supports > redirection.
 }
 // Generate a human-friendly listing of objects.
 func (self *Reposurgeon) DoTip(lineIn string) bool {
+	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+	defer parse.Closem()
 	f := func(p *LineParse, i int, e Event) string {
 		c, ok := e.(*Commit)
 		if ok {
@@ -11547,7 +11549,7 @@ func (self *Reposurgeon) DoTip(lineIn string) bool {
 			return ""
 		}
 	}
-	self.reportSelect(lineIn, f)
+	self.reportSelect(parse, f)
 	return false
 }
 
@@ -11560,6 +11562,8 @@ field 'commit'. Supports > redirection.
 }
 
 func (self *Reposurgeon) DoTags(lineIn string) bool {
+	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+	defer parse.Closem()
 	f := func(p *LineParse, i int, e Event) string {
 		// this is pretty stupid; pretend you didn't see it
 		switch v := e.(type) {
@@ -11574,7 +11578,7 @@ func (self *Reposurgeon) DoTags(lineIn string) bool {
 		}
 		return ""
 	}
-	self.reportSelect(lineIn, f)
+	self.reportSelect(parse, f)
 	return false
 }
 
@@ -11586,6 +11590,8 @@ Supports > redirection.
 `)
 }
 func (self *Reposurgeon) DoStamp(lineIn string) bool {
+	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+	defer parse.Closem()
 	f := func(p *LineParse, i int, e Event) string {
 		// this is pretty stupid; pretend you didn't see it
 		switch v := e.(type) {
@@ -11598,7 +11604,7 @@ func (self *Reposurgeon) DoStamp(lineIn string) bool {
 		}
 		return ""
 	}
-	self.reportSelect(lineIn, f)
+	self.reportSelect(parse, f)
 	return false
 }
 
