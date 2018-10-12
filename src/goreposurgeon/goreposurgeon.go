@@ -2518,6 +2518,17 @@ func (msg *MessageBlock) deleteHeader(hd string) {
 	msg.hdnames.Remove(hd)
 }
 
+func (msg *MessageBlock) filterHeaders(regexp *regexp.Regexp) {
+	// because iterator invalidation
+	tmp := make([]string, len(msg.hdnames))
+	copy(tmp, msg.hdnames)
+	for _, key := range tmp {
+		if !regexp.MatchString(key+":") {
+			msg.deleteHeader(key)
+		}
+	}
+}
+
 func (msg *MessageBlock) String() string {
 	hd := ""
 	for _, k := range msg.hdnames {
@@ -3246,13 +3257,8 @@ func (t *Tag) emailOut(modifiers stringSet, eventnum int,
 		complain("in tag %s, comment was not LF-terminated.", t.name)
 	}
 	if filterRegexp != nil {
-		for key := range msg.header {
-			if len(filterRegexp.Find([]byte(key+":"))) > 0 {
-				msg.deleteHeader(key)
-			}
-		}
+		msg.filterHeaders(filterRegexp)
 	}
-
 	return msg.String()
 }
 
@@ -4080,13 +4086,11 @@ func (commit *Commit) emailOut(modifiers stringSet,
 		complain("in commit %s, comment was not LF-terminated.",
 			commit.mark)
 	}
+
 	if filterRegexp != nil {
-		for _, key := range msg.hdnames {
-			if len(filterRegexp.Find([]byte(key+":"))) > 0 {
-				msg.deleteHeader(key)
-			}
-		}
+		msg.filterHeaders(filterRegexp)
 	}
+
 	return msg.String()
 }
 
@@ -10400,18 +10404,20 @@ func (lp *LineParse) Tokens() []string {
 	return strings.Fields(lp.line)
 }
 
-func (lp *LineParse) OptVal(opt string) (val string) {
+func (lp *LineParse) OptVal(opt string) (val string, present bool) {
 	for _, option := range lp.options {
 		if strings.Contains(option, "=") {
 			parts := strings.Split(option, "=")
 			if len(parts) > 1 && parts[0] == opt {
-				return parts[1]
+				return parts[1], true
 			} else {
-				return ""
+				return "", true
 			}
+		} else if option == opt {
+			return "", true
 		}
 	}
-	return ""
+	return "", false
 }
 
 func (lp *LineParse) RedirectInput(reader io.Closer) {
@@ -12312,12 +12318,13 @@ its contents are backed up to a save directory.
             panic(throw("command", "rebuild does not take a selection set"))
         with RepoSurgeon.LineParse(self, line) as parse:
             rebuildRepo(self.chosen(), parse.line, parse.options, self.preferred)
+*/
 
-    #
-    # Editing commands
-    #
-    func help_mailbox_out():
-        rs.helpOutput("""
+//
+// Editing commands
+//
+func (self *Reposurgeon) HelpMailboxOut() {
+	self.helpOutput(`
 Emit a mailbox file of messages in RFC822 format representing the
 contents of repository metadata. Takes a selection set; members of the set
 other than commits, annotated tags, and passthroughs are ignored (that
@@ -12326,26 +12333,48 @@ is, presently, blobs and resets). Supports > redirection.
 May have an option --filter, followed by = and a /-enclosed regular expression.
 If this is given, only headers with names matching it are emitted.  In this
 context the name of the header includes its trailing colon.
-""")
-    func do_mailbox_out(self, line str):
-        "Generate a mailbox file representing object metadata."
-        filterRegexp = None
-        opts = shlex.split(line)
-        for token in opts:
-            if token.startswith("--filter="):
-                token = token[9:]
-                if len(token) < 2 or token[0] != '/' or token[-1] != '/':
-                    raise Recoverable("malformed filter option in mailbox_out")
-                try:
-                    filterRegexp = regexp.MustCompile(token[1:-1].encode('ascii'))
-                except sre_constants.error as e:
-                    raise Recoverable("filter compilation error - %s" % e)
-            else if token.startswith(">"):
-                continue
-            else:
-                raise Recoverable("unknown option %s in mailbox_out" % token)
-        self.report_select(line, "emailOut", (filterRegexp,))
+`)
+}
 
+// Generate a mailbox file representing object metadata.
+func (self *Reposurgeon) DoMailboxOut(lineIn string) bool {
+	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+	defer parse.Closem()
+
+	var filterRegexp *regexp.Regexp
+	s, present := parse.OptVal("filter")
+	if present {
+		if len(s) >= 2 && strings.HasPrefix(s, "/") && strings.HasSuffix(s, "/") {
+			var err error
+			filterRegexp, err = regexp.Compile(s[1:len(s)-1])
+			if err != nil {
+				self.cmd.Output("malformed filter option in mailbox_out\n")
+				return false
+			}
+		} else {
+			self.cmd.Output("malformed filter option in mailbox_out\n")
+			return false
+		}
+	}
+	f := func(p *LineParse, i int, e Event) string {
+		// this is pretty stupid; pretend you didn't see it
+		switch v := e.(type) {
+		case *Passthrough:
+			return v.emailOut(stringSet{}, i, filterRegexp)
+		case *Commit:
+			return v.emailOut(stringSet{}, i, filterRegexp)
+		case *Tag:
+			return v.emailOut(stringSet{}, i, filterRegexp)
+		default:
+			return ""
+		}
+		return ""
+	}
+	self.reportSelect(parse, f)
+	return false
+}
+
+/*
     func help_mailbox_in():
         rs.helpOutput("""
 Accept a mailbox file of messages in RFC822 format representing the
