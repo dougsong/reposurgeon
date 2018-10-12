@@ -15522,7 +15522,10 @@ remaining arguments are available to the command logic.
 `)
 }
 func (rs *Reposurgeon) HelpFunctions() {
-	docstrings := map[string]string{"foo": "this is just a test function; it doesn't actually do anything"}
+	//FIXME: This code is incorrect as the handler functions are no longer
+	//methods of the reposurgeon class.  We're keeping it around for the
+	//moment as a worked example of reflection.
+	docstrings := map[string]string{}
 	rs.helpOutput("The following special selection functions are available:\n")
 	t := reflect.TypeOf(rs)
 	for i := 0; i < t.NumMethod(); i++ {
