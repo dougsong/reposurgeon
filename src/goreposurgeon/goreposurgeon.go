@@ -104,6 +104,7 @@ import (
 	kommandant "gitlab.com/ianbruene/Kommandant"
 	terminal "golang.org/x/crypto/ssh/terminal"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
+	shlex "github.com/anmitsu/go-shlex"
 )
 
 const version = "4.0-pre"
@@ -10438,11 +10439,13 @@ type Reposurgeon struct {
 	history    []string
 	preferred  *VCS
 	startTime  time.Time
+	prompt_format string
 }
 
 func newReposurgeon() *Reposurgeon {
 	rs := new(Reposurgeon)
 	rs.startTime = time.Now()
+	rs.prompt_format = "reposurgeon% "
 	return rs
 }
 
@@ -10534,15 +10537,40 @@ developers.
             globalOptions[option] = []
         globalOptions['svn_branchify'] = ['trunk', 'tags/*', 'branches/*', '*']
         globalOptions['svn_branchify_mapping'] = []
-    #
-    # Housekeeping hooks.
-    #
+*/
+
+//
+// Housekeeping hooks.
+//
+/*
     func onecmd(self, line str):
         "Execute one command, fielding interrupts for recoverable exceptions."
         try:
             cmd.Cmd.onecmd(self, line)
         except Recoverable as e:
             complain(e.msg)
+*/
+
+func (self *Reposurgeon) PreCommand(lineIn string) (lineOut string) {
+	if lineIn != "" {
+		self.history = append(self.history, lineIn)
+	}
+
+	return lineIn
+}
+
+func (self *Reposurgeon) PostCommand(stop bool, lineIn string) bool {
+	var chosen_name string = ""
+	if self.chosen() != nil {
+		chosen_name = self.chosen().name
+	}
+	replacer := strings.NewReplacer("{chosen}", chosen_name)
+	self.cmd.Prompt = replacer.Replace(self.prompt_format)
+
+	return stop
+}
+
+/*
     func postcmd(self, _unused, line):
         try:
             self.prompt = self.prompt_format % {"chosen":self.chosen() and self.chosen().name}
@@ -15435,31 +15463,38 @@ func (rs *Reposurgeon) DoExit(_line string) (stopOut bool) {
 	announce(debugSHOUT, fmt.Sprintf("exiting, elapsed time %v.", time.Now().Sub(rs.startTime)))
 	return true
 }
-/*
-    #
-    # Prompt customization
-    #
-    func help_prompt():
-        rs.helpOutput("""
+
+//
+// Prompt customization
+//
+func (self *Reposurgeon) HelpPrompt() {
+	self.helpOutput(`
 Set the command prompt format to the value of the command line; with
-an empty command line, display it. The prompt format is evaluated in Python
-after each command with the following dictionary substitutions:
+an empty command line, display it. The prompt format is evaluated
+after each command with the following substitutions:
 
-chosen: The name of the selected repository, or None if none currently selected.
+{chosen}: The name of the selected repository, or the empty string if
+          no repository is currently selected.
 
-Thus, one useful format might be 'rs[%(chosen)s]%% '
+Thus, one useful format might be 'rs[{chosen}]% '.
 
-More format items may be added in the future.  The default prompt corresponds
-to the format 'reposurgeon%% '. The format line is evaluated with shell quotng
-of tokens, so that spaces can be included.
-""")
-    func do_prompt(self, line str):
-        if line:
-            self.prompt_format = " ".join(shlex.split(line))
-        else:
-            os.Stdout.WriteString("prompt = %s\n" % self.prompt_format)
-
-*/
+More format items may be added in the future.  The default prompt
+corresponds to the format 'reposurgeon% '. The format line is
+evaluated with shell quoting of tokens, so that spaces can be
+included.
+`)
+}
+func (self *Reposurgeon) DoPrompt(lineIn string) bool {
+	if lineIn != "" {
+		words, err := shlex.Split(lineIn, true)
+		if err != nil {
+			self.cmd.Output("oops")
+			return false
+		}
+		self.prompt_format = strings.Join(words, " ")
+	}
+	return false
+}
 
 //
 // On-line help and instrumentation
