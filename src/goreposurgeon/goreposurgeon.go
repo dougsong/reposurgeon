@@ -4000,7 +4000,7 @@ func (commit *Commit) lister(_modifiers stringSet, eventnum int, cols int) strin
 		summary += fmt.Sprintf("%6s ", legacy)
 	}
 	report := summary + topline
-	if cols > 0 {
+	if cols > 0 && len(report) > cols {
 		report = report[:cols]
 	}
 	return report
@@ -10990,28 +10990,42 @@ func (self *Reposurgeon) PostCommand(stop bool, lineIn string) bool {
                     result.add(ind)
                     queue.append(commit)
         return result
+*/
 
-    #
-    # Helpers
-    #
-    func report_select(self, line, method, optargs=()):
-        "Generate a repository report on all objects with a specified method."
-        if not self.chosen():
-            complain("no repo has been chosen.")
-            return
-        with newLineParse(self, line, nil, stringSet{"stdout"}) as parse:
-            if self.selection is None and parse.line.strip():
-                parse.line = self.set_selection_set(parse.line)
-            else if self.selection is None:
-                self.selection = self.chosen().all()
-            for i, event in self.selected():
-                if hasattr(event, method):
-                    summary = getattr(event, method)(*((parse, i,)+optargs))
-                    if summary:
-                        if summary.endswith("\n"):
-                            parse.stdout.WriteString(summary)
-                        else:
-                            parse.stdout.WriteString(summary + "\n")
+//
+// Helpers
+//
+
+// Generate a repository report on all objects with a specified display method.
+func (self *Reposurgeon) reportSelect(lineIn string, display func(*LineParse, int, Event) string) {
+	if self.chosen() == nil {
+		self.cmd.Output("no repo has been chosen.")
+		return
+	}
+	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+	defer parse.Closem()
+	repo := self.chosen()
+	if self.selection == nil {
+		if parse.line == "" {
+			self.selection = repo.all()
+		} else if self.selection == nil {
+			selparser := new(SelectionParser)
+			self.selection, parse.line = selparser.parse(lineIn, len(repo.events))
+		}
+	}
+	for i, eventid := range self.selection {
+		summary := display(parse, i, repo.events[eventid])
+		if summary != "" {
+			if strings.HasSuffix(summary, "\n") {
+				fmt.Fprint(parse.stdout, summary)
+			} else {
+				fmt.Fprintln(parse.stdout, summary)
+			}
+		}
+	}
+}
+
+/*
     @staticmethod
     func pop_token(line):
         "Grab a whitespace-delimited token from the front of the line."
@@ -11486,17 +11500,28 @@ func (self *Reposurgeon) DoCount(lineIn string) bool {
 	return false
 }
 
-    func help_list():
-        rs.helpOutput("""
+func (self *Reposurgeon) HelpList() {
+	self.helpOutput(`
 Display commits in a human-friendly format; the first column is raw
 event numbers, the second a timestamp in local time. If the repository
 has legacy IDs, they will be displayed in the third column. The
 leading portion of the comment follows. Supports > redirection.
-""")
-    func do_list(self, line: str):
-        "Generate a human-friendly listing of objects."
-        self.report_select(line, "lister", (screenwidth(),))
-
+`)
+}
+// Generate a human-friendly listing of objects.
+func (self *Reposurgeon) DoList(lineIn string) bool {
+	f := func(p *LineParse, i int, e Event) string {
+		c, ok := e.(*Commit)
+		if ok {
+			return c.lister(stringSet{}, i, 80) // screenwidth()
+		} else {
+			return ""
+		}
+	}
+	self.reportSelect(lineIn, f)
+	return false
+}
+/*
     func help_tip():
         rs.helpOutput("""
 Display the branch tip names associated with commits in the selection
