@@ -2120,9 +2120,9 @@ func newBaton(prompt string, endmsg string, enable bool) *Baton {
 	me.endmsg = endmsg
 	if enable {
 		me.stream = os.Stdout
-		me.stream.Write([]byte(me.prompt + "...[\b"))
+		me.stream.WriteString(me.prompt + "...[\b")
 		if me.isatty() {
-			me.stream.Write([]byte(" \b"))
+			me.stream.WriteString(" \b")
 		}
 		me.counter = 0
 		me.starttime = time.Now()
@@ -2146,7 +2146,7 @@ func (baton *Baton) bumpcounter() {
 	if baton.isatty() {
 		if baton.countfmt != "" {
 			update := fmt.Sprintf(baton.countfmt, baton.counter)
-			baton.stream.Write([]byte(update + strings.Repeat("\b", len(update))))
+			baton.stream.WriteString(update + strings.Repeat("\b", len(update)))
 			//baton.stream.Flush()
 		} else {
 			baton.twirl("")
@@ -2158,7 +2158,7 @@ func (baton *Baton) bumpcounter() {
 func (baton *Baton) endcounter() {
 	if baton.stream != nil {
 		w := len(fmt.Sprintf(baton.countfmt, baton.counter))
-		baton.stream.Write([]byte(strings.Repeat(" ", w) + strings.Repeat("\b", w)))
+		baton.stream.WriteString(strings.Repeat(" ", w) + strings.Repeat("\b", w))
 		//baton.stream.Flush()
 	}
 	baton.countfmt = ""
@@ -2170,15 +2170,15 @@ func (baton *Baton) twirl(ch string) {
 		return
 	}
 	if baton.erase {
-		baton.stream.Write([]byte(strings.Repeat("\b", baton.lastlen)))
-		baton.stream.Write([]byte(strings.Repeat(" ", baton.lastlen)))
-		baton.stream.Write([]byte(strings.Repeat("\b", baton.lastlen)))
+		baton.stream.WriteString(strings.Repeat("\b", baton.lastlen))
+		baton.stream.WriteString(strings.Repeat(" ", baton.lastlen))
+		baton.stream.WriteString(strings.Repeat("\b", baton.lastlen))
 		baton.erase = true
 	}
 	if baton.isatty() {
 		if ch != "" {
 			baton.lastlen = len(ch)
-			baton.stream.Write([]byte(ch))
+			baton.stream.WriteString(ch)
 			//baton.stream.Flush()
 			baton.erase = strings.Contains(ch, "%")
 			if baton.erase {
@@ -2188,11 +2188,11 @@ func (baton *Baton) twirl(ch string) {
 			baton.lastlen = 1
 			baton.erase = false
 			if baton.counter > 0 && (baton.counter%(100*1000)) == 0 {
-				baton.stream.Write([]byte("!"))
+				baton.stream.WriteString("!")
 			} else if baton.counter > 0 && (baton.counter%(10*1000)) == 0 {
-				baton.stream.Write([]byte("*"))
+				baton.stream.WriteString("*")
 			} else if baton.counter > 0 && (baton.counter%(1*1000)) == 0 {
-				baton.stream.Write([]byte("+"))
+				baton.stream.WriteString("+")
 			} else {
 				baton.stream.Write([]byte{"-/|\\"[baton.counter%4]})
 				baton.erase = true
@@ -2207,8 +2207,8 @@ func (baton *Baton) exit(override string) {
 		baton.endmsg = override
 	}
 	if baton.stream != nil {
-		baton.stream.Write([]byte(fmt.Sprintf("]\b...(%s) %s.\n",
-			time.Since(baton.starttime), baton.endmsg)))
+		fmt.Fprintf(baton.stream, "]\b...(%s) %s.\n",
+			time.Since(baton.starttime), baton.endmsg)
 	}
 }
 
@@ -2315,13 +2315,13 @@ func nuke(directory string, legend string) {
 
 func complain(msg string, args ...interface{}) {
 	content := fmt.Sprintf(msg, args...)
-	os.Stderr.Write([]byte("reposurgeon: " + content + "\n"))
+	os.Stderr.WriteString("reposurgeon: " + content + "\n")
 }
 
 func announce(lvl int, msg string, args ...interface{}) {
 	if debugEnable(lvl) {
 		content := fmt.Sprintf(msg, args...)
-		os.Stdout.Write([]byte("reposurgeon: " + content + "\n"))
+		os.Stdout.WriteString("reposurgeon: " + content + "\n")
 	}
 }
 
@@ -4519,10 +4519,10 @@ func (commit *Commit) cliques() map[string][]int {
 // fileopDump reports file ops without data or inlines; used for debugging only.
 func (commit *Commit) fileopDump() {
 	banner := fmt.Sprintf("commit %d, mark %s:\n", commit.repo.find(commit.mark)+1, commit.mark)
-	os.Stdout.Write([]byte(banner))
+	os.Stdout.WriteString(banner)
 	for i, op := range commit.operations() {
 		report := fmt.Sprintf("%d: %-20s\n", i, op.String())
-		os.Stdout.Write([]byte(report))
+		os.Stdout.WriteString(report)
 	}
 }
 
@@ -4786,7 +4786,7 @@ func (commit *Commit) checkout(directory string) string {
 					if err4 != nil {
 						panic(fmt.Errorf("File creation failed during checkout: %v", err4))
 					}
-					file.Write([]byte(blob.getContent()))
+					file.WriteString(blob.getContent())
 					file.Close()
 				}
 			}
@@ -5101,7 +5101,7 @@ func captureFromProcess(command string) (string, error) {
 	cmd := exec.Command("sh", "-c", command)
 	content, err := cmd.CombinedOutput()
 	if debugEnable(debugCOMMANDS) {
-		os.Stderr.Write([]byte(content))
+		os.Stderr.Write(content)
 	}
 	return string(content), err
 }
@@ -6789,7 +6789,7 @@ func (repo *Repository) writeAuthorMap(selection orderedIntSet, fp io.Writer) er
 		}
 	}
 	for userid, cid := range contributors {
-		_, err := fp.Write([]byte(fmt.Sprintf("%s = %s\n", userid, cid)))
+		_, err := fmt.Fprintf(fp, "%s = %s\n", userid, cid)
 		if err != nil {
 			return fmt.Errorf("in writeAuthorMap: %v", err)
 		}
@@ -10476,7 +10476,7 @@ func (rs *Reposurgeon) helpOutput(help string) {
 // Command implementation begins here
 //
 func (rs *Reposurgeon) DoEOF(lineIn string) (stopOut bool) {
-	os.Stdout.Write([]byte{'\n'})
+	os.Stdout.WriteString("\n")
 	return true
 }
 
