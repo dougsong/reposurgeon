@@ -556,6 +556,7 @@ func TestRemapAttribution(t *testing.T) {
 
 func TestBlobfile(t *testing.T) {
 	repo := newRepository("fubar")
+	defer repo.cleanup()
 	repo.basedir = "foo"
 	expectdir := fmt.Sprintf("foo/.rs%d-fubar/blobs/", os.Getpid())
 
@@ -569,7 +570,6 @@ func TestBlobfile(t *testing.T) {
 	blob1.setContent(sampleContent, 0)
 	saw := blob1.getContent()
 	assertEqual(t, sampleContent, saw)
-	repo.cleanup()
 }
 
 func TestUndecodable(t *testing.T) {
@@ -592,7 +592,7 @@ func TestUndecodable(t *testing.T) {
 
 func TestTag(t *testing.T) {
 	repo := newRepository("fubar")
-	repo.basedir = "foo"
+	defer repo.cleanup()
 	attr1 := newAttribution("jrh <jrh> 1456976347 -0500")
 	t1 := newTag(repo, "sample1", ":2", nil, attr1, "Sample tag #1\n")
 	repo.events = append(repo.events, t1)
@@ -787,6 +787,7 @@ func TestFileOp(t *testing.T) {
 	}
 
 	repo := newRepository("fubar")
+	defer repo.cleanup()
 	commit := newCommit(repo)
 	repo.addEvent(commit)
 	// Appending these in opposite order from how they should sort
@@ -799,6 +800,7 @@ func TestFileOp(t *testing.T) {
 
 func TestCommitMethods(t *testing.T) {
 	repo := newRepository("fubar")
+	defer repo.cleanup()
 	commit := newCommit(repo)
 	repo.addEvent(commit)
 	committer := "J. Random Hacker <jrh@foobar.com> 1456976347 -0500"
@@ -868,6 +870,7 @@ Example commit for unit testing, modified.
 
 func TestParentChildMethods(t *testing.T) {
 	repo := newRepository("fubar")
+	defer repo.cleanup()
 	commit1 := newCommit(repo)
 	repo.addEvent(commit1)
 	committer1 := "J. Random Hacker <jrh@foobar.com> 1456976347 -0500"
@@ -990,6 +993,7 @@ func TestParentChildMethods(t *testing.T) {
 
 func TestAlldeletes(t *testing.T) {
 	repo := newRepository("fubar")
+	defer repo.cleanup()
 	commit1 := newCommit(repo)
 	repo.addEvent(commit1)
 	committer1 := "J. Random Hacker <jrh@foobar.com> 1456976347 -0500"
@@ -1104,6 +1108,7 @@ M 100644 :3 README
 
 `
 	repo := newRepository("test")
+	defer repo.cleanup()
 	sp := newStreamParser(repo)
 	r := strings.NewReader(rawdump)
 	sp.fastImport(r, nil, false, "synthetic test load")
@@ -1137,8 +1142,6 @@ M 100644 :3 README
 	assertBool(t, commit2.undecodable("ASCII"), true)
 	assertBool(t, commit2.undecodable("ISO-8859-1"), false)
 	assertBool(t, commit2.undecodable("UTF-8"), false)
-
-	sp.repo.cleanup()
 }
 
 func TestReadAuthorMap(t *testing.T) {
@@ -1160,6 +1163,7 @@ woc = wocwoc <woc@cow>
 	}
 
 	repo := newRepository("test")
+	defer repo.cleanup()
 
 	err := repo.readAuthorMap(newOrderedIntSet(), strings.NewReader(input))
 	if err != nil {
@@ -1195,8 +1199,6 @@ woc = wocwoc <woc@cow>
 			t.Errorf("alias[%v] entry contents unexpected: %v", x, a)
 		}
 	}
-
-	repo.cleanup()
 }
 
 // Sample small repository used for multiple tests
@@ -1278,6 +1280,7 @@ this is a test tag
 
 func TestFastImportParse2(t *testing.T) {
 	repo := newRepository("test")
+	defer repo.cleanup()
 	sp := newStreamParser(repo)
 	r := strings.NewReader(rawdump)
 	sp.fastImport(r, nil, false, "synthetic test load")
@@ -1372,12 +1375,11 @@ M 100644 :3 README
 	lastcommit := repo.index(allcommits[len(allcommits)-1])
 	ancestors := repo.ancestors(lastcommit)
 	assertBool(t, ancestors.Equal(orderedIntSet{4, 2}), true)
-
-	repo.cleanup()
 }
 
 func TestDelete(t *testing.T) {
 	repo := newRepository("test")
+	defer repo.cleanup()
 	sp := newStreamParser(repo)
 	r := strings.NewReader(rawdump)
 	sp.fastImport(r, nil, false, "synthetic test load")
@@ -1453,6 +1455,7 @@ this is a test tag
 
 func TestResort(t *testing.T) {
 	repo := newRepository("test")
+	defer repo.cleanup()
 	sp := newStreamParser(repo)
 	r := strings.NewReader(rawdump)
 	sp.fastImport(r, nil, false, "synthetic test load")
@@ -1552,6 +1555,7 @@ this is a test tag
 
 `
 	repo := newRepository("test")
+	defer repo.cleanup()
 	sp := newStreamParser(repo)
 	r := strings.NewReader(doubled)
 	sp.fastImport(r, nil, false, "synthetic test load")
