@@ -44,6 +44,8 @@ Things that still need unit tests:
 
 * resort()
 
+* blobAncestor()
+
 */
 
 func assertBool(t *testing.T, see bool, expect bool) {

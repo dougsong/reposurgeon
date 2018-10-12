@@ -8583,28 +8583,43 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
                                  lambda ops: ([op for op in ops if not op.path.startswith(prefix)],
                                               [op for op in ops if (op.path or op.target) and
                                                                    (op.path or op.target).startswith(prefix)]))
+*/
 
-    func blob_ancestor(self, commit *Commit, path):
-        "Return blob for the nearest ancestor to COMMIT of the specified PATH."
-        ancestor = commit
-        while true:
-            back = ancestor.parents()
-            if not back:
-                break
-            ancestor = back[0]
-            for op in ancestor.operations():
-                if hasattr(op, "path") and op.path == path:
-                    if op.op == opD:
-                        # Path had no ancestor after last delete
-                        return None
-                    else if op.op in (opR, opC):
-                        path = op.source
-                    else if op.op == opM:
-                        # Buglet: if this path has multiple ops,
-                        # we'd probably prefer the last to the first.
-                        return self.markToEvent(op.ref)
-        return None
+// Return blob for the nearest ancestor to COMMIT of the specified PATH.
+func (self *Repository) blobAncestor(commit *Commit, path string) *Blob {
+	var ok bool
+	ancestor := commit
+	for {
+		back := ancestor.parents()
+		if len(back) == 0 {
+			break
+		}
+		trial := back[0]
+		if ancestor, ok = trial.(*Commit); !ok {
+			break	// could be a callout
+		}
+		for _, op := range ancestor.operations() {
+			if op.path == path {
+				if op.op == opD {
+					// Path had no ancestor after
+					// last delete
+					return nil
+				} else if op.op == opR || op.op == opC {
+					path = op.source
+				} else if op.op == opM {
+					// Buglet: if this path has
+					// multiple ops, we'd probably
+					// prefer the last to the
+					// first.
+					return self.markToEvent(op.ref).(*Blob)
+				}
+			}
+		}
+	}
+	return nil
+}
 
+/*
     func dumptimes():
         total = self.timings[-1][1] - self.timings[0][-1]
         commit_count = sum(1 for _ in self.commits())
@@ -15139,7 +15154,7 @@ that zone is used.
                         blobfile = repo.markToEvent(op.ref).materialize()
                         # Figure out where we should look for changes in
                         # this blob by comparing it to its nearest ancestor.
-                        ob = repo.blob_ancestor(commit, op.path)
+                        ob = repo.blobAncestor(commit, op.path)
                         if ob:
                             with open(ob.materialize()) as oldblob:
                                 then = oldblob.read().splitlines()
