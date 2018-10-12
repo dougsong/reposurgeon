@@ -70,6 +70,7 @@ package main
 //    with the Git log date format, which claims to be RFC822 but isn't.  So
 //    screw it - we always dump timestamps in RFC3339 now.
 // 5. We now interpret Subversion $Rev$ and $LastChangedRev$ cookie.
+// 6. The exec and eval commands are no longer supported.
 
 import (
 	"bufio"
@@ -14989,46 +14990,6 @@ Undefine the macro named in this command's first argument.
             raise Recoverable("'%s' is not a defined macro" % name)
         else:
             del self.definitions[name]
-
-    func help_exec():
-        rs.helpOutput("""
-Execute custom code from standard input (normally a file via < redirection).
-
-Use this to set up custom extension functions for later calls. The
-code has full access to all internal data structures. Functions
-defined are accessible to later 'eval' calls.
-""")
-    func do_exec(self, line str):
-        "Execute custom python code."
-        with RepoSurgeon.LineParse(self, line, []strings{"stdin"}) as parse:
-            try:
-                # The additional args are required to make the function
-                # visible to a later eval.
-                with open(parse.stdin.Name, 'rb') as fp:
-                    exec(compile(polystr(fp.read()), parse.stdin.Name, 'exec'), locals(), globals())
-            except SyntaxError as e:
-                raise Recoverable("extension function - %s\n%s" % (e, e.text))
-            except IOError:
-                raise Recoverable("I/O error, can't find or open input source")
-
-    func help_eval():
-        rs.helpOutput("""
-Evaluate a line of code in the current interpreter context.
-Typically this will be a call to a function defined by a previous exec.
-The variables '_repository' and '_selection' will have the obvious values.
-Note that '_selection' will be a list of integers, not objects.
-""")
-    func do_eval(self, line str):
-        "Call a function from custom python code."
-        if self.selection is None:
-            os.Stdout.WriteString("no selection\n")
-        else:
-            _selection = self.selection
-            _repository = self.chosen()
-            try:
-                eval(line)
-            except (NameError, SyntaxError) as e:
-                raise Recoverable(str(e))
 
     #
     # Timequakes and bumping
