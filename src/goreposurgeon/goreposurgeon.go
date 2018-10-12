@@ -92,6 +92,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"runtime"
 	"runtime/pprof"
 	"sort"
 	"strconv"
@@ -8587,7 +8588,7 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
 */
 
 // Return blob for the nearest ancestor to COMMIT of the specified PATH.
-func (self *Repository) blobAncestor(commit *Commit, path string) *Blob {
+func (repo *Repository) blobAncestor(commit *Commit, path string) *Blob {
 	var ok bool
 	ancestor := commit
 	for {
@@ -8612,7 +8613,7 @@ func (self *Repository) blobAncestor(commit *Commit, path string) *Blob {
 					// multiple ops, we'd probably
 					// prefer the last to the
 					// first.
-					return self.markToEvent(op.ref).(*Blob)
+					return repo.markToEvent(op.ref).(*Blob)
 				}
 			}
 		}
@@ -8620,22 +8621,29 @@ func (self *Repository) blobAncestor(commit *Commit, path string) *Blob {
 	return nil
 }
 
-/*
-    func dumptimes():
-        total = self.timings[-1][1] - self.timings[0][-1]
-        commit_count = sum(1 for _ in self.commits())
-        if self.legacyCount is None:
-            os.Stdout.WriteString("        commits: %d\n" % commit_count)
-        else:
-            os.Stdout.WriteString("        commits: %d (from %d)\n" % (commit_count, self.legacyCount))
-        for (i, (phase, _interval)) in enumerate(self.timings):
-            if i > 0:
-                interval = self.timings[i][1] - self.timings[i-1][1]
-                os.Stdout.WriteString("%15s: %s (%2.2f%%)\n" % (phase,
-                                              humanize(interval),
-                                              (interval * 100)/total))
-        os.Stdout.WriteString("          total: %s (%d/sec)\n" % (humanize(total), int((self.legacyCount or commit_count))/total))
+func (repo *Repository) dumptimes() {
+	total := repo.timings[len(repo.timings)-1].stamp.Sub(repo.timings[0].stamp)
+	commitCount := len(repo.commits(nil))
+	if repo.legacyCount <= 0 {
+		fmt.Fprintf(os.Stdout, "        commits: %d\n", commitCount)
+	} else {
+		fmt.Fprintf(os.Stdout, "        commits: %d (from %d)\n", commitCount, repo.legacyCount)
+	}
+	totalf := float64(total)
+	for i := range repo.timings {
+		if i > 0 {
+			interval := repo.timings[i].stamp.Sub(repo.timings[i-1].stamp)
+			phase := repo.timings[i].label
+			intervalf := float64(interval)
+			fmt.Fprintf(os.Stdout, "%15s: %v (%2.2f%%)\n",
+				phase, interval, (intervalf * 100)/totalf)
+		}
+	}
+	fmt.Fprintf(os.Stdout, "          total: %v (%d/sec)\n", total,
+		int(float64(time.Duration(commitCount) * time.Second)/float64(total)))
+}
 
+/*
 func readRepo(source, options, preferred):
     "Read a repository using fast-import."
     if debugEnable(debugSHUFFLE):
@@ -11381,25 +11389,27 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 	return false
 }
 
-/*
-    func help_timing():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpTiming() {
+	    rs.helpOutput(`
 Report phase-timing results and memory usage from repository analysis.
-""")
-    func do_timing(self, line str):
-        "Report repo-analysis times and memory usage."
-        if not self.chosen():
-            complain("no repo has been chosen.")
-            return
-        if line:
-            self.chosen().timings.append((line, time.now()))
-        self.repo.dumptimes()
-        if psutil is None:
-            complain("The psutil module required for memory statistics is not installed.")
-        else:
-            mem = psutil.virtual_memory()
-            announce(debugSHOUT, repr(mem))
-*/
+`)
+}
+// Report repo-analysis times and memory usage.
+func (self *Reposurgeon) DoTiming(line string) (stopOut bool) {
+	if self.chosen() == nil {
+		complain("no repo has been chosen.")
+		return
+	}
+	if line != "" {
+		self.chosen().timings = append(self.chosen().timings, TimeMark{line, time.Now()})
+	}
+	self.repo.dumptimes()
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+	fmt.Printf("     Total heap: %.2fMB  High water: %.2fMB\n",
+		float64(memStats.HeapAlloc) / 1e6, float64(memStats.TotalAlloc) / 1e6)
+	return false
+}
 
 //
 // Information-gathering
