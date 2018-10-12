@@ -4009,7 +4009,7 @@ func (commit *Commit) lister(_modifiers stringSet, eventnum int, cols int) strin
 // stamp enables do_stamp() to report action stamps.
 func (commit *Commit) stamp(modifiers stringSet, _eventnum int, cols int) string {
 	report := "<" + commit.actionStamp() + "> " + strings.Split(commit.comment, "\n")[0]
-	if cols > 0 {
+	if cols > 0 && len(report) > cols {
 		report = report[:cols]
 	}
 	return report
@@ -11578,16 +11578,31 @@ func (self *Reposurgeon) DoTags(lineIn string) bool {
 	return false
 }
 
-/*
-    func help_stamp():
-        rs.helpOutput("""
+func (self *Reposurgeon) HelpStamp() {
+	self.helpOutput(`
 Display full action stamps correponding to commits in a select.
 The stamp is followed by the first line of the commit message.
 Supports > redirection.
-""")
-    func do_stamp(self,line):
-        self.report_select(line, "stamp", (screenwidth(),))
+`)
+}
+func (self *Reposurgeon) DoStamp(lineIn string) bool {
+	f := func(p *LineParse, i int, e Event) string {
+		// this is pretty stupid; pretend you didn't see it
+		switch v := e.(type) {
+		case *Commit:
+			return v.stamp(stringSet{}, i, 80) // screenwidth()
+		case *Tag:
+			return v.stamp(stringSet{}, i, 80) // screenwidth()
+		default:
+			return ""
+		}
+		return ""
+	}
+	self.reportSelect(lineIn, f)
+	return false
+}
 
+/*
     func help_sizes():
         rs.helpOutput("""
 Print a report on data volume per branch; takes a selection set,
