@@ -181,15 +181,16 @@ type Baton struct {
 
 // NewBaton - create a new Baton object with specifued start and end messages
 func NewBaton(prompt string, endmsg string) *Baton {
-	var baton Baton
-	baton.stream = os.Stderr
+	baton := Baton{
+		stream: os.Stderr,
+		endmsg: endmsg,
+		time:   time.Now(),
+	}
 	baton.stream.Write([]byte(prompt + "..."))
 	if terminal.IsTerminal(int(baton.stream.Fd())) {
 		baton.stream.Write([]byte(" \010"))
 	}
 	//baton.stream.Flush()
-	baton.endmsg = endmsg
-	baton.time = time.Now()
 	return &baton
 }
 
@@ -231,10 +232,10 @@ func NewLineBufferedSource(source io.Reader) LineBufferedSource {
 	if debug {
 		fmt.Fprintf(os.Stderr, "<setting up NewLineBufferedSource>\n")
 	}
-	var lbs LineBufferedSource
-	lbs.Linebuffer = []byte("")
-	lbs.source = source
-	lbs.reader = bufio.NewReader(lbs.source)
+	lbs := LineBufferedSource{
+		source: source,
+		reader: bufio.NewReader(source),
+	}
 	fd, ok := lbs.source.(*os.File)
 	if ok {
 		lbs.stream = fd
@@ -430,13 +431,13 @@ type DumpfileSource struct {
 
 // NewDumpfileSource - declare a new dumpfile source object with implied parsing
 func NewDumpfileSource(rd io.Reader, baton *Baton) DumpfileSource {
-	var ds DumpfileSource
-	ds.Lbs = NewLineBufferedSource(rd)
-	ds.Baton = baton
-	ds.Revision = 0
-	ds.EmittedRevisions = make(map[string]bool)
+	return DumpfileSource{
+		Lbs:              NewLineBufferedSource(rd),
+		Baton:            baton,
+		Revision:         0,
+		EmittedRevisions: make(map[string]bool),
+	}
 	//runtime.SetFinalizer(&ds, func (s DumpfileSource) {s.Baton.End("")})
-	return ds
 }
 
 // SetLength - alter the length field of a specified header
@@ -690,7 +691,6 @@ func (ds *DumpfileSource) Report(selection SubversionRange,
 						ds.say(stash)
 					}
 				}
-				nodecount = 0
 				break
 			} else if strings.HasPrefix(string(line), "Node-") {
 				nodecount++
@@ -754,9 +754,10 @@ const delim = "-----------------------------------------------------------------
 
 // NewLogfile - initialize a new logfilr object from an input source
 func NewLogfile(readable io.Reader, restrict *SubversionRange) *Logfile {
-	var lf Logfile
-	lf.comments = make(map[int]Logentry)
-	lf.source = NewLineBufferedSource(readable)
+	lf := Logfile{
+		comments: make(map[int]Logentry),
+		source:   NewLineBufferedSource(readable),
+	}
 	type LogState int
 	const (
 		awaitingHeader LogState = iota
