@@ -8697,7 +8697,7 @@ func readRepo(source, options, preferred):
                     (tfdesc, tfname) = tempfile.mkstemp()
                     assert tfdesc > -1    # pacify pylint
                     context["tempfile"] = tfname
-                    do_or_die(repo.vcs.exporter % context, "repository export")
+                    runProcess(repo.vcs.exporter % context, "repository export")
                     with open(tfname, "rb") as tp:
                         repo.fastImport(tp, options, progress=showprogress, source=source)
                 finally:
@@ -8811,7 +8811,7 @@ func rebuildRepo(repo, target, options, preferred):
     try:
         os.Chdir(staging)
         if vcs.initializer:
-            do_or_die(vcs.initializer, "repository initialization")
+            runProcess(vcs.initializer, "repository initialization")
         parameters = {"basename": os.path.basename(target)}
         if "%(tempfile)s" in vcs.importer:
             try:
@@ -8820,7 +8820,7 @@ func rebuildRepo(repo, target, options, preferred):
                 with open(tfname, "wb") as tp:
                     repo.fastExport(range(len(repo)), make_wrapper(tp), options, progress=verbose>0, target=preferred)
                 parameters["tempfile"] = tfname
-                do_or_die(vcs.importer % parameters, "import")
+                runProcess(vcs.importer % parameters, "import")
             finally:
                 os.remove(tfname)
                 os.close(tfdesc)
@@ -8839,7 +8839,7 @@ func rebuildRepo(repo, target, options, preferred):
                                   % legacyfile)
 
         if vcs.checkout:
-            do_or_die(vcs.checkout, "repository_checkout")
+            runProcess(vcs.checkout, "repository_checkout")
         else:
             complain("checkout not supported for %s skipping" % vcs.name)
 
@@ -8897,22 +8897,24 @@ func rebuildRepo(repo, target, options, preferred):
         os.Chdir(here)
         if staging != target:
             nuke(staging, "reposurgeon: removing staging directory")
-
-func do_or_die(dcmd, legend=""):
-    "Either execute a command or raise a fatal exception."
-    if legend:
-        legend = " "  + legend
-    announce(debugCOMMANDS, "executing '%s'%s" % (dcmd, legend))
-    try:
-        retcode = subprocess.call(dcmd, shell=true, stderr=os.Stderr)
-        if retcode < 0:
-            raise Fatal("child was terminated by signal %d." % -retcode)
-        else if retcode != 0:
-            raise Fatal("child returned %d." % retcode)
-    except (OSError, IOError) as e:
-        raise Fatal("execution of %s%s failed: %s" % (dcmd, legend, e))
-
 */
+
+// Either execute a command or raise a fatal exception.
+func runProcess(dcmd string, legend string) error {
+	if legend != "" {
+		legend = " "  + legend
+	}
+	announce(debugCOMMANDS, "executing '%s'%s", dcmd, legend)
+	words, err := shlex.Split(dcmd, true)
+	if err != nil {
+		return fmt.Errorf("preparing %q for execution: %v", dcmd, err)
+	}
+	err = exec.Command(words[0], words[1:]...).Run()
+	if err != nil {
+		return fmt.Errorf("executing %q: %v", dcmd, err)
+	}
+	return nil
+}
 
 func readFromProcess(command string) (io.ReadCloser, *exec.Cmd, error) {
 	cmd := exec.Command("sh", "-c", command+" 2>&1")
