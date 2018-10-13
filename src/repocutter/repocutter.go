@@ -495,7 +495,7 @@ func (ds *DumpfileSource) ReadNode(PropertyHook func(*Properties)) ([]byte, []by
 			fmt.Fprintf(os.Stderr, "repocutter: unexpected EOF in node header\n")
 			os.Exit(1)
 		}
-		m := nodeCopyfrom.Find(line)
+		m := nodeCopyfrom.FindSubmatch(line)
 		if m != nil {
 			r := string(m[1])
 			if !ds.EmittedRevisions[r] {
