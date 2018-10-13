@@ -757,7 +757,12 @@ func NewLogfile(readable io.Reader, restrict *SubversionRange) *Logfile {
 	var lf Logfile
 	lf.comments = make(map[int]Logentry)
 	lf.source = NewLineBufferedSource(readable)
-	state := "awaiting_header"
+	type LogState int
+	const (
+		awaitingHeader LogState = iota
+		inLogEntry
+	)
+	state := awaitingHeader
 	author := []byte("")
 	date := []byte("")
 	logentry := []byte("")
@@ -768,7 +773,7 @@ func NewLogfile(readable io.Reader, restrict *SubversionRange) *Logfile {
 	for {
 		lineno++
 		line = lf.source.Readline()
-		if state == "in_logentry" {
+		if state == inLogEntry {
 			if len(line) == 0 || bytes.HasPrefix(line, []byte(delim)) {
 				if rev > -1 {
 					logentry = bytes.TrimSpace(logentry)
@@ -779,14 +784,14 @@ func NewLogfile(readable io.Reader, restrict *SubversionRange) *Logfile {
 					logentry = []byte("")
 				}
 				if len(line) != 0 {
-					state = "awaiting_header"
+					state = awaitingHeader
 				} else {
 					break
 				}
 			} else {
 				logentry = append(logentry, line...)
 			}
-		} else if state == "awaiting_header" {
+		} else if state == awaitingHeader {
 			if len(line) == 0 {
 				break
 			} else if bytes.HasPrefix(line, []byte("-----------")) {
@@ -803,7 +808,7 @@ func NewLogfile(readable io.Reader, restrict *SubversionRange) *Logfile {
 					//lc := bytes.TrimSpace(fields[3])
 					revstr = revstr[1:] // strip off leaing 'r'
 					rev, _ = strconv.Atoi(string(revstr))
-					state = "in_logentry"
+					state = inLogEntry
 				}
 			}
 		}
