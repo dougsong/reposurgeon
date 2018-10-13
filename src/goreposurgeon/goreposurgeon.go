@@ -11542,7 +11542,7 @@ func (self *Reposurgeon) DoList(lineIn string) bool {
 	f := func(p *LineParse, i int, e Event) string {
 		c, ok := e.(*Commit)
 		if ok {
-			return c.lister(stringSet{}, i, 80) // screenwidth()
+			return c.lister(stringSet{}, i, screenwidth())
 		} else {
 			return ""
 		}
@@ -11573,7 +11573,7 @@ func (self *Reposurgeon) DoTip(lineIn string) bool {
 	f := func(p *LineParse, i int, e Event) string {
 		c, ok := e.(*Commit)
 		if ok {
-			return c.tip(stringSet{}, i, 80) // screenwidth()
+			return c.tip(stringSet{}, i, screenwidth())
 		} else {
 			return ""
 		}
@@ -11597,11 +11597,11 @@ func (self *Reposurgeon) DoTags(lineIn string) bool {
 		// this is pretty stupid; pretend you didn't see it
 		switch v := e.(type) {
 		case *Commit:
-			return v.tags(stringSet{}, i, 80) // screenwidth()
+			return v.tags(stringSet{}, i, screenwidth())
 		case *Reset:
-			return v.tags(stringSet{}, i, 80) // screenwidth()
+			return v.tags(stringSet{}, i, screenwidth())
 		case *Tag:
-			return v.tags(stringSet{}, i, 80) // screenwidth()
+			return v.tags(stringSet{}, i, screenwidth())
 		default:
 			return ""
 		}
@@ -11625,9 +11625,9 @@ func (self *Reposurgeon) DoStamp(lineIn string) bool {
 		// this is pretty stupid; pretend you didn't see it
 		switch v := e.(type) {
 		case *Commit:
-			return v.stamp(stringSet{}, i, 80) // screenwidth()
+			return v.stamp(stringSet{}, i, screenwidth())
 		case *Tag:
-			return v.stamp(stringSet{}, i, 80) // screenwidth()
+			return v.stamp(stringSet{}, i, screenwidth())
 		default:
 			return ""
 		}
