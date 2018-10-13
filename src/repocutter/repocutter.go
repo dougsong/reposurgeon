@@ -468,11 +468,10 @@ func (ds *DumpfileSource) ReadRevisionHeader(PropertyHook func(*Properties)) ([]
 		fmt.Fprintf(os.Stderr, "<after append: %d>\n", ds.Lbs.linenumber)
 	}
 	for {
-		if string(ds.Lbs.Peek()) == linesep {
-			stash = append(stash, ds.Lbs.Readline()...)
-		} else {
+		if string(ds.Lbs.Peek()) != linesep {
 			break
 		}
+		stash = append(stash, ds.Lbs.Readline()...)
 	}
 	if ds.Baton != nil {
 		ds.Baton.Twirl("")
@@ -497,7 +496,7 @@ func (ds *DumpfileSource) ReadNode(PropertyHook func(*Properties)) ([]byte, []by
 			os.Exit(1)
 		}
 		m := nodeCopyfrom.Find(line)
-		if len(m) > 0 {
+		if m != nil {
 			r := string(m[1])
 			if !ds.EmittedRevisions[r] {
 				header = append(header, line...)
