@@ -555,7 +555,7 @@ func init() {
 		{
 			name:         "git",
 			subdirectory: ".git",
-			exporter:     "git fast-export --signed-tags: verbatim --tag-of-filtered-object: drop --all",
+			exporter:     "git fast-export --signed-tags=verbatim --tag-of-filtered-object=drop --all",
 			styleflags:   newStringSet(),
 			extensions:   newStringSet(),
 			initializer:  "git init --quiet",
@@ -5403,13 +5403,16 @@ func (sp *StreamParser) fiReadData(line string) (string, int64) {
 			sp.error("bad count in data: " + line[5:])
 		}
 		start = sp.tell()
-		buf := make([]byte, count)
-		var n int
-		n, err = sp.fp.Read(buf)
-		if err != nil || count != n {
-			sp.error("bad read in data")
+		for count > 0 {
+			buf := make([]byte, count)
+			var n int
+			n, err = sp.fp.Read(buf)
+			if err != nil {
+				sp.error("bad read in data")
+			}
+			data += string(buf)
+			count -= n
 		}
-		data = string(buf)
 	} else if strings.HasPrefix(line, "property") {
 		line = line[9:]                        // Skip this token
 		line = line[strings.Index(line, " "):] // Skip the property name
@@ -8660,19 +8663,20 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 	var extractor *Extractor
 	var vcs *VCS
 	var vcsname string
-	for _, possible := range vcstypes {
+	for i, possible := range vcstypes {
 		if preferred != nil && possible.name != preferred.name {
 			continue
 		}
 		subdir := source + "/" + possible.subdirectory
 		subdir = filepath.FromSlash(subdir)
 		if exists(subdir) && isdir(subdir) && possible.exporter != "" {
-			vcs = &possible
+			fmt.Println("ASSIGNED")
+			vcs = &vcstypes[i]
 			vcsname = vcs.name 
 			hitcount++
 		}
 	}
-	for _, possible := range extractors {
+	for i, possible := range extractors {
 		if preferred != nil && !newStringSet(preferred.name, preferred.name + "-extractor").Contains(possible.getMeta().name) {
 			continue
 		}
@@ -8681,7 +8685,7 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 		subdir = filepath.FromSlash(subdir)
 		if exists(subdir) && isdir(subdir) {
 			if (meta.visible || preferred != nil) && meta.name == preferred.name {
-				extractor = &possible
+				extractor = &extractors[i]
 				vcsname = meta.name
 				hitcount++
 			}
@@ -8696,12 +8700,6 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 	}
 	repo := newRepository("")
 	repo.sourcedir = source
-	if vcs != nil {
-		repo.hint("", vcs.name, true)
-		repo.preserveSet = vcs.preserve
-		//showprogress := (verbose > 0) && !repo.exportStyle().Contains("export-progress")
-		//context := map[string]string{"basename": filepath.Base(repo.sourcedir)}
-	}
 	here, err := os.Getwd()
 	if err != nil {
 		return nil, fmt.Errorf("readRepo is disoriented: %v", err)
@@ -8709,104 +8707,187 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 	defer os.Chdir(here)
 	os.Chdir(repo.sourcedir)
 	// We found a matching VCS type
-/*
 	if vcs != nil {
-		if string.Contains(repo.vcs.exporter, "${tempfile}")  {
-			tfdesc := ioutil.Tempfile("", "rst")
+		repo.hint("", vcs.name, true)
+		repo.preserveSet = vcs.preserve
+		showprogress := (verbose > 0) && !repo.exportStyle().Contains("export-progress")
+		context := map[string]string{"basename": filepath.Base(repo.sourcedir)}
+		mapper := func (sub string) string {
+			for k, v := range context {
+				from := "${" + k + "}"
+				sub = strings.Replace(sub, from, v, -1)
+			}
+			return sub
+		}
+		if strings.Contains(repo.vcs.exporter, "${tempfile}")  {
+			tfdesc, err := ioutil.TempFile("", "rst")
+			if err != nil {
+				return nil, err
+			}
 			defer tfdesc.Close()
 			defer os.Remove(tfdesc.Name())
 			context["tempfile"] = tfdesc.Name()
-			runProcess(repo.vcs.exporter % context, "repository export")
-			tp := open(tfname, "rb") 
-				repo.fastImport(tp, options, progress=showprogress, source=source)
+			cmd := os.Expand(repo.vcs.exporter, mapper)
+			runProcess(cmd, "repository export")
+			tfdesc.Close()
+			tp, err := os.Open(tfdesc.Name()) 
+			if err != nil {
+				return nil, err
+			}
+			repo.fastImport(tp, options, showprogress, source)
+			tp.Close()
 		} else {
-			tp := popenOrDie(repo.vcs.exporter % context, "repository export")
-			repo.fastImport(tp, options, progress=showprogress, source=source)
+			cmd := os.Expand(repo.vcs.exporter, mapper)
+			tp, _, err := readFromProcess(cmd)
+			if err != nil {
+				return nil, err
+			}
+			repo.fastImport(tp, options, showprogress, source)
 			tp.Close()
 		}
-		if repo.vcs.authormap && os.path.exists(repo.vcs.authormap) {
+		if repo.vcs.authormap != "" && exists(repo.vcs.authormap) {
 			announce(debugSHOUT, "reading author map.")
-			fp := open(repo.vcs.authormap, "rb") as fp {
-			repo.readAuthorMap(repo.all()), make_wrapper(fp))
+			fp, err := os.Open(repo.vcs.authormap)
+			if err != nil {
+				return nil, err
+			}
+			repo.readAuthorMap(repo.all(), fp)
 			fp.Close()
 		}
-		legacyMap := os.path.join(vcs.subdirectory, "legacy_map")
-		if os.path.exists(legacy_map) {
-			rfp := open(legacyMap, "rb")
-			repo.readLegacyMap(make_wrapper(rfp))
+		legacyMap := vcs.subdirectory + "/legacy_map"
+		legacyMap = filepath.FromSlash(legacyMap)
+		if exists(legacyMap) {
+			rfp, err := os.Open(legacyMap)
+			if err != nil {
+				return nil, err
+			}
+			repo.readLegacyMap(rfp)
 			rfp.Close()
 		}
-		if vcs.lister {
-			func fileset(exclude) {
-				allfiles = []
-				for root, dirs, files in os.walk(".") {
-					allfiles += [os.path.join(root, name)[2:] for name in files]
-					for _, exdir := range exclude {
-						if exdir in dirs {
-							dirs.remove(exdir)
-						}
+		if vcs.lister != "" {
+			registered := newStringSet()
+			stdout, cmd, err := readFromProcess(vcs.lister)
+			if err != nil {
+				return nil, err
+			}
+			// Get the names of all files under version control
+			r := bufio.NewReader(stdout)
+			for {
+				line, err2 := r.ReadString(byte('\n'))
+				if err2 == io.EOF {
+					if cmd != nil {
+						cmd.Wait()
 					}
+					break
+				} else if err2 != nil {
+					return nil, fmt.Errorf("while collecting file manifestL %v", err2)
 				}
-				return set(allfiles)
+				registered = append(registered, strings.TrimSpace(line))
 			}
-			with popenOrDie(vcs.lister) as fp {
-				repofiles := set(polystr(fp.read()).split())
-			}
-			allfiles = fileset([vcs.subdirectory] + glob.glob(".rs*"))
-			repo.preserveSet |= (allfiles - repofiles)
+			stdout.Close()
+			// Get the names of all files except those in the
+			// repository metadata directory and reposurgeon
+			// scratch directories
+			var allfiles = newStringSet()
+			err = filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					fmt.Printf("path access failure %q: %v\n", path, err)
+					return err
+				}
+				if info.IsDir() && (info.Name() == vcs.subdirectory || strings.HasPrefix(info.Name(), ".rs")) {
+					return filepath.SkipDir
+				}
+				allfiles = append(allfiles, path)
+				return nil
+			})
+			// Compute the things to preserve
+			repo.preserveSet = allfiles.Subtract(registered)
 		}
 		// kluge: git-specific hook
 		if repo.vcs.name == "git" {
-			if os.path.exists(".git/cvs-revisions") {
+			if exists(".git/cvs-revisions") {
 				announce(debugSHOUT, "reading cvs-revisions map.")
-				pathrev_to_hash := {}
+				type pathRev struct {
+					path string
+					rev string
+				}
+				pathRevToHash := make(map[pathRev]string)
 				// Pass 1: Get git's path/revision to
 				// hash mapping
-				with open(".git/cvs-revisions", "r") as fp {
-					  for _, line := range fp {
-						  (path, rev, hashv) = strings.Fields(line)
-						  pathrev_to_hash[(path, rev)] = hashv
-					  }
-				  }
-				  // Pass 2: get git's hash to (time,person) mapping
-				  hash_to_action := {}
-				  stamp_set := set({})
-				  with popenOrDie("git log --all --format='%H %ct %ce'", "r") as fp {
-					  for _, line := range fp {
-						  (hashv, ctime, cperson) = strings.Fields(polystr(line))
-						  stamp := (int(ctime), cperson)
-						  if stamp in stamp_set {
-							  complain("more than one commit matches %s!%s (%s)"
-								  % (rfc3339(int(ctime)), cperson, hashv))
-							  if stamp in hash_to_action {
-								  delete(hash_to_action, hashv)
-							  }
-						  } else {
-							  hash_to_action[hashv] = stamp
-							  stamp_set.add(stamp)
-						  }
-					  }
-				  }
-				// Pass 3: build a (time,person)
-				// to commit mapping
-				action_to_mark := {}
-				for _, commit := range repo.commits() {
-					action_to_mark[(commit.committer.date.timestamp, commit.committer.email)] = commit
+				fp, err := os.Open(".git/cvs-revisions")
+				if err != nil {
+					return nil, err
+				}
+				defer fp.Close()
+				r := bufio.NewReader(fp)
+				for {
+					line, err1 := r.ReadString(byte('\n'))
+					if err1 == io.EOF {
+						break
+					} else if err1 != nil {
+						return nil, fmt.Errorf("reading cvs-revisions map: %v", err1)
+					}
+
+					fields := strings.Fields(line)
+					pathrev := pathRev{fields[0], fields[1]}
+					hashv := fields[2]
+					pathRevToHash[pathrev] = hashv
+				}
+				// Pass 2: get git's hash to
+				// (time,person) mapping
+				hashToAction := make(map[string]string)
+				stampSet := make(map[string]bool)
+				fp2, _, err2 := readFromProcess("git log --all --format='%H %ct %ce'")
+				if err2 != nil {
+					return nil, err2
+				}
+				r2 := bufio.NewReader(fp2)
+				for {
+					line, err2 := r2.ReadString(byte('\n'))
+					if err2 == io.EOF {
+						break
+				} else if err2 != nil {
+						return nil, fmt.Errorf("reading cvs-revisions map: %v", err2)
+					}
+
+					fields := strings.Fields(line)
+					hashv := fields[0]
+					ctime := fields[1]
+					cperson := fields[2]
+					inttime, err3 := strconv.Atoi(ctime) 
+					if err3 != nil {
+						return nil, fmt.Errorf("while reang git hash mapping: %v", err3)
+					}
+					stamp := rfc3339(time.Unix(int64(inttime), 0))
+					stamp += "!" + cperson
+					if stampSet[stamp] {
+						complain("more than one commit matches %s (%s)",
+							stamp, hashv)
+
+						delete(hashToAction, hashv)
+					} else {
+						hashToAction[hashv] = stamp
+						stampSet[stamp] = true
+					}
+				}
+				// Pass 3: build a time+person
+				// to commit mapping.
+				actionToCommit := make(map[string]*Commit)
+				for _, commit := range repo.commits(nil) {
+					actionToCommit[commit.committer.actionStamp()] = commit
 				}
 				// Pass 4: use it to set commit properties
-				for ((path, rev), value) in pathrev_to_hash.items() {
-					if value in hash_to_action {
-						  (ctime, cperson) = hash_to_action[value]
-						  action_to_mark[(ctime, cperson)].legacyID = fmt.Sprintf("CVS:%s:%s", path, rev)
+				for pathrev, value := range pathRevToHash {
+					if stamp, ok := hashToAction[value]; ok {
+						actionToCommit[stamp].legacyID = fmt.Sprintf("CVS:%s:%s", pathrev.path, pathrev.rev)
 					}
 				}
 			}
 		}
 	}
-*/
 	// We found a matching custom extractor
 	if extractor != nil {
-		repo.stronghint=true
+		repo.stronghint = true
 		streamer := newRepoStreamer(*extractor)
 		streamer.extract(repo, verbose>0)
 	}
@@ -10487,7 +10568,6 @@ func (lp *LineParse) Closem() {
 type Reposurgeon struct {
 	cmd *kommandant.Kmdt
 	RepositoryList
-	verbose    int
 	quiet      bool
 	echo       int
 	callstack  [][]string
@@ -12111,7 +12191,8 @@ For a list of supported types, invoke the 'prefer' command.
 // Read in a repository for surgery.
 func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 	if rs.selection != nil {
-		panic(throw("command", "read does not take a selection set"))
+		complain("read does not take a selection set")
+		return false
 	}
 	parse := newLineParse(line, nil, []string{"stdin"})
 	defer parse.Closem()
@@ -12145,19 +12226,31 @@ func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 			}
 		}
 		repo.fastImport(parse.stdin, parse.options, (verbose == 1 && !quiet), "")
-	}
-	/*
-		FIXME: This needs readRepo
+	} else if parse.line == "" || parse.line == "." {
+		var err2 error
 		// This is slightly asymmetrical with the write side, which
 		// interprets an empty argument list as '-'
-		else if !parse.line || parse.line == "." {
-			repo = readRepo(os.Getwd(), parse.options, rs.preferred)
-		} else if os.path.isdir(parse.line) {
-			repo = readRepo(parse.line, parse.options, rs.preferred)
-		} else {
-			raise Recoverable("read no longer takes a filename argument - use < redirection instead")
+		cdir, err2 := os.Getwd()
+		if err2 != nil {
+			complain(err2.Error())
+			return false
 		}
-	*/
+		repo, err2 = readRepo(cdir, parse.options, rs.preferred)
+		if err2 != nil {
+			complain(err2.Error())
+			return false
+		}
+	} else if isdir(parse.line) {
+		var err2 error
+		repo, err2 = readRepo(parse.line, parse.options, rs.preferred)
+		if err2 != nil {
+			complain(err2.Error())
+			return false
+		}
+	} else {
+		complain("read no longer takes a filename argument - use < redirection instead")
+		return false
+	}
 	rs.repolist = append(rs.repolist, repo)
 	rs.choose(repo)
 	if rs.chosen() != nil {
@@ -15812,15 +15905,15 @@ developers only.
 }
 func (rs *Reposurgeon) DoVerbose(lineIn string) (stopOut bool) {
 	if len(lineIn) != 0 {
-		verbose, err := strconv.Atoi(lineIn)
+		nverbose, err := strconv.Atoi(lineIn)
 		if err != nil {
 			rs.helpOutput("verbosity value must be an integer\n")
 		} else {
-			rs.verbose = verbose
+			verbose = nverbose
 		}
 	}
-	if len(lineIn) == 0 || rs.verbose > 0 {
-		rs.helpOutput(fmt.Sprintf("verbose %d\n", rs.verbose))
+	if len(lineIn) == 0 || verbose > 0 {
+		rs.helpOutput(fmt.Sprintf("verbose %d\n", verbose))
 	}
 	return false
 }
@@ -15858,7 +15951,7 @@ func (rs *Reposurgeon) DoEcho(lineIn string) (stopOut bool) {
 			rs.echo = echo
 		}
 	}
-	if rs.verbose > 0 {
+	if verbose > 0 {
 		rs.cmd.Output(fmt.Sprintf("echo %d\n", rs.echo))
 	}
 	return false
