@@ -11336,17 +11336,25 @@ func (rs *Reposurgeon) DoHistory(_line string) (stopOut bool) {
 	return false
 }
 
-/*
-    func do_coverage(self, unused):
-        "Display the coverage-case set (developer instrumentation)."
-        assert unused is not None   # pacify pylint
-        if not self.chosen():
-            complain("no repo has been chosen.")
-            return
-        for e in self.chosen().commits():
-            e.fileopDump()
-        os.Stdout.WriteString("Case coverage: %s\n" % sorted(self.chosen().caseCoverage))
-*/
+func (self *Reposurgeon) HelpCoverage() {
+	self.helpOutput("Display the coverage-case set (developer instrumentation).")
+}
+// Display the coverage-case set (developer instrumentation).
+func (self *Reposurgeon) DoCoverage(lineIn string) bool {
+	repo := self.chosen()
+	if repo == nil {
+		self.cmd.Output("no repo has been chosen.")
+		return false
+	}
+	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+	defer parse.Closem()
+	for _, commit := range repo.commits(nil) {
+		commit.fileopDump()
+	}
+	repo.caseCoverage.Sort()
+	fmt.Fprintf(parse.stdout, "Case coverage: %s\n", repo.caseCoverage)
+	return false
+}
 
 func (self *Reposurgeon) HelpIndex() {
 	self.helpOutput(`

@@ -14,3 +14,5 @@ MANIFEST
 cy*
 cy*.c
 cy*.o
+*~
+.rs*/
