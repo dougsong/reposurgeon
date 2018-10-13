@@ -468,15 +468,15 @@ func (s orderedIntSet) Pop() interface{} {
 // that are not part of the basic VCS. Thus these may fail when called;
 // we need to be prepared to cope with that.
 //
-// %(tempfile)s in a command gets substituted with the name of a
+// ${tempfile} in a command gets substituted with the name of a
 // tempfile that the calling code will know to read or write from as
 // appropriate after the command is done.  If your exporter can simply
 // dump to stdout, or your importer read from stdin, leave out the
-// %(tempfile)s; reposurgeon will popen(3) the command, and it will
+// ${tempfile}; reposurgeon will popen(3) the command, and it will
 // actually be slightly faster (especially on large repos) because it
 // won't have to wait for the tempfile I/O to complete.
 //
-// %(basename) is replaced with the basename of the repo directory.
+// ${basename} is replaced with the basename of the repo directory.
 
 // VCS is a class representing a version-control system.
 type VCS struct {
@@ -573,7 +573,7 @@ func init() {
 		{
 			name:         "bzr",
 			subdirectory: ".bzr",
-			exporter:     "bzr fast-export --no-plain %(basename)s",
+			exporter:     "bzr fast-export --no-plain ${basename}",
 			styleflags: newStringSet(
 				"export-progress",
 				"no-nl-after-commit",
@@ -617,7 +617,7 @@ bzr-orphans
 			extensions:  newStringSet(),
 			initializer: "hg init",
 			lister:      "hg status -macn",
-			importer:    "hg fastimport %(tempfile)s",
+			importer:    "hg fastimport ${tempfile}",
 			checkout:    "hg checkout",
 			preserve:    newStringSet(".hg/hgrc"),
 			authormap:   "",
@@ -8647,132 +8647,173 @@ func (repo *Repository) dumptimes() {
 		int(float64(time.Duration(commitCount) * time.Second)/float64(total)))
 }
 
+// Read a repository using fast-import.
+func readRepo(source string, options stringSet, preferred *VCS) (*Repository, error) {
+	if debugEnable(debugSHUFFLE) {
+		if preferred != nil {
+			announce(debugSHOUT, fmt.Sprintf("looking for a %s repo...", preferred.name))
+		} else {
+			announce(debugSHOUT, "reposurgeon: looking for any repo at %s...", source)
+		}
+	}
+	hitcount := 0
+	var extractor *Extractor
+	var vcs *VCS
+	var vcsname string
+	for _, possible := range vcstypes {
+		if preferred != nil && possible.name != preferred.name {
+			continue
+		}
+		subdir := source + "/" + possible.subdirectory
+		subdir = filepath.FromSlash(subdir)
+		if exists(subdir) && isdir(subdir) && possible.exporter != "" {
+			vcs = &possible
+			vcsname = vcs.name 
+			hitcount++
+		}
+	}
+	for _, possible := range extractors {
+		if preferred != nil && !newStringSet(preferred.name, preferred.name + "-extractor").Contains(possible.getMeta().name) {
+			continue
+		}
+		meta := possible.getMeta()
+		subdir := source + "/" + meta.vcs.subdirectory
+		subdir = filepath.FromSlash(subdir)
+		if exists(subdir) && isdir(subdir) {
+			if (meta.visible || preferred != nil) && meta.name == preferred.name {
+				extractor = &possible
+				vcsname = meta.name
+				hitcount++
+			}
+		}
+	}
+	if hitcount == 0 {
+		return nil, fmt.Errorf("couldn't find a repo under %s", source)
+	} else if hitcount > 1 {
+		return nil, fmt.Errorf("too many repos under %s", source)
+	} else if debugEnable(debugSHUFFLE) {
+		announce(debugSHUFFLE, "found %s repository", vcsname)
+	}
+	repo := newRepository("")
+	repo.sourcedir = source
+	if vcs != nil {
+		repo.hint("", vcs.name, true)
+		repo.preserveSet = vcs.preserve
+		//showprogress := (verbose > 0) && !repo.exportStyle().Contains("export-progress")
+		//context := map[string]string{"basename": filepath.Base(repo.sourcedir)}
+	}
+	here, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("readRepo is disoriented: %v", err)
+	}
+	defer os.Chdir(here)
+	os.Chdir(repo.sourcedir)
+	// We found a matching VCS type
 /*
-func readRepo(source, options, preferred):
-    "Read a repository using fast-import."
-    if debugEnable(debugSHUFFLE):
-        if preferred:
-            announce(debugSHOUT, "looking for a %s repo..." % preferred.name)
-        else:
-            announce(debugSHOUT, "reposurgeon: looking for any repo at %s..." % \
-                     os.path.abspath(source))
-    hitcount = 0
-    extractor = vcs = None
-    for possible in vcstypes:
-        if preferred and possible.name != preferred.name:
-            continue
-        subdir = os.path.join(source, possible.subdirectory)
-        if os.path.exists(subdir) and os.path.isdir(subdir) and possible.exporter:
-            vcs = possible
-            hitcount++
-    for possible in extractors:
-        if preferred and possible.name not in [preferred.name, preferred.name + "-extractor"]:
-            continue
-        subdir = os.path.join(source, possible.subdirectory)
-        if os.path.exists(subdir) and os.path.isdir(subdir):
-            if possible.visible or preferred \
-                   and possible.name == preferred.name:
-                extractor = possible
-                hitcount++
-    if hitcount == 0:
-        raise Recoverable("couldn't find a repo under %s" % os.path.relpath(source))
-    else if hitcount > 1:
-        raise Recoverable("too many repos under %s" % os.path.relpath(source))
-    else if debugEnable(debugSHUFFLE):
-        announce(debugSHUFFLE, "found %s repository" % getattr(vcs or extractor, "name"))
-    repo = Repository()
-    repo.sourcedir = source
-    if vcs:
-        repo.hint(vcs.name, strong=true)
-        repo.preserveSet = vcs.preserve
-        showprogress = (verbose > 0) and "export-progress" not in repo.exportStyle()
-        context = {"basename": os.path.basename(repo.sourcedir)}
-    try:
-        here = os.getcwd()
-        os.Chdir(repo.sourcedir)
-        # We found a matching VCS type
-        if vcs:
-            if "%(tempfile)s" in repo.vcs.exporter:
-                try:
-                    (tfdesc, tfname) = tempfile.mkstemp()
-                    assert tfdesc > -1    # pacify pylint
-                    context["tempfile"] = tfname
-                    runProcess(repo.vcs.exporter % context, "repository export")
-                    with open(tfname, "rb") as tp:
-                        repo.fastImport(tp, options, progress=showprogress, source=source)
-                finally:
-                    os.remove(tfname)
-                    os.close(tfdesc)
-            else:
-                with popenOrDie(repo.vcs.exporter % context, "repository export") as tp:
-                    repo.fastImport(make_wrapper(tp), options, progress=showprogress, source=source)
-            if repo.vcs.authormap and os.path.exists(repo.vcs.authormap):
-                announce(debugSHOUT, "reading author map.")
-                with open(repo.vcs.authormap, "rb") as fp:
-                    repo.readAuthorMap(range(len(repo.events)), make_wrapper(fp))
-            legacyMap = os.path.join(vcs.subdirectory, "legacy_map")
-            if os.path.exists(legacy_map):
-                with open(legacyMap, "rb") as rfp:
-                    repo.readLegacyMap(make_wrapper(rfp))
-            if vcs.lister:
-                func fileset(exclude):
-                    allfiles = []
-                    for root, dirs, files in os.walk("."):
-                        allfiles += [os.path.join(root, name)[2:] for name in files]
-                        for exdir in exclude:
-                            if exdir in dirs:
-                                dirs.remove(exdir)
-                    return set(allfiles)
-                with popenOrDie(vcs.lister) as fp:
-                    repofiles = set(polystr(fp.read()).split())
-                allfiles = fileset([vcs.subdirectory] + glob.glob(".rs*"))
-                repo.preserveSet |= (allfiles - repofiles)
-            # kluge: git-specific hook
-            if repo.vcs.name == "git":
-                if os.path.exists(".git/cvs-revisions"):
-                    announce(debugSHOUT, "reading cvs-revisions map.")
-                    pathrev_to_hash = {}
-                    # Pass 1: Get git's path/revision to hash mapping
-                    with open(".git/cvs-revisions", "r") as fp:
-                        for line in fp:
-                            (path, rev, hashv) = line.split()
-                            pathrev_to_hash[(path, rev)] = hashv
-                    # Pass 2: get git's hash to (time,person) mapping
-                    hash_to_action = {}
-                    stamp_set = set({})
-                    with popenOrDie("git log --all --format='%H %ct %ce'", "r") as fp:
-                        for line in fp:
-                            (hashv, ctime, cperson) = polystr(line).split()
-                            stamp = (int(ctime), cperson)
-                            if stamp in stamp_set:
-                                complain("more than one commit matches %s!%s (%s)" \
-                                         % (rfc3339(int(ctime)), cperson, hashv))
-                                if stamp in hash_to_action:
-                                    del hash_to_action[hashv]
-                            else:
-                                hash_to_action[hashv] = stamp
-                                stamp_set.add(stamp)
-                        # Pass 3: build a (time,person) to commit mapping
-                        action_to_mark = {}
-                        for commit in repo.commits():
-                            action_to_mark[(commit.committer.date.timestamp, commit.committer.email)] = commit
-                        # Pass 4: use it to set commit properties
-                        for ((path, rev), value) in pathrev_to_hash.items():
-                            if value in hash_to_action:
-                                (ctime, cperson) = hash_to_action[value]
-                                action_to_mark[(ctime, cperson)].legacyID = "CVS:%s:%s" % (path, rev)
-                        del pathrev_to_hash
-                        del hash_to_action
-                        del stamp_set
-        # We found a matching custom extractor
-        if extractor:
-            repo.stronghint=true
-            streamer = newRepoStreamer(extractor)
-            streamer.extract(repo, progress=verbose>0)
-    finally:
-        os.Chdir(here)
-    return repo
+	if vcs != nil {
+		if string.Contains(repo.vcs.exporter, "${tempfile}")  {
+			tfdesc := ioutil.Tempfile("", "rst")
+			defer tfdesc.Close()
+			defer os.Remove(tfdesc.Name())
+			context["tempfile"] = tfdesc.Name()
+			runProcess(repo.vcs.exporter % context, "repository export")
+			tp := open(tfname, "rb") 
+				repo.fastImport(tp, options, progress=showprogress, source=source)
+		} else {
+			tp := popenOrDie(repo.vcs.exporter % context, "repository export")
+			repo.fastImport(tp, options, progress=showprogress, source=source)
+			tp.Close()
+		}
+		if repo.vcs.authormap && os.path.exists(repo.vcs.authormap) {
+			announce(debugSHOUT, "reading author map.")
+			fp := open(repo.vcs.authormap, "rb") as fp {
+			repo.readAuthorMap(repo.all()), make_wrapper(fp))
+			fp.Close()
+		}
+		legacyMap := os.path.join(vcs.subdirectory, "legacy_map")
+		if os.path.exists(legacy_map) {
+			rfp := open(legacyMap, "rb")
+			repo.readLegacyMap(make_wrapper(rfp))
+			rfp.Close()
+		}
+		if vcs.lister {
+			func fileset(exclude) {
+				allfiles = []
+				for root, dirs, files in os.walk(".") {
+					allfiles += [os.path.join(root, name)[2:] for name in files]
+					for _, exdir := range exclude {
+						if exdir in dirs {
+							dirs.remove(exdir)
+						}
+					}
+				}
+				return set(allfiles)
+			}
+			with popenOrDie(vcs.lister) as fp {
+				repofiles := set(polystr(fp.read()).split())
+			}
+			allfiles = fileset([vcs.subdirectory] + glob.glob(".rs*"))
+			repo.preserveSet |= (allfiles - repofiles)
+		}
+		// kluge: git-specific hook
+		if repo.vcs.name == "git" {
+			if os.path.exists(".git/cvs-revisions") {
+				announce(debugSHOUT, "reading cvs-revisions map.")
+				pathrev_to_hash := {}
+				// Pass 1: Get git's path/revision to
+				// hash mapping
+				with open(".git/cvs-revisions", "r") as fp {
+					  for _, line := range fp {
+						  (path, rev, hashv) = strings.Fields(line)
+						  pathrev_to_hash[(path, rev)] = hashv
+					  }
+				  }
+				  // Pass 2: get git's hash to (time,person) mapping
+				  hash_to_action := {}
+				  stamp_set := set({})
+				  with popenOrDie("git log --all --format='%H %ct %ce'", "r") as fp {
+					  for _, line := range fp {
+						  (hashv, ctime, cperson) = strings.Fields(polystr(line))
+						  stamp := (int(ctime), cperson)
+						  if stamp in stamp_set {
+							  complain("more than one commit matches %s!%s (%s)"
+								  % (rfc3339(int(ctime)), cperson, hashv))
+							  if stamp in hash_to_action {
+								  delete(hash_to_action, hashv)
+							  }
+						  } else {
+							  hash_to_action[hashv] = stamp
+							  stamp_set.add(stamp)
+						  }
+					  }
+				  }
+				// Pass 3: build a (time,person)
+				// to commit mapping
+				action_to_mark := {}
+				for _, commit := range repo.commits() {
+					action_to_mark[(commit.committer.date.timestamp, commit.committer.email)] = commit
+				}
+				// Pass 4: use it to set commit properties
+				for ((path, rev), value) in pathrev_to_hash.items() {
+					if value in hash_to_action {
+						  (ctime, cperson) = hash_to_action[value]
+						  action_to_mark[(ctime, cperson)].legacyID = fmt.Sprintf("CVS:%s:%s", path, rev)
+					}
+				}
+			}
+		}
+	}
+*/
+	// We found a matching custom extractor
+	if extractor != nil {
+		repo.stronghint=true
+		streamer := newRepoStreamer(*extractor)
+		streamer.extract(repo, verbose>0)
+	}
+	return repo, nil
+}
 
+/*
 func rebuildRepo(repo, target, options, preferred):
     "Rebuild a repository from the captured state."
     if not target and repo.sourcedir:
@@ -8813,7 +8854,7 @@ func rebuildRepo(repo, target, options, preferred):
         if vcs.initializer:
             runProcess(vcs.initializer, "repository initialization")
         parameters = {"basename": os.path.basename(target)}
-        if "%(tempfile)s" in vcs.importer:
+        if "${tempfile}" in vcs.importer:
             try:
                 (tfdesc, tfname) = tempfile.mkstemp()
                 assert tfdesc > -1    # pacify pylint
