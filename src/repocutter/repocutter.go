@@ -349,7 +349,7 @@ func (lbs *LineBufferedSource) Push(line []byte) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "<Push: pushing %s>\n", vis(line))
 	}
-	lbs.Linebuffer = []byte(line)
+	lbs.Linebuffer = line
 }
 
 // HasLineBuffered - do we have one ready to go?
@@ -595,10 +595,10 @@ type SubversionRange struct {
 func NewSubversionRange(txt string) SubversionRange {
 	var s SubversionRange
 	s.intervals = make([][2]int, 0)
+	var upperbound int
 	for _, item := range strings.Split(txt, ",") {
 		var parts [2]int
-		var upperbound int
-		if strings.Index(item, ":") != -1 {
+		if strings.Contains(item, ":") {
 			fields := strings.Split(item, ":")
 			if fields[0] == "HEAD" {
 				panic("repocutter: can't accept HEAD as lower bound of a range.")
@@ -755,7 +755,7 @@ const delim = "-----------------------------------------------------------------
 // NewLogfile - initialize a new logfilr object from an input source
 func NewLogfile(readable io.Reader, restrict *SubversionRange) *Logfile {
 	var lf Logfile
-	lf.comments = make(map[int]Logentry, 0)
+	lf.comments = make(map[int]Logentry)
 	lf.source = NewLineBufferedSource(readable)
 	state := "awaiting_header"
 	author := []byte("")
@@ -998,14 +998,13 @@ func strip(source DumpfileSource, selection SubversionRange, patterns []string) 
 	innerstrip := func(header []byte, properties []byte, content []byte) []byte {
 		setLength := func(hd []byte, name string, val int) []byte {
 			r := regexp.MustCompile(name + ": ([0-9]*)")
-			m := r.FindSubmatchIndex([]byte(hd))
+			m := r.FindSubmatchIndex(hd)
 			if len(m) != 4 {
 				panic(fmt.Sprintf("While setting length of %s", name))
 			}
-			var res []byte
-			res = hd[0:m[2]]
+			res := hd[0:m[2]]
 			res = append(res, []byte(fmt.Sprintf("%d", val))...)
-			res = append(res, hd[m[3]:len(hd)]...)
+			res = append(res, hd[m[3]:]...)
 			return res
 		}
 
@@ -1023,7 +1022,7 @@ func strip(source DumpfileSource, selection SubversionRange, patterns []string) 
 			}
 		}
 		if ok {
-			if content != nil && len(content) > 0 {
+			if len(content) > 0 { //len([]nil == 0)
 				tell := fmt.Sprintf("Revision is %d, file path is %s.\n\n\n",
 					source.Revision, getHeader(header, "Node-path"))
 				// Avoid replacing symlinks, a reposurgeon sanity check barfs.
@@ -1060,7 +1059,7 @@ func strip(source DumpfileSource, selection SubversionRange, patterns []string) 
 func doreduce(source DumpfileSource) {
 	interesting := make([]int, 0)
 	reducehook := func(header []byte, properties []byte, _content []byte) []byte {
-		if !(string(getHeader(header, "Node-kind")) == "file" && string(getHeader(header, "Node-action")) == "change") || (properties != nil && len(properties) > 0) {
+		if !(string(getHeader(header, "Node-kind")) == "file" && string(getHeader(header, "Node-action")) == "change") || len(properties) > 0 { //len([]nil == 0)
 			interesting = append(interesting, source.Revision)
 		}
 		copysource := getHeader(header, "Node-copyfrom-rev")
@@ -1182,7 +1181,7 @@ func pathrename(source DumpfileSource, selection SubversionRange, patterns []str
 
 // Renumber all revisions.
 func renumber(source DumpfileSource) {
-	renumbering := make(map[string]int, 0)
+	renumbering := make(map[string]int)
 	counter := 0
 	var p []byte
 	for {
