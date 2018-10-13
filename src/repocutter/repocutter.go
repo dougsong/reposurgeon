@@ -259,28 +259,27 @@ func vis(line []byte) string {
 }
 
 // Readline - line-buffered readline.  Return "" on EOF.
-func (lbs *LineBufferedSource) Readline() []byte {
-	var line []byte
-	var err error
+func (lbs *LineBufferedSource) Readline() (line []byte) {
 	if len(lbs.Linebuffer) != 0 {
 		line = lbs.Linebuffer
 		if debug {
 			fmt.Fprintf(os.Stderr, "<Readline: popping %s>\n", vis(line))
 		}
 		lbs.Linebuffer = []byte{}
-	} else {
-		line, err = lbs.reader.ReadBytes('\n')
-		lbs.linenumber++
-		if debug {
-			fmt.Fprintf(os.Stderr, "<Readline %d: read %s>\n", lbs.linenumber, vis(line))
-		}
-		if err == io.EOF {
-			return []byte{}
-		} else if err != nil {
-			panic("repocutter: I/O error in Readline of LineBufferedSource")
-		}
+		return
 	}
-	return line
+	line, err := lbs.reader.ReadBytes('\n')
+	lbs.linenumber++
+	if debug {
+		fmt.Fprintf(os.Stderr, "<Readline %d: read %s>\n", lbs.linenumber, vis(line))
+	}
+	if err == io.EOF {
+		return []byte{}
+	}
+	if err != nil {
+		panic("repocutter: I/O error in Readline of LineBufferedSource")
+	}
+	return
 }
 
 // Require - read a line, requiring it to have a specified prefix.
@@ -301,20 +300,19 @@ func (lbs *LineBufferedSource) Read(rlen int) []byte {
 	if len(lbs.Linebuffer) != 0 {
 		panic(fmt.Sprintf("repocutter: line buffer unexpectedly nonempty after line %d", lbs.linenumber))
 	}
-	var text []byte
-	var chunk []byte
+	text := make([]byte, 0, rlen)
+	chunk := make([]byte, rlen)
 	for {
-		chunk = make([]byte, rlen)
 		n, err := lbs.reader.Read(chunk)
 		if err != nil && err != io.EOF {
 			panic("repocutter: I/O error in Read of LineBufferedSource")
 		}
-		chunk = chunk[0:n]
-		text = append(text, chunk...)
+		text = append(text, chunk[0:n]...)
 		if n == rlen {
 			break
 		}
 		rlen -= n
+		chunk = chunk[:rlen]
 	}
 	lbs.linenumber += strings.Count(string(text), "\n")
 	return text
