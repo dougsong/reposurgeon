@@ -267,7 +267,7 @@ func (lbs *LineBufferedSource) Readline() []byte {
 		if debug {
 			fmt.Fprintf(os.Stderr, "<Readline: popping %s>\n", vis(line))
 		}
-		lbs.Linebuffer = []byte("")
+		lbs.Linebuffer = []byte{}
 	} else {
 		line, err = lbs.reader.ReadBytes('\n')
 		lbs.linenumber++
@@ -275,7 +275,7 @@ func (lbs *LineBufferedSource) Readline() []byte {
 			fmt.Fprintf(os.Stderr, "<Readline %d: read %s>\n", lbs.linenumber, vis(line))
 		}
 		if err == io.EOF {
-			return []byte("")
+			return []byte{}
 		} else if err != nil {
 			panic("repocutter: I/O error in Readline of LineBufferedSource")
 		}
@@ -340,7 +340,7 @@ func (lbs *LineBufferedSource) Peek() []byte {
 func (lbs *LineBufferedSource) Flush() []byte {
 	//assert(lbs.Linebuffer is not None)
 	line := lbs.Linebuffer
-	lbs.Linebuffer = []byte("")
+	lbs.Linebuffer = []byte{}
 	return line
 }
 
@@ -521,7 +521,7 @@ func (ds *DumpfileSource) ReadNode(PropertyHook func(*Properties)) ([]byte, []by
 		properties = props.Stringer()
 	}
 	// Using a read() here allows us to handle binary content
-	content := []byte("")
+	content := []byte{}
 	cl := textContentLength.FindSubmatch(header)
 	if len(cl) > 1 {
 		n, _ := strconv.Atoi(string(cl[1]))
@@ -542,7 +542,7 @@ func (ds *DumpfileSource) ReadUntilNext(prefix string, revmap map[int]int) []byt
 	if debug {
 		fmt.Fprintf(os.Stderr, "<ReadUntilNext: until %s>\n", prefix)
 	}
-	stash := []byte("")
+	stash := []byte{}
 	for {
 		line := ds.Lbs.Readline()
 		if debug {
@@ -714,7 +714,7 @@ func (ds *DumpfileSource) Report(selection SubversionRange,
 						fmt.Fprintf(os.Stderr, "<appending to: %s>\n", vis(stash))
 					}
 					nodetxt = append(stash, nodetxt...)
-					stash = []byte("")
+					stash = []byte{}
 				}
 				if passthrough && len(nodetxt) > 0 {
 					if debug {
@@ -764,9 +764,9 @@ func NewLogfile(readable io.Reader, restrict *SubversionRange) *Logfile {
 		inLogEntry
 	)
 	state := awaitingHeader
-	author := []byte("")
-	date := []byte("")
-	logentry := []byte("")
+	author := []byte{}
+	date := []byte{}
+	logentry := []byte{}
 	lineno := 0
 	rev := -1
 	re := regexp.MustCompile("^r[0-9]+")
@@ -782,7 +782,7 @@ func NewLogfile(readable io.Reader, restrict *SubversionRange) *Logfile {
 						lf.comments[rev] = Logentry{author, date, logentry}
 					}
 					rev = -1
-					logentry = []byte("")
+					logentry = []byte{}
 				}
 				if len(line) != 0 {
 					state = awaitingHeader
@@ -1043,13 +1043,13 @@ func strip(source DumpfileSource, selection SubversionRange, patterns []string) 
 					"Content-length", len(properties)+len(content)-2)
 			}
 			r1 := regexp.MustCompile("Text-content-md5:.*\n")
-			header = r1.ReplaceAll(header, []byte(""))
+			header = r1.ReplaceAll(header, []byte{})
 			r2 := regexp.MustCompile("Text-content-sha1:.*\n")
-			header = r2.ReplaceAll(header, []byte(""))
+			header = r2.ReplaceAll(header, []byte{})
 			r3 := regexp.MustCompile("Text-copy-source-md5:.*\n")
-			header = r3.ReplaceAll(header, []byte(""))
+			header = r3.ReplaceAll(header, []byte{})
 			r4 := regexp.MustCompile("Text-copy-source-sha1:.*\n")
-			header = r4.ReplaceAll(header, []byte(""))
+			header = r4.ReplaceAll(header, []byte{})
 		}
 
 		all := make([]byte, 0)
@@ -1118,7 +1118,7 @@ func expunge(source DumpfileSource, selection SubversionRange, patterns []string
 			all = append(all, content...)
 			return all
 		}
-		return []byte("")
+		return []byte{}
 	}
 	source.Report(selection, expungehook, nil, true, true)
 }
@@ -1144,7 +1144,7 @@ func sift(source DumpfileSource, selection SubversionRange, patterns []string) {
 			all = append(all, content...)
 			return all
 		}
-		return []byte("")
+		return []byte{}
 	}
 	source.Report(selection, sifthook, nil, true, false)
 }
