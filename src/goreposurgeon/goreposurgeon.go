@@ -11395,7 +11395,7 @@ func (self *Reposurgeon) DoCoverage(lineIn string) bool {
 		commit.fileopDump()
 	}
 	repo.caseCoverage.Sort()
-	fmt.Fprintf(parse.stdout, "Case coverage: %s\n", repo.caseCoverage)
+	fmt.Fprintf(parse.stdout, "Case coverage: %v\n", repo.caseCoverage)
 	return false
 }
 
