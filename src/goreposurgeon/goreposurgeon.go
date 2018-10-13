@@ -11346,44 +11346,67 @@ func (rs *Reposurgeon) DoHistory(_line string) (stopOut bool) {
         for e in self.chosen().commits():
             e.fileopDump()
         os.Stdout.WriteString("Case coverage: %s\n" % sorted(self.chosen().caseCoverage))
+*/
 
-    func help_index():
-        rs.helpOutput("""
+func (self *Reposurgeon) HelpIndex() {
+	self.helpOutput(`
 Display four columns of info on selected objects: their number, their
 type, the associate mark (or '-' if no mark) and a summary field
 varying by type.  For a branch or tag it's the reference; for a commit
 it's the commit branch; for a blob it's the repository path of the
 file in the blob.  Supports > redirection.
-""")
-    func do_index(self, line str):
-        "Generate a summary listing of objects."
-        if not self.chosen():
-            complain("no repo has been chosen.")
-            return
-        # We could do all this logic using report_select() and index() methods
-        # in the objects, but that would have two disadvantages.  First, we'd
-        # get a default-set computation we don't want.  Second, for this
-        # function it's helpful to have the method strings close together so
-        # we can maintain columnation.
-        if self.selection is None:
-            self.selection = [n for n, o1 in enumerate(self.chosen()) if not isinstance(o1, Blob)]
-        with newLineParse(self, line, nil stringSet{"stdout"}) as parse:
-            for i, event in self.selected():
-                if isinstance(event, Blob):
-                    parse.stdout.WriteString("%6d blob   %6s    %s\n" % (i+1, event.mark," ".join(event.paths())))
-                    continue
-                if isinstance(event, Commit):
-                    parse.stdout.WriteString("%6d commit %6s    %s\n" % (i+1, event.mark or '-', event.branch))
-                    continue
-                if isinstance(event, Tag):
-                    parse.stdout.WriteString("%6d tag    %6s    %4s\n" % (i+1, event.committish, repr(event.name),))
-                    continue
-                if isinstance(event, Reset):
-                    parse.stdout.WriteString("%6d branch %6s    %s\n" % (i+1, event.committish or '-', event.ref))
-                    continue
-                else:
-                    parse.stdout.WriteString("?      -      %s\n" % (event,))
-*/
+`)
+}
+
+// Generate a summary listing of objects.
+func (self *Reposurgeon) DoIndex(lineIn string) bool {
+	repo := self.chosen()
+	if repo == nil {
+		self.cmd.Output("no repo has been chosen.")
+		return false
+	}
+	// We could do all this logic using reportSelect() and index() methods
+	// in the objects, but that would have two disadvantages.  First, we'd
+	// get a default-set computation we don't want.  Second, for this
+	// function it's helpful to have the method strings close together so
+	// we can maintain columnation.
+	if self.selection == nil {
+		self.selection = make([]int, 0)
+		for _, eventid := range repo.all() {
+			event := repo.events[eventid]
+			_, isblob := event.(*Blob)
+			if !isblob {
+				self.selection = append(self.selection, eventid)
+			}
+		}
+	}
+	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+	defer parse.Closem()
+	for _, eventid := range self.selection {
+		event := repo.events[eventid]
+		switch e := event.(type) {
+		case *Blob:
+			fmt.Fprintf(parse.stdout, "%6d blob   %6s    %s\n", eventid+1, e.mark, strings.Join(e.paths(""), " "))
+		case *Commit:
+			mark := e.mark
+			if mark == "" {
+				mark = "-"
+			}
+			fmt.Fprintf(parse.stdout, "%6d commit %6s    %s\n", eventid+1, mark, e.branch)
+		case *Tag:
+			fmt.Fprintf(parse.stdout, "%6d tag    %6s    %4s\n", eventid+1, e.committish, e.name)
+		case *Reset:
+			committish := e.committish
+			if committish == "" {
+				committish = "-"
+			}
+			fmt.Fprintf(parse.stdout, "%6d branch %6s    %s\n", eventid+1, committish, e.ref)
+		default:
+			fmt.Fprintf(parse.stdout, "?      -      %s\n", e)
+		}
+	}
+	return false
+}
 
 func (rs *Reposurgeon) HelpProfile() {
 	rs.helpOutput(`
