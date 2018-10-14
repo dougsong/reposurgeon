@@ -548,31 +548,32 @@ func (ds *DumpfileSource) ReadUntilNext(prefix string, revmap map[int]int) []byt
 
 		if len(line) == 0 {
 			return stash
-		} else if strings.HasPrefix(string(line), prefix) {
+		}
+		if strings.HasPrefix(string(line), prefix) {
 			ds.Lbs.Push(line)
 			if debug {
 				fmt.Fprintf(os.Stderr, "<ReadUntilNext pushes: %s>\n", vis(line))
 			}
 			return stash
-		} else {
-			// Hack the revision levels in copy-from headers.
-			// We're actually modifying the dumpfile contents
-			// (rather than selectively omitting parts of it).
-			// Note: this will break on a dumpfile that has dumpfiles
-			// in its nodes!
-			if revmap != nil && strings.HasPrefix(string(line), "Node-copyfrom-rev:") {
-				old := bytes.Fields(line)[1]
-				oldi, err := strconv.Atoi(string(old))
-				if err != nil {
-					newrev := []byte(strconv.Itoa(revmap[oldi]))
-					line = bytes.Replace(line, old, newrev, 1)
-				}
-			}
-			stash = append(stash, line...)
-			if debug {
-				fmt.Fprintf(os.Stderr, "<ReadUntilNext: appends %s>\n", vis(line))
+		}
+		// Hack the revision levels in copy-from headers.
+		// We're actually modifying the dumpfile contents
+		// (rather than selectively omitting parts of it).
+		// Note: this will break on a dumpfile that has dumpfiles
+		// in its nodes!
+		if revmap != nil && strings.HasPrefix(string(line), "Node-copyfrom-rev:") {
+			old := bytes.Fields(line)[1]
+			oldi, err := strconv.Atoi(string(old))
+			if err != nil {
+				newrev := []byte(strconv.Itoa(revmap[oldi]))
+				line = bytes.Replace(line, old, newrev, 1)
 			}
 		}
+		stash = append(stash, line...)
+		if debug {
+			fmt.Fprintf(os.Stderr, "<ReadUntilNext: appends %s>\n", vis(line))
+		}
+
 	}
 }
 
@@ -658,11 +659,10 @@ func (ds *DumpfileSource) Report(selection SubversionRange,
 	for {
 		nodecount = 0
 		stash, _ := ds.ReadRevisionHeader(prophook)
-		if selection.Contains(ds.Revision) {
-			// pass
-		} else if ds.Revision == selection.Upperbound()+1 {
-			return
-		} else {
+		if !selection.Contains(ds.Revision) {
+			if ds.Revision == selection.Upperbound()+1 {
+				return
+			}
 			ds.ReadUntilNext("Revision-number:", nil)
 			continue
 		}
@@ -670,15 +670,17 @@ func (ds *DumpfileSource) Report(selection SubversionRange,
 			line = ds.Lbs.Readline()
 			if len(line) == 0 {
 				return
-			} else if string(line) == "\n" {
+			}
+			if string(line) == "\n" {
 				if passthrough && emit {
 					if debug {
 						fmt.Fprintf(os.Stderr, "<passthrough dump: %s>\n", vis(line))
 					}
 					os.Stdout.Write(line)
-					continue
 				}
-			} else if strings.HasPrefix(string(line), "Revision-number:") {
+				continue
+			}
+			if strings.HasPrefix(string(line), "Revision-number:") {
 				ds.Lbs.Push(line)
 				if len(stash) != 0 && nodecount == 0 && passempty {
 					if passthrough {
@@ -689,7 +691,8 @@ func (ds *DumpfileSource) Report(selection SubversionRange,
 					}
 				}
 				break
-			} else if strings.HasPrefix(string(line), "Node-") {
+			}
+			if strings.HasPrefix(string(line), "Node-") {
 				nodecount++
 				ds.Lbs.Push(line)
 				header, properties, content := ds.ReadNode(prophook)
@@ -720,10 +723,9 @@ func (ds *DumpfileSource) Report(selection SubversionRange,
 					ds.say(nodetxt)
 				}
 				continue
-			} else {
-				fmt.Fprintf(os.Stderr, "repocutter: parse at %d doesn't look right (%s), aborting!\n", ds.Revision, vis(line))
-				os.Exit(1)
 			}
+			fmt.Fprintf(os.Stderr, "repocutter: parse at %d doesn't look right (%s), aborting!\n", ds.Revision, vis(line))
+			os.Exit(1)
 		}
 	}
 }
@@ -781,34 +783,33 @@ func NewLogfile(readable io.Reader, restrict *SubversionRange) *Logfile {
 					rev = -1
 					logentry = []byte{}
 				}
-				if len(line) != 0 {
-					state = awaitingHeader
-				} else {
+				if len(line) == 0 {
 					break
 				}
+				state = awaitingHeader
 			} else {
 				logentry = append(logentry, line...)
 			}
-		} else if state == awaitingHeader {
+		}
+		if state == awaitingHeader {
 			if len(line) == 0 {
 				break
-			} else if bytes.HasPrefix(line, []byte("-----------")) {
-				continue
-			} else {
-				if re.Find(line) == nil {
-					fmt.Fprintf(os.Stderr, "line %d: repocutter did not see a comment header where one was expected\n", lineno)
-					os.Exit(1)
-				} else {
-					fields := bytes.Split(line, []byte("|"))
-					revstr := bytes.TrimSpace(fields[0])
-					author = bytes.TrimSpace(fields[1])
-					date = bytes.TrimSpace(fields[2])
-					//lc := bytes.TrimSpace(fields[3])
-					revstr = revstr[1:] // strip off leaing 'r'
-					rev, _ = strconv.Atoi(string(revstr))
-					state = inLogEntry
-				}
 			}
+			if bytes.HasPrefix(line, []byte("-----------")) {
+				continue
+			}
+			if !re.Match(line) {
+				fmt.Fprintf(os.Stderr, "line %d: repocutter did not see a comment header where one was expected\n", lineno)
+				os.Exit(1)
+			}
+			fields := bytes.Split(line, []byte("|"))
+			revstr := bytes.TrimSpace(fields[0])
+			author = bytes.TrimSpace(fields[1])
+			date = bytes.TrimSpace(fields[2])
+			//lc := bytes.TrimSpace(fields[3])
+			revstr = revstr[1:] // strip off leaing 'r'
+			rev, _ = strconv.Atoi(string(revstr))
+			state = inLogEntry
 		}
 	}
 	return &lf
@@ -1017,7 +1018,7 @@ func strip(source DumpfileSource, selection SubversionRange, patterns []string) 
 		if nodepath != nil {
 			for _, pattern := range patterns {
 				re := regexp.MustCompile(pattern)
-				if re.Find(nodepath) == nil {
+				if !re.Match(nodepath) {
 					//os.Stderr.Write("strip skipping: %s\n", filepath)
 					ok = false
 					break
@@ -1102,7 +1103,7 @@ func expunge(source DumpfileSource, selection SubversionRange, patterns []string
 		if nodepath != nil {
 			for _, pattern := range patterns {
 				r := regexp.MustCompile(pattern)
-				if r.Find(nodepath) != nil {
+				if r.Match(nodepath) {
 					matched = true
 					break
 				}
@@ -1128,7 +1129,7 @@ func sift(source DumpfileSource, selection SubversionRange, patterns []string) {
 		if nodepath != nil {
 			for _, pattern := range patterns {
 				r := regexp.MustCompile(pattern)
-				if r.Find(nodepath) != nil {
+				if r.Match(nodepath) {
 					matched = true
 					break
 				}
@@ -1191,7 +1192,8 @@ func renumber(source DumpfileSource) {
 		line := source.Lbs.Readline()
 		if len(line) == 0 {
 			break
-		} else if p = payload("Revision-number", line); p != nil {
+		}
+		if p = payload("Revision-number", line); p != nil {
 			fmt.Printf("Revision-number: %d\n", counter)
 			renumbering[string(p)] = counter
 			counter++
