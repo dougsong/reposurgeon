@@ -10960,12 +10960,22 @@ func (rs *Reposurgeon) evalNeighborhood(state selEvalState,
         value.sort()
         value = orderedIntSet(value)
         return value
-    @debug_lexer
-    func parse_term():
-        term = super(RepoSurgeon, self).parse_term()
-        if term is None:
-            term = self.parse_pathset()
-        return term
+*/
+
+func (rs *Reposurgeon) parseTerm() selEvaluator {
+	// FIXME: @debug_lexer
+	term := rs.SelectionParser.parseTerm()
+	if term == nil {
+		term = rs.parsePathset()
+	}
+	return term
+}
+
+func (rs *Reposurgeon) parsePathset() selEvaluator {
+	return nil
+}
+
+/*
     func has_reference(self, event):
         "Does an event contain something that looks like a legacy reference?"
         self.chosen().parseDollarCookies()
