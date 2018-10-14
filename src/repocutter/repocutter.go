@@ -913,11 +913,10 @@ func proprename(source DumpfileSource, propnames []string, selection SubversionR
 }
 
 func getAuthor(props map[string]string) string {
-	author := props["svn:author"]
-	if author == "" {
-		author = "(no author)"
+	if author, ok := props["svn:author"]; ok {
+		return author
 	}
-	return author
+	return "(no author)"
 }
 
 // getHeader - extract a given field from a header string
@@ -996,7 +995,7 @@ func strip(source DumpfileSource, selection SubversionRange, patterns []string) 
 				panic(fmt.Sprintf("While setting length of %s", name))
 			}
 			res := hd[0:m[2]]
-			res = append(res, []byte(fmt.Sprintf("%d", val))...)
+			res = append(res, []byte(strconv.Itoa(val))...)
 			res = append(res, hd[m[3]:]...)
 			return res
 		}
@@ -1051,7 +1050,7 @@ func strip(source DumpfileSource, selection SubversionRange, patterns []string) 
 // Topologically reduce a dump, removing spans of plain file modifications.
 func doreduce(source DumpfileSource) {
 	interesting := make([]int, 0)
-	reducehook := func(header []byte, properties []byte, _content []byte) []byte {
+	reducehook := func(header []byte, properties []byte, _ []byte) []byte {
 		if !(string(getHeader(header, "Node-kind")) == "file" && string(getHeader(header, "Node-action")) == "change") || len(properties) > 0 { //len([]nil == 0)
 			interesting = append(interesting, source.Revision)
 		}
@@ -1196,7 +1195,7 @@ func renumber(source DumpfileSource) {
 
 // Strip out ops defined by a revision selection and a path regexp.
 func see(source DumpfileSource, selection SubversionRange) {
-	seenode := func(header []byte, _properties []byte, _content []byte) []byte {
+	seenode := func(header []byte, _, _ []byte) []byte {
 		if debug {
 			fmt.Fprintf(os.Stderr, "<header: %s>\n", vis(header))
 		}
@@ -1220,8 +1219,6 @@ func see(source DumpfileSource, selection SubversionRange) {
 	}
 	source.Report(selection, seenode, nil, false, true)
 }
-
-var swaplatch = false // Ugh...
 
 // Hack paths by swapping the top two components.
 func swap(source DumpfileSource, selection SubversionRange) {
@@ -1258,6 +1255,7 @@ func swap(source DumpfileSource, selection SubversionRange) {
 		// generated so reposurgeon doesn't get confused about
 		// the branch structure.
 	}
+	var swaplatch bool // Ugh, but less than global
 	nodehook := func(header []byte, properties []byte, content []byte) []byte {
 		// This is dodgy.  The assumption here is that the first node
 		// of r1 is the directory creation for the first project.
