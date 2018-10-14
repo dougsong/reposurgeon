@@ -1380,7 +1380,11 @@ func (ge GitExtractor) _metadata(rev string, format string) string {
 }
 
 func (ge GitExtractor) postExtract(_repo *Repository) {
-	exec.Command("git", "checkout", "--quiet", "master").Run()
+	cmd := exec.Command("git", "checkout", "--quiet", "master")
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Run()
 }
 
 // isClean is a predicate;  return true if repo has no unsaved changes.
@@ -7277,7 +7281,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 		}
 		_, err := fp.Write([]byte(event.String()))
 		if err != nil {
-			panic(fmt.Errorf("export error: %s", err))
+			panic(fmt.Errorf("export error: %v", err))
 		}
 	}
 	baton.exit("")
@@ -9112,7 +9116,11 @@ func runProcess(dcmd string, legend string) error {
 	if err != nil {
 		return fmt.Errorf("preparing %q for execution: %v", dcmd, err)
 	}
-	err = exec.Command(words[0], words[1:]...).Run()
+	cmd := exec.Command(words[0], words[1:]...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Run()
 	if err != nil {
 		return fmt.Errorf("executing %q: %v", dcmd, err)
 	}
@@ -9121,6 +9129,8 @@ func runProcess(dcmd string, legend string) error {
 
 func readFromProcess(command string) (io.ReadCloser, *exec.Cmd, error) {
 	cmd := exec.Command("sh", "-c", command+" 2>&1")
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, nil, err
@@ -9139,6 +9149,8 @@ func readFromProcess(command string) (io.ReadCloser, *exec.Cmd, error) {
 
 func writeToProcess(command string) (io.WriteCloser, *exec.Cmd, error) {
 	cmd := exec.Command("sh", "-c", command+" 2>&1")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	stdout, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, nil, err
