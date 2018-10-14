@@ -8938,8 +8938,8 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		}
 	} else {
 		staging = fmt.Sprintf("%s-stage%d", target, os.Getpid())
-		if !filepath.IsAbs(target) || filepath.IsAbs(staging) {
-			return errors.New("internal error: target and staging paths should be absolute.")
+		if !filepath.IsAbs(target) || !filepath.IsAbs(staging) {
+			return fmt.Errorf("internal error: target (%s) and staging paths (%s) should be absolute.", target, staging)
 		}
 		err := os.Mkdir(staging, userReadWriteMode)
 		if err != nil {
