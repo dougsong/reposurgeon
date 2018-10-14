@@ -1376,53 +1376,57 @@ func main() {
 			baton = nil
 		}
 	}
-	if flag.Arg(0) == "propdel" {
+
+	switch flag.Arg(0) {
+	case "propdel":
 		propdel(NewDumpfileSource(input, baton), flag.Args()[1:], selection)
-	} else if flag.Arg(0) == "propset" {
+	case "propset":
 		propset(NewDumpfileSource(input, baton), flag.Args()[1:], selection)
-	} else if flag.Arg(0) == "proprename" {
+	case "proprename":
 		proprename(NewDumpfileSource(input, baton), flag.Args()[1:], selection)
-	} else if flag.Arg(0) == "select" {
+	case "select":
 		sselect(NewDumpfileSource(input, baton), selection)
-	} else if flag.Arg(0) == "log" {
+	case "log":
 		log(NewDumpfileSource(input, baton), selection)
-	} else if flag.Arg(0) == "setlog" {
+	case "setlog":
 		if logpatch == "" {
 			fmt.Fprintf(os.Stderr, "repocutter: setlog requires a log entries file.\n")
 			os.Exit(1)
 		}
 		setlog(NewDumpfileSource(input, baton), logpatch, selection)
-	} else if flag.Arg(0) == "strip" {
+	case "strip":
 		strip(NewDumpfileSource(input, baton), selection, flag.Args()[1:])
-	} else if flag.Arg(0) == "pathrename" {
+	case "pathrename":
 		pathrename(NewDumpfileSource(input, baton), selection, flag.Args()[1:])
-	} else if flag.Arg(0) == "expunge" {
+	case "expunge":
 		expunge(NewDumpfileSource(input, baton), selection, flag.Args()[1:])
-	} else if flag.Arg(0) == "sift" {
+	case "sift":
 		sift(NewDumpfileSource(input, baton), selection, flag.Args()[1:])
-	} else if flag.Arg(0) == "renumber" {
+	case "renumber":
 		renumber(NewDumpfileSource(input, baton))
-	} else if flag.Arg(0) == "reduce" {
+	case "reduce":
 		f, err := os.Open(flag.Args()[1])
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "repocutter: can't open stream ro reduce\n")
 			os.Exit(1)
 		}
 		doreduce(NewDumpfileSource(f, baton))
-	} else if flag.Arg(0) == "see" {
+	case "see":
 		see(NewDumpfileSource(input, baton), selection)
-	} else if flag.Arg(0) == "swap" {
+	case "swap":
 		swap(NewDumpfileSource(input, baton), selection)
-	} else if flag.Arg(0) == "help" {
+	case "help":
 		if len(flag.Args()) == 1 {
 			os.Stdout.WriteString(doc)
-		} else if cdoc, ok := helpdict[flag.Arg(1)]; ok {
-			os.Stdout.WriteString(cdoc)
-		} else {
-			fmt.Fprintf(os.Stderr, "repocutter: no such command\n")
-			os.Exit(1)
+			break
 		}
-	} else {
+		if cdoc, ok := helpdict[flag.Arg(1)]; ok {
+			os.Stdout.WriteString(cdoc)
+			break
+		}
+		fmt.Fprintf(os.Stderr, "repocutter: no such command\n")
+		os.Exit(1)
+	default:
 		fmt.Fprintf(os.Stderr, "repocutter: \"%s\": unknown subcommand\n", flag.Arg(0))
 		os.Exit(1)
 	}
