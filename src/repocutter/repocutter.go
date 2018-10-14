@@ -388,8 +388,7 @@ func NewProperties(source *DumpfileSource) Properties {
 // Stringer - return a representation of properties that can round-trip
 func (props *Properties) Stringer() string {
 	var b strings.Builder
-	for i := range props.propkeys {
-		key := props.propkeys[i]
+	for _, key := range props.propkeys {
 		if props.properties[key] != "" {
 			fmt.Fprintf(&b, "K %d%s", len(key), linesep)
 			fmt.Fprintf(&b, "%s%s", key, linesep)
