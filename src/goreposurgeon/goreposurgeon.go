@@ -11787,7 +11787,7 @@ unwieldy. Supports > redirection.
         if self.selection is None:
             self.selection = self.chosen().all()
         sizes = {}
-        with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
+        with newLineParse(self, line, stringSet{"stdout"}) as parse:
             for _, event in self.selected():
                 if isinstance(event, Commit):
                     if event.branch not in sizes:
@@ -11831,7 +11831,7 @@ Supports > redirection.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
+        with newLineParse(self, line, stringSet{"stdout"}) as parse:
             unmapped = regexp.MustCompile(("[^@]*$|[^@]*@" + str(self.chosen().uuid) + "$").encode('ascii'))
             shortset = set()
             deletealls = set()
@@ -12358,7 +12358,7 @@ before each event dump.
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
+        with newLineParse(self, line, stringSet{"stdout"}) as parse:
             if self.selection is None and parse.line.strip():
                 parse.line = self.set_selection_set(parse.line)
             else if self.selection is None:
@@ -12438,7 +12438,7 @@ for graphviz. Supports > redirection.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
+        with newLineParse(self, line, stringSet{"stdout"}) as parse:
             parse.stdout.WriteString("digraph {\n")
             for _, event in self.selected():
                 if isinstance(event, Commit):
@@ -12471,7 +12471,7 @@ for graphviz. Supports > redirection.
     func help_rebuild():
         rs.helpOutput("""
 Rebuild a repository from the state held by reposurgeon.  The argument
-specifies the target directory in which to do the rebuild;x0 if the
+specifies the target directory in which to do the rebuild; if the
 repository read was from a repo directory (and not a git-import stream), it
 defaults to that directory.  If the target directory is nonempty
 its contents are backed up to a save directory.
@@ -12483,7 +12483,7 @@ its contents are backed up to a save directory.
             return
         if self.selection is not None:
             panic(throw("command", "rebuild does not take a selection set"))
-        with RepoSurgeon.LineParse(self, line) as parse:
+        with newLineParse(self, line) as parse:
             rebuildRepo(self.chosen(), parse.line, parse.options, self.preferred)
 */
 
@@ -12586,7 +12586,7 @@ CVS empty-comment marker.
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        with RepoSurgeon.LineParse(self, line, capabilities=["stdin","stdout"]) as parse:
+        with newLineParse(self, line, capabilities=["stdin","stdout"]) as parse:
             update_list = []
             while true:
                 var msg MessageBlock
@@ -13058,7 +13058,7 @@ the new text is appended.
             return
         if self.selection is None:
             raise Recoverable("no selection")
-        with RepoSurgeon.LineParse(self, line) as parse:
+        with newLineParse(self, line) as parse:
             fields = shlex.split(parse.line)
             if not fields:
                 raise Recoverable("missing append line")
@@ -13085,7 +13085,7 @@ removal of fileops associated with commits requires this.
             return
         if self.selection is None:
             self.selection = []
-        with RepoSurgeon.LineParse(self, line) as parse:
+        with newLineParse(self, line) as parse:
             self.chosen().squash(self.selection, parse.options)
     func help_delete():
         rs.helpOutput("""
@@ -13105,7 +13105,7 @@ squash with the --delete flag.
             return
         if self.selection is None:
             self.selection = []
-        with RepoSurgeon.LineParse(self, line) as parse:
+        with newLineParse(self, line) as parse:
             self.chosen().squash(self.selection, set(["--delete"]) | parse.options)
 
     func help_coalesce():
@@ -13137,7 +13137,7 @@ With  the --debug option, show messages about mismatches.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        with RepoSurgeon.LineParse(self, line) as parse:
+        with newLineParse(self, line) as parse:
             timefuzz = 90
             changelog = "--changelog" in parse.options
             if parse.line:
@@ -13296,7 +13296,7 @@ used with the add command to patch data into a repository.
         blob = Blob(repo)
         blob.setMark(":1")
         repo.addEvent(blob, where=0)
-        with RepoSurgeon.LineParse(self, line, []strings{"stdin"}) as parse:
+        with newLineParse(self, line, []strings{"stdin"}) as parse:
             blob.setContent(parse.stdin.read())
         repo.declareSequenceMutation("adding blob")
         repo.invalidateNamecache()
@@ -13696,7 +13696,7 @@ branch being grafted on.
         "Unite repos together."
         self.unchoose()
         factors = []
-        with RepoSurgeon.LineParse(self, line) as parse:
+        with newLineParse(self, line) as parse:
             for name in parse.line.split():
                 repo = self.repoByName(name)
                 if repo is None:
@@ -13736,7 +13736,7 @@ of the grafted repository.
             return
         if not self.repolist:
             raise Recoverable("no repositories are loaded.")
-        with RepoSurgeon.LineParse(self, line) as parse:
+        with newLineParse(self, line) as parse:
             if parse.line in self.reponames():
                 graft_repo = self.repoByName(parse.line)
             else:
@@ -13859,7 +13859,7 @@ in the ancestry of the commit, this command throws an error.  With the
             self.selection = repo.all()
         (source_re, line) = RepoSurgeon.pop_token(line)
         (verb, line) = RepoSurgeon.pop_token(line)
-        with RepoSurgeon.LineParse(self, line) as parse:
+        with newLineParse(self, line) as parse:
             if verb == "rename":
                 force = '--force' in parse.options
                 (target_re, _) = RepoSurgeon.pop_token(parse.line)
@@ -13907,7 +13907,7 @@ with no argument, strip the first directory component from every path.
         if self.selection is None:
             self.selection = self.chosen().all()
         if not line.startswith(("sub", "sup")):
-            with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
+            with newLineParse(self, line, stringSet{"stdout"}) as parse:
                 allpaths = set()
                 for _, event in self.selected(Commit):
                     allpaths.update(event.paths())
@@ -13954,7 +13954,7 @@ This command supports > redirection.
             raise Recoverable("no repo has been chosen")
         if self.selection is None:
             self.selection = self.chosen().all()
-        with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
+        with newLineParse(self, line, stringSet{"stdout"}) as parse:
             filter_func = None
             line = parse.line.strip()
             if line:
@@ -14019,7 +14019,7 @@ merge link is moved to the tagified commit's parent.
             raise Recoverable("no repo has been chosen")
         if self.selection is None:
             self.selection = repo.all()
-        with RepoSurgeon.LineParse(self, line) as parse:
+        with newLineParse(self, line) as parse:
             if parse.line:
                 raise Recoverable("too many arguments for tagify.")
             before = len([c for c in repo.commits()])
@@ -14152,7 +14152,7 @@ Policy:
         if repo is None:
             complain("no repo has been chosen.")
             return
-        with RepoSurgeon.LineParse(self, line) as parse:
+        with newLineParse(self, line) as parse:
             use_order = '--use-order' in parse.options
             try:
                 selected = list(self.selected(Commit))
@@ -14252,7 +14252,7 @@ after the operation.
         if len(sel) == 1:
             complain("only 1 commit selected; nothing to re-order")
             return
-        with RepoSurgeon.LineParse(self, line) as parse:
+        with newLineParse(self, line) as parse:
             if parse.line:
                 raise Recoverable("'reorder' takes no arguments")
             repo.reorder_commits(sel, '--quiet' in parse.options)
@@ -14793,7 +14793,7 @@ Available actions are:
             raise Recoverable("no repo has been chosen")
         selparser = AttributionEditor.SelParser()
         machine, rest = selparser.compile(line)
-        with RepoSurgeon.LineParse(self, rest, stringSet{"stdout"}) as parse:
+        with newLineParse(self, rest, stringSet{"stdout"}) as parse:
             try:
                 fields = shlex.split(parse.line)
             except ValueError as e:
@@ -14876,14 +14876,14 @@ part to the right of an equals sign will need editing.
             self.selection = self.chosen().all()
         if line.startswith("write"):
             line = line[5:].strip()
-            with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
+            with newLineParse(self, line, stringSet{"stdout"}) as parse:
                 if parse.tokens():
                     raise Recoverable("authors write no longer takes a filename argument - use > redirection instead")
                 self.chosen().writeAuthorMap(self.selection, parse.stdout)
         else:
             if line.startswith("read"):
                 line = line[4:].strip()
-            with RepoSurgeon.LineParse(self, line, []strings{"stdin"}) as parse:
+            with newLineParse(self, line, []strings{"stdin"}) as parse:
                 if parse.tokens():
                     raise Recoverable("authors read no longer takes a filename argument - use < redirection instead")
                 self.chosen().readAuthorMap(self.selection, parse.stdin)
@@ -14905,14 +14905,14 @@ output or a >-redirected filename.
             return
         if line.startswith("write"):
             line = line[5:].strip()
-            with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
+            with newLineParse(self, line, stringSet{"stdout"}) as parse:
                 if parse.tokens():
                     raise Recoverable("legacy write does not take a filename argument - use > redirection instead")
                 self.chosen().writeLegacyMap(parse.stdout)
         else:
             if line.startswith("read"):
                 line = line[4:].strip()
-            with RepoSurgeon.LineParse(self, line, []strings{"stdin"}) as parse:
+            with newLineParse(self, line, []strings{"stdin"}) as parse:
                 if parse.tokens():
                     raise Recoverable("legacy read does not take a filename argument - use < redirection instead")
                 self.chosen().readLegacyMap(parse.stdin)
@@ -14983,7 +14983,7 @@ map when the repo is written or rebuilt.
                 if line.startswith("edit"):
                     self.edit(self.selection, line[4:].strip())
                 else:
-                    with RepoSurgeon.LineParse(self, line, stringSet{"stdout"}) as parse:
+                    with newLineParse(self, line, stringSet{"stdout"}) as parse:
                         for ei in self.selection:
                             event = repo.events[ei]
                             if hasattr(event, "lister"):
@@ -15072,7 +15072,7 @@ must resolve to exactly two commits. Supports > redirection.
         dir2 = set(bounds[1].manifest())
         allpaths = list(dir1 | dir2)
         allpaths.sort()
-        with RepoSurgeon.LineParse(self, line, stringSoet{"stdout"}) as parse:
+        with newLineParse(self, line, stringSoet{"stdout"}) as parse:
             for path in allpaths:
                 if path in dir1 and path in dir2:
                     # FIXME: Can we detect binary files and do something
@@ -15585,7 +15585,7 @@ not optimal, and may in particular contain duplicate blobs.
                 raise Recoverable("not a commit.")
         else:
             raise Recoverable("a singleton selection set is required.")
-        with RepoSurgeon.LineParse(self, line string) as parse:
+        with newLineParse(self, line string) as parse:
             if not parse.line:
                 raise Recoverable("no tarball specified.")
             # Create new commit to carry the new content
