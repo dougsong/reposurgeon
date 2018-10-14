@@ -10670,6 +10670,7 @@ func (lp *LineParse) Closem() {
 type Reposurgeon struct {
 	cmd *kommandant.Kmdt
 	RepositoryList
+	SelectionParser
 	quiet      bool
 	echo       int
 	callstack  [][]string
@@ -10683,6 +10684,7 @@ type Reposurgeon struct {
 
 func newReposurgeon() *Reposurgeon {
 	rs := new(Reposurgeon)
+	rs.SelectionParser.subclass = rs
 	rs.startTime = time.Now()
 	rs.prompt_format = "reposurgeon% "
 	return rs
@@ -11255,8 +11257,9 @@ func (self *Reposurgeon) reportSelect(parse *LineParse, display func(*LineParse,
 		if parse.line == "" {
 			self.selection = repo.all()
 		} else if self.selection == nil {
-			selparser := new(SelectionParser)
-			self.selection, parse.line = selparser.parse(parse.line, len(repo.events))
+			// FIXME: call Reposurgeon.setSelectionSet() rather
+			// than doing this manually
+			self.selection, parse.line = self.SelectionParser.parse(parse.line, len(repo.events))
 		}
 	}
 	for _, eventid := range self.selection {
