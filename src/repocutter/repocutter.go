@@ -386,18 +386,19 @@ func NewProperties(source *DumpfileSource) Properties {
 }
 
 // Stringer - return a representation of properties that can round-trip
-func (props *Properties) Stringer() (st string) {
+func (props *Properties) Stringer() string {
+	var b strings.Builder
 	for i := range props.propkeys {
 		key := props.propkeys[i]
 		if props.properties[key] != "" {
-			st += fmt.Sprintf("K %d%s", len(key), linesep)
-			st += fmt.Sprintf("%s%s", key, linesep)
-			st += fmt.Sprintf("V %d%s", len(props.properties[key]), linesep)
-			st += fmt.Sprintf("%s%s", props.properties[key], linesep)
+			fmt.Fprintf(&b, "K %d%s", len(key), linesep)
+			fmt.Fprintf(&b, "%s%s", key, linesep)
+			fmt.Fprintf(&b, "V %d%s", len(props.properties[key]), linesep)
+			fmt.Fprintf(&b, "%s%s", props.properties[key], linesep)
 		}
 	}
-	st += "PROPS-END\n"
-	return st
+	b.WriteString("PROPS-END\n")
+	return b.String()
 }
 
 // Contains - does a Properties object contain a specified key?
