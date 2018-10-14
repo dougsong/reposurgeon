@@ -444,7 +444,7 @@ func SetLength(header string, data []byte, val int) []byte {
 	return re.ReplaceAll(data, []byte("$1 "+strconv.Itoa(val)))
 }
 
-// ReadRevisionHeader - ead a revision header, parsing its properties.
+// ReadRevisionHeader - read a revision header, parsing its properties.
 func (ds *DumpfileSource) ReadRevisionHeader(PropertyHook func(*Properties)) ([]byte, map[string]string) {
 	stash := ds.Lbs.Require("Revision-number:")
 	rev := string(bytes.Fields(stash)[1])
@@ -467,10 +467,7 @@ func (ds *DumpfileSource) ReadRevisionHeader(PropertyHook func(*Properties)) ([]
 	if debug {
 		fmt.Fprintf(os.Stderr, "<after append: %d>\n", ds.Lbs.linenumber)
 	}
-	for {
-		if string(ds.Lbs.Peek()) != linesep {
-			break
-		}
+	for string(ds.Lbs.Peek()) == linesep {
 		stash = append(stash, ds.Lbs.Readline()...)
 	}
 	if ds.Baton != nil {
@@ -545,7 +542,6 @@ func (ds *DumpfileSource) ReadUntilNext(prefix string, revmap map[int]int) []byt
 		if debug {
 			fmt.Fprintf(os.Stderr, "<ReadUntilNext: sees %s>\n", vis(line))
 		}
-
 		if len(line) == 0 {
 			return stash
 		}
@@ -751,7 +747,7 @@ func (lf *Logfile) Contains(revision int) bool {
 
 const delim = "------------------------------------------------------------------------"
 
-// NewLogfile - initialize a new logfilr object from an input source
+// NewLogfile - initialize a new logfile object from an input source
 func NewLogfile(readable io.Reader, restrict *SubversionRange) *Logfile {
 	lf := Logfile{
 		comments: make(map[int]Logentry),
@@ -852,11 +848,11 @@ func sselect(source DumpfileSource, selection SubversionRange) {
 		}
 		if emit {
 			os.Stdout.Write(source.Lbs.Flush())
-		} else if revision == selection.Upperbound()+1 {
-			return
-		} else {
-			source.Lbs.Flush()
 		}
+		if revision == selection.Upperbound()+1 {
+			return
+		}
+		source.Lbs.Flush()
 	}
 }
 
@@ -872,18 +868,12 @@ func dumpall(header []byte, properties []byte, content []byte) []byte {
 func propdel(source DumpfileSource, propnames []string, selection SubversionRange) {
 	revhook := func(props *Properties) {
 		for _, propname := range propnames {
-			if _, ok := props.properties[propname]; ok {
-				props.properties[propname] = ""
-			}
-			var delindex = -1
-			var item string
-			for delindex, item = range props.propkeys {
+			delete(props.properties, propname)
+			for delindex, item := range props.propkeys {
 				if item == propname {
+					props.propkeys = append(props.propkeys[:delindex], props.propkeys[delindex+1:]...)
 					break
 				}
-			}
-			if delindex != -1 {
-				props.propkeys = append(props.propkeys[:delindex], props.propkeys[delindex+1:]...)
 			}
 		}
 	}
@@ -971,7 +961,7 @@ func log(source DumpfileSource, selection SubversionRange) {
 			author,
 			drep,
 			strings.Count(logentry, "\n"))
-		os.Stdout.Write([]byte("\n" + logentry + "\n"))
+		os.Stdout.WriteString("\n" + logentry + "\n")
 	}
 	source.Report(selection, nil, prophook, false, true)
 }
