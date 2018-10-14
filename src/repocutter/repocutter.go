@@ -186,9 +186,9 @@ func NewBaton(prompt string, endmsg string) *Baton {
 		endmsg: endmsg,
 		time:   time.Now(),
 	}
-	baton.stream.Write([]byte(prompt + "..."))
+	baton.stream.WriteString(prompt + "...")
 	if terminal.IsTerminal(int(baton.stream.Fd())) {
-		baton.stream.Write([]byte(" \010"))
+		baton.stream.WriteString(" \b")
 	}
 	//baton.stream.Flush()
 	return &baton
@@ -201,10 +201,10 @@ func (baton *Baton) Twirl(ch string) {
 	}
 	if terminal.IsTerminal(int(baton.stream.Fd())) {
 		if ch != "" {
-			baton.stream.Write([]byte(ch))
+			baton.stream.WriteString(ch)
 		} else {
 			baton.stream.Write([]byte{"-/|\\"[baton.count%4]})
-			baton.stream.Write([]byte("\010"))
+			baton.stream.WriteString("\b")
 		}
 	}
 	baton.count++
@@ -386,8 +386,7 @@ func NewProperties(source *DumpfileSource) Properties {
 }
 
 // Stringer - return a representation of properties that can round-trip
-func (props *Properties) Stringer() string {
-	st := ""
+func (props *Properties) Stringer() (st string) {
 	for i := range props.propkeys {
 		key := props.propkeys[i]
 		if props.properties[key] != "" {
