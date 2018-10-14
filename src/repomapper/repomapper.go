@@ -24,7 +24,7 @@ type Contributor struct {
 
 // Does this entry need completion?
 func (cb *Contributor) incomplete() bool {
-	return cb.name == cb.fullname || strings.Index(cb.email, "@") == -1
+	return cb.name == cb.fullname || !strings.Contains(cb.email, "@")
 }
 
 // Stringer - render a Contributor in rereadable form
@@ -70,11 +70,11 @@ func NewContribMap(fn string) ContribMap {
 		}
 		v := *new(Contributor)
 		firstmatch := groups[0]
-		v.name = string(firstmatch[1])
-		v.fullname = strings.Trim(string(firstmatch[2]), " \t")
-		v.email = string(firstmatch[3])
-		v.tz = string(firstmatch[4])
-		cm[string(v.name)] = v
+		v.name = firstmatch[1]
+		v.fullname = strings.Trim(firstmatch[2], " \t")
+		v.email = firstmatch[3]
+		v.tz = firstmatch[4]
+		cm[v.name] = v
 	}
 	bylines(fn, digest)
 	return cm
@@ -83,7 +83,7 @@ func NewContribMap(fn string) ContribMap {
 // Suffix - add an address suffix to entries lacking one.
 func (cm *ContribMap) Suffix(addr string) {
 	for k, obj := range *cm {
-		if strings.Index(obj.email, "@") == -1 {
+		if !strings.Contains(obj.email, "@") {
 			obj.email += "@" + addr
 			(*cm)[k] = obj
 		}
