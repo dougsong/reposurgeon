@@ -3226,6 +3226,9 @@ func (t *Tag) index() int {
 	return t.repo.index(t)
 }
 
+// getComment returns the comment attached to a tag
+func (t *Tag) getComment() string { return t.comment }
+
 // idMe IDs this tag for humans."
 func (t Tag) idMe() string {
 	suffix := ""
@@ -3901,6 +3904,9 @@ func (commit *Commit) attach(event Event) {
 func (commit *Commit) index() int {
 	return commit.repo.index(commit)
 }
+
+// getComment returns the comment attached to a commit
+func (commit *Commit) getComment() string { return commit.comment }
 
 // idMe IDs this commit for humans.
 func (commit Commit) idMe() string {
@@ -5068,6 +5074,9 @@ func (p Passthrough) idMe() string {
 func (p Passthrough) getMark() string {
 	return ""
 }
+
+// getComment returns the text attached to a passthrough
+func (p *Passthrough) getComment() string { return p.text }
 
 // String reports this passthrough in import-stream format.
 func (p Passthrough) String() string {
@@ -10975,22 +10984,23 @@ func (rs *Reposurgeon) parsePathset() selEvaluator {
 	return nil
 }
 
+// Does an event contain something that looks like a legacy reference?
+func (rs *Reposurgeon) hasReference(event Event) bool {
+	rs.chosen().parseDollarCookies()
+	var text string
+	type commentGetter interface{ getComment() string }
+	if g, ok := event.(commentGetter); ok {
+		text = g.getComment()
+	} else {
+		return false
+	}
+	if rs.chosen().vcs == nil {
+		return false
+	}
+	return rs.chosen().vcs.hasReference([]byte(text))
+}
+
 /*
-    func has_reference(self, event):
-        "Does an event contain something that looks like a legacy reference?"
-        self.chosen().parseDollarCookies()
-        if hasattr(event, "comment"):
-            text = event.comment
-        else if hasattr(event, "text"):
-            text = event.text
-        else:
-            return false
-        if self.chosen().vcs is None or not self.chosen().vcs.cookies:
-            return false
-        for pattern in self.chosen().vcs.cookies:
-            if re.search(pattern.encode('ascii'), polybytes(text)):
-                return true
-        return false
     func visibility_typeletters():
         func e(i):
             return self.chosen().events[i]
