@@ -106,6 +106,7 @@ import (
 	terminal "golang.org/x/crypto/ssh/terminal"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
 	shlex "github.com/anmitsu/go-shlex"
+	shutil "github.com/termie/go-shutil"
 )
 
 const version = "4.0-pre"
@@ -6918,7 +6919,7 @@ func (repo *Repository) commits(selection orderedIntSet) []*Commit {
 }
 
 // Dump legacy references.
-func (repo *Repository) writeLegacyMap(fp io.Writer) {
+func (repo *Repository) writeLegacyMap(fp io.Writer) error {
 	keylist := make([]string, 0)
 	for key := range repo.legacyMap {
 		keylist = append(keylist, key)
@@ -6945,12 +6946,14 @@ func (repo *Repository) writeLegacyMap(fp io.Writer) {
 		// legacy map.  It's a simple substitute for
 		// partitioning the map at expunge time.
 		if repo.markToEvent(commit.mark) != nil && commit.legacyID != "" {
+			// Someday check errors here? 
 			fmt.Fprintf(fp, "%s\t%s!%s%s\n", cookie,
 				commit.committer.date.rfc3339(),
 				commit.committer.email,
 				serial)
 		}
 	}
+	return nil
 }
 
 // Turn a commit into a tag.
@@ -8894,132 +8897,207 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 	return repo, nil
 }
 
-/*
-func rebuildRepo(repo, target, options, preferred):
-    "Rebuild a repository from the captured state."
-    if not target and repo.sourcedir:
-        target = repo.sourcedir
-    if target:
-        target = os.path.abspath(target)
-    else:
-        raise Recoverable("no default destination for rebuild")
-    vcs = preferred or repo.vcs
-    if not vcs:
-        raise Recoverable("please prefer a repo type first")
-    if not hasattr(vcs, "exporter") or vcs.importer is None:
-        raise Recoverable("%s repositories are supported for read only." \
-                          % preferred.name)
+// Rebuild a repository from the captured state.
+func (repo *Repository) rebuildRepo(target string, options stringSet,
+		preferred *VCS) error {
+	if target == "" && repo.sourcedir != "" {
+		target = repo.sourcedir
+	}
+	if target != "" {
+		var err error
+		target, err = filepath.Abs(target)
+		if err != nil {
+			return fmt.Errorf("while computing target: %v", err)
+		}
+	} else {
+		return errors.New("no default destination for rebuild")
+	}
+	vcs := preferred
+	if vcs == nil {
+		vcs = repo.vcs
+	}
+	if vcs == nil {
+		return errors.New("please prefer a repo type first")
+	}
+	if vcs.importer == "" {
+		return fmt.Errorf("%s repositories supported for read only.",
+			vcs.name)
 
-    if os.path.join("refs", "heads", "master") not in repo.branchset():
-        complain("repository has no branch named master. git will have no HEAD commit after the import; consider using the branch command to rename one of your branches to master.")
+	}
+	if !repo.branchset().Contains("refs/heads/master") {
+		complain("repository has no branch named master. git will have no HEAD commit after the import; consider using the branch command to rename one of your branches to master.")
+	}
+	// Create a new empty directory to do the rebuild in
+	var staging string
+	if exists(target) {
+		staging = target
+		err := os.Mkdir(target, userReadWriteMode)
+		if err != nil {
+			return fmt.Errorf("target directory creation failed: %v", err)
+		}
+	} else {
+		staging = fmt.Sprintf("%s-stage%d", target, os.Getpid())
+		//assert(os.path.isabs(target) && os.path.isabs(staging))
+		err := os.Mkdir(staging, userReadWriteMode)
+		if err != nil {
+			return fmt.Errorf("staging directory creation failed: %v", err)
+		}
+	}
+	// Try the rebuild in the empty staging directory
+	here, err2 := os.Getwd()
+	if err2 != nil {
+		return fmt.Errorf("buildRepo is disoriented: %v", err2)
+	}
+	os.Chdir(staging)
+	defer func () {
+		os.Chdir(here)
+		if staging != target {
+			nuke(staging, "reposurgeon: removing staging directory")
+		}
+	}()
 
-    # Create a new empty directory to do the rebuild in
-    if not os.path.exists(target):
-        staging = target
-        try:
-            os.mkdir(target)
-        except OSError:
-            raise Recoverable("target directory creation failed")
-    else:
-        staging = target + "-stage" + str(os.getpid())
-        assert(os.path.isabs(target) and os.path.isabs(staging))
-        try:
-            os.mkdir(staging)
-        except OSError:
-            raise Recoverable("staging directory creation failed")
+	if vcs.initializer != "" {
+		runProcess(vcs.initializer, "repository initialization")
+	}
+	context := map[string]string{"basename": filepath.Base(target)}
+	mapper := func (sub string) string {
+		for k, v := range context {
+			from := "${" + k + "}"
+			sub = strings.Replace(sub, from, v, -1)
+		}
+		return sub
+	}
+	if strings.Contains(vcs.importer, "${tempfile}")  {
+		tfdesc, err := ioutil.TempFile("", "rst")
+		if err != nil {
+			return err
+		}
+		// Ship to the tempfile
+		repo.fastExport(repo.all(), tfdesc,
+			options, preferred, verbose>0)
+		tfdesc.Close()
+		// Pick up the tempfile
+		context["tempfile"] = tfdesc.Name()
+		cmd := os.Expand(repo.vcs.importer, mapper)
+		runProcess(cmd, "repository import")
+		os.Remove(tfdesc.Name())
+	} else {
+		cmd := os.Expand(repo.vcs.importer, mapper)
+		tp, _, err := writeToProcess(cmd)
+		if err != nil {
+			return err
+		}
+		repo.fastExport(repo.all(), tp,
+			options, preferred, verbose>0)
+		tp.Close()
+	}
+	if repo.writeLegacy {
+		legacyfile := filepath.FromSlash(vcs.subdirectory + "/legacy-map")
+		wfp, err := os.OpenFile(legacyfile,
+			os.O_WRONLY|os.O_CREATE, userReadWriteMode)
+		if err != nil {
+			return fmt.Errorf("legacy-map file %s could not be written: %v",
+				legacyfile, err)
+		}
+		defer wfp.Close()
+		err = repo.writeLegacyMap(wfp)
+		if err != nil {
+			return err
+		}
+	}
+	if vcs.checkout != "" {
+		runProcess(vcs.checkout, "repository_checkout")
+	} else {
+		complain("checkout not supported for %s skipping", vcs.name)
 
-    # Try the rebuild in the empty staging directory
-    here = os.getcwd()
-    try:
-        os.Chdir(staging)
-        if vcs.initializer:
-            runProcess(vcs.initializer, "repository initialization")
-        parameters = {"basename": os.path.basename(target)}
-        if "${tempfile}" in vcs.importer:
-            try:
-                (tfdesc, tfname) = tempfile.mkstemp()
-                assert tfdesc > -1    # pacify pylint
-                with open(tfname, "wb") as tp:
-                    repo.fastExport(range(len(repo)), make_wrapper(tp), options, progress=verbose>0, target=preferred)
-                parameters["tempfile"] = tfname
-                runProcess(vcs.importer % parameters, "import")
-            finally:
-                os.remove(tfname)
-                os.close(tfdesc)
-        else:
-            with popenOrDie(vcs.importer % parameters, "import", mode="w") as tp:
-                repo.fastExport(range(len(repo)), make_wrapper(tp), options,
-                                 target=preferred,
-                                 progress=verbose>0)
-        if repo.writeLegacy:
-            try:
-                legacyfile = os.path.join(vcs.subdirectory, "legacy-map")
-                with open(legacyfile, "wb") as wfp:
-                    repo.writeLegacyMap(make_wrapper(wfp))
-            except IOError:
-                raise Recoverable("legacy-map file %s could not be written." \
-                                  % legacyfile)
+	}
+	if verbose > 0 {
+		announce(debugSHOUT, "rebuild is complete.")
 
-        if vcs.checkout:
-            runProcess(vcs.checkout, "repository_checkout")
-        else:
-            complain("checkout not supported for %s skipping" % vcs.name)
+	}
+	os.Chdir(here)
+	var savedir string
+	if staging != target {
+		// Rebuild succeeded - make an empty backup directory
+		backupcount := 1
+		for {
+			savedir := target + (fmt.Sprintf(".~%d~", backupcount))
+			if exists(savedir) {
+				backupcount++
+			} else {
+				break
+			}
+		}
+		if !filepath.IsAbs(savedir) {
+			return fmt.Errorf("internal error, %q should be absolute", savedir)
+		}
+		os.Mkdir(savedir, userReadWriteMode)
 
-        if verbose:
-            announce(debugSHOUT, "rebuild is complete.")
-
-        os.Chdir(here)
-        if staging != target:
-            # Rebuild succeeded - make an empty backup directory
-            backupcount = 1
-            while true:
-                savedir = target + (".~%d~" % backupcount)
-                if os.path.exists(savedir):
-                    backupcount++
-                else:
-                    break
-            assert(os.path.abspath(savedir))
-            os.mkdir(savedir)
-
-            # This is a critical region.  Ignore all signals until we're done.
-            with CriticalRegion():
-                # Move the unmodified repo contents in target to the
-                # backup directory.  Then move the staging contents to the
-                # target directory.  Finally, restore designated files
-                # from backup to target.
-                for sub in os.listdir(target):
-                    os.rename(os.path.join(target, sub),
-                              os.path.join(savedir, sub))
-                if verbose:
-                    announce(debugSHOUT, "repo backed up to %s." % os.path.relpath(savedir))
-                for sub in os.listdir(staging):
-                    os.rename(os.path.join(staging, sub),
-                              os.path.join(target, sub))
-                if verbose:
-                    announce(debugSHOUT, "modified repo moved to %s." % os.path.relpath(target))
-            if repo.preserveSet:
-                for sub in repo.preserveSet:
-                    src = os.path.join(savedir, sub)
-                    dst = os.path.join(target, sub)
-                    if os.path.exists(src):
-                        if os.path.exists(dst) and os.path.isdir(dst):
-                            shutil.rmtree(dst)
-                        if os.path.isdir(src):
-                            shutil.copytree(src, dst)
-                        else:
-                            dstdir = os.path.dirname(dst)
-                            if not os.path.exists(dstdir):
-                                os.makedirs(dstdir)
-                            shutil.copy2(src, dst)
-                if verbose:
-                    announce(debugSHOUT, "preserved files restored.")
-            else if verbose:
-                announce(debugSHOUT, "no preservations.")
-    finally:
-        os.Chdir(here)
-        if staging != target:
-            nuke(staging, "reposurgeon: removing staging directory")
-*/
+		ljoin := func(sup string, sub string) string {
+			return filepath.FromSlash(sup + "/" + sub)
+		}
+		
+		// This is a critical region.  Ignore all signals
+		// until we're done.
+		//
+		// Move the unmodified repo contents in target to the
+		// backup directory.  Then move the staging contents to the
+		// target directory.  Finally, restore designated files
+		// from backup to target.
+		entries, err := ioutil.ReadDir(target)
+		if err != nil {
+			return err
+		}
+		for _, sub := range entries {
+			os.Rename(ljoin(target, sub.Name()),
+				ljoin(savedir, sub.Name()))
+		}
+		// FIXME: Use filepath.Rel fo shorten these messages, once we
+		// can beat it into actuall working.
+		if verbose > 0 {
+			announce(debugSHOUT, "repo backed up to %s.", savedir)
+		}
+		entries, err = ioutil.ReadDir(staging)
+		if err != nil {
+			return err
+		}
+		for _, sub := range entries {
+			os.Rename(ljoin(staging, sub.Name()),
+				ljoin(target, sub.Name()))
+		}
+		if verbose > 0 {
+			announce(debugSHOUT, "modified repo moved to %s.", target)
+		}
+		// Critical region ends
+		
+		if len(repo.preserveSet) > 0 {
+			for _, sub := range repo.preserveSet {
+				src := ljoin(savedir, sub)
+				dst := ljoin(target, sub)
+				if exists(src) {
+					if exists(dst) && isdir(dst) {
+						os.RemoveAll(dst)
+					}
+					if isdir(src) {
+						shutil.CopyTree(src, dst, nil)
+					} else {
+						dstdir := filepath.Dir(dst)
+						if !exists(dstdir) {
+							os.MkdirAll(dstdir, userReadWriteMode)
+						}
+						shutil.Copy(src, dst, false)
+					}
+				}
+			}
+			if verbose > 0 {
+				announce(debugSHOUT, "preserved files restored.")
+			}
+		} else if verbose > 0 {
+			announce(debugSHOUT, "no preservations.")
+		}
+	}
+	return nil
+}
 
 // Either execute a command or raise a fatal exception.
 func runProcess(dcmd string, legend string) error {
@@ -11397,7 +11475,7 @@ Tab-completes on the list of defined names.
 `)
 }
 
-//func complete_unassign(text, _line, _begidx, _endidx) {
+//func CompleteUnassign(text, _line, _begidx, _endidx) {
 //	repo := self.chosen()
 //	return sorted([x for x in repo.assignments.keys() if strings.HasPrefix(x, text)])
 //}
@@ -11922,7 +12000,7 @@ If no preferred type has been explicitly selected, reading in a
 repository (but not a fast-import stream) will implicitly set reposurgeon's
 preference to the type of that repository.
 """)
-    func complete_prefer(self, text, _line, _begidx, _endidx):
+    func CompletePrefer(self, text, _line, _begidx, _endidx):
         return sorted([x.name for x in vcstypes if x.importer and x.name.startswith(text)])
     func do_prefer(self, line: str):
         "Report or select the preferred repository type."
@@ -11964,7 +12042,7 @@ format of stream files made from the repository.
 The repository source type is reliably set when reading a Subversion
 stream.
 """)
-    func complete_sourcetype(self, text, _line, _begidx, _endidx):
+    func CompleteSourcetype(self, text, _line, _begidx, _endidx):
         return sorted([x.name for x in vcstypes if x.exporter and x.name.startswith(text)])
     func do_sourcetype(self, line: str):
         "Report or select the current repository's source type."
@@ -12003,7 +12081,7 @@ With an argument, the command tab-completes on the above list.
 }
 
 /*
-   func complete_choose(self, text, _line, _begidx, _endidx):
+   func CompleteChoose(self, text, _line, _begidx, _endidx):
        if not self.repolist:
            return None
        return sorted([x.name for x in self.repolist if x.name.startswith(text)])
@@ -12054,7 +12132,7 @@ currently chosen repo. Tab-completes on the list of loaded repositories.
 `)
 }
 
-//complete_drop = complete_choose
+//CompleteDrop := CompleteChoose
 
 // Drop a repo from reposurgeon's list.
 func (rs *Reposurgeon) DoDrop(line string) (stopOut bool) {
@@ -12336,9 +12414,8 @@ func (rs *Reposurgeon) DoWrite(line string) (stopOut bool) {
 			}
 		}
 		rs.chosen().fastExport(rs.selection, parse.stdout, parse.options, rs.preferred, (verbose==1 && !quiet))
-		// FIXME: Needs rebuildRepo
-	//} else if os.path.isdir(parse.line) {
-	//	rebuildRepo(rs.chosen(), parse.line, parse.options, rs.preferred)
+	} else if isdir(parse.line) {
+		rs.chosen().rebuildRepo(parse.line, parse.options, rs.preferred)
 	} else {
 		panic(throw("command", "write no longer takes a filename argument - use > redirection instead"))
 	}
@@ -12384,7 +12461,7 @@ blobs. The 'reduce' mode always acts on the entire repository.
 
 This is intended for producing reduced test cases from large repositories.
 """)
-    func complete_strip(self, _text, _line, _begidx, _endidx):
+    func CompleteStrip(self, _text, _line, _begidx, _endidx):
         return ["blobs", "reduce"]
     func do_strip(self, line str):
         "Drop content to produce a reduced test case."
@@ -12467,31 +12544,37 @@ for graphviz. Supports > redirection.
                     parse.stdout.WriteString('\t"%s" [label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
                                        % (event.name, event.name, summary))
             parse.stdout.WriteString("}\n")
+*/
 
-    func help_rebuild():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpRebuild() {
+        rs.helpOutput(`
 Rebuild a repository from the state held by reposurgeon.  The argument
 specifies the target directory in which to do the rebuild; if the
 repository read was from a repo directory (and not a git-import stream), it
 defaults to that directory.  If the target directory is nonempty
 its contents are backed up to a save directory.
-""")
-    func do_rebuild(self, line str):
-        "Rebuild a repository from the edited state."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        if self.selection is not None:
-            panic(throw("command", "rebuild does not take a selection set"))
-        with newLineParse(self, line) as parse:
-            rebuildRepo(self.chosen(), parse.line, parse.options, self.preferred)
-*/
+`)
+}
+    // Rebuild a repository from the edited state.
+func (rs *Reposurgeon) DoRebuild(line string) (stopOut bool) {
+        if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+        }
+        if rs.selection != nil {
+		panic(throw("command", "rebuild does not take a selection set"))
+        }
+        parse := newLineParse(line, nil, nil)
+	defer parse.Closem()
+	rs.chosen().rebuildRepo(parse.line, parse.options, rs.preferred)
+	return false
+}
 
 //
 // Editing commands
 //
-func (self *Reposurgeon) HelpMailboxOut() {
-	self.helpOutput(`
+func (rs *Reposurgeon) HelpMailboxOut() {
+	rs.helpOutput(`
 Emit a mailbox file of messages in RFC822 format representing the
 contents of repository metadata. Takes a selection set; members of the set
 other than commits, annotated tags, and passthroughs are ignored (that
@@ -12504,7 +12587,7 @@ context the name of the header includes its trailing colon.
 }
 
 // Generate a mailbox file representing object metadata.
-func (self *Reposurgeon) DoMailboxOut(lineIn string) bool {
+func (rs *Reposurgeon) DoMailboxOut(lineIn string) bool {
 	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
 	defer parse.Closem()
 
@@ -12515,11 +12598,11 @@ func (self *Reposurgeon) DoMailboxOut(lineIn string) bool {
 			var err error
 			filterRegexp, err = regexp.Compile(s[1:len(s)-1])
 			if err != nil {
-				self.cmd.Output("malformed filter option in mailbox_out\n")
+				rs.cmd.Output("malformed filter option in mailbox_out\n")
 				return false
 			}
 		} else {
-			self.cmd.Output("malformed filter option in mailbox_out\n")
+			rs.cmd.Output("malformed filter option in mailbox_out\n")
 			return false
 		}
 	}
@@ -12537,7 +12620,7 @@ func (self *Reposurgeon) DoMailboxOut(lineIn string) bool {
 		}
 		return ""
 	}
-	self.reportSelect(parse, f)
+	rs.reportSelect(parse, f)
 	return false
 }
 
@@ -15198,7 +15281,7 @@ options. The following flags and options are defined:
 """)
         for (opt, expl) in RepoSurgeon.OptionFlags:
             os.Stdout.WriteString(opt + ":\n" + expl + "\n")
-    func complete_set(self, text, _line, _begidx, _endidx):
+    func CompleteSet(self, text, _line, _begidx, _endidx):
         return sorted([x for (x, _) in RepoSurgeon.OptionFlags if x.startswith(text)])
     func do_set(self, line str):
         if not line.strip():
@@ -15218,7 +15301,7 @@ following flags and options are defined:
 """)
         for (opt, expl) in RepoSurgeon.OptionFlags:
             os.Stdout.WriteString(opt + ":\n" + expl + "\n")
-    complete_clear = complete_set
+    CompleteClear := CompleteSet
     func do_clear(self, line str):
         if not line.strip():
             for opt in dict(RepoSurgeon.OptionFlags):
@@ -15307,7 +15390,7 @@ the command generated by the expansion.
         rs.helpOutput("""
 Undefine the macro named in this command's first argument.
 """)
-    func complete_undefine(self, text, _line, _begidx, _endidx):
+    func CompleteUndefine(self, text, _line, _begidx, _endidx):
         return sorted([x for x in self.definitions if x.startswith(text)])
     func do_undefine(self, line str):
         try:
