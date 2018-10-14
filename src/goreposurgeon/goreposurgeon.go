@@ -71,6 +71,8 @@ package main
 //    screw it - we always dump timestamps in RFC3339 now.
 // 5. We now interpret Subversion $Rev$ and $LastChangedRev$ cookie.
 // 6. The exec and eval commands are no longer supported.
+// 7. The shell command spawns an interactive shell rather than passing
+//    a single line to a shell.
 
 import (
 	"bufio"
@@ -2197,8 +2199,8 @@ func (baton *Baton) twirl(ch string) {
 			} else {
 				baton.stream.Write([]byte{"-/|\\"[baton.counter%4]})
 				baton.erase = true
-				baton.counter++
 			}
+			baton.counter++
 		}
 	}
 }
@@ -8673,7 +8675,6 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 		subdir := source + "/" + possible.subdirectory
 		subdir = filepath.FromSlash(subdir)
 		if exists(subdir) && isdir(subdir) && possible.exporter != "" {
-			fmt.Println("ASSIGNED")
 			vcs = &vcstypes[i]
 			vcsname = vcs.name 
 			hitcount++
@@ -8929,7 +8930,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 	}
 	// Create a new empty directory to do the rebuild in
 	var staging string
-	if exists(target) {
+	if !exists(target) {
 		staging = target
 		err := os.Mkdir(target, userReadWriteMode)
 		if err != nil {
@@ -8937,7 +8938,9 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		}
 	} else {
 		staging = fmt.Sprintf("%s-stage%d", target, os.Getpid())
-		//assert(os.path.isabs(target) && os.path.isabs(staging))
+		if !filepath.IsAbs(target) || filepath.IsAbs(staging) {
+			return errors.New("internal error: target and staging paths should be absolute.")
+		}
 		err := os.Mkdir(staging, userReadWriteMode)
 		if err != nil {
 			return fmt.Errorf("staging directory creation failed: %v", err)
@@ -10822,17 +10825,32 @@ func (self *Reposurgeon) PostCommand(stop bool, lineIn string) bool {
                 complain(e.msg)
                 line = ""
         return line
-    func do_shell(self, line str):
-        "Execute a shell command."
-        os.Stdout.Flush()
-        os.Stderr.Flush()
-        if os.system(line):
-            raise Recoverable("'shell %s' returned error." % line)
-    func cleanup():
-        "Tell all the repos we're holding to clean up."
-        announce(debugSHUFFLE, "interpreter cleanup called.")
-        for repo in self.repolist:
-            repo.cleanup()
+*/
+
+func (rs *Reposurgeon) HelpShell() {
+	rs.helpOutput(`
+Spawn a shell process. Exit the shell to return to reposurgeon.
+Honors the $SHELL envorinmemt variable.
+`)
+}
+func (self *Reposurgeon) DoShell(line string) (stopOut bool) {
+	shell := os.Getenv("SHELL")
+	if shell == "" {
+		shell = "/bin/sh"
+	}
+	announce(debugSHOUT, "Spawning %s...", shell)
+	cmd := exec.Command(shell)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		complain("spawn of %s returned error: %v", shell, err)
+        }
+	return false
+   }
+
+/*
     func selected(self, types=None):
         "Iterate over the selection set."
         return self.chosen().iterevents(indices=self.selection, types=types)
@@ -12566,7 +12584,10 @@ func (rs *Reposurgeon) DoRebuild(line string) (stopOut bool) {
         }
         parse := newLineParse(line, nil, nil)
 	defer parse.Closem()
-	rs.chosen().rebuildRepo(parse.line, parse.options, rs.preferred)
+	err := rs.chosen().rebuildRepo(parse.line, parse.options, rs.preferred)
+	if err != nil {
+		complain(err.Error())
+	}
 	return false
 }
 
@@ -16129,8 +16150,11 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) cleanup() {
-	// FIXME: Implement for real  when RepositoryList is ready
-	rs.helpOutput("Cleanup time.\n")
+        // Tell all the repos we're holding to clean up.
+        announce(debugSHUFFLE, "interpreter cleanup called.")
+        for _, repo := range rs.repolist {
+		repo.cleanup()
+        }
 }
 
 func main() {
@@ -16145,7 +16169,7 @@ func main() {
 	//	go rs.cleanup()
 	//}()
 
-	interpreter.Prompt = "reposurgeon% "
+	interpreter.Prompt = "goreposurgeon% "
 	if len(os.Args[1:]) == 0 {
 		os.Args = append(os.Args, "-")
 	}
