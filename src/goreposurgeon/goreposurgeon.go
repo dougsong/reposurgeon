@@ -103,12 +103,12 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	shlex "github.com/anmitsu/go-shlex"
 	orderedset "github.com/emirpasic/gods/sets/linkedhashset"
+	shutil "github.com/termie/go-shutil"
 	kommandant "gitlab.com/ianbruene/Kommandant"
 	terminal "golang.org/x/crypto/ssh/terminal"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
-	shlex "github.com/anmitsu/go-shlex"
-	shutil "github.com/termie/go-shutil"
 )
 
 const version = "4.0-pre"
@@ -2465,7 +2465,7 @@ func newMessageBlock(bp *bufio.Reader) (*MessageBlock, error) {
 			panic(throw("mailbox", "Ill-formed line in mail message"))
 		}
 		key := data[0:colon]
-		payload := strings.TrimSpace(data[colon+1 : len(data)])
+		payload := strings.TrimSpace(data[colon+1:])
 		msg.hdnames = append(msg.hdnames, key)
 		msg.header[key] = payload
 		return true
@@ -2546,7 +2546,7 @@ func (msg *MessageBlock) filterHeaders(regexp *regexp.Regexp) {
 	tmp := make([]string, len(msg.hdnames))
 	copy(tmp, msg.hdnames)
 	for _, key := range tmp {
-		if !regexp.MatchString(key+":") {
+		if !regexp.MatchString(key + ":") {
 			msg.deleteHeader(key)
 		}
 	}
@@ -2986,7 +2986,7 @@ func (b *Blob) getBlobfile(create bool) string {
 	// the filesystem to speed up lookup time.
 	parts := strings.Split(filepath.FromSlash(b.repo.subdir("")), "/")
 	parts = append(parts,
-		[]string{"blobs", stem[0:3], stem[3:6], stem[6:len(stem)]}...)
+		[]string{"blobs", stem[0:3], stem[3:6], stem[6:]}...)
 	if create {
 		dir := strings.Join(parts[0:len(parts)-1], "/")
 		err := os.MkdirAll(filepath.FromSlash(dir), userReadWriteMode)
@@ -2994,7 +2994,7 @@ func (b *Blob) getBlobfile(create bool) string {
 			panic(fmt.Errorf("Blob creation: %v", err))
 		}
 	}
-	return filepath.FromSlash(strings.Join(parts[0:len(parts)], "/"))
+	return filepath.FromSlash(strings.Join(parts[0:], "/"))
 }
 
 // hasfile answers the question: "Does this blob have its own file?"
@@ -8866,7 +8866,7 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 					line, err2 := r2.ReadString(byte('\n'))
 					if err2 == io.EOF {
 						break
-				} else if err2 != nil {
+					} else if err2 != nil {
 						return nil, fmt.Errorf("reading cvs-revisions map: %v", err2)
 					}
 
@@ -12382,7 +12382,7 @@ func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 				command := fmt.Sprintf(infilter.importer, srcname)
 				reader, _, err := readFromProcess(command)
 				if err != nil {
-					panic(throw("command", "can't open filter: %v"))
+					panic(throw("command", "can't open filter: %v", infilter))
 				}
 				parse.stdin = reader
 				break
@@ -12492,7 +12492,7 @@ func (rs *Reposurgeon) DoWrite(line string) (stopOut bool) {
 				command := fmt.Sprintf(outfilter.exporter, srcname)
 				writer, _, err := writeToProcess(command)
 				if err != nil {
-					panic(throw("command", "can't open output filter: %v"))
+					panic(throw("command", "can't open output filter: %v", outfilter))
 				}
 				parse.stdout = writer
 				break

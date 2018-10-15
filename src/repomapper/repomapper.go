@@ -68,12 +68,13 @@ func NewContribMap(fn string) ContribMap {
 		if groups == nil {
 			log.Fatal("repomapper: ill-formed map line.\n")
 		}
-		v := *new(Contributor)
 		firstmatch := groups[0]
-		v.name = firstmatch[1]
-		v.fullname = strings.Trim(firstmatch[2], " \t")
-		v.email = firstmatch[3]
-		v.tz = firstmatch[4]
+		v := Contributor{
+			name:     firstmatch[1],
+			fullname: strings.Trim(firstmatch[2], " \t"),
+			email:    firstmatch[3],
+			tz:       firstmatch[4],
+		}
 		cm[v.name] = v
 	}
 	bylines(fn, digest)

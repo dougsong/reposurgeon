@@ -396,16 +396,16 @@ Magic cookie.
 	}
 
 	// Test the byte stuffing
-	if strings.Index(saw, "\n----------------------------------") == -1 {
+	if !strings.Contains(saw, "\n----------------------------------") {
 		t.Error("Failure to remove byte-stuffing prefix")
 	}
-	if strings.Index(saw, "Magic cookie") == -1 {
+	if !strings.Contains(saw, "Magic cookie") {
 		t.Error("False match on bye-stuffed delimiter")
 	}
 
 	saw = msg.String()
 	expected = "Event-Number"
-	if strings.Index(saw, expected) == -1 {
+	if !strings.Contains(saw, expected) {
 		t.Errorf("Unexpected stringer content %s, expecting %s",
 			strconv.Quote(saw), strconv.Quote(expected))
 	}
@@ -539,7 +539,7 @@ func TestRemapAttribution(t *testing.T) {
 	assertEqual(t, attr1.email, "jrh@foobar.com")
 
 	attr2 := newAttribution("esr <esr> 1456976347 +0000")
-	zone, offset := attr2.date.timestamp.Zone()
+	_, offset := attr2.date.timestamp.Zone()
 	if offset != 0 {
 		t.Errorf("Zone was +0000 but computed offset is %d", offset)
 	}
@@ -548,7 +548,7 @@ func TestRemapAttribution(t *testing.T) {
 	// fragile, it will fail if the IANA zone database is not
 	// available
 	attr2.remap(authormap)
-	zone, offset = attr2.date.timestamp.Zone()
+	zone, offset := attr2.date.timestamp.Zone()
 	if zone != "EST" {
 		t.Errorf("Zone was %s (%d) after remapping.", zone, offset)
 	}
@@ -596,7 +596,7 @@ func TestTag(t *testing.T) {
 	attr1 := newAttribution("jrh <jrh> 1456976347 -0500")
 	t1 := newTag(repo, "sample1", ":2", nil, attr1, "Sample tag #1\n")
 	repo.events = append(repo.events, t1)
-	if strings.Index(t1.comment, "Sample") == -1 {
+	if !strings.Contains(t1.comment, "Sample") {
 		t.Error("expected string not found in tag comment")
 	}
 
@@ -1343,7 +1343,7 @@ M 100644 :3 README
 
 	var b strings.Builder
 	mapped := orderedIntSet{repo.index(commit1)}
-	if err := repo.writeAuthorMap(mapped, &b); err != nil {
+	if err = repo.writeAuthorMap(mapped, &b); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	expect := "esr = Eric S. Raymond <esr@thyrsus.com>\n"
