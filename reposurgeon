@@ -3129,11 +3129,13 @@ class Commit(object):
             elif '--callout' in options:
                 parts.append("from %s\n" % ancestor.callout())
         for ancestor in parents[1:]:
+            nugget = ''
             if not internals or ancestor.mark in internals:
                 nugget = ancestor.mark
-            else:
+            elif '--callout' in options:
                 nugget = ancestor.callout()
-            parts.append("merge %s\n" % nugget)
+            if nugget:
+                parts.append("merge %s\n" % nugget)
         if vcs and "commit-properties" in vcs.extensions:
             if self.properties:
                 for (name, value) in self.properties.items():
