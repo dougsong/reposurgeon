@@ -9020,7 +9020,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 			}
 		}
 		if !filepath.IsAbs(savedir) {
-			return fmt.Errorf("internal error, %q should be absolute", savedir)
+			return fmt.Errorf("internal error, savedir %q should be absolute", savedir)
 		}
 		os.Mkdir(savedir, userReadWriteMode)
 
@@ -9043,8 +9043,8 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 			os.Rename(ljoin(target, sub.Name()),
 				ljoin(savedir, sub.Name()))
 		}
-		// FIXME: Use filepath.Rel fo shorten these messages, once we
-		// can beat it into actuall working.
+		// FIXME: Use filepath.Rel to shorten these messages, once we
+		// can beat it into actually working.
 		if verbose > 0 {
 			announce(debugSHOUT, "repo backed up to %s.", savedir)
 		}
@@ -10826,7 +10826,7 @@ func (self *Reposurgeon) PostCommand(stop bool, lineIn string) bool {
 func (rs *Reposurgeon) HelpShell() {
 	rs.helpOutput(`
 Spawn a shell process. Exit the shell to return to reposurgeon.
-Honors the $SHELL envorinmemt variable.
+Honors the $SHELL environment variable.
 `)
 }
 func (self *Reposurgeon) DoShell(line string) (stopOut bool) {
