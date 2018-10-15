@@ -103,12 +103,13 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	shlex "github.com/anmitsu/go-shlex"
-	orderedset "github.com/emirpasic/gods/sets/linkedhashset"
-	shutil "github.com/termie/go-shutil"
-	kommandant "gitlab.com/ianbruene/Kommandant"
-	terminal "golang.org/x/crypto/ssh/terminal"
+	cmp "github.com/google/go-cmp/cmp"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
+	kommandant "gitlab.com/ianbruene/Kommandant"
+	orderedset "github.com/emirpasic/gods/sets/linkedhashset"
+	shlex "github.com/anmitsu/go-shlex"
+	shutil "github.com/termie/go-shutil"
+	terminal "golang.org/x/crypto/ssh/terminal"
 )
 
 const version = "4.0-pre"
@@ -8214,59 +8215,87 @@ func (repo *Repository) resort() {
 	}
 }
 
-/*
-   func reorder_commits(self, v, bequiet):
-       "Re-order a contiguous range of commits."
-       func validate_operations(events, bequiet):
-           "Check if fileops still make sense after re-ordering events."
-           # Also check events one level beyond re-ordered range; anything
-           # beyond that is the user's responsibility.
-           for x in events + events[-1].children():
-               ops = []
-               for op in x.operations():
-                   path = None
-                   if op.op == opD:
-                       path = op.path
-                   else if op.op in (opR, opC):
-                       path = op.source
-                   if path is not None and not x.visible(path):
-                       if not bequiet:
-                           complain("%s '%s' fileop references non-existent '%s' after re-order" %
-                                    (x.idMe(), op.op, path))
-                       continue
-                   ops.append(op)
-               if ops != x.operations():
-                   x.setOperations(ops)
-                   x.invalidatePathsetCache()
-                   if not bequiet and len(ops) == 0:
-                       complain("%s no fileops remain after re-order" % x.idMe())
-
-       if len(v) <= 1:
-           return
-       events = [self.events[i] for i in v]
-       sorted_events = [self.events[i] for i in sorted(v)]
-       for e in sorted_events[1:]:
-           if len(e.parents()) > 1:
-               raise Recoverable("non-linear history detected: %s" % e.idMe())
-       for e in sorted_events[:-1]:
-           if len(e.children()) > 1:
-               raise Recoverable("non-linear history detected: %s" % e.idMe())
-       if any(not sorted_events[i+1].hasParents() or
-              x not in sorted_events[i+1].parents()
-              for i,x in enumerate(sorted_events[:-1])):
-           raise Recoverable("selected commit range not contiguous")
-       if events == sorted_events:
-           complain("commits already in desired order")
-           return
-       events[0].setParents(list(sorted_events[0].parents()))
-       for x in list(sorted_events[-1].children()):
-           x.replaceParent(sorted_events[-1], events[-1])
-       for i,e in enumerate(events[:-1]):
-           events[i+1].setParents([e])
-       validate_operations(events, bequiet)
-       self.resort()
-
-*/
+// Re-order a contiguous range of commits.
+func (self *Repository) reorderCommits(v []int, bequiet bool) {
+	if len(v) <= 1 {
+		return
+	}
+	events := make([]Commit, len(v))
+	for i, e := range v {
+		events[i] = self.events[e].(Commit)
+	}
+	sorted_events := make([]Commit, len(v))
+	sort.Sort(sort.IntSlice(v))
+	for i, e := range v {
+		sorted_events[i] = self.events[e].(Commit)
+	}
+	//if events == sorted_events {
+	//	complain("commits already in desired order")
+	//}
+	for _, e := range sorted_events[1:] {
+		if len(e.parents()) > 1 {
+			complain("non-linear history detected: %s", e.idMe())
+			return
+		}
+	}
+	last_event := sorted_events[len(sorted_events)-1]
+	if len(last_event.children()) > 1 {
+		complain("non-linear history detected: %s", last_event.idMe())
+		return
+	}
+	for i, e := range sorted_events[:len(sorted_events)-1] {
+		next_event := sorted_events[i+1]
+		isaparent := false
+		for _, p := range next_event.parents() {
+			if e.idMe() == p.idMe() {
+				isaparent = true
+				break
+			}
+		}
+		if !isaparent {
+			complain("selected commit range not contiguous")
+			return
+		}
+	}
+	events[0].setParents(sorted_events[0].parents())
+	for _, e := range last_event.parents() {
+		e.(*Commit).replaceParent(&last_event, &events[len(events)-1])
+	}
+	for i, e := range events[:len(events)-1] {
+		events[i+1].setParents([]CommitLike{e})
+	}
+	// Check if fileops still make sense after re-ordering events.
+	// Also check events one level beyond re-ordered range; anything
+	// beyond that is the user's responsibility.
+	combined := make([]Event, len(events)+len(events[len(events)-1].children()))
+	for _, e := range combined {
+		c := e.(*Commit)
+		ops := make([]FileOp, 0)
+		for _, op := range c.operations() {
+			var path string
+			if op.op == opD {
+				path = op.path
+			} else if op.op == opR || op.op == opC {
+				path = op.source
+			}
+			if path != "" && c.visible(path) != nil {
+				if !bequiet {
+					complain("%s '%s' fileop references non-existent '%s' after re-order", e.idMe(), op.op, path)
+				}
+			} else {
+				ops = append(ops, op)
+			}
+		}
+		if !cmp.Equal(ops, c.operations()) {
+			c.setOperations(ops)
+			c.invalidatePathsetCache()
+			if !bequiet && len(ops) == 0 {
+				complain("%s no fileops remain after re-order", c.idMe())
+			}
+		}
+	}
+	self.resort()
+}
 
 // Renumber the marks in a repo starting from a specified origin.
 func (repo *Repository) renumber(origin int, baton *Baton) {
@@ -14364,11 +14393,11 @@ Policy:
             child.setParents(parents)
             if do_resort:
                 repo.resort()
+*/
 
-    func help_reorder():
-        rs.helpOutput("""
+func (self *Reposurgeon) HelpReorder() {
+	self.helpOutput(`
 Re-order a contiguous range of commits.
-
 Older revision control systems tracked change history on a per-file basis,
 rather than as a series of atomic "changesets", which often made it difficult
 to determine the relationships between changes. Some tools which convert a
@@ -14386,7 +14415,6 @@ be re-ordered, so that those pertaining to each particular topic are clumped
 together, and then possibly squashed into one or more changesets pertaining to
 each topic. This command, 'reorder', can help with the first task; the
 'squash' command with the second.
-
 Selected commits are re-arranged in the order specified; for instance:
 ":7,:5,:9,:3 reorder". The specified commit range must be contiguous; each
 commit must be accounted for after re-ordering. Thus, for example, ':5' can
@@ -14394,7 +14422,6 @@ not be omitted from ":7,:5,:9,:3 reorder". (To drop a commit, use the 'delete'
 or 'squash' command.) The selected commits must represent a linear history,
 however, the lowest numbered commit being re-ordered may have multiple
 parents, and the highest numbered may have multiple children.
-
 Re-ordered commits and their immediate descendants are inspected for
 rudimentary fileops inconsistencies. Warns if re-ordering results in a commit
 trying to delete, rename, or copy a file before it was ever created. Likewise,
@@ -14404,31 +14431,42 @@ affected commits and beyond; for instance, moving a commit which renames a
 file ahead of a commit which references the original name. Such anomalies can
 be discovered via manual inspection and repaired with the 'add' and 'remove'
 (and possibly 'path') commands. Warnings can be suppressed with '--quiet'.
-
 In addition to adjusting their parent/child relationships, re-ordering commits
 also re-orders the underlying events since ancestors must appear before
 descendants, and blobs must appear before commits which reference them. This
 means that events within the specified range will have different event numbers
 after the operation.
-""")
-    func do_reorder(self, line str):
-        "Re-order a contiguous range of commits."
-        repo = self.chosen()
-        if repo is None:
-            raise Recoverable("no repo has been chosen")
-        if self.selection is None:
-            raise Recoverable("no selection")
-        sel = [i for i in self.selection if isinstance(repo[i], Commit)]
-        if len(sel) == 0:
-            raise Recoverable("no commits in selection")
-        if len(sel) == 1:
-            complain("only 1 commit selected; nothing to re-order")
-            return
-        with newLineParse(self, line) as parse:
-            if parse.line:
-                raise Recoverable("'reorder' takes no arguments")
-            repo.reorder_commits(sel, '--quiet' in parse.options)
+`)
+}
+// Re-order a contiguous range of commits.
+func (self *Reposurgeon) DoReorder(lineIn string) bool {
+	repo := self.chosen()
+	if repo == nil {
+		complain("no repo has been chosen.")
+		return false
+	}
+	sel := self.selection
+	if sel != nil {
+		complain("no selection")
+	}
+	if len(sel) == 0 {
+		complain("no commits in selection")
+		return false
+	} else if len(sel) == 1 {
+		complain("only 1 commit selected; nothing to re-order")
+		return false
+	}
+	parse := newLineParse(lineIn, nil, nil)
+	if parse.line != "" {
+		complain("'reorder' takes no arguments")
+		return false
+	}
+	_, quiet := parse.OptVal("quiet")
+	repo.reorderCommits(sel, quiet)
+	return false
+}
 
+/*
     func help_branch():
         rs.helpOutput("""
 Rename or delete a branch (and any associated resets).  First argument

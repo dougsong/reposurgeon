@@ -59,6 +59,7 @@ dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc -f nofooter.conf
 #
 
 gosetup:
+	GOPATH=$(GOPATH) go get -u github.com/google/go-cmp/cmp
 	GOPATH=$(GOPATH) go get -u golang.org/x/crypto/ssh/terminal
 	GOPATH=$(GOPATH) go get -u golang.org/x/text/encoding/ianaindex
 	GOPATH=$(GOPATH) go get -u gitlab.com/ianbruene/Kommandant
