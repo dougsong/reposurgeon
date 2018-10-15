@@ -10061,7 +10061,7 @@ func (p *SelectionParser) evalPolyrange(state selEvalState,
 	return resolved
 }
 
-var atomNumRE = regexp.MustCompile(`[0-9]+`)
+var atomNumRE = regexp.MustCompile(`^[0-9]+`)
 
 func (p *SelectionParser) parseAtom() selEvaluator {
 	// FIXME: @debug_lexer
