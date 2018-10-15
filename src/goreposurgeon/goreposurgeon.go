@@ -185,6 +185,21 @@ func isfile(pathname string) bool {
 	return err == nil && st.Mode().IsRegular()
 }
 
+func relpath(dir string) string {
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	if !strings.HasPrefix(dir, "/") {
+		dir = "/" + dir
+	}
+	wd, err = filepath.Rel(wd, dir)
+	if err != nil {
+		panic(err)
+	}
+	return wd
+}
+
 func getsize(pathname string) int64 {
 	st, err := os.Stat(pathname)
 	if err != nil {
@@ -8685,9 +8700,9 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 		}
 	}
 	if hitcount == 0 {
-		return nil, fmt.Errorf("couldn't find a repo under %s", source)
+		return nil, fmt.Errorf("couldn't find a repo under %s", relpath(source))
 	} else if hitcount > 1 {
-		return nil, fmt.Errorf("too many repos under %s", source)
+		return nil, fmt.Errorf("too many repos under %s", relpath(source))
 	} else if debugEnable(debugSHUFFLE) {
 		announce(debugSHUFFLE, "found %s repository", vcsname)
 	}
@@ -9056,10 +9071,8 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 			os.Rename(ljoin(target, sub.Name()),
 				ljoin(savedir, sub.Name()))
 		}
-		// FIXME: Use filepath.Rel to shorten these messages, once we
-		// can beat it into actually working.
 		if verbose > 0 {
-			announce(debugSHOUT, "repo backed up to %s.", savedir)
+			announce(debugSHOUT, "repo backed up to %s.", relpath(savedir))
 		}
 		entries, err = ioutil.ReadDir(staging)
 		if err != nil {
@@ -9070,7 +9083,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 				ljoin(target, sub.Name()))
 		}
 		if verbose > 0 {
-			announce(debugSHOUT, "modified repo moved to %s.", target)
+			announce(debugSHOUT, "modified repo moved to %s.", relpath(target))
 		}
 		// Critical region ends
 	}		
