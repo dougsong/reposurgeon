@@ -16283,7 +16283,7 @@ func (rs *Reposurgeon) cleanup() {
 
 func main() {
 	rs := newReposurgeon()
-	interpreter := kommandant.NewKommandant(rs, "", nil, nil)
+	interpreter := kommandant.NewBasicKommandant(rs, os.Stdin, os.Stdout)
 
 	// FIXME: restore this when code is more stable
 	//defer func() {
