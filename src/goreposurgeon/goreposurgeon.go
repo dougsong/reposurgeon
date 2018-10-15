@@ -10712,7 +10712,7 @@ func newReposurgeon() *Reposurgeon {
 	rs := new(Reposurgeon)
 	rs.SelectionParser.subclass = rs
 	rs.startTime = time.Now()
-	rs.prompt_format = "reposurgeon% "
+	rs.prompt_format = "goreposurgeon% "
 	return rs
 }
 
@@ -16307,7 +16307,7 @@ func main() {
 	//	go rs.cleanup()
 	//}()
 
-	interpreter.Prompt = "goreposurgeon% "
+	interpreter.Prompt = rs.prompt_format
 	if len(os.Args[1:]) == 0 {
 		os.Args = append(os.Args, "-")
 	}
