@@ -4963,21 +4963,24 @@ func (commit Commit) String() string {
 		parts = append(parts, "\n")
 	}
 	parents := commit.parents()
+	doCallouts := commit.repo.writeOptions.Contains("--callout")
 	if len(parents) > 0 {
 		ancestor := parents[0]
 		if !incremental || commit.repo.internals.Contains(ancestor.getMark()) {
 			parts = append(parts, fmt.Sprintf("from %s\n", ancestor.getMark()))
-		} else if commit.repo.writeOptions.Contains("--callout") {
+		} else if doCallouts {
 			parts = append(parts, fmt.Sprintf("from %s\n", ancestor.callout()))
 		}
 		for _, ancestor := range parents[1:] {
 			var nugget string
 			if commit.repo.internals == nil || commit.repo.internals.Contains(ancestor.getMark()) {
 				nugget = ancestor.getMark()
-			} else {
+			} else if doCallouts {
 				nugget = ancestor.callout()
 			}
-			parts = append(parts, fmt.Sprintf("merge %s\n", nugget))
+			if nugget != "" {
+				parts = append(parts, fmt.Sprintf("merge %s\n", nugget))
+			}
 		}
 	}
 	if vcs != nil && vcs.extensions.Contains("commit-properties") {
@@ -7214,11 +7217,12 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 	if target != nil && target.name == "svn" {
 		//return SubversionDumper().dump(selection, fp, progress)	FIXME
 	}
+	repo.internals = nil
 	// Select all blobs implied by the commits in the range. If we ever
-	// go to reptesentation where fileops are inline this logic will need
+	// go to a representation where fileops are inline this logic will need
 	// to be modified.
-	repo.internals = newStringSet()
 	if !selection.Equal(repo.all()) {
+		repo.internals = newStringSet()
 		for _, ei := range selection {
 			event := repo.events[ei]
 			if mark := event.getMark(); mark != "" {
