@@ -10686,6 +10686,7 @@ type Reposurgeon struct {
 	history    []string
 	preferred  *VCS
 	startTime  time.Time
+	capture    []string
 	prompt_format string
 }
 
@@ -10799,14 +10800,38 @@ developers.
             complain(e.msg)
 */
 
-func (self *Reposurgeon) PreCommand(lineIn string) (lineOut string) {
-	if strings.HasPrefix(lineIn, "#") {
-		return ""
-	} else if lineIn != "" {
-		self.history = append(self.history, lineIn)
-	}
+var inlineCommentRE = regexp.MustCompile(`\s+#`)
 
-	return lineIn
+func (rs *Reposurgeon) PreCommand(line string) string {
+	if rs.capture != nil {
+		if strings.HasPrefix(line, "}") {
+			rs.capture = nil
+		} else {
+			rs.capture = append(rs.capture, line)
+		}
+	}
+	trimmed := strings.TrimRight(line, " \t\n")
+	if len(trimmed) != 0 {
+		rs.history = append(rs.history, trimmed)
+	}
+	if rs.echo > 0 {
+		os.Stdout.WriteString(trimmed)
+	}
+	rs.selection = nil
+	if strings.HasPrefix(line, "#") {
+		return ""
+	}
+	line = inlineCommentRE.Split(line, 2)[0]
+	if rs.chosen() != nil {
+		defer func(line *string) {
+			if e := catch("command", recover()); e != nil {
+				complain(e.message)
+				*line = ""
+			}
+		}(&line)
+		line = rs.setSelectionSet(line)
+	}
+	return line
 }
 
 func (self *Reposurgeon) PostCommand(stop bool, lineIn string) bool {
@@ -10831,32 +10856,6 @@ func (self *Reposurgeon) PostCommand(stop bool, lineIn string) bool {
         return false
     func emptyline():
         pass
-    func precmd(self, line str):
-        "Pre-command hook."
-        if self.capture is not None:
-            if line.startswith("}"):
-                self.capture = None
-            else:
-                self.capture.append(line)
-            return ""
-        self.history.append(line.rstrip())
-        if self.echo:
-            os.Stdout.WriteString(line.rstrip()+"\n")
-        self.selection = None
-        if line.startswith("#"):
-            return ""
-        m = regexp.MustCompile("\s+#".encode('ascii'))
-        if m:
-            line = polystr(m.split(polybytes(line))[0])
-        # This is the only place in the implementation that knows
-        # whether the syntax is VSO or SVO.
-        if self.chosen():
-            try:
-                line = self.set_selection_set(line)
-            except Recoverable as e:
-                complain(e.msg)
-                line = ""
-        return line
 */
 
 func (rs *Reposurgeon) HelpShell() {
