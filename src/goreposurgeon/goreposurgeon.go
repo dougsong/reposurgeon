@@ -10809,15 +10809,6 @@ developers.
 //
 // Housekeeping hooks.
 //
-/*
-    func onecmd(self, line str):
-        "Execute one command, fielding interrupts for recoverable exceptions."
-        try:
-            cmd.Cmd.onecmd(self, line)
-        except Recoverable as e:
-            complain(e.msg)
-*/
-
 var inlineCommentRE = regexp.MustCompile(`\s+#`)
 
 func (rs *Reposurgeon) PreCommand(line string) string {
@@ -10870,19 +10861,6 @@ func (self *Reposurgeon) PostCommand(stop bool, lineIn string) bool {
 
 	return stop
 }
-
-/*
-    func postcmd(self, _unused, line):
-        try:
-            self.prompt = self.prompt_format % {"chosen":self.chosen() and self.chosen().name}
-        except ValueError:
-            announce(debugSHOUT, "bad prompt format - remember, literal % must be doubled.")
-        if line == "EOF":
-            return true
-        return false
-    func emptyline():
-        pass
-*/
 
 func (rs *Reposurgeon) HelpShell() {
 	rs.helpOutput(`
