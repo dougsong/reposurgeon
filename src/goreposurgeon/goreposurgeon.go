@@ -12523,14 +12523,42 @@ func (rs *Reposurgeon) DoWrite(line string) (stopOut bool) {
 	return false
 }
 
-/*
-    func help_inspect():
-        rs.helpOutput("""
+func (self *Reposurgeon ) HelpInspect() {
+	self.helpOutput(`
 Dump a fast-import stream representing selected events to standard
 output or via > redirect to a file.  Just like a write, except (1) the
 progress meter is disabled, and (2) there is an identifying header
 before each event dump.
-""")
+`)
+}
+
+// Dump raw events.
+func (self *Reposurgeon) DoInspect(lineIn string) bool {
+	repo := self.chosen()
+	if repo == nil {
+		complain("no repo has been chosen.")
+		return false
+	}
+
+	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+	defer parse.Closem()
+
+	if self.selection == nil {
+		self.selection, parse.line = self.parse(parse.line, len(repo.events))
+		if self.selection == nil {
+			self.selection = repo.all()
+		}
+	}
+	for i, eventid := range self.selection {
+		event := repo.events[eventid]
+		header := fmt.Sprintf("Event %d %s\n", i+1, strings.Repeat("=", 72))
+		fmt.Fprintln(parse.stdout, header[:72])
+		fmt.Fprint(parse.stdout, event.String())
+	}
+
+	return false
+}
+/*
     func do_inspect(self, line str):
         "Dump raw events."
         if self.chosen() is None:
