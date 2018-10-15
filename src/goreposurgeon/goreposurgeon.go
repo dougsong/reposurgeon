@@ -5308,16 +5308,14 @@ func (sp *StreamParser) gripe(msg string) {
 
 func (sp *StreamParser) read(n int) string {
 	// Read possibly binary data
-	cs := make([]byte, n)
-	m, err := sp.fp.Read(cs)
+	buf := make([]byte, n)
+	_, err := io.ReadFull(sp.fp, buf)
 	if err != nil {
-		sp.error(fmt.Sprintf("in readline(): %v", err))
-	} else if m < n {
-		sp.error(fmt.Sprintf("short read in readline"))
+		sp.error("bad read in data")
 	}
 	sp.ccount += int64(n)
-	sp.importLine = bytes.Count(cs, []byte{'\n'})
-	return string(cs)
+	sp.importLine = bytes.Count(buf, []byte{'\n'})
+	return string(buf)
 }
 
 func (sp *StreamParser) readline() string {
@@ -5410,16 +5408,7 @@ func (sp *StreamParser) fiReadData(line string) (string, int64) {
 			sp.error("bad count in data: " + line[5:])
 		}
 		start = sp.tell()
-		for count > 0 {
-			buf := make([]byte, count)
-			var n int
-			n, err = sp.fp.Read(buf)
-			if err != nil {
-				sp.error("bad read in data")
-			}
-			data += string(buf)
-			count -= n
-		}
+		data = sp.read(count)
 	} else if strings.HasPrefix(line, "property") {
 		line = line[9:]                        // Skip this token
 		line = line[strings.Index(line, " "):] // Skip the property name
@@ -5429,13 +5418,8 @@ func (sp *StreamParser) fiReadData(line string) (string, int64) {
 			sp.error("bad count in property")
 		}
 		start = sp.tell()
-		buf := make([]byte, count)
-		var n int
-		n, err = sp.fp.Read(buf)
-		if err != nil || n != count {
-			sp.error("bad read in property")
-		}
-		data = line[nextws:] + string(buf)
+		buf := sp.read(count)
+		data = line[nextws:] + buf
 	} else {
 		sp.error("malformed data header")
 	}
@@ -5494,15 +5478,11 @@ func (sp *StreamParser) sdRequireSpacer() {
 
 func (sp *StreamParser) sdReadBlob(length int) string {
 	// Read a Subversion file-content blob.
-	buf := make([]byte, length+1)
-	n, _ := sp.fp.Read(buf)
-	if n != length+1 || buf[length] != '\n' {
+	buf := sp.read(length+1)
+	if buf[length] != '\n' {
 		sp.error("EOL not seen where expected, Content-Length incorrect")
 	}
-	content := string(buf[:length])
-	sp.importLine += strings.Count(content, "\n") + 1
-	sp.ccount += int64(len(content)) + 1
-	return content
+	return string(buf[:length])
 }
 
 func (sp *StreamParser) sdReadProps(target string, checklength int) OrderedMap {
