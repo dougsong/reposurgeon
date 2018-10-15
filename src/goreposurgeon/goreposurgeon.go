@@ -61,18 +61,7 @@ package main
 // underscores on field names to flag fields tht should never be
 // referenced ouside a method of the associated struct.
 //
-// Differences from the Python version
-// 1. whoami() does not read .lynxrc files
-// 2. No Python plugins.
-// 3. Regular expressions use Go syntax rather than Python. Little
-//    difference in practice; the biggest deal is lack of lookbehinds
-// 4. Go and Python disagree on what RFC822 format is, and neither is compatible
-//    with the Git log date format, which claims to be RFC822 but isn't.  So
-//    screw it - we always dump timestamps in RFC3339 now.
-// 5. We now interpret Subversion $Rev$ and $LastChangedRev$ cookie.
-// 6. The exec and eval commands are no longer supported.
-// 7. The shell command spawns an interactive shell rather than passing
-//    a single line to a shell.
+// Do 'help news' for a summary of recent changes. 
 
 import (
 	"bufio"
@@ -11495,6 +11484,23 @@ func (self *Reposurgeon) reportSelect(parse *LineParse, display func(*LineParse,
 //
 // Command implementation begins here
 //
+
+func (rs *Reposurgeon) HelpNews() {
+    rs.helpOutput(`
+4.0 differences from the Python 3.x versions:
+1. whoami() does not read .lynxrc files
+2. No Python plugins.
+3. Regular expressions use Go syntax rather than Python. Little
+   difference in practice; the biggest deal is lack of lookbehinds
+4. Go and Python disagree on what RFC822 format is, and neither is compatible
+   with the Git log date format, which claims to be RFC822 but isn't.  So
+   we always dump timestamps in RFC3339 now.
+5. We now interpret Subversion $Rev$ and $LastChangedRev$ cookies.
+6. The exec and eval commands are no longer supported.
+7. The shell command spawns an interactive shell rather than passing
+   a single line to a shell.
+`)
+}
 
 //
 // On-line help and instrumentation
