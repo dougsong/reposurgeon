@@ -10909,17 +10909,28 @@ func (rs *Reposurgeon) isNamed(s string) (result bool) {
 	return
 }
 
+func (rs *Reposurgeon) parseExpression() selEvaluator {
+	// FIXME: @debug_lexer
+	value := rs.SelectionParser.parseExpression()
+	for {
+		if rs.peek() != '?' {
+			break
+		}
+		rs.pop()
+		orig := value
+		value = func(x selEvalState, s *orderedset.Set) *orderedset.Set {
+			return rs.evalNeighborhood(x, s, orig)
+		}
+	}
+	return value
+}
+
+func (rs *Reposurgeon) evalNeighborhood(state selEvalState,
+	preselection *orderedset.Set, subject selEvaluator) *orderedset.Set {
+	return preselection
+}
+
 /*
-    @debug_lexer
-    func parse_expression():
-        value = super(RepoSurgeon, self).parse_expression()
-        while true:
-            c = self.peek()
-            if c != '?':
-                break
-            self.pop()
-            value = lambda p, orig=value: self.eval_neighborhood(p, orig)
-        return value
     @debug_lexer
     func eval_neighborhood(self, preselection, subject):
         value = subject(preselection)
