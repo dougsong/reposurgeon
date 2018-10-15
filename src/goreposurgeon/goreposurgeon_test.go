@@ -112,7 +112,7 @@ func TestStringSet(t *testing.T) {
 		t.Error("Remove computation failed.")
 	}
 
-	expect := `{"a", "b", "c"}`
+	expect := `["a", "b", "c"]`
 	get := ts.String()
 	if expect != get {
 		t.Errorf("Stringer check failed, expected %s got %s.",
@@ -182,7 +182,7 @@ func TestOrderedIntSet(t *testing.T) {
 		t.Error("Remove computation failed.")
 	}
 
-	expect := `{1, 2, 3}`
+	expect := `[1, 2, 3]`
 	get := ts.String()
 	if expect != get {
 		t.Errorf("Stringer check failed, expected %s got %s.",

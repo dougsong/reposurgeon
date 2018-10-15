@@ -45,6 +45,7 @@ python: listcheck roundtrip roundtrip-compress mailboxing fi-regress coalesce \
 		svncheck-regress
 
 nonpython: repomapper-regress repotool-regress repocutter-regress
+	GOPATH=$(GOPATH) go test -v goreposurgeon
 
 hg-extractor: hg-regress hg-regress-branches hg-regress-merges \
 		hg-regress-tags hg-regress-patho
