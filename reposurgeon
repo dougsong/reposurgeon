@@ -7729,7 +7729,10 @@ def rebuild_repo(repo, target, options, preferred):
             announce(DEBUG_SHOUT, "rebuild is complete.")
 
         os.chdir(here)
-        if staging != target:
+        if staging == target:
+            # For purposes of restoring preserved files
+            savedir = here
+        else:
             # Rebuild succeeded - make an empty backup directory
             backupcount = 1
             while True:
@@ -7757,24 +7760,24 @@ def rebuild_repo(repo, target, options, preferred):
                               os.path.join(target, sub))
                 if verbose:
                     announce(DEBUG_SHOUT, "modified repo moved to %s." % os.path.relpath(target))
-            if repo.preserve_set:
-                for sub in repo.preserve_set:
-                    src = os.path.join(savedir, sub)
-                    dst = os.path.join(target, sub)
-                    if os.path.exists(src):
-                        if os.path.exists(dst) and os.path.isdir(dst):
-                            shutil.rmtree(dst)
-                        if os.path.isdir(src):
-                            shutil.copytree(src, dst)
-                        else:
-                            dstdir = os.path.dirname(dst)
-                            if not os.path.exists(dstdir):
-                                os.makedirs(dstdir)
-                            shutil.copy2(src, dst)
-                if verbose:
-                    announce(DEBUG_SHOUT, "preserved files restored.")
-            elif verbose:
-                announce(DEBUG_SHOUT, "no preservations.")
+        if repo.preserve_set:
+            for sub in repo.preserve_set:
+                src = os.path.join(savedir, sub)
+                dst = os.path.join(target, sub)
+                if os.path.exists(src):
+                    if os.path.exists(dst) and os.path.isdir(dst):
+                        shutil.rmtree(dst)
+                    if os.path.isdir(src):
+                        shutil.copytree(src, dst)
+                    else:
+                        dstdir = os.path.dirname(dst)
+                        if not os.path.exists(dstdir):
+                            os.makedirs(dstdir)
+                        shutil.copy2(src, dst)
+            if verbose:
+                announce(DEBUG_SHOUT, "preserved files restored.")
+        elif verbose:
+            announce(DEBUG_SHOUT, "no preservations.")
     finally:
         os.chdir(here)
         if staging != target:
