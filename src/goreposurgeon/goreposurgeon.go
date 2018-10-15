@@ -10879,22 +10879,37 @@ func (self *Reposurgeon) DoShell(line string) (stopOut bool) {
     func selected(self, types=None):
         "Iterate over the selection set."
         return self.chosen().iterevents(indices=self.selection, types=types)
-    #
-    # The selection-language parsing code starts here.
-    #
-    func set_selection_set(self, line str):
-        "Implement object-selection syntax."
-        # Returns the line with the selection removed
-        self.selection = None
-        if not self.chosen():
-            return line
-        try:
-            if self.chosen().named(line):
-                line = "<" + line + ">"
-        except Recoverable:
-            pass
-        self.selection, line = self.parse(line, self.chosen().all())
-        return line
+*/
+
+//
+// The selection-language parsing code starts here.
+//
+
+// setSelectionSet parses object-selection syntax at the beginning of line
+// and returns the remaining part of the line
+func (rs *Reposurgeon) setSelectionSet(line string) string {
+	rs.selection = nil
+	if rs.chosen() == nil {
+		return line
+	}
+	if rs.isNamed(line) {
+		line = "<" + line + ">"
+	}
+	rs.selection, line = rs.parse(line, len(rs.chosen().events))
+	return line
+}
+
+func (rs *Reposurgeon) isNamed(s string) (result bool) {
+	defer func(result *bool) {
+		if e := catch("command", recover()); e != nil {
+			*result = false
+		}
+	}(&result)
+	result = rs.chosen().named(s) != nil
+	return
+}
+
+/*
     @debug_lexer
     func parse_expression():
         value = super(RepoSurgeon, self).parse_expression()
@@ -11257,9 +11272,7 @@ func (self *Reposurgeon) reportSelect(parse *LineParse, display func(*LineParse,
 		if parse.line == "" {
 			self.selection = repo.all()
 		} else if self.selection == nil {
-			// FIXME: call Reposurgeon.setSelectionSet() rather
-			// than doing this manually
-			self.selection, parse.line = self.SelectionParser.parse(parse.line, len(repo.events))
+			parse.line = self.setSelectionSet(parse.line)
 		}
 	}
 	for _, eventid := range self.selection {
