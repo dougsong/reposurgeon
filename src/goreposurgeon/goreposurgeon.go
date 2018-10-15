@@ -6655,8 +6655,7 @@ func (repo *Repository) named(ref string) orderedIntSet {
 				return d < -24 || d > 24
 			}
 		} else {
-			complain("unparseable date in " + ref)
-			return nil
+			panic(throw("command", "unparseable date in "+ref))
 		}
 	}
 	emailID := ""
@@ -6691,8 +6690,7 @@ func (repo *Repository) named(ref string) orderedIntSet {
 			}
 		}
 		if len(matches) < 1 {
-			complain("no events match %s", ref)
-			return nil
+			panic(throw("command", "no events match %s", ref))
 		} else if len(matches) > 1 {
 			if ordinal != -1 && ordinal <= len(matches) {
 				selection.Add(matches[ordinal-1])
