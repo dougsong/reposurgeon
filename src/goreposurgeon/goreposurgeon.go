@@ -10778,7 +10778,9 @@ developers.
 */
 
 func (self *Reposurgeon) PreCommand(lineIn string) (lineOut string) {
-	if lineIn != "" {
+	if strings.HasPrefix(lineIn, "#") {
+		return ""
+	} else if lineIn != "" {
 		self.history = append(self.history, lineIn)
 	}
 
@@ -16085,8 +16087,9 @@ func (rs *Reposurgeon) HelpScript() {
 	rs.helpOutput("Read and execute commands from a named file.\n")
 }
 func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
+	interpreter := rs.cmd
 	if len(lineIn) == 0 {
-		rs.cmd.Output("script requires a file argument\n")
+		interpreter.Output("script requires a file argument\n")
 		return
 	}
 	words := strings.Split(lineIn, " ")
@@ -16094,11 +16097,14 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 	fname, vars := words[0], words[1:]
 	scriptfp, err := os.Open(fname)
 	if err != nil {
-		rs.cmd.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
+		interpreter.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
 		return
 	}
 	defer scriptfp.Close()
 
+	if interpreter.PreLoop != nil {
+		interpreter.PreLoop()
+	}
 	scanner := bufio.NewScanner(scriptfp)
 	for scanner.Scan() {
 		scriptline := scanner.Text()
@@ -16111,7 +16117,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 		if strings.Contains(scriptline, "<<") {
 			heredoc, err := ioutil.TempFile("", "reposurgeon-")
 			if err != nil {
-				rs.cmd.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
+				interpreter.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
 				return
 			}
 			//defer os.Remove(heredoc.Name())
@@ -16129,7 +16135,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 				} else {
 					_, err := heredoc.WriteString(nextline + "\n") // unnecessary copy
 					if err != nil {
-						rs.cmd.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
+						interpreter.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
 						return
 					}
 				}
@@ -16148,10 +16154,23 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 			scriptline = strings.Replace(scriptline, ref, v, -1)
 		}
 		scriptline = strings.Replace(scriptline, "$$", strconv.FormatInt(int64(os.Getpid()), 10), -1)
-		rs.cmd.OneCmd(scriptline)
+
+		if interpreter.PreCommand != nil {
+			scriptline = interpreter.PreCommand(scriptline)
+		}
+		stop := interpreter.OneCmd(scriptline)
+		if interpreter.PostCommand != nil {
+			stop = interpreter.PostCommand(stop, scriptline)
+		}
+		if stop {
+			break
+		}
 	}
 	if err := scanner.Err(); err != nil {
-		rs.cmd.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
+		interpreter.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
+	}
+	if interpreter.PostLoop != nil {
+		interpreter.PostLoop()
 	}
 
 	rs.callstack = rs.callstack[:len(rs.callstack)-1]
