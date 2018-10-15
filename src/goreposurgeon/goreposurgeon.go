@@ -1709,6 +1709,7 @@ func mustChdir(directory string, errorclass string) {
 			"In %s, could not change working directory to %s: %v",
 			errorclass, directory, err))
 	}
+	announce(debugSHUFFLE, "changing directory to %s", directory)
 }
 
 func mustCaptureFromProcess(command string, errorclass string) string {
@@ -2245,7 +2246,7 @@ const debugSVNPARSE = 4 // Lower-level Subversion parsing details
 const debugEMAILIN = 4  // Debug round-tripping through mailbox_{out|in}
 const debugSHUFFLE = 4  // Debug file and directory handling
 const debugCOMMANDS = 5 // Show commands as they are executed
-const debugUNITE = 5    // Debug mark assignments in merging
+const debugUNITE = 6    // Debug mark assignments in merging
 const debugLEXER = 6    // Debug selection-language parsing
 var quiet = false
 
@@ -8696,8 +8697,13 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 	if err != nil {
 		return nil, fmt.Errorf("readRepo is disoriented: %v", err)
 	}
-	defer os.Chdir(here)
-	os.Chdir(repo.sourcedir)
+	announce(debugSHUFFLE, "current directory is %q", here)
+	chdir := func(directory string, legend string) {
+		os.Chdir(directory)
+		announce(debugSHUFFLE, "changing directory to %s: %s", legend, directory)
+	}
+	defer chdir(here, "original")
+	chdir(repo.sourcedir, "repository directory")
 	// We found a matching VCS type
 	if vcs != nil {
 		repo.hint("", vcs.name, true)
@@ -8916,6 +8922,10 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 	if !repo.branchset().Contains("refs/heads/master") {
 		complain("repository has no branch named master. git will have no HEAD commit after the import; consider using the branch command to rename one of your branches to master.")
 	}
+	chdir := func(directory string, legend string) {
+		os.Chdir(directory)
+		announce(debugSHUFFLE, "changing directory to %s: %s", legend, directory)
+	}
 	// Create a new empty directory to do the rebuild in
 	var staging string
 	if !exists(target) {
@@ -8939,9 +8949,9 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 	if err2 != nil {
 		return fmt.Errorf("buildRepo is disoriented: %v", err2)
 	}
-	os.Chdir(staging)
+	chdir(staging, "staging")
 	defer func () {
-		os.Chdir(here)
+		chdir(here, "staging")
 		if staging != target {
 			nuke(staging, "reposurgeon: removing staging directory")
 		}
@@ -8974,13 +8984,14 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		os.Remove(tfdesc.Name())
 	} else {
 		cmd := os.Expand(repo.vcs.importer, mapper)
-		tp, _, err := writeToProcess(cmd)
+		tp, cls, err := writeToProcess(cmd)
 		if err != nil {
 			return err
 		}
 		repo.fastExport(repo.all(), tp,
 			options, preferred, verbose>0)
 		tp.Close()
+		cls.Wait()
 	}
 	if repo.writeLegacy {
 		legacyfile := filepath.FromSlash(vcs.subdirectory + "/legacy-map")
@@ -8997,7 +9008,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		}
 	}
 	if vcs.checkout != "" {
-		runProcess(vcs.checkout, "repository_checkout")
+		runProcess(vcs.checkout, "repository checkout")
 	} else {
 		complain("checkout not supported for %s skipping", vcs.name)
 
@@ -9006,9 +9017,15 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		announce(debugSHOUT, "rebuild is complete.")
 
 	}
-	os.Chdir(here)
+	ljoin := func(sup string, sub string) string {
+		return filepath.FromSlash(sup + "/" + sub)
+	}	
+	chdir(here, "original")
 	var savedir string
-	if staging != target {
+	if staging == target {
+		// For preservation purposes
+		savedir = here
+	} else { 
 		// Rebuild succeeded - make an empty backup directory
 		backupcount := 1
 		for {
@@ -9024,10 +9041,6 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		}
 		os.Mkdir(savedir, userReadWriteMode)
 
-		ljoin := func(sup string, sub string) string {
-			return filepath.FromSlash(sup + "/" + sub)
-		}
-		
 		// This is a critical region.  Ignore all signals
 		// until we're done.
 		//
@@ -9060,32 +9073,31 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 			announce(debugSHOUT, "modified repo moved to %s.", target)
 		}
 		// Critical region ends
-		
-		if len(repo.preserveSet) > 0 {
-			for _, sub := range repo.preserveSet {
-				src := ljoin(savedir, sub)
-				dst := ljoin(target, sub)
-				if exists(src) {
-					if exists(dst) && isdir(dst) {
-						os.RemoveAll(dst)
+	}		
+	if len(repo.preserveSet) > 0 {
+		for _, sub := range repo.preserveSet {
+			src := ljoin(savedir, sub)
+			dst := ljoin(target, sub)
+			if exists(src) {
+				if exists(dst) && isdir(dst) {
+					os.RemoveAll(dst)
+				}
+				if isdir(src) {
+					shutil.CopyTree(src, dst, nil)
+				} else {
+					dstdir := filepath.Dir(dst)
+					if !exists(dstdir) {
+						os.MkdirAll(dstdir, userReadWriteMode)
 					}
-					if isdir(src) {
-						shutil.CopyTree(src, dst, nil)
-					} else {
-						dstdir := filepath.Dir(dst)
-						if !exists(dstdir) {
-							os.MkdirAll(dstdir, userReadWriteMode)
-						}
-						shutil.Copy(src, dst, false)
-					}
+					shutil.Copy(src, dst, false)
 				}
 			}
-			if verbose > 0 {
-				announce(debugSHOUT, "preserved files restored.")
-			}
-		} else if verbose > 0 {
-			announce(debugSHOUT, "no preservations.")
 		}
+		if verbose > 0 {
+			announce(debugSHOUT, "preserved files restored.")
+		}
+	} else if verbose > 0 {
+		announce(debugSHOUT, "no preservations.")
 	}
 	return nil
 }
@@ -12575,9 +12587,10 @@ func (rs *Reposurgeon) DoRebuild(line string) (stopOut bool) {
 		complain("no repo has been chosen.")
 		return false
         }
-        if rs.selection != nil {
-		panic(throw("command", "rebuild does not take a selection set"))
-        }
+	//FIXME: when pre-command hook works.
+        //if rs.selection != nil {
+	//	panic(throw("command", "rebuild does not take a selection set"))
+        //}
         parse := newLineParse(line, nil, nil)
 	defer parse.Closem()
 	err := rs.chosen().rebuildRepo(parse.line, parse.options, rs.preferred)
