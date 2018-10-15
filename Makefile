@@ -59,13 +59,13 @@ dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc -f nofooter.conf
 #
 
 gosetup:
-	GOPATH=$(GOPATH) go get -u github.com/google/go-cmp/cmp
-	GOPATH=$(GOPATH) go get -u golang.org/x/crypto/ssh/terminal
-	GOPATH=$(GOPATH) go get -u golang.org/x/text/encoding/ianaindex
-	GOPATH=$(GOPATH) go get -u gitlab.com/ianbruene/Kommandant
-	GOPATH=$(GOPATH) go get -u github.com/emirpasic/gods/sets/linkedhashset
-	GOPATH=$(GOPATH) go get -u github.com/anmitsu/go-shlex
-	GOPATH=$(GOPATH) go get -u github.com/termie/go-shutil
+	GOPATH=$(GOPATH) go get -u -f github.com/google/go-cmp/cmp
+	GOPATH=$(GOPATH) go get -u -f golang.org/x/crypto/ssh/terminal
+	GOPATH=$(GOPATH) go get -u -f golang.org/x/text/encoding/ianaindex
+	GOPATH=$(GOPATH) go get -u -f gitlab.com/ianbruene/Kommandant
+	GOPATH=$(GOPATH) go get -u -f github.com/emirpasic/gods/sets/linkedhashset
+	GOPATH=$(GOPATH) go get -u -f github.com/anmitsu/go-shlex
+	GOPATH=$(GOPATH) go get -u -f github.com/termie/go-shutil
 
 govet:
 	GOPATH=$(GOPATH) go vet repocutter
