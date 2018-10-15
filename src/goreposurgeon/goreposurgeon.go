@@ -9029,7 +9029,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		// Rebuild succeeded - make an empty backup directory
 		backupcount := 1
 		for {
-			savedir := target + (fmt.Sprintf(".~%d~", backupcount))
+			savedir = target + (fmt.Sprintf(".~%d~", backupcount))
 			if exists(savedir) {
 				backupcount++
 			} else {
