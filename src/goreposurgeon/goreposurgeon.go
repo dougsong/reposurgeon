@@ -10840,16 +10840,24 @@ func (rs *Reposurgeon) PreCommand(line string) string {
 		return ""
 	}
 	line = inlineCommentRE.Split(line, 2)[0]
-	if rs.chosen() != nil {
-		defer func(line *string) {
-			if e := catch("command", recover()); e != nil {
-				complain(e.message)
-				*line = ""
-			}
-		}(&line)
-		line = rs.setSelectionSet(line)
+
+	defer func(line *string) {
+		if e := catch("command", recover()); e != nil {
+			complain(e.message)
+			*line = ""
+		}
+	}(&line)
+
+	if rs.isNamed(line) {
+		line = "<" + line + ">"
 	}
-	return line
+
+	machine, rest := rs.imp().compile(line)
+	if rs.chosen() != nil {
+		rs.selection = rs.imp().evaluate(machine, len(rs.chosen().events))
+	}
+
+	return rest
 }
 
 func (self *Reposurgeon) PostCommand(stop bool, lineIn string) bool {
@@ -10909,27 +10917,16 @@ func (self *Reposurgeon) DoShell(line string) (stopOut bool) {
 // The selection-language parsing code starts here.
 //
 
-// setSelectionSet parses object-selection syntax at the beginning of line
-// and returns the remaining part of the line
-func (rs *Reposurgeon) setSelectionSet(line string) string {
-	rs.selection = nil
-	if rs.chosen() == nil {
-		return line
-	}
-	if rs.isNamed(line) {
-		line = "<" + line + ">"
-	}
-	rs.selection, line = rs.parse(line, len(rs.chosen().events))
-	return line
-}
-
 func (rs *Reposurgeon) isNamed(s string) (result bool) {
 	defer func(result *bool) {
 		if e := catch("command", recover()); e != nil {
 			*result = false
 		}
 	}(&result)
-	result = rs.chosen().named(s) != nil
+	repo := rs.chosen()
+	if repo != nil {
+		result = repo.named(s) != nil
+	}
 	return
 }
 
@@ -11317,8 +11314,14 @@ func (self *Reposurgeon) reportSelect(parse *LineParse, display func(*LineParse,
 	if self.selection == nil {
 		if parse.line == "" {
 			self.selection = repo.all()
-		} else if self.selection == nil {
-			parse.line = self.setSelectionSet(parse.line)
+		} else {
+			defer func(line *string) {
+				if e := catch("command", recover()); e != nil {
+					complain(e.message)
+					*line = ""
+				}
+			}(&parse.line)
+			self.selection, parse.line = self.parse(parse.line, len(repo.events))
 		}
 	}
 	for _, eventid := range self.selection {
