@@ -12559,26 +12559,6 @@ func (self *Reposurgeon) DoInspect(lineIn string) bool {
 	return false
 }
 /*
-    func do_inspect(self, line str):
-        "Dump raw events."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        with newLineParse(self, line, stringSet{"stdout"}) as parse:
-            if self.selection is None and parse.line.strip():
-                parse.line = self.set_selection_set(parse.line)
-            else if self.selection is None:
-                self.selection = self.chosen().all()
-            for ei, event in self.selected():
-                header = "Event %s, " % repr(ei+1)
-                header = header[:-2]
-                header += " " + ((72 - len(header)) * "=") + "\n"
-                parse.stdout.WriteString(header)
-                if isinstance(event, Commit):
-                    parse.stdout.WriteString(event.dump())
-                else:
-                    parse.stdout.WriteString(str(event))
-
     func help_strip():
         rs.helpOutput("""
 Replace the blobs in the selected repository with self-identifying stubs;
