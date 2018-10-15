@@ -319,12 +319,12 @@ func (s stringSet) Union(other stringSet) stringSet {
 	return union
 }
 
-func (s *stringSet) String() string {
-	if len(*s) == 0 {
+func (s stringSet) String() string {
+	if len(s) == 0 {
 		return "{}"
 	}
 	rep := "{"
-	for _, el := range *s {
+	for _, el := range s {
 		rep += "\""
 		rep += el
 		rep += "\", "
@@ -424,12 +424,12 @@ func (s orderedIntSet) Sort() {
 	sort.Slice(s, func(i, j int) bool { return s[i] < s[j] })
 }
 
-func (s *orderedIntSet) String() string {
-	if len(*s) == 0 {
+func (s orderedIntSet) String() string {
+	if len(s) == 0 {
 		return "{}"
 	}
 	rep := "{"
-	for _, el := range *s {
+	for _, el := range s {
 		rep += fmt.Sprintf("%d, ", el)
 	}
 	return rep[0:len(rep)-2] + "}"
