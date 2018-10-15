@@ -321,15 +321,15 @@ func (s stringSet) Union(other stringSet) stringSet {
 
 func (s stringSet) String() string {
 	if len(s) == 0 {
-		return "{}"
+		return "[]"
 	}
-	rep := "{"
+	rep := "["
 	for _, el := range s {
 		rep += "\""
 		rep += el
 		rep += "\", "
 	}
-	return rep[0:len(rep)-2] + "}"
+	return rep[0:len(rep)-2] + "]"
 }
 
 // A copy of the stringSet code with the names changed to protect the innocent.
@@ -426,13 +426,13 @@ func (s orderedIntSet) Sort() {
 
 func (s orderedIntSet) String() string {
 	if len(s) == 0 {
-		return "{}"
+		return "[]"
 	}
-	rep := "{"
+	rep := "["
 	for _, el := range s {
 		rep += fmt.Sprintf("%d, ", el)
 	}
-	return rep[0:len(rep)-2] + "}"
+	return rep[0:len(rep)-2] + "]"
 }
 
 /*
