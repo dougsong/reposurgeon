@@ -8211,12 +8211,18 @@ func (self *Repository) reorderCommits(v []int, bequiet bool) {
 	}
 	events := make([]Commit, len(v))
 	for i, e := range v {
-		events[i] = self.events[e].(Commit)
+		commit, ok := self.events[e].(Commit)
+		if ok {
+			events[i] = commit
+		}
 	}
 	sorted_events := make([]Commit, len(v))
 	sort.Sort(sort.IntSlice(v))
 	for i, e := range v {
-		sorted_events[i] = self.events[e].(Commit)
+		commit, ok := self.events[e].(Commit)
+		if ok {
+			sorted_events[i] = commit
+		}
 	}
 	//if events == sorted_events {
 	//	complain("commits already in desired order")
