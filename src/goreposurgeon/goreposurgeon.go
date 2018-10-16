@@ -10831,6 +10831,7 @@ func (rs *Reposurgeon) PreCommand(line string) string {
 	}
 	if rs.echo > 0 {
 		os.Stdout.WriteString(trimmed)
+		os.Stdout.WriteString("\n")
 	}
 	rs.selection = nil
 	if strings.HasPrefix(line, "#") {
