@@ -9648,6 +9648,8 @@ type selParser interface {
 	evaluate(selEvaluator, int) []int
 	parse(line string, nitems int) ([]int, string)
 	parseExpression() selEvaluator
+	parseSequence() selEvaluator
+	evalSequence(selEvalState, *orderedset.Set, selEvaluator, selEvaluator) *orderedset.Set
 	parseDisjunct() selEvaluator
 	evalDisjunct(selEvalState, *orderedset.Set, selEvaluator, selEvaluator) *orderedset.Set
 	parseConjunct() selEvaluator
@@ -9771,7 +9773,39 @@ class SelectionParser(object):
 func (p *SelectionParser) parseExpression() selEvaluator {
 	// FIXME: @debug_lexer
 	p.eatWS()
-	return p.imp().parseDisjunct()
+	return p.imp().parseSequence()
+}
+
+// parseSequence
+func (p *SelectionParser) parseSequence() selEvaluator {
+	p.eatWS()
+	op := p.imp().parseDisjunct()
+	for {
+		p.eatWS()
+		if p.peek() != ',' {
+			break
+		}
+		op2 := p.imp().parseDisjunct()
+		if op2 == nil {
+			break
+		}
+		op1 := op
+		op = func(x selEvalState, s *orderedset.Set) *orderedset.Set {
+			return p.imp().evalSequence(x, s, op1, op2)
+		}
+	}
+	return op
+}
+
+func (p *SelectionParser) evalSequence(state selEvalState, preselection *orderedset.Set, op1, op2 selEvaluator) *orderedset.Set {
+	selected := orderedset.New()
+	for _, op := range []selEvaluator{op1, op2} {
+		set := op(state, preselection)
+		if set != nil {
+			selected.Add(set.Values()...)
+		}
+	}
+	return selected
 }
 
 // parseDisjunct parses a disjunctive expression (| has lowest precedence)
