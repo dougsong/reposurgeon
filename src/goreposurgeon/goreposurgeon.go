@@ -14507,6 +14507,7 @@ func (self *Reposurgeon) DoReorder(lineIn string) bool {
 	sel := self.selection
 	if sel != nil {
 		complain("no selection")
+		return false
 	}
 	if len(sel) == 0 {
 		complain("no commits in selection")
