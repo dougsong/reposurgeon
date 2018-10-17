@@ -498,6 +498,7 @@ type VCS struct {
 	importer     string
 	checkout     string
 	preserve     stringSet
+	prenuke	     stringSet
 	authormap    string
 	ignorename   string
 	dfltignores  string
@@ -529,6 +530,7 @@ func (vcs VCS) String() string {
 		fmt.Sprintf("       Lister: %s\n", vcs.lister) +
 		fmt.Sprintf("     Importer: %s\n", vcs.importer) +
 		fmt.Sprintf("     Checkout: %s\n", vcs.checkout) +
+		fmt.Sprintf("      Prenuke: %s\n", vcs.prenuke.String()) +
 		fmt.Sprintf("     Preserve: %s\n", vcs.preserve.String()) +
 		fmt.Sprintf("    Authormap: %s\n", vcs.authormap) +
 		fmt.Sprintf("   Ignorename: %s\n", vcs.ignorename) +
@@ -570,6 +572,7 @@ func init() {
 			importer:     "git fast-import --quiet",
 			checkout:     "git checkout",
 			lister:       "git ls-files",
+			prenuke:      newStringSet(".git/hooks"),
 			preserve:     newStringSet(".git/config", ".git/hooks"),
 			authormap:    ".git/cvs-authors",
 			ignorename:   ".gitignore",
@@ -593,6 +596,7 @@ func init() {
 			lister:      "",
 			importer:    "bzr fast-import -",
 			checkout:    "bzr checkout",
+			prenuke:     newStringSet(".bzr/plugins"),
 			preserve:    newStringSet(),
 			authormap:   "",
 			project:     "http://bazaar.canonical.com/en/",
@@ -627,6 +631,7 @@ bzr-orphans
 			lister:      "hg status -macn",
 			importer:    "hg fastimport ${tempfile}",
 			checkout:    "hg checkout",
+			prenuke:     newStringSet(),
 			preserve:    newStringSet(".hg/hgrc"),
 			authormap:   "",
 			ignorename:  ".hgignore",
@@ -650,6 +655,7 @@ branch is renamed to 'master'.
 			lister:       "darcs show files",
 			importer:     "darcs fastconvert import",
 			checkout:     "",
+			prenuke:      newStringSet(),
 			preserve:     newStringSet(),
 			authormap:    "",
 			ignorename:   "_darcs/prefs/boring",
@@ -767,6 +773,7 @@ core
 			lister:       "mtn list known",
 			importer:     "",
 			checkout:     "",
+			prenuke:      newStringSet(),
 			preserve:     newStringSet(),
 			authormap:    "",
 			ignorename:   ".mtn_ignore", // Assumes default hooks
@@ -824,6 +831,7 @@ _darcs
 			importer:     "svnadmin load .",
 			checkout:     "",
 			lister:       "",
+			prenuke:      newStringSet(),
 			preserve:     newStringSet("hooks"),
 			authormap:    "",
 			ignorename:   "",
@@ -865,6 +873,7 @@ _darcs
 			importer:     "",
 			checkout:     "",
 			lister:       "",
+			prenuke:      newStringSet(),
 			preserve:     newStringSet(),
 			authormap:    "",
 			ignorename:   "",
@@ -930,6 +939,7 @@ core
 			importer:     "",
 			checkout:     "",
 			lister:       "src ls",
+			prenuke:      newStringSet(),
 			preserve:     newStringSet(),
 			authormap:    "",
 			ignorename:   "",
@@ -949,6 +959,7 @@ core
 			lister:       "bk gfiles -U",
 			importer:     "bk fast-import -q",
 			checkout:     "",
+			prenuke:      newStringSet(),
 			preserve:     newStringSet(),
 			authormap:    "",
 			ignorename:   "BitKeeper/etc/ignore",
@@ -9125,20 +9136,30 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		// Critical region ends
 	}		
 	if len(repo.preserveSet) > 0 {
+		// This is how we clear away hooks directories in
+		// newly-created repos
+		if repo.vcs.prenuke != nil {
+			for _, path := range repo.vcs.prenuke {
+				os.RemoveAll(path)
+			}
+		}
+		preserveMe := repo.preserveSet
+		if repo.vcs.authormap != "" {
+			preserveMe = append(preserveMe, repo.vcs.authormap)
+		}
 		for _, sub := range repo.preserveSet {
 			src := ljoin(savedir, sub)
 			dst := ljoin(target, sub)
-			if exists(src) {
-				if exists(dst) && isdir(dst) {
-					os.RemoveAll(dst)
+			// Second check for !exists is belt-and suspenders;
+			// it should never fire.
+			if exists(src) && !exists(dst) {
+				dstdir := filepath.Dir(dst)
+				if !exists(dstdir) {
+					os.MkdirAll(dstdir, userReadWriteMode)
 				}
 				if isdir(src) {
 					shutil.CopyTree(src, dst, nil)
 				} else {
-					dstdir := filepath.Dir(dst)
-					if !exists(dstdir) {
-						os.MkdirAll(dstdir, userReadWriteMode)
-					}
 					shutil.Copy(src, dst, false)
 				}
 			}
@@ -11550,6 +11571,7 @@ func (rs *Reposurgeon) HelpNews() {
 6. The exec and eval commands are no longer supported.
 7. The shell command spawns an interactive shell rather than passing
    a single line to a shell.
+8. git hooks are preserved through surgery.
 `)
 }
 
