@@ -8856,7 +8856,7 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 				return nil
 			})
 			// Compute the things to preserve
-			repo.preserveSet = allfiles.Subtract(registered)
+			repo.preserveSet = repo.preserveSet.Union(allfiles.Subtract(registered))
 		}
 		// kluge: git-specific hook
 		if repo.vcs.name == "git" {
@@ -9102,19 +9102,25 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		// until we're done.
 		//
 		// Move the unmodified repo contents in target to the
-		// backup directory.  Then move the staging contents to the
-		// target directory.  Finally, restore designated files
-		// from backup to target.
+		// backup directory, leaving a copy of the VCS config
+		// in place.  Then move the staging contents
+		// (*excluding* the VCS config) to the target
+		// directory.  Finally, restore designated files from
+		// backup to target.
 		entries, err := ioutil.ReadDir(target)
 		if err != nil {
 			return err
 		}
 		announce(debugSHUFFLE, "Target %s to backup%s", target, savedir)
 		for _, sub := range entries {
-			announce(debugSHUFFLE, "%s -> %s", ljoin(target, sub.Name()),
-				ljoin(savedir, sub.Name()))
-			os.Rename(ljoin(target, sub.Name()),
-				ljoin(savedir, sub.Name()))
+			src := ljoin(target, sub.Name())
+			dst := ljoin(savedir, sub.Name())
+			announce(debugSHUFFLE, "%s -> %s", src, dst)
+			if sub.Name() == repo.vcs.subdirectory {
+				shutil.CopyTree(src, dst, nil)
+			} else {
+				os.Rename(src, dst)
+			}
 		}
 		if verbose > 0 {
 			announce(debugSHOUT, "repo backed up to %s.", relpath(savedir))
@@ -9123,9 +9129,13 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		if err != nil {
 			return err
 		}
-		announce(debugSHUFFLE, "Copy staging %s to target %s", staging, target)
+		announce(debugSHUFFLE, "Copy staging %s to target %s (excluding %s)", staging, target, repo.vcs.subdirectory)
 		for _, sub := range entries {
-			announce(debugSHUFFLE, "%s -> %s", ljoin(staging, sub.Name()),
+			if sub.Name() == repo.vcs.subdirectory {
+				continue
+			}
+			announce(debugSHUFFLE, "%s -> %s",
+				ljoin(staging, sub.Name()),
 				ljoin(target, sub.Name()))
 			os.Rename(ljoin(staging, sub.Name()),
 				ljoin(target, sub.Name()))
@@ -9135,24 +9145,27 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		}
 		// Critical region ends
 	}		
-	if len(repo.preserveSet) > 0 {
-		// This is how we clear away hooks directories in
-		// newly-created repos
-		if repo.vcs.prenuke != nil {
-			for _, path := range repo.vcs.prenuke {
-				os.RemoveAll(path)
-			}
+	// This is how we clear away hooks directories in
+	// newly-created repos
+	announce(debugSHUFFLE, "Nuking %v from staging %s", repo.vcs.prenuke, staging)
+	if repo.vcs.prenuke != nil {
+		for _, path := range repo.vcs.prenuke {
+			os.RemoveAll(ljoin(staging, path))
 		}
+	}
+	if len(repo.preserveSet) > 0 {
 		preserveMe := repo.preserveSet
 		if repo.vcs.authormap != "" {
 			preserveMe = append(preserveMe, repo.vcs.authormap)
 		}
+		announce(debugSHUFFLE, "Copy preservation set %v from backup %s to target %s", preserveMe, savedir, target)
 		for _, sub := range repo.preserveSet {
 			src := ljoin(savedir, sub)
 			dst := ljoin(target, sub)
-			// Second check for !exists is belt-and suspenders;
-			// it should never fire.
-			if exists(src) && !exists(dst) {
+			// Beware of adding a target-noxesistence check here,
+			// if you do that the VCS config won't get copied because
+			// the newly-created one will block it.
+			if exists(src) {
 				dstdir := filepath.Dir(dst)
 				if !exists(dstdir) {
 					os.MkdirAll(dstdir, userReadWriteMode)
