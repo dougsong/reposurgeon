@@ -10943,13 +10943,9 @@ func (rs *Reposurgeon) PreCommand(line string) string {
 		}
 	}(&line)
 
-	if rs.isNamed(line) {
-		line = "<" + line + ">"
-	}
-
-	machine, rest := rs.imp().compile(line)
+	machine, rest := rs.parseSelectionSet(line)
 	if rs.chosen() != nil {
-		rs.selection = rs.imp().evaluate(machine, rs.chosen())
+		rs.selection = rs.evalSelectionSet(machine, rs.chosen())
 	}
 
 	return rest
@@ -10998,6 +10994,23 @@ func (self *Reposurgeon) DoShell(line string) (stopOut bool) {
 //
 // The selection-language parsing code starts here.
 //
+func (self *Reposurgeon) parseSelectionSet(line string) (machine selEvaluator, rest string) {
+	if self.isNamed(line) {
+		line = "<" + line + ">"
+	}
+
+	return self.imp().compile(line)
+}
+
+func (self *Reposurgeon) evalSelectionSet(machine selEvaluator, repo *Repository) []int {
+	return self.imp().evaluate(machine, repo)
+}
+
+func (self *Reposurgeon) setSelectionSet(line string) (rest string) {
+	machine, rest := self.parseSelectionSet(line)
+	self.selection = self.evalSelectionSet(machine, self.chosen())
+	return rest
+}
 
 func (rs *Reposurgeon) isNamed(s string) (result bool) {
 	defer func(result *bool) {
@@ -11403,7 +11416,7 @@ func (self *Reposurgeon) reportSelect(parse *LineParse, display func(*LineParse,
 					*line = ""
 				}
 			}(&parse.line)
-			self.selection, parse.line = self.parse(parse.line, repo)
+			parse.line = self.setSelectionSet(parse.line)
 		}
 	}
 	for _, eventid := range self.selection {
