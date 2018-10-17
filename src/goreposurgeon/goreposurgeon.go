@@ -12586,9 +12586,12 @@ func (rs *Reposurgeon) DoWrite(line string) (stopOut bool) {
 		}
 		rs.chosen().fastExport(rs.selection, parse.stdout, parse.options, rs.preferred, (verbose==1 && !quiet))
 	} else if isdir(parse.line) {
-		rs.chosen().rebuildRepo(parse.line, parse.options, rs.preferred)
+		err := rs.chosen().rebuildRepo(parse.line, parse.options, rs.preferred)
+		if err != nil {
+			complain(err.Error())
+		}
 	} else {
-		panic(throw("command", "write no longer takes a filename argument - use > redirection instead"))
+		complain("write no longer takes a filename argument - use > redirection instead")
 	}
 	return false
 }
