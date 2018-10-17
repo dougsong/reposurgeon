@@ -8997,7 +8997,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 	}
 	chdir(staging, "staging")
 	defer func () {
-		chdir(here, "staging")
+		chdir(here, "original")
 		if staging != target {
 			nuke(staging, "reposurgeon: removing staging directory")
 		}
@@ -9112,7 +9112,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		if err != nil {
 			return err
 		}
-		announce(debugSHUFFLE, "Staging %s to target%s", staging, target)
+		announce(debugSHUFFLE, "Copy staging %s to target %s", staging, target)
 		for _, sub := range entries {
 			announce(debugSHUFFLE, "%s -> %s", ljoin(staging, sub.Name()),
 				ljoin(target, sub.Name()))
@@ -9120,7 +9120,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 				ljoin(target, sub.Name()))
 		}
 		if verbose > 0 {
-			announce(debugSHOUT, "modified repo moved to %s.", relpath(target))
+			announce(debugSHOUT, "modified repo moved to %s.", target)
 		}
 		// Critical region ends
 	}		
