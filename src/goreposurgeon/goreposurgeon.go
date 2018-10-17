@@ -9098,7 +9098,10 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		if err != nil {
 			return err
 		}
+		announce(debugSHUFFLE, "Target %s to backup%s", target, savedir)
 		for _, sub := range entries {
+			announce(debugSHUFFLE, "%s -> %s", ljoin(target, sub.Name()),
+				ljoin(savedir, sub.Name()))
 			os.Rename(ljoin(target, sub.Name()),
 				ljoin(savedir, sub.Name()))
 		}
@@ -9109,7 +9112,10 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		if err != nil {
 			return err
 		}
+		announce(debugSHUFFLE, "Staging %s to target%s", staging, target)
 		for _, sub := range entries {
+			announce(debugSHUFFLE, "%s -> %s", ljoin(staging, sub.Name()),
+				ljoin(target, sub.Name()))
 			os.Rename(ljoin(staging, sub.Name()),
 				ljoin(target, sub.Name()))
 		}
