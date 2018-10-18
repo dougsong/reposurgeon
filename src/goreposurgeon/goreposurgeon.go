@@ -15714,16 +15714,23 @@ func (self *Reposurgeon) DoDo(line string) bool {
 	}
 	body := strings.NewReader(strings.NewReplacer(replacements...).Replace(strings.Join(macro, "\n")))
 
-	// this is a little weird, but could be worse
+	// This is a little weird, but could be worse. My first
+	// thought was to create a new Reposurgeon object, and copy
+	// the repository list, the selection, and other state to
+	// it. If the macro modified them, they would then need to be
+	// copied back. Instead I'm saving the state that the macro
+	// shouldn't be able to permenantly changed, and restoring it
+	// after the macro is finished.
 	existing_definitions := self.definitions
 	existing_prompt_format := self.prompt_format
 	existing_interpreter := self.cmd
 	self.definitions = make(map[string][]string)
-	self.inputIsStdin = false
 	for k, v := range existing_definitions {
 		self.definitions[k] = make([]string, len(v))
 		copy(self.definitions[k], v)
 	}
+	existing_inputIsStdin := self.inputIsStdin
+	self.inputIsStdin = false
 	self.prompt_format = ""
 	interpreter := kommandant.NewBasicKommandant(self, body, self.cmd.Stdout)
 	interpreter.Prompt = self.prompt_format
@@ -15736,7 +15743,7 @@ func (self *Reposurgeon) DoDo(line string) bool {
 	go innerloop()
 	<-done
 
-	self.inputIsStdin = true
+	self.inputIsStdin = existing_inputIsStdin
 	self.cmd = existing_interpreter
 	self.prompt_format = existing_prompt_format
 	self.definitions = existing_definitions
