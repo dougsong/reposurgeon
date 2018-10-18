@@ -12738,10 +12738,10 @@ func (self *Reposurgeon) DoInspect(lineIn string) bool {
 			self.selection = repo.all()
 		}
 	}
-	for i, eventid := range self.selection {
+	for _, eventid := range self.selection {
 		event := repo.events[eventid]
-		header := fmt.Sprintf("Event %d %s\n", i+1, strings.Repeat("=", 72))
-		fmt.Fprintln(parse.stdout, header[:72])
+		header := fmt.Sprintf("Event %d %s\n", eventid+1, strings.Repeat("=", 72))
+		fmt.Fprintln(parse.stdout, header[:73])
 		fmt.Fprint(parse.stdout, event.String())
 	}
 
