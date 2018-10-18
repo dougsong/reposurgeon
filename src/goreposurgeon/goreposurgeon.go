@@ -10787,9 +10787,51 @@ func (lp *LineParse) Closem() {
 	}
 }
 
+type CmdContext struct {
+	cmd          *kommandant.Kmdt
+	definitions  map[string][]string
+	inputIsStdin bool
+}
+
+type MacroDefinition struct {
+	CmdContext
+	body  []string
+	depth int
+}
+
+func (self *MacroDefinition) PreCommand(line string) string {
+	line = strings.TrimSpace(line)
+	if self.depth == 0 && (line[0] == '}' || line == "EOF") {
+		return line // non-empty return value takes us to DefaultCommand, which stops the loop
+	} else {
+		if strings.HasPrefix(line, "define") && strings.HasSuffix(line, "{") {
+			self.depth += 1
+		} else if line[0] == '}' || line == "EOF" {
+			if self.depth != 0 {
+				self.depth -= 1
+			}
+		}
+		self.body = append(self.body, line)
+		return ""
+	}
+	return ""
+}
+
+func (self *MacroDefinition) DefaultCommand(line string) bool {
+	return true
+}
+
+func (self CmdContext) SetCore(k *kommandant.Kmdt) {
+	self.cmd = k
+}
+
+func (self *MacroDefinition) DoEOF(string) bool {
+	return true
+}
+
 // Reposurgeon tells Kommandant what our local commands are
 type Reposurgeon struct {
-	cmd *kommandant.Kmdt
+	CmdContext
 	RepositoryList
 	SelectionParser
 	quiet      bool
@@ -10800,7 +10842,6 @@ type Reposurgeon struct {
 	history    []string
 	preferred  *VCS
 	startTime  time.Time
-	capture    []string
 	prompt_format string
 }
 
@@ -10809,6 +10850,8 @@ func newReposurgeon() *Reposurgeon {
 	rs.SelectionParser.subclass = rs
 	rs.startTime = time.Now()
 	rs.prompt_format = "goreposurgeon% "
+	rs.definitions = make(map[string][]string)
+	rs.inputIsStdin = true
 	return rs
 }
 
@@ -10908,13 +10951,6 @@ developers.
 var inlineCommentRE = regexp.MustCompile(`\s+#`)
 
 func (rs *Reposurgeon) PreCommand(line string) string {
-	if rs.capture != nil {
-		if strings.HasPrefix(line, "}") {
-			rs.capture = nil
-		} else {
-			rs.capture = append(rs.capture, line)
-		}
-	}
 	trimmed := strings.TrimRight(line, " \t\n")
 	if len(trimmed) != 0 {
 		rs.history = append(rs.history, trimmed)
@@ -15581,12 +15617,13 @@ following flags and options are defined:
                     complain("no such option flag as '%s'" % option)
                 else:
                     globalOptions[option] = false
+*/
 
-    #
-    # Macros and custom extensions
-    #
-    func help_define():
-        rs.helpOutput("""
+//
+// Macros and custom extensions
+//
+func (self *Reposurgeon) HelpDefine() {
+	self.helpOutput(`
 Define a macro.  The first whitespace-separated token is the name; the
 remainder of the line is the body, unless it is '{', which begins a
 multi-line macro terminated by a line beginning with '}'.
@@ -15594,30 +15631,52 @@ multi-line macro terminated by a line beginning with '}'.
 A later 'do' call can invoke this macro.
 
 'define' by itself without a name or body produces a macro list.
-""")
-    func do_define(self, line str):
-        "Define a macro"
-        try:
-            name = line.split()[0]
-        except IndexError:
-            name = line.strip()
-        body = line[len(name):].strip()
-        if not body:
-            for (name, body) in self.definitions.items():
-                if len(body) == 1:
-                    os.Stdout.WriteString("define %s %s\n" % (name, body[0]))
-                else:
-                    os.Stdout.WriteString("define %s {\n" % name)
-                    for bodyline in body:
-                        os.Stdout.WriteString(bodyline)
-                    os.Stdout.WriteString("}\n")
-        else if body[0] != '{':
-            self.definitions[name] = [body]
-        else:
-            self.capture = self.definitions[name] = []
+`)
+}
 
-    func help_do():
-        rs.helpOutput("""
+// Define a macro
+func (self *Reposurgeon) DoDefine(lineIn string) bool {
+	words := strings.SplitN(lineIn, " ", 2)
+	name := words[0]
+	if len(words) > 1 {
+		body := words[1]
+		if body[0] == '{' {
+			body := make(chan []string)
+			innerloop := func() {
+				inner := new(MacroDefinition)
+				inner.definitions = make(map[string][]string, 0)
+				inner.cmd = kommandant.NewBasicKommandant(inner, self.cmd.Stdin, self.cmd.Stdout)
+				if self.inputIsStdin {
+					inner.cmd.Prompt = "> "
+				} else {
+					inner.cmd.Prompt = ""
+				}
+				inner.cmd.CmdLoop("")
+				body <- inner.body
+			}
+			go innerloop()
+			self.definitions[name] = <-body
+		} else {
+			self.definitions[name] = []string{body}
+		}
+	} else {
+		for name, body := range self.definitions {
+			if len(body) == 1 {
+				fmt.Printf("define %s %s\n", name, body[0])
+			} else {
+				fmt.Printf("define %s {\n", name)
+				for _, line := range body {
+					fmt.Println("\t", line)
+				}
+				fmt.Println("}")
+			}
+		}
+	}
+	return false
+}
+
+func (self *Reposurgeon) HelpDo() {
+	self.helpOutput(`
 Expand and perform a macro.  The first whitespace-separated token is
 the name of the macro to be called; remaining tokens replace {0},
 {1}... in the macro definition (the conventions used are those of the
@@ -15626,52 +15685,92 @@ string-quoted; string quotes are stripped. Macros can call macros.
 If the macro expansion does not itself begin with a selection set,
 whatever set was specified before the 'do' keyword is available to
 the command generated by the expansion.
-""")
-    func do_do(self, line str):
-        "Do a macro."
-        try:
-            name = line.split()[0]
-        except IndexError:
-            complain("no macro name was givenn.")
-            return
-        if name not in self.definitions:
-            raise Recoverable("'%s' is not a defined macro" % name)
-        try:
-            args = shlex.split(line[len(name):])
-        except ValueError as e:
-            raise Recoverable("macro parse failed, %s" % e)
-        do_selection = self.selection
-        for defline in self.definitions[name]:
-            try:
-                defline = defline.format(*args)
-            except IndexError:
-                raise Recoverable("macro argument error")
-            # If a leading portion of the expansion body is a selection
-            # expression, use it.  Otherwise we'll restore whatever
-            # selection set came before the do keyword.
-            expansion = self.precmd(defline)
-            if self.selection is None:
-                self.selection = do_selection
-            # Call the base method so RecoverableExceptions
-            # won't be caught; we want them to abort macros.
-            self.onecmd(expansion)
-    func help_undefine():
-        rs.helpOutput("""
+`)
+}
+
+// Do a macro
+func (self *Reposurgeon) DoDo(line string) bool {
+	parse := newLineParse(line, nil, stringSet{"stdout"})
+	words, err := shlex.Split(parse.line, true)
+	if len(words) == 0 {
+		complain("no macro name was given.")
+		return false
+	}
+	if err != nil {
+		complain("macro parse failed, %s", err)
+		return false
+	}
+	name := words[0]
+	macro, present := self.definitions[name]
+	if !present {
+		complain("'%s' is not a defined macro", name)
+		return false
+	}
+	args := words[1:]
+	replacements := make([]string, 2*len(args))
+	for i, arg := range args {
+		replacements = append(replacements, fmt.Sprintf("{%d}", i))
+		replacements = append(replacements, arg)
+	}
+	body := strings.NewReader(strings.NewReplacer(replacements...).Replace(strings.Join(macro, "\n")))
+
+	// this is a little weird, but could be worse
+	existing_definitions := self.definitions
+	existing_prompt_format := self.prompt_format
+	existing_interpreter := self.cmd
+	self.definitions = make(map[string][]string)
+	self.inputIsStdin = false
+	for k, v := range existing_definitions {
+		self.definitions[k] = make([]string, len(v))
+		copy(self.definitions[k], v)
+	}
+	self.prompt_format = ""
+	interpreter := kommandant.NewBasicKommandant(self, body, self.cmd.Stdout)
+	interpreter.Prompt = self.prompt_format
+
+	done := make(chan bool)
+	innerloop := func() {
+		interpreter.CmdLoop("")
+		done <- true
+	}
+	go innerloop()
+	<-done
+
+	self.inputIsStdin = true
+	self.cmd = existing_interpreter
+	self.prompt_format = existing_prompt_format
+	self.definitions = existing_definitions
+	return false
+}
+
+func (self *Reposurgeon) HelpUndefine() {
+	self.helpOutput(`
 Undefine the macro named in this command's first argument.
-""")
+`)
+}
+
+/*
     func CompleteUndefine(self, text, _line, _begidx, _endidx):
         return sorted([x for x in self.definitions if x.startswith(text)])
-    func do_undefine(self, line str):
-        try:
-            name = line.split()[0]
-        except IndexError:
-            complain("no macro name was givenn.")
-            return
-        if name not in self.definitions:
-            raise Recoverable("'%s' is not a defined macro" % name)
-        else:
-            del self.definitions[name]
+*/
 
+func (self *Reposurgeon) DoUndefine(line string) bool {
+	words := strings.SplitN(line, " ", 1)
+	name := words[0]
+	if name == "" {
+		complain("no macro name was given.")
+		return false
+	}
+	_, present := self.definitions[name]
+	if !present {
+		complain("'%s' is not a defined macro", name)
+		return false
+	}
+	delete(self.definitions, name)
+	return false
+}
+
+/*
     #
     # Timequakes and bumping
     #
