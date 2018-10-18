@@ -7231,9 +7231,9 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 	fp io.Writer, options stringSet, target *VCS, progress bool) error {
 	repo.writeOptions = options
 	repo.preferred = target
-	if target != nil && target.name == "svn" {
-		//return SubversionDumper().dump(selection, fp, progress)	FIXME
-	}
+	//if target != nil && target.name == "svn" {
+	//	return SubversionDumper().dump(selection, fp, progress)	FIXME
+	//}
 	repo.internals = nil
 	// Select all blobs implied by the commits in the range. If we ever
 	// go to a representation where fileops are inline this logic will need
@@ -15385,9 +15385,10 @@ map when the repo is written or rebuilt.
                                 summary = event.lister(None, ei, screenwidth())
                                 if summary:
                                     parse.stdout.WriteString(summary + "\n")
+*/
 
-    func help_gitify():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpGitify() {
+    rs.helpOutput(`
 Attempt to massage comments into a git-friendly form with a blank
 separator line after a summary line.  This code assumes it can insert
 a blank line if the first line of the comment ends with '.', ',', ':',
@@ -15395,30 +15396,57 @@ a blank line if the first line of the comment ends with '.', ',', ':',
 won't be touched.
 
 Takes a selection set, defaulting to all commits and tags.
-""")
-    func do_gitify(self, _line):
-        "Gitify comments."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        if self.selection is None:
-            self.selection = self.chosen().all()
-        line_enders = ('.', ',', ';', ':', '?', '!')
-        with Baton(prompt="gitifying comments", enable=(verbose == 1)) as baton:
-            for ei in range(self.selection[0], self.selection[-1]):
-                event = self.chosen().events[ei]
-                if isinstance(event, (Commit, Tag)):
-                    event.comment = event.comment.strip() + "\n"
-                    if event.comment.count('\n') < 2:
-                        continue
-                    firsteol = event.comment.index('\n')
-                    if event.comment[firsteol+1] == '\n':
-                        continue
-                    if event.comment[firsteol-1] in line_enders:
-                        event.comment = event.comment[:firsteol] + \
-                                        '\n' + \
-                                        event.comment[firsteol:]
-                baton.twirl("")
+`)
+}
+// Gitify comments.
+func (rs *Reposurgeon) DoGitify(_line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return
+	}
+	if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+	}
+	lineEnders := stringSet{".", ",", ";", ":", "?", "!"}
+	baton:= newBaton("gitifying comments", "", verbose==1)
+	for _, ei := range rs.selection {
+		event := rs.chosen().events[ei]
+		if commit, ok := event.(*Commit); ok {
+			commit.comment = strings.TrimSpace(commit.comment) + "\n"
+			if strings.Count(commit.comment, "\n") < 2 {
+				continue
+			}
+			firsteol := strings.Index(commit.comment, "\n")
+			if commit.comment[firsteol+1] == byte('\n') {
+				continue
+			}
+			if lineEnders.Contains(string(commit.comment[firsteol-1])) {
+				commit.comment = commit.comment[:firsteol] +
+					"\n" +
+					commit.comment[firsteol:]
+			}
+		} else if tag, ok := event.(*Tag); ok {
+			tag.comment = strings.TrimSpace(tag.comment) + "\n"
+			if strings.Count(tag.comment, "\n") < 2 {
+				continue
+			}
+			firsteol := strings.Index(commit.comment, "\n")
+			if tag.comment[firsteol+1] == byte('\n') {
+				continue
+			}
+			if lineEnders.Contains(string(tag.comment[firsteol-1])) {
+				tag.comment = tag.comment[:firsteol] +
+					"\n" +
+					tag.comment[firsteol:]
+			}
+		}
+		baton.twirl("")
+	}
+	baton.exit("")
+	return false
+}
+
+/*
     #
     # Examining tree states
     #
