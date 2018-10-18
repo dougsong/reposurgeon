@@ -10957,8 +10957,10 @@ func (rs *Reposurgeon) PreCommand(line string) string {
 		rs.history = append(rs.history, trimmed)
 	}
 	if rs.echo > 0 {
-		os.Stdout.WriteString(trimmed)
-		os.Stdout.WriteString("\n")
+		if trimmed != "EOF" {
+			os.Stdout.WriteString(trimmed)
+			os.Stdout.WriteString("\n")
+		}
 	}
 	rs.selection = rs.defaultSelection
 	if strings.HasPrefix(line, "#") {
