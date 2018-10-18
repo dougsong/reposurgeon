@@ -15227,12 +15227,12 @@ Available actions are:
                 ed.resolve(parse.stdout, ' '.join(args) if args else None)
             else:
                 raise Recoverable("unrecognized action: %s" % action)
-
-    #
-    # Artifact removal
-    #
-    func help_authors():
-        rs.helpOutput("""
+*/
+//
+// Artifact removal
+//
+func (rs *Reposurgeon) HelpAuthors() {
+    rs.helpOutput(`
 Apply or dump author-map information for the specified selection
 set, defaulting to all events.
 
@@ -15261,28 +15261,39 @@ interpreted by 'authors read', with entries for each unique committer,
 author, and tagger (to standard output or a >-redirected file). This
 may be helpful as a start on building an authors file, though each
 part to the right of an equals sign will need editing.
-""")
-    func do_authors(self, line str):
-        "Apply or dump author-mapping file."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        if self.selection is None:
-            self.selection = self.chosen().all()
-        if line.startswith("write"):
-            line = line[5:].strip()
-            with newLineParse(self, line, stringSet{"stdout"}) as parse:
-                if parse.tokens():
-                    raise Recoverable("authors write no longer takes a filename argument - use > redirection instead")
-                self.chosen().writeAuthorMap(self.selection, parse.stdout)
-        else:
-            if line.startswith("read"):
-                line = line[4:].strip()
-            with newLineParse(self, line, []strings{"stdin"}) as parse:
-                if parse.tokens():
-                    raise Recoverable("authors read no longer takes a filename argument - use < redirection instead")
-                self.chosen().readAuthorMap(self.selection, parse.stdin)
-
+`)
+}
+// Apply or dump author-mapping file.
+func (rs *Reposurgeon) DoAuthors(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return
+	}
+	if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+	}
+	if strings.HasPrefix(line, "write") {
+		line = strings.TrimSpace(line[5:])
+		parse := newLineParse(line, nil, stringSet{"stdout"})
+		if len(parse.Tokens()) > 0 {
+			complain("authors write no longer takes a filename argument - use > redirection instead")
+			return false
+		}
+		rs.chosen().writeAuthorMap(rs.selection, parse.stdout)
+	} else {
+		if strings.HasPrefix(line, "read") {
+			line = strings.TrimSpace(line[4:])
+		}
+		parse := newLineParse(line, nil, stringSet{"stdin"})
+		if len(parse.Tokens()) > 0 {
+			complain("authors read no longer takes a filename argument - use < redirection instead")
+			return false
+		}
+		rs.chosen().readAuthorMap(rs.selection, parse.stdin)
+	}
+	return false
+}
+/*
     #
     # Reference lifting
     #
