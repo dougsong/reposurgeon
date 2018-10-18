@@ -10834,15 +10834,16 @@ type Reposurgeon struct {
 	CmdContext
 	RepositoryList
 	SelectionParser
-	quiet      bool
-	echo       int
-	callstack  [][]string
-	profileLog string
-	selection  orderedIntSet
-	history    []string
-	preferred  *VCS
-	startTime  time.Time
-	prompt_format string
+	quiet            bool
+	echo             int
+	callstack        [][]string
+	profileLog       string
+	selection        orderedIntSet
+	defaultSelection orderedIntSet
+	history          []string
+	preferred        *VCS
+	startTime        time.Time
+	prompt_format    string
 }
 
 func newReposurgeon() *Reposurgeon {
@@ -10959,7 +10960,7 @@ func (rs *Reposurgeon) PreCommand(line string) string {
 		os.Stdout.WriteString(trimmed)
 		os.Stdout.WriteString("\n")
 	}
-	rs.selection = nil
+	rs.selection = rs.defaultSelection
 	if strings.HasPrefix(line, "#") {
 		return ""
 	}
@@ -10974,7 +10975,11 @@ func (rs *Reposurgeon) PreCommand(line string) string {
 
 	machine, rest := rs.parseSelectionSet(line)
 	if rs.chosen() != nil {
-		rs.selection = rs.evalSelectionSet(machine, rs.chosen())
+		if machine != nil {
+			rs.selection = rs.evalSelectionSet(machine, rs.chosen())
+		} else {
+			rs.selection = rs.defaultSelection
+		}
 	}
 
 	return rest
@@ -15721,6 +15726,8 @@ func (self *Reposurgeon) DoDo(line string) bool {
 	// copied back. Instead I'm saving the state that the macro
 	// shouldn't be able to permenantly changed, and restoring it
 	// after the macro is finished.
+	existing_defaultSelection := self.defaultSelection
+	self.defaultSelection = self.selection
 	existing_definitions := self.definitions
 	existing_prompt_format := self.prompt_format
 	existing_interpreter := self.cmd
@@ -15747,6 +15754,7 @@ func (self *Reposurgeon) DoDo(line string) bool {
 	self.cmd = existing_interpreter
 	self.prompt_format = existing_prompt_format
 	self.definitions = existing_definitions
+	self.defaultSelection = existing_defaultSelection
 	return false
 }
 
