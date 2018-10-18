@@ -16437,17 +16437,29 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 		return
 	}
 	defer scriptfp.Close()
+	script := bufio.NewReader(scriptfp)
+
+	existing_inputIsStdin := rs.inputIsStdin
+	rs.inputIsStdin = false
 
 	if interpreter.PreLoop != nil {
 		interpreter.PreLoop()
 	}
-	scanner := bufio.NewScanner(scriptfp)
-	for scanner.Scan() {
-		scriptline := scanner.Text()
+	for {
+		scriptline, err := script.ReadString('\n')
+		if err == io.EOF && scriptline == "" {
+			break
+		}
 		// Handle multiline commands
 		for strings.HasSuffix(scriptline, "\\\n") {
-			scriptline = scriptline[:len(scriptline)-2] + scanner.Text()
+			nexterline, err := script.ReadString('\n')
+			if err == io.EOF && nexterline == "" {
+				break
+			}
+			scriptline = scriptline[:len(scriptline)-2] + nexterline
 		}
+
+		scriptline = strings.TrimSpace(scriptline)
 
 		// Simulate shell here-document processing
 		if strings.Contains(scriptline, "<<") {
@@ -16456,20 +16468,19 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 				interpreter.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
 				return
 			}
-			//defer os.Remove(heredoc.Name())
+			defer os.Remove(heredoc.Name())
 
 			stuff := strings.Split(scriptline, "<<")
 			scriptline = stuff[0]
 			terminator := stuff[1]
 			for true {
-				scanner.Scan()
-				nextline := scanner.Text()
-				if nextline == "" {
+				nextline, err := script.ReadString('\n')
+				if err == io.EOF && nextline == "" {
 					break
 				} else if nextline == terminator {
 					break
 				} else {
-					_, err := heredoc.WriteString(nextline + "\n") // unnecessary copy
+					_, err := fmt.Fprint(heredoc, nextline)
 					if err != nil {
 						interpreter.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
 						return
@@ -16491,6 +16502,13 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 		}
 		scriptline = strings.Replace(scriptline, "$$", strconv.FormatInt(int64(os.Getpid()), 10), -1)
 
+		// if the script wants to define a macro, the input for the macro has to come from the script file
+		existing_stdin := rs.cmd.Stdin
+		if strings.HasPrefix(scriptline, "define") && strings.HasSuffix(scriptline, "{") {
+			rs.cmd.Stdin = script
+		}
+
+		// finally we execute the command, plus the before/after steps
 		if interpreter.PreCommand != nil {
 			scriptline = interpreter.PreCommand(scriptline)
 		}
@@ -16498,16 +16516,19 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 		if interpreter.PostCommand != nil {
 			stop = interpreter.PostCommand(stop, scriptline)
 		}
+
+		// and then we have to put the stdin back where it was, in case we changed it
+		rs.cmd.Stdin = existing_stdin
+
 		if stop {
 			break
 		}
 	}
-	if err := scanner.Err(); err != nil {
-		interpreter.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
-	}
 	if interpreter.PostLoop != nil {
 		interpreter.PostLoop()
 	}
+
+	rs.inputIsStdin = existing_inputIsStdin
 
 	rs.callstack = rs.callstack[:len(rs.callstack)-1]
 	return false
