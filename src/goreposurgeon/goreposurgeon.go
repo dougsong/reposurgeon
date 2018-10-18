@@ -12194,7 +12194,7 @@ Supports > redirection.
 /*
     func do_lint(self, line: str):
         "Look for lint in a repo."
-        if not self.chosen():
+        if self.chosen() == None:
             complain("no repo has been chosen.")
             return
         if self.selection is None:
@@ -13050,7 +13050,7 @@ CVS empty-comment marker.
 `)
 }
 /*
-    func do_mailbox_in(self, line str):
+    func DoMailbox_in(self, line str):
         "Accept a mailbox file representing object metadata and update from it."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -13250,7 +13250,7 @@ Supports < and > redirection.
 /*
     func do_edit(self, line str):
         "Edit metadata interactively."
-        if not self.chosen():
+        if self.chosen() == None:
             complain("no repo is loaded")
             return
         if self.selection is None:
@@ -13299,8 +13299,8 @@ With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
 `)
 }
 /*
-    func do_filter(self, line str):
-        if not self.chosen():
+    func DoFilter(self, line str):
+        if self.chosen() == None:
             complain("no repo is loaded")
             return
         if not line:
@@ -13403,9 +13403,9 @@ With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
                            hook=filterhook.do,
                            attributes=filterhook.attributes,
                            safety=not line.startswith('--dedos'))
-
-    func help_transcode():
-        rs.helpOutput("""
+*/
+func (rs *Reposurgeon) HelpTranscode() {
+        rs.helpOutput(`
 Transcode blobs, commit comments and committer/author names, or tag
 comments and tag committer names in the selection set to UTF-8 from
 the character encoding specified on the command line.
@@ -13421,9 +13421,12 @@ standard codecs library. In particular, 'latin-1' is a valid codec name.
 
 Errors in this command are fatal, because an error may leave
 repository objects in a damaged state.
-""")
-    func do_transcode(self, line str):
-        if not self.chosen():
+`)
+}
+
+/*
+func DoTranscode(self, line str):
+        if self.chosen() == None:
             complain("no repo is loaded")
             return
         else if self.selection is None:
@@ -13439,12 +13442,13 @@ repository objects in a damaged state.
         except UnicodeError:
             raise Fatal("UnicodeError during transcoding")
 
-    func help_setfield():
-        rs.helpOutput("""
+*/
+func (rs *Reposurgeon) HelpSetfield() {
+        rs.helpOutput(`
 In the selected objects (defaulting to none) set every instance of a
 named field to a string value.  The string may be quoted to include
-whitespace, and use backslash escapes interpreted by the Python
-string-escape codec, such as \\s.
+whitespace, and use backslash escapes interpreted by Go's C-like
+string-escape codec, such as \s.
 
 Attempts to set nonexistent attributes are ignored. Valid values for
 the attribute are internal Python field names; in particular, for
@@ -13457,10 +13461,12 @@ dates. The former sets the author's name and email address (assuming
 the value can be parsed for both), copying the committer
 timestamp. The author's timezone may be deduced from the email
 address.
-""")
-    func do_setfield(self, line str):
+`)
+}
+/*
+    func DoSetfield(self, line str):
         "Set an object field from a string."
-        if not self.chosen():
+        if self.chosen() == None:
             complain("no repo is loaded")
             return
         repo = self.chosen()
@@ -13488,17 +13494,19 @@ address.
                 event.committer.date = Date(value)
             else if field == "authdate" and commit, ok := event.(*Commit); ok:
                 event.authors[0].date = Date(value)
-
-    func help_setperm():
-        rs.helpOutput("""
+*/
+func (rs *Reposurgeon) HelpSetperm() {
+        rs.helpOutput(`
 For the selected objects (defaulting to none) take the first argument as an
 octal literal describing permissions.  All subsequent arguments are paths.
 For each M fileop in the selection set and exactly matching one of the
 paths, patch the permission field to the first argument value.
-""")
-    func do_setperm(self, line str):
+`)
+}
+/*
+    func DoSetperm(self, line str):
         "Set permissions on M fileops matching a path list."
-        if not self.chosen():
+        if self.chosen() == None:
             complain("no repo is loaded")
             return
         if self.selection is None:
@@ -13528,7 +13536,7 @@ the new text is appended.
 """)
     func do_append(self, line str):
         "Append a line to comments in the specified selection set."
-        if not self.chosen():
+        if self.chosen() == None:
             complain("no repo is loaded")
             return
         if self.selection is None:
@@ -13555,7 +13563,7 @@ removal of fileops associated with commits requires this.
 """)
     func do_squash(self, line str):
         "Squash events in the specified selection set."
-        if not self.chosen():
+        if self.chosen() == None:
             complain("no repo is loaded")
             return
         if self.selection is None:
@@ -13575,7 +13583,7 @@ squash with the --delete flag.
 """)
     func do_delete(self, line str):
         "Delete events in the specified selection set."
-        if not self.chosen():
+        if self.chosen() == None:
             complain("no repo is loaded")
             return
         if self.selection is None:
@@ -13685,7 +13693,7 @@ in the commit's ancestry.
 """)
     func do_add(self, line str):
         "Add a fileop to a specified commit."
-        if not self.chosen():
+        if self.chosen() == None:
             complain("no repo is loaded")
             return
         if self.selection is None:
@@ -13761,9 +13769,10 @@ Create a blob at mark :1 after renumbering other marks starting from
 :2.  Data is taken from stdin, which may be a here-doc.  This can be
 used with the add command to patch data into a repository.
 """)
+/*
     func do_blob(self, line str):
         "Add a fileop to a specified commit."
-        if not self.chosen():
+        if self.chosen() == None:
             complain("no repo is loaded")
             return
         repo = self.chosen()
@@ -13776,8 +13785,8 @@ used with the add command to patch data into a repository.
         repo.declareSequenceMutation("adding blob")
         repo.invalidateNamecache()
 
-    func help_remove():
-        rs.helpOutput("""
+    func help_remove() {
+        rs.helpOutput(`
 From a specified commit, remove a specified fileop. The syntax is:
 
      remove [DMRCN] OP [to COMMIT]
@@ -13794,7 +13803,8 @@ cannot be combined with 'deletes'.
 Note that this command does not attempt to scavenge blobs even if the
 deleted fileop might be the only reference to them. This behavior may
 change in a future release.
-""")
+`)
+    }
     func do_remove(self, line str):
         "Delete a fileop from a specified commit."
         repo =  self.chosen()
@@ -13977,9 +13987,8 @@ func (rs *Reposurgeon) DoWhen(LineIn string) (StopOut bool) {
 	return false
 }
 
-/*
-    func help_divide():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpDivide() {
+        rs.helpOutput(`
 Attempt to partition a repo by cutting the parent-child link
 between two specified commits (they must be adjacent). Does not take a
 general selection-set argument.  It is only necessary to specify the
@@ -13992,8 +14001,11 @@ remain connected through another path after the cut, the behavior
 changes.  In this case, if the parent and child were on the same
 branch 'qux', the branch segments are renamed 'qux-early' and
 'qux-late'.
-""")
-    func do_divide(self, _line):
+`)
+}
+
+/*
+func DoDivide(self, _line):
         "Attempt to topologically partition the repo."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -14047,8 +14059,10 @@ branch 'qux', the branch segments are renamed 'qux-early' and
         if verbose:
             self.do_choose("")
 
-    func help_expunge():
-        rs.helpOutput("""
+*/
+
+func (rs *Reposurgeon) HelpExpunge() {
+        rs.helpOutput(`
 Expunge files from the selected portion of the repo history; the
 default is the entire history.  The arguments to this command may be
 paths or Python regular expressions matching paths (regexps must
@@ -14075,8 +14089,11 @@ The removal set is not discarded. It is assembled into a new
 repository named after the old one with the suffix "-expunges" added.
 Thus, this command can be used to carve a repository into sections by
 file path matches.
-""")
-    func do_expunge(self, line str):
+`)
+}
+
+/*
+   func DoExpunge(self, line str):
         "Expunge files from the chosen repository."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -14084,9 +14101,9 @@ file path matches.
         if self.selection is None:
             self.selection = self.chosen().all()
         self.expunge(self.selection, line.split())
-
-    func help_split():
-        rs.helpOutput("""
+*/
+func (rs *Reposurgeon) HelpSplit() {
+        rs.helpOutput(`
 Split a specified commit in two, the opposite of squash.
 
     split at M
@@ -14109,8 +14126,11 @@ Finally, some file operations - starting at the one matched or indexed
 by the split argument - are moved forward from the original commit
 into the new one.  Legal indices are 2-n, where n is the number of
 file operations in the original commit.
-""")
-    func do_split(self, line str):
+`)
+}
+
+/*
+func DoSplit(self, line str):
         "Split a commit."
         if self.chosen() is None:
             raise Recoverable("no repo has been chosen.")
@@ -14144,9 +14164,9 @@ file operations in the original commit.
             raise Recoverable("don't know what to do for preposition %s" % prep)
         if verbose:
             announce(debugSHOUT, "new commits are events %s and %s." % (where+1, where+2))
-
-    func help_unite():
-        rs.helpOutput("""
+*/
+func (rs *Reposurgeon) HelpUnite() {
+        rs.helpOutput(`
 Unite repositories. Name any number of loaded repositories; they will
 be united into one union repo and removed from the load list.  The
 union repo will be selected.
@@ -14166,8 +14186,10 @@ type.
 With the option --prune, at each join generate D ops for every
 file that doesn't have a modify operation in the root commit of the
 branch being grafted on.
-""")
-    func do_unite(self, line str):
+`)
+    }
+/*
+func DoUnite(self, line str):
         "Unite repos together."
         self.unchoose()
         factors = []
@@ -14183,9 +14205,10 @@ branch being grafted on.
             self.unite(factors, parse.options)
         if verbose:
             self.do_choose('')
+*/
 
-    func help_graft():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpGraft() {
+        rs.helpOutput(`
 For when unite doesn't give you enough control. This command may have
 either of two forms, selected by the size of the selection set.  The
 first argument is always required to be the name of a loaded repo.
@@ -14203,8 +14226,11 @@ named repo is removed from the load list.
 
 With the option --prune, prepend a deleteall operation into the root
 of the grafted repository.
-""")
-    func do_graft(self, line str):
+`)
+}
+
+/*
+func Dograft(self, line str):
         "Graft a named repo onto the selected one."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -14231,9 +14257,10 @@ of the grafted repository.
             # OK, we've got the two repos and the graft point.  Do it.
             self.chosen().graft(graft_repo, graft_point, parse.options)
             self.remove_by_name(graft_repo.name)
+*/
 
-    func help_debranch():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpDebranch() {
+        rs.helpOutput(`
 Takes one or two arguments which must be the names of source and target
 branches; if the second (target) argument is omitted it defaults to 'master'.
 The history of the source branch is merged into the history of the target
@@ -14241,8 +14268,11 @@ branch, becoming the history of a subdirectory with the name of the source
 branch. Any trailing segment of a branch name is accepted as a synonym for
 it; thus 'master' is the same as 'refs/heads/master'.  Any resets of the
 source branch are removed.
-""")
-    func do_debranch(self, line str):
+`)
+}
+
+/*
+func DoDebranch(self, line str):
         "Turn a branch into a subdirectory."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -14312,9 +14342,10 @@ source branch are removed.
             if source_reset is not None:
                 del repo.events[source_reset]
             repo.declareSequenceMutation("debranch operation")
+*/
 
-    func help_path():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpPath() {
+        rs.helpOutput(`
 Rename a path in every fileop of every selected commit.  The
 default selection set is all commits. The first argument is interpreted as a
 Python regular expression to match against paths; the second may contain
@@ -14323,7 +14354,9 @@ back-reference syntax.
 Ordinarily, if the target path already exists in the fileops, or is visible
 in the ancestry of the commit, this command throws an error.  With the
 --force option, these checks are skipped.
-""")
+`)
+}
+/*
     func do_path(self, line str):
         "Rename paths in the history."
         if self.chosen() is None:
@@ -14363,9 +14396,10 @@ in the ancestry of the commit, this command throws an error.  With the
                     setattr(fileop, attr, newpath)
             else:
                 raise Recoverable("unknown verb '%s' in path command." % verb)
+*/
 
-    func help_paths():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpPaths() {
+        rs.helpOutput(`
 Without a modifier, list all paths touched by fileops in
 the selection set (which defaults to the entire repo). This
 variant does > redirection.
@@ -14374,8 +14408,10 @@ With the 'sub' modifier, take a second argument that is a directory
 name and prepend it to every path. With the 'sup' modifier, strip
 any directory argument from the start of the path if it appears there;
 with no argument, strip the first directory component from every path.
-""" )
-    func do_paths(self, line str):
+` )
+    }
+/*
+    func DoPaths(self, line str):
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
@@ -14412,9 +14448,10 @@ with no argument, strip the first directory component from every path.
                                                lambda f: f[len(prefix):] if f.startswith(prefix) else f)
                 os.Stdout.WriteString("\n".join(modified) + "\n")
         self.chosen().invalidateManifests()
+*/
 
-    func help_manifest():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpManifest() {
+        rs.helpOutput(`
 Print commit path lists. Takes an optional selection set argument
 defaulting to all commits, and an optional Python regular expression.
 For each commit in the selection set, print the mapping of all paths in
@@ -14422,8 +14459,10 @@ that commit tree to the corresponding blob marks, mirroring what files
 would be created in a checkout of the commit. If a regular expression
 is given, only print "path -> mark" lines for paths matching it.
 This command supports > redirection.
-""")
-    func do_manifest(self, line str):
+`)
+}
+/*
+    func DoManifest(self, line str):
         "Print all files (matching the regex) in the selected commits trees."
         if self.chosen() is None:
             raise Recoverable("no repo has been chosen")
@@ -14458,9 +14497,9 @@ This command supports > redirection.
                             in event.manifest().items()
                             if filter_func(polybytes(path))))
                 parse.stdout.WriteString("\n")
-
-    func help_tagify():
-        rs.helpOutput("""
+*/
+func (rs *Reposurgeon) help_tagify() {
+        rs.helpOutput(`
 Search for empty commits and turn them into tags. Takes an optional selection
 set argument defaulting to all commits. For each commit in the selection set,
 turn it into a tag with the same message and author information if it has no
@@ -14486,59 +14525,76 @@ the default 'emptycommit-<ident>'.
 The third option is '--tagify-merges' that makes reposurgeon also
 tagify merge commits that have no fileops.  When this is done the
 merge link is moved to the tagified commit's parent.
-""")
-    func do_tagify(self, line str):
-        "Search for empty commits and turn them into tags."
-        repo = self.chosen()
-        if repo is None:
+`)
+}
+/*
+    // Search for empty commits and turn them into tags.
+    func (self @@) DoTagify(line str) {
+        repo := self.chosen()
+        if repo == nil {
             raise Recoverable("no repo has been chosen")
-        if self.selection is None:
+        }
+        if self.selection == nil {
             self.selection = repo.all()
-        with newLineParse(self, line) as parse:
-            if parse.line:
+        }
+        with newLineParse(self, line) as parse {
+            if parse.line {
                 raise Recoverable("too many arguments for tagify.")
-            before = len([c for c in repo.commits()])
+            }
+            before := len([c for c in repo.commits()])
             repo.tagifyEmpty(
-                    commits = self.selection,
-                    canonicalize = "--canonicalize" in parse.options,
-                    tipdeletes = "--tipdeletes" in parse.options,
-                    tagifyMerges = "--tagify-merges" in parse.options)
-            after = len([c for c in repo.commits()])
-            announce(debugSHOUT, "%d commits tagified." % (before - after))
+                    commits := self.selection,
+                    canonicalize := "--canonicalize" in parse.options,
+                    tipdeletes := "--tipdeletes" in parse.options,
+                    tagifyMerges := "--tagify-merges" in parse.options)
+            after := len([c for c in repo.commits()])
+            announce(debugSHOUT, fmt.Sprintf("%d commits tagified.", before - after))
 
-    func help_merge():
-        rs.helpOutput("""
+        }
+    }
+*/
+func (rs *Reposurgeon) HelpMerge() {
+        rs.helpOutput(`
 Create a merge link. Takes a selection set argument, ignoring all but
 the lowest (source) and highest (target) members.  Creates a merge link
 from the highest member (child) to the lowest (parent).
-
-""" )
-    func do_merge(self, _line):
-        if self.chosen() is None:
+`)
+}
+/*
+    func (self *Reposrgeon) DoMerge(_line) {
+        if rs.chosen() == nil {
             complain("no repo has been chosen.")
             return
-        try:
-            commits = sorted(self.selected(Commit))
-            commits[1:-1] = [] # Drop all but first and last
+        }
+        try {
+            commits := sorted(rs.selected(Commit))
+            commits[1:-1] = [] // Drop all but first and last
             (_, earlier), (_, later) = commits
-        except (TypeError, ValueError):
+        }
+        except (TypeError, ValueError) {
             raise Recoverable("merge requires a selection set "
                               "with at least two commits.")
+        }
         later.addParentCommit(earlier)
-        #earlier_id = "%s (%s)" % (earlier.mark, earlier.branch)
-        #later_id = "%s (%s)" % (later.mark, later.branch)
-        #announce(debugSHOUT, "%s added as a parent of %s" % (earlier_id, later_id))
+        //earlier_id = "%s (%s)" % (earlier.mark, earlier.branch)
+        //later_id = "%s (%s)" % (later.mark, later.branch)
+        //announce(debugSHOUT, "%s added as a parent of %s" % (earlier_id, later_id))
 
-    func help_unmerge():
-        rs.helpOutput("""
+    }
+*/
+
+func (rs *Reposurgeon) HelpUnmerge() {
+        rs.helpOutput(`
 Linearizes a commit. Takes a selection set argument, which must resolve to a
 single commit, and removes all its parents except for the first. It is
 equivalent to reparent --rebase {first parent},{commit}, where {commit} is the
 selection set given to unmerge and {first parent} is a set resolving to that
 commit's first parent, but doesn't need you to find the first parent yourself.
+`)
+}
 
-""" )
-    func do_unmerge(self, _line):
+/*
+    func DoUnmerge(self, _line):
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
@@ -14548,9 +14604,10 @@ commit's first parent, but doesn't need you to find the first parent yourself.
         except (TypeError, ValueError):
             raise Recoverable("unmerge requires a single commit.")
         commit.setParents(commit.parents()[:1])
+*/
 
-    func help_reparent():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpReparent() {
+        rs.helpOutput(`
 Changes the parent list of a commit.  Takes a selection set, zero or
 more option arguments, and an optional policy argument.
 
@@ -14621,8 +14678,11 @@ Policy:
         Inhibits the default behavior -- no 'deleteall' is issued and
         the tree contents of all descendents can be modified as a
         result.
-""")
-    func do_reparent(self, line str):
+`)
+}
+
+/*
+    func DoReparent(self, line str):
         repo = self.chosen()
         if repo is None:
             complain("no repo has been chosen.")
@@ -14746,9 +14806,8 @@ func (self *Reposurgeon) DoReorder(lineIn string) bool {
 	return false
 }
 
-/*
-    func help_branch():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpBranch() {
+	rs.helpOutput(`
 Rename or delete a branch (and any associated resets).  First argument
 must be an existing branch name; second argument must one of the verbs
 'rename' or 'delete'. The branchname may use backslash escapes
@@ -14760,8 +14819,10 @@ no third argument is required.
 
 For either name, if it does not contain a '/' the prefix 'heads/'
 is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
-""")
-    func do_branch(self, line str):
+`)
+}
+/*
+    func DoBranch(self, line str):
         "Rename a branch or delete it."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -14797,9 +14858,10 @@ is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
                          (isinstance(repo.events[i], Commit) and repo.events[i].branch == branchname)])
         else:
             raise Recoverable("unknown verb '%s' in branch command." % verb)
+*/
 
-    func help_tag():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpTag() {
+        rs.helpOutput(`
 Create, move, rename, or delete a tag.
 
 Creation is a special case.  First argument is a name, which must not
@@ -14846,8 +14908,10 @@ In a delete, any matching tag or reset is deleted; then matching
 branch fields are changed to match the branch of the unique descendent
 of the tagged commit, if there is one.  When a tag is moved, no branch
 fields are changed and a warning is issued.
-""")
-    func do_tag(self, line str):
+`)
+    }
+/*
+    func DoTag(self, line str):
         "Move a tag to point to a specified commit, or rename it, or delete it."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -14974,9 +15038,9 @@ fields are changed and a warning is issued.
                     complain("couldn't determine a unique successor for %s at %s" % (tagname, commits[-1].idMe()))
         else:
             raise Recoverable("unknown verb '%s' in tag command." % verb)
-
-    func help_reset():
-        rs.helpOutput("""
+*/
+func (rs *Reposurgeon) HelpReset() {
+        rs.helpOutput(`
 Create, move, rename, or delete a reset. Create is a special case; it
 requires a singleton selection which is the associate commit for the
 reset, takes as a first argument the name of the reset (which must not
@@ -15004,8 +15068,11 @@ renamed with it to match.  When a reset is deleted, matching branch
 fields are changed to match the branch of the unique descendent of the
 tip commit of the associated branch, if there is one.  When a reset is
 moved, no branch fields are changed.
-""")
-    func do_reset(self, line str):
+`)
+}
+
+/*
+    func DoReset(self, line str):
         "Move a reset to point to a specified commit, or rename it, or delete it."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -15087,9 +15154,10 @@ moved, no branch fields are changed.
             repo.declareSequenceMutation("reset delete")
         else:
             raise Recoverable("unknown verb '%s' in reset command." % verb)
+*/
 
-    func help_ignores():
-        rs.helpOutput("""Intelligent handling of ignore-pattern files.
+func (rs *Reposurgeon) HelpIgnores() {
+        rs.helpOutput(`Intelligent handling of ignore-pattern files.
 This command fails if no repository has been selected or no preferred write
 type has been set for the repository.  It does not take a selection set.
 
@@ -15109,8 +15177,11 @@ containing the defaults.  This command will error out on prefer types
 that have no default ignore patterns (git and hg, in particular).  It
 will also error out when it knows the import tool has already set
 default patterns.
-""")
-    func do_ignores(self, line str):
+`)
+}
+
+/*
+    func DoIgnores(self, line str):
         "Manipulate ignore patterns in the repo."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -15187,9 +15258,10 @@ default patterns.
                 announce(debugSHOUT, "%d %s blobs modified." % (changecount, self.ignorename))
             else:
                 raise Recoverable("unknown verb %s in ignores line" % verb)
+*/
 
-    func help_attribution():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpAttribution() {
+        rs.helpOutput(`
 Inspect, modify, add, and remove commit and tag attributions.
 
 Attributions upon which to operate are selected in much the same way as events
@@ -15275,7 +15347,10 @@ Available actions are:
 
     Implemented mainly for regression testing, but may be useful for exploring
     the selection-set language.
-""")
+`)
+}
+
+/*
     func do_attribution(self, line str):
         "Inspect, modify, add, and remove commit and tag attributions."
         repo = self.chosen()
@@ -15388,18 +15463,20 @@ func (rs *Reposurgeon) DoAuthors(line string) (stopOut bool) {
 	}
 	return false
 }
-/*
-    #
-    # Reference lifting
-    #
-    func help_legacy():
-        rs.helpOutput("""
+
+//
+// Reference lifting
+//
+func (rs *Reposurgeon) HelpLegacy() {
+        rs.helpOutput(`
 Apply or list legacy-reference information. Does not take a
 selection set. The 'read' variant reads from standard input or a
 <-redirected filename; the 'write' variant writes to standard
 output or a >-redirected filename.
-""")
-    func do_legacy(self, line str):
+`)
+    }
+/*
+    func DoLegacy(self, line str):
         "Apply a reference-mapping file."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -15417,9 +15494,10 @@ output or a >-redirected filename.
                 if parse.tokens():
                     raise Recoverable("legacy read does not take a filename argument - use < redirection instead")
                 self.chosen().readLegacyMap(parse.stdin)
+*/
 
-    func help_references():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpReferences() {
+        rs.helpOutput(`
 With the 'list' modifier, produces a listing of events that may have
 Subversion or CVS commit references in them.  This version
 of the command supports >-redirection.  Equivalent to '=N list'.
@@ -15434,8 +15512,11 @@ consisting of the leading string '[[', followed by a VCS identifier
 by ']]'. An action stamp pointing at the corresponding commit is
 substituted when possible.  Enables writing of the legacy-reference
 map when the repo is written or rebuilt.
-""")
-    func do_references(self, line str):
+`)
+}
+/*
+
+func DoReferences(self, line str):
         "Look for things that might be CVS or Subversion revision references."
         if self.chosen() is None:
             complain("no repo has been chosen.")
