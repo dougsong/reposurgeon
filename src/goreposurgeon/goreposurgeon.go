@@ -71,6 +71,7 @@ import (
 	"crypto/sha1"
 	"errors"
 	"fmt"
+	"html"
 	"io"
 	"io/ioutil"
 	"log"
@@ -12176,9 +12177,8 @@ func (rs *Reposurgeon) DoSizes(line string) (stopOut bool) {
 	return false
 }
 
-/*
-    func help_lint():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpLint() {
+	rs.helpOutput(`
 Look for DAG and metadata configurations that may indicate a
 problem. Presently checks for: (1) Mid-branch deletes, (2)
 disconnected commits, (3) parentless commits, (4) the existance of
@@ -12188,7 +12188,10 @@ branch labels descending from the same commit, (7) time and
 action-stamp collisions.
 
 Supports > redirection.
-""")
+`)
+}
+
+/*
     func do_lint(self, line: str):
         "Look for lint in a repo."
         if not self.chosen():
@@ -12265,11 +12268,12 @@ Supports > redirection.
 --uniqueness    -u     report on collisions among action stamps
 --options       -?     list available options\
 """)
-    #
-    # Housekeeping
-    #
-    func help_prefer():
-        rs.helpOutput("""
+*/
+    //
+    // Housekeeping
+    //
+func (rs *Reposurgeon) HelpPrefer() {
+        rs.helpOutput(`
 Report or set (with argument) the preferred type of repository. With
 no arguments, describe capabilities of all supported systems. With an
 argument (which must be the name of a supported version-control
@@ -12286,8 +12290,10 @@ the preferred type rather than its original type (if it had one).
 If no preferred type has been explicitly selected, reading in a
 repository (but not a fast-import stream) will implicitly set reposurgeon's
 preference to the type of that repository.
-""")
-    func CompletePrefer(self, text, _line, _begidx, _endidx):
+`)
+}
+/*
+func CompletePrefer(self, text, _line, _begidx, _endidx):
         return sorted([x.name for x in vcstypes if x.importer and x.name.startswith(text)])
     func do_prefer(self, line: str):
         "Report or select the preferred repository type."
@@ -12312,9 +12318,10 @@ preference to the type of that repository.
                 os.Stdout.WriteString("No preferred type has been set.\n")
             else:
                 os.Stdout.WriteString("%s is the preferred type.\n" % self.preferred.name)
+*/
 
-    func help_sourcetype():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpSourcetype() {
+        rs.helpOutput(`
 Report (with no arguments) or select (with one argument) the current
 repository's source type.  This type is normally set at
 repository-read time, but may remain unset if the source was a stream
@@ -12328,28 +12335,48 @@ format of stream files made from the repository.
 
 The repository source type is reliably set when reading a Subversion
 stream.
-""")
-    func CompleteSourcetype(self, text, _line, _begidx, _endidx):
-        return sorted([x.name for x in vcstypes if x.exporter and x.name.startswith(text)])
-    func do_sourcetype(self, line: str):
-        "Report or select the current repository's source type."
-        if not self.chosen():
-            complain("no repo has been chosen.")
-            return
-        repo = self.chosen()
-        if not line:
-            if self.chosen().vcs:
-                os.Stdout.WriteString("%s: %s\n" % (repo.name, repo.vcs.name))
-            else:
-                os.Stdout.WriteString("%s: no preferred type.\n" % repo.name)
-        else:
-            for repotype in vcstypes + extractors:
-                if line.lower() == repotype.name:
-                    self.chosen().vcs = repotype
-                    break
-            else:
-                complain("known types are %s." % " ".join([x.name for x in vcstypes] + [x.name for x in extractors if x.visible]))
-*/
+`)
+}
+//func (rs *Reposurgeon) CompleteSourcetype(text, _line, _begidx, _endidx) {
+//    return sorted([x.name for x in vcstypes if x.exporter && strings.HasPrefix(x.name, text)])
+//}
+// Report or select the current repository's source type.
+func (rs *Reposurgeon) DoSourcetype(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return
+	}
+	repo := rs.chosen()
+	if line == "" {
+		if rs.chosen().vcs != nil {
+			fmt.Fprintf(os.Stdout, "%s: %s\n", repo.name, repo.vcs.name)
+		} else {
+			fmt.Fprintf(os.Stdout, "%s: no preferred type.\n", repo.name)
+		}
+	} else {
+		type VCSAssoc struct {name string; vcs *VCS}
+		supported := make([]string, 0)
+		lookup := make([]VCSAssoc, 0)
+		for i, v := range vcstypes {
+			supported = append(supported, v.name)
+			lookup = append(lookup, VCSAssoc{vcstypes[i].name, &vcstypes[i]}) 
+		}
+		for i, x := range extractors {
+			if x.getMeta().visible {
+				supported = append(supported, x.getMeta().name)
+				lookup = append(lookup, VCSAssoc{extractors[i].getMeta().name, extractors[i].getMeta().vcs}) 
+			}
+		}
+		for _, repotype := range lookup {
+			if strings.ToLower(line) == repotype.name {
+				rs.chosen().vcs = repotype.vcs
+				return false
+			}
+		}
+		complain("known types are %v.", supported)
+	}
+	return false
+}
 
 func (rs *Reposurgeon) HelpChoose() {
 	rs.helpOutput(`
@@ -12396,7 +12423,7 @@ func (rs *Reposurgeon) DoChoose(line string) (stopOut bool) {
 			if !quiet {
 				os.Stdout.WriteString(rfc3339(repo.readtime) + " ")
 			}
-			os.Stdout.WriteString(fmt.Sprintf("%s %s\n", status, repo.name))
+			fmt.Fprintf(os.Stdout, "%s %s\n", status, repo.name)
 		}
 	} else {
 		if newStringSet(rs.reponames()...).Contains(line) {
@@ -12747,9 +12774,9 @@ func (self *Reposurgeon) DoInspect(lineIn string) bool {
 
 	return false
 }
-/*
-    func help_strip():
-        rs.helpOutput("""
+
+func (rs *Reposurgeon) HelpStrip() {
+        rs.helpOutput(`
 Replace the blobs in the selected repository with self-identifying stubs;
 and/or strip out topologically uninteresting commits.  The modifiers for
 this are 'blobs' and 'reduce' respectively; the default is 'blobs'.
@@ -12758,91 +12785,147 @@ A selection set is effective only with the 'blobs' option, defaulting to all
 blobs. The 'reduce' mode always acts on the entire repository.
 
 This is intended for producing reduced test cases from large repositories.
-""")
-    func CompleteStrip(self, _text, _line, _begidx, _endidx):
-        return ["blobs", "reduce"]
-    func do_strip(self, line str):
-        "Drop content to produce a reduced test case."
-        repo = self.chosen()
-        if repo is None:
-            complain("no repo has been chosen.")
-            return
-        if self.selection is None:
-            self.selection = self.chosen().all()
-        if not line:
-            striptypes = ["blobs"]
-        else:
-            striptypes = line.split()
-        if "blobs" in striptypes:
-            for (_, event) in self.selected(Blob):
-                event.setContent("Blob at %s\n" % event.mark)
-        if "reduce" in striptypes:
-            interesting = set([])
-            for event in repo.events:
-                if isinstance(event, Tag):
-                    interesting.add(event.committish)
-                else if isinstance(event, Reset):
-                    interesting.add(event.ref)
-                else if isinstance(event, Commit):
-                    if len(event.children()) != 1 or len(event.parents()) != 1:
-                        interesting.add(event.mark)
-                    else:
-                        for op in event.operations():
-                            if op.op != opM or event.parents()[0].ancestorCount(op.path) == 0:
-                                interesting.add(event.mark)
-                                break
-            neighbors = set()
-            for event in repo.events:
-                if isinstance(event, Commit) and event.mark in interesting:
-                    neighbors |= set(event.parentMarks())
-                    neighbors |= set(event.childMarks())
-            interesting |= neighbors
-            oldlen = len(repo.events)
-            repo.delete([i for i in range(len(repo.events)) \
-                         if isinstance(event, Commit) and event.mark not in interesting])
-            announce(debugSHOUT, "From %d to %d events." % (oldlen, len(repo.events)))
-    func help_graph():
-        rs.helpOutput("""
+`)
+}
+//func (self *Reposurgeon) CompleteStrip(_text, _line, _begidx, _endidx) {
+//    return ["blobs", "reduce"]
+//}
+// Drop content to produce a reduced test case.
+func (rs *Reposurgeon) DoStrip(line string) (stopOut bool) {
+	repo := rs.chosen()
+	if repo == nil {
+		complain("no repo has been chosen.")
+		return false
+	}
+	if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+	}
+	var striptypes stringSet
+	var oldlen int
+	if line == "" {
+		striptypes = stringSet{"blobs"}
+	} else {
+		striptypes = newStringSet(strings.Fields(line)...)
+	}
+	if striptypes.Contains("blobs")  {
+		for _, ei := range rs.selection {
+			if blob, ok := repo.events[ei].(*Blob); ok {
+				blob.setContent(fmt.Sprintf("Blob at %s\n", blob.mark), blob.start)
+			}
+		}
+	}
+	if striptypes.Contains("reduce")  {
+		interesting := newStringSet()
+		for _, event := range repo.events {
+			if tag, ok := event.(*Tag); ok {
+				interesting.Add(tag.committish)
+			} else if reset, ok := event.(*Reset); ok {
+				interesting.Add(reset.ref)
+			} else if commit, ok := event.(*Commit); ok {
+				if len(commit.children()) != 1 || len(commit.parents()) != 1 {
+					interesting.Add(commit.mark)
+				} else {
+					for _, op := range commit.operations() {
+						direct := commit.parents()[0]
+						var noAncestor bool
+						if _, ok := direct.(*Callout); ok {
+							noAncestor = true
+						} else if commit, ok := direct.(*Commit); ok {
+							noAncestor = commit.ancestorCount(op.path) == 0
+						}
+						if op.op != opM || noAncestor {
+							interesting.Add(commit.mark)
+							break
+						}
+					}
+				}
+			}
+		}
+		neighbors := newStringSet()
+		for _, event := range repo.events {
+			if commit, ok := event.(*Commit); ok && interesting.Contains(commit.mark) {
+				neighbors = neighbors.Union(newStringSet(commit.parentMarks()...))
+				neighbors = neighbors.Union(newStringSet(commit.childMarks()...))
+			}
+		}
+		interesting = interesting.Union(neighbors)
+		oldlen = len(repo.events)
+		deletia := newOrderedIntSet()
+		for i, event := range repo.events {
+			if commit, ok := event.(*Commit); ok && !interesting.Contains(commit.mark) {
+				deletia.Add(i)
+			}
+		}
+		repo.delete(deletia, nil)
+	}
+	announce(debugSHOUT, "From %d to %d events.", oldlen, len(repo.events))
+	return false
+}
+
+
+func (rs *Reposurgeon) HelpGraph() {
+        rs.helpOutput(`
 Dump a graph representing selected events to standard output in DOT markup
 for graphviz. Supports > redirection.
-""")
-    func do_graph(self, line str):
-        "Dump a commit graph."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        if self.selection is None:
-            self.selection = self.chosen().all()
-        with newLineParse(self, line, stringSet{"stdout"}) as parse:
-            parse.stdout.WriteString("digraph {\n")
-            for _, event in self.selected():
-                if isinstance(event, Commit):
-                    for parent in event.parentMarks():
-                        if self.chosen().find(parent) in self.selection:
-                            parse.stdout.WriteString('\t%s -> %s;\n' \
-                                               % (parent[1:], event.mark[1:]))
-                if isinstance(event, Tag):
-                    parse.stdout.WriteString('\t"%s" -> "%s" [style=dotted];\n' \
-                                       % (event.name, event.committish[1:], ))
-                    parse.stdout.WriteString('\t{rank=same; "%s"; "%s"}\n' \
-                                       % (event.name, event.committish[1:], ))
-            for _, event in self.selected():
-                if isinstance(event, Commit):
-                    summary = cgi.escape(event.comment.split('\n')[0][:42])
-                    cid = event.mark
-                    if event.legacyID:
-                        cid = event.showlegacy() + " &rarr; " + cid
-                    parse.stdout.WriteString('\t%s [shape=box,width=5,label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
-                                       % (event.mark[1:], cid, summary))
-                    if all(event.branch != child.branch for child in event.children()):
-                        parse.stdout.WriteString('\t"%s" [shape=oval,width=2];\n' % event.branch)
-                        parse.stdout.WriteString('\t"%s" -> "%s" [style=dotted];\n' % (event.mark[1:], event.branch))
-                if isinstance(event, Tag):
-                    summary = cgi.escape(event.comment.split('\n')[0][:32])
-                    parse.stdout.WriteString('\t"%s" [label=<<table cellspacing="0" border="0" cellborder="0"><tr><td><font color="blue">%s</font></td><td>%s</td></tr></table>>];\n' \
-                                       % (event.name, event.name, summary))
-            parse.stdout.WriteString("}\n")
-*/
+`)
+}
+// Dump a commit graph.
+func (rs *Reposurgeon) DoGraph(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+	}
+	if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+	}
+	parse := newLineParse(line, nil, stringSet{"stdout"})
+	fmt.Fprint(parse.stdout, "digraph {\n")
+	for _, ei := range rs.selection {
+		event := rs.chosen().events[ei]
+		if commit, ok := event.(*Commit); ok {
+			for _, parent := range commit.parentMarks() {
+				if rs.selection.Contains(rs.chosen().find(parent)) {
+					fmt.Fprintf(parse.stdout, "\t%s -> %s;\n",
+						parent[1:], commit.mark[1:])
+				}
+			}
+		}
+		if tag, ok := event.(*Tag); ok {
+			fmt.Fprintf(parse.stdout, "\t\"%s\" -> \"%s\" [style=dotted];\n",
+				tag.name, tag.committish[1:])
+			fmt.Fprintf(parse.stdout, "\t{rank=same; \"%s\"; \"%s\"}\n",
+				tag.name, tag.committish[1:])
+		}
+	}
+	for _, ei := range rs.selection {
+		event := rs.chosen().events[ei]
+		if commit, ok := event.(*Commit); ok {
+			summary := html.EscapeString(strings.Split(commit.comment, "\n")[0][:42])
+			cid := commit.mark
+			if commit.legacyID != "" {
+				cid = commit.showlegacy() + " &rarr; " + cid
+			}
+			fmt.Fprintf(parse.stdout, "\t%s [shape=box,width=5,label=<<table cellspacing=\"0\" border=\"0\" cellborder=\"0\"><tr><td><font color=\"blue\">%s</font></td><td>%s</td></tr></table>>];\n",
+				commit.mark[1:], cid, summary)
+			newbranch := true
+			for _, cchild := range commit.children() {
+				if child, ok := cchild.(*Commit); ok && commit.branch == child.branch {
+					newbranch = false
+				}
+			}
+			if newbranch {
+				fmt.Fprintf(parse.stdout, "\t\"%s\" [shape=oval,width=2];\n", commit.branch)
+				fmt.Fprintf(parse.stdout, "\t\"%s\" -> \"%s\" [style=dotted];\n", commit.mark[1:], commit.branch)
+			}
+		}
+		if tag, ok := event.(*Tag); ok {
+			summary := html.EscapeString(strings.Split(tag.comment, "\n")[0][:32])
+			fmt.Fprintf(parse.stdout, "\t\"%s\" [label=<<table cellspacing=\"0\" border=\"0\" cellborder=\"0\"><tr><td><font color=\"blue\">%s</font></td><td>%s</td></tr></table>>];\n",tag.name, tag.name, summary)
+		}
+	}
+	fmt.Fprint(parse.stdout, "}\n")
+	return false
+}
 
 func (rs *Reposurgeon) HelpRebuild() {
         rs.helpOutput(`
@@ -12926,9 +13009,8 @@ func (rs *Reposurgeon) DoMailboxOut(lineIn string) bool {
 	return false
 }
 
-/*
-    func help_mailbox_in():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpMailbox_in() {
+	rs.helpOutput(`
 Accept a mailbox file of messages in RFC822 format representing the
 contents of the metadata in selected commits and annotated tags. Takes
 no selection set. If there is an argument it will be taken as the name
@@ -12965,7 +13047,9 @@ that can be fed back in. Supports > redirection.
 If the option --empty-only is given, this command will throw a recoverable error
 if it tries to alter a message body that is neither empty nor consists of the
 CVS empty-comment marker.
-""")
+`)
+}
+/*
     func do_mailbox_in(self, line str):
         "Accept a mailbox file representing object metadata and update from it."
         if self.chosen() is None:
@@ -12995,7 +13079,7 @@ CVS empty-comment marker.
                 committer_counts[stamp]++
             attribution_by_committer[stamp] = commit
         for event in self.chosen().events:
-            if isinstance(event, Tag):
+            if tag, ok := event.(*Tag); ok:
                 if event.name:
                     name_map[event.name] = event
                 if event.tagger:
@@ -13144,9 +13228,10 @@ CVS empty-comment marker.
             if "--changed" in parse.options:
                 for update in changers:
                     parse.stdout.WriteString(MessageBlockDivider + "\n" + update.as_string(unixfrom=false))
+*/
 
-    func help_edit():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpEdit() {
+        rs.helpOutput(`
 Report the selection set of events to a tempfile as mailbox_out does,
 call an editor on it, and update from the result as mailbox_in does.
 If you do not specify an editor name as second argument, it will be
@@ -13160,7 +13245,9 @@ However, if you specify a selection set consisting of a single
 blob, your editor will be called on the blob file.
 
 Supports < and > redirection.
-""")
+`)
+}
+/*
     func do_edit(self, line str):
         "Edit metadata interactively."
         if not self.chosen():
@@ -13170,9 +13257,10 @@ Supports < and > redirection.
             self.selection = [n for n, o2 in enumerate(self.chosen()) \
                               if hasattr(o2, "emailOut")]
         self.edit(self.selection, line)
+*/
 
-    func help_filter():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpFilter() {
+        rs.helpOutput(`
 Run blobs, commit comments and committer/author names, or tag comments
 and tag committer names in the selection set through the filter
 specified on the command line.
@@ -13208,7 +13296,9 @@ With --replace, the behavior is like --regexp but the expressions are
 not interpreted as regular expressions. (This is slighly faster).
 
 With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
-""")
+`)
+}
+/*
     func do_filter(self, line str):
         if not self.chosen():
             complain("no repo is loaded")
@@ -13384,7 +13474,7 @@ address.
         for _, event in self.selected():
             if hasattr(event, field):
                 setattr(event, field, value)
-            else if field == "author" and isinstance(event, Commit):
+            else if field == "author" and commit, ok := event.(*Commit); ok:
                 attr = value
                 attr += " " + str(event.committer.date.timestamp)
                 attr += " " + event.committer.date.orig_tz_string
@@ -13394,9 +13484,9 @@ address.
                         newattr.date.set_tz(tz)
                         break
                 event.authors.append(newattr)
-            else if field == "commitdate" and isinstance(event, Commit):
+            else if field == "commitdate" and commit, ok := event.(*Commit); ok:
                 event.committer.date = Date(value)
-            else if field == "authdate" and isinstance(event, Commit):
+            else if field == "authdate" and commit, ok := event.(*Commit); ok:
                 event.authors[0].date = Date(value)
 
     func help_setperm():
@@ -13848,12 +13938,12 @@ an offset literal of +0 or -0.
             if not re.match(r"[+-][0-9][0-9][0-9][0-9]".encode('ascii'), polybytes(args[1])):
                 complain("expected timezone literal to be [+-]hhmm")
         for _, event in self.selected():
-            if isinstance(event, Tag):
+            if tag, ok := event.(*Tag); ok:
                 if event.tagger:
                     event.tagger.date.timestamp += offset
                     if len(args) > 1:
                         event.tagger.date.orig_tz_string = args[1]
-            else if isinstance(event, Commit):
+            else if commit, ok := event.(*Commit); ok:
                 event.committer.date.timestamp += offset
                 if len(args) > 1:
                     event.committer.date.orig_tz_string = args[1]
@@ -14030,7 +14120,7 @@ file operations in the original commit.
             raise Recoverable("selection of a single commit required for this command")
         where = self.selection[0]
         event = self.chosen()[where]
-        if not isinstance(event, Commit):
+        if not commit, ok := event.(*Commit); ok:
             raise Recoverable("fileop argument doesn't point at a commit")
         line = str(line)   # pacify pylint by forcing string type
         try:
@@ -14217,7 +14307,7 @@ source branch are removed.
                 event.setBranch(target)
                 last_parent = [event.mark]
             for (i, event) in enumerate(self.repo.events):
-                if isinstance(event, Reset) and event.ref == source:
+                if reset, ok := event.(*Reset); ok and event.ref == source:
                     source_reset = i
             if source_reset is not None:
                 del repo.events[source_reset]
@@ -14582,12 +14672,14 @@ Policy:
 func (self *Reposurgeon) HelpReorder() {
 	self.helpOutput(`
 Re-order a contiguous range of commits.
+
 Older revision control systems tracked change history on a per-file basis,
 rather than as a series of atomic "changesets", which often made it difficult
 to determine the relationships between changes. Some tools which convert a
 history from one revision control system to another attempt to infer
 changesets by comparing file commit comment and time-stamp against those of
 other nearby commits, but such inference is a heuristic and can easily fail.
+
 In the best case, when inference fails, a range of commits in the resulting
 conversion which should have been coalesced into a single changeset instead
 end up as a contiguous range of separate commits. This situation typically can
@@ -14599,6 +14691,7 @@ be re-ordered, so that those pertaining to each particular topic are clumped
 together, and then possibly squashed into one or more changesets pertaining to
 each topic. This command, 'reorder', can help with the first task; the
 'squash' command with the second.
+
 Selected commits are re-arranged in the order specified; for instance:
 ":7,:5,:9,:3 reorder". The specified commit range must be contiguous; each
 commit must be accounted for after re-ordering. Thus, for example, ':5' can
@@ -14606,6 +14699,7 @@ not be omitted from ":7,:5,:9,:3 reorder". (To drop a commit, use the 'delete'
 or 'squash' command.) The selected commits must represent a linear history,
 however, the lowest numbered commit being re-ordered may have multiple
 parents, and the highest numbered may have multiple children.
+
 Re-ordered commits and their immediate descendants are inspected for
 rudimentary fileops inconsistencies. Warns if re-ordering results in a commit
 trying to delete, rename, or copy a file before it was ever created. Likewise,
@@ -14615,6 +14709,7 @@ affected commits and beyond; for instance, moving a commit which renames a
 file ahead of a commit which references the original name. Such anomalies can
 be discovered via manual inspection and repaired with the 'add' and 'remove'
 (and possibly 'path') commands. Warnings can be suppressed with '--quiet'.
+
 In addition to adjusting their parent/child relationships, re-ordering commits
 also re-orders the underlying events since ancestors must appear before
 descendants, and blobs must appear before commits which reference them. This
@@ -14689,10 +14784,10 @@ is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
                 raise Recoverable("there is already a branch named '%s'." \
                                   % newname)
             for event in repo:
-                if isinstance(event, Commit):
+                if commit, ok := event.(*Commit); ok:
                     if event.branch == branchname:
                         event.setBranch(newname)
-                else if isinstance(event, Reset):
+                else if reset, ok := event.(*Reset); ok:
                     if event.ref == branchname:
                         event.ref = newname
         else if verb == "delete":
@@ -14788,9 +14883,9 @@ fields are changed and a warning is issued.
             lasttag = None
             lastcommit = None
             for (i, event) in enumerate(repo.events):
-                if isinstance(event, Tag):
+                if tag, ok := event.(*Tag); ok:
                     lasttag = i
-                else if isinstance(event, Commit):
+                else if commit, ok := event.(*Commit); ok:
                     lastcommit = i
             if lasttag is None:
                 lasttag = lastcommit
@@ -14804,23 +14899,23 @@ fields are changed and a warning is issued.
                 # Regexp - can refer to a list of tags matched
                 tagre = regexp.MustCompile(tagname[1:-1])
                 for event in repo.events:
-                    if isinstance(event, Tag) and tagre.search(event.name):
+                    if tag, ok := event.(*Tag); ok and tagre.search(event.name):
                         tags.append(event)
                     # len("refs/heads/") = 11
-                    else if isinstance(event, Reset) and tagre.search(event.ref[11:]):
+                    else if reset, ok := event.(*Reset); ok and tagre.search(event.ref[11:]):
                         resets.append(event)
                     # len("refs/tags/") = 10
-                    else if isinstance(event, Commit) and tagre.search(event.branch[10:]):
+                    else if commit, ok := event.(*Commit); ok and tagre.search(event.branch[10:]):
                         commits.append(event)
             else:
                 # Non-regexp - can only refer to a single tag
                 fulltagname = Tag.branchname(tagname)
                 for event in repo.events:
-                    if isinstance(event, Tag) and event.name == tagname:
+                    if tag, ok := event.(*Tag); ok and event.name == tagname:
                         tags.append(event)
-                    else if isinstance(event, Reset) and event.ref == fulltagname:
+                    else if reset, ok := event.(*Reset); ok and event.ref == fulltagname:
                         resets.append(event)
-                    else if isinstance(event, Commit) and event.branch == fulltagname:
+                    else if commit, ok := event.(*Commit); ok and event.branch == fulltagname:
                         commits.append(event)
             if not tags and not resets and not commits:
                 raise Recoverable("no tags matching %s" % tagname)
@@ -14850,7 +14945,7 @@ fields are changed and a warning is issued.
                 raise Recoverable("new tag name must be nonempty.")
             if len(tags) == 1:
                 for event in repo.events:
-                    if isinstance(event, Tag) and event != tags[0] and event.name == tags[0].name:
+                    if tag, ok := event.(*Tag); ok and event != tags[0] and event.name == tags[0].name:
                         raise Recoverable("tag name collision, not renaming.")
                 tags[0].name = newname
             fullnewname = Tag.branchname(newname)
@@ -16745,7 +16840,7 @@ deleted name.
                 return None
             for ind in range(sp.repo.index(obj), -1, -1):
                 event = sp.repo.events[ind]
-                if isinstance(event, Commit):
+                if commit, ok := event.(*Commit); ok:
 `                    b = getbranch(event)
                     if b && path.startswith(b):
                         return event
@@ -17634,7 +17729,7 @@ deleted name.
         deleteables = []
         newtags = []
         for (i, event) in enumerate(sp.repo):
-            if isinstance(event, Commit):
+            if commit, ok := event.(*Commit); ok:
                 # It is possible for commit.comment to be None if
                 # the repository has been dumpfiltered and has
                 # empty commits.  If that's the case it can't very
@@ -18080,11 +18175,11 @@ class SubversionDumper:
         self.directory_create(fp, revision, tagrefpath, "", parents)
     func dump(self, selection, fp, progress=false):
         "Export the repository as a Subversion dumpfile."
-        tags = [event for event in self.repo.events if isinstance(event, Tag)]
+        tags = [event for event in self.repo.events if tag, ok := event.(*Tag); ok]
         # Fast-export prefers tags to branches as commit parents but SVN prefers branches
         for i in selection:
             event = self.repo.events[i]
-            if isinstance(event, Commit):
+            if commit, ok := event.(*Commit); ok:
                 event.color = SubversionDumper.commitbranch(event)
         with Baton("reposurgeon: dumping", enable=progress) as baton:
             try:
@@ -18100,7 +18195,7 @@ class SubversionDumper:
                     event = self.repo.events[i]
                     # Passthroughs are lost; there are no equivalents
                     # in Subversion's ontology.
-                    if not isinstance(event, Commit):
+                    if not commit, ok := event.(*Commit); ok:
                         continue
                     if event.branch.startswith("refs/notes"):
                         complain("skipping note as unsupported")
