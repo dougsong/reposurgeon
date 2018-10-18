@@ -2078,7 +2078,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 			}
 		}
 		if len(parents) == 0 { // && commit.branch != "refs/heads/master"
-			reset := newReset(repo, commit.branch, "", commit)
+			reset := newReset(repo, commit.branch, commit.mark)
 			repo.addEvent(reset)
 		}
 		commit.sortOperations()
@@ -2095,7 +2095,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 		if !strings.Contains(resetname, "/tags/") {
 			// FIXME: what if revision is unknown?
 			// keep previous behavior for now
-			reset := newReset(repo, resetname, "", rs.commitMap[revision])
+			reset := newReset(repo, resetname, rs.commitMap[revision].mark)
 			reset.ref = resetname
 			repo.addEvent(reset)
 		}
@@ -3462,18 +3462,16 @@ type Reset struct {
 	repo       *Repository
 	ref        string
 	committish string
-	target     *Commit
 	color      string
 	deleteme   bool
 }
 
-func newReset(repo *Repository, ref string, committish string, target *Commit) *Reset {
+func newReset(repo *Repository, ref string, committish string) *Reset {
 	reset := new(Reset)
 	reset.repo = repo
 	reset.ref = ref
 	reset.committish = committish
-	reset.target = target
-	reset.remember(repo, committish, target)
+	reset.remember(repo, committish)
 	return reset
 }
 
@@ -3493,24 +3491,18 @@ func (reset Reset) getMark() string {
 }
 
 // remember records an attachment to a repo and commit.
-func (reset *Reset) remember(repo *Repository, committish string, target *Commit) {
+func (reset *Reset) remember(repo *Repository, committish string) {
 	reset.repo = repo
-	if target != nil {
-		reset.target = target
-		reset.committish = target.getMark()
-	} else {
-		reset.committish = committish
-	}
-	if reset.target != nil {
-		reset.target.attach(reset)
+	reset.committish = committish
+	if event := repo.markToEvent(committish); event != nil {
+		event.(*Commit).attach(reset)
 	}
 }
 
 // forget loses this reset's attachment to its commit and repo.
 func (reset *Reset) forget() {
-	if reset.target != nil {
-		reset.target.detach(reset)
-		reset.target = nil
+	if event := reset.repo.markToEvent(reset.committish); event != nil {
+		event.(*Commit).detach(reset)
 	}
 	reset.repo = nil
 }
@@ -6010,12 +6002,12 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			commitcount++
 			baton.twirl("")
 		} else if strings.HasPrefix(line, "reset") {
-			reset := newReset(sp.repo, "", "", nil)
+			reset := newReset(sp.repo, "", "")
 			reset.ref = strings.TrimSpace(line[6:])
 			line = sp.fiReadline()
 			if strings.HasPrefix(line, "from") {
 				committish := strings.TrimSpace(line[5:])
-				reset.remember(sp.repo, committish, nil)
+				reset.remember(sp.repo, committish)
 			} else {
 				sp.pushback(line)
 			}
@@ -6060,11 +6052,12 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 		switch event.(type) {
 		case Reset:
 			reset := event.(*Reset)
-			if reset.committish != "" && reset.target == nil {
-				reset.target = sp.repo.markToEvent(reset.committish).(*Commit)
-				if reset.target == nil {
+			if reset.committish != "" {
+				commit := sp.repo.markToEvent(reset.committish).(*Commit)
+				if commit == nil {
 					sp.gripe(fmt.Sprintf("unresolved committish in reset %s", reset.committish))
 				}
+				commit.attach(reset)
 			}
 		case Tag:
 			tag := event.(*Tag)
@@ -7926,7 +7919,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 					// will take care of moving the
 					// attachment to the new target.
 					reset := newReset(repo,
-						commit.branch, "", commit)
+						commit.branch, commit.mark)
 					repo.events[ei] = reset
 				}
 				// use a copy of attachments since it
@@ -7935,10 +7928,10 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 					switch event.(type) {
 					case *Tag:
 						e.(*Tag).forget()
-						e.(*Reset).remember(repo, "", newTarget)
+						e.(*Reset).remember(repo, newTarget.mark)
 					case *Reset:
 						e.(*Tag).forget()
-						e.(*Reset).remember(repo, "", newTarget)
+						e.(*Reset).remember(repo, newTarget.mark)
 					}
 				}
 			}
@@ -8145,8 +8138,8 @@ func (repo *Repository) resort() {
 			handle(n, node.(*Tag).committish)
 		case *Reset:
 			reset := node.(*Reset)
-			if reset.target != nil {
-				t := repo.index(reset.target)
+			if reset.committish != "" {
+				t := repo.find(reset.committish)
 				//assert(n != t)
 				start.Remove(n)
 				edges.eout.Add(t)
