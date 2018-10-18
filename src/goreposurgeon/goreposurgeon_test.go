@@ -56,7 +56,7 @@ func assertBool(t *testing.T, see bool, expect bool) {
 
 func assertEqual(t *testing.T, a string, b string) {
 	if a != b {
-		t.Errorf("assertEqual: expected %q == %q", a, b)
+		t.Fatalf("assertEqual: expected %q == %q", a, b)
 	}
 }
 
@@ -594,7 +594,7 @@ func TestTag(t *testing.T) {
 	repo := newRepository("fubar")
 	defer repo.cleanup()
 	attr1 := newAttribution("jrh <jrh> 1456976347 -0500")
-	t1 := newTag(repo, "sample1", ":2", nil, attr1, "Sample tag #1\n")
+	t1 := newTag(repo, "sample1", ":2", attr1, "Sample tag #1\n")
 	repo.events = append(repo.events, t1)
 	if !strings.Contains(t1.comment, "Sample") {
 		t.Error("expected string not found in tag comment")
@@ -802,12 +802,13 @@ func TestCommitMethods(t *testing.T) {
 	repo := newRepository("fubar")
 	defer repo.cleanup()
 	commit := newCommit(repo)
-	repo.addEvent(commit)
 	committer := "J. Random Hacker <jrh@foobar.com> 1456976347 -0500"
 	commit.committer = *newAttribution(committer)
 	author := newAttribution("esr <esr@thyrsus.com> 1457998347 +0000")
 	commit.authors = append(commit.authors, *author)
 	commit.comment = "Example commit for unit testing\n"
+	commit.mark = ":2"
+	repo.addEvent(commit)
 
 	// Check for actual cloning. rather than just copying a reference
 	copied := commit.clone(repo)
@@ -817,18 +818,19 @@ func TestCommitMethods(t *testing.T) {
 	}
 	copied.authors[0].fullname = "I am legion"
 	if commit.authors[0].fullname == copied.authors[0].fullname {
-		t.Fatal("unexpected pass by reference of authot attribution")
+		t.Fatal("unexpected pass by reference of author attribution")
 	}
 
 	// Check that various reports look sane, at least matching each other
 	assertEqual(t, commit.lister(nil, 42, 0),
-		"    43 2016-03-14T23:32:27Z        Example commit for unit testing")
+		"    43 2016-03-14T23:32:27Z     :2 Example commit for unit testing")
 	assertEqual(t, commit.actionStamp(),
 		"2016-03-14T23:32:27Z!esr@thyrsus.com")
 	assertEqual(t, commit.showlegacy(), "")
 	assertEqual(t, commit.stamp(nil, 42, 0),
 		"<2016-03-14T23:32:27Z!esr@thyrsus.com> Example commit for unit testing")
 	expectout := `Event-Number: 43
+Event-Mark: :2
 Author: esr <esr@thyrsus.com>
 Author-Date: 2016-03-14T23:32:27Z
 Committer: J. Random Hacker <jrh@foobar.com>
@@ -850,6 +852,7 @@ Example commit for unit testing, modified.
 	}
 	commit.emailIn(msg, false)
 	hackcheck := `Event-Number: 43
+Event-Mark: :2
 Author: Tim the Enchanter <esr@thyrsus.com>
 Author-Date: 2016-03-14T23:32:27Z
 Committer: J. Random Hacker <jrh@foobar.com>
@@ -861,7 +864,7 @@ Example commit for unit testing, modified.
 	assertEqual(t, commit.emailOut(nil, 42, nil), hackcheck)
 
 	attr1 := newAttribution("jrh <jrh> 1456976347 -0500")
-	newTag(repo, "sample1", ":2", commit, attr1, "Sample tag #1\n")
+	newTag(repo, "sample1", ":2", attr1, "Sample tag #1\n")
 
 	if len(commit.attachments) != 1 {
 		t.Errorf("tag attachment failed: %d", len(commit.attachments))
@@ -1285,9 +1288,14 @@ func TestFastImportParse2(t *testing.T) {
 	r := strings.NewReader(rawdump)
 	sp.fastImport(r, nil, false, "synthetic test load")
 
-	testTag, ok1 := repo.events[len(repo.events)-1].(*Tag)
+	testTag1, ok1 := repo.events[len(repo.events)-1].(*Tag)
 	assertBool(t, ok1, true)
-	assertEqual(t, "with-comment", testTag.name)
+	assertEqual(t, "with-comment", testTag1.name)
+
+	testTag2, ok2 := repo.events[len(repo.events)-2].(*Tag)
+	assertBool(t, ok2, true)
+	assertEqual(t, "no-comment", testTag2.name)
+
 	testReset, ok2 := repo.events[1].(*Reset)
 	assertBool(t, ok2, true)
 	assertEqual(t, "refs/heads/master", testReset.ref)
@@ -1315,6 +1323,11 @@ committer esr <esr> 1322671521 +0000
 data 17
 Second revision.
 M 100644 :3 README
+
+tag no-comment
+from :4
+tagger esr <esr> 1322671316 +0000
+data 0
 
 `
 	a.Reset()

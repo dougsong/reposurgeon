@@ -73,7 +73,7 @@ govet:
 	GOPATH=$(GOPATH) go vet goreposurgeon
 
 gotest:
-	GOPATH=$(GOPATH) GOCACHE=off go test goreposurgeon
+	GOPATH=$(GOPATH) GOCACHE=off go test $(TESTOPTS) goreposurgeon
 
 goformat:
 	gofmt -w src/repocutter/

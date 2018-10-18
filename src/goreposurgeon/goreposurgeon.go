@@ -1317,7 +1317,7 @@ func (ge GitExtractor) gatherAllReferences(rs *RepoStreamer) error {
 		rs.refs.set("refs/tags/"+tag, objecthash)
 		if objecthash != taghash {
 			// committish isn't a mark; we'll fix that later
-			tagobj := *newTag(nil, tag, objecthash, nil,
+			tagobj := *newTag(nil, tag, objecthash,
 				newAttribution(tagger),
 				comment)
 			rs.tags = append(rs.tags, tagobj)
@@ -2109,7 +2109,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 		// committish marks here.
 		c, ok := rs.commitMap[tag.committish]
 		if !ok {
-			tag.remember(repo, "", c)
+			tag.remember(repo, c.mark)
 		} else {
 			return nil, fmt.Errorf("no commit corresponds to %s", tag.committish)
 		}
@@ -3171,7 +3171,6 @@ type Tag struct {
 	name       string
 	color      string
 	committish string
-	target     *Commit
 	tagger     *Attribution
 	comment    string
 	legacyID   string
@@ -3180,12 +3179,12 @@ type Tag struct {
 
 func newTag(repo *Repository,
 	name string, committish string,
-	target *Commit, tagger *Attribution, comment string) *Tag {
+	tagger *Attribution, comment string) *Tag {
 	t := new(Tag)
 	t.name = name
 	t.tagger = tagger
 	t.comment = comment
-	t.remember(repo, committish, target)
+	t.remember(repo, committish)
 	return t
 }
 
@@ -3200,24 +3199,18 @@ func (t Tag) getMark() string {
 }
 
 // remember records an attachment to a repo and commit.
-func (t *Tag) remember(repo *Repository, committish string, target *Commit) {
+func (t *Tag) remember(repo *Repository, committish string) {
 	t.repo = repo
-	t.target = target
-	if t.target != nil {
-		t.committish = target.getMark()
-	} else {
-		t.committish = committish
-	}
-	if t.target != nil {
-		t.target.attach(t)
+	t.committish = committish
+	if event := repo.markToEvent(committish); event != nil {
+		event.(*Commit).attach(t)
 	}
 }
 
 // forget removes this tag's attachment to its commit and repo.
 func (t *Tag) forget() {
-	if t.target != nil {
-		t.target.detach(t)
-		t.target = nil
+	if event := t.repo.markToEvent(t.committish); event != nil {
+		event.(*Commit).detach(t)
 	}
 	t.repo = nil
 }
@@ -6054,7 +6047,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				sp.pushback(line)
 			}
 			d, _ := sp.fiReadData("")
-			tag := newTag(sp.repo, tagname, referent, nil, tagger, d)
+			tag := newTag(sp.repo, tagname, referent, tagger, d)
 			tag.legacyID = legacyID
 			sp.repo.addEvent(tag)
 		} else {
@@ -6075,11 +6068,12 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			}
 		case Tag:
 			tag := event.(*Tag)
-			if tag.committish != "" && tag.target == nil {
-				tag.target = sp.repo.markToEvent(tag.committish).(*Commit)
-				if tag.target == nil {
+			if tag.committish != "" {
+				commit := sp.repo.markToEvent(tag.committish).(*Commit)
+				if commit == nil {
 					sp.gripe(fmt.Sprintf("unresolved committish in tag %s", tag.committish))
 				}
+				commit.attach(tag)
 			}
 		}
 	}
@@ -6996,7 +6990,7 @@ func (repo *Repository) tagify(commit *Commit, name string, target string, legen
 			pref += "\n"
 		}
 	}
-	tag := newTag(commit.repo, name, target, nil, &commit.committer, pref+legend)
+	tag := newTag(commit.repo, name, target, &commit.committer, pref+legend)
 	tag.legacyID = commit.legacyID
 	//repo.addEvent(tag)
 	if delete {
