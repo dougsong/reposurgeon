@@ -6069,11 +6069,17 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			reset := event.(*Reset)
 			if reset.committish != "" && reset.target == nil {
 				reset.target = sp.repo.markToEvent(reset.committish).(*Commit)
+				if reset.target == nil {
+					sp.gripe(fmt.Sprintf("unresolved committish in reset %s", reset.committish))
+				}
 			}
 		case Tag:
 			tag := event.(*Tag)
 			if tag.committish != "" && tag.target == nil {
 				tag.target = sp.repo.markToEvent(tag.committish).(*Commit)
+				if tag.target == nil {
+					sp.gripe(fmt.Sprintf("unresolved committish in tag %s", tag.committish))
+				}
 			}
 		}
 	}
@@ -12065,9 +12071,8 @@ func (self *Reposurgeon) DoStamp(lineIn string) bool {
 	return false
 }
 
-/*
-    func help_sizes():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpSizes() {
+        rs.helpOutput(`
 Print a report on data volume per branch; takes a selection set,
 defaulting to all events. The numbers tally the size of uncompressed
 blobs, commit and tag comments, and other metadata strings (a blob is
@@ -12075,40 +12080,73 @@ counted each time a commit points at it).  Not an exact measure of
 storage size: intended mainly as a way to get information on how to
 efficiently partition a repository that has become large enough to be
 unwieldy. Supports > redirection.
-""")
-    func do_sizes(self, line: str):
-        "Report branch relative sizes."
-        if not self.chosen():
-            complain("no repo has been chosen.")
-            return
-        if self.selection is None:
-            self.selection = self.chosen().all()
-        sizes = {}
-        with newLineParse(self, line, stringSet{"stdout"}) as parse:
-            for _, event in self.selected():
-                if isinstance(event, Commit):
-                    if event.branch not in sizes:
-                        sizes[event.branch] = 0
-                    sizes[event.branch] += len(str(event.committer))
-                    for author in event.authors:
-                        sizes[event.branch] += len(str(author))
-                    sizes[event.branch] += len(event.comment)
-                    for fileop in event.operations():
-                        if fileop.op == opM:
-                            sizes[event.branch] += self.repo.markToEvent(fileop.ref).size
-                else if isinstance(event, Tag):
-                    commit = event.target
-                    if commit.branch not in sizes:
-                        sizes[commit.branch] = 0
-                    sizes[commit.branch] += len(str(event.tagger))
-                    sizes[commit.branch] += len(event.comment)
-            total = sum(sizes.values())
-            func sz(n, s):
-                parse.stdout.WriteString("%9d\t%2.2f%%\t%s\n" \
-                                   % (n, (n * 100.0) / total, s))
-            for key in sorted(sizes):
-                sz(sizes[key], key)
-            sz(total, "")
+`)
+}
+// Report branch relative sizes.
+func (rs *Reposurgeon) DoSizes(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+	}
+	repo := rs.chosen()
+	if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+	}
+	sizes := make(map[string]int)
+	parse := newLineParse(line, nil, stringSet{"stdout"})
+	for _, i := range rs.selection {
+		if commit, ok := repo.events[i].(*Commit); ok {
+			if _, ok := sizes[commit.branch]; !ok {
+				sizes[commit.branch] = 0
+			}
+			sizes[commit.branch] += len(commit.committer.String())
+			for _, author := range commit.authors {
+				sizes[commit.branch] += len(author.String())
+			}
+			sizes[commit.branch] += len(commit.comment)
+			for _, fileop := range commit.operations() {
+				if fileop.op == opM {
+					if !strings.HasPrefix(fileop.ref, ":") {
+						// Skip submodule refs
+						continue
+					}
+					ref := repo.markToEvent(fileop.ref)
+					if ref == nil {
+						complain("internal error: %s should be a blob reference", fileop.ref)
+						continue
+					}
+					sizes[commit.branch] += int(ref.(*Blob).size)
+				}
+			}
+		} else if tag, ok := repo.events[i].(*Tag); ok {
+			commit := repo.markToEvent(tag.committish).(*Commit)
+			if commit == nil {
+				complain("internal error: target of tag %s is nil", tag.name)
+				continue
+			}
+			if _, ok := sizes[commit.branch]; !ok {
+				sizes[commit.branch] = 0
+			}
+			sizes[commit.branch] += len(tag.tagger.String())
+			sizes[commit.branch] += len(tag.comment)
+		}
+	}
+	total := 0
+	for _, v := range sizes {
+		total += v
+	}
+	sz := func(n int, s string) {
+		fmt.Fprintf(parse.stdout, "%12d\t%2.2f%%\t%s\n",
+			n, float64(n * 100.0) / float64(total), s)
+	}
+	for key, val := range sizes {
+		sz(val, key)
+	}
+	sz(total, "")
+	return false
+}
+
+/*
     func help_lint():
         rs.helpOutput("""
 Look for DAG and metadata configurations that may indicate a
