@@ -10887,32 +10887,34 @@ func (rs *Reposurgeon) DoQuit(lineIn string) (stopOut bool) {
 	return true
 }
 
-/*
-
-class RepoSurgeon(cmd.Cmd, RepositoryList, SelectionParser):
-    "Repository surgeon command interpreter."
-    OptionFlags = (
-        ("canonicalize", """\
-    If set, import stream reads and mailbox_in and edit will canonicalize
+var OptionFlags = [...][2]string{
+        {"canonicalize", 
+`If set, import stream reads and mailbox_in and edit will canonicalize
 comments by replacing CR-LF with LF, stripping leading and trailing whitespace,
 and then appending a LF.
-"""),
-        ("compressblobs", """\
-    Use compression for on-disk copies of blobs. Accepts an increase
+`},
+        {"compressblobs",
+`Use compression for on-disk copies of blobs. Accepts an increase
 in repository read and write time in order to reduce the amount of
 disk space required while editing; this may be useful for large
 repositories. No effect if the edit input was a dump stream; in that
 case, reposurgeon doesn't make on-disk blob copies at all (it points
 into sections of the input stream instead).
-"""),
-        ("testmode", """\
-Disable some features that cause output to be vary depending on wall time
+`},
+        {"testmode",
+`Disable some features that cause output to be vary depending on wall time
 and the ID of the invoking user. Use in regression-test loads.
-"""),
-        ("bigprofile", """\
-Extra profiling for large repositories.  Mainly of interest to reposurgeon
+`},
+        {"bigprofile",
+`Extra profiling for large repositories.  Mainly of interest to reposurgeon
 developers.
-"""),
+`},
+}
+
+/*
+
+class RepoSurgeon(cmd.Cmd, RepositoryList, SelectionParser):
+    "Repository surgeon command interpreter."
         )
     unclean = regexp.MustCompile("[^\n]*\n[^\n]".encode('ascii'))
 */
@@ -13050,7 +13052,7 @@ CVS empty-comment marker.
 `)
 }
 /*
-    func DoMailbox_in(self, line str):
+    func (rs *Reposurgeon) DoMailbox_in(self, line str):
         "Accept a mailbox file representing object metadata and update from it."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -13299,7 +13301,7 @@ With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
 `)
 }
 /*
-    func DoFilter(self, line str):
+    func (rs *Reposurgeon) DoFilter(self, line str):
         if self.chosen() == None:
             complain("no repo is loaded")
             return
@@ -13425,7 +13427,7 @@ repository objects in a damaged state.
 }
 
 /*
-func DoTranscode(self, line str):
+func (rs *Reposurgeon) DoTranscode(self, line str):
         if self.chosen() == None:
             complain("no repo is loaded")
             return
@@ -13464,7 +13466,7 @@ address.
 `)
 }
 /*
-    func DoSetfield(self, line str):
+    func (rs *Reposurgeon) DoSetfield(self, line str):
         "Set an object field from a string."
         if self.chosen() == None:
             complain("no repo is loaded")
@@ -13504,7 +13506,7 @@ paths, patch the permission field to the first argument value.
 `)
 }
 /*
-    func DoSetperm(self, line str):
+    func (rs *Reposurgeon) DoSetperm(self, line str):
         "Set permissions on M fileops matching a path list."
         if self.chosen() == None:
             complain("no repo is loaded")
@@ -14005,7 +14007,7 @@ branch 'qux', the branch segments are renamed 'qux-early' and
 }
 
 /*
-func DoDivide(self, _line):
+func (rs *Reposurgeon) DoDivide(self, _line):
         "Attempt to topologically partition the repo."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -14093,7 +14095,7 @@ file path matches.
 }
 
 /*
-   func DoExpunge(self, line str):
+   func (rs *Reposurgeon) DoExpunge(self, line str):
         "Expunge files from the chosen repository."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -14130,7 +14132,7 @@ file operations in the original commit.
 }
 
 /*
-func DoSplit(self, line str):
+func (rs *Reposurgeon) DoSplit(self, line str):
         "Split a commit."
         if self.chosen() is None:
             raise Recoverable("no repo has been chosen.")
@@ -14189,7 +14191,7 @@ branch being grafted on.
 `)
     }
 /*
-func DoUnite(self, line str):
+func (rs *Reposurgeon) DoUnite(self, line str):
         "Unite repos together."
         self.unchoose()
         factors = []
@@ -14230,7 +14232,7 @@ of the grafted repository.
 }
 
 /*
-func Dograft(self, line str):
+func (rs *Reposurgeon) Dograft(self, line str):
         "Graft a named repo onto the selected one."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -14272,7 +14274,7 @@ source branch are removed.
 }
 
 /*
-func DoDebranch(self, line str):
+func (rs *Reposurgeon) DoDebranch(self, line str):
         "Turn a branch into a subdirectory."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -14411,7 +14413,7 @@ with no argument, strip the first directory component from every path.
 ` )
     }
 /*
-    func DoPaths(self, line str):
+    func (rs *Reposurgeon) DoPaths(self, line str):
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
@@ -14462,7 +14464,7 @@ This command supports > redirection.
 `)
 }
 /*
-    func DoManifest(self, line str):
+    func (rs *Reposurgeon) DoManifest(self, line str):
         "Print all files (matching the regex) in the selected commits trees."
         if self.chosen() is None:
             raise Recoverable("no repo has been chosen")
@@ -14594,7 +14596,7 @@ commit's first parent, but doesn't need you to find the first parent yourself.
 }
 
 /*
-    func DoUnmerge(self, _line):
+    func (rs *Reposurgeon) DoUnmerge(self, _line):
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
@@ -14682,7 +14684,7 @@ Policy:
 }
 
 /*
-    func DoReparent(self, line str):
+    func (rs *Reposurgeon) DoReparent(self, line str):
         repo = self.chosen()
         if repo is None:
             complain("no repo has been chosen.")
@@ -14822,7 +14824,7 @@ is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
 `)
 }
 /*
-    func DoBranch(self, line str):
+    func (rs *Reposurgeon) DoBranch(self, line str):
         "Rename a branch or delete it."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -14911,7 +14913,7 @@ fields are changed and a warning is issued.
 `)
     }
 /*
-    func DoTag(self, line str):
+    func (rs *Reposurgeon) DoTag(self, line str):
         "Move a tag to point to a specified commit, or rename it, or delete it."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -15072,7 +15074,7 @@ moved, no branch fields are changed.
 }
 
 /*
-    func DoReset(self, line str):
+    func (rs *Reposurgeon) DoReset(self, line str):
         "Move a reset to point to a specified commit, or rename it, or delete it."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -15181,7 +15183,7 @@ default patterns.
 }
 
 /*
-    func DoIgnores(self, line str):
+    func (rs *Reposurgeon) DoIgnores(self, line str):
         "Manipulate ignore patterns in the repo."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -15476,7 +15478,7 @@ output or a >-redirected filename.
 `)
     }
 /*
-    func DoLegacy(self, line str):
+    func (rs *Reposurgeon) DoLegacy(self, line str):
         "Apply a reference-mapping file."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -15516,7 +15518,7 @@ map when the repo is written or rebuilt.
 }
 /*
 
-func DoReferences(self, line str):
+func (rs *Reposurgeon) DoReferences(self, line str):
         "Look for things that might be CVS or Subversion revision references."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -15644,7 +15646,7 @@ set must resolve to a singleton commit.
 }
 
 /*
-func DoCheckout(self, line str):
+func (rs *Reposurgeon) DoCheckout(self, line str):
         "Check out files for a specified commit into a directory."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -15671,7 +15673,7 @@ must resolve to exactly two commits. Supports > redirection.
 }
 
 /*
-    func DoDiff(self,line):
+    func (rs *Reposurgeon) DoDiff(self,line):
         "Display a diff between versions."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -15738,18 +15740,23 @@ dumpfile reads. This may lead to unexpected results if you forget
 to re-set it.
 `)
 }
-/*
-    func DoBranchify(self, line str):
-        if self.selection is not None:
-            panic(throw("command", "branchify does not take a selection set"))
-        if line.strip():
-            globalOptions['svn_branchify'] = line.strip().split()
-        announce(debugSHOUT, "branchify " + " ".join(globalOptions['svn_branchify']))
-    #
-    # Setting branch name rewriting
-    #
-    func help_branchify_map():
-        rs.helpOutput("""
+
+func (rs *Reposurgeon) DoBranchify(line string) (stopOut bool) {
+	if rs.selection != nil {
+		complain("branchify does not take a selection set")
+		return false
+	}
+	if strings.TrimSpace(line) != "" {
+		globalOptions["svn_branchify"] = strings.Fields(strings.TrimSpace(line))
+	}
+	announce(debugSHOUT, "branchify " + strings.Join(globalOptions["svn_branchify"], " "))
+	return false
+}
+//
+// Setting branch name rewriting
+//
+func (rs *Reposurgeon) HelpBranchify_map() {
+	rs.helpOutput(`
 Specify the list of regular expressions used for mapping the svn branches that
 are detected by branchify. If none of the expressions match, the default behavior
 applies. This maps a branch to the name of the last directory, except for trunk
@@ -15781,7 +15788,10 @@ Note that the branchify_map set is a property of the reposurgeon interpreter,
 not of any individual repository, and will persist across Subversion
 dumpfile reads. This may lead to unexpected results if you forget
 to re-set it.
-""")
+`)
+}
+
+/*
     func do_branchify_map(self, line str):
         if self.selection is not None:
             panic(throw("command", "branchify_map does not take a selection set"))
@@ -15805,21 +15815,26 @@ to re-set it.
                 announce(debugSHOUT,  "\t" + match + " -> " + replace)
         else:
             complain("branchify_map is empty.")
-
-    #
-    # Setting options
-    #
-    func help_set():
-        rs.helpOutput("""
+*/
+    //
+    // Setting options
+    //
+func (rs *Reposurgeon) HelpSet() {
+        rs.helpOutput(`
 Set a (tab-completed) boolean option to control reposurgeon's
 behavior.  With no arguments, displays the state of all flags and
 options. The following flags and options are defined:
-""")
-        for (opt, expl) in RepoSurgeon.OptionFlags:
-            os.Stdout.WriteString(opt + ":\n" + expl + "\n")
+
+`)
+        for _, opt := range OptionFlags {
+            fmt.Print(opt[0] + ":\n" + opt[1] + "\n")
+	}
+}
+
+/*
     func CompleteSet(self, text, _line, _begidx, _endidx):
         return sorted([x for (x, _) in RepoSurgeon.OptionFlags if x.startswith(text)])
-    func do_set(self, line str):
+    func (rs *Reposurgeon) DoSet(self, line str):
         if not line.strip():
             for (opt, _expl) in RepoSurgeon.OptionFlags:
                 os.Stdout.WriteString("\t%s = %s\n" % (opt, globalOptions.get(opt, false)))
@@ -15829,14 +15844,20 @@ options. The following flags and options are defined:
                     complain("no such option flag as '%s'" % option)
                 else:
                     globalOptions[option] = true
-    func help_clear():
-        rs.helpOutput("""
+*/
+func (rs *Reposurgeon) HelpClear() {
+        rs.helpOutput(`
 Clear a (tab-completed) boolean option to control reposurgeon's
 behavior.  With no arguments, displays the state of all flags. The
 following flags and options are defined:
-""")
-        for (opt, expl) in RepoSurgeon.OptionFlags:
-            os.Stdout.WriteString(opt + ":\n" + expl + "\n")
+
+`)
+        for _, opt := range OptionFlags {
+            fmt.Print(opt[0] + ":\n" + opt[1] + "\n")
+	}
+}
+
+/*
     CompleteClear := CompleteSet
     func do_clear(self, line str):
         if not line.strip():
@@ -16011,12 +16032,11 @@ func (self *Reposurgeon) DoUndefine(line string) bool {
 	return false
 }
 
-/*
-    #
-    # Timequakes and bumping
-    #
-    func help_timequake():
-        rs.helpOutput("""
+//
+// Timequakes and bumping
+//
+func (rs *Reposurgeon) HelpTimequake() {
+        rs.helpOutput(`
 Attempt to hack committer and author time stamps to make all action
 stamps in the selection set (defaulting to all commits in the
 repository) to be unique.  Works by identifying collisions between parent
@@ -16033,8 +16053,11 @@ to be individually dealt with using 'timebump' commands.
 The normal use case for this command is early in converting CVS or Subversion
 repositories, to ensure that the surgical language can count on having a unique
 action-stamp ID for each commit.
-""")
-    func do_timequake(self, _line):
+`)
+}
+
+/*
+    func (rs *Reposurgeon) DoTimequake(self, _line):
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
@@ -16052,8 +16075,10 @@ action-stamp ID for each commit.
                 baton.twirl("")
             announce(debugSHOUT, "%d events modified" % modified)
         repo.invalidateNamecache()
-    func help_timebump():
-        rs.helpOutput("""
+*/
+
+func (rs *Reposurgeon) HelpTimebump() {
+        rs.helpOutput(`
 Bump the committer and author timestamps of commits in the selection
 set (defaulting to empty) by one second.  With following integer agument,
 that many seconds.  Argument may be negative.
@@ -16061,8 +16086,10 @@ that many seconds.  Argument may be negative.
 The normal use case for this command is early in converting CVS or Subversion
 repositories, cleaning up after 'timequake', to ensure that the surgical
 language can count on having a unique action-stamp ID for each commit.
-""")
-    func do_timebump(self, line str):
+`)
+}
+/*
+    func (rs *Reposurgeon) DoTimebump(self, line string):
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
@@ -16071,12 +16098,12 @@ language can count on having a unique action-stamp ID for each commit.
         offset = int(line) if line else 1
         for (_, event) in self.selected(Commit):
             event.bump(offset)
-
-    #
-    # Changelog processing
-    #
-    func help_changelogs():
-        rs.helpOutput("""
+*/
+//
+// Changelog processing
+//
+func (rs *Reposurgeon) HelpChangelogs() {
+        rs.helpOutput(`
 Mine the ChangeLog files for authorship data.
 
 Assume such files have basenam 'ChangeLog', and that they are in the
@@ -16098,8 +16125,10 @@ In accordance with FSF policy for ChangeLogs, any date in an
 attribution header is discarded and the committer date is used.
 However, if the nam is an author-map alias with an associated timezone,
 that zone is used.
-""")
-    func do_changelogs(self, line str):
+`)
+}
+/*
+    func (rs *Reposurgeon) DoChangelogs(self, line str):
         "Mine repository changelogs for authorship data."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -16236,12 +16265,12 @@ that zone is used.
         repo.invalidateNamecache()
         announce(debugSHOUT, "fills %d of %d authorships, changing %s, from %d ChangeLogs." \
                  % (cm, cc, cd, cl))
-
-    #
-    # Tarball incorporation
-    #
-    func help_incorporate():
-        rs.helpOutput("""
+*/
+//
+// Tarball incorporation
+//
+func (rs *Reposurgeon) HelpIncorporate() {
+    rs.helpOutput(`
 Insert the contents of a specified tarball as a commit.  The tarball name is
 given as an argument.  It may be a gzipped or bzipped tarball.  The initial
 segment of each path is assumed to be a version directory and stripped off.
@@ -16262,8 +16291,11 @@ is generated.  A comment recording the tarball name is generated.
 
 Note that the import stream generated by this command is - while correct -
 not optimal, and may in particular contain duplicate blobs.
-""")
-    func do_incorporate(self, line str):
+`)
+}
+
+/*
+    func (rs *Reposurgeon) DoIncorporate(self, line str):
         "Create a new commit from a tarball."
         if self.chosen() is None:
             complain("no repo has been chosen.")
