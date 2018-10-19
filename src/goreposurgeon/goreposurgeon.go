@@ -11965,7 +11965,7 @@ func (self *Reposurgeon) DoStats(line string) bool {
 				blobs, commits, tags, resets,
 				rfc3339(repo.readtime))
 			if repo.sourcedir != "" {
-				fmt.Fprintf(parse.stdout, "  Loaded from %s\n", repo.sourcedir))
+				fmt.Fprintf(parse.stdout, "  Loaded from %s\n", repo.sourcedir)
 			}
 			//if repo.vcs {
 			//    parse.stdout.WriteString(polystr(repo.vcs) + "\n")
@@ -16497,7 +16497,7 @@ func (self *Reposurgeon) DoPrompt(lineIn string) bool {
 	if lineIn != "" {
 		words, err := shlex.Split(lineIn, true)
 		if err != nil {
-			complain("failed to parse your prompt string: %s", err.Error()))
+			complain("failed to parse your prompt string: %s", err.Error())
 			return false
 		}
 		self.prompt_format = strings.Join(words, " ")
@@ -16705,7 +16705,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 	fname, vars := words[0], words[1:]
 	scriptfp, err := os.Open(fname)
 	if err != nil {
-		complain("script failure on '%s': %s", fname, err))
+		complain("script failure on '%s': %s", fname, err)
 		return
 	}
 	defer scriptfp.Close()
