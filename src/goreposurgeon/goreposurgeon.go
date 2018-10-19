@@ -8677,9 +8677,9 @@ func (repo *Repository) dumptimes() {
 	total := repo.timings[len(repo.timings)-1].stamp.Sub(repo.timings[0].stamp)
 	commitCount := len(repo.commits(nil))
 	if repo.legacyCount <= 0 {
-		fmt.Fprintf(os.Stdout, "        commits: %d\n", commitCount)
+		fmt.Printf("        commits: %d\n", commitCount)
 	} else {
-		fmt.Fprintf(os.Stdout, "        commits: %d (from %d)\n", commitCount, repo.legacyCount)
+		fmt.Printf("        commits: %d (from %d)\n", commitCount, repo.legacyCount)
 	}
 	totalf := float64(total)
 	for i := range repo.timings {
@@ -8687,11 +8687,11 @@ func (repo *Repository) dumptimes() {
 			interval := repo.timings[i].stamp.Sub(repo.timings[i-1].stamp)
 			phase := repo.timings[i].label
 			intervalf := float64(interval)
-			fmt.Fprintf(os.Stdout, "%15s: %v (%2.2f%%)\n",
+			fmt.Printf("%15s: %v (%2.2f%%)\n",
 				phase, interval, (intervalf * 100)/totalf)
 		}
 	}
-	fmt.Fprintf(os.Stdout, "          total: %v (%d/sec)\n", total,
+	fmt.Printf("          total: %v (%d/sec)\n", total,
 		int(float64(time.Duration(commitCount) * time.Second)/float64(total)))
 }
 
@@ -8840,7 +8840,7 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 			var allfiles = newStringSet()
 			err = filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 				if err != nil {
-					fmt.Printf("path access failure %q: %v\n", path, err)
+					complain("path access failure %q: %v", path, err)
 					return err
 				}
 				if info.IsDir() && (info.Name() == vcs.subdirectory || strings.HasPrefix(info.Name(), ".rs")) {
@@ -11441,7 +11441,7 @@ func (rs *Reposurgeon) hasReference(event Event) bool {
 // Generate a repository report on all objects with a specified display method.
 func (self *Reposurgeon) reportSelect(parse *LineParse, display func(*LineParse, int, Event) string) {
 	if self.chosen() == nil {
-		self.cmd.Output("no repo has been chosen.")
+		complain("no repo has been chosen.")
 		return
 	}
 	repo := self.chosen()
@@ -11666,7 +11666,7 @@ func (rs *Reposurgeon) DoResolve(line string) (stopOut bool) {
 		for i, item := range rs.selection {
 			oneOrigin[i] = item + 1
 		}
-		fmt.Printf("%v\n", newOrderedIntSet(oneOrigin...))
+		announce(debugSHOUT, "%v\n", newOrderedIntSet(oneOrigin...))
 	}
 	return false
 }
@@ -11761,7 +11761,7 @@ func (rs *Reposurgeon) HelpNames() {
 List all known symbolic names of branches and tags. Supports > redirection.
 `)
 }
-func (rs *Reposurgeon)  DoNames(line string) (stopOut bool) {
+func (rs *Reposurgeon) DoNames(line string) (stopOut bool) {
 	if rs.chosen() == nil{
 		complain("no repo has been chosen.")
 		return
@@ -11790,7 +11790,7 @@ Dump your command list from this session so far.
 // FIXME: Needs real post-command hook.
 func (rs *Reposurgeon) DoHistory(_line string) (stopOut bool) {
 	for _, line := range rs.history {
-		os.Stdout.WriteString(line + "\n")
+		fmt.Println(line)
 	}
 	return false
 }
@@ -11802,7 +11802,7 @@ func (self *Reposurgeon) HelpCoverage() {
 func (self *Reposurgeon) DoCoverage(lineIn string) bool {
 	repo := self.chosen()
 	if repo == nil {
-		self.cmd.Output("no repo has been chosen.")
+		complain("no repo has been chosen.")
 		return false
 	}
 	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
@@ -11829,7 +11829,7 @@ file in the blob.  Supports > redirection.
 func (self *Reposurgeon) DoIndex(lineIn string) bool {
 	repo := self.chosen()
 	if repo == nil {
-		self.cmd.Output("no repo has been chosen.")
+		complain("no repo has been chosen.")
 		return false
 	}
 	// We could do all this logic using reportSelect() and index() methods
@@ -11965,7 +11965,7 @@ func (self *Reposurgeon) DoStats(line string) bool {
 				blobs, commits, tags, resets,
 				rfc3339(repo.readtime))
 			if repo.sourcedir != "" {
-				io.WriteString(parse.stdout, fmt.Sprintf("  Loaded from %s\n", repo.sourcedir))
+				fmt.Fprintf(parse.stdout, "  Loaded from %s\n", repo.sourcedir))
 			}
 			//if repo.vcs {
 			//    parse.stdout.WriteString(polystr(repo.vcs) + "\n")
@@ -12351,9 +12351,9 @@ func (rs *Reposurgeon) DoSourcetype(line string) (stopOut bool) {
 	repo := rs.chosen()
 	if line == "" {
 		if rs.chosen().vcs != nil {
-			fmt.Fprintf(os.Stdout, "%s: %s\n", repo.name, repo.vcs.name)
+			announce("%s: %s\n", repo.name, repo.vcs.name)
 		} else {
-			fmt.Fprintf(os.Stdout, "%s: no preferred type.\n", repo.name)
+			announce("%s: no preferred type.\n", repo.name)
 		}
 	} else {
 		type VCSAssoc struct {name string; vcs *VCS}
@@ -12425,7 +12425,7 @@ func (rs *Reposurgeon) DoChoose(line string) (stopOut bool) {
 			if !quiet {
 				os.Stdout.WriteString(rfc3339(repo.readtime) + " ")
 			}
-			fmt.Fprintf(os.Stdout, "%s %s\n", status, repo.name)
+			announce("%s %s\n", status, repo.name)
 		}
 	} else {
 		if newStringSet(rs.reponames()...).Contains(line) {
@@ -12434,7 +12434,7 @@ func (rs *Reposurgeon) DoChoose(line string) (stopOut bool) {
 				rs.DoStats(line)
 			}
 		} else {
-			complain(fmt.Sprintf("no such repo as %s", line))
+			complain("no such repo as %s", line)
 		}
 	}
 	return false
@@ -12476,7 +12476,7 @@ func (rs *Reposurgeon) DoDrop(line string) (stopOut bool) {
 		holdrepo.cleanup()
 		rs.removeByName(line)
 	} else {
-		complain(fmt.Sprintf("no such repo as %s", line))
+		complain("no such repo as %s", line)
 	}
 	if verbose > 0 {
 		// Emit listing of remaining repos
@@ -12498,7 +12498,7 @@ func (rs *Reposurgeon) DoRename(line string) (stopOut bool) {
 		panic(throw("command", "rename does not take a selection set"))
 	}
 	if rs.reponames().Contains(line) {
-		complain(fmt.Sprintf("there is already a repo named %s.", line))
+		complain("there is already a repo named %s.", line)
 	} else if rs.chosen() == nil {
 		complain("no repository is currently chosen.")
 	} else {
@@ -12529,7 +12529,7 @@ func (rs *Reposurgeon) DoPreserve(line string) (stopOut bool) {
 	for _, filename := range strings.Fields(line) {
 		rs.chosen().preserve(filename)
 	}
-	announce(debugSHOUT, fmt.Sprintf("preserving %s.", rs.chosen().preservable()))
+	announce(debugSHOUT, "preserving %s.", rs.chosen().preservable())
 	return false
 }
 
@@ -12554,7 +12554,7 @@ func (rs *Reposurgeon) DoUnpreserve(line string) (stopOut bool) {
 	for _, filename := range strings.Fields(line) {
 		rs.chosen().unpreserve(filename)
 	}
-	announce(debugSHOUT, fmt.Sprintf("preserving %s.", rs.chosen().preservable()))
+	announce(debugSHOUT, "preserving %s.", rs.chosen().preservable())
 	return false
 }
 
@@ -12985,11 +12985,11 @@ func (rs *Reposurgeon) DoMailboxOut(lineIn string) bool {
 			var err error
 			filterRegexp, err = regexp.Compile(s[1:len(s)-1])
 			if err != nil {
-				rs.cmd.Output("malformed filter option in mailbox_out\n")
+				complain("malformed filter option in mailbox_out\n")
 				return false
 			}
 		} else {
-			rs.cmd.Output("malformed filter option in mailbox_out\n")
+			complain("malformed filter option in mailbox_out\n")
 			return false
 		}
 	}
@@ -14550,7 +14550,7 @@ merge link is moved to the tagified commit's parent.
                     tipdeletes := "--tipdeletes" in parse.options,
                     tagifyMerges := "--tagify-merges" in parse.options)
             after := len([c for c in repo.commits()])
-            announce(debugSHOUT, fmt.Sprintf("%d commits tagified.", before - after))
+            announce(debugSHOUT, "%d commits tagified.", before - after)
 
         }
     }
@@ -15961,8 +15961,7 @@ func (self *Reposurgeon) DoDo(line string) bool {
 	args := words[1:]
 	replacements := make([]string, 2*len(args))
 	for i, arg := range args {
-		replacements = append(replacements, fmt.Sprintf("{%d}", i))
-		replacements = append(replacements, arg)
+		replacements = append(replacements, fmt.Sprintf("{%d}", i), arg)
 	}
 	body := strings.NewReader(strings.NewReplacer(replacements...).Replace(strings.Join(macro, "\n")))
 
@@ -16459,7 +16458,7 @@ Desplay elapsed time since start.
 `)
 }
 func (rs *Reposurgeon) DoElapsed(_line string) (stopOut bool) {
-	announce(debugSHOUT, fmt.Sprintf("elapsed time %v.", time.Now().Sub(rs.startTime)))
+	announce(debugSHOUT, "elapsed time %v.", time.Now().Sub(rs.startTime))
 	return false
 }
 func (rs *Reposurgeon) HelpExit() {
@@ -16470,7 +16469,7 @@ Typing EOT (usually Ctrl-D) will exit quietly.
 `)
 }
 func (rs *Reposurgeon) DoExit(_line string) (stopOut bool) {
-	announce(debugSHOUT, fmt.Sprintf("exiting, elapsed time %v.", time.Now().Sub(rs.startTime)))
+	announce(debugSHOUT, "exiting, elapsed time %v.", time.Now().Sub(rs.startTime))
 	return true
 }
 
@@ -16498,7 +16497,7 @@ func (self *Reposurgeon) DoPrompt(lineIn string) bool {
 	if lineIn != "" {
 		words, err := shlex.Split(lineIn, true)
 		if err != nil {
-			self.cmd.Output("oops")
+			complain("failed to parse your prompt string: %s", err.Error()))
 			return false
 		}
 		self.prompt_format = strings.Join(words, " ")
@@ -16637,7 +16636,7 @@ func (rs *Reposurgeon) DoVerbose(lineIn string) (stopOut bool) {
 		}
 	}
 	if len(lineIn) == 0 || verbose > 0 {
-		rs.helpOutput(fmt.Sprintf("verbose %d\n", verbose))
+		announce(debugSHOUT, "verbose %d\n", verbose)
 	}
 	return false
 }
@@ -16670,13 +16669,13 @@ func (rs *Reposurgeon) DoEcho(lineIn string) (stopOut bool) {
 	if len(lineIn) != 0 {
 		echo, err := strconv.Atoi(lineIn)
 		if err != nil {
-			rs.cmd.Output("echo value must be an integer\n")
+			complain("echo value must be an integer.")
 		} else {
 			rs.echo = echo
 		}
 	}
 	if verbose > 0 {
-		rs.cmd.Output(fmt.Sprintf("echo %d\n", rs.echo))
+		announce(debugSHOUT, "echo %d\n", rs.echo)
 	}
 	return false
 }
@@ -16706,7 +16705,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 	fname, vars := words[0], words[1:]
 	scriptfp, err := os.Open(fname)
 	if err != nil {
-		interpreter.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
+		complain("script failure on '%s': %s", fname, err))
 		return
 	}
 	defer scriptfp.Close()
@@ -16738,7 +16737,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 		if strings.Contains(scriptline, "<<") {
 			heredoc, err := ioutil.TempFile("", "reposurgeon-")
 			if err != nil {
-				interpreter.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
+				complain("script failure on '%s': %s", fname, err)
 				return
 			}
 			defer os.Remove(heredoc.Name())
@@ -16755,7 +16754,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 				} else {
 					_, err := fmt.Fprint(heredoc, nextline)
 					if err != nil {
-						interpreter.Output(fmt.Sprintf("script failure on '%s': %s", fname, err))
+						complain("script failure on '%s': %s", fname, err)
 						return
 					}
 				}
