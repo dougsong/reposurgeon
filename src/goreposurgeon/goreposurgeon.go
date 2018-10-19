@@ -12194,7 +12194,7 @@ Supports > redirection.
 }
 
 /*
-    func do_lint(self, line: str):
+    func (rs *Reposurgeon) DoLint(self, line: str):
         "Look for lint in a repo."
         if self.chosen() == None:
             complain("no repo has been chosen.")
@@ -12297,7 +12297,7 @@ preference to the type of that repository.
 /*
 func CompletePrefer(self, text, _line, _begidx, _endidx):
         return sorted([x.name for x in vcstypes if x.importer and x.name.startswith(text)])
-    func do_prefer(self, line: str):
+    func (rs *Reposurgeon) DoPrefer(self, line: str):
         "Report or select the preferred repository type."
         if not line:
             for vcs in vcstypes:
@@ -13250,7 +13250,7 @@ Supports < and > redirection.
 `)
 }
 /*
-    func do_edit(self, line str):
+    func (rs *Reposurgeon) DoEdit(self, line str):
         "Edit metadata interactively."
         if self.chosen() == None:
             complain("no repo is loaded")
@@ -13536,7 +13536,7 @@ interpreted using Python's string_decode codec.
 If the option --rstrip is given, the comment is right-stripped before
 the new text is appended.
 """)
-    func do_append(self, line str):
+    func (rs *Reposurgeon) DoAppend(self, line str):
         "Append a line to comments in the specified selection set."
         if self.chosen() == None:
             complain("no repo is loaded")
@@ -13563,7 +13563,7 @@ The default selection set for this command is empty.  Blobs cannot be
 directly affected by this command; they move or are deleted only when
 removal of fileops associated with commits requires this.
 """)
-    func do_squash(self, line str):
+    func (rs *Reposurgeon) DoSquash(self, line str):
         "Squash events in the specified selection set."
         if self.chosen() == None:
             complain("no repo is loaded")
@@ -13583,7 +13583,7 @@ When a commit is deleted, what becomes of tags and fileops attached to
 it is controlled by policy flags.  A delete is equivalent to a
 squash with the --delete flag.
 """)
-    func do_delete(self, line str):
+    func (rs *Reposurgeon) DoDelete(self, line str):
         "Delete events in the specified selection set."
         if self.chosen() == None:
             complain("no repo is loaded")
@@ -13614,7 +13614,7 @@ a convention used by Free Software Foundation projects.
 
 With  the --debug option, show messages about mismatches.
 """)
-    func do_coalesce(self, line str):
+    func (rs *Reposurgeon) DoCoalesce(self, line str):
         "Coalesce events in the specified selection set."
         repo = self.chosen()
         if not repo:
@@ -13693,7 +13693,7 @@ operation to be valid, there must be an M operation for the source
 in the commit's ancestry.
 
 """)
-    func do_add(self, line str):
+    func (rs *Reposurgeon) DoAdd(self, line str):
         "Add a fileop to a specified commit."
         if self.chosen() == None:
             complain("no repo is loaded")
@@ -13772,7 +13772,7 @@ Create a blob at mark :1 after renumbering other marks starting from
 used with the add command to patch data into a repository.
 """)
 /*
-    func do_blob(self, line str):
+    func (rs *Reposurgeon) DoBlob(self, line str):
         "Add a fileop to a specified commit."
         if self.chosen() == None:
             complain("no repo is loaded")
@@ -13807,7 +13807,7 @@ deleted fileop might be the only reference to them. This behavior may
 change in a future release.
 `)
     }
-    func do_remove(self, line str):
+    func (rs *Reposurgeon) DoRemove(self, line str):
         "Delete a fileop from a specified commit."
         repo =  self.chosen()
         if not repo:
@@ -13865,28 +13865,36 @@ change in a future release.
             except IndexError:
                 complain("out-of-range fileop index %s" % ind)
                 return
+*/
 
-    func help_renumber():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpRenumber() {
+        rs.helpOutput(`
 Renumber the marks in a repository, from :1 up to <n> where <n> is the
 count of the last mark. Just in case an importer ever cares about mark
 ordering or gaps in the sequence.
-""")
-    func do_renumber(self, unused):
-        "Renumber the marks in the selected repo."
-        assert unused is not None    # pacify pylint
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        self.repo.renumber()
+`)
+}
 
-    func help_dedup():
-        rs.helpOutput("""
+func (rs *Reposurgeon) DoRenumber(line string) (stopOut bool) {
+        // Renumber the marks in the selected repo.
+        if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return
+        }
+        rs.repo.renumber(1, nil)
+	return false
+}
+
+func (rs *Reposurgeon) HelpDedup() {
+        rs.helpOutput(`
 Deduplicate blobs in the selection set.  If multiple blobs in the selection
 set have the same SHA1, throw away all but the first, and change fileops
 referencing them to instead reference the (kept) first blob.
-""")
-    func do_dedup(self, line str):
+`)
+}
+
+/*
+    func (rs *Reposurgeon) DoDedup(line str):
         "Deduplicate identical (up to SHA1) blobs within the selection set"
         pacify_pylint(line)
         if self.chosen() is None:
@@ -13916,7 +13924,7 @@ Optionally you may also specify another argument in the form [+-]hhmm, a
 timeone literal to apply.  To apply a timezone without an offset, use
 an offset literal of +0 or -0.
 """)
-    func do_timeoffset(self, line str):
+    func (rs *Reposurgeon) Do_timeoffset(self, line str):
         "Apply a time offset to all dates in selected events."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -14191,7 +14199,7 @@ branch being grafted on.
 `)
     }
 /*
-func (rs *Reposurgeon) DoUnite(self, line str):
+func (rs *Reposurgeon) DoUnite(line string):
         "Unite repos together."
         self.unchoose()
         factors = []
@@ -14232,7 +14240,7 @@ of the grafted repository.
 }
 
 /*
-func (rs *Reposurgeon) Dograft(self, line str):
+func (rs *Reposurgeon) DoGraft(line string):
         "Graft a named repo onto the selected one."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -14274,7 +14282,7 @@ source branch are removed.
 }
 
 /*
-func (rs *Reposurgeon) DoDebranch(self, line str):
+func (rs *Reposurgeon) DoDebranch(line string):
         "Turn a branch into a subdirectory."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -14359,7 +14367,7 @@ in the ancestry of the commit, this command throws an error.  With the
 `)
 }
 /*
-    func do_path(self, line str):
+    func (rs *Reposurgeon) DoPath(self, line str):
         "Rename paths in the history."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -14531,7 +14539,7 @@ merge link is moved to the tagified commit's parent.
 }
 /*
     // Search for empty commits and turn them into tags.
-    func (self @@) DoTagify(line str) {
+    func (self *Reposurgeon) DoTagify(line str) {
         repo := self.chosen()
         if repo == nil {
             raise Recoverable("no repo has been chosen")
@@ -15159,7 +15167,9 @@ moved, no branch fields are changed.
 */
 
 func (rs *Reposurgeon) HelpIgnores() {
-        rs.helpOutput(`Intelligent handling of ignore-pattern files.
+        rs.helpOutput(`
+Intelligent handling of ignore-pattern files.
+
 This command fails if no repository has been selected or no preferred write
 type has been set for the repository.  It does not take a selection set.
 
@@ -15353,7 +15363,7 @@ Available actions are:
 }
 
 /*
-    func do_attribution(self, line str):
+    func (rs *Reposurgeon) Do_attribution(self, line str):
         "Inspect, modify, add, and remove commit and tag attributions."
         repo = self.chosen()
         if repo is None:
@@ -15792,7 +15802,7 @@ to re-set it.
 }
 
 /*
-    func do_branchify_map(self, line str):
+    func (rs *Reposurgeon) Do_branchify_map(self, line str):
         if self.selection is not None:
             panic(throw("command", "branchify_map does not take a selection set"))
         line = line.strip()
@@ -15859,7 +15869,7 @@ following flags and options are defined:
 
 /*
     CompleteClear := CompleteSet
-    func do_clear(self, line str):
+    func (rs *Reposurgeon) Do_clear(self, line str):
         if not line.strip():
             for opt in dict(RepoSurgeon.OptionFlags):
                 os.Stdout.WriteString("\t%s = %s\n" % (opt, globalOptions.get(opt, false)))
