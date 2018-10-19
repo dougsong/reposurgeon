@@ -15633,16 +15633,18 @@ func (rs *Reposurgeon) DoGitify(_line string) (stopOut bool) {
 	return false
 }
 
-/*
-    #
-    # Examining tree states
-    #
-    func help_checkout():
-        rs.helpOutput("""
+//
+// Examining tree states
+//
+func (rs *Reposurgeon) HelpCheckout() {
+        rs.helpOutput(`
 Check out files for a specified commit into a directory.  The selection
 set must resolve to a singleton commit.
-""")
-    func do_checkout(self, line str):
+`)
+}
+
+/*
+func DoCheckout(self, line str):
         "Check out files for a specified commit into a directory."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -15659,13 +15661,17 @@ set must resolve to a singleton commit.
         else:
             raise Recoverable("a singleton selection set is required.")
         commit.checkout(line)
+*/
 
-    func help_diff():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpDiff() {
+        rs.helpOutput(`
 Display the difference between commits. Takes a selection-set argument which
 must resolve to exactly two commits. Supports > redirection.
-""")
-    func do_diff(self,line):
+`)
+}
+
+/*
+    func DoDiff(self,line):
         "Display a diff between versions."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -15706,12 +15712,13 @@ must resolve to exactly two commits. Supports > redirection.
                     parse.stdout.WriteString("%s: added\n" % path)
                 else:
                     raise Recoverable("internal error - missing path in diff")
+*/
 
-    #
-    # Setting paths to branchify
-    #
-    func help_branchify():
-        rs.helpOutput("""
+//
+// Setting paths to branchify
+//
+func (rs *Reposurgeon) HelpBranchify() {
+        rs.helpOutput(`
 Specify the list of directories to be treated as potential branches (to
 become tags if there are no modifications after the creation copies)
 when analyzing a Subversion repo. This list is ignored when reading
@@ -15729,8 +15736,10 @@ Note that the branchify set is a property of the reposurgeon interpreter, not
 of any individual repository, and will persist across Subversion
 dumpfile reads. This may lead to unexpected results if you forget
 to re-set it.
-""")
-    func do_branchify(self, line str):
+`)
+}
+/*
+    func DoBranchify(self, line str):
         if self.selection is not None:
             panic(throw("command", "branchify does not take a selection set"))
         if line.strip():
