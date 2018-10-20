@@ -558,8 +558,15 @@ func (vcs VCS) hasReference(comment []byte) bool {
 	return false
 }
 
+type Importer struct {
+	name     string      // importer name
+	visible  bool        // should it be selectable?
+	engine   interface{} // Import engine, either a VCS or extractor class
+	basevcs  *VCS        // Underlying VCS if engine is an extractor
+}
+
 var vcstypes []VCS
-var extractors []Extractor
+var importers []Importer
 
 func init() {
 	vcstypes = []VCS{
@@ -972,8 +979,28 @@ core
 		},
 	}
 
-	// More extractors go in this list
-	extractors = []Extractor{*newGitExtractor(), *newHgExtractor()}
+	for i := range vcstypes {
+		vcs := &vcstypes[i]
+		importers = append(importers, Importer{
+			name: vcs.name,
+			visible: true,
+			engine: vcs,
+			basevcs: nil,
+		})
+	}
+	// Append extractors to this list
+	importers = append(importers, Importer{
+		name:"git-extractor",
+		visible: false,
+		engine: newGitExtractor(),
+		basevcs: findVCS("git"),
+	})
+	importers = append(importers, Importer{
+		name:"hg-extractor",
+		visible: true,
+		engine: newHgExtractor(),
+		basevcs: findVCS("hg"),
+	})
 }
 
 // Import and export filter methods for VCSes that use magic files rather
@@ -1024,19 +1051,8 @@ type CommitMeta struct {
 	branch string
 }
 
-// ExtractorMeta meeds to be composed into each extractor class as the
-// place where its common data lives. The methods that have to be common
-// to extractors are specified by the Extractor interface, next up.
-type ExtractorMeta struct {
-	name    string // extractor name
-	vcs     *VCS   // underlying VCS
-	visible bool   // should it be selectable?
-}
-
 // Extractor specifies common features of all VCS-specific extractor classes
 type Extractor interface {
-	// Return meta-information about an extractor.
-	getMeta() ExtractorMeta
 	// Gather the topologically-ordered lists of revisions and the parent map
 	// (revlist and parent members)
 	gatherRevisionIDs(*RepoStreamer) error
@@ -1181,7 +1197,6 @@ func lineByLine(rs *RepoStreamer, command string, errfmt string,
 
 // GitExtractor is a repository extractor for the git version-control system
 type GitExtractor struct {
-	b ExtractorMeta
 }
 
 func newGitExtractor() *GitExtractor {
@@ -1201,14 +1216,7 @@ func newGitExtractor() *GitExtractor {
 	// test for the generic RepoStreamer code and a model for future
 	// extractors.
 	ge := new(GitExtractor)
-	ge.b.name = "git-extractor"
-	ge.b.vcs = findVCS("git")
-	ge.b.visible = false
 	return ge
-}
-
-func (ge GitExtractor) getMeta() ExtractorMeta {
-	return ge.b
 }
 
 func (ge GitExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
@@ -1434,7 +1442,6 @@ func (ge GitExtractor) getComment(rev string) string {
 
 // HgExtractor is a repository extractor for the hg version-control system
 type HgExtractor struct {
-	b ExtractorMeta
 	ColorMixer
 	tagsFound      bool
 	bookmarksFound bool
@@ -1445,14 +1452,7 @@ func newHgExtractor() *HgExtractor {
 	// start, after the hg extractor runs the tip (most recent
 	// revision on any branch) will be checked out.
 	ge := new(HgExtractor)
-	ge.b.name = "hg-extractor"
-	ge.b.vcs = findVCS("hg")
-	ge.b.visible = true
 	return ge
-}
-
-func (he HgExtractor) getMeta() ExtractorMeta {
-	return he.b
 }
 
 //gatherRevisionIDs gets the topologically-ordered list of revisions and parents.
@@ -1890,7 +1890,7 @@ func (rs *RepoStreamer) fileSetAt(revision string) stringSet {
 	return fs
 }
 
-func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, error) {
+func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Repository, error) {
 	if !rs.extractor.isClean() {
 		return nil, fmt.Errorf("repository directory has unsaved changes")
 	}
@@ -1909,9 +1909,8 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 		}
 	}(&repo, &err)
 
-	meta := rs.extractor.getMeta()
 	repo.makedir()
-	front := fmt.Sprintf("#reposurgeon sourcetype %s\n", meta.vcs.name)
+	front := fmt.Sprintf("#reposurgeon sourcetype %s\n", vcs.name)
 	repo.addEvent(newPassthrough(repo, front))
 
 	err = rs.extractor.gatherRevisionIDs(rs)
@@ -2116,7 +2115,7 @@ func (rs *RepoStreamer) extract(repo *Repository, progress bool) (*Repository, e
 		}
 	}
 	rs.extractor.postExtract(repo)
-	repo.vcs = meta.vcs
+	repo.vcs = vcs
 	return repo, err
 }
 
@@ -8707,31 +8706,34 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 	hitcount := 0
 	var extractor *Extractor
 	var vcs *VCS
-	var vcsname string
-	for i, possible := range vcstypes {
-		if preferred != nil && possible.name != preferred.name {
-			continue
-		}
-		subdir := source + "/" + possible.subdirectory
-		subdir = filepath.FromSlash(subdir)
-		if exists(subdir) && isdir(subdir) && possible.exporter != "" {
-			vcs = &vcstypes[i]
-			vcsname = vcs.name 
-			hitcount++
-		}
-	}
-	for i, possible := range extractors {
-		if preferred != nil && !newStringSet(preferred.name, preferred.name + "-extractor").Contains(possible.getMeta().name) {
-			continue
-		}
-		meta := possible.getMeta()
-		subdir := source + "/" + meta.vcs.subdirectory
-		subdir = filepath.FromSlash(subdir)
-		if exists(subdir) && isdir(subdir) {
-			if (meta.visible || preferred != nil) && meta.name == preferred.name {
-				extractor = &extractors[i]
-				vcsname = meta.name
+	for _, possible := range importers {
+		switch possible.engine.(type) {
+		case *VCS:
+			trialVCS := possible.engine.(*VCS)
+			if preferred != nil && possible.name != preferred.name {
+				continue
+			}
+			extractor = nil
+			subdir := source + "/" + trialVCS.subdirectory
+			subdir = filepath.FromSlash(subdir)
+			if exists(subdir) && isdir(subdir) && trialVCS.exporter != "" {
+				vcs = trialVCS
 				hitcount++
+			}
+		case *Extractor:
+			trialExtractor := possible.engine.(*Extractor)
+			if preferred != nil && !newStringSet(preferred.name, preferred.name + "-extractor").Contains(possible.name) {
+				continue
+			}
+			trialVCS := possible.basevcs
+			subdir := source + "/" + trialVCS.subdirectory
+			subdir = filepath.FromSlash(subdir)
+			if exists(subdir) && isdir(subdir) {
+				if (possible.visible || preferred != nil) && trialVCS.name == preferred.name {
+					vcs = trialVCS
+					extractor = trialExtractor
+					hitcount++
+				}
 			}
 		}
 	}
@@ -8740,7 +8742,7 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 	} else if hitcount > 1 {
 		return nil, fmt.Errorf("too many repos under %s", relpath(source))
 	} else if debugEnable(debugSHUFFLE) {
-		announce(debugSHUFFLE, "found %s repository", vcsname)
+		announce(debugSHUFFLE, "found %s repository", vcs.name)
 	}
 	repo := newRepository("")
 	repo.sourcedir = source
@@ -8755,6 +8757,13 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 	}
 	defer chdir(here, "original")
 	chdir(repo.sourcedir, "repository directory")
+	// We found a matching custom extractor
+	if extractor != nil {
+		repo.stronghint = true
+		streamer := newRepoStreamer(*extractor)
+		streamer.extract(repo, vcs, verbose>0)
+		return repo, nil
+	}
 	// We found a matching VCS type
 	if vcs != nil {
 		repo.hint("", vcs.name, true)
@@ -8933,12 +8942,6 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 				}
 			}
 		}
-	}
-	// We found a matching custom extractor
-	if extractor != nil {
-		repo.stronghint = true
-		streamer := newRepoStreamer(*extractor)
-		streamer.extract(repo, verbose>0)
 	}
 	return repo, nil
 }
@@ -12297,30 +12300,50 @@ preference to the type of that repository.
 /*
 func CompletePrefer(self, text, _line, _begidx, _endidx):
         return sorted([x.name for x in vcstypes if x.importer and x.name.startswith(text)])
-    func (rs *Reposurgeon) DoPrefer(self, line: str):
-        "Report or select the preferred repository type."
-        if not line:
-            for vcs in vcstypes:
-                os.Stdout.WriteString(str(vcs) + "\n")
-            for option in fileFilters:
-                os.Stdout.WriteString("read and write have a --format=%s option that supports %s files.\n"
-                      % (option, option.capitalize()))
-            if any(ext.visible and not ext.vcstype for ext in extractors):
-                os.Stdout.WriteString("Other systems supported for read only: %s\n\n" \
-                      % " ".join(ext.name for ext in extractors if ext.visible))
-        else:
-            for repotype in vcstypes + extractors:
-                if line.lower() == repotype.name:
-                    self.preferred = repotype
-                    break
-            else:
-                complain("known types are %s." % " ".join([x.name for x in vcstypes] + [x.name for x in extractors if x.visible]))
-        if verbose:
-            if not self.preferred:
-                os.Stdout.WriteString("No preferred type has been set.\n")
-            else:
-                os.Stdout.WriteString("%s is the preferred type.\n" % self.preferred.name)
 */
+// Report or select the preferred repository type.
+func (rs *Reposurgeon) DoPrefer(line string) (stopOut bool) {
+	if line == "" {
+		for _, vcs := range vcstypes {
+			fmt.Fprint(os.Stdout, vcs.String() + "\n")
+		}
+		for option, _ := range fileFilters {
+			fmt.Fprintf(os.Stdout, "read and write have a --format=%s option that supports %s files.\n", option, strings.ToTitle(option))
+		}
+		extractable := make([]string, 0)
+		for _, importer := range importers {
+			if importer.visible && importer.basevcs != nil {
+				extractable = append(extractable, importer.name)
+			}
+		}
+		if len(extractable) > 0 {
+			fmt.Fprintf(os.Stdout, "Other systems supported for read only: %s\n\n", strings.Join(extractable, " "))
+		}
+	} else {
+		known := ""
+		rs.preferred = nil
+		for _, repotype := range importers {
+			if repotype.basevcs == nil && strings.ToLower(line) == repotype.name {
+				rs.preferred = repotype.engine.(*VCS)
+				return false
+			}
+			if repotype.visible {
+				known += " " + repotype.name
+			}
+ 		}
+		if rs.preferred == nil {
+			complain("known types are: %s\n", known)
+		}
+	}
+	if verbose > 0 {
+		if rs.preferred == nil{
+			fmt.Fprint(os.Stdout, "No preferred type has been set.\n")
+		} else {
+			fmt.Fprint(os.Stdout, fmt.Sprintf("%s is the preferred type.\n", rs.preferred.name))
+		}
+	}
+	return false
+}
 
 func (rs *Reposurgeon) HelpSourcetype() {
         rs.helpOutput(`
@@ -12351,31 +12374,22 @@ func (rs *Reposurgeon) DoSourcetype(line string) (stopOut bool) {
 	repo := rs.chosen()
 	if line == "" {
 		if rs.chosen().vcs != nil {
-			announce("%s: %s\n", repo.name, repo.vcs.name)
+			fmt.Printf("%s: %s\n", repo.name, repo.vcs.name)
 		} else {
-			announce("%s: no preferred type.\n", repo.name)
+			fmt.Printf("%s: no preferred type.\n", repo.name)
 		}
 	} else {
-		type VCSAssoc struct {name string; vcs *VCS}
-		supported := make([]string, 0)
-		lookup := make([]VCSAssoc, 0)
-		for i, v := range vcstypes {
-			supported = append(supported, v.name)
-			lookup = append(lookup, VCSAssoc{vcstypes[i].name, &vcstypes[i]}) 
-		}
-		for i, x := range extractors {
-			if x.getMeta().visible {
-				supported = append(supported, x.getMeta().name)
-				lookup = append(lookup, VCSAssoc{extractors[i].getMeta().name, extractors[i].getMeta().vcs}) 
-			}
-		}
-		for _, repotype := range lookup {
-			if strings.ToLower(line) == repotype.name {
-				rs.chosen().vcs = repotype.vcs
+		known := ""
+		for _, importer := range importers {
+			if strings.ToLower(line) == importer.name {
+				rs.chosen().vcs = importer.basevcs
 				return false
 			}
-		}
-		complain("known types are %v.", supported)
+			if importer.visible {
+				known += " " + importer.name
+			}
+ 		}
+		complain("known types are %v.", known)
 	}
 	return false
 }
@@ -12423,9 +12437,9 @@ func (rs *Reposurgeon) DoChoose(line string) (stopOut bool) {
 				status = "*"
 			}
 			if !quiet {
-				os.Stdout.WriteString(rfc3339(repo.readtime) + " ")
+				fmt.Fprint(os.Stdout, rfc3339(repo.readtime) + " ")
 			}
-			announce("%s %s\n", status, repo.name)
+			fmt.Printf("%s %s\n", status, repo.name)
 		}
 	} else {
 		if newStringSet(rs.reponames()...).Contains(line) {
@@ -13305,7 +13319,7 @@ With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
         if self.chosen() == None:
             complain("no repo is loaded")
             return
-        if not line:
+        if line == "":
             complain("no filter is specified")
             return
         if self.selection is None:
@@ -13931,7 +13945,7 @@ an offset literal of +0 or -0.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        if not line:
+        if line == "":
             complain("a signed time offset argument is required.")
             return
         else if line[0] not in ('-', '+'):
@@ -14441,13 +14455,13 @@ with no argument, strip the first directory component from every path.
             prefix = fields[1]
             modified = self.chosen().path_walk(self.selection,
                                                lambda f: os.path.join(prefix,f))
-            os.Stdout.WriteString("\n".join(modified) + "\n")
+            fmt.Fprint(os.stdout, "\n".join(modified) + "\n")
         else if fields[0] == "sup":
             if len(fields) == 1:
                 try:
                     modified = self.chosen().path_walk(self.selection,
                                                    lambda f: f[f.find(os.sep)+1:])
-                    os.Stdout.WriteString("\n".join(modified) + "\n")
+                    fmt.Fprint(os.stdout, "\n".join(modified) + "\n")
                 except IndexError:
                     raise Recoverable("no / in sup path.")
             else:
@@ -14456,7 +14470,7 @@ with no argument, strip the first directory component from every path.
                     prefix = prefix + os.sep
                 modified = self.chosen().path_walk(self.selection,
                                                lambda f: f[len(prefix):] if f.startswith(prefix) else f)
-                os.Stdout.WriteString("\n".join(modified) + "\n")
+                fmt.Fprint(os.stdout, "\n".join(modified) + "\n")
         self.chosen().invalidateManifests()
 */
 
@@ -15664,7 +15678,7 @@ func (rs *Reposurgeon) DoCheckout(self, line str):
         repo = self.chosen()
         if self.selection is None:
             self.selection = self.chosen().all()
-        if not line:
+        if line == "":
             raise Recoverable("no target directory specified.")
         if len(self.selection) == 1:
             commit = repo.events[self.selection[0]]
@@ -15802,7 +15816,7 @@ to re-set it.
 }
 
 /*
-    func (rs *Reposurgeon) Do_branchify_map(self, line str):
+    func (rs *Reposurgeon) DoBranchify_map(self, line str):
         if self.selection is not None:
             panic(throw("command", "branchify_map does not take a selection set"))
         line = line.strip()
@@ -15847,7 +15861,7 @@ options. The following flags and options are defined:
     func (rs *Reposurgeon) DoSet(self, line str):
         if not line.strip():
             for (opt, _expl) in RepoSurgeon.OptionFlags:
-                os.Stdout.WriteString("\t%s = %s\n" % (opt, globalOptions.get(opt, false)))
+                fmt.Fprint(os.stdout, "\t%s = %s\n" % (opt, globalOptions.get(opt, false)))
         else:
             for option in line.split():
                 if option not in dict(RepoSurgeon.OptionFlags):
@@ -15869,10 +15883,10 @@ following flags and options are defined:
 
 /*
     CompleteClear := CompleteSet
-    func (rs *Reposurgeon) Do_clear(self, line str):
+    func (rs *Reposurgeon) DoClear(self, line str):
         if not line.strip():
             for opt in dict(RepoSurgeon.OptionFlags):
-                os.Stdout.WriteString("\t%s = %s\n" % (opt, globalOptions.get(opt, false)))
+                fmt.Fprint(os.stdout, "\t%s = %s\n" % (opt, globalOptions.get(opt, false)))
         else:
             for option in line.split():
                 if option not in dict(RepoSurgeon.OptionFlags):
@@ -16433,8 +16447,10 @@ func (rs *Reposurgeon) DoVersion(line string) (stopOut bool) {
 		for _, v := range vcstypes {
 			supported = append(supported, v.name)
 		}
-		for _, x := range extractors {
-			supported = append(supported, x.getMeta().name)
+		for _, x := range importers {
+			if x.visible{
+				supported = append(supported, x.name)
+			}
 		}
 		announce(debugSHOUT, "reposurgeon " + version + " supporting " + strings.Join(supported, " "))
 	} else {
