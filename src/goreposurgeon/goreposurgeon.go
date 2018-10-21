@@ -232,6 +232,14 @@ func filecopy(src, dst string) (int64, error) {
 	return nBytes, err
 }
 
+// hasAttr emulates Python hasattr using the Go reflection system
+func hasAttr(obj interface{}, fld string) bool {
+	objValue := reflect.ValueOf(obj)
+	objType := objValue.Type()
+	_, ok := objType.FieldByName(fld)
+	return ok
+}
+
 // This representation optimizes for small memory footprint at the expense
 // of speed.  To make the opposite trade we would do the obvious thing with
 // map[string] bool.
@@ -2366,6 +2374,7 @@ func nuke(directory string, legend string) {
 }
 
 func complain(msg string, args ...interface{}) {
+	// FIXME: set plag to abort script execution
 	content := fmt.Sprintf(msg, args...)
 	os.Stderr.WriteString("reposurgeon: " + content + "\n")
 }
@@ -3093,6 +3102,11 @@ func (b *Blob) materialize() string {
 	return b.getBlobfile(false)
 }
 
+// what to treat as a coment when message-boxing
+func (b Blob) getComment() string {
+	return b.getContent()
+}
+
 // sha returns the SHA-1 hash of the blob content. Used only for indexing,
 // does not need to be crypto-quality
 func (b *Blob) sha() string {
@@ -3249,7 +3263,7 @@ func (t *Tag) index() int {
 }
 
 // getComment returns the comment attached to a tag
-func (t *Tag) getComment() string { return t.comment }
+func (t Tag) getComment() string { return t.comment }
 
 // idMe IDs this tag for humans."
 func (t Tag) idMe() string {
@@ -3518,6 +3532,11 @@ func (reset Reset) getMark() string {
 	return ""
 }
 
+// what to treat as a coment when message-boxing (dummy to satify Event)
+func (reset Reset) getComment() string {
+	return ""
+}
+	
 // remember records an attachment to a repo and commit.
 func (reset *Reset) remember(repo *Repository, committish string) {
 	reset.repo = repo
@@ -3838,6 +3857,11 @@ func (callout Callout) idMe() string {
 	return fmt.Sprintf("callout-%s", callout.mark)
 }
 
+// what to treat as a coment when message-boxing (dummy to satisfy Event)
+func (callout Callout) getComment() string {
+	return ""
+}
+	
 // Stub to satisfy Event interface - should never be used
 func (callout Callout) String() string {
 	return fmt.Sprintf("callout-%s", callout.mark)
@@ -3920,7 +3944,7 @@ func (commit *Commit) index() int {
 }
 
 // getComment returns the comment attached to a commit
-func (commit *Commit) getComment() string { return commit.comment }
+func (commit Commit) getComment() string { return commit.comment }
 
 // idMe IDs this commit for humans.
 func (commit Commit) idMe() string {
@@ -5066,7 +5090,7 @@ func newPassthrough(repo *Repository, line string) *Passthrough {
 	return p
 }
 
-// emailOut enables do_mailbox_out() to report these.
+// emailOut enables DoMailbox_out() to report these.
 func (p *Passthrough) emailOut(_modifiers stringSet,
 	eventnum int, _filterRegexp *regexp.Regexp) string {
 	msg, _ := newMessageBlock(nil)
@@ -5090,7 +5114,7 @@ func (p Passthrough) getMark() string {
 }
 
 // getComment returns the text attached to a passthrough
-func (p *Passthrough) getComment() string { return p.text }
+func (p Passthrough) getComment() string { return p.text }
 
 // String reports this passthrough in import-stream format.
 func (p Passthrough) String() string {
@@ -6309,6 +6333,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 type Event interface {
 	idMe() string
 	getMark() string
+	getComment() string
 	String() string
 	getDelFlag() bool
 }
@@ -6317,6 +6342,7 @@ type Event interface {
 type CommitLike interface {
 	idMe() string
 	getMark() string
+	getComment() string
 	callout() string
 	String() string
 	getDelFlag() bool
@@ -10888,16 +10914,36 @@ type Reposurgeon struct {
 	history          []string
 	preferred        *VCS
 	startTime        time.Time
-	prompt_format    string
+        prompt           string
+	promptFormat     string
 }
+
+/*
+        self.use_rawinput = true
+        self.ignorename = None
+        self.callstack = []
+        self.definitions = {}
+        self.capture = None
+*/
+
+
+var unclean = regexp.MustCompile("[^\n]*\n[^\n]")
 
 func newReposurgeon() *Reposurgeon {
 	rs := new(Reposurgeon)
 	rs.SelectionParser.subclass = rs
 	rs.startTime = time.Now()
-	rs.prompt_format = "goreposurgeon% "
+	rs.promptFormat = "goreposurgeon% "
 	rs.definitions = make(map[string][]string)
 	rs.inputIsStdin = true
+	rs.prompt = "reposurgeon%"
+        rs.promptFormat = "reposurgeon%% "
+	// These are globals and should probably be set in init().
+        for _, option := range optionFlags {
+		listOptions[option[0]] = newStringSet()
+	}
+        listOptions["svn_branchify"] = stringSet{"trunk", "tags/*", "branches/*", "*"}
+        listOptions["svn_branchify_mapping"] = stringSet{}
 	return rs
 }
 
@@ -10930,37 +10976,6 @@ func (rs *Reposurgeon) HelpQuit() {
 func (rs *Reposurgeon) DoQuit(lineIn string) (stopOut bool) {
 	return true
 }
-
-/*
-
-class RepoSurgeon(cmd.Cmd, RepositoryList, SelectionParser):
-    "Repository surgeon command interpreter."
-        )
-    unclean = regexp.MustCompile("[^\n]*\n[^\n]".encode('ascii'))
-*/
-
-/*
-    func __init__():
-        cmd.Cmd.__init__()
-        RepositoryList.__init__()
-        SelectionParser.__init__()
-        self.use_rawinput = true
-        self.echo = 0
-        self.prompt = "reposurgeon% "
-        self.prompt_format = "reposurgeon%% "
-        self.preferred = None
-        self.ignorename = None
-        self.selection = []
-        self.history = []
-        self.callstack = []
-        self.definitions = {}
-        self.capture = None
-        self.startTime = time.time()
-        for option in dict(RepoSurgeon.OptionFlags):
-            listOptions[option] = []
-        listOptions['svn_branchify'] = ['trunk', 'tags/*', 'branches/*', '*']
-        listOptions['svn_branchify_mapping'] = []
-*/
 
 //
 // Housekeeping hooks.
@@ -11009,7 +11024,7 @@ func (self *Reposurgeon) PostCommand(stop bool, lineIn string) bool {
 		chosen_name = self.chosen().name
 	}
 	replacer := strings.NewReplacer("{chosen}", chosen_name)
-	self.cmd.Prompt = replacer.Replace(self.prompt_format)
+	self.cmd.Prompt = replacer.Replace(self.promptFormat)
 
 	return stop
 }
@@ -13079,186 +13094,258 @@ if it tries to alter a message body that is neither empty nor consists of the
 CVS empty-comment marker.
 `)
 }
-/*
-    func (rs *Reposurgeon) DoMailbox_in(self, line str):
-        "Accept a mailbox file representing object metadata and update from it."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        with rs.newLineParse(line, capabilities=["stdin","stdout"]) as parse:
-            update_list = []
-            while true:
-                var msg MessageBlock
-                err = msg.readMessage(parse.stdin)
-                if err != nil:
-                    break
-                update_list.append(email.message_from_string(msg))
-        # First, a validation pass
-        attribution_by_author = {}
-        attribution_by_committer = {}
-        name_map = {}
-        author_counts = collections.Counter()
-        committer_counts = collections.Counter()
-        for commit in self.chosen().commits():
-            stamp = commit.actionStamp()
-            if stamp in attribution_by_author and attribution_by_author[stamp] != commit:
-                author_counts[stamp]++
-            attribution_by_author[stamp] = commit
-            stamp = commit.committer.action_stamp()
-            if stamp in attribution_by_committer and attribution_by_committer[stamp] != commit:
-                committer_counts[stamp]++
-            attribution_by_committer[stamp] = commit
-        for event in self.chosen().events:
-            if tag, ok := event.(*Tag); ok:
-                if event.name:
-                    name_map[event.name] = event
-                if event.tagger:
-                    stamp = event.tagger.action_stamp()
-                    if stamp in attribution_by_author and attribution_by_author[stamp] != event:
-                        author_counts[stamp]++
-                    attribution_by_author[stamp] = event
-        legacyMap = {}
-        for commit in self.chosen().commits():
-            if commit.legacyID:
-                legacyMap[commit.legacyID] = commit
-        events = []
-        errors = 0
-        # Special case - event creation
-        if '--create' in parse.options:
-            for (i, message) in enumerate(update_list):
-                if "Tag-Name" in message:
-                    blank = Tag()
-                    blank.tagger = Attribution()
-                    blank.emailIn(message, fill=true)
-                    blank.committish = [c for c in self.chosen().commits()][-1].mark
-                    #self.chosen().addEvent(blank)
-                else:
-                    blank = Commit()
-                    blank.committer = Attribution()
-                    blank.emailIn(message, fill=true)
-                    blank.mark = self.chosen().newmark()
-                    blank.repo = self.chosen()
-                    if not blank.branch:
-                        # Avoids crapping out on name lookup.
-                        blank.branch = "generated-" + blank.mark[1:]
-                    if not self.selection or len(self.selection) != 1:
-                        self.chosen().addEvent(blank)
-                    else:
-                        event = self.chosen().events[self.selection[0]]
-                        blank.setParents([event])
-                        self.chosen().addEvent(blank, where=self.selection[0]+1)
-            self.chosen().declareSequenceMutation("event creation")
-            return
-        # Normal case - no --create
-        for (i, message) in enumerate(update_list):
-            event = None
-            if "Event-Number" in message:
-                try:
-                    eventnum = int(message["Event-Number"]) - 1
-                except ValueError:
-                    complain("event number garbled in update %d" % (i+1,))
-                    errors++
-                else:
-                    if eventnum < 0 or eventnum >= len(self.chosen()):
-                        complain("event number %d out of range in update %d" \
-                                        % (eventnum, i+1))
-                        errors++
-                    else:
-                        event = self.chosen()[eventnum]
-            else if "Legacy-ID" in message:
-                try:
-                    event = legacyMap[message["Legacy-ID"]]
-                except KeyError:
-                    complain("no commit matches legacy-ID %s" \
-                                      % message["Legacy-ID"])
-                    errors++
-            else if "Event-Mark" in message:
-                event = self.chosen().markToEvent(message["Event-Mark"])
-                if not event:
-                    complain("no commit matches mark %s" \
-                             % message["Event-Mark"])
-                    errors++
-            else if "Author" in message and "Author-Date" in message:
-                blank = Commit()
-                blank.authors.append(Attribution())
-                blank.emailIn(message)
-                stamp = blank.action_stamp()
-                try:
-                    event = attribution_by_author[stamp]
-                except KeyError:
-                    complain("no commit matches stamp %s" % stamp)
-                    errors++
-                if author_counts[stamp] > 1:
-                    complain("multiple events (%d) match %s" % (author_counts[stamp], stamp))
-                    errors++
-            else if "Committer" in message and "Committer-Date" in message:
-                blank = Commit()
-                blank.committer = Attribution()
-                blank.emailIn(message)
-                stamp = blank.committer.action_stamp()
-                try:
-                    event = attribution_by_committer[stamp]
-                except KeyError:
-                    complain("no commit matches stamp %s" % stamp)
-                    errors++
-                if committer_counts[stamp] > 1:
-                    complain("multiple events (%d) match %s" % (committer_counts[stamp], stamp))
-                    errors++
-            else if "Tagger" in message and "Tagger-Date" in message:
-                blank = Tag()
-                blank.tagger = Attribution()
-                blank.emailIn(message)
-                stamp = blank.tagger.action_stamp()
-                try:
-                    event = attribution_by_author[stamp]
-                except KeyError:
-                    complain("no tag matches stamp %s" % stamp)
-                    errors++
-                if author_counts[stamp] > 1:
-                    complain("multiple events match %s" % stamp)
-                    errors++
-            else if "Tag-Name" in message:
-                blank = Tag()
-                blank.tagger = Attribution()
-                blank.emailIn(message)
-                try:
-                    event = name_map[blank.name]
-                except KeyError:
-                    complain("no tag matches name %s" % blank.name)
-                    errors++
-            else:
-                complain("no commit matches update %d:\n%s" % (i+1, message.as_string()))
-                errors++
-            if event is not None and not hasattr(event, "emailIn"):
-                try:
-                    complain("event %d cannot be modified"%(event.index()+1))
-                except AttributeError:
-                    complain("event cannot be modified")
-                errors++
-            # Always append, even None, to stay in sync with update_list
-            events.append(event)
-        if errors > 0:
-            raise Recoverable("%d errors in metadata updates" % errors)
-        # Now apply the updates
-        changers = []
-        for (i, (event, update)) in enumerate(zip(events, update_list)):
-            if "Check-Text" in update and not event.comment.strip().startswith(update["Check-Text"].strip()):
-                raise Recoverable("check text mismatch at %s (input %s of %s), expected %s saw %s, bailing out" % (event.action_stamp(), i+1, len(update_list), repr(update["Check-Text"]), repr(event.comment[:64])))
-            if '--empty-only' in parse.options:
-                if event.comment != update.get_payload() and not emptyComment(event.comment):
-                    raise Recoverable("nonempty comment at %s (input %s of %s), bailing out" % (event.action_stamp(), i+1, len(update_list)))
-            if event.emailIn(update):
-                changers.append(update)
-        if verbose:
-            if not changers:
-                complain("no events modified by mailbox_in.")
-            else:
-                complain("%d events modified by mailbox_in." % len(changers))
-        if parse.stdout != os.Stdout:
-            if "--changed" in parse.options:
-                for update in changers:
-                    parse.stdout.WriteString(MessageBlockDivider + "\n" + update.as_string(unixfrom=false))
-*/
+
+// Accept a mailbox file representing object metadata and update from it.
+func (rs *Reposurgeon) DoMailbox_in(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+	}
+	repo := rs.chosen()
+	parse := rs.newLineParse(line, stringSet{"stdin","stdout"})
+	defer parse.Closem()
+	updateList := make([]*MessageBlock, 0)
+	r := bufio.NewReader(parse.stdin)
+	if r == nil {
+		complain("reader creation failed")
+		return false
+	}
+	for {
+		msg, err := newMessageBlock(r)
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			complain("malformed message block: %v", err)
+			return false
+		}
+		updateList = append(updateList, msg)
+        }
+	// First, a validation pass
+	attribution_by_author := make(map[string]Event)
+	attribution_by_committer := make(map[string]Event)
+	name_map := make(map[string]*Tag)
+	author_counts := make(map[string]int)
+	committer_counts := make(map[string]int)
+	for _, commit := range repo.commits(nil) {
+		stamp := commit.actionStamp()
+		if found, ok := attribution_by_author[stamp]; ok && found != commit {
+			author_counts[stamp]++
+		}
+		attribution_by_author[stamp] = commit
+		stamp = commit.committer.actionStamp()
+		if found, ok := attribution_by_committer[stamp]; ok && found != commit {
+			committer_counts[stamp]++
+		}
+		attribution_by_committer[stamp] = commit
+	}
+	for _, event := range repo.events {
+		if tag, ok := event.(*Tag); ok {
+			if tag.name != "" {
+				name_map[tag.name] = tag
+			}
+			if tag.tagger != nil {
+				stamp := tag.tagger.actionStamp()
+				if found, ok := attribution_by_author[stamp]; ok && found != tag {
+					author_counts[stamp]++
+				}
+				attribution_by_author[stamp] = tag
+			}
+		}
+	}
+	legacyMap := make(map[string]*Commit)
+	for _, commit := range repo.commits(nil) {
+		if commit.legacyID != ""{
+			legacyMap[commit.legacyID] = commit
+		}
+	}
+	// Special case - event creation
+	if parse.options.Contains("--create")  {
+		for _, message := range updateList {
+			if strings.Contains(message.String(), "Tag-Name")  {
+				blank := newTag(repo, "", "", nil, "")
+				blank.tagger = newAttribution("")
+				blank.emailIn(message, true)
+				commits := repo.commits(nil)
+				blank.committish = commits[len(commits)-1].mark
+				//repo.addEvent(blank)
+			} else {
+				blank := newCommit(repo)
+				blank.committer = *newAttribution("")
+				blank.emailIn(message, true)
+				blank.mark = repo.newmark()
+				if blank.branch == "" {
+					// Avoids crapping out on name lookup.
+					blank.branch = "generated-" + blank.mark[1:]
+				}
+				if rs.selection == nil || len(rs.selection) != 1 {
+					repo.addEvent(blank)
+				} else {
+					// FIXME: needs careful testing, these
+					// type conversions are weird.
+					commit, ok := repo.events[rs.selection[0]].(CommitLike)
+					if ok {
+						blank.setParents([]CommitLike{commit})
+						repo.insertEvent(blank, rs.selection[0]+1, "vent creation from message block")
+					}
+				}
+			}
+		}
+		repo.declareSequenceMutation("event creation")
+		return false
+	}
+	// Normal case - no --create
+	events := make([]Event, 0)
+	errorCount := 0
+	var event Event
+	for i, message := range updateList {
+		event = nil
+		if message.getHeader("Event-Number") != ""  {
+			eventnum, err := strconv.Atoi(message.getHeader("Event-Number"))
+			if err != nil {
+				complain("event number garbled in update %d: %v",i+1, err)
+				errorCount++
+			} else {
+				eventnum--
+				if eventnum < 0 || eventnum >= len(repo.events) {
+					complain("event number %d out of range in update %d",
+						eventnum, i+1)
+					errorCount++
+				} else {
+					event = repo.events[eventnum]
+				}
+			}
+		} else if message.getHeader("Legacy-ID") != "" {
+			event = legacyMap[message.getHeader("Legacy-ID")]
+			if event == nil {
+				complain("no commit matches legacy-ID %s",
+					message.getHeader("Legacy-ID"))
+				errorCount++
+			}
+		} else if message.getHeader("Event-Mark") != "" {
+			event = repo.markToEvent(message.getHeader("Event-Mark"))
+			if event == nil {
+				complain("no commit matches mark %s",
+					message.getHeader("Event-Mark"))
+				errorCount++
+			}
+		} else if message.getHeader("Author") != "" && message.getHeader("Author-Date") != "" {
+			blank := newCommit(repo)
+			blank.authors = append(blank.authors, *newAttribution(""))
+			blank.emailIn(message, false)
+			stamp := blank.actionStamp()
+			event = attribution_by_author[stamp]
+			if event == nil {
+				complain("no commit matches stamp %s", stamp)
+				errorCount++
+			}
+			if author_counts[stamp] > 1 {
+				complain("multiple events (%d) match %s", author_counts[stamp], stamp)
+				errorCount++
+			}
+		} else if message.getHeader("Committer") != "" && message.getHeader("Committer-Date") != "" {
+			blank := newCommit(repo)
+			blank.committer = *newAttribution("")
+			blank.emailIn(message, false)
+			stamp := blank.committer.actionStamp()
+			event = attribution_by_committer[stamp]
+			if event == nil {
+				complain("no commit matches stamp %s", stamp)
+				errorCount++
+			}
+			if committer_counts[stamp] > 1 {
+				complain(fmt.Sprintf("multiple events (%d) match %s", committer_counts[stamp], stamp))
+				errorCount++
+			}
+		} else if message.getHeader("Tagger") != "" && message.getHeader("Tagger-Date") != "" {
+			blank := newTag(repo, "", "", nil, "")
+			blank.tagger = newAttribution("")
+			blank.emailIn(message, false)
+			stamp := blank.tagger.actionStamp()
+			event = attribution_by_author[stamp]
+			if event == nil {
+				complain("no tag matches stamp %s", stamp)
+				errorCount++
+			}
+			if author_counts[stamp] > 1 {
+				complain("multiple events match %s", stamp)
+				errorCount++
+			}
+		} else if message.getHeader("Tag-Name") != "" {
+			blank := newTag(repo, "", "", nil, "")
+			blank.tagger = newAttribution("")
+			blank.emailIn(message, false)
+			event = name_map[blank.name]
+			if event == nil {
+				complain("no tag matches name %s", blank.name)
+				errorCount++
+			}
+		} else {
+			complain("no commit matches update %d:\n%s", i+1, message.String())
+			errorCount++
+		}
+		if event != nil {
+			ei := repo.index(event)
+			if ei == -1 {
+				complain("event at update %d can't be found in repository", i+1)
+				return false
+			} else if !hasAttr(event, "emailIn") {
+				complain("event %d cannot be modified", ei+1)
+			}
+			errorCount++
+			return false
+		}
+		// Always append, even None, to stay in sync with updateList
+		events = append(events, event)
+	}
+	if errorCount > 0 {
+		complain("%d errors in metadata updates", errorCount)
+		return false
+	}
+	// Now apply the updates
+	changers := make([]*MessageBlock, 0)
+	for i := range updateList {
+		event := events[i]
+		update := updateList[i]
+		check := strings.TrimSpace(update.getHeader("Check-Text"))
+		if check != ""  && strings.HasPrefix(strings.TrimSpace(event.getComment()), check) {
+			complain("check text mismatch at %s (input %s of %s), expected %s saw %q, bailing out", event.idMe(), i+1, len(updateList), check, event.getComment()[:64])
+			return false
+		}
+		if parse.options.Contains("--empty-only")  {
+			if event.getComment() != update.getPayload() && !emptyComment(event.getComment()) {
+				complain("nonempty comment at %s (input %s of %s), bailing out", event.idMe(), i+1, len(updateList))
+			}
+		}
+
+		switch event.(type) {
+		case *Commit:
+			commit := event.(*Commit)
+			if commit.emailIn(update, false) {
+				changers = append(changers, update)
+			}
+		case *Tag:
+			tag := event.(*Tag)
+			if tag.emailIn(update, false) {
+				changers = append(changers, update)
+			}
+		}
+	}
+	if verbose > 0 {
+		if len(changers) == 0 {
+			announce(debugSHOUT, "no events modified by mailbox_in.")
+		} else {
+			announce(debugSHOUT, "%d events modified by mailbox_in.", len(changers))
+		}
+	}
+	if parse.stdout != os.Stdout {
+		if parse.options.Contains("--changed")  {
+			for _, update := range changers {
+				fmt.Fprint(parse.stdout, string(MessageBlockDivider) + "\n" + update.String())
+			}
+		}
+	}
+	return false
+}
 
 func (rs *Reposurgeon) HelpEdit() {
         rs.helpOutput(`
@@ -13446,7 +13533,7 @@ in commits is filtered when the selection set contains (only) blobs
 and the commit is within the range bounded by the earliest and latest
 blob in the specification.
 
-The encoding argument must name one of the codecs known to the Python
+The encoding argument must name one of the codecs known to the Go
 standard codecs library. In particular, 'latin-1' is a valid codec name.
 
 Errors in this command are fatal, because an error may leave
@@ -13481,9 +13568,9 @@ whitespace, and use backslash escapes interpreted by Go's C-like
 string-escape codec, such as \s.
 
 Attempts to set nonexistent attributes are ignored. Valid values for
-the attribute are internal Python field names; in particular, for
-commits, 'comment' and 'branch' are legal.  Consult the source code
-for other interesting values.
+the attribute are internal field names; in particular, for commits,
+'comment' and 'branch' are legal.  Consult the source code for other
+interesting values.
 
 The special fieldnames 'author', 'commitdate' and 'authdate' apply
 only to commits in the range.  The latter two sets attribution
@@ -13578,32 +13665,61 @@ func (rs *Reposurgeon) HelpAppend() {
 Append text to the comments of commits and tags in the specified
 selection set. The text is the first token of the command and may
 be a quoted string. C-style escape sequences in the string are
-interpreted using Python's string_decode codec.
+interpreted using Go's Quote/Unquote codec from the strconv library.
 
 If the option --rstrip is given, the comment is right-stripped before
 the new text is appended.
 `)
 }
 
-/*
-    func (rs *Reposurgeon) DoAppend(self, line str):
-        "Append a line to comments in the specified selection set."
-        if self.chosen() == None:
-            complain("no repo is loaded")
-            return
-        if self.selection is None:
-            raise Recoverable("no selection")
-        with rs.newLineParse(linem, nil) as parse:
-            fields = shlex.split(parse.line)
-            if not fields:
-                raise Recoverable("missing append line")
-            line = string_escape(fields[0])
-            for _, event in self.selected((Tag, Commit)):
-                if '--rstrip' in parse.options:
-                    event.comment = event.comment.rstrip()
-                event.comment += line
-
-*/
+// Append a line to comments in the specified selection set.
+func (rs *Reposurgeon) DoAppend(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo is loaded")
+		return false
+	}
+	if rs.selection == nil {
+		complain("no selection")
+		return false
+	}
+	parse := rs.newLineParse(line, nil)
+	defer parse.Closem()
+	fields, err := shlex.Split(parse.line, true)
+	if err != nil {
+		complain(err.Error())
+		return false
+	}
+	if len(fields) == 0 {
+		complain("missing append line")
+		return false
+	}
+	// FIXME: Check that this plays nice with shlex. It wants to see
+	// quotes as he first and last characters of the string - not yet
+	// known whether shlex leaves those on a string token or strips them.
+	line, err = strconv.Unquote(fields[0])
+	if err != nil {
+		complain(err.Error())
+		return false
+	}
+	for _, ei := range rs.selection {
+		event := rs.chosen().events[ei]
+		switch event.(type) {
+		case *Commit:
+			commit := event.(*Commit)
+			if parse.options.Contains("--rstrip")  {
+				commit.comment = strings.TrimRight(commit.comment, " \n\t")
+			}
+			commit.comment += line
+		case *Tag:
+			tag := event.(*Tag)
+			if parse.options.Contains("--rstrip")  {
+				tag.comment = strings.TrimRight(tag.comment, " \n\t")
+			}
+			tag.comment += line
+		}
+	}
+	return false
+}
 
 func (rs *Reposurgeon) HelpSquash() {
         rs.helpOutput(`
@@ -14166,7 +14282,7 @@ func (rs *Reposurgeon) HelpExpunge() {
         rs.helpOutput(`
 Expunge files from the selected portion of the repo history; the
 default is the entire history.  The arguments to this command may be
-paths or Python regular expressions matching paths (regexps must
+paths or regular expressions matching paths (regexps must
 be marked by being surrounded with //).
 
 All filemodify (M) operations and delete (D) operations involving a
@@ -14449,7 +14565,7 @@ func (rs *Reposurgeon) HelpPath() {
         rs.helpOutput(`
 Rename a path in every fileop of every selected commit.  The
 default selection set is all commits. The first argument is interpreted as a
-Python regular expression to match against paths; the second may contain
+Go regular expression to match against paths; the second may contain
 back-reference syntax.
 
 Ordinarily, if the target path already exists in the fileops, or is visible
@@ -14554,7 +14670,7 @@ with no argument, strip the first directory component from every path.
 func (rs *Reposurgeon) HelpManifest() {
         rs.helpOutput(`
 Print commit path lists. Takes an optional selection set argument
-defaulting to all commits, and an optional Python regular expression.
+defaulting to all commits, and an optional Go regular expression.
 For each commit in the selection set, print the mapping of all paths in
 that commit tree to the corresponding blob marks, mirroring what files
 would be created in a checkout of the commit. If a regular expression
@@ -14699,18 +14815,24 @@ commit's first parent, but doesn't need you to find the first parent yourself.
 `)
 }
 
-/*
-    func (rs *Reposurgeon) DoUnmerge(self, _line):
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        try:
-            if len(self.selection) != 1: raise ValueError()
-            (_, commit), = self.selected(Commit)
-        except (TypeError, ValueError):
-            raise Recoverable("unmerge requires a single commit.")
-        commit.setParents(commit.parents()[:1])
-*/
+func (rs *Reposurgeon) DoUnmerge(_line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+	}
+	if len(rs.selection) != 1 {
+		complain("unmerge requires a single commit.")
+		return false
+	}
+	event := rs.chosen().events[rs.selection[0]]
+	if commit, ok := event.(*Commit); !ok {
+		complain("unmerge target is not a commit.")
+	} else {
+		commit.setParents(commit.parents()[:1])
+	}
+	return false
+
+}
 
 func (rs *Reposurgeon) HelpReparent() {
         rs.helpOutput(`
@@ -15161,8 +15283,8 @@ a 'rename', the third argument may be any token that can be interpreted
 as a valid reset name (but not the name of an existing
 reset). For a 'delete', no third argument is required.
 
-Reset names may use backslash escapes interpreted by the Python
-string-escape codec, such as \\s.
+Reset names may use backslash escapes interpreted by the Go
+string-escape codec, such as \s.
 
 An argument matches a reset's name if it is either the entire
 reference (refs/heads/FOO or refs/tags/FOO for some some value of FOO)
@@ -15382,7 +15504,7 @@ union, '&' intersection, and '~' negation, and function calls @min(), @max(),
 Attributions can also be selected by visibility set '=C' for committers, '=A'
 for authors, and '=T' for taggers.
 
-Finally, /regex/ will attempt to match the Python regular expression regex
+Finally, /regex/ will attempt to match the Go regular expression regex
 against an attribution name and email address; '/n' limits the match to only
 the name, and '/e' to only the email address.
 
@@ -15651,7 +15773,7 @@ func (rs *Reposurgeon) DoReferences(self, line str):
                     complain("no commit matches " + repr(payload))
                     return matchobj.group(0) # no replacement
                 else if commit:
-                    text = commit.action_stamp()
+                    text = commit.actionStamp()
                     return polybytes(text)
                 else:
                     complain("cannot resolve %s" % payload)
@@ -15760,25 +15882,30 @@ set must resolve to a singleton commit.
 `)
 }
 
-/*
-func (rs *Reposurgeon) DoCheckout(self, line str):
-        "Check out files for a specified commit into a directory."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        repo = self.chosen()
-        if self.selection is None:
-            self.selection = self.chosen().all()
-        if line == "":
-            raise Recoverable("no target directory specified.")
-        if len(self.selection) == 1:
-            commit = repo.events[self.selection[0]]
-            if not isinstance(commit, Commit):
-                raise Recoverable("not a commit.")
-        else:
-            raise Recoverable("a singleton selection set is required.")
-        commit.checkout(line)
-*/
+// Check out files for a specified commit into a directory.
+func (rs *Reposurgeon) DoCheckout(line string) (stopOut bool) {
+        if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+        }
+        repo := rs.chosen()
+        if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+        }
+        if line == "" {
+		complain("no target directory specified.")
+        } else if len(rs.selection) == 1 {
+		event := repo.events[rs.selection[0]]
+		if commit, ok := event.(*Commit); ok {
+			commit.checkout(line)
+		} else {
+			complain("not a commit.")
+		}
+        } else {
+		complain("a singleton selection set is required.")
+        }
+	return false
+}
 
 func (rs *Reposurgeon) HelpDiff() {
         rs.helpOutput(`
@@ -16100,7 +16227,7 @@ func (rs *Reposurgeon) DoDo(line string) bool {
 	existing_defaultSelection := rs.defaultSelection
 	rs.defaultSelection = rs.selection
 	existing_definitions := rs.definitions
-	existing_prompt_format := rs.prompt_format
+	existing_promptFormat := rs.promptFormat
 	existing_interpreter := rs.cmd
 	rs.definitions = make(map[string][]string)
 	for k, v := range existing_definitions {
@@ -16109,9 +16236,9 @@ func (rs *Reposurgeon) DoDo(line string) bool {
 	}
 	existing_inputIsStdin := rs.inputIsStdin
 	rs.inputIsStdin = false
-	rs.prompt_format = ""
+	rs.promptFormat = ""
 	interpreter := kommandant.NewBasicKommandant(rs, body, rs.cmd.Stdout)
-	interpreter.Prompt = rs.prompt_format
+	interpreter.Prompt = rs.promptFormat
 
 	done := make(chan bool)
 	innerloop := func() {
@@ -16123,7 +16250,7 @@ func (rs *Reposurgeon) DoDo(line string) bool {
 
 	rs.inputIsStdin = existing_inputIsStdin
 	rs.cmd = existing_interpreter
-	rs.prompt_format = existing_prompt_format
+	rs.promptFormat = existing_promptFormat
 	rs.definitions = existing_definitions
 	rs.defaultSelection = existing_defaultSelection
 	return false
@@ -16627,7 +16754,7 @@ func (self *Reposurgeon) DoPrompt(lineIn string) bool {
 			complain("failed to parse your prompt string: %s", err.Error())
 			return false
 		}
-		self.prompt_format = strings.Join(words, " ")
+		self.promptFormat = strings.Join(words, " ")
 	}
 	return false
 }
@@ -16952,7 +17079,6 @@ func main() {
 	//	go rs.cleanup()
 	//}()
 
-	interpreter.Prompt = rs.prompt_format
 	if len(os.Args[1:]) == 0 {
 		os.Args = append(os.Args, "-")
 	}
