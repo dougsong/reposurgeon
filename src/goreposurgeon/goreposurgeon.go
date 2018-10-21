@@ -2300,9 +2300,7 @@ developers.
 }
 
 var flagOptions = make(map[string]bool)
-
-
-var listOptions map[string]stringSet
+var listOptions = make(map[string]stringSet)
 
 func haveGlobalOption(name string) bool {
 	_, ok := listOptions[name]
