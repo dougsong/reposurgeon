@@ -89,6 +89,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -2317,8 +2318,29 @@ func setGlobalOption(name string, value stringSet) {
 	listOptions[name] = value
 }
 
+/*
+ * Global context, Eventually all globals should 
+ */
 
+type Context struct {
+	// The abort plag
+	abortScript      bool
+	abortLock        sync.Mutex
+}
 
+var context Context
+
+func (ctx *Context) getAbort() bool {
+	ctx.abortLock.Lock()
+	defer ctx.abortLock.Unlock()
+	return ctx.abortScript
+}
+
+func (ctx *Context) setAbort(cond bool) {
+	ctx.abortLock.Lock()
+	defer ctx.abortLock.Unlock()
+	ctx.abortScript = cond
+}
 
 // whoami - ask various programs that keep track of who you are
 func whoami() (string, string) {
@@ -2377,6 +2399,7 @@ func complain(msg string, args ...interface{}) {
 	// FIXME: set plag to abort script execution
 	content := fmt.Sprintf(msg, args...)
 	os.Stderr.WriteString("reposurgeon: " + content + "\n")
+	context.setAbort(true)
 }
 
 func announce(lvl int, msg string, args ...interface{}) {
@@ -16953,6 +16976,9 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 		interpreter.Output("script requires a file argument\n")
 		return
 	}
+	if len(rs.callstack) == 0 {
+		context.setAbort(false)
+	}
 	words := strings.Split(lineIn, " ")
 	rs.callstack = append(rs.callstack, words)
 	fname, vars := words[0], words[1:]
@@ -16971,6 +16997,12 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 		interpreter.PreLoop()
 	}
 	for {
+		// Abort flag is set by complain() and signals.
+		// When it's set, we abort out of every nested
+		// script call.
+		if context.getAbort() {
+			break
+		}
 		scriptline, err := script.ReadString('\n')
 		if err == io.EOF && scriptline == "" {
 			break
@@ -17027,7 +17059,8 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 		}
 		scriptline = strings.Replace(scriptline, "$$", strconv.FormatInt(int64(os.Getpid()), 10), -1)
 
-		// if the script wants to define a macro, the input for the macro has to come from the script file
+		// if the script wants to define a macro, the input
+		// for the macro has to come from the script file
 		existing_stdin := rs.cmd.Stdin
 		if strings.HasPrefix(scriptline, "define") && strings.HasSuffix(scriptline, "{") {
 			rs.cmd.Stdin = script
