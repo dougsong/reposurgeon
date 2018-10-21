@@ -10986,7 +10986,9 @@ func (rs *Reposurgeon) helpOutput(help string) {
 // Command implementation begins here
 //
 func (rs *Reposurgeon) DoEOF(lineIn string) (stopOut bool) {
-	os.Stdout.WriteString("\n")
+	if rs.inputIsStdin {
+		os.Stdout.WriteString("\n")
+	}
 	return true
 }
 
