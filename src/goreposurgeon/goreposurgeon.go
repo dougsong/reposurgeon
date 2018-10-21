@@ -9263,6 +9263,19 @@ func (rl *RepositoryList) unchoose() {
 	rl.repo = nil
 }
 
+// Unstreamify any repo about to be stepped on by a srtream output.
+func (rl *RepositoryList) writeNotify(filename string) {
+	for _, repo := range rl.repolist {
+		if repo.name == filename || strings.Contains(filename, repo.name + ".")  {
+			for _, event := range repo.events {
+				if blob, ok := event.(*Blob); ok {
+					blob.materialize()
+				}
+			}
+		}
+	}
+}
+
 // Return a list of the names of all repositories.
 func (rl *RepositoryList) reponames() stringSet {
 	var lst = make([]string, len(rl.repolist))
@@ -10641,7 +10654,7 @@ class AttributionEditor(object):
 */
 
 type LineParse struct {
-	write_callback func(filename string)
+	repolist       *RepositoryList
 	line           string
 	capabilities   stringSet
 	stdin          io.ReadCloser
@@ -10653,12 +10666,12 @@ type LineParse struct {
 	closem         []io.Closer
 }
 
-func newLineParseInner(line string, wc func(filename string), capabilities stringSet) (*LineParse, error) {
+func (rl *RepositoryList) newLineParseInner(line string, capabilities stringSet) (*LineParse, error) {
 	caps := make(map[string]bool)
 	for _, cap := range capabilities {
 		caps[cap] = true
 	}
-	lp := LineParse{write_callback: wc,
+	lp := LineParse{
 		line:         line,
 		capabilities: capabilities,
 		stdin:        os.Stdin,
@@ -10700,9 +10713,9 @@ func newLineParseInner(line string, wc func(filename string), capabilities strin
 					return nil, errors.New(fmt.Sprintf("can't redirect output to %s, which is a directory", lp.outfile))
 				}
 			}
-			if wc != nil {
-				wc(lp.outfile) // flush the outfile, if it happens to be a file that Reposurgeon has already opened
-			}
+			// flush the outfile, if it happens to be a file
+			// that Reposurgeon has already opened
+			rl.writeNotify(lp.outfile)
 			mode := os.O_WRONLY
 			if match[2*1+1]-match[2*1+0] > 1 {
 				mode |= os.O_APPEND
@@ -10742,8 +10755,8 @@ func newLineParseInner(line string, wc func(filename string), capabilities strin
 	return &lp, nil
 }
 
-func newLineParse(line string, wc func(filename string), capabilities stringSet) *LineParse {
-	lp, err := newLineParseInner(line, wc, capabilities)
+func (rl *RepositoryList) newLineParse(line string, capabilities stringSet) *LineParse {
+	lp, err := rl.newLineParseInner(line, capabilities)
 	if err != nil {
 		panic(throw("command", "duringLineParse: %v", err))
 	}
@@ -10923,13 +10936,6 @@ class RepoSurgeon(cmd.Cmd, RepositoryList, SelectionParser):
 */
 
 /*
-    func write_notify(self, filename):
-        "Unstreamify any repo about to be written."
-        for repo in self.repolist:
-            if repo.name == filename or repo.name + "." in filename:
-                for event in repo.events:
-                    if isinstance(event, Blob):
-                        event.materialize()
     func __init__():
         cmd.Cmd.__init__()
         RepositoryList.__init__()
@@ -11490,7 +11496,7 @@ func (self *Reposurgeon) reportSelect(parse *LineParse, display func(*LineParse,
     func edit(self, selection, line):
         # Mailboxize and edit the non-blobs in the selection
         # Assumes that self.chosen() and selection are not None
-        with newLineParse(self, line, capabilities=["stdin", "stdout"]) as parse:
+        with self.newLineParse(line, capabilities=["stdin", "stdout"]) as parse:
             editor = parse.line or os.getenv("EDITOR")
             if not editor:
                 complain("you have not specified an editor and $EDITOR is not set")
@@ -11692,13 +11698,13 @@ that would otherwise be performed repeatedly, e.g. in macro calls.
 `)
  }
 
-func (self *Reposurgeon) DoAssign(line string) (stopOut bool) {
-	repo := self.chosen()
+func (rs *Reposurgeon) DoAssign(line string) (stopOut bool) {
+	repo := rs.chosen()
 	if repo == nil {
 		complain("no repo has been chosen.")
 		return false
 	}
-	if self.selection == nil {
+	if rs.selection == nil {
 		if line != "" {
 			panic(throw("command", "No selection"))
 		} else {
@@ -11708,7 +11714,7 @@ func (self *Reposurgeon) DoAssign(line string) (stopOut bool) {
 			return false
 		}
 	}
-	parse := newLineParse(line, nil, nil)
+	parse := rs.newLineParse(line, nil)
 	defer parse.Closem()
 	name := strings.TrimSpace(parse.line)
 	for key := range repo.assignments {
@@ -11720,10 +11726,10 @@ func (self *Reposurgeon) DoAssign(line string) (stopOut bool) {
 	//The logic of named needs to change.
 	if repo.named(name) != nil {
 		panic(throw("command", "%s conflicts with a branch, tag, legacy-ID, or date", name))
-	} else if parse.options.Contains("--singleton") && len(self.selection) != 1 {
+	} else if parse.options.Contains("--singleton") && len(rs.selection) != 1 {
 		panic(throw("command", "a singleton selection was required here"))
 	} else {
-		repo.assignments[name] = self.selection
+		repo.assignments[name] = rs.selection
 
 	}
 	return false
@@ -11769,7 +11775,7 @@ func (rs *Reposurgeon) DoNames(line string) (stopOut bool) {
 		complain("no repo has been chosen.")
 		return
 	}
-	parse := newLineParse(line, nil, stringSet{"stdout"})
+	parse := rs.newLineParse(line, stringSet{"stdout"})
 	defer parse.Closem()
 	branches := rs.chosen().branchset()
 	//sortbranches.Sort()
@@ -11802,13 +11808,13 @@ func (self *Reposurgeon) HelpCoverage() {
 	self.helpOutput("Display the coverage-case set (developer instrumentation).")
 }
 // Display the coverage-case set (developer instrumentation).
-func (self *Reposurgeon) DoCoverage(lineIn string) bool {
-	repo := self.chosen()
+func (rs *Reposurgeon) DoCoverage(lineIn string) bool {
+	repo := rs.chosen()
 	if repo == nil {
 		complain("no repo has been chosen.")
 		return false
 	}
-	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
 	defer parse.Closem()
 	for _, commit := range repo.commits(nil) {
 		commit.fileopDump()
@@ -11818,8 +11824,8 @@ func (self *Reposurgeon) DoCoverage(lineIn string) bool {
 	return false
 }
 
-func (self *Reposurgeon) HelpIndex() {
-	self.helpOutput(`
+func (rs *Reposurgeon) HelpIndex() {
+	rs.helpOutput(`
 Display four columns of info on selected objects: their number, their
 type, the associate mark (or '-' if no mark) and a summary field
 varying by type.  For a branch or tag it's the reference; for a commit
@@ -11829,8 +11835,8 @@ file in the blob.  Supports > redirection.
 }
 
 // Generate a summary listing of objects.
-func (self *Reposurgeon) DoIndex(lineIn string) bool {
-	repo := self.chosen()
+func (rs *Reposurgeon) DoIndex(lineIn string) bool {
+	repo := rs.chosen()
 	if repo == nil {
 		complain("no repo has been chosen.")
 		return false
@@ -11840,19 +11846,19 @@ func (self *Reposurgeon) DoIndex(lineIn string) bool {
 	// get a default-set computation we don't want.  Second, for this
 	// function it's helpful to have the method strings close together so
 	// we can maintain columnation.
-	if self.selection == nil {
-		self.selection = make([]int, 0)
+	if rs.selection == nil {
+		rs.selection = make([]int, 0)
 		for _, eventid := range repo.all() {
 			event := repo.events[eventid]
 			_, isblob := event.(*Blob)
 			if !isblob {
-				self.selection = append(self.selection, eventid)
+				rs.selection = append(rs.selection, eventid)
 			}
 		}
 	}
-	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
 	defer parse.Closem()
-	for _, eventid := range self.selection {
+	for _, eventid := range rs.selection {
 		event := repo.events[eventid]
 		switch e := event.(type) {
 		case *Blob:
@@ -11906,15 +11912,15 @@ Report phase-timing results and memory usage from repository analysis.
 `)
 }
 // Report repo-analysis times and memory usage.
-func (self *Reposurgeon) DoTiming(line string) (stopOut bool) {
-	if self.chosen() == nil {
+func (rs *Reposurgeon) DoTiming(line string) (stopOut bool) {
+	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
 		return
 	}
 	if line != "" {
-		self.chosen().timings = append(self.chosen().timings, TimeMark{line, time.Now()})
+		rs.chosen().timings = append(rs.chosen().timings, TimeMark{line, time.Now()})
 	}
-	self.repo.dumptimes()
+	rs.repo.dumptimes()
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 	fmt.Printf("     Total heap: %.2fMB  High water: %.2fMB\n",
@@ -11933,18 +11939,18 @@ currently chosen repository. Supports > redirection.
 }
 
 // Report information on repositories.
-func (self *Reposurgeon) DoStats(line string) bool {
-	parse := newLineParse(line, nil, stringSet{"stdout"})
+func (rs *Reposurgeon) DoStats(line string) bool {
+	parse := rs.newLineParse(line, stringSet{"stdout"})
 	defer parse.Closem()
 	if parse.line == "" {
-		if self.chosen() == nil {
+		if rs.chosen() == nil {
 			complain("no repo has been chosen.")
 			return false
 		}
-		parse.line = self.chosen().name
+		parse.line = rs.chosen().name
 	}
 	for _, name := range parse.Tokens() {
-		repo := self.repoByName(name)
+		repo := rs.repoByName(name)
 		if repo == nil {
 			panic(throw("command", "no such repo as %s", name))
 		} else {
@@ -11977,28 +11983,28 @@ func (self *Reposurgeon) DoStats(line string) bool {
 	return false
 }
 
-func (self *Reposurgeon) HelpCount() {
-	self.helpOutput(`
+func (rs *Reposurgeon) HelpCount() {
+	rs.helpOutput(`
 Report a count of items in the selection set. Default set is everything
 in the currently-selected repo. Supports > redirection.
 `)
 }
-func (self *Reposurgeon) DoCount(lineIn string) bool {
-	if self.chosen() == nil {
+func (rs *Reposurgeon) DoCount(lineIn string) bool {
+	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
 		return false
 	}
-	if self.selection == nil {
-		self.selection = self.chosen().all()
+	if rs.selection == nil {
+		rs.selection = rs.chosen().all()
 	}
-	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
 	defer parse.Closem()
-	fmt.Fprintf(parse.stdout, "%d\n", len(self.selection))
+	fmt.Fprintf(parse.stdout, "%d\n", len(rs.selection))
 	return false
 }
 
-func (self *Reposurgeon) HelpList() {
-	self.helpOutput(`
+func (rs *Reposurgeon) HelpList() {
+	rs.helpOutput(`
 Display commits in a human-friendly format; the first column is raw
 event numbers, the second a timestamp in local time. If the repository
 has legacy IDs, they will be displayed in the third column. The
@@ -12006,8 +12012,8 @@ leading portion of the comment follows. Supports > redirection.
 `)
 }
 // Generate a human-friendly listing of objects.
-func (self *Reposurgeon) DoList(lineIn string) bool {
-	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+func (rs *Reposurgeon) DoList(lineIn string) bool {
+	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
 	defer parse.Closem()
 	f := func(p *LineParse, i int, e Event) string {
 		c, ok := e.(*Commit)
@@ -12017,12 +12023,12 @@ func (self *Reposurgeon) DoList(lineIn string) bool {
 			return ""
 		}
 	}
-	self.reportSelect(parse, f)
+	rs.reportSelect(parse, f)
 	return false
 }
 
-func (self *Reposurgeon) HelpTip() {
-	self.helpOutput(`
+func (rs *Reposurgeon) HelpTip() {
+	rs.helpOutput(`
 Display the branch tip names associated with commits in the selection
 set.  These will not necessarily be the same as their branch fields
 (which will often be tag names if the repo contains either annotated
@@ -12037,8 +12043,8 @@ Supports > redirection.
 `)
 }
 // Generate a human-friendly listing of objects.
-func (self *Reposurgeon) DoTip(lineIn string) bool {
-	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+func (rs *Reposurgeon) DoTip(lineIn string) bool {
+	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
 	defer parse.Closem()
 	f := func(p *LineParse, i int, e Event) string {
 		c, ok := e.(*Commit)
@@ -12048,20 +12054,20 @@ func (self *Reposurgeon) DoTip(lineIn string) bool {
 			return ""
 		}
 	}
-	self.reportSelect(parse, f)
+	rs.reportSelect(parse, f)
 	return false
 }
 
-func (self *Reposurgeon) HelpTags() {
-	self.helpOutput(`
+func (rs *Reposurgeon) HelpTags() {
+	rs.helpOutput(`
 Display tags and resets: three fields, an event number and a type and a name.
 Branch tip commits associated with tags are also displayed with the type
 field 'commit'. Supports > redirection.
 `)
 }
 
-func (self *Reposurgeon) DoTags(lineIn string) bool {
-	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+func (rs *Reposurgeon) DoTags(lineIn string) bool {
+	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
 	defer parse.Closem()
 	f := func(p *LineParse, i int, e Event) string {
 		// this is pretty stupid; pretend you didn't see it
@@ -12077,19 +12083,19 @@ func (self *Reposurgeon) DoTags(lineIn string) bool {
 		}
 		return ""
 	}
-	self.reportSelect(parse, f)
+	rs.reportSelect(parse, f)
 	return false
 }
 
-func (self *Reposurgeon) HelpStamp() {
-	self.helpOutput(`
+func (rs *Reposurgeon) HelpStamp() {
+	rs.helpOutput(`
 Display full action stamps correponding to commits in a select.
 The stamp is followed by the first line of the commit message.
 Supports > redirection.
 `)
 }
-func (self *Reposurgeon) DoStamp(lineIn string) bool {
-	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+func (rs *Reposurgeon) DoStamp(lineIn string) bool {
+	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
 	defer parse.Closem()
 	f := func(p *LineParse, i int, e Event) string {
 		// this is pretty stupid; pretend you didn't see it
@@ -12103,7 +12109,7 @@ func (self *Reposurgeon) DoStamp(lineIn string) bool {
 		}
 		return ""
 	}
-	self.reportSelect(parse, f)
+	rs.reportSelect(parse, f)
 	return false
 }
 
@@ -12129,7 +12135,7 @@ func (rs *Reposurgeon) DoSizes(line string) (stopOut bool) {
 		rs.selection = rs.chosen().all()
 	}
 	sizes := make(map[string]int)
-	parse := newLineParse(line, nil, stringSet{"stdout"})
+	parse := rs.newLineParse(line, stringSet{"stdout"})
 	for _, i := range rs.selection {
 		if commit, ok := repo.events[i].(*Commit); ok {
 			if _, ok := sizes[commit.branch]; !ok {
@@ -12204,7 +12210,7 @@ Supports > redirection.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        with newLineParse(self, line, stringSet{"stdout"}) as parse:
+        with rs.newLineParse(line, stringSet{"stdout"}) as parse:
             unmapped = regexp.MustCompile(("[^@]*$|[^@]*@" + str(self.chosen().uuid) + "$").encode('ascii'))
             shortset = set()
             deletealls = set()
@@ -12602,7 +12608,7 @@ func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 		complain("read does not take a selection set")
 		return false
 	}
-	parse := newLineParse(line, nil, []string{"stdin"})
+	parse := rs.newLineParse(line, []string{"stdin"})
 	defer parse.Closem()
 	var repo *Repository
 	if parse.redirected {
@@ -12712,7 +12718,7 @@ func (rs *Reposurgeon) DoWrite(line string) (stopOut bool) {
 			line = usr.HomeDir  + line[1:]
 		}
 	}
-	parse := newLineParse(line, nil, stringSet{"stdout"})
+	parse := rs.newLineParse(line, stringSet{"stdout"})
 	defer parse.Closem()
 	// This is slightly asymmetrical with the read side, which
 	// interprets an empty argument list as '.'
@@ -12765,23 +12771,23 @@ before each event dump.
 }
 
 // Dump raw events.
-func (self *Reposurgeon) DoInspect(lineIn string) bool {
-	repo := self.chosen()
+func (rs *Reposurgeon) DoInspect(lineIn string) bool {
+	repo := rs.chosen()
 	if repo == nil {
 		complain("no repo has been chosen.")
 		return false
 	}
 
-	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
 	defer parse.Closem()
 
-	if self.selection == nil {
-		self.selection, parse.line = self.parse(parse.line, repo)
-		if self.selection == nil {
-			self.selection = repo.all()
+	if rs.selection == nil {
+		rs.selection, parse.line = rs.parse(parse.line, repo)
+		if rs.selection == nil {
+			rs.selection = repo.all()
 		}
 	}
-	for _, eventid := range self.selection {
+	for _, eventid := range rs.selection {
 		event := repo.events[eventid]
 		header := fmt.Sprintf("Event %d %s\n", eventid+1, strings.Repeat("=", 72))
 		fmt.Fprintln(parse.stdout, header[:73])
@@ -12894,7 +12900,7 @@ func (rs *Reposurgeon) DoGraph(line string) (stopOut bool) {
 	if rs.selection == nil {
 		rs.selection = rs.chosen().all()
 	}
-	parse := newLineParse(line, nil, stringSet{"stdout"})
+	parse := rs.newLineParse(line, stringSet{"stdout"})
 	fmt.Fprint(parse.stdout, "digraph {\n")
 	for _, ei := range rs.selection {
 		event := rs.chosen().events[ei]
@@ -12962,7 +12968,7 @@ func (rs *Reposurgeon) DoRebuild(line string) (stopOut bool) {
         //if rs.selection != nil {
 	//	panic(throw("command", "rebuild does not take a selection set"))
         //}
-        parse := newLineParse(line, nil, nil)
+        parse := rs.newLineParse(line, nil)
 	defer parse.Closem()
 	err := rs.chosen().rebuildRepo(parse.line, parse.options, rs.preferred)
 	if err != nil {
@@ -12989,7 +12995,7 @@ context the name of the header includes its trailing colon.
 
 // Generate a mailbox file representing object metadata.
 func (rs *Reposurgeon) DoMailboxOut(lineIn string) bool {
-	parse := newLineParse(lineIn, nil, stringSet{"stdout"})
+	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
 	defer parse.Closem()
 
 	var filterRegexp *regexp.Regexp
@@ -13071,7 +13077,7 @@ CVS empty-comment marker.
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
-        with newLineParse(self, line, capabilities=["stdin","stdout"]) as parse:
+        with rs.newLineParse(line, capabilities=["stdin","stdout"]) as parse:
             update_list = []
             while true:
                 var msg MessageBlock
@@ -13557,7 +13563,7 @@ the new text is appended.
             return
         if self.selection is None:
             raise Recoverable("no selection")
-        with newLineParse(self, line) as parse:
+        with rs.newLineParse(linem, nil) as parse:
             fields = shlex.split(parse.line)
             if not fields:
                 raise Recoverable("missing append line")
@@ -13584,7 +13590,7 @@ removal of fileops associated with commits requires this.
             return
         if self.selection is None:
             self.selection = []
-        with newLineParse(self, line) as parse:
+        with rs.newLineParse(line, nil) as parse:
             self.chosen().squash(self.selection, parse.options)
     func help_delete():
         rs.helpOutput("""
@@ -13604,7 +13610,7 @@ squash with the --delete flag.
             return
         if self.selection is None:
             self.selection = []
-        with newLineParse(self, line) as parse:
+        with rs.newLineParse(line, nil) as parse:
             self.chosen().squash(self.selection, set(["--delete"]) | parse.options)
 
     func help_coalesce():
@@ -13636,7 +13642,7 @@ With  the --debug option, show messages about mismatches.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
-        with newLineParse(self, line) as parse:
+        with rs.newLineParse(line, nil) as parse:
             timefuzz = 90
             changelog = "--changelog" in parse.options
             if parse.line:
@@ -13796,7 +13802,7 @@ used with the add command to patch data into a repository.
         blob = Blob(repo)
         blob.setMark(":1")
         repo.addEvent(blob, where=0)
-        with newLineParse(self, line, []strings{"stdin"}) as parse:
+        with rs.newLineParse(line, []strings{"stdin"}) as parse:
             blob.setContent(parse.stdin.read())
         repo.declareSequenceMutation("adding blob")
         repo.invalidateNamecache()
@@ -14217,7 +14223,7 @@ func (rs *Reposurgeon) DoUnite(line string):
         "Unite repos together."
         self.unchoose()
         factors = []
-        with newLineParse(self, line) as parse:
+        with rs.newLineParse(self, line, nil) as parse:
             for name in parse.line.split():
                 repo = self.repoByName(name)
                 if repo is None:
@@ -14261,7 +14267,7 @@ func (rs *Reposurgeon) DoGraft(line string):
             return
         if not self.repolist:
             raise Recoverable("no repositories are loaded.")
-        with newLineParse(self, line) as parse:
+        with rs.newLineParse(line, nil) as parse:
             if parse.line in self.reponames():
                 graft_repo = self.repoByName(parse.line)
             else:
@@ -14391,7 +14397,7 @@ in the ancestry of the commit, this command throws an error.  With the
             self.selection = repo.all()
         (source_re, line) = RepoSurgeon.pop_token(line)
         (verb, line) = RepoSurgeon.pop_token(line)
-        with newLineParse(self, line) as parse:
+        with rs.newLineParse(line, nil) as parse:
             if verb == "rename":
                 force = '--force' in parse.options
                 (target_re, _) = RepoSurgeon.pop_token(parse.line)
@@ -14442,7 +14448,7 @@ with no argument, strip the first directory component from every path.
         if self.selection is None:
             self.selection = self.chosen().all()
         if not line.startswith(("sub", "sup")):
-            with newLineParse(self, line, stringSet{"stdout"}) as parse:
+            with rs.newLineParse(line, stringSet{"stdout"}) as parse:
                 allpaths = set()
                 for _, event in self.selected(Commit):
                     allpaths.update(event.paths())
@@ -14492,7 +14498,7 @@ This command supports > redirection.
             raise Recoverable("no repo has been chosen")
         if self.selection is None:
             self.selection = self.chosen().all()
-        with newLineParse(self, line, stringSet{"stdout"}) as parse:
+        with rs.newLineParse(line, stringSet{"stdout"}) as parse:
             filter_func = None
             line = parse.line.strip()
             if line:
@@ -14561,7 +14567,7 @@ merge link is moved to the tagified commit's parent.
         if self.selection == nil {
             self.selection = repo.all()
         }
-        with newLineParse(self, line) as parse {
+        with rs.newLineParse(line, nil) as parse {
             if parse.line {
                 raise Recoverable("too many arguments for tagify.")
             }
@@ -14711,7 +14717,7 @@ Policy:
         if repo is None:
             complain("no repo has been chosen.")
             return
-        with newLineParse(self, line) as parse:
+        with rs.newLineParse(line, nil) as parse:
             use_order = '--use-order' in parse.options
             try:
                 selected = list(self.selected(Commit))
@@ -14802,13 +14808,13 @@ after the operation.
 `)
 }
 // Re-order a contiguous range of commits.
-func (self *Reposurgeon) DoReorder(lineIn string) bool {
-	repo := self.chosen()
+func (rs *Reposurgeon) DoReorder(lineIn string) bool {
+	repo := rs.chosen()
 	if repo == nil {
 		complain("no repo has been chosen.")
 		return false
 	}
-	sel := self.selection
+	sel := rs.selection
 	if sel != nil {
 		complain("no selection")
 		return false
@@ -14820,7 +14826,7 @@ func (self *Reposurgeon) DoReorder(lineIn string) bool {
 		complain("only 1 commit selected; nothing to re-order")
 		return false
 	}
-	parse := newLineParse(lineIn, nil, nil)
+	parse := rs.newLineParse(lineIn, nil)
 	if parse.line != "" {
 		complain("'reorder' takes no arguments")
 		return false
@@ -15384,7 +15390,7 @@ Available actions are:
             raise Recoverable("no repo has been chosen")
         selparser = AttributionEditor.SelParser()
         machine, rest = selparser.compile(line)
-        with newLineParse(self, rest, stringSet{"stdout"}) as parse:
+        with rs.newLineParse(rest, stringSet{"stdout"}) as parse:
             try:
                 fields = shlex.split(parse.line)
             except ValueError as e:
@@ -15470,7 +15476,7 @@ func (rs *Reposurgeon) DoAuthors(line string) (stopOut bool) {
 	}
 	if strings.HasPrefix(line, "write") {
 		line = strings.TrimSpace(line[5:])
-		parse := newLineParse(line, nil, stringSet{"stdout"})
+		parse := rs.newLineParse(line, stringSet{"stdout"})
 		if len(parse.Tokens()) > 0 {
 			complain("authors write no longer takes a filename argument - use > redirection instead")
 			return false
@@ -15480,7 +15486,7 @@ func (rs *Reposurgeon) DoAuthors(line string) (stopOut bool) {
 		if strings.HasPrefix(line, "read") {
 			line = strings.TrimSpace(line[4:])
 		}
-		parse := newLineParse(line, nil, stringSet{"stdin"})
+		parse := rs.newLineParse(line, stringSet{"stdin"})
 		if len(parse.Tokens()) > 0 {
 			complain("authors read no longer takes a filename argument - use < redirection instead")
 			return false
@@ -15509,14 +15515,14 @@ output or a >-redirected filename.
             return
         if line.startswith("write"):
             line = line[5:].strip()
-            with newLineParse(self, line, stringSet{"stdout"}) as parse:
+            with rs.newLineParse(line, stringSet{"stdout"}) as parse:
                 if parse.tokens():
                     raise Recoverable("legacy write does not take a filename argument - use > redirection instead")
                 self.chosen().writeLegacyMap(parse.stdout)
         else:
             if line.startswith("read"):
                 line = line[4:].strip()
-            with newLineParse(self, line, []strings{"stdin"}) as parse:
+            with rs.newLineParse(line, []strings{"stdin"}) as parse:
                 if parse.tokens():
                     raise Recoverable("legacy read does not take a filename argument - use < redirection instead")
                 self.chosen().readLegacyMap(parse.stdin)
@@ -15591,7 +15597,7 @@ func (rs *Reposurgeon) DoReferences(self, line str):
                 if line.startswith("edit"):
                     self.edit(self.selection, line[4:].strip())
                 else:
-                    with newLineParse(self, line, stringSet{"stdout"}) as parse:
+                    with rs.newLineParse(line, stringSet{"stdout"}) as parse:
                         for ei in self.selection:
                             event = repo.events[ei]
                             if hasattr(event, "lister"):
@@ -15714,7 +15720,7 @@ must resolve to exactly two commits. Supports > redirection.
         dir2 = set(bounds[1].manifest())
         allpaths = list(dir1 | dir2)
         allpaths.sort()
-        with newLineParse(self, line, stringSoet{"stdout"}) as parse:
+        with rs.newLineParse(line, stringSoet{"stdout"}) as parse:
             for path in allpaths:
                 if path in dir1 and path in dir2:
                     # FIXME: Can we detect binary files and do something
@@ -15965,8 +15971,8 @@ the command generated by the expansion.
 }
 
 // Do a macro
-func (self *Reposurgeon) DoDo(line string) bool {
-	parse := newLineParse(line, nil, stringSet{"stdout"})
+func (rs *Reposurgeon) DoDo(line string) bool {
+	parse := rs.newLineParse(line, stringSet{"stdout"})
 	words, err := shlex.Split(parse.line, true)
 	if len(words) == 0 {
 		complain("no macro name was given.")
@@ -15977,7 +15983,7 @@ func (self *Reposurgeon) DoDo(line string) bool {
 		return false
 	}
 	name := words[0]
-	macro, present := self.definitions[name]
+	macro, present := rs.definitions[name]
 	if !present {
 		complain("'%s' is not a defined macro", name)
 		return false
@@ -15996,21 +16002,21 @@ func (self *Reposurgeon) DoDo(line string) bool {
 	// copied back. Instead I'm saving the state that the macro
 	// shouldn't be able to permenantly changed, and restoring it
 	// after the macro is finished.
-	existing_defaultSelection := self.defaultSelection
-	self.defaultSelection = self.selection
-	existing_definitions := self.definitions
-	existing_prompt_format := self.prompt_format
-	existing_interpreter := self.cmd
-	self.definitions = make(map[string][]string)
+	existing_defaultSelection := rs.defaultSelection
+	rs.defaultSelection = rs.selection
+	existing_definitions := rs.definitions
+	existing_prompt_format := rs.prompt_format
+	existing_interpreter := rs.cmd
+	rs.definitions = make(map[string][]string)
 	for k, v := range existing_definitions {
-		self.definitions[k] = make([]string, len(v))
-		copy(self.definitions[k], v)
+		rs.definitions[k] = make([]string, len(v))
+		copy(rs.definitions[k], v)
 	}
-	existing_inputIsStdin := self.inputIsStdin
-	self.inputIsStdin = false
-	self.prompt_format = ""
-	interpreter := kommandant.NewBasicKommandant(self, body, self.cmd.Stdout)
-	interpreter.Prompt = self.prompt_format
+	existing_inputIsStdin := rs.inputIsStdin
+	rs.inputIsStdin = false
+	rs.prompt_format = ""
+	interpreter := kommandant.NewBasicKommandant(rs, body, rs.cmd.Stdout)
+	interpreter.Prompt = rs.prompt_format
 
 	done := make(chan bool)
 	innerloop := func() {
@@ -16020,16 +16026,16 @@ func (self *Reposurgeon) DoDo(line string) bool {
 	go innerloop()
 	<-done
 
-	self.inputIsStdin = existing_inputIsStdin
-	self.cmd = existing_interpreter
-	self.prompt_format = existing_prompt_format
-	self.definitions = existing_definitions
-	self.defaultSelection = existing_defaultSelection
+	rs.inputIsStdin = existing_inputIsStdin
+	rs.cmd = existing_interpreter
+	rs.prompt_format = existing_prompt_format
+	rs.definitions = existing_definitions
+	rs.defaultSelection = existing_defaultSelection
 	return false
 }
 
-func (self *Reposurgeon) HelpUndefine() {
-	self.helpOutput(`
+func (rs *Reposurgeon) HelpUndefine() {
+	rs.helpOutput(`
 Undefine the macro named in this command's first argument.
 `)
 }
@@ -16039,19 +16045,19 @@ Undefine the macro named in this command's first argument.
         return sorted([x for x in self.definitions if x.startswith(text)])
 */
 
-func (self *Reposurgeon) DoUndefine(line string) bool {
+func (rs *Reposurgeon) DoUndefine(line string) bool {
 	words := strings.SplitN(line, " ", 1)
 	name := words[0]
 	if name == "" {
 		complain("no macro name was given.")
 		return false
 	}
-	_, present := self.definitions[name]
+	_, present := rs.definitions[name]
 	if !present {
 		complain("'%s' is not a defined macro", name)
 		return false
 	}
-	delete(self.definitions, name)
+	delete(rs.definitions, name)
 	return false
 }
 
@@ -16332,7 +16338,7 @@ not optimal, and may in particular contain duplicate blobs.
                 raise Recoverable("not a commit.")
         else:
             raise Recoverable("a singleton selection set is required.")
-        with newLineParse(self, line string) as parse:
+        with rs.newLineParse(line string) as parse:
             if not parse.line:
                 raise Recoverable("no tarball specified.")
             # Create new commit to carry the new content
@@ -16710,8 +16716,7 @@ func (rs *Reposurgeon) HelpPrint() {
 }
 
 func (rs *Reposurgeon) DoPrint(lineIn string) (stopOut bool) {
-	wc := func(filename string) {}
-	parse := newLineParse(lineIn, wc, []string{"stdout"})
+	parse := rs.newLineParse(lineIn, []string{"stdout"})
 	defer parse.Closem()
 	fmt.Fprintf(parse.stdout, "%s\n", parse.line)
 	return false
