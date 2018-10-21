@@ -10935,7 +10935,6 @@ type Reposurgeon struct {
 	history          []string
 	preferred        *VCS
 	startTime        time.Time
-        prompt           string
 	promptFormat     string
 }
 
@@ -10954,11 +10953,9 @@ func newReposurgeon() *Reposurgeon {
 	rs := new(Reposurgeon)
 	rs.SelectionParser.subclass = rs
 	rs.startTime = time.Now()
-	rs.promptFormat = "goreposurgeon% "
 	rs.definitions = make(map[string][]string)
 	rs.inputIsStdin = true
-	rs.prompt = "reposurgeon%"
-        rs.promptFormat = "reposurgeon%% "
+        rs.promptFormat = "reposurgeon% "
 	// These are globals and should probably be set in init().
         for _, option := range optionFlags {
 		listOptions[option[0]] = newStringSet()
@@ -11003,6 +11000,20 @@ func (rs *Reposurgeon) DoQuit(lineIn string) (stopOut bool) {
 //
 var inlineCommentRE = regexp.MustCompile(`\s+#`)
 
+func (rs *Reposurgeon) buildPrompt() { 
+	var chosenName string = ""
+	if rs.chosen() != nil {
+		chosenName = rs.chosen().name
+	}
+
+	replacer := strings.NewReplacer("{chosen}", chosenName)
+	rs.cmd.Prompt = replacer.Replace(rs.promptFormat)
+}
+
+func (rs *Reposurgeon) PreLoop() {
+	rs.buildPrompt()
+}
+
 func (rs *Reposurgeon) PreCommand(line string) string {
 	trimmed := strings.TrimRight(line, " \t\n")
 	if len(trimmed) != 0 {
@@ -11034,17 +11045,12 @@ func (rs *Reposurgeon) PreCommand(line string) string {
 		}
 	}
 
+	rs.buildPrompt()
+	
 	return rest
 }
 
-func (self *Reposurgeon) PostCommand(stop bool, lineIn string) bool {
-	var chosen_name string = ""
-	if self.chosen() != nil {
-		chosen_name = self.chosen().name
-	}
-	replacer := strings.NewReplacer("{chosen}", chosen_name)
-	self.cmd.Prompt = replacer.Replace(self.promptFormat)
-
+func (rs *Reposurgeon) PostCommand(stop bool, lineIn string) bool {
 	return stop
 }
 
@@ -11054,7 +11060,7 @@ Spawn a shell process. Exit the shell to return to reposurgeon.
 Honors the $SHELL environment variable.
 `)
 }
-func (self *Reposurgeon) DoShell(line string) (stopOut bool) {
+func (rs *Reposurgeon) DoShell(line string) (stopOut bool) {
 	shell := os.Getenv("SHELL")
 	if shell == "" {
 		shell = "/bin/sh"
@@ -11072,29 +11078,29 @@ func (self *Reposurgeon) DoShell(line string) (stopOut bool) {
    }
 
 /*
-    func selected(self, types=None):
+    func selected(rs, types=None):
         "Iterate over the selection set."
-        return self.chosen().iterevents(indices=self.selection, types=types)
+        return rs.chosen().iterevents(indices=rs.selection, types=types)
 */
 
 //
 // The selection-language parsing code starts here.
 //
-func (self *Reposurgeon) parseSelectionSet(line string) (machine selEvaluator, rest string) {
-	if self.isNamed(line) {
+func (rs *Reposurgeon) parseSelectionSet(line string) (machine selEvaluator, rest string) {
+	if rs.isNamed(line) {
 		line = "<" + line + ">"
 	}
 
-	return self.imp().compile(line)
+	return rs.imp().compile(line)
 }
 
-func (self *Reposurgeon) evalSelectionSet(machine selEvaluator, repo *Repository) []int {
-	return self.imp().evaluate(machine, repo)
+func (rs *Reposurgeon) evalSelectionSet(machine selEvaluator, repo *Repository) []int {
+	return rs.imp().evaluate(machine, repo)
 }
 
-func (self *Reposurgeon) setSelectionSet(line string) (rest string) {
-	machine, rest := self.parseSelectionSet(line)
-	self.selection = self.evalSelectionSet(machine, self.chosen())
+func (rs *Reposurgeon) setSelectionSet(line string) (rest string) {
+	machine, rest := rs.parseSelectionSet(line)
+	rs.selection = rs.evalSelectionSet(machine, rs.chosen())
 	return rest
 }
 
