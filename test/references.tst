@@ -21,7 +21,7 @@ nba-guest = Niels Baggesen <nba@users.sourceforge.net>
 lyrgard-guest = Jonathan Dion <lyrgard-guest@alioth.debian.org>
 jongough-guest = Jon Gough <jon.gough@eclipsesystems.com.au>
 EOF
-mailbox_in <<EOF
+msgin <<EOF
 ------------------------------------------------------------------------------
 Author: Peter Selinger <selinger@users.sourceforge.net>
 Author-Date: Sat 04 Mar 2006 17:44:41 +0000

@@ -47,7 +47,7 @@ template = """\
 #
 # For a production-quality conversion you will need to edit the map
 # file and the lift script.  During the process you can set EXTRAS to
-# name extra metadata such as a comments mailbox.
+# name extra metadata such as a comments message-box.
 #
 # Afterwards, you can use the headcompare and tagscompare productions
 # to check your work.

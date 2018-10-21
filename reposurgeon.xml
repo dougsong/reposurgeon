@@ -1479,11 +1479,11 @@ fileops referencing them to instead reference the (kept) first blob.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>mailbox_out</command>
+<term><command>msgout</command>
         [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
-<para>Emit a mailbox file of messages in RFC822 format representing
+<para>Emit a file of messages in RFC822 format representing
 the contents of repository metadata. Takes a selection set; members of
 the set other than commits, annotated tags, and passthroughs are
 ignored (that is, presently, blobs and resets).</para>
@@ -1499,17 +1499,17 @@ includes its trailing colon.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term><command>mailbox_in</command>
+<term><command>msgin</command>
         [<emphasis>--create</emphasis>]
         [<emphasis>--empty-only</emphasis>]
         [&lt;<emphasis>infile</emphasis>]
         [<emphasis>--changed</emphasis> &gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
-<para>Accept a mailbox file of messages in RFC822 format representing the
+<para>Accept a file of messages in RFC822 format representing the
 contents of the metadata in selected commits and annotated tags. Takes
 no selection set.  If there is an argument it will be taken as the
-name of a mailbox file to read from; if no argument, or one of '-', reads
+name of a message file to read from; if no argument, or one of '-', reads
 from standard input. Supports &lt; redirection.</para>
 
 <para>Users should be aware that modifying an Event-Number or
@@ -1517,7 +1517,7 @@ Event-Mark field will change which event the update from that message
 is applied to.  This is unlikely to have good results.</para>
 
 <para>The header CheckText, if present, is examined to see if the comment text of
-the associated event begins with it. If not, the mailbox modification
+the associated event begins with it. If not, the item modification
 is aborted. This helps ensure that you are landing updates ob the
 events you intend.</para>
 
@@ -1532,7 +1532,7 @@ commit set was specified for commit creations, the new commits are
 made children of that commit.</para>
 
 <para>Otherwise, if the Event-Number and Event-Mark fields are absent, the
-mailbox_in logic will attempt to match the commit or tag first by
+msgin logic will attempt to match the commit or tag first by
 Legacy-ID, then by a unique committer ID and timestamp pair.</para>
 
 <para>If output is redirected and the modifier <quote>--changed</quote>
@@ -1674,8 +1674,8 @@ to fix them up.</para>
 <term><command>edit</command>
 </term>
 <listitem>
-<para>Report the selection set of events to a tempfile as mailbox_out does,
-call an editor on it, and update from the result as mailbox_in does.
+<para>Report the selection set of events to a tempfile as msgout does,
+call an editor on it, and update from the result as msgin does.
 If you do not specify an editor name as second argument, it will be
 taken from the $EDITOR variable in your environment.
 If $EDITOR is not set, /usr/bin/editor will be used as a fallback
@@ -1683,7 +1683,7 @@ if it exists as a symlink to your default editor, as is the case on
 Debian, Ubuntu and their derivatives.</para>
 
 <para>Normally this command ignores blobs because
-<command>mailbox_out</command> does.  However, if you specify a
+<command>msgout</command> does.  However, if you specify a
 selection set consisting of a single blob, your editor will be called
 directly on the blob file.</para>
 
@@ -3763,7 +3763,7 @@ summary-plus-continuation form.]]</para>
 point of conversion. E.g</para>
 
 <programlisting>
-mailbox_in --create &lt;&lt;EOF
+msgin --create &lt;&lt;EOF
 Tag-Name: git-conversion
 
 Marks the spot at which this repository was converted from Subversion to git.
@@ -3886,9 +3886,12 @@ syntax uses similarly named options with leading dashes, that can appear
 anywhere after the tagify command</para>
 
 <para>In versions before 2.9. the syntax of "authors", "legacy",
-"list", and "mailbox_{in|out}" was different (and "legacy" was
+"list", and what are now "msg{in|out}" was different (and "legacy" was
 "fossils"). They took plain filename arguments rather that using
 redirect &lt; and &gt;.</para>
+
+<para>In versions before 4.0, msgin and msgout were named mailbox_in
+and mailbox_out.</para>
 </refsect1>
 
 <refsect1 id='limitations'><title>LIMITATIONS AND GUARANTEES</title>
@@ -3932,7 +3935,7 @@ or warn you when they cannot do so.</para>
 <para>Guarantee: <command>reposurgeon</command> handles the bzr
 commit-properties extension, correctly passing through property
 items including those with embedded newlines. (Such properties
-are also editable in the mailbox format.)</para>
+are also editable in the message-box format.)</para>
 
 <para>Limitation: Because <command>reposurgeon</command>
 relies on other programs to generate and interpret the fast-import command

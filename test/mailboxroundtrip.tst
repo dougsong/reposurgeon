@@ -1,7 +1,7 @@
-## Test mailbox_out/mailbox_in round-trip
+## Test msgout/msgin round-trip
 
 read <min.fi
-mailbox_out >/tmp/rsmailbox$$$$
-mailbox_in </tmp/rsmailbox$$$$
-shell rm /tmp/rsmailbox$$$$
+msgout >/tmp/rsmsgbox$$$$
+msgin </tmp/rsmsgbox$$$$
+shell rm /tmp/rsmsgbox$$$$
 write -

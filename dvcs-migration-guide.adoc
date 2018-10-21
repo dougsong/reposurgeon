@@ -516,7 +516,7 @@ summary-plus-continuation form.]]
 
 You should also, as previously noted, leave a tag in the normal
 commit sequence noting the switchover.  You can do this with
-the `mailbox --create` command; see the reposurgeon
+the `msgin --create` command; see the reposurgeon
 manual page for details and an example.
 
 === Nonsurgical cleanup steps ===
@@ -827,6 +827,9 @@ Makefile.
 
 4.6 (2017-12-14)::
      Recommend PyPy for speeding up large conversions.
+
+Repository head::
+     Track the name change of the mailbox commands. 
 
 // Local Variables:
 // compile-command: "make dvcs-migration-guide.html"

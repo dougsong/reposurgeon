@@ -122,7 +122,7 @@ const version = "4.0-pre"
 // extractor = unexpected VCS command behavior inside an extractor class.
 // Abort the attempt to build a repo.
 //
-// mailbox = malformed mailbox-style input.  Abort merging those changes.
+// msgbox = malformed mailbox-style input.  Abort merging those changes.
 //
 // Unlabeled panics are presumed to be unrecoverable and intended to be
 // full aborts indicating a serious internal error.  These will call a defer
@@ -2268,7 +2268,7 @@ const debugFILEMAP = 3  // Debug building of filemaps
 const debugDELETE = 3   // Debug canonicalization after deletes
 const debugIGNORES = 3  // Debug ignore generation
 const debugSVNPARSE = 4 // Lower-level Subversion parsing details
-const debugEMAILIN = 4  // Debug round-tripping through mailbox_{out|in}
+const debugEMAILIN = 4  // Debug round-tripping through msg{out|in}
 const debugSHUFFLE = 4  // Debug file and directory handling
 const debugCOMMANDS = 5 // Show commands as they are executed
 const debugUNITE = 6    // Debug mark assignments in merging
@@ -2277,7 +2277,7 @@ var quiet = false
 
 var optionFlags = [...][2]string{
         {"canonicalize", 
-`If set, import stream reads and mailbox_in and edit will canonicalize
+`If set, import stream reads and msgin and edit will canonicalize
 comments by replacing CR-LF with LF, stripping leading and trailing whitespace,
 and then appending a LF.
 `},
@@ -2497,7 +2497,7 @@ func (d OrderedMap) Swap(i int, j int) {
  * This is how we serialize comments so they can be modified in an editor.
  */
 
-// MessageBlockDivider is the separator between messages in a comment mailbox.
+// MessageBlockDivider is the separator between messages in a message-box.
 var MessageBlockDivider = bytes.Repeat([]byte("-"), 78)
 
 // MessageBlock is similar to net/mail's type, but the body is pulled inboard
@@ -2521,7 +2521,7 @@ func newMessageBlock(bp *bufio.Reader) (*MessageBlock, error) {
 		}
 		colon := strings.Index(data, ":")
 		if colon == -1 {
-			panic(throw("mailbox", "Ill-formed line in mail message"))
+			panic(throw("msgbox", "Ill-formed line in mail message"))
 		}
 		key := data[0:colon]
 		payload := strings.TrimSpace(data[colon+1:])
@@ -3317,7 +3317,7 @@ func (t *Tag) tags(modifiers stringSet, eventnum int, _cols int) string {
 	return fmt.Sprintf("%6d\ttag\t%s", eventnum+1, t.name)
 }
 
-// emailOut enables do_mailbox_out() to report tag metadata
+// emailOut enables DoMsgout() to report tag metadata
 func (t *Tag) emailOut(modifiers stringSet, eventnum int,
 	filterRegexp *regexp.Regexp) string {
 	msg, _ := newMessageBlock(nil)
@@ -3349,7 +3349,7 @@ func (t *Tag) emailOut(modifiers stringSet, eventnum int,
 func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 	tagname := msg.getHeader("Tag-Name")
 	if tagname == "" {
-		panic(throw("mailbox", "update to tag %s is malformed", t.name))
+		panic(throw("msgbox", "update to tag %s is malformed", t.name))
 	}
 	modified := false
 	if t.name != tagname {
@@ -3366,7 +3366,7 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 	if newtagger := msg.getHeader("Tagger"); newtagger != "" {
 		newname, newemail, _, err := parseAttributionLine(newtagger)
 		if err != nil || newname == "" || newemail == "" {
-			panic(throw("mailbox", "Can't recognize address in Tagger: "+newtagger))
+			panic(throw("msgbox", "Can't recognize address in Tagger: "+newtagger))
 		} else if t.tagger.fullname != newname || t.tagger.email != newemail {
 			t.tagger.fullname, t.tagger.email = newname, newemail
 			announce(debugEMAILIN,
@@ -3378,7 +3378,7 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 			candidate := msg.getHeader("Tagger-Date")
 			date, err := newDate(candidate)
 			if err != nil {
-				panic(throw("mailbox", "Malformed date %s in tag message: %v",
+				panic(throw("msgbox", "Malformed date %s in tag message: %v",
 					candidate, err))
 			}
 			if t.tagger.date.isZero() || !date.timestamp.Equal(t.tagger.date.timestamp) {
@@ -4134,7 +4134,7 @@ func (commit *Commit) tags(_modifiers stringSet, eventnum int, _cols int) string
 	return fmt.Sprintf("%6d\tcommit\t%s", eventnum+1, commit.branch)
 }
 
-// emailOut enables do_mailbox_out() to report commit metadata.
+// emailOut enables DoMsgout() to report commit metadata.
 func (commit *Commit) emailOut(modifiers stringSet,
 	eventnum int, filterRegexp *regexp.Regexp) string {
 	msg, _ := newMessageBlock(nil)
@@ -4235,7 +4235,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 		var err2 error
 		newfullname, newemail, _, err2 := parseAttributionLine(newcommitter)
 		if err2 != nil {
-			panic(throw("mailbox", "bad attribution: %v", err2))
+			panic(throw("msgbox", "bad attribution: %v", err2))
 		}
 		if c.fullname != newfullname || c.email != newemail {
 			c.fullname, c.email = newfullname, newemail
@@ -4247,7 +4247,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 	}
 	newcommitdate, err := newDate(msg.getHeader("Committer-Date"))
 	if err != nil {
-		panic(throw("mailbox", "Bad Committer-Date: %v", err))
+		panic(throw("msgbox", "Bad Committer-Date: %v", err))
 	}
 	if newcommitdate.isZero() && !newcommitdate.Equal(c.date) {
 		if commit.repo != nil {
@@ -4283,7 +4283,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 			c := &commit.authors[i]
 			newfullname, newemail, _, err := parseAttributionLine(msg.getHeader(hdr))
 			if err != nil {
-				panic(throw("mailbox", "bad attribution: %v", err))
+				panic(throw("msgbox", "bad attribution: %v", err))
 			}
 			if c.fullname != newfullname || c.email != newemail {
 				c.fullname, c.email = newfullname, newemail
@@ -4296,7 +4296,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 			if newdate != "" {
 				date, err := newDate(newdate)
 				if err != nil {
-					panic(throw("mailbox", "Bad Author-Date: %v", err))
+					panic(throw("msgbox", "Bad Author-Date: %v", err))
 				}
 				if c.date.isZero() || !date.Equal(c.date) {
 					eventnum := msg.getHeader("Event-Number")
@@ -5111,7 +5111,7 @@ func newPassthrough(repo *Repository, line string) *Passthrough {
 	return p
 }
 
-// emailOut enables DoMailbox_out() to report these.
+// emailOut enables DoMsgout() to report these.
 func (p *Passthrough) emailOut(_modifiers stringSet,
 	eventnum int, _filterRegexp *regexp.Regexp) string {
 	msg, _ := newMessageBlock(nil)
@@ -11584,7 +11584,7 @@ func popToken(line string) (string, string) {
             if fp.wait():
                 raise Recoverable("%s returned a failure status" % editor)
             else:
-                self.do_mailbox_in("<" + tfname)
+                self.DoMsgin("<" + tfname)
         # No try/finally here - we want the tempfile to survive on fatal error
         # because it might have megabytes of metadata edits in it.
         os.remove(tfname)
@@ -13022,12 +13022,12 @@ func (rs *Reposurgeon) DoRebuild(line string) (stopOut bool) {
 //
 // Editing commands
 //
-func (rs *Reposurgeon) HelpMailboxOut() {
+func (rs *Reposurgeon) HelpMsgout() {
 	rs.helpOutput(`
-Emit a mailbox file of messages in RFC822 format representing the
-contents of repository metadata. Takes a selection set; members of the set
-other than commits, annotated tags, and passthroughs are ignored (that
-is, presently, blobs and resets). Supports > redirection.
+Emit a file of messages in RFC822 format representing the contents of
+repository metadata. Takes a selection set; members of the set other
+than commits, annotated tags, and passthroughs are ignored (that is,
+presently, blobs and resets). Supports > redirection.
 
 May have an option --filter, followed by = and a /-enclosed regular expression.
 If this is given, only headers with names matching it are emitted.  In this
@@ -13035,8 +13035,8 @@ context the name of the header includes its trailing colon.
 `)
 }
 
-// Generate a mailbox file representing object metadata.
-func (rs *Reposurgeon) DoMailboxOut(lineIn string) bool {
+// Generate a message-box file representing object metadata.
+func (rs *Reposurgeon) DoMsgout(lineIn string) bool {
 	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
 	defer parse.Closem()
 
@@ -13047,11 +13047,11 @@ func (rs *Reposurgeon) DoMailboxOut(lineIn string) bool {
 			var err error
 			filterRegexp, err = regexp.Compile(s[1:len(s)-1])
 			if err != nil {
-				complain("malformed filter option in mailbox_out\n")
+				complain("malformed filter option in msgout\n")
 				return false
 			}
 		} else {
-			complain("malformed filter option in mailbox_out\n")
+			complain("malformed filter option in msgout\n")
 			return false
 		}
 	}
@@ -13073,12 +13073,12 @@ func (rs *Reposurgeon) DoMailboxOut(lineIn string) bool {
 	return false
 }
 
-func (rs *Reposurgeon) HelpMailbox_in() {
+func (rs *Reposurgeon) HelpMsgin() {
 	rs.helpOutput(`
-Accept a mailbox file of messages in RFC822 format representing the
+Accept a file of messages in RFC822 format representing the
 contents of the metadata in selected commits and annotated tags. Takes
 no selection set. If there is an argument it will be taken as the name
-of a mailbox file to read from; if no argument, or one of '-', reads
+of a message-box file to read from; if no argument, or one of '-', reads
 from standard input. Supports < redirection.
 
 Users should be aware that modifying an Event-Number or Event-Mark field
@@ -13086,9 +13086,9 @@ will change which event the update from that message is applied to.  This
 is unlikely to have good results.
 
 The header CheckText, if present, is examined to see if the comment
-text of the associated event begins with it. If not, the mailbox
+text of the associated event begins with it. If not, the item
 modification is aborted. This helps ensure that you are landing
-updates ob the events you intend.
+updates on the events you intend.
 
 If the --create modifier is present, new tags and commits will be
 appended to the repository.  In this case it is an error for a tag
@@ -13101,7 +13101,7 @@ commit set was specified for commit creations, the new commits are
 made children of that commit.
 
 Otherwise, if the Event-Number and Event-Mark fields are absent, the
-mailbox_in logic will attempt to match the commit or tag first by Legacy-ID,
+msgin logic will attempt to match the commit or tag first by Legacy-ID,
 then by a unique committer ID and timestamp pair.
 
 If output is redirected and the modifier '--changed' appears, a minimal
@@ -13114,8 +13114,8 @@ CVS empty-comment marker.
 `)
 }
 
-// Accept a mailbox file representing object metadata and update from it.
-func (rs *Reposurgeon) DoMailbox_in(line string) (stopOut bool) {
+// Accept a message-box file representing object metadata and update from it.
+func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
 		return false
@@ -13351,9 +13351,9 @@ func (rs *Reposurgeon) DoMailbox_in(line string) (stopOut bool) {
 	}
 	if verbose > 0 {
 		if len(changers) == 0 {
-			announce(debugSHOUT, "no events modified by mailbox_in.")
+			announce(debugSHOUT, "no events modified by msgin.")
 		} else {
-			announce(debugSHOUT, "%d events modified by mailbox_in.", len(changers))
+			announce(debugSHOUT, "%d events modified by msgin.", len(changers))
 		}
 	}
 	if parse.stdout != os.Stdout {
@@ -13368,15 +13368,15 @@ func (rs *Reposurgeon) DoMailbox_in(line string) (stopOut bool) {
 
 func (rs *Reposurgeon) HelpEdit() {
         rs.helpOutput(`
-Report the selection set of events to a tempfile as mailbox_out does,
-call an editor on it, and update from the result as mailbox_in does.
+Report the selection set of events to a tempfile as msgout does,
+call an editor on it, and update from the result as msgin does.
 If you do not specify an editor name as second argument, it will be
 taken from the $EDITOR variable in your environment.
 If $EDITOR is not set, /usr/bin/editor will be used as a fallback
 if it exists as a symlink to your default editor, as is the case on
 Debian, Ubuntu and their derivatives.
 
-Normally this command ignores blobs because mailbox_out does.
+Normally this command ignores blobs because msgout does.
 However, if you specify a selection set consisting of a single
 blob, your editor will be called on the blob file.
 

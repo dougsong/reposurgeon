@@ -27,7 +27,7 @@ check:
 	@if { ./setpypy pypy || ./setpypy python; } 2>/dev/null; then echo "=== Running built-in tests" && $(REPOSURGEON) "runtests"; else echo "pypy/python missing; skipping built-in tests"; fi
 	@if { ./setpypy pypy || ./setpypy python; } 2>/dev/null; then time make -e --quiet python; else echo "pypy/python missing; skipping tests"; fi
 	@./setpypy pypy 2>/dev/null || :
-	@time make nonpython
+	#@time make nonpython
 	@echo "=== No diff output is good news."
 
 # Portability check - tests all dialects
@@ -38,14 +38,14 @@ portcheck: check
 	@time make nonpython
 	@echo "=== No diff output is good news."
 
-python: listcheck roundtrip roundtrip-compress mailboxing fi-regress coalesce \
+python: listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce \
 		git-regress git-regress-branches git-regress-merges \
 		git-regress-tags hg-extractor svnload-regress \
 		liftcheck-regress legacy-regress svndump-regress \
 		svncheck-regress
 
-nonpython: repomapper-regress repotool-regress repocutter-regress
-	GOPATH=$(GOPATH) go test -v goreposurgeon
+#nonpython: repomapper-regress repotool-regress repocutter-regress
+#	GOPATH=$(GOPATH) go test -v goreposurgeon
 
 hg-extractor: hg-regress hg-regress-branches hg-regress-merges \
 		hg-regress-tags hg-regress-patho
@@ -99,10 +99,10 @@ roundtrip-compress:
 	    rm -f /tmp/rs$$$$ || exit 1; \
 	done
 
-# Test that dumping metadata to mailbox form and updating from the mailbox
-# is idempotent if you make no changes to the mailbox.
-mailboxing:
-	@echo "=== Testing mailbox-out/mailbox-in roundtripping:"
+# Test that dumping metadata to msgbox form and updating from the message-box
+# is idempotent if you make no changes to the message-box.
+messagebox:
+	@echo "=== Testing msgout/msgin roundtripping:"
 	@for file in *.fi; do \
 	    echo "  $${file}";\
 	    $(REPOSURGEON) "read <$${file}" "edit echo>/dev/null" "write -" \

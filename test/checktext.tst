@@ -1,6 +1,6 @@
 ## Test Check-Text match and mismatch
 read <min.fi
-mailbox_in <<EOF
+msgin <<EOF
 ------------------------------------------------------------------------------
 Committer: Ralf Schlatterbeck <rsc@runtux.com>
 Committer-Date: Thu 01 Jan 1970 00:00:00 +0000
@@ -8,7 +8,7 @@ Check-Text: First commit.
 
 Alter first commit, check text is correct.
 EOF
-mailbox_in <<EOF
+msgin <<EOF
 ------------------------------------------------------------------------------
 Committer: Ralf Schlatterbeck <rsc@runtux.com>
 Committer-Date: Thu 01 Jan 1970 00:00:00 +0000

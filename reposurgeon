@@ -1453,7 +1453,7 @@ DEBUG_FILEMAP   = 3    # Debug building of filemaps
 DEBUG_DELETE    = 3    # Debug canonicalization after deletes
 DEBUG_IGNORES   = 3    # Debug ignore generation
 DEBUG_SVNPARSE  = 4    # Lower-level Subversion parsing details
-DEBUG_EMAILIN   = 4    # Debug event round-tripping through mailbox_{out|in}
+DEBUG_EMAILIN   = 4    # Debug event round-tripping through msg{out|in}
 DEBUG_SHUFFLE   = 4    # Debug file and directory handling
 DEBUG_COMMANDS  = 5    # Show commands as they are executed
 DEBUG_UNITE     = 5    # Debug mark assignments in merging
@@ -2193,7 +2193,7 @@ class Tag(object):
         "Enable do_tags() to report tags."
         return "%6d\ttag\t%s" % (eventnum+1, self.name)
     def email_out(self, modifiers, eventnum, filter_regexp=None):
-        "Enable do_mailbox_out() to report tag metadata."
+        "Enable do_msgout() to report tag metadata."
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
         msg["Tag-Name"] = self.name
@@ -2650,7 +2650,7 @@ class Commit(object):
                 return None
         return "%6d\tcommit\t%s" % (eventnum+1, self.branch)
     def email_out(self, modifiers, eventnum, filter_regexp=None):
-        "Enable do_mailbox_out() to report commit metadate."
+        "Enable do_msgout() to report commit metadate."
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
         msg["Event-Mark"] = self.mark
@@ -3161,7 +3161,7 @@ class Passthrough(object):
         self.deletehook = None
         self.color = None
     def email_out(self, _modifiers, eventnum, _filter_regexp=None):
-        "Enable do_mailbox_out() to report these."
+        "Enable do_msgout() to report these."
         msg = RepoSurgeonEmail()
         msg["Event-Number"] = str(eventnum+1)
         msg.set_payload(self.text)
@@ -8827,7 +8827,7 @@ class RepoSurgeon(cmd.Cmd, RepositoryList, SelectionParser):
     "Repository surgeon command interpreter."
     OptionFlags = (
         ("canonicalize", """\
-    If set, import stream reads and mailbox_in and edit will canonicalize
+    If set, import stream reads and msgin and edit will canonicalize
 comments by replacing CR-LF with LF, stripping leading and trailing whitespace,
 and then appending a LF.
 """),
@@ -9465,7 +9465,7 @@ developers.
             if fp.wait():
                 raise Recoverable("%s returned a failure status" % editor)
             else:
-                self.do_mailbox_in("<" + tfname)
+                self.do_msgin("<" + tfname)
         # No try/finally here - we want the tempfile to survive on fatal error
         # because it might have megabytes of metadata edits in it.
         os.remove(tfname)
@@ -10621,9 +10621,9 @@ its contents are backed up to a save directory.
     #
     # Editing commands
     #
-    def help_mailbox_out(self):
+    def help_msgout(self):
         sys.stdout.write("""
-Emit a mailbox file of messages in RFC822 format representing the
+Emit a file of messages in RFC822 format representing the
 contents of repository metadata. Takes a selection set; members of the set
 other than commits, annotated tags, and passthroughs are ignored (that
 is, presently, blobs and resets). Supports > redirection.
@@ -10632,15 +10632,15 @@ May have an option --filter, followed by = and a /-enclosed regular expression.
 If this is given, only headers with names matching it are emitted.  In this
 context the name of the header includes its trailing colon.
 """)
-    def do_mailbox_out(self, line):
-        "Generate a mailbox file representing object metadata."
+    def do_msgout(self, line):
+        "Generate a message-box file representing object metadata."
         filter_regexp = None
         opts = shlex.split(line)
         for token in opts:
             if token.startswith("--filter="):
                 token = token[9:]
                 if len(token) < 2 or token[0] != '/' or token[-1] != '/':
-                    raise Recoverable("malformed filter option in mailbox_out")
+                    raise Recoverable("malformed filter option in msgout")
                 try:
                     filter_regexp = re.compile(token[1:-1].encode('ascii'))
                 except sre_constants.error as e:
@@ -10648,15 +10648,15 @@ context the name of the header includes its trailing colon.
             elif token.startswith(">"):
                 continue
             else:
-                raise Recoverable("unknown option %s in mailbox_out" % token)
+                raise Recoverable("unknown option %s in msgout" % token)
         self.report_select(line, "email_out", (filter_regexp,))
 
-    def help_mailbox_in(self):
+    def help_msgin(self):
         sys.stdout.write("""
-Accept a mailbox file of messages in RFC822 format representing the
+Accept a file of messages in RFC822 format representing the
 contents of the metadata in selected commits and annotated tags. Takes
 no selection set. If there is an argument it will be taken as the name
-of a mailbox file to read from; if no argument, or one of '-', reads
+of a message-box file to read from; if no argument, or one of '-', reads
 from standard input. Supports < redirection.
 
 Users should be aware that modifying an Event-Number or Event-Mark field
@@ -10664,9 +10664,9 @@ will change which event the update from that message is applied to.  This
 is unlikely to have good results.
 
 The header CheckText, if present, is examined to see if the comment
-text of the associated event begins with it. If not, the mailbox
+text of the associated event begins with it. If not, the item
 modification is aborted. This helps ensure that you are landing
-updates ob the events you intend.
+updates on the events you intend.
 
 If the --create modifier is present, new tags and commits will be
 appended to the repository.  In this case it is an error for a tag
@@ -10679,7 +10679,7 @@ commit set was specified for commit creations, the new commits are
 made children of that commit.
 
 Otherwise, if the Event-Number and Event-Mark fields are absent, the
-mailbox_in logic will attempt to match the commit or tag first by Legacy-ID,
+msgin logic will attempt to match the commit or tag first by Legacy-ID,
 then by a unique committer ID and timestamp pair.
 
 If output is redirected and the modifier '--changed' appears, a minimal
@@ -10690,8 +10690,8 @@ If the option --empty-only is given, this command will throw a recoverable error
 if it tries to alter a message body that is neither empty nor consists of the
 CVS empty-comment marker.
 """)
-    def do_mailbox_in(self, line):
-        "Accept a mailbox file representing object metadata and update from it."
+    def do_msgin(self, line):
+        "Accept a message-box file representing object metadata and update from it."
         if self.chosen() is None:
             complain("no repo has been chosen.")
             return
@@ -10860,9 +10860,9 @@ CVS empty-comment marker.
                 changers.append(update)
         if verbose:
             if not changers:
-                complain("no events modified by mailbox_in.")
+                complain("no events modified by msgin.")
             else:
-                complain("%d events modified by mailbox_in." % len(changers))
+                complain("%d events modified by msgin." % len(changers))
         if parse.stdout != sys.stdout:
             if "--changed" in parse.options:
                 for update in changers:
@@ -10870,15 +10870,15 @@ CVS empty-comment marker.
 
     def help_edit(self):
         sys.stdout.write("""
-Report the selection set of events to a tempfile as mailbox_out does,
-call an editor on it, and update from the result as mailbox_in does.
+Report the selection set of events to a tempfile as msgout does,
+call an editor on it, and update from the result as msgin does.
 If you do not specify an editor name as second argument, it will be
 taken from the $EDITOR variable in your environment.
 If $EDITOR is not set, /usr/bin/editor will be used as a fallback
 if it exists as a symlink to your default editor, as is the case on
 Debian, Ubuntu and their derivatives.
 
-Normally this command ignores blobs because mailbox_out does.
+Normally this command ignores blobs because msgout does.
 However, if you specify a selection set consisting of a single
 blob, your editor will be called on the blob file.
 

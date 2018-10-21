@@ -33,7 +33,7 @@ The file 'reposurgeon-git-aliases` can be appended to your `~/.gitconfig' to
 support working directly with action stamps in git.
 
 Finally, an Emacs Lisp mode with useful functions for editing large
-comment mailboxes is included.
+comment message-boxes is included.
 
 The hashbang lines in these tools invoke PyPy, an alternative Python
 implementation that performs much better than CPyton on this code. You

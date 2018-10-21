@@ -1,3 +1,3 @@
-## Test mailbox_out --filter option
+## Test msgout --filter option
 read <sample1.fi
-=C mailbox_out --filter=/Author:|Committer:|Committer-Date:/
+=C msgout --filter=/Author:|Committer:|Committer-Date:/

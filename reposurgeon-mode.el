@@ -1,6 +1,6 @@
 ;; A mode for editing the mailbox-like comment dumps produced by reposurgeon.
 ;;
-;; Canonicalizing thousands of comments in a mailbox_out dump is the grottiest
+;; Canonicalizing thousands of comments in a msgout dump is the grottiest
 ;; part of lifting a repository, but if you don't do it you are probably going
 ;; to miss things that should turn into reference cookies.  This mode aims to
 ;; speed up the process.
@@ -13,7 +13,7 @@
 
 (defconst reposurgeon-mail-delimiter
   "------------------------------------------------------------------------------\n"
-  "Delimiter line used in reposurgeon comment mailboxes.")
+  "Delimiter line used in reposurgeon comment msgboxes.")
 
 (defun decimal-digit-after ()
   (and (>= (char-after) ?0) (<= (char-after) ?9)))
@@ -68,7 +68,7 @@
 
 (defun svn-lift-log ()
   "After pasting a segment of a Subversion log dump, this will fix delimiters
-and headers so it's in the same format as the rest of the mailbox."
+and headers so it's in the same format as the rest of the msgbox."
   (interactive)
   (while (re-search-forward (concat svn-log-delimiter "r\\([0-9]+\\).*") nil t)
     (replace-match (concat reposurgeon-mail-delimiter "Fossil-ID: \\1") nil nil)))
@@ -88,7 +88,7 @@ and headers so it's in the same format as the rest of the mailbox."
   )
 
 (defun kill-comment-entry ()
-  "Remove current mailbox entry, move to next."
+  "Remove current msgbox entry, move to next."
   (interactive)
   (re-search-backward (concat "^" reposurgeon-mail-delimiter))
   (beginning-of-line)
@@ -104,8 +104,8 @@ and headers so it's in the same format as the rest of the mailbox."
   (interactive)
   (grep (format "egrep -nH -e \"Node-path|Revision-number|Node-copyfrom\" %s " (buffer-file-name))))
 
-(defun strip-mailbox-headers ()
-  "Strip all headers from a mailbox comment dump except Event-Mark."
+(defun strip-msgbox-headers ()
+  "Strip all headers from a msgbox comment dump except Event-Mark."
   (interactive)
   (goto-char (point-min))
   (let ((seen-state nil))
@@ -131,7 +131,7 @@ and headers so it's in the same format as the rest of the mailbox."
 
 (define-derived-mode reposurgeon-mode
   text-mode "Reposurgeon"
-  "Major mode for editing reposurgeon comment mailboxes.
+  "Major mode for editing reposurgeon comment message-boxes.
 \\{reposurgeon-mode-map}"
   (setq case-fold-search nil))
 
