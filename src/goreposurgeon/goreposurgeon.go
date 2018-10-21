@@ -11479,20 +11479,23 @@ func (self *Reposurgeon) reportSelect(parse *LineParse, display func(*LineParse,
 	}
 }
 
+// Grab a whitespace-delimited token from the front of the line.
+func popToken(line string) (string, string) {
+	tok := ""
+	line = strings.TrimLeft(line, " \n\t")
+	for {
+		if line == "" || line[0] == ' ' || line[9] == '\t' {
+			break
+		} else {
+			tok += line[:1]
+			line = line[1:]
+		}
+	}
+	line = strings.TrimLeft(line, " \n\t")
+	return tok, line
+}
+
 /*
-    @staticmethod
-    func pop_token(line):
-        "Grab a whitespace-delimited token from the front of the line."
-        tok = ""
-        line = line.lstrip()
-        while true:
-            if not line or line[0].isspace():
-                break
-            else:
-                tok += line[0]
-                line = line[1:]
-        line = line.lstrip()
-        return (tok, line)
     func edit(self, selection, line):
         # Mailboxize and edit the non-blobs in the selection
         # Assumes that self.chosen() and selection are not None
@@ -13453,7 +13456,7 @@ func (rs *Reposurgeon) DoTranscode(self, line str):
             return
         else if self.selection is None:
             self.selection = self.chosen().all()
-        (codec, line) = RepoSurgeon.pop_token(line)
+        (codec, line) = popToken(line)
         func transcode(txt, _paths=None):
             return polystr(codecs.encode(codecs.decode(polybytes(txt), codec), "utf-8"))
         try:
@@ -13545,9 +13548,10 @@ paths, patch the permission field to the first argument value.
                     if op.op == opM and op.path in fields:
                         op.mode = perm
                 baton.twirl("")
+*/
 
-    func help_append():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpAppend() {
+        rs.helpOutput(`
 Append text to the comments of commits and tags in the specified
 selection set. The text is the first token of the command and may
 be a quoted string. C-style escape sequences in the string are
@@ -13555,7 +13559,10 @@ interpreted using Python's string_decode codec.
 
 If the option --rstrip is given, the comment is right-stripped before
 the new text is appended.
-""")
+`)
+}
+
+/*
     func (rs *Reposurgeon) DoAppend(self, line str):
         "Append a line to comments in the specified selection set."
         if self.chosen() == None:
@@ -13573,8 +13580,10 @@ the new text is appended.
                     event.comment = event.comment.rstrip()
                 event.comment += line
 
-    func help_squash():
-        rs.helpOutput("""
+*/
+
+func (rs *Reposurgeon) HelpSquash() {
+        rs.helpOutput(`
 Combine a selection set of events; this may mean deleting them or
 pushing their content forward or back onto a target commit just
 outside the selection range, depending on policy flags.
@@ -13582,7 +13591,10 @@ outside the selection range, depending on policy flags.
 The default selection set for this command is empty.  Blobs cannot be
 directly affected by this command; they move or are deleted only when
 removal of fileops associated with commits requires this.
-""")
+`)
+}
+
+/*
     func (rs *Reposurgeon) DoSquash(self, line str):
         "Squash events in the specified selection set."
         if self.chosen() == None:
@@ -13592,8 +13604,10 @@ removal of fileops associated with commits requires this.
             self.selection = []
         with rs.newLineParse(line, nil) as parse:
             self.chosen().squash(self.selection, parse.options)
-    func help_delete():
-        rs.helpOutput("""
+*/
+
+func (rs *Reposurgeon) HelpDelete() {
+        rs.helpOutput(`
 Delete a selection set of events.  The default selection set for this
 command is empty.  Tags, resets, and passthroughs are deleted with no
 side effects.  Blobs cannot be directly deleted with this command; they
@@ -13602,7 +13616,10 @@ are removed only when removal of fileops associated with commits requires this.
 When a commit is deleted, what becomes of tags and fileops attached to
 it is controlled by policy flags.  A delete is equivalent to a
 squash with the --delete flag.
-""")
+`)
+}
+
+/*
     func (rs *Reposurgeon) DoDelete(self, line str):
         "Delete events in the specified selection set."
         if self.chosen() == None:
@@ -13612,9 +13629,10 @@ squash with the --delete flag.
             self.selection = []
         with rs.newLineParse(line, nil) as parse:
             self.chosen().squash(self.selection, set(["--delete"]) | parse.options)
+*/
 
-    func help_coalesce():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpCoalesce() {
+        rs.helpOutput(`
 Scan the selection set (defaulting to all) for runs of commits with
 identical comments close to each other in time (this is a common form
 of scar tissues in repository up-conversions from older file-oriented
@@ -13633,7 +13651,10 @@ matches and the commit separation is small enough.  This option handles
 a convention used by Free Software Foundation projects.
 
 With  the --debug option, show messages about mismatches.
-""")
+`)
+}
+
+/*
     func (rs *Reposurgeon) DoCoalesce(self, line str):
         "Coalesce events in the specified selection set."
         repo = self.chosen()
@@ -13699,8 +13720,10 @@ With  the --debug option, show messages about mismatches.
                 repo.squash([repo.find(mark) for mark in span[:-1]], ("--coalesce",))
             if verbose > 0:
                 announce(debugSHOUT, "%d spans coalesced." % len(squashes))
-    func help_add():
-        rs.helpOutput("""
+*/
+
+func (rs *Reposurgeon) HelpAdd() {
+        rs.helpOutput(`
 From a specified commit, add a specified fileop. The syntax is
 
      add {D path | M perm mark path | R source target | C source target}
@@ -13712,7 +13735,10 @@ refer to a blob that precedes the commit location.  For an R or C
 operation to be valid, there must be an M operation for the source
 in the commit's ancestry.
 
-""")
+`)
+}
+
+/*
     func (rs *Reposurgeon) DoAdd(self, line str):
         "Add a fileop to a specified commit."
         if self.chosen() == None:
@@ -13780,9 +13806,10 @@ in the commit's ancestry.
             else if optype in (opR, "C"):
                 fileop.construct(optype, source, target)
             event.appendOperation(fileop)
+*/
 
-    func help_blob():
-        rs.helpOutput("""
+func (rs *Reposurgeon) HelpBlob() {
+        rs.helpOutput(`
 Syntax:
 
      blob
@@ -13790,7 +13817,9 @@ Syntax:
 Create a blob at mark :1 after renumbering other marks starting from
 :2.  Data is taken from stdin, which may be a here-doc.  This can be
 used with the add command to patch data into a repository.
-""")
+`)
+}
+
 /*
     func (rs *Reposurgeon) DoBlob(self, line str):
         "Add a fileop to a specified commit."
@@ -13806,8 +13835,9 @@ used with the add command to patch data into a repository.
             blob.setContent(parse.stdin.read())
         repo.declareSequenceMutation("adding blob")
         repo.invalidateNamecache()
+*/
 
-    func help_remove() {
+func (rs *Reposurgeon) HelpRemove() {
         rs.helpOutput(`
 From a specified commit, remove a specified fileop. The syntax is:
 
@@ -13826,8 +13856,10 @@ Note that this command does not attempt to scavenge blobs even if the
 deleted fileop might be the only reference to them. This behavior may
 change in a future release.
 `)
-    }
-    func (rs *Reposurgeon) DoRemove(self, line str):
+}
+
+/*
+   func (rs *Reposurgeon) DoRemove(self, line str):
         "Delete a fileop from a specified commit."
         repo =  self.chosen()
         if not repo:
@@ -13836,12 +13868,12 @@ change in a future release.
         if self.selection is None:
             self.selection = []
         orig = line
-        (opindex, line) = RepoSurgeon.pop_token(line)
+        (opindex, line) = popToken(line)
         # FIXME: This needs more general parsing
         optypes = "DMRCN"
         if re.match(r"[DMRCN]+$".encode('ascii'), polybytes(opindex)):
             optypes = opindex
-            (opindex, line) = RepoSurgeon.pop_token(line)
+            (opindex, line) = popToken(line)
         for ie, event in self.selected(Commit):
             event.invalidatePathsetCache()
             if opindex == "deletes":
@@ -13864,7 +13896,7 @@ change in a future release.
                     return
             target = None
             if line:
-                (verb, line)  = RepoSurgeon.pop_token(line)
+                (verb, line)  = popToken(line)
                 if verb == 'to':
                     self.set_selection_set(line)
                     if len(self.selection) != 1:
@@ -13933,9 +13965,10 @@ referencing them to instead reference the (kept) first blob.
                     blob_map[sha] = event.mark
         self.chosen().dedup(dup_map)
         return
+*/
 
-    func help_timeoffset():
-        rs.helpOutput("""
+func (rs *Reposurgeon) Help_Timeoffset() {
+        rs.helpOutput(`
 Apply a time offset to all time/date stamps in the selected set.  An offset
 argument is required; it may be in the form [+-]ss, [+-]mm:ss or [+-]hh:mm:ss.
 The leading sign is required to distingush it from a selection expression.
@@ -13943,8 +13976,11 @@ The leading sign is required to distingush it from a selection expression.
 Optionally you may also specify another argument in the form [+-]hhmm, a
 timeone literal to apply.  To apply a timezone without an offset, use
 an offset literal of +0 or -0.
-""")
-    func (rs *Reposurgeon) Do_timeoffset(self, line str):
+`)
+}
+
+/*
+func (rs *Reposurgeon) DoTimeoffset(self, line str):
         "Apply a time offset to all dates in selected events."
         if self.chosen() is None:
             complain("no repo has been chosen.")
@@ -14395,12 +14431,12 @@ in the ancestry of the commit, this command throws an error.  With the
         repo = self.chosen()
         if self.selection is None:
             self.selection = repo.all()
-        (source_re, line) = RepoSurgeon.pop_token(line)
-        (verb, line) = RepoSurgeon.pop_token(line)
+        (source_re, line) = popToken(line)
+        (verb, line) = popToken(line)
         with rs.newLineParse(line, nil) as parse:
             if verb == "rename":
                 force = '--force' in parse.options
-                (target_re, _) = RepoSurgeon.pop_token(parse.line)
+                (target_re, _) = popToken(parse.line)
                 if not target_re:
                     raise Recoverable("no target specified in rename")
                 actions = []
@@ -14858,15 +14894,15 @@ is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
             complain("no repo has been chosen.")
             return
         repo = self.chosen()
-        (branchname, line) = RepoSurgeon.pop_token(line)
+        (branchname, line) = popToken(line)
         branchname = string_escape(branchname)
         if "/" not in branchname:
             branchname = 'refs/heads/' + branchname
         if branchname not in repo.branchset():
             raise Recoverable("no such branch as %s" % branchname)
-        (verb, line) = RepoSurgeon.pop_token(line)
+        (verb, line) = popToken(line)
         if verb == "rename":
-            (newname, line) = RepoSurgeon.pop_token(line)
+            (newname, line) = popToken(line)
             if not newname:
                 raise Recoverable("new branch name must be nonempty.")
             if "/" not in newname:
@@ -14954,9 +14990,9 @@ fields are changed and a warning is issued.
         # These things often occur in combination. Notably, git-fast-export
         # generates for each tag object corresponding branch labels on
         # some ancestor commits - the rule for where this stops is unclear.
-        (tagname, line) = RepoSurgeon.pop_token(line)
+        (tagname, line) = popToken(line)
         tagname = string_escape(tagname)
-        (verb, line) = RepoSurgeon.pop_token(line)
+        (verb, line) = popToken(line)
         if verb == 'create':
             if repo.named(tagname):
                 raise Recoverable("something is already named %s" % tagname)
@@ -15034,7 +15070,7 @@ fields are changed and a warning is issued.
         else if verb == "rename":
             if len(tags) > 1:
                 raise Recoverable("exactly one tag is required for rename")
-            (newname, line) = RepoSurgeon.pop_token(line)
+            (newname, line) = popToken(line)
             if not newname:
                 raise Recoverable("new tag name must be nonempty.")
             if len(tags) == 1:
@@ -15110,7 +15146,7 @@ moved, no branch fields are changed.
         repo = self.chosen()
         if self.selection is None:
             self.selection = repo.all()
-        (resetname, line) = RepoSurgeon.pop_token(line)
+        (resetname, line) = popToken(line)
         resetname = string_escape(resetname)
         if "/" not in resetname:
             resetname = "heads/" + resetname
@@ -15118,7 +15154,7 @@ moved, no branch fields are changed.
             resetname = "refs/" + resetname
         resets = [e for _,e in repo.iterevents(indices=self.selection, types=Reset)
                       if e.ref == resetname]
-        (verb, line) = RepoSurgeon.pop_token(line)
+        (verb, line) = popToken(line)
         if verb == "create":
             if resets:
                 raise Recoverable("one or more resets match %s" % resetname)
@@ -15151,7 +15187,7 @@ moved, no branch fields are changed.
         else if verb == "rename":
             if not resets:
                 raise Recoverable("no such reset as %s" % resetname)
-            (newname, line) = RepoSurgeon.pop_token(line)
+            (newname, line) = popToken(line)
             if not newname:
                 raise Recoverable("new reset name must be nonempty.")
             if newname.count("/") == 0:
