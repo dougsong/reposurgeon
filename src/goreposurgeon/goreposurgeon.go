@@ -1963,7 +1963,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 	}
 
 	if len(uncolored) > 0 {
-		if verbose >= 1 {
+		if context.verbose >= 1 {
 			return nil, fmt.Errorf("missing branch attribute for %v", uncolored)
 		}
 		return nil, fmt.Errorf("some branches do not have local ref names")
@@ -2258,8 +2258,6 @@ func (baton *Baton) readProgress(ccount int64, filesize int64) {
  * Debugging and utility
  */
 
-var verbose = 0
-
 const debugSHOUT = 0    // Unconditional
 const debugSVNDUMP = 2  // Debug Subversion dumping
 const debugTOPOLOGY = 2 // Debug repo-extractor logic (coarse-grained)
@@ -2273,7 +2271,6 @@ const debugSHUFFLE = 4  // Debug file and directory handling
 const debugCOMMANDS = 5 // Show commands as they are executed
 const debugUNITE = 6    // Debug mark assignments in merging
 const debugLEXER = 6    // Debug selection-language parsing
-var quiet = false
 
 var optionFlags = [...][2]string{
         {"canonicalize", 
@@ -2299,31 +2296,36 @@ developers.
 `},
 }
 
-var flagOptions = make(map[string]bool)
-var listOptions = make(map[string]stringSet)
-
 func haveGlobalOption(name string) bool {
-	_, ok := listOptions[name]
+	_, ok := context.listOptions[name]
 	return ok
 }
 
 func listOption(name string) stringSet {
-	d, _ := listOptions[name]
+	d, _ := context.listOptions[name]
 	return d // Should be nil if not present
 }
 
 func setGlobalOption(name string, value stringSet) {
-	listOptions[name] = value
+	context.listOptions[name] = value
 }
 
 /*
- * Global context, Eventually all globals should 
+ * Global context. Eventually all globals should live here.
  */
 
 type Context struct {
-	// The abort plag
+	verbose int
+	// The abort flag
 	abortScript      bool
 	abortLock        sync.Mutex
+	flagOptions      map[string]bool
+	listOptions      map[string]stringSet
+}
+
+func (ctx *Context) init() {
+	ctx.flagOptions = make(map[string]bool)
+	ctx.listOptions = make(map[string]stringSet)
 }
 
 var context Context
@@ -2382,7 +2384,7 @@ func screenwidth() int {
 
 // debugEnable is a hook to set up debug-message filtering.
 func debugEnable(level int) bool {
-	return verbose >= level
+	return context.verbose >= level
 }
 
 // nuke removed a (large) directory, reporting elapsed time.
@@ -5386,7 +5388,7 @@ func (sp *StreamParser) warn(msg string) {
 
 func (sp *StreamParser) gripe(msg string) {
 	// Display or queue up an error message.
-	if verbose < 2 {
+	if context.verbose < 2 {
 		sp.warnings = append(sp.warnings, msg)
 	} else {
 		complain(msg)
@@ -6968,7 +6970,7 @@ func (repo *Repository) readLegacyMap(fp io.Reader) error {
 		}
 	}
 
-	if verbose >= 1 {
+	if context.verbose >= 1 {
 		announce(debugSHOUT, "%d matched, %d unmatched, %d total",
 			matched, unmatched, matched+unmatched)
 	}
@@ -8266,7 +8268,7 @@ func (repo *Repository) resort() {
 			newEvents[i] = repo.events[j]
 		}
 		repo.events = newEvents
-		if verbose > 0 {
+		if context.verbose > 0 {
 			announce(debugSHOUT, "re-sorted events")
 		}
 		// assignments will be fixed so don't pass anything to
@@ -8836,14 +8838,14 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 	if extractor != nil {
 		repo.stronghint = true
 		streamer := newRepoStreamer(*extractor)
-		streamer.extract(repo, vcs, verbose>0)
+		streamer.extract(repo, vcs, context.verbose>0)
 		return repo, nil
 	}
 	// We found a matching VCS type
 	if vcs != nil {
 		repo.hint("", vcs.name, true)
 		repo.preserveSet = vcs.preserve
-		showprogress := (verbose > 0) && !repo.exportStyle().Contains("export-progress")
+		showprogress := (context.verbose > 0) && !repo.exportStyle().Contains("export-progress")
 		context := map[string]string{"basename": filepath.Base(repo.sourcedir)}
 		mapper := func (sub string) string {
 			for k, v := range context {
@@ -9089,9 +9091,9 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 	if vcs.initializer != "" {
 		runProcess(vcs.initializer, "repository initialization")
 	}
-	context := map[string]string{"basename": filepath.Base(target)}
+	params := map[string]string{"basename": filepath.Base(target)}
 	mapper := func (sub string) string {
-		for k, v := range context {
+		for k, v := range params {
 			from := "${" + k + "}"
 			sub = strings.Replace(sub, from, v, -1)
 		}
@@ -9104,10 +9106,10 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		}
 		// Ship to the tempfile
 		repo.fastExport(repo.all(), tfdesc,
-			options, preferred, verbose>0)
+			options, preferred, context.verbose>0)
 		tfdesc.Close()
 		// Pick up the tempfile
-		context["tempfile"] = tfdesc.Name()
+		params["tempfile"] = tfdesc.Name()
 		cmd := os.Expand(repo.vcs.importer, mapper)
 		runProcess(cmd, "repository import")
 		os.Remove(tfdesc.Name())
@@ -9118,7 +9120,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 			return err
 		}
 		repo.fastExport(repo.all(), tp,
-			options, preferred, verbose>0)
+			options, preferred, context.verbose>0)
 		tp.Close()
 		cls.Wait()
 	}
@@ -9142,7 +9144,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		complain("checkout not supported for %s skipping", vcs.name)
 
 	}
-	if verbose > 0 {
+	if context.verbose > 0 {
 		announce(debugSHOUT, "rebuild is complete.")
 
 	}
@@ -9194,7 +9196,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 				os.Rename(src, dst)
 			}
 		}
-		if verbose > 0 {
+		if context.verbose > 0 {
 			announce(debugSHOUT, "repo backed up to %s.", relpath(savedir))
 		}
 		entries, err = ioutil.ReadDir(staging)
@@ -9212,7 +9214,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 			os.Rename(ljoin(staging, sub.Name()),
 				ljoin(target, sub.Name()))
 		}
-		if verbose > 0 {
+		if context.verbose > 0 {
 			announce(debugSHOUT, "modified repo moved to %s.", target)
 		}
 		// Critical region ends
@@ -9249,10 +9251,10 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 				}
 			}
 		}
-		if verbose > 0 {
+		if context.verbose > 0 {
 			announce(debugSHOUT, "preserved files restored.")
 		}
-	} else if verbose > 0 {
+	} else if context.verbose > 0 {
 		announce(debugSHOUT, "no preservations.")
 	}
 	return nil
@@ -9638,7 +9640,7 @@ func (rs *RepositoryList) removeByName(name string) {
                 fileop = event.operations()[i]
                 if fileop.op == opD:
                     keepers.append(fileop)
-                    if verbose:
+                    if context.verbose:
                         announce(debugSHOUT, "at %d, expunging D %s" \
                                  % (ei+1, fileop.path))
                 else if fileop.op == opM:
@@ -9648,7 +9650,7 @@ func (rs *RepositoryList) removeByName(name string) {
                         blob = self.repo[bi]
                         assert(isinstance(blob, Blob))
                         blobs.append(blob)
-                    if verbose:
+                    if context.verbose:
                         announce(debugSHOUT, "at %d, expunging M %s" \
                                  % (ei+1, fileop.path))
                 else if fileop.op in (opR, opC):
@@ -10958,10 +10960,10 @@ func newReposurgeon() *Reposurgeon {
         rs.promptFormat = "reposurgeon% "
 	// These are globals and should probably be set in init().
         for _, option := range optionFlags {
-		listOptions[option[0]] = newStringSet()
+		context.listOptions[option[0]] = newStringSet()
 	}
-        listOptions["svn_branchify"] = stringSet{"trunk", "tags/*", "branches/*", "*"}
-        listOptions["svn_branchify_mapping"] = stringSet{}
+        context.listOptions["svn_branchify"] = stringSet{"trunk", "tags/*", "branches/*", "*"}
+        context.listOptions["svn_branchify_mapping"] = stringSet{}
 	return rs
 }
 
@@ -11616,7 +11618,7 @@ func popToken(line string) (string, string) {
                         if fileop.inline is not None:
                             self.selection.append(ei)
             self.selection.sort()
-        with Baton(prompt=prompt, enable=(verbose == 1)) as baton:
+        with Baton(prompt=prompt, enable=(context.verbose == 1)) as baton:
             altered = 0
             for _, event in self.selected():
                 if isinstance(event, Tag):
@@ -12389,7 +12391,7 @@ func (rs *Reposurgeon) DoPrefer(line string) (stopOut bool) {
 			complain("known types are: %s\n", known)
 		}
 	}
-	if verbose > 0 {
+	if context.verbose > 0 {
 		if rs.preferred == nil{
 			fmt.Fprint(os.Stdout, "No preferred type has been set.\n")
 		} else {
@@ -12477,7 +12479,7 @@ func (rs *Reposurgeon) DoChoose(line string) (stopOut bool) {
 		panic(throw("command", "choose does not take a selection set"))
 	}
 	if len(rs.repolist) == 0 {
-		if verbose > 0 {
+		if context.verbose > 0 {
 			complain("no repositories are loaded.")
 			return false
 		}
@@ -12490,7 +12492,7 @@ func (rs *Reposurgeon) DoChoose(line string) (stopOut bool) {
 			if rs.chosen() != nil && repo == rs.chosen() {
 				status = "*"
 			}
-			if !quiet {
+			if !rs.quiet {
 				fmt.Fprint(os.Stdout, rfc3339(repo.readtime) + " ")
 			}
 			fmt.Printf("%s %s\n", status, repo.name)
@@ -12498,7 +12500,7 @@ func (rs *Reposurgeon) DoChoose(line string) (stopOut bool) {
 	} else {
 		if newStringSet(rs.reponames()...).Contains(line) {
 			rs.choose(rs.repoByName(line))
-			if verbose < 0 {
+			if context.verbose < 0 {
 				rs.DoStats(line)
 			}
 		} else {
@@ -12521,7 +12523,7 @@ currently chosen repo. Tab-completes on the list of loaded repositories.
 // Drop a repo from reposurgeon's list.
 func (rs *Reposurgeon) DoDrop(line string) (stopOut bool) {
 	if len(rs.reponames()) == 0 {
-		if verbose > 0 {
+		if context.verbose > 0 {
 			complain("no repositories are loaded.")
 			return false
 		}
@@ -12546,7 +12548,7 @@ func (rs *Reposurgeon) DoDrop(line string) (stopOut bool) {
 	} else {
 		complain("no such repo as %s", line)
 	}
-	if verbose > 0 {
+	if context.verbose > 0 {
 		// Emit listing of remaining repos
 		rs.DoChoose("")
 	}
@@ -12687,7 +12689,7 @@ func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 				break
 			}
 		}
-		repo.fastImport(parse.stdin, parse.options, (verbose == 1 && !quiet), "")
+		repo.fastImport(parse.stdin, parse.options, (context.verbose == 1 && !rs.quiet), "")
 	} else if parse.line == "" || parse.line == "." {
 		var err2 error
 		// This is slightly asymmetrical with the write side, which
@@ -12728,7 +12730,7 @@ func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 		}
 		rs.chosen().rename(rs.uniquify(filepath.Base(name)))
 	}
-	if verbose > 0 {
+	if context.verbose > 0 {
 		rs.DoChoose("")
 	}
 	return false
@@ -12797,7 +12799,7 @@ func (rs *Reposurgeon) DoWrite(line string) (stopOut bool) {
 				break
 			}
 		}
-		rs.chosen().fastExport(rs.selection, parse.stdout, parse.options, rs.preferred, (verbose==1 && !quiet))
+		rs.chosen().fastExport(rs.selection, parse.stdout, parse.options, rs.preferred, (context.verbose==1 && !rs.quiet))
 	} else if isdir(parse.line) {
 		err := rs.chosen().rebuildRepo(parse.line, parse.options, rs.preferred)
 		if err != nil {
@@ -13355,7 +13357,7 @@ func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 			}
 		}
 	}
-	if verbose > 0 {
+	if context.verbose > 0 {
 		if len(changers) == 0 {
 			announce(debugSHOUT, "no events modified by msgin.")
 		} else {
@@ -13670,7 +13672,7 @@ func (rs *Reposurgeon) DoSetperm(line string) (stopOut bool) {
 		complain("unexpected permission literal %s", perm)
 		return false
 	}
-	baton := newBaton("patching modes", "", verbose == 1)
+	baton := newBaton("patching modes", "", context.verbose == 1)
 	for _, ei := range rs.selection {
 		if commit, ok := rs.chosen().events[ei].(*Commit); ok {
 			for _, op := range commit.operations() {
@@ -13847,17 +13849,17 @@ With  the --debug option, show messages about mismatches.
                            and commit.operations()[0].path.endswith("ChangeLog")
             func coalesce_match(cthis, cnext):
                 if cthis.committer.email != cnext.committer.email:
-                    if verbose >= debugDELETE or '--debug' in parse.options:
+                    if context.verbose >= debugDELETE or '--debug' in parse.options:
                         complain("committer email mismatch at %s" % cnext.idMe())
                     return false
                 if cthis.committer.date.delta(cnext.committer.date) >= timefuzz:
-                    if verbose >= debugDELETE or '--debug' in parse.options:
+                    if context.verbose >= debugDELETE or '--debug' in parse.options:
                         complain("time fuzz exceeded at %s" % cnext.idMe())
                     return false
                 if changelog and not is_clog(cthis) and is_clog(cnext):
                     return true
                 if cthis.comment != cnext.comment:
-                    if verbose >= debugDELETE or '--debug' in parse.options:
+                    if context.verbose >= debugDELETE or '--debug' in parse.options:
                         complain("comment mismatch at %s" % cnext.idMe())
                     return false
                 return true
@@ -13887,7 +13889,7 @@ With  the --debug option, show messages about mismatches.
                 # Prevent lossage when last is a ChangeLog commit
                 repo.markToEvent(span[-1]).comment = repo.markToEvent(span[0]).comment
                 repo.squash([repo.find(mark) for mark in span[:-1]], ("--coalesce",))
-            if verbose > 0:
+            if context.verbose > 0:
                 announce(debugSHOUT, "%d spans coalesced." % len(squashes))
 */
 
@@ -14143,7 +14145,7 @@ referencing them to instead reference the (kept) first blob.
         return
 */
 
-func (rs *Reposurgeon) Help_Timeoffset() {
+func (rs *Reposurgeon) HelpTimeoffset() {
         rs.helpOutput(`
 Apply a time offset to all time/date stamps in the selected set.  An offset
 argument is required; it may be in the form [+-]ss, [+-]mm:ss or [+-]hh:mm:ss.
@@ -14298,7 +14300,7 @@ func (rs *Reposurgeon) DoDivide(self, _line):
                             event.branch += "-early"
                         else:
                             event.branch += "-late"
-        if verbose:
+        if context.verbose:
             self.do_choose("")
 
 */
@@ -14404,7 +14406,7 @@ func (rs *Reposurgeon) DoSplit(self, line str):
                                   % obj)
         else:
             raise Recoverable("don't know what to do for preposition %s" % prep)
-        if verbose:
+        if context.verbose:
             announce(debugSHOUT, "new commits are events %s and %s." % (where+1, where+2))
 */
 func (rs *Reposurgeon) HelpUnite() {
@@ -14445,7 +14447,7 @@ func (rs *Reposurgeon) DoUnite(line string):
             if not factors or len(factors) < 2:
                 raise Recoverable("unite requires repo name arguments")
             self.unite(factors, parse.options)
-        if verbose:
+        if context.verbose:
             self.do_choose('')
 */
 
@@ -15859,7 +15861,7 @@ func (rs *Reposurgeon) DoGitify(_line string) (stopOut bool) {
 		rs.selection = rs.chosen().all()
 	}
 	lineEnders := stringSet{".", ",", ";", ":", "?", "!"}
-	baton:= newBaton("gitifying comments", "", verbose==1)
+	baton:= newBaton("gitifying comments", "", context.verbose==1)
 	for _, ei := range rs.selection {
 		event := rs.chosen().events[ei]
 		if commit, ok := event.(*Commit); ok {
@@ -16014,9 +16016,9 @@ func (rs *Reposurgeon) DoBranchify(line string) (stopOut bool) {
 		return false
 	}
 	if strings.TrimSpace(line) != "" {
-		listOptions["svn_branchify"] = strings.Fields(strings.TrimSpace(line))
+		context.listOptions["svn_branchify"] = strings.Fields(strings.TrimSpace(line))
 	}
-	announce(debugSHOUT, "branchify " + strings.Join(listOptions["svn_branchify"], " "))
+	announce(debugSHOUT, "branchify " + strings.Join(context.listOptions["svn_branchify"], " "))
 	return false
 }
 //
@@ -16064,7 +16066,7 @@ to re-set it.
             panic(throw("command", "branchify_map does not take a selection set"))
         line = line.strip()
         if line == "reset":
-            listOptions['svn_branchify_mapping'] = []
+            context.listOptions['svn_branchify_mapping'] = []
         else if line:
             func split_regex(regex):
                 separator = regex[0]
@@ -16074,11 +16076,11 @@ to re-set it.
                 if not replace or not match:
                     raise Recoverable("Regex '%s' has an empty search or replace part" % regex)
                 return match ,replace
-            listOptions['svn_branchify_mapping'] = \
+            context.listOptions['svn_branchify_mapping'] = \
                     list(map(split_regex, line.split()))
-        if listOptions['svn_branchify_mapping']:
+        if context.listOptions['svn_branchify_mapping']:
             announce(debugSHOUT, "branchify_map, regex -> branch name:")
-            for match, replace in listOptions['svn_branchify_mapping']:
+            for match, replace in context.listOptions['svn_branchify_mapping']:
                 announce(debugSHOUT,  "\t" + match + " -> " + replace)
         else:
             complain("branchify_map is empty.")
@@ -16106,14 +16108,14 @@ options. The following flags and options are defined:
 func tweakFlagOptions(line string, val bool) {
 	if strings.TrimSpace(line)  == "" {
 		for _, opt := range optionFlags {
-			fmt.Printf("\t%s = %v\n", opt[0], flagOptions[opt[0]])
+			fmt.Printf("\t%s = %v\n", opt[0], context.flagOptions[opt[0]])
 		}
 	} else {
 	good:
 		for _, name := range strings.Fields(line) {
 			for _, opt := range optionFlags {
 				if name == opt[0] {
-					flagOptions[opt[0]] = val
+					context.flagOptions[opt[0]] = val
 					break good
 				}
 			}
@@ -16340,7 +16342,7 @@ action-stamp ID for each commit.
         repo = self.chosen()
         if self.selection is None:
             self.selection = self.chosen().all()
-        with Baton(prompt="reposurgeon: disambiguating", enable=(verbose == 1)) as baton:
+        with Baton(prompt="reposurgeon: disambiguating", enable=(context.verbose == 1)) as baton:
             modified = 0
             for (_, event) in self.selected(Commit):
                 parents = event.parents()
@@ -16449,7 +16451,7 @@ that zone is used.
             except ValueError:
                 pass
             return None
-        with Baton("reposurgeon: parsing changelogs", enable=(verbose == 1)) as baton:
+        with Baton("reposurgeon: parsing changelogs", enable=(context.verbose == 1)) as baton:
             for commit in repo.commits():
                 cc++
                 # If a changeset is *all* ChangeLog mods, it's probably either
@@ -16644,7 +16646,7 @@ not optimal, and may in particular contain duplicate blobs.
                             blank.appendOperation(op)
                 repo.declareSequenceMutation()
                 repo.invalidateObjectMap()
-                if not listOptions["testmode"]:
+                if not context.listOptions["testmode"]:
                     blank.committer.date = Date(rfc3339(newest))
             except IOError:
                 raise Recoverable("open or read failed on %s" % parse.line)
@@ -16721,7 +16723,7 @@ func (rs *Reposurgeon) DoVersion(line string) (stopOut bool) {
 		}
 		if major != vmajor {
 			panic("major version mismatch, aborting.")
-		} else if verbose > 0 {
+		} else if context.verbose > 0 {
 			announce(debugSHOUT, "version check passed.")
 
 		}
@@ -16911,11 +16913,11 @@ func (rs *Reposurgeon) DoVerbose(lineIn string) (stopOut bool) {
 		if err != nil {
 			rs.helpOutput("verbosity value must be an integer\n")
 		} else {
-			verbose = nverbose
+			context.verbose = nverbose
 		}
 	}
-	if len(lineIn) == 0 || verbose > 0 {
-		announce(debugSHOUT, "verbose %d\n", verbose)
+	if len(lineIn) == 0 || context.verbose > 0 {
+		announce(debugSHOUT, "verbose %d\n", context.verbose)
 	}
 	return false
 }
@@ -16953,7 +16955,7 @@ func (rs *Reposurgeon) DoEcho(lineIn string) (stopOut bool) {
 			rs.echo = echo
 		}
 	}
-	if verbose > 0 {
+	if context.verbose > 0 {
 		announce(debugSHOUT, "echo %d\n", rs.echo)
 	}
 	return false
@@ -17103,6 +17105,7 @@ func (rs *Reposurgeon) cleanup() {
 }
 
 func main() {
+	context.init()
 	rs := newReposurgeon()
 	interpreter := kommandant.NewBasicKommandant(rs, os.Stdin, os.Stdout)
 
@@ -17124,8 +17127,8 @@ func main() {
 	for _, arg := range os.Args[1:] {
 		for _, acmd := range strings.Split(arg, ";") {
 			if acmd == "-" {
-				if verbose == 0 {
-					verbose = 1
+				if context.verbose == 0 {
+					context.verbose = 1
 				}
 				interpreter.CmdLoop("")
 			} else {
