@@ -2266,23 +2266,51 @@ const debugUNITE = 6    // Debug mark assignments in merging
 const debugLEXER = 6    // Debug selection-language parsing
 var quiet = false
 
-// Boolean option false is represented by key not in option map,
-// true is represented by an empty stringlist value.
-var globalOptions map[string]stringSet
+var optionFlags = [...][2]string{
+        {"canonicalize", 
+`If set, import stream reads and mailbox_in and edit will canonicalize
+comments by replacing CR-LF with LF, stripping leading and trailing whitespace,
+and then appending a LF.
+`},
+        {"compressblobs",
+`Use compression for on-disk copies of blobs. Accepts an increase
+in repository read and write time in order to reduce the amount of
+disk space required while editing; this may be useful for large
+repositories. No effect if the edit input was a dump stream; in that
+case, reposurgeon doesn't make on-disk blob copies at all (it points
+into sections of the input stream instead).
+`},
+        {"testmode",
+`Disable some features that cause output to be vary depending on wall time
+and the ID of the invoking user. Use in regression-test loads.
+`},
+        {"bigprofile",
+`Extra profiling for large repositories.  Mainly of interest to reposurgeon
+developers.
+`},
+}
+
+var flagOptions = make(map[string]bool)
+
+
+var listOptions map[string]stringSet
 
 func haveGlobalOption(name string) bool {
-	_, ok := globalOptions[name]
+	_, ok := listOptions[name]
 	return ok
 }
 
-func globalOption(name string) stringSet {
-	d, _ := globalOptions[name]
+func listOption(name string) stringSet {
+	d, _ := listOptions[name]
 	return d // Should be nil if not present
 }
 
 func setGlobalOption(name string, value stringSet) {
-	globalOptions[name] = value
+	listOptions[name] = value
 }
+
+
+
 
 // whoami - ask various programs that keep track of who you are
 func whoami() (string, string) {
@@ -6239,12 +6267,12 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			}
 			np := node.path + svnSep
 			if node.action == sdADD && node.kind == sdDIR && !sp.isBranch(np) && !nobranch {
-				for _, trial := range globalOption("svn_branchify") {
+				for _, trial := range listOption("svn_branchify") {
 					if strings.Contains(trial, "*") && trial == node.path {
 						sp.branches[np] = nil
-					} else if strings.HasSuffix(trial, svnSep+"*") && filepath.Dir(trial) == filepath.Dir(node.path) && !globalOption("svn_branchify").Contains(np+"*") {
+					} else if strings.HasSuffix(trial, svnSep+"*") && filepath.Dir(trial) == filepath.Dir(node.path) && !listOption("svn_branchify").Contains(np+"*") {
 						sp.branches[np] = nil
-					} else if trial == "*" && !globalOption("svn_branchify").Contains(np+"*") && strings.Count(node.path, svnSep) < 1 {
+					} else if trial == "*" && !listOption("svn_branchify").Contains(np+"*") && strings.Count(node.path, svnSep) < 1 {
 						sp.branches[np] = nil
 					}
 				}
@@ -10903,30 +10931,6 @@ func (rs *Reposurgeon) DoQuit(lineIn string) (stopOut bool) {
 	return true
 }
 
-var OptionFlags = [...][2]string{
-        {"canonicalize", 
-`If set, import stream reads and mailbox_in and edit will canonicalize
-comments by replacing CR-LF with LF, stripping leading and trailing whitespace,
-and then appending a LF.
-`},
-        {"compressblobs",
-`Use compression for on-disk copies of blobs. Accepts an increase
-in repository read and write time in order to reduce the amount of
-disk space required while editing; this may be useful for large
-repositories. No effect if the edit input was a dump stream; in that
-case, reposurgeon doesn't make on-disk blob copies at all (it points
-into sections of the input stream instead).
-`},
-        {"testmode",
-`Disable some features that cause output to be vary depending on wall time
-and the ID of the invoking user. Use in regression-test loads.
-`},
-        {"bigprofile",
-`Extra profiling for large repositories.  Mainly of interest to reposurgeon
-developers.
-`},
-}
-
 /*
 
 class RepoSurgeon(cmd.Cmd, RepositoryList, SelectionParser):
@@ -10953,9 +10957,9 @@ class RepoSurgeon(cmd.Cmd, RepositoryList, SelectionParser):
         self.capture = None
         self.startTime = time.time()
         for option in dict(RepoSurgeon.OptionFlags):
-            globalOptions[option] = []
-        globalOptions['svn_branchify'] = ['trunk', 'tags/*', 'branches/*', '*']
-        globalOptions['svn_branchify_mapping'] = []
+            listOptions[option] = []
+        listOptions['svn_branchify'] = ['trunk', 'tags/*', 'branches/*', '*']
+        listOptions['svn_branchify_mapping'] = []
 */
 
 //
@@ -11637,6 +11641,7 @@ func popToken(line string) (string, string) {
 func (rs *Reposurgeon) HelpNews() {
     rs.helpOutput(`
 4.0 differences from the Python 3.x versions:
+
 1. whoami() does not read .lynxrc files
 2. No Python plugins.
 3. Regular expressions use Go syntax rather than Python. Little
@@ -13528,27 +13533,45 @@ For each M fileop in the selection set and exactly matching one of the
 paths, patch the permission field to the first argument value.
 `)
 }
-/*
-    func (rs *Reposurgeon) DoSetperm(self, line str):
-        "Set permissions on M fileops matching a path list."
-        if self.chosen() == None:
-            complain("no repo is loaded")
-            return
-        if self.selection is None:
-            raise Recoverable("no selection")
-        fields = shlex.split(line)
-        if not fields or len(fields) < 2:
-            raise Recoverable("missing or malformed setperm line")
-        perm = fields.pop(0)
-        if perm not in ('100644', '100755', '120000'):
-            raise Recoverable("unexpected permission literal %s" % perm)
-        with Baton(prompt="patching modes", enable=(verbose == 1)) as baton:
-            for _, event in self.selected(Commit):
-                for op in event.operations():
-                    if op.op == opM and op.path in fields:
-                        op.mode = perm
-                baton.twirl("")
-*/
+// Set permissions on M fileops matching a path list.
+func (rs *Reposurgeon) DoSetperm(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo is loaded")
+		return false
+	}
+	if rs.selection == nil {
+		complain("no selection")
+		return false
+	}
+	fields, err := shlex.Split(line, true)
+	if err != nil {
+		complain("failurev in line pesing: %v", err)
+		return false
+	}
+	if len(fields) < 2 {
+		complain("missing or malformed setperm line")
+		return false
+	}
+	perm := fields[0]
+	paths := newStringSet(fields[1:]...)
+	if !newStringSet("100644", "100755", "120000").Contains(perm) {
+		complain("unexpected permission literal %s", perm)
+		return false
+	}
+	baton := newBaton("patching modes", "", verbose == 1)
+	for _, ei := range rs.selection {
+		if commit, ok := rs.chosen().events[ei].(*Commit); ok {
+			for _, op := range commit.operations() {
+				if op.op == opM && paths.Contains(op.path) {
+					op.mode = perm
+				}
+			}
+			baton.twirl("")
+		}
+        }
+	baton.exit("")
+	return false
+}
 
 func (rs *Reposurgeon) HelpAppend() {
         rs.helpOutput(`
@@ -13594,17 +13617,20 @@ removal of fileops associated with commits requires this.
 `)
 }
 
-/*
-    func (rs *Reposurgeon) DoSquash(self, line str):
-        "Squash events in the specified selection set."
-        if self.chosen() == None:
-            complain("no repo is loaded")
-            return
-        if self.selection is None:
-            self.selection = []
-        with rs.newLineParse(line, nil) as parse:
-            self.chosen().squash(self.selection, parse.options)
-*/
+// Squash events in the specified selection set.
+func (rs *Reposurgeon) DoSquash(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo is loaded")
+		return false
+	}
+	if rs.selection == nil {
+		rs.selection = nil
+	}
+	parse := rs.newLineParse(line, nil)
+	defer parse.Closem()
+	rs.chosen().squash(rs.selection, parse.options)
+	return false
+}
 
 func (rs *Reposurgeon) HelpDelete() {
         rs.helpOutput(`
@@ -13618,18 +13644,20 @@ it is controlled by policy flags.  A delete is equivalent to a
 squash with the --delete flag.
 `)
 }
-
-/*
-    func (rs *Reposurgeon) DoDelete(self, line str):
-        "Delete events in the specified selection set."
-        if self.chosen() == None:
-            complain("no repo is loaded")
-            return
-        if self.selection is None:
-            self.selection = []
-        with rs.newLineParse(line, nil) as parse:
-            self.chosen().squash(self.selection, set(["--delete"]) | parse.options)
-*/
+func (rs *Reposurgeon) DoDelete(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo is loaded")
+		return false
+	}
+	if rs.selection == nil {
+		rs.selection = nil
+	}
+	parse := rs.newLineParse(line, nil)
+	defer parse.Closem()
+	parse.options.Add("--delete")
+	rs.chosen().squash(rs.selection, parse.options)
+	return false
+}
 
 func (rs *Reposurgeon) HelpCoalesce() {
         rs.helpOutput(`
@@ -13820,22 +13848,29 @@ used with the add command to patch data into a repository.
 `)
 }
 
-/*
-    func (rs *Reposurgeon) DoBlob(self, line str):
-        "Add a fileop to a specified commit."
-        if self.chosen() == None:
-            complain("no repo is loaded")
-            return
-        repo = self.chosen()
-        repo.renumber(2)
-        blob = Blob(repo)
-        blob.setMark(":1")
-        repo.addEvent(blob, where=0)
-        with rs.newLineParse(line, []strings{"stdin"}) as parse:
-            blob.setContent(parse.stdin.read())
-        repo.declareSequenceMutation("adding blob")
-        repo.invalidateNamecache()
-*/
+// Add a fileop to a specified commit.
+func (rs *Reposurgeon) DoBlob(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo is loaded")
+		return false
+	}
+	repo := rs.chosen()
+	repo.renumber(2, nil)
+	blob := newBlob(repo)
+	blob.setMark(":1")
+	// FIXME: Insert after front events
+	repo.insertEvent(blob, 0, "adding blob")
+	parse := rs.newLineParse(line, stringSet{"stdin"})
+	content, err := ioutil.ReadAll(parse.stdin)
+	if err != nil {
+		complain("while reading blob content: %v")
+		return false
+	}
+	blob.setContent(string(content), blob.start)
+	repo.declareSequenceMutation("adding blob")
+	repo.invalidateNamecache()
+	return false
+}
 
 func (rs *Reposurgeon) HelpRemove() {
         rs.helpOutput(`
@@ -14564,7 +14599,7 @@ This command supports > redirection.
                             if filter_func(polybytes(path))))
                 parse.stdout.WriteString("\n")
 */
-func (rs *Reposurgeon) help_tagify() {
+func (rs *Reposurgeon) HelpTagify() {
         rs.helpOutput(`
 Search for empty commits and turn them into tags. Takes an optional selection
 set argument defaulting to all commits. For each commit in the selection set,
@@ -14593,32 +14628,37 @@ tagify merge commits that have no fileops.  When this is done the
 merge link is moved to the tagified commit's parent.
 `)
 }
-/*
-    // Search for empty commits and turn them into tags.
-    func (self *Reposurgeon) DoTagify(line str) {
-        repo := self.chosen()
-        if repo == nil {
-            raise Recoverable("no repo has been chosen")
-        }
-        if self.selection == nil {
-            self.selection = repo.all()
-        }
-        with rs.newLineParse(line, nil) as parse {
-            if parse.line {
-                raise Recoverable("too many arguments for tagify.")
-            }
-            before := len([c for c in repo.commits()])
-            repo.tagifyEmpty(
-                    commits := self.selection,
-                    canonicalize := "--canonicalize" in parse.options,
-                    tipdeletes := "--tipdeletes" in parse.options,
-                    tagifyMerges := "--tagify-merges" in parse.options)
-            after := len([c for c in repo.commits()])
-            announce(debugSHOUT, "%d commits tagified.", before - after)
 
-        }
-    }
-*/
+// Search for empty commits and turn them into tags.
+func (rs *Reposurgeon) DoTagify(line string) (stopOut bool) {
+	repo := rs.chosen()
+	if repo == nil {
+		complain("no repo has been chosen")
+		return false
+	}
+	if rs.selection == nil {
+		rs.selection = repo.all()
+	}
+	parse := rs.newLineParse(line, nil)
+	if parse.line != "" {
+		complain("too many arguments for tagify.")
+		return false
+	}
+	before := len(repo.commits(nil))
+	repo.tagifyEmpty(
+		rs.selection,
+		parse.options.Contains("--tipdeletes"),
+		parse.options.Contains("--tagify-merges"),
+		parse.options.Contains("--canonicalize"),
+		nil,
+		nil,
+		false,
+		func(msg string) {rs.cmd.Output(msg)})
+	after := len(repo.commits(nil))
+	announce(debugSHOUT, "%d commits tagified.", before - after)
+	return false
+}
+
 func (rs *Reposurgeon) HelpMerge() {
         rs.helpOutput(`
 Create a merge link. Takes a selection set argument, ignoring all but
@@ -14627,7 +14667,7 @@ from the highest member (child) to the lowest (parent).
 `)
 }
 /*
-    func (self *Reposrgeon) DoMerge(_line) {
+    func (self *Reposurgeon) DoMerge(_line) {
         if rs.chosen() == nil {
             complain("no repo has been chosen.")
             return
@@ -15419,7 +15459,7 @@ Available actions are:
 }
 
 /*
-    func (rs *Reposurgeon) Do_attribution(self, line str):
+    func (rs *Reposurgeon) DoAttribution(self, line str):
         "Inspect, modify, add, and remove commit and tag attributions."
         repo = self.chosen()
         if repo is None:
@@ -15542,27 +15582,36 @@ selection set. The 'read' variant reads from standard input or a
 <-redirected filename; the 'write' variant writes to standard
 output or a >-redirected filename.
 `)
-    }
-/*
-    func (rs *Reposurgeon) DoLegacy(self, line str):
-        "Apply a reference-mapping file."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        if line.startswith("write"):
-            line = line[5:].strip()
-            with rs.newLineParse(line, stringSet{"stdout"}) as parse:
-                if parse.tokens():
-                    raise Recoverable("legacy write does not take a filename argument - use > redirection instead")
-                self.chosen().writeLegacyMap(parse.stdout)
-        else:
-            if line.startswith("read"):
-                line = line[4:].strip()
-            with rs.newLineParse(line, []strings{"stdin"}) as parse:
-                if parse.tokens():
-                    raise Recoverable("legacy read does not take a filename argument - use < redirection instead")
-                self.chosen().readLegacyMap(parse.stdin)
-*/
+}
+
+    // Apply a reference-mapping file.
+func (rs *Reposurgeon) DoLegacy(line string) (stopOut bool) {
+        if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return
+        }
+        if strings.HasPrefix(line, "write") {
+		line = strings.TrimSpace(line[5:])
+		parse := rs.newLineParse(line, stringSet{"stdout"})
+		defer parse.Closem()
+		if len(parse.Tokens()) > 0 {
+			complain("legacy write does not take a filename argument - use > redirection instead")
+			return false
+		}
+		rs.chosen().writeLegacyMap(parse.stdout)
+        } else {
+		if strings.HasPrefix(line, "read") {
+			line = strings.TrimSpace(line[4:])
+		}
+		parse := rs.newLineParse(line, []string{"stdin"})
+		if len(parse.Tokens()) > 0 {
+			complain("legacy read does not take a filename argument - use < redirection instead")
+			return false
+		}
+		rs.chosen().readLegacyMap(parse.stdin)
+        }
+	return false
+}
 
 func (rs *Reposurgeon) HelpReferences() {
         rs.helpOutput(`
@@ -15756,7 +15805,7 @@ must resolve to exactly two commits. Supports > redirection.
         dir2 = set(bounds[1].manifest())
         allpaths = list(dir1 | dir2)
         allpaths.sort()
-        with rs.newLineParse(line, stringSoet{"stdout"}) as parse:
+        with rs.newLineParse(line, stringSet{"stdout"}) as parse:
             for path in allpaths:
                 if path in dir1 and path in dir2:
                     # FIXME: Can we detect binary files and do something
@@ -15813,9 +15862,9 @@ func (rs *Reposurgeon) DoBranchify(line string) (stopOut bool) {
 		return false
 	}
 	if strings.TrimSpace(line) != "" {
-		globalOptions["svn_branchify"] = strings.Fields(strings.TrimSpace(line))
+		listOptions["svn_branchify"] = strings.Fields(strings.TrimSpace(line))
 	}
-	announce(debugSHOUT, "branchify " + strings.Join(globalOptions["svn_branchify"], " "))
+	announce(debugSHOUT, "branchify " + strings.Join(listOptions["svn_branchify"], " "))
 	return false
 }
 //
@@ -15863,7 +15912,7 @@ to re-set it.
             panic(throw("command", "branchify_map does not take a selection set"))
         line = line.strip()
         if line == "reset":
-            globalOptions['svn_branchify_mapping'] = []
+            listOptions['svn_branchify_mapping'] = []
         else if line:
             func split_regex(regex):
                 separator = regex[0]
@@ -15873,11 +15922,11 @@ to re-set it.
                 if not replace or not match:
                     raise Recoverable("Regex '%s' has an empty search or replace part" % regex)
                 return match ,replace
-            globalOptions['svn_branchify_mapping'] = \
+            listOptions['svn_branchify_mapping'] = \
                     list(map(split_regex, line.split()))
-        if globalOptions['svn_branchify_mapping']:
+        if listOptions['svn_branchify_mapping']:
             announce(debugSHOUT, "branchify_map, regex -> branch name:")
-            for match, replace in globalOptions['svn_branchify_mapping']:
+            for match, replace in listOptions['svn_branchify_mapping']:
                 announce(debugSHOUT,  "\t" + match + " -> " + replace)
         else:
             complain("branchify_map is empty.")
@@ -15892,7 +15941,7 @@ behavior.  With no arguments, displays the state of all flags and
 options. The following flags and options are defined:
 
 `)
-        for _, opt := range OptionFlags {
+        for _, opt := range optionFlags {
             fmt.Print(opt[0] + ":\n" + opt[1] + "\n")
 	}
 }
@@ -15900,17 +15949,32 @@ options. The following flags and options are defined:
 /*
     func CompleteSet(self, text, _line, _begidx, _endidx):
         return sorted([x for (x, _) in RepoSurgeon.OptionFlags if x.startswith(text)])
-    func (rs *Reposurgeon) DoSet(self, line str):
-        if not line.strip():
-            for (opt, _expl) in RepoSurgeon.OptionFlags:
-                fmt.Fprint(os.stdout, "\t%s = %s\n" % (opt, globalOptions.get(opt, false)))
-        else:
-            for option in line.split():
-                if option not in dict(RepoSurgeon.OptionFlags):
-                    complain("no such option flag as '%s'" % option)
-                else:
-                    globalOptions[option] = true
 */
+
+func tweakFlagOptions(line string, val bool) {
+	if strings.TrimSpace(line)  == "" {
+		for _, opt := range optionFlags {
+			fmt.Printf("\t%s = %v\n", opt[0], flagOptions[opt[0]])
+		}
+	} else {
+	good:
+		for _, name := range strings.Fields(line) {
+			for _, opt := range optionFlags {
+				if name == opt[0] {
+					flagOptions[opt[0]] = val
+					break good
+				}
+			}
+			complain("no such option flag as '%s'", name)
+		}
+        }
+}
+
+func (rs *Reposurgeon) DoSet(line string) (stopOut bool) {
+	tweakFlagOptions(line, true)
+	return false
+}
+	
 func (rs *Reposurgeon) HelpClear() {
         rs.helpOutput(`
 Clear a (tab-completed) boolean option to control reposurgeon's
@@ -15918,24 +15982,19 @@ behavior.  With no arguments, displays the state of all flags. The
 following flags and options are defined:
 
 `)
-        for _, opt := range OptionFlags {
+        for _, opt := range optionFlags {
             fmt.Print(opt[0] + ":\n" + opt[1] + "\n")
 	}
 }
 
 /*
     CompleteClear := CompleteSet
-    func (rs *Reposurgeon) DoClear(self, line str):
-        if not line.strip():
-            for opt in dict(RepoSurgeon.OptionFlags):
-                fmt.Fprint(os.stdout, "\t%s = %s\n" % (opt, globalOptions.get(opt, false)))
-        else:
-            for option in line.split():
-                if option not in dict(RepoSurgeon.OptionFlags):
-                    complain("no such option flag as '%s'" % option)
-                else:
-                    globalOptions[option] = false
 */
+
+func (rs *Reposurgeon) DoClear(line string) (stopOut bool) {
+	tweakFlagOptions(line, true)
+	return false
+}
 
 //
 // Macros and custom extensions
@@ -16433,7 +16492,7 @@ not optimal, and may in particular contain duplicate blobs.
                             blank.appendOperation(op)
                 repo.declareSequenceMutation()
                 repo.invalidateObjectMap()
-                if not globalOptions["testmode"]:
+                if not listOptions["testmode"]:
                     blank.committer.date = Date(rfc3339(newest))
             except IOError:
                 raise Recoverable("open or read failed on %s" % parse.line)
@@ -17991,7 +18050,7 @@ deleted name.
         func (sp *StreamParser)  compile_regex (mapping):
             regex, replace = mapping
             return regexp.MustCompile(regex.encode('ascii')), polybytes(replace)
-        compiled_mapping = list(map(compile_regex, globalOption("svn_branchify_mapping")))
+        compiled_mapping = list(map(compile_regex, listOption("svn_branchify_mapping")))
         # Now pretty up the branch names
         deletia = []
         for (index, commit) in enumerate(sp.repo.events):
