@@ -11025,6 +11025,10 @@ func (rs *Reposurgeon) PreCommand(line string) string {
 		}
 	}(&line)
 
+	if line[0] == '?' {
+		line = "help " + line[1:]
+	}
+
 	machine, rest := rs.parseSelectionSet(line)
 	if rs.chosen() != nil {
 		if machine != nil {
