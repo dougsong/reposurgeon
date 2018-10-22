@@ -1053,7 +1053,7 @@ var fileFilters = map[string]struct {
 // particular, RFC3339 dates are good. and so is git's native
 // integer-Unix-timestamp/timezone pairs.
 
-// CommitMeta is the extractor;s idea of per-commit metadata
+// CommitMeta is the extractor's idea of per-commit metadata
 type CommitMeta struct {
 	ci     string
 	ai     string
@@ -8606,55 +8606,6 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
                         newparent = self.events[list(attach)[0]]
                         commit.insertParent(idx, newparent.mark)
         self.renumber()
-    func __last_modification(self, commit *Commit, path):
-        "Locate the last modification of the specified path before this commit."
-        ancestors = commit.parents()
-        while ancestors:
-            backto = []
-            # pylint: disable=useless-else-on-loop
-            for ancestor in ancestors:
-                # This is potential trouble if the file was renamed
-                # down one side of a merge bubble but not the other.
-                # Might cause an internal-error message, but no real
-                # harm will be done.
-                for (i, fileop) in enumerate(ancestor.operations()):
-                    if fileop.op == opR and fileop.target == path:
-                        path = fileop.source
-                    else if fileop.op == opM and fileop.path == path:
-                        return (ancestor, i)
-                else:
-                    backto += ancestor.parents()
-            ancestors = backto
-        return None
-    func move_to_rename():
-        "Make rename sequences from matched delete-modify pairs."
-        # TODO: Actually use this somewhere...
-        rename_count = 0
-        # pylint: disable=unpacking-non-sequence
-        for commit in self.commits():
-            renames = []
-            for (d, op) in enumerate(commit.operations()):
-                if op.op == opD:
-                    previous = self.__last_modification(commit, op.path)
-                    if not previous:
-                        raise Recoverable("internal error looking for renames of %s" % op.path)
-                    else:
-                        (ancestor, i) = previous
-                        for (m, op2) in enumerate(commit.operations()):
-                            if op2.op == opM and \
-                               ancestor.operations()[i].mode == op2.mode and \
-                               ancestor.operations()[i].ref == op2.ref:
-                                renames.append((d, m))
-                                rename_count++
-                                break
-            for (d, m) in renames:
-                commit.operations()[d].source = commit.operations()[d].path
-                commit.operations()[d].target = commit.operations()[m].path
-                del commit.operations()[d].path
-                commit.operations()[d].op = opR
-                commit.operations().pop(m)
-                commit.invalidatePathsetCache()
-        return rename_count
     func path_walk(self, selection, hook=lambda path: path):
         "Apply a hook to all paths, returning the set of modified paths."
         modified = set()
