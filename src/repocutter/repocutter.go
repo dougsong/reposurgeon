@@ -389,12 +389,10 @@ func NewProperties(source *DumpfileSource) Properties {
 func (props *Properties) Stringer() string {
 	var b strings.Builder
 	for _, key := range props.propkeys {
-		if props.properties[key] != "" {
-			fmt.Fprintf(&b, "K %d%s", len(key), linesep)
-			fmt.Fprintf(&b, "%s%s", key, linesep)
-			fmt.Fprintf(&b, "V %d%s", len(props.properties[key]), linesep)
-			fmt.Fprintf(&b, "%s%s", props.properties[key], linesep)
-		}
+		fmt.Fprintf(&b, "K %d%s", len(key), linesep)
+		fmt.Fprintf(&b, "%s%s", key, linesep)
+		fmt.Fprintf(&b, "V %d%s", len(props.properties[key]), linesep)
+		fmt.Fprintf(&b, "%s%s", props.properties[key], linesep)
 	}
 	b.WriteString("PROPS-END\n")
 	return b.String()
