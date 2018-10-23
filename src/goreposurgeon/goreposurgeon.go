@@ -9400,74 +9400,103 @@ func (rs *RepositoryList) removeByName(name string) {
 }
 
 /*
-    func cut_conflict(self, early, late):
-        "Apply a graph-coloring algorithm to see if the repo can be split here."
-        self.cutIndex = late.parentMarks().index(early.mark)
-        late.removeParent(early)
-        func do_color(commit *Commit, color):
-            commit.color = color
-            for fileop in commit.operations():
-                if fileop.op == opM and fileop.ref != "inline":
-                    blob = self.repo.find(fileop.ref)
-                    assert isinstance(self.repo[blob], Blob)
-                    self.repo[blob].colors.append(color)
-        do_color(early, "early")
-        do_color(late, "late")
-        conflict = false
-        keepgoing = true
-        while keepgoing and not conflict:
-            keepgoing = false
-            for event in self.repo.commits():
-                if event.color:
-                    for neighbor in itertools.chain(event.parents(), event.children()):
-                        if neighbor.color is None:
-                            do_color(neighbor, event.color)
-                            keepgoing = true
-                            break
-                        else if neighbor.color != event.color:
-                            conflict = true
-                            break
-        return conflict
-    func cut_clear(self, early, late):
+// Apply a graph-coloring algorithm to see if the repo can be split here.
+func (rs *Repository) cutConflict(early *CommitLike, late *CommitLike) (bool, error) {
+	rs.cutIndex = -1
+	for i, m := range late.parentMarks() {
+		if m == early.mark {
+			rs.cutIndex := i
+			break
+		}
+	}
+	if rs.cutIndex == -1 {
+		err := fmt.Errorf("commit %s is not a parent of commit %s", ealy.mark, late.mark)
+		return false, err
+	}
+	late.removeParent(early)
+	doColor := func(commit *Commit, color string) {
+		commit.color = color
+		for _, fileop := range commit.operations() {
+			if fileop.op == opM && fileop.ref != "inline" {
+				blob := rs.repo.index(fileop.ref)
+				//assert isinstance(rs.repo[blob], Blob)
+				rs.repo.events[blob].colors.append(color)
+			}
+		}
+	}
+	doColor(early, "early")
+	doColor(late, "late")
+	conflict := false
+	keepgoing := true
+	for keepgoing && !conflict {
+		keepgoing = false
+		for _, event := range rs.repo.commits(nil) {
+			if event.color {
+				for _, neighbor := range event.parents() {
+					if neighbor.color == nil {
+						do_color(neighbor, event.color)
+						keepgoing = true
+						break
+					} else if neighbor.color != event.color {
+						conflict = true
+						break
+					}
+				}
+				for _, neighbor := range event.children() {
+					if neighbor.color == nil {
+						do_color(neighbor, event.color)
+						keepgoing = true
+						break
+					} else if neighbor.color != event.color {
+						conflict = true
+						break
+					}
+				}
+			}
+		}
+	}
+	return conflict, nil
+}
+    func cut_clear(rs, early, late):
         "Undo a cut operation and clear all colors."
-        late.insertParent(self.cutIndex, early.mark)
-        for event in self.repo:
+        late.insertParent(rs.cutIndex, early.mark)
+        for event in rs.repo:
             if hasattr(event, "color"):
                 event.color = None
             if hasattr(event, "colors"):
                 event.colors = []
-    func cut(self, early, late):
+    func cut(rs, early, late):
         "Attempt to topologically cut the selected repo."
-        if self.cut_conflict(early, late):
-            self.cut_clear(early, late)
+        if rs.cutConflict(early, late):
+            rs.cut_clear(early, late)
             return false
         # Repo can be split, so we need to color tags
-        for t in self.repo.events:
+        for t in rs.repo.events:
             if isinstance(t, Tag):
-                for c in self.repo.events:
+                for c in rs.repo.events:
                     if isinstance(c, Commit):
                         if c is t.target:
                             t.color = c.color
         # Front events go with early segment, they'll be copied to late one.
-        for event in self.repo.frontEvents():
+        for event in rs.repo.frontEvents():
             event.color = "early"
-        assert all(hasattr(x, "color") or hasattr(x, "colors") or isinstance(x, Reset) for x in self.repo)
+        assert all(hasattr(x, "color") or hasattr(x, "colors") or isinstance(x, Reset) for x in rs.repo)
         # Resets are tricky.  One may have both colors.
         # Blobs can have both colors too, through references in
         # commits on both sides of the cut, but we took care
         # of that earlier.
         trackbranches = {"early": set(), "late": set()}
-        for commit in self.repo.commits():
+        for commit in rs.repo.commits():
             if commit.color is None:
                 complain("%s is uncolored!" % commit.mark)
             else:
                 trackbranches[commit.color].add(commit.branch)
         # Now it's time to do the actual partitioning
-        early = Repository(self.repo.name + "-early")
+        early = Repository(rs.repo.name + "-early")
         os.mkdir(early.subdir())
-        late = Repository(self.repo.name + "-late")
+        late = Repository(rs.repo.name + "-late")
         os.mkdir(late.subdir())
-        for event in self.repo:
+        for event in rs.repo:
             if isinstance(event, Reset):
                 if event.ref in trackbranches["early"]:
                     early.addEvent(copy.copy(event))
@@ -9494,12 +9523,12 @@ func (rs *RepositoryList) removeByName(name string) {
         late.events = copy.copy(early.frontEvents()) + late.events
         late.declareSequenceMutation("cut operation")
         # Add the split results to the repo list.
-        self.repolist.append(early)
-        self.repolist.append(late)
-        self.repo.cleanup()
-        self.remove_by_name(self.repo.name)
+        rs.repolist.append(early)
+        rs.repolist.append(late)
+        rs.repo.cleanup()
+        rs.remove_by_name(rs.repo.name)
         return true
-    func unite(self, factors, options):
+    func unite(rs, factors, options):
         "Unite multiple repos into a union repo."
         for x in factors:
             if not list(x.commits()):
@@ -9515,7 +9544,7 @@ func (rs *RepositoryList) removeByName(name string) {
         factors.reverse()
         for factor in factors:
             union.absorb(factor)
-            self.remove_by_name(factor.name)
+            rs.remove_by_name(factor.name)
         # Renumber all events
         union.renumber()
         # Sort out the root grafts. The way we used to do this
@@ -9556,9 +9585,9 @@ func (rs *RepositoryList) removeByName(name string) {
                 root.setOperations(deletes + root.operations())
                 root.canonicalize()
         # Put the result on the load list
-        self.repolist.append(union)
-        self.choose(union)
-    func expunge(self, selection, matchers):
+        rs.repolist.append(union)
+        rs.choose(union)
+    func expunge(rs, selection, matchers):
         "Expunge a set of files from the commits in the selection set."
         func digest(toklist):
             digested = []
@@ -9576,7 +9605,7 @@ func (rs *RepositoryList) removeByName(name string) {
             alterations = []
             expunge, notagify = digest(matchers)
             for ei in selection:
-                event = self.repo[ei]
+                event = rs.repo[ei]
                 deletia = []
                 if hasattr(event, "fileops"):
                     for (i, fileop) in enumerate(event.operations()):
@@ -9612,14 +9641,14 @@ func (rs *RepositoryList) removeByName(name string) {
         except re.error:
             raise Recoverable("you confused the regexp processor!")
         # Second pass: perform actual fileop expunges
-        expunged = Repository(self.repo.name + "-expunges")
-        expunged.seekstream = self.repo.seekstream
+        expunged = Repository(rs.repo.name + "-expunges")
+        expunged.seekstream = rs.repo.seekstream
         expunged.makedir()
-        for event in self.repo:
+        for event in rs.repo:
             event.deletehook = None
         for (ei, deletia) in zip(selection, alterations):
             if not deletia: continue
-            event = self.repo[ei]
+            event = rs.repo[ei]
             keepers = []
             blobs = []
             for i in deletia:
@@ -9632,8 +9661,8 @@ func (rs *RepositoryList) removeByName(name string) {
                 else if fileop.op == opM:
                     keepers.append(fileop)
                     if fileop.ref != 'inline':
-                        bi = self.repo.find(fileop.ref)
-                        blob = self.repo[bi]
+                        bi = rs.repo.find(fileop.ref)
+                        blob = rs.repo[bi]
                         assert(isinstance(blob, Blob))
                         blobs.append(blob)
                     if context.verbose:
@@ -9656,10 +9685,10 @@ func (rs *RepositoryList) removeByName(name string) {
                     blob.deletehook = blob.clone(expunged)
                 event.deletehook = newevent
         # Build the new repo and hook it into the load list
-        expunged.events = copy.copy(self.repo.frontEvents())
+        expunged.events = copy.copy(rs.repo.frontEvents())
         expunged.declareSequenceMutation("expunge operation")
         expunged_branches = expunged.branchset()
-        for event in self.repo:
+        for event in rs.repo:
             if event.deletehook:
                 expunged.addEvent(event.deletehook)
                 event.deletehook = None
@@ -9675,7 +9704,7 @@ func (rs *RepositoryList) removeByName(name string) {
                     event.target is not None and \
                     event.target.deletehook:
                 expunged.addEvent(copy.deepcopy(event))
-        for event in itertools.chain(self.repo.events, expunged.events):
+        for event in itertools.chain(rs.repo.events, expunged.events):
             if hasattr(event, "deletehook"):
                 delattr(event, "deletehook")
         expunged_marks = set(event.mark for event in expunged.events if hasattr(event, "mark"))
@@ -9686,12 +9715,12 @@ func (rs *RepositoryList) removeByName(name string) {
                 # searched in the expunged repository.
                 event.setParentMarks(m for m in event.parentMarks()
                                          if m in expunged_marks)
-        keeper_marks = set(event.mark for event in self.repo.events if hasattr(event, "mark"))
-        for event in self.repo.events:
+        keeper_marks = set(event.mark for event in rs.repo.events if hasattr(event, "mark"))
+        for event in rs.repo.events:
             if hasattr(event, "parents"):
                 event.setParents([e for e in event.parents() if e.mark in keeper_marks])
         backreferences = collections.Counter()
-        for event in self.repo.events:
+        for event in rs.repo.events:
             if isinstance(event, Commit):
                 for fileop in event.operations():
                     if fileop.op == opM:
@@ -9699,7 +9728,7 @@ func (rs *RepositoryList) removeByName(name string) {
         # Now remove commits that no longer have fileops, and released blobs.
         # Announce events that will be deleted.
         if debugEnable(debugDELETE):
-            to_delete = [i+1 for i,e in enumerate(self.repo.events)
+            to_delete = [i+1 for i,e in enumerate(rs.repo.events)
                     if (isinstance(e, Blob) and not backreferences[e.mark])
                     or (isinstance(e, Commit) and not e.operations())]
             if not to_delete:
@@ -9708,16 +9737,16 @@ func (rs *RepositoryList) removeByName(name string) {
                 announce(debugSHOUT, "deleting blobs and empty commits %s" % to_delete)
             del to_delete
         # First delete the blobs.
-        self.repo.events = [e for e in self.repo.events
+        rs.repo.events = [e for e in rs.repo.events
                               if (not isinstance(e, Blob))
                               or backreferences[e.mark]]
         # Then tagify empty commits.
-        self.repo.tagifyEmpty(canonicalize = false, createTags = not notagify)
+        rs.repo.tagifyEmpty(canonicalize = false, createTags = not notagify)
         # And tell we changed the manifests and the event sequence.
-        self.repo.invalidateManifests()
-        self.repo.declareSequenceMutation("expunge cleanup")
+        rs.repo.invalidateManifests()
+        rs.repo.declareSequenceMutation("expunge cleanup")
         # At last, add the expunged repository to the loaded list.
-        self.repolist.append(expunged)
+        rs.repolist.append(expunged)
 
 func debug_lexer(f):
     """Function decorator to debug SelectionParser selection parsing methods."""
