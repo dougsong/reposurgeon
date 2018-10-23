@@ -2301,20 +2301,6 @@ developers.
 `},
 }
 
-func haveGlobalOption(name string) bool {
-	_, ok := context.listOptions[name]
-	return ok
-}
-
-func listOption(name string) stringSet {
-	d, _ := context.listOptions[name]
-	return d // Should be nil if not present
-}
-
-func setGlobalOption(name string, value stringSet) {
-	context.listOptions[name] = value
-}
-
 /*
  * Global context. Eventually all globals should live here.
  */
@@ -2349,7 +2335,7 @@ func (ctx *Context) setAbort(cond bool) {
 
 // whoami - ask various programs that keep track of who you are
 func whoami() (string, string) {
-	if haveGlobalOption("testmode") {
+	if context.flagOptions["testmode"] {
 		return "Fred J. Foonly", "foonly@foo.com"
 	}
 	// Git version-control system
@@ -3081,7 +3067,7 @@ func (b *Blob) getContent() string {
 	var file io.ReadCloser
 	var err error
 	var buf bytes.Buffer
-	if haveGlobalOption("compressblobs") {
+	if context.flagOptions["compressblobs"] {
 		file, err = gzip.NewReader(&buf)
 	} else {
 		file, err = os.Open(b.getBlobfile(false))
@@ -3105,7 +3091,7 @@ func (b *Blob) setContent(text string, tell int64) {
 		var file io.WriteCloser
 		var err error
 		var buf bytes.Buffer
-		if haveGlobalOption("compressblobs") {
+		if context.flagOptions["compressblobs"] {
 			file = gzip.NewWriter(&buf)
 		} else {
 			file, err = os.OpenFile(b.getBlobfile(true),
@@ -3407,7 +3393,7 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 		t.legacyID = legacy
 	}
 	newcomment := msg.getPayload()
-	if haveGlobalOption("canonicalize") {
+	if context.flagOptions["canonicalize"] {
 		newcomment = strings.TrimSpace(newcomment)
 		newcomment = strings.Replace(newcomment, "\r\n", "\n", 1)
 		newcomment += "\n"
@@ -4342,7 +4328,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 		modified = true
 	}
 	newcomment := msg.getPayload()
-	if haveGlobalOption("canonicalize") {
+	if context.flagOptions["canonicalize"] {
 		newcomment = strings.TrimSpace(newcomment)
 		newcomment = strings.Replace(newcomment, "\r\n", "\n", 1)
 		newcomment += "\n"
@@ -5998,7 +5984,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				} else if strings.HasPrefix(line, "data") {
 					d, _ := sp.fiReadData(line)
 					commit.comment = d
-					if haveGlobalOption("canonicalize") {
+					if context.flagOptions["canonicalize"] {
 						commit.comment = strings.Replace(strings.TrimSpace(commit.comment), "\r\n", "\n", -1) + "\n"
 					}
 				} else if strings.HasPrefix(line, "from") || strings.HasPrefix(line, "merge") {
@@ -6319,12 +6305,12 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			}
 			np := node.path + svnSep
 			if node.action == sdADD && node.kind == sdDIR && !sp.isBranch(np) && !nobranch {
-				for _, trial := range listOption("svn_branchify") {
+				for _, trial := range context.listOptions["svn_branchify"] {
 					if strings.Contains(trial, "*") && trial == node.path {
 						sp.branches[np] = nil
-					} else if strings.HasSuffix(trial, svnSep+"*") && filepath.Dir(trial) == filepath.Dir(node.path) && !listOption("svn_branchify").Contains(np+"*") {
+					} else if strings.HasSuffix(trial, svnSep+"*") && filepath.Dir(trial) == filepath.Dir(node.path) && !context.listOptions["svn_branchify"].Contains(np+"*") {
 						sp.branches[np] = nil
-					} else if trial == "*" && !listOption("svn_branchify").Contains(np+"*") && strings.Count(node.path, svnSep) < 1 {
+					} else if trial == "*" && !context.listOptions["svn_branchify"].Contains(np+"*") && strings.Count(node.path, svnSep) < 1 {
 						sp.branches[np] = nil
 					}
 				}
@@ -6342,7 +6328,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 
 	timeit := func(tag string) {
 		sp.timeMark("tag")
-		if haveGlobalOption("bigprofile") {
+		if context.flagOptions["bigprofile"] {
 			e := len(sp.repo.timings) - 1
 			baton.twirl(fmt.Sprintf("%s:%v...", tag, sp.repo.timings[e].stamp.Sub(sp.repo.timings[e-1].stamp)))
 		} else {
@@ -17400,7 +17386,7 @@ deleted name.
             commit.committer = Attribution(attribution)
             # Use this with just-generated input streams
             # that have wall times in them.
-            if haveGlobalOptions("testmode"):
+            if context.flagOptions["testmode"]:
                 commit.committer.name = "Fred J. Foonly"
                 commit.committer.email = "foonly@foo.com"
                 commit.committer.date.timestamp = parseInt(revision) * 360
