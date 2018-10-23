@@ -8643,43 +8643,71 @@ func (repo *Repository) pathWalk(selection orderedIntSet, hook func(string)strin
 	return modified
 }
 
-/*
-    func split_commit(self, where, splitfunc):
-        event = self.events[where]
-        # Fileop split happens here
-        (fileops, fileops2) = splitfunc(event.operations())
-        if fileops and fileops2:
-            self.events.insert(where+1, event.clone())
-            self.declareSequenceMutation("commit split")
-            event2 = self.events[where+1]
-            # need a new mark
-            assert(event.mark == event2.mark)
-            event2.setMark(event.repo.newmark())
-            self.invalidateObjectMap()
-            # Fix up parent/child relationships
-            for child in list(event.children()):
-                child.replaceParent(event, event2)
-            event2.setParents([event])
-            # and then finalize the ops
-            event2.setOperations(fileops2)
-            event2.invalidatePathsetCache()
-            event.setOperations(fileops)
-            event.invalidatePathsetCache()
-            # Avoid duplicates in the legacy-ID map
-            if event2.legacyID:
-                event2.legacyID += ".split"
-            return true
-        return false
-    func split_commit_by_index(self, where, splitpoint):
-        return self.split_commit(where,
-                                 lambda ops: (ops[:splitpoint],
-                                              ops[splitpoint:]))
-    func split_commit_by_prefix(self, where, prefix):
-        return self.split_commit(where,
-                                 lambda ops: ([op for op in ops if not op.path.startswith(prefix)],
-                                              [op for op in ops if (op.path or op.target) and
-                                                                   (op.path or op.target).startswith(prefix)]))
-*/
+func (rs *Repository) splitCommit(where int, splitfunc func([]FileOp) ([]FileOp, []FileOp)) error {
+	event := rs.events[where]
+	// Fileop split happens here
+	commit, ok := event.(*Commit)
+	if !ok {
+		return fmt.Errorf("split location %s is not a commit", event.idMe())
+	}
+	fileops, fileops2 := splitfunc(commit.operations())
+	if len(fileops) == 0 || len(fileops2) == 0 {
+		return errors.New("no-op commit split, repo unchanged")
+	}
+	rs.insertEvent(commit.clone(rs), where+1, "commit split")
+	rs.declareSequenceMutation("commit split")
+	commit2 := rs.events[where+1].(*Commit)
+	// need a new mark
+	//assert(commit.mark == commit2.mark)
+	commit2.setMark(commit.repo.newmark())
+	rs.invalidateObjectMap()
+	// Fix up parent/child relationships
+	for _, child := range commit.children() {
+		child.(*Commit).replaceParent(commit, commit2)
+	}
+	commit2.setParents([]CommitLike{*commit})
+	// and then finalize the ops
+	commit2.setOperations(fileops2)
+	commit2.invalidatePathsetCache()
+	commit.setOperations(fileops)
+	commit.invalidatePathsetCache()
+	// Avoid duplicates in the legacy-ID map
+	if commit2.legacyID != "" {
+		commit2.legacyID += ".split"
+	}
+	return nil
+}
+
+func (rs *Repository) splitCommitByIndex(where int, splitpoint int) error {
+        return rs.splitCommit(where,
+		func(ops []FileOp) ([]FileOp, []FileOp) {
+			return ops[:splitpoint], ops[splitpoint:]
+		})
+}
+
+func (rs *Repository) splitCommitByPrefix(where int, prefix string) error {
+        return rs.splitCommit(where,
+		func(ops []FileOp) ([]FileOp, []FileOp) {
+			var without []FileOp
+			var with []FileOp
+			for _, op := range ops {
+				// In Python: lambda ops: ([op for op
+				// in ops if
+				// !strings.HasPrefix(op.path,
+				// prefix)],
+                                // [op for op in ops if (op.path || op.target)
+				// and (op.path || op.target).startswith(prefix)]))
+				if strings.HasPrefix(op.path, prefix) {
+					with = append(with, op)
+				} else if strings.HasPrefix(op.target, prefix) {
+					with = append(with, op)
+				} else {
+					without = append(without, op)
+				}
+			}
+			return without, with
+		})
+}
 
 // Return blob for the nearest ancestor to COMMIT of the specified PATH.
 func (repo *Repository) blobAncestor(commit *Commit, path string) *Blob {
@@ -14341,42 +14369,63 @@ file operations in the original commit.
 `)
 }
 
-/*
-func (rs *Reposurgeon) DoSplit(self, line str):
-        "Split a commit."
-        if self.chosen() is None:
-            raise Recoverable("no repo has been chosen.")
-        if self.selection is None:
-            self.selection = []
-        if len(self.selection) != 1:
-            raise Recoverable("selection of a single commit required for this command")
-        where = self.selection[0]
-        event = self.chosen()[where]
-        if not commit, ok := event.(*Commit); ok:
-            raise Recoverable("fileop argument doesn't point at a commit")
-        line = str(line)   # pacify pylint by forcing string type
-        try:
-            (prep, obj) = line.split()
-        except ValueError:
-            raise Recoverable("ill-formed split command")
-        if prep == 'at':
-            try:
-                splitpoint = int(obj) - 1
-                if splitpoint not in range(1, len(event.operations())):
-                    raise Recoverable("fileop index %d out of range" % splitpoint)
-                self.chosen().split_commit_by_index(where, splitpoint)
-            except ValueError:
-                raise Recoverable("expected integer fileop index (1-origin)")
-        else if prep == 'by':
-            split = self.chosen().split_commit_by_prefix(where, obj)
-            if not split:
-                raise Recoverable("couldn't find '%s' in a fileop path." \
-                                  % obj)
-        else:
-            raise Recoverable("don't know what to do for preposition %s" % prep)
-        if context.verbose:
-            announce(debugSHOUT, "new commits are events %s and %s." % (where+1, where+2))
-*/
+// Split a commit.
+func (rs *Reposurgeon) DoSplit(line string) (stopOut bool) {
+        if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+        }
+        if len(rs.selection) != 1 {
+		complain("selection of a single commit required for this command")
+		return false
+        }
+        where := rs.selection[0]
+        event := rs.chosen().events[where]
+	commit, ok := event.(*Commit)
+        if !ok {
+		complain("selection doesn't point at a commit")
+		return false
+        }
+	fields := strings.Fields(line)
+	prep := fields[0]
+	obj := fields[1]
+        if len(fields) != 2 {
+		complain("ill-formed split command")
+		return false
+        }
+        if prep == "at" {
+		splitpoint, err := strconv.Atoi(obj)
+		if err != nil {
+			complain("expected integer fileop index (1-origin)")
+			return false
+		}
+		splitpoint--
+		if splitpoint > len(commit.operations()) {
+			complain("fileop index %d out of range", splitpoint)
+			return false
+		}
+		err = rs.chosen().splitCommitByIndex(where, splitpoint)
+		if err != nil {
+			complain(err.Error())
+			return false
+		}
+        } else if prep == "by" {
+		err := rs.chosen().splitCommitByPrefix(where, obj)
+		if err != nil {
+			complain(err.Error())
+			return false
+		}
+        } else {
+		complain("don't know what to do for preposition %s", prep)
+		return false
+        }
+        if context.verbose > 0{
+		announce(debugSHOUT, "new commits are events %d and %d.", where+1, where+2)
+        }
+	return false
+}
+
+
 func (rs *Reposurgeon) HelpUnite() {
         rs.helpOutput(`
 Unite repositories. Name any number of loaded repositories; they will
@@ -17225,7 +17274,7 @@ deleted name.
         # its timeslice at reasonable intervals. Needed because
         # it doesn't hit the disk.
         announce(debugEXTRACT, "Pass 4")
-        split_commits = {}
+        splitCommits = {}
         func (sp *StreamParser)  last_relevant_commit(max_rev, path,
                                  getbranch = operator.attrgetter("branch")):
             # Make path look like a branch
@@ -17233,7 +17282,7 @@ deleted name.
             if path[-1] != svnSep: path = path + svnSep
             # If the revision is split, try from the last split commit
             try:
-                max_rev = split_commits[max_rev]
+                max_rev = splitCommits[max_rev]
             except KeyError:
                 pass
             # Find the commit object...
@@ -17774,7 +17823,7 @@ deleted name.
             # not consisting entirely of deleteall operations.
             if len(other_ops) > 1:
                 # Store the last used split id
-                split_commits[revision] = split.legacyID
+                splitCommitsos[revision] = split.legacyID
             # Sort fileops according to git rules
             for newcommit in newcommits:
                 newcommit.sortOperations()
