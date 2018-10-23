@@ -11571,7 +11571,7 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 		} else {
 			return
 		}
-		context.abortScript = false
+		context.setAbort(false)
 	}
 	// Special case: user selected a single blob
 	if len(selection) == 1 {
@@ -11815,19 +11815,24 @@ Unassign a symbolic name.  Throws an error if the name is not assigned.
 Tab-completes on the list of defined names.
 `)
 }
-
-//func CompleteUnassign(text, _line, _begidx, _endidx) {
-//	repo := self.chosen()
-//	return sorted([x for x in repo.assignments.keys() if strings.HasPrefix(x, text)])
-//}
-
-func (self *Reposurgeon) DoUnassign(line string) (stopOut bool) {
-	repo := self.chosen()
+func (rs *Reposurgeon) CompleteUnassign(text string) []string {
+	repo := rs.chosen()
+	out := make([]string, 0)
+	if repo != nil {
+		for key := range repo.assignments {
+			out = append(out, key)
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+func (rs *Reposurgeon) DoUnassign(line string) (stopOut bool) {
+	repo := rs.chosen()
 	if repo == nil {
 		complain("no repo has been chosen.")
 		return false
 	}
-	if self.selection != nil {
+	if rs.selection != nil {
 		panic(throw("command", "cannot take a selection"))
 	}
 	name := strings.TrimSpace(line)
@@ -11878,8 +11883,8 @@ func (rs *Reposurgeon) DoHistory(_line string) (stopOut bool) {
 	return false
 }
 
-func (self *Reposurgeon) HelpCoverage() {
-	self.helpOutput("Display the coverage-case set (developer instrumentation).")
+func (rs *Reposurgeon) HelpCoverage() {
+	rs.helpOutput("Display the coverage-case set (developer instrumentation).")
 }
 // Display the coverage-case set (developer instrumentation).
 func (rs *Reposurgeon) DoCoverage(lineIn string) bool {
@@ -12377,10 +12382,18 @@ repository (but not a fast-import stream) will implicitly set reposurgeon's
 preference to the type of that repository.
 `)
 }
-/*
-func CompletePrefer(self, text, _line, _begidx, _endidx):
-        return sorted([x.name for x in vcstypes if x.importer and x.name.startswith(text)])
-*/
+
+func (rs *Reposurgeon) CompletePrefer(text string) []string {
+	out := make([]string, 0)
+	for _, x := range vcstypes {
+		if x.importer != "" && strings.HasPrefix(x.name, text) {
+			out = append(out, x.name)
+		}
+	}
+	sort.Strings(out)
+        return out
+}
+
 // Report or select the preferred repository type.
 func (rs *Reposurgeon) DoPrefer(line string) (stopOut bool) {
 	if line == "" {
@@ -12442,9 +12455,16 @@ The repository source type is reliably set when reading a Subversion
 stream.
 `)
 }
-//func (rs *Reposurgeon) CompleteSourcetype(text, _line, _begidx, _endidx) {
-//    return sorted([x.name for x in vcstypes if x.exporter && strings.HasPrefix(x.name, text)])
-//}
+func (rs *Reposurgeon) CompleteSourcetype(text string) []string {
+	out := make([]string, 0)
+	for _, x := range vcstypes {
+		if x.exporter != "" && strings.HasPrefix(x.name, text) {
+			out = append(out, x.name)
+		}
+	}
+	sort.Strings(out)
+        return out
+}
 // Report or select the current repository's source type.
 func (rs *Reposurgeon) DoSourcetype(line string) (stopOut bool) {
 	if rs.chosen() == nil {
@@ -12489,14 +12509,19 @@ repository, '-' for others.
 With an argument, the command tab-completes on the above list.
 `)
 }
-
-/*
-   func CompleteChoose(self, text, _line, _begidx, _endidx):
-       if not self.repolist:
-           return None
-       return sorted([x.name for x in self.repolist if x.name.startswith(text)])
-*/
-
+func (rs *Reposurgeon) CompleteChoose(text string) []string {
+	if rs.repolist == nil {
+		return nil
+	}
+	out := make([]string, 0)
+	for _, x := range rs.repolist {
+		if strings.HasPrefix(x.name, text) {
+			out = append(out, x.name)
+		}
+	}
+	sort.Strings(out)
+        return out
+}
 // Choose a named repo on which to operate.
 func (rs *Reposurgeon) DoChoose(line string) (stopOut bool) {
 	if rs.selection != nil {
@@ -12541,9 +12566,9 @@ used for its metadata and deleting on-disk blobs. With no argument, drops the
 currently chosen repo. Tab-completes on the list of loaded repositories.
 `)
 }
-
-//CompleteDrop := CompleteChoose
-
+func (rs *Reposurgeon) CompleteDrop(text string) []string {
+	return rs.CompleteChoose(text)
+}
 // Drop a repo from reposurgeon's list.
 func (rs *Reposurgeon) DoDrop(line string) (stopOut bool) {
 	if len(rs.reponames()) == 0 {
@@ -12883,9 +12908,9 @@ blobs. The 'reduce' mode always acts on the entire repository.
 This is intended for producing reduced test cases from large repositories.
 `)
 }
-//func (self *Reposurgeon) CompleteStrip(_text, _line, _begidx, _endidx) {
-//    return ["blobs", "reduce"]
-//}
+func (rs *Reposurgeon) CompleteStrip(text string) []string {
+	return []string{"blobs", "reduce"}
+}
 // Drop content to produce a reduced test case.
 func (rs *Reposurgeon) DoStrip(line string) (stopOut bool) {
 	repo := rs.chosen()
@@ -16169,12 +16194,16 @@ options. The following flags and options are defined:
             fmt.Print(opt[0] + ":\n" + opt[1] + "\n")
 	}
 }
-
-/*
-    func CompleteSet(self, text, _line, _begidx, _endidx):
-        return sorted([x for (x, _) in RepoSurgeon.OptionFlags if x.startswith(text)])
-*/
-
+func (rs *Reposurgeon) CompleteSet(text string) []string {
+	out := make([]string, 0)
+	for _, x := range optionFlags {
+		if strings.HasPrefix(x[0], text) && !context.flagOptions[x[0]] {
+			out = append(out, x[0])
+		}
+	}
+	sort.Strings(out)
+        return out
+}
 func tweakFlagOptions(line string, val bool) {
 	if strings.TrimSpace(line)  == "" {
 		for _, opt := range optionFlags {
@@ -16193,7 +16222,6 @@ func tweakFlagOptions(line string, val bool) {
 		}
         }
 }
-
 func (rs *Reposurgeon) DoSet(line string) (stopOut bool) {
 	tweakFlagOptions(line, true)
 	return false
@@ -16210,11 +16238,16 @@ following flags and options are defined:
             fmt.Print(opt[0] + ":\n" + opt[1] + "\n")
 	}
 }
-
-/*
-    CompleteClear := CompleteSet
-*/
-
+func (rs *Reposurgeon) CompleteClear(text string) []string {
+	out := make([]string, 0)
+	for _, x := range optionFlags {
+		if strings.HasPrefix(x[0], text) && context.flagOptions[x[0]] {
+			out = append(out, x[0])
+		}
+	}
+	sort.Strings(out)
+        return out
+}
 func (rs *Reposurgeon) DoClear(line string) (stopOut bool) {
 	tweakFlagOptions(line, true)
 	return false
@@ -16358,12 +16391,17 @@ func (rs *Reposurgeon) HelpUndefine() {
 Undefine the macro named in this command's first argument.
 `)
 }
-
-/*
-    func CompleteUndefine(self, text, _line, _begidx, _endidx):
-        return sorted([x for x in self.definitions if x.startswith(text)])
-*/
-
+func (rs *Reposurgeon) CompleteUndefine(text string) []string {
+	repo := rs.chosen()
+	out := make([]string, 0)
+	if repo != nil {
+		for key := range rs.definitions {
+			out = append(out, key)
+		}
+	}
+	sort.Strings(out)
+	return out
+}
 func (rs *Reposurgeon) DoUndefine(line string) bool {
 	words := strings.SplitN(line, " ", 1)
 	name := words[0]
