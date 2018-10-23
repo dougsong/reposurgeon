@@ -64,6 +64,7 @@ package main
 // Do 'help news' for a summary of recent changes. 
 
 import (
+	"archive/tar"
 	"bufio"
 	"bytes"
 	"compress/gzip"
@@ -16657,9 +16658,46 @@ that zone is used.
         announce(debugSHOUT, "fills %d of %d authorships, changing %s, from %d ChangeLogs." \
                  % (cm, cc, cd, cl))
 */
+
 //
 // Tarball incorporation
 //
+func extractTar(dst string, r io.Reader) ([]tar.Header, error) {
+	files := make([]tar.Header, 0)
+	tr := tar.NewReader(r)
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			return files, nil
+		} else if err != nil {
+			return nil, err
+		} else if header == nil {
+			continue
+		}
+
+		target := filepath.Join(dst, header.Name)
+		if header.Typeflag == tar.TypeDir {
+			if _, err := os.Stat(target); err != nil {
+				if err := os.MkdirAll(target, 0755); err != nil {
+					return nil, err
+				}
+			}
+		} else if header.Typeflag == tar.TypeReg {
+			files = append(files, *header)
+			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			if err != nil {
+				return nil, err
+			}
+			if _, err := io.Copy(f, tr); err != nil {
+				return nil, err
+			}
+			f.Close()
+		}
+	}
+
+	return files, nil
+}
+
 func (rs *Reposurgeon) HelpIncorporate() {
     rs.helpOutput(`
 Insert the contents of a specified tarball as a commit.  The tarball name is
@@ -16685,118 +16723,179 @@ not optimal, and may in particular contain duplicate blobs.
 `)
 }
 
-/*
-    func (rs *Reposurgeon) DoIncorporate(self, line str):
-        "Create a new commit from a tarball."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        repo = self.chosen()
-        if self.selection is None:
-            self.selection = [repo.find(repo.earliestCommit().mark)]
-        if len(self.selection) == 1:
-            commit = repo.events[self.selection[0]]
-            if not isinstance(commit, Commit):
-                raise Recoverable("not a commit.")
-        else:
-            raise Recoverable("a singleton selection set is required.")
-        with rs.newLineParse(line string) as parse:
-            if not parse.line:
-                raise Recoverable("no tarball specified.")
-            # Create new commit to carry the new content
-            blank = Commit()
-            blank.committer = Attribution()
-            blank.mark = repo.newmark()
-            blank.repo = repo
-            (blank.committer.name, blank.committer.email) = whoami()
-            blank.branch = commit.branch
-            blank.comment = "Content from %s\n" % parse.line
-            blank.committer.date = Date("1970-01-01T00:00:00Z")
-            strip = int(parse.optval("strip") or 1)
-            if "--after" in parse.options:
-                loc = repo.find(commit.mark)+1
-            else:
-                loc = repo.find(commit.mark)
-                while loc > 0:
-                    if isinstance(repo.events[loc-1], Blob):
-                        loc -= 1
-                    else:
-                        break
-            # Incorporate the tarball content
-            try:
-                newest = 0
-                here = os.getcwd()
-                with tarfile.open(parse.line) as tarball:
-                    os.Chdir(repo.subdir())
-                    tarball.extractall()
-                    os.Chdir(here)
-                IXANY = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-                with tarfile.open(parse.line) as tarball:
-                    # Pre-sorting avoids an indeterminacy bug in tarfile
-                    # order traversal.
-                    info = []
-                    for tarinfo in tarball:
-                        info.append(tarinfo)
-                    info.sort(key=lambda x: x.name)
-                    for tarinfo in info:
-                        if tarinfo.type == tarfile.REGTYPE:
-                            if newest < tarinfo.mtime:
-                                newest = tarinfo.mtime
-                            b = Blob(repo)
-                            repo.addEvent(b, where=loc)
-                            loc++
-                            repo.declareSequenceMutation()
-                            repo.invalidateObjectMap()
-                            b.setMark(repo.newmark())
-                            #b.size = tarinfo.size
-                            b.setBlobfile(os.path.join(self.repo.subdir(), tarinfo.name))
-                            op = FileOp(repo)
-                            fn = os.path.join(*os.path.split(tarinfo.name)[strip:])
-                            mode = 0o100644
-                            if tarinfo.mode & IXANY:
-                                mode = 0o100755
-                            op.construct("M", mode, b.mark, fn)
-                            blank.appendOperation(op)
-                repo.declareSequenceMutation()
-                repo.invalidateObjectMap()
-                if not context.listOptions["testmode"]:
-                    blank.committer.date = Date(rfc3339(newest))
-            except IOError:
-                raise Recoverable("open or read failed on %s" % parse.line)
-            # Link it into the repository
-            if "--after" not in parse.options:
-                repo.addEvent(blank, where=loc)
-                blank.setParents(commit.parents())
-                commit.setParents([blank])
-            else:
-                blank.setParents([commit])
-                for offspring in commit.children():
-                    offspring.replaceParent(commit, blank)
-                repo.addEvent(blank, where=loc)
-            # We get here if incorporation worked OK.
-            for opt in parse.options:
-                if opt.startswith("--date"):
-                    blank.committer.date = Date(opt.split("=")[1])
-            # Generate deletes into the next commit(s) so files won't
-            # leak forward. Also prevent files leaking forward from any
-            # previous commit.  We gave to force determinstic path list
-            # order here, otherwise regressio tests will fail in flaky
-            # ways.
-            blank_path_list = list(blank.paths())
-            blank_path_list.sort()
-            for path in blank_path_list:
-                for child in blank.children():
-                    if path not in child.paths():
-                        op = FileOp(repo)
-                        op.construct("D", path)
-                        child.appendOperation(op)
-            for parent in blank.parents():
-                for leaker in parent.paths():
-                    if leaker not in blank_path_list:
-                        op = FileOp(repo)
-                        op.construct("D", leaker)
-                        blank.appendOperation(op)
-*/
+// Create a new commit from a tarball.
+func (self *Reposurgeon) DoIncorporate(line string) bool {
+	repo := self.chosen()
+	if repo == nil {
+		complain("no repo has been chosen.")
+		return false
+	}
+	if self.selection == nil {
+		self.selection = []int{repo.find(repo.earliestCommit().mark)}
+	}
+	var commit *Commit
+	if len(self.selection) == 1 {
+		event := repo.events[self.selection[0]]
+		var ok bool
+		if commit, ok = event.(*Commit); !ok {
+			complain("selection is not a commit.")
+			return false
+		}
+	} else {
+		complain("a singleton selection set is required.")
+		return false
+	}
+	parse := self.newLineParse(line, nil)
+	if parse.line == "" {
+		complain("no tarball specified.")
+		return false
+	}
+
+	// Create new commit to carry the new content
+	blank := newCommit(repo)
+	blank.committer = *newAttribution("")
+	blank.mark = repo.newmark()
+	blank.repo = repo
+	blank.committer.fullname, blank.committer.email = whoami()
+	blank.branch = commit.branch
+	blank.comment = fmt.Sprintf("Content from %s\n", parse.line)
+	var err error
+	blank.committer.date, err = newDate("1970-01-01T00:00:00Z")
+	stripstr, present := parse.OptVal("strip")
+	var strip int
+	if !present {
+		strip = 1
+	} else {
+		var err error
+		strip, err = strconv.Atoi(stripstr)
+		if err != nil {
+			complain("strip option must be an integer")
+			return false
+		}
+	}
+
+	_, insertAfter := parse.OptVal("after")
+	var loc int
+	if insertAfter {
+		loc = repo.find(commit.mark)+1
+	} else {
+		loc = repo.find(commit.mark)
+		for loc > 0 {
+			_, ok := repo.events[loc-1].(*Blob)
+			if ok {
+				loc -= 1
+			} else {
+				break
+			}
+		}
+	}
+
+	// Incorporate the tarball content
+	tarfile, err := os.Open(parse.line)
+	if err != nil {
+		complain("open or read failed on %s", parse.line)
+		return false
+	}
+
+	announce(debugSHUFFLE, "extracting %s into %s", parse.line, repo.subdir(""))
+	headers, err := extractTar(repo.subdir(""), tarfile)
+	if err != nil {
+		complain("error while extracting tarball %s: %s", parse.line, err.Error())
+	}
+	// Pre-sorting avoids an indeterminacy bug in tarfile
+	// order traversal.
+	sort.SliceStable(headers, func(i, j int) bool { return headers[i].Name < headers[j].Name })
+
+	var newest time.Time
+	for _, header := range headers {
+		if header.ModTime.Before(newest) {
+			newest = header.ModTime
+		}
+		b := newBlob(repo)
+		repo.insertEvent(b, loc, "")
+		loc++
+		repo.declareSequenceMutation("")
+		repo.invalidateObjectMap()
+		b.setMark(repo.newmark())
+		//b.size = header.size
+		b.setBlobfile(filepath.Join(repo.subdir(""), header.Name))
+		op := newFileOp(repo)
+		fn := path.Join(strings.Split(header.Name, string(os.PathSeparator))[strip:]...)
+		mode := 0100644
+		if header.Mode & 0111 != 0 {
+			mode = 0100755
+		}
+		op.construct("M", strconv.FormatInt(int64(mode), 8), b.mark, fn)
+		blank.appendOperation(*op)
+	}
+
+	repo.declareSequenceMutation("")
+	repo.invalidateObjectMap()
+	if !context.flagOptions["testmode"] {
+		blank.committer.date = Date{timestamp: newest}
+	}
+
+	// Link it into the repository
+	if !insertAfter {
+		repo.insertEvent(blank, loc, "")
+		blank.setParents(commit.parents())
+		commit.setParents([]CommitLike{blank})
+	} else {
+		blank.setParents([]CommitLike{commit})
+		for _, offspring := range commit.children() {
+			c, ok := offspring.(*Commit)
+			if ok {
+				c.replaceParent(commit, blank)
+			}
+		}
+		repo.insertEvent(blank, loc, "")
+	}
+
+	// We get here if incorporation worked OK.
+	date, present := parse.OptVal("date")
+	if present {
+		blank.committer.date, err = newDate(date)
+		if err != nil {
+			complain("invalid date: %s", date)
+			return false
+		}
+	}
+
+	// Generate deletes into the next commit(s) so files won't
+	// leak forward. Also prevent files leaking forward from any
+	// previous commit.  We gave to force determinstic path list
+	// order here, otherwise regressio tests will fail in flaky
+	// ways.
+	blank_path_list := blank.paths(nil)
+	sort.Slice(blank_path_list, func(i, j int) bool { return blank_path_list[i] < blank_path_list[j] })
+	for _, path := range blank_path_list {
+		for _, child := range blank.children() {
+			c, ok := child.(*Commit)
+			if ok {
+				if !c.paths(nil).Contains(path) {
+					op := newFileOp(repo)
+					op.construct("D", path)
+					c.appendOperation(*op)
+				}
+			}
+		}
+	}
+	for _, parent := range blank.parents() {
+		c, ok := parent.(*Commit)
+		if ok {
+			for _, leaker := range c.paths(nil) {
+				if !blank_path_list.Contains(leaker) {
+					op := newFileOp(repo)
+					op.construct("D", leaker)
+					blank.appendOperation(*op)
+				}
+			}
+		}
+	}
+
+	return false
+}
+
 //
 // Version binding
 //
