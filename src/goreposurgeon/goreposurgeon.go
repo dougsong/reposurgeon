@@ -8606,29 +8606,44 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
                         newparent = self.events[list(attach)[0]]
                         commit.insertParent(idx, newparent.mark)
         self.renumber()
-    func path_walk(self, selection, hook=lambda path: path):
-        "Apply a hook to all paths, returning the set of modified paths."
-        modified = set()
-        for ei in selection:
-            event = self.events[ei]
-            if isinstance(event, Commit):
-                for fileop in event.operations():
-                    if fileop.op in (opM, opD):
-                        newpath = hook(fileop.path)
-                        if newpath != fileop.path:
-                            modified.add(newpath)
-                        fileop.path = newpath
-                    else if fileop.op in (opR, opC):
-                        newpath = hook(fileop.source)
-                        if newpath != fileop.source:
-                            modified.add(newpath)
-                        fileop.source = newpath
-                        newpath = hook(fileop.target)
-                        if newpath != fileop.target:
-                            modified.add(newpath)
-                        fileop.target = newpath
-                event.invalidatePathsetCache()
-        return sorted(modified)
+*/
+// Apply a hook to all paths, returning the set of modified paths.
+func (repo *Repository) pathWalk(selection orderedIntSet, hook func(string)string) stringSet {
+	if hook == nil {
+		hook = func(s string) string {return s}
+	}
+	modified := newStringSet()
+	for _, ei := range selection {
+		event := repo.events[ei]
+		if commit, ok := event.(*Commit); ok {
+			for _, fileop := range commit.operations() {
+				if fileop.op == opM || fileop.op == opD {
+					newpath := hook(fileop.path)
+					if newpath != fileop.path {
+						modified.Add(newpath)
+					}
+					fileop.path = newpath
+				} else if fileop.op == opR || fileop.op == opC {
+					newpath := hook(fileop.source)
+					if newpath != fileop.source {
+						modified.Add(newpath)
+					}
+					fileop.source = newpath
+					newpath = hook(fileop.target)
+					if newpath != fileop.target {
+						modified.Add(newpath)
+					}
+					fileop.target = newpath
+				}
+			}
+			commit.invalidatePathsetCache()
+		}
+	}
+	sort.Strings(modified)
+	return modified
+}
+
+/*
     func split_commit(self, where, splitfunc):
         event = self.events[where]
         # Fileop split happens here
@@ -14605,47 +14620,71 @@ With the 'sub' modifier, take a second argument that is a directory
 name and prepend it to every path. With the 'sup' modifier, strip
 any directory argument from the start of the path if it appears there;
 with no argument, strip the first directory component from every path.
-` )
-    }
-/*
-    func (rs *Reposurgeon) DoPaths(self, line str):
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        if self.selection is None:
-            self.selection = self.chosen().all()
-        if not line.startswith(("sub", "sup")):
-            with rs.newLineParse(line, stringSet{"stdout"}) as parse:
-                allpaths = set()
-                for _, event in self.selected(Commit):
-                    allpaths.update(event.paths())
-                parse.stdout.WriteString("\n".join(sorted(allpaths)) + "\n")
-                return
-        fields = line.split()
-        if fields[0] == "sub":
-            if len(fields) < 2:
-                raise Fatal("Error paths sub needs a directory name argument")
-            prefix = fields[1]
-            modified = self.chosen().path_walk(self.selection,
-                                               lambda f: os.path.join(prefix,f))
-            fmt.Fprint(os.stdout, "\n".join(modified) + "\n")
-        else if fields[0] == "sup":
-            if len(fields) == 1:
-                try:
-                    modified = self.chosen().path_walk(self.selection,
-                                                   lambda f: f[f.find(os.sep)+1:])
-                    fmt.Fprint(os.stdout, "\n".join(modified) + "\n")
-                except IndexError:
-                    raise Recoverable("no / in sup path.")
-            else:
-                prefix = fields[1]
-                if not prefix.endswith(os.sep):
-                    prefix = prefix + os.sep
-                modified = self.chosen().path_walk(self.selection,
-                                               lambda f: f[len(prefix):] if f.startswith(prefix) else f)
-                fmt.Fprint(os.stdout, "\n".join(modified) + "\n")
-        self.chosen().invalidateManifests()
-*/
+`)
+}
+func (rs *Reposurgeon) DoPaths(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+	}
+	if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+	}
+	parse := rs.newLineParse(line, stringSet{"stdout"})
+	defer parse.Closem()
+	if !strings.HasPrefix(line, "sub") && !strings.HasPrefix(line, "sup") {
+		allpaths := newStringSet()
+		for _, commit := range rs.chosen().commits(nil) {
+			allpaths = allpaths.Union(commit.paths(nil))
+		}
+		sort.Strings(allpaths)
+		fmt.Fprint(parse.stdout, strings.Join(allpaths, "\n") + "\n")
+		return false
+	}
+	fields := strings.Fields(line)
+	if fields[0] == "sub" {
+		if len(fields) < 2 {
+			complain("Error paths sub needs a directory name argument")
+			return false
+		}
+		prefix := fields[1]
+		modified := rs.chosen().pathWalk(rs.selection,
+			func(f string) string {return prefix + string(os.PathSeparator) + f})
+		fmt.Fprint(parse.stdout, strings.Join(modified, "\n") + "\n")
+	} else if fields[0] == "sup" {
+		if len(fields) == 1 {
+			modified := rs.chosen().pathWalk(rs.selection,
+				func(f string) string {
+					slash := strings.Index(f, "/")
+					if slash == -1 {
+						return f
+					} else {
+						return f[slash+1:]
+					}
+				})
+			sort.Strings(modified)
+			fmt.Fprint(parse.stdout, strings.Join(modified, "\n") + "\n")
+		} else {
+			prefix := fields[1]
+			if !strings.HasSuffix(prefix, "/") {
+				prefix += "/"
+			}
+			modified := rs.chosen().pathWalk(rs.selection,
+				func(f string) string {
+					if strings.HasPrefix(f, prefix) {
+						return f[len(prefix):]
+					} else {
+						return f
+					}
+				})
+			sort.Strings(modified)
+			fmt.Fprint(parse.stdout, strings.Join(modified, "\n") + "\n")
+			return false
+		}
+	}
+	//rs.chosen().invalidateManifests()
+	return false
+}
 
 func (rs *Reposurgeon) HelpManifest() {
         rs.helpOutput(`
@@ -14677,23 +14716,23 @@ This command supports > redirection.
                 header = "Event %s, " % repr(ei+1)
                 header = header[:-2]
                 header += " " + ((72 - len(header)) * "=") + "\n"
-                parse.stdout.WriteString(header)
+                fmt.Fprint(parse.stdout, header)
                 if event.legacyID:
-                    parse.stdout.WriteString("# Legacy-ID: %s\n" % event.legacyID)
-                parse.stdout.WriteString("commit %s\n" % event.branch)
+                    fmt.Fprint(parse.stdout, "# Legacy-ID: %s\n" % event.legacyID)
+                fmt.Fprint(parse.stdout, "commit %s\n" % event.branch)
                 if event.mark:
-                    parse.stdout.WriteString("mark %s\n" % event.mark)
-                parse.stdout.WriteString("\n")
+                    fmt.Fprint(parse.stdout, "mark %s\n" % event.mark)
+                fmt.Fprint(parse.stdout, "\n")
                 if filter_func is None:
-                    parse.stdout.WriteString("\n".join("%s -> %s" % (path, mark)
+                    fmt.Fprint(parse.stdout, "\n".join("%s -> %s" % (path, mark)
                             for path, (mode, mark, _)
                             in event.manifest().items()))
                 else:
-                    parse.stdout.WriteString("\n".join("%s -> %s" % (path, mark)
+                    fmt.Fprint(parse.stdout, "\n".join("%s -> %s" % (path, mark)
                             for path, (mode, mark, _)
                             in event.manifest().items()
                             if filter_func(polybytes(path))))
-                parse.stdout.WriteString("\n")
+                fmt.Fprint(parse.stdout, "\n")
 */
 func (rs *Reposurgeon) HelpTagify() {
         rs.helpOutput(`
@@ -15781,7 +15820,7 @@ func (rs *Reposurgeon) DoReferences(self, line str):
         else:
             self.selection = [e for e in range(len(repo.events)) if self.has_reference(repo.events[e])]
             if self.selection:
-                if line.startswith("edit"):
+                if strings.HasPrefix(line, "edit"):
                     self.edit(self.selection, line[4:].strip())
                 else:
                     with rs.newLineParse(line, stringSet{"stdout"}) as parse:
@@ -15790,7 +15829,7 @@ func (rs *Reposurgeon) DoReferences(self, line str):
                             if hasattr(event, "lister"):
                                 summary = event.lister(None, ei, screenwidth())
                                 if summary:
-                                    parse.stdout.WriteString(summary + "\n")
+                                    fmt.Fprint(parse.stdout, summary + "\n")
 */
 
 func (rs *Reposurgeon) HelpGitify() {
@@ -15929,11 +15968,11 @@ must resolve to exactly two commits. Supports > redirection.
                                                          fromfile=file0,
                                                          tofile=file1,
                                                          lineterm=""):
-                            parse.stdout.WriteString(diffline + "\n")
+                            fmt.Fprint(parse.stdout, diffline + "\n")
                 else if path in dir1:
-                    parse.stdout.WriteString("%s: removed\n" % path)
+                    fmt.Fprint(parse.stdout, "%s: removed\n" % path)
                 else if path in dir2:
-                    parse.stdout.WriteString("%s: added\n" % path)
+                    fmt.Fprint(parse.stdout, "%s: added\n" % path)
                 else:
                     raise Recoverable("internal error - missing path in diff")
 */
