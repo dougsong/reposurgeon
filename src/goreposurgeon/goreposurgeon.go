@@ -177,6 +177,11 @@ func isfile(pathname string) bool {
 	return err == nil && st.Mode().IsRegular()
 }
 
+func islink(pathname string) bool {
+	st, err := os.Stat(pathname)
+	return err == nil && (st.Mode() & os.ModeSymlink) != 0
+}
+
 func relpath(dir string) string {
 	wd, err := os.Getwd()
 	if err != nil {
@@ -9268,7 +9273,7 @@ func runProcess(dcmd string, legend string) error {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("executing %q: %v", dcmd, err)
 	}
@@ -11537,63 +11542,100 @@ func popToken(line string) (string, string) {
 	return tok, line
 }
 
-/*
-    func edit(self, selection, line):
-        # Mailboxize and edit the non-blobs in the selection
-        # Assumes that self.chosen() and selection are not None
-        with self.newLineParse(line, capabilities=["stdin", "stdout"]) as parse:
-            editor = parse.line or os.getenv("EDITOR")
-            if not editor:
-                complain("you have not specified an editor and $EDITOR is not set")
-                # Fallback on /usr/bin/editor on Debian and derivatives.
-                # See https://www.debian.org/doc/debian-policy/#editors-and-pagers
-                editor = "/usr/bin/editor"
-                editor_real = os.path.realpath(editor)
-                if os.path.islink(editor) and os.path.exists(editor_real):
-                    complain("using %s -> %s instead" % (editor, editor_real))
-                else:
-                    return
-            # Special case: user selected a single blob
-            if len(selection) == 1:
-                singleton = self.chosen()[selection[0]]
-                if isinstance(singleton, Blob):
-                    func find_successor(event, path):
-                        here = []
-                        for child in event.children():
-                            for fileop in child.operations():
-                                if fileop.op == opM and fileop.path == path:
-                                    here.append(child.mark)
-                            here += find_successor(child, path)
-                        return here
-                    for event in self.chosen().commits():
-                        for fileop in event.operations():
-                            if fileop.op == opM and fileop.ref == singleton.mark:
-                                if len(find_successor(event, fileop.path)) > 0:
-                                    complain("beware: not the last 'M %s' on its branch" % fileop.path)
-                                break
-                    os.system(editor + " " + singleton.materialize())
-                    return
-                # Fall through
-            (tfdesc, tfname) = tempfile.mkstemp()
-            assert tfdesc > -1    # pacify pylint
-            try:
-                with open(tfname, "wb") as tfp:
-                    for i in selection:
-                        event = self.chosen()[i]
-                        if hasattr(event, "emailOut"):
-                            tfp.write(polybytes(event.emailOut([], i)))
-            except IOError:
-                raise Recoverable("write of editor tempfile failed")
-            fp = subprocess.Popen([editor, tfname], stdin=parse.stdin, stdout=parse.stdout)
-            if fp.wait():
-                raise Recoverable("%s returned a failure status" % editor)
-            else:
-                self.DoMsgin("<" + tfname)
-        # No try/finally here - we want the tempfile to survive on fatal error
-        # because it might have megabytes of metadata edits in it.
-        os.remove(tfname)
-        os.close(tfdesc)
 
+func (commit *Commit) findSuccessors(path string) []string {
+	var here []string
+	for _, child := range commit.children() {
+		childCommit, ok := child.(*Commit)
+		if !ok {
+			continue
+		}
+		for _, fileop := range childCommit.operations() {
+			if fileop.op == opM && fileop.path == path {
+				here = append(here, childCommit.mark)
+			}
+		}
+		here = append(here, childCommit.findSuccessors(path)...)
+	}
+	return here
+}
+
+// edit mailboxizes and edits the non-blobs in the selection
+// Assumes that rs.chosen() and selection are not None
+func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
+	parse := rs.newLineParse(line, stringSet{"stdin", "stdout"})
+	editor := os.Getenv("EDITOR")
+	if parse.line != "" {
+		editor = parse.line
+	}
+	if editor == "" {
+		complain("you have not specified an editor and $EDITOR is unset")
+		// Fallback on /usr/bin/editor on Debian and
+		// derivatives.  See
+		// https://www.debian.org/doc/debian-policy/#editors-and-pagers
+		editor = "/usr/bin/editor"
+		realEditor, err := filepath.EvalSymlinks(editor)
+		if err != nil {
+			complain(err.Error())
+			return
+		}
+		if islink(editor) && exists(realEditor) {
+			announce(debugSHOUT, "using %s -> %s instead", editor, realEditor)
+
+		} else {
+			return
+		}
+		context.abortScript = false
+	}
+	// Special case: user selected a single blob
+	if len(selection) == 1 {
+		singleton := rs.chosen().events[selection[0]]
+		if blob, ok := singleton.(*Blob); ok {
+			for _, commit := range rs.chosen().commits(nil) {
+				for _, fileop := range commit.operations() {
+					if fileop.op == opM && fileop.ref == singleton.getMark() {
+						if len(commit.findSuccessors(fileop.path)) > 0 {
+							complain("beware: not the last 'M %s' on its branch", fileop.path)
+						}
+						break
+					}
+				}
+			}
+			runProcess(editor + " " + blob.materialize(), "editing")
+			return
+		}
+		// Fall through
+
+		file, err1 := ioutil.TempFile(".", "rse")
+		if err1 != nil {
+			complain("creating tempfile for edit: %v", err1)
+			return
+		}
+		defer os.Remove(file.Name())		
+		for _, i := range selection {
+			event := rs.chosen().events[i]
+			switch event.(type) {
+			case *Commit:
+				file.WriteString(event.(*Commit).emailOut(nil, i, nil))
+			case *Tag:
+				file.WriteString(event.(*Tag).emailOut(nil, i, nil))
+			}
+		}
+		file.Close()
+		cmd := exec.Command(editor, file.Name())
+		cmd.Stdin = parse.stdin
+		cmd.Stdout = parse.stdout
+		cmd.Stderr = os.Stderr
+		err := cmd.Run()
+		if err != nil {
+			complain("running editor: %v", err)
+			return
+		}
+		rs.DoMsgin("<" + file.Name())
+	}
+}
+
+/*
     func data_traverse(self, prompt, hook, attributes, safety):
         "Filter commit metadata (and possibly blobs) through a specified hook."
         blobs = any(isinstance(self.chosen().events[i], Blob)
@@ -13387,17 +13429,18 @@ blob, your editor will be called on the blob file.
 Supports < and > redirection.
 `)
 }
-/*
-    func (rs *Reposurgeon) DoEdit(self, line str):
-        "Edit metadata interactively."
-        if self.chosen() == None:
-            complain("no repo is loaded")
-            return
-        if self.selection is None:
-            self.selection = [n for n, o2 in enumerate(self.chosen()) \
-                              if hasattr(o2, "emailOut")]
-        self.edit(self.selection, line)
-*/
+// Edit metadata interactively.
+func (rs *Reposurgeon) DoEdit(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo is loaded")
+		return false
+	}
+	if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+	}
+	rs.edit(rs.selection, line)
+	return false
+}
 
 func (rs *Reposurgeon) HelpFilter() {
         rs.helpOutput(`

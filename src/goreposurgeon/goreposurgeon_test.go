@@ -26,7 +26,8 @@ Things that still need unit tests:
 
 * nontrivial case of commit head method
 
-* repository named() lookup - can't test yet without assignment logic
+* repository named() lookup - can't test yet without assignment logic.
+  Check that category order matches Python's.
 
 * parsing of inline fileops.
 
@@ -45,6 +46,8 @@ Things that still need unit tests:
 * resort()
 
 * blobAncestor()
+
+* edit()
 
 */
 
