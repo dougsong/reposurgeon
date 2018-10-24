@@ -9419,7 +9419,7 @@ func (rs *RepositoryList) removeByName(name string) {
 }
 
 // Apply a graph-coloring algorithm to see if the repo can be split here.
-func (rs *Repository) cutConflict(early *Commit, late *Commit) (bool, int, error) {
+func (repo *Repository) cutConflict(early *Commit, late *Commit) (bool, int, error) {
 	cutIndex := -1
 	for i, m := range late.parentMarks() {
 		if m == early.mark {
@@ -9437,8 +9437,8 @@ func (rs *Repository) cutConflict(early *Commit, late *Commit) (bool, int, error
 		if commit, ok := commitlike.(*Commit); ok {
 			for _, fileop := range commit.operations() {
 				if fileop.op == opM && fileop.ref != "inline" {
-					blob := rs.markToEvent(fileop.ref)
-					//assert isinstance(rs.repo[blob], Blob)
+					blob := repo.markToEvent(fileop.ref)
+					//assert isinstance(repo.repo[blob], Blob)
 					blob.(*Blob).colors = append(blob.(*Blob).colors, color)
 				}
 			}
@@ -9450,7 +9450,7 @@ func (rs *Repository) cutConflict(early *Commit, late *Commit) (bool, int, error
 	keepgoing := true
 	for keepgoing && !conflict {
 		keepgoing = false
-		for _, event := range rs.commits(nil) {
+		for _, event := range repo.commits(nil) {
 			if event.color != ""{
 				for _, neighbor := range event.parents() {
 					if neighbor.getColor() == "" {
@@ -11684,85 +11684,123 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 	}
 }
 
-/*
-    func data_traverse(self, prompt, hook, attributes, safety):
-        "Filter commit metadata (and possibly blobs) through a specified hook."
-        blobs = any(isinstance(self.chosen().events[i], Blob)
-                    for i in self.selection)
-        nonblobs = any(not isinstance(self.chosen().events[i], Blob)
-                       for i in self.selection)
-        # Try to prevent user from shooting self in foot
-        if safety and blobs and nonblobs:
-            raise Recoverable("cannot transform blobs and nonblobs in same command")
-        # If user is transforming blobs, transform all inlines within the range.
-        # This is an expensive step because of the sort; avoid doing it
-        # when possible.
-        if blobs and self.chosen().inlines > 0:
-            for ei in range(self.selection[0], self.selection[-1]):
-                event = self.chosen().events[ei]
-                if isinstance(event, (Commit, Tag)):
-                    for fileop in event.operations():
-                        if fileop.inline is not None:
-                            self.selection.append(ei)
-            self.selection.sort()
-        with Baton(prompt=prompt, enable=(context.verbose == 1)) as baton:
-            altered = 0
-            for _, event in self.selected():
-                if isinstance(event, Tag):
-                    if nonblobs:
-                        oldcomment = event.comment
-                        event.comment = hook(event.comment)
-                        anychanged = (oldcomment != event.comment)
-                        oldtagger = event.tagger.who()
-                        newtagger = hook(oldtagger)
-                        if oldtagger != newtagger:
-                            newtagger += " " + str(event.tagger.date)
-                            event.tagger = Attribution(newtagger)
-                            anychanged = true
-                        if anychanged:
-                            altered++
-                else if isinstance(event, Commit):
-                    if nonblobs:
-                        anychanged = false
-                        if "c" in attributes:
-                            oldcomment = event.comment
-                            event.comment = hook(event.comment)
-                            if oldcomment != event.comment:
-                                anychanged = true
-                        if "C" in attributes:
-                            oldcommitter = event.committer.who()
-                            newcommitter = hook(oldcommitter)
-                            changed = (oldcommitter != newcommitter)
-                            if changed:
-                                newcommitter += " " + str(event.committer.date)
-                                event.committer = Attribution(newcommitter)
-                                anychanged = true
-                        if "a" in attributes:
-                            for i in range(len(event.authors)):
-                                oldauthor = event.authors[i].who()
-                                newauthor = hook(oldauthor)
-                                if oldauthor != newauthor:
-                                    newauthor += " "+str(event.authors[i].date)
-                                    event.authors[i] = Attribution(newauthor)
-                                    anychanged = true
-                        if anychanged:
-                            altered++
-                    if blobs and isinstance(event, Commit):
-                        for fileop in event.operations():
-                            if fileop.inline is not None:
-                                oldinline = fileop.inline
-                                fileop.inline = hook(fileop.inline, event.path)
-                                altered += int(fileop.inline != oldinline)
-                else if isinstance(event, Blob):
-                    content = event.getContent()
-                    modified = hook(content, " ".join(event.paths()))
-                    if content != modified:
-                        event.setContent(modified)
-                    altered += (content != modified)
-                baton.twirl("")
-        announce(debugSHOUT, "%d items modified by %s." % (altered, prompt.lower()))
+// Filter commit metadata (and possibly blobs) through a specified hook.
+func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, attributes stringSet, safety bool) {
+	blobs := false
+	nonblobs := false
+	for _, ei := range rs.selection {
+		event := rs.chosen().events[ei]
+		switch event.(type) {
+		case *Blob:
+			blobs = true
+		default:
+			nonblobs = true
+		}
+		if blobs && nonblobs {
+			break
+		}
+	}		
+	// Try to prevent user from shooting self in foot
+	if safety && blobs && nonblobs {
+		complain("cannot transform blobs and nonblobs in same command")
+		return
+	}
+	// If user is transforming blobs, transform all inlines within the range.
+	// This is an expensive step because of the sort; avoid doing it
+	// when possible.
+	if blobs && rs.chosen().inlines > 0 {
+		for ei := rs.selection[0]; ei <= rs.selection[len(rs.selection)-1]; ei++ {
+			event := rs.chosen().events[ei]
+			if commit, ok := event.(Commit); ok {
+				for _, fileop := range commit.operations() {
+					if fileop.inline != "" {
+						rs.selection = append(rs.selection, ei)
+					}
+				}
+			}
+		}
+		rs.selection.Sort()
+	}
+	baton := newBaton(prompt, "", context.verbose == 1)
+	defer baton.exit("")
+	altered := 0
+	for _, ei := range rs.selection {
+		event := rs.chosen().events[ei]
+		if tag, ok := event.(*Tag); ok {
+			if nonblobs {
+				oldcomment := tag.comment
+				tag.comment = hook(tag.comment)
+				anychanged := (oldcomment != tag.comment)
+				oldtagger := tag.tagger.who()
+				newtagger := hook(oldtagger)
+				if oldtagger != newtagger {
+					newtagger += " " + tag.tagger.date.String()
+					tag.tagger = newAttribution(newtagger)
+					anychanged = anychanged || true
+				}
+				if anychanged {
+					altered++
+				}
+			}
+		} else if commit, ok := event.(*Commit); ok {
+			if nonblobs {
+				anychanged := false
+				if attributes.Contains("c")  {
+					oldcomment := commit.comment
+					commit.comment = hook(commit.comment)
+					if oldcomment != commit.comment {
+						anychanged = true
+					}
+				}
+				if attributes.Contains("C")  {
+					oldcommitter := commit.committer.who()
+					newcommitter := hook(oldcommitter)
+					changed := (oldcommitter != newcommitter)
+					if changed {
+						newcommitter += " " + commit.committer.date.String()
+						commit.committer = *newAttribution(newcommitter)
+						anychanged = true
+					}
+				}
+				if attributes.Contains("a")  {
+					for i := range commit.authors {
+						oldauthor := commit.authors[i].who()
+						newauthor := hook(oldauthor)
+						if oldauthor != newauthor {
+							newauthor += " "+commit.authors[i].date.String()
+							commit.authors[i] = *newAttribution(newauthor)
+							anychanged = true
+						}
+					}
+				}
+				if anychanged {
+					altered++
+				}
+			}
+			if blobs {
+				for _, fileop := range commit.operations() {
+					if fileop.inline != "" {
+						oldinline := fileop.inline
+						fileop.inline = hook(fileop.inline)
+						if fileop.inline != oldinline {
+							altered++
+						}
+					}
+				}
+			}
+		} else if blob, ok := event.(*Blob); ok {
+			content := blob.getContent()
+			modified := hook(content)
+			if content != modified {
+				blob.setContent(modified, blob.start)
+				altered++
+			}
+		}
+		baton.twirl("")
+	}
+	announce(debugSHOUT, "%d items modified by %s.", altered, strings.ToLower(prompt))
+}
 
-*/
 //
 // Command implementation begins here
 //
@@ -12345,15 +12383,15 @@ Supports > redirection.
 }
 
 /*
-    func (rs *Reposurgeon) DoLint(self, line: str):
+    func (rs *Reposurgeon) DoLint(rs, line: str):
         "Look for lint in a repo."
-        if self.chosen() == None:
+        if rs.chosen() == None:
             complain("no repo has been chosen.")
             return
-        if self.selection is None:
-            self.selection = self.chosen().all()
+        if rs.selection is None:
+            rs.selection = rs.chosen().all()
         with rs.newLineParse(line, stringSet{"stdout"}) as parse:
-            unmapped = regexp.MustCompile(("[^@]*$|[^@]*@" + str(self.chosen().uuid) + "$").encode('ascii'))
+            unmapped = regexp.MustCompile(("[^@]*$|[^@]*@" + str(rs.chosen().uuid) + "$").encode('ascii'))
             shortset = set()
             deletealls = set()
             disconnected = set()
@@ -12361,7 +12399,7 @@ Supports > redirection.
             emptyaddr = set()
             emptyname = set()
             badaddress = set()
-            for _, event in self.selected(Commit):
+            for _, event in rs.selected(Commit):
                 if event.operations() and event.operations()[0].op == 'deleteall' and event.hasChildren():
                     deletealls.add("on %s at %s" % (event.branch, event.idMe()))
                 if not event.hasParents() and not event.hasChildren():
@@ -12411,7 +12449,7 @@ Supports > redirection.
                     parse.stdout.WriteString("email address missing @: %s\n" % item)
             if not parse.options or "--uniqueness" in parse.options \
                    or "-u" in parse.options:
-                self.chosen().checkUniqueness(true, announcer=lambda s: parse.stdout.WriteString("reposurgeon: " + s + "\n"))
+                rs.chosen().checkUniqueness(true, announcer=lambda s: parse.stdout.WriteString("reposurgeon: " + s + "\n"))
             if "--options" in parse.options or "-?" in parse.options:
                 os.Stdout.WriteString("""\
 --deletealls    -d     report mid-branch deletealls
@@ -12923,8 +12961,8 @@ func (rs *Reposurgeon) DoWrite(line string) (stopOut bool) {
 	return false
 }
 
-func (self *Reposurgeon ) HelpInspect() {
-	self.helpOutput(`
+func (rs *Reposurgeon ) HelpInspect() {
+	rs.helpOutput(`
 Dump a fast-import stream representing selected events to standard
 output or via > redirect to a file.  Just like a write, except (1) the
 progress meter is disabled, and (2) there is an identifying header
@@ -13556,29 +13594,29 @@ With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
 `)
 }
 /*
-    func (rs *Reposurgeon) DoFilter(self, line str):
-        if self.chosen() == None:
+    func (rs *Reposurgeon) DoFilter(rs, line str):
+        if rs.chosen() == None:
             complain("no repo is loaded")
             return
         if line == "":
             complain("no filter is specified")
             return
-        if self.selection is None:
+        if rs.selection is None:
             complain("no selection")
             return
         class FilterCommand:
-            func __init__(self, repo, filtercmd):
+            func __init__(rs, repo, filtercmd):
                 "Initialize the filter from the command line."
-                self.repo = repo
-                self.filtercmd = None
-                self.sub = None
-                self.regex = None
-                self.attributes = set([])
+                rs.repo = repo
+                rs.filtercmd = None
+                rs.sub = None
+                rs.regex = None
+                rs.attributes = set([])
                 # Must not use LineParse here as it would try to strip options
                 # in shell commands.
                 if filtercmd.startswith('--shell'):
-                    self.filtercmd = filtercmd[7:].lstrip()
-                    self.attributes = {"c", "a", "C"}
+                    rs.filtercmd = filtercmd[7:].lstrip()
+                    rs.attributes = {"c", "a", "C"}
                 else if filtercmd.startswith('--regex') or filtercmd.startswith('--replace'):
                     firstspace = filtercmd.find(' ')
                     if firstspace == -1:
@@ -13602,44 +13640,44 @@ With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
                             if flag == "g":
                                 subcount = 0
                             else if flag in {"c", "a", "C"}:
-                                self.attributes.add(flag)
+                                rs.attributes.add(flag)
                             else if flag.isdigit():
                                 subcount = int(subflags)
                             else:
                                 raise Recoverable("unknown filter flag")
-                        if not self.attributes:
-                            self.attributes = {"c", "a", "C"}
+                        if not rs.attributes:
+                            rs.attributes = {"c", "a", "C"}
                         # subcount 0 does not reliably work as it should
                         if filtercmd.startswith('--regex'):
                             try:
                                 pattern = parts[1]
                                 if str is not bytes:
                                     pattern = pattern.encode(master_encoding)
-                                self.regex = regexp.MustCompile(pattern)
+                                rs.regex = regexp.MustCompile(pattern)
                             except sre_constants.error as e:
                                 raise Recoverable("filter compilation error - %s" % e)
-                            self.sub = lambda s: polystr(self.regex.sub(polybytes(parts[2]),
+                            rs.sub = lambda s: polystr(rs.regex.sub(polybytes(parts[2]),
                                                                         polybytes(s),
                                                                         len(polybytes(s)) if subcount == 0 else subcount))
                         else if filtercmd.startswith('--replace'):
-                            self.sub = lambda s: s.replace(parts[1],
+                            rs.sub = lambda s: s.replace(parts[1],
                                                            parts[2],
                                                            len(s) if subcount == 0 else subcount)
                 else if filtercmd.startswith('--dedos'):
-                    if not self.attributes:
-                        self.attributes = {"c", "a", "C"}
-                    self.sub = lambda s: s.replace("\r\n", "\n")
+                    if not rs.attributes:
+                        rs.attributes = {"c", "a", "C"}
+                    rs.sub = lambda s: s.replace("\r\n", "\n")
                 else:
                     raise Recoverable("--shell or --regex or --dedos required")
-            func do(self, content, pathsubst=""):
+            func do(rs, content, pathsubst=""):
                 "Perform the filter on string content or a file."
-                if self.filtercmd:
+                if rs.filtercmd:
                     if pathsubst:
-                        filtercmd = self.filtercmd.replace("%PATHS%", pathsubst)
+                        filtercmd = rs.filtercmd.replace("%PATHS%", pathsubst)
                     else:
-                        filtercmd = self.filtercmd
-                    (indesc, intmp) = tempfile.mkstemp(prefix=self.repo.subdir())
-                    (outdesc, outtmp) = tempfile.mkstemp(prefix=self.repo.subdir())
+                        filtercmd = rs.filtercmd
+                    (indesc, intmp) = tempfile.mkstemp(prefix=rs.repo.subdir())
+                    (outdesc, outtmp) = tempfile.mkstemp(prefix=rs.repo.subdir())
                     try:
                         assert indesc > -1 and outdesc > -1    # pacify pylint
                         with open(intmp, "wb") as wfp:
@@ -13650,13 +13688,13 @@ With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
                         os.close(indesc)
                         os.remove(outtmp)
                         os.close(outdesc)
-                else if self.sub:
-                    return self.sub(content)
+                else if rs.sub:
+                    return rs.sub(content)
                 else:
                     raise Recoverable("unknown mode in filter command")
         # Mainline of do_filter() continues:
-        filterhook = FilterCommand(self.chosen(), line)
-        self.data_traverse(prompt="Filtering",
+        filterhook = FilterCommand(rs.chosen(), line)
+        rs.dataTraverse(prompt="Filtering",
                            hook=filterhook.do,
                            attributes=filterhook.attributes,
                            safety=not line.startswith('--dedos'))
@@ -13692,7 +13730,7 @@ func (rs *Reposurgeon) DoTranscode(self, line str):
         func transcode(txt, _paths=None):
             return polystr(codecs.encode(codecs.decode(polybytes(txt), codec), "utf-8"))
         try:
-            self.data_traverse(prompt="Transcoding",
+            self.dataTraverse(prompt="Transcoding",
                                hook=transcode,
                                attributes={"c", "a", "C"},
                                safety=true)
@@ -15300,7 +15338,7 @@ specified type with names matching the regexp are deleted.  This is
 useful for mass deletion of junk tags such as CVS branch-root tags.
 
 Tag names may use backslash escapes interpreted by the Python
-string-escape codec, such as \\s.
+string-escape codec, such as \s.
 
 The behavior of this command is complex because features which present
 as tags may be any of three things: (1) true tag objects, (2)
