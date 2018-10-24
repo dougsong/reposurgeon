@@ -7370,7 +7370,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 	repo.writeOptions = options
 	repo.preferred = target
 	//if target != nil && target.name == "svn" {
-	//	return SubversionDumper().dump(selection, fp, progress)	FIXME
+	//	return newSubversionDumper(repo, false).dump(selection, fp, progress)
 	//}
 	repo.internals = nil
 	// Select all blobs implied by the commits in the range. If we ever
@@ -16710,7 +16710,7 @@ func (rs *Reposurgeon) HelpChangelogs() {
         rs.helpOutput(`
 Mine the ChangeLog files for authorship data.
 
-Assume such files have basenam 'ChangeLog', and that they are in the
+Assume such files have basename 'ChangeLog', and that they are in the
 format used by FSF projects: entry header lines begin with YYYY-MM-DD
 and are followed by a fullname/address.
 
@@ -18740,441 +18740,543 @@ deleted name.
         timeit("linting")
         # Treat this in-core state as though it was read from an SVN repo
         sp.repo.hint("svn", strong=true)
+*/
 
-class SubversionDumper:
-    "Repository to Subversion stream dump."
-    func __init__(self, repo, nobranch=false):
-        self.repo = repo
-        self.nobranch = nobranch
-        self.pathmap = {}
-        self.mark_to_revision = {}
-        self.branches_created = []
-    class FlowState:
-        func __init__(self, rev, props=None):
-            self.rev = rev
-            self.props = props or {}
-            self.is_directory = false
-            self.subfiles = 0
-    dfltignores = next(vcs.dfltignores for vcs in vcstypes if vcs.name == "svn").replace("\n/", "\n")
-    @staticmethod
-    func svnprops(pdict):
-        return "".join("K %d\n%s\nV %d\n%s\n" % (len(key), key, len(val), val)
-                        for key, val in sorted(pdict.items()) if val)
-    @staticmethod
-    func dump_revprops(fp, revision, date, author=None, log=None, parents=None):
-        "Emit a Revision-number record describing unversioned properties."
-        fp.write("Revision-number: %d\n" % revision)
-        parts = []
-        parts.append(SubversionDumper.svnprops({"svn:log": log}))
-        parts.append(SubversionDumper.svnprops({"svn:author": author}))
-        # Ugh.  Subversion apparently insists on those decimal places
-        parts.append(SubversionDumper.svnprops({"svn:date": date.rfc3339()[:-1]+".000000Z"}))
-        # Hack merge links into mergeinfo properties.  This is a kluge
-        # - the Subversion model is really like cherrypicking rather
-        # than branch merging - but it's better than nothing, and
-        # should at least round-trip with the logic in the Subversion
-        # dump parser.
-        if len(parents or []) > 1:
-            parents = iter(parents)
-            next(parents) # ignore main parent
-            ancestral = ".".join(itertools.imap(str, sorted(parents)))
-            parts.append(SubversionDumper.svnprops({"svn:mergeinfo": ancestral}))
-        parts.append("PROPS-END\n")
-        parts.append("\n")
-        revprops = "".join(parts)
-        fp.write("Prop-content-length: %d\n" % (len(revprops)-1))
-        fp.write("Content-length: %d\n\n" % (len(revprops)-1))
-        fp.write(revprops)
-    @staticmethod
-    func dump_node(fp, path, kind, action, content="",
-                  fromRev=None, fromPath=None,
-                  props=None):
-        "Emit a Node record describing versioned properties and content."
-        fp.write("Node-path: %s\n" % path)
-        fp.write("Node-kind: %s\n" % kind)
-        fp.write("Node-action: %s\n" % action)
-        if fromRev:
-            fp.write("Node-copyfrom-rev: %s\n" % fromRev)
-        if fromPath:
-            fp.write("Node-copyfrom-path: %s\n" % fromPath)
-        nodeprops = SubversionDumper.svnprops(props or {}) + "PROPS-END\n"
-        fp.write("Prop-content-length: %d\n" % len(nodeprops))
-        if content:
-            fp.write("Text-content-length: %d\n" % len(content))
-            # Checksum validation in svnload works if we do sha1 but
-            # not if we try md5.  It's unknown why - possibly svn load
-            # is simply ignoring sha1.
-            #fp.write("Text-content-md5: %s\n" % hashlib.md5(polybytes(content)).hexdigest())
-            fp.write("Text-content-sha1: %s\n" % hashlib.sha1(polybytes(content)).hexdigest())
-        fp.write("Content-length: %d\n\n" % (len(nodeprops) + len(content)))
-        fp.write(nodeprops)
-        if content:
-            fp.write(content)
-        fp.write("\n\n")
-    @staticmethod
-    func commitbranch(commit):
-        "The branch that a commit belongs to prefering master and branches rather than tags"
-        #FIXME: This logic should be improved to match the logic in branchColor more closely
-        if commit.branch.startswith("refs/heads/") or not commit.hasChildren():
-            return commit.branch
-        candidatebranch = None
-        for child in commit.children():
-            childbranch = SubversionDumper.commitbranch(child)
-            if childbranch == "refs/heads/master":
-                return "refs/heads/master"
-            else if childbranch.startswith("refs/heads/") && not candidatebranch:
-                candidatebranch = childbranch
-        if candidatebranch and not commit.branch.startswith("refs/heads/"):
-            return candidatebranch
-        else:
-            return commit.branch
-    @staticmethod
-    func svnbranch(branch):
-        "The branch directory corresponding to a specified git branch."
-        segments = branch.split(svnSep)
-        if segments[0] == "HEAD":
-            return "trunk"
-        assert segments[0] == "refs"
-        if tuple(segments) == ("refs", "heads", "master"):
-            return "trunk"
-        if segments[1] not in ("tags", "heads") or len(segments) != 3:
-            raise Recoverable("%s can't be mapped to Subversion." % branch)
-        svnbase = segments[2]
-        if svnbase.endswith("trunk"):
-            svnbase += "-git"
-        if segments[1] == "tags":
-            return os.path.join("tags", svnbase)
-        else:
-            return os.path.join("branches", svnbase)
-    func svnize(self, branch, path=""):
-        "Return SVN path corresponding to a specified gitspace branch and path."
-        if self.nobranch:
-            return path
-        return os.path.join(SubversionDumper.svnbranch(branch), path)
-    func filedelete(self, fp, revision, branch, path, parents):
-        "Emit the dump-stream records required to delete a file."
-        announce(debugSVNDUMP, "filedelete%s" % repr((branch, path)))
-        # Branch and directory creation may be required.
-        # This has to be called early so copy can update the filemap.
-        self.directory_create(fp, revision, branch, path, parents)
-        svnpath = self.svnize(branch, path)
-        fp.write("Node-path: %s\n" % svnpath)
-        fp.write("Node-action: delete\n\n\n")
-        del self.pathmap[revision][svnpath]
-        while true:
-            svnpath = os.path.dirname(svnpath)
-            # The second disjunct in this guard is a
-            # spasmodic twitch in the direction of
-            # respecting Subversion's notion of a "flow".
-            # We refrain from deleting branch directories
-            # so they'll have just one flow throughout the
-            # life of the repository.
-            if not svnpath or svnpath in self.branches_created:
-                break
-            self.pathmap[revision][svnpath].subfiles -= 1
-            if self.pathmap[revision][svnpath].subfiles == 0:
-                fp.write("Node-path: %s\n" % svnpath)
-                fp.write("Node-action: delete\n\n\n")
-                del self.pathmap[revision][svnpath]
-            else:
-                break # Don't consider parents of directories we keep
-    func filedeleteall(self, fp, revision, branch):
-        # Create branch if required, no need to copy from a parent!
-        self.directory_create(fp, revision, branch, path="", parents=None)
-        branchdir = self.svnbranch(branch)
-        # Here again the object is mutated, so a copy list must be used.
-        for path in self.pathmap[revision].keys():
-            if path.startswith(branchdir + svnSep):
-                del self.pathmap[revision][path]
-        self.branches_created.remove(branchdir)
-        fp.write("Node-path: %s\n" % branchdir)
-        fp.write("Node-action: delete\n\n\n")
-    func directory_create(self, fp, revision, branch, path, parents=None):
-        announce(debugSVNDUMP, "directory_create%s" % repr((revision, branch, path)))
-        creations = []
-        # Branch creation may be required
-        svnout = SubversionDumper.svnbranch(branch)
-        if svnout not in self.branches_created:
-            if svnout.startswith("branches") && "branches" not in self.branches_created:
-                self.branches_created.append("branches")
-                creations.append(("branches", None, None))
-            else if svnout.startswith("tags") && "tags" not in self.branches_created:
-                self.branches_created.append("tags")
-                creations.append(("tags", None, None))
-            self.branches_created.append(svnout)
-            if parents and parents[0].mark in self.mark_to_revision && branch != parents[0].color: # Handle empty initial commit(s)
-                fromRev = self.mark_to_revision[parents[0].mark]
-                from_branch = SubversionDumper.svnbranch(parents[0].color)
-                creations.append((svnout, fromRev, from_branch))
-                # Careful about the following - the path map gets mutated in
-                # this loop, you need to get a list of the keys up front or
-                # Python will barf.  Thing is, in Python 3 keys() returns an
-                # iterator...
-                for key in list(self.pathmap[fromRev].keys()):
-                    if key.startswith(from_branch + svnSep) && key != from_branch:
-                        counterpart = svnout + key[len(from_branch):]
-                        self.pathmap[revision][counterpart] = SubversionDumper.FlowState(revision)
-                        self.pathmap[revision][counterpart].subfiles = self.pathmap[fromRev][key].subfiles
-                        self.pathmap[revision][counterpart].is_directory = self.pathmap[fromRev][key].is_directory
-            else:
-                creations.append((svnout, None, None))
-        # Create all directory segments required
-        # to get down to the level where we can
-        # create the file.
-        parts = os.path.dirname(path).split(svnSep)
-        if parts[0]:
-            parents = [svnSep.join(parts[:i+1])
-                                   for i in range(len(parts))]
-            for parentdir in parents:
-                fullpath = os.path.join(svnout, parentdir)
-                if fullpath not in self.pathmap[revision]:
-                    creations.append((fullpath, None, None))
-        for (dpath, fromRev, fromPath) in creations:
-            SubversionDumper.dump_node(fp,
-                                       path=dpath,
-                                       kind="dir",
-                                       action="add",
-                                       fromRev=fromRev,
-                                       fromPath=fromPath)
-            self.pathmap[revision][dpath] = SubversionDumper.FlowState(revision)
-            self.pathmap[revision][dpath].is_directory = true
-            parentdir = os.path.dirname(dpath)
-            if parentdir in self.pathmap[revision]:
-                self.pathmap[revision][parentdir].subfiles++
-    func filemodify(self, fp, revision, branch, mode, ref, path, inline, parents):
-        "Emit the dump-stream records required to add or modify a file."
-        announce(debugSVNDUMP, "filemodify%s" % repr((revision, branch, mode, ref, path,
-                                            [event.mark for event in parents])))
-        # Branch and directory creation may be required.
-        # This has to be called early so copy can update the filemap.
-        self.directory_create(fp, revision, branch, path, parents)
-        svnpath = self.svnize(branch, path)
-        if svnpath in self.pathmap[revision]:
-            svnop = "change"
-            self.pathmap[revision][svnpath].rev = revision
-        else:
-            svnop = "add"
-            self.pathmap[revision][os.path.dirname(svnpath)].subfiles++
-            self.pathmap[revision][svnpath] = SubversionDumper.FlowState(revision)
-        announce(debugSVNDUMP, "Generating %s %s" % (svnpath, svnop))
-        if ref == "inline":
-            content = inline
-        else:
-            content = self.repo.markToEvent(ref).getContent()
-        changeprops = None
-        if svnpath in self.pathmap[revision]:
-            if mode == '100755':
-                if "svn:executable" not in self.pathmap[revision][svnpath].props:
-                    self.pathmap[revision][svnpath].props["svn:executable"] = "true"
-                    changeprops = self.pathmap[revision][svnpath].props
-            else if mode == '100644':
-                if "svn:executable" in self.pathmap[revision][svnpath].props:
-                    self.pathmap[revision][svnpath].props["svn:executable"] = "false"
-                    changeprops = self.pathmap[revision][svnpath].props
-        #if mode == "120000":
-        #    changeprops = {"svn:special":"*"}
-        #    content = "link " + content
-        # The actual content
-        SubversionDumper.dump_node(fp,
-                  path=svnpath,
-                  kind="file",
-                  action=svnop,
-                  props=changeprops,
-                  content=content)
-    func filecopy(self, fp, revision, branch, source, target, parents):
-        announce(debugSVNDUMP, "filecopy%s" % repr((revision, branch, source, target)))
-        # Branch and directory creation may be required.
-        # This has to be called early so copy can update the filemap.
-        self.directory_create(fp, revision, branch, target, parents)
-        svnsource = self.svnize(branch, source)
-        try:
-            flow = self.pathmap[revision][svnsource]
-        except:
-            raise Fatal("couldn't retrieve flow information for %s" % source)
-        svntarget = self.svnize(branch, target)
-        self.pathmap[revision][os.path.dirname(svntarget)].subfiles++
-        self.pathmap[revision][svntarget] = self.pathmap[revision][svnsource]
-        SubversionDumper.dump_node(fp,
-                                   path=svntarget,
-                                   kind="file",
-                                   action="add",
-                                   fromPath=svnsource,
-                                   fromRev=flow.rev)
-    func make_tag(self, fp, revision, name, log, author, parents):
-        announce(debugSVNDUMP, "make_tag%s" % repr((revision, name, log, str(author))))
-        tagrefpath = os.path.join("refs/tags", name)
-        SubversionDumper.dump_revprops(fp, revision,
-                                       log=log,
-                                       author=author.email.split("@")[0],
-                                       date=author.date)
-        self.directory_create(fp, revision, tagrefpath, "", parents)
-    func dump(self, selection, fp, progress=false):
-        "Export the repository as a Subversion dumpfile."
-        tags = [event for event in self.repo.events if tag, ok := event.(*Tag); ok]
-        # Fast-export prefers tags to branches as commit parents but SVN prefers branches
-        for i in selection:
-            event = self.repo.events[i]
-            if commit, ok := event.(*Commit); ok:
-                event.color = SubversionDumper.commitbranch(event)
-        with Baton("reposurgeon: dumping", enable=progress) as baton:
-            try:
-                fp.write("SVN-fs-dump-format-version: 2\n\n")
-                fp.write("UUID: %s\n\n" % (self.repo.uuid or uuid.uuid4()))
-                SubversionDumper.dump_revprops(fp,
-                                               revision=0,
-                                               date=Date(rfc3339(time.time())))
-                baton.twirl("")
-                revision = 0
-                self.pathmap[revision] = {}
-                for i in selection:
-                    event = self.repo.events[i]
-                    # Passthroughs are lost; there are no equivalents
-                    # in Subversion's ontology.
-                    if not commit, ok := event.(*Commit); ok:
-                        continue
-                    if event.branch.startswith("refs/notes"):
-                        complain("skipping note as unsupported")
-                        continue
-                    if event.branch == "refs/stash":
-                        complain("skipping stash as unsupported")
-                        continue
-                    if event.color.startswith("refs/remotes"):
-                        complain("skipping remote as unsupported %s" % event.color)
-                        continue
-                    revision++
-                    parents = event.parents()
-                    # Need a deep copy iff the parent commit is a branching point
-                    if len(parents) == 1 && len(parents[0].children()) == 1 && parents[0].color == event.color:
-                        self.pathmap[revision] = self.pathmap[revision-1]
-                    else:
-                        self.pathmap[revision] = copy.deepcopy(self.pathmap[revision-1])
-                    self.mark_to_revision[event.mark] = revision
-                    # We must treat the gitspace committer attribute
-                    # as the author: gitspace author information is
-                    # lost.  So is everything but the local part of
-                    # the committer name.
-                    backlinks = [self.mark_to_revision[mark]
-                                 for mark in event.parentMarks() if mark in self.mark_to_revision]
-                    SubversionDumper.dump_revprops(fp, revision,
-                                                   log=event.comment.replace("\r\n", "\n"),
-                                                   author=event.committer.email.split("@")[0],
-                                                   date=event.committer.date,
-                                                   parents=backlinks)
-                    for fileop in event.operations():
-                        if fileop.op == opD:
-                            if fileop.path.endswith(".gitignore"):
-                                self.directory_create(fp, revision,
-                                                      branch=event.color,
-                                                      path=fileop.path,
-                                                      parents=parents)
-                                svnpath = self.svnize(event.color, os.path.dirname(fileop.path))
-                                self.pathmap[revision][svnpath].props["svn:ignore"] = ""
-                                SubversionDumper.dump_node(fp,
-                                          path=os.path.dirname(svnpath),
-                                          kind="dir",
-                                          action="change",
-                                          props = self.pathmap[revision][svnpath].props)
-                            else:
-                                self.filedelete(fp, revision, event.color, fileop.path, parents)
-                        else if fileop.op == opM:
-                            if fileop.path.endswith(".gitignore"):
-                                svnpath = self.svnize(event.color,
-                                                      os.path.dirname(fileop.path))
-=                                self.directory_create(fp, revision,
-                                                      branch=event.color,
-                                                      path=fileop.path,
-                                                      parents=parents)
-                                if fileop.ref == "inline":
-                                    content = fileop.inline
-                                else:
-                                    content = self.repo.markToEvent(fileop.ref).getContent()
-                                content = content.replace(SubversionDumper.dfltignores,"") # Strip out default SVN ignores
-                                if svnpath not in self.pathmap[revision]:
-                                    self.pathmap[revision][svnpath] = SubversionDumper.FlowState(revision)
-                                if len(content) > 0 or "svn:ignore" in self.pathmap[revision][svnpath].props:
-                                    self.pathmap[revision][svnpath].props["svn:ignore"] = content
-                                    SubversionDumper.dump_node(fp,
-                                              path=os.path.dirname(svnpath),
-                                              kind="dir",
-                                              action="change",
-                                              props = self.pathmap[revision][svnpath].props)
-                            else if fileop.mode == "160000":
-                                complain("skipping submodule link reference %s" % fileop.ref)
-                            else:
-                                self.filemodify(fp,
-                                                revision,
-                                                event.color,
-                                                fileop.mode,
-                                                fileop.ref,
-                                                fileop.path,
-                                                fileop.inline,
-                                                parents)
-                        else if fileop.op == opR:
-                            self.filecopy(fp,
-                                          revision,
-                                          event.color,
-                                          fileop.source,
-                                          fileop.target,
-                                          parents)
-                            self.filedelete(fp, revision, event.branch, fileop.source, event.parents())
-                        else if fileop.op == opC:
-                            self.filecopy(fp,
-                                          revision,
-                                          event.color,
-                                          fileop.source,
-                                          fileop.target,
-                                          parents)
-                        else if fileop.op == FileOp.deleteall:
-                            self.filedeleteall(fp,
-                                               revision,
-                                               event.color)
-                        else:
-                            raise Fatal("unsupported fileop type %s." \
-                                        % fileop.op)
-                    # Turn any annotated tag pointing at this commit into
-                    # a directory copy.
-                    for tag in tags:
-                        if tag.target is event:
-                            if event.operations():
-                                revision++
-                                self.pathmap[revision] = self.pathmap[revision-1]
-                                tagparents = [event]
-                            else:
-                                tagparents = parents
-                            self.make_tag(fp,
-                                          revision,
-                                          name=tag.name,
-                                          log=tag.comment.replace("\r\n", "\n"),
-                                          author=tag.tagger,
-                                          parents=tagparents)
-                            break
+/*
+ * Report repository as a Subversion stream dump.
+ * Does not round-trip
+ */
 
-                    # Preserve lightweight tags, too.  Ugh, O(n**2).
-                    if event.branch.startswith("refs/tags"):
-                        svntarget = os.path.join("tags", branchbase(event.branch))
-                        createtag = svntarget not in self.branches_created
-                        if createtag && event.hasChildren():
-                            for child in event.children():
-                                if child.branch == event.branch:
-                                    createtag = false
-                                    break
-                        if createtag:
-                            if event.operations():
-                                revision++
-                                self.pathmap[revision] = self.pathmap[revision-1]
-                                tagparents = [event]
-                            else:
-                                tagparents = parents
-                            self.make_tag(fp,
-                                          revision,
-                                          name=branchbase(event.branch),
-                                          log="",
-                                          author=event.committer,
-                                          parents=tagparents)
-                    fp.Flush()
-            except IOError as e:
-                raise Fatal("export error: %s" % e)
+type SubversionDumper struct {
+        repo *Repository
+        nobranch bool
+        pathmap map[int]map[string]*FlowState
+        markToRevision map[string]int
+        branchesCreated stringSet
+}
 
+func newSubversionDumper(repo *Repository, nobranch bool) *SubversionDumper {
+	sd := new(SubversionDumper)
+	sd.repo = repo
+	sd.nobranch = nobranch
+	sd.pathmap = make(map[int]map[string]*FlowState)
+	sd.markToRevision = make(map[string]int)
+	sd.branchesCreated = newStringSet()
+	return sd
+}
+
+type FlowState struct {
+	rev int
+	isDirectory bool
+	subfiles int
+	props OrderedMap
+}
+
+func newFlowState(rev int) *FlowState {
+	return &FlowState{rev: rev, isDirectory: false, subfiles: 0} 
+}
+
+var dfltignores = strings. Replace(findVCS("svn").dfltignores, "\n/", "\n", 0)
+
+func svnprops(pdict OrderedMap) string {
+	var out string
+	for _, k := range pdict.keys {
+		val := pdict.get(k)
+		out += fmt.Sprintf("K %d\n%s\nV %d\n%s\n", len(k), k, len(val), val)
+	}
+	return out
+}	
+
+// Emit a Revision-number record describing unversioned properties.
+// Last argument is a list of revision numbers corresponig to parent commits.
+// FIXME: Last four arguments were ioptional in Python, fix at callsite
+func dumpRevprops(fp io.Writer, revision int, date *Date, author string, log string, parents []int) {
+	fmt.Fprintf(fp, "Revision-number: %d\n", revision)
+	parts := make([]string, 0)
+	attrib := newOrderedMap()
+	attrib.set("svn:log", log)
+	attrib.set("svn:author", author)
+	// Ugh.  Subversion apparently insists on those decimal places
+	d := date.rfc3339()
+	attrib.set("svn:date", d[:len(d)-1]+".000000Z")
+	parts = append(parts, svnprops(attrib))
+	// Hack merge links into mergeinfo properties.  This is a kluge
+	// - the Subversion model is really like cherrypicking rather
+	// than branch merging - but it's better than nothing, and
+	// should at least round-trip with the logic in the Subversion
+	// dump parser.
+	ancestral := ""
+	if len(parents) > 0 {
+		sort.Ints(parents)
+		for _, p := range parents[1:] { // ignore main parent  
+			ancestral += "." + fmt.Sprintf(".%d", p)
+		}
+		ancestral = ancestral[1:]
+	}
+	mergeinfo := newOrderedMap()
+	mergeinfo.set("svn:mergeinfo", ancestral)
+	parts = append(parts, svnprops(mergeinfo))
+	parts = append(parts, "PROPS-END\n")
+	parts = append(parts, "\n")
+	revprops := strings.Join(parts, "")
+	fmt.Fprintf(fp, "Prop-content-length: %d\n", len(revprops)-1)
+	fmt.Fprintf(fp, "Content-length: %d\n\n", len(revprops)-1)
+	fmt.Fprint(fp, revprops)
+}
+
+func dumpNode(fp io.Writer, dpath string,
+	kind string, action string, content string,
+	fromRev int, fromPath string, props *OrderedMap) {
+	// Emit a Node record describing versioned properties and content.
+	fmt.Fprintf(fp, "Node-path: %s\n", dpath)
+	fmt.Fprintf(fp, "Node-kind: %s\n", kind)
+	fmt.Fprintf(fp, "Node-action: %s\n", action)
+	if fromRev != 0 {
+		fmt.Fprintf(fp, "Node-copyfrom-rev: %d\n", fromRev)
+	}
+	if fromPath != ""{
+		fmt.Fprintf(fp, "Node-copyfrom-path: %s\n", fromPath)
+	}
+	nodeprops := svnprops(*props) + "PROPS-END\n"
+	fmt.Fprintf(fp, "Prop-content-length: %d\n", len(nodeprops))
+	if content != "" {
+		fmt.Fprintf(fp, "Text-content-length: %d\n", len(content))
+		// Checksum validation in svnload works if we do sha1 but
+		// not if we try md5.  It's unknown why - possibly svn load
+		// is simply ignoring sha1.
+		//fp.write("Text-content-md5: %x\n" % md5.Sum([]byte(content)))
+		fmt.Fprintf(fp, "Text-content-sha1: %x\n", sha1.Sum([]byte(content)))
+	}
+	fmt.Fprintf(fp, "Content-length: %d\n\n", len(nodeprops) + len(content))
+	fmt.Fprint(fp, nodeprops)
+	if content != "" {
+		fmt.Fprint(fp, content)
+	}
+	fmt.Fprint(fp, "\n\n")
+}
+
+// The branch that a commit belongs, to prefering master and branches
+// rather than tags.
+// FIXME: This logic should be improved to match the logic in
+// branchColor more closely
+func commitbranch(commit *Commit) string {
+	if strings.HasPrefix(commit.branch, "refs/heads/") || !commit.hasChildren() {
+		return commit.branch
+	}
+	candidatebranch := ""
+	for _, child := range commit.children() {
+		if childCommit, ok := child.(*Commit); ok {
+			childbranch := commitbranch(childCommit)
+			if childbranch == "refs/heads/master" {
+				return "refs/heads/master"
+			} else if strings.HasPrefix(childbranch, "refs/heads/") && candidatebranch == "" {
+				candidatebranch = childbranch
+			}
+		}
+	}
+	if candidatebranch != "" && !strings.HasPrefix(commit.branch, "refs/heads/") {
+		return candidatebranch
+	} else {
+		return commit.branch
+	}
+}
+
+
+// The branch directory corresponding to a specified git branch.
+func svnbranch(branch string) string {
+	if branch == "refs/heads/master" {
+		return "trunk"
+	}
+	segments := strings.Split(branch, svnSep)
+	//assert segments[0] == "refs"
+	if segments[0] == "HEAD" {
+		return "trunk"
+	}
+	if !newStringSet("tags", "heads").Contains(segments[1]) || len(segments) != 3 {
+		panic(throw("command", "%s can't be mapped to Subversion.", branch))
+	}
+	svnbase := segments[2]
+	if strings.HasSuffix(svnbase, "trunk") {
+		svnbase += "-git"
+	}
+	if segments[1] == "tags" {
+		return filepath.Join("tags", svnbase)
+	} else {
+		return filepath.Join("branches", svnbase)
+	}
+}
+
+// Return SVN path corresponding to a specified gitspace branch and path.
+func (sd *SubversionDumper) svnize(branch, path string) string {
+	if sd.nobranch {
+		return path
+	}
+	return filepath.Join(svnbranch(branch), path)
+}
+
+// Emit the dump-stream records required to delete a file.
+func (sd *SubversionDumper) filedelete(fp io.Writer, revision int,
+	branch string, argpath string, parents []CommitLike) {
+	announce(debugSVNDUMP, "filedelete(%s, %s)", branch, argpath)
+	// Branch and directory creation may be required.
+	// This has to be called early so copy can update the filemap.
+	sd.directoryCreate(fp, revision, branch, argpath, parents)
+	svnpath := sd.svnize(branch, argpath)
+	fmt.Fprintf(fp, "Node-path: %s\n", svnpath)
+	fmt.Fprint(fp, "Node-action: delete\n\n\n")
+	delete(sd.pathmap[revision], svnpath)
+	for {
+		svnpath = filepath.Dir(svnpath)
+		// The second disjunct in this guard is a
+		// spasmodic twitch in the direction of
+		// respecting Subversion's notion of a "flow".
+		// We refrain from deleting branch directories
+		// so they'll have just one flow throughout the
+		// life of the repository.
+		if svnpath == "" || sd.branchesCreated.Contains(svnpath) {
+			break
+		}
+		sd.pathmap[revision][svnpath].subfiles--
+		if sd.pathmap[revision][svnpath].subfiles == 0 {
+			fmt.Fprintf(fp, "Node-path: %s\n", svnpath)
+			fmt.Fprint(fp, "Node-action: delete\n\n\n")
+			delete(sd.pathmap[revision], svnpath)
+		} else {
+			break // Don't consider parents of directories we keep
+		}
+	}
+}
+
+// Create branch if required, no need to copy from a parent!
+func (sd *SubversionDumper) filedeleteall(fp io.Writer, revision int, branch string, parents []CommitLike) {
+	sd.directoryCreate(fp, revision, branch, "", parents)
+	branchdir := svnbranch(branch)
+	// Here again the object is mutated, so a copy list must be used.
+	for dpath, _ := range sd.pathmap[revision] {
+		if strings.HasPrefix(dpath, branchdir + svnSep) {
+			delete(sd.pathmap[revision], dpath)
+		}
+	}
+	sd.branchesCreated.Remove(branchdir)
+	fmt.Fprintf(fp, "Node-path: %s\n", branchdir)
+	fmt.Fprint(fp, "Node-action: delete\n\n\n")
+}
+
+
+func (sd *SubversionDumper) directoryCreate(fp io.Writer, revision int,
+	branch string, path string, parents []CommitLike) {
+	announce(debugSVNDUMP, "directoryCreate (%d, %s, %s)",
+		revision, branch, path)
+	type Creation struct {
+		path string
+		fromRev int
+		fromPath string
+	}
+	creations := make([]Creation, 0)
+	// Branch creation may be required
+	svnout := svnbranch(branch)
+	if !sd.branchesCreated.Contains(svnout) {
+		if strings.HasPrefix(svnout, "branches") && !sd.branchesCreated.Contains("branches") {
+			sd.branchesCreated = append(sd.branchesCreated, "branches")
+			creations = append(creations, Creation{"branches", 0, ""})
+		} else if strings.HasPrefix(svnout, "tags") && !sd.branchesCreated.Contains("tags") {
+			sd.branchesCreated = append(sd.branchesCreated, "tags")
+			creations = append(creations, Creation{"tags", 0, ""})
+		}
+		sd.branchesCreated = append(sd.branchesCreated, svnout)
+		if len(parents) > 0 && sd.markToRevision[parents[0].getMark()] != 0 && branch != parents[0].getColor() {
+			fromRev := sd.markToRevision[parents[0].getMark()]
+			fromBranch := svnbranch(parents[0].getColor())
+			creations = append(creations, Creation{svnout, fromRev, fromBranch})
+			// Careful about the following - the path map
+			// gets mutated in this loop, you need to get
+			// a list of the keys up front or Python will
+			// barf.  Thing is, in Python 3 keys() returns
+			// an iterator...
+			for key := range sd.pathmap[fromRev] {
+				if strings.HasPrefix(fromBranch + svnSep, key) && key != fromBranch {
+					counterpart := svnout + key[len(fromBranch):]
+					sd.pathmap[revision][counterpart] = newFlowState(revision)
+					sd.pathmap[revision][counterpart].subfiles = sd.pathmap[fromRev][key].subfiles
+					sd.pathmap[revision][counterpart].isDirectory = sd.pathmap[fromRev][key].isDirectory
+				}
+			}
+		} else {
+			creations = append(creations, Creation{svnout, 0, ""})
+
+		}
+	}
+	// Create all directory segments required
+	// to get down to the level where we can
+	// create the file.
+	parts := strings.Split(filepath.Dir(path), svnSep)
+	if parts[0] != "" {
+		parents := make([]string, 0)
+		for i := range(parts) {
+			parents = append(parents, filepath.Join(parts[:i+1]...))
+		}
+		for _, parentdir := range parents {
+			fullpath := filepath.Join(svnout, parentdir)
+			if _, ok := sd.pathmap[revision][fullpath]; ok {
+				creations = append(creations, Creation{fullpath, 0, ""})
+			}
+		}
+	}
+	for _, item := range creations {
+		dumpNode(fp, item.path,
+			"dir", "add", "",
+			item.fromRev, item.fromPath, nil)
+		sd.pathmap[revision][item.path] = newFlowState(revision)
+		sd.pathmap[revision][item.path].isDirectory = true
+		parentdir := filepath.Dir(item.path)
+		if _, ok := sd.pathmap[revision][parentdir]; ok {
+			sd.pathmap[revision][parentdir].subfiles++
+		}
+	}
+}
+
+
+// Emit the dump-stream records required to add or modify a file.
+func (sd *SubversionDumper) filemodify(fp io.Writer, revision int,
+	branch string, mode string, ref string, path string, inline string,
+	parents []CommitLike) {
+	announce(debugSVNDUMP, "filemodify(%d, %s, %s, %s, %s %s, ...)", revision, branch, mode, ref, path, inline)
+	// Branch and directory creation may be required.
+	// This has to be called early so copy can update the filemap.
+	sd.directoryCreate(fp, revision, branch, path, parents)
+	svnpath := sd.svnize(branch, path)
+	var svnop string 
+	if _, ok := sd.pathmap[revision][svnpath]; ok {
+		svnop = "change"
+		sd.pathmap[revision][svnpath].rev = revision
+	} else {
+		svnop = "add"
+		sd.pathmap[revision][filepath.Dir(svnpath)].subfiles++
+		sd.pathmap[revision][svnpath] = newFlowState(revision)
+	}
+	announce(debugSVNDUMP, "Generating %s %s", svnpath, svnop)
+	var content string
+	if ref == "inline" {
+		content = inline
+	} else {
+		content = sd.repo.markToEvent(ref).(*Blob).getContent()
+	}
+	changeprops := newOrderedMap()
+	if _, ok := sd.pathmap[revision][svnpath]; ok {
+		if mode == "100755" {
+			if sd.pathmap[revision][svnpath].props.get("svn:executable") == "" {
+				sd.pathmap[revision][svnpath].props.set("svn:executable", "true")
+				changeprops = sd.pathmap[revision][svnpath].props
+			}
+		} else if mode == "100644" {
+			if sd.pathmap[revision][svnpath].props.get("svn:executable") != "" {
+				sd.pathmap[revision][svnpath].props.set("svn:executable", "false")
+				changeprops = sd.pathmap[revision][svnpath].props
+			}
+		}
+	}
+	//if mode == "120000" {
+	//    changeprops = {"svn:special":"*"}
+	//    content = "link " + content
+	// The actual content
+	dumpNode(fp, svnpath, "file", svnop,
+		content, 0, "", &changeprops)
+}
+
+func (self *SubversionDumper) filecopy(fp io.Writer, revision int,
+	branch string, source string, target string, parents []CommitLike) {
+	announce(debugSVNDUMP, "filecopy(%d, %s, %s, %s)", revision, branch, source, target)
+	// Branch and directory creation may be required.
+	// This has to be called early so copy can update the filemap.
+	self.directoryCreate(fp, revision, branch, target, parents)
+	svnsource := self.svnize(branch, source)
+	flow, ok := self.pathmap[revision][svnsource]
+	if !ok {
+		panic(throw("command", "couldn't retrieve flow information for %s", source))
+	}
+	svntarget := self.svnize(branch, target)
+	self.pathmap[revision][filepath.Dir(svntarget)].subfiles++
+	self.pathmap[revision][svntarget] = self.pathmap[revision][svnsource]
+	dumpNode(fp, svntarget, "file", "add", "", flow.rev, svnsource, nil)
+}
+
+func (self *SubversionDumper) makeTag(fp io.Writer, revision int,
+	name string, logtxt string, author *Attribution, parents []CommitLike) {
+	announce(debugSVNDUMP, "makeTag(%d, %s, %s, %v)",
+		revision, name, logtxt, author)
+	tagrefpath := filepath.Join("refs/tags", name)
+	dumpRevprops(fp, revision, &author.date,
+		strings.Split(author.email, "@")[0], logtxt, nil)
+	self.directoryCreate(fp, revision, tagrefpath, "", parents)
+}
+
+/*
+def dump(self, selection, fp, progress=False):
+    "Export the repository as a Subversion dumpfile."
+    tags = [event for event in self.repo.events if isinstance(event, Tag)]
+    # Fast-export prefers tags to branches as commit parents but SVN prefers branches
+    for i in selection:
+	event = self.repo.events[i]
+	if isinstance(event, Commit):
+	    event.color = SubversionDumper.commitbranch(event)
+    baton := newBaton("reposurgeon: dumping", enable=progress)
+	try:
+	    fp.write("SVN-fs-dump-format-version: 2\n\n")
+	    fp.write("UUID: %s\n\n" % (self.repo.uuid or uuid.uuid4()))
+	    SubversionDumper.dumpRevprops(fp,
+					   revision=0,
+					   date=Date(rfc3339(time.time())))
+	    baton.twirl()
+	    revision = 0
+	    self.pathmap[revision] = {}
+	    for i in selection:
+		event = self.repo.events[i]
+		# Passthroughs are lost; there are no equivalents
+		# in Subversion's ontology.
+		if not isinstance(event, Commit):
+		    continue
+		if event.branch.startswith("refs/notes"):
+		    complain("skipping note as unsupported")
+		    continue
+		if event.branch == "refs/stash":
+		    complain("skipping stash as unsupported")
+		    continue
+		if event.color.startswith("refs/remotes"):
+		    complain("skipping remote as unsupported %s" % event.color)
+		    continue
+		revision += 1
+		parents = event.parents()
+		# Need a deep copy iff the parent commit is a branching point
+		if len(parents) == 1 and len(parents[0].children()) == 1 and parents[0].color == event.color:
+		    self.pathmap[revision] = self.pathmap[revision-1]
+		else:
+		    self.pathmap[revision] = copy.deepcopy(self.pathmap[revision-1])
+		self.markToRevision[event.mark] = revision
+		# We must treat the gitspace committer attribute
+		# as the author: gitspace author information is
+		# lost.  So is everything but the local part of
+		# the committer name.
+		backlinks = [self.markToRevision[mark]
+			     for mark in event.parent_marks() if mark in self.markToRevision]
+		SubversionDumper.dumpRevprops(fp, revision,
+					       log=event.comment.replace("\r\n", "\n"),
+					       author=event.committer.email.split("@")[0],
+					       date=event.committer.date,
+					       parents=backlinks)
+		for fileop in event.operations():
+		    if fileop.op == FileOp.D:
+			if fileop.path.endswith(".gitignore"):
+			    self.directoryCreate(fp, revision,
+						  branch=event.color,
+						  path=fileop.path,
+						  parents=parents)
+			    svnpath = self.svnize(event.color, os.path.dirname(fileop.path))
+			    self.pathmap[revision][svnpath].props["svn:ignore"] = ""
+			    SubversionDumper.dumpNode(fp,
+				      path=os.path.dirname(svnpath),
+				      kind="dir",
+				      action="change",
+				      props = self.pathmap[revision][svnpath].props)
+			else:
+			    self.filedelete(fp, revision, event.color, fileop.path, parents)
+		    elif fileop.op == FileOp.M:
+			if fileop.path.endswith(".gitignore"):
+			    svnpath = self.svnize(event.color,
+						  os.path.dirname(fileop.path))
+			    self.directoryCreate(fp, revision,
+						  branch=event.color,
+						  path=fileop.path,
+						  parents=parents)
+			    if fileop.ref == "inline":
+				content = fileop.inline
+			    else:
+				content = self.repo.objfind(fileop.ref).get_content()
+			    content = content.replace(SubversionDumper.dfltignores,"") # Strip out default SVN ignores
+			    if svnpath not in self.pathmap[revision]:
+				self.pathmap[revision][svnpath] = SubversionDumper.FlowState(revision)
+			    if len(content) > 0 or "svn:ignore" in self.pathmap[revision][svnpath].props:
+				self.pathmap[revision][svnpath].props["svn:ignore"] = content
+				SubversionDumper.dumpNode(fp,
+					  path=os.path.dirname(svnpath),
+					  kind="dir",
+					  action="change",
+					  props = self.pathmap[revision][svnpath].props)
+			elif fileop.mode == "160000":
+			    complain("skipping submodule link reference %s" % fileop.ref)
+			else:
+			    self.filemodify(fp,
+					    revision,
+					    event.color,
+					    fileop.mode,
+					    fileop.ref,
+					    fileop.path,
+					    fileop.inline,
+					    parents)
+		    elif fileop.op == FileOp.R:
+			self.filecopy(fp,
+				      revision,
+				      event.color,
+				      fileop.source,
+				      fileop.target,
+				      parents)
+			self.filedelete(fp, revision, event.branch, fileop.source, event.parents())
+		    elif fileop.op == FileOp.C:
+			self.filecopy(fp,
+				      revision,
+				      event.color,
+				      fileop.source,
+				      fileop.target,
+				      parents)
+		    elif fileop.op == FileOp.deleteall:
+			self.filedeleteall(fp,
+					   revision,
+					   event.color)
+		    else:
+			raise Fatal("unsupported fileop type %s." \
+				    % fileop.op)
+		# Turn any annotated tag pointing at this commit into
+		# a directory copy.
+		for tag in tags:
+		    if tag.target is event:
+			if event.operations():
+			    revision += 1
+			    self.pathmap[revision] = self.pathmap[revision-1]
+			    tagparents = [event]
+			else:
+			    tagparents = parents
+			self.makeTag(fp,
+				      revision,
+				      name=tag.name,
+				      log=tag.comment.replace("\r\n", "\n"),
+				      author=tag.tagger,
+				      parents=tagparents)
+			break
+
+		# Preserve lightweight tags, too.  Ugh, O(n**2).
+		if event.branch.startswith("refs/tags"):
+		    svntarget = os.path.join("tags", branchbase(event.branch))
+		    createtag = svntarget not in self.branchesCreated
+		    if createtag and event.has_children():
+			for child in event.children():
+			    if child.branch == event.branch:
+				createtag = False
+				break
+		    if createtag:
+			if event.operations():
+			    revision += 1
+			    self.pathmap[revision] = self.pathmap[revision-1]
+			    tagparents = [event]
+			else:
+			    tagparents = parents
+			self.makeTag(fp,
+				      revision,
+				      name=branchbase(event.branch),
+				      log="",
+				      author=event.committer,
+				      parents=tagparents)
+		fp.flush()
+	except IOError as e:
+	    raise Fatal("export error: %s" % e)
 */
 
 // end
