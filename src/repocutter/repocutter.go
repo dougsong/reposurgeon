@@ -653,7 +653,7 @@ func (ds *DumpfileSource) Report(selection SubversionRange,
 		nodecount = 0
 		stash, _ := ds.ReadRevisionHeader(prophook)
 		if !selection.Contains(ds.Revision) {
-			if ds.Revision == selection.Upperbound()+1 {
+			if ds.Revision > selection.Upperbound() {
 				return
 			}
 			ds.ReadUntilNext("Revision-number:", nil)
@@ -846,7 +846,7 @@ func sselect(source DumpfileSource, selection SubversionRange) {
 		if emit {
 			os.Stdout.Write(source.Lbs.Flush())
 		}
-		if revision == selection.Upperbound()+1 {
+		if revision > selection.Upperbound() {
 			return
 		}
 		source.Lbs.Flush()
