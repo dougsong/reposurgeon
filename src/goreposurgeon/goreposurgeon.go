@@ -277,6 +277,16 @@ func setAttr(obj interface{}, name string, value interface{}) error {
 	return nil
 }
 
+// stringEscape interprets backslash escapes in a token, such as is returned by
+// the shlex package.  If theargument token was wrapped by Go string quores
+// they are stripped off. 
+func stringEscape(s string) (string, error) {
+	if s[0] != '"' {
+		s = `"` + s + `"`
+	}
+	return strconv.Unquote(s)
+}
+
 // This representation optimizes for small memory footprint at the expense
 // of speed.  To make the opposite trade we would do the obvious thing with
 // map[string] bool.
@@ -13788,38 +13798,57 @@ timestamp. The author's timezone may be deduced from the email
 address.
 `)
 }
-/*
-    func (rs *Reposurgeon) DoSetfield(self, line str):
-        "Set an object field from a string."
-        if self.chosen() == None:
-            complain("no repo is loaded")
-            return
-        repo = self.chosen()
-        if self.selection is None:
-            raise Recoverable("no selection")
-        fields = shlex.split(line)
-        if not fields or len(fields) != 2:
-            raise Recoverable("missing or malformed setfield line")
-        field = fields[0]
-        value = string_escape(fields[1])
-        for _, event in self.selected():
-            if hasattr(event, field):
-                setattr(event, field, value)
-            else if field == "author" and commit, ok := event.(*Commit); ok:
-                attr = value
-                attr += " " + str(event.committer.date.timestamp)
-                attr += " " + event.committer.date.orig_tz_string
-                newattr = Attribution(attr)
-                for (_, nemail, tz) in repo.authormap.values():
-                    if newattr.email == nemail:
-                        newattr.date.set_tz(tz)
-                        break
-                event.authors.append(newattr)
-            else if field == "commitdate" and commit, ok := event.(*Commit); ok:
-                event.committer.date = Date(value)
-            else if field == "authdate" and commit, ok := event.(*Commit); ok:
-                event.authors[0].date = Date(value)
-*/
+// Set an object field from a string.
+func (rs *Reposurgeon) DoSetfield(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo is loaded")
+		return false
+	}
+	repo := rs.chosen()
+	if rs.selection == nil {
+		complain("no selection")
+		return false
+	}
+	fields, err := shlex.Split(line, true)
+	if err != nil || len(fields) != 2 {
+		complain("missing or malformed setfield line")
+	}
+	field := fields[0]
+	value, err := stringEscape(fields[1])
+	if err != nil {
+		complain("while setting field: %v", err)
+		return false
+	}
+	for _, ei := range rs.selection {
+		event := repo.events[ei]
+		if hasAttr(event, field) {
+			setAttr(event, field, value)
+		} else if commit, ok := event.(*Commit); ok {
+			if field == "author" {
+				attr := value
+				attr += " " + commit.committer.date.String()
+				newattr := newAttribution(attr)
+				commit.authors = append(commit.authors, *newattr)
+			} else if field == "commitdate" {
+				newdate, err := newDate(value)
+				if err != nil {
+					complain(err.Error())
+					return false
+				}
+				commit.committer.date = newdate 
+			} else if field == "authdate" {
+				newdate, err := newDate(value)
+				if err != nil {
+					complain(err.Error())
+					return false
+				}
+				commit.authors[0].date = newdate
+			}
+		}
+	}
+	return false
+}
+
 func (rs *Reposurgeon) HelpSetperm() {
         rs.helpOutput(`
 For the selected objects (defaulting to none) take the first argument as an
@@ -13901,10 +13930,7 @@ func (rs *Reposurgeon) DoAppend(line string) (stopOut bool) {
 		complain("missing append line")
 		return false
 	}
-	// FIXME: Check that this plays nice with shlex. It wants to see
-	// quotes as he first and last characters of the string - not yet
-	// known whether shlex leaves those on a string token or strips them.
-	line, err = strconv.Unquote(fields[0])
+	line, err = stringEscape(fields[0])
 	if err != nil {
 		complain(err.Error())
 		return false
