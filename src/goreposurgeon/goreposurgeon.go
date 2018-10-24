@@ -466,6 +466,16 @@ func (s orderedIntSet) Union(other orderedIntSet) orderedIntSet {
 	return union
 }
 
+func (s orderedIntSet) Min() int {
+	var min int = math.MaxInt32
+	for _, v  := range s {
+		if v < min {
+			min = v
+		}
+	}
+	return min
+}
+
 func (s orderedIntSet) Sort() {
 	sort.Slice(s, func(i, j int) bool { return s[i] < s[j] })
 }
@@ -14072,7 +14082,7 @@ With  the --debug option, show messages about mismatches.
                 return true
             eligible = {}
             squashes = []
-            for (_i, commit) in self.selected(Commit):
+            for (_i, commit) in self.commits(self.selection):
                 if commit.branch not in eligible:
                     # No active commit span for this branch - start one
                     # with the mark of this commit
@@ -14116,75 +14126,104 @@ in the commit's ancestry.
 `)
 }
 
-/*
-    func (rs *Reposurgeon) DoAdd(self, line str):
-        "Add a fileop to a specified commit."
-        if self.chosen() == None:
-            complain("no repo is loaded")
-            return
-        if self.selection is None:
-            self.selection = []
-        repo = self.chosen()
-        fields = shlex.split(line)
-        if len(fields) < 2:
-            raise Recoverable("add requires an operation type and arguments")
-        optype = fields[0]
-        if optype == "D":
-            path = fields[1]
-            for _, event in self.selected(Commit):
-                if path in event.paths():
-                    raise Recoverable("%s already has an op for %s" \
-                                      % (event.mark, path))
-                if event.ancestorCount(path) == 0:
-                    raise Recoverable("no previous M for %s" % path)
-        else if optype == "M":
-            if len(fields) != 4:
-                raise Recoverable("wrong field count in add command")
-            else if fields[1].endswith("644"):
-                perms = 0o100644
-            else if fields[1].endswith("755"):
-                perms = 0o100755
-            mark = fields[2]
-            if not mark.startswith(":"):
-                raise Recoverable("garbled mark %s in add command" % mark)
-            try:
-                markval = int(mark[1:])
-            except ValueError:
-                raise Recoverable("non-numeric mark %s in add command" % mark)
-            if not isinstance(repo.markToEvent(mark), Blob):
-                raise Recoverable("mark %s in add command does not refer to a blob" % mark)
-            else if markval >= min(self.selection):
-                raise Recoverable("mark %s in add command is after add location" % mark)
-            path = fields[3]
-            for _, event in self.selected(Commit):
-                if path in event.paths():
-                    raise Recoverable("%s already has an op for %s" \
-                                      % (event.mark, path))
-        else if optype in (opR, "C"):
-            try:
-                source = fields[1]
-                target = fields[2]
-            except IndexError:
-                raise Recoverable("too few arguments in add %s" % optype)
-            for _, event in self.selected(Commit):
-                if source in event.paths() or target in event.paths():
-                    raise Recoverable("%s already has an op for %s or %s" \
-                                      % (event.mark, source, target))
-                if event.ancestorCount(source) == 0:
-                    raise Recoverable("no previous M for %s" % source)
-        else:
-            raise Recoverable("unknown operation type %s in add command" % optype)
-        for _, event in self.selected(Commit):
-            event.invalidatePathsetCache()
-            fileop = FileOp(self.chosen())
-            if optype == "D":
-                fileop.construct("D", path)
-            else if optype == "M":
-                fileop.construct(opM, perms, mark, path)
-            else if optype in (opR, "C"):
-                fileop.construct(optype, source, target)
-            event.appendOperation(fileop)
-*/
+// Add a fileop to a specified commit.
+func (rs *Reposurgeon) DoAdd(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo is loaded")
+		return false
+	}
+	repo := rs.chosen()
+	fields, err := shlex.Split(line, true)
+	if err != nil && len(fields) < 2 {
+		complain("add requires an operation type and arguments")
+		return false
+	}
+	optype := fields[0]
+	var perms, argpath, mark, source, target string
+	if optype == "D" {
+		argpath := fields[1]
+		for _, event := range repo.commits(rs.selection) {
+			if event.paths(nil).Contains(argpath) {
+				complain("%s already has an op for %s",
+					event.mark, argpath)
+				return false
+			}
+			if event.ancestorCount(argpath) == 0 {
+				complain("no previous M for %s", argpath)
+				return false
+			}
+		}
+	} else if optype == "M" {
+		if len(fields) != 4 {
+			complain("wrong field count in add command")
+			return false
+		} else if strings.HasSuffix(fields[1], "644") {
+			perms = "100644"
+		} else if strings.HasSuffix(fields[1], "755") {
+			perms = "100755"
+		}
+		mark = fields[2]
+		if !strings.HasPrefix(mark, ":") {
+			complain("garbled mark %s in add command", mark)
+			return false
+		}
+		markval, err1 := strconv.Atoi(mark[1:])
+		if err1 != nil {
+			complain("non-numeric mark %s in add command", mark)
+			return false
+		}
+		blob, ok := repo.markToEvent(mark).(*Blob)
+		if !ok {
+			complain("mark %s in add command does not refer to a blob", mark)
+			return false
+		} else if markval >= rs.selection.Min() {
+			complain("mark %s in add command is after add location", mark)
+			return false
+		}
+		argpath := fields[3]
+		for _, event := range repo.commits(rs.selection) {
+			if event.paths(nil).Contains(argpath) {
+				complain("%s already has an op for %s",
+					blob.mark, argpath)
+				return false
+			}
+		}
+	} else if optype == opR || optype == opC {
+		if len(fields) < 4 {
+			complain("too few arguments in add %s", optype)
+			return false
+		}
+		source = fields[1]
+		target = fields[2]
+		for _, event := range repo.commits(rs.selection) {
+			if event.paths(nil).Contains(source) || event.paths(nil).Contains(target) {
+				complain("%s already has an op for %s or %s",
+					event.mark, source, target)
+				return false
+			}
+			if event.ancestorCount(source) == 0 {
+				complain("no previous M for %s", source)
+				return false
+			}
+		}
+	} else {
+		complain("unknown operation type %s in add command", optype)
+		return false
+	}
+	for _, commit := range repo.commits(rs.selection) {
+		commit.invalidatePathsetCache()
+		fileop := newFileOp(rs.chosen())
+		if optype == "D" {
+			fileop.construct("D", argpath)
+		} else if optype == "M" {
+			fileop.construct(opM, perms, mark, argpath)
+		} else if optype == opR || optype == opC {
+			fileop.construct(optype, source, target)
+		}
+		commit.appendOperation(*fileop)
+	}
+	return false
+}
 
 func (rs *Reposurgeon) HelpBlob() {
         rs.helpOutput(`
@@ -14259,7 +14298,7 @@ change in a future release.
         if re.match(r"[DMRCN]+$".encode('ascii'), polybytes(opindex)):
             optypes = opindex
             (opindex, line) = popToken(line)
-        for ie, event in self.selected(Commit):
+        for ie, event := range self.commits(self.selection):
             event.invalidatePathsetCache()
             if opindex == "deletes":
                 event.setOperations([e for e in event.operations() if e.op != opD])
@@ -14846,7 +14885,7 @@ in the ancestry of the commit, this command throws an error.  With the
                 if not target_re:
                     raise Recoverable("no target specified in rename")
                 actions = []
-                for _,commit in self.selected(Commit):
+                for _,commit := range self.commits(self.selection):
                     touched = false
                     for fileop in commit.operations():
                         for attr in ("path", "source", "target"):
@@ -14972,7 +15011,7 @@ This command supports > redirection.
                     filter_func = regexp.MustCompile(line.encode('ascii')).search
                 except re.error:
                     raise Recoverable("invalid regular expression")
-            for ei, event in self.selected(Commit):
+            for ei, event := range self.commits(self.selection):
                 header = "Event %s, " % repr(ei+1)
                 header = header[:-2]
                 header += " " + ((72 - len(header)) * "=") + "\n"
@@ -15197,7 +15236,7 @@ Policy:
         with rs.newLineParse(line, nil) as parse:
             use_order = '--use-order' in parse.options
             try:
-                selected = list(self.selected(Commit))
+                selected = list(self.commits(self.selection))
                 if not len(selected): raise ValueError()
                 if len(self.selection) != len(selected): raise ValueError()
             except (TypeError, ValueError):
@@ -15442,7 +15481,7 @@ fields are changed and a warning is issued.
                 raise Recoverable("usage: tag <name> create <singleton-selection>")
             try:
                 if len(self.selection) != 1: raise ValueError()
-                (_, target), = self.selected(Commit)
+                (_, target), = self.commits(self.selection)
             except (TypeError, ValueError):
                 raise Recoverable("tag create requires a singleton commit set.")
             tag = Tag(name=tagname,
@@ -15494,7 +15533,7 @@ fields are changed and a warning is issued.
             self.set_selection_set(line)
             try:
                 if len(self.selection) != 1: raise ValueError()
-                (_, target), = self.selected(Commit)
+                (_, target), = self.commits(self.selection)
             except (TypeError, ValueError):
                 raise Recoverable("tag move requires a singleton commit set.")
             if tags:
@@ -15601,7 +15640,7 @@ moved, no branch fields are changed.
                 raise Recoverable("one or more resets match %s" % resetname)
             try:
                 if len(self.selection) != 1: raise ValueError()
-                target, = self.selected(Commit)
+                target, = self.commits(self.selection)
             except (TypeError, ValueError):
                 raise Recoverable("reset create requires a singleton commit set.")
             reset = Reset(repo, ref=resetname)
@@ -15619,7 +15658,7 @@ moved, no branch fields are changed.
             reset.forget()
             try:
                 if len(self.selection) != 1: raise ValueError()
-                (_, target), = self.selected(Commit)
+                (_, target), = self.commits(self.selection)
             except (TypeError, ValueError):
                 raise Recoverable("reset move requires a singleton commit set.")
             reset.forget()
@@ -16599,26 +16638,34 @@ action-stamp ID for each commit.
 `)
 }
 
-/*
-    func (rs *Reposurgeon) DoTimequake(self, _line):
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        repo = self.chosen()
-        if self.selection is None:
-            self.selection = self.chosen().all()
-        with Baton(prompt="reposurgeon: disambiguating", enable=(context.verbose == 1)) as baton:
-            modified = 0
-            for (_, event) in self.selected(Commit):
-                parents = event.parents()
-                if len(parents) == 1:
-                    if event.committer.date.timestamp == parents[0].committer.date.timestamp:
-                        event.bump()
-                        modified++
-                baton.twirl("")
-            announce(debugSHOUT, "%d events modified" % modified)
-        repo.invalidateNamecache()
-*/
+func (rs *Reposurgeon) DoTimequake(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+	}
+	repo := rs.chosen()
+	if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+	}
+	baton := newBaton("reposurgeon: disambiguating", "", context.verbose == 1)
+	modified := 0
+	for _, event := range repo.commits(rs.selection) {
+		parents := event.parents()
+		if len(parents) == 1 {
+			if parent, ok := parents[0].(*Commit); ok {
+				if event.committer.date.timestamp.Equal(parent.committer.date.timestamp) {
+					event.bump(1)
+					modified++
+				}
+			}
+		}
+		baton.twirl("")
+        }
+	baton.exit("")
+	announce(debugSHOUT, "%d events modified", modified)
+	repo.invalidateNamecache()
+	return false
+}
 
 func (rs *Reposurgeon) HelpTimebump() {
         rs.helpOutput(`
@@ -16631,17 +16678,31 @@ repositories, cleaning up after 'timequake', to ensure that the surgical
 language can count on having a unique action-stamp ID for each commit.
 `)
 }
-/*
-    func (rs *Reposurgeon) DoTimebump(self, line string):
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        if self.selection is None:
-            raise Recoverable("reposurgeon: no default select set for bump.")
-        offset = int(line) if line else 1
-        for (_, event) in self.selected(Commit):
-            event.bump(offset)
-*/
+func (rs *Reposurgeon) DoTimebump(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+	}
+	if rs.selection == nil {
+		complain("reposurgeon: no default select set for bump.")
+		return false
+	}
+	var offset int
+	var err error
+	if line == "" {
+		offset = 1
+	} else {
+		offset, err = strconv.Atoi(line)
+		if err != nil {
+			complain("in timebump: %v", err)
+			return false
+		}
+	}
+	for _, event := range rs.chosen().commits(rs.selection) {
+		event.bump(offset)
+	}
+	return false
+}
 //
 // Changelog processing
 //
