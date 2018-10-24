@@ -3847,6 +3847,7 @@ type Callout struct {
 	branch      string
 	_childNodes []string
 	deleteme    bool
+	color       string
 }
 
 func newCallout(mark string) *Callout {
@@ -3887,6 +3888,14 @@ type ManifestEntry struct {
 	mode   string
 	ref    string
 	inline string
+}
+
+func (callout Callout) getColor() string {
+	return callout.color
+}
+
+func (callout Callout) setColor(color string) {
+	callout.color = color
 }
 
 func (m ManifestEntry) String() string {
@@ -3934,6 +3943,14 @@ func newCommit(repo *Repository) *Commit {
 	commit._parentNodes = make([]CommitLike, 0)
 	//commit._pathset = nil
 	return commit
+}
+
+func (commit Commit) getColor() string {
+	return commit.color
+}
+
+func (commit Commit) setColor(color string) {
+	commit.color = color
 }
 
 func (commit *Commit) detach(event Event) bool {
@@ -6361,6 +6378,8 @@ type CommitLike interface {
 	callout() string
 	String() string
 	getDelFlag() bool
+	getColor() string
+	setColor(string)
 }
 
 // Contributor - associate a username with a DVCS-style ID and timezone
@@ -9399,28 +9418,29 @@ func (rs *RepositoryList) removeByName(name string) {
 	rs.repolist = newList
 }
 
-/*
 // Apply a graph-coloring algorithm to see if the repo can be split here.
-func (rs *Repository) cutConflict(early *CommitLike, late *CommitLike) (bool, error) {
-	rs.cutIndex = -1
+func (rs *Repository) cutConflict(early *Commit, late *Commit) (bool, int, error) {
+	cutIndex := -1
 	for i, m := range late.parentMarks() {
 		if m == early.mark {
-			rs.cutIndex := i
+			cutIndex = i
 			break
 		}
 	}
-	if rs.cutIndex == -1 {
-		err := fmt.Errorf("commit %s is not a parent of commit %s", ealy.mark, late.mark)
-		return false, err
+	if cutIndex == -1 {
+		err := fmt.Errorf("commit %s is not a parent of commit %s", early.mark, late.mark)
+		return false, -1, err
 	}
 	late.removeParent(early)
-	doColor := func(commit *Commit, color string) {
-		commit.color = color
-		for _, fileop := range commit.operations() {
-			if fileop.op == opM && fileop.ref != "inline" {
-				blob := rs.repo.index(fileop.ref)
-				//assert isinstance(rs.repo[blob], Blob)
-				rs.repo.events[blob].colors.append(color)
+	doColor := func(commitlike CommitLike, color string) {
+		commitlike.setColor(color)
+		if commit, ok := commitlike.(*Commit); ok {
+			for _, fileop := range commit.operations() {
+				if fileop.op == opM && fileop.ref != "inline" {
+					blob := rs.markToEvent(fileop.ref)
+					//assert isinstance(rs.repo[blob], Blob)
+					blob.(*Blob).colors = append(blob.(*Blob).colors, color)
+				}
 			}
 		}
 	}
@@ -9430,24 +9450,24 @@ func (rs *Repository) cutConflict(early *CommitLike, late *CommitLike) (bool, er
 	keepgoing := true
 	for keepgoing && !conflict {
 		keepgoing = false
-		for _, event := range rs.repo.commits(nil) {
-			if event.color {
+		for _, event := range rs.commits(nil) {
+			if event.color != ""{
 				for _, neighbor := range event.parents() {
-					if neighbor.color == nil {
-						do_color(neighbor, event.color)
+					if neighbor.getColor() == "" {
+						doColor(neighbor, event.color)
 						keepgoing = true
 						break
-					} else if neighbor.color != event.color {
+					} else if neighbor.getColor() != event.color {
 						conflict = true
 						break
 					}
 				}
 				for _, neighbor := range event.children() {
-					if neighbor.color == nil {
-						do_color(neighbor, event.color)
+					if neighbor.getColor() == "" {
+						doColor(neighbor, event.color)
 						keepgoing = true
 						break
-					} else if neighbor.color != event.color {
+					} else if neighbor.getColor() != event.color {
 						conflict = true
 						break
 					}
@@ -9455,20 +9475,28 @@ func (rs *Repository) cutConflict(early *CommitLike, late *CommitLike) (bool, er
 			}
 		}
 	}
-	return conflict, nil
+	return conflict, cutIndex, nil
 }
-    func cut_clear(rs, early, late):
-        "Undo a cut operation and clear all colors."
-        late.insertParent(rs.cutIndex, early.mark)
-        for event in rs.repo:
-            if hasattr(event, "color"):
-                event.color = None
-            if hasattr(event, "colors"):
-                event.colors = []
+
+// Undo a cut operation and clear all colors.
+func (repo *Repository) cutClear(early *Commit, late *Commit, cutIndex int) {
+        late.insertParent(cutIndex, early.mark)
+        for _, event := range repo.events {
+		switch event.(type) {
+		case *Blob:
+			event.(*Blob).colors = nil
+		case *Commit:
+			event.(*Commit).color = ""
+		}
+        }
+}
+
+/*
     func cut(rs, early, late):
         "Attempt to topologically cut the selected repo."
-        if rs.cutConflict(early, late):
-            rs.cut_clear(early, late)
+	ok, idx, err :=rs.cutConflict(early, late):
+        if !ok {
+            rs.cutClear(early, late, idx)
             return false
         # Repo can be split, so we need to color tags
         for t in rs.repo.events:
