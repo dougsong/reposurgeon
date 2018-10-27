@@ -66,6 +66,7 @@ gosetup:
 	GOPATH=$(GOPATH) go get -u -f github.com/emirpasic/gods/sets/linkedhashset
 	GOPATH=$(GOPATH) go get -u -f github.com/anmitsu/go-shlex
 	GOPATH=$(GOPATH) go get -u -f github.com/termie/go-shutil
+	GOPATH=$(GOPATH) go get -u -f github.com/google/uuid
 
 govet:
 	GOPATH=$(GOPATH) go vet repocutter
