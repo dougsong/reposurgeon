@@ -16,6 +16,7 @@ import (
 	"time"
 
 	terminal "golang.org/x/crypto/ssh/terminal" // For GetSize()
+	pcre "github.com/glenn-brown/golang-pkg-pcre/src/pkg/pcre"
 )
 
 const linesep = "\n"
@@ -136,8 +137,8 @@ removed as well.
 
 Modify Node-path headers, Node-copyfrom-path headers, and
 svn:mergeinfo properies matching the specified Python regular
-expression FROM; replace with TO.  TO may contain Pyton backreferences
-to parenthesized portions of FROM.
+expression FROM; replace with TO.  TO may contain Perl-style
+backreferences to parenthesized portions of FROM.
 `,
 	"renumber": `renumber: usage: repocutter renumber
 
@@ -1153,8 +1154,11 @@ func pathrename(source DumpfileSource, selection SubversionRange, patterns []str
 				pathline := header[offs:endoffs]
 				after := header[endoffs:]
 				//sys.stderr.write("Patterns: %s %s\n" % (patterns[0], patterns[1]))
-				r := regexp.MustCompile(patterns[0])
-				pathline = r.ReplaceAll(pathline, []byte(patterns[1]))
+				//Patterns from the pcre package rather than
+				//the native Go regexps because we need support
+				//for backreferences.
+				r := pcre.MustCompile(patterns[0], 0)
+				pathline = r.ReplaceAll(pathline, []byte(patterns[1]), 0)
 				header = before
 				header = append(header, pathline...)
 				header = append(header, after...)

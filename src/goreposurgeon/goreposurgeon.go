@@ -11182,12 +11182,6 @@ func (rs *Reposurgeon) DoShell(line string) (stopOut bool) {
 	return false
    }
 
-/*
-    func selected(rs, types=None):
-        "Iterate over the selection set."
-        return rs.chosen().iterevents(indices=rs.selection, types=types)
-*/
-
 //
 // The selection-language parsing code starts here.
 //

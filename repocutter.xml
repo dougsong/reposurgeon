@@ -193,6 +193,12 @@ which time the obsolete "squash" command was retired.</para>
 longer recognizes Macintosh-syle line endings consisting of a carriage
 return only. This may be addressed in a future version.</para>
 
+<para>Because the native Go regular-expression library declines to
+support backreferences (in order to scale better) the regexps in the
+pathrename are implemented using a third-party library that supports
+Perl regular-expression syntax.  Neither are exactly identical to the
+Oython regexps supported in older versions.</para>
+
 </refsect1>
 
 
