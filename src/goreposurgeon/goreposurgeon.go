@@ -11102,14 +11102,13 @@ func (rs *Reposurgeon) DoQuit(lineIn string) (stopOut bool) {
 var inlineCommentRE = regexp.MustCompile(`\s+#`)
 
 func (rs *Reposurgeon) buildPrompt() { 
-	//FIXME when Kommandant interface stabilizes
-	//var chosenName string = ""
-	//if rs.chosen() != nil {
-	//	chosenName = rs.chosen().name
-	//}
+	var chosenName string = ""
+	if rs.chosen() != nil {
+		chosenName = rs.chosen().name
+	}
 
-	//replacer := strings.NewReplacer("{chosen}", chosenName)
-	//rs.cmd.Prompt = replacer.Replace(rs.promptFormat)
+	replacer := strings.NewReplacer("{chosen}", chosenName)
+	rs.cmd.SetPrompt(replacer.Replace(rs.promptFormat))
 }
 
 func (rs *Reposurgeon) PreLoop() {
@@ -16479,13 +16478,11 @@ func (self *Reposurgeon) DoDefine(lineIn string) bool {
 			innerloop := func() {
 				inner := new(MacroDefinition)
 				inner.definitions = make(map[string][]string, 0)
-				inner.cmd = kommandant.NewBasicKommandant(inner, self.cmd.Stdin, self.cmd.Stdout)
+				inner.cmd = kommandant.NewKommandant(inner)
 				if self.inputIsStdin {
-					// FIXME: when Kommandant stabilizes
-					//inner.cmd.Prompt = "> "
+					inner.cmd.SetPrompt("> ")
 				} else {
-					// FIXME: when Kommandant stabilizes
-					//inner.cmd.Prompt = ""
+					inner.cmd.SetPrompt("")
 				}
 				inner.cmd.CmdLoop("")
 				body <- inner.body
@@ -16569,10 +16566,10 @@ func (rs *Reposurgeon) DoDo(line string) bool {
 	existing_inputIsStdin := rs.inputIsStdin
 	rs.inputIsStdin = false
 	rs.promptFormat = ""
-	interpreter := kommandant.NewBasicKommandant(rs, body, rs.cmd.Stdout)
-	//FIXME: When Kommandant stabilizes.
-	//interpreter.Prompt = rs.promptFormat
-
+	interpreter := kommandant.NewKommandant(rs)
+	interpreter.Stdin = bufio.NewReader(body)
+	interpreter.SetPrompt("")
+	
 	done := make(chan bool)
 	innerloop := func() {
 		interpreter.CmdLoop("")
@@ -17538,7 +17535,7 @@ func (rs *Reposurgeon) cleanup() {
 func main() {
 	context.init()
 	rs := newReposurgeon()
-	interpreter := kommandant.NewBasicKommandant(rs, os.Stdin, os.Stdout)
+	interpreter := kommandant.NewKommandant(rs)
 
 	// FIXME: restore this when code is more stable
 	//defer func() {
