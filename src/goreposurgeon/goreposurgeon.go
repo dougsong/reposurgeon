@@ -11004,7 +11004,6 @@ func (self *MacroDefinition) PreCommand(line string) string {
 		self.body = append(self.body, line)
 		return ""
 	}
-	return ""
 }
 
 func (self *MacroDefinition) DefaultCommand(line string) bool {
@@ -12308,7 +12307,6 @@ func (rs *Reposurgeon) DoTags(lineIn string) bool {
 		default:
 			return ""
 		}
-		return ""
 	}
 	rs.reportSelect(parse, f)
 	return false
@@ -12334,7 +12332,6 @@ func (rs *Reposurgeon) DoStamp(lineIn string) bool {
 		default:
 			return ""
 		}
-		return ""
 	}
 	rs.reportSelect(parse, f)
 	return false
@@ -13272,7 +13269,6 @@ func (rs *Reposurgeon) DoMsgout(lineIn string) bool {
 		default:
 			return ""
 		}
-		return ""
 	}
 	rs.reportSelect(parse, f)
 	return false
@@ -16904,8 +16900,6 @@ func extractTar(dst string, r io.Reader) ([]tar.Header, error) {
 			f.Close()
 		}
 	}
-
-	return files, nil
 }
 
 func (rs *Reposurgeon) HelpIncorporate() {
