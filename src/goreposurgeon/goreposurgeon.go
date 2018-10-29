@@ -11102,13 +11102,14 @@ func (rs *Reposurgeon) DoQuit(lineIn string) (stopOut bool) {
 var inlineCommentRE = regexp.MustCompile(`\s+#`)
 
 func (rs *Reposurgeon) buildPrompt() { 
-	var chosenName string = ""
-	if rs.chosen() != nil {
-		chosenName = rs.chosen().name
-	}
+	//FIXME when Kommandant interface stabilizes
+	//var chosenName string = ""
+	//if rs.chosen() != nil {
+	//	chosenName = rs.chosen().name
+	//}
 
-	replacer := strings.NewReplacer("{chosen}", chosenName)
-	rs.cmd.Prompt = replacer.Replace(rs.promptFormat)
+	//replacer := strings.NewReplacer("{chosen}", chosenName)
+	//rs.cmd.Prompt = replacer.Replace(rs.promptFormat)
 }
 
 func (rs *Reposurgeon) PreLoop() {
@@ -16480,9 +16481,11 @@ func (self *Reposurgeon) DoDefine(lineIn string) bool {
 				inner.definitions = make(map[string][]string, 0)
 				inner.cmd = kommandant.NewBasicKommandant(inner, self.cmd.Stdin, self.cmd.Stdout)
 				if self.inputIsStdin {
-					inner.cmd.Prompt = "> "
+					// FIXME: when Kommandant stabilizes
+					//inner.cmd.Prompt = "> "
 				} else {
-					inner.cmd.Prompt = ""
+					// FIXME: when Kommandant stabilizes
+					//inner.cmd.Prompt = ""
 				}
 				inner.cmd.CmdLoop("")
 				body <- inner.body
@@ -16567,7 +16570,8 @@ func (rs *Reposurgeon) DoDo(line string) bool {
 	rs.inputIsStdin = false
 	rs.promptFormat = ""
 	interpreter := kommandant.NewBasicKommandant(rs, body, rs.cmd.Stdout)
-	interpreter.Prompt = rs.promptFormat
+	//FIXME: When Kommandant stabilizes.
+	//interpreter.Prompt = rs.promptFormat
 
 	done := make(chan bool)
 	innerloop := func() {
@@ -19086,62 +19090,67 @@ func (sd *SubversionDumper) filemodify(fp io.Writer, revision int,
 		content, 0, "", &changeprops)
 }
 
-func (self *SubversionDumper) filecopy(fp io.Writer, revision int,
+func (sd *SubversionDumper) filecopy(fp io.Writer, revision int,
 	branch string, source string, target string, parents []CommitLike) {
 	announce(debugSVNDUMP, "filecopy(%d, %s, %s, %s)", revision, branch, source, target)
 	// Branch and directory creation may be required.
 	// This has to be called early so copy can update the filemap.
-	self.directoryCreate(fp, revision, branch, target, parents)
-	svnsource := self.svnize(branch, source)
-	flow, ok := self.pathmap[revision][svnsource]
+	sd.directoryCreate(fp, revision, branch, target, parents)
+	svnsource := sd.svnize(branch, source)
+	flow, ok := sd.pathmap[revision][svnsource]
 	if !ok {
 		panic(throw("command", "couldn't retrieve flow information for %s", source))
 	}
-	svntarget := self.svnize(branch, target)
-	self.pathmap[revision][filepath.Dir(svntarget)].subfiles++
-	self.pathmap[revision][svntarget] = self.pathmap[revision][svnsource]
+	svntarget := sd.svnize(branch, target)
+	sd.pathmap[revision][filepath.Dir(svntarget)].subfiles++
+	sd.pathmap[revision][svntarget] = sd.pathmap[revision][svnsource]
 	dumpNode(fp, svntarget, "file", "add", "", flow.rev, svnsource, nil)
 }
 
-func (self *SubversionDumper) makeTag(fp io.Writer, revision int,
+func (sd *SubversionDumper) makeTag(fp io.Writer, revision int,
 	name string, logtxt string, author *Attribution, parents []CommitLike) {
 	announce(debugSVNDUMP, "makeTag(%d, %s, %s, %v)",
 		revision, name, logtxt, author)
 	tagrefpath := filepath.Join("refs/tags", name)
 	dumpRevprops(fp, revision, &author.date,
 		strings.Split(author.email, "@")[0], logtxt, nil)
-	self.directoryCreate(fp, revision, tagrefpath, "", parents)
+	sd.directoryCreate(fp, revision, tagrefpath, "", parents)
 }
 
 // Export the repository as a Subversion dumpfile.
-func (self *SubversionDumper) dump(selection orderedIntSet,
+func (sd *SubversionDumper) dump(selection orderedIntSet,
 	fp io.Writer, progress bool) {
-	tags := make([]tags, 0)
-	for _, event := range self.repo.events {
+	tags := make([]Tag, 0)
+	for _, event := range sd.repo.events {
 		if tag, ok := event.(*Tag); ok {
-			tags = append(tags, tag)
+			tags = append(tags, *tag)
 		}
 	}
 	// Fast-export prefers tags to branches as commit parents but
 	// SVN prefers branches
 	for _, i := range selection {
-		event = self.repo.events[i]
-		if isinstance(event, Commit) {
-			event.color = commitbranch(event)
+		event := sd.repo.events[i]
+		if commit, ok := event.(*Commit); ok {
+			commit.color = commitbranch(commit)
 		}
 	}
 	baton := newBaton("reposurgeon: dumping", "", progress)
-	fmt.Frint(fp, "SVN-fs-dump-format-version: 2\n\n")
-	if self.repo.uuid == "" {
-		self.repo.uuid = uuid.NewUUTD().String()
+	fmt.Print(fp, "SVN-fs-dump-format-version: 2\n\n")
+	if sd.repo.uuid == "" {
+		newuuid, err := uuid.NewUUID()
+		if err != nil {
+			panic(err.Error())
+		}
+		sd.repo.uuid = newuuid.String()
 	}
-	fmt.Fprintf(fp, "UUID: %s\n\n", self.repo.uuid)
-	SubversionDumper.dumpRevprops(fp, 0, Date(rfc3339(time.Now())), "", "")
-	baton.twirl()
-	revision = 0
-	self.pathmap[revision] = make(map[string]*FlowState)
+	fmt.Fprintf(fp, "UUID: %s\n\n", sd.repo.uuid)
+	d, _ := newDate(rfc3339(time.Now()))
+	dumpRevprops(fp, 0, &d, "", "", nil)
+	baton.twirl("")
+	revision := 0
+	sd.pathmap[revision] = make(map[string]*FlowState)
 	for _, i := range selection {
-		event = self.repo.events[i]
+		event := sd.repo.events[i]
 		commit, ok := event.(*Commit)
 		// Passthroughs are lost; there are no equivalents
 		// in Subversion's ontology.
@@ -19161,160 +19170,173 @@ func (self *SubversionDumper) dump(selection orderedIntSet,
 			continue
 		}
 		revision++
-		parents = commit.parents()
+		parents := commit.parents()
+		sd.pathmap[revision] = sd.pathmap[revision-1]
 		// Need a deep copy iff the parent commit is a branching point
-		if len(parents) == 1 && len(parents[0].children()) == 1 && parents[0].color == commit.color {
-			self.pathmap[revision] = self.pathmap[revision-1]
-		} else {
-			self.pathmap[revision] = make(map[string]*FlowState)
-			for key, value := range originalMap {
-				targetself.pathmap[revision][key] = self.pathmap[revision-1]
+		if len(parents) < 0 {
+			mother, ok := parents[0].(*Commit)
+			if ok {
+				if len(mother.children()) > 1 && mother.color != commit.color {
+					sd.pathmap[revision] = make(map[string]*FlowState)
+					for key, value := range sd.pathmap[revision-1] {
+						sd.pathmap[revision][key] = value
+					}
+				}
 			}
 		}
-		self.markToRevision[commit.mark] = revision
+		sd.markToRevision[commit.mark] = revision
 		// We must treat the gitspace committer attribute
 		// as the author: gitspace author information is
 		// lost.  So is everything but the local part of
 		// the committer name.
-		backlinks = make([]string, 0)
+		backlinks := make([]int, 0)
 		for _, mark := range commit.parentMarks() {
-			if parent, ok := self.markToRevision[mark]; ok {
+			if parent, ok := sd.markToRevision[mark]; ok {
 				backlinks = append(backlinks, parent)
 			}
 		}
-	}
-	dumpRevprops(fp, revision,
-		commit.comment.replace("\r\n", "\n"),
-		commit.committer.email.split("@")[0],
-		committer.date,
-		backlinks)
-	for _, fileop := range commit.operations() {
-		if fileop.op == FileOp.D {
-			if strings.HasSuffix(fileop.path, ".gitignore") {
-				self.directoryCreate(fp, revision,
-					commit.color, fileop.path, parents)
-				svnpath = self.svnize(commit.color, filepath.Dir(fileop.path))
-				self.pathmap[revision][svnpath].props["svn:ignore"] = ""
-				dumpNode(fp,
-					filepath.Dir(svnpath),
-					"dir",
-					"change",
-					self.pathmap[revision][svnpath].props)
-			} else {
-				self.filedelete(fp, revision, commit.color, fileop.path, parents)
-			}
-		} else if fileop.op == FileOp.M {
-			if strings.HasSuffix(fileop.path, ".gitignore") {
-				svnpath = self.svnize(commit.color,
-					filepath.Dir(fileop.path))
-				self.directoryCreate(fp, revision,
-					branch=commit.color,
-					path=fileop.path,
-					parents=parents)
-				if fileop.ref == "inline" {
-					content = fileop.inline
+		dumpRevprops(fp, revision,
+			&commit.committer.date,
+			strings.Split(commit.committer.email, "@")[0],
+			strings.Replace(commit.comment, "\r\n", "\n", -1),
+			backlinks)
+		for _, fileop := range commit.operations() {
+			if fileop.op == opD {
+				if strings.HasSuffix(fileop.path, ".gitignore") {
+					sd.directoryCreate(fp, revision,
+						commit.color, fileop.path, parents)
+					svnpath := sd.svnize(commit.color, filepath.Dir(fileop.path))
+					sd.pathmap[revision][svnpath].props.set("svn:ignore", "")
+					dumpNode(fp,
+						filepath.Dir(svnpath),
+						"dir",
+						"change",
+						"",
+						0,
+						"",
+						&sd.pathmap[revision][svnpath].props)
 				} else {
-					content = self.repo.objfind(fileop.ref).get_content()
+					sd.filedelete(fp, revision, commit.color, fileop.path, parents)
 				}
-				content = content.replace(SubversionDumper.dfltignores,"") // Strip out default SVN ignores
-				if svnpath !in self.pathmap[revision] {
-					self.pathmap[revision][svnpath] = SubversionDumper.FlowState(revision)
+			} else if fileop.op == opM {
+				if strings.HasSuffix(fileop.path, ".gitignore") {
+					svnpath := sd.svnize(commit.color,
+						filepath.Dir(fileop.path))
+					sd.directoryCreate(fp, revision,
+						commit.color,
+						fileop.path,
+						parents)
+					var content string
+					if fileop.ref == "inline" {
+						content = fileop.inline
+					} else {
+						content = sd.repo.markToEvent(fileop.ref).(*Blob).getContent()
+					}
+					content = strings.Replace(content, dfltignores, "", 1) // Strip out default SVN ignores
+					if  _, ok := sd.pathmap[revision][svnpath]; !ok {
+						sd.pathmap[revision][svnpath] = newFlowState(revision)
+					}
+					if len(content) > 0 || sd.pathmap[revision][svnpath].props.has("svn:ignore") {
+						sd.pathmap[revision][svnpath].props.set("svn:ignore", content)
+						dumpNode(fp,
+							filepath.Dir(svnpath),
+							"dir", "change",
+							"",
+							0, "",
+							&sd.pathmap[revision][svnpath].props)
+					}
+				} else if fileop.mode == "160000" {
+					complain(fmt.Sprintf("skipping submodule link reference %s", fileop.ref))
+				} else {
+					sd.filemodify(fp,
+						revision,
+						commit.color,
+						fileop.mode,
+						fileop.ref,
+						fileop.path,
+						fileop.inline,
+						parents)
 				}
-				if len(content) > 0 || "svn:ignore" in self.pathmap[revision][svnpath].props {
-					self.pathmap[revision][svnpath].props["svn:ignore"] = content
-					SubversionDumper.dumpNode(fp,
-						path=filepath.Dir(svnpath),
-						kind="dir",
-						action="change",
-						props = self.pathmap[revision][svnpath].props)
-				}
-			} else if fileop.mode == "160000" {
-				complain(fmt.Sprintf("skipping submodule link reference %s", fileop.ref))
-			} else {
-				self.filemodify(fp,
+			} else if fileop.op == opR {
+				sd.filecopy(fp,
 					revision,
 					commit.color,
-					fileop.mode,
-					fileop.ref,
-					fileop.path,
-					fileop.inline,
+					fileop.source,
+					fileop.target,
 					parents)
+				sd.filedelete(fp, revision, commit.branch, fileop.source, commit.parents())
+			} else if fileop.op == opC {
+				sd.filecopy(fp,
+					revision,
+					commit.color,
+					fileop.source,
+					fileop.target,
+					parents)
+			} else if fileop.op == deleteall {
+				sd.filedeleteall(fp,
+					revision,
+					commit.color,
+					nil)
+			} else {
+				panic(fmt.Sprintf("unsupported fileop type %s.",
+					fileop.op))
 			}
-		} else if fileop.op == FileOp.R {
-			self.filecopy(fp,
-				revision,
-				commit.color,
-				fileop.source,
-				fileop.target,
-				parents)
-			self.filedelete(fp, revision, commit.branch, fileop.source, commit.parents())
-		} else if fileop.op == FileOp.C {
-			self.filecopy(fp,
-				revision,
-				commit.color,
-				fileop.source,
-				fileop.target,
-				parents)
-		} else if fileop.op == FileOp.deleteall {
-			self.filedeleteall(fp,
-				revision,
-				commit.color)
-		} else {
-			raise Fatal("unsupported fileop type %s."
-				% fileop.op)
 		}
-        }
-	// Turn any annotated tag pointing at this commit into
-	// a directory copy.
-	for _, tag := range tags {
-		if tag.target is commit {
-			if commit.operations() {
+		// Turn any annotated tag pointing at this commit into
+		// a directory copy.
+		for _, attachment := range commit.attachments {
+			tag, ok := attachment.(*Tag)
+			if !ok {
+				continue
+			}
+			var tagparents []CommitLike
+			if len(commit.operations()) > 0 {
 				revision++
-				self.pathmap[revision] = self.pathmap[revision-1]
-				tagparents = [commit]
+				sd.pathmap[revision] = sd.pathmap[revision-1]
+				tagparents = []CommitLike{commit}
 			} else {
 				tagparents = parents
 			}
-			self.makeTag(fp,
+			sd.makeTag(fp,
 				revision,
-				name=tag.name,
-				log=tag.comment.replace("\r\n", "\n"),
-				author=tag.tagger,
-				parents=tagparents)
-			break
-
+				tag.name,
+				strings.Replace(tag.comment, "\r\n", "\n", 0),
+				tag.tagger,
+				tagparents)
 		}
-        }
-	// Preserve lightweight tags, too.  Ugh, O(n**2).
-	if strings.HasPrefix(commit.branch, "refs/tags") {
-		svntarget := os.path.join("tags", branchbase(commit.branch))
-		createtag = svntarget !in self.branchesCreated
-		if createtag && commit.has_children() {
-			for _, child := range commit.children() {
-				if child.branch == commit.branch {
-					createtag = false
-					break
+		// Preserve lightweight tags, too.  Ugh, O(n**2).
+		createtag := false
+		if strings.HasPrefix(commit.branch, "refs/tags") {
+			svntarget := filepath.Join("tags", branchbase(commit.branch))
+			createtag = !sd.branchesCreated.Contains(svntarget)
+			if createtag && commit.hasChildren() {
+				for _, child := range commit.children() {
+					commitChild, ok := child.(*Commit)
+					if ok && commitChild.branch == commit.branch {
+						createtag = false
+						break
+					}
 				}
 			}
-		}
-		if createtag {
-			if commit.operations() {
-				revision++
-				self.pathmap[revision] = self.pathmap[revision-1]
-				tagparents = [commit]
-			} else {
-				tagparents = parents
+			var tagparents []CommitLike
+			if createtag {
+				if len(commit.operations()) > 0 {
+					revision++
+					sd.pathmap[revision] = sd.pathmap[revision-1]
+					tagparents = []CommitLike{commit}
+				} else {
+					tagparents = parents
+				}
+				sd.makeTag(fp,
+					revision,
+					branchbase(commit.branch),
+					"",
+					&commit.committer,
+					tagparents)
 			}
-			self.makeTag(fp,
-				revision,
-				name=branchbase(commit.branch),
-				log="",
-				author=commit.committer,
-				parents=tagparents)
 		}
-        }
-	fp.flush()
+		//fp.flush()
+	}
 }
-}
-
+	
 // end
