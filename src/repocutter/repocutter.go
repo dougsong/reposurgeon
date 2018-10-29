@@ -51,7 +51,7 @@ Available subcommands:
    setlog
    sift
    strip
-   swaps
+   swap
 
 Translated from the 2017-12-13 version of repocutter,
 which began life as 'svncutter' in 2009.  The obsolete 
@@ -169,6 +169,12 @@ revision, operation type, file path, and the copy source (if any).
 Directory paths are distinguished by a trailing slash.  The 'copy'
 operation is really an 'add' with a directory source and target;
 the display name is changed to make them easier to see.
+`,
+	"swap": `swap: usage: repocutter [-r SELECTION] swap
+
+Swap the top two elements of each pathname in every revision in the
+selection set. Useful following a sift operation for straightening out
+a common form of multi-project repository.
 `,
 }
 
