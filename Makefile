@@ -58,6 +58,8 @@ dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc -f nofooter.conf
 # Auxilary Go productions
 #
 
+# If you get a compilation failure on the golang-pkg-pcre library,
+# install libpcre3-dev or equivelent.
 gosetup:
 	GOPATH=$(GOPATH) go get -u -f github.com/google/go-cmp/cmp
 	GOPATH=$(GOPATH) go get -u -f golang.org/x/crypto/ssh/terminal
