@@ -10,6 +10,7 @@ apt-get update -qy && apt-get install -qy --no-install-recommends \
     cvs \
     flex \
     golang \
+    libpcre3-dev \
     pypy \
     python2.7 \
     python3 \
