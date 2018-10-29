@@ -4282,7 +4282,7 @@ class StreamParser:
             # we preseume to be some kind of operator error that needs
             # to show up under lint and be manually corrected
             reverso = list(self.revisions.keys())
-            reverso.sort(reverse=True)
+            reverso.sort(reverse=True, key=int)
             deadbranches = set([])
             for revision in reverso:
                 for node in self.revisions[revision].nodes:

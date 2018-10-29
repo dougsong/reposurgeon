@@ -1,7 +1,3 @@
-reposurgeon: r99~tags/alioth_SVN_migration/data nuked by tip delete
-reposurgeon: r9~branches/r2.0.1/data nuked by tip delete
-reposurgeon: r8~branches/Testing/data nuked by tip delete
-reposurgeon: r7~branches/Stable/data nuked by tip delete
 reposurgeon: r336~tags/v2.0.3/drivers nuked by tip delete
 reposurgeon: r336~tags/v2.0.3/packaging nuked by tip delete
 reposurgeon: r336~tags/v2.0.3/scripts/hotplug nuked by tip delete
@@ -39,8 +35,12 @@ reposurgeon: r161~branches/regex_branch/scripts/hotplug nuked by tip delete
 reposurgeon: r127~branches/Tripp_Lite_Omni/data nuked by tip delete
 reposurgeon: r127~branches/Tripp_Lite_Omni/packaging nuked by tip delete
 reposurgeon: r127~branches/Tripp_Lite_Omni/scripts/hotplug nuked by tip delete
+reposurgeon: r99~tags/alioth_SVN_migration/data nuked by tip delete
 reposurgeon: r11~branches/v2.1.0/data nuked by tip delete
 reposurgeon: r10~tags/v2.0.1/data nuked by tip delete
+reposurgeon: r9~branches/r2.0.1/data nuked by tip delete
+reposurgeon: r8~branches/Testing/data nuked by tip delete
+reposurgeon: r7~branches/Stable/data nuked by tip delete
 CVS:trunk/CHANGES:1.1	2005-01-27T14:33:14Z!aquette
 CVS:trunk/COPYING:1.1	2005-01-27T14:33:14Z!aquette
 CVS:trunk/CREDITS:1.1	2005-01-27T14:33:14Z!aquette
@@ -552,6 +552,7 @@ CVS:branches/Testing/clients/Makefile.in:1.2.8.1	2005-05-04T09:36:37Z!aquette
 CVS:branches/Testing/clients/upsstats.c:1.1.1.1.8.1	2005-05-04T09:36:37Z!aquette
 CVS:branches/Testing/configure.in:1.1.1.1.8.1	2005-05-04T09:36:37Z!aquette
 CVS:branches/Testing/configure:1.1.1.1.8.1	2005-05-04T09:36:37Z!aquette
+CVS:branches/Testing/data/driver.list:1.2.8.1	2005-05-04T09:36:37Z!aquette
 CVS:branches/Testing/drivers/Makefile.drvbuild:1.1.1.1.8.1	2005-05-04T09:36:37Z!aquette
 CVS:branches/Testing/drivers/Makefile.in:1.1.1.1.8.1	2005-05-04T09:36:37Z!aquette
 CVS:branches/Testing/drivers/apc-hid.h:1.1.4.1	2005-05-04T09:36:37Z!aquette
@@ -602,7 +603,6 @@ CVS:branches/Testing/man/powermust.8:1.1.1.1.8.1	2005-05-04T09:36:37Z!aquette
 CVS:branches/Testing/man/snmp-ups.8:1.1.1.1.8.1	2005-05-04T09:36:37Z!aquette
 CVS:branches/Testing/man/solis.8:1.1.4.1	2005-05-04T09:36:37Z!aquette
 CVS:branches/Testing/man/upscode2.8:1.1.4.1	2005-05-04T09:36:37Z!aquette
-CVS:tags/v2.0.2_pre1/data/driver.list:1.2.8.1	2005-05-04T09:36:37Z!no-author
 SVN:56	2005-05-04T09:36:37Z!aquette
 SVN:57	2005-05-04T09:36:37Z!no-author
 CVS:branches/Testing/CHANGES:1.2.8.2	2005-05-26T12:22:27Z!aquette
@@ -640,10 +640,10 @@ CVS:branches/Testing/CHANGES:1.2.8.6	2005-06-22T12:10:33Z!aquette
 CVS:branches/Testing/MAINTAINERS:1.1.1.1.8.1	2005-06-22T12:10:33Z!aquette
 CVS:branches/Testing/NEWS:1.1.1.1.8.1	2005-06-22T12:10:33Z!aquette
 CVS:branches/Testing/UPGRADING:1.2.8.1	2005-06-22T12:10:33Z!aquette
+CVS:branches/Testing/data/driver.list:1.2.8.2	2005-06-22T12:10:33Z!aquette
 CVS:branches/Testing/drivers/newhidups.c:1.1.1.1.8.6	2005-06-22T12:10:33Z!aquette
 CVS:branches/Testing/include/version.h:1.2.8.2	2005-06-22T12:10:33Z!aquette
 CVS:branches/Testing/include/version:1.2.8.2	2005-06-22T12:10:33Z!aquette
-CVS:tags/v2.0.2_pre2/data/driver.list:1.2.8.2	2005-06-22T12:10:33Z!no-author
 SVN:62	2005-06-22T12:10:33Z!aquette
 SVN:63	2005-06-22T12:10:33Z!no-author
 CVS:branches/Testing/CHANGES:1.2.8.7	2005-06-23T19:11:21Z!aquette
@@ -696,6 +696,7 @@ CVS:branches/Development/packaging/mandriva/upsmon:1.1.2.1	2005-06-23T21:09:22Z!
 SVN:66	2005-06-23T21:09:22Z!aquette
 SVN:67	2005-06-23T22:09:31Z!aquette
 CVS:branches/Testing/CHANGES:1.2.8.8	2005-06-27T08:24:53Z!aquette
+CVS:branches/Testing/data/driver.list:1.2.8.3	2005-06-27T08:24:53Z!aquette
 SVN:68	2005-06-27T08:24:53Z!aquette
 CVS:branches/Development/CHANGES:1.2.8.7.2.2	2005-06-27T08:59:30Z!aquette
 CVS:branches/Development/data/driver.list:1.2.8.2.2.1	2005-06-27T08:59:30Z!aquette
@@ -832,6 +833,7 @@ CVS:branches/Development/drivers/newhidups.h:1.1.1.1.8.3.2.5	2005-08-10T12:06:08
 CVS:branches/Development/scripts/hotplug/libhid.usermap:1.1.1.1.8.2.2.1	2005-08-10T12:06:08Z!aquette
 SVN:105	2005-08-10T12:06:08Z!aquette
 CVS:branches/Testing/CHANGES:1.2.8.21	2005-08-16T11:03:04Z!aquette
+CVS:branches/Testing/data/driver.list:1.2.8.6	2005-08-16T11:03:04Z!aquette
 CVS:branches/Testing/drivers/genericups.h:1.1.1.1.8.2	2005-08-16T11:03:04Z!aquette
 CVS:branches/Testing/drivers/main.c:1.1.1.1.8.2	2005-08-16T11:03:04Z!aquette
 CVS:branches/Testing/drivers/mge-shut.c:1.2.8.3	2005-08-16T11:03:04Z!aquette
@@ -860,6 +862,7 @@ CVS:branches/Development/CHANGES:1.2.8.7.2.20	2005-08-16T20:55:38Z!aquette
 CVS:branches/Development/data/driver.list:1.2.8.2.2.6	2005-08-16T20:55:38Z!aquette
 SVN:112	2005-08-16T20:55:38Z!aquette
 CVS:branches/Testing/CHANGES:1.2.8.22	2005-08-16T20:59:24Z!aquette
+CVS:branches/Testing/data/driver.list:1.2.8.7	2005-08-16T20:59:24Z!aquette
 SVN:113	2005-08-16T20:59:24Z!aquette
 CVS:branches/Testing/CHANGES:1.2.8.23	2005-08-16T21:56:14Z!aquette
 CVS:branches/Testing/NEWS:1.1.1.1.8.2	2005-08-16T21:56:14Z!aquette
@@ -876,6 +879,7 @@ CVS:branches/Testing/drivers/mge-utalk.c:1.1.1.1.8.2	2005-08-18T12:45:41Z!aquett
 CVS:branches/Testing/drivers/mge-utalk.h:1.1.1.1.8.2	2005-08-18T12:45:41Z!aquette
 SVN:116	2005-08-18T12:45:41Z!aquette
 CVS:branches/Testing/CHANGES:1.2.8.25	2005-08-23T07:39:14Z!aquette
+CVS:branches/Testing/data/driver.list:1.2.8.8	2005-08-23T07:39:14Z!aquette
 CVS:branches/Testing/drivers/Makefile.in:1.1.1.1.8.2	2005-08-23T07:39:14Z!aquette
 CVS:branches/Testing/drivers/gamatronic.c:1.1.4.1	2005-08-23T07:39:14Z!aquette
 CVS:branches/Testing/drivers/gamatronic.h:1.1.4.1	2005-08-23T07:39:14Z!aquette
@@ -1264,6 +1268,7 @@ SVN:211	2005-09-30T21:10:39Z!aquette
 CVS:branches/Development/data/driver.list:1.2.8.2.2.11	2005-09-30T21:22:22Z!aquette
 SVN:212	2005-09-30T21:22:22Z!aquette
 CVS:branches/Testing/CHANGES:1.2.8.26	2005-09-30T21:24:11Z!aquette
+CVS:branches/Testing/data/driver.list:1.2.8.9	2005-09-30T21:24:11Z!aquette
 CVS:branches/Testing/drivers/bcmxcp.c:1.1.4.4	2005-09-30T21:24:11Z!aquette
 CVS:branches/Testing/drivers/bcmxcp.h:1.1.4.2	2005-09-30T21:24:11Z!aquette
 CVS:branches/Testing/man/bcmxcp.8:1.1.4.2	2005-09-30T21:24:11Z!aquette
@@ -1313,6 +1318,7 @@ CVS:branches/Development/drivers/belkin-hid.c:1.1.2.8	2005-10-04T03:34:37Z!selin
 SVN:227	2005-10-04T03:34:37Z!selinger-guest
 CVS:branches/Development/drivers/nut_usb.c:1.1.2.2	2005-10-06T07:38:42Z!keyson-guest
 SVN:228	2005-10-06T07:38:42Z!keyson-guest
+CVS:branches/Testing/data/driver.list:1.2.8.10	2005-10-07T08:29:34Z!aquette
 CVS:branches/Testing/man/gamatronic.8:1.1.4.1	2005-10-07T08:29:34Z!aquette
 SVN:229	2005-10-07T08:29:34Z!aquette
 CVS:branches/Development/CHANGES:1.2.8.7.2.54	2005-10-08T21:21:41Z!aquette
@@ -1412,8 +1418,10 @@ CVS:branches/Testing/drivers/gendb:1.1.1.1.8.5	2005-10-10T20:50:20Z!keyson-guest
 SVN:245	2005-10-10T20:50:20Z!keyson-guest
 CVS:branches/Testing/CHANGES:1.2.8.33	2005-10-11T07:02:42Z!aquette
 CVS:branches/Testing/README:1.1.1.1.8.2	2005-10-11T07:02:42Z!aquette
+CVS:branches/Testing/data/driver.list:1.2.8.11	2005-10-11T07:02:42Z!aquette
 SVN:246	2005-10-11T07:02:42Z!aquette
 CVS:branches/Testing/README:1.1.1.1.8.3	2005-10-11T21:35:36Z!selinger-guest
+CVS:branches/Testing/data/driver.list:1.2.8.12	2005-10-11T21:35:36Z!selinger-guest
 SVN:247	2005-10-11T21:35:36Z!selinger-guest
 CVS:branches/Development/CHANGES:1.2.8.7.2.60	2005-10-19T12:13:31Z!aquette
 CVS:branches/Development/debian/changelog:1.1.2.3	2005-10-19T12:13:31Z!aquette
@@ -1518,6 +1526,7 @@ SVN:267	2005-11-14T20:37:10Z!aquette
 CVS:branches/Testing/CHANGES:1.2.8.34	2005-11-14T20:37:12Z!aquette
 CVS:branches/Testing/NEWS:1.1.1.1.8.3	2005-11-14T20:37:12Z!aquette
 CVS:branches/Testing/UPGRADING:1.2.8.3	2005-11-14T20:37:12Z!aquette
+CVS:branches/Testing/data/driver.list:1.2.8.13	2005-11-14T20:37:12Z!aquette
 CVS:branches/Testing/scripts/hotplug-ng/README:1.1.2.1	2005-11-14T20:37:12Z!aquette
 CVS:branches/Testing/scripts/hotplug-ng/nut-usbups.hotplug.in:1.1.2.1	2005-11-14T20:37:12Z!aquette
 CVS:branches/Testing/scripts/hotplug-ng/nut-usbups.rules.in:1.1.2.1	2005-11-14T20:37:12Z!aquette
@@ -1526,6 +1535,7 @@ SVN:268	2005-11-14T20:37:12Z!aquette
 CVS:branches/Testing/configure.in:1.1.1.1.8.4	2005-11-14T21:07:20Z!aquette
 SVN:269	2005-11-14T21:07:20Z!aquette
 CVS:branches/Testing/CHANGES:1.2.8.35	2005-11-15T16:31:10Z!keyson-guest
+CVS:branches/Testing/data/driver.list:1.2.8.14	2005-11-15T16:31:10Z!keyson-guest
 SVN:270	2005-11-15T16:31:10Z!keyson-guest
 CVS:branches/Development/CHANGES:1.2.8.7.2.71	2005-11-15T16:38:08Z!keyson-guest
 CVS:branches/Development/data/driver.list:1.2.8.2.2.17	2005-11-15T16:38:08Z!keyson-guest
@@ -1573,11 +1583,11 @@ CVS:branches/Development/man/newhidups.8:1.1.1.1.8.1.2.6	2005-12-19T08:41:58Z!aq
 SVN:281	2005-12-19T08:41:58Z!aquette
 CVS:branches/Development/conf/upsstats.html:1.2.10.2	2005-12-22T01:18:19Z!clepple-guest
 SVN:282	2005-12-22T01:18:19Z!clepple-guest
+CVS:branches/Testing/data/driver.list:1.2.8.15	2005-12-22T13:35:31Z!aquette
 SVN:283	2005-12-22T13:35:31Z!aquette
 CVS:branches/Testing/CHANGES:1.2.8.38	2005-12-22T14:29:41Z!aquette
 CVS:branches/Testing/include/version.h:1.2.8.4	2005-12-22T14:29:41Z!aquette
 CVS:branches/Testing/include/version:1.2.8.4	2005-12-22T14:29:41Z!aquette
-CVS:tags/v2.0.3_pre2/data/driver.list:1.2.8.15	2005-12-22T14:29:41Z!no-author
 SVN:284	2005-12-22T14:29:41Z!aquette
 SVN:285	2005-12-22T14:29:41Z!no-author
 CVS:branches/Development/man/newhidups.8:1.1.1.1.8.1.2.7	2005-12-23T16:29:13Z!clepple-guest
@@ -1598,9 +1608,11 @@ CVS:branches/Testing/drivers/mge-utalk.c:1.1.1.1.8.3	2006-01-16T14:39:28Z!aquett
 CVS:branches/Testing/man/mge-utalk.8:1.1.1.1.8.3	2006-01-16T14:39:28Z!aquette
 SVN:290	2006-01-16T14:39:28Z!aquette
 CVS:branches/Testing/CHANGES:1.2.8.40	2006-01-16T22:22:45Z!carlosefr-guest
+CVS:branches/Testing/data/driver.list:1.2.8.16	2006-01-16T22:22:45Z!carlosefr-guest
 CVS:branches/Testing/man/powermust.8:1.1.1.1.8.2	2006-01-16T22:22:45Z!carlosefr-guest
 SVN:291	2006-01-16T22:22:45Z!carlosefr-guest
 CVS:branches/Testing/CHANGES:1.2.8.41	2006-01-18T23:59:22Z!carlosefr-guest
+CVS:branches/Testing/data/driver.list:1.2.8.17	2006-01-18T23:59:22Z!carlosefr-guest
 CVS:branches/Testing/man/powermust.8:1.1.1.1.8.3	2006-01-18T23:59:22Z!carlosefr-guest
 SVN:292	2006-01-18T23:59:22Z!carlosefr-guest
 CVS:branches/Development/CHANGES:1.2.8.7.2.78	2006-01-19T00:04:45Z!carlosefr-guest
@@ -1851,6 +1863,7 @@ CVS:branches/Stable/clients/Makefile.in:1.2.6.1	2006-02-07T14:36:20Z!aquette
 CVS:branches/Stable/clients/upsstats.c:1.1.1.1.6.1	2006-02-07T14:36:20Z!aquette
 CVS:branches/Stable/configure.in:1.1.1.1.6.1	2006-02-07T14:36:20Z!aquette
 CVS:branches/Stable/configure:1.1.1.1.6.1	2006-02-07T14:36:20Z!aquette
+CVS:branches/Stable/data/driver.list:1.2.6.1	2006-02-07T14:36:20Z!aquette
 CVS:branches/Stable/docs/FAQ:1.1.1.1.6.1	2006-02-07T14:36:20Z!aquette
 CVS:branches/Stable/docs/upssched.txt:1.1.1.1.6.1	2006-02-07T14:36:20Z!aquette
 CVS:branches/Stable/drivers/Makefile.drvbuild:1.1.1.1.6.1	2006-02-07T14:36:20Z!aquette
@@ -1903,7 +1916,6 @@ CVS:branches/Stable/man/snmp-ups.8:1.1.1.1.6.1	2006-02-07T14:36:20Z!aquette
 CVS:branches/Stable/packaging/RedHat/nut.spec.in:1.1.1.1.6.1	2006-02-07T14:36:20Z!aquette
 CVS:branches/Stable/scripts/hotplug/README:1.1.1.1.6.1	2006-02-07T14:36:20Z!aquette
 CVS:branches/Stable/scripts/hotplug/libhid.usermap:1.1.1.1.6.1	2006-02-07T14:36:20Z!aquette
-CVS:tags/v2.0.3/data/driver.list:1.2.6.1	2006-02-07T14:36:20Z!no-author
 SVN:335	2006-02-07T14:36:20Z!aquette
 SVN:336	2006-02-07T14:36:20Z!no-author
 CVS:branches/Development/man/genericups.8:1.1.1.1.8.1.2.3	2006-02-07T20:19:03Z!adkorte-guest
@@ -2006,6 +2018,7 @@ SVN:368	2006-03-03T12:52:47Z!selinger-guest
 SVN:369	2006-03-03T20:25:48Z!adkorte-guest
 SVN:370	2006-03-04T14:31:12Z!adkorte-guest
 CVS:branches/Testing/CHANGES:1.2.8.7.2.105	2006-03-04T17:44:41Z!selinger-guest
+CVS:branches/Testing/data/driver.list:1.2.8.2.2.23	2006-03-04T17:44:41Z!selinger-guest
 CVS:branches/Testing/drivers/apc-hid.c:1.1.2.12	2006-03-04T17:44:41Z!selinger-guest
 CVS:branches/Testing/drivers/hidparser.c:1.1.1.1.10.5	2006-03-04T17:44:41Z!selinger-guest
 CVS:branches/Testing/drivers/hidtypes.h:1.1.1.1.10.4	2006-03-04T17:44:41Z!selinger-guest
