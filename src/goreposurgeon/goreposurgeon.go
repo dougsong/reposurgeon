@@ -12427,86 +12427,116 @@ Supports > redirection.
 }
 
 /*
-    func (rs *Reposurgeon) DoLint(rs, line: str):
-        "Look for lint in a repo."
-        if rs.chosen() == None:
-            complain("no repo has been chosen.")
-            return
-        if rs.selection is None:
-            rs.selection = rs.chosen().all()
-        with rs.newLineParse(line, stringSet{"stdout"}) as parse:
-            unmapped = regexp.MustCompile(("[^@]*$|[^@]*@" + str(rs.chosen().uuid) + "$").encode('ascii'))
-            shortset = set()
-            deletealls = set()
-            disconnected = set()
-            roots = set()
-            emptyaddr = set()
-            emptyname = set()
-            badaddress = set()
-            for _, event in rs.selected(Commit):
-                if event.operations() and event.operations()[0].op == 'deleteall' and event.hasChildren():
-                    deletealls.add("on %s at %s" % (event.branch, event.idMe()))
-                if not event.hasParents() and not event.hasChildren():
-                    disconnected.add(event.idMe())
-                else if not event.hasParents():
-                    roots.add(event.idMe())
-                if unmapped:
-                    for person in [event.committer] + event.authors:
-                        if unmapped.match(polybytes(person.email)):
-                            shortset.add(person.email)
-                if not event.committer.email:
-                    emptyaddr.add(event.idMe())
-                else if "@" not in event.committer.email:
-                    badaddress.add(event.idMe())
-                for author in event.authors:
-                    if not author.email:
-                        emptyaddr.add(event.idMe())
-                    else if "@" not in author.email:
-                        badaddress.add(event.idMe())
-                if not event.committer.name:
-                    emptyname.add(event.idMe())
-                for author in event.authors:
-                    if not author.name:
-                        emptyname.add(event.idMe())
+// Look for lint in a repo.
+func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return
+	}
+	if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+	}
+	parse := rs.newLineParse(line, stringSet{"stdout"})
+	defer parse.Closem()
+	unmapped := regexp.MustCompile("[^@]*$|[^@]*@" + rs.chosen().uuid + "$")
+	shortset := newOrderedIntSet()
+	deletealls := newStringSet()
+	disconnected := newOrderedIntSet()
+	roots := newOrderedIntSet()
+	emptyaddr := newOrderedIntSet()
+	emptyname := newOrderedIntSet()
+	badaddress := newOrderedIntSet()
+	for _, commit in rs.chosen().commits(rs.selection) {
+		if commit.operations() && commit.operations()[0].op == "deleteall" && commit.hasChildren() {
+			deletealls.add(fmt.Sprintf("on %s at %s", commit.branch, commit.idMe()))
+		}
+		if !commit.hasParents() && !commit.hasChildren() {
+			disconnected.add(commit.idMe())
+		} else if !commit.hasParents() {
+			roots.add(commit.idMe())
+		}
+		if unmapped {
+			for _, person := range [commit.committer] + commit.authors {
+				if unmapped.match(polybytes(person.email)) {
+					shortset.add(person.email)
+				}
+			}
+		}
+		if !commit.committer.email {
+			emptyaddr.add(commit.idMe())
+		} else if "@" !in commit.committer.email {
+			badaddress.add(commit.idMe())
+		}
+		for _, author := range commit.authors {
+			if !author.email {
+				emptyaddr.add(commit.idMe())
+			} else if "@" !in author.email {
+				badaddress.add(commit.idMe())
+			}
+		}
+		if !commit.committer.name {
+			emptyname.add(commit.idMe())
+		}
+		for _, author := range commit.authors {
+			if !author.name {
+				emptyname.add(commit.idMe())
 
-            if not parse.options or "--deletealls" in parse.options \
-                   or "-d" in parse.options:
-                for item in sorted(deletealls):
-                    parse.stdout.WriteString("mid-branch delete: %s\n" % item)
-            if not parse.options or "--connected" in parse.options \
-                   or "-c" in parse.options:
-                for item in sorted(disconnected):
-                    parse.stdout.WriteString("disconnected commit: %s\n" % item)
-            if not parse.options or "--roots" in parse.options \
-                   or "-r" in parse.options:
-                if len(roots) > 1:
-                    parse.stdout.WriteString("multiple root commits: %s\n" % sorted(roots))
-            if not parse.options or "--names" in parse.options \
-                   or "-n" in parse.options:
-                for item in sorted(shortset):
-                    parse.stdout.WriteString("unknown shortname: %s\n" % item)
-                for item in sorted(emptyaddr):
-                    parse.stdout.WriteString("empty committer address: %s\n" % item)
-                for item in sorted(emptyname):
-                    parse.stdout.WriteString("empty committer name: %s\n" % item)
-                for item in sorted(badaddress):
-                    parse.stdout.WriteString("email address missing @: %s\n" % item)
-            if not parse.options or "--uniqueness" in parse.options \
-                   or "-u" in parse.options:
-                rs.chosen().checkUniqueness(true, announcer=lambda s: parse.stdout.WriteString("reposurgeon: " + s + "\n"))
-            if "--options" in parse.options or "-?" in parse.options:
-                os.Stdout.WriteString("""\
+			}
+		}
+        }
+	if !parse.options || "--deletealls" in parse.options
+	|| "-d" in parse.options {
+		for _, item := range sorted(deletealls) {
+			parse.stdout.WriteString(fmt.Sprintf("mid-branch delete: %s\n", item))
+		}
+        }
+	if !parse.options || "--connected" in parse.options
+	|| "-c" in parse.options {
+		for _, item := range sorted(disconnected) {
+			parse.stdout.WriteString(fmt.Sprintf("disconnected commit: %s\n", item))
+		}
+        }
+	if !parse.options || "--roots" in parse.options
+	|| "-r" in parse.options {
+		if len(roots) > 1 {
+			parse.stdout.WriteString(fmt.Sprintf("multiple root commits: %s\n", sorted)(roots))
+		}
+        }
+	if !parse.options || "--names" in parse.options
+	|| "-n" in parse.options {
+		for _, item := range sorted(shortset) {
+			parse.stdout.WriteString(fmt.Sprintf("unknown shortname: %s\n", item))
+		}
+		for _, item := range sorted(emptyaddr) {
+			parse.stdout.WriteString(fmt.Sprintf("empty committer address: %s\n", item))
+		}
+		for _, item := range sorted(emptyname) {
+			parse.stdout.WriteString(fmt.Sprintf("empty committer name: %s\n", item))
+		}
+		for _, item := range sorted(badaddress) {
+			parse.stdout.WriteString(fmt.Sprintf("email address missing @: %s\n", item))
+		}
+        }
+	if !parse.options || "--uniqueness" in parse.options
+	|| "-u" in parse.options {
+		rs.chosen().checkUniqueness(true, announcer=lambda s: parse.stdout.WriteString("reposurgeon: " + s + "\n"))
+        }
+	if string.Contains(parse.options, "--options")  || "-?" in parse.options {
+		os.Stdout.WriteString(`\
 --deletealls    -d     report mid-branch deletealls
 --connected     -c     report disconnected commits
 --roots         -r     report on multiple roots
 --attributions  -a     report on anomalies in usernames and attributions
 --uniqueness    -u     report on collisions among action stamps
 --options       -?     list available options\
-""")
+`)
+        }
+}
 */
-    //
-    // Housekeeping
-    //
+
+//
+// Housekeeping
+//
 func (rs *Reposurgeon) HelpPrefer() {
         rs.helpOutput(`
 Report or set (with argument) the preferred type of repository. With
