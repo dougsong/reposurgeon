@@ -18811,6 +18811,7 @@ type SubversionDumper struct {
         pathmap map[int]map[string]*FlowState
         markToRevision map[string]int
         branchesCreated stringSet
+	vcs *VCS
 }
 
 func newSubversionDumper(repo *Repository, nobranch bool) *SubversionDumper {
@@ -18820,6 +18821,7 @@ func newSubversionDumper(repo *Repository, nobranch bool) *SubversionDumper {
 	sd.pathmap = make(map[int]map[string]*FlowState)
 	sd.markToRevision = make(map[string]int)
 	sd.branchesCreated = newStringSet()
+	sd.vcs = findVCS("svn")
 	return sd
 }
 
@@ -18833,8 +18835,6 @@ type FlowState struct {
 func newFlowState(rev int) *FlowState {
 	return &FlowState{rev: rev, isDirectory: false, subfiles: 0} 
 }
-
-var dfltignores = strings. Replace(findVCS("svn").dfltignores, "\n/", "\n", 0)
 
 func svnprops(pdict OrderedMap) string {
 	var out string
@@ -19283,7 +19283,7 @@ func (sd *SubversionDumper) dump(selection orderedIntSet,
 					} else {
 						content = sd.repo.markToEvent(fileop.ref).(*Blob).getContent()
 					}
-					content = strings.Replace(content, dfltignores, "", 1) // Strip out default SVN ignores
+					content = strings.Replace(content, sd.vcs.dfltignores, "", 1) // Strip out default SVN ignores
 					if  _, ok := sd.pathmap[revision][svnpath]; !ok {
 						sd.pathmap[revision][svnpath] = newFlowState(revision)
 					}
