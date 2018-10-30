@@ -381,6 +381,10 @@ func (s stringSet) String() string {
 	return rep[0:len(rep)-2] + "]"
 }
 
+func (s stringSet) Empty() bool {
+	return len(s) == 0
+}
+
 // A copy of the stringSet code with the names changed to protect the innocent.
 // Lack of generics is annoying.
 type orderedIntSet []int
@@ -7299,7 +7303,7 @@ func (repo *Repository) parseDollarCookies() {
 }
 
 // Audit the repository for uniqueness properties.
-func (repo *Repository) checkUniqueness(verbosely bool, announcer func(...string)) {
+func (repo *Repository) checkUniqueness(verbosely bool, announcer func(string)) {
 	repo.uniqueness = ""
 	timecheck := make(map[string]Event)
 	timeCollisions := make(map[string][]Event)
@@ -7326,7 +7330,7 @@ func (repo *Repository) checkUniqueness(verbosely bool, announcer func(...string
 		for k := range timeCollisions {
 			reps = append(reps, k)
 		}
-		announcer("These timestamps have multiple commits: %s",
+		announcer("These timestamps have multiple commits: %s" +
 			strings.Join(reps, " "))
 	}
 	stampCollisions := newStringSet()
@@ -7353,7 +7357,7 @@ func (repo *Repository) checkUniqueness(verbosely bool, announcer func(...string
 		return
 	}
 	if announcer != nil {
-		announcer("These marks are in stamp collisions: %v",
+		announcer("These marks are in stamp collisions: " +
 			strings.Join(stampCollisions, " "))
 	}
 }
@@ -12426,7 +12430,6 @@ Supports > redirection.
 `)
 }
 
-/*
 // Look for lint in a repo.
 func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 	if rs.chosen() == nil {
@@ -12439,90 +12442,95 @@ func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 	parse := rs.newLineParse(line, stringSet{"stdout"})
 	defer parse.Closem()
 	unmapped := regexp.MustCompile("[^@]*$|[^@]*@" + rs.chosen().uuid + "$")
-	shortset := newOrderedIntSet()
+	shortset := newStringSet()
 	deletealls := newStringSet()
-	disconnected := newOrderedIntSet()
-	roots := newOrderedIntSet()
-	emptyaddr := newOrderedIntSet()
-	emptyname := newOrderedIntSet()
-	badaddress := newOrderedIntSet()
-	for _, commit in rs.chosen().commits(rs.selection) {
-		if commit.operations() && commit.operations()[0].op == "deleteall" && commit.hasChildren() {
-			deletealls.add(fmt.Sprintf("on %s at %s", commit.branch, commit.idMe()))
+	disconnected := newStringSet()
+	roots := newStringSet()
+	emptyaddr := newStringSet()
+	emptyname := newStringSet()
+	badaddress := newStringSet()
+	for _, commit := range rs.chosen().commits(rs.selection) {
+		if len(commit.operations()) > 0 && commit.operations()[0].op == deleteall && commit.hasChildren() {
+			deletealls.Add(fmt.Sprintf("on %s at %s", commit.branch, commit.idMe()))
 		}
 		if !commit.hasParents() && !commit.hasChildren() {
-			disconnected.add(commit.idMe())
+			disconnected.Add(commit.idMe())
 		} else if !commit.hasParents() {
-			roots.add(commit.idMe())
+			roots.Add(commit.idMe())
 		}
-		if unmapped {
-			for _, person := range [commit.committer] + commit.authors {
-				if unmapped.match(polybytes(person.email)) {
-					shortset.add(person.email)
-				}
+		if unmapped.MatchString(commit.committer.email) {
+			shortset.Add(commit.committer.email)
+		}
+		for _, person := range commit.authors  {
+			if unmapped.MatchString(person.email) {
+				shortset.Add(person.email)
 			}
 		}
-		if !commit.committer.email {
-			emptyaddr.add(commit.idMe())
-		} else if "@" !in commit.committer.email {
-			badaddress.add(commit.idMe())
+		if commit.committer.email == "" {
+			emptyaddr.Add(commit.idMe())
+		} else if !strings.Contains(commit.committer.email, "@") {
+			badaddress.Add(commit.idMe())
 		}
 		for _, author := range commit.authors {
-			if !author.email {
-				emptyaddr.add(commit.idMe())
-			} else if "@" !in author.email {
-				badaddress.add(commit.idMe())
+			if author.email == "" {
+				emptyaddr.Add(commit.idMe())
+			} else if !strings.Contains(author.email, "@") {
+				badaddress.Add(commit.idMe())
 			}
 		}
-		if !commit.committer.name {
-			emptyname.add(commit.idMe())
+		if commit.committer.fullname == "" {
+			emptyname.Add(commit.idMe())
 		}
 		for _, author := range commit.authors {
-			if !author.name {
-				emptyname.add(commit.idMe())
+			if author.fullname == "" {
+				emptyname.Add(commit.idMe())
 
 			}
 		}
         }
-	if !parse.options || "--deletealls" in parse.options
-	|| "-d" in parse.options {
-		for _, item := range sorted(deletealls) {
-			parse.stdout.WriteString(fmt.Sprintf("mid-branch delete: %s\n", item))
+	if parse.options.Empty() || parse.options.Contains("--deletealls") || parse.options.Contains("-d") {
+		sort.Strings(deletealls)
+		for _, item := range deletealls {
+			fmt.Fprintf(parse.stdout, "mid-branch delete: %s\n", item)
 		}
         }
-	if !parse.options || "--connected" in parse.options
-	|| "-c" in parse.options {
-		for _, item := range sorted(disconnected) {
-			parse.stdout.WriteString(fmt.Sprintf("disconnected commit: %s\n", item))
+	if parse.options.Empty() || parse.options.Contains("--connected") || parse.options.Contains("-c") {
+		sort.Strings(disconnected)
+		for _, item := range disconnected {
+			fmt.Fprintf(parse.stdout, "disconnected commit: %s\n", item)
 		}
         }
-	if !parse.options || "--roots" in parse.options
-	|| "-r" in parse.options {
+	if parse.options.Empty() || parse.options.Contains("--roots") || parse.options.Contains("-r") {
 		if len(roots) > 1 {
-			parse.stdout.WriteString(fmt.Sprintf("multiple root commits: %s\n", sorted)(roots))
+			sort.Strings(roots)
+			fmt.Fprintf(parse.stdout, "multiple root commits: %v\n", roots)
 		}
         }
-	if !parse.options || "--names" in parse.options
-	|| "-n" in parse.options {
-		for _, item := range sorted(shortset) {
-			parse.stdout.WriteString(fmt.Sprintf("unknown shortname: %s\n", item))
+	if parse.options.Empty() || parse.options.Contains("--names") || parse.options.Contains("-n") {
+		sort.Strings(shortset)
+		for _, item := range shortset {
+			fmt.Fprintf(parse.stdout, "unknown shortname: %s\n", item)
 		}
-		for _, item := range sorted(emptyaddr) {
-			parse.stdout.WriteString(fmt.Sprintf("empty committer address: %s\n", item))
+		sort.Strings(emptyaddr)
+		for _, item := range emptyaddr {
+			fmt.Fprintf(parse.stdout, "empty committer address: %s\n", item)
 		}
-		for _, item := range sorted(emptyname) {
-			parse.stdout.WriteString(fmt.Sprintf("empty committer name: %s\n", item))
+		sort.Strings(emptyname)
+		for _, item := range emptyname {
+			fmt.Fprintf(parse.stdout, "empty committer name: %s\n", item)
 		}
-		for _, item := range sorted(badaddress) {
-			parse.stdout.WriteString(fmt.Sprintf("email address missing @: %s\n", item))
+		sort.Strings(badaddress)
+		for _, item := range badaddress {
+			fmt.Fprintf(parse.stdout, "email address missing @: %s\n", item)
 		}
         }
-	if !parse.options || "--uniqueness" in parse.options
-	|| "-u" in parse.options {
-		rs.chosen().checkUniqueness(true, announcer=lambda s: parse.stdout.WriteString("reposurgeon: " + s + "\n"))
+	if parse.options.Empty() || parse.options.Contains("--uniqueness") || parse.options.Contains("-u") {
+		rs.chosen().checkUniqueness(true, func(s string) {
+			fmt.Print(s)
+		})
         }
-	if string.Contains(parse.options, "--options")  || "-?" in parse.options {
-		os.Stdout.WriteString(`\
+	if parse.options.Contains("--options")  || parse.options.Contains("-?") {
+		fmt.Print(`\
 --deletealls    -d     report mid-branch deletealls
 --connected     -c     report disconnected commits
 --roots         -r     report on multiple roots
@@ -12531,8 +12539,8 @@ func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 --options       -?     list available options\
 `)
         }
+	return false
 }
-*/
 
 //
 // Housekeeping
@@ -14076,7 +14084,7 @@ With  the --debug option, show messages about mismatches.
             self.selection = self.chosen().all()
         with rs.newLineParse(line, nil) as parse:
             timefuzz = 90
-            changelog = "--changelog" in parse.options
+            changelog = parse.options.Contains("--changelog")
             if parse.line:
                 try:
                     timefuzz = int(parse.line)
