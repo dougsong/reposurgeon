@@ -14073,73 +14073,101 @@ With  the --debug option, show messages about mismatches.
 `)
 }
 
-/*
-    func (rs *Reposurgeon) DoCoalesce(self, line str):
-        "Coalesce events in the specified selection set."
-        repo = self.chosen()
-        if not repo:
-            complain("no repo is loaded")
-            return
-        if self.selection is None:
-            self.selection = self.chosen().all()
-        with rs.newLineParse(line, nil) as parse:
-            timefuzz = 90
-            changelog = parse.options.Contains("--changelog")
-            if parse.line:
-                try:
-                    timefuzz = int(parse.line)
-                except ValueError:
-                    raise Recoverable("time-fuzz value must be an integer")
-            func is_clog(commit):
-                return "empty log message" in commit.comment \
-                           and len(commit.operations()) == 1 \
-                           and commit.operations()[0].op == opM \
-                           and commit.operations()[0].path.endswith("ChangeLog")
-            func coalesce_match(cthis, cnext):
-                if cthis.committer.email != cnext.committer.email:
-                    if context.verbose >= debugDELETE or '--debug' in parse.options:
-                        complain("committer email mismatch at %s" % cnext.idMe())
-                    return false
-                if cthis.committer.date.delta(cnext.committer.date) >= timefuzz:
-                    if context.verbose >= debugDELETE or '--debug' in parse.options:
-                        complain("time fuzz exceeded at %s" % cnext.idMe())
-                    return false
-                if changelog and not is_clog(cthis) and is_clog(cnext):
-                    return true
-                if cthis.comment != cnext.comment:
-                    if context.verbose >= debugDELETE or '--debug' in parse.options:
-                        complain("comment mismatch at %s" % cnext.idMe())
-                    return false
-                return true
-            eligible = {}
-            squashes = []
-            for (_i, commit) in self.commits(self.selection):
-                if commit.branch not in eligible:
-                    # No active commit span for this branch - start one
-                    # with the mark of this commit
-                    eligible[commit.branch] = [commit.mark]
-                else if coalesce_match(
-                    repo.markToEvent(eligible[commit.branch][-1]),
-                    commit):
-                    # This commit matches the one at the end of its branch span.
-                    # Append its mark to the span.
-                    eligible[commit.branch].append(commit.mark)
-                else:
-                    # This commit doesn't match the one at the end of its span.
-                    # Coalesce the span and start a new one with this commit.
-                    if len(eligible[commit.branch]) > 1:
-                        squashes.append(eligible[commit.branch])
-                    eligible[commit.branch] = [commit.mark]
-            for endspan in eligible.values():
-                if len(endspan) > 1:
-                    squashes.append(endspan)
-            for span in squashes:
-                # Prevent lossage when last is a ChangeLog commit
-                repo.markToEvent(span[-1]).comment = repo.markToEvent(span[0]).comment
-                repo.squash([repo.find(mark) for mark in span[:-1]], ("--coalesce",))
-            if context.verbose > 0:
-                announce(debugSHOUT, "%d spans coalesced." % len(squashes))
-*/
+// Coalesce events in the specified selection set.
+func (rs *Reposurgeon) DoCoalesce(line string) (stopOut bool) {
+	repo := rs.chosen()
+	if repo == nil {
+		complain("no repo is loaded")
+		return false
+	}
+	if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+	}
+	parse := rs.newLineParse(line, nil)
+	defer parse.Closem()
+	timefuzz := 90
+	changelog := parse.options.Contains("--changelog")
+	if parse.line  != "" {
+		var err error
+		timefuzz, err = strconv.Atoi(parse.line)
+		if err != nil {
+			complain("time-fuzz value must be an integer")
+			return false
+		}
+        }
+	isChangelog := func(commit *Commit) bool {
+		return strings.Contains(commit.comment, "empty log message") && len(commit.operations()) == 1 && commit.operations()[0].op == opM && strings.HasSuffix(commit.operations()[0].path, "ChangeLog")
+        }
+	coalesceMatch := func(cthis *Commit, cnext *Commit) bool {
+		verbose := context.verbose >= debugDELETE || parse.options.Contains("--debug")
+		if cthis.committer.email != cnext.committer.email {
+			if verbose {
+				complain("committer email mismatch at %s", cnext.idMe())
+			}
+			return false
+		}
+		if cthis.committer.date.delta(cnext.committer.date) >= time.Duration(timefuzz) * time.Second {
+			if verbose {
+				complain("time fuzz exceeded at %s", cnext.idMe())
+			}
+			return false
+		}
+		if changelog && !isChangelog(cthis) && isChangelog(cnext) {
+			return true
+		}
+		if cthis.comment != cnext.comment {
+			if verbose {
+				complain("comment mismatch at %s", cnext.idMe())
+			}
+			return false
+		}
+		return true
+        }
+	eligible := make(map[string][]string)
+	squashes := make([][]string, 0)
+	for _, commit := range repo.commits(rs.selection) {
+		trial, ok := eligible[commit.branch]
+		if !ok {
+			// No active commit span for this branch - start one
+			// with the mark of this commit
+			eligible[commit.branch] = []string{commit.mark}
+		} else if coalesceMatch(
+			repo.markToEvent(trial[len(trial)-1]).(*Commit),
+			commit) {
+				// This commit matches the one at the
+				// end of its branch span.  Append its
+				// mark to the span.
+				eligible[commit.branch] = append(eligible[commit.branch], commit.mark)
+			} else {
+				// This commit doesn't match the one
+				// at the end of its span.  Coalesce
+				// the span and start a new one with
+				// this commit.
+				if len(eligible[commit.branch]) > 1 {
+					squashes = append(squashes, eligible[commit.branch])
+				}
+				eligible[commit.branch] = []string{commit.mark}
+			}
+        }
+	for _, endspan := range eligible {
+		if len(endspan) > 1 {
+			squashes = append(squashes, endspan)
+		}
+        }
+	for _, span := range squashes {
+		// Prevent lossage when last is a ChangeLog commit
+		repo.markToEvent(span[len(span)-1]).(*Commit).comment = repo.markToEvent(span[0]).(*Commit).comment
+		squashable := make([]int, 0)
+		for _, mark := range span[:len(span)-1] {
+			squashable = append(squashable, repo.find(mark))
+		}
+		repo.squash(squashable, stringSet{"--coalesce"})
+        }
+	if context.verbose > 0 {
+		announce(debugSHOUT, "%d spans coalesced.", len(squashes))
+	}
+	return false
+}
 
 func (rs *Reposurgeon) HelpAdd() {
         rs.helpOutput(`
