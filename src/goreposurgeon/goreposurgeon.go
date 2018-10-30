@@ -11037,16 +11037,8 @@ type Reposurgeon struct {
 	preferred        *VCS
 	startTime        time.Time
 	promptFormat     string
+        ignorename       string
 }
-
-/*
-        self.use_rawinput = true
-        self.ignorename = None
-        self.callstack = []
-        self.definitions = {}
-        self.capture = None
-*/
-
 
 var unclean = regexp.MustCompile("[^\n]*\n[^\n]")
 
@@ -11068,7 +11060,7 @@ func newReposurgeon() *Reposurgeon {
 }
 
 
-// SetCore is a Kommandant housekeeping hook, not yet used
+// SetCore is a Kommandant housekeeping hook.
 func (rs *Reposurgeon) SetCore(k *kommandant.Kmdt) {
 	rs.cmd = k
 }
