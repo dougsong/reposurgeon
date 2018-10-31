@@ -103,8 +103,6 @@ import (
 	shutil "github.com/termie/go-shutil"
 	terminal "golang.org/x/crypto/ssh/terminal"
 	uuid "github.com/google/uuid"
-
-
 )
 
 const version = "4.0-pre"
@@ -3044,6 +3042,7 @@ type Blob struct {
 	size     int64    // length start if this blob refers into a dump
 	abspath  string
 	deleteme bool
+	expungehook *Blob
 }
 
 var blobseq int
@@ -3331,7 +3330,7 @@ func (t *Tag) forget() {
 
 // index returns our 0-origin index in our repo.
 func (t *Tag) index() int {
-	return t.repo.index(t)
+	return t.repo.eventToIndex(t)
 }
 
 // getComment returns the comment attached to a tag
@@ -3595,7 +3594,7 @@ func (reset Reset) getDelFlag() bool {
 
 // idMe IDs this reset for humans.
 func (reset Reset) idMe() string {
-	return fmt.Sprintf("reset-%s@%d", reset.ref, reset.repo.index(reset))
+	return fmt.Sprintf("reset-%s@%d", reset.ref, reset.repo.eventToIndex(reset))
 }
 
 // getMark returns the reset's identifying mark
@@ -3979,6 +3978,7 @@ type Commit struct {
 	_parentNodes []CommitLike // list of parent nodes
 	_childNodes  []CommitLike // list of child nodes
 	_pathset     stringSet
+	expungehook  *Commit
 }
 
 func (commit Commit) getDelFlag() bool {
@@ -4029,7 +4029,7 @@ func (commit *Commit) attach(event Event) {
 
 // index gives the commit's 0-origin index in our repo.
 func (commit *Commit) index() int {
-	return commit.repo.index(commit)
+	return commit.repo.eventToIndex(commit)
 }
 
 // getComment returns the comment attached to a commit
@@ -5194,7 +5194,7 @@ func (p *Passthrough) emailIn(msg *MessageBlock) {
 
 // idMe IDs this passthrough for humans."
 func (p Passthrough) idMe() string {
-	return fmt.Sprintf("passthrough@%d", p.repo.index(p))
+	return fmt.Sprintf("passthrough@%d", p.repo.eventToIndex(p))
 }
 
 //getMark is a stub required for the Event interface
@@ -6556,7 +6556,7 @@ func (repo *Repository) markToEvent(mark string) Event {
 }
 
 // index returns the index of the specified object in the main even list
-func (repo *Repository) index(obj Event) int {
+func (repo *Repository) eventToIndex(obj Event) int {
 	for ind, event := range repo.events {
 		if event == obj {
 			return ind
@@ -7400,7 +7400,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 					}
 				}
 				for _, tag := range commit.attachments {
-					selection.Add(repo.index(tag))
+					selection.Add(repo.eventToIndex(tag))
 				}
 			}
 		}
@@ -8201,7 +8201,7 @@ func (repo *Repository) gcBlobs() {
 // Delete machinery ends here
 //
 
-// Return options and features.
+// Return options and features.  Makes a copy slice.
 func (repo *Repository) frontEvents() []Event {
 	var front = make([]Event, 0)
 	for _, event := range repo.events {
@@ -8263,7 +8263,7 @@ func (repo *Repository) resort() {
 		case *Commit:
 			commit := node.(*Commit)
 			for _, parent := range commit.parents() {
-				p := repo.index(parent)
+				p := repo.eventToIndex(parent)
 				//assert(n != p)
 				start.Remove(n)
 				edges.eout.Add(p)
@@ -9462,17 +9462,17 @@ func (rl *RepositoryList) repoByName(name string) *Repository {
 }
 
 // Remove a repo by name.
-func (rs *RepositoryList) removeByName(name string) {
-	if rs.repo != nil && rs.repo.name == name {
-		rs.unchoose()
+func (rl *RepositoryList) removeByName(name string) {
+	if rl.repo != nil && rl.repo.name == name {
+		rl.unchoose()
 	}
 	newList := make([]*Repository, 0)
-	for _, repo := range rs.repolist {
+	for _, repo := range rl.repolist {
 		if repo.name != name {
 			newList = append(newList, repo)
 		}
 	}
-	rs.repolist = newList
+	rl.repolist = newList
 }
 
 // Apply a graph-coloring algorithm to see if the repo can be split here.
@@ -9672,167 +9672,272 @@ func (repo *Repository) cutClear(early *Commit, late *Commit, cutIndex int) {
         # Put the result on the load list
         rs.repolist.append(union)
         rs.choose(union)
-    func expunge(rs, selection, matchers):
-        "Expunge a set of files from the commits in the selection set."
-        func digest(toklist):
-            digested = []
-            notagify = false
-            for s in toklist:
-                if s.startswith('/') and s.endswith('/'):
-                    digested.append("(?:" + s[1:-1] + ")")
-                else if s == '--notagify':
-                    notagify = true
-                else:
-                    digested.append("^" + re.escape(s) + "$")
-            return regexp.MustCompile("|".join(digested).encode('ascii')), notagify
-        try:
-            # First pass: compute fileop deletions
-            alterations = []
-            expunge, notagify = digest(matchers)
-            for ei in selection:
-                event = rs.repo[ei]
-                deletia = []
-                if hasattr(event, "fileops"):
-                    for (i, fileop) in enumerate(event.operations()):
-                        if debugEnable(debugDELETE):
-                            os.Stdout.WriteString(polystr(fileop) + "\n")
-                        if fileop.op in "DM":
-                            if expunge.search(polybytes(fileop.path)):
-                                deletia.append(i)
-                        else if fileop.op in "RC":
-                            fileop.sourcedelete = expunge.search(polybytes(fileop.source))
-                            fileop.targetdelete = expunge.search(polybytes(fileop.target))
-                            if fileop.sourcedelete:
-                                deletia.append(i)
-                                announce(debugSHOUT, "following %s of %s to %s" %
-                                         (fileop.op,
-                                          fileop.source,
-                                          fileop.target))
-                                if fileop.op == opR:
-                                    try:
-                                        matchers.remove("^" + fileop.source + "$")
-                                    except ValueError:
-                                        pass
-                                matchers.append("^" + fileop.target + "$")
-                                expunge, notagify = digest(matchers)
-                            else if fileop.targetdelete:
-                                if fileop.op == opR:
-                                    fileop.op = opD
-                                else if fileop.op == opC:
-                                    deletia.append(i)
-                                matchers.append("^" + fileop.target + "$")
-                                expunge, notagify = digest(matchers)
-                alterations.append(deletia)
-        except re.error:
-            raise Recoverable("you confused the regexp processor!")
-        # Second pass: perform actual fileop expunges
-        expunged = Repository(rs.repo.name + "-expunges")
-        expunged.seekstream = rs.repo.seekstream
-        expunged.makedir()
-        for event in rs.repo:
-            event.deletehook = None
-        for (ei, deletia) in zip(selection, alterations):
-            if not deletia: continue
-            event = rs.repo[ei]
-            keepers = []
-            blobs = []
-            for i in deletia:
-                fileop = event.operations()[i]
-                if fileop.op == opD:
-                    keepers.append(fileop)
-                    if context.verbose:
-                        announce(debugSHOUT, "at %d, expunging D %s" \
-                                 % (ei+1, fileop.path))
-                else if fileop.op == opM:
-                    keepers.append(fileop)
-                    if fileop.ref != 'inline':
-                        bi = rs.repo.find(fileop.ref)
-                        blob = rs.repo[bi]
-                        assert(isinstance(blob, Blob))
-                        blobs.append(blob)
-                    if context.verbose:
-                        announce(debugSHOUT, "at %d, expunging M %s" \
-                                 % (ei+1, fileop.path))
-                else if fileop.op in (opR, opC):
-                    assert(fileop.sourcedelete or fileop.targetdelete)
-                    if fileop.sourcedelete and fileop.targetdelete:
-                        keepers.append(fileop)
-            event.setOperations([op for (i, op) in enumerate(event.operations())
-                                  if i not in set(deletia)])
-            event.invalidatePathsetCache()
-            # If there are any keeper fileops, hang them them and
-            # their blobs on keeps, cloning the commit() for them.
-            if keepers:
-                newevent = event.clone(expunged)
-                newevent.setOperations(keepers)
-                newevent.invalidatePathsetCache()
-                for blob in blobs:
-                    blob.deletehook = blob.clone(expunged)
-                event.deletehook = newevent
-        # Build the new repo and hook it into the load list
-        expunged.events = copy.copy(rs.repo.frontEvents())
-        expunged.declareSequenceMutation("expunge operation")
-        expunged_branches = expunged.branchset()
-        for event in rs.repo:
-            if event.deletehook:
-                expunged.addEvent(event.deletehook)
-                event.deletehook = None
-            else if isinstance(event, Reset):
-                if event.target is not None:
-                    if event.target.deletehook:
-                        expunged.addEvent(copy.deepcopy(event))
-                else if isinstance(event, Reset) and event.ref in expunged_branches:
-                    newreset = copy.copy(event)
-                    newreset.repo = expunged
-                    expunged.addEvent(newreset)
-            else if isinstance(event, Tag) and \
-                    event.target is not None and \
-                    event.target.deletehook:
-                expunged.addEvent(copy.deepcopy(event))
-        for event in itertools.chain(rs.repo.events, expunged.events):
-            if hasattr(event, "deletehook"):
-                delattr(event, "deletehook")
-        expunged_marks = set(event.mark for event in expunged.events if hasattr(event, "mark"))
-        for event in expunged.events:
-            if hasattr(event, "parents"):
-                # Parents still are Commits in the non-expunged repository
-                # We use setParentMarks so that the correct parents are
-                # searched in the expunged repository.
-                event.setParentMarks(m for m in event.parentMarks()
-                                         if m in expunged_marks)
-        keeper_marks = set(event.mark for event in rs.repo.events if hasattr(event, "mark"))
-        for event in rs.repo.events:
-            if hasattr(event, "parents"):
-                event.setParents([e for e in event.parents() if e.mark in keeper_marks])
-        backreferences = collections.Counter()
-        for event in rs.repo.events:
-            if isinstance(event, Commit):
-                for fileop in event.operations():
-                    if fileop.op == opM:
-                        backreferences[fileop.ref]++
-        # Now remove commits that no longer have fileops, and released blobs.
-        # Announce events that will be deleted.
-        if debugEnable(debugDELETE):
-            to_delete = [i+1 for i,e in enumerate(rs.repo.events)
-                    if (isinstance(e, Blob) and not backreferences[e.mark])
-                    or (isinstance(e, Commit) and not e.operations())]
-            if not to_delete:
-                announce(debugSHOUT, "deletion set is empty.")
-            else:
-                announce(debugSHOUT, "deleting blobs and empty commits %s" % to_delete)
-            del to_delete
-        # First delete the blobs.
-        rs.repo.events = [e for e in rs.repo.events
-                              if (not isinstance(e, Blob))
-                              or backreferences[e.mark]]
-        # Then tagify empty commits.
-        rs.repo.tagifyEmpty(canonicalize = false, createTags = not notagify)
-        # And tell we changed the manifests and the event sequence.
-        rs.repo.invalidateManifests()
-        rs.repo.declareSequenceMutation("expunge cleanup")
-        # At last, add the expunged repository to the loaded list.
-        rs.repolist.append(expunged)
+*/
 
+// Expunge a set of files from the commits in the selection set.
+func (rs *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
+	digest := func(toklist []string) (*regexp.Regexp, bool) {
+		digested := make([]string, 0)
+		notagify := false
+		for _, s := range toklist {
+			if strings.HasPrefix(s, "/") && strings.HasSuffix(s, "/") {
+				digested = append(digested, "(?:" + s[1:len(s)-1] + ")")
+			} else if s == "--notagify" {
+				notagify = true
+			} else {
+				digested = append(digested, "^" + regexp.QuoteMeta(s) + "$")
+			}
+		}
+		return regexp.MustCompile(strings.Join(digested, "|")), notagify
+	}
+	// First pass: compute fileop deletions
+	alterations := make([][]int, 0)
+	expunge, notagify := digest(matchers)
+	for _, ei := range selection {
+		event := rs.repo.events[ei]
+		deletia := make([]int, 0)
+		commit, ok := event.(*Commit)
+		if ok {
+			for i, fileop := range commit.operations() {
+				announce(debugDELETE, fileop.String() + "\n")
+				if fileop.op == opD || fileop.op == opM {
+					if expunge.MatchString(fileop.path) {
+						deletia = append(deletia, i)
+					}
+				} else if fileop.op  == opR || fileop.op == opC {
+					sourcedelete := expunge.MatchString(fileop.source)
+					targetdelete := expunge.MatchString(fileop.target)
+					if sourcedelete {
+						deletia = append(deletia, i)
+						announce(debugSHOUT, "following %s of %s to %s", fileop.op, fileop.source, fileop.target)
+						if fileop.op == opR {
+							newmatchers := make([]string, 0)
+							for _, m := range matchers {
+								if m != "^" + fileop.source + "$" {
+									newmatchers = append(newmatchers, m)
+								}
+							}
+							matchers = newmatchers
+						}
+						matchers = append(matchers, "^" + fileop.target + "$")
+						expunge, notagify = digest(matchers)
+					} else if targetdelete {
+						if fileop.op == opR {
+							fileop.op = opD
+						} else if fileop.op == opC {
+							deletia = append(deletia, i)
+						}
+						matchers = append(matchers, "^" + fileop.target + "$")
+						expunge, notagify = digest(matchers)
+					}
+				}
+			}
+		}
+		alterations = append(alterations, deletia)
+	}
+	// Second pass: perform actual fileop expunges
+	expunged := newRepository(rs.repo.name + "-expunges")
+	expunged.seekstream = rs.repo.seekstream
+	expunged.makedir()
+	for _, event := range rs.repo.events {
+		switch event.(type) {
+		case *Blob:
+			blob := event.(*Blob)
+			blob.expungehook = nil
+		case *Commit:
+			commit := event.(*Commit)
+			commit.expungehook = nil
+		}
+	}
+	for i, ei  := range selection {
+		deletia := alterations[i]
+		if len(deletia)== 0 {
+			continue
+		}
+		commit := rs.repo.events[ei].(*Commit)
+		keepers := make([]FileOp, 0)
+		blobs := make([]*Blob, 0)
+		for _, i := range deletia {
+			fileop := commit.operations()[i]
+			var sourcedelete bool
+			var targetdelete bool
+			if fileop.op == opD {
+				keepers = append(keepers, fileop)
+				if context.verbose > 0 {
+					announce(debugSHOUT, "at %d, expunging D %s",
+						ei+1, fileop.path)
+				}
+			} else if fileop.op == opM {
+				keepers = append(keepers, fileop)
+				if fileop.ref != "inline" {
+					bi := rs.repo.find(fileop.ref)
+					blob := rs.repo.events[bi].(*Blob)
+					//assert(isinstance(blob, Blob))
+					blobs = append(blobs, blob)
+				}
+				if context.verbose > 0 {
+					announce(debugSHOUT, "at %d, expunging M %s", ei+1, fileop.path)
+				}
+			} else if fileop.op == opR || fileop.op == opC {
+				//assert(sourcedelete || targetdelete)
+				if sourcedelete && targetdelete {
+					keepers = append(keepers, fileop)
+				}
+			}
+		}
+
+		nondeletia := make([]FileOp, 0)
+		deletiaSet := newOrderedIntSet(deletia...)
+		for i, op := range commit.operations() {
+			if !deletiaSet.Contains(i) {
+				nondeletia = append(nondeletia, op)
+			}
+		}
+		commit.setOperations(nondeletia)
+		commit.invalidatePathsetCache()
+		// If there are any keeper fileops, hang them them and
+		// their blobs on keeps, cloning the commit() for them.
+		if len(keepers) > 0 {
+			newcommit := commit.clone(expunged)
+			newcommit.setOperations(keepers)
+			newcommit.invalidatePathsetCache()
+			for _, blob := range blobs {
+				blob.expungehook = blob.clone(expunged)
+			}
+			commit.expungehook = newcommit
+		}
+	}
+	// Build the new repo and hook it into the load list
+	expunged.events = rs.repo.frontEvents()
+	expunged.declareSequenceMutation("expunge operation")
+	expungedBranches := expunged.branchset()
+	expungedMarks := make([]string, 0)
+	// FIXME: Computation of keeperMarks replicates the Python behavior
+	// keeper_marks = set(event.mark for event in self.repo.events if hasattr(event, "mark"))
+	// which selects *all* marks in the unmodified repository, but this is
+	// probably wrong - it should probably explude marks 
+	keeperMarks := make([]string, 0)
+	for _, event := range rs.repo.events {
+		switch event.(type) {
+		case *Blob:
+			blob := event.(*Blob)
+			if blob.expungehook == nil {
+				keeperMarks = append(keeperMarks, blob.mark)
+			} else {
+				expunged.addEvent(blob.expungehook)
+				blob.expungehook = nil
+				expungedMarks = append(expungedMarks, blob.mark)
+				// FIXME: Probably wrong
+				keeperMarks = append(keeperMarks, blob.mark)
+			}
+		case *Commit:
+			commit := event.(*Commit)
+			if commit == nil {
+				keeperMarks = append(keeperMarks, commit.mark)
+			} else {
+				expunged.addEvent(commit.expungehook)
+				commit.expungehook = nil
+				expungedMarks = append(expungedMarks, commit.mark)
+				// FIXME: Probably wrong
+				keeperMarks = append(keeperMarks, commit.mark)
+			}
+		case *Reset:
+			reset := event.(*Reset)
+			if expungedBranches.Contains(reset.ref) {
+				expunged.addEvent(reset)
+				reset.repo = expunged
+			}
+		case *Tag:
+			tag := event.(*Tag)
+			target := rs.repo.markToEvent(tag.committish).(*Commit)
+			if target.expungehook != nil {
+				expunged.addEvent(tag)
+				tag.repo = expunged
+			}
+		}
+	}
+	/*
+	 * FIXME: This code isn't right.
+	 *
+	 * I think this may have been somebody else's mistaken attempt at a fix.
+	 * The prose in the command doesn't look like mine (ESR's) and the
+	 * concept is wrong - the marks from the old repository can't just be
+	 * deleted, they need to be chased so the expunge repository has a
+	 * coherent set of parent-child chains.
+	 *
+	 * Probably this code need to be reworked so it clones the entire 
+	 * repository structure and does complementary deletes.
+	 *
+	for _, event := range expunged.events {
+		commit, ok := event.(*Commit)
+		if ok {
+			// Parents still are Commits in the
+			// non-expunged repository We use
+			// setParentMarks so that the correct parents
+			// are searched in the expunged repository.
+			commit.setParentMarks(m for m in event.parentMarks()
+				if m in expungedMarks)
+		}
+        }
+	*/
+	//FIXME: No-op, because we're still replicating the Python behavior of
+	// keeping all marks.
+	//for _, commits := range repo.commits() {
+	//    commit.setParents([e for e in event.parents() if e.mark in keeper_marks])
+        //}
+   
+	backreferences := make(map[string]int)
+	for _, commit := range rs.repo.commits(nil) {
+		for _, fileop := range commit.operations() {
+			if fileop.op == opM {
+				backreferences[fileop.ref]++
+			}
+		}
+	}
+	// Now remove commits that no longer have fileops, and released blobs.
+	// Announce events that will be deleted.
+	if debugEnable(debugDELETE) {
+		toDelete := make([]int, 0)
+		for i, event := range rs.repo.events {
+			switch event.(type) {
+			case *Blob:
+				blob := event.(*Blob)
+				if backreferences[blob.mark] == 0 {
+					toDelete = append(toDelete, i+1)
+				}
+			case *Commit:
+				commit := event.(*Commit)
+				if len(commit.operations()) == 0 {
+					toDelete = append(toDelete, i+1)
+				}
+			}
+		}
+		if len(toDelete) == 0 {
+			announce(debugSHOUT, "deletion set is empty.")
+		} else {
+			announce(debugSHOUT, "deleting blobs and empty commits %v", toDelete)
+		}
+	}
+	// First delete the blobs.  Use the SliceTricks idiom for filtering
+	// in place so no additional allocation is required.
+	filtered := rs.repo.events[:0]
+	for _, event := range rs.repo.events {
+		blob, ok := event.(*Blob)
+		if !ok || backreferences[blob.mark] > 0 {
+			filtered = append(filtered, event)
+		}
+	}
+	rs.repo.events = filtered
+	// Then tagify empty commits.
+	rs.repo.tagifyEmpty(nil, false, false, false, nil, nil, !notagify, nil)
+	// And tell we changed the manifests and the event sequence.
+	//rs.repo.invalidateManifests()
+	rs.repo.declareSequenceMutation("expunge cleanup")
+	// At last, add the expunged repository to the loaded list.
+	rs.repolist = append(rs.repolist, expunged)
+}
+
+/*
 func debug_lexer(f):
     """Function decorator to debug SelectionParser selection parsing methods."""
     @functools.wraps(f)
@@ -11255,7 +11360,7 @@ func (rs *Reposurgeon) evalNeighborhood(state selEvalState,
                                 add_set.add(i)
             else if isinstance(event, (Tag, Reset)):
                 if event.target:
-                    add_set.add(event.target.index())
+                    add_set.add(event.target.eventToIndex())
         value |= add_set
         value -= remove_set
         value = list(value)
@@ -11574,7 +11679,7 @@ func (rs *Reposurgeon) hasReference(event Event) bool {
         # Breadth-first traversal of the graph
         while queue:
             for commit in operation(queue.popleft()):
-                ind = repo.index(commit)
+                ind = repo.eventToIndex(commit)
                 if ind not in result:
                     result.add(ind)
                     queue.append(commit)
@@ -13534,7 +13639,7 @@ func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 			errorCount++
 		}
 		if event != nil {
-			ei := repo.index(event)
+			ei := repo.eventToIndex(event)
 			if ei == -1 {
 				complain("event at update %d can't be found in repository", i+1)
 				return false
@@ -14632,17 +14737,19 @@ Thus, this command can be used to carve a repository into sections by
 file path matches.
 `)
 }
+// Expunge files from the chosen repository.
+func (rs *Reposurgeon) DoExpunge(line string) {
+	if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return
+	}
+	if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+	}
+	rs.expunge(rs.selection, strings.Fields(line))
+}
 
-/*
-   func (rs *Reposurgeon) DoExpunge(self, line str):
-        "Expunge files from the chosen repository."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        if self.selection is None:
-            self.selection = self.chosen().all()
-        self.expunge(self.selection, line.split())
-*/
+
 func (rs *Reposurgeon) HelpSplit() {
         rs.helpOutput(`
 Split a specified commit in two, the opposite of squash.
@@ -15817,7 +15924,7 @@ default patterns.
                         blob.addalias(self.ignorename)
                         blob.setContent(self.preferred.dfltignores)
                         blob.mark = ":insert"
-                        repo.events.insert(repo.index(earliest), blob)
+                        repo.events.insert(repo.eventToIndex(earliest), blob)
                         repo.declareSequenceMutation("ignore creation")
                         newop = FileOp(self.chosen())
                         newop.construct("M", 0o100644, ":insert", self.ignorename)
@@ -17723,7 +17830,7 @@ deleted name.
                 obj = sp.repo.legacyMap["SVN:%s" % max_rev]
             except KeyError:
                 return None
-            for ind in range(sp.repo.index(obj), -1, -1):
+            for ind in range(sp.repo.eventToIndex(obj), -1, -1):
                 event = sp.repo.events[ind]
                 if commit, ok := event.(*Commit); ok:
 `                    b = getbranch(event)
