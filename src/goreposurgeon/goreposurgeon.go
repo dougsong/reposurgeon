@@ -13768,7 +13768,7 @@ only.
 With --replace, the behavior is like --regexp but the expressions are
 not interpreted as regular expressions. (This is slighly faster).
 
-With --dedos, DOS/Windows-style \\r\\n line terminators are replaced with \\n.
+With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
 `)
 }
 /*
@@ -14524,28 +14524,31 @@ set have the same SHA1, throw away all but the first, and change fileops
 referencing them to instead reference the (kept) first blob.
 `)
 }
-
-/*
-    func (rs *Reposurgeon) DoDedup(line str):
-        "Deduplicate identical (up to SHA1) blobs within the selection set"
-        pacify_pylint(line)
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        if self.selection is None:
-            self.selection = self.chosen().all()
-        blob_map = {} # hash -> mark
-        dup_map = {} # duplicate mark -> canonical mark
-        for _, event in self.selected():
-            if isinstance(event, Blob):
-                sha = event.sha()
-                if sha in blob_map:
-                    dup_map[event.mark] = blob_map[sha]
-                else:
-                    blob_map[sha] = event.mark
-        self.chosen().dedup(dup_map)
-        return
-*/
+// Deduplicate identical (up to SHA1) blobs within the selection set
+func (rs *Reposurgeon) DoDedup(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+	}
+	if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+	}
+	blobMap := make(map[string]string) // hash -> mark
+	dupMap :=  make(map[string]string) // duplicate mark -> canonical mark
+	for _, ei := range rs.selection {
+		event := rs.chosen().events[ei]
+		if blob, ok := event.(*Blob); ok {
+			sha := blob.sha()
+			if blobMap[sha] != "" {
+				dupMap[blob.mark] = blobMap[sha]
+			} else {
+				blobMap[sha] = blob.mark
+			}
+		}
+	}
+	rs.chosen().dedup(dupMap)
+	return false
+}
 
 func (rs *Reposurgeon) HelpTimeoffset() {
         rs.helpOutput(`
