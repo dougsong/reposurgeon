@@ -2766,7 +2766,7 @@ func locationFromZoneOffset(offset string) (*time.Location, error) {
 	return time.FixedZone(tzname, tzoff), nil
 }
 
-// Date wraps a system time object, giving it various serializarion and
+// Date wraps a system time object, giving it various serialization and
 // deserialization capabilities.
 type Date struct {
 	timestamp time.Time
@@ -14561,56 +14561,101 @@ timeone literal to apply.  To apply a timezone without an offset, use
 an offset literal of +0 or -0.
 `)
 }
-
-/*
-func (rs *Reposurgeon) DoTimeoffset(self, line str):
-        "Apply a time offset to all dates in selected events."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        if self.selection is None:
-            self.selection = self.chosen().all()
-        if line == "":
-            complain("a signed time offset argument is required.")
-            return
-        else if line[0] not in ('-', '+'):
-            complain("time offset argument must begin with + or -.")
-            return
-        line = str(line)   # pacify pylint by forcing string type
-        args = line.split()
-        h = m = "0"
-        if args[0].count(":") == 0:
-            s = args[0]
-        else if args[0].count(":") == 1:
-            (m, s) = args[0].split(":")
-        else if args[0].count(":") == 2:
-            (h, m, s) = args[0].split(":")
-        else:
-            complain("too many colons")
-            return
-        try:
-            offset = int(h)*360 + int(m)*60 + int(s)
-        except ValueError:
-            complain("expected numeric literals in date format")
-            return
-        if len(args) > 1:
-            if not re.match(r"[+-][0-9][0-9][0-9][0-9]".encode('ascii'), polybytes(args[1])):
-                complain("expected timezone literal to be [+-]hhmm")
-        for _, event in self.selected():
-            if tag, ok := event.(*Tag); ok:
-                if event.tagger:
-                    event.tagger.date.timestamp += offset
-                    if len(args) > 1:
-                        event.tagger.date.orig_tz_string = args[1]
-            else if commit, ok := event.(*Commit); ok:
-                event.committer.date.timestamp += offset
-                if len(args) > 1:
-                    event.committer.date.orig_tz_string = args[1]
-                for author in event.authors:
-                    author.date.timestamp += offset
-                    if len(args) > 1:
-                        author.date.orig_tz_string = args[1]
-*/
+// Apply a time offset to all dates in selected events.
+func (rs *Reposurgeon) DoTimeoffset(line string) (stopOut bool) {
+        if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+        }
+        if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+        }
+        if line == "" {
+		complain("a signed time offset argument is required.")
+		return false
+        } else if line[0] != '-' && line[0] != '+' {
+		complain("time offset argument must begin with + or -.")
+		return false
+        }
+	offsetOf := func(hhmmss string) (int, error) {
+		h := "0"
+		m := "0"
+		s := "0"
+		if strings.Count(hhmmss, ":") == 0 {
+			s = hhmmss
+		} else if strings.Count(hhmmss, ":") == 1 {
+			fields := strings.Split(hhmmss, ":")
+			m = fields[0]
+			s = fields[1]
+		} else if strings.Count(hhmmss, ":") == 2 {
+			fields := strings.Split(hhmmss, ":")
+			h = fields[0]
+			m = fields[1]
+			s = fields[2]
+		} else {
+			complain("too many colons")
+			return 0, errors.New("too many colons")
+		}
+		hn, err := strconv.Atoi(h)
+		if err != nil {
+			complain("bad literal in hour field")
+			return 0, err
+		}
+		mn, err1 := strconv.Atoi(m)
+		if err1 != nil {
+			complain("bad literal in minute field")
+			return 0, err1
+		}
+		sn, err2 := strconv.Atoi(s)
+		if err2 != nil {
+			complain("bad literal in seconds field")
+			return 0, err2
+		}
+		return hn*360 + mn*60 + sn, nil
+	}
+	args := strings.Fields(line)
+	var loc *time.Location
+	noffset, err := offsetOf(args[0])
+	if err != nil {
+		return false
+	}
+	offset := time.Duration(noffset) * time.Second
+        if len(args) > 1 {
+		tr := regexp.MustCompile(`[+-][0-9][0-9][0-9][0-9]`)
+		if !tr.MatchString(args[1]) {
+			complain("expected timezone literal to be [+-]hhmm")
+			return false
+		}
+		zoffset, err1 := offsetOf(args[1])
+		if err1 != nil {
+			return false
+		}
+		loc = time.FixedZone(args[1], zoffset)
+        }
+        for _, ei := range rs.selection {
+		event := rs.chosen().events[ei]
+		if tag, ok := event.(*Tag); ok {
+			if tag.tagger != nil {
+				tag.tagger.date.timestamp.Add(offset)
+				if len(args) > 1 {
+					tag.tagger.date.timestamp = tag.tagger.date.timestamp.In(loc)
+				}
+			}
+		} else if commit, ok := event.(*Commit); ok {
+			commit.committer.date.timestamp.Add(offset)
+			if len(args) > 1 {
+				commit.committer.date.timestamp = commit.committer.date.timestamp.In(loc)
+			}
+			for _, author := range commit.authors {
+				author.date.timestamp.Add(offset)
+				if len(args) > 1 {
+					author.date.timestamp = author.date.timestamp.In(loc)
+				}
+			}
+		}
+        }
+	return true
+}
 
 func (rs *Reposurgeon) HelpWhen() {
 	rs.helpOutput(`
