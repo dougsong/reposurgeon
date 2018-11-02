@@ -1358,7 +1358,7 @@ data 0
 	assertEqual(t, commit1.committer.fullname, "Eric S. Raymond")
 
 	var b strings.Builder
-	mapped := orderedIntSet{repo.index(commit1)}
+	mapped := orderedIntSet{repo.eventToIndex(commit1)}
 	if err = repo.writeAuthorMap(mapped, &b); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1388,7 +1388,7 @@ data 0
 
 	assertEqual(t, repo.earliestCommit().comment, "First revision.\n")
 	allcommits := repo.commits(nil)
-	lastcommit := repo.index(allcommits[len(allcommits)-1])
+	lastcommit := repo.eventToIndex(allcommits[len(allcommits)-1])
 	ancestors := repo.ancestors(lastcommit)
 	assertBool(t, ancestors.Equal(orderedIntSet{4, 2}), true)
 }
