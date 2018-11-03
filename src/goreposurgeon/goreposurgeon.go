@@ -11565,12 +11565,12 @@ func (rs *Reposurgeon) hasReference(event Event) bool {
                 break
         else:
             raise Recoverable("malformed path matcher")
-        if matcher.startswith('/'):
+        if matcher.startswith(os.PathSeparator):
             flags = set()
             while matcher[-1] in ("a", "c", "D", "M", "R", "C", "N"):
                 flags.add(matcher[-1])
                 matcher = matcher[:-1]
-            if matcher[-1] != '/':
+            if matcher[-1] != os.PathSeparator:
                 raise Recoverable("regexp matcher missing trailing /")
             try:
                 search = regexp.MustCompile(matcher[1:-1].encode('ascii')).search
@@ -15573,44 +15573,75 @@ For either name, if it does not contain a '/' the prefix 'heads/'
 is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
 `)
 }
-/*
-    func (rs *Reposurgeon) DoBranch(self, line str):
-        "Rename a branch or delete it."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        repo = self.chosen()
-        (branchname, line) = popToken(line)
-        branchname = string_escape(branchname)
-        if "/" not in branchname:
-            branchname = 'refs/heads/' + branchname
-        if branchname not in repo.branchset():
-            raise Recoverable("no such branch as %s" % branchname)
-        (verb, line) = popToken(line)
-        if verb == "rename":
-            (newname, line) = popToken(line)
-            if not newname:
-                raise Recoverable("new branch name must be nonempty.")
-            if "/" not in newname:
-                newname = 'refs/heads/' + newname
-            if newname in repo.branchset():
-                raise Recoverable("there is already a branch named '%s'." \
-                                  % newname)
-            for event in repo:
-                if commit, ok := event.(*Commit); ok:
-                    if event.branch == branchname:
-                        event.setBranch(newname)
-                else if reset, ok := event.(*Reset); ok:
-                    if event.ref == branchname:
-                        event.ref = newname
-        else if verb == "delete":
-            repo.delete([i for i in range(len(repo.events)) if
-                         (isinstance(repo.events[i], Reset) and repo.events[i].ref == branchname) \
-                         or \
-                         (isinstance(repo.events[i], Commit) and repo.events[i].branch == branchname)])
-        else:
-            raise Recoverable("unknown verb '%s' in branch command." % verb)
-*/
+// Rename a branch or delete it.
+func (rs *Reposurgeon) DoBranch(line string) (stopOut bool) {
+        if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+        }
+        repo := rs.chosen()
+        branchname, line := popToken(line)
+	var err error
+        branchname, err = stringEscape(branchname)
+	if err != nil {
+		complain("while selecting branch: %v", err)
+		return false
+	}
+        if !strings.Contains(branchname, "/") {
+		branchname = "refs/heads/" + branchname
+        }
+        if !repo.branchset().Contains(branchname) {
+		complain("no such branch as %s", branchname)
+		return false
+        }
+	var verb string
+        verb, line = popToken(line)
+        if verb == "rename" {
+		var newname string
+		newname, line = popToken(line)
+		if newname == "" {
+			complain("new branch name must be nonempty.")
+			return false
+		}
+		if !strings.Contains(newname, "/") {
+			newname = "refs/heads/" + newname
+		}
+		if repo.branchset().Contains(newname) {
+			complain("there is already a branch named '%s'.", newname)
+			return false
+		}
+		for _, event := range repo.events {
+			if commit, ok := event.(*Commit); ok {
+				if commit.branch == branchname {
+					commit.setBranch(newname)
+				}
+			} else if reset, ok := event.(*Reset); ok {
+				if reset.ref == branchname {
+					reset.ref = newname
+				}
+			}
+		}
+        } else if verb == "delete" {
+		deletia := make([]int, 0)
+		for ei := range repo.events {
+			event := repo.events[ei]
+			if commit, ok := event.(*Commit); ok {
+				if commit.branch == branchname {
+					deletia = append(deletia, ei)
+				}
+			} else if reset, ok := event.(*Reset); ok {
+				if reset.ref == branchname {	
+					deletia = append(deletia, ei)
+				}
+			}
+		}
+		repo.delete(orderedIntSet(deletia), nil)
+        } else {
+		complain("unknown verb '%s' in branch command.", verb)
+		return false
+        }
+	return true
+}
 
 func (rs *Reposurgeon) HelpTag() {
         rs.helpOutput(`
@@ -15711,7 +15742,7 @@ fields are changed and a warning is issued.
             tags = []
             resets = []
             commits = []
-            if tagname[0] == '/' and tagname[-1] == '/':
+            if tagname[0] == os.PathSeparator and tagname[-1] == os.PathSeparator:
                 # Regexp - can refer to a list of tags matched
                 tagre = regexp.MustCompile(tagname[1:-1])
                 for event in repo.events:
