@@ -15798,7 +15798,7 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 		var ok bool
 		rs.setSelectionSet(line)
 		if len(rs.selection) != 1 {
-			complain("tag rename requires a singleton commit set.")
+			complain("tag move requires a singleton commit set.")
 			return false
                 } else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
 			complain("move target is not a commit.")
@@ -15898,7 +15898,7 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 func (rs *Reposurgeon) HelpReset() {
         rs.helpOutput(`
 Create, move, rename, or delete a reset. Create is a special case; it
-requires a singleton selection which is the associate commit for the
+requires a singleton selection which is the associated commit for the
 reset, takes as a first argument the name of the reset (which must not
 exist), and ends with the keyword create.
 
@@ -15927,90 +15927,148 @@ moved, no branch fields are changed.
 `)
 }
 
-/*
-    func (rs *Reposurgeon) DoReset(self, line str):
-        "Move a reset to point to a specified commit, or rename it, or delete it."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        repo = self.chosen()
-        if self.selection is None:
-            self.selection = repo.all()
-        (resetname, line) = popToken(line)
-        resetname = string_escape(resetname)
-        if "/" not in resetname:
-            resetname = "heads/" + resetname
-        if not resetname.startswith("refs/"):
-            resetname = "refs/" + resetname
-        resets = [e for _,e in repo.iterevents(indices=self.selection, types=Reset)
-                      if e.ref == resetname]
-        (verb, line) = popToken(line)
-        if verb == "create":
-            if resets:
-                raise Recoverable("one or more resets match %s" % resetname)
-            try:
-                if len(self.selection) != 1: raise ValueError()
-                target, = self.commits(self.selection)
-            except (TypeError, ValueError):
-                raise Recoverable("reset create requires a singleton commit set.")
-            reset = Reset(repo, ref=resetname)
-            repo.addEvent(reset)
-            reset.remember(repo, target=target[1])
-            repo.declareSequenceMutation("reset create")
-        else if verb == "move":
-            if not resets:
-                raise Recoverable("no such reset as %s" % resetname)
-            if len(resets) == 1:
-                reset = resets[0]
-            else:
-                raise Recoverable("can't move multiple resets")
-            self.set_selection_set(line)
-            reset.forget()
-            try:
-                if len(self.selection) != 1: raise ValueError()
-                (_, target), = self.commits(self.selection)
-            except (TypeError, ValueError):
-                raise Recoverable("reset move requires a singleton commit set.")
-            reset.forget()
-            reset.remember(repo, target=target)
-            repo.declareSequenceMutation("reset move")
-        else if verb == "rename":
-            if not resets:
-                raise Recoverable("no such reset as %s" % resetname)
-            (newname, line) = popToken(line)
-            if not newname:
-                raise Recoverable("new reset name must be nonempty.")
-            if newname.count("/") == 0:
-                newname = "heads/" + newname
-            if not newname.startswith("refs/"):
-                newname = "refs/" + newname
-            if any(r.ref == newname for _,r in repo.iterevents(types=Reset)) \
-                    or any(c.branch == newname
-                           for _,c in repo.iterevents(types=Commit)):
-                raise Recoverable("reset reference collision, not renaming.")
-            for reset in resets:
-                reset.ref = newname
-            for (_, event) in repo.iterevents(types=Commit):
-                if event.branch == resetname:
-                    event.branch = newname
-        else if verb == "delete":
-            if not resets:
-                raise Recoverable("no such reset as %s" % resetname)
-            tip = next((c for _,c in repo.iterevents(types=Commit)
-                          if c.branch == resetname),
-                       None)
-            if tip and len(tip.children()) == 1:
-                successor = tip.children()[0].branch
-                for (_, event) in repo.iterevents(types=Commit):
-                    if event.branch == resetname:
-                        event.branch = successor
-            for reset in resets:
-                reset.forget()
-                repo.events.remove(reset)
-            repo.declareSequenceMutation("reset delete")
-        else:
-            raise Recoverable("unknown verb '%s' in reset command." % verb)
-*/
+// Move a reset to point to a specified commit, or rename it, or delete it.
+func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
+        if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return
+        }
+        repo := rs.chosen()
+        if rs.selection == nil {
+		rs.selection = repo.all()
+        }
+	var resetname string
+	var err error
+        resetname, line = popToken(line)
+        resetname, err = stringEscape(resetname)
+	if err != nil {
+		complain("in reset command: %v", err)
+		return false
+	}
+        if !strings.Contains(resetname, "/") {
+		resetname = "heads/" + resetname
+        }
+        if !strings.HasPrefix(resetname, "refs/") {
+		resetname = "refs/" + resetname
+        }
+	resets := make([]*Reset, 0)
+	for _, ei := range rs.selection {
+		reset, ok := repo.events[ei].(*Reset)
+		if ok && reset.ref == resetname {
+			resets = append(resets, reset)
+		}
+	}
+	var verb string
+        verb, line = popToken(line)
+        if verb == "create" {
+		var target *Commit
+		var ok bool
+		if len(resets) > 0 {
+			complain("one or more resets match %s", resetname)
+			return false
+		}
+		if len(rs.selection) != 1 {
+			complain("reset create requires a singleton commit set.")
+			return false
+                } else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
+			complain("create target is not a commit.")
+			return false
+		}
+		reset := newReset(repo, resetname, target.mark)
+		repo.addEvent(reset)
+		repo.declareSequenceMutation("reset create")
+        } else if verb == "move" {
+		var reset *Reset
+		var target *Commit
+		var ok bool
+		if len(resets) == 0 {
+			complain("no such reset as %s", resetname)
+		}
+		if len(resets) == 1 {
+			reset = resets[0]
+		} else {
+			complain("can't move multiple resets")
+			return false
+		}
+		rs.setSelectionSet(line)
+		if len(rs.selection) != 1 {
+			complain("reset move requires a singleton commit set.")
+			return false
+                } else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
+			complain("move target is not a commit.")
+			return false
+		}
+		reset.forget()
+		reset.remember(repo, target.mark)
+		repo.declareSequenceMutation("reset move")
+        } else if verb == "rename" {
+		var newname string
+		if len(resets) == 0 {
+			complain("no such reset as %s", resetname)
+			return false
+		}
+		newname, line = popToken(line)
+		if newname == "" {
+			complain("new reset name must be nonempty.")
+			return false
+		}
+		if strings.Count(newname, "/") == 0 {
+			newname = "heads/" + newname
+		}
+		if !strings.HasPrefix(newname, "refs/") {
+			newname = "refs/" + newname
+		}
+		for _, reset := range resets {
+			if reset.ref == newname {
+				complain("reset branch collision, not renaming.")
+				return false
+			}
+		}
+		for _, commit := range repo.commits(nil) {
+			if commit.branch == newname {
+				complain("commit branch collision, not renaming.")
+				return false
+			}
+		}
+		for _, reset := range resets {
+			reset.ref = newname
+		}
+		for _, commit := range repo.commits(nil) {
+			if commit.branch == resetname {
+				commit.branch = newname
+			}
+		}
+        } else if verb == "delete" {
+		if len(resets) == 0 {
+			complain("no such reset as %s", resetname)
+			return false
+		}
+		var tip *Commit
+		for _, commit := range repo.commits(nil) {
+			if commit.branch == resetname {
+				tip = commit
+			}
+		}
+		if tip != nil && len(tip.children()) == 1 {
+			successor := tip.children()[0]
+			if cSuccessor, ok := successor.(*Commit); ok {
+				for _, commit := range repo.commits(nil) {
+					if commit.branch == resetname {
+						commit.branch = cSuccessor.branch
+					}
+				}
+			}
+		}
+		for _, reset := range resets {
+			reset.forget()
+			repo.delete([]int{repo.eventToIndex(reset)}, nil)
+		}
+		repo.declareSequenceMutation("reset delete")
+        } else {
+		complain("unknown verb '%s' in reset command.", verb)
+        }
+	return false
+}
 
 func (rs *Reposurgeon) HelpIgnores() {
         rs.helpOutput(`
