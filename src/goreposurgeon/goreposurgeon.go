@@ -11116,7 +11116,7 @@ func (self *MacroDefinition) PreCommand(line string) string {
 }
 
 func (self *MacroDefinition) DefaultCommand(line string) bool {
-	return true
+	return false
 }
 
 func (self CmdContext) SetCore(k *kommandant.Kmdt) {
@@ -14654,7 +14654,7 @@ func (rs *Reposurgeon) DoTimeoffset(line string) (stopOut bool) {
 			}
 		}
         }
-	return true
+	return false
 }
 
 func (rs *Reposurgeon) HelpWhen() {
@@ -15640,7 +15640,7 @@ func (rs *Reposurgeon) DoBranch(line string) (stopOut bool) {
 		complain("unknown verb '%s' in branch command.", verb)
 		return false
         }
-	return true
+	return false
 }
 
 func (rs *Reposurgeon) HelpTag() {
@@ -15692,136 +15692,209 @@ branch fields are changed to match the branch of the unique descendent
 of the tagged commit, if there is one.  When a tag is moved, no branch
 fields are changed and a warning is issued.
 `)
-    }
-/*
-    func (rs *Reposurgeon) DoTag(self, line str):
-        "Move a tag to point to a specified commit, or rename it, or delete it."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        repo = self.chosen()
-        # A tag name can refer to one of the following things:
-        # (1) A tag object, by name
-        # (2) A reset object having a name in the tags/ namespace
-        # (3) The tip commit of a branch with branch fields
-        # These things often occur in combination. Notably, git-fast-export
-        # generates for each tag object corresponding branch labels on
-        # some ancestor commits - the rule for where this stops is unclear.
-        (tagname, line) = popToken(line)
-        tagname = string_escape(tagname)
-        (verb, line) = popToken(line)
-        if verb == 'create':
-            if repo.named(tagname):
-                raise Recoverable("something is already named %s" % tagname)
-            self.set_selection_set(line)
-            if self.selection is None:
-                raise Recoverable("usage: tag <name> create <singleton-selection>")
-            try:
-                if len(self.selection) != 1: raise ValueError()
-                (_, target), = self.commits(self.selection)
-            except (TypeError, ValueError):
-                raise Recoverable("tag create requires a singleton commit set.")
-            tag = Tag(name=tagname,
-                      committish=target.mark,
-                      target=target,
-                      tagger=target.committer.clone(),
-                      comment=target.comment)
-            tag.tagger.date.timestamp++	# So it's unique
-            lasttag = None
-            lastcommit = None
-            for (i, event) in enumerate(repo.events):
-                if tag, ok := event.(*Tag); ok:
-                    lasttag = i
-                else if commit, ok := event.(*Commit); ok:
-                    lastcommit = i
-            if lasttag is None:
-                lasttag = lastcommit
-            repo.addEvent(tag, lasttag+1, "tag creation")
-            return
-        else:
-            tags = []
-            resets = []
-            commits = []
-            if tagname[0] == os.PathSeparator and tagname[-1] == os.PathSeparator:
-                # Regexp - can refer to a list of tags matched
-                tagre = regexp.MustCompile(tagname[1:-1])
-                for event in repo.events:
-                    if tag, ok := event.(*Tag); ok and tagre.search(event.name):
-                        tags.append(event)
-                    # len("refs/heads/") = 11
-                    else if reset, ok := event.(*Reset); ok and tagre.search(event.ref[11:]):
-                        resets.append(event)
-                    # len("refs/tags/") = 10
-                    else if commit, ok := event.(*Commit); ok and tagre.search(event.branch[10:]):
-                        commits.append(event)
-            else:
-                # Non-regexp - can only refer to a single tag
-                fulltagname = Tag.branchname(tagname)
-                for event in repo.events:
-                    if tag, ok := event.(*Tag); ok and event.name == tagname:
-                        tags.append(event)
-                    else if reset, ok := event.(*Reset); ok and event.ref == fulltagname:
-                        resets.append(event)
-                    else if commit, ok := event.(*Commit); ok and event.branch == fulltagname:
-                        commits.append(event)
-            if not tags and not resets and not commits:
-                raise Recoverable("no tags matching %s" % tagname)
-        if verb == "move":
-            self.set_selection_set(line)
-            try:
-                if len(self.selection) != 1: raise ValueError()
-                (_, target), = self.commits(self.selection)
-            except (TypeError, ValueError):
-                raise Recoverable("tag move requires a singleton commit set.")
-            if tags:
-                for tag in tags:
-                    tag.forget()
-                    tag.remember(repo, target=target)
-            if resets:
-                if len(resets) == 1:
-                    resets[0].committish = target.mark
-                else:
-                    complain("cannot move multiple tags.")
-            if commits:
-                complain("warning - tag move does not modify branch fields")
-        else if verb == "rename":
-            if len(tags) > 1:
-                raise Recoverable("exactly one tag is required for rename")
-            (newname, line) = popToken(line)
-            if not newname:
-                raise Recoverable("new tag name must be nonempty.")
-            if len(tags) == 1:
-                for event in repo.events:
-                    if tag, ok := event.(*Tag); ok and event != tags[0] and event.name == tags[0].name:
-                        raise Recoverable("tag name collision, not renaming.")
-                tags[0].name = newname
-            fullnewname = Tag.branchname(newname)
-            for reset in resets:
-                reset.ref = fullnewname
-            for event in commits:
-                event.branch = fullnewname
-        else if verb == "delete":
-            for tag in tags:
-                tag.forget()
-                repo.events.remove(tag)
-            if len(tags) > 0:
-                repo.declareSequenceMutation("tag deletion")
-            for reset in resets:
-                reset.forget()
-                repo.events.remove(reset)
-            if len(resets) > 0:
-                repo.declareSequenceMutation("reset deletion")
-            if commits:
-                successors = {child.branch for child in commits[-1].children() if child.parents()[0] == commits[-1]}
-                if len(successors) == 1:
-                    successor = successors.pop()
-                    for event in commits:
-                        event.branch = successor
-                else:
-                    complain("couldn't determine a unique successor for %s at %s" % (tagname, commits[-1].idMe()))
-        else:
-            raise Recoverable("unknown verb '%s' in tag command." % verb)
-*/
+}
+
+// Move a tag to point to a specified commit, or rename it, or delete it.
+func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
+        if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+        }
+        repo := rs.chosen()
+        // A tag name can refer to one of the following things {
+        // (1) A tag object, by name
+        // (2) A reset object having a name in the tags/ namespace
+        // (3) The tip commit of a branch with branch fields
+        // These things often occur in combination. Notably, git-fast-export
+        // generates for each tag object corresponding branch labels on
+        // some ancestor commits - the rule for where this stops is unclear.
+	var tagname string
+	var err error 
+        tagname, line = popToken(line)
+	if err != nil {
+		complain("while selecting tag: %v", err)
+		return false
+	}
+        tagname, err = stringEscape(tagname)
+	if err != nil {
+		complain("in tag command: %v", err)
+		return false
+	}
+	var verb string
+        verb, line = popToken(line)
+        if verb == "create" {
+		var ok bool
+		var target *Commit
+		if repo.named(tagname) != nil {
+			complain("something is already named %s", tagname)
+			return false
+		}
+		rs.setSelectionSet(line)
+		if rs.selection == nil {
+			complain("usage: tag <name> create <singleton-selection>")
+			return false
+		} else if len(rs.selection) != 1 {
+			complain("tag create requires a singleton commit set.")
+			return false
+                } else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
+			complain("create target is not a commit.")
+			return false
+		}
+		tag := newTag(repo, tagname, target.mark,
+			target.committer.clone(),
+			target.comment)
+		tag.tagger.date.timestamp.Add(time.Second) 	// So it is unique
+		var lasttag int
+		var lastcommit int
+		for i, event := range repo.events {
+			if _, ok := event.(*Tag); ok {
+				lasttag = i
+			} else if _, ok := event.(*Commit); ok {
+				lastcommit = i
+			}
+		}
+		if lasttag == 0 {
+			lasttag = lastcommit
+		}
+		repo.insertEvent(tag, lasttag+1, "tag creation")
+		return false
+	}
+	tags := make([]*Tag, 0)
+	resets := make([]*Reset, 0)
+	commits := make([]*Commit, 0)
+	if tagname[0] == os.PathSeparator && tagname[len(tagname)-1] == os.PathSeparator {
+		// Regexp - can refer to a list of tags matched
+		tagre := regexp.MustCompile(tagname[1:len(tagname)-1])
+		for _, event := range repo.events {
+			if tag, ok := event.(*Tag); ok && tagre.MatchString(tag.name) {
+				tags = append(tags, tag)
+			} else if reset, ok := event.(*Reset); ok && tagre.MatchString(reset.ref[11:]) {
+				// len("refs/heads/") = 11
+				resets = append(resets, reset)
+			} else if commit, ok := event.(*Commit); ok && tagre.MatchString(commit.branch[10:]) {
+				// len("refs/tags/") = 10
+				commits = append(commits, commit)
+			}
+		}
+	} else {
+		// Non-regexp - can only refer to a single tag
+		fulltagname := branchname(tagname)
+		for _, event := range repo.events {
+			if tag, ok := event.(*Tag); ok && tag.name == tagname {
+				tags = append(tags, tag)
+			} else if reset, ok := event.(*Reset); ok && reset.ref == fulltagname {
+				resets = append(resets, reset)
+			} else if commit, ok := event.(*Commit); ok && commit.branch == fulltagname {
+				commits = append(commits, commit)
+			}
+		}
+	}
+	if len(tags) == 0 && len(resets) == 0 && len(commits) == 0 {
+		complain("no tags matching %s", tagname)
+		return false
+	}
+        if verb == "move" {
+		var target *Commit
+		var ok bool
+		rs.setSelectionSet(line)
+		if len(rs.selection) != 1 {
+			complain("tag rename requires a singleton commit set.")
+			return false
+                } else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
+			complain("move target is not a commit.")
+			return false
+		}
+		if len(tags) > 0 {
+			for _, tag := range tags {
+				tag.forget()
+				tag.remember(repo, target.mark)
+			}
+		}
+		if len(resets) > 0 {
+			if len(resets) == 1 {
+				resets[0].committish = target.mark
+			} else {
+				complain("cannot move multiple tags.")
+			}
+		}
+		if len(commits) > 0 {
+			complain("warning - tag move does not modify branch fields")
+		}
+        } else if verb == "rename" {
+		if len(tags) > 1 {
+			complain("exactly one tag is required for rename")
+			return false
+		}
+		var newname string
+		newname, line = popToken(line)
+		if newname == "" {
+			complain("new tag name must be nonempty.")
+			return false
+		}
+		if len(tags) == 1 {
+			for _, event := range repo.events {
+				if tag, ok := event.(*Tag); ok && tag != tags[0] && tag.name == tags[0].name {
+					complain("tag name collision, not renaming.")
+					return false
+				}
+			}
+			tags[0].name = newname
+		}
+		fullnewname := branchname(newname)
+		for _, reset := range resets {
+			reset.ref = fullnewname
+		}
+		for _, event := range commits {
+			event.branch = fullnewname
+		}
+        } else if verb == "delete" {
+		for _, tag := range tags {
+			tag.forget()
+			repo.delete([]int{tag.index()}, nil)
+		}
+		if len(tags) > 0 {
+			repo.declareSequenceMutation("tag deletion")
+		}
+		for _, reset := range resets {
+			reset.forget()
+			repo.delete([]int{repo.eventToIndex(reset)}, nil)
+		}
+		if len(resets) > 0 {
+			repo.declareSequenceMutation("reset deletion")
+		}
+		if len(commits) > 0 {
+			successors := make([]string, 0)
+			for _, child := range commits[len(commits)-1].children() {
+				childCommit, ok := child.(*Commit)
+				if !ok {
+					continue
+				}
+				childFather, ok := childCommit.parents()[0].(*Commit)
+				if !ok {
+					continue
+				}
+				if childFather == commits[len(commits)-1] {
+					successors = append(successors, childCommit.branch)
+				}
+			}
+			
+			//successors := {child.branch for child in commits[-1].children() if child.parents()[0] == commits[-1]}
+			if len(successors) == 1 {
+				for _, event := range commits {
+					event.branch = successors[0]
+				}
+			} else {
+				complain("couldn't determine a unique successor for %s at %s", tagname, commits[len(commits)-1].idMe())
+				return false
+			}
+		}
+        } else {
+		complain("unknown verb '%s' in tag command.", verb)
+		return false
+        }
+	return false
+}
+
 func (rs *Reposurgeon) HelpReset() {
         rs.helpOutput(`
 Create, move, rename, or delete a reset. Create is a special case; it
