@@ -252,38 +252,26 @@ func getAttr(obj interface{}, fld string) (string, bool) {
 	return objValue.FieldByName(fld).String(), true
 }
 
-// setAttr emulates Python setattr using the Go reflection system.  It
-// sets the provided obj field with provided value. obj param has to
-// be a pointer to a struct, otherwise it will soundly fail. Provided
-// value type should match with the struct field you're trying to set.
-// Code swiped from https://github.com/oleiade/reflections/
-func setAttr(obj interface{}, name string, value interface{}) error {
-	// Fetch the field reflect.Value
-	structValue := reflect.ValueOf(obj).Elem()
-	structFieldValue := structValue.FieldByName(name)
+func setAttr(obj interface{}, name string, value string) error {	
+	rv := reflect.ValueOf(obj).Elem()
+
+	structFieldValue := rv.FieldByName(name)
 
 	if !structFieldValue.IsValid() {
 		return fmt.Errorf("No such field: %s in obj", name)
 	}
-
 	// If obj field value is not settable an error is thrown
 	if !structFieldValue.CanSet() {
 		return fmt.Errorf("Cannot set %s field value", name)
 	}
 
-	structFieldType := structFieldValue.Type()
-	val := reflect.ValueOf(value)
-	if structFieldType != val.Type() {
-		invalidTypeError := errors.New("Provided value type didn't match obj field type")
-		return invalidTypeError
-	}
-
-	structFieldValue.Set(val)
+	f2v := rv.FieldByName(name)
+	f2v.SetString(value)
 	return nil
 }
 
 // stringEscape interprets backslash escapes in a token, such as is returned by
-// the shlex package.  If theargument token was wrapped by Go string quores
+// the shlex package.  If the argument token was wrapped by Go string quotes
 // they are stripped off. 
 func stringEscape(s string) (string, error) {
 	if s[0] != '"' {

@@ -1588,4 +1588,34 @@ this is a test tag
 	assertEqual(t, a.String(), rawdump)
 }
 
+func TestGetSetAttr(t *testing.T) {
+	// Test data swiped from TestReferences
+	type vcsTestEntry struct {
+		Vcs      string
+		Expected bool
+		Comment  string
+	}
+	var vcsTestTable = []vcsTestEntry{
+		{"git", false, "abracadabra"},
+		{"git", true, "commit 56ab29."},
+		{"svn", true, " r2336 "},
+		{"svn", false, " 3.14159 "},
+		{"cvs", true, " 1.15 "},
+		{"cvs", false, " 42 "},
+	}
+	extractor := func(v vcsTestEntry, s string) string {
+		val, ok := getAttr(v, s)
+		if !ok {
+			t.Fatalf("value has no field %s", s)
+		}
+		return val
+	}
+	assertEqual(t, vcsTestTable[0].Vcs, extractor(vcsTestTable[0], "Vcs"))
+	assertEqual(t, vcsTestTable[4].Comment, extractor(vcsTestTable[4], "Comment"))
+	err := setAttr(&vcsTestTable[0], "Vcs", "foozle")
+	if err != nil {
+		t.Fatalf("during setattr test: %v", err)
+	}
+	assertEqual(t, vcsTestTable[0].Vcs, "foozle")
+}
 // end
