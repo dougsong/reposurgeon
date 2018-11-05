@@ -240,12 +240,16 @@ func filecopy(src, dst string) (int64, error) {
 	return nBytes, err
 }
 
-// hasAttr emulates Python hasattr using the Go reflection system
-func hasAttr(obj interface{}, fld string) bool {
+// getAttr emulates Python hasattr/getattr using the Go reflection system
+// Current version can only return string-valued fields.
+func getAttr(obj interface{}, fld string) (string, bool) {
 	objValue := reflect.ValueOf(obj)
 	objType := objValue.Type()
 	_, ok := objType.FieldByName(fld)
-	return ok
+	if !ok {
+		return "", false
+	}
+	return objValue.FieldByName(fld).String(), true
 }
 
 // setAttr emulates Python setattr using the Go reflection system.  It
@@ -13643,7 +13647,7 @@ func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 			if ei == -1 {
 				complain("event at update %d can't be found in repository", i+1)
 				return false
-			} else if !hasAttr(event, "emailIn") {
+			} else if _, ok := getAttr(event, "emailIn"); ok {
 				complain("event %d cannot be modified", ei+1)
 			}
 			errorCount++
@@ -13959,7 +13963,7 @@ func (rs *Reposurgeon) DoSetfield(line string) (stopOut bool) {
 	}
 	for _, ei := range rs.selection {
 		event := repo.events[ei]
-		if hasAttr(event, field) {
+		if _, ok := getAttr(event, field); ok {
 			setAttr(event, field, value)
 		} else if commit, ok := event.(*Commit); ok {
 			if field == "author" {
@@ -16096,85 +16100,121 @@ default patterns.
 `)
 }
 
-/*
-    func (rs *Reposurgeon) DoIgnores(self, line str):
-        "Manipulate ignore patterns in the repo."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        repo = self.chosen()
-        if self.preferred and not self.ignorename:
-            self.ignorename = self.preferred.ignorename
-        if not self.preferred:
-            raise Recoverable("preferred repository type has not been set")
-        if not self.ignorename:
-            raise Recoverable("preferred repository type has no declared ignorename")
-        func isignore(blob):
-            return len(blob.pathlist) \
-                       and all(x.endswith(self.ignorename) for x in blob.pathlist)
-        for verb in line.split():
-            if verb == 'defaults':
-                if "import-defaults" in self.preferred.styleflags:
-                    raise Recoverable("importer already set default ignores")
-                else if not self.preferred.dfltignores:
-                    raise Recoverable("no default ignores in %s" % self.preferred.name)
-                else:
-                    changecount = 0
-                    # Modify existing ignore files
-                    for (_, blob) in repo.iterevents(indices=None, types=(Blob,)):
-                        if isignore(blob):
-                            blob.setContent(self.preferred.dfltignores \
-                                         + blob.getContent())
-                            changecount++
-                    # Create an early ignore file if required.
-                    # Don't move this before the modification pass!
-                    earliest = repo.earliestCommit()
-                    if not [fileop for fileop in earliest.operations() if fileop.op == opM and fileop.path.endswith(self.ignorename)]:
-                        blob = Blob(repo)
-                        blob.addalias(self.ignorename)
-                        blob.setContent(self.preferred.dfltignores)
-                        blob.mark = ":insert"
-                        repo.events.insert(repo.eventToIndex(earliest), blob)
-                        repo.declareSequenceMutation("ignore creation")
-                        newop = FileOp(self.chosen())
-                        newop.construct("M", 0o100644, ":insert", self.ignorename)
-                        earliest.appendOperation(newop)
-                        repo.renumber()
-                        announce(debugSHOUT, "initial %s created." % self.ignorename)
-                announce(debugSHOUT, "%d %s blobs modified." % (changecount, self.ignorename))
-            else if verb == 'rename':
-                changecount = 0
-                for (_, event) in repo.iterevents(indices=None, types=(Commit,)):
-                    for fileop in event.operations():
-                        for attr in ("path", "source", "target"):
-                            if hasattr(fileop, attr):
-                                oldpath = getattr(fileop, "path")
-                                if oldpath and oldpath.endswith(self.ignorename):
-                                    newpath = os.path.join(os.path.dirname(oldpath),
-                                                       self.preferred.ignorename)
-                                    setattr(fileop, attr, newpath)
-                                    changecount++
-                                    if fileop.op == opM:
-                                        blob = repo.markToEvent(fileop.ref)
-                                        if blob.pathlist[0] == oldpath:
-                                            blob.pathlist[0] = newpath
-                announce(debugSHOUT, "%d ignore files renamed (%s -> %s)."
-                         % (changecount,
-                            self.ignorename,
-                            self.preferred.ignorename))
-                self.ignorename = self.preferred.ignorename
-            else if verb == 'translate':
-                changecount = 0
-                for (_, blob) in repo.iterevents(indices=None, types=(Blob,)):
-                    if isignore(blob):
-                        if self.preferred.name == "hg":
-                            if not blob.getContent().startswith("syntax: glob\n"):
-                                blob.setContent("syntax: glob\n" + blob.getContent())
-                                changecount++
-                announce(debugSHOUT, "%d %s blobs modified." % (changecount, self.ignorename))
-            else:
-                raise Recoverable("unknown verb %s in ignores line" % verb)
-*/
+// Manipulate ignore patterns in the repo.
+func (rs *Reposurgeon) DoIgnores(line string) (stopOut bool) {
+        if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+        }
+        repo := rs.chosen()
+        if rs.preferred != nil && rs.ignorename == "" {
+		rs.ignorename = rs.preferred.ignorename
+        }
+        if rs.preferred != nil {
+		complain("preferred repository type has not been set")
+		return false
+        }
+        if rs.ignorename == "" {
+		complain("preferred repository type has no declared ignorename")
+		return false
+        }
+        isIgnore := func(blob *Blob) bool {
+		if len(blob.pathlist) == 0 {
+			return false
+		}
+		for _, fpath := range blob.pathlist {
+			if !strings.HasSuffix(fpath, rs.ignorename) {
+				return false
+			}
+		}
+		return true
+        }
+        for _, verb := range strings.Fields(line) {
+		if verb == "defaults" {
+			if rs.preferred.styleflags.Contains("import-defaults")  {
+				complain("importer already set default ignores")
+				return false
+			} else if len(rs.preferred.dfltignores) == 0 {
+				complain("no default ignores in %s", rs.preferred.name)
+				return false
+			} else {
+				changecount := 0
+				// Modify existing ignore files
+				for _, event := range repo.events {
+					if blob, ok := event.(*Blob); ok && isIgnore(blob) {
+						blob.setContent(rs.preferred.dfltignores + blob.getContent(), blob.start)
+						changecount++
+					}
+				}
+				// Create an early ignore file if required.
+				// Do not move this before the modification pass!
+				earliest := repo.earliestCommit()
+				hasIgnoreBlob := false
+				for _, fileop := range earliest.operations() {
+					if fileop.op == opM && strings.HasSuffix(fileop.path, rs.ignorename) {
+						hasIgnoreBlob = true
+					}
+				}
+				if !hasIgnoreBlob {
+					blob := newBlob(repo)
+					blob.addalias(rs.ignorename)
+					blob.setContent(rs.preferred.dfltignores, blob.start)
+					blob.mark = ":insert"
+					repo.insertEvent(blob, repo.eventToIndex(earliest), "ignore-blob creation")
+					repo.declareSequenceMutation("ignore creation")
+					newop := newFileOp(rs.chosen())
+					newop.construct("M", "100644", ":insert", rs.ignorename)
+					earliest.appendOperation(*newop)
+					repo.renumber(1, nil)
+					announce(debugSHOUT, fmt.Sprintf("initial %s created.", rs.ignorename))
+				}
+				announce(debugSHOUT, fmt.Sprintf("%d %s blobs modified.", changecount, rs.ignorename))
+			}
+		} else if verb == "rename" {
+			changecount := 0
+			for _, commit := range repo.commits(nil) {
+				for _, fileop := range commit.operations() {
+					for _, attr := range []string{"path", "source", "target"} {
+						if oldpath, ok := getAttr(fileop, attr); ok {
+							if oldpath != "" && strings.HasSuffix(oldpath, rs.ignorename) {
+								newpath := filepath.Join(filepath.Dir(oldpath),
+									rs.preferred.ignorename)
+								setAttr(fileop, attr, newpath)
+								changecount++
+								if fileop.op == opM {
+									blob := repo.markToEvent(fileop.ref).(*Blob)
+									if blob.pathlist[0] == oldpath {
+										blob.pathlist[0] = newpath
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			announce(debugSHOUT, "%d ignore files renamed (%s -> %s).",
+				changecount, rs.ignorename, rs.preferred.ignorename)
+			rs.ignorename = rs.preferred.ignorename
+		} else if verb == "translate" {
+			changecount := 0
+			for _, event := range repo.events {
+				if blob, ok := event.(*Blob); ok && isIgnore(blob) {
+					if rs.preferred.name == "hg" {
+						if !strings.HasPrefix(blob.getContent(), "syntax: glob\n") {
+							blob.setContent("syntax: glob\n" + blob.getContent(), blob.start)
+							changecount++
+						}
+					}
+				}
+			}
+			announce(debugSHOUT, fmt.Sprintf("%d %s blobs modified.", changecount, rs.ignorename))
+		} else {
+			complain("unknown verb %s in ignores line", verb)
+			return false
+		}
+	}
+	return false
+}
 
 func (rs *Reposurgeon) HelpAttribution() {
         rs.helpOutput(`
