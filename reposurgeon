@@ -7294,6 +7294,9 @@ class Repository:
         for event in other:
             if hasattr(event, "moveto"):
                 event.moveto(self)
+                if hasattr(event, "fileops"):
+                    for op in event.fileops:
+                        op.repo = self
         other.events = []
         other.cleanup()
         #del other
@@ -12771,7 +12774,7 @@ default patterns.
                     for fileop in event.operations():
                         for attr in ("path", "source", "target"):
                             if hasattr(fileop, attr):
-                                oldpath = getattr(fileop, "path")
+                                oldpath = getattr(fileop, attr)
                                 if oldpath and oldpath.endswith(self.ignorename):
                                     newpath = os.path.join(os.path.dirname(oldpath),
                                                        self.preferred.ignorename)
