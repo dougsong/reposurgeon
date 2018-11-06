@@ -276,7 +276,7 @@ func TestHasReferences(t *testing.T) {
 	type vcsTestEntry struct {
 		vcs      string
 		expected bool
-		comment  string
+		Comment  string
 	}
 	var vcsTestTable = []vcsTestEntry{
 		{"git", false, "abracadabra"},
@@ -288,10 +288,10 @@ func TestHasReferences(t *testing.T) {
 	}
 	for _, tst := range vcsTestTable {
 		vcs := findVCS(tst.vcs)
-		match := vcs.hasReference([]byte(tst.comment))
+		match := vcs.hasReference([]byte(tst.Comment))
 		if match != tst.expected {
 			t.Errorf("%s ID in '%s' unexpectedly %v (%v).",
-				tst.vcs, tst.comment, match, tst)
+				tst.vcs, tst.Comment, match, tst)
 		}
 	}
 }
@@ -315,7 +315,7 @@ func TestZoneFromEmail(t *testing.T) {
 
 func TestEmptyComment(t *testing.T) {
 	var TestTable = []struct {
-		comment string
+		Comment string
 		empty   bool
 	}{
 		{"nonempty", false},
@@ -324,10 +324,10 @@ func TestEmptyComment(t *testing.T) {
 		{"*** empty log message ***", true},
 	}
 	for _, tst := range TestTable {
-		empty := emptyComment(tst.comment)
+		empty := emptyComment(tst.Comment)
 		if empty != tst.empty {
 			t.Errorf("For %s, expected %v saw %v.",
-				strconv.Quote(tst.comment), tst.empty, empty)
+				strconv.Quote(tst.Comment), tst.empty, empty)
 		}
 	}
 }
@@ -599,8 +599,8 @@ func TestTag(t *testing.T) {
 	attr1 := newAttribution("jrh <jrh> 1456976347 -0500")
 	t1 := newTag(repo, "sample1", ":2", attr1, "Sample tag #1\n")
 	repo.events = append(repo.events, t1)
-	if !strings.Contains(t1.comment, "Sample") {
-		t.Error("expected string not found in tag comment")
+	if !strings.Contains(t1.Comment, "Sample") {
+		t.Error("expected string not found in tag Comment")
 	}
 
 	// Verify that tag index works - would be -1 on failure
@@ -683,7 +683,7 @@ func TestFileOp(t *testing.T) {
 	assertEqual(t, "M", fileop1.op)
 	assertEqual(t, "100644", fileop1.mode)
 	assertEqual(t, ":1", fileop1.ref)
-	assertEqual(t, "README", fileop1.path)
+	assertEqual(t, "README", fileop1.Path)
 	if !fileop1.paths(nil).Equal(stringSet{"README"}) {
 		t.Error("fileop1 path extraction failed equality check")
 	}
@@ -692,30 +692,30 @@ func TestFileOp(t *testing.T) {
 	assertEqual(t, "M", fileop2.op)
 	assertEqual(t, "100755", fileop2.mode)
 	assertEqual(t, ":2", fileop2.ref)
-	assertEqual(t, "DRINKME", fileop2.path)
+	assertEqual(t, "DRINKME", fileop2.Path)
 	if !fileop2.paths(nil).Equal(stringSet{"DRINKME"}) {
 		t.Error("fileop2 path extraction failed equality check")
 	}
 
 	fileop3 := newFileOp(nil).construct("D", "DRINKME")
 	assertEqual(t, "D", fileop3.op)
-	assertEqual(t, "DRINKME", fileop3.path)
+	assertEqual(t, "DRINKME", fileop3.Path)
 	if !fileop3.paths(nil).Equal(stringSet{"DRINKME"}) {
 		t.Error("fileop3 path extraction failed equality check")
 	}
 
 	fileop4 := newFileOp(nil).construct("R", "DRINKME", "EATME")
 	assertEqual(t, "R", fileop4.op)
-	assertEqual(t, "DRINKME", fileop4.source)
-	assertEqual(t, "EATME", fileop4.target)
+	assertEqual(t, "DRINKME", fileop4.Source)
+	assertEqual(t, "EATME", fileop4.Target)
 	if !fileop4.paths(nil).Equal(stringSet{"EATME", "DRINKME"}) {
 		t.Error("fileop4 path extraction failed equality check")
 	}
 
 	fileop5 := newFileOp(nil).construct("C", "DRINKME", "EATME")
 	assertEqual(t, "C", fileop5.op)
-	assertEqual(t, "DRINKME", fileop5.source)
-	assertEqual(t, "EATME", fileop5.target)
+	assertEqual(t, "DRINKME", fileop5.Source)
+	assertEqual(t, "EATME", fileop5.Target)
 	if !fileop5.paths(nil).Equal(stringSet{"EATME", "DRINKME"}) {
 		t.Error("fileop5 path extraction failed equality check")
 	}
@@ -723,7 +723,7 @@ func TestFileOp(t *testing.T) {
 	fileop6 := newFileOp(nil).construct("N", ":3", "EATME")
 	assertEqual(t, "N", fileop6.op)
 	assertEqual(t, ":3", fileop6.ref)
-	assertEqual(t, "EATME", fileop6.path)
+	assertEqual(t, "EATME", fileop6.Path)
 	if !fileop6.paths(nil).Equal(stringSet{"EATME"}) {
 		t.Error("fileop6 path extraction failed equality check")
 	}
@@ -739,7 +739,7 @@ func TestFileOp(t *testing.T) {
 	assertEqual(t, "M", fileop8.op)
 	assertEqual(t, "100644", fileop8.mode)
 	assertEqual(t, ":4", fileop8.ref)
-	assertEqual(t, "COPYING", fileop8.path)
+	assertEqual(t, "COPYING", fileop8.Path)
 	assertEqual(t, line8+"\n", fileop8.String())
 
 	line9 := "M 100755 :5 runme.sh"
@@ -747,34 +747,34 @@ func TestFileOp(t *testing.T) {
 	assertEqual(t, "M", fileop9.op)
 	assertEqual(t, "100755", fileop9.mode)
 	assertEqual(t, ":5", fileop9.ref)
-	assertEqual(t, "runme.sh", fileop9.path)
+	assertEqual(t, "runme.sh", fileop9.Path)
 	assertEqual(t, line9+"\n", fileop9.String())
 
 	line10 := "D deleteme"
 	fileop10 := newFileOp(nil).parse(line10)
 	assertEqual(t, "D", fileop10.op)
-	assertEqual(t, "deleteme", fileop10.path)
+	assertEqual(t, "deleteme", fileop10.Path)
 	assertEqual(t, line10+"\n", fileop10.String())
 
 	line11 := `R "DRINKME" "EATME"`
 	fileop11 := newFileOp(nil).parse(line11)
 	assertEqual(t, "R", fileop11.op)
-	assertEqual(t, "DRINKME", fileop11.source)
-	assertEqual(t, "EATME", fileop11.target)
+	assertEqual(t, "DRINKME", fileop11.Source)
+	assertEqual(t, "EATME", fileop11.Target)
 	assertEqual(t, line11+"\n", fileop11.String())
 
 	line12 := `C "DRINKME" "EATME"`
 	fileop12 := newFileOp(nil).parse(line12)
 	assertEqual(t, "C", fileop12.op)
-	assertEqual(t, "DRINKME", fileop12.source)
-	assertEqual(t, "EATME", fileop12.target)
+	assertEqual(t, "DRINKME", fileop12.Source)
+	assertEqual(t, "EATME", fileop12.Target)
 	assertEqual(t, line12+"\n", fileop12.String())
 
 	line13 := "N :6 EATME"
 	fileop13 := newFileOp(nil).parse(line13)
 	assertEqual(t, "N", fileop13.op)
 	assertEqual(t, ":6", fileop13.ref)
-	assertEqual(t, "EATME", fileop13.path)
+	assertEqual(t, "EATME", fileop13.Path)
 	assertEqual(t, line13+"\n", fileop13.String())
 
 	line14 := "deleteall"
@@ -797,8 +797,8 @@ func TestFileOp(t *testing.T) {
 	commit.appendOperation(*fileop1) // README
 	commit.appendOperation(*fileop2) // DRINKME
 	commit.sortOperations()
-	assertEqual(t, commit.fileops[0].path, "DRINKME")
-	assertEqual(t, commit.fileops[1].path, "README")
+	assertEqual(t, commit.fileops[0].Path, "DRINKME")
+	assertEqual(t, commit.fileops[1].Path, "README")
 }
 
 func TestCommitMethods(t *testing.T) {
@@ -809,7 +809,7 @@ func TestCommitMethods(t *testing.T) {
 	commit.committer = *newAttribution(committer)
 	author := newAttribution("esr <esr@thyrsus.com> 1457998347 +0000")
 	commit.authors = append(commit.authors, *author)
-	commit.comment = "Example commit for unit testing\n"
+	commit.Comment = "Example commit for unit testing\n"
 	commit.mark = ":2"
 	repo.addEvent(commit)
 
@@ -883,7 +883,7 @@ func TestParentChildMethods(t *testing.T) {
 	commit1.committer = *newAttribution(committer1)
 	author1 := newAttribution("esr <esr@thyrsus.com> 1457998347 +0000")
 	commit1.authors = append(commit1.authors, *author1)
-	commit1.comment = "Example commit for unit testing\n"
+	commit1.Comment = "Example commit for unit testing\n"
 	commit1.setMark(":1")
 
 	commit2 := newCommit(repo)
@@ -892,7 +892,7 @@ func TestParentChildMethods(t *testing.T) {
 	commit2.committer = *newAttribution(committer2)
 	author2 := newAttribution("esr <esr@thyrsus.com> 1457998347 +0000")
 	commit2.authors = append(commit2.authors, *author2)
-	commit2.comment = "Second example commit for unit testing\n"
+	commit2.Comment = "Second example commit for unit testing\n"
 	commit2.setMark(":2")
 
 	commit2.addParentByMark(":1")
@@ -910,7 +910,7 @@ func TestParentChildMethods(t *testing.T) {
 	commit3.committer = *newAttribution(committer3)
 	author3 := newAttribution("esr <esr@thyrsus.com> 1457998447 +0000")
 	commit3.authors = append(commit3.authors, *author3)
-	commit3.comment = "Third example commit for unit testing\n"
+	commit3.Comment = "Third example commit for unit testing\n"
 	commit3.setMark(":3")
 
 	commit3.addParentByMark(":2")
@@ -1006,7 +1006,7 @@ func TestAlldeletes(t *testing.T) {
 	commit1.committer = *newAttribution(committer1)
 	author1 := newAttribution("esr <esr@thyrsus.com> 1457998347 +0000")
 	commit1.authors = append(commit1.authors, *author1)
-	commit1.comment = "Example commit for unit testing\n"
+	commit1.Comment = "Example commit for unit testing\n"
 	commit1.setMark(":1")
 
 	// Set up some fileops so we can test things like manifests
@@ -1122,7 +1122,7 @@ M 100644 :3 README
 	assertBool(t, len(repo.events) == 4, true)
 	assertBool(t, repo.events[3].getMark() == ":4", true)
 	assertEqual(t, repo.markToEvent(":3").(*Blob).getContent(), "0123456789012345678\n")
-	assertEqual(t, repo.markToEvent(":2").(*Commit).comment, "First commit.\n")
+	assertEqual(t, repo.markToEvent(":2").(*Commit).Comment, "First commit.\n")
 	commit2 := repo.events[3].(*Commit)
 	assertEqual(t, commit2.String(), rawdump[len(rawdump)-len(commit2.String()):])
 	d, _ := commit2.blobByName("README")
@@ -1142,9 +1142,9 @@ M 100644 :3 README
 	// Hack in illegal UTF-8 sequence - can't do this in Go source text,
 	// the compiler doesn't like it.
 	assertBool(t, commit2.undecodable("ASCII"), false)
-	assertIntEqual(t, int(commit2.comment[161]), 120)
-	commit2.comment = strings.Replace(commit2.comment, "bacx", "bac\xe9", 1)
-	assertIntEqual(t, int(commit2.comment[161]), 0xe9)
+	assertIntEqual(t, int(commit2.Comment[161]), 120)
+	commit2.Comment = strings.Replace(commit2.Comment, "bacx", "bac\xe9", 1)
+	assertIntEqual(t, int(commit2.Comment[161]), 0xe9)
 	assertBool(t, commit2.undecodable("ASCII"), true)
 	assertBool(t, commit2.undecodable("ISO-8859-1"), false)
 	assertBool(t, commit2.undecodable("UTF-8"), false)
@@ -1386,7 +1386,7 @@ data 0
 	assertBool(t, isPassthrough(repo.events[12], "done"), true)
 	assertBool(t, isPassthrough(repo.events[11], "boogabooga"), true)
 
-	assertEqual(t, repo.earliestCommit().comment, "First revision.\n")
+	assertEqual(t, repo.earliestCommit().Comment, "First revision.\n")
 	allcommits := repo.commits(nil)
 	lastcommit := repo.eventToIndex(allcommits[len(allcommits)-1])
 	ancestors := repo.ancestors(lastcommit)

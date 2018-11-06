@@ -57,11 +57,19 @@ package main
 // VCS instance.
 
 // This code was translated from Python. It retains, for internal
-// documentation purposes the Pyton convention of using leading
+// documentation purposes, the Python convention of using leading
 // underscores on field names to flag fields tht should never be
 // referenced ouside a method of the associated struct.
 //
-// Do 'help news' for a summary of recent changes. 
+// The capitalization of other fieldnames looks inconsistent because
+// the code tries to retain the lowercase Python names and
+// compartmentalize as much as possible to be visible only within the
+// declaring package.  Some fields are capitalized for backwards
+// compatibility with the Python setfield command, others (like some
+// members of FileOp) because there's an internal requirement that
+// they be settable by the Go reflection primitives.
+//
+// Do 'help news' for a summary of recent changes.
 
 import (
 	"archive/tar"
@@ -1762,8 +1770,8 @@ func (he HgExtractor) postExtract(repo *Repository) {
 		for _, event := range repo.events {
 			switch event.(type) {
 			case *Commit:
-				if event.(*Commit).branch == "refs/heads/default" {
-					event.(*Commit).branch = "refs/heads/master"
+				if event.(*Commit).Branch == "refs/heads/default" {
+					event.(*Commit).Branch = "refs/heads/master"
 				}
 			case *Reset:
 				event.(*Reset).ref = "refs/heads/master"
@@ -2040,9 +2048,9 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 			commit.addParentCommit(rs.commitMap[rev])
 		}
 		commit.setBranch(rs.meta[revision].branch)
-		commit.comment = rs.extractor.getComment(revision)
+		commit.Comment = rs.extractor.getComment(revision)
 		if debugEnable(debugEXTRACT) {
-			msg := strconv.Quote(commit.comment)
+			msg := strconv.Quote(commit.Comment)
 			announce(debugEXTRACT,
 				"r%s: comment '%s'", revision, msg)
 		}
@@ -2139,8 +2147,8 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 				delete(rs.visibleFiles[revision], tbd)
 			}
 		}
-		if len(parents) == 0 { // && commit.branch != "refs/heads/master"
-			reset := newReset(repo, commit.branch, commit.mark)
+		if len(parents) == 0 { // && commit.Branch != "refs/heads/master"
+			reset := newReset(repo, commit.Branch, commit.mark)
 			repo.addEvent(reset)
 		}
 		commit.sortOperations()
@@ -2892,7 +2900,7 @@ func (date *Date) After(other Date) bool {
  * Attributions
  */
 
-// Attribution represents pins a reposiory event to a person and time.
+// Attribution pins a repository event to a person and time.
 type Attribution struct {
 	fullname string
 	email    string
@@ -3034,7 +3042,7 @@ type Blob struct {
 	size     int64    // length start if this blob refers into a dump
 	abspath  string
 	deleteme bool
-	expungehook *Blob
+	_expungehook *Blob
 }
 
 var blobseq int
@@ -3277,7 +3285,7 @@ type Tag struct {
 	color      string
 	committish string
 	tagger     *Attribution
-	comment    string
+	Comment    string
 	legacyID   string
 	deleteme   bool
 }
@@ -3288,7 +3296,7 @@ func newTag(repo *Repository,
 	t := new(Tag)
 	t.name = name
 	t.tagger = tagger
-	t.comment = comment
+	t.Comment = comment
 	t.remember(repo, committish)
 	return t
 }
@@ -3326,7 +3334,7 @@ func (t *Tag) index() int {
 }
 
 // getComment returns the comment attached to a tag
-func (t Tag) getComment() string { return t.comment }
+func (t Tag) getComment() string { return t.Comment }
 
 // idMe IDs this tag for humans."
 func (t Tag) idMe() string {
@@ -3372,13 +3380,13 @@ func (t *Tag) emailOut(modifiers stringSet, eventnum int,
 	if t.legacyID != "" {
 		msg.setHeader("Legacy-ID", t.legacyID)
 	}
-	check := strings.Split(t.comment, "\n")[0]
+	check := strings.Split(t.Comment, "\n")[0]
 	if len(check) > 64 {
 		check = check[0:64]
 	}
 	msg.setHeader("Check-Text", check)
-	msg.setPayload(t.comment)
-	if t.comment != "" && !strings.HasSuffix(t.comment, "\n") {
+	msg.setPayload(t.Comment)
+	if t.Comment != "" && !strings.HasSuffix(t.Comment, "\n") {
 		complain("in tag %s, comment was not LF-terminated.", t.name)
 	}
 	if filterRegexp != nil {
@@ -3447,11 +3455,11 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 		newcomment = strings.Replace(newcomment, "\r\n", "\n", 1)
 		newcomment += "\n"
 	}
-	if newcomment != t.comment {
+	if newcomment != t.Comment {
 		announce(debugEMAILIN, "in tag %s, comment is modified %q -> %q",
-			msg.getHeader("Event-Number"), t.comment, newcomment)
+			msg.getHeader("Event-Number"), t.Comment, newcomment)
 		modified = true
-		t.comment = newcomment
+		t.Comment = newcomment
 	}
 
 	if fill && t.tagger.fullname == "" {
@@ -3512,7 +3520,7 @@ func (t *Tag) undecodable(codec string) bool {
 	if !f2 {
 		return true
 	}
-	_, f3, _ := ianaDecode(t.comment, codec)
+	_, f3, _ := ianaDecode(t.Comment, codec)
 	if !f3 {
 		return true
 	}
@@ -3533,7 +3541,7 @@ func branchname(tagname string) string {
 
 // stamp enables do_stamp() to report action stamps
 func (t *Tag) stamp(_modifiers stringSet, _eventnum int, cols int) string {
-	report := "<" + t.tagger.actionStamp() + "> " + strings.Split(t.comment, "\n")[0]
+	report := "<" + t.tagger.actionStamp() + "> " + strings.Split(t.Comment, "\n")[0]
 	if cols > 0 {
 		report = report[0:cols]
 	}
@@ -3552,8 +3560,8 @@ func (t Tag) String() string {
 		tagger := fmt.Sprintf("tagger %s\n", t.tagger)
 		parts = append(parts, tagger)
 	}
-	comment := t.comment
-	if t.comment != "" && t.repo.writeOptions.Contains("--legacy") && t.legacyID != "" {
+	comment := t.Comment
+	if t.Comment != "" && t.repo.writeOptions.Contains("--legacy") && t.legacyID != "" {
 		comment += fmt.Sprintf("\nLegacy-ID: %s\n", t.legacyID)
 		parts = append(parts, comment)
 	}
@@ -3648,10 +3656,10 @@ type FileOp struct {
 	repo       *Repository
 	op         string
 	committish string
-	source     string
-	target     string
+	Source     string
+	Target     string
 	mode       string
-	path       string
+	Path       string
 	ref        string
 	inline     string
 }
@@ -3682,22 +3690,22 @@ func (fileop *FileOp) construct(opargs ...string) *FileOp {
 		fileop.op = opM
 		fileop.mode = opargs[1]
 		fileop.ref = opargs[2]
-		fileop.path = opargs[3]
+		fileop.Path = opargs[3]
 	} else if opargs[0] == "D" {
 		fileop.op = opD
-		fileop.path = opargs[1]
+		fileop.Path = opargs[1]
 	} else if opargs[0] == "N" {
 		fileop.op = opN
 		fileop.ref = opargs[1]
-		fileop.path = opargs[2]
+		fileop.Path = opargs[2]
 	} else if opargs[0] == "R" {
 		fileop.op = opR
-		fileop.source = opargs[1]
-		fileop.target = opargs[2]
+		fileop.Source = opargs[1]
+		fileop.Target = opargs[2]
 	} else if opargs[0] == "C" {
 		fileop.op = opC
-		fileop.source = opargs[1]
-		fileop.target = opargs[2]
+		fileop.Source = opargs[1]
+		fileop.Target = opargs[2]
 	} else if opargs[0] == "deleteall" {
 		fileop.op = deleteall
 	} else {
@@ -3788,34 +3796,34 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 		fileop.op = opM
 		fileop.mode = string(fields[1])
 		fileop.ref = string(fields[2])
-		fileop.path = intern(string(fields[3]))
+		fileop.Path = intern(string(fields[3]))
 	} else if strings.HasPrefix(opline, "N ") {
 		if len(fields) != 3 {
 			panic(throw("parse", "Bad format of N line: %q", opline))
 		}
 		fileop.op = opN
 		fileop.ref = string(fields[1])
-		fileop.path = intern(string(fields[2]))
+		fileop.Path = intern(string(fields[2]))
 	} else if strings.HasPrefix(opline, "D ") {
 		if len(fields) != 2 {
 			panic(throw("parse", "Bad format of D line: %q", opline))
 		}
 		fileop.op = opD
-		fileop.path = intern(string(fields[1]))
+		fileop.Path = intern(string(fields[1]))
 	} else if strings.HasPrefix(opline, "R ") {
 		if len(fields) != 3 {
 			panic(throw("parse", "Bad format of R line: %q", opline))
 		}
 		fileop.op = opR
-		fileop.source = intern(fields[1])
-		fileop.target = intern(fields[2])
+		fileop.Source = intern(fields[1])
+		fileop.Target = intern(fields[2])
 	} else if strings.HasPrefix(opline, "C ") {
 		if len(fields) != 3 {
 			panic(throw("parse", "Bad format of C line: %q", opline))
 		}
 		fileop.op = opC
-		fileop.source = intern(fields[1])
-		fileop.target = intern(fields[2])
+		fileop.Source = intern(fields[1])
+		fileop.Target = intern(fields[2])
 	} else if opline == "deleteall" {
 		fileop.op = deleteall
 	} else {
@@ -3833,10 +3841,10 @@ func (fileop *FileOp) paths(pathtype stringSet) stringSet {
 		return stringSet{}
 	}
 	if fileop.op == opM || fileop.op == opD || fileop.op == opN {
-		return stringSet{fileop.path}
+		return stringSet{fileop.Path}
 	}
 	if fileop.op == opR || fileop.op == opC {
-		return stringSet{fileop.source, fileop.target}
+		return stringSet{fileop.Source, fileop.Target}
 	}
 	// Ugh...this isn't right for deleteall, but since we don't expect
 	// to see that except at branch tips we'll ignore it for now.
@@ -3864,7 +3872,7 @@ func (fileop FileOp) String() string {
 	}
 	if fileop.op == opM {
 		parts := fileop.op + " " + fileop.mode + " " + fileop.ref
-		parts += " " + quotifyIfNeeded(fileop.path) + "\n"
+		parts += " " + quotifyIfNeeded(fileop.Path) + "\n"
 		if fileop.ref == "inline" {
 			parts += fmt.Sprintf("data %d\n", len(fileop.inline))
 			parts += fileop.inline + "\n"
@@ -3872,17 +3880,17 @@ func (fileop FileOp) String() string {
 		return parts
 	} else if fileop.op == opN {
 		parts := "N " + fileop.ref
-		parts += " " + quotifyIfNeeded(fileop.path) + "\n"
+		parts += " " + quotifyIfNeeded(fileop.Path) + "\n"
 		if fileop.ref == "inline" {
 			parts += fmt.Sprintf("data %d\n", len(fileop.inline))
 			parts += fileop.inline + "\n"
 		}
 		return parts
 	} else if fileop.op == opD {
-		return "D " + quotifyIfNeeded(fileop.path) + "\n"
+		return "D " + quotifyIfNeeded(fileop.Path) + "\n"
 	} else if fileop.op == opR || fileop.op == opC {
 		return fmt.Sprintf(`%s %q %q`, fileop.op,
-			fileop.source, fileop.target) + "\n"
+			fileop.Source, fileop.Target) + "\n"
 	} else if fileop.op == deleteall {
 		return fileop.op + "\n"
 	}
@@ -3957,8 +3965,8 @@ type Commit struct {
 	mark         string        // Mark name of commit (may be None)
 	authors      []Attribution // Authors of commit
 	committer    Attribution   // Person responsible for committing it.
-	comment      string        // Commit comment
-	branch       string        // branch name
+	Comment      string        // Commit comment
+	Branch       string        // branch name
 	fileops      []FileOp      // blob and file operation list
 	properties   OrderedMap    // commit properties (extension)
 	_manifest    map[string]*ManifestEntry
@@ -3970,7 +3978,7 @@ type Commit struct {
 	_parentNodes []CommitLike // list of parent nodes
 	_childNodes  []CommitLike // list of child nodes
 	_pathset     stringSet
-	expungehook  *Commit
+	_expungehook  *Commit
 }
 
 func (commit Commit) getDelFlag() bool {
@@ -4025,7 +4033,7 @@ func (commit *Commit) index() int {
 }
 
 // getComment returns the comment attached to a commit
-func (commit Commit) getComment() string { return commit.comment }
+func (commit Commit) getComment() string { return commit.Comment }
 
 // idMe IDs this commit for humans.
 func (commit Commit) idMe() string {
@@ -4051,7 +4059,7 @@ func (commit *Commit) date() Date {
 
 // setBranch sets the repo's branch field.
 func (commit *Commit) setBranch(branch string) {
-	commit.branch = intern(branch)
+	commit.Branch = intern(branch)
 }
 
 // operations returns a list of ileops associated with this commit;
@@ -4085,11 +4093,11 @@ func (commit *Commit) prependOperation(op FileOp) {
 func (commit *Commit) sortOperations() {
 	const sortkeySentinel = "@"
 	pathpart := func(fileop FileOp) string {
-		if fileop.path != "" {
-			return fileop.path
+		if fileop.Path != "" {
+			return fileop.Path
 		}
-		if fileop.source != "" {
-			return fileop.path
+		if fileop.Source != "" {
+			return fileop.Path
 		}
 		return ""
 	}
@@ -4126,9 +4134,9 @@ func (commit *Commit) clone(repo *Repository) *Commit {
 	// FIXME: Test this against Python, which does a deeper copy.
 	// It might alter the behavior of the split operation.
 	copy(c.authors, commit.authors)
-	c.comment = commit.comment
+	c.Comment = commit.Comment
 	c.mark = commit.mark
-	c.branch = commit.branch
+	c.Branch = commit.Branch
 	return c
 }
 
@@ -4146,7 +4154,7 @@ func (commit *Commit) showlegacy() string {
 
 // lister enables do_list() to report commits.
 func (commit *Commit) lister(_modifiers stringSet, eventnum int, cols int) string {
-	topline := strings.Split(commit.comment, "\n")[0]
+	topline := strings.Split(commit.Comment, "\n")[0]
 	summary := fmt.Sprintf("%6d %s %6s ",
 		eventnum+1, commit.date().rfc3339(), commit.mark)
 	if commit.legacyID != "" {
@@ -4162,7 +4170,7 @@ func (commit *Commit) lister(_modifiers stringSet, eventnum int, cols int) strin
 
 // stamp enables do_stamp() to report action stamps.
 func (commit *Commit) stamp(modifiers stringSet, _eventnum int, cols int) string {
-	report := "<" + commit.actionStamp() + "> " + strings.Split(commit.comment, "\n")[0]
+	report := "<" + commit.actionStamp() + "> " + strings.Split(commit.Comment, "\n")[0]
 	if cols > 0 && len(report) > cols {
 		report = report[:cols]
 	}
@@ -4171,7 +4179,7 @@ func (commit *Commit) stamp(modifiers stringSet, _eventnum int, cols int) string
 
 // tags enables do_tags() to report tag tip commits.
 func (commit *Commit) tags(_modifiers stringSet, eventnum int, _cols int) string {
-	if commit.branch == "" || !strings.Contains(commit.branch, "/tags/") {
+	if commit.Branch == "" || !strings.Contains(commit.Branch, "/tags/") {
 		return ""
 	}
 	if commit.hasChildren() {
@@ -4179,7 +4187,7 @@ func (commit *Commit) tags(_modifiers stringSet, eventnum int, _cols int) string
 		for _, child := range commit.children() {
 			switch child.(type) {
 			case *Commit:
-				successorBranches.Add(child.(Commit).branch)
+				successorBranches.Add(child.(Commit).Branch)
 			case *Callout:
 				complain("internal error: callouts do not have branches: %s",
 					child.idMe())
@@ -4187,11 +4195,11 @@ func (commit *Commit) tags(_modifiers stringSet, eventnum int, _cols int) string
 				panic("In tags method, unexpected type in child list")
 			}
 		}
-		if len(successorBranches) == 1 && successorBranches[0] == commit.branch {
+		if len(successorBranches) == 1 && successorBranches[0] == commit.Branch {
 			return ""
 		}
 	}
-	return fmt.Sprintf("%6d\tcommit\t%s", eventnum+1, commit.branch)
+	return fmt.Sprintf("%6d\tcommit\t%s", eventnum+1, commit.Branch)
 }
 
 // emailOut enables DoMsgout() to report commit metadata.
@@ -4200,7 +4208,7 @@ func (commit *Commit) emailOut(modifiers stringSet,
 	msg, _ := newMessageBlock(nil)
 	msg.setHeader("Event-Number", fmt.Sprintf("%d", eventnum+1))
 	msg.setHeader("Event-Mark", commit.mark)
-	msg.setHeader("Branch", commit.branch)
+	msg.setHeader("Branch", commit.Branch)
 	msg.setHeader("Parents", strings.Join(commit.parentMarks(), " "))
 	if commit.authors != nil && len(commit.authors) > 0 {
 		commit.authors[0].emailOut(modifiers, msg, "Author")
@@ -4224,13 +4232,13 @@ func (commit *Commit) emailOut(modifiers stringSet,
 			msg.setHeader("Property-"+hdr, value)
 		}
 	}
-	check := strings.Split(commit.comment, "\n")[0]
+	check := strings.Split(commit.Comment, "\n")[0]
 	if len(check) > 54 {
 		check = check[0:54]
 	}
 	msg.setHeader("Check-Text", check)
-	msg.setPayload(commit.comment)
-	if !strings.HasSuffix(commit.comment, "\n") {
+	msg.setPayload(commit.Comment)
+	if !strings.HasSuffix(commit.Comment, "\n") {
 		complain("in commit %s, comment was not LF-terminated.",
 			commit.mark)
 	}
@@ -4277,7 +4285,7 @@ var authorRE = regexp.MustCompile("Author[0-9]*$")
 func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 	modified := false
 	newbranch := msg.getHeader("Branch")
-	if newbranch != "" && commit.branch != newbranch {
+	if newbranch != "" && commit.Branch != newbranch {
 		modified = true
 		commit.setBranch(newbranch)
 	}
@@ -4400,11 +4408,11 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 		newcomment = strings.Replace(newcomment, "\r\n", "\n", 1)
 		newcomment += "\n"
 	}
-	if newcomment != commit.comment {
+	if newcomment != commit.Comment {
 		announce(debugEMAILIN, "in %s, comment is modified %q -> %q",
-			commit.idMe(), commit.comment, newcomment)
+			commit.idMe(), commit.Comment, newcomment)
 		modified = true
-		commit.comment = newcomment
+		commit.Comment = newcomment
 	}
 	if fill {
 		modified = true
@@ -4658,11 +4666,11 @@ func (commit *Commit) cliques() map[string][]int {
 	cliques := make(map[string][]int)
 	for i, fileop := range commit.operations() {
 		if fileop.op == opM {
-			_, ok := cliques[fileop.path]
+			_, ok := cliques[fileop.Path]
 			if !ok {
-				cliques[fileop.path] = make([]int, 0)
+				cliques[fileop.Path] = make([]int, 0)
 			}
-			cliques[fileop.path] = append(cliques[fileop.path], i)
+			cliques[fileop.Path] = append(cliques[fileop.Path], i)
 		}
 	}
 	return cliques
@@ -4714,11 +4722,11 @@ func (commit *Commit) visible(argpath string) *Commit {
 			// M/C/R foo after D foo pairs. If this condition
 			// is violated it can throw false negatives.
 			for _, fileop := range ancestor.operations() {
-				if fileop.op == opD && fileop.path == argpath {
+				if fileop.op == opD && fileop.Path == argpath {
 					return nil
-				} else if fileop.op == opM && fileop.path == argpath {
+				} else if fileop.op == opM && fileop.Path == argpath {
 					return ancestor
-				} else if (fileop.op == opR || fileop.op == opC) && fileop.target == argpath {
+				} else if (fileop.op == opR || fileop.op == opC) && fileop.Target == argpath {
 					return ancestor
 				}
 			}
@@ -4763,14 +4771,14 @@ func (commit *Commit) manifest() map[string]*ManifestEntry {
 	// Take own fileops into account.
 	for _, fileop := range commit.operations() {
 		if fileop.op == opM {
-			commit._manifest[fileop.path] = &ManifestEntry{fileop.mode, fileop.ref, fileop.inline}
+			commit._manifest[fileop.Path] = &ManifestEntry{fileop.mode, fileop.ref, fileop.inline}
 		} else if fileop.op == opD {
-			delete(commit._manifest, fileop.path)
+			delete(commit._manifest, fileop.Path)
 		} else if fileop.op == opC {
-			commit._manifest[fileop.target] = commit._manifest[fileop.source]
+			commit._manifest[fileop.Target] = commit._manifest[fileop.Source]
 		} else if fileop.op == opR {
-			commit._manifest[fileop.target] = commit._manifest[fileop.source]
-			delete(commit._manifest, fileop.source)
+			commit._manifest[fileop.Target] = commit._manifest[fileop.Source]
+			delete(commit._manifest, fileop.Source)
 		} else if fileop.op == "deleteall" {
 			commit._manifest = make(map[string]*ManifestEntry)
 		}
@@ -4949,15 +4957,15 @@ func (commit *Commit) checkout(directory string) string {
 
 // head returns the branch to which this commit belongs.
 func (commit *Commit) head() string {
-	if strings.HasPrefix(commit.branch, "refs/heads/") || !commit.hasChildren() {
-		return commit.branch
+	if strings.HasPrefix(commit.Branch, "refs/heads/") || !commit.hasChildren() {
+		return commit.Branch
 	}
 	rank := 0
 	var child Event
 	for rank, child = range commit.children() {
 		switch child.(type) {
 		case *Commit:
-			if child.(*Commit).branch == commit.branch {
+			if child.(*Commit).Branch == commit.Branch {
 				return child.(*Commit).head()
 			}
 		case *Callout:
@@ -5037,7 +5045,7 @@ func (commit *Commit) undecodable(codec string) bool {
 			return true
 		}
 	}
-	_, f4, _ := ianaDecode(commit.comment, codec)
+	_, f4, _ := ianaDecode(commit.Comment, codec)
 	if !f4 {
 		return true
 	}
@@ -5059,11 +5067,11 @@ func (commit Commit) String() string {
 	incremental := false
 	if !commit.repo.writeOptions.Contains("--noincremental") {
 		if commit.repo.realized != nil && commit.hasParents() {
-			if _, ok := commit.repo.realized[commit.branch]; !ok {
+			if _, ok := commit.repo.realized[commit.Branch]; !ok {
 				parent := commit.parents()[0]
 				switch parent.(type) {
 				case *Commit:
-					pbranch := parent.(*Commit).branch
+					pbranch := parent.(*Commit).Branch
 					if !commit.repo.realized[pbranch] {
 						incremental = true
 					}
@@ -5072,14 +5080,14 @@ func (commit Commit) String() string {
 		}
 	}
 	if incremental {
-		parts = append(parts, fmt.Sprintf("reset %s^0\n\n", commit.branch))
+		parts = append(parts, fmt.Sprintf("reset %s^0\n\n", commit.Branch))
 	}
-	parts = append(parts, fmt.Sprintf("commit %s\n", commit.branch))
+	parts = append(parts, fmt.Sprintf("commit %s\n", commit.Branch))
 	if commit.legacyID != "" {
 		parts = append(parts, fmt.Sprintf("#legacy-id %s\n", commit.legacyID))
 	}
 	if commit.repo.realized != nil {
-		commit.repo.realized[commit.branch] = true
+		commit.repo.realized[commit.Branch] = true
 	}
 	if commit.mark != "" {
 		parts = append(parts, fmt.Sprintf("mark %s\n", commit.mark))
@@ -5095,7 +5103,7 @@ func (commit Commit) String() string {
 	// As of git 2.13.6 (possibly earlier) the comment fields of
 	// commit is no longer optional - you have to emit data 0 if there
 	// is no comment, otherwise the importer gets confused.
-	comment := commit.comment
+	comment := commit.Comment
 	if commit.repo.writeOptions.Contains("--legacy") && commit.legacyID != "" {
 		comment += fmt.Sprintf("\nLegacy-ID: %s\n", commit.legacyID)
 	}
@@ -6050,9 +6058,9 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 					}
 				} else if strings.HasPrefix(line, "data") {
 					d, _ := sp.fiReadData(line)
-					commit.comment = d
+					commit.Comment = d
 					if context.flagOptions["canonicalize"] {
-						commit.comment = strings.Replace(strings.TrimSpace(commit.comment), "\r\n", "\n", -1) + "\n"
+						commit.Comment = strings.Replace(strings.TrimSpace(commit.Comment), "\r\n", "\n", -1) + "\n"
 					}
 				} else if strings.HasPrefix(line, "from") || strings.HasPrefix(line, "merge") {
 					mark := strings.Fields(line)[1]
@@ -6070,7 +6078,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 					if fileop.ref != "inline" {
 						ref := sp.repo.markToEvent(fileop.ref)
 						if ref != nil {
-							ref.(*Blob).addalias(fileop.path)
+							ref.(*Blob).addalias(fileop.Path)
 						} else {
 							// Crap out on
 							// anything
@@ -6642,7 +6650,7 @@ func (repo *Repository) branchset() stringSet {
 				branches.Add(e.(*Reset).ref)
 			}
 		case *Commit:
-			branches.Add(e.(*Commit).branch)
+			branches.Add(e.(*Commit).Branch)
 		}
 	}
 	return branches
@@ -6660,7 +6668,7 @@ func (repo *Repository) branchmap() map[string]string {
 				brmap[e.(*Reset).ref] = e.(*Reset).committish
 			}
 		case *Commit:
-			brmap[e.(*Commit).branch] = e.(*Commit).mark
+			brmap[e.(*Commit).Branch] = e.(*Commit).mark
 		}
 	}
 	return brmap
@@ -6742,7 +6750,7 @@ func (repo *Repository) named(ref string) orderedIntSet {
 			for i, event := range repo.events {
 				switch event.(type) {
 				case *Commit:
-					if event.(*Commit).branch == symbol {
+					if event.(*Commit).Branch == symbol {
 						loc = i
 					}
 				}
@@ -7112,10 +7120,10 @@ func (repo *Repository) tagify(commit *Commit, name string, target string, legen
 		panic("Attempting to tagify a commit with fileops.")
 	}
 	var pref string
-	if commit.comment == "" {
+	if commit.Comment == "" {
 		pref = ""
 	} else {
-		pref = commit.comment
+		pref = commit.Comment
 		if legend != "" || !strings.HasSuffix(pref, "\n") {
 			pref += "\n"
 		}
@@ -7131,7 +7139,7 @@ func (repo *Repository) tagify(commit *Commit, name string, target string, legen
 // Default scheme to name tags generated from empty commits
 func defaultEmptyTagName(commit *Commit) string {
 	if len(commit.operations()) > 0 {
-		branch := commit.branch
+		branch := commit.Branch
 		if strings.HasSuffix(branch, svnSep) {
 			branch = branch[:len(branch)-1]
 		}
@@ -7224,9 +7232,9 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 			}
 			msg += "deleting parentless"
 			if len(commit.operations()) > 0 {
-				msg += fmt.Sprintf("tip delete of %s.", commit.branch)
+				msg += fmt.Sprintf("tip delete of %s.", commit.Branch)
 			} else {
-				msg += fmt.Sprintf(" zero-op commit on %s.", commit.branch)
+				msg += fmt.Sprintf(" zero-op commit on %s.", commit.Branch)
 			}
 			if gripe != nil {
 				gripe(msg[1:])
@@ -7275,7 +7283,7 @@ func (repo *Repository) parseDollarCookies() {
 					repo.dollarMap[svnkey] = commit
 				}
 			} else {
-				if filepath.Base(fileop.path) != blob.cookie.path {
+				if filepath.Base(fileop.Path) != blob.cookie.path {
 					// Usually the
 					// harmless result of
 					// a file move or copy
@@ -7283,9 +7291,9 @@ func (repo *Repository) parseDollarCookies() {
 					// git-svn didn't pick
 					// up on.
 					complain("mismatched CVS header path '%s' in %s vs '%s' in %s",
-						fileop.path, commit.mark, blob.cookie.path, blob.mark)
+						fileop.Path, commit.mark, blob.cookie.path, blob.mark)
 				}
-				cvskey := fmt.Sprintf("CVS:%s:%s", fileop.path, blob.cookie.path)
+				cvskey := fmt.Sprintf("CVS:%s:%s", fileop.Path, blob.cookie.path)
 				if _, ok := repo.dollarMap[cvskey]; !ok {
 					repo.dollarMap[cvskey] = commit
 				}
@@ -7565,7 +7573,7 @@ func (commit *Commit) ancestorCount(path string) int {
 	count := 0
 	for {
 		for _, fileop := range commit.operations() {
-			if fileop.op == opM && fileop.path == path {
+			if fileop.op == opM && fileop.Path == path {
 				count++
 				break
 			}
@@ -7609,24 +7617,24 @@ func (repo *Repository) _compose(commit *Commit, left FileOp, right FileOp) (boo
 	} else if left.op == opM && right.op == opD {
 		// M a + D a -> D a
 		// Or, could reduce to nothing if M a was the only modify..
-		if commit.ancestorCount(left.path) == 1 {
+		if commit.ancestorCount(left.Path) == 1 {
 			return true, nilOp, nilOp, "", 1
 		} else {
 			return true, right, nilOp, "", 2
 		}
 	} else if left.op == opM && right.op == opR {
 		// M a + R a b -> R a b M b, so R falls towards start of list
-		if left.path == right.source {
-			if commit.ancestorCount(left.path) == 1 {
+		if left.Path == right.Source {
+			if commit.ancestorCount(left.Path) == 1 {
 				// M a has no ancestors, preceding R can be dropped
-				left.path = right.target
+				left.Path = right.Target
 				return true, left, nilOp, "", 3
 			} else {
 				// M a has ancestors, R is still needed
-				left.path = right.target
+				left.Path = right.Target
 				return true, right, left, "", 4
 			}
-		} else if left.path == right.target {
+		} else if left.Path == right.Target {
 			// M b + R a b can't happen.  If you try to
 			// generate this with git mv it throws an
 			// error.  An ordinary mv results in D b M a.
@@ -7657,9 +7665,9 @@ func (repo *Repository) _compose(commit *Commit, left FileOp, right FileOp) (boo
 	} else if left.op == opD && right.op == opD {
 		return true, left, nilOp, "", -2
 	} else if left.op == opD && (right.op == opR || right.op == opC) {
-		if left.path == right.source {
+		if left.Path == right.Source {
 			return false, left, right,
-				fmt.Sprintf("R or C of %s after deletion?", left.path), -3
+				fmt.Sprintf("R or C of %s after deletion?", left.Path), -3
 		} else {
 			return false, left, right, "", 8
 		}
@@ -7667,19 +7675,19 @@ func (repo *Repository) _compose(commit *Commit, left FileOp, right FileOp) (boo
 		//
 		// First op R
 		//
-		if left.target == right.path {
+		if left.Target == right.Path {
 			// Rename followed by delete of target
 			// composes to source delete
-			right.path = left.source
+			right.Path = left.Source
 			return true, nilOp, right, "", 9
 		} else {
 			// On rename followed by delete of source
 			// discard the delete but user should be
 			// warned.
 			return false, left, nilOp,
-				fmt.Sprintf("delete of %s after renaming to %s?", right.path, left.source), -4
+				fmt.Sprintf("delete of %s after renaming to %s?", right.Path, left.Source), -4
 		}
-	} else if pair == [2]string{opR, deleteall} && left.target == right.path {
+	} else if pair == [2]string{opR, deleteall} && left.Target == right.Path {
 		// Rename followed by deleteall shouldn't be possible
 		return false, nilOp, right,
 			"rename before deleteall not removed?", -5
@@ -7688,12 +7696,12 @@ func (repo *Repository) _compose(commit *Commit, left FileOp, right FileOp) (boo
 		return false, left, right, "", 10
 	} else if left.op == opR && right.op == opR {
 		// Compose renames where possible
-		if left.target == right.source {
-			left.target = right.target
+		if left.Target == right.Source {
+			left.Target = right.Target
 			return true, left, nilOp, "", 11
 		} else {
 			return false, left, right,
-				fmt.Sprintf("R %s %s is inconsistent with following operation", left.source, left.target), -6
+				fmt.Sprintf("R %s %s is inconsistent with following operation", left.Source, left.Target), -6
 		}
 	}
 	// We could do R a b + C b c -> C a c + R a b, but why?
@@ -7703,22 +7711,22 @@ func (repo *Repository) _compose(commit *Commit, left FileOp, right FileOp) (boo
 		//
 		// First op C
 		//
-		if left.source == right.path {
+		if left.Source == right.Path {
 			// Copy followed by delete of the source is a rename.
 			left.setOp(opR)
 			return true, left, nilOp, "", 13
-		} else if left.target == right.path {
+		} else if left.Target == right.Path {
 			// This delete undoes the copy
 			return true, nilOp, nilOp, "", 14
 		}
 	} else if pair == [2]string{opC, opR} {
-		if left.source == right.source {
+		if left.Source == right.Source {
 			// No reduction
 			return false, left, right, "", 15
 		} else {
 			// Copy followed by a rename of the target reduces to single copy
-			if left.target == right.source {
-				left.target = right.target
+			if left.Target == right.Source {
+				left.Target = right.Target
 				return true, left, nilOp, "", 16
 			}
 		}
@@ -7839,8 +7847,8 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 			}
 			if delete {
 				speak := fmt.Sprintf("warning: commit %s to be deleted has ", commit.mark)
-				if strings.Contains(commit.branch, "/") && !strings.Contains(commit.branch, "/heads/") {
-					complain(speak + fmt.Sprintf("non-head branch attribute %s", commit.branch))
+				if strings.Contains(commit.Branch, "/") && !strings.Contains(commit.Branch, "/heads/") {
+					complain(speak + fmt.Sprintf("non-head branch attribute %s", commit.Branch))
 				}
 				if !commit.alldeletes(nil) {
 					complain(speak + "non-delete fileops.")
@@ -7969,11 +7977,11 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 					// Also prepend event's
 					// comment, ignoring empty log
 					// messages.
-					if policy.Contains("--empty-only") && !emptyComment(child.comment) {
+					if policy.Contains("--empty-only") && !emptyComment(child.Comment) {
 						complain(fmt.Sprintf("--empty is on and %s comment is nonempty", child.idMe()))
 					}
-					child.comment = composeComment(commit.comment,
-						child.comment)
+					child.Comment = composeComment(commit.Comment,
+						child.Comment)
 					altered = append(altered, child)
 				}
 				// Really set the parents to the newly
@@ -8011,11 +8019,11 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				parent.fileops = append(parent.fileops, commit.fileops...)
 				parent.invalidatePathsetCache()
 				// Also append child"s comment to its parent"s
-				if policy.Contains("--empty-only") && !emptyComment(parent.comment) {
+				if policy.Contains("--empty-only") && !emptyComment(parent.Comment) {
 					complain(fmt.Sprintf("--empty is on and %s comment is nonempty", parent.idMe()))
 				}
-				parent.comment = composeComment(parent.comment,
-					commit.comment)
+				parent.Comment = composeComment(parent.Comment,
+					commit.Comment)
 				altered = append(altered, parent)
 				// We need to ensure all fileop blobs
 				// are defined before the
@@ -8046,7 +8054,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 					}
 				}
 			} else {
-				if !tagify && strings.Contains(commit.branch, "/tags/") && newTarget.branch != commit.branch {
+				if !tagify && strings.Contains(commit.Branch, "/tags/") && newTarget.Branch != commit.Branch {
 					// By deleting the commit, we would
 					// lose the fact that it moves its
 					// branch (to create a lightweight tag
@@ -8056,7 +8064,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 					// will take care of moving the
 					// attachment to the new target.
 					reset := newReset(repo,
-						commit.branch, commit.mark)
+						commit.Branch, commit.mark)
 					repo.events[ei] = reset
 				}
 				// use a copy of attachments since it
@@ -8121,7 +8129,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 						newOps = append(newOps, op)
 						continue
 					}
-					myclique := cliques[op.path]
+					myclique := cliques[op.Path]
 					if i == myclique[len(myclique)-1] {
 						newOps = append(newOps, op)
 						continue
@@ -8410,9 +8418,9 @@ func (self *Repository) reorderCommits(v []int, bequiet bool) {
 		for _, op := range c.operations() {
 			var path string
 			if op.op == opD {
-				path = op.path
+				path = op.Path
 			} else if op.op == opR || op.op == opC {
-				path = op.source
+				path = op.Source
 			}
 			if path != "" && c.visible(path) != nil {
 				if !bequiet {
@@ -8678,22 +8686,22 @@ func (repo *Repository) pathWalk(selection orderedIntSet, hook func(string)strin
 		if commit, ok := event.(*Commit); ok {
 			for _, fileop := range commit.operations() {
 				if fileop.op == opM || fileop.op == opD {
-					newpath := hook(fileop.path)
-					if newpath != fileop.path {
+					newpath := hook(fileop.Path)
+					if newpath != fileop.Path {
 						modified.Add(newpath)
 					}
-					fileop.path = newpath
+					fileop.Path = newpath
 				} else if fileop.op == opR || fileop.op == opC {
-					newpath := hook(fileop.source)
-					if newpath != fileop.source {
+					newpath := hook(fileop.Source)
+					if newpath != fileop.Source {
 						modified.Add(newpath)
 					}
-					fileop.source = newpath
-					newpath = hook(fileop.target)
-					if newpath != fileop.target {
+					fileop.Source = newpath
+					newpath = hook(fileop.Target)
+					if newpath != fileop.Target {
 						modified.Add(newpath)
 					}
-					fileop.target = newpath
+					fileop.Target = newpath
 				}
 			}
 			commit.invalidatePathsetCache()
@@ -8753,13 +8761,13 @@ func (rs *Repository) splitCommitByPrefix(where int, prefix string) error {
 			for _, op := range ops {
 				// In Python: lambda ops: ([op for op
 				// in ops if
-				// !strings.HasPrefix(op.path,
+				// !strings.HasPrefix(op.Path,
 				// prefix)],
-                                // [op for op in ops if (op.path || op.target)
-				// and (op.path || op.target).startswith(prefix)]))
-				if strings.HasPrefix(op.path, prefix) {
+                                // [op for op in ops if (op.Path || op.Target)
+				// and (op.Path || op.Target).startswith(prefix)]))
+				if strings.HasPrefix(op.Path, prefix) {
 					with = append(with, op)
-				} else if strings.HasPrefix(op.target, prefix) {
+				} else if strings.HasPrefix(op.Target, prefix) {
 					with = append(with, op)
 				} else {
 					without = append(without, op)
@@ -8783,13 +8791,13 @@ func (repo *Repository) blobAncestor(commit *Commit, path string) *Blob {
 			break	// could be a callout
 		}
 		for _, op := range ancestor.operations() {
-			if op.path == path {
+			if op.Path == path {
 				if op.op == opD {
 					// Path had no ancestor after
 					// last delete
 					return nil
 				} else if op.op == opR || op.op == opC {
-					path = op.source
+					path = op.Source
 				} else if op.op == opM {
 					// Buglet: if this path has
 					// multiple ops, we'd probably
@@ -9552,7 +9560,7 @@ func (repo *Repository) cutClear(early *Commit, late *Commit, cutIndex int) {
             if isinstance(t, Tag):
                 for c in rs.repo.events:
                     if isinstance(c, Commit):
-                        if c is t.target:
+                        if c is t.Target:
                             t.color = c.color
         # Front events go with early segment, they'll be copied to late one.
         for event in rs.repo.frontEvents():
@@ -9567,7 +9575,7 @@ func (repo *Repository) cutClear(early *Commit, late *Commit, cutIndex int) {
             if commit.color is None:
                 complain("%s is uncolored!" % commit.mark)
             else:
-                trackbranches[commit.color].add(commit.branch)
+                trackbranches[commit.color].add(commit.Branch)
         # Now it's time to do the actual partitioning
         early = Repository(rs.repo.name + "-early")
         os.mkdir(early.subdir())
@@ -9693,25 +9701,25 @@ func (rs *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			for i, fileop := range commit.operations() {
 				announce(debugDELETE, fileop.String() + "\n")
 				if fileop.op == opD || fileop.op == opM {
-					if expunge.MatchString(fileop.path) {
+					if expunge.MatchString(fileop.Path) {
 						deletia = append(deletia, i)
 					}
 				} else if fileop.op  == opR || fileop.op == opC {
-					sourcedelete := expunge.MatchString(fileop.source)
-					targetdelete := expunge.MatchString(fileop.target)
+					sourcedelete := expunge.MatchString(fileop.Source)
+					targetdelete := expunge.MatchString(fileop.Target)
 					if sourcedelete {
 						deletia = append(deletia, i)
-						announce(debugSHOUT, "following %s of %s to %s", fileop.op, fileop.source, fileop.target)
+						announce(debugSHOUT, "following %s of %s to %s", fileop.op, fileop.Source, fileop.Target)
 						if fileop.op == opR {
 							newmatchers := make([]string, 0)
 							for _, m := range matchers {
-								if m != "^" + fileop.source + "$" {
+								if m != "^" + fileop.Source + "$" {
 									newmatchers = append(newmatchers, m)
 								}
 							}
 							matchers = newmatchers
 						}
-						matchers = append(matchers, "^" + fileop.target + "$")
+						matchers = append(matchers, "^" + fileop.Target + "$")
 						expunge, notagify = digest(matchers)
 					} else if targetdelete {
 						if fileop.op == opR {
@@ -9719,7 +9727,7 @@ func (rs *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 						} else if fileop.op == opC {
 							deletia = append(deletia, i)
 						}
-						matchers = append(matchers, "^" + fileop.target + "$")
+						matchers = append(matchers, "^" + fileop.Target + "$")
 						expunge, notagify = digest(matchers)
 					}
 				}
@@ -9735,10 +9743,10 @@ func (rs *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 		switch event.(type) {
 		case *Blob:
 			blob := event.(*Blob)
-			blob.expungehook = nil
+			blob._expungehook = nil
 		case *Commit:
 			commit := event.(*Commit)
-			commit.expungehook = nil
+			commit._expungehook = nil
 		}
 	}
 	for i, ei  := range selection {
@@ -9757,7 +9765,7 @@ func (rs *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 				keepers = append(keepers, fileop)
 				if context.verbose > 0 {
 					announce(debugSHOUT, "at %d, expunging D %s",
-						ei+1, fileop.path)
+						ei+1, fileop.Path)
 				}
 			} else if fileop.op == opM {
 				keepers = append(keepers, fileop)
@@ -9768,7 +9776,7 @@ func (rs *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 					blobs = append(blobs, blob)
 				}
 				if context.verbose > 0 {
-					announce(debugSHOUT, "at %d, expunging M %s", ei+1, fileop.path)
+					announce(debugSHOUT, "at %d, expunging M %s", ei+1, fileop.Path)
 				}
 			} else if fileop.op == opR || fileop.op == opC {
 				//assert(sourcedelete || targetdelete)
@@ -9794,9 +9802,9 @@ func (rs *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			newcommit.setOperations(keepers)
 			newcommit.invalidatePathsetCache()
 			for _, blob := range blobs {
-				blob.expungehook = blob.clone(expunged)
+				blob._expungehook = blob.clone(expunged)
 			}
-			commit.expungehook = newcommit
+			commit._expungehook = newcommit
 		}
 	}
 	// Build the new repo and hook it into the load list
@@ -9813,11 +9821,11 @@ func (rs *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 		switch event.(type) {
 		case *Blob:
 			blob := event.(*Blob)
-			if blob.expungehook == nil {
+			if blob._expungehook == nil {
 				keeperMarks = append(keeperMarks, blob.mark)
 			} else {
-				expunged.addEvent(blob.expungehook)
-				blob.expungehook = nil
+				expunged.addEvent(blob._expungehook)
+				blob._expungehook = nil
 				expungedMarks = append(expungedMarks, blob.mark)
 				// FIXME: Probably wrong
 				keeperMarks = append(keeperMarks, blob.mark)
@@ -9827,8 +9835,8 @@ func (rs *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			if commit == nil {
 				keeperMarks = append(keeperMarks, commit.mark)
 			} else {
-				expunged.addEvent(commit.expungehook)
-				commit.expungehook = nil
+				expunged.addEvent(commit._expungehook)
+				commit._expungehook = nil
 				expungedMarks = append(expungedMarks, commit.mark)
 				// FIXME: Probably wrong
 				keeperMarks = append(keeperMarks, commit.mark)
@@ -9842,7 +9850,7 @@ func (rs *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 		case *Tag:
 			tag := event.(*Tag)
 			target := rs.repo.markToEvent(tag.committish).(*Commit)
-			if target.expungehook != nil {
+			if target._expungehook != nil {
 				expunged.addEvent(tag)
 				tag.repo = expunged
 			}
@@ -11407,7 +11415,7 @@ func (rs *Reposurgeon) hasReference(event Event) bool {
             "Z" : lambda i: isinstance(e(i), Commit) and len(e(i).operations())==0,
             "M" : lambda i: isinstance(e(i), Commit) and len(e(i).parents()) > 1,
             "F" : lambda i: isinstance(e(i), Commit) and len(e(i).children()) > 1,
-            "L" : lambda i: isinstance(e(i), Commit) and RepoSurgeon.unclean.match(polybytes(e(i).comment)),
+            "L" : lambda i: isinstance(e(i), Commit) and RepoSurgeon.unclean.match(polybytes(e(i).Comment)),
             "I" : lambda i: hasattr(e(i), 'undecodable') and e(i).undecodable(),
             "D" : lambda i: hasattr(e(i), 'alldeletes') and e(i).alldeletes(),
             "N" : lambda i: self.has_reference(e(i))
@@ -11488,8 +11496,8 @@ func (rs *Reposurgeon) hasReference(event Event) bool {
         search_in = searchable_attrs.values()
         extractor_lambdas = {
             "author": lambda x: x.authors[0].who(),
-            "branch": lambda x: x.branch,
-            "comment": lambda x: x.comment,
+            "branch": lambda x: x.Branch,
+            "comment": lambda x: x.Comment,
             "committer": lambda x: x.committer.who(),
             "committish": lambda x: x.committish,
             "text": lambda x: x.text,
@@ -11619,12 +11627,12 @@ func (rs *Reposurgeon) hasReference(event Event) bool {
             else:
                 tree = match_trees[parent.mark].snapshot()
             for fileop in event.operations():
-                if fileop.op == opM and match(polybytes(fileop.path)):
-                    tree[fileop.path] = true
-                else if fileop.op in (opC, opR) and match(polybytes(fileop.target)):
-                    tree[fileop.target] = true
-                else if fileop.op == opD and match(polybytes(fileop.path)):
-                    del tree[fileop.path]
+                if fileop.op == opM and match(polybytes(fileop.Path)):
+                    tree[fileop.Path] = true
+                else if fileop.op in (opC, opR) and match(polybytes(fileop.Target)):
+                    tree[fileop.Target] = true
+                else if fileop.op == opD and match(polybytes(fileop.Path)):
+                    del tree[fileop.Path]
                 else if fileop.op == opR and match(polybytes(fileop.source)):
                     del tree[fileop.source]
                 else if fileop.op == 'deleteall':
@@ -11739,7 +11747,7 @@ func (commit *Commit) findSuccessors(path string) []string {
 			continue
 		}
 		for _, fileop := range childCommit.operations() {
-			if fileop.op == opM && fileop.path == path {
+			if fileop.op == opM && fileop.Path == path {
 				here = append(here, childCommit.mark)
 			}
 		}
@@ -11782,8 +11790,8 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 			for _, commit := range rs.chosen().commits(nil) {
 				for _, fileop := range commit.operations() {
 					if fileop.op == opM && fileop.ref == singleton.getMark() {
-						if len(commit.findSuccessors(fileop.path)) > 0 {
-							complain("beware: not the last 'M %s' on its branch", fileop.path)
+						if len(commit.findSuccessors(fileop.Path)) > 0 {
+							complain("beware: not the last 'M %s' on its branch", fileop.Path)
 						}
 						break
 					}
@@ -11867,9 +11875,9 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 		event := rs.chosen().events[ei]
 		if tag, ok := event.(*Tag); ok {
 			if nonblobs {
-				oldcomment := tag.comment
-				tag.comment = hook(tag.comment)
-				anychanged := (oldcomment != tag.comment)
+				oldcomment := tag.Comment
+				tag.Comment = hook(tag.Comment)
+				anychanged := (oldcomment != tag.Comment)
 				oldtagger := tag.tagger.who()
 				newtagger := hook(oldtagger)
 				if oldtagger != newtagger {
@@ -11885,9 +11893,9 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 			if nonblobs {
 				anychanged := false
 				if attributes.Contains("c")  {
-					oldcomment := commit.comment
-					commit.comment = hook(commit.comment)
-					if oldcomment != commit.comment {
+					oldcomment := commit.Comment
+					commit.Comment = hook(commit.Comment)
+					if oldcomment != commit.Comment {
 						anychanged = true
 					}
 				}
@@ -11960,6 +11968,8 @@ func (rs *Reposurgeon) HelpNews() {
 7. The shell command spawns an interactive shell rather than passing
    a single line to a shell.
 8. git hooks are preserved through surgery.
+9. The set of structure fieldnames that can be used with setfield is smaller.
+   However, all fieldnames for which support was documented will still work
 `)
 }
 
@@ -12187,7 +12197,7 @@ func (rs *Reposurgeon) DoIndex(lineIn string) bool {
 			if mark == "" {
 				mark = "-"
 			}
-			fmt.Fprintf(parse.stdout, "%6d commit %6s    %s\n", eventid+1, mark, e.branch)
+			fmt.Fprintf(parse.stdout, "%6d commit %6s    %s\n", eventid+1, mark, e.Branch)
 		case *Tag:
 			fmt.Fprintf(parse.stdout, "%6d tag    %6s    %4s\n", eventid+1, e.committish, e.name)
 		case *Reset:
@@ -12455,14 +12465,14 @@ func (rs *Reposurgeon) DoSizes(line string) (stopOut bool) {
 	parse := rs.newLineParse(line, stringSet{"stdout"})
 	for _, i := range rs.selection {
 		if commit, ok := repo.events[i].(*Commit); ok {
-			if _, ok := sizes[commit.branch]; !ok {
-				sizes[commit.branch] = 0
+			if _, ok := sizes[commit.Branch]; !ok {
+				sizes[commit.Branch] = 0
 			}
-			sizes[commit.branch] += len(commit.committer.String())
+			sizes[commit.Branch] += len(commit.committer.String())
 			for _, author := range commit.authors {
-				sizes[commit.branch] += len(author.String())
+				sizes[commit.Branch] += len(author.String())
 			}
-			sizes[commit.branch] += len(commit.comment)
+			sizes[commit.Branch] += len(commit.Comment)
 			for _, fileop := range commit.operations() {
 				if fileop.op == opM {
 					if !strings.HasPrefix(fileop.ref, ":") {
@@ -12474,7 +12484,7 @@ func (rs *Reposurgeon) DoSizes(line string) (stopOut bool) {
 						complain("internal error: %s should be a blob reference", fileop.ref)
 						continue
 					}
-					sizes[commit.branch] += int(ref.(*Blob).size)
+					sizes[commit.Branch] += int(ref.(*Blob).size)
 				}
 			}
 		} else if tag, ok := repo.events[i].(*Tag); ok {
@@ -12483,11 +12493,11 @@ func (rs *Reposurgeon) DoSizes(line string) (stopOut bool) {
 				complain("internal error: target of tag %s is nil", tag.name)
 				continue
 			}
-			if _, ok := sizes[commit.branch]; !ok {
-				sizes[commit.branch] = 0
+			if _, ok := sizes[commit.Branch]; !ok {
+				sizes[commit.Branch] = 0
 			}
-			sizes[commit.branch] += len(tag.tagger.String())
-			sizes[commit.branch] += len(tag.comment)
+			sizes[commit.Branch] += len(tag.tagger.String())
+			sizes[commit.Branch] += len(tag.Comment)
 		}
 	}
 	total := 0
@@ -12540,7 +12550,7 @@ func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 	badaddress := newStringSet()
 	for _, commit := range rs.chosen().commits(rs.selection) {
 		if len(commit.operations()) > 0 && commit.operations()[0].op == deleteall && commit.hasChildren() {
-			deletealls.Add(fmt.Sprintf("on %s at %s", commit.branch, commit.idMe()))
+			deletealls.Add(fmt.Sprintf("on %s at %s", commit.Branch, commit.idMe()))
 		}
 		if !commit.hasParents() && !commit.hasChildren() {
 			disconnected.Add(commit.idMe())
@@ -13224,7 +13234,7 @@ func (rs *Reposurgeon) DoStrip(line string) (stopOut bool) {
 						if _, ok := direct.(*Callout); ok {
 							noAncestor = true
 						} else if commit, ok := direct.(*Commit); ok {
-							noAncestor = commit.ancestorCount(op.path) == 0
+							noAncestor = commit.ancestorCount(op.Path) == 0
 						}
 						if op.op != opM || noAncestor {
 							interesting.Add(commit.mark)
@@ -13293,7 +13303,7 @@ func (rs *Reposurgeon) DoGraph(line string) (stopOut bool) {
 	for _, ei := range rs.selection {
 		event := rs.chosen().events[ei]
 		if commit, ok := event.(*Commit); ok {
-			summary := html.EscapeString(strings.Split(commit.comment, "\n")[0][:42])
+			summary := html.EscapeString(strings.Split(commit.Comment, "\n")[0][:42])
 			cid := commit.mark
 			if commit.legacyID != "" {
 				cid = commit.showlegacy() + " &rarr; " + cid
@@ -13302,17 +13312,17 @@ func (rs *Reposurgeon) DoGraph(line string) (stopOut bool) {
 				commit.mark[1:], cid, summary)
 			newbranch := true
 			for _, cchild := range commit.children() {
-				if child, ok := cchild.(*Commit); ok && commit.branch == child.branch {
+				if child, ok := cchild.(*Commit); ok && commit.Branch == child.Branch {
 					newbranch = false
 				}
 			}
 			if newbranch {
-				fmt.Fprintf(parse.stdout, "\t\"%s\" [shape=oval,width=2];\n", commit.branch)
-				fmt.Fprintf(parse.stdout, "\t\"%s\" -> \"%s\" [style=dotted];\n", commit.mark[1:], commit.branch)
+				fmt.Fprintf(parse.stdout, "\t\"%s\" [shape=oval,width=2];\n", commit.Branch)
+				fmt.Fprintf(parse.stdout, "\t\"%s\" -> \"%s\" [style=dotted];\n", commit.mark[1:], commit.Branch)
 			}
 		}
 		if tag, ok := event.(*Tag); ok {
-			summary := html.EscapeString(strings.Split(tag.comment, "\n")[0][:32])
+			summary := html.EscapeString(strings.Split(tag.Comment, "\n")[0][:32])
 			fmt.Fprintf(parse.stdout, "\t\"%s\" [label=<<table cellspacing=\"0\" border=\"0\" cellborder=\"0\"><tr><td><font color=\"blue\">%s</font></td><td>%s</td></tr></table>>];\n",tag.name, tag.name, summary)
 		}
 	}
@@ -13520,9 +13530,9 @@ func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 				blank.committer = *newAttribution("")
 				blank.emailIn(message, true)
 				blank.mark = repo.newmark()
-				if blank.branch == "" {
+				if blank.Branch == "" {
 					// Avoids crapping out on name lookup.
-					blank.branch = "generated-" + blank.mark[1:]
+					blank.Branch = "generated-" + blank.mark[1:]
 				}
 				if rs.selection == nil || len(rs.selection) != 1 {
 					repo.addEvent(blank)
@@ -13952,7 +13962,7 @@ func (rs *Reposurgeon) DoSetfield(line string) (stopOut bool) {
 	for _, ei := range rs.selection {
 		event := repo.events[ei]
 		if _, ok := getAttr(event, field); ok {
-			setAttr(event, field, value)
+			setAttr(event, strings.Title(field), value)
 		} else if commit, ok := event.(*Commit); ok {
 			if field == "author" {
 				attr := value
@@ -14016,7 +14026,7 @@ func (rs *Reposurgeon) DoSetperm(line string) (stopOut bool) {
 	for _, ei := range rs.selection {
 		if commit, ok := rs.chosen().events[ei].(*Commit); ok {
 			for _, op := range commit.operations() {
-				if op.op == opM && paths.Contains(op.path) {
+				if op.op == opM && paths.Contains(op.Path) {
 					op.mode = perm
 				}
 			}
@@ -14071,15 +14081,15 @@ func (rs *Reposurgeon) DoAppend(line string) (stopOut bool) {
 		case *Commit:
 			commit := event.(*Commit)
 			if parse.options.Contains("--rstrip")  {
-				commit.comment = strings.TrimRight(commit.comment, " \n\t")
+				commit.Comment = strings.TrimRight(commit.Comment, " \n\t")
 			}
-			commit.comment += line
+			commit.Comment += line
 		case *Tag:
 			tag := event.(*Tag)
 			if parse.options.Contains("--rstrip")  {
-				tag.comment = strings.TrimRight(tag.comment, " \n\t")
+				tag.Comment = strings.TrimRight(tag.Comment, " \n\t")
 			}
-			tag.comment += line
+			tag.Comment += line
 		}
 	}
 	return false
@@ -14185,7 +14195,7 @@ func (rs *Reposurgeon) DoCoalesce(line string) (stopOut bool) {
 		}
         }
 	isChangelog := func(commit *Commit) bool {
-		return strings.Contains(commit.comment, "empty log message") && len(commit.operations()) == 1 && commit.operations()[0].op == opM && strings.HasSuffix(commit.operations()[0].path, "ChangeLog")
+		return strings.Contains(commit.Comment, "empty log message") && len(commit.operations()) == 1 && commit.operations()[0].op == opM && strings.HasSuffix(commit.operations()[0].Path, "ChangeLog")
         }
 	coalesceMatch := func(cthis *Commit, cnext *Commit) bool {
 		verbose := context.verbose >= debugDELETE || parse.options.Contains("--debug")
@@ -14204,7 +14214,7 @@ func (rs *Reposurgeon) DoCoalesce(line string) (stopOut bool) {
 		if changelog && !isChangelog(cthis) && isChangelog(cnext) {
 			return true
 		}
-		if cthis.comment != cnext.comment {
+		if cthis.Comment != cnext.Comment {
 			if verbose {
 				complain("comment mismatch at %s", cnext.idMe())
 			}
@@ -14215,27 +14225,27 @@ func (rs *Reposurgeon) DoCoalesce(line string) (stopOut bool) {
 	eligible := make(map[string][]string)
 	squashes := make([][]string, 0)
 	for _, commit := range repo.commits(rs.selection) {
-		trial, ok := eligible[commit.branch]
+		trial, ok := eligible[commit.Branch]
 		if !ok {
 			// No active commit span for this branch - start one
 			// with the mark of this commit
-			eligible[commit.branch] = []string{commit.mark}
+			eligible[commit.Branch] = []string{commit.mark}
 		} else if coalesceMatch(
 			repo.markToEvent(trial[len(trial)-1]).(*Commit),
 			commit) {
 				// This commit matches the one at the
 				// end of its branch span.  Append its
 				// mark to the span.
-				eligible[commit.branch] = append(eligible[commit.branch], commit.mark)
+				eligible[commit.Branch] = append(eligible[commit.Branch], commit.mark)
 			} else {
 				// This commit doesn't match the one
 				// at the end of its span.  Coalesce
 				// the span and start a new one with
 				// this commit.
-				if len(eligible[commit.branch]) > 1 {
-					squashes = append(squashes, eligible[commit.branch])
+				if len(eligible[commit.Branch]) > 1 {
+					squashes = append(squashes, eligible[commit.Branch])
 				}
-				eligible[commit.branch] = []string{commit.mark}
+				eligible[commit.Branch] = []string{commit.mark}
 			}
         }
 	for _, endspan := range eligible {
@@ -14245,7 +14255,7 @@ func (rs *Reposurgeon) DoCoalesce(line string) (stopOut bool) {
         }
 	for _, span := range squashes {
 		// Prevent lossage when last is a ChangeLog commit
-		repo.markToEvent(span[len(span)-1]).(*Commit).comment = repo.markToEvent(span[0]).(*Commit).comment
+		repo.markToEvent(span[len(span)-1]).(*Commit).Comment = repo.markToEvent(span[0]).(*Commit).Comment
 		squashable := make([]int, 0)
 		for _, mark := range span[:len(span)-1] {
 			squashable = append(squashable, repo.find(mark))
@@ -14730,18 +14740,18 @@ func (rs *Reposurgeon) DoDivide(self, _line):
         if not self.cut(early, late):
             # If that failed, cut anyway and rename the branch segments
             late.removeParent(early)
-            if early.branch != late.branch:
+            if early.Branch != late.Branch:
                 announce(debugSHOUT, "no branch renames were required")
             else:
-                basename = early.branch
+                basename = early.Branch
                 announce(debugSHOUT, "%s has been split into %s-early and %s-late" \
                          % (basename, basename, basename))
                 for (i, event) in enumerate(self.chosen().events):
-                    if hasattr(event, "branch") and event.branch == basename:
+                    if hasattr(event, "branch") and event.Branch == basename:
                         if i <= self.selection[0]:
-                            event.branch += "-early"
+                            event.Branch += "-early"
                         else:
-                            event.branch += "-late"
+                            event.Branch += "-late"
         if context.verbose:
             self.do_choose("")
 
@@ -14994,7 +15004,7 @@ func (rs *Reposurgeon) DoDebranch(line string):
             if len(args) == 2:
                 target = args[1]
             repo = self.chosen()
-            branches = repo.branchmap()
+            branches = repo.Branchmap()
             if source not in branches.keys():
                 for candidate in branches.keys():
                     if candidate.endswith(os.sep + source):
@@ -15033,7 +15043,7 @@ func (rs *Reposurgeon) DoDebranch(line string):
                         found = true
                     else if fileop.op in (opR, opC):
                         fileop.source = os.path.join(pref, fileop.source)
-                        fileop.target = os.path.join(pref, fileop.target)
+                        fileop.Target = os.path.join(pref, fileop.Target)
                         found = true
                 if found:
                     repo.events[ci].invalidatePathsetCache()
@@ -15216,7 +15226,7 @@ This command supports > redirection.
                 fmt.Fprint(parse.stdout, header)
                 if event.legacyID:
                     fmt.Fprint(parse.stdout, "# Legacy-ID: %s\n" % event.legacyID)
-                fmt.Fprint(parse.stdout, "commit %s\n" % event.branch)
+                fmt.Fprint(parse.stdout, "commit %s\n" % event.Branch)
                 if event.mark:
                     fmt.Fprint(parse.stdout, "mark %s\n" % event.mark)
                 fmt.Fprint(parse.stdout, "\n")
@@ -15314,8 +15324,8 @@ from the highest member (child) to the lowest (parent).
                               "with at least two commits.")
         }
         later.addParentCommit(earlier)
-        //earlier_id = "%s (%s)" % (earlier.mark, earlier.branch)
-        //later_id = "%s (%s)" % (later.mark, later.branch)
+        //earlier_id = "%s (%s)" % (earlier.mark, earlier.Branch)
+        //later_id = "%s (%s)" % (later.mark, later.Branch)
         //announce(debugSHOUT, "%s added as a parent of %s" % (earlier_id, later_id))
 
     }
@@ -15604,7 +15614,7 @@ func (rs *Reposurgeon) DoBranch(line string) (stopOut bool) {
 		}
 		for _, event := range repo.events {
 			if commit, ok := event.(*Commit); ok {
-				if commit.branch == branchname {
+				if commit.Branch == branchname {
 					commit.setBranch(newname)
 				}
 			} else if reset, ok := event.(*Reset); ok {
@@ -15618,7 +15628,7 @@ func (rs *Reposurgeon) DoBranch(line string) (stopOut bool) {
 		for ei := range repo.events {
 			event := repo.events[ei]
 			if commit, ok := event.(*Commit); ok {
-				if commit.branch == branchname {
+				if commit.Branch == branchname {
 					deletia = append(deletia, ei)
 				}
 			} else if reset, ok := event.(*Reset); ok {
@@ -15734,7 +15744,7 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 		}
 		tag := newTag(repo, tagname, target.mark,
 			target.committer.clone(),
-			target.comment)
+			target.Comment)
 		tag.tagger.date.timestamp.Add(time.Second) 	// So it is unique
 		var lasttag int
 		var lastcommit int
@@ -15763,7 +15773,7 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 			} else if reset, ok := event.(*Reset); ok && tagre.MatchString(reset.ref[11:]) {
 				// len("refs/heads/") = 11
 				resets = append(resets, reset)
-			} else if commit, ok := event.(*Commit); ok && tagre.MatchString(commit.branch[10:]) {
+			} else if commit, ok := event.(*Commit); ok && tagre.MatchString(commit.Branch[10:]) {
 				// len("refs/tags/") = 10
 				commits = append(commits, commit)
 			}
@@ -15776,7 +15786,7 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 				tags = append(tags, tag)
 			} else if reset, ok := event.(*Reset); ok && reset.ref == fulltagname {
 				resets = append(resets, reset)
-			} else if commit, ok := event.(*Commit); ok && commit.branch == fulltagname {
+			} else if commit, ok := event.(*Commit); ok && commit.Branch == fulltagname {
 				commits = append(commits, commit)
 			}
 		}
@@ -15837,7 +15847,7 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 			reset.ref = fullnewname
 		}
 		for _, event := range commits {
-			event.branch = fullnewname
+			event.Branch = fullnewname
 		}
         } else if verb == "delete" {
 		for _, tag := range tags {
@@ -15866,14 +15876,14 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 					continue
 				}
 				if childFather == commits[len(commits)-1] {
-					successors = append(successors, childCommit.branch)
+					successors = append(successors, childCommit.Branch)
 				}
 			}
 			
-			//successors := {child.branch for child in commits[-1].children() if child.parents()[0] == commits[-1]}
+			//successors := {child.Branch for child in commits[-1].children() if child.parents()[0] == commits[-1]}
 			if len(successors) == 1 {
 				for _, event := range commits {
-					event.branch = successors[0]
+					event.Branch = successors[0]
 				}
 			} else {
 				complain("couldn't determine a unique successor for %s at %s", tagname, commits[len(commits)-1].idMe())
@@ -16017,7 +16027,7 @@ func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
 			}
 		}
 		for _, commit := range repo.commits(nil) {
-			if commit.branch == newname {
+			if commit.Branch == newname {
 				complain("commit branch collision, not renaming.")
 				return false
 			}
@@ -16026,8 +16036,8 @@ func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
 			reset.ref = newname
 		}
 		for _, commit := range repo.commits(nil) {
-			if commit.branch == resetname {
-				commit.branch = newname
+			if commit.Branch == resetname {
+				commit.Branch = newname
 			}
 		}
         } else if verb == "delete" {
@@ -16037,7 +16047,7 @@ func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
 		}
 		var tip *Commit
 		for _, commit := range repo.commits(nil) {
-			if commit.branch == resetname {
+			if commit.Branch == resetname {
 				tip = commit
 			}
 		}
@@ -16045,8 +16055,8 @@ func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
 			successor := tip.children()[0]
 			if cSuccessor, ok := successor.(*Commit); ok {
 				for _, commit := range repo.commits(nil) {
-					if commit.branch == resetname {
-						commit.branch = cSuccessor.branch
+					if commit.Branch == resetname {
+						commit.Branch = cSuccessor.Branch
 					}
 				}
 			}
@@ -16139,7 +16149,7 @@ func (rs *Reposurgeon) DoIgnores(line string) (stopOut bool) {
 				earliest := repo.earliestCommit()
 				hasIgnoreBlob := false
 				for _, fileop := range earliest.operations() {
-					if fileop.op == opM && strings.HasSuffix(fileop.path, rs.ignorename) {
+					if fileop.op == opM && strings.HasSuffix(fileop.Path, rs.ignorename) {
 						hasIgnoreBlob = true
 					}
 				}
@@ -16505,10 +16515,10 @@ func (rs *Reposurgeon) DoReferences(self, line str):
                 match_re = regexp.MustCompile((re.escape("[[")+regexp+re.escape("]]")).encode('ascii'))
                 for _, event in self.selected():
                     if isinstance(event, (Commit, Tag)):
-                        event.comment, new_hits = match_re.subn(
+                        event.Comment, new_hits = match_re.subn(
                             lambda m: substitute(getter, m),
-                            polybytes(event.comment))
-                        event.comment = polystr(event.comment)
+                            polybytes(event.Comment))
+                        event.Comment = polystr(event.Comment)
                         hits += new_hits
             announce(debugSHOUT, "%d references resolved." % hits)
             repo.writeLegacy = true
@@ -16552,32 +16562,32 @@ func (rs *Reposurgeon) DoGitify(_line string) (stopOut bool) {
 	for _, ei := range rs.selection {
 		event := rs.chosen().events[ei]
 		if commit, ok := event.(*Commit); ok {
-			commit.comment = strings.TrimSpace(commit.comment) + "\n"
-			if strings.Count(commit.comment, "\n") < 2 {
+			commit.Comment = strings.TrimSpace(commit.Comment) + "\n"
+			if strings.Count(commit.Comment, "\n") < 2 {
 				continue
 			}
-			firsteol := strings.Index(commit.comment, "\n")
-			if commit.comment[firsteol+1] == byte('\n') {
+			firsteol := strings.Index(commit.Comment, "\n")
+			if commit.Comment[firsteol+1] == byte('\n') {
 				continue
 			}
-			if lineEnders.Contains(string(commit.comment[firsteol-1])) {
-				commit.comment = commit.comment[:firsteol] +
+			if lineEnders.Contains(string(commit.Comment[firsteol-1])) {
+				commit.Comment = commit.Comment[:firsteol] +
 					"\n" +
-					commit.comment[firsteol:]
+					commit.Comment[firsteol:]
 			}
 		} else if tag, ok := event.(*Tag); ok {
-			tag.comment = strings.TrimSpace(tag.comment) + "\n"
-			if strings.Count(tag.comment, "\n") < 2 {
+			tag.Comment = strings.TrimSpace(tag.Comment) + "\n"
+			if strings.Count(tag.Comment, "\n") < 2 {
 				continue
 			}
-			firsteol := strings.Index(commit.comment, "\n")
-			if tag.comment[firsteol+1] == byte('\n') {
+			firsteol := strings.Index(commit.Comment, "\n")
+			if tag.Comment[firsteol+1] == byte('\n') {
 				continue
 			}
-			if lineEnders.Contains(string(tag.comment[firsteol-1])) {
-				tag.comment = tag.comment[:firsteol] +
+			if lineEnders.Contains(string(tag.Comment[firsteol-1])) {
+				tag.Comment = tag.Comment[:firsteol] +
 					"\n" +
-					tag.comment[firsteol:]
+					tag.Comment[firsteol:]
 			}
 		}
 		baton.twirl("")
@@ -17364,8 +17374,8 @@ func (self *Reposurgeon) DoIncorporate(line string) bool {
 	blank.mark = repo.newmark()
 	blank.repo = repo
 	blank.committer.fullname, blank.committer.email = whoami()
-	blank.branch = commit.branch
-	blank.comment = fmt.Sprintf("Content from %s\n", parse.line)
+	blank.Branch = commit.Branch
+	blank.Comment = fmt.Sprintf("Content from %s\n", parse.line)
 	var err error
 	blank.committer.date, err = newDate("1970-01-01T00:00:00Z")
 	stripstr, present := parse.OptVal("strip")
@@ -18114,9 +18124,9 @@ deleted name.
             else:
                 au = "no-author"
             if record.log:
-                commit.comment = record.log
-                if not commit.comment.endswith("\n"):
-                    commit.comment += "\n"
+                commit.Comment = record.log
+                if not commit.Comment.endswith("\n"):
+                    commit.Comment += "\n"
             if '@' in au:
                 # This is a thing that happens occasionally.  A DVCS-style
                 # attribution (name + email) gets stuffed in a Subversion
@@ -18590,9 +18600,9 @@ deleted name.
                 # Sequence numbers for split commits are 1-origin
                 split.legacyID += StreamParser.splitSep + str(i + 1)
                 sp.repo.legacyMap["SVN:%s" % split.legacyID] = split
-                if split.comment is None:
-                    split.comment = ""
-                split.comment += "\n[[Split portion of a mixed commit.]]\n"
+                if split.Comment is None:
+                    split.Comment = ""
+                split.Comment += "\n[[Split portion of a mixed commit.]]\n"
                 split.setMark(sp.repo.newmark())
                 split.setOperations(fileops)
                 split.invalidatePathsetCache()
@@ -18725,7 +18735,7 @@ deleted name.
         if debugEnable(debugEXTRACT):
             announce(debugEXTRACT, "at post-parsing time:")
             for commit in sp.repo.commits():
-                msg = commit.comment
+                msg = commit.Comment
                 if msg is None:
                     msg = ""
                 announce(debugSHOUT, "r%-4s %4s %2d %2d '%s'" % \
@@ -18773,7 +18783,7 @@ deleted name.
                             fileop.path = fileop.path[len(branch):]
                         else if fileop.op in (opR, opC):
                             fileop.source = fileop.source[len(branch):]
-                            fileop.target = fileop.target[len(branch):]
+                            fileop.Target = fileop.Target[len(branch):]
                     commit.invalidatePathsetCache()
                 else:
                     commit.setBranch("root")
@@ -18783,12 +18793,12 @@ deleted name.
             timeit("branches")
             # ...then rebuild parent links so they follow the branches
             for commit in sp.repo.commits():
-                if sp.branches[commit.branch] is None:
+                if sp.branches[commit.Branch] is None:
                     branchroots.append(commit)
                     commit.setParents([])
                 else:
-                    commit.setParents([sp.branches[commit.branch]])
-                sp.branches[commit.branch] = commit
+                    commit.setParents([sp.branches[commit.Branch]])
+                sp.branches[commit.Branch] = commit
                 # Per-commit spinner disabled because this pass is fast
                 #baton.twirl("")
             sp.timeMark("parents")
@@ -18798,7 +18808,7 @@ deleted name.
             # last phase.
             try:
                 commit = next(c for c in sp.repo.commits()
-                              if c.branch == "root")
+                              if c.Branch == "root")
             except StopIteration:
                 pass
             else:
@@ -18817,7 +18827,7 @@ deleted name.
                     # it can only happen if parent was the now tagified root.
                     continue
                 if not child.hasParents() \
-                        && child.branch not in sp.branchcopies:
+                        && child.Branch not in sp.branchcopies:
                     # The branch wasn't created by copying another branch and
                     # is instead populated by fileops. Prepend a deleteall to
                     # ensure that it starts with a clean tree instead of
@@ -18835,10 +18845,10 @@ deleted name.
                 if parent not in child.parents():
                     child.addParentCommit(parent)
             for root in branchroots:
-                if getattr(commit.branch, "fileops", None) \
-                        && root.branch != ("trunk" + svnSep):
+                if getattr(commit.Branch, "fileops", None) \
+                        && root.Branch != ("trunk" + svnSep):
                     sp.gripe("r%s: can't connect nonempty branch %s to origin" \
-                                % (root.legacyID, root.branch))
+                                % (root.legacyID, root.Branch))
             timeit("branchlinks")
             # Add links due to svn:mergeinfo properties
             mergeinfo = PathMap()
@@ -18946,7 +18956,7 @@ deleted name.
                               commit.mark, ancestor,
                               len(commit.operations()),
                               len(commit.properties or ""),
-                              commit.branch))
+                              commit.Branch))
         baton.twirl("")
         # Code controlled by --nobranch option ends.
         # Canonicalize all commits to ensure all ops actually do something.
@@ -18960,16 +18970,16 @@ deleted name.
         newtags = []
         for (i, event) in enumerate(sp.repo):
             if commit, ok := event.(*Commit); ok:
-                # It is possible for commit.comment to be None if
+                # It is possible for commit.Comment to be None if
                 # the repository has been dumpfiltered and has
                 # empty commits.  If that's the case it can't very
                 # well have CVS artifacts in it.
-                if event.comment is None:
+                if event.Comment is None:
                     sp.gripe("r%s has no comment" % event.legacyID)
                     continue
                 # Things that cvs2svn created as tag surrogates
                 # get turned into actual tags.
-                m = StreamParser.cvs2svnTagRE.search(polybytes(event.comment))
+                m = StreamParser.cvs2svnTagRE.search(polybytes(event.Comment))
                 if m && not event.hasChildren():
                     fulltag = os.path.join("refs", "tags", polystr(m.group(1)))
                     newtags.append(Reset(sp.repo, ref=fulltag,
@@ -18977,7 +18987,7 @@ deleted name.
                     deleteables.append(i)
                 # Childless generated branch commits carry no informationn,
                 # and just get removed.
-                m = StreamParser.cvs2svnBranchRE.search(polybytes(event.comment))
+                m = StreamParser.cvs2svnBranchRE.search(polybytes(event.Comment))
                 if m && not event.hasChildren():
                     deleteables.append(i)
                 baton.twirl("")
@@ -19006,9 +19016,9 @@ deleted name.
             # Give branch and tag roots a special name, except for "trunk" and
             # "root" which do not come from a regular branch copy.
             if commit.mark in rootmarks:
-                name = branchbase (commit.branch)
+                name = branchbase (commit.Branch)
                 if name not in rootskip:
-                    if commit.branch.startswith("refs/tags/"):
+                    if commit.Branch.startswith("refs/tags/"):
                         return name
                     return name + "-root"
             # Fallback on standard rules.
@@ -19016,7 +19026,7 @@ deleted name.
         func (sp *StreamParser)  taglegend(commit):
             # Tipdelete commits and branch roots don't get any legend.
             if commit.operations() or (commit.mark in rootmarks \
-                    && branchbase(commit.branch) not in rootskip):
+                    && branchbase(commit.Branch) not in rootskip):
                 return ""
             # Otherwise, generate one for inspection.
             legend = ["[[Tag from zero-fileop commit at Subversion r%s" \
@@ -19041,38 +19051,38 @@ deleted name.
                 continue
             matched = false
             for regex, replace in compiled_mapping:
-                result, substitutions = regex.subn(replace,polybytes(commit.branch))
+                result, substitutions = regex.subn(replace,polybytes(commit.Branch))
                 if substitutions == 1:
                     matched = true
                     commit.setBranch(os.path.join("refs",polystr(result)))
                     break
             if matched:
                 continue
-            if commit.branch == "root":
+            if commit.Branch == "root":
                 commit.setBranch(os.path.join("refs", "heads", "root"))
-            else if commit.branch.startswith("tags" + svnSep):
-                branch = commit.branch
+            else if commit.Branch.startswith("tags" + svnSep):
+                branch = commit.Branch
                 if branch.endswith(svnSep):
                     branch = branch[:-1]
                 commit.setBranch(os.path.join("refs", "tags",
                                               os.path.basename(branch)))
-            else if commit.branch == "trunk" + svnSep:
+            else if commit.Branch == "trunk" + svnSep:
                 commit.setBranch(os.path.join("refs", "heads", "master"))
             else:
-                basename = os.path.basename(commit.branch[:-1])
+                basename = os.path.basename(commit.Branch[:-1])
                 commit.setBranch(os.path.join("refs", "heads", basename))
                 # Some of these should turn into resets.  Is this a branchroot
                 # commit with no fileops?
                 if '--preserve' not in options && len(commit.parents()) == 1:
                     parent = commit.parents()[0]
-                    if parent.branch != commit.branch && not commit.operations():
+                    if parent.Branch != commit.Branch && not commit.operations():
                         announce(debugEXTRACT, "branch root of %s with comment %s discarded"
-                                 % (commit.branch, repr(commit.comment)))
+                                 % (commit.Branch, repr(commit.Comment)))
                         # FIXME: Adding a reset for the new branch at the end
                         # of the event sequence was erroneous - caused later
                         # commits to be ignored. Possibly we should add a reset
                         # where the branch commit was?
-                        #sp.repo.addEvent(Reset(sp.repo, ref=commit.branch,
+                        #sp.repo.addEvent(Reset(sp.repo, ref=commit.Branch,
                         #                          target=parent))
                         deletia.append(index)
             baton.twirl("")
@@ -19112,7 +19122,7 @@ deleted name.
             else:
                 if a is b:
                     sp.gripe("r%s: duplicate parent marks" % commit.legacyID)
-                else if a.branch == b.branch == commit.branch:
+                else if a.Branch == b.Branch == commit.Branch:
                     if b.committer.date < a.committer.date:
                         (a, b) = (b, a)
                     if b.descendedFrom(a):
@@ -19131,7 +19141,7 @@ deleted name.
                     && commit.hasChildren() \
                     && commit.mark not in ignore_deleteall:
                 sp.gripe("mid-branch deleteall on %s at <%s>." % \
-                        (commit.branch, commit.legacyID))
+                        (commit.Branch, commit.legacyID))
         timeit("linting")
         # Treat this in-core state as though it was read from an SVN repo
         sp.repo.hint("svn", strong=true)
@@ -19255,8 +19265,8 @@ func dumpNode(fp io.Writer, dpath string,
 // FIXME: This logic should be improved to match the logic in
 // branchColor more closely
 func commitbranch(commit *Commit) string {
-	if strings.HasPrefix(commit.branch, "refs/heads/") || !commit.hasChildren() {
-		return commit.branch
+	if strings.HasPrefix(commit.Branch, "refs/heads/") || !commit.hasChildren() {
+		return commit.Branch
 	}
 	candidatebranch := ""
 	for _, child := range commit.children() {
@@ -19269,10 +19279,10 @@ func commitbranch(commit *Commit) string {
 			}
 		}
 	}
-	if candidatebranch != "" && !strings.HasPrefix(commit.branch, "refs/heads/") {
+	if candidatebranch != "" && !strings.HasPrefix(commit.Branch, "refs/heads/") {
 		return candidatebranch
 	} else {
-		return commit.branch
+		return commit.Branch
 	}
 }
 
@@ -19545,11 +19555,11 @@ func (sd *SubversionDumper) dump(selection orderedIntSet,
 		if !ok {
 			continue
 		}
-		if strings.HasPrefix(commit.branch, "refs/notes") {
+		if strings.HasPrefix(commit.Branch, "refs/notes") {
 			complain("skipping note as unsupported")
 			continue
 		}
-		if commit.branch == "refs/stash" {
+		if commit.Branch == "refs/stash" {
 			complain("skipping stash as unsupported")
 			continue
 		}
@@ -19586,14 +19596,14 @@ func (sd *SubversionDumper) dump(selection orderedIntSet,
 		dumpRevprops(fp, revision,
 			&commit.committer.date,
 			strings.Split(commit.committer.email, "@")[0],
-			strings.Replace(commit.comment, "\r\n", "\n", -1),
+			strings.Replace(commit.Comment, "\r\n", "\n", -1),
 			backlinks)
 		for _, fileop := range commit.operations() {
 			if fileop.op == opD {
-				if strings.HasSuffix(fileop.path, ".gitignore") {
+				if strings.HasSuffix(fileop.Path, ".gitignore") {
 					sd.directoryCreate(fp, revision,
-						commit.color, fileop.path, parents)
-					svnpath := sd.svnize(commit.color, filepath.Dir(fileop.path))
+						commit.color, fileop.Path, parents)
+					svnpath := sd.svnize(commit.color, filepath.Dir(fileop.Path))
 					sd.pathmap[revision][svnpath].props.set("svn:ignore", "")
 					dumpNode(fp,
 						filepath.Dir(svnpath),
@@ -19604,15 +19614,15 @@ func (sd *SubversionDumper) dump(selection orderedIntSet,
 						"",
 						&sd.pathmap[revision][svnpath].props)
 				} else {
-					sd.filedelete(fp, revision, commit.color, fileop.path, parents)
+					sd.filedelete(fp, revision, commit.color, fileop.Path, parents)
 				}
 			} else if fileop.op == opM {
-				if strings.HasSuffix(fileop.path, ".gitignore") {
+				if strings.HasSuffix(fileop.Path, ".gitignore") {
 					svnpath := sd.svnize(commit.color,
-						filepath.Dir(fileop.path))
+						filepath.Dir(fileop.Path))
 					sd.directoryCreate(fp, revision,
 						commit.color,
-						fileop.path,
+						fileop.Path,
 						parents)
 					var content string
 					if fileop.ref == "inline" {
@@ -19641,7 +19651,7 @@ func (sd *SubversionDumper) dump(selection orderedIntSet,
 						commit.color,
 						fileop.mode,
 						fileop.ref,
-						fileop.path,
+						fileop.Path,
 						fileop.inline,
 						parents)
 				}
@@ -19649,16 +19659,16 @@ func (sd *SubversionDumper) dump(selection orderedIntSet,
 				sd.filecopy(fp,
 					revision,
 					commit.color,
-					fileop.source,
-					fileop.target,
+					fileop.Source,
+					fileop.Target,
 					parents)
-				sd.filedelete(fp, revision, commit.branch, fileop.source, commit.parents())
+				sd.filedelete(fp, revision, commit.Branch, fileop.Source, commit.parents())
 			} else if fileop.op == opC {
 				sd.filecopy(fp,
 					revision,
 					commit.color,
-					fileop.source,
-					fileop.target,
+					fileop.Source,
+					fileop.Target,
 					parents)
 			} else if fileop.op == deleteall {
 				sd.filedeleteall(fp,
@@ -19688,19 +19698,19 @@ func (sd *SubversionDumper) dump(selection orderedIntSet,
 			sd.makeTag(fp,
 				revision,
 				tag.name,
-				strings.Replace(tag.comment, "\r\n", "\n", 0),
+				strings.Replace(tag.Comment, "\r\n", "\n", 0),
 				tag.tagger,
 				tagparents)
 		}
 		// Preserve lightweight tags, too.  Ugh, O(n**2).
 		createtag := false
-		if strings.HasPrefix(commit.branch, "refs/tags") {
-			svntarget := filepath.Join("tags", branchbase(commit.branch))
+		if strings.HasPrefix(commit.Branch, "refs/tags") {
+			svntarget := filepath.Join("tags", branchbase(commit.Branch))
 			createtag = !sd.branchesCreated.Contains(svntarget)
 			if createtag && commit.hasChildren() {
 				for _, child := range commit.children() {
 					commitChild, ok := child.(*Commit)
-					if ok && commitChild.branch == commit.branch {
+					if ok && commitChild.Branch == commit.Branch {
 						createtag = false
 						break
 					}
@@ -19717,7 +19727,7 @@ func (sd *SubversionDumper) dump(selection orderedIntSet,
 				}
 				sd.makeTag(fp,
 					revision,
-					branchbase(commit.branch),
+					branchbase(commit.Branch),
 					"",
 					&commit.committer,
 					tagparents)
