@@ -8567,69 +8567,82 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
 	}
 }
 
-/*
-    func uniquify(self, color, persist=None):
-        "Disambiguate branches, tags, and marks using the specified label."
-        for event in self.events:
-            for (objtype, attr) in ((Commit, "branch"),
-                                    (Reset, "ref"),
-                                    (Tag, "name"),):
-                if isinstance(event, objtype):
-                    oldname = getattr(event, attr)
-                    newname = None
-                    if persist is None:
-                        # we're not trying to preserve names
-                        if objtype == Tag:
-                            newname = color + "-" + oldname
-                        else:
-                            newname = oldname + "-" + color
-                    else if oldname not in persist:
-                        # record name as belonging to this repo
-                        persist[oldname] = color
-                        continue
-                    else if persist.get(oldname) == color:
-                        # name belongs here, do nothing
-                        continue
-                    else:
-                        # collision - oldname belongs to a different repo
-                        if objtype == Tag:
-                            newname = color + "-" + oldname
-                        else:
-                            newname = oldname + "-" + color
-                    if newname:
-                        setattr(event, attr, newname)
-                        announce(debugUNITE, "moving %s -> %s in %s.%s"
-                                     % (oldname, newname,
-                                        objtype.__name__,
-                                        attr))
-                        if persist is not None:
-                            persist[newname] = color
-             # Disambiguate defining marks.
-            for fld in ("mark", "committish"):
-                if hasattr(event, fld):
-                    old = getattr(event, fld)
-                    if old is None:
-                        continue
-                    else if not old.startswith(":"):
-                        raise Fatal("field not in mark format")
-                    else:
-                        new = old + "-" + color
-                        announce(debugUNITE, "moving %s -> %s in %s.%s"
-                                     % (old, new,
-                                        event.__class__.__name__,
-                                        fld))
-                        setattr(event, fld, new)
-            self.invalidateObjectMap()
-            # Now marks in fileops
-            if isinstance(event, Commit):
-                for fileop in event.operations():
-                    if fileop.op == opM and fileop.ref.startswith(":"):
-                        new = fileop.ref + "-" + color
-                        announce(debugUNITE, "moving %s -> %s in fileop"
-                                     % (fileop.ref, new))
-                        fileop.ref = new
+// Disambiguate branches, tags, and marks using the specified label.
+func (repo *Repository) uniquify(color string, persist map[string]string) map[string]string {
+	makename := func(oldname string, obj string, fld string, reverse bool) string {
+		newname := ""
+		if persist == nil {
+			// we're not trying to preserve names
+			if reverse {
+				newname = color + "-" + oldname
+			} else {
+				newname = oldname + "-" + color
+			}
+		} else if _, ok := persist[oldname]; !ok {
+			// record name as belonging to this repo
+			persist[oldname] = color
+			return oldname
+		} else if persist[oldname] == color {
+			// name belongs here, do nothing
+			return oldname
+		} else {
+			// collision - oldname belongs to a different repo
+			if reverse {
+				newname = color + "-" + oldname
+			} else {
+				newname = oldname + "-" + color
+			}
+		}
+		if newname != "" {
+			announce(debugUNITE, "moving %s -> %s in %s.%s", oldname, newname, obj,	fld)
+			if persist != nil {
+				persist[newname] = color
+			}
+			return newname
+		}
+		return oldname
+	}
+	makemark := func(oldname string, obj string, fld string) string {
+		if oldname == "" {
+			return ""
+		}
+		if !strings.HasPrefix(oldname, ":") {
+			panic("field not in mark format")
+		}
+		newname := oldname + "-" + color
+		announce(debugUNITE, "moving %s -> %s in %s.%s",
+			oldname, newname, obj, fld)
+		return newname
+	}
+        for _, event := range repo.events {
+		switch event.(type) {
+		case *Commit:
+			commit := event.(*Commit)
+			commit.Branch = makename(commit.Branch,
+				"commit", "branch", false)
+			commit.mark = makemark(commit.mark, "commit", "mark")
+			for i, fileop := range commit.fileops {
+				if fileop.op == opM && strings.HasPrefix(fileop.ref, ":") {
+					newname := fileop.ref + "-" + color
+					announce(debugUNITE,
+						"moving %s -> %s in fileop",
+						fileop.ref, newname)
+					commit.fileops[i].ref = newname
+				}
+			}
+		case *Reset:
+			reset := event.(*Reset)
+			reset.ref = makename(reset.ref,	"reset", "ref", false)
+			reset.committish = makemark(reset.committish, "tag", "committish")
+		case *Tag:
+			tag := event.(*Tag)
+			tag.name = makename(tag.name,"tag", "name", true)
+			tag.committish = makemark(tag.committish, "tag", "committish")
+		}
+        }
+	repo.invalidateObjectMap()
         return persist
-*/
+}
 
 // Absorb all events from the repository OTHER into SELF.
 // Only vcstype, sourcedir, and basedir are not copied here
