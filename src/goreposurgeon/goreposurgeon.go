@@ -4584,12 +4584,14 @@ func (commit *Commit) insertParent(idx int, mark string) {
 	commit.invalidateManifests()
 }
 
-func (commit *Commit) removeParent(event *Commit) {
+func (commit *Commit) removeParent(event CommitLike) {
 	// remove *all* occurences of event in parents
 	commit._parentNodes = commitRemove(commit._parentNodes, event)
 	// and all occurences of self in event's children
-	event._childNodes = commitRemove(event._childNodes, commit)
-	commit.invalidateManifests()
+	if commit, ok := event.(*Commit); ok {
+		commit._childNodes = commitRemove(commit._childNodes, commit)
+		commit.invalidateManifests()
+	}
 }
 
 func (commit *Commit) replaceParent(e1, e2 *Commit) {
@@ -8676,48 +8678,63 @@ func (repo *Repository) absorb(other *Repository) {
         other.cleanup()
 }
 
-/*
-    func graft(self, graft_repo, graft_point, options):
-        "Graft a repo on to this one at a specified point."
-        if graft_point is None:
-            persist = {}
-        else:
-            persist = None
-            where = self.events[graft_point]
-            if not isinstance(where, Commit):
-                raise Recoverable("%s in %s is not a commit." % \
-                                  (where.mark, self.name))
-        # Errors aren't recoverable after this
-        graft_repo.uniquify(graft_repo.name, persist)
-        if graft_point is not None:
-            graftroot = graft_repo.earliestCommit()
-        self.absorb(graft_repo)
-        if graft_point:
-            graftroot.addParentByMark(where.mark)
+// Graft a repo on to this one at a specified point.
+func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options stringSet) error {
+	var persist map[string]string
+	var anchor *Commit
+	var ok bool
+        if graftPoint == -1 {
+		persist = make(map[string]string)
+        } else {
+		persist = nil
+		where := repo.events[graftPoint]
+		anchor, ok = where.(*Commit)
+		if !ok {
+			return fmt.Errorf("%s in %s is not a commit.",
+				where.idMe(), repo.name)
+		}
+        }
+        // Errors aren't recoverable after this
+        graftRepo.uniquify(graftRepo.name, persist)
+	var graftroot *Commit
+        if graftPoint != -1 {
+		graftroot = graftRepo.earliestCommit()
+        }
+        repo.absorb(graftRepo)
+        if graftPoint != -1 {
+		graftroot.addParentByMark(anchor.mark)
 
-        if "--prune" in options:
-            # Prepend a deleteall. Roots have nothing upline to preserve.
-            delop = FileOp()
-            delop.construct("deleteall")
-            graftroot.prependOperation(delop)
+        }
+        if options.Contains("--prune")  {
+		// Prepend a deleteall. Roots have nothing upline to preserve.
+		delop := newFileOp(repo)
+		delop.construct("deleteall")
+		graftroot.prependOperation(*delop)
 
-        # Resolve all callouts
-        for commit in graft_repo.commits():
-            for (idx, parent) in enumerate(commit.parents()):
-                if Commit.isCallout(parent.mark):
-                    attach = self.named(parent.mark)
-                    if len(attach) == 0:
-                        raise Recoverable("no match for %s in %s" \
-                                          % (parent.mark, graft_repo.name))
-                    else if len(attach) >= 2:
-                        raise Recoverable("%s is ambiguous in %s" \
-                                          % (parent.mark, graft_repo.name))
-                    else:
-                        commit.removeParent(parent)
-                        newparent = self.events[list(attach)[0]]
-                        commit.insertParent(idx, newparent.mark)
-        self.renumber()
-*/
+        }
+        // Resolve all callouts
+        for _, commit := range graftRepo.commits(nil) {
+		for idx, parent := range commit.parents() {
+			if isCallout(parent.getMark()) {
+				attach := repo.named(parent.getMark())
+				if len(attach) == 0 {
+					fmt.Errorf("no match for %s in %s",
+						parent.getMark(), graftRepo.name)
+				} else if len(attach) >= 2 {
+					fmt.Errorf("%s is ambiguous in %s",
+						parent.getMark(), graftRepo.name)
+				} else {
+					commit.removeParent(parent)
+					newparent := repo.events[attach[0]]
+					commit.insertParent(idx, newparent.getMark())
+				}
+			}
+		}
+        }
+        repo.renumber(1, nil)
+	return nil
+}
+
 // Apply a hook to all paths, returning the set of modified paths.
 func (repo *Repository) pathWalk(selection orderedIntSet, hook func(string)string) stringSet {
 	if hook == nil {
@@ -15001,14 +15018,14 @@ func (rs *Reposurgeon) DoGraft(line string):
             raise Recoverable("no repositories are loaded.")
         with rs.newLineParse(line, nil) as parse:
             if parse.line in self.reponames():
-                graft_repo = self.repoByName(parse.line)
+                graftRepo = self.repoByName(parse.line)
             else:
                 raise Recoverable("no such repo as %s" % parse.line)
             require_graft_point = true
             if self.selection is not None and len(self.selection) == 1:
                 graft_point = self.selection[0]
             else:
-                for commit in graft_repo.commits():
+                for commit in graftRepo.commits():
                     for parent in commit.parents():
                         if Commit.isCallout(parent.mark):
                             require_graft_point = false
@@ -15017,8 +15034,8 @@ func (rs *Reposurgeon) DoGraft(line string):
                 else:
                     raise Recoverable("a singleton selection set is required.")
             # OK, we've got the two repos and the graft point.  Do it.
-            self.chosen().graft(graft_repo, graft_point, parse.options)
-            self.remove_by_name(graft_repo.name)
+            self.chosen().graft(graftRepo, graft_point, parse.options)
+            self.remove_by_name(graftRepo.name)
 */
 
 func (rs *Reposurgeon) HelpDebranch() {
