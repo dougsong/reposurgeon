@@ -3204,7 +3204,7 @@ func (b *Blob) forget() {
 }
 
 // moveto changes the repo this blob is associated with."
-func (b *Blob) moveto(repo *Repository) *Blob {
+func (b *Blob) moveto(repo *Repository) {
 	if b.hasfile() {
 		oldloc := b.getBlobfile(false)
 		b.repo = repo
@@ -3213,7 +3213,6 @@ func (b *Blob) moveto(repo *Repository) *Blob {
 			"blob rename calls os.rename(%s, %s)", oldloc, newloc)
 		os.Rename(oldloc, newloc)
 	}
-	return b
 }
 
 // clone makes a copy of this blob, pointing at the same file."
@@ -3326,6 +3325,11 @@ func (t *Tag) forget() {
 		event.(*Commit).detach(t)
 	}
 	t.repo = nil
+}
+
+// moveto changes the repo this reset is associated with."
+func (tag Tag) moveto(repo *Repository) {
+	tag.repo = repo
 }
 
 // index returns our 0-origin index in our repo.
@@ -3626,7 +3630,7 @@ func (reset *Reset) forget() {
 }
 
 // moveto changes the repo this reset is associated with."
-func (reset *Reset) moveto(repo *Repository) {
+func (reset Reset) moveto(repo *Repository) {
 	reset.repo = repo
 }
 
@@ -3937,6 +3941,10 @@ func (callout Callout) getComment() string {
 // Stub to satisfy Event interface - should never be used
 func (callout Callout) String() string {
 	return fmt.Sprintf("callout-%s", callout.mark)
+}
+
+func (c Callout) moveto(*Repository) {
+	// Has no repo field
 }
 
 // ManifestEntry is visibility data about a file at a commit where it has no M
@@ -4448,7 +4456,7 @@ func (commit *Commit) forget() {
 }
 
 // moveto changes the repo this commit is associated with.
-func (commit *Commit) moveto(repo *Repository) {
+func (commit Commit) moveto(repo *Repository) {
 	for _, fileop := range commit.operations() {
 		fileop.repo = repo
 		if fileop.op == opN {
@@ -5208,6 +5216,10 @@ func (p Passthrough) getComment() string { return p.text }
 // String reports this passthrough in import-stream format.
 func (p Passthrough) String() string {
 	return p.text
+}
+
+func (p Passthrough) moveto(*Repository) {
+	// Has no repo field
 }
 
 // Generic extractor code begins here
@@ -6424,6 +6436,7 @@ type Event interface {
 	getMark() string
 	getComment() string
 	String() string
+	moveto(*Repository) 
 	getDelFlag() bool
 }
 
@@ -6434,6 +6447,7 @@ type CommitLike interface {
 	getComment() string
 	callout() string
 	String() string
+	moveto(*Repository) 
 	getDelFlag() bool
 	getColor() string
 	setColor(string)
@@ -8615,25 +8629,41 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
                                      % (fileop.ref, new))
                         fileop.ref = new
         return persist
-    func absorb(self, other):
-        "Absorb all events from the repository OTHER into SELF."
-        # Only vcstype, sourcedir, and basedir are not copied here
-        self.preserveSet |= other.preserveSet
-        self.caseCoverage |= other.caseCoverage
-        # Strip feature events off the front, they have to stay in front.
-        while isinstance(other[0], Passthrough):
-            lenfront = sum(1 for x in self.events if isinstance(x, Passthrough))
-            self.events.insert(lenfront, other.events.pop(0))
-        # Merge in the non-feature events and blobs
-        self.events += other.events
-        self.declareSequenceMutation("absorb")
-        # Transplant in fileops, blobs, and other impedimenta
-        for event in other:
-            if hasattr(event, "moveto"):
-                event.moveto(repo)
-        other.events = []
+*/
+
+// Absorb all events from the repository OTHER into SELF.
+// Only vcstype, sourcedir, and basedir are not copied here
+// Marks and tag/branch names must have been uniquified first.
+func (repo *Repository) absorb(other *Repository) {
+        repo.preserveSet = repo.preserveSet.Union(other.preserveSet)
+        repo.caseCoverage = repo.caseCoverage.Union(other.caseCoverage)
+        // Strip feature events off the front, they have to stay in front.
+	front := len(repo.frontEvents())
+	for i := 0; ; i++{
+		passthrough, ok := other.events[i].(*Reset)
+		if ok {
+			repo.insertEvent(passthrough, front, "moving passthroughs")
+			front++
+		}
+		break
+	}
+        // Merge in the non-feature events and blobs
+        repo.events = append(repo.events, other.events...)
+        repo.declareSequenceMutation("absorb")
+        // Transplant in fileops, blobs, and other impedimenta
+        for _, event := range other.events {
+		event.moveto(repo)
+		if commit, ok := event.(*Commit); ok {
+			for i := range commit.fileops {
+				commit.fileops[i].repo = repo
+			}
+		}
+        }
+        other.events = nil
         other.cleanup()
-        #del other
+}
+
+/*
     func graft(self, graft_repo, graft_point, options):
         "Graft a repo on to this one at a specified point."
         if graft_point is None:
