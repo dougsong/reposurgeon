@@ -10029,7 +10029,6 @@ func debug_lexer(f):
 */
 
 type selEvalState interface {
-	theRepo() *Repository
 	nItems() int
 	allItems() *orderedset.Set
 }
@@ -10038,8 +10037,8 @@ type selEvaluator func(selEvalState, *orderedset.Set) *orderedset.Set
 
 type selParser interface {
 	compile(line string) (selEvaluator, string)
-	evaluate(selEvaluator, *Repository) []int
-	parse(line string, repo *Repository) ([]int, string)
+	evaluate(selEvaluator, int) []int
+	parse(line string, nitems int) ([]int, string)
 	parseExpression() selEvaluator
 	parseDisjunct() selEvaluator
 	evalDisjunct(selEvalState, *orderedset.Set, selEvaluator, selEvaluator) *orderedset.Set
@@ -10054,7 +10053,6 @@ type selParser interface {
 	possiblePolyrange() bool
 	evalPolyrange(selEvalState, *orderedset.Set, []selEvaluator) *orderedset.Set
 	parseAtom() selEvaluator
-	evalMark(selEvalState, *orderedset.Set, string) *orderedset.Set
 	parseTextSearch() selEvaluator
 	parseFuncall() selEvaluator
 }
@@ -10063,7 +10061,7 @@ type selParser interface {
 type SelectionParser struct {
 	subclass selParser
 	line     string
-	_repo    *Repository
+	nitems   int
 }
 
 func (p *SelectionParser) imp() selParser {
@@ -10080,12 +10078,11 @@ func (p *SelectionParser) evalState() selEvalState {
 	return p
 }
 
-func (p *SelectionParser) theRepo() *Repository { return p._repo }
-func (p *SelectionParser) nItems() int { return len(p._repo.events) }
+func (p *SelectionParser) nItems() int { return p.nitems }
 
 func (p *SelectionParser) allItems() *orderedset.Set {
 	s := orderedset.New()
-	for i := 0; i < p.nItems(); i++ {
+	for i := 0; i < p.nitems; i++ {
 		s.Add(i)
 	}
 	return s
@@ -10114,12 +10111,13 @@ func (p *SelectionParser) compile(line string) (selEvaluator, string) {
 }
 
 // evaluate evaluates a pre-compiled selection query against item list
-func (p *SelectionParser) evaluate(machine selEvaluator, repo *Repository) []int {
+func (p *SelectionParser) evaluate(machine selEvaluator, nitems int) []int {
 	if machine == nil {
 		return nil
 	}
-	p._repo = repo
+	p.nitems = nitems
 	crunched := machine(p.evalState(), p.allItems())
+	p.nitems = 0
 	selection := make([]int, crunched.Size())
 	for i, x := range crunched.Values() {
 		selection[i] = x.(int)
@@ -10128,9 +10126,9 @@ func (p *SelectionParser) evaluate(machine selEvaluator, repo *Repository) []int
 }
 
 // parse parses selection and returns remainder of line with selection removed
-func (p *SelectionParser) parse(line string, repo *Repository) ([]int, string) {
+func (p *SelectionParser) parse(line string, nitems int) ([]int, string) {
 	machine, rest := p.imp().compile(line)
-	return p.imp().evaluate(machine, repo), rest
+	return p.imp().evaluate(machine, nitems), rest
 }
 
 func (p *SelectionParser) peek() rune {
@@ -10388,7 +10386,7 @@ func (p *SelectionParser) visibilityTypeletters() map[rune]func(int) bool {
 }
 
 func (p *SelectionParser) polyrangeInitials() string {
-	return "0123456789$:"
+	return "0123456789$"
 }
 
 // Does the input look like a possible polyrange?
@@ -10413,7 +10411,6 @@ func (p *SelectionParser) parsePolyrange() selEvaluator {
 			if op := p.imp().parseAtom(); op != nil {
 				ops = append(ops, op)
 			}
-			p.eatWS()
 		}
 		polyrange = func(x selEvalState, s *orderedset.Set) *orderedset.Set {
 			return p.imp().evalPolyrange(x, s, ops)
@@ -10497,17 +10494,6 @@ func (p *SelectionParser) parseAtom() selEvaluator {
 			return orderedset.New(number - 1)
 		}
 		p.line = p.line[len(match):]
-	} else if p.peek() == ':' { // : starts a mark
-		match := atomNumRE.FindStringIndex(p.line[1:])
-		if match != nil {
-			mark := p.line[:match[1]+1]
-			op = func(x selEvalState, s *orderedset.Set) *orderedset.Set {
-				return p.imp().evalMark(x, s, mark)
-			}
-			p.line = p.line[match[1]+1:]
-		} else {
-			panic(throw("command", fmt.Sprintf("invalid mark specified: %s", p.line)))
-		}
 	} else if p.peek() == '$' { // $ means last commit, a la ed(1).
 		op = func(selEvalState, *orderedset.Set) *orderedset.Set {
 			return orderedset.New(polyrangeDollar)
@@ -10524,15 +10510,6 @@ func (p *SelectionParser) parseAtom() selEvaluator {
 		panic(throw("command", "malformed span"))
 	}
 	return op
-}
-
-func (p *SelectionParser) evalMark(x selEvalState, s *orderedset.Set, mark string) *orderedset.Set {
-	eventid := x.theRepo().find(mark)
-	if eventid != -1 {
-		return orderedset.New(eventid)
-	} else {
-		return orderedset.New()
-	}
 }
 
 // parseTextSearch parses a text search specification
@@ -11277,7 +11254,7 @@ func (rs *Reposurgeon) PreCommand(line string) string {
 	}
 
 	rs.buildPrompt()
-	
+
 	return rest
 }
 
