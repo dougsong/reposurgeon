@@ -573,6 +573,7 @@ func TestBlobfile(t *testing.T) {
 	blob1.setContent(sampleContent, 0)
 	saw := blob1.getContent()
 	assertEqual(t, sampleContent, saw)
+	nuke("foo", "")
 }
 
 func TestUndecodable(t *testing.T) {
