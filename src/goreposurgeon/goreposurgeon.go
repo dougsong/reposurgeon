@@ -260,7 +260,7 @@ func getAttr(obj interface{}, fld string) (string, bool) {
 	return objValue.FieldByName(fld).String(), true
 }
 
-func setAttr(obj interface{}, name string, value string) error {	
+func setAttr(obj interface{}, name string, value string) error {
 	rv := reflect.ValueOf(obj).Elem()
 
 	structFieldValue := rv.FieldByName(name)
@@ -280,7 +280,7 @@ func setAttr(obj interface{}, name string, value string) error {
 
 // stringEscape interprets backslash escapes in a token, such as is returned by
 // the shlex package.  If the argument token was wrapped by Go string quotes
-// they are stripped off. 
+// they are stripped off.
 func stringEscape(s string) (string, error) {
 	if s[0] != '"' {
 		s = `"` + s + `"`
@@ -2334,12 +2334,12 @@ const debugUNITE = 6    // Debug mark assignments in merging
 const debugLEXER = 6    // Debug selection-language parsing
 
 var optionFlags = [...][2]string{
-        {"canonicalize", 
+	{"canonicalize",
 `If set, import stream reads and msgin and edit will canonicalize
 comments by replacing CR-LF with LF, stripping leading and trailing whitespace,
 and then appending a LF.
 `},
-        {"compressblobs",
+	{"compressblobs",
 `Use compression for on-disk copies of blobs. Accepts an increase
 in repository read and write time in order to reduce the amount of
 disk space required while editing; this may be useful for large
@@ -2347,11 +2347,11 @@ repositories. No effect if the edit input was a dump stream; in that
 case, reposurgeon doesn't make on-disk blob copies at all (it points
 into sections of the input stream instead).
 `},
-        {"testmode",
+	{"testmode",
 `Disable some features that cause output to be vary depending on wall time
 and the ID of the invoking user. Use in regression-test loads.
 `},
-        {"bigprofile",
+	{"bigprofile",
 `Extra profiling for large repositories.  Mainly of interest to reposurgeon
 developers.
 `},
@@ -3611,7 +3611,7 @@ func (reset Reset) getMark() string {
 func (reset Reset) getComment() string {
 	return ""
 }
-	
+
 // remember records an attachment to a repo and commit.
 func (reset *Reset) remember(repo *Repository, committish string) {
 	reset.repo = repo
@@ -3937,7 +3937,7 @@ func (callout Callout) idMe() string {
 func (callout Callout) getComment() string {
 	return ""
 }
-	
+
 // Stub to satisfy Event interface - should never be used
 func (callout Callout) String() string {
 	return fmt.Sprintf("callout-%s", callout.mark)
@@ -6438,7 +6438,7 @@ type Event interface {
 	getMark() string
 	getComment() string
 	String() string
-	moveto(*Repository) 
+	moveto(*Repository)
 	getDelFlag() bool
 }
 
@@ -6449,7 +6449,7 @@ type CommitLike interface {
 	getComment() string
 	callout() string
 	String() string
-	moveto(*Repository) 
+	moveto(*Repository)
 	getDelFlag() bool
 	getColor() string
 	setColor(string)
@@ -7113,7 +7113,7 @@ func (repo *Repository) writeLegacyMap(fp io.Writer) error {
 		// legacy map.  It's a simple substitute for
 		// partitioning the map at expunge time.
 		if repo.markToEvent(commit.mark) != nil && commit.legacyID != "" {
-			// Someday check errors here? 
+			// Someday check errors here?
 			fmt.Fprintf(fp, "%s\t%s!%s%s\n", cookie,
 				commit.committer.date.rfc3339(),
 				commit.committer.email,
@@ -8616,7 +8616,7 @@ func (repo *Repository) uniquify(color string, persist map[string]string) map[st
 			oldname, newname, obj, fld)
 		return newname
 	}
-        for _, event := range repo.events {
+	for _, event := range repo.events {
 		switch event.(type) {
 		case *Commit:
 			commit := event.(*Commit)
@@ -8641,18 +8641,18 @@ func (repo *Repository) uniquify(color string, persist map[string]string) map[st
 			tag.name = makename(tag.name,"tag", "name", true)
 			tag.committish = makemark(tag.committish, "tag", "committish")
 		}
-        }
+	}
 	repo.invalidateObjectMap()
-        return persist
+	return persist
 }
 
 // Absorb all events from the repository OTHER into SELF.
 // Only vcstype, sourcedir, and basedir are not copied here
 // Marks and tag/branch names must have been uniquified first.
 func (repo *Repository) absorb(other *Repository) {
-        repo.preserveSet = repo.preserveSet.Union(other.preserveSet)
-        repo.caseCoverage = repo.caseCoverage.Union(other.caseCoverage)
-        // Strip feature events off the front, they have to stay in front.
+	repo.preserveSet = repo.preserveSet.Union(other.preserveSet)
+	repo.caseCoverage = repo.caseCoverage.Union(other.caseCoverage)
+	// Strip feature events off the front, they have to stay in front.
 	front := len(repo.frontEvents())
 	for i := 0; ; i++{
 		passthrough, ok := other.events[i].(*Reset)
@@ -8662,20 +8662,20 @@ func (repo *Repository) absorb(other *Repository) {
 		}
 		break
 	}
-        // Merge in the non-feature events and blobs
-        repo.events = append(repo.events, other.events...)
-        repo.declareSequenceMutation("absorb")
-        // Transplant in fileops, blobs, and other impedimenta
-        for _, event := range other.events {
+	// Merge in the non-feature events and blobs
+	repo.events = append(repo.events, other.events...)
+	repo.declareSequenceMutation("absorb")
+	// Transplant in fileops, blobs, and other impedimenta
+	for _, event := range other.events {
 		event.moveto(repo)
 		if commit, ok := event.(*Commit); ok {
 			for i := range commit.fileops {
 				commit.fileops[i].repo = repo
 			}
 		}
-        }
-        other.events = nil
-        other.cleanup()
+	}
+	other.events = nil
+	other.cleanup()
 }
 
 // Graft a repo on to this one at a specified point.
@@ -8683,9 +8683,9 @@ func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options str
 	var persist map[string]string
 	var anchor *Commit
 	var ok bool
-        if graftPoint == -1 {
+	if graftPoint == -1 {
 		persist = make(map[string]string)
-        } else {
+	} else {
 		persist = nil
 		where := repo.events[graftPoint]
 		anchor, ok = where.(*Commit)
@@ -8693,27 +8693,27 @@ func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options str
 			return fmt.Errorf("%s in %s is not a commit.",
 				where.idMe(), repo.name)
 		}
-        }
-        // Errors aren't recoverable after this
-        graftRepo.uniquify(graftRepo.name, persist)
+	}
+	// Errors aren't recoverable after this
+	graftRepo.uniquify(graftRepo.name, persist)
 	var graftroot *Commit
-        if graftPoint != -1 {
+	if graftPoint != -1 {
 		graftroot = graftRepo.earliestCommit()
-        }
-        repo.absorb(graftRepo)
-        if graftPoint != -1 {
+	}
+	repo.absorb(graftRepo)
+	if graftPoint != -1 {
 		graftroot.addParentByMark(anchor.mark)
 
-        }
-        if options.Contains("--prune")  {
+	}
+	if options.Contains("--prune")  {
 		// Prepend a deleteall. Roots have nothing upline to preserve.
 		delop := newFileOp(repo)
 		delop.construct("deleteall")
 		graftroot.prependOperation(*delop)
 
-        }
-        // Resolve all callouts
-        for _, commit := range graftRepo.commits(nil) {
+	}
+	// Resolve all callouts
+	for _, commit := range graftRepo.commits(nil) {
 		for idx, parent := range commit.parents() {
 			if isCallout(parent.getMark()) {
 				attach := repo.named(parent.getMark())
@@ -8730,8 +8730,8 @@ func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options str
 				}
 			}
 		}
-        }
-        repo.renumber(1, nil)
+	}
+	repo.renumber(1, nil)
 	return nil
 }
 
@@ -8807,14 +8807,14 @@ func (rs *Repository) splitCommit(where int, splitfunc func([]FileOp) ([]FileOp,
 }
 
 func (rs *Repository) splitCommitByIndex(where int, splitpoint int) error {
-        return rs.splitCommit(where,
+	return rs.splitCommit(where,
 		func(ops []FileOp) ([]FileOp, []FileOp) {
 			return ops[:splitpoint], ops[splitpoint:]
 		})
 }
 
 func (rs *Repository) splitCommitByPrefix(where int, prefix string) error {
-        return rs.splitCommit(where,
+	return rs.splitCommit(where,
 		func(ops []FileOp) ([]FileOp, []FileOp) {
 			var without []FileOp
 			var with []FileOp
@@ -8823,7 +8823,7 @@ func (rs *Repository) splitCommitByPrefix(where int, prefix string) error {
 				// in ops if
 				// !strings.HasPrefix(op.Path,
 				// prefix)],
-                                // [op for op in ops if (op.Path || op.Target)
+		                // [op for op in ops if (op.Path || op.Target)
 				// and (op.Path || op.Target).startswith(prefix)]))
 				if strings.HasPrefix(op.Path, prefix) {
 					with = append(with, op)
@@ -8987,7 +8987,7 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 			cmd := os.Expand(repo.vcs.exporter, mapper)
 			runProcess(cmd, "repository export")
 			tfdesc.Close()
-			tp, err := os.Open(tfdesc.Name()) 
+			tp, err := os.Open(tfdesc.Name())
 			if err != nil {
 				return nil, err
 			}
@@ -9111,7 +9111,7 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 					hashv := fields[0]
 					ctime := fields[1]
 					cperson := fields[2]
-					inttime, err3 := strconv.Atoi(ctime) 
+					inttime, err3 := strconv.Atoi(ctime)
 					if err3 != nil {
 						return nil, fmt.Errorf("while reang git hash mapping: %v", err3)
 					}
@@ -9272,13 +9272,13 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 	}
 	ljoin := func(sup string, sub string) string {
 		return filepath.FromSlash(sup + "/" + sub)
-	}	
+	}
 	chdir(here, "original")
 	var savedir string
 	if staging == target {
 		// For preservation purposes
 		savedir = here
-	} else { 
+	} else {
 		// Rebuild succeeded - make an empty backup directory
 		backupcount := 1
 		for {
@@ -9340,7 +9340,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 			announce(debugSHOUT, "modified repo moved to %s.", target)
 		}
 		// Critical region ends
-	}		
+	}
 	// This is how we clear away hooks directories in
 	// newly-created repos
 	announce(debugSHUFFLE, "Nuking %v from staging %s", repo.vcs.prenuke, staging)
@@ -9597,15 +9597,15 @@ func (repo *Repository) cutConflict(early *Commit, late *Commit) (bool, int, err
 
 // Undo a cut operation and clear all colors.
 func (repo *Repository) cutClear(early *Commit, late *Commit, cutIndex int) {
-        late.insertParent(cutIndex, early.mark)
-        for _, event := range repo.events {
+	late.insertParent(cutIndex, early.mark)
+	for _, event := range repo.events {
 		switch event.(type) {
 		case *Blob:
 			event.(*Blob).colors = nil
 		case *Commit:
 			event.(*Commit).color = ""
 		}
-        }
+	}
 }
 
 /*
@@ -9875,7 +9875,7 @@ func (rs *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 	// FIXME: Computation of keeperMarks replicates the Python behavior
 	// keeper_marks = set(event.mark for event in self.repo.events if hasattr(event, "mark"))
 	// which selects *all* marks in the unmodified repository, but this is
-	// probably wrong - it should probably explude marks 
+	// probably wrong - it should probably explude marks
 	keeperMarks := make([]string, 0)
 	for _, event := range rs.repo.events {
 		switch event.(type) {
@@ -9925,7 +9925,7 @@ func (rs *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 	 * deleted, they need to be chased so the expunge repository has a
 	 * coherent set of parent-child chains.
 	 *
-	 * Probably this code need to be reworked so it clones the entire 
+	 * Probably this code need to be reworked so it clones the entire
 	 * repository structure and does complementary deletes.
 	 *
 	for _, event := range expunged.events {
@@ -9938,14 +9938,14 @@ func (rs *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			commit.setParentMarks(m for m in event.parentMarks()
 				if m in expungedMarks)
 		}
-        }
+	}
 	*/
 	//FIXME: No-op, because we're still replicating the Python behavior of
 	// keeping all marks.
 	//for _, commits := range repo.commits() {
 	//    commit.setParents([e for e in event.parents() if e.mark in keeper_marks])
-        //}
-   
+	//}
+
 	backreferences := make(map[string]int)
 	for _, commit := range rs.repo.commits(nil) {
 		for _, fileop := range commit.operations() {
@@ -11145,7 +11145,7 @@ type Reposurgeon struct {
 	preferred        *VCS
 	startTime        time.Time
 	promptFormat     string
-        ignorename       string
+	ignorename       string
 }
 
 var unclean = regexp.MustCompile("[^\n]*\n[^\n]")
@@ -11157,13 +11157,13 @@ func newReposurgeon() *Reposurgeon {
 	rs.definitions = make(map[string][]string)
 	rs.inputIsStdin = true
 	// FIXME: Change this back when the port is verified
-        rs.promptFormat = "goreposurgeon% "
+	rs.promptFormat = "goreposurgeon% "
 	// These are globals and should probably be set in init().
-        for _, option := range optionFlags {
+	for _, option := range optionFlags {
 		context.listOptions[option[0]] = newStringSet()
 	}
-        context.listOptions["svn_branchify"] = stringSet{"trunk", "tags/*", "branches/*", "*"}
-        context.listOptions["svn_branchify_mapping"] = stringSet{}
+	context.listOptions["svn_branchify"] = stringSet{"trunk", "tags/*", "branches/*", "*"}
+	context.listOptions["svn_branchify_mapping"] = stringSet{}
 	return rs
 }
 
@@ -11204,7 +11204,7 @@ func (rs *Reposurgeon) DoQuit(lineIn string) (stopOut bool) {
 //
 var inlineCommentRE = regexp.MustCompile(`\s+#`)
 
-func (rs *Reposurgeon) buildPrompt() { 
+func (rs *Reposurgeon) buildPrompt() {
 	var chosenName string = ""
 	if rs.chosen() != nil {
 		chosenName = rs.chosen().name
@@ -11281,7 +11281,7 @@ func (rs *Reposurgeon) DoShell(line string) (stopOut bool) {
 	err := cmd.Run()
 	if err != nil {
 		complain("spawn of %s returned error: %v", shell, err)
-        }
+	}
 	return false
    }
 
@@ -11810,7 +11810,7 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 			complain("creating tempfile for edit: %v", err1)
 			return
 		}
-		defer os.Remove(file.Name())		
+		defer os.Remove(file.Name())
 		for _, i := range selection {
 			event := rs.chosen().events[i]
 			switch event.(type) {
@@ -11849,7 +11849,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 		if blobs && nonblobs {
 			break
 		}
-	}		
+	}
 	// Try to prevent user from shooting self in foot
 	if safety && blobs && nonblobs {
 		complain("cannot transform blobs and nonblobs in same command")
@@ -12008,7 +12008,7 @@ func (rs *Reposurgeon) DoResolve(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpAssign() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Compute a leading selection set and assign it to a symbolic name,
 which must follow the assign keyword. It is an error to assign to a
 name that is already assigned, or to any existing branch name.
@@ -12063,7 +12063,7 @@ func (rs *Reposurgeon) DoAssign(line string) (stopOut bool) {
 }
 
 func(rs *Reposurgeon)  HelpUnassign() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Unassign a symbolic name.  Throws an error if the name is not assigned.
 Tab-completes on the list of defined names.
 `)
@@ -12444,7 +12444,7 @@ func (rs *Reposurgeon) DoStamp(lineIn string) bool {
 }
 
 func (rs *Reposurgeon) HelpSizes() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Print a report on data volume per branch; takes a selection set,
 defaulting to all events. The numbers tally the size of uncompressed
 blobs, commit and tag comments, and other metadata strings (a blob is
@@ -12589,25 +12589,25 @@ func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 
 			}
 		}
-        }
+	}
 	if parse.options.Empty() || parse.options.Contains("--deletealls") || parse.options.Contains("-d") {
 		sort.Strings(deletealls)
 		for _, item := range deletealls {
 			fmt.Fprintf(parse.stdout, "mid-branch delete: %s\n", item)
 		}
-        }
+	}
 	if parse.options.Empty() || parse.options.Contains("--connected") || parse.options.Contains("-c") {
 		sort.Strings(disconnected)
 		for _, item := range disconnected {
 			fmt.Fprintf(parse.stdout, "disconnected commit: %s\n", item)
 		}
-        }
+	}
 	if parse.options.Empty() || parse.options.Contains("--roots") || parse.options.Contains("-r") {
 		if len(roots) > 1 {
 			sort.Strings(roots)
 			fmt.Fprintf(parse.stdout, "multiple root commits: %v\n", roots)
 		}
-        }
+	}
 	if parse.options.Empty() || parse.options.Contains("--names") || parse.options.Contains("-n") {
 		sort.Strings(shortset)
 		for _, item := range shortset {
@@ -12625,12 +12625,12 @@ func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 		for _, item := range badaddress {
 			fmt.Fprintf(parse.stdout, "email address missing @: %s\n", item)
 		}
-        }
+	}
 	if parse.options.Empty() || parse.options.Contains("--uniqueness") || parse.options.Contains("-u") {
 		rs.chosen().checkUniqueness(true, func(s string) {
 			fmt.Print(s)
 		})
-        }
+	}
 	if parse.options.Contains("--options")  || parse.options.Contains("-?") {
 		fmt.Print(`\
 --deletealls    -d     report mid-branch deletealls
@@ -12640,7 +12640,7 @@ func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 --uniqueness    -u     report on collisions among action stamps
 --options       -?     list available options\
 `)
-        }
+	}
 	return false
 }
 
@@ -12648,7 +12648,7 @@ func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 // Housekeeping
 //
 func (rs *Reposurgeon) HelpPrefer() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Report or set (with argument) the preferred type of repository. With
 no arguments, describe capabilities of all supported systems. With an
 argument (which must be the name of a supported version-control
@@ -12676,7 +12676,7 @@ func (rs *Reposurgeon) CompletePrefer(text string) []string {
 		}
 	}
 	sort.Strings(out)
-        return out
+	return out
 }
 
 // Report or select the preferred repository type.
@@ -12708,7 +12708,7 @@ func (rs *Reposurgeon) DoPrefer(line string) (stopOut bool) {
 			if repotype.visible {
 				known += " " + repotype.name
 			}
- 		}
+		}
 		if rs.preferred == nil {
 			complain("known types are: %s\n", known)
 		}
@@ -12724,7 +12724,7 @@ func (rs *Reposurgeon) DoPrefer(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpSourcetype() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Report (with no arguments) or select (with one argument) the current
 repository's source type.  This type is normally set at
 repository-read time, but may remain unset if the source was a stream
@@ -12748,7 +12748,7 @@ func (rs *Reposurgeon) CompleteSourcetype(text string) []string {
 		}
 	}
 	sort.Strings(out)
-        return out
+	return out
 }
 // Report or select the current repository's source type.
 func (rs *Reposurgeon) DoSourcetype(line string) (stopOut bool) {
@@ -12773,7 +12773,7 @@ func (rs *Reposurgeon) DoSourcetype(line string) (stopOut bool) {
 			if importer.visible {
 				known += " " + importer.name
 			}
- 		}
+		}
 		complain("known types are %v.", known)
 	}
 	return false
@@ -12805,7 +12805,7 @@ func (rs *Reposurgeon) CompleteChoose(text string) []string {
 		}
 	}
 	sort.Strings(out)
-        return out
+	return out
 }
 // Choose a named repo on which to operate.
 func (rs *Reposurgeon) DoChoose(line string) (stopOut bool) {
@@ -13071,7 +13071,7 @@ func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpWrite() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Dump a fast-import stream representing selected events to standard
 output (if second argument is empty or '-') or via > redirect to a file.
 Alternatively, if there ia no redirect and the argument names a
@@ -13085,7 +13085,7 @@ preferred repository type cannot digest them.
 The --fossil option can be used to write out binary repository dump files.
 For a list of supported types, invoke the 'prefer' command.
 `)
-    }
+}
 // Stream out the results of repo surgery.
 func (rs *Reposurgeon) DoWrite(line string) (stopOut bool) {
 	if rs.chosen() == nil {
@@ -13182,7 +13182,7 @@ func (rs *Reposurgeon) DoInspect(lineIn string) bool {
 }
 
 func (rs *Reposurgeon) HelpStrip() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Replace the blobs in the selected repository with self-identifying stubs;
 and/or strip out topologically uninteresting commits.  The modifiers for
 this are 'blobs' and 'reduce' respectively; the default is 'blobs'.
@@ -13270,7 +13270,7 @@ func (rs *Reposurgeon) DoStrip(line string) (stopOut bool) {
 
 
 func (rs *Reposurgeon) HelpGraph() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Dump a graph representing selected events to standard output in DOT markup
 for graphviz. Supports > redirection.
 `)
@@ -13334,7 +13334,7 @@ func (rs *Reposurgeon) DoGraph(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpRebuild() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Rebuild a repository from the state held by reposurgeon.  The argument
 specifies the target directory in which to do the rebuild; if the
 repository read was from a repo directory (and not a git-import stream), it
@@ -13344,15 +13344,15 @@ its contents are backed up to a save directory.
 }
     // Rebuild a repository from the edited state.
 func (rs *Reposurgeon) DoRebuild(line string) (stopOut bool) {
-        if rs.chosen() == nil {
+	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
 		return false
-        }
+	}
 	//FIXME: when pre-command hook works.
-        //if rs.selection != nil {
+	//if rs.selection != nil {
 	//	panic(throw("command", "rebuild does not take a selection set"))
-        //}
-        parse := rs.newLineParse(line, nil)
+	//}
+	parse := rs.newLineParse(line, nil)
 	defer parse.Closem()
 	err := rs.chosen().rebuildRepo(parse.line, parse.options, rs.preferred)
 	if err != nil {
@@ -13479,7 +13479,7 @@ func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 			return false
 		}
 		updateList = append(updateList, msg)
-        }
+	}
 	// First, a validation pass
 	attribution_by_author := make(map[string]Event)
 	attribution_by_committer := make(map[string]Event)
@@ -13708,7 +13708,7 @@ func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpEdit() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Report the selection set of events to a tempfile as msgout does,
 call an editor on it, and update from the result as msgin does.
 If you do not specify an editor name as second argument, it will be
@@ -13738,7 +13738,7 @@ func (rs *Reposurgeon) DoEdit(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpFilter() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Run blobs, commit comments and committer/author names, or tag comments
 and tag committer names in the selection set through the filter
 specified on the command line.
@@ -13883,7 +13883,7 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
                            safety=not line.startswith('--dedos'))
 */
 func (rs *Reposurgeon) HelpTranscode() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Transcode blobs, commit comments and committer/author names, or tag
 comments and tag committer names in the selection set to UTF-8 from
 the character encoding specified on the command line.
@@ -13922,7 +13922,7 @@ func (rs *Reposurgeon) DoTranscode(self, line str):
 
 */
 func (rs *Reposurgeon) HelpSetfield() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 In the selected objects (defaulting to none) set every instance of a
 named field to a string value.  The string may be quoted to include
 whitespace, and use backslash escapes interpreted by Go's C-like
@@ -13978,7 +13978,7 @@ func (rs *Reposurgeon) DoSetfield(line string) (stopOut bool) {
 					complain(err.Error())
 					return false
 				}
-				commit.committer.date = newdate 
+				commit.committer.date = newdate
 			} else if field == "authdate" {
 				newdate, err := newDate(value)
 				if err != nil {
@@ -13993,7 +13993,7 @@ func (rs *Reposurgeon) DoSetfield(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpSetperm() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 For the selected objects (defaulting to none) take the first argument as an
 octal literal describing permissions.  All subsequent arguments are paths.
 For each M fileop in the selection set and exactly matching one of the
@@ -14035,13 +14035,13 @@ func (rs *Reposurgeon) DoSetperm(line string) (stopOut bool) {
 			}
 			baton.twirl("")
 		}
-        }
+	}
 	baton.exit("")
 	return false
 }
 
 func (rs *Reposurgeon) HelpAppend() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Append text to the comments of commits and tags in the specified
 selection set. The text is the first token of the command and may
 be a quoted string. C-style escape sequences in the string are
@@ -14099,7 +14099,7 @@ func (rs *Reposurgeon) DoAppend(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpSquash() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Combine a selection set of events; this may mean deleting them or
 pushing their content forward or back onto a target commit just
 outside the selection range, depending on policy flags.
@@ -14126,7 +14126,7 @@ func (rs *Reposurgeon) DoSquash(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpDelete() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Delete a selection set of events.  The default selection set for this
 command is empty.  Tags, resets, and passthroughs are deleted with no
 side effects.  Blobs cannot be directly deleted with this command; they
@@ -14153,7 +14153,7 @@ func (rs *Reposurgeon) DoDelete(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpCoalesce() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Scan the selection set (defaulting to all) for runs of commits with
 identical comments close to each other in time (this is a common form
 of scar tissues in repository up-conversions from older file-oriented
@@ -14196,10 +14196,10 @@ func (rs *Reposurgeon) DoCoalesce(line string) (stopOut bool) {
 			complain("time-fuzz value must be an integer")
 			return false
 		}
-        }
+	}
 	isChangelog := func(commit *Commit) bool {
 		return strings.Contains(commit.Comment, "empty log message") && len(commit.operations()) == 1 && commit.operations()[0].op == opM && strings.HasSuffix(commit.operations()[0].Path, "ChangeLog")
-        }
+	}
 	coalesceMatch := func(cthis *Commit, cnext *Commit) bool {
 		verbose := context.verbose >= debugDELETE || parse.options.Contains("--debug")
 		if cthis.committer.email != cnext.committer.email {
@@ -14224,7 +14224,7 @@ func (rs *Reposurgeon) DoCoalesce(line string) (stopOut bool) {
 			return false
 		}
 		return true
-        }
+	}
 	eligible := make(map[string][]string)
 	squashes := make([][]string, 0)
 	for _, commit := range repo.commits(rs.selection) {
@@ -14250,12 +14250,12 @@ func (rs *Reposurgeon) DoCoalesce(line string) (stopOut bool) {
 				}
 				eligible[commit.Branch] = []string{commit.mark}
 			}
-        }
+	}
 	for _, endspan := range eligible {
 		if len(endspan) > 1 {
 			squashes = append(squashes, endspan)
 		}
-        }
+	}
 	for _, span := range squashes {
 		// Prevent lossage when last is a ChangeLog commit
 		repo.markToEvent(span[len(span)-1]).(*Commit).Comment = repo.markToEvent(span[0]).(*Commit).Comment
@@ -14264,7 +14264,7 @@ func (rs *Reposurgeon) DoCoalesce(line string) (stopOut bool) {
 			squashable = append(squashable, repo.find(mark))
 		}
 		repo.squash(squashable, stringSet{"--coalesce"})
-        }
+	}
 	if context.verbose > 0 {
 		announce(debugSHOUT, "%d spans coalesced.", len(squashes))
 	}
@@ -14272,7 +14272,7 @@ func (rs *Reposurgeon) DoCoalesce(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpAdd() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 From a specified commit, add a specified fileop. The syntax is
 
      add {D path | M perm mark path | R source target | C source target}
@@ -14387,7 +14387,7 @@ func (rs *Reposurgeon) DoAdd(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpBlob() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Syntax:
 
      blob
@@ -14423,7 +14423,7 @@ func (rs *Reposurgeon) DoBlob(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpRemove() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 From a specified commit, remove a specified fileop. The syntax is:
 
      remove [DMRCN] OP [to COMMIT]
@@ -14505,7 +14505,7 @@ change in a future release.
 */
 
 func (rs *Reposurgeon) HelpRenumber() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Renumber the marks in a repository, from :1 up to <n> where <n> is the
 count of the last mark. Just in case an importer ever cares about mark
 ordering or gaps in the sequence.
@@ -14513,17 +14513,17 @@ ordering or gaps in the sequence.
 }
 
 func (rs *Reposurgeon) DoRenumber(line string) (stopOut bool) {
-        // Renumber the marks in the selected repo.
-        if rs.chosen() == nil {
+	// Renumber the marks in the selected repo.
+	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
 		return
-        }
-        rs.repo.renumber(1, nil)
+	}
+	rs.repo.renumber(1, nil)
 	return false
 }
 
 func (rs *Reposurgeon) HelpDedup() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Deduplicate blobs in the selection set.  If multiple blobs in the selection
 set have the same SHA1, throw away all but the first, and change fileops
 referencing them to instead reference the (kept) first blob.
@@ -14556,7 +14556,7 @@ func (rs *Reposurgeon) DoDedup(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpTimeoffset() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Apply a time offset to all time/date stamps in the selected set.  An offset
 argument is required; it may be in the form [+-]ss, [+-]mm:ss or [+-]hh:mm:ss.
 The leading sign is required to distingush it from a selection expression.
@@ -14568,20 +14568,20 @@ an offset literal of +0 or -0.
 }
 // Apply a time offset to all dates in selected events.
 func (rs *Reposurgeon) DoTimeoffset(line string) (stopOut bool) {
-        if rs.chosen() == nil {
+	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
 		return false
-        }
-        if rs.selection == nil {
+	}
+	if rs.selection == nil {
 		rs.selection = rs.chosen().all()
-        }
-        if line == "" {
+	}
+	if line == "" {
 		complain("a signed time offset argument is required.")
 		return false
-        } else if line[0] != '-' && line[0] != '+' {
+	} else if line[0] != '-' && line[0] != '+' {
 		complain("time offset argument must begin with + or -.")
 		return false
-        }
+	}
 	offsetOf := func(hhmmss string) (int, error) {
 		h := "0"
 		m := "0"
@@ -14625,7 +14625,7 @@ func (rs *Reposurgeon) DoTimeoffset(line string) (stopOut bool) {
 		return false
 	}
 	offset := time.Duration(noffset) * time.Second
-        if len(args) > 1 {
+	if len(args) > 1 {
 		tr := regexp.MustCompile(`[+-][0-9][0-9][0-9][0-9]`)
 		if !tr.MatchString(args[1]) {
 			complain("expected timezone literal to be [+-]hhmm")
@@ -14636,8 +14636,8 @@ func (rs *Reposurgeon) DoTimeoffset(line string) (stopOut bool) {
 			return false
 		}
 		loc = time.FixedZone(args[1], zoffset)
-        }
-        for _, ei := range rs.selection {
+	}
+	for _, ei := range rs.selection {
 		event := rs.chosen().events[ei]
 		if tag, ok := event.(*Tag); ok {
 			if tag.tagger != nil {
@@ -14658,7 +14658,7 @@ func (rs *Reposurgeon) DoTimeoffset(line string) (stopOut bool) {
 				}
 			}
 		}
-        }
+	}
 	return false
 }
 
@@ -14687,7 +14687,7 @@ func (rs *Reposurgeon) DoWhen(LineIn string) (StopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpDivide() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Attempt to partition a repo by cutting the parent-child link
 between two specified commits (they must be adjacent). Does not take a
 general selection-set argument.  It is only necessary to specify the
@@ -14761,7 +14761,7 @@ func (rs *Reposurgeon) DoDivide(self, _line):
 */
 
 func (rs *Reposurgeon) HelpExpunge() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Expunge files from the selected portion of the repo history; the
 default is the entire history.  The arguments to this command may be
 paths or regular expressions matching paths (regexps must
@@ -14804,7 +14804,7 @@ func (rs *Reposurgeon) DoExpunge(line string) {
 
 
 func (rs *Reposurgeon) HelpSplit() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Split a specified commit in two, the opposite of squash.
 
     split at M
@@ -14832,29 +14832,29 @@ file operations in the original commit.
 
 // Split a commit.
 func (rs *Reposurgeon) DoSplit(line string) (stopOut bool) {
-        if rs.chosen() == nil {
+	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
 		return false
-        }
-        if len(rs.selection) != 1 {
+	}
+	if len(rs.selection) != 1 {
 		complain("selection of a single commit required for this command")
 		return false
-        }
-        where := rs.selection[0]
-        event := rs.chosen().events[where]
+	}
+	where := rs.selection[0]
+	event := rs.chosen().events[where]
 	commit, ok := event.(*Commit)
-        if !ok {
+	if !ok {
 		complain("selection doesn't point at a commit")
 		return false
-        }
+	}
 	fields := strings.Fields(line)
 	prep := fields[0]
 	obj := fields[1]
-        if len(fields) != 2 {
+	if len(fields) != 2 {
 		complain("ill-formed split command")
 		return false
-        }
-        if prep == "at" {
+	}
+	if prep == "at" {
 		splitpoint, err := strconv.Atoi(obj)
 		if err != nil {
 			complain("expected integer fileop index (1-origin)")
@@ -14870,25 +14870,25 @@ func (rs *Reposurgeon) DoSplit(line string) (stopOut bool) {
 			complain(err.Error())
 			return false
 		}
-        } else if prep == "by" {
+	} else if prep == "by" {
 		err := rs.chosen().splitCommitByPrefix(where, obj)
 		if err != nil {
 			complain(err.Error())
 			return false
 		}
-        } else {
+	} else {
 		complain("don't know what to do for preposition %s", prep)
 		return false
-        }
-        if context.verbose > 0{
+	}
+	if context.verbose > 0{
 		announce(debugSHOUT, "new commits are events %d and %d.", where+1, where+2)
-        }
+	}
 	return false
 }
 
 
 func (rs *Reposurgeon) HelpUnite() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Unite repositories. Name any number of loaded repositories; they will
 be united into one union repo and removed from the load list.  The
 union repo will be selected.
@@ -14913,9 +14913,9 @@ branch being grafted on.
 
 // Unite repos together.
 func (rs *Reposurgeon) DoUnite(line string) (stopOut bool) {
-        rs.unchoose()
-        factors := make([]*Repository, 0)
-        parse := rs.newLineParse(line, nil)
+	rs.unchoose()
+	factors := make([]*Repository, 0)
+	parse := rs.newLineParse(line, nil)
 	defer parse.Closem()
 	for _, name := range strings.Fields(parse.line) {
 		repo := rs.repoByName(name)
@@ -14932,15 +14932,15 @@ func (rs *Reposurgeon) DoUnite(line string) (stopOut bool) {
 	}
 	// FIXME: Uncomment wgen unite() exists
 	//rs.unite(factors, parse.options)
-        if context.verbose > 0 {
+	if context.verbose > 0 {
 		rs.DoChoose("")
-        }
+	}
 	return false
 }
 
 
 func (rs *Reposurgeon) HelpGraft() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 For when unite doesn't give you enough control. This command may have
 either of two forms, selected by the size of the selection set.  The
 first argument is always required to be the name of a loaded repo.
@@ -14992,7 +14992,7 @@ func (rs *Reposurgeon) DoGraft(line string):
 */
 
 func (rs *Reposurgeon) HelpDebranch() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Takes one or two arguments which must be the names of source and target
 branches; if the second (target) argument is omitted it defaults to 'master'.
 The history of the source branch is merged into the history of the target
@@ -15077,7 +15077,7 @@ func (rs *Reposurgeon) DoDebranch(line string):
 */
 
 func (rs *Reposurgeon) HelpPath() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Rename a path in every fileop of every selected commit.  The
 default selection set is all commits. The first argument is interpreted as a
 Go regular expression to match against paths; the second may contain
@@ -15131,7 +15131,7 @@ in the ancestry of the commit, this command throws an error.  With the
 */
 
 func (rs *Reposurgeon) HelpPaths() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Without a modifier, list all paths touched by fileops in
 the selection set (which defaults to the entire repo). This
 variant does > redirection.
@@ -15207,7 +15207,7 @@ func (rs *Reposurgeon) DoPaths(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpManifest() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Print commit path lists. Takes an optional selection set argument
 defaulting to all commits, and an optional Go regular expression.
 For each commit in the selection set, print the mapping of all paths in
@@ -15255,7 +15255,7 @@ This command supports > redirection.
                 fmt.Fprint(parse.stdout, "\n")
 */
 func (rs *Reposurgeon) HelpTagify() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Search for empty commits and turn them into tags. Takes an optional selection
 set argument defaulting to all commits. For each commit in the selection set,
 turn it into a tag with the same message and author information if it has no
@@ -15315,7 +15315,7 @@ func (rs *Reposurgeon) DoTagify(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpMerge() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Create a merge link. Takes a selection set argument, ignoring all but
 the lowest (source) and highest (target) members.  Creates a merge link
 from the highest member (child) to the lowest (parent).
@@ -15345,7 +15345,7 @@ from the highest member (child) to the lowest (parent).
 */
 
 func (rs *Reposurgeon) HelpUnmerge() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Linearizes a commit. Takes a selection set argument, which must resolve to a
 single commit, and removes all its parents except for the first. It is
 equivalent to reparent --rebase {first parent},{commit}, where {commit} is the
@@ -15374,7 +15374,7 @@ func (rs *Reposurgeon) DoUnmerge(_line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpReparent() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Changes the parent list of a commit.  Takes a selection set, zero or
 more option arguments, and an optional policy argument.
 
@@ -15590,28 +15590,28 @@ is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
 }
 // Rename a branch or delete it.
 func (rs *Reposurgeon) DoBranch(line string) (stopOut bool) {
-        if rs.chosen() == nil {
+	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
 		return false
-        }
-        repo := rs.chosen()
-        branchname, line := popToken(line)
+	}
+	repo := rs.chosen()
+	branchname, line := popToken(line)
 	var err error
-        branchname, err = stringEscape(branchname)
+	branchname, err = stringEscape(branchname)
 	if err != nil {
 		complain("while selecting branch: %v", err)
 		return false
 	}
-        if !strings.Contains(branchname, "/") {
+	if !strings.Contains(branchname, "/") {
 		branchname = "refs/heads/" + branchname
-        }
-        if !repo.branchset().Contains(branchname) {
+	}
+	if !repo.branchset().Contains(branchname) {
 		complain("no such branch as %s", branchname)
 		return false
-        }
+	}
 	var verb string
-        verb, line = popToken(line)
-        if verb == "rename" {
+	verb, line = popToken(line)
+	if verb == "rename" {
 		var newname string
 		newname, line = popToken(line)
 		if newname == "" {
@@ -15636,7 +15636,7 @@ func (rs *Reposurgeon) DoBranch(line string) (stopOut bool) {
 				}
 			}
 		}
-        } else if verb == "delete" {
+	} else if verb == "delete" {
 		deletia := make([]int, 0)
 		for ei := range repo.events {
 			event := repo.events[ei]
@@ -15645,21 +15645,21 @@ func (rs *Reposurgeon) DoBranch(line string) (stopOut bool) {
 					deletia = append(deletia, ei)
 				}
 			} else if reset, ok := event.(*Reset); ok {
-				if reset.ref == branchname {	
+				if reset.ref == branchname {
 					deletia = append(deletia, ei)
 				}
 			}
 		}
 		repo.delete(orderedIntSet(deletia), nil)
-        } else {
+	} else {
 		complain("unknown verb '%s' in branch command.", verb)
 		return false
-        }
+	}
 	return false
 }
 
 func (rs *Reposurgeon) HelpTag() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Create, move, rename, or delete a tag.
 
 Creation is a special case.  First argument is a name, which must not
@@ -15711,33 +15711,33 @@ fields are changed and a warning is issued.
 
 // Move a tag to point to a specified commit, or rename it, or delete it.
 func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
-        if rs.chosen() == nil {
+	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
 		return false
-        }
-        repo := rs.chosen()
-        // A tag name can refer to one of the following things {
-        // (1) A tag object, by name
-        // (2) A reset object having a name in the tags/ namespace
-        // (3) The tip commit of a branch with branch fields
-        // These things often occur in combination. Notably, git-fast-export
-        // generates for each tag object corresponding branch labels on
-        // some ancestor commits - the rule for where this stops is unclear.
+	}
+	repo := rs.chosen()
+	// A tag name can refer to one of the following things {
+	// (1) A tag object, by name
+	// (2) A reset object having a name in the tags/ namespace
+	// (3) The tip commit of a branch with branch fields
+	// These things often occur in combination. Notably, git-fast-export
+	// generates for each tag object corresponding branch labels on
+	// some ancestor commits - the rule for where this stops is unclear.
 	var tagname string
-	var err error 
-        tagname, line = popToken(line)
+	var err error
+	tagname, line = popToken(line)
 	if err != nil {
 		complain("while selecting tag: %v", err)
 		return false
 	}
-        tagname, err = stringEscape(tagname)
+	tagname, err = stringEscape(tagname)
 	if err != nil {
 		complain("in tag command: %v", err)
 		return false
 	}
 	var verb string
-        verb, line = popToken(line)
-        if verb == "create" {
+	verb, line = popToken(line)
+	if verb == "create" {
 		var ok bool
 		var target *Commit
 		if repo.named(tagname) != nil {
@@ -15751,7 +15751,7 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 		} else if len(rs.selection) != 1 {
 			complain("tag create requires a singleton commit set.")
 			return false
-                } else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
+		} else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
 			complain("create target is not a commit.")
 			return false
 		}
@@ -15808,14 +15808,14 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 		complain("no tags matching %s", tagname)
 		return false
 	}
-        if verb == "move" {
+	if verb == "move" {
 		var target *Commit
 		var ok bool
 		rs.setSelectionSet(line)
 		if len(rs.selection) != 1 {
 			complain("tag move requires a singleton commit set.")
 			return false
-                } else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
+		} else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
 			complain("move target is not a commit.")
 			return false
 		}
@@ -15835,7 +15835,7 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 		if len(commits) > 0 {
 			complain("warning - tag move does not modify branch fields")
 		}
-        } else if verb == "rename" {
+	} else if verb == "rename" {
 		if len(tags) > 1 {
 			complain("exactly one tag is required for rename")
 			return false
@@ -15862,7 +15862,7 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 		for _, event := range commits {
 			event.Branch = fullnewname
 		}
-        } else if verb == "delete" {
+	} else if verb == "delete" {
 		for _, tag := range tags {
 			tag.forget()
 			repo.delete([]int{tag.index()}, nil)
@@ -15892,7 +15892,7 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 					successors = append(successors, childCommit.Branch)
 				}
 			}
-			
+
 			//successors := {child.Branch for child in commits[-1].children() if child.parents()[0] == commits[-1]}
 			if len(successors) == 1 {
 				for _, event := range commits {
@@ -15903,15 +15903,15 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 				return false
 			}
 		}
-        } else {
+	} else {
 		complain("unknown verb '%s' in tag command.", verb)
 		return false
-        }
+	}
 	return false
 }
 
 func (rs *Reposurgeon) HelpReset() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Create, move, rename, or delete a reset. Create is a special case; it
 requires a singleton selection which is the associated commit for the
 reset, takes as a first argument the name of the reset (which must not
@@ -15944,28 +15944,28 @@ moved, no branch fields are changed.
 
 // Move a reset to point to a specified commit, or rename it, or delete it.
 func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
-        if rs.chosen() == nil {
+	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
 		return
-        }
-        repo := rs.chosen()
-        if rs.selection == nil {
+	}
+	repo := rs.chosen()
+	if rs.selection == nil {
 		rs.selection = repo.all()
-        }
+	}
 	var resetname string
 	var err error
-        resetname, line = popToken(line)
-        resetname, err = stringEscape(resetname)
+	resetname, line = popToken(line)
+	resetname, err = stringEscape(resetname)
 	if err != nil {
 		complain("in reset command: %v", err)
 		return false
 	}
-        if !strings.Contains(resetname, "/") {
+	if !strings.Contains(resetname, "/") {
 		resetname = "heads/" + resetname
-        }
-        if !strings.HasPrefix(resetname, "refs/") {
+	}
+	if !strings.HasPrefix(resetname, "refs/") {
 		resetname = "refs/" + resetname
-        }
+	}
 	resets := make([]*Reset, 0)
 	for _, ei := range rs.selection {
 		reset, ok := repo.events[ei].(*Reset)
@@ -15974,8 +15974,8 @@ func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
 		}
 	}
 	var verb string
-        verb, line = popToken(line)
-        if verb == "create" {
+	verb, line = popToken(line)
+	if verb == "create" {
 		var target *Commit
 		var ok bool
 		if len(resets) > 0 {
@@ -15985,14 +15985,14 @@ func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
 		if len(rs.selection) != 1 {
 			complain("reset create requires a singleton commit set.")
 			return false
-                } else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
+		} else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
 			complain("create target is not a commit.")
 			return false
 		}
 		reset := newReset(repo, resetname, target.mark)
 		repo.addEvent(reset)
 		repo.declareSequenceMutation("reset create")
-        } else if verb == "move" {
+	} else if verb == "move" {
 		var reset *Reset
 		var target *Commit
 		var ok bool
@@ -16009,14 +16009,14 @@ func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
 		if len(rs.selection) != 1 {
 			complain("reset move requires a singleton commit set.")
 			return false
-                } else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
+		} else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
 			complain("move target is not a commit.")
 			return false
 		}
 		reset.forget()
 		reset.remember(repo, target.mark)
 		repo.declareSequenceMutation("reset move")
-        } else if verb == "rename" {
+	} else if verb == "rename" {
 		var newname string
 		if len(resets) == 0 {
 			complain("no such reset as %s", resetname)
@@ -16053,7 +16053,7 @@ func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
 				commit.Branch = newname
 			}
 		}
-        } else if verb == "delete" {
+	} else if verb == "delete" {
 		if len(resets) == 0 {
 			complain("no such reset as %s", resetname)
 			return false
@@ -16079,14 +16079,14 @@ func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
 			repo.delete([]int{repo.eventToIndex(reset)}, nil)
 		}
 		repo.declareSequenceMutation("reset delete")
-        } else {
+	} else {
 		complain("unknown verb '%s' in reset command.", verb)
-        }
+	}
 	return false
 }
 
 func (rs *Reposurgeon) HelpIgnores() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Intelligent handling of ignore-pattern files.
 
 This command fails if no repository has been selected or no preferred write
@@ -16113,23 +16113,23 @@ default patterns.
 
 // Manipulate ignore patterns in the repo.
 func (rs *Reposurgeon) DoIgnores(line string) (stopOut bool) {
-        if rs.chosen() == nil {
+	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
 		return false
-        }
-        repo := rs.chosen()
-        if rs.preferred != nil && rs.ignorename == "" {
+	}
+	repo := rs.chosen()
+	if rs.preferred != nil && rs.ignorename == "" {
 		rs.ignorename = rs.preferred.ignorename
-        }
-        if rs.preferred != nil {
+	}
+	if rs.preferred != nil {
 		complain("preferred repository type has not been set")
 		return false
-        }
-        if rs.ignorename == "" {
+	}
+	if rs.ignorename == "" {
 		complain("preferred repository type has no declared ignorename")
 		return false
-        }
-        isIgnore := func(blob *Blob) bool {
+	}
+	isIgnore := func(blob *Blob) bool {
 		if len(blob.pathlist) == 0 {
 			return false
 		}
@@ -16139,8 +16139,8 @@ func (rs *Reposurgeon) DoIgnores(line string) (stopOut bool) {
 			}
 		}
 		return true
-        }
-        for _, verb := range strings.Fields(line) {
+	}
+	for _, verb := range strings.Fields(line) {
 		if verb == "defaults" {
 			if rs.preferred.styleflags.Contains("import-defaults")  {
 				complain("importer already set default ignores")
@@ -16228,7 +16228,7 @@ func (rs *Reposurgeon) DoIgnores(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpAttribution() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Inspect, modify, add, and remove commit and tag attributions.
 
 Attributions upon which to operate are selected in much the same way as events
@@ -16435,7 +16435,7 @@ func (rs *Reposurgeon) DoAuthors(line string) (stopOut bool) {
 // Reference lifting
 //
 func (rs *Reposurgeon) HelpLegacy() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Apply or list legacy-reference information. Does not take a
 selection set. The 'read' variant reads from standard input or a
 <-redirected filename; the 'write' variant writes to standard
@@ -16445,11 +16445,11 @@ output or a >-redirected filename.
 
     // Apply a reference-mapping file.
 func (rs *Reposurgeon) DoLegacy(line string) (stopOut bool) {
-        if rs.chosen() == nil {
+	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
 		return
-        }
-        if strings.HasPrefix(line, "write") {
+	}
+	if strings.HasPrefix(line, "write") {
 		line = strings.TrimSpace(line[5:])
 		parse := rs.newLineParse(line, stringSet{"stdout"})
 		defer parse.Closem()
@@ -16458,7 +16458,7 @@ func (rs *Reposurgeon) DoLegacy(line string) (stopOut bool) {
 			return false
 		}
 		rs.chosen().writeLegacyMap(parse.stdout)
-        } else {
+	} else {
 		if strings.HasPrefix(line, "read") {
 			line = strings.TrimSpace(line[4:])
 		}
@@ -16468,12 +16468,12 @@ func (rs *Reposurgeon) DoLegacy(line string) (stopOut bool) {
 			return false
 		}
 		rs.chosen().readLegacyMap(parse.stdin)
-        }
+	}
 	return false
 }
 
 func (rs *Reposurgeon) HelpReferences() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 With the 'list' modifier, produces a listing of events that may have
 Subversion or CVS commit references in them.  This version
 of the command supports >-redirection.  Equivalent to '=N list'.
@@ -16613,7 +16613,7 @@ func (rs *Reposurgeon) DoGitify(_line string) (stopOut bool) {
 // Examining tree states
 //
 func (rs *Reposurgeon) HelpCheckout() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Check out files for a specified commit into a directory.  The selection
 set must resolve to a singleton commit.
 `)
@@ -16621,31 +16621,31 @@ set must resolve to a singleton commit.
 
 // Check out files for a specified commit into a directory.
 func (rs *Reposurgeon) DoCheckout(line string) (stopOut bool) {
-        if rs.chosen() == nil {
+	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
 		return false
-        }
-        repo := rs.chosen()
-        if rs.selection == nil {
+	}
+	repo := rs.chosen()
+	if rs.selection == nil {
 		rs.selection = rs.chosen().all()
-        }
-        if line == "" {
+	}
+	if line == "" {
 		complain("no target directory specified.")
-        } else if len(rs.selection) == 1 {
+	} else if len(rs.selection) == 1 {
 		event := repo.events[rs.selection[0]]
 		if commit, ok := event.(*Commit); ok {
 			commit.checkout(line)
 		} else {
 			complain("not a commit.")
 		}
-        } else {
+	} else {
 		complain("a singleton selection set is required.")
-        }
+	}
 	return false
 }
 
 func (rs *Reposurgeon) HelpDiff() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Display the difference between commits. Takes a selection-set argument which
 must resolve to exactly two commits. Supports > redirection.
 `)
@@ -16699,7 +16699,7 @@ must resolve to exactly two commits. Supports > redirection.
 // Setting paths to branchify
 //
 func (rs *Reposurgeon) HelpBranchify() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Specify the list of directories to be treated as potential branches (to
 become tags if there are no modifications after the creation copies)
 when analyzing a Subversion repo. This list is ignored when reading
@@ -16799,14 +16799,14 @@ to re-set it.
     // Setting options
     //
 func (rs *Reposurgeon) HelpSet() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Set a (tab-completed) boolean option to control reposurgeon's
 behavior.  With no arguments, displays the state of all flags and
 options. The following flags and options are defined:
 
 `)
-        for _, opt := range optionFlags {
-            fmt.Print(opt[0] + ":\n" + opt[1] + "\n")
+	for _, opt := range optionFlags {
+	    fmt.Print(opt[0] + ":\n" + opt[1] + "\n")
 	}
 }
 func (rs *Reposurgeon) CompleteSet(text string) []string {
@@ -16817,7 +16817,7 @@ func (rs *Reposurgeon) CompleteSet(text string) []string {
 		}
 	}
 	sort.Strings(out)
-        return out
+	return out
 }
 func tweakFlagOptions(line string, val bool) {
 	if strings.TrimSpace(line)  == "" {
@@ -16835,22 +16835,22 @@ func tweakFlagOptions(line string, val bool) {
 			}
 			complain("no such option flag as '%s'", name)
 		}
-        }
+	}
 }
 func (rs *Reposurgeon) DoSet(line string) (stopOut bool) {
 	tweakFlagOptions(line, true)
 	return false
 }
-	
+
 func (rs *Reposurgeon) HelpClear() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Clear a (tab-completed) boolean option to control reposurgeon's
 behavior.  With no arguments, displays the state of all flags. The
 following flags and options are defined:
 
 `)
-        for _, opt := range optionFlags {
-            fmt.Print(opt[0] + ":\n" + opt[1] + "\n")
+	for _, opt := range optionFlags {
+	    fmt.Print(opt[0] + ":\n" + opt[1] + "\n")
 	}
 }
 func (rs *Reposurgeon) CompleteClear(text string) []string {
@@ -16861,7 +16861,7 @@ func (rs *Reposurgeon) CompleteClear(text string) []string {
 		}
 	}
 	sort.Strings(out)
-        return out
+	return out
 }
 func (rs *Reposurgeon) DoClear(line string) (stopOut bool) {
 	tweakFlagOptions(line, true)
@@ -17004,7 +17004,7 @@ func (rs *Reposurgeon) DoDo(line string) bool {
 	interpreter := kommandant.NewKommandant(rs)
 	interpreter.SetStdin(NewIOShim(body))
 	interpreter.SetPrompt("")
-	
+
 	done := make(chan bool)
 	innerloop := func() {
 		interpreter.CmdLoop("")
@@ -17057,7 +17057,7 @@ func (rs *Reposurgeon) DoUndefine(line string) bool {
 // Timequakes and bumping
 //
 func (rs *Reposurgeon) HelpTimequake() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Attempt to hack committer and author time stamps to make all action
 stamps in the selection set (defaulting to all commits in the
 repository) to be unique.  Works by identifying collisions between parent
@@ -17099,7 +17099,7 @@ func (rs *Reposurgeon) DoTimequake(line string) (stopOut bool) {
 			}
 		}
 		baton.twirl("")
-        }
+	}
 	baton.exit("")
 	announce(debugSHOUT, "%d events modified", modified)
 	repo.invalidateNamecache()
@@ -17107,7 +17107,7 @@ func (rs *Reposurgeon) DoTimequake(line string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) HelpTimebump() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Bump the committer and author timestamps of commits in the selection
 set (defaulting to empty) by one second.  With following integer agument,
 that many seconds.  Argument may be negative.
@@ -17146,7 +17146,7 @@ func (rs *Reposurgeon) DoTimebump(line string) (stopOut bool) {
 // Changelog processing
 //
 func (rs *Reposurgeon) HelpChangelogs() {
-        rs.helpOutput(`
+	rs.helpOutput(`
 Mine the ChangeLog files for authorship data.
 
 Assume such files have basename 'ChangeLog', and that they are in the
@@ -17958,11 +17958,11 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 }
 
 func (rs *Reposurgeon) cleanup() {
-        // Tell all the repos we're holding to clean up.
-        announce(debugSHUFFLE, "interpreter cleanup called.")
-        for _, repo := range rs.repolist {
+	// Tell all the repos we're holding to clean up.
+	announce(debugSHUFFLE, "interpreter cleanup called.")
+	for _, repo := range rs.repolist {
 		repo.cleanup()
-        }
+	}
 }
 
 func main() {
@@ -19185,11 +19185,11 @@ deleted name.
  */
 
 type SubversionDumper struct {
-        repo *Repository
-        nobranch bool
-        pathmap map[int]map[string]*FlowState
-        markToRevision map[string]int
-        branchesCreated stringSet
+	repo *Repository
+	nobranch bool
+	pathmap map[int]map[string]*FlowState
+	markToRevision map[string]int
+	branchesCreated stringSet
 	vcs *VCS
 }
 
@@ -19212,7 +19212,7 @@ type FlowState struct {
 }
 
 func newFlowState(rev int) *FlowState {
-	return &FlowState{rev: rev, isDirectory: false, subfiles: 0} 
+	return &FlowState{rev: rev, isDirectory: false, subfiles: 0}
 }
 
 func svnprops(pdict OrderedMap) string {
@@ -19222,7 +19222,7 @@ func svnprops(pdict OrderedMap) string {
 		out += fmt.Sprintf("K %d\n%s\nV %d\n%s\n", len(k), k, len(val), val)
 	}
 	return out
-}	
+}
 
 // Emit a Revision-number record describing unversioned properties.
 // Last argument is a list of revision numbers corresponig to parent commits.
@@ -19245,7 +19245,7 @@ func dumpRevprops(fp io.Writer, revision int, date *Date, author string, log str
 	ancestral := ""
 	if len(parents) > 0 {
 		sort.Ints(parents)
-		for _, p := range parents[1:] { // ignore main parent  
+		for _, p := range parents[1:] { // ignore main parent
 			ancestral += "." + fmt.Sprintf(".%d", p)
 		}
 		ancestral = ancestral[1:]
@@ -19482,7 +19482,7 @@ func (sd *SubversionDumper) filemodify(fp io.Writer, revision int,
 	// This has to be called early so copy can update the filemap.
 	sd.directoryCreate(fp, revision, branch, path, parents)
 	svnpath := sd.svnize(branch, path)
-	var svnop string 
+	var svnop string
 	if _, ok := sd.pathmap[revision][svnpath]; ok {
 		svnop = "change"
 		sd.pathmap[revision][svnpath].rev = revision
@@ -19768,5 +19768,5 @@ func (sd *SubversionDumper) dump(selection orderedIntSet,
 		//fp.flush()
 	}
 }
-	
+
 // end
