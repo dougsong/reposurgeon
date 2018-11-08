@@ -14932,25 +14932,35 @@ With the option --prune, at each join generate D ops for every
 file that doesn't have a modify operation in the root commit of the
 branch being grafted on.
 `)
-    }
-/*
-func (rs *Reposurgeon) DoUnite(line string):
-        "Unite repos together."
-        self.unchoose()
-        factors = []
-        with rs.newLineParse(self, line, nil) as parse:
-            for name in parse.line.split():
-                repo = self.repoByName(name)
-                if repo is None:
-                    raise Recoverable("no such repo as %s" % name)
-                else:
-                    factors.append(repo)
-            if not factors or len(factors) < 2:
-                raise Recoverable("unite requires repo name arguments")
-            self.unite(factors, parse.options)
-        if context.verbose:
-            self.do_choose('')
-*/
+}
+
+// Unite repos together.
+func (rs *Reposurgeon) DoUnite(line string) (stopOut bool) {
+        rs.unchoose()
+        factors := make([]*Repository, 0)
+        parse := rs.newLineParse(line, nil)
+	defer parse.Closem()
+	for _, name := range strings.Fields(parse.line) {
+		repo := rs.repoByName(name)
+		if repo == nil {
+			complain("no such repo as %s", name)
+			return false
+		} else {
+			factors = append(factors, repo)
+		}
+	}
+	if len(factors) < 2 {
+		complain("unite requires two or more repo name arguments")
+		return false
+	}
+	// FIXME: Uncomment wgen unite() exists
+	//rs.unite(factors, parse.options)
+        if context.verbose > 0 {
+		rs.DoChoose("")
+        }
+	return false
+}
+
 
 func (rs *Reposurgeon) HelpGraft() {
         rs.helpOutput(`
