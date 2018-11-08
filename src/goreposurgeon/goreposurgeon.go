@@ -2368,11 +2368,13 @@ type Context struct {
 	abortLock        sync.Mutex
 	flagOptions      map[string]bool
 	listOptions      map[string]stringSet
+	mapOptions       map[string]map[string]string
 }
 
 func (ctx *Context) init() {
 	ctx.flagOptions = make(map[string]bool)
 	ctx.listOptions = make(map[string]stringSet)
+	ctx.mapOptions = make(map[string]map[string]string)
 }
 
 var context Context
@@ -11163,7 +11165,7 @@ func newReposurgeon() *Reposurgeon {
 		context.listOptions[option[0]] = newStringSet()
 	}
 	context.listOptions["svn_branchify"] = stringSet{"trunk", "tags/*", "branches/*", "*"}
-	context.listOptions["svn_branchify_mapping"] = stringSet{}
+	context.mapOptions["svn_branchify_mapping"] = make(map[string]string)
 	return rs
 }
 
@@ -16770,34 +16772,43 @@ to re-set it.
 `)
 }
 
-/*
-    func (rs *Reposurgeon) DoBranchify_map(self, line str):
-        if self.selection is not None:
-            panic(throw("command", "branchify_map does not take a selection set"))
-        line = line.strip()
-        if line == "reset":
-            context.listOptions['svn_branchify_mapping'] = []
-        else if line:
-            func split_regex(regex):
-                separator = regex[0]
-                if separator != regex[-1]:
-                    raise Recoverable("Regex '%s' did not end with separator character" % regex)
-                match, _, replace = regex[1:-1].partition(separator)
-                if not replace or not match:
-                    raise Recoverable("Regex '%s' has an empty search or replace part" % regex)
-                return match ,replace
-            context.listOptions['svn_branchify_mapping'] = \
-                    list(map(split_regex, line.split()))
-        if context.listOptions['svn_branchify_mapping']:
-            announce(debugSHOUT, "branchify_map, regex -> branch name:")
-            for match, replace in context.listOptions['svn_branchify_mapping']:
-                announce(debugSHOUT,  "\t" + match + " -> " + replace)
-        else:
-            complain("branchify_map is empty.")
-*/
-    //
-    // Setting options
-    //
+func (self *Reposurgeon) DoBranchify_map(line string) bool {
+	if self.selection != nil {
+		panic(throw("command", "branchify_map does not take a selection set"))
+	}
+	line = strings.TrimSpace(line)
+	if line == "reset" {
+		context.mapOptions["svn_branchify_mapping"] = make(map[string]string)
+	} else if line != "" {
+		for _, regex := range strings.Fields(line) {
+			separator := regex[0]
+			if separator != regex[len(regex)-1] {
+				complain("Regex '%s' did not end with separator character", regex)
+				return false
+			}
+			stuff := strings.SplitN(regex[1:len(regex)-1], string(separator), 2)
+			match, replace := stuff[0], stuff[1]
+			if replace == "" || match == "" {
+				complain("Regex '%s' has an empty search or replace part", regex)
+				return false
+			}
+			context.mapOptions["svn_branchify_mapping"][match] = replace
+		}
+	}
+	if len(context.mapOptions["svn_branchify_mapping"]) != 0 {
+		announce(debugSHOUT, "branchify_map, regex -> branch name:")
+		for match, replace := range context.mapOptions["svn_branchify_mapping"] {
+			announce(debugSHOUT,  "\t" + match + " -> " + replace)
+		}
+	} else {
+		complain("branchify_map is empty.")
+	}
+	return false
+}
+
+//
+// Setting options
+//
 func (rs *Reposurgeon) HelpSet() {
 	rs.helpOutput(`
 Set a (tab-completed) boolean option to control reposurgeon's
