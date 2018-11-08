@@ -11297,7 +11297,7 @@ func (rs *Reposurgeon) parseSelectionSet(line string) (machine selEvaluator, res
 }
 
 func (rs *Reposurgeon) evalSelectionSet(machine selEvaluator, repo *Repository) []int {
-	return rs.imp().evaluate(machine, repo)
+	return rs.imp().evaluate(machine, len(repo.events))
 }
 
 func (rs *Reposurgeon) setSelectionSet(line string) (rest string) {
@@ -13166,7 +13166,7 @@ func (rs *Reposurgeon) DoInspect(lineIn string) bool {
 	defer parse.Closem()
 
 	if rs.selection == nil {
-		rs.selection, parse.line = rs.parse(parse.line, repo)
+		rs.selection, parse.line = rs.parse(parse.line, len(repo.events))
 		if rs.selection == nil {
 			rs.selection = repo.all()
 		}
