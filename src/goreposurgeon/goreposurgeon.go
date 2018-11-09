@@ -11732,7 +11732,7 @@ func popToken(line string) (string, string) {
 	tok := ""
 	line = strings.TrimLeft(line, " \n\t")
 	for {
-		if line == "" || line[0] == ' ' || line[9] == '\t' {
+		if line == "" || line[0] == ' ' || line[0] == '\t' {
 			break
 		} else {
 			tok += line[:1]
@@ -14445,66 +14445,112 @@ change in a future release.
 `)
 }
 
-/*
-   func (rs *Reposurgeon) DoRemove(self, line str):
-        "Delete a fileop from a specified commit."
-        repo =  self.chosen()
-        if not repo:
-            complain("no repo is loaded")
-            return
-        if self.selection is None:
-            self.selection = []
-        orig = line
-        (opindex, line) = popToken(line)
-        # FIXME: This needs more general parsing
-        optypes = "DMRCN"
-        if re.match(r"[DMRCN]+$".encode('ascii'), polybytes(opindex)):
-            optypes = opindex
-            (opindex, line) = popToken(line)
-        for ie, event := range self.commits(self.selection):
-            event.invalidatePathsetCache()
-            if opindex == "deletes":
-                event.setOperations([e for e in event.operations() if e.op != opD])
-                return
-            for (ind, op) in enumerate(event.operations()):
-                if hasattr(op, "op") and getattr(op, "op") not in optypes:
-                    continue
-                if hasattr(op, "path") and getattr(op, "path") == opindex:
-                    break
-                if hasattr(op, "source") and getattr(op, "source") == opindex:
-                    break
-                if hasattr(op, "target") and getattr(op, "target") == opindex:
-                    break
-            else:
-                try:
-                    ind = int(opindex) - 1
-                except (ValueError, IndexError):
-                    complain("invalid or missing fileop specification '%s' on %s" % (opindex, repr(orig)))
-                    return
-            target = None
-            if line:
-                (verb, line)  = popToken(line)
-                if verb == 'to':
-                    self.set_selection_set(line)
-                    if len(self.selection) != 1:
-                        raise Recoverable("remove to requires a singleton selection")
-                    target = self.selection[0]
-            try:
-                removed = event.operations().pop(ind)
-                if target:
-                    repo.events[target].appendOperation(removed)
-                    # Blob might have to move, too - we need to keep the
-                    # relocated op from having an unresolvable forward
-                    # mark reference.
-                    if removed.ref is not None and target < ie:
-                        blob = repo.events.pop(repo.find(removed.ref))
-                        repo.addEvent(blob, target)
-                        repo.declareSequenceMutation("blob move")
-                    # FIXME: Scavenge blobs left with no references
-            except IndexError:
-                complain("out-of-range fileop index %s" % ind)
-                return
-*/
+// Delete a fileop from a specified commit.
+func (self *Reposurgeon) DoRemove(line string) bool {
+	repo := self.chosen()
+	if repo == nil {
+		complain("no repo is loaded")
+		return false
+	}
+	if self.selection == nil {
+		self.selection = newOrderedIntSet()
+	}
+	orig := line
+	opindex, line := popToken(line)
+	// FIXME: This needs more general parsing
+	optypes := "DMRCN"
+	regex := regexp.MustCompile("^[DMRCN]+$")
+	match := regex.FindStringIndex(opindex)
+	if match != nil {
+		optypes = opindex[match[0]:match[1]]
+		opindex, line = popToken(line)
+	}
+	for _, ie := range self.selection {
+		ev := repo.events[ie]
+		event, ok := ev.(*Commit)
+		if !ok {
+			complain("Event %d is not a commit.", ie+1)
+			return false
+		}
+		event.invalidatePathsetCache()
+		if opindex == "deletes" {
+			ops := make([]FileOp, 0)
+			for _, op := range event.operations() {
+				if op.op != opD {
+					ops = append(ops, op)
+				}
+			}
+			event.setOperations(ops)
+			return false
+		}
+		ind := -1
+		// first, see if opindex matches the filenames of any of this event's operations
+		for i, op := range event.operations() {
+			if !strings.Contains(optypes, op.op) {
+				continue
+			}
+			if op.Path == opindex || op.Source == opindex || op.Target == opindex {
+				ind = i
+				break
+			}
+		}
+		// otherwise, perhaps it's an integer
+		if ind == -1 {
+			var err error
+			ind, err = strconv.Atoi(opindex)
+			ind -= 1
+			if err != nil {
+				complain("invalid or missing fileop specification '%s' on %s", opindex, orig)
+				return false
+			}
+		}
+		target := -1
+		if line != "" {
+			verb, line := popToken(line)
+			if verb == "to" {
+				self.setSelectionSet(line)
+				if len(self.selection) != 1 {
+					complain("remove to requires a singleton selection")
+					return false
+				}
+				target = self.selection[0]
+			}
+		}
+		ops := event.operations()
+		present := ind >= 0 && ind < len(ops)
+		if !present {
+			complain("out-of-range fileop index %d", ind)
+			return false
+		}
+		removed := ops[ind]
+		event.fileops = append(ops[:ind], ops[ind+1:]...)
+		if target != -1 {
+			present := target >= 0 && target < len(repo.events)
+			if !present {
+				complain("out-of-range target event %d", target+1)
+				return false
+			}
+			commit, ok := repo.events[target].(*Commit)
+			if !ok {
+				complain("event %d is not a commit", target+1)
+				return false
+			} else {
+				commit.appendOperation(removed)
+			}
+			// Blob might have to move, too - we need to keep the
+			// relocated op from having an unresolvable forward
+			// mark reference.
+			if removed.ref != "" && target < ie {
+				i := repo.find(removed.ref)
+				blob := repo.events[i]
+				repo.events = append(repo.events[:i], repo.events[i+1:]...)
+				repo.insertEvent(blob, target, "blob move")
+			}
+			// FIXME: Scavenge blobs left with no references
+		}
+	}
+	return false
+}
 
 func (rs *Reposurgeon) HelpRenumber() {
 	rs.helpOutput(`
