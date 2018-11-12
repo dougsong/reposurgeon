@@ -11552,28 +11552,48 @@ func (rs *Reposurgeon) possiblePolyrange() bool {
 	return true
 }
 
+var markRE = regexp.MustCompile(`^:[0-9]+`)
+
+func (rs *Reposurgeon) parseAtom() selEvaluator {
+	// FIXME: @debug_lexer
+	selection := rs.SelectionParser.parseAtom()
+	if selection == nil {
+		// Mark references
+		markref := markRE.FindString(rs.line)
+		if len(markref) > 0 {
+			rs.line = rs.line[len(markref):]
+			selection = func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
+				return rs.evalAtomMark(x, s, markref)
+			}
+		} else if rs.peek() == ':' {
+			panic(throw("command", "malformed mark"))
+		} else if rs.peek() == '<' {
+			rs.pop()
+			closer := strings.IndexRune(rs.line, '>')
+			if closer == -1 {
+				panic(throw("command", fmt.Sprintf("reference improperly terminated. '%s'", rs.line)))
+			}
+			ref := rs.line[:closer]
+			rs.line = rs.line[closer+1:]
+			selection = func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
+				return rs.evalAtomRef(x, s, ref)
+			}
+		}
+	}
+	return selection
+}
+
+func (rs *Reposurgeon) evalAtomMark(state selEvalState,
+	preselection *fastOrderedIntSet, markref string) *fastOrderedIntSet {
+	return preselection
+}
+
+func (rs *Reposurgeon) evalAtomRef(state selEvalState,
+	preselection *fastOrderedIntSet, ref string) *fastOrderedIntSet {
+	return preselection
+}
+
 /*
-    @debug_lexer
-    func parse_atom():
-        selection = super(RepoSurgeon, self).parse_atom()
-        if selection is None:
-            # Mark references
-            match = re.match(r":[0-9]+".encode('ascii'), polybytes(self.line))
-            if match:
-                markref = polystr(match.group())
-                self.line = self.line[len(markref):]
-                selection = lambda p: self.eval_atom_mark(p, markref)
-            else if self.peek() == ':':
-                raise Recoverable("malformed mark")
-            else if self.peek() == "<":
-                self.pop()
-                closer = self.line.find('>')
-                if closer == -1:
-                    raise Recoverable("reference improperly terminated. '%s'" % self.line)
-                ref = self.line[:closer]
-                self.line = self.line[closer+1:]
-                selection = lambda p: self.eval_atom_ref(p, ref)
-        return selection
     @debug_lexer
     func eval_atom_mark(self, preselection, markref):
         pacify_pylint(preselection)
