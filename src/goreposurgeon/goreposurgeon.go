@@ -11429,40 +11429,51 @@ func (rs *Reposurgeon) parseExpression() selEvaluator {
 
 func (rs *Reposurgeon) evalNeighborhood(state selEvalState,
 	preselection *fastOrderedIntSet, subject selEvaluator) *fastOrderedIntSet {
-	return preselection
+	// FIXME: @debug_lexer
+	value := subject(state, preselection)
+	addSet := newFastOrderedIntSet()
+	removeSet := newFastOrderedIntSet()
+	it := value.Iterator()
+	for it.Next() {
+		ei := it.Value()
+		event := rs.chosen().events[ei]
+		if c, ok := event.(*Commit); ok {
+			for _, parent := range c.parents() {
+				addSet.Add(rs.chosen().find(parent.getMark()))
+			}
+			for _, child := range c.children() {
+				addSet.Add(rs.chosen().find(child.getMark()))
+			}
+		} else if _, ok := event.(*Blob); ok {
+			removeSet.Add(ei) // Don't select the blob itself
+			it2 := preselection.Iterator()
+			for it2.Next() {
+				i := it2.Value()
+				event2 := rs.chosen().events[i]
+				if c, ok := event2.(*Commit); ok {
+					for _, fileop := range c.operations() {
+						if fileop.op == opM &&
+							fileop.ref == event.getMark() {
+							addSet.Add(i)
+						}
+					}
+				}
+			}
+		} else if t, ok := event.(*Tag); ok {
+			if e := rs.repo.markToEvent(t.committish); e != nil {
+				addSet.Add(rs.repo.eventToIndex(e))
+			}
+		} else if r, ok := event.(*Reset); ok {
+			if e := rs.repo.markToEvent(r.committish); e != nil {
+				addSet.Add(rs.repo.eventToIndex(e))
+			}
+		}
+	}
+	value = value.Union(addSet)
+	value = value.Subtract(removeSet)
+	value = value.Sort()
+	return value
 }
-
-/*
-    @debug_lexer
-    func eval_neighborhood(self, preselection, subject):
-        value = subject(preselection)
-        add_set = orderedIntSet()
-        remove_set = orderedIntSet()
-        for ei in value:
-            event = self.chosen().events[ei]
-            if isinstance(event, Commit):
-                for parent in event.parents():
-                    add_set.add(self.chosen().find(parent.mark))
-                for child in event.children():
-                    add_set.add(self.chosen().find(child.mark))
-            else if isinstance(event, Blob):
-                remove_set.add(ei) # Don't select the blob itself
-                for i in preselection:
-                    event2 = self.chosen().events[i]
-                    if isinstance(event2, Commit):
-                        for fileop in event2.operations():
-                            if fileop.op == opM and fileop.ref==event.mark:
-                                add_set.add(i)
-            else if isinstance(event, (Tag, Reset)):
-                if event.target:
-                    add_set.add(event.target.eventToIndex())
-        value |= add_set
-        value -= remove_set
-        value = list(value)
-        value.sort()
-        value = orderedIntSet(value)
-        return value
-*/
 
 func (rs *Reposurgeon) parseTerm() selEvaluator {
 	// FIXME: @debug_lexer
