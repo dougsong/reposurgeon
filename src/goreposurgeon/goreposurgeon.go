@@ -517,6 +517,113 @@ func (s orderedIntSet) Pop() interface{} {
 }
 */
 
+// fastOrderedIntSet is like orderedIntSet but optimizes for speed at the
+// expense of space.
+type fastOrderedIntSet struct{ set *orderedset.Set }
+
+type fastOrderedIntSetIt struct{ it orderedset.Iterator }
+
+func (x *fastOrderedIntSetIt) Next() bool {
+	return x.it.Next()
+}
+
+func (x *fastOrderedIntSetIt) Index() int {
+	return x.it.Index()
+}
+
+func (x *fastOrderedIntSetIt) Value() int {
+	return x.it.Value().(int)
+}
+
+func newFastOrderedIntSet(x ...int) *fastOrderedIntSet {
+	s := orderedset.New()
+	for _, i := range x {
+		s.Add(i)
+	}
+	return &fastOrderedIntSet{s}
+}
+
+func (s fastOrderedIntSet) Size() int {
+	return s.set.Size()
+}
+
+func (s fastOrderedIntSet) Iterator() fastOrderedIntSetIt {
+	return fastOrderedIntSetIt{it: s.set.Iterator()}
+}
+
+func (s fastOrderedIntSet) Values() []int {
+	v := make([]int, s.Size())
+	it := s.Iterator()
+	for it.Next() {
+		v[it.Index()] = it.Value()
+	}
+	return v
+}
+
+func (s fastOrderedIntSet) Contains(x int) bool {
+	return s.set.Contains(x)
+}
+
+func (s *fastOrderedIntSet) Remove(x int) bool {
+	if s.Contains(x) {
+		s.set.Remove(x)
+		return true
+	}
+	return false
+}
+
+func (s *fastOrderedIntSet) Add(x int) {
+	s.set.Add(x)
+}
+
+func (s fastOrderedIntSet) Subtract(other *fastOrderedIntSet) *fastOrderedIntSet {
+	p := orderedset.New()
+	it := s.set.Iterator()
+	for it.Next() {
+		if !other.set.Contains(it.Value()) {
+			p.Add(it.Value())
+		}
+	}
+	return &fastOrderedIntSet{p}
+}
+
+func (s fastOrderedIntSet) Intersection(other *fastOrderedIntSet) *fastOrderedIntSet {
+	p := orderedset.New()
+	it := s.set.Iterator()
+	for it.Next() {
+		if other.set.Contains(it.Value()) {
+			p.Add(it.Value())
+		}
+	}
+	return &fastOrderedIntSet{p}
+}
+
+func (s fastOrderedIntSet) Union(other *fastOrderedIntSet) *fastOrderedIntSet {
+	p := orderedset.New(s.set.Values()...)
+	p.Add(other.set.Values()...)
+	return &fastOrderedIntSet{p}
+}
+
+func (s fastOrderedIntSet) Sort() *fastOrderedIntSet {
+	v := s.set.Values()
+	sort.Slice(v, func(i, j int) bool { return v[i].(int) < v[j].(int) })
+	return &fastOrderedIntSet{orderedset.New(v...)}
+}
+
+func (s fastOrderedIntSet) String() string {
+	var b strings.Builder
+	b.WriteRune('[')
+	it := s.Iterator()
+	for it.Next() {
+		if it.Index() > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(strconv.Itoa(it.Value()))
+	}
+	b.WriteRune(']')
+	return b.String()
+}
+
 /*
  * Encapsulation of VCS capabilities starts here
  */
