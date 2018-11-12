@@ -11504,28 +11504,37 @@ func (rs *Reposurgeon) hasReference(event Event) bool {
 	return rs.chosen().vcs.hasReference([]byte(text))
 }
 
+func (rs *Reposurgeon) visibilityTypeletters() map[rune]func(int) bool {
+	type undecode interface {
+		undecodable(string) bool
+	}
+	type alldel interface {
+		alldeletes(stringSet) bool
+	}
+	e := func(i int) Event {
+		return rs.chosen().events[i]
+	}
+	// Available: AEGJKQSVWXY
+	return map[rune]func(int) bool{
+		'B': func(i int) bool { _, ok := e(i).(*Blob); return ok },
+		'C': func(i int) bool { _, ok := e(i).(*Commit); return ok },
+		'T': func(i int) bool { _, ok := e(i).(*Tag); return ok },
+		'R': func(i int) bool { _, ok := e(i).(*Reset); return ok },
+		'P': func(i int) bool { _, ok := e(i).(*Passthrough); return ok },
+		'H': func(i int) bool { c, ok := e(i).(*Commit); return ok && !c.hasChildren() },
+		'O': func(i int) bool { c, ok := e(i).(*Commit); return ok && !c.hasParents() },
+		'U': func(i int) bool { c, ok := e(i).(*Commit); return ok && c.hasCallouts() },
+		'Z': func(i int) bool { c, ok := e(i).(*Commit); return ok && len(c.operations()) == 0 },
+		'M': func(i int) bool { c, ok := e(i).(*Commit); return ok && len(c.parents()) > 1 },
+		'F': func(i int) bool { c, ok := e(i).(*Commit); return ok && len(c.children()) > 1 },
+		'L': func(i int) bool { c, ok := e(i).(*Commit); return ok && unclean.MatchString(c.Comment) },
+		'I': func(i int) bool { p, ok := e(i).(undecode); return ok && p.undecodable("utf-8") },
+		'D': func(i int) bool { p, ok := e(i).(alldel); return ok && p.alldeletes(nil) },
+		'N': func(i int) bool { return rs.hasReference(e(i)) },
+	}
+}
+
 /*
-    func visibility_typeletters():
-        func e(i):
-            return self.chosen().events[i]
-        # Available: AEGJKQSVWXY
-        return {
-            "B" : lambda i: isinstance(e(i), Blob),
-            "C" : lambda i: isinstance(e(i), Commit),
-            "T" : lambda i: isinstance(e(i), Tag),
-            "R" : lambda i: isinstance(e(i), Reset),
-            "P" : lambda i: isinstance(e(i), Passthrough),
-            "H" : lambda i: isinstance(e(i), Commit) and not e(i).hasChildren(),
-            "O" : lambda i: isinstance(e(i), Commit) and not e(i).hasParents(),
-            "U" : lambda i: isinstance(e(i), Commit) and e(i).hasCallouts(),
-            "Z" : lambda i: isinstance(e(i), Commit) and len(e(i).operations())==0,
-            "M" : lambda i: isinstance(e(i), Commit) and len(e(i).parents()) > 1,
-            "F" : lambda i: isinstance(e(i), Commit) and len(e(i).children()) > 1,
-            "L" : lambda i: isinstance(e(i), Commit) and RepoSurgeon.unclean.match(polybytes(e(i).Comment)),
-            "I" : lambda i: hasattr(e(i), 'undecodable') and e(i).undecodable(),
-            "D" : lambda i: hasattr(e(i), 'alldeletes') and e(i).alldeletes(),
-            "N" : lambda i: self.has_reference(e(i))
-            }
     func polyrange_initials():
         return super(RepoSurgeon, self).polyrange_initials() + (":", "<")
     func possible_polyrange():
