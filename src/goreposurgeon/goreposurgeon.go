@@ -11534,9 +11534,11 @@ func (rs *Reposurgeon) visibilityTypeletters() map[rune]func(int) bool {
 	}
 }
 
+func (rs *Reposurgeon) polyrangeInitials() string {
+	return rs.SelectionParser.polyrangeInitials() + ":<"
+}
+
 /*
-    func polyrange_initials():
-        return super(RepoSurgeon, self).polyrange_initials() + (":", "<")
     func possible_polyrange():
         "Does the input look like a possible polyrange?"
         if not super(RepoSurgeon, self).possible_polyrange():
