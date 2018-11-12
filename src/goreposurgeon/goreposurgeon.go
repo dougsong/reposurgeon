@@ -11538,17 +11538,21 @@ func (rs *Reposurgeon) polyrangeInitials() string {
 	return rs.SelectionParser.polyrangeInitials() + ":<"
 }
 
+// Does the input look like a possible polyrange?
+func (rs *Reposurgeon) possiblePolyrange() bool {
+	if !rs.SelectionParser.possiblePolyrange() {
+		return false
+	}
+	// Avoid having an input redirect mistaken for the start of a literal.
+	// This might break if a command can ever have both input and output
+	// redirects.
+	if rs.peek() == '<' && !strings.ContainsRune(rs.line, '>') {
+		return false
+	}
+	return true
+}
+
 /*
-    func possible_polyrange():
-        "Does the input look like a possible polyrange?"
-        if not super(RepoSurgeon, self).possible_polyrange():
-            return false
-        # Avoid having an input redirect mistaken for the start of a literal.
-        # This might break if a command can ever have both input and output
-        # redirects.
-        if self.peek() == "<" and ">" not in self.line:
-            return false
-        return true
     @debug_lexer
     func parse_atom():
         selection = super(RepoSurgeon, self).parse_atom()
