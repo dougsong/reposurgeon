@@ -10698,33 +10698,23 @@ func sucHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
 	return suc
 }
 
-func selMutate(s *orderedset.Set, f func([]int) []int) *orderedset.Set {
-	v := make([]int, s.Size())
-	for i, n := range s.Values() {
-		v[i] = n.(int)
-	}
-	sel := orderedset.New()
-	for _, n := range f(v) {
-		sel.Add(n)
-	}
-	return sel
-}
-
 // Sort the argument set.
 func srtHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
 	// FIXME: @debug_lexer
-	return selMutate(subarg, func(x []int) []int {
-		sort.Sort(sort.IntSlice(x))
-		return x
-	})
+	v := subarg.Values()
+	sort.Slice(v, func(i, j int) bool { return v[i].(int) < v[j].(int) })
+	return orderedset.New(v...)
 }
 
 // Reverse the argument set.
 func revHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
 	// FIXME: @debug_lexer
-	return selMutate(subarg, func(x []int) []int {
-		return sort.Reverse(sort.IntSlice(x)).(sort.IntSlice)
-	})
+	n := subarg.Size()
+	v := make([]interface{}, n)
+	for i, x := range subarg.Values() {
+		v[n-i-1] = x
+	}
+	return orderedset.New(v...)
 }
 
 /*
