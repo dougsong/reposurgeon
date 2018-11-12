@@ -10466,10 +10466,11 @@ func (p *SelectionParser) evalVisibility(state selEvalState,
 		predicates = append(predicates, typeletters[r])
 	}
 	visibility := newFastOrderedIntSet()
-	for _, i := range preselection.Values() {
+	it := preselection.Iterator()
+	for it.Next() {
 		for _, f := range predicates {
-			if f(i) {
-				visibility.Add(i)
+			if f(it.Value()) {
+				visibility.Add(it.Value())
 				break
 			}
 		}
@@ -10536,8 +10537,9 @@ func (p *SelectionParser) evalPolyrange(state selEvalState,
 	resolved := newFastOrderedIntSet()
 	last := int(math.MinInt64)
 	spanning := false
-	for _, elt := range selection.Values() {
-		i := elt
+	it := selection.Iterator()
+	for it.Next() {
+		i := it.Value()
 		if i == polyrangeDollar { // "$"
 			i = state.nItems() - 1
 		}
@@ -10564,8 +10566,9 @@ func (p *SelectionParser) evalPolyrange(state selEvalState,
 		panic(throw("command", "incomplete range expression"))
 	}
 	lim := state.nItems() - 1
-	for _, elt := range resolved.Values() {
-		i := elt
+	it = resolved.Iterator()
+	for it.Next() {
+		i := it.Value()
 		if i < 0 || i > lim {
 			panic(throw("command", fmt.Sprintf("element %d out of range", i+1)))
 		}
@@ -10714,26 +10717,30 @@ func selMin(s *fastOrderedIntSet) int {
 	if s.Size() == 0 {
 		panic(throw("command", "cannot take minimum of empty set"))
 	}
-	var n interface{}
-	for _, x := range s.Values() {
-		if n == nil || x < n.(int) {
-			n = x
+	it := s.Iterator()
+	it.Next()
+	n := it.Value()
+	for it.Next() {
+		if it.Value() < n {
+			n = it.Value()
 		}
 	}
-	return n.(int)
+	return n
 }
 
 func selMax(s *fastOrderedIntSet) int {
 	if s.Size() == 0 {
 		panic(throw("command", "cannot take maximum of empty set"))
 	}
-	var n interface{}
-	for _, x := range s.Values() {
-		if n == nil || x > n.(int) {
-			n = x
+	it := s.Iterator()
+	it.Next()
+	n := it.Value()
+	for it.Next() {
+		if it.Value() > n {
+			n = it.Value()
 		}
 	}
-	return n.(int)
+	return n
 }
 
 // Minimum member of a selection set.
@@ -10803,8 +10810,9 @@ func revHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSe
 	// FIXME: @debug_lexer
 	n := subarg.Size()
 	v := make([]int, n)
-	for i, x := range subarg.Values() {
-		v[n-i-1] = x
+	it := subarg.Iterator()
+	for it.Next() {
+		v[n-it.Index()-1] = it.Value()
 	}
 	return newFastOrderedIntSet(v...)
 }
