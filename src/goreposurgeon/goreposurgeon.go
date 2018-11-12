@@ -11240,7 +11240,7 @@ type Reposurgeon struct {
 	ignorename       string
 }
 
-var unclean = regexp.MustCompile("[^\n]*\n[^\n]")
+var unclean = regexp.MustCompile("^[^\n]*\n[^\n]")
 
 func newReposurgeon() *Reposurgeon {
 	rs := new(Reposurgeon)
