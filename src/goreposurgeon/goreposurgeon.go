@@ -10139,10 +10139,10 @@ func debug_lexer(f):
 
 type selEvalState interface {
 	nItems() int
-	allItems() *orderedset.Set
+	allItems() *fastOrderedIntSet
 }
 
-type selEvaluator func(selEvalState, *orderedset.Set) *orderedset.Set
+type selEvaluator func(selEvalState, *fastOrderedIntSet) *fastOrderedIntSet
 
 type selParser interface {
 	compile(line string) (selEvaluator, string)
@@ -10150,17 +10150,17 @@ type selParser interface {
 	parse(line string, nitems int) ([]int, string)
 	parseExpression() selEvaluator
 	parseDisjunct() selEvaluator
-	evalDisjunct(selEvalState, *orderedset.Set, selEvaluator, selEvaluator) *orderedset.Set
+	evalDisjunct(selEvalState, *fastOrderedIntSet, selEvaluator, selEvaluator) *fastOrderedIntSet
 	parseConjunct() selEvaluator
-	evalConjunct(selEvalState, *orderedset.Set, selEvaluator, selEvaluator) *orderedset.Set
+	evalConjunct(selEvalState, *fastOrderedIntSet, selEvaluator, selEvaluator) *fastOrderedIntSet
 	parseTerm() selEvaluator
-	evalTermNegate(selEvalState, *orderedset.Set, selEvaluator) *orderedset.Set
+	evalTermNegate(selEvalState, *fastOrderedIntSet, selEvaluator) *fastOrderedIntSet
 	parseVisibility() selEvaluator
-	evalVisibility(selEvalState, *orderedset.Set, string) *orderedset.Set
+	evalVisibility(selEvalState, *fastOrderedIntSet, string) *fastOrderedIntSet
 	parsePolyrange() selEvaluator
 	polyrangeInitials() string
 	possiblePolyrange() bool
-	evalPolyrange(selEvalState, *orderedset.Set, []selEvaluator) *orderedset.Set
+	evalPolyrange(selEvalState, *fastOrderedIntSet, []selEvaluator) *fastOrderedIntSet
 	parseAtom() selEvaluator
 	parseTextSearch() selEvaluator
 	parseFuncall() selEvaluator
@@ -10189,8 +10189,8 @@ func (p *SelectionParser) evalState() selEvalState {
 
 func (p *SelectionParser) nItems() int { return p.nitems }
 
-func (p *SelectionParser) allItems() *orderedset.Set {
-	s := orderedset.New()
+func (p *SelectionParser) allItems() *fastOrderedIntSet {
+	s := newFastOrderedIntSet()
 	for i := 0; i < p.nitems; i++ {
 		s.Add(i)
 	}
@@ -10227,11 +10227,7 @@ func (p *SelectionParser) evaluate(machine selEvaluator, nitems int) []int {
 	p.nitems = nitems
 	crunched := machine(p.evalState(), p.allItems())
 	p.nitems = 0
-	selection := make([]int, crunched.Size())
-	for i, x := range crunched.Values() {
-		selection[i] = x.(int)
-	}
-	return selection
+	return crunched.Values()
 }
 
 // parse parses selection and returns remainder of line with selection removed
@@ -10291,7 +10287,7 @@ func (p *SelectionParser) parseDisjunct() selEvaluator {
 			break
 		}
 		op1 := op
-		op = func(x selEvalState, s *orderedset.Set) *orderedset.Set {
+		op = func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
 			return p.imp().evalDisjunct(x, s, op1, op2)
 		}
 	}
@@ -10300,15 +10296,15 @@ func (p *SelectionParser) parseDisjunct() selEvaluator {
 
 // evalDisjunct evaluates a disjunctive expression
 func (p *SelectionParser) evalDisjunct(state selEvalState,
-	preselection *orderedset.Set, op1, op2 selEvaluator) *orderedset.Set {
+	preselection *fastOrderedIntSet, op1, op2 selEvaluator) *fastOrderedIntSet {
 	// FIXME: @debug_lexer
-	selected := orderedset.New()
+	selected := newFastOrderedIntSet()
 	conjunct := op1(state, preselection)
 	if conjunct != nil {
-		selected.Add(conjunct.Values()...)
+		selected = selected.Union(conjunct)
 		conjunct = op2(state, preselection)
 		if conjunct != nil {
-			selected.Add(conjunct.Values()...)
+			selected = selected.Union(conjunct)
 		}
 	}
 	return selected
@@ -10320,8 +10316,8 @@ func (p *SelectionParser) parseConjunct() selEvaluator {
 	p.eatWS()
 	op := p.imp().parseTerm()
 	if op == nil {
-		return func(x selEvalState, s *orderedset.Set) *orderedset.Set {
-			noop := func(selEvalState, *orderedset.Set) *orderedset.Set { return nil }
+		return func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
+			noop := func(selEvalState, *fastOrderedIntSet) *fastOrderedIntSet { return nil }
 
 			return p.imp().evalConjunct(x, s, noop, nil)
 		}
@@ -10337,7 +10333,7 @@ func (p *SelectionParser) parseConjunct() selEvaluator {
 			break
 		}
 		op1 := op
-		op = func(x selEvalState, s *orderedset.Set) *orderedset.Set {
+		op = func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
 			return p.imp().evalConjunct(x, s, op1, op2)
 		}
 	}
@@ -10346,7 +10342,7 @@ func (p *SelectionParser) parseConjunct() selEvaluator {
 
 // evalConjunct evaluates a conjunctive expression
 func (p *SelectionParser) evalConjunct(state selEvalState,
-	preselection *orderedset.Set, op1, op2 selEvaluator) *orderedset.Set {
+	preselection *fastOrderedIntSet, op1, op2 selEvaluator) *fastOrderedIntSet {
 	// FIXME: @debug_lexer
 	// assign term before intersecting with preselection so
 	// that the order specified by the user's first term is
@@ -10355,22 +10351,13 @@ func (p *SelectionParser) evalConjunct(state selEvalState,
 	if conjunct == nil {
 		conjunct = preselection
 	} else {
-		intersect := func(s1, s2 *orderedset.Set) *orderedset.Set {
-			s := orderedset.New()
-			for _, x := range s1.Values() {
-				if s2.Contains(x) {
-					s.Add(x)
-				}
-			}
-			return s
-		}
 		// this line is necessary if the user specified only
 		// polyranges because evalPolyrange() ignores the
 		// preselection
-		conjunct = intersect(conjunct, preselection)
+		conjunct = conjunct.Intersection(preselection)
 		term := op2(state, preselection)
 		if term != nil {
-			conjunct = intersect(conjunct, term)
+			conjunct = conjunct.Intersection(term)
 		}
 	}
 	return conjunct
@@ -10383,7 +10370,7 @@ func (p *SelectionParser) parseTerm() selEvaluator {
 	if p.peek() == '~' {
 		p.pop()
 		op := p.imp().parseExpression()
-		term = func(x selEvalState, s *orderedset.Set) *orderedset.Set {
+		term = func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
 			return p.imp().evalTermNegate(x, s, op)
 		}
 	} else if p.peek() == '(' {
@@ -10411,10 +10398,10 @@ func (p *SelectionParser) parseTerm() selEvaluator {
 }
 
 func (p *SelectionParser) evalTermNegate(state selEvalState,
-	preselection *orderedset.Set, op selEvaluator) *orderedset.Set {
+	preselection *fastOrderedIntSet, op selEvaluator) *fastOrderedIntSet {
 	// FIXME: @debug_lexer
 	negated := op(state, state.allItems())
-	remainder := orderedset.New()
+	remainder := newFastOrderedIntSet()
 	for i, n := 0, state.nItems(); i < n; i++ {
 		if !negated.Contains(i) {
 			remainder.Add(i)
@@ -10458,7 +10445,7 @@ func (p *SelectionParser) parseVisibility() selEvaluator {
 		// FIXME: port debugger to Go
 		// p._debug_lexer("visibility set is %s with %s left" % (
 		//     visible, repr(p.line)))
-		visibility = func(x selEvalState, s *orderedset.Set) *orderedset.Set {
+		visibility = func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
 			return p.imp().evalVisibility(x, s, visible)
 		}
 	}
@@ -10467,7 +10454,7 @@ func (p *SelectionParser) parseVisibility() selEvaluator {
 
 // evalVisibility evaluates a visibility spec
 func (p *SelectionParser) evalVisibility(state selEvalState,
-	preselection *orderedset.Set, visible string) *orderedset.Set {
+	preselection *fastOrderedIntSet, visible string) *fastOrderedIntSet {
 	// FIXME: @debug_lexer
 	// FIXME: self._debug_lexer("visibility set is %s" % visible)
 	type typelettersGetter interface {
@@ -10478,10 +10465,10 @@ func (p *SelectionParser) evalVisibility(state selEvalState,
 	for _, r := range visible {
 		predicates = append(predicates, typeletters[r])
 	}
-	visibility := orderedset.New()
+	visibility := newFastOrderedIntSet()
 	for _, i := range preselection.Values() {
 		for _, f := range predicates {
-			if f(i.(int)) {
+			if f(i) {
 				visibility.Add(i)
 				break
 			}
@@ -10521,7 +10508,7 @@ func (p *SelectionParser) parsePolyrange() selEvaluator {
 				ops = append(ops, op)
 			}
 		}
-		polyrange = func(x selEvalState, s *orderedset.Set) *orderedset.Set {
+		polyrange = func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
 			return p.imp().evalPolyrange(x, s, ops)
 		}
 	}
@@ -10533,24 +10520,24 @@ const polyrangeDollar = math.MaxInt64
 
 // evalPolyrange evaluates a polyrange specification (list of intervals)
 func (p *SelectionParser) evalPolyrange(state selEvalState,
-	preselection *orderedset.Set, ops []selEvaluator) *orderedset.Set {
+	preselection *fastOrderedIntSet, ops []selEvaluator) *fastOrderedIntSet {
 	// FIXME: @debug_lexer
 	// preselection is not used since it is perfectly legal to have range
 	// bounds be outside of the reduced set.
-	selection := orderedset.New()
+	selection := newFastOrderedIntSet()
 	for _, op := range ops {
 		sel := op(state, preselection)
 		if sel != nil {
-			selection.Add(sel.Values()...)
+			selection = selection.Union(sel)
 		}
 	}
 	// FIXME: self._debug_lexer(fmt.Sprintf("location list is %s", selection))
 	// Resolve spans
-	resolved := orderedset.New()
+	resolved := newFastOrderedIntSet()
 	last := int(math.MinInt64)
 	spanning := false
 	for _, elt := range selection.Values() {
-		i := elt.(int)
+		i := elt
 		if i == polyrangeDollar { // "$"
 			i = state.nItems() - 1
 		}
@@ -10578,7 +10565,7 @@ func (p *SelectionParser) evalPolyrange(state selEvalState,
 	}
 	lim := state.nItems() - 1
 	for _, elt := range resolved.Values() {
-		i := elt.(int)
+		i := elt
 		if i < 0 || i > lim {
 			panic(throw("command", fmt.Sprintf("element %d out of range", i+1)))
 		}
@@ -10599,20 +10586,20 @@ func (p *SelectionParser) parseAtom() selEvaluator {
 		if err != nil {
 			panic(throw("command", fmt.Sprintf("Atoi(%q) failed: %v", match, err)))
 		}
-		op = func(selEvalState, *orderedset.Set) *orderedset.Set {
-			return orderedset.New(number - 1)
+		op = func(selEvalState, *fastOrderedIntSet) *fastOrderedIntSet {
+			return newFastOrderedIntSet(number - 1)
 		}
 		p.line = p.line[len(match):]
 	} else if p.peek() == '$' { // $ means last commit, a la ed(1).
-		op = func(selEvalState, *orderedset.Set) *orderedset.Set {
-			return orderedset.New(polyrangeDollar)
+		op = func(selEvalState, *fastOrderedIntSet) *fastOrderedIntSet {
+			return newFastOrderedIntSet(polyrangeDollar)
 		}
 		p.pop()
 	} else if p.peek() == ',' { // Comma just delimits a location spec
 		p.pop()
 	} else if strings.HasPrefix(p.line, "..") { // Following ".." means a span
-		op = func(selEvalState, *orderedset.Set) *orderedset.Set {
-			return orderedset.New(polyrangeRange)
+		op = func(selEvalState, *fastOrderedIntSet) *fastOrderedIntSet {
+			return newFastOrderedIntSet(polyrangeRange)
 		}
 		p.line = p.line[len(".."):]
 	} else if p.peek() == '.' {
@@ -10626,7 +10613,7 @@ func (p *SelectionParser) parseTextSearch() selEvaluator {
 	// FIXME: @debug_lexer
 	p.eatWS()
 	type textSearcher interface {
-		evalTextSearch(selEvalState, *orderedset.Set, *regexp.Regexp, string) *orderedset.Set
+		evalTextSearch(selEvalState, *fastOrderedIntSet, *regexp.Regexp, string) *fastOrderedIntSet
 	}
 	searcher, ok := p.subclass.(textSearcher)
 	if !ok {
@@ -10654,7 +10641,7 @@ func (p *SelectionParser) parseTextSearch() selEvaluator {
 		for x := range seen {
 			modifiers.WriteRune(x)
 		}
-		return func(x selEvalState, s *orderedset.Set) *orderedset.Set {
+		return func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
 			return searcher.evalTextSearch(x, s, re, modifiers.String())
 		}
 	}
@@ -10708,7 +10695,7 @@ func (p *SelectionParser) parseFuncall() selEvaluator {
 	if op == nil {
 		panic(throw("command", "no such function @%s()", funname.String()))
 	}
-	return func(x selEvalState, s *orderedset.Set) *orderedset.Set {
+	return func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
 		return op(x, subarg(x, s))
 	}
 }
@@ -10723,26 +10710,26 @@ var selFuncs = map[string]selEvaluator{
 	"rev": revHandler,
 }
 
-func selMin(s *orderedset.Set) int {
+func selMin(s *fastOrderedIntSet) int {
 	if s.Size() == 0 {
 		panic(throw("command", "cannot take minimum of empty set"))
 	}
 	var n interface{}
 	for _, x := range s.Values() {
-		if n == nil || x.(int) < n.(int) {
+		if n == nil || x < n.(int) {
 			n = x
 		}
 	}
 	return n.(int)
 }
 
-func selMax(s *orderedset.Set) int {
+func selMax(s *fastOrderedIntSet) int {
 	if s.Size() == 0 {
 		panic(throw("command", "cannot take maximum of empty set"))
 	}
 	var n interface{}
 	for _, x := range s.Values() {
-		if n == nil || x.(int) > n.(int) {
+		if n == nil || x > n.(int) {
 			n = x
 		}
 	}
@@ -10750,30 +10737,30 @@ func selMax(s *orderedset.Set) int {
 }
 
 // Minimum member of a selection set.
-func minHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
+func minHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
 	// FIXME: @debug_lexer
-	return orderedset.New(selMin(subarg))
+	return newFastOrderedIntSet(selMin(subarg))
 }
 
 // Maximum member of a selection set.
-func maxHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
+func maxHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
 	// FIXME: @debug_lexer
-	return orderedset.New(selMax(subarg))
+	return newFastOrderedIntSet(selMax(subarg))
 }
 
 // Amplify - map empty set to empty, nonempty set to all.
-func ampHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
+func ampHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
 	// FIXME: @debug_lexer
 	if subarg.Size() != 0 {
 		return state.allItems()
 	}
-	return orderedset.New()
+	return newFastOrderedIntSet()
 }
 
 // Predecessors function; all elements previous to argument set.
-func preHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
+func preHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
 	// FIXME: @debug_lexer
-	pre := orderedset.New()
+	pre := newFastOrderedIntSet()
 	if subarg.Size() == 0 {
 		return pre
 	}
@@ -10788,9 +10775,9 @@ func preHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
 }
 
 // Successors function; all elements following argument set.
-func sucHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
+func sucHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
 	// FIXME: @debug_lexer
-	suc := orderedset.New()
+	suc := newFastOrderedIntSet()
 	if subarg.Size() == 0 {
 		return suc
 	}
@@ -10806,22 +10793,20 @@ func sucHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
 }
 
 // Sort the argument set.
-func srtHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
+func srtHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
 	// FIXME: @debug_lexer
-	v := subarg.Values()
-	sort.Slice(v, func(i, j int) bool { return v[i].(int) < v[j].(int) })
-	return orderedset.New(v...)
+	return subarg.Sort()
 }
 
 // Reverse the argument set.
-func revHandler(state selEvalState, subarg *orderedset.Set) *orderedset.Set {
+func revHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
 	// FIXME: @debug_lexer
 	n := subarg.Size()
-	v := make([]interface{}, n)
+	v := make([]int, n)
 	for i, x := range subarg.Values() {
 		v[n-i-1] = x
 	}
-	return orderedset.New(v...)
+	return newFastOrderedIntSet(v...)
 }
 
 /*
@@ -11427,7 +11412,7 @@ func (rs *Reposurgeon) parseExpression() selEvaluator {
 		}
 		rs.pop()
 		orig := value
-		value = func(x selEvalState, s *orderedset.Set) *orderedset.Set {
+		value = func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
 			return rs.evalNeighborhood(x, s, orig)
 		}
 	}
@@ -11435,7 +11420,7 @@ func (rs *Reposurgeon) parseExpression() selEvaluator {
 }
 
 func (rs *Reposurgeon) evalNeighborhood(state selEvalState,
-	preselection *orderedset.Set, subject selEvaluator) *orderedset.Set {
+	preselection *fastOrderedIntSet, subject selEvaluator) *fastOrderedIntSet {
 	return preselection
 }
 
