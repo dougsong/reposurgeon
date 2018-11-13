@@ -11776,28 +11776,60 @@ func (rs *Reposurgeon) evalAtomRef(state selEvalState,
             if (not tree) == match_all:
                 result.add(i)
         return result
-    @debug_lexer
-    func chn_handler(self, subarg):
-        "All children of commits in the selection set."
-        return self._accumulate_commits(subarg,
-                                        operator.methodcaller("children"),
-                                        recurse=false)
-    @debug_lexer
-    func dsc_handler(self, subarg):
-        "All descendants of a selection set, recursively."
-        return self._accumulate_commits(subarg,
-                                        operator.methodcaller("children"))
-    @debug_lexer
-    func par_handler(self, subarg):
-        "All parents of a selection set."
-        return self._accumulate_commits(subarg,
-                                        operator.methodcaller("parents"),
-                                        recurse=false)
-    @debug_lexer
-    func anc_handler(self, subarg):
-        "All ancestors of a selection set, recursively."
-        return self._accumulate_commits(subarg,
-                                        operator.methodcaller("parents"))
+*/
+
+func (rs *Reposurgeon) functions() map[string]selEvaluator {
+	return map[string]selEvaluator{
+		"chn": func(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
+			return rs.chnHandler(state, subarg)
+		},
+		"dsc": func(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
+			return rs.dscHandler(state, subarg)
+		},
+		"par": func(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
+			return rs.parHandler(state, subarg)
+		},
+		"anc": func(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
+			return rs.ancHandler(state, subarg)
+		},
+	}
+}
+
+// All children of commits in the selection set.
+func (rs *Reposurgeon) chnHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
+	// FIXME: @debug_lexer
+	return rs.accumulateCommits(subarg,
+		func(c *Commit) []CommitLike { return c.children() }, false)
+}
+
+// All descendants of a selection set, recursively.
+func (rs *Reposurgeon) dscHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
+	// FIXME: @debug_lexer
+	return rs.accumulateCommits(subarg,
+		func(c *Commit) []CommitLike { return c.children() }, true)
+}
+
+// All parents of a selection set.
+func (rs *Reposurgeon) parHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
+	// FIXME: @debug_lexer
+	return rs.accumulateCommits(subarg,
+		func(c *Commit) []CommitLike { return c.parents() }, false)
+}
+
+// All ancestors of a selection set, recursively.
+func (rs *Reposurgeon) ancHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
+	// FIXME: @debug_lexer
+	return rs.accumulateCommits(subarg,
+		func(c *Commit) []CommitLike { return c.parents() }, true)
+}
+
+func (rs *Reposurgeon) accumulateCommits(subarg *fastOrderedIntSet,
+	operation func(*Commit) []CommitLike, recurse bool) *fastOrderedIntSet {
+	// FIXME: implement this
+	return subarg
+}
+
+/*
     func _accumulate_commits(self, subarg, operation, recurse=true):
         repo = self.chosen()
         result = orderedIntSet()
