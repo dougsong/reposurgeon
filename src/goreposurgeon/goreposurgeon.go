@@ -11585,7 +11585,17 @@ func (rs *Reposurgeon) parseAtom() selEvaluator {
 
 func (rs *Reposurgeon) evalAtomMark(state selEvalState,
 	preselection *fastOrderedIntSet, markref string) *fastOrderedIntSet {
-	return preselection
+	// FIXME: @debug_lexer
+	events := rs.chosen().events
+	for i := 0; i < state.nItems(); i++ {
+		e := events[i]
+		if val, ok := getAttr(e, "mark"); ok && val == markref {
+			return newFastOrderedIntSet(i)
+		} else if val, ok := getAttr(e, "committish"); ok && val == markref {
+			return newFastOrderedIntSet(i)
+		}
+	}
+	panic(throw("command", fmt.Sprintf("mark %s not found.", markref)))
 }
 
 func (rs *Reposurgeon) evalAtomRef(state selEvalState,
@@ -11594,20 +11604,6 @@ func (rs *Reposurgeon) evalAtomRef(state selEvalState,
 }
 
 /*
-    @debug_lexer
-    func eval_atom_mark(self, preselection, markref):
-        pacify_pylint(preselection)
-        selection = []
-        for (i, event) in enumerate(self.chosen()):
-            if hasattr(event, "mark") and event.mark == markref:
-                selection.append(i)
-                break
-            else if hasattr(event, "committish") and event.committish == markref:
-                selection.append(i)
-                break
-        else:
-            raise Recoverable("mark %s not found." % markref)
-        return selection
     @debug_lexer
     func eval_atom_ref(self, preselection, ref):
         pacify_pylint(preselection)
