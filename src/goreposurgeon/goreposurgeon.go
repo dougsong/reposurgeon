@@ -11600,23 +11600,21 @@ func (rs *Reposurgeon) evalAtomMark(state selEvalState,
 
 func (rs *Reposurgeon) evalAtomRef(state selEvalState,
 	preselection *fastOrderedIntSet, ref string) *fastOrderedIntSet {
-	return preselection
+	// FIXME: @debug_lexer
+	selection := newFastOrderedIntSet()
+	lookup := rs.chosen().named(ref)
+	if lookup != nil {
+		// Choose to include *all* commits matching the date.
+		// Alas, results in unfortunate behavior when a date
+		// with multiple commits ends a span.
+		selection = selection.Union(newFastOrderedIntSet(lookup...))
+	} else {
+		panic(throw("command", fmt.Sprintf("couldn't match a name at <%s>", ref)))
+	}
+	return selection
 }
 
 /*
-    @debug_lexer
-    func eval_atom_ref(self, preselection, ref):
-        pacify_pylint(preselection)
-        selection = []
-        lookup = self.chosen().named(ref)
-        if lookup:
-            # Choose to include *all* commits matching the date.
-            # Alas, results in unfortunate behavior when a date
-            # with multiple commits ends a span.
-            selection += list(lookup)
-        else:
-            raise Recoverable("couldn't match a name at <%s>" % ref)
-        return selection
     @debug_lexer
     func eval_textsearch(self, preselection, search, modifiers):
         "Perform a text search of items."
