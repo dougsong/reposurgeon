@@ -5,8 +5,9 @@
 
 sed -e \
        "/if block ends with a return statement, so drop this else and outdent its block/d" \
+    -e "/exported type .* should have comment or be unexported/d" \
     -e "/exported method .* should have comment or be unexported/d" \
+    -e "/exported function .* should have comment or be unexported/d" \
     -e "/comment on exported method .* should be of the form/d" \
-
-
-
+    -e "/error strings should not be capitalized or end with punctuation or a newline/d" \
+    -e "/Branchify_map/d"
