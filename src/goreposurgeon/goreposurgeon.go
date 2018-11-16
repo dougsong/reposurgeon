@@ -11480,8 +11480,76 @@ func (rs *Reposurgeon) parseTerm() selEvaluator {
 	return term
 }
 
+// Parse a path name to evaluate the set of commits that refer to it.
 func (rs *Reposurgeon) parsePathset() selEvaluator {
-	return nil
+	// FIXME: @debug_lexer
+	rs.eatWS()
+	if rs.peek() != '[' {
+		return nil
+	}
+	rs.pop()
+	var matcher string
+	depth := 1
+	for i, c := range rs.line {
+		if c == '[' {
+			depth++
+		} else if c == ']' {
+			depth--
+		}
+		if depth == 0 {
+			matcher = rs.line[:i]
+			rs.line = rs.line[i+1:]
+			break
+		}
+	}
+	if depth != 0 {
+		panic(throw("command", "malformed path matcher"))
+	}
+	if strings.HasPrefix(matcher, "/") {
+		end := strings.LastIndexByte(matcher, '/')
+		if end < 1 {
+			panic(throw("command", "regexp matcher missing trailing /"))
+		}
+		pattern := matcher[1:end]
+		seen := make(map[rune]struct{})
+		for _, c := range matcher[end+1:] {
+			if strings.ContainsRune("acDMRCN", c) {
+				seen[c] = struct{}{}
+			} else {
+				panic(throw("command", "unrecognized matcher flag '%c'", c))
+			}
+		}
+		var b strings.Builder
+		for k := range seen {
+			b.WriteRune(k)
+		}
+		flags := b.String()
+		search, err := regexp.Compile(pattern)
+		if err != nil {
+			panic(throw("command", "invalid regular expression /%s/%s", pattern, flags))
+		}
+		return func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
+			return rs.evalPathsetRegex(x, s, search, flags)
+		}
+	} else {
+		return func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
+			return rs.evalPathset(x, s, matcher)
+		}
+	}
+}
+
+// Resolve a path regex to the set of commits that refer to it.
+func (rs *Reposurgeon) evalPathsetRegex(state selEvalState,
+	preselection *fastOrderedIntSet, search *regexp.Regexp,
+	flags string) *fastOrderedIntSet {
+	// FIXME: @debug_lexer
+	return preselection
+}
+
+func (rs *Reposurgeon) evalPathset(state selEvalState,
+	preselection *fastOrderedIntSet, matcher string) *fastOrderedIntSet {
+	// FIXME: @debug_lexer
+	return preselection
 }
 
 // Does an event contain something that looks like a legacy reference?
@@ -11731,39 +11799,6 @@ func (rs *Reposurgeon) evalTextSearch(state selEvalState,
 
 /*
 class Reposurgeon(object):
-    @debug_lexer
-    func parse_pathset():
-        "Parse a path name to evaluate the set of commits that refer to it."
-        self.line = self.line.lstrip()
-        if self.peek() != "[":
-            return None
-        self.pop()
-        depth = 1
-        for (i, c) in enumerate(self.line):
-            if c == '[':
-                depth++
-            else if c == ']':
-                depth -= 1
-            if depth == 0:
-                matcher = self.line[:i]
-                self.line = self.line[i+1:]
-                break
-        else:
-            raise Recoverable("malformed path matcher")
-        if matcher.startswith(os.PathSeparator):
-            flags = set()
-            while matcher[-1] in ("a", "c", "D", "M", "R", "C", "N"):
-                flags.add(matcher[-1])
-                matcher = matcher[:-1]
-            if matcher[-1] != os.PathSeparator:
-                raise Recoverable("regexp matcher missing trailing /")
-            try:
-                search = regexp.MustCompile(matcher[1:-1].encode('ascii')).search
-            except re.error:
-                raise Recoverable("invalid regular expression")
-            return lambda p: self.eval_pathset_regex(p, search, flags)
-        else:
-            return lambda p: self.eval_pathset(p, matcher)
     @debug_lexer
     func eval_pathset_regex(self, preselection, search, flags):
         "Resolve a path regex to the set of commits that refer to it."
