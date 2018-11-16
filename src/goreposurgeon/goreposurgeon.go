@@ -10569,7 +10569,7 @@ func (p *SelectionParser) evalPolyrange(state selEvalState,
 	for it.Next() {
 		i := it.Value()
 		if i < 0 || i > lim {
-			panic(throw("command", fmt.Sprintf("element %d out of range", i+1)))
+			panic(throw("command", "element %d out of range", i+1))
 		}
 	}
 	return resolved
@@ -10586,7 +10586,7 @@ func (p *SelectionParser) parseAtom() selEvaluator {
 	if len(match) > 0 {
 		number, err := strconv.Atoi(match)
 		if err != nil {
-			panic(throw("command", fmt.Sprintf("Atoi(%q) failed: %v", match, err)))
+			panic(throw("command", "Atoi(%q) failed: %v", match, err))
 		}
 		op = func(selEvalState, *fastOrderedIntSet) *fastOrderedIntSet {
 			return newFastOrderedIntSet(number - 1)
@@ -10630,9 +10630,7 @@ func (p *SelectionParser) parseTextSearch() selEvaluator {
 		pattern := p.line[:endat]
 		re, err := regexp.Compile(pattern)
 		if err != nil {
-			panic(throw("command", fmt.Sprintf(
-				"invalid regular expression: /%s/ (%v)",
-				pattern, err)))
+			panic(throw("command", "invalid regular expression: /%s/ (%v)", pattern, err))
 		}
 		p.line = p.line[endat+1:]
 		seen := make(map[rune]struct{})
@@ -11569,7 +11567,7 @@ func (rs *Reposurgeon) parseAtom() selEvaluator {
 			rs.pop()
 			closer := strings.IndexRune(rs.line, '>')
 			if closer == -1 {
-				panic(throw("command", fmt.Sprintf("reference improperly terminated. '%s'", rs.line)))
+				panic(throw("command", "reference improperly terminated. '%s'", rs.line))
 			}
 			ref := rs.line[:closer]
 			rs.line = rs.line[closer+1:]
@@ -11593,7 +11591,7 @@ func (rs *Reposurgeon) evalAtomMark(state selEvalState,
 			return newFastOrderedIntSet(i)
 		}
 	}
-	panic(throw("command", fmt.Sprintf("mark %s not found.", markref)))
+	panic(throw("command", "mark %s not found.", markref))
 }
 
 func (rs *Reposurgeon) evalAtomRef(state selEvalState,
@@ -11607,7 +11605,7 @@ func (rs *Reposurgeon) evalAtomRef(state selEvalState,
 		// with multiple commits ends a span.
 		selection = selection.Union(newFastOrderedIntSet(lookup...))
 	} else {
-		panic(throw("command", fmt.Sprintf("couldn't match a name at <%s>", ref)))
+		panic(throw("command", "couldn't match a name at <%s>", ref))
 	}
 	return selection
 }
