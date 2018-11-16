@@ -30,7 +30,8 @@ SOURCES += Dockerfile ci/prepare.sh ci/Makefile ci/requirements.txt
 DOCS = README.adoc NEWS TODO
 
 .PHONY: all install clean uninstall version pylint check zip release refresh \
-    docker-build docker-check docker-check-noscm
+    docker-build docker-check docker-check-noscm \
+    gosetup govet gotest goformat gofmt golint
 
 BINARIES = reposurgeon repotool repomapper repocutter
 MANPAGES = reposurgeon.1 repotool.1 repomapper.1 repocutter.1
@@ -79,7 +80,7 @@ govet:
 gotest:
 	GOPATH=$(GOPATH) GOCACHE=off go test $(TESTOPTS) goreposurgeon
 
-goformat:
+gofmt goformat:
 	gofmt -w src/repocutter/
 	gofmt -w src/repomapper/
 	gofmt -w src/goreposurgeon/
