@@ -11610,74 +11610,127 @@ func (rs *Reposurgeon) evalAtomRef(state selEvalState,
 	return selection
 }
 
+// Perform a text search of items.
+func (rs *Reposurgeon) evalTextSearch(state selEvalState,
+	preselection *fastOrderedIntSet,
+	search *regexp.Regexp, modifiers string) *fastOrderedIntSet {
+	// FIXME: @debug_lexer
+	matchers := newFastOrderedIntSet()
+	searchableAttrs := map[rune]string{
+		'a': "author",     // commit
+		'b': "branch",     // commit
+		'c': "comment",    // commit or tag
+		'C': "committer",  // commit
+		'r': "committish", // tag or reset
+		'p': "text",       // passthrough
+		't': "tagger",     // tag
+		'n': "name",       // tag
+	}
+	var searchIn []string
+	for _, v := range searchableAttrs {
+		searchIn = append(searchIn, v)
+	}
+	exattr := func(e Event, k string) string {
+		if s, ok := getAttr(e, k); ok {
+			return s
+		}
+		panic(fmt.Sprintf("no %q in %T", k, e))
+	}
+	extractors := map[string]func(Event) string{
+		"author": func(e Event) string {
+			if c, ok := e.(*Commit); ok && len(c.authors) != 0 {
+				return c.authors[0].who()
+			}
+			panic(fmt.Sprintf(`no "author" in %T`, e))
+		},
+		"branch":  func(e Event) string { return exattr(e, "Branch") },
+		"comment": func(e Event) string { return exattr(e, "Comment") },
+		"committer": func(e Event) string {
+			if c, ok := e.(*Commit); ok {
+				return c.committer.who()
+			}
+			panic(fmt.Sprintf(`no "committer" in %T`, e))
+		},
+		"committish": func(e Event) string { return exattr(e, "committish") },
+		"text":       func(e Event) string { return exattr(e, "text") },
+		"tagger": func(e Event) string {
+			if t, ok := e.(*Tag); ok {
+				return t.tagger.who()
+			}
+			panic(fmt.Sprintf(`no "tagger" in %T`, e))
+		},
+		"name": func(e Event) string { return exattr(e, "name") },
+	}
+	checkAuthors := false
+	checkBlobs := false
+	checkBranch := false
+	if len(modifiers) != 0 {
+		searchIn = []string{}
+		for _, m := range modifiers {
+			if m == 'a' {
+				checkAuthors = true
+			} else if m == 'B' {
+				checkBlobs = true
+			} else if _, ok := searchableAttrs[m]; ok {
+				searchIn = append(searchIn, searchableAttrs[m])
+				if m == 'b' {
+					checkBranch = true
+				}
+			} else {
+				panic(throw("command", "unknown textsearch flag"))
+			}
+		}
+	}
+	events := rs.chosen().events
+	it := preselection.Iterator()
+	for it.Next() {
+		e := events[it.Value()]
+		if checkBranch {
+			if t, ok := e.(*Tag); ok {
+				e = rs.repo.markToEvent(t.committish)
+			} else if b, ok := e.(*Blob); ok {
+				for ci := it.Value(); ci < len(events); ci++ {
+					possible := events[ci]
+					if c, ok := possible.(*Commit); ok &&
+						c.references(b.mark) {
+						// FIXME: Won't find multiple
+						// references
+						e = possible
+						break
+					}
+				}
+			}
+		}
+		for _, searchable := range searchIn {
+			if _, ok := getAttr(e, searchable); ok {
+				key := extractors[searchable](e)
+				if len(key) != 0 && search.MatchString(key) {
+					matchers.Add(it.Value())
+				}
+			}
+		}
+		if checkAuthors {
+			if c, ok := e.(*Commit); ok {
+				for _, a := range c.authors {
+					if search.MatchString(a.String()) {
+						matchers.Add(it.Value())
+						break
+					}
+				}
+			}
+		}
+		if checkBlobs {
+			if b, ok := e.(*Blob); ok &&
+				search.MatchString(b.getContent()) {
+				matchers.Add(it.Value())
+			}
+		}
+	}
+	return matchers
+}
+
 /*
 class Reposurgeon(object):
-    @debug_lexer
-    func eval_textsearch(self, preselection, search, modifiers):
-        "Perform a text search of items."
-        matchers = orderedIntSet()
-        searchable_attrs = {"a":"author",          # commit
-                            "b":"branch",          # commit
-                            "c":"comment",         # commit or tag
-                            "C":"committer",       # commit
-                            "r":"committish",      # tag or reset
-                            "p":"text",            # passthrough
-                            "t":"tagger",          # tag
-                            "n":"name"             # tag
-                            }
-        search_in = searchable_attrs.values()
-        extractor_lambdas = {
-            "author": lambda x: x.authors[0].who(),
-            "branch": lambda x: x.Branch,
-            "comment": lambda x: x.Comment,
-            "committer": lambda x: x.committer.who(),
-            "committish": lambda x: x.committish,
-            "text": lambda x: x.text,
-            "tagger": lambda x: x.tagger.who(),
-            "name": lambda x: x.name,
-            }
-        check_authors = false
-        check_blobs = false
-        check_branch = false
-        if modifiers:
-            search_in = []
-            for m in modifiers:
-                if m == 'a':
-                    check_authors = true
-                else if m == 'B':
-                    check_blobs = true
-                else if m in searchable_attrs.keys():
-                    search_in.append(searchable_attrs[m])
-                    if m == 'b':
-                        check_branch = true
-                else:
-                    raise Recoverable("unknown textsearch flag")
-        for i in preselection:
-            e = self.chosen().events[i]
-            if check_branch:
-                if isinstance(e, Tag):
-                    e = e.target
-                else if isinstance(e, Blob):
-                    events = self.chosen().events
-                    for ci in range(i, len(events)):
-                        possible = events[ci]
-                        if isinstance(possible, Commit) and possible.references(e.mark):
-                            # FIXME: Won't find multiple references
-                            e = possible
-                            break
-            for searchable in search_in:
-                if hasattr(e, searchable):
-                    key = extractor_lambdas[searchable](e)
-                    if key is not None and search(polybytes(key)):
-                        matchers.add(i)
-            if check_authors and isinstance(e, Commit):
-                for ai in range(len(e.authors)):
-                    if search(polybytes(str(e.authors[ai]))):
-                        matchers.add(i)
-                        break
-            if check_blobs and isinstance(e, Blob) and search(polybytes(e.getContent())):
-                matchers.add(i)
-        return matchers
     @debug_lexer
     func parse_pathset():
         "Parse a path name to evaluate the set of commits that refer to it."
