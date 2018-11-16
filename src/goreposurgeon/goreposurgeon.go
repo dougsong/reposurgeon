@@ -8827,10 +8827,10 @@ func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options str
 			if isCallout(parent.getMark()) {
 				attach := repo.named(parent.getMark())
 				if len(attach) == 0 {
-					fmt.Errorf("no match for %s in %s",
+					return fmt.Errorf("no match for %s in %s",
 						parent.getMark(), graftRepo.name)
 				} else if len(attach) >= 2 {
-					fmt.Errorf("%s is ambiguous in %s",
+					return fmt.Errorf("%s is ambiguous in %s",
 						parent.getMark(), graftRepo.name)
 				} else {
 					commit.removeParent(parent)
@@ -13844,12 +13844,12 @@ func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 		update := updateList[i]
 		check := strings.TrimSpace(update.getHeader("Check-Text"))
 		if check != "" && strings.HasPrefix(strings.TrimSpace(event.getComment()), check) {
-			complain("check text mismatch at %s (input %s of %s), expected %s saw %q, bailing out", event.idMe(), i+1, len(updateList), check, event.getComment()[:64])
+			complain("check text mismatch at %s (input %d of %d), expected %s saw %q, bailing out", event.idMe(), i+1, len(updateList), check, event.getComment()[:64])
 			return false
 		}
 		if parse.options.Contains("--empty-only") {
 			if event.getComment() != update.getPayload() && !emptyComment(event.getComment()) {
-				complain("nonempty comment at %s (input %s of %s), bailing out", event.idMe(), i+1, len(updateList))
+				complain("nonempty comment at %s (input %d of %d), bailing out", event.idMe(), i+1, len(updateList))
 			}
 		}
 
@@ -14595,7 +14595,7 @@ func (rs *Reposurgeon) DoBlob(line string) (stopOut bool) {
 	parse := rs.newLineParse(line, stringSet{"stdin"})
 	content, err := ioutil.ReadAll(parse.stdin)
 	if err != nil {
-		complain("while reading blob content: %v")
+		complain("while reading blob content: %v", err)
 		return false
 	}
 	blob.setContent(string(content), blob.start)
