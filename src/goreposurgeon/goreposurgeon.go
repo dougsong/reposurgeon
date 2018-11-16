@@ -3145,7 +3145,7 @@ type Blob struct {
 	blobseq      int
 	mark         string
 	pathlist     []string // In-repo paths associated with this blob
-	colors       []string // Scratch space for grapg coloring algorithms
+	colors       stringSet // Scratch space for grapg coloring algorithms
 	cookie       Cookie   // CVS/SVN cookie analyzed out of this file
 	start        int64    // Seek start if this blob refers into a dump
 	size         int64    // length start if this blob refers into a dump
@@ -9645,7 +9645,7 @@ func (rl *RepositoryList) removeByName(name string) {
 }
 
 // Apply a graph-coloring algorithm to see if the repo can be split here.
-func (repo *Repository) cutConflict(early *Commit, late *Commit) (bool, int, error) {
+func (rs *RepositoryList) cutConflict(early *Commit, late *Commit) (bool, int, error) {
 	cutIndex := -1
 	for i, m := range late.parentMarks() {
 		if m == early.mark {
@@ -9663,7 +9663,7 @@ func (repo *Repository) cutConflict(early *Commit, late *Commit) (bool, int, err
 		if commit, ok := commitlike.(*Commit); ok {
 			for _, fileop := range commit.operations() {
 				if fileop.op == opM && fileop.ref != "inline" {
-					blob := repo.markToEvent(fileop.ref)
+					blob := rs.repo.markToEvent(fileop.ref)
 					//assert isinstance(repo.repo[blob], Blob)
 					blob.(*Blob).colors = append(blob.(*Blob).colors, color)
 				}
@@ -9676,7 +9676,7 @@ func (repo *Repository) cutConflict(early *Commit, late *Commit) (bool, int, err
 	keepgoing := true
 	for keepgoing && !conflict {
 		keepgoing = false
-		for _, event := range repo.commits(nil) {
+		for _, event := range rs.repo.commits(nil) {
 			if event.color != "" {
 				for _, neighbor := range event.parents() {
 					if neighbor.getColor() == "" {
@@ -9717,71 +9717,118 @@ func (repo *Repository) cutClear(early *Commit, late *Commit, cutIndex int) {
 	}
 }
 
+// Attempt to topologically cut the selected repo.
+func (rs *RepositoryList) cut(early *Commit, late *Commit) bool {
+	ok, idx, err := rs.cutConflict(early, late)
+	if !ok {
+		rs.repo.cutClear(early, late, idx)
+		return false
+	}
+	if err != nil {
+		complain(err.Error())
+	}
+	// Repo can be split, so we need to color tags
+	for _, event := range rs.repo.events {
+		t, ok := event.(*Tag)
+		if ok {
+			for _, c := range rs.repo.commits(nil) {
+				if c.mark == t.committish {
+					t.color = c.color
+				}
+			}
+		}
+	}
+	// Front events go with early segment, they'll be copied to late one.
+	for _, event := range rs.repo.frontEvents() {
+		if passthrough, ok := event.(*Passthrough); ok {
+			passthrough.color = "early"
+		}
+	}
+	//assert all(hasattr(x, "color") || hasattr(x, "colors") || isinstance(x, Reset) for x in rs.repo)
+	// Resets are tricky.  One may have both colors.
+	// Blobs can have both colors too, through references in
+	// commits on both sides of the cut, but we took care
+	// of that earlier.
+	earlyBranches := newStringSet()
+	lateBranches := newStringSet()
+	for _, commit := range rs.repo.commits(nil) {
+		if commit.color == "" {
+			complain(fmt.Sprintf("%s is uncolored!", commit.mark))
+		} else if commit.color == "early"{
+			earlyBranches.Add(commit.Branch)
+		} else if commit.color == "late"{
+			lateBranches.Add(commit.Branch)
+		}
+	}
+	// Now it's time to do the actual partitioning
+	earlyPart := newRepository(rs.repo.name + "-early")
+	os.Mkdir(earlyPart.subdir(""), userReadWriteMode)
+	latePart := newRepository(rs.repo.name + "-late")
+	os.Mkdir(latePart.subdir(""), userReadWriteMode)
+	for _, event := range rs.repo.events {
+		if reset, ok := event.(*Reset); ok {
+			if earlyBranches.Contains(reset.ref) {
+				earlyPart.addEvent(*reset)
+			}
+			if lateBranches.Contains(reset.ref) {
+				latePart.addEvent(*reset)
+			}
+		} else if blob, ok := event.(*Blob); ok {
+			if blob.colors.Contains("early")  {
+				earlyPart.addEvent(blob.clone(earlyPart))
+			}
+			if blob.colors.Contains("late")  {
+				latePart.addEvent(blob.clone(latePart))
+			}
+		} else {
+			if passthrough, ok := event.(*Passthrough); ok {
+				if passthrough.color == "early" {
+					passthrough.moveto(earlyPart)
+					earlyPart.addEvent(passthrough)
+				} else if passthrough.color == "late" {
+					passthrough.moveto(earlyPart)
+					earlyPart.addEvent(passthrough)
+				} else {
+					// TODO: Someday, color passthroughs
+					// that aren't fronted.
+					panic(fmt.Sprintf("coloring algorithm failed on %s", event.idMe()))
+				}
+			} else if commit, ok := event.(*Commit); ok {
+				if commit.color == "early" {
+					commit.moveto(earlyPart)
+					earlyPart.addEvent(commit)
+				} else if commit.color == "late" {
+					commit.moveto(earlyPart)
+					earlyPart.addEvent(commit)
+				} else {
+					panic(fmt.Sprintf("coloring algorithm failed on %s", event.idMe()))
+				}
+			} else if tag, ok := event.(*Tag); ok {
+				if tag.color == "early" {
+					tag.moveto(earlyPart)
+					earlyPart.addEvent(tag)
+				} else if tag.color == "late" {
+					tag.moveto(earlyPart)
+					earlyPart.addEvent(tag)
+				} else {
+					panic(fmt.Sprintf("coloring algorithm failed on %s", event.idMe()))
+				}
+			}
+		}
+	}
+	// Options and features may need to be copied to the late fragment.
+	// It's crucial here that frontEvents() returns a copy, not a reference. 
+	latePart.events = append(earlyPart.frontEvents(), latePart.events...)
+	latePart.declareSequenceMutation("cut operation")
+	// Add the split results to the repo list.
+	rs.repolist = append(rs.repolist, earlyPart)
+	rs.repolist = append(rs.repolist, latePart)
+	rs.repo.cleanup()
+	rs.removeByName(rs.repo.name)
+	return true
+}
+
 /*
-    func cut(rs, early, late):
-        "Attempt to topologically cut the selected repo."
-	ok, idx, err :=rs.cutConflict(early, late):
-        if !ok {
-            rs.cutClear(early, late, idx)
-            return false
-        # Repo can be split, so we need to color tags
-        for t in rs.repo.events:
-            if isinstance(t, Tag):
-                for c in rs.repo.events:
-                    if isinstance(c, Commit):
-                        if c is t.Target:
-                            t.color = c.color
-        # Front events go with early segment, they'll be copied to late one.
-        for event in rs.repo.frontEvents():
-            event.color = "early"
-        assert all(hasattr(x, "color") or hasattr(x, "colors") or isinstance(x, Reset) for x in rs.repo)
-        # Resets are tricky.  One may have both colors.
-        # Blobs can have both colors too, through references in
-        # commits on both sides of the cut, but we took care
-        # of that earlier.
-        trackbranches = {"early": set(), "late": set()}
-        for commit in rs.repo.commits():
-            if commit.color is None:
-                complain("%s is uncolored!" % commit.mark)
-            else:
-                trackbranches[commit.color].add(commit.Branch)
-        # Now it's time to do the actual partitioning
-        early = Repository(rs.repo.name + "-early")
-        os.mkdir(early.subdir())
-        late = Repository(rs.repo.name + "-late")
-        os.mkdir(late.subdir())
-        for event in rs.repo:
-            if isinstance(event, Reset):
-                if event.ref in trackbranches["early"]:
-                    early.addEvent(copy.copy(event))
-                if event.ref in trackbranches["late"]:
-                    late.addEvent(copy.copy(event))
-            else if isinstance(event, Blob):
-                if "early" in event.colors:
-                    early.addEvent(event.clone(early))
-                if "late" in event.colors:
-                    late.addEvent(event.clone(late))
-            else:
-                if event.color == "early":
-                    if hasattr(event, "moveto"):
-                        event.moveto(early)
-                    early.addEvent(event)
-                else if event.color == "late":
-                    if hasattr(event, "moveto"):
-                        event.moveto(late)
-                    late.addEvent(event)
-                else:
-                    # TODO: Someday, color passthroughs that aren't fronted.
-                    raise Fatal("coloring algorithm failed on %s" % event)
-        # Options and features may need to be copied to the late fragment.
-        late.events = copy.copy(early.frontEvents()) + late.events
-        late.declareSequenceMutation("cut operation")
-        # Add the split results to the repo list.
-        rs.repolist.append(early)
-        rs.repolist.append(late)
-        rs.repo.cleanup()
-        rs.remove_by_name(rs.repo.name)
-        return true
     func unite(rs, factors, options):
         "Unite multiple repos into a union repo."
         for x in factors:
