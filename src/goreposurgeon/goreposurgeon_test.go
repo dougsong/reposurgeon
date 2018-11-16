@@ -1619,4 +1619,3 @@ func TestGetSetAttr(t *testing.T) {
 	}
 	assertEqual(t, vcsTestTable[0].Vcs, "foozle")
 }
-// end

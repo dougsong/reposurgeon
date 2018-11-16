@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
-	terminal "golang.org/x/crypto/ssh/terminal" // For GetSize()
 	pcre "github.com/glenn-brown/golang-pkg-pcre/src/pkg/pcre"
+	terminal "golang.org/x/crypto/ssh/terminal" // For GetSize()
 )
 
 const linesep = "\n"
