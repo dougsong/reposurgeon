@@ -14711,7 +14711,7 @@ func (rs *Reposurgeon) DoAdd(line string) (stopOut bool) {
 			}
 		}
 	} else if optype == opR || optype == opC {
-		if len(fields) < 4 {
+		if len(fields) < 3 {
 			complain("too few arguments in add %s", optype)
 			return false
 		}
