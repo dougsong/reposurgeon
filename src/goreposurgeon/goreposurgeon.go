@@ -7667,8 +7667,8 @@ func (repo *Repository) earliestCommit() *Commit {
 }
 
 // Return the date of earliest commit.
-func (repo *Repository) earliest() Date {
-	return repo.earliestCommit().committer.date
+func (repo *Repository) earliest() time.Time {
+	return repo.earliestCommit().committer.date.timestamp
 }
 
 // Return ancestors of an event, in reverse order.
@@ -9828,67 +9828,93 @@ func (rs *RepositoryList) cut(early *Commit, late *Commit) bool {
 	return true
 }
 
-/*
-    func unite(rs, factors, options):
-        "Unite multiple repos into a union repo."
-        for x in factors:
-            if not list(x.commits()):
-                raise Recoverable("empty factor %s" % x.name)
-        factors.sort(key=operator.methodcaller("earliest"))
-        roots = [x.earliestCommit() for x in factors]
-        union = Repository("+".join(r.name for r in factors))
-        os.mkdir(union.subdir())
-        factors.reverse()
-        persist = {}
-        for factor in factors:
-            persist = factor.uniquify(factor.name, persist)
-        factors.reverse()
-        for factor in factors:
-            union.absorb(factor)
-            rs.remove_by_name(factor.name)
-        # Renumber all events
-        union.renumber()
-        # Sort out the root grafts. The way we used to do this
-        # involved sorting the union commits by timestamp, but this
-        # fails because in real-world repos timestamp order may not
-        # coincide with mark order - leading to "mark not defined"
-        # errors from the importer at rebuild time. Instead we graft
-        # each root just after the last commit in the dump sequence
-        # with a date prior to it.  This method gives less intuitive
-        # results, but at least means we never need to reorder
-        # commits.
-        for root in roots[1:]:
-            # Get last commit such that it and all before it are earlier.
-            # Never raises IndexError since union.earliestCommit() is root[0]
-            # which satisfies earlier() thanks to factors sorting.
-            eligible = collections.deque(
-                itertools.takewhile(lambda e: root.when() > e.when(), union.commits()),
-                    maxlen = 1)
-            if eligible:
-                most_recent = eligible.pop()
-            else:
-                # Weird case - can arise if you unite two or more copies
-                # of the same commit.
-                most_recent = union.earliestCommit()
-            if most_recent.mark is None:
-                # This should never happen either.
-                raise Fatal("can't link to commit with no mark")
-            root.addParentByMark(most_recent.mark)
-            # We may not want files from the ancestral stock to persist
-            # in the grafted branch unless they have modify ops in the branch
-            # root.
-            if "--prune" in options:
-                deletes = []
-                for path in most_recent.manifest():
-                    fileop = FileOp()
-                    fileop.construct("D", path)
-                    deletes.append(fileop)
-                root.setOperations(deletes + root.operations())
-                root.canonicalize()
-        # Put the result on the load list
-        rs.repolist.append(union)
-        rs.choose(union)
-*/
+// Unite multiple repos into a union repo.
+func (rs *RepositoryList) unite(factors []*Repository, options stringSet) {
+	for _, x := range factors {
+		if len(x.commits()) == 0 {
+			complain(fmt.Sprintf("empty factor %s", x.name))
+			return
+		}
+	}
+	sort.Slice(factors, func(i, j int) bool {
+		return factors[i].earliest().Before(factors[j].earliest())
+	})
+	// Forward time order
+	roots := make([]*Commit, 0)
+	uname := ""
+	for _, x := range factors {
+		roots = append(roots, x.earliestCommit())
+		uname += "+" + x.name
+	}
+	
+	union := newRepository(uname[1:])
+	os.Mkdir(union.subdir(""), userReadWriteMode)
+	// Reverse time order
+	sort.Slice(factors, func(i, j int) bool {
+		return factors[i].earliest().After(factors[j].earliest())
+	})
+	persist := map[string]string
+	for _, factor := range factors {
+		persist = factor.uniquify(factor.name, persist)
+	}
+	// Forward time order
+	for _, x := range factors {
+		roots = append(roots, x.earliestCommit())
+	}
+	for _, factor := range factors {
+		union.absorb(factor)
+		rs.removeByName(factor.name)
+	}
+	// Renumber all events
+	union.renumber()
+	// Sort out the root grafts. The way we used to do this
+	// involved sorting the union commits by timestamp, but this
+	// fails because in real-world repos timestamp order may not
+	// coincide with mark order - leading to "mark not defined"
+	// errors from the importer at rebuild time. Instead we graft
+	// each root just after the last commit in the dump sequence
+	// with a date prior to it.  This method gives less intuitive
+	// results, but at least means we never need to reorder
+	// commits.
+	for _, root := range roots[1:] {
+		// Get last commit such that it and all before it are
+		// earlier.  Never raises IndexError since
+		// union.earliestCommit() is root[0] which satisfies
+		// earlier() thanks to factors sorting.
+		eligible := collections.deque(
+			itertools.takewhile(lambda e: root.when() > e.when(), union.commits()),
+			maxlen := 1)
+		
+		if eligible {
+			mostRecent = eligible.pop()
+		} else {
+			// Weird case - can arise if you unite two or more copies
+			// of the same commit.
+			mostRecent = union.earliestCommit()
+		}
+		if mostRecent.mark == nil {
+			// This should never happen either.
+			panic("in unite: can't link to commit with no mark")
+		}
+		root.addParentByMark(mostRecent.mark)
+		// We may not want files from the ancestral stock to
+		// persist in the grafted branch unless they have
+		// modify ops in the branch root.
+		if options.Contains("--prune")  {
+			deletes := []Fileop
+			for _, path := range mostRecent.manifest() {
+				fileop := newFileOp()
+				fileop.construct("D", path)
+				deletes = append(deletes, fileop)
+			}
+			root.setOperations(append(deletes, root.operations()...))
+			root.canonicalize()
+		}
+	}
+	// Put the result on the load list
+	rs.repolist = append(rs.repolist, union)
+	rs.choose(union)
+}
 
 // Expunge a set of files from the commits in the selection set.
 func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
