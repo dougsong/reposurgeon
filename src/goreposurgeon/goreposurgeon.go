@@ -12335,7 +12335,7 @@ func (rs *Reposurgeon) DoResolve(line string) (stopOut bool) {
 		for i, item := range rs.selection {
 			oneOrigin[i] = item + 1
 		}
-		announce(debugSHOUT, "%v", newOrderedIntSet(oneOrigin...))
+		os.Stdout.WriteString(fmt.Sprintf("%v\n", newOrderedIntSet(oneOrigin...)))
 	}
 	return false
 }
