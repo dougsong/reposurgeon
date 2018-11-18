@@ -12343,7 +12343,7 @@ func (rs *Reposurgeon) DoResolve(line string) (stopOut bool) {
 		for i, item := range rs.selection {
 			oneOrigin[i] = item + 1
 		}
-		announce(debugSHOUT, "%v\n", newOrderedIntSet(oneOrigin...))
+		announce(debugSHOUT, "%v", newOrderedIntSet(oneOrigin...))
 	}
 	return false
 }
@@ -18218,7 +18218,7 @@ func (rs *Reposurgeon) DoVerbose(lineIn string) (stopOut bool) {
 		}
 	}
 	if len(lineIn) == 0 || context.verbose > 0 {
-		announce(debugSHOUT, "verbose %d\n", context.verbose)
+		announce(debugSHOUT, "verbose %d", context.verbose)
 	}
 	return false
 }
@@ -18257,7 +18257,7 @@ func (rs *Reposurgeon) DoEcho(lineIn string) (stopOut bool) {
 		}
 	}
 	if context.verbose > 0 {
-		announce(debugSHOUT, "echo %d\n", rs.echo)
+		announce(debugSHOUT, "echo %d", rs.echo)
 	}
 	return false
 }
