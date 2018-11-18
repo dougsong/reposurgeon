@@ -11581,7 +11581,7 @@ func (rs *Reposurgeon) parsePathset() selEvaluator {
 		}
 	}
 	if depth != 0 {
-		panic(throw("command", "malformed path matcher"))
+		panic(throw("command", "malformed path matcher; unbalanced [ and ]"))
 	}
 	if strings.HasPrefix(matcher, "/") {
 		end := strings.LastIndexByte(matcher, '/')
