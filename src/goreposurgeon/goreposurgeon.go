@@ -11439,8 +11439,8 @@ func (rs *Reposurgeon) DoShell(line string) (stopOut bool) {
 	if shell == "" {
 		shell = "/bin/sh"
 	}
-	announce(debugSHOUT, "Spawning %s...", shell)
-	cmd := exec.Command(shell)
+	announce(debugSHOUT, "Spawning %s -c %#v...", shell, line)
+	cmd := exec.Command(shell, "-c", line)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
