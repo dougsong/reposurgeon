@@ -3176,8 +3176,8 @@ func (b Blob) idMe() string {
 }
 
 // pathlist is implemented for uniformity with commits and fileops."
-func (b *Blob) paths(_pathtype string) []string {
-	return b.pathlist
+func (b *Blob) paths(_pathtype stringSet) stringSet {
+	return newStringSet(b.pathlist...)
 }
 
 func (b *Blob) addalias(argpath string) {
@@ -12524,7 +12524,7 @@ func (rs *Reposurgeon) DoIndex(lineIn string) bool {
 		event := repo.events[eventid]
 		switch e := event.(type) {
 		case *Blob:
-			fmt.Fprintf(parse.stdout, "%6d blob   %6s    %s\n", eventid+1, e.mark, strings.Join(e.paths(""), " "))
+			fmt.Fprintf(parse.stdout, "%6d blob   %6s    %s\n", eventid+1, e.mark, strings.Join(e.paths(nil), " "))
 		case *Commit:
 			mark := e.mark
 			if mark == "" {
