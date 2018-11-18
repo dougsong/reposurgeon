@@ -11340,6 +11340,16 @@ func newReposurgeon() *Reposurgeon {
 // SetCore is a Kommandant housekeeping hook.
 func (rs *Reposurgeon) SetCore(k *kommandant.Kmdt) {
 	rs.cmd = k
+	k.OneCommand = func(line string) (stop bool) {
+		defer func(stop *bool) {
+			if e := catch("command", recover()); e != nil {
+				complain(e.message)
+				*stop = false
+			}
+		}(&stop)
+		stop = k.OneCmd_core(line)
+		return
+	}
 }
 
 // helpOutput handles Go multiline literals that may have a leading \n
