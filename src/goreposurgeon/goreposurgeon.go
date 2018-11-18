@@ -162,8 +162,7 @@ func catch(accept string, x interface{}) *exception {
 	if x == nil {
 		return nil
 	}
-	err := x.(*exception)
-	if err.class == accept {
+	if err, ok := x.(*exception); ok && err.class == accept {
 		return err
 	}
 	panic(x)
