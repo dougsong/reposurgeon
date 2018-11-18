@@ -11647,10 +11647,21 @@ func (rs *Reposurgeon) evalPathsetRegex(state selEvalState,
 	return hits
 }
 
+// Resolve a path name to the set of commits that refer to it.
 func (rs *Reposurgeon) evalPathset(state selEvalState,
 	preselection *fastOrderedIntSet, matcher string) *fastOrderedIntSet {
 	// FIXME: @debug_lexer
-	return preselection
+	type vendPaths interface{ paths(stringSet) stringSet }
+	hits := newFastOrderedIntSet()
+	events := rs.chosen().events
+	it := preselection.Iterator()
+	for it.Next() {
+		if e, ok := events[it.Value()].(vendPaths); ok &&
+			e.paths(nil).Contains(matcher) {
+			hits.Add(it.Value())
+		}
+	}
+	return hits
 }
 
 func (rs *Reposurgeon) evalPathsetFull(state selEvalState,
@@ -11906,14 +11917,6 @@ func (rs *Reposurgeon) evalTextSearch(state selEvalState,
 
 /*
 class Reposurgeon(object):
-    @debug_lexer
-    func eval_pathset(self, preselection, matcher):
-        "Resolve a path name to the set of commits that refer to it."
-        chosen = self.chosen()
-        return orderedIntSet(
-            i for (i, event) in chosen.iterevents(
-                preselection, types=(Commit, Blob))
-            if matcher in event.paths())
     func eval_pathset_full(self, match_condition,
                                 preselection,
                                 match_all):
