@@ -11617,12 +11617,45 @@ func (rs *Reposurgeon) evalPathsetRegex(state selEvalState,
 	preselection *fastOrderedIntSet, search *regexp.Regexp,
 	flags stringSet) *fastOrderedIntSet {
 	// FIXME: @debug_lexer
-	return preselection
+	if flags.Contains("c") {
+		return rs.evalPathsetFull(state, preselection,
+			search, flags.Contains("a"))
+	}
+	all := flags.Contains("a")
+	flags.Remove("a")
+	type vendPaths interface{ paths(stringSet) stringSet }
+	hits := newFastOrderedIntSet()
+	events := rs.chosen().events
+	it := preselection.Iterator()
+	for it.Next() {
+		if e, ok := events[it.Value()].(vendPaths); ok {
+			matches := 0
+			paths := e.paths(flags)
+			for _, p := range paths {
+				if search.MatchString(p) {
+					matches++
+					if !all {
+						break
+					}
+				}
+			}
+			if (all && matches == len(paths)) || matches > 0 {
+				hits.Add(it.Value())
+			}
+		}
+	}
+	return hits
 }
 
 func (rs *Reposurgeon) evalPathset(state selEvalState,
 	preselection *fastOrderedIntSet, matcher string) *fastOrderedIntSet {
 	// FIXME: @debug_lexer
+	return preselection
+}
+
+func (rs *Reposurgeon) evalPathsetFull(state selEvalState,
+	preselection *fastOrderedIntSet, matchCond *regexp.Regexp,
+	matchAll bool) *fastOrderedIntSet {
 	return preselection
 }
 
@@ -11873,23 +11906,6 @@ func (rs *Reposurgeon) evalTextSearch(state selEvalState,
 
 /*
 class Reposurgeon(object):
-    @debug_lexer
-    func eval_pathset_regex(self, preselection, search, flags):
-        "Resolve a path regex to the set of commits that refer to it."
-        chosen = self.chosen()
-        if "c" in flags:
-            return self.eval_pathset_full(search,
-                                          preselection,
-                                          "a" in flags)
-        all_or_any = all if "a" in flags else any
-        if "a" in flags:
-            flags.remove("a")
-        hits = orderedIntSet()
-        for (i, event) in chosen.iterevents(
-                        preselection, types=(Commit, Blob)):
-            if all_or_any(itertools.imap(search, itertools.imap(polybytes, event.paths(flags)))):
-                hits.add(i)
-        return hits
     @debug_lexer
     func eval_pathset(self, preselection, matcher):
         "Resolve a path name to the set of commits that refer to it."
