@@ -11589,22 +11589,18 @@ func (rs *Reposurgeon) parsePathset() selEvaluator {
 			panic(throw("command", "regexp matcher missing trailing /"))
 		}
 		pattern := matcher[1:end]
-		seen := make(map[rune]struct{})
+		flags := newStringSet()
 		for _, c := range matcher[end+1:] {
-			if strings.ContainsRune("acDMRCN", c) {
-				seen[c] = struct{}{}
-			} else {
+			switch string(c) {
+			case "a", "c", opM, opD, opR, opC, opN:
+				flags.Add(string(c))
+			default:
 				panic(throw("command", "unrecognized matcher flag '%c'", c))
 			}
 		}
-		var b strings.Builder
-		for k := range seen {
-			b.WriteRune(k)
-		}
-		flags := b.String()
 		search, err := regexp.Compile(pattern)
 		if err != nil {
-			panic(throw("command", "invalid regular expression /%s/%s", pattern, flags))
+			panic(throw("command", "invalid regular expression %s", matcher))
 		}
 		return func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
 			return rs.evalPathsetRegex(x, s, search, flags)
@@ -11619,7 +11615,7 @@ func (rs *Reposurgeon) parsePathset() selEvaluator {
 // Resolve a path regex to the set of commits that refer to it.
 func (rs *Reposurgeon) evalPathsetRegex(state selEvalState,
 	preselection *fastOrderedIntSet, search *regexp.Regexp,
-	flags string) *fastOrderedIntSet {
+	flags stringSet) *fastOrderedIntSet {
 	// FIXME: @debug_lexer
 	return preselection
 }
