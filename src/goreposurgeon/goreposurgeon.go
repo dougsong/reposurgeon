@@ -11411,7 +11411,7 @@ func (rs *Reposurgeon) PreCommand(line string) string {
 		}
 	}(&line)
 
-	if line[0] == '?' {
+	if len(line) != 0 && line[0] == '?' {
 		line = "help " + line[1:]
 	}
 
