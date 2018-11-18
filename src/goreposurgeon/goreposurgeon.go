@@ -9831,7 +9831,7 @@ func (rs *RepositoryList) cut(early *Commit, late *Commit) bool {
 // Unite multiple repos into a union repo.
 func (rs *RepositoryList) unite(factors []*Repository, options stringSet) {
 	for _, x := range factors {
-		if len(x.commits()) == 0 {
+		if len(x.commits(nil)) == 0 {
 			complain(fmt.Sprintf("empty factor %s", x.name))
 			return
 		}
@@ -9853,7 +9853,7 @@ func (rs *RepositoryList) unite(factors []*Repository, options stringSet) {
 	sort.Slice(factors, func(i, j int) bool {
 		return factors[i].earliest().After(factors[j].earliest())
 	})
-	persist := map[string]string
+	persist := make(map[string]string)
 	for _, factor := range factors {
 		persist = factor.uniquify(factor.name, persist)
 	}
@@ -9866,7 +9866,7 @@ func (rs *RepositoryList) unite(factors []*Repository, options stringSet) {
 		rs.removeByName(factor.name)
 	}
 	// Renumber all events
-	union.renumber()
+	union.renumber(1, nil)
 	// Sort out the root grafts. The way we used to do this
 	// involved sorting the union commits by timestamp, but this
 	// fails because in real-world repos timestamp order may not
@@ -9876,39 +9876,46 @@ func (rs *RepositoryList) unite(factors []*Repository, options stringSet) {
 	// with a date prior to it.  This method gives less intuitive
 	// results, but at least means we never need to reorder
 	// commits.
+        commits := union.commits(nil)
 	for _, root := range roots[1:] {
 		// Get last commit such that it and all before it are
 		// earlier.  Never raises IndexError since
 		// union.earliestCommit() is root[0] which satisfies
 		// earlier() thanks to factors sorting.
-		eligible := collections.deque(
-			itertools.takewhile(lambda e: root.when() > e.when(), union.commits()),
-			maxlen := 1)
-		
-		if eligible {
-			mostRecent = eligible.pop()
-		} else {
-			// Weird case - can arise if you unite two or more copies
-			// of the same commit.
+		var mostRecent *Commit
+		for i, event := range commits {
+			if !root.when().Before(event.when()) {
+				continue
+			} else if mostRecent == nil || event.when().Before(mostRecent.when()) {
+				mostRecent = commits[i-1]
+				break
+			}
+		}
+		if mostRecent == nil {
+			// Weird case - can arise if you unite
+			// two or more copies of the same
+			// commit.
 			mostRecent = union.earliestCommit()
 		}
-		if mostRecent.mark == nil {
-			// This should never happen either.
+		if mostRecent.mark == "" {
+			// This should never happen.
 			panic("in unite: can't link to commit with no mark")
-		}
-		root.addParentByMark(mostRecent.mark)
-		// We may not want files from the ancestral stock to
-		// persist in the grafted branch unless they have
-		// modify ops in the branch root.
-		if options.Contains("--prune")  {
-			deletes := []Fileop
-			for _, path := range mostRecent.manifest() {
-				fileop := newFileOp()
-				fileop.construct("D", path)
-				deletes = append(deletes, fileop)
+		} else {
+			root.addParentByMark(mostRecent.mark)
+			// We may not want files from the
+			// ancestral stock to persist in the
+			// grafted branch unless they have
+			// modify ops in the branch root.
+			if options.Contains("--prune")  {
+				deletes := make([]FileOp, 0)
+				for _, path := range mostRecent.manifest() {
+					fileop := newFileOp(union)
+					fileop.construct("D", path.ref)
+					deletes = append(deletes, *fileop)
+				}
+				root.setOperations(append(deletes, root.operations()...))
+				root.canonicalize()
 			}
-			root.setOperations(append(deletes, root.operations()...))
-			root.canonicalize()
 		}
 	}
 	// Put the result on the load list
@@ -15318,8 +15325,7 @@ func (rs *Reposurgeon) DoUnite(line string) (stopOut bool) {
 		complain("unite requires two or more repo name arguments")
 		return false
 	}
-	// FIXME: Uncomment wgen unite() exists
-	//rs.unite(factors, parse.options)
+	rs.unite(factors, parse.options)
 	if context.verbose > 0 {
 		rs.DoChoose("")
 	}
