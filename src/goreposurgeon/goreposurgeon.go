@@ -9647,7 +9647,7 @@ func (rl *RepositoryList) removeByName(name string) {
 }
 
 // Apply a graph-coloring algorithm to see if the repo can be split here.
-func (rs *RepositoryList) cutConflict(early *Commit, late *Commit) (bool, int, error) {
+func (rl *RepositoryList) cutConflict(early *Commit, late *Commit) (bool, int, error) {
 	cutIndex := -1
 	for i, m := range late.parentMarks() {
 		if m == early.mark {
@@ -9665,7 +9665,7 @@ func (rs *RepositoryList) cutConflict(early *Commit, late *Commit) (bool, int, e
 		if commit, ok := commitlike.(*Commit); ok {
 			for _, fileop := range commit.operations() {
 				if fileop.op == opM && fileop.ref != "inline" {
-					blob := rs.repo.markToEvent(fileop.ref)
+					blob := rl.repo.markToEvent(fileop.ref)
 					//assert isinstance(repo.repo[blob], Blob)
 					blob.(*Blob).colors = append(blob.(*Blob).colors, color)
 				}
@@ -9678,7 +9678,7 @@ func (rs *RepositoryList) cutConflict(early *Commit, late *Commit) (bool, int, e
 	keepgoing := true
 	for keepgoing && !conflict {
 		keepgoing = false
-		for _, event := range rs.repo.commits(nil) {
+		for _, event := range rl.repo.commits(nil) {
 			if event.color != "" {
 				for _, neighbor := range event.parents() {
 					if neighbor.getColor() == "" {
@@ -9720,20 +9720,20 @@ func (repo *Repository) cutClear(early *Commit, late *Commit, cutIndex int) {
 }
 
 // Attempt to topologically cut the selected repo.
-func (rs *RepositoryList) cut(early *Commit, late *Commit) bool {
-	ok, idx, err := rs.cutConflict(early, late)
+func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
+	ok, idx, err := rl.cutConflict(early, late)
 	if !ok {
-		rs.repo.cutClear(early, late, idx)
+		rl.repo.cutClear(early, late, idx)
 		return false
 	}
 	if err != nil {
 		complain(err.Error())
 	}
 	// Repo can be split, so we need to color tags
-	for _, event := range rs.repo.events {
+	for _, event := range rl.repo.events {
 		t, ok := event.(*Tag)
 		if ok {
-			for _, c := range rs.repo.commits(nil) {
+			for _, c := range rl.repo.commits(nil) {
 				if c.mark == t.committish {
 					t.color = c.color
 				}
@@ -9741,19 +9741,19 @@ func (rs *RepositoryList) cut(early *Commit, late *Commit) bool {
 		}
 	}
 	// Front events go with early segment, they'll be copied to late one.
-	for _, event := range rs.repo.frontEvents() {
+	for _, event := range rl.repo.frontEvents() {
 		if passthrough, ok := event.(*Passthrough); ok {
 			passthrough.color = "early"
 		}
 	}
-	//assert all(hasattr(x, "color") || hasattr(x, "colors") || isinstance(x, Reset) for x in rs.repo)
+	//assert all(hasattr(x, "color") || hasattr(x, "colors") || isinstance(x, Reset) for x in rl.repo)
 	// Resets are tricky.  One may have both colors.
 	// Blobs can have both colors too, through references in
 	// commits on both sides of the cut, but we took care
 	// of that earlier.
 	earlyBranches := newStringSet()
 	lateBranches := newStringSet()
-	for _, commit := range rs.repo.commits(nil) {
+	for _, commit := range rl.repo.commits(nil) {
 		if commit.color == "" {
 			complain(fmt.Sprintf("%s is uncolored!", commit.mark))
 		} else if commit.color == "early" {
@@ -9763,11 +9763,11 @@ func (rs *RepositoryList) cut(early *Commit, late *Commit) bool {
 		}
 	}
 	// Now it's time to do the actual partitioning
-	earlyPart := newRepository(rs.repo.name + "-early")
+	earlyPart := newRepository(rl.repo.name + "-early")
 	os.Mkdir(earlyPart.subdir(""), userReadWriteMode)
-	latePart := newRepository(rs.repo.name + "-late")
+	latePart := newRepository(rl.repo.name + "-late")
 	os.Mkdir(latePart.subdir(""), userReadWriteMode)
-	for _, event := range rs.repo.events {
+	for _, event := range rl.repo.events {
 		if reset, ok := event.(*Reset); ok {
 			if earlyBranches.Contains(reset.ref) {
 				earlyPart.addEvent(*reset)
@@ -9823,15 +9823,15 @@ func (rs *RepositoryList) cut(early *Commit, late *Commit) bool {
 	latePart.events = append(earlyPart.frontEvents(), latePart.events...)
 	latePart.declareSequenceMutation("cut operation")
 	// Add the split results to the repo list.
-	rs.repolist = append(rs.repolist, earlyPart)
-	rs.repolist = append(rs.repolist, latePart)
-	rs.repo.cleanup()
-	rs.removeByName(rs.repo.name)
+	rl.repolist = append(rl.repolist, earlyPart)
+	rl.repolist = append(rl.repolist, latePart)
+	rl.repo.cleanup()
+	rl.removeByName(rl.repo.name)
 	return true
 }
 
 // Unite multiple repos into a union repo.
-func (rs *RepositoryList) unite(factors []*Repository, options stringSet) {
+func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
 	for _, x := range factors {
 		if len(x.commits(nil)) == 0 {
 			complain(fmt.Sprintf("empty factor %s", x.name))
@@ -9865,7 +9865,7 @@ func (rs *RepositoryList) unite(factors []*Repository, options stringSet) {
 	}
 	for _, factor := range factors {
 		union.absorb(factor)
-		rs.removeByName(factor.name)
+		rl.removeByName(factor.name)
 	}
 	// Renumber all events
 	union.renumber(1, nil)
@@ -9921,8 +9921,8 @@ func (rs *RepositoryList) unite(factors []*Repository, options stringSet) {
 		}
 	}
 	// Put the result on the load list
-	rs.repolist = append(rs.repolist, union)
-	rs.choose(union)
+	rl.repolist = append(rl.repolist, union)
+	rl.choose(union)
 }
 
 // Expunge a set of files from the commits in the selection set.
