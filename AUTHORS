@@ -10,6 +10,7 @@ Julien "_FrnchFrgg_" RIVAUD <frnchfrgg@free.fr>
 
 Daniel Brooks <db48x@db48x.net>
    Date unit testing, improvements for split and expunge commands.
+   Assist Python to Go port.
 
 Chris Lemmons <alficles@gmail.com>
    Solved some problems with inline blobs, improved interoperability with
@@ -34,3 +35,4 @@ Eric Sunshine <sunshine@sunshineco.com>
    compiled once and evaluated many times.
    Added 'attribution' command.
    Added 'reorder' command.
+   Assist Python to Go port.
