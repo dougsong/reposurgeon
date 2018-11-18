@@ -10519,8 +10519,7 @@ func (p *SelectionParser) parseVisibility() selEvaluator {
 		// We need a special check here because these expressions
 		// could otherwise run onto the text part of the command.
 		if !strings.ContainsRune("()|& ", p.peek()) {
-			panic(throw("command",
-				fmt.Sprintf("garbled type mask at %s", p.line)))
+			panic(throw("command", "garbled type mask at %s", p.line))
 		}
 		// FIXME: port debugger to Go
 		// p._debug_lexer("visibility set is %s with %s left" % (
