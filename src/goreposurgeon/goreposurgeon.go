@@ -11121,7 +11121,7 @@ type LineParse struct {
 	closem       []io.Closer
 }
 
-func (rl *RepositoryList) newLineParseInner(line string, capabilities stringSet) (*LineParse, error) {
+func (rl *RepositoryList) newLineParse(line string, capabilities stringSet) *LineParse {
 	caps := make(map[string]bool)
 	for _, cap := range capabilities {
 		caps[cap] = true
@@ -11141,13 +11141,13 @@ func (rl *RepositoryList) newLineParseInner(line string, capabilities stringSet)
 	match := regexp.MustCompile("<[^ ]+").FindStringIndex(lp.line)
 	if match != nil {
 		if !caps["stdin"] {
-			return nil, errors.New("no support for < redirection")
+			panic(throw("command", "no support for < redirection"))
 		}
 		lp.infile = lp.line[match[0]+1 : match[1]]
 		if lp.infile != "" && lp.infile != "-" {
 			lp.stdin, err = os.Open(lp.infile)
 			if err != nil {
-				return nil, fmt.Errorf("can't open %s for read", lp.infile)
+				panic(throw("command", "can't open %s for read", lp.infile))
 			}
 			lp.closem = append(lp.closem, lp.stdin)
 		}
@@ -11158,14 +11158,14 @@ func (rl *RepositoryList) newLineParseInner(line string, capabilities stringSet)
 	match = regexp.MustCompile("(>>?)([^ ]+)").FindStringSubmatchIndex(lp.line)
 	if match != nil {
 		if !caps["stdout"] {
-			return nil, errors.New("no support for > redirection")
+			panic(throw("command", "no support for > redirection"))
 		}
 		lp.outfile = lp.line[match[2*2+0]:match[2*2+1]]
 		if lp.outfile != "" && lp.outfile != "-" {
 			info, err := os.Stat(lp.outfile)
 			if err == nil {
 				if info.Mode().IsDir() {
-					return nil, fmt.Errorf("can't redirect output to %s, which is a directory", lp.outfile)
+					panic(throw("command", "can't redirect output to %s, which is a directory", lp.outfile))
 				}
 			}
 			// flush the outfile, if it happens to be a file
@@ -11179,7 +11179,7 @@ func (rl *RepositoryList) newLineParseInner(line string, capabilities stringSet)
 			}
 			lp.stdout, err = os.OpenFile(lp.outfile, mode, 0644)
 			if err != nil {
-				return nil, fmt.Errorf("can't open %s for writing", lp.outfile)
+				panic(throw("command", "can't open %s for writing", lp.outfile))
 			}
 			lp.closem = append(lp.closem, lp.stdout)
 		}
@@ -11201,21 +11201,13 @@ func (rl *RepositoryList) newLineParseInner(line string, capabilities stringSet)
 	// Dash redirection
 	if !lp.redirected && lp.line == "-" {
 		if !caps["stdout"] && !caps["stdin"] {
-			return nil, errors.New("no support for - redirection")
+			panic(throw("command", "no support for - redirection"))
 		} else {
 			lp.line = ""
 			lp.redirected = true
 		}
 	}
-	return &lp, nil
-}
-
-func (rl *RepositoryList) newLineParse(line string, capabilities stringSet) *LineParse {
-	lp, err := rl.newLineParseInner(line, capabilities)
-	if err != nil {
-		panic(throw("command", "%v", err))
-	}
-	return lp
+	return &lp
 }
 
 // Return the argument token list after the parse for redirects.
