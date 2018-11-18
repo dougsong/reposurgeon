@@ -10541,8 +10541,8 @@ func (p *SelectionParser) evalVisibility(state selEvalState,
 	}
 	typeletters := p.subclass.(typelettersGetter).visibilityTypeletters()
 	predicates := make([]func(int) bool, len(visible))
-	for _, r := range visible {
-		predicates = append(predicates, typeletters[r])
+	for i, r := range visible {
+		predicates[i] = typeletters[r]
 	}
 	visibility := newFastOrderedIntSet()
 	it := preselection.Iterator()
