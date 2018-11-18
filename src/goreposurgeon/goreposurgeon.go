@@ -3144,11 +3144,11 @@ type Blob struct {
 	repo         *Repository
 	blobseq      int
 	mark         string
-	pathlist     []string // In-repo paths associated with this blob
+	pathlist     []string  // In-repo paths associated with this blob
 	colors       stringSet // Scratch space for grapg coloring algorithms
-	cookie       Cookie   // CVS/SVN cookie analyzed out of this file
-	start        int64    // Seek start if this blob refers into a dump
-	size         int64    // length start if this blob refers into a dump
+	cookie       Cookie    // CVS/SVN cookie analyzed out of this file
+	start        int64     // Seek start if this blob refers into a dump
+	size         int64     // length start if this blob refers into a dump
 	abspath      string
 	deleteme     bool
 	_expungehook *Blob
@@ -9756,9 +9756,9 @@ func (rs *RepositoryList) cut(early *Commit, late *Commit) bool {
 	for _, commit := range rs.repo.commits(nil) {
 		if commit.color == "" {
 			complain(fmt.Sprintf("%s is uncolored!", commit.mark))
-		} else if commit.color == "early"{
+		} else if commit.color == "early" {
 			earlyBranches.Add(commit.Branch)
-		} else if commit.color == "late"{
+		} else if commit.color == "late" {
 			lateBranches.Add(commit.Branch)
 		}
 	}
@@ -9776,10 +9776,10 @@ func (rs *RepositoryList) cut(early *Commit, late *Commit) bool {
 				latePart.addEvent(*reset)
 			}
 		} else if blob, ok := event.(*Blob); ok {
-			if blob.colors.Contains("early")  {
+			if blob.colors.Contains("early") {
 				earlyPart.addEvent(blob.clone(earlyPart))
 			}
-			if blob.colors.Contains("late")  {
+			if blob.colors.Contains("late") {
 				latePart.addEvent(blob.clone(latePart))
 			}
 		} else {
@@ -9819,7 +9819,7 @@ func (rs *RepositoryList) cut(early *Commit, late *Commit) bool {
 		}
 	}
 	// Options and features may need to be copied to the late fragment.
-	// It's crucial here that frontEvents() returns a copy, not a reference. 
+	// It's crucial here that frontEvents() returns a copy, not a reference.
 	latePart.events = append(earlyPart.frontEvents(), latePart.events...)
 	latePart.declareSequenceMutation("cut operation")
 	// Add the split results to the repo list.
@@ -9848,7 +9848,7 @@ func (rs *RepositoryList) unite(factors []*Repository, options stringSet) {
 		roots = append(roots, x.earliestCommit())
 		uname += "+" + x.name
 	}
-	
+
 	union := newRepository(uname[1:])
 	os.Mkdir(union.subdir(""), userReadWriteMode)
 	// Reverse time order
@@ -9878,7 +9878,7 @@ func (rs *RepositoryList) unite(factors []*Repository, options stringSet) {
 	// with a date prior to it.  This method gives less intuitive
 	// results, but at least means we never need to reorder
 	// commits.
-        commits := union.commits(nil)
+	commits := union.commits(nil)
 	for _, root := range roots[1:] {
 		// Get last commit such that it and all before it are
 		// earlier.  Never raises IndexError since
@@ -9908,7 +9908,7 @@ func (rs *RepositoryList) unite(factors []*Repository, options stringSet) {
 			// ancestral stock to persist in the
 			// grafted branch unless they have
 			// modify ops in the branch root.
-			if options.Contains("--prune")  {
+			if options.Contains("--prune") {
 				deletes := make([]FileOp, 0)
 				for _, path := range mostRecent.manifest() {
 					fileop := newFileOp(union)
@@ -15358,15 +15358,15 @@ of the grafted repository.
 
 // Graft a named repo onto the selected one.
 func (rs *Reposurgeon) DoGraft(line string) (stopOut bool) {
-        if rs.chosen() == nil {
+	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
 		return false
-        }
-        if len(rs.repolist) == 0 {
+	}
+	if len(rs.repolist) == 0 {
 		complain("no repositories are loaded.")
 		return false
-        }
-        parse := rs.newLineParse(line, nil)
+	}
+	parse := rs.newLineParse(line, nil)
 	defer parse.Closem()
 	graftRepo := rs.repoByName(parse.line)
 	requireGraftPoint := true
