@@ -12331,11 +12331,11 @@ func (rs *Reposurgeon) DoResolve(line string) (stopOut bool) {
 		if line != "" {
 			os.Stdout.WriteString(fmt.Sprintf("%s: ", line))
 		}
-		oneOrigin := make([]int, len(rs.selection))
-		for i, item := range rs.selection {
-			oneOrigin[i] = item + 1
+		oneOrigin := newOrderedIntSet()
+		for _, i := range rs.selection {
+			oneOrigin.Add(i + 1)
 		}
-		os.Stdout.WriteString(fmt.Sprintf("%v\n", newOrderedIntSet(oneOrigin...)))
+		os.Stdout.WriteString(fmt.Sprintf("%v\n", oneOrigin))
 	}
 	return false
 }
