@@ -8787,12 +8787,14 @@ func (repo *Repository) absorb(other *Repository) {
 	other.cleanup()
 }
 
+const invalidGraftIndex = -1
+
 // Graft a repo on to this one at a specified point.
 func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options stringSet) error {
 	var persist map[string]string
 	var anchor *Commit
 	var ok bool
-	if graftPoint == -1 {
+	if graftPoint == invalidGraftIndex {
 		persist = make(map[string]string)
 	} else {
 		persist = nil
@@ -8806,11 +8808,11 @@ func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options str
 	// Errors aren't recoverable after this
 	graftRepo.uniquify(graftRepo.name, persist)
 	var graftroot *Commit
-	if graftPoint != -1 {
+	if graftPoint != invalidGraftIndex {
 		graftroot = graftRepo.earliestCommit()
 	}
 	repo.absorb(graftRepo)
-	if graftPoint != -1 {
+	if graftPoint != invalidGraftIndex {
 		graftroot.addParentByMark(anchor.mark)
 
 	}
@@ -15354,35 +15356,43 @@ of the grafted repository.
 `)
 }
 
-/*
-func (rs *Reposurgeon) DoGraft(line string):
-        "Graft a named repo onto the selected one."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        if not self.repolist:
-            raise Recoverable("no repositories are loaded.")
-        with rs.newLineParse(line, nil) as parse:
-            if parse.line in self.reponames():
-                graftRepo = self.repoByName(parse.line)
-            else:
-                raise Recoverable("no such repo as %s" % parse.line)
-            require_graft_point = true
-            if self.selection is not None and len(self.selection) == 1:
-                graft_point = self.selection[0]
-            else:
-                for commit in graftRepo.commits():
-                    for parent in commit.parents():
-                        if Commit.isCallout(parent.mark):
-                            require_graft_point = false
-                if not require_graft_point:
-                    graft_point = None
-                else:
-                    raise Recoverable("a singleton selection set is required.")
-            # OK, we've got the two repos and the graft point.  Do it.
-            self.chosen().graft(graftRepo, graft_point, parse.options)
-            self.remove_by_name(graftRepo.name)
-*/
+// Graft a named repo onto the selected one.
+func (rs *Reposurgeon) DoGraft(line string) (stopOut bool) {
+        if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+        }
+        if len(rs.repolist) == 0 {
+		complain("no repositories are loaded.")
+		return false
+        }
+        parse := rs.newLineParse(line, nil)
+	defer parse.Closem()
+	graftRepo := rs.repoByName(parse.line)
+	requireGraftPoint := true
+	var graftPoint int
+	if rs.selection != nil && len(rs.selection) == 1 {
+		graftPoint = rs.selection[0]
+	} else {
+		for _, commit := range graftRepo.commits(nil) {
+			for _, parent := range commit.parents() {
+				if isCallout(parent.getMark()) {
+					requireGraftPoint = false
+				}
+			}
+		}
+		if !requireGraftPoint {
+			graftPoint = invalidGraftIndex
+		} else {
+			complain("a singleton selection set is required.")
+			return false
+		}
+	}
+	// OK, we've got the two repos and the graft point.  Do it.
+	rs.chosen().graft(graftRepo, graftPoint, parse.options)
+	rs.removeByName(graftRepo.name)
+	return false
+}
 
 func (rs *Reposurgeon) HelpDebranch() {
 	rs.helpOutput(`
