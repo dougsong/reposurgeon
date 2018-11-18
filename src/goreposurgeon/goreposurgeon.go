@@ -3042,7 +3042,7 @@ func newAttribution(attrline string) *Attribution {
 	if attrline != "" {
 		fullname, email, datestamp, err1 := parseAttributionLine(attrline)
 		if err1 != nil {
-			panic(throw("parse", "in neWAttribution: %v", err1))
+			panic(throw("parse", "in newAttribution: %v", err1))
 		}
 		parsed, err2 := newDate(datestamp)
 		if err2 != nil {
@@ -12378,7 +12378,7 @@ func (rs *Reposurgeon) DoAssign(line string) (stopOut bool) {
 	name := strings.TrimSpace(parse.line)
 	for key := range repo.assignments {
 		if key == name {
-			panic(throw("xommand", "%s has already been set", name))
+			panic(throw("command", "%s has already been set", name))
 		}
 	}
 	//FIXME: Incorrect - could collide with an old assignment.
