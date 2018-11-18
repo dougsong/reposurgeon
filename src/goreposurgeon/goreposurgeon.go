@@ -10557,10 +10557,6 @@ func (p *SelectionParser) evalVisibility(state selEvalState,
 	return visibility
 }
 
-func (p *SelectionParser) visibilityTypeletters() map[rune]func(int) bool {
-	return nil
-}
-
 func (p *SelectionParser) polyrangeInitials() string {
 	return "0123456789$"
 }
