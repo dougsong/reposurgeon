@@ -11213,7 +11213,7 @@ func (rl *RepositoryList) newLineParseInner(line string, capabilities stringSet)
 func (rl *RepositoryList) newLineParse(line string, capabilities stringSet) *LineParse {
 	lp, err := rl.newLineParseInner(line, capabilities)
 	if err != nil {
-		panic(throw("command", "duringLineParse: %v", err))
+		panic(throw("command", "%v", err))
 	}
 	return lp
 }
