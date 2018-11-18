@@ -11411,8 +11411,8 @@ func (rs *Reposurgeon) PreCommand(line string) string {
 		}
 	}(&line)
 
-	if len(line) != 0 && line[0] == '?' {
-		line = "help " + line[1:]
+	if strings.HasPrefix(strings.TrimSpace(line), "?") {
+		line = strings.Replace(line, "?", "help", 1)
 	}
 
 	machine, rest := rs.parseSelectionSet(line)
