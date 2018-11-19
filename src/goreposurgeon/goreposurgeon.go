@@ -4303,7 +4303,7 @@ func (commit *Commit) tags(_modifiers stringSet, eventnum int, _cols int) string
 		for _, child := range commit.children() {
 			switch child.(type) {
 			case *Commit:
-				successorBranches.Add(child.(Commit).Branch)
+				successorBranches.Add(child.(*Commit).Branch)
 			case *Callout:
 				complain("internal error: callouts do not have branches: %s",
 					child.idMe())
