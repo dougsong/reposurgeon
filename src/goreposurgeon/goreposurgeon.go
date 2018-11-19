@@ -12043,17 +12043,7 @@ func (rs *Reposurgeon) reportSelect(parse *LineParse, display func(*LineParse, i
 	}
 	repo := rs.chosen()
 	if rs.selection == nil {
-		if parse.line == "" {
-			rs.selection = repo.all()
-		} else {
-			defer func(line *string) {
-				if e := catch("command", recover()); e != nil {
-					complain(e.message)
-					*line = ""
-				}
-			}(&parse.line)
-			parse.line = rs.setSelectionSet(parse.line)
-		}
+		rs.selection = repo.all()
 	}
 	for _, eventid := range rs.selection {
 		summary := display(parse, eventid, repo.events[eventid])
