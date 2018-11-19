@@ -1345,7 +1345,7 @@ func findVCS(name string) *VCS {
 			return &vcs
 		}
 	}
-	panic("reposurgeon: failed to find " + name + " in VCS types")
+	panic("reposurgeon: failed to find '" + name + "' in VCS types")
 }
 
 func lineByLine(rs *RepoStreamer, command string, errfmt string,
@@ -6247,7 +6247,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 					// Dodgy bzr autodetection hook...
 					if sp.repo.vcs == nil {
 						if commit.properties.has("branch-nick") {
-							sp.repo.hint("bzr", "", true)
+							sp.repo.hint("", "bzr", true)
 						}
 					}
 					sp.pushback(line)
@@ -6744,7 +6744,7 @@ func (repo *Repository) hint(clue1 string, clue2 string, strong bool) bool {
 			clue1, repo.hintlist[len(repo.hintlist)-1])
 		return false
 	}
-	if !repo.stronghint {
+	if !repo.stronghint && clue2 != "" {
 		repo.vcs = findVCS(clue2)
 	}
 	if newhint {
@@ -13402,7 +13402,7 @@ func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 	rs.choose(repo)
 	if rs.chosen() != nil {
 		if rs.chosen().vcs != nil {
-			repo.preferred = rs.chosen().vcs
+			rs.preferred = rs.chosen().vcs
 		}
 		name := rs.chosen().sourcedir
 		if name == "" {
