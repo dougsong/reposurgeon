@@ -12017,34 +12017,37 @@ func (rs *Reposurgeon) ancHandler(state selEvalState, subarg *fastOrderedIntSet)
 
 func (rs *Reposurgeon) accumulateCommits(subarg *fastOrderedIntSet,
 	operation func(*Commit) []CommitLike, recurse bool) *fastOrderedIntSet {
-	// FIXME: implement this
-	return subarg
+	repo := rs.chosen()
+	commits := repo.commits(newOrderedIntSet(subarg.Values()...))
+	if !recurse {
+		result := newFastOrderedIntSet()
+		for _, commit := range commits {
+			for _, x := range operation(commit) {
+				result.Add(repo.eventToIndex(x))
+			}
+		}
+		return result
+	}
+	result := newFastOrderedIntSet(subarg.Values()...)
+	// Populate the queue with selected commits
+	var queue []CommitLike
+	for _, c := range commits {
+		queue = append(queue, c)
+	}
+	// Breadth-first traversal of the graph
+	for len(queue) != 0 {
+		popped := queue[0].(*Commit)
+		queue = queue[1:]
+		for _, commit := range operation(popped) {
+			ind := repo.eventToIndex(commit)
+			if !result.Contains(ind) {
+				result.Add(ind)
+				queue = append(queue, commit)
+			}
+		}
+	}
+	return result
 }
-
-/*
-class Reposurgeon(object):
-    func _accumulate_commits(self, subarg, operation, recurse=true):
-        repo = self.chosen()
-        result = orderedIntSet()
-        subiter = repo.iterevents(subarg, types=Commit)
-        if not recurse:
-            for _, commit in subiter:
-                result.update(itertools.imap(repo.index, operation(commit)))
-            return result
-        result |= subarg
-        # Populate the queue with selected commits
-        queue = collections.deque(itertools.imap(
-                            operator.itemgetter(1),
-                            subiter))
-        # Breadth-first traversal of the graph
-        while queue:
-            for commit in operation(queue.popleft()):
-                ind = repo.eventToIndex(commit)
-                if ind not in result:
-                    result.add(ind)
-                    queue.append(commit)
-        return result
-*/
 
 //
 // Helpers
