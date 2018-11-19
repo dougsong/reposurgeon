@@ -6681,6 +6681,13 @@ func (repo *Repository) markToEvent(mark string) Event {
 
 // index returns the index of the specified object in the main even list
 func (repo *Repository) eventToIndex(obj Event) int {
+	mark := obj.getMark()
+	if len(mark) != 0 {
+		ind := repo.find(mark)
+		if ind >= 0 {
+			return ind
+		}
+	}
 	for ind, event := range repo.events {
 		if event == obj {
 			return ind
