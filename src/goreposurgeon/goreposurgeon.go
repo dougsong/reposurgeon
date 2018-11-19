@@ -12681,10 +12681,12 @@ leading portion of the comment follows. Supports > redirection.
 func (rs *Reposurgeon) DoList(lineIn string) bool {
 	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
 	defer parse.Closem()
+	w := screenwidth()
+	modifiers := stringSet{}
 	f := func(p *LineParse, i int, e Event) string {
 		c, ok := e.(*Commit)
 		if ok {
-			return c.lister(stringSet{}, i, screenwidth())
+			return c.lister(modifiers, i, w)
 		} else {
 			return ""
 		}
@@ -12713,10 +12715,12 @@ Supports > redirection.
 func (rs *Reposurgeon) DoTip(lineIn string) bool {
 	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
 	defer parse.Closem()
+	w := screenwidth()
+	modifiers := stringSet{}
 	f := func(p *LineParse, i int, e Event) string {
 		c, ok := e.(*Commit)
 		if ok {
-			return c.tip(stringSet{}, i, screenwidth())
+			return c.tip(modifiers, i, w)
 		} else {
 			return ""
 		}
@@ -12736,15 +12740,17 @@ field 'commit'. Supports > redirection.
 func (rs *Reposurgeon) DoTags(lineIn string) bool {
 	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
 	defer parse.Closem()
+	w := screenwidth()
+	modifiers := stringSet{}
 	f := func(p *LineParse, i int, e Event) string {
 		// this is pretty stupid; pretend you didn't see it
 		switch v := e.(type) {
 		case *Commit:
-			return v.tags(stringSet{}, i, screenwidth())
+			return v.tags(modifiers, i, w)
 		case *Reset:
-			return v.tags(stringSet{}, i, screenwidth())
+			return v.tags(modifiers, i, w)
 		case *Tag:
-			return v.tags(stringSet{}, i, screenwidth())
+			return v.tags(modifiers, i, w)
 		default:
 			return ""
 		}
@@ -12763,13 +12769,15 @@ Supports > redirection.
 func (rs *Reposurgeon) DoStamp(lineIn string) bool {
 	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
 	defer parse.Closem()
+	w := screenwidth()
+	modifiers := stringSet{}
 	f := func(p *LineParse, i int, e Event) string {
 		// this is pretty stupid; pretend you didn't see it
 		switch v := e.(type) {
 		case *Commit:
-			return v.stamp(stringSet{}, i, screenwidth())
+			return v.stamp(modifiers, i, w)
 		case *Tag:
-			return v.stamp(stringSet{}, i, screenwidth())
+			return v.stamp(modifiers, i, w)
 		default:
 			return ""
 		}
@@ -16955,10 +16963,11 @@ func (rs *Reposurgeon) DoReferences(self, line str):
                     self.edit(self.selection, line[4:].strip())
                 else:
                     with rs.newLineParse(line, stringSet{"stdout"}) as parse:
+                        w = screenwidth()
                         for ei in self.selection:
                             event = repo.events[ei]
                             if hasattr(event, "lister"):
-                                summary = event.lister(None, ei, screenwidth())
+                                summary = event.lister(None, ei, w)
                                 if summary:
                                     fmt.Fprint(parse.stdout, summary + "\n")
 */
