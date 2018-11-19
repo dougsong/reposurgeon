@@ -11430,8 +11430,7 @@ func (rs *Reposurgeon) PostCommand(stop bool, lineIn string) bool {
 
 func (rs *Reposurgeon) HelpShell() {
 	rs.helpOutput(`
-Spawn a shell process. Exit the shell to return to reposurgeon.
-Honors the $SHELL environment variable.
+Run a shell command. Honors the $SHELL environment variable.
 `)
 }
 func (rs *Reposurgeon) DoShell(line string) (stopOut bool) {
@@ -12310,10 +12309,8 @@ func (rs *Reposurgeon) HelpNews() {
    we always dump timestamps in RFC3339 now.
 5. We now interpret Subversion $Rev$ and $LastChangedRev$ cookies.
 6. The exec and eval commands are no longer supported.
-7. The shell command spawns an interactive shell rather than passing
-   a single line to a shell.
-8. git hooks are preserved through surgery.
-9. The set of structure fieldnames that can be used with setfield is smaller.
+7. git hooks are preserved through surgery.
+8. The set of structure fieldnames that can be used with setfield is smaller.
    However, all fieldnames for which support was documented will still work
 `)
 }
