@@ -11673,7 +11673,56 @@ func (rs *Reposurgeon) evalPathset(state selEvalState,
 func (rs *Reposurgeon) evalPathsetFull(state selEvalState,
 	preselection *fastOrderedIntSet, matchCond *regexp.Regexp,
 	matchAll bool) *fastOrderedIntSet {
-	return preselection
+	// Try to match a regex in the trees. For each commit we remember
+	// only the part of the tree that matches the regex. In most cases
+	// it is a lot less memory and CPU hungry than running regexes on
+	// the full commit manifests. In the matchAll case we instead
+	// select commits that nowhere match the opposite condition.
+	match := func(s string) bool { return matchCond.MatchString(s) }
+	if matchAll {
+		match = func(s string) bool { return !matchCond.MatchString(s) }
+	}
+	type Tree map[string]struct{}
+	matchTrees := make(map[string]Tree)
+	result := newFastOrderedIntSet()
+	lastEvent := selMax(preselection)
+	for i, event := range rs.chosen().commits(nil) {
+		if i > lastEvent {
+			break
+		}
+		tree := make(Tree)
+		parents := event.parents()
+		if len(parents) != 0 {
+			parentTree, ok := matchTrees[parents[0].getMark()]
+			if !ok {
+				panic(fmt.Sprintf("commit tree missing: %s",
+					parents[0].getMark()))
+			}
+			for k := range parentTree {
+				tree[k] = struct{}{}
+			}
+		}
+		for _, fileop := range event.operations() {
+			if fileop.op == opM && match(fileop.Path) {
+				tree[fileop.Path] = struct{}{}
+			} else if fileop.op == opC && match(fileop.Target) {
+				tree[fileop.Target] = struct{}{}
+			} else if fileop.op == opR && match(fileop.Target) {
+				tree[fileop.Target] = struct{}{}
+			} else if fileop.op == opD && match(fileop.Path) {
+				delete(tree, fileop.Path)
+			} else if fileop.op == opR && match(fileop.Source) {
+				delete(tree, fileop.Source)
+			} else if fileop.op == deleteall {
+				tree = make(Tree)
+			}
+		}
+		matchTrees[event.mark] = tree
+		if (len(tree) == 0) == matchAll {
+			result.Add(i)
+		}
+	}
+	return result
 }
 
 // Does an event contain something that looks like a legacy reference?
@@ -11920,47 +11969,6 @@ func (rs *Reposurgeon) evalTextSearch(state selEvalState,
 	}
 	return matchers
 }
-
-/*
-class Reposurgeon(object):
-    func eval_pathset_full(self, match_condition,
-                                preselection,
-                                match_all):
-        # Try to match a regex in the trees. For each commit we remember
-        # only the part of the tree that matches the regex. In most cases
-        # it is a lot less memory and CPU hungry than running regexes on
-        # the full commit manifests. In the match_all case we instead
-        # select commits that nowhere match the opposite condition.
-        match = match_condition
-        if match_all:
-            match = lambda p: not match_condition(p)
-        match_trees = {}
-        result = orderedIntSet()
-        last_event = max(preselection)
-        for (i, event) in self.chosen().iterevents(types=Commit):
-            if i > last_event: break
-            try:
-                parent = event.parents()[0]
-            except IndexError:
-                tree = PathMap()
-            else:
-                tree = match_trees[parent.mark].snapshot()
-            for fileop in event.operations():
-                if fileop.op == opM and match(polybytes(fileop.Path)):
-                    tree[fileop.Path] = true
-                else if fileop.op in (opC, opR) and match(polybytes(fileop.Target)):
-                    tree[fileop.Target] = true
-                else if fileop.op == opD and match(polybytes(fileop.Path)):
-                    del tree[fileop.Path]
-                else if fileop.op == opR and match(polybytes(fileop.source)):
-                    del tree[fileop.source]
-                else if fileop.op == 'deleteall':
-                    tree = PathMap()
-            match_trees[event.mark] = tree
-            if (not tree) == match_all:
-                result.add(i)
-        return result
-*/
 
 func (rs *Reposurgeon) functions() map[string]selEvaluator {
 	return map[string]selEvaluator{
