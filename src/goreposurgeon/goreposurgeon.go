@@ -250,7 +250,7 @@ func filecopy(src, dst string) (int64, error) {
 // getAttr emulates Python hasattr/getattr using the Go reflection system
 // Current version can only return string-valued fields.
 func getAttr(obj interface{}, fld string) (string, bool) {
-	objValue := reflect.ValueOf(obj)
+	objValue := reflect.Indirect(reflect.ValueOf(obj))
 	objType := objValue.Type()
 	_, ok := objType.FieldByName(fld)
 	if !ok {

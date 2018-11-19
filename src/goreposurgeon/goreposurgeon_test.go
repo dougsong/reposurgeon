@@ -1611,8 +1611,17 @@ func TestGetSetAttr(t *testing.T) {
 		}
 		return val
 	}
+	pextractor := func(v *vcsTestEntry, s string) string {
+		val, ok := getAttr(v, s)
+		if !ok {
+			t.Fatalf("value has no field %s", s)
+		}
+		return val
+	}
 	assertEqual(t, vcsTestTable[0].Vcs, extractor(vcsTestTable[0], "Vcs"))
 	assertEqual(t, vcsTestTable[4].Comment, extractor(vcsTestTable[4], "Comment"))
+	assertEqual(t, vcsTestTable[0].Vcs, pextractor(&vcsTestTable[0], "Vcs"))
+	assertEqual(t, vcsTestTable[4].Comment, pextractor(&vcsTestTable[4], "Comment"))
 	err := setAttr(&vcsTestTable[0], "Vcs", "foozle")
 	if err != nil {
 		t.Fatalf("during setattr test: %v", err)
