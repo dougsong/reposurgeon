@@ -86,9 +86,9 @@ gofmt goformat:
 	gofmt -w src/goreposurgeon/
 
 golint:
-	@golint src/repocutter | ./lintfilter 2>&1
-	@golint src/repomapper | ./lintfilter 2>&1
-	@golint src/goreposurgeon | ./lintfilter 2>&1
+	golint src/repocutter | ./lintfilter 2>&1
+	golint src/repomapper | ./lintfilter 2>&1
+	golint src/goreposurgeon | ./lintfilter 2>&1
 
 #
 # Installation
