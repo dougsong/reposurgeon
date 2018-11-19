@@ -4326,7 +4326,7 @@ func (commit *Commit) emailOut(modifiers stringSet,
 	msg.setHeader("Event-Mark", commit.mark)
 	msg.setHeader("Branch", commit.Branch)
 	msg.setHeader("Parents", strings.Join(commit.parentMarks(), " "))
-	if commit.authors != nil && len(commit.authors) > 0 {
+	if len(commit.authors) > 0 {
 		commit.authors[0].emailOut(modifiers, msg, "Author")
 		for i, coauthor := range commit.authors[1:] {
 			coauthor.emailOut(modifiers, msg, "Author"+fmt.Sprintf("%d", 2+i))
@@ -4370,7 +4370,7 @@ func (commit *Commit) emailOut(modifiers stringSet,
 func (commit *Commit) actionStamp() string {
 	// Prefer the author stamp because that doesn't change when patches
 	// are replayed onto a repository, while the commit stamp will.
-	if commit.authors != nil && len(commit.authors) > 0 {
+	if len(commit.authors) > 0 {
 		return commit.authors[0].actionStamp()
 	}
 	return commit.committer.actionStamp()
