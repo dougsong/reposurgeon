@@ -4167,7 +4167,7 @@ func (commit *Commit) when() time.Time {
 
 // date returns the commit date, for purpose of display and reference
 func (commit *Commit) date() Date {
-	if commit.authors != nil {
+	if len(commit.authors) > 0 {
 		return commit.authors[0].date
 	}
 	return commit.committer.date
@@ -5648,7 +5648,7 @@ func (sp *StreamParser) fiReadline() string {
 				// --reposurgeon mode.
 				fields := strings.Fields(line)
 				if fields[1] == "sourcetype" && len(fields) == 3 {
-					sp.repo.hint(fields[2], "", true)
+					sp.repo.hint("", fields[2], true)
 				}
 			}
 			continue
@@ -6212,7 +6212,6 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 							}
 						}
 					}
-					commit.appendOperation(*fileop)
 					if fileop.mode == "160000" {
 						// This is a submodule
 						// link.  The ref
@@ -6228,6 +6227,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 						// 100644, 100755, 120000.
 						sp.fiParseFileop(fileop)
 					}
+					commit.appendOperation(*fileop)
 				} else if line[0] == opN[0] {
 					fileop := newFileOp(sp.repo).parse(line)
 					commit.appendOperation(*fileop)
