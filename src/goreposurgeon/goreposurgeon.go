@@ -11648,7 +11648,7 @@ func (rs *Reposurgeon) evalPathsetRegex(state selEvalState,
 					}
 				}
 			}
-			if (all && matches == len(paths)) || matches > 0 {
+			if (all && matches == len(paths)) || (!all && matches > 0) {
 				hits.Add(it.Value())
 			}
 		}
