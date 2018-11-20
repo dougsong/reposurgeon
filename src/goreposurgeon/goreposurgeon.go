@@ -11259,16 +11259,18 @@ type CmdContext struct {
 	inputIsStdin bool
 }
 
+// This is a Kommandant command loop which handles multi-line macro
+// definitions.
 type MacroDefinition struct {
 	CmdContext
 	body  []string
 	depth int
 }
 
-func (md *MacroDefinition) PreCommand(line string) string {
+func (md *MacroDefinition) DefaultCommand(line string) bool {
 	line = strings.TrimSpace(line)
 	if md.depth == 0 && (line[0] == '}' || line == "EOF") {
-		return line // non-empty return value takes us to DefaultCommand, which stops the loop
+		return true // we're done, exit the loop
 	} else {
 		if strings.HasPrefix(line, "define") && strings.HasSuffix(line, "{") {
 			md.depth++
@@ -11278,12 +11280,8 @@ func (md *MacroDefinition) PreCommand(line string) string {
 			}
 		}
 		md.body = append(md.body, line)
-		return ""
+		return false // keep accepting commands
 	}
-}
-
-func (md *MacroDefinition) DefaultCommand(line string) bool {
-	return false
 }
 
 func (md CmdContext) SetCore(k *kommandant.Kmdt) {
