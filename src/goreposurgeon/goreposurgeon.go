@@ -11857,10 +11857,17 @@ func (rs *Reposurgeon) evalTextSearch(state selEvalState,
 	search *regexp.Regexp, modifiers string) *fastOrderedIntSet {
 	// FIXME: @debug_lexer
 	matchers := newFastOrderedIntSet()
+	// values ("author", "Branch", etc.) in 'searchableAttrs' and keys in
+	// 'extractors' (below) must exactly match spelling and case of fields
+	// in structures being interrogated since reflection is used both to
+	// check that the structure has such a field and to retrieve the
+	// field's value (the spelling and case requirement is true even for
+	// extractors which pull field values directly, without going through
+	// getAttr())
 	searchableAttrs := map[rune]string{
 		'a': "author",     // commit
-		'b': "branch",     // commit
-		'c': "comment",    // commit or tag
+		'b': "Branch",     // commit
+		'c': "Comment",    // commit or tag
 		'C': "committer",  // commit
 		'r': "committish", // tag or reset
 		'p': "text",       // passthrough
@@ -11884,8 +11891,8 @@ func (rs *Reposurgeon) evalTextSearch(state selEvalState,
 			}
 			panic(fmt.Sprintf(`no "author" in %T`, e))
 		},
-		"branch":  func(e Event) string { return exattr(e, "Branch") },
-		"comment": func(e Event) string { return exattr(e, "Comment") },
+		"Branch":  func(e Event) string { return exattr(e, "Branch") },
+		"Comment": func(e Event) string { return exattr(e, "Comment") },
 		"committer": func(e Event) string {
 			if c, ok := e.(*Commit); ok {
 				return c.committer.who()
