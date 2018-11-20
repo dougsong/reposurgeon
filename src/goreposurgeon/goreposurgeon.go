@@ -11629,6 +11629,9 @@ func (rs *Reposurgeon) evalPathsetRegex(state selEvalState,
 	}
 	all := flags.Contains("a")
 	flags.Remove("a")
+	if len(flags) == 0 {
+		flags = nil // paths(nil) means "all paths"
+	}
 	type vendPaths interface{ paths(stringSet) stringSet }
 	hits := newFastOrderedIntSet()
 	events := rs.chosen().events
