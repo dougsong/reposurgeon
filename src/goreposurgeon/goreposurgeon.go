@@ -9583,7 +9583,7 @@ func (rl *RepositoryList) unchoose() {
 	rl.repo = nil
 }
 
-// Unstreamify any repo about to be stepped on by a srtream output.
+// Unstreamify any repo about to be stepped on by a stream output.
 func (rl *RepositoryList) writeNotify(filename string) {
 	for _, repo := range rl.repolist {
 		if repo.name == filename || strings.Contains(filename, repo.name+".") {
@@ -10343,18 +10343,6 @@ func (p *SelectionParser) pop() rune {
 	p.line = p.line[n:]
 	return r
 }
-
-/*
-
-class SelectionParser(object):
-    # this should only be called from a @debug_lexer function (it
-    # depends on state set up by that decorator)
-    func _debug_lexer(self, msg):
-       if debugEnable(debugLEXER):
-           stack = getattr(self, '_debug_lexer_stack')
-           announce(debugSHOUT, "{0}{1}(): {2}".format(' ' * len(stack), stack[-1], msg))
-
-*/
 
 func (p *SelectionParser) parseExpression() selEvaluator {
 	// FIXME: @debug_lexer
@@ -15141,63 +15129,76 @@ branch 'qux', the branch segments are renamed 'qux-early' and
 'qux-late'.
 `)
 }
+func (rs *Reposurgeon) DoDivide(_line string) (stopOut bool) {
+        if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+        }
+        if len(rs.selection) == 0 {
+		complain("one or possibly two arguments specifying a link are required")
+		return
+        }
+        earlyEvent := rs.chosen().events[rs.selection[0]]
+	earlyCommit, ok := earlyEvent.(*Commit)
+        if !ok {
+		complain("first element of selection is not a commit")
+		return
+        }
+        possibles := earlyCommit.children()
+	var late Event 
+	var lateCommit *Commit
+        if len(rs.selection) == 1 {
+		if len(possibles) > 1 {
+			complain("commit has multiple children, one must be specified")
+			return false
+		} else if len(possibles) == 1 {
+			late = possibles[0]
+		} else {
+			complain("parent has no children")
+			return false
+		}
+        } else if len(rs.selection) == 2 {
+		late = rs.chosen().events[rs.selection[1]]
+		lateCommit, ok = late.(*Commit)
+		if !ok {
+			complain("last element of selection is not a commit")
+			return false
+		}
+		if !stringSet(lateCommit.parentMarks()).Contains(earlyCommit.mark) {
+			complain("not a parent-child pair")
+			return false
+		}
+        } else if len(rs.selection) > 2 {
+		complain("too many arguments")
+        }
+        //assert(early && late)
+        // Try the topological cut first
+        if !rs.cut(earlyCommit, lateCommit) {
+		// If that failed, cut anyway and rename the branch segments
+		lateCommit.removeParent(earlyCommit)
+		if earlyCommit.Branch != lateCommit.Branch {
+			announce(debugSHOUT, "no branch renames were required")
+		} else {
+			basename := earlyCommit.Branch
+			announce(debugSHOUT, "%s has been split into %s-early and %s-late",
+				basename, basename, basename)
+			for i, event := range rs.chosen().events {
+				if commit, ok := event.(*Commit); ok && commit.Branch == basename {
+					if i <= rs.selection[0] {
+						commit.Branch += "-early"
+					} else {
+						commit.Branch += "-late"
+					}
+				}
+			}
+		}
+        }
+        if context.verbose > 0 {
+		rs.DoChoose("")
+        }
+	return false
+}
 
-/*
-func (rs *Reposurgeon) DoDivide(self, _line):
-        "Attempt to topologically partition the repo."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-            return
-        if self.selection is None:
-            self.selection = []
-        if len(self.selection) == 0:
-            complain("one or possibly two arguments specifying a link are required")
-            return
-        early = self.chosen()[self.selection[0]]
-        if not isinstance(early, Commit):
-            complain("first element of selection is not a commit")
-            return
-        possibles = list(early.children())
-        if len(self.selection) == 1:
-            if len(possibles) > 1:
-                complain("commit has multiple children, one must be specified")
-                return
-            else if len(possibles) == 1:
-                late = possibles[0]
-            else:
-                complain("parent has no children")
-                return
-        else if len(self.selection) == 2:
-            late = self.chosen()[self.selection[1]]
-            if not isinstance(late, Commit):
-                complain("last element of selection is not a commit")
-                return
-            if early.mark not in late.parentMarks():
-                complain("not a parent-child pair")
-                return
-        else if len(self.selection) > 2:
-            complain("too many arguments")
-        assert(early and late)
-        # Try the topological cut first
-        if not self.cut(early, late):
-            # If that failed, cut anyway and rename the branch segments
-            late.removeParent(early)
-            if early.Branch != late.Branch:
-                announce(debugSHOUT, "no branch renames were required")
-            else:
-                basename = early.Branch
-                announce(debugSHOUT, "%s has been split into %s-early and %s-late" \
-                         % (basename, basename, basename))
-                for (i, event) in enumerate(self.chosen().events):
-                    if hasattr(event, "branch") and event.Branch == basename:
-                        if i <= self.selection[0]:
-                            event.Branch += "-early"
-                        else:
-                            event.Branch += "-late"
-        if context.verbose:
-            self.do_choose("")
-
-*/
 
 func (rs *Reposurgeon) HelpExpunge() {
 	rs.helpOutput(`
