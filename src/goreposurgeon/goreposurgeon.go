@@ -4796,7 +4796,7 @@ func (commit *Commit) cliques() map[string][]int {
 
 // fileopDump reports file ops without data or inlines; used for debugging only.
 func (commit *Commit) fileopDump() {
-	banner := fmt.Sprintf("commit %d, mark %s:\n", commit.repo.find(commit.mark)+1, commit.mark)
+	banner := fmt.Sprintf("commit %d, mark %s:\n", commit.repo.markToIndex(commit.mark)+1, commit.mark)
 	os.Stdout.WriteString(banner)
 	for i, op := range commit.operations() {
 		report := fmt.Sprintf("%d: %-20s\n", i, op.String())
@@ -6683,7 +6683,7 @@ func (repo *Repository) markToEvent(mark string) Event {
 func (repo *Repository) eventToIndex(obj Event) int {
 	mark := obj.getMark()
 	if len(mark) != 0 {
-		ind := repo.find(mark)
+		ind := repo.markToIndex(mark)
 		if ind >= 0 {
 			return ind
 		}
@@ -6697,7 +6697,7 @@ func (repo *Repository) eventToIndex(obj Event) int {
 }
 
 // find gets an object index by mark
-func (repo *Repository) find(mark string) int {
+func (repo *Repository) markToIndex(mark string) int {
 	if repo._markToIndex == nil {
 		repo._markToIndex = make(map[string]int)
 		for ind, event := range repo.events {
@@ -7528,7 +7528,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 			if commit, ok := event.(*Commit); ok {
 				for _, fileop := range commit.operations() {
 					if fileop.op == opM {
-						idx := repo.find(fileop.ref)
+						idx := repo.markToIndex(fileop.ref)
 						if fileop.ref != "inline" {
 							selection.Add(idx)
 						}
@@ -7692,7 +7692,7 @@ func (repo *Repository) ancestors(ei int) orderedIntSet {
 		if !commit.hasParents() {
 			break
 		} else {
-			efrom := repo.find(commit.parentMarks()[0])
+			efrom := repo.markToIndex(commit.parentMarks()[0])
 			trail.Add(efrom)
 			ei = efrom
 		}
@@ -8383,7 +8383,7 @@ func (repo *Repository) resort() {
 			return
 		}
 		//assert(ymark[0] == ":")
-		y := repo.find(ymark)
+		y := repo.markToIndex(ymark)
 		//assert(y != nil)
 		//assert(x != y)
 		start.Remove(x)
@@ -8419,7 +8419,7 @@ func (repo *Repository) resort() {
 		case *Reset:
 			reset := node.(*Reset)
 			if reset.committish != "" {
-				t := repo.find(reset.committish)
+				t := repo.markToIndex(reset.committish)
 				//assert(n != t)
 				start.Remove(n)
 				edges.eout.Add(t)
@@ -10031,7 +10031,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			} else if fileop.op == opM {
 				keepers = append(keepers, fileop)
 				if fileop.ref != "inline" {
-					bi := rl.repo.find(fileop.ref)
+					bi := rl.repo.markToIndex(fileop.ref)
 					blob := rl.repo.events[bi].(*Blob)
 					//assert(isinstance(blob, Blob))
 					blobs = append(blobs, blob)
@@ -11521,10 +11521,10 @@ func (rs *Reposurgeon) evalNeighborhood(state selEvalState,
 		event := rs.chosen().events[ei]
 		if c, ok := event.(*Commit); ok {
 			for _, parent := range c.parents() {
-				addSet.Add(rs.chosen().find(parent.getMark()))
+				addSet.Add(rs.chosen().markToIndex(parent.getMark()))
 			}
 			for _, child := range c.children() {
-				addSet.Add(rs.chosen().find(child.getMark()))
+				addSet.Add(rs.chosen().markToIndex(child.getMark()))
 			}
 		} else if _, ok := event.(*Blob); ok {
 			removeSet.Add(ei) // Don't select the blob itself
@@ -13673,7 +13673,7 @@ func (rs *Reposurgeon) DoGraph(line string) (stopOut bool) {
 		event := rs.chosen().events[ei]
 		if commit, ok := event.(*Commit); ok {
 			for _, parent := range commit.parentMarks() {
-				if rs.selection.Contains(rs.chosen().find(parent)) {
+				if rs.selection.Contains(rs.chosen().markToIndex(parent)) {
 					fmt.Fprintf(parse.stdout, "\t%s -> %s;\n",
 						parent[1:], commit.mark[1:])
 				}
@@ -14651,7 +14651,7 @@ func (rs *Reposurgeon) DoCoalesce(line string) (stopOut bool) {
 		repo.markToEvent(span[len(span)-1]).(*Commit).Comment = repo.markToEvent(span[0]).(*Commit).Comment
 		squashable := make([]int, 0)
 		for _, mark := range span[:len(span)-1] {
-			squashable = append(squashable, repo.find(mark))
+			squashable = append(squashable, repo.markToIndex(mark))
 		}
 		repo.squash(squashable, stringSet{"--coalesce"})
 	}
@@ -14929,7 +14929,7 @@ func (rs *Reposurgeon) DoRemove(line string) bool {
 			// relocated op from having an unresolvable forward
 			// mark reference.
 			if removed.ref != "" && target < ie {
-				i := repo.find(removed.ref)
+				i := repo.markToIndex(removed.ref)
 				blob := repo.events[i]
 				repo.events = append(repo.events[:i], repo.events[i+1:]...)
 				repo.insertEvent(blob, target, "blob move")
@@ -15446,78 +15446,100 @@ source branch are removed.
 `)
 }
 
-/*
-func (rs *Reposurgeon) DoDebranch(line string):
-        "Turn a branch into a subdirectory."
-        if self.chosen() is None:
-            complain("no repo has been chosen.")
-        args = line.split()
-        if not args:
-            complain("debranch command requires at least one argument")
-        else:
-            target = 'refs/heads/master'
-            source = args[0]
-            if len(args) == 2:
-                target = args[1]
-            repo = self.chosen()
-            branches = repo.Branchmap()
-            if source not in branches.keys():
-                for candidate in branches.keys():
-                    if candidate.endswith(os.sep + source):
-                        source = candidate
-                        break
-                else:
-                    complain("no branch matches source %s" % source)
-                    return
-            if target not in branches.keys():
-                for candidate in branches.keys():
-                    if candidate.endswith(os.sep + target):
-                        target = candidate
-                        break
-                else:
-                    complain("no branch matches %s" % target)
-                    return
-            # Now that the arguments are in proper form, implement
-            stip = repo.find(branches[source])
-            scommits = repo.ancestors(stip) + [stip]
-            scommits.sort()
-            ttip = repo.find(branches[target])
-            tcommits = repo.ancestors(ttip) + [ttip]
-            tcommits.sort()
-            # Don't touch commits up to the branch join.
-            last_parent = []
-            while scommits and tcommits and scommits[0] == tcommits[0]:
-                last_parent = [repo.events[scommits[0]].mark]
-                scommits.pop(0)
-                tcommits.pop(0)
-            pref = os.path.basename(source)
-            for ci in scommits:
-                found = false
-                for fileop in repo.events[ci].operations():
-                    if fileop.op in (opD, opM):
-                        fileop.path = os.path.join(pref, fileop.path)
-                        found = true
-                    else if fileop.op in (opR, opC):
-                        fileop.source = os.path.join(pref, fileop.source)
-                        fileop.Target = os.path.join(pref, fileop.Target)
-                        found = true
-                if found:
-                    repo.events[ci].invalidatePathsetCache()
-            merged = sorted(set(scommits + tcommits))
-            source_reset = None
-            for i in merged:
-                event = repo.events[i]
-                if last_parent is not None:
-                    event.setParentMarks(last_parent + event.parentMarks()[1:])
-                event.setBranch(target)
-                last_parent = [event.mark]
-            for (i, event) in enumerate(self.repo.events):
-                if reset, ok := event.(*Reset); ok and event.ref == source:
-                    source_reset = i
-            if source_reset is not None:
-                del repo.events[source_reset]
-            repo.declareSequenceMutation("debranch operation")
-*/
+// Turn a branch into a subdirectory.
+func (rs *Reposurgeon) DoDebranch(line string) (stopOut bool) {
+        if rs.chosen() == nil {
+		complain("no repo has been chosen.")
+		return false
+        }
+        args := strings.Fields(line)
+        if len(args) == 0 {
+		complain("debranch command requires at least one argument")
+		return false
+	}
+	target := "refs/heads/master"
+	source := args[0]
+	if len(args) == 2 {
+		target = args[1]
+	}
+	repo := rs.chosen()
+	branches := repo.branchmap()
+	if branches[source] == "" {
+		for candidate, _ := range branches {
+			if strings.HasSuffix(candidate, string(os.PathSeparator) + source) {
+				source = candidate
+				goto found1
+			}
+		}
+		complain("no branch matches source %s", source)
+		return false
+	found1:
+	}
+	if branches[target] == "" {
+		for candidate, _ := range branches {
+			if strings.HasSuffix(candidate, string(os.PathSeparator) + target) {
+				target = candidate
+				goto found2
+			}
+		}
+		complain("no branch matches %s", target)
+		return false
+	found2:
+	}
+	// Now that the arguments are in proper form, implement
+	stip := repo.markToIndex(branches[source])
+	scommits := append(repo.ancestors(stip), stip)
+	sort.Ints(scommits)
+	ttip := repo.markToIndex(branches[target])
+	tcommits := append(repo.ancestors(ttip), ttip)
+	sort.Ints(tcommits)
+	// Don't touch commits up to the branch join.
+	lastParent := ""
+	for len(scommits) > 0 && len(tcommits) > 0 && scommits[0] == tcommits[0] {
+		lastParent = repo.events[scommits[0]].getMark()
+		scommits = scommits[1:]
+		tcommits = tcommits[1:]
+	}
+	pref := filepath.Base(source)
+	for _, ci := range scommits {
+		found := false
+		for _, fileop := range repo.events[ci].(*Commit).operations() {
+			if fileop.op == opD || fileop.op == opM {
+				fileop.Path = filepath.Join(pref, fileop.Path)
+				found = true
+			} else if fileop.op == opR || fileop.op == opC {
+				fileop.Source = filepath.Join(pref, fileop.Source)
+				fileop.Target = filepath.Join(pref, fileop.Target)
+				found = true
+			}
+		}
+		if found {
+			repo.events[ci].(*Commit).invalidatePathsetCache()
+		}
+	}
+	merged := append(scommits, tcommits...)
+	sort.Ints(merged)
+	sourceReset := -1
+	for _, i := range merged {
+		commit := repo.events[i].(*Commit)
+		if lastParent != "" {
+			commit.setParentMarks(append([]string{lastParent}, commit.parentMarks()[1:]...))
+		}
+		commit.setBranch(target)
+		lastParent = commit.mark
+	}
+	for i, event := range rs.repo.events {
+		if reset, ok := event.(*Reset); ok && reset.ref == source {
+			sourceReset = i
+		}
+	}
+	if sourceReset != -1 {
+		repo.delete([]int{sourceReset}, nil)
+	}
+	repo.declareSequenceMutation("debranch operation")
+	return false
+}
+
 
 func (rs *Reposurgeon) HelpPath() {
 	rs.helpOutput(`
@@ -17851,7 +17873,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		return false
 	}
 	if rs.selection == nil {
-		rs.selection = []int{repo.find(repo.earliestCommit().mark)}
+		rs.selection = []int{repo.markToIndex(repo.earliestCommit().mark)}
 	}
 	var commit *Commit
 	if len(rs.selection) == 1 {
@@ -17897,9 +17919,9 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 	_, insertAfter := parse.OptVal("after")
 	var loc int
 	if insertAfter {
-		loc = repo.find(commit.mark) + 1
+		loc = repo.markToIndex(commit.mark) + 1
 	} else {
-		loc = repo.find(commit.mark)
+		loc = repo.markToIndex(commit.mark)
 		for loc > 0 {
 			_, ok := repo.events[loc-1].(*Blob)
 			if ok {
@@ -18860,7 +18882,7 @@ deleted name.
                             if node.path == svnSep:
                                 gitignore_path = ".gitignore"
                             else:
-                                gitignore_path = os.path.join(node.path,
+                                gitignore_path = filepath.Join(node.path,
                                                               ".gitignore")
                             # There are no other directory properties that can
                             # turn into fileops.
@@ -19264,7 +19286,7 @@ deleted name.
         if not sp.branches or nobranch:
             last = None
             for commit in sp.repo.commits():
-                commit.setBranch(os.path.join("refs", "heads", "master") + svnSep)
+                commit.setBranch(filepath.Join("refs", "heads", "master") + svnSep)
                 if last is not None: commit.setParents([last])
                 last = commit
         else:
@@ -19485,7 +19507,7 @@ deleted name.
                 # get turned into actual tags.
                 m = StreamParser.cvs2svnTagRE.search(polybytes(event.Comment))
                 if m && not event.hasChildren():
-                    fulltag = os.path.join("refs", "tags", polystr(m.group(1)))
+                    fulltag = filepath.Join("refs", "tags", polystr(m.group(1)))
                     newtags.append(Reset(sp.repo, ref=fulltag,
                                                   target=event.parents()[0]))
                     deleteables.append(i)
@@ -19558,23 +19580,23 @@ deleted name.
                 result, substitutions = regex.subn(replace,polybytes(commit.Branch))
                 if substitutions == 1:
                     matched = true
-                    commit.setBranch(os.path.join("refs",polystr(result)))
+                    commit.setBranch(filepath.Join("refs",polystr(result)))
                     break
             if matched:
                 continue
             if commit.Branch == "root":
-                commit.setBranch(os.path.join("refs", "heads", "root"))
+                commit.setBranch(filepath.Join("refs", "heads", "root"))
             else if commit.Branch.startswith("tags" + svnSep):
                 branch = commit.Branch
                 if branch.endswith(svnSep):
                     branch = branch[:-1]
-                commit.setBranch(os.path.join("refs", "tags",
+                commit.setBranch(filepath.Join("refs", "tags",
                                               os.path.basename(branch)))
             else if commit.Branch == "trunk" + svnSep:
-                commit.setBranch(os.path.join("refs", "heads", "master"))
+                commit.setBranch(filepath.Join("refs", "heads", "master"))
             else:
                 basename = os.path.basename(commit.Branch[:-1])
-                commit.setBranch(os.path.join("refs", "heads", basename))
+                commit.setBranch(filepath.Join("refs", "heads", basename))
                 # Some of these should turn into resets.  Is this a branchroot
                 # commit with no fileops?
                 if '--preserve' not in options && len(commit.parents()) == 1:
