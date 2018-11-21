@@ -7511,9 +7511,9 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 	fp io.Writer, options stringSet, target *VCS, progress bool) error {
 	repo.writeOptions = options
 	repo.preferred = target
-	//if target != nil && target.name == "svn" {
-	//	return newSubversionDumper(repo, false).dump(selection, fp, progress)
-	//}
+	if target != nil && target.name == "svn" {
+		return newSubversionDumper(repo, false).dump(selection, fp, progress)
+	}
 	repo.internals = nil
 	// Select all blobs implied by the commits in the range. If we ever
 	// go to a representation where fileops are inline this logic will need
@@ -14872,7 +14872,8 @@ func (rs *Reposurgeon) DoRemove(line string) bool {
 			return false
 		}
 		ind := -1
-		// first, see if opindex matches the filenames of any of this event's operations
+		// first, see if opindex matches the filenames of any
+		// of this event's operations
 		for i, op := range event.operations() {
 			if !strings.Contains(optypes, op.op) {
 				continue
@@ -20040,7 +20041,7 @@ func (sd *SubversionDumper) makeTag(fp io.Writer, revision int,
 
 // Export the repository as a Subversion dumpfile.
 func (sd *SubversionDumper) dump(selection orderedIntSet,
-	fp io.Writer, progress bool) {
+	fp io.Writer, progress bool) error {
 	tags := make([]Tag, 0)
 	for _, event := range sd.repo.events {
 		if tag, ok := event.(*Tag); ok {
@@ -20060,7 +20061,7 @@ func (sd *SubversionDumper) dump(selection orderedIntSet,
 	if sd.repo.uuid == "" {
 		newuuid, err := uuid.NewUUID()
 		if err != nil {
-			panic(err.Error())
+			return err
 		}
 		sd.repo.uuid = newuuid.String()
 	}
@@ -20258,4 +20259,5 @@ func (sd *SubversionDumper) dump(selection orderedIntSet,
 		}
 		//fp.flush()
 	}
+	return nil
 }
