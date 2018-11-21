@@ -15688,43 +15688,57 @@ This command supports > redirection.
 }
 
 /*
-class Reposurgeon(object):
-    func (rs *Reposurgeon) DoManifest(self, line str):
-        "Print all files (matching the regex) in the selected commits trees."
-        if self.chosen() is None:
-            raise Recoverable("no repo has been chosen")
-        if self.selection is None:
-            self.selection = self.chosen().all()
-        with rs.newLineParse(line, stringSet{"stdout"}) as parse:
-            filter_func = None
-            line = parse.line.strip()
-            if line:
-                try:
-                    filter_func = regexp.MustCompile(line.encode('ascii')).search
-                except re.error:
-                    raise Recoverable("invalid regular expression")
-            for ei, event := range self.commits(self.selection):
-                header = "Event %s, " % repr(ei+1)
-                header = header[:-2]
-                header += " " + ((72 - len(header)) * "=") + "\n"
-                fmt.Fprint(parse.stdout, header)
-                if event.legacyID:
-                    fmt.Fprint(parse.stdout, "# Legacy-ID: %s\n" % event.legacyID)
-                fmt.Fprint(parse.stdout, "commit %s\n" % event.Branch)
-                if event.mark:
-                    fmt.Fprint(parse.stdout, "mark %s\n" % event.mark)
-                fmt.Fprint(parse.stdout, "\n")
-                if filter_func is None:
-                    fmt.Fprint(parse.stdout, "\n".join("%s -> %s" % (path, mark)
-                            for path, (mode, mark, _)
-                            in event.manifest().items()))
-                else:
-                    fmt.Fprint(parse.stdout, "\n".join("%s -> %s" % (path, mark)
-                            for path, (mode, mark, _)
-                            in event.manifest().items()
-                            if filter_func(polybytes(path))))
-                fmt.Fprint(parse.stdout, "\n")
+// Print all files (matching the regex) in the selected commits trees.
+func (rs *Reposurgeon) DoManifest(self, line str) {
+    if self.chosen() == nil {
+	raise Recoverable("no repo has been chosen")
+    }
+    if self.selection == nil {
+	self.selection = self.chosen().all()
+    }
+    with rs.newLineParse(line, stringSet{"stdout"}) as parse {
+	filter_func = nil
+	line := strings.TrimSpace(parse.line)
+	if line {
+	    try {
+		filter_func = regexp.MustCompile(line.encode("ascii")).search
+            }
+	    except re.error {
+		raise Recoverable("invalid regular expression")
+            }
+        }
+	for ei, event := range self.commits(self.selection) {
+	    header = fmt.Sprintf("Event %s, ", repr)(ei+1)
+	    header = header[:-2]
+	    header += " " + ((72 - len(header)) * "=") + "\n"
+	    fmt.Fprint(parse.stdout, header)
+	    if event.legacyID {
+		fmt.Fprint(parse.stdout, fmt.Sprintf("# Legacy-ID: %s\n", event.legacy)ID)
+            }
+	    fmt.Fprint(parse.stdout, fmt.Sprintf("commit %s\n", event).Branch)
+	    if event.mark {
+		fmt.Fprint(parse.stdout, fmt.Sprintf("mark %s\n", event.mark))
+            }
+	    fmt.Fprint(parse.stdout, "\n")
+	    if filter_func == nil {
+		fmt.Fprint(parse.stdout, "\nfmt.Sprintf(".join(fmt.Sprintf(", s) -> %s", path, mark)
+			for path, (mode, mark, _)
+                        }
+			in event.manifest().items()))
+            } else {
+		fmt.Fprint(parse.stdout, "\nfmt.Sprintf(".join(fmt.Sprintf(", s) -> %s", path, mark)
+			for path, (mode, mark, _)
+                        }
+			in event.manifest().items()
+			if filter_func(polybytes(path))))
+                        }
+            }
+	    fmt.Fprint(parse.stdout, "\n")
+        }
+    }
+}
 */
+
 func (rs *Reposurgeon) HelpTagify() {
 	rs.helpOutput(`
 Search for empty commits and turn them into tags. Takes an optional selection

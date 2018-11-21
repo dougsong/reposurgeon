@@ -1401,7 +1401,7 @@ func TestDelete(t *testing.T) {
 	r := strings.NewReader(rawdump)
 	sp.fastImport(r, nil, false, "synthetic test load")
 
-	thirdcommit := repo.find(":6")
+	thirdcommit := repo.markToIndex(":6")
 	repo.delete(orderedIntSet{thirdcommit}, nil)
 	var a strings.Builder
 	if err := repo.fastExport(repo.all(), &a,
