@@ -7324,7 +7324,11 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 		}
 	}
 	deletia := make([]int, 0)
-	for index, commit := range repo.commits(selection) {
+	for _, index := range selection {
+		commit, ok := repo.events[index].(*Commit)
+		if !ok {
+			continue
+		}
 		var name string
 		if len(commit.operations()) == 0 || isTipdelete(commit) {
 			if commit.hasParents() {
