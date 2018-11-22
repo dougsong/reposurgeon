@@ -11263,7 +11263,7 @@ type CmdContext struct {
 	inputIsStdin bool
 }
 
-// This is a Kommandant command loop which handles multi-line macro
+// MacroDefinition is a Kommandant command loop which handles multi-line macro
 // definitions.
 type MacroDefinition struct {
 	CmdContext
