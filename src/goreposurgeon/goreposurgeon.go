@@ -11687,12 +11687,16 @@ func (rs *Reposurgeon) evalPathsetFull(state selEvalState,
 	matchTrees := make(map[string]Tree)
 	result := newFastOrderedIntSet()
 	lastEvent := selMax(preselection)
-	for i, event := range rs.chosen().commits(nil) {
+	for i, event := range rs.chosen().events {
+		c, ok := event.(*Commit)
+		if !ok {
+			continue
+		}
 		if i > lastEvent {
 			break
 		}
 		tree := make(Tree)
-		parents := event.parents()
+		parents := c.parents()
 		if len(parents) != 0 {
 			parentTree, ok := matchTrees[parents[0].getMark()]
 			if !ok {
@@ -11703,7 +11707,7 @@ func (rs *Reposurgeon) evalPathsetFull(state selEvalState,
 				tree[k] = struct{}{}
 			}
 		}
-		for _, fileop := range event.operations() {
+		for _, fileop := range c.operations() {
 			if fileop.op == opM && match(fileop.Path) {
 				tree[fileop.Path] = struct{}{}
 			} else if fileop.op == opC && match(fileop.Target) {
@@ -11718,7 +11722,7 @@ func (rs *Reposurgeon) evalPathsetFull(state selEvalState,
 				tree = make(Tree)
 			}
 		}
-		matchTrees[event.mark] = tree
+		matchTrees[c.mark] = tree
 		if (len(tree) == 0) == matchAll {
 			result.Add(i)
 		}
