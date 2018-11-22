@@ -6945,7 +6945,7 @@ func (repo *Repository) named(ref string) orderedIntSet {
 					continue
 				}
 				// FIXME: Recognize aliases here
-				if commit.committer.email != emailID {
+				if len(emailID) != 0 && commit.committer.email != emailID {
 					continue
 				} else {
 					matches.Add(ei)
@@ -6955,7 +6955,7 @@ func (repo *Repository) named(ref string) orderedIntSet {
 				// FIXME: Recognize aliases here
 				if !datematch(tag.tagger.date) {
 					continue
-				} else if tag.tagger.email != emailID {
+				} else if len(emailID) != 0 && tag.tagger.email != emailID {
 					continue
 				} else {
 					matches.Add(ei)
