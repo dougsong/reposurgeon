@@ -2094,7 +2094,7 @@ moved, no branch fields are changed.</para>
 </varlistentry>
 <varlistentry>
 <term><command>debranch</command>
-        <emphasis>source-branch</emphasis>...
+        <emphasis>source-branch</emphasis>
         <emphasis>[target-branch]</emphasis>.
 </term>
 <listitem>
