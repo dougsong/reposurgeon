@@ -15478,7 +15478,7 @@ func (rs *Reposurgeon) DoDebranch(line string) (stopOut bool) {
 	repo := rs.chosen()
 	branches := repo.branchmap()
 	if branches[source] == "" {
-		for candidate, _ := range branches {
+		for candidate := range branches {
 			if strings.HasSuffix(candidate, string(os.PathSeparator)+source) {
 				source = candidate
 				goto found1
@@ -15489,7 +15489,7 @@ func (rs *Reposurgeon) DoDebranch(line string) (stopOut bool) {
 	found1:
 	}
 	if branches[target] == "" {
-		for candidate, _ := range branches {
+		for candidate := range branches {
 			if strings.HasSuffix(candidate, string(os.PathSeparator)+target) {
 				target = candidate
 				goto found2
