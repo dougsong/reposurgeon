@@ -2095,7 +2095,7 @@ moved, no branch fields are changed.</para>
 <varlistentry>
 <term><command>debranch</command>
         <emphasis>source-branch</emphasis>
-        <emphasis>[target-branch]</emphasis>.
+        <emphasis>[target-branch]</emphasis>
 </term>
 <listitem>
 <para>Takes one or two arguments which must be the names of source and
@@ -2114,7 +2114,7 @@ removed.</para>
 </varlistentry>
 <varlistentry>
 <term><command>strip</command>
-        <command>[blobs|reduce]</command>.
+        <command>[blobs|reduce]</command>
 </term>
 <listitem>
 <para>Reduce the selected repository to make it a more tractable test
@@ -2142,9 +2142,9 @@ non-boring child.</para>
 </varlistentry>
 <varlistentry>
 <term><command>ignores</command>
-        <command>[rename]</command>.
-        <command>[translate]</command>.
-        <command>[defaults]</command>.
+        <command>[rename]</command>
+        <command>[translate]</command>
+        <command>[defaults]</command>
 </term>
 <listitem>
 <para>Intelligent handling of ignore-pattern files.
