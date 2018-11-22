@@ -12423,6 +12423,7 @@ Unassign a symbolic name.  Throws an error if the name is not assigned.
 Tab-completes on the list of defined names.
 `)
 }
+
 func (rs *Reposurgeon) CompleteUnassign(text string) []string {
 	repo := rs.chosen()
 	out := make([]string, 0)
@@ -12434,6 +12435,7 @@ func (rs *Reposurgeon) CompleteUnassign(text string) []string {
 	sort.Strings(out)
 	return out
 }
+
 func (rs *Reposurgeon) DoUnassign(line string) (stopOut bool) {
 	repo := rs.chosen()
 	if repo == nil {
@@ -12457,6 +12459,7 @@ func (rs *Reposurgeon) HelpNames() {
 List all known symbolic names of branches and tags. Supports > redirection.
 `)
 }
+
 func (rs *Reposurgeon) DoNames(line string) (stopOut bool) {
 	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
@@ -12578,6 +12581,7 @@ func (rs *Reposurgeon) HelpProfile() {
 Enable profiling. Profile statistics are dumped to the path given as argument.
 `)
 }
+
 func (rs *Reposurgeon) DoProfile(line string) bool {
 	rs.profileLog = line
 	if rs.profileLog == "" {
@@ -12791,6 +12795,7 @@ The stamp is followed by the first line of the commit message.
 Supports > redirection.
 `)
 }
+
 func (rs *Reposurgeon) DoStamp(lineIn string) bool {
 	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
 	defer parse.Closem()
@@ -13109,6 +13114,7 @@ The repository source type is reliably set when reading a Subversion
 stream.
 `)
 }
+
 func (rs *Reposurgeon) CompleteSourcetype(text string) []string {
 	out := make([]string, 0)
 	for _, x := range vcstypes {
@@ -13164,6 +13170,7 @@ repository, '-' for others.
 With an argument, the command tab-completes on the above list.
 `)
 }
+
 func (rs *Reposurgeon) CompleteChoose(text string) []string {
 	if rs.repolist == nil {
 		return nil
@@ -14518,6 +14525,7 @@ it is controlled by policy flags.  A delete is equivalent to a
 squash with the --delete flag.
 `)
 }
+
 func (rs *Reposurgeon) DoDelete(line string) (stopOut bool) {
 	if rs.chosen() == nil {
 		complain("no repo is loaded")
@@ -15132,25 +15140,26 @@ branch 'qux', the branch segments are renamed 'qux-early' and
 'qux-late'.
 `)
 }
+
 func (rs *Reposurgeon) DoDivide(_line string) (stopOut bool) {
-        if rs.chosen() == nil {
+	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
 		return false
-        }
-        if len(rs.selection) == 0 {
+	}
+	if len(rs.selection) == 0 {
 		complain("one or possibly two arguments specifying a link are required")
 		return
-        }
-        earlyEvent := rs.chosen().events[rs.selection[0]]
+	}
+	earlyEvent := rs.chosen().events[rs.selection[0]]
 	earlyCommit, ok := earlyEvent.(*Commit)
-        if !ok {
+	if !ok {
 		complain("first element of selection is not a commit")
 		return
-        }
-        possibles := earlyCommit.children()
-	var late Event 
+	}
+	possibles := earlyCommit.children()
+	var late Event
 	var lateCommit *Commit
-        if len(rs.selection) == 1 {
+	if len(rs.selection) == 1 {
 		if len(possibles) > 1 {
 			complain("commit has multiple children, one must be specified")
 			return false
@@ -15160,7 +15169,7 @@ func (rs *Reposurgeon) DoDivide(_line string) (stopOut bool) {
 			complain("parent has no children")
 			return false
 		}
-        } else if len(rs.selection) == 2 {
+	} else if len(rs.selection) == 2 {
 		late = rs.chosen().events[rs.selection[1]]
 		lateCommit, ok = late.(*Commit)
 		if !ok {
@@ -15171,12 +15180,12 @@ func (rs *Reposurgeon) DoDivide(_line string) (stopOut bool) {
 			complain("not a parent-child pair")
 			return false
 		}
-        } else if len(rs.selection) > 2 {
+	} else if len(rs.selection) > 2 {
 		complain("too many arguments")
-        }
-        //assert(early && late)
-        // Try the topological cut first
-        if !rs.cut(earlyCommit, lateCommit) {
+	}
+	//assert(early && late)
+	// Try the topological cut first
+	if !rs.cut(earlyCommit, lateCommit) {
 		// If that failed, cut anyway and rename the branch segments
 		lateCommit.removeParent(earlyCommit)
 		if earlyCommit.Branch != lateCommit.Branch {
@@ -15195,13 +15204,12 @@ func (rs *Reposurgeon) DoDivide(_line string) (stopOut bool) {
 				}
 			}
 		}
-        }
-        if context.verbose > 0 {
+	}
+	if context.verbose > 0 {
 		rs.DoChoose("")
-        }
+	}
 	return false
 }
-
 
 func (rs *Reposurgeon) HelpExpunge() {
 	rs.helpOutput(`
@@ -15453,12 +15461,12 @@ source branch are removed.
 
 // Turn a branch into a subdirectory.
 func (rs *Reposurgeon) DoDebranch(line string) (stopOut bool) {
-        if rs.chosen() == nil {
+	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
 		return false
-        }
-        args := strings.Fields(line)
-        if len(args) == 0 {
+	}
+	args := strings.Fields(line)
+	if len(args) == 0 {
 		complain("debranch command requires at least one argument")
 		return false
 	}
@@ -15471,7 +15479,7 @@ func (rs *Reposurgeon) DoDebranch(line string) (stopOut bool) {
 	branches := repo.branchmap()
 	if branches[source] == "" {
 		for candidate, _ := range branches {
-			if strings.HasSuffix(candidate, string(os.PathSeparator) + source) {
+			if strings.HasSuffix(candidate, string(os.PathSeparator)+source) {
 				source = candidate
 				goto found1
 			}
@@ -15482,7 +15490,7 @@ func (rs *Reposurgeon) DoDebranch(line string) (stopOut bool) {
 	}
 	if branches[target] == "" {
 		for candidate, _ := range branches {
-			if strings.HasSuffix(candidate, string(os.PathSeparator) + target) {
+			if strings.HasSuffix(candidate, string(os.PathSeparator)+target) {
 				target = candidate
 				goto found2
 			}
@@ -15544,7 +15552,6 @@ func (rs *Reposurgeon) DoDebranch(line string) (stopOut bool) {
 	repo.declareSequenceMutation("debranch operation")
 	return false
 }
-
 
 func (rs *Reposurgeon) HelpPath() {
 	rs.helpOutput(`
@@ -15614,6 +15621,7 @@ any directory argument from the start of the path if it appears there;
 with no argument, strip the first directory component from every path.
 `)
 }
+
 func (rs *Reposurgeon) DoPaths(line string) (stopOut bool) {
 	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
@@ -17318,6 +17326,7 @@ options. The following flags and options are defined:
 		fmt.Print(opt[0] + ":\n" + opt[1] + "\n")
 	}
 }
+
 func (rs *Reposurgeon) CompleteSet(text string) []string {
 	out := make([]string, 0)
 	for _, x := range optionFlags {
@@ -17328,6 +17337,7 @@ func (rs *Reposurgeon) CompleteSet(text string) []string {
 	sort.Strings(out)
 	return out
 }
+
 func tweakFlagOptions(line string, val bool) {
 	if strings.TrimSpace(line) == "" {
 		for _, opt := range optionFlags {
@@ -17346,6 +17356,7 @@ func tweakFlagOptions(line string, val bool) {
 		}
 	}
 }
+
 func (rs *Reposurgeon) DoSet(line string) (stopOut bool) {
 	tweakFlagOptions(line, true)
 	return false
@@ -17362,6 +17373,7 @@ following flags and options are defined:
 		fmt.Print(opt[0] + ":\n" + opt[1] + "\n")
 	}
 }
+
 func (rs *Reposurgeon) CompleteClear(text string) []string {
 	out := make([]string, 0)
 	for _, x := range optionFlags {
@@ -17372,6 +17384,7 @@ func (rs *Reposurgeon) CompleteClear(text string) []string {
 	sort.Strings(out)
 	return out
 }
+
 func (rs *Reposurgeon) DoClear(line string) (stopOut bool) {
 	tweakFlagOptions(line, true)
 	return false
@@ -17535,6 +17548,7 @@ func (rs *Reposurgeon) HelpUndefine() {
 Undefine the macro named in this command's first argument.
 `)
 }
+
 func (rs *Reposurgeon) CompleteUndefine(text string) []string {
 	repo := rs.chosen()
 	out := make([]string, 0)
@@ -17546,6 +17560,7 @@ func (rs *Reposurgeon) CompleteUndefine(text string) []string {
 	sort.Strings(out)
 	return out
 }
+
 func (rs *Reposurgeon) DoUndefine(line string) bool {
 	words := strings.SplitN(line, " ", 1)
 	name := words[0]
@@ -17626,6 +17641,7 @@ repositories, cleaning up after 'timequake', to ensure that the surgical
 language can count on having a unique action-stamp ID for each commit.
 `)
 }
+
 func (rs *Reposurgeon) DoTimebump(line string) (stopOut bool) {
 	if rs.chosen() == nil {
 		complain("no repo has been chosen.")
@@ -18069,6 +18085,7 @@ The program will error out if the major version has changed (which
 means the surgical language is not backwards compatible).
 `)
 }
+
 func (rs *Reposurgeon) DoVersion(line string) (stopOut bool) {
 	if line == "" {
 		supported := make([]string, 0)
@@ -18112,10 +18129,12 @@ func (rs *Reposurgeon) HelpElapsed() {
 Desplay elapsed time since start.
 `)
 }
+
 func (rs *Reposurgeon) DoElapsed(_line string) (stopOut bool) {
 	announce(debugSHOUT, "elapsed time %v.", time.Now().Sub(rs.startTime))
 	return false
 }
+
 func (rs *Reposurgeon) HelpExit() {
 	rs.helpOutput(`
 Exit the program cleanly, emitting a goodbye message.
@@ -18123,6 +18142,7 @@ Exit the program cleanly, emitting a goodbye message.
 Typing EOT (usually Ctrl-D) will exit quietly.
 `)
 }
+
 func (rs *Reposurgeon) DoExit(_line string) (stopOut bool) {
 	announce(debugSHOUT, "exiting, elapsed time %v.", time.Now().Sub(rs.startTime))
 	return true
@@ -18148,6 +18168,7 @@ evaluated with shell quoting of tokens, so that spaces can be
 included.
 `)
 }
+
 func (rs *Reposurgeon) DoPrompt(lineIn string) bool {
 	if lineIn != "" {
 		words, err := shlex.Split(lineIn, true)
@@ -18166,6 +18187,7 @@ func (rs *Reposurgeon) DoPrompt(lineIn string) bool {
 func (rs *Reposurgeon) HelpHelp() {
 	rs.helpOutput("Show help for a command. Follow with space and the command name.\n")
 }
+
 func (rs *Reposurgeon) HelpSelection() {
 	rs.helpOutput(`
 A quick example-centered reference for selection-set syntax.
@@ -18235,6 +18257,7 @@ repeatedly for effect. Do set negation with prefix ~; it has higher
 precedence than & | but lower than ?.
 `)
 }
+
 func (rs *Reposurgeon) HelpSyntax() {
 	rs.helpOutput(`
 Commands are distinguished by a command keyword.  Most take a selection set
@@ -18253,6 +18276,7 @@ as the name of a file from which command output should be taken.  Any
 remaining arguments are available to the command logic.
 `)
 }
+
 func (rs *Reposurgeon) HelpFunctions() {
 	//FIXME: This code is incorrect as the handler functions are no longer
 	//methods of the reposurgeon class.  We're keeping it around for the
@@ -18281,6 +18305,7 @@ them. Higher levels of verbosity are available but intended for
 developers only.
 `)
 }
+
 func (rs *Reposurgeon) DoVerbose(lineIn string) (stopOut bool) {
 	if len(lineIn) != 0 {
 		nverbose, err := strconv.Atoi(lineIn)
@@ -18295,6 +18320,7 @@ func (rs *Reposurgeon) DoVerbose(lineIn string) (stopOut bool) {
 	}
 	return false
 }
+
 func (rs *Reposurgeon) HelpQuiet() {
 	rs.helpOutput(`
 Without an argument, this command requests a report of the quiet
@@ -18303,6 +18329,7 @@ on, time-varying report fields which would otherwise cause spurious
 failures in regression testing are suppressed.
 `)
 }
+
 func (rs *Reposurgeon) DoQuiet(lineIn string) (stopOut bool) {
 	if lineIn == "" {
 		if rs.quiet {
@@ -18315,11 +18342,13 @@ func (rs *Reposurgeon) DoQuiet(lineIn string) (stopOut bool) {
 	}
 	return false
 }
+
 func (rs *Reposurgeon) HelpEcho() {
 	rs.helpOutput(`
 Set or clear echoing of commands before processing.
 `)
 }
+
 func (rs *Reposurgeon) DoEcho(lineIn string) (stopOut bool) {
 	if len(lineIn) != 0 {
 		echo, err := strconv.Atoi(lineIn)
@@ -18334,6 +18363,7 @@ func (rs *Reposurgeon) DoEcho(lineIn string) (stopOut bool) {
 	}
 	return false
 }
+
 func (rs *Reposurgeon) HelpPrint() {
 	rs.helpOutput("Print a literal string.\n")
 }
@@ -18348,6 +18378,7 @@ func (rs *Reposurgeon) DoPrint(lineIn string) (stopOut bool) {
 func (rs *Reposurgeon) HelpScript() {
 	rs.helpOutput("Read and execute commands from a named file.\n")
 }
+
 func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 	interpreter := rs.cmd
 	if len(lineIn) == 0 {
