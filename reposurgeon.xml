@@ -1992,7 +1992,7 @@ is prepended.</para>
 <varlistentry>
 <term><command>tag</command>
         <emphasis>tagname</emphasis>
-        <command>{move|rename|delete}</command>
+        <command>{create|move|rename|delete}</command>
         <emphasis>[arg]</emphasis>
 </term>
 <listitem>
