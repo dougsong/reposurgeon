@@ -11405,10 +11405,6 @@ func (rs *Reposurgeon) PreCommand(line string) string {
 		}
 	}(&line)
 
-	if strings.HasPrefix(strings.TrimSpace(line), "?") {
-		line = strings.Replace(line, "?", "help", 1)
-	}
-
 	machine, rest := rs.parseSelectionSet(line)
 	if rs.chosen() != nil {
 		if machine != nil {
