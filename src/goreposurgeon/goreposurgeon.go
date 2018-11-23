@@ -6924,8 +6924,8 @@ func (repo *Repository) named(ref string) orderedIntSet {
 		daymark, err3 := time.Parse("2006-01-02", datestr)
 		if err3 == nil {
 			datematch = func(u Date) bool {
-				d := daymark.Sub(u.timestamp).Hours()
-				return d < -24 || d > 24
+				d := u.timestamp.Sub(daymark).Hours()
+				return d >= 0 && d < 24
 			}
 		} else {
 			panic(throw("command", "unparseable date in "+ref))
