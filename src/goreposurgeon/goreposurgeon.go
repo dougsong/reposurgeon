@@ -10358,6 +10358,9 @@ func (p *SelectionParser) parseDisjunct() selEvaluator {
 	// FIXME: @debug_lexer
 	p.eatWS()
 	op := p.imp().parseConjunct()
+	if op == nil {
+		return nil
+	}
 	for {
 		p.eatWS()
 		if p.peek() != '|' {
@@ -10398,11 +10401,7 @@ func (p *SelectionParser) parseConjunct() selEvaluator {
 	p.eatWS()
 	op := p.imp().parseTerm()
 	if op == nil {
-		return func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
-			noop := func(selEvalState, *fastOrderedIntSet) *fastOrderedIntSet { return nil }
-
-			return p.imp().evalConjunct(x, s, noop, nil)
-		}
+		return nil
 	}
 	for {
 		p.eatWS()
@@ -11487,6 +11486,9 @@ func (rs *Reposurgeon) isNamed(s string) (result bool) {
 func (rs *Reposurgeon) parseExpression() selEvaluator {
 	// FIXME: @debug_lexer
 	value := rs.SelectionParser.parseExpression()
+	if value == nil {
+		return nil
+	}
 	for {
 		if rs.peek() != '?' {
 			break

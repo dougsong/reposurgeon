@@ -8309,6 +8309,8 @@ class SelectionParser(object):
         "Parse a disjunctive expression (| has lowest precedence)"
         self.line = self.line.lstrip()
         op = self.parse_conjunct()
+        if op is None:
+            return None
         while True:
             self.line = self.line.lstrip()
             if self.peek() != '|':
@@ -8336,7 +8338,7 @@ class SelectionParser(object):
         self.line = self.line.lstrip()
         op = self.parse_term()
         if op is None:
-            return lambda p: self.eval_conjunct(p, lambda q: None, None)
+            return None
         while True:
             self.line = self.line.lstrip()
             if self.peek() != '&':
@@ -9041,6 +9043,8 @@ developers.
     @debug_lexer
     def parse_expression(self):
         value = super(RepoSurgeon, self).parse_expression()
+        if value is None:
+            return None
         while True:
             c = self.peek()
             if c != '?':
