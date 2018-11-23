@@ -61,7 +61,8 @@ dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc -f nofooter.conf
 
 # Temporary; it's here to track which test sections have succeeded
 goregress:
-	 cd test; make -k REPOSURGEON=goreposurgeon roundtrip roundtrip-compress
+	 cd test; make REPOSURGEON=goreposurgeon roundtrip roundtrip-compress \
+		messagebox
 
 # If you get a compilation failure on the golang-pkg-pcre library,
 # install libpcre3-dev or equivelent.
