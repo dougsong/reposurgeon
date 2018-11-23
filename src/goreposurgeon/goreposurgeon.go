@@ -11249,6 +11249,7 @@ func (lp *LineParse) Closem() {
 
 type CmdContext struct {
 	cmd          *kommandant.Kmdt
+	echo         int
 	definitions  map[string][]string
 	inputIsStdin bool
 }
@@ -11259,6 +11260,13 @@ type MacroDefinition struct {
 	CmdContext
 	body  []string
 	depth int
+}
+
+func (md *MacroDefinition) PreCommand(line string) string {
+	if md.echo > 0 {
+		fmt.Fprintln(os.Stdout, line)
+	}
+	return line
 }
 
 func (md *MacroDefinition) DefaultCommand(line string) bool {
@@ -11292,7 +11300,6 @@ type Reposurgeon struct {
 	RepositoryList
 	SelectionParser
 	quiet            bool
-	echo             int
 	callstack        [][]string
 	profileLog       string
 	selection        orderedIntSet
@@ -17415,6 +17422,7 @@ func (rs *Reposurgeon) DoDefine(lineIn string) bool {
 			body := make(chan []string)
 			innerloop := func() {
 				inner := new(MacroDefinition)
+				inner.echo = rs.echo
 				inner.definitions = make(map[string][]string, 0)
 				inner.cmd = kommandant.NewKommandant(inner)
 				if rs.inputIsStdin {
