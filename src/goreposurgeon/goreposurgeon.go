@@ -16278,7 +16278,7 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 	tags := make([]*Tag, 0)
 	resets := make([]*Reset, 0)
 	commits := make([]*Commit, 0)
-	if tagname[0] == os.PathSeparator && tagname[len(tagname)-1] == os.PathSeparator {
+	if tagname[0] == '/' && tagname[len(tagname)-1] == '/' {
 		// Regexp - can refer to a list of tags matched
 		tagre := regexp.MustCompile(tagname[1 : len(tagname)-1])
 		for _, event := range repo.events {
