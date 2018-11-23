@@ -29,6 +29,7 @@ read <simple.fi
 <lightweight-sample> resolve Branch tip
 /annotated-sample/b resolve Tag
 <annotated-sample> resolve Tag location
+annotated-sample resolve Tag implicit
 /regression/ resolve Text search
 /Raymond/ resolve Commit comment search
 [Makefile] resolve Path search

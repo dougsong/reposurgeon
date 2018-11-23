@@ -55,6 +55,8 @@ Branch tip: [83]
 Tag: [84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 131]
 <annotated-sample> resolve Tag location
 Tag location: [131]
+annotated-sample resolve Tag implicit
+Tag implicit: [131]
 /regression/ resolve Text search
 Text search: [50, 58, 120, 131]
 /Raymond/ resolve Commit comment search

@@ -11449,8 +11449,10 @@ func (rs *Reposurgeon) DoShell(line string) (stopOut bool) {
 // The selection-language parsing code starts here.
 //
 func (rs *Reposurgeon) parseSelectionSet(line string) (machine selEvaluator, rest string) {
-	if rs.isNamed(line) {
-		line = "<" + line + ">"
+	s := strings.TrimLeft(line, " \t")
+	i := strings.IndexAny(s, " \t")
+	if i > 0 && rs.isNamed(s[:i]) {
+		line = "<" + s[:i] + ">" + s[i:]
 	}
 
 	return rs.imp().compile(line)

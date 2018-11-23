@@ -9034,8 +9034,9 @@ developers.
         if not self.chosen():
             return line
         try:
-            if self.chosen().named(line):
-                line = "<" + line + ">"
+            parts = line.split(None,1)
+            if len(parts) != 0 and self.chosen().named(parts[0]):
+                line = "<" + parts[0] + "> " + (parts[1] if len(parts) > 1 else "")
         except Recoverable:
             pass
         self.selection, line = self.parse(line, self.chosen().all())
