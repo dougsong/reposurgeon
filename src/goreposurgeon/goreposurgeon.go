@@ -6958,7 +6958,7 @@ func (repo *Repository) named(ref string) orderedIntSet {
 				} else if tag.tagger.email != emailID {
 					continue
 				} else {
-					matches = append(matches, ei)
+					matches.Add(ei)
 				}
 			}
 		}
