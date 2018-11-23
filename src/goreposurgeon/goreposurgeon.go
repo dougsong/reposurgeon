@@ -3229,21 +3229,24 @@ func (b *Blob) getContent() string {
 		}
 		return string(data)
 	}
-	var file io.ReadCloser
-	var err error
-	var buf bytes.Buffer
-	if context.flagOptions["compressblobs"] {
-		file, err = gzip.NewReader(&buf)
-	} else {
-		file, err = os.Open(b.getBlobfile(false))
-	}
+	var data []byte
+	file, err := os.Open(b.getBlobfile(false))
 	if err != nil {
-		panic(fmt.Errorf("Blob creation: %v", err))
+		panic(fmt.Errorf("Blob read: %v", err))
 	}
 	defer file.Close()
-	data, err := ioutil.ReadAll(file)
+	if context.flagOptions["compressblobs"] {
+		input, err2 := gzip.NewReader(file)
+		if err2 != nil {
+			panic(err.Error())
+		}
+		defer input.Close()
+		data, err = ioutil.ReadAll(input)
+	} else {
+		data, err = ioutil.ReadAll(file)
+	}
 	if err != nil {
-		panic(fmt.Errorf("Blob write: %v", err))
+		panic(fmt.Errorf("Blob read: %v", err))
 	}
 	return string(data)
 }
@@ -3253,22 +3256,22 @@ func (b *Blob) setContent(text string, tell int64) {
 	b.start = tell
 	b.size = int64(len(text))
 	if b.hasfile() {
-		var file io.WriteCloser
-		var err error
-		var buf bytes.Buffer
-		if context.flagOptions["compressblobs"] {
-			file = gzip.NewWriter(&buf)
-		} else {
-			file, err = os.OpenFile(b.getBlobfile(true),
-				os.O_WRONLY|os.O_CREATE, userReadWriteMode)
-		}
-		if err != nil {
-			panic(fmt.Errorf("Blob update: %v", err))
-		}
-		defer file.Close()
-		_, err = io.WriteString(file, text)
+		file, err := os.OpenFile(b.getBlobfile(true),
+			os.O_WRONLY|os.O_CREATE, userReadWriteMode)
 		if err != nil {
 			panic(fmt.Errorf("Blob write: %v", err))
+		}
+		defer file.Close()
+		if context.flagOptions["compressblobs"] {
+			output := gzip.NewWriter(file)
+
+			defer output.Close()
+			_, err = io.WriteString(output, text)
+		} else {
+			_, err = io.WriteString(file, text)
+		}
+		if err != nil {
+			panic(fmt.Errorf("Blob writer: %v", err))
 		}
 	}
 }
