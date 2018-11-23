@@ -17425,6 +17425,7 @@ func (rs *Reposurgeon) DoDefine(lineIn string) bool {
 				inner.echo = rs.echo
 				inner.definitions = make(map[string][]string, 0)
 				inner.cmd = kommandant.NewKommandant(inner)
+				inner.cmd.SetStdin(rs.cmd.GetStdin())
 				if rs.inputIsStdin {
 					inner.cmd.SetPrompt("> ")
 				} else {
