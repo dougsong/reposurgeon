@@ -6922,7 +6922,7 @@ func (repo *Repository) named(ref string) orderedIntSet {
 		}
 	} else {
 		daymark, err3 := time.Parse("2006-01-02", datestr)
-		if err3 != nil {
+		if err3 == nil {
 			datematch = func(u Date) bool {
 				d := daymark.Sub(u.timestamp).Hours()
 				return d < -24 || d > 24
