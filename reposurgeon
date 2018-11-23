@@ -12479,6 +12479,8 @@ fields are changed and a warning is issued.
         # generates for each tag object corresponding branch labels on
         # some ancestor commits - the rule for where this stops is unclear.
         (tagname, line) = RepoSurgeon.pop_token(line)
+        if not tagname:
+            raise Recoverable("missing tag name")
         tagname = string_escape(tagname)
         (verb, line) = RepoSurgeon.pop_token(line)
         if verb == 'create':

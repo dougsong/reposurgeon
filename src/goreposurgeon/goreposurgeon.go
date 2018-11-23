@@ -16225,12 +16225,12 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 	// generates for each tag object corresponding branch labels on
 	// some ancestor commits - the rule for where this stops is unclear.
 	var tagname string
-	var err error
 	tagname, line = popToken(line)
-	if err != nil {
-		complain("while selecting tag: %v", err)
+	if len(tagname) == 0 {
+		complain("missing tag name")
 		return false
 	}
+	var err error
 	tagname, err = stringEscape(tagname)
 	if err != nil {
 		complain("in tag command: %v", err)
