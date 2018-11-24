@@ -22,8 +22,8 @@ do
     echo "Test $x"
     case $mode in
 	view)
-	    reposurgeon "read <$1.svn" "prefer git" "write -" 2>&1;;
+	    ${REPOSURGEON:-reposurgeon} "read <$1.svn" "prefer git" "write -" 2>&1;;
 	*)
-	    reposurgeon "read <$1.svn" "prefer git" "write -" 2>&1 | diff -u $1.chk - ;;
+	    ${REPOSURGEON:-reposurgeon} "read <$1.svn" "prefer git" "write -" 2>&1 | diff -u $1.chk - ;;
     esac
 done

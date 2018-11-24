@@ -15,5 +15,5 @@ TERM=dumb
 for x in $*;
 do
     echo "Test $x"
-    reposurgeon "script $1.tst" 2>&1 | diff -u $1.chk -
+    ${REPOSURGEON:-reposurgeon} "script $1.tst" 2>&1 | diff -u $1.chk -
 done
