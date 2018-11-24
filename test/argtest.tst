@@ -1,2 +1,2 @@
 ## Test argument substitution in a script call
-!echo $1
+!echo $0 $1

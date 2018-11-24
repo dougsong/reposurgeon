@@ -11444,7 +11444,7 @@ func (rs *Reposurgeon) DoShell(line string) (stopOut bool) {
 	if shell == "" {
 		shell = "/bin/sh"
 	}
-	announce(debugSHOUT, "Spawning %s -c %#v...", shell, line)
+	announce(debugCOMMANDS, "Spawning %s -c %#v...", shell, line)
 	cmd := exec.Command(shell, "-c", line)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -18404,7 +18404,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 	}
 	words := strings.Split(lineIn, " ")
 	rs.callstack = append(rs.callstack, words)
-	fname, vars := words[0], words[1:]
+	fname := words[0]
 	scriptfp, err := os.Open(fname)
 	if err != nil {
 		croak("script failure on '%s': %s", fname, err)
@@ -18472,8 +18472,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 		// End of heredoc simulation
 
 		// Positional variables
-		// TODO: double check to see if the +1 is correct
-		for i, v := range vars {
+		for i, v := range rs.callstack[len(rs.callstack)-1] {
 			ref := "$" + strconv.FormatInt(int64(i), 10)
 			scriptline = strings.Replace(scriptline, ref, v, -1)
 		}
