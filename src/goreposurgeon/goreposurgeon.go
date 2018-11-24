@@ -2550,8 +2550,12 @@ func nuke(directory string, legend string) {
 	os.RemoveAll(directory)
 }
 
+func complain(msg string, args ...interface{}) {
+	content := fmt.Sprintf(msg, args...)
+	os.Stderr.WriteString("reposurgeon: " + content + "\n")
+}
+
 func croak(msg string, args ...interface{}) {
-	// FIXME: set plag to abort script execution
 	content := fmt.Sprintf(msg, args...)
 	os.Stderr.WriteString("reposurgeon: " + content + "\n")
 	context.setAbort(true)
@@ -14754,7 +14758,8 @@ func (rs *Reposurgeon) DoAdd(line string) (stopOut bool) {
 		target = fields[2]
 		for _, event := range repo.commits(rs.selection) {
 			if event.paths(nil).Contains(source) || event.paths(nil).Contains(target) {
-				croak("%s already has an op for %s or %s",
+				//FIXME: -> croak() when tests can change 
+				complain("%s already has an op for %s or %s",
 					event.mark, source, target)
 				return false
 			}
