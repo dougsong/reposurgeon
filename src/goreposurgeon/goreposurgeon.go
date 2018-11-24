@@ -2078,7 +2078,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 	defer func(r **Repository, e *error) {
 		if thrown := catch("extractor", recover()); thrown != nil {
 			if strings.HasPrefix(thrown.class, "extractor") {
-				complain(thrown.message)
+				croak(thrown.message)
 				*e = errors.New(thrown.message)
 				*r = nil
 			}
@@ -2176,7 +2176,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 					continue
 				}
 				if !exists(pathname) {
-					complain("r%s: expected path %s does not exist!",
+					croak("r%s: expected path %s does not exist!",
 						revision, pathname)
 					continue
 				}
@@ -2550,7 +2550,7 @@ func nuke(directory string, legend string) {
 	os.RemoveAll(directory)
 }
 
-func complain(msg string, args ...interface{}) {
+func croak(msg string, args ...interface{}) {
 	// FIXME: set plag to abort script execution
 	content := fmt.Sprintf(msg, args...)
 	os.Stderr.WriteString("reposurgeon: " + content + "\n")
@@ -3502,7 +3502,7 @@ func (t *Tag) emailOut(modifiers stringSet, eventnum int,
 	msg.setHeader("Check-Text", check)
 	msg.setPayload(t.Comment)
 	if t.Comment != "" && !strings.HasSuffix(t.Comment, "\n") {
-		complain("in tag %s, comment was not LF-terminated.", t.name)
+		croak("in tag %s, comment was not LF-terminated.", t.name)
 	}
 	if filterRegexp != nil {
 		msg.filterHeaders(filterRegexp)
@@ -4308,7 +4308,7 @@ func (commit *Commit) tags(_modifiers stringSet, eventnum int, _cols int) string
 			case *Commit:
 				successorBranches.Add(child.(*Commit).Branch)
 			case *Callout:
-				complain("internal error: callouts do not have branches: %s",
+				croak("internal error: callouts do not have branches: %s",
 					child.idMe())
 			default:
 				panic("In tags method, unexpected type in child list")
@@ -4358,7 +4358,7 @@ func (commit *Commit) emailOut(modifiers stringSet,
 	msg.setHeader("Check-Text", check)
 	msg.setPayload(commit.Comment)
 	if !strings.HasSuffix(commit.Comment, "\n") {
-		complain("in commit %s, comment was not LF-terminated.",
+		croak("in commit %s, comment was not LF-terminated.",
 			commit.mark)
 	}
 
@@ -4629,7 +4629,7 @@ func (commit *Commit) setParents(parents []CommitLike) {
 		case (Commit):
 			parent.(*Commit)._childNodes = commitRemove(parent.(*Commit)._childNodes, commit)
 		case (Callout):
-			complain("not removing callout %s", parent.(Callout).mark)
+			croak("not removing callout %s", parent.(Callout).mark)
 		}
 	}
 	commit._parentNodes = parents
@@ -4683,7 +4683,7 @@ func (commit *Commit) addCallout(mark string) {
 func (commit *Commit) insertParent(idx int, mark string) {
 	newparent := commit.repo.markToEvent(mark)
 	if newparent == nil {
-		complain("invalid mark %s passed to insertParent", mark)
+		croak("invalid mark %s passed to insertParent", mark)
 		return
 	}
 	// Stupid slice tricks: https://github.com/golang/go/wiki/SliceTricks
@@ -4884,7 +4884,7 @@ func (commit *Commit) manifest() map[string]*ManifestEntry {
 				commit._manifest[k] = v
 			}
 		case *Callout:
-			complain("internal error: can't get through a callout")
+			croak("internal error: can't get through a callout")
 		default:
 			panic("manifest() found unexpected type in parent list")
 		}
@@ -4956,7 +4956,7 @@ func (commit *Commit) canonicalize() {
 			case *Commit:
 				previous = p.(*Commit).manifest()
 			case *Callout:
-				complain("internal error: can't get through a callout")
+				croak("internal error: can't get through a callout")
 				return
 			default:
 				panic("manifest() found unexpected type in parent list")
@@ -5023,7 +5023,7 @@ func (commit *Commit) checkout(directory string) string {
 
 	defer func() {
 		if r := recover(); r != nil {
-			complain("could not create checkout directory or files: %v.", r)
+			croak("could not create checkout directory or files: %v.", r)
 		}
 	}()
 
@@ -5090,7 +5090,7 @@ func (commit *Commit) head() string {
 				return child.(*Commit).head()
 			}
 		case *Callout:
-			complain("internal error: callouts do not have branches: %s",
+			croak("internal error: callouts do not have branches: %s",
 				child.idMe())
 		}
 	}
@@ -5099,7 +5099,7 @@ func (commit *Commit) head() string {
 		case *Commit:
 			child.(*Commit).head() // there was only one child
 		case *Callout:
-			complain("internal error: callouts do not have branches: %s",
+			croak("internal error: callouts do not have branches: %s",
 				child.idMe())
 		}
 	}
@@ -5571,9 +5571,9 @@ func (sp *StreamParser) error(msg string) {
 func (sp *StreamParser) warn(msg string) {
 	// Display a parse warning associated with a line.
 	if sp.importLine > 0 {
-		complain("%s at line %d", msg, sp.importLine)
+		croak("%s at line %d", msg, sp.importLine)
 	} else {
-		complain(msg)
+		croak(msg)
 	}
 }
 
@@ -5582,7 +5582,7 @@ func (sp *StreamParser) gripe(msg string) {
 	if context.verbose < 2 {
 		sp.warnings = append(sp.warnings, msg)
 	} else {
-		complain(msg)
+		croak(msg)
 	}
 }
 
@@ -6398,7 +6398,7 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 		sp.error("ignoring empty repository")
 	}
 	for _, warning := range sp.warnings {
-		complain(warning)
+		croak(warning)
 	}
 
 	// FIXME: When we have signal notifications, fire the defer on signal.
@@ -6407,7 +6407,7 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 			if baton != nil {
 				baton.exit("interrupted by error")
 			}
-			complain(e.message)
+			croak(e.message)
 			nuke(sp.repo.subdir(""), fmt.Sprintf("import interrupted, removing %s", sp.repo.subdir("")))
 		}
 		if sp.repo.seekstream != nil {
@@ -7411,7 +7411,7 @@ func (repo *Repository) parseDollarCookies() {
 			}
 			blob := repo.markToEvent(fileop.ref).(*Blob)
 			if commit.properties.get("legacy") != "" {
-				complain("legacy property of %s overwritten",
+				croak("legacy property of %s overwritten",
 					commit.mark)
 			}
 
@@ -7428,7 +7428,7 @@ func (repo *Repository) parseDollarCookies() {
 					// that cvs2svn or
 					// git-svn didn't pick
 					// up on.
-					complain("mismatched CVS header path '%s' in %s vs '%s' in %s",
+					croak("mismatched CVS header path '%s' in %s vs '%s' in %s",
 						fileop.Path, commit.mark, blob.cookie.path, blob.mark)
 				}
 				cvskey := fmt.Sprintf("CVS:%s:%s", fileop.Path, blob.cookie.path)
@@ -7652,7 +7652,7 @@ func (repo *Repository) filterAssignments(f func(Event) bool) {
 			}
 		}
 		if len(values) > 0 && len(newassigns) == 0 {
-			complain(fmt.Sprintf("sequence modification left %s empty", name))
+			croak(fmt.Sprintf("sequence modification left %s empty", name))
 		}
 		repo.assignments[name] = newassigns
 	}
@@ -7664,7 +7664,7 @@ func (repo *Repository) declareSequenceMutation(warning string) {
 	repo._namecache = nil
 	if len(repo.assignments) > 0 && warning != "" {
 		repo.assignments = nil
-		complain("assignments invalidated by " + warning)
+		croak("assignments invalidated by " + warning)
 	}
 }
 
@@ -7915,7 +7915,7 @@ func (repo *Repository) canonicalize(commit *Commit) orderedIntSet {
 							commit.fileopDump()
 						}
 						if warn != "" {
-							complain(warn)
+							croak(warn)
 						}
 						coverage.Add(cn)
 					}
@@ -7986,18 +7986,18 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 			if delete {
 				speak := fmt.Sprintf("warning: commit %s to be deleted has ", commit.mark)
 				if strings.Contains(commit.Branch, "/") && !strings.Contains(commit.Branch, "/heads/") {
-					complain(speak + fmt.Sprintf("non-head branch attribute %s", commit.Branch))
+					croak(speak + fmt.Sprintf("non-head branch attribute %s", commit.Branch))
 				}
 				if !commit.alldeletes(nil) {
-					complain(speak + "non-delete fileops.")
+					croak(speak + "non-delete fileops.")
 				}
 			}
 			if !delete {
 				if pushback && !commit.hasParents() {
-					complain("warning: pushback of parentless commit %s", commit.mark)
+					croak("warning: pushback of parentless commit %s", commit.mark)
 				}
 				if pushforward && !commit.hasChildren() {
-					complain("warning: pushforward of childless commit %s", commit.mark)
+					croak("warning: pushforward of childless commit %s", commit.mark)
 				}
 			}
 		}
@@ -8116,7 +8116,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 					// comment, ignoring empty log
 					// messages.
 					if policy.Contains("--empty-only") && !emptyComment(child.Comment) {
-						complain(fmt.Sprintf("--empty is on and %s comment is nonempty", child.idMe()))
+						croak(fmt.Sprintf("--empty is on and %s comment is nonempty", child.idMe()))
 					}
 					child.Comment = composeComment(commit.Comment,
 						child.Comment)
@@ -8158,7 +8158,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				parent.invalidatePathsetCache()
 				// Also append child"s comment to its parent"s
 				if policy.Contains("--empty-only") && !emptyComment(parent.Comment) {
-					complain(fmt.Sprintf("--empty is on and %s comment is nonempty", parent.idMe()))
+					croak(fmt.Sprintf("--empty is on and %s comment is nonempty", parent.idMe()))
 				}
 				parent.Comment = composeComment(parent.Comment,
 					commit.Comment)
@@ -8253,7 +8253,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 			if (!policy.Contains("--coalesce") && !delete) || debugEnable(debugDELETE) {
 				for path, oplist := range cliques {
 					if len(oplist) > 1 && !dquiet {
-						complain("commit %s has multiple Ms for %s", commit.mark, path)
+						croak("commit %s has multiple Ms for %s", commit.mark, path)
 					}
 				}
 			}
@@ -8466,7 +8466,7 @@ func (repo *Repository) resort() {
 		//assert len(t - o) == 0
 		leftout := orig.Subtract(tsorted)
 		if len(leftout) > 0 {
-			complain("event re-sort failed due to one or more dependency cycles involving the following events: %v", leftout)
+			croak("event re-sort failed due to one or more dependency cycles involving the following events: %v", leftout)
 			return
 		}
 		newEvents := make([]Event, len(repo.events))
@@ -8512,17 +8512,17 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 		}
 	}
 	//if events == sortedEvents {
-	//	complain("commits already in desired order")
+	//	croak("commits already in desired order")
 	//}
 	for _, e := range sortedEvents[1:] {
 		if len(e.parents()) > 1 {
-			complain("non-linear history detected: %s", e.idMe())
+			croak("non-linear history detected: %s", e.idMe())
 			return
 		}
 	}
 	lastEvent := sortedEvents[len(sortedEvents)-1]
 	if len(lastEvent.children()) > 1 {
-		complain("non-linear history detected: %s", lastEvent.idMe())
+		croak("non-linear history detected: %s", lastEvent.idMe())
 		return
 	}
 	for i, e := range sortedEvents[:len(sortedEvents)-1] {
@@ -8535,7 +8535,7 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 			}
 		}
 		if !isaparent {
-			complain("selected commit range not contiguous")
+			croak("selected commit range not contiguous")
 			return
 		}
 	}
@@ -8562,7 +8562,7 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 			}
 			if path != "" && c.visible(path) != nil {
 				if !bequiet {
-					complain("%s '%s' fileop references non-existent '%s' after re-order", e.idMe(), op.op, path)
+					croak("%s '%s' fileop references non-existent '%s' after re-order", e.idMe(), op.op, path)
 				}
 			} else {
 				ops = append(ops, op)
@@ -8572,7 +8572,7 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 			c.setOperations(ops)
 			c.invalidatePathsetCache()
 			if !bequiet && len(ops) == 0 {
-				complain("%s no fileops remain after re-order", c.idMe())
+				croak("%s no fileops remain after re-order", c.idMe())
 			}
 		}
 	}
@@ -9172,7 +9172,7 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 			var allfiles = newStringSet()
 			err = filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 				if err != nil {
-					complain("path access failure %q: %v", path, err)
+					croak("path access failure %q: %v", path, err)
 					return err
 				}
 				if info.IsDir() && (info.Name() == vcs.subdirectory || strings.HasPrefix(info.Name(), ".rs")) {
@@ -9242,7 +9242,7 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 					stamp := rfc3339(time.Unix(int64(inttime), 0))
 					stamp += "!" + cperson
 					if stampSet[stamp] {
-						complain("more than one commit matches %s (%s)",
+						croak("more than one commit matches %s (%s)",
 							stamp, hashv)
 
 						delete(hashToAction, hashv)
@@ -9297,7 +9297,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 
 	}
 	if !repo.branchset().Contains("refs/heads/master") {
-		complain("repository has no branch named master. git will have no HEAD commit after the import; consider using the branch command to rename one of your branches to master.")
+		croak("repository has no branch named master. git will have no HEAD commit after the import; consider using the branch command to rename one of your branches to master.")
 	}
 	chdir := func(directory string, legend string) {
 		os.Chdir(directory)
@@ -9387,7 +9387,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 	if vcs.checkout != "" {
 		runProcess(vcs.checkout, "repository checkout")
 	} else {
-		complain("checkout not supported for %s skipping", vcs.name)
+		croak("checkout not supported for %s skipping", vcs.name)
 
 	}
 	if context.verbose > 0 {
@@ -9740,7 +9740,7 @@ func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
 		return false
 	}
 	if err != nil {
-		complain(err.Error())
+		croak(err.Error())
 	}
 	// Repo can be split, so we need to color tags
 	for _, event := range rl.repo.events {
@@ -9768,7 +9768,7 @@ func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
 	lateBranches := newStringSet()
 	for _, commit := range rl.repo.commits(nil) {
 		if commit.color == "" {
-			complain(fmt.Sprintf("%s is uncolored!", commit.mark))
+			croak(fmt.Sprintf("%s is uncolored!", commit.mark))
 		} else if commit.color == "early" {
 			earlyBranches.Add(commit.Branch)
 		} else if commit.color == "late" {
@@ -9847,7 +9847,7 @@ func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
 func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
 	for _, x := range factors {
 		if len(x.commits(nil)) == 0 {
-			complain(fmt.Sprintf("empty factor %s", x.name))
+			croak(fmt.Sprintf("empty factor %s", x.name))
 			return
 		}
 	}
@@ -11336,7 +11336,7 @@ func (rs *Reposurgeon) SetCore(k *kommandant.Kmdt) {
 	k.OneCommand = func(line string) (stop bool) {
 		defer func(stop *bool) {
 			if e := catch("command", recover()); e != nil {
-				complain(e.message)
+				croak(e.message)
 				*stop = false
 			}
 		}(&stop)
@@ -11407,7 +11407,7 @@ func (rs *Reposurgeon) PreCommand(line string) string {
 
 	defer func(line *string) {
 		if e := catch("command", recover()); e != nil {
-			complain(e.message)
+			croak(e.message)
 			*line = ""
 		}
 	}(&line)
@@ -11447,7 +11447,7 @@ func (rs *Reposurgeon) DoShell(line string) (stopOut bool) {
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		complain("spawn of %s returned error: %v", shell, err)
+		croak("spawn of %s returned error: %v", shell, err)
 	}
 	return false
 }
@@ -12070,7 +12070,7 @@ func (rs *Reposurgeon) accumulateCommits(subarg *fastOrderedIntSet,
 // Generate a repository report on all objects with a specified display method.
 func (rs *Reposurgeon) reportSelect(parse *LineParse, display func(*LineParse, int, Event) string) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return
 	}
 	repo := rs.chosen()
@@ -12131,14 +12131,14 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 		editor = parse.line
 	}
 	if editor == "" {
-		complain("you have not specified an editor and $EDITOR is unset")
+		croak("you have not specified an editor and $EDITOR is unset")
 		// Fallback on /usr/bin/editor on Debian and
 		// derivatives.  See
 		// https://www.debian.org/doc/debian-policy/#editors-and-pagers
 		editor = "/usr/bin/editor"
 		realEditor, err := filepath.EvalSymlinks(editor)
 		if err != nil {
-			complain(err.Error())
+			croak(err.Error())
 			return
 		}
 		if islink(editor) && exists(realEditor) {
@@ -12157,7 +12157,7 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 				for _, fileop := range commit.operations() {
 					if fileop.op == opM && fileop.ref == singleton.getMark() {
 						if len(commit.findSuccessors(fileop.Path)) > 0 {
-							complain("beware: not the last 'M %s' on its branch", fileop.Path)
+							croak("beware: not the last 'M %s' on its branch", fileop.Path)
 						}
 						break
 					}
@@ -12170,7 +12170,7 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 
 		file, err1 := ioutil.TempFile(".", "rse")
 		if err1 != nil {
-			complain("creating tempfile for edit: %v", err1)
+			croak("creating tempfile for edit: %v", err1)
 			return
 		}
 		defer os.Remove(file.Name())
@@ -12190,7 +12190,7 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 		cmd.Stderr = os.Stderr
 		err := cmd.Run()
 		if err != nil {
-			complain("running editor: %v", err)
+			croak("running editor: %v", err)
 			return
 		}
 		rs.DoMsgin("<" + file.Name())
@@ -12215,7 +12215,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 	}
 	// Try to prevent user from shooting self in foot
 	if safety && blobs && nonblobs {
-		complain("cannot transform blobs and nonblobs in same command")
+		croak("cannot transform blobs and nonblobs in same command")
 		return
 	}
 	// If user is transforming blobs, transform all inlines within the range.
@@ -12390,7 +12390,7 @@ that would otherwise be performed repeatedly, e.g. in macro calls.
 func (rs *Reposurgeon) DoAssign(line string) (stopOut bool) {
 	repo := rs.chosen()
 	if repo == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	if rs.selection == nil {
@@ -12446,7 +12446,7 @@ func (rs *Reposurgeon) CompleteUnassign(text string) []string {
 func (rs *Reposurgeon) DoUnassign(line string) (stopOut bool) {
 	repo := rs.chosen()
 	if repo == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	if rs.selection != nil {
@@ -12469,7 +12469,7 @@ List all known symbolic names of branches and tags. Supports > redirection.
 
 func (rs *Reposurgeon) DoNames(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return
 	}
 	parse := rs.newLineParse(line, stringSet{"stdout"})
@@ -12510,7 +12510,7 @@ func (rs *Reposurgeon) HelpCoverage() {
 func (rs *Reposurgeon) DoCoverage(lineIn string) bool {
 	repo := rs.chosen()
 	if repo == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
@@ -12537,7 +12537,7 @@ file in the blob.  Supports > redirection.
 func (rs *Reposurgeon) DoIndex(lineIn string) bool {
 	repo := rs.chosen()
 	if repo == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	// We could do all this logic using reportSelect() and index() methods
@@ -12615,7 +12615,7 @@ Report phase-timing results and memory usage from repository analysis.
 // Report repo-analysis times and memory usage.
 func (rs *Reposurgeon) DoTiming(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return
 	}
 	if line != "" {
@@ -12645,7 +12645,7 @@ func (rs *Reposurgeon) DoStats(line string) bool {
 	defer parse.Closem()
 	if parse.line == "" {
 		if rs.chosen() == nil {
-			complain("no repo has been chosen.")
+			croak("no repo has been chosen.")
 			return false
 		}
 		parse.line = rs.chosen().name
@@ -12692,7 +12692,7 @@ in the currently-selected repo. Supports > redirection.
 }
 func (rs *Reposurgeon) DoCount(lineIn string) bool {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	if rs.selection == nil {
@@ -12838,7 +12838,7 @@ unwieldy. Supports > redirection.
 // Report branch relative sizes.
 func (rs *Reposurgeon) DoSizes(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	repo := rs.chosen()
@@ -12865,7 +12865,7 @@ func (rs *Reposurgeon) DoSizes(line string) (stopOut bool) {
 					}
 					ref := repo.markToEvent(fileop.ref)
 					if ref == nil {
-						complain("internal error: %s should be a blob reference", fileop.ref)
+						croak("internal error: %s should be a blob reference", fileop.ref)
 						continue
 					}
 					sizes[commit.Branch] += int(ref.(*Blob).size)
@@ -12874,7 +12874,7 @@ func (rs *Reposurgeon) DoSizes(line string) (stopOut bool) {
 		} else if tag, ok := repo.events[i].(*Tag); ok {
 			commit := repo.markToEvent(tag.committish).(*Commit)
 			if commit == nil {
-				complain("internal error: target of tag %s is nil", tag.name)
+				croak("internal error: target of tag %s is nil", tag.name)
 				continue
 			}
 			if _, ok := sizes[commit.Branch]; !ok {
@@ -12916,7 +12916,7 @@ Supports > redirection.
 // Look for lint in a repo.
 func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return
 	}
 	if rs.selection == nil {
@@ -13091,7 +13091,7 @@ func (rs *Reposurgeon) DoPrefer(line string) (stopOut bool) {
 			}
 		}
 		if rs.preferred == nil {
-			complain("known types are: %s\n", known)
+			croak("known types are: %s\n", known)
 		}
 	}
 	if context.verbose > 0 {
@@ -13136,7 +13136,7 @@ func (rs *Reposurgeon) CompleteSourcetype(text string) []string {
 // Report or select the current repository's source type.
 func (rs *Reposurgeon) DoSourcetype(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return
 	}
 	repo := rs.chosen()
@@ -13157,7 +13157,7 @@ func (rs *Reposurgeon) DoSourcetype(line string) (stopOut bool) {
 				known += " " + importer.name
 			}
 		}
-		complain("known types are %v.", known)
+		croak("known types are %v.", known)
 	}
 	return false
 }
@@ -13199,7 +13199,7 @@ func (rs *Reposurgeon) DoChoose(line string) (stopOut bool) {
 	}
 	if len(rs.repolist) == 0 {
 		if context.verbose > 0 {
-			complain("no repositories are loaded.")
+			croak("no repositories are loaded.")
 			return false
 		}
 	}
@@ -13223,7 +13223,7 @@ func (rs *Reposurgeon) DoChoose(line string) (stopOut bool) {
 				rs.DoStats(line)
 			}
 		} else {
-			complain("no such repo as %s", line)
+			croak("no such repo as %s", line)
 		}
 	}
 	return false
@@ -13244,7 +13244,7 @@ func (rs *Reposurgeon) CompleteDrop(text string) []string {
 func (rs *Reposurgeon) DoDrop(line string) (stopOut bool) {
 	if len(rs.reponames()) == 0 {
 		if context.verbose > 0 {
-			complain("no repositories are loaded.")
+			croak("no repositories are loaded.")
 			return false
 		}
 	}
@@ -13253,7 +13253,7 @@ func (rs *Reposurgeon) DoDrop(line string) (stopOut bool) {
 	}
 	if line == "" {
 		if rs.chosen() == nil {
-			complain("no repo has been chosen.")
+			croak("no repo has been chosen.")
 			return false
 		}
 		line = rs.chosen().name
@@ -13266,7 +13266,7 @@ func (rs *Reposurgeon) DoDrop(line string) (stopOut bool) {
 		holdrepo.cleanup()
 		rs.removeByName(line)
 	} else {
-		complain("no such repo as %s", line)
+		croak("no such repo as %s", line)
 	}
 	if context.verbose > 0 {
 		// Emit listing of remaining repos
@@ -13288,9 +13288,9 @@ func (rs *Reposurgeon) DoRename(line string) (stopOut bool) {
 		panic(throw("command", "rename does not take a selection set"))
 	}
 	if rs.reponames().Contains(line) {
-		complain("there is already a repo named %s.", line)
+		croak("there is already a repo named %s.", line)
 	} else if rs.chosen() == nil {
-		complain("no repository is currently chosen.")
+		croak("no repository is currently chosen.")
 	} else {
 		rs.chosen().rename(line)
 
@@ -13313,7 +13313,7 @@ func (rs *Reposurgeon) DoPreserve(line string) (stopOut bool) {
 		panic(throw("command", "preserve does not take a selection set"))
 	}
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	for _, filename := range strings.Fields(line) {
@@ -13338,7 +13338,7 @@ func (rs *Reposurgeon) DoUnpreserve(line string) (stopOut bool) {
 		panic(throw("command", "unpreserve does not take a selection set"))
 	}
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	for _, filename := range strings.Fields(line) {
@@ -13375,7 +13375,7 @@ For a list of supported types, invoke the 'prefer' command.
 // Read in a repository for surgery.
 func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 	if rs.selection != nil {
-		complain("read does not take a selection set")
+		croak("read does not take a selection set")
 		return false
 	}
 	parse := rs.newLineParse(line, []string{"stdin"})
@@ -13416,23 +13416,23 @@ func (rs *Reposurgeon) DoRead(line string) (stopOut bool) {
 		// interprets an empty argument list as '-'
 		cdir, err2 := os.Getwd()
 		if err2 != nil {
-			complain(err2.Error())
+			croak(err2.Error())
 			return false
 		}
 		repo, err2 = readRepo(cdir, parse.options, rs.preferred)
 		if err2 != nil {
-			complain(err2.Error())
+			croak(err2.Error())
 			return false
 		}
 	} else if isdir(parse.line) {
 		var err2 error
 		repo, err2 = readRepo(parse.line, parse.options, rs.preferred)
 		if err2 != nil {
-			complain(err2.Error())
+			croak(err2.Error())
 			return false
 		}
 	} else {
-		complain("read no longer takes a filename argument - use < redirection instead")
+		croak("read no longer takes a filename argument - use < redirection instead")
 		return false
 	}
 	rs.repolist = append(rs.repolist, repo)
@@ -13476,7 +13476,7 @@ For a list of supported types, invoke the 'prefer' command.
 // Stream out the results of repo surgery.
 func (rs *Reposurgeon) DoWrite(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	if rs.selection == nil {
@@ -13524,10 +13524,10 @@ func (rs *Reposurgeon) DoWrite(line string) (stopOut bool) {
 	} else if isdir(parse.line) {
 		err := rs.chosen().rebuildRepo(parse.line, parse.options, rs.preferred)
 		if err != nil {
-			complain(err.Error())
+			croak(err.Error())
 		}
 	} else {
-		complain("write no longer takes a filename argument - use > redirection instead")
+		croak("write no longer takes a filename argument - use > redirection instead")
 	}
 	return false
 }
@@ -13545,7 +13545,7 @@ before each event dump.
 func (rs *Reposurgeon) DoInspect(lineIn string) bool {
 	repo := rs.chosen()
 	if repo == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 
@@ -13588,7 +13588,7 @@ func (rs *Reposurgeon) CompleteStrip(text string) []string {
 func (rs *Reposurgeon) DoStrip(line string) (stopOut bool) {
 	repo := rs.chosen()
 	if repo == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	if rs.selection == nil {
@@ -13666,7 +13666,7 @@ for graphviz. Supports > redirection.
 // Dump a commit graph.
 func (rs *Reposurgeon) DoGraph(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	if rs.selection == nil {
@@ -13734,7 +13734,7 @@ its contents are backed up to a save directory.
 // Rebuild a repository from the edited state.
 func (rs *Reposurgeon) DoRebuild(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	//FIXME: when pre-command hook works.
@@ -13745,7 +13745,7 @@ func (rs *Reposurgeon) DoRebuild(line string) (stopOut bool) {
 	defer parse.Closem()
 	err := rs.chosen().rebuildRepo(parse.line, parse.options, rs.preferred)
 	if err != nil {
-		complain(err.Error())
+		croak(err.Error())
 	}
 	return false
 }
@@ -13778,11 +13778,11 @@ func (rs *Reposurgeon) DoMsgout(lineIn string) bool {
 			var err error
 			filterRegexp, err = regexp.Compile(s[1 : len(s)-1])
 			if err != nil {
-				complain("malformed filter option in msgout\n")
+				croak("malformed filter option in msgout\n")
 				return false
 			}
 		} else {
-			complain("malformed filter option in msgout\n")
+			croak("malformed filter option in msgout\n")
 			return false
 		}
 	}
@@ -13847,7 +13847,7 @@ CVS empty-comment marker.
 // Accept a message-box file representing object metadata and update from it.
 func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	repo := rs.chosen()
@@ -13856,7 +13856,7 @@ func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 	updateList := make([]*MessageBlock, 0)
 	r := bufio.NewReader(parse.stdin)
 	if r == nil {
-		complain("reader creation failed")
+		croak("reader creation failed")
 		return false
 	}
 	for {
@@ -13864,7 +13864,7 @@ func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			complain("malformed message block: %v", err)
+			croak("malformed message block: %v", err)
 			return false
 		}
 		updateList = append(updateList, msg)
@@ -13951,12 +13951,12 @@ func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 		if message.getHeader("Event-Number") != "" {
 			eventnum, err := strconv.Atoi(message.getHeader("Event-Number"))
 			if err != nil {
-				complain("event number garbled in update %d: %v", i+1, err)
+				croak("event number garbled in update %d: %v", i+1, err)
 				errorCount++
 			} else {
 				eventnum--
 				if eventnum < 0 || eventnum >= len(repo.events) {
-					complain("event number %d out of range in update %d",
+					croak("event number %d out of range in update %d",
 						eventnum, i+1)
 					errorCount++
 				} else {
@@ -13966,14 +13966,14 @@ func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 		} else if message.getHeader("Legacy-ID") != "" {
 			event = legacyMap[message.getHeader("Legacy-ID")]
 			if event == nil {
-				complain("no commit matches legacy-ID %s",
+				croak("no commit matches legacy-ID %s",
 					message.getHeader("Legacy-ID"))
 				errorCount++
 			}
 		} else if message.getHeader("Event-Mark") != "" {
 			event = repo.markToEvent(message.getHeader("Event-Mark"))
 			if event == nil {
-				complain("no commit matches mark %s",
+				croak("no commit matches mark %s",
 					message.getHeader("Event-Mark"))
 				errorCount++
 			}
@@ -13984,11 +13984,11 @@ func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 			stamp := blank.actionStamp()
 			event = attributionByAuthor[stamp]
 			if event == nil {
-				complain("no commit matches stamp %s", stamp)
+				croak("no commit matches stamp %s", stamp)
 				errorCount++
 			}
 			if authorCounts[stamp] > 1 {
-				complain("multiple events (%d) match %s", authorCounts[stamp], stamp)
+				croak("multiple events (%d) match %s", authorCounts[stamp], stamp)
 				errorCount++
 			}
 		} else if message.getHeader("Committer") != "" && message.getHeader("Committer-Date") != "" {
@@ -13998,11 +13998,11 @@ func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 			stamp := blank.committer.actionStamp()
 			event = attributionByCommitter[stamp]
 			if event == nil {
-				complain("no commit matches stamp %s", stamp)
+				croak("no commit matches stamp %s", stamp)
 				errorCount++
 			}
 			if committerCounts[stamp] > 1 {
-				complain(fmt.Sprintf("multiple events (%d) match %s", committerCounts[stamp], stamp))
+				croak(fmt.Sprintf("multiple events (%d) match %s", committerCounts[stamp], stamp))
 				errorCount++
 			}
 		} else if message.getHeader("Tagger") != "" && message.getHeader("Tagger-Date") != "" {
@@ -14012,11 +14012,11 @@ func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 			stamp := blank.tagger.actionStamp()
 			event = attributionByAuthor[stamp]
 			if event == nil {
-				complain("no tag matches stamp %s", stamp)
+				croak("no tag matches stamp %s", stamp)
 				errorCount++
 			}
 			if authorCounts[stamp] > 1 {
-				complain("multiple events match %s", stamp)
+				croak("multiple events match %s", stamp)
 				errorCount++
 			}
 		} else if message.getHeader("Tag-Name") != "" {
@@ -14025,20 +14025,20 @@ func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 			blank.emailIn(message, false)
 			event = nameMap[blank.name]
 			if event == nil {
-				complain("no tag matches name %s", blank.name)
+				croak("no tag matches name %s", blank.name)
 				errorCount++
 			}
 		} else {
-			complain("no commit matches update %d:\n%s", i+1, message.String())
+			croak("no commit matches update %d:\n%s", i+1, message.String())
 			errorCount++
 		}
 		if event != nil {
 			ei := repo.eventToIndex(event)
 			if ei == -1 {
-				complain("event at update %d can't be found in repository", i+1)
+				croak("event at update %d can't be found in repository", i+1)
 				return false
 			} else if _, ok := getAttr(event, "emailIn"); ok {
-				complain("event %d cannot be modified", ei+1)
+				croak("event %d cannot be modified", ei+1)
 			}
 			errorCount++
 			return false
@@ -14047,7 +14047,7 @@ func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 		events = append(events, event)
 	}
 	if errorCount > 0 {
-		complain("%d errors in metadata updates", errorCount)
+		croak("%d errors in metadata updates", errorCount)
 		return false
 	}
 	// Now apply the updates
@@ -14057,12 +14057,12 @@ func (rs *Reposurgeon) DoMsgin(line string) (stopOut bool) {
 		update := updateList[i]
 		check := strings.TrimSpace(update.getHeader("Check-Text"))
 		if check != "" && strings.HasPrefix(strings.TrimSpace(event.getComment()), check) {
-			complain("check text mismatch at %s (input %d of %d), expected %s saw %q, bailing out", event.idMe(), i+1, len(updateList), check, event.getComment()[:64])
+			croak("check text mismatch at %s (input %d of %d), expected %s saw %q, bailing out", event.idMe(), i+1, len(updateList), check, event.getComment()[:64])
 			return false
 		}
 		if parse.options.Contains("--empty-only") {
 			if event.getComment() != update.getPayload() && !emptyComment(event.getComment()) {
-				complain("nonempty comment at %s (input %d of %d), bailing out", event.idMe(), i+1, len(updateList))
+				croak("nonempty comment at %s (input %d of %d), bailing out", event.idMe(), i+1, len(updateList))
 			}
 		}
 
@@ -14117,7 +14117,7 @@ Supports < and > redirection.
 // Edit metadata interactively.
 func (rs *Reposurgeon) DoEdit(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo is loaded")
+		croak("no repo is loaded")
 		return false
 	}
 	if rs.selection == nil {
@@ -14171,13 +14171,13 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
 class Reposurgeon(object):
     func (rs *Reposurgeon) DoFilter(rs, line str):
         if rs.chosen() == None:
-            complain("no repo is loaded")
+            croak("no repo is loaded")
             return
         if line == "":
-            complain("no filter is specified")
+            croak("no filter is specified")
             return
         if rs.selection is None:
-            complain("no selection")
+            croak("no selection")
             return
         class FilterCommand:
             func __init__(rs, repo, filtercmd):
@@ -14298,7 +14298,7 @@ repository objects in a damaged state.
 /*
 func (rs *Reposurgeon) DoTranscode(self, line str):
         if self.chosen() == None:
-            complain("no repo is loaded")
+            croak("no repo is loaded")
             return
         else if self.selection is None:
             self.selection = self.chosen().all()
@@ -14338,22 +14338,22 @@ address.
 // Set an object field from a string.
 func (rs *Reposurgeon) DoSetfield(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo is loaded")
+		croak("no repo is loaded")
 		return false
 	}
 	repo := rs.chosen()
 	if rs.selection == nil {
-		complain("no selection")
+		croak("no selection")
 		return false
 	}
 	fields, err := shlex.Split(line, true)
 	if err != nil || len(fields) != 2 {
-		complain("missing or malformed setfield line")
+		croak("missing or malformed setfield line")
 	}
 	field := fields[0]
 	value, err := stringEscape(fields[1])
 	if err != nil {
-		complain("while setting field: %v", err)
+		croak("while setting field: %v", err)
 		return false
 	}
 	for _, ei := range rs.selection {
@@ -14369,14 +14369,14 @@ func (rs *Reposurgeon) DoSetfield(line string) (stopOut bool) {
 			} else if field == "commitdate" {
 				newdate, err := newDate(value)
 				if err != nil {
-					complain(err.Error())
+					croak(err.Error())
 					return false
 				}
 				commit.committer.date = newdate
 			} else if field == "authdate" {
 				newdate, err := newDate(value)
 				if err != nil {
-					complain(err.Error())
+					croak(err.Error())
 					return false
 				}
 				commit.authors[0].date = newdate
@@ -14398,26 +14398,26 @@ paths, patch the permission field to the first argument value.
 // Set permissions on M fileops matching a path list.
 func (rs *Reposurgeon) DoSetperm(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo is loaded")
+		croak("no repo is loaded")
 		return false
 	}
 	if rs.selection == nil {
-		complain("no selection")
+		croak("no selection")
 		return false
 	}
 	fields, err := shlex.Split(line, true)
 	if err != nil {
-		complain("failurev in line pesing: %v", err)
+		croak("failurev in line pesing: %v", err)
 		return false
 	}
 	if len(fields) < 2 {
-		complain("missing or malformed setperm line")
+		croak("missing or malformed setperm line")
 		return false
 	}
 	perm := fields[0]
 	paths := newStringSet(fields[1:]...)
 	if !newStringSet("100644", "100755", "120000").Contains(perm) {
-		complain("unexpected permission literal %s", perm)
+		croak("unexpected permission literal %s", perm)
 		return false
 	}
 	baton := newBaton("patching modes", "", context.verbose == 1)
@@ -14450,27 +14450,27 @@ the new text is appended.
 // Append a line to comments in the specified selection set.
 func (rs *Reposurgeon) DoAppend(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo is loaded")
+		croak("no repo is loaded")
 		return false
 	}
 	if rs.selection == nil {
-		complain("no selection")
+		croak("no selection")
 		return false
 	}
 	parse := rs.newLineParse(line, nil)
 	defer parse.Closem()
 	fields, err := shlex.Split(parse.line, true)
 	if err != nil {
-		complain(err.Error())
+		croak(err.Error())
 		return false
 	}
 	if len(fields) == 0 {
-		complain("missing append line")
+		croak("missing append line")
 		return false
 	}
 	line, err = stringEscape(fields[0])
 	if err != nil {
-		complain(err.Error())
+		croak(err.Error())
 		return false
 	}
 	for _, ei := range rs.selection {
@@ -14508,7 +14508,7 @@ removal of fileops associated with commits requires this.
 // Squash events in the specified selection set.
 func (rs *Reposurgeon) DoSquash(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo is loaded")
+		croak("no repo is loaded")
 		return false
 	}
 	if rs.selection == nil {
@@ -14535,7 +14535,7 @@ squash with the --delete flag.
 
 func (rs *Reposurgeon) DoDelete(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo is loaded")
+		croak("no repo is loaded")
 		return false
 	}
 	if rs.selection == nil {
@@ -14575,7 +14575,7 @@ With  the --debug option, show messages about mismatches.
 func (rs *Reposurgeon) DoCoalesce(line string) (stopOut bool) {
 	repo := rs.chosen()
 	if repo == nil {
-		complain("no repo is loaded")
+		croak("no repo is loaded")
 		return false
 	}
 	if rs.selection == nil {
@@ -14589,7 +14589,7 @@ func (rs *Reposurgeon) DoCoalesce(line string) (stopOut bool) {
 		var err error
 		timefuzz, err = strconv.Atoi(parse.line)
 		if err != nil {
-			complain("time-fuzz value must be an integer")
+			croak("time-fuzz value must be an integer")
 			return false
 		}
 	}
@@ -14600,13 +14600,13 @@ func (rs *Reposurgeon) DoCoalesce(line string) (stopOut bool) {
 		verbose := context.verbose >= debugDELETE || parse.options.Contains("--debug")
 		if cthis.committer.email != cnext.committer.email {
 			if verbose {
-				complain("committer email mismatch at %s", cnext.idMe())
+				croak("committer email mismatch at %s", cnext.idMe())
 			}
 			return false
 		}
 		if cthis.committer.date.delta(cnext.committer.date) >= time.Duration(timefuzz)*time.Second {
 			if verbose {
-				complain("time fuzz exceeded at %s", cnext.idMe())
+				croak("time fuzz exceeded at %s", cnext.idMe())
 			}
 			return false
 		}
@@ -14615,7 +14615,7 @@ func (rs *Reposurgeon) DoCoalesce(line string) (stopOut bool) {
 		}
 		if cthis.Comment != cnext.Comment {
 			if verbose {
-				complain("comment mismatch at %s", cnext.idMe())
+				croak("comment mismatch at %s", cnext.idMe())
 			}
 			return false
 		}
@@ -14686,13 +14686,13 @@ in the commit's ancestry.
 // Add a fileop to a specified commit.
 func (rs *Reposurgeon) DoAdd(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo is loaded")
+		croak("no repo is loaded")
 		return false
 	}
 	repo := rs.chosen()
 	fields, err := shlex.Split(line, true)
 	if err != nil && len(fields) < 2 {
-		complain("add requires an operation type and arguments")
+		croak("add requires an operation type and arguments")
 		return false
 	}
 	optype := fields[0]
@@ -14701,18 +14701,18 @@ func (rs *Reposurgeon) DoAdd(line string) (stopOut bool) {
 		argpath = fields[1]
 		for _, event := range repo.commits(rs.selection) {
 			if event.paths(nil).Contains(argpath) {
-				complain("%s already has an op for %s",
+				croak("%s already has an op for %s",
 					event.mark, argpath)
 				return false
 			}
 			if event.ancestorCount(argpath) == 0 {
-				complain("no previous M for %s", argpath)
+				croak("no previous M for %s", argpath)
 				return false
 			}
 		}
 	} else if optype == "M" {
 		if len(fields) != 4 {
-			complain("wrong field count in add command")
+			croak("wrong field count in add command")
 			return false
 		} else if strings.HasSuffix(fields[1], "644") {
 			perms = "100644"
@@ -14721,50 +14721,50 @@ func (rs *Reposurgeon) DoAdd(line string) (stopOut bool) {
 		}
 		mark = fields[2]
 		if !strings.HasPrefix(mark, ":") {
-			complain("garbled mark %s in add command", mark)
+			croak("garbled mark %s in add command", mark)
 			return false
 		}
 		markval, err1 := strconv.Atoi(mark[1:])
 		if err1 != nil {
-			complain("non-numeric mark %s in add command", mark)
+			croak("non-numeric mark %s in add command", mark)
 			return false
 		}
 		blob, ok := repo.markToEvent(mark).(*Blob)
 		if !ok {
-			complain("mark %s in add command does not refer to a blob", mark)
+			croak("mark %s in add command does not refer to a blob", mark)
 			return false
 		} else if markval >= rs.selection.Min() {
-			complain("mark %s in add command is after add location", mark)
+			croak("mark %s in add command is after add location", mark)
 			return false
 		}
 		argpath = fields[3]
 		for _, event := range repo.commits(rs.selection) {
 			if event.paths(nil).Contains(argpath) {
-				complain("%s already has an op for %s",
+				croak("%s already has an op for %s",
 					blob.mark, argpath)
 				return false
 			}
 		}
 	} else if optype == opR || optype == opC {
 		if len(fields) < 3 {
-			complain("too few arguments in add %s", optype)
+			croak("too few arguments in add %s", optype)
 			return false
 		}
 		source = fields[1]
 		target = fields[2]
 		for _, event := range repo.commits(rs.selection) {
 			if event.paths(nil).Contains(source) || event.paths(nil).Contains(target) {
-				complain("%s already has an op for %s or %s",
+				croak("%s already has an op for %s or %s",
 					event.mark, source, target)
 				return false
 			}
 			if event.ancestorCount(source) == 0 {
-				complain("no previous M for %s", source)
+				croak("no previous M for %s", source)
 				return false
 			}
 		}
 	} else {
-		complain("unknown operation type %s in add command", optype)
+		croak("unknown operation type %s in add command", optype)
 		return false
 	}
 	for _, commit := range repo.commits(rs.selection) {
@@ -14797,7 +14797,7 @@ used with the add command to patch data into a repository.
 // Add a fileop to a specified commit.
 func (rs *Reposurgeon) DoBlob(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo is loaded")
+		croak("no repo is loaded")
 		return false
 	}
 	repo := rs.chosen()
@@ -14809,7 +14809,7 @@ func (rs *Reposurgeon) DoBlob(line string) (stopOut bool) {
 	parse := rs.newLineParse(line, stringSet{"stdin"})
 	content, err := ioutil.ReadAll(parse.stdin)
 	if err != nil {
-		complain("while reading blob content: %v", err)
+		croak("while reading blob content: %v", err)
 		return false
 	}
 	blob.setContent(string(content), blob.start)
@@ -14843,7 +14843,7 @@ change in a future release.
 func (rs *Reposurgeon) DoRemove(line string) bool {
 	repo := rs.chosen()
 	if repo == nil {
-		complain("no repo is loaded")
+		croak("no repo is loaded")
 		return false
 	}
 	if rs.selection == nil {
@@ -14863,7 +14863,7 @@ func (rs *Reposurgeon) DoRemove(line string) bool {
 		ev := repo.events[ie]
 		event, ok := ev.(*Commit)
 		if !ok {
-			complain("Event %d is not a commit.", ie+1)
+			croak("Event %d is not a commit.", ie+1)
 			return false
 		}
 		event.invalidatePathsetCache()
@@ -14895,7 +14895,7 @@ func (rs *Reposurgeon) DoRemove(line string) bool {
 			ind, err = strconv.Atoi(opindex)
 			ind--
 			if err != nil {
-				complain("invalid or missing fileop specification '%s' on %s", opindex, orig)
+				croak("invalid or missing fileop specification '%s' on %s", opindex, orig)
 				return false
 			}
 		}
@@ -14905,7 +14905,7 @@ func (rs *Reposurgeon) DoRemove(line string) bool {
 			if verb == "to" {
 				rs.setSelectionSet(line)
 				if len(rs.selection) != 1 {
-					complain("remove to requires a singleton selection")
+					croak("remove to requires a singleton selection")
 					return false
 				}
 				target = rs.selection[0]
@@ -14914,7 +14914,7 @@ func (rs *Reposurgeon) DoRemove(line string) bool {
 		ops := event.operations()
 		present := ind >= 0 && ind < len(ops)
 		if !present {
-			complain("out-of-range fileop index %d", ind)
+			croak("out-of-range fileop index %d", ind)
 			return false
 		}
 		removed := ops[ind]
@@ -14922,12 +14922,12 @@ func (rs *Reposurgeon) DoRemove(line string) bool {
 		if target != -1 {
 			present := target >= 0 && target < len(repo.events)
 			if !present {
-				complain("out-of-range target event %d", target+1)
+				croak("out-of-range target event %d", target+1)
 				return false
 			}
 			commit, ok := repo.events[target].(*Commit)
 			if !ok {
-				complain("event %d is not a commit", target+1)
+				croak("event %d is not a commit", target+1)
 				return false
 			} else {
 				commit.appendOperation(removed)
@@ -14958,7 +14958,7 @@ ordering or gaps in the sequence.
 func (rs *Reposurgeon) DoRenumber(line string) (stopOut bool) {
 	// Renumber the marks in the selected repo.
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return
 	}
 	rs.repo.renumber(1, nil)
@@ -14976,7 +14976,7 @@ referencing them to instead reference the (kept) first blob.
 // Deduplicate identical (up to SHA1) blobs within the selection set
 func (rs *Reposurgeon) DoDedup(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	if rs.selection == nil {
@@ -15014,17 +15014,17 @@ an offset literal of +0 or -0.
 // Apply a time offset to all dates in selected events.
 func (rs *Reposurgeon) DoTimeoffset(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	if rs.selection == nil {
 		rs.selection = rs.chosen().all()
 	}
 	if line == "" {
-		complain("a signed time offset argument is required.")
+		croak("a signed time offset argument is required.")
 		return false
 	} else if line[0] != '-' && line[0] != '+' {
-		complain("time offset argument must begin with + or -.")
+		croak("time offset argument must begin with + or -.")
 		return false
 	}
 	offsetOf := func(hhmmss string) (int, error) {
@@ -15043,22 +15043,22 @@ func (rs *Reposurgeon) DoTimeoffset(line string) (stopOut bool) {
 			m = fields[1]
 			s = fields[2]
 		} else {
-			complain("too many colons")
+			croak("too many colons")
 			return 0, errors.New("too many colons")
 		}
 		hn, err := strconv.Atoi(h)
 		if err != nil {
-			complain("bad literal in hour field")
+			croak("bad literal in hour field")
 			return 0, err
 		}
 		mn, err1 := strconv.Atoi(m)
 		if err1 != nil {
-			complain("bad literal in minute field")
+			croak("bad literal in minute field")
 			return 0, err1
 		}
 		sn, err2 := strconv.Atoi(s)
 		if err2 != nil {
-			complain("bad literal in seconds field")
+			croak("bad literal in seconds field")
 			return 0, err2
 		}
 		return hn*360 + mn*60 + sn, nil
@@ -15073,7 +15073,7 @@ func (rs *Reposurgeon) DoTimeoffset(line string) (stopOut bool) {
 	if len(args) > 1 {
 		tr := regexp.MustCompile(`[+-][0-9][0-9][0-9][0-9]`)
 		if !tr.MatchString(args[1]) {
-			complain("expected timezone literal to be [+-]hhmm")
+			croak("expected timezone literal to be [+-]hhmm")
 			return false
 		}
 		zoffset, err1 := offsetOf(args[1])
@@ -15117,12 +15117,12 @@ date format and converts to RFC3339.
 }
 func (rs *Reposurgeon) DoWhen(LineIn string) (StopOut bool) {
 	if LineIn == "" {
-		complain("a timestamp in either integer or RFC3339 form is required.")
+		croak("a timestamp in either integer or RFC3339 form is required.")
 		return false
 	}
 	d, err := newDate(LineIn)
 	if err != nil {
-		complain("unrecognized date format")
+		croak("unrecognized date format")
 	} else if strings.Contains(LineIn, "Z") {
 		fmt.Println(d.String())
 	} else {
@@ -15150,17 +15150,17 @@ branch 'qux', the branch segments are renamed 'qux-early' and
 
 func (rs *Reposurgeon) DoDivide(_line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	if len(rs.selection) == 0 {
-		complain("one or possibly two arguments specifying a link are required")
+		croak("one or possibly two arguments specifying a link are required")
 		return
 	}
 	earlyEvent := rs.chosen().events[rs.selection[0]]
 	earlyCommit, ok := earlyEvent.(*Commit)
 	if !ok {
-		complain("first element of selection is not a commit")
+		croak("first element of selection is not a commit")
 		return
 	}
 	possibles := earlyCommit.children()
@@ -15168,27 +15168,27 @@ func (rs *Reposurgeon) DoDivide(_line string) (stopOut bool) {
 	var lateCommit *Commit
 	if len(rs.selection) == 1 {
 		if len(possibles) > 1 {
-			complain("commit has multiple children, one must be specified")
+			croak("commit has multiple children, one must be specified")
 			return false
 		} else if len(possibles) == 1 {
 			late = possibles[0]
 		} else {
-			complain("parent has no children")
+			croak("parent has no children")
 			return false
 		}
 	} else if len(rs.selection) == 2 {
 		late = rs.chosen().events[rs.selection[1]]
 		lateCommit, ok = late.(*Commit)
 		if !ok {
-			complain("last element of selection is not a commit")
+			croak("last element of selection is not a commit")
 			return false
 		}
 		if !stringSet(lateCommit.parentMarks()).Contains(earlyCommit.mark) {
-			complain("not a parent-child pair")
+			croak("not a parent-child pair")
 			return false
 		}
 	} else if len(rs.selection) > 2 {
-		complain("too many arguments")
+		croak("too many arguments")
 	}
 	//assert(early && late)
 	// Try the topological cut first
@@ -15252,7 +15252,7 @@ file path matches.
 // Expunge files from the chosen repository.
 func (rs *Reposurgeon) DoExpunge(line string) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return
 	}
 	if rs.selection == nil {
@@ -15291,51 +15291,51 @@ file operations in the original commit.
 // Split a commit.
 func (rs *Reposurgeon) DoSplit(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	if len(rs.selection) != 1 {
-		complain("selection of a single commit required for this command")
+		croak("selection of a single commit required for this command")
 		return false
 	}
 	where := rs.selection[0]
 	event := rs.chosen().events[where]
 	commit, ok := event.(*Commit)
 	if !ok {
-		complain("selection doesn't point at a commit")
+		croak("selection doesn't point at a commit")
 		return false
 	}
 	fields := strings.Fields(line)
 	prep := fields[0]
 	obj := fields[1]
 	if len(fields) != 2 {
-		complain("ill-formed split command")
+		croak("ill-formed split command")
 		return false
 	}
 	if prep == "at" {
 		splitpoint, err := strconv.Atoi(obj)
 		if err != nil {
-			complain("expected integer fileop index (1-origin)")
+			croak("expected integer fileop index (1-origin)")
 			return false
 		}
 		splitpoint--
 		if splitpoint > len(commit.operations()) {
-			complain("fileop index %d out of range", splitpoint)
+			croak("fileop index %d out of range", splitpoint)
 			return false
 		}
 		err = rs.chosen().splitCommitByIndex(where, splitpoint)
 		if err != nil {
-			complain(err.Error())
+			croak(err.Error())
 			return false
 		}
 	} else if prep == "by" {
 		err := rs.chosen().splitCommitByPrefix(where, obj)
 		if err != nil {
-			complain(err.Error())
+			croak(err.Error())
 			return false
 		}
 	} else {
-		complain("don't know what to do for preposition %s", prep)
+		croak("don't know what to do for preposition %s", prep)
 		return false
 	}
 	if context.verbose > 0 {
@@ -15377,14 +15377,14 @@ func (rs *Reposurgeon) DoUnite(line string) (stopOut bool) {
 	for _, name := range strings.Fields(parse.line) {
 		repo := rs.repoByName(name)
 		if repo == nil {
-			complain("no such repo as %s", name)
+			croak("no such repo as %s", name)
 			return false
 		} else {
 			factors = append(factors, repo)
 		}
 	}
 	if len(factors) < 2 {
-		complain("unite requires two or more repo name arguments")
+		croak("unite requires two or more repo name arguments")
 		return false
 	}
 	rs.unite(factors, parse.options)
@@ -15419,11 +15419,11 @@ of the grafted repository.
 // Graft a named repo onto the selected one.
 func (rs *Reposurgeon) DoGraft(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	if len(rs.repolist) == 0 {
-		complain("no repositories are loaded.")
+		croak("no repositories are loaded.")
 		return false
 	}
 	parse := rs.newLineParse(line, nil)
@@ -15444,7 +15444,7 @@ func (rs *Reposurgeon) DoGraft(line string) (stopOut bool) {
 		if !requireGraftPoint {
 			graftPoint = invalidGraftIndex
 		} else {
-			complain("a singleton selection set is required.")
+			croak("a singleton selection set is required.")
 			return false
 		}
 	}
@@ -15469,12 +15469,12 @@ source branch are removed.
 // Turn a branch into a subdirectory.
 func (rs *Reposurgeon) DoDebranch(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	args := strings.Fields(line)
 	if len(args) == 0 {
-		complain("debranch command requires at least one argument")
+		croak("debranch command requires at least one argument")
 		return false
 	}
 	target := "refs/heads/master"
@@ -15491,7 +15491,7 @@ func (rs *Reposurgeon) DoDebranch(line string) (stopOut bool) {
 				goto found1
 			}
 		}
-		complain("no branch matches source %s", source)
+		croak("no branch matches source %s", source)
 		return false
 	found1:
 	}
@@ -15502,7 +15502,7 @@ func (rs *Reposurgeon) DoDebranch(line string) (stopOut bool) {
 				goto found2
 			}
 		}
-		complain("no branch matches %s", target)
+		croak("no branch matches %s", target)
 		return false
 	found2:
 	}
@@ -15578,7 +15578,7 @@ class Reposurgeon(object):
     func (rs *Reposurgeon) DoPath(self, line str):
         "Rename paths in the history."
         if self.chosen() is None:
-            complain("no repo has been chosen.")
+            croak("no repo has been chosen.")
             return
         repo = self.chosen()
         if self.selection is None:
@@ -15631,7 +15631,7 @@ with no argument, strip the first directory component from every path.
 
 func (rs *Reposurgeon) DoPaths(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	if rs.selection == nil {
@@ -15651,7 +15651,7 @@ func (rs *Reposurgeon) DoPaths(line string) (stopOut bool) {
 	fields := strings.Fields(line)
 	if fields[0] == "sub" {
 		if len(fields) < 2 {
-			complain("Error paths sub needs a directory name argument")
+			croak("Error paths sub needs a directory name argument")
 			return false
 		}
 		prefix := fields[1]
@@ -15791,7 +15791,7 @@ merge link is moved to the tagified commit's parent.
 func (rs *Reposurgeon) DoTagify(line string) (stopOut bool) {
 	repo := rs.chosen()
 	if repo == nil {
-		complain("no repo has been chosen")
+		croak("no repo has been chosen")
 		return false
 	}
 	if rs.selection == nil {
@@ -15799,7 +15799,7 @@ func (rs *Reposurgeon) DoTagify(line string) (stopOut bool) {
 	}
 	parse := rs.newLineParse(line, nil)
 	if parse.line != "" {
-		complain("too many arguments for tagify.")
+		croak("too many arguments for tagify.")
 		return false
 	}
 	before := len(repo.commits(nil))
@@ -15829,7 +15829,7 @@ from the highest member (child) to the lowest (parent).
 class Reposurgeon(object):
     func (self *Reposurgeon) DoMerge(_line) {
         if rs.chosen() == nil {
-            complain("no repo has been chosen.")
+            croak("no repo has been chosen.")
             return
         }
         try {
@@ -15861,16 +15861,16 @@ commit's first parent, but doesn't need you to find the first parent yourself.
 
 func (rs *Reposurgeon) DoUnmerge(_line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	if len(rs.selection) != 1 {
-		complain("unmerge requires a single commit.")
+		croak("unmerge requires a single commit.")
 		return false
 	}
 	event := rs.chosen().events[rs.selection[0]]
 	if commit, ok := event.(*Commit); !ok {
-		complain("unmerge target is not a commit.")
+		croak("unmerge target is not a commit.")
 	} else {
 		commit.setParents(commit.parents()[:1])
 	}
@@ -15958,7 +15958,7 @@ class Reposurgeon(object):
     func (rs *Reposurgeon) DoReparent(self, line str):
         repo = self.chosen()
         if repo is None:
-            complain("no repo has been chosen.")
+            croak("no repo has been chosen.")
             return
         with rs.newLineParse(line, nil) as parse:
             use_order = '--use-order' in parse.options
@@ -16055,24 +16055,24 @@ after the operation.
 func (rs *Reposurgeon) DoReorder(lineIn string) bool {
 	repo := rs.chosen()
 	if repo == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	sel := rs.selection
 	if sel != nil {
-		complain("no selection")
+		croak("no selection")
 		return false
 	}
 	if len(sel) == 0 {
-		complain("no commits in selection")
+		croak("no commits in selection")
 		return false
 	} else if len(sel) == 1 {
-		complain("only 1 commit selected; nothing to re-order")
+		croak("only 1 commit selected; nothing to re-order")
 		return false
 	}
 	parse := rs.newLineParse(lineIn, nil)
 	if parse.line != "" {
-		complain("'reorder' takes no arguments")
+		croak("'reorder' takes no arguments")
 		return false
 	}
 	_, quiet := parse.OptVal("quiet")
@@ -16099,7 +16099,7 @@ is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
 // Rename a branch or delete it.
 func (rs *Reposurgeon) DoBranch(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	repo := rs.chosen()
@@ -16107,14 +16107,14 @@ func (rs *Reposurgeon) DoBranch(line string) (stopOut bool) {
 	var err error
 	branchname, err = stringEscape(branchname)
 	if err != nil {
-		complain("while selecting branch: %v", err)
+		croak("while selecting branch: %v", err)
 		return false
 	}
 	if !strings.Contains(branchname, "/") {
 		branchname = "refs/heads/" + branchname
 	}
 	if !repo.branchset().Contains(branchname) {
-		complain("no such branch as %s", branchname)
+		croak("no such branch as %s", branchname)
 		return false
 	}
 	var verb string
@@ -16123,14 +16123,14 @@ func (rs *Reposurgeon) DoBranch(line string) (stopOut bool) {
 		var newname string
 		newname, line = popToken(line)
 		if newname == "" {
-			complain("new branch name must be nonempty.")
+			croak("new branch name must be nonempty.")
 			return false
 		}
 		if !strings.Contains(newname, "/") {
 			newname = "refs/heads/" + newname
 		}
 		if repo.branchset().Contains(newname) {
-			complain("there is already a branch named '%s'.", newname)
+			croak("there is already a branch named '%s'.", newname)
 			return false
 		}
 		for _, event := range repo.events {
@@ -16160,7 +16160,7 @@ func (rs *Reposurgeon) DoBranch(line string) (stopOut bool) {
 		}
 		repo.delete(orderedIntSet(deletia), nil)
 	} else {
-		complain("unknown verb '%s' in branch command.", verb)
+		croak("unknown verb '%s' in branch command.", verb)
 		return false
 	}
 	return false
@@ -16220,7 +16220,7 @@ fields are changed and a warning is issued.
 // Move a tag to point to a specified commit, or rename it, or delete it.
 func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	repo := rs.chosen()
@@ -16234,13 +16234,13 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 	var tagname string
 	tagname, line = popToken(line)
 	if len(tagname) == 0 {
-		complain("missing tag name")
+		croak("missing tag name")
 		return false
 	}
 	var err error
 	tagname, err = stringEscape(tagname)
 	if err != nil {
-		complain("in tag command: %v", err)
+		croak("in tag command: %v", err)
 		return false
 	}
 	var verb string
@@ -16249,18 +16249,18 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 		var ok bool
 		var target *Commit
 		if repo.named(tagname) != nil {
-			complain("something is already named %s", tagname)
+			croak("something is already named %s", tagname)
 			return false
 		}
 		rs.setSelectionSet(line)
 		if rs.selection == nil {
-			complain("usage: tag <name> create <singleton-selection>")
+			croak("usage: tag <name> create <singleton-selection>")
 			return false
 		} else if len(rs.selection) != 1 {
-			complain("tag create requires a singleton commit set.")
+			croak("tag create requires a singleton commit set.")
 			return false
 		} else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
-			complain("create target is not a commit.")
+			croak("create target is not a commit.")
 			return false
 		}
 		tag := newTag(repo, tagname, target.mark,
@@ -16313,7 +16313,7 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 		}
 	}
 	if len(tags) == 0 && len(resets) == 0 && len(commits) == 0 {
-		complain("no tags matching %s", tagname)
+		croak("no tags matching %s", tagname)
 		return false
 	}
 	if verb == "move" {
@@ -16321,10 +16321,10 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 		var ok bool
 		rs.setSelectionSet(line)
 		if len(rs.selection) != 1 {
-			complain("tag move requires a singleton commit set.")
+			croak("tag move requires a singleton commit set.")
 			return false
 		} else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
-			complain("move target is not a commit.")
+			croak("move target is not a commit.")
 			return false
 		}
 		if len(tags) > 0 {
@@ -16337,27 +16337,27 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 			if len(resets) == 1 {
 				resets[0].committish = target.mark
 			} else {
-				complain("cannot move multiple tags.")
+				croak("cannot move multiple tags.")
 			}
 		}
 		if len(commits) > 0 {
-			complain("warning - tag move does not modify branch fields")
+			croak("warning - tag move does not modify branch fields")
 		}
 	} else if verb == "rename" {
 		if len(tags) > 1 {
-			complain("exactly one tag is required for rename")
+			croak("exactly one tag is required for rename")
 			return false
 		}
 		var newname string
 		newname, line = popToken(line)
 		if newname == "" {
-			complain("new tag name must be nonempty.")
+			croak("new tag name must be nonempty.")
 			return false
 		}
 		if len(tags) == 1 {
 			for _, event := range repo.events {
 				if tag, ok := event.(*Tag); ok && tag != tags[0] && tag.name == tags[0].name {
-					complain("tag name collision, not renaming.")
+					croak("tag name collision, not renaming.")
 					return false
 				}
 			}
@@ -16407,12 +16407,12 @@ func (rs *Reposurgeon) DoTag(line string) (stopOut bool) {
 					event.Branch = successors[0]
 				}
 			} else {
-				complain("couldn't determine a unique successor for %s at %s", tagname, commits[len(commits)-1].idMe())
+				croak("couldn't determine a unique successor for %s at %s", tagname, commits[len(commits)-1].idMe())
 				return false
 			}
 		}
 	} else {
-		complain("unknown verb '%s' in tag command.", verb)
+		croak("unknown verb '%s' in tag command.", verb)
 		return false
 	}
 	return false
@@ -16453,7 +16453,7 @@ moved, no branch fields are changed.
 // Move a reset to point to a specified commit, or rename it, or delete it.
 func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return
 	}
 	repo := rs.chosen()
@@ -16465,7 +16465,7 @@ func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
 	resetname, line = popToken(line)
 	resetname, err = stringEscape(resetname)
 	if err != nil {
-		complain("in reset command: %v", err)
+		croak("in reset command: %v", err)
 		return false
 	}
 	if !strings.Contains(resetname, "/") {
@@ -16487,14 +16487,14 @@ func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
 		var target *Commit
 		var ok bool
 		if len(resets) > 0 {
-			complain("one or more resets match %s", resetname)
+			croak("one or more resets match %s", resetname)
 			return false
 		}
 		if len(rs.selection) != 1 {
-			complain("reset create requires a singleton commit set.")
+			croak("reset create requires a singleton commit set.")
 			return false
 		} else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
-			complain("create target is not a commit.")
+			croak("create target is not a commit.")
 			return false
 		}
 		reset := newReset(repo, resetname, target.mark)
@@ -16505,20 +16505,20 @@ func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
 		var target *Commit
 		var ok bool
 		if len(resets) == 0 {
-			complain("no such reset as %s", resetname)
+			croak("no such reset as %s", resetname)
 		}
 		if len(resets) == 1 {
 			reset = resets[0]
 		} else {
-			complain("can't move multiple resets")
+			croak("can't move multiple resets")
 			return false
 		}
 		rs.setSelectionSet(line)
 		if len(rs.selection) != 1 {
-			complain("reset move requires a singleton commit set.")
+			croak("reset move requires a singleton commit set.")
 			return false
 		} else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
-			complain("move target is not a commit.")
+			croak("move target is not a commit.")
 			return false
 		}
 		reset.forget()
@@ -16527,12 +16527,12 @@ func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
 	} else if verb == "rename" {
 		var newname string
 		if len(resets) == 0 {
-			complain("no such reset as %s", resetname)
+			croak("no such reset as %s", resetname)
 			return false
 		}
 		newname, line = popToken(line)
 		if newname == "" {
-			complain("new reset name must be nonempty.")
+			croak("new reset name must be nonempty.")
 			return false
 		}
 		if strings.Count(newname, "/") == 0 {
@@ -16543,13 +16543,13 @@ func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
 		}
 		for _, reset := range resets {
 			if reset.ref == newname {
-				complain("reset branch collision, not renaming.")
+				croak("reset branch collision, not renaming.")
 				return false
 			}
 		}
 		for _, commit := range repo.commits(nil) {
 			if commit.Branch == newname {
-				complain("commit branch collision, not renaming.")
+				croak("commit branch collision, not renaming.")
 				return false
 			}
 		}
@@ -16563,7 +16563,7 @@ func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
 		}
 	} else if verb == "delete" {
 		if len(resets) == 0 {
-			complain("no such reset as %s", resetname)
+			croak("no such reset as %s", resetname)
 			return false
 		}
 		var tip *Commit
@@ -16588,7 +16588,7 @@ func (rs *Reposurgeon) DoReset(line string) (stopOut bool) {
 		}
 		repo.declareSequenceMutation("reset delete")
 	} else {
-		complain("unknown verb '%s' in reset command.", verb)
+		croak("unknown verb '%s' in reset command.", verb)
 	}
 	return false
 }
@@ -16622,7 +16622,7 @@ default patterns.
 // Manipulate ignore patterns in the repo.
 func (rs *Reposurgeon) DoIgnores(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	repo := rs.chosen()
@@ -16630,11 +16630,11 @@ func (rs *Reposurgeon) DoIgnores(line string) (stopOut bool) {
 		rs.ignorename = rs.preferred.ignorename
 	}
 	if rs.preferred != nil {
-		complain("preferred repository type has not been set")
+		croak("preferred repository type has not been set")
 		return false
 	}
 	if rs.ignorename == "" {
-		complain("preferred repository type has no declared ignorename")
+		croak("preferred repository type has no declared ignorename")
 		return false
 	}
 	isIgnore := func(blob *Blob) bool {
@@ -16651,10 +16651,10 @@ func (rs *Reposurgeon) DoIgnores(line string) (stopOut bool) {
 	for _, verb := range strings.Fields(line) {
 		if verb == "defaults" {
 			if rs.preferred.styleflags.Contains("import-defaults") {
-				complain("importer already set default ignores")
+				croak("importer already set default ignores")
 				return false
 			} else if len(rs.preferred.dfltignores) == 0 {
-				complain("no default ignores in %s", rs.preferred.name)
+				croak("no default ignores in %s", rs.preferred.name)
 				return false
 			} else {
 				changecount := 0
@@ -16728,7 +16728,7 @@ func (rs *Reposurgeon) DoIgnores(line string) (stopOut bool) {
 			}
 			announce(debugSHOUT, fmt.Sprintf("%d %s blobs modified.", changecount, rs.ignorename))
 		} else {
-			complain("unknown verb %s in ignores line", verb)
+			croak("unknown verb %s in ignores line", verb)
 			return false
 		}
 	}
@@ -16913,7 +16913,7 @@ part to the right of an equals sign will need editing.
 // Apply or dump author-mapping file.
 func (rs *Reposurgeon) DoAuthors(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return
 	}
 	if rs.selection == nil {
@@ -16923,7 +16923,7 @@ func (rs *Reposurgeon) DoAuthors(line string) (stopOut bool) {
 		line = strings.TrimSpace(line[5:])
 		parse := rs.newLineParse(line, stringSet{"stdout"})
 		if len(parse.Tokens()) > 0 {
-			complain("authors write no longer takes a filename argument - use > redirection instead")
+			croak("authors write no longer takes a filename argument - use > redirection instead")
 			return false
 		}
 		rs.chosen().writeAuthorMap(rs.selection, parse.stdout)
@@ -16933,7 +16933,7 @@ func (rs *Reposurgeon) DoAuthors(line string) (stopOut bool) {
 		}
 		parse := rs.newLineParse(line, stringSet{"stdin"})
 		if len(parse.Tokens()) > 0 {
-			complain("authors read no longer takes a filename argument - use < redirection instead")
+			croak("authors read no longer takes a filename argument - use < redirection instead")
 			return false
 		}
 		rs.chosen().readAuthorMap(rs.selection, parse.stdin)
@@ -16956,7 +16956,7 @@ output or a >-redirected filename.
 // Apply a reference-mapping file.
 func (rs *Reposurgeon) DoLegacy(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return
 	}
 	if strings.HasPrefix(line, "write") {
@@ -16964,7 +16964,7 @@ func (rs *Reposurgeon) DoLegacy(line string) (stopOut bool) {
 		parse := rs.newLineParse(line, stringSet{"stdout"})
 		defer parse.Closem()
 		if len(parse.Tokens()) > 0 {
-			complain("legacy write does not take a filename argument - use > redirection instead")
+			croak("legacy write does not take a filename argument - use > redirection instead")
 			return false
 		}
 		rs.chosen().writeLegacyMap(parse.stdout)
@@ -16974,7 +16974,7 @@ func (rs *Reposurgeon) DoLegacy(line string) (stopOut bool) {
 		}
 		parse := rs.newLineParse(line, []string{"stdin"})
 		if len(parse.Tokens()) > 0 {
-			complain("legacy read does not take a filename argument - use < redirection instead")
+			croak("legacy read does not take a filename argument - use < redirection instead")
 			return false
 		}
 		rs.chosen().readLegacyMap(parse.stdin)
@@ -17006,7 +17006,7 @@ map when the repo is written or rebuilt.
 func (rs *Reposurgeon) DoReferences(self, line str):
         "Look for things that might be CVS or Subversion revision references."
         if self.chosen() is None:
-            complain("no repo has been chosen.")
+            croak("no repo has been chosen.")
             return
         repo = self.chosen()
         if self.selection is None:
@@ -17018,13 +17018,13 @@ func (rs *Reposurgeon) DoReferences(self, line str):
                 payload = polystr(matchobj.group(0)[2:-2])
                 commit = getter(payload)
                 if commit is None:
-                    complain("no commit matches " + repr(payload))
+                    croak("no commit matches " + repr(payload))
                     return matchobj.group(0) # no replacement
                 else if commit:
                     text = commit.actionStamp()
                     return polybytes(text)
                 else:
-                    complain("cannot resolve %s" % payload)
+                    croak("cannot resolve %s" % payload)
                     return matchobj.group(0) # no replacement
             for (regexp, getter) in \
                     ((r"CVS:[^:\]]+:[0-9.]+",
@@ -17077,7 +17077,7 @@ Takes a selection set, defaulting to all commits and tags.
 // Gitify comments.
 func (rs *Reposurgeon) DoGitify(_line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return
 	}
 	if rs.selection == nil {
@@ -17135,7 +17135,7 @@ set must resolve to a singleton commit.
 // Check out files for a specified commit into a directory.
 func (rs *Reposurgeon) DoCheckout(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	repo := rs.chosen()
@@ -17143,16 +17143,16 @@ func (rs *Reposurgeon) DoCheckout(line string) (stopOut bool) {
 		rs.selection = rs.chosen().all()
 	}
 	if line == "" {
-		complain("no target directory specified.")
+		croak("no target directory specified.")
 	} else if len(rs.selection) == 1 {
 		event := repo.events[rs.selection[0]]
 		if commit, ok := event.(*Commit); ok {
 			commit.checkout(line)
 		} else {
-			complain("not a commit.")
+			croak("not a commit.")
 		}
 	} else {
-		complain("a singleton selection set is required.")
+		croak("a singleton selection set is required.")
 	}
 	return false
 }
@@ -17169,7 +17169,7 @@ class Reposurgeon(object):
     func (rs *Reposurgeon) DoDiff(self,line):
         "Display a diff between versions."
         if self.chosen() is None:
-            complain("no repo has been chosen.")
+            croak("no repo has been chosen.")
             return
         repo = self.chosen()
         if self.selection is None:
@@ -17236,7 +17236,7 @@ to re-set it.
 
 func (rs *Reposurgeon) DoBranchify(line string) (stopOut bool) {
 	if rs.selection != nil {
-		complain("branchify does not take a selection set")
+		croak("branchify does not take a selection set")
 		return false
 	}
 	if strings.TrimSpace(line) != "" {
@@ -17296,13 +17296,13 @@ func (rs *Reposurgeon) DoBranchify_map(line string) bool {
 		for _, regex := range strings.Fields(line) {
 			separator := regex[0]
 			if separator != regex[len(regex)-1] {
-				complain("Regex '%s' did not end with separator character", regex)
+				croak("Regex '%s' did not end with separator character", regex)
 				return false
 			}
 			stuff := strings.SplitN(regex[1:len(regex)-1], string(separator), 2)
 			match, replace := stuff[0], stuff[1]
 			if replace == "" || match == "" {
-				complain("Regex '%s' has an empty search or replace part", regex)
+				croak("Regex '%s' has an empty search or replace part", regex)
 				return false
 			}
 			context.mapOptions["svn_branchify_mapping"][match] = replace
@@ -17314,7 +17314,7 @@ func (rs *Reposurgeon) DoBranchify_map(line string) bool {
 			announce(debugSHOUT, "\t"+match+" -> "+replace)
 		}
 	} else {
-		complain("branchify_map is empty.")
+		croak("branchify_map is empty.")
 	}
 	return false
 }
@@ -17359,7 +17359,7 @@ func tweakFlagOptions(line string, val bool) {
 					break good
 				}
 			}
-			complain("no such option flag as '%s'", name)
+			croak("no such option flag as '%s'", name)
 		}
 	}
 }
@@ -17492,17 +17492,17 @@ func (rs *Reposurgeon) DoDo(line string) bool {
 	parse := rs.newLineParse(line, stringSet{"stdout"})
 	words, err := shlex.Split(parse.line, true)
 	if len(words) == 0 {
-		complain("no macro name was given.")
+		croak("no macro name was given.")
 		return false
 	}
 	if err != nil {
-		complain("macro parse failed, %s", err)
+		croak("macro parse failed, %s", err)
 		return false
 	}
 	name := words[0]
 	macro, present := rs.definitions[name]
 	if !present {
-		complain("'%s' is not a defined macro", name)
+		croak("'%s' is not a defined macro", name)
 		return false
 	}
 	args := words[1:]
@@ -17574,12 +17574,12 @@ func (rs *Reposurgeon) DoUndefine(line string) bool {
 	words := strings.SplitN(line, " ", 1)
 	name := words[0]
 	if name == "" {
-		complain("no macro name was given.")
+		croak("no macro name was given.")
 		return false
 	}
 	_, present := rs.definitions[name]
 	if !present {
-		complain("'%s' is not a defined macro", name)
+		croak("'%s' is not a defined macro", name)
 		return false
 	}
 	delete(rs.definitions, name)
@@ -17612,7 +17612,7 @@ action-stamp ID for each commit.
 
 func (rs *Reposurgeon) DoTimequake(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	repo := rs.chosen()
@@ -17653,11 +17653,11 @@ language can count on having a unique action-stamp ID for each commit.
 
 func (rs *Reposurgeon) DoTimebump(line string) (stopOut bool) {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	if rs.selection == nil {
-		complain("reposurgeon: no default select set for bump.")
+		croak("reposurgeon: no default select set for bump.")
 		return false
 	}
 	var offset int
@@ -17667,7 +17667,7 @@ func (rs *Reposurgeon) DoTimebump(line string) (stopOut bool) {
 	} else {
 		offset, err = strconv.Atoi(line)
 		if err != nil {
-			complain("in timebump: %v", err)
+			croak("in timebump: %v", err)
 			return false
 		}
 	}
@@ -17711,7 +17711,7 @@ class Reposurgeon(object):
     func (rs *Reposurgeon) DoChangelogs(self, line str):
         "Mine repository changelogs for authorship data."
         if self.chosen() is None:
-            complain("no repo has been chosen.")
+            croak("no repo has been chosen.")
             return
         repo = self.chosen()
         cc = cl = cm = cd = 0
@@ -17817,7 +17817,7 @@ class Reposurgeon(object):
                             if not newattr.name:
                                 for mapentry in repo.authormap.values():
                                     if len(mapentry) != 3:
-                                        complain("malformed author map entry %s" % (mapentry,))
+                                        croak("malformed author map entry %s" % (mapentry,))
                                         continue
                                     (name, nemail, _tz) = mapentry
                                     if newattr.email == nemail:
@@ -17913,7 +17913,7 @@ not optimal, and may in particular contain duplicate blobs.
 func (rs *Reposurgeon) DoIncorporate(line string) bool {
 	repo := rs.chosen()
 	if repo == nil {
-		complain("no repo has been chosen.")
+		croak("no repo has been chosen.")
 		return false
 	}
 	if rs.selection == nil {
@@ -17924,16 +17924,16 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		event := repo.events[rs.selection[0]]
 		var ok bool
 		if commit, ok = event.(*Commit); !ok {
-			complain("selection is not a commit.")
+			croak("selection is not a commit.")
 			return false
 		}
 	} else {
-		complain("a singleton selection set is required.")
+		croak("a singleton selection set is required.")
 		return false
 	}
 	parse := rs.newLineParse(line, nil)
 	if parse.line == "" {
-		complain("no tarball specified.")
+		croak("no tarball specified.")
 		return false
 	}
 
@@ -17955,7 +17955,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		var err error
 		strip, err = strconv.Atoi(stripstr)
 		if err != nil {
-			complain("strip option must be an integer")
+			croak("strip option must be an integer")
 			return false
 		}
 	}
@@ -17979,14 +17979,14 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 	// Incorporate the tarball content
 	tarfile, err := os.Open(parse.line)
 	if err != nil {
-		complain("open or read failed on %s", parse.line)
+		croak("open or read failed on %s", parse.line)
 		return false
 	}
 
 	announce(debugSHUFFLE, "extracting %s into %s", parse.line, repo.subdir(""))
 	headers, err := extractTar(repo.subdir(""), tarfile)
 	if err != nil {
-		complain("error while extracting tarball %s: %s", parse.line, err.Error())
+		croak("error while extracting tarball %s: %s", parse.line, err.Error())
 	}
 	// Pre-sorting avoids an indeterminacy bug in tarfile
 	// order traversal.
@@ -18042,7 +18042,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 	if present {
 		blank.committer.date, err = newDate(date)
 		if err != nil {
-			complain("invalid date: %s", date)
+			croak("invalid date: %s", date)
 			return false
 		}
 	}
@@ -18114,7 +18114,7 @@ func (rs *Reposurgeon) DoVersion(line string) (stopOut bool) {
 		if strings.Contains(line, ".") {
 			fields = strings.Split(strings.TrimSpace(line), ".")
 			if len(fields) != 2 {
-				complain("invalid version.")
+				croak("invalid version.")
 				return false
 			}
 		} else {
@@ -18182,7 +18182,7 @@ func (rs *Reposurgeon) DoPrompt(lineIn string) bool {
 	if lineIn != "" {
 		words, err := shlex.Split(lineIn, true)
 		if err != nil {
-			complain("failed to parse your prompt string: %s", err.Error())
+			croak("failed to parse your prompt string: %s", err.Error())
 			return false
 		}
 		rs.promptFormat = strings.Join(words, " ")
@@ -18362,7 +18362,7 @@ func (rs *Reposurgeon) DoEcho(lineIn string) (stopOut bool) {
 	if len(lineIn) != 0 {
 		echo, err := strconv.Atoi(lineIn)
 		if err != nil {
-			complain("echo value must be an integer.")
+			croak("echo value must be an integer.")
 		} else {
 			rs.echo = echo
 		}
@@ -18402,7 +18402,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 	fname, vars := words[0], words[1:]
 	scriptfp, err := os.Open(fname)
 	if err != nil {
-		complain("script failure on '%s': %s", fname, err)
+		croak("script failure on '%s': %s", fname, err)
 		return
 	}
 	defer scriptfp.Close()
@@ -18436,7 +18436,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 		if strings.Contains(scriptline, "<<") {
 			heredoc, err := ioutil.TempFile("", "reposurgeon-")
 			if err != nil {
-				complain("script failure on '%s': %s", fname, err)
+				croak("script failure on '%s': %s", fname, err)
 				return
 			}
 			defer os.Remove(heredoc.Name())
@@ -18453,7 +18453,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 				} else {
 					_, err := fmt.Fprint(heredoc, nextline)
 					if err != nil {
-						complain("script failure on '%s': %s", fname, err)
+						croak("script failure on '%s': %s", fname, err)
 						return
 					}
 				}
@@ -19279,7 +19279,7 @@ deleted name.
                                 operator.attrgetter("common"))
                         if prev is None:
                             if debugEnable(debugTOPOLOGY):
-                                complain("lookback for %s failed, not making branch link" % latest)
+                                croak("lookback for %s failed, not making branch link" % latest)
                         else:
                             sp.fileopBranchlinks.add(newcommit.common)
                             announce(debugTOPOLOGY, "r%s: making branch link %s" %
@@ -20143,15 +20143,15 @@ func (sd *SubversionDumper) dump(selection orderedIntSet,
 			continue
 		}
 		if strings.HasPrefix(commit.Branch, "refs/notes") {
-			complain("skipping note as unsupported")
+			croak("skipping note as unsupported")
 			continue
 		}
 		if commit.Branch == "refs/stash" {
-			complain("skipping stash as unsupported")
+			croak("skipping stash as unsupported")
 			continue
 		}
 		if strings.HasPrefix(commit.color, "refs/remotes") {
-			complain("skipping remote as unsupported %s", commit.color)
+			croak("skipping remote as unsupported %s", commit.color)
 			continue
 		}
 		revision++
@@ -20231,7 +20231,7 @@ func (sd *SubversionDumper) dump(selection orderedIntSet,
 							&sd.pathmap[revision][svnpath].props)
 					}
 				} else if fileop.mode == "160000" {
-					complain(fmt.Sprintf("skipping submodule link reference %s", fileop.ref))
+					croak("skipping submodule link reference %s", fileop.ref)
 				} else {
 					sd.filemodify(fp,
 						revision,
