@@ -14698,7 +14698,7 @@ func (rs *Reposurgeon) DoAdd(line string) (stopOut bool) {
 	optype := fields[0]
 	var perms, argpath, mark, source, target string
 	if optype == "D" {
-		argpath := fields[1]
+		argpath = fields[1]
 		for _, event := range repo.commits(rs.selection) {
 			if event.paths(nil).Contains(argpath) {
 				complain("%s already has an op for %s",
@@ -14737,7 +14737,7 @@ func (rs *Reposurgeon) DoAdd(line string) (stopOut bool) {
 			complain("mark %s in add command is after add location", mark)
 			return false
 		}
-		argpath := fields[3]
+		argpath = fields[3]
 		for _, event := range repo.commits(rs.selection) {
 			if event.paths(nil).Contains(argpath) {
 				complain("%s already has an op for %s",
@@ -18414,14 +18414,10 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 	if interpreter.PreLoop != nil {
 		interpreter.PreLoop()
 	}
+	lineno := 1
 	for {
-		// Abort flag is set by complain() and signals.
-		// When it's set, we abort out of every nested
-		// script call.
-		if context.getAbort() {
-			break
-		}
 		scriptline, err := script.ReadString('\n')
+		lineno++
 		if err == io.EOF && scriptline == "" {
 			break
 		}
@@ -18461,6 +18457,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 						return
 					}
 				}
+				lineno++
 			}
 
 			heredoc.Close()
@@ -18493,9 +18490,17 @@ func (rs *Reposurgeon) DoScript(lineIn string) (stopOut bool) {
 			stop = interpreter.PostCommand(stop, scriptline)
 		}
 
-		// and then we have to put the stdin back where it was, in case we changed it
+		// and then we have to put the stdin back where it
+		// was, in case we changed it
 		rs.cmd.SetStdin(existingStdin)
 
+		// Abort flag is set by croak() and signals.
+		// When it is set, we abort out of every nested
+		// script call.
+		if context.getAbort() {
+			announce(debugSHOUT, "script abort at line %d: %q", lineno, scriptline)
+			break
+		}
 		if stop {
 			break
 		}
