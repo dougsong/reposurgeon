@@ -3589,7 +3589,8 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 	return modified
 }
 
-// ianaDecode tells if a string has undecodable i18n sequences in it.
+// ianaDecode decodes data in a string to UTF-8.
+// The error return tells if a string has undecodable i18n sequences in it.
 // http://www.iana.org/assignments/character-sets/character-sets.xhtml
 func ianaDecode(data, codec string) (string, bool, error) {
 	// This works around a bug in the ianaindex package.
@@ -14329,30 +14330,34 @@ blob in the specification.
 The encoding argument must name one of the codecs known to the Go
 standard codecs library. In particular, 'latin-1' is a valid codec name.
 
-Errors in this command are fatal, because an error may leave
-repository objects in a damaged state.
+Errors in this command are force the repository to be dropped, because an
+error may leave repository objects in a damaged state.
+
 `)
 }
 
-/*
-func (rs *Reposurgeon) DoTranscode(self, line str):
-        if self.chosen() == None:
-            croak("no repo is loaded")
-            return
-        else if self.selection is None:
-            self.selection = self.chosen().all()
-        (codec, line) = popToken(line)
-        func transcode(txt, _paths=None):
-            return polystr(codecs.encode(codecs.decode(polybytes(txt), codec), "utf-8"))
-        try:
-            self.dataTraverse(prompt="Transcoding",
-                               hook=transcode,
-                               attributes={"c", "a", "C"},
-                               safety=true)
-        except UnicodeError:
-            raise Fatal("UnicodeError during transcoding")
+func (rs *Reposurgeon) DoTranscode(line string) (stopOut bool) {
+        if rs.chosen() == nil {
+		croak("no repo is loaded")
+		return false
+        } else if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+        }
+        transcode := func(txt string) string {
+		out, ok, err := ianaDecode(txt, line)
+		if !ok || err != nil {
+			complain("decode error during transcoding: %v", err)
+			rs.unchoose()
+		}
+		return out
+        }
+	rs.dataTraverse("Transcoding",
+		transcode,
+		newStringSet("c", "a", "C"),
+		true)
+	return false
+}
 
-*/
 func (rs *Reposurgeon) HelpSetfield() {
 	rs.helpOutput(`
 In the selected objects (defaulting to none) set every instance of a
