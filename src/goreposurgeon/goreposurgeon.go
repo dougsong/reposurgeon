@@ -2470,6 +2470,7 @@ developers.
 type Context struct {
 	verbose int
 	// The abort flag
+	relax bool
 	abortScript bool
 	abortLock   sync.Mutex
 	flagOptions map[string]bool
@@ -2558,7 +2559,9 @@ func complain(msg string, args ...interface{}) {
 func croak(msg string, args ...interface{}) {
 	content := fmt.Sprintf(msg, args...)
 	os.Stderr.WriteString("reposurgeon: " + content + "\n")
-	context.setAbort(true)
+	if !context.relax {
+		context.setAbort(true)
+	}
 }
 
 func announce(lvl int, msg string, args ...interface{}) {
@@ -6871,10 +6874,6 @@ func (repo *Repository) named(ref string) orderedIntSet {
 	// more expensive in time than doing a single lookup. Avoid
 	// lots of O(n**2) searches by building a lookup cache, at the
 	// expense of increased working set for the hash table.
-	lookup, ok := repo.assignments[ref]
-	if ok {
-		return lookup
-	}
 	if repo._namecache == nil {
 		repo._buildNamecache()
 	}
@@ -6900,6 +6899,11 @@ func (repo *Repository) named(ref string) orderedIntSet {
 				return newOrderedIntSet(loc)
 			}
 		}
+	}
+	// Next, assignments
+	lookup, ok := repo.assignments[ref]
+	if ok {
+		return lookup
 	}
 	// Might be a date or action stamp (though action stamps should
 	// be in the name cache already).  First, peel off an optional
@@ -6932,8 +6936,6 @@ func (repo *Repository) named(ref string) orderedIntSet {
 				d := u.timestamp.Sub(daymark).Hours()
 				return d >= 0 && d < 24
 			}
-		} else {
-			panic(throw("command", "unparseable date in "+ref))
 		}
 	}
 	emailID := ""
@@ -14798,8 +14800,7 @@ func (rs *Reposurgeon) DoAdd(line string) (stopOut bool) {
 		target = fields[2]
 		for _, event := range repo.commits(rs.selection) {
 			if event.paths(nil).Contains(source) || event.paths(nil).Contains(target) {
-				//FIXME: -> croak() when tests can change 
-				complain("%s already has an op for %s or %s",
+				croak("%s already has an op for %s or %s",
 					event.mark, source, target)
 				return false
 			}
@@ -18451,6 +18452,16 @@ func (rs *Reposurgeon) DoPrint(lineIn string) (stopOut bool) {
 	parse := rs.newLineParse(lineIn, []string{"stdout"})
 	defer parse.Closem()
 	fmt.Fprintf(parse.stdout, "%s\n", parse.line)
+	return false
+}
+
+func (rs *Reposurgeon) HelpRelax() {
+	rs.helpOutput("Make command errors non-fatal in scripts.\n")
+}
+
+//FIXME: Document this
+func (rs *Reposurgeon) DoRelax(lineIn string) (stopOut bool) {
+	context.relax = true
 	return false
 }
 

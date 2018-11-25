@@ -13926,6 +13926,15 @@ Runs the unit tests and reports the results.
             for name in available:
                 runtest(name)
 
+    def help_relax(self):
+        sys.stdout.write("""
+This command is a no-op in Python reposurgeon.  In Go reposurgeon it prevents
+errors from aborting the enclosing script.
+""")
+    def do_relax(self, line):
+        pass
+
+
 # this class copied from https://code.activestate.com/recipes/576694/
 # created by Raymond Hettinger
 # revision 9, dated 2009-03-19
