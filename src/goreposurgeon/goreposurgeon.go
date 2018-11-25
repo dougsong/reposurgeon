@@ -12329,7 +12329,8 @@ func (rs *Reposurgeon) HelpNews() {
 1. whoami() does not read .lynxrc files
 2. No Python plugins.
 3. Regular expressions use Go syntax rather than Python. Little
-   difference in practice; the biggest deal is lack of lookbehinds
+   difference in practice; the biggest deal is lack of lookbehinds.
+   Also, regexp substititions are always 'g' (all copies).
 4. Go and Python disagree on what RFC822 format is, and neither is compatible
    with the Git log date format, which claims to be RFC822 but isn't.  So
    we always dump timestamps in RFC3339 now.
@@ -14171,113 +14172,147 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
 `)
 }
 
-/*
-class Reposurgeon(object):
-    func (rs *Reposurgeon) DoFilter(rs, line str):
-        if rs.chosen() == None:
-            croak("no repo is loaded")
-            return
-        if line == "":
-            croak("no filter is specified")
-            return
-        if rs.selection is None:
-            croak("no selection")
-            return
-        class FilterCommand:
-            func __init__(rs, repo, filtercmd):
-                "Initialize the filter from the command line."
-                rs.repo = repo
-                rs.filtercmd = None
-                rs.sub = None
-                rs.regex = None
-                rs.attributes = set([])
-                # Must not use LineParse here as it would try to strip options
-                # in shell commands.
-                if filtercmd.startswith('--shell'):
-                    rs.filtercmd = filtercmd[7:].lstrip()
-                    rs.attributes = {"c", "a", "C"}
-                else if filtercmd.startswith('--regex') or filtercmd.startswith('--replace'):
-                    firstspace = filtercmd.find(' ')
-                    if firstspace == -1:
-                        raise Recoverable("missing filter specification")
-                    stripped = filtercmd[firstspace:].lstrip()
-                    parts = stripped.split(stripped[0])
-                    subflags = parts[-1]
-                    if len(parts) != 4:
-                        raise Recoverable("malformed filter specification")
-                    else if parts[0]:
-                        raise Recoverable("bad prefix '%s' on filter specification" % parts[0])
-                    else if subflags and not re.match(r"[0-9]*g?".encode('ascii'), polybytes(subflags)):
-                        raise Recoverable("unrecognized filter flags")
-                    else if "%PATHS%" in filtercmd:
-                        raise Recoverable("%PATHS% is not yet supported in regex filters")
-                    else:
-                        subcount = 1
-                        while subflags:
-                            flag = subflags[0]
-                            subflags = subflags[:-1]
-                            if flag == "g":
-                                subcount = 0
-                            else if flag in {"c", "a", "C"}:
-                                rs.attributes.add(flag)
-                            else if flag.isdigit():
-                                subcount = int(subflags)
-                            else:
-                                raise Recoverable("unknown filter flag")
-                        if not rs.attributes:
-                            rs.attributes = {"c", "a", "C"}
-                        # subcount 0 does not reliably work as it should
-                        if filtercmd.startswith('--regex'):
-                            try:
-                                pattern = parts[1]
-                                if str is not bytes:
-                                    pattern = pattern.encode(master_encoding)
-                                rs.regex = regexp.MustCompile(pattern)
-                            except sre_constants.error as e:
-                                raise Recoverable("filter compilation error - %s" % e)
-                            rs.sub = lambda s: polystr(rs.regex.sub(polybytes(parts[2]),
-                                                                        polybytes(s),
-                                                                        len(polybytes(s)) if subcount == 0 else subcount))
-                        else if filtercmd.startswith('--replace'):
-                            rs.sub = lambda s: s.replace(parts[1],
-                                                           parts[2],
-                                                           len(s) if subcount == 0 else subcount)
-                else if filtercmd.startswith('--dedos'):
-                    if not rs.attributes:
-                        rs.attributes = {"c", "a", "C"}
-                    rs.sub = lambda s: s.replace("\r\n", "\n")
-                else:
-                    raise Recoverable("--shell or --regex or --dedos required")
-            func do(rs, content, pathsubst=""):
-                "Perform the filter on string content or a file."
-                if rs.filtercmd:
-                    if pathsubst:
-                        filtercmd = rs.filtercmd.replace("%PATHS%", pathsubst)
-                    else:
-                        filtercmd = rs.filtercmd
-                    (indesc, intmp) = tempfile.mkstemp(prefix=rs.repo.subdir())
-                    (outdesc, outtmp) = tempfile.mkstemp(prefix=rs.repo.subdir())
-                    try:
-                        assert indesc > -1 and outdesc > -1    # pacify pylint
-                        with open(intmp, "wb") as wfp:
-                            wfp.write(polybytes(content))
-                        return polystr(captureFromProcess("%s <%s" % (filtercmd, intmp)))
-                    finally:
-                        os.remove(intmp)
-                        os.close(indesc)
-                        os.remove(outtmp)
-                        os.close(outdesc)
-                else if rs.sub:
-                    return rs.sub(content)
-                else:
-                    raise Recoverable("unknown mode in filter command")
-        # Mainline of do_filter() continues:
-        filterhook = FilterCommand(rs.chosen(), line)
-        rs.dataTraverse(prompt="Filtering",
-                           hook=filterhook.do,
-                           attributes=filterhook.attributes,
-                           safety=not line.startswith('--dedos'))
-*/
+type filterCommand struct {
+	repo *Repository
+	filtercmd string
+	sub func(string) string
+	regexp *regexp.Regexp
+	attributes stringSet
+}
+
+// newFilterCmmand - Initialize a filter from the command line.
+func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
+	fc := new(filterCommand)
+	fc.repo = repo
+	fc.attributes = newStringSet()
+	// Must not use LineParse here as it would try to strip options
+	// in shell commands.
+	flagRe := regexp.MustCompile(`[0-9]*g?`)
+	if strings.HasPrefix(filtercmd, "--shell") {
+		fc.filtercmd = strings.TrimSpace(filtercmd[7:])
+		fc.attributes = newStringSet("c", "a", "C")
+	} else if strings.HasPrefix(filtercmd, "--regex") || strings.HasPrefix(filtercmd, "--replace") {
+		firstspace := strings.Index(filtercmd, " ")
+		if firstspace == -1 {
+                        croak("missing filter specification")
+			return nil
+		}
+		stripped := strings.TrimSpace(filtercmd[firstspace:])
+		parts := strings.Split(stripped, stripped[0:1])
+		subflags := parts[len(parts)-1]
+		if len(parts) != 4 {
+                        croak("malformed filter specification")
+			return nil
+		} else if parts[0] != "" {
+                        croak("bad prefix %q on filter specification", parts[0])
+			return nil
+		} else if subflags != "" && !flagRe.MatchString(subflags) {
+                        croak("unrecognized filter flags")
+			return nil
+		} else if strings.Index(filtercmd, "%PATHS%") != -1 {
+                        croak("%PATHS% is not yet supported in regex filters")
+			return nil
+		} else {
+                        subcount := 1
+                        for subflags != "" {
+				flag := subflags[0:1]
+				subflags = subflags[:len(subflags)-1]
+				if flag == "g" {
+					subcount = -1
+				} else if flag == "c" || flag == "a" || flag == "C" {
+					fc.attributes.Add(flag)
+				} else if i := strings.Index("0123456789", flag); i != -1 {
+					subcount = i
+				} else {
+					croak("unknown filter flag")
+					return nil
+				}
+                        }
+                        if len(fc.attributes) == 0 {
+				fc.attributes = newStringSet("c", "a", "C")
+                        }
+                        if strings.HasPrefix(filtercmd, "--regex") {
+				pattern := parts[1]
+				var err error
+				fc.regexp, err = regexp.Compile(pattern)
+				if err != nil {
+					croak("filter compilation error: %v",err)
+					return nil
+				}
+				fc.sub = func(s string) string {
+					//FIXME: Regression since Python,
+					// defaults to the old 'g' behavior'.
+					return fc.regexp.ReplaceAllString(s, parts[2])
+				}
+                        } else if strings.HasPrefix(filtercmd, "--replace") {
+				fc.sub = func(s string) string {
+					return strings.Replace(s, parts[1], parts[2], subcount)
+				}
+                        }
+		}
+	} else if strings.HasPrefix(filtercmd, "--dedos") {
+		if len(fc.attributes) == 0 {
+                        fc.attributes = newStringSet("c", "a", "C")
+		}
+		fc.sub = func(s string) string {
+			return strings.Replace(s, "\r\n", "\n", -1)
+		}
+	} else {
+		croak("--shell or --regex or --dedos required")
+		return nil
+	}
+	return fc
+}
+
+func (fc *filterCommand) do(content string) string {
+	// Perform the filter on string content or a file.
+	if fc.filtercmd != "" {
+		//FIXME: %PATHS% looks like it never worked. Repair or remove.
+		//var filtercmd string
+		//if pathsubst != "" {
+                //        filtercmd = strings.Replace(fc.filtercmd, "%PATHS%", pathsubst, -1)
+		//} else {
+                //        filtercmd = fc.filtercmd
+		//}
+		cmd := exec.Command("sh", "-c", fc.filtercmd)
+		cmd.Stdin = strings.NewReader(content)
+		content, err := cmd.CombinedOutput()
+		if err != nil {
+			complain("filter command failed")
+			return string(content)
+		}
+	} else if fc.sub != nil {
+		return fc.sub(content)
+	} else {
+		complain("unknown mode in filter command")
+	}
+	return content
+	
+}
+
+func (rs *Reposurgeon) DoFilter(line string) (StopOut bool) {
+	if rs.chosen() == nil {
+		croak("no repo is loaded")
+		return false
+	}
+	if line == "" {
+		croak("no filter is specified")
+		return false
+	}
+	if rs.selection == nil {
+		croak("no selection")
+		return false
+	}
+	// Mainline of do_filter() continues {
+	filterhook := newFilterCommand(rs.chosen(), line)
+	if filterhook != nil {
+		rs.dataTraverse("Filtering",
+			filterhook.do,
+			filterhook.attributes,
+			!strings.HasPrefix(line, "--dedos"))
+	}
+	return false
+}
 
 func (rs *Reposurgeon) HelpTranscode() {
 	rs.helpOutput(`
