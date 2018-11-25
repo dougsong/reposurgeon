@@ -15609,7 +15609,7 @@ func (rs *Reposurgeon) HelpPath() {
 	rs.helpOutput(`
 Rename a path in every fileop of every selected commit.  The
 default selection set is all commits. The first argument is interpreted as a
-Go regular expression to match against paths; the second may contain
+Go regular expression to match against paths; the second may contain Go
 back-reference syntax.
 
 Ordinarily, if the target path already exists in the fileops, or is visible
@@ -15617,49 +15617,74 @@ in the ancestry of the commit, this command throws an error.  With the
 --force option, these checks are skipped.
 `)
 }
-
-/*
-class Reposurgeon(object):
-    func (rs *Reposurgeon) DoPath(self, line str):
-        "Rename paths in the history."
-        if self.chosen() is None:
-            croak("no repo has been chosen.")
-            return
-        repo = self.chosen()
-        if self.selection is None:
-            self.selection = repo.all()
-        (source_re, line) = popToken(line)
-        (verb, line) = popToken(line)
-        with rs.newLineParse(line, nil) as parse:
-            if verb == "rename":
-                force = '--force' in parse.options
-                (target_re, _) = popToken(parse.line)
-                if not target_re:
-                    raise Recoverable("no target specified in rename")
-                actions = []
-                for _,commit := range self.commits(self.selection):
-                    touched = false
-                    for fileop in commit.operations():
-                        for attr in ("path", "source", "target"):
-                            if hasattr(fileop, attr):
-                                oldpath = getattr(fileop, attr)
-                                if oldpath and re.search(polybytes(source_re), polybytes(oldpath)):
-                                    newpath = polystr(re.sub(polybytes(source_re), polybytes(target_re), polybytes(oldpath)))
-                                    if not force and commit.visible(newpath):
-                                        raise Recoverable("rename at %s failed, %s visible in ancestry" % (commit.idMe(), newpath))
-                                    else if not force and newpath in commit.paths():
-                                        raise Recoverable("rename at %s failed, %s exists there" % (commit.idMe(), newpath))
-                                    else:
-                                        actions.append((fileop, attr, newpath))
-                                        touched = true
-                    if touched:
-                        commit.invalidatePathsetCache()
-                # All checks must pass before any renames
-                for (fileop, attr, newpath) in actions:
-                    setattr(fileop, attr, newpath)
-            else:
-                raise Recoverable("unknown verb '%s' in path command." % verb)
-*/
+// Rename paths in the history.
+func (rs *Reposurgeon) DoPath(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		croak("no repo has been chosen.")
+		return false
+	}
+	repo := rs.chosen()
+	if rs.selection == nil {
+		rs.selection = repo.all()
+	}
+	var sourcePattern string
+	sourcePattern, line = popToken(line)
+	sourceRE, err1 := regexp.Compile(sourcePattern)
+	if err1 != nil {
+		complain("source path regexp compilation failed: %v", err1)
+		return false
+	}
+	var verb string
+	verb, line = popToken(line)
+	parse := rs.newLineParse(line, nil)
+	defer parse.Closem()
+	if verb == "rename" {
+		force := parse.options.Contains("--force")
+		targetPattern, _ := popToken(parse.line)
+		if targetPattern != "" {
+			complain("no target specified in rename")
+			return false
+		}
+		type pathAction struct {
+			fileop *FileOp
+			attr string
+			newpath string
+		}
+		actions := make([]pathAction, 0)
+		for _, commit := range repo.commits(rs.selection) {
+			touched := false
+			for _, fileop := range commit.operations() {
+				for _, attr := range []string{"path", "source", "target"} {
+					if oldpath, ok := getAttr(fileop, attr); ok {
+						if oldpath != "" && sourceRE.MatchString(oldpath) {
+							newpath := sourceRE.ReplaceAllString(oldpath, targetPattern)
+							if !force && commit.visible(newpath) != nil {
+								complain("rename at %s failed, %s visible in ancestry", commit.idMe(), newpath)
+								return false
+							} else if !force && commit.paths(nil).Contains(newpath) {
+								complain("rename at %s failed, %s exists there", commit.idMe(), newpath)
+								return false
+							} else {
+								actions = append(actions, pathAction{&fileop, attr, newpath})
+								touched = true
+							}
+						}
+					}
+				}
+			}
+			if touched {
+				commit.invalidatePathsetCache()
+			}
+		}
+		// All checks must pass before any renames
+		for _, action := range actions {
+			setAttr(action.fileop, action.attr, action.newpath)
+		}
+	} else {
+		complain("unknown verb '%s' in path command.", verb)
+	}
+	return false
+}
 
 func (rs *Reposurgeon) HelpPaths() {
 	rs.helpOutput(`
