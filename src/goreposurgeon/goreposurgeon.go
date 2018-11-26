@@ -7056,9 +7056,10 @@ func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) err
 		event := repo.events[ei]
 		switch event.(type) {
 		case *Commit:
-			event.(*Commit).committer.remap(repo.authormap)
-			for _, author := range event.(*Commit).authors {
-				author.remap(repo.authormap)
+			c := event.(*Commit)
+			c.committer.remap(repo.authormap)
+			for ai := range c.authors {
+				c.authors[ai].remap(repo.authormap)
 			}
 		case *Tag:
 			event.(*Tag).tagger.remap(repo.authormap)
