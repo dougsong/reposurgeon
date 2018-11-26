@@ -10207,37 +10207,6 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 	rl.repolist = append(rl.repolist, expunged)
 }
 
-/*
-func debug_lexer(f):
-    """Function decorator to debug SelectionParser selection parsing methods."""
-    @functools.wraps(f)
-    func wrapper(self, *args):
-        if not debugEnable(debugLEXER):
-            return f(self, *args)
-        try:
-            stack = getattr(self, '_debug_lexer_stack')
-        except AttributeError:
-            stack = []
-            setattr(self, '_debug_lexer_stack', stack)
-        v = args[0] if self.line is None else ''
-        s = ": {0}".format(repr(self.line)) if self.line is not None else ''
-        announce(debugSHOUT, "{0}{1}({2}){3}".format(' ' * len(stack), f.__name__, v, s))
-        stack.append(f.__name__)
-        try:
-            ret = f(self, *args)
-        except Exception as e:
-            ret = e
-            raise
-        finally:
-            x = "lambda" if callable(ret) else repr(ret)
-            s = ", left = {0}".format(repr(self.line)) if self.line is not None else ''
-            announce(debugSHOUT, "{0}{1} <- {2}(){3}".format(
-                ' ' * len(stack), x, stack.pop(), s))
-        return ret
-    return wrapper
-
-*/
-
 type selEvalState interface {
 	nItems() int
 	allItems() *fastOrderedIntSet
@@ -10355,14 +10324,12 @@ func (p *SelectionParser) pop() rune {
 }
 
 func (p *SelectionParser) parseExpression() selEvaluator {
-	// FIXME: @debug_lexer
 	p.eatWS()
 	return p.imp().parseDisjunct()
 }
 
 // parseDisjunct parses a disjunctive expression (| has lowest precedence)
 func (p *SelectionParser) parseDisjunct() selEvaluator {
-	// FIXME: @debug_lexer
 	p.eatWS()
 	op := p.imp().parseConjunct()
 	if op == nil {
@@ -10389,7 +10356,6 @@ func (p *SelectionParser) parseDisjunct() selEvaluator {
 // evalDisjunct evaluates a disjunctive expression
 func (p *SelectionParser) evalDisjunct(state selEvalState,
 	preselection *fastOrderedIntSet, op1, op2 selEvaluator) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	selected := newFastOrderedIntSet()
 	conjunct := op1(state, preselection)
 	if conjunct != nil {
@@ -10404,7 +10370,6 @@ func (p *SelectionParser) evalDisjunct(state selEvalState,
 
 // parseConjunct parses a conjunctive expression (and has higher precedence)
 func (p *SelectionParser) parseConjunct() selEvaluator {
-	// FIXME: @debug_lexer
 	p.eatWS()
 	op := p.imp().parseTerm()
 	if op == nil {
@@ -10431,7 +10396,6 @@ func (p *SelectionParser) parseConjunct() selEvaluator {
 // evalConjunct evaluates a conjunctive expression
 func (p *SelectionParser) evalConjunct(state selEvalState,
 	preselection *fastOrderedIntSet, op1, op2 selEvaluator) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	// assign term before intersecting with preselection so
 	// that the order specified by the user's first term is
 	// preserved
@@ -10452,7 +10416,6 @@ func (p *SelectionParser) evalConjunct(state selEvalState,
 }
 
 func (p *SelectionParser) parseTerm() selEvaluator {
-	// FIXME: @debug_lexer
 	var term selEvaluator
 	p.eatWS()
 	if p.peek() == '~' {
@@ -10487,7 +10450,6 @@ func (p *SelectionParser) parseTerm() selEvaluator {
 
 func (p *SelectionParser) evalTermNegate(state selEvalState,
 	preselection *fastOrderedIntSet, op selEvaluator) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	negated := op(state, state.allItems())
 	remainder := newFastOrderedIntSet()
 	for i, n := 0, state.nItems(); i < n; i++ {
@@ -10500,7 +10462,6 @@ func (p *SelectionParser) evalTermNegate(state selEvalState,
 
 // parseVisibility parses a visibility spec
 func (p *SelectionParser) parseVisibility() selEvaluator {
-	// FIXME: @debug_lexer
 	p.eatWS()
 	var visibility selEvaluator
 	type typelettersGetter interface {
@@ -10529,9 +10490,6 @@ func (p *SelectionParser) parseVisibility() selEvaluator {
 		if !strings.ContainsRune("()|& ", p.peek()) {
 			panic(throw("command", "garbled type mask at %s", p.line))
 		}
-		// FIXME: port debugger to Go
-		// p._debug_lexer("visibility set is %s with %s left" % (
-		//     visible, repr(p.line)))
 		visibility = func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
 			return p.imp().evalVisibility(x, s, visible)
 		}
@@ -10542,8 +10500,6 @@ func (p *SelectionParser) parseVisibility() selEvaluator {
 // evalVisibility evaluates a visibility spec
 func (p *SelectionParser) evalVisibility(state selEvalState,
 	preselection *fastOrderedIntSet, visible string) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
-	// FIXME: self._debug_lexer("visibility set is %s" % visible)
 	type typelettersGetter interface {
 		visibilityTypeletters() map[rune]func(int) bool
 	}
@@ -10576,7 +10532,6 @@ func (p *SelectionParser) possiblePolyrange() bool {
 
 // parsePolyrange parses a polyrange specification (list of intervals)
 func (p *SelectionParser) parsePolyrange() selEvaluator {
-	// FIXME: @debug_lexer
 	var polyrange selEvaluator
 	p.eatWS()
 	if !p.imp().possiblePolyrange() {
@@ -10605,7 +10560,6 @@ const polyrangeDollar = math.MaxInt64
 // evalPolyrange evaluates a polyrange specification (list of intervals)
 func (p *SelectionParser) evalPolyrange(state selEvalState,
 	preselection *fastOrderedIntSet, ops []selEvaluator) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	// preselection is not used since it is perfectly legal to have range
 	// bounds be outside of the reduced set.
 	selection := newFastOrderedIntSet()
@@ -10615,7 +10569,6 @@ func (p *SelectionParser) evalPolyrange(state selEvalState,
 			selection = selection.Union(sel)
 		}
 	}
-	// FIXME: self._debug_lexer(fmt.Sprintf("location list is %s", selection))
 	// Resolve spans
 	resolved := newFastOrderedIntSet()
 	last := int(math.MinInt64)
@@ -10643,7 +10596,6 @@ func (p *SelectionParser) evalPolyrange(state selEvalState,
 			last = i
 		}
 	}
-	// FIXME: self._debug_lexer(fmt.Sprintf("resolved list is %s", selection))
 	// Sanity checks
 	if spanning {
 		panic(throw("command", "incomplete range expression"))
@@ -10662,7 +10614,6 @@ func (p *SelectionParser) evalPolyrange(state selEvalState,
 var atomNumRE = regexp.MustCompile(`^[0-9]+`)
 
 func (p *SelectionParser) parseAtom() selEvaluator {
-	// FIXME: @debug_lexer
 	p.eatWS()
 	var op selEvaluator
 	// First, literal command numbers (1-origin)
@@ -10696,7 +10647,6 @@ func (p *SelectionParser) parseAtom() selEvaluator {
 
 // parseTextSearch parses a text search specification
 func (p *SelectionParser) parseTextSearch() selEvaluator {
-	// FIXME: @debug_lexer
 	p.eatWS()
 	type textSearcher interface {
 		evalTextSearch(selEvalState, *fastOrderedIntSet, *regexp.Regexp, string) *fastOrderedIntSet
@@ -10733,7 +10683,6 @@ func (p *SelectionParser) parseTextSearch() selEvaluator {
 
 // parseFuncall parses a function call
 func (p *SelectionParser) parseFuncall() selEvaluator {
-	// FIXME: @debug_lexer
 	p.eatWS()
 	if p.peek() != '@' {
 		return nil
@@ -10826,19 +10775,16 @@ func selMax(s *fastOrderedIntSet) int {
 
 // Minimum member of a selection set.
 func minHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	return newFastOrderedIntSet(selMin(subarg))
 }
 
 // Maximum member of a selection set.
 func maxHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	return newFastOrderedIntSet(selMax(subarg))
 }
 
 // Amplify - map empty set to empty, nonempty set to all.
 func ampHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	if subarg.Size() != 0 {
 		return state.allItems()
 	}
@@ -10847,7 +10793,6 @@ func ampHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSe
 
 // Predecessors function; all elements previous to argument set.
 func preHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	pre := newFastOrderedIntSet()
 	if subarg.Size() == 0 {
 		return pre
@@ -10864,7 +10809,6 @@ func preHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSe
 
 // Successors function; all elements following argument set.
 func sucHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	suc := newFastOrderedIntSet()
 	if subarg.Size() == 0 {
 		return suc
@@ -10882,13 +10826,11 @@ func sucHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSe
 
 // Sort the argument set.
 func srtHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	return subarg.Sort()
 }
 
 // Reverse the argument set.
 func revHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	n := subarg.Size()
 	v := make([]int, n)
 	it := subarg.Iterator()
@@ -10958,7 +10900,6 @@ class AttributionEditor(object):
                 "A" : lambda i: isinstance(self.attributions[i], AttributionEditor.Author),
                 "T" : lambda i: isinstance(self.attributions[i], AttributionEditor.Tagger)
             }
-        @debug_lexer
         func eval_textsearch(self, preselection, search, modifiers):
             if not modifiers:
                 check_name = check_email = true
@@ -11496,7 +11437,6 @@ func (rs *Reposurgeon) isNamed(s string) (result bool) {
 }
 
 func (rs *Reposurgeon) parseExpression() selEvaluator {
-	// FIXME: @debug_lexer
 	value := rs.SelectionParser.parseExpression()
 	if value == nil {
 		return nil
@@ -11516,7 +11456,6 @@ func (rs *Reposurgeon) parseExpression() selEvaluator {
 
 func (rs *Reposurgeon) evalNeighborhood(state selEvalState,
 	preselection *fastOrderedIntSet, subject selEvaluator) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	value := subject(state, preselection)
 	addSet := newFastOrderedIntSet()
 	removeSet := newFastOrderedIntSet()
@@ -11563,7 +11502,6 @@ func (rs *Reposurgeon) evalNeighborhood(state selEvalState,
 }
 
 func (rs *Reposurgeon) parseTerm() selEvaluator {
-	// FIXME: @debug_lexer
 	term := rs.SelectionParser.parseTerm()
 	if term == nil {
 		term = rs.parsePathset()
@@ -11573,7 +11511,6 @@ func (rs *Reposurgeon) parseTerm() selEvaluator {
 
 // Parse a path name to evaluate the set of commits that refer to it.
 func (rs *Reposurgeon) parsePathset() selEvaluator {
-	// FIXME: @debug_lexer
 	rs.eatWS()
 	if rs.peek() != '[' {
 		return nil
@@ -11629,7 +11566,6 @@ func (rs *Reposurgeon) parsePathset() selEvaluator {
 func (rs *Reposurgeon) evalPathsetRegex(state selEvalState,
 	preselection *fastOrderedIntSet, search *regexp.Regexp,
 	flags stringSet) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	if flags.Contains("c") {
 		return rs.evalPathsetFull(state, preselection,
 			search, flags.Contains("a"))
@@ -11666,7 +11602,6 @@ func (rs *Reposurgeon) evalPathsetRegex(state selEvalState,
 // Resolve a path name to the set of commits that refer to it.
 func (rs *Reposurgeon) evalPathset(state selEvalState,
 	preselection *fastOrderedIntSet, matcher string) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	type vendPaths interface{ paths(stringSet) stringSet }
 	hits := newFastOrderedIntSet()
 	events := rs.chosen().events
@@ -11806,7 +11741,6 @@ func (rs *Reposurgeon) possiblePolyrange() bool {
 var markRE = regexp.MustCompile(`^:[0-9]+`)
 
 func (rs *Reposurgeon) parseAtom() selEvaluator {
-	// FIXME: @debug_lexer
 	selection := rs.SelectionParser.parseAtom()
 	if selection == nil {
 		// Mark references
@@ -11836,7 +11770,6 @@ func (rs *Reposurgeon) parseAtom() selEvaluator {
 
 func (rs *Reposurgeon) evalAtomMark(state selEvalState,
 	preselection *fastOrderedIntSet, markref string) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	events := rs.chosen().events
 	for i := 0; i < state.nItems(); i++ {
 		e := events[i]
@@ -11851,7 +11784,6 @@ func (rs *Reposurgeon) evalAtomMark(state selEvalState,
 
 func (rs *Reposurgeon) evalAtomRef(state selEvalState,
 	preselection *fastOrderedIntSet, ref string) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	selection := newFastOrderedIntSet()
 	lookup := rs.chosen().named(ref)
 	if lookup != nil {
@@ -11869,7 +11801,6 @@ func (rs *Reposurgeon) evalAtomRef(state selEvalState,
 func (rs *Reposurgeon) evalTextSearch(state selEvalState,
 	preselection *fastOrderedIntSet,
 	search *regexp.Regexp, modifiers string) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	matchers := newFastOrderedIntSet()
 	// values ("author", "Branch", etc.) in 'searchableAttrs' and keys in
 	// 'extractors' (below) must exactly match spelling and case of fields
@@ -12010,28 +11941,24 @@ func (rs *Reposurgeon) functions() map[string]selEvaluator {
 
 // All children of commits in the selection set.
 func (rs *Reposurgeon) chnHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	return rs.accumulateCommits(subarg,
 		func(c *Commit) []CommitLike { return c.children() }, false)
 }
 
 // All descendants of a selection set, recursively.
 func (rs *Reposurgeon) dscHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	return rs.accumulateCommits(subarg,
 		func(c *Commit) []CommitLike { return c.children() }, true)
 }
 
 // All parents of a selection set.
 func (rs *Reposurgeon) parHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	return rs.accumulateCommits(subarg,
 		func(c *Commit) []CommitLike { return c.parents() }, false)
 }
 
 // All ancestors of a selection set, recursively.
 func (rs *Reposurgeon) ancHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSet {
-	// FIXME: @debug_lexer
 	return rs.accumulateCommits(subarg,
 		func(c *Commit) []CommitLike { return c.parents() }, true)
 }
@@ -15803,16 +15730,16 @@ func (rs *Reposurgeon) DoManifest(line string) (stopOut bool) {
 		header += " " + strings.Repeat("=", 72 - len(header)) + "\n"
 		fmt.Fprint(parse.stdout, header)
 		if event.legacyID != ""{
-			fmt.Fprint(parse.stdout, "# Legacy-ID: %s\n", event.legacyID)
+			fmt.Fprintf(parse.stdout, "# Legacy-ID: %s\n", event.legacyID)
 		}
-		fmt.Fprint(parse.stdout, "commit %s\n", event.Branch)
+		fmt.Fprintf(parse.stdout, "commit %s\n", event.Branch)
 		if event.mark != "" {
-			fmt.Fprint(parse.stdout, "mark %s\n", event.mark)
+			fmt.Fprintf(parse.stdout, "mark %s\n", event.mark)
 		}
 		fmt.Fprint(parse.stdout, "\n")
 		for path, entry := range event.manifest() {
 			if filterFunc(path) {
-				fmt.Fprint(parse.stdout, "%s -> %s\n", path, entry.ref)
+				fmt.Fprintf(parse.stdout, "%s -> %s\n", path, entry.ref)
 			}
 		}
 		fmt.Fprint(parse.stdout, "\n")
