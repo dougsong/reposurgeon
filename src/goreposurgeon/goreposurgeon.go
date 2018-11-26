@@ -2470,7 +2470,7 @@ developers.
 type Context struct {
 	verbose int
 	// The abort flag
-	relax bool
+	relax       bool
 	abortScript bool
 	abortLock   sync.Mutex
 	flagOptions map[string]bool
@@ -14103,10 +14103,10 @@ With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
 }
 
 type filterCommand struct {
-	repo *Repository
-	filtercmd string
-	sub func(string) string
-	regexp *regexp.Regexp
+	repo       *Repository
+	filtercmd  string
+	sub        func(string) string
+	regexp     *regexp.Regexp
 	attributes stringSet
 }
 
@@ -14124,27 +14124,27 @@ func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
 	} else if strings.HasPrefix(filtercmd, "--regex") || strings.HasPrefix(filtercmd, "--replace") {
 		firstspace := strings.Index(filtercmd, " ")
 		if firstspace == -1 {
-                        croak("missing filter specification")
+			croak("missing filter specification")
 			return nil
 		}
 		stripped := strings.TrimSpace(filtercmd[firstspace:])
 		parts := strings.Split(stripped, stripped[0:1])
 		subflags := parts[len(parts)-1]
 		if len(parts) != 4 {
-                        croak("malformed filter specification")
+			croak("malformed filter specification")
 			return nil
 		} else if parts[0] != "" {
-                        croak("bad prefix %q on filter specification", parts[0])
+			croak("bad prefix %q on filter specification", parts[0])
 			return nil
 		} else if subflags != "" && !flagRe.MatchString(subflags) {
-                        croak("unrecognized filter flags")
+			croak("unrecognized filter flags")
 			return nil
 		} else if strings.Index(filtercmd, "%PATHS%") != -1 {
-                        croak("%PATHS% is not yet supported in regex filters")
+			croak("%PATHS% is not yet supported in regex filters")
 			return nil
 		} else {
-                        subcount := 1
-                        for subflags != "" {
+			subcount := 1
+			for subflags != "" {
 				flag := subflags[0:1]
 				subflags = subflags[:len(subflags)-1]
 				if flag == "g" {
@@ -14157,16 +14157,16 @@ func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
 					croak("unknown filter flag")
 					return nil
 				}
-                        }
-                        if len(fc.attributes) == 0 {
+			}
+			if len(fc.attributes) == 0 {
 				fc.attributes = newStringSet("c", "a", "C")
-                        }
-                        if strings.HasPrefix(filtercmd, "--regex") {
+			}
+			if strings.HasPrefix(filtercmd, "--regex") {
 				pattern := parts[1]
 				var err error
 				fc.regexp, err = regexp.Compile(pattern)
 				if err != nil {
-					croak("filter compilation error: %v",err)
+					croak("filter compilation error: %v", err)
 					return nil
 				}
 				fc.sub = func(s string) string {
@@ -14174,15 +14174,15 @@ func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
 					// defaults to the old 'g' behavior'.
 					return fc.regexp.ReplaceAllString(s, parts[2])
 				}
-                        } else if strings.HasPrefix(filtercmd, "--replace") {
+			} else if strings.HasPrefix(filtercmd, "--replace") {
 				fc.sub = func(s string) string {
 					return strings.Replace(s, parts[1], parts[2], subcount)
 				}
-                        }
+			}
 		}
 	} else if strings.HasPrefix(filtercmd, "--dedos") {
 		if len(fc.attributes) == 0 {
-                        fc.attributes = newStringSet("c", "a", "C")
+			fc.attributes = newStringSet("c", "a", "C")
 		}
 		fc.sub = func(s string) string {
 			return strings.Replace(s, "\r\n", "\n", -1)
@@ -14200,9 +14200,9 @@ func (fc *filterCommand) do(content string) string {
 		//FIXME: %PATHS% looks like it never worked. Repair or remove.
 		//var filtercmd string
 		//if pathsubst != "" {
-                //        filtercmd = strings.Replace(fc.filtercmd, "%PATHS%", pathsubst, -1)
+		//        filtercmd = strings.Replace(fc.filtercmd, "%PATHS%", pathsubst, -1)
 		//} else {
-                //        filtercmd = fc.filtercmd
+		//        filtercmd = fc.filtercmd
 		//}
 		cmd := exec.Command("sh", "-c", fc.filtercmd)
 		cmd.Stdin = strings.NewReader(content)
@@ -14217,7 +14217,6 @@ func (fc *filterCommand) do(content string) string {
 		complain("unknown mode in filter command")
 	}
 	return content
-	
 }
 
 func (rs *Reposurgeon) DoFilter(line string) (StopOut bool) {
@@ -14266,20 +14265,20 @@ error may leave repository objects in a damaged state.
 }
 
 func (rs *Reposurgeon) DoTranscode(line string) bool {
-        if rs.chosen() == nil {
+	if rs.chosen() == nil {
 		croak("no repo is loaded")
 		return false
-        } else if rs.selection == nil {
+	} else if rs.selection == nil {
 		rs.selection = rs.chosen().all()
-        }
-        transcode := func(txt string) string {
+	}
+	transcode := func(txt string) string {
 		out, ok, err := ianaDecode(txt, line)
 		if !ok || err != nil {
 			complain("decode error during transcoding: %v", err)
 			rs.unchoose()
 		}
 		return out
-        }
+	}
 	rs.dataTraverse("Transcoding",
 		transcode,
 		newStringSet("c", "a", "C"),
@@ -15545,6 +15544,7 @@ in the ancestry of the commit, this command throws an error.  With the
 --force option, these checks are skipped.
 `)
 }
+
 // Rename paths in the history.
 func (rs *Reposurgeon) DoPath(line string) bool {
 	if rs.chosen() == nil {
@@ -15574,8 +15574,8 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 			return false
 		}
 		type pathAction struct {
-			fileop *FileOp
-			attr string
+			fileop  *FileOp
+			attr    string
 			newpath string
 		}
 		actions := make([]pathAction, 0)
@@ -15702,6 +15702,7 @@ is given, only print "path -> mark" lines for paths matching it.
 This command supports > redirection.
 `)
 }
+
 // Print all files (matching the regex) in the selected commits trees.
 func (rs *Reposurgeon) DoManifest(line string) bool {
 	if rs.chosen() == nil {
@@ -15712,7 +15713,7 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 		rs.selection = rs.chosen().all()
 	}
 	parse := rs.newLineParse(line, stringSet{"stdout"})
-	var filterFunc = func(s string) bool {return true}
+	var filterFunc = func(s string) bool { return true }
 	line = strings.TrimSpace(parse.line)
 	if line != "" {
 		filterRE, err := regexp.Compile(line)
@@ -15723,13 +15724,13 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 		filterFunc = func(s string) bool {
 			return filterRE.MatchString(s)
 		}
-        }
+	}
 	for ei, event := range rs.chosen().commits(rs.selection) {
 		header := fmt.Sprintf("Event %d, ", ei+1)
 		header = header[:len(header)-2]
-		header += " " + strings.Repeat("=", 72 - len(header)) + "\n"
+		header += " " + strings.Repeat("=", 72-len(header)) + "\n"
 		fmt.Fprint(parse.stdout, header)
-		if event.legacyID != ""{
+		if event.legacyID != "" {
 			fmt.Fprintf(parse.stdout, "# Legacy-ID: %s\n", event.legacyID)
 		}
 		fmt.Fprintf(parse.stdout, "commit %s\n", event.Branch)
@@ -15743,7 +15744,7 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 			}
 		}
 		fmt.Fprint(parse.stdout, "\n")
-        }
+	}
 	return false
 }
 
