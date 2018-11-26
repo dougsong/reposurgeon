@@ -18412,7 +18412,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 	if interpreter.PreLoop != nil {
 		interpreter.PreLoop()
 	}
-	lineno := 1
+	lineno := 0
 	for {
 		scriptline, err := script.ReadString('\n')
 		lineno++
@@ -18425,6 +18425,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 			if err == io.EOF && nexterline == "" {
 				break
 			}
+			lineno++
 			scriptline = scriptline[:len(scriptline)-2] + nexterline
 		}
 
