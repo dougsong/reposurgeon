@@ -18442,7 +18442,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 
 			stuff := strings.Split(scriptline, "<<")
 			scriptline = stuff[0]
-			terminator := stuff[1]
+			terminator := stuff[1] + "\n"
 			for true {
 				nextline, err := script.ReadString('\n')
 				if err == io.EOF && nextline == "" {
