@@ -59,11 +59,11 @@ annotated-sample resolve Tag implicit
 @pre(<2010-10-27T17:25:36Z>) resolve predecessor function call 
 # Test here-doc syntax
 echo 0
-authors read <<EOF
+:2 authors read <<EOF
 esr = Eric Raymond <esr@thyrsus.com>
 EOF
 echo 1
-write -
+:2 inspect
 # Test multiline commands
 resolve \
 <annotated-sample>
