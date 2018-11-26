@@ -15775,58 +15775,50 @@ is given, only print "path -> mark" lines for paths matching it.
 This command supports > redirection.
 `)
 }
-
-/*
 // Print all files (matching the regex) in the selected commits trees.
-func (rs *Reposurgeon) DoManifest(self, line str) {
-    if self.chosen() == nil {
-	raise Recoverable("no repo has been chosen")
-    }
-    if self.selection == nil {
-	self.selection = self.chosen().all()
-    }
-    with rs.newLineParse(line, stringSet{"stdout"}) as parse {
-	filter_func = nil
-	line := strings.TrimSpace(parse.line)
-	if line {
-	    try {
-		filter_func = regexp.MustCompile(line.encode("ascii")).search
-            }
-	    except re.error {
-		raise Recoverable("invalid regular expression")
-            }
+func (rs *Reposurgeon) DoManifest(line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		complain("no repo has been chosen")
+		return false
+	}
+	if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+	}
+	parse := rs.newLineParse(line, stringSet{"stdout"})
+	var filterFunc = func(s string) bool {return true}
+	line = strings.TrimSpace(parse.line)
+	if line != "" {
+		filterRE, err := regexp.Compile(line)
+		if err != nil {
+			complain("invalid regular expression: %v", err)
+			return false
+		}
+		filterFunc = func(s string) bool {
+			return filterRE.MatchString(s)
+		}
         }
-	for ei, event := range self.commits(self.selection) {
-	    header = fmt.Sprintf("Event %s, ", repr)(ei+1)
-	    header = header[:-2]
-	    header += " " + ((72 - len(header)) * "=") + "\n"
-	    fmt.Fprint(parse.stdout, header)
-	    if event.legacyID {
-		fmt.Fprint(parse.stdout, fmt.Sprintf("# Legacy-ID: %s\n", event.legacy)ID)
-            }
-	    fmt.Fprint(parse.stdout, fmt.Sprintf("commit %s\n", event).Branch)
-	    if event.mark {
-		fmt.Fprint(parse.stdout, fmt.Sprintf("mark %s\n", event.mark))
-            }
-	    fmt.Fprint(parse.stdout, "\n")
-	    if filter_func == nil {
-		fmt.Fprint(parse.stdout, "\nfmt.Sprintf(".join(fmt.Sprintf(", s) -> %s", path, mark)
-			for path, (mode, mark, _)
-                        }
-			in event.manifest().items()))
-            } else {
-		fmt.Fprint(parse.stdout, "\nfmt.Sprintf(".join(fmt.Sprintf(", s) -> %s", path, mark)
-			for path, (mode, mark, _)
-                        }
-			in event.manifest().items()
-			if filter_func(polybytes(path))))
-                        }
-            }
-	    fmt.Fprint(parse.stdout, "\n")
+	for ei, event := range rs.chosen().commits(rs.selection) {
+		header := fmt.Sprintf("Event %d, ", ei+1)
+		header = header[:len(header)-2]
+		header += " " + strings.Repeat("=", 72 - len(header)) + "\n"
+		fmt.Fprint(parse.stdout, header)
+		if event.legacyID != ""{
+			fmt.Fprint(parse.stdout, "# Legacy-ID: %s\n", event.legacyID)
+		}
+		fmt.Fprint(parse.stdout, "commit %s\n", event.Branch)
+		if event.mark != "" {
+			fmt.Fprint(parse.stdout, "mark %s\n", event.mark)
+		}
+		fmt.Fprint(parse.stdout, "\n")
+		for path, entry := range event.manifest() {
+			if filterFunc(path) {
+				fmt.Fprint(parse.stdout, "%s -> %s\n", path, entry.ref)
+			}
+		}
+		fmt.Fprint(parse.stdout, "\n")
         }
-    }
+	return false
 }
-*/
 
 func (rs *Reposurgeon) HelpTagify() {
 	rs.helpOutput(`
