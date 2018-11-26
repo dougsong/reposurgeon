@@ -15887,30 +15887,27 @@ the lowest (source) and highest (target) members.  Creates a merge link
 from the highest member (child) to the lowest (parent).
 `)
 }
-
-/*
-class Reposurgeon(object):
-    func (self *Reposurgeon) DoMerge(_line) {
-        if rs.chosen() == nil {
-            croak("no repo has been chosen.")
-            return
-        }
-        try {
-            commits := sorted(rs.selected(Commit))
-            commits[1:-1] = [] // Drop all but first and last
-            (_, earlier), (_, later) = commits
-        }
-        except (TypeError, ValueError) {
-            raise Recoverable("merge requires a selection set "
-                              "with at least two commits.")
-        }
-        later.addParentCommit(earlier)
-        //earlier_id = "%s (%s)" % (earlier.mark, earlier.Branch)
-        //later_id = "%s (%s)" % (later.mark, later.Branch)
-        //announce(debugSHOUT, "%s added as a parent of %s" % (earlier_id, later_id))
-
-    }
-*/
+func (rs *Reposurgeon) DoMerge(_line string) (stopOut bool) {
+	if rs.chosen() == nil {
+		croak("no repo has been chosen.")
+		return
+	}
+	commits := rs.chosen().commits(rs.selection)
+	if len(commits) < 2 {
+		croak("merge requires a selection set with at least two commits.")
+		return false
+	}
+	early := commits[0]
+	late := commits[len(commits)-1]
+	if late.mark < early.mark {
+		late, early = early, late
+	}
+	late.addParentCommit(early)
+	//earlyID = fmt.Sprintf("%s (%s)", early.mark, early.Branch)
+	//lateID = fmt.Sprintf("%s (%s)", late.mark, late.Branch)
+	//announce(debugSHOUT, "%s added as a parent of %s", earlyID, lateID)
+	return false
+}
 
 func (rs *Reposurgeon) HelpUnmerge() {
 	rs.helpOutput(`
