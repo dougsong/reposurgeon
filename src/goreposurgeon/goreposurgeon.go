@@ -17235,67 +17235,112 @@ map when the repo is written or rebuilt.
 `)
 }
 
-/*
-
-func (rs *Reposurgeon) DoReferences(self, line str):
-        "Look for things that might be CVS or Subversion revision references."
-        if self.chosen() is None:
-            croak("no repo has been chosen.")
-            return
-        repo = self.chosen()
-        if self.selection is None:
-            self.selection = self.chosen().all()
-        if "lift" in line:
-            self.chosen().parseDollarCookies()
-            hits = 0
-            func substitute(getter, matchobj):
-                payload = polystr(matchobj.group(0)[2:-2])
-                commit = getter(payload)
-                if commit is None:
-                    croak("no commit matches " + repr(payload))
-                    return matchobj.group(0) # no replacement
-                else if commit:
-                    text = commit.actionStamp()
-                    return polybytes(text)
-                else:
-                    croak("cannot resolve %s" % payload)
-                    return matchobj.group(0) # no replacement
-            for (regexp, getter) in \
-                    ((r"CVS:[^:\]]+:[0-9.]+",
-                      lambda p: repo.legacyMap.get(p) or repo.dollarMap.get(p)),
-                     ("SVN:[0-9]+",
-                      lambda p: repo.legacyMap.get(p) or repo.dollarMap.get(p)),
-                     ("HG:[0-9a-f]+",
-                      lambda p: repo.legacyMap.get(p)),
-                     (":[0-9]+",
-                      lambda p: repo.markToEvent(p)),
-                     ):
-                match_re = regexp.MustCompile((re.escape("[[")+regexp+re.escape("]]")).encode('ascii'))
-                for _, event in self.selected():
-                    if isinstance(event, (Commit, Tag)):
-                        event.Comment, new_hits = match_re.subn(
-                            lambda m: substitute(getter, m),
-                            polybytes(event.Comment))
-                        event.Comment = polystr(event.Comment)
-                        hits += new_hits
-            announce(debugSHOUT, "%d references resolved." % hits)
-            repo.writeLegacy = true
-        else:
-            self.selection = [e for e in range(len(repo.events)) if self.has_reference(repo.events[e])]
-            if self.selection:
-                if strings.HasPrefix(line, "edit"):
-                    self.edit(self.selection, line[4:].strip())
-                else:
-                    with rs.newLineParse(line, stringSet{"stdout"}) as parse:
-                        defer parse.Closem()
-                        w = screenwidth()
-                        for ei in self.selection:
-                            event = repo.events[ei]
-                            if hasattr(event, "lister"):
-                                summary = event.lister(None, ei, w)
-                                if summary:
-                                    fmt.Fprint(parse.stdout, summary + "\n")
-*/
+// Look for things that might be CVS or Subversion revision references.
+func (rs *Reposurgeon) DoReferences(line string) bool {
+        if rs.chosen() == nil {
+		croak("no repo has been chosen.")
+		return false
+        }
+        repo := rs.chosen()
+        if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+        }
+        if strings.Contains(line, "lift")  {
+		rs.chosen().parseDollarCookies()
+		hits := 0
+		substitute := func(getter func(string)*Commit, legend string) string {
+			// legend was matchobj.group(0) in Python
+			commit := getter(legend)
+			if commit == nil {
+				complain("no commit matches %q", legend)
+				return legend // no replacement
+			} else {
+				text := commit.actionStamp()
+				hits++
+				return text
+			}
+		}
+		type getterPair struct {
+			pattern string
+			getter func(string)*Commit
+		}
+		getterPairs := []getterPair{
+			{`\[\[CVS:[^:\]]+:[0-9.]+\]\]`,
+				func (p string) *Commit {
+					if c := repo.legacyMap[p]; c != nil {
+						return c
+					}
+					return repo.dollarMap[p]
+				}},
+			{`\[\[SVN:[0-9]+\]\]`,
+				func (p string) *Commit {
+					if c := repo.legacyMap[p]; c != nil {
+						return c
+					}
+					return repo.dollarMap[p]
+				}},
+			{`\[\[HG:[0-9a-f]+\]\]`,
+				func (p string) *Commit {
+					return repo.legacyMap[p]
+				}},
+			{`\[\[:[0-9]+\]\]`,
+				func (p string) *Commit {
+					event := repo.markToEvent(p)
+					commit, ok := event.(*Commit)
+					if ok {
+						return commit
+					}
+					return nil
+				}},
+		}
+		for _, item := range getterPairs { 
+			matchRE := regexp.MustCompile(item.pattern)
+			for _, commit := range rs.chosen().commits(rs.selection) {
+				commit.Comment = matchRE.ReplaceAllStringFunc(
+					commit.Comment,
+					func (m string) string {
+						return substitute(item.getter,m)
+					})
+			}
+		}
+		announce(debugSHOUT, "%d references resolved.", hits)
+		repo.writeLegacy = true
+        } else {
+		//FIXME: Maybe this should filter rather than making a new set?
+		rs.selection = make([]int, 0)
+		for idx, commit := range repo.commits(nil) {
+			if rs.hasReference(commit) {
+				rs.selection = append(rs.selection, idx)
+			}
+		}
+		if len(rs.selection) > 0 {
+			if strings.HasPrefix(line, "edit") {
+				rs.edit(rs.selection, strings.TrimSpace(line[4:]))
+			} else {
+				parse := rs.newLineParse(line, stringSet{"stdout"})
+				defer parse.Closem()
+				w := screenwidth()
+				for _, ei := range rs.selection {
+					event := repo.events[ei]
+					summary := ""
+					switch event.(type) {
+					case *Commit:
+						commit := event.(*Commit)
+						summary = commit.lister(nil, ei, w)
+						break
+					//case *Tag:
+					//	tag := event.(*Tag)
+					//	summary = tag.lister(nil, ei, w)
+					}
+					if summary != ""{
+						fmt.Fprint(parse.stdout, summary + "\n")
+					}
+				}
+			}
+		}
+        }
+	return false
+}
 
 func (rs *Reposurgeon) HelpGitify() {
 	rs.helpOutput(`
