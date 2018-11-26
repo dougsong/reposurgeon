@@ -17761,7 +17761,7 @@ map entries.
 
 In accordance with FSF policy for ChangeLogs, any date in an
 attribution header is discarded and the committer date is used.
-However, if the nam is an author-map alias with an associated timezone,
+However, if the name is an author-map alias with an associated timezone,
 that zone is used.
 `)
 }
