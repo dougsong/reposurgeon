@@ -65,9 +65,9 @@ EOF
 echo 1
 :2 inspect
 # Test multiline commands
-resolve \
-<annotated-sample>
-resolve \
+<annotated-sample> \
+resolve
 24..97\
 &\
-=C
+=C \
+resolve

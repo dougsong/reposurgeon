@@ -124,7 +124,7 @@ The adventure begins.
 M 100644 :1 rs
 
 # Test multiline commands
-resolve <annotated-sample>
-No selection
-resolve 24..97&=C
-No selection
+<annotated-sample> resolve
+[131]
+24..97&=C resolve
+[24, 26, 29, 31, 33, 35, 37, 39, 41, 43, 45, 50, 52, 54, 56, 58, 60, 62, 67, 70, 72, 76, 78, 81, 83, 85, 88, 90, 93, 96]
