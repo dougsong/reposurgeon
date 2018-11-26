@@ -14140,7 +14140,7 @@ func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
 			croak("unrecognized filter flags")
 			return nil
 		} else if strings.Index(filtercmd, "%PATHS%") != -1 {
-			croak("%PATHS% is not yet supported in regex filters")
+			croak("%s is not yet supported in regex filters", "%PATHS%")
 			return nil
 		} else {
 			subcount := 1
