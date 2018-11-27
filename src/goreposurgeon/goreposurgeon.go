@@ -10211,14 +10211,15 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 type selEvalState interface {
 	nItems() int
 	allItems() *fastOrderedIntSet
+	release()
 }
 
 type selEvaluator func(selEvalState, *fastOrderedIntSet) *fastOrderedIntSet
 
 type selParser interface {
 	compile(line string) (selEvaluator, string)
-	evaluate(selEvaluator, int) []int
-	parse(line string, nitems int) ([]int, string)
+	evaluate(selEvaluator, selEvalState) []int
+	parse(string, selEvalState) ([]int, string)
 	parseExpression() selEvaluator
 	parseDisjunct() selEvaluator
 	evalDisjunct(selEvalState, *fastOrderedIntSet, selEvaluator, selEvaluator) *fastOrderedIntSet
@@ -10251,12 +10252,12 @@ func (p *SelectionParser) imp() selParser {
 	return p
 }
 
-func (p *SelectionParser) evalState() selEvalState {
-	if x, ok := p.subclass.(selEvalState); ok {
-		return x
-	}
+func (p *SelectionParser) evalState(nitems int) selEvalState {
+	p.nitems = nitems
 	return p
 }
+
+func (p *SelectionParser) release() { p.nitems = 0 }
 
 func (p *SelectionParser) nItems() int { return p.nitems }
 
@@ -10291,20 +10292,17 @@ func (p *SelectionParser) compile(line string) (selEvaluator, string) {
 }
 
 // evaluate evaluates a pre-compiled selection query against item list
-func (p *SelectionParser) evaluate(machine selEvaluator, nitems int) []int {
+func (p *SelectionParser) evaluate(machine selEvaluator, state selEvalState) []int {
 	if machine == nil {
 		return nil
 	}
-	p.nitems = nitems
-	crunched := machine(p.evalState(), p.allItems())
-	p.nitems = 0
-	return crunched.Values()
+	return machine(state, p.allItems()).Values()
 }
 
 // parse parses selection and returns remainder of line with selection removed
-func (p *SelectionParser) parse(line string, nitems int) ([]int, string) {
+func (p *SelectionParser) parse(line string, state selEvalState) ([]int, string) {
 	machine, rest := p.imp().compile(line)
-	return p.imp().evaluate(machine, nitems), rest
+	return p.imp().evaluate(machine, state), rest
 }
 
 func (p *SelectionParser) peek() rune {
@@ -11487,7 +11485,9 @@ func (rs *Reposurgeon) parseSelectionSet(line string) (machine selEvaluator, res
 }
 
 func (rs *Reposurgeon) evalSelectionSet(machine selEvaluator, repo *Repository) []int {
-	return rs.imp().evaluate(machine, len(repo.events))
+	state := rs.evalState(len(repo.events))
+	defer state.release()
+	return rs.imp().evaluate(machine, state)
 }
 
 func (rs *Reposurgeon) setSelectionSet(line string) (rest string) {
@@ -13563,7 +13563,9 @@ func (rs *Reposurgeon) DoInspect(lineIn string) bool {
 	defer parse.Closem()
 
 	if rs.selection == nil {
-		rs.selection, parse.line = rs.parse(parse.line, len(repo.events))
+		state := rs.evalState(len(repo.events))
+		defer state.release()
+		rs.selection, parse.line = rs.parse(parse.line, state)
 		if rs.selection == nil {
 			rs.selection = repo.all()
 		}
