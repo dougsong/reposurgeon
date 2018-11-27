@@ -10951,14 +10951,22 @@ func (p *attrEditTagger) insert(after bool, e Event, a Attribution) {
 	p.maxOne(p.desc())
 }
 
+type attrEditSelParser struct {
+	SelectionParser
+	attributions []attrEditAttr
+}
+
+func newAttrEditSelParser() *attrEditSelParser {
+	p := new(attrEditSelParser)
+	p.SelectionParser.subclass = p
+	return p
+}
+
 /*
 
 class AttributionEditor(object):
     "Inspect and edit committer, author, tagger attributions."
     class SelParser(SelectionParser):
-        func __init__():
-            SelectionParser.__init__()
-            self.attributions = None
         func evaluate(self, machine, attributions):
             self.attributions = attributions
             sel = super(AttributionEditor.SelParser, self).evaluate(
