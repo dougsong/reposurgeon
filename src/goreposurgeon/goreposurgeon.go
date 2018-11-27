@@ -10884,12 +10884,28 @@ func (p *attrEditMixin) maxOne(desc string) {
 	panic(throw("command", "unable to add %s (only 1 allowed)", desc))
 }
 
+type attrEditCommitter struct {
+	attrEditMixin
+}
+
+func newAttrEditCommitter(a *Attribution) *attrEditCommitter {
+	return &attrEditCommitter{attrEditMixin{a}}
+}
+
+func (p *attrEditCommitter) desc() string { return "committer" }
+
+func (p *attrEditCommitter) remove(e Event) {
+	p.minOne(p.desc())
+}
+
+func (p *attrEditCommitter) insert(after bool, e Event, a Attribution) {
+	p.maxOne(p.desc())
+}
+
 /*
 
 class AttributionEditor(object):
     "Inspect and edit committer, author, tagger attributions."
-    class Committer(A):
-        pass
     class Author(A):
         func __init__(self, attribution, pos):
             AttributionEditor.A.__init__(self, attribution)
