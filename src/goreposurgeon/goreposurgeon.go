@@ -10962,17 +10962,21 @@ func newAttrEditSelParser() *attrEditSelParser {
 	return p
 }
 
+func (p *attrEditSelParser) evalState(v []attrEditAttr) selEvalState {
+	p.attributions = v
+	return p.SelectionParser.evalState(len(v))
+}
+
+func (p *attrEditSelParser) release() {
+	p.attributions = nil
+	p.SelectionParser.release()
+}
+
 /*
 
 class AttributionEditor(object):
     "Inspect and edit committer, author, tagger attributions."
     class SelParser(SelectionParser):
-        func evaluate(self, machine, attributions):
-            self.attributions = attributions
-            sel = super(AttributionEditor.SelParser, self).evaluate(
-                machine, range(len(self.attributions)))
-            self.attributions = None
-            return sel
         func visibility_typeletters():
             return {
                 "C" : lambda i: isinstance(self.attributions[i], AttributionEditor.Committer),
