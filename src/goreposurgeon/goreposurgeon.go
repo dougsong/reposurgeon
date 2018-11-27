@@ -10972,17 +10972,19 @@ func (p *attrEditSelParser) release() {
 	p.SelectionParser.release()
 }
 
+func (p *attrEditSelParser) visibilityTypeletters() map[rune]func(int) bool {
+	return map[rune]func(int) bool{
+		'C': func(i int) bool { _, ok := p.attributions[i].(*attrEditCommitter); return ok },
+		'A': func(i int) bool { _, ok := p.attributions[i].(*attrEditAuthor); return ok },
+		'T': func(i int) bool { _, ok := p.attributions[i].(*attrEditTagger); return ok },
+	}
+}
+
 /*
 
 class AttributionEditor(object):
     "Inspect and edit committer, author, tagger attributions."
     class SelParser(SelectionParser):
-        func visibility_typeletters():
-            return {
-                "C" : lambda i: isinstance(self.attributions[i], AttributionEditor.Committer),
-                "A" : lambda i: isinstance(self.attributions[i], AttributionEditor.Author),
-                "T" : lambda i: isinstance(self.attributions[i], AttributionEditor.Tagger)
-            }
         func eval_textsearch(self, preselection, search, modifiers):
             if not modifiers:
                 check_name = check_email = true
