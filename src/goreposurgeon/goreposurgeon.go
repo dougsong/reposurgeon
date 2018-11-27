@@ -10935,12 +10935,28 @@ func (p *attrEditAuthor) insert(after bool, e Event, a Attribution) {
 	c.authors = v
 }
 
+type attrEditTagger struct {
+	attrEditMixin
+}
+
+func newAttrEditTagger(a *Attribution) *attrEditTagger {
+	return &attrEditTagger{attrEditMixin{a}}
+}
+
+func (p *attrEditTagger) desc() string { return "tagger" }
+
+func (p *attrEditTagger) remove(e Event) {
+	p.minOne(p.desc())
+}
+
+func (p *attrEditTagger) insert(after bool, e Event, a Attribution) {
+	p.maxOne(p.desc())
+}
+
 /*
 
 class AttributionEditor(object):
     "Inspect and edit committer, author, tagger attributions."
-    class Tagger(A):
-        pass
     class SelParser(SelectionParser):
         func __init__():
             SelectionParser.__init__()
