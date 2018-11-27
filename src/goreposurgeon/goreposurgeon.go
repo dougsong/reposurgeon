@@ -10980,30 +10980,39 @@ func (p *attrEditSelParser) visibilityTypeletters() map[rune]func(int) bool {
 	}
 }
 
+func (p *attrEditSelParser) evalTextSearch(state selEvalState,
+	preselection *fastOrderedIntSet,
+	search *regexp.Regexp, modifiers string) *fastOrderedIntSet {
+	var checkName, checkEmail bool
+	if len(modifiers) == 0 {
+		checkName, checkEmail = true, true
+	} else {
+		for _, m := range modifiers {
+			if m == 'n' {
+				checkName = true
+			} else if m == 'e' {
+				checkEmail = true
+			} else {
+				panic(throw("command", "unknown textsearch flag"))
+			}
+		}
+	}
+	found := newFastOrderedIntSet()
+	it := preselection.Iterator()
+	for it.Next() {
+		a := p.attributions[it.Value()]
+		if (checkName && search.MatchString(a.name())) ||
+			(checkEmail && search.MatchString(a.email())) {
+			found.Add(it.Value())
+		}
+	}
+	return found
+}
+
 /*
 
 class AttributionEditor(object):
     "Inspect and edit committer, author, tagger attributions."
-    class SelParser(SelectionParser):
-        func eval_textsearch(self, preselection, search, modifiers):
-            if not modifiers:
-                check_name = check_email = true
-            else:
-                check_name = check_email = false
-                for m in modifiers:
-                    if m == 'n':
-                        check_name = true
-                    else if m == 'e':
-                        check_email = true
-                    else:
-                        raise Recoverable("unknown textsearch flag")
-            found = orderedIntSet()
-            for i in preselection:
-                a = self.attributions[i]
-                if ((check_name and search(polybytes(a.name))) or
-                    (check_email and search(polybytes(a.email)))):
-                    found.add(i)
-            return found
     func __init__(self, events, machine):
         self.events = events
         self.machine = machine
