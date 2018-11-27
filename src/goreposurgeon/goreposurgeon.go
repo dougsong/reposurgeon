@@ -10841,36 +10841,53 @@ func revHandler(state selEvalState, subarg *fastOrderedIntSet) *fastOrderedIntSe
 	return newFastOrderedIntSet(v...)
 }
 
+type attrEditAttr interface {
+	String() string
+	desc() string
+	name() string
+	email() string
+	date() Date
+	assign(name, email string, date Date)
+	remove(Event)
+	insert(after bool, e Event, a Attribution)
+}
+
+type attrEditMixin struct {
+	a *Attribution
+}
+
+func (p *attrEditMixin) String() string {
+	return p.a.String()
+}
+
+func (p *attrEditMixin) name() string  { return p.a.fullname }
+func (p *attrEditMixin) email() string { return p.a.email }
+func (p *attrEditMixin) date() Date    { return p.a.date }
+
+func (p *attrEditMixin) assign(name, email string, date Date) {
+	if len(name) != 0 {
+		p.a.fullname = name
+	}
+	if len(email) != 0 {
+		p.a.email = email
+	}
+	if !date.isZero() {
+		p.a.date = date
+	}
+}
+
+func (p *attrEditMixin) minOne(desc string) {
+	panic(throw("command", "unable to delete %s (1 needed)", desc))
+}
+
+func (p *attrEditMixin) maxOne(desc string) {
+	panic(throw("command", "unable to add %s (only 1 allowed)", desc))
+}
+
 /*
 
 class AttributionEditor(object):
     "Inspect and edit committer, author, tagger attributions."
-    class A(object):
-        func __init__(self, attribution):
-            self.attribution = attribution
-        func __getattr__(self, name):
-            if name in self.__dict__:
-                return super(AttributionEditor.A, self).__getattr__(name)
-            return getattr(self.attribution, name)
-        func String():
-            return self.attribution.String()
-        func desc():
-            return self.__class__.__name__.lower()
-        func assign(self, name, emailaddr, date):
-            if name is not None:
-                self.attribution.name = name
-            if emailaddr is not None:
-                self.attribution.email = emailaddr
-            if date is not None:
-                self.attribution.date = date
-        func delete(self, event):
-            pacify_pylint(event)
-            raise Recoverable("unable to delete %s (1 needed)" % self.desc())
-        func insert(self, after, event, newattr):
-            pacify_pylint(after)
-            pacify_pylint(event)
-            pacify_pylint(newattr)
-            raise Recoverable("unable to add %s (only 1 allowed)" % self.desc())
     class Committer(A):
         pass
     class Author(A):
