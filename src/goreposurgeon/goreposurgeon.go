@@ -10902,20 +10902,43 @@ func (p *attrEditCommitter) insert(after bool, e Event, a Attribution) {
 	p.maxOne(p.desc())
 }
 
+type attrEditAuthor struct {
+	attrEditMixin
+	pos int
+}
+
+func newAttrEditAuthor(a *Attribution, pos int) *attrEditAuthor {
+	return &attrEditAuthor{attrEditMixin{a}, pos}
+}
+
+func (p *attrEditAuthor) desc() string { return "author" }
+
+func (p *attrEditAuthor) remove(e Event) {
+	c := e.(*Commit)
+	v := c.authors
+	copy(v[p.pos:], v[p.pos+1:])
+	v[len(v)-1] = Attribution{}
+	c.authors = v[:len(v)-1]
+}
+
+func (p *attrEditAuthor) insert(after bool, e Event, a Attribution) {
+	c := e.(*Commit)
+	newpos := p.pos
+	if after {
+		newpos++
+	}
+	v := append(c.authors, Attribution{})
+	if newpos < len(v)-1 {
+		copy(v[newpos+1:], v[newpos:])
+	}
+	v[newpos] = a
+	c.authors = v
+}
+
 /*
 
 class AttributionEditor(object):
     "Inspect and edit committer, author, tagger attributions."
-    class Author(A):
-        func __init__(self, attribution, pos):
-            AttributionEditor.A.__init__(self, attribution)
-            self.pos = pos
-        func delete(self, event):
-            del event.authors[self.pos]
-            if not event.authors:
-                event.authors = None
-        func insert(self, after, event, newattr):
-            event.authors.insert(self.pos + (1 if after else 0), newattr)
     class Tagger(A):
         pass
     class SelParser(SelectionParser):
