@@ -12564,6 +12564,9 @@ func (rs *Reposurgeon) DoAssign(line string) bool {
 	} else if parse.options.Contains("--singleton") && len(rs.selection) != 1 {
 		panic(throw("command", "a singleton selection was required here"))
 	} else {
+		if repo.assignments == nil {
+			repo.assignments = make(map[string]orderedIntSet)
+		}
 		repo.assignments[name] = rs.selection
 
 	}
