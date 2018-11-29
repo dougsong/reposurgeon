@@ -5833,6 +5833,7 @@ func (sp *StreamParser) timeMark(label string) {
 }
 
 func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesize int64) {
+	revisions := make(map[int]RevisionRecord)
 	hashcopy := func(hash *[sha1.Size]byte, src string) {
 		for i := 0; i < sha1.Size && i < len(src); i++ {
 			hash[i] = src[i]
@@ -5987,7 +5988,7 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 						if node.propchange {
 							sp.propertyStash[node.path] = node.props
 						} else if node.action == sdADD && node.fromPath != "" {
-							for _, oldnode := range sp.revisions[node.fromRev].nodes {
+							for _, oldnode := range revisions[node.fromRev].nodes {
 								if oldnode.path == node.fromPath {
 									sp.propertyStash[node.path] = oldnode.props
 								}
@@ -6088,12 +6089,23 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 				// Node processing ends
 			}
 			// Node list parsing ends
-			sp.revisions = append(sp.revisions, *newRevisionRecord(nodes, props))
+			revisions[revision] = *newRevisionRecord(nodes, props)
 			sp.repo.legacyCount++
 			announce(debugSVNPARSE, "revision parsing, line %d: ends", sp.importLine)
 			// End Revision processing
 			baton.readProgress(sp.ccount, filesize)
 		}
+	}
+	maxrev := 0
+	for rev, _ := range revisions {
+		if rev > maxrev {
+			maxrev = rev
+		}
+	}
+	sp.revisions = make([]RevisionRecord, maxrev)
+	for maxrev >= 1 {
+		sp.revisions[maxrev-1] = revisions[maxrev]
+		maxrev -= 1
 	}
 }
 
