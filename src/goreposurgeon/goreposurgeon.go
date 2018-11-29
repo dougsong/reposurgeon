@@ -15363,6 +15363,11 @@ func (rs *Reposurgeon) DoDivide(_line string) bool {
 			return false
 		} else if len(possibles) == 1 {
 			late = possibles[0]
+			lateCommit, ok = late.(*Commit)
+			if !ok {
+				croak("only child of selected commit is not a commit")
+				return false
+			}
 		} else {
 			croak("parent has no children")
 			return false
