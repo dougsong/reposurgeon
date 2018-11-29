@@ -13847,7 +13847,11 @@ func (rs *Reposurgeon) DoGraph(line string) bool {
 	for _, ei := range rs.selection {
 		event := rs.chosen().events[ei]
 		if commit, ok := event.(*Commit); ok {
-			summary := html.EscapeString(strings.Split(commit.Comment, "\n")[0][:42])
+			firstline := strings.Split(commit.Comment, "\n")[0]
+			if len(firstline) > 42 {
+				firstline = firstline[:42]
+			}
+			summary := html.EscapeString(firstline)
 			cid := commit.mark
 			if commit.legacyID != "" {
 				cid = commit.showlegacy() + " &rarr; " + cid
