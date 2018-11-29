@@ -7388,11 +7388,11 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 			} else if commit.mark != "" {
 				msg += fmt.Sprintf(" '%s':", commit.mark)
 			}
-			msg += "deleting parentless"
+			msg += " deleting parentless "
 			if len(commit.operations()) > 0 {
-				msg += fmt.Sprintf("tip delete of %s.", commit.Branch)
+				msg += fmt.Sprintf("tip delete of %s.\n", commit.Branch)
 			} else {
-				msg += fmt.Sprintf(" zero-op commit on %s.", commit.Branch)
+				msg += fmt.Sprintf("zero-op commit on %s.\n", commit.Branch)
 			}
 			if gripe != nil {
 				gripe(msg[1:])
@@ -8120,8 +8120,9 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				// commit.parents() insertion." Requires some
 				// odd contortions in Go so we won't do it
 				// unless there's a bug case.
-				newParents = append(newParents,
-					oldParents[eventPos+1:]...)
+				if len(oldParents) > eventPos {
+					newParents = append(newParents, oldParents[eventPos+1:]...)
+				}
 				// Prepend a copy of this event's file ops to
 				// all children with the event as their first
 				// parent,and mark each such child as needing
