@@ -6088,7 +6088,7 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 				// Node processing ends
 			}
 			// Node list parsing ends
-			sp.revisions[revision] = *newRevisionRecord(nodes, props)
+			sp.revisions = append(sp.revisions, *newRevisionRecord(nodes, props))
 			sp.repo.legacyCount++
 			announce(debugSVNPARSE, "revision parsing, line %d: ends", sp.importLine)
 			// End Revision processing
@@ -6466,7 +6466,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// to show up under lint && be manually corrected
 		deadbranches := newStringSet()
 		for i := range sp.revisions {
-			backup := len(sp.revisions) - i
+			backup := len(sp.revisions) - i - 1
 			for j := range sp.revisions[backup].nodes {
 				node := &sp.revisions[backup].nodes[j]
 				if !strings.HasPrefix(node.path, "tags") && !strings.HasPrefix(node.path, "branches") {
