@@ -2856,7 +2856,7 @@ func rfc3339(t time.Time) string {
 	return t.UTC().Format(time.RFC3339)
 }
 
-var gitDateRE = regexp.MustCompile(`[0-9]+\s*[+-][0-9]+$`)
+var gitDateRE = regexp.MustCompile(`^[0-9]+\s*[+-][0-9]+$`)
 var zoneOffsetRE = regexp.MustCompile(`^([-+]?[0-9]{2})([0-9]{2})$`)
 
 // locationFromZoneOffset makes a Go location object from a hhhmmm string.
@@ -2897,6 +2897,7 @@ type Date struct {
 // Go can handle but that has the tz and year swapped.
 //const GitLogFormat = "Mon Jan 02 15:04:05 2006 -0700"
 const GitLogFormat = "Mon Jan 02 15:04:05 -0700 2006"
+const RFC1123ZNoComma = "Mon 02 Jan 2006 15:04:05 -0700"
 
 // newDate exists mainly to wrap a parser to recognize date formats that
 // exporters or email programs might emit
@@ -2930,7 +2931,7 @@ func newDate(text string) (Date, error) {
 	// RFC3339Nano - so we parse Subversion dates with fractional seconds
 	// RFC1123Z - we use it in message-block headers
 	// GitLog - git log emits this format
-	for _, layout := range []string{time.RFC3339, time.RFC3339Nano, time.RFC1123Z, GitLogFormat} {
+	for _, layout := range []string{time.RFC3339, time.RFC3339Nano, time.RFC1123Z, GitLogFormat, RFC1123ZNoComma} {
 		trial, err3 := time.Parse(layout, string(text))
 		if err3 == nil {
 			t.timestamp = trial.Round(1 * time.Second)
@@ -4442,7 +4443,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 	}
 	newcommitdate, err := newDate(msg.getHeader("Committer-Date"))
 	if err != nil {
-		panic(throw("msgbox", "Bad Committer-Date: %v", err))
+		panic(throw("msgbox", "Bad Committer-Date: %#v (%v)", msg.getHeader("Committer-Date"), err))
 	}
 	if newcommitdate.isZero() && !newcommitdate.Equal(c.date) {
 		if commit.repo != nil {
