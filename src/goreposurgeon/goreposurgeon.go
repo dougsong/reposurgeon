@@ -11173,17 +11173,25 @@ func (p *AttributionEditor) doAssign(eventNo int, e Event, attrs []attrEditAttr,
 	}
 }
 
+func (p *AttributionEditor) remove() {
+	p.apply((*AttributionEditor).doRemove)
+}
+
+func (p *AttributionEditor) doRemove(eventNo int, e Event, attrs []attrEditAttr, sel []int, extra ...interface{}) {
+	if sel == nil {
+		sel = p.authorIndices(attrs)
+	}
+	rev := make([]int, len(sel))
+	copy(rev, sel)
+	sort.Sort(sort.Reverse(sort.IntSlice(rev)))
+	for _, i := range rev {
+		attrs[i].remove(e)
+	}
+}
+
 /*
 
 class AttributionEditor(object):
-    func delete():
-        self.apply(self.do_delete)
-    func do_delete(self, event, attributions, sel, **extra):
-        pacify_pylint(extra)
-        if sel is None:
-            sel = self.indices(attributions, AttributionEditor.Author)
-        for i in sorted(sel, reverse=true):
-            attributions[i].delete(event)
     func insert(self, args, after):
         name, emailaddr, date = self.glean(args)
         self.apply(self.do_insert, after=after, name=name, emailaddr=emailaddr, date=date)
