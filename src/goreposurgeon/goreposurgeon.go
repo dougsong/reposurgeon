@@ -11112,29 +11112,34 @@ func (p *AttributionEditor) infer(attrs []attrEditAttr, preferred int,
 	return name, email, date
 }
 
+func (p *AttributionEditor) glean(args []string) (string, string, Date) {
+	var name, email string
+	var date Date
+	for _, x := range args {
+		if d, err := newDate(x); err == nil {
+
+			if !date.isZero() {
+				panic(throw("command", "extra timestamp: %s", x))
+			}
+			date = d
+		} else if strings.ContainsRune(x, '@') {
+			if len(email) != 0 {
+				panic(throw("command", "extra email: %s", x))
+			}
+			email = x
+		} else {
+			if len(name) != 0 {
+				panic(throw("command", "extra name: %s", x))
+			}
+			name = x
+		}
+	}
+	return name, email, date
+}
+
 /*
 
 class AttributionEditor(object):
-    func glean(self, args):
-        name = emailaddr = date = None
-        for x in args:
-            try:
-                d = Date(x)
-                if date is not None:
-                    raise Recoverable("extra timestamp: %s" % x)
-                date = d
-                continue
-            except Fatal:
-                pass
-            if '@' in x:
-                if emailaddr is not None:
-                    raise Recoverable("extra email: %s" % x)
-                emailaddr = x
-            else:
-                if name is not None:
-                    raise Recoverable("extra name: %s" % x)
-                name = x
-        return name, emailaddr, date
     func inspect(self, stdout):
         self.apply(self.do_inspect, stdout=stdout)
     func do_inspect(self, eventno, event, attributions, sel, stdout):
