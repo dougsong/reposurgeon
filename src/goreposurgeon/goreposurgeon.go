@@ -11020,18 +11020,25 @@ func newAttributionEditor(sel []int, events []Event, machine func([]attrEditAttr
 	return &AttributionEditor{sel, events, machine}
 }
 
+func (p *AttributionEditor) attributions(e Event) []attrEditAttr {
+	switch x := e.(type) {
+	case *Commit:
+		v := make([]attrEditAttr, 1+len(x.authors))
+		v[0] = newAttrEditCommitter(&x.committer)
+		for i := range x.authors {
+			v[i+1] = newAttrEditAuthor(&x.authors[i], i)
+		}
+		return v
+	case *Tag:
+		return []attrEditAttr{newAttrEditTagger(x.tagger)}
+	default:
+		panic(fmt.Sprintf("unexpected event type: %T", e))
+	}
+}
+
 /*
 
 class AttributionEditor(object):
-    func attributions(self, event):
-        try:
-            v = [AttributionEditor.Committer(event.committer)]
-            if event.authors is not None:
-                v.extend([AttributionEditor.Author(a,i)
-                          for i,a in enumerate(event.authors)])
-        except AttributeError:
-            v = [AttributionEditor.Tagger(event.tagger)]
-        return v
     func indices(self, v, types):
         return [i for i,x in enumerate(v) if isinstance(x, types)]
     func mark(self, event):
