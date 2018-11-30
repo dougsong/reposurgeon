@@ -12061,6 +12061,7 @@ func (commit *Commit) findSuccessors(path string) []string {
 // Assumes that rs.chosen() and selection are not None
 func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 	parse := rs.newLineParse(line, stringSet{"stdin", "stdout"})
+	defer parse.Closem()
 	editor := os.Getenv("EDITOR")
 	if parse.line != "" {
 		editor = parse.line
@@ -12783,6 +12784,7 @@ func (rs *Reposurgeon) DoSizes(line string) bool {
 	}
 	sizes := make(map[string]int)
 	parse := rs.newLineParse(line, stringSet{"stdout"})
+	defer parse.Closem()
 	for _, i := range rs.selection {
 		if commit, ok := repo.events[i].(*Commit); ok {
 			if _, ok := sizes[commit.Branch]; !ok {
@@ -13609,6 +13611,7 @@ func (rs *Reposurgeon) DoGraph(line string) bool {
 		rs.selection = rs.chosen().all()
 	}
 	parse := rs.newLineParse(line, stringSet{"stdout"})
+	defer parse.Closem()
 	fmt.Fprint(parse.stdout, "digraph {\n")
 	for _, ei := range rs.selection {
 		event := rs.chosen().events[ei]
@@ -14780,6 +14783,7 @@ func (rs *Reposurgeon) DoBlob(line string) bool {
 	// FIXME: Insert after front events
 	repo.insertEvent(blob, 0, "adding blob")
 	parse := rs.newLineParse(line, stringSet{"stdin"})
+	defer parse.Closem()
 	content, err := ioutil.ReadAll(parse.stdin)
 	if err != nil {
 		croak("while reading blob content: %v", err)
@@ -15714,6 +15718,7 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 		rs.selection = rs.chosen().all()
 	}
 	parse := rs.newLineParse(line, stringSet{"stdout"})
+	defer parse.Closem()
 	var filterFunc = func(s string) bool { return true }
 	line = strings.TrimSpace(parse.line)
 	if line != "" {
@@ -15790,6 +15795,7 @@ func (rs *Reposurgeon) DoTagify(line string) bool {
 		rs.selection = repo.all()
 	}
 	parse := rs.newLineParse(line, nil)
+	defer parse.Closem()
 	if parse.line != "" {
 		croak("too many arguments for tagify.")
 		return false
@@ -15950,6 +15956,7 @@ class Reposurgeon(object):
             croak("no repo has been chosen.")
             return
         with rs.newLineParse(line, nil) as parse:
+            defer parse.Closem()
             use_order = '--use-order' in parse.options
             try:
                 selected = list(self.commits(self.selection))
@@ -16060,6 +16067,7 @@ func (rs *Reposurgeon) DoReorder(lineIn string) bool {
 		return false
 	}
 	parse := rs.newLineParse(lineIn, nil)
+	defer parse.Closem()
 	if parse.line != "" {
 		croak("'reorder' takes no arguments")
 		return false
@@ -16911,6 +16919,7 @@ func (rs *Reposurgeon) DoAuthors(line string) bool {
 	if strings.HasPrefix(line, "write") {
 		line = strings.TrimSpace(line[5:])
 		parse := rs.newLineParse(line, stringSet{"stdout"})
+		defer parse.Closem()
 		if len(parse.Tokens()) > 0 {
 			croak("authors write no longer takes a filename argument - use > redirection instead")
 			return false
@@ -16921,6 +16930,7 @@ func (rs *Reposurgeon) DoAuthors(line string) bool {
 			line = strings.TrimSpace(line[4:])
 		}
 		parse := rs.newLineParse(line, stringSet{"stdin"})
+		defer parse.Closem()
 		if len(parse.Tokens()) > 0 {
 			croak("authors read no longer takes a filename argument - use < redirection instead")
 			return false
@@ -16962,6 +16972,7 @@ func (rs *Reposurgeon) DoLegacy(line string) bool {
 			line = strings.TrimSpace(line[4:])
 		}
 		parse := rs.newLineParse(line, []string{"stdin"})
+		defer parse.Closem()
 		if len(parse.Tokens()) > 0 {
 			croak("legacy read does not take a filename argument - use < redirection instead")
 			return false
@@ -17042,6 +17053,7 @@ func (rs *Reposurgeon) DoReferences(self, line str):
                     self.edit(self.selection, line[4:].strip())
                 else:
                     with rs.newLineParse(line, stringSet{"stdout"}) as parse:
+                        defer parse.Closem()
                         w = screenwidth()
                         for ei in self.selection:
                             event = repo.events[ei]
@@ -17173,6 +17185,7 @@ class Reposurgeon(object):
         allpaths = list(dir1 | dir2)
         allpaths.sort()
         with rs.newLineParse(line, stringSet{"stdout"}) as parse:
+            defer parse.Closem()
             for path in allpaths:
                 if path in dir1 and path in dir2:
                     # FIXME: Can we detect binary files and do something
@@ -17479,6 +17492,7 @@ func (i *ioShim) Close() (err error) {
 // Do a macro
 func (rs *Reposurgeon) DoDo(line string) bool {
 	parse := rs.newLineParse(line, stringSet{"stdout"})
+	defer parse.Closem()
 	words, err := shlex.Split(parse.line, true)
 	if len(words) == 0 {
 		croak("no macro name was given.")
@@ -17921,6 +17935,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		return false
 	}
 	parse := rs.newLineParse(line, nil)
+	defer parse.Closem()
 	if parse.line == "" {
 		croak("no tarball specified.")
 		return false
