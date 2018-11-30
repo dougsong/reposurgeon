@@ -11072,34 +11072,49 @@ func (p *AttributionEditor) apply(f func(p *AttributionEditor, eventNo int, e Ev
 	}
 }
 
+func (p *AttributionEditor) infer(attrs []attrEditAttr, preferred int,
+	name, email string, date Date) (string, string, Date) {
+	if len(name) == 0 && len(email) == 0 {
+		panic(throw("command", "unable to infer missing name and email"))
+	}
+	if preferred > 0 {
+		attrs = append([]attrEditAttr{attrs[preferred]}, attrs...)
+	}
+	if len(name) == 0 {
+		for _, a := range attrs {
+			if a.email() == email {
+				name = a.name()
+				break
+			}
+		}
+		if len(name) == 0 {
+			panic(throw("command", "unable to infer name for %s", email))
+		}
+	}
+	if len(email) == 0 {
+		for _, a := range attrs {
+			if a.name() == name {
+				email = a.email()
+				break
+			}
+		}
+		if len(email) == 0 {
+			panic(throw("command", "unable to infer email for %s", name))
+		}
+	}
+	if date.isZero() {
+		if len(attrs) != 0 {
+			date = attrs[0].date()
+		} else {
+			panic(throw("command", "unable to infer date"))
+		}
+	}
+	return name, email, date
+}
+
 /*
 
 class AttributionEditor(object):
-    func infer(self, attributions, preferred, name, emailaddr, date):
-        if name is None and emailaddr is None:
-            raise Recoverable("unable to infer missing name and email")
-        if preferred is not None:
-            attributions = [attributions[preferred]] + attributions
-        if name is None:
-            for a in attributions:
-                if a.email == emailaddr:
-                    name = a.name
-                    break
-            if name is None:
-                raise Recoverable("unable to infer name for %s" % emailaddr)
-        if emailaddr is None:
-            for a in attributions:
-                if a.name == name:
-                    emailaddr = a.email
-                    break
-            if emailaddr is None:
-                raise Recoverable("unable to infer email for %s" % name)
-        if date is None:
-            if attributions:
-                date = attributions[0].date
-            else:
-                raise Recoverable("unable to infer date")
-        return name, emailaddr, date
     func glean(self, args):
         name = emailaddr = date = None
         for x in args:
