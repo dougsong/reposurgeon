@@ -11009,13 +11009,20 @@ func (p *attrEditSelParser) evalTextSearch(state selEvalState,
 	return found
 }
 
+// AttributionEditor inspects and edits committer, author, tagger attributions
+type AttributionEditor struct {
+	eventSel []int
+	events   []Event
+	machine  func([]attrEditAttr) []int
+}
+
+func newAttributionEditor(sel []int, events []Event, machine func([]attrEditAttr) []int) *AttributionEditor {
+	return &AttributionEditor{sel, events, machine}
+}
+
 /*
 
 class AttributionEditor(object):
-    "Inspect and edit committer, author, tagger attributions."
-    func __init__(self, events, machine):
-        self.events = events
-        self.machine = machine
     func attributions(self, event):
         try:
             v = [AttributionEditor.Committer(event.committer)]
