@@ -11054,18 +11054,27 @@ func (p *AttributionEditor) getMark(e Event) string {
 	return m
 }
 
+func (p *AttributionEditor) apply(f func(p *AttributionEditor, eventNo int, e Event, attrs []attrEditAttr, sel []int, extra ...interface{}), extra ...interface{}) {
+	for _, i := range p.eventSel {
+		e := p.events[i]
+		attrs := p.attributions(e)
+		var sel []int
+		func() {
+			defer func() {
+				if x := catch("command", recover()); x != nil {
+					panic(throw("command", "%s (event %d, mark %s)",
+						x.Error(), i+1, p.getMark(e)))
+				}
+			}()
+			sel = p.machine(attrs)
+		}()
+		f(p, i, e, attrs, sel, extra...)
+	}
+}
+
 /*
 
 class AttributionEditor(object):
-    func apply(self, f, **extra):
-        for i, event in self.events:
-            attributions = self.attributions(event)
-            try:
-                sel = self.machine(attributions)
-            except Recoverable as e:
-                raise Recoverable("%s (event %d, mark %s)" %
-                                  (e.msg, i+1, self.mark(event)))
-            f(event=event, attributions=attributions, sel=sel, eventno=i, **extra)
     func infer(self, attributions, preferred, name, emailaddr, date):
         if name is None and emailaddr is None:
             raise Recoverable("unable to infer missing name and email")
