@@ -11222,21 +11222,30 @@ func (p *AttributionEditor) doInsert(eventNo int, e Event, attrs []attrEditAttr,
 	}
 }
 
-/*
+func (p *AttributionEditor) resolve(w io.Writer, label string) {
+	p.apply((*AttributionEditor).doResolve, w, label)
+}
 
-class AttributionEditor(object):
-    func resolve(self, stdout, label):
-        self.apply(self.do_resolve, stdout=stdout, label=label)
-    func do_resolve(self, eventno, event, sel, stdout, label, **extra):
-        pacify_pylint(extra)
-        if sel is None:
-            raise Recoverable("no attribution selected")
-        if label:
-            stdout.write("%s: " % label)
-        stdout.write("%6d %6s %s\n" %
-                     (eventno+1, self.mark(event), [x+1 for x in sel]))
-
-*/
+func (p *AttributionEditor) doResolve(eventNo int, e Event, attrs []attrEditAttr, sel []int, extra ...interface{}) {
+	w := extra[0].(io.Writer)
+	label := extra[1].(string)
+	if sel == nil {
+		panic(throw("command", "no attribution selected"))
+	}
+	var b strings.Builder
+	if len(label) != 0 {
+		b.WriteString(fmt.Sprintf("%s: ", label))
+	}
+	b.WriteString(fmt.Sprintf("%6d %6s [", eventNo+1, p.getMark(e)))
+	for i, n := range sel {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(strconv.Itoa(n + 1))
+	}
+	b.WriteString("]\n")
+	io.WriteString(w, b.String())
+}
 
 type LineParse struct {
 	repolist     *RepositoryList
