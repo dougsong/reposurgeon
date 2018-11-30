@@ -11137,18 +11137,28 @@ func (p *AttributionEditor) glean(args []string) (string, string, Date) {
 	return name, email, date
 }
 
+func (p *AttributionEditor) inspect(w io.Writer) {
+	p.apply((*AttributionEditor).doInspect, w)
+}
+
+func (p *AttributionEditor) doInspect(eventNo int, e Event, attrs []attrEditAttr, sel []int, extra ...interface{}) {
+	w := extra[0].(io.Writer)
+	mark := p.getMark(e)
+	if sel == nil {
+		sel = make([]int, len(attrs))
+		for i := range attrs {
+			sel[i] = i
+		}
+	}
+	for _, i := range sel {
+		a := attrs[i]
+		io.WriteString(w, fmt.Sprintf("%6d %6s %2d:%-9s %s\n", eventNo+1, mark, i+1, a.desc(), a))
+	}
+}
+
 /*
 
 class AttributionEditor(object):
-    func inspect(self, stdout):
-        self.apply(self.do_inspect, stdout=stdout)
-    func do_inspect(self, eventno, event, attributions, sel, stdout):
-        mark = self.mark(event)
-        if sel is None:
-            sel = range(len(attributions))
-        for i in sel:
-            a = attributions[i]
-            stdout.write("%6d %6s %2d:%-9s %s\n" % (eventno+1, mark, i+1, a.desc(), a))
     func assign(self, args):
         name, emailaddr, date = self.glean(args)
         self.apply(self.do_assign, name=name, emailaddr=emailaddr, date=date)
