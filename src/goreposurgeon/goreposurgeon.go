@@ -11036,11 +11036,19 @@ func (p *AttributionEditor) attributions(e Event) []attrEditAttr {
 	}
 }
 
+func (p *AttributionEditor) authorIndices(attrs []attrEditAttr) []int {
+	v := make([]int, 0, len(attrs))
+	for i, a := range attrs {
+		if _, ok := a.(*attrEditAuthor); ok {
+			v = append(v, i)
+		}
+	}
+	return v
+}
+
 /*
 
 class AttributionEditor(object):
-    func indices(self, v, types):
-        return [i for i,x in enumerate(v) if isinstance(x, types)]
     func mark(self, event):
         try:
             mark = event.mark or '-'
