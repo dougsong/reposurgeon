@@ -10489,7 +10489,7 @@ func (p *SelectionParser) parseVisibility() selEvaluator {
 		// We need a special check here because these expressions
 		// could otherwise run onto the text part of the command.
 		if !strings.ContainsRune("()|& ", p.peek()) {
-			panic(throw("command", "garbled type mask at %s", p.line))
+			panic(throw("command", "garbled type mask at '%s'", p.line))
 		}
 		visibility = func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
 			return p.imp().evalVisibility(x, s, visible)
