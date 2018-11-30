@@ -17020,55 +17020,91 @@ Available actions are:
 `)
 }
 
-/*
-class Reposurgeon(object):
-    func (rs *Reposurgeon) DoAttribution(self, line str):
-        "Inspect, modify, add, and remove commit and tag attributions."
-        repo = self.chosen()
-        if repo is None:
-            raise Recoverable("no repo has been chosen")
-        selparser = AttributionEditor.SelParser()
-        machine, rest = selparser.compile(line)
-        with rs.newLineParse(rest, stringSet{"stdout"}) as parse:
-            try:
-                fields = shlex.split(parse.line)
-            except ValueError as e:
-                raise Recoverable("attribution parse failed: %s" % e)
-            action = fields[0] if fields else 'show'
-            args = fields[1:]
-            if self.selection is None:
-                if action == 'show':
-                    self.selection = repo.all()
-                else:
-                    raise Recoverable("no selection")
-            sel = list(self.selected((Commit, Tag)))
-            if not sel:
-                raise Recoverable("no commits or tags in selection")
-            ed = AttributionEditor(sel, lambda a: selparser.evaluate(machine, a))
-            if action == 'show':
-                if len(args) > 0:
-                    raise Recoverable("'show' takes no arguments")
-                ed.inspect(parse.stdout)
-            else if action == 'delete':
-                if len(args) > 0:
-                    raise Recoverable("'delete' takes no arguments")
-                ed.delete()
-            else if action == 'set':
-                if len(args) < 1 or len(args) > 3:
-                    raise Recoverable("'set' requires at least one of: name, email, date")
-                ed.assign(args)
-            else if action in ('prepend', 'append'):
-                if len(args) < 1 or len(args) > 3:
-                    raise Recoverable("'%s' requires at least one of: name, email; date is optional" % action)
-                if action == 'prepend':
-                    ed.insert(args, false)
-                else if action == 'append':
-                    ed.insert(args, true)
-            else if action == 'resolve':
-                ed.resolve(parse.stdout, ' '.join(args) if args else None)
-            else:
-                raise Recoverable("unrecognized action: %s" % action)
-*/
+// Inspect, modify, add, and remove commit and tag attributions.
+func (rs *Reposurgeon) DoAttribution(line string) bool {
+	repo := rs.chosen()
+	if repo == nil {
+		croak("no repo has been chosen")
+		return false
+	}
+	selparser := newAttrEditSelParser()
+	machine, rest := selparser.compile(line)
+	parse := rs.newLineParse(rest, stringSet{"stdout"})
+	defer parse.Closem()
+	fields, err := shlex.Split(parse.line, true)
+	if err != nil {
+		croak("attribution parse failed: %v", err)
+		return false
+	}
+	var action string
+	args := []string{}
+	if len(fields) == 0 {
+		action = "show"
+	} else {
+		action = fields[0]
+		args = fields[1:]
+	}
+	if rs.selection == nil {
+		if action == "show" {
+			rs.selection = repo.all()
+		} else {
+			croak("no selection")
+			return false
+		}
+	}
+	var sel []int
+	for _, i := range rs.selection {
+		switch repo.events[i].(type) {
+		case *Commit, *Tag:
+			sel = append(sel, i)
+		}
+	}
+	if len(sel) == 0 {
+		croak("no commits or tags in selection")
+		return false
+	}
+	ed := newAttributionEditor(sel, repo.events, func(attrs []attrEditAttr) []int {
+		state := selparser.evalState(attrs)
+		defer state.release()
+		return selparser.evaluate(machine, state)
+	})
+	if action == "show" {
+		if len(args) > 0 {
+			croak("'show' takes no arguments")
+			return false
+		}
+		ed.inspect(parse.stdout)
+	} else if action == "delete" {
+		if len(args) > 0 {
+			croak("'delete' takes no arguments")
+			return false
+		}
+		ed.remove()
+	} else if action == "set" {
+		if len(args) < 1 || len(args) > 3 {
+			croak("'set' requires at least one of: name, email, date")
+			return false
+		}
+		ed.assign(args)
+	} else if action == "prepend" || action == "append" {
+		if len(args) < 1 || len(args) > 3 {
+			croak("'%s' requires at least one of: name, email; date is optional", action)
+			return false
+		}
+		if action == "prepend" {
+			ed.insert(args, false)
+		} else if action == "append" {
+			ed.insert(args, true)
+		}
+	} else if action == "resolve" {
+		ed.resolve(parse.stdout, strings.Join(args, " "))
+	} else {
+		croak("unrecognized action: %s", action)
+		return false
+	}
+	return false
+}
+
 //
 // Artifact removal
 //
