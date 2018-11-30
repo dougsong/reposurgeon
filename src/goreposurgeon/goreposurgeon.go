@@ -11156,18 +11156,26 @@ func (p *AttributionEditor) doInspect(eventNo int, e Event, attrs []attrEditAttr
 	}
 }
 
+func (p *AttributionEditor) assign(args []string) {
+	name, email, date := p.glean(args)
+	p.apply((*AttributionEditor).doAssign, name, email, date)
+}
+
+func (p *AttributionEditor) doAssign(eventNo int, e Event, attrs []attrEditAttr, sel []int, extra ...interface{}) {
+	name := extra[0].(string)
+	email := extra[1].(string)
+	date := extra[2].(Date)
+	if sel == nil {
+		panic(throw("command", "no attribution selected"))
+	}
+	for _, i := range sel {
+		attrs[i].assign(name, email, date)
+	}
+}
+
 /*
 
 class AttributionEditor(object):
-    func assign(self, args):
-        name, emailaddr, date = self.glean(args)
-        self.apply(self.do_assign, name=name, emailaddr=emailaddr, date=date)
-    func do_assign(self, attributions, sel, name, emailaddr, date, **extra):
-        pacify_pylint(extra)
-        if sel is None:
-            raise Recoverable("no attribution selected")
-        for i in sel:
-            attributions[i].assign(name, emailaddr, date)
     func delete():
         self.apply(self.do_delete)
     func do_delete(self, event, attributions, sel, **extra):
