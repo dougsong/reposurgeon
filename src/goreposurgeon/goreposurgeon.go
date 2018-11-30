@@ -11189,29 +11189,42 @@ func (p *AttributionEditor) doRemove(eventNo int, e Event, attrs []attrEditAttr,
 	}
 }
 
+func (p *AttributionEditor) insert(args []string, after bool) {
+	name, email, date := p.glean(args)
+	p.apply((*AttributionEditor).doInsert, after, name, email, date)
+}
+
+func (p *AttributionEditor) doInsert(eventNo int, e Event, attrs []attrEditAttr, sel []int, extra ...interface{}) {
+	after := extra[0].(bool)
+	name := extra[1].(string)
+	email := extra[2].(string)
+	date := extra[3].(Date)
+	if sel == nil {
+		sel = p.authorIndices(attrs)
+	}
+	var basis = -1
+	if len(sel) != 0 {
+		if after {
+			basis = sel[len(sel)-1]
+		} else {
+			basis = sel[0]
+		}
+	}
+	var a Attribution
+	a.fullname, a.email, a.date = p.infer(attrs, basis, name, email, date)
+	if basis >= 0 {
+		attrs[basis].insert(after, e, a)
+	} else if c, ok := e.(*Commit); ok {
+		c.authors = append(c.authors, a)
+	} else {
+		panic(throw("command", "unable to add author to %s",
+			strings.ToLower(reflect.TypeOf(e).Elem().Name())))
+	}
+}
+
 /*
 
 class AttributionEditor(object):
-    func insert(self, args, after):
-        name, emailaddr, date = self.glean(args)
-        self.apply(self.do_insert, after=after, name=name, emailaddr=emailaddr, date=date)
-    func do_insert(self, event, attributions, sel, after, name, emailaddr, date, **extra):
-        pacify_pylint(extra)
-        if not sel:
-            sel = self.indices(attributions, AttributionEditor.Author)
-        basis = sel[-1 if after else 0] if sel else None
-        a = Attribution()
-        a.name, a.email, a.date = self.infer(
-            attributions, basis, name, emailaddr, date)
-        if basis is not None:
-            attributions[basis].insert(after, event, a)
-        else:
-            try:
-                assert(event.authors is None)
-                event.authors = [a]
-            except AttributeError:
-                raise Recoverable("unable to add author to %s" %
-                                  event.__class__.__name__.lower())
     func resolve(self, stdout, label):
         self.apply(self.do_resolve, stdout=stdout, label=label)
     func do_resolve(self, eventno, event, sel, stdout, label, **extra):
