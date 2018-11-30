@@ -11046,15 +11046,17 @@ func (p *AttributionEditor) authorIndices(attrs []attrEditAttr) []int {
 	return v
 }
 
+func (p *AttributionEditor) getMark(e Event) string {
+	m := e.getMark()
+	if len(m) == 0 {
+		m = "-"
+	}
+	return m
+}
+
 /*
 
 class AttributionEditor(object):
-    func mark(self, event):
-        try:
-            mark = event.mark or '-'
-        except AttributeError:
-            mark = '-'
-        return mark
     func apply(self, f, **extra):
         for i, event in self.events:
             attributions = self.attributions(event)
