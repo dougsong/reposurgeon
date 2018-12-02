@@ -5492,6 +5492,25 @@ func (p *PathMap) copyFrom(targetPath interface{}, sourcePathMap *PathMap, sourc
 	p.insert(targetPath, sourceObj)
 }
 
+func (p *PathMap) items() []pathMapItem {
+	var items []pathMapItem
+	raw := p.rawItems()
+	sort.Slice(raw, func(i, j int) bool {
+		return raw[i].name < raw[j].name
+	})
+	for _, x := range raw {
+		if q, ok := x.value.(*PathMap); ok {
+			for _, y := range q.items() {
+				items = append(items, pathMapItem{
+					filepath.Join(x.name, y.name), y.value})
+			}
+		} else if x.value != nil {
+			items = append(items, x)
+		}
+	}
+	return items
+}
+
 // Return the current value associated with the component in the store
 func (p *PathMap) rawGet(component string) interface{} {
 	if snaplist, ok := p.store[component]; ok {
