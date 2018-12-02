@@ -5457,6 +5457,18 @@ func newPathMap(other interface{}) *PathMap {
 	return p
 }
 
+// Return the current value associated with the component in the store
+func (p *PathMap) rawGet(component string) interface{} {
+	if snaplist, ok := p.store[component]; ok {
+		if p.snapid < len(snaplist)-1 {
+			return snaplist[p.snapid]
+		} else {
+			return snaplist[len(snaplist)-1]
+		}
+	}
+	return nil
+}
+
 // Return basename of path and remaining components as slice.
 func pathMapSplitPath(path interface{}) (string, []string) {
 	if p, ok := path.(string); ok {
