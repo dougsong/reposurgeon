@@ -5520,6 +5520,10 @@ func (p *PathMap) names() []string {
 	return v
 }
 
+func (p *PathMap) String() string {
+	return "<PathMap: " + strings.Join(p.names(), " ") + ">"
+}
+
 // Return the current value associated with the component in the store
 func (p *PathMap) rawGet(component string) interface{} {
 	if snaplist, ok := p.store[component]; ok {
