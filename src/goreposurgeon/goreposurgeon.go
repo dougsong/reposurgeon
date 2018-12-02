@@ -5492,6 +5492,14 @@ func (p *PathMap) copyFrom(targetPath interface{}, sourcePathMap *PathMap, sourc
 	p.insert(targetPath, sourceObj)
 }
 
+func (p *PathMap) lsR(path interface{}) []string {
+	elt := p.find(path)
+	if q, ok := elt.(*PathMap); ok {
+		return q.names()
+	}
+	return []string{}
+}
+
 // Return true if path is present in the set as a file.
 func (p *PathMap) contains(path interface{}) bool {
 	elt := p.find(path)
