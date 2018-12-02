@@ -5496,6 +5496,27 @@ func (p *PathMap) rawSet(component string, value interface{}) interface{} {
 	return value
 }
 
+// Iterate through (component, current values) pairs
+func (p *PathMap) rawItems() []pathMapItem {
+	var items []pathMapItem
+	snapid := p.snapid
+	for component, snaplist := range p.store {
+		if component == pathMapSelf {
+			continue
+		}
+		var val interface{}
+		if snapid < len(snaplist)-1 {
+			val = snaplist[snapid]
+		} else {
+			val = snaplist[len(snaplist)-1]
+		}
+		if val != nil {
+			items = append(items, pathMapItem{component, val})
+		}
+	}
+	return items
+}
+
 // Return basename of path and remaining components as slice.
 func pathMapSplitPath(path interface{}) (string, []string) {
 	if p, ok := path.(string); ok {
