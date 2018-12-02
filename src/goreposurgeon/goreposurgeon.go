@@ -12138,8 +12138,7 @@ func (rs *Reposurgeon) evalPathsetFull(state selEvalState,
 	if matchAll {
 		match = func(s string) bool { return !matchCond.MatchString(s) }
 	}
-	type Tree map[string]struct{}
-	matchTrees := make(map[string]Tree)
+	matchTrees := make(map[string]*PathMap)
 	result := newFastOrderedIntSet()
 	lastEvent := selMax(preselection)
 	for i, event := range rs.chosen().events {
@@ -12150,35 +12149,35 @@ func (rs *Reposurgeon) evalPathsetFull(state selEvalState,
 		if i > lastEvent {
 			break
 		}
-		tree := make(Tree)
+		var tree *PathMap
 		parents := c.parents()
-		if len(parents) != 0 {
+		if len(parents) == 0 {
+			tree = newPathMap(nil)
+		} else {
 			parentTree, ok := matchTrees[parents[0].getMark()]
 			if !ok {
 				panic(fmt.Sprintf("commit tree missing: %s",
 					parents[0].getMark()))
 			}
-			for k := range parentTree {
-				tree[k] = struct{}{}
-			}
+			tree = parentTree.snapshot()
 		}
 		for _, fileop := range c.operations() {
 			if fileop.op == opM && match(fileop.Path) {
-				tree[fileop.Path] = struct{}{}
+				tree.set(fileop.Path, true)
 			} else if fileop.op == opC && match(fileop.Target) {
-				tree[fileop.Target] = struct{}{}
+				tree.set(fileop.Target, true)
 			} else if fileop.op == opR && match(fileop.Target) {
-				tree[fileop.Target] = struct{}{}
+				tree.set(fileop.Target, true)
 			} else if fileop.op == opD && match(fileop.Path) {
-				delete(tree, fileop.Path)
+				tree.remove(fileop.Path)
 			} else if fileop.op == opR && match(fileop.Source) {
-				delete(tree, fileop.Source)
+				tree.remove(fileop.Source)
 			} else if fileop.op == deleteall {
-				tree = make(Tree)
+				tree = newPathMap(nil)
 			}
 		}
 		matchTrees[c.mark] = tree
-		if (len(tree) == 0) == matchAll {
+		if tree.isEmpty() == matchAll {
 			result.Add(i)
 		}
 	}
