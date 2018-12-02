@@ -5510,6 +5510,14 @@ func (p *PathMap) get(path interface{}) interface{} {
 	return elt
 }
 
+// Add a filename to the set, with associated value (not nil).
+func (p *PathMap) set(path interface{}, value interface{}) {
+	if value == nil {
+		panic("internal error: can't add nil to pathmap")
+	}
+	p.insert(path, value)
+}
+
 func (p *PathMap) isEmpty() bool {
 	return len(p.rawItems()) == 0
 }
