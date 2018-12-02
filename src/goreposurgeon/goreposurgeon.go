@@ -5499,6 +5499,17 @@ func (p *PathMap) contains(path interface{}) bool {
 	return !ok && elt != nil
 }
 
+// Return the value associated with a specified path.
+func (p *PathMap) get(path interface{}) interface{} {
+	elt := p.find(path)
+	if elt == nil {
+		return nil
+	} else if _, ok := elt.(*PathMap); ok {
+		return nil
+	}
+	return elt
+}
+
 func (p *PathMap) isEmpty() bool {
 	return len(p.rawItems()) == 0
 }
