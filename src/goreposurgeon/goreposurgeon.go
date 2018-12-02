@@ -111,6 +111,7 @@ import (
 	kommandant "gitlab.com/ianbruene/Kommandant"
 	terminal "golang.org/x/crypto/ssh/terminal"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
+	difflib "github.com/pmezard/go-difflib/difflib"
 )
 
 const version = "4.0-pre"
@@ -17769,51 +17770,72 @@ must resolve to exactly two commits. Supports > redirection.
 `)
 }
 
-/*
-class Reposurgeon(object):
-    func (rs *Reposurgeon) DoDiff(self,line):
-        "Display a diff between versions."
-        if self.chosen() is None:
-            croak("no repo has been chosen.")
-            return
-        repo = self.chosen()
-        if self.selection is None:
-            self.selection = self.chosen().all()
-        bounds = tuple(repo.events[i] for i in self.selection)
-        if len(self.selection) != 2 or \
-               not isinstance(bounds[0], Commit) or \
-               not isinstance(bounds[1], Commit):
-            raise Recoverable("a pair of commits is required.")
-        dir1 = set(bounds[0].manifest())
-        dir2 = set(bounds[1].manifest())
-        allpaths = list(dir1 | dir2)
-        allpaths.sort()
-        with rs.newLineParse(line, stringSet{"stdout"}) as parse:
-            defer parse.Closem()
-            for path in allpaths:
-                if path in dir1 and path in dir2:
-                    # FIXME: Can we detect binary files and do something
-                    # more useful here?
-                    fromtext = bounds[0].blobByName(path)
-                    totext = bounds[1].blobByName(path)
-                    # Don't list identical files
-                    if fromtext != totext:
-                        lines0 = fromtext.split('\n')
-                        lines1 = totext.split('\n')
-                        file0 = path + " (" + bounds[0].mark + ")"
-                        file1 = path + " (" + bounds[1].mark + ")"
-                        for diffline in difflib.unified_diff(lines0, lines1,
-                                                         fromfile=file0,
-                                                         tofile=file1,
-                                                         lineterm=""):
-                            fmt.Fprint(parse.stdout, diffline + "\n")
-                else if path in dir1:
-                    fmt.Fprint(parse.stdout, "%s: removed\n" % path)
-                else if path in dir2:
-                    fmt.Fprint(parse.stdout, "%s: added\n" % path)
-                else:
-                    raise Recoverable("internal error - missing path in diff")
-*/
+// Display a diff between versions.
+func (rs *Reposurgeon) DoDiff(line string) bool {
+	if rs.chosen() == nil {
+		croak("no repo has been chosen.")
+		return false
+	}
+	repo := rs.chosen()
+	if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+	}
+	if len(rs.selection) != 2 {
+		complain("a pair of commits is required.")
+		return false
+	}
+	lower, ok1 := repo.events[rs.selection[0]].(*Commit)
+	upper, ok2 := repo.events[rs.selection[1]].(*Commit)
+	if !ok1 || !ok2 {
+		complain("a pair of commits is required.")
+		return false
+	}	
+	dir1 := newStringSet()
+	for path, _ := range lower.manifest() {
+		dir1.Add(path)
+	}
+	dir2 := newStringSet()
+	for path, _ := range upper.manifest() {
+		dir2.Add(path)
+	}
+	allpaths := dir1.Intersection(dir2)
+	sort.Strings(allpaths)
+	parse := rs.newLineParse(line, stringSet{"stdout"})
+	defer parse.Closem()
+	for _, path := range allpaths {
+		if dir1.Contains(path) && dir2.Contains(path) {
+			// FIXME: Can we detect binary files and do something
+			// more useful here?
+			fromtext, _ := lower.blobByName(path)
+			totext, _ := upper.blobByName(path)
+			// Don't list identical files
+			if fromtext != totext {
+				lines0 := strings.Split(fromtext, "\n")
+				lines1 := strings.Split(totext, "\n")
+				file0 := path + " (" + lower.mark + ")"
+				file1 := path + " (" + upper.mark + ")"
+				diff := difflib.UnifiedDiff{
+					A:lines0,
+					B:lines1,
+					FromFile: file0,
+					ToFile: file1,
+					Context: 3,
+				}
+				text, _ := difflib.GetUnifiedDiffString(diff)
+				fmt.Fprint(parse.stdout, text + "\n")
+			} else if dir1.Contains(path) {
+				fmt.Fprint(parse.stdout, "%s: removed\n", path)
+			} else if dir2.Contains(path) {
+				fmt.Fprint(parse.stdout, "%s: added\n", path)
+			} else {
+				complain("internal error - missing path in diff")
+				return false
+			}
+		}
+	}
+	return false
+}
+
 
 //
 // Setting paths to branchify
@@ -18014,7 +18036,7 @@ multi-line macro terminated by a line beginning with '}'.
 
 A later 'do' call can invoke this macro.
 
-'define' by itself without a name or body produces a macro list.
+'define' by itrs without a name or body produces a macro list.
 `)
 }
 
@@ -18068,7 +18090,7 @@ the name of the macro to be called; remaining tokens replace {0},
 {1}... in the macro definition (the conventions used are those of the
 Python format method). Tokens may contain whitespace if they are
 string-quoted; string quotes are stripped. Macros can call macros.
-If the macro expansion does not itself begin with a selection set,
+If the macro expansion does not itrs begin with a selection set,
 whatever set was specified before the 'do' keyword is available to
 the command generated by the expansion.
 `)
@@ -18315,12 +18337,12 @@ that zone is used.
 
 /*
 class Reposurgeon(object):
-    func (rs *Reposurgeon) DoChangelogs(self, line str):
+    func (rs *Reposurgeon) DoChangelogs(rs, line str):
         "Mine repository changelogs for authorship data."
-        if self.chosen() is None:
+        if rs.chosen() is None:
             croak("no repo has been chosen.")
             return
-        repo = self.chosen()
+        repo = rs.chosen()
         cc = cl = cm = cd = 0
         differ = difflib.Differ()
         func parse_attribution_line(line):
