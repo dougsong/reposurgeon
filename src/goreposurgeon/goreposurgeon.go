@@ -5511,6 +5511,15 @@ func (p *PathMap) items() []pathMapItem {
 	return items
 }
 
+func (p *PathMap) names() []string {
+	items := p.items()
+	v := make([]string, len(items))
+	for i := 0; i < len(items); i++ {
+		v[i] = items[i].name
+	}
+	return v
+}
+
 // Return the current value associated with the component in the store
 func (p *PathMap) rawGet(component string) interface{} {
 	if snaplist, ok := p.store[component]; ok {
