@@ -5457,6 +5457,23 @@ func newPathMap(other interface{}) *PathMap {
 	return p
 }
 
+// Return basename of path and remaining components as slice.
+func pathMapSplitPath(path interface{}) (string, []string) {
+	if p, ok := path.(string); ok {
+		components := strings.Split(filepath.Clean(p),
+			string(os.PathSeparator))
+		if len(components) == 0 {
+			return "", nil
+		}
+		return components[0], components[1:]
+	} else {
+		slice := path.([]interface{})
+		components := strings.Split(filepath.Clean(slice[0].(string)),
+			string(os.PathSeparator))
+		return pathMapSelf, components
+	}
+}
+
 // Stream parsing
 //
 // The Subversion dumpfile format is documented at
