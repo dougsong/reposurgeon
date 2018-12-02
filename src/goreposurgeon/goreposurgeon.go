@@ -5475,6 +5475,23 @@ func (p *PathMap) snapshot() *PathMap {
 	return r
 }
 
+// Insert, at targetPath, a snapshot of sourcePath in sourcePathMap.
+func (p *PathMap) copyFrom(targetPath interface{}, sourcePathMap *PathMap, sourcePath interface{}) {
+	sourceObj := sourcePathMap.find(sourcePath)
+	if sourceObj == nil {
+		return
+	}
+	if x, ok := sourceObj.(*PathMap); ok {
+		if x == sourcePathMap {
+			// Do not share toplevel instances, only inner ones
+			sourceObj = x.snapshot()
+		} else {
+			x.shared = true
+		}
+	}
+	p.insert(targetPath, sourceObj)
+}
+
 // Return the current value associated with the component in the store
 func (p *PathMap) rawGet(component string) interface{} {
 	if snaplist, ok := p.store[component]; ok {
