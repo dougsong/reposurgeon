@@ -6098,7 +6098,7 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 		}
 	}
 	maxrev := 0
-	for rev, _ := range revisions {
+	for rev := range revisions {
 		if rev > maxrev {
 			maxrev = rev
 		}
@@ -6106,7 +6106,7 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 	sp.revisions = make([]RevisionRecord, maxrev)
 	for maxrev >= 1 {
 		sp.revisions[maxrev-1] = revisions[maxrev]
-		maxrev -= 1
+		maxrev--
 	}
 }
 
