@@ -5518,6 +5518,28 @@ func (p *PathMap) set(path interface{}, value interface{}) {
 	p.insert(path, value)
 }
 
+// Remove a filename, or all descendents of a directory name, from the set.
+func (p *PathMap) remove(path interface{}) {
+	basename, components := pathMapSplitPath(path)
+	if p.shared {
+		panic("internal error: unexpected unshared pathmap")
+	}
+	q := p
+	for _, component := range components {
+		nxt := q.rawGet(component)
+		r, ok := nxt.(*PathMap)
+		if !ok {
+			return
+		}
+		if r.shared {
+			nxt = p.rawSet(component, r.snapshot())
+		}
+		q = nxt.(*PathMap)
+	}
+	// Set value to nil since PathMap doesn't tell nil and absence apart
+	p.rawSet(basename, nil)
+}
+
 func (p *PathMap) isEmpty() bool {
 	return len(p.rawItems()) == 0
 }
