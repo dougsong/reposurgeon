@@ -5469,6 +5469,33 @@ func (p *PathMap) rawGet(component string) interface{} {
 	return nil
 }
 
+// Set the current value associated with the component in the store
+func (p *PathMap) rawSet(component string, value interface{}) interface{} {
+	if p.store == nil {
+		p.store = make(map[string][]interface{})
+	}
+	snaplist, ok := p.store[component]
+	if !ok {
+		snaplist = []interface{}{nil}
+		p.store[component] = snaplist
+	}
+	needed := 1
+	if *p.maxid < p.snapid+1 {
+		needed += *p.maxid
+	} else {
+		needed += p.snapid + 1
+	}
+	if len(snaplist) < needed {
+		last := snaplist[len(snaplist)-1]
+		for i := len(snaplist); i < needed; i++ {
+			snaplist = append(snaplist, last)
+		}
+		p.store[component] = snaplist
+	}
+	snaplist[p.snapid] = value
+	return value
+}
+
 // Return basename of path and remaining components as slice.
 func pathMapSplitPath(path interface{}) (string, []string) {
 	if p, ok := path.(string); ok {
