@@ -5457,6 +5457,24 @@ func newPathMap(other interface{}) *PathMap {
 	return p
 }
 
+// Return a copy-on-write snapshot of the set.
+func (p *PathMap) snapshot() *PathMap {
+	r := newPathMap(p)
+	if p.snapid < r.snapid-1 {
+		// Late snapshot of an "old" PathMap. Restore values which may
+		// have changed since. This is uncommon, don't over-optimize.
+		for component := range p.store { // rawItems() would skip nil
+			r.rawSet(component, p.rawGet(component))
+		}
+	}
+	for _, v := range r.rawItems() {
+		if q, ok := v.value.(*PathMap); ok {
+			q.shared = true
+		}
+	}
+	return r
+}
+
 // Return the current value associated with the component in the store
 func (p *PathMap) rawGet(component string) interface{} {
 	if snaplist, ok := p.store[component]; ok {
