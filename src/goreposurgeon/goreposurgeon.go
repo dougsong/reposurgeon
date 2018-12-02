@@ -5492,6 +5492,10 @@ func (p *PathMap) copyFrom(targetPath interface{}, sourcePathMap *PathMap, sourc
 	p.insert(targetPath, sourceObj)
 }
 
+func (p *PathMap) isEmpty() bool {
+	return len(p.rawItems()) == 0
+}
+
 func (p *PathMap) items() []pathMapItem {
 	var items []pathMapItem
 	raw := p.rawItems()
