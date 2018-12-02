@@ -17263,18 +17263,18 @@ map when the repo is written or rebuilt.
 
 // Look for things that might be CVS or Subversion revision references.
 func (rs *Reposurgeon) DoReferences(line string) bool {
-        if rs.chosen() == nil {
+	if rs.chosen() == nil {
 		croak("no repo has been chosen.")
 		return false
-        }
-        repo := rs.chosen()
-        if rs.selection == nil {
+	}
+	repo := rs.chosen()
+	if rs.selection == nil {
 		rs.selection = rs.chosen().all()
-        }
-        if strings.Contains(line, "lift")  {
+	}
+	if strings.Contains(line, "lift") {
 		rs.chosen().parseDollarCookies()
 		hits := 0
-		substitute := func(getter func(string)*Commit, legend string) string {
+		substitute := func(getter func(string) *Commit, legend string) string {
 			// legend was matchobj.group(0) in Python
 			commit := getter(legend)
 			if commit == nil {
@@ -17288,29 +17288,29 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 		}
 		type getterPair struct {
 			pattern string
-			getter func(string)*Commit
+			getter  func(string) *Commit
 		}
 		getterPairs := []getterPair{
 			{`\[\[CVS:[^:\]]+:[0-9.]+\]\]`,
-				func (p string) *Commit {
+				func(p string) *Commit {
 					if c := repo.legacyMap[p]; c != nil {
 						return c
 					}
 					return repo.dollarMap[p]
 				}},
 			{`\[\[SVN:[0-9]+\]\]`,
-				func (p string) *Commit {
+				func(p string) *Commit {
 					if c := repo.legacyMap[p]; c != nil {
 						return c
 					}
 					return repo.dollarMap[p]
 				}},
 			{`\[\[HG:[0-9a-f]+\]\]`,
-				func (p string) *Commit {
+				func(p string) *Commit {
 					return repo.legacyMap[p]
 				}},
 			{`\[\[:[0-9]+\]\]`,
-				func (p string) *Commit {
+				func(p string) *Commit {
 					event := repo.markToEvent(p)
 					commit, ok := event.(*Commit)
 					if ok {
@@ -17319,19 +17319,19 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 					return nil
 				}},
 		}
-		for _, item := range getterPairs { 
+		for _, item := range getterPairs {
 			matchRE := regexp.MustCompile(item.pattern)
 			for _, commit := range rs.chosen().commits(rs.selection) {
 				commit.Comment = matchRE.ReplaceAllStringFunc(
 					commit.Comment,
-					func (m string) string {
-						return substitute(item.getter,m)
+					func(m string) string {
+						return substitute(item.getter, m)
 					})
 			}
 		}
 		announce(debugSHOUT, "%d references resolved.", hits)
 		repo.writeLegacy = true
-        } else {
+	} else {
 		//FIXME: Maybe this should filter rather than making a new set?
 		rs.selection = make([]int, 0)
 		for idx, commit := range repo.commits(nil) {
@@ -17354,17 +17354,17 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 						commit := event.(*Commit)
 						summary = commit.lister(nil, ei, w)
 						break
-					//case *Tag:
-					//	tag := event.(*Tag)
-					//	summary = tag.lister(nil, ei, w)
+						//case *Tag:
+						//	tag := event.(*Tag)
+						//	summary = tag.lister(nil, ei, w)
 					}
-					if summary != ""{
-						fmt.Fprint(parse.stdout, summary + "\n")
+					if summary != "" {
+						fmt.Fprint(parse.stdout, summary+"\n")
 					}
 				}
 			}
 		}
-        }
+	}
 	return false
 }
 
