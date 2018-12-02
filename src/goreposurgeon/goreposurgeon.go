@@ -6717,7 +6717,7 @@ func (repo *Repository) eventToIndex(obj Event) int {
 			return ind
 		}
 	}
-	panic("Internal error: object not matched in repository %s", repo.name)
+	panic(fmt.Sprintf("Internal error: object not matched in repository %s", repo.name))
 }
 
 // find gets an object index by mark
