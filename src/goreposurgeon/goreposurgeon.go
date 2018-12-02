@@ -5496,6 +5496,19 @@ func (p *PathMap) isEmpty() bool {
 	return len(p.rawItems()) == 0
 }
 
+// Return the number of files in the set.
+func (p *PathMap) size() int {
+	n := 0
+	for _, x := range p.rawItems() {
+		if q, ok := x.value.(*PathMap); ok {
+			n += q.size()
+		} else {
+			n++
+		}
+	}
+	return n
+}
+
 func (p *PathMap) items() []pathMapItem {
 	var items []pathMapItem
 	raw := p.rawItems()
