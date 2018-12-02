@@ -5433,6 +5433,30 @@ type pathMapItem struct {
 
 var pathMapSelf = `/\/\/\/`
 
+func newPathMap(other interface{}) *PathMap {
+	// The instance may be a child of several other PathMaps if |shared| is
+	// true. |snapid| is an integer unique among related PathMaps, and
+	// |maxid| is the maximum |snapid| of the collection and is shared
+	// among all instances. |store| is a map mapping single-component
+	// names to lists of values indexed by snapids. The values which can be
+	// other PathMaps (for directories) or anything except PathMaps and
+	// nil (for files).
+	p := new(PathMap)
+	if o, ok := other.(*PathMap); ok {
+		p.store = o.store
+		p.maxid = o.maxid
+		(*p.maxid)++
+		p.snapid = *p.maxid
+	} else {
+		maxid := 0
+		p.store = nil
+		p.maxid = &maxid
+		p.snapid = maxid
+	}
+	p.shared = false
+	return p
+}
+
 // Stream parsing
 //
 // The Subversion dumpfile format is documented at
