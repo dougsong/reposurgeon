@@ -5535,6 +5535,29 @@ func (p *PathMap) rawItems() []pathMapItem {
 	return items
 }
 
+// Insert obj at the location given by components.
+func (p *PathMap) insert(path interface{}, obj interface{}) {
+	basename, components := pathMapSplitPath(path)
+	if len(basename) == 0 {
+		return
+	}
+	if p.shared {
+		panic("internal error: unexpected unshared pathmap")
+	}
+	q := p
+	for _, component := range components {
+		nxt := q.rawGet(component)
+		r, ok := nxt.(*PathMap)
+		if !ok {
+			nxt = q.rawSet(component, newPathMap(nil))
+		} else if r.shared {
+			nxt = q.rawSet(component, r.snapshot())
+		}
+		q = nxt.(*PathMap)
+	}
+	q.rawSet(basename, obj)
+}
+
 // Return basename of path and remaining components as slice.
 func pathMapSplitPath(path interface{}) (string, []string) {
 	if p, ok := path.(string); ok {
