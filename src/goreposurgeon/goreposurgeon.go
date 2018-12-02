@@ -5416,6 +5416,23 @@ func branchbase(branch string) string {
 	return filepath.Base(branch)
 }
 
+// PathMap represents the set of filenames visible in a Subversion revision,
+// using copy-on-write to keep the size of the structure in line with the size
+// of the Subversion repository metadata.
+type PathMap struct {
+	shared bool
+	maxid  *int
+	snapid int
+	store  map[string][]interface{}
+}
+
+type pathMapItem struct {
+	name  string
+	value interface{}
+}
+
+var pathMapSelf = `/\/\/\/`
+
 // Stream parsing
 //
 // The Subversion dumpfile format is documented at
