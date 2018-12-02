@@ -5558,6 +5558,25 @@ func (p *PathMap) insert(path interface{}, obj interface{}) {
 	q.rawSet(basename, obj)
 }
 
+// Return the object at the location given by components--either
+// the associated value if it's present as a filename, or a PathMap
+// containing the descendents if it's a directory name.  Return
+// None if the location does not exist in the set.
+func (p *PathMap) find(path interface{}) interface{} {
+	basename, components := pathMapSplitPath(path)
+	if len(basename) == 0 {
+		return p
+	}
+	q := p
+	for _, component := range components {
+		q := q.rawGet(component)
+		if _, ok := q.(*PathMap); !ok {
+			return nil
+		}
+	}
+	return q.rawGet(basename)
+}
+
 // Return basename of path and remaining components as slice.
 func pathMapSplitPath(path interface{}) (string, []string) {
 	if p, ok := path.(string); ok {
