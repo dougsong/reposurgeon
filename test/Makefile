@@ -12,6 +12,9 @@ REPOCUTTER := repocutter
 REPOTOOL := repotool 
 REPOMAPPER := repomapper
 
+# Setting this to 0 allows tests to continue on error.
+STOPOUT=1
+
 # Defeat annoying behavior under Mac OS X - builtin echo doesn't do -n
 ECHO := /bin/echo
 
@@ -81,10 +84,10 @@ roundtrip:
 	@echo "=== Testing stream-file round-tripping:" 
 	@for file in *.fi; do \
 	    echo "  $${file}"; \
-	    $(REPOSURGEON) "read -;write -" <$$file >/tmp/rs$$$$ || exit 1; \
+	    $(REPOSURGEON) "read -;write -" <$$file >/tmp/rs$$$$ || exit $(STOPOUT); \
 	    [ -s /tmp/rs$$$$ ] && diff --text -u $${file} /tmp/rs$$$$ \
-		|| exit 1; \
-	    rm -f /tmp/rs$$$$ || exit 1; \
+		|| exit $(STOPOUT); \
+	    rm -f /tmp/rs$$$$ || exit $(STOPOUT); \
 	done
 
 # Test that all stream files round-trip properly with compression
@@ -93,10 +96,10 @@ roundtrip-compress:
 	@for file in *.fi; do \
 	    echo "  $${file}"; \
 	    $(REPOSURGEON) "set compressblobs" "read -;write -" \
-		<$$file >/tmp/rs$$$$ || exit 1; \
+		<$$file >/tmp/rs$$$$ || exit $(STOPOUT); \
 	    [ -s /tmp/rs$$$$ ] && diff --text -u $${file} /tmp/rs$$$$ \
-		|| exit 1; \
-	    rm -f /tmp/rs$$$$ || exit 1; \
+		|| exit $(STOPOUT); \
+	    rm -f /tmp/rs$$$$ || exit $(STOPOUT); \
 	done
 
 # Test that dumping metadata to msgbox form and updating from the message-box
@@ -106,9 +109,9 @@ messagebox:
 	@for file in *.fi; do \
 	    echo "  $${file}";\
 	    $(REPOSURGEON) "read <$${file}" "edit echo>/dev/null" "write -" \
-		>/tmp/regress$$$$ || exit 1; \
+		>/tmp/regress$$$$ || exit $(STOPOUT); \
 	    [ -s /tmp/regress$$$$ ] && diff --text -u $${file} /tmp/regress$$$$ \
-		|| exit 1; \
+		|| exit $(STOPOUT); \
 	done
 	@rm -f /tmp/regress$$$$
 
@@ -119,15 +122,15 @@ fi-buildregress:
 	@for file in $(TESTLOADS); do \
 	    echo "Remaking $${file}.chk"; \
 	    $(REPOSURGEON) "script $${file}.tst testing123" >$${file}.chk \
-		2>&1 || exit 1; \
+		2>&1 || exit $(STOPOUT); \
 	done
 fi-regress:
 	@echo "=== Running general tests:"
 	@for file in $(TESTLOADS); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.tst  || echo ' ## (no description)'; \
 	    if $(REPOSURGEON) "script $${file}.tst testing123" >/tmp/regress$$$$ 2>&1; \
-	    then diff --text -u $${file}.chk /tmp/regress$$$$ || exit 1; \
-	    else echo "*** Nonzero return status on $${file}!"; exit 1; fi \
+	    then diff --text -u $${file}.chk /tmp/regress$$$$ || exit $(STOPOUT); \
+	    else echo "*** Nonzero return status on $${file}!"; exit $(STOPOUT); fi \
 	done
 	@rm -f /tmp/regress$$$$
 
@@ -137,7 +140,7 @@ buildcoalesce:
 	@for file in $(COALESCE); do \
 	    echo "Rebuilding coalescence regression test using $${file}.fi"; \
 	    $(REPOSURGEON) "read <$${file}.fi; coalesce; write -" \
-		>$${file}.chk || exit 1; \
+		>$${file}.chk || exit $(STOPOUT); \
 	done
 	@rm -f /tmp/regress$$$$
 coalesce:
@@ -145,9 +148,9 @@ coalesce:
 	@for file in $(COALESCE); do \
 	    echo "  $${file}.fi"; \
 	    $(REPOSURGEON) "read <$${file}.fi; coalesce; write -" \
-		>/tmp/regress$$$$ || exit 1; \
+		>/tmp/regress$$$$ || exit $(STOPOUT); \
 	    [ -s /tmp/regress$$$$ ] && diff --text -u $${file}.chk /tmp/regress$$$$ \
-		|| exit 1; \
+		|| exit $(STOPOUT); \
 	done
 	@rm -f /tmp/regress$$$$
 
@@ -160,8 +163,8 @@ git-regress:
 	    for test in $(GITLOADS); do \
 		if (echo "  $${test}.fi" >&2; \
 		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit 1; \
-		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
+		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
 	    done; \
 	else echo "    Skipped, git missing."; exit 0; \
 	fi
@@ -176,8 +179,8 @@ git-regress-branches:
 	    for test in $(GITBRANCHES); do \
 		if (echo "  $${test}.fi" >&2; \
 		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit 1; \
-		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
+		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
 	    done; \
 	else echo "    Skipped, git missing."; exit 0; \
 	fi
@@ -192,8 +195,8 @@ git-regress-merges:
 	    for test in $(GITMERGES); do \
 		if (echo "  $${test}.fi" >&2; \
 		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit 1; \
-		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
+		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
 	    done; \
 	else echo "    Skipped, git missing."; exit 0; \
 	fi
@@ -208,8 +211,8 @@ git-regress-tags:
 	    for test in $(GITTAGS); do \
 		if (echo "  $${test}.fi" >&2; \
 		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit 1; \
-		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
+		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
 	    done; \
 	else echo "    Skipped, git missing."; exit 0; \
 	fi
@@ -224,8 +227,8 @@ hg-regress:
 	    for test in $(HGLOADS); do \
 		if (echo "  $${test}.fi" >&2; \
 		./hg-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit 1; \
-		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
+		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
 	    done; \
 	else echo "    Skipped, hg or git missing."; exit 0; \
 	fi
@@ -238,7 +241,7 @@ hg-buildregress-branches:
 	@for file in $(HGBRANCHES); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
-		2>&1 || exit 1; \
+		2>&1 || exit $(STOPOUT); \
 	done
 hg-regress-branches:
 	@echo "=== Testing hg-extractor with multiple hg branches:"
@@ -247,8 +250,8 @@ hg-regress-branches:
 	    for test in $(HGBRANCHES); do \
 		if (echo "  $${test}" >&2; \
 		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit 1; \
-		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
+		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
 	    done; \
 	else echo "    Skipped, hg missing."; exit 0; \
 	fi
@@ -260,7 +263,7 @@ hg-buildregress-merges:
 	@for file in $(HGMERGES); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
-		2>&1 || exit 1; \
+		2>&1 || exit $(STOPOUT); \
 	done
 hg-regress-merges:
 	@echo "=== Testing hg-extractor with merges:"
@@ -269,8 +272,8 @@ hg-regress-merges:
 	    for test in $(HGMERGES); do \
 		if (echo "  $${test}" >&2; \
 		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit 1; \
-		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
+		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
 	    done; \
 	else echo "    Skipped, hg missing."; exit 0; \
 	fi
@@ -282,7 +285,7 @@ hg-buildregress-tags:
 	@for file in $(HGTAGS); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
-		2>&1 || exit 1; \
+		2>&1 || exit $(STOPOUT); \
 	done
 hg-regress-tags:
 	@echo "=== Testing hg-extractor with tags:"
@@ -291,8 +294,8 @@ hg-regress-tags:
 	    for test in $(HGTAGS); do \
 		if (echo "  $${test}" >&2; \
 		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit 1; \
-		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
+		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
 	    done; \
 	else echo "    Skipped, hg missing."; exit 0; \
 	fi
@@ -304,7 +307,7 @@ hg-buildregress-patho:
 	@for file in $(HGPATHO); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test 2>/dev/null | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
-		2>&1 || exit 1; \
+		2>&1 || exit $(STOPOUT); \
 	done
 hg-regress-patho:
 	@echo "=== Testing hg-extractor with pathological loads:"
@@ -313,8 +316,8 @@ hg-regress-patho:
 	    for test in $(HGPATHO); do \
 		if (echo "  $${test}" >&2; \
 		./hg-$${test}-test 2>/dev/null) | sed -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit 1; \
-		else echo "*** Nonzero return status on $${test}!"; exit 1; fi \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
+		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
 	    done; \
 	else echo "    Skipped, hg missing."; exit 0; \
 	fi
@@ -328,7 +331,7 @@ svnload-buildregress:
 	    then \
 		    echo "Remaking $${test}.chk"; \
 		    rm -f $${test}.chk && make --quiet $${test}.chk \
-			|| exit 1; \
+			|| exit $(STOPOUT); \
 	    fi \
 	done
 svnload-regress:
@@ -339,19 +342,19 @@ svnload-regress:
 	    then \
 		(if { $(ECHO) -n "  $${test}.svn"; grep --text '^ ##' $${test}.svn || echo ' ## (no description)'; } >&2; \
 		$(REPOSURGEON) "read <$${test}.svn" "prefer git" "write -" >/tmp/regress$$$$ 2>&1; \
-		then diff --text -u $${test}.chk /tmp/regress$$$$ || exit 1; \
-		else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
+		then diff --text -u $${test}.chk /tmp/regress$$$$ || exit $(STOPOUT); \
+		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi; \
 		if command -v git >/dev/null 2>&1 ; \
 		then \
-		    mkdir /tmp/reposurgeon$$$$ || exit 1; \
-		    (cd /tmp/reposurgeon$$$$ || exit 1; \
-			git init --quiet || exit 1; \
+		    mkdir /tmp/reposurgeon$$$$ || exit $(STOPOUT); \
+		    (cd /tmp/reposurgeon$$$$ || exit $(STOPOUT); \
+			git init --quiet || exit $(STOPOUT); \
 			grep --text -v 'reposurgeon:' /tmp/regress$$$$ | git fast-import --quiet) \
-			    || exit 1; \
+			    || exit $(STOPOUT); \
 		    rm -fr /tmp/reposurgeon$$$$\
 		else echo "    Skipped, git missing."; \
 		fi \
-		) || exit 1; \
+		) || exit $(STOPOUT); \
 	    fi \
 	done
 	@rm -f /tmp/regress$$$$
@@ -369,7 +372,7 @@ liftcheck-regress:
 		for test in $(SVNCLEAN); \
 		do \
 		    { $(ECHO) -n "  $${test}.svn"; grep --text '^ ##' $${test} || echo ' ## (no description)'; } >&2; \
-		    liftcheck $${test} || { echo "*** Failed on $${test}!"; exit 1; } \
+		    liftcheck $${test} || { echo "*** Failed on $${test}!"; exit $(STOPOUT); } \
 		done \
 	else \
 		echo "     Skipped, either git or svn is missing"; \
@@ -387,7 +390,7 @@ legacy-buildregress:
 	do \
 	    echo "Remaking $${test}.map"; \
 	    rm -f $${test}.map && make --quiet $${test}.map 2>/dev/null \
-		|| exit 1; \
+		|| exit $(STOPOUT); \
 	done
 legacy-regress:
 	@echo "=== Testing legacy-map generation:"
@@ -395,8 +398,8 @@ legacy-regress:
 	do \
 	    if echo "  $${test}.svn" >&2; \
 	    $(REPOSURGEON) "read <$${test}.svn" "legacy write -" >/tmp/regress$$$$ 2>/dev/null; \
-	    then diff --text -u $${test}.map /tmp/regress$$$$ || exit 1; \
-	    else echo "*** Nonzero return status on $${test}!"; exit 1; fi; \
+	    then diff --text -u $${test}.map /tmp/regress$$$$ || exit $(STOPOUT); \
+	    else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi; \
 	done
 	@rm -f /tmp/regress$$$$
 
@@ -407,7 +410,7 @@ svndump-buildregress:
 	do \
 	    echo "Remaking $${f}.chk"; \
 	    $(REPOSURGEON) "read <$${f}.fi" "prefer svn" "write -" | svn-to-svn -s >$${f}.chk \
-		|| exit 1; \
+		|| exit $(STOPOUT); \
 	done
 	@make --quiet clean
 svndump-regress:
@@ -418,8 +421,8 @@ svndump-regress:
 	    then \
 		if echo "  $${test}.fi" >&2; \
 		$(REPOSURGEON) "read <$${test}.fi" "prefer svn" "write -" | tee /tmp/prestripped$$$$ | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
-		then diff --text -u $${test}.chk /tmp/stripped$$$$ || exit 1; \
-		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;\
+		then diff --text -u $${test}.chk /tmp/stripped$$$$ || exit $(STOPOUT); \
+		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi;\
 	    fi \
 	done
 	@make --quiet clean
@@ -435,12 +438,12 @@ svncheck:
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
 		svn-to-svn -s <$${test}.svn >/tmp/checkstripped$$$$ 2>&1 \
-		    || exit 1; \
+		    || exit $(STOPOUT); \
 		if echo "  $${test}.svn" >&2; \
 		$(REPOSURGEON) "set svn_no_autoignores" "read $${test}.svn" "prefer svn" "write -"  | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
 		then diff --text -u /tmp/checkstripped$$$$ /tmp/stripped$$$$ \
-		    || exit 1; \
-		else echo "*** Nonzero return status on $${test}!"; exit 1; fi;\
+		    || exit $(STOPOUT); \
+		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi;\
 	    fi \
 	done
 	@make --quiet clean
@@ -452,7 +455,7 @@ MAPPERTESTS := $(shell ls -1 repomapper*.sh | sed '/.sh/s///')
 repomapper-buildregress:
 	@for file in $(MAPPERTESTS); do \
 	    echo "Remaking $${file}.chk"; \
-	    $(SHELL) $${file}.sh >$${file}.chk || exit 1; \
+	    $(SHELL) $${file}.sh >$${file}.chk || exit $(STOPOUT); \
 	done
 repomapper-regress:
 	@echo "=== Running repomapper tests:"
@@ -470,7 +473,7 @@ TOOLTESTS := $(shell ls -1 repotool*.sh | sed '/.sh/s///')
 repotool-buildregress:
 	@for file in $(TOOLTESTS); do \
 	    echo "Remaking $${file}.chk"; \
-	    $(SHELL) $${file}.sh --rebuild $${file} || exit 1; \
+	    $(SHELL) $${file}.sh --rebuild $${file} || exit $(STOPOUT); \
 	done
 repotool-regress:
 	@echo "=== Running repotool tests:"
@@ -488,7 +491,7 @@ CUTTERTESTS := $(shell ls -1 repocutter*.sh | sed '/.sh/s///')
 repocutter-buildregress:
 	@for file in $(CUTTERTESTS); do \
 	    echo "Remaking $${file}.chk"; \
-	    $(SHELL) $${file}.sh >$${file}.chk || exit 1; \
+	    $(SHELL) $${file}.sh >$${file}.chk || exit $(STOPOUT); \
 	done
 repocutter-regress:
 	@echo "=== Running repocutter tests:"
@@ -506,7 +509,7 @@ SVNCHECK := $(shell ls -1 svncheck*.sh | sed '/.sh/s///')
 svncheck-buildregress:
 	@for file in $(SVNCHECK); do \
 	    echo "Remaking $${file}.chk"; \
-	    $(SHELL) $${file}.sh -d | $(REPOSURGEON) "set testmode" 'read -' 'prefer git' 'write -' >$${file}.chk || exit 1; \
+	    $(SHELL) $${file}.sh -d | $(REPOSURGEON) "set testmode" 'read -' 'prefer git' 'write -' >$${file}.chk || exit $(STOPOUT); \
 	done
 svncheck-regress:
 	@echo "=== Running svncheck tests:"
@@ -540,14 +543,14 @@ svn-flat: clean
 	svnadmin create test-repo
 	svn co file://${PWD}/test-repo test-checkout
 svn-branchy: svn-flat
-	@cd test-checkout || exit 1; set -x; \
-		svn mkdir trunk || exit 1; \
-		svn mkdir tags || exit 1; \
-		svn mkdir branches || exit 1; \
-		echo "Directory layout." | svn commit -F - || exit 1; \
+	@cd test-checkout || exit $(STOPOUT); set -x; \
+		svn mkdir trunk || exit $(STOPOUT); \
+		svn mkdir tags || exit $(STOPOUT); \
+		svn mkdir branches || exit $(STOPOUT); \
+		echo "Directory layout." | svn commit -F - || exit $(STOPOUT); \
 		echo "This is a test Subversion repository" >trunk/README; \
-		svn add trunk/README || exit 1; \
-		echo "Initial README content." | svn commit -F - || exit 1
+		svn add trunk/README || exit $(STOPOUT); \
+		echo "Initial README content." | svn commit -F - || exit $(STOPOUT)
 svn-dump:
 	@svnadmin dump test-repo 
 
