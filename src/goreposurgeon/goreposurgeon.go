@@ -16472,55 +16472,71 @@ Policy:
 `)
 }
 
-/*
-class Reposurgeon(object):
-    func (rs *Reposurgeon) DoReparent(self, line str):
-        repo = self.chosen()
-        if repo is None:
-            croak("no repo has been chosen.")
-            return
-        with rs.newLineParse(line, nil) as parse:
-            defer parse.Closem()
-            use_order = '--use-order' in parse.options
-            try:
-                selected = list(self.commits(self.selection))
-                if not len(selected): raise ValueError()
-                if len(self.selection) != len(selected): raise ValueError()
-            except (TypeError, ValueError):
-                raise Recoverable("reparent requires one or more selected commits")
-            if not use_order:
-                selected.sort()
-            # determine whether an event resort might be needed.  it is
-            # assumed that ancestor commits already have a lower event
-            # index before this function is called, which should be true
-            # as long as every function that modifies the DAG calls
-            # Repository.resort() when needed.  thus, a call to resort()
-            # should only be necessary if --use-order is passed and a
-            # parent will have an index higher than the modified commit.
-            do_resort = use_order and not all(selected[-1][0] > x[0]
-                                              for x in selected[0:-1])
-            parents = [x[1] for x in selected[0:-1]]
-            child = selected[-1][1]
-            if do_resort and any(p.descendedFrom(child) for p in parents):
-                raise Recoverable('reparenting a commit to its own descendant' \
-                                  + ' would introduce a cycle')
-            if "--rebase" not in parse.options:
-                # Recreate the state of the tree
-                f = FileOp(repo)
-                f.construct("deleteall")
-                newops = [f]
-                for (path, (mode, mark, inline)) in child.manifest().items():
-                    f = FileOp(repo)
-                    f.construct("M", mode, mark, path)
-                    if mark == "inline":
-                        f.inline = inline
-                    newops.append(f)
-                newops.extend(child.operations())
-                child.setOperations(newops)
-            child.setParents(parents)
-            if do_resort:
-                repo.resort()
-*/
+func (rs *Reposurgeon) DoReparent(line string) bool {
+	repo := rs.chosen()
+	if repo == nil {
+		croak("no repo has been chosen.")
+		return false
+	}
+	parse := rs.newLineParse(line, nil)
+	defer parse.Closem()
+	useOrder := parse.options.Contains("--use-order")
+	// determine whether an event resort might be needed.  it is
+	// assumed that ancestor commits already have a lower event
+	// index before this function is called, which should be true
+	// as long as every function that modifies the DAG calls
+	// Repository.resort() when needed.  thus, a call to resort()
+	// should only be necessary if --use-order is passed and a
+	// parent will have an index higher than the modified commit.
+	var doResort bool
+	if useOrder {
+		for _, idx := range rs.selection[:len(rs.selection)-1] {
+			if idx > rs.selection[len(rs.selection) -1] {
+				doResort = true
+			}
+		}
+	} else {
+		sort.Ints(rs.selection)
+	}
+	selected := repo.commits(rs.selection)
+	if len(selected) == 0 || len(rs.selection) != len(selected) {
+		complain("reparent requires one or more selected commits")
+	}
+	child := selected[len(selected)-1]
+	parents := make([]CommitLike, len(rs.selection)-1)
+	for i, c := range selected[:len(selected)-1] {
+		parents[i] = c
+	}
+	if doResort {
+		for _, p := range parents {
+			if p.(*Commit).descendedFrom(child) {
+				complain("reparenting a commit to its own descendant would introduce a cycle")
+				return false
+			}
+		}
+	}
+	if !parse.options.Contains("--rebase") {
+		// Recreate the state of the tree
+		f := *newFileOp(repo)
+		f.construct("deleteall")
+		newops := []FileOp{f}
+		for path, entry := range child.manifest() {
+			f = *newFileOp(repo)
+			f.construct("M", entry.mode, entry.ref, path)
+			if entry.ref == "inline" {
+				f.inline = entry.inline
+			}
+			newops = append(newops, f)
+		}
+		newops = append(newops, child.operations()...)
+		child.setOperations(newops)
+	}
+	child.setParents(parents)
+	if doResort {
+		repo.resort()
+	}
+	return false
+}
 
 func (rs *Reposurgeon) HelpReorder() {
 	rs.helpOutput(`
