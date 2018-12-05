@@ -20426,7 +20426,7 @@ type FlowState struct {
 }
 
 func newFlowState(rev int) *FlowState {
-	return &FlowState{rev: rev, isDirectory: false, subfiles: 0}
+	return &FlowState{rev: rev, isDirectory: false, subfiles: 0, props: newOrderedMap()}
 }
 
 func svnprops(pdict OrderedMap) string {
@@ -20457,7 +20457,7 @@ func dumpRevprops(fp io.Writer, revision int, date *Date, author string, log str
 	// should at least round-trip with the logic in the Subversion
 	// dump parser.
 	ancestral := ""
-	if len(parents) > 0 {
+	if len(parents) > 1 {
 		sort.Ints(parents)
 		for _, p := range parents[1:] { // ignore main parent
 			ancestral += "." + fmt.Sprintf(".%d", p)
@@ -20488,8 +20488,11 @@ func dumpNode(fp io.Writer, dpath string,
 	if fromPath != "" {
 		fmt.Fprintf(fp, "Node-copyfrom-path: %s\n", fromPath)
 	}
-	nodeprops := svnprops(*props) + "PROPS-END\n"
-	fmt.Fprintf(fp, "Prop-content-length: %d\n", len(nodeprops))
+	var nodeprops string
+	if props != nil {
+		nodeprops = svnprops(*props) + "PROPS-END\n"
+		fmt.Fprintf(fp, "Prop-content-length: %d\n", len(nodeprops))
+	}
 	if content != "" {
 		fmt.Fprintf(fp, "Text-content-length: %d\n", len(content))
 		// Checksum validation in svnload works if we do sha1 but
@@ -20499,7 +20502,9 @@ func dumpNode(fp io.Writer, dpath string,
 		fmt.Fprintf(fp, "Text-content-sha1: %x\n", sha1.Sum([]byte(content)))
 	}
 	fmt.Fprintf(fp, "Content-length: %d\n\n", len(nodeprops)+len(content))
-	fmt.Fprint(fp, nodeprops)
+	if props != nil {
+		fmt.Fprint(fp, nodeprops)
+	}
 	if content != "" {
 		fmt.Fprint(fp, content)
 	}
