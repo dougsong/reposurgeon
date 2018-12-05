@@ -20781,7 +20781,7 @@ func (sd *SubversionDumper) dump(selection orderedIntSet,
 		}
 	}
 	baton := newBaton("reposurgeon: dumping", "", progress)
-	fmt.Print(fp, "SVN-fs-dump-format-version: 2\n\n")
+	fmt.Fprint(fp, "SVN-fs-dump-format-version: 2\n\n")
 	if sd.repo.uuid == "" {
 		newuuid, err := uuid.NewUUID()
 		if err != nil {
