@@ -6996,7 +6996,7 @@ class Repository:
         self.filter_assignments(eligible)
         self.events = [e for e in self.events if not eligible(e)]
         self.invalidate_manifests()     # Might not be needed
-        self.declare_sequence_mutation()
+        self.declare_sequence_mutation("GC")
     def __delitem__(self, index):
         # To make Repository a proper container (and please pylint)
         self.squash([index], ["--delete", "--quiet", "--tagback"])
