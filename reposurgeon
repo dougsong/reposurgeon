@@ -9176,13 +9176,13 @@ developers.
         pacify_pylint(preselection)
         selection = []
         lookup = self.chosen().named(ref)
-        if lookup:
+        if lookup == None:
+            raise Recoverable("couldn't match a name at <%s>" % ref)
+        else:
             # Choose to include *all* commits matching the date.
             # Alas, results in unfortunate behavior when a date
             # with multiple commits ends a span.
             selection += list(lookup)
-        else:
-            raise Recoverable("couldn't match a name at <%s>" % ref)
         return selection
     @debug_lexer
     def eval_textsearch(self, preselection, search, modifiers):
