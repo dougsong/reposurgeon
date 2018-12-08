@@ -3225,7 +3225,7 @@ func (b *Blob) getBlobfile(create bool) string {
 
 // hasfile answers the question: "Does this blob have its own file?"
 func (b *Blob) hasfile() bool {
-	return b.repo.seekstream != nil || b.start != -1
+	return b.repo.seekstream == nil || b.start == -1
 }
 
 // getContent gets the content of the blob as a string.
@@ -5856,7 +5856,6 @@ func newStreamParser(repo *Repository) *StreamParser {
 	sp.repo = repo
 	sp.linebuffers = make([]string, 0)
 	sp.warnings = make([]string, 0)
-	sp.ccount = -1
 	// Everything below here is Subversion-specific
 	sp.branches = make(map[string]*Commit)
 	sp.branchlink = newStringSet()
@@ -6731,9 +6730,6 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 			}
 			croak(e.message)
 			nuke(sp.repo.subdir(""), fmt.Sprintf("import interrupted, removing %s", sp.repo.subdir("")))
-		}
-		if sp.repo.seekstream != nil {
-			sp.repo.seekstream.Close()
 		}
 	}()
 }
@@ -12751,7 +12747,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 			content := blob.getContent()
 			modified := hook(content)
 			if content != modified {
-				blob.setContent(modified, blob.start)
+				blob.setContent(modified, -1)
 				altered++
 			}
 		}
@@ -13830,7 +13826,8 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 		return false
 	}
 	parse := rs.newLineParse(line, []string{"stdin"})
-	defer parse.Closem()
+	// Don't do parse.Closem() here - you'll nuke the seaakstream that
+	// we use to get content out of dump streams.
 	var repo *Repository
 	if parse.redirected {
 		repo = newRepository("")
@@ -14057,7 +14054,7 @@ func (rs *Reposurgeon) DoStrip(line string) bool {
 	if striptypes.Contains("blobs") {
 		for _, ei := range rs.selection {
 			if blob, ok := repo.events[ei].(*Blob); ok {
-				blob.setContent(fmt.Sprintf("Blob at %s\n", blob.mark), blob.start)
+				blob.setContent(fmt.Sprintf("Blob at %s\n", blob.mark), -1)
 			}
 		}
 	}
@@ -14708,7 +14705,8 @@ func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
 			fc.attributes = newStringSet("c", "a", "C")
 		}
 		fc.sub = func(s string) string {
-			return strings.Replace(s, "\r\n", "\n", -1)
+			out := strings.Replace(s, "\r\n", "\n", -1)
+			return out
 		}
 	} else {
 		croak("--shell or --regex or --dedos required")
@@ -15308,7 +15306,7 @@ func (rs *Reposurgeon) DoBlob(line string) bool {
 		croak("while reading blob content: %v", err)
 		return false
 	}
-	blob.setContent(string(content), blob.start)
+	blob.setContent(string(content), -1)
 	repo.declareSequenceMutation("adding blob")
 	repo.invalidateNamecache()
 	return false
@@ -17198,7 +17196,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 				// Modify existing ignore files
 				for _, event := range repo.events {
 					if blob, ok := event.(*Blob); ok && isIgnore(blob) {
-						blob.setContent(rs.preferred.dfltignores+blob.getContent(), blob.start)
+						blob.setContent(rs.preferred.dfltignores+blob.getContent(), -1)
 						changecount++
 					}
 				}
@@ -17214,7 +17212,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 				if !hasIgnoreBlob {
 					blob := newBlob(repo)
 					blob.addalias(rs.ignorename)
-					blob.setContent(rs.preferred.dfltignores, blob.start)
+					blob.setContent(rs.preferred.dfltignores, -1)
 					blob.mark = ":insert"
 					repo.insertEvent(blob, repo.eventToIndex(earliest), "ignore-blob creation")
 					repo.declareSequenceMutation("ignore creation")
@@ -17257,7 +17255,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 				if blob, ok := event.(*Blob); ok && isIgnore(blob) {
 					if rs.preferred.name == "hg" {
 						if !strings.HasPrefix(blob.getContent(), "syntax: glob\n") {
-							blob.setContent("syntax: glob\n"+blob.getContent(), blob.start)
+							blob.setContent("syntax: glob\n"+blob.getContent(), -1)
 							changecount++
 						}
 					}
