@@ -1,5 +1,5 @@
 ## Generated commits should have the correct tree
 echo 1
-read <treecontents.svn
+read <x-treecontents.svn
 inspect
 manifest

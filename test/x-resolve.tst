@@ -1,5 +1,5 @@
 ## Test selection sets
-read <debranch.svn
+read <x-debranch.svn
 echo 1
 1,3 resolve
 1..3 resolve

@@ -2,7 +2,7 @@
 verbose 0
 branchify trunk branches/* branches/subdir/*
 branchify_map :branches/(.*)/:heads/\1:
-read <subdir.svn
+read <x-subdir.svn
 prefer git
 <subdir/mybranch> list
 write -

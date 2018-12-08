@@ -66,7 +66,7 @@ tags
    130	reset	refs/heads/master
    131	tag	annotated-sample
 history
-script simple.tst testing123
+script x-simple.tst testing123
 ## Test of index, tip, tags, history, paths, expunge and checkout
 echo 1
 read <simple.fi

@@ -1,5 +1,5 @@
 ## Test of the debranch feature
-read <debranch.svn
+read <x-debranch.svn
 debranch resources master
 prefer git
 write -
