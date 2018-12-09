@@ -17076,9 +17076,10 @@ func (rs *Reposurgeon) DoReset(line string) bool {
 		if !strings.HasPrefix(newname, "refs/") {
 			newname = "refs/" + newname
 		}
-		for _, reset := range resets {
-			if reset.ref == newname {
-				croak("reset branch collision, not renaming.")
+		for _, ei := range rs.selection {
+			reset, ok := repo.events[ei].(*Reset)
+			if ok && reset.ref == newname {
+				croak("reset reference collision, not renaming.")
 				return false
 			}
 		}
@@ -17088,6 +17089,7 @@ func (rs *Reposurgeon) DoReset(line string) bool {
 				return false
 			}
 		}
+
 		for _, reset := range resets {
 			reset.ref = newname
 		}
