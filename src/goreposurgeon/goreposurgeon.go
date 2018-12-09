@@ -5916,7 +5916,7 @@ func (sp *StreamParser) readline() string {
 	} else {
 		cs := make([]byte, 1)
 		for {
-			_, err := sp.fp.ReadFull(cs)
+			_, err := io.ReadFull(sp.fp, cs)
 			if err != nil {
 				if err == io.EOF {
 					line = []byte{}
@@ -18122,7 +18122,7 @@ func newIOShim(r io.Reader) (shim *ioShim) {
 }
 
 func (i *ioShim) Read(p []byte) (n int, err error) {
-	return i.input.ReadFull(p)
+	return io.ReadFull(i.input, p)
 }
 
 func (i *ioShim) Close() (err error) {
