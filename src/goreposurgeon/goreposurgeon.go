@@ -2711,7 +2711,7 @@ func newMessageBlock(bp *bufio.Reader) (*MessageBlock, error) {
 				return nil, err
 			}
 			if !inBody && (line[0] == ' ' || line[0] == '\t') {
-				// RFC822 continuation
+				// RFC2822 continuation
 				if len(msg.hdnames) >= 1 {
 					lasthdr := msg.hdnames[len(msg.hdnames)-1]
 					msg.setHeader(lasthdr,
@@ -2873,7 +2873,7 @@ func locationFromZoneOffset(offset string) (*time.Location, error) {
 	hours, _ := strconv.Atoi(string(m[1]))
 	mins, _ := strconv.Atoi(string(m[2]))
 	if hours < -14 || hours > 13 || mins > 59 {
-		// According to RFC2822 we could put "-0000" in here to
+		// According to RFC2822/RFC1123 we could put "-0000" in here to
 		// indicate invalid zone information.
 		return nil, errors.New("dubious zone offset " + string(offset))
 	}
@@ -2893,9 +2893,10 @@ type Date struct {
 // which is Go's RFC1123Z format. (We're ignoring obsolete variants
 // with letter zones and two-digit years.)
 //
-// FIXME: Alas, we cannot yet support this due to an apparent bug in time.Parse()
-// For bug-isolation purposes we're currently faking it with a format
-// Go can handle but that has the tz and year swapped.
+// FIXME: Alas, we cannot yet support GitLogFormat due to an apparent
+// bug in time.Parse() For bug-isolation purposes we're currently
+// faking it with a format Go can handle but that has the tz and year
+// swapped.
 //const GitLogFormat = "Mon Jan 02 15:04:05 2006 -0700"
 const GitLogFormat = "Mon Jan 02 15:04:05 -0700 2006"
 const RFC1123ZNoComma = "Mon 02 Jan 2006 15:04:05 -0700"
@@ -2960,7 +2961,7 @@ func (date Date) gitlog() string {
 	return date.timestamp.Format(GitLogFormat)
 }
 
-func (date Date) rfc2822() string {
+func (date Date) rfc1123() string {
 	// Alas, the format Go calls RFC822 is archaic
 	return date.timestamp.Format(time.RFC1123Z)
 }
@@ -3084,7 +3085,7 @@ func (attr *Attribution) clone() *Attribution {
 // attribution object.
 func (attr *Attribution) emailOut(modifiers stringSet, msg *MessageBlock, hdr string) {
 	msg.setHeader(hdr, attr.fullname+" <"+attr.email+">")
-	msg.setHeader(hdr+"-Date", attr.date.rfc3339())
+	msg.setHeader(hdr+"-Date", attr.date.rfc1123())
 }
 
 // Equal compares attributions
@@ -12765,17 +12766,12 @@ func (rs *Reposurgeon) HelpNews() {
 4.0 differences from the Python 3.x versions:
 
 1. whoami() does not read .lynxrc files
-2. No Python plugins.
-3. Regular expressions use Go syntax rather than Python. Little
+2. Regular expressions use Go syntax rather than Python. Little
    difference in practice; the biggest deal is lack of lookbehinds.
    Also, regexp substititions are always 'g' (all copies).
-4. Go and Python disagree on what RFC822 format is, and neither is compatible
-   with the Git log date format, which claims to be RFC822 but isn't.  So
-   we always dump timestamps in RFC3339 now.
-5. We now interpret Subversion $Rev$ and $LastChangedRev$ cookies.
-6. The exec and eval commands are no longer supported.
-7. git hooks are preserved through surgery.
-8. The set of structure fieldnames that can be used with setfield is smaller.
+3. We now interpret Subversion $Rev$ and $LastChangedRev$ cookies.
+4. git hooks are preserved through surgery.
+5. The set of structure fieldnames that can be used with setfield is smaller.
    However, all fieldnames for which support was documented will still work
 `)
 }

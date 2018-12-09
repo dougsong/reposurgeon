@@ -1839,9 +1839,9 @@ class Date(object):
             raise Recoverable("invalid UTC offset '%s'" % text)
     def rfc3339(self):
         return rfc3339(self.timestamp)
-    def rfc822(self):
-        "Format as an RFC822 timestamp."
-        return time.strftime("%a %d %b %Y %H:%M:%S", time.gmtime(self.timestamp + self.tz_offset)) + " " + self.orig_tz_string
+    def rfc1123(self):
+        "Format as an RFC1123 timestamp."
+        return time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime(self.timestamp + self.tz_offset)) + " " + self.orig_tz_string
     def delta(self, other):
         return other.timestamp - self.timestamp
     @staticmethod
@@ -1894,22 +1894,22 @@ class DateTests(unittest.TestCase):
                 self.assertEqual(getattr(date, func)(), result)
         data = [['2010-10-27T18:43:32Z',
                  { 'rfc3339': "2010-10-27T18:43:32Z",
-                   'rfc822': "Wed 27 Oct 2010 18:43:32 +0000",
+                   'rfc1123': "Wed, 27 Oct 2010 18:43:32 +0000",
                    '__str__': "1288205012 +0000" }],
                 ['1288205012 +0000',
                  { 'rfc3339': "2010-10-27T18:43:32Z",
-                   'rfc822': "Wed 27 Oct 2010 18:43:32 +0000",
+                   'rfc1123': "Wed, 27 Oct 2010 18:43:32 +0000",
                    '__str__': "1288205012 +0000" }],
                 ['Wed 27 Oct 2010 18:43:32 +0000',
                  { 'rfc3339': "2010-10-27T18:43:32Z",
-                   'rfc822': "Wed 27 Oct 2010 18:43:32 +0000",
+                   'rfc1123': "Wed, 27 Oct 2010 18:43:32 +0000",
                    '__str__': "1288205012 +0000" }]]
         for init, formats in data:
             do_test(init, formats)
     def test_equality(self):
         d1 = Date('2010-10-27T18:43:32Z')
         d2 = Date('1288205012 +0000')
-        d3 = Date('Wed 27 Oct 2010 18:43:32 +0000')
+        d3 = Date('Wed, 27 Oct 2010 18:43:32 +0000')
         self.assertEqual(d1, d1)
         self.assertEqual(d1, d2)
         self.assertEqual(d1, d3)
@@ -1920,9 +1920,9 @@ class DateTests(unittest.TestCase):
         self.assertEqual(Date.tzresolve("-0500", int(time.time())), "-0500")
         self.assertIn(Date.tzresolve("Europe/Warsaw", int(time.time())), ("+0100", "+0200"))
     def test_inequality(self):
-        d1 = Date('Wed 27 Oct 2010 18:43:32 +0000')
-        d2 = Date('Wed 27 Oct 2010 18:43:33 +0000')
-        d3 = Date('Wed 27 Oct 2010 18:43:32 +0100')
+        d1 = Date('Wed, 27 Oct 2010 18:43:32 +0000')
+        d2 = Date('Wed, 27 Oct 2010 18:43:33 +0000')
+        d3 = Date('Wed, 27 Oct 2010 18:43:32 +0100')
         self.assertNotEqual(d1, d2)
         self.assertTrue(d1 < d2)
         self.assertTrue(d2 > d1)
@@ -1943,9 +1943,9 @@ class DateTests(unittest.TestCase):
         self.assertTrue(d1 < d2)
         self.assertTrue(d2 > d1)
     def test_deltas(self):
-        d1 = Date('Wed 27 Oct 2010 18:43:32 +0000')
-        d2 = Date('Wed 27 Oct 2010 18:43:33 +0000')
-        d3 = Date('Wed 27 Oct 2010 18:43:32 +0100')
+        d1 = Date('Wed, 27 Oct 2010 18:43:32 +0000')
+        d2 = Date('Wed, 27 Oct 2010 18:43:33 +0000')
+        d3 = Date('Wed, 27 Oct 2010 18:43:32 +0100')
         self.assertEqual(d1.delta(d2), 1)
         self.assertEqual(d2.delta(d3), -3601)
         self.assertEqual(d3.delta(d1), 3600)
@@ -1985,9 +1985,9 @@ class Attribution(object):
         mycopy.date = self.date.clone()
         return mycopy
     def email_out(self, _modifiers, msg, hdr):
-        "Update an RC822 message object with a representation of this."
+        "Update an RCF2822 message object with a representation of this."
         msg[hdr] = self.name + " <" + self.email + ">"
-        msg[hdr + "-Date"] = self.date.rfc822()
+        msg[hdr + "-Date"] = self.date.rfc1123()
     def remap(self, authors):
         "Remap the attribution name."
         for (local, (name, mail, timezone)) in authors.items():
@@ -10631,7 +10631,7 @@ its contents are backed up to a save directory.
     #
     def help_msgout(self):
         sys.stdout.write("""
-Emit a file of messages in RFC822 format representing the
+Emit a file of messages in RFC2822 format representing the
 contents of repository metadata. Takes a selection set; members of the set
 other than commits, annotated tags, and passthroughs are ignored (that
 is, presently, blobs and resets). Supports > redirection.
@@ -10661,7 +10661,7 @@ context the name of the header includes its trailing colon.
 
     def help_msgin(self):
         sys.stdout.write("""
-Accept a file of messages in RFC822 format representing the
+Accept a file of messages in RFC2822 format representing the
 contents of the metadata in selected commits and annotated tags. Takes
 no selection set. If there is an argument it will be taken as the name
 of a message-box file to read from; if no argument, or one of '-', reads

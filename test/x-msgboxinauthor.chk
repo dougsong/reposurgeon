@@ -6,8 +6,8 @@ Branch: refs/heads/master
 Parents: 
 Committer: Ralf Schlatterbeck <rsc@runtux.com>
 Author: Eric Sunshine <sunshine@sunshineco.com>
-Committer-Date: Thu 01 Jan 1970 00:00:00 +0000
-Author-Date: Thu 01 Jan 1970 00:00:00 +0000
+Committer-Date: Thu, 01 Jan 1970 00:00:00 +0000
+Author-Date: Thu, 01 Jan 1970 00:00:00 +0000
 Check-Text: First commit.
 
 First commit.

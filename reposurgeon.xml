@@ -1484,7 +1484,7 @@ fileops referencing them to instead reference the (kept) first blob.</para>
         [&gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
-<para>Emit a file of messages in RFC822 format representing
+<para>Emit a file of messages in RFC2822 format representing
 the contents of repository metadata. Takes a selection set; members of
 the set other than commits, annotated tags, and passthroughs are
 ignored (that is, presently, blobs and resets).</para>
@@ -1507,7 +1507,7 @@ includes its trailing colon.</para>
         [<command>--changed</command> &gt;<emphasis>outfile</emphasis>]
 </term>
 <listitem>
-<para>Accept a file of messages in RFC822 format representing the
+<para>Accept a file of messages in RFC2822 format representing the
 contents of the metadata in selected commits and annotated tags. Takes
 no selection set.  If there is an argument it will be taken as the
 name of a message file to read from; if no argument, or one of '-', reads

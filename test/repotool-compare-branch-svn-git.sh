@@ -1,8 +1,8 @@
 ## Test comparing branch between svn and git repo
 
 # Results should be independent of what file stem this is, as
-# long as it's an svn dump and has the right festure to be named by cmploc.
-stem=debranch
+# long as it's an svn dump and has the right feature to be named by cmploc.
+stem=x-debranch
 cmploc=resources
 cmpmode=-b
 
