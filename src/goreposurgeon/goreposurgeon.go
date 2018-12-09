@@ -14101,8 +14101,8 @@ func (rs *Reposurgeon) DoStrip(line string) bool {
 			}
 		}
 		repo.delete(deletia, nil)
+		announce(debugSHOUT, "From %d to %d events.", oldlen, len(repo.events))
 	}
-	announce(debugSHOUT, "From %d to %d events.", oldlen, len(repo.events))
 	return false
 }
 
