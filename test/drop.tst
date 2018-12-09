@@ -1,16 +1,17 @@
+## Test drop command
+
+echo 1
+relax
 drop
-reposurgeon: no repo has been chosen.
 
 read <min.fi
 drop
 drop
-reposurgeon: no repo has been chosen.
 
 read <min.fi
 read <min.fi
 drop
 drop
-reposurgeon: no repo has been chosen.
 choose min
 drop
 
