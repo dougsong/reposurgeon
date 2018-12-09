@@ -16794,7 +16794,7 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 		} else if len(rs.selection) != 1 {
 			croak("tag create requires a singleton commit set.")
 			return false
-		} else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
+		} else if target, ok = repo.events[rs.selection[0]].(*Commit); !ok {
 			croak("create target is not a commit.")
 			return false
 		}
@@ -16858,7 +16858,7 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 		if len(rs.selection) != 1 {
 			croak("tag move requires a singleton commit set.")
 			return false
-		} else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
+		} else if target, ok = repo.events[rs.selection[0]].(*Commit); !ok {
 			croak("move target is not a commit.")
 			return false
 		}
@@ -16876,7 +16876,7 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 			}
 		}
 		if len(commits) > 0 {
-			croak("warning - tag move does not modify branch fields")
+			complain("warning - tag move does not modify branch fields")
 		}
 	} else if verb == "rename" {
 		if len(tags) > 1 {
@@ -17028,7 +17028,7 @@ func (rs *Reposurgeon) DoReset(line string) bool {
 		if len(rs.selection) != 1 {
 			croak("reset create requires a singleton commit set.")
 			return false
-		} else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
+		} else if target, ok = repo.events[rs.selection[0]].(*Commit); !ok {
 			croak("create target is not a commit.")
 			return false
 		}
@@ -17052,7 +17052,7 @@ func (rs *Reposurgeon) DoReset(line string) bool {
 		if len(rs.selection) != 1 {
 			croak("reset move requires a singleton commit set.")
 			return false
-		} else if target, ok = repo.events[rs.selection[0]].(*Commit); ok {
+		} else if target, ok = repo.events[rs.selection[0]].(*Commit); !ok {
 			croak("move target is not a commit.")
 			return false
 		}
