@@ -2664,38 +2664,7 @@ possibility of typing a wrong date that doesn't refer to a commit with
 an empty comment. This was a real-world example from the CVS-to-git
 conversion of groff.)</para>
 
-<para>When even a macro is not enough, you can write and call  custom
-Python extensions.</para>
-
 <variablelist>
-<varlistentry>
-<term><command>exec</command>
-          <emphasis>name</emphasis>
-</term>
-<listitem>
-<para>Execute custom code from standard input (normally a file via
-&lt; redirection).  Use this to set up custom extension functions for
-later eval calls. The code has full access to all internal data
-structures. Functions defined are accessible to later
-<command>eval</command> calls.</para>
-
-<para>This can be called in a script with the extension code in a
-here-doc.</para>
-</listitem>
-</varlistentry>
-<varlistentry>
-<term><command>eval</command>
-          <emphasis>function-name</emphasis>
-</term>
-<listitem>
-<para>Evaluate a line of code in the current interpreter context.
-Typically this will be a call to a function defined by a previous
-exec. The variables <varname>_repository</varname> and
-<varname>_selection</varname> will have the obvious values.  Note that
-<varname>_selection</varname> will be a list of integers, not objects.
-</para>
-</listitem>
-</varlistentry>
 <varlistentry>
 <term><command>script</command>
         <emphasis>filename</emphasis>
