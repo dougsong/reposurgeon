@@ -2657,11 +2657,11 @@ class Commit(object):
         msg["Branch"] = self.branch
         if self.parent_marks():
             msg["Parents"] = " ".join(self.parent_marks())
+        self.committer.email_out(modifiers, msg, "Committer")
         if self.authors:
             self.authors[0].email_out(modifiers, msg, "Author")
             for (i, coauthor) in enumerate(self.authors[1:]):
                 coauthor.email_out(msg, "Author" + repr(2+i))
-        self.committer.email_out(modifiers, msg, "Committer")
         if self.legacy_id:
             msg["Legacy-ID"] = self.legacy_id
         if self.properties:

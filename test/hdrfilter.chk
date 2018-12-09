@@ -1,109 +1,109 @@
 ------------------------------------------------------------------------------
-Author: Eric S. Raymond <esr@thyrsus.com>
 Committer: Eric S. Raymond <esr@thyrsus.com>
 Committer-Date: Sun, 02 Dec 2012 00:37:55 -0500
+Author: Eric S. Raymond <esr@thyrsus.com>
 
 A start on a test repository for the Subversion dumper.
 ------------------------------------------------------------------------------
-Author: Eric S. Raymond <esr@thyrsus.com>
 Committer: Eric S. Raymond <esr@thyrsus.com>
 Committer-Date: Sun, 02 Dec 2012 00:39:18 -0500
+Author: Eric S. Raymond <esr@thyrsus.com>
 
 Create a .gitignore in order to test whether this special case is OK.
 ------------------------------------------------------------------------------
-Author: Eric S. Raymond <esr@thyrsus.com>
 Committer: Eric S. Raymond <esr@thyrsus.com>
 Committer-Date: Sun, 02 Dec 2012 00:40:58 -0500
+Author: Eric S. Raymond <esr@thyrsus.com>
 
 Test deep directory creation.
 ------------------------------------------------------------------------------
-Author: Eric S. Raymond <esr@thyrsus.com>
 Committer: Eric S. Raymond <esr@thyrsus.com>
 Committer-Date: Sun, 02 Dec 2012 00:42:08 -0500
+Author: Eric S. Raymond <esr@thyrsus.com>
 
 Test a .gitignore modification for causing the right property change.
 ------------------------------------------------------------------------------
-Author: Eric S. Raymond <esr@thyrsus.com>
 Committer: Eric S. Raymond <esr@thyrsus.com>
 Committer-Date: Sun, 02 Dec 2012 00:43:44 -0500
+Author: Eric S. Raymond <esr@thyrsus.com>
 
 A script without its executable bit.
 ------------------------------------------------------------------------------
-Author: Eric S. Raymond <esr@thyrsus.com>
 Committer: Eric S. Raymond <esr@thyrsus.com>
 Committer-Date: Sun, 02 Dec 2012 00:44:01 -0500
+Author: Eric S. Raymond <esr@thyrsus.com>
 
 Delete the deep directory.
 ------------------------------------------------------------------------------
-Author: Eric S. Raymond <esr@thyrsus.com>
 Committer: Eric S. Raymond <esr@thyrsus.com>
 Committer-Date: Sun, 02 Dec 2012 00:46:11 -0500
+Author: Eric S. Raymond <esr@thyrsus.com>
 
 Turn on the script's executable bit.
 ------------------------------------------------------------------------------
-Author: Eric S. Raymond <esr@thyrsus.com>
 Committer: Eric S. Raymond <esr@thyrsus.com>
 Committer-Date: Sun, 02 Dec 2012 00:48:20 -0500
+Author: Eric S. Raymond <esr@thyrsus.com>
 
 Just a spacer commit.
 ------------------------------------------------------------------------------
-Author: Eric S. Raymond <esr@thyrsus.com>
 Committer: Eric S. Raymond <esr@thyrsus.com>
 Committer-Date: Sun, 02 Dec 2012 00:48:32 -0500
+Author: Eric S. Raymond <esr@thyrsus.com>
 
 Turn off the executable bit.
 ------------------------------------------------------------------------------
-Author: Eric S. Raymond <esr@thyrsus.com>
 Committer: Eric S. Raymond <esr@thyrsus.com>
 Committer-Date: Sun, 02 Dec 2012 01:02:42 -0500
+Author: Eric S. Raymond <esr@thyrsus.com>
 
 Spacer commit with a tag attached.
 ------------------------------------------------------------------------------
-Author: Eric S. Raymond <esr@thyrsus.com>
 Committer: Eric S. Raymond <esr@thyrsus.com>
 Committer-Date: Sun, 02 Dec 2012 01:05:11 -0500
+Author: Eric S. Raymond <esr@thyrsus.com>
 
 A third spacer commit. We'll start a branch after this one.
 ------------------------------------------------------------------------------
-Author: Eric S. Raymond <esr@thyrsus.com>
 Committer: Eric S. Raymond <esr@thyrsus.com>
 Committer-Date: Sun, 02 Dec 2012 01:08:27 -0500
+Author: Eric S. Raymond <esr@thyrsus.com>
 
 First post-split commit on the main branch.
 ------------------------------------------------------------------------------
-Author: Eric S. Raymond <esr@thyrsus.com>
 Committer: Eric S. Raymond <esr@thyrsus.com>
 Committer-Date: Sun, 02 Dec 2012 01:15:01 -0500
+Author: Eric S. Raymond <esr@thyrsus.com>
 
 Second commit on the main branch.
 ------------------------------------------------------------------------------
-Author: Eric S. Raymond <esr@thyrsus.com>
 Committer: Eric S. Raymond <esr@thyrsus.com>
 Committer-Date: Sun, 02 Dec 2012 17:52:52 -0500
+Author: Eric S. Raymond <esr@thyrsus.com>
 
 Attempt to generate a copy.
 ------------------------------------------------------------------------------
-Author: Eric S. Raymond <esr@thyrsus.com>
 Committer: Eric S. Raymond <esr@thyrsus.com>
 Committer-Date: Sun, 02 Dec 2012 20:03:59 -0500
+Author: Eric S. Raymond <esr@thyrsus.com>
 
 Attempt to generate a copy op.
 ------------------------------------------------------------------------------
-Author: Eric S. Raymond <esr@thyrsus.com>
 Committer: Eric S. Raymond <esr@thyrsus.com>
 Committer-Date: Sun, 02 Dec 2012 01:06:53 -0500
+Author: Eric S. Raymond <esr@thyrsus.com>
 
 First commit on the alternate branch.
 ------------------------------------------------------------------------------
-Author: Eric S. Raymond <esr@thyrsus.com>
 Committer: Eric S. Raymond <esr@thyrsus.com>
 Committer-Date: Sun, 02 Dec 2012 01:12:55 -0500
+Author: Eric S. Raymond <esr@thyrsus.com>
 
 Second commit on the alternate branch.
 ------------------------------------------------------------------------------
-Author: Eric S. Raymond <esr@thyrsus.com>
 Committer: Eric S. Raymond <esr@thyrsus.com>
 Committer-Date: Sun, 02 Dec 2012 20:24:14 -0500
+Author: Eric S. Raymond <esr@thyrsus.com>
 
 Merge branch 'alternate'
 
