@@ -2777,7 +2777,7 @@ func (msg *MessageBlock) filterHeaders(regexp *regexp.Regexp) {
 }
 
 func (msg *MessageBlock) String() string {
-	hd := ""
+	hd := string(MessageBlockDivider) + "\n"
 	for _, k := range msg.hdnames {
 		if v := msg.header[k]; v != "" {
 			hd += fmt.Sprintf("%s: %s\n", k, v)
@@ -3055,6 +3055,9 @@ func newAttribution(attrline string) *Attribution {
 		}
 		parsed, err2 := newDate(datestamp)
 		if err2 != nil {
+			//FIXME: What to do when this is called by DoMsgin?
+			//Right now it's panic time because the main loop only
+			// catches when we throw "command".
 			panic(throw("parse", "Malformed attribution date '%s' in '%s': %v",
 				datestamp, attrline, err2))
 		}
@@ -4470,7 +4473,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 		// msg is *not* a dict so the .keys() is correct
 		sort.Strings(authorkeys)
 		for i := 0; i < len(authorkeys)-len(commit.authors); i++ {
-			commit.authors = append(commit.authors, *newAttribution(authorkeys[i]))
+			commit.authors = append(commit.authors, *newAttribution(msg.getHeader(authorkeys[i])))
 		}
 		// Another potential minor bug: permuting the set of authors
 		// will look like a modification, as old and new authors are
@@ -14487,12 +14490,13 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 			ei := repo.eventToIndex(event)
 			if ei == -1 {
 				croak("event at update %d can't be found in repository", i+1)
+				errorCount++
 				return false
 			} else if _, ok := getAttr(event, "emailIn"); ok {
 				croak("event %d cannot be modified", ei+1)
+				errorCount++
+				return false
 			}
-			errorCount++
-			return false
 		}
 		// Always append, even None, to stay in sync with updateList
 		events = append(events, event)
@@ -14507,8 +14511,9 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 		event := events[i]
 		update := updateList[i]
 		check := strings.TrimSpace(update.getHeader("Check-Text"))
-		if check != "" && strings.HasPrefix(strings.TrimSpace(event.getComment()), check) {
-			croak("check text mismatch at %s (input %d of %d), expected %s saw %q, bailing out", event.idMe(), i+1, len(updateList), check, event.getComment()[:64])
+		if check != "" && !strings.HasPrefix(strings.TrimSpace(event.getComment()), check) {
+			fmt.Fprintf(os.Stderr, "Got here1\n")
+			croak("check text mismatch at %s (input %d of %d), expected %s saw %q, bailing out", event.idMe(), i+1, len(updateList), check, event.getComment())
 			return false
 		}
 		if parse.options.Contains("--empty-only") {
@@ -17836,9 +17841,9 @@ func (rs *Reposurgeon) DoDiff(line string) bool {
 				text, _ := difflib.GetUnifiedDiffString(diff)
 				fmt.Fprint(parse.stdout, text + "\n")
 			} else if dir1.Contains(path) {
-				fmt.Fprint(parse.stdout, "%s: removed\n", path)
+				fmt.Fprintf(parse.stdout, "%s: removed\n", path)
 			} else if dir2.Contains(path) {
-				fmt.Fprint(parse.stdout, "%s: added\n", path)
+				fmt.Fprintf(parse.stdout, "%s: added\n", path)
 			} else {
 				complain("internal error - missing path in diff")
 				return false

@@ -611,7 +611,7 @@ func TestTag(t *testing.T) {
 
 	assertEqual(t, t1.actionStamp(), "2016-03-03T03:39:07Z!jrh")
 	assertEqual(t, t1.emailOut(nil, 42, nil),
-		"Event-Number: 43\nTag-Name: sample1\nTarget-Mark: :2\nTagger: jrh <jrh>\nTagger-Date: 2016-03-03T03:39:07Z\nCheck-Text: Sample tag #1\n\nSample tag #1\n")
+		"------------------------------------------------------------------------------\nEvent-Number: 43\nTag-Name: sample1\nTarget-Mark: :2\nTagger: jrh <jrh>\nTagger-Date: Wed, 02 Mar 2016 22:39:07 -0500\nCheck-Text: Sample tag #1\n\nSample tag #1\n")
 	assertEqual(t, t1.String(),
 		"tag sample1\nfrom :2\ntagger jrh <jrh> 1456976347 -0500\ndata 14\nSample tag #1\n\n")
 
@@ -833,16 +833,7 @@ func TestCommitMethods(t *testing.T) {
 	assertEqual(t, commit.showlegacy(), "")
 	assertEqual(t, commit.stamp(nil, 42, 0),
 		"<2016-03-14T23:32:27Z!esr@thyrsus.com> Example commit for unit testing")
-	expectout := `Event-Number: 43
-Event-Mark: :2
-Author: esr <esr@thyrsus.com>
-Author-Date: 2016-03-14T23:32:27Z
-Committer: J. Random Hacker <jrh@foobar.com>
-Committer-Date: 2016-03-03T03:39:07Z
-Check-Text: Example commit for unit testing
-
-Example commit for unit testing
-`
+	expectout := "------------------------------------------------------------------------------\nEvent-Number: 43\nEvent-Mark: :2\nCommitter: J. Random Hacker <jrh@foobar.com>\nCommitter-Date: Wed, 02 Mar 2016 22:39:07 -0500\nAuthor: esr <esr@thyrsus.com>\nAuthor-Date: Mon, 14 Mar 2016 23:32:27 +0000\nCheck-Text: Example commit for unit testing\n\nExample commit for unit testing\n"
 	assertEqual(t, commit.emailOut(nil, 42, nil), expectout)
 	hackheader := `Event-Number: 43
 Author: Tim the Enchanter <esr@thyrsus.com>
@@ -855,16 +846,7 @@ Example commit for unit testing, modified.
 		log.Fatalf("On first read: %v", err)
 	}
 	commit.emailIn(msg, false)
-	hackcheck := `Event-Number: 43
-Event-Mark: :2
-Author: Tim the Enchanter <esr@thyrsus.com>
-Author-Date: 2016-03-14T23:32:27Z
-Committer: J. Random Hacker <jrh@foobar.com>
-Committer-Date: 2016-03-03T03:39:07Z
-Check-Text: Example commit for unit testing, modified.
-
-Example commit for unit testing, modified.
-`
+	hackcheck := "------------------------------------------------------------------------------\nEvent-Number: 43\nEvent-Mark: :2\nCommitter: J. Random Hacker <jrh@foobar.com>\nCommitter-Date: Wed, 02 Mar 2016 22:39:07 -0500\nAuthor: Tim the Enchanter <esr@thyrsus.com>\nAuthor-Date: Mon, 14 Mar 2016 23:32:27 +0000\nCheck-Text: Example commit for unit testing, modified.\n\nExample commit for unit testing, modified.\n"
 	assertEqual(t, commit.emailOut(nil, 42, nil), hackcheck)
 
 	attr1 := newAttribution("jrh <jrh> 1456976347 -0500")
