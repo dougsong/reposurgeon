@@ -4339,12 +4339,12 @@ func (commit *Commit) emailOut(modifiers stringSet,
 	msg.setHeader("Event-Mark", commit.mark)
 	msg.setHeader("Branch", commit.Branch)
 	msg.setHeader("Parents", strings.Join(commit.parentMarks(), " "))
+	commit.committer.emailOut(modifiers, msg, "Committer")
 	if len(commit.authors) > 0 {
 		commit.authors[0].emailOut(modifiers, msg, "Author")
 		for i, coauthor := range commit.authors[1:] {
 			coauthor.emailOut(modifiers, msg, "Author"+fmt.Sprintf("%d", 2+i))
 		}
-		commit.committer.emailOut(modifiers, msg, "Committer")
 	}
 	if commit.legacyID != "" {
 		msg.setHeader("Legacy-ID", commit.legacyID)
