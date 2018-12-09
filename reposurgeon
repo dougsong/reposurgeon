@@ -2655,7 +2655,8 @@ class Commit(object):
         msg["Event-Number"] = str(eventnum+1)
         msg["Event-Mark"] = self.mark
         msg["Branch"] = self.branch
-        msg["Parents"] = " ".join(self.parent_marks())
+        if self.parent_marks():
+            msg["Parents"] = " ".join(self.parent_marks())
         if self.authors:
             self.authors[0].email_out(modifiers, msg, "Author")
             for (i, coauthor) in enumerate(self.authors[1:]):

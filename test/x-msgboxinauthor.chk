@@ -3,7 +3,6 @@ Modification input begins
 Event-Number: 2
 Event-Mark: :2
 Branch: refs/heads/master
-Parents: 
 Committer: Ralf Schlatterbeck <rsc@runtux.com>
 Author: Eric Sunshine <sunshine@sunshineco.com>
 Committer-Date: Thu, 01 Jan 1970 00:00:00 +0000
