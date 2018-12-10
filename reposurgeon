@@ -1462,6 +1462,9 @@ quiet = False
 
 global_options = {}
 
+bailout = False
+relax = False
+
 def whoami():
     "Ask various programs that keep track of who you are who you are."
     if global_options["testmode"]:
@@ -8971,6 +8974,8 @@ developers.
             cmd.Cmd.onecmd(self, line)
         except Recoverable as e:
             complain(e.msg)
+            global bailout
+            bailout = True
     def postcmd(self, _unused, line):
         try:
             self.prompt = self.prompt_format % {"chosen":self.chosen() and self.chosen().name}
@@ -9817,11 +9822,15 @@ List all known symbolic names of branches and tags. Supports > redirection.
             complain("script requires a file argument")
             return
         try:
+            global bailout, relax
+            bailout = relax = False
             self.callstack.append(line.split())
             with open(self.callstack[-1][0], "rb") as scriptfp:
                 scriptfp = make_wrapper(scriptfp)
+                lineno = 0
                 while True:
                     scriptline = scriptfp.readline()
+                    lineno += 1
                     if not scriptline:
                         break
                     # Handle multiline commands
@@ -9836,6 +9845,7 @@ List all known symbolic names of branches and tags. Supports > redirection.
                                                               delete=False)
                         while True:
                             nextline = scriptfp.readline()
+                            lineno += 1
                             if nextline == '':
                                 break
                             elif nextline == terminator:
@@ -9852,6 +9862,8 @@ List all known symbolic names of branches and tags. Supports > redirection.
                     self.onecmd(self.precmd(scriptline))
                     if heredoc:
                         os.remove(heredoc.name)
+                    if bailout and not relax:
+			announce(DEBUG_SHOUT, "script abort at line %d: %r" % linenno)
             self.callstack.pop()
         except IOError as e:
             complain("script failure on '%s': %s" % (line, e))
@@ -13889,12 +13901,11 @@ Runs the unit tests and reports the results.
 
     def help_relax(self):
         sys.stdout.write("""
-This command is a no-op in Python reposurgeon.  In Go reposurgeon it prevents
-errors from aborting the enclosing script.
+Make command errors non-fatal in scripts.\n
 """)
     def do_relax(self, line):
-        pass
-
+        global relax
+        relax = True
 
 # this class copied from https://code.activestate.com/recipes/576694/
 # created by Raymond Hettinger

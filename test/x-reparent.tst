@@ -1,5 +1,6 @@
 ## Reparenting parents with and w/o tree preservation
 echo 1
+relax
 read <simple.fi
 127 inspect
 127..$ manifest

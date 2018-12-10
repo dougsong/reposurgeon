@@ -3025,6 +3025,14 @@ on, time-varying report fields which would otherwise cause spurious
 failures in regression testing are suppressed.</para></listitem>
 </varlistentry>
 <varlistentry>
+<term><command>relax</command>
+</term>
+<listitem><para>Normally, a command error aborts the execution of an
+enclosing script. The relax command suppresses this behavior. It is
+useful when writing regression tests that exercise failure
+cases.</para></listitem>
+</varlistentry>
+<varlistentry>
 <term><command>print</command>
         <emphasis>output-text...</emphasis>
 </term>

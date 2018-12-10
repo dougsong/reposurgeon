@@ -1,5 +1,6 @@
 ## Split a commit based on a directory prefix
 echo 1
+relax
 verbose 1
 quiet on
 # There's a --nobranch embedded in the test load so it can be checked standalone.

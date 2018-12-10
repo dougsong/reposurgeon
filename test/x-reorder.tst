@@ -1,5 +1,6 @@
 ## Test commit re-ordering
 echo 1
+relax
 read <reorder.fi
 
 # basic operation
