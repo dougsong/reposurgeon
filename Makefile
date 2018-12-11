@@ -75,7 +75,8 @@ gosetup:
 	GOPATH=$(GOPATH) go get -u -f github.com/termie/go-shutil
 	GOPATH=$(GOPATH) go get -u -f github.com/google/uuid
 	GOPATH=$(GOPATH) go get -u -f github.com/glenn-brown/golang-pkg-pcre/src/pkg/pcre
-	GOPATH=$(GOPATH) go get -u -f github.com/pmezard/go-difflib/difflib
+	#GOPATH=$(GOPATH) go get -u -f github.com/pmezard/go-difflib/difflib
+	GOPATH=$(GOPATH) go get -u -f github.com/IanBruene/go-difflib/difflib
 
 govet:
 	GOPATH=$(GOPATH) go vet repocutter

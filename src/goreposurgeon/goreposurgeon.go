@@ -111,7 +111,7 @@ import (
 	kommandant "gitlab.com/ianbruene/Kommandant"
 	terminal "golang.org/x/crypto/ssh/terminal"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
-	difflib "github.com/pmezard/go-difflib/difflib"
+	difflib "github.com/IanBruene/go-difflib/difflib"
 )
 
 const version = "4.0-pre"
