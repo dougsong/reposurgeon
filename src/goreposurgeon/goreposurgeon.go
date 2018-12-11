@@ -2469,7 +2469,8 @@ developers.
  */
 
 type Context struct {
-	verbose int
+	verbose     int
+	blobseq     int
 	// The abort flag
 	relax       bool
 	abortScript bool
@@ -3166,16 +3167,14 @@ type Blob struct {
 	_expungehook *Blob
 }
 
-var blobseq int
-
 func newBlob(repo *Repository) *Blob {
 	b := new(Blob)
 	b.repo = repo
 	b.pathlist = make([]string, 0) // These have an implied sequence.
 	b.colors = newStringSet()
 	b.start = -1
-	b.blobseq = blobseq
-	blobseq++
+	b.blobseq = context.blobseq
+	context.blobseq++
 	return b
 }
 
