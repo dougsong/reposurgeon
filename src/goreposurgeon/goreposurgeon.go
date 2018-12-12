@@ -3167,12 +3167,14 @@ type Blob struct {
 	_expungehook *Blob
 }
 
+const noOffset = -1
+
 func newBlob(repo *Repository) *Blob {
 	b := new(Blob)
 	b.repo = repo
 	b.pathlist = make([]string, 0) // These have an implied sequence.
 	b.colors = newStringSet()
-	b.start = -1
+	b.start = noOffset
 	b.blobseq = context.blobseq
 	context.blobseq++
 	return b
@@ -3228,7 +3230,7 @@ func (b *Blob) getBlobfile(create bool) string {
 
 // hasfile answers the question: "Does this blob have its own file?"
 func (b *Blob) hasfile() bool {
-	return b.repo.seekstream == nil || b.start == -1
+	return b.repo.seekstream == nil || b.start == noOffset
 }
 
 // getContent gets the content of the blob as a string.
@@ -3264,6 +3266,9 @@ func (b *Blob) getContent() string {
 }
 
 // setContent sets the content of the blob from a string.
+// tell is the start offset of the data in the input source;
+// if it noOffset, there is no seek stream and creation of
+// an on-disk blob is forced.
 func (b *Blob) setContent(text string, tell int64) {
 	b.start = tell
 	b.size = int64(len(text))
@@ -3290,8 +3295,8 @@ func (b *Blob) setContent(text string, tell int64) {
 
 // materialize stores this content as a separate file, if it isn't already.
 func (b *Blob) materialize() string {
-	if !b.hasfile() {
-		b.setContent(b.getContent(), 0)
+	if b.start != noOffset {
+		b.setContent(b.getContent(), noOffset)
 	}
 	return b.getBlobfile(false)
 }
@@ -5941,6 +5946,9 @@ func (sp *StreamParser) readline() string {
 
 func (sp *StreamParser) tell() int64 {
 	// Return the current read offset in the source stream.
+	if sp.fp == nil {
+		return noOffset
+	}
 	return sp.ccount
 }
 
@@ -5983,7 +5991,7 @@ func (sp *StreamParser) fiReadData(line string) (string, int64) {
 	if strings.HasPrefix(line, "data <<") {
 		delim := line[7:]
 		data = ""
-		start = sp.tell()
+		start = sp.ccount
 		for {
 			dataline := sp.readline()
 			if dataline == delim {
@@ -5999,7 +6007,7 @@ func (sp *StreamParser) fiReadData(line string) (string, int64) {
 		if err != nil {
 			sp.error("bad count in data: " + line[5:])
 		}
-		start = sp.tell()
+		start = sp.ccount
 		data = sp.read(count)
 	} else if strings.HasPrefix(line, "property") {
 		line = line[9:]                        // Skip this token
@@ -6009,7 +6017,7 @@ func (sp *StreamParser) fiReadData(line string) (string, int64) {
 		if err != nil {
 			sp.error("bad count in property")
 		}
-		start = sp.tell()
+		start = sp.ccount
 		buf := sp.read(count)
 		data = line[nextws:] + buf
 	} else {
@@ -6188,39 +6196,6 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 						}
 						if tlen > -1 {
 							start := sp.tell()
-							// This is a
-							// crock. It
-							// is
-							// justified
-							// only by the
-							// fact that
-							// we get -1
-							// back from
-							// sp.tell()
-							// only when
-							// the parser
-							// input is
-							// coming from
-							// an inferior
-							// process
-							// rather than
-							// a file. In
-							// this case
-							// the start
-							// offset can
-							// be any
-							// random
-							// garbage,
-							// because
-							// we'll never
-							// try to use
-							// it for
-							// seeking
-							// blob
-							// content.
-							if start == -1 {
-								start = 0
-							}
 							text := sp.sdReadBlob(tlen)
 							node.blob = newBlob(sp.repo)
 							node.blob.setContent(text, start)
@@ -12750,7 +12725,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 			content := blob.getContent()
 			modified := hook(content)
 			if content != modified {
-				blob.setContent(modified, -1)
+				blob.setContent(modified, noOffset)
 				altered++
 			}
 		}
