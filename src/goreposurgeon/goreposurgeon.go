@@ -6857,7 +6857,7 @@ deleted name.
 		for _, node := range record.nodes {
 			// Mutate the filemap according to copies
 			if node.fromRev > 0 {
-				//assert parseInt(node.fromRev) < parseInt(revision)
+				//assert node.fromRev < revision
 				filemap.copyFrom(node.path, filemaps[node.fromRev],
 					node.fromPath)
 				announce(debugFILEMAP, "r%d~%s copied to %s",
@@ -6914,40 +6914,52 @@ deleted name.
         }
         timeit("copysets")
 
-/*
-	# Build commits
-        # This code can eat your processor, so we make it give up
-        # its timeslice at reasonable intervals. Needed because
-        # it doesn't hit the disk.
+	// Build commits
+        // This code can eat your processor, so we make it give up
+        // its timeslice at reasonable intervals. Needed because
+        // it does not hit the disk.
         announce(debugEXTRACT, "Pass 4")
-        splitCommits = {}
-        func (sp *StreamParser)  last_relevant_commit(max_rev, path,
-                                 getbranch = operator.attrgetter("branch")):
-            # Make path look like a branch
-            if path[0] == "/": path = path[1:]
-            if path[-1] != svnSep: path = path + svnSep
-            # If the revision is split, try from the last split commit
-            try:
-                max_rev = splitCommits[max_rev]
-            except KeyError:
-                pass
-            # Find the commit object...
-            try:
-                obj = sp.repo.legacyMap["SVN:%s" % max_rev]
-            except KeyError:
-                return None
-            for ind in range(sp.repo.eventToIndex(obj), -1, -1):
-                event = sp.repo.events[ind]
-                if commit, ok := event.(*Commit); ok:
-`                    b = getbranch(event)
-                    if b && path.startswith(b):
-                        return event
-            return None
-        previous = None
-        # If the repo is large, we'll give up on some diagnostic info in order
-        # to reduce the working set size.
-        if len(sp.revisions.keys()) > 50000:
-            sp.large = true
+/*
+        splitCommits := make(map[int]int)
+        //previous := nil
+	lastRelevantCommit := func(sp *StreamParser, maxRev int, path string, attr string) *Commit {
+		// Make path look like a branch
+		if path[:1] == svnSep {
+			path = path[1:]
+		}
+		if path[len(path)-1] != svnSep[0] {
+			path = path + svnSep
+		}
+		// If the revision is split, try from the last split commit
+		splitAt, ok := splitCommits[maxRev]
+		if ok {
+			maxRev = splitAt
+		}
+		// Find the commit object...
+		obj, ok := sp.repo.legacyMap[fmt.Sprintf("SVN:%s", maxRev)]
+		if !ok {
+			return nil
+		}
+		for revision := sp.repo.eventToIndex(obj)-1; revision > 0; revision-- {
+			event := sp.repo.events[revision]
+			if commit, ok := event.(*Commit); ok {
+				b, ok := getAttr(commit, attr)
+				if ok && strings.HasSuffix(path, b) {
+					return commit
+				}
+			}
+		}
+		return nil
+	}
+
+        // If the repo is large, we'll give up on some diagnostic info in order
+        // to reduce the working set size.
+        if len(sp.revisions) > 50000 {
+		sp.large = true
+        }
+*/
+/*
+
         for (revision, record) in sp.revisions.items():
             announce(debugEXTRACT, "Revision %s:" % revision)
             for node in record.nodes:
@@ -7542,9 +7554,9 @@ deleted name.
                         latest = max(reversed(copies),
                                      key=lambda node: parseInt(node.fromRev))
                     if latest is not None:
-                        prev = last_relevant_commit(
+                        prev = lastRelevantCommit(
                                 latest.fromRev, latest.fromPath,
-                                operator.attrgetter("common"))
+                                "common")
                         if prev is None:
                             if debugEnable(debugTOPOLOGY):
                                 croak("lookback for %s failed, not making branch link" % latest)
@@ -7767,8 +7779,8 @@ deleted name.
                                 # the source branch; we need to find the latest
                                 # commit between min_rev and fromRev made on
                                 # that branch.
-                                from_commit = last_relevant_commit(
-                                                    fromRev, fromPath)
+                                from_commit = lastRelevantCommit(
+                                                    fromRev, fromPath, "branch")
                                 if from_commit is not None && \
                                         parseInt(from_commit.legacyID.split(".",1)[0]) \
                                             >= parseInt(min_rev):
@@ -7782,7 +7794,7 @@ deleted name.
                     new_merges = own_merges - existing_merges
                     if not new_merges: continue
                     # Find the correct commit in the split case
-                    commit = last_relevant_commit(revision, node.path)
+                    commit = lastRelevantCommit(revision, node.path, "branch")
                     if commit is None or \
                             not commit.legacyID.startswith(revision):
                         # The reverse lookup went past the target revision
