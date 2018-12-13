@@ -6896,23 +6896,23 @@ deleted name.
         //if debugEnable(debugFILEMAP) {
         //    announce(debugSHOUT, "filemaps %s" % filemaps)
 
-/*
-        # Build from sets in each directory copy record.
+        // Build from sets in each directory copy record.
         announce(debugEXTRACT, "Pass 3")
-        for copynode in copynodes:
-            if debugEnable(debugFILEMAP):
-                # Conditional retained because computing this filemap
-                # slice can be expensive enough to look like a hang forever
-                # on a sufficiently large repository - GCC was the type case.
-                announce(debugFILEMAP, "r%s copynode filemap is %s" \
-                         % (copynode.fromRev, filemaps[copynode.fromRev]))
-            copynode.fromSet = PathMap()
+        for _, copynode := range copynodes {
+            if debugEnable(debugFILEMAP) {
+                // Conditional retained because computing this filemap
+                // slice can be expensive enough to look like a hang forever
+                // on a sufficiently large repository - GCC was the type case.
+		    announce(debugFILEMAP, "r%s copynode filemap is %s",
+                         copynode.fromRev, filemaps[copynode.fromRev])
+            }
+            copynode.fromSet = newPathMap(nil)
             copynode.fromSet.copyFrom(copynode.fromPath,
                                         filemaps[copynode.fromRev],
                                         copynode.fromPath)
             baton.twirl("")
+        }
         timeit("copysets")
-*/
 
 /*
 	# Build commits
