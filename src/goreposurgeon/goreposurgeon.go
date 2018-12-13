@@ -5466,6 +5466,7 @@ func newPathMap(other interface{}) *PathMap {
 	return p
 }
 
+
 // Return a copy-on-write snapshot of the set.
 func (p *PathMap) snapshot() *PathMap {
 	r := newPathMap(p)
@@ -5776,8 +5777,9 @@ type NodeAction struct {
 	props       OrderedMap
 	propchange  bool
 	// These are set during the analysis phase
-	blobmark  string
-	generated bool
+	fromSet	    *PathMap
+	blobmark    string
+	generated   bool
 }
 
 func (action NodeAction) String() string {
@@ -5789,9 +5791,9 @@ func (action NodeAction) String() string {
 	if action.fromRev != 0 {
 		out += fmt.Sprintf("%d", action.fromRev) + "~" + action.fromPath
 	}
-	//if len(action.fromSet) > 0 {
-	//	out += "sources=" + action.fromSet.String()
-	//}
+	if len(action.fromSet.store) > 0 {
+		out += "sources=" + action.fromSet.String()
+	}
 	if action.generated {
 		out += " generated"
 	}
@@ -6846,44 +6848,55 @@ stalled the completion of the Subversion reader for six months. To
 invoke it, the repository had to contain a Subversion branch creation,
 followed by a deletion, followed by a move of another branch to the
 deleted name.
-
-        # Build filemaps.
+*/
+        // Build filemaps.
         announce(debugEXTRACT, "Pass 2")
-        filemaps = {}
-        filemap = PathMap()
-        for (revision, record) in sp.revisions.items():
-            for node in record.nodes:
-                # Mutate the filemap according to copies
-                if node.fromRev:
-                    assert parseInt(node.fromRev) < parseInt(revision)
-                    filemap.copyFrom(node.path, filemaps[node.fromRev],
-                                      node.fromPath)
-                    announce(debugFILEMAP, "r%d~%s copied to %s" \
-                                 % (node.fromRev, node.fromPath, node.path))
-                # Mutate the filemap according to adds/deletes/changes
-                if node.action == sdADD && node.kind == sdFILE:
-                    filemap[node.path] = node
-                    announce(debugFILEMAP, "r%d~%s added" % (node.revision, node.path))
-                else if node.action == sdDELETE or (node.action == sdREPLACE && node.kind == sdDIR):
-                    if node.kind == sdNONE:
-                        node.kind = sdFILE if node.path in filemap else sdDIR
-                    # Snapshot the deleted paths before removing them.
-                    node.fromSet = PathMap()
-                    node.fromSet.copyFrom(node.path, filemap, node.path)
-                    del filemap[node.path]
-                    announce(debugFILEMAP, "r%d~%s deleted" \
-                                 % (node.revision, node.path))
-                else if node.action in (sdCHANGE, sdREPLACE) && node.kind == sdFILE:
-                    filemap[node.path] = node
-                    announce(debugFILEMAP, "r%d~%s changed" % (node.revision, node.path))
-            filemaps[revision] = filemap.snapshot()
-            baton.twirl("")
-        del filemap
+        filemaps := make(map[int]*PathMap)
+        filemap := newPathMap(nil)
+        for revision, record := range sp.revisions {
+		for _, node := range record.nodes {
+			// Mutate the filemap according to copies
+			if node.fromRev > 0 {
+				//assert parseInt(node.fromRev) < parseInt(revision)
+				filemap.copyFrom(node.path, filemaps[node.fromRev],
+					node.fromPath)
+				announce(debugFILEMAP, "r%d~%s copied to %s",
+					node.fromRev, node.fromPath, node.path)
+			}
+			// Mutate the filemap according to adds/deletes/changes
+			if node.action == sdADD && node.kind == sdFILE {
+				filemap.set(node.path, node)
+				announce(debugFILEMAP, "r%d~%s added", node.revision, node.path)
+			} else if node.action == sdDELETE || (node.action == sdREPLACE && node.kind == sdDIR) {
+				if node.kind == sdNONE {
+					if filemap.contains(node.path) {
+						node.kind = sdFILE
+					} else {
+						node.kind = sdDIR
+					}
+				}
+				// Snapshot the deleted paths before
+				// removing them.
+				node.fromSet = newPathMap(nil)
+				node.fromSet.copyFrom(node.path, filemap, node.path)
+				filemap.remove(node.path)
+				announce(debugFILEMAP, "r%d~%s deleted",
+					node.revision, node.path)
+			} else if (node.action == sdCHANGE || node.action == sdREPLACE) && node.kind == sdFILE {
+				filemap.set(node.path, node)
+				announce(debugFILEMAP, "r%d~%s changed", node.revision, node.path)
+			}
+		}
+		filemaps[revision] = filemap.snapshot()
+		baton.twirl("")
+        }
+ 
         timeit("filemaps")
-        # Blows up huge on large repos...
-        #if debugEnable(debugFILEMAP):
-        #    announce(debugSHOUT, "filemaps %s" % filemaps)
+        // Blows up huge on large repos...
+        //if debugEnable(debugFILEMAP) {
+        //    announce(debugSHOUT, "filemaps %s" % filemaps)
 
+/*
         # Build from sets in each directory copy record.
         announce(debugEXTRACT, "Pass 3")
         for copynode in copynodes:
