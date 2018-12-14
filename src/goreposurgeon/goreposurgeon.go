@@ -5920,7 +5920,7 @@ func (sp *StreamParser) read(n int) string {
 		sp.error("bad read in data")
 	}
 	sp.ccount += int64(n)
-	sp.importLine = bytes.Count(buf, []byte{'\n'})
+	sp.importLine += bytes.Count(buf, []byte("\n"))
 	return string(buf)
 }
 
@@ -8466,7 +8466,7 @@ func (repo *Repository) named(ref string) orderedIntSet {
 }
 
 func (repo *Repository) invalidateObjectMap() {
-	// Force an object-map rebuild on the next lookup.
+	// Force an object-map rebuild on the next mark lookup or mark set.
 	repo._eventByMark = nil
 }
 
