@@ -5845,7 +5845,7 @@ const splitSep = "."
 // populate a Repository.
 type StreamParser struct {
 	repo        *Repository
-	fp          io.Reader // Can't be os.File, unit tests will fail
+	fp          *bufio.Reader // Can't be os.File, unit tests will fail
 	importLine  int
 	ccount      int64
 	linebuffers []string
@@ -5931,20 +5931,13 @@ func (sp *StreamParser) readline() string {
 		line = []byte(sp.linebuffers[0])
 		sp.linebuffers = sp.linebuffers[1:]
 	} else {
-		cs := make([]byte, 1)
-		for {
-			_, err := io.ReadFull(sp.fp, cs)
-			if err != nil {
-				if err == io.EOF {
-					line = []byte{}
-					break
-				} else {
-					panic(throw("parse", "in readline(): %v", err))
-				}
-			}
-			line = append(line, cs[0])
-			if cs[0] == '\n' {
-				break
+		var err error
+		line, err = sp.fp.ReadBytes('\n')
+		if err != nil {
+			if err == io.EOF {
+				line = []byte{}
+			} else {
+				panic(throw("parse", "in readline(): %v", err))
 			}
 		}
 	}
@@ -6660,7 +6653,7 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 	sp.repo.makedir()
 	sp.timeMark("start")
 	var filesize int64 = -1
-	sp.fp = fp
+	sp.fp = bufio.NewReader(fp)
 	fileobj, ok := fp.(*os.File)
 	// Optimization: if we're reading from a plain stream dump,
 	// no need to clone all the blobs.
