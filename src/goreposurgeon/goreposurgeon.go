@@ -113,6 +113,7 @@ import (
 	ianaindex "golang.org/x/text/encoding/ianaindex"
 	difflib "github.com/IanBruene/go-difflib/difflib"
 )
+import _ "net/http/pprof"
 
 const version = "4.0-pre"
 
@@ -3319,10 +3320,13 @@ func (b Blob) getMark() string {
 
 // setMark sets the blob's mark and clears the mark lookup cache.
 func (b *Blob) setMark(mark string) string {
-	b.mark = mark
 	if b.repo != nil {
-		b.repo._eventByMark = nil
+		if b.repo._eventByMark == nil {
+			b.repo._eventByMark = make(map[string]Event)
+		}
+		b.repo._eventByMark[mark] = b 
 	}
+	b.mark = mark
 	return mark
 }
 
@@ -4566,10 +4570,13 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 
 // setMark sets the commit's mark and clears the lookup cache.
 func (commit *Commit) setMark(mark string) string {
-	commit.mark = mark
 	if commit.repo != nil {
-		commit.repo._eventByMark = nil
+		if commit.repo._eventByMark == nil {
+			commit.repo._eventByMark = make(map[string]Event)
+		}
+		commit.repo._eventByMark[mark] = commit
 	}
+	commit.mark = mark
 	return mark
 }
 
