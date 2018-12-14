@@ -9086,10 +9086,26 @@ func (repo *Repository) rename(newname string) error {
 	return nil
 }
 
+// Fast append avoids doing a full copy of the slice on every allocation
+// Code triviall modified from AppendByte on "Go Slices: usage and internals".
+func appendEvents(slice []Event, data ...Event) []Event {
+    m := len(slice)
+    n := m + len(data)
+    if n > cap(slice) { // if necessary, reallocate
+        // allocate double what's needed, for future growth.
+        newSlice := make([]Event, (n+1)*2)
+        copy(newSlice, slice)
+        slice = newSlice
+    }
+    slice = slice[0:n]
+    copy(slice[m:n], data)
+    return slice
+}
+
 // Insert an event just before the specified index.
 func (repo *Repository) insertEvent(event Event, where int, legend string) {
 	// No-alloc insert: https://github.com/golang/go/wiki/SliceTricks
-	repo.events = append(repo.events, nil)
+	repo.events = appendEvents(repo.events, nil)
 	copy(repo.events[where+1:], repo.events[where:])
 	repo.events[where] = event
 	repo.declareSequenceMutation(legend)
