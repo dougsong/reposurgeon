@@ -1,6 +1,8 @@
 ## Test errors parsing and evaluating disjunctions
 echo 1
 
+set testmode
+
 read <sample1.fi
 
 3 | 5 list

@@ -2456,8 +2456,7 @@ case, reposurgeon doesn't make on-disk blob copies at all (it points
 into sections of the input stream instead).
 `},
 	{"testmode",
-		`Disable some features that cause output to be vary depending on wall time
-and the ID of the invoking user. Use in regression-test loads.
+		`Disable some features that cause output to be vary depending on wall time, screen width, and the ID of the invoking user. Use in regression-test loads.
 `},
 	{"bigprofile",
 		`Extra profiling for large repositories.  Mainly of interest to reposurgeon
@@ -2530,9 +2529,13 @@ func whoami() (string, string) {
 
 // screenwidth returns the current width of the terminal window.
 func screenwidth() int {
-	width, _, err := terminal.GetSize(0)
-	if err != nil {
-		log.Fatal(err)
+	width := 80
+	if !context.flagOptions["testmode"] && terminal.IsTerminal(0) {
+		var err error
+		width, _, err = terminal.GetSize(0)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	return width
 }

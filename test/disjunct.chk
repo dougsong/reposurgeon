@@ -1,4 +1,6 @@
 
+set testmode
+
 read <sample1.fi
 
 3 | 5 list

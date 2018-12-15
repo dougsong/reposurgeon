@@ -1493,7 +1493,7 @@ def screenwidth():
     "Return the current width of the terminal window."
     # Alternatives at http://stackoverflow.com/questions/566746
     width = 80
-    if os.isatty(1):
+    if (not global_options["testmode"]) and os.isatty(1):
         if str is not bytes:
             (width, _) = shutil.get_terminal_size((80, 24))
         else:
@@ -8849,8 +8849,8 @@ case, reposurgeon doesn't make on-disk blob copies at all (it points
 into sections of the input stream instead).
 """),
         ("testmode", """\
-Disable some features that cause output to be vary depending on wall time
-and the ID of the invoking user. Use in regression-test loads.
+Disable some features that cause output to be vary depending on wall time,
+screen width, and the ID of the invoking user. Use in regression-test loads.
 """),
         ("bigprofile", """\
 Extra profiling for large repositories.  Mainly of interest to reposurgeon
