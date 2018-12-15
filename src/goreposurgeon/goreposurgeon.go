@@ -14189,7 +14189,8 @@ func (rs *Reposurgeon) DoIndex(lineIn string) bool {
 			}
 			fmt.Fprintf(parse.stdout, "%6d commit %6s    %s\n", eventid+1, mark, e.Branch)
 		case *Tag:
-			fmt.Fprintf(parse.stdout, "%6d tag    %6s    %4s\n", eventid+1, e.committish, e.name)
+			// FIXME: when port is done, remove single quotes?
+			fmt.Fprintf(parse.stdout, "%6d tag    %6s    '%4s'\n", eventid+1, e.committish, e.name)
 		case *Reset:
 			committish := e.committish
 			if committish == "" {
