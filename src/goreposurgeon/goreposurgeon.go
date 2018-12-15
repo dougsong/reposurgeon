@@ -17427,25 +17427,29 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 			return filterRE.MatchString(s)
 		}
 	}
-	for ei, event := range rs.chosen().commits(rs.selection) {
+	events := rs.chosen().events
+	for _, ei := range rs.selection {
+		commit, ok := events[ei].(*Commit)
+		if !ok {
+			continue
+		}
 		header := fmt.Sprintf("Event %d, ", ei+1)
 		header = header[:len(header)-2]
 		header += " " + strings.Repeat("=", 72-len(header)) + "\n"
 		fmt.Fprint(parse.stdout, header)
-		if event.legacyID != "" {
-			fmt.Fprintf(parse.stdout, "# Legacy-ID: %s\n", event.legacyID)
+		if commit.legacyID != "" {
+			fmt.Fprintf(parse.stdout, "# Legacy-ID: %s\n", commit.legacyID)
 		}
-		fmt.Fprintf(parse.stdout, "commit %s\n", event.Branch)
-		if event.mark != "" {
-			fmt.Fprintf(parse.stdout, "mark %s\n", event.mark)
+		fmt.Fprintf(parse.stdout, "commit %s\n", commit.Branch)
+		if commit.mark != "" {
+			fmt.Fprintf(parse.stdout, "mark %s\n", commit.mark)
 		}
 		fmt.Fprint(parse.stdout, "\n")
-		for path, entry := range event.manifest() {
+		for path, entry := range commit.manifest() {
 			if filterFunc(path) {
 				fmt.Fprintf(parse.stdout, "%s -> %s\n", path, entry.ref)
 			}
 		}
-		fmt.Fprint(parse.stdout, "\n")
 	}
 	return false
 }
