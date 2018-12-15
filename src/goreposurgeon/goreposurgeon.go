@@ -8285,6 +8285,7 @@ func (repo *Repository) branchmap() map[string]string {
 	return brmap
 }
 
+// FIXME: with the compile/exec code, should be possible to do this more cheaply
 func (repo *Repository) all() orderedIntSet {
 	// Return a set that selects the entire repository.
 	s := make([]int, len(repo.events))
@@ -9482,7 +9483,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 					croak(speak + fmt.Sprintf("non-head branch attribute %s", commit.Branch))
 				}
 				if !commit.alldeletes(nil) {
-					croak(speak + "non-delete fileops.")
+					complain(speak + "non-delete fileops.")
 				}
 			}
 			if !delete {
@@ -16921,15 +16922,16 @@ file path matches.
 }
 
 // Expunge files from the chosen repository.
-func (rs *Reposurgeon) DoExpunge(line string) {
+func (rs *Reposurgeon) DoExpunge(line string) bool {
 	if rs.chosen() == nil {
 		croak("no repo has been chosen.")
-		return
+		return false
 	}
 	if rs.selection == nil {
 		rs.selection = rs.chosen().all()
 	}
 	rs.expunge(rs.selection, strings.Fields(line))
+	return false
 }
 
 func (rs *Reposurgeon) HelpSplit() {
