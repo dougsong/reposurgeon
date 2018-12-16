@@ -1,4 +1,4 @@
-## Test tag creation
+## Test tag creation via msgin
 
 read <min.fi
 msgin --create <<EOF
