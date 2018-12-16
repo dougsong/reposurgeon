@@ -12821,7 +12821,7 @@ func (rl *RepositoryList) newLineParse(line string, capabilities stringSet) *Lin
 		if match == nil {
 			break
 		} else {
-			lp.options = append(lp.options, lp.line[match[2]:match[3]])
+			lp.options = append(lp.options, lp.line[match[2]-2:match[3]])
 			lp.line = lp.line[:match[2]-2] + lp.line[match[3]:]
 		}
 	}
@@ -15402,17 +15402,18 @@ func (rs *Reposurgeon) DoMsgout(lineIn string) bool {
 	defer parse.Closem()
 
 	var filterRegexp *regexp.Regexp
-	s, present := parse.OptVal("filter")
+	s, present := parse.OptVal("--filter")
 	if present {
 		if len(s) >= 2 && strings.HasPrefix(s, "/") && strings.HasSuffix(s, "/") {
 			var err error
-			filterRegexp, err = regexp.Compile(s[1 : len(s)-1])
+			payload := s[1 : len(s)-1]
+			filterRegexp, err = regexp.Compile(payload)
 			if err != nil {
-				croak("malformed filter option in msgout\n")
+				croak("malformed filter option %q in msgout\n", payload)
 				return false
 			}
 		} else {
-			croak("malformed filter option in msgout\n")
+			croak("malformed filter option %q in msgout\n", s)
 			return false
 		}
 	}
@@ -15688,13 +15689,12 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 		update := updateList[i]
 		check := strings.TrimSpace(update.getHeader("Check-Text"))
 		if check != "" && !strings.HasPrefix(strings.TrimSpace(event.getComment()), check) {
-			fmt.Fprintf(os.Stderr, "Got here1\n")
-			croak("check text mismatch at %s (input %d of %d), expected %s saw %q, bailing out", event.idMe(), i+1, len(updateList), check, event.getComment())
+			croak("check text mismatch at %s (input %d of %d), expected %s saw %q, bailing out", event.(*Commit).actionStamp(), i+1, len(updateList), check, event.getComment())
 			return false
 		}
 		if parse.options.Contains("--empty-only") {
 			if event.getComment() != update.getPayload() && !emptyComment(event.getComment()) {
-				croak("nonempty comment at %s (input %d of %d), bailing out", event.idMe(), i+1, len(updateList))
+				croak("nonempty comment at %s (input %d of %d), bailing out", event.(*Commit).actionStamp(), i+1, len(updateList))
 			}
 		}
 
@@ -17792,7 +17792,7 @@ func (rs *Reposurgeon) DoReorder(lineIn string) bool {
 		croak("'reorder' takes no arguments")
 		return false
 	}
-	_, quiet := parse.OptVal("quiet")
+	_, quiet := parse.OptVal("--quiet")
 	repo.reorderCommits(sel, quiet)
 	return false
 }
@@ -19775,7 +19775,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 	blank.Comment = fmt.Sprintf("Content from %s\n", parse.line)
 	var err error
 	blank.committer.date, err = newDate("1970-01-01T00:00:00Z")
-	stripstr, present := parse.OptVal("strip")
+	stripstr, present := parse.OptVal("--strip")
 	var strip int
 	if !present {
 		strip = 1
@@ -19788,7 +19788,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		}
 	}
 
-	_, insertAfter := parse.OptVal("after")
+	_, insertAfter := parse.OptVal("--after")
 	var loc int
 	if insertAfter {
 		loc = repo.markToIndex(commit.mark) + 1
@@ -19866,7 +19866,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 	}
 
 	// We get here if incorporation worked OK.
-	date, present := parse.OptVal("date")
+	date, present := parse.OptVal("--date")
 	if present {
 		blank.committer.date, err = newDate(date)
 		if err != nil {
