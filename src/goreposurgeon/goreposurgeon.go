@@ -3573,7 +3573,9 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 					candidate, err))
 			}
 			if t.tagger.date.isZero() || !date.timestamp.Equal(t.tagger.date.timestamp) {
-				// FIXME: When we camn change tests, remove guard
+				// If self.repo is nil this is filling
+				// in fields in a a new tag creation,
+				// so suppress the usual message.
 				if t.repo != nil {
 					announce(debugSHOUT, "in %s, Tagger-Date is modified '%v' -> '%v' (delta %v)",
 						t.idMe(),

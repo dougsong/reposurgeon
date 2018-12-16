@@ -2240,7 +2240,8 @@ class Tag(object):
             if "Tagger-Date" in msg:
                 date = Date(msg["Tagger-Date"])
                 if self.tagger.date is None or date != self.tagger.date:
-                    # Yes, display this unconditionally
+                    # If self.repo is nil this is filling in fields in a
+                    # a new tag creation, so suppress the usual message.
                     if self.repo:
                         announce(DEBUG_SHOUT, "in %s, Tagger-Date is modified '%s' -> '%s' (delta %d)" \
                              % (self.id_me(),
