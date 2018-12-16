@@ -3449,8 +3449,10 @@ func (t Tag) getMark() string {
 func (t *Tag) remember(repo *Repository, committish string) {
 	t.repo = repo
 	t.committish = committish
-	if event := repo.markToEvent(committish); event != nil {
-		event.(*Commit).attach(t)
+	if repo != nil {
+		if  event := repo.markToEvent(committish); event != nil {
+			event.(*Commit).attach(t)
+		}
 	}
 }
 
@@ -3571,15 +3573,15 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 					candidate, err))
 			}
 			if t.tagger.date.isZero() || !date.timestamp.Equal(t.tagger.date.timestamp) {
-				// Yes, display this unconditionally
+				// FIXME: When we camn change tests, remove guard
 				if t.repo != nil {
 					announce(debugSHOUT, "in %s, Tagger-Date is modified '%v' -> '%v' (delta %v)",
 						t.idMe(),
 						t.tagger.date, taggerdate,
 						date.timestamp.Sub(t.tagger.date.timestamp))
-					t.tagger.date = date
-					modified = true
 				}
+				t.tagger.date = date
+				modified = true
 			}
 		}
 	}
@@ -15542,12 +15544,12 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 	if parse.options.Contains("--create") {
 		for _, message := range updateList {
 			if strings.Contains(message.String(), "Tag-Name") {
-				blank := newTag(repo, "", "", nil, "")
+				blank := newTag(nil, "", "", nil, "")
 				blank.tagger = newAttribution("")
 				blank.emailIn(message, true)
 				commits := repo.commits(nil)
-				blank.committish = commits[len(commits)-1].mark
-				//repo.addEvent(blank)
+				blank.remember(repo, commits[len(commits)-1].mark)
+				repo.addEvent(blank)
 			} else {
 				blank := newCommit(repo)
 				blank.committer = *newAttribution("")
