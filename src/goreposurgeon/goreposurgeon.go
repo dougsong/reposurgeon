@@ -17277,7 +17277,7 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 	if verb == "rename" {
 		force := parse.options.Contains("--force")
 		targetPattern, _ := popToken(parse.line)
-		if targetPattern != "" {
+		if targetPattern == "" {
 			complain("no target specified in rename")
 			return false
 		}
@@ -17290,9 +17290,9 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 		for _, commit := range repo.commits(rs.selection) {
 			touched := false
 			for _, fileop := range commit.operations() {
-				for _, attr := range []string{"path", "source", "target"} {
+				for _, attr := range []string{"Path", "Source", "Target"} {
 					if oldpath, ok := getAttr(fileop, attr); ok {
-						if oldpath != "" && sourceRE.MatchString(oldpath) {
+						if ok && sourceRE.MatchString(oldpath) {
 							newpath := sourceRE.ReplaceAllString(oldpath, targetPattern)
 							if !force && commit.visible(newpath) != nil {
 								complain("rename at %s failed, %s visible in ancestry", commit.idMe(), newpath)
