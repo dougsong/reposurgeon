@@ -18352,7 +18352,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 	if rs.preferred != nil && rs.ignorename == "" {
 		rs.ignorename = rs.preferred.ignorename
 	}
-	if rs.preferred != nil {
+	if rs.preferred == nil {
 		croak("preferred repository type has not been set")
 		return false
 	}
@@ -18415,13 +18415,15 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 		} else if verb == "rename" {
 			changecount := 0
 			for _, commit := range repo.commits(nil) {
-				for _, fileop := range commit.operations() {
-					for _, attr := range []string{"path", "source", "target"} {
-						if oldpath, ok := getAttr(fileop, attr); ok {
-							if oldpath != "" && strings.HasSuffix(oldpath, rs.ignorename) {
+				for idx, fileop := range commit.operations() {
+					for _, attr := range []string{"Path", "Source", "Target"} {
+						oldpath, ok := getAttr(fileop, attr)
+						if ok {
+							
+							if ok && strings.HasSuffix(oldpath, rs.ignorename) {
 								newpath := filepath.Join(filepath.Dir(oldpath),
 									rs.preferred.ignorename)
-								setAttr(fileop, attr, newpath)
+								setAttr(&commit.fileops[idx], attr, newpath)
 								changecount++
 								if fileop.op == opM {
 									blob := repo.markToEvent(fileop.ref).(*Blob)
