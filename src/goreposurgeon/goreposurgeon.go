@@ -3375,7 +3375,7 @@ func (b *Blob) clone(repo *Repository) *Blob {
 // can also appear under the alias "Rev" or "LastChangedRev".
 var dollarID = regexp.MustCompile(`\$Id *: *([^$]+) *\$`)
 var dollarRevision = regexp.MustCompile(`\$Rev(?:ision) *: *([^$]*) *\$`)
-var dollarLastChanged = regexp.MustCompile(`\$LatChangedRev *: *([^$]*) *\$`)
+var dollarLastChanged = regexp.MustCompile(`\$LastChangedRev *: *([^$]*) *\$`)
 
 func (b *Blob) parseCookie(content string) Cookie {
 	// Parse CVS && Subversion $-headers
@@ -8883,9 +8883,9 @@ func (repo *Repository) parseDollarCookies() {
 	// Set commit legacy properties from $Id$ && $Subversion$
 	// cookies in blobs. In order to throw away stale headers from
 	// after, e.g., a CVS-to-SVN or SVN-to-git conversion, we
-	// ignore duplicat keys - note this assumes commits are
-	// time-ordered, wjich is true for SVN but maye not for
-	// CVS. Might be we should explcitly time-check in the latter
+	// ignore duplicate keys - note this assumes commits are properly
+	// time-ordered, which is true for SVN but maybe not for
+	// CVS. Might be we should explicitly time-check in the latter
 	// case, but CVS timestamps aren't reliable so it might not
 	// include conversion quality any.
 	repo.dollarMap = make(map[string]*Commit)
@@ -8899,13 +8899,12 @@ func (repo *Repository) parseDollarCookies() {
 				croak("legacy property of %s overwritten",
 					commit.mark)
 			}
-
 			if blob.cookie.implies() == "SVN" {
 				svnkey := "SVN:" + blob.cookie.rev
 				if _, ok := repo.dollarMap[svnkey]; !ok {
 					repo.dollarMap[svnkey] = commit
 				}
-			} else {
+			} else if !blob.cookie.isEmpty() {
 				if filepath.Base(fileop.Path) != blob.cookie.path {
 					// Usually the
 					// harmless result of
