@@ -19245,7 +19245,7 @@ multi-line macro terminated by a line beginning with '}'.
 
 A later 'do' call can invoke this macro.
 
-'define' by itrs without a name or body produces a macro list.
+'define' by itself without a name or body produces a macro list.
 `)
 }
 
@@ -19545,144 +19545,178 @@ that zone is used.
 }
 
 /*
-class Reposurgeon(object):
-    func (rs *Reposurgeon) DoChangelogs(rs, line str):
-        "Mine repository changelogs for authorship data."
-        if rs.chosen() is None:
-            croak("no repo has been chosen.")
-            return
-        repo = rs.chosen()
-        cc = cl = cm = cd = 0
-        differ = difflib.Differ()
-        func parse_attribution_line(line):
-            if len(line) <= 10 or line[0].isspace():
-                return None
-            # Massage old-style addresses into newstyle
-            line = line.replace("(", "<").replace(")", ">")
-            # Deal with some address masking
-            line = line.replace(" <at> ", "@")
-            # Malformation in a GCC Changelog that might be replicated elsewhere.
-            if line.endswith(">>"):
-                line = line[:-1]
-            # Line must contain an email address
-            if not (line.count('<') == 1 and line.endswith(">")):
-                return None
-            if line[0].isdigit() and line[1].isdigit():
-                space = line.find(" ")
-                if space < 0:
-                    return None
-                date = line[:space]
-                try:
-                    calendar.timegm(time.strptime(date, "%Y-%m-%d"))
-                except ValueError:
-                    return None
-                addr = line[space+1:].strip()
-                return addr
-            # Scan for old-style date like "Tue Dec  9 01:16:06 1997"
-            try:
-                possible_date = " ".join(line.split()[:5])
-                # Doesn't matter that TZ is wrong here, we're only going
-                # to use the day part at most.
-                calendar.timegm(time.strptime(possible_date, "%a %b %d %H:%M:%S %Y"))
-                skipre = regexp.MustCompile("\s+".join(line.split()[:5]))
-                m = skipre.match(line)
-                addr = line[len(m.group(0)):].strip()
-                return addr
-            except ValueError:
-                pass
-            return None
-        with Baton("reposurgeon: parsing changelogs", enable=(context.verbose == 1)) as baton:
-            for commit in repo.commits():
-                cc++
-                # If a changeset is *all* ChangeLog mods, it's probably either
-                # a log rotation or a maintainer fixing a typo. In either case,
-                # best not to re-attribute this.
-                if not [op.path for op in commit.operations() \
-                        if op.op==opM and not os.path.basename(op.path).startswith("ChangeLog")]:
-                    continue
-                for op in commit.operations():
-                    baton.twirl("")
-                    if op.op == opM and os.path.basename(op.path) == "ChangeLog":
-                        cl++
-                        blobfile = repo.markToEvent(op.ref).materialize()
-                        # Figure out where we should look for changes in
-                        # this blob by comparing it to its nearest ancestor.
-                        ob = repo.blobAncestor(commit, op.path)
-                        if ob:
-                            with open(ob.materialize()) as oldblob:
-                                then = oldblob.read().splitlines()
-                        else:
-                            then = ""
-                        with open(blobfile) as newblob:
-                            now = newblob.read().splitlines()
-                        before = true
-                        inherited = new = None
-                        #print("Analyzing Changelog at %s." % commit.mark)
-                        for diffline in differ.compare(then, now):
-                            if diffline[0] != ' ':
-                                #print("Change encountered")
-                                before = false
-                            #print("I see: %s" % repr(diffline))
-                            line = diffline[2:]
-                            attribution = parse_attribution_line(line)
-                            if attribution is not None:
-                                addr = attribution
-                                #print("I notice: %s %s %s" % (diffline[0], attribution, before))
-                                # This is the tricky part.  We want the
-                                # last attribution from before the change
-                                # band to stick unless there's one *in*
-                                # the change band. If there's more than one,
-                                # assume the most recent is the latest and
-                                # correct.
-                                if attribution:
-                                    if before:
-                                        inherited = attribution
-                                        #print("Inherited: %s" % repr(inherited))
-                                    if diffline[0] in ('+', '?'):
-                                        if attribution and not new:
-                                            new = attribution
-                                            #print("New: %s" % repr(new))
-                                            break
-                            #print("Attributions: %s %s" % (inherited, new))
-                            attribution = new if new else inherited
-                        if attribution is not None:
-                            addr = attribution
-                            cm++
-                            newattr = commit.committer.clone()
-                            (newattr.name, newattr.email) = addr.split("<")
-                            newattr.email = newattr.email.strip()[:-1]
-                            newattr.name = newattr.name.strip()
-                            if not newattr.name:
-                                for mapentry in repo.authormap.values():
-                                    if len(mapentry) != 3:
-                                        croak("malformed author map entry %s" % (mapentry,))
-                                        continue
-                                    (name, nemail, _tz) = mapentry
-                                    if newattr.email == nemail:
-                                        newattr.name = name
-                                        break
-                            if newattr.email in repo.tzmap:
-                                newattr.date.set_tz(repo.tzmap[newattr.email])
-                            else:
-                                newattr.date.set_tz(zoneFromEmail(newattr.email))
-                            if (newattr.name, newattr.email) in repo.aliases:
-                                (newattr.name, newattr.email) = repo.aliases[(newattr.name, newattr.email)]
-                            if not commit.authors:
-                                commit.authors = [newattr]
-                            else:
-                                # Required because git sometimed fills in the
-                                # author field from the committer.
-                                if commit.authors[-1].address() == commit.committer.address():
-                                    commit.authors.pop()
-                                # Someday, detect whether target VCS allows
-                                # multiple authors and append unconditonally
-                                # if so.
-                                if not commit.authors and newattr.address() not in [x.address for x in commit.authors]:
-                                    commit.authors.append(newattr)
-                                    cd++
-        repo.invalidateNamecache()
-        announce(debugSHOUT, "fills %d of %d authorships, changing %s, from %d ChangeLogs." \
-                 % (cm, cc, cd, cl))
+// Mine repository changelogs for authorship data.
+func (rs *Reposurgeon) DoChangelogs(line str) bool {
+	if rs.chosen() == nil {
+		croak("no repo has been chosen.")
+		return false
+	}
+	repo := rs.chosen()
+	cc := cl = cm = cd = 0
+	differ := difflib.Differ()
+	parseAttributionLine = func(line string) {
+		if len(line) <= 10 || line[0].isspace() {
+			return nil
+		}
+		// Massage old-style addresses into newstyle
+		line = strings.Replace(line, "(", -1).replace(")", ">")
+		// Deal with some address masking
+		line = strings.Replace(line, " <at> ", -1)
+		// Malformation in a GCC Changelog that might be replicated elsewhere.
+		if strings.HasSuffix(line, ">>") {
+			line = line[:-1]
+		}
+		// Line must contain an email address
+		if !(strings.Count(line, "<") == 1 && strings.HasSuffix(line, ">")) {
+			return nil
+		}
+		if line[0].isdigit() && line[1].isdigit() {
+			space := strings.Index(line, " ")
+			if space < 0 {
+				return nil
+			}
+			date := line[:space]
+			try {
+				calendar.timegm(time.strptime(date, "%Y-%m-%d"))
+			}
+			except ValueError {
+				return nil
+			}
+			addr = line[space+1:].strip()
+			return addr
+		}
+		// Scan for old-style date like "Tue Dec  9 01:16:06 1997"
+		//try {
+		possible_date := " ".join(strings.Fields(line)[:5])
+		// Doesn't matter that TZ is wrong here, we're only going
+		// to use the day part at most.
+		calendar.timegm(time.strptime(possible_date, "%a %b %d %H:%M:%S %Y"))
+		skipre := regexp.MustCompile("\s+".join(strings.Fields(line)[:5]))
+		m := skipre.match(line)
+		addr = line[len(m.group(0)):].strip()
+		return addr
+		//except ValueError {
+		//    pass
+		return nil
+	}
+	baton := Baton("reposurgeon: parsing changelogs", enable=(context.verbose == 1))
+	for _, commit := range repo.commits(nil) {
+		cc++
+		// If a changeset is *all* ChangeLog mods, it is probably either
+		// a log rotation or a maintainer fixing a typo. In either case,
+		// best not to re-attribute this.
+		if ![op.path for op in commit.operations()
+			if op.op==opM && !filepath.Base(op.path).startswith("ChangeLog")] {
+			}
+		continue
+	}
+	for _, op := range commit.operations() {
+		baton.twirl("")
+		if op.op == opM && filepath.Base(op.path) == "ChangeLog" {
+			cl++
+			blobfile := repo.markToEvent(op.ref).materialize()
+			// Figure out where we should look for changes in
+			// this blob by comparing it to its nearest ancestor.
+			ob := repo.blobAncestor(commit, op.path)
+			if ob {
+				with open(ob.materialize()) as oldblob {
+					then = oldblob.read().splitlines()
+				}
+			} else {
+				then = ""
+			}
+			with open(blobfile) as newblob {
+				now := newblob.read().splitlines()
+			}
+			before = true
+			inherited = new = nil
+			//print("Analyzing Changelog at %s." % commit.mark)
+			for _, diffline := range differ.compare(then, now) {
+				if diffline[0] != " " {
+					//print("Change encountered")
+					before = false
+				}
+				//print("I see: %s" % repr(diffline))
+				line = diffline[2:]
+				attribution = parseAttributionLine(line)
+				if attribution != nil {
+					addr = attribution
+					//print("I notice: %s %s %s" % (diffline[0], attribution, before))
+					// This is the tricky part.  We want the
+					// last attribution from before the change
+					// band to stick unless there's one *in*
+					// the change band. If there's more than one,
+					// assume the most recent is the latest and
+					// correct.
+					if attribution {
+						if before {
+							inherited = attribution
+							//print("Inherited: %s" % repr(inherited))
+						}
+						if diffline[0] in ("+", "?") {
+							if attribution && !new {
+								new := attribution
+								//print("New: %s" % repr(new))
+								break
+							}
+						}
+					}
+}
+			//print("Attributions: %s %s" % (inherited, new))
+			attribution = new if new else inherited
+		}
+		if attribution != nil {
+			addr = attribution
+			cm++
+			newattr := commit.committer.clone()
+			(newattr.name, newattr.email) = strings.Split(addr, "<")
+			newattr.email = strings.TrimSpace(newattr.email)[:-1]
+			newattr.name = strings.TrimSpace(newattr.name)
+			if !newattr.name {
+				for _, mapentry := range repo.authormap.values() {
+					if len(mapentry) != 3 {
+						croak(fmt.Sprintf("malformed author map entry %s", mapentry,))
+						continue
+					}
+					(name, nemail, _tz) = mapentry
+					if newattr.email == nemail {
+						newattr.name = name
+						break
+					}
+				}
+			}
+			if newattr.email in repo.tzmap {
+				newattr.date.set_tz(repo.tzmap[newattr.email])
+			} else {
+				newattr.date.set_tz(zoneFromEmail(newattr.email))
+			}
+			if (newattr.name, newattr.email) in repo.aliases {
+				(newattr.name, newattr.email) = repo.aliases[(newattr.name, newattr.email)]
+			}
+			if !commit.authors {
+				commit.authors = [newattr]
+			} else {
+				// Required because git sometimed fills in the
+				// author field from the committer.
+				if commit.authors[-1].address() == commit.committer.address() {
+					commit.authors.pop()
+				}
+				// Someday, detect whether target VCS allows
+				// multiple authors and append unconditonally
+				// if so.
+				if !commit.authors && newattr.address() !in [x.address for x in commit.authors] {
+					commit.authors = append(commit.authors, newattr)
+					cd++
+				}
+			}
+		}
+	}
+}
+				}
+    repo.invalidateNamecache()
+    announce(debugSHOUT, "fills %d of %d authorships, changing %s, from %d ChangeLogs."
+	     % (cm, cc, cd, cl))
+}
 */
 
 //
