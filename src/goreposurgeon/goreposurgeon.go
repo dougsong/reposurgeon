@@ -5501,6 +5501,9 @@ func (p *PathMap) snapshot() *PathMap {
 
 // Insert, at targetPath, a snapshot of sourcePath in sourcePathMap.
 func (p *PathMap) copyFrom(targetPath interface{}, sourcePathMap *PathMap, sourcePath interface{}) {
+	if sourcePathMap == nil {
+		return
+	}
 	sourceObj := sourcePathMap.find(sourcePath)
 	if sourceObj == nil {
 		return
@@ -5715,12 +5718,15 @@ func (p *PathMap) find(path interface{}) interface{} {
 	}
 	q := p
 	for _, component := range components {
-		q := q.rawGet(component)
-		if _, ok := q.(*PathMap); !ok {
+		nxt := q.rawGet(component)
+		if _, ok := nxt.(*PathMap); !ok {
 			return nil
+		} else {
+			q = nxt.(*PathMap)
 		}
 	}
-	return q.rawGet(basename)
+	result := q.rawGet(basename)
+	return result
 }
 
 // Return basename of path and remaining components as slice.

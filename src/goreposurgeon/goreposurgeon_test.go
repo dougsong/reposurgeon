@@ -57,6 +57,10 @@ func assertBool(t *testing.T, see bool, expect bool) {
 	}
 }
 
+func assertTrue(t *testing.T, see bool) {
+	assertBool(t, see, true)
+}
+
 func assertEqual(t *testing.T, a string, b string) {
 	if a != b {
 		t.Fatalf("assertEqual: expected %q == %q", a, b)
@@ -1057,12 +1061,11 @@ V 27
 PROPS-END
 `
 	sp := newStreamParser(nil)
-	sp.fp = strings.NewReader(rawmsg)
+	sp.fp = bufio.NewReader(strings.NewReader(rawmsg))
 	om := sp.sdReadProps("test", len(rawmsg))
 	expected = "{svn:log:A vanilla repository - standard layout, linear history, no tags, no branches. \n,svn:author:esr,svn:date:2011-11-30T16:41:55.154754Z}"
 	saw = om.String()
 	assertEqual(t, saw, expected)
-
 }
 
 func TestFastImportParse1(t *testing.T) {
@@ -1609,4 +1612,12 @@ func TestGetSetAttr(t *testing.T) {
 		t.Fatalf("during setattr test: %v", err)
 	}
 	assertEqual(t, vcsTestTable[0].Vcs, "foozle")
+}
+
+func TestPathMap(t *testing.T) {
+	p := newPathMap(nil)
+	assertTrue(t, p.isEmpty())
+	p.set("foo/bar", 42)
+	assertTrue(t, p.contains("foo/bar"))
+	assertIntEqual(t, p.find("foo/bar").(int), 42)
 }
