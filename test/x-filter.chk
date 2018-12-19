@@ -1,12 +1,20 @@
+Testing shell filtering of blobs
 reposurgeon: 11 items modified by filtering.
+Testing shell filtering of commits
 reposurgeon: 18 items modified by filtering.
+Testing regexp filtering of blobs
 reposurgeon: 8 items modified by filtering.
+Testing regexp filtering of commits
 reposurgeon: 1 items modified by filtering.
+Testing replace filtering of commits
 reposurgeon: 2 items modified by filtering.
+Testing replace filtering of commits, comment only
 reposurgeon: 2 items modified by filtering.
-Following substitution should be a no-op
+Following substitution should be a no-op, committer only
 reposurgeon: 0 items modified by filtering.
+Testing replace filtering of commits (all fields)
 reposurgeon: 18 items modified by filtering.
+Testing replace filtering of tags
 reposurgeon: 1 items modified by filtering.
 blob
 mark :1
