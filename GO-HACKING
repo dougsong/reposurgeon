@@ -1,0 +1,89 @@
+= Helping with the Go translation =
+
+You can help by fixing command handlers to have correct behavior on a
+regression test that succeeds under the Python implementation but
+fails under Go.
+
+Do your builds through the Makefile, which sets the GOPATH
+variable to work around it not being embedded in a normal Go
+workspace.
+
+To build the Go tools, simply run "make" in the toplevel directory.
+This also builds the suite documentation.  Before running it the
+*first* time, run "make gosetup" to install package dependencies.
+
+'make gotest' runs the Go unit tests.  These are pretty stable.
+
+'make goregress' runs the full regression-test suite using the
+Go binary.  To prevent stopping on failure, set STOPOUT=0 in
+the environment.
+
+To list general tests that are failing under Go or can't yet be exercised,
+
+   cd test; ls x-*.tst
+
+To run a single test,
+
+   cd test; singletest x-foo
+
+will check the actual result of the script in x.foo.tst against its expected
+output in x-foo.chk.  No output other than the test notice is good.  The
+Python version passes all these tests.
+
+The following can't yet be tested as they rely on the Subversion dump reader:
+
+x-blob-id.tst
+x-branchify_map.tst
+x-branchify.tst
+x-debranch.tst
+x-debranch2.tst
+x-expunge-deletion.tst
+x-expunge.tst
+x-gitify.tst
+x-lint.tst
+x-nesting.tst
+x-references.tst
+x-resolve.tst
+x-userignores.tst
+x-split-dir.tst
+x-split.tst.tst
+x-squash-id.tst
+x-subdir.tst
+x-tagretract.tst
+x-userignores.tst
+
+The following tests presently fail under Go.  Reducing this list to
+empty is a near-term goal.
+
+x-calloutgraft: panics.
+x-callout: defective translation, something simple but location is unknown.
+x-changelog: handler is not yet implemented.
+x-checktext: there's some minor defect in the msgin translation.
+x-commit-expunge: expunge operation fails.
+x-debranch3: unknown failure
+x-delete: delete primitive failed
+x-delkeepsbranch: delete primitive failed
+x-diff: wrapper around the Differ call appears to be wrong.
+x-divide: divide logic appears broken
+x-filter: filtered items aren't modified - probably copy vs. reference error.
+x-graft2: panics
+x-graft-rune: panics
+x-graft: panics
+x-i18n: filtered items aren't modified - probably copy vs. reference error.
+x-legacy: commit reference parser is busted, should be easy to fix.
+x-liftlogs: changelogs handler is still missing.
+x-macro: Spurious EOF in single-line explansion, and multiline doesn't work.
+x-multiple-tagback: unknown failure.
+x-multiroot: panics
+x-pathrename: ancestry check is failing.
+x-pathrename-with-set: rename operation fails.
+x-prune: panics.
+x-reorder: toposort code is busted.
+x-reparent: panics.
+x-restructure: unknown failure
+x-simple: several command failures, none look very difficult
+x-tagcreate: create date is wrong, should be simple to fix.
+x-tagify: throws mark not found.
+x-treecontent: panics.
+x-unite: panics.
+x-unite3: panics.
