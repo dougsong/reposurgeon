@@ -15,16 +15,29 @@ This also builds the suite documentation.  Before running it the
 'make gotest' runs the Go unit tests.  These are pretty stable.
 
 'make goregress' runs the full regression-test suite using the
-Go binary.  To prevent stopping on failure, set STOPOUT=0 in
-the environment.
+Go binary.  It will bail out on the first error.
 
 To list general tests that are failing under Go or can't yet be exercised,
 
    cd test; ls x-*.tst
 
-To run a single test,
+There are tools and makefile productions for finer-grained testing.  
+Their behavior is cinrolled by two variables:
 
-   cd test; singletest x-foo
+REPOSURGEON: either reposurgeon (the default) or goreposurgeon
+
+STOPOUT: 1 (the default) produces a bailout after the first failed
+test.  Set it to 0 to continue after failed tests - you have to do
+this on the make command line, e.g. "cd test; make STOPOUT=0
+fi-regress".  Note, the output from this may be voluminous and
+unuseful.
+
+make goregress forces REPOSURGEON=reposurgeon.  It runs fi-regress which is
+the inner production for general regression tests.
+
+To run a single test under Go,
+
+   cd test; REPOSURGEON=../goreposurgeon singletest x-foo
 
 will check the actual result of the script in x.foo.tst against its expected
 output in x-foo.chk.  No output other than the test notice is good.  The
