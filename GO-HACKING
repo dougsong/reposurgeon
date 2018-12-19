@@ -87,15 +87,15 @@ x-delkeepsbranch: delete primitive failed
 x-diff: wrapper around the Differ call appears to be wrong.
 x-divide: divide logic appears broken
 x-filter: filtered items aren't modified - probably copy vs. reference error.
-x-graft2: panics
-x-graft-rune: panics
-x-graft: panics
+x-graft2: panics.
+x-graft-prune: panics.
+x-graft: panics.
 x-i18n: filtered items aren't modified - probably copy vs. reference error.
 x-legacy: commit reference parser is busted, should be easy to fix.
 x-liftlogs: changelogs handler is still missing.
-x-macro: Spurious EOF in single-line explansion, and multiline doesn't work.
+x-macro: Spurious EOF in single-line expansion, and multiline doesn't work.
 x-multiple-tagback: unknown failure.
-x-multiroot: panics
+x-multiroot: panics.
 x-pathrename: ancestry check is failing.
 x-pathrename-with-set: rename operation fails.
 x-prune: panics.
