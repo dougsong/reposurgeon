@@ -1,7 +1,7 @@
 #!/bin/sh
 # singletest - run a single regression test
 
-. common-setup.sh
+. ./common-setup.sh
 
 # Use absolute path so tests that change working directory still use 
 # scripts from parent directory.  Note that using $PWD seems to fail
