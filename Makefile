@@ -29,6 +29,8 @@ SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
 SOURCES += Dockerfile ci/prepare.sh ci/Makefile ci/requirements.txt
 DOCS = README.adoc NEWS TODO
 
+STOPOUT=1
+
 .PHONY: all install clean uninstall version pylint check zip release refresh \
     docker-build docker-check docker-check-noscm \
     gosetup govet gotest goformat gofmt golint
@@ -61,7 +63,7 @@ dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc -f nofooter.conf
 
 # Temporary; it's here to track which test sections have succeeded
 goregress:
-	 cd test; make REPOSURGEON=goreposurgeon 
+	 cd test; make STOPOUT=$(STOPOUT) REPOSURGEON=goreposurgeon
 
 # If you get a compilation failure on the golang-pkg-pcre library,
 # install libpcre3-dev or equivelent.
