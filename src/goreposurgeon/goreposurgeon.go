@@ -19545,6 +19545,8 @@ that zone is used.
 }
 
 /*
+var ymdRE := regexp.MustCompile("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]")
+
 // Mine repository changelogs for authorship data.
 func (rs *Reposurgeon) DoChangelogs(line str) bool {
 	if rs.chosen() == nil {
@@ -19552,45 +19554,49 @@ func (rs *Reposurgeon) DoChangelogs(line str) bool {
 		return false
 	}
 	repo := rs.chosen()
-	cc := cl = cm = cd = 0
+	cc := cl := cm := cd := 0, 0, 0, 0
 	differ := difflib.Differ()
-	parseAttributionLine = func(line string) {
+	parseAttributionLine = func(line string) string {
 		if len(line) <= 10 || line[0].isspace() {
-			return nil
+			return ""
 		}
 		// Massage old-style addresses into newstyle
-		line = strings.Replace(line, "(", -1).replace(")", ">")
+		line = strings.Replace(line, "(", -1)
+		line = strings.Replace(")", ">", -1)
 		// Deal with some address masking
-		line = strings.Replace(line, " <at> ", -1)
-		// Malformation in a GCC Changelog that might be replicated elsewhere.
+		line = strings.Replace(line, " <at> ", "@", -1)
+		// Malformation in a GCC Changelog that might be
+		// replicated elsewhere.
 		if strings.HasSuffix(line, ">>") {
 			line = line[:-1]
 		}
 		// Line must contain an email address
 		if !(strings.Count(line, "<") == 1 && strings.HasSuffix(line, ">")) {
-			return nil
+			return ""
 		}
 		if line[0].isdigit() && line[1].isdigit() {
 			space := strings.Index(line, " ")
 			if space < 0 {
-				return nil
+				return ""
 			}
 			date := line[:space]
-			try {
-				calendar.timegm(time.strptime(date, "%Y-%m-%d"))
+			if !ymdRE.MatchString(date) {
+				return ""
 			}
-			except ValueError {
-				return nil
-			}
-			addr = line[space+1:].strip()
+			addr := strings.TrimSpace(line[space+1:])
 			return addr
 		}
 		// Scan for old-style date like "Tue Dec  9 01:16:06 1997"
-		//try {
-		possible_date := " ".join(strings.Fields(line)[:5])
-		// Doesn't matter that TZ is wrong here, we're only going
-		// to use the day part at most.
-		calendar.timegm(time.strptime(possible_date, "%a %b %d %H:%M:%S %Y"))
+		// This corresponsds to Go ANSIC format.
+		fields := strings.Fields(line)
+		if len(fields) >= 5 {
+			possible_date := strings.Join(fields[:5], " ")
+			// Doesn't matter that TZ is wrong here, we're only going
+			// to use the day part at most.
+			_, err := time.Parse(time.ANSIC, possible_date)
+			if err != nil {
+				return ""
+			}
 		skipre := regexp.MustCompile("\s+".join(strings.Fields(line)[:5]))
 		m := skipre.match(line)
 		addr = line[len(m.group(0)):].strip()
