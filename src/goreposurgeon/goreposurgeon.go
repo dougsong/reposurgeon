@@ -3651,24 +3651,11 @@ func ianaDecode(data, codec string) (string, bool, error) {
 	return string(decoded), err2 == nil, err2
 }
 
-func (t *Tag) undecodable(codec string) bool {
-	_, f1, err1 := ianaDecode(t.name, codec)
-	if !f1 || err1 != nil {
-		return true
+func (t *Tag) decodable() bool {
+	valid := func(s string) bool {
+		return utf8.Valid([]byte(s))
 	}
-	_, f2, _ := ianaDecode(t.tagger.fullname, codec)
-	if !f2 {
-		return true
-	}
-	_, f2, _ = ianaDecode(t.tagger.email, codec)
-	if !f2 {
-		return true
-	}
-	_, f3, _ := ianaDecode(t.Comment, codec)
-	if !f3 {
-		return true
-	}
-	return false
+	return valid(t.name) && valid(t.tagger.fullname) && valid(t.tagger.email) && valid(t.Comment)
 }
 
 // branchname returns the full branch reference corresponding to a tag.
@@ -5178,31 +5165,20 @@ func (commit *Commit) blobByName(pathname string) (string, bool) {
 	}
 }
 
-// undecodable tells whether this commit has undecodable i18n sequences in it?
-func (commit *Commit) undecodable(codec string) bool {
-	_, f1, err1 := ianaDecode(commit.committer.fullname, codec)
-	if !f1 || err1 != nil {
-		return true
+// decodable tells whether this commi us enriirely composed of decodable UTF-8.
+func (commit *Commit) decodable() bool {
+	valid := func(s string) bool {
+		return utf8.Valid([]byte(s))
 	}
-	_, f1, err1 = ianaDecode(commit.committer.email, codec)
-	if !f1 {
-		return true
-	}
-	for _, attr := range commit.authors {
-		_, f2, _ := ianaDecode(attr.fullname, codec)
-		if !f2 {
-			return true
-		}
-		_, f3, _ := ianaDecode(attr.email, codec)
-		if !f3 {
-			return true
+	if !(valid(commit.committer.fullname) && valid(commit.committer.email) && valid(commit.Comment)) {
+		return false
+	} 
+	for _, author := range commit.authors {
+		if !valid(author.fullname) || !valid(author.email) {
+			return false
 		}
 	}
-	_, f4, _ := ianaDecode(commit.Comment, codec)
-	if !f4 {
-		return true
-	}
-	return false
+	return true
 }
 
 // delete severs this commit from its repository.
@@ -13386,8 +13362,8 @@ func (rs *Reposurgeon) hasReference(event Event) bool {
 }
 
 func (rs *Reposurgeon) visibilityTypeletters() map[rune]func(int) bool {
-	type undecode interface {
-		undecodable(string) bool
+	type decodable interface {
+		decodable() bool
 	}
 	type alldel interface {
 		alldeletes(stringSet) bool
@@ -13409,7 +13385,7 @@ func (rs *Reposurgeon) visibilityTypeletters() map[rune]func(int) bool {
 		'M': func(i int) bool { c, ok := e(i).(*Commit); return ok && len(c.parents()) > 1 },
 		'F': func(i int) bool { c, ok := e(i).(*Commit); return ok && len(c.children()) > 1 },
 		'L': func(i int) bool { c, ok := e(i).(*Commit); return ok && unclean.MatchString(c.Comment) },
-		'I': func(i int) bool { p, ok := e(i).(undecode); return ok && p.undecodable("utf-8") },
+		'I': func(i int) bool { p, ok := e(i).(decodable); return ok && !p.decodable() },
 		'D': func(i int) bool { p, ok := e(i).(alldel); return ok && p.alldeletes(nil) },
 		'N': func(i int) bool { return rs.hasReference(e(i)) },
 	}
