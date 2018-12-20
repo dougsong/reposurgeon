@@ -15816,7 +15816,7 @@ type filterCommand struct {
 	attributes stringSet
 }
 
-// newFilterCmmand - Initialize a filter from the command line.
+// newFilterCommand - Initialize a filter from the command line.
 func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
 	fc := new(filterCommand)
 	fc.repo = repo
@@ -15876,9 +15876,19 @@ func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
 					return nil
 				}
 				fc.sub = func(s string) string {
-					//FIXME: Regression since Python,
-					// defaults to the old 'g' behavior'.
-					return fc.regexp.ReplaceAllString(s, parts[2])
+					if subcount == -1 {
+						return fc.regexp.ReplaceAllString(s, parts[2])
+					} else {
+						replacecount := subcount
+						replacer := func(s string) string {
+							replacecount--
+							if replacecount > -1 {
+								return parts[2]
+							}
+							return s
+						}
+						return fc.regexp.ReplaceAllStringFunc(s, replacer)
+					}
 				}
 			} else if strings.HasPrefix(filtercmd, "--replace") {
 				fc.sub = func(s string) string {
@@ -15916,8 +15926,8 @@ func (fc *filterCommand) do(content string) string {
 		content, err := cmd.CombinedOutput()
 		if err != nil {
 			complain("filter command failed")
-			return string(content)
 		}
+		return string(content)
 	} else if fc.sub != nil {
 		return fc.sub(content)
 	} else {

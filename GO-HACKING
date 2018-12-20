@@ -86,7 +86,6 @@ x-delete: delete primitive failed
 x-delkeepsbranch: delete primitive failed
 x-diff: wrapper around the Differ call appears to be wrong.
 x-divide: divide logic appears broken
-x-filter: filtered items aren't modified - probably copy vs. reference error.
 x-graft2: panics.
 x-graft-prune: panics.
 x-graft: panics.
