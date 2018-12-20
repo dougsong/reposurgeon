@@ -88,6 +88,7 @@ import (
 	"net/mail"
 	"os"
 	"os/exec"
+	"os/signal"
 	"os/user"
 	"path"
 	"path/filepath"
@@ -2480,6 +2481,7 @@ developers.
 type Context struct {
 	verbose     int
 	blobseq     int
+	signals     chan os.Signal
 	// The abort flag
 	relax       bool
 	abortScript bool
@@ -2493,6 +2495,16 @@ func (ctx *Context) init() {
 	ctx.flagOptions = make(map[string]bool)
 	ctx.listOptions = make(map[string]stringSet)
 	ctx.mapOptions = make(map[string]map[string]string)
+	ctx.signals = make(chan os.Signal, 1)
+	signal.Notify(context.signals, os.Interrupt)
+	go func() {
+		for {
+			<-context.signals
+			context.setAbort(true)
+			fmt.Printf("Interrupt\n")
+		}
+	}()
+		
 }
 
 var context Context
@@ -6617,7 +6629,6 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 //
 // The main event
 //
-// FIXME: When we have signal notifications, fire the defer on signal.
 
 func (sp *StreamParser) fastImport(fp io.Reader,
 	options stringSet, progress bool, source string) {
@@ -6674,7 +6685,7 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 		croak(warning)
 	}
 
-	// FIXME: When we have signal notifications, fire the defer on signal.
+	// FIXME: Fire the defer on signal. First attempt at this failed.
 	defer func() {
 		if e := catch("parse", recover()); e != nil {
 			if baton != nil {
@@ -13673,6 +13684,9 @@ func (rs *Reposurgeon) reportSelect(parse *LineParse, display func(*LineParse, i
 			} else {
 				fmt.Fprintln(parse.stdout, summary)
 			}
+		}
+		if context.getAbort() {
+			break
 		}
 	}
 }
