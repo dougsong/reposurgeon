@@ -1503,10 +1503,12 @@ func (ge GitExtractor) gatherAllReferences(rs *RepoStreamer) error {
 		}
 		rs.refs.set("refs/tags/"+tag, objecthash)
 		if objecthash != taghash {
+			attrib, err := newAttribution(tagger)
+			if err != nil {
+				return fmt.Errorf("warning: atttribution in tag %s garbled: %v", tag, err)
+			}
 			// committish isn't a mark; we'll fix that later
-			tagobj := *newTag(nil, tag, objecthash,
-				newAttribution(tagger),
-				comment)
+			tagobj := *newTag(nil, tag, objecthash,	attrib,	comment)
 			rs.tags = append(rs.tags, tagobj)
 		}
 		rs.baton.twirl("")
@@ -2147,10 +2149,17 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 		rs.baton.twirl("")
 		present := rs.extractor.checkout(revision)
 		parents := rs.getParents(revision)
-		commit.committer = *newAttribution(rs.getCommitter(revision))
+		attrib, err := newAttribution(rs.getCommitter(revision))
+		if err != nil {
+			panic(throw("extract", "garbled commit attribution: %v", err))
+		}
+		commit.committer = *attrib
 		for _, a := range rs.getAuthors(revision) {
-			commit.authors = append(commit.authors,
-				*newAttribution(a))
+			attrib, err = newAttribution(a)
+			if err != nil {
+				panic(throw("extract", "garbled author attribution: %v", err))
+			}
+			commit.authors = append(commit.authors,	*attrib)
 		}
 		for _, rev := range parents {
 			commit.addParentCommit(rs.commitMap[rev])
@@ -3050,21 +3059,19 @@ func (attr *Attribution) address() (string, string) {
 }
 
 // newAttribution makes an Attribution from an author or committer line
-func newAttribution(attrline string) *Attribution {
+func newAttribution(attrline string) (*Attribution, error) {
 	attr := new(Attribution)
 
 	if attrline != "" {
 		fullname, email, datestamp, err1 := parseAttributionLine(attrline)
 		if err1 != nil {
-			panic(throw("parse", "in newAttribution: %v", err1))
+			return attr, fmt.Errorf("malformed attribution: %v", err1)
 		}
 		parsed, err2 := newDate(datestamp)
 		if err2 != nil {
-			//FIXME: What to do when this is called by DoMsgin?
-			//Right now it's panic time because the main loop only
-			// catches when we throw "command".
-			panic(throw("parse", "Malformed attribution date '%s' in '%s': %v",
-				datestamp, attrline, err2))
+			return attr,
+				fmt.Errorf("malformed attribution date '%s' in '%s': %v",
+				datestamp, attrline, err2)
 		}
 		// Deal with a cvs2svn artifact
 		if fullname == "(no author)" {
@@ -3074,7 +3081,7 @@ func newAttribution(attrline string) *Attribution {
 		attr.email = intern(email)
 		attr.date = parsed
 	}
-	return attr
+	return attr, nil
 }
 
 func (attr Attribution) String() string {
@@ -3082,7 +3089,7 @@ func (attr Attribution) String() string {
 }
 
 func (attr *Attribution) clone() *Attribution {
-	mycopy := newAttribution("")
+	mycopy, _ := newAttribution("")
 	mycopy.fullname = attr.fullname
 	mycopy.email = attr.email
 	mycopy.date = attr.date.clone()
@@ -4437,7 +4444,11 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 		// msg is *not* a dict so the .keys() is correct
 		sort.Strings(authorkeys)
 		for i := 0; i < len(authorkeys)-len(commit.authors); i++ {
-			commit.authors = append(commit.authors, *newAttribution(msg.getHeader(authorkeys[i])))
+			attrib, err := newAttribution(msg.getHeader(authorkeys[i]))
+			if err != nil {
+				panic(throw("msgbox", "bad author field: %v", err))
+			}
+			commit.authors = append(commit.authors, *attrib)
 		}
 		// Another potential minor bug: permuting the set of authors
 		// will look like a modification, as old and new authors are
@@ -6388,12 +6399,18 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 					sp.repo.markseq++
 					commit.setMark(strings.TrimSpace(line[5:]))
 				} else if strings.HasPrefix(line, "author") {
-					attrib := *newAttribution(line[7:])
-					commit.authors = append(commit.authors, attrib)
+					attrib, err := newAttribution(line[7:])
+					if err != nil {
+						panic(throw("parse", "in author field: %v", err))
+					}
+					commit.authors = append(commit.authors, *attrib)
 					sp.repo.tzmap[attrib.email] = attrib.date.timestamp.Location()
 				} else if strings.HasPrefix(line, "committer") {
-					attrib := *newAttribution(line[10:])
-					commit.committer = attrib
+					attrib, err := newAttribution(line[10:])
+					if err != nil {
+						panic(throw("parse", "in committer field: %v", err))
+					}
+					commit.committer = *attrib
 					sp.repo.tzmap[attrib.email] = attrib.date.timestamp.Location()
 				} else if strings.HasPrefix(line, "property") {
 					commit.properties = newOrderedMap()
@@ -6551,7 +6568,11 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			}
 			line = sp.fiReadline()
 			if strings.HasPrefix(line, "tagger") {
-				tagger = newAttribution(line[7:])
+				var err error
+				tagger, err = newAttribution(line[7:])
+				if err != nil {
+					panic(throw("parse", "in tagger field: %v", err))
+				}
 			} else {
 				sp.warn("missing tagger after from in tag")
 				sp.pushback(line)
@@ -13816,7 +13837,11 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 				newtagger := hook(oldtagger)
 				if oldtagger != newtagger {
 					newtagger += " " + tag.tagger.date.String()
-					tag.tagger = newAttribution(newtagger)
+					attrib, err := newAttribution(newtagger)
+					if err != nil {
+						panic(throw("command", "in data traverse of tag: %v", err))
+					}
+					tag.tagger = attrib
 					anychanged = anychanged || true
 				}
 				if anychanged {
@@ -13839,7 +13864,11 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 					changed := (oldcommitter != newcommitter)
 					if changed {
 						newcommitter += " " + commit.committer.date.String()
-						commit.committer = *newAttribution(newcommitter)
+						attrib, err := newAttribution(newcommitter)
+						if err != nil {
+							panic(throw("command", "in data traverse of commit: %v", err))
+						}
+						commit.committer = *attrib
 						anychanged = true
 					}
 				}
@@ -13849,7 +13878,11 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 						newauthor := hook(oldauthor)
 						if oldauthor != newauthor {
 							newauthor += " " + commit.authors[i].date.String()
-							commit.authors[i] = *newAttribution(newauthor)
+							attrib, err := newAttribution(newauthor)
+							if err != nil {
+								panic(throw("command", "in data traverse of commit: %v", err))
+							}
+							commit.authors[i] = *attrib
 							anychanged = true
 						}
 					}
@@ -15490,14 +15523,16 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 		for _, message := range updateList {
 			if strings.Contains(message.String(), "Tag-Name") {
 				blank := newTag(nil, "", "", nil, "")
-				blank.tagger = newAttribution("")
+				attrib, _ :=  newAttribution("")
+				blank.tagger = attrib
 				blank.emailIn(message, true)
 				commits := repo.commits(nil)
 				blank.remember(repo, commits[len(commits)-1].mark)
 				repo.addEvent(blank)
 			} else {
 				blank := newCommit(repo)
-				blank.committer = *newAttribution("")
+				attrib, _ :=  newAttribution("")
+				blank.committer = *attrib
 				blank.emailIn(message, true)
 				blank.mark = repo.newmark()
 				if blank.Branch == "" {
@@ -15557,7 +15592,8 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 			}
 		} else if message.getHeader("Author") != "" && message.getHeader("Author-Date") != "" {
 			blank := newCommit(repo)
-			blank.authors = append(blank.authors, *newAttribution(""))
+			attrib, _ := newAttribution("")
+			blank.authors = append(blank.authors, *attrib)
 			blank.emailIn(message, false)
 			stamp := blank.actionStamp()
 			event = attributionByAuthor[stamp]
@@ -15571,7 +15607,8 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 			}
 		} else if message.getHeader("Committer") != "" && message.getHeader("Committer-Date") != "" {
 			blank := newCommit(repo)
-			blank.committer = *newAttribution("")
+			attrib, _ := newAttribution("")
+			blank.committer = *attrib
 			blank.emailIn(message, false)
 			stamp := blank.committer.actionStamp()
 			event = attributionByCommitter[stamp]
@@ -15585,7 +15622,8 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 			}
 		} else if message.getHeader("Tagger") != "" && message.getHeader("Tagger-Date") != "" {
 			blank := newTag(repo, "", "", nil, "")
-			blank.tagger = newAttribution("")
+			attrib, _ := newAttribution("")
+			blank.tagger = attrib
 			blank.emailIn(message, false)
 			stamp := blank.tagger.actionStamp()
 			event = attributionByAuthor[stamp]
@@ -15599,7 +15637,8 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 			}
 		} else if message.getHeader("Tag-Name") != "" {
 			blank := newTag(repo, "", "", nil, "")
-			blank.tagger = newAttribution("")
+			attrib, _ := newAttribution("")
+			blank.tagger = attrib
 			blank.emailIn(message, false)
 			event = nameMap[blank.name]
 			if event == nil {
@@ -15999,7 +16038,7 @@ func (rs *Reposurgeon) DoSetfield(line string) bool {
 			if field == "author" {
 				attr := value
 				attr += " " + commit.committer.date.String()
-				newattr := newAttribution(attr)
+				newattr, _ := newAttribution("")
 				commit.authors = append(commit.authors, *newattr)
 			} else if field == "commitdate" {
 				newdate, err := newDate(value)
@@ -19774,7 +19813,8 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 
 	// Create new commit to carry the new content
 	blank := newCommit(repo)
-	blank.committer = *newAttribution("")
+	attr, _ := newAttribution("")
+	blank.committer = *attr
 	blank.mark = repo.newmark()
 	blank.repo = repo
 	blank.committer.fullname, blank.committer.email = whoami()
