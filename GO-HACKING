@@ -108,7 +108,7 @@ x-unite3: panics.
 == Tuning for speed ==
 
 The goal of this port is to improve conversion performance on large
-repositories by an order of magniude or more, with the horrible
+repositories by an order of magnitude or more, with the horrible
 example being the GCC subversion history.  Trial runs with the Python
 version were taking 9-10 hours!
 

@@ -2903,7 +2903,7 @@ class Commit(object):
         sys.stdout.write("commit %d, mark %s:\n" % (self.repo.find(self.mark)+1, self.mark))
         for (i, op) in enumerate(self.operations()):
             if op is not None:
-                sys.stdout.write("%d: %-20s\n" % (i, str(op)))
+                sys.stdout.write("%d: %s\n" % (i, str(op)))
     def paths(self, pathtype=None):
         "Return the set of all paths touched by this commit."
         if self._pathset is None:

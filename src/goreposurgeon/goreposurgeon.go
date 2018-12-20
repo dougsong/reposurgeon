@@ -4783,7 +4783,7 @@ func (commit *Commit) fileopDump() {
 	banner := fmt.Sprintf("commit %d, mark %s:\n", commit.repo.markToIndex(commit.mark)+1, commit.mark)
 	os.Stdout.WriteString(banner)
 	for i, op := range commit.operations() {
-		report := fmt.Sprintf("%d: %-20s\n", i, op.String())
+		report := fmt.Sprintf("%d: %s", i, op.String())
 		os.Stdout.WriteString(report)
 	}
 }
