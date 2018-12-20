@@ -112,6 +112,7 @@ import (
 	terminal "golang.org/x/crypto/ssh/terminal"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
 	difflib "github.com/IanBruene/go-difflib/difflib"
+	transform "golang.org/x/text/transform"
 )
 import _ "net/http/pprof"
 
@@ -3658,6 +3659,17 @@ func (t *Tag) decodable() bool {
 	return valid(t.name) && valid(t.tagger.fullname) && valid(t.tagger.email) && valid(t.Comment)
 }
 
+func (t *Tag) transform(transformer transform.Transformer) {
+	tx := func(s string) string {
+		res, _, _ := transform.Bytes(transformer, []byte(s))
+		return string(res)
+	}
+	t.name = tx(t.name)
+	t.tagger.fullname = tx(t.tagger.fullname)
+	t.tagger.email = tx(t.tagger.email)
+	t.Comment = tx(t.Comment)
+}
+
 // branchname returns the full branch reference corresponding to a tag.
 func branchname(tagname string) string {
 	fulltagname := tagname
@@ -5179,6 +5191,20 @@ func (commit *Commit) decodable() bool {
 		}
 	}
 	return true
+}
+
+func (commit *Commit) transform(transformer transform.Transformer) {
+	tx := func(s string) string {
+		res, _, _ := transform.Bytes(transformer, []byte(s))
+		return string(res)
+	}
+	commit.committer.fullname = tx(commit.committer.fullname)
+	commit.committer.email = tx(commit.committer.email)
+	commit.Comment = tx(commit.Comment)
+	for idx := range commit.authors {
+		commit.authors[idx].fullname = tx(commit.authors[idx].fullname)
+		commit.authors[idx].email = tx(commit.authors[idx].email)
+	}
 }
 
 // delete severs this commit from its repository.
@@ -13364,6 +13390,7 @@ func (rs *Reposurgeon) hasReference(event Event) bool {
 func (rs *Reposurgeon) visibilityTypeletters() map[rune]func(int) bool {
 	type decodable interface {
 		decodable() bool
+		transform(transform.Transformer)
 	}
 	type alldel interface {
 		alldeletes(stringSet) bool
@@ -15951,7 +15978,7 @@ blob in the specification.
 The encoding argument must name one of the codecs known to the Go
 standard codecs library. In particular, 'latin-1' is a valid codec name.
 
-Errors in this command are force the repository to be dropped, because an
+Errors in this command force the repository to be dropped, because an
 error may leave repository objects in a damaged state.
 
 `)
@@ -15964,6 +15991,11 @@ func (rs *Reposurgeon) DoTranscode(line string) bool {
 	} else if rs.selection == nil {
 		rs.selection = rs.chosen().all()
 	}
+
+
+
+
+
 	transcode := func(txt string) string {
 		out, ok, err := ianaDecode(txt, line)
 		if !ok || err != nil {
