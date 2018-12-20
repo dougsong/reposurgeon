@@ -11545,7 +11545,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 	// FIXME: Computation of keeperMarks replicates the Python behavior
 	// keeper_marks = set(event.mark for event in self.repo.events if hasattr(event, "mark"))
 	// which selects *all* marks in the unmodified repository, but this is
-	// probably wrong - it should probably explude marks
+	// probably wrong - it should probably exclude marks
 	keeperMarks := make([]string, 0)
 	for _, event := range rl.repo.events {
 		switch event.(type) {
@@ -15347,10 +15347,9 @@ func (rs *Reposurgeon) DoRebuild(line string) bool {
 		croak("no repo has been chosen.")
 		return false
 	}
-	//FIXME: when pre-command hook works.
-	//if rs.selection != nil {
-	//	panic(throw("command", "rebuild does not take a selection set"))
-	//}
+	if len(rs.selection) != 0 {
+		panic(throw("command", "rebuild does not take a selection set"))
+	}
 	parse := rs.newLineParse(line, nil)
 	defer parse.Closem()
 	err := rs.chosen().rebuildRepo(parse.line, parse.options, rs.preferred)
@@ -20161,26 +20160,6 @@ remaining arguments are available to the command logic.
 `)
 }
 
-func (rs *Reposurgeon) HelpFunctions() {
-	//FIXME: This code is incorrect as the handler functions are no longer
-	//methods of the reposurgeon class.  We're keeping it around for the
-	//moment as a worked example of reflection.
-	docstrings := map[string]string{}
-	rs.helpOutput("The following special selection functions are available:\n")
-	t := reflect.TypeOf(rs)
-	for i := 0; i < t.NumMethod(); i++ {
-		tm := t.Method(i)
-		if strings.HasSuffix(tm.Name, "Handler") {
-			shortname := strings.ToLower(tm.Name[:len(tm.Name)-7])
-			docstring, present := docstrings[shortname]
-			if !present {
-				docstring = "(sorry, this function is currently undocumented)"
-			}
-			rs.helpOutput(fmt.Sprintf("@%s()\t%s\n", shortname, docstring))
-		}
-	}
-}
-
 func (rs *Reposurgeon) HelpVerbose() {
 	rs.helpOutput(`
 Without an argument, this command requests a report of the verbosity
@@ -20263,7 +20242,6 @@ func (rs *Reposurgeon) HelpRelax() {
 	rs.helpOutput("Make command errors non-fatal in scripts.\n")
 }
 
-//FIXME: Document this
 func (rs *Reposurgeon) DoRelax(lineIn string) bool {
 	context.relax = true
 	return false
@@ -20510,7 +20488,7 @@ func svnprops(pdict OrderedMap) string {
 
 // Emit a Revision-number record describing unversioned properties.
 // Last argument is a list of revision numbers corresponig to parent commits.
-// FIXME: Last four arguments were ioptional in Python, fix at callsite
+// FIXME: Last four arguments were optional in Python, fix at callsite
 func dumpRevprops(fp io.Writer, revision int, date *Date, author string, log string, parents []int) {
 	fmt.Fprintf(fp, "Revision-number: %d\n", revision)
 	parts := make([]string, 0)
