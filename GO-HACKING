@@ -89,7 +89,6 @@ x-divide: divide logic appears broken
 x-graft2: panics.
 x-graft-prune: panics.
 x-graft: panics.
-x-i18n: filtered items aren't modified - probably copy vs. reference error.
 x-legacy: commit reference parser is busted, should be easy to fix.
 x-liftlogs: changelogs handler is still missing.
 x-macro: Spurious EOF in single-line expansion, and multiline doesn't work.

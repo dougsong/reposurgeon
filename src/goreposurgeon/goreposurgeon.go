@@ -112,7 +112,6 @@ import (
 	terminal "golang.org/x/crypto/ssh/terminal"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
 	difflib "github.com/IanBruene/go-difflib/difflib"
-	transform "golang.org/x/text/transform"
 )
 import _ "net/http/pprof"
 
@@ -3614,60 +3613,11 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 	return modified
 }
 
-// ianaDecode decodes data in a string to UTF-8.
-// The error return tells if a string has undecodable i18n sequences in it.
-// http://www.iana.org/assignments/character-sets/character-sets.xhtml
-func ianaDecode(data, codec string) (string, bool, error) {
-	// This works around a bug in the ianaindex package.
-	// It should return a copying decoder if the name is a synonym for ASCII
-	// but does not.
-	var asciiNames = stringSet{
-		"US-ASCII",
-		"iso-ir-6",
-		"ANSI_X3.4-1968",
-		"ANSI_X3.4-1986",
-		"ISO_646.irv:1991",
-		"ISO646-US",
-		"us",
-		"IBM367",
-		"cp367",
-		"csASCII",
-		"ascii", // Unaccountably not an IANA name
-		"ASCII", // Unaccountably not an IANA name
-	}
-	if asciiNames.Contains(codec) {
-		for _, c := range data {
-			if c > 127 {
-				return data, false, nil
-			}
-		}
-		return data, true, nil
-	}
-	enc, err1 := ianaindex.IANA.Encoding(codec)
-	if err1 != nil {
-		return data, false, err1
-	}
-	dec := enc.NewDecoder()
-	decoded, err2 := dec.Bytes([]byte(data))
-	return string(decoded), err2 == nil, err2
-}
-
 func (t *Tag) decodable() bool {
 	valid := func(s string) bool {
 		return utf8.Valid([]byte(s))
 	}
 	return valid(t.name) && valid(t.tagger.fullname) && valid(t.tagger.email) && valid(t.Comment)
-}
-
-func (t *Tag) transform(transformer transform.Transformer) {
-	tx := func(s string) string {
-		res, _, _ := transform.Bytes(transformer, []byte(s))
-		return string(res)
-	}
-	t.name = tx(t.name)
-	t.tagger.fullname = tx(t.tagger.fullname)
-	t.tagger.email = tx(t.tagger.email)
-	t.Comment = tx(t.Comment)
 }
 
 // branchname returns the full branch reference corresponding to a tag.
@@ -5191,20 +5141,6 @@ func (commit *Commit) decodable() bool {
 		}
 	}
 	return true
-}
-
-func (commit *Commit) transform(transformer transform.Transformer) {
-	tx := func(s string) string {
-		res, _, _ := transform.Bytes(transformer, []byte(s))
-		return string(res)
-	}
-	commit.committer.fullname = tx(commit.committer.fullname)
-	commit.committer.email = tx(commit.committer.email)
-	commit.Comment = tx(commit.Comment)
-	for idx := range commit.authors {
-		commit.authors[idx].fullname = tx(commit.authors[idx].fullname)
-		commit.authors[idx].email = tx(commit.authors[idx].email)
-	}
 }
 
 // delete severs this commit from its repository.
@@ -13390,7 +13326,6 @@ func (rs *Reposurgeon) hasReference(event Event) bool {
 func (rs *Reposurgeon) visibilityTypeletters() map[rune]func(int) bool {
 	type decodable interface {
 		decodable() bool
-		transform(transform.Transformer)
 	}
 	type alldel interface {
 		alldeletes(stringSet) bool
@@ -15992,17 +15927,20 @@ func (rs *Reposurgeon) DoTranscode(line string) bool {
 		rs.selection = rs.chosen().all()
 	}
 
-
-
-
+	enc, err := ianaindex.IANA.Encoding(line)
+	if err != nil {
+		croak("can's set up codec %s: error %v", line, err)
+		return false
+	}
+	decoder := enc.NewDecoder()
 
 	transcode := func(txt string) string {
-		out, ok, err := ianaDecode(txt, line)
-		if !ok || err != nil {
+		out, err := decoder.Bytes([]byte(txt))
+		if err != nil {
 			complain("decode error during transcoding: %v", err)
 			rs.unchoose()
 		}
-		return out
+		return string(out)
 	}
 	rs.dataTraverse("Transcoding",
 		transcode,

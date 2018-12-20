@@ -1657,7 +1657,7 @@ and the commit is within the range bounded by the earliest and latest
 blob in the specification.</para>
 
 <para>The encoding argument must name one of the codecs known to the Python
-standard codecs library. In particular, 'latin-1' is a valid codec name.</para>
+standard codecs library. In particular, 'latin1' is a valid codec name.</para>
 
 <para>Errors in this command are fatal, because an error may leave
 repository objects in a damaged state.</para>
