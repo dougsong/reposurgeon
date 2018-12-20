@@ -84,7 +84,6 @@ x-commit-expunge: expunge operation fails.
 x-debranch3: unknown failure
 x-delete: delete primitive failed
 x-delkeepsbranch: delete primitive failed
-x-diff: wrapper around the Differ call appears to be wrong.
 x-divide: divide logic appears broken
 x-graft2: panics.
 x-graft-prune: panics.

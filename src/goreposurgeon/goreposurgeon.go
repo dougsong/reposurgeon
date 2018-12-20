@@ -18963,7 +18963,7 @@ func (rs *Reposurgeon) DoDiff(line string) bool {
 	for path, _ := range upper.manifest() {
 		dir2.Add(path)
 	}
-	allpaths := dir1.Intersection(dir2)
+	allpaths := dir1.Union(dir2)
 	sort.Strings(allpaths)
 	parse := rs.newLineParse(line, stringSet{"stdout"})
 	defer parse.Closem()
@@ -18975,8 +18975,8 @@ func (rs *Reposurgeon) DoDiff(line string) bool {
 			totext, _ := upper.blobByName(path)
 			// Don't list identical files
 			if fromtext != totext {
-				lines0 := strings.Split(fromtext, "\n")
-				lines1 := strings.Split(totext, "\n")
+				lines0 := difflib.SplitLines(fromtext)
+				lines1 := difflib.SplitLines(totext)
 				file0 := path + " (" + lower.mark + ")"
 				file1 := path + " (" + upper.mark + ")"
 				diff := difflib.UnifiedDiff{
@@ -18987,15 +18987,15 @@ func (rs *Reposurgeon) DoDiff(line string) bool {
 					Context: 3,
 				}
 				text, _ := difflib.GetUnifiedDiffString(diff)
-				fmt.Fprint(parse.stdout, text + "\n")
-			} else if dir1.Contains(path) {
-				fmt.Fprintf(parse.stdout, "%s: removed\n", path)
-			} else if dir2.Contains(path) {
-				fmt.Fprintf(parse.stdout, "%s: added\n", path)
-			} else {
-				complain("internal error - missing path in diff")
-				return false
+				fmt.Fprint(parse.stdout, text)
 			}
+		} else if dir1.Contains(path) {
+			fmt.Fprintf(parse.stdout, "%s: removed\n", path)
+		} else if dir2.Contains(path) {
+			fmt.Fprintf(parse.stdout, "%s: added\n", path)
+		} else {
+			complain("internal error - missing path in diff")
+			return false
 		}
 	}
 	return false
