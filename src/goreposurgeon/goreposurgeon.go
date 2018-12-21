@@ -19104,7 +19104,7 @@ needed 'heads/' or 'tags/'. This allows for choosing the right kind of branch
 type.
 
 While the syntax template above uses slashes, any first character will
-be used as a delimeter (and you will need to use a different one in the
+be used as a delimiter (and you will need to use a different one in the
 common case that the paths contain slashes).
 
 You must give this command *before* the Subversion repository read it

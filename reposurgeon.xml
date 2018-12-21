@@ -2820,7 +2820,7 @@ without either the needed 'heads/' or 'tags/'. This allows for
 choosing the right kind of branch type.</para>
 
 <para>While the syntax template above uses slashes, any first character will
-be used as a delimeter (and you will need to use a different one in the
+be used as a delimiter (and you will need to use a different one in the
 common case that the paths contain slashes).</para>
 
 <para>You must give this command <emphasis>before</emphasis> the

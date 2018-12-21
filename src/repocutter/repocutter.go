@@ -136,7 +136,7 @@ removed as well.
 	"pathrename": `pathrename: usage: repocutter [-r SELECTION ] pathrename FROM TO
 
 Modify Node-path headers, Node-copyfrom-path headers, and
-svn:mergeinfo properies matching the specified Python regular
+svn:mergeinfo properties matching the specified Python regular
 expression FROM; replace with TO.  TO may contain Perl-style
 backreferences to parenthesized portions of FROM.
 `,

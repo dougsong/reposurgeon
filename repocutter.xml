@@ -165,7 +165,7 @@ easier to see.</para></listitem>
 sometimes useful when converting a multi-project Subversion repository
 that has normal trunk/branch/tag structure under each top-level
 directory (of course the alternative is to break it into componebts
-using mutiple strip operations).</para></listitem>
+using multiple strip operations).</para></listitem>
 </varlistentry>
 </variablelist>
 
