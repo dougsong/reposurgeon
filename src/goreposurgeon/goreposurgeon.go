@@ -6886,7 +6886,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			// Conditional retained because computing this filemap
 			// slice can be expensive enough to look like a hang forever
 			// on a sufficiently large repository - GCC was the type case.
-			announce(debugFILEMAP, "r%s copynode filemap is %s",
+			announce(debugFILEMAP, "r%d copynode filemap is %s",
 				copynode.fromRev, filemaps[copynode.fromRev])
 		}
 		copynode.fromSet = newPathMap(nil)
