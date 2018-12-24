@@ -4672,7 +4672,8 @@ func (commit *Commit) addParentByMark(mark string) {
 
 // callout generates a callout cookie for this commit.
 func (commit Commit) callout() string {
-	return commit.actionStamp()
+	result := commit.actionStamp()
+	return result
 }
 
 // is_callot tells if the specified mark field a callout?"
@@ -5229,7 +5230,7 @@ func (commit Commit) String() string {
 	doCallouts := commit.repo.writeOptions.Contains("--callout")
 	if len(parents) > 0 {
 		ancestor := parents[0]
-		if !incremental || commit.repo.internals.Contains(ancestor.getMark()) {
+		if (commit.repo.internals == nil && !incremental) || commit.repo.internals.Contains(ancestor.getMark()) {
 			parts = append(parts, fmt.Sprintf("from %s\n", ancestor.getMark()))
 		} else if doCallouts {
 			parts = append(parts, fmt.Sprintf("from %s\n", ancestor.callout()))
