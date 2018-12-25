@@ -688,9 +688,10 @@ type VCS struct {
 }
 
 // Constants needed in VCS class methods
+const bareNumeric = `[0-9]+`
 const suffixNumeric = `[0-9]+\s`
 const tokenNumeric = `\s` + suffixNumeric
-const dottedNumeric = `\s[0-9]+(\.[0-9]+\s)`
+const dottedNumeric = `\s[0-9]+(\.[0-9]+)`
 
 func (vcs VCS) String() string {
 	realignores := newStringSet()
@@ -1046,7 +1047,7 @@ _darcs
 /.DS_store
 # Simulated Subversion default ignores end here
 `,
-			cookies: reMake(`\b(?:SVN|svn|Subversion|subversion|rev|version)\s+`+suffixNumeric, "r"+suffixNumeric),
+			cookies: reMake(`\b(?:SVN|svn|Subversion|subversion|rev|version)\s+`+suffixNumeric, "r"+suffixNumeric, bareNumeric+`\w`),
 			project: "http://subversion.apache.org/",
 			notes:   "Run from the repository, not a checkout directory.",
 		},
@@ -1094,7 +1095,7 @@ _$*
 core
 # Simulated cvs default ignores end here
 `,
-			cookies: reMake(dottedNumeric),
+			cookies: reMake(dottedNumeric, dottedNumeric+`\w`),
 			project: "http://www.catb.org/~esr/cvs-fast-export",
 			notes:   "Requires cvs-fast-export.",
 		},
@@ -1164,7 +1165,7 @@ core
 			name:    vcs.name,
 			visible: true,
 			engine:  vcs,
-			basevcs: nil,
+			basevcs: vcs,
 		})
 	}
 	// Append extractors to this list
@@ -13352,7 +13353,8 @@ func (rs *Reposurgeon) hasReference(event Event) bool {
 	if rs.chosen().vcs == nil {
 		return false
 	}
-	return rs.chosen().vcs.hasReference([]byte(text))
+	result := rs.chosen().vcs.hasReference([]byte(text))
+	return result
 }
 
 func (rs *Reposurgeon) visibilityTypeletters() map[rune]func(int) bool {

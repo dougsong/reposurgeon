@@ -86,7 +86,6 @@ x-divide: divide logic appears broken
 x-graft2: ill-formed stream error
 x-graft-prune: ill-formed stream error
 x-graft: ill-formed stream error
-x-legacy: commit reference parser is busted, should be easy to fix.
 x-liftlogs: changelogs handler is still missing.
 x-macro: Spurious EOF in single-line expansion, and multiline doesn't work.
 x-multiple-tagback: unknown failure.
