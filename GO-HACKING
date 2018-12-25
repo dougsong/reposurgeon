@@ -76,23 +76,33 @@ x-userignores.tst
 The following tests presently fail under Go.  Reducing this list to
 empty is a near-term goal.
 
+x-calloutgraft: panics
 x-changelog: handler is not yet implemented.
 x-checktext: there's some minor defect in the msgin translation.
 x-commit-expunge: expunge operation fails.
 x-debranch3: unknown failure
 x-delkeepsbranch: delete primitive failed
 x-divide: divide logic appears broken
+x-graft2: panics
+x-graft-prune: panics
+x-graft: panics 
 x-legacy: commit reference parser is busted, should be easy to fix.
 x-liftlogs: changelogs handler is still missing.
 x-macro: Spurious EOF in single-line expansion, and multiline doesn't work.
 x-multiple-tagback: unknown failure.
+x-multiroot: panics 
 x-pathrename: ancestry check is failing.
 x-pathrename-with-set: rename operation fails.
+x-prune: panics
 x-reorder: toposort code is busted.
+x-reparent: panics
 x-restructure: unknown failure
 x-simple: several command failures, none look very difficult
 x-tagcreate: create date is wrong, should be simple to fix.
 x-tagify: throws mark not found.
+x-treecontent: no panic, wrong result
+x-unite: panics
+x-unite3: panics
 
 == Tuning for speed ==
 
