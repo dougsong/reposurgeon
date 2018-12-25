@@ -5042,9 +5042,9 @@ func (commit *Commit) checkout(directory string) string {
 			// https://github.com/golang/go/issues/22323
 			var dpath string
 			for i := range parts[0 : len(parts)-1] {
-				dpath = filepath.FromSlash(strings.Join(parts[:i], "/"))
+				dpath = filepath.FromSlash(strings.Join(parts[:i+1], "/"))
 				err := os.Mkdir(dpath, userReadWriteMode)
-				if err != nil {
+				if err != nil && !os.IsExist(err) {
 					panic(fmt.Errorf("Directory creation failed during checkout: %v", err))
 				}
 
