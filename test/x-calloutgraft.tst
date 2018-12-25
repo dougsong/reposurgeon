@@ -2,8 +2,8 @@
 read <debranch3.fi
 /alternate/b delete
 # Relies on the fact that callout.chk was created from the branch just deleted
-read <x-callout.chk
+read <callout.chk
 choose debranch3
-graft x-callout.chk
+graft callout.chk
 # The result should be topologically equivalent to the original debranch3.fi
 write -
