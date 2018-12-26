@@ -8726,7 +8726,7 @@ func (repo *Repository) tagify(commit *Commit, name string, target string, legen
 	}
 	tag := newTag(commit.repo, name, target, &commit.committer, pref+legend)
 	tag.legacyID = commit.legacyID
-	//repo.addEvent(tag)
+	repo.addEvent(tag)
 	if delete {
 		commit.delete([]string{"--tagback"})
 	}
@@ -8808,38 +8808,38 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 				for repo.named(name) != nil {
 					name += "-displaced"
 				}
-			}
-			legend := ""
-			if legendFunc != nil {
-				legend = legendFunc(commit)
-			}
-			commit.setOperations(nil)
-			if createTags {
-				repo.tagify(commit,
-					name,
-					commit.parents()[0].getMark(),
-					legend,
-					false)
-			}
-			deletia = append(deletia, index)
-		} else {
-			msg := ""
-			if commit.legacyID != "" {
-				// FIXME: Subversion assumption
-				msg += fmt.Sprintf(" r%s:", commit.legacyID)
-			} else if commit.mark != "" {
-				msg += fmt.Sprintf(" '%s':", commit.mark)
-			}
-			msg += " deleting parentless "
-			if len(commit.operations()) > 0 {
-				msg += fmt.Sprintf("tip delete of %s.\n", commit.Branch)
+				legend := ""
+				if legendFunc != nil {
+					legend = legendFunc(commit)
+				}
+				commit.setOperations(nil)
+				if createTags {
+					repo.tagify(commit,
+						name,
+						commit.parents()[0].getMark(),
+						legend,
+						false)
+				}
+				deletia = append(deletia, index)
 			} else {
-				msg += fmt.Sprintf("zero-op commit on %s.\n", commit.Branch)
+				msg := ""
+				if commit.legacyID != "" {
+					// FIXME: Subversion assumption
+					msg += fmt.Sprintf(" r%s:", commit.legacyID)
+				} else if commit.mark != "" {
+					msg += fmt.Sprintf(" '%s':", commit.mark)
+				}
+				msg += " deleting parentless "
+				if len(commit.operations()) > 0 {
+					msg += fmt.Sprintf("tip delete of %s.\n", commit.Branch)
+				} else {
+					msg += fmt.Sprintf("zero-op commit on %s.\n", commit.Branch)
+				}
+				if gripe != nil {
+					gripe(msg[1:])
+				}
+				deletia = append(deletia, index)
 			}
-			if gripe != nil {
-				gripe(msg[1:])
-			}
-			deletia = append(deletia, index)
 		}
 	}
 	repo.delete(deletia, []string{"--tagback", "--tagify"})
@@ -17530,7 +17530,7 @@ func (rs *Reposurgeon) DoTagify(line string) bool {
 		parse.options.Contains("--canonicalize"),
 		nil,
 		nil,
-		false,
+		true,
 		func(msg string) { fmt.Print(msg) })
 	after := len(repo.commits(nil))
 	announce(debugSHOUT, "%d commits tagified.", before-after)
