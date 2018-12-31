@@ -65,7 +65,7 @@ dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc -f nofooter.conf
 #
 
 # Temporary; it's here to track which test sections have succeeded
-goregress:
+goregress: gotest
 	 cd test; make STOPOUT=$(STOPOUT) REPOSURGEON=goreposurgeon
 
 # If you get a compilation failure on the golang-pkg-pcre library,

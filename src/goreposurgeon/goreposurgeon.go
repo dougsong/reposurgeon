@@ -688,7 +688,6 @@ type VCS struct {
 }
 
 // Constants needed in VCS class methods
-const bareNumeric = `[0-9]+`
 const suffixNumeric = `[0-9]+\s`
 const tokenNumeric = `\s` + suffixNumeric
 const dottedNumeric = `\s[0-9]+(\.[0-9]+)`
@@ -1047,7 +1046,7 @@ _darcs
 /.DS_store
 # Simulated Subversion default ignores end here
 `,
-			cookies: reMake(`\b(?:SVN|svn|Subversion|subversion|rev|version)\s+`+suffixNumeric, "r"+suffixNumeric, bareNumeric+`\w`),
+			cookies: reMake(`\b(?:SVN|svn|Subversion|subversion|rev|version)\s+`+suffixNumeric, "r"+suffixNumeric),
 			project: "http://subversion.apache.org/",
 			notes:   "Run from the repository, not a checkout directory.",
 		},
