@@ -14700,7 +14700,7 @@ func (rs *Reposurgeon) DoPrefer(line string) bool {
 		known := ""
 		rs.preferred = nil
 		for _, repotype := range importers {
-			if repotype.basevcs == nil && strings.ToLower(line) == repotype.name {
+			if repotype.basevcs != nil && strings.ToLower(line) == repotype.name {
 				rs.preferred = repotype.engine.(*VCS)
 				return false
 			}
