@@ -41,6 +41,9 @@ HTMLFILES = $(MANPAGES:.1=.html) \
             dvcs-migration-guide.html features.html reporting-bugs.html
 SHARED    = $(DOCS) reposurgeon-git-aliases $(HTMLFILES)
 
+# THe following would produce reproducible builds, but it breaks Gitlab CI.
+#GOFLAGS=-gcflags 'all=-N -l -trimpath $(GOPATH)/src' -asmflags 'all=-trimpath $(GOPATH)/src'
+
 GOFLAGS=-gcflags '-N -l'
 all:  $(MANPAGES) $(HTMLFILES)
 	GOPATH=$(GOPATH) go build $(GOFLAGS) repocutter
