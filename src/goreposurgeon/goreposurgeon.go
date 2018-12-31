@@ -4663,11 +4663,11 @@ func (commit *Commit) addParentCommit(newparent *Commit) {
 }
 
 func (commit *Commit) addParentByMark(mark string) {
-	newparent := commit.repo.markToEvent(mark).(*Commit)
+	newparent := commit.repo.markToEvent(mark)
 	if newparent == nil {
 		panic("Ill-formed stream: cannot resolve " + mark)
 	}
-	commit.addParentCommit(newparent)
+	commit.addParentCommit(newparent.(*Commit))
 }
 
 // callout generates a callout cookie for this commit.
@@ -18106,8 +18106,9 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 		}
 	} else if verb == "delete" {
 		for _, tag := range tags {
-			tag.forget()
+			// the order here in important
 			repo.delete([]int{tag.index()}, nil)
+			tag.forget()
 		}
 		if len(tags) > 0 {
 			repo.declareSequenceMutation("tag deletion")
