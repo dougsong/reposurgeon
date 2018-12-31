@@ -17677,6 +17677,10 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 		croak("no repo has been chosen.")
 		return false
 	}
+	// FIXME: Prevents infinite loop, but shouldn't be necessary.
+	for _, commit := range repo.commits(nil) {
+		commit.invalidateManifests()
+	}
 	parse := rs.newLineParse(line, nil)
 	defer parse.Closem()
 	useOrder := parse.options.Contains("--use-order")
