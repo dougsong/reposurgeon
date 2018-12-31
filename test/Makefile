@@ -38,7 +38,6 @@ portcheck: check
 	@if ./setpypy python2; then time make -e --quiet python; else echo "python2 missing; skipping tests"; fi
 	@if ./setpypy python3; then time make -e --quiet python; else echo "python3 missing; skipping tests"; fi
 	@./setpypy pypy 2>/dev/null || :
-	@time make nonpython
 	@echo "=== No diff output is good news."
 
 python: listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce \
@@ -46,9 +45,6 @@ python: listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce \
 		git-regress-tags hg-extractor svnload-regress \
 		liftcheck-regress legacy-regress svndump-regress \
 		svncheck-regress
-
-#nonpython: repomapper-regress repotool-regress repocutter-regress
-#	GOPATH=$(GOPATH) go test -v goreposurgeon
 
 hg-extractor: hg-regress hg-regress-branches hg-regress-merges \
 		hg-regress-tags hg-regress-patho
