@@ -20387,13 +20387,12 @@ func main() {
 	interpreter := kommandant.NewKommandant(rs)
 	interpreter.EnableReadline(true)
 
-	// FIXME: restore this when code is more stable
-	//defer func() {
-	//	if e := recover(); e != nil {
-	//		fmt.Println("reposurgeon: panic recovery: ", e)
-	//	}
-	//	go rs.cleanup()
-	//}()
+	defer func() {
+		if e := recover(); e != nil {
+			fmt.Println("reposurgeon: panic recovery: ", e)
+		}
+		go rs.cleanup()
+	}()
 
 	if len(os.Args[1:]) == 0 {
 		os.Args = append(os.Args, "-")
