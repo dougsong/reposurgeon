@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -71,6 +72,19 @@ func assertIntEqual(t *testing.T, a int, b int) {
 	if a != b {
 		t.Errorf("assertIntEqual: expected %d == %d", a, b)
 	}
+}
+
+// This is pretty strange.  According to the Go documentation, there
+// are no backreferences. Yet this works under 1.10.4 
+func TestBackreferences(t *testing.T) {
+	from := []byte("aaabxbcccc")
+	pattern := "b(.)b"
+	replacement := []byte("dd${1}d")
+	expected := "aaaddxdcccc"
+
+	pre := regexp.MustCompile(pattern)
+	result := pre.ReplaceAll(from, replacement)
+	assertEqual(t, string(result), expected)
 }
 
 func TestStringSet(t *testing.T) {
