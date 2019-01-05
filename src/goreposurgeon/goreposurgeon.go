@@ -9462,7 +9462,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 			if delete {
 				speak := fmt.Sprintf("warning: commit %s to be deleted has ", commit.mark)
 				if strings.Contains(commit.Branch, "/") && !strings.Contains(commit.Branch, "/heads/") {
-					croak(speak + fmt.Sprintf("non-head branch attribute %s", commit.Branch))
+					complain(speak + fmt.Sprintf("non-head branch attribute %s", commit.Branch))
 				}
 				if !commit.alldeletes(nil) {
 					complain(speak + "non-delete fileops.")
@@ -9470,10 +9470,10 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 			}
 			if !delete {
 				if pushback && !commit.hasParents() {
-					croak("warning: pushback of parentless commit %s", commit.mark)
+					complain("warning: pushback of parentless commit %s", commit.mark)
 				}
 				if pushforward && !commit.hasChildren() {
-					croak("warning: pushforward of childless commit %s", commit.mark)
+					complain("warning: pushforward of childless commit %s", commit.mark)
 				}
 			}
 		}
@@ -9685,12 +9685,12 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				// use a copy of attachments since it
 				// will be mutated
 				for _, e := range commit.attachments {
-					switch event.(type) {
+					switch e.(type) {
 					case *Tag:
 						e.(*Tag).forget()
-						e.(*Reset).remember(repo, newTarget.mark)
+						e.(*Tag).remember(repo, newTarget.mark)
 					case *Reset:
-						e.(*Tag).forget()
+						e.(*Reset).forget()
 						e.(*Reset).remember(repo, newTarget.mark)
 					}
 				}
