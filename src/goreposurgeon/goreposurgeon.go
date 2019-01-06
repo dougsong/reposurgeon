@@ -9562,22 +9562,22 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				}
 				// Start with existing parents before us,
 				// including existing duplicates
-				newParents := oldParents[:eventPos]
+				newParents := make([]CommitLike, len(oldParents) - 1 + len(commit.parents()))
+				newParentIndex := 0
+				newParentIndex += copy(newParents, oldParents[:eventPos])
 				// Add our parents. The Python version
 				// tossed out duplicates of preceding
 				// parents.  Skip callouts.
 				for _, ancestor := range commit.parents() {
-					cparent, ok := ancestor.(*Commit)
-					if ok {
-						newParents = append(newParents, cparent)
-					}
+					newParents[newParentIndex] = ancestor
+					newParentIndex += 1
 				}
 				// In Python, we "Avoid duplicates due to
 				// commit.parents() insertion." Requires some
 				// odd contortions in Go so we won't do it
 				// unless there's a bug case.
 				if len(oldParents) > eventPos {
-					newParents = append(newParents, oldParents[eventPos+1:]...)
+					copy(newParents[newParentIndex:], oldParents[eventPos+1:])
 				}
 				// Prepend a copy of this event's file ops to
 				// all children with the event as their first
