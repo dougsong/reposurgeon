@@ -9570,7 +9570,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				// parents.  Skip callouts.
 				for _, ancestor := range commit.parents() {
 					newParents[newParentIndex] = ancestor
-					newParentIndex += 1
+					newParentIndex++
 				}
 				// In Python, we "Avoid duplicates due to
 				// commit.parents() insertion." Requires some
@@ -10291,7 +10291,7 @@ func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options str
 		where := repo.events[graftPoint]
 		anchor, ok = where.(*Commit)
 		if !ok {
-			return fmt.Errorf("%s in %s is not a commit.",
+			return fmt.Errorf("%s in %s is not a commit",
 				where.idMe(), repo.name)
 		}
 	}
@@ -10769,7 +10769,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		return errors.New("please prefer a repo type first")
 	}
 	if vcs.importer == "" {
-		return fmt.Errorf("%s repositories supported for read only.",
+		return fmt.Errorf("%s repositories supported for read only",
 			vcs.name)
 
 	}
@@ -10791,7 +10791,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 	} else {
 		staging = fmt.Sprintf("%s-stage%d", target, os.Getpid())
 		if !filepath.IsAbs(target) || !filepath.IsAbs(staging) {
-			return fmt.Errorf("internal error: target (%s) and staging paths (%s) should be absolute.", target, staging)
+			return fmt.Errorf("internal error: target (%s) and staging paths (%s) should be absolute", target, staging)
 		}
 		err := os.Mkdir(staging, userReadWriteMode)
 		if err != nil {
@@ -19014,11 +19014,11 @@ func (rs *Reposurgeon) DoDiff(line string) bool {
 		return false
 	}
 	dir1 := newStringSet()
-	for path, _ := range lower.manifest() {
+	for path := range lower.manifest() {
 		dir1.Add(path)
 	}
 	dir2 := newStringSet()
-	for path, _ := range upper.manifest() {
+	for path := range upper.manifest() {
 		dir2.Add(path)
 	}
 	allpaths := dir1.Union(dir2)
