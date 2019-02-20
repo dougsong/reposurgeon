@@ -1,8 +1,6 @@
 #
 # makefile for reposurgeon
 #
-GOPATH=$(shell pwd)
-
 INSTALL=install
 XMLTO=xmlto
 XMLTOOPTS=-m docbook-extra.xml
@@ -46,9 +44,9 @@ SHARED    = $(DOCS) reposurgeon-git-aliases $(HTMLFILES)
 
 GOFLAGS=-gcflags '-N -l'
 all:  $(MANPAGES) $(HTMLFILES)
-	GOPATH=$(GOPATH) go build $(GOFLAGS) repocutter
-	GOPATH=$(GOPATH) go build $(GOFLAGS) repomapper
-	GOPATH=$(GOPATH) go build $(GOFLAGS) goreposurgeon
+	go build $(GOFLAGS) -o repoctter ./go-repocutter
+	go build $(GOFLAGS) -o repomapper ./go-repomapper
+	go build $(GOFLAGS) -o goreposurgeon ./go-reposurgeon
 
 %.1: %.xml
 	$(XMLTO) $(XMLTOOPTS) man $<
@@ -68,38 +66,23 @@ dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc -f nofooter.conf
 goregress: gotest
 	 cd test; make STOPOUT=$(STOPOUT) REPOSURGEON=goreposurgeon
 
-# If you get a compilation failure on the golang-pkg-pcre library,
-# install libpcre3-dev or equivelent.
-gosetup:
-	GOPATH=$(GOPATH) go get -u -f github.com/google/go-cmp/cmp
-	GOPATH=$(GOPATH) go get -u -f golang.org/x/crypto/ssh/terminal
-	GOPATH=$(GOPATH) go get -u -f golang.org/x/text/encoding/ianaindex
-	GOPATH=$(GOPATH) go get -u -f gitlab.com/ianbruene/kommandant
-	GOPATH=$(GOPATH) go get -u -f github.com/emirpasic/gods/sets/linkedhashset
-	GOPATH=$(GOPATH) go get -u -f github.com/anmitsu/go-shlex
-	GOPATH=$(GOPATH) go get -u -f github.com/termie/go-shutil
-	GOPATH=$(GOPATH) go get -u -f github.com/google/uuid
-	GOPATH=$(GOPATH) go get -u -f github.com/glenn-brown/golang-pkg-pcre/src/pkg/pcre
-	#GOPATH=$(GOPATH) go get -u -f github.com/pmezard/go-difflib/difflib
-	GOPATH=$(GOPATH) go get -u -f github.com/IanBruene/go-difflib/difflib
-
 govet:
-	GOPATH=$(GOPATH) go vet repocutter
-	GOPATH=$(GOPATH) go vet repomapper
-	GOPATH=$(GOPATH) go vet goreposurgeon
+	go vet ./go-repocutter
+	go vet ./go-repomapper
+	go vet ./go-reposurgeon
 
 gotest:
-	GOPATH=$(GOPATH) GOCACHE=off go test $(TESTOPTS) goreposurgeon
+	go test $(TESTOPTS) ./go-reposurgeon
 
 gofmt goformat:
-	gofmt -w src/repocutter/
-	gofmt -w src/repomapper/
-	gofmt -w src/goreposurgeon/
+	gofmt -w ./go-repocutter/
+	gofmt -w ./go-repomapper/
+	gofmt -w ./go-reposurgeon/
 
 golint:
-	golint src/repocutter | ./lintfilter 2>&1
-	golint src/repomapper | ./lintfilter 2>&1
-	golint src/goreposurgeon | ./lintfilter 2>&1
+	golint ./go-repocutter | ./lintfilter 2>&1
+	golint ./go-repomapper | ./lintfilter 2>&1
+	golint ./go-reposurgeon | ./lintfilter 2>&1
 
 #
 # Installation
