@@ -110,7 +110,7 @@ import (
 	cmp "github.com/google/go-cmp/cmp"
 	uuid "github.com/google/uuid"
 	shutil "github.com/termie/go-shutil"
-	kommandant "gitlab.com/ianbruene/Kommandant"
+	kommandant "gitlab.com/ianbruene/kommandant"
 	terminal "golang.org/x/crypto/ssh/terminal"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
 )
