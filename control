@@ -22,6 +22,8 @@ XBS-IRC-Channel: irc://chat.freenode.net/#reposurgeon
 
 XBS-OpenHub-URL: https://www.ohloh.net/p/reposurgeon
 
+XBS-Debian-Packages: reposurgeon
+
 XBS-Logo: reposturgeon.png
 
 XBS-VC-Tag-Template: %(version)s
