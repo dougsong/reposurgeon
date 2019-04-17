@@ -252,7 +252,7 @@ func NewLineBufferedSource(source io.Reader) LineBufferedSource {
 
 // Rewind - reset source to its beginning, only works when seekable
 func (lbs *LineBufferedSource) Rewind() {
-	lbs.reader.Reset(lbs.reader)
+	lbs.reader.Reset(lbs.source)
 	if lbs.stream != nil {
 		if debug {
 			fmt.Fprintf(os.Stderr, "<Rewind>\n")
