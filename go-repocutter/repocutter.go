@@ -1072,7 +1072,7 @@ func doreduce(source DumpfileSource) {
 	var selection string
 	integerIn := func(n int, v []int) bool {
 		for _, i := range v {
-			if n == v[i] {
+			if n == i {
 				return true
 			}
 		}
