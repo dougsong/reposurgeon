@@ -1072,12 +1072,8 @@ func doreduce(source DumpfileSource) {
 	source.Report(NewSubversionRange("0:HEAD"), reducehook, nil, false, true)
 	var selection string
 	integerIn := func(n int, v []int) bool {
-		for _, i := range v {
-			if n == i {
-				return true
-			}
-		}
-		return false
+		idx := sort.SearchInts(v[:], n)
+		return idx < len(v) && v[idx] == n
 	}
 	sort.Ints(interesting[:])
 	prev := -1
