@@ -1058,13 +1058,13 @@ func doreduce(source DumpfileSource) {
 	interesting := make([]int, 0)
 	reducehook := func(header []byte, properties []byte, _ []byte) []byte {
 		if !(string(getHeader(header, "Node-kind")) == "file" && string(getHeader(header, "Node-action")) == "change") || len(properties) > 0 { //len([]nil == 0)
-			interesting = append(interesting, source.Revision)
+			interesting = append(interesting, source.Revision-1, source.Revision, source.Revision+1)
 		}
 		copysource := getHeader(header, "Node-copyfrom-rev")
 		if copysource != nil {
 			n, err := strconv.Atoi(string(copysource))
 			if err == nil {
-				interesting = append(interesting, n)
+				interesting = append(interesting, n-1, n, n+1)
 			}
 		}
 		return nil
