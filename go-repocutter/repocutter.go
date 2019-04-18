@@ -11,6 +11,7 @@ import (
 	"math"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -1078,7 +1079,13 @@ func doreduce(source DumpfileSource) {
 		}
 		return false
 	}
+	sort.Ints(interesting[:])
+	prev := -1
 	for _, item := range interesting {
+		if item == prev {
+			continue
+		}
+		prev = item
 		if integerIn(item-1, interesting) || integerIn(item, interesting) || integerIn(item+1, interesting) {
 			selection += fmt.Sprintf("%d,", item)
 		}
