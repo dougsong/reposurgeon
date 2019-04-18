@@ -1071,10 +1071,6 @@ func doreduce(source DumpfileSource) {
 	}
 	source.Report(NewSubversionRange("0:HEAD"), reducehook, nil, false, true)
 	var selection string
-	integerIn := func(n int, v []int) bool {
-		idx := sort.SearchInts(v[:], n)
-		return idx < len(v) && v[idx] == n
-	}
 	sort.Ints(interesting[:])
 	prev := -1
 	for _, item := range interesting {
@@ -1082,9 +1078,7 @@ func doreduce(source DumpfileSource) {
 			continue
 		}
 		prev = item
-		if integerIn(item-1, interesting) || integerIn(item, interesting) || integerIn(item+1, interesting) {
-			selection += fmt.Sprintf("%d,", item)
-		}
+		selection += fmt.Sprintf("%d,", item)
 	}
 	source.Lbs.Rewind()
 	// -1 is to trim off trailing comma
