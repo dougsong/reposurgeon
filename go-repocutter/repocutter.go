@@ -1084,8 +1084,8 @@ func doreduce(source DumpfileSource) {
 		}
 	}
 	source.Lbs.Rewind()
-	// -2 is to trim off trailing comma
-	sselect(source, NewSubversionRange(selection[0:len(selection)-2]))
+	// -1 is to trim off trailing comma
+	sselect(source, NewSubversionRange(selection[0:len(selection)-1]))
 }
 
 // Strip out ops defined by a revision selection and a path regexp.
