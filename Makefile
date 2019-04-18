@@ -44,7 +44,7 @@ SHARED    = $(DOCS) reposurgeon-git-aliases $(HTMLFILES)
 
 GOFLAGS=-gcflags '-N -l'
 all:  $(MANPAGES) $(HTMLFILES)
-	go build $(GOFLAGS) -o repoctter ./go-repocutter
+	go build $(GOFLAGS) -o repocutter ./go-repocutter
 	go build $(GOFLAGS) -o repomapper ./go-repomapper
 	go build $(GOFLAGS) -o goreposurgeon ./go-reposurgeon
 
