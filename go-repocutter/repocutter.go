@@ -1156,7 +1156,8 @@ func pathrename(source DumpfileSource, selection SubversionRange, patterns []str
 				endoffs := offs + bytes.Index(header[offs:], []byte("\n"))
 				before := header[:offs]
 				pathline := header[offs:endoffs]
-				after := header[endoffs:]
+				after := make([]byte, len(header) - endoffs)
+				copy(after, header[endoffs:])
 				// Go documentation still says there's no
 				// backreference support, but ${1} does
 				// the right thing to refer to a paren group
