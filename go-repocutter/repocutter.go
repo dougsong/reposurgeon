@@ -1056,6 +1056,7 @@ func strip(source DumpfileSource, selection SubversionRange, patterns []string) 
 // Topologically reduce a dump, removing spans of plain file modifications.
 func doreduce(source DumpfileSource) {
 	interesting := make([]int, 0)
+	interesting = append(interesting, 0)
 	reducehook := func(header []byte, properties []byte, _ []byte) []byte {
 		if !(string(getHeader(header, "Node-kind")) == "file" && string(getHeader(header, "Node-action")) == "change") || len(properties) > 0 { //len([]nil == 0)
 			interesting = append(interesting, source.Revision-1, source.Revision, source.Revision+1)
