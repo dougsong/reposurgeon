@@ -64,7 +64,7 @@ dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc -f nofooter.conf
 
 # Temporary; it's here to track which test sections have succeeded
 goregress: gotest
-	 cd test; make STOPOUT=$(STOPOUT) REPOSURGEON=goreposurgeon
+	 cd test; $(MAKE) STOPOUT=$(STOPOUT) REPOSURGEON=goreposurgeon
 
 govet:
 	go vet ./go-repocutter
@@ -128,7 +128,7 @@ pylint:
 	@$(PYLINT) $(COMMON_PYLINT) --disable=$(PYLINTOPTS1) reposurgeon
 
 check:
-	make all; cd test; $(MAKE) --quiet check
+	$(MAKE) all; cd test; $(MAKE) --quiet check
 
 portcheck:
 	cd test; $(MAKE) --quiet portcheck
