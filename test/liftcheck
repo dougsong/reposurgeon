@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # liftcheck - compare reposurgeon lift of a Subversion repo with a checkout
 #
