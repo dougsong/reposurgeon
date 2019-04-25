@@ -2532,7 +2532,7 @@ class Commit(object):
     __slots__ = ("repo", "mark", "authors", "committer", "comment",
                  "branch", "fileops", "properties", "filemap", "color",
                  "legacy_id", "common", "deletehook", "attachments",
-                 "_parent_nodes", "_child_nodes", "_pathset")
+                 "_parent_nodes", "_child_nodes")
     __hash__ = None
     def __init__(self, repo=None):
         self.repo = repo
@@ -2551,7 +2551,6 @@ class Commit(object):
         self.attachments = []        # Tags pointing at this commit
         self._parent_nodes = []      # list of parent nodes
         self._child_nodes = []       # list of child nodes
-        self._pathset = None
     def index(self):
         "Our 0-origin index in our repo."
         return self.repo.index(self)
@@ -2599,7 +2598,6 @@ class Commit(object):
         c.authors = copy.deepcopy(self.authors)
         c.set_operations([])
         c.filemap = None
-        c._pathset = None
         c.color = None
         if repo is not None:
             c.repo = repo
@@ -2906,14 +2904,10 @@ class Commit(object):
                 sys.stdout.write("%d: %s\n" % (i, str(op)))
     def paths(self, pathtype=None):
         "Return the set of all paths touched by this commit."
-        if self._pathset is None:
-            self._pathset = set()
-            for fileop in self.operations():
-                self._pathset |= fileop.paths(pathtype)
-        return self._pathset
-    def invalidate_pathset_cache(self):
-        "Force a rebuild on the next call to paths()."
-        self._pathset = None
+        pathset = set()
+        for fileop in self.operations():
+            pathset |= fileop.paths(pathtype)
+        return pathset
     def visible(self, path):
         "Is the specified path modified and not deleted in the ancestors?"
         ancestor = self
@@ -3023,7 +3017,6 @@ class Commit(object):
                 new_ops.append(fileop)
         # Finishing touches:
         self.sort_operations()
-        self._pathset = None
     def alldeletes(self, killset=None):
         "Is this an all-deletes commit?"
         if killset is None:
@@ -4915,7 +4908,6 @@ class StreamParser:
                 try:
                     commit.common, stage = next(oplist)
                     commit.set_operations(stage)
-                    commit.invalidate_pathset_cache()
                 except StopIteration:
                     commit.common = os.path.commonprefix([node.path for node in record.nodes])
                 commit.set_mark(self.repo.newmark())
@@ -4935,7 +4927,6 @@ class StreamParser:
                 split.comment += "\n[[Split portion of a mixed commit.]]\n"
                 split.set_mark(self.repo.newmark())
                 split.set_operations(fileops)
-                split.invalidate_pathset_cache()
                 newcommits.append(split)
             # The revision is truly mixed if there is more than one clique
             # not consisting entirely of deleteall operations.
@@ -5113,7 +5104,6 @@ class StreamParser:
                         elif fileop.op in (FileOp.R, FileOp.C):
                             fileop.source = fileop.source[len(branch):]
                             fileop.target = fileop.target[len(branch):]
-                    commit.invalidate_pathset_cache()
                 else:
                     commit.set_branch("root")
                     self.branches["root"] = None
@@ -6722,7 +6712,6 @@ class Repository:
         if lastdeleteall is not None:
             announce(DEBUG_DELETE, "removing all before rightmost deleteall")
             commit.set_operations(commit.operations()[lastdeleteall:])
-            commit.invalidate_pathset_cache()
         # Composition in the general case is trickier.
         while True:
             # Keep making passes until nothing mutates
@@ -6747,7 +6736,6 @@ class Repository:
             if not mutated:
                 break
             commit.set_operations([x for x in commit.operations() if x is not None])
-            commit.invalidate_pathset_cache()
         return coverage
     def squash(self, selected, policy):
         "Delete a set of events, or rearrange it forward or backwards."
@@ -6862,7 +6850,6 @@ class Repository:
                     # resolution.
                     if pushforward and child.parents()[0] == event:
                         child.set_operations(copy.copy(event.operations()) + child.operations())
-                        child.invalidate_pathset_cache()
                         # Also prepend event's comment, ignoring empty
                         # log messages.
                         if "--empty-only" in policy and not empty_comment(child.comment):
@@ -6881,7 +6868,6 @@ class Repository:
                         fileop = FileOp(self)
                         fileop.construct("deleteall")
                         child.prepend_operation(fileop)
-                        child.invalidate_pathset_cache()
                         altered.append(child)
                 # We might be trying to hand the event's fileops to its
                 # primary parent.
@@ -6891,7 +6877,6 @@ class Repository:
                     # resolution.
                     parent = event.parents()[0]
                     parent.set_operations(parent.operations() + copy.copy(event.operations()))
-                    parent.invalidate_pathset_cache()
                     # Also append child's comment to its parent's
                     if "--empty-only" in policy and not empty_comment(parent.comment):
                         complain("--empty is on and %s comment is nonempty" % parent.id_me())
@@ -6967,7 +6952,6 @@ class Repository:
                     event.set_operations( \
                            [op for (i, op) in enumerate(event.operations())
                             if (op.op != FileOp.M) or (i == cliques[op.path][-1])])
-                    event.invalidate_pathset_cache()
                 if debug_enable(DEBUG_DELETE):
                     announce(DEBUG_DELETE, "Commit %d, after applying policy:" % (ei + 1,))
                     event.fileop_dump()
@@ -7141,7 +7125,6 @@ class Repository:
                     ops.append(op)
                 if ops != x.operations():
                     x.set_operations(ops)
-                    x.invalidate_pathset_cache()
                     if not bequiet and len(ops) == 0:
                         complain("%s no fileops remain after re-order" % x.id_me())
 
@@ -7392,7 +7375,6 @@ class Repository:
                 del commit.operations()[d].path
                 commit.operations()[d].op = FileOp.R
                 commit.operations().pop(m)
-                commit.invalidate_pathset_cache()
         return rename_count
     def path_walk(self, selection, hook=lambda path: path):
         "Apply a hook to all paths, returning the set of modified paths."
@@ -7415,7 +7397,6 @@ class Repository:
                         if newpath != fileop.target:
                             modified.add(newpath)
                         fileop.target = newpath
-                event.invalidate_pathset_cache()
         return sorted(modified)
     def split_commit(self, where, splitfunc):
         event = self.events[where]
@@ -7435,9 +7416,7 @@ class Repository:
             event2.set_parents([event])
             # and then finalize the ops
             event2.set_operations(fileops2)
-            event2.invalidate_pathset_cache()
             event.set_operations(fileops)
-            event.invalidate_pathset_cache()
             # Avoid duplicates in the legacy-ID map
             if event2.legacy_id:
                 event2.legacy_id += ".split"
@@ -8160,13 +8139,11 @@ class RepositoryList:
                         keepers.append(fileop)
             event.set_operations([op for (i, op) in enumerate(event.operations())
                                   if i not in set(deletia)])
-            event.invalidate_pathset_cache()
             # If there are any keeper fileops, hang them them and
             # their blobs on keeps, cloning the commit() for them.
             if keepers:
                 newevent = event.clone(expunged)
                 newevent.set_operations(keepers)
-                newevent.invalidate_pathset_cache()
                 for blob in blobs:
                     blob.deletehook = blob.clone(expunged)
                 event.deletehook = newevent
@@ -11397,7 +11374,6 @@ in the commit's ancestry.
         else:
             raise Recoverable("unknown operation type %s in add command" % optype)
         for _, event in self.selected(Commit):
-            event.invalidate_pathset_cache()
             fileop = FileOp(self.chosen())
             if optype == "D":
                 fileop.construct("D", path)
@@ -11467,7 +11443,6 @@ change in a future release.
             optypes = opindex
             (opindex, line) = RepoSurgeon.pop_token(line)
         for ie, event in self.selected(Commit):
-            event.invalidate_pathset_cache()
             if opindex == "deletes":
                 event.set_operations([e for e in event.operations() if e.op != FileOp.D])
                 return
@@ -11944,8 +11919,6 @@ source branch are removed.
                         fileop.source = os.path.join(pref, fileop.source)
                         fileop.target = os.path.join(pref, fileop.target)
                         found = True
-                if found:
-                    repo.events[ci].invalidate_pathset_cache()
             merged = sorted(set(scommits + tcommits))
             source_reset = None
             for i in merged:
@@ -11990,7 +11963,6 @@ in the ancestry of the commit, this command throws an error.  With the
                     raise Recoverable("no target specified in rename")
                 actions = []
                 for _,commit in self.selected(Commit):
-                    touched = False
                     for fileop in commit.operations():
                         for attr in ("path", "source", "target"):
                             if hasattr(fileop, attr):
@@ -12003,9 +11975,6 @@ in the ancestry of the commit, this command throws an error.  With the
                                         raise Recoverable("rename at %s failed, %s exists there" % (commit.id_me(), newpath))
                                     else:
                                         actions.append((fileop, attr, newpath))
-                                        touched = True
-                    if touched:
-                        commit.invalidate_pathset_cache()
                 # All checks must pass before any renames
                 for (fileop, attr, newpath) in actions:
                     setattr(fileop, attr, newpath)

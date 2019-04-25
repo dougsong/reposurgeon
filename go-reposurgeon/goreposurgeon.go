@@ -4093,7 +4093,6 @@ type Commit struct {
 	attachments  []Event      // Tags and Resets pointing at this commit
 	_parentNodes []CommitLike // list of parent nodes
 	_childNodes  []CommitLike // list of child nodes
-	_pathset     stringSet
 	_expungehook *Commit
 }
 
@@ -4114,7 +4113,6 @@ func newCommit(repo *Repository) *Commit {
 	commit.attachments = make([]Event, 0)
 	commit._childNodes = make([]CommitLike, 0)
 	commit._parentNodes = make([]CommitLike, 0)
-	//commit._pathset = nil
 	return commit
 }
 
@@ -4187,21 +4185,18 @@ func (commit *Commit) operations() []FileOp {
 // setOperations replaces the set of fileops associated with this commit.
 func (commit *Commit) setOperations(ops []FileOp) {
 	commit.fileops = ops
-	commit.invalidatePathsetCache()
 	commit.invalidateManifests()
 }
 
 // appendOperation appends to the set of fileops associated with this commit.
 func (commit *Commit) appendOperation(op FileOp) {
 	commit.fileops = append(commit.fileops, op)
-	commit.invalidatePathsetCache()
 	commit.invalidateManifests()
 }
 
 // prependOperation prepends to the set of fileops associated with this commit.
 func (commit *Commit) prependOperation(op FileOp) {
 	commit.fileops = append([]FileOp{op}, commit.fileops...)
-	commit.invalidatePathsetCache()
 	commit.invalidateManifests()
 }
 
@@ -4230,7 +4225,6 @@ func (commit *Commit) sortOperations() {
 		return left < right
 	}
 	sort.Slice(commit.fileops, lessthan)
-	commit.invalidatePathsetCache()
 }
 
 // bump increments the timestamps on this commit to avoid time collisions.
@@ -4814,21 +4808,13 @@ func (commit *Commit) fileopDump() {
 
 // paths returns the set of all paths touched by this commit.
 func (commit *Commit) paths(pathtype stringSet) stringSet {
-	if commit._pathset == nil {
-		commit._pathset = newStringSet()
-		for _, fileop := range commit.operations() {
-			for _, item := range fileop.paths(pathtype) {
-				commit._pathset.Add(item)
-
-			}
+	pathset := newStringSet()
+	for _, fileop := range commit.operations() {
+		for _, item := range fileop.paths(pathtype) {
+			pathset.Add(item)
 		}
 	}
-	return commit._pathset
-}
-
-// invalidatePathsetCache forces a rebuild on the next call to paths().
-func (commit *Commit) invalidatePathsetCache() {
-	commit._pathset = nil
+	return pathset
 }
 
 // visible tells if a path is modified and not deleted in the ancestors
@@ -4929,7 +4915,6 @@ func (commit *Commit) canonicalize() {
 		return
 	}
 	// Get paths touched by non-deleteall operations.
-	commit.invalidatePathsetCache()
 	paths := commit.paths(nil)
 	// Full canonicalization is very expensive on large
 	// repositories. Try an inexpensive check for cases it needn't
@@ -5000,7 +4985,6 @@ func (commit *Commit) canonicalize() {
 	}
 	// Finishing touches.  Sorting always has to be done
 	commit.sortOperations()
-	commit._pathset = nil
 }
 
 // alldeletes is a predicate: is this an all-deletes commit?
@@ -7438,7 +7422,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	                   try:
 	                       commit.common, stage = next(oplist)
 	                       commit.setOperations(stage)
-	                       commit.invalidatePathsetCache()
 	                   except StopIteration:
 	                       commit.common = os.path.commonprefix([node.path for node in record.nodes])
 	                   commit.setMark(sp.repo.newmark())
@@ -7458,7 +7441,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	                   split.Comment += "\n[[Split portion of a mixed commit.]]\n"
 	                   split.setMark(sp.repo.newmark())
 	                   split.setOperations(fileops)
-	                   split.invalidatePathsetCache()
 	                   newcommits.append(split)
 	               # The revision is truly mixed if there is more than one clique
 	               # not consisting entirely of deleteall operations.
@@ -7637,7 +7619,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	                           else if fileop.op in (opR, opC):
 	                               fileop.source = fileop.source[len(branch):]
 	                               fileop.Target = fileop.Target[len(branch):]
-	                       commit.invalidatePathsetCache()
 	                   else:
 	                       commit.setBranch("root")
 	                       sp.branches["root"] = None
@@ -9369,7 +9350,6 @@ func (repo *Repository) canonicalize(commit *Commit) orderedIntSet {
 	if lastdeleteall != -1 {
 		announce(debugDELETE, "removing all before rightmost deleteall")
 		commit.setOperations(commit.operations()[lastdeleteall:])
-		commit.invalidatePathsetCache()
 	}
 	// Composition in the general case is trickier.
 	for {
@@ -9408,7 +9388,6 @@ func (repo *Repository) canonicalize(commit *Commit) orderedIntSet {
 			}
 		}
 		commit.setOperations(newOps)
-		commit.invalidatePathsetCache()
 	}
 	return coverage
 }
@@ -9588,7 +9567,6 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 					copy(newops, commit.operations())
 					newops = append(newops, child.operations()...)
 					child.setOperations(newops)
-					child.invalidatePathsetCache()
 					// Also prepend event's
 					// comment, ignoring empty log
 					// messages.
@@ -9614,7 +9592,6 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 					fileop := newFileOp(repo)
 					fileop.construct("deleteall")
 					child.prependOperation(*fileop)
-					child.invalidatePathsetCache()
 					altered = append(altered, child)
 				}
 			}
@@ -9632,7 +9609,6 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 					continue // Ignore callouts
 				}
 				parent.fileops = append(parent.fileops, commit.fileops...)
-				parent.invalidatePathsetCache()
 				// Also append child"s comment to its parent"s
 				if policy.Contains("--empty-only") && !emptyComment(parent.Comment) {
 					croak(fmt.Sprintf("--empty is on and %s comment is nonempty", parent.idMe()))
@@ -9753,7 +9729,6 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				commit.setOperations(newOps)
 			}
 
-			commit.invalidatePathsetCache()
 			if debugEnable(debugDELETE) {
 				announce(debugDELETE, fmt.Sprintf("%s, after applying policy:", commit.idMe()))
 				commit.fileopDump()
@@ -10047,7 +10022,6 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 		}
 		if !cmp.Equal(ops, c.operations()) {
 			c.setOperations(ops)
-			c.invalidatePathsetCache()
 			if !bequiet && len(ops) == 0 {
 				croak("%s no fileops remain after re-order", c.idMe())
 			}
@@ -10365,7 +10339,6 @@ func (repo *Repository) pathWalk(selection orderedIntSet, hook func(string) stri
 					fileop.Target = newpath
 				}
 			}
-			commit.invalidatePathsetCache()
 		}
 	}
 	sort.Strings(modified)
@@ -10397,9 +10370,7 @@ func (repo *Repository) splitCommit(where int, splitfunc func([]FileOp) ([]FileO
 	commit2.setParents([]CommitLike{*commit})
 	// and then finalize the ops
 	commit2.setOperations(fileops2)
-	commit2.invalidatePathsetCache()
 	commit.setOperations(fileops)
-	commit.invalidatePathsetCache()
 	// Avoid duplicates in the legacy-ID map
 	if commit2.legacyID != "" {
 		commit2.legacyID += ".split"
@@ -11535,13 +11506,11 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			}
 		}
 		commit.setOperations(nondeletia)
-		commit.invalidatePathsetCache()
 		// If there are any keeper fileops, hang them them and
 		// their blobs on keeps, cloning the commit() for them.
 		if len(keepers) > 0 {
 			newcommit := commit.clone(expunged)
 			newcommit.setOperations(keepers)
-			newcommit.invalidatePathsetCache()
 			for _, blob := range blobs {
 				blob._expungehook = blob.clone(expunged)
 			}
@@ -16456,7 +16425,6 @@ func (rs *Reposurgeon) DoAdd(line string) bool {
 		return false
 	}
 	for _, commit := range repo.commits(rs.selection) {
-		commit.invalidatePathsetCache()
 		fileop := newFileOp(rs.chosen())
 		if optype == "D" {
 			fileop.construct("D", argpath)
@@ -16555,7 +16523,6 @@ func (rs *Reposurgeon) DoRemove(line string) bool {
 			croak("Event %d is not a commit.", ie+1)
 			return false
 		}
-		event.invalidatePathsetCache()
 		if opindex == "deletes" {
 			ops := make([]FileOp, 0)
 			for _, op := range event.operations() {
@@ -17217,19 +17184,13 @@ func (rs *Reposurgeon) DoDebranch(line string) bool {
 	}
 	pref := filepath.Base(source)
 	for _, ci := range scommits {
-		found := false
 		for _, fileop := range repo.events[ci].(*Commit).operations() {
 			if fileop.op == opD || fileop.op == opM {
 				fileop.Path = filepath.Join(pref, fileop.Path)
-				found = true
 			} else if fileop.op == opR || fileop.op == opC {
 				fileop.Source = filepath.Join(pref, fileop.Source)
 				fileop.Target = filepath.Join(pref, fileop.Target)
-				found = true
 			}
-		}
-		if found {
-			repo.events[ci].(*Commit).invalidatePathsetCache()
 		}
 	}
 	merged := append(scommits, tcommits...)
@@ -17303,7 +17264,6 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 		}
 		actions := make([]pathAction, 0)
 		for _, commit := range repo.commits(rs.selection) {
-			touched := false
 			for _, fileop := range commit.operations() {
 				for _, attr := range []string{"Path", "Source", "Target"} {
 					if oldpath, ok := getAttr(fileop, attr); ok {
@@ -17317,14 +17277,10 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 								return false
 							} else {
 								actions = append(actions, pathAction{&fileop, attr, newpath})
-								touched = true
 							}
 						}
 					}
 				}
-			}
-			if touched {
-				commit.invalidatePathsetCache()
 			}
 		}
 		// All checks must pass before any renames
