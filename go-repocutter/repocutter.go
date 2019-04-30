@@ -1000,9 +1000,11 @@ func strip(source DumpfileSource, selection SubversionRange, patterns []string) 
 			if len(m) != 4 {
 				panic(fmt.Sprintf("While setting length of %s", name))
 			}
+			after := make([]byte, len(hd) - m[3])
+			copy(after, hd[m[3]:])
 			res := hd[0:m[2]]
 			res = append(res, []byte(strconv.Itoa(val))...)
-			res = append(res, hd[m[3]:]...)
+			res = append(res, after...)
 			return res
 		}
 
