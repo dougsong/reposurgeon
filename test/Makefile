@@ -367,7 +367,7 @@ liftcheck-regress:
 	then \
 		for test in $(SVNCLEAN); \
 		do \
-		    { $(ECHO) -n "  $${test}.svn"; grep --text '^ ##' $${test} || echo ' ## (no description)'; } >&2; \
+		    { $(ECHO) -n "  $${test}"; grep --text '^ ##' $${test} || echo ' ## (no description)'; } >&2; \
 		    liftcheck $${test} || { echo "*** Failed on $${test}!"; exit $(STOPOUT); } \
 		done \
 	else \
