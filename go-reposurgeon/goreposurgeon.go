@@ -290,6 +290,18 @@ func stringEscape(s string) (string, error) {
 	return strconv.Unquote(s)
 }
 
+// pstr is called on format-string arguments for which Python had a %q format.
+// Python's %q wraps the escapified string representation in single quotes,
+// Go's %q in double quotes.  Bridge the gap.
+// FIXME: Once the Go translation is complete, remove all calls to this,
+// change corresponding %s format elements to %q, and rebuild the regression
+// tests
+func qtoq(s string) string {
+	s1 := fmt.Sprintf("%q", s)
+	s2 := s1[1:len(s1)-1]
+	return "'" + s2 + "'"
+}
+
 // This representation optimizes for small memory footprint at the expense
 // of speed.  To make the opposite trade we would do the obvious thing with
 // map[string] bool.
@@ -3590,7 +3602,7 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 				panic(throw("msgbox", "Malformed date %s in tag message: %v",
 					taggerdate, err))
 			}
-			if t.tagger.date.isZero() || !date.timestamp.Equal(t.tagger.date.timestamp) {
+			if !t.tagger.date.isZero() && !date.timestamp.Equal(t.tagger.date.timestamp) {
 				// If self.repo is nil this is filling
 				// in fields in a a new tag creation,
 				// so suppress the usual message.
@@ -3600,9 +3612,9 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 						t.tagger.date, taggerdate,
 						date.timestamp.Sub(t.tagger.date.timestamp))
 				}
-				t.tagger.date = date
 				modified = true
 			}
+			t.tagger.date = date
 		}
 	}
 
@@ -4422,20 +4434,24 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 			modified = true
 		}
 	}
-	newcommitdate, err := newDate(msg.getHeader("Committer-Date"))
+	rawdate := msg.getHeader("Committer-Date")
+	if rawdate == "" {
+		panic(throw("msgbox", "Missing Committer-Date"))
+	}
+	newcommitdate, err := newDate(rawdate)
 	if err != nil {
 		panic(throw("msgbox", "Bad Committer-Date: %#v (%v)", msg.getHeader("Committer-Date"), err))
 	}
-	if newcommitdate.isZero() && !newcommitdate.Equal(c.date) {
+	if !c.date.isZero() && !newcommitdate.Equal(c.date) {
 		if commit.repo != nil {
 			announce(debugEMAILIN, "in %s, Committer-Date is modified '%s' -> '%s' (delta %d)",
 				commit.idMe(),
 				c.date, newcommitdate,
 				c.date.delta(newcommitdate))
 		}
-		c.date = newcommitdate
 		modified = true
 	}
+	c.date = newcommitdate
 	newauthor := msg.getHeader("Author")
 	if newauthor != "" {
 		authorkeys := []string{}
@@ -4479,16 +4495,16 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 				if err != nil {
 					panic(throw("msgbox", "Bad Author-Date: %v", err))
 				}
-				if c.date.isZero() || !date.Equal(c.date) {
+				if !c.date.isZero() && !date.Equal(c.date) {
 					eventnum := msg.getHeader("Event-Number")
 					if commit.repo != nil && eventnum != "" {
 						announce(debugEMAILIN,
 							"in event %s, %s-Date #%d is modified",
 							eventnum, hdr, i+1)
 					}
-					c.date = date
 					modified = true
 				}
+				c.date = date
 			}
 		}
 	}
@@ -15657,7 +15673,7 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 		update := updateList[i]
 		check := strings.TrimSpace(update.getHeader("Check-Text"))
 		if check != "" && !strings.HasPrefix(strings.TrimSpace(event.getComment()), check) {
-			croak("check text mismatch at %s (input %d of %d), expected %s saw %q, bailing out", event.(*Commit).actionStamp(), i+1, len(updateList), check, event.getComment())
+			croak("check text mismatch at %s (input %d of %d), expected %s saw %s, bailing out", event.(*Commit).actionStamp(), i+1, len(updateList), qtoq(check), qtoq(event.getComment()))
 			return false
 		}
 		if parse.options.Contains("--empty-only") {
@@ -19536,7 +19552,7 @@ func (rs *Reposurgeon) DoChangelogs(line str) bool {
 			return addr
 		}
 		// Scan for old-style date like "Tue Dec  9 01:16:06 1997"
-		// This corresponsds to Go ANSIC format.
+		// This corresponds to Go ANSIC format.
 		fields := strings.Fields(line)
 		if len(fields) >= 5 {
 			possible_date := strings.Join(fields[:5], " ")
