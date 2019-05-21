@@ -3585,11 +3585,10 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 			modified = true
 		}
 		if taggerdate := msg.getHeader("Tagger-Date"); taggerdate != "" {
-			candidate := msg.getHeader("Tagger-Date")
-			date, err := newDate(candidate)
+			date, err := newDate(taggerdate)
 			if err != nil {
 				panic(throw("msgbox", "Malformed date %s in tag message: %v",
-					candidate, err))
+					taggerdate, err))
 			}
 			if t.tagger.date.isZero() || !date.timestamp.Equal(t.tagger.date.timestamp) {
 				// If self.repo is nil this is filling
