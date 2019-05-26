@@ -3352,11 +3352,11 @@ func (b Blob) getMark() string {
 	return b.mark
 }
 
-// setMark sets the blob's mark and clears the mark lookup cache.
+// setMark sets the blob's mark
 func (b *Blob) setMark(mark string) string {
 	if b.repo != nil {
 		if b.repo._eventByMark == nil {
-			b.repo._eventByMark = make(map[string]Event)
+			b.repo.memoizeMarks()
 		}
 		b.repo._eventByMark[mark] = b
 	}
@@ -3367,18 +3367,6 @@ func (b *Blob) setMark(mark string) string {
 // forget de-links this commit from its repo.
 func (b *Blob) forget() {
 	b.repo = nil
-}
-
-// moveto changes the repo this blob is associated with."
-func (b *Blob) moveto(repo *Repository) {
-	if b.hasfile() {
-		oldloc := b.getBlobfile(false)
-		b.repo = repo
-		newloc := b.getBlobfile(true)
-		announce(debugSHUFFLE,
-			"blob rename calls os.rename(%s, %s)", oldloc, newloc)
-		os.Rename(oldloc, newloc)
-	}
 }
 
 // clone makes a copy of this blob, pointing at the same file."
@@ -3493,11 +3481,6 @@ func (t *Tag) forget() {
 		event.(*Commit).detach(t)
 	}
 	t.repo = nil
-}
-
-// moveto changes the repo this reset is associated with."
-func (t Tag) moveto(repo *Repository) {
-	t.repo = repo
 }
 
 // index returns our 0-origin index in our repo.
@@ -3746,11 +3729,6 @@ func (reset *Reset) forget() {
 		event.(*Commit).detach(reset)
 	}
 	reset.repo = nil
-}
-
-// moveto changes the repo this reset is associated with."
-func (reset Reset) moveto(repo *Repository) {
-	reset.repo = repo
 }
 
 // tags enables do_tags() to report resets."
@@ -4060,10 +4038,6 @@ func (callout Callout) getComment() string {
 // Stub to satisfy Event interface - should never be used
 func (callout Callout) String() string {
 	return fmt.Sprintf("callout-%s", callout.mark)
-}
-
-func (callout Callout) moveto(*Repository) {
-	// Has no repo field
 }
 
 // ManifestEntry is visibility data about a file at a commit where it has no M
@@ -4556,11 +4530,11 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 	return modified
 }
 
-// setMark sets the commit's mark and clears the lookup cache.
+// setMark sets the commit's mark
 func (commit *Commit) setMark(mark string) string {
 	if commit.repo != nil {
 		if commit.repo._eventByMark == nil {
-			commit.repo._eventByMark = make(map[string]Event)
+			commit.repo.memoizeMarks()
 		}
 		commit.repo._eventByMark[mark] = commit
 	}
@@ -4577,18 +4551,6 @@ func (commit *Commit) forget() {
 		}
 	}
 	commit.repo = nil
-}
-
-// moveto changes the repo this commit is associated with.
-func (commit Commit) moveto(repo *Repository) {
-	for _, fileop := range commit.operations() {
-		fileop.repo = repo
-		if fileop.op == opN {
-			commit.repo.inlines--
-			repo.inlines++
-		}
-	}
-	commit.repo = repo
 }
 
 // parents gets a list of this commit's parents.
@@ -5322,10 +5284,6 @@ func (p Passthrough) getComment() string { return p.text }
 // String reports this passthrough in import-stream format.
 func (p Passthrough) String() string {
 	return p.text
-}
-
-func (p Passthrough) moveto(*Repository) {
-	// Has no repo field
 }
 
 // Generic extractor code begins here
@@ -8005,7 +7963,6 @@ type Event interface {
 	getMark() string
 	getComment() string
 	String() string
-	moveto(*Repository)
 	getDelFlag() bool
 }
 
@@ -8016,7 +7973,6 @@ type CommitLike interface {
 	getComment() string
 	callout() string
 	String() string
-	moveto(*Repository)
 	getDelFlag() bool
 	getColor() string
 	setColor(string)
@@ -8120,16 +8076,22 @@ func (repo *Repository) cleanup() {
 		fmt.Sprintf("reposurgeon: cleaning up %s", repo.subdir("")))
 }
 
+
+// memoizeMarks rebuilds the mark cache
+func (repo *Repository) memoizeMarks() {
+	repo._eventByMark = make(map[string]Event)
+	for _, event := range repo.events {
+		key := event.getMark()
+		if key != "" {
+			repo._eventByMark[key] = event
+		}
+	}
+}
+
 // markToEvent finds an object by mark
 func (repo *Repository) markToEvent(mark string) Event {
 	if repo._eventByMark == nil {
-		repo._eventByMark = make(map[string]Event)
-		for _, event := range repo.events {
-			key := event.getMark()
-			if key != "" {
-				repo._eventByMark[key] = event
-			}
-		}
+		repo.memoizeMarks()
 	}
 	d, ok := repo._eventByMark[mark]
 	if ok {
@@ -8138,7 +8100,7 @@ func (repo *Repository) markToEvent(mark string) Event {
 	return nil
 }
 
-// index returns the index of the specified object in the main even list
+// index returns the index of the specified object in the main event list
 func (repo *Repository) eventToIndex(obj Event) int {
 	mark := obj.getMark()
 	if len(mark) != 0 {
@@ -8152,6 +8114,7 @@ func (repo *Repository) eventToIndex(obj Event) int {
 			return ind
 		}
 	}
+	// Alas, we can't used Id() here without infinite recursion
 	panic(fmt.Sprintf("Internal error: object not matched in repository %s", repo.name))
 }
 
@@ -9066,7 +9029,7 @@ func (repo *Repository) rename(newname string) error {
 }
 
 // Fast append avoids doing a full copy of the slice on every allocation
-// Code triviall modified from AppendByte on "Go Slices: usage and internals".
+// Code trivially modified from AppendByte on "Go Slices: usage and internals".
 func appendEvents(slice []Event, data ...Event) []Event {
 	m := len(slice)
 	n := m + len(data)
@@ -9806,6 +9769,40 @@ func (repo *Repository) gcBlobs() {
 // Delete machinery ends here
 //
 
+
+// moveto changes the repo an event is associated with."
+func (repo *Repository) moveto(event Event) {
+	// Passthroughs and Callouts have no repo field
+	switch event.(type) {
+	case *Blob:
+		b := event.(*Blob)
+		if b.hasfile() {
+			oldloc := b.getBlobfile(false)
+			b.repo = repo
+			newloc := b.getBlobfile(true)
+			announce(debugSHUFFLE,
+				"blob rename calls os.rename(%s, %s)", oldloc, newloc)
+			os.Rename(oldloc, newloc)
+		}
+	case *Tag:
+		t := event.(*Tag)
+		t.repo = repo
+	case *Reset:
+		r := event.(*Reset)
+		r.repo = repo
+	case *Commit:
+		commit := event.(*Commit)
+		for _, fileop := range commit.operations() {
+			fileop.repo = repo
+			if fileop.op == opN {
+				commit.repo.inlines--
+				repo.inlines++
+			}
+		}
+		commit.repo = repo
+	}
+}
+
 // Return options and features.  Makes a copy slice.
 func (repo *Repository) frontEvents() []Event {
 	var front = make([]Event, 0)
@@ -10255,12 +10252,7 @@ func (repo *Repository) absorb(other *Repository) {
 	repo.declareSequenceMutation("absorb")
 	// Transplant in fileops, blobs, and other impedimenta
 	for _, event := range other.events {
-		event.moveto(repo)
-		if commit, ok := event.(*Commit); ok {
-			for i := range commit.fileops {
-				commit.fileops[i].repo = repo
-			}
-		}
+		repo.moveto(event)
 	}
 	other.events = nil
 	other.cleanup()
@@ -10321,6 +10313,7 @@ func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options str
 			}
 		}
 	}
+	fmt.Fprintf(os.Stderr, "ERR before renumber\n")
 	repo.renumber(1, nil)
 	return nil
 }
@@ -11261,10 +11254,10 @@ func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
 		} else {
 			if passthrough, ok := event.(*Passthrough); ok {
 				if passthrough.color == "early" {
-					passthrough.moveto(earlyPart)
+					earlyPart.moveto(passthrough)
 					earlyPart.addEvent(passthrough)
 				} else if passthrough.color == "late" {
-					passthrough.moveto(earlyPart)
+					earlyPart.moveto(passthrough)
 					earlyPart.addEvent(passthrough)
 				} else {
 					// TODO: Someday, color passthroughs
@@ -11273,20 +11266,20 @@ func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
 				}
 			} else if commit, ok := event.(*Commit); ok {
 				if commit.color == "early" {
-					commit.moveto(earlyPart)
+					earlyPart.moveto(commit)
 					earlyPart.addEvent(commit)
 				} else if commit.color == "late" {
-					commit.moveto(earlyPart)
+					earlyPart.moveto(commit)
 					earlyPart.addEvent(commit)
 				} else {
 					panic(fmt.Sprintf("coloring algorithm failed on %s", event.idMe()))
 				}
 			} else if tag, ok := event.(*Tag); ok {
 				if tag.color == "early" {
-					tag.moveto(earlyPart)
+					earlyPart.moveto(tag)
 					earlyPart.addEvent(tag)
 				} else if tag.color == "late" {
-					tag.moveto(earlyPart)
+					earlyPart.moveto(tag)
 					earlyPart.addEvent(tag)
 				} else {
 					panic(fmt.Sprintf("coloring algorithm failed on %s", event.idMe()))
