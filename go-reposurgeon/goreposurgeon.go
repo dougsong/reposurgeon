@@ -10236,13 +10236,6 @@ func (repo *Repository) uniquify(color string, persist map[string]string) map[st
 // Marks and tag/branch names must have been uniquified first,
 // otherwise name collisions could occur in the merged repo.
 func (repo *Repository) absorb(other *Repository) {
-	deleteEvent := func(i int, a []Event) {
-		// Hack for deletion without memory leaks is from
-		// https://github.com/golang/go/wiki/SliceTricks
-		copy(a[i:], a[i+1:])
-		a[len(a)-1] = nil // or the zero value of T
-		a = a[:len(a)-1]
-	}
 	repo.preserveSet = repo.preserveSet.Union(other.preserveSet)
 	repo.caseCoverage = repo.caseCoverage.Union(other.caseCoverage)
 	// Strip feature events off the front, they have to stay in front.
@@ -10252,7 +10245,11 @@ func (repo *Repository) absorb(other *Repository) {
 		if ok {
 			repo.insertEvent(passthrough, front, "moving passthroughs")
 			front++
-			deleteEvent(0, other.events)
+			// FIXME: Leaks an array slot. See
+			// https://github.com/golang/go/wiki/SliceTricks
+			// for a better way.
+			other.events[0] = nil	// Prevent memory leak
+			other.events = other.events[1:]
 		} else {
 			break
 		}
