@@ -10233,27 +10233,29 @@ func (repo *Repository) uniquify(color string, persist map[string]string) map[st
 
 // Absorb all events from the repository OTHER into SELF.
 // Only vcstype, sourcedir, and basedir are not copied here
-// Marks and tag/branch names must have been uniquified first.
+// Marks and tag/branch names must have been uniquified first,
+// otherwise name collisions could occur in the merged repo.
 func (repo *Repository) absorb(other *Repository) {
 	repo.preserveSet = repo.preserveSet.Union(other.preserveSet)
 	repo.caseCoverage = repo.caseCoverage.Union(other.caseCoverage)
 	// Strip feature events off the front, they have to stay in front.
 	front := len(repo.frontEvents())
-	for i := 0; ; i++ {
-		passthrough, ok := other.events[i].(*Reset)
+	for {
+		passthrough, ok := other.events[0].(*Passthrough)
 		if ok {
 			repo.insertEvent(passthrough, front, "moving passthroughs")
 			front++
+			other.events = other.events[1:]
+		} else {
+			break
 		}
-		break
 	}
 	// Merge in the non-feature events and blobs
-	repo.events = append(repo.events, other.events...)
-	repo.declareSequenceMutation("absorb")
-	// Transplant in fileops, blobs, and other impedimenta
 	for _, event := range other.events {
 		repo.moveto(event)
 	}
+	repo.events = append(repo.events, other.events...)
+	repo.declareSequenceMutation("absorb")
 	other.events = nil
 	other.cleanup()
 }
@@ -10313,8 +10315,7 @@ func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options str
 			}
 		}
 	}
-	fmt.Fprintf(os.Stderr, "ERR before renumber\n")
-	repo.renumber(1, nil)
+	//repo.renumber(1, nil)
 	return nil
 }
 
