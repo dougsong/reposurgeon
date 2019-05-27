@@ -8115,7 +8115,7 @@ func (repo *Repository) eventToIndex(obj Event) int {
 		}
 	}
 	// Alas, we can't used Id() here without infinite recursion
-	panic(fmt.Sprintf("Internal error: object not matched in repository %s", repo.name))
+	panic(fmt.Sprintf("Internal error: object |%v| not matched in repository %s", obj, repo.name))
 }
 
 // find gets an object index by mark
@@ -9602,7 +9602,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				// stream.  Easiest way to do this is
 				// shift the range of events between
 				// commit and parent down and put
-				// parent kust before commit.
+				// parent just before commit.
 				earliest := parent.index()
 				latest := commit.index()
 				for i := earliest; i < latest; i++ {
@@ -10236,6 +10236,13 @@ func (repo *Repository) uniquify(color string, persist map[string]string) map[st
 // Marks and tag/branch names must have been uniquified first,
 // otherwise name collisions could occur in the merged repo.
 func (repo *Repository) absorb(other *Repository) {
+	deleteEvent := func(i int, a []Event) {
+		// Hack for deletion without memory leaks is from
+		// https://github.com/golang/go/wiki/SliceTricks
+		copy(a[i:], a[i+1:])
+		a[len(a)-1] = nil // or the zero value of T
+		a = a[:len(a)-1]
+	}
 	repo.preserveSet = repo.preserveSet.Union(other.preserveSet)
 	repo.caseCoverage = repo.caseCoverage.Union(other.caseCoverage)
 	// Strip feature events off the front, they have to stay in front.
@@ -10245,7 +10252,7 @@ func (repo *Repository) absorb(other *Repository) {
 		if ok {
 			repo.insertEvent(passthrough, front, "moving passthroughs")
 			front++
-			other.events = other.events[1:]
+			deleteEvent(0, other.events)
 		} else {
 			break
 		}
