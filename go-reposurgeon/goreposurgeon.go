@@ -4601,9 +4601,9 @@ func (commit *Commit) setParents(parents []CommitLike) {
 	for _, parent := range commit._parentNodes {
 		// remove all occurrences of self in old parent's children cache
 		switch parent.(type) {
-		case (Commit):
+		case *Commit:
 			parent.(*Commit)._childNodes = commitRemove(parent.(*Commit)._childNodes, commit)
-		case (Callout):
+		case *Callout:
 			croak("not removing callout %s", parent.(Callout).mark)
 		}
 	}
@@ -6516,6 +6516,11 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				sp.pushback(line)
 			}
 			sp.repo.addEvent(reset)
+			fmt.Fprintf(os.Stderr, "ERR: Before eventToIndex\n")
+			sp.repo.eventToIndex(reset)
+			fmt.Fprintf(os.Stderr, "ERR: Before idMe\n")
+			reset.idMe()
+			fmt.Fprintf(os.Stderr, "ERR: success\n")
 			baton.twirl("")
 		} else if strings.HasPrefix(line, "tag") {
 			var tagger *Attribution
@@ -8102,6 +8107,7 @@ func (repo *Repository) markToEvent(mark string) Event {
 
 // index returns the index of the specified object in the main event list
 func (repo *Repository) eventToIndex(obj Event) int {
+	fmt.Fprintf(os.Stderr, "ERR: eventToIndex(%p)\n", obj)
 	mark := obj.getMark()
 	if len(mark) != 0 {
 		ind := repo.markToIndex(mark)
@@ -10319,7 +10325,7 @@ func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options str
 			}
 		}
 	}
-	//repo.renumber(1, nil)
+	repo.renumber(1, nil)
 	return nil
 }
 
