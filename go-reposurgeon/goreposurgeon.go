@@ -4051,7 +4051,7 @@ func (callout Callout) getColor() string {
 	return callout.color
 }
 
-func (callout Callout) setColor(color string) {
+func (callout *Callout) setColor(color string) {
 	callout.color = color
 }
 
@@ -4105,7 +4105,7 @@ func (commit Commit) getColor() string {
 	return commit.color
 }
 
-func (commit Commit) setColor(color string) {
+func (commit *Commit) setColor(color string) {
 	commit.color = color
 }
 
@@ -4603,7 +4603,7 @@ func (commit *Commit) setParents(parents []CommitLike) {
 		case *Commit:
 			parent.(*Commit)._childNodes = commitRemove(parent.(*Commit)._childNodes, commit)
 		case *Callout:
-			croak("not removing callout %s", parent.(Callout).mark)
+			croak("not removing callout %s", parent.(*Callout).mark)
 		}
 	}
 	commit._parentNodes = parents
@@ -4700,7 +4700,7 @@ func (commit *Commit) hasParents() bool {
 func (commit *Commit) hasCallouts() bool {
 	for _, c := range commit._parentNodes {
 		switch c.(type) {
-		case Callout:
+		case *Callout:
 			return true
 		}
 	}
@@ -10008,7 +10008,7 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 		e.(*Commit).replaceParent(&lastEvent, &events[len(events)-1])
 	}
 	for i, e := range events[:len(events)-1] {
-		events[i+1].setParents([]CommitLike{e})
+		events[i+1].setParents([]CommitLike{&e})
 	}
 	// Check if fileops still make sense after re-ordering events.
 	// Also check events one level beyond re-ordered range; anything
@@ -10380,7 +10380,7 @@ func (repo *Repository) splitCommit(where int, splitfunc func([]FileOp) ([]FileO
 	for _, child := range commit.children() {
 		child.(*Commit).replaceParent(commit, commit2)
 	}
-	commit2.setParents([]CommitLike{*commit})
+	commit2.setParents([]CommitLike{commit})
 	// and then finalize the ops
 	commit2.setOperations(fileops2)
 	commit.setOperations(fileops)
