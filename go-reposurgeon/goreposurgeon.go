@@ -9030,6 +9030,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 			panic(fmt.Errorf("export error: %v", err))
 		}
 	}
+	repo.realized = nil
 	baton.exit("")
 	return nil
 }
