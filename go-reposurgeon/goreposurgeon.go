@@ -4409,23 +4409,22 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 		}
 	}
 	rawdate := msg.getHeader("Committer-Date")
-	if rawdate == "" {
-		panic(throw("msgbox", "Missing Committer-Date"))
-	}
-	newcommitdate, err := newDate(rawdate)
-	if err != nil {
-		panic(throw("msgbox", "Bad Committer-Date: %#v (%v)", msg.getHeader("Committer-Date"), err))
-	}
-	if !c.date.isZero() && !newcommitdate.Equal(c.date) {
-		if commit.repo != nil {
-			announce(debugEMAILIN, "in %s, Committer-Date is modified '%s' -> '%s' (delta %d)",
-				commit.idMe(),
-				c.date, newcommitdate,
-				c.date.delta(newcommitdate))
+	if rawdate != "" {
+		newcommitdate, err := newDate(rawdate)
+		if err != nil {
+			panic(throw("msgbox", "Bad Committer-Date: %#v (%v)", msg.getHeader("Committer-Date"), err))
 		}
-		modified = true
+		if !c.date.isZero() && !newcommitdate.Equal(c.date) {
+			if commit.repo != nil {
+				announce(debugEMAILIN, "in %s, Committer-Date is modified '%s' -> '%s' (delta %d)",
+					commit.idMe(),
+					c.date, newcommitdate,
+					c.date.delta(newcommitdate))
+			}
+			modified = true
+		}
+		c.date = newcommitdate
 	}
-	c.date = newcommitdate
 	newauthor := msg.getHeader("Author")
 	if newauthor != "" {
 		authorkeys := []string{}
