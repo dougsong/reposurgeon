@@ -3220,7 +3220,7 @@ func (b Blob) getDelFlag() bool {
 }
 
 // idMe IDs this blob for humans.
-func (b Blob) idMe() string {
+func (b *Blob) idMe() string {
 	return fmt.Sprintf("blob@%s", b.mark)
 }
 
@@ -3492,7 +3492,7 @@ func (t *Tag) index() int {
 func (t Tag) getComment() string { return t.Comment }
 
 // idMe IDs this tag for humans."
-func (t Tag) idMe() string {
+func (t *Tag) idMe() string {
 	suffix := ""
 	if t.legacyID != "" {
 		suffix = "=<" + t.legacyID + ">"
@@ -3699,7 +3699,7 @@ func (reset Reset) getDelFlag() bool {
 }
 
 // idMe IDs this reset for humans.
-func (reset Reset) idMe() string {
+func (reset *Reset) idMe() string {
 	return fmt.Sprintf("reset-%s@%d", reset.ref, reset.repo.eventToIndex(reset))
 }
 
@@ -4026,7 +4026,7 @@ func (callout Callout) getMark() string {
 	return callout.mark
 }
 
-func (callout Callout) idMe() string {
+func (callout *Callout) idMe() string {
 	return fmt.Sprintf("callout-%s", callout.mark)
 }
 
@@ -4135,7 +4135,7 @@ func (commit *Commit) index() int {
 func (commit Commit) getComment() string { return commit.Comment }
 
 // idMe IDs this commit for humans.
-func (commit Commit) idMe() string {
+func (commit *Commit) idMe() string {
 	myid := fmt.Sprintf("commit@%s", commit.mark)
 	if commit.legacyID != "" {
 		myid += fmt.Sprintf("=<%s>", commit.legacyID)
@@ -6557,7 +6557,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 	}
 	for _, event := range sp.repo.events {
 		switch event.(type) {
-		case Reset:
+		case *Reset:
 			reset := event.(*Reset)
 			if reset.committish != "" {
 				commit := sp.repo.markToEvent(reset.committish).(*Commit)
@@ -6566,7 +6566,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				}
 				commit.attach(reset)
 			}
-		case Tag:
+		case *Tag:
 			tag := event.(*Tag)
 			if tag.committish != "" {
 				commit := sp.repo.markToEvent(tag.committish).(*Commit)
@@ -9960,17 +9960,17 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 	if len(v) <= 1 {
 		return
 	}
-	events := make([]Commit, len(v))
+	events := make([]*Commit, len(v))
 	for i, e := range v {
-		commit, ok := repo.events[e].(Commit)
+		commit, ok := repo.events[e].(*Commit)
 		if ok {
 			events[i] = commit
 		}
 	}
-	sortedEvents := make([]Commit, len(v))
+	sortedEvents := make([]*Commit, len(v))
 	sort.Sort(sort.IntSlice(v))
 	for i, e := range v {
-		commit, ok := repo.events[e].(Commit)
+		commit, ok := repo.events[e].(*Commit)
 		if ok {
 			sortedEvents[i] = commit
 		}
@@ -10005,10 +10005,10 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 	}
 	events[0].setParents(sortedEvents[0].parents())
 	for _, e := range lastEvent.parents() {
-		e.(*Commit).replaceParent(&lastEvent, &events[len(events)-1])
+		e.(*Commit).replaceParent(lastEvent, events[len(events)-1])
 	}
 	for i, e := range events[:len(events)-1] {
-		events[i+1].setParents([]CommitLike{&e})
+		events[i+1].setParents([]CommitLike{e})
 	}
 	// Check if fileops still make sense after re-ordering events.
 	// Also check events one level beyond re-ordered range; anything
@@ -11244,10 +11244,10 @@ func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
 	for _, event := range rl.repo.events {
 		if reset, ok := event.(*Reset); ok {
 			if earlyBranches.Contains(reset.ref) {
-				earlyPart.addEvent(*reset)
+				earlyPart.addEvent(reset)
 			}
 			if lateBranches.Contains(reset.ref) {
-				latePart.addEvent(*reset)
+				latePart.addEvent(reset)
 			}
 		} else if blob, ok := event.(*Blob); ok {
 			if blob.colors.Contains("early") {
@@ -13810,7 +13810,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 	if blobs && rs.chosen().inlines > 0 {
 		for ei := rs.selection[0]; ei <= rs.selection[len(rs.selection)-1]; ei++ {
 			event := rs.chosen().events[ei]
-			if commit, ok := event.(Commit); ok {
+			if commit, ok := event.(*Commit); ok {
 				for _, fileop := range commit.operations() {
 					if fileop.inline != "" {
 						rs.selection = append(rs.selection, ei)
