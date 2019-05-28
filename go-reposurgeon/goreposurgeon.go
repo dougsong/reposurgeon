@@ -8101,7 +8101,6 @@ func (repo *Repository) markToEvent(mark string) Event {
 
 // index returns the index of the specified object in the main event list
 func (repo *Repository) eventToIndex(obj Event) int {
-	fmt.Fprintf(os.Stderr, "ERR: eventToIndex(%p)\n", obj)
 	mark := obj.getMark()
 	if len(mark) != 0 {
 		ind := repo.markToIndex(mark)
