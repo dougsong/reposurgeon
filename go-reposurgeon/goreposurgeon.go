@@ -9541,6 +9541,14 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				}
 				return a + "\n" + b
 			}
+			listCommitsByMark := func(items []CommitLike) []string {
+				marks := make([]string, 0)
+				for _, item := range items {
+					marks = append(marks, item.getMark())
+				}
+				return marks
+			}
+			announce(debugDELETE, "to be reparented: %v", listCommitsByMark(commit.children()))
 			for _, cchild := range commit.children() {
 				child, ok := cchild.(*Commit)
 				if !ok {
@@ -9601,13 +9609,6 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				}
 				// Really set the parents to the newly
 				// constructed list
-				listCommitsByMark := func(items []CommitLike) []string {
-					marks := make([]string, 0)
-					for _, item := range items {
-						marks = append(marks, item.getMark())
-					}
-					return marks
-				}
 				announce(debugDELETE, "Parents of %s changed from %v to %v",
 					child.getMark(), listCommitsByMark(oldParents), listCommitsByMark(newParents))
 				child.setParents(newParents)

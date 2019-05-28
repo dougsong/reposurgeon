@@ -6825,6 +6825,7 @@ class Repository:
                         return a
                     else:
                         return a + '\n' + b
+		announce(DEBUG_DELETE, "to be reparented: %s" % ([x.mark for x in event.children()],))
                 for child in list(event.children()):
                     # Insert event's parents in place of event in child's
                     # parent list. We keep existing duplicates in case they
