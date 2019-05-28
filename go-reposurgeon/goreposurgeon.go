@@ -6516,11 +6516,6 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				sp.pushback(line)
 			}
 			sp.repo.addEvent(reset)
-			fmt.Fprintf(os.Stderr, "ERR: Before eventToIndex\n")
-			sp.repo.eventToIndex(reset)
-			fmt.Fprintf(os.Stderr, "ERR: Before idMe\n")
-			reset.idMe()
-			fmt.Fprintf(os.Stderr, "ERR: success\n")
 			baton.twirl("")
 		} else if strings.HasPrefix(line, "tag") {
 			var tagger *Attribution
