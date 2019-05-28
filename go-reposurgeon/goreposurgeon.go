@@ -8114,8 +8114,8 @@ func (repo *Repository) eventToIndex(obj Event) int {
 			return ind
 		}
 	}
-	// Alas, we can't used Id() here without infinite recursion
-	panic(fmt.Sprintf("Internal error: object |%v| not matched in repository %s", obj, repo.name))
+	// Alas, we can't use Id() here without infinite recursion
+	panic(fmt.Sprintf("Internal error: object %q not matched in repository %s", fmt.Sprintf("%v", obj), repo.name))
 }
 
 // find gets an object index by mark
