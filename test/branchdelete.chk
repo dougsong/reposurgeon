@@ -66,7 +66,7 @@ mark :12
 committer esr <esr> 1324127616 +0000
 data 78
 This is an example of a deleteall that should have influence on the manifest.
-from :10
+from :2
 deleteall
 
 commit refs/heads/samplebranch2

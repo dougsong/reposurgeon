@@ -6858,6 +6858,7 @@ class Repository:
                                                         child.comment)
                         altered.append(child)
                     # Really set the parents to the newly constructed list
+                    announce(DEBUG_DELETE, "Parents of %s changed from %s to %s" % (child.mark, [x.mark for x in old_parents], [x.mark for x in new_parents]))
                     child.set_parents(new_parents)
                     # If event was the first parent of child yet has no parents
                     # of its own, then child's first parent has changed.

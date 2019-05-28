@@ -9601,6 +9601,15 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				}
 				// Really set the parents to the newly
 				// constructed list
+				listCommitsByMark := func(items []CommitLike) []string {
+					marks := make([]string, 0)
+					for _, item := range items {
+						marks = append(marks, item.getMark())
+					}
+					return marks
+				}
+				announce(debugDELETE, "Parents of %s changed from %v to %v",
+					child.getMark(), listCommitsByMark(oldParents), listCommitsByMark(newParents))
 				child.setParents(newParents)
 				// If event was the first parent of
 				// child yet has no parents of its
