@@ -90,6 +90,7 @@ A branch created for illustrative purposes.
 
 [[Tag from directory creation or copy commit at Subversion r3]]
 
+reset refs/heads/samplebranch2
 commit refs/heads/samplebranch2
 mark :12
 committer esr <esr> 1324127616 +0000
