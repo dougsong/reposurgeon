@@ -3369,6 +3369,18 @@ func (b *Blob) forget() {
 	b.repo = nil
 }
 
+// moveto changes the repo this blob is associated with."
+func (b *Blob) moveto(repo *Repository) {
+	if b.hasfile() {
+		oldloc := b.getBlobfile(false)
+		b.repo = repo
+		newloc := b.getBlobfile(true)
+		announce(debugSHUFFLE,
+			"blob rename calls os.rename(%s, %s)", oldloc, newloc)
+		os.Rename(oldloc, newloc)
+	}
+}
+
 // clone makes a copy of this blob, pointing at the same file."
 func (b *Blob) clone(repo *Repository) *Blob {
 	c := newBlob(repo)
@@ -3481,6 +3493,11 @@ func (t *Tag) forget() {
 		event.(*Commit).detach(t)
 	}
 	t.repo = nil
+}
+
+// moveto changes the repo this reset is associated with."
+func (t *Tag) moveto(repo *Repository) {
+	t.repo = repo
 }
 
 // index returns our 0-origin index in our repo.
@@ -3729,6 +3746,11 @@ func (reset *Reset) forget() {
 		event.(*Commit).detach(reset)
 	}
 	reset.repo = nil
+}
+
+// moveto changes the repo this reset is associated with."
+func (reset *Reset) moveto(repo *Repository) {
+	reset.repo = repo
 }
 
 // tags enables do_tags() to report resets."
@@ -4038,6 +4060,10 @@ func (callout Callout) getComment() string {
 // Stub to satisfy Event interface - should never be used
 func (callout Callout) String() string {
 	return fmt.Sprintf("callout-%s", callout.mark)
+}
+
+func (callout *Callout) moveto(*Repository) {
+	// Has no repo field
 }
 
 // ManifestEntry is visibility data about a file at a commit where it has no M
@@ -4550,6 +4576,18 @@ func (commit *Commit) forget() {
 		}
 	}
 	commit.repo = nil
+}
+
+// moveto changes the repo this commit is associated with.
+func (commit *Commit) moveto(repo *Repository) {
+	for _, fileop := range commit.operations() {
+		fileop.repo = repo
+		if fileop.op == opN {
+			commit.repo.inlines--
+			repo.inlines++
+		}
+	}
+	commit.repo = repo
 }
 
 // parents gets a list of this commit's parents.
@@ -5268,7 +5306,7 @@ func (p *Passthrough) emailIn(msg *MessageBlock) {
 }
 
 // idMe IDs this passthrough for humans."
-func (p Passthrough) idMe() string {
+func (p *Passthrough) idMe() string {
 	return fmt.Sprintf("passthrough@%d", p.repo.eventToIndex(p))
 }
 
@@ -5283,6 +5321,10 @@ func (p Passthrough) getComment() string { return p.text }
 // String reports this passthrough in import-stream format.
 func (p Passthrough) String() string {
 	return p.text
+}
+
+func (p *Passthrough) moveto(*Repository) {
+	// Has no repo field
 }
 
 // Generic extractor code begins here
@@ -7962,6 +8004,7 @@ type Event interface {
 	getMark() string
 	getComment() string
 	String() string
+	moveto(*Repository)
 	getDelFlag() bool
 }
 
@@ -7972,6 +8015,7 @@ type CommitLike interface {
 	getComment() string
 	callout() string
 	String() string
+	moveto(*Repository)
 	getDelFlag() bool
 	getColor() string
 	setColor(string)
@@ -9768,40 +9812,6 @@ func (repo *Repository) gcBlobs() {
 // Delete machinery ends here
 //
 
-
-// moveto changes the repo an event is associated with."
-func (repo *Repository) moveto(event Event) {
-	// Passthroughs and Callouts have no repo field
-	switch event.(type) {
-	case *Blob:
-		b := event.(*Blob)
-		if b.hasfile() {
-			oldloc := b.getBlobfile(false)
-			b.repo = repo
-			newloc := b.getBlobfile(true)
-			announce(debugSHUFFLE,
-				"blob rename calls os.rename(%s, %s)", oldloc, newloc)
-			os.Rename(oldloc, newloc)
-		}
-	case *Tag:
-		t := event.(*Tag)
-		t.repo = repo
-	case *Reset:
-		r := event.(*Reset)
-		r.repo = repo
-	case *Commit:
-		commit := event.(*Commit)
-		for _, fileop := range commit.operations() {
-			fileop.repo = repo
-			if fileop.op == opN {
-				commit.repo.inlines--
-				repo.inlines++
-			}
-		}
-		commit.repo = repo
-	}
-}
-
 // Return options and features.  Makes a copy slice.
 func (repo *Repository) frontEvents() []Event {
 	var front = make([]Event, 0)
@@ -10255,7 +10265,7 @@ func (repo *Repository) absorb(other *Repository) {
 	}
 	// Merge in the non-feature events and blobs
 	for _, event := range other.events {
-		repo.moveto(event)
+		event.moveto(repo)
 	}
 	repo.events = append(repo.events, other.events...)
 	repo.declareSequenceMutation("absorb")
@@ -11258,10 +11268,10 @@ func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
 		} else {
 			if passthrough, ok := event.(*Passthrough); ok {
 				if passthrough.color == "early" {
-					earlyPart.moveto(passthrough)
+					passthrough.moveto(earlyPart)
 					earlyPart.addEvent(passthrough)
 				} else if passthrough.color == "late" {
-					earlyPart.moveto(passthrough)
+					passthrough.moveto(earlyPart)
 					earlyPart.addEvent(passthrough)
 				} else {
 					// TODO: Someday, color passthroughs
@@ -11270,20 +11280,20 @@ func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
 				}
 			} else if commit, ok := event.(*Commit); ok {
 				if commit.color == "early" {
-					earlyPart.moveto(commit)
+					commit.moveto(earlyPart)
 					earlyPart.addEvent(commit)
 				} else if commit.color == "late" {
-					earlyPart.moveto(commit)
+					commit.moveto(earlyPart)
 					earlyPart.addEvent(commit)
 				} else {
 					panic(fmt.Sprintf("coloring algorithm failed on %s", event.idMe()))
 				}
 			} else if tag, ok := event.(*Tag); ok {
 				if tag.color == "early" {
-					earlyPart.moveto(tag)
+					tag.moveto(earlyPart)
 					earlyPart.addEvent(tag)
 				} else if tag.color == "late" {
-					earlyPart.moveto(tag)
+					tag.moveto(earlyPart)
 					earlyPart.addEvent(tag)
 				} else {
 					panic(fmt.Sprintf("coloring algorithm failed on %s", event.idMe()))
