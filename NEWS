@@ -1,6 +1,6 @@
 = reposurgeon project news =
 
-Repository head:
+3.46: 2019-05-29::
      Added 'relax' no-op command.
      Added bug warning about repocutter not handling Mac line terminations.
      Fix for GitLab issue #117: malformed attribution.
