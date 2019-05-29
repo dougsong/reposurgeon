@@ -9524,6 +9524,9 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 					newTarget = noncallout
 				}
 			}
+			if newTarget != nil {
+				announce(debugDELETE, "new target for tags and resets is %s", newTarget.getMark())
+			}
 			// Reparent each child.  Concatenate comments,
 			// ignoring empty-log-message markers.
 			composeComment := func(a string, b string) string {
@@ -9700,14 +9703,17 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				}
 				// use a copy of attachments since it
 				// will be mutated
+				attachments_copy := make([]Event, 0)
 				for _, e := range commit.attachments {
-					switch event.(type) {
+					attachments_copy = append(attachments_copy, e)
+				}
+				for _, e := range attachments_copy {
+					announce(debugDELETE, "moving attachment %s of %s to %s", commit.mark, e.idMe(), newTarget.getMark())
+					switch e.(type) {
 					case *Tag:
-						e.(*Tag).forget()
-						e.(*Reset).remember(repo, newTarget.mark)
+						e.(*Tag).remember(repo, newTarget.getMark())
 					case *Reset:
-						e.(*Tag).forget()
-						e.(*Reset).remember(repo, newTarget.mark)
+						e.(*Reset).remember(repo, newTarget.getMark())
 					}
 				}
 			}

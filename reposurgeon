@@ -6804,12 +6804,15 @@ class Repository:
                 event.deletehook = True
                 # Decide the new target for tags
                 filter_only = True
+                new_target = None
                 if tagforward and event.has_children():
                     filter_only = False
                     new_target = event.first_child()
                 elif tagback and event.parents():
                     filter_only = False
                     new_target = event.parents()[0]
+		if new_target is not None:
+		    announce(DEBUG_DELETE, "new target for tags and resets is %s" % new_target.mark)
                 # Reparent each child
                 def compose_comment(a, b):
                     "Concatenate comments, ignoring empty-log-message markers."
@@ -6922,6 +6925,7 @@ class Repository:
                         self.events[ei] = reset
                     # use a copy of attachments since it will be mutated
                     for t in list(event.attachments):
+		        announce(DEBUG_DELETE, "moving attachment %s of %s to %s" % (event.mark, t.id_me(), new_target.mark))
                         t.forget()
                         t.remember(self, target=new_target)
                 # And forget the deleted event
