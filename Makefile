@@ -19,12 +19,16 @@ SOURCES += docbook-extra.xml nofooter.conf
 SOURCES += \
 	reposurgeon reposurgeon.xml \
 	repotool repotool.xml \
-	src/*/*.go \
+	go-repocutter/repocutter.go \
+	go-repomapper/repomapper.go \
+	go-reposurgeon/goreposurgeon.go \
+	go-reposurgeon/goreposurgeon_test.go \
+	go-reposurgeon/intern.go \
 	repomapper.xml repocutter.xml \
 	reporting-bugs.adoc features.adoc dvcs-migration-guide.adoc \
 	reposurgeon-mode.el
 SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
-SOURCES += Dockerfile ci/prepare.sh ci/Makefile ci/requirements.txt
+SOURCES += Dockerfile ci/prepare.sh ci/requirements.txt .gitlab-ci.yml
 DOCS = README.adoc NEWS TODO
 
 STOPOUT=1
