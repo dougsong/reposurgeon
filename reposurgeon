@@ -9163,7 +9163,7 @@ developers.
         pacify_pylint(preselection)
         selection = []
         lookup = self.chosen().named(ref)
-        if lookup == None:
+        if lookup is None:
             raise Recoverable("couldn't match a name at <%s>" % ref)
         else:
             # Choose to include *all* commits matching the date.
