@@ -9542,18 +9542,25 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				return a + "\n" + b
 			}
 			listCommitsByMark := func(items []CommitLike) []string {
+				// Used for diagnostics
 				marks := make([]string, 0)
 				for _, item := range items {
-					marks = append(marks, item.getMark())
+					var legend string
+					if item == nil {
+						legend = "nil"
+					} else {
+						legend = fmt.Sprintf("%s (%p)", item.getMark(), item)
+					}
+					marks = append(marks, legend)
 				}
 				return marks
 			}
-			announce(debugDELETE, "to be reparented: %v", listCommitsByMark(commit.children()))
-			for _, cchild := range commit.children() {
-				child, ok := cchild.(*Commit)
-				if !ok {
-					continue // Ignore callouts
-				}
+			//announce(debugDELETE, "deleting %s requires %v to be reparented.", commit.getMark(), commit.childMarks())
+			for _, cchild := range commit.childMarks() {
+				if isCallout(cchild) {
+					continue
+				}					
+				child := repo.markToEvent(cchild).(*Commit)
 				// Insert commit's parents in place of
 				// commit in child's parent list. We
 				// keep existing duplicates in case
@@ -9569,6 +9576,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 						break
 					}
 				}
+				//announce(debugDELETE, "reparenting: %s", child.getMark())
 				// Start with existing parents before us,
 				// including existing duplicates
 				newParents := make([]CommitLike, len(oldParents) - 1 + len(commit.parents()))
