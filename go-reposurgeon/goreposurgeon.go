@@ -9463,7 +9463,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 			if delete {
 				speak := fmt.Sprintf("warning: commit %s to be deleted has ", commit.mark)
 				if strings.Contains(commit.Branch, "/") && !strings.Contains(commit.Branch, "/heads/") {
-					croak(speak + fmt.Sprintf("non-head branch attribute %s", commit.Branch))
+					complain(speak + fmt.Sprintf("non-head branch attribute %s", commit.Branch))
 				}
 				if !commit.alldeletes(nil) {
 					complain(speak + "non-delete fileops.")
