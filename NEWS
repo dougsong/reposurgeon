@@ -8,6 +8,8 @@ Repository head:
      Command renames: mailbox_in -> msgin, mailbox_out -> msgout.
      The exec and eval commands have been removed.
      Scripts now bail out on error; "relax" suppresses this.
+     Fixes for repocutter strip and patherename (GitLab issues #18 & #142)
+     Document some limitations of repocutter sift and expunge.
 
 3.45: 2018-08-24::
      Repaired the distribution maker to again include README.adoc, NEWS, TODO.
