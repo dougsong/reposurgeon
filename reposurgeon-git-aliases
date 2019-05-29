@@ -1,5 +1,9 @@
 [alias]
 	# git stamp <commit-ish> - print a reposurgeon-style action stamp
+	# This always goes to the committer. It would be better to look at thwe author
+	# timestamp first and fall back to commmitter, because the author stamp because 
+	# doesn't change when patches  are replayed onto a repository, while the commit
+	# stamp will. 
 	stamp = show -s --format='%cI!%ce'
 
 	# git scommit <stamp> <rev-list-args> - list most recent commit that matches <stamp>.
