@@ -13,8 +13,12 @@ type Pool struct {
 var pool *Pool
 
 // enableIntern - choose to reduce memory footprint at the cost of speed
-func enableIntern() {
-	pool.lookup = make(map[string]string)
+func enableIntern(b bool) {
+	if b {
+		pool.lookup = make(map[string]string)
+		return
+	}
+	pool.lookup = nil
 }
 
 func intern(s string) string {
