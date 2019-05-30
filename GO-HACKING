@@ -78,17 +78,12 @@ empty is a near-term goal.
 
 x-calloutgraft: object not matched error
 x-changelog: handler is not yet implemented.
-x-checktext: there's some minor defect in the msgin translation.
 x-commit-expunge: expunge operation fails.
 x-debranch3: unknown failure
-x-delkeepsbranch: delete primitive failed
 x-divide: divide logic appears broken
 x-graft2: ill-formed stream error
-x-graft-prune: ill-formed stream error
-x-graft: ill-formed stream error
 x-liftlogs: changelogs handler is still missing.
 x-macro: Spurious EOF in single-line expansion, and multiline doesn't work.
-x-multiple-tagback: unknown failure.
 x-multiroot: ill-formed stream error
 x-pathrename: ancestry check is failing.
 x-pathrename-with-set: rename operation fails.

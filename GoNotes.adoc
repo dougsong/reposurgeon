@@ -25,9 +25,10 @@ conformance with the Go community's practice for grounding language
 enhancement requests not in it-would-be-nice-to-have abstractions but
 rather in a description of real-world problems. The scale driver of
 this real-world problem is that, while at 14KLOC reposurgeon is not
-expecially large, it is very *dense* - algorithmically complex,
-bristling with graph theory, FSMs, parsing, tricky data structures,
-two robot harnesses driving other other tools, and three different
+expecially large, it is very *dense*.  It's a DSL that's a tructure
+editor for attributed DAGs - algorithmically complex, bristling with
+graph theory, FSMs, parsing, tricky data structures, two robot
+harnesses driving other tools, and three different
 operator-composition algebras.
 
 Accordingly, reposurgeon would be a challenge to the expressiveness of
@@ -107,8 +108,8 @@ difficult to grasp what was going on at all those callsites.
 
 === Absence of "with" and try/finally context-manager idioms ===
 
-This is a real expressiveness problem, not just a readability issue.
-In Python I can do this:
+This is a real expressiveness problem, not just a readability issue
+like the preceding.  In Python I can do this:
 
 ----------------------------------------------------------------------
 class CriticalRegion:
@@ -244,11 +245,11 @@ func exampleFunction() {
 }
 ----------------------------------------------------------------------
 
-This is still a bit grubby, however.  Notably, c has to be exposed in
-the outer scope.  But I don't see any way to get what I really want -
-the Python context-manager protocol - without introducing a very
-un-Go-like form of magic structure-member naming, so I'd settle
-for try/finally.
+This is still a bit grubby, though bit less so if it's treated like a
+conditional and c is not be exposed in the outer scope.  I don't see
+any way to get what I really want - the Python context-manager
+protocol - without introducing a very un-Go-like form of magic
+structure-member naming, so I'd settle for try/finally.
 
 === No map over slices ===
 
@@ -709,7 +710,7 @@ func (repo *Repository) commits() func()*Commit {
 ...and there I have it.  An iterator, with exactly the same lifetime
 as the for loop.
 
-I urge that this be adopted for Go 2. Small, easy new evaluation rule,
+I suggest that this be adopted for Go 2. Small, easy new evaluation rule,
 big gain in expressiveness.
 
 === Hieratic documentation ===
@@ -792,7 +793,7 @@ Attention to the problem and a good techical writer/editor can fix this.
 I think the Go translation of reposurgeon is going to be better - more
 maintainable - code than the Python original, not just faster.  And this
 is not because I'm rewriting or refactoring as I go; I've explained that
-I'm trying very hard to avoid that. It's that Go's mimalistic approch
+I'm trying very hard to avoid that. It's that Go's minimalistic approch
 actually...works.
 
 I see a maintainability benefit from the static typing. The Go type
