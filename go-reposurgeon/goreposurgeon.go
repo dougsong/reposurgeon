@@ -4017,6 +4017,9 @@ func (fileop FileOp) String() string {
 			fileop.Source, fileop.Target) + "\n"
 	} else if fileop.op == deleteall {
 		return fileop.op + "\n"
+	} else if fileop.op == "" {
+		// It's a nilOp, sometimes dumped during diagnostics
+		return "X\n"
 	}
 	panic(throw("command", "Unexpected op %q while writing", fileop.op))
 }
