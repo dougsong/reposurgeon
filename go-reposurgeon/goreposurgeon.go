@@ -5100,13 +5100,15 @@ func (commit *Commit) head() string {
 	if rank == 0 {
 		switch child.(type) {
 		case *Commit:
-			child.(*Commit).head() // there was only one child
+			return child.(*Commit).head() // there was only one child
 		case *Callout:
 			croak("internal error: callouts do not have branches: %s",
 				child.idMe())
 		}
 	}
-	panic(throw("command", "Can't deduce a branch head for %s", commit.mark))
+	croak("Can't deduce a branch head for %s", commit.mark)
+	// FIXME: should we panic here? 
+	return ""
 }
 
 // tip enables do_tip() to report deduced branch tips.
