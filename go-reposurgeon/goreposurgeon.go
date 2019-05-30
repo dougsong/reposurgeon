@@ -14025,7 +14025,8 @@ func (rs *Reposurgeon) DoAssign(line string) bool {
 	}
 	if rs.selection == nil {
 		if line != "" {
-			panic(throw("command", "No selection"))
+			croak("No selection")
+			return false
 		} else {
 			for n, v := range repo.assignments {
 				announce(debugSHOUT, fmt.Sprintf("%s = %v", n, v))
@@ -14038,15 +14039,18 @@ func (rs *Reposurgeon) DoAssign(line string) bool {
 	name := strings.TrimSpace(parse.line)
 	for key := range repo.assignments {
 		if key == name {
-			panic(throw("command", "%s has already been set", name))
+			croak("%s has already been set", name)
+			return false
 		}
 	}
 	//FIXME: Incorrect - could collide with an old assignment.
 	//The logic of named needs to change.
 	if repo.named(name) != nil {
-		panic(throw("command", "%s conflicts with a branch, tag, legacy-ID, or date", name))
+		croak("%s conflicts with a branch, tag, legacy-ID, or date", name)
+		return false
 	} else if parse.options.Contains("--singleton") && len(rs.selection) != 1 {
-		panic(throw("command", "a singleton selection was required here"))
+		croak("a singleton selection was required here")
+		return false
 	} else {
 		if repo.assignments == nil {
 			repo.assignments = make(map[string]orderedIntSet)
@@ -14083,13 +14087,15 @@ func (rs *Reposurgeon) DoUnassign(line string) bool {
 		return false
 	}
 	if rs.selection != nil {
-		panic(throw("command", "cannot take a selection"))
+		croak("cannot take a selection")
+		return false
 	}
 	name := strings.TrimSpace(line)
 	if _, ok := repo.assignments[name]; ok {
 		delete(repo.assignments, name)
 	} else {
-		panic(throw("command", "%s has not been set", name))
+		croak("%s has not been set", name)
+		return false
 	}
 	return false
 }
@@ -14287,7 +14293,8 @@ func (rs *Reposurgeon) DoStats(line string) bool {
 	for _, name := range parse.Tokens() {
 		repo := rs.repoByName(name)
 		if repo == nil {
-			panic(throw("command", "no such repo as %s", name))
+			croak("no such repo as %s", name)
+			return false
 		} else {
 			var blobs, commits, tags, resets, passthroughs int
 			for _, event := range repo.events {
@@ -14830,7 +14837,8 @@ func (rs *Reposurgeon) CompleteChoose(text string) []string {
 // Choose a named repo on which to operate.
 func (rs *Reposurgeon) DoChoose(line string) bool {
 	if rs.selection != nil {
-		panic(throw("command", "choose does not take a selection set"))
+		croak("choose does not take a selection set")
+		return false
 	}
 	if len(rs.repolist) == 0 {
 		if context.verbose > 0 {
@@ -14884,7 +14892,8 @@ func (rs *Reposurgeon) DoDrop(line string) bool {
 		}
 	}
 	if rs.selection != nil {
-		panic(throw("command", "drop does not take a selection set"))
+		croak("drop does not take a selection set")
+		return false
 	}
 	if line == "" {
 		if rs.chosen() == nil {
@@ -14920,7 +14929,8 @@ if there is already one by the new name.
 // Rename a repository.
 func (rs *Reposurgeon) DoRename(line string) bool {
 	if rs.selection != nil {
-		panic(throw("command", "rename does not take a selection set"))
+		croak("rename does not take a selection set")
+		return false
 	}
 	if rs.reponames().Contains(line) {
 		croak("there is already a repo named %s.", line)
@@ -14945,7 +14955,8 @@ list is displayed afterwards.
 // Add files and subdirectories to the preserve set.
 func (rs *Reposurgeon) DoPreserve(line string) bool {
 	if rs.selection != nil {
-		panic(throw("command", "preserve does not take a selection set"))
+		croak("preserve does not take a selection set")
+		return false
 	}
 	if rs.chosen() == nil {
 		croak("no repo has been chosen.")
@@ -14970,7 +14981,8 @@ current preserve list is displayed afterwards.
 // Remove files and subdirectories from the preserve set.
 func (rs *Reposurgeon) DoUnpreserve(line string) bool {
 	if rs.selection != nil {
-		panic(throw("command", "unpreserve does not take a selection set"))
+		croak("unpreserve does not take a selection set")
+		return false
 	}
 	if rs.chosen() == nil {
 		croak("no repo has been chosen.")
@@ -15024,7 +15036,8 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 				vcs := strings.Split(option, "=")[1]
 				infilter, ok := fileFilters[vcs]
 				if !ok {
-					panic(throw("command", "unrecognized --format"))
+					croak("unrecognized --format")
+					return false
 				}
 				srcname := "unknown-in"
 				if f, ok := parse.stdin.(*os.File); ok {
@@ -15039,7 +15052,8 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 				command := fmt.Sprintf(infilter.importer, srcname)
 				reader, _, err := readFromProcess(command)
 				if err != nil {
-					panic(throw("command", "can't open filter: %v", infilter))
+					croak("can't open filter: %v", infilter)
+					return false
 				}
 				parse.stdin = reader
 				break
@@ -15135,7 +15149,8 @@ func (rs *Reposurgeon) DoWrite(line string) bool {
 				vcs := strings.Split(option, "=")[1]
 				outfilter, ok := fileFilters[vcs]
 				if !ok {
-					panic(throw("command", "unrecognized --format"))
+					croak("unrecognized --format")
+					return false
 				}
 				srcname := "unknown-out"
 				if f, ok := parse.stdout.(*os.File); ok {
@@ -15150,7 +15165,8 @@ func (rs *Reposurgeon) DoWrite(line string) bool {
 				command := fmt.Sprintf(outfilter.exporter, srcname)
 				writer, _, err := writeToProcess(command)
 				if err != nil {
-					panic(throw("command", "can't open output filter: %v", outfilter))
+					croak("can't open output filter: %v", outfilter)
+					return false
 				}
 				parse.stdout = writer
 				break
@@ -15381,7 +15397,8 @@ func (rs *Reposurgeon) DoRebuild(line string) bool {
 		return false
 	}
 	if len(rs.selection) != 0 {
-		panic(throw("command", "rebuild does not take a selection set"))
+		croak("rebuild does not take a selection set")
+		return false
 	}
 	parse := rs.newLineParse(line, nil)
 	defer parse.Closem()
@@ -19142,7 +19159,8 @@ to re-set it.
 
 func (rs *Reposurgeon) DoBranchify_map(line string) bool {
 	if rs.selection != nil {
-		panic(throw("command", "branchify_map does not take a selection set"))
+		croak("branchify_map does not take a selection set")
+		return false
 	}
 	line = strings.TrimSpace(line)
 	if line == "reset" {
