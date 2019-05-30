@@ -4018,7 +4018,7 @@ func (fileop FileOp) String() string {
 	} else if fileop.op == deleteall {
 		return fileop.op + "\n"
 	}
-	panic(throw("Unexpected op %s while writing", fileop.op))
+	panic(throw("command", "Unexpected op %q while writing", fileop.op))
 }
 
 // Callout is a stub object for callout marks in incomplete repository segments.
