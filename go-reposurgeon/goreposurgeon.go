@@ -2462,6 +2462,7 @@ const debugSHUFFLE = 4  // Debug file and directory handling
 const debugCOMMANDS = 5 // Show commands as they are executed
 const debugUNITE = 6    // Debug mark assignments in merging
 const debugLEXER = 6    // Debug selection-language parsing
+const debugDISABLE = 7	// dummy value for temporarily disabling a diagnostic
 
 var optionFlags = [...][2]string{
 	{"canonicalize",
@@ -9754,7 +9755,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 			if (!policy.Contains("--coalesce") && !delete) || debugEnable(debugDELETE) {
 				for path, oplist := range cliques {
 					if len(oplist) > 1 && !dquiet {
-						croak("commit %s has multiple Ms for %s", commit.mark, path)
+						complain("commit %s has multiple Ms for %s", commit.mark, path)
 					}
 				}
 			}
