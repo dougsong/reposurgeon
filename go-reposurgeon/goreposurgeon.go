@@ -14840,9 +14840,9 @@ func (rs *Reposurgeon) DoChoose(line string) bool {
 		croak("choose does not take a selection set")
 		return false
 	}
-	if len(rs.repolist) == 0 {
+	if len(rs.repolist) == 0 && len(line) > 0 {
 		if context.verbose > 0 {
-			croak("no repositories are loaded.")
+			croak("no repositories are loaded, can't find %q.", line)
 			return false
 		}
 	}
