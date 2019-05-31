@@ -3220,6 +3220,10 @@ func (b Blob) getDelFlag() bool {
 	return b.deleteme
 }
 
+func (b *Blob) setDelFlag(t bool) {
+	b.deleteme = t
+}
+
 // idMe IDs this blob for humans.
 func (b *Blob) idMe() string {
 	return fmt.Sprintf("blob@%s", b.mark)
@@ -3471,6 +3475,10 @@ func (t Tag) getDelFlag() bool {
 	return t.deleteme
 }
 
+func (t *Tag) setDelFlag(b bool) {
+	t.deleteme = b
+}
+
 // getMark returns the tag's identifying mark
 // Not actually used, needed to satisfy Event interface
 func (t Tag) getMark() string {
@@ -3714,6 +3722,10 @@ func newReset(repo *Repository, ref string, committish string) *Reset {
 
 func (reset Reset) getDelFlag() bool {
 	return reset.deleteme
+}
+
+func (reset *Reset) setDelFlag(b bool) {
+	reset.deleteme = b
 }
 
 // idMe IDs this reset for humans.
@@ -4044,6 +4056,9 @@ func (callout Callout) getDelFlag() bool {
 	return callout.deleteme
 }
 
+func (callout *Callout) setDelFlag(b bool) {
+	callout.deleteme = b
+}
 func (callout Callout) callout() string {
 	return callout.mark
 }
@@ -4113,6 +4128,10 @@ type Commit struct {
 
 func (commit Commit) getDelFlag() bool {
 	return commit.deleteme
+}
+
+func (commit *Commit) setDelFlag(b bool) {
+	commit.deleteme = b
 }
 
 func (commit Commit) getMark() string {
@@ -5285,6 +5304,10 @@ type Passthrough struct {
 
 func (p Passthrough) getDelFlag() bool {
 	return p.deleteme
+}
+
+func (p *Passthrough) setDelFlag(b bool) {
+	p.deleteme = b
 }
 
 func newPassthrough(repo *Repository, line string) *Passthrough {
@@ -8012,6 +8035,7 @@ type Event interface {
 	String() string
 	moveto(*Repository)
 	getDelFlag() bool
+	setDelFlag(bool)
 }
 
 // CommitLike is a Commit or Callout
@@ -8023,6 +8047,7 @@ type CommitLike interface {
 	String() string
 	moveto(*Repository)
 	getDelFlag() bool
+	setDelFlag(bool)
 	getColor() string
 	setColor(string)
 }
@@ -9488,18 +9513,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 	altered := make([]*Commit, 0)
 	// Here are the deletions
 	for _, event := range repo.events {
-		switch event.(type) {
-		case *Blob:
-			event.(*Blob).deleteme = false
-		case *Tag:
-			event.(*Tag).deleteme = false
-		case *Reset:
-			event.(*Reset).deleteme = false
-		case *Passthrough:
-			event.(*Passthrough).deleteme = false
-		case *Commit:
-			event.(*Commit).deleteme = false
-		}
+		event.setDelFlag(false)
 	}
 	var newTarget *Commit
 	for _, ei := range selected {
@@ -9508,16 +9522,16 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 		case *Blob:
 			// Never delete a blob except as a side effect of
 			// deleting a commit.
-			event.(*Blob).deleteme = false
+			event.setDelFlag(false)
 		case *Tag:
-			event.(*Tag).deleteme = delete
+			event.setDelFlag(delete)
 		case *Reset:
-			event.(*Reset).deleteme = delete
+			event.setDelFlag(delete)
 		case *Passthrough:
-			event.(*Passthrough).deleteme = delete
+			event.setDelFlag(delete)
 		case *Commit:
+			event.setDelFlag(delete)
 			commit := event.(*Commit)
-			commit.deleteme = true
 			// Decide the new target for tags
 			filterOnly := true
 			if tagforward && commit.hasChildren() {
@@ -9686,12 +9700,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 			// Move tags && attachments
 			if filterOnly {
 				for _, e := range commit.attachments {
-					switch e.(type) {
-					case *Tag:
-						e.(*Tag).deleteme = false
-					case *Reset:
-						e.(*Reset).deleteme = false
-					}
+					e.setDelFlag(true)
 				}
 			} else {
 				if !tagify && strings.Contains(commit.Branch, "/tags/") && newTarget.Branch != commit.Branch {
