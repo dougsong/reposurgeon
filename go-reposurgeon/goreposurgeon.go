@@ -9530,7 +9530,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 		case *Passthrough:
 			event.setDelFlag(delete)
 		case *Commit:
-			event.setDelFlag(delete)
+			event.setDelFlag(true)
 			commit := event.(*Commit)
 			// Decide the new target for tags
 			filterOnly := true
