@@ -1452,26 +1452,10 @@ A vanilla repository - standard layout, linear history, no tags, no branches.
 
 [[Tag from root commit at Subversion r1]]
 
-tag emptycommit-5
-from :6
-tagger esr <esr> 1323084440 +0000
-data 151
-Adding a property setting.
-
-[[Tag from zero-fileop commit at Subversion r5:
-<NodeAction: r5 change file 'trunk/README' properties=[('foo', 'bar')]>
-]]
-
 tag no-comment
 from :4
 tagger esr <esr> 1322671316 +0000
 data 0
-
-tag with-comment
-from :6
-tagger esr <esr> 1322671317 +0000
-data 19
-this is a test tag
 
 `
 	assertEqual(t, a.String(), dtrimmed)
