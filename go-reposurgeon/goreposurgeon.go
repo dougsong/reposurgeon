@@ -18040,7 +18040,7 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 		tag := newTag(repo, tagname, target.mark,
 			target.committer.clone(),
 			target.Comment)
-		tag.tagger.date.timestamp.Add(time.Second) // So it is unique
+		tag.tagger.date.timestamp = tag.tagger.date.timestamp.Add(time.Second) // So it is unique
 		var lasttag int
 		var lastcommit int
 		for i, event := range repo.events {
