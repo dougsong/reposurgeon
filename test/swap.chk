@@ -1474,7 +1474,6 @@ refs #9865 - NFSe was using unnecessary validation
 from :212
 M 100644 :214 trunk/lib/git_nfse.rb
 M 100644 :213 trunk/lib/git_nfse/types/complex.rb
-D trunk/lib/git_nfse/validations.rb
 
 blob
 mark :216
