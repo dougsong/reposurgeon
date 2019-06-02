@@ -1,4 +1,5 @@
 ## Test selection sets
+relax
 read <testrepo.fi
 echo 1
 1,3 resolve

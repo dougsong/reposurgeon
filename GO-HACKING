@@ -64,7 +64,6 @@ x-gitify.tst
 x-lint.tst
 x-nesting.tst
 x-references.tst
-x-resolve.tst
 x-userignores.tst
 x-split-dir.tst
 x-split.tst.tst
