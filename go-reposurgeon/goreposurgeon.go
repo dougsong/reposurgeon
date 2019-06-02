@@ -4948,78 +4948,58 @@ func (commit *Commit) canonicalize() {
 		}
 	}
 	commit.fileops = commit.fileops[lastdel:len(commit.fileops)]
-	if len(commit.fileops) < 2 {
+        ops := commit.operations()
+        if len(ops) == 0 || ops[0].op == deleteall {
 		return
 	}
-	// Get paths touched by non-deleteall operations.
-	paths := commit.paths(nil)
-	// Full canonicalization is very expensive on large
-	// repositories. Try an inexpensive check for cases it needn't
-	// be done. If all ops are Ms and Ds, and every path in a commit
-	// is unique, don't do it.  The .gitignores guard is required
-	// because these are sometimes generated.
-	md := 0
-	for _, op := range commit.operations() {
-		if op.op == opM || op.op == opD {
-			md++
+        // Get paths touched by non-deleteall operations.
+        paths := commit.paths(nil)
+	// Fetch the tree state before us...
+	var previous map[string]*ManifestEntry
+	if !commit.hasParents() {
+		previous = make(map[string]*ManifestEntry)
+	} else {
+		p := commit.parents()[0]
+		switch p.(type) {
+		case *Commit:
+			previous = p.(*Commit).manifest()
+		case *Callout:
+			croak("internal error: can't get through a callout")
+			return
+		default:
+			panic("manifest() found unexpected type in parent list")
 		}
 	}
-	gi := 0
-	all := 0
-	for _, cpath := range commit.paths(nil) {
-		all++
-		if path.Base(cpath) == ".gitignore" {
-			gi++
-		}
-	}
-	if md > 1 && (all != md || gi > 0) {
-		// Fetch the tree state before us...
-		var previous map[string]*ManifestEntry
-		if !commit.hasParents() {
-			previous = make(map[string]*ManifestEntry)
-		} else {
-			p := commit.parents()[0]
-			switch p.(type) {
-			case *Commit:
-				previous = p.(*Commit).manifest()
-			case *Callout:
-				croak("internal error: can't get through a callout")
-				return
-			default:
-				panic("manifest() found unexpected type in parent list")
-			}
-		}
-		current := commit.manifest()
-		newops := make([]FileOp, 0)
-		// Generate needed D fileops.
-		if commit.fileops[0].op != deleteall {
-			// Only files touched by non-deleteall ops might disappear.
-			for _, cpath := range paths {
-				_, old := previous[cpath]
-				_, new := current[cpath]
-				if old && !new {
-					fileop := newFileOp(commit.repo)
-					fileop.construct("D", cpath)
-					newops = append(newops, *fileop)
-				}
-			}
-		}
-		// Generate needed M fileops.
-		// Only paths touched by non-deleteall ops can be changed.
+	current := commit.manifest()
+	newops := make([]FileOp, 0)
+	// Generate needed D fileops.
+	if commit.fileops[0].op != deleteall {
+		// Only files touched by non-deleteall ops might disappear.
 		for _, cpath := range paths {
-			oe, _ := previous[cpath]
-			ne, newok := current[cpath]
-			if newok && ne != oe {
+			_, old := previous[cpath]
+			_, new := current[cpath]
+			if old && !new {
 				fileop := newFileOp(commit.repo)
-				fileop.construct(opM, ne.mode, ne.ref, cpath)
-				if ne.ref == "inline" {
-					fileop.inline = ne.inline
-				}
+				fileop.construct("D", cpath)
 				newops = append(newops, *fileop)
 			}
 		}
-		commit.setOperations(newops)
 	}
+	// Generate needed M fileops.
+	// Only paths touched by non-deleteall ops can be changed.
+	for _, cpath := range paths {
+		oe, _ := previous[cpath]
+		ne, newok := current[cpath]
+		if newok && ne != oe {
+			fileop := newFileOp(commit.repo)
+			fileop.construct(opM, ne.mode, ne.ref, cpath)
+			if ne.ref == "inline" {
+				fileop.inline = ne.inline
+			}
+			newops = append(newops, *fileop)
+		}
+	}
+	commit.setOperations(newops)
 	// Finishing touches.  Sorting always has to be done
 	commit.sortOperations()
 }
