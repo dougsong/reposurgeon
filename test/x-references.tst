@@ -1,5 +1,8 @@
 ## Test authors read, legacy-ID refs, heredocs, comment editing
 read <x-references.svn
+<1>,<2>,<13> resolve
+<1>..<2> resolve
+<3>..<7> resolve
 authors read <<EOF
 esr-guest = Eric S. Raymond <esr-guest@alioth.debian.org>
 lestat-guest = David Goncalves <david@lestat.st>
