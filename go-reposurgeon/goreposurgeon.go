@@ -3990,12 +3990,19 @@ func (fileop *FileOp) paths(pathtype stringSet) stringSet {
 	panic("Unknown fileop type " + fileop.op)
 }
 
-// relevant tells if two fileops touch any of the same filesthe same file(s)
+// relevant tells if two fileops touch any of the same files
 func (fileop *FileOp) relevant(other *FileOp) bool {
 	if fileop.op == deleteall || other.op == deleteall {
 		return true
 	}
 	return len(fileop.paths(nil).Intersection(other.paths(nil))) > 0
+}
+
+// equals tells if two fileops have the same content
+// Not yet used.
+func (fileop *FileOp) equals(other *FileOp) bool {
+	// Relies on structs being compared member-by-member 
+	return *fileop == *other
 }
 
 // String dumps this fileop in import-stream format
@@ -4103,6 +4110,11 @@ func (callout *Callout) setColor(color string) {
 func (m ManifestEntry) String() string {
 	return fmt.Sprintf("<entry mode=%q ref=%q inline=%q>",
 		m.mode, m.ref, m.inline)
+}
+
+func (m *ManifestEntry) equals(other *ManifestEntry) bool {
+	fmt.Fprintf(os.Stdout, "DEBUG: comparing %v with %v: %v\n", m, other, *m == *other) 
+	return *m == *other
 }
 
 // Commit represents a commit event in a fast-export stream
@@ -4889,7 +4901,7 @@ func (commit *Commit) visible(argpath string) *Commit {
 // possible with manifests from previous commits to keep working-set
 // size to a minimum.  Note, if the working set blows up horribly
 // anyway, the map overhead here is a thing to suspect - we might
-// have to something like the copy-on-write structure in the ancestral
+// have to go to something like the copy-on-write structure in the ancestral
 // Python.
 func (commit *Commit) manifest() map[string]*ManifestEntry {
 	// yeah, baby this operation is *so* memoized...
@@ -4971,6 +4983,7 @@ func (commit *Commit) canonicalize() {
 		}
 	}
 	current := commit.manifest()
+	fmt.Fprintf(os.Stdout, "DEBUG: at %s: prev = %v, this = %v\n", commit.mark,  previous, current) 
 	newops := make([]FileOp, 0)
 	// Generate needed D fileops.
 	if commit.fileops[0].op != deleteall {
@@ -4988,9 +5001,11 @@ func (commit *Commit) canonicalize() {
 	// Generate needed M fileops.
 	// Only paths touched by non-deleteall ops can be changed.
 	for _, cpath := range paths {
-		oe, _ := previous[cpath]
+		oe, oldok := previous[cpath]
 		ne, newok := current[cpath]
-		if newok && ne != oe {
+		fmt.Fprintf(os.Stdout, "DEBUG: oldok = %v, newok = %v\n", oldok, newok) 
+		if newok && !(oldok && oe.equals(ne)) {
+			fmt.Fprintf(os.Stdout, "DEBUG: %s needs patch\n", commit.mark) 
 			fileop := newFileOp(commit.repo)
 			fileop.construct(opM, ne.mode, ne.ref, cpath)
 			if ne.ref == "inline" {
@@ -4999,6 +5014,7 @@ func (commit *Commit) canonicalize() {
 			newops = append(newops, *fileop)
 		}
 	}
+	fmt.Fprintf(os.Stdout, "DEBUG: at %s: newops = %v\n", commit.mark,  newops) 
 	commit.setOperations(newops)
 	// Finishing touches.  Sorting always has to be done
 	commit.sortOperations()
@@ -20408,12 +20424,13 @@ func main() {
 	interpreter := kommandant.NewKommandant(rs)
 	interpreter.EnableReadline(true)
 
-	defer func() {
-		if e := recover(); e != nil {
-			fmt.Println("reposurgeon: panic recovery: ", e)
-		}
-		go rs.cleanup()
-	}()
+	//FIXME: Imp;ement a cleanup command rather than this
+	//defer func() {
+	//	if e := recover(); e != nil {
+	//		fmt.Println("reposurgeon: panic recovery: ", e)
+	//	}
+	//	go rs.cleanup()
+	//}()
 
 	if len(os.Args[1:]) == 0 {
 		os.Args = append(os.Args, "-")
