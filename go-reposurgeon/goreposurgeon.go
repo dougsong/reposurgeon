@@ -4113,7 +4113,7 @@ func (m ManifestEntry) String() string {
 }
 
 func (m *ManifestEntry) equals(other *ManifestEntry) bool {
-	fmt.Fprintf(os.Stdout, "DEBUG: comparing %v with %v: %v\n", m, other, *m == *other) 
+	// TRelies on member-by-member structure comparison
 	return *m == *other
 }
 
@@ -4983,7 +4983,6 @@ func (commit *Commit) canonicalize() {
 		}
 	}
 	current := commit.manifest()
-	fmt.Fprintf(os.Stdout, "DEBUG: at %s: prev = %v, this = %v\n", commit.mark,  previous, current) 
 	newops := make([]FileOp, 0)
 	// Generate needed D fileops.
 	if commit.fileops[0].op != deleteall {
@@ -5003,9 +5002,7 @@ func (commit *Commit) canonicalize() {
 	for _, cpath := range paths {
 		oe, oldok := previous[cpath]
 		ne, newok := current[cpath]
-		fmt.Fprintf(os.Stdout, "DEBUG: oldok = %v, newok = %v\n", oldok, newok) 
 		if newok && !(oldok && oe.equals(ne)) {
-			fmt.Fprintf(os.Stdout, "DEBUG: %s needs patch\n", commit.mark) 
 			fileop := newFileOp(commit.repo)
 			fileop.construct(opM, ne.mode, ne.ref, cpath)
 			if ne.ref == "inline" {
@@ -5014,7 +5011,6 @@ func (commit *Commit) canonicalize() {
 			newops = append(newops, *fileop)
 		}
 	}
-	fmt.Fprintf(os.Stdout, "DEBUG: at %s: newops = %v\n", commit.mark,  newops) 
 	commit.setOperations(newops)
 	// Finishing touches.  Sorting always has to be done
 	commit.sortOperations()
