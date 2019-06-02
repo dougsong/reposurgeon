@@ -71,6 +71,7 @@ x-split.tst.tst
 x-squash-id.tst
 x-subdir.tst
 x-tagretract.tst
+x-treecontent
 x-userignores.tst
 
 The following tests presently fail under Go.  Reducing this list to
@@ -91,8 +92,6 @@ x-prune: object not matched error
 x-reorder: toposort code is busted.
 x-reparent: stack overflow
 x-simple: several command failures, none look very difficult
-x-tagify: throws mark not found.
-x-treecontent: no panic, wrong result
 x-unite: object not matched error
 x-unite3: object not matched error
 
