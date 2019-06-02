@@ -112,9 +112,8 @@ Create a branch "branch2" and copy two files from trunk
 The branch should now contain subfile1 and subfile2.
 
 from :6
-D master-branch4
-D subdir/subfile1
-D subdir/subfile2
+deleteall
+M 100644 :1 .gitignore
 M 100644 :4 subfile1
 M 100644 :5 subfile2
 
@@ -147,9 +146,8 @@ committer frnchfrgg <frnchfrgg> 1366744808 +0000
 data 44
 Create branch3, importing trunk as a subdir
 from :6
-D master-branch4
-D subdir/subfile1
-D subdir/subfile2
+deleteall
+M 100644 :1 .gitignore
 M 100644 :1 trunk/.gitignore
 M 100644 :3 trunk/master-branch4
 M 100644 :4 trunk/subdir/subfile1

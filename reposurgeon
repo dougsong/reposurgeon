@@ -2422,7 +2422,7 @@ class FileOp(object):
         elif opargs[0] in ("R", "C"):
             (self.op, self.source, self.target) = opargs
         elif opargs[0] == "deleteall":
-            self.setOp("deleteall")
+            self.setOp(FileOp.deleteall)
         else:
             raise Fatal("unexpected fileop %s" % opargs[0])
         if self.op:
@@ -2457,7 +2457,7 @@ class FileOp(object):
             self.source = sys.intern(self.source)
             self.target = sys.intern(self.target)
         elif opline == "deleteall":
-            self.op = "deleteall"
+            self.op = FileOp.deleteall
         else:
             raise Fatal("unexpected fileop %s while parsing" % opline)
         if self.op:
@@ -2959,26 +2959,18 @@ class Commit(object):
         return ancestors
     def canonicalize(self):
         "Replace fileops by a minimal set of D and M with the same result."
-        # If last fileop is a deleteall, only keep that.
+        # Discard everything before the last deletall if there is one.
+        # We'd really like to do rindex() here in case of muliples.
         try:
-            lastop = self.operations()[-1]
-        except IndexError:
+            lastop = self.operations().index(FileOp.deleteall)
+            self.set_operations(self.operations()[lastop:])
+        except ValueError:
+            pass
+        ops = self.operations()
+        if len(ops) == 0 or ops[0].op == FileOp.deleteall:
             return
-        else:
-            if lastop.op == FileOp.deleteall:
-                self.set_operations([lastop])
-                return
         # Get paths touched by non-deleteall operations.
         paths = self.paths()
-        # Full canonicalization is very expensive on large
-        # repositories. Try an inexpensive check for cases it needn't
-        # be done. If all ops are Ms and Ds, and every path in an op
-        # is unique, don't do it.  The .gitignores guard is required
-        # because these are sometimes generated.
-        md = [op for op in self.operations() if op.op in (FileOp.M, FileOp.D)]
-        gitignores = [path for path in paths if os.path.basename(path) == ".gitignore"]
-        if len(md) > 1 and len(self.paths()) == len(md) and not gitignores:
-            return
         # Fetch the tree state before us...
         try:
             parent = self.parents()[0]
