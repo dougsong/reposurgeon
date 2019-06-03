@@ -10244,11 +10244,14 @@ func (repo *Repository) uniquify(color string, persist map[string]string) map[st
 	}
 	for _, event := range repo.events {
 		switch event.(type) {
+		case *Blob:
+			blob := event.(*Blob)
+			blob.setMark(makemark(blob.mark, "blob", "mark"))
 		case *Commit:
 			commit := event.(*Commit)
 			commit.Branch = makename(commit.Branch,
 				"commit", "branch", false)
-			commit.mark = makemark(commit.mark, "commit", "mark")
+			commit.setMark(makemark(commit.mark, "commit", "mark"))
 			for i, fileop := range commit.fileops {
 				if fileop.op == opM && strings.HasPrefix(fileop.ref, ":") {
 					newname := fileop.ref + "-" + color
