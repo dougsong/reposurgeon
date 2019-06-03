@@ -11411,7 +11411,7 @@ func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
 		for i, event := range commits {
 			if !root.when().Before(event.when()) {
 				continue
-			} else if mostRecent == nil || event.when().Before(mostRecent.when()) {
+			} else if i > 0 && (mostRecent == nil || event.when().Before(mostRecent.when())) {
 				mostRecent = commits[i-1]
 				break
 			}
