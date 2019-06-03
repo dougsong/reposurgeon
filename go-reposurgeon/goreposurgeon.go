@@ -4632,15 +4632,20 @@ func (commit *Commit) parents() []CommitLike {
 
 // invalidateManifests cleans out manifess in this commit and all descendants
 func (commit *Commit) invalidateManifests() {
-	commit._manifest = nil
-	for _, c := range commit.children() {
-		switch c.(type) {
-		case *Commit:
-			c.(*Commit).invalidateManifests()
-		case *Callout:
-			/* do nothing */
-		default:
-			panic("InvalidateManifests found unexpected type in child list")
+	// The obvious recursive way to do this has a strong tendenct
+	// to blow Go's stack.  This way is cheaper but does too much,
+	// requiring downstream manfests on branches other than commits
+	// to be revuilt later. Fortunately that is not a common operation.
+	latch := false
+	for _, event := range commit.repo.events { 
+		here, ok := event.(*Commit)
+		if ok {
+			if here == commit && !latch {
+				latch = true
+			}
+			if latch {
+				here._manifest = nil
+			}
 		}
 	}
 }
