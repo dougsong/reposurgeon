@@ -11361,17 +11361,16 @@ func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
 			return
 		}
 	}
+	// Forward time order
 	sort.Slice(factors, func(i, j int) bool {
 		return factors[i].earliest().Before(factors[j].earliest())
 	})
-	// Forward time order
 	roots := make([]*Commit, 0)
 	uname := ""
 	for _, x := range factors {
 		roots = append(roots, x.earliestCommit())
 		uname += "+" + x.name
 	}
-
 	union := newRepository(uname[1:])
 	os.Mkdir(union.subdir(""), userReadWriteMode)
 	// Reverse time order
@@ -11383,6 +11382,10 @@ func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
 		persist = factor.uniquify(factor.name, persist)
 	}
 	// Forward time order
+	sort.Slice(factors, func(i, j int) bool {
+		return factors[i].earliest().Before(factors[j].earliest())
+	})
+	roots = make([]*Commit, 0)
 	for _, x := range factors {
 		roots = append(roots, x.earliestCommit())
 	}
@@ -11390,6 +11393,13 @@ func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
 		union.absorb(factor)
 		rl.removeByName(factor.name)
 	}
+	//dumpEvents := func(repo *Repository) []string {
+	//	var out []string
+	//	for _, commit := range repo.commits(nil) {
+	//		out = append(out, commit.getMark())
+	//	}
+	//	return out
+	//}
 	// Renumber all events
 	union.renumber(1, nil)
 	// Sort out the root grafts. The way we used to do this
