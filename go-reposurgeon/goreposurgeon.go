@@ -11375,7 +11375,7 @@ func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
 	os.Mkdir(union.subdir(""), userReadWriteMode)
 	// Reverse time order
 	sort.Slice(factors, func(i, j int) bool {
-		return factors[i].earliest().After(factors[j].earliest())
+		return !factors[i].earliest().Before(factors[j].earliest())
 	})
 	persist := make(map[string]string)
 	for _, factor := range factors {

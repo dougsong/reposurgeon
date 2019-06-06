@@ -81,7 +81,6 @@ x-changelog: handler is not yet implemented.
 x-commit-expunge: expunge operation fails.
 x-debranch3: unknown failure
 x-divide: divide logic appears broken
-x-graft2: ill-formed stream error
 x-liftlogs: changelogs handler is still missing.
 x-macro: Spurious EOF in single-line expansion, and multiline doesn't work.
 x-multiroot: ill-formed stream error
@@ -91,7 +90,6 @@ x-prune: object not matched error
 x-reorder: toposort code is busted.
 x-reparent: stack overflow
 x-simple: several command failures, none look very difficult
-x-unite: object not matched error
 x-unite3: object not matched error
 
 == Tuning for speed ==
