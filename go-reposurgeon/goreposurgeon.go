@@ -8322,20 +8322,22 @@ func (repo *Repository) _buildNamecache() {
 			if legacyID != "" {
 				repo._namecache[legacyID] = []int{i}
 			}
-			var key string
+			committerStamp := commit.committer.actionStamp()
+			var authorStamp string
 			if len(commit.authors) > 0 {
-				key = commit.authors[0].actionStamp()
-				if _, ok := repo._namecache[key]; !ok {
-					repo._namecache[key] = []int{i}
+				authorStamp = commit.authors[0].actionStamp()
+				if authorStamp == committerStamp {
+					continue
+				} else if _, ok := repo._namecache[authorStamp]; !ok {
+					repo._namecache[authorStamp] = []int{i}
 				} else {
-					repo._namecache[key] = append(repo._namecache[key], i)
+					repo._namecache[authorStamp] = append(repo._namecache[authorStamp], i)
 				}
 			}
-			key = commit.committer.actionStamp()
-			if _, ok := repo._namecache[key]; !ok {
-				repo._namecache[key] = []int{i}
+			if _, ok := repo._namecache[committerStamp]; !ok {
+				repo._namecache[committerStamp] = []int{i}
 			} else {
-				repo._namecache[key] = append(repo._namecache[key], i)
+				repo._namecache[committerStamp] = append(repo._namecache[committerStamp], i)
 			}
 		case *Tag:
 			repo._namecache[event.(*Tag).name] = []int{i}
@@ -10349,26 +10351,27 @@ func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options str
 		graftroot.prependOperation(*delop)
 
 	}
+	repo.renumber(1, nil)
 	// Resolve all callouts
-	for _, commit := range graftRepo.commits(nil) {
+	unresolved := make([]string, 0)
+	for _, commit := range repo.commits(nil) {
 		for idx, parent := range commit.parents() {
-			if isCallout(parent.getMark()) {
-				attach := repo.named(parent.getMark())
-				if len(attach) == 0 {
-					return fmt.Errorf("no match for %s in %s",
-						parent.getMark(), graftRepo.name)
-				} else if len(attach) >= 2 {
-					return fmt.Errorf("%s is ambiguous in %s",
-						parent.getMark(), graftRepo.name)
-				} else {
+			parentMark := parent.getMark()
+			if isCallout(parentMark) {
+				attach := repo.named(parentMark)
+				if len(attach) == 1 {
 					commit.removeParent(parent)
 					newparent := repo.events[attach[0]]
 					commit.insertParent(idx, newparent.getMark())
+				} else {
+					unresolved = append(unresolved, parentMark)
 				}
 			}
 		}
 	}
-	repo.renumber(1, nil)
+	if len(unresolved) > 0 {
+		return fmt.Errorf("unresolved callouts: %v", unresolved) 
+	}
 	return nil
 }
 

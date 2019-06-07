@@ -76,7 +76,6 @@ x-userignores.tst
 The following tests presently fail under Go.  Reducing this list to
 empty is a near-term goal.
 
-x-calloutgraft: object not matched error
 x-changelog: handler is not yet implemented.
 x-commit-expunge: expunge operation fails.
 x-debranch3: unknown failure
@@ -90,7 +89,7 @@ x-prune: object not matched error
 x-reorder: toposort code is busted.
 x-reparent: stack overflow
 x-simple: several command failures, none look very difficult
-x-unite3: object not matched error
+x-unite3: commit misordering
 
 == Tuning for speed ==
 
