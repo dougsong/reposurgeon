@@ -11445,9 +11445,9 @@ func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
 			// modify ops in the branch root.
 			if options.Contains("--prune") {
 				deletes := make([]FileOp, 0)
-				for _, path := range mostRecent.manifest() {
+				for path, _ := range mostRecent.manifest() {
 					fileop := newFileOp(union)
-					fileop.construct("D", path.ref)
+					fileop.construct("D", path)
 					deletes = append(deletes, *fileop)
 				}
 				root.setOperations(append(deletes, root.operations()...))
