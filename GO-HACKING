@@ -85,7 +85,7 @@ x-macro: Spurious EOF in single-line expansion, and multiline doesn't work.
 x-multiroot: ill-formed stream error
 x-pathrename: ancestry check is failing.
 x-pathrename-with-set: rename operation fails.
-x-prune: object not matched error
+x-unite-prune: missing delete op
 x-reorder: toposort code is busted.
 x-reparent: stack overflow
 x-simple: several command failures, none look very difficult
