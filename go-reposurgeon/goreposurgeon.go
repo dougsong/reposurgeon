@@ -10349,7 +10349,6 @@ func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options str
 		delop := newFileOp(repo)
 		delop.construct("deleteall")
 		graftroot.prependOperation(*delop)
-
 	}
 	repo.renumber(1, nil)
 	// Resolve all callouts
