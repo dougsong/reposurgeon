@@ -4690,7 +4690,7 @@ func (commit *Commit) setParents(parents []CommitLike) {
 		case *Commit:
 			parent.(*Commit)._childNodes = append(parent.(*Commit)._childNodes, commit)
 		case *Callout:
-			/* do nothing */
+			// do nothing
 		}
 	}
 	commit.invalidateManifests()
@@ -6926,47 +6926,47 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// its timeslice at reasonable intervals. Needed because
 	// it does not hit the disk.
 	announce(debugEXTRACT, "Pass 4")
-	/*
-	           splitCommits := make(map[int]int)
-	           //previous := nil
-	   	lastRelevantCommit := func(sp *StreamParser, maxRev int, path string, attr string) *Commit {
-	   		// Make path look like a branch
-	   		if path[:1] == svnSep {
-	   			path = path[1:]
-	   		}
-	   		if path[len(path)-1] != svnSep[0] {
-	   			path = path + svnSep
-	   		}
-	   		// If the revision is split, try from the last split commit
-	   		splitAt, ok := splitCommits[maxRev]
-	   		if ok {
-	   			maxRev = splitAt
-	   		}
-	   		// Find the commit object...
-	   		obj, ok := sp.repo.legacyMap[fmt.Sprintf("SVN:%s", maxRev)]
-	   		if !ok {
-	   			return nil
-	   		}
-	   		for revision := sp.repo.eventToIndex(obj)-1; revision > 0; revision-- {
-	   			event := sp.repo.events[revision]
-	   			if commit, ok := event.(*Commit); ok {
-	   				b, ok := getAttr(commit, attr)
-	   				if ok && strings.HasSuffix(path, b) {
-	   					return commit
-	   				}
-	   			}
-	   		}
-	   		return nil
-	   	}
 
-	           // If the repo is large, we'll give up on some diagnostic info in order
-	           // to reduce the working set size.
-	           if len(sp.revisions) > 50000 {
-	   		sp.large = true
-	           }
+	//splitCommits := make(map[int]int)
+	//previous := nil
+	/*
+	lastRelevantCommit := func(sp *StreamParser, maxRev int, path string, attr string) *Commit {
+		// Make path look like a branch
+		if path[:1] == svnSep {
+			path = path[1:]
+		}
+		if path[len(path)-1] != svnSep[0] {
+			path = path + svnSep
+		}
+		// If the revision is split, try from the last split commit
+		splitAt, ok := splitCommits[maxRev]
+		if ok {
+			maxRev = splitAt
+		}
+		// Find the commit object...
+		obj, ok := sp.repo.legacyMap[fmt.Sprintf("SVN:%s", maxRev)]
+		if !ok {
+			return nil
+		}
+		for revision := sp.repo.eventToIndex(obj)-1; revision > 0; revision-- {
+			event := sp.repo.events[revision]
+			if commit, ok := event.(*Commit); ok {
+				b, ok := getAttr(commit, attr)
+				if ok && strings.HasSuffix(path, b) {
+					return commit
+				}
+			}
+		}
+		return nil
+	}
 	*/
-	/*
 
+	// If the repo is large, we'll give up on some diagnostic info in order
+	// to reduce the working set size.
+	if len(sp.revisions) > 50000 {
+		sp.large = true
+	}
+	/*
 	           for (revision, record) in sp.revisions.items():
 	               announce(debugEXTRACT, "Revision %s:" % revision)
 	               for node in record.nodes:
