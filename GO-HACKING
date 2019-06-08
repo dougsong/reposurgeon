@@ -77,7 +77,6 @@ The following tests presently fail under Go.  Reducing this list to
 empty is a near-term goal.
 
 x-changelog: handler is not yet implemented.
-x-commit-expunge: expunge operation fails.
 x-debranch3: unknown failure
 x-divide: divide logic appears broken
 x-liftlogs: changelogs handler is still missing.

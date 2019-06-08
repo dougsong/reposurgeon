@@ -7963,7 +7963,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	           sp.repo.delete(deletia)
 	           timeit("polishing")
 	           announce(debugEXTRACT, "after branch name mapping")
-	           sp.repo.tagifyEmpty(tipdeletes = true,
+	           sp.repo.tagifyEmpty(all(), tipdeletes = true,
 	                                  canonicalize = false,
 	                                  nameFunc = tagname,
 	                                  legendFunc = taglegend,
@@ -11712,7 +11712,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 	}
 	rl.repo.events = filtered
 	// Then tagify empty commits.
-	rl.repo.tagifyEmpty(nil, false, false, false, nil, nil, !notagify, nil)
+	rl.repo.tagifyEmpty(selection, false, false, false, nil, nil, !notagify, nil)
 	// And tell we changed the manifests and the event sequence.
 	//rl.repo.invalidateManifests()
 	rl.repo.declareSequenceMutation("expunge cleanup")
@@ -17009,6 +17009,7 @@ func (rs *Reposurgeon) DoExpunge(line string) bool {
 	}
 	if rs.selection == nil {
 		rs.selection = rs.chosen().all()
+
 	}
 	rs.expunge(rs.selection, strings.Fields(line))
 	return false
