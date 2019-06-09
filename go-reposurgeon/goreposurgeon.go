@@ -7026,7 +7026,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	                   commit.committer.name = "Fred J. Foonly"
 	                   commit.committer.email = "foonly@foo.com"
 	                   commit.committer.date.timestamp = parseInt(revision) * 360
-	                   commit.committer.date.set_tz("GMT")
+	                   commit.committer.date.setTZ("GMT")
 	               commit.properties = record.props
 	               # Zero revision is never interesting - no operations, no
 	               # comment, no author, it's just a start marker for a
@@ -19587,37 +19587,39 @@ that zone is used.
 `)
 }
 
-/*
-var ymdRE := regexp.MustCompile("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]")
+
+var ymdRE = regexp.MustCompile("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]")
 
 // Mine repository changelogs for authorship data.
-func (rs *Reposurgeon) DoChangelogs(line str) bool {
+func (rs *Reposurgeon) DoChangelogs(line string) bool {
 	if rs.chosen() == nil {
 		croak("no repo has been chosen.")
 		return false
 	}
 	repo := rs.chosen()
-	cc := cl := cm := cd := 0, 0, 0, 0
+	cc, cl, cm, cd := 0, 0, 0, 0
+/*
 	differ := difflib.Differ()
-	parseAttributionLine = func(line string) string {
-		if len(line) <= 10 || line[0].isspace() {
+	parseAttributionLine := func(line string) string {
+		// Parse an attributuinn line in a ChangeLog entry, get an email address
+		if len(line) <= 10 || unicode.IsSpace(rune(line[0])) {
 			return ""
 		}
 		// Massage old-style addresses into newstyle
-		line = strings.Replace(line, "(", -1)
-		line = strings.Replace(")", ">", -1)
+		line = strings.Replace(line, "(", "<", -1)
+		line = strings.Replace(line, ")", ">", -1)
 		// Deal with some address masking
 		line = strings.Replace(line, " <at> ", "@", -1)
 		// Malformation in a GCC Changelog that might be
 		// replicated elsewhere.
 		if strings.HasSuffix(line, ">>") {
-			line = line[:-1]
+			line = line[:len(line)-1]
 		}
 		// Line must contain an email address
-		if !(strings.Count(line, "<") == 1 && strings.HasSuffix(line, ">")) {
+		if !(strings.Count(line, "<") == 1 && strings.Count(line, ">") == 1) {
 			return ""
 		}
-		if line[0].isdigit() && line[1].isdigit() {
+		if unicode.IsDigit(rune(line[0])) && unicode.IsDigit(rune(line[0])) {
 			space := strings.Index(line, " ")
 			if space < 0 {
 				return ""
@@ -19640,133 +19642,132 @@ func (rs *Reposurgeon) DoChangelogs(line str) bool {
 			if err != nil {
 				return ""
 			}
-		skipre := regexp.MustCompile("\s+".join(strings.Fields(line)[:5]))
-		m := skipre.match(line)
-		addr = line[len(m.group(0)):].strip()
+		}
+		skipre := regexp.MustCompile(strings.Join(strings.Fields(line)[:5], `\s+`))
+		m := skipre.FindStringIndex(line)
+		if m == nil {
+			return ""
+		}
+		addr := strings.TrimSpace(line[m[1]-1:])
 		return addr
-		//except ValueError {
-		//    pass
-		return nil
 	}
-	baton := Baton("reposurgeon: parsing changelogs", enable=(context.verbose == 1))
+	baton := newBaton("reposurgeon: parsing changelogs", "", context.verbose == 1)
 	for _, commit := range repo.commits(nil) {
 		cc++
 		// If a changeset is *all* ChangeLog mods, it is probably either
 		// a log rotation or a maintainer fixing a typo. In either case,
 		// best not to re-attribute this.
-		if ![op.path for op in commit.operations()
-			if op.op==opM && !filepath.Base(op.path).startswith("ChangeLog")] {
+		notChangelog:= false
+		for _, op := range commit.operations() {
+			if op.op != opM || !strings.HasPrefix(filepath.Base(op.Path), "ChangeLog") {
+				notChangelog:= true
 			}
-		continue
-	}
-	for _, op := range commit.operations() {
-		baton.twirl("")
-		if op.op == opM && filepath.Base(op.path) == "ChangeLog" {
-			cl++
-			blobfile := repo.markToEvent(op.ref).materialize()
-			// Figure out where we should look for changes in
-			// this blob by comparing it to its nearest ancestor.
-			ob := repo.blobAncestor(commit, op.path)
-			if ob {
-				with open(ob.materialize()) as oldblob {
-					then = oldblob.read().splitlines()
+		}
+		if !notChangelog {
+			continue
+		}
+		for _, op := range commit.operations() {
+			baton.twirl("")
+			if op.op == opM && filepath.Base(op.Path) == "ChangeLog" {
+				cl++
+				blobfile := repo.markToEvent(op.ref).(*Blob).materialize()
+				// Figure out where we should look for changes in
+				// this blob by comparing it to its nearest ancestor.
+				then := make([]string, 0)
+				if ob := repo.blobAncestor(commit, op.Path); ob != nil {
+					oldcontent, _ := ioutil.ReadFile(ob.materialize())
+					then = strings.Split(string(oldcontent), "\n")
 				}
-			} else {
-				then = ""
-			}
-			with open(blobfile) as newblob {
-				now := newblob.read().splitlines()
-			}
-			before = true
-			inherited = new = nil
-			//print("Analyzing Changelog at %s." % commit.mark)
-			for _, diffline := range differ.compare(then, now) {
-				if diffline[0] != " " {
-					//print("Change encountered")
-					before = false
-				}
-				//print("I see: %s" % repr(diffline))
-				line = diffline[2:]
-				attribution = parseAttributionLine(line)
-				if attribution != nil {
-					addr = attribution
-					//print("I notice: %s %s %s" % (diffline[0], attribution, before))
-					// This is the tricky part.  We want the
-					// last attribution from before the change
-					// band to stick unless there's one *in*
-					// the change band. If there's more than one,
-					// assume the most recent is the latest and
-					// correct.
-					if attribution {
+				newcontent, _ := ioutil.ReadFile(blobfile)
+				now := strings.Split(string(newcontent), "\n")
+				before := true
+				var attribution, inherited, new string
+				//print("Analyzing Changelog at %s." % commit.mark)
+				for _, diffline := range differ.compare(then, now) {
+					if diffline[0] != " " {
+						//print("Change encountered")
+						before = false
+					}
+					//print("I see: %q" % diffline)
+					line := diffline[2:]
+					attribution = parseAttributionLine(line)
+					if attribution != "" {
+						//print("I notice: %s %s %s" % (diffline[0], attribution, before))
+						// This is the tricky part.  We want the
+						// last attribution from before the change
+						// band to stick unless there's one *in*
+						// the change band. If there's more than one,
+						// assume the most recent is the latest and
+						// correct.
 						if before {
 							inherited = attribution
 							//print("Inherited: %s" % repr(inherited))
-						}
-						if diffline[0] in ("+", "?") {
-							if attribution && !new {
-								new := attribution
+							}
+						if diffline[0] == '+' || diffline[0] == '?' {
+							if attribution != "" && new == "" {
+								new = attribution
 								//print("New: %s" % repr(new))
 								break
 							}
 						}
 					}
-}
-			//print("Attributions: %s %s" % (inherited, new))
-			attribution = new if new else inherited
-		}
-		if attribution != nil {
-			addr = attribution
-			cm++
-			newattr := commit.committer.clone()
-			(newattr.name, newattr.email) = strings.Split(addr, "<")
-			newattr.email = strings.TrimSpace(newattr.email)[:-1]
-			newattr.name = strings.TrimSpace(newattr.name)
-			if !newattr.name {
-				for _, mapentry := range repo.authormap.values() {
-					if len(mapentry) != 3 {
-						croak(fmt.Sprintf("malformed author map entry %s", mapentry,))
-						continue
-					}
-					(name, nemail, _tz) = mapentry
-					if newattr.email == nemail {
-						newattr.name = name
-						break
+					//print("Attributions: %s %s" % (inherited, new))
+					if new != "" {
+						attribution = new
+					} else {
+						attribution = inherited
 					}
 				}
-			}
-			if newattr.email in repo.tzmap {
-				newattr.date.set_tz(repo.tzmap[newattr.email])
-			} else {
-				newattr.date.set_tz(zoneFromEmail(newattr.email))
-			}
-			if (newattr.name, newattr.email) in repo.aliases {
-				(newattr.name, newattr.email) = repo.aliases[(newattr.name, newattr.email)]
-			}
-			if !commit.authors {
-				commit.authors = [newattr]
-			} else {
-				// Required because git sometimed fills in the
-				// author field from the committer.
-				if commit.authors[-1].address() == commit.committer.address() {
-					commit.authors.pop()
-				}
-				// Someday, detect whether target VCS allows
-				// multiple authors and append unconditonally
-				// if so.
-				if !commit.authors && newattr.address() !in [x.address for x in commit.authors] {
-					commit.authors = append(commit.authors, newattr)
-					cd++
+				if attribution != "" {
+					cm++
+					newattr := commit.committer.clone()
+					flds := strings.Split(attribution, "<")
+					newattr.email = strings.TrimSpace(flds[1][:len(flds[1])-1])
+					newattr.fullname = strings.TrimSpace(flds[0])
+					if newattr.fullname == "" {
+						for _, mapentry := range repo.authormap {
+							if newattr.email == mapentry.email {
+								newattr.fullname = mapentry.fullname
+								break
+							}
+						}
+					}
+					if _, ok := repo.tzmap[newattr.email]; ok  {
+						newattr.date.setTZ(repo.tzmap[newattr.email].String())
+					} else {
+						newattr.date.setTZ(zoneFromEmail(newattr.email))
+					}
+					// FIXME: Re-enable
+					if (newattr.name, newattr.email) in repo.aliases {
+						(newattr.name, newattr.email) = repo.aliases[(newattr.name, newattr.email)]
+					}
+					if len(commit.authors) == 0 {
+						commit.authors = append(commit.authors, *newattr)
+					} else {
+						// Required because git sometimes fills in the
+						// author field from the committer.
+						if commit.authors[len(commit.authors)-1].address() == commit.committer.address() {
+							commit.authors = commit.authors[:len(commit.authors)-1]
+						}
+						/// FIXME: Re-enable
+						// Someday, detect whether target VCS allows
+						// multiple authors and append unconditonally
+						// if so.
+						if len(commit.authors) == 0 && newattr.address() !in [x.address for x in commit.authors] {
+							commit.authors = append(commit.authors, newattr)
+							cd++
+						}
+
+					}
 				}
 			}
 		}
 	}
-}
-				}
-    repo.invalidateNamecache()
-    announce(debugSHOUT, "fills %d of %d authorships, changing %s, from %d ChangeLogs."
-	     % (cm, cc, cd, cl))
-}
 */
+	repo.invalidateNamecache()
+	announce(debugSHOUT, "fills %d of %d authorships, changing %s, from %d ChangeLogs.", cm, cc, cd, cl)
+	return false
+}
 
 //
 // Tarball incorporation
