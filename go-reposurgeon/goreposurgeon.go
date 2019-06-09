@@ -19599,6 +19599,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 	repo := rs.chosen()
 	cc, cl, cm, cd := 0, 0, 0, 0
 /*
+This code awaits implementation of difflib.Differ
 	differ := difflib.Differ()
 	parseAttributionLine := func(line string) string {
 		// Parse an attributuinn line in a ChangeLog entry, get an email address
@@ -19724,6 +19725,10 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 					flds := strings.Split(attribution, "<")
 					newattr.email = strings.TrimSpace(flds[1][:len(flds[1])-1])
 					newattr.fullname = strings.TrimSpace(flds[0])
+					// This assumes email addreses of contributors are unique.
+					// We could get wacky results if two people with different
+					// human naames but identicall email addresses were run through
+					// this code, but that outcome seems wildly unlikely.
 					if newattr.fullname == "" {
 						for _, mapentry := range repo.authormap {
 							if newattr.email == mapentry.email {
@@ -19737,25 +19742,32 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 					} else {
 						newattr.date.setTZ(zoneFromEmail(newattr.email))
 					}
-					// FIXME: Re-enable
-					if (newattr.name, newattr.email) in repo.aliases {
-						(newattr.name, newattr.email) = repo.aliases[(newattr.name, newattr.email)]
+					if val, ok := repo.aliases[ContributorID{fullname:newattr.fullname, email:newattr.email}]; ok {
+						newattr.fullname, newattr.email = val.fullname, val.email
 					}
 					if len(commit.authors) == 0 {
 						commit.authors = append(commit.authors, *newattr)
 					} else {
 						// Required because git sometimes fills in the
 						// author field from the committer.
-						if commit.authors[len(commit.authors)-1].address() == commit.committer.address() {
+						if commit.authors[len(commit.authors)-1].email == commit.committer.email {
 							commit.authors = commit.authors[:len(commit.authors)-1]
 						}
 						/// FIXME: Re-enable
 						// Someday, detect whether target VCS allows
 						// multiple authors and append unconditonally
 						// if so.
-						if len(commit.authors) == 0 && newattr.address() !in [x.address for x in commit.authors] {
-							commit.authors = append(commit.authors, newattr)
-							cd++
+						if len(commit.authors) == 0 {
+							matched := false
+							for _, author := range commit.authors {
+								if author.email == newattr.email {
+									matched = true
+								}
+							}
+							if !matched {
+								commit.authors = append(commit.authors, *newattr)
+								cd++
+							}
 						}
 
 					}
@@ -19765,7 +19777,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 	}
 */
 	repo.invalidateNamecache()
-	announce(debugSHOUT, "fills %d of %d authorships, changing %s, from %d ChangeLogs.", cm, cc, cd, cl)
+	announce(debugSHOUT, "fills %d of %d authorships, changing %d, from %d ChangeLogs.", cm, cc, cd, cl)
 	return false
 }
 

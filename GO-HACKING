@@ -76,10 +76,10 @@ x-userignores.tst
 The following tests presently fail under Go.  Reducing this list to
 empty is a near-term goal.
 
-x-changelog: handler is not yet implemented.
+x-changelog: Need difflib.Differ
 x-debranch3: unknown failure
 x-divide: divide logic appears broken
-x-liftlogs: changelogs handler is still missing.
+x-liftlogs: Need difflib.Differ
 x-macro: Spurious EOF in single-line expansion, and multiline doesn't work.
 x-multiroot: ill-formed stream error
 x-pathrename: ancestry check is failing.
