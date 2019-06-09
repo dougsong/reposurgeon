@@ -1000,7 +1000,7 @@ func strip(source DumpfileSource, selection SubversionRange, patterns []string) 
 			if len(m) != 4 {
 				panic(fmt.Sprintf("While setting length of %s", name))
 			}
-			after := make([]byte, len(hd) - m[3])
+			after := make([]byte, len(hd)-m[3])
 			copy(after, hd[m[3]:])
 			res := hd[0:m[2]]
 			res = append(res, []byte(strconv.Itoa(val))...)
@@ -1158,7 +1158,7 @@ func pathrename(source DumpfileSource, selection SubversionRange, patterns []str
 				endoffs := offs + bytes.Index(header[offs:], []byte("\n"))
 				before := header[:offs]
 				pathline := header[offs:endoffs]
-				after := make([]byte, len(header) - endoffs)
+				after := make([]byte, len(header)-endoffs)
 				copy(after, header[endoffs:])
 				// Go documentation still says there's no
 				// backreference support, but ${1} does

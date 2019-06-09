@@ -75,7 +75,7 @@ func assertIntEqual(t *testing.T, a int, b int) {
 }
 
 // This is pretty strange.  According to the Go documentation, there
-// are no backreferences. Yet this works under 1.10.4 
+// are no backreferences. Yet this works under 1.10.4
 func TestBackreferences(t *testing.T) {
 	from := []byte("aaabxbcccc")
 	pattern := "b(.)b"

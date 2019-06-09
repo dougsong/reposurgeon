@@ -298,7 +298,7 @@ func stringEscape(s string) (string, error) {
 // tests
 func qtoq(s string) string {
 	s1 := fmt.Sprintf("%q", s)
-	s2 := s1[1:len(s1)-1]
+	s2 := s1[1 : len(s1)-1]
 	return "'" + s2 + "'"
 }
 
@@ -2462,7 +2462,7 @@ const debugSHUFFLE = 4  // Debug file and directory handling
 const debugCOMMANDS = 5 // Show commands as they are executed
 const debugUNITE = 6    // Debug mark assignments in merging
 const debugLEXER = 6    // Debug selection-language parsing
-const debugDISABLE = 7	// dummy value for temporarily disabling a diagnostic
+const debugDISABLE = 7  // dummy value for temporarily disabling a diagnostic
 
 var optionFlags = [...][2]string{
 	{"canonicalize",
@@ -4001,7 +4001,7 @@ func (fileop *FileOp) relevant(other *FileOp) bool {
 // equals tells if two fileops have the same content
 // Not yet used.
 func (fileop *FileOp) equals(other *FileOp) bool {
-	// Relies on structs being compared member-by-member 
+	// Relies on structs being compared member-by-member
 	return *fileop == *other
 }
 
@@ -4637,7 +4637,7 @@ func (commit *Commit) invalidateManifests() {
 	// requiring downstream manfests on branches other than commits
 	// to be revuilt later. Fortunately that is not a common operation.
 	latch := false
-	for _, event := range commit.repo.events { 
+	for _, event := range commit.repo.events {
 		here, ok := event.(*Commit)
 		if ok {
 			if here == commit && !latch {
@@ -4965,12 +4965,12 @@ func (commit *Commit) canonicalize() {
 		}
 	}
 	commit.fileops = commit.fileops[lastdel:len(commit.fileops)]
-        ops := commit.operations()
-        if len(ops) == 0 || ops[0].op == deleteall {
+	ops := commit.operations()
+	if len(ops) == 0 || ops[0].op == deleteall {
 		return
 	}
-        // Get paths touched by non-deleteall operations.
-        paths := commit.paths(nil)
+	// Get paths touched by non-deleteall operations.
+	paths := commit.paths(nil)
 	// Fetch the tree state before us...
 	var previous map[string]*ManifestEntry
 	if !commit.hasParents() {
@@ -5127,7 +5127,7 @@ func (commit *Commit) head() string {
 		}
 	}
 	croak("Can't deduce a branch head for %s", commit.mark)
-	// FIXME: should we panic here? 
+	// FIXME: should we panic here?
 	return ""
 }
 
@@ -6930,35 +6930,35 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	//splitCommits := make(map[int]int)
 	//previous := nil
 	/*
-	lastRelevantCommit := func(sp *StreamParser, maxRev int, path string, attr string) *Commit {
-		// Make path look like a branch
-		if path[:1] == svnSep {
-			path = path[1:]
-		}
-		if path[len(path)-1] != svnSep[0] {
-			path = path + svnSep
-		}
-		// If the revision is split, try from the last split commit
-		splitAt, ok := splitCommits[maxRev]
-		if ok {
-			maxRev = splitAt
-		}
-		// Find the commit object...
-		obj, ok := sp.repo.legacyMap[fmt.Sprintf("SVN:%s", maxRev)]
-		if !ok {
-			return nil
-		}
-		for revision := sp.repo.eventToIndex(obj)-1; revision > 0; revision-- {
-			event := sp.repo.events[revision]
-			if commit, ok := event.(*Commit); ok {
-				b, ok := getAttr(commit, attr)
-				if ok && strings.HasSuffix(path, b) {
-					return commit
+		lastRelevantCommit := func(sp *StreamParser, maxRev int, path string, attr string) *Commit {
+			// Make path look like a branch
+			if path[:1] == svnSep {
+				path = path[1:]
+			}
+			if path[len(path)-1] != svnSep[0] {
+				path = path + svnSep
+			}
+			// If the revision is split, try from the last split commit
+			splitAt, ok := splitCommits[maxRev]
+			if ok {
+				maxRev = splitAt
+			}
+			// Find the commit object...
+			obj, ok := sp.repo.legacyMap[fmt.Sprintf("SVN:%s", maxRev)]
+			if !ok {
+				return nil
+			}
+			for revision := sp.repo.eventToIndex(obj)-1; revision > 0; revision-- {
+				event := sp.repo.events[revision]
+				if commit, ok := event.(*Commit); ok {
+					b, ok := getAttr(commit, attr)
+					if ok && strings.HasSuffix(path, b) {
+						return commit
+					}
 				}
 			}
+			return nil
 		}
-		return nil
-	}
 	*/
 
 	// If the repo is large, we'll give up on some diagnostic info in order
@@ -8146,7 +8146,6 @@ func (repo *Repository) cleanup() {
 	nuke(repo.subdir(""),
 		fmt.Sprintf("reposurgeon: cleaning up %s", repo.subdir("")))
 }
-
 
 // memoizeMarks rebuilds the mark cache
 func (repo *Repository) memoizeMarks() {
@@ -9581,7 +9580,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 			for _, cchild := range commit.childMarks() {
 				if isCallout(cchild) {
 					continue
-				}					
+				}
 				child := repo.markToEvent(cchild).(*Commit)
 				// Insert commit's parents in place of
 				// commit in child's parent list. We
@@ -9601,7 +9600,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				//announce(debugDELETE, "reparenting: %s", child.getMark())
 				// Start with existing parents before us,
 				// including existing duplicates
-				newParents := make([]CommitLike, len(oldParents) - 1 + len(commit.parents()))
+				newParents := make([]CommitLike, len(oldParents)-1+len(commit.parents()))
 				newParentIndex := 0
 				newParentIndex += copy(newParents, oldParents[:eventPos])
 				// Add our parents. The Python version
@@ -10299,7 +10298,7 @@ func (repo *Repository) absorb(other *Repository) {
 			// FIXME: Leaks an array slot. See
 			// https://github.com/golang/go/wiki/SliceTricks
 			// for a better way.
-			other.events[0] = nil	// Prevent memory leak
+			other.events[0] = nil // Prevent memory leak
 			other.events = other.events[1:]
 		} else {
 			break
@@ -10369,7 +10368,7 @@ func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options str
 		}
 	}
 	if len(unresolved) > 0 {
-		return fmt.Errorf("unresolved callouts: %v", unresolved) 
+		return fmt.Errorf("unresolved callouts: %v", unresolved)
 	}
 	return nil
 }
@@ -19587,7 +19586,6 @@ that zone is used.
 `)
 }
 
-
 var ymdRE = regexp.MustCompile("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]")
 
 // Mine repository changelogs for authorship data.
@@ -19598,184 +19596,184 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 	}
 	repo := rs.chosen()
 	cc, cl, cm, cd := 0, 0, 0, 0
-/*
-This code awaits implementation of difflib.Differ
-	differ := difflib.Differ()
-	parseAttributionLine := func(line string) string {
-		// Parse an attributuinn line in a ChangeLog entry, get an email address
-		if len(line) <= 10 || unicode.IsSpace(rune(line[0])) {
-			return ""
-		}
-		// Massage old-style addresses into newstyle
-		line = strings.Replace(line, "(", "<", -1)
-		line = strings.Replace(line, ")", ">", -1)
-		// Deal with some address masking
-		line = strings.Replace(line, " <at> ", "@", -1)
-		// Malformation in a GCC Changelog that might be
-		// replicated elsewhere.
-		if strings.HasSuffix(line, ">>") {
-			line = line[:len(line)-1]
-		}
-		// Line must contain an email address
-		if !(strings.Count(line, "<") == 1 && strings.Count(line, ">") == 1) {
-			return ""
-		}
-		if unicode.IsDigit(rune(line[0])) && unicode.IsDigit(rune(line[0])) {
-			space := strings.Index(line, " ")
-			if space < 0 {
-				return ""
-			}
-			date := line[:space]
-			if !ymdRE.MatchString(date) {
-				return ""
-			}
-			addr := strings.TrimSpace(line[space+1:])
-			return addr
-		}
-		// Scan for old-style date like "Tue Dec  9 01:16:06 1997"
-		// This corresponds to Go ANSIC format.
-		fields := strings.Fields(line)
-		if len(fields) >= 5 {
-			possible_date := strings.Join(fields[:5], " ")
-			// Doesn't matter that TZ is wrong here, we're only going
-			// to use the day part at most.
-			_, err := time.Parse(time.ANSIC, possible_date)
-			if err != nil {
-				return ""
-			}
-		}
-		skipre := regexp.MustCompile(strings.Join(strings.Fields(line)[:5], `\s+`))
-		m := skipre.FindStringIndex(line)
-		if m == nil {
-			return ""
-		}
-		addr := strings.TrimSpace(line[m[1]-1:])
-		return addr
-	}
-	baton := newBaton("reposurgeon: parsing changelogs", "", context.verbose == 1)
-	for _, commit := range repo.commits(nil) {
-		cc++
-		// If a changeset is *all* ChangeLog mods, it is probably either
-		// a log rotation or a maintainer fixing a typo. In either case,
-		// best not to re-attribute this.
-		notChangelog:= false
-		for _, op := range commit.operations() {
-			if op.op != opM || !strings.HasPrefix(filepath.Base(op.Path), "ChangeLog") {
-				notChangelog:= true
-			}
-		}
-		if !notChangelog {
-			continue
-		}
-		for _, op := range commit.operations() {
-			baton.twirl("")
-			if op.op == opM && filepath.Base(op.Path) == "ChangeLog" {
-				cl++
-				blobfile := repo.markToEvent(op.ref).(*Blob).materialize()
-				// Figure out where we should look for changes in
-				// this blob by comparing it to its nearest ancestor.
-				then := make([]string, 0)
-				if ob := repo.blobAncestor(commit, op.Path); ob != nil {
-					oldcontent, _ := ioutil.ReadFile(ob.materialize())
-					then = strings.Split(string(oldcontent), "\n")
-				}
-				newcontent, _ := ioutil.ReadFile(blobfile)
-				now := strings.Split(string(newcontent), "\n")
-				before := true
-				var attribution, inherited, new string
-				//print("Analyzing Changelog at %s." % commit.mark)
-				for _, diffline := range differ.compare(then, now) {
-					if diffline[0] != " " {
-						//print("Change encountered")
-						before = false
-					}
-					//print("I see: %q" % diffline)
-					line := diffline[2:]
-					attribution = parseAttributionLine(line)
-					if attribution != "" {
-						//print("I notice: %s %s %s" % (diffline[0], attribution, before))
-						// This is the tricky part.  We want the
-						// last attribution from before the change
-						// band to stick unless there's one *in*
-						// the change band. If there's more than one,
-						// assume the most recent is the latest and
-						// correct.
-						if before {
-							inherited = attribution
-							//print("Inherited: %s" % repr(inherited))
-							}
-						if diffline[0] == '+' || diffline[0] == '?' {
-							if attribution != "" && new == "" {
-								new = attribution
-								//print("New: %s" % repr(new))
-								break
-							}
-						}
-					}
-					//print("Attributions: %s %s" % (inherited, new))
-					if new != "" {
-						attribution = new
-					} else {
-						attribution = inherited
-					}
-				}
-				if attribution != "" {
-					cm++
-					newattr := commit.committer.clone()
-					flds := strings.Split(attribution, "<")
-					newattr.email = strings.TrimSpace(flds[1][:len(flds[1])-1])
-					newattr.fullname = strings.TrimSpace(flds[0])
-					// This assumes email addreses of contributors are unique.
-					// We could get wacky results if two people with different
-					// human naames but identicall email addresses were run through
-					// this code, but that outcome seems wildly unlikely.
-					if newattr.fullname == "" {
-						for _, mapentry := range repo.authormap {
-							if newattr.email == mapentry.email {
-								newattr.fullname = mapentry.fullname
-								break
-							}
-						}
-					}
-					if _, ok := repo.tzmap[newattr.email]; ok  {
-						newattr.date.setTZ(repo.tzmap[newattr.email].String())
-					} else {
-						newattr.date.setTZ(zoneFromEmail(newattr.email))
-					}
-					if val, ok := repo.aliases[ContributorID{fullname:newattr.fullname, email:newattr.email}]; ok {
-						newattr.fullname, newattr.email = val.fullname, val.email
-					}
-					if len(commit.authors) == 0 {
-						commit.authors = append(commit.authors, *newattr)
-					} else {
-						// Required because git sometimes fills in the
-						// author field from the committer.
-						if commit.authors[len(commit.authors)-1].email == commit.committer.email {
-							commit.authors = commit.authors[:len(commit.authors)-1]
-						}
-						/// FIXME: Re-enable
-						// Someday, detect whether target VCS allows
-						// multiple authors and append unconditonally
-						// if so.
-						if len(commit.authors) == 0 {
-							matched := false
-							for _, author := range commit.authors {
-								if author.email == newattr.email {
-									matched = true
-								}
-							}
-							if !matched {
-								commit.authors = append(commit.authors, *newattr)
-								cd++
-							}
-						}
+	/*
+	   This code awaits implementation of difflib.Differ
+	   	differ := difflib.Differ()
+	   	parseAttributionLine := func(line string) string {
+	   		// Parse an attributuinn line in a ChangeLog entry, get an email address
+	   		if len(line) <= 10 || unicode.IsSpace(rune(line[0])) {
+	   			return ""
+	   		}
+	   		// Massage old-style addresses into newstyle
+	   		line = strings.Replace(line, "(", "<", -1)
+	   		line = strings.Replace(line, ")", ">", -1)
+	   		// Deal with some address masking
+	   		line = strings.Replace(line, " <at> ", "@", -1)
+	   		// Malformation in a GCC Changelog that might be
+	   		// replicated elsewhere.
+	   		if strings.HasSuffix(line, ">>") {
+	   			line = line[:len(line)-1]
+	   		}
+	   		// Line must contain an email address
+	   		if !(strings.Count(line, "<") == 1 && strings.Count(line, ">") == 1) {
+	   			return ""
+	   		}
+	   		if unicode.IsDigit(rune(line[0])) && unicode.IsDigit(rune(line[0])) {
+	   			space := strings.Index(line, " ")
+	   			if space < 0 {
+	   				return ""
+	   			}
+	   			date := line[:space]
+	   			if !ymdRE.MatchString(date) {
+	   				return ""
+	   			}
+	   			addr := strings.TrimSpace(line[space+1:])
+	   			return addr
+	   		}
+	   		// Scan for old-style date like "Tue Dec  9 01:16:06 1997"
+	   		// This corresponds to Go ANSIC format.
+	   		fields := strings.Fields(line)
+	   		if len(fields) >= 5 {
+	   			possible_date := strings.Join(fields[:5], " ")
+	   			// Doesn't matter that TZ is wrong here, we're only going
+	   			// to use the day part at most.
+	   			_, err := time.Parse(time.ANSIC, possible_date)
+	   			if err != nil {
+	   				return ""
+	   			}
+	   		}
+	   		skipre := regexp.MustCompile(strings.Join(strings.Fields(line)[:5], `\s+`))
+	   		m := skipre.FindStringIndex(line)
+	   		if m == nil {
+	   			return ""
+	   		}
+	   		addr := strings.TrimSpace(line[m[1]-1:])
+	   		return addr
+	   	}
+	   	baton := newBaton("reposurgeon: parsing changelogs", "", context.verbose == 1)
+	   	for _, commit := range repo.commits(nil) {
+	   		cc++
+	   		// If a changeset is *all* ChangeLog mods, it is probably either
+	   		// a log rotation or a maintainer fixing a typo. In either case,
+	   		// best not to re-attribute this.
+	   		notChangelog:= false
+	   		for _, op := range commit.operations() {
+	   			if op.op != opM || !strings.HasPrefix(filepath.Base(op.Path), "ChangeLog") {
+	   				notChangelog:= true
+	   			}
+	   		}
+	   		if !notChangelog {
+	   			continue
+	   		}
+	   		for _, op := range commit.operations() {
+	   			baton.twirl("")
+	   			if op.op == opM && filepath.Base(op.Path) == "ChangeLog" {
+	   				cl++
+	   				blobfile := repo.markToEvent(op.ref).(*Blob).materialize()
+	   				// Figure out where we should look for changes in
+	   				// this blob by comparing it to its nearest ancestor.
+	   				then := make([]string, 0)
+	   				if ob := repo.blobAncestor(commit, op.Path); ob != nil {
+	   					oldcontent, _ := ioutil.ReadFile(ob.materialize())
+	   					then = strings.Split(string(oldcontent), "\n")
+	   				}
+	   				newcontent, _ := ioutil.ReadFile(blobfile)
+	   				now := strings.Split(string(newcontent), "\n")
+	   				before := true
+	   				var attribution, inherited, new string
+	   				//print("Analyzing Changelog at %s." % commit.mark)
+	   				for _, diffline := range differ.compare(then, now) {
+	   					if diffline[0] != " " {
+	   						//print("Change encountered")
+	   						before = false
+	   					}
+	   					//print("I see: %q" % diffline)
+	   					line := diffline[2:]
+	   					attribution = parseAttributionLine(line)
+	   					if attribution != "" {
+	   						//print("I notice: %s %s %s" % (diffline[0], attribution, before))
+	   						// This is the tricky part.  We want the
+	   						// last attribution from before the change
+	   						// band to stick unless there's one *in*
+	   						// the change band. If there's more than one,
+	   						// assume the most recent is the latest and
+	   						// correct.
+	   						if before {
+	   							inherited = attribution
+	   							//print("Inherited: %s" % repr(inherited))
+	   							}
+	   						if diffline[0] == '+' || diffline[0] == '?' {
+	   							if attribution != "" && new == "" {
+	   								new = attribution
+	   								//print("New: %s" % repr(new))
+	   								break
+	   							}
+	   						}
+	   					}
+	   					//print("Attributions: %s %s" % (inherited, new))
+	   					if new != "" {
+	   						attribution = new
+	   					} else {
+	   						attribution = inherited
+	   					}
+	   				}
+	   				if attribution != "" {
+	   					cm++
+	   					newattr := commit.committer.clone()
+	   					flds := strings.Split(attribution, "<")
+	   					newattr.email = strings.TrimSpace(flds[1][:len(flds[1])-1])
+	   					newattr.fullname = strings.TrimSpace(flds[0])
+	   					// This assumes email addreses of contributors are unique.
+	   					// We could get wacky results if two people with different
+	   					// human naames but identicall email addresses were run through
+	   					// this code, but that outcome seems wildly unlikely.
+	   					if newattr.fullname == "" {
+	   						for _, mapentry := range repo.authormap {
+	   							if newattr.email == mapentry.email {
+	   								newattr.fullname = mapentry.fullname
+	   								break
+	   							}
+	   						}
+	   					}
+	   					if _, ok := repo.tzmap[newattr.email]; ok  {
+	   						newattr.date.setTZ(repo.tzmap[newattr.email].String())
+	   					} else {
+	   						newattr.date.setTZ(zoneFromEmail(newattr.email))
+	   					}
+	   					if val, ok := repo.aliases[ContributorID{fullname:newattr.fullname, email:newattr.email}]; ok {
+	   						newattr.fullname, newattr.email = val.fullname, val.email
+	   					}
+	   					if len(commit.authors) == 0 {
+	   						commit.authors = append(commit.authors, *newattr)
+	   					} else {
+	   						// Required because git sometimes fills in the
+	   						// author field from the committer.
+	   						if commit.authors[len(commit.authors)-1].email == commit.committer.email {
+	   							commit.authors = commit.authors[:len(commit.authors)-1]
+	   						}
+	   						/// FIXME: Re-enable
+	   						// Someday, detect whether target VCS allows
+	   						// multiple authors and append unconditonally
+	   						// if so.
+	   						if len(commit.authors) == 0 {
+	   							matched := false
+	   							for _, author := range commit.authors {
+	   								if author.email == newattr.email {
+	   									matched = true
+	   								}
+	   							}
+	   							if !matched {
+	   								commit.authors = append(commit.authors, *newattr)
+	   								cd++
+	   							}
+	   						}
 
-					}
-				}
-			}
-		}
-	}
-*/
+	   					}
+	   				}
+	   			}
+	   		}
+	   	}
+	*/
 	repo.invalidateNamecache()
 	announce(debugSHOUT, "fills %d of %d authorships, changing %d, from %d ChangeLogs.", cm, cc, cd, cl)
 	return false
