@@ -7051,37 +7051,35 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 if revision == 0 {
                         continue
                 }
-		/*
-                expandedNodes := make([]NodeAction, 0)
-                hasProperties := newStringSet()
+                //expandedNodes := make([]NodeAction, 0)
+                //hasProperties := newStringSet()
                 for n, node := range record.nodes {
                         if debugEnable(debugEXTRACT) {
                                 announce(debugEXTRACT, fmt.Sprintf("r%s:%d: %s", revision, n+1, node))
-                        } else if node.kind == sdDIR
-                                 && node.action != sdCHANGE
-                                 && debugEnable(debugTOPOLOGY) {
-                                announce(debugSHOUT, str(node))
+                        } else if node.kind == sdDIR &&
+				node.action != sdCHANGE && debugEnable(debugTOPOLOGY) {
+                                announce(debugSHOUT, node.String())
                         }
+			/*
                         // Handle per-path properties.
                         if len(node.props) > 0 {
-                                if string.Contains(node.props, "cvs2svn:cvs-rev")  {
-                                        cvskey = "CVS:%s:%s" % (node.path,
-                                                                node.props["cvs2svn:cvs-rev"])
+                                if strings.Contains(node.props, "cvs2svn:cvs-rev")  {
+                                        cvskey = fmt.Sprintf("CVS:%s:%s", node.path, node.props["cvs2svn:cvs-rev"])
                                         sp.repo.legacyMap[cvskey] = commit
-                                        delete(node.props, "cvs2svn:cvs-rev")
+                                        node.props["cvs2svn:cvs-rev"] = ""
                                 }
                                 // Remove blank lines from svn:ignore property values.
-                                if string.Contains(node.props, "svn:ignore")  {
+                                if strings.Contains(node.props, "svn:ignore")  {
                                         oldIgnore = node.props["svn:ignore"]
                                         ignoreLines = [line for line in oldIgnore.splitlines(true) if line != "\n"]
                                         newIgnore = "".join(ignoreLines)
                                         if newIgnore == "" {
-                                                delete(node.props, "svn:ignore")
+                                                node.props["svn:ignore"] = ""
                                         } else {
                                                 node.props["svn:ignore"] = newIgnore
                                         }
                                 }
-                                if "--ignore-properties" !in options {
+                                if !options.Contains("--ignore-properties") {
                                         prop_items = ((prop, val)
                                                         for prop, val := range node.props
                                                         }
@@ -7343,7 +7341,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                         }
                                 }
                         }
+			*/
                 }
+		/*
                 // Ugh.  Because cvs2svn is brain-dead and issues D/M pairs
                 // for identical paths in generated commits, we have to remove those
                 // D ops here.  Otherwise later on when we're generating ops, if
@@ -7358,8 +7358,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 }
                 // Create actions corresponding to both
                 // parsed and generated nodes.
-                actions = []
-                ancestor_nodes = {}
+                actions := []
+                ancestorNodes = {}
                 for _, node := range expandedNodes {
                         if node.action == nil: continue
                         }
@@ -7369,7 +7369,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                         fileop = FileOp(sp.repo)
                                         fileop.construct("D", node.path)
                                         actions.append((node, fileop))
-                                        ancestor_nodes[node.path] = nil
+                                        ancestorNodes[node.path] = nil
                                 } else if node.action in (sdADD, sdCHANGE, sdREPLACE) {
                                         // Try to figure out who the ancestor of
                                         // this node is.
@@ -7400,7 +7400,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                 // robustness, we don't assume revisions are
                                                 // consecutive numbers.
                                                 try {
-                                                        ancestor = ancestor_nodes[node.path]
+                                                        ancestor = ancestorNodes[node.path]
                                                 }
                                                 except KeyError {
                                                         ancestor = filemaps[previous][node.path]
@@ -7447,7 +7447,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                 }
                                                 continue
                                         }
-                                        ancestor_nodes[node.path] = node
+                                        ancestorNodes[node.path] = node
                                         assert node.blobmark
                                         // Time for fileop generation.
                                         perms = sp.nodePermissions(node)
