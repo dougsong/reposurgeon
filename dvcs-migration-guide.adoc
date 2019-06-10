@@ -259,7 +259,7 @@ Sometimes Subversion developers use collections of per-file mergeinfo
 properties to express partial branch merges.  This does not map to
 the DVCS model at all well, and trying to promote these to full-branch
 merges by hand is actually dangerous.  An excellent essay,
-https://plus.google.com/100357083629018071519/posts/jG7CN9R1SsZ[Partial
+http://web.archive.org/web/20170104093332/https://plus.google.com/100357083629018071519/posts/jG7CN9R1SsZ
 git merges -- just say no.] explores the problem in depth.  
 
 The bottom line is that reposurgeon warns about per-file svn:mergeinfo
