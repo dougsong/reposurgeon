@@ -35,7 +35,7 @@ STOPOUT=1
 
 .PHONY: all install clean uninstall version pylint check zip release refresh \
     docker-build docker-check docker-check-noscm \
-    gosetup govet gotest goformat gofmt golint
+    govet gotest goformat gofmt golint
 
 BINARIES = reposurgeon repotool repomapper repocutter
 MANPAGES = reposurgeon.1 repotool.1 repomapper.1 repocutter.1

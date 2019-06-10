@@ -12,22 +12,14 @@ You can help by fixing command handlers to have correct behavior on a
 regression test that succeeds under the Python implementation but
 fails under Go.
 
-Do your builds through the Makefile, which sets the GOPATH
-variable to work around it not being embedded in a normal Go
-workspace.
-
 To build the Go tools, simply run "make" in the toplevel directory.
-This also builds the suite documentation.  Before running it the
-*first* time, run "make gosetup" to install package dependencies.
+This also builds the suite documentation.
 
 'make gotest' runs the Go unit tests.  These are pretty stable.
 
 'make goregress' runs the full regression-test suite using the
-Go binary.  It will bail out on the first error.
-
-To list general tests that are failing under Go or can't yet be exercised,
-
-   cd test; ls x-*.tst
+Go binary.  It will bail out on the first error.  Presently it
+dies on the x-blob-id test; this is expected.
 
 There are tools and makefile productions for finer-grained testing.  
 Their behavior is cinrolled by two variables:
@@ -45,9 +37,9 @@ the inner production for general regression tests.
 
 To run a single test under Go,
 
-   cd test; REPOSURGEON=../goreposurgeon singletest x-foo
+   cd test; REPOSURGEON=../goreposurgeon ./singletest x-foo
 
-will check the actual result of the script in x.foo.tst against its expected
+will check the actual result of the script in x-foo.tst against its expected
 output in x-foo.chk.  No output other than the test notice is good.  The
 Python version passes all these tests.
 
@@ -87,6 +79,8 @@ x-reorder: toposort code is busted.
 x-reparent: stack overflow
 x-simple: several command failures, none look very difficult
 x-unite3: commit misordering
+
+The next step after these will be testing extractor classes.
 
 == Tuning for speed ==
 
