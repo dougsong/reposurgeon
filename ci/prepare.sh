@@ -21,10 +21,6 @@ apt-get update -qy && apt-get install -qy --no-install-recommends \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
-# Get required Go packages
-go version
-make gosetup
-
 # Install cvs-fast-export - this is the only reason bison and flex are installed
 mkdir -p /usr/local/src/
 cd /usr/local/src/
