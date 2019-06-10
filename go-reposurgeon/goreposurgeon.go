@@ -19646,7 +19646,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		if m == nil {
 			return ""
 		}
-		addr := strings.TrimSpace(line[m[1]-1:])
+		addr := strings.TrimSpace(line[m[1]:])
 		return addr
 	}
 	baton := newBaton("reposurgeon: parsing changelogs", "", context.verbose == 1)
