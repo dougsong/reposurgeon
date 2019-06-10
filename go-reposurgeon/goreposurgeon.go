@@ -6966,7 +6966,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	if len(sp.revisions) > 50000 {
 		sp.large = true
 	}
-	/*
         for revision, record := range sp.revisions {
                 announce(debugEXTRACT, "Revision %s:", revision)
                 for _, node := range record.nodes {
@@ -6996,6 +6995,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         //                    % (revision, node))
                         //}
                 }
+		/*
                 //memcheck(sp.repo)
                 commit = newCommit(sp.repo)
                 ad := record.date
@@ -7701,7 +7701,10 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         record.nodes = [n for n in record.nodes if n.kind == sdDIR]
                         sp.revisions[revision] = record
                 }
-        }
+		*/
+        } // end of revision loop
+
+	/*
         // Filemaps are no longer needed
         del filemaps
         // Bail out if we have read no commits
