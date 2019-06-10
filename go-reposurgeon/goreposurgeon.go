@@ -6902,7 +6902,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// Blows up huge on large repos...
 	//if debugEnable(debugFILEMAP) {
 	//    announce(debugSHOUT, "filemaps %s" % filemaps)
-
+	//}
+	
 	// Build from sets in each directory copy record.
 	announce(debugEXTRACT, "Pass 3")
 	for _, copynode := range copynodes {
@@ -6978,7 +6979,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         }
                         // if node.props is None, no property section.
                         // if node.blob is None, no text section.
-			if !((node.action == sdCHANGE || node.action == sdADD || node.action == sdDELETE || node.action == sdREPLACE)) {
+			if !((node.action == sdCHANGE || node.action == sdADD || node.action == sdDELETE || node.action == sdREPLACE) &&
+				(node.kind == sdFILE || node.kind == sdDIR) &&
+			        ((node.fromRev == 0) == (node.fromPath == ""))) {
 				panic(throw("parse", "forbidden operation in dump stream at r%s: %s", revision, node))
 			}
 
@@ -6987,8 +6990,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         //               node.props != nil ||
                         //               node.fromRev ||
                         //               node.action in (sdADD, sdDELETE)
-                        //        assert (node.fromRev == nil) == (node.fromPath == nil)
-                        //        assert node.kind in (sdFILE, sdDIR)
                         //        assert node.kind != sdNONE || node.action == sdDELETE
                         //        assert node.action in (sdADD, sdREPLACE) || !node.fromRev
                 }
@@ -7035,22 +7036,22 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			panic(throw("parse", "impossibly ill-formed attribution in dump stream at r%s", revision))
 		}
 		commit.committer = *newattr
-		/*
                 // Use this with just-generated input streams
                 // that have wall times in them.
                 if context.flagOptions["testmode"] {
-                        commit.committer.name = "Fred J. Foonly"
+                        commit.committer.fullname = "Fred J. Foonly"
                         commit.committer.email = "foonly@foo.com"
-                        commit.committer.date.timestamp = parseInt(revision) * 360
+                        commit.committer.date.timestamp = time.Unix(int64(revision * 360), 0)
                         commit.committer.date.setTZ("GMT")
                 }
                 commit.properties = record.props
                 // Zero revision is never interesting - no operations, no
                 // comment, no author, it's just a start marker for a
                 // non-incremental dump.
-                if revision == "0" {
+                if revision == 0 {
                         continue
                 }
+		/*
                 expandedNodes = []
                 has_properties = set()
                 for n, node := range record.nodes {
