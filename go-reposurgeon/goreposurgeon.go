@@ -6978,9 +6978,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         }
                         // if node.props is None, no property section.
                         // if node.blob is None, no text section.
-			// FIXME: This sanity-checking code is a Python remnant.  Translate to Go?
-                        //try {
-                        //       assert node.action in (sdCHANGE, sdADD, sdDELETE, sdREPLACE)
+			if !((node.action == sdCHANGE || node.action == sdADD || node.action == sdDELETE || node.action == sdREPLACE)) {
+				panic(throw("parse", "forbidden operation in dump stream at r%s: %s", revision, node))
+			}
+
+			// FIXME: Someday rescue these sanity checks
                         //        assert node.blob != nil ||
                         //               node.props != nil ||
                         //               node.fromRev ||
@@ -6989,19 +6991,15 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         //        assert node.kind in (sdFILE, sdDIR)
                         //        assert node.kind != sdNONE || node.action == sdDELETE
                         //        assert node.action in (sdADD, sdREPLACE) || !node.fromRev
-                        //}
-                        //except AssertionError {
-                        //        raise Fatal("forbidden operation in dump stream at r%s: %s"
-                        //                    % (revision, node))
-                        //}
                 }
-		/*
+
                 //memcheck(sp.repo)
-                commit = newCommit(sp.repo)
+                commit := newCommit(sp.repo)
                 ad := record.date
                 if ad == "" {
                         sp.error("missing required date field")
                 }
+		var au string
                 if record.author != "" {
                         au = record.author
                 } else {
@@ -7009,12 +7007,12 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 }
                 if record.log != "" {
                         commit.Comment = record.log
-                        if !HasSuffix(commit, "\n") {
+                        if !strings.HasSuffix(commit.Comment, "\n") {
                                 commit.Comment += "\n"
                         }
                 }
 		attribution := ""
-                if string.Contains(au, "@")  {
+                if strings.Count(au, "@") == 1  {
                         // This is a thing that happens occasionally.  A DVCS-style
                         // attribution (name + email) gets stuffed in a Subversion
                         // author field
@@ -7032,7 +7030,12 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 } else {
                         attribution = fmt.Sprintf("%s <%s> %s", au, au, ad)
                 }
-                commit.committer = newAttribution(attribution)
+                newattr, err := newAttribution(attribution)
+		if err != nil {
+			panic(throw("parse", "impossibly ill-formed attribution in dump stream at r%s", revision))
+		}
+		commit.committer = *newattr
+		/*
                 // Use this with just-generated input streams
                 // that have wall times in them.
                 if context.flagOptions["testmode"] {
@@ -7048,7 +7051,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 if revision == "0" {
                         continue
                 }
-                expanded_nodes = []
+                expandedNodes = []
                 has_properties = set()
                 for n, node := range record.nodes {
                         if debugEnable(debugEXTRACT) {
@@ -7059,7 +7062,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 announce(debugSHOUT, str(node))
                         }
                         // Handle per-path properties.
-                        if node.props != nil {
+                        if len(node.props) > 0 {
                                 if string.Contains(node.props, "cvs2svn:cvs-rev")  {
                                         cvskey = "CVS:%s:%s" % (node.path,
                                                                 node.props["cvs2svn:cvs-rev"])
@@ -7103,7 +7106,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 }
                         }
                         if node.kind == sdFILE {
-                                expanded_nodes = append(expanded_nodes, node)
+                                expandedNodes = append(expandedNodes, node)
                         } else if node.kind == sdDIR {
                                 // svnSep is appended to avoid collisions with path
                                 // prefixes.
@@ -7130,7 +7133,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 } else if node.action in (sdDELETE, sdREPLACE) {
                                         if node.path in sp.branches {
                                                 sp.branchdeletes.add(node.path)
-                                                expanded_nodes = append(expanded_nodes, node)
+                                                expandedNodes = append(expandedNodes, node)
                                                 // The deleteall will also delete .gitignore files
                                                 for _, ignorepath := range list(gi
                                                             for _, gi := range sp.activeGitignores
@@ -7153,7 +7156,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                                 newnode.action = sdDELETE
                                                                 newnode.kind = sdFILE
                                                                 newnode.generated = true
-                                                                expanded_nodes = append(expanded_nodes, newnode)
+                                                                expandedNodes = append(expandedNodes, newnode)
                                                         }
                                                 }
                                                 // Emit delete actions for the .gitignore files we
@@ -7171,7 +7174,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                         newnode.action = sdDELETE
                                                         newnode.kind = sdFILE
                                                         newnode.generated = true
-                                                        expanded_nodes = append(expanded_nodes, newnode)
+                                                        expandedNodes = append(expandedNodes, newnode)
                                                         del sp.activeGitignores[ignorepath]
                                                 }
                                         }
@@ -7246,7 +7249,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                                 subnode.contentHash =
                                                                         hashlib.md5(polybytes(ignore)).hexdigest()
                                                                 subnode.generated = true
-                                                                expanded_nodes = append(expanded_nodes, subnode)
+                                                                expandedNodes = append(expandedNodes, subnode)
                                                         }
                                                 }
                                                 // Now generate copies for all files in the source
@@ -7272,7 +7275,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                                         subnode.fromPath,
                                                                         subnode.path))
                                                         subnode.generated = true
-                                                        expanded_nodes = append(expanded_nodes, subnode)
+                                                        expandedNodes = append(expandedNodes, subnode)
                                                 }
                                         }
                                 }
@@ -7323,7 +7326,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                         // Otherwise when the property is unset we
                                                         // won't have the right thing happen.
                                                         newnode.generated = true
-                                                        expanded_nodes = append(expanded_nodes, newnode)
+                                                        expandedNodes = append(expandedNodes, newnode)
                                                         sp.activeGitignores[gitignore_path] = ignore
                                                 } else if gitignore_path in sp.activeGitignores {
                                                         newnode = StreamParser.NodeAction()
@@ -7333,7 +7336,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                         newnode.kind = sdFILE
                                                         announce(debugIGNORES, fmt.Sprintf("r%s: queuing up %s deletion.", revision, newnode.path))
                                                         newnode.generated = true
-                                                        expanded_nodes = append(expanded_nodes, newnode)
+                                                        expandedNodes = append(expandedNodes, newnode)
                                                         del sp.activeGitignores[gitignore_path]
                                                 }
                                         }
@@ -7346,7 +7349,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 // the M node happens to be missing its hash it will be seen as
                 // unmodified and only the D will be issued.
                 seen = set()
-                for _, node := range reversed(expanded_nodes) {
+                for _, node := range reversed(expandedNodes) {
                         if node.action == sdDELETE && node.path in seen {
                                 node.action = nil
                         }
@@ -7356,7 +7359,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 // parsed and generated nodes.
                 actions = []
                 ancestor_nodes = {}
-                for _, node := range expanded_nodes {
+                for _, node := range expandedNodes {
                         if node.action == nil: continue
                         }
                         if node.kind == sdFILE {
@@ -8223,10 +8226,10 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 (commit.Branch, commit.legacyID))
                 }
         }
+	*/
         timeit("linting")
         // Treat this in-core state as though it was read from an SVN repo
-        sp.repo.hint("svn", strong=true)
-	*/
+        sp.repo.hint("svn", "", true)
 }
 
 // Generic repository-manipulation code begins here
