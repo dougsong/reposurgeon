@@ -6968,7 +6968,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	}
 	/*
         for revision, record := range sp.revisions {
-                announce(debugEXTRACT, fmt.Sprintf("Revision %s:", revision))
+                announce(debugEXTRACT, "Revision %s:", revision)
                 for _, node := range record.nodes {
                         // In Subversion, we can assume .cvsignores are
                         // legacies from a bygone era that have been long since
@@ -6979,39 +6979,41 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         }
                         // if node.props is None, no property section.
                         // if node.blob is None, no text section.
-                        try {
-                                assert node.action in (sdCHANGE, sdADD, sdDELETE, sdREPLACE)
-                                assert node.blob != nil ||
-                                       node.props != nil ||
-                                       node.fromRev ||
-                                       node.action in (sdADD, sdDELETE)
-                                assert (node.fromRev == nil) == (node.fromPath == nil)
-                                assert node.kind in (sdFILE, sdDIR)
-                                assert node.kind != sdNONE || node.action == sdDELETE
-                                assert node.action in (sdADD, sdREPLACE) || !node.fromRev
-                        }
-                        except AssertionError {
-                                raise Fatal("forbidden operation in dump stream at r%s: %s"
-                                            % (revision, node))
-                        }
+			// FIXME: This sanity-checking code is a Python remnant.  Translate to Go?
+                        //try {
+                        //       assert node.action in (sdCHANGE, sdADD, sdDELETE, sdREPLACE)
+                        //        assert node.blob != nil ||
+                        //               node.props != nil ||
+                        //               node.fromRev ||
+                        //               node.action in (sdADD, sdDELETE)
+                        //        assert (node.fromRev == nil) == (node.fromPath == nil)
+                        //        assert node.kind in (sdFILE, sdDIR)
+                        //        assert node.kind != sdNONE || node.action == sdDELETE
+                        //        assert node.action in (sdADD, sdREPLACE) || !node.fromRev
+                        //}
+                        //except AssertionError {
+                        //        raise Fatal("forbidden operation in dump stream at r%s: %s"
+                        //                    % (revision, node))
+                        //}
                 }
                 //memcheck(sp.repo)
-                commit = Commit(sp.repo)
-                ad = record.date
-                if ad == nil {
+                commit = newCommit(sp.repo)
+                ad := record.date
+                if ad == "" {
                         sp.error("missing required date field")
                 }
-                if record.author {
+                if record.author != "" {
                         au = record.author
                 } else {
                         au = "no-author"
                 }
-                if record.log {
+                if record.log != "" {
                         commit.Comment = record.log
-                        if !commit.Comment.endswith("\n") {
+                        if !HasSuffix(commit, "\n") {
                                 commit.Comment += "\n"
                         }
                 }
+		attribution := ""
                 if string.Contains(au, "@")  {
                         // This is a thing that happens occasionally.  A DVCS-style
                         // attribution (name + email) gets stuffed in a Subversion
@@ -7021,15 +7023,16 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 attribution = au + " " + ad
                         } else {
                                 // Punt...
-                                (au, ah) = strings.Split(au, "@")
+				parts := strings.Split(au, "@")
+                                au, ah := parts[0], parts[1]
                                 attribution = au + " <" + au  + "@" + ah  + "> " + ad
                         }
-                } else if "--use-uuid" in options {
+                } else if options.Contains("--use-uuid") {
                         attribution = fmt.Sprintf("%s <%s@%s> %s", au, au, sp.repo.uuid, ad)
                 } else {
                         attribution = fmt.Sprintf("%s <%s> %s", au, au, ad)
                 }
-                commit.committer = Attribution(attribution)
+                commit.committer = newAttribution(attribution)
                 // Use this with just-generated input streams
                 // that have wall times in them.
                 if context.flagOptions["testmode"] {
