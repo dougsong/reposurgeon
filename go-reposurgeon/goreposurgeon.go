@@ -7052,8 +7052,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         continue
                 }
 		/*
-                expandedNodes = []
-                has_properties = set()
+                expandedNodes := make([]NodeAction, 0)
+                hasProperties := newStringSet()
                 for n, node := range record.nodes {
                         if debugEnable(debugEXTRACT) {
                                 announce(debugEXTRACT, fmt.Sprintf("r%s:%d: %s", revision, n+1, node))
@@ -7072,13 +7072,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 }
                                 // Remove blank lines from svn:ignore property values.
                                 if string.Contains(node.props, "svn:ignore")  {
-                                        old_ignore = node.props["svn:ignore"]
-                                        ignore_lines = [line for line in old_ignore.splitlines(true) if line != "\n"]
-                                        new_ignore = "".join(ignore_lines)
-                                        if new_ignore == "" {
+                                        oldIgnore = node.props["svn:ignore"]
+                                        ignoreLines = [line for line in oldIgnore.splitlines(true) if line != "\n"]
+                                        newIgnore = "".join(ignoreLines)
+                                        if newIgnore == "" {
                                                 delete(node.props, "svn:ignore")
                                         } else {
-                                                node.props["svn:ignore"] = new_ignore
+                                                node.props["svn:ignore"] = newIgnore
                                         }
                                 }
                                 if "--ignore-properties" !in options {
@@ -7091,10 +7091,10 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                 first = next(prop_items)
                                         }
                                         except StopIteration {
-                                                if node.path in has_properties {
+                                                if node.path in hasProperties {
                                                         sp.gripe("r%d~%s: properties cleared."
                                                                      % (node.revision, node.path))
-                                                        has_properties.discard(node.path)
+                                                        hasProperties.Remove(node.path)
                                                 }
                                         } else {
                                                 sp.gripe("r%d~%s properties set:"
@@ -7102,7 +7102,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                 for prop, val in itertools.chain((first,), prop_items) {
                                                         sp.gripe(fmt.Sprintf("\t%s = '%s'", prop, val))
                                                 }
-                                                has_properties.add(node.path)
+                                                hasProperties.Add(node.path)
                                         }
                                 }
                         }
