@@ -7051,7 +7051,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 if revision == 0 {
                         continue
                 }
-                //expandedNodes := make([]NodeAction, 0)
+                expandedNodes := make([]NodeAction, 0)
                 hasProperties := newStringSet()
                 for n, node := range record.nodes {
                         if debugEnable(debugEXTRACT) {
@@ -7102,16 +7102,16 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                         }
                                 }
                         }
-			/*
                         if node.kind == sdFILE {
                                 expandedNodes = append(expandedNodes, node)
                         } else if node.kind == sdDIR {
                                 // svnSep is appended to avoid collisions with path
                                 // prefixes.
                                 node.path += svnSep
-                                if node.fromPath {
+                                if node.fromPath != "" {
                                         node.fromPath += svnSep
                                 }
+				/*
                                 if node.action in (sdADD, sdCHANGE) {
                                         if node.path in sp.branches {
                                                 if !node.props: node.props = {}
@@ -7339,8 +7339,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                 }
                                         }
                                 }
+				*/
                         }
-			*/
                 }
 		/*
                 // Ugh.  Because cvs2svn is brain-dead and issues D/M pairs
