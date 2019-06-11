@@ -5757,14 +5757,14 @@ var pathTypeValues = []string{"none", "file", "dir", "ILLEGAL-TYPE"}
 // junk file properties - cvs2svn in particular generates them like
 // mad.  We want to let through other properties that might carry
 // useful information.
-var ignoreProperties = []string{
-	"svn:executable", // We special-case this one elsewhere
-	"svn:ignore",     // We special-case this one elsewhere
-	"svn:special",    // We special-case this one elsewhere
-	"svn:mime-type",
-	"svn:keywords",
-	"svn:needs-lock",
-	"svn:eol-style", // Don't want to suppress, but cvs2svn floods these.
+var ignoreProperties = map[string]bool{
+	"svn:executable":true, // We special-case this one elsewhere
+	"svn:ignore":true,     // We special-case this one elsewhere
+	"svn:special":true,    // We special-case this one elsewhere
+	"svn:mime-type":true,
+	"svn:keywords":true,
+	"svn:needs-lock":true,
+	"svn:eol-style":true,  // Don't want to suppress, but cvs2svn floods these.
 }
 
 // NodeAction represents a file-modification action ina Subversion dump stream
@@ -7052,7 +7052,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         continue
                 }
                 //expandedNodes := make([]NodeAction, 0)
-                //hasProperties := newStringSet()
+                hasProperties := newStringSet()
                 for n, node := range record.nodes {
                         if debugEnable(debugEXTRACT) {
                                 announce(debugEXTRACT, fmt.Sprintf("r%s:%d: %s", revision, n+1, node))
@@ -7060,50 +7060,49 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				node.action != sdCHANGE && debugEnable(debugTOPOLOGY) {
                                 announce(debugSHOUT, node.String())
                         }
-			/*
                         // Handle per-path properties.
-                        if len(node.props) > 0 {
-                                if strings.Contains(node.props, "cvs2svn:cvs-rev")  {
-                                        cvskey = fmt.Sprintf("CVS:%s:%s", node.path, node.props["cvs2svn:cvs-rev"])
+                        if node.props.Len() > 0 {
+                                if node.props.has("cvs2svn:cvs-rev")  {
+                                        cvskey := fmt.Sprintf("CVS:%s:%s", node.path, node.props.get("cvs2svn:cvs-rev"))
                                         sp.repo.legacyMap[cvskey] = commit
-                                        node.props["cvs2svn:cvs-rev"] = ""
+                                        node.props.set("cvs2svn:cvs-rev", "")
                                 }
                                 // Remove blank lines from svn:ignore property values.
-                                if strings.Contains(node.props, "svn:ignore")  {
-                                        oldIgnore = node.props["svn:ignore"]
-                                        ignoreLines = [line for line in oldIgnore.splitlines(true) if line != "\n"]
-                                        newIgnore = "".join(ignoreLines)
+                                if node.props.has("svn:ignore")  {
+                                        oldIgnore := node.props.get("svn:ignore")
+                                        newIgnore := strings.Replace(oldIgnore, "\n\n", "", -1)
                                         if newIgnore == "" {
-                                                node.props["svn:ignore"] = ""
+                                                node.props.set("svn:ignore", "")
                                         } else {
-                                                node.props["svn:ignore"] = newIgnore
+                                                node.props.set("svn:ignore", newIgnore)
                                         }
                                 }
                                 if !options.Contains("--ignore-properties") {
-                                        prop_items = ((prop, val)
-                                                        for prop, val := range node.props
-                                                        }
-                                                        if ((prop !in StreamParser.ignoreProperties) && !(prop == "svn:mergeinfo" && node.kind == sdDIR)))
-                                                        }
-                                        try {
-                                                first = next(prop_items)
-                                        }
-                                        except StopIteration {
-                                                if node.path in hasProperties {
-                                                        sp.gripe("r%d~%s: properties cleared."
-                                                                     % (node.revision, node.path))
+					eligible := make([][2]string, 0)
+					for prop, val := range node.props.dict {
+						if ignoreProperties[prop] {
+							continue
+						}
+						if prop == "svn:mergeinfo" && node.kind == sdDIR {
+							continue
+						}
+						eligible = append(eligible, [2]string{prop, val})
+					}
+					if len(eligible) == 0 {
+                                                if hasProperties.Contains(node.path) {
+                                                        sp.gripe(fmt.Sprintf("r%d~%s: properties cleared.", node.revision, node.path))
                                                         hasProperties.Remove(node.path)
                                                 }
                                         } else {
-                                                sp.gripe("r%d~%s properties set:"
-                                                                       % (node.revision, node.path))
-                                                for prop, val in itertools.chain((first,), prop_items) {
-                                                        sp.gripe(fmt.Sprintf("\t%s = '%s'", prop, val))
+                                                sp.gripe(fmt.Sprintf("r%d~%s properties set:", node.revision, node.path))
+                                                for _, pair := range eligible {
+                                                        sp.gripe(fmt.Sprintf("\t%s = '%s'", pair[0], pair[1]))
                                                 }
                                                 hasProperties.Add(node.path)
                                         }
                                 }
                         }
+			/*
                         if node.kind == sdFILE {
                                 expandedNodes = append(expandedNodes, node)
                         } else if node.kind == sdDIR {
