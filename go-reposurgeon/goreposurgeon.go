@@ -5476,7 +5476,7 @@ func newPathMap(other interface{}) *PathMap {
 	return p
 }
 
-// Return a copy-on-write snapshot of the set.
+// snapshot returns a copy-on-write snapshot of the set.
 func (p *PathMap) snapshot() *PathMap {
 	r := newPathMap(p)
 	if p.snapid < r.snapid-1 {
@@ -5494,7 +5494,7 @@ func (p *PathMap) snapshot() *PathMap {
 	return r
 }
 
-// Insert, at targetPath, a snapshot of sourcePath in sourcePathMap.
+// copyFrom inserts at targetPath, a snapshot of sourcePath in sourcePathMap.
 func (p *PathMap) copyFrom(targetPath interface{}, sourcePathMap *PathMap, sourcePath interface{}) {
 	if sourcePathMap == nil {
 		return
@@ -5517,19 +5517,19 @@ func (p *PathMap) copyFrom(targetPath interface{}, sourcePathMap *PathMap, sourc
 func (p *PathMap) lsR(path interface{}) []string {
 	elt := p.find(path)
 	if q, ok := elt.(*PathMap); ok {
-		return q.names()
+		return q.pathnames()
 	}
 	return []string{}
 }
 
-// Return true if path is present in the set as a file.
+// contains return true if path is present in the set as a file.
 func (p *PathMap) contains(path interface{}) bool {
 	elt := p.find(path)
 	_, ok := elt.(*PathMap)
 	return !ok && elt != nil
 }
 
-// Return the value associated with a specified path.
+// get returns the value associated with a specified path.
 func (p *PathMap) get(path interface{}) interface{} {
 	elt := p.find(path)
 	if elt == nil {
@@ -5540,7 +5540,7 @@ func (p *PathMap) get(path interface{}) interface{} {
 	return elt
 }
 
-// Add a filename to the set, with associated value (not nil).
+// set adds a filename to the set, with associated value (not nil).
 func (p *PathMap) set(path interface{}, value interface{}) {
 	if value == nil {
 		panic("internal error: can't add nil to pathmap")
@@ -5548,7 +5548,7 @@ func (p *PathMap) set(path interface{}, value interface{}) {
 	p.insert(path, value)
 }
 
-// Remove a filename, or all descendents of a directory name, from the set.
+// remove removes a filename, or all descendents of a directory name, from the set.
 func (p *PathMap) remove(path interface{}) {
 	basename, components := pathMapSplitPath(path)
 	if p.shared {
@@ -5574,7 +5574,7 @@ func (p *PathMap) isEmpty() bool {
 	return len(p.rawItems()) == 0
 }
 
-// Return the number of files in the set.
+// size returns the number of files in the set.
 func (p *PathMap) size() int {
 	n := 0
 	for _, x := range p.rawItems() {
@@ -5606,7 +5606,8 @@ func (p *PathMap) items() []pathMapItem {
 	return items
 }
 
-func (p *PathMap) names() []string {
+// names returns a sorted list of the pathnames in the set
+func (p *PathMap) pathnames() []string {
 	items := p.items()
 	v := make([]string, len(items))
 	for i := 0; i < len(items); i++ {
@@ -5616,10 +5617,10 @@ func (p *PathMap) names() []string {
 }
 
 func (p *PathMap) String() string {
-	return "<PathMap: " + strings.Join(p.names(), " ") + ">"
+	return "<PathMap: " + strings.Join(p.pathnames(), " ") + ">"
 }
 
-// Return the current value associated with the component in the store
+// rawGet returns the current value associated with the component in the store
 func (p *PathMap) rawGet(component string) interface{} {
 	if snaplist, ok := p.store[component]; ok {
 		if p.snapid < len(snaplist)-1 {
@@ -5631,7 +5632,7 @@ func (p *PathMap) rawGet(component string) interface{} {
 	return nil
 }
 
-// Set the current value associated with the component in the store
+// rawSet sets the current value associated with the component in the store
 func (p *PathMap) rawSet(component string, value interface{}) interface{} {
 	if p.store == nil {
 		p.store = make(map[string][]interface{})
@@ -5679,7 +5680,7 @@ func (p *PathMap) rawItems() []pathMapItem {
 	return items
 }
 
-// Insert obj at the location given by components.
+// insert inserts obj at the location given by components.
 func (p *PathMap) insert(path interface{}, obj interface{}) {
 	basename, components := pathMapSplitPath(path)
 	if len(basename) == 0 {
@@ -7148,22 +7149,21 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							}
                                                 }
                                         } else {
-						// FIXME: Can't range over a PathMap!!!
                                                 // A delete or replace with no from set
                                                 // can occur if the directory is empty.
-                                                // We can just ignore this case.
-                                                //if node.fromSet != nil {
-                                                //       for _, child := range node.fromSet {
-                                                //                announce(debugEXTRACT, "r%s: deleting %s", revision, child)
-                                                //                var newnode NodeAction
-                                                //                newnode.path = child
-                                                //                newnode.revision = revision
-                                                //                newnode.action = sdDELETE
-                                                //                newnode.kind = sdFILE
-                                                //                newnode.generated = true
-                                                //                expandedNodes = append(expandedNodes, newnode)
-                                                //        }
-                                                //}
+                                                // We can just ignore that case. Otherwise...
+                                                if node.fromSet != nil {
+							for _, child := range node.fromSet.pathnames() {
+                                                                announce(debugEXTRACT, "r%s: deleting %s", revision, child)
+                                                                var newnode NodeAction
+                                                                newnode.path = child
+                                                                newnode.revision = revision
+                                                                newnode.action = sdDELETE
+                                                                newnode.kind = sdFILE
+                                                                newnode.generated = true
+                                                                expandedNodes = append(expandedNodes, newnode)
+                                                        }
+                                                }
                                                 // Emit delete actions for the .gitignore files we
                                                 // have generated. Note that even with a directory
                                                 // with no files from SVN, we might have added
