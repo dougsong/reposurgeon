@@ -11646,40 +11646,31 @@ func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
 		// earlier.  Never raises IndexError since
 		// union.earliestCommit() is root[0] which satisfies
 		// earlier() thanks to factors sorting.
-		var mostRecent *Commit
+		mostRecent := union.earliestCommit()
 		for i, event := range commits {
-			if !root.when().Before(event.when()) {
+			if event == root {
+				break
+			} else if root.when().Before(event.when()) {
 				continue
-			} else if i > 0 && (mostRecent == nil || event.when().Before(mostRecent.when())) {
-				mostRecent = commits[i-1]
+			} else if i > 0 {
+				mostRecent = commits[i]
 				break
 			}
 		}
-		if mostRecent == nil {
-			// Weird case - can arise if you unite
-			// two or more copies of the same
-			// commit.
-			mostRecent = union.earliestCommit()
-		}
-		if mostRecent.mark == "" {
-			// This should never happen.
-			panic("in unite: can't link to commit with no mark")
-		} else {
-			root.addParentByMark(mostRecent.mark)
-			// We may not want files from the
-			// ancestral stock to persist in the
-			// grafted branch unless they have
-			// modify ops in the branch root.
-			if options.Contains("--prune") {
-				deletes := make([]FileOp, 0)
-				for path, _ := range mostRecent.manifest() {
-					fileop := newFileOp(union)
-					fileop.construct("D", path)
-					deletes = append(deletes, *fileop)
-				}
-				root.setOperations(append(deletes, root.operations()...))
-				root.canonicalize()
+		root.addParentByMark(mostRecent.mark)
+		// We may not want files from the
+		// ancestral stock to persist in the
+		// grafted branch unless they have
+		// modify ops in the branch root.
+		if options.Contains("--prune") {
+			deletes := make([]FileOp, 0)
+			for path, _ := range mostRecent.manifest() {
+				fileop := newFileOp(union)
+				fileop.construct("D", path)
+				deletes = append(deletes, *fileop)
 			}
+			root.setOperations(append(deletes, root.operations()...))
+			root.canonicalize()
 		}
 	}
 	// Put the result on the load list
