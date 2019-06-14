@@ -7117,6 +7117,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                         }
                                 }
                         }
+			// Starting with the nodes in the Subversion dump, expand them into a set that
+			// unpacks all directory operations into equivalent sets of file operations.
                         if node.kind == sdFILE {
                                 expandedNodes = append(expandedNodes, node)
                         } else if node.kind == sdDIR {
@@ -7358,19 +7360,25 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 // D ops here.  Otherwise later on when we're generating ops, if
                 // the M node happens to be missing its hash it will be seen as
                 // unmodified and only the D will be issued.
-                seen = set()
-                for _, node := range reversed(expandedNodes) {
-                        if node.action == sdDELETE && node.path in seen {
+                seen := newStringSet()
+                for idx := len(expandedNodes-1; idx >=0; idx-- {
+			node := expendedNodes[idx]
+                        if node.action == sdDELETE && seen.Contains(node.path) {
                                 node.action = nil
                         }
-                        seen.add(node.path)
+                        seen.Add(node.path)
                 }
                 // Create actions corresponding to both
                 // parsed and generated nodes.
-                actions := []
+		type fiAction struct {
+			node NodeAction
+			fileop FileOp
+		}
+                actions := make([]fiAction, 0)
                 ancestorNodes = {}
                 for _, node := range expandedNodes {
-                        if node.action == nil: continue
+                        if node.action == nil [
+				continue
                         }
                         if node.kind == sdFILE {
                                 if node.action == sdDELETE {
