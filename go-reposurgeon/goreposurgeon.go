@@ -7080,9 +7080,12 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                         node.props.set("cvs2svn:cvs-rev", "")
                                 }
                                 // Remove blank lines from svn:ignore property values.
+				// Note: this is not as general as the Python version,
+				// which would also strip nonempty lines consisting entirely
+				// of whitespace.
                                 if node.props.has("svn:ignore")  {
                                         oldIgnore := node.props.get("svn:ignore")
-                                        newIgnore := strings.Replace(oldIgnore, "\n\n", "", -1)
+                                        newIgnore := strings.Replace(oldIgnore, "\n\n", "\n", -1)
                                         if newIgnore == "" {
                                                 node.props.set("svn:ignore", "")
                                         } else {
