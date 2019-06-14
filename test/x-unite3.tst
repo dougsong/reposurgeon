@@ -10,8 +10,8 @@ commit refs/heads/master
 mark :2
 author repo1 <sample-repo1@example.com> 1510100170 -0500
 committer repo1 <sample-repo1@example.com> 1510100170 -0500
-data 17
-initial revision
+data 22
+initial revision of 1
 M 100644 :1 hello.txt
 
 reset refs/heads/master
@@ -30,8 +30,8 @@ commit refs/heads/master
 mark :2
 author repo2 <sample-repo2@example.com> 1510100172 -0500
 committer repo2 <sample-repo2@example.com> 1510100172 -0500
-data 17
-initial revision
+data 22
+initial revision of 2
 M 100644 :1 hello.txt
 
 reset refs/heads/master
@@ -50,8 +50,8 @@ commit refs/heads/master
 mark :2
 author repo3 <sample-repo3@example.com> 1510100174 -0500
 committer repo3 <sample-repo3@example.com> 1510100174 -0500
-data 17
-initial revision
+data 22
+initial revision of 3
 M 100644 :1 hello.txt
 
 reset refs/heads/master
