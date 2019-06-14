@@ -6831,7 +6831,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						sp.branches[np] = nil
 					}
 				}
-				if _, ok := sp.branches[np]; ok && debugEnable(debugTOPOLOGY) {
+				if sp.isBranch(np) && debugEnable(debugTOPOLOGY) {
 					announce(debugSHOUT, "%s recognized as a branch", np)
 				}
 			}
@@ -7124,7 +7124,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                         node.fromPath += svnSep
                                 }
                                 if node.action == sdADD || node.action ==  sdCHANGE {
-                                        if _, ok := sp.branches[node.path]; ok {
+                                        if sp.isBranch(node.path) {
                                                 if node.props.isZero() {
 							node.props = newOrderedMap()
                                                 }
@@ -7140,7 +7140,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                 node.props.set("svn:ignore", ignore)
                                         }
                                 } else if node.action == sdDELETE || node.action == sdREPLACE {
-                                        if _, ok := sp.branches[node.path]; ok {
+                                        if sp.isBranch(node.path) {
                                                 sp.branchdeletes.Add(node.path)
                                                 expandedNodes = append(expandedNodes, node)
                                                 // The deleteall will also delete .gitignore files
@@ -7194,9 +7194,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 // deleted, perform a normal copy and interpret
                                 // this as an ad-hoc branch merge.
                                 if node.fromPath {
-                                        branchcopy = node.fromPath in sp.branches
-                                                         && node.path in sp.branches
-                                                         && node.path !in sp.branchdeletes
+                                        branchcopy = sp.isBranch(node.fromPath) &&
+                                                         sp.isBranch(node.path) &&
+                                                         !sp.isBranchDeleted(node.path)
                                         announce(debugTOPOLOGY, "r%s: directory copy to %s from "
                                                      // r%d~%s (branchcopy %s) 
                                                      % (revision,
