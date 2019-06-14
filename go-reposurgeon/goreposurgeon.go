@@ -6761,6 +6761,7 @@ func (sp *StreamParser) isBranch(pathname string) bool {
 // it might be "\" on OSes not to be mentioned in polite company.
 const svnSep = "/"
 
+
 func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// Subversion actions to import-stream commits.
 	sp.repo.addEvent(newPassthrough(sp.repo, "#reposurgeon sourcetype svn\n"))
@@ -6979,7 +6980,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		sp.large = true
 	}
         for revision, record := range sp.revisions {
-                announce(debugEXTRACT, "Revision %s:", revision)
+                announce(debugEXTRACT, "Revision %d:", revision)
                 for _, node := range record.nodes {
                         // In Subversion, we can assume .cvsignores are
                         // legacies from a bygone era that have been long since
@@ -6993,7 +6994,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			if !((node.action == sdCHANGE || node.action == sdADD || node.action == sdDELETE || node.action == sdREPLACE) &&
 				(node.kind == sdFILE || node.kind == sdDIR) &&
 			        ((node.fromRev == 0) == (node.fromPath == ""))) {
-				panic(throw("parse", "forbidden operation in dump stream at r%s: %s", revision, node))
+				panic(throw("parse", "forbidden operation in dump stream at r%d: %s", revision, node))
 			}
 
 			// FIXME: Someday rescue these sanity checks
@@ -7044,7 +7045,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 }
                 newattr, err := newAttribution(attribution)
 		if err != nil {
-			panic(throw("parse", "impossibly ill-formed attribution in dump stream at r%s", revision))
+			panic(throw("parse", "impossibly ill-formed attribution in dump stream at r%d", revision))
 		}
 		commit.committer = *newattr
                 // Use this with just-generated input streams
@@ -7066,7 +7067,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 hasProperties := newStringSet()
                 for n, node := range record.nodes {
                         if debugEnable(debugEXTRACT) {
-                                announce(debugEXTRACT, fmt.Sprintf("r%s:%d: %s", revision, n+1, node))
+                                announce(debugEXTRACT, fmt.Sprintf("r%d:%d: %s", revision, n+1, node))
                         } else if node.kind == sdDIR &&
 				node.action != sdCHANGE && debugEnable(debugTOPOLOGY) {
                                 announce(debugSHOUT, node.String())
@@ -7154,7 +7155,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                 // We can just ignore that case. Otherwise...
                                                 if node.fromSet != nil {
 							for _, child := range node.fromSet.pathnames() {
-                                                                announce(debugEXTRACT, "r%s: deleting %s", revision, child)
+                                                                announce(debugEXTRACT, "r%d: deleting %s", revision, child)
                                                                 var newnode NodeAction
                                                                 newnode.path = child
                                                                 newnode.revision = revision
