@@ -19608,45 +19608,22 @@ func (rs *Reposurgeon) DoDo(line string) bool {
 	for i, arg := range args {
 		replacements = append(replacements, fmt.Sprintf("{%d}", i), arg)
 	}
-	body := strings.NewReader(strings.NewReplacer(replacements...).Replace(strings.Join(macro, "\n")))
+	body := strings.NewReplacer(replacements...).Replace(strings.Join(macro, "\n"))
+	doSelection := rs.selection
 
-	// This is a little weird, but could be worse. My first
-	// thought was to create a new Reposurgeon object, and copy
-	// the repository list, the selection, and other state to
-	// it. If the macro modified them, they would then need to be
-	// copied back. Instead I'm saving the state that the macro
-	// shouldn't be able to permenantly changed, and restoring it
-	// after the macro is finished.
-	existingDefaultSelection := rs.defaultSelection
-	rs.defaultSelection = rs.selection
-	existingDefinitions := rs.definitions
-	existingPromptFormat := rs.promptFormat
-	existingInterpreter := rs.cmd
-	rs.definitions = make(map[string][]string)
-	for k, v := range existingDefinitions {
-		rs.definitions[k] = make([]string, len(v))
-		copy(rs.definitions[k], v)
+	for _, defline := range strings.Split(body, "\n") {
+		// If a leading portion of the expansion body is a selection
+		// expression, use it.  Otherwise we'll restore whatever
+		// selection set came before the do keyword.
+		expansion := rs.cmd.PreCommand(defline)
+		if rs.selection  == nil {
+			rs.selection = doSelection
+		}
+		// Call the base method so RecoverableExceptions
+		// won't be caught; we want them to abort macros.
+		rs.cmd.OneCmd(expansion)
 	}
-	existingInputIsStdin := rs.inputIsStdin
-	rs.inputIsStdin = false
-	rs.promptFormat = ""
-	interpreter := kommandant.NewKommandant(rs)
-	interpreter.SetStdin(ioutil.NopCloser(body))
-	interpreter.SetPrompt("")
 
-	done := make(chan bool)
-	innerloop := func() {
-		interpreter.CmdLoop("")
-		done <- true
-	}
-	go innerloop()
-	<-done
-
-	rs.inputIsStdin = existingInputIsStdin
-	rs.cmd = existingInterpreter
-	rs.promptFormat = existingPromptFormat
-	rs.definitions = existingDefinitions
-	rs.defaultSelection = existingDefaultSelection
 	return false
 }
 
