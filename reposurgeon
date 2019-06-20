@@ -670,7 +670,7 @@ _darcs
         project="http://subversion.apache.org/",
         notes="Run from the repository, not a checkout directory."),
     VCS(name="cvs",
-        subdirectory="CVSROOT",	# Can't be Attic, that doesn't always exist.
+        subdirectory="CVSROOT", # Can't be Attic, that doesn't always exist.
         exporter="find . -name '*,v' -print | cvs-fast-export --reposurgeon",
         styleflags={"import-defaults", "export-progress"},
         extensions={},
@@ -6803,8 +6803,8 @@ class Repository:
                 elif tagback and event.parents():
                     filter_only = False
                     new_target = event.parents()[0]
-		if new_target is not None:
-		    announce(DEBUG_DELETE, "new target for tags and resets is %s" % new_target.mark)
+                if new_target is not None:
+                    announce(DEBUG_DELETE, "new target for tags and resets is %s" % new_target.mark)
                 # Reparent each child
                 def compose_comment(a, b):
                     "Concatenate comments, ignoring empty-log-message markers."
@@ -6820,9 +6820,9 @@ class Repository:
                         return a
                     else:
                         return a + '\n' + b
-		announce(DEBUG_DELETE, "to be reparented: %s" % ([x.mark for x in event.children()],))
+                announce(DEBUG_DELETE, "to be reparented: %s" % ([x.mark for x in event.children()],))
                 for child in list(event.children()):
-		    announce(DEBUG_DELETE, "reparenting: %s" % child.mark)
+                    announce(DEBUG_DELETE, "reparenting: %s" % child.mark)
                     # Insert event's parents in place of event in child's
                     # parent list. We keep existing duplicates in case they
                     # are wanted, but ensure we don't introduce new ones.
@@ -6917,7 +6917,7 @@ class Repository:
                         self.events[ei] = reset
                     # use a copy of attachments since it will be mutated
                     for t in list(event.attachments):
-		        announce(DEBUG_DELETE, "moving attachment %s of %s to %s" % (event.mark, t.id_me(), new_target.mark))
+                        announce(DEBUG_DELETE, "moving attachment %s of %s to %s" % (event.mark, t.id_me(), new_target.mark))
                         t.forget()
                         t.remember(self, target=new_target)
                 # And forget the deleted event
