@@ -484,6 +484,28 @@ func TestDateFormats(t *testing.T) {
 	}
 }
 
+func TestDateRoundtrip(t *testing.T) {
+	// Test round-tripping of git-style dates
+	type harness struct {
+		from      int64
+		expected  string
+	}
+	testTable := []string{
+		"1288205012 +0000",
+		"1287754582 -0400",
+		"1288996926 -0400",
+	}
+	for _, item := range testTable {
+		tobj, _ := newDate(item)
+		through := tobj.String()
+		if through != item {
+			t.Errorf("date roundtrip from %s: saw %s",
+				item, through)
+		}
+	}
+}
+
+
 func TestDateComparison(t *testing.T) {
 	d1, _ := newDate("2010-10-27T18:43:32Z")
 	d2, _ := newDate("1288205012 +0000")
