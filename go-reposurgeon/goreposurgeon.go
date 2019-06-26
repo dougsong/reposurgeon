@@ -13204,7 +13204,7 @@ func newReposurgeon() *Reposurgeon {
 // SetCore is a Kommandant housekeeping hook.
 func (rs *Reposurgeon) SetCore(k *kommandant.Kmdt) {
 	rs.cmd = k
-	k.OneCommand = func(line string) (stop bool) {
+	k.OneCmd_hook = func(line string) (stop bool) {
 		defer func(stop *bool) {
 			if e := catch("command", recover()); e != nil {
 				croak(e.message)
@@ -13261,7 +13261,7 @@ func (rs *Reposurgeon) PreLoop() {
 	rs.buildPrompt()
 }
 
-func (rs *Reposurgeon) PreCommand(line string) string {
+func (rs *Reposurgeon) PreCmd(line string) string {
 	trimmed := strings.TrimRight(line, " \t\n")
 	if len(trimmed) != 0 {
 		rs.history = append(rs.history, trimmed)
@@ -13297,7 +13297,7 @@ func (rs *Reposurgeon) PreCommand(line string) string {
 	return rest
 }
 
-func (rs *Reposurgeon) PostCommand(stop bool, lineIn string) bool {
+func (rs *Reposurgeon) PostCmd(stop bool, lineIn string) bool {
 	return stop
 }
 
@@ -19613,7 +19613,7 @@ func (rs *Reposurgeon) DoDo(line string) bool {
 		// If a leading portion of the expansion body is a selection
 		// expression, use it.  Otherwise we'll restore whatever
 		// selection set came before the do keyword.
-		expansion := rs.cmd.PreCommand(defline)
+		expansion := rs.cmd.PreCmd_hook(defline)
 		if rs.selection  == nil {
 			rs.selection = doSelection
 		}
@@ -20529,8 +20529,8 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 	existingInputIsStdin := rs.inputIsStdin
 	rs.inputIsStdin = false
 
-	if interpreter.PreLoop != nil {
-		interpreter.PreLoop()
+	if interpreter.PreLoop_hook != nil {
+		interpreter.PreLoop_hook()
 	}
 	lineno := 0
 	for {
@@ -20600,12 +20600,12 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 		}
 
 		// finally we execute the command, plus the before/after steps
-		if interpreter.PreCommand != nil {
-			scriptline = interpreter.PreCommand(scriptline)
+		if interpreter.PreCmd_hook != nil {
+			scriptline = interpreter.PreCmd_hook(scriptline)
 		}
 		stop := interpreter.OneCmd(scriptline)
-		if interpreter.PostCommand != nil {
-			stop = interpreter.PostCommand(stop, scriptline)
+		if interpreter.PostCmd_hook != nil {
+			stop = interpreter.PostCmd_hook(stop, scriptline)
 		}
 
 		// and then we have to put the stdin back where it
@@ -20623,8 +20623,8 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 			break
 		}
 	}
-	if interpreter.PostLoop != nil {
-		interpreter.PostLoop()
+	if interpreter.PostLoop_hook != nil {
+		interpreter.PostLoop_hook()
 	}
 
 	rs.inputIsStdin = existingInputIsStdin
@@ -20658,8 +20658,8 @@ func main() {
 	if len(os.Args[1:]) == 0 {
 		os.Args = append(os.Args, "-")
 	}
-	if interpreter.PreLoop != nil {
-		interpreter.PreLoop()
+	if interpreter.PreLoop_hook != nil {
+		interpreter.PreLoop_hook()
 	}
 	stop := false
 	for _, arg := range os.Args[1:] {
@@ -20678,12 +20678,12 @@ func main() {
 				if strings.HasPrefix(acmd, "--") {
 					acmd = acmd[2:]
 				}
-				if interpreter.PreCommand != nil {
-					acmd = interpreter.PreCommand(acmd)
+				if interpreter.PreCmd_hook != nil {
+					acmd = interpreter.PreCmd_hook(acmd)
 				}
 				stop = interpreter.OneCmd(acmd)
-				if interpreter.PostCommand != nil {
-					stop = interpreter.PostCommand(stop, acmd)
+				if interpreter.PostCmd_hook != nil {
+					stop = interpreter.PostCmd_hook(stop, acmd)
 				}
 				if stop {
 					break
@@ -20691,8 +20691,8 @@ func main() {
 			}
 		}
 	}
-	if interpreter.PostLoop != nil {
-		interpreter.PostLoop()
+	if interpreter.PostLoop_hook != nil {
+		interpreter.PostLoop_hook()
 	}
 
 }
