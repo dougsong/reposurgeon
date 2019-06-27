@@ -11909,15 +11909,12 @@ source branch are removed.
                 tcommits.pop(0)
             pref = os.path.basename(source)
             for ci in scommits:
-                found = False
                 for fileop in repo.events[ci].operations():
                     if fileop.op in (FileOp.D, FileOp.M):
                         fileop.path = os.path.join(pref, fileop.path)
-                        found = True
                     elif fileop.op in (FileOp.R, FileOp.C):
                         fileop.source = os.path.join(pref, fileop.source)
                         fileop.target = os.path.join(pref, fileop.target)
-                        found = True
             merged = sorted(set(scommits + tcommits))
             source_reset = None
             for i in merged:
