@@ -13204,7 +13204,7 @@ func newReposurgeon() *Reposurgeon {
 // SetCore is a Kommandant housekeeping hook.
 func (rs *Reposurgeon) SetCore(k *kommandant.Kmdt) {
 	rs.cmd = k
-	k.OneCmd_hook = func(line string) (stop bool) {
+	k.OneCmdHook = func(line string) (stop bool) {
 		defer func(stop *bool) {
 			if e := catch("command", recover()); e != nil {
 				croak(e.message)
@@ -17476,6 +17476,7 @@ func (rs *Reposurgeon) DoDebranch(line string) bool {
 		return false
 	found2:
 	}
+	fmt.Fprintf(os.Stderr, "DEBUG: source=%s, target=%s\n", source, target)
 	// Now that the arguments are in proper form, implement
 	stip := repo.markToIndex(branches[source])
 	scommits := append(repo.ancestors(stip), stip)
@@ -17490,9 +17491,11 @@ func (rs *Reposurgeon) DoDebranch(line string) bool {
 		scommits = scommits[1:]
 		tcommits = tcommits[1:]
 	}
+	fmt.Fprintf(os.Stderr, "DEBUG: scommits=%s, tcomimts=%s\n", scommits, tcommits)
 	pref := filepath.Base(source)
 	for _, ci := range scommits {
-		for _, fileop := range repo.events[ci].(*Commit).operations() {
+		for idx := range repo.events[ci].(*Commit).operations() {
+			fileop := &repo.events[ci].(*Commit).fileops[idx]
 			if fileop.op == opD || fileop.op == opM {
 				fileop.Path = filepath.Join(pref, fileop.Path)
 			} else if fileop.op == opR || fileop.op == opC {
@@ -19613,7 +19616,7 @@ func (rs *Reposurgeon) DoDo(line string) bool {
 		// If a leading portion of the expansion body is a selection
 		// expression, use it.  Otherwise we'll restore whatever
 		// selection set came before the do keyword.
-		expansion := rs.cmd.PreCmd_hook(defline)
+		expansion := rs.cmd.PreCmdHook(defline)
 		if rs.selection  == nil {
 			rs.selection = doSelection
 		}
@@ -20529,8 +20532,8 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 	existingInputIsStdin := rs.inputIsStdin
 	rs.inputIsStdin = false
 
-	if interpreter.PreLoop_hook != nil {
-		interpreter.PreLoop_hook()
+	if interpreter.PreLoopHook != nil {
+		interpreter.PreLoopHook()
 	}
 	lineno := 0
 	for {
@@ -20600,12 +20603,12 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 		}
 
 		// finally we execute the command, plus the before/after steps
-		if interpreter.PreCmd_hook != nil {
-			scriptline = interpreter.PreCmd_hook(scriptline)
+		if interpreter.PreCmdHook != nil {
+			scriptline = interpreter.PreCmdHook(scriptline)
 		}
 		stop := interpreter.OneCmd(scriptline)
-		if interpreter.PostCmd_hook != nil {
-			stop = interpreter.PostCmd_hook(stop, scriptline)
+		if interpreter.PostCmdHook != nil {
+			stop = interpreter.PostCmdHook(stop, scriptline)
 		}
 
 		// and then we have to put the stdin back where it
@@ -20623,8 +20626,8 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 			break
 		}
 	}
-	if interpreter.PostLoop_hook != nil {
-		interpreter.PostLoop_hook()
+	if interpreter.PostLoopHook != nil {
+		interpreter.PostLoopHook()
 	}
 
 	rs.inputIsStdin = existingInputIsStdin
@@ -20658,8 +20661,8 @@ func main() {
 	if len(os.Args[1:]) == 0 {
 		os.Args = append(os.Args, "-")
 	}
-	if interpreter.PreLoop_hook != nil {
-		interpreter.PreLoop_hook()
+	if interpreter.PreLoopHook != nil {
+		interpreter.PreLoopHook()
 	}
 	stop := false
 	for _, arg := range os.Args[1:] {
@@ -20678,12 +20681,12 @@ func main() {
 				if strings.HasPrefix(acmd, "--") {
 					acmd = acmd[2:]
 				}
-				if interpreter.PreCmd_hook != nil {
-					acmd = interpreter.PreCmd_hook(acmd)
+				if interpreter.PreCmdHook != nil {
+					acmd = interpreter.PreCmdHook(acmd)
 				}
 				stop = interpreter.OneCmd(acmd)
-				if interpreter.PostCmd_hook != nil {
-					stop = interpreter.PostCmd_hook(stop, acmd)
+				if interpreter.PostCmdHook != nil {
+					stop = interpreter.PostCmdHook(stop, acmd)
 				}
 				if stop {
 					break
@@ -20691,8 +20694,8 @@ func main() {
 			}
 		}
 	}
-	if interpreter.PostLoop_hook != nil {
-		interpreter.PostLoop_hook()
+	if interpreter.PostLoopHook != nil {
+		interpreter.PostLoopHook()
 	}
 
 }
