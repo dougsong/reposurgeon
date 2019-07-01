@@ -20,6 +20,7 @@
 #
 read <debranch3.fi
 debranch alternate master
+write -
 echo 1
 :17 paths
 :15 paths

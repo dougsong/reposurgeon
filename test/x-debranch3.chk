@@ -1,3 +1,132 @@
+blob
+mark :1
+data 5
+test
+
+reset refs/heads/master
+commit refs/heads/master
+mark :2
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414427 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414427 +0100
+data 10
+Create f1
+M 100644 :1 f1
+
+blob
+mark :3
+data 6
+test2
+
+commit refs/heads/master
+mark :4
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414457 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414457 +0100
+data 7
+Add f2
+from :2
+M 100644 :3 f2
+
+blob
+mark :5
+data 14
+test2
+testing
+
+commit refs/heads/master
+mark :6
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414506 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414506 +0100
+data 10
+Modify f2
+from :4
+M 100644 :5 f2
+
+blob
+mark :7
+data 9
+test
+123
+
+blob
+mark :8
+data 18
+test2
+testing
+234
+
+commit refs/heads/master
+mark :9
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414636 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414636 +0100
+data 18
+Changes on branch
+from :6
+M 100644 :7 alternate/f1
+M 100644 :8 alternate/f2
+
+blob
+mark :10
+data 4
+123
+
+commit refs/heads/master
+mark :11
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414659 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414659 +0100
+data 25
+Another change on branch
+from :9
+M 100644 :10 alternate/f1
+
+blob
+mark :12
+data 22
+test2
+testing
+234
+ttt
+
+commit refs/heads/master
+mark :13
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414717 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414717 +0100
+data 28
+Another change on alternate
+from :11
+M 100644 :12 alternate/f2
+
+blob
+mark :14
+data 8
+testing
+
+commit refs/heads/master
+mark :15
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414689 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414689 +0100
+data 17
+Change on master
+from :13
+M 100644 :14 f2
+
+blob
+mark :16
+data 7
+test
+t
+
+commit refs/heads/master
+mark :17
+author Ralf Schlatterbeck <rsc@runtux.com> 1392414742 +0100
+committer Ralf Schlatterbeck <rsc@runtux.com> 1392414742 +0100
+data 25
+Another change on master
+from :15
+M 100644 :16 f1
+
+reset refs/heads/master
+from :17
+
 :17 paths
 f1
 :15 paths
