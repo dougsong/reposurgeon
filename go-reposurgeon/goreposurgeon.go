@@ -59,7 +59,7 @@ package main
 // This code was translated from Python. It retains, for internal
 // documentation purposes, the Python convention of using leading
 // underscores on field names to flag fields tht should never be
-// referenced ouside a method of the associated struct.
+// referenced outside a method of the associated struct.
 //
 // The capitalization of other fieldnames looks inconsistent because
 // the code tries to retain the lowercase Python names and
@@ -17495,7 +17495,7 @@ func (rs *Reposurgeon) DoDebranch(line string) bool {
 	pref := filepath.Base(source)
 	for _, ci := range scommits {
 		for idx := range repo.events[ci].(*Commit).operations() {
-			fileop := &repo.events[ci].(*Commit).fileops[idx]
+			fileop := &(repo.events[ci].(*Commit).fileops[idx])
 			if fileop.op == opD || fileop.op == opM {
 				fileop.Path = filepath.Join(pref, fileop.Path)
 			} else if fileop.op == opR || fileop.op == opC {
