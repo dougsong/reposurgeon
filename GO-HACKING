@@ -68,7 +68,6 @@ x-userignores.tst
 The following tests presently fail under Go.  Reducing this list to
 empty is a near-term goal.
 
-x-debranch3: unknown failure
 x-divide: divide logic appears broken
 x-liftlog: Minor failure
 x-macro: Spurious EOF in single-line expansion, and multiline doesn't work.

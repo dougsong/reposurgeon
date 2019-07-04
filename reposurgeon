@@ -2907,6 +2907,7 @@ class Commit(object):
         pathset = set()
         for fileop in self.operations():
             pathset |= fileop.paths(pathtype)
+        sys.stderr.write("DEBUG: at %s paths %s\n" % (self.mark, pathset))
         return pathset
     def visible(self, path):
         "Is the specified path modified and not deleted in the ancestors?"
@@ -11994,11 +11995,13 @@ with no argument, strip the first directory component from every path.
             return
         if self.selection is None:
             self.selection = self.chosen().all()
+        sys.stderr.write("DEBUG: selection set %s\n" % self.selection)
         if not line.startswith(("sub", "sup")):
             with RepoSurgeon.LineParse(self, line, capabilities=["stdout"]) as parse:
                 allpaths = set()
                 for _, event in self.selected(Commit):
-                    allpaths.update(event.paths())
+                    allpaths = allpaths | event.paths()
+                    sys.stderr.write("DEBUG: cumulative %s\n" % allpaths)
                 parse.stdout.write("\n".join(sorted(allpaths)) + "\n")
                 return
         fields = line.split()

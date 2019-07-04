@@ -17476,7 +17476,6 @@ func (rs *Reposurgeon) DoDebranch(line string) bool {
 		return false
 	found2:
 	}
-	fmt.Fprintf(os.Stderr, "DEBUG: source=%s, target=%s\n", source, target)
 	// Now that the arguments are in proper form, implement
 	stip := repo.markToIndex(branches[source])
 	scommits := append(repo.ancestors(stip), stip)
@@ -17491,7 +17490,6 @@ func (rs *Reposurgeon) DoDebranch(line string) bool {
 		scommits = scommits[1:]
 		tcommits = tcommits[1:]
 	}
-	fmt.Fprintf(os.Stderr, "DEBUG: scommits=%s, tcomimts=%s\n", scommits, tcommits)
 	pref := filepath.Base(source)
 	for _, ci := range scommits {
 		for idx := range repo.events[ci].(*Commit).operations() {
@@ -17629,8 +17627,8 @@ func (rs *Reposurgeon) DoPaths(line string) bool {
 	defer parse.Closem()
 	if !strings.HasPrefix(line, "sub") && !strings.HasPrefix(line, "sup") {
 		allpaths := newStringSet()
-		for _, commit := range rs.chosen().commits(nil) {
-			allpaths = allpaths.Union(commit.paths(nil))
+		for _, idx := range rs.selection {
+			allpaths = allpaths.Union(rs.chosen().events[idx].(*Commit).paths(nil))
 		}
 		sort.Strings(allpaths)
 		fmt.Fprint(parse.stdout, strings.Join(allpaths, "\n")+"\n")
