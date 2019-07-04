@@ -42,14 +42,9 @@ have pypy installed.  The performance difference is dramatic on large
 repositories.
 
 We are in the process of moving this suite of tools from Python to Go
-for large performance increases.  The subdirectory 'src' contains the
-Go source.  Do your builds through the Makefile, which sets the GOPATH
-variable to work around it not being embedded in a normal Go
-workspace.
-
+for large performance increases. You will require Go 1.11 or later.
 To build the Go tools, simply run "make" in the toplevel directory.
-This also builds the suite documentation.  Before running it the
-*first* time, run "make gosetup" to install package dependencies.
+This also builds the suite documentation.
 
 There is an extensive regression-test suite in the `test/` directory.
 To test the correctness of this software, ensure that `pypy` and
