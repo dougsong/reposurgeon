@@ -9842,6 +9842,7 @@ List all known symbolic names of branches and tags. Supports > redirection.
                     if bailout and not relax:
                         announce(DEBUG_SHOUT, "script abort at line %d: %r" %
                                  (lineno, scriptline))
+                        break
             self.callstack.pop()
         except IOError as e:
             complain("script failure on '%s': %s" % (line, e))
