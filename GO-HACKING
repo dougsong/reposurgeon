@@ -71,8 +71,6 @@ empty is a near-term goal.
 x-divide: divide logic appears broken
 x-liftlog: Minor failure
 x-macro: Spurious EOF in single-line expansion, and multiline doesn't work.
-x-pathrename: ancestry check is failing.
-x-pathrename-with-set: rename operation fails.
 x-reorder: toposort code is busted.
 x-reparent: stack overflow
 x-simple: several command failures, none look very difficult

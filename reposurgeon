@@ -11977,7 +11977,7 @@ in the ancestry of the commit, this command throws an error.  With the
                                 if oldpath and re.search(polybytes(source_re), polybytes(oldpath)):
                                     newpath = polystr(re.sub(polybytes(source_re), polybytes(target_re), polybytes(oldpath)))
                                     if not force and commit.visible(newpath):
-                                        raise Recoverable("rename at %s failed, %s visible in ancestry" % (commit.id_me(), newpath))
+                                        raise Recoverable("rename of %s at %s failed, %s visible in ancestry" % (oldpath, commit.id_me(), newpath))
                                     elif not force and newpath in commit.paths():
                                         raise Recoverable("rename at %s failed, %s exists there" % (commit.id_me(), newpath))
                                     else:
