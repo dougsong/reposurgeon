@@ -11602,17 +11602,20 @@ func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
 	}
 	union := newRepository(uname[1:])
 	os.Mkdir(union.subdir(""), userReadWriteMode)
+	factorOrder := func(i, j int) bool {
+		return !factors[i].earliest().After(factors[j].earliest())
+	}
 	// Reverse time order
-	sort.Slice(factors, func(i, j int) bool {
-		return !factors[i].earliest().Before(factors[j].earliest())
+	sort.SliceStable(factors, func(i, j int) bool {
+		return factorOrder(j, i)
 	})
 	persist := make(map[string]string)
 	for _, factor := range factors {
 		persist = factor.uniquify(factor.name, persist)
 	}
 	// Forward time order
-	sort.Slice(factors, func(i, j int) bool {
-		return factors[i].earliest().Before(factors[j].earliest())
+	sort.SliceStable(factors, func(i, j int) bool {
+		return factorOrder(i, j)
 	})
 	roots = make([]*Commit, 0)
 	for _, x := range factors {
