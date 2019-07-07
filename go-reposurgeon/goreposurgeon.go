@@ -17173,7 +17173,11 @@ func (rs *Reposurgeon) DoDivide(_line string) bool {
 	}
 	//assert(early && late)
 	// Try the topological cut first
-	if !rs.cut(earlyCommit, lateCommit) {
+	if rs.cut(earlyCommit, lateCommit) {
+		if context.verbose > 0 {
+			announce(debugSHOUT, "topological cut succeeded")
+		}
+	} else {
 		// If that failed, cut anyway and rename the branch segments
 		lateCommit.removeParent(earlyCommit)
 		if earlyCommit.Branch != lateCommit.Branch {

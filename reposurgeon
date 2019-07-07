@@ -11651,7 +11651,10 @@ branch 'qux', the branch segments are renamed 'qux-early' and
             complain("too many arguments")
         assert(early and late)
         # Try the topological cut first
-        if not self.cut(early, late):
+        if self.cut(early, late):
+            if verbose > 0:
+                announce(DEBUG_SHOUT, "topological cut succeeded")
+        else:
             # If that failed, cut anyway and rename the branch segments
             late.remove_parent(early)
             if early.branch != late.branch:
