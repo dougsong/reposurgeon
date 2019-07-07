@@ -11953,6 +11953,17 @@ in the ancestry of the commit, this command throws an error.  With the
         (verb, line) = RepoSurgeon.pop_token(line)
         with RepoSurgeon.LineParse(self, line) as parse:
             if verb == "rename":
+                class path_action:
+                    def __init__(self, fileop, commit, attr, newpath):
+                        self.fileop = fileop
+                        self.commit = commit
+                        self.attr = attr
+                        self.newpath = newpath
+                    def __str__(self):
+	                for i, op in enumerate(self.commit.fileops):
+		            if op == self.fileop:
+			            break
+	                return "[%s(%d) %s=%s]" % (self.commit.id_me(), i, self.attr, self.newpath)
                 force = '--force' in parse.options
                 (target_re, _) = RepoSurgeon.pop_token(parse.line)
                 if not target_re:
@@ -11970,10 +11981,11 @@ in the ancestry of the commit, this command throws an error.  With the
                                     elif not force and newpath in commit.paths():
                                         raise Recoverable("rename at %s failed, %s exists there" % (commit.id_me(), newpath))
                                     else:
-                                        actions.append((fileop, attr, newpath))
+                                        actions.append(path_action(fileop, commit, attr, newpath))
                 # All checks must pass before any renames
-                for (fileop, attr, newpath) in actions:
-                    setattr(fileop, attr, newpath)
+                # sys.stderr.write("DEBUG: Actions: %s\n" % [str(a) for a in actions])
+                for action in actions:
+                    setattr(action.fileop, action.attr, action.newpath)
             else:
                 raise Recoverable("unknown verb '%s' in path command." % verb)
 
