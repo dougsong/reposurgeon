@@ -1,5 +1,8 @@
 = reposurgeon project news =
 
+Repository head::
+     Fix for a crash bug when bauking out of a script failure.
+
 3.46: 2019-05-29::
      Added 'relax' no-op command.
      Added bug warning about repocutter not handling Mac line terminations.
