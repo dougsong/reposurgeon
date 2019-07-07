@@ -16083,6 +16083,16 @@ type filterCommand struct {
 	attributes stringSet
 }
 
+// GoReplacer bridges from Python-style back-references (\1) to Go-style ($1).
+// FIXME: Remove this shim when the cutover to Go is final.
+func GoReplacer(re *regexp.Regexp, fromString, toString string) string {
+	toString = strings.Replace(toString, `\1`, `$1`, -1)
+	//fmt.Fprintf(os.Stderr, "GoReplacer in: on %s do %s -> %s\n", re.String(), fromString, toString)
+	out := re.ReplaceAllString(fromString, toString)
+	//fmt.Fprintf(os.Stderr, "GoReplacer out: %s\n", out)
+	return out
+}
+
 // newFilterCommand - Initialize a filter from the command line.
 func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
 	fc := new(filterCommand)
@@ -16144,7 +16154,7 @@ func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
 				}
 				fc.sub = func(s string) string {
 					if subcount == -1 {
-						return fc.regexp.ReplaceAllString(s, parts[2])
+						return GoReplacer(fc.regexp, s, parts[2])
 					} else {
 						replacecount := subcount
 						replacer := func(s string) string {
@@ -17538,6 +17548,25 @@ in the ancestry of the commit, this command throws an error.  With the
 `)
 }
 
+type pathAction struct {
+	fileop  *FileOp
+	commit  *Commit	// Only used for debug dump  
+	attr    string
+	newpath string
+}
+
+func (pa pathAction) String() string {
+	var i int
+	var op FileOp
+	for i, op = range pa.commit.fileops {
+		if op == *pa.fileop {
+			break
+		}
+	}
+	
+	return fmt.Sprintf("[%s(%d) %s=%s]", pa.commit.idMe(), i, pa.attr, pa.newpath)
+}
+
 // Rename paths in the history.
 func (rs *Reposurgeon) DoPath(line string) bool {
 	if rs.chosen() == nil {
@@ -17566,26 +17595,23 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 			complain("no target specified in rename")
 			return false
 		}
-		type pathAction struct {
-			fileop  *FileOp
-			attr    string
-			newpath string
-		}
 		actions := make([]pathAction, 0)
 		for _, commit := range repo.commits(rs.selection) {
-			for _, fileop := range commit.operations() {
+			for idx := range commit.fileops {
 				for _, attr := range []string{"Path", "Source", "Target"} {
-					if oldpath, ok := getAttr(fileop, attr); ok {
-						if ok && sourceRE.MatchString(oldpath) {
-							newpath := sourceRE.ReplaceAllString(oldpath, targetPattern)
+					fileop := &commit.fileops[idx]
+					if oldpath, ok := getAttr(*fileop, attr); ok {
+						if ok && oldpath != "" && sourceRE.MatchString(oldpath) {
+							newpath := GoReplacer(sourceRE, oldpath, targetPattern)
+							//fmt.Fprintf(os.Stderr, "DEBUG: At %s op %d replacing: %s via %s yields %s\n", commit.idMe(), idx, oldpath, targetPattern, newpath)
 							if !force && commit.visible(newpath) != nil {
-								complain("rename at %s failed, %s visible in ancestry", commit.idMe(), newpath)
+								complain("rename of %s at %s failed, %s visible in ancestry", oldpath, commit.idMe(), newpath)
 								return false
 							} else if !force && commit.paths(nil).Contains(newpath) {
-								complain("rename at %s failed, %s exists there", commit.idMe(), newpath)
+								complain("rename of %s at %s failed, %s exists there", oldpath, commit.idMe(), newpath)
 								return false
 							} else {
-								actions = append(actions, pathAction{&fileop, attr, newpath})
+								actions = append(actions, pathAction{fileop, commit, attr, newpath})
 							}
 						}
 					}
@@ -17593,6 +17619,7 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 			}
 		}
 		// All checks must pass before any renames
+                //fmt.Fprintf(os.Stderr, "DEBUG: Actions: %v\n", actions)
 		for _, action := range actions {
 			setAttr(action.fileop, action.attr, action.newpath)
 		}
