@@ -11540,8 +11540,8 @@ func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
 					passthrough.moveto(earlyPart)
 					earlyPart.addEvent(passthrough)
 				} else if passthrough.color == "late" {
-					passthrough.moveto(earlyPart)
-					earlyPart.addEvent(passthrough)
+					passthrough.moveto(latePart)
+					latePart.addEvent(passthrough)
 				} else {
 					// TODO: Someday, color passthroughs
 					// that aren't fronted.
@@ -11552,8 +11552,8 @@ func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
 					commit.moveto(earlyPart)
 					earlyPart.addEvent(commit)
 				} else if commit.color == "late" {
-					commit.moveto(earlyPart)
-					earlyPart.addEvent(commit)
+					commit.moveto(latePart)
+					latePart.addEvent(commit)
 				} else {
 					panic(fmt.Sprintf("coloring algorithm failed on %s", event.idMe()))
 				}
@@ -11562,8 +11562,8 @@ func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
 					tag.moveto(earlyPart)
 					earlyPart.addEvent(tag)
 				} else if tag.color == "late" {
-					tag.moveto(earlyPart)
-					earlyPart.addEvent(tag)
+					tag.moveto(latePart)
+					latePart.addEvent(tag)
 				} else {
 					panic(fmt.Sprintf("coloring algorithm failed on %s", event.idMe()))
 				}
