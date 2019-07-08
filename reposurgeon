@@ -11651,6 +11651,7 @@ branch 'qux', the branch segments are renamed 'qux-early' and
         elif len(self.selection) > 2:
             complain("too many arguments")
         assert(early and late)
+        self.selection = None
         # Try the topological cut first
         if self.cut(early, late):
             if verbose > 0:

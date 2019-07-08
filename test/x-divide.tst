@@ -3,6 +3,7 @@ echo 1
 read <bzr.fi
 verbose 1
 :1 divide
+verbose 0
 choose bzr-early
 write -
 choose bzr-late

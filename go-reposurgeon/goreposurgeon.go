@@ -17172,6 +17172,7 @@ func (rs *Reposurgeon) DoDivide(_line string) bool {
 		croak("too many arguments")
 	}
 	//assert(early && late)
+	rs.selection = nil
 	// Try the topological cut first
 	if rs.cut(earlyCommit, lateCommit) {
 		if context.verbose > 0 {
