@@ -1,10 +1,11 @@
 read <bzr.fi
 verbose 1
 reposurgeon: verbose 1
+quiet on
 :1 divide
 reposurgeon: topological cut succeeded
-2019-07-07T22:10:24Z - bzr-early
-2019-07-07T22:10:24Z - bzr-late
+- bzr-early
+- bzr-late
 verbose 0
 choose bzr-early
 write -
