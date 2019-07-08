@@ -2909,7 +2909,7 @@ func rfc3339(t time.Time) string {
 var gitDateRE = regexp.MustCompile(`^[0-9]+\s*[+-][0-9]+$`)
 var zoneOffsetRE = regexp.MustCompile(`^([-+]?[0-9]{2})([0-9]{2})$`)
 
-// locationFromZoneOffset makes a Go location object from a hhhmmm string.
+// locationFromZoneOffset makes a Go location object from a [+-]hhhmmm string.
 // It is rather a strained hack. We don't get an actual TZ from a
 // Git-format date, just a [+-]hhmm offset. Fortunately that
 // is usually all we need to dump. Make a location from which
@@ -2928,6 +2928,7 @@ func locationFromZoneOffset(offset string) (*time.Location, error) {
 	}
 	tzname := intern(offset)
 	tzoff := (hours*60 + mins) * 60
+	//fmt.Fprintf(os.Stderr, "DEBUG: %s produces %d offset: %v\n", tzname, tzoff, time.FixedZone(tzname, tzoff))
 	return time.FixedZone(tzname, tzoff), nil
 }
 
@@ -2956,7 +2957,7 @@ func newDate(text string) (Date, error) {
 	var t Date
 	// Special case: we may want current time in UTC
 	if len(text) == 0 {
-		t.timestamp = time.Now()
+		t.timestamp = time.Now().UTC()
 		return t, nil
 	}
 	// Otherwise, look for git's preferred format, which is a timestamp
@@ -3019,26 +3020,12 @@ func (date Date) delta(other Date) time.Duration {
 	return other.timestamp.Sub(date.timestamp)
 }
 
-// String formats a Date object as an internal Git date (Unix time in seconds
-// and a hhmm offset).  The tricky part here is what we do if the
-// time's location is not already a +-hhmm string.
-func (date Date) String() string {
-	var hhmm string
-	loc := date.timestamp.Location()
-	zone := loc.String()
-	if len(zone) > 0 && (zone[0] == byte('+') || zone[0] == byte('-')) {
-		hhmm = zone
-	} else {
-		_, offs := date.timestamp.Zone()
-		sign := "+"
-		if offs < 0 {
-			offs *= -1
-			sign = "-"
-		}
-		hhmm = fmt.Sprintf("%s%02d%02d", sign, offs/60, offs%60)
-	}
+const dayHalf = (24 * 60 * 60) / 2
 
-	return fmt.Sprintf("%d %s", date.timestamp.Unix(), hhmm)
+// String formats a Date object as an internal Git date (Unix time in seconds
+// and a hhmm offset).
+func (date Date) String() string {
+	return fmt.Sprintf("%d %s", date.timestamp.Unix(), date.timestamp.Format("-0700"))
 }
 
 func (date *Date) setTZ(zone string) {
@@ -7054,7 +7041,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         commit.committer.fullname = "Fred J. Foonly"
                         commit.committer.email = "foonly@foo.com"
                         commit.committer.date.timestamp = time.Unix(int64(revision * 360), 0)
-                        commit.committer.date.setTZ("GMT")
+                        commit.committer.date.setTZ("UTC")
                 }
                 commit.properties = record.props
                 // Zero revision is never interesting - no operations, no
@@ -17611,7 +17598,6 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 					if oldpath, ok := getAttr(*fileop, attr); ok {
 						if ok && oldpath != "" && sourceRE.MatchString(oldpath) {
 							newpath := GoReplacer(sourceRE, oldpath, targetPattern)
-							//fmt.Fprintf(os.Stderr, "DEBUG: At %s op %d replacing: %s via %s yields %s\n", commit.idMe(), idx, oldpath, targetPattern, newpath)
 							if !force && commit.visible(newpath) != nil {
 								complain("rename of %s at %s failed, %s visible in ancestry", oldpath, commit.idMe(), newpath)
 								return false
@@ -19967,10 +19953,10 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 							}
 						}
 					}
-					if _, ok := repo.tzmap[newattr.email]; ok  {
-						newattr.date.setTZ(repo.tzmap[newattr.email].String())
-					} else {
-						newattr.date.setTZ(zoneFromEmail(newattr.email))
+					if tz, ok := repo.tzmap[newattr.email]; ok { //&& unicode.IsLetter(rune(tz.String()[0])) {
+						newattr.date.timestamp = newattr.date.timestamp.In(tz)
+					} else if zone := zoneFromEmail(newattr.email); zone != ""{
+						newattr.date.setTZ(zone)
 					}
 					if val, ok := repo.aliases[ContributorID{fullname:newattr.fullname, email:newattr.email}]; ok {
 						newattr.fullname, newattr.email = val.fullname, val.email

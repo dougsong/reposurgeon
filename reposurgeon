@@ -4464,7 +4464,7 @@ class StreamParser:
                 commit.committer.name = "Fred J. Foonly"
                 commit.committer.email = "foonly@foo.com"
                 commit.committer.date.timestamp = int(revision) * 360
-                commit.committer.date.set_tz("GMT")
+                commit.committer.date.set_tz("UTC")
             commit.properties = record.props
             # Zero revision is never interesting - no operations, no
             # comment, no author, it's just a start marker for a
