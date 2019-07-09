@@ -12078,15 +12078,15 @@ This command supports > redirection.
                 if event.mark:
                     parse.stdout.write("mark %s\n" % event.mark)
                 parse.stdout.write("\n")
+                items = [(k, v) for (k, v) in event.manifest().items()]
+                items.sort(key=lambda x: x[0]) 
                 if filter_func is None:
                     parse.stdout.write("\n".join("%s -> %s" % (path, mark)
-                            for path, (mode, mark, _)
-                            in event.manifest().items()))
+                            for path, (mode, mark, _) in items))
                 else:
                     parse.stdout.write("\n".join("%s -> %s" % (path, mark)
-                            for path, (mode, mark, _)
-                            in event.manifest().items()
-                            if filter_func(polybytes(path))))
+                            for path, (mode, mark, _) in items
+                                                 if filter_func(polybytes(path))))
                 parse.stdout.write("\n")
 
     def help_tagify(self):
