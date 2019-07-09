@@ -9034,16 +9034,16 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 		}
 	}
 	deletia := make([]int, 0)
-	for _, index := range selection {
+	tagifyEvent := func(index int) {
 		commit, ok := repo.events[index].(*Commit)
 		if !ok {
-			continue
+			return
 		}
 		var name string
 		if len(commit.operations()) == 0 || isTipdelete(commit) {
 			if commit.hasParents() {
 				if len(commit.parents()) > 1 && !tagifyMerges {
-					continue
+					return
 				}
 				if nameFunc != nil {
 					name = nameFunc(commit)
@@ -9085,6 +9085,18 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 				}
 				deletia = append(deletia, index)
 			}
+		}
+
+	}
+
+
+	if len(selection) == 0 {
+		for index := range repo.events {
+			tagifyEvent(index)
+		}
+	} else {
+		for _, index := range selection {
+			tagifyEvent(index)
 		}
 	}
 	repo.delete(deletia, []string{"--tagback", "--tagify"})
@@ -11917,8 +11929,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 		}
 	}
 	rl.repo.events = filtered
-	// Then tagify empty commits.
-	rl.repo.tagifyEmpty(selection, false, false, false, nil, nil, !notagify, nil)
+	rl.repo.tagifyEmpty(nil, false, false, false, nil, nil, !notagify, nil)
 	// And tell we changed the manifests and the event sequence.
 	//rl.repo.invalidateManifests()
 	rl.repo.declareSequenceMutation("expunge cleanup")
