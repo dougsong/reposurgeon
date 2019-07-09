@@ -13141,7 +13141,7 @@ func (md *MacroDefinition) PreCommand(line string) string {
 	return line
 }
 
-func (md *MacroDefinition) DefaultCommand(line string) bool {
+func (md *MacroDefinition) Default(line string) bool {
 	line = strings.TrimSpace(line)
 	if md.depth == 0 && (line[0] == '}' || line == "EOF") {
 		return true // we're done, exit the loop
