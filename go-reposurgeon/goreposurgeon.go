@@ -11834,7 +11834,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			}
 		case *Commit:
 			commit := event.(*Commit)
-			if commit == nil {
+			if commit._expungehook == nil {
 				keeperMarks = append(keeperMarks, commit.mark)
 			} else {
 				expunged.addEvent(commit._expungehook)
