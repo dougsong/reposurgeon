@@ -11765,8 +11765,8 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 		commit := rl.repo.events[ei].(*Commit)
 		keepers := make([]FileOp, 0)
 		blobs := make([]*Blob, 0)
-		for _, i := range deletia {
-			fileop := commit.operations()[i]
+		for _, j := range deletia {
+			fileop := commit.fileops[j]
 			var sourcedelete bool
 			var targetdelete bool
 			if fileop.op == opD {
