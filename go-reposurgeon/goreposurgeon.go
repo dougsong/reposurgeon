@@ -17764,10 +17764,19 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 			fmt.Fprintf(parse.stdout, "mark %s\n", commit.mark)
 		}
 		fmt.Fprint(parse.stdout, "\n")
+		type ManifestItem struct {
+			path string
+			entry *ManifestEntry
+		}
+		manifestItems := make([]ManifestItem, 0)
 		for path, entry := range commit.manifest() {
 			if filterFunc(path) {
-				fmt.Fprintf(parse.stdout, "%s -> %s\n", path, entry.ref)
+				manifestItems = append(manifestItems, ManifestItem{path, entry}) 
 			}
+		}
+		sort.Slice(manifestItems, func(i, j int) bool {return manifestItems[i].path < manifestItems[j].path})
+		for _, item := range manifestItems {
+			fmt.Fprintf(parse.stdout, "%s -> %s\n", item.path, item.entry.ref)
 		}
 	}
 	return false
