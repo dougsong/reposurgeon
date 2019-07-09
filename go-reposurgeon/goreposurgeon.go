@@ -17648,8 +17648,8 @@ func (rs *Reposurgeon) DoPaths(line string) bool {
 	defer parse.Closem()
 	if !strings.HasPrefix(line, "sub") && !strings.HasPrefix(line, "sup") {
 		allpaths := newStringSet()
-		for _, idx := range rs.selection {
-			allpaths = allpaths.Union(rs.chosen().events[idx].(*Commit).paths(nil))
+		for _, commit := range rs.chosen().commits(rs.selection) {
+			allpaths = allpaths.Union(commit.paths(nil))
 		}
 		sort.Strings(allpaths)
 		fmt.Fprint(parse.stdout, strings.Join(allpaths, "\n")+"\n")
