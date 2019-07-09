@@ -3386,6 +3386,10 @@ func (b *Blob) moveto(repo *Repository) {
 // clone makes a copy of this blob, pointing at the same file."
 func (b *Blob) clone(repo *Repository) *Blob {
 	c := newBlob(repo)
+	c.mark = b.mark
+	c.pathlist = make([]string, len(b.pathlist))
+	copy(c.pathlist, b.pathlist)
+	c.cookie = b.cookie
 	c.colors = newStringSet()
 	if b.hasfile() {
 		announce(debugSHUFFLE,
