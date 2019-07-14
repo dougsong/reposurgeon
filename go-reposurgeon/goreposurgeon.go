@@ -2462,7 +2462,7 @@ const debugDELETE = 3   // Debug canonicalization after deletes
 const debugIGNORES = 3  // Debug ignore generation
 const debugSVNPARSE = 4 // Lower-level Subversion parsing details
 const debugEMAILIN = 4  // Debug round-tripping through msg{out|in}
-const debugSHUFFLE = 4  // Debug file and directory handling
+const debugSHUFFLE = 1  // Debug file and directory handling
 const debugCOMMANDS = 5 // Show commands as they are executed
 const debugUNITE = 6    // Debug mark assignments in merging
 const debugLEXER = 6    // Debug selection-language parsing
@@ -3310,6 +3310,7 @@ func (b *Blob) setContent(text string, tell int64) {
 	b.start = tell
 	b.size = int64(len(text))
 	if b.hasfile() {
+		fmt.Fprintf(os.Stderr, "DEBUG: setContent() out to %s\n", b.getBlobfile(false))
 		file, err := os.OpenFile(b.getBlobfile(true),
 			os.O_WRONLY|os.O_CREATE, userReadWriteMode)
 		if err != nil {
@@ -3322,6 +3323,7 @@ func (b *Blob) setContent(text string, tell int64) {
 			defer output.Close()
 			_, err = io.WriteString(output, text)
 		} else {
+			fmt.Fprintf(os.Stderr, "DEBUG: shipping %s (%d) to %s\n", text[:10], len(text), file.Name())
 			_, err = io.WriteString(file, text)
 		}
 		if err != nil {
@@ -3332,8 +3334,10 @@ func (b *Blob) setContent(text string, tell int64) {
 
 // materialize stores this content as a separate file, if it isn't already.
 func (b *Blob) materialize() string {
+	fmt.Fprintf(os.Stderr, "DEBUG: materialize(%s) in starts at %d\n", b.mark, b.start)
 	if b.start != noOffset {
 		b.setContent(b.getContent(), noOffset)
+		fmt.Fprintf(os.Stderr, "DEBUG: materialize(%s) out to %s\n", b.mark, b.getBlobfile(false))
 	}
 	return b.getBlobfile(false)
 }
@@ -3378,18 +3382,20 @@ func (b *Blob) moveto(repo *Repository) {
 		b.repo = repo
 		newloc := b.getBlobfile(true)
 		announce(debugSHUFFLE,
-			"blob rename calls os.rename(%s, %s)", oldloc, newloc)
-		os.Rename(oldloc, newloc)
+			"blob moveto calls os.rename(%s, %s)", oldloc, newloc)
+		err := os.Rename(oldloc, newloc)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Fprintf(os.Stderr, "DEBUG: after moveto %s has size %d\n", newloc, getsize(newloc))
 	}
 }
 
-// clone makes a copy of this blob, pointing at the same file."
+// clone makes a fresh (uncolored) copy of this blob, pointing at the same file."
 func (b *Blob) clone(repo *Repository) *Blob {
-	c := newBlob(repo)
-	c.mark = b.mark
+	c := b	// copy scalar fields
 	c.pathlist = make([]string, len(b.pathlist))
 	copy(c.pathlist, b.pathlist)
-	c.cookie = b.cookie
 	c.colors = newStringSet()
 	if b.hasfile() {
 		announce(debugSHUFFLE,
@@ -3398,6 +3404,9 @@ func (b *Blob) clone(repo *Repository) *Blob {
 		if err != nil {
 			panic(fmt.Errorf("Blob clone: %v", err))
 		}
+	} else {
+		announce(debugSHUFFLE,
+			"blob %s is not materialized.", b.mark)
 	}
 	return c
 }
@@ -3438,9 +3447,11 @@ func (b *Blob) parseCookie(content string) Cookie {
 }
 
 func (b Blob) String() string {
+	fmt.Fprintf(os.Stderr, "DEBUG: stringifying %s\n", b.mark)
 	if b.hasfile() {
 		fn := b.getBlobfile(false)
 		if !exists(fn) {
+			fmt.Fprintf(os.Stderr, "DEBUG: no content %s for %s\n", fn, b.mark)
 			return ""
 		}
 	}
@@ -3505,7 +3516,7 @@ func (t *Tag) forget() {
 	t.repo = nil
 }
 
-// moveto changes the repo this reset is associated with."
+// moveto changes the repo this tag is associated with."
 func (t *Tag) moveto(repo *Repository) {
 	t.repo = repo
 }
@@ -4089,6 +4100,7 @@ func (callout Callout) String() string {
 	return fmt.Sprintf("callout-%s", callout.mark)
 }
 
+// moveto changes the repo this callout is associated with."
 func (callout *Callout) moveto(*Repository) {
 	// Has no repo field
 }
@@ -5350,6 +5362,7 @@ func (p Passthrough) String() string {
 	return p.text
 }
 
+// moveto changes the repo this passthrough is associated with."
 func (p *Passthrough) moveto(*Repository) {
 	// Has no repo field
 }
@@ -5784,9 +5797,9 @@ type NodeAction struct {
 	props       OrderedMap
 	propchange  bool
 	// These are set during the analysis phase
-	fromSet   *PathMap
-	blobmark  string
-	generated bool
+	fromSet     *PathMap
+	blobmark    string
+	generated   bool
 }
 
 func (action NodeAction) String() string {
@@ -11747,6 +11760,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 	expunged := newRepository(rl.repo.name + "-expunges")
 	expunged.seekstream = rl.repo.seekstream
 	expunged.makedir()
+	fmt.Fprintf(os.Stderr, "DEBUG: base directory %s, expunged directory %s\n", rl.repo.subdir(""), expunged.subdir(""))
 	for _, event := range rl.repo.events {
 		switch event.(type) {
 		case *Blob:
@@ -11808,7 +11822,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			newcommit := commit.clone(expunged)
 			newcommit.setOperations(keepers)
 			for _, blob := range blobs {
-				blob._expungehook = blob.clone(expunged)
+				blob._expungehook = blob.clone(rl.repo)
 			}
 			commit._expungehook = newcommit
 		}
@@ -11830,6 +11844,9 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			if blob._expungehook == nil {
 				keeperMarks = append(keeperMarks, blob.mark)
 			} else {
+				blob._expungehook.materialize()
+				blob._expungehook.moveto(expunged)
+				//fmt.Fprintf(os.Stderr, "DEBUG: moving blob %s materialized %s (%d), %q\n", blob._expungehook.mark, blob._expungehook.getBlobfile(false), getsize(blob._expungehook.getBlobfile(false)), blob.getContent()[:10])
 				expunged.addEvent(blob._expungehook)
 				blob._expungehook = nil
 				expungedMarks = append(expungedMarks, blob.mark)
@@ -11862,6 +11879,12 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			}
 		}
 	}
+	sane := func() {
+		firstblob := expunged.events[0].(*Blob).getBlobfile(false)
+		fmt.Fprintf(os.Stderr, "DEBUG: size of first blob %s is %d\n", firstblob, getsize(firstblob))
+	}
+	sane()
+	fmt.Fprintf(os.Stderr, "DEBUG: %d expunged events\n", len(expunged.events))
 	/*
 	 * FIXME: This code isn't right.
 	 *
