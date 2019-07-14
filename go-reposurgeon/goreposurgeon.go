@@ -2462,7 +2462,7 @@ const debugDELETE = 3   // Debug canonicalization after deletes
 const debugIGNORES = 3  // Debug ignore generation
 const debugSVNPARSE = 4 // Lower-level Subversion parsing details
 const debugEMAILIN = 4  // Debug round-tripping through msg{out|in}
-const debugSHUFFLE = 1  // Debug file and directory handling
+const debugSHUFFLE = 4  // Debug file and directory handling
 const debugCOMMANDS = 5 // Show commands as they are executed
 const debugUNITE = 6    // Debug mark assignments in merging
 const debugLEXER = 6    // Debug selection-language parsing
@@ -2928,7 +2928,6 @@ func locationFromZoneOffset(offset string) (*time.Location, error) {
 	}
 	tzname := intern(offset)
 	tzoff := (hours*60 + mins) * 60
-	//fmt.Fprintf(os.Stderr, "DEBUG: %s produces %d offset: %v\n", tzname, tzoff, time.FixedZone(tzname, tzoff))
 	return time.FixedZone(tzname, tzoff), nil
 }
 
@@ -3310,7 +3309,6 @@ func (b *Blob) setContent(text string, tell int64) {
 	b.start = tell
 	b.size = int64(len(text))
 	if b.hasfile() {
-		fmt.Fprintf(os.Stderr, "DEBUG: setContent() out to %s\n", b.getBlobfile(false))
 		file, err := os.OpenFile(b.getBlobfile(true),
 			os.O_WRONLY|os.O_CREATE, userReadWriteMode)
 		if err != nil {
@@ -3323,7 +3321,6 @@ func (b *Blob) setContent(text string, tell int64) {
 			defer output.Close()
 			_, err = io.WriteString(output, text)
 		} else {
-			fmt.Fprintf(os.Stderr, "DEBUG: shipping %s (%d) to %s\n", text[:10], len(text), file.Name())
 			_, err = io.WriteString(file, text)
 		}
 		if err != nil {
@@ -3334,10 +3331,8 @@ func (b *Blob) setContent(text string, tell int64) {
 
 // materialize stores this content as a separate file, if it isn't already.
 func (b *Blob) materialize() string {
-	fmt.Fprintf(os.Stderr, "DEBUG: materialize(%s) in starts at %d\n", b.mark, b.start)
 	if b.start != noOffset {
 		b.setContent(b.getContent(), noOffset)
-		fmt.Fprintf(os.Stderr, "DEBUG: materialize(%s) out to %s\n", b.mark, b.getBlobfile(false))
 	}
 	return b.getBlobfile(false)
 }
@@ -3387,7 +3382,6 @@ func (b *Blob) moveto(repo *Repository) {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Fprintf(os.Stderr, "DEBUG: after moveto %s has size %d\n", newloc, getsize(newloc))
 	}
 }
 
@@ -3447,11 +3441,9 @@ func (b *Blob) parseCookie(content string) Cookie {
 }
 
 func (b Blob) String() string {
-	fmt.Fprintf(os.Stderr, "DEBUG: stringifying %s\n", b.mark)
 	if b.hasfile() {
 		fn := b.getBlobfile(false)
 		if !exists(fn) {
-			fmt.Fprintf(os.Stderr, "DEBUG: no content %s for %s\n", fn, b.mark)
 			return ""
 		}
 	}
@@ -11760,7 +11752,6 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 	expunged := newRepository(rl.repo.name + "-expunges")
 	expunged.seekstream = rl.repo.seekstream
 	expunged.makedir()
-	fmt.Fprintf(os.Stderr, "DEBUG: base directory %s, expunged directory %s\n", rl.repo.subdir(""), expunged.subdir(""))
 	for _, event := range rl.repo.events {
 		switch event.(type) {
 		case *Blob:
@@ -11846,7 +11837,6 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			} else {
 				blob._expungehook.materialize()
 				blob._expungehook.moveto(expunged)
-				//fmt.Fprintf(os.Stderr, "DEBUG: moving blob %s materialized %s (%d), %q\n", blob._expungehook.mark, blob._expungehook.getBlobfile(false), getsize(blob._expungehook.getBlobfile(false)), blob.getContent()[:10])
 				expunged.addEvent(blob._expungehook)
 				blob._expungehook = nil
 				expungedMarks = append(expungedMarks, blob.mark)
@@ -11879,12 +11869,6 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			}
 		}
 	}
-	sane := func() {
-		firstblob := expunged.events[0].(*Blob).getBlobfile(false)
-		fmt.Fprintf(os.Stderr, "DEBUG: size of first blob %s is %d\n", firstblob, getsize(firstblob))
-	}
-	sane()
-	fmt.Fprintf(os.Stderr, "DEBUG: %d expunged events\n", len(expunged.events))
 	/*
 	 * FIXME: This code isn't right.
 	 *
@@ -17651,7 +17635,6 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 			}
 		}
 		// All checks must pass before any renames
-                //fmt.Fprintf(os.Stderr, "DEBUG: Actions: %v\n", actions)
 		for _, action := range actions {
 			setAttr(action.fileop, action.attr, action.newpath)
 		}
