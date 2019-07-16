@@ -4289,16 +4289,30 @@ func (commit *Commit) bump(i int) {
 
 // clone replicates this commit, without its fileops, color, children, or tags.
 func (commit *Commit) clone(repo *Repository) *Commit {
-	c := newCommit(repo)
-	c.committer = commit.committer
+	var c = *commit
 	c.authors = make([]Attribution, len(commit.authors))
 	// FIXME: Test this against Python, which does a deeper copy.
 	// It might alter the behavior of the split operation.
 	copy(c.authors, commit.authors)
-	c.Comment = commit.Comment
-	c.mark = commit.mark
-	c.Branch = commit.Branch
-	return c
+	//c.fileops = make([]FileOp, len(commit.fileops))
+	//for i := range commit.fileops {
+	//	c.fileops[i] = commit.fileops[i]
+	//}
+	// FIXME: copy properties someday
+	// FIXME: Copy not deep enough, tagger is a pointer field.
+	//c.attachments = make([]Event, len(commit.attachments))
+	//for i := range commit.attachments {
+	//	c.attachments[i] = commit.attachments[i]
+	//}
+	//c._childNodes = make([]CommitLike, len(commit._childNodes))
+	//for i := range commit._childNodes {
+	//	c._childNodes[i] = commit._childNodes[i]
+	//}
+	//c._parentNodes = make([]CommitLike, len(commit._parentNodes))
+	//for i := range commit._parentNodes {
+	//	c._parentNodes[i] = commit._parentNodes[i]
+	//}
+	return &c
 }
 
 // showlegacy returns a legacy ID in the expected form for the ancestral system.
