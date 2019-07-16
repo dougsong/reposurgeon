@@ -25,6 +25,5 @@ mark :7
 committer esr <esr> 1323707585 +0000
 data 77
 The import stream representation of this commit should have a delete fileop.
-from :6
 D doomed
 

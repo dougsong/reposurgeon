@@ -289,7 +289,6 @@ author Eric S. Raymond <esr@thyrsus.com> 1287768418 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287768418 -0400
 data 40
 Sync data structures with design notes.
-from :6
 M 100644 :8 theory.txt
 
 blob
@@ -333,6 +332,7 @@ author Eric S. Raymond <esr@thyrsus.com> 1288009592 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288009592 -0400
 data 27
 Upate theory of operation.
+from :9
 M 100644 :22 theory.txt
 
 blob
@@ -390,6 +390,7 @@ author Eric S. Raymond <esr@thyrsus.com> 1288032988 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288032988 -0400
 data 46
 The quick brown fox jumped over the lazy dog.
+from :23
 M 100644 :27 theory.txt
 
 blob
@@ -445,6 +446,7 @@ author Eric S. Raymond <esr@thyrsus.com> 1288083882 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288083882 -0400
 data 53
 git-fast-export captures lightweight tags after all.
+from :28
 M 100755 :50 theory.txt
 
 

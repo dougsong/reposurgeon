@@ -8064,6 +8064,8 @@ class RepositoryList:
                 else:
                     digested.append("^" + re.escape(s) + "$")
             return re.compile("|".join(digested).encode('ascii')), notagify
+        # Save a copy of all paremt-child relationships, we'll need it later
+        parentage = {commit.mark: commit.parent_marks() for commit in self.repo.commits()}
         try:
             # First pass: compute fileop deletions
             alterations = []
@@ -8169,14 +8171,23 @@ class RepositoryList:
         for event in itertools.chain(self.repo.events, expunged.events):
             if hasattr(event, "deletehook"):
                 delattr(event, "deletehook")
+        # Patch together ancestry chains in the expunged repo
         expunged_marks = set(event.mark for event in expunged.events if hasattr(event, "mark"))
         for event in expunged.events:
             if hasattr(event, "parents"):
-                # Parents still are Commits in the non-expunged repository
-                # We use set_parent_marks so that the correct parents are
-                # searched in the expunged repository.
-                event.set_parent_marks(m for m in event.parent_marks()
-                                         if m in expunged_marks)
+                oldparents = self.repo.objfind(event.mark).parent_marks()
+                event.set_parents([])
+                for parent in oldparents:
+                    backto = parent
+                    while backto in parentage:
+                        if len(parentage[backto]) == 0:
+                            break
+                        # Could we preserve marge parent relationship here?
+                        if  parentage[backto][0] in expunged_marks:
+                            event.add_parent(parentage[backto][0])
+                            break
+                        else:
+                            backto = parentage[backto][0]
         keeper_marks = set(event.mark for event in self.repo.events if hasattr(event, "mark"))
         for event in self.repo.events:
             if hasattr(event, "parents"):
