@@ -11711,6 +11711,11 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 		}
 		return regexp.MustCompile(strings.Join(digested, "|")), notagify
 	}
+        // Save a copy of all parent-child relationships, we'll need it later
+	parentage := make(map[string][]string)
+	for _, commit := range rl.repo.commits(nil) {
+		parentage[commit.mark] = commit.parentMarks()
+	}
 	// First pass: compute fileop deletions
 	alterations := make([][]int, 0)
 	expunge, notagify := digest(matchers)
@@ -11830,37 +11835,24 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 	expunged.events = rl.repo.frontEvents()
 	expunged.declareSequenceMutation("expunge operation")
 	expungedBranches := expunged.branchset()
-	expungedMarks := make([]string, 0)
-	// FIXME: Computation of keeperMarks replicates the Python behavior
-	// keeper_marks = set(event.mark for event in self.repo.events if hasattr(event, "mark"))
-	// which selects *all* marks in the unmodified repository, but this is
-	// probably wrong - it should probably exclude marks
-	keeperMarks := make([]string, 0)
+	expungedMarks := stringSet(nil)
 	for _, event := range rl.repo.events {
 		switch event.(type) {
 		case *Blob:
 			blob := event.(*Blob)
-			if blob._expungehook == nil {
-				keeperMarks = append(keeperMarks, blob.mark)
-			} else {
+			if blob._expungehook != nil {
 				blob._expungehook.materialize()
 				blob._expungehook.moveto(expunged)
 				expunged.addEvent(blob._expungehook)
 				blob._expungehook = nil
-				expungedMarks = append(expungedMarks, blob.mark)
-				// FIXME: Probably wrong
-				keeperMarks = append(keeperMarks, blob.mark)
+				expungedMarks.Add(blob.mark)
 			}
 		case *Commit:
 			commit := event.(*Commit)
-			if commit._expungehook == nil {
-				keeperMarks = append(keeperMarks, commit.mark)
-			} else {
+			if commit._expungehook != nil {
 				expunged.addEvent(commit._expungehook)
 				commit._expungehook = nil
-				expungedMarks = append(expungedMarks, commit.mark)
-				// FIXME: Probably wrong
-				keeperMarks = append(keeperMarks, commit.mark)
+				expungedMarks.Add(commit.mark)
 			}
 		case *Reset:
 			reset := event.(*Reset)
@@ -11877,35 +11869,23 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			}
 		}
 	}
-	/*
-	 * FIXME: This code isn't right.
-	 *
-	 * I think this may have been somebody else's mistaken attempt at a fix.
-	 * The prose in the command doesn't look like mine (ESR's) and the
-	 * concept is wrong - the marks from the old repository can't just be
-	 * deleted, they need to be chased so the expunge repository has a
-	 * coherent set of parent-child chains.
-	 *
-	 * Probably this code need to be reworked so it clones the entire
-	 * repository structure and does complementary deletes.
-	 */
-	// for _, event := range expunged.events {
-	// 	commit, ok := event.(*Commit)
-	// 	if ok {
-	// 		// Parents still are Commits in the
-	// 		// non-expunged repository We use
-	// 		// setParentMarks so that the correct parents
-	// 		// are searched in the expunged repository.
-	// 		commit.setParentMarks(m for m in event.parentMarks()
-	// 			if m in expungedMarks)
-	// 	}
-	// }
-	//FIXME: No-op, because we're still replicating the Python behavior of
-	// keeping all marks.
-	//for _, commits := range repo.commits() {
-	//    commit.setParents([e for e in event.parents() if e.mark in keeper_marks])
-	//}
-
+        // Patch together ancestry chains in the expunged repo
+        for _, commit := range expunged.commits(nil) {
+		commit.setParents(nil)
+		oldparents := rl.repo.markToEvent(commit.mark).(*Commit).parentMarks()
+		for _, parent := range oldparents {
+			backto := parent
+			for len(parentage[backto]) > 0 { 
+		                // Could we preserve merge parent relationship here?
+		                if  expungedMarks.Contains(parentage[backto][0]) {
+					commit.addParentByMark(parentage[backto][0])
+					break
+		                } else {
+					backto = parentage[backto][0]
+				}
+			}
+		}
+	}
 	backreferences := make(map[string]int)
 	for _, commit := range rl.repo.commits(nil) {
 		for _, fileop := range commit.operations() {
