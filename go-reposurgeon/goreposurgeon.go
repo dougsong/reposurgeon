@@ -4289,29 +4289,23 @@ func (commit *Commit) bump(i int) {
 
 // clone replicates this commit, without its fileops, color, children, or tags.
 func (commit *Commit) clone(repo *Repository) *Commit {
-	var c = *commit
-	c.authors = make([]Attribution, len(commit.authors))
 	// FIXME: Test this against Python, which does a deeper copy.
 	// It might alter the behavior of the split operation.
+	var c = *commit // Was a Python deepcopy
+	c.authors = make([]Attribution, len(commit.authors))
 	copy(c.authors, commit.authors)
-	//c.fileops = make([]FileOp, len(commit.fileops))
-	//for i := range commit.fileops {
-	//	c.fileops[i] = commit.fileops[i]
-	//}
-	// FIXME: copy properties someday
-	// FIXME: Copy not deep enough, tagger is a pointer field.
-	//c.attachments = make([]Event, len(commit.attachments))
-	//for i := range commit.attachments {
-	//	c.attachments[i] = commit.attachments[i]
-	//}
-	//c._childNodes = make([]CommitLike, len(commit._childNodes))
-	//for i := range commit._childNodes {
-	//	c._childNodes[i] = commit._childNodes[i]
-	//}
-	//c._parentNodes = make([]CommitLike, len(commit._parentNodes))
-	//for i := range commit._parentNodes {
-	//	c._parentNodes[i] = commit._parentNodes[i]
-	//}
+        c.setOperations(nil)
+        //c.filemap = nil
+        c.color = ""
+        if repo != nil {
+		c.repo = repo
+	}
+        c._childNodes = nil
+        // use the encapsulation to set parents instead of relying
+        // on the copy, so that Commit can do its bookkeeping.
+        c._parentNodes = nil // avoid confusing set_parents()
+        c.setParents(commit.parents())
+	c.attachments = nil
 	return &c
 }
 
