@@ -16324,7 +16324,9 @@ func (rs *Reposurgeon) DoSetfield(line string) bool {
 	if err != nil || len(fields) != 2 {
 		croak("missing or malformed setfield line")
 	}
-	field := fields[0]
+	// Caling strings,Title so that Python-sytyle (uncapitalized)
+	// fieldnsmes will still work.
+	field := strings.Title(fields[0])
 	value, err := stringEscape(fields[1])
 	if err != nil {
 		croak("while setting field: %v", err)
@@ -16333,7 +16335,7 @@ func (rs *Reposurgeon) DoSetfield(line string) bool {
 	for _, ei := range rs.selection {
 		event := repo.events[ei]
 		if _, ok := getAttr(event, field); ok {
-			setAttr(event, strings.Title(field), value)
+			setAttr(event, field, value)
 		} else if commit, ok := event.(*Commit); ok {
 			if field == "author" {
 				attr := value
@@ -16397,9 +16399,9 @@ func (rs *Reposurgeon) DoSetperm(line string) bool {
 	baton := newBaton("patching modes", "", context.verbose == 1)
 	for _, ei := range rs.selection {
 		if commit, ok := rs.chosen().events[ei].(*Commit); ok {
-			for _, op := range commit.operations() {
+			for i, op := range commit.fileops {
 				if op.op == opM && paths.Contains(op.Path) {
-					op.mode = perm
+					commit.fileops[i].mode = perm
 				}
 			}
 			baton.twirl("")
