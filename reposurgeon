@@ -7377,6 +7377,7 @@ class Repository:
         return rename_count
     def path_walk(self, selection, hook=lambda path: path):
         "Apply a hook to all paths, returning the set of modified paths."
+        sys.stderr.write("DEBUG: path_walk in\n")
         modified = set()
         for ei in selection:
             event = self.events[ei]
@@ -7384,6 +7385,7 @@ class Repository:
                 for fileop in event.operations():
                     if fileop.op in (FileOp.M, FileOp.D):
                         newpath = hook(fileop.path)
+			sys.stderr.write("DEBUG: mapping %s -> %s\n" % (fileop.path, newpath))
                         if newpath != fileop.path:
                             modified.add(newpath)
                         fileop.path = newpath
@@ -7396,6 +7398,7 @@ class Repository:
                         if newpath != fileop.target:
                             modified.add(newpath)
                         fileop.target = newpath
+        sys.stderr.write("DEBUG: I see %s\n" % modified)
         return sorted(modified)
     def split_commit(self, where, splitfunc):
         event = self.events[where]

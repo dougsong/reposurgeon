@@ -10626,13 +10626,13 @@ func (repo *Repository) pathWalk(selection orderedIntSet, hook func(string) stri
 	for _, ei := range selection {
 		event := repo.events[ei]
 		if commit, ok := event.(*Commit); ok {
-			for _, fileop := range commit.operations() {
+			for i, fileop := range commit.operations() {
 				if fileop.op == opM || fileop.op == opD {
 					newpath := hook(fileop.Path)
 					if newpath != fileop.Path {
 						modified.Add(newpath)
 					}
-					fileop.Path = newpath
+					commit.fileops[i].Path = newpath
 				} else if fileop.op == opR || fileop.op == opC {
 					newpath := hook(fileop.Source)
 					if newpath != fileop.Source {
@@ -10643,7 +10643,7 @@ func (repo *Repository) pathWalk(selection orderedIntSet, hook func(string) stri
 					if newpath != fileop.Target {
 						modified.Add(newpath)
 					}
-					fileop.Target = newpath
+					commit.fileops[i].Target = newpath
 				}
 			}
 		}

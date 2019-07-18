@@ -68,10 +68,9 @@ x-userignores.tst
 The following tests presently fail under Go.  Reducing this list to
 empty is a near-term goal.
 
-x-macro: Spurious EOF in single-line expansion, and multiline doesn't work.
+x-macro: Multiline doesn't work due to greediness in Go buffering.
 x-reorder: toposort code is busted.
-x-reparent: stack overflow
-x-simple: several command failures, none look very difficult
+x-reparent: unknown failure
 
 The next step after these will be testing extractor classes.
 
