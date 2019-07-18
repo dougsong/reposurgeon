@@ -8064,7 +8064,7 @@ class RepositoryList:
                 else:
                     digested.append("^" + re.escape(s) + "$")
             return re.compile("|".join(digested).encode('ascii')), notagify
-        # Save a copy of all paremt-child relationships, we'll need it later
+        # Save a copy of all parent-child relationships, we'll need it later
         parentage = {commit.mark: commit.parent_marks() for commit in self.repo.commits()}
         try:
             # First pass: compute fileop deletions
@@ -8188,10 +8188,6 @@ class RepositoryList:
                             break
                         else:
                             backto = parentage[backto][0]
-        keeper_marks = set(event.mark for event in self.repo.events if hasattr(event, "mark"))
-        for event in self.repo.events:
-            if hasattr(event, "parents"):
-                event.set_parents([e for e in event.parents() if e.mark in keeper_marks])
         backreferences = collections.Counter()
         for event in self.repo.events:
             if isinstance(event, Commit):
