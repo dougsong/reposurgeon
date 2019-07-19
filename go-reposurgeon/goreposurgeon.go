@@ -76,7 +76,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
-
+	"container/heap"
 	"crypto/sha1"
 	"errors"
 	"fmt"
@@ -499,6 +499,12 @@ func (s orderedIntSet) Sort() {
 	sort.Slice(s, func(i, j int) bool { return s[i] < s[j] })
 }
 
+func (s *orderedIntSet) Pop() int {
+	x := (*s)[len(*s)-1]
+	*s = (*s)[:len(*s)-1]
+	return x
+}
+
 func (s orderedIntSet) String() string {
 	if len(s) == 0 {
 		return "[]"
@@ -511,6 +517,7 @@ func (s orderedIntSet) String() string {
 }
 
 /*
+// FIXME: Someday, use this so reorder doesn't need to declare a separate heap type.
 // Satisfy the heap interface
 func (s orderedIntSet) Len() int           { return len(s) }
 func (s orderedIntSet) Less(i, j int) bool { return s[i] < s[j] }
@@ -520,14 +527,6 @@ func (s orderedIntSet) Push(x interface{}) {
 	// Push and Pop use pointer receivers because they modify the
 	// slice's length, not just its contents.
 	s = append(s, x.(int))
-}
-
-func (s orderedIntSet) Pop() interface{} {
-	old := s
-	n := len(old)
-	x := old[n-1]
-	s = old[0 : n-1]
-	return x
 }
 */
 
@@ -10126,10 +10125,32 @@ func (d *DAG) setdefault(key int, e *DAGedges) *DAGedges {
 	return (*d)[key]
 }
 
+// From https://golang.org/pkg/container/heap/#example__intHeap
+
+// An IntHeap is a min-heap of ints.
+type IntHeap []int
+
+func (h IntHeap) Len() int           { return len(h) }
+func (h IntHeap) Less(i, j int) bool { return h[i] < h[j] }
+func (h IntHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+
+func (h *IntHeap) Push(x interface{}) {
+	// Push and Pop use pointer receivers because they modify the slice's length,
+	// not just its contents.
+	*h = append(*h, x.(int))
+}
+
+func (h *IntHeap) Pop() interface{} {
+	old := *h
+	n := len(old)
+	x := old[n-1]
+	*h = old[0 : n-1]
+	return x
+}
+
 // resort topologically sorts the events in this repository.
 // It reorders self.events so that objects referenced by other objects
 // appear first.  The sort is stable to avoid unnecessary churn.
-// FIXME: resort doesn't work.
 func (repo *Repository) resort() {
 	var dag DAG = make(map[int]*DAGedges)
 	start := repo.all()
@@ -10190,30 +10211,32 @@ func (repo *Repository) resort() {
 
 		}
 	}
-	fmt.Printf("The DAG is: %v\n", dag)
-	// Now topologically sort the DAG.
-	// FIXME: The Python version used a priority queue to provide
-	// a stable topological sort (each event's priority is its
-	// original index)  In theory this should be possible using
-	// the Go heap code.
+        // now topologically sort the dag, using a priority queue to
+        // provide a stable topological sort (each event's priority is
+        // its original index)
+	s := new(IntHeap)
+        heap.Init(s)
+	for _, elt := range start {
+		heap.Push(s, elt)
+	}
 	tsorted := newOrderedIntSet()
 	oldIndexToNew := make(map[int]int)
-	for len(start) > 0 {
-		n := start[len(start)-1]
-		start = start[:len(start)-1]
-		//assert n  not in oldIndexToNew
+        for len(*s) > 0 {
+		n := heap.Pop(s).(int)
+		//assert n not in old_index_to_new
 		oldIndexToNew[n] = len(tsorted)
 		tsorted.Add(n)
-		for len(dag[n].ein) > 0 {
-			m := dag[n].ein[len(dag[n].ein)-1]
-			dag[n].ein = dag[n].ein[:len(dag[n].ein)-1]
+		ein := dag[n].ein
+		for len(ein) > 0 {
+			m := ein.Pop()
 			medges := dag[m]
 			medges.eout.Remove(n)
 			if len(medges.eout) == 0 {
-				start = append(start, m)
+				heap.Push(s, m)
 			}
 		}
-	}
+	}	
+
 	orig := repo.all()
 	//assert len(t) == len(tsorted)
 	if !tsorted.Equal(orig) {
