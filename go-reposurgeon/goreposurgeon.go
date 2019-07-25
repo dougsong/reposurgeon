@@ -16802,8 +16802,7 @@ func (rs *Reposurgeon) DoBlob(line string) bool {
 	repo.renumber(2, nil)
 	blob := newBlob(repo)
 	blob.setMark(":1")
-	// FIXME: Insert after front events
-	repo.insertEvent(blob, 0, "adding blob")
+	repo.insertEvent(blob, len(repo.frontEvents()), "adding blob")
 	parse := rs.newLineParse(line, stringSet{"stdin"})
 	defer parse.Closem()
 	content, err := ioutil.ReadAll(parse.stdin)
@@ -20712,7 +20711,7 @@ func main() {
 	interpreter := kommandant.NewKommandant(rs)
 	interpreter.EnableReadline(true)
 
-	//FIXME: Imp;ement a cleanup command rather than this
+	//FIXME: Implement a cleanup command rather than this
 	//defer func() {
 	//	if e := recover(); e != nil {
 	//		fmt.Println("reposurgeon: panic recovery: ", e)

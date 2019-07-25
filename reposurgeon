@@ -7377,7 +7377,6 @@ class Repository:
         return rename_count
     def path_walk(self, selection, hook=lambda path: path):
         "Apply a hook to all paths, returning the set of modified paths."
-        sys.stderr.write("DEBUG: path_walk in\n")
         modified = set()
         for ei in selection:
             event = self.events[ei]
@@ -7385,7 +7384,6 @@ class Repository:
                 for fileop in event.operations():
                     if fileop.op in (FileOp.M, FileOp.D):
                         newpath = hook(fileop.path)
-			sys.stderr.write("DEBUG: mapping %s -> %s\n" % (fileop.path, newpath))
                         if newpath != fileop.path:
                             modified.add(newpath)
                         fileop.path = newpath
@@ -7398,7 +7396,6 @@ class Repository:
                         if newpath != fileop.target:
                             modified.add(newpath)
                         fileop.target = newpath
-        sys.stderr.write("DEBUG: I see %s\n" % modified)
         return sorted(modified)
     def split_commit(self, where, splitfunc):
         event = self.events[where]
@@ -11412,7 +11409,7 @@ used with the add command to patch data into a repository.
         repo.renumber(2)
         blob = Blob(repo)
         blob.set_mark(":1")
-        repo.addEvent(blob, where=0)
+        repo.addEvent(blob, where=len(repo.front_events()))
         with RepoSurgeon.LineParse(self, line, capabilities=["stdin"]) as parse:
             blob.set_content(parse.stdin.read())
         repo.declare_sequence_mutation("adding blob")
@@ -11998,7 +11995,6 @@ in the ancestry of the commit, this command throws an error.  With the
                                     else:
                                         actions.append(path_action(fileop, commit, attr, newpath))
                 # All checks must pass before any renames
-                # sys.stderr.write("DEBUG: Actions: %s\n" % [str(a) for a in actions])
                 for action in actions:
                     setattr(action.fileop, action.attr, action.newpath)
             else:

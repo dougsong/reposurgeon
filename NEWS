@@ -3,7 +3,8 @@
 Repository head::
      Fix for a crash bug when backing out of a script failure.
      Fix for an error that caused premature exit from the divide command.
-     Repositories created by the expunge command now have correct ancestor marks.
+     Repositories created by expunge command now have correct ancestor marks.
+     Insert newly created blobs after front events.
 
 3.46: 2019-05-29::
      Added 'relax' no-op command.
