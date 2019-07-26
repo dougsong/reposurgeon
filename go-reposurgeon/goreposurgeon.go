@@ -7353,20 +7353,20 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 }
                         }
                 }
-		/*
                 // Ugh.  Because cvs2svn is brain-dead and issues D/M pairs
                 // for identical paths in generated commits, we have to remove those
                 // D ops here.  Otherwise later on when we're generating ops, if
                 // the M node happens to be missing its hash it will be seen as
                 // unmodified and only the D will be issued.
                 seen := newStringSet()
-                for idx := len(expandedNodes-1; idx >=0; idx-- {
-			node := expendedNodes[idx]
+                for idx := len(expandedNodes)-1; idx >=0; idx-- {
+			node := expandedNodes[idx]
                         if node.action == sdDELETE && seen.Contains(node.path) {
-                                node.action = nil
+                                node.action = sdNONE
                         }
                         seen.Add(node.path)
                 }
+		/*
                 // Create actions corresponding to both
                 // parsed and generated nodes.
 		type fiAction struct {
