@@ -77,6 +77,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"container/heap"
+	"crypto/md5"
 	"crypto/sha1"
 	"errors"
 	"fmt"
@@ -5790,8 +5791,8 @@ type NodeAction struct {
 	action      int // initially sdNONE
 	fromRev     int
 	fromPath    string
-	contentHash [sha1.Size]byte
-	fromHash    [sha1.Size]byte
+	contentHash string
+	fromHash    string
 	blob        *Blob
 	props       OrderedMap
 	propchange  bool
@@ -5876,7 +5877,7 @@ type StreamParser struct {
 	directoryBranchlinks stringSet
 	activeGitignores     map[string]string
 	large                bool
-	propagate            map[string]string
+	propagate            map[string]bool
 }
 
 // newSteamParser parses a fast-import stream or Subversion dump to a Repository.
@@ -5897,7 +5898,7 @@ func newStreamParser(repo *Repository) *StreamParser {
 	sp.fileopBranchlinks = newStringSet()
 	sp.directoryBranchlinks = newStringSet()
 	sp.activeGitignores = make(map[string]string)
-	sp.propagate = make(map[string]string)
+	sp.propagate = make(map[string]bool)
 	return sp
 }
 
@@ -6160,11 +6161,11 @@ func (sp *StreamParser) timeMark(label string) {
 
 func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesize int64) {
 	revisions := make(map[int]RevisionRecord)
-	hashcopy := func(hash *[sha1.Size]byte, src string) {
-		for i := 0; i < sha1.Size && i < len(src); i++ {
-			hash[i] = src[i]
-		}
-	}
+	//hashcopy := func(hash *[sha1.Size]byte, src string) {
+	//	for i := 0; i < sha1.Size && i < len(src); i++ {
+	//		hash[i] = src[i]
+	//	}
+	//}
 	trackSymlinks := newStringSet()
 	for {
 		line := sp.readline()
@@ -6364,9 +6365,9 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 					if node == nil {
 						node = new(NodeAction)
 					}
-					hashcopy(&node.fromHash, sdBody(line))
+					node.fromHash = intern(sdBody(line))
 				} else if strings.HasPrefix(line, "Text-content-md5: ") {
-					hashcopy(&node.contentHash, sdBody(line))
+					node.contentHash = intern(sdBody(line))
 				} else if strings.HasPrefix(line, "Text-content-sha1: ") {
 					continue
 				} else if strings.HasPrefix(line, "Text-content-length: ") {
@@ -6758,6 +6759,10 @@ func nodePermissions(node NodeAction) string {
 func (sp *StreamParser) isBranch(pathname string) bool {
 	_, ok := sp.branches[pathname]
 	return ok
+}
+
+func (sp *StreamParser) isBranchDeleted(pathname string) bool {
+	return sp.branchdeletes.Contains(pathname)
 }
 
 // Path separator as found in Subversion dump files. Isolated because
@@ -7191,7 +7196,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                 }
                                         }
                                 }
-				/*
                                 // Handle directory copies.  If this is a copy
                                 // between branches, no fileop should be issued
                                 // until there is an actual file modification on
@@ -7201,104 +7205,94 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 // Exception: If the target branch has been
                                 // deleted, perform a normal copy and interpret
                                 // this as an ad-hoc branch merge.
-                                if node.fromPath {
-                                        branchcopy = sp.isBranch(node.fromPath) &&
+                                if node.fromPath != "" {
+                                        branchcopy := sp.isBranch(node.fromPath) &&
                                                          sp.isBranch(node.path) &&
                                                          !sp.isBranchDeleted(node.path)
-                                        announce(debugTOPOLOGY, "r%s: directory copy to %s from "
-                                                     // r%d~%s (branchcopy %s) 
-                                                     % (revision,
-                                                        node.path,
-                                                        node.fromRev,
-                                                        node.fromPath,
-                                                        branchcopy))
+                                        announce(debugTOPOLOGY, "r%d: directory copy to %s from r%d:%s",
+                                                     revision, node.path, node.fromRev, node.fromPath)
                                         // Update our .gitignore list so that it includes those
                                         // in the newly created copy, to ensure they correctly
                                         // get deleted during a future directory deletion.
-                                        l = len(node.fromPath)
-                                        for sourcegi, value in list((gi,v) for (gi,v) in
-                                                    sp.activeGitignores.items()
-                                                    if gi.startswith(node.fromPath)) {
-                                                    }
-                                                destgi = node.path + sourcegi[l:]
-                                                sp.activeGitignores[destgi] = value
+                                        l := len(node.fromPath)
+                                        for sourcegi, value := range sp.activeGitignores {
+						if strings.HasPrefix(sourcegi, node.fromPath) {
+						destgi := node.path + sourcegi[l:]
+							sp.activeGitignores[destgi] = value
+						}
                                         }
                                         if branchcopy {
-                                                sp.branchcopies.add(node.path)
+                                                sp.branchcopies.Add(node.path)
+						// FIXME: There's a bug somewhere in here... 
                                                 // Store the minimum information needed to propagate
                                                 // executable bits across branch copies. If we needed
                                                 // to preserve any other properties, sp.propagate
                                                 // would need to have property maps as values.
-                                                for _, source := range node.fromSet {
-                                                        lookback = filemaps[node.fromRev][source]
-                                                        if lookback.props && "svn:executable" in lookback.props {
-                                                                stem = source[len(node.fromPath):]
-                                                                targetpath = node.path + stem
+                                                for _, source := range node.fromSet.pathnames() {
+                                                        lookback := filemaps[node.fromRev].get(source)
+							found, ok := lookback.(*NodeAction)
+                                                        if ok && found.props.has("svn:executable") {
+                                                                stem := source[len(node.fromPath):]
+                                                                targetpath := node.path + stem
                                                                 sp.propagate[targetpath] = true
-                                                                announce(debugTOPOLOGY, "r%s: exec-mark %s"
-                                                                         % (revision, targetpath))
+                                                                announce(debugTOPOLOGY, "r%d: exec-mark %s", revision, targetpath)
                                                         }
                                                 }
                                         } else {
-                                                sp.branchdeletes.discard(node.path)
+                                                sp.branchdeletes.Remove(node.path)
                                                 // Generate copy ops for generated .gitignore files
                                                 // to match the copy of svn:ignore props on the
                                                 // Subversion side. We use the just updated
                                                 // activeGitignores dict for that purpose.
-                                                if "--user-ignores" !in options {
-                                                        for gipath, ignore in list(
-                                                                    (gi,v) for (gi,v) in
-                                                                    sp.activeGitignores.items()
-                                                                    if strings.HasPrefix(gi, node.path)) {
-                                                                    }
-                                                                blob = Blob(sp.repo)
-                                                                blob.setContent(ignore)
-                                                                subnode = StreamParser.NodeAction()
-                                                                subnode.path = gipath
-                                                                subnode.revision = revision
-                                                                subnode.action = sdADD
-                                                                subnode.kind = sdFILE
-                                                                subnode.blob = blob
-                                                                subnode.contentHash =
-                                                                        hashlib.md5(polybytes(ignore)).hexdigest()
-                                                                subnode.generated = true
-                                                                expandedNodes = append(expandedNodes, subnode)
-                                                        }
+                                                if !options.Contains("--user-ignores") {
+                                                        for gipath, ignore := range sp.activeGitignores {
+                                                                    if strings.HasPrefix(gipath, node.path) {
+									    blob := newBlob(sp.repo)
+									    blob.setContent(ignore, noOffset)
+									    subnode := new(NodeAction)
+									    subnode.path = gipath
+									    subnode.revision = revision
+									    subnode.action = sdADD
+									    subnode.kind = sdFILE
+									    subnode.blob = blob
+									    subnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
+									    subnode.generated = true
+									    expandedNodes = append(expandedNodes, *subnode)
+								    }
+							}
                                                 }
-                                                // Now generate copies for all files in the source
-                                                for _, source := range node.fromSet {
-                                                        lookback = filemaps[node.fromRev][source]
-                                                        if lookback == nil {
-                                                                raise Fatal("r%s: can't find ancestor %s" \
-                                                                         % (revision, source))
+                                                // Now generate copies for all files in the copy source directory
+                                                for _, source := range node.fromSet.pathnames() {
+                                                        lookback := filemaps[node.fromRev].get(source)
+							found, ok := lookback.(*NodeAction)
+                                                        if !ok {
+                                                                panic(fmt.Errorf("r%d: can't find ancestor %s",
+									revision, source))
                                                         }
-                                                        subnode = StreamParser.NodeAction()
-                                                        subnode.path = node.path +
-                                                                source[len(node.fromPath):]
+                                                        subnode := new(NodeAction)
+                                                        subnode.path = node.path + source[len(node.fromPath):]
                                                         subnode.revision = revision
-                                                        subnode.fromPath = lookback.path
-                                                        subnode.fromRev = lookback.revision
-                                                        subnode.fromHash = lookback.contentHash
-                                                        subnode.props = lookback.props
+                                                        subnode.fromPath = found.path
+                                                        subnode.fromRev = found.revision
+                                                        subnode.fromHash = found.contentHash
+                                                        subnode.props = found.props
                                                         subnode.action = sdADD
                                                         subnode.kind = sdFILE
-                                                        announce(debugTOPOLOGY, "r%s: generated copy r%d~%s -> %s"
-                                                                     % (revision,
-                                                                        subnode.fromRev,
-                                                                        subnode.fromPath,
-                                                                        subnode.path))
+                                                        announce(debugTOPOLOGY, "r%d: generated copy r%d~%s -> %s",
+								revision, subnode.fromRev, subnode.fromPath, subnode.path)
                                                         subnode.generated = true
-                                                        expandedNodes = append(expandedNodes, subnode)
+                                                        expandedNodes = append(expandedNodes, *subnode)
                                                 }
                                         }
                                 }
                                 // Property settings can be present on either
                                 // sdADD or sdCHANGE actions.
-                                if node.propchange && node.props != nil {
-                                        announce(debugEXTRACT, "r%s: setting properties %s on %s"
-                                                     % (revision, node.props, node.path))
+                                if node.propchange && !node.props.isZero() {
+                                        announce(debugEXTRACT, "r%d: setting properties %v on %s",
+                                                    revision, node.props, node.path)
                                         // svn:ignore gets handled here,
-                                        if "--user-ignores" !in options {
+                                        if !options.Contains("--user-ignores") {
+						var gitignore_path string
                                                 if node.path == svnSep {
                                                         gitignore_path = ".gitignore"
                                                 } else {
@@ -7307,8 +7301,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                 }
                                                 // There are no other directory properties that can
                                                 // turn into fileops.
-                                                ignore = node.props.get("svn:ignore")
-                                                if ignore != nil {
+                                                ignore := node.props.get("svn:ignore")
+                                                if ignore != "" {
                                                         // svn:ignore properties are nonrecursive
                                                         // to lower directories, but .gitignore
                                                         // patterns are recursive.  Thus we need to
@@ -7318,43 +7312,45 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                         // if done naively this clobbers the branch-root
                                                         // defaults, so we need to have protected these
                                                         // with a leading slash and reverse the transform.
-                                                        ignore = polystr(re.sub("\n(?!#)".encode("ascii"), "\n/".encode("ascii"), polybytes("\n" + ignore)))
-                                                        ignore = strings.Replace(ignore, "\n//", -1)
+							// In Python:
+							//ignore = polystr(re.sub("\n(?!#)".encode('ascii'), "\n/".encode('ascii'), polybytes("\n" + ignore)))
+                                			//ignore = ignore.replace("\n//", "\n")
+                                                        ignore = regexp.MustCompile("\n(?!#)").ReplaceAllLiteralString("\n" + ignore, "\n/")
+                                                        ignore = strings.Replace(ignore, "\n//", "\n", -1)
                                                         ignore = ignore[1:]
                                                         if strings.HasSuffix(ignore, "/") {
-                                                                ignore = ignore[:-1]
+                                                                ignore = ignore[:len(ignore)-1]
                                                         }
-                                                        blob = Blob(sp.repo)
-                                                        blob.setContent(ignore)
-                                                        newnode = StreamParser.NodeAction()
+                                                        blob := newBlob(sp.repo)
+                                                        blob.setContent(ignore, noOffset)
+                                                        newnode := new(NodeAction)
                                                         newnode.path = gitignore_path
                                                         newnode.revision = revision
                                                         newnode.action = sdADD
                                                         newnode.kind = sdFILE
                                                         newnode.blob = blob
-                                                        newnode.contentHash =
-                                                                hashlib.md5(polybytes(ignore)).hexdigest()
-                                                        announce(debugIGNORES, fmt.Sprintf("r%s: queuing up %s generation with:\n%s.", revision, newnode.path, node.props["svn:ignore"]))
+                                                        newnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
+                                                        announce(debugIGNORES, "r%d: queuing up %s generation with:\n%v.",
+								revision, newnode.path, node.props.get("svn:ignore"))
                                                         // Must append rather than simply performing.
                                                         // Otherwise when the property is unset we
                                                         // won't have the right thing happen.
                                                         newnode.generated = true
-                                                        expandedNodes = append(expandedNodes, newnode)
+                                                        expandedNodes = append(expandedNodes, *newnode)
                                                         sp.activeGitignores[gitignore_path] = ignore
-                                                } else if gitignore_path in sp.activeGitignores {
-                                                        newnode = StreamParser.NodeAction()
+                                                } else if _, ok := sp.activeGitignores[gitignore_path]; ok {
+                                                        newnode := new(NodeAction)
                                                         newnode.path = gitignore_path
                                                         newnode.revision = revision
                                                         newnode.action = sdDELETE
                                                         newnode.kind = sdFILE
-                                                        announce(debugIGNORES, fmt.Sprintf("r%s: queuing up %s deletion.", revision, newnode.path))
+                                                        announce(debugIGNORES, "r%d: queuing up %s deletion.", revision, newnode.path)
                                                         newnode.generated = true
-                                                        expandedNodes = append(expandedNodes, newnode)
-                                                        del sp.activeGitignores[gitignore_path]
+                                                        expandedNodes = append(expandedNodes, *newnode)
+                                                        delete(sp.activeGitignores, gitignore_path)
                                                 }
                                         }
                                 }
-				*/
                         }
                 }
 		/*
@@ -7430,7 +7426,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                         }
                                         // Time for fileop generation
                                         if node.blob != nil {
-                                                if node.contentHash in sp.hashmap {
+<                                                if node.contentHash in sp.hashmap {
                                                         // Blob matches an existing one -
                                                         // node was created by a
                                                         // non-Subversion copy followed by
