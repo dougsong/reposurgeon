@@ -7209,7 +7209,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                         branchcopy := sp.isBranch(node.fromPath) &&
                                                          sp.isBranch(node.path) &&
                                                          !sp.isBranchDeleted(node.path)
-                                        announce(debugTOPOLOGY, "r%d: directory copy to %s from r%d:%s",
+                                        announce(debugTOPOLOGY, "r%d: directory copy to %s from r%d~%s",
                                                      revision, node.path, node.fromRev, node.fromPath)
                                         // Update our .gitignore list so that it includes those
                                         // in the newly created copy, to ensure they correctly
@@ -7366,7 +7366,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         }
                         seen.Add(node.path)
                 }
-		/*
                 // Create actions corresponding to both
                 // parsed and generated nodes.
 		type fiAction struct {
@@ -7374,59 +7373,63 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			fileop FileOp
 		}
                 actions := make([]fiAction, 0)
-                ancestorNodes = {}
+                //ancestorNodes := make(map[string]*NodeAction)
                 for _, node := range expandedNodes {
-                        if node.action == nil [
+                        if node.action == sdNONE {
 				continue
                         }
+			/*
+			var ancestor *NodeAction
+			var ok bool
                         if node.kind == sdFILE {
                                 if node.action == sdDELETE {
-                                        assert node.blob == nil
-                                        fileop = FileOp(sp.repo)
+                                        //assert node.blob == nil
+                                        fileop := newFileOp(sp.repo)
                                         fileop.construct("D", node.path)
-                                        actions.append((node, fileop))
+                                        actions = append(actions, fiAction{node, fileop})
                                         ancestorNodes[node.path] = nil
-                                } else if node.action in (sdADD, sdCHANGE, sdREPLACE) {
+                                } else if node.action == sdADD || node.action == sdCHANGE || node.action == sdREPLACE {
                                         // Try to figure out who the ancestor of
                                         // this node is.
-                                        if node.fromPath || node.fromHash {
+                                        if node.fromPath != "" || node.fromHash != ""{
                                                 // Try first via fromPath
-                                                ancestor = filemaps[node.fromRev][node.fromPath]
+                                                found := filemaps[node.fromRev].get(node.fromPath)
+						ancestor, ok = found.(*NodeAction) 
                                                 if debugEnable(debugTOPOLOGY) {
-                                                        if ancestor {
-                                                                announce(debugSHOUT, "r%d~%s -> %s (via filemap)" %
-                                                                         (node.revision, node.path, ancestor))
+                                                        if ok {
+                                                                announce(debugSHOUT, "r%d~%s -> %v (via filemap)",
+                                                                         node.revision, node.path, ancestor)
                                                         } else {
-                                                                announce(debugSHOUT, "r%d~%s has no ancestor (via filemap)" %
-                                                                         (node.revision, node.path))
+                                                                announce(debugSHOUT, "r%d~%s has no ancestor (via filemap)",
+                                                                         node.revision, node.path)
                                                         }
                                                 }
                                                 // Fallback on the first blob that had this hash
-                                                if node.fromHash && !ancestor {
+                                                if node.fromHash != "" && !ok {
                                                         ancestor = sp.hashmap[node.fromHash]
-                                                        announce(debugTOPOLOGY, "r%d~%s -> %s (via hashmap)" %
-                                                                 (node.revision, node.path, ancestor))
+                                                        announce(debugTOPOLOGY, "r%d~%s -> %s (via hashmap)",
+                                                                 node.revision, node.path, ancestor)
                                                 }
-                                                if !ancestor && !strings.HasSuffix(node.path, ".gitignore") {
-                                                        sp.gripe("r%d~%s: missing filemap node."
-                                                                  % (node.revision, node.path))
+                                                if !ok && !strings.HasSuffix(node.path, ".gitignore") {
+                                                        sp.gripe("r%d~%s: missing filemap node for.gitignore.",
+                                                                  node.revision, node.path)
                                                 }
                                         } else if node.action != sdADD {
                                                 // Ordinary inheritance, no node copy.  For
                                                 // robustness, we don't assume revisions are
                                                 // consecutive numbers.
-                                                try {
-                                                        ancestor = ancestorNodes[node.path]
-                                                }
-                                                except KeyError {
-                                                        ancestor = filemaps[previous][node.path]
+                                                found := filemaps[node.fromRev].get(node.path)
+						ancestor, ok = found.(*NodeAction) 
+                                                if !ok {
+                                                        found = filemaps[previous].get(node.path)
+							ancestor, _ = found.(*NodeAction) 
                                                 }
                                         } else {
                                                 ancestor = nil
                                         }
                                         // Time for fileop generation
                                         if node.blob != nil {
-<                                                if node.contentHash in sp.hashmap {
+                                                if sp.hashmap[node.contentHash] != nil  {
                                                         // Blob matches an existing one -
                                                         // node was created by a
                                                         // non-Subversion copy followed by
@@ -7458,32 +7461,32 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                 // way to figure out what mark to use
                                                 // in a fileop.
                                                 if !strings.HasSuffix(node.path, ".gitignore") {
-                                                        sp.gripe("r%d~%s: permission information may be lost."
-                                                                   % (node.revision, node.path))
+                                                        sp.gripe("r%d~%s: permission information may be lost.",
+                                                                   node.revision, node.path)
                                                 }
                                                 continue
                                         }
                                         ancestorNodes[node.path] = node
-                                        assert node.blobmark
+                                        //assert node.blobmark
                                         // Time for fileop generation.
-                                        perms = sp.nodePermissions(node)
-                                        if node.path in sp.propagate {
+                                        perms := sp.nodePermissions(node)
+                                        if sp.propagate[node.path]  {
                                                 perms = 0o100755
                                                 delete(sp.propagate, node.path)
                                         }
-                                        new_content = (node.blob != nil)
+                                        newContent := (node.blob != nil)
                                         // Ignore and complain about explicit .gitignores
                                         // created, e.g, by git-svn.  In an ideal world we
                                         // would merge these with svn:ignore properties. but
                                         // this would be hairy and bug-prone. So we give
                                         // the user a heads-up and expect these to be
                                         // merged by hand.
-                                        if new_content
+                                        if newContent
                                            && !node.generated
-                                           && "--user-ignores" !in options
+                                           && !options.Contains("--user-ignores")
                                            && strings.HasSuffix(node.path, ".gitignore") {
-                                                sp.gripe("r%d~%s: user-created .gitignore ignored."
-                                                           % (node.revision, node.path))
+                                                sp.gripe("r%d~%s: user-created .gitignore ignored.",
+                                                           node.revision, node.path)
                                                 continue
                                         }
                                         // This ugly nasty guard is critically important.
@@ -7498,35 +7501,37 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                         // 4. The permissions for this path have changed;
                                         // we need to generate a modify with an old mark
                                         // but new permissions.
-                                        generated_file_copy = node.generated
-                                        subversion_file_copy = (node.fromHash != nil)
-                                        if (new_content or
-                                            generated_file_copy or
-                                            subversion_file_copy or
-                                            node.propchange) {
-                                                assert perms
-                                                fileop = FileOp(sp.repo)
+                                        generatedFileCopy := node.generated
+                                        subversionFileCopy := (node.fromHash != nil)
+                                        if newContent ||
+                                            generatedFileCopy ||
+                                            subversionFileCopy ||
+                                            node.propchange {
+                                                //assert perms
+                                                fileop := newFileOp(sp.repo)
                                                 fileop.construct(opM,
                                                                  perms,
                                                                  node.blobmark,
                                                                  node.path)
-                                                actions.append((node, fileop))
+                                                actions = append(actions, fiAction{node, fileop})
                                                 sp.repo.markToEvent(fileop.ref).addalias(node.path)
                                         } else if debugEnable(debugEXTRACT) {
-                                                announce(debugEXTRACT, fmt.Sprintf("r%d~%s: unmodified", node.revision, node.path))
+                                                announce(debugEXTRACT, "r%d~%s: unmodified", node.revision, node.path)
                                         }
                                 }
                         }
                         // These are directory actions.
-                        else if node.action in (sdDELETE, sdREPLACE) {
-                                announce(debugEXTRACT, fmt.Sprintf("r%s: deleteall %s", revision,node.path))
-                                fileop = FileOp(sp.repo)
-                                fileop.construct("deleteall", node.path[:-1])
-                                actions.append((node, fileop))
+                        else if node.action == sdDELETE || node.action == sdREPLACE {
+                                announce(debugEXTRACT, "r%d: deleteall %s", revision,node.path)
+                                fileop := newFileOp(sp.repo)
+                                fileop.construct("deleteall", node.path[:len(node.path)-1])
+                                actions = append(actions, fiAction{node, fileop})
                         }
+			*/
                 }
                 // Time to generate commits from actions and fileops.
-                announce(debugEXTRACT, fmt.Sprintf("r%s: %d actions", revision, len(actions)))
+                announce(debugEXTRACT, "r%d: %d actions", revision, len(actions))
+		/*
                 // First, break the file operations into branch cliques
                 cliques = newOrderedMap()
                 lastbranch = nil
@@ -7868,7 +7873,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                         commit = commit.firstChild()
                                 }
                                 if commit.operations() || commit.hasChildren() {
-                                        fileop = FileOp(sp.repo)
+                                        fileop = newFileOp(sp.repo)
                                         fileop.construct("deleteall")
                                         commit.prependOperation(fileop)
                                         sp.generatedDeletes.append(commit)
@@ -7887,15 +7892,16 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 }
                 timeit("branchlinks")
                 // Add links due to svn:mergeinfo properties
-                mergeinfo = PathMap()
-                mergeinfos = {}
+                mergeinfo := PathMap()
+                mergeinfos := make(map[int]*PathMap)
                 for revision, record := range sp.revisions {
                         for _, node := range record.nodes {
-                                if node.kind != sdDIR: continue
+                                if node.kind != sdDIR {
+					 continue
                                 }
                                 // Mutate the mergeinfo according to copies
-                                if node.fromRev {
-                                        assert parseInt(node.fromRev) < parseInt(revision)
+                                if node.fromRev != "" {
+                                        //assert parseInt(node.fromRev) < parseInt(revision)
                                         mergeinfo.copyFrom(
                                                 node.path,
                                                 mergeinfos.get(node.fromRev) || PathMap(),
@@ -7973,16 +7979,17 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 }
                                 mergeinfo[(node.path,)] = own_merges
                                 new_merges = own_merges - existing_merges
-                                if !new_merges: continue
+                                if !new_merges {
+					continue
                                 }
                                 // Find the correct commit in the split case
                                 commit = lastRelevantCommit(revision, node.path, "branch")
                                 if commit == nil ||
                                         !commit.legacyID.startswith(revision) {
                                         // The reverse lookup went past the target revision
-                                        sp.gripe("cannot resolve mergeinfo destination "
+                                        sp.gripe("cannot resolve mergeinfo destination ",
                                                    // to revision %s for path %s.
-                                                   % (revision, node.path))
+                                                   revision, node.path)
                                         continue
                                 }
                                 // Alter the DAG to express merges.
@@ -7999,7 +8006,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         mergeinfos[revision] = mergeinfo.snapshot()
                         baton.twirl("")
                 }
-                del mergeinfo, mergeinfos
+                //delete(mergeinfo) 
+		//delete(mergeinfos)
                 timeit("mergeinfo")
                 if debugEnable(debugEXTRACT) {
                         announce(debugEXTRACT, "after branch analysis")
