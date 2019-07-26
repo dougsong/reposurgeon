@@ -13144,44 +13144,8 @@ type CmdContext struct {
 	inputIsStdin bool
 }
 
-// MacroDefinition is a Kommandant command loop which handles multi-line macro
-// definitions.
-type MacroDefinition struct {
-	CmdContext
-	body  []string
-	depth int
-}
-
-func (md *MacroDefinition) PreCommand(line string) string {
-	if md.echo > 0 {
-		fmt.Fprintln(os.Stdout, line)
-	}
-	return line
-}
-
-func (md *MacroDefinition) Default(line string) bool {
-	line = strings.TrimSpace(line)
-	if md.depth == 0 && (line[0] == '}' || line == "EOF") {
-		return true // we're done, exit the loop
-	} else {
-		if strings.HasPrefix(line, "define") && strings.HasSuffix(line, "{") {
-			md.depth++
-		} else if line[0] == '}' || line == "EOF" {
-			if md.depth != 0 {
-				md.depth--
-			}
-		}
-		md.body = append(md.body, line)
-		return false // keep accepting commands
-	}
-}
-
 func (md CmdContext) SetCore(k *kommandant.Kmdt) {
 	md.cmd = k
-}
-
-func (md *MacroDefinition) DoEOF(string) bool {
-	return true
 }
 
 // Reposurgeon tells Kommandant what our local commands are
@@ -19594,23 +19558,37 @@ func (rs *Reposurgeon) DoDefine(lineIn string) bool {
 	if len(words) > 1 {
 		body := words[1]
 		if body[0] == '{' {
-			body := make(chan []string)
-			innerloop := func() {
-				inner := new(MacroDefinition)
-				inner.echo = rs.echo
-				inner.definitions = make(map[string][]string, 0)
-				inner.cmd = kommandant.NewKommandant(inner)
-				inner.cmd.SetStdin(rs.cmd.GetStdin())
-				if rs.inputIsStdin {
-					inner.cmd.SetPrompt("> ")
-				} else {
-					inner.cmd.SetPrompt("")
-				}
-				inner.cmd.CmdLoop("")
-				body <- inner.body
+			subbody := make([]string, 0)
+			depth := 0
+			existingPrompt := rs.cmd.GetPrompt()
+			if rs.inputIsStdin {
+				rs.cmd.SetPrompt("> ")
+			} else {
+				rs.cmd.SetPrompt("")
 			}
-			go innerloop()
-			rs.definitions[name] = <-body
+			defer rs.cmd.SetPrompt(existingPrompt)
+			for true {
+				line, err := rs.cmd.Readline()
+				line = strings.TrimSpace(line)
+				if err == io.EOF {
+					line = "EOF"
+				} else if err != nil {
+					break
+				}
+				if depth == 0 && (line[0] == '}' || line == "EOF") {
+					// done, exit loop
+					break
+				} else if strings.HasPrefix(line, "define") &&
+					strings.HasSuffix(line, "{") {
+					depth++
+				} else if line[0] == '}' || line == "EOF" {
+					if depth > 0 {
+						depth--
+					}
+				}
+				subbody = append(subbody, line)
+			}
+			rs.definitions[name] = subbody
 		} else {
 			rs.definitions[name] = []string{body}
 		}
