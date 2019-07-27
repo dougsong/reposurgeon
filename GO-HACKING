@@ -68,7 +68,6 @@ x-userignores.tst
 The following tests presently fail under Go.  Reducing this list to
 empty is a near-term goal.
 
-x-macro: Multiline doesn't work due to greediness in Go buffering.
 x-reorder: toposort code is busted.
 x-reparent: unknown failure
 
