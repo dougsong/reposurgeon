@@ -7530,44 +7530,47 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 announce(debugEXTRACT, "r%d: %d actions", revision, len(actions))
 		/*
                 // First, break the file operations into branch cliques
-                cliques = newOrderedMap()
-                lastbranch = nil
+                cliques := make(map[string][]FileOp)
+                lastbranch := ""
                 for (node, fileop) in actions {
                         // Try last seen branch first
                         if lastbranch && strings.HasPrefix(node.path, lastbranch) {
-                                cliques.setdefault(lastbranch, []).append(fileop)
+                                cliques[lastbranch] = append(cliques[lastbranch], fileop)
                                 continue
                         }
                         // Preferentially match longest branches
+			explicitMatch = false
                         for _, branch := range sp.branchlist() {
                                 if strings.HasPrefix(node.path, branch) {
-                                        cliques.setdefault(branch, []).append(fileop)
+					cliques[branch] = append(cliques[branch], fileop)
                                         lastbranch = branch
+					explicitMatch = true
                                         break
                                 }
-                        } else {
-                                cliques.setdefault("", []).append(fileop)
+			}
+                        if !explicitMatch {
+                                cliques[""] = append(cliques[""], fileop)
                         }
                 }
                 // Make two operation lists from the cliques, sorting cliques
                 // containing only branch deletes from other cliques.
-                deleteall_ops = []
-                other_ops = []
+                deleteallOps := []
+                otherOps := []
                 for branch, ops := range cliques {
                         if len(ops) == 1 && ops[0].op == FileOp.deleteall {
-                                deleteall_ops.append((branch, ops))
+                                deleteallOps.append((branch, ops))
                         } else {
-                                other_ops.append((branch, ops))
+                                otherOps.append((branch, ops))
                         }
                 }
-                oplist = itertools.chain(other_ops, deleteall_ops)
+                oplist = itertools.chain(otherOps, deleteallOps)
                 // Create all commits corresponding to the revision
-                newcommits = []
-                commit.legacyID = revision
-                if len(other_ops) <= 1 {
+                newcommits = []Commit
+                commit.legacyID = fmt.Sprintf("%d", revision)
+                if len(otherOps) <= 1 {
                         // In the ordinary case, we can assign all non-deleteall fileops
                         // to the base commit.
-                        sp.repo.legacyMap[fmt.Sprintf("SVN:%s", commit.legacy)ID] = commit
+                        sp.repo.legacyMap[fmt.Sprintf("SVN:%s", commit.legacyID)] = commit
                         try {
                                 commit.common, stage = next(oplist)
                                 commit.setOperations(stage)
@@ -7598,7 +7601,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 }
                 // The revision is truly mixed if there is more than one clique
                 // not consisting entirely of deleteall operations.
-                if len(other_ops) > 1 {
+                if len(otherOps) > 1 {
                         // Store the last used split id
                         splitCommitsos[revision] = split.legacyID
                 }
@@ -7620,7 +7623,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 // No code uses the result if branch analysis is turned off.
                 if !nobranch {
                         for _, newcommit := range newcommits {
-                                if commit.mark in sp.branchlink: continue
+                                if commit.mark in sp.branchlink {
+					continue
                                 }
                                 copies = [node for node in record.nodes
                                           if node.fromRev != nil
