@@ -5866,7 +5866,7 @@ type StreamParser struct {
 	lastcookie  Cookie
 	// Everything below here is Subversion-specific
 	branches             map[string]*Commit // Points to branch root commits
-	branchlink           stringSet
+	branchlink           map[string][2]*Commit
 	branchdeletes        stringSet
 	branchcopies         stringSet
 	generatedDeletes     []*Commit
@@ -5888,7 +5888,7 @@ func newStreamParser(repo *Repository) *StreamParser {
 	sp.warnings = make([]string, 0)
 	// Everything below here is Subversion-specific
 	sp.branches = make(map[string]*Commit)
-	sp.branchlink = newStringSet()
+	sp.branchlink = make(map[string][2]*Commit)
 	sp.branchdeletes = newStringSet()
 	sp.branchcopies = newStringSet()
 	sp.generatedDeletes = make([]*Commit, 0)
@@ -6950,38 +6950,38 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 
 	var previous int 
 
-	splitCommits := make(map[int]string)
-	/*
-		lastRelevantCommit := func(sp *StreamParser, maxRev int, path string, attr string) *Commit {
-			// Make path look like a branch
-			if path[:1] == svnSep {
-				path = path[1:]
-			}
-			if path[len(path)-1] != svnSep[0] {
-				path = path + svnSep
-			}
-			// If the revision is split, try from the last split commit
-			splitAt, ok := splitCommits[maxRev]
-			if ok {
-				maxRev = splitAt
-			}
-			// Find the commit object...
-			obj, ok := sp.repo.legacyMap[fmt.Sprintf("SVN:%s", maxRev)]
-			if !ok {
-				return nil
-			}
-			for revision := sp.repo.eventToIndex(obj)-1; revision > 0; revision-- {
-				event := sp.repo.events[revision]
-				if commit, ok := event.(*Commit); ok {
-					b, ok := getAttr(commit, attr)
-					if ok && strings.HasSuffix(path, b) {
-						return commit
-					}
-				}
-			}
+	splitCommits := make(map[int]int)
+	lastRelevantCommit := func(sp *StreamParser, maxRev int, path string, attr string) *Commit {
+		// Make path look like a branch
+		if path[:1] == svnSep {
+			path = path[1:]
+		}
+		if path[len(path)-1] != svnSep[0] {
+			path = path + svnSep
+		}
+		// If the revision is split, try from the last split commit
+		var legacyID string
+		if splitCommits[maxRev] == 0 {
+			legacyID = fmt.Sprintf("SVN:%d", maxRev)
+		} else {
+			legacyID = fmt.Sprintf("SVN:%d.%d", maxRev, splitCommits[maxRev]+1)
+		}	
+		// Find the commit object...
+		obj, ok := sp.repo.legacyMap[legacyID]
+		if !ok {
 			return nil
 		}
-	*/
+		for revision := sp.repo.eventToIndex(obj)-1; revision > 0; revision-- {
+			event := sp.repo.events[revision]
+			if commit, ok := event.(*Commit); ok {
+				b, ok := getAttr(commit, attr)
+				if ok && strings.HasSuffix(path, b) {
+					return commit
+				}
+			}
+		}
+		return nil
+	}
 
 	// If the repo is large, we'll give up on some diagnostic info in order
 	// to reduce the working set size.
@@ -7605,7 +7605,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 }
                 // If the commit is mixed, or there are deletealls left over,
                 // handle that.
-                //oplist = sorted(oplist, key=operator.itemgetter(0))
+                sort.SliceStable(oplist, func(i, j int) bool {
+			return oplist[i].branch < oplist[j].branch
+		})
 		var split *Commit
                 for i, action := range oplist {
                         split = commit.clone(sp.repo)
@@ -7621,8 +7623,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 // The revision is truly mixed if there is more than one clique
                 // not consisting entirely of deleteall operations.
                 if len(otherOps) > 1 {
-                        // Store the last used split id
-                        splitCommits[revision] = split.legacyID
+                        // Store the number of splits
+                        splitCommits[revision] = len(otherOps)
                 }
                 // Sort fileops according to git rules
                 for _, newcommit := range newcommits {
@@ -7642,14 +7644,15 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 // No code uses the result if branch analysis is turned off.
                 if !nobranch {
                         for i := range newcommits {
-                                if sp.branchlink.Contains(commit.mark) {
+                                if _, ok := sp.branchlink[commit.mark]; ok {
 					continue
                                 }
 				newcommit := newcommits[i].(*Commit)
-				copies := make([]NodeAction, 0)
-				for _, node := range record.nodes {
-					if node.fromRev != 0  && strings.HasPrefix(node.path, newcommit.common) {
-						copies = append(copies, node)
+				copies := make([]*NodeAction, 0)
+				for j := range record.nodes {
+					noderef := &record.nodes[j]
+					if noderef.fromRev != 0  && strings.HasPrefix(noderef.path, newcommit.common) {
+						copies = append(copies, noderef)
 					}
 				
 				}
@@ -7657,25 +7660,14 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                         announce(debugSHOUT, "r%s: copy operations %s",
                                                      newcommit.legacyID, copies)
                                 }
-				/*
                                 // If the copies include one for the directory, use that as
                                 // the first parent: most of the files in the new branch
                                 // will come from that copy, and that might well be a full
                                 // branch copy where doing that way is needed because the
                                 // fileop for the copy didn't get generated and the commit
                                 // tree would be wrong if we didn't.
-                                latest = next((node for node in copies
-                                                if node.kind == sdDIR &&
-                                                   node.fromPath != "" &&
-                                                   node.path == newcommit.common),
-                                                }
-                                              nil)
-                                if latest != nil {
-                                        sp.directoryBranchlinks.add(newcommit.common)
-                                        announce(debugTOPOLOGY, "r%s: directory copy with %s"
-                                                     % (newcommit.legacyID, copies))
-                                }
-                                // Use may have botched a branch creation by doing a
+				//
+                                // Otherwise, usr may have botched a branch creation by doing a
                                 // non-Subversion directory copy followed by a bunch of
                                 // Subversion adds. Blob hashes will match existing files,
                                 // but fromRev and fromPath won't be set at parse time.
@@ -7684,7 +7676,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 // Thus, we have to treat multiple file copies as
                                 // an instruction to create a gitspace branch.
                                 //
-                                // This guard filters out copy op sets that are
+                                // The guard len(copies) > 1 filters out copy op sets that are
                                 // *single* file copies. We're making an assumption
                                 // here that multiple file copies should always
                                 // trigger a branch link creation.  This assumption
@@ -7697,19 +7689,32 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 // these have to be removed by a debubbling pass later.
                                 // I don't know what generates these things - cvs2svn, maybe.
                                 //
-                                // The second conjunct of this guard filters out the case
-                                // where the user actually did do a previous Subversion file
-                                // copy to start the branch, in which case we want to link
-                                // through that.
-                                else if len(copies) > 1
-                                         && newcommit.common !in sp.directoryBranchlinks {
-                                        // Use max() on the reversed iterator since max returns
-                                        // the first item with the max key and we want the last
-                                        latest = max(reversed(copies),
-                                                     key=lambda node: parseInt(node.fromRev))
-                                }
+                                // The second conjunct (newcommit.common not in
+                                // self.directoryBranchlink) filters out the
+                                // case where the user actually did do a previous
+                                // Subversion file copy to start the
+                                // branch, in which case we want to
+                                // link through that.
+				var latest *NodeAction
+				for _, noderef := range copies { 
+					if noderef.kind == sdDIR && noderef.path != "" && noderef.path == newcommit.common {
+						latest = noderef
+					}
+				}	
                                 if latest != nil {
-                                        prev = lastRelevantCommit(
+                                        sp.directoryBranchlinks.Add(newcommit.common)
+                                        announce(debugTOPOLOGY, "r%s: directory copy with %s",
+                                                     newcommit.legacyID, copies)
+                                } else if len(copies) > 1 &&
+					!sp.directoryBranchlinks.Contains(newcommit.common) {
+					for _, node := range copies {
+						if latest == nil || node.fromRev > latest.fromRev {
+							latest = node
+						}
+					}
+				}
+                                if latest != nil {
+                                        prev := lastRelevantCommit(sp,
                                                 latest.fromRev, latest.fromPath,
                                                 "common")
                                         if prev == nil {
@@ -7717,21 +7722,19 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                         croak(fmt.Sprintf("lookback for %s failed, not making branch link", latest))
                                                 }
                                         } else {
-                                                sp.fileopBranchlinks.add(newcommit.common)
-                                                announce(debugTOPOLOGY, "r%s: making branch link %s" %
-                                                             (newcommit.legacyID, newcommit.common))
-                                                sp.branchlink[newcommit.mark] = (newcommit, prev)
-                                                announce(debugTOPOLOGY, "r%s: link %s (%s) back to %s (%s, %s)" %
-                                                             (newcommit.legacyID,
-                                                              newcommit.mark,
-                                                              newcommit.common,
-                                                              latest.fromRev,
-                                                              prev.mark,
-                                                              prev.common
-                                                              ))
+                                                sp.fileopBranchlinks.Add(newcommit.common)
+                                                announce(debugTOPOLOGY, "r%s: making branch link %s",
+							newcommit.legacyID, newcommit.common)
+                                                sp.branchlink[newcommit.mark] = [2]*Commit{newcommit, prev}
+                                                announce(debugTOPOLOGY, "r%s: link %s (%s) back to %s (%s, %s)",
+							newcommit.legacyID,
+							newcommit.mark,
+							newcommit.common,
+							latest.fromRev,
+							prev.mark,
+							prev.common)
                                         }
                                 }
-				*/
                         }
                 }
                 // We're done, add all the new commits
@@ -7766,12 +7769,12 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
         except StopIteration {
                 raise Recoverable("empty stream or repository.")
         }
-        // Warn about dubious branch links
-        sp.fileopBranchlinks.discard("trunk" + svnSep)
-        if sp.fileopBranchlinks - sp.directoryBranchlinks {
-                sp.gripe(fmt.Sprintf("branch links detected by file ops only: %s", " ").join(sorted(sp.fileopBranchlinks - sp.directoryBranchlinks)))
-        }
 	*/
+        // Warn about dubious branch links
+        sp.fileopBranchlinks.Remove("trunk" + svnSep)
+	if links := sp.fileopBranchlinks.Subtract(sp.directoryBranchlinks); !links.Empty() {
+                sp.gripe(fmt.Sprintf("branch links detected by file ops only: %v", links))
+        }
         timeit("commits")
         if debugEnable(debugEXTRACT) {
                 announce(debugEXTRACT, "at post-parsing time:")
@@ -7869,7 +7872,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 } else {
                         earliest = sp.repo.earliestCommit()
                         if commit != earliest {
-                                sp.branchlink[commit.mark] = (commit, earliest)
+                                sp.branchlink[commit.mark] = [2]*Commit{commit, earliest}
                         }
                 }
                 timeit("root")
