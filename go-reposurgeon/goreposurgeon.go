@@ -7528,30 +7528,34 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 }
                 // Time to generate commits from actions and fileops.
                 announce(debugEXTRACT, "r%d: %d actions", revision, len(actions))
-		/*
-                // First, break the file operations into branch cliques
+                // First, break the file operations into branch cliques.
+		// In the normal case there will be only one such clique,
+		// but in Subversion (unlike git) it is possible to make
+		// a commit that modifies multiple branches. In order to
+		// cope with this case we must first recognize it.
                 cliques := make(map[string][]FileOp)
                 lastbranch := ""
-                for (node, fileop) in actions {
+                for _, action := range actions {
                         // Try last seen branch first
-                        if lastbranch && strings.HasPrefix(node.path, lastbranch) {
-                                cliques[lastbranch] = append(cliques[lastbranch], fileop)
+                        if lastbranch != "" && strings.HasPrefix(action.node.path, lastbranch) {
+                                cliques[lastbranch] = append(cliques[lastbranch], action.fileop)
                                 continue
                         }
                         // Preferentially match longest branches
-			explicitMatch = false
+			explicitMatch := false
                         for _, branch := range sp.branchlist() {
-                                if strings.HasPrefix(node.path, branch) {
-					cliques[branch] = append(cliques[branch], fileop)
+                                if strings.HasPrefix(action.node.path, branch) {
+					cliques[branch] = append(cliques[branch], action.fileop)
                                         lastbranch = branch
 					explicitMatch = true
                                         break
                                 }
 			}
                         if !explicitMatch {
-                                cliques[""] = append(cliques[""], fileop)
+                                cliques[""] = append(cliques[""], action.fileop)
                         }
                 }
+		/*
                 // Make two operation lists from the cliques, sorting cliques
                 // containing only branch deletes from other cliques.
                 deleteallOps := []
@@ -7603,7 +7607,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 // not consisting entirely of deleteall operations.
                 if len(otherOps) > 1 {
                         // Store the last used split id
-                        splitCommitsos[revision] = split.legacyID
+                        splitCommit[revision] = split.legacyID
                 }
                 // Sort fileops according to git rules
                 for _, newcommit := range newcommits {
