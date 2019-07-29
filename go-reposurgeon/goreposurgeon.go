@@ -4201,7 +4201,7 @@ func (commit *Commit) index() int {
 func (commit Commit) getComment() string { return commit.Comment }
 
 // idMe IDs this commit for humans.
-func (commit *Commit) idMe() string {
+func (commit Commit) idMe() string {
 	myid := fmt.Sprintf("commit@%s", commit.mark)
 	if commit.legacyID != "" {
 		myid += fmt.Sprintf("=<%s>", commit.legacyID)
@@ -6950,7 +6950,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 
 	var previous int 
 
-	//splitCommits := make(map[int]int)
+	splitCommits := make(map[int]string)
 	/*
 		lastRelevantCommit := func(sp *StreamParser, maxRev int, path string, attr string) *Commit {
 			// Make path look like a branch
@@ -7557,7 +7557,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 }
 		type branchAction struct {
 			branch string
-			fileop []FileOp
+			fileops []FileOp
 		}
                 // Make two operation lists from the cliques, sorting cliques
                 // containing only branch deletes from other cliques.
@@ -7570,52 +7570,50 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 otherOps = append(otherOps, branchAction{branch, ops})
                         }
                 }
-                //oplist := append(otherOps, deleteallOps...)
+                oplist := append(otherOps, deleteallOps...)
                 // Create all commits corresponding to the revision
                 newcommits := make([]Event, 0)
                 commit.legacyID = fmt.Sprintf("%d", revision)
-		/*
                 if len(otherOps) <= 1 {
                         // In the ordinary case, we can assign all non-deleteall fileops
                         // to the base commit.
                         sp.repo.legacyMap[fmt.Sprintf("SVN:%s", commit.legacyID)] = commit
-                        try {
+			/*
+                        if len(oplist) > 0 {
                                 commit.common, stage = next(oplist)
                                 commit.setOperations(stage)
-                        }
-                        except StopIteration {
+                        } else {
                                 commit.common = os.path.commonprefix([node.path for node in record.nodes])
                         }
+			*/
                         commit.setMark(sp.repo.newmark())
-                        announce(debugEXTRACT, "r%s gets mark %s", revision, commit.mark)
+                        announce(debugEXTRACT, "r%d gets mark %s", revision, commit.mark)
                         newcommits = append(newcommits, commit)
                 }
                 // If the commit is mixed, or there are deletealls left over,
                 // handle that.
-                oplist = sorted(oplist, key=operator.itemgetter(0))
-                for (i, (branch, fileops)) in enumerate(oplist) {
-                        split := commit.clone()
-                        split.common = branch
+                //oplist = sorted(oplist, key=operator.itemgetter(0))
+		var split *Commit
+                for i, action := range oplist {
+                        split = commit.clone(sp.repo)
+                        split.common = action.branch
                         // Sequence numbers for split commits are 1-origin
-                        split.legacyID += StreamParser.splitSep + str(i + 1)
-                        sp.repo.legacyMap[fmt.Sprintf("SVN:%s", split.legacy)ID] = split
-                        if split.Comment == nil {
-                                split.Comment = ""
-                        }
+                        split.legacyID += splitSep + strconv.Itoa(i + 1)
+                        sp.repo.legacyMap[fmt.Sprintf("SVN:%s", split.legacyID)] = split
                         split.Comment += "\n[[Split portion of a mixed commit.]]\n"
                         split.setMark(sp.repo.newmark())
-                        split.setOperations(fileops)
+                        split.setOperations(action.fileops)
                         newcommits = append(newcommits, split)
                 }
                 // The revision is truly mixed if there is more than one clique
                 // not consisting entirely of deleteall operations.
                 if len(otherOps) > 1 {
                         // Store the last used split id
-                        splitCommit[revision] = split.legacyID
+                        splitCommits[revision] = split.legacyID
                 }
                 // Sort fileops according to git rules
                 for _, newcommit := range newcommits {
-                        newcommit.sortOperations()
+                        newcommit.(*Commit).sortOperations()
                 }
                 // Deduce links between branches on the basis of copies. This
                 // is tricky because a revision can be the target of multiple
@@ -7630,18 +7628,23 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 // expedient of picking the *latest* revision in them!
                 // No code uses the result if branch analysis is turned off.
                 if !nobranch {
-                        for _, newcommit := range newcommits {
-                                if commit.mark in sp.branchlink {
+                        for i := range newcommits {
+                                if sp.branchlink.Contains(commit.mark) {
 					continue
                                 }
-                                copies = [node for node in record.nodes
-                                          if node.fromRev != nil
-                                          }
-                                          && strings.HasPrefix(node.path, newcommit.common)]
-                                if copies && debugEnable(debugTOPOLOGY) {
-                                        announce(debugSHOUT, "r%s: copy operations %s" %
-                                                     (newcommit.legacyID, copies))
+				newcommit := newcommits[i].(*Commit)
+				copies := make([]NodeAction, 0)
+				for _, node := range record.nodes {
+					if node.fromRev != 0  && strings.HasPrefix(node.path, newcommit.common) {
+						copies = append(copies, node)
+					}
+				
+				}
+                                if len(copies) > 0 && debugEnable(debugTOPOLOGY) {
+                                        announce(debugSHOUT, "r%s: copy operations %s",
+                                                     newcommit.legacyID, copies)
                                 }
+				/*
                                 // If the copies include one for the directory, use that as
                                 // the first parent: most of the files in the new branch
                                 // will come from that copy, and that might well be a full
@@ -7650,7 +7653,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 // tree would be wrong if we didn't.
                                 latest = next((node for node in copies
                                                 if node.kind == sdDIR &&
-                                                   node.fromPath &&
+                                                   node.fromPath != "" &&
                                                    node.path == newcommit.common),
                                                 }
                                               nil)
@@ -7715,9 +7718,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                               ))
                                         }
                                 }
+				*/
                         }
                 }
-		*/
                 // We're done, add all the new commits
                 sp.repo.events = append(sp.repo.events, newcommits...)
                 sp.repo.declareSequenceMutation("adding new commits")
