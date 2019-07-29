@@ -5782,7 +5782,9 @@ var ignoreProperties = map[string]bool{
 	"svn:eol-style":true,  // Don't want to suppress, but cvs2svn floods these.
 }
 
-// NodeAction represents a file-modification action ina Subversion dump stream
+// NodeAction represents a file-modification action in a Subversion dump stream.
+// Don't rely on addresses of these structures to be stable durung the entire
+// parse phase, there's a compacting copy that breaks that assumption.
 type NodeAction struct {
 	// These are set during parsing.  Can all initially have zero values
 	revision    int
@@ -7745,7 +7747,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 baton.twirl("")
                 time.Sleep(0)
                 previous = revision
-		/*
                 // End of processing for this Subversion revision.  If the
                 // repo is large, we throw out file records for this node in
                 // order to reduce the maximum working set from proportional
@@ -7753,23 +7754,24 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 // What we give up is some detail in the diagnostic messages
                 // on zero-fileop commits.
                 if sp.large {
-                        record.nodes = [n for n in record.nodes if n.kind == sdDIR]
-                        sp.revisions[revision] = record
+			sp.revisions[revision].nodes = make([]NodeAction, 0)
+			// This copy loop requires that NodeAction structures cannot contain
+			// pointers to other NodeAction structures.
+			for _, n := range record.nodes {
+				if n.kind == sdDIR {
+					sp.revisions[revision].nodes = append(sp.revisions[revision].nodes, n)
+				}
+			}
                 }
-		*/
         } // end of revision loop
 
         // Filemaps are no longer needed, allow them to be gae=rbage collectedc
         filemaps = nil
-	/*
         // Bail out if we have read no commits
-        try {
-                sp.repo.earliestCommit()
+        if len(sp.repo.commits(nil)) == 0 {
+                sp.gripe("empty stream or repository.")
+		return
         }
-        except StopIteration {
-                raise Recoverable("empty stream or repository.")
-        }
-	*/
         // Warn about dubious branch links
         sp.fileopBranchlinks.Remove("trunk" + svnSep)
 	if links := sp.fileopBranchlinks.Subtract(sp.directoryBranchlinks); !links.Empty() {
