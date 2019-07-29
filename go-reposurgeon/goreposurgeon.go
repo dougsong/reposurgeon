@@ -7555,22 +7555,26 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 cliques[""] = append(cliques[""], action.fileop)
                         }
                 }
-		/*
+		type branchAction struct {
+			branch string
+			fileop []FileOp
+		}
                 // Make two operation lists from the cliques, sorting cliques
                 // containing only branch deletes from other cliques.
-                deleteallOps := []
-                otherOps := []
+                deleteallOps := make([]branchAction, 0)
+                otherOps := make([]branchAction, 0)
                 for branch, ops := range cliques {
-                        if len(ops) == 1 && ops[0].op == FileOp.deleteall {
-                                deleteallOps.append((branch, ops))
+                        if len(ops) == 1 && ops[0].op == deleteall {
+                                deleteallOps = append(deleteallOps, branchAction{branch, ops})
                         } else {
-                                otherOps.append((branch, ops))
+                                otherOps = append(otherOps, branchAction{branch, ops})
                         }
                 }
-                oplist = itertools.chain(otherOps, deleteallOps)
+                //oplist := append(otherOps, deleteallOps...)
                 // Create all commits corresponding to the revision
-                newcommits = []Commit
+                newcommits := make([]Event, 0)
                 commit.legacyID = fmt.Sprintf("%d", revision)
+		/*
                 if len(otherOps) <= 1 {
                         // In the ordinary case, we can assign all non-deleteall fileops
                         // to the base commit.
@@ -7583,14 +7587,14 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 commit.common = os.path.commonprefix([node.path for node in record.nodes])
                         }
                         commit.setMark(sp.repo.newmark())
-                        announce(debugEXTRACT, fmt.Sprintf("r%s gets mark %s", revision, commit.mark))
+                        announce(debugEXTRACT, "r%s gets mark %s", revision, commit.mark)
                         newcommits = append(newcommits, commit)
                 }
                 // If the commit is mixed, or there are deletealls left over,
                 // handle that.
                 oplist = sorted(oplist, key=operator.itemgetter(0))
                 for (i, (branch, fileops)) in enumerate(oplist) {
-                        split = commit.clone()
+                        split := commit.clone()
                         split.common = branch
                         // Sequence numbers for split commits are 1-origin
                         split.legacyID += StreamParser.splitSep + str(i + 1)
@@ -7713,14 +7717,16 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 }
                         }
                 }
+		*/
                 // We're done, add all the new commits
-                sp.repo.events += newcommits
-                sp.repo.declareSequenceMutation()
+                sp.repo.events = append(sp.repo.events, newcommits...)
+                sp.repo.declareSequenceMutation("adding new commits")
                 // Report progress, and give up our scheduler slot
                 // so as not to eat the processor.
                 baton.twirl("")
-                time.sleep(0)
+                time.Sleep(0)
                 previous = revision
+		/*
                 // End of processing for this Subversion revision.  If the
                 // repo is large, we throw out file records for this node in
                 // order to reduce the maximum working set from proportional
@@ -7734,9 +7740,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		*/
         } // end of revision loop
 
+        // Filemaps are no longer needed, allow them to be gae=rbage collectedc
+        filemaps = nil
 	/*
-        // Filemaps are no longer needed
-        del filemaps
         // Bail out if we have read no commits
         try {
                 sp.repo.earliestCommit()
@@ -7749,21 +7755,19 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
         if sp.fileopBranchlinks - sp.directoryBranchlinks {
                 sp.gripe(fmt.Sprintf("branch links detected by file ops only: %s", " ").join(sorted(sp.fileopBranchlinks - sp.directoryBranchlinks)))
         }
+	*/
         timeit("commits")
         if debugEnable(debugEXTRACT) {
                 announce(debugEXTRACT, "at post-parsing time:")
-                for _, commit := range sp.repo.commits() {
-                        msg = commit.Comment
-                        if msg == nil {
-                                msg = ""
-                        }
-                        announce(debugSHOUT, "r%-4s %4s %2d %2d '%s'" %
-                                 (commit.legacyID, commit.mark,
-                                  len(commit.operations()),
-                                  len(commit.properties || ""),
-                                  strings.TrimSpace(msg)[:20]))
+                for _, commit := range sp.repo.commits(nil) {
+                        announce(debugSHOUT, "r%-4s %4s %2d %2d '%s'",
+				commit.legacyID, commit.mark,
+				len(commit.operations()),
+				commit.properties.Len(),
+				strings.TrimSpace(commit.Comment)[:20])
                 }
         }
+	/*
         // First, turn the root commit into a tag
         if sp.repo.events && !sp.repo.earliestCommit().operations() {
                 try {
