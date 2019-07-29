@@ -268,7 +268,7 @@ D hello.sh
 # error: no repo
 drop reorder
 reorder
-reposurgeon: no repo has been chosen
+reposurgeon: no repo has been chosen.
 read <reorder.fi
 
 # error: incorrect number of arguments

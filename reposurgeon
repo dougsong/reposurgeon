@@ -12354,7 +12354,7 @@ after the operation.
         "Re-order a contiguous range of commits."
         repo = self.chosen()
         if repo is None:
-            raise Recoverable("no repo has been chosen")
+            raise Recoverable("no repo has been chosen.")
         if self.selection is None:
             raise Recoverable("no selection")
         sel = [i for i in self.selection if isinstance(repo[i], Commit)]
