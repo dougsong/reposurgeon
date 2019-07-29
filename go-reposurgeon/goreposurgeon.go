@@ -19660,7 +19660,7 @@ func (rs *Reposurgeon) DoDo(line string) bool {
 		// If a leading portion of the expansion body is a selection
 		// expression, use it.  Otherwise we'll restore whatever
 		// selection set came before the do keyword.
-		expansion := rs.cmd.PreCmdHook(defline)
+		expansion := rs.cmd.PreCmd(defline)
 		if rs.selection  == nil {
 			rs.selection = doSelection
 		}
@@ -20576,9 +20576,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 	existingInputIsStdin := rs.inputIsStdin
 	rs.inputIsStdin = false
 
-	if interpreter.PreLoopHook != nil {
-		interpreter.PreLoopHook()
-	}
+	interpreter.PreLoop()
 	lineno := 0
 	for {
 		scriptline, err := script.ReadString('\n')
@@ -20647,13 +20645,9 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 		}
 
 		// finally we execute the command, plus the before/after steps
-		if interpreter.PreCmdHook != nil {
-			scriptline = interpreter.PreCmdHook(scriptline)
-		}
+		scriptline = interpreter.PreCmd(scriptline)
 		stop := interpreter.OneCmd(scriptline)
-		if interpreter.PostCmdHook != nil {
-			stop = interpreter.PostCmdHook(stop, scriptline)
-		}
+		stop = interpreter.PostCmd(stop, scriptline)
 
 		// and then we have to put the stdin back where it
 		// was, in case we changed it
@@ -20670,9 +20664,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 			break
 		}
 	}
-	if interpreter.PostLoopHook != nil {
-		interpreter.PostLoopHook()
-	}
+	interpreter.PostLoop()
 
 	rs.inputIsStdin = existingInputIsStdin
 
@@ -20705,9 +20697,7 @@ func main() {
 	if len(os.Args[1:]) == 0 {
 		os.Args = append(os.Args, "-")
 	}
-	if interpreter.PreLoopHook != nil {
-		interpreter.PreLoopHook()
-	}
+	interpreter.PreLoop()
 	stop := false
 	for _, arg := range os.Args[1:] {
 		for _, acmd := range strings.Split(arg, ";") {
@@ -20725,23 +20715,16 @@ func main() {
 				if strings.HasPrefix(acmd, "--") {
 					acmd = acmd[2:]
 				}
-				if interpreter.PreCmdHook != nil {
-					acmd = interpreter.PreCmdHook(acmd)
-				}
+				acmd = interpreter.PreCmd(acmd)
 				stop = interpreter.OneCmd(acmd)
-				if interpreter.PostCmdHook != nil {
-					stop = interpreter.PostCmdHook(stop, acmd)
-				}
+				stop = interpreter.PostCmd(stop, acmd)
 				if stop {
 					break
 				}
 			}
 		}
 	}
-	if interpreter.PostLoopHook != nil {
-		interpreter.PostLoopHook()
-	}
-
+	interpreter.PostLoop()
 }
 
 /*
