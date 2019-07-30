@@ -18125,7 +18125,7 @@ func (rs *Reposurgeon) DoReorder(lineIn string) bool {
 		return false
 	}
 	sel := rs.selection
-	if sel != nil {
+	if sel == nil {
 		croak("no selection")
 		return false
 	}
