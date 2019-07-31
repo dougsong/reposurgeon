@@ -18072,9 +18072,10 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 		child.setOperations(newops)
 	}
 	child.setParents(parents)
-	if doResort {
-		repo.resort()
-	}
+	// Restore this whemn we have toposort working identically in Gp and Python.
+	//if doResort {
+	//	repo.resort()
+	//}
 	return false
 }
 

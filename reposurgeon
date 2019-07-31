@@ -12301,8 +12301,9 @@ Policy:
                 newops.extend(child.operations())
                 child.set_operations(newops)
             child.set_parents(parents)
-            if do_resort:
-                repo.resort()
+	    # Restore this whemn we have toposort working identically in Gp and Python.
+            #if do_resort:
+            #    repo.resort()
 
     def help_reorder(self):
         sys.stdout.write("""
