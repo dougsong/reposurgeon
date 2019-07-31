@@ -7858,24 +7858,24 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 }
                 sp.timeMark("parents")
                 baton.twirl("")
-		/*
                 // The root branch is special. It wasn't made by a copy, so
                 // we didn't get the information to connect it to trunk in the
                 // last phase.
-                try {
-                        commit = next(c for c in sp.repo.commits()
-                                      if c.Branch == "root")
-                                      }
-                }
-                except StopIteration {
-                        pass
-                } else {
-                        earliest = sp.repo.earliestCommit()
-                        if commit != earliest {
-                                sp.branchlink[commit.mark] = [2]*Commit{commit, earliest}
+		var rootcommit *Commit
+		for _, c := range sp.repo.commits(nil) {
+			if c.Branch == "root" {
+				rootcommit = c
+				break
+			}
+		}
+		if rootcommit != nil {
+			earliest := sp.repo.earliestCommit()
+                        if rootcommit != earliest {
+                                sp.branchlink[rootcommit.mark] = [2]*Commit{rootcommit, earliest}
                         }
                 }
                 timeit("root")
+		/*
                 // Add links due to Subversion copy operations
                 announce(debugEXTRACT, "branch roots: [{roots}], links {{{links}}}".format(
                         roots = ", ".join(c.mark for c in branchroots),
