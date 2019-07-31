@@ -7882,35 +7882,44 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         links = ", ".join("{l[0].mark}: {l[1].mark}".format(l=l)
                                           for _, l := range sp.branchlink.values())))
                                           }
-                for (child, parent) in sp.branchlink.values() {
-                        if parent.repo is !sp.repo {
+		*/
+                for _, item := range sp.branchlink {
+			child, parent := item[0], item[1]
+                        if parent.repo != sp.repo {
                                 // The parent has been deleted since, don't add the link;
-                                // it can only happen if parent was the now tagified root.
+                                // this can only happen if parent was the now tagified root.
                                 continue
                         }
-                        if !child.hasParents()
-                                && child.Branch !in sp.branchcopies {
+                        if !child.hasParents() && !sp.branchcopies.Contains(child.Branch) {
                                 // The branch wasn't created by copying another branch and
                                 // is instead populated by fileops. Prepend a deleteall to
                                 // ensure that it starts with a clean tree instead of
                                 // inheriting that of its soon to be added first parent.
                                 // The deleteall is put on the first commit of the branch
                                 // which has fileops or more than one child.
-                                commit = child
-                                while len(commit.children()) == 1 && !commit.operations() {
+                                commit := child
+                                for len(commit.children()) == 1 && len(commit.operations()) == 0 {
                                         commit = commit.firstChild()
                                 }
-                                if commit.operations() || commit.hasChildren() {
-                                        fileop = newFileOp(sp.repo)
+                                if len(commit.operations()) > 0 || commit.hasChildren() {
+                                        fileop := newFileOp(sp.repo)
                                         fileop.construct("deleteall")
-                                        commit.prependOperation(fileop)
-                                        sp.generatedDeletes.append(commit)
+                                        commit.prependOperation(*fileop)
+                                        sp.generatedDeletes = append(sp.generatedDeletes, commit)
                                 }
                         }
-                        if parent !in child.parents() {
-                                child.addParentCommit(parent)
+			var found bool
+                        for _, p := range child.parents() {
+                                if p == parent {
+					found = true
+					break
+				}
                         }
+			if !found {
+				child.addParentCommit(parent)
+			}
                 }
+		/*
                 for _, root := range branchroots {
                         if getattr(commit.Branch, "fileops", nil)
                                 && root.Branch != ("trunk" + svnSep) {
@@ -8243,8 +8252,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
         }
         timeit("tagcleaning")
         announce(debugEXTRACT, "after delete/copy canonicalization")
-        // Remove spurious parent links caused by random cvs2svn file copies.
-        //baton.twirl("debubbling")
+        // Remove spurious parent links caused by random cvs2svn file copies.        //baton.twirl("debubbling")
         for _, commit := range sp.repo.commits() {
                 try {
                         a, b = commit.parents()
