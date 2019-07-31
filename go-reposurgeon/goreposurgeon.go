@@ -7788,22 +7788,19 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				strings.TrimSpace(commit.Comment)[:20])
                 }
         }
-	/*
         // First, turn the root commit into a tag
-        if sp.repo.events && !sp.repo.earliestCommit().operations() {
-                try {
-                        initial, second = itertools.islice(sp.repo.commits(), 2)
-                        sp.repo.tagify(initial,
-                                         "root",
-                                         second,
-                                         fmt.Sprintf("[[Tag from root commit at Subversion r%s]]\n", initial.legacy)ID
-                                     true)
-                }
-                except ValueError: // sp.repo has less than two commits
-                        sp.gripe("could not tagify root commit.")
-                }
+        if commits := sp.repo.commits(nil); len(commits) >= 2 && len(commits[0].operations()) == 0 {
+		initial, second := commits[0], commits[1]
+		sp.repo.tagify(initial,
+			"root",
+			second.mark,
+			fmt.Sprintf("[[Tag from root commit at Subversion r%s]]\n", initial.legacyID),
+			true)
+	} else {
+		sp.gripe("could not tagify root commit.")
         }
         timeit("rootcommit")
+	/*
         // Now, branch analysis.
         branchroots = []
         if !sp.branches || nobranch {
