@@ -5868,7 +5868,7 @@ type StreamParser struct {
 	lastcookie  Cookie
 	// Everything below here is Subversion-specific
 	branches             map[string]*Commit // Points to branch root commits
-	branchlink           map[string][2]*Commit
+	branchlink           map[string]daglink
 	branchdeletes        stringSet
 	branchcopies         stringSet
 	generatedDeletes     []*Commit
@@ -5882,6 +5882,11 @@ type StreamParser struct {
 	propagate            map[string]bool
 }
 
+type daglink struct{
+	child *Commit
+	parent *Commit
+}
+
 // newSteamParser parses a fast-import stream or Subversion dump to a Repository.
 func newStreamParser(repo *Repository) *StreamParser {
 	sp := new(StreamParser)
@@ -5890,7 +5895,7 @@ func newStreamParser(repo *Repository) *StreamParser {
 	sp.warnings = make([]string, 0)
 	// Everything below here is Subversion-specific
 	sp.branches = make(map[string]*Commit)
-	sp.branchlink = make(map[string][2]*Commit)
+	sp.branchlink = make(map[string]daglink)
 	sp.branchdeletes = newStringSet()
 	sp.branchcopies = newStringSet()
 	sp.generatedDeletes = make([]*Commit, 0)
@@ -7727,7 +7732,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                 sp.fileopBranchlinks.Add(newcommit.common)
                                                 announce(debugTOPOLOGY, "r%s: making branch link %s",
 							newcommit.legacyID, newcommit.common)
-                                                sp.branchlink[newcommit.mark] = [2]*Commit{newcommit, prev}
+                                                sp.branchlink[newcommit.mark] = daglink{newcommit, prev}
                                                 announce(debugTOPOLOGY, "r%s: link %s (%s) back to %s (%s, %s)",
 							newcommit.legacyID,
 							newcommit.mark,
@@ -7871,7 +7876,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		if rootcommit != nil {
 			earliest := sp.repo.earliestCommit()
                         if rootcommit != earliest {
-                                sp.branchlink[rootcommit.mark] = [2]*Commit{rootcommit, earliest}
+                                sp.branchlink[rootcommit.mark] = daglink{rootcommit, earliest}
                         }
                 }
                 timeit("root")
@@ -7884,20 +7889,19 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                           }
 		*/
                 for _, item := range sp.branchlink {
-			child, parent := item[0], item[1]
-                        if parent.repo != sp.repo {
+                        if item.parent.repo != sp.repo {
                                 // The parent has been deleted since, don't add the link;
                                 // this can only happen if parent was the now tagified root.
                                 continue
                         }
-                        if !child.hasParents() && !sp.branchcopies.Contains(child.Branch) {
+                        if !item.child.hasParents() && !sp.branchcopies.Contains(item.child.Branch) {
                                 // The branch wasn't created by copying another branch and
                                 // is instead populated by fileops. Prepend a deleteall to
                                 // ensure that it starts with a clean tree instead of
                                 // inheriting that of its soon to be added first parent.
                                 // The deleteall is put on the first commit of the branch
                                 // which has fileops or more than one child.
-                                commit := child
+                                commit := item.child
                                 for len(commit.children()) == 1 && len(commit.operations()) == 0 {
                                         commit = commit.firstChild()
                                 }
@@ -7909,14 +7913,14 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 }
                         }
 			var found bool
-                        for _, p := range child.parents() {
-                                if p == parent {
+                        for _, p := range item.child.parents() {
+                                if p == item.parent {
 					found = true
 					break
 				}
                         }
 			if !found {
-				child.addParentCommit(parent)
+				item.child.addParentCommit(item.parent)
 			}
                 }
 		/*
