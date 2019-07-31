@@ -7801,7 +7801,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
         }
         timeit("rootcommit")
         // Now, branch analysis.
-        //branchroots := make([]*Commit, 0)
+        branchroots := make([]*Commit, 0)
         if len(sp.branches) == 0 || nobranch {
                 var last *Commit
                 for _, commit := range sp.repo.commits(nil) {
@@ -7814,26 +7814,25 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
         } else {
                 // Instead, determine a branch for each commit...
                 announce(debugEXTRACT, fmt.Sprintf("Branches: %s", sp.branches,))
-		/*
-                lastbranch = nil
+                var lastbranch, branch string
                 for _, commit := range sp.repo.commits(nil) {
-                        if lastbranch != nil
-                                && strings.HasPrefix(commit.common, lastbranch) {
+                        if lastbranch != "" && strings.HasPrefix(commit.common, lastbranch) {
                                 branch = lastbranch
                         } else {
                                 // Prefer the longest possible branch
-                                branch = next((b for b in sp.branchlist()
-                                              if strings.HasPrefix(commit.common, b)),
-                                              }
-                                              nil)
+				for _, b := range sp.branchlist() {
+					if strings.HasPrefix(commit.common, b) {
+						branch = b
+					}
+				}
                         }
-                        if branch != nil {
+                        if branch != "" {
                                 commit.setBranch(branch)
                                 for _, fileop := range commit.operations() {
-                                        if fileop.op in (opM, opD) {
-                                                fileop.path = fileop.path[len(branch):]
-                                        } else if fileop.op in (opR, opC) {
-                                                fileop.source = fileop.source[len(branch):]
+                                        if fileop.op  == opM || fileop.op == opD {
+                                                fileop.Path = fileop.Path[len(branch):]
+                                        } else if fileop.op  == opR || fileop.op == opC {
+                                                fileop.Source = fileop.Source[len(branch):]
                                                 fileop.Target = fileop.Target[len(branch):]
                                         }
                                 }
@@ -7844,14 +7843,14 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         lastbranch = branch
                         baton.twirl("")
                 }
-                timeit("branches")
+		timeit("branches")
                 // ...then rebuild parent links so they follow the branches
-                for _, commit := range sp.repo.commits() {
+                for _, commit := range sp.repo.commits(nil) {
                         if sp.branches[commit.Branch] == nil {
                                 branchroots = append(branchroots, commit)
-                                commit.setParents([])
+                                commit.setParents(nil)
                         } else {
-                                commit.setParents([sp.branches[commit.Branch]])
+                                commit.setParents([]CommitLike{sp.branches[commit.Branch]})
                         }
                         sp.branches[commit.Branch] = commit
                         // Per-commit spinner disabled because this pass is fast
@@ -7859,6 +7858,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 }
                 sp.timeMark("parents")
                 baton.twirl("")
+		/*
                 // The root branch is special. It wasn't made by a copy, so
                 // we didn't get the information to connect it to trunk in the
                 // last phase.
@@ -8036,25 +8036,26 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 }
                 //delete(mergeinfo) 
 		//delete(mergeinfos)
+		*/
                 timeit("mergeinfo")
                 if debugEnable(debugEXTRACT) {
                         announce(debugEXTRACT, "after branch analysis")
-                        for _, commit := range sp.repo.commits() {
-                                try {
-                                        ancestor = commit.parents()[0]
-                                }
-                                except IndexError {
-                                        ancestor = "-"
-                                }
-                                announce(debugSHOUT, "r%-4s %4s %4s %2d %2d '%s'" %
-                                         (commit.legacyID,
-                                          commit.mark, ancestor,
-                                          len(commit.operations()),
-                                          len(commit.properties || ""),
-                                          commit.Branch))
+                        for _, commit := range sp.repo.commits(nil) {
+				var ancestorID string
+				ancestors := commit.parents()
+                                if len(ancestors) == 0 {
+                                        ancestorID = "-"
+                                } else {
+					ancestorID = ancestors[0].getMark()
+					announce(debugSHOUT, "r%-4s %4s %4s %2d %2d '%s'",
+						commit.legacyID,
+						commit.mark, ancestorID,
+						len(commit.operations()),
+						commit.properties.Len(),
+						commit.Branch)
+				}
                         }
                 }
-		*/
         }
         // Code controlled by --nobranch option ends.
         baton.twirl("")
