@@ -7733,7 +7733,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                 announce(debugTOPOLOGY, "r%s: making branch link %s",
 							newcommit.legacyID, newcommit.common)
                                                 sp.branchlink[newcommit.mark] = daglink{newcommit, prev}
-                                                announce(debugTOPOLOGY, "r%s: link %s (%s) back to %s (%s, %s)",
+                                                announce(debugTOPOLOGY, "r%s: link %s (%s) back to %d (%s, %s)",
 							newcommit.legacyID,
 							newcommit.mark,
 							newcommit.common,
@@ -7923,15 +7923,14 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				item.child.addParentCommit(item.parent)
 			}
                 }
-		/*
                 for _, root := range branchroots {
-                        if getattr(commit.Branch, "fileops", nil)
-                                && root.Branch != ("trunk" + svnSep) {
-                                sp.gripe("r%s: can't connect nonempty branch %s to origin" \
-                                            % (root.legacyID, root.Branch))
+                        if len(root.operations()) != 0 && root.Branch != ("trunk" + svnSep) {
+				sp.gripe(fmt.Sprintf("r%s: can't connect nonempty branch %s to origin",
+					root.legacyID, root.Branch))
                         }
                 }
                 timeit("branchlinks")
+		/*
                 // Add links due to svn:mergeinfo properties
                 mergeinfo := PathMap()
                 mergeinfos := make(map[int]*PathMap)
