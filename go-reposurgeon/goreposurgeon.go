@@ -7800,22 +7800,23 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		sp.gripe("could not tagify root commit.")
         }
         timeit("rootcommit")
-	/*
         // Now, branch analysis.
-        branchroots = []
-        if !sp.branches || nobranch {
-                last = nil
-                for _, commit := range sp.repo.commits() {
+        //branchroots := make([]*Commit, 0)
+        if len(sp.branches) == 0 || nobranch {
+                var last *Commit
+                for _, commit := range sp.repo.commits(nil) {
                         commit.setBranch(filepath.Join("refs", "heads", "master") + svnSep)
-                        if last != nil: commit.setParents([last])
+                        if last != nil {
+				commit.setParents([]CommitLike{last})
                         }
                         last = commit
                 }
         } else {
                 // Instead, determine a branch for each commit...
                 announce(debugEXTRACT, fmt.Sprintf("Branches: %s", sp.branches,))
+		/*
                 lastbranch = nil
-                for _, commit := range sp.repo.commits() {
+                for _, commit := range sp.repo.commits(nil) {
                         if lastbranch != nil
                                 && strings.HasPrefix(commit.common, lastbranch) {
                                 branch = lastbranch
@@ -8053,8 +8054,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                           commit.Branch))
                         }
                 }
+		*/
         }
-	*/
         // Code controlled by --nobranch option ends.
         baton.twirl("")
         // Canonicalize all commits to ensure all ops actually do something.
