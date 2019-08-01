@@ -18021,7 +18021,7 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 	parse := rs.newLineParse(line, nil)
 	defer parse.Closem()
 	useOrder := parse.options.Contains("--use-order")
-	// determine whether an event resort might be needed.  it is
+	// Determine whether an event resort might be needed.  it is
 	// assumed that ancestor commits already have a lower event
 	// index before this function is called, which should be true
 	// as long as every function that modifies the DAG calls
@@ -18070,9 +18070,10 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 		}
 		newops = append(newops, child.operations()...)
 		child.setOperations(newops)
+		child.sortOperations()
 	}
 	child.setParents(parents)
-	// Restore this whemn we have toposort working identically in Gp and Python.
+	// Restore this when we have toposort working identically in Go and Python.
 	//if doResort {
 	//	repo.resort()
 	//}

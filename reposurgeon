@@ -12300,6 +12300,7 @@ Policy:
                     newops.append(f)
                 newops.extend(child.operations())
                 child.set_operations(newops)
+                child.sort_operations()
             child.set_parents(parents)
 	    # Restore this whemn we have toposort working identically in Gp and Python.
             #if do_resort:
