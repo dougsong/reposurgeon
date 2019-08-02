@@ -7931,8 +7931,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 }
                 timeit("branchlinks")
                 // Add links due to svn:mergeinfo properties
-		/*
-                mergeinfo := PathMap()
+                mergeinfo := newPathMap(nil)
                 mergeinfos := make(map[int]*PathMap)
                 for revision, record := range sp.revisions {
                         for _, node := range record.nodes {
@@ -7941,11 +7940,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					 continue
                                 }
                                 // Mutate the mergeinfo according to copies
-                                if node.fromRev != "" {
+                                if node.fromRev != 0 {
                                         //assert parseInt(node.fromRev) < parseInt(revision)
-					fromMerges := mergeinfos.get(node.fromRev)
+					fromMerges := mergeinfos[node.fromRev]
 					if fromMerges == nil {
-						fromMerges = PathMap()
+						fromMerges = newPathMap(nil)
 					}
                                         mergeinfo.copyFrom(node.path, fromMerges, node.fromPath)
                                         announce(debugEXTRACT, "r%d~%s mergeinfo copied to %s",
@@ -7961,56 +7960,57 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 // links. Also, since merging will also inherit the
                                 // mergeinfo entries of the source path, we also need to
                                 // gather and ignore those.
-                                existingMerges := set(mergeinfo[node.path] || [])
+                                existingMerges := *mergeinfo.get(node.path).(*stringSet)
                                 ownMerges := newStringSet()
-				info, ok := node.props["svn:mergeinfo"]
-                                if ok {
+				info := node.props.get("svn:mergeinfo")
+                                if info != "" {
                                         for _, line := range strings.Split(info, "\n") {
 						fields := strings.Split(line, ":")
                                                 if len(fields) != 2 {
                                                         continue
                                                 }
 						fromPath, ranges := fields[0], fields[1]
-                                                for span := strings.Split(ranges, ",") {
+                                                for _, span := range strings.Split(ranges, ",") {
                                                         // Ignore single-rev fields, they are cherry-picks.
                                                         // TODO: maybe we should even test if minRev
                                                         // corresponds to some fromRev + 1 to ensure no
                                                         // commit has been skipped.
-							fields = strings.Split(line, "-")
+							fields = strings.Split(span, "-")
 							if len(fields) != 2 {
 								continue
 							}
 							minRev, fromRev := fields[0], fields[1]
                                                         // Import mergeinfo from merged branches
-                                                        ok2, pastMerges := mergeinfos[fromRev][fromPath]
-                                                        if ok2 && len(pastMerges) > 0 {
-								existingMerges.update(pastMerges)
+                                                        rawPastMerges, ok := mergeinfos[parseInt(fromRev)]
+                                                        if ok && rawPastMerges != nil {
+								pastMerges := rawPastMerges.get(fromPath).(*stringSet)
+								existingMerges = existingMerges.Union(*pastMerges)
                                                         }
-                                                        // Svn doesn't fit the merge range to commits on
+                                                        // SVN doesn't fit the merge range to commits on
                                                         // the source branch; we need to find the latest
                                                         // commit between minRev and fromRev made on
                                                         // that branch.
-                                                        fromCommit = lastRelevantCommit(
-                                                                            fromRev, fromPath, "branch")
-                                                        if fromCommit != nil &&
-                                                                parseInt(fromCommit.legacyID.split(".",1)[0])
-                                                                    >= parseInt(minRev) {
-                                                                ownMerges.Add(fromCommit.mark)
-                                                        } else {
+							fromCommit := lastRelevantCommit(sp, parseInt(fromRev), fromPath, "branch")
+							if fromCommit == nil {
                                                                 sp.gripe(fmt.Sprintf("cannot resolve mergeinfo path %s.",
 									fromRev, node.path))
+                                                        } else {
+								legacyFields := strings.Split(fromCommit.legacyID, ".")
+								if parseInt(legacyFields[0]) >= parseInt(minRev) {
+									ownMerges.Add(fromCommit.mark)
+								}
                                                         }
                                                 }
                                         }
                                 }
-                                mergeinfo[node.path] = ownMerges
-                                newMerges = ownMerges.Subtract(existingMerges)
+                                mergeinfo.set(node.path, ownMerges)
+                                newMerges := ownMerges.Subtract(existingMerges)
                                 if len(newMerges) == 0 {
 					continue
                                 }
                                 // Find the correct commit in the split case
-                                commit = lastRelevantCommit(revision, node.path, "branch")
-                                if commit == nil || !strings.HasPrefix(commit.legacyID, revision) {
+                                commit := lastRelevantCommit(sp, revision, node.path, "branch")
+                                if commit == nil || !strings.HasPrefix(commit.legacyID, fmt.Sprintf("%d", revision)) {
                                         // The reverse lookup went past the target revision
                                         sp.gripe(fmt.Sprintf("cannot resolve mergeinfo destination ",
 						revision, node.path))
@@ -8018,12 +8018,10 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 }
                                 // Alter the DAG to express merges.
                                 for _, mark := range newMerges {
-                                        parent = sp.repo.markToEvent(mark)
-                                        if parent !in commit.parents() {
-                                                commit.addParentCommit(parent)
-                                        }
-                                        announce(debugTOPOLOGY, "processed new mergeinfo from r%s ".
-                                                     "to r%s." % parent.legacyID, commit.legacyID)
+                                        parent := sp.repo.markToEvent(mark).(*Commit)
+                                        // FIXME: should add check for duplication here
+					commit.addParentCommit(parent)
+                                        announce(debugTOPOLOGY, "processed new mergeinfo from r%s to r%s.", parent.legacyID, commit.legacyID)
                                 }
                         }
                         mergeinfos[revision] = mergeinfo.snapshot()
@@ -8032,7 +8030,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// Allow mergeinfo storage to be garbage-collected 
 		mergeinfo = nil 
 		mergeinfos = nil
-		*/
                 timeit("mergeinfo")
                 if debugEnable(debugEXTRACT) {
                         announce(debugEXTRACT, "after branch analysis")
