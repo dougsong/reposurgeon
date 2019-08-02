@@ -8095,7 +8095,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
         baton.twirl("")
         timeit("junk")
         announce(debugEXTRACT, "after cvs2svn artifact removal")
-	/*
         // Now we need to tagify all other commits without fileops, because git
         // is going to just discard them when we build a live repo and they
         // might possibly contain interesting metadata.
@@ -8110,62 +8109,69 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
         //   just might be.
         // * All other commits without fileops get turned into an annotated tag
         //   with name "emptycommit-<revision>".
-        rootmarks = {root.mark for root in branchroots} // empty if nobranch
-        rootskip = {"trunk"+svnSep, "root"}
-        func (sp *StreamParser)  tagname(commit) {
+        rootmarks := newStringSet()	 // stays empty if nobranch
+	for _, root := range branchroots {
+		rootmarks.Add(root.mark)
+	}
+	rootskip := newStringSet()
+	rootskip.Add("trunk"+svnSep)
+	rootskip.Add("root")
+        tagname := func(commit *Commit) string {
                 // Give branch and tag roots a special name, except for "trunk" and
                 // "root" which do not come from a regular branch copy.
-                if commit.mark in rootmarks {
-                        name = branchbase (commit.Branch)
-                        if name !in rootskip {
-                                if commit.Branch.startswith("refs/tags/") {
+                if rootmarks.Contains(commit.mark) {
+                        name := branchbase(commit.Branch)
+                        if rootskip.Contains(name) {
+                                if strings.HasPrefix(commit.Branch, "refs/tags/") {
                                         return name
                                 }
                                 return name + "-root"
                         }
                 }
-                // Fallback on standard rules.
-                return nil
+                // Fallback to standard rules.
+                return ""
         }
-        func (sp *StreamParser)  taglegend(commit) {
+        taglegend := func(commit *Commit) string {
                 // Tipdelete commits and branch roots don't get any legend.
-                if commit.operations() || (commit.mark in rootmarks
-                        && branchbase(commit.Branch) !in rootskip) {
+                if len(commit.operations()) > 0 || (rootmarks.Contains(commit.mark) && !rootskip.Contains(branchbase(commit.Branch))) {
                         return ""
                 }
                 // Otherwise, generate one for inspection.
-                legend = ["[[Tag from zero-fileop commit at Subversion r%s"
-                                 % commit.legacyID]
+		legend := []string{fmt.Sprintf("[[Tag from zero-fileop commit at Subversion r%s", commit.legacyID)}
                 // This guard can fail on a split commit
-                if commit.legacyID in sp.revisions {
-                        if sp.revisions[commit.legacyID].nodes {
-                                legend = append(legend, ":\n")
-                                legend.extend(str(node)+"\n"
-                                        for _, node := range sp.revisions[commit.legacyID].nodes)
-                                        }
-                        }
+		idx := sp.repo.eventToIndex(commit)
+		if _, split := splitCommits[idx]; !split {
+			legend = append(legend, ":\n")
+			for _, node := range sp.revisions[idx].nodes {
+				legend = append(legend, node.String() + "\n")
+			}
                 }
                 legend = append(legend, "]]\n")
-                return "".join(legend)
-        }
-        //Pre compile the regex mappings for the next step
-        func (sp *StreamParser)  compile_regex (mapping) string {
-                regex, replace = mapping
-                return regexp.MustCompile(regex.encode("ascii")), polybytes(replace)
-        }
-        compiled_mapping := list(map(compile_regex, listOption("svn_branchify_mapping")))
+                return strings.Join(legend, "")
+	}
+
+	//  FIXME: Do precompilation earlier and bail out on a bad regexp rather than panicking 
+	type branchMapping struct {
+		match *regexp.Regexp
+		replace string
+	}
+	branchMappings := make([]branchMapping, 0)
+	for key, value := range context.mapOptions["svn_branchify_mapping"] {
+		branchMappings = append(branchMappings, branchMapping{regexp.MustCompile(key), value})
+	}
         // Now pretty up the branch names
-        deletia := []
-        for index, commit := range sp.repo.events {
-                if !isinstance(commit, Commit) {
-                        continue
-                }
+        deletia := make([]int, 0)
+        for index, event := range sp.repo.events {
+		commit, ok := event.(*Commit)
+		if !ok {
+			continue
+		}
                 matched := false
-                for regex, replace in compiled_mapping {
-                        result, substitutions = regex.subn(replace,polybytes(commit.Branch))
-                        if substitutions == 1 {
-                                matched := true
-                                commit.setBranch(filepath.Join("refs",polystr(result)))
+                for _, item := range branchMappings {
+                        result := item.match.ReplaceAllString(commit.Branch, item.replace)
+                        if result != commit.Branch {
+                                matched = true
+                                commit.setBranch(filepath.Join("refs", result))
                                 break
                         }
                 }
@@ -8174,25 +8180,25 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 }
                 if commit.Branch == "root" {
                         commit.setBranch(filepath.Join("refs", "heads", "root"))
-                } else if commit.Branch.startswith("tags" + svnSep) {
+                } else if strings.HasPrefix(commit.Branch, "tags" + svnSep) {
                         branch := commit.Branch
-                        if branch.endswith(svnSep) {
-                                branch := branch[:-1]
+                        if strings.HasSuffix(branch, svnSep) {
+                                branch = branch[:len(branch)-1]
                         }
-                        commit.setBranch(filepath.Join("refs", "tags",
-                                                      filepath.Base(branch)))
+                        commit.setBranch(filepath.Join("refs", "tags", filepath.Base(branch)))
                 } else if commit.Branch == "trunk" + svnSep {
                         commit.setBranch(filepath.Join("refs", "heads", "master"))
                 } else {
-                        basename = filepath.Base(commit.Branch[:-1])
+                        basename := filepath.Base(commit.Branch[:len(commit.Branch)-1])
                         commit.setBranch(filepath.Join("refs", "heads", basename))
                         // Some of these should turn into resets.  Is this a branchroot
                         // commit with no fileops?
-                        if "--preserve" !in options && len(commit.parents()) == 1 {
-                                parent = commit.parents()[0]
-                                if parent.Branch != commit.Branch && !commit.operations() {
-                                        announce(debugEXTRACT, "branch root of %s with comment %s discarded"
-                                                 % (commit.Branch, repr(commit.Comment)))
+                        if !options.Contains("--preserve") && len(commit.parents()) == 1 {
+                                parentEvent := commit.parents()[0]
+				parent, ok := parentEvent.(*Commit) 
+                                if ok && parent.Branch != commit.Branch && len(commit.operations()) == 0 {
+                                        announce(debugEXTRACT, "branch root of %s with comment %s discarded",
+                                                 commit.Branch, qtoq(commit.Comment))
                                         // FIXME: Adding a reset for the new branch at the end
                                         // of the event sequence was erroneous - caused later
                                         // commits to be ignored. Possibly we should add a reset
@@ -8205,16 +8211,20 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 }
                 baton.twirl("")
         }
-        sp.repo.delete(deletia)
+        sp.repo.delete(deletia, nil)
         timeit("polishing")
         announce(debugEXTRACT, "after branch name mapping")
-        sp.repo.tagifyEmpty(all(), tipdeletes = true,
-                               canonicalize = false,
-                               nameFunc = tagname,
-                               legendFunc = taglegend,
-                               gripe = sp.gripe)
+        sp.repo.tagifyEmpty(nil,
+		/* tipdeletes*/ true,
+		/* tagifyMerges */ false,
+		/* canonicalize */ false,
+		/* nameFunc */ tagname,
+		/* legendFunc */ taglegend,
+		/* createTags */ false,
+		/* gripe */ sp.gripe)
         sp.timeMark("tagifying")
         baton.twirl("")
+	/*
         announce(debugEXTRACT, "after tagification")
         // cvs2svn likes to crap out sequences of deletes followed by
         // filecopies on the same node when it's generating tag commits.
@@ -8258,23 +8268,25 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 // Per-commit spinner disabled because this pass is fast
                 //baton.twirl("")
         }
+	*/
         timeit("debubbling")
-        sp.repo.renumber(baton=baton)
+        sp.repo.renumber(1, baton)
         timeit("renumbering")
         // Look for tag and branch merges that mean we may want to undo a
         // tag or branch creation
-        ignore_deleteall = set(commit.mark
-                               for _, commit := range sp.generatedDeletes)
-                               }
-        for _, commit := range sp.repo.commits() {
-                if commit.operations() && commit.operations()[0].op == "deleteall"
-                        && commit.hasChildren()
-                        && commit.mark !in ignore_deleteall {
-                        sp.gripe("mid-branch deleteall on %s at <%s>." %
-                                (commit.Branch, commit.legacyID))
+        ignorableDeletealls := newStringSet()
+	for _, commit := range sp.generatedDeletes {
+		ignorableDeletealls.Add(commit.mark)
+	}
+        for _, commit := range sp.repo.commits(nil) {
+                if len(commit.operations()) > 0 &&
+			commit.operations()[0].op == "deleteall" &&
+                        commit.hasChildren() &&
+			!ignorableDeletealls.Contains(commit.mark) {
+				sp.gripe(fmt.Sprintf("mid-branch deleteall on %s at <%s>.",
+					commit.Branch, commit.legacyID))
                 }
         }
-	*/
         timeit("linting")
         // Treat this in-core state as though it was read from an SVN repo
         sp.repo.hint("svn", "", true)
@@ -9043,12 +9055,12 @@ func defaultEmptyTagName(commit *Commit) string {
                           tipdeletes = false,
                           tagifyMerges = false,
                           canonicalize = true,
-                          name_func = lambda _: nil,
+                          nameFunc = lambda _: nil,
                           legendFunc = lambda _: "",
-                          create_tags = true,
+                          createTags = true,
                           gripe = complain
                          ):
-           Arguments: * commits:       nil, or a set of event indices
+           Arguments: * commits:       nil for all, or a set of event indices
                                        tagifyEmpty() ignores non-commits
                       * tipdeletes:    whether tipdeletes should be tagified
                       * canonicalize:  whether to canonicalize fileops first
@@ -19428,7 +19440,7 @@ applies. This maps a branch to the name of the last directory, except for trunk
 and '*' which are mapped to master and root.
 
 With no arguments the current regex replacement pairs are shown. Passing 'reset'
-will clear the reset mapping.
+will clear the mapping.
 
 Syntax: branchify_map /regex1/branch1/ /regex2/branch2/ ...
 
