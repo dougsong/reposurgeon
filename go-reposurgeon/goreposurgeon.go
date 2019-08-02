@@ -7961,7 +7961,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 // links. Also, since merging will also inherit the
                                 // mergeinfo entries of the source path, we also need to
                                 // gather and ignore those.
-                                existingMerges := set(mergeinfo[(node.path,)] || [])
+                                existingMerges := set(mergeinfo[node.path] || [])
                                 ownMerges := newStringSet()
 				info, ok := node.props["svn:mergeinfo"]
                                 if ok {
@@ -7982,8 +7982,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							}
 							minRev, fromRev := fields[0], fields[1]
                                                         // Import mergeinfo from merged branches
-                                                        ok2, pastMerges := mergeinfos[fromRev][(fromPath,)]
-                                                        if ok2 && len(lastMerges) > 0 {
+                                                        ok2, pastMerges := mergeinfos[fromRev][fromPath]
+                                                        if ok2 && len(pastMerges) > 0 {
 								existingMerges.update(pastMerges)
                                                         }
                                                         // Svn doesn't fit the merge range to commits on
@@ -8003,7 +8003,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                 }
                                         }
                                 }
-                                mergeinfo[(node.path,)] = ownMerges
+                                mergeinfo[node.path] = ownMerges
                                 newMerges = ownMerges.Subtract(existingMerges)
                                 if len(newMerges) == 0 {
 					continue

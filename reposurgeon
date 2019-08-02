@@ -5186,7 +5186,7 @@ class StreamParser:
                     # links. Also, since merging will also inherit the
                     # mergeinfo entries of the source path, we also need to
                     # gather and ignore those.
-                    existing_merges = set(mergeinfo[(node.path,)] or [])
+                    existing_merges = set(mergeinfo[node.path] or [])
                     own_merges = set()
                     try:
                         info = node.props['svn:mergeinfo']
@@ -5210,7 +5210,7 @@ class StreamParser:
                                 if (not min_rev) or (not from_rev): continue
                                 # Import mergeinfo from merged branches
                                 try:
-                                    past_merges = mergeinfos[from_rev][(from_path,)]
+                                    past_merges = mergeinfos[from_rev][from_path]
                                 except KeyError:
                                     pass
                                 else:
@@ -5231,7 +5231,7 @@ class StreamParser:
                                                "source from revision %s for "
                                                "path %s." % (from_rev,
                                                              node.path))
-                    mergeinfo[(node.path,)] = own_merges
+                    mergeinfo[node.path] = own_merges
                     new_merges = own_merges - existing_merges
                     if not new_merges: continue
                     # Find the correct commit in the split case
