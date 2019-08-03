@@ -5826,7 +5826,12 @@ func (action NodeAction) String() string {
 }
 
 // RevisionRecord is a list of NodeActions at a rev in a Subversion dump
+// Note that the revision field differs from the index in the revisions
+// array only if the sreream is complete (missing leading revisions or
+// has gaps). Processing of such streams is not well-tested and will
+// probably fail.
 type RevisionRecord struct {
+	revision int
 	nodes  []NodeAction
 	log    string
 	date   string
@@ -5834,8 +5839,9 @@ type RevisionRecord struct {
 	props  OrderedMap
 }
 
-func newRevisionRecord(nodes []NodeAction, props OrderedMap) *RevisionRecord {
+func newRevisionRecord(nodes []NodeAction, props OrderedMap, revision int) *RevisionRecord {
 	rr := new(RevisionRecord)
+	rr.revision = revision
 	rr.nodes = nodes
 	// Following four members are so we can avoid having a hash
 	// object in every single node instance...those are expensive.
@@ -6167,12 +6173,6 @@ func (sp *StreamParser) timeMark(label string) {
 }
 
 func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesize int64) {
-	revisions := make(map[int]RevisionRecord)
-	//hashcopy := func(hash *[sha1.Size]byte, src string) {
-	//	for i := 0; i < sha1.Size && i < len(src); i++ {
-	//		hash[i] = src[i]
-	//	}
-	//}
 	trackSymlinks := newStringSet()
 	for {
 		line := sp.readline()
@@ -6289,7 +6289,7 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 						if node.propchange {
 							sp.propertyStash[node.path] = node.props
 						} else if node.action == sdADD && node.fromPath != "" {
-							for _, oldnode := range revisions[node.fromRev].nodes {
+							for _, oldnode := range sp.revisions[node.fromRev].nodes {
 								if oldnode.path == node.fromPath {
 									sp.propertyStash[node.path] = oldnode.props
 								}
@@ -6390,23 +6390,12 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 				// Node processing ends
 			}
 			// Node list parsing ends
-			revisions[revision] = *newRevisionRecord(nodes, props)
+			sp.revisions = append(sp.revisions, *newRevisionRecord(nodes, props, revision))
 			sp.repo.legacyCount++
-			announce(debugSVNPARSE, "revision parsing, line %d: ends", sp.importLine)
+			announce(debugSVNPARSE, "revision parsing, line %d: ends with %d records", sp.importLine, sp.repo.legacyCount)
 			// End Revision processing
 			baton.readProgress(sp.ccount, filesize)
 		}
-	}
-	maxrev := 0
-	for rev := range revisions {
-		if rev > maxrev {
-			maxrev = rev
-		}
-	}
-	sp.revisions = make([]RevisionRecord, maxrev)
-	for maxrev >= 1 {
-		sp.revisions[maxrev-1] = revisions[maxrev]
-		maxrev--
 	}
 }
 
@@ -6884,7 +6873,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	   deleted name.
 	*/
 	// Build filemaps.
-	announce(debugEXTRACT, "Pass 2")
+	announce(debugEXTRACT, "Pass 2: %d Subversion revisions", len(sp.revisions))
 	filemaps := make(map[int]*PathMap)
 	filemap := newPathMap(nil)
 	for revision, record := range sp.revisions {
@@ -7382,6 +7371,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
                 actions := make([]fiAction, 0)
                 ancestorNodes := make(map[string]*NodeAction)
+		announce(debugEXTRACT, "%d expanded Subversion nodes", len(expandedNodes))
                 for _, node := range expandedNodes {
                         if node.action == sdNONE {
 				continue
