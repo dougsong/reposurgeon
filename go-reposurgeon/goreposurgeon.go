@@ -7590,6 +7590,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         if len(oplist) > 0 {
                                 commit.common = oplist[0].branch
                                 commit.setOperations(oplist[0].fileops)
+				oplist = oplist[1:]
                         } else {
 				// Find common prefix of all node paths.
 				commit.common = record.nodes[0].path
