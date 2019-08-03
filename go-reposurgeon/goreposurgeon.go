@@ -7524,18 +7524,21 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         }
                 }
                 // Time to generate commits from actions and fileops.
-                announce(debugEXTRACT, "r%d: %d actions", revision, len(actions))
                 // First, break the file operations into branch cliques.
 		// In the normal case there will be only one such clique,
 		// but in Subversion (unlike git) it is possible to make
 		// a commit that modifies multiple branches. In order to
 		// cope with this case we must first recognize it.
                 cliques := make(map[string][]FileOp)
+		cliqueBranches := make([]string, 0)
                 lastbranch := ""
                 for _, action := range actions {
                         // Try last seen branch first
                         if lastbranch != "" && strings.HasPrefix(action.node.path, lastbranch) {
                                 cliques[lastbranch] = append(cliques[lastbranch], action.fileop)
+				if len(cliqueBranches) == 0 || lastbranch != cliqueBranches[len(cliqueBranches)-1] {
+					cliqueBranches = append(cliqueBranches, lastbranch)
+				}
                                 continue
                         }
                         // Preferentially match longest branches
@@ -7543,6 +7546,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         for _, branch := range sp.branchlist() {
                                 if strings.HasPrefix(action.node.path, branch) {
 					cliques[branch] = append(cliques[branch], action.fileop)
+					if len(cliqueBranches) == 0 || branch != cliqueBranches[len(cliqueBranches)-1] {
+						cliqueBranches = append(cliqueBranches, branch)
+					}
                                         lastbranch = branch
 					explicitMatch = true
                                         break
@@ -7550,8 +7556,12 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			}
                         if !explicitMatch {
                                 cliques[""] = append(cliques[""], action.fileop)
+				if len(cliqueBranches) == 0 || "" != cliqueBranches[len(cliqueBranches)-1] {
+					cliqueBranches = append(cliqueBranches, "")
+				}
                         }
                 }
+                announce(debugEXTRACT, "r%d: %d action(s) in %d clique(s)", revision, len(actions), len(cliques))
 		type branchAction struct {
 			branch string
 			fileops []FileOp
@@ -7560,7 +7570,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 // containing only branch deletes from other cliques.
                 deleteallOps := make([]branchAction, 0)
                 otherOps := make([]branchAction, 0)
-                for branch, ops := range cliques {
+                for _, branch := range cliqueBranches {
+			ops := cliques[branch]
                         if len(ops) == 1 && ops[0].op == deleteall {
                                 deleteallOps = append(deleteallOps, branchAction{branch, ops})
                         } else {
