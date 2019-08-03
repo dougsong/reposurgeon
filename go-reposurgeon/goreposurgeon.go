@@ -7992,7 +7992,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                         // that branch.
 							fromCommit := lastRelevantCommit(sp, parseInt(fromRev), fromPath, "branch")
 							if fromCommit == nil {
-                                                                sp.gripe(fmt.Sprintf("cannot resolve mergeinfo path %s.",
+                                                                sp.gripe(fmt.Sprintf("cannot resolve mergeinfosource from revision %s for  path %s.",
 									fromRev, node.path))
                                                         } else {
 								legacyFields := strings.Split(fromCommit.legacyID, ".")
@@ -8012,7 +8012,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 commit := lastRelevantCommit(sp, revision, node.path, "branch")
                                 if commit == nil || !strings.HasPrefix(commit.legacyID, fmt.Sprintf("%d", revision)) {
                                         // The reverse lookup went past the target revision
-                                        sp.gripe(fmt.Sprintf("cannot resolve mergeinfo destination ",
+                                        sp.gripe(fmt.Sprintf("cannot resolve mergeinfo destination to revision %d for path %s.",
 						revision, node.path))
                                         continue
                                 }
@@ -8224,51 +8224,53 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		/* gripe */ sp.gripe)
         sp.timeMark("tagifying")
         baton.twirl("")
-	/*
         announce(debugEXTRACT, "after tagification")
         // cvs2svn likes to crap out sequences of deletes followed by
         // filecopies on the same node when it's generating tag commits.
         // These are lots of examples of this in the nut.svn test load.
         // These show up as redundant (D, M) fileop pairs.
-        for _, commit := range sp.repo.commits() {
-                if any(fileop == nil for fileop in commit.operations()) {
-                        raise Fatal(fmt.Sprintf("Null fileop at r%s", commit.legacy)ID)
+        for _, commit := range sp.repo.commits(nil) {
+		nonnil := make([]FileOp, 0)
+                for i := range commit.operations() {
+			if i < len(commit.operations()) {
+				if commit.operations()[i].op == opD && commit.operations()[i+1].op == opM {
+					if commit.operations()[i].Path == commit.operations()[i+1].Path {
+						continue
+					}
+				}
+			}
+			nonnil = append(nonnil, commit.operations()[i])
                 }
-                for i := range(len(commit.operations())-1) {
-                        if commit.operations()[i].op == opD && commit.operations()[i+1].op == opM {
-                                if commit.operations()[i].path == commit.operations()[i+1].path {
-                                        commit.operations()[i].op = nil
-                                }
-                        }
-                }
-                commit.setOperations([fileop for fileop in commit.operations() if fileop.op != nil])
+		nonnil = append(nonnil, commit.fileops[len(commit.operations())-1])
+                commit.setOperations(nonnil)
                 baton.twirl("")
         }
         timeit("tagcleaning")
         announce(debugEXTRACT, "after delete/copy canonicalization")
-        // Remove spurious parent links caused by random cvs2svn file copies.        //baton.twirl("debubbling")
-        for _, commit := range sp.repo.commits() {
-                try {
-                        a, b = commit.parents()
-                }
-                except ValueError {
-                        pass
-                } else {
-                        if a is b {
-                                sp.gripe(fmt.Sprintf("r%s: duplicate parent marks", commit.legacy)ID)
-                        } else if a.Branch == b.Branch == commit.Branch {
-                                if b.committer.date < a.committer.date {
-                                        (a, b) = (b, a)
-                                }
-                                if b.descendedFrom(a) {
-                                        commit.removeParent(a)
-                                }
-                        }
+        // Remove spurious parent links caused by random cvs2svn file copies.
+        for _, commit := range sp.repo.commits(nil) {
+		parents := commit.parents()
+		if len(parents) != 2 {
+			continue
+		}
+		a, ok1 := parents[0].(*Commit)
+		b, ok2 := parents[1].(*Commit)
+		if !ok1 || !ok2 {
+			continue
+		}
+		if a.getMark() == b.getMark() {
+			sp.gripe(fmt.Sprintf("r%s: duplicate parent marks", commit.legacyID))
+                } else if a.Branch == commit.Branch && b.Branch == commit.Branch {
+			if b.committer.date.Before(a.committer.date) {
+				a, b = b, a
+			}
+			if b.descendedFrom(a) {
+				commit.removeParent(a)
+			}
                 }
                 // Per-commit spinner disabled because this pass is fast
                 //baton.twirl("")
         }
-	*/
         timeit("debubbling")
         sp.repo.renumber(1, baton)
         timeit("renumbering")

@@ -69,7 +69,7 @@ The following tests presently fail under Go.  Reducing this list to
 empty is a near-term goal.
 
 x-reorder: toposort code is busted.
-x-reparent: unknown failure
+reparent: presently succeeds, but the toposort has been commented out.
 
 The next step after these will be testing extractor classes.
 
