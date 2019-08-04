@@ -7795,17 +7795,21 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				strings.TrimSpace(commit.Comment)[:20])
                 }
         }
-        // First, turn the root commit into a tag
-        if commits := sp.repo.commits(nil); len(commits) >= 2 && len(commits[0].operations()) == 0 {
-		initial, second := commits[0], commits[1]
-		sp.repo.tagify(initial,
-			"root",
-			second.mark,
-			fmt.Sprintf("[[Tag from root commit at Subversion r%s]]\n", initial.legacyID),
-			true)
-	} else {
-		sp.gripe("could not tagify root commit.")
-        }
+        // First, turn a no-op root commit into a tag
+	if len(sp.repo.events) > 0 && len(sp.repo.earliestCommit().operations()) == 0 {
+		if commits := sp.repo.commits(nil); len(commits[0].operations()) == 0 {
+			if len(commits) >= 2 {
+				initial, second := commits[0], commits[1]
+				sp.repo.tagify(initial,
+					"root",
+					second.mark,
+					fmt.Sprintf("[[Tag from root commit at Subversion r%s]]\n", initial.legacyID),
+					true)
+			}
+		} else {
+			sp.gripe("could not tagify root commit.")
+		}
+	}
         timeit("rootcommit")
         // Now, branch analysis.
         branchroots := make([]*Commit, 0)
