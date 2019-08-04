@@ -19806,7 +19806,7 @@ func (rs *Reposurgeon) DoTimequake(line string) bool {
 func (rs *Reposurgeon) HelpTimebump() {
 	rs.helpOutput(`
 Bump the committer and author timestamps of commits in the selection
-set (defaulting to empty) by one second.  With following integer agument,
+set (defaulting to empty) by one second.  With following integer argument,
 that many seconds.  Argument may be negative.
 
 The normal use case for this command is early in converting CVS or Subversion

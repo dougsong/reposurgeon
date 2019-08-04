@@ -5,8 +5,11 @@
   suite, this problem is exhibited by agito.svn, fleetwood.svn, and
   references.svn.
 
+* Propagation of execute permission in Subversion translations seems flawed.
+
 * Some attempt should be made to create marge links when a deletall is followed
-  by a directory copy from another branch.
+  by a directory copy from another branch. (This is what triggers the "mid-branch
+  delete" warning, wehich should ideally go away.)
 
 * Can gitspace merges be deduced from svk:merge and svnmerge properties?
 
