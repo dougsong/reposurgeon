@@ -7838,7 +7838,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         }
                         if branch != "" {
                                 commit.setBranch(branch)
-                                for _, fileop := range commit.operations() {
+                                for i := range commit.fileops {
+					fileop := &commit.fileops[i]
                                         if fileop.op  == opM || fileop.op == opD {
                                                 fileop.Path = fileop.Path[len(branch):]
                                         } else if fileop.op  == opR || fileop.op == opC {
