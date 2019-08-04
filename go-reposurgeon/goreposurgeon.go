@@ -7678,7 +7678,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 // fileop for the copy didn't get generated and the commit
                                 // tree would be wrong if we didn't.
 				//
-                                // Otherwise, usr may have botched a branch creation by doing a
+                                // Otherwise, user may have botched a branch creation by doing a
                                 // non-Subversion directory copy followed by a bunch of
                                 // Subversion adds. Blob hashes will match existing files,
                                 // but fromRev and fromPath won't be set at parse time.
@@ -8238,18 +8238,21 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
         // These are lots of examples of this in the nut.svn test load.
         // These show up as redundant (D, M) fileop pairs.
         for _, commit := range sp.repo.commits(nil) {
-		nonnil := make([]FileOp, 0)
                 for i := range commit.operations() {
 			if i < len(commit.operations()) {
 				if commit.operations()[i].op == opD && commit.operations()[i+1].op == opM {
 					if commit.operations()[i].Path == commit.operations()[i+1].Path {
-						continue
+						commit.fileops[i].op = "X"
 					}
 				}
 			}
-			nonnil = append(nonnil, commit.operations()[i])
                 }
-		nonnil = append(nonnil, commit.fileops[len(commit.operations())-1])
+		nonnil := make([]FileOp, 0)
+		for _, op := range commit.operations() {
+			if op.op != "X" {
+				nonnil = append(nonnil, op)
+			}
+		}
                 commit.setOperations(nonnil)
                 baton.twirl("")
         }
