@@ -4,12 +4,14 @@ expunge doomed
 choose deletion-expunges
 inspect
 Event 1 =================================================================
+#reposurgeon sourcetype svn
+Event 2 =================================================================
 blob
 mark :5
 data 77
 This file is doomed.  It exists only so we can check translation of deletes.
 
-Event 2 =================================================================
+Event 3 =================================================================
 commit refs/heads/master
 #legacy-id 3
 mark :6
@@ -18,7 +20,7 @@ data 71
 Create a doomed file so we can delete it and see the fileop generated.
 M 100644 :5 doomed
 
-Event 3 =================================================================
+Event 4 =================================================================
 commit refs/heads/master
 #legacy-id 4
 mark :7

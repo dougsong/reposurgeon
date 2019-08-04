@@ -7002,10 +7002,14 @@ class Repository:
     #
     def front_events(self):
         "Return options, features."
-        return [e for e in self.events \
-                if isinstance(e, Passthrough) \
-                and (e.text.startswith("option") or e.text.startswith("feature"))]
-
+        front = []
+        for e in self.events:
+            if isinstance(e, Passthrough):
+                front.append(e)
+            else:
+                break
+        return front
+            
     def resort(self):
         """Topologically sort the events in this repository.
 
