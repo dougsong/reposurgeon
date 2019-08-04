@@ -4684,13 +4684,14 @@ class StreamParser:
                                 # leading / in order to render the
                                 # Subversion behavior accurately.  However,
                                 # if done naively this clobbers the branch-root
-                                # defaults, so we need to have protected these
-                                # with a leading slash and reverse the transform.
-                                ignore = polystr(re.sub("\n(?!#)".encode('ascii'), "\n/".encode('ascii'), polybytes("\n" + ignore)))
-                                ignore = ignore.replace("\n//", "\n")
-                                ignore = ignore[1:]
-                                if ignore.endswith("/"):
-                                    ignore = ignore[:-1]
+                                # defaults, so we need to do this line by line.
+                                ignorelines = [] 
+                                for line in ignore.split("\n"):
+                                    if line.startswith("#") or line.startswith("/") or line == "":
+                                        ignorelines.append(line)
+                                    else:
+                                        ignorelines.append("/" + line)
+                                ignore = "\n".join(ignorelines)
                                 blob = Blob(self.repo)
                                 blob.set_content(ignore)
                                 newnode = StreamParser.NodeAction()
