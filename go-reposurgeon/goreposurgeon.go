@@ -7308,17 +7308,16 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                         // leading / in order to render the
                                                         // Subversion behavior accurately.  However,
                                                         // if done naively this clobbers the branch-root
-                                                        // defaults, so we need to have protected these
-                                                        // with a leading slash and reverse the transform.
-							// In Python:
-							//ignore = polystr(re.sub("\n(?!#)".encode('ascii'), "\n/".encode('ascii'), polybytes("\n" + ignore)))
-                                			//ignore = ignore.replace("\n//", "\n")
-                                                        ignore = regexp.MustCompile("\n(?!#)").ReplaceAllLiteralString("\n" + ignore, "\n/")
-                                                        ignore = strings.Replace(ignore, "\n//", "\n", -1)
-                                                        ignore = ignore[1:]
-                                                        if strings.HasSuffix(ignore, "/") {
-                                                                ignore = ignore[:len(ignore)-1]
-                                                        }
+                                                        // ignore defaults, which are already anchored.
+							ignorelines := make([]string, 0)
+							for _, line := range strings.Split(ignore, "\n") {
+								if strings.HasPrefix("line", "#") || strings.HasPrefix("line", "[/]") {
+									ignorelines = append(ignorelines, line)
+								} else {
+									ignorelines = append(ignorelines, "/" + line)
+								}
+							}
+							ignore = strings.Join(ignorelines, "\n")
                                                         blob := newBlob(sp.repo)
                                                         blob.setContent(ignore, noOffset)
                                                         newnode := new(NodeAction)
@@ -7968,7 +7967,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 // links. Also, since merging will also inherit the
                                 // mergeinfo entries of the source path, we also need to
                                 // gather and ignore those.
-                                existingMerges := *mergeinfo.get(node.path).(*stringSet)
+				rawOldMerges := mergeinfo.get(node.path)
+				var existingMerges stringSet
+				if rawOldMerges == nil {
+					existingMerges = newStringSet()
+				} else {
+					existingMerges = *rawOldMerges.(*stringSet)
+				}
                                 ownMerges := newStringSet()
 				info := node.props.get("svn:mergeinfo")
                                 if info != "" {
