@@ -2985,7 +2985,9 @@ func newDate(text string) (Date, error) {
 	for _, layout := range []string{time.RFC3339, time.RFC3339Nano, time.RFC1123Z, GitLogFormat, RFC1123ZNoComma} {
 		trial, err3 := time.Parse(layout, string(text))
 		if err3 == nil {
-			t.timestamp = trial.Round(1 * time.Second)
+			// Could be Round() rather than Truncate() - it's this way
+			// for compatibility with the ancestral Python.
+			t.timestamp = trial.Truncate(1 * time.Second)
 			return t, nil
 		}
 	}
