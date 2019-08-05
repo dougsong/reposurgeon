@@ -46,20 +46,20 @@ Python version passes all these tests.
 The following tests presently fail:
 
 x-reorder: toposort code is busted.
-x-branchify_map.tst: crash failure
-x-branchify.tst: panic, index out of range
-x-debranch.tst: interface conversion on stringSet fails
-x-debranch2.tst: interface conversion on stringSet fails
+x-branchify_map.tst: nonfatal error
+x-branchify.tst: missing fileop node
+x-debranch.tst: index out of range crash
+x-debranch2.tst: index out of range crash
 x-expunge-deletion.tst: forbidden operation in dump stream
 x-expunge.tst: missing filemap node
-x-gitify.tst: script failure on read
+x-gitify.tst: index error crash
 x-lint.tst: forbidden operation in dump stream
-x-nesting.tst: interface conversion on stringSet fails
+x-nesting.tst: can't connect nonempty branch root to origi
 x-references.tst: index out of range crash
 x-split-dir.tst: interface conversion on blob fails
 x-split.tst: interface conversion on stringSet fails
-x-squash-id.tst: script abort on read
-x-subdir.tst: interface conversion on stringSet fails
+x-squash-id.tst: index error crash
+x-subdir.tst: can't connect nonempty branch root to origin
 x-tagretract.tst: forbidden operation in dump stream
 x-treecontents.tst: forbidden operation in dump stream
 x-userignores.tst: interface conversion on stringSet fails

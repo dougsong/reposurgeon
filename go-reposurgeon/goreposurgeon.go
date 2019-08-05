@@ -8015,7 +8015,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                 }
                                         }
                                 }
-                                mergeinfo.set(node.path, ownMerges)
+                                mergeinfo.set(node.path, &ownMerges)
                                 newMerges := ownMerges.Subtract(existingMerges)
                                 if len(newMerges) == 0 {
 					continue
@@ -8243,7 +8243,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
         // These show up as redundant (D, M) fileop pairs.
         for _, commit := range sp.repo.commits(nil) {
                 for i := range commit.operations() {
-			if i < len(commit.operations()) {
+			if i < len(commit.operations())-1 {
 				if commit.operations()[i].op == opD && commit.operations()[i+1].op == opM {
 					if commit.operations()[i].Path == commit.operations()[i+1].Path {
 						commit.fileops[i].op = "X"
@@ -9125,11 +9125,9 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 				} else {
 					name = defaultEmptyTagName(commit)
 				}
-				fmt.Fprintf(os.Stderr, "Before searching for %q\n", name)
 				for repo.named(name) != nil {
 					name += "-displaced"
 				}
-				fmt.Fprintf(os.Stderr, "After searching for %q\n", name)
 				legend := ""
 				if legendFunc != nil {
 					legend = legendFunc(commit)
