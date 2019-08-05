@@ -9119,12 +9119,17 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 				}
 				if nameFunc != nil {
 					name = nameFunc(commit)
+					if name == "" {
+						name = defaultEmptyTagName(commit)
+					}
 				} else {
 					name = defaultEmptyTagName(commit)
 				}
+				fmt.Fprintf(os.Stderr, "Before searching for %q\n", name)
 				for repo.named(name) != nil {
 					name += "-displaced"
 				}
+				fmt.Fprintf(os.Stderr, "After searching for %q\n", name)
 				legend := ""
 				if legendFunc != nil {
 					legend = legendFunc(commit)
