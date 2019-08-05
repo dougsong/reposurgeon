@@ -8151,14 +8151,16 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 }
                 // Otherwise, generate one for inspection.
 		legend := []string{fmt.Sprintf("[[Tag from zero-fileop commit at Subversion r%s", commit.legacyID)}
+		/* FIXME: Restore this someday - got more diffcult to do when revisions stopped being a map.
                 // This guard can fail on a split commit
 		idx := sp.repo.eventToIndex(commit)
-		if _, split := splitCommits[idx]; !split {
+		if _, split := splitCommits[idx]; split {
 			legend = append(legend, ":\n")
 			for _, node := range sp.revisions[idx].nodes {
 				legend = append(legend, node.String() + "\n")
 			}
                 }
+		*/
                 legend = append(legend, "]]\n")
                 return strings.Join(legend, "")
 	}

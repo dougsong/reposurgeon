@@ -5352,11 +5352,11 @@ class StreamParser:
             legend = ["[[Tag from zero-fileop commit at Subversion r%s" \
                              % commit.legacy_id]
             # This guard can fail on a split commit
-            if commit.legacy_id in self.revisions:
-                if self.revisions[commit.legacy_id].nodes:
-                    legend.append(":\n")
-                    legend.extend(str(node)+"\n"
-                            for node in self.revisions[commit.legacy_id].nodes)
+            #if commit.legacy_id in self.revisions:
+            #    if self.revisions[commit.legacy_id].nodes:
+            #        legend.append(":\n")
+            #        legend.extend(str(node)+"\n"
+            #                for node in self.revisions[commit.legacy_id].nodes)
             legend.append("]]\n")
             return "".join(legend)
         #Pre compile the regex mappings for the next step

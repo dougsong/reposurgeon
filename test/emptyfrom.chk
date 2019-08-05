@@ -138,13 +138,10 @@ tag emptycommit-2
 #legacy-id 2
 from :2
 tagger thuang <thuang> 1438190588 +0000
-data 136
+data 53
 r2
 
-[[Tag from zero-fileop commit at Subversion r2:
-<NodeAction: r2 add dir 'trunk/sim/'>
-<NodeAction: r2 add dir 'trunk/sim/logs/'>
-]]
+[[Tag from zero-fileop commit at Subversion r2]]
 
 tag silver
 #legacy-id 3
@@ -157,11 +154,8 @@ tag emptycommit-11
 #legacy-id 11
 from :12
 tagger frank <frank> 1443477472 +0000
-data 173
+data 55
 r45
 
-[[Tag from zero-fileop commit at Subversion r11:
-<NodeAction: r11 add dir 'trunk/sim/test_lib/MATRIX_temp/'>
-<NodeAction: r11 delete dir 'trunk/sim/test_lib/temp/'>
-]]
+[[Tag from zero-fileop commit at Subversion r11]]
 

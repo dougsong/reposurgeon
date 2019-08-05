@@ -65,12 +65,10 @@ tag emptycommit-3
 #legacy-id 3
 from :2
 tagger jason <jason> 1441071261 +0000
-data 103
+data 57
 subdir
 
-[[Tag from zero-fileop commit at Subversion r3:
-<NodeAction: r3 add dir 'branches/subdir/'>
-]]
+[[Tag from zero-fileop commit at Subversion r3]]
 
 tag subdir/mybranch-root
 #legacy-id 4

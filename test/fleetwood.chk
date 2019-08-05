@@ -82,23 +82,19 @@ tag emptycommit-2
 #legacy-id 2
 from :2
 tagger mike <mike> 1437858590 +0000
-data 107
+data 72
 Create tags directory
 
-[[Tag from zero-fileop commit at Subversion r2:
-<NodeAction: r2 add dir 'tags/'>
-]]
+[[Tag from zero-fileop commit at Subversion r2]]
 
 tag emptycommit-3
 #legacy-id 3
 from :2
 tagger mike <mike> 1437858590 +0000
-data 115
+data 76
 Create branches directory
 
-[[Tag from zero-fileop commit at Subversion r3:
-<NodeAction: r3 add dir 'branches/'>
-]]
+[[Tag from zero-fileop commit at Subversion r3]]
 
 tag 1.0
 #legacy-id 5

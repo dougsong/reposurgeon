@@ -145,13 +145,11 @@ tag emptycommit-4
 #legacy-id 4
 from :6
 tagger chungy <chungy> 1391603792 +0000
-data 264
+data 217
 Add a custom .gitignore file
 
 This simulates the case of a git-svn user wishing to ignore *.txt
 files, without adding them to Subversion's native svn:ignore property.
 
-[[Tag from zero-fileop commit at Subversion r4:
-<NodeAction: r4 add file 'trunk/.gitignore'>
-]]
+[[Tag from zero-fileop commit at Subversion r4]]
 

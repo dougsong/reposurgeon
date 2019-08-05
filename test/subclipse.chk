@@ -46,11 +46,8 @@ tag emptycommit-3
 #legacy-id 3
 from :4
 tagger khan <khan> 1354595761 +0000
-data 284
+data 110
 Replace file with a copy of the previous revision of itself
 
-[[Tag from zero-fileop commit at Subversion r3:
-<NodeAction: r3 ILLEGAL-ACTION file 'trunk/hello' sources=<PathMap: trunk/hello>>
-<NodeAction: r3 add file 'trunk/hello' from=2~trunk/hello sources=<PathMap: trunk/hello>>
-]]
+[[Tag from zero-fileop commit at Subversion r3]]
 

@@ -106,10 +106,8 @@ tag emptycommit-2
 #legacy-id 2
 from :2
 tagger brooksd <brooksd> 1354779383 +0000
-data 118
+data 76
 default repository layout
 
-[[Tag from zero-fileop commit at Subversion r2:
-<NodeAction: r2 add dir 'proj1/trunk/'>
-]]
+[[Tag from zero-fileop commit at Subversion r2]]
 

@@ -1655,15 +1655,11 @@ tag emptycommit-2
 #legacy-id 2
 from :2
 tagger pablo.lerina <pablo.lerina> 1250102929 +0000
-data 244
+data 108
 Criando estrutura de repositorio (trunk, branches, tags)
 
 
-[[Tag from zero-fileop commit at Subversion r2:
-<NodeAction: r2 add dir 'activeedi/branches/'>
-<NodeAction: r2 add dir 'activeedi/tags/'>
-<NodeAction: r2 add dir 'activeedi/trunk/'>
-]]
+[[Tag from zero-fileop commit at Subversion r2]]
 
 tag tipdelete-brazilian-nfse
 #legacy-id 42.1

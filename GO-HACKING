@@ -62,7 +62,7 @@ x-squash-id.tst: index error crash
 x-subdir.tst: can't connect nonempty branch root to origin
 x-tagretract.tst: forbidden operation in dump stream
 x-treecontents.tst: forbidden operation in dump stream
-x-userignores.tst: interface conversion on stringSet fails
+x-userignores.tst: index out of range
 
 The reparent test presently succeeds, but the toposort has been
 commented out.

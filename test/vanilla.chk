@@ -82,10 +82,8 @@ tag emptycommit-5
 #legacy-id 5
 from :8
 tagger esr <esr> 1323084440 +0000
-data 149
+data 77
 Adding a property setting.
 
-[[Tag from zero-fileop commit at Subversion r5:
-<NodeAction: r5 change file 'trunk/README' properties={'foo': 'bar'}>
-]]
+[[Tag from zero-fileop commit at Subversion r5]]
 
