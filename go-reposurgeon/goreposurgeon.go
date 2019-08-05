@@ -5758,10 +5758,10 @@ const sdNONE = 0 // Must be integer zero
 const sdFILE = 1
 const sdDIR = 2
 const sdADD = 1
-const sdDELETE = 3
-const sdCHANGE = 4
-const sdREPLACE = 5
-const sdNUKE = 6 // Not part of the Subversion data model
+const sdDELETE = 2
+const sdCHANGE = 3
+const sdREPLACE = 4
+const sdNUKE = 5 // Not part of the Subversion data model
 
 // If these don't match the constants above, havoc will ensue
 var actionValues = []string{"none", "add", "delete", "change", "replace"}
@@ -6995,8 +6995,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                         }
                         // if node.props is None, no property section.
                         // if node.blob is None, no text section.
+			// Delete actions may be issued without a dir or file kind
 			if !((node.action == sdCHANGE || node.action == sdADD || node.action == sdDELETE || node.action == sdREPLACE) &&
-				(node.kind == sdFILE || node.kind == sdDIR) &&
+				(node.kind == sdFILE || node.kind == sdDIR || node.action == sdDELETE) &&
 			        ((node.fromRev == 0) == (node.fromPath == ""))) {
 				panic(throw("parse", "forbidden operation in dump stream at r%d: %s", revision, node))
 			}
