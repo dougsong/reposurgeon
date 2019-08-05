@@ -5893,6 +5893,11 @@ type daglink struct{
 	parent *Commit
 }
 
+// Only used in diagnostics
+func (dl daglink) String() string {
+	return fmt.Sprintf("%s->%s", dl.child.mark, dl.parent.mark)
+}
+
 // newSteamParser parses a fast-import stream or Subversion dump to a Repository.
 func newStreamParser(repo *Repository) *StreamParser {
 	sp := new(StreamParser)
@@ -7772,7 +7777,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 }
         } // end of revision loop
 
-        // Filemaps are no longer needed, allow them to be gae=rbage collectedc
+        // Filemaps are no longer needed, allow them to be garbage collectedc
         filemaps = nil
         // Bail out if we have read no commits
         if len(sp.repo.commits(nil)) == 0 {
@@ -7792,7 +7797,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				commit.legacyID, commit.mark,
 				len(commit.operations()),
 				commit.properties.Len(),
-				strings.TrimSpace(commit.Comment)[:20])
+				strings.TrimSpace(commit.Comment))
                 }
         }
         // First, turn a no-op root commit into a tag
@@ -7888,13 +7893,14 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 }
                 timeit("root")
                 // Add links due to Subversion copy operations
-		/*
-                announce(debugEXTRACT, "branch roots: [{roots}], links {{{links}}}".format(
-                        roots = ", ".join(c.mark for c in branchroots),
-                        links = ", ".join("{l[0].mark}: {l[1].mark}".format(l=l)
-                                          for _, l := range sp.branchlink.values())))
-                                          }
-		*/
+		if debugEnable(debugEXTRACT) {
+			rootmarks := make([]string, 0)
+			for _, commit := range branchroots {
+				rootmarks = append(rootmarks, commit.mark)
+			}
+			// Python version only displayet the branchlink values
+			announce(debugEXTRACT, "branch roots: %v, links: %v", rootmarks, sp.branchlink)
+		}
                 for _, item := range sp.branchlink {
                         if item.parent.repo != sp.repo {
                                 // The parent has been deleted since, don't add the link;
