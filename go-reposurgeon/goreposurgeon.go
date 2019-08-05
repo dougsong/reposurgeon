@@ -7939,6 +7939,16 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                 // Add links due to svn:mergeinfo properties
                 mergeinfo := newPathMap(nil)
                 mergeinfos := make(map[int]*PathMap)
+		getMerges := func(minfo *PathMap, path string) stringSet {
+			rawOldMerges := minfo.get(path)
+			var eMerges stringSet
+			if rawOldMerges == nil {
+				eMerges = newStringSet()
+			} else {
+				eMerges = *rawOldMerges.(*stringSet)
+			}
+			return eMerges
+		}
                 for revision, record := range sp.revisions {
                         for _, node := range record.nodes {
 				// We're only looking at directory nodes
@@ -7966,13 +7976,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 // links. Also, since merging will also inherit the
                                 // mergeinfo entries of the source path, we also need to
                                 // gather and ignore those.
-				rawOldMerges := mergeinfo.get(node.path)
-				var existingMerges stringSet
-				if rawOldMerges == nil {
-					existingMerges = newStringSet()
-				} else {
-					existingMerges = *rawOldMerges.(*stringSet)
-				}
+				existingMerges := getMerges(mergeinfo, node.path)
                                 ownMerges := newStringSet()
 				info := node.props.get("svn:mergeinfo")
                                 if info != "" {
@@ -7993,11 +7997,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							}
 							minRev, fromRev := fields[0], fields[1]
                                                         // Import mergeinfo from merged branches
-                                                        rawPastMerges, ok := mergeinfos[parseInt(fromRev)]
-                                                        if ok && rawPastMerges != nil {
-								pastMerges := rawPastMerges.get(fromPath).(*stringSet)
-								existingMerges = existingMerges.Union(*pastMerges)
-                                                        }
+                                                        pastMerges := getMerges(mergeinfos[parseInt(fromRev)], fromPath)
+							existingMerges = existingMerges.Union(pastMerges)
                                                         // SVN doesn't fit the merge range to commits on
                                                         // the source branch; we need to find the latest
                                                         // commit between minRev and fromRev made on
