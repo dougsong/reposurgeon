@@ -48,20 +48,20 @@ The following tests presently fail:
 x-reorder: toposort code is busted.
 x-branchify_map.tst: nonfatal error
 x-branchify.tst: missing fileop node
-x-debranch.tst: index out of range crash
-x-debranch2.tst: index out of range crash
-x-expunge-deletion.tst: forbidden operation in dump stream
+x-debranch.tst: missing fileop node
+x-debranch2.tst: missing fileop node
+x-expunge-deletion.tst: nonfatal error, missing commit
 x-expunge.tst: missing filemap node
-x-gitify.tst: index error crash
-x-lint.tst: forbidden operation in dump stream
+x-gitify.tst: nonfatal failure
+x-lint.tst: branch connection failure
 x-nesting.tst: can't connect nonempty branch root to origin
 x-references.tst: index out of range crash
 x-split-dir.tst: interface conversion on blob fails
 x-split.tst: index error crash
 x-squash-id.tst: index error crash
 x-subdir.tst: can't connect nonempty branch root to origin
-x-tagretract.tst: forbidden operation in dump stream
-x-treecontents.tst: forbidden operation in dump stream
+x-tagretract.tst: index out of range error
+x-treecontents.tst: branch connection error
 x-userignores.tst: index out of range
 
 The reparent test presently succeeds, but the toposort has been
