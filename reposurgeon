@@ -4263,7 +4263,7 @@ class StreamParser:
     def svn_process(self, options, baton):
         "Subversion actions to import-stream commits."
         self.repo.addEvent(Passthrough("#reposurgeon sourcetype svn\n", self.repo))
-        announce(DEBUG_EXTRACT, "Pass 0")
+        announce(DEBUG_EXTRACT, "Pass 0: dead-branch deletion")
         if '--preserve' not in options:
             # Identify Subversion tag/branch directories with
             # tipdeletes and nuke them.  Happens well before tip
@@ -4290,7 +4290,7 @@ class StreamParser:
             for (revision, record) in self.revisions.items():
                 record.nodes = [node for node in record.nodes if node.action != SD_NUKE]
         # Find all copy sources and compute the set of branches
-        announce(DEBUG_EXTRACT, "Pass 1")
+        announce(DEBUG_EXTRACT, "Pass 1: compute copy sets and branches")
         nobranch = '--nobranch' in options
         copynodes = []
         for (revision, record) in self.revisions.items():
@@ -4322,7 +4322,7 @@ class StreamParser:
             #memcheck(self.repo)
         timeit("copynodes")
         # Build filemaps.
-        announce(DEBUG_EXTRACT, "Pass 2")
+        announce(DEBUG_EXTRACT, "Pass 2: %d Subversion revisions" % len(self.revisions))
         filemaps = {}
         filemap = PathMap()
         for (revision, record) in self.revisions.items():

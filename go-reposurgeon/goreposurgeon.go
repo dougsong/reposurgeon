@@ -2462,9 +2462,8 @@ const debugSVNPARSE = 4 // Lower-level Subversion parsing details
 const debugEMAILIN = 4  // Debug round-tripping through msg{out|in}
 const debugSHUFFLE = 4  // Debug file and directory handling
 const debugCOMMANDS = 5 // Show commands as they are executed
-const debugUNITE = 6    // Debug mark assignments in merging
+const debugUNITE = 5    // Debug mark assignments in merging
 const debugLEXER = 6    // Debug selection-language parsing
-const debugDISABLE = 7  // dummy value for temporarily disabling a diagnostic
 
 var optionFlags = [...][2]string{
 	{"canonicalize",
@@ -2687,7 +2686,10 @@ func (d OrderedMap) String() string {
 	for _, el := range d.keys {
 		out += el + ":" + d.dict[el] + ","
 	}
-	return out[:len(out)-1] + "}"
+	if len(d.keys) > 0 {
+		out = out[:len(out)-1]
+	}
+	return out + "}"
 }
 
 // Less returns true if the sort method says the value for key i is
