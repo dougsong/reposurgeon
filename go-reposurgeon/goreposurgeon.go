@@ -5816,7 +5816,7 @@ func (action NodeAction) String() string {
 		out += fmt.Sprintf("%d", action.fromRev) + "~" + action.fromPath
 	}
 	if action.fromSet != nil {
-		out += "sources=" + action.fromSet.String()
+		out += " sources=" + action.fromSet.String()
 	}
 	if action.generated {
 		out += " generated"
@@ -7478,7 +7478,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                 continue
                                         }
                                         ancestorNodes[node.path] = &node
-                                        //assert node.blobmark
+                                        if node.blobmark == "" {
+						panic(fmt.Errorf("impossibly empty blob mark in %s", node))
+					}
                                         // Time for fileop generation.
                                         perms := nodePermissions(node)
                                         if sp.propagate[node.path]  {
@@ -7514,18 +7516,15 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                         // but new permissions.
                                         generatedFileCopy := node.generated
                                         subversionFileCopy := (node.fromHash != "")
-                                        if newContent ||
-                                            generatedFileCopy ||
-                                            subversionFileCopy ||
-                                            node.propchange {
+                                        if newContent || generatedFileCopy || subversionFileCopy || node.propchange {
                                                 //assert perms
                                                 fileop := newFileOp(sp.repo)
                                                 fileop.construct(opM,
                                                                  perms,
                                                                  node.blobmark,
                                                                  node.path)
-                                                actions = append(actions, fiAction{node, *fileop})
-					    sp.repo.markToEvent(fileop.ref).(*Blob).addalias(node.path)
+						actions = append(actions, fiAction{node, *fileop})
+						sp.repo.markToEvent(fileop.ref).(*Blob).addalias(node.path)
                                         } else if debugEnable(debugEXTRACT) {
                                                 announce(debugEXTRACT, "r%d~%s: unmodified", node.revision, node.path)
                                         }
