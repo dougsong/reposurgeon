@@ -4864,7 +4864,6 @@ class StreamParser:
                     fileop.construct("deleteall", node.path[:-1])
                     actions.append((node, fileop))
             # Time to generate commits from actions and fileops.
-            announce(DEBUG_EXTRACT, "r%s: %d actions" % (revision, len(actions)))
             # First, break the file operations into branch cliques
             cliques = {}
             clique_branches = [] 
@@ -4888,6 +4887,7 @@ class StreamParser:
                     cliques.setdefault("", []).append(fileop)
                     if not clique_branches or "" != clique_branches[-1]:
                         clique_branches.append("")
+            announce(DEBUG_EXTRACT, "r%s: %d action(s) in %d clique(s)" % (revision, len(actions), len(cliques)))
             # Make two operation lists from the cliques, sorting cliques
             # containing only branch deletes from other cliques.
             deleteall_ops = []

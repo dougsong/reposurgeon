@@ -5928,20 +5928,20 @@ func (sp *StreamParser) error(msg string) {
 }
 
 func (sp *StreamParser) warn(msg string) {
-	// Display a parse warning associated with a line.
+	// Display a parse warning associated with a line but don't error out.
 	if sp.importLine > 0 {
-		croak("%s at line %d", msg, sp.importLine)
+		complain("%s at line %d", msg, sp.importLine)
 	} else {
-		croak(msg)
+		complain(msg)
 	}
 }
 
 func (sp *StreamParser) gripe(msg string) {
-	// Display or queue up an error message.
+	// Display or queue up an error message for end of parse.
 	if context.verbose < 2 {
 		sp.warnings = append(sp.warnings, msg)
 	} else {
-		croak(msg)
+		complain(msg)
 	}
 }
 

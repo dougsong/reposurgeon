@@ -358,7 +358,7 @@ svnload-regress:
 # Perform full regression on SVN streams that have clean conversions -
 # that is, no messages due to branch surgery or whatever.
 SVNCLEAN := binary.svn blob-id.svn deletion.svn deepdirs.svn delignore.svn \
-	executable.svn 	x-expunge.svn filecopy.svn x-gitify.svn ignore-blank.svn \
+	executable.svn 	x-expunge.svn filecopy.svn gitify.svn ignore-blank.svn \
 	mkignore.svn pangram.svn permcopy2.svn permcopy.svn replace-dir.svn \
 	x-squash-id.svn x-subdir.svn svnignores.svn
 liftcheck-regress:
