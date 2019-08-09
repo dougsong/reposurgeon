@@ -47,11 +47,11 @@ The following tests presently fail:
 
 x-reorder: toposort code is busted.
 x-branchify_map.tst: nonfatal error
-x-branchify.tst: missing fileop node
-x-debranch.tst: missing fileop node
-x-debranch2.tst: missing fileop node
+x-branchify.tst: failure during branch link detection
+x-debranch.tst: index out of range panic
+x-debranch2.tst: slice bounds out of range error
 x-expunge-deletion.tst: nonfatal error, missing commit
-x-expunge.tst: missing filemap node
+x-expunge.tst: interface conversion on blob fails
 x-gitify.tst: nonfatal failure
 x-lint.tst: branch connection failure
 x-nesting.tst: unknown failure
@@ -61,7 +61,7 @@ x-split.tst: index error crash
 x-squash-id.tst: index error crash
 x-subdir.tst: name lookup failure
 x-tagretract.tst: index out of range error
-x-treecontents.tst: missing fileop node
+x-treecontents.tst: nonfatal error
 x-userignores.tst: index out of range
 
 The reparent test presently succeeds, but the toposort has been

@@ -7394,27 +7394,35 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 } else if node.action == sdADD || node.action == sdCHANGE || node.action == sdREPLACE {
                                         // Try to figure out who the ancestor of
                                         // this node is.
-                                        if node.fromPath != "" || node.fromHash != ""{
+                                        if node.fromPath != "" || node.fromHash != "" {
                                                 // Try first via fromPath
-                                                found := filemaps[node.fromRev].get(node.fromPath)
-						ancestor, ok = found.(*NodeAction) 
-                                                if debugEnable(debugTOPOLOGY) {
-                                                        if ok {
-                                                                announce(debugSHOUT, "r%d~%s -> %v (via filemap)",
-                                                                         node.revision, node.path, ancestor)
-                                                        } else {
-                                                                announce(debugSHOUT, "r%d~%s has no ancestor (via filemap)",
-                                                                         node.revision, node.path)
-                                                        }
-                                                }
+                                                fm, ok := filemaps[node.fromRev]
+						if ok {
+							var trialnode interface {}
+							trialnode = fm.get(node.fromPath)
+							if trialnode == nil {
+								ok = false
+							} else {
+								ancestor, ok = trialnode.(*NodeAction) 
+								if debugEnable(debugTOPOLOGY) {
+									if ok {
+										announce(debugSHOUT, "r%d~%s -> %v (via filemap)",
+											node.revision, node.path, ancestor)
+									} else {
+										announce(debugSHOUT, "r%d~%s has no ancestor (via filemap)",
+											node.revision, node.path)
+									}
+								}
+							}
+						}
                                                 // Fallback on the first blob that had this hash
-                                                if node.fromHash != "" && !ok {
-                                                        ancestor = sp.hashmap[node.fromHash]
+                                                if !ok && node.fromHash != "" {
+                                                        ancestor, ok = sp.hashmap[node.fromHash]
                                                         announce(debugTOPOLOGY, "r%d~%s -> %s (via hashmap)",
-                                                                 node.revision, node.path, ancestor)
+								node.revision, node.path, ancestor)
                                                 }
                                                 if !ok && !strings.HasSuffix(node.path, ".gitignore") {
-                                                        sp.gripe(fmt.Sprintf("r%d~%s: missing filemap node for.gitignore.",
+                                                        sp.gripe(fmt.Sprintf("r%d~%s: missing ancestor node for non-.gitignore.",
 								node.revision, node.path))
                                                 }
                                         } else if node.action != sdADD {

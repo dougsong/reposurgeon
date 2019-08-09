@@ -4761,7 +4761,7 @@ class StreamParser:
                                 announce(DEBUG_TOPOLOGY, "r%s~%s -> %s (via hashmap)" % \
                                          (node.revision, node.path, ancestor))
                             if not ancestor and not node.path.endswith(".gitignore"):
-                                self.gripe("r%s~%s: missing filemap node." \
+                                self.gripe("r%s~%s: missing ancestor node for non-.gitignore." \
                                           % (node.revision, node.path))
                         elif node.action != SD_ADD:
                             # Ordinary inheritance, no node copy.  For
