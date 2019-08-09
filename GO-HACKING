@@ -52,7 +52,6 @@ x-debranch.tst: index out of range panic
 x-debranch2.tst: slice bounds out of range error
 x-expunge-deletion.tst: nonfatal error, missing commit
 x-expunge.tst: interface conversion on blob fails
-x-gitify.tst: nonfatal failure
 x-lint.tst: branch connection failure
 x-nesting.tst: unknown failure
 x-references.tst: index out of range crash

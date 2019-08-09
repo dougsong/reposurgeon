@@ -5,6 +5,7 @@ pkg
 golang.org
 github.com
 gitlab.com
+go.sum
 *.1
 *.html
 MANIFEST
