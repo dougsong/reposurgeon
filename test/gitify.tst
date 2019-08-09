@@ -1,5 +1,5 @@
 ## Test for the gitify command to canonicalize comments.
-read <x-gitify.svn
+read <gitify.svn
 prefer git
 gitify
 write -
