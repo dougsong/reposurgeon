@@ -32,7 +32,7 @@ this on the make command line, e.g. "cd test; make STOPOUT=0
 fi-regress".  Note, the output from this may be voluminous and
 unuseful.
 
-make goregress forces REPOSURGEON=reposurgeon.  It runs fi-regress which is
+make goregress forces REPOSURGEON=goreposurgeon.  It runs fi-regress which is
 the inner production for general regression tests.
 
 To run a single test under Go,
@@ -65,6 +65,10 @@ x-userignores.tst: index out of range
 
 The reparent test presently succeeds, but the toposort has been
 commented out.
+
+The Go implementation of filemaps is probably broken.  At verbose 4 it looks
+like filemap lookups in the branchify test are failing; this is masked because
+fallback lookups through the hashmap succeed.
 
 The next steps after these will be testing coalescebce, extractor classes,
 and the Subversion load tests.
