@@ -54,14 +54,14 @@ x-expunge-deletion.tst: nonfatal error, missing commit
 x-expunge.tst: missing filemap node
 x-gitify.tst: nonfatal failure
 x-lint.tst: branch connection failure
-x-nesting.tst: can't connect nonempty branch root to origin
+x-nesting.tst: unknown failure
 x-references.tst: index out of range crash
 x-split-dir.tst: interface conversion on blob fails
 x-split.tst: index error crash
 x-squash-id.tst: index error crash
-x-subdir.tst: can't connect nonempty branch root to origin
+x-subdir.tst: name lookup failure
 x-tagretract.tst: index out of range error
-x-treecontents.tst: branch connection error
+x-treecontents.tst: missing fileop node
 x-userignores.tst: index out of range
 
 The reparent test presently succeeds, but the toposort has been

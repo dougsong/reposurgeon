@@ -7900,7 +7900,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			for _, commit := range branchroots {
 				rootmarks = append(rootmarks, commit.mark)
 			}
-			// Python version only displayet the branchlink values
+			// Python version only displayed the branchlink values
 			announce(debugEXTRACT, "branch roots: %v, links: %v", rootmarks, sp.branchlink)
 		}
                 for _, item := range sp.branchlink {
@@ -7938,12 +7938,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				item.child.addParentCommit(item.parent)
 			}
                 }
-                for _, root := range branchroots {
-                        if len(root.operations()) != 0 && root.Branch != ("trunk" + svnSep) {
-				sp.gripe(fmt.Sprintf("r%s: can't connect nonempty branch %s to origin",
-					root.legacyID, root.Branch))
-                        }
-                }
+		//FIXME: This test is not correct.  What was the Python trying to validate?
+                //for _, root := range branchroots {
+                //        if len(root.operations()) != 0 && root.Branch != ("trunk" + svnSep) {
+		//		sp.gripe(fmt.Sprintf("r%s: can't connect nonempty branch %s to origin",
+		//			root.legacyID, root.Branch))
+                ///       }
+                //}
                 timeit("branchlinks")
                 // Add links due to svn:mergeinfo properties
                 mergeinfo := newPathMap(nil)

@@ -5164,11 +5164,12 @@ class StreamParser:
                         self.generated_deletes.append(commit)
                 if parent not in child.parents():
                     child.add_parent(parent)
-            for root in branchroots:
-                if getattr(commit.branch, "fileops", None) \
-                        and root.branch != ("trunk" + os.sep):
-                    self.gripe("r%s: can't connect nonempty branch %s to origin" \
-                                % (root.legacy_id, root.branch))
+            #FIXME: commit.branch is not abn object. What were we validating here?
+            #for root in branchroots:
+            #    if getattr(commit.branch, "fileops", None) \
+            #            and root.branch != ("trunk" + os.sep):
+            #        self.gripe("r%s: can't connect nonempty branch %s to origin" \
+            #                    % (root.legacy_id, root.branch))
             timeit("branchlinks")
             # Add links due to svn:mergeinfo properties
             mergeinfo = PathMap()
