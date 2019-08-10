@@ -7440,14 +7440,14 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                         }
                                         // Time for fileop generation
                                         if node.blob != nil {
-                                                if sp.hashmap[node.contentHash] != nil  {
+                                                if lookback, ok := sp.hashmap[node.contentHash]; ok  {
                                                         // Blob matches an existing one -
                                                         // node was created by a
                                                         // non-Subversion copy followed by
                                                         // add.  Get the ancestry right,
                                                         // otherwise parent pointers won't
                                                         // be computed properly.
-                                                        ancestor = sp.hashmap[node.contentHash]
+							ancestor = lookback
                                                         node.fromPath = ancestor.fromPath
                                                         node.fromRev = ancestor.fromRev
                                                         node.blobmark = ancestor.blobmark
