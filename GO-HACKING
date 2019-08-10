@@ -53,15 +53,14 @@ x-debranch2.tst: slice bounds out of range error
 x-expunge-deletion.tst: nonfatal error, missing commit
 x-expunge.tst: fatal failure to compute blob mark
 x-lint.tst: branch connection failure
-x-nesting.tst: unknown failure
+x-nesting.tst: can't find anecestor
 x-references.tst: index out of range crash
-x-split-dir.tst: fatal failure to compute blob mark
+x-split-dir.tst: nonfatal failure to resolve mergeinfo
 x-split.tst: index error crash
-x-squash-id.tst: index error crash
-x-subdir.tst: name lookup failure
+x-subdir.tst: can't find ancestor
 x-tagretract.tst: index out of range error
-x-treecontents.tst: nonfatal error
-x-userignores.tst: index out of range
+x-treecontents.tst: can't find anestor
+x-userignores.tst: cannot resolve mergeinfo
 
 The reparent test presently succeeds, but the toposort has been
 commented out.

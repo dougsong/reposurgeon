@@ -8030,7 +8030,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                         // that branch.
 							fromCommit := lastRelevantCommit(sp, parseInt(fromRev), fromPath, "branch")
 							if fromCommit == nil {
-                                                                sp.gripe(fmt.Sprintf("cannot resolve mergeinfosource from revision %s for  path %s.",
+                                                                sp.gripe(fmt.Sprintf("cannot resolve mergeinfo source from revision %s for path %s.",
 									fromRev, node.path))
                                                         } else {
 								legacyFields := strings.Split(fromCommit.legacyID, ".")
