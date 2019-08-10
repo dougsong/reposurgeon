@@ -6922,9 +6922,17 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 
 	timeit("filemaps")
 	// Blows up huge on large repos...
-	//if debugEnable(debugFILEMAP) {
-	//    announce(debugSHOUT, "filemaps %s" % filemaps)
-	//}
+	if debugEnable(debugFILEMAP) {
+		fmt.Printf("Filemaps for %d revisions:\n", len(sp.revisions))
+		for revision := range sp.revisions {
+			fmt.Printf("r%d: ", revision)
+			here := filemaps[revision]
+			for _, path := range here.pathnames() {
+				fmt.Printf("%s ", path)
+			}
+			fmt.Print("\n")
+		}
+	}
 	
 	// Build from sets in each directory copy record.
 	announce(debugEXTRACT, "Pass 3")

@@ -4355,8 +4355,14 @@ class StreamParser:
         del filemap
         timeit("filemaps")
         # Blows up huge on large repos...
-        #if debug_enable(DEBUG_FILEMAP):
-        #    announce(DEBUG_SHOUT, "filemaps %s" % filemaps)
+	if debug_enable(DEBUG_FILEMAP):
+	    sys.stdout.write("Filemaps for %s revisions:\n" % len(self.revisions))
+	    for revision in self.revisions:
+	        sys.stdout.write("r%s: " % revision)
+		here = filemaps[revision]
+		for path in here:
+		    sys.stdout.write("%s " % path)
+	        sys.stdout.write("\n")
         # Build from sets in each directory copy record.
         announce(DEBUG_EXTRACT, "Pass 3")
         for copynode in copynodes:
