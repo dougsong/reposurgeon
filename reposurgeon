@@ -5275,7 +5275,7 @@ class StreamParser:
                 announce(DEBUG_EXTRACT, "after branch analysis")
                 for commit in self.repo.commits():
                     try:
-                        ancestor = commit.parents()[0]
+                        ancestor = commit.parents()[0].mark
                     except IndexError:
                         ancestor = '-'
                     announce(DEBUG_SHOUT, "r%-4s %4s %4s %2d %2d '%s'" % \

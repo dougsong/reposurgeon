@@ -8078,13 +8078,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                         ancestorID = "-"
                                 } else {
 					ancestorID = ancestors[0].getMark()
-					announce(debugSHOUT, "r%-4s %4s %4s %2d %2d '%s'",
-						commit.legacyID,
-						commit.mark, ancestorID,
-						len(commit.operations()),
-						commit.properties.Len(),
-						commit.Branch)
 				}
+				announce(debugSHOUT, "r%-4s %4s %4s %2d %2d '%s'",
+					commit.legacyID,
+					commit.mark, ancestorID,
+					len(commit.operations()),
+					commit.properties.Len(),
+					commit.Branch)
                         }
                 }
         }

@@ -69,7 +69,7 @@ The Go implementation of filemaps is probably broken.  At verbose 4 it looks
 like filemap lookups in the branchify test are failing; this is masked because
 fallback lookups through the hashmap succeed.
 
-The next steps after these will be testing coalescebce, extractor classes,
+The next steps after these will be testing coalescence, extractor classes,
 and the Subversion load tests.
 
 == Tuning for speed ==
