@@ -5456,7 +5456,7 @@ type pathMapItem struct {
 	value interface{}
 }
 
-var pathMapSelf = `/\/\/\/`
+const pathMapSelf = `/\/\/\/`
 
 func newPathMap(other interface{}) *PathMap {
 	// The instance may be a child of several other PathMaps if |shared| is
@@ -5739,7 +5739,7 @@ func pathMapSplitPath(path interface{}) (string, []string) {
 		if len(components) == 0 {
 			return "", nil
 		}
-		return components[0], components[1:]
+		return components[len(components)-1], components[:len(components)-1]
 	} else {
 		slice := path.([]interface{})
 		components := strings.Split(filepath.Clean(slice[0].(string)),
