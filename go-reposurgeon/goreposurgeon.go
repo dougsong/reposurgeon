@@ -5624,8 +5624,16 @@ func (p *PathMap) pathnames() []string {
 }
 
 func (p *PathMap) String() string {
-	return "<PathMap: " + strings.Join(p.pathnames(), " ") + ">"
+	out := "{"
+	for _, item := range p.items() {
+		out += fmt.Sprintf("%s: %v, ", item.name, item.value)
+	}
+	if p.size() > 0 {
+		out = out[:len(out)-2]
+	}
+	return out + "}"
 }
+
 
 // rawGet returns the current value associated with the component in the store
 func (p *PathMap) rawGet(component string) interface{} {
@@ -6926,12 +6934,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	if debugEnable(debugFILEMAP) {
 		fmt.Printf("Filemaps for %d revisions:\n", len(sp.revisions))
 		for revision := range sp.revisions {
-			fmt.Printf("r%d: ", revision)
-			here := filemaps[revision]
-			for _, path := range here.pathnames() {
-				fmt.Printf("%s ", path)
-			}
-			fmt.Print("\n")
+			fmt.Printf("r%d: %v\n", revision, filemaps[revision])
 		}
 	}
 	

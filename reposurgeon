@@ -3317,7 +3317,12 @@ class PathMap(object):
     def __iter__(self):
         return itertools.imap(operator.itemgetter(0), self.items())
     def __str__(self):
-        return '<PathMap: {}>'.format(' '.join(self))
+	out = "{"
+	for item in self.items():
+	    out += "%s: %s, " % item
+	if len(self) > 0:
+		out = out[:len(out)-2]
+	return out + "}"
     # Return the current value associated with the component in the store
     def _elts_get(self, component):
         snaplist = self.store.get(component) or [None]
@@ -4358,11 +4363,7 @@ class StreamParser:
 	if debug_enable(DEBUG_FILEMAP):
 	    sys.stdout.write("Filemaps for %s revisions:\n" % len(self.revisions))
 	    for revision in self.revisions:
-	        sys.stdout.write("r%s: " % revision)
-		here = filemaps[revision]
-		for path in here:
-		    sys.stdout.write("%s " % path)
-	        sys.stdout.write("\n")
+	        sys.stdout.write("r%s: %s\n" % (revision, filemaps[revision]))
         # Build from sets in each directory copy record.
         announce(DEBUG_EXTRACT, "Pass 3")
         for copynode in copynodes:
