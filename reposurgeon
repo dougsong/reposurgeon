@@ -4322,7 +4322,7 @@ class StreamParser:
             #memcheck(self.repo)
         timeit("copynodes")
         # Build filemaps.
-        announce(DEBUG_EXTRACT, "Pass 2: %d Subversion revisions" % len(self.revisions))
+        announce(DEBUG_EXTRACT, "Pass 2: build filemaps for %d Subversion revisions" % len(self.revisions))
         filemaps = {}
         filemap = PathMap()
         for (revision, record) in self.revisions.items():

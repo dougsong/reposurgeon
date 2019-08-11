@@ -5574,6 +5574,7 @@ func (p *PathMap) remove(path interface{}) {
 	}
 	// Set value to nil since PathMap doesn't tell nil and absence apart
 	p.rawSet(basename, nil)
+	fmt.Fprintf(os.Stderr, "XXXXX After deleting %v names are %v\n", path, p.pathnames())
 }
 
 func (p *PathMap) isEmpty() bool {
@@ -6879,7 +6880,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	   deleted name.
 	*/
 	// Build filemaps.
-	announce(debugEXTRACT, "Pass 2: %d Subversion revisions", len(sp.revisions))
+	announce(debugEXTRACT, "Pass 2: build filemaps for %d Subversion revisions", len(sp.revisions))
 	filemaps := make(map[int]*PathMap)
 	filemap := newPathMap(nil)
 	for revision, record := range sp.revisions {
