@@ -360,7 +360,7 @@ svnload-regress:
 SVNCLEAN := binary.svn blob-id.svn deletion.svn deepdirs.svn delignore.svn \
 	executable.svn 	x-expunge.svn filecopy.svn gitify.svn ignore-blank.svn \
 	mkignore.svn pangram.svn permcopy2.svn permcopy.svn replace-dir.svn \
-	x-squash-id.svn x-subdir.svn svnignores.svn
+	squash-id.svn x-subdir.svn svnignores.svn
 liftcheck-regress:
 	@echo "== Testing conversion correctness of Subversion streams:"
 	@if  command -v git >/dev/null 2>&1 &&  command -v svn >/dev/null 2>&1; \
