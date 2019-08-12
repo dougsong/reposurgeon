@@ -5574,7 +5574,7 @@ func (p *PathMap) remove(path interface{}) {
 	}
 	// Set value to nil since PathMap doesn't tell nil and absence apart
 	p.rawSet(basename, nil)
-	fmt.Fprintf(os.Stderr, "XXXXX After deleting %v names are %v\n", path, p.pathnames())
+	//fmt.Fprintf(os.Stderr, "XXXXXXXXXXXXXXXX After deleting %v map is %v part is %v\n", path, p.String(), p.rawGet(basename))
 }
 
 func (p *PathMap) isEmpty() bool {
@@ -5649,20 +5649,15 @@ func (p *PathMap) rawGet(component string) interface{} {
 
 // rawSet sets the current value associated with the component in the store
 func (p *PathMap) rawSet(component string, value interface{}) interface{} {
+	//fmt.Fprintf(os.Stderr, "XXXXX Before rawSet(%v, %v) map is %s\n", component, value, p.String())
 	if p.store == nil {
 		p.store = make(map[string][]interface{})
 	}
 	snaplist, ok := p.store[component]
 	if !ok {
 		snaplist = []interface{}{nil}
-		p.store[component] = snaplist
 	}
-	needed := 1
-	if *p.maxid < p.snapid+1 {
-		needed += *p.maxid
-	} else {
-		needed += p.snapid + 1
-	}
+	needed := min(*p.maxid, p.snapid + 1) + 1
 	if len(snaplist) < needed {
 		last := snaplist[len(snaplist)-1]
 		for i := len(snaplist); i < needed; i++ {
@@ -5671,6 +5666,8 @@ func (p *PathMap) rawSet(component string, value interface{}) interface{} {
 		p.store[component] = snaplist
 	}
 	snaplist[p.snapid] = value
+	p.store[component] = snaplist
+	//fmt.Fprintf(os.Stderr, "XXXXX After rawSet(%v, %v) map is %s part is %s\n", component, value, p.String(), p.rawGet(component))
 	return value
 }
 
@@ -5682,12 +5679,7 @@ func (p *PathMap) rawItems() []pathMapItem {
 		if component == pathMapSelf {
 			continue
 		}
-		var val interface{}
-		if snapid < len(snaplist)-1 {
-			val = snaplist[snapid]
-		} else {
-			val = snaplist[len(snaplist)-1]
-		}
+		val := snaplist[min(snapid, len(snaplist) - 1)]
 		if val != nil {
 			items = append(items, pathMapItem{component, val})
 		}
