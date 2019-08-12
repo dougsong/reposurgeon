@@ -1648,4 +1648,6 @@ func TestPathMap(t *testing.T) {
 	p.set("foo/bar", 42)
 	assertTrue(t, p.contains("foo/bar"))
 	assertIntEqual(t, p.find("foo/bar").(int), 42)
+	p.remove("foo/bar")
+	assertTrue(t, !p.contains("foo/bar"))
 }

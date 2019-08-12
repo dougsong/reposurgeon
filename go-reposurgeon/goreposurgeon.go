@@ -5565,8 +5565,7 @@ func (p *PathMap) remove(path interface{}) {
 		q = nxt.(*PathMap)
 	}
 	// Set value to nil since PathMap doesn't tell nil and absence apart
-	p.rawSet(basename, nil)
-	//fmt.Fprintf(os.Stderr, "XXXXXXXXXXXXXXXX After deleting %v map is %v part is %v\n", path, p.String(), p.rawGet(basename))
+	q.rawSet(basename, nil)
 }
 
 func (p *PathMap) isEmpty() bool {
@@ -5641,7 +5640,6 @@ func (p *PathMap) rawGet(component string) interface{} {
 
 // rawSet sets the current value associated with the component in the store
 func (p *PathMap) rawSet(component string, value interface{}) interface{} {
-	//fmt.Fprintf(os.Stderr, "XXXXX Before rawSet(%v, %v) map is %s\n", component, value, p.String())
 	if p.store == nil {
 		p.store = make(map[string][]interface{})
 	}
@@ -5659,7 +5657,6 @@ func (p *PathMap) rawSet(component string, value interface{}) interface{} {
 	}
 	snaplist[p.snapid] = value
 	p.store[component] = snaplist
-	//fmt.Fprintf(os.Stderr, "XXXXX After rawSet(%v, %v) map is %s part is %s\n", component, value, p.String(), p.rawGet(component))
 	return value
 }
 
