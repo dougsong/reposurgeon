@@ -2480,7 +2480,8 @@ case, reposurgeon doesn't make on-disk blob copies at all (it points
 into sections of the input stream instead).
 `},
 	{"testmode",
-		`Disable some features that cause output to be vary depending on wall time, screen width, and the ID of the invoking user. Use in regression-test loads.
+		`Disable some features that cause output to be vary depending on wall time, 
+screen width, and the ID of the invoking user. Use in regression-test loads.
 `},
 	{"bigprofile",
 		`Extra profiling for large repositories.  Mainly of interest to reposurgeon
