@@ -4726,6 +4726,7 @@ class StreamParser:
                                 newnode.generated = True
                                 expanded_nodes.append(newnode)
                                 del self.active_gitignores[gitignore_path]
+	    announce(DEBUG_EXTRACT, "%d expanded Subversion nodes" % len(expanded_nodes))
             # Ugh.  Because cvs2svn is brain-dead and issues D/M pairs
             # for identical paths in generated commits, we have to remove those
             # D ops here.  Otherwise later on when we're generating ops, if

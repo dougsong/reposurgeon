@@ -7349,6 +7349,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                 }
                         }
                 }
+		announce(debugEXTRACT, "%d expanded Subversion nodes", len(expandedNodes))
                 // Ugh.  Because cvs2svn is brain-dead and issues D/M pairs
                 // for identical paths in generated commits, we have to remove those
                 // D ops here.  Otherwise later on when we're generating ops, if
@@ -7370,7 +7371,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
                 actions := make([]fiAction, 0)
                 ancestorNodes := make(map[string]*NodeAction)
-		announce(debugEXTRACT, "%d expanded Subversion nodes", len(expandedNodes))
                 for _, node := range expandedNodes {
                         if node.action == sdNONE {
 				continue
