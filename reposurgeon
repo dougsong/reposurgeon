@@ -3299,7 +3299,7 @@ class PathMap(object):
             self = nxt
         # Set value to None since PathMap doesn't tell None and absence apart
         self._elts_set(basename, None)
-xvv    def __nonzero__(self):
+    def __nonzero__(self):
         "Return true if any filenames are present in the set."
         return any(v for _, v in self._elts_items())
     __bool__ = __nonzero__  # for Python 3
