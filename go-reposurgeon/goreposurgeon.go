@@ -6874,7 +6874,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	filemaps := make(map[int]*PathMap)
 	filemap := newPathMap(nil)
 	for revision, record := range sp.revisions {
-		for _, node := range record.nodes {
+		for idx, node := range record.nodes {
 			// Mutate the filemap according to copies
 			if node.fromRev > 0 {
 				//assert node.fromRev < revision
@@ -6890,15 +6890,16 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			} else if node.action == sdDELETE || (node.action == sdREPLACE && node.kind == sdDIR) {
 				if node.kind == sdNONE {
 					if filemap.contains(node.path) {
-						node.kind = sdFILE
+						record.nodes[idx].kind = sdFILE
 					} else {
-						node.kind = sdDIR
+						record.nodes[idx].kind = sdDIR
 					}
 				}
+				announce(debugFILEMAP, "r%d: deduced type for %s", record.nodes[idx].revision, record.nodes[idx])
 				// Snapshot the deleted paths before
 				// removing them.
-				node.fromSet = newPathMap(nil)
-				node.fromSet.copyFrom(node.path, filemap, node.path)
+				record.nodes[idx].fromSet = newPathMap(nil)
+				record.nodes[idx].fromSet.copyFrom(node.path, filemap, node.path)
 				filemap.remove(node.path)
 				announce(debugFILEMAP, "r%d~%s deleted",
 					node.revision, node.path)
