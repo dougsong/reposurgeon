@@ -10,8 +10,8 @@
 from __future__ import print_function
 
 import sys, os, cmd, tempfile, subprocess, glob, hashlib, cProfile
-import re, sre_constants, signal, shutil, copy, shlex, collections, uuid
-import cgi, bz2, codecs, time, calendar, unittest, itertools, operator
+import re, sre_constants, signal, shutil, copy, shlex, uuid
+import cgi, bz2, codecs, time, calendar, unittest, collections, itertools, operator
 import functools, filecmp, datetime, difflib, tarfile, stat
 import email.message, email.parser
 import heapq
@@ -805,6 +805,18 @@ def readprogress(baton, fp, filesize):
             lastfrac = frac
     baton.twirl()
 
+class quietOrderedDict(collections.OrderedDict):
+    "Stringize an ordered dictionary as though it were plain."
+    def __init__(self, *args):
+        collections.OrderedDict.__init__(self, *args)
+    def __str__(self):
+        raw = collections.OrderedDict.__str__(self)
+        if raw.startswith("quietOrderedDict("):
+            raw = "{" + raw[17:]
+        if raw.endswith(")"):
+            raw = raw[:-1] + "}"
+        return raw
+
 # How to write extractor classes:
 #
 # Clone one of the existing ones and mutate.
@@ -843,7 +855,7 @@ class Extractor(object):
         self.revlist = [] # commit identifiers, oldest first
         self.parents = {} # commit -> [parent-commit, ...]
         self.meta = {} # commit -> {'ci':committer, 'ai':author, 'branch':color}
-        self.refs = collections.OrderedDict() # 'refs/class/name' -> commit
+        self.refs = quietOrderedDict() # 'refs/class/name' -> commit
         self.tags = [] # Tag objects (annotated tags only)
         self.timestamps = None # if used, commit -> Unix timestamp
         self.child_timestamps = None # if used, commit -> timestamp of latest child (used for coloring)
@@ -1016,7 +1028,7 @@ class Extractor(object):
         if self.properties:
             raise NotImplementedError()
         else:
-            return collections.OrderedDict()
+            return quietOrderedDict()
 
 class GitExtractor(Extractor):
     "Repository extractor for the git version-control system."
@@ -2761,7 +2773,7 @@ class Commit(object):
             if msg["Legacy-ID"] != self.legacy_id:
                 modified = True
                 self.legacy_id = msg["Legacy-ID"]
-        newprops = collections.OrderedDict()
+        newprops = quietOrderedDict()
         for prophdr in msg.keys():
             if not prophdr.startswith("Property-"): continue
             propkey = prophdr[9:].lower()
@@ -2892,7 +2904,7 @@ class Commit(object):
                         for parent in self.parents())
     def cliques(self):
         "Return a dictionary mapping filenames to associated M cliques."
-        cliques = collections.OrderedDict()
+        cliques = quietOrderedDict()
         for (i, fileop) in enumerate(self.operations()):
             if fileop.op == FileOp.M: cliques.setdefault(fileop.path, []).append(i)
         return cliques
@@ -3317,12 +3329,12 @@ class PathMap(object):
     def __iter__(self):
         return itertools.imap(operator.itemgetter(0), self.items())
     def __str__(self):
-	out = "{"
-	for item in self.items():
-	    out += "%s: %s, " % item
-	if len(self) > 0:
-		out = out[:len(out)-2]
-	return out + "}"
+        out = "{"
+        for item in self.items():
+            out += "%s: %s, " % item
+        if len(self) > 0:
+            out = out[:len(out)-2]
+        return out + "}"
     # Return the current value associated with the component in the store
     def _elts_get(self, component):
         snaplist = self.store.get(component) or [None]
@@ -3501,7 +3513,7 @@ class RepoStreamer:
                 commit.sort_operations()
                 commit.legacy_id = revision
                 if commit.properties is None:
-                    commit.properties = collections.OrderedDict()
+                    commit.properties = quietOrderedDict()
                 commit.properties.update(self.extractor.get_properties(revision))
                 commit.set_mark(repo.newmark())
                 self.commit_map[revision] = commit
@@ -3646,8 +3658,8 @@ class StreamParser:
         self.branchdeletes = set()
         self.branchcopies = set()
         self.generated_deletes = []
-        self.revisions = collections.OrderedDict()
-        self.copycounts = collections.OrderedDict()
+        self.revisions = quietOrderedDict()
+        self.copycounts = quietOrderedDict()
         self.hashmap = {}
         self.property_stash = {}
         self.fileop_branchlinks  = set()
@@ -3774,7 +3786,7 @@ class StreamParser:
         return content
     def sd_read_props(self, target, checklength):
         # Parse a Subversion properties section, return as an OrderedDict.
-        props = collections.OrderedDict()
+        props = quietOrderedDict()
         self.ccount = 0
         while self.ccount < checklength:
             line = self.readline()
@@ -4090,7 +4102,7 @@ class StreamParser:
                                     except ValueError:
                                         self.error("malformed committer line")
                                 elif line.startswith("property"):
-                                    commit.properties = collections.OrderedDict()
+                                    commit.properties = quietOrderedDict()
                                     fields = line.split(" ")
                                     if len(fields) < 3:
                                         self.error("malformed property line")
@@ -4346,7 +4358,7 @@ class StreamParser:
                 elif node.action == SD_DELETE or (node.action == SD_REPLACE and node.kind == SD_DIR):
                     if node.kind == SD_NONE:
                         node.kind = SD_FILE if node.path in filemap else SD_DIR
-			announce(DEBUG_FILEMAP, "r%s: deduced type for %s" % (node.revision, node))
+                        announce(DEBUG_FILEMAP, "r%s: deduced type for %s" % (node.revision, node))
                     # Snapshot the deleted paths before removing them.
                     node.from_set = PathMap()
                     node.from_set.copy_from(node.path, filemap, node.path)
@@ -4361,10 +4373,10 @@ class StreamParser:
         del filemap
         timeit("filemaps")
         # Blows up huge on large repos...
-	if debug_enable(DEBUG_FILEMAP):
-	    sys.stdout.write("Filemaps for %s revisions:\n" % len(self.revisions))
-	    for revision in self.revisions:
-	        sys.stdout.write("r%s: %s\n" % (revision, filemaps[revision]))
+        if debug_enable(DEBUG_FILEMAP):
+            sys.stdout.write("Filemaps for %s revisions:\n" % len(self.revisions))
+            for revision in self.revisions:
+                sys.stdout.write("r%s: %s\n" % (revision, filemaps[revision]))
         # Build from sets in each directory copy record.
         announce(DEBUG_EXTRACT, "Pass 3")
         for copynode in copynodes:
@@ -4727,7 +4739,7 @@ class StreamParser:
                                 newnode.generated = True
                                 expanded_nodes.append(newnode)
                                 del self.active_gitignores[gitignore_path]
-	    announce(DEBUG_EXTRACT, "%d expanded Subversion nodes" % len(expanded_nodes))
+            announce(DEBUG_EXTRACT, "%d expanded Subversion nodes" % len(expanded_nodes))
             # Ugh.  Because cvs2svn is brain-dead and issues D/M pairs
             # for identical paths in generated commits, we have to remove those
             # D ops here.  Otherwise later on when we're generating ops, if
@@ -5070,9 +5082,9 @@ class StreamParser:
                 if msg is None:
                     msg = ""
                 else:
-		    msg = commit.comment.strip()
-		    if len(msg) > 30:
-			msg = msg[:27] + "..."
+                    msg = commit.comment.strip()
+                    if len(msg) > 30:
+                        msg = msg[:27] + "..."
                 announce(DEBUG_SHOUT, "r%-4s %4s %2d %2d '%s'" % \
                          (commit.legacy_id, commit.mark,
                           len(commit.operations()),
@@ -11999,10 +12011,10 @@ in the ancestry of the commit, this command throws an error.  With the
                         self.attr = attr
                         self.newpath = newpath
                     def __str__(self):
-	                for i, op in enumerate(self.commit.fileops):
-		            if op == self.fileop:
-			            break
-	                return "[%s(%d) %s=%s]" % (self.commit.id_me(), i, self.attr, self.newpath)
+                        for i, op in enumerate(self.commit.fileops):
+                            if op == self.fileop:
+                                    break
+                        return "[%s(%d) %s=%s]" % (self.commit.id_me(), i, self.attr, self.newpath)
                 force = '--force' in parse.options
                 (target_re, _) = RepoSurgeon.pop_token(parse.line)
                 if not target_re:
@@ -12329,7 +12341,7 @@ Policy:
                 child.set_operations(newops)
                 child.sort_operations()
             child.set_parents(parents)
-	    # Restore this whemn we have toposort working identically in Gp and Python.
+            # Restore this whemn we have toposort working identically in Gp and Python.
             #if do_resort:
             #    repo.resort()
 
