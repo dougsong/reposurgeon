@@ -303,6 +303,15 @@ func qtoq(s string) string {
 	return "'" + s2 + "'"
 }
 
+// Render boolean values a la Python 
+// FIXME: Once the Go translation is complete, remove all calls to this,
+func pythonbool(b bool) string {
+	if b {
+		return "True"
+	}
+	return "False"
+}
+
 // This representation optimizes for small memory footprint at the expense
 // of speed.  To make the opposite trade we would do the obvious thing with
 // map[string] bool.
@@ -7208,8 +7217,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                         branchcopy := sp.isBranch(node.fromPath) &&
                                                          sp.isBranch(node.path) &&
                                                          !sp.isBranchDeleted(node.path)
-                                        announce(debugTOPOLOGY, "r%d: directory copy to %s from r%d~%s",
-                                                     revision, node.path, node.fromRev, node.fromPath)
+                                        announce(debugTOPOLOGY, "r%d: directory copy to %s from r%d~%s (branchcopy %s)",
+						revision, node.path, node.fromRev, node.fromPath, pythonbool(branchcopy))
                                         // Update our .gitignore list so that it includes those
                                         // in the newly created copy, to ensure they correctly
                                         // get deleted during a future directory deletion.
