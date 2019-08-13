@@ -4561,7 +4561,7 @@ class StreamParser:
                                     newnode = StreamParser.NodeAction()
                                     newnode.path = child
                                     newnode.revision = revision
-                                    newnode.action = SDb_DELETE
+                                    newnode.action = SD_DELETE
                                     newnode.kind = SD_FILE
                                     newnode.generated = True
                                     expanded_nodes.append(newnode)

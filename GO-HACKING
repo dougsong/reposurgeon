@@ -52,13 +52,13 @@ x-debranch.tst: index out of range panic
 x-debranch2.tst: slice bounds out of range error
 x-expunge.tst: fatal failure to compute blob mark
 x-lint.tst: branch connection failure
-x-nesting.tst: can't find anecestor
+x-nesting.tst: nonfatal failure
 x-references.tst: index out of range crash
 x-split-dir.tst: nonfatal failure to resolve mergeinfo
 x-split.tst: index error crash
-x-subdir.tst: can't find ancestor
+x-subdir.tst: name match failure
 x-tagretract.tst: index out of range error
-x-treecontents.tst: can't find anestor
+x-treecontents.tst: nonfatal error
 x-userignores.tst: cannot resolve mergeinfo
 
 The reparent test presently succeeds, but the toposort has been
