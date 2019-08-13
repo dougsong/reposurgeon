@@ -6169,7 +6169,7 @@ func (sp *StreamParser) timeMark(label string) {
 	sp.repo.timings = append(sp.repo.timings, TimeMark{label, time.Now()})
 }
 
-func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesize int64) {
+func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesize int64) {
 	trackSymlinks := newStringSet()
 	for {
 		line := sp.readline()
@@ -6179,7 +6179,7 @@ func (sp *StreamParser) parseSubversion(options stringSet, baton *Baton, filesiz
 			continue
 		} else if strings.HasPrefix(line, " # reposurgeon-read-options:") {
 			payload := strings.Split(line, ":")[1]
-			options = options.Union(newStringSet(strings.Fields(payload)...))
+			*options = (*options).Union(newStringSet(strings.Fields(payload)...))
 		} else if strings.HasPrefix(line, "UUID:") {
 			sp.repo.uuid = sdBody(line)
 		} else if strings.HasPrefix(line, "Revision-number: ") {
@@ -6689,7 +6689,7 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 			sp.error("unsupported dump format version " + body)
 		}
 		// Beginning of Subversion dump parsing
-		sp.parseSubversion(options, baton, filesize)
+		sp.parseSubversion(&options, baton, filesize)
 		// End of Subversion dump parsing
 		sp.timeMark("parsing")
 		sp.svnProcess(options, baton)
