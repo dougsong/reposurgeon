@@ -5069,11 +5069,15 @@ class StreamParser:
                 msg = commit.comment
                 if msg is None:
                     msg = ""
+                else:
+		    msg = commit.comment.strip()
+		    if len(msg) > 30:
+			msg = msg[:27] + "..."
                 announce(DEBUG_SHOUT, "r%-4s %4s %2d %2d '%s'" % \
                          (commit.legacy_id, commit.mark,
                           len(commit.operations()),
                           len(commit.properties or ""),
-                          msg.strip()[:20]))
+                          msg))
         # First, turn the root commit into a tag
         if self.repo.events and not self.repo.earliest_commit().operations():
             try:

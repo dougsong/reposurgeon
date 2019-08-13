@@ -5799,12 +5799,12 @@ type NodeAction struct {
 
 func (action NodeAction) String() string {
 	out := "<NodeAction: "
-	out += fmt.Sprintf("%d", action.revision)
+	out += fmt.Sprintf("r%d", action.revision)
 	out += " " + actionValues[action.action]
 	out += " " + pathTypeValues[action.kind]
 	out += " '" + action.path + "'"
 	if action.fromRev != 0 {
-		out += fmt.Sprintf("%d", action.fromRev) + "~" + action.fromPath
+		out += fmt.Sprintf(" from=%d", action.fromRev) + "~" + action.fromPath
 	}
 	if action.fromSet != nil {
 		out += " sources=" + action.fromSet.String()
@@ -7798,11 +7798,15 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
         if debugEnable(debugEXTRACT) {
                 announce(debugEXTRACT, "at post-parsing time:")
                 for _, commit := range sp.repo.commits(nil) {
+			text := strings.TrimSpace(commit.Comment)
+			if len(text) > 30 {
+				text = text[:27] + "..."
+			}
                         announce(debugSHOUT, "r%-4s %4s %2d %2d '%s'",
 				commit.legacyID, commit.mark,
 				len(commit.operations()),
 				commit.properties.Len(),
-				strings.TrimSpace(commit.Comment))
+				text)
                 }
         }
         // First, turn a no-op root commit into a tag
