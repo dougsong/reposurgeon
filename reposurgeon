@@ -4795,7 +4795,7 @@ class StreamParser:
                                 node.from_path = ancestor.from_path
                                 node.from_rev = ancestor.from_rev
                                 node.blobmark = ancestor.blobmark
-                            else:
+                            if node.blobmark is None:
                                 # An entirely new blob
                                 node.blobmark = node.blob.set_mark(self.repo.newmark())
                                 self.repo.addEvent(node.blob)
