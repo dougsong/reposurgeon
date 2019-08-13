@@ -7229,7 +7229,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                 // would need to have property maps as values.
                                                 for _, source := range node.fromSet.pathnames() {
                                                         lookback := filemaps[node.fromRev].get(source)
-							found, ok := lookback.(*NodeAction)
+							found, ok := lookback.(NodeAction)
                                                         if ok && found.props.has("svn:executable") {
                                                                 stem := source[len(node.fromPath):]
                                                                 targetpath := node.path + stem
@@ -7263,10 +7263,10 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                 // Now generate copies for all files in the copy source directory
                                                 for _, source := range node.fromSet.pathnames() {
                                                         lookback := filemaps[node.fromRev].get(source)
-							found, ok := lookback.(*NodeAction)
+							found, ok := lookback.(NodeAction)
                                                         if !ok {
-                                                                panic(fmt.Errorf("r%d: can't find ancestor %s",
-									revision, source))
+                                                                panic(fmt.Errorf("r%d: can't find ancestor of %s at r%d",
+									revision, source, node.fromRev))
                                                         }
                                                         subnode := new(NodeAction)
                                                         subnode.path = node.path + source[len(node.fromPath):]
@@ -7378,7 +7378,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				continue
                         }
 			var ancestor *NodeAction
-			var ok bool
                         if node.kind == sdFILE {
                                 if node.action == sdDELETE {
                                         //assert node.blob == nil
@@ -7425,11 +7424,12 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
                                                 // robustness, we don't assume revisions are
                                                 // consecutive numbers.
                                                 found := filemaps[node.fromRev].get(node.path)
-						ancestor, ok = found.(*NodeAction) 
+						lookback, ok := found.(NodeAction) 
                                                 if !ok {
                                                         found = filemaps[previous].get(node.path)
-							ancestor, _ = found.(*NodeAction) 
+							lookback, _ = found.(NodeAction) 
                                                 }
+						ancestor = &lookback
                                         } else {
                                                 ancestor = nil
                                         }
