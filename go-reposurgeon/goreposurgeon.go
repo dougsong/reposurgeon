@@ -6737,7 +6737,7 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 }
 
 //
-// The rendezvous between parsing and object building for import
+// The rendezvous between parsing and object building for git import
 // streams is pretty trivial and best done inline in the parser
 // because reposurgeon's internal structures are designed to match
 // those entities. For Subversion dumpfiles, on the other hand,
@@ -6775,11 +6775,14 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	announce(debugEXTRACT, "Pass 0: dead-branch deletion")
 	if !options.Contains("--preserve") {
 		// Identify Subversion tag/branch directories with
-		// tipdeletes && nuke them.  Happens well before tip
-		// deletes are tagified, the behavior if --preserve is on.
-		// This pass doesn't touch trunk - any tipdelete on trunk
-		// we presume to be some kind of operator error that needs
-		// to show up under lint && be manually corrected
+		// tipdeletes && nuke them. Thety're going to turn into
+		// gitspace branch and tag entities that don't die.		
+		// Happens well before tip deletes are tagified, the
+		// behavior if --preserve is on.  This pass doesn't
+		// touch trunk - any tipdelete on trunk we presume to
+		// be some kind of operator error that needs to show
+		// up under lint && be manually corrected.
+		// FIXME: Last sentence may reflect incorrect assumption.
 		deadbranches := newStringSet()
 		for i := range sp.revisions {
 			backup := len(sp.revisions) - i - 1
@@ -6974,6 +6977,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		if !ok {
 			return nil
 		}
+		// FIXME: Is this right? Do we need to indirect through branches in some way?
 		for revision := sp.repo.eventToIndex(obj) - 1; revision > 0; revision-- {
 			event := sp.repo.events[revision]
 			if commit, ok := event.(*Commit); ok {
