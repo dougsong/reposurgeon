@@ -5815,7 +5815,7 @@ func (action NodeAction) String() string {
 	if action.fromRev != 0 {
 		out += fmt.Sprintf(" from=%d", action.fromRev) + "~" + action.fromPath
 	}
-	if action.fromSet != nil {
+	if action.fromSet != nil && !action.fromSet.isEmpty() {
 		out += " sources=" + action.fromSet.String()
 	}
 	if action.generated {
