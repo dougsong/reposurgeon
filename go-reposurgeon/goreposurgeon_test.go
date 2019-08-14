@@ -487,8 +487,8 @@ func TestDateFormats(t *testing.T) {
 func TestDateRoundtrip(t *testing.T) {
 	// Test round-tripping of git-style dates
 	type harness struct {
-		from      int64
-		expected  string
+		from     int64
+		expected string
 	}
 	testTable := []string{
 		"1288205012 +0000",
@@ -504,7 +504,6 @@ func TestDateRoundtrip(t *testing.T) {
 		}
 	}
 }
-
 
 func TestDateComparison(t *testing.T) {
 	d1, _ := newDate("2010-10-27T18:43:32Z")

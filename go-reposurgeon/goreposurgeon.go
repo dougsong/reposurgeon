@@ -105,11 +105,11 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	difflib "github.com/ianbruene/go-difflib/difflib"
 	shlex "github.com/anmitsu/go-shlex"
 	orderedset "github.com/emirpasic/gods/sets/linkedhashset"
 	cmp "github.com/google/go-cmp/cmp"
 	uuid "github.com/google/uuid"
+	difflib "github.com/ianbruene/go-difflib/difflib"
 	shutil "github.com/termie/go-shutil"
 	kommandant "gitlab.com/ianbruene/kommandant"
 	terminal "golang.org/x/crypto/ssh/terminal"
@@ -303,7 +303,7 @@ func qtoq(s string) string {
 	return "'" + s2 + "'"
 }
 
-// Render boolean values a la Python 
+// Render boolean values a la Python
 // FIXME: Once the Go translation is complete, remove all calls to this,
 func pythonbool(b bool) string {
 	if b {
@@ -1069,9 +1069,9 @@ _darcs
 			// should *not* be anchored, and will be
 			// removed later in processing.
 			dfltignores: subversionDefaultIgnores,
-			cookies: reMake(`\sr?\d+([.])?\s`),
-			project: "http://subversion.apache.org/",
-			notes:   "Run from the repository, not a checkout directory.",
+			cookies:     reMake(`\sr?\d+([.])?\s`),
+			project:     "http://subversion.apache.org/",
+			notes:       "Run from the repository, not a checkout directory.",
 		},
 		{
 			name:         "cvs",
@@ -2654,7 +2654,6 @@ func (d OrderedMap) isZero() bool {
 	return d.keys == nil
 }
 
-
 func (d *OrderedMap) get(hd string) string {
 	payload, ok := d.dict[hd]
 	if !ok {
@@ -3399,7 +3398,7 @@ func (b *Blob) moveto(repo *Repository) {
 
 // clone makes a fresh (uncolored) copy of this blob, pointing at the same file."
 func (b *Blob) clone(repo *Repository) *Blob {
-	c := b	// copy scalar fields
+	c := b // copy scalar fields
 	c.pathlist = make([]string, len(b.pathlist))
 	copy(c.pathlist, b.pathlist)
 	c.colors = newStringSet()
@@ -4306,17 +4305,17 @@ func (commit *Commit) clone(repo *Repository) *Commit {
 	var c = *commit // Was a Python deepcopy
 	c.authors = make([]Attribution, len(commit.authors))
 	copy(c.authors, commit.authors)
-        c.setOperations(nil)
-        //c.filemap = nil
-        c.color = ""
-        if repo != nil {
+	c.setOperations(nil)
+	//c.filemap = nil
+	c.color = ""
+	if repo != nil {
 		c.repo = repo
 	}
-        c._childNodes = nil
-        // use the encapsulation to set parents instead of relying
-        // on the copy, so that Commit can do its bookkeeping.
-        c._parentNodes = nil // avoid confusing set_parents()
-        c.setParents(commit.parents())
+	c._childNodes = nil
+	// use the encapsulation to set parents instead of relying
+	// on the copy, so that Commit can do its bookkeeping.
+	c._parentNodes = nil // avoid confusing set_parents()
+	c.setParents(commit.parents())
 	c.attachments = nil
 	return &c
 }
@@ -5635,7 +5634,6 @@ func (p *PathMap) String() string {
 	return out + "}"
 }
 
-
 // rawGet returns the current value associated with the component in the store
 func (p *PathMap) rawGet(component string) interface{} {
 	if snaplist, ok := p.store[component]; ok {
@@ -5657,7 +5655,7 @@ func (p *PathMap) rawSet(component string, value interface{}) interface{} {
 	if !ok {
 		snaplist = []interface{}{nil}
 	}
-	needed := min(*p.maxid, p.snapid + 1) + 1
+	needed := min(*p.maxid, p.snapid+1) + 1
 	if len(snaplist) < needed {
 		last := snaplist[len(snaplist)-1]
 		for i := len(snaplist); i < needed; i++ {
@@ -5678,7 +5676,7 @@ func (p *PathMap) rawItems() []pathMapItem {
 		if component == pathMapSelf {
 			continue
 		}
-		val := snaplist[min(snapid, len(snaplist) - 1)]
+		val := snaplist[min(snapid, len(snaplist)-1)]
 		if val != nil {
 			items = append(items, pathMapItem{component, val})
 		}
@@ -5775,13 +5773,13 @@ var pathTypeValues = []string{"none", "file", "dir", "ILLEGAL-TYPE"}
 // mad.  We want to let through other properties that might carry
 // useful information.
 var ignoreProperties = map[string]bool{
-	"svn:executable":true, // We special-case this one elsewhere
-	"svn:ignore":true,     // We special-case this one elsewhere
-	"svn:special":true,    // We special-case this one elsewhere
-	"svn:mime-type":true,
-	"svn:keywords":true,
-	"svn:needs-lock":true,
-	"svn:eol-style":true,  // Don't want to suppress, but cvs2svn floods these.
+	"svn:executable": true, // We special-case this one elsewhere
+	"svn:ignore":     true, // We special-case this one elsewhere
+	"svn:special":    true, // We special-case this one elsewhere
+	"svn:mime-type":  true,
+	"svn:keywords":   true,
+	"svn:needs-lock": true,
+	"svn:eol-style":  true, // Don't want to suppress, but cvs2svn floods these.
 }
 
 // NodeAction represents a file-modification action in a Subversion dump stream.
@@ -5801,9 +5799,9 @@ type NodeAction struct {
 	props       OrderedMap
 	propchange  bool
 	// These are set during the analysis phase
-	fromSet     *PathMap
-	blobmark    string
-	generated   bool
+	fromSet   *PathMap
+	blobmark  string
+	generated bool
 }
 
 func (action NodeAction) String() string {
@@ -5834,11 +5832,11 @@ func (action NodeAction) String() string {
 // probably fail.
 type RevisionRecord struct {
 	revision int
-	nodes  []NodeAction
-	log    string
-	date   string
-	author string
-	props  OrderedMap
+	nodes    []NodeAction
+	log      string
+	date     string
+	author   string
+	props    OrderedMap
 }
 
 func newRevisionRecord(nodes []NodeAction, props OrderedMap, revision int) *RevisionRecord {
@@ -5890,8 +5888,8 @@ type StreamParser struct {
 	propagate            map[string]bool
 }
 
-type daglink struct{
-	child *Commit
+type daglink struct {
+	child  *Commit
 	parent *Commit
 }
 
@@ -6247,13 +6245,13 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 							// removes it.
 							// But the
 							// link op is
-							// on;y marked
+							// only marked
 							// with
 							// property
 							// svn:special
 							// on
 							// creation,
-							// !on
+							// on
 							// modification.
 							// So we have
 							// to track
@@ -6771,7 +6769,6 @@ func (sp *StreamParser) isBranchDeleted(pathname string) bool {
 // it might be "\" on OSes not to be mentioned in polite company.
 const svnSep = "/"
 
-
 func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// Subversion actions to import-stream commits.
 	sp.repo.addEvent(newPassthrough(sp.repo, "#reposurgeon sourcetype svn\n"))
@@ -6929,7 +6926,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			fmt.Printf("r%d: %v\n", revision, filemaps[revision])
 		}
 	}
-	
+
 	// Build from sets in each directory copy record.
 	announce(debugEXTRACT, "Pass 3")
 	for _, copynode := range copynodes {
@@ -6954,7 +6951,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// it does not hit the disk.
 	announce(debugEXTRACT, "Pass 4")
 
-	var previous int 
+	var previous int
 
 	splitCommits := make(map[int]int)
 	lastRelevantCommit := func(sp *StreamParser, maxRev int, path string, attr string) *Commit {
@@ -6971,13 +6968,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			legacyID = fmt.Sprintf("SVN:%d", maxRev)
 		} else {
 			legacyID = fmt.Sprintf("SVN:%d.%d", maxRev, splitCommits[maxRev]+1)
-		}	
+		}
 		// Find the commit object...
 		obj, ok := sp.repo.legacyMap[legacyID]
 		if !ok {
 			return nil
 		}
-		for revision := sp.repo.eventToIndex(obj)-1; revision > 0; revision-- {
+		for revision := sp.repo.eventToIndex(obj) - 1; revision > 0; revision-- {
 			event := sp.repo.events[revision]
 			if commit, ok := event.(*Commit); ok {
 				b, ok := getAttr(commit, attr)
@@ -6994,121 +6991,121 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	if len(sp.revisions) > 50000 {
 		sp.large = true
 	}
-        for revision, record := range sp.revisions {
-                announce(debugEXTRACT, "Revision %d:", revision)
-                for _, node := range record.nodes {
-                        // In Subversion, we can assume .cvsignores are
-                        // legacies from a bygone era that have been long since
-                        // replaced by svn:ignore properties.  Therefore we can
-                        // just drop them.
-                        if strings.HasSuffix(node.path, ".cvsignore") {
-                                continue
-                        }
-                        // if node.props is None, no property section.
-                        // if node.blob is None, no text section.
+	for revision, record := range sp.revisions {
+		announce(debugEXTRACT, "Revision %d:", revision)
+		for _, node := range record.nodes {
+			// In Subversion, we can assume .cvsignores are
+			// legacies from a bygone era that have been long since
+			// replaced by svn:ignore properties.  Therefore we can
+			// just drop them.
+			if strings.HasSuffix(node.path, ".cvsignore") {
+				continue
+			}
+			// if node.props is None, no property section.
+			// if node.blob is None, no text section.
 			// Delete actions may be issued without a dir or file kind
 			if !((node.action == sdCHANGE || node.action == sdADD || node.action == sdDELETE || node.action == sdREPLACE) &&
 				(node.kind == sdFILE || node.kind == sdDIR || node.action == sdDELETE) &&
-			        ((node.fromRev == 0) == (node.fromPath == ""))) {
+				((node.fromRev == 0) == (node.fromPath == ""))) {
 				panic(throw("parse", "forbidden operation in dump stream at r%d: %s", revision, node))
 			}
 
 			// FIXME: Someday rescue these sanity checks
-                        //        assert node.blob != nil ||
-                        //               node.props != nil ||
-                        //               node.fromRev ||
-                        //               node.action in (sdADD, sdDELETE)
-                        //        assert node.kind != sdNONE || node.action == sdDELETE
-                        //        assert node.action in (sdADD, sdREPLACE) || !node.fromRev
-                }
+			//        assert node.blob != nil ||
+			//               node.props != nil ||
+			//               node.fromRev ||
+			//               node.action in (sdADD, sdDELETE)
+			//        assert node.kind != sdNONE || node.action == sdDELETE
+			//        assert node.action in (sdADD, sdREPLACE) || !node.fromRev
+		}
 
-                //memcheck(sp.repo)
-                commit := newCommit(sp.repo)
-                ad := record.date
-                if ad == "" {
-                        sp.error("missing required date field")
-                }
+		//memcheck(sp.repo)
+		commit := newCommit(sp.repo)
+		ad := record.date
+		if ad == "" {
+			sp.error("missing required date field")
+		}
 		var au string
-                if record.author != "" {
-                        au = record.author
-                } else {
-                        au = "no-author"
-                }
-                if record.log != "" {
-                        commit.Comment = record.log
-                        if !strings.HasSuffix(commit.Comment, "\n") {
-                                commit.Comment += "\n"
-                        }
-                }
+		if record.author != "" {
+			au = record.author
+		} else {
+			au = "no-author"
+		}
+		if record.log != "" {
+			commit.Comment = record.log
+			if !strings.HasSuffix(commit.Comment, "\n") {
+				commit.Comment += "\n"
+			}
+		}
 		attribution := ""
-                if strings.Count(au, "@") == 1  {
-                        // This is a thing that happens occasionally.  A DVCS-style
-                        // attribution (name + email) gets stuffed in a Subversion
-                        // author field
-                        // First, check to see if it's a fully-formed address
-                        if strings.Count(au, "<") == 1 && strings.Count(au, ">") == 1 && strings.Count(au, " ") > 0 {
-                                attribution = au + " " + ad
-                        } else {
-                                // Punt...
+		if strings.Count(au, "@") == 1 {
+			// This is a thing that happens occasionally.  A DVCS-style
+			// attribution (name + email) gets stuffed in a Subversion
+			// author field
+			// First, check to see if it's a fully-formed address
+			if strings.Count(au, "<") == 1 && strings.Count(au, ">") == 1 && strings.Count(au, " ") > 0 {
+				attribution = au + " " + ad
+			} else {
+				// Punt...
 				parts := strings.Split(au, "@")
-                                au, ah := parts[0], parts[1]
-                                attribution = au + " <" + au  + "@" + ah  + "> " + ad
-                        }
-                } else if options.Contains("--use-uuid") {
-                        attribution = fmt.Sprintf("%s <%s@%s> %s", au, au, sp.repo.uuid, ad)
-                } else {
-                        attribution = fmt.Sprintf("%s <%s> %s", au, au, ad)
-                }
-                newattr, err := newAttribution(attribution)
+				au, ah := parts[0], parts[1]
+				attribution = au + " <" + au + "@" + ah + "> " + ad
+			}
+		} else if options.Contains("--use-uuid") {
+			attribution = fmt.Sprintf("%s <%s@%s> %s", au, au, sp.repo.uuid, ad)
+		} else {
+			attribution = fmt.Sprintf("%s <%s> %s", au, au, ad)
+		}
+		newattr, err := newAttribution(attribution)
 		if err != nil {
 			panic(throw("parse", "impossibly ill-formed attribution in dump stream at r%d", revision))
 		}
 		commit.committer = *newattr
-                // Use this with just-generated input streams
-                // that have wall times in them.
-                if context.flagOptions["testmode"] {
-                        commit.committer.fullname = "Fred J. Foonly"
-                        commit.committer.email = "foonly@foo.com"
-                        commit.committer.date.timestamp = time.Unix(int64(revision * 360), 0)
-                        commit.committer.date.setTZ("UTC")
-                }
-                commit.properties = record.props
-                // Zero revision is never interesting - no operations, no
-                // comment, no author, it's just a start marker for a
-                // non-incremental dump.
-                if revision == 0 {
-                        continue
-                }
-                expandedNodes := make([]NodeAction, 0)
-                hasProperties := newStringSet()
-                for n, node := range record.nodes {
-                        if debugEnable(debugEXTRACT) {
-                                announce(debugEXTRACT, fmt.Sprintf("r%d:%d: %s", revision, n+1, node))
-                        } else if node.kind == sdDIR &&
+		// Use this with just-generated input streams
+		// that have wall times in them.
+		if context.flagOptions["testmode"] {
+			commit.committer.fullname = "Fred J. Foonly"
+			commit.committer.email = "foonly@foo.com"
+			commit.committer.date.timestamp = time.Unix(int64(revision*360), 0)
+			commit.committer.date.setTZ("UTC")
+		}
+		commit.properties = record.props
+		// Zero revision is never interesting - no operations, no
+		// comment, no author, it's just a start marker for a
+		// non-incremental dump.
+		if revision == 0 {
+			continue
+		}
+		expandedNodes := make([]NodeAction, 0)
+		hasProperties := newStringSet()
+		for n, node := range record.nodes {
+			if debugEnable(debugEXTRACT) {
+				announce(debugEXTRACT, fmt.Sprintf("r%d:%d: %s", revision, n+1, node))
+			} else if node.kind == sdDIR &&
 				node.action != sdCHANGE && debugEnable(debugTOPOLOGY) {
-                                announce(debugSHOUT, node.String())
-                        }
-                        // Handle per-path properties.
-                        if node.props.Len() > 0 {
-                                if node.props.has("cvs2svn:cvs-rev")  {
-                                        cvskey := fmt.Sprintf("CVS:%s:%s", node.path, node.props.get("cvs2svn:cvs-rev"))
-                                        sp.repo.legacyMap[cvskey] = commit
-                                        node.props.set("cvs2svn:cvs-rev", "")
-                                }
-                                // Remove blank lines from svn:ignore property values.
+				announce(debugSHOUT, node.String())
+			}
+			// Handle per-path properties.
+			if node.props.Len() > 0 {
+				if node.props.has("cvs2svn:cvs-rev") {
+					cvskey := fmt.Sprintf("CVS:%s:%s", node.path, node.props.get("cvs2svn:cvs-rev"))
+					sp.repo.legacyMap[cvskey] = commit
+					node.props.set("cvs2svn:cvs-rev", "")
+				}
+				// Remove blank lines from svn:ignore property values.
 				// Note: this is not as general as the Python version,
 				// which would also strip nonempty lines consisting entirely
 				// of whitespace.
-                                if node.props.has("svn:ignore")  {
-                                        oldIgnore := node.props.get("svn:ignore")
-                                        newIgnore := strings.Replace(oldIgnore, "\n\n", "\n", -1)
-                                        if newIgnore == "" {
-                                                node.props.set("svn:ignore", "")
-                                        } else {
-                                                node.props.set("svn:ignore", newIgnore)
-                                        }
-                                }
-                                if !options.Contains("--ignore-properties") {
+				if node.props.has("svn:ignore") {
+					oldIgnore := node.props.get("svn:ignore")
+					newIgnore := strings.Replace(oldIgnore, "\n\n", "\n", -1)
+					if newIgnore == "" {
+						node.props.set("svn:ignore", "")
+					} else {
+						node.props.set("svn:ignore", newIgnore)
+					}
+				}
+				if !options.Contains("--ignore-properties") {
 					eligible := make([][2]string, 0)
 					for prop, val := range node.props.dict {
 						if ignoreProperties[prop] {
@@ -7120,79 +7117,79 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						eligible = append(eligible, [2]string{prop, val})
 					}
 					if len(eligible) == 0 {
-                                                if hasProperties.Contains(node.path) {
-                                                        sp.gripe(fmt.Sprintf("r%d~%s: properties cleared.", node.revision, node.path))
-                                                        hasProperties.Remove(node.path)
-                                                }
-                                        } else {
-                                                sp.gripe(fmt.Sprintf("r%d~%s properties set:", node.revision, node.path))
-                                                for _, pair := range eligible {
-                                                        sp.gripe(fmt.Sprintf("\t%s = '%s'", pair[0], pair[1]))
-                                                }
-                                                hasProperties.Add(node.path)
-                                        }
-                                }
-                        }
+						if hasProperties.Contains(node.path) {
+							sp.gripe(fmt.Sprintf("r%d~%s: properties cleared.", node.revision, node.path))
+							hasProperties.Remove(node.path)
+						}
+					} else {
+						sp.gripe(fmt.Sprintf("r%d~%s properties set:", node.revision, node.path))
+						for _, pair := range eligible {
+							sp.gripe(fmt.Sprintf("\t%s = '%s'", pair[0], pair[1]))
+						}
+						hasProperties.Add(node.path)
+					}
+				}
+			}
 			// Starting with the nodes in the Subversion dump, expand them into a set that
 			// unpacks all directory operations into equivalent sets of file operations.
-                        if node.kind == sdFILE {
-                                expandedNodes = append(expandedNodes, node)
-                        } else if node.kind == sdDIR {
-                                // svnSep is appended to avoid collisions with path
-                                // prefixes.
-                                node.path += svnSep
-                                if node.fromPath != "" {
-                                        node.fromPath += svnSep
-                                }
-                                if node.action == sdADD || node.action ==  sdCHANGE {
-                                        if sp.isBranch(node.path) {
-                                                if node.props.isZero() {
+			if node.kind == sdFILE {
+				expandedNodes = append(expandedNodes, node)
+			} else if node.kind == sdDIR {
+				// svnSep is appended to avoid collisions with path
+				// prefixes.
+				node.path += svnSep
+				if node.fromPath != "" {
+					node.fromPath += svnSep
+				}
+				if node.action == sdADD || node.action == sdCHANGE {
+					if sp.isBranch(node.path) {
+						if node.props.isZero() {
 							node.props = newOrderedMap()
-                                                }
+						}
 						var ignore string
 						startwith := subversionDefaultIgnores
-                                                if rootignores := node.props.get("svn:ignore"); rootignores != "" {
-                                                        ignore = startwith +
-                                                                 "# The contents of the svn:ignore property on the branch root.\n" +
-                                                                 rootignores
-                                                } else {
-                                                        ignore = startwith
-                                                }
-                                                node.props.set("svn:ignore", ignore)
-                                        }
-                                } else if node.action == sdDELETE || node.action == sdREPLACE {
-                                        if sp.isBranch(node.path) {
-                                                sp.branchdeletes.Add(node.path)
-                                                expandedNodes = append(expandedNodes, node)
-                                                // The deleteall will also delete .gitignore files
-                                                for _, ignorepath := range sp.activeGitignores { 
+						if rootignores := node.props.get("svn:ignore"); rootignores != "" {
+							ignore = startwith +
+								"# The contents of the svn:ignore property on the branch root.\n" +
+								rootignores
+						} else {
+							ignore = startwith
+						}
+						node.props.set("svn:ignore", ignore)
+					}
+				} else if node.action == sdDELETE || node.action == sdREPLACE {
+					if sp.isBranch(node.path) {
+						sp.branchdeletes.Add(node.path)
+						expandedNodes = append(expandedNodes, node)
+						// The deleteall will also delete .gitignore files
+						for _, ignorepath := range sp.activeGitignores {
 							if strings.HasPrefix(ignorepath, node.path) {
-								delete(sp.activeGitignores, ignorepath) 
+								delete(sp.activeGitignores, ignorepath)
 							}
-                                                }
-                                        } else {
-                                                // A delete or replace with no from set
-                                                // can occur if the directory is empty.
-                                                // We can just ignore that case. Otherwise...
-                                                if node.fromSet != nil {
+						}
+					} else {
+						// A delete or replace with no from set
+						// can occur if the directory is empty.
+						// We can just ignore that case. Otherwise...
+						if node.fromSet != nil {
 							for _, child := range node.fromSet.pathnames() {
-                                                                announce(debugEXTRACT, "r%d: deleting %s", revision, child)
-                                                                var newnode NodeAction
-                                                                newnode.path = child
-                                                                newnode.revision = revision
-                                                                newnode.action = sdDELETE
-                                                                newnode.kind = sdFILE
-                                                                newnode.generated = true
-                                                                expandedNodes = append(expandedNodes, newnode)
-                                                        }
-                                                }
-                                                // Emit delete actions for the .gitignore files we
-                                                // have generated. Note that even with a directory
-                                                // with no files from SVN, we might have added
-                                                // .gitignore files we now must delete.
-                                                for _, ignorepath := range sp.activeGitignores {
+								announce(debugEXTRACT, "r%d: deleting %s", revision, child)
+								var newnode NodeAction
+								newnode.path = child
+								newnode.revision = revision
+								newnode.action = sdDELETE
+								newnode.kind = sdFILE
+								newnode.generated = true
+								expandedNodes = append(expandedNodes, newnode)
+							}
+						}
+						// Emit delete actions for the .gitignore files we
+						// have generated. Note that even with a directory
+						// with no files from SVN, we might have added
+						// .gitignore files we now must delete.
+						for _, ignorepath := range sp.activeGitignores {
 							if strings.HasPrefix(ignorepath, node.path) {
-                                                                var newnode NodeAction
+								var newnode NodeAction
 								newnode.path = ignorepath
 								newnode.revision = revision
 								newnode.action = sdDELETE
@@ -7201,212 +7198,212 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 								expandedNodes = append(expandedNodes, newnode)
 								delete(sp.activeGitignores, ignorepath)
 							}
-                                                }
-                                        }
-                                }
-                                // Handle directory copies.  If this is a copy
-                                // between branches, no fileop should be issued
-                                // until there is an actual file modification on
-                                // the new branch. Instead, remember that the
-                                // branch root inherits the tree of the source
-                                // branch and should not start with a deleteall.
-                                // Exception: If the target branch has been
-                                // deleted, perform a normal copy and interpret
-                                // this as an ad-hoc branch merge.
-                                if node.fromPath != "" {
-                                        branchcopy := sp.isBranch(node.fromPath) &&
-                                                         sp.isBranch(node.path) &&
-                                                         !sp.isBranchDeleted(node.path)
-                                        announce(debugTOPOLOGY, "r%d: directory copy to %s from r%d~%s (branchcopy %s)",
+						}
+					}
+				}
+				// Handle directory copies.  If this is a copy
+				// between branches, no fileop should be issued
+				// until there is an actual file modification on
+				// the new branch. Instead, remember that the
+				// branch root inherits the tree of the source
+				// branch and should not start with a deleteall.
+				// Exception: If the target branch has been
+				// deleted, perform a normal copy and interpret
+				// this as an ad-hoc branch merge.
+				if node.fromPath != "" {
+					branchcopy := sp.isBranch(node.fromPath) &&
+						sp.isBranch(node.path) &&
+						!sp.isBranchDeleted(node.path)
+					announce(debugTOPOLOGY, "r%d: directory copy to %s from r%d~%s (branchcopy %s)",
 						revision, node.path, node.fromRev, node.fromPath, pythonbool(branchcopy))
-                                        // Update our .gitignore list so that it includes those
-                                        // in the newly created copy, to ensure they correctly
-                                        // get deleted during a future directory deletion.
-                                        l := len(node.fromPath)
-                                        for sourcegi, value := range sp.activeGitignores {
+					// Update our .gitignore list so that it includes those
+					// in the newly created copy, to ensure they correctly
+					// get deleted during a future directory deletion.
+					l := len(node.fromPath)
+					for sourcegi, value := range sp.activeGitignores {
 						if strings.HasPrefix(sourcegi, node.fromPath) {
-						destgi := node.path + sourcegi[l:]
+							destgi := node.path + sourcegi[l:]
 							sp.activeGitignores[destgi] = value
 						}
-                                        }
-                                        if branchcopy {
-                                                sp.branchcopies.Add(node.path)
-						// FIXME: There's a bug somewhere in here... 
-                                                // Store the minimum information needed to propagate
-                                                // executable bits across branch copies. If we needed
-                                                // to preserve any other properties, sp.propagate
-                                                // would need to have property maps as values.
-                                                for _, source := range node.fromSet.pathnames() {
-                                                        lookback := filemaps[node.fromRev].get(source)
+					}
+					if branchcopy {
+						sp.branchcopies.Add(node.path)
+						// FIXME: There's a bug somewhere in here...
+						// Store the minimum information needed to propagate
+						// executable bits across branch copies. If we needed
+						// to preserve any other properties, sp.propagate
+						// would need to have property maps as values.
+						for _, source := range node.fromSet.pathnames() {
+							lookback := filemaps[node.fromRev].get(source)
 							found, ok := lookback.(NodeAction)
-                                                        if ok && found.props.has("svn:executable") {
-                                                                stem := source[len(node.fromPath):]
-                                                                targetpath := node.path + stem
-                                                                sp.propagate[targetpath] = true
-                                                                announce(debugTOPOLOGY, "r%d: exec-mark %s", revision, targetpath)
-                                                        }
-                                                }
-                                        } else {
-                                                sp.branchdeletes.Remove(node.path)
-                                                // Generate copy ops for generated .gitignore files
-                                                // to match the copy of svn:ignore props on the
-                                                // Subversion side. We use the just updated
-                                                // activeGitignores dict for that purpose.
-                                                if !options.Contains("--user-ignores") {
-                                                        for gipath, ignore := range sp.activeGitignores {
-                                                                    if strings.HasPrefix(gipath, node.path) {
-									    blob := newBlob(sp.repo)
-									    blob.setContent(ignore, noOffset)
-									    subnode := new(NodeAction)
-									    subnode.path = gipath
-									    subnode.revision = revision
-									    subnode.action = sdADD
-									    subnode.kind = sdFILE
-									    subnode.blob = blob
-									    subnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
-									    subnode.generated = true
-									    expandedNodes = append(expandedNodes, *subnode)
-								    }
+							if ok && found.props.has("svn:executable") {
+								stem := source[len(node.fromPath):]
+								targetpath := node.path + stem
+								sp.propagate[targetpath] = true
+								announce(debugTOPOLOGY, "r%d: exec-mark %s", revision, targetpath)
 							}
-                                                }
-                                                // Now generate copies for all files in the copy source directory
-                                                for _, source := range node.fromSet.pathnames() {
-                                                        lookback := filemaps[node.fromRev].get(source)
+						}
+					} else {
+						sp.branchdeletes.Remove(node.path)
+						// Generate copy ops for generated .gitignore files
+						// to match the copy of svn:ignore props on the
+						// Subversion side. We use the just updated
+						// activeGitignores dict for that purpose.
+						if !options.Contains("--user-ignores") {
+							for gipath, ignore := range sp.activeGitignores {
+								if strings.HasPrefix(gipath, node.path) {
+									blob := newBlob(sp.repo)
+									blob.setContent(ignore, noOffset)
+									subnode := new(NodeAction)
+									subnode.path = gipath
+									subnode.revision = revision
+									subnode.action = sdADD
+									subnode.kind = sdFILE
+									subnode.blob = blob
+									subnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
+									subnode.generated = true
+									expandedNodes = append(expandedNodes, *subnode)
+								}
+							}
+						}
+						// Now generate copies for all files in the copy source directory
+						for _, source := range node.fromSet.pathnames() {
+							lookback := filemaps[node.fromRev].get(source)
 							found, ok := lookback.(NodeAction)
-                                                        if !ok {
-                                                                panic(fmt.Errorf("r%d: can't find ancestor of %s at r%d",
+							if !ok {
+								panic(fmt.Errorf("r%d: can't find ancestor of %s at r%d",
 									revision, source, node.fromRev))
-                                                        }
-                                                        subnode := new(NodeAction)
-                                                        subnode.path = node.path + source[len(node.fromPath):]
-                                                        subnode.revision = revision
-                                                        subnode.fromPath = found.path
-                                                        subnode.fromRev = found.revision
-                                                        subnode.fromHash = found.contentHash
-                                                        subnode.props = found.props
-                                                        subnode.action = sdADD
-                                                        subnode.kind = sdFILE
-                                                        announce(debugTOPOLOGY, "r%d: generated copy r%d~%s -> %s",
+							}
+							subnode := new(NodeAction)
+							subnode.path = node.path + source[len(node.fromPath):]
+							subnode.revision = revision
+							subnode.fromPath = found.path
+							subnode.fromRev = found.revision
+							subnode.fromHash = found.contentHash
+							subnode.props = found.props
+							subnode.action = sdADD
+							subnode.kind = sdFILE
+							announce(debugTOPOLOGY, "r%d: generated copy r%d~%s -> %s",
 								revision, subnode.fromRev, subnode.fromPath, subnode.path)
-                                                        subnode.generated = true
-                                                        expandedNodes = append(expandedNodes, *subnode)
-                                                }
-                                        }
-                                }
-                                // Property settings can be present on either
-                                // sdADD or sdCHANGE actions.
-                                if node.propchange && !node.props.isZero() {
-                                        announce(debugEXTRACT, "r%d: setting properties %v on %s",
-                                                    revision, node.props, node.path)
-                                        // svn:ignore gets handled here,
-                                        if !options.Contains("--user-ignores") {
+							subnode.generated = true
+							expandedNodes = append(expandedNodes, *subnode)
+						}
+					}
+				}
+				// Property settings can be present on either
+				// sdADD or sdCHANGE actions.
+				if node.propchange && !node.props.isZero() {
+					announce(debugEXTRACT, "r%d: setting properties %v on %s",
+						revision, node.props, node.path)
+					// svn:ignore gets handled here,
+					if !options.Contains("--user-ignores") {
 						var gitignore_path string
-                                                if node.path == svnSep {
-                                                        gitignore_path = ".gitignore"
-                                                } else {
-                                                        gitignore_path = filepath.Join(node.path,
-                                                                                      ".gitignore")
-                                                }
-                                                // There are no other directory properties that can
-                                                // turn into fileops.
-                                                ignore := node.props.get("svn:ignore")
-                                                if ignore != "" {
-                                                        // svn:ignore properties are nonrecursive
-                                                        // to lower directories, but .gitignore
-                                                        // patterns are recursive.  Thus we need to
-                                                        // anchor the translated pattern with
-                                                        // leading / in order to render the
-                                                        // Subversion behavior accurately.  However,
-                                                        // if done naively this clobbers the branch-root
-                                                        // ignore defaults, which are already anchored.
+						if node.path == svnSep {
+							gitignore_path = ".gitignore"
+						} else {
+							gitignore_path = filepath.Join(node.path,
+								".gitignore")
+						}
+						// There are no other directory properties that can
+						// turn into fileops.
+						ignore := node.props.get("svn:ignore")
+						if ignore != "" {
+							// svn:ignore properties are nonrecursive
+							// to lower directories, but .gitignore
+							// patterns are recursive.  Thus we need to
+							// anchor the translated pattern with
+							// leading / in order to render the
+							// Subversion behavior accurately.  However,
+							// if done naively this clobbers the branch-root
+							// ignore defaults, which are already anchored.
 							ignorelines := make([]string, 0)
 							for _, line := range strings.Split(ignore, "\n") {
 								if strings.HasPrefix(line, "#") || strings.HasPrefix(line, "/") || line == "" {
 									ignorelines = append(ignorelines, line)
 								} else {
-									ignorelines = append(ignorelines, "/" + line)
+									ignorelines = append(ignorelines, "/"+line)
 								}
 							}
 							ignore = strings.Join(ignorelines, "\n")
-                                                        blob := newBlob(sp.repo)
-                                                        blob.setContent(ignore, noOffset)
-                                                        newnode := new(NodeAction)
-                                                        newnode.path = gitignore_path
-                                                        newnode.revision = revision
-                                                        newnode.action = sdADD
-                                                        newnode.kind = sdFILE
-                                                        newnode.blob = blob
-                                                        newnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
-                                                        announce(debugIGNORES, "r%d: queuing up %s generation with:\n%v.",
+							blob := newBlob(sp.repo)
+							blob.setContent(ignore, noOffset)
+							newnode := new(NodeAction)
+							newnode.path = gitignore_path
+							newnode.revision = revision
+							newnode.action = sdADD
+							newnode.kind = sdFILE
+							newnode.blob = blob
+							newnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
+							announce(debugIGNORES, "r%d: queuing up %s generation with:\n%v.",
 								revision, newnode.path, node.props.get("svn:ignore"))
-                                                        // Must append rather than simply performing.
-                                                        // Otherwise when the property is unset we
-                                                        // won't have the right thing happen.
-                                                        newnode.generated = true
-                                                        expandedNodes = append(expandedNodes, *newnode)
-                                                        sp.activeGitignores[gitignore_path] = ignore
-                                                } else if _, ok := sp.activeGitignores[gitignore_path]; ok {
-                                                        newnode := new(NodeAction)
-                                                        newnode.path = gitignore_path
-                                                        newnode.revision = revision
-                                                        newnode.action = sdDELETE
-                                                        newnode.kind = sdFILE
-                                                        announce(debugIGNORES, "r%d: queuing up %s deletion.", revision, newnode.path)
-                                                        newnode.generated = true
-                                                        expandedNodes = append(expandedNodes, *newnode)
-                                                        delete(sp.activeGitignores, gitignore_path)
-                                                }
-                                        }
-                                }
-                        }
-                }
+							// Must append rather than simply performing.
+							// Otherwise when the property is unset we
+							// won't have the right thing happen.
+							newnode.generated = true
+							expandedNodes = append(expandedNodes, *newnode)
+							sp.activeGitignores[gitignore_path] = ignore
+						} else if _, ok := sp.activeGitignores[gitignore_path]; ok {
+							newnode := new(NodeAction)
+							newnode.path = gitignore_path
+							newnode.revision = revision
+							newnode.action = sdDELETE
+							newnode.kind = sdFILE
+							announce(debugIGNORES, "r%d: queuing up %s deletion.", revision, newnode.path)
+							newnode.generated = true
+							expandedNodes = append(expandedNodes, *newnode)
+							delete(sp.activeGitignores, gitignore_path)
+						}
+					}
+				}
+			}
+		}
 		announce(debugEXTRACT, "%d expanded Subversion nodes", len(expandedNodes))
-                // Ugh.  Because cvs2svn is brain-dead and issues D/M pairs
-                // for identical paths in generated commits, we have to remove those
-                // D ops here.  Otherwise later on when we're generating ops, if
-                // the M node happens to be missing its hash it will be seen as
-                // unmodified and only the D will be issued.
-                seen := newStringSet()
-                for idx := len(expandedNodes)-1; idx >=0; idx-- {
+		// Ugh.  Because cvs2svn is brain-dead and issues D/M pairs
+		// for identical paths in generated commits, we have to remove those
+		// D ops here.  Otherwise later on when we're generating ops, if
+		// the M node happens to be missing its hash it will be seen as
+		// unmodified and only the D will be issued.
+		seen := newStringSet()
+		for idx := len(expandedNodes) - 1; idx >= 0; idx-- {
 			node := expandedNodes[idx]
-                        if node.action == sdDELETE && seen.Contains(node.path) {
-                                node.action = sdNONE
-                        }
-                        seen.Add(node.path)
-                }
-                // Create actions corresponding to both
-                // parsed and generated nodes.
+			if node.action == sdDELETE && seen.Contains(node.path) {
+				node.action = sdNONE
+			}
+			seen.Add(node.path)
+		}
+		// Create actions corresponding to both
+		// parsed and generated nodes.
 		type fiAction struct {
-			node NodeAction
+			node   NodeAction
 			fileop FileOp
 		}
-                actions := make([]fiAction, 0)
-                ancestorNodes := make(map[string]*NodeAction)
-                for _, node := range expandedNodes {
-                        if node.action == sdNONE {
+		actions := make([]fiAction, 0)
+		ancestorNodes := make(map[string]*NodeAction)
+		for _, node := range expandedNodes {
+			if node.action == sdNONE {
 				continue
-                        }
+			}
 			var ancestor *NodeAction
-                        if node.kind == sdFILE {
-                                if node.action == sdDELETE {
-                                        //assert node.blob == nil
-                                        fileop := newFileOp(sp.repo)
-                                        fileop.construct("D", node.path)
-                                        actions = append(actions, fiAction{node, *fileop})
-                                        ancestorNodes[node.path] = nil
-                                } else if node.action == sdADD || node.action == sdCHANGE || node.action == sdREPLACE {
-                                        // Try to figure out who the ancestor of
-                                        // this node is.
-                                        if node.fromPath != "" || node.fromHash != "" {
-                                                // Try first via fromPath
-                                                fm, ok := filemaps[node.fromRev]
+			if node.kind == sdFILE {
+				if node.action == sdDELETE {
+					//assert node.blob == nil
+					fileop := newFileOp(sp.repo)
+					fileop.construct("D", node.path)
+					actions = append(actions, fiAction{node, *fileop})
+					ancestorNodes[node.path] = nil
+				} else if node.action == sdADD || node.action == sdCHANGE || node.action == sdREPLACE {
+					// Try to figure out who the ancestor of
+					// this node is.
+					if node.fromPath != "" || node.fromHash != "" {
+						// Try first via fromPath
+						fm, ok := filemaps[node.fromRev]
 						if ok {
-							var trialnode interface {}
+							var trialnode interface{}
 							trialnode = fm.get(node.fromPath)
 							if trialnode == nil {
 								ok = false
 							} else {
-								lookback, ok2 := trialnode.(NodeAction) 
+								lookback, ok2 := trialnode.(NodeAction)
 								if debugEnable(debugTOPOLOGY) {
 									if ok2 {
 										ancestor = &lookback
@@ -7419,199 +7416,199 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 								}
 							}
 						}
-                                                // Fallback on the first blob that had this hash
-                                                if !ok && node.fromHash != "" {
-                                                        ancestor, ok = sp.hashmap[node.fromHash]
-                                                        announce(debugTOPOLOGY, "r%d~%s -> %s (via hashmap)",
+						// Fallback on the first blob that had this hash
+						if !ok && node.fromHash != "" {
+							ancestor, ok = sp.hashmap[node.fromHash]
+							announce(debugTOPOLOGY, "r%d~%s -> %s (via hashmap)",
 								node.revision, node.path, ancestor)
-                                                }
-                                                if !ok && !strings.HasSuffix(node.path, ".gitignore") {
-                                                        sp.gripe(fmt.Sprintf("r%d~%s: missing ancestor node for non-.gitignore.",
+						}
+						if !ok && !strings.HasSuffix(node.path, ".gitignore") {
+							sp.gripe(fmt.Sprintf("r%d~%s: missing ancestor node for non-.gitignore.",
 								node.revision, node.path))
-                                                }
-                                        } else if node.action != sdADD {
-                                                // Ordinary inheritance, no node copy.  For
-                                                // robustness, we don't assume revisions are
-                                                // consecutive numbers.
-                                                found := filemaps[node.fromRev].get(node.path)
-						lookback, ok := found.(NodeAction) 
-                                                if !ok {
-                                                        found = filemaps[previous].get(node.path)
-							lookback, _ = found.(NodeAction) 
-                                                }
+						}
+					} else if node.action != sdADD {
+						// Ordinary inheritance, no node copy.  For
+						// robustness, we don't assume revisions are
+						// consecutive numbers.
+						found := filemaps[node.fromRev].get(node.path)
+						lookback, ok := found.(NodeAction)
+						if !ok {
+							found = filemaps[previous].get(node.path)
+							lookback, _ = found.(NodeAction)
+						}
 						ancestor = &lookback
-                                        } else {
-                                                ancestor = nil
-                                        }
-                                        // Time for fileop generation
-                                        if node.blob != nil {
-                                                if lookback, ok := sp.hashmap[node.contentHash]; ok  {
-                                                        // Blob matches an existing one -
-                                                        // node was created by a
-                                                        // non-Subversion copy followed by
-                                                        // add.  Get the ancestry right,
-                                                        // otherwise parent pointers won't
-                                                        // be computed properly.
+					} else {
+						ancestor = nil
+					}
+					// Time for fileop generation
+					if node.blob != nil {
+						if lookback, ok := sp.hashmap[node.contentHash]; ok {
+							// Blob matches an existing one -
+							// node was created by a
+							// non-Subversion copy followed by
+							// add.  Get the ancestry right,
+							// otherwise parent pointers won't
+							// be computed properly.
 							ancestor = lookback
-                                                        node.fromPath = ancestor.fromPath
-                                                        node.fromRev = ancestor.fromRev
-                                                        node.blobmark = ancestor.blobmark
-                                                }
+							node.fromPath = ancestor.fromPath
+							node.fromRev = ancestor.fromRev
+							node.blobmark = ancestor.blobmark
+						}
 						if node.blobmark == "" {
-                                                        node.blobmark = node.blob.setMark(sp.repo.newmark())
-                                                        sp.repo.addEvent(node.blob)
-                                                        // Blobs generated by reposurgeon
-                                                        // (e.g .gitignore content) have no
-                                                        // content hash.  Don't record
-                                                        // them, otherwise they'll all
-                                                        // collide :-)
-                                                        if node.contentHash != "" {
-                                                                sp.hashmap[node.contentHash] = &node
-                                                        }
-                                                }
-                                        } else if ancestor != nil {
-                                                node.blobmark = ancestor.blobmark
-                                        } else {
-                                                // No ancestor, no blob. Has to be a
-                                                // pure property change.  There's no
-                                                // way to figure out what mark to use
-                                                // in a fileop.
-                                                if !strings.HasSuffix(node.path, ".gitignore") {
-                                                        sp.gripe(fmt.Sprintf("r%d~%s: permission information may be lost.",
+							node.blobmark = node.blob.setMark(sp.repo.newmark())
+							sp.repo.addEvent(node.blob)
+							// Blobs generated by reposurgeon
+							// (e.g .gitignore content) have no
+							// content hash.  Don't record
+							// them, otherwise they'll all
+							// collide :-)
+							if node.contentHash != "" {
+								sp.hashmap[node.contentHash] = &node
+							}
+						}
+					} else if ancestor != nil {
+						node.blobmark = ancestor.blobmark
+					} else {
+						// No ancestor, no blob. Has to be a
+						// pure property change.  There's no
+						// way to figure out what mark to use
+						// in a fileop.
+						if !strings.HasSuffix(node.path, ".gitignore") {
+							sp.gripe(fmt.Sprintf("r%d~%s: permission information may be lost.",
 								node.revision, node.path))
-                                                }
-                                                continue
-                                        }
-                                        ancestorNodes[node.path] = &node
+						}
+						continue
+					}
+					ancestorNodes[node.path] = &node
 					// This check was not present in the ancestral Python.
-                                        if node.blobmark == "" && !strings.HasSuffix(node.path, ".gitignore") {
+					if node.blobmark == "" && !strings.HasSuffix(node.path, ".gitignore") {
 						panic(fmt.Errorf("impossibly empty blob mark in %s", node))
 					}
-                                        // Time for fileop generation.
-                                        perms := nodePermissions(node)
-                                        if sp.propagate[node.path]  {
-                                                perms = "100755"
-                                                delete(sp.propagate, node.path)
-                                        }
-                                        newContent := (node.blob != nil)
-                                        // Ignore and complain about explicit .gitignores
-                                        // created, e.g, by git-svn.  In an ideal world we
-                                        // would merge these with svn:ignore properties. but
-                                        // this would be hairy and bug-prone. So we give
-                                        // the user a heads-up and expect these to be
-                                        // merged by hand.
-                                        if newContent &&
-                                           !node.generated && 
-                                           !options.Contains("--user-ignores") &&
-                                           strings.HasSuffix(node.path, ".gitignore") {
-                                                sp.gripe(fmt.Sprintf("r%d~%s: user-created .gitignore ignored.",
+					// Time for fileop generation.
+					perms := nodePermissions(node)
+					if sp.propagate[node.path] {
+						perms = "100755"
+						delete(sp.propagate, node.path)
+					}
+					newContent := (node.blob != nil)
+					// Ignore and complain about explicit .gitignores
+					// created, e.g, by git-svn.  In an ideal world we
+					// would merge these with svn:ignore properties. but
+					// this would be hairy and bug-prone. So we give
+					// the user a heads-up and expect these to be
+					// merged by hand.
+					if newContent &&
+						!node.generated &&
+						!options.Contains("--user-ignores") &&
+						strings.HasSuffix(node.path, ".gitignore") {
+						sp.gripe(fmt.Sprintf("r%d~%s: user-created .gitignore ignored.",
 							node.revision, node.path))
-                                                continue
-                                        }
-                                        // This ugly nasty guard is critically important.
-                                        // We need to generate a modify if {
-                                        // 1. There is new content.
-                                        // 2. This node was generated as an
-                                        // expansion of a directory copy.
-                                        // 3. The node was produced by an explicit
-                                        // Subversion file copy (not a directory copy)
-                                        // in which case it has an MD5 hash that points
-                                        // back to a source.
-                                        // 4. The permissions for this path have changed;
-                                        // we need to generate a modify with an old mark
-                                        // but new permissions.
-                                        generatedFileCopy := node.generated
-                                        subversionFileCopy := (node.fromHash != "")
-                                        if newContent || generatedFileCopy || subversionFileCopy || node.propchange {
-                                                //assert perms
-                                                fileop := newFileOp(sp.repo)
-                                                fileop.construct(opM,
-                                                                 perms,
-                                                                 node.blobmark,
-                                                                 node.path)
+						continue
+					}
+					// This ugly nasty guard is critically important.
+					// We need to generate a modify if {
+					// 1. There is new content.
+					// 2. This node was generated as an
+					// expansion of a directory copy.
+					// 3. The node was produced by an explicit
+					// Subversion file copy (not a directory copy)
+					// in which case it has an MD5 hash that points
+					// back to a source.
+					// 4. The permissions for this path have changed;
+					// we need to generate a modify with an old mark
+					// but new permissions.
+					generatedFileCopy := node.generated
+					subversionFileCopy := (node.fromHash != "")
+					if newContent || generatedFileCopy || subversionFileCopy || node.propchange {
+						//assert perms
+						fileop := newFileOp(sp.repo)
+						fileop.construct(opM,
+							perms,
+							node.blobmark,
+							node.path)
 						actions = append(actions, fiAction{node, *fileop})
 						sp.repo.markToEvent(fileop.ref).(*Blob).addalias(node.path)
-                                        } else if debugEnable(debugEXTRACT) {
-                                                announce(debugEXTRACT, "r%d~%s: unmodified", node.revision, node.path)
-                                        }
-                                }
-                        } else if node.action == sdDELETE || node.action == sdREPLACE {
-                        	// These are directory actions.
-                                announce(debugEXTRACT, "r%d: deleteall %s", revision,node.path)
-                                fileop := newFileOp(sp.repo)
-                                fileop.construct("deleteall", node.path[:len(node.path)-1])
-                                actions = append(actions, fiAction{node, *fileop})
-                        }
-                }
-                // Time to generate commits from actions and fileops.
-                // First, break the file operations into branch cliques.
+					} else if debugEnable(debugEXTRACT) {
+						announce(debugEXTRACT, "r%d~%s: unmodified", node.revision, node.path)
+					}
+				}
+			} else if node.action == sdDELETE || node.action == sdREPLACE {
+				// These are directory actions.
+				announce(debugEXTRACT, "r%d: deleteall %s", revision, node.path)
+				fileop := newFileOp(sp.repo)
+				fileop.construct("deleteall", node.path[:len(node.path)-1])
+				actions = append(actions, fiAction{node, *fileop})
+			}
+		}
+		// Time to generate commits from actions and fileops.
+		// First, break the file operations into branch cliques.
 		// In the normal case there will be only one such clique,
 		// but in Subversion (unlike git) it is possible to make
 		// a commit that modifies multiple branches. In order to
 		// cope with this case we must first recognize it.
-                cliques := make(map[string][]FileOp)
+		cliques := make(map[string][]FileOp)
 		cliqueBranches := make([]string, 0)
-                lastbranch := ""
-                for _, action := range actions {
-                        // Try last seen branch first
-                        if lastbranch != "" && strings.HasPrefix(action.node.path, lastbranch) {
-                                cliques[lastbranch] = append(cliques[lastbranch], action.fileop)
+		lastbranch := ""
+		for _, action := range actions {
+			// Try last seen branch first
+			if lastbranch != "" && strings.HasPrefix(action.node.path, lastbranch) {
+				cliques[lastbranch] = append(cliques[lastbranch], action.fileop)
 				if len(cliqueBranches) == 0 || lastbranch != cliqueBranches[len(cliqueBranches)-1] {
 					cliqueBranches = append(cliqueBranches, lastbranch)
 				}
-                                continue
-                        }
-                        // Preferentially match longest branches
+				continue
+			}
+			// Preferentially match longest branches
 			explicitMatch := false
-                        for _, branch := range sp.branchlist() {
-                                if strings.HasPrefix(action.node.path, branch) {
+			for _, branch := range sp.branchlist() {
+				if strings.HasPrefix(action.node.path, branch) {
 					cliques[branch] = append(cliques[branch], action.fileop)
 					if len(cliqueBranches) == 0 || branch != cliqueBranches[len(cliqueBranches)-1] {
 						cliqueBranches = append(cliqueBranches, branch)
 					}
-                                        lastbranch = branch
+					lastbranch = branch
 					explicitMatch = true
-                                        break
-                                }
+					break
+				}
 			}
-                        if !explicitMatch {
-                                cliques[""] = append(cliques[""], action.fileop)
+			if !explicitMatch {
+				cliques[""] = append(cliques[""], action.fileop)
 				if len(cliqueBranches) == 0 || "" != cliqueBranches[len(cliqueBranches)-1] {
 					cliqueBranches = append(cliqueBranches, "")
 				}
-                        }
-                }
-                announce(debugEXTRACT, "r%d: %d action(s) in %d clique(s)", revision, len(actions), len(cliques))
+			}
+		}
+		announce(debugEXTRACT, "r%d: %d action(s) in %d clique(s)", revision, len(actions), len(cliques))
 		type branchAction struct {
-			branch string
+			branch  string
 			fileops []FileOp
 		}
-                // Make two operation lists from the cliques, sorting cliques
-                // containing only branch deletes from other cliques.
-                deleteallOps := make([]branchAction, 0)
-                otherOps := make([]branchAction, 0)
-                for _, branch := range cliqueBranches {
+		// Make two operation lists from the cliques, sorting cliques
+		// containing only branch deletes from other cliques.
+		deleteallOps := make([]branchAction, 0)
+		otherOps := make([]branchAction, 0)
+		for _, branch := range cliqueBranches {
 			ops := cliques[branch]
-                        if len(ops) == 1 && ops[0].op == deleteall {
-                                deleteallOps = append(deleteallOps, branchAction{branch, ops})
-                        } else {
-                                otherOps = append(otherOps, branchAction{branch, ops})
-                        }
-                }
-                oplist := append(otherOps, deleteallOps...)
-                // Create all commits corresponding to the revision
-                newcommits := make([]Event, 0)
-                commit.legacyID = fmt.Sprintf("%d", revision)
-		// FIXME: Questionable - should maybe be testing length of branch clique list here 
-                if len(otherOps) <= 1 {
-                        // In the ordinary case (1 or 0 non-delete ops), we can assign all non-deleteall fileops
-                        // to the base commit.
-                        sp.repo.legacyMap[fmt.Sprintf("SVN:%s", commit.legacyID)] = commit
-                        if len(oplist) > 0 {
-                                commit.common = oplist[0].branch
-                                commit.setOperations(oplist[0].fileops)
+			if len(ops) == 1 && ops[0].op == deleteall {
+				deleteallOps = append(deleteallOps, branchAction{branch, ops})
+			} else {
+				otherOps = append(otherOps, branchAction{branch, ops})
+			}
+		}
+		oplist := append(otherOps, deleteallOps...)
+		// Create all commits corresponding to the revision
+		newcommits := make([]Event, 0)
+		commit.legacyID = fmt.Sprintf("%d", revision)
+		// FIXME: Questionable - should maybe be testing length of branch clique list here
+		if len(otherOps) <= 1 {
+			// In the ordinary case (1 or 0 non-delete ops), we can assign all non-deleteall fileops
+			// to the base commit.
+			sp.repo.legacyMap[fmt.Sprintf("SVN:%s", commit.legacyID)] = commit
+			if len(oplist) > 0 {
+				commit.common = oplist[0].branch
+				commit.setOperations(oplist[0].fileops)
 				oplist = oplist[1:]
-                        } else {
+			} else {
 				// Find common prefix of all node paths.
 				commit.common = record.nodes[0].path
 				var j int
@@ -7627,114 +7624,114 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				for len(commit.common) > 0 && !strings.HasSuffix(commit.common, svnSep) {
 					commit.common = commit.common[:len(commit.common)-1]
 				}
-                        }
-                        commit.setMark(sp.repo.newmark())
-                        announce(debugEXTRACT, "r%d gets mark %s", revision, commit.mark)
-                        newcommits = append(newcommits, commit)
-                }
-                // If the commit is mixed, or there are deletealls left over,
-                // handle that.
-                sort.SliceStable(oplist, func(i, j int) bool {
+			}
+			commit.setMark(sp.repo.newmark())
+			announce(debugEXTRACT, "r%d gets mark %s", revision, commit.mark)
+			newcommits = append(newcommits, commit)
+		}
+		// If the commit is mixed, or there are deletealls left over,
+		// handle that.
+		sort.SliceStable(oplist, func(i, j int) bool {
 			return oplist[i].branch < oplist[j].branch
 		})
 		var split *Commit
-                for i, action := range oplist {
-                        split = commit.clone(sp.repo)
-                        split.common = action.branch
-                        // Sequence numbers for split commits are 1-origin
-                        split.legacyID += splitSep + strconv.Itoa(i + 1)
-                        sp.repo.legacyMap[fmt.Sprintf("SVN:%s", split.legacyID)] = split
-                        split.Comment += "\n[[Split portion of a mixed commit.]]\n"
-                        split.setMark(sp.repo.newmark())
-                        split.setOperations(action.fileops)
-                        newcommits = append(newcommits, split)
-                }
-                // The revision is truly mixed if there is more than one clique
-                // not consisting entirely of deleteall operations.
-                if len(otherOps) > 1 {
-                        // Store the number of splits
-                        splitCommits[revision] = len(otherOps)
-                }
-                // Sort fileops according to git rules
-                for _, newcommit := range newcommits {
-                        newcommit.(*Commit).sortOperations()
-                }
-                // Deduce links between branches on the basis of copies. This
-                // is tricky because a revision can be the target of multiple
-                // copies.  Humans don't abuse this because tracking multiple
-                // copies is too hard to do in a slow organic brain, but tools
-                // like cvs2svn can generate large sets of them. cvs2svn seems
-                // to try to copy each file && directory from the commit
-                // corresponding to the CVS revision where the file was last
-                // changed before the copy, which may be substantially earlier
-                // than the CVS revision corresponding to the
-                // copy. Fortunately, we can resolve such sets by the simple
-                // expedient of picking the *latest* revision in them!
-                // No code uses the result if branch analysis is turned off.
-                if !nobranch {
-                        for i := range newcommits {
-                                if _, ok := sp.branchlink[commit.mark]; ok {
+		for i, action := range oplist {
+			split = commit.clone(sp.repo)
+			split.common = action.branch
+			// Sequence numbers for split commits are 1-origin
+			split.legacyID += splitSep + strconv.Itoa(i+1)
+			sp.repo.legacyMap[fmt.Sprintf("SVN:%s", split.legacyID)] = split
+			split.Comment += "\n[[Split portion of a mixed commit.]]\n"
+			split.setMark(sp.repo.newmark())
+			split.setOperations(action.fileops)
+			newcommits = append(newcommits, split)
+		}
+		// The revision is truly mixed if there is more than one clique
+		// not consisting entirely of deleteall operations.
+		if len(otherOps) > 1 {
+			// Store the number of splits
+			splitCommits[revision] = len(otherOps)
+		}
+		// Sort fileops according to git rules
+		for _, newcommit := range newcommits {
+			newcommit.(*Commit).sortOperations()
+		}
+		// Deduce links between branches on the basis of copies. This
+		// is tricky because a revision can be the target of multiple
+		// copies.  Humans don't abuse this because tracking multiple
+		// copies is too hard to do in a slow organic brain, but tools
+		// like cvs2svn can generate large sets of them. cvs2svn seems
+		// to try to copy each file && directory from the commit
+		// corresponding to the CVS revision where the file was last
+		// changed before the copy, which may be substantially earlier
+		// than the CVS revision corresponding to the
+		// copy. Fortunately, we can resolve such sets by the simple
+		// expedient of picking the *latest* revision in them!
+		// No code uses the result if branch analysis is turned off.
+		if !nobranch {
+			for i := range newcommits {
+				if _, ok := sp.branchlink[commit.mark]; ok {
 					continue
-                                }
+				}
 				newcommit := newcommits[i].(*Commit)
 				copies := make([]*NodeAction, 0)
 				for j := range record.nodes {
 					noderef := &record.nodes[j]
-					if noderef.fromRev != 0  && strings.HasPrefix(noderef.path, newcommit.common) {
+					if noderef.fromRev != 0 && strings.HasPrefix(noderef.path, newcommit.common) {
 						copies = append(copies, noderef)
 					}
-				
+
 				}
-                                if len(copies) > 0 && debugEnable(debugTOPOLOGY) {
-                                        announce(debugSHOUT, "r%s: copy operations %s",
-                                                     newcommit.legacyID, copies)
-                                }
-                                // If the copies include one for the directory, use that as
-                                // the first parent: most of the files in the new branch
-                                // will come from that copy, and that might well be a full
-                                // branch copy where doing that way is needed because the
-                                // fileop for the copy didn't get generated and the commit
-                                // tree would be wrong if we didn't.
+				if len(copies) > 0 && debugEnable(debugTOPOLOGY) {
+					announce(debugSHOUT, "r%s: copy operations %s",
+						newcommit.legacyID, copies)
+				}
+				// If the copies include one for the directory, use that as
+				// the first parent: most of the files in the new branch
+				// will come from that copy, and that might well be a full
+				// branch copy where doing that way is needed because the
+				// fileop for the copy didn't get generated and the commit
+				// tree would be wrong if we didn't.
 				//
-                                // Otherwise, user may have botched a branch creation by doing a
-                                // non-Subversion directory copy followed by a bunch of
-                                // Subversion adds. Blob hashes will match existing files,
-                                // but fromRev and fromPath won't be set at parse time.
-                                // Our code detects this case and makes file
-                                // backlinks, but can't deduce the directory copy.
-                                // Thus, we have to treat multiple file copies as
-                                // an instruction to create a gitspace branch.
-                                //
-                                // The guard len(copies) > 1 filters out copy op sets that are
-                                // *single* file copies. We're making an assumption
-                                // here that multiple file copies should always
-                                // trigger a branch link creation.  This assumption
-                                // could be wrong, which is why we emit a warning
-                                // message later on for branch links detected this
-                                // way
-                                //
-                                // Even with this filter you'll tend to end up with lots
-                                // of little merge bubbles with no commits on one side;
-                                // these have to be removed by a debubbling pass later.
-                                // I don't know what generates these things - cvs2svn, maybe.
-                                //
-                                // The second conjunct (newcommit.common not in
-                                // self.directoryBranchlink) filters out the
-                                // case where the user actually did do a previous
-                                // Subversion file copy to start the
-                                // branch, in which case we want to
-                                // link through that.
+				// Otherwise, user may have botched a branch creation by doing a
+				// non-Subversion directory copy followed by a bunch of
+				// Subversion adds. Blob hashes will match existing files,
+				// but fromRev and fromPath won't be set at parse time.
+				// Our code detects this case and makes file
+				// backlinks, but can't deduce the directory copy.
+				// Thus, we have to treat multiple file copies as
+				// an instruction to create a gitspace branch.
+				//
+				// The guard len(copies) > 1 filters out copy op sets that are
+				// *single* file copies. We're making an assumption
+				// here that multiple file copies should always
+				// trigger a branch link creation.  This assumption
+				// could be wrong, which is why we emit a warning
+				// message later on for branch links detected this
+				// way
+				//
+				// Even with this filter you'll tend to end up with lots
+				// of little merge bubbles with no commits on one side;
+				// these have to be removed by a debubbling pass later.
+				// I don't know what generates these things - cvs2svn, maybe.
+				//
+				// The second conjunct (newcommit.common not in
+				// self.directoryBranchlink) filters out the
+				// case where the user actually did do a previous
+				// Subversion file copy to start the
+				// branch, in which case we want to
+				// link through that.
 				var latest *NodeAction
-				for _, noderef := range copies { 
+				for _, noderef := range copies {
 					if noderef.kind == sdDIR && noderef.path != "" && noderef.path == newcommit.common {
 						latest = noderef
 					}
-				}	
-                                if latest != nil {
-                                        sp.directoryBranchlinks.Add(newcommit.common)
-                                        announce(debugTOPOLOGY, "r%s: directory copy with %s",
-                                                     newcommit.legacyID, copies)
-                                } else if len(copies) > 1 &&
+				}
+				if latest != nil {
+					sp.directoryBranchlinks.Add(newcommit.common)
+					announce(debugTOPOLOGY, "r%s: directory copy with %s",
+						newcommit.legacyID, copies)
+				} else if len(copies) > 1 &&
 					!sp.directoryBranchlinks.Contains(newcommit.common) {
 					for _, node := range copies {
 						if latest == nil || node.fromRev > latest.fromRev {
@@ -7742,45 +7739,45 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						}
 					}
 				}
-                                if latest != nil {
-                                        prev := lastRelevantCommit(sp,
-                                                latest.fromRev, latest.fromPath,
-                                                "common")
-                                        if prev == nil {
-                                                if debugEnable(debugTOPOLOGY) {
-                                                        croak(fmt.Sprintf("lookback for %s failed, not making branch link", latest))
-                                                }
-                                        } else {
-                                                sp.fileopBranchlinks.Add(newcommit.common)
-                                                announce(debugTOPOLOGY, "r%s: making branch link %s",
+				if latest != nil {
+					prev := lastRelevantCommit(sp,
+						latest.fromRev, latest.fromPath,
+						"common")
+					if prev == nil {
+						if debugEnable(debugTOPOLOGY) {
+							croak(fmt.Sprintf("lookback for %s failed, not making branch link", latest))
+						}
+					} else {
+						sp.fileopBranchlinks.Add(newcommit.common)
+						announce(debugTOPOLOGY, "r%s: making branch link %s",
 							newcommit.legacyID, newcommit.common)
-                                                sp.branchlink[newcommit.mark] = daglink{newcommit, prev}
-                                                announce(debugTOPOLOGY, "r%s: link %s (%s) back to %d (%s, %s)",
+						sp.branchlink[newcommit.mark] = daglink{newcommit, prev}
+						announce(debugTOPOLOGY, "r%s: link %s (%s) back to %d (%s, %s)",
 							newcommit.legacyID,
 							newcommit.mark,
 							newcommit.common,
 							latest.fromRev,
 							prev.mark,
 							prev.common)
-                                        }
-                                }
-                        }
-                }
-                // We're done, add all the new commits
-                sp.repo.events = append(sp.repo.events, newcommits...)
-                sp.repo.declareSequenceMutation("adding new commits")
-                // Report progress, and give up our scheduler slot
-                // so as not to eat the processor.
-                baton.twirl("")
-                time.Sleep(0)
-                previous = revision
-                // End of processing for this Subversion revision.  If the
-                // repo is large, we throw out file records for this node in
-                // order to reduce the maximum working set from proportional
-                // to two times the number of Subversion commits to one time.
-                // What we give up is some detail in the diagnostic messages
-                // on zero-fileop commits.
-                if sp.large {
+					}
+				}
+			}
+		}
+		// We're done, add all the new commits
+		sp.repo.events = append(sp.repo.events, newcommits...)
+		sp.repo.declareSequenceMutation("adding new commits")
+		// Report progress, and give up our scheduler slot
+		// so as not to eat the processor.
+		baton.twirl("")
+		time.Sleep(0)
+		previous = revision
+		// End of processing for this Subversion revision.  If the
+		// repo is large, we throw out file records for this node in
+		// order to reduce the maximum working set from proportional
+		// to two times the number of Subversion commits to one time.
+		// What we give up is some detail in the diagnostic messages
+		// on zero-fileop commits.
+		if sp.large {
 			sp.revisions[revision].nodes = make([]NodeAction, 0)
 			// This copy loop requires that NodeAction structures cannot contain
 			// pointers to other NodeAction structures.
@@ -7789,37 +7786,37 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					sp.revisions[revision].nodes = append(sp.revisions[revision].nodes, n)
 				}
 			}
-                }
-        } // end of revision loop
+		}
+	} // end of revision loop
 
-        // Filemaps are no longer needed, allow them to be garbage collectedc
-        filemaps = nil
-        // Bail out if we have read no commits
-        if len(sp.repo.commits(nil)) == 0 {
-                sp.gripe("empty stream or repository.")
+	// Filemaps are no longer needed, allow them to be garbage collectedc
+	filemaps = nil
+	// Bail out if we have read no commits
+	if len(sp.repo.commits(nil)) == 0 {
+		sp.gripe("empty stream or repository.")
 		return
-        }
-        // Warn about dubious branch links
-        sp.fileopBranchlinks.Remove("trunk" + svnSep)
+	}
+	// Warn about dubious branch links
+	sp.fileopBranchlinks.Remove("trunk" + svnSep)
 	if links := sp.fileopBranchlinks.Subtract(sp.directoryBranchlinks); !links.Empty() {
-                sp.gripe(fmt.Sprintf("branch links detected by file ops only: %v", links))
-        }
-        timeit("commits")
-        if debugEnable(debugEXTRACT) {
-                announce(debugEXTRACT, "at post-parsing time:")
-                for _, commit := range sp.repo.commits(nil) {
+		sp.gripe(fmt.Sprintf("branch links detected by file ops only: %v", links))
+	}
+	timeit("commits")
+	if debugEnable(debugEXTRACT) {
+		announce(debugEXTRACT, "at post-parsing time:")
+		for _, commit := range sp.repo.commits(nil) {
 			text := strings.TrimSpace(commit.Comment)
 			if len(text) > 30 {
 				text = text[:27] + "..."
 			}
-                        announce(debugSHOUT, "r%-4s %4s %2d %2d '%s'",
+			announce(debugSHOUT, "r%-4s %4s %2d %2d '%s'",
 				commit.legacyID, commit.mark,
 				len(commit.operations()),
 				commit.properties.Len(),
 				text)
-                }
-        }
-        // First, turn a no-op root commit into a tag
+		}
+	}
+	// First, turn a no-op root commit into a tag
 	if len(sp.repo.events) > 0 && len(sp.repo.earliestCommit().operations()) == 0 {
 		if commits := sp.repo.commits(nil); len(commits[0].operations()) == 0 {
 			if len(commits) >= 2 {
@@ -7834,69 +7831,69 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			sp.gripe("could not tagify root commit.")
 		}
 	}
-        timeit("rootcommit")
-        // Now, branch analysis.
-        branchroots := make([]*Commit, 0)
-        if len(sp.branches) == 0 || nobranch {
-                var last *Commit
-                for _, commit := range sp.repo.commits(nil) {
-                        commit.setBranch(filepath.Join("refs", "heads", "master") + svnSep)
-                        if last != nil {
+	timeit("rootcommit")
+	// Now, branch analysis.
+	branchroots := make([]*Commit, 0)
+	if len(sp.branches) == 0 || nobranch {
+		var last *Commit
+		for _, commit := range sp.repo.commits(nil) {
+			commit.setBranch(filepath.Join("refs", "heads", "master") + svnSep)
+			if last != nil {
 				commit.setParents([]CommitLike{last})
-                        }
-                        last = commit
-                }
-        } else {
-                // Instead, determine a branch for each commit...
-                announce(debugEXTRACT, fmt.Sprintf("Branches: %s", sp.branches,))
-                var lastbranch, branch string
-                for _, commit := range sp.repo.commits(nil) {
-                        if lastbranch != "" && strings.HasPrefix(commit.common, lastbranch) {
-                                branch = lastbranch
-                        } else {
-                                // Prefer the longest possible branch
+			}
+			last = commit
+		}
+	} else {
+		// Instead, determine a branch for each commit...
+		announce(debugEXTRACT, fmt.Sprintf("Branches: %s", sp.branches))
+		var lastbranch, branch string
+		for _, commit := range sp.repo.commits(nil) {
+			if lastbranch != "" && strings.HasPrefix(commit.common, lastbranch) {
+				branch = lastbranch
+			} else {
+				// Prefer the longest possible branch
 				for _, b := range sp.branchlist() {
 					if strings.HasPrefix(commit.common, b) {
 						branch = b
 					}
 				}
-                        }
-                        if branch != "" {
-                                commit.setBranch(branch)
-                                for i := range commit.fileops {
+			}
+			if branch != "" {
+				commit.setBranch(branch)
+				for i := range commit.fileops {
 					fileop := &commit.fileops[i]
-                                        if fileop.op  == opM || fileop.op == opD {
-                                                fileop.Path = fileop.Path[len(branch):]
-                                        } else if fileop.op  == opR || fileop.op == opC {
-                                                fileop.Source = fileop.Source[len(branch):]
-                                                fileop.Target = fileop.Target[len(branch):]
-                                        }
-                                }
-                        } else {
-                                commit.setBranch("root")
-                                sp.branches["root"] = nil
-                        }
-                        lastbranch = branch
-                        baton.twirl("")
-                }
+					if fileop.op == opM || fileop.op == opD {
+						fileop.Path = fileop.Path[len(branch):]
+					} else if fileop.op == opR || fileop.op == opC {
+						fileop.Source = fileop.Source[len(branch):]
+						fileop.Target = fileop.Target[len(branch):]
+					}
+				}
+			} else {
+				commit.setBranch("root")
+				sp.branches["root"] = nil
+			}
+			lastbranch = branch
+			baton.twirl("")
+		}
 		timeit("branches")
-                // ...then rebuild parent links so they follow the branches
-                for _, commit := range sp.repo.commits(nil) {
-                        if sp.branches[commit.Branch] == nil {
-                                branchroots = append(branchroots, commit)
-                                commit.setParents(nil)
-                        } else {
-                                commit.setParents([]CommitLike{sp.branches[commit.Branch]})
-                        }
-                        sp.branches[commit.Branch] = commit
-                        // Per-commit spinner disabled because this pass is fast
-                        //baton.twirl("")
-                }
-                sp.timeMark("parents")
-                baton.twirl("")
-                // The root branch is special. It wasn't made by a copy, so
-                // we didn't get the information to connect it to trunk in the
-                // last phase.
+		// ...then rebuild parent links so they follow the branches
+		for _, commit := range sp.repo.commits(nil) {
+			if sp.branches[commit.Branch] == nil {
+				branchroots = append(branchroots, commit)
+				commit.setParents(nil)
+			} else {
+				commit.setParents([]CommitLike{sp.branches[commit.Branch]})
+			}
+			sp.branches[commit.Branch] = commit
+			// Per-commit spinner disabled because this pass is fast
+			//baton.twirl("")
+		}
+		sp.timeMark("parents")
+		baton.twirl("")
+		// The root branch is special. It wasn't made by a copy, so
+		// we didn't get the information to connect it to trunk in the
+		// last phase.
 		var rootcommit *Commit
 		for _, c := range sp.repo.commits(nil) {
 			if c.Branch == "root" {
@@ -7906,12 +7903,12 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 		if rootcommit != nil {
 			earliest := sp.repo.earliestCommit()
-                        if rootcommit != earliest {
-                                sp.branchlink[rootcommit.mark] = daglink{rootcommit, earliest}
-                        }
-                }
-                timeit("root")
-                // Add links due to Subversion copy operations
+			if rootcommit != earliest {
+				sp.branchlink[rootcommit.mark] = daglink{rootcommit, earliest}
+			}
+		}
+		timeit("root")
+		// Add links due to Subversion copy operations
 		if debugEnable(debugEXTRACT) {
 			rootmarks := make([]string, 0)
 			for _, commit := range branchroots {
@@ -7920,52 +7917,52 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			// Python version only displayed the branchlink values
 			announce(debugEXTRACT, "branch roots: %v, links: %v", rootmarks, sp.branchlink)
 		}
-                for _, item := range sp.branchlink {
-                        if item.parent.repo != sp.repo {
-                                // The parent has been deleted since, don't add the link;
-                                // this can only happen if parent was the now tagified root.
-                                continue
-                        }
-                        if !item.child.hasParents() && !sp.branchcopies.Contains(item.child.Branch) {
-                                // The branch wasn't created by copying another branch and
-                                // is instead populated by fileops. Prepend a deleteall to
-                                // ensure that it starts with a clean tree instead of
-                                // inheriting that of its soon to be added first parent.
-                                // The deleteall is put on the first commit of the branch
-                                // which has fileops or more than one child.
-                                commit := item.child
-                                for len(commit.children()) == 1 && len(commit.operations()) == 0 {
-                                        commit = commit.firstChild()
-                                }
-                                if len(commit.operations()) > 0 || commit.hasChildren() {
-                                        fileop := newFileOp(sp.repo)
-                                        fileop.construct("deleteall")
-                                        commit.prependOperation(*fileop)
-                                        sp.generatedDeletes = append(sp.generatedDeletes, commit)
-                                }
-                        }
+		for _, item := range sp.branchlink {
+			if item.parent.repo != sp.repo {
+				// The parent has been deleted since, don't add the link;
+				// this can only happen if parent was the now tagified root.
+				continue
+			}
+			if !item.child.hasParents() && !sp.branchcopies.Contains(item.child.Branch) {
+				// The branch wasn't created by copying another branch and
+				// is instead populated by fileops. Prepend a deleteall to
+				// ensure that it starts with a clean tree instead of
+				// inheriting that of its soon to be added first parent.
+				// The deleteall is put on the first commit of the branch
+				// which has fileops or more than one child.
+				commit := item.child
+				for len(commit.children()) == 1 && len(commit.operations()) == 0 {
+					commit = commit.firstChild()
+				}
+				if len(commit.operations()) > 0 || commit.hasChildren() {
+					fileop := newFileOp(sp.repo)
+					fileop.construct("deleteall")
+					commit.prependOperation(*fileop)
+					sp.generatedDeletes = append(sp.generatedDeletes, commit)
+				}
+			}
 			var found bool
-                        for _, p := range item.child.parents() {
-                                if p == item.parent {
+			for _, p := range item.child.parents() {
+				if p == item.parent {
 					found = true
 					break
 				}
-                        }
+			}
 			if !found {
 				item.child.addParentCommit(item.parent)
 			}
-                }
+		}
 		//FIXME: This test is not correct.  What was the Python trying to validate?
-                //for _, root := range branchroots {
-                //        if len(root.operations()) != 0 && root.Branch != ("trunk" + svnSep) {
+		//for _, root := range branchroots {
+		//        if len(root.operations()) != 0 && root.Branch != ("trunk" + svnSep) {
 		//		sp.gripe(fmt.Sprintf("r%s: can't connect nonempty branch %s to origin",
 		//			root.legacyID, root.Branch))
-                ///       }
-                //}
-                timeit("branchlinks")
-                // Add links due to svn:mergeinfo properties
-                mergeinfo := newPathMap(nil)
-                mergeinfos := make(map[int]*PathMap)
+		///       }
+		//}
+		timeit("branchlinks")
+		// Add links due to svn:mergeinfo properties
+		mergeinfo := newPathMap(nil)
+		mergeinfos := make(map[int]*PathMap)
 		getMerges := func(minfo *PathMap, path string) stringSet {
 			rawOldMerges := minfo.get(path)
 			var eMerges stringSet
@@ -7976,109 +7973,109 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			}
 			return eMerges
 		}
-                for revision, record := range sp.revisions {
-                        for _, node := range record.nodes {
+		for revision, record := range sp.revisions {
+			for _, node := range record.nodes {
 				// We're only looking at directory nodes
-                                if node.kind != sdDIR {
-					 continue
-                                }
-                                // Mutate the mergeinfo according to copies
-                                if node.fromRev != 0 {
-                                        //assert parseInt(node.fromRev) < parseInt(revision)
+				if node.kind != sdDIR {
+					continue
+				}
+				// Mutate the mergeinfo according to copies
+				if node.fromRev != 0 {
+					//assert parseInt(node.fromRev) < parseInt(revision)
 					fromMerges := mergeinfos[node.fromRev]
 					if fromMerges == nil {
 						fromMerges = newPathMap(nil)
 					}
-                                        mergeinfo.copyFrom(node.path, fromMerges, node.fromPath)
-                                        announce(debugEXTRACT, "r%d~%s mergeinfo copied to %s",
-                                                node.fromRev, node.fromPath, node.path)
-                                }
-                                // Mutate the filemap according to current mergeinfo.
-                                // The general case is multiline: each line may describe
-                                // multiple spans merging to this revision; we only consider
-                                // the end revision of each span.
-                                // Because svn:mergeinfo will persist like other properties,
-                                // we need to compare with the already present mergeinfo and
-                                // only take new entries into account when creating merge
-                                // links. Also, since merging will also inherit the
-                                // mergeinfo entries of the source path, we also need to
-                                // gather and ignore those.
+					mergeinfo.copyFrom(node.path, fromMerges, node.fromPath)
+					announce(debugEXTRACT, "r%d~%s mergeinfo copied to %s",
+						node.fromRev, node.fromPath, node.path)
+				}
+				// Mutate the filemap according to current mergeinfo.
+				// The general case is multiline: each line may describe
+				// multiple spans merging to this revision; we only consider
+				// the end revision of each span.
+				// Because svn:mergeinfo will persist like other properties,
+				// we need to compare with the already present mergeinfo and
+				// only take new entries into account when creating merge
+				// links. Also, since merging will also inherit the
+				// mergeinfo entries of the source path, we also need to
+				// gather and ignore those.
 				existingMerges := getMerges(mergeinfo, node.path)
-                                ownMerges := newStringSet()
+				ownMerges := newStringSet()
 				info := node.props.get("svn:mergeinfo")
-                                if info != "" {
-                                        for _, line := range strings.Split(info, "\n") {
+				if info != "" {
+					for _, line := range strings.Split(info, "\n") {
 						fields := strings.Split(line, ":")
-                                                if len(fields) != 2 {
-                                                        continue
-                                                }
+						if len(fields) != 2 {
+							continue
+						}
 						fromPath, ranges := fields[0], fields[1]
-                                                for _, span := range strings.Split(ranges, ",") {
-                                                        // Ignore single-rev fields, they are cherry-picks.
-                                                        // TODO: maybe we should even test if minRev
-                                                        // corresponds to some fromRev + 1 to ensure no
-                                                        // commit has been skipped.
+						for _, span := range strings.Split(ranges, ",") {
+							// Ignore single-rev fields, they are cherry-picks.
+							// TODO: maybe we should even test if minRev
+							// corresponds to some fromRev + 1 to ensure no
+							// commit has been skipped.
 							fields = strings.Split(span, "-")
 							if len(fields) != 2 {
 								continue
 							}
 							minRev, fromRev := fields[0], fields[1]
-                                                        // Import mergeinfo from merged branches
-                                                        pastMerges := getMerges(mergeinfos[parseInt(fromRev)], fromPath)
+							// Import mergeinfo from merged branches
+							pastMerges := getMerges(mergeinfos[parseInt(fromRev)], fromPath)
 							existingMerges = existingMerges.Union(pastMerges)
-                                                        // SVN doesn't fit the merge range to commits on
-                                                        // the source branch; we need to find the latest
-                                                        // commit between minRev and fromRev made on
-                                                        // that branch.
+							// SVN doesn't fit the merge range to commits on
+							// the source branch; we need to find the latest
+							// commit between minRev and fromRev made on
+							// that branch.
 							fromCommit := lastRelevantCommit(sp, parseInt(fromRev), fromPath, "branch")
 							if fromCommit == nil {
-                                                                sp.gripe(fmt.Sprintf("cannot resolve mergeinfo source from revision %s for path %s.",
+								sp.gripe(fmt.Sprintf("cannot resolve mergeinfo source from revision %s for path %s.",
 									fromRev, node.path))
-                                                        } else {
+							} else {
 								legacyFields := strings.Split(fromCommit.legacyID, ".")
 								if parseInt(legacyFields[0]) >= parseInt(minRev) {
 									ownMerges.Add(fromCommit.mark)
 								}
-                                                        }
-                                                }
-                                        }
-                                }
-                                mergeinfo.set(node.path, &ownMerges)
-                                newMerges := ownMerges.Subtract(existingMerges)
-                                if len(newMerges) == 0 {
+							}
+						}
+					}
+				}
+				mergeinfo.set(node.path, &ownMerges)
+				newMerges := ownMerges.Subtract(existingMerges)
+				if len(newMerges) == 0 {
 					continue
-                                }
-                                // Find the correct commit in the split case
-                                commit := lastRelevantCommit(sp, revision, node.path, "branch")
-                                if commit == nil || !strings.HasPrefix(commit.legacyID, fmt.Sprintf("%d", revision)) {
-                                        // The reverse lookup went past the target revision
-                                        sp.gripe(fmt.Sprintf("cannot resolve mergeinfo destination to revision %d for path %s.",
+				}
+				// Find the correct commit in the split case
+				commit := lastRelevantCommit(sp, revision, node.path, "branch")
+				if commit == nil || !strings.HasPrefix(commit.legacyID, fmt.Sprintf("%d", revision)) {
+					// The reverse lookup went past the target revision
+					sp.gripe(fmt.Sprintf("cannot resolve mergeinfo destination to revision %d for path %s.",
 						revision, node.path))
-                                        continue
-                                }
-                                // Alter the DAG to express merges.
-                                for _, mark := range newMerges {
-                                        parent := sp.repo.markToEvent(mark).(*Commit)
-                                        // FIXME: should add check for duplication here
+					continue
+				}
+				// Alter the DAG to express merges.
+				for _, mark := range newMerges {
+					parent := sp.repo.markToEvent(mark).(*Commit)
+					// FIXME: should add check for duplication here
 					commit.addParentCommit(parent)
-                                        announce(debugTOPOLOGY, "processed new mergeinfo from r%s to r%s.", parent.legacyID, commit.legacyID)
-                                }
-                        }
-                        mergeinfos[revision] = mergeinfo.snapshot()
-                        baton.twirl("")
+					announce(debugTOPOLOGY, "processed new mergeinfo from r%s to r%s.", parent.legacyID, commit.legacyID)
+				}
+			}
+			mergeinfos[revision] = mergeinfo.snapshot()
+			baton.twirl("")
 		}
-		// Allow mergeinfo storage to be garbage-collected 
-		mergeinfo = nil 
+		// Allow mergeinfo storage to be garbage-collected
+		mergeinfo = nil
 		mergeinfos = nil
-                timeit("mergeinfo")
-                if debugEnable(debugEXTRACT) {
-                        announce(debugEXTRACT, "after branch analysis")
-                        for _, commit := range sp.repo.commits(nil) {
+		timeit("mergeinfo")
+		if debugEnable(debugEXTRACT) {
+			announce(debugEXTRACT, "after branch analysis")
+			for _, commit := range sp.repo.commits(nil) {
 				var ancestorID string
 				ancestors := commit.parents()
-                                if len(ancestors) == 0 {
-                                        ancestorID = "-"
-                                } else {
+				if len(ancestors) == 0 {
+					ancestorID = "-"
+				} else {
 					ancestorID = ancestors[0].getMark()
 				}
 				announce(debugSHOUT, "r%-4s %4s %4s %2d %2d '%s'",
@@ -8087,176 +8084,176 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					len(commit.operations()),
 					commit.properties.Len(),
 					commit.Branch)
-                        }
-                }
-        }
-        // Code controlled by --nobranch option ends.
-        baton.twirl("")
-        // Canonicalize all commits to ensure all ops actually do something.
-        for _, commit := range sp.repo.commits(nil) {
-                commit.canonicalize()
-                baton.twirl("")
-        }
-        timeit("canonicalize")
-        announce(debugEXTRACT, "after canonicalization")
-        // Now clean up junk commits generated by cvs2svn.
-        deleteables := make([]int, 0)
-        newtags := make([]Event, 0)
-        for i, event := range sp.repo.events {
-                if commit, ok := event.(*Commit); ok {
-                        // It is possible for commit.Comment to be None if
-                        // the repository has been dumpfiltered and has
-                        // empty commits.  If that's the case it can't very
-                        // well have CVS artifacts in it.
-                        if commit.Comment == "" {
-                                sp.gripe(fmt.Sprintf("r%s has no comment", commit.legacyID))
-                                continue
-                        }
-                        // Commits that cvs2svn created as tag surrogates
-                        // get turned into actual tags.
-                        m := cvs2svnTagRE.FindStringSubmatch(commit.Comment)
-                        if len(m) > 1 && !commit.hasChildren() {
-                                fulltag := filepath.Join("refs", "tags", m[1])
-                                newtags = append(newtags, newReset(sp.repo, fulltag,
-                                                              commit.parentMarks()[0]))
-                                deleteables = append(deleteables, i)
-                        }
-                        // Childless generated branch commits carry no informationn,
-                        // and just get removed.
-                        m = cvs2svnBranchRE.FindStringSubmatch(commit.Comment)
-                        if len(m) > 0 && !commit.hasChildren() {
-                                deleteables = append(deleteables, i)
-                        }
-                        baton.twirl("")
-                }
-        }
-        sp.repo.delete(deleteables, []string{"--tagback"})
-        sp.repo.events = append(sp.repo.events, newtags...)
-        baton.twirl("")
-        timeit("junk")
-        announce(debugEXTRACT, "after cvs2svn artifact removal")
-        // Now we need to tagify all other commits without fileops, because git
-        // is going to just discard them when we build a live repo and they
-        // might possibly contain interesting metadata.
-        // * Commits from tag creation often have no fileops since they come
-        //   from a directory copy in Subversion. The annotated tag name is the
-        //   basename of the SVN tag directory.
-        // * Same for branch-root commits. The tag name is the basename of the
-        //   branch directory in SVN, with "-root" appended to distinguish them
-        //   from SVN tags.
-        // * Commits at a branch tip that consist only of deleteall are also
-        //   tagified: their fileops aren't worth saving; the comment metadata
-        //   just might be.
-        // * All other commits without fileops get turned into an annotated tag
-        //   with name "emptycommit-<revision>".
-        rootmarks := newStringSet()	 // stays empty if nobranch
+			}
+		}
+	}
+	// Code controlled by --nobranch option ends.
+	baton.twirl("")
+	// Canonicalize all commits to ensure all ops actually do something.
+	for _, commit := range sp.repo.commits(nil) {
+		commit.canonicalize()
+		baton.twirl("")
+	}
+	timeit("canonicalize")
+	announce(debugEXTRACT, "after canonicalization")
+	// Now clean up junk commits generated by cvs2svn.
+	deleteables := make([]int, 0)
+	newtags := make([]Event, 0)
+	for i, event := range sp.repo.events {
+		if commit, ok := event.(*Commit); ok {
+			// It is possible for commit.Comment to be None if
+			// the repository has been dumpfiltered and has
+			// empty commits.  If that's the case it can't very
+			// well have CVS artifacts in it.
+			if commit.Comment == "" {
+				sp.gripe(fmt.Sprintf("r%s has no comment", commit.legacyID))
+				continue
+			}
+			// Commits that cvs2svn created as tag surrogates
+			// get turned into actual tags.
+			m := cvs2svnTagRE.FindStringSubmatch(commit.Comment)
+			if len(m) > 1 && !commit.hasChildren() {
+				fulltag := filepath.Join("refs", "tags", m[1])
+				newtags = append(newtags, newReset(sp.repo, fulltag,
+					commit.parentMarks()[0]))
+				deleteables = append(deleteables, i)
+			}
+			// Childless generated branch commits carry no informationn,
+			// and just get removed.
+			m = cvs2svnBranchRE.FindStringSubmatch(commit.Comment)
+			if len(m) > 0 && !commit.hasChildren() {
+				deleteables = append(deleteables, i)
+			}
+			baton.twirl("")
+		}
+	}
+	sp.repo.delete(deleteables, []string{"--tagback"})
+	sp.repo.events = append(sp.repo.events, newtags...)
+	baton.twirl("")
+	timeit("junk")
+	announce(debugEXTRACT, "after cvs2svn artifact removal")
+	// Now we need to tagify all other commits without fileops, because git
+	// is going to just discard them when we build a live repo and they
+	// might possibly contain interesting metadata.
+	// * Commits from tag creation often have no fileops since they come
+	//   from a directory copy in Subversion. The annotated tag name is the
+	//   basename of the SVN tag directory.
+	// * Same for branch-root commits. The tag name is the basename of the
+	//   branch directory in SVN, with "-root" appended to distinguish them
+	//   from SVN tags.
+	// * Commits at a branch tip that consist only of deleteall are also
+	//   tagified: their fileops aren't worth saving; the comment metadata
+	//   just might be.
+	// * All other commits without fileops get turned into an annotated tag
+	//   with name "emptycommit-<revision>".
+	rootmarks := newStringSet() // stays empty if nobranch
 	for _, root := range branchroots {
 		rootmarks.Add(root.mark)
 	}
 	rootskip := newStringSet()
-	rootskip.Add("trunk"+svnSep)
+	rootskip.Add("trunk" + svnSep)
 	rootskip.Add("root")
-        tagname := func(commit *Commit) string {
-                // Give branch and tag roots a special name, except for "trunk" and
-                // "root" which do not come from a regular branch copy.
-                if rootmarks.Contains(commit.mark) {
-                        name := branchbase(commit.Branch)
-                        if rootskip.Contains(name) {
-                                if strings.HasPrefix(commit.Branch, "refs/tags/") {
-                                        return name
-                                }
-                                return name + "-root"
-                        }
-                }
-                // Fallback to standard rules.
-                return ""
-        }
-        taglegend := func(commit *Commit) string {
-                // Tipdelete commits and branch roots don't get any legend.
-                if len(commit.operations()) > 0 || (rootmarks.Contains(commit.mark) && !rootskip.Contains(branchbase(commit.Branch))) {
-                        return ""
-                }
-                // Otherwise, generate one for inspection.
+	tagname := func(commit *Commit) string {
+		// Give branch and tag roots a special name, except for "trunk" and
+		// "root" which do not come from a regular branch copy.
+		if rootmarks.Contains(commit.mark) {
+			name := branchbase(commit.Branch)
+			if rootskip.Contains(name) {
+				if strings.HasPrefix(commit.Branch, "refs/tags/") {
+					return name
+				}
+				return name + "-root"
+			}
+		}
+		// Fallback to standard rules.
+		return ""
+	}
+	taglegend := func(commit *Commit) string {
+		// Tipdelete commits and branch roots don't get any legend.
+		if len(commit.operations()) > 0 || (rootmarks.Contains(commit.mark) && !rootskip.Contains(branchbase(commit.Branch))) {
+			return ""
+		}
+		// Otherwise, generate one for inspection.
 		legend := []string{fmt.Sprintf("[[Tag from zero-fileop commit at Subversion r%s", commit.legacyID)}
 		/* FIXME: Restore this someday - got more diffcult to do when revisions stopped being a map.
-                // This guard can fail on a split commit
-		idx := sp.repo.eventToIndex(commit)
-		if _, split := splitCommits[idx]; split {
-			legend = append(legend, ":\n")
-			for _, node := range sp.revisions[idx].nodes {
-				legend = append(legend, node.String() + "\n")
-			}
-                }
+		                // This guard can fail on a split commit
+				idx := sp.repo.eventToIndex(commit)
+				if _, split := splitCommits[idx]; split {
+					legend = append(legend, ":\n")
+					for _, node := range sp.revisions[idx].nodes {
+						legend = append(legend, node.String() + "\n")
+					}
+		                }
 		*/
-                legend = append(legend, "]]\n")
-                return strings.Join(legend, "")
+		legend = append(legend, "]]\n")
+		return strings.Join(legend, "")
 	}
 
-	//  FIXME: Do precompilation earlier and bail out on a bad regexp rather than panicking 
+	//  FIXME: Do precompilation earlier and bail out on a bad regexp rather than panicking
 	type branchMapping struct {
-		match *regexp.Regexp
+		match   *regexp.Regexp
 		replace string
 	}
 	branchMappings := make([]branchMapping, 0)
 	for key, value := range context.mapOptions["svn_branchify_mapping"] {
 		branchMappings = append(branchMappings, branchMapping{regexp.MustCompile(key), value})
 	}
-        // Now pretty up the branch names
-        deletia := make([]int, 0)
-        for index, event := range sp.repo.events {
+	// Now pretty up the branch names
+	deletia := make([]int, 0)
+	for index, event := range sp.repo.events {
 		commit, ok := event.(*Commit)
 		if !ok {
 			continue
 		}
-                matched := false
-                for _, item := range branchMappings {
-                        result := item.match.ReplaceAllString(commit.Branch, item.replace)
-                        if result != commit.Branch {
-                                matched = true
-                                commit.setBranch(filepath.Join("refs", result))
-                                break
-                        }
-                }
-                if matched {
-                        continue
-                }
-                if commit.Branch == "root" {
-                        commit.setBranch(filepath.Join("refs", "heads", "root"))
-                } else if strings.HasPrefix(commit.Branch, "tags" + svnSep) {
-                        branch := commit.Branch
-                        if strings.HasSuffix(branch, svnSep) {
-                                branch = branch[:len(branch)-1]
-                        }
-                        commit.setBranch(filepath.Join("refs", "tags", filepath.Base(branch)))
-                } else if commit.Branch == "trunk" + svnSep {
-                        commit.setBranch(filepath.Join("refs", "heads", "master"))
-                } else {
-                        basename := filepath.Base(commit.Branch[:len(commit.Branch)-1])
-                        commit.setBranch(filepath.Join("refs", "heads", basename))
-                        // Some of these should turn into resets.  Is this a branchroot
-                        // commit with no fileops?
-                        if !options.Contains("--preserve") && len(commit.parents()) == 1 {
-                                parentEvent := commit.parents()[0]
-				parent, ok := parentEvent.(*Commit) 
-                                if ok && parent.Branch != commit.Branch && len(commit.operations()) == 0 {
-                                        announce(debugEXTRACT, "branch root of %s with comment %s discarded",
-                                                 commit.Branch, qtoq(commit.Comment))
-                                        // FIXME: Adding a reset for the new branch at the end
-                                        // of the event sequence was erroneous - caused later
-                                        // commits to be ignored. Possibly we should add a reset
-                                        // where the branch commit was?
-                                        //sp.repo.addEvent(Reset(sp.repo, ref=commit.Branch,
-                                        //                          target=parent))
-                                        deletia = append(deletia, index)
-                                }
-                        }
-                }
-                baton.twirl("")
-        }
-        sp.repo.delete(deletia, nil)
-        timeit("polishing")
-        announce(debugEXTRACT, "after branch name mapping")
-        sp.repo.tagifyEmpty(nil,
+		matched := false
+		for _, item := range branchMappings {
+			result := item.match.ReplaceAllString(commit.Branch, item.replace)
+			if result != commit.Branch {
+				matched = true
+				commit.setBranch(filepath.Join("refs", result))
+				break
+			}
+		}
+		if matched {
+			continue
+		}
+		if commit.Branch == "root" {
+			commit.setBranch(filepath.Join("refs", "heads", "root"))
+		} else if strings.HasPrefix(commit.Branch, "tags"+svnSep) {
+			branch := commit.Branch
+			if strings.HasSuffix(branch, svnSep) {
+				branch = branch[:len(branch)-1]
+			}
+			commit.setBranch(filepath.Join("refs", "tags", filepath.Base(branch)))
+		} else if commit.Branch == "trunk"+svnSep {
+			commit.setBranch(filepath.Join("refs", "heads", "master"))
+		} else {
+			basename := filepath.Base(commit.Branch[:len(commit.Branch)-1])
+			commit.setBranch(filepath.Join("refs", "heads", basename))
+			// Some of these should turn into resets.  Is this a branchroot
+			// commit with no fileops?
+			if !options.Contains("--preserve") && len(commit.parents()) == 1 {
+				parentEvent := commit.parents()[0]
+				parent, ok := parentEvent.(*Commit)
+				if ok && parent.Branch != commit.Branch && len(commit.operations()) == 0 {
+					announce(debugEXTRACT, "branch root of %s with comment %s discarded",
+						commit.Branch, qtoq(commit.Comment))
+					// FIXME: Adding a reset for the new branch at the end
+					// of the event sequence was erroneous - caused later
+					// commits to be ignored. Possibly we should add a reset
+					// where the branch commit was?
+					//sp.repo.addEvent(Reset(sp.repo, ref=commit.Branch,
+					//                          target=parent))
+					deletia = append(deletia, index)
+				}
+			}
+		}
+		baton.twirl("")
+	}
+	sp.repo.delete(deletia, nil)
+	timeit("polishing")
+	announce(debugEXTRACT, "after branch name mapping")
+	sp.repo.tagifyEmpty(nil,
 		/* tipdeletes*/ true,
 		/* tagifyMerges */ false,
 		/* canonicalize */ false,
@@ -8264,15 +8261,15 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		/* legendFunc */ taglegend,
 		/* createTags */ false,
 		/* gripe */ sp.gripe)
-        sp.timeMark("tagifying")
-        baton.twirl("")
-        announce(debugEXTRACT, "after tagification")
-        // cvs2svn likes to crap out sequences of deletes followed by
-        // filecopies on the same node when it's generating tag commits.
-        // These are lots of examples of this in the nut.svn test load.
-        // These show up as redundant (D, M) fileop pairs.
-        for _, commit := range sp.repo.commits(nil) {
-                for i := range commit.operations() {
+	sp.timeMark("tagifying")
+	baton.twirl("")
+	announce(debugEXTRACT, "after tagification")
+	// cvs2svn likes to crap out sequences of deletes followed by
+	// filecopies on the same node when it's generating tag commits.
+	// These are lots of examples of this in the nut.svn test load.
+	// These show up as redundant (D, M) fileop pairs.
+	for _, commit := range sp.repo.commits(nil) {
+		for i := range commit.operations() {
 			if i < len(commit.operations())-1 {
 				if commit.operations()[i].op == opD && commit.operations()[i+1].op == opM {
 					if commit.operations()[i].Path == commit.operations()[i+1].Path {
@@ -8280,20 +8277,20 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					}
 				}
 			}
-                }
+		}
 		nonnil := make([]FileOp, 0)
 		for _, op := range commit.operations() {
 			if op.op != "X" {
 				nonnil = append(nonnil, op)
 			}
 		}
-                commit.setOperations(nonnil)
-                baton.twirl("")
-        }
-        timeit("tagcleaning")
-        announce(debugEXTRACT, "after delete/copy canonicalization")
-        // Remove spurious parent links caused by random cvs2svn file copies.
-        for _, commit := range sp.repo.commits(nil) {
+		commit.setOperations(nonnil)
+		baton.twirl("")
+	}
+	timeit("tagcleaning")
+	announce(debugEXTRACT, "after delete/copy canonicalization")
+	// Remove spurious parent links caused by random cvs2svn file copies.
+	for _, commit := range sp.repo.commits(nil) {
 		parents := commit.parents()
 		if len(parents) != 2 {
 			continue
@@ -8305,38 +8302,38 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 		if a.getMark() == b.getMark() {
 			sp.gripe(fmt.Sprintf("r%s: duplicate parent marks", commit.legacyID))
-                } else if a.Branch == commit.Branch && b.Branch == commit.Branch {
+		} else if a.Branch == commit.Branch && b.Branch == commit.Branch {
 			if b.committer.date.Before(a.committer.date) {
 				a, b = b, a
 			}
 			if b.descendedFrom(a) {
 				commit.removeParent(a)
 			}
-                }
-                // Per-commit spinner disabled because this pass is fast
-                //baton.twirl("")
-        }
-        timeit("debubbling")
-        sp.repo.renumber(1, baton)
-        timeit("renumbering")
-        // Look for tag and branch merges that mean we may want to undo a
-        // tag or branch creation
-        ignorableDeletealls := newStringSet()
+		}
+		// Per-commit spinner disabled because this pass is fast
+		//baton.twirl("")
+	}
+	timeit("debubbling")
+	sp.repo.renumber(1, baton)
+	timeit("renumbering")
+	// Look for tag and branch merges that mean we may want to undo a
+	// tag or branch creation
+	ignorableDeletealls := newStringSet()
 	for _, commit := range sp.generatedDeletes {
 		ignorableDeletealls.Add(commit.mark)
 	}
-        for _, commit := range sp.repo.commits(nil) {
-                if len(commit.operations()) > 0 &&
+	for _, commit := range sp.repo.commits(nil) {
+		if len(commit.operations()) > 0 &&
 			commit.operations()[0].op == "deleteall" &&
-                        commit.hasChildren() &&
+			commit.hasChildren() &&
 			!ignorableDeletealls.Contains(commit.mark) {
-				sp.gripe(fmt.Sprintf("mid-branch deleteall on %s at <%s>.",
-					commit.Branch, commit.legacyID))
-                }
-        }
-        timeit("linting")
-        // Treat this in-core state as though it was read from an SVN repo
-        sp.repo.hint("svn", "", true)
+			sp.gripe(fmt.Sprintf("mid-branch deleteall on %s at <%s>.",
+				commit.Branch, commit.legacyID))
+		}
+	}
+	timeit("linting")
+	// Treat this in-core state as though it was read from an SVN repo
+	sp.repo.hint("svn", "", true)
 }
 
 // Generic repository-manipulation code begins here
@@ -9193,7 +9190,6 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 		}
 
 	}
-
 
 	if len(selection) == 0 {
 		for index := range repo.events {
@@ -10300,17 +10296,17 @@ func (repo *Repository) resort() {
 
 		}
 	}
-        // now topologically sort the dag, using a priority queue to
-        // provide a stable topological sort (each event's priority is
-        // its original index)
+	// now topologically sort the dag, using a priority queue to
+	// provide a stable topological sort (each event's priority is
+	// its original index)
 	s := new(IntHeap)
-        heap.Init(s)
+	heap.Init(s)
 	for _, elt := range start {
 		heap.Push(s, elt)
 	}
 	tsorted := newOrderedIntSet()
 	oldIndexToNew := make(map[int]int)
-        for len(*s) > 0 {
+	for len(*s) > 0 {
 		n := heap.Pop(s).(int)
 		//assert n not in old_index_to_new
 		oldIndexToNew[n] = len(tsorted)
@@ -10324,7 +10320,7 @@ func (repo *Repository) resort() {
 				heap.Push(s, m)
 			}
 		}
-	}	
+	}
 
 	orig := repo.all()
 	//assert len(t) == len(tsorted)
@@ -11823,7 +11819,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 		}
 		return regexp.MustCompile(strings.Join(digested, "|")), notagify
 	}
-        // Save a copy of all parent-child relationships, we'll need it later
+	// Save a copy of all parent-child relationships, we'll need it later
 	parentage := make(map[string][]string)
 	for _, commit := range rl.repo.commits(nil) {
 		parentage[commit.mark] = commit.parentMarks()
@@ -11981,18 +11977,18 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			}
 		}
 	}
-        // Patch together ancestry chains in the expunged repo
-        for _, commit := range expunged.commits(nil) {
+	// Patch together ancestry chains in the expunged repo
+	for _, commit := range expunged.commits(nil) {
 		commit.setParents(nil)
 		oldparents := rl.repo.markToEvent(commit.mark).(*Commit).parentMarks()
 		for _, parent := range oldparents {
 			backto := parent
-			for len(parentage[backto]) > 0 { 
-		                // Could we preserve merge parent relationship here?
-		                if  expungedMarks.Contains(parentage[backto][0]) {
+			for len(parentage[backto]) > 0 {
+				// Could we preserve merge parent relationship here?
+				if expungedMarks.Contains(parentage[backto][0]) {
 					commit.addParentByMark(parentage[backto][0])
 					break
-		                } else {
+				} else {
 					backto = parentage[backto][0]
 				}
 			}
@@ -17632,7 +17628,7 @@ in the ancestry of the commit, this command throws an error.  With the
 
 type pathAction struct {
 	fileop  *FileOp
-	commit  *Commit	// Only used for debug dump  
+	commit  *Commit // Only used for debug dump
 	attr    string
 	newpath string
 }
@@ -17645,7 +17641,7 @@ func (pa pathAction) String() string {
 			break
 		}
 	}
-	
+
 	return fmt.Sprintf("[%s(%d) %s=%s]", pa.commit.idMe(), i, pa.attr, pa.newpath)
 }
 
@@ -17840,16 +17836,16 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 		}
 		fmt.Fprint(parse.stdout, "\n")
 		type ManifestItem struct {
-			path string
+			path  string
 			entry *ManifestEntry
 		}
 		manifestItems := make([]ManifestItem, 0)
 		for path, entry := range commit.manifest() {
 			if filterFunc(path) {
-				manifestItems = append(manifestItems, ManifestItem{path, entry}) 
+				manifestItems = append(manifestItems, ManifestItem{path, entry})
 			}
 		}
-		sort.Slice(manifestItems, func(i, j int) bool {return manifestItems[i].path < manifestItems[j].path})
+		sort.Slice(manifestItems, func(i, j int) bool { return manifestItems[i].path < manifestItems[j].path })
 		for _, item := range manifestItems {
 			fmt.Fprintf(parse.stdout, "%s -> %s\n", item.path, item.entry.ref)
 		}
@@ -19747,7 +19743,7 @@ func (rs *Reposurgeon) DoDo(line string) bool {
 		// expression, use it.  Otherwise we'll restore whatever
 		// selection set came before the do keyword.
 		expansion := rs.cmd.PreCmd(defline)
-		if rs.selection  == nil {
+		if rs.selection == nil {
 			rs.selection = doSelection
 		}
 		// Call the base method so RecoverableExceptions
@@ -20009,7 +20005,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				//print("Analyzing Changelog at %s." % commit.mark)
 				comparison, err := differ.Compare(then, now)
 				if err != nil {
-					panic(err)	// Should never happen.
+					panic(err) // Should never happen.
 				}
 				for _, diffline := range comparison {
 					if diffline[0] != ' ' {
@@ -20030,7 +20026,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 						if before {
 							inherited = attribution
 							//print("Inherited: %s" % repr(inherited))
-							}
+						}
 						if diffline[0] == '+' || diffline[0] == '?' {
 							if attribution != "" && new == "" {
 								new = attribution
@@ -20066,10 +20062,10 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 					}
 					if tz, ok := repo.tzmap[newattr.email]; ok { //&& unicode.IsLetter(rune(tz.String()[0])) {
 						newattr.date.timestamp = newattr.date.timestamp.In(tz)
-					} else if zone := zoneFromEmail(newattr.email); zone != ""{
+					} else if zone := zoneFromEmail(newattr.email); zone != "" {
 						newattr.date.setTZ(zone)
 					}
-					if val, ok := repo.aliases[ContributorID{fullname:newattr.fullname, email:newattr.email}]; ok {
+					if val, ok := repo.aliases[ContributorID{fullname: newattr.fullname, email: newattr.email}]; ok {
 						newattr.fullname, newattr.email = val.fullname, val.email
 					}
 					if len(commit.authors) == 0 {
