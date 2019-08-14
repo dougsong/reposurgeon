@@ -7406,9 +7406,10 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							if trialnode == nil {
 								ok = false
 							} else {
-								ancestor, ok = trialnode.(*NodeAction) 
+								lookback, ok2 := trialnode.(NodeAction) 
 								if debugEnable(debugTOPOLOGY) {
-									if ok {
+									if ok2 {
+										ancestor = &lookback
 										announce(debugSHOUT, "r%d~%s -> %v (via filemap)",
 											node.revision, node.path, ancestor)
 									} else {
