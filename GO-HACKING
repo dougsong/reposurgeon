@@ -50,7 +50,6 @@ x-branchify_map.tst: nonfatal error
 x-branchify.tst: failure during branch link detection
 x-debranch.tst: index out of range panic
 x-debranch2.tst: slice bounds out of range error
-x-expunge.tst: fatal failure to compute blob mark
 x-lint.tst: branch connection failure
 x-nesting.tst: nonfatal failure
 x-references.tst: index out of range crash
