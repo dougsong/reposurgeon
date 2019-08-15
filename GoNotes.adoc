@@ -1,35 +1,39 @@
 = Notes on the Go translation of Reposurgeon =
-version 1.5, 2018-10-07
+version 1.6, 2019-08-15
 
 The reposurgeon codebase is moving from Python to Go because the
-Python implementation is too slow on really large repositories. The
-GCC history at over 259K commits is the straw that broke the camel's
-back; using PyPy with every optimization on semi-custom hardware tuned
-for this job still yielded test conversion times of over 9 hours,
-which is death on one's recipe-debugging cycle.  A test translation of
-the auxiliary repocutter tool suggested that we could expect a 40x
-speedup, which is in line with published Python vs. Go comparative
-benchmarks.
-
-The problem directed the choice of Go, not the other way around.  I
-seriously considered OCaml or a compiled Lisp as alternatives.
-
-I did examine the automated tools for Python to Go, but rejected them
-because the generated Go code would have been a maintainability
-disaster.  Thus, translation by hand.  Though at about 22% in I wrote
-https://gitlab.com/esr/pytogo[a fast, crude, incomplete Python-to-Go
-translator] to assist the process.
+Python implementation is too slow on really large repositories. 
 
 This is an experience report on that translation, written in attempted
 conformance with the Go community's practice for grounding language
 enhancement requests not in it-would-be-nice-to-have abstractions but
 rather in a description of real-world problems. The scale driver of
-this real-world problem is that, while at 14KLOC reposurgeon is not
-expecially large, it is very *dense*.  It's a DSL that's a tructure
-editor for attributed DAGs - algorithmically complex, bristling with
-graph theory, FSMs, parsing, tricky data structures, two robot
-harnesses driving other tools, and three different
+this real-world problem is that, while at 14KLOC of Python reposurgeon
+is not especially large, it is very *dense*.  It's a DSL that's a
+structure editor for attributed DAGs - algorithmically complex,
+bristling with graph theory, FSMs, parsing, tricky data structures,
+two robot harnesses driving other tools, and three different
 operator-composition algebras.
+
+The GCC history at over 259K commits is the straw that broke the
+camel's back; using PyPy with every optimization on semi-custom
+hardware tuned for this job still yielded test conversion times of
+over 9 hours, which is death on one's recipe-debugging cycle.  A test
+translation of the auxiliary repocutter tool suggested that we could
+expect up to a 40x speedup, which is in line with published Python
+vs. Go comparative benchmarks.
+
+The problem directed the choice of Go, not the other way around.  I
+seriously considered OCaml or a compiled Lisp as alternatives.  I
+concluded that in either case the semantic gap between Python and
+the target language was so large that translation would be
+impractical. Only Go offered me any practical hope.
+
+I did examine the automated tools for Python to Go, but rejected them
+because the generated Go code would have been a maintainability
+disaster.  Thus, translation by hand.  Though at about 22% in I wrote
+https://gitlab.com/esr/pytogo[a fast, crude, incomplete Python-to-Go
+source translator] to assist the process.
 
 Accordingly, reposurgeon would be a challenge to the expressiveness of
 any language it were implemented in.  It makes a good test of the
@@ -67,17 +71,24 @@ relinquish in Go.  I went in thinking that they'd be on my want list
 for Go before I was done, but no - not even at reposurgeon's
 complexity scale.
 
-The positive part of my summation is that hand-translation of Python
-to Go even at this scale and complexity is not horrible.  It's
-not *easy*, exactly, but quite doable.  It is however time-intensive;
-counting time to build the required unit tests in Go, I managed about
-150-200 lines a day before writing pytogo and 500-600 lines per
-day afterwards.
+Generics.  Yes, these would have made translation easier, but the main
+inpact turned out to be that I had to write my own set-of-int and
+set-of-string classes.  That was a surprisingly light hit.  What I
+really missed was generic map-function-over-slice, which could be
+handled by adding a much narrower feature.
 
-The pain points are mainly around a handful of advanced Python
+The positive part of my summation is that hand-translation of Python
+to Go even at this scale and complexity is not horrible.  It's not
+*easy*, exactly, but quite doable.  It is however time-intensive;
+counting time to build the required unit tests in Go, I managed about
+150-200 lines a day before writing pytogo and 500-600 lines per day
+afterwards.  The entire translation, interleaved with my work on NTPsec
+and other projects, took just about 12 months in wall time.
+
+The pain points were mainly around a handful of advanced Python
 features: iterators, generators, comprehensions, and class-valued
 exceptions.  Fortunately, even in quite advanced Python code like
-reposurgeon these turn out to not be very common on a per-KLOC basis.
+reposurgeon's these turn out to not be very common on a per-KLOC basis.
 
 == Problems that are ==
 
@@ -257,7 +268,7 @@ Translating Python map() calls and comprehensions produces code that
 is ugly and bulky, forcing the declaration of dummy variables that
 don't need to exist.
 
-If one graded Go point extensions by a figure of merit in which the
+If one graded possible Go point extensions by a figure of merit in which the
 numerator is "how much Python expressiveness this keeps" and the
 denominator is "how simple and self-contained the Go feature would be"
 I think this one would be top of list.
@@ -685,14 +696,15 @@ Then, on my second reading, I had a brainstorm.  I found the trivial
 Go extension that would give iterators with no new syntax, no hidden
 magic, and no yield/return distinction:
 
-New evaluation rule on how to interpret for loops when the range operand
-is a callable: the loop runs until the callable returns the zero
-value of its type.
+New evaluation rule on how to interpret for loops when the range
+operand is a callable: the loop runs as a generator, yielding each
+value in succession, until the callable returns the zero value of its
+type.
 
 So, with that I could write a Repository method like this:
 
 ---------------------------------------------------------------
-func (repo *Repository) commits() func()*Commit {
+func (repo *Repository) commits() func() *Commit {
 	idx := -1
 	return func() *Commit {
 		for {
@@ -710,8 +722,8 @@ func (repo *Repository) commits() func()*Commit {
 ...and there I have it.  An iterator, with exactly the same lifetime
 as the for loop.
 
-I suggest that this be adopted for Go 2. Small, easy new evaluation rule,
-big gain in expressiveness.
+I suggest that this be adopted for a future release of Go. Small, easy
+new evaluation rule, big gain in expressiveness.
 
 === Hieratic documentation ===
 
@@ -734,7 +746,7 @@ old blog post by Ian Lance Taylor (one of the Go devs) that was
 offsite, dated from 2009, and contained obsolete implementation
 details.
 
-The high-level problem is that while the devs have done a praiseworthy
+The high-level problem is that while the Go devs have done a praiseworthy
 and unusually effective job of documenting their language considering
 the usual limitations of documentation-by-developers, finding things
 in the corona is *hard*.  And knowing what's current is *hard*.
@@ -775,7 +787,7 @@ be obsolete and when the document was last reviewed for correctness.
 Note: After writing this, I had an even worse time digging up and
 fixing in my mind all the details of how defer/panic/recover works.
 It's almost all documented somewhere, though Peter Seebach and I ended
-up writing a FAQ on how to set local variables from a defer clause to
+up writing a FAQ entry on how to set local variables from a defer clause to
 clear up minor confusion. There's a very helpful blog
 post on the general topic.  But the blog post leaves out the crucial detail
 that recover returns interface {}, not error; this tripped me up when
@@ -786,7 +798,7 @@ This is all too typical. Everything makes sense once you know it, but
 before you know it critical details are often lurking in places you
 have no way of knowing you should look.
 
-Attention to the problem and a good techical writer/editor can fix this.
+Attention to the problem and a good technical writer/editor can fix this.
 
 == Accentuating the positive ==
 
@@ -809,11 +821,43 @@ testing of the translation and have to debug it in the large.
 I have to call out the Go time library as a particularly good piece of
 work. Having the basic timestamp property be location-aware with its
 presentation modified by the implied zone offset simplified a lot
-of cruft out of the handling of commiter/author dates in Python.
+of cruft out of the handling of committer/author dates in Python.
 
 Now that I've seen Go strings...holy hell, Python 3 unicode strings
 sure look like a nasty botch in retrospect. Good work not falling into
 that trap.
+
+== Pass-by-reference vs. pass-by-value ==
+
+As I write this section, translation is complete to the point where
+all code has been moved and most of about a hundred end-to-end
+tests are working in Go; only about fifteen still turn up bugs.
+
+I think I can say now that once one has a translation from Python to
+Go that compiles, the largest single sources of bugs is the difference
+between Python pass-by-reference semantics for object and Go
+pass-by-value.  Especially when iterating over lists.
+
+Go "for i, node := range nodelist" looks very similar to Python 
+"for (i, node) in enumerate nodelist"; the gotcha is that Go's
+pass by value semantics means that altering members of node 
+will *not* mutate the nodelist.
+
+The fix isn't very difficult; this
+
+-----------------------------------------------------------------
+        for i := range nodelist {
+	        node := &nodelist[i]
+		...
+	}
+
+-----------------------------------------------------------------
+
+often suffices. 
+
+I don't have any recommended language change around this, as I don't
+think Go's choice is wrong. I do think the fact that this relatively 
+minor issue is one of the larger translation barriers is interesting.
 
 == Envoi: Actionable recommendations, in priority order ==
 
@@ -825,7 +869,8 @@ that trap.
 3. try/finally should be added to the language.
 
 4. Yes, throw()/catch() needs to be writeable in the language.  Two
-   minimal relaxations of compilation rules make writing it possible.
+   minimal relaxations of compilation rules would make writing it
+   possible.
 
 5. Lookbehinds should be added to the regexp library.
 
