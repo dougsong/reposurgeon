@@ -6883,7 +6883,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	filemaps := make(map[int]*PathMap)
 	filemap := newPathMap(nil)
 	for revision, record := range sp.revisions {
-		for idx, node := range record.nodes {
+		for idx := range record.nodes {
+			node := &record.nodes[idx]
 			// Mutate the filemap according to copies
 			if node.fromRev > 0 {
 				//assert node.fromRev < revision
@@ -6899,16 +6900,16 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			} else if node.action == sdDELETE || (node.action == sdREPLACE && node.kind == sdDIR) {
 				if node.kind == sdNONE {
 					if filemap.contains(node.path) {
-						record.nodes[idx].kind = sdFILE
+						node.kind = sdFILE
 					} else {
-						record.nodes[idx].kind = sdDIR
+						node.kind = sdDIR
 					}
 				}
-				announce(debugFILEMAP, "r%d: deduced type for %s", record.nodes[idx].revision, record.nodes[idx])
+				announce(debugFILEMAP, "r%d: deduced type for %s", node.revision, node)
 				// Snapshot the deleted paths before
 				// removing them.
-				record.nodes[idx].fromSet = newPathMap(nil)
-				record.nodes[idx].fromSet.copyFrom(node.path, filemap, node.path)
+				node.fromSet = newPathMap(nil)
+				node.fromSet.copyFrom(node.path, filemap, node.path)
 				filemap.remove(node.path)
 				announce(debugFILEMAP, "r%d~%s deleted",
 					node.revision, node.path)
@@ -7240,7 +7241,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						// would need to have property maps as values.
 						for _, source := range node.fromSet.pathnames() {
 							lookback := filemaps[node.fromRev].get(source)
-							found, ok := lookback.(NodeAction)
+							found, ok := lookback.(*NodeAction)
 							if ok && found.props.has("svn:executable") {
 								stem := source[len(node.fromPath):]
 								targetpath := node.path + stem
@@ -7274,7 +7275,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						// Now generate copies for all files in the copy source directory
 						for _, source := range node.fromSet.pathnames() {
 							lookback := filemaps[node.fromRev].get(source)
-							found, ok := lookback.(NodeAction)
+							found, ok := lookback.(*NodeAction)
 							if !ok {
 								panic(fmt.Errorf("r%d: can't find ancestor of %s at r%d",
 									revision, source, node.fromRev))
@@ -7409,10 +7410,10 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							if trialnode == nil {
 								ok = false
 							} else {
-								lookback, ok2 := trialnode.(NodeAction)
+								lookback, ok2 := trialnode.(*NodeAction)
 								if debugEnable(debugTOPOLOGY) {
 									if ok2 {
-										ancestor = &lookback
+										ancestor = lookback
 										announce(debugSHOUT, "r%d~%s -> %v (via filemap)",
 											node.revision, node.path, ancestor)
 									} else {
@@ -7479,6 +7480,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						}
 					} else if ancestor != nil {
 						node.blobmark = ancestor.blobmark
+						announce(debugEXTRACT, "r%d: %s gets blob '%s' fom ancestor %s",
+							revision, node, node.blobmark, ancestor)
 					} else {
 						// No ancestor, no blob. Has to be a
 						// pure property change.  There's no
