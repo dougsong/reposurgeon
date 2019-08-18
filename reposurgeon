@@ -4327,7 +4327,7 @@ class StreamParser:
                         elif trial == '*' and node.path + os.sep + '*' not in global_options['svn_branchify'] and node.path.count(os.sep) < 1:
                             self.branches[node.path+os.sep] = None
                     if node.path+os.sep in self.branches and debug_enable(DEBUG_TOPOLOGY):
-                        announce(DEBUG_SHOUT, "%s recognized as a branch" % node.path+os.sep)
+                        announce(DEBUG_SHOUT, "%s recognized as a branch" % (node.path+os.sep))
             # Per-commit spinner disabled because this pass is fast
             #baton.twirl()
         copynodes.sort(key=operator.attrgetter("from_rev"))

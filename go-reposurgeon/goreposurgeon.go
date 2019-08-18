@@ -6833,7 +6833,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			np := node.path + svnSep
 			if node.action == sdADD && node.kind == sdDIR && !sp.isBranch(np) && !nobranch {
 				for _, trial := range context.listOptions["svn_branchify"] {
-					if strings.Contains(trial, "*") && trial == node.path {
+					if !strings.Contains(trial, "*") && trial == node.path {
 						sp.branches[np] = nil
 					} else if strings.HasSuffix(trial, svnSep+"*") && filepath.Dir(trial) == filepath.Dir(node.path) && !context.listOptions["svn_branchify"].Contains(np+"*") {
 						sp.branches[np] = nil
@@ -7486,8 +7486,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						// pure property change.  There's no
 						// way to figure out what mark to use
 						// in a fileop.
+						// FIXME: Ideally we'd like a report of source line number here.
 						if !strings.HasSuffix(node.path, ".gitignore") {
-							sp.gripe(fmt.Sprintf("r%d~%s: permission information may be lost.",
+							complain(fmt.Sprintf("r%d~%s: permission information may be lost.",
 								node.revision, node.path))
 						}
 						continue
