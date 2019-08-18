@@ -7081,7 +7081,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		if revision == 0 {
 			continue
 		}
-		expandedNodes := make([]NodeAction, 0)
+		expandedNodes := make([]*NodeAction, 0)
 		hasProperties := newStringSet()
 		for n := range record.nodes {
 			node := &record.nodes[n]
@@ -7139,7 +7139,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			// Starting with the nodes in the Subversion dump, expand them into a set that
 			// unpacks all directory operations into equivalent sets of file operations.
 			if node.kind == sdFILE {
-				expandedNodes = append(expandedNodes, *node)
+				expandedNodes = append(expandedNodes, node)
 			} else if node.kind == sdDIR {
 				// svnSep is appended to avoid collisions with path
 				// prefixes.
@@ -7166,7 +7166,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				} else if node.action == sdDELETE || node.action == sdREPLACE {
 					if sp.isBranch(node.path) {
 						sp.branchdeletes.Add(node.path)
-						expandedNodes = append(expandedNodes, *node)
+						expandedNodes = append(expandedNodes, node)
 						// The deleteall will also delete .gitignore files
 						for _, ignorepath := range sp.activeGitignores {
 							if strings.HasPrefix(ignorepath, node.path) {
@@ -7180,7 +7180,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						if node.fromSet != nil {
 							for _, child := range node.fromSet.pathnames() {
 								announce(debugEXTRACT, "r%d: deleting %s", revision, child)
-								var newnode NodeAction
+								newnode := new(NodeAction)
 								newnode.path = child
 								newnode.revision = revision
 								newnode.action = sdDELETE
@@ -7195,7 +7195,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						// .gitignore files we now must delete.
 						for _, ignorepath := range sp.activeGitignores {
 							if strings.HasPrefix(ignorepath, node.path) {
-								var newnode NodeAction
+								newnode := new(NodeAction)
 								newnode.path = ignorepath
 								newnode.revision = revision
 								newnode.action = sdDELETE
@@ -7268,7 +7268,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 									subnode.blob = blob
 									subnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
 									subnode.generated = true
-									expandedNodes = append(expandedNodes, *subnode)
+									expandedNodes = append(expandedNodes, subnode)
 								}
 							}
 						}
@@ -7292,7 +7292,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							announce(debugTOPOLOGY, "r%d: generated copy r%d~%s -> %s",
 								revision, subnode.fromRev, subnode.fromPath, subnode.path)
 							subnode.generated = true
-							expandedNodes = append(expandedNodes, *subnode)
+							expandedNodes = append(expandedNodes, subnode)
 						}
 					}
 				}
@@ -7346,7 +7346,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							// Otherwise when the property is unset we
 							// won't have the right thing happen.
 							newnode.generated = true
-							expandedNodes = append(expandedNodes, *newnode)
+							expandedNodes = append(expandedNodes, newnode)
 							sp.activeGitignores[gitignore_path] = ignore
 						} else if _, ok := sp.activeGitignores[gitignore_path]; ok {
 							newnode := new(NodeAction)
@@ -7356,7 +7356,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							newnode.kind = sdFILE
 							announce(debugIGNORES, "r%d: queuing up %s deletion.", revision, newnode.path)
 							newnode.generated = true
-							expandedNodes = append(expandedNodes, *newnode)
+							expandedNodes = append(expandedNodes, newnode)
 							delete(sp.activeGitignores, gitignore_path)
 						}
 					}
@@ -7385,8 +7385,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 		actions := make([]fiAction, 0)
 		ancestorNodes := make(map[string]*NodeAction)
-		for idx := range expandedNodes {
-			node := &expandedNodes[idx]
+		for _, node := range expandedNodes {
 			if node.action == sdNONE {
 				continue
 			}
