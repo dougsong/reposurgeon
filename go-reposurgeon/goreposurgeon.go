@@ -6979,7 +6979,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			return nil
 		}
 		// FIXME: Is this right? Do we need to indirect through branches in some way?
-		for revision := sp.repo.eventToIndex(obj) - 1; revision > 0; revision-- {
+		for revision := sp.repo.eventToIndex(obj); revision > 0; revision-- {
 			event := sp.repo.events[revision]
 			if commit, ok := event.(*Commit); ok {
 				b, ok := getAttr(commit, attr)
@@ -7766,7 +7766,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						announce(debugTOPOLOGY, "r%s: making branch link %s",
 							newcommit.legacyID, newcommit.common)
 						sp.branchlink[newcommit.mark] = daglink{newcommit, prev}
-						announce(debugTOPOLOGY, "r%s: link %s (%s) back to %d (%s, %s)",
+						announce(debugTOPOLOGY, "r%s: link %s (%s) back to r%d (%s, %s)",
 							newcommit.legacyID,
 							newcommit.mark,
 							newcommit.common,
