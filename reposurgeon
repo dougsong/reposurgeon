@@ -5440,6 +5440,7 @@ class StreamParser:
         timeit("polishing")
         announce(DEBUG_EXTRACT, "after branch name mapping")
         self.repo.tagify_empty(tipdeletes = True,
+                               tagify_merges = False,
                                canonicalize = False,
                                name_func = tagname,
                                legend_func = taglegend,
