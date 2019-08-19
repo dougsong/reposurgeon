@@ -4399,8 +4399,7 @@ class StreamParser:
         # it doesn't hit the disk.
         announce(DEBUG_EXTRACT, "Pass 4")
         split_commits = {}
-        def last_relevant_commit(max_rev, path,
-                                 getbranch = operator.attrgetter("branch")):
+        def last_relevant_commit(max_rev, path, attr="branch"):
             # Make path look like a branch
             if path[0] == "/": path = path[1:]
             if path[-1] != os.sep: path = path + os.sep
@@ -4417,7 +4416,7 @@ class StreamParser:
             for ind in range(self.repo.index(obj), -1, -1):
                 event = self.repo.events[ind]
                 if isinstance(event, Commit):
-                    b = getbranch(event)
+                    b = getattr(event, attr)
                     if b and path.startswith(b):
                         return event
             return None
@@ -5034,7 +5033,7 @@ class StreamParser:
                     if latest is not None:
                         prev = last_relevant_commit(
                                 latest.from_rev, latest.from_path,
-                                operator.attrgetter("common"))
+                                "common")
                         if prev is None:
                             if debug_enable(DEBUG_TOPOLOGY):
                                 complain("lookback for %s failed, not making branch link" % latest)
@@ -5043,7 +5042,7 @@ class StreamParser:
                             announce(DEBUG_TOPOLOGY, "r%s: making branch link %s" %
                                          (newcommit.legacy_id, newcommit.common))
                             self.branchlink[newcommit.mark] = (newcommit, prev)
-                            announce(DEBUG_TOPOLOGY, "r%s: link %s (%s) back to %s (%s, %s)" % \
+                            announce(DEBUG_TOPOLOGY, "r%s: link %s (%s) back to r%s (%s, %s)" % \
                                          (newcommit.legacy_id,
                                           newcommit.mark,
                                           newcommit.common,
@@ -5261,7 +5260,7 @@ class StreamParser:
                                 # commit between min_rev and from_rev made on
                                 # that branch.
                                 from_commit = last_relevant_commit(
-                                                    from_rev, from_path)
+                                                    from_rev, from_path, "branch")
                                 if from_commit is not None and \
                                         int(from_commit.legacy_id.split(".",1)[0]) \
                                             >= int(min_rev):
@@ -5275,7 +5274,7 @@ class StreamParser:
                     new_merges = own_merges - existing_merges
                     if not new_merges: continue
                     # Find the correct commit in the split case
-                    commit = last_relevant_commit(revision, node.path)
+                    commit = last_relevant_commit(revision, node.path, "branch")
                     if commit is None or \
                             not commit.legacy_id.startswith(revision):
                         # The reverse lookup went past the target revision
