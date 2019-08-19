@@ -5366,7 +5366,7 @@ class StreamParser:
             # Give branch and tag roots a special name, except for "trunk" and
             # "root" which do not come from a regular branch copy.
             if commit.mark in rootmarks:
-                name = branchbase (commit.branch)
+                name = branchbase(commit.branch)
                 if name not in rootskip:
                     if commit.branch.startswith("refs/tags/"):
                         return name

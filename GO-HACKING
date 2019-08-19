@@ -50,8 +50,7 @@ x-branchify.tst: failure during branch link detection
 x-debranch.tst: index out of range panic
 x-debranch2.tst: slice bounds out of range error
 x-lint.tst: branch connection failure
-x-nesting.tst: nonfatal failure
-x-references.tst: index out of range crash
+X-references.tst: index out of range crash
 x-split-dir.tst: nonfatal failure to resolve mergeinfo
 x-split.tst: index error crash
 x-subdir.tst: name match failure

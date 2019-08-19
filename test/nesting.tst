@@ -4,6 +4,6 @@ branchify cpp-msbuild/trunk cpp-msbuild/branches/* cpp-msbuild/tags/*
 branchify_map \
    :cpp-msbuild/trunk/:heads/master: \
    :cpp-msbuild/tags/(.*)/:tags/\1:
-read <x-nesting.svn
+read <nesting.svn
 prefer git
 write -

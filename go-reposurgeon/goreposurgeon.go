@@ -8172,7 +8172,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// "root" which do not come from a regular branch copy.
 		if rootmarks.Contains(commit.mark) {
 			name := branchbase(commit.Branch)
-			if rootskip.Contains(name) {
+			if !rootskip.Contains(name) {
 				if strings.HasPrefix(commit.Branch, "refs/tags/") {
 					return name
 				}
@@ -8273,7 +8273,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		/* canonicalize */ false,
 		/* nameFunc */ tagname,
 		/* legendFunc */ taglegend,
-		/* createTags */ false,
+		/* createTags */ true,
 		/* gripe */ sp.gripe)
 	sp.timeMark("tagifying")
 	baton.twirl("")
@@ -9123,8 +9123,8 @@ func defaultEmptyTagName(commit *Commit) string {
                       * tipdeletes:    whether tipdeletes should be tagified
                       * canonicalize:  whether to canonicalize fileops first
                       * nameFunc:      custom function for choosing the tag
-                                       name; if it returns a false value like
-                                       nil, a default scheme is used
+                                       name; if it returns an emoty string,
+                                       a default scheme is used
                       * legendFunc:    custom function for choosing the legend
                                        of a tag; no fallback is provided. By
                                        default it always returns "".
@@ -9160,15 +9160,15 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 				}
 				if nameFunc != nil {
 					name = nameFunc(commit)
-					if name == "" {
+ 					if name == "" {
 						name = defaultEmptyTagName(commit)
 					}
 				} else {
 					name = defaultEmptyTagName(commit)
 				}
-				for repo.named(name) != nil {
-					name += "-displaced"
-				}
+				//for repo.named(name) != nil {
+				//	name += "-displaced"
+				//}
 				legend := ""
 				if legendFunc != nil {
 					legend = legendFunc(commit)
