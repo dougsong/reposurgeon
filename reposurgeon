@@ -5244,6 +5244,9 @@ class StreamParser:
                                 # commit has been skipped.
                                 try:
                                     min_rev, from_rev = span.split("-", 1)
+                                    # ignore non-inheritable revision ranges
+                                    if from_rev[-1] is '*':
+                                        from_rev = from_rev[:-1]
                                 except ValueError:
                                     min_rev = from_rev = None
                                 if (not min_rev) or (not from_rev): continue
