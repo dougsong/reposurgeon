@@ -8221,7 +8221,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 		matched := false
 		for _, item := range branchMappings {
-			result := item.match.ReplaceAllString(commit.Branch, item.replace)
+			result := GoReplacer(item.match, commit.Branch, item.replace)
 			if result != commit.Branch {
 				matched = true
 				commit.setBranch(filepath.Join("refs", result))
@@ -16172,10 +16172,13 @@ type filterCommand struct {
 // GoReplacer bridges from Python-style back-references (\1) to Go-style ($1).
 // FIXME: Remove this shim when the cutover to Go is final.
 func GoReplacer(re *regexp.Regexp, fromString, toString string) string {
-	toString = strings.Replace(toString, `\1`, `$1`, -1)
-	//fmt.Fprintf(os.Stderr, "GoReplacer in: on %s do %s -> %s\n", re.String(), fromString, toString)
+	for i := 0; i < 10; i++ {
+		sdigit := fmt.Sprintf("%d", i)
+		toString = strings.Replace(toString, `\`+sdigit, `${`+sdigit+`}`, -1)
+	}
+	//fmt.Fprintf(os.Stderr, "GoReplacer in: on %q do %s -> %s\n", re.String(), fromString, toString)
 	out := re.ReplaceAllString(fromString, toString)
-	//fmt.Fprintf(os.Stderr, "GoReplacer out: %s\n", out)
+	//fmt.Fprintf(os.Stderr, "GoReplacer out: on %q %q -> %q yields: %s\n", re.String(), fromString, toString, out)
 	return out
 }
 
