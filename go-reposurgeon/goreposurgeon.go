@@ -8034,6 +8034,10 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 								continue
 							}
 							minRev, fromRev := fields[0], fields[1]
+							// ignore non-inheritable revision ranges
+							if fromRev[len(fromRev)-1] == '*' {
+								fromRev = fromRev[:len(fromRev)-1]
+							}
 							// Import mergeinfo from merged branches
 							pastMerges := getMerges(mergeinfos[parseInt(fromRev)], fromPath)
 							existingMerges = existingMerges.Union(pastMerges)
