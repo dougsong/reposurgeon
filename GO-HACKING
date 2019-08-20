@@ -46,14 +46,14 @@ Python version passes all these tests.
 The following tests presently fail:
 
 x-reorder: toposort code is busted.
-x-branchify.tst: failure during branch link detection
-x-debranch.tst: index out of range panic
+x-branchify.tst: "permission information may be lost" nonfatal failure"
+x-debranch.tst: slice bounds out of range error
 x-debranch2.tst: slice bounds out of range error
-x-lint.tst: branch connection failure
-X-references.tst: index out of range crash
+x-lint.tst: "permission information may be lost" nonfatal failure"
+x-references.tst: index out of range crash
 x-split-dir.tst: nonfatal failure to resolve mergeinfo
 x-split.tst: index error crash
-x-subdir.tst: name match failure
+x-subdir.tst: failure to fill in branch roots correctly
 x-tagretract.tst: index out of range error
 x-treecontents.tst: nonfatal error
 x-userignores.tst: cannot resolve mergeinfo
