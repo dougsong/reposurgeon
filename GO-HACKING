@@ -46,10 +46,10 @@ Python version passes all these tests.
 The following tests presently fail:
 
 x-reorder: toposort code is busted.
-x-branchify.tst: "permission information may be lost" nonfatal failure"
-x-debranch.tst: slice bounds out of range error
-x-debranch2.tst: slice bounds out of range error
-x-lint.tst: "permission information may be lost" nonfatal failure"
+x-branchify.tst: "permission information may be lost" nonfatal failure
+x-debranch.tst: nonfatal failure
+x-debranch2.tst: "permission information may be lost" nonfatal failure
+x-lint.tst: "permission information may be lost" nonfatal failure
 x-references.tst: index out of range crash
 x-split-dir.tst: nonfatal failure to resolve mergeinfo
 x-split.tst: index error crash

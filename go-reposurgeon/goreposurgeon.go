@@ -17616,7 +17616,7 @@ func (rs *Reposurgeon) DoDebranch(line string) bool {
 	sourceReset := -1
 	for _, i := range merged {
 		commit := repo.events[i].(*Commit)
-		if lastParent != "" {
+		if lastParent != "" && commit.hasParents() {
 			commit.setParentMarks(append([]string{lastParent}, commit.parentMarks()[1:]...))
 		}
 		commit.setBranch(target)
