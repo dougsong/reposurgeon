@@ -50,7 +50,6 @@ x-debranch.tst: nonfatal failure
 x-references.tst: index out of range crash
 x-split-dir.tst: nonfatal failure to resolve mergeinfo
 x-split.tst: index error crash
-x-tagretract.tst: index out of range error
 x-treecontents.tst: nonfatal error
 x-userignores.tst: cannot resolve mergeinfo
 
