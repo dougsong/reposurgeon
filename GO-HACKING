@@ -53,7 +53,6 @@ x-lint.tst: "permission information may be lost" nonfatal failure
 x-references.tst: index out of range crash
 x-split-dir.tst: nonfatal failure to resolve mergeinfo
 x-split.tst: index error crash
-x-subdir.tst: failure to fill in branch roots correctly
 x-tagretract.tst: index out of range error
 x-treecontents.tst: nonfatal error
 x-userignores.tst: cannot resolve mergeinfo
@@ -119,4 +118,4 @@ https://github.com/google/pprof/blob/master/doc/README.md
 
 https://www.signalfx.com/blog/a-pattern-for-optimizing-go-2/
 
-http://www.agardner.me/golang/garbage/collection/gc/escape/analysis/2015/10/18/go-escape-analysis.html
+ohttp://www.agardner.me/golang/garbage/collection/gc/escape/analysis/2015/10/18/go-escape-analysis.html
