@@ -6868,9 +6868,9 @@ class Repository:
                         return a
                     else:
                         return a + '\n' + b
-                announce(DEBUG_DELETE, "to be reparented: %s" % ([x.mark for x in event.children()],))
+                #announce(DEBUG_DELETE, "deleting %s requires %s to be reparented: %s" % (commit.mark. [x.mark for x in event.children()],))
                 for child in list(event.children()):
-                    announce(DEBUG_DELETE, "reparenting: %s" % child.mark)
+                    # announce(DEBUG_DELETE, "reparenting: %s" % child.mark)
                     # Insert event's parents in place of event in child's
                     # parent list. We keep existing duplicates in case they
                     # are wanted, but ensure we don't introduce new ones.
