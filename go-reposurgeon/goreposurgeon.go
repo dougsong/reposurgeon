@@ -10790,14 +10790,17 @@ func (repo *Repository) pathWalk(selection orderedIntSet, hook func(string) stri
 	return modified
 }
 
-func (repo *Repository) splitCommit(where int, splitfunc func([]FileOp) ([]FileOp, []FileOp)) error {
+func (repo *Repository) splitCommit(where int, splitfunc func([]FileOp) ([]FileOp, []FileOp, error)) error {
 	event := repo.events[where]
 	// Fileop split happens here
 	commit, ok := event.(*Commit)
 	if !ok {
 		return fmt.Errorf("split location %s is not a commit", event.idMe())
 	}
-	fileops, fileops2 := splitfunc(commit.operations())
+	fileops, fileops2, err := splitfunc(commit.operations())
+	if err != nil {
+		return err
+	}
 	if len(fileops) == 0 || len(fileops2) == 0 {
 		return errors.New("no-op commit split, repo unchanged")
 	}
@@ -10824,17 +10827,19 @@ func (repo *Repository) splitCommit(where int, splitfunc func([]FileOp) ([]FileO
 }
 
 func (repo *Repository) splitCommitByIndex(where int, splitpoint int) error {
+	// FIXME: validity-check the split index 
 	return repo.splitCommit(where,
-		func(ops []FileOp) ([]FileOp, []FileOp) {
-			return ops[:splitpoint], ops[splitpoint:]
+		func(ops []FileOp) ([]FileOp, []FileOp, error) {
+			return ops[:splitpoint], ops[splitpoint:], nil
 		})
 }
 
 func (repo *Repository) splitCommitByPrefix(where int, prefix string) error {
 	return repo.splitCommit(where,
-		func(ops []FileOp) ([]FileOp, []FileOp) {
+		func(ops []FileOp) ([]FileOp, []FileOp, error) {
 			var without []FileOp
 			var with []FileOp
+			err := fmt.Errorf("couldn't find '%s' in a fileop path.", prefix)
 			for _, op := range ops {
 				// In Python: lambda ops: ([op for op
 				// in ops if
@@ -10844,13 +10849,15 @@ func (repo *Repository) splitCommitByPrefix(where int, prefix string) error {
 				// and (op.Path || op.Target).startswith(prefix)]))
 				if strings.HasPrefix(op.Path, prefix) {
 					with = append(with, op)
+					err = nil
 				} else if strings.HasPrefix(op.Target, prefix) {
 					with = append(with, op)
 				} else {
 					without = append(without, op)
 				}
 			}
-			return without, with
+			
+			return without, with, err
 		})
 }
 
