@@ -8356,7 +8356,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			commit.operations()[0].op == "deleteall" &&
 			commit.hasChildren() &&
 			!ignorableDeletealls.Contains(commit.mark) {
-			sp.gripe(fmt.Sprintf("mid-branch deleteall on %s at <%s>.",
+			// FIXME: Python reports a line number in this method
+			complain(fmt.Sprintf("mid-branch deleteall on %s at <%s>.",
 				commit.Branch, commit.legacyID))
 		}
 	}
@@ -14908,7 +14909,7 @@ func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 	}
 	parse := rs.newLineParse(line, stringSet{"stdout"})
 	defer parse.Closem()
-	unmapped := regexp.MustCompile("[^@]*$|[^@]*@" + rs.chosen().uuid + "$")
+	unmapped := regexp.MustCompile("^[^@]*$|^[^@]*@" + rs.chosen().uuid + "$")
 	shortset := newStringSet()
 	deletealls := newStringSet()
 	disconnected := newStringSet()
@@ -14993,7 +14994,7 @@ func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 	}
 	if parse.options.Empty() || parse.options.Contains("--uniqueness") || parse.options.Contains("-u") {
 		rs.chosen().checkUniqueness(true, func(s string) {
-			fmt.Print(s)
+			fmt.Fprint(parse.stdout, "reposurgeon: " + s + "\n")
 		})
 	}
 	if parse.options.Contains("--options") || parse.options.Contains("-?") {
