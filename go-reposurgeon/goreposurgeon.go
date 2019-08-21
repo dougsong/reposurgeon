@@ -7410,15 +7410,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 								ok = false
 							} else {
 								lookback, ok2 := trialnode.(*NodeAction)
-								if debugEnable(debugTOPOLOGY) {
-									if ok2 {
-										ancestor = lookback
-										announce(debugSHOUT, "r%d~%s -> %v (via filemap)",
-											node.revision, node.path, ancestor)
-									} else {
-										announce(debugSHOUT, "r%d~%s has no ancestor (via filemap)",
+								if ok2 {
+									ancestor = lookback
+									announce(debugTOPOLOGY, "r%d~%s -> %v (via filemap)",
+										node.revision, node.path, ancestor)
+								} else {
+									announce(debugTOPOLOGY, "r%d~%s has no ancestor (via filemap)",
 											node.revision, node.path)
-									}
 								}
 							}
 						}
