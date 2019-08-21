@@ -5118,14 +5118,18 @@ class StreamParser:
             announce(DEBUG_EXTRACT, "Branches: %s" % (self.branches,))
             lastbranch = None
             for commit in self.repo.commits():
+		announce(DEBUG_EXTRACT, "seeking branch assignment for %s with common prefix '%s'" % (commit.mark, commit.common))
                 if lastbranch is not None \
                         and commit.common.startswith(lastbranch):
+		    announce(DEBUG_EXTRACT, "branch assignment for %s from lastbranch '%s'" % (commit.mark, lastbranch))
                     branch = lastbranch
                 else:
                     # Prefer the longest possible branch
+                    # The branchlist is sorted, longest first
                     branch = next((b for b in self.branchlist()
                                   if commit.common.startswith(b)),
                                   None)
+		announce(DEBUG_EXTRACT, "branch assignment for %s is '%s'" % (commit.mark, branch))
                 if branch is not None:
                     commit.set_branch(branch)
                     for fileop in commit.operations():
@@ -5143,6 +5147,7 @@ class StreamParser:
             # ...then rebuild parent links so they follow the branches
             for commit in self.repo.commits():
                 if self.branches[commit.branch] is None:
+		    announce(DEBUG_EXTRACT,"commit %s branch %s is rootless" % (commit.mark, commit.branch))
                     branchroots.append(commit)
                     commit.set_parents([])
                 else:

@@ -7860,19 +7860,31 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	} else {
 		// Instead, determine a branch for each commit...
 		announce(debugEXTRACT, fmt.Sprintf("Branches: %s", sp.branches))
-		var lastbranch, branch string
+		var lastbranch string = "//"
+		var branch string = "//"
 		for _, commit := range sp.repo.commits(nil) {
-			if lastbranch != "" && strings.HasPrefix(commit.common, lastbranch) {
+			announce(debugEXTRACT, "seeking branch assignment for %s with common prefix '%s'", commit.mark, commit.common)
+			if lastbranch != "//" && strings.HasPrefix(commit.common, lastbranch) {
+				announce(debugEXTRACT, "branch assignment for %s from lastbranch '%s'", commit.mark, lastbranch)
 				branch = lastbranch
 			} else {
 				// Prefer the longest possible branch
+				// The branchlist is sorted, longest first
+				prefmatch := "//"
 				for _, b := range sp.branchlist() {
 					if strings.HasPrefix(commit.common, b) {
-						branch = b
+						prefmatch = b
+						break
 					}
 				}
+				if prefmatch != "//" {
+					branch = prefmatch
+				} else {
+					branch = "//"
+				}
 			}
-			if branch != "" {
+			announce(debugEXTRACT, "branch assignment for %s is '%s'", commit.mark, branch)
+			if branch != "//" {
 				commit.setBranch(branch)
 				for i := range commit.fileops {
 					fileop := &commit.fileops[i]
@@ -7894,6 +7906,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// ...then rebuild parent links so they follow the branches
 		for _, commit := range sp.repo.commits(nil) {
 			if sp.branches[commit.Branch] == nil {
+				announce(debugEXTRACT,"commit %s branch %s is rootless", commit.mark, commit.Branch)
 				branchroots = append(branchroots, commit)
 				commit.setParents(nil)
 			} else {
