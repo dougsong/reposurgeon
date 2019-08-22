@@ -77,6 +77,7 @@ set-of-string classes.  That was a surprisingly light hit.  What I
 really missed was generic map-function-over-slice, which could be
 handled by adding a much narrower feature.
 
+// DATE-SENSITIVE
 The positive part of my summation is that hand-translation of Python
 to Go even at this scale and complexity is not horrible.  It's not
 *easy*, exactly, but quite doable.  It is however time-intensive;
@@ -829,6 +830,7 @@ that trap.
 
 == Pass-by-reference vs. pass-by-value ==
 
+// DATE-SENSITIVE
 As I write this section, translation is complete to the point where
 all code has been moved and most of about a hundred end-to-end
 tests are working in Go; only about fifteen still turn up bugs.

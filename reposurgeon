@@ -5108,6 +5108,7 @@ class StreamParser:
         # Now, branch analysis.
         branchroots = []
         if not self.branches or nobranch:
+	    announce(DEBUG_EXTRACT, "no branch analysis")
             last = None
             for commit in self.repo.commits():
                 commit.set_branch(os.path.join("refs", "heads", "master") + os.sep)
@@ -5118,7 +5119,7 @@ class StreamParser:
             announce(DEBUG_EXTRACT, "Branches: %s" % (self.branches,))
             lastbranch = None
             for commit in self.repo.commits():
-		announce(DEBUG_EXTRACT, "seeking branch assignment for %s with common prefix '%s'" % (commit.mark, commit.common))
+		#announce(DEBUG_EXTRACT, "seeking branch assignment for %s with common prefix '%s'" % (commit.mark, commit.common))
                 if lastbranch is not None \
                         and commit.common.startswith(lastbranch):
 		    announce(DEBUG_EXTRACT, "branch assignment for %s from lastbranch '%s'" % (commit.mark, lastbranch))
@@ -5151,6 +5152,7 @@ class StreamParser:
                     branchroots.append(commit)
                     commit.set_parents([])
                 else:
+		    announce(DEBUG_EXTRACT,"commit %s has parent %s on branch %s" % (commit.mark, self.branches[commit.branch], commit.branch))
                     commit.set_parents([self.branches[commit.branch]])
                 self.branches[commit.branch] = commit
                 # Per-commit spinner disabled because this pass is fast

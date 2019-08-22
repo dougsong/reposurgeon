@@ -7847,6 +7847,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// Now, branch analysis.
 	branchroots := make([]*Commit, 0)
 	if len(sp.branches) == 0 || nobranch {
+		announce(debugEXTRACT, "no branch analysis")
 		var last *Commit
 		for _, commit := range sp.repo.commits(nil) {
 			commit.setBranch(filepath.Join("refs", "heads", "master") + svnSep)
@@ -7861,7 +7862,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		var lastbranch string = "//"
 		var branch string = "//"
 		for _, commit := range sp.repo.commits(nil) {
-			announce(debugEXTRACT, "seeking branch assignment for %s with common prefix '%s'", commit.mark, commit.common)
+			//announce(debugEXTRACT, "seeking branch assignment for %s with common prefix '%s'", commit.mark, commit.common)
 			if lastbranch != "//" && strings.HasPrefix(commit.common, lastbranch) {
 				announce(debugEXTRACT, "branch assignment for %s from lastbranch '%s'", commit.mark, lastbranch)
 				branch = lastbranch
@@ -7908,6 +7909,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				branchroots = append(branchroots, commit)
 				commit.setParents(nil)
 			} else {
+				announce(debugEXTRACT,"commit %s has parent %s on branch %s", commit.mark, sp.branches[commit.Branch], commit.Branch)
 				commit.setParents([]CommitLike{sp.branches[commit.Branch]})
 			}
 			sp.branches[commit.Branch] = commit
