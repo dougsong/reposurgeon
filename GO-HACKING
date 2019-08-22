@@ -46,7 +46,6 @@ Python version passes all these tests.
 The following tests presently fail:
 
 x-reorder: toposort code is busted.
-x-debranch.tst: nonfatal failure
 x-references.tst: index out of range crash
 x-split.tst: index error crash
 x-treecontents.tst: nonfatal error

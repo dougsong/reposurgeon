@@ -4674,6 +4674,15 @@ func (commit *Commit) invalidateManifests() {
 	}
 }
 
+// FIXME: I think this is duplicated somewhere else
+func listMarks(items []CommitLike) []string {
+	var out []string
+	for _, x := range items {
+		out = append(out, x.getMark())
+	}
+	return out
+}
+
 // parentMarks hides the parent list behind a wrapper, so that we
 // can memoize the computation, which is very expensive and frequently
 // performed.
@@ -17614,9 +17623,9 @@ func (rs *Reposurgeon) DoDebranch(line string) bool {
 	tcommits := append(repo.ancestors(ttip), ttip)
 	sort.Ints(tcommits)
 	// Don't touch commits up to the branch join.
-	lastParent := ""
+	lastParent := make([]string, 0)
 	for len(scommits) > 0 && len(tcommits) > 0 && scommits[0] == tcommits[0] {
-		lastParent = repo.events[scommits[0]].getMark()
+		lastParent = []string{repo.events[scommits[0]].getMark()}
 		scommits = scommits[1:]
 		tcommits = tcommits[1:]
 	}
@@ -17637,11 +17646,15 @@ func (rs *Reposurgeon) DoDebranch(line string) bool {
 	sourceReset := -1
 	for _, i := range merged {
 		commit := repo.events[i].(*Commit)
-		if lastParent != "" && commit.hasParents() {
-			commit.setParentMarks(append([]string{lastParent}, commit.parentMarks()[1:]...))
+		if len(lastParent) > 0 {
+			trailingMarks := commit.parentMarks()
+			if len(trailingMarks) > 0 {
+				trailingMarks = trailingMarks[1:]
+			}
+			commit.setParentMarks(append(lastParent, trailingMarks...))
 		}
 		commit.setBranch(target)
-		lastParent = commit.mark
+		lastParent = []string{commit.mark}
 	}
 	for i, event := range rs.repo.events {
 		if reset, ok := event.(*Reset); ok && reset.ref == source {
