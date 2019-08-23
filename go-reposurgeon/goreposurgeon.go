@@ -7105,7 +7105,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				if node.props.has("cvs2svn:cvs-rev") {
 					cvskey := fmt.Sprintf("CVS:%s:%s", node.path, node.props.get("cvs2svn:cvs-rev"))
 					sp.repo.legacyMap[cvskey] = commit
-					node.props.set("cvs2svn:cvs-rev", "")
+					node.props.delete("cvs2svn:cvs-rev")
 				}
 				// Remove blank lines from svn:ignore property values.
 				// Note: this is not as general as the Python version,
@@ -7629,6 +7629,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				commit.common = oplist[0].branch
 				commit.setOperations(oplist[0].fileops)
 				oplist = oplist[1:]
+			} else if len(record.nodes) == 0 {
+				commit.common = ""
 			} else {
 				// Find common prefix of all node paths.
 				commit.common = record.nodes[0].path

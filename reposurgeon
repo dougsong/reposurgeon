@@ -5200,7 +5200,7 @@ class StreamParser:
                         self.generated_deletes.append(commit)
                 if parent not in child.parents():
                     child.add_parent(parent)
-            #FIXME: commit.branch is not abn object. What were we validating here?
+            #FIXME: commit.branch is not an object. What were we validating here?
             #for root in branchroots:
             #    if getattr(commit.branch, "fileops", None) \
             #            and root.branch != ("trunk" + os.sep):
