@@ -3,6 +3,16 @@ SVN-fs-dump-format-version: 2
 
 UUID: cbe4824d-5261-45e1-906a-c00dd1423e37
 
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2012-10-31T01:12:39.062296Z
+PROPS-END
+
 Revision-number: 1
 Prop-content-length: 112
 Content-length: 112
@@ -18291,6 +18301,36 @@ V 23
 Author Date Id Revision
 PROPS-END
 Revision is 88, file path is branches/Development/drivers/genericups.h.
+
+
+Revision-number: 89
+Prop-content-length: 124
+Content-length: 124
+
+K 7
+svn:log
+V 22
+dummy commit inserted
+
+K 10
+svn:author
+V 7
+aquette
+K 8
+svn:date
+V 27
+2005-07-22T16:23:04.000000Z
+PROPS-END
+
+Node-path: branches/Testing/CHANGES
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 55
+Content-length: 67
+
+PROPS-END
+Revision is 89, file path is branches/Testing/CHANGES.
 
 
 Revision-number: 90

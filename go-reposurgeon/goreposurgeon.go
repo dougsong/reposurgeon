@@ -6307,7 +6307,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 									sp.propertyStash[node.path] = oldnode.props
 								}
 							}
-							//os.Stderr.write(fmt.Sprintf("Copy node %s:%s stashes %s\n", node.revision, node.path, sp.propertyStash[node.path]))
+							//fmt.Fprintf(os.Stderr, "Copy node %d:%s stashes %s\n", node.revision, node.path, sp.propertyStash[node.path])
 						}
 						if node.action == sdDELETE {
 							if _, ok := sp.propertyStash[node.path]; ok {
@@ -14324,7 +14324,9 @@ func (rs *Reposurgeon) HelpNews() {
 3. We now interpret Subversion $Rev$ and $LastChangedRev$ cookies.
 4. git hooks are preserved through surgery.
 5. The set of structure fieldnames that can be used with setfield is smaller.
-   However, all fieldnames for which support was documented will still work
+   However, all fieldnames for which support was documented will still work/
+6. Subversion dump streams must now be a continuous span of revitions 
+   starting from zero (restriction added for performance reasons).
 `)
 }
 
