@@ -6975,6 +6975,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		if path[len(path)-1] != svnSep[0] {
 			path = path + svnSep
 		}
+		//announce(debugEXTRACT, "looking back, maxRev=%d, path='%s', attr='%s'", maxRev, path, attr)
 		// If the revision is split, try from the last split commit
 		var legacyID string
 		if splitCommits[maxRev] == 0 {
@@ -6992,7 +6993,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			event := sp.repo.events[revision]
 			if commit, ok := event.(*Commit); ok {
 				b, ok := getAttr(commit, attr)
-				if ok && strings.HasSuffix(path, b) {
+				//announce(debugEXTRACT, "looking back examines %s looking for '%s'", commit.mark, b)
+				if ok && b != "" && strings.HasPrefix(path, b) {
+					//announce(debugEXTRACT, "looking back returns %s", commit.mark)
 					return commit
 				}
 			}

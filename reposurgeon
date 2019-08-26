@@ -4403,6 +4403,7 @@ class StreamParser:
             # Make path look like a branch
             if path[0] == "/": path = path[1:]
             if path[-1] != os.sep: path = path + os.sep
+	    #announce(DEBUG_EXTRACT, "looking back, maxRev=%s, path='%s', attr='%s'" % (max_rev, path, attr))
             # If the revision is split, try from the last split commit
             try:
                 max_rev = split_commits[max_rev]
@@ -4417,7 +4418,9 @@ class StreamParser:
                 event = self.repo.events[ind]
                 if isinstance(event, Commit):
                     b = getattr(event, attr)
+	            #announce(DEBUG_EXTRACT, "looking back examines %s looking for '%s'" % (event.mark, b))
                     if b and path.startswith(b):
+	                #announce(DEBUG_EXTRACT, "looking back returns %s" % (event.mark))
                         return event
             return None
         previous = None
@@ -5035,7 +5038,7 @@ class StreamParser:
                         latest = max(reversed(copies),
                                      key=lambda node: int(node.from_rev))
 			announce(DEBUG_TOPOLOGY, "r%s: file copy matching %s finds %s" \
-						 % (newcommit.legacyID, copies, latest))
+						 % (newcommit.legacy_id, copies, latest))
                     if latest is not None:
                         prev = last_relevant_commit(
                                 latest.from_rev, latest.from_path,

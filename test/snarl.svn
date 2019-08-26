@@ -1,0 +1,169 @@
+SVN-fs-dump-format-version: 2
+ ## Reproduce a Subversion copy case, testing lookback code.
+
+UUID: cbe4824d-5261-45e1-906a-c00dd1423e37
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2012-10-31T01:12:39.062296Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 112
+Content-length: 112
+
+K 7
+svn:log
+V 38
+New repository initialized by cvs2svn.
+K 8
+svn:date
+V 27
+2005-01-27T14:33:14.000000Z
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 119
+Content-length: 119
+
+K 7
+svn:log
+V 17
+Initial revision
+
+K 10
+svn:author
+V 7
+aquette
+K 8
+svn:date
+V 27
+2005-01-27T14:33:14.000000Z
+PROPS-END
+
+Node-path: trunk/CHANGES
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 43
+Content-length: 53
+
+PROPS-END
+Revision is 2, file path is trunk/CHANGES.
+
+
+
+Revision-number: 3
+Prop-content-length: 151
+Content-length: 151
+
+K 7
+svn:log
+V 77
+This commit was manufactured by cvs2svn to create branch
+'INITIAL_IMPORT_AQ'.
+K 8
+svn:date
+V 27
+2005-01-27T14:33:14.000000Z
+PROPS-END
+
+Node-path: branches/INITIAL_IMPORT_AQ
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk
+
+
+Revision-number: 4
+Prop-content-length: 157
+Content-length: 157
+
+K 7
+svn:log
+V 55
+Initial CVS import from nut testing release 2.0.1-pre4
+
+K 10
+svn:author
+V 7
+aquette
+K 8
+svn:date
+V 27
+2005-01-27T14:33:22.000000Z
+PROPS-END
+
+Revision-number: 5
+Prop-content-length: 157
+Content-length: 157
+
+K 7
+svn:log
+V 83
+This commit was manufactured by cvs2svn to create tag
+'INITIAL_IMPORT_V2_0_1_pre4'.
+K 8
+svn:date
+V 27
+2005-01-27T14:33:22.000000Z
+PROPS-END
+
+Node-path: tags/INITIAL_IMPORT_V2_0_1_pre4
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 4
+Node-copyfrom-path: branches/INITIAL_IMPORT_AQ
+
+
+Revision-number: 6
+Prop-content-length: 151
+Content-length: 151
+
+K 7
+svn:log
+V 49
+Bring CVS tree in sync with the new 2.0.1 stable
+
+K 10
+svn:author
+V 7
+aquette
+K 8
+svn:date
+V 27
+2005-02-28T09:14:07.000000Z
+PROPS-END
+
