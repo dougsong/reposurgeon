@@ -7776,10 +7776,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						}
 					} else {
 						sp.fileopBranchlinks.Add(newcommit.common)
-						announce(debugTOPOLOGY, "r%s: making branch link %s",
-							newcommit.legacyID, newcommit.common)
 						sp.branchlink[newcommit.mark] = daglink{newcommit, prev}
-						announce(debugTOPOLOGY, "r%s: link %s (%s) back to r%d (%s, %s)",
+						announce(debugTOPOLOGY, "r%s: link %s (%s) back to r%d (mark=%s, common='%s')",
 							newcommit.legacyID,
 							newcommit.mark,
 							newcommit.common,

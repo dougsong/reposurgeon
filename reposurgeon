@@ -5043,10 +5043,8 @@ class StreamParser:
                                 complain("lookback for %s failed, not making branch link" % latest)
                         else:
                             self.fileop_branchlinks.add(newcommit.common)
-                            announce(DEBUG_TOPOLOGY, "r%s: making branch link %s" %
-                                         (newcommit.legacy_id, newcommit.common))
                             self.branchlink[newcommit.mark] = (newcommit, prev)
-                            announce(DEBUG_TOPOLOGY, "r%s: link %s (%s) back to r%s (%s, %s)" % \
+                            announce(DEBUG_TOPOLOGY, "r%s: link %s (%s) back to r%s (mark=%s, common='%s')" % \
                                          (newcommit.legacy_id,
                                           newcommit.mark,
                                           newcommit.common,
