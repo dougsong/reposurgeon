@@ -3247,6 +3247,11 @@ git-svn.  Otherwise, addresses will be generated the way git cvs-import does
 it, simply copying the username into the address field.</para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term>--noignores</term>
+<listitem><para>Do not fill in an equivalent of default Subversion ignore patterns.</para>
+</listitem>
+</varlistentry>
 </variablelist>
 
 <para>These modifiers can go anywhere in any order on the read command

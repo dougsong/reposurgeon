@@ -4544,7 +4544,10 @@ class StreamParser:
                     if node.action in (SD_ADD, SD_CHANGE):
                         if node.path in self.branches:
                             if not node.props: node.props = {}
-                            startwith = next(vcs.dfltignores for vcs in vcstypes if vcs.name == "svn")
+                            if "--noignores" in options:
+                                startwith = ""
+                            else:
+                                startwith = next(vcs.dfltignores for vcs in vcstypes if vcs.name == "svn")
                             try:
                                 ignore = startwith + \
                                          "# The contents of the svn:ignore " \
@@ -4552,7 +4555,8 @@ class StreamParser:
                                          node.props["svn:ignore"]
                             except KeyError:
                                 ignore = startwith
-                            node.props["svn:ignore"] = ignore
+                            if ignore:
+                                node.props["svn:ignore"] = ignore
                     elif node.action in (SD_DELETE, SD_REPLACE):
                         if node.path in self.branches:
                             self.branchdeletes.add(node.path)

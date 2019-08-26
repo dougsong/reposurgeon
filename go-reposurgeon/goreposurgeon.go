@@ -7161,8 +7161,10 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						if node.props.isZero() {
 							node.props = newOrderedMap()
 						}
-						var ignore string
-						startwith := subversionDefaultIgnores
+						var ignore, startwith string
+						if !options.Contains("--noignores") {	
+							startwith = subversionDefaultIgnores
+						}
 						if rootignores := node.props.get("svn:ignore"); rootignores != "" {
 							ignore = startwith +
 								"# The contents of the svn:ignore property on the branch root.\n" +
@@ -7170,7 +7172,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						} else {
 							ignore = startwith
 						}
-						node.props.set("svn:ignore", ignore)
+						if ignore != "" {
+							node.props.set("svn:ignore", ignore)
+						}
 					}
 				} else if node.action == sdDELETE || node.action == sdREPLACE {
 					if sp.isBranch(node.path) {
