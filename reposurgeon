@@ -5000,8 +5000,8 @@ class StreamParser:
                                   None)
                     if latest is not None:
                         self.directory_branchlinks.add(newcommit.common)
-                        announce(DEBUG_TOPOLOGY, "r%s: directory copy with %s" \
-                                     % (newcommit.legacy_id, copies))
+                        announce(DEBUG_TOPOLOGY, "r%s: directory copy with %s finds %s" \
+                                     % (newcommit.legacy_id, copies, latest))
                     # Use may have botched a branch creation by doing a
                     # non-Subversion directory copy followed by a bunch of
                     # Subversion adds. Blob hashes will match existing files,
@@ -5034,6 +5034,8 @@ class StreamParser:
                         # the first item with the max key and we want the last
                         latest = max(reversed(copies),
                                      key=lambda node: int(node.from_rev))
+			announce(DEBUG_TOPOLOGY, "r%s: file copy matching %s finds %s" \
+						 % (newcommit.legacyID, copies, latest))
                     if latest is not None:
                         prev = last_relevant_commit(
                                 latest.from_rev, latest.from_path,

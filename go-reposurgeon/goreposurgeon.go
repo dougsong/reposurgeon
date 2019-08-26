@@ -7756,8 +7756,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 				if latest != nil {
 					sp.directoryBranchlinks.Add(newcommit.common)
-					announce(debugTOPOLOGY, "r%s: directory copy with %s",
-						newcommit.legacyID, copies)
+					announce(debugTOPOLOGY, "r%s: directory copy with %s finds %s",
+						newcommit.legacyID, copies, latest)
 				} else if len(copies) > 1 &&
 					!sp.directoryBranchlinks.Contains(newcommit.common) {
 					for _, node := range copies {
@@ -7765,6 +7765,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							latest = node
 						}
 					}
+					announce(debugTOPOLOGY, "r%s: file copy matching %s finds %s",
+						newcommit.legacyID, copies, latest)
 				}
 				if latest != nil {
 					prev := lastRelevantCommit(sp,
