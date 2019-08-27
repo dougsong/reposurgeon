@@ -19261,6 +19261,7 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 		getterPairs := []getterPair{
 			{`\[\[CVS:[^:\]]+:[0-9.]+\]\]`,
 				func(p string) *Commit {
+					p = p[2:len(p)-2]
 					if c := repo.legacyMap[p]; c != nil {
 						return c
 					}
@@ -19268,6 +19269,7 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 				}},
 			{`\[\[SVN:[0-9]+\]\]`,
 				func(p string) *Commit {
+					p = p[2:len(p)-2]
 					if c := repo.legacyMap[p]; c != nil {
 						return c
 					}
@@ -19275,10 +19277,12 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 				}},
 			{`\[\[HG:[0-9a-f]+\]\]`,
 				func(p string) *Commit {
+					p = p[2:len(p)-2]
 					return repo.legacyMap[p]
 				}},
 			{`\[\[:[0-9]+\]\]`,
 				func(p string) *Commit {
+					p = p[2:len(p)-2]
 					event := repo.markToEvent(p)
 					commit, ok := event.(*Commit)
 					if ok {
