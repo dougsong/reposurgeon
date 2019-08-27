@@ -1,0 +1,123 @@
+SVN-fs-dump-format-version: 2
+ ## Tiny repo for testing reference-cookie substitution
+
+UUID: 94498f3a-dabf-49f2-b408-667d41c11847
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2019-08-27T15:18:57.013106Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 116
+Content-length: 116
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2019-08-27T15:18:57.091998Z
+K 7
+svn:log
+V 18
+Directory layout.
+
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 122
+Content-length: 122
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2019-08-27T15:18:57.144467Z
+K 7
+svn:log
+V 24
+Initial README content.
+
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Text-content-md5: 86f1cf4a56ae881bea5acc66fec6df56
+Text-content-sha1: a0446ad3fd4b2c068ce3ecab58720eec422f8125
+Prop-content-length: 10
+Text-content-length: 37
+Content-length: 47
+
+PROPS-END
+This is a test Subversion repository
+
+
+Revision-number: 3
+Prop-content-length: 158
+Content-length: 158
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2019-08-27T15:22:08.565824Z
+K 7
+svn:log
+V 60
+The point of this commit is the reference cookie: [[SVN:1]]
+
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-md5: 5fc26bcb6f704f5e94675e7d000a5ee5
+Text-content-sha1: 1a86cacd0e83451b6b7aa38bbcce271cca61f882
+Text-content-length: 24
+Content-length: 24
+
+A trivial modification.
+
+
