@@ -8054,6 +8054,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						if len(fields) != 2 {
 							continue
 						}
+						// One path, one range list
 						fromPath, ranges := fields[0], fields[1]
 						for _, span := range strings.Split(ranges, ",") {
 							// Ignore single-rev fields, they are cherry-picks.
@@ -8076,7 +8077,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							// the source branch; we need to find the latest
 							// commit between minRev and fromRev made on
 							// that branch.
-							fromCommit := lastRelevantCommit(sp, parseInt(fromRev), fromPath, "branch")
+							fromCommit := lastRelevantCommit(sp, parseInt(fromRev), fromPath, "Branch")
 							if fromCommit == nil {
 								sp.gripe(fmt.Sprintf("cannot resolve mergeinfo source from revision %s for path %s.",
 									fromRev, node.path))
@@ -8095,7 +8096,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					continue
 				}
 				// Find the correct commit in the split case
-				commit := lastRelevantCommit(sp, revision, node.path, "branch")
+				commit := lastRelevantCommit(sp, revision, node.path, "Branch")
 				if commit == nil || !strings.HasPrefix(commit.legacyID, fmt.Sprintf("%d", revision)) {
 					// The reverse lookup went past the target revision
 					sp.gripe(fmt.Sprintf("cannot resolve mergeinfo destination to revision %d for path %s.",
@@ -15098,7 +15099,7 @@ func (rs *Reposurgeon) DoPrefer(line string) bool {
 		for _, repotype := range importers {
 			if repotype.basevcs != nil && strings.ToLower(line) == repotype.name {
 				rs.preferred = repotype.engine.(*VCS)
-				return false
+				break
 			}
 			if repotype.visible {
 				known += " " + repotype.name
