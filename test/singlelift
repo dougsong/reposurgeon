@@ -1,5 +1,8 @@
 #!/bin/sh
 # singlelift - run a single Subversion conversion test
+#
+# The REPOSURGEON environment variable can be used to substitute in a
+# different implementation.
 
 . common-setup.sh
 

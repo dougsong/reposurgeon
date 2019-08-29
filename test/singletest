@@ -1,5 +1,8 @@
 #!/bin/sh
 # singletest - run a single regression test
+#
+# The REPOSURGEON environment variable can be used to substitute in a
+# different implementation.
 
 . ./common-setup.sh
 

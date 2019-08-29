@@ -7,6 +7,9 @@
 # the hg convert utility converts git branches in a fast-import
 # stream to hg bookmarks, so the hg-regress test target only
 # tests correct handling of hg bookmarks, not hg branches
+#
+# The REPOSURGEON environment variable can be used to substitute in a
+# different implementation.
 
 . common-setup.sh
 
@@ -72,7 +75,7 @@ fi
 # Should we stream the repo?
 if [ $stream = True ]
 then
-    try ${BIN}/reposurgeon "read $testrepo" "sourcetype git" "write -"
+    try ${BIN}/${REPOSURGEON:-reposurgeon} "read $testrepo" "sourcetype git" "write -"
 fi
 
 # Should we clean up the test directory

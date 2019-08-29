@@ -154,7 +154,8 @@ coalesce:
 GITLOADS = bs
 git-regress:
 	@echo "=== Testing git-extractor:"
-	@if command -v git >/dev/null 2>&1 ; \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	if command -v git >/dev/null 2>&1 ; \
 	then \
 	    for test in $(GITLOADS); do \
 		if (echo "  $${test}.fi" >&2; \
@@ -170,7 +171,8 @@ git-regress:
 GITBRANCHES = be bb
 git-regress-branches:
 	@echo "=== Testing git-extractor with multiple git branches:"
-	@if command -v git >/dev/null 2>&1 ; \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	if command -v git >/dev/null 2>&1 ; \
 	then \
 	    for test in $(GITBRANCHES); do \
 		if (echo "  $${test}.fi" >&2; \
@@ -186,7 +188,8 @@ git-regress-branches:
 GITMERGES = be2 be3 be4 be5 be6
 git-regress-merges:
 	@echo "=== Testing git-extractor with merges:"
-	@if command -v git >/dev/null 2>&1 ; \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	if command -v git >/dev/null 2>&1 ; \
 	then \
 	    for test in $(GITMERGES); do \
 		if (echo "  $${test}.fi" >&2; \
@@ -202,7 +205,8 @@ git-regress-merges:
 GITTAGS = bt bt2
 git-regress-tags:
 	@echo "=== Testing git-extractor with tags:"
-	@if command -v git >/dev/null 2>&1 ; \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	if command -v git >/dev/null 2>&1 ; \
 	then \
 	    for test in $(GITTAGS); do \
 		if (echo "  $${test}.fi" >&2; \
@@ -218,7 +222,8 @@ git-regress-tags:
 HGLOADS = testrepo2
 hg-regress:
 	@echo "=== Testing hg-extractor:"
-	@if command -v hg >/dev/null 2>&1 && command -v git >/dev/null 2>&1 ; \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	if command -v hg >/dev/null 2>&1 && command -v git >/dev/null 2>&1 ; \
 	then \
 	    for test in $(HGLOADS); do \
 		if (echo "  $${test}.fi" >&2; \
@@ -234,14 +239,16 @@ hg-regress:
 # NOTE: the bb-alt test demonstrates an hg repo with coloring that git cannot reproduce
 HGBRANCHES = be be2 be3 bb-alt be-bookmarks
 hg-buildregress-branches:
-	@for file in $(HGBRANCHES); do \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	for file in $(HGBRANCHES); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
 		2>&1 || exit $(STOPOUT); \
 	done
 hg-regress-branches:
 	@echo "=== Testing hg-extractor with multiple hg branches:"
-	@if command -v hg >/dev/null 2>&1 ; \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	if command -v hg >/dev/null 2>&1 ; \
 	then \
 	    for test in $(HGBRANCHES); do \
 		if (echo "  $${test}" >&2; \
@@ -256,14 +263,16 @@ hg-regress-branches:
 # Test the hg extractor with merges
 HGMERGES = be2 be3 be4 be5 be6
 hg-buildregress-merges:
-	@for file in $(HGMERGES); do \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	for file in $(HGMERGES); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
 		2>&1 || exit $(STOPOUT); \
 	done
 hg-regress-merges:
 	@echo "=== Testing hg-extractor with merges:"
-	@if command -v hg >/dev/null 2>&1 ; \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	if command -v hg >/dev/null 2>&1 ; \
 	then \
 	    for test in $(HGMERGES); do \
 		if (echo "  $${test}" >&2; \
@@ -278,14 +287,16 @@ hg-regress-merges:
 # Test the hg extractor with tags
 HGTAGS = bt bt2
 hg-buildregress-tags:
-	@for file in $(HGTAGS); do \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	for file in $(HGTAGS); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
 		2>&1 || exit $(STOPOUT); \
 	done
 hg-regress-tags:
 	@echo "=== Testing hg-extractor with tags:"
-	@if command -v hg >/dev/null 2>&1 ; \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	if command -v hg >/dev/null 2>&1 ; \
 	then \
 	    for test in $(HGTAGS); do \
 		if (echo "  $${test}" >&2; \
@@ -300,14 +311,16 @@ hg-regress-tags:
 # Test the hg extractor with pathological loads
 HGPATHO = be-subrepo be-subrepo2
 hg-buildregress-patho:
-	@for file in $(HGPATHO); do \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	for file in $(HGPATHO); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test 2>/dev/null | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
 		2>&1 || exit $(STOPOUT); \
 	done
 hg-regress-patho:
 	@echo "=== Testing hg-extractor with pathological loads:"
-	@if command -v hg >/dev/null 2>&1 ; \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	if command -v hg >/dev/null 2>&1 ; \
 	then \
 	    for test in $(HGPATHO); do \
 		if (echo "  $${test}" >&2; \
@@ -322,7 +335,8 @@ hg-regress-patho:
 # Test loading from Subversion
 SVNLOADS := $(shell ls *.svn | sed '/.svn/s///')
 svnload-buildregress:
-	@for test in $(SVNLOADS); do \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	for test in $(SVNLOADS); do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
 		    echo "Remaking $${test}.chk"; \
@@ -332,7 +346,8 @@ svnload-buildregress:
 	done
 svnload-regress:
 	@echo "== Testing loading of Subversion streams:"
-	@for test in $(SVNLOADS); \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	for test in $(SVNLOADS); \
 	do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
@@ -363,7 +378,8 @@ SVNCLEAN := binary.svn blob-id.svn deletion.svn deepdirs.svn delignore.svn \
 	squash-id.svn subdir.svn svnignores.svn
 liftcheck-regress:
 	@echo "== Testing conversion correctness of Subversion streams:"
-	@if  command -v git >/dev/null 2>&1 &&  command -v svn >/dev/null 2>&1; \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	if  command -v git >/dev/null 2>&1 &&  command -v svn >/dev/null 2>&1; \
 	then \
 		for test in $(SVNCLEAN); \
 		do \
@@ -382,7 +398,8 @@ liftcheck-dirty:
 
 REFLOADS=x-references mergeinfo-with-split
 legacy-buildregress:
-	@for test in $(REFLOADS); \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	for test in $(REFLOADS); \
 	do \
 	    echo "Remaking $${test}.map"; \
 	    rm -f $${test}.map && make --quiet $${test}.map 2>/dev/null \
@@ -390,7 +407,8 @@ legacy-buildregress:
 	done
 legacy-regress:
 	@echo "=== Testing legacy-map generation:"
-	@for test in $(REFLOADS); \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	for test in $(REFLOADS); \
 	do \
 	    if echo "  $${test}.svn" >&2; \
 	    $(REPOSURGEON) "read <$${test}.svn" "legacy write -" >/tmp/regress$$$$ 2>/dev/null; \
@@ -402,7 +420,8 @@ legacy-regress:
 # Test dumping to Subversion
 DUMPLOADS=bs svnfodder
 svndump-buildregress:
-	@for f in $(DUMPLOADS); \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	for f in $(DUMPLOADS); \
 	do \
 	    echo "Remaking $${f}.chk"; \
 	    $(REPOSURGEON) "read <$${f}.fi" "prefer svn" "write -" | svn-to-svn -s >$${f}.chk \
@@ -429,7 +448,8 @@ svndump-regress:
 # all repos.
 SVNCHECK=pangram
 svncheck:
-	@for test in $(SVNCHECK); \
+	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	for test in $(SVNCHECK); \
 	do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
@@ -449,13 +469,15 @@ svncheck:
 # corresponding *.chk files to see which tests this runs.
 MAPPERTESTS := $(shell ls -1 repomapper*.sh | sed '/.sh/s///')
 repomapper-buildregress:
-	@for file in $(MAPPERTESTS); do \
+	@REPOMAPPER=$$REPOMAPPER; export REPOMAPPER; \
+	for file in $(MAPPERTESTS); do \
 	    echo "Remaking $${file}.chk"; \
 	    $(SHELL) $${file}.sh >$${file}.chk || exit $(STOPOUT); \
 	done
 repomapper-regress:
 	@echo "=== Running repomapper tests:"
-	@status=0; \
+	@REPOMAPPER=$$REPOMAPPER; export REPOMAPPER; \
+	status=0; \
 	for file in $(MAPPERTESTS); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
 	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || status=1; \
@@ -467,12 +489,14 @@ repomapper-regress:
 # corresponding *.chk files to see which tests this runs.
 TOOLTESTS := $(shell ls -1 repotool*.sh | sed '/.sh/s///')
 repotool-buildregress:
-	@for file in $(TOOLTESTS); do \
+	@REPOTOOL=$$REPOTOOL; export REPOTOOL; \
+	for file in $(TOOLTESTS); do \
 	    echo "Remaking $${file}.chk"; \
 	    $(SHELL) $${file}.sh --rebuild $${file} || exit $(STOPOUT); \
 	done
 repotool-regress:
 	@echo "=== Running repotool tests:"
+	@REPOTOOL=$$REPOTOOL; export REPOTOOL; \
 	@status=0; \
 	for file in $(TOOLTESTS); do \
 	    $(ECHO) -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)'; \
@@ -485,12 +509,14 @@ repotool-regress:
 # corresponding *.chk files to see which tests this runs.
 CUTTERTESTS := $(shell ls -1 repocutter*.sh | sed '/.sh/s///')
 repocutter-buildregress:
-	@for file in $(CUTTERTESTS); do \
+	@REPOMAPPER=$$REPOMAPPER; export REPOMAPPER; \
+	for file in $(CUTTERTESTS); do \
 	    echo "Remaking $${file}.chk"; \
 	    $(SHELL) $${file}.sh >$${file}.chk || exit $(STOPOUT); \
 	done
 repocutter-regress:
 	@echo "=== Running repocutter tests:"
+	@REPOCUTTER=$$REPOCUTTER; export REPOCUTTER; \
 	@status=0; \
 	for file in $(CUTTERTESTS); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \

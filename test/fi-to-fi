@@ -20,6 +20,9 @@
 # To add complexity to a test load, do -n, then edit the test repo with
 # git, then use -r.
 #
+# The REPOSURGEON environment variable can be used to substitute in a
+# different implementation.
+#
 BIN=${PWD}/..
 
 extract=True
@@ -56,7 +59,7 @@ fi
 # Should we stream the repo?
 if [ $stream = True ]
 then
-    ${BIN}/reposurgeon "prefer git-extractor" "read $testrepo" "write -"
+    ${BIN}/${REPOSURGEON:-reposurgeon} "prefer git-extractor" "read $testrepo" "write -"
 fi
 
 # Should we clean up the test directory

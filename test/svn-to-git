@@ -149,7 +149,7 @@ svn2git) mkdir git-scratch; cp -r $svnrepo git-scratch;
 	    ruby -I../../externals/svn2git/lib \
 	    ../../externals/svn2git/bin/svn2git file://${PWD}/$svnrepo) && \
 	    mv git-scratch $gitrepo ;;
-*)  reposurgeon "read $svnrepo" "rebuild $gitrepo"
+*)  ${REPOSURGEON:-reposurgeon} "read $svnrepo" "rebuild $gitrepo"
 esac
 
 ) >&2

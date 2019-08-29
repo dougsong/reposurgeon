@@ -10,6 +10,9 @@
 # reconstruct refs for a parent commit that has more than one
 # child and does not have the same ref as its latest child. That
 # is the case for the first commit in this repo.
+#
+# The REPOSURGEON environment variable can be used to substitute in a
+# different implementation.
 
 . common-setup.sh
 
@@ -72,7 +75,7 @@ fi
 # Should we stream the repo?
 if [ $stream = True ]
 then
-    try ${BIN}/reposurgeon "read $testrepo" "sourcetype git" "write -"
+    try ${BIN}/${REPOSURGEON:-reposurgeon} "read $testrepo" "sourcetype git" "write -"
 fi
 
 # Should we clean up the test directory

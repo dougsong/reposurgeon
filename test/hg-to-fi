@@ -16,6 +16,9 @@
 # To add complexity to a test load, do -n, then edit the test repo with
 # hg, then use -d.
 #
+# The REPOSURGEON environment variable can be used to substitute in a
+# different implementation.
+#
 
 . common-setup.sh
 
@@ -64,7 +67,7 @@ fi
 # Should we stream the repo?
 if [ $stream = True ]
 then
-    try ${BIN}/reposurgeon "read $testrepo" "sourcetype git" "write -"
+    try ${BIN}/${REPOSURGEON:-reposurgeon} "read $testrepo" "sourcetype git" "write -"
 fi
 
 # Should we clean up the test directory

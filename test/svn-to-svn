@@ -38,6 +38,9 @@
 # be up to date before streaming it. Also note that any embedded comments
 # will be lost.
 #
+# The REPOSURGEON environment variable can be used to substitute in a
+# different implementation.
+#
 . common-setup.sh
 
 PATH=$PATH:../..
@@ -139,13 +142,13 @@ fi
 # Should we view the repo?
 if [ $view = T ]
 then
-    (cd $testrepo >/dev/null; {BIN}/reposurgeon "verbose $verbose" "read ." "prefer git" "rebuild /tmp/testrepo$$"; cd /tmp/testrepo$$; gitk --all --tags)
+    (cd $testrepo >/dev/null; {BIN}/${REPOSURGEON:-reposurgeon} "verbose $verbose" "read ." "prefer git" "rebuild /tmp/testrepo$$"; cd /tmp/testrepo$$; gitk --all --tags)
 fi
 
 # Should we stream the repo?
 if [ $stream = T ]
 then
-    reposurgeon "verbose $verbose" "read $testrepo" "$streamopts" "write"
+    ${REPOSURGEON:-reposurgeon} "verbose $verbose" "read $testrepo" "$streamopts" "write"
 fi
 
 # Should we undump the repo?
