@@ -18247,8 +18247,12 @@ func (rs *Reposurgeon) DoReorder(lineIn string) bool {
 		croak("no selection")
 		return false
 	}
-	if len(sel) == 0 {
+	commits := repo.commits(sel)
+	if len(commits) == 0 {
 		croak("no commits in selection")
+		return false
+	} else if len(commits) != len(sel) {
+		croak("selection set must be all commits")
 		return false
 	} else if len(sel) == 1 {
 		croak("only 1 commit selected; nothing to re-order")
