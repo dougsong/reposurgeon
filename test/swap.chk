@@ -1,4 +1,4 @@
-reposurgeon: branch links detected by file ops only: activeedi/
+reposurgeon: branch links detected by file ops only: ["activeedi/"]
 #reposurgeon sourcetype svn
 blob
 mark :1

@@ -2,7 +2,7 @@
 
 # Results should be independent of what file stem this is, as
 # long as it's an svn dump and has the right feature to be named by cmploc.
-stem=x-debranch
+stem=debranch
 cmploc=resources
 cmpmode=-b
 

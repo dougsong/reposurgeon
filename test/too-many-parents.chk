@@ -1,4 +1,4 @@
-reposurgeon: branch links detected by file ops only: branches/opari2-RB-rc2.0/
+reposurgeon: branch links detected by file ops only: ["branches/opari2-RB-rc2.0/"]
 reposurgeon: cannot resolve mergeinfo source from revision 152 for path branches/TRY_CROESSEL_unification2/build-config/m4/.
 reposurgeon: cannot resolve mergeinfo source from revision 152 for path branches/TRY_CROESSEL_unification2/build-config/platforms/.
 reposurgeon: cannot resolve mergeinfo destination to revision 313 for path branches/opari2-RB-2.0/.

@@ -46,9 +46,7 @@ Python version passes all these tests.
 The following tests presently fail:
 
 x-reorder: toposort code is busted.
-x-references.tst: index out of range crash
-x-treecontents.tst: nonfatal error
-x-userignores.tst: cannot resolve mergeinfo
+x-references.tst: incorrect (additional) fileops
 
 The reparent test presently succeeds, but the toposort has been
 commented out.
