@@ -107,7 +107,6 @@ import (
 
 	shlex "github.com/anmitsu/go-shlex"
 	orderedset "github.com/emirpasic/gods/sets/linkedhashset"
-	cmp "github.com/google/go-cmp/cmp"
 	uuid "github.com/google/uuid"
 	difflib "github.com/ianbruene/go-difflib/difflib"
 	shutil "github.com/termie/go-shutil"
@@ -10425,9 +10424,21 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 			sortedEvents[i] = commit
 		}
 	}
-	//if events == sortedEvents {
-	//	croak("commits already in desired order")
-	//}
+	commitSliceEqual := func(a, b []*Commit) bool {
+		if len(a) != len(b) {
+			return false
+		}
+		for i := range a {
+			if a[i] != b[i] {
+				return false
+			}
+		}
+		return true
+	}
+	if commitSliceEqual(events, sortedEvents) {
+		croak("commits already in desired order")
+		return
+	}
 	for _, e := range sortedEvents[1:] {
 		if len(e.parents()) > 1 {
 			croak("non-linear history detected: %s", e.idMe())
@@ -10461,12 +10472,9 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 		events[i+1].setParents([]CommitLike{e})
 	}
 	// Check if fileops still make sense after re-ordering events.
-	// Also check events one level beyond re-ordered range; anything
+	// FIXME: The Python used to check events one level beyond re-ordered range; anything
 	// beyond that is the user's responsibility.
-	combined := make([]Event, len(events)+len(events[len(events)-1].children()))
-	for _, e := range combined {
-		c := e.(*Commit)
-		ops := make([]FileOp, 0)
+	for _, c := range events {
 		for _, op := range c.operations() {
 			var path string
 			if op.op == opD {
@@ -10476,16 +10484,8 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 			}
 			if path != "" && c.visible(path) != nil {
 				if !bequiet {
-					croak("%s '%s' fileop references non-existent '%s' after re-order", e.idMe(), op.op, path)
+					croak("%s '%s' fileop references non-existent '%s' after re-order", c.idMe(), op.op, path)
 				}
-			} else {
-				ops = append(ops, op)
-			}
-		}
-		if !cmp.Equal(ops, c.operations()) {
-			c.setOperations(ops)
-			if !bequiet && len(ops) == 0 {
-				croak("%s no fileops remain after re-order", c.idMe())
 			}
 		}
 	}
