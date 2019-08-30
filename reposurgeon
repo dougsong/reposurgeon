@@ -7058,111 +7058,6 @@ class Repository:
                 break
         return front
             
-    def resort(self):
-        """Topologically sort the events in this repository.
-
-        Reorder self.events so that objects referenced by other
-        objects appear first.  The sort is stable to avoid unnecessary
-        churn.
-        """
-
-        class dag_edges(object):
-            def __init__(self):
-                self.eout = set()
-                self.ein = set()
-
-        dag = {}
-        start = set(range(len(self.events)))
-
-        # helper for constructing the dag
-        def handle(x, ymark):
-            assert(ymark is not None)
-            if ymark == 'inline':
-                return
-            assert(ymark[0] == ':')
-            if ymark is not None and ymark[0] == ':':
-                y = self.find(ymark)
-                assert(y is not None)
-                assert(x != y)
-                start.discard(x)
-                dag.setdefault(x, dag_edges()).eout.add(y)
-                dag.setdefault(y, dag_edges()).ein.add(x)
-
-        # construct the dag
-        for n, node in enumerate(self.events):
-            edges = dag.setdefault(n, dag_edges())
-            if isinstance(node, Commit):
-                for parent in node.parents():
-                    p = self.index(parent)
-                    assert(n != p)
-                    start.discard(n)
-                    edges.eout.add(p)
-                    dag.setdefault(p, dag_edges()).ein.add(n)
-                for o in node.operations():
-                    if o.op == FileOp.M:
-                        handle(n, o.ref)
-                    elif o.op == FileOp.N:
-                        handle(n, o.ref)
-                        handle(n, o.committish)
-            elif isinstance(node, Blob):
-                pass
-            elif isinstance(node, Tag):
-                handle(n, node.committish)
-            elif isinstance(node, Reset):
-                if node.target is not None:
-                    t = self.index(node.target)
-                    assert(n != t)
-                    start.discard(n)
-                    edges.eout.add(t)
-                    dag.setdefault(t, dag_edges()).ein.add(n)
-            elif isinstance(node, Passthrough):
-                pass
-            else:
-                raise ValueError('unexpected event type')
-
-        # now topologically sort the dag, using a priority queue to
-        # provide a stable topological sort (each event's priority is
-        # its original index)
-        s = list(start)
-        heapq.heapify(s)
-        tsorted = []
-        old_index_to_new = {}
-        while len(s):
-            n = heapq.heappop(s)
-            assert n not in old_index_to_new
-            old_index_to_new[n] = len(tsorted)
-            tsorted.append(n)
-            ein = dag[n].ein
-            while len(ein):
-                m = ein.pop()
-                medges = dag[m]
-                medges.eout.remove(n)
-                if not len(medges.eout):
-                    heapq.heappush(s, m)
-
-        orig = range(len(self.events))
-        if tsorted != orig:
-            t = set(tsorted)
-            assert len(t) == len(tsorted)
-            o = set(orig)
-            assert len(t - o) == 0
-            leftout = o - t
-            if (len(leftout)):
-                complain('event re-sort failed due to one or more dependency' \
-                         + ' cycles involving the following events: ' \
-                         + ', '.join(str(x+1) for x in sorted(leftout)))
-                return
-            self.events = [self.events[i] for i in tsorted]
-            if verbose:
-                announce(DEBUG_SHOUT, 're-sorted events')
-            # assignments will be fixed so don't pass anything to
-            # declare_sequence_mutation() to tell it to warn about
-            # invalidated assignments
-            self.declare_sequence_mutation()
-            self.assignments = {
-                name:[old_index_to_new[i] for i in selection]
-                for name, selection in self.assignments.items()}
-
     def reorder_commits(self, v, bequiet):
         "Re-order a contiguous range of commits."
         def validate_operations(events, bequiet):
@@ -7211,7 +7106,6 @@ class Repository:
         for i,e in enumerate(events[:-1]):
             events[i+1].set_parents([e])
         validate_operations(events, bequiet)
-        self.resort()
     def renumber(self, origin=1, baton=None):
         "Renumber the marks in a repo starting from a specified origin."
         markmap = {}
@@ -12289,21 +12183,15 @@ Options:
         and so on.  Examples:
 
             # this makes 33 the parent of 17
-            33|17 reparent --use-order
+            33,17 reparent --use-order
 
             # this makes 17 an octopus merge commit.  its first parent
             # is commit 22, second parent is 33, and third parent is 15
-            22,33,15|17 reparent --use-order
+            22,33,15,17 reparent --use-order
 
-        Because ancestor commit events must appear before their
-        descendants, giving a commit with a low event number a parent
-        with a high event number triggers a re-sort of the events.  A
-        re-sort assigns different event numbers to some or all of the
-        events.  Re-sorting only works if the reparenting does not
-        introduce any cycles.  To swap the order of two commits that
-        have an ancestor-descendant relationship without introducing a
-        cycle during the process, you must reparent the descendant
-        commit first.
+       Warning: with this option, it is possible to preduce a repository
+       graph in which parents precede children. This will produce a fatal error
+       when the repository state is written out, so don't do that.
 
 Policy:
 
@@ -12336,16 +12224,14 @@ Policy:
                 selected.sort()
             # determine whether an event resort might be needed.  it is
             # assumed that ancestor commits already have a lower event
-            # index before this function is called, which should be true
-            # as long as every function that modifies the DAG calls
-            # Repository.resort() when needed.  thus, a call to resort()
-            # should only be necessary if --use-order is passed and a
+            # index before this function is called; thus, a cycle can
+            # only be introduced if --use-order is passed and a
             # parent will have an index higher than the modified commit.
-            do_resort = use_order and not all(selected[-1][0] > x[0]
+            cycle_possible = use_order and not all(selected[-1][0] > x[0]
                                               for x in selected[0:-1])
             parents = [x[1] for x in selected[0:-1]]
             child = selected[-1][1]
-            if do_resort and any(p.descended_from(child) for p in parents):
+            if cycle_possible and any(p.descended_from(child) for p in parents):
                 raise Recoverable('reparenting a commit to its own descendant' \
                                   + ' would introduce a cycle')
             if "--rebase" not in parse.options:
@@ -12363,9 +12249,6 @@ Policy:
                 child.set_operations(newops)
                 child.sort_operations()
             child.set_parents(parents)
-            # Restore this whemn we have toposort working identically in Gp and Python.
-            #if do_resort:
-            #    repo.resort()
 
     def help_reorder(self):
         sys.stdout.write("""

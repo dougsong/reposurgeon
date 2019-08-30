@@ -7,6 +7,7 @@ Repository head::
      Insert newly created blobs after front events.
      Minor repair to translation of Subversion default ignores. 
      Add --noignores read option to suppress filling in default Subversion ignores.
+     Results of reorder and reparent ae no longer toposorted. 
 
 3.46: 2019-05-29::
      Added 'relax' no-op command.

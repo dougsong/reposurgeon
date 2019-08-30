@@ -48,9 +48,6 @@ The following tests presently fail:
 x-reorder: toposort code is busted.
 x-references.tst: incorrect (additional) fileops
 
-The reparent test presently succeeds, but the toposort has been
-commented out.
-
 The next steps after these will be testing coalescence, extractor classes,
 and the Subversion load tests.
 

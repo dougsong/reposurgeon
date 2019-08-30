@@ -6,16 +6,16 @@ read <reorder.fi
 20..31 index
     20 commit    :19    refs/heads/master
     21 blob      :20    README
-    22 commit    :22    refs/heads/master
-    23 blob      :23    hello.c
-    24 commit    :24    refs/heads/master
-    25 blob      :25    hello.sh
-    26 commit    :26    refs/heads/master
-    27 commit    :21    refs/heads/master
+    22 commit    :21    refs/heads/master
+    23 commit    :22    refs/heads/master
+    24 blob      :23    hello.c
+    25 commit    :24    refs/heads/master
+    26 blob      :25    hello.sh
+    27 commit    :26    refs/heads/master
     28 blob      :27    STRATEGY.txt
-    29 blob      :29    README
-    30 commit    :30    refs/heads/master
-    31 commit    :28    refs/heads/master
+    29 commit    :28    refs/heads/master
+    30 blob      :29    README
+    31 commit    :30    refs/heads/master
 20..31 & =C inspect
 Event 20 ================================================================
 commit refs/heads/master
@@ -29,6 +29,16 @@ M 100644 :18 README
 
 Event 22 ================================================================
 commit refs/heads/master
+mark :21
+author Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
+data 29
+readme: add missing greeting
+from :26
+M 100644 :20 README
+
+Event 23 ================================================================
+commit refs/heads/master
 mark :22
 author Eric Sunshine <sunshine@sunshineco.com> 1491184959 -0400
 committer Eric Sunshine <sunshine@sunshineco.com> 1491184959 -0400
@@ -37,7 +47,7 @@ hello: retire this failed experiment
 from :19
 D hello.sh
 
-Event 24 ================================================================
+Event 25 ================================================================
 commit refs/heads/master
 mark :24
 author Eric Sunshine <sunshine@sunshineco.com> 1491185031 -0400
@@ -47,7 +57,7 @@ hello: revive as compiled program in place of old shell script
 from :22
 M 100644 :23 hello.c
 
-Event 26 ================================================================
+Event 27 ================================================================
 commit refs/heads/master
 mark :26
 author Eric Sunshine <sunshine@sunshineco.com> 1491185187 -0400
@@ -58,27 +68,7 @@ from :24
 D hello.c
 M 100644 :25 hello.sh
 
-Event 27 ================================================================
-commit refs/heads/master
-mark :21
-author Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
-data 29
-readme: add missing greeting
-from :26
-M 100644 :20 README
-
-Event 30 ================================================================
-commit refs/heads/master
-mark :30
-author Eric Sunshine <sunshine@sunshineco.com> 1491185336 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491185336 -0400
-data 31
-readme: make the game official
-from :21
-M 100644 :29 README
-
-Event 31 ================================================================
+Event 29 ================================================================
 commit refs/heads/master
 mark :28
 author Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
@@ -88,18 +78,38 @@ strategy: assist those less fortunate souls
 from :30
 M 100644 :27 STRATEGY.txt
 
+Event 31 ================================================================
+commit refs/heads/master
+mark :30
+author Eric Sunshine <sunshine@sunshineco.com> 1491185336 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491185336 -0400
+data 31
+readme: make the game official
+from :21
+M 100644 :29 README
+
 
 # boundary case: first commit
 :5,:2 reorder
 1..6 index
      1 blob       :1    README
      2 branch      -    refs/heads/master
-     3 blob       :3    README
-     4 blob       :4    banana.sh
-     5 commit     :5    refs/heads/master
-     6 commit     :2    refs/heads/master
+     3 commit     :2    refs/heads/master
+     4 blob       :3    README
+     5 blob       :4    banana.sh
+     6 commit     :5    refs/heads/master
 1..6 & =C inspect
-Event 5 =================================================================
+Event 3 =================================================================
+commit refs/heads/master
+mark :2
+author Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
+data 21
+readme: commencement
+from :5
+M 100644 :1 README
+
+Event 6 =================================================================
 commit refs/heads/master
 mark :5
 author Eric Sunshine <sunshine@sunshineco.com> 1491184036 -0400
@@ -109,46 +119,16 @@ banana: commence banana synthesis
 M 100644 :3 README
 M 100755 :4 banana.sh
 
-Event 6 =================================================================
-commit refs/heads/master
-mark :2
-author Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
-data 21
-readme: commencement
-from :5
-M 100644 :1 README
-
 
 # boundary case: last commit
 :32,:33,:31 reorder
 32..$ index
-    32 commit    :32    refs/heads/master
-    33 commit    :33    refs/heads/master
-    34 commit    :31    refs/heads/master
+    32 commit    :31    refs/heads/master
+    33 commit    :32    refs/heads/master
+    34 commit    :33    refs/heads/master
     35 branch    :33    refs/heads/master
 32..$ & =C inspect
 Event 32 ================================================================
-commit refs/heads/master
-mark :32
-author Eric Sunshine <sunshine@sunshineco.com> 1491353475 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491354742 -0400
-data 38
-strategy: duplicate for Windows folks
-from :28
-C "STRATEGY.txt" "STRATEGY"
-
-Event 33 ================================================================
-commit refs/heads/master
-mark :33
-author Eric Sunshine <sunshine@sunshineco.com> 1491353531 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491354773 -0400
-data 33
-strategy: retire Windows support
-from :32
-D STRATEGY
-
-Event 34 ================================================================
 commit refs/heads/master
 mark :31
 author Eric Sunshine <sunshine@sunshineco.com> 1491185431 -0400
@@ -158,17 +138,37 @@ readme: standardize on .txt extension
 from :33
 R "README" "README.txt"
 
+Event 33 ================================================================
+commit refs/heads/master
+mark :32
+author Eric Sunshine <sunshine@sunshineco.com> 1491353475 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491354742 -0400
+data 38
+strategy: duplicate for Windows folks
+from :28
+C "STRATEGY.txt" "STRATEGY"
+
+Event 34 ================================================================
+commit refs/heads/master
+mark :33
+author Eric Sunshine <sunshine@sunshineco.com> 1491353531 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491354773 -0400
+data 33
+strategy: retire Windows support
+from :32
+D STRATEGY
+
 
 # boundary case: maximum event: multiple children
 :7,:2 reorder
 7..10,13 index
-     7 commit     :7    refs/heads/master
-     8 commit     :2    refs/heads/master
+     7 blob       :6    THEORY.txt
+     8 commit     :7    refs/heads/master
      9 blob       :8    hello.sh
     10 commit     :9    refs/heads/master
     13 commit    :12    refs/heads/pbj
 7..10,13 & =C inspect
-Event 7 =================================================================
+Event 8 =================================================================
 commit refs/heads/master
 mark :7
 author Eric Sunshine <sunshine@sunshineco.com> 1491184183 -0400
@@ -177,16 +177,6 @@ data 49
 theory: rudimentary banana synthesis explanation
 from :5
 M 100644 :6 THEORY.txt
-
-Event 8 =================================================================
-commit refs/heads/master
-mark :2
-author Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
-data 21
-readme: commencement
-from :7
-M 100644 :1 README
 
 Event 10 ================================================================
 commit refs/heads/master
@@ -214,11 +204,11 @@ M 100755 :11 banana.sh
 :19,:17 reorder
 17..22 index
     17 commit    :16    refs/heads/pbj
-    18 blob      :18    README
-    19 commit    :19    refs/heads/master
-    20 commit    :17    refs/heads/master
+    18 commit    :17    refs/heads/master
+    19 blob      :18    README
+    20 commit    :19    refs/heads/master
     21 blob      :20    README
-    22 commit    :22    refs/heads/master
+    22 commit    :21    refs/heads/master
 17..22 & =C inspect
 Event 17 ================================================================
 commit refs/heads/pbj
@@ -230,18 +220,7 @@ theory: explain significance of ice cream
 from :14
 M 100644 :15 THEORY.txt
 
-Event 19 ================================================================
-commit refs/heads/master
-mark :19
-author Eric Sunshine <sunshine@sunshineco.com> 1491184847 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491184847 -0400
-data 38
-readme: finalize ice cream experiment
-from :9
-merge :16
-M 100644 :18 README
-
-Event 20 ================================================================
+Event 18 ================================================================
 commit refs/heads/master
 mark :17
 author Eric Sunshine <sunshine@sunshineco.com> 1491184715 -0400
@@ -254,15 +233,26 @@ M 100644 :15 THEORY.txt
 M 100755 :11 banana.sh
 M 100755 :13 icecream.sh
 
+Event 20 ================================================================
+commit refs/heads/master
+mark :19
+author Eric Sunshine <sunshine@sunshineco.com> 1491184847 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184847 -0400
+data 38
+readme: finalize ice cream experiment
+from :9
+merge :16
+M 100644 :18 README
+
 Event 22 ================================================================
 commit refs/heads/master
-mark :22
-author Eric Sunshine <sunshine@sunshineco.com> 1491184959 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491184959 -0400
-data 37
-hello: retire this failed experiment
-from :17
-D hello.sh
+mark :21
+author Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
+data 29
+readme: add missing greeting
+from :26
+M 100644 :20 README
 
 
 # error: no repo

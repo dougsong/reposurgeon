@@ -1874,21 +1874,16 @@ commit becomes the second parent, and so on.  Examples:</para>
 
 <programlisting>
 # this makes 33 the parent of 17
-33|17 reparent --use-order
+33,17 reparent --use-order
 
 # this makes 17 an octopus merge commit.  its first parent
 # is commit 22, second parent is 33, and third parent is 15
-22,33,15|17 reparent --use-order
+22,33,15,17 reparent --use-order
 </programlisting>
 
-<para>Because ancestor commit events must appear before their
-descendants, giving a commit with a low event number a parent with a
-high event number triggers a re-sort of the events.  A re-sort assigns
-different event numbers to some or all of the events.  Re-sorting only
-works if the reparenting does not introduce any cycles.  To swap the
-order of two commits that have an ancestor–descendant relationship
-without introducing a cycle during the process, you must reparent the
-descendant commit first.</para>
+<para>Warning: with this option, it is possible to preduce a repository
+graph in which parents precede children. This will produce a fatal error
+when the repository state is written out, so don't do that.</para>
 </listitem></varlistentry>
 </variablelist>
 </listitem></varlistentry>
