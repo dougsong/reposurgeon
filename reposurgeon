@@ -10226,7 +10226,7 @@ With an argument, the command tab-completes on the above list.
         if self.selection is not None:
             raise Recoverable("choose does not take a selection set")
         if not self.repolist:
-            if verbose > 0:
+            if verbose > 0 and len(line) > 0:
                 complain("no repositories are loaded.")
                 return
         self.repolist.sort(key=operator.attrgetter("name"))

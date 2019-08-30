@@ -10286,16 +10286,16 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 		croak("non-linear history detected: %s", lastEvent.idMe())
 		return
 	}
+	contiguous := true
 	for i, e := range sortedEvents[:len(sortedEvents)-1] {
 		nextEvent := sortedEvents[i+1]
-		isaparent := false
 		for _, p := range nextEvent.parents() {
-			if e.idMe() == p.idMe() {
-				isaparent = true
+			if e.idMe() != p.idMe() {
+				contiguous = false
 				break
 			}
 		}
-		if !isaparent {
+		if !contiguous {
 			croak("selected commit range not contiguous")
 			return
 		}
@@ -18076,6 +18076,12 @@ func (rs *Reposurgeon) DoReorder(lineIn string) bool {
 		croak("no selection")
 		return false
 	}
+	parse := rs.newLineParse(lineIn, nil)
+	defer parse.Closem()
+	if parse.line != "" {
+		croak("'reorder' takes no arguments")
+		return false
+	}
 	commits := repo.commits(sel)
 	if len(commits) == 0 {
 		croak("no commits in selection")
@@ -18085,12 +18091,6 @@ func (rs *Reposurgeon) DoReorder(lineIn string) bool {
 		return false
 	} else if len(sel) == 1 {
 		croak("only 1 commit selected; nothing to re-order")
-		return false
-	}
-	parse := rs.newLineParse(lineIn, nil)
-	defer parse.Closem()
-	if parse.line != "" {
-		croak("'reorder' takes no arguments")
 		return false
 	}
 	_, quiet := parse.OptVal("--quiet")
