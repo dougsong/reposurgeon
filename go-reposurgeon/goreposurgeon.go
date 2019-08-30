@@ -4908,23 +4908,24 @@ func (commit *Commit) visible(argpath string) *Commit {
 	for {
 		parents := ancestor.parents()
 		if len(parents) == 0 {
-			break
+			return nil
 		} else {
 			switch parents[0].(type) {
 			case *Callout:
-				break
-			}
-			ancestor = parents[0].(*Commit)
-			// This loop assumes that the op sequence has no
-			// M/C/R foo after D foo pairs. If this condition
-			// is violated it can throw false negatives.
-			for _, fileop := range ancestor.operations() {
-				if fileop.op == opD && fileop.Path == argpath {
-					return nil
-				} else if fileop.op == opM && fileop.Path == argpath {
-					return ancestor
-				} else if (fileop.op == opR || fileop.op == opC) && fileop.Target == argpath {
-					return ancestor
+				return nil
+			case *Commit:
+				ancestor = parents[0].(*Commit)
+				// This loop assumes that the op sequence has no
+				// M/C/R foo after D foo pairs. If this condition
+				// is violated it can throw false negatives.
+				for _, fileop := range ancestor.operations() {
+					if fileop.op == opD && fileop.Path == argpath {
+						return nil
+					} else if fileop.op == opM && fileop.Path == argpath {
+						return ancestor
+					} else if (fileop.op == opR || fileop.op == opC) && fileop.Target == argpath {
+						return ancestor
+					}
 				}
 			}
 		}
