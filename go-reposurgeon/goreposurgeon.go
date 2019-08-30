@@ -76,7 +76,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
-q	"crypto/md5"
+	"crypto/md5"
 	"crypto/sha1"
 	"errors"
 	"fmt"
