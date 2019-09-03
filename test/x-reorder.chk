@@ -307,5 +307,3 @@ read <reorder.fi
 :32,:30,:31:28 reorder
 reposurgeon: commit@:32 'C' fileop references non-existent 'STRATEGY.txt' after re-order
 reposurgeon: commit@:32 no fileops remain after re-order
-reposurgeon: commit@:33 'D' fileop references non-existent 'STRATEGY' after re-order
-reposurgeon: commit@:33 no fileops remain after re-order

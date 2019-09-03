@@ -4920,16 +4920,20 @@ func (commit *Commit) visible(argpath string) *Commit {
 				// is violated it can throw false negatives.
 				for _, fileop := range ancestor.operations() {
 					if fileop.op == opD && fileop.Path == argpath {
+						//fmt.Printf("XXXX visible(%s) at %s -> nil\n", argpath, commit.mark)
 						return nil
 					} else if fileop.op == opM && fileop.Path == argpath {
+						//fmt.Printf("XXXX visible(%s) at %s -> %s\n", argpath, commit.mark, ancestor.mark)
 						return ancestor
 					} else if (fileop.op == opR || fileop.op == opC) && fileop.Target == argpath {
+						//fmt.Printf("XXXX visible(%s) at %s -> %s\n", argpath, commit.mark, ancestor.mark)
 						return ancestor
 					}
 				}
 			}
 		}
 	}
+	fmt.Printf("XXXX visible(%s) at %s -> nil (fallthrough)\n", argpath, commit.mark)
 	return nil
 }
 
@@ -10309,8 +10313,7 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 		events[i+1].setParents([]CommitLike{e})
 	}
 	// Check if fileops still make sense after re-ordering events.
-	// FIXME: The Python used to check events one level beyond re-ordered range; anything
-	// beyond that is the user's responsibility.
+	// FIXME: The Python used to check chiild events too.
 	for _, c := range events {
 		for _, op := range c.operations() {
 			var path string
@@ -10319,7 +10322,7 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 			} else if op.op == opR || op.op == opC {
 				path = op.Source
 			}
-			if path != "" && c.visible(path) != nil {
+			if path != "" && c.visible(path) == nil {
 				if !bequiet {
 					croak("%s '%s' fileop references non-existent '%s' after re-order", c.idMe(), op.op, path)
 				}

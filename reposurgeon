@@ -2933,9 +2933,12 @@ class Commit(object):
                     if fileop.op == FileOp.D and fileop.path == path:
                         break
                     elif fileop.op == FileOp.M and fileop.path == path:
+	                #sys.stdout.write("XXXX visible(%s) at %s -> %s\n" % (path, self.mark, ancestor.mark))
                         return ancestor
                     elif fileop.op in (FileOp.R, FileOp.C) and fileop.target == path:
+	                #sys.stdout.write("XXXX visible(%s) at %s -> %s\n" % (path, self.mark, ancestor.mark))
                         return ancestor
+	#sys.stdout.write("XXXX visible(%s) at %s\n -> None" % (path, self.mark))
         return None
     def manifest(self):
         "Return a map from paths to marks for files existing at this commit."
@@ -7062,9 +7065,7 @@ class Repository:
         "Re-order a contiguous range of commits."
         def validate_operations(events, bequiet):
             "Check if fileops still make sense after re-ordering events."
-            # Also check events one level beyond re-ordered range; anything
-            # beyond that is the user's responsibility.
-            for x in events + events[-1].children():
+            for x in events:
                 ops = []
                 for op in x.operations():
                     path = None
