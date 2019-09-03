@@ -10270,7 +10270,7 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 			return false
 		}
 		for i := range a {
-			if a[i] != b[i] {
+			if a[i].String() != b[i].String() {
 				return false
 			}
 		}
@@ -10282,13 +10282,13 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 	}
 	for _, e := range sortedEvents[1:] {
 		if len(e.parents()) > 1 {
-			croak("non-linear history detected: %s", e.idMe())
+			croak("non-linear history detected, multiple parents at %s", e.idMe())
 			return
 		}
 	}
 	lastEvent := sortedEvents[len(sortedEvents)-1]
 	if len(lastEvent.children()) > 1 {
-		croak("non-linear history detected: %s", lastEvent.idMe())
+		croak("non-linear history detected, multiple children at %s", lastEvent.idMe())
 		return
 	}
 	contiguous := true
@@ -10312,9 +10312,21 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 	for i, e := range events[:len(events)-1] {
 		events[i+1].setParents([]CommitLike{e})
 	}
+	fileopSliceEqual := func(a, b []FileOp) bool {
+		if len(a) != len(b) {
+			return false
+		}
+		for i := range a {
+			if a[i].String() != b[i].String() {
+				return false
+			}
+		}
+		return true
+	}
 	// Check if fileops still make sense after re-ordering events.
-	// FIXME: The Python used to check chiild events too.
+	// FIXME: The Python used to check child events too.
 	for _, c := range events {
+		ops := make([]FileOp, 0)
 		for _, op := range c.operations() {
 			var path string
 			if op.op == opD {
@@ -10326,6 +10338,14 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 				if !bequiet {
 					croak("%s '%s' fileop references non-existent '%s' after re-order", c.idMe(), op.op, path)
 				}
+				continue
+			}
+			ops = append(ops, op)
+		}
+		if !fileopSliceEqual(ops, c.operations()) {
+			c.setOperations(ops)
+			if !bequiet && len(ops) == 0 {
+				complain("%s no fileops remain after re-order", c.idMe())
 			}
 		}
 	}

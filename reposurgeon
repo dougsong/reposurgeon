@@ -7090,10 +7090,10 @@ class Repository:
         sorted_events = [self.events[i] for i in sorted(v)]
         for e in sorted_events[1:]:
             if len(e.parents()) > 1:
-                raise Recoverable("non-linear history detected: %s" % e.id_me())
+                raise Recoverable("non-linear history detected, multiple parents at %s" % e.id_me())
         for e in sorted_events[:-1]:
             if len(e.children()) > 1:
-                raise Recoverable("non-linear history detected: %s" % e.id_me())
+                raise Recoverable("non-linear history detected. multiple children at %s" % e.id_me())
         if any(not sorted_events[i+1].has_parents() or
                x not in sorted_events[i+1].parents()
                for i,x in enumerate(sorted_events[:-1])):
