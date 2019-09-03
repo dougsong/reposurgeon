@@ -6,28 +6,23 @@ read <reorder.fi
 
 # basic operation
 :22,:24,:26,:21,:30,:28 reorder
-20..31 index
-20..31 & =C inspect
+write
 
 # boundary case: first commit
 :5,:2 reorder
-1..6 index
-1..6 & =C inspect
+write
 
 # boundary case: last commit
 :32,:33,:31 reorder
-32..$ index
-32..$ & =C inspect
+write
 
 # boundary case: maximum event: multiple children
 :7,:2 reorder
-7..10,13 index
-7..10,13 & =C inspect
+write
 
 # boundary case: minimum event: multiple parents
 :19,:17 reorder
-17..22 index
-17..22 & =C inspect
+write
 
 # error: no repo
 drop reorder
