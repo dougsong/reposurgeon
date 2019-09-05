@@ -7088,6 +7088,7 @@ class Repository:
             return
         events = [self.events[i] for i in v]
         sorted_events = [self.events[i] for i in sorted(v)]
+        sys.stdout.write("XXXX Events %s, sorted %s\n" % ([x.mark for x in events], [x.mark for x in sorted_events]))
         for e in sorted_events[1:]:
             if len(e.parents()) > 1:
                 raise Recoverable("non-linear history detected, multiple parents at %s" % e.id_me())
