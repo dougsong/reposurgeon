@@ -18156,11 +18156,11 @@ func (rs *Reposurgeon) DoReorder(lineIn string) bool {
 	if len(commits) == 0 {
 		croak("no commits in selection")
 		return false
+	} else if len(commits) == 1 {
+		croak("only 1 commit selected; nothing to re-order")
+		return false
 	} else if len(commits) != len(sel) {
 		croak("selection set must be all commits")
-		return false
-	} else if len(sel) == 1 {
-		croak("only 1 commit selected; nothing to re-order")
 		return false
 	}
 	_, quiet := parse.OptVal("--quiet")
