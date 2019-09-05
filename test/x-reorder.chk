@@ -1405,7 +1405,7 @@ reposurgeon: selected commit range not contiguous
 
 # error: non-linear history: multiple children
 :9,:7 reorder
-reposurgeon: non-linear history detected. multiple children at commit@:7
+reposurgeon: non-linear history detected, multiple children at commit@:7
 # error: non-linear history: multiple parents
 :17,:16 reorder
 reposurgeon: non-linear history detected, multiple parents at commit@:17
