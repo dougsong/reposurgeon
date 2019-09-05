@@ -4710,10 +4710,12 @@ func commitRemove(commitlist []CommitLike, commit CommitLike) []CommitLike {
 	//fmt.Printf("XXXX commitRemove(%v, %s)\n", listMarks(commitlist), markOrNil(commit))
 	for i, el := range commitlist {
 		if commit == el {
+			copy(commitlist[i:], commitlist[i+1:])
+			//FIXME: Reinstate the zero-out, once we figure
+			// out why it was causing a core dump
 			// Zero out the deleted element so it's GCed
 			// See https://github.com/golang/go/wiki/SliceTricks
-			copy(commitlist[i:], commitlist[i+1:])
-			commitlist[len(commitlist)-1] = nil
+			//commitlist[len(commitlist)-1] = nil
 			commitlist = commitlist[:len(commitlist)-1]
 			break
 		}
@@ -4821,9 +4823,9 @@ func (commit *Commit) replaceParent(e1, e2 *Commit) {
 		if item == e1 {
 			commit._parentNodes[i] = e2
 			e1._childNodes = commitRemove(e1._childNodes, commit)
-			//fmt.Printf("XXXX %s child nodes after replacement: %v\n", e1.mark, listMarks(e1._childNodes))
+			//fmt.Printf("XXXXX %s child nodes after replacement: %v\n", e1.mark, listMarks(e1._childNodes))
 			e2._childNodes = append(e2._childNodes, commit)
-			//fmt.Printf("XXXX %s child nodes after replacement: %v\n", e2.mark, listMarks(e2._childNodes))
+			//fmt.Printf("XXXXX %s child nodes after replacement: %v\n", e2.mark, listMarks(e2._childNodes))
 			commit.invalidateManifests()
 			return
 		}
@@ -4962,7 +4964,7 @@ func (commit *Commit) visible(argpath string) *Commit {
 			}
 		}
 	}
-	fmt.Printf("XXXX visible(%s) at %s -> nil (fallthrough)\n", argpath, commit.mark)
+	//fmt.Printf("XXXX visible(%s) at %s -> nil (fallthrough)\n", argpath, commit.mark)
 	return nil
 }
 
@@ -10295,14 +10297,14 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 			sortedEvents[i] = commit
 		}
 	}
-	listCommits := func (items []*Commit) []string {
-		var out []string
-		for _, x := range items {
-			out = append(out, x.getMark())
-		}
-		return out
-	}
-        fmt.Printf("XXXX Events %s, sorted %s\n", listCommits(events), listCommits(sortedEvents))
+	//listCommits := func (items []*Commit) []string {
+	//	var out []string
+	//	for _, x := range items {
+	//		out = append(out, x.getMark())
+	//	}
+	//	return out
+	//}
+        //fmt.Printf("XXXX Events %s, sorted %s\n", listCommits(events), listCommits(sortedEvents))
 	commitSliceEqual := func(a, b []*Commit) bool {
 		if len(a) != len(b) {
 			return false
@@ -10339,20 +10341,20 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 				break
 			}
 		}
-		if !contiguous {
-			croak("selected commit range not contiguous")
-			return
-		}
+	}
+	if !contiguous {
+		croak("selected commit range not contiguous")
+		return
 	}
 	lastEvent := sortedEvents[len(sortedEvents)-1]
 	events[0].setParents(sortedEvents[0].parents())
-	fmt.Printf("XXXX children of %s = {%v}\n", lastEvent.mark, listMarks(lastEvent.children()))
+	//fmt.Printf("XXXX children of %s = {%v}\n", lastEvent.mark, listMarks(lastEvent.children()))
 	for _, e := range lastEvent.children() {
-		fmt.Printf("XXXX child of %s is %s will be reparented with %s\n", lastEvent.mark, markOrNil(e), markOrNil(events[len(events)-1]))
+		//fmt.Printf("XXXXX child of %s is %s will be reparented with %s\n", lastEvent.mark, markOrNil(e), markOrNil(events[len(events)-1]))
 		e.(*Commit).replaceParent(lastEvent, events[len(events)-1])
-		fmt.Printf("XXXX parents of %s = {%v}\n", e.getMark(), listMarks(e.(*Commit).parents()))
+		//fmt.Printf("XXXXX parents of %s after replacement = {%v}\n", e.getMark(), listMarks(e.(*Commit).parents()))
 	}
-	fmt.Printf("XXXX Got here\n")
+	//fmt.Printf("XXXX Got here\n")
 	for i, e := range events[:len(events)-1] {
 		events[i+1].setParents([]CommitLike{e})
 	}
