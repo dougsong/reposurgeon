@@ -4711,11 +4711,9 @@ func commitRemove(commitlist []CommitLike, commit CommitLike) []CommitLike {
 	for i, el := range commitlist {
 		if commit == el {
 			copy(commitlist[i:], commitlist[i+1:])
-			//FIXME: Reinstate the zero-out, once we figure
-			// out why it was causing a core dump
 			// Zero out the deleted element so it's GCed
 			// See https://github.com/golang/go/wiki/SliceTricks
-			//commitlist[len(commitlist)-1] = nil
+			commitlist[len(commitlist)-1] = nil
 			commitlist = commitlist[:len(commitlist)-1]
 			break
 		}
@@ -10297,14 +10295,6 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 			sortedEvents[i] = commit
 		}
 	}
-	//listCommits := func (items []*Commit) []string {
-	//	var out []string
-	//	for _, x := range items {
-	//		out = append(out, x.getMark())
-	//	}
-	//	return out
-	//}
-        //fmt.Printf("XXXX Events %s, sorted %s\n", listCommits(events), listCommits(sortedEvents))
 	commitSliceEqual := func(a, b []*Commit) bool {
 		if len(a) != len(b) {
 			return false
@@ -10315,10 +10305,6 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 			}
 		}
 		return true
-	}
-	if commitSliceEqual(events, sortedEvents) {
-		croak("commits already in desired order")
-		return
 	}
 	for _, e := range sortedEvents[1:] {
 		if len(e.parents()) > 1 {
@@ -10332,18 +10318,22 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 			return
 		}
 	}
-	contiguous := true
-	for i, e := range sortedEvents[:len(sortedEvents)-1] {
-		nextEvent := sortedEvents[i+1]
-		for _, p := range nextEvent.parents() {
-			if e.idMe() != p.idMe() {
-				contiguous = false
-				break
+	isChildOf := func(later, earlier *Commit) bool {
+		for _, c := range later.parents() {
+			if c.getMark() == earlier.getMark() {
+				return true
 			}
 		}
+		return false
 	}
-	if !contiguous {
-		croak("selected commit range not contiguous")
+	for i := 0; i  < len(sortedEvents)-1; i++ {
+		if !isChildOf(sortedEvents[i+1], sortedEvents[i]) {
+			croak("selected commit range not contiguous")
+			return
+		}
+	}
+	if commitSliceEqual(events, sortedEvents) {
+		croak("commits already in desired order")
 		return
 	}
 	lastEvent := sortedEvents[len(sortedEvents)-1]

@@ -17,3 +17,7 @@
   anything useful for production. Improving it might be useful.
   
 * Also see the Gitlab issue tracker for two minor problems.
+
+* It would be nice to restore the toposort code from Python, removed
+  not merely because porting it to Go failed but because the attempt
+  opened up a can of worms about the operation's nonlocal effects.
