@@ -4707,19 +4707,13 @@ func (commit *Commit) parentMarks() []string {
 
 // commitRemove removes all instances of a commit/callout pointer from a list
 func commitRemove(commitlist []CommitLike, commit CommitLike) []CommitLike {
-	//fmt.Printf("XXXX commitRemove(%v, %s)\n", listMarks(commitlist), markOrNil(commit))
-	for i, el := range commitlist {
-		if commit == el {
-			copy(commitlist[i:], commitlist[i+1:])
-			// Zero out the deleted element so it's GCed
-			// See https://github.com/golang/go/wiki/SliceTricks
-			commitlist[len(commitlist)-1] = nil
-			commitlist = commitlist[:len(commitlist)-1]
-			break
+	out := make([]CommitLike, 0)
+	for i := range commitlist {
+		if commitlist[i] != commit {
+			out = append(out, commitlist[i])
 		}
 	}
-	//fmt.Printf("XXXX commitRemove returns %v\n", listMarks(commitlist))
-	return commitlist
+	return out
 }
 
 func (commit *Commit) setParents(parents []CommitLike) {
@@ -20255,7 +20249,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		blank.setParents(commit.parents())
 		commit.setParents([]CommitLike{blank})
 	} else {
-		blank.setParents([]CommitLike{commit})
+		blank._parentNodes = []CommitLike{commit}
 		for _, offspring := range commit.children() {
 			c, ok := offspring.(*Commit)
 			if ok {
@@ -20277,7 +20271,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 
 	// Generate deletes into the next commit(s) so files won't
 	// leak forward. Also prevent files leaking forward from any
-	// previous commit.  We gave to force determinstic path list
+	// previous commit.  We have to force deterministic path list
 	// order here, otherwise regressio tests will fail in flaky
 	// ways.
 	blankPathList := blank.paths(nil)
