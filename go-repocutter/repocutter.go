@@ -1081,7 +1081,7 @@ func doreduce(source DumpfileSource) {
 			continue
 		}
 		prev = item
-		selection += fmt.Sprintf("%d,", item)
+		selection += string(item)
 	}
 	source.Lbs.Rewind()
 	// -1 is to trim off trailing comma
