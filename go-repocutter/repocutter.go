@@ -1194,8 +1194,8 @@ func renumber(source DumpfileSource) {
 			fmt.Printf("Revision-number: %d\n", counter)
 			renumbering[string(p)] = counter
 			counter++
-		} else if p = payload("Node-copyfrom-rev:", line); p != nil {
-			fmt.Printf("Node-copyfrom-rev: %s\n", string(renumbering[string(p)]))
+		} else if p = payload("Node-copyfrom-rev", line); p != nil {
+			fmt.Printf("Node-copyfrom-rev: %d\n", renumbering[string(p)])
 		} else {
 			os.Stdout.Write(line)
 		}

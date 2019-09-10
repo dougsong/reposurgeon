@@ -161,26 +161,23 @@ Revision is 2, file path is trunk/drivers/serial.c.
 
 
 Revision-number: 3
-Prop-content-length: 151
-Content-length: 151
+Prop-content-length: 157
+Content-length: 157
 
+K 7
+svn:log
+V 55
+Initial CVS import from nut testing release 2.0.1-pre4
+
+K 10
+svn:author
+V 7
+aquette
 K 8
 svn:date
 V 27
-2005-01-27T14:33:14.000000Z
-K 7
-svn:log
-V 77
-This commit was manufactured by cvs2svn to create branch
-'INITIAL_IMPORT_AQ'.
+2005-01-27T14:33:22.000000Z
 PROPS-END
-
-Node-path: branches/INITIAL_IMPORT_AQ
-Node-kind: dir
-Node-action: add
-Node-copyfrom-rev: 2
-Node-copyfrom-path: trunk
-
 
 Revision-number: 4
 Prop-content-length: 151
@@ -240,7 +237,7 @@ PROPS-END
 Node-path: branches/Testing
 Node-kind: dir
 Node-action: add
-Node-copyfrom-rev: 4
+Node-copyfrom-rev: 3
 Node-copyfrom-path: branches/INITIAL_IMPORT_AQ
 
 Node-path: branches/Testing/data
@@ -250,7 +247,7 @@ Node-action: delete
 Node-path: branches/Testing/data
 Node-kind: dir
 Node-action: add
-Node-copyfrom-rev: 5
+Node-copyfrom-rev: 4
 Node-copyfrom-path: trunk/data
 
 Revision-number: 6
@@ -382,7 +379,7 @@ PROPS-END
 Node-path: branches/Development
 Node-kind: dir
 Node-action: add
-Node-copyfrom-rev: 4
+Node-copyfrom-rev: 3
 Node-copyfrom-path: branches/INITIAL_IMPORT_AQ
 
 Node-path: branches/Development/drivers/Makefile.drvbuild
@@ -392,7 +389,7 @@ Node-action: delete
 Node-path: branches/Development/drivers/Makefile.drvbuild
 Node-kind: file
 Node-action: add
-Node-copyfrom-rev: 7
+Node-copyfrom-rev: 6
 Node-copyfrom-path: branches/Testing/drivers/Makefile.drvbuild
 
 Node-path: branches/Development/drivers/libusb.c
@@ -402,7 +399,7 @@ Node-action: delete
 Node-path: branches/Development/drivers/libusb.c
 Node-kind: file
 Node-action: add
-Node-copyfrom-rev: 9
+Node-copyfrom-rev: 8
 Node-copyfrom-path: branches/Testing/drivers/libusb.c
 
 
@@ -486,7 +483,7 @@ Node-action: delete
 Node-path: trunk
 Node-kind: dir
 Node-action: add
-Node-copyfrom-rev: 12
+Node-copyfrom-rev: 11
 Node-copyfrom-path: branches/Development
 
 
@@ -570,7 +567,7 @@ PROPS-END
 Node-path: branches/automake
 Node-kind: dir
 Node-action: add
-Node-copyfrom-rev: 15
+Node-copyfrom-rev: 14
 Node-copyfrom-path: trunk
 
 
