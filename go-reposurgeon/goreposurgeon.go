@@ -4943,20 +4943,16 @@ func (commit *Commit) visible(argpath string) *Commit {
 				// is violated it can throw false negatives.
 				for _, fileop := range ancestor.operations() {
 					if fileop.op == opD && fileop.Path == argpath {
-						//fmt.Printf("XXXX visible(%s) at %s -> nil\n", argpath, commit.mark)
 						return nil
 					} else if fileop.op == opM && fileop.Path == argpath {
-						//fmt.Printf("XXXX visible(%s) at %s -> %s\n", argpath, commit.mark, ancestor.mark)
 						return ancestor
 					} else if (fileop.op == opR || fileop.op == opC) && fileop.Target == argpath {
-						//fmt.Printf("XXXX visible(%s) at %s -> %s\n", argpath, commit.mark, ancestor.mark)
 						return ancestor
 					}
 				}
 			}
 		}
 	}
-	//fmt.Printf("XXXX visible(%s) at %s -> nil (fallthrough)\n", argpath, commit.mark)
 	return nil
 }
 
