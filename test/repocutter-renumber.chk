@@ -1,0 +1,631 @@
+SVN-fs-dump-format-version: 2
+ ## Test handling of mid-branch delete
+
+UUID: 4efa1f5a-b1e1-4f28-afaf-2edfe9881d84
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2006-02-16T03:13:51.037843Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 112
+Content-length: 112
+
+K 8
+svn:date
+V 27
+2005-01-27T14:33:14.000000Z
+K 7
+svn:log
+V 413
+This is a severely hacked and stripped-down extraction from the NUT repository 
+intended to trap its major pathologies where they can be put under a 
+microscope and used as a regression test.  It includes a multibranch commit
+and a mid-branch delete followed by a branch rename to on top
+of the deleted branch.  The original file content has been replaced with small
+unique cookies, but the structure left intact.
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 119
+Content-length: 119
+
+K 8
+svn:date
+V 27
+2005-01-27T14:33:14.000000Z
+K 7
+svn:log
+V 17
+Initial revision
+
+K 10
+svn:author
+V 7
+aquette
+PROPS-END
+
+Node-path: trunk/conf
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/data
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/data/cmdvartab
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 50
+Content-length: 60
+
+PROPS-END
+Revision is 2, file path is trunk/data/cmdvartab.
+
+
+Node-path: trunk/data/driver.list
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 52
+Content-length: 62
+
+PROPS-END
+Revision is 2, file path is trunk/data/driver.list.
+
+
+Node-path: trunk/drivers
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/drivers/Makefile.drvbuild
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 61
+Content-length: 71
+
+PROPS-END
+Revision is 2, file path is trunk/drivers/Makefile.drvbuild.
+
+
+Node-path: trunk/drivers/libusb.c
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 52
+Content-length: 62
+
+PROPS-END
+Revision is 2, file path is trunk/drivers/libusb.c.
+
+
+Node-path: trunk/drivers/serial.c
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 52
+Content-length: 62
+
+PROPS-END
+Revision is 2, file path is trunk/drivers/serial.c.
+
+
+Revision-number: 3
+Prop-content-length: 151
+Content-length: 151
+
+K 8
+svn:date
+V 27
+2005-01-27T14:33:14.000000Z
+K 7
+svn:log
+V 77
+This commit was manufactured by cvs2svn to create branch
+'INITIAL_IMPORT_AQ'.
+PROPS-END
+
+Node-path: branches/INITIAL_IMPORT_AQ
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk
+
+
+Revision-number: 4
+Prop-content-length: 151
+Content-length: 151
+
+K 8
+svn:date
+V 27
+2005-02-28T09:14:07.000000Z
+K 7
+svn:log
+V 49
+Bring CVS tree in sync with the new 2.0.1 stable
+
+K 10
+svn:author
+V 7
+aquette
+PROPS-END
+
+Node-path: trunk/data/cmdvartab
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 50
+Content-length: 60
+
+PROPS-END
+Revision is 5, file path is trunk/data/cmdvartab.
+
+
+Node-path: trunk/data/driver.list
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 52
+Content-length: 62
+
+PROPS-END
+Revision is 5, file path is trunk/data/driver.list.
+
+
+Revision-number: 5
+Prop-content-length: 141
+Content-length: 141
+
+K 8
+svn:date
+V 27
+2005-02-28T09:14:07.000000Z
+K 7
+svn:log
+V 67
+This commit was manufactured by cvs2svn to create branch 'Testing'.
+PROPS-END
+
+Node-path: branches/Testing
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 4
+Node-copyfrom-path: branches/INITIAL_IMPORT_AQ
+
+Node-path: branches/Testing/data
+Node-kind: dir
+Node-action: delete
+
+Node-path: branches/Testing/data
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 5
+Node-copyfrom-path: trunk/data
+
+Revision-number: 6
+Prop-content-length: 168
+Content-length: 168
+
+K 8
+svn:date
+V 27
+2005-05-04T09:36:37.000000Z
+K 7
+svn:log
+V 66
+bring 2.0.2-pre1 testing release in sync with development release
+
+K 10
+svn:author
+V 7
+aquette
+PROPS-END
+
+Node-path: branches/Testing/data/driver.list
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 63
+Content-length: 73
+
+PROPS-END
+Revision is 7, file path is branches/Testing/data/driver.list.
+
+
+Node-path: branches/Testing/drivers/Makefile.drvbuild
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 72
+Content-length: 82
+
+PROPS-END
+Revision is 7, file path is branches/Testing/drivers/Makefile.drvbuild.
+
+
+Node-path: branches/Testing/drivers/libusb.c
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 63
+Content-length: 73
+
+PROPS-END
+Revision is 7, file path is branches/Testing/drivers/libusb.c.
+
+
+Revision-number: 7
+Prop-content-length: 150
+Content-length: 150
+
+K 7
+svn:log
+V 48
+various 2.0.2-pre2 changes, mostly on newhidups
+
+K 10
+svn:author
+V 7
+aquette
+K 8
+svn:date
+V 27
+2005-05-26T12:22:27.000000Z
+PROPS-END
+
+Node-path: branches/Testing/drivers/libusb.c
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 63
+Content-length: 73
+
+PROPS-END
+Revision is 8, file path is branches/Testing/drivers/libusb.c.
+
+
+Revision-number: 8
+Prop-content-length: 170
+Content-length: 170
+
+K 8
+svn:date
+V 27
+2005-06-22T07:39:36.000000Z
+K 7
+svn:log
+V 68
+various mge-shut, newhidups and tripplite improvements and buxfixes
+
+K 10
+svn:author
+V 7
+aquette
+PROPS-END
+
+Node-path: branches/Testing/drivers/libusb.c
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 63
+Content-length: 73
+
+PROPS-END
+Revision is 9, file path is branches/Testing/drivers/libusb.c.
+
+
+Revision-number: 9
+Prop-content-length: 145
+Content-length: 145
+
+K 8
+svn:date
+V 27
+2005-06-23T19:11:21.000000Z
+K 7
+svn:log
+V 71
+This commit was manufactured by cvs2svn to create branch 'Development'.
+PROPS-END
+
+Node-path: branches/Development
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 4
+Node-copyfrom-path: branches/INITIAL_IMPORT_AQ
+
+Node-path: branches/Development/drivers/Makefile.drvbuild
+Node-kind: file
+Node-action: delete
+
+Node-path: branches/Development/drivers/Makefile.drvbuild
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 7
+Node-copyfrom-path: branches/Testing/drivers/Makefile.drvbuild
+
+Node-path: branches/Development/drivers/libusb.c
+Node-kind: file
+Node-action: delete
+
+Node-path: branches/Development/drivers/libusb.c
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 9
+Node-copyfrom-path: branches/Testing/drivers/libusb.c
+
+
+Revision-number: 10
+Prop-content-length: 173
+Content-length: 173
+
+K 7
+svn:log
+V 64
+
+changed ser_send_char to use "unsigned char" instead of "char"
+
+K 10
+svn:author
+V 13
+adkorte-guest
+K 8
+svn:date
+V 27
+2006-02-11T16:07:25.000000Z
+PROPS-END
+
+Node-path: branches/Development/drivers/serial.c
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Text-content-length: 68
+Content-length: 78
+
+PROPS-END
+Revision is 11, file path is branches/Development/drivers/serial.c.
+
+
+Revision-number: 11
+Prop-content-length: 189
+Content-length: 189
+
+K 8
+svn:date
+V 27
+2006-02-16T13:29:18.703598Z
+K 7
+svn:log
+V 80
+Retire the old trunk (CVS HEAD), in preparation for moving branches/Development
+
+K 10
+svn:author
+V 13
+clepple-guest
+PROPS-END
+
+Node-path: trunk
+Node-action: delete
+
+
+Revision-number: 12
+Prop-content-length: 149
+Content-length: 149
+
+K 8
+svn:date
+V 27
+2006-02-16T13:31:43.954716Z
+K 7
+svn:log
+V 40
+Moving branches/Development into trunk.
+
+K 10
+svn:author
+V 13
+clepple-guest
+PROPS-END
+
+Node-path: branches/Development
+Node-action: delete
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 12
+Node-copyfrom-path: branches/Development
+
+
+Revision-number: 13
+Prop-content-length: 166
+Content-length: 166
+
+K 8
+svn:date
+V 27
+2006-10-06T02:30:51.032235Z
+K 7
+svn:log
+V 57
+Ran 'make depend' to get rid of errors regarding rhino.h
+
+K 10
+svn:author
+V 13
+clepple-guest
+PROPS-END
+
+Node-path: trunk/drivers/Makefile.drvbuild
+Node-kind: file
+Node-action: change
+Text-content-length: 62
+Content-length: 62
+
+Revision is 14, file path is trunk/drivers/Makefile.drvbuild.
+
+
+Revision-number: 14
+Prop-content-length: 264
+Content-length: 264
+
+K 7
+svn:log
+V 153
+ - mge-shut: made report buffer mechanism compatible with newmge-shut,
+   cleaned up an unused variable from mge-shut.
+ - updated dependencies for rhino
+
+K 10
+svn:author
+V 14
+selinger-guest
+K 8
+svn:date
+V 27
+2006-10-10T01:33:03.956334Z
+PROPS-END
+
+Node-path: trunk/drivers/Makefile.drvbuild
+Node-kind: file
+Node-action: change
+Text-content-length: 62
+Content-length: 62
+
+Revision is 15, file path is trunk/drivers/Makefile.drvbuild.
+
+
+Revision-number: 15
+Prop-content-length: 150
+Content-length: 150
+
+K 8
+svn:date
+V 27
+2006-10-15T21:09:36.989626Z
+K 7
+svn:log
+V 40
+* creating a branch "automake" of trunk
+
+K 10
+svn:author
+V 14
+selinger-guest
+PROPS-END
+
+Node-path: branches/automake
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 15
+Node-copyfrom-path: trunk
+
+
+Revision-number: 16
+Prop-content-length: 457
+Content-length: 457
+
+K 8
+svn:date
+V 27
+2006-10-15T21:19:57.130571Z
+K 7
+svn:log
+V 346
+ - converted build system to automake
+ - removed from SVN: files generated by aclocal, autoheader, automake,
+   autoconf, configure
+ - renamed CREDITS to AUTHORS and CHANGES to ChangeLog, to comply with
+   GNU standards
+ - removed Makefile.dist, drivers/gendb, drivers/Makefile.drvbuild,
+   include/version*
+ - moved local autoconf macros to m4/
+
+K 10
+svn:author
+V 14
+selinger-guest
+PROPS-END
+
+Node-path: branches/automake
+Node-kind: dir
+Node-action: change
+Prop-content-length: 185
+Content-length: 185
+
+K 10
+svn:ignore
+V 152
+configure
+Makefile.in
+nut-*.tar.gz
+nut-*.*.*
+Makefile
+config.log
+config.status
+autom4te.cache
+svn-commit.tmp
+aclocal.m4
+configure
+libtool
+Makefile.in
+
+
+
+PROPS-END
+
+
+
