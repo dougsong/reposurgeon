@@ -40,6 +40,7 @@ portcheck: check
 	@./setpypy pypy 2>/dev/null || :
 	@echo "=== No diff output is good news."
 
+# Note: must reintegrare repocutter/repotool/repomapper test when the transpation is done
 python: listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce \
 		git-regress git-regress-branches git-regress-merges \
 		git-regress-tags hg-extractor svnload-regress \
@@ -465,7 +466,7 @@ svncheck:
 	@make --quiet clean
 	@rm -f /tmp/prestripped$$$$ /tmp/stripped$$$$ /tmp/checkstripped$$$$
 
-# Regressio-testing of repomapper; look at the *.sh and
+# Regression-testing of repomapper; look at the *.sh and
 # corresponding *.chk files to see which tests this runs.
 MAPPERTESTS := $(shell ls -1 repomapper*.sh | sed '/.sh/s///')
 repomapper-buildregress:
@@ -497,7 +498,7 @@ repotool-buildregress:
 repotool-regress:
 	@echo "=== Running repotool tests:"
 	@REPOTOOL=$$REPOTOOL; export REPOTOOL; \
-	@status=0; \
+	status=0; \
 	for file in $(TOOLTESTS); do \
 	    $(ECHO) -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)'; \
 	    $(SHELL) $${file}.sh --regress $${file} || status=1; \
@@ -517,7 +518,7 @@ repocutter-buildregress:
 repocutter-regress:
 	@echo "=== Running repocutter tests:"
 	@REPOCUTTER=$$REPOCUTTER; export REPOCUTTER; \
-	@status=0; \
+	status=0; \
 	for file in $(CUTTERTESTS); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
 	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || status=1; \

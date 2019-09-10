@@ -8,6 +8,7 @@ Repository head::
      Minor repair to translation of Subversion default ignores. 
      Add --noignores read option to suppress filling in default Subversion ignores.
      Results of reorder and reparent ae no longer toposorted. 
+     Fix: repocutter was not patching Node-copyfrom-rev fields as it should.
 
 3.46: 2019-05-29::
      Added 'relax' no-op command.
