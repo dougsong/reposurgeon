@@ -1647,6 +1647,19 @@ func TestPathMap(t *testing.T) {
 	p.set("foo/bar", 42)
 	assertTrue(t, p.contains("foo/bar"))
 	assertIntEqual(t, p.find("foo/bar").(int), 42)
+	// Deleting a directory should delete subcomponents, too
 	p.remove("foo/bar")
 	assertTrue(t, !p.contains("foo/bar"))
+	assertEqual(t, p.String(), "{}")
+	p.set("baz/qux", 23)
+	assertTrue(t, p.contains("baz/qux"))
+	p.remove("baz")
+	assertEqual(t, p.String(), "{}")
+	assertTrue(t, !p.contains("baz/qux"))
+	p.set("gronk/baz/qux", 23)
+	assertTrue(t, p.contains("gronk/baz/qux"))
+	p.remove("gronk")
+	assertTrue(t, !p.contains("gronk/baz/qux"))
+	assertEqual(t, p.String(), "{}")
+		
 }
