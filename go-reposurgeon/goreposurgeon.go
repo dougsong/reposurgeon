@@ -2691,10 +2691,10 @@ func (d OrderedMap) Len() int {
 func (d OrderedMap) String() string {
 	var out = "{"
 	for _, el := range d.keys {
-		out += el + ":" + d.dict[el] + ","
+		out += "'" + el + "': '" + d.dict[el] + "', "
 	}
 	if len(d.keys) > 0 {
-		out = out[:len(out)-1]
+		out = out[:len(out)-2]
 	}
 	return out + "}"
 }
@@ -5851,7 +5851,7 @@ func (action NodeAction) String() string {
 		out += " generated"
 	}
 	if action.props.Len() > 0 {
-		out += action.props.String()
+		out += " properties=" + action.props.String()
 	}
 	return out + ">"
 }

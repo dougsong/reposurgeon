@@ -282,7 +282,7 @@ func TestOrderedMap(t *testing.T) {
 	assertEqual(t, m.keys[1], "b")
 	assertEqual(t, m.keys[2], "a")
 
-	expected := "{c:x,b:y,a:z}"
+	expected := "{'c': 'x', 'b': 'y', 'a': 'z'}"
 	saw := m.String()
 	if expected != saw {
 		t.Errorf("in OrderedMap String() test, expected %s saw %s",
@@ -1105,7 +1105,7 @@ PROPS-END
 	sp := newStreamParser(nil)
 	sp.fp = bufio.NewReader(strings.NewReader(rawmsg))
 	om := sp.sdReadProps("test", len(rawmsg))
-	expected = "{svn:log:A vanilla repository - standard layout, linear history, no tags, no branches. \n,svn:author:esr,svn:date:2011-11-30T16:41:55.154754Z}"
+	expected = "{'svn:log': 'A vanilla repository - standard layout, linear history, no tags, no branches. \n', 'svn:author': 'esr', 'svn:date': '2011-11-30T16:41:55.154754Z'}"
 	saw = om.String()
 	assertEqual(t, saw, expected)
 }
