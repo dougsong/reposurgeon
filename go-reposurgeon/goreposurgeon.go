@@ -5590,7 +5590,7 @@ func (p *PathMap) set(path interface{}, value interface{}) {
 func (p *PathMap) remove(path interface{}) {
 	basename, components := pathMapSplitPath(path)
 	if p.shared {
-		panic("internal error: unexpected unshared pathmap")
+		panic("internal error: unexpected shared pathmap in PathMap deletion")
 	}
 	q := p
 	for _, component := range components {
@@ -5632,12 +5632,15 @@ func (p *PathMap) items() []pathMapItem {
 		return raw[i].name < raw[j].name
 	})
 	for _, x := range raw {
+		if x.value == nil {
+			continue
+		}
 		if q, ok := x.value.(*PathMap); ok {
 			for _, y := range q.items() {
 				items = append(items, pathMapItem{
 					filepath.Join(x.name, y.name), y.value})
 			}
-		} else if x.value != nil {
+		} else {
 			items = append(items, x)
 		}
 	}
