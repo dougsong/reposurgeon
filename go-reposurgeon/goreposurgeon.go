@@ -6939,7 +6939,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						node.kind = sdDIR
 					}
 				}
-				announce(debugFILEMAP, "r%d: deduced type for %s", node.revision, node)
+				//announce(debugFILEMAP, "r%d: deduced type for %s", node.revision, node)
 				// Snapshot the deleted paths before
 				// removing them.
 				node.fromSet = newPathMap(nil)
@@ -7518,8 +7518,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						}
 					} else if ancestor != nil {
 						node.blobmark = ancestor.blobmark
-						announce(debugEXTRACT, "r%d: %s gets blob '%s' fom ancestor %s",
-							revision, node, node.blobmark, ancestor)
+						//announce(debugEXTRACT, "r%d: %s gets blob '%s' from ancestor %s",
+						//	revision, node, node.blobmark, ancestor)
 					} else {
 						// No ancestor, no blob. Has to be a
 						// pure property change.  There's no
