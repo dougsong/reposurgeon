@@ -4767,6 +4767,7 @@ class StreamParser:
             seen = set()
             for node in reversed(expanded_nodes):
                 if node.action == SD_DELETE and node.path in seen:
+		    announce(DEBUG_EXTRACT, "r%s: cvs2svn junk pair detected, omitting %s deletion." % (revision, node.path))
                     node.action = None
                 seen.add(node.path)
             # Create actions corresponding to both

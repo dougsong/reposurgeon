@@ -7292,6 +7292,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		for idx := len(expandedNodes) - 1; idx >= 0; idx-- {
 			node := expandedNodes[idx]
 			if node.action == sdDELETE && seen.Contains(node.path) {
+				announce(debugEXTRACT, "r%d: cvs2svn junk pair detected, omitting %s deletion.", revision, node.path)
 				node.action = sdNONE
 			}
 			seen.Add(node.path)
