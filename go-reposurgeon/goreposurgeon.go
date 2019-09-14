@@ -5490,276 +5490,127 @@ type pathMapItem struct {
 	value interface{}
 }
 
-// using copy-on-write to keep the size of the structure in line with the size
-// of the Subversion repository metadata.
-type PathMap struct {
-	shared bool
-	maxid  *int
-	snapid int
-	store  map[string][]interface{}
-}
+// In the ancestral Python this was implemented with tricky
+// CoW. Sadly, attempting to port that to Go failed with subtle bugs,
+// probably due to the difference between Python pass-by-reference and
+// Go pass-by-value.
+//
+// The API has been preserved in case anybody needs to try
+// implementing CoW again.  The reason would be working-set size on
+// large repositories, but Go per-object overhead is enough lower than
+// Python's that it probably wins without CoW.
+//
+// This is not, however, a thing to try lightly. The Python CoW may
+// have been overengineering. It couldn't save value space provided
+// the value type is either a pointer to shared storage (as in the
+// dumpfile reader) or an integral scalar that fits in a pointer
+// (other uses).  It could hashtable spave only proportional to the
+// number of directory-copy operations in the history.
 
-const pathMapSelf = `/\/\/\/`
+//
+type PathMap struct {
+	store map[string]interface{}
+}
 
 func newPathMap() *PathMap {
-	return makePathMap(nil)
+	pm := new(PathMap)
+	pm.store = make(map[string]interface{})
+	return pm
 }
 
-func makePathMap(other interface{}) *PathMap {
-	// The instance may be a child of several other PathMaps if |shared| is
-	// true. |snapid| is an integer unique among related PathMaps, and
-	// |maxid| is the maximum |snapid| of the collection and is shared
-	// among all instances. |store| is a map mapping single-component
-	// names to lists of values indexed by snapids. The values which can be
-	// other PathMaps (for directories) or anything except PathMaps and
-	// nil (for files).
-	p := new(PathMap)
-	if o, ok := other.(*PathMap); ok {
-		p.store = o.store
-		p.maxid = o.maxid
-		(*p.maxid)++
-		p.snapid = *p.maxid
-	} else {
-		maxid := 0
-		p.store = nil
-		p.maxid = &maxid
-		p.snapid = maxid
-	}
-	p.shared = false
-	return p
-}
-
-// snapshot returns a copy-on-write snapshot of the set.
-func (p *PathMap) snapshot() *PathMap {
-	r := makePathMap(p)
-	if p.snapid < r.snapid-1 {
-		// Late snapshot of an "old" PathMap. Restore values which may
-		// have changed since. This is uncommon, don't over-optimize.
-		for component := range p.store { // rawItems() would skip nil
-			r.rawSet(component, p.rawGet(component))
-		}
-	}
-	for _, v := range r.rawItems() {
-		if q, ok := v.value.(*PathMap); ok {
-			q.shared = true
-		}
+// snapshot returns a snapshot of the current state of an evolving filemap.
+func (pm PathMap) snapshot() *PathMap {
+	r := newPathMap()
+	for k, v := range pm.store {
+		r.store[k] = v
 	}
 	return r
 }
 
 // copyFrom inserts at targetPath, a snapshot of sourcePath in sourcePathMap.
-func (p *PathMap) copyFrom(targetPath interface{}, sourcePathMap *PathMap, sourcePath interface{}) {
-	if sourcePathMap == nil {
+func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePath string) {
+	//fmt.Printf("XXX copyFrom(pm=%v, targetPath=%q, sourcePathMap=%v, sourcePath=%q)\n", pm, targetPath, sourcePathMap, sourcePath)
+	if sourcePathMap.isEmpty() {
 		return
 	}
-	sourceObj := sourcePathMap.find(sourcePath)
-	if sourceObj == nil {
-		return
+	if sourcePath == "" {
+		panic("empty string as copy source path")
 	}
-	if x, ok := sourceObj.(*PathMap); ok {
-		if x == sourcePathMap {
-			// Do not share toplevel instances, only inner ones
-			sourceObj = x.snapshot()
-		} else {
-			x.shared = true
+	presentAsDirname := func(dir string, pm *PathMap) bool {
+		for subPath := range sourcePathMap.store {
+			if strings.HasPrefix(subPath, dir + svnSep) {
+				return true
+			}
 		}
+		return false
 	}
-	p.insert(targetPath, sourceObj)
+	if presentAsDirname(sourcePath, sourcePathMap) {
+		// Exists in source map as a directory, do directory copy to under target path.
+		for subPath, value := range sourcePathMap.store {
+			if strings.HasPrefix(subPath, sourcePath + svnSep) {
+				target := targetPath + subPath[len(sourcePath):]
+				//fmt.Printf("XXXXX directory copy: subPath=%q target=%s\n", subPath, target)
+				pm.store[target] = value
+			}
+		}
+		//fmt.Printf("XXXXX after directory copy: pm=%v\n", pm)
+		return
+	}
+	if sourcePathMap.contains(sourcePath) {
+		// Exists in source map as a file.
+		//fmt.Printf("XXXXX file-to-file copy: targetPath=%q sourcePath=%q\n", targetPath, sourcePath)
+		pm.store[targetPath] = sourcePathMap.store[sourcePath]
+		return
+	}
+	// Yes, there's a fallthrough case where we do nothing.  In the ancestral Python
+	// the function ended with the equivalent of the next line of code, but nil is
+	// not an ignored value in this implementation.
+	//pm.store[targetPath] = nil
+	//fmt.Printf("XXX copyFrom(pm=%v, targetPath=%q, sourcePathMap=%v, sourcePath=%q) fell through\n", pm, targetPath, sourcePathMap, sourcePath)
 }
 
-// contains return true if path is present in the set as a file.
-func (p *PathMap) contains(path interface{}) bool {
-	elt := p.find(path)
-	_, ok := elt.(*PathMap)
-	return !ok && elt != nil
+// contains return true if path is present in the map as a file.
+func (pm *PathMap) contains(path string) bool {
+	_, ok := pm.store[path]
+	return ok
 }
 
 // get returns the value associated with a specified path.
-func (p *PathMap) get(path interface{}) interface{} {
-	elt := p.find(path)
-	if elt == nil {
-		return nil
-	} else if _, ok := elt.(*PathMap); ok {
-		return nil
-	}
-	return elt
+func (pm PathMap) get(path string) interface{} {
+	return pm.store[path]
 }
 
-// set adds a filename to the set, with associated value (not nil).
-func (p *PathMap) set(path interface{}, value interface{}) {
-	if value == nil {
-		panic("internal error: can't add nil to pathmap")
-	}
-	p.insert(path, value)
+// set adds a filename to the map, with associated value.
+func (pm PathMap) set(path string, value interface{}) {
+	pm.store[path] = value
 }
 
-// remove removes a filename, or all descendents of a directory name, from the set.
-func (p *PathMap) remove(path interface{}) {
-	basename, components := pathMapSplitPath(path)
-	if p.shared {
-		panic("internal error: unexpected shared pathmap in PathMap deletion")
-	}
-	q := p
-	for _, component := range components {
-		nxt := q.rawGet(component)
-		r, ok := nxt.(*PathMap)
-		if !ok {
-			return
-		}
-		if r.shared {
-			nxt = p.rawSet(component, r.snapshot())
-		}
-		q = nxt.(*PathMap)
-	}
-	// Set value to nil since PathMap doesn't tell nil and absence apart
-	q.rawSet(basename, nil)
-}
-
-// size returns the number of files in the set.
-func (p *PathMap) size() int {
-	n := 0
-	for _, x := range p.rawItems() {
-		if q, ok := x.value.(*PathMap); ok {
-			n += q.size()
-		} else {
-			n++
-		}
-	}
-	return n
-}
-
-func (p *PathMap) items() []pathMapItem {
-	var items []pathMapItem
-	raw := p.rawItems()
-	sort.Slice(raw, func(i, j int) bool {
-		return raw[i].name < raw[j].name
-	})
-	for _, x := range raw {
-		if x.value == nil {
-			continue
-		}
-		if q, ok := x.value.(*PathMap); ok {
-			for _, y := range q.items() {
-				items = append(items, pathMapItem{
-					filepath.Join(x.name, y.name), y.value})
-			}
-		} else {
-			items = append(items, x)
-		}
-	}
-	return items
-}
-
-// rawGet returns the current value associated with the component in the store
-func (p *PathMap) rawGet(component string) interface{} {
-	if snaplist, ok := p.store[component]; ok {
-		if p.snapid < len(snaplist)-1 {
-			return snaplist[p.snapid]
-		} else {
-			return snaplist[len(snaplist)-1]
-		}
-	}
-	return nil
-}
-
-// rawSet sets the current value associated with the component in the store
-func (p *PathMap) rawSet(component string, value interface{}) interface{} {
-	if p.store == nil {
-		p.store = make(map[string][]interface{})
-	}
-	snaplist, ok := p.store[component]
-	if !ok {
-		snaplist = []interface{}{nil}
-	}
-	needed := min(*p.maxid, p.snapid+1) + 1
-	if len(snaplist) < needed {
-		last := snaplist[len(snaplist)-1]
-		for i := len(snaplist); i < needed; i++ {
-			snaplist = append(snaplist, last)
-		}
-		p.store[component] = snaplist
-	}
-	snaplist[p.snapid] = value
-	p.store[component] = snaplist
-	return value
-}
-
-// Iterate through (component, current values) pairs
-func (p *PathMap) rawItems() []pathMapItem {
-	var items []pathMapItem
-	snapid := p.snapid
-	for component, snaplist := range p.store {
-		if component == pathMapSelf {
-			continue
-		}
-		val := snaplist[min(snapid, len(snaplist)-1)]
-		if val != nil {
-			items = append(items, pathMapItem{component, val})
-		}
-	}
-	return items
-}
-
-// insert inserts obj at the location given by components.
-func (p *PathMap) insert(path interface{}, obj interface{}) {
-	basename, components := pathMapSplitPath(path)
-	if len(basename) == 0 {
+// remove removes a filename, or all descendents of a directory name, from the map.
+func (pm *PathMap) remove(path string) {
+	if _, ok := pm.store[path]; ok {
+		delete(pm.store, path)
 		return
 	}
-	if p.shared {
-		panic("internal error: unexpected unshared pathmap")
-	}
-	q := p
-	for _, component := range components {
-		nxt := q.rawGet(component)
-		r, ok := nxt.(*PathMap)
-		if !ok {
-			nxt = q.rawSet(component, makePathMap(nil))
-		} else if r.shared {
-			nxt = q.rawSet(component, r.snapshot())
+	for k := range pm.store {
+		if strings.HasPrefix(k, path + svnSep) {
+			delete(pm.store, k)
 		}
-		q = nxt.(*PathMap)
 	}
-	q.rawSet(basename, obj)
 }
 
-// Return the object at the location given by components--either
-// the associated value if it's present as a filename, or a PathMap
-// containing the descendents if it's a directory name.  Return
-// None if the location does not exist in the set.
-func (p *PathMap) find(path interface{}) interface{} {
-	basename, components := pathMapSplitPath(path)
-	if len(basename) == 0 {
-		return p
+func (pm PathMap) items() []pathMapItem {
+	items := make([]pathMapItem, 0)
+	for k, v := range pm.store {
+		items = append(items, pathMapItem{k, v})
 	}
-	q := p
-	for _, component := range components {
-		nxt := q.rawGet(component)
-		if _, ok := nxt.(*PathMap); !ok {
-			return nil
-		} else {
-			q = nxt.(*PathMap)
-		}
-	}
-	result := q.rawGet(basename)
-	return result
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].name < items[j].name
+	})
+	return items
 }
 
-// Return basename of path and remaining components as slice.
-func pathMapSplitPath(path interface{}) (string, []string) {
-	if p, ok := path.(string); ok {
-		components := strings.Split(filepath.Clean(p),
-			string(os.PathSeparator))
-		if len(components) == 0 {
-			return "", nil
-		}
-		return components[len(components)-1], components[:len(components)-1]
-	} else {
-		slice := path.([]interface{})
-		components := strings.Split(filepath.Clean(slice[0].(string)),
-			string(os.PathSeparator))
-		return pathMapSelf, components
-	}
+func (pm PathMap) size() int {
+	return len(pm.store)
 }
 
 // Derived PathMap code, independent of the store implementation
