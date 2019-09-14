@@ -5481,7 +5481,15 @@ func branchbase(branch string) string {
 	return filepath.Base(branch)
 }
 
-// PathMap represents the set of filenames visible in a Subversion revision,
+// A PathMap represents a mapping from a set of filenames visible in a
+// Subversion revision to some kind of value object.  The main use is
+// by the dumpfile parser, in which the value object is a NodeAction.
+
+type pathMapItem struct {
+	name  string
+	value interface{}
+}
+
 // using copy-on-write to keep the size of the structure in line with the size
 // of the Subversion repository metadata.
 type PathMap struct {
@@ -5491,14 +5499,13 @@ type PathMap struct {
 	store  map[string][]interface{}
 }
 
-type pathMapItem struct {
-	name  string
-	value interface{}
-}
-
 const pathMapSelf = `/\/\/\/`
 
-func newPathMap(other interface{}) *PathMap {
+func newPathMap() *PathMap {
+	return makePathMap(nil)
+}
+
+func makePathMap(other interface{}) *PathMap {
 	// The instance may be a child of several other PathMaps if |shared| is
 	// true. |snapid| is an integer unique among related PathMaps, and
 	// |maxid| is the maximum |snapid| of the collection and is shared
@@ -5524,7 +5531,7 @@ func newPathMap(other interface{}) *PathMap {
 
 // snapshot returns a copy-on-write snapshot of the set.
 func (p *PathMap) snapshot() *PathMap {
-	r := newPathMap(p)
+	r := makePathMap(p)
 	if p.snapid < r.snapid-1 {
 		// Late snapshot of an "old" PathMap. Restore values which may
 		// have changed since. This is uncommon, don't over-optimize.
@@ -5608,10 +5615,6 @@ func (p *PathMap) remove(path interface{}) {
 	q.rawSet(basename, nil)
 }
 
-func (p *PathMap) isEmpty() bool {
-	return len(p.rawItems()) == 0
-}
-
 // size returns the number of files in the set.
 func (p *PathMap) size() int {
 	n := 0
@@ -5645,27 +5648,6 @@ func (p *PathMap) items() []pathMapItem {
 		}
 	}
 	return items
-}
-
-// names returns a sorted list of the pathnames in the set
-func (p *PathMap) pathnames() []string {
-	items := p.items()
-	v := make([]string, len(items))
-	for i := 0; i < len(items); i++ {
-		v[i] = items[i].name
-	}
-	return v
-}
-
-func (p *PathMap) String() string {
-	out := "{"
-	for _, item := range p.items() {
-		out += fmt.Sprintf("%s: %v, ", item.name, item.value)
-	}
-	if p.size() > 0 {
-		out = out[:len(out)-2]
-	}
-	return out + "}"
 }
 
 // rawGet returns the current value associated with the component in the store
@@ -5732,7 +5714,7 @@ func (p *PathMap) insert(path interface{}, obj interface{}) {
 		nxt := q.rawGet(component)
 		r, ok := nxt.(*PathMap)
 		if !ok {
-			nxt = q.rawSet(component, newPathMap(nil))
+			nxt = q.rawSet(component, makePathMap(nil))
 		} else if r.shared {
 			nxt = q.rawSet(component, r.snapshot())
 		}
@@ -5778,6 +5760,33 @@ func pathMapSplitPath(path interface{}) (string, []string) {
 			string(os.PathSeparator))
 		return pathMapSelf, components
 	}
+}
+
+// Derived PathMap code, independent of the store implementation
+
+func (p *PathMap) isEmpty() bool {
+	return p.size() == 0
+}
+
+func (p *PathMap) String() string {
+	out := "{"
+	for _, item := range p.items() {
+		out += fmt.Sprintf("%s: %v, ", item.name, item.value)
+	}
+	if p.size() > 0 {
+		out = out[:len(out)-2]
+	}
+	return out + "}"
+}
+
+// names returns a sorted list of the pathnames in the set
+func (p *PathMap) pathnames() []string {
+	items := p.items()
+	v := make([]string, len(items))
+	for i := 0; i < len(items); i++ {
+		v[i] = items[i].name
+	}
+	return v
 }
 
 // Stream parsing
@@ -6915,7 +6924,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// Build filemaps.
 	announce(debugEXTRACT, "Pass 2: build filemaps for %d Subversion revisions", len(sp.revisions))
 	filemaps := make(map[int]*PathMap)
-	filemap := newPathMap(nil)
+	filemap := newPathMap()
 	for revision, record := range sp.revisions {
 		for idx := range record.nodes {
 			node := &record.nodes[idx]
@@ -6942,7 +6951,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				//announce(debugFILEMAP, "r%d: deduced type for %s", node.revision, node)
 				// Snapshot the deleted paths before
 				// removing them.
-				node.fromSet = newPathMap(nil)
+				node.fromSet = newPathMap()
 				node.fromSet.copyFrom(node.path, filemap, node.path)
 				filemap.remove(node.path)
 				announce(debugFILEMAP, "r%d~%s deleted",
@@ -6975,7 +6984,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			announce(debugFILEMAP, "r%d copynode filemap is %s",
 				copynode.fromRev, filemaps[copynode.fromRev])
 		}
-		copynode.fromSet = newPathMap(nil)
+		copynode.fromSet = newPathMap()
 		copynode.fromSet.copyFrom(copynode.fromPath,
 			filemaps[copynode.fromRev],
 			copynode.fromPath)
@@ -8031,7 +8040,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		//}
 		timeit("branchlinks")
 		// Add links due to svn:mergeinfo properties
-		mergeinfo := newPathMap(nil)
+		mergeinfo := newPathMap()
 		mergeinfos := make(map[int]*PathMap)
 		getMerges := func(minfo *PathMap, path string) stringSet {
 			rawOldMerges := minfo.get(path)
@@ -8054,7 +8063,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					//assert parseInt(node.fromRev) < parseInt(revision)
 					fromMerges := mergeinfos[node.fromRev]
 					if fromMerges == nil {
-						fromMerges = newPathMap(nil)
+						fromMerges = newPathMap()
 					}
 					mergeinfo.copyFrom(node.path, fromMerges, node.fromPath)
 					announce(debugEXTRACT, "r%d~%s mergeinfo copied to %s",
@@ -13584,7 +13593,7 @@ func (rs *Reposurgeon) evalPathsetFull(state selEvalState,
 		var tree *PathMap
 		parents := c.parents()
 		if len(parents) == 0 {
-			tree = newPathMap(nil)
+			tree = newPathMap()
 		} else {
 			parentTree, ok := matchTrees[parents[0].getMark()]
 			if !ok {
@@ -13605,7 +13614,7 @@ func (rs *Reposurgeon) evalPathsetFull(state selEvalState,
 			} else if fileop.op == opR && match(fileop.Source) {
 				tree.remove(fileop.Source)
 			} else if fileop.op == deleteall {
-				tree = newPathMap(nil)
+				tree = newPathMap()
 			}
 		}
 		matchTrees[c.mark] = tree

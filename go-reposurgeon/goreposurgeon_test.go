@@ -1642,11 +1642,11 @@ func TestGetSetAttr(t *testing.T) {
 }
 
 func TestPathMap(t *testing.T) {
-	p := newPathMap(nil)
+	p := newPathMap()
 	assertTrue(t, p.isEmpty())
 	p.set("foo/bar", 42)
 	assertTrue(t, p.contains("foo/bar"))
-	assertIntEqual(t, p.find("foo/bar").(int), 42)
+	assertIntEqual(t, p.get("foo/bar").(int), 42)
 	// Deleting a directory should delete subcomponents, too
 	p.remove("foo/bar")
 	assertTrue(t, !p.contains("foo/bar"))
