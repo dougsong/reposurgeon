@@ -2144,7 +2144,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 	}
 	rs.baton.twirl("")
 	// Sort branch/tag references by target revision ID, earliest first
-	// Needs to be done before branch coloring because the simu;ation
+	// Needs to be done before branch coloring because the simulation
 	// of the Git branch-coloring alorithm needs it.  Also controls the
 	// order in which annotated tags and resets are output.
 	rs.refs.valueLess = func(a string, b string) bool {
@@ -2157,6 +2157,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 		}
 		panic(throw("extractor", "Did not find revision IDs in revlist"))
 	}
+	// FIXME: This might need to be SortStable
 	sort.Sort(rs.refs)
 	rs.baton.twirl("")
 	rs.extractor.colorBranches(rs)
@@ -4297,7 +4298,7 @@ func (commit *Commit) sortOperations() {
 		right := pathpart(commit.fileops[j]) + sortkeySentinel
 		return left < right
 	}
-	sort.Slice(commit.fileops, lessthan)
+	sort.SliceStable(commit.fileops, lessthan)
 }
 
 // bump increments the timestamps on this commit to avoid time collisions.
@@ -12853,6 +12854,7 @@ func (p *AttributionEditor) doRemove(eventNo int, e Event, attrs []attrEditAttr,
 	}
 	rev := make([]int, len(sel))
 	copy(rev, sel)
+	// FIXME: Python sort is stable, this isn't.  A problem?
 	sort.Sort(sort.Reverse(sort.IntSlice(rev)))
 	for _, i := range rev {
 		attrs[i].remove(e)
