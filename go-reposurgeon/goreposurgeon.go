@@ -401,6 +401,19 @@ func (s stringSet) String() string {
 	return rep[0:len(rep)-2] + "]"
 }
 
+func (s stringSet) Equal(other stringSet) bool {
+	if len(s) != len(other) {
+		return false
+	}
+	// Naive O(n**2) method - don't use on large sets if you care about speed
+	for _, item := range s {
+		if !other.Contains(item) {
+			return false
+		}
+	}
+	return true
+}
+
 func (s stringSet) Empty() bool {
 	return len(s) == 0
 }
@@ -5714,7 +5727,12 @@ func (action NodeAction) String() string {
 		out += " generated"
 	}
 	if action.props.Len() > 0 {
-		out += " properties=" + action.props.String()
+		out += " properties="
+		if newStringSet(action.props.keys...).Equal(newStringSet("svn:ignore")) && action.props.get("svn:ignore") == subversionDefaultIgnores {
+			out += "{SUBVERSION DEFAULT IGNORES}"
+		} else {
+			out += action.props.String()
+		}
 	}
 	return out + ">"
 }

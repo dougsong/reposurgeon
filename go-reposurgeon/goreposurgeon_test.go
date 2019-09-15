@@ -687,19 +687,6 @@ func TestBranchname(t *testing.T) {
 	assertEqual(t, branchname("dubious"), "refs/tags/dubious")
 }
 
-func (s stringSet) Equal(other stringSet) bool {
-	if len(s) != len(other) {
-		return false
-	}
-	// Naive O(n**2) method - don't use on large sets if you care about speed
-	for _, item := range s {
-		if !other.Contains(item) {
-			return false
-		}
-	}
-	return true
-}
-
 func TestStringScan(t *testing.T) {
 	type testEntry struct {
 		input  string
