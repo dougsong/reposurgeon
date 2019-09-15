@@ -817,6 +817,12 @@ class quietOrderedDict(collections.OrderedDict):
             raw = raw[:-1] + "}"
         return raw
 
+# Shims to make Python list dumps look like Golang ones
+def goify_str(lst):
+    return "[" + " ".join(lst) + "]" 
+def goify_int(lst):
+    return "[" + ", ".join([str(x) for x in lst]) + "]" 
+
 # How to write extractor classes:
 #
 # Clone one of the existing ones and mutate.
@@ -5184,8 +5190,8 @@ class StreamParser:
                     self.branchlink[commit.mark] = (commit, earliest)
             timeit("root")
             # Add links due to Subversion copy operations
-            announce(DEBUG_EXTRACT, "branch roots: [{roots}], links {{{links}}}".format(
-                    roots = ", ".join(c.mark for c in branchroots),
+            announce(DEBUG_EXTRACT, "branch roots: {roots}, links {{{links}}}".format(
+                    roots = goify_str([c.mark for c in branchroots]),
                     links = ", ".join("{l[0].mark}: {l[1].mark}".format(l=l)
                                       for l in self.branchlink.values())))
             for (child, parent) in self.branchlink.values():
@@ -5447,8 +5453,8 @@ class StreamParser:
                 if '--preserve' not in options and len(commit.parents()) == 1:
                     parent = commit.parents()[0]
                     if parent.branch != commit.branch and not commit.operations():
-                        announce(DEBUG_EXTRACT, "branch root of %s with comment %s discarded"
-                                 % (commit.branch, repr(commit.comment)))
+                        announce(DEBUG_EXTRACT, "branch root of %s with comment '%s' discarded"
+                                 % (commit.branch, repr(commit.comment)[1:-1]))
                         # FIXME: Adding a reset for the new branch at the end
                         # of the event sequence was erroneous - caused later
                         # commits to be ignored. Possibly we should add a reset
@@ -6792,7 +6798,7 @@ class Repository:
         return coverage
     def squash(self, selected, policy):
         "Delete a set of events, or rearrange it forward or backwards."
-        announce(DEBUG_DELETE, "Deletion list is %s" % [self.events[x].id_me() for x in selected])
+        announce(DEBUG_DELETE, "Deletion list is %s" % goify_int(selected))
         for qualifier in policy:
             if qualifier not in ["--complain",
                                  "--coalesce",
@@ -6916,7 +6922,7 @@ class Repository:
                                                         child.comment)
                         altered.append(child)
                     # Really set the parents to the newly constructed list
-                    announce(DEBUG_DELETE, "Parents of %s changed from %s to %s" % (child.mark, [x.mark for x in old_parents], [x.mark for x in new_parents]))
+                    announce(DEBUG_DELETE, "Parents of %s changed from %s to %s" % (child.mark, goify_str([x.mark for x in old_parents]), goify_str([x.mark for x in new_parents])))
                     child.set_parents(new_parents)
                     # If event was the first parent of child yet has no parents
                     # of its own, then child's first parent has changed.

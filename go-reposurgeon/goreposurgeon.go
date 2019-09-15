@@ -292,7 +292,7 @@ func stringEscape(s string) (string, error) {
 // pstr is called on format-string arguments for which Python had a %q format.
 // Python's %q wraps the escapified string representation in single quotes,
 // Go's %q in double quotes.  Bridge the gap.
-// FIXME: Once the Go translation is complete, remove all calls to this,
+// GO-FINALIZE: Once the Go translation is complete, remove all calls to this,
 // change corresponding %s format elements to %q, and rebuild the regression
 // tests
 func qtoq(s string) string {
@@ -302,7 +302,7 @@ func qtoq(s string) string {
 }
 
 // Render boolean values a la Python
-// FIXME: Once the Go translation is complete, remove all calls to this,
+// GO-FINALIZE: Once the Go translation is complete, remove all calls to this,
 func pythonbool(b bool) string {
 	if b {
 		return "True"
@@ -7767,33 +7767,35 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			last = commit
 		}
 	} else {
+		// GO-FINALIZE: Makes debug listings look lkke Python's.make
+		const impossibleFilename = "None"
 		// Instead, determine a branch for each commit...
 		announce(debugEXTRACT, fmt.Sprintf("Branches: %s", sp.branches))
-		var lastbranch string = "//"
-		var branch string = "//"
+		var lastbranch string = impossibleFilename
+		var branch string = impossibleFilename
 		for _, commit := range sp.repo.commits(nil) {
 			//announce(debugEXTRACT, "seeking branch assignment for %s with common prefix '%s'", commit.mark, commit.common)
-			if lastbranch != "//" && strings.HasPrefix(commit.common, lastbranch) {
+			if lastbranch != impossibleFilename && strings.HasPrefix(commit.common, lastbranch) {
 				announce(debugEXTRACT, "branch assignment for %s from lastbranch '%s'", commit.mark, lastbranch)
 				branch = lastbranch
 			} else {
 				// Prefer the longest possible branch
 				// The branchlist is sorted, longest first
-				prefmatch := "//"
+				prefmatch := impossibleFilename
 				for _, b := range sp.branchlist() {
 					if strings.HasPrefix(commit.common, b) {
 						prefmatch = b
 						break
 					}
 				}
-				if prefmatch != "//" {
+				if prefmatch != impossibleFilename {
 					branch = prefmatch
 				} else {
-					branch = "//"
+					branch = impossibleFilename
 				}
 			}
 			announce(debugEXTRACT, "branch assignment for %s is '%s'", commit.mark, branch)
-			if branch != "//" {
+			if branch != impossibleFilename {
 				commit.setBranch(branch)
 				for i := range commit.fileops {
 					fileop := &commit.fileops[i]
@@ -9842,7 +9844,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 					if item == nil {
 						legend = "nil"
 					} else {
-						legend = fmt.Sprintf("%s (%p)", item.getMark(), item)
+						legend = fmt.Sprintf("%s", item.getMark())
 					}
 					marks = append(marks, legend)
 				}
@@ -13075,7 +13077,7 @@ func newReposurgeon() *Reposurgeon {
 	rs.startTime = time.Now()
 	rs.definitions = make(map[string][]string)
 	rs.inputIsStdin = true
-	// FIXME: Change this back when the port is verified
+	// GO-FINALIZE: Change this back when the port is verified
 	rs.promptFormat = "goreposurgeon% "
 	// These are globals and should probably be set in init().
 	for _, option := range optionFlags {
@@ -14336,7 +14338,7 @@ func (rs *Reposurgeon) DoIndex(lineIn string) bool {
 			}
 			fmt.Fprintf(parse.stdout, "%6d commit %6s    %s\n", eventid+1, mark, e.Branch)
 		case *Tag:
-			// FIXME: when port is done, remove single quotes?
+			// GO-FINALIZE: when port is done, remove single quotes?
 			fmt.Fprintf(parse.stdout, "%6d tag    %6s    '%4s'\n", eventid+1, e.committish, e.name)
 		case *Reset:
 			committish := e.committish
@@ -15971,7 +15973,7 @@ type filterCommand struct {
 }
 
 // GoReplacer bridges from Python-style back-references (\1) to Go-style ($1).
-// FIXME: Remove this shim when the cutover to Go is final.
+// GO-FINALIZE: Remove this shim when the cutover to Go is final.
 func GoReplacer(re *regexp.Regexp, fromString, toString string) string {
 	for i := 0; i < 10; i++ {
 		sdigit := fmt.Sprintf("%d", i)
