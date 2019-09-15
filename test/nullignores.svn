@@ -1,0 +1,180 @@
+SVN-fs-dump-format-version: 2
+ ## Test handling of generated and user-created ignores.
+
+UUID: 93cc1b8a-248f-4e9f-9ba6-b2dcc7ef1bc5
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2019-09-15T15:34:11.470523Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 116
+Content-length: 116
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2019-09-15T15:34:11.550350Z
+K 7
+svn:log
+V 18
+Directory layout.
+
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 122
+Content-length: 122
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2019-09-15T15:34:11.602973Z
+K 7
+svn:log
+V 24
+Initial README content.
+
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Text-content-md5: 86f1cf4a56ae881bea5acc66fec6df56
+Text-content-sha1: a0446ad3fd4b2c068ce3ecab58720eec422f8125
+Prop-content-length: 10
+Text-content-length: 37
+Content-length: 47
+
+PROPS-END
+This is a test Subversion repository
+
+
+Revision-number: 3
+Prop-content-length: 121
+Content-length: 121
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2019-09-15T15:34:52.530381Z
+K 7
+svn:log
+V 23
+User-created .cvsignore
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-md5: 7ace2a14e5472ad58c21a752e2334e72
+Text-content-sha1: 7e9ed61b2607f4311193ac19699f286bf9a1c610
+Text-content-length: 23
+Content-length: 23
+
+Introducing .cvsignore
+
+
+Revision-number: 4
+Prop-content-length: 121
+Content-length: 121
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2019-09-15T15:35:45.612522Z
+K 7
+svn:log
+V 23
+User-created .gitignore
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-md5: a6e55aeba28b8646f42b990586133a08
+Text-content-sha1: 7cdd5a90288c69d722a974e5f0e3f01e87de814a
+Text-content-length: 23
+Content-length: 23
+
+Introducing .gitignore
+
+
+Revision-number: 5
+Prop-content-length: 115
+Content-length: 115
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2019-09-15T15:36:10.244680Z
+K 7
+svn:log
+V 17
+Create a bookend.
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: change
+Text-content-md5: 41f78fa018e07905d1d5d52ccdac5a22
+Text-content-sha1: 413f181e56fb2b7b73b41a969b9f3c4a13a6ca04
+Text-content-length: 15
+Content-length: 15
+
+Bookend commit
+
+
