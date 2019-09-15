@@ -3109,7 +3109,7 @@ class Commit(object):
                     incremental = True
         if incremental:
             parts.append("reset %s^0\n\n" % self.branch)
-        parts.append("commit %s\n" % self.branch)
+        parts.append("commit %s\n" % (self.branch if self.branch is not None else ""))
         if self.legacy_id:
             parts.append("#legacy-id %s\n" % self.legacy_id)
         if realized is not None:
@@ -4962,6 +4962,8 @@ class StreamParser:
                     commit.common = os.path.commonprefix([node.path for node in record.nodes])
                 commit.set_mark(self.repo.newmark())
                 announce(DEBUG_EXTRACT, "r%s gets mark %s" % (revision, commit.mark))
+                if commit is None:
+                    announce(DEBUG_EXTRACT, "null commit in ordinary case")
                 newcommits.append(commit)
             # If the commit is mixed, or there are deletealls left over,
             # handle that.
@@ -4977,6 +4979,8 @@ class StreamParser:
                 split.comment += "\n[[Split portion of a mixed commit.]]\n"
                 split.set_mark(self.repo.newmark())
                 split.set_operations(fileops)
+                if commit is None:
+                    announce(DEBUG_EXTRACT, "null split commit")
                 newcommits.append(split)
             # The revision is truly mixed if there is more than one clique
             # not consisting entirely of deleteall operations.
@@ -4986,6 +4990,8 @@ class StreamParser:
             # Sort fileops according to git rules
             for newcommit in newcommits:
                 newcommit.sort_operations()
+            if newcommits:
+                announce(DEBUG_EXTRACT, "New commits (%d): %s" % (len(newcommits), goify_nonstr(newcommits)))
             # Deduce links between branches on the basis of copies. This
             # is tricky because a revision can be the target of multiple
             # copies.  Humans don't abuse this because tracking multiple
@@ -5197,10 +5203,10 @@ class StreamParser:
                     self.branchlink[commit.mark] = (commit, earliest)
             timeit("root")
             # Add links due to Subversion copy operations
-            announce(DEBUG_EXTRACT, "branch roots: {roots}, links {{{links}}}".format(
+            announce(DEBUG_EXTRACT, "branch roots: {roots}, links: map[{links}]".format(
                     roots = goify_str([c.mark for c in branchroots]),
-                    links = ", ".join("{l[0].mark}: {l[1].mark}".format(l=l)
-                                      for l in self.branchlink.values())))
+                    links = " ".join("{k}:{v[0].mark}->{v[1].mark}".format(k=k, v=v)
+                                      for k, v in self.branchlink.items())))
             for (child, parent) in self.branchlink.values():
                 if parent.repo is not self.repo:
                     # The parent has been deleted since, don't add the link;

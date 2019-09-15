@@ -7592,6 +7592,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		for _, newcommit := range newcommits {
 			newcommit.(*Commit).sortOperations()
 		}
+		if len(newcommits) > 0 {
+			announce(debugEXTRACT, "New commits (%d): %v", len(newcommits), newcommits)
+		}
 		// Deduce links between branches on the basis of copies. This
 		// is tricky because a revision can be the target of multiple
 		// copies.  Humans don't abuse this because tracking multiple
