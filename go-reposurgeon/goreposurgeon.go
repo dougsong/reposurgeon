@@ -7453,6 +7453,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				actions = append(actions, fiAction{*node, *fileop})
 			}
 		}
+		if debugEnable(debugEXTRACT) {
+			fmt.Println("Actions:")
+			for _, action := range actions {
+				// Format-string not \n terminated because the Node stringer does it.
+				fmt.Printf("reposurgeon: %v -> %v", action.node, action.fileop)
+			}
+		}
 		// Time to generate commits from actions and fileops.
 		// First, break the file operations into branch cliques.
 		// In the normal case there will be only one such clique,

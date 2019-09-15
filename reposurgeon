@@ -4895,6 +4895,10 @@ class StreamParser:
                     fileop = FileOp(self.repo)
                     fileop.construct("deleteall", node.path[:-1])
                     actions.append((node, fileop))
+            if debug_enable(DEBUG_EXTRACT):
+                sys.stdout.write("Actions:\n")
+                for (node, fileop) in actions:
+                    sys.stdout.write("reposurgeon: %s -> %s\n" % (node, fileop))
             # Time to generate commits from actions and fileops.
             # First, break the file operations into branch cliques
             cliques = {}
