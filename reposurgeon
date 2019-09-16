@@ -4443,12 +4443,6 @@ class StreamParser:
         for (revision, record) in self.revisions.items():
             announce(DEBUG_EXTRACT, "Revision %s:" % revision)
             for node in record.nodes:
-                # In Subversion, we can assume .cvsignores are
-                # legacies from a bygone era that have been long since
-                # replaced by svn:ignore properties.  Therefore we can
-                # just drop them.
-                if node.path.endswith(".cvsignore"):
-                    continue
                 # if node.props is None, no property section.
                 # if node.blob is None, no text section.
                 try:
@@ -4777,6 +4771,25 @@ class StreamParser:
             for node in expanded_nodes:
                 if node.action is None: continue
                 if node.kind == SD_FILE:
+                    # All .cvsignores should be ignored as remnants from
+                    # a previous up-conversion to Subversion.
+                    # This is a philosophical choice; we're taking the
+                    # users' Subversion settings as authoritative
+                    # rather than trying to mimic the exact CVS behavior.
+                    if node.path.endswith(".cvsignore"):
+                        continue
+                    # Ignore and complain about explicit .gitignores
+                    # created, e.g, by git-svn.  In an ideal world we
+                    # would merge these with svn:ignore properties. but
+                    # this would be hairy and bug-prone. So we give
+                    # the user a heads-up and expect these to be
+                    # merged by hand.
+                    if node.path.endswith(".gitignore") \
+                       and not node.generated \
+                       and '--user-ignores' not in options:
+                        self.gripe("r%s~%s: user-created .gitignore ignored." \
+                                   % (node.revision, node.path))
+                        continue
                     if node.action == SD_DELETE:
                         assert node.blob is None
                         fileop = FileOp(self.repo)
@@ -4860,20 +4873,6 @@ class StreamParser:
                         if node.path in self.propagate:
                             perms = 0o100755
                             del self.propagate[node.path]
-                        new_content = (node.blob is not None)
-                        # Ignore and complain about explicit .gitignores
-                        # created, e.g, by git-svn.  In an ideal world we
-                        # would merge these with svn:ignore properties. but
-                        # this would be hairy and bug-prone. So we give
-                        # the user a heads-up and expect these to be
-                        # merged by hand.
-                        if new_content \
-                           and not node.generated \
-                           and '--user-ignores' not in options \
-                           and node.path.endswith(".gitignore"):
-                            self.gripe("r%s~%s: user-created .gitignore ignored." \
-                                       % (node.revision, node.path))
-                            continue
                         # This ugly nasty guard is critically important.
                         # We need to generate a modify if:
                         # 1. There is new content.
@@ -4886,6 +4885,7 @@ class StreamParser:
                         # 4. The permissions for this path have changed;
                         # we need to generate a modify with an old mark
                         # but new permissions.
+                        new_content = (node.blob is not None)
                         generated_file_copy = node.generated
                         subversion_file_copy = (node.from_hash is not None)
                         if (new_content or

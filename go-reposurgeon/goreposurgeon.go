@@ -4824,14 +4824,11 @@ func (commit *Commit) replaceParent(e1, e2 *Commit) {
 	if e2 == nil {
 		panic("null commit in replaceParents()")
 	}
-	//fmt.Printf("XXXX in %s replaceParent %s with %s\n", commit.mark, e1.mark, e2.mark)
 	for i, item := range commit._parentNodes {
 		if item == e1 {
 			commit._parentNodes[i] = e2
 			e1._childNodes = commitRemove(e1._childNodes, commit)
-			//fmt.Printf("XXXXX %s child nodes after replacement: %v\n", e1.mark, listMarks(e1._childNodes))
 			e2._childNodes = append(e2._childNodes, commit)
-			//fmt.Printf("XXXXX %s child nodes after replacement: %v\n", e2.mark, listMarks(e2._childNodes))
 			commit.invalidateManifests()
 			return
 		}
@@ -5543,7 +5540,6 @@ func (pm PathMap) snapshot() *PathMap {
 
 // copyFrom inserts at targetPath, a snapshot of sourcePath in sourcePathMap.
 func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePath string) {
-	//fmt.Printf("XXX copyFrom(pm=%v, targetPath=%q, sourcePathMap=%v, sourcePath=%q)\n", pm, targetPath, sourcePathMap, sourcePath)
 	if sourcePathMap.isEmpty() {
 		return
 	}
@@ -5563,7 +5559,6 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 		for subPath, value := range sourcePathMap.store {
 			if strings.HasPrefix(subPath, sourcePath + svnSep) {
 				target := targetPath + subPath[len(sourcePath):]
-				//fmt.Printf("XXXXX directory copy: subPath=%q target=%s\n", subPath, target)
 				pm.store[target] = value
 			}
 		}
@@ -5572,7 +5567,6 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 	}
 	if sourcePathMap.contains(sourcePath) {
 		// Exists in source map as a file.
-		//fmt.Printf("XXXXX file-to-file copy: targetPath=%q sourcePath=%q\n", targetPath, sourcePath)
 		pm.store[targetPath] = sourcePathMap.store[sourcePath]
 		return
 	}
@@ -5580,7 +5574,6 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 	// the function ended with the equivalent of the next line of code, but nil is
 	// not an ignored value in this implementation.
 	//pm.store[targetPath] = nil
-	//fmt.Printf("XXX copyFrom(pm=%v, targetPath=%q, sourcePathMap=%v, sourcePath=%q) fell through\n", pm, targetPath, sourcePathMap, sourcePath)
 }
 
 // contains return true if path is present in the map as a file.
@@ -6915,13 +6908,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	for revision, record := range sp.revisions {
 		announce(debugEXTRACT, "Revision %d:", revision)
 		for _, node := range record.nodes {
-			// In Subversion, we can assume .cvsignores are
-			// legacies from a bygone era that have been long since
-			// replaced by svn:ignore properties.  Therefore we can
-			// just drop them.
-			if strings.HasSuffix(node.path, ".cvsignore") {
-				continue
-			}
 			// if node.props is None, no property section.
 			// if node.blob is None, no text section.
 			// Delete actions may be issued without a dir or file kind
@@ -7312,6 +7298,28 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			}
 			var ancestor *NodeAction
 			if node.kind == sdFILE {
+				// All .cvsignores should be ignored as remnants from
+				// a previous up-conversion to Subversion.
+				// This is a philosophical choice; we're taking the
+				//users' Subversion settings as authoritative
+				// rather than trying to mimic the exact CVS behavior.
+				if strings.HasSuffix(node.path, ".cvsignore") {
+					continue
+				}
+				// Ignore and complain about explicit .gitignores
+				// created, e.g, by git-svn.  In an ideal world we
+				// would merge these with svn:ignore properties. but
+				// this would be hairy and bug-prone. So we give
+				// the user a heads-up and expect these to be
+				// merged by hand.
+				if strings.HasSuffix(node.path, ".gitignore") {
+					if !node.generated &&
+						!options.Contains("--user-ignores") {
+						sp.gripe(fmt.Sprintf("r%d~%s: user-created .gitignore ignored.",
+							node.revision, node.path))
+						continue
+					}
+				}
 				if node.action == sdDELETE {
 					//assert node.blob == nil
 					fileop := newFileOp(sp.repo)
@@ -7423,21 +7431,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						perms = "100755"
 						delete(sp.propagate, node.path)
 					}
-					newContent := (node.blob != nil)
-					// Ignore and complain about explicit .gitignores
-					// created, e.g, by git-svn.  In an ideal world we
-					// would merge these with svn:ignore properties. but
-					// this would be hairy and bug-prone. So we give
-					// the user a heads-up and expect these to be
-					// merged by hand.
-					if newContent &&
-						!node.generated &&
-						!options.Contains("--user-ignores") &&
-						strings.HasSuffix(node.path, ".gitignore") {
-						sp.gripe(fmt.Sprintf("r%d~%s: user-created .gitignore ignored.",
-							node.revision, node.path))
-						continue
-					}
 					// This ugly nasty guard is critically important.
 					// We need to generate a modify if {
 					// 1. There is new content.
@@ -7451,6 +7444,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					// we need to generate a modify with an old mark
 					// but new permissions.
 					generatedFileCopy := node.generated
+					newContent := (node.blob != nil)
 					subversionFileCopy := (node.fromHash != "")
 					if newContent || generatedFileCopy || subversionFileCopy || node.propchange {
 						//assert perms
@@ -10220,13 +10214,9 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 	}
 	lastEvent := sortedEvents[len(sortedEvents)-1]
 	events[0].setParents(sortedEvents[0].parents())
-	//fmt.Printf("XXXX children of %s = {%v}\n", lastEvent.mark, listMarks(lastEvent.children()))
 	for _, e := range lastEvent.children() {
-		//fmt.Printf("XXXXX child of %s is %s will be reparented with %s\n", lastEvent.mark, markOrNil(e), markOrNil(events[len(events)-1]))
 		e.(*Commit).replaceParent(lastEvent, events[len(events)-1])
-		//fmt.Printf("XXXXX parents of %s after replacement = {%v}\n", e.getMark(), listMarks(e.(*Commit).parents()))
 	}
-	//fmt.Printf("XXXX Got here\n")
 	for i, e := range events[:len(events)-1] {
 		events[i+1].setParents([]CommitLike{e})
 	}

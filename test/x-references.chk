@@ -45,26 +45,26 @@ reposurgeon: mid-branch deleteall on refs/heads/master at <355>.
 [3, 308, 340]
 [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308]
 reposurgeon: couldn't match a name at <3>
-Event 1921 ==============================================================
+Event 1897 ==============================================================
 commit refs/heads/Development
 #legacy-id 352
-mark :1920
+mark :1896
 committer Peter Selinger <selinger@users.sourceforge.net> 1139780787 +0000
 data 251
  - newhidups: rewrote logical-to-physical value conversion. Rewrote
    extraction of logical values from report. Added Kelvin-to-Celsius
    conversion. Tweaked APC date conversion. Back-UPS BF500 support.
    Deleted unused items in HIDItem structure.
-from :1910
-M 100644 :1911 CHANGES
-M 100644 :1912 data/driver.list
-M 100644 :1913 drivers/apc-hid.c
-M 100644 :1914 drivers/hidparser.c
-M 100644 :1915 drivers/hidtypes.h
-M 100644 :1916 drivers/libhid.c
-M 100644 :1917 drivers/libhid.h
-M 100644 :1918 drivers/newhidups.c
-M 100644 :1919 drivers/newhidups.h
+from :1886
+M 100644 :1887 CHANGES
+M 100644 :1888 data/driver.list
+M 100644 :1889 drivers/apc-hid.c
+M 100644 :1890 drivers/hidparser.c
+M 100644 :1891 drivers/hidtypes.h
+M 100644 :1892 drivers/libhid.c
+M 100644 :1893 drivers/libhid.h
+M 100644 :1894 drivers/newhidups.c
+M 100644 :1895 drivers/newhidups.h
 
 reposurgeon: 1 references resolved.
 #reposurgeon sourcetype svn
@@ -10847,11 +10847,6 @@ data 323
 /config.status
 blob
 mark :1643
-data 63
-Revision is 318, file path is branches/Development/.cvsignore.
-
-blob
-mark :1644
 data 96
 /Makefile
 /upsimage.cgi
@@ -10863,49 +10858,22 @@ data 96
 /upsmon
 /upsrw
 /upssched
-blob
-mark :1645
-data 71
-Revision is 318, file path is branches/Development/clients/.cvsignore.
-
 commit refs/heads/Development
 #legacy-id 318
-mark :1646
+mark :1644
 committer Peter Selinger <selinger@users.sourceforge.net> 1138817815 +0000
 data 71
 added .cvsignore files in each relevant directory, to reduce CVS noise
 from :1641
-M 100644 :1643 .cvsignore
 M 100644 :1642 .gitignore
-M 100644 :1645 clients/.cvsignore
-M 100644 :1644 clients/.gitignore
+M 100644 :1643 clients/.gitignore
 
 blob
-mark :1647
+mark :1645
 data 9
 /Makefile
 blob
-mark :1648
-data 70
-Revision is 319, file path is branches/Development/common/.cvsignore.
-
-blob
-mark :1649
-data 68
-Revision is 319, file path is branches/Development/conf/.cvsignore.
-
-blob
-mark :1650
-data 68
-Revision is 319, file path is branches/Development/data/.cvsignore.
-
-blob
-mark :1651
-data 73
-Revision is 319, file path is branches/Development/data/html/.cvsignore.
-
-blob
-mark :1652
+mark :1646
 data 455
 /Makefile
 /bcmxcp_usb
@@ -10954,1301 +10922,1189 @@ data 455
 /upscode2
 /victronups
 blob
-mark :1653
-data 71
-Revision is 319, file path is branches/Development/drivers/.cvsignore.
-
-blob
-mark :1654
+mark :1647
 data 9
 /config.h
 blob
-mark :1655
-data 71
-Revision is 319, file path is branches/Development/include/.cvsignore.
-
-blob
-mark :1656
+mark :1648
 data 47
 /Makefile
 /libupsclient-config
 /libupsclient.pc
 blob
-mark :1657
-data 67
-Revision is 319, file path is branches/Development/lib/.cvsignore.
-
-blob
-mark :1658
-data 67
-Revision is 319, file path is branches/Development/man/.cvsignore.
-
-blob
-mark :1659
+mark :1649
 data 10
 /libhidups
 blob
-mark :1660
-data 79
-Revision is 319, file path is branches/Development/scripts/hotplug/.cvsignore.
-
-blob
-mark :1661
+mark :1650
 data 15
 /Makefile
 /upsd
-blob
-mark :1662
-data 70
-Revision is 319, file path is branches/Development/server/.cvsignore.
-
 commit refs/heads/Development
 #legacy-id 319
-mark :1663
+mark :1651
 committer Peter Selinger <selinger@users.sourceforge.net> 1138817821 +0000
 data 71
 added .cvsignore files in each relevant directory, to reduce CVS noise
-from :1646
-M 100644 :1648 common/.cvsignore
-M 100644 :1647 common/.gitignore
-M 100644 :1649 conf/.cvsignore
-M 100644 :1647 conf/.gitignore
-M 100644 :1650 data/.cvsignore
-M 100644 :1647 data/.gitignore
-M 100644 :1651 data/html/.cvsignore
-M 100644 :1647 data/html/.gitignore
-M 100644 :1653 drivers/.cvsignore
-M 100644 :1652 drivers/.gitignore
-M 100644 :1655 include/.cvsignore
-M 100644 :1654 include/.gitignore
-M 100644 :1657 lib/.cvsignore
-M 100644 :1656 lib/.gitignore
-M 100644 :1658 man/.cvsignore
-M 100644 :1647 man/.gitignore
-M 100644 :1660 scripts/hotplug/.cvsignore
-M 100644 :1659 scripts/hotplug/.gitignore
-M 100644 :1662 server/.cvsignore
-M 100644 :1661 server/.gitignore
+from :1644
+M 100644 :1645 common/.gitignore
+M 100644 :1645 conf/.gitignore
+M 100644 :1645 data/.gitignore
+M 100644 :1645 data/html/.gitignore
+M 100644 :1646 drivers/.gitignore
+M 100644 :1647 include/.gitignore
+M 100644 :1648 lib/.gitignore
+M 100644 :1645 man/.gitignore
+M 100644 :1649 scripts/hotplug/.gitignore
+M 100644 :1650 server/.gitignore
 
 blob
-mark :1664
+mark :1652
 data 60
 Revision is 320, file path is branches/Development/CHANGES.
 
 blob
-mark :1665
+mark :1653
 data 72
 Revision is 320, file path is branches/Development/drivers/upsdrvctl.c.
 
 blob
-mark :1666
+mark :1654
 data 68
 Revision is 320, file path is branches/Development/man/upsdrvctl.8.
 
 commit refs/heads/Development
 #legacy-id 320
-mark :1667
+mark :1655
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138915495 +0000
 data 174
 
 Added 'status' command to upsdrvctl and removed passing of 'port' in
 several functions (this is no longer needed, as the drivers will look
 this up themselves in 'ups.conf'.
-from :1663
-M 100644 :1664 CHANGES
-M 100644 :1665 drivers/upsdrvctl.c
-M 100644 :1666 man/upsdrvctl.8
+from :1651
+M 100644 :1652 CHANGES
+M 100644 :1653 drivers/upsdrvctl.c
+M 100644 :1654 man/upsdrvctl.8
 
 blob
-mark :1668
+mark :1656
 data 60
 Revision is 321, file path is branches/Development/CREDITS.
 
 commit refs/heads/Development
 #legacy-id 321
-mark :1669
+mark :1657
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138915697 +0000
 data 14
 
 Added myself
-from :1667
-M 100644 :1668 CREDITS
+from :1655
+M 100644 :1656 CREDITS
 
 blob
-mark :1670
+mark :1658
 data 72
 Revision is 322, file path is branches/Development/drivers/upsdrvctl.c.
 
 commit refs/heads/Development
 #legacy-id 322
-mark :1671
+mark :1659
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138916263 +0000
 data 56
 
 Forgot to paste one line from the previous code, added
-from :1669
-M 100644 :1670 drivers/upsdrvctl.c
+from :1657
+M 100644 :1658 drivers/upsdrvctl.c
 
 blob
-mark :1672
+mark :1660
 data 60
 Revision is 323, file path is branches/Development/CHANGES.
 
 blob
-mark :1673
+mark :1661
 data 72
 Revision is 323, file path is branches/Development/drivers/upsdrvctl.c.
 
 commit refs/heads/Development
 #legacy-id 323
-mark :1674
+mark :1662
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138999366 +0000
 data 141
 
 Use old style pid names for the drivers too, for backwards compatibility.
 Consolidate tree walking functions to be shared for all commands.
-from :1671
-M 100644 :1672 CHANGES
-M 100644 :1673 drivers/upsdrvctl.c
+from :1659
+M 100644 :1660 CHANGES
+M 100644 :1661 drivers/upsdrvctl.c
 
 blob
-mark :1675
+mark :1663
 data 60
 Revision is 324, file path is branches/Development/CHANGES.
 
 blob
-mark :1676
+mark :1664
 data 73
 Revision is 324, file path is branches/Development/drivers/genericups.c.
 
 commit refs/heads/Development
 #legacy-id 324
-mark :1677
+mark :1665
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139084494 +0000
 data 129
 drivers/genericups.c: check for invalid overrides for signals
 (don't accept output signal if an input is expected or vice-versa)
-from :1674
-M 100644 :1675 CHANGES
-M 100644 :1676 drivers/genericups.c
+from :1662
+M 100644 :1663 CHANGES
+M 100644 :1664 drivers/genericups.c
 
 blob
-mark :1678
+mark :1666
 data 60
 Revision is 325, file path is branches/Development/CHANGES.
 
 blob
-mark :1679
+mark :1667
 data 72
 Revision is 325, file path is branches/Development/drivers/upsdrvctl.c.
 
 commit refs/heads/Development
 #legacy-id 325
-mark :1680
+mark :1668
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139088241 +0000
 data 29
 minor changes (coding style)
-from :1677
-M 100644 :1678 CHANGES
-M 100644 :1679 drivers/upsdrvctl.c
+from :1665
+M 100644 :1666 CHANGES
+M 100644 :1667 drivers/upsdrvctl.c
 
 blob
-mark :1681
-data 61
-Revision is 327, file path is branches/reportbuf/.cvsignore.
-
-blob
-mark :1682
+mark :1669
 data 58
 Revision is 327, file path is branches/reportbuf/CHANGES.
 
 blob
-mark :1683
+mark :1670
 data 58
 Revision is 327, file path is branches/reportbuf/CREDITS.
 
 blob
-mark :1684
+mark :1671
 data 58
 Revision is 327, file path is branches/reportbuf/INSTALL.
 
 blob
-mark :1685
+mark :1672
 data 55
 Revision is 327, file path is branches/reportbuf/NEWS.
 
 blob
-mark :1686
+mark :1673
 data 57
 Revision is 327, file path is branches/reportbuf/README.
 
 blob
-mark :1687
-data 69
-Revision is 327, file path is branches/reportbuf/clients/.cvsignore.
-
-blob
-mark :1688
-data 68
-Revision is 327, file path is branches/reportbuf/common/.cvsignore.
-
-blob
-mark :1689
-data 66
-Revision is 327, file path is branches/reportbuf/conf/.cvsignore.
-
-blob
-mark :1690
+mark :1674
 data 69
 Revision is 327, file path is branches/reportbuf/conf/upsstats.html.
 
 blob
-mark :1691
-data 66
-Revision is 327, file path is branches/reportbuf/data/.cvsignore.
-
-blob
-mark :1692
+mark :1675
 data 67
 Revision is 327, file path is branches/reportbuf/data/driver.list.
 
 blob
-mark :1693
-data 71
-Revision is 327, file path is branches/reportbuf/data/html/.cvsignore.
-
-blob
-mark :1694
+mark :1676
 data 59
 Revision is 327, file path is branches/reportbuf/docs/FAQ.
 
 blob
-mark :1695
+mark :1677
 data 69
 Revision is 327, file path is branches/reportbuf/docs/new-names.txt.
 
 blob
-mark :1696
-data 69
-Revision is 327, file path is branches/reportbuf/drivers/.cvsignore.
-
-blob
-mark :1697
+mark :1678
 data 76
 Revision is 327, file path is branches/reportbuf/drivers/Makefile.drvbuild.
 
 blob
-mark :1698
+mark :1679
 data 70
 Revision is 327, file path is branches/reportbuf/drivers/Makefile.in.
 
 blob
-mark :1699
+mark :1680
 data 68
 Revision is 327, file path is branches/reportbuf/drivers/apc-hid.c.
 
 blob
-mark :1700
+mark :1681
 data 68
 Revision is 327, file path is branches/reportbuf/drivers/apccmib.h.
 
 blob
-mark :1701
+mark :1682
 data 69
 Revision is 327, file path is branches/reportbuf/drivers/apcsmart.h.
 
 blob
-mark :1702
+mark :1683
 data 67
 Revision is 327, file path is branches/reportbuf/drivers/belkin.h.
 
 blob
-mark :1703
+mark :1684
 data 70
 Revision is 327, file path is branches/reportbuf/drivers/belkinunv.c.
 
 blob
-mark :1704
+mark :1685
 data 69
 Revision is 327, file path is branches/reportbuf/drivers/bestfcom.c.
 
 blob
-mark :1705
+mark :1686
 data 70
 Revision is 327, file path is branches/reportbuf/drivers/fentonups.h.
 
 blob
-mark :1706
+mark :1687
 data 71
 Revision is 327, file path is branches/reportbuf/drivers/genericups.c.
 
 blob
-mark :1707
+mark :1688
 data 68
 Revision is 327, file path is branches/reportbuf/drivers/ietfmib.h.
 
 blob
-mark :1708
+mark :1689
 data 68
 Revision is 327, file path is branches/reportbuf/drivers/megatec.c.
 
 blob
-mark :1709
+mark :1690
 data 68
 Revision is 327, file path is branches/reportbuf/drivers/megatec.h.
 
 blob
-mark :1710
+mark :1691
 data 69
 Revision is 327, file path is branches/reportbuf/drivers/mge-shut.c.
 
 blob
-mark :1711
+mark :1692
 data 67
 Revision is 327, file path is branches/reportbuf/drivers/mgemib.h.
 
 blob
-mark :1712
+mark :1693
 data 73
 Revision is 327, file path is branches/reportbuf/drivers/netvisionmib.h.
 
 blob
-mark :1713
+mark :1694
 data 68
 Revision is 327, file path is branches/reportbuf/drivers/optiups.c.
 
 blob
-mark :1714
+mark :1695
 data 68
 Revision is 327, file path is branches/reportbuf/drivers/optiups.h.
 
 blob
-mark :1715
+mark :1696
 data 69
 Revision is 327, file path is branches/reportbuf/drivers/powercom.h.
 
 blob
-mark :1716
+mark :1697
 data 66
 Revision is 327, file path is branches/reportbuf/drivers/pwmib.h.
 
 blob
-mark :1717
+mark :1698
 data 68
 Revision is 327, file path is branches/reportbuf/drivers/safenet.c.
 
 blob
-mark :1718
+mark :1699
 data 68
 Revision is 327, file path is branches/reportbuf/drivers/safenet.h.
 
 blob
-mark :1719
+mark :1700
 data 67
 Revision is 327, file path is branches/reportbuf/drivers/serial.c.
 
 blob
-mark :1720
+mark :1701
 data 67
 Revision is 327, file path is branches/reportbuf/drivers/serial.h.
 
 blob
-mark :1721
+mark :1702
 data 69
 Revision is 327, file path is branches/reportbuf/drivers/snmp-ups.c.
 
 blob
-mark :1722
+mark :1703
 data 69
 Revision is 327, file path is branches/reportbuf/drivers/snmp-ups.h.
 
 blob
-mark :1723
+mark :1704
 data 70
 Revision is 327, file path is branches/reportbuf/drivers/tripplite.c.
 
 blob
-mark :1724
+mark :1705
 data 70
 Revision is 327, file path is branches/reportbuf/drivers/upsdrvctl.c.
 
 blob
-mark :1725
-data 69
-Revision is 327, file path is branches/reportbuf/include/.cvsignore.
-
-blob
-mark :1726
+mark :1706
 data 67
 Revision is 327, file path is branches/reportbuf/include/common.h.
 
 blob
-mark :1727
-data 65
-Revision is 327, file path is branches/reportbuf/lib/.cvsignore.
-
-blob
-mark :1728
-data 65
-Revision is 327, file path is branches/reportbuf/man/.cvsignore.
-
-blob
-mark :1729
+mark :1707
 data 66
 Revision is 327, file path is branches/reportbuf/man/Makefile.in.
 
 blob
-mark :1730
+mark :1708
 data 64
 Revision is 327, file path is branches/reportbuf/man/megatec.8.
 
 blob
-mark :1731
+mark :1709
 data 65
 Revision is 327, file path is branches/reportbuf/man/mge-shut.8.
 
 blob
-mark :1732
+mark :1710
 data 66
 Revision is 327, file path is branches/reportbuf/man/mge-utalk.8.
 
 blob
-mark :1733
+mark :1711
 data 66
 Revision is 327, file path is branches/reportbuf/man/newhidups.8.
 
 blob
-mark :1734
+mark :1712
 data 64
 Revision is 327, file path is branches/reportbuf/man/optiups.8.
 
 blob
-mark :1735
+mark :1713
 data 66
 Revision is 327, file path is branches/reportbuf/man/upsdrvctl.8.
 
 blob
-mark :1736
-data 77
-Revision is 327, file path is branches/reportbuf/scripts/hotplug/.cvsignore.
-
-blob
-mark :1737
+mark :1714
 data 81
 Revision is 327, file path is branches/reportbuf/scripts/hotplug/libhid.usermap.
 
 blob
-mark :1738
-data 68
-Revision is 327, file path is branches/reportbuf/server/.cvsignore.
-
-blob
-mark :1739
+mark :1715
 data 66
 Revision is 327, file path is branches/reportbuf/server/sstate.c.
 
 commit refs/heads/reportbuf
 #legacy-id 327
-mark :1740
+mark :1716
 committer Peter Selinger <selinger@users.sourceforge.net> 1139223108 +0000
 data 105
 * merged changes from Development branch (reportbuf_base until
   reportbuf_base0) into reportbuf branch.
 from :1489
-M 100644 :1681 .cvsignore
 M 100644 :1642 .gitignore
-M 100644 :1682 CHANGES
-M 100644 :1683 CREDITS
-M 100644 :1684 INSTALL
+M 100644 :1669 CHANGES
+M 100644 :1670 CREDITS
+M 100644 :1671 INSTALL
 D Makefile
-M 100644 :1685 NEWS
-M 100644 :1686 README
-M 100644 :1687 clients/.cvsignore
-M 100644 :1644 clients/.gitignore
-M 100644 :1688 common/.cvsignore
-M 100644 :1647 common/.gitignore
-M 100644 :1689 conf/.cvsignore
-M 100644 :1647 conf/.gitignore
-M 100644 :1690 conf/upsstats.html
-M 100644 :1691 data/.cvsignore
-M 100644 :1647 data/.gitignore
-M 100644 :1692 data/driver.list
-M 100644 :1693 data/html/.cvsignore
-M 100644 :1647 data/html/.gitignore
-M 100644 :1694 docs/FAQ
-M 100644 :1695 docs/new-names.txt
-M 100644 :1696 drivers/.cvsignore
-M 100644 :1652 drivers/.gitignore
-M 100644 :1697 drivers/Makefile.drvbuild
-M 100644 :1698 drivers/Makefile.in
-M 100644 :1699 drivers/apc-hid.c
-M 100644 :1700 drivers/apccmib.h
-M 100644 :1701 drivers/apcsmart.h
-M 100644 :1702 drivers/belkin.h
-M 100644 :1703 drivers/belkinunv.c
-M 100644 :1704 drivers/bestfcom.c
-M 100644 :1705 drivers/fentonups.h
-M 100644 :1706 drivers/genericups.c
-M 100644 :1707 drivers/ietfmib.h
-M 100644 :1708 drivers/megatec.c
-M 100644 :1709 drivers/megatec.h
-M 100644 :1710 drivers/mge-shut.c
-M 100644 :1711 drivers/mgemib.h
-M 100644 :1712 drivers/netvisionmib.h
-M 100644 :1713 drivers/optiups.c
-M 100644 :1714 drivers/optiups.h
-M 100644 :1715 drivers/powercom.h
-M 100644 :1716 drivers/pwmib.h
-M 100644 :1717 drivers/safenet.c
-M 100644 :1718 drivers/safenet.h
-M 100644 :1719 drivers/serial.c
-M 100644 :1720 drivers/serial.h
-M 100644 :1721 drivers/snmp-ups.c
-M 100644 :1722 drivers/snmp-ups.h
-M 100644 :1723 drivers/tripplite.c
-M 100644 :1724 drivers/upsdrvctl.c
-M 100644 :1725 include/.cvsignore
-M 100644 :1654 include/.gitignore
-M 100644 :1726 include/common.h
-M 100644 :1727 lib/.cvsignore
-M 100644 :1656 lib/.gitignore
-M 100644 :1728 man/.cvsignore
-M 100644 :1647 man/.gitignore
-M 100644 :1729 man/Makefile.in
-M 100644 :1730 man/megatec.8
-M 100644 :1731 man/mge-shut.8
-M 100644 :1732 man/mge-utalk.8
-M 100644 :1733 man/newhidups.8
-M 100644 :1734 man/optiups.8
-M 100644 :1735 man/upsdrvctl.8
-M 100644 :1736 scripts/hotplug/.cvsignore
-M 100644 :1659 scripts/hotplug/.gitignore
-M 100644 :1737 scripts/hotplug/libhid.usermap
-M 100644 :1738 server/.cvsignore
-M 100644 :1661 server/.gitignore
-M 100644 :1739 server/sstate.c
+M 100644 :1672 NEWS
+M 100644 :1673 README
+M 100644 :1643 clients/.gitignore
+M 100644 :1645 common/.gitignore
+M 100644 :1645 conf/.gitignore
+M 100644 :1674 conf/upsstats.html
+M 100644 :1645 data/.gitignore
+M 100644 :1675 data/driver.list
+M 100644 :1645 data/html/.gitignore
+M 100644 :1676 docs/FAQ
+M 100644 :1677 docs/new-names.txt
+M 100644 :1646 drivers/.gitignore
+M 100644 :1678 drivers/Makefile.drvbuild
+M 100644 :1679 drivers/Makefile.in
+M 100644 :1680 drivers/apc-hid.c
+M 100644 :1681 drivers/apccmib.h
+M 100644 :1682 drivers/apcsmart.h
+M 100644 :1683 drivers/belkin.h
+M 100644 :1684 drivers/belkinunv.c
+M 100644 :1685 drivers/bestfcom.c
+M 100644 :1686 drivers/fentonups.h
+M 100644 :1687 drivers/genericups.c
+M 100644 :1688 drivers/ietfmib.h
+M 100644 :1689 drivers/megatec.c
+M 100644 :1690 drivers/megatec.h
+M 100644 :1691 drivers/mge-shut.c
+M 100644 :1692 drivers/mgemib.h
+M 100644 :1693 drivers/netvisionmib.h
+M 100644 :1694 drivers/optiups.c
+M 100644 :1695 drivers/optiups.h
+M 100644 :1696 drivers/powercom.h
+M 100644 :1697 drivers/pwmib.h
+M 100644 :1698 drivers/safenet.c
+M 100644 :1699 drivers/safenet.h
+M 100644 :1700 drivers/serial.c
+M 100644 :1701 drivers/serial.h
+M 100644 :1702 drivers/snmp-ups.c
+M 100644 :1703 drivers/snmp-ups.h
+M 100644 :1704 drivers/tripplite.c
+M 100644 :1705 drivers/upsdrvctl.c
+M 100644 :1647 include/.gitignore
+M 100644 :1706 include/common.h
+M 100644 :1648 lib/.gitignore
+M 100644 :1645 man/.gitignore
+M 100644 :1707 man/Makefile.in
+M 100644 :1708 man/megatec.8
+M 100644 :1709 man/mge-shut.8
+M 100644 :1710 man/mge-utalk.8
+M 100644 :1711 man/newhidups.8
+M 100644 :1712 man/optiups.8
+M 100644 :1713 man/upsdrvctl.8
+M 100644 :1649 scripts/hotplug/.gitignore
+M 100644 :1714 scripts/hotplug/libhid.usermap
+M 100644 :1650 server/.gitignore
+M 100644 :1715 server/sstate.c
 
 blob
-mark :1741
+mark :1717
 data 64
 Revision is 328, file path is branches/Testing/man/powermust.8.
 
 commit refs/heads/Testing
 #legacy-id 328
-mark :1742
+mark :1718
 committer Arnaud Quette <arnaud.quette@free.fr> 1139306503 +0000
 data 16
 update the date
 from :1603
-M 100644 :1741 man/powermust.8
+M 100644 :1717 man/powermust.8
 
 blob
-mark :1743
+mark :1719
 data 57
 Revision is 329, file path is branches/Testing/docs/FAQ.
 
 commit refs/heads/Testing
 #legacy-id 329
-mark :1744
+mark :1720
 committer Arnaud Quette <arnaud.quette@free.fr> 1139306649 +0000
 data 22
 a bit more FAQ update
-from :1742
-M 100644 :1743 docs/FAQ
+from :1718
+M 100644 :1719 docs/FAQ
 
 blob
-mark :1745
+mark :1721
 data 56
 Revision is 330, file path is branches/Testing/CHANGES.
 
 blob
-mark :1746
+mark :1722
 data 53
 Revision is 330, file path is branches/Testing/NEWS.
 
 blob
-mark :1747
+mark :1723
 data 58
 Revision is 330, file path is branches/Testing/configure.
 
 blob
-mark :1748
+mark :1724
 data 61
 Revision is 330, file path is branches/Testing/configure.in.
 
 blob
-mark :1749
+mark :1725
 data 59
 Revision is 330, file path is branches/Testing/install-sh.
 
 commit refs/heads/Testing
 #legacy-id 330
-mark :1750
+mark :1726
 committer Arnaud Quette <arnaud.quette@free.fr> 1139313020 +0000
 data 32
 final changes for 2.0.3 release
-from :1744
-M 100644 :1745 CHANGES
-M 100644 :1746 NEWS
-M 100644 :1748 configure.in
-M 100755 :1747 configure
-M 100755 :1749 install-sh
+from :1720
+M 100644 :1721 CHANGES
+M 100644 :1722 NEWS
+M 100644 :1724 configure.in
+M 100755 :1723 configure
+M 100755 :1725 install-sh
 
 blob
-mark :1751
+mark :1727
 data 56
 Revision is 331, file path is branches/Testing/CHANGES.
 
 blob
-mark :1752
+mark :1728
 data 64
 Revision is 331, file path is branches/Testing/include/version.
 
 blob
-mark :1753
+mark :1729
 data 66
 Revision is 331, file path is branches/Testing/include/version.h.
 
 commit refs/heads/Testing
 #legacy-id 331
-mark :1754
+mark :1730
 committer Arnaud Quette <arnaud.quette@free.fr> 1139313473 +0000
 data 24
 missing version* update
-from :1750
-M 100644 :1751 CHANGES
-M 100644 :1753 include/version.h
-M 100644 :1752 include/version
+from :1726
+M 100644 :1727 CHANGES
+M 100644 :1729 include/version.h
+M 100644 :1728 include/version
 
 blob
-mark :1755
+mark :1731
 data 57
 Revision is 332, file path is branches/Testing/Makefile.
 
 commit refs/heads/Testing
 #legacy-id 332
-mark :1756
+mark :1732
 committer Arnaud Quette <arnaud.quette@free.fr> 1139313556 +0000
 data 48
 restore Makefile.dist as the top level Makefile
-from :1754
-M 100644 :1755 Makefile
+from :1730
+M 100644 :1731 Makefile
 
 blob
-mark :1757
+mark :1733
 data 56
 Revision is 333, file path is branches/Testing/INSTALL.
 
 commit refs/heads/Testing
 #legacy-id 333
-mark :1758
+mark :1734
 committer Arnaud Quette <arnaud.quette@free.fr> 1139314191 +0000
 data 50
 add a mention for libusb and Net-SNMP requirement
-from :1756
-M 100644 :1757 INSTALL
+from :1732
+M 100644 :1733 INSTALL
 
 blob
-mark :1759
+mark :1735
 data 71
 Revision is 334, file path is branches/Stable/docs/hid-subdrivers.txt.
 
 blob
-mark :1760
+mark :1736
 data 65
 Revision is 334, file path is branches/Stable/drivers/apc-hid.c.
 
 blob
-mark :1761
+mark :1737
 data 65
 Revision is 334, file path is branches/Stable/drivers/apc-hid.h.
 
 blob
-mark :1762
+mark :1738
 data 64
 Revision is 334, file path is branches/Stable/drivers/bcmxcp.c.
 
 blob
-mark :1763
+mark :1739
 data 64
 Revision is 334, file path is branches/Stable/drivers/bcmxcp.h.
 
 blob
-mark :1764
+mark :1740
 data 67
 Revision is 334, file path is branches/Stable/drivers/bcmxcp_io.h.
 
 blob
-mark :1765
+mark :1741
 data 68
 Revision is 334, file path is branches/Stable/drivers/bcmxcp_ser.c.
 
 blob
-mark :1766
+mark :1742
 data 68
 Revision is 334, file path is branches/Stable/drivers/bcmxcp_usb.c.
 
 blob
-mark :1767
+mark :1743
 data 68
 Revision is 334, file path is branches/Stable/drivers/belkin-hid.c.
 
 blob
-mark :1768
+mark :1744
 data 68
 Revision is 334, file path is branches/Stable/drivers/belkin-hid.h.
 
 blob
-mark :1769
+mark :1745
 data 68
 Revision is 334, file path is branches/Stable/drivers/gamatronic.c.
 
 blob
-mark :1770
+mark :1746
 data 68
 Revision is 334, file path is branches/Stable/drivers/gamatronic.h.
 
 blob
-mark :1771
+mark :1747
 data 64
 Revision is 334, file path is branches/Stable/drivers/libusb.h.
 
 blob
-mark :1772
+mark :1748
 data 65
 Revision is 334, file path is branches/Stable/drivers/mge-hid.c.
 
 blob
-mark :1773
+mark :1749
 data 65
 Revision is 334, file path is branches/Stable/drivers/mge-hid.h.
 
 blob
-mark :1774
+mark :1750
 data 70
 Revision is 334, file path is branches/Stable/drivers/netvisionmib.h.
 
 blob
-mark :1775
+mark :1751
 data 65
 Revision is 334, file path is branches/Stable/drivers/nut_usb.c.
 
 blob
-mark :1776
+mark :1752
 data 65
 Revision is 334, file path is branches/Stable/drivers/nut_usb.h.
 
 blob
-mark :1777
+mark :1753
 data 63
 Revision is 334, file path is branches/Stable/drivers/pwmib.h.
 
 blob
-mark :1778
+mark :1754
 data 63
 Revision is 334, file path is branches/Stable/drivers/solis.c.
 
 blob
-mark :1779
+mark :1755
 data 63
 Revision is 334, file path is branches/Stable/drivers/solis.h.
 
 blob
-mark :1780
+mark :1756
 data 71
 Revision is 334, file path is branches/Stable/drivers/tripplite_usb.c.
 
 blob
-mark :1781
+mark :1757
 data 66
 Revision is 334, file path is branches/Stable/drivers/upscode2.c.
 
 blob
-mark :1782
+mark :1758
 data 60
 Revision is 334, file path is branches/Stable/man/bcmxcp.8.
 
 blob
-mark :1783
+mark :1759
 data 64
 Revision is 334, file path is branches/Stable/man/bcmxcp_usb.8.
 
 blob
-mark :1784
+mark :1760
 data 64
 Revision is 334, file path is branches/Stable/man/gamatronic.8.
 
 blob
-mark :1785
+mark :1761
 data 59
 Revision is 334, file path is branches/Stable/man/solis.8.
 
 blob
-mark :1786
+mark :1762
 data 67
 Revision is 334, file path is branches/Stable/man/tripplite_usb.8.
 
 blob
-mark :1787
+mark :1763
 data 62
 Revision is 334, file path is branches/Stable/man/upscode2.8.
 
 blob
-mark :1788
+mark :1764
 data 73
 Revision is 334, file path is branches/Stable/scripts/hotplug-ng/README.
 
 blob
-mark :1789
+mark :1765
 data 88
 Revision is 334, file path is branches/Stable/scripts/hotplug-ng/nut-usbups.hotplug.in.
 
 blob
-mark :1790
+mark :1766
 data 86
 Revision is 334, file path is branches/Stable/scripts/hotplug-ng/nut-usbups.rules.in.
 
 commit refs/heads/Stable
 #legacy-id 334
-mark :1791
+mark :1767
 committer Arnaud Quette <arnaud.quette@free.fr> 1139322717 +0000
 data 26
 new files added to Stable
 from :307
-M 100644 :1759 docs/hid-subdrivers.txt
-M 100644 :1760 drivers/apc-hid.c
-M 100644 :1761 drivers/apc-hid.h
-M 100644 :1762 drivers/bcmxcp.c
-M 100644 :1763 drivers/bcmxcp.h
-M 100644 :1764 drivers/bcmxcp_io.h
-M 100644 :1765 drivers/bcmxcp_ser.c
-M 100644 :1766 drivers/bcmxcp_usb.c
-M 100644 :1767 drivers/belkin-hid.c
-M 100644 :1768 drivers/belkin-hid.h
-M 100644 :1769 drivers/gamatronic.c
-M 100644 :1770 drivers/gamatronic.h
+M 100644 :1735 docs/hid-subdrivers.txt
+M 100644 :1736 drivers/apc-hid.c
+M 100644 :1737 drivers/apc-hid.h
+M 100644 :1738 drivers/bcmxcp.c
+M 100644 :1739 drivers/bcmxcp.h
+M 100644 :1740 drivers/bcmxcp_io.h
+M 100644 :1741 drivers/bcmxcp_ser.c
+M 100644 :1742 drivers/bcmxcp_usb.c
+M 100644 :1743 drivers/belkin-hid.c
+M 100644 :1744 drivers/belkin-hid.h
+M 100644 :1745 drivers/gamatronic.c
+M 100644 :1746 drivers/gamatronic.h
 D drivers/hid-usb.h
-M 100644 :1771 drivers/libusb.h
-M 100644 :1772 drivers/mge-hid.c
-M 100644 :1773 drivers/mge-hid.h
-M 100644 :1774 drivers/netvisionmib.h
-M 100644 :1775 drivers/nut_usb.c
-M 100644 :1776 drivers/nut_usb.h
-M 100644 :1777 drivers/pwmib.h
-M 100644 :1778 drivers/solis.c
-M 100644 :1779 drivers/solis.h
-M 100644 :1780 drivers/tripplite_usb.c
-M 100644 :1781 drivers/upscode2.c
-M 100644 :1782 man/bcmxcp.8
-M 100644 :1783 man/bcmxcp_usb.8
-M 100644 :1784 man/gamatronic.8
-M 100644 :1785 man/solis.8
-M 100644 :1786 man/tripplite_usb.8
-M 100644 :1787 man/upscode2.8
-M 100644 :1788 scripts/hotplug-ng/README
-M 100644 :1789 scripts/hotplug-ng/nut-usbups.hotplug.in
-M 100644 :1790 scripts/hotplug-ng/nut-usbups.rules.in
+M 100644 :1747 drivers/libusb.h
+M 100644 :1748 drivers/mge-hid.c
+M 100644 :1749 drivers/mge-hid.h
+M 100644 :1750 drivers/netvisionmib.h
+M 100644 :1751 drivers/nut_usb.c
+M 100644 :1752 drivers/nut_usb.h
+M 100644 :1753 drivers/pwmib.h
+M 100644 :1754 drivers/solis.c
+M 100644 :1755 drivers/solis.h
+M 100644 :1756 drivers/tripplite_usb.c
+M 100644 :1757 drivers/upscode2.c
+M 100644 :1758 man/bcmxcp.8
+M 100644 :1759 man/bcmxcp_usb.8
+M 100644 :1760 man/gamatronic.8
+M 100644 :1761 man/solis.8
+M 100644 :1762 man/tripplite_usb.8
+M 100644 :1763 man/upscode2.8
+M 100644 :1764 scripts/hotplug-ng/README
+M 100644 :1765 scripts/hotplug-ng/nut-usbups.hotplug.in
+M 100644 :1766 scripts/hotplug-ng/nut-usbups.rules.in
 
 blob
-mark :1792
+mark :1768
 data 55
 Revision is 335, file path is branches/Stable/CHANGES.
 
 blob
-mark :1793
+mark :1769
 data 55
 Revision is 335, file path is branches/Stable/INSTALL.
 
 blob
-mark :1794
+mark :1770
 data 59
 Revision is 335, file path is branches/Stable/MAINTAINERS.
 
 blob
-mark :1795
+mark :1771
 data 59
 Revision is 335, file path is branches/Stable/Makefile.in.
 
 blob
-mark :1796
+mark :1772
 data 52
 Revision is 335, file path is branches/Stable/NEWS.
 
 blob
-mark :1797
+mark :1773
 data 54
 Revision is 335, file path is branches/Stable/README.
 
 blob
-mark :1798
+mark :1774
 data 57
 Revision is 335, file path is branches/Stable/UPGRADING.
 
 blob
-mark :1799
+mark :1775
 data 67
 Revision is 335, file path is branches/Stable/clients/Makefile.in.
 
 blob
-mark :1800
+mark :1776
 data 66
 Revision is 335, file path is branches/Stable/clients/upsstats.c.
 
 blob
-mark :1801
+mark :1777
 data 57
 Revision is 335, file path is branches/Stable/configure.
 
 blob
-mark :1802
+mark :1778
 data 60
 Revision is 335, file path is branches/Stable/configure.in.
 
 blob
-mark :1803
+mark :1779
 data 64
 Revision is 335, file path is branches/Stable/data/driver.list.
 
 blob
-mark :1804
+mark :1780
 data 56
 Revision is 335, file path is branches/Stable/docs/FAQ.
 
 blob
-mark :1805
+mark :1781
 data 65
 Revision is 335, file path is branches/Stable/docs/upssched.txt.
 
 blob
-mark :1806
+mark :1782
 data 73
 Revision is 335, file path is branches/Stable/drivers/Makefile.drvbuild.
 
 blob
-mark :1807
+mark :1783
 data 67
 Revision is 335, file path is branches/Stable/drivers/Makefile.in.
 
 blob
-mark :1808
+mark :1784
 data 65
 Revision is 335, file path is branches/Stable/drivers/apccmib.h.
 
 blob
-mark :1809
+mark :1785
 data 66
 Revision is 335, file path is branches/Stable/drivers/apcsmart.c.
 
 blob
-mark :1810
+mark :1786
 data 66
 Revision is 335, file path is branches/Stable/drivers/apcsmart.h.
 
 blob
-mark :1811
+mark :1787
 data 66
 Revision is 335, file path is branches/Stable/drivers/bestfcom.c.
 
 blob
-mark :1812
+mark :1788
 data 64
 Revision is 335, file path is branches/Stable/drivers/cpsups.c.
 
 blob
-mark :1813
+mark :1789
 data 64
 Revision is 335, file path is branches/Stable/drivers/cpsups.h.
 
 blob
-mark :1814
+mark :1790
 data 68
 Revision is 335, file path is branches/Stable/drivers/cyberpower.c.
 
 blob
-mark :1815
+mark :1791
 data 70
 Revision is 335, file path is branches/Stable/drivers/energizerups.c.
 
 blob
-mark :1816
+mark :1792
 data 64
 Revision is 335, file path is branches/Stable/drivers/etapro.c.
 
 blob
-mark :1817
+mark :1793
 data 67
 Revision is 335, file path is branches/Stable/drivers/fentonups.c.
 
 blob
-mark :1818
+mark :1794
 data 67
 Revision is 335, file path is branches/Stable/drivers/fentonups.h.
 
 blob
-mark :1819
+mark :1795
 data 61
 Revision is 335, file path is branches/Stable/drivers/gendb.
 
 blob
-mark :1820
+mark :1796
 data 68
 Revision is 335, file path is branches/Stable/drivers/genericups.c.
 
 blob
-mark :1821
+mark :1797
 data 68
 Revision is 335, file path is branches/Stable/drivers/genericups.h.
 
 blob
-mark :1822
+mark :1798
 data 67
 Revision is 335, file path is branches/Stable/drivers/hidparser.c.
 
 blob
-mark :1823
+mark :1799
 data 66
 Revision is 335, file path is branches/Stable/drivers/hidtypes.h.
 
 blob
-mark :1824
+mark :1800
 data 64
 Revision is 335, file path is branches/Stable/drivers/isbmex.c.
 
 blob
-mark :1825
+mark :1801
 data 64
 Revision is 335, file path is branches/Stable/drivers/libhid.c.
 
 blob
-mark :1826
+mark :1802
 data 64
 Revision is 335, file path is branches/Stable/drivers/libhid.h.
 
 blob
-mark :1827
+mark :1803
 data 64
 Revision is 335, file path is branches/Stable/drivers/libusb.c.
 
 blob
-mark :1828
+mark :1804
 data 62
 Revision is 335, file path is branches/Stable/drivers/main.c.
 
 blob
-mark :1829
+mark :1805
 data 66
 Revision is 335, file path is branches/Stable/drivers/mge-shut.c.
 
 blob
-mark :1830
+mark :1806
 data 66
 Revision is 335, file path is branches/Stable/drivers/mge-shut.h.
 
 blob
-mark :1831
+mark :1807
 data 67
 Revision is 335, file path is branches/Stable/drivers/mge-utalk.c.
 
 blob
-mark :1832
+mark :1808
 data 67
 Revision is 335, file path is branches/Stable/drivers/mge-utalk.h.
 
 blob
-mark :1833
+mark :1809
 data 64
 Revision is 335, file path is branches/Stable/drivers/mgemib.h.
 
 blob
-mark :1834
+mark :1810
 data 67
 Revision is 335, file path is branches/Stable/drivers/newhidups.c.
 
 blob
-mark :1835
+mark :1811
 data 67
 Revision is 335, file path is branches/Stable/drivers/newhidups.h.
 
 blob
-mark :1836
+mark :1812
 data 67
 Revision is 335, file path is branches/Stable/drivers/powermust.c.
 
 blob
-mark :1837
+mark :1813
 data 65
 Revision is 335, file path is branches/Stable/drivers/safenet.c.
 
 blob
-mark :1838
+mark :1814
 data 66
 Revision is 335, file path is branches/Stable/drivers/snmp-ups.c.
 
 blob
-mark :1839
+mark :1815
 data 66
 Revision is 335, file path is branches/Stable/drivers/snmp-ups.h.
 
 blob
-mark :1840
+mark :1816
 data 67
 Revision is 335, file path is branches/Stable/drivers/tripplite.c.
 
 blob
-mark :1841
+mark :1817
 data 63
 Revision is 335, file path is branches/Stable/include/version.
 
 blob
-mark :1842
+mark :1818
 data 65
 Revision is 335, file path is branches/Stable/include/version.h.
 
 blob
-mark :1843
+mark :1819
 data 58
 Revision is 335, file path is branches/Stable/install-sh.
 
 blob
-mark :1844
+mark :1820
 data 63
 Revision is 335, file path is branches/Stable/man/Makefile.in.
 
 blob
-mark :1845
+mark :1821
 data 63
 Revision is 335, file path is branches/Stable/man/fentonups.8.
 
 blob
-mark :1846
+mark :1822
 data 64
 Revision is 335, file path is branches/Stable/man/genericups.8.
 
 blob
-mark :1847
+mark :1823
 data 62
 Revision is 335, file path is branches/Stable/man/mge-shut.8.
 
 blob
-mark :1848
+mark :1824
 data 63
 Revision is 335, file path is branches/Stable/man/mge-utalk.8.
 
 blob
-mark :1849
+mark :1825
 data 63
 Revision is 335, file path is branches/Stable/man/newhidups.8.
 
 blob
-mark :1850
+mark :1826
 data 63
 Revision is 335, file path is branches/Stable/man/nutupsdrv.8.
 
 blob
-mark :1851
+mark :1827
 data 63
 Revision is 335, file path is branches/Stable/man/powermust.8.
 
 blob
-mark :1852
+mark :1828
 data 62
 Revision is 335, file path is branches/Stable/man/snmp-ups.8.
 
 blob
-mark :1853
+mark :1829
 data 76
 Revision is 335, file path is branches/Stable/packaging/RedHat/nut.spec.in.
 
 blob
-mark :1854
+mark :1830
 data 70
 Revision is 335, file path is branches/Stable/scripts/hotplug/README.
 
 blob
-mark :1855
+mark :1831
 data 78
 Revision is 335, file path is branches/Stable/scripts/hotplug/libhid.usermap.
 
 commit refs/heads/Stable
 #legacy-id 335
-mark :1856
+mark :1832
 committer Arnaud Quette <arnaud.quette@free.fr> 1139322980 +0000
 data 68
 uncommited Stable files, following the merge from Testing to Stable
-from :1791
-M 100644 :1792 CHANGES
-M 100644 :1793 INSTALL
-M 100644 :1794 MAINTAINERS
-M 100644 :1795 Makefile.in
-M 100644 :1796 NEWS
-M 100644 :1797 README
-M 100644 :1798 UPGRADING
-M 100644 :1799 clients/Makefile.in
-M 100644 :1800 clients/upsstats.c
-M 100644 :1802 configure.in
-M 100755 :1801 configure
-M 100644 :1803 data/driver.list
-M 100644 :1804 docs/FAQ
-M 100644 :1805 docs/upssched.txt
-M 100644 :1806 drivers/Makefile.drvbuild
-M 100644 :1807 drivers/Makefile.in
-M 100644 :1808 drivers/apccmib.h
-M 100644 :1809 drivers/apcsmart.c
-M 100644 :1810 drivers/apcsmart.h
-M 100644 :1811 drivers/bestfcom.c
-M 100644 :1812 drivers/cpsups.c
-M 100644 :1813 drivers/cpsups.h
-M 100644 :1814 drivers/cyberpower.c
-M 100644 :1815 drivers/energizerups.c
-M 100644 :1816 drivers/etapro.c
-M 100644 :1817 drivers/fentonups.c
-M 100644 :1818 drivers/fentonups.h
-M 100755 :1819 drivers/gendb
-M 100644 :1820 drivers/genericups.c
-M 100644 :1821 drivers/genericups.h
-M 100644 :1822 drivers/hidparser.c
-M 100644 :1823 drivers/hidtypes.h
-M 100644 :1824 drivers/isbmex.c
-M 100644 :1825 drivers/libhid.c
-M 100644 :1826 drivers/libhid.h
-M 100644 :1827 drivers/libusb.c
-M 100644 :1828 drivers/main.c
-M 100644 :1829 drivers/mge-shut.c
-M 100644 :1830 drivers/mge-shut.h
-M 100644 :1831 drivers/mge-utalk.c
-M 100644 :1832 drivers/mge-utalk.h
-M 100644 :1833 drivers/mgemib.h
-M 100644 :1834 drivers/newhidups.c
-M 100644 :1835 drivers/newhidups.h
-M 100644 :1836 drivers/powermust.c
-M 100644 :1837 drivers/safenet.c
-M 100644 :1838 drivers/snmp-ups.c
-M 100644 :1839 drivers/snmp-ups.h
-M 100644 :1840 drivers/tripplite.c
-M 100644 :1842 include/version.h
-M 100644 :1841 include/version
-M 100755 :1843 install-sh
-M 100644 :1844 man/Makefile.in
-M 100644 :1845 man/fentonups.8
-M 100644 :1846 man/genericups.8
-M 100644 :1847 man/mge-shut.8
-M 100644 :1848 man/mge-utalk.8
-M 100644 :1849 man/newhidups.8
-M 100644 :1850 man/nutupsdrv.8
-M 100644 :1851 man/powermust.8
-M 100644 :1852 man/snmp-ups.8
-M 100644 :1853 packaging/RedHat/nut.spec.in
-M 100644 :1854 scripts/hotplug/README
-M 100644 :1855 scripts/hotplug/libhid.usermap
+from :1767
+M 100644 :1768 CHANGES
+M 100644 :1769 INSTALL
+M 100644 :1770 MAINTAINERS
+M 100644 :1771 Makefile.in
+M 100644 :1772 NEWS
+M 100644 :1773 README
+M 100644 :1774 UPGRADING
+M 100644 :1775 clients/Makefile.in
+M 100644 :1776 clients/upsstats.c
+M 100644 :1778 configure.in
+M 100755 :1777 configure
+M 100644 :1779 data/driver.list
+M 100644 :1780 docs/FAQ
+M 100644 :1781 docs/upssched.txt
+M 100644 :1782 drivers/Makefile.drvbuild
+M 100644 :1783 drivers/Makefile.in
+M 100644 :1784 drivers/apccmib.h
+M 100644 :1785 drivers/apcsmart.c
+M 100644 :1786 drivers/apcsmart.h
+M 100644 :1787 drivers/bestfcom.c
+M 100644 :1788 drivers/cpsups.c
+M 100644 :1789 drivers/cpsups.h
+M 100644 :1790 drivers/cyberpower.c
+M 100644 :1791 drivers/energizerups.c
+M 100644 :1792 drivers/etapro.c
+M 100644 :1793 drivers/fentonups.c
+M 100644 :1794 drivers/fentonups.h
+M 100755 :1795 drivers/gendb
+M 100644 :1796 drivers/genericups.c
+M 100644 :1797 drivers/genericups.h
+M 100644 :1798 drivers/hidparser.c
+M 100644 :1799 drivers/hidtypes.h
+M 100644 :1800 drivers/isbmex.c
+M 100644 :1801 drivers/libhid.c
+M 100644 :1802 drivers/libhid.h
+M 100644 :1803 drivers/libusb.c
+M 100644 :1804 drivers/main.c
+M 100644 :1805 drivers/mge-shut.c
+M 100644 :1806 drivers/mge-shut.h
+M 100644 :1807 drivers/mge-utalk.c
+M 100644 :1808 drivers/mge-utalk.h
+M 100644 :1809 drivers/mgemib.h
+M 100644 :1810 drivers/newhidups.c
+M 100644 :1811 drivers/newhidups.h
+M 100644 :1812 drivers/powermust.c
+M 100644 :1813 drivers/safenet.c
+M 100644 :1814 drivers/snmp-ups.c
+M 100644 :1815 drivers/snmp-ups.h
+M 100644 :1816 drivers/tripplite.c
+M 100644 :1818 include/version.h
+M 100644 :1817 include/version
+M 100755 :1819 install-sh
+M 100644 :1820 man/Makefile.in
+M 100644 :1821 man/fentonups.8
+M 100644 :1822 man/genericups.8
+M 100644 :1823 man/mge-shut.8
+M 100644 :1824 man/mge-utalk.8
+M 100644 :1825 man/newhidups.8
+M 100644 :1826 man/nutupsdrv.8
+M 100644 :1827 man/powermust.8
+M 100644 :1828 man/snmp-ups.8
+M 100644 :1829 packaging/RedHat/nut.spec.in
+M 100644 :1830 scripts/hotplug/README
+M 100644 :1831 scripts/hotplug/libhid.usermap
 
 blob
-mark :1857
+mark :1833
 data 69
 Revision is 337, file path is branches/Development/man/genericups.8.
 
 commit refs/heads/Development
 #legacy-id 337
-mark :1858
+mark :1834
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139343543 +0000
 data 302
 
@@ -12258,557 +12114,557 @@ This chapter was added with version 2.0.1, however the code that should
 perform this job never made it into the driver. Since it has been like
 this for so long and nobody (?) complained about it, there doesn't seem
 to be a demand for it.
-from :1680
-M 100644 :1857 man/genericups.8
+from :1668
+M 100644 :1833 man/genericups.8
 
 blob
-mark :1859
+mark :1835
 data 60
 Revision is 338, file path is branches/Development/CHANGES.
 
 blob
-mark :1860
+mark :1836
 data 66
 Revision is 338, file path is branches/Development/man/megatec.8.
 
 commit refs/heads/Development
 #legacy-id 338
-mark :1861
+mark :1837
 committer Carlos Rodrigues <cefrodrigues@gmail.com> 1139354808 +0000
 data 37
 minor change to man/megatec.8 (date)
-from :1858
-M 100644 :1859 CHANGES
-M 100644 :1860 man/megatec.8
+from :1834
+M 100644 :1835 CHANGES
+M 100644 :1836 man/megatec.8
 
 blob
-mark :1862
+mark :1838
 data 60
 Revision is 339, file path is branches/Development/CHANGES.
 
 blob
-mark :1863
+mark :1839
 data 71
 Revision is 339, file path is branches/Development/clients/upsimage.c.
 
 blob
-mark :1864
+mark :1840
 data 71
 Revision is 339, file path is branches/Development/clients/upsstats.c.
 
 blob
-mark :1865
+mark :1841
 data 78
 Revision is 339, file path is branches/Development/conf/upsstats-single.html.
 
 blob
-mark :1866
+mark :1842
 data 71
 Revision is 339, file path is branches/Development/conf/upsstats.html.
 
 commit refs/heads/Development
 #legacy-id 339
-mark :1867
+mark :1843
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1139469643 +0000
 data 41
 - Update's to cgi client and html pages.
-from :1861
-M 100644 :1862 CHANGES
-M 100644 :1863 clients/upsimage.c
-M 100644 :1864 clients/upsstats.c
-M 100644 :1865 conf/upsstats-single.html
-M 100644 :1866 conf/upsstats.html
+from :1837
+M 100644 :1838 CHANGES
+M 100644 :1839 clients/upsimage.c
+M 100644 :1840 clients/upsstats.c
+M 100644 :1841 conf/upsstats-single.html
+M 100644 :1842 conf/upsstats.html
 
 blob
-mark :1868
+mark :1844
 data 60
 Revision is 340, file path is branches/Development/CHANGES.
 
 blob
-mark :1869
+mark :1845
 data 78
 Revision is 340, file path is branches/Development/conf/upsstats-single.html.
 
 blob
-mark :1870
+mark :1846
 data 71
 Revision is 340, file path is branches/Development/conf/upsstats.html.
 
 blob
-mark :1871
+mark :1847
 data 72
 Revision is 340, file path is branches/Development/man/upsstats.html.5.
 
 commit refs/heads/Development
 #legacy-id 340
-mark :1872
+mark :1848
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1139490850 +0000
 data 23
 - Update to cgi patch.
-from :1867
-M 100644 :1868 CHANGES
-M 100644 :1869 conf/upsstats-single.html
-M 100644 :1870 conf/upsstats.html
-M 100644 :1871 man/upsstats.html.5
+from :1843
+M 100644 :1844 CHANGES
+M 100644 :1845 conf/upsstats-single.html
+M 100644 :1846 conf/upsstats.html
+M 100644 :1847 man/upsstats.html.5
 
 blob
-mark :1873
+mark :1849
 data 60
 Revision is 341, file path is branches/Development/CHANGES.
 
 commit refs/heads/Development
 #legacy-id 341
-mark :1874
+mark :1850
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1139491553 +0000
 data 37
 - Included the right text i CHANGES.
-from :1872
-M 100644 :1873 CHANGES
+from :1848
+M 100644 :1849 CHANGES
 
 blob
-mark :1875
+mark :1851
 data 60
 Revision is 342, file path is branches/Development/CHANGES.
 
 blob
-mark :1876
+mark :1852
 data 72
 Revision is 342, file path is branches/Development/drivers/belkinunv.c.
 
 commit refs/heads/Development
 #legacy-id 342
-mark :1877
+mark :1853
 committer Peter Selinger <selinger@users.sourceforge.net> 1139500870 +0000
 data 44
 * belkinunv: reduced gcc4 compiler warnings
-from :1874
-M 100644 :1875 CHANGES
-M 100644 :1876 drivers/belkinunv.c
+from :1850
+M 100644 :1851 CHANGES
+M 100644 :1852 drivers/belkinunv.c
 
 blob
-mark :1878
+mark :1854
 data 64
 Revision is 343, file path is branches/Development/MAINTAINERS.
 
 commit refs/heads/Development
 #legacy-id 343
-mark :1879
+mark :1855
 committer Peter Selinger <selinger@users.sourceforge.net> 1139501290 +0000
 data 15
 * added myself
-from :1877
-M 100644 :1878 MAINTAINERS
+from :1853
+M 100644 :1854 MAINTAINERS
 
 blob
-mark :1880
+mark :1856
 data 60
 Revision is 344, file path is branches/Development/CHANGES.
 
 blob
-mark :1881
+mark :1857
 data 73
 Revision is 344, file path is branches/Development/drivers/bcmxcp_ser.c.
 
 commit refs/heads/Development
 #legacy-id 344
-mark :1882
+mark :1858
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1139513225 +0000
 data 33
 - Reduced gcc4 compiler warnings
-from :1879
-M 100644 :1880 CHANGES
-M 100644 :1881 drivers/bcmxcp_ser.c
+from :1855
+M 100644 :1856 CHANGES
+M 100644 :1857 drivers/bcmxcp_ser.c
 
 blob
-mark :1883
+mark :1859
 data 60
 Revision is 345, file path is branches/Development/CHANGES.
 
 blob
-mark :1884
+mark :1860
 data 68
 Revision is 345, file path is branches/Development/common/common.c.
 
 blob
-mark :1885
+mark :1861
 data 69
 Revision is 345, file path is branches/Development/include/common.h.
 
 commit refs/heads/Development
 #legacy-id 345
-mark :1886
+mark :1862
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139517729 +0000
 data 130
 
 sendsignalfn() and sendsignal() let caller know if a signal was sent
 successfully or not instead of returning silently on errors
-from :1882
-M 100644 :1883 CHANGES
-M 100644 :1884 common/common.c
-M 100644 :1885 include/common.h
+from :1858
+M 100644 :1859 CHANGES
+M 100644 :1860 common/common.c
+M 100644 :1861 include/common.h
 
 blob
-mark :1887
+mark :1863
 data 60
 Revision is 346, file path is branches/Development/CHANGES.
 
 blob
-mark :1888
+mark :1864
 data 72
 Revision is 346, file path is branches/Development/drivers/upsdrvctl.c.
 
 blob
-mark :1889
+mark :1865
 data 68
 Revision is 346, file path is branches/Development/man/upsdrvctl.8.
 
 commit refs/heads/Development
 #legacy-id 346
-mark :1890
+mark :1866
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139518807 +0000
 data 171
 
 upsdrvctl: code cleanup and bug fix (the previous update introduced a bug
 that caused a UPS to be ignored if 'sdorder = -1', not only on shutdown
 like it is supposed to)
-from :1886
-M 100644 :1887 CHANGES
-M 100644 :1888 drivers/upsdrvctl.c
-M 100644 :1889 man/upsdrvctl.8
+from :1862
+M 100644 :1863 CHANGES
+M 100644 :1864 drivers/upsdrvctl.c
+M 100644 :1865 man/upsdrvctl.8
 
 blob
-mark :1891
+mark :1867
 data 60
 Revision is 347, file path is branches/Development/CHANGES.
 
 blob
-mark :1892
+mark :1868
 data 68
 Revision is 347, file path is branches/Development/drivers/al175.c.
 
 blob
-mark :1893
+mark :1869
 data 66
 Revision is 347, file path is branches/Development/drivers/gendb.
 
 blob
-mark :1894
+mark :1870
 data 69
 Revision is 347, file path is branches/Development/drivers/nitram.c.
 
 blob
-mark :1895
+mark :1871
 data 69
 Revision is 347, file path is branches/Development/drivers/nitram.h.
 
 commit refs/heads/Development
 #legacy-id 347
-mark :1896
+mark :1872
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1139564973 +0000
 data 54
 - Patch from Niels. And fix of line ending in nitram.
-from :1890
-M 100644 :1891 CHANGES
-M 100644 :1892 drivers/al175.c
-M 100755 :1893 drivers/gendb
-M 100644 :1894 drivers/nitram.c
-M 100644 :1895 drivers/nitram.h
+from :1866
+M 100644 :1867 CHANGES
+M 100644 :1868 drivers/al175.c
+M 100755 :1869 drivers/gendb
+M 100644 :1870 drivers/nitram.c
+M 100644 :1871 drivers/nitram.h
 
 blob
-mark :1897
+mark :1873
 data 60
 Revision is 348, file path is branches/Development/CHANGES.
 
 blob
-mark :1898
+mark :1874
 data 73
 Revision is 348, file path is branches/Development/drivers/bcmxcp_ser.c.
 
 blob
-mark :1899
+mark :1875
 data 72
 Revision is 348, file path is branches/Development/drivers/belkinunv.c.
 
 blob
-mark :1900
+mark :1876
 data 69
 Revision is 348, file path is branches/Development/drivers/serial.c.
 
 blob
-mark :1901
+mark :1877
 data 69
 Revision is 348, file path is branches/Development/drivers/serial.h.
 
 commit refs/heads/Development
 #legacy-id 348
-mark :1902
+mark :1878
 committer Peter Selinger <selinger@users.sourceforge.net> 1139610472 +0000
 data 194
  - serial.c: changed several generic serial port communication
    functions to use buffers of type "unsigned char" instead of "char".
  - belkinunv.c, bcmxcp_ser.c: removed superflous type casts
-from :1896
-M 100644 :1897 CHANGES
-M 100644 :1898 drivers/bcmxcp_ser.c
-M 100644 :1899 drivers/belkinunv.c
-M 100644 :1900 drivers/serial.c
-M 100644 :1901 drivers/serial.h
+from :1872
+M 100644 :1873 CHANGES
+M 100644 :1874 drivers/bcmxcp_ser.c
+M 100644 :1875 drivers/belkinunv.c
+M 100644 :1876 drivers/serial.c
+M 100644 :1877 drivers/serial.h
 
 blob
-mark :1903
+mark :1879
 data 60
 Revision is 349, file path is branches/Development/CREDITS.
 
 commit refs/heads/Development
 #legacy-id 349
-mark :1904
+mark :1880
 committer Peter Selinger <selinger@users.sourceforge.net> 1139651014 +0000
 data 20
 * updated own entry
-from :1902
-M 100644 :1903 CREDITS
+from :1878
+M 100644 :1879 CREDITS
 
 blob
-mark :1905
+mark :1881
 data 60
 Revision is 350, file path is branches/Development/CHANGES.
 
 blob
-mark :1906
+mark :1882
 data 69
 Revision is 350, file path is branches/Development/drivers/serial.c.
 
 blob
-mark :1907
+mark :1883
 data 69
 Revision is 350, file path is branches/Development/drivers/serial.h.
 
 commit refs/heads/Development
 #legacy-id 350
-mark :1908
+mark :1884
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139674045 +0000
 data 64
 
 changed ser_send_char to use "unsigned char" instead of "char"
-from :1904
-M 100644 :1905 CHANGES
-M 100644 :1906 drivers/serial.c
-M 100644 :1907 drivers/serial.h
+from :1880
+M 100644 :1881 CHANGES
+M 100644 :1882 drivers/serial.c
+M 100644 :1883 drivers/serial.h
 
 blob
-mark :1909
+mark :1885
 data 61
 Revision is 351, file path is branches/Development/docs/FAQ.
 
 commit refs/heads/Development
 #legacy-id 351
-mark :1910
+mark :1886
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139674720 +0000
 data 195
 
 This FAQ entry is no longer applicable, since starting from version 1.4.0,
 upsd will no longer be able to startup in this particular case (it changes
 UID before reading the configuration files)
-from :1908
-M 100644 :1909 docs/FAQ
+from :1884
+M 100644 :1885 docs/FAQ
 
 blob
-mark :1911
+mark :1887
 data 60
 Revision is 352, file path is branches/Development/CHANGES.
 
 blob
-mark :1912
+mark :1888
 data 69
 Revision is 352, file path is branches/Development/data/driver.list.
 
 blob
-mark :1913
+mark :1889
 data 70
 Revision is 352, file path is branches/Development/drivers/apc-hid.c.
 
 blob
-mark :1914
+mark :1890
 data 72
 Revision is 352, file path is branches/Development/drivers/hidparser.c.
 
 blob
-mark :1915
+mark :1891
 data 71
 Revision is 352, file path is branches/Development/drivers/hidtypes.h.
 
 blob
-mark :1916
+mark :1892
 data 69
 Revision is 352, file path is branches/Development/drivers/libhid.c.
 
 blob
-mark :1917
+mark :1893
 data 69
 Revision is 352, file path is branches/Development/drivers/libhid.h.
 
 blob
-mark :1918
+mark :1894
 data 72
 Revision is 352, file path is branches/Development/drivers/newhidups.c.
 
 blob
-mark :1919
+mark :1895
 data 72
 Revision is 352, file path is branches/Development/drivers/newhidups.h.
 
 commit refs/heads/Development
 #legacy-id 352
-mark :1920
+mark :1896
 committer Peter Selinger <selinger@users.sourceforge.net> 1139780787 +0000
 data 251
  - newhidups: rewrote logical-to-physical value conversion. Rewrote
    extraction of logical values from report. Added Kelvin-to-Celsius
    conversion. Tweaked APC date conversion. Back-UPS BF500 support.
    Deleted unused items in HIDItem structure.
-from :1910
-M 100644 :1911 CHANGES
-M 100644 :1912 data/driver.list
-M 100644 :1913 drivers/apc-hid.c
-M 100644 :1914 drivers/hidparser.c
-M 100644 :1915 drivers/hidtypes.h
-M 100644 :1916 drivers/libhid.c
-M 100644 :1917 drivers/libhid.h
-M 100644 :1918 drivers/newhidups.c
-M 100644 :1919 drivers/newhidups.h
+from :1886
+M 100644 :1887 CHANGES
+M 100644 :1888 data/driver.list
+M 100644 :1889 drivers/apc-hid.c
+M 100644 :1890 drivers/hidparser.c
+M 100644 :1891 drivers/hidtypes.h
+M 100644 :1892 drivers/libhid.c
+M 100644 :1893 drivers/libhid.h
+M 100644 :1894 drivers/newhidups.c
+M 100644 :1895 drivers/newhidups.h
 
 blob
-mark :1921
+mark :1897
 data 60
 Revision is 353, file path is branches/Development/CHANGES.
 
 blob
-mark :1922
+mark :1898
 data 67
 Revision is 353, file path is branches/Development/data/cmdvartab.
 
 blob
-mark :1923
+mark :1899
 data 74
 Revision is 353, file path is branches/Development/data/evolution500.dev.
 
 blob
-mark :1924
+mark :1900
 data 66
 Revision is 353, file path is branches/Development/docs/acpi.txt.
 
 blob
-mark :1925
+mark :1901
 data 72
 Revision is 353, file path is branches/Development/docs/al175-vars.txt.
 
 blob
-mark :1926
+mark :1902
 data 71
 Revision is 353, file path is branches/Development/docs/new-names.txt.
 
 blob
-mark :1927
+mark :1903
 data 70
 Revision is 353, file path is branches/Development/docs/protocol.txt.
 
 blob
-mark :1928
+mark :1904
 data 68
 Revision is 353, file path is branches/Development/drivers/al175.c.
 
 blob
-mark :1929
+mark :1905
 data 70
 Revision is 353, file path is branches/Development/drivers/apc-hid.c.
 
 blob
-mark :1930
+mark :1906
 data 70
 Revision is 353, file path is branches/Development/drivers/apccmib.h.
 
 blob
-mark :1931
+mark :1907
 data 71
 Revision is 353, file path is branches/Development/drivers/apcsmart.h.
 
 blob
-mark :1932
+mark :1908
 data 72
 Revision is 353, file path is branches/Development/drivers/dummy-ups.h.
 
 blob
-mark :1933
+mark :1909
 data 73
 Revision is 353, file path is branches/Development/drivers/esupssmart.c.
 
 blob
-mark :1934
+mark :1910
 data 70
 Revision is 353, file path is branches/Development/drivers/megatec.c.
 
 blob
-mark :1935
+mark :1911
 data 70
 Revision is 353, file path is branches/Development/drivers/mge-hid.c.
 
 blob
-mark :1936
+mark :1912
 data 71
 Revision is 353, file path is branches/Development/drivers/mge-shut.h.
 
 blob
-mark :1937
+mark :1913
 data 69
 Revision is 353, file path is branches/Development/drivers/nitram.c.
 
 blob
-mark :1938
+mark :1914
 data 68
 Revision is 353, file path is branches/Development/drivers/oneac.c.
 
 blob
-mark :1939
+mark :1915
 data 76
 Revision is 353, file path is branches/Development/drivers/tripplite-hid.c.
 
 blob
-mark :1940
+mark :1916
 data 74
 Revision is 353, file path is branches/Development/drivers/tripplitesu.c.
 
 commit refs/heads/Development
 #legacy-id 353
-mark :1941
+mark :1917
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1139998875 +0000
 data 104
 - Replaces output.voltage.target.battery and
    output.voltage.target.line with output.voltage.nominal.
-from :1920
-M 100644 :1921 CHANGES
-M 100644 :1922 data/cmdvartab
-M 100644 :1923 data/evolution500.dev
-M 100644 :1924 docs/acpi.txt
-M 100644 :1925 docs/al175-vars.txt
-M 100644 :1926 docs/new-names.txt
-M 100644 :1927 docs/protocol.txt
-M 100644 :1928 drivers/al175.c
-M 100644 :1929 drivers/apc-hid.c
-M 100644 :1930 drivers/apccmib.h
-M 100644 :1931 drivers/apcsmart.h
-M 100644 :1932 drivers/dummy-ups.h
-M 100644 :1933 drivers/esupssmart.c
-M 100644 :1934 drivers/megatec.c
-M 100644 :1935 drivers/mge-hid.c
-M 100644 :1936 drivers/mge-shut.h
-M 100644 :1937 drivers/nitram.c
-M 100644 :1938 drivers/oneac.c
-M 100644 :1939 drivers/tripplite-hid.c
-M 100644 :1940 drivers/tripplitesu.c
+from :1896
+M 100644 :1897 CHANGES
+M 100644 :1898 data/cmdvartab
+M 100644 :1899 data/evolution500.dev
+M 100644 :1900 docs/acpi.txt
+M 100644 :1901 docs/al175-vars.txt
+M 100644 :1902 docs/new-names.txt
+M 100644 :1903 docs/protocol.txt
+M 100644 :1904 drivers/al175.c
+M 100644 :1905 drivers/apc-hid.c
+M 100644 :1906 drivers/apccmib.h
+M 100644 :1907 drivers/apcsmart.h
+M 100644 :1908 drivers/dummy-ups.h
+M 100644 :1909 drivers/esupssmart.c
+M 100644 :1910 drivers/megatec.c
+M 100644 :1911 drivers/mge-hid.c
+M 100644 :1912 drivers/mge-shut.h
+M 100644 :1913 drivers/nitram.c
+M 100644 :1914 drivers/oneac.c
+M 100644 :1915 drivers/tripplite-hid.c
+M 100644 :1916 drivers/tripplitesu.c
 
 commit refs/heads/master
 #legacy-id 355
-mark :1942
+mark :1918
 committer Charles Lepple <clepple+nut@gmail.com> 1140096558 +0000
 data 80
 Retire the old trunk (CVS HEAD), in preparation for moving branches/Development
@@ -12817,25 +12673,23 @@ deleteall
 
 commit refs/heads/master
 #legacy-id 356
-mark :1943
+mark :1919
 committer Charles Lepple <clepple+nut@gmail.com> 1140096703 +0000
 data 40
 Moving branches/Development into trunk.
-from :1942
-merge :1941
-M 100644 :1643 .cvsignore
-M 100644 :1921 CHANGES
+from :1918
+merge :1917
+M 100644 :1897 CHANGES
 M 100644 :4 COPYING
-M 100644 :1903 CREDITS
+M 100644 :1879 CREDITS
 M 100644 :1587 INSTALL
-M 100644 :1878 MAINTAINERS
+M 100644 :1854 MAINTAINERS
 M 100644 :9 Makefile.dist
 M 100644 :859 Makefile.in
 M 100644 :1588 NEWS
 M 100644 :1589 README
 M 100644 :579 UPGRADING
 M 100644 :14 aclocal.m4
-M 100644 :1645 clients/.cvsignore
 M 100644 :489 clients/Makefile.in
 M 100644 :16 clients/cgilib.c
 M 100644 :17 clients/cgilib.h
@@ -12844,7 +12698,7 @@ M 100644 :19 clients/upsc.c
 M 100644 :20 clients/upsclient.c
 M 100644 :311 clients/upsclient.h
 M 100644 :22 clients/upscmd.c
-M 100644 :1863 clients/upsimage.c
+M 100644 :1839 clients/upsimage.c
 M 100644 :24 clients/upsimagearg.h
 M 100644 :312 clients/upslog.c
 M 100644 :26 clients/upslog.h
@@ -12855,12 +12709,11 @@ M 100755 :30 clients/upssched-cmd
 M 100644 :31 clients/upssched.c
 M 100644 :32 clients/upssched.h
 M 100644 :33 clients/upsset.c
-M 100644 :1864 clients/upsstats.c
+M 100644 :1840 clients/upsstats.c
 M 100644 :35 clients/upsstats.h
-M 100644 :1648 common/.cvsignore
 M 100644 :36 common/Makefile.in
 M 100644 :37 common/atexit.c
-M 100644 :1884 common/common.c
+M 100644 :1860 common/common.c
 M 100644 :39 common/inet_aton.c
 M 100644 :40 common/parseconf.c
 M 100644 :41 common/setenv.c
@@ -12868,7 +12721,6 @@ M 100644 :42 common/snprintf.c
 M 100644 :43 common/state.c
 M 100644 :44 common/strerror.c
 M 100644 :45 common/upsconf.c
-M 100644 :1649 conf/.cvsignore
 M 100644 :46 conf/Makefile.in
 M 100644 :47 conf/hosts.conf
 M 100644 :313 conf/ups.conf
@@ -12877,18 +12729,16 @@ M 100644 :50 conf/upsd.users
 M 100644 :314 conf/upsmon.conf
 M 100644 :52 conf/upssched.conf
 M 100644 :53 conf/upsset.conf
-M 100644 :1869 conf/upsstats-single.html
-M 100644 :1870 conf/upsstats.html
+M 100644 :1845 conf/upsstats-single.html
+M 100644 :1846 conf/upsstats.html
 M 100755 :588 config.guess
 M 100644 :589 config.sub
 M 100644 :1229 configure.in
 M 100755 :1341 configure
-M 100644 :1650 data/.cvsignore
 M 100644 :60 data/Makefile.in
-M 100644 :1922 data/cmdvartab
-M 100644 :1912 data/driver.list
-M 100644 :1923 data/evolution500.dev
-M 100644 :1651 data/html/.cvsignore
+M 100644 :1898 data/cmdvartab
+M 100644 :1888 data/driver.list
+M 100644 :1899 data/evolution500.dev
 M 100644 :894 data/html/Makefile.in
 M 100644 :741 data/html/README
 M 100644 :742 data/html/bottom.html
@@ -12931,10 +12781,10 @@ M 100644 :621 debian/po/templates.pot
 M 100755 :1373 debian/po/vi.po
 M 100755 :1269 debian/rules
 M 100644 :623 debian/watch
-M 100644 :1909 docs/FAQ
+M 100644 :1885 docs/FAQ
 M 100644 :64 docs/README
-M 100644 :1924 docs/acpi.txt
-M 100644 :1925 docs/al175-vars.txt
+M 100644 :1900 docs/acpi.txt
+M 100644 :1901 docs/al175-vars.txt
 M 100644 :65 docs/big-servers.txt
 M 100644 :66 docs/cables/apc-rs500-serial.txt
 M 100644 :67 docs/cables/apc.txt
@@ -12955,37 +12805,36 @@ M 100644 :81 docs/developers.txt
 M 100644 :1394 docs/hid-subdrivers.txt
 M 100644 :82 docs/ideas.txt
 M 100644 :1143 docs/new-drivers.txt
-M 100644 :1926 docs/new-names.txt
+M 100644 :1902 docs/new-names.txt
 M 100644 :85 docs/osd-notify.txt
 M 100644 :86 docs/pager.txt
 M 100644 :87 docs/powersaving.txt
-M 100644 :1927 docs/protocol.txt
+M 100644 :1903 docs/protocol.txt
 M 100644 :89 docs/shutdown.txt
 M 100644 :90 docs/snmp.txt
 M 100644 :91 docs/sock-protocol.txt
 M 100644 :92 docs/ssl.txt
 M 100644 :1224 docs/upssched.txt
-M 100644 :1653 drivers/.cvsignore
 M 100644 :1342 drivers/Doxyfile
 M 100644 :1569 drivers/Makefile.drvbuild
 M 100644 :1570 drivers/Makefile.in
-M 100644 :1928 drivers/al175.c
+M 100644 :1904 drivers/al175.c
 M 100644 :1278 drivers/al175.h
-M 100644 :1929 drivers/apc-hid.c
+M 100644 :1905 drivers/apc-hid.c
 M 100644 :1146 drivers/apc-hid.h
-M 100644 :1930 drivers/apccmib.h
+M 100644 :1906 drivers/apccmib.h
 M 100644 :498 drivers/apcsmart.c
-M 100644 :1931 drivers/apcsmart.h
+M 100644 :1907 drivers/apcsmart.h
 M 100644 :1204 drivers/bcmxcp.c
 M 100644 :847 drivers/bcmxcp.h
 M 100644 :848 drivers/bcmxcp_io.h
-M 100644 :1898 drivers/bcmxcp_ser.c
+M 100644 :1874 drivers/bcmxcp_ser.c
 M 100644 :850 drivers/bcmxcp_usb.c
 M 100644 :1438 drivers/belkin-hid.c
 M 100644 :1148 drivers/belkin-hid.h
 M 100644 :99 drivers/belkin.c
 M 100644 :1558 drivers/belkin.h
-M 100644 :1899 drivers/belkinunv.c
+M 100644 :1875 drivers/belkinunv.c
 M 100644 :939 drivers/belkinunv.h
 M 100644 :1595 drivers/bestfcom.c
 M 100644 :941 drivers/bestfcom.h
@@ -13002,9 +12851,9 @@ M 100644 :949 drivers/cyberpower.h
 M 100644 :1427 drivers/dstate.c
 M 100644 :110 drivers/dstate.h
 M 100644 :758 drivers/dummy-ups.c
-M 100644 :1932 drivers/dummy-ups.h
+M 100644 :1908 drivers/dummy-ups.h
 M 100644 :505 drivers/energizerups.c
-M 100644 :1933 drivers/esupssmart.c
+M 100644 :1909 drivers/esupssmart.c
 M 100644 :951 drivers/esupssmart.h
 M 100644 :952 drivers/etapro.c
 M 100644 :953 drivers/etapro.h
@@ -13014,14 +12863,14 @@ M 100644 :546 drivers/fentonups.c
 M 100644 :1494 drivers/fentonups.h
 M 100644 :808 drivers/gamatronic.c
 M 100644 :809 drivers/gamatronic.h
-M 100755 :1893 drivers/gendb
+M 100755 :1869 drivers/gendb
 M 100644 :1389 drivers/generic-hid.c
 M 100644 :1390 drivers/generic-hid.h
-M 100644 :1676 drivers/genericups.c
+M 100644 :1664 drivers/genericups.c
 M 100644 :800 drivers/genericups.h
-M 100644 :1914 drivers/hidparser.c
+M 100644 :1890 drivers/hidparser.c
 M 100644 :1456 drivers/hidparser.h
-M 100644 :1915 drivers/hidtypes.h
+M 100644 :1891 drivers/hidtypes.h
 M 100644 :125 drivers/hidups.c
 M 100644 :126 drivers/hidups.h
 M 100644 :1607 drivers/ietfmib.h
@@ -13029,8 +12878,8 @@ M 100644 :957 drivers/ippon.c
 M 100644 :958 drivers/ippon.h
 M 100644 :959 drivers/isbmex.c
 M 100644 :960 drivers/isbmex.h
-M 100644 :1916 drivers/libhid.c
-M 100644 :1917 drivers/libhid.h
+M 100644 :1892 drivers/libhid.c
+M 100644 :1893 drivers/libhid.h
 M 100644 :1232 drivers/libusb.c
 M 100644 :1407 drivers/libusb.h
 M 100644 :961 drivers/liebert.c
@@ -13039,27 +12888,27 @@ M 100644 :1428 drivers/main.c
 M 100644 :135 drivers/main.h
 M 100644 :963 drivers/masterguard.c
 M 100644 :964 drivers/masterguard.h
-M 100644 :1934 drivers/megatec.c
+M 100644 :1910 drivers/megatec.c
 M 100644 :1533 drivers/megatec.h
 M 100644 :965 drivers/metasys.c
 M 100644 :966 drivers/metasys.h
-M 100644 :1935 drivers/mge-hid.c
+M 100644 :1911 drivers/mge-hid.c
 M 100644 :1385 drivers/mge-hid.h
 M 100644 :1561 drivers/mge-shut.c
-M 100644 :1936 drivers/mge-shut.h
+M 100644 :1912 drivers/mge-shut.h
 M 100644 :825 drivers/mge-utalk.c
 M 100644 :826 drivers/mge-utalk.h
 M 100644 :1608 drivers/mgemib.h
 M 100644 :967 drivers/mustek.c
 M 100644 :968 drivers/mustek.h
 M 100644 :1609 drivers/netvisionmib.h
-M 100644 :1918 drivers/newhidups.c
-M 100644 :1919 drivers/newhidups.h
-M 100644 :1937 drivers/nitram.c
-M 100644 :1895 drivers/nitram.h
+M 100644 :1894 drivers/newhidups.c
+M 100644 :1895 drivers/newhidups.h
+M 100644 :1913 drivers/nitram.c
+M 100644 :1871 drivers/nitram.h
 M 100644 :1257 drivers/nut_usb.c
 M 100644 :853 drivers/nut_usb.h
-M 100644 :1938 drivers/oneac.c
+M 100644 :1914 drivers/oneac.c
 M 100644 :148 drivers/oneac.h
 M 100644 :1571 drivers/optiups.c
 M 100644 :1572 drivers/optiups.h
@@ -13068,8 +12917,8 @@ M 100644 :1562 drivers/powercom.h
 M 100644 :1610 drivers/pwmib.h
 M 100644 :1635 drivers/safenet.c
 M 100644 :1636 drivers/safenet.h
-M 100644 :1906 drivers/serial.c
-M 100644 :1907 drivers/serial.h
+M 100644 :1882 drivers/serial.c
+M 100644 :1883 drivers/serial.h
 M 100644 :1133 drivers/skel.c
 M 100644 :157 drivers/sms.c
 M 100644 :158 drivers/sms.h
@@ -13077,21 +12926,20 @@ M 100644 :1619 drivers/snmp-ups.c
 M 100644 :1620 drivers/snmp-ups.h
 M 100644 :662 drivers/solis.c
 M 100644 :528 drivers/solis.h
-M 100644 :1939 drivers/tripplite-hid.c
+M 100644 :1915 drivers/tripplite-hid.c
 M 100644 :1444 drivers/tripplite-hid.h
 M 100644 :1597 drivers/tripplite.c
 M 100644 :972 drivers/tripplite.h
 M 100644 :1344 drivers/tripplite_usb.c
-M 100644 :1940 drivers/tripplitesu.c
+M 100644 :1916 drivers/tripplitesu.c
 M 100644 :974 drivers/tripplitesu.h
 M 100644 :975 drivers/upscode2.c
 M 100644 :976 drivers/upscode2.h
-M 100644 :1888 drivers/upsdrvctl.c
+M 100644 :1864 drivers/upsdrvctl.c
 M 100644 :977 drivers/victronups.c
 M 100644 :978 drivers/victronups.h
-M 100644 :1655 include/.cvsignore
 M 100644 :165 include/attribute.h
-M 100644 :1885 include/common.h
+M 100644 :1861 include/common.h
 M 100644 :863 include/config.h.in
 M 100644 :168 include/extstate.h
 M 100644 :323 include/parseconf.h
@@ -13104,12 +12952,10 @@ M 100644 :175 include/upshandler.h
 M 100644 :643 include/version.h
 M 100644 :642 include/version
 M 100755 :178 install-sh
-M 100644 :1657 lib/.cvsignore
 M 100644 :179 lib/Makefile.in
 M 100644 :180 lib/README
 M 100644 :181 lib/libupsclient-config.in
 M 100644 :182 lib/libupsclient.pc.in
-M 100644 :1658 man/.cvsignore
 M 100644 :1573 man/Makefile.in
 M 100644 :1279 man/al175.8
 M 100644 :184 man/apcsmart.8
@@ -13128,14 +12974,14 @@ M 100644 :194 man/etapro.8
 M 100644 :195 man/everups.8
 M 100644 :535 man/fentonups.8
 M 100644 :810 man/gamatronic.8
-M 100644 :1857 man/genericups.8
+M 100644 :1833 man/genericups.8
 M 100644 :198 man/hidups.8
 M 100644 :199 man/hosts.conf.5
 M 100644 :200 man/ippon.8
 M 100644 :201 man/isbmex.8
 M 100644 :202 man/liebert.8
 M 100644 :203 man/masterguard.8
-M 100644 :1860 man/megatec.8
+M 100644 :1836 man/megatec.8
 M 100644 :204 man/metasys.8
 M 100644 :1515 man/mge-shut.8
 M 100644 :1516 man/mge-utalk.8
@@ -13173,7 +13019,7 @@ M 100644 :543 man/upscode2.8
 M 100644 :234 man/upsd.8
 M 100644 :235 man/upsd.conf.5
 M 100644 :236 man/upsd.users.5
-M 100644 :1889 man/upsdrvctl.8
+M 100644 :1865 man/upsdrvctl.8
 M 100644 :238 man/upsimage.cgi.8
 M 100644 :239 man/upslog.8
 M 100644 :240 man/upsmon.8
@@ -13184,7 +13030,7 @@ M 100644 :244 man/upssched.conf.5
 M 100644 :245 man/upsset.cgi.8
 M 100644 :246 man/upsset.conf.5
 M 100644 :247 man/upsstats.cgi.8
-M 100644 :1871 man/upsstats.html.5
+M 100644 :1847 man/upsstats.html.5
 M 100644 :249 man/victronups.8
 M 100644 :624 packaging/README
 M 100644 :689 packaging/RedHat/nut.spec.in
@@ -13216,12 +13062,10 @@ M 100644 :269 scripts/Windows/halt.c
 M 100644 :1500 scripts/hotplug-ng/README
 M 100644 :1501 scripts/hotplug-ng/nut-usbups.hotplug.in
 M 100644 :1502 scripts/hotplug-ng/nut-usbups.rules.in
-M 100644 :1660 scripts/hotplug/.cvsignore
 M 100644 :812 scripts/hotplug/README
 M 100644 :1498 scripts/hotplug/libhid.usermap
 M 100644 :272 scripts/hotplug/libhidups.in
 M 100644 :273 scripts/misc/osd-notify
-M 100644 :1662 server/.cvsignore
 M 100644 :274 server/Makefile.in
 M 100644 :275 server/access.c
 M 100644 :276 server/access.h
@@ -13257,7 +13101,7 @@ M 100644 :305 server/user.c
 M 100644 :306 server/user.h
 
 blob
-mark :1944
+mark :1920
 data 113
 /Makefile
 /upsimage.cgi
@@ -13273,7 +13117,7 @@ data 113
 
 commit refs/heads/master
 #legacy-id 358
-mark :1945
+mark :1921
 committer Charles Lepple <clepple+nut@gmail.com> 1140282414 +0000
 data 344
 In SVN, you use the svn:ignore property on a directory to ignore files.
@@ -13283,110 +13127,98 @@ and added a client library to the ignore list.
 
 Reference:
     http://svnbook.red-bean.com/en/1.1/ch07s02.html#svn-ch-7-sect-2.3.3
-from :1943
-D .cvsignore
-D clients/.cvsignore
-M 100644 :1944 clients/.gitignore
-D common/.cvsignore
-D conf/.cvsignore
-D data/.cvsignore
-D data/html/.cvsignore
-D drivers/.cvsignore
-D include/.cvsignore
-D lib/.cvsignore
-D man/.cvsignore
-D scripts/hotplug/.cvsignore
-D server/.cvsignore
+from :1919
+M 100644 :1920 clients/.gitignore
 
 blob
-mark :1946
+mark :1922
 data 45
 Revision is 359, file path is trunk/CHANGES.
 
 commit refs/heads/master
 #legacy-id 359
-mark :1947
+mark :1923
 committer Charles Lepple <clepple+nut@gmail.com> 1140527628 +0000
 data 33
 Note SVN conversion in changelog
-from :1945
-M 100644 :1946 CHANGES
+from :1921
+M 100644 :1922 CHANGES
 
 blob
-mark :1948
+mark :1924
 data 45
 Revision is 360, file path is trunk/INSTALL.
 
 commit refs/heads/master
 #legacy-id 360
-mark :1949
+mark :1925
 committer Peter Selinger <selinger@users.sourceforge.net> 1140647116 +0000
 data 53
 * clarified newhidups use of "port" value in INSTALL
-from :1947
-M 100644 :1948 INSTALL
+from :1923
+M 100644 :1924 INSTALL
 
 blob
-mark :1950
+mark :1926
 data 45
 Revision is 361, file path is trunk/CHANGES.
 
 blob
-mark :1951
+mark :1927
 data 57
 Revision is 361, file path is trunk/drivers/upsdrvctl.c.
 
 commit refs/heads/master
 #legacy-id 361
-mark :1952
+mark :1928
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1140961608 +0000
 data 54
 Remove superfluous 'xstrdup' from drivers/upsdrvctl.c
-from :1949
-M 100644 :1950 CHANGES
-M 100644 :1951 drivers/upsdrvctl.c
+from :1925
+M 100644 :1926 CHANGES
+M 100644 :1927 drivers/upsdrvctl.c
 
 blob
-mark :1953
+mark :1929
 data 45
 Revision is 362, file path is trunk/CHANGES.
 
 commit refs/heads/master
 #legacy-id 362
-mark :1954
+mark :1930
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1141056595 +0000
 data 6
 nomsg
-from :1952
-M 100644 :1953 CHANGES
+from :1928
+M 100644 :1929 CHANGES
 
 blob
-mark :1955
+mark :1931
 data 54
 Revision is 363, file path is trunk/data/driver.list.
 
 commit refs/heads/master
 #legacy-id 363
-mark :1956
+mark :1932
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1141056605 +0000
 data 6
 nomsg
-from :1954
-M 100644 :1955 data/driver.list
+from :1930
+M 100644 :1931 data/driver.list
 
 blob
-mark :1957
+mark :1933
 data 45
 Revision is 364, file path is trunk/CHANGES.
 
 commit refs/heads/master
 #legacy-id 364
-mark :1958
+mark :1934
 committer Arnaud Quette <arnaud.quette@free.fr> 1141071413 +0000
 data 27
 move debian/ to packaging/
-from :1956
-M 100644 :1957 CHANGES
+from :1932
+M 100644 :1933 CHANGES
 D debian/changelog
 D debian/control
 D debian/copyright
@@ -13459,177 +13291,177 @@ M 100755 :1269 packaging/debian/rules
 M 100644 :623 packaging/debian/watch
 
 blob
-mark :1959
+mark :1935
 data 45
 Revision is 365, file path is trunk/CHANGES.
 
 blob
-mark :1960
+mark :1936
 data 56
 Revision is 365, file path is trunk/drivers/mge-shut.h.
 
 blob
-mark :1961
+mark :1937
 data 57
 Revision is 365, file path is trunk/drivers/mge-utalk.h.
 
 blob
-mark :1962
+mark :1938
 data 56
 Revision is 365, file path is trunk/drivers/snmp-ups.c.
 
 commit refs/heads/master
 #legacy-id 365
-mark :1963
+mark :1939
 committer Arnaud Quette <arnaud.quette@free.fr> 1141072973 +0000
 data 45
 remove the zero prefix on mge-* and snmp-ups
-from :1958
-M 100644 :1959 CHANGES
-M 100644 :1960 drivers/mge-shut.h
-M 100644 :1961 drivers/mge-utalk.h
-M 100644 :1962 drivers/snmp-ups.c
+from :1934
+M 100644 :1935 CHANGES
+M 100644 :1936 drivers/mge-shut.h
+M 100644 :1937 drivers/mge-utalk.h
+M 100644 :1938 drivers/snmp-ups.c
 
 blob
-mark :1964
+mark :1940
 data 53
 Revision is 367, file path is trunk/common/common.c.
 
 commit refs/heads/master
 #legacy-id 367
-mark :1965
+mark :1941
 committer Peter Selinger <selinger@users.sourceforge.net> 1141378966 +0000
 data 67
 * set errno=ENOENT in common.c:get_user_pwent() if user not found 
-from :1963
-M 100644 :1964 common/common.c
+from :1939
+M 100644 :1940 common/common.c
 
 blob
-mark :1966
+mark :1942
 data 45
 Revision is 368, file path is trunk/CHANGES.
 
 commit refs/heads/master
 #legacy-id 368
-mark :1967
+mark :1943
 committer Peter Selinger <selinger@users.sourceforge.net> 1141390367 +0000
 data 38
 * updated CHANGES for previous commit
-from :1965
-M 100644 :1966 CHANGES
+from :1941
+M 100644 :1942 CHANGES
 
 blob
-mark :1968
+mark :1944
 data 45
 Revision is 369, file path is trunk/CHANGES.
 
 blob
-mark :1969
+mark :1945
 data 54
 Revision is 369, file path is trunk/clients/upslog.c.
 
 blob
-mark :1970
+mark :1946
 data 54
 Revision is 369, file path is trunk/clients/upsmon.c.
 
 blob
-mark :1971
+mark :1947
 data 53
 Revision is 369, file path is trunk/common/common.c.
 
 blob
-mark :1972
+mark :1948
 data 52
 Revision is 369, file path is trunk/drivers/main.c.
 
 blob
-mark :1973
+mark :1949
 data 51
 Revision is 369, file path is trunk/server/upsd.c.
 
 commit refs/heads/master
 #legacy-id 369
-mark :1974
+mark :1950
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1141417548 +0000
 data 109
 handle problems with get_user_pwent() directly, instead of first returning to the caller with a NULL pointer
-from :1967
-M 100644 :1968 CHANGES
-M 100644 :1969 clients/upslog.c
-M 100644 :1970 clients/upsmon.c
-M 100644 :1971 common/common.c
-M 100644 :1972 drivers/main.c
-M 100644 :1973 server/upsd.c
+from :1943
+M 100644 :1944 CHANGES
+M 100644 :1945 clients/upslog.c
+M 100644 :1946 clients/upsmon.c
+M 100644 :1947 common/common.c
+M 100644 :1948 drivers/main.c
+M 100644 :1949 server/upsd.c
 
 blob
-mark :1975
+mark :1951
 data 45
 Revision is 370, file path is trunk/CHANGES.
 
 blob
-mark :1976
+mark :1952
 data 55
 Revision is 370, file path is trunk/drivers/safenet.c.
 
 commit refs/heads/master
 #legacy-id 370
-mark :1977
+mark :1953
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1141482672 +0000
 data 69
 drivers/safenet.c: increase timeout for reading replies from the UPS
-from :1974
-M 100644 :1975 CHANGES
-M 100644 :1976 drivers/safenet.c
+from :1950
+M 100644 :1951 CHANGES
+M 100644 :1952 drivers/safenet.c
 
 blob
-mark :1978
+mark :1954
 data 56
 Revision is 371, file path is branches/Testing/CHANGES.
 
 blob
-mark :1979
+mark :1955
 data 65
 Revision is 371, file path is branches/Testing/data/driver.list.
 
 blob
-mark :1980
+mark :1956
 data 66
 Revision is 371, file path is branches/Testing/drivers/apc-hid.c.
 
 blob
-mark :1981
+mark :1957
 data 68
 Revision is 371, file path is branches/Testing/drivers/hidparser.c.
 
 blob
-mark :1982
+mark :1958
 data 67
 Revision is 371, file path is branches/Testing/drivers/hidtypes.h.
 
 blob
-mark :1983
+mark :1959
 data 65
 Revision is 371, file path is branches/Testing/drivers/libhid.c.
 
 blob
-mark :1984
+mark :1960
 data 65
 Revision is 371, file path is branches/Testing/drivers/libhid.h.
 
 blob
-mark :1985
+mark :1961
 data 68
 Revision is 371, file path is branches/Testing/drivers/newhidups.c.
 
 blob
-mark :1986
+mark :1962
 data 68
 Revision is 371, file path is branches/Testing/drivers/newhidups.h.
 
 commit refs/heads/Testing
 #legacy-id 371
-mark :1987
+mark :1963
 author Peter Selinger <selinger@users.sourceforge.net> 1141494281 +0000
 committer Peter Selinger <selinger@users.sourceforge.net> 1141494281 +0000
 data 325
@@ -13639,24 +13471,24 @@ newhidups: rewrote logical-to-physical value conversion. Rewrote
 extraction of logical values from report. Added Kelvin-to-Celsius
 conversion. Tweaked APC date conversion. Back-UPS BF500 support.
 Deleted unused items in HIDItem structure.
-from :1758
-M 100644 :1978 CHANGES
-M 100644 :1979 data/driver.list
-M 100644 :1980 drivers/apc-hid.c
-M 100644 :1981 drivers/hidparser.c
-M 100644 :1982 drivers/hidtypes.h
-M 100644 :1983 drivers/libhid.c
-M 100644 :1984 drivers/libhid.h
-M 100644 :1985 drivers/newhidups.c
-M 100644 :1986 drivers/newhidups.h
+from :1734
+M 100644 :1954 CHANGES
+M 100644 :1955 data/driver.list
+M 100644 :1956 drivers/apc-hid.c
+M 100644 :1957 drivers/hidparser.c
+M 100644 :1958 drivers/hidtypes.h
+M 100644 :1959 drivers/libhid.c
+M 100644 :1960 drivers/libhid.h
+M 100644 :1961 drivers/newhidups.c
+M 100644 :1962 drivers/newhidups.h
 
 commit refs/heads/Testing
 #legacy-id 372
-mark :1988
+mark :1964
 committer Peter Selinger <selinger@users.sourceforge.net> 1141494469 +0000
 data 74
 removed Makefile from Testing branch, because it does not belong in SVN. 
-from :1987
+from :1963
 D Makefile
 
 tag emptycommit-4
@@ -14019,7 +13851,7 @@ file .cvsignore was initially added on branch Development.
 
 tag reportbuf_base0
 #legacy-id 326
-from :1680
+from :1668
 tagger no-author <no-author> 1139088241 +0000
 data 73
 This commit was manufactured by cvs2svn to create tag
@@ -14052,7 +13884,7 @@ Cleaning up repository after initial SVN import
 
 tag tipdelete-Development
 #legacy-id 356.1
-from :1941
+from :1917
 tagger Charles Lepple <clepple+nut@gmail.com> 1140096703 +0000
 data 78
 Moving branches/Development into trunk.
