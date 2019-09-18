@@ -7066,6 +7066,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							ignore = startwith
 						}
 						if ignore != "" {
+							announce(debugIGNORES, "initializing %s ignores as %s\n", node.path, ignore)
 							node.props.set("svn:ignore", ignore)
 						}
 					}
@@ -7074,8 +7075,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						sp.branchdeletes.Add(node.path)
 						expandedNodes = append(expandedNodes, node)
 						// The deleteall will also delete .gitignore files
-						for _, ignorepath := range sp.activeGitignores {
+						for ignorepath := range sp.activeGitignores {
 							if strings.HasPrefix(ignorepath, node.path) {
+								announce(debugIGNORES, "r%d: deleting %s", revision, ignorepath)
 								delete(sp.activeGitignores, ignorepath)
 							}
 						}
@@ -7131,6 +7133,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					// Update our .gitignore list so that it includes those
 					// in the newly created copy, to ensure they correctly
 					// get deleted during a future directory deletion.
+					announce(debugIGNORES, "before update at %s active ignores are: %s\n", node.path, sp.activeGitignores)
 					l := len(node.fromPath)
 					for sourcegi, value := range sp.activeGitignores {
 						if strings.HasPrefix(sourcegi, node.fromPath) {
@@ -7138,6 +7141,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							sp.activeGitignores[destgi] = value
 						}
 					}
+					announce(debugIGNORES, "after update at %s active ignores are: %s\n", node.path, sp.activeGitignores)
 					if branchcopy {
 						sp.branchcopies.Add(node.path)
 						// FIXME: There's a bug somewhere in here...
@@ -7161,6 +7165,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						// to match the copy of svn:ignore props on the
 						// Subversion side. We use the just updated
 						// activeGitignores dict for that purpose.
+						announce(debugIGNORES, "state of active ignores: %s\n", sp.activeGitignores)
 						if !options.Contains("--user-ignores") {
 							for gipath, ignore := range sp.activeGitignores {
 								if strings.HasPrefix(gipath, node.path) {
@@ -7246,7 +7251,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							newnode.kind = sdFILE
 							newnode.blob = blob
 							newnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
-							announce(debugIGNORES, "r%d: queuing up %s generation with:\n%v.",
+							announce(debugIGNORES, "XXX r%d: queuing up %s generation with: %v.",
 								revision, newnode.path, node.props.get("svn:ignore"))
 							// Must append rather than simply performing.
 							// Otherwise when the property is unset we
@@ -7260,7 +7265,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							newnode.revision = revision
 							newnode.action = sdDELETE
 							newnode.kind = sdFILE
-							announce(debugIGNORES, "r%d: queuing up %s deletion.", revision, newnode.path)
+							announce(debugIGNORES, "XXX r%d: queuing up %s deletion.", revision, newnode.path)
 							newnode.generated = true
 							expandedNodes = append(expandedNodes, newnode)
 							delete(sp.activeGitignores, gitignore_path)

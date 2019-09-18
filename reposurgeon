@@ -4552,11 +4552,12 @@ class StreamParser:
                         node.from_path += os.sep
                     if node.action in (SD_ADD, SD_CHANGE):
                         if node.path in self.branches:
-                            if not node.props: node.props = {}
+                            if not node.props:
+                                node.props = {}
                             if "--noignores" in options:
                                 startwith = ""
                             else:
-                                startwith = next(vcs.dfltignores for vcs in vcstypes if vcs.name == "svn")
+                                startwith = subversion_default_ignores
                             try:
                                 ignore = startwith + \
                                          "# The contents of the svn:ignore " \
@@ -4565,6 +4566,7 @@ class StreamParser:
                             except KeyError:
                                 ignore = startwith
                             if ignore:
+                                announce(DEBUG_IGNORES, "initializing %s ignores as %s\n" % (node.path, ignore))
                                 node.props["svn:ignore"] = ignore
                     elif node.action in (SD_DELETE, SD_REPLACE):
                         if node.path in self.branches:
@@ -4573,6 +4575,7 @@ class StreamParser:
                             # The deleteall will also delete .gitignore files
                             for ignorepath in list(self.active_gitignores.keys()):
                                 if ignorepath.startswith(node.path):
+				    announce(DEBUG_IGNORES, "r%s: deleting %s" % (revision, ignorepath))
                                     del self.active_gitignores[ignorepath]
                         else:
                             # A delete or replace with no from set
@@ -4626,11 +4629,13 @@ class StreamParser:
                         # Update our .gitignore list so that it includes those
                         # in the newly created copy, to ensure they correctly
                         # get deleted during a future directory deletion.
+                        announce(DEBUG_IGNORES, "before update at %s active ignores are: %s\n" % (node.path, self.active_gitignores))
                         l = len(node.from_path)
                         for sourcegi, value in self.active_gitignores.items():
                                     if sourcegi.startswith(node.from_path):
                                         destgi = node.path + sourcegi[l:]
                                         self.active_gitignores[destgi] = value
+                        announce(DEBUG_IGNORES, "after update at %s active ignores are: %s\n" % (node.path, self.active_gitignores))
                         if branchcopy:
                             self.branchcopies.add(node.path)
                             # Store the minimum information needed to propagate
@@ -4651,6 +4656,7 @@ class StreamParser:
                             # to match the copy of svn:ignore props on the
                             # Subversion side. We use the just updated
                             # active_gitignores dict for that purpose.
+                            announce(DEBUG_IGNORES, "state of active ignores: %s\n" % self.active_gitignores)
                             if '--user-ignores' not in options:
                                 for gipath, ignore in self.active_gitignores.items():
                                     if gipath.startswith(node.path):
@@ -4730,7 +4736,7 @@ class StreamParser:
                                 newnode.blob = blob
                                 newnode.content_hash = \
                                         hashlib.md5(polybytes(ignore)).hexdigest()
-                                announce(DEBUG_IGNORES, "r%s: queuing up %s generation with:\n%s." % (revision, newnode.path, node.props["svn:ignore"]))
+                                announce(DEBUG_IGNORES, "XXX r%s: queuing up %s generation with: %s." % (revision, newnode.path, node.props["svn:ignore"]))
                                 # Must append rather than simply performing.
                                 # Otherwise when the property is unset we
                                 # won't have the right thing happen.
@@ -4743,7 +4749,7 @@ class StreamParser:
                                 newnode.revision = revision
                                 newnode.action = SD_DELETE
                                 newnode.kind = SD_FILE
-                                announce(DEBUG_IGNORES, "r%s: queuing up %s deletion." % (revision, newnode.path))
+                                announce(DEBUG_IGNORES, "XXX r%s: queuing up %s deletion." % (revision, newnode.path))
                                 newnode.generated = True
                                 expanded_nodes.append(newnode)
                                 del self.active_gitignores[gitignore_path]
@@ -7103,7 +7109,6 @@ class Repository:
             return
         events = [self.events[i] for i in v]
         sorted_events = [self.events[i] for i in sorted(v)]
-        #sys.stdout.write("XXXX Events %s, sorted %s\n" % ([x.mark for x in events], [x.mark for x in sorted_events]))
         for e in sorted_events[1:]:
             if len(e.parents()) > 1:
                 raise Recoverable("non-linear history detected, multiple parents at %s" % e.id_me())
