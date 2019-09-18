@@ -6675,6 +6675,8 @@ func (sp *StreamParser) isBranchDeleted(pathname string) bool {
 // it might be "\" on OSes not to be mentioned in polite company.
 const svnSep = "/"
 
+var blankline = regexp.MustCompile(`(?m:^\s*\n)`)
+
 func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// Subversion actions to import-stream commits.
 	sp.repo.addEvent(newPassthrough(sp.repo, "#reposurgeon sourcetype svn\n"))
@@ -7001,12 +7003,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					node.props.delete("cvs2svn:cvs-rev")
 				}
 				// Remove blank lines from svn:ignore property values.
-				// Note: this is not as general as the Python version,
-				// which would also strip nonempty lines consisting entirely
-				// of whitespace.
 				if node.props.has("svn:ignore") {
 					oldIgnore := node.props.get("svn:ignore")
-					newIgnore := strings.Replace(oldIgnore, "\n\n", "\n", -1)
+					newIgnore := blankline.ReplaceAllLiteralString(oldIgnore, "")
 					if newIgnore == "" {
 						node.props.set("svn:ignore", "")
 					} else {
