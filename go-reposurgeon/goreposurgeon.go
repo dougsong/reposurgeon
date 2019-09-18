@@ -7006,11 +7006,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				if node.props.has("svn:ignore") {
 					oldIgnore := node.props.get("svn:ignore")
 					newIgnore := blankline.ReplaceAllLiteralString(oldIgnore, "")
-					if newIgnore == "" {
-						node.props.set("svn:ignore", "")
-					} else {
-						node.props.set("svn:ignore", newIgnore)
-					}
+					node.props.set("svn:ignore", newIgnore)
 				}
 				if !options.Contains("--ignore-properties") {
 					eligible := make([][2]string, 0)
