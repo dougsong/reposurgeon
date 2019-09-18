@@ -4571,10 +4571,9 @@ class StreamParser:
                             self.branchdeletes.add(node.path)
                             expanded_nodes.append(node)
                             # The deleteall will also delete .gitignore files
-                            for ignorepath in list(gi
-                                        for gi in self.active_gitignores
-                                        if gi.startswith(node.path)):
-                                del self.active_gitignores[ignorepath]
+                            for ignorepath in list(self.active_gitignores.keys()):
+                                if ignorepath.startswith(node.path):
+                                    del self.active_gitignores[ignorepath]
                         else:
                             # A delete or replace with no from set
                             # can occur if the directory is empty.
@@ -4594,17 +4593,16 @@ class StreamParser:
                             # have generated. Note that even with a directory
                             # with no files from SVN, we might have added
                             # .gitignore files we now must delete.
-                            for ignorepath in list(gi
-                                        for gi in self.active_gitignores
-                                        if gi.startswith(node.path)):
-                                newnode = StreamParser.NodeAction()
-                                newnode.path = ignorepath
-                                newnode.revision = revision
-                                newnode.action = SD_DELETE
-                                newnode.kind = SD_FILE
-                                newnode.generated = True
-                                expanded_nodes.append(newnode)
-                                del self.active_gitignores[ignorepath]
+                            for ignorepath in list(self.active_gitignores.keys()):
+                                if ignorepath.startswith(node.path):
+                                    newnode = StreamParser.NodeAction()
+                                    newnode.path = ignorepath
+                                    newnode.revision = revision
+                                    newnode.action = SD_DELETE
+                                    newnode.kind = SD_FILE
+                                    newnode.generated = True
+                                    expanded_nodes.append(newnode)
+                                    del self.active_gitignores[ignorepath]
                     # Handle directory copies.  If this is a copy
                     # between branches, no fileop should be issued
                     # until there is an actual file modification on
@@ -4629,11 +4627,10 @@ class StreamParser:
                         # in the newly created copy, to ensure they correctly
                         # get deleted during a future directory deletion.
                         l = len(node.from_path)
-                        for sourcegi, value in list((gi,v) for (gi,v) in
-                                    self.active_gitignores.items()
-                                    if gi.startswith(node.from_path)):
-                            destgi = node.path + sourcegi[l:]
-                            self.active_gitignores[destgi] = value
+                        for sourcegi, value in self.active_gitignores.items():
+                                    if sourcegi.startswith(node.from_path):
+                                        destgi = node.path + sourcegi[l:]
+                                        self.active_gitignores[destgi] = value
                         if branchcopy:
                             self.branchcopies.add(node.path)
                             # Store the minimum information needed to propagate
@@ -4655,22 +4652,20 @@ class StreamParser:
                             # Subversion side. We use the just updated
                             # active_gitignores dict for that purpose.
                             if '--user-ignores' not in options:
-                                for gipath, ignore in list(
-                                            (gi,v) for (gi,v) in
-                                            self.active_gitignores.items()
-                                            if gi.startswith(node.path)):
-                                    blob = Blob(self.repo)
-                                    blob.set_content(ignore)
-                                    subnode = StreamParser.NodeAction()
-                                    subnode.path = gipath
-                                    subnode.revision = revision
-                                    subnode.action = SD_ADD
-                                    subnode.kind = SD_FILE
-                                    subnode.blob = blob
-                                    subnode.content_hash = \
-                                            hashlib.md5(polybytes(ignore)).hexdigest()
-                                    subnode.generated = True
-                                    expanded_nodes.append(subnode)
+                                for gipath, ignore in self.active_gitignores.items():
+                                    if gipath.startswith(node.path):
+                                        blob = Blob(self.repo)
+                                        blob.set_content(ignore)
+                                        subnode = StreamParser.NodeAction()
+                                        subnode.path = gipath
+                                        subnode.revision = revision
+                                        subnode.action = SD_ADD
+                                        subnode.kind = SD_FILE
+                                        subnode.blob = blob
+                                        subnode.content_hash = \
+                                                hashlib.md5(polybytes(ignore)).hexdigest()
+                                        subnode.generated = True
+                                        expanded_nodes.append(subnode)
                             # Now generate copies for all files in the source
                             for source in node.from_set:
                                 lookback = filemaps[node.from_rev][source]
