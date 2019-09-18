@@ -618,6 +618,7 @@ func (s fastOrderedIntSet) Subtract(other *fastOrderedIntSet) *fastOrderedIntSet
 			p.Add(it.Value())
 		}
 	}
+
 	return &fastOrderedIntSet{p}
 }
 
@@ -2681,6 +2682,11 @@ func (d *OrderedMap) has(hd string) bool {
 
 func (d *OrderedMap) set(hd string, data string) {
 	d.dict[hd] = data
+	for _, k := range d.keys {
+		if hd == k {
+			return
+		}
+	}
 	d.keys = append(d.keys, hd)
 }
 
