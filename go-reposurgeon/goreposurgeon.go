@@ -7421,10 +7421,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						continue
 					}
 					ancestorNodes[node.path] = node
-					// This check was not present in the ancestral Python.
-					if node.blobmark == "" && !strings.HasSuffix(node.path, ".gitignore") {
-						panic(fmt.Errorf("impossibly empty blob mark in %s", node))
-					}
+					// Note: the blob mark can still be empty here on a pure property change.
 					// Time for fileop generation.
 					perms := nodePermissions(*node)
 					if sp.propagate[node.path] {
