@@ -42,8 +42,9 @@ portcheck: check
 
 # Note: must reintegrare repocutter/repotool/repomapper test when the transpation is done
 python: listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce \
+		svnload-regress \
 		git-regress git-regress-branches git-regress-merges \
-		git-regress-tags hg-extractor svnload-regress \
+		git-regress-tags hg-extractor \
 		liftcheck-regress legacy-regress svndump-regress \
 		svncheck-regress
 
@@ -334,7 +335,7 @@ hg-regress-patho:
 	@rm -f /tmp/regress$$$$
 
 # Test loading from Subversion
-SVNLOADS := $(shell ls *.svn | sed '/.svn/s///')
+SVNLOADS := $(shell ls *.svn | sed '/.svn$$/s///')
 svnload-buildregress:
 	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
 	for test in $(SVNLOADS); do \
