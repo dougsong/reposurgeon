@@ -39,7 +39,7 @@ data 99
 Revision is 13685, file path is applications/rendering/osmarender/stylesheets/symbols/curling.svg.
 
 commit refs/heads/master
-#legacy-id 13685
+#legacy-id 3
 mark :5
 committer petschge <petschge> 1234516710 +0000
 data 31
@@ -48,21 +48,21 @@ from :2
 M 100644 :4 curling.svg
 M 100644 :3 osm-map-features-z17.xml
 
-tag emptycommit-13684
-#legacy-id 13684
+tag emptycommit-2
+#legacy-id 2
 from :2
 tagger crschmidt <crschmidt> 1234496989 +0000
-data 78
+data 74
 add missing image files
 
-[[Tag from zero-fileop commit at Subversion r13684]]
+[[Tag from zero-fileop commit at Subversion r2]]
 
-tag emptycommit-13686
-#legacy-id 13686
+tag emptycommit-4
+#legacy-id 4
 from :2
 tagger koying <koying> 1234522695 +0000
-data 239
+data 235
 ADD : Styles dock + list of styles in "Tools-Styles" for quick style switching. As a consequence, a directory must be defined in the preferences where all custom styles will be stored.
 
-[[Tag from zero-fileop commit at Subversion r13686]]
+[[Tag from zero-fileop commit at Subversion r4]]
 

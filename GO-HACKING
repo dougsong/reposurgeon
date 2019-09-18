@@ -43,8 +43,21 @@ will check the actual result of the script in foo.tst against its expected
 output in foo.chk.  No output other than the test notice is good.  The
 Python version passes all these tests.
 
-The next steps after these will be testing extractor classes,
-and the Subversion load tests.
+The following Subversion load tests presently fail:
+
+delignore.svn
+executable.svn
+format7.svn
+mergeinfo-with-split.svn
+permcopy2.svn
+permcopy.svn
+svnignores.svn
+swap.svn
+too-many-parents.svn
+vanilla.svn
+wrong-mergeinfo.svn
+
+The next steps after these will be testing extractor classes.
 
 == Tuning for speed ==
 
