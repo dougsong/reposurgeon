@@ -397,7 +397,7 @@ liftcheck-dirty:
 	@ls *.svn | comm -23 - goodlist$$
 	@rm goodlist$$
 
-REFLOADS=x-references mergeinfo-with-split
+REFLOADS=references mergeinfo-with-split
 legacy-buildregress:
 	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
 	for test in $(REFLOADS); \
