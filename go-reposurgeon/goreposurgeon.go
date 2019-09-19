@@ -5568,7 +5568,6 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 				pm.store[target] = value
 			}
 		}
-		//fmt.Printf("XXXXX after directory copy: pm=%v\n", pm)
 		return
 	}
 	if sourcePathMap.contains(sourcePath) {
@@ -7252,7 +7251,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							newnode.kind = sdFILE
 							newnode.blob = blob
 							newnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
-							announce(debugIGNORES, "XXX r%d: queuing up %s generation with: %v.",
+							announce(debugIGNORES, "r%d: queuing up %s generation with: %v.",
 								revision, newnode.path, node.props.get("svn:ignore"))
 							// Must append rather than simply performing.
 							// Otherwise when the property is unset we
@@ -7266,7 +7265,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							newnode.revision = revision
 							newnode.action = sdDELETE
 							newnode.kind = sdFILE
-							announce(debugIGNORES, "XXX r%d: queuing up %s deletion.", revision, newnode.path)
+							announce(debugIGNORES, "r%d: queuing up %s deletion.", revision, newnode.path)
 							newnode.generated = true
 							expandedNodes = append(expandedNodes, newnode)
 							delete(sp.activeGitignores, gitignore_path)

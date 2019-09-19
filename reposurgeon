@@ -818,11 +818,20 @@ class quietOrderedDict(collections.OrderedDict):
             raw = raw[:-1] + "}"
         return raw
 
+
 # Shims to make Python list dumps look like Golang ones
 def goify_str(lst):
     return "[" + " ".join(lst) + "]" 
 def goify_nonstr(lst):
     return "[" + ", ".join([str(x) for x in lst]) + "]" 
+def goify_map(d):
+    "Dump a map in Go style, chatacter values not backslashified."
+    out = "{"
+    for k, v in d.items():
+        out += "'%s': '%s', " % (k, v)
+    if len(d) > 0:
+        out = out[:-2]
+    return out + "}"
 
 # How to write extractor classes:
 #
@@ -4699,7 +4708,7 @@ class StreamParser:
                     # SD_ADD or SD_CHANGE actions.
                     if node.propchange and node.props is not None:
                         announce(DEBUG_EXTRACT, "r%s: setting properties %s on %s" \
-                                     % (revision, node.props, node.path))
+                                     % (revision, goify_map(node.props), node.path))
                         # svn:ignore gets handled here,
                         if '--user-ignores' not in options:
                             if node.path == os.sep:
@@ -4736,7 +4745,7 @@ class StreamParser:
                                 newnode.blob = blob
                                 newnode.content_hash = \
                                         hashlib.md5(polybytes(ignore)).hexdigest()
-                                announce(DEBUG_IGNORES, "XXX r%s: queuing up %s generation with: %s." % (revision, newnode.path, node.props["svn:ignore"]))
+                                announce(DEBUG_IGNORES, "r%s: queuing up %s generation with: %s." % (revision, newnode.path, node.props["svn:ignore"]))
                                 # Must append rather than simply performing.
                                 # Otherwise when the property is unset we
                                 # won't have the right thing happen.
@@ -4749,7 +4758,7 @@ class StreamParser:
                                 newnode.revision = revision
                                 newnode.action = SD_DELETE
                                 newnode.kind = SD_FILE
-                                announce(DEBUG_IGNORES, "XXX r%s: queuing up %s deletion." % (revision, newnode.path))
+                                announce(DEBUG_IGNORES, "r%s: queuing up %s deletion." % (revision, newnode.path))
                                 newnode.generated = True
                                 expanded_nodes.append(newnode)
                                 del self.active_gitignores[gitignore_path]
