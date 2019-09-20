@@ -7368,19 +7368,17 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						// Ordinary inheritance, no node copy.  For
 						// robustness, we don't assume revisions are
 						// consecutive numbers.
-						found := filemaps[node.fromRev].get(node.path)
-						lookback, ok := found.(NodeAction)
-						if !ok {
-							found = filemaps[previous].get(node.path)
-							lookback, _ = found.(NodeAction)
+						lookback, ok := ancestorNodes[node.path]
+						if ok {
+							ancestor = lookback
+						} else {
+							lookback2 := filemaps[previous].get(node.path)
+							if lookback2 != nil {
+								ancestor = lookback2.(*NodeAction)
+							} else {
+								ancestor = nil
+							}
 						}
-						ancestor = &lookback
-						//lookback, ok := ancestorNodes[node.path]
-						//if ok {
-						//	ancestor = lookback
-						//} else {
-						//	ancestor = filemaps[previous].get(node.path).(*NodeAction)
-						//}
 					} else {
 						ancestor = nil
 					}
