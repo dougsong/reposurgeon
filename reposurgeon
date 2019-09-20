@@ -4867,6 +4867,8 @@ class StreamParser:
                                     self.hashmap[node.content_hash] = node
                         elif ancestor:
                             node.blobmark = ancestor.blobmark
+			    announce(DEBUG_EXTRACT, "r%s: %s gets blob '%s' from ancestor %s" \
+				     % (revision, node, node.blobmark, ancestor))
                         else:
                             # No ancestor, no blob. Has to be a
                             # pure property change.  There's no

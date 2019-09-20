@@ -7375,6 +7375,12 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							lookback, _ = found.(NodeAction)
 						}
 						ancestor = &lookback
+						//lookback, ok := ancestorNodes[node.path]
+						//if ok {
+						//	ancestor = lookback
+						//} else {
+						//	ancestor = filemaps[previous].get(node.path).(*NodeAction)
+						//}
 					} else {
 						ancestor = nil
 					}
@@ -7411,8 +7417,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						}
 					} else if ancestor != nil {
 						node.blobmark = ancestor.blobmark
-						//announce(debugEXTRACT, "r%d: %s gets blob '%s' from ancestor %s",
-						//	revision, node, node.blobmark, ancestor)
+						announce(debugEXTRACT, "r%d: %s gets blob '%s' from ancestor %s",
+							revision, node, node.blobmark, ancestor)
 					} else {
 						// No ancestor, no blob. Has to be a
 						// pure property change.  There's no
@@ -7426,7 +7432,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						continue
 					}
 					ancestorNodes[node.path] = node
-					// Note: the blob mark can still be empty here on a pure property change.
+					if node.blobmark == "" {
+						panic("impossibly empty blob mark")
+					}
 					// Time for fileop generation.
 					perms := nodePermissions(*node)
 					if sp.propagate[node.path] {

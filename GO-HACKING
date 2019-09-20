@@ -46,7 +46,6 @@ Python version passes all these tests.
 The following Subversion load tests presently fail:
 
 executable.svn
-format7.svn
 mergeinfo-with-split.svn
 permcopy2.svn
 permcopy.svn
