@@ -7100,8 +7100,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						// Emit delete actions for the .gitignore files we
 						// have generated. Note that even with a directory
 						// with no files from SVN, we might have added
-						// .gitignore files we now must delete.
-						for _, ignorepath := range sp.activeGitignores {
+						// .gitignore files we now must delete
+						for ignorepath := range sp.activeGitignores {
 							if strings.HasPrefix(ignorepath, node.path) {
 								newnode := new(NodeAction)
 								newnode.path = ignorepath

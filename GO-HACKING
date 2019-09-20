@@ -45,7 +45,6 @@ Python version passes all these tests.
 
 The following Subversion load tests presently fail:
 
-delignore.svn
 executable.svn
 format7.svn
 mergeinfo-with-split.svn
