@@ -4365,31 +4365,31 @@ class StreamParser:
         filemaps = {}
         filemap = PathMap()
         for (revision, record) in self.revisions.items():
-            for node in record.nodes:
+            for (idx, node) in enumerate(record.nodes):
                 # Mutate the filemap according to copies
                 if node.from_rev:
                     assert int(node.from_rev) < int(revision)
                     filemap.copy_from(node.path, filemaps[node.from_rev],
                                       node.from_path)
-                    announce(DEBUG_FILEMAP, "r%s~%s copied to %s" \
-                                 % (node.from_rev, node.from_path, node.path))
+                    announce(DEBUG_FILEMAP, "r%s#%d: r%s~%s copied to %s" \
+                                 % (revision, idx+1, node.from_rev, node.from_path, node.path))
                 # Mutate the filemap according to adds/deletes/changes
                 if node.action == SD_ADD and node.kind == SD_FILE:
                     filemap[node.path] = node
-                    announce(DEBUG_FILEMAP, "r%s~%s added" % (node.revision, node.path))
+                    announce(DEBUG_FILEMAP, "r%s#%d: %s added" % (node.revision, idx+1, node.path))
                 elif node.action == SD_DELETE or (node.action == SD_REPLACE and node.kind == SD_DIR):
                     if node.kind == SD_NONE:
                         node.kind = SD_FILE if node.path in filemap else SD_DIR
-                        # announce(DEBUG_FILEMAP, "r%s: deduced type for %s" % (node.revision, node))
+                        # announce(DEBUG_FILEMAP, "r%s#%d: deduced type for %s" % (node.revision, idx+1, node))
                     # Snapshot the deleted paths before removing them.
                     node.from_set = PathMap()
                     node.from_set.copy_from(node.path, filemap, node.path)
                     del filemap[node.path]
-                    announce(DEBUG_FILEMAP, "r%s~%s deleted" \
-                                 % (node.revision, node.path))
+                    announce(DEBUG_FILEMAP, "r%s$#%d: %s deleted" \
+                                 % (node.revision, idx+1, node.path))
                 elif node.action in (SD_CHANGE, SD_REPLACE) and node.kind == SD_FILE:
                     filemap[node.path] = node
-                    announce(DEBUG_FILEMAP, "r%s~%s changed" % (node.revision, node.path))
+                    announce(DEBUG_FILEMAP, "r%s#%d: %s changed" % (node.revision, idx+1, node.path))
             filemaps[revision] = filemap.snapshot()
             baton.twirl()
         del filemap
@@ -4513,7 +4513,7 @@ class StreamParser:
             has_properties = set()
             for (n, node) in enumerate(record.nodes):
                 if debug_enable(DEBUG_EXTRACT):
-                    announce(DEBUG_EXTRACT, "r%s:%d: %s" % (revision, n+1, node))
+                    announce(DEBUG_EXTRACT, "r%s#%d: %s" % (revision, n+1, node))
                 elif node.kind == SD_DIR \
                          and node.action != SD_CHANGE \
                          and debug_enable(DEBUG_TOPOLOGY):
@@ -4542,12 +4542,12 @@ class StreamParser:
                             first = next(prop_items)
                         except StopIteration:
                             if node.path in has_properties:
-                                self.gripe("r%s~%s: properties cleared." \
-                                             % (node.revision, node.path))
+                                self.gripe("r%s%d~%s: properties cleared." \
+                                             % (node.revision, n+1, node.path))
                                 has_properties.discard(node.path)
                         else:
-                            self.gripe("r%s~%s properties set:" \
-                                                   % (node.revision, node.path))
+                            self.gripe("r%s#%d~%s properties set:" \
+                                                   % (node.revision, n+1, node.path))
                             for prop, val in itertools.chain((first,), prop_items):
                                 self.gripe("\t%s = '%s'" % (prop, val))
                             has_properties.add(node.path)
@@ -4584,7 +4584,7 @@ class StreamParser:
                             # The deleteall will also delete .gitignore files
                             for ignorepath in list(self.active_gitignores.keys()):
                                 if ignorepath.startswith(node.path):
-				    announce(DEBUG_IGNORES, "r%s: deleting %s" % (revision, ignorepath))
+				    announce(DEBUG_IGNORES, "r%s#%d: deleting %s" % (revision, n+1, ignorepath))
                                     del self.active_gitignores[ignorepath]
                         else:
                             # A delete or replace with no from set
@@ -4592,8 +4592,8 @@ class StreamParser:
                             # We can just ignore this case.
                             if node.from_set is not None:
                                 for child in node.from_set:
-                                    announce(DEBUG_EXTRACT, "r%s: deleting %s" \
-                                                 % (revision, child))
+                                    announce(DEBUG_EXTRACT, "r%s#%d: deleting %s" \
+                                                 % (revision, n+1, child))
                                     newnode = StreamParser.NodeAction()
                                     newnode.path = child
                                     newnode.revision = revision
@@ -4607,6 +4607,8 @@ class StreamParser:
                             # .gitignore files we now must delete.
                             for ignorepath in list(self.active_gitignores.keys()):
                                 if ignorepath.startswith(node.path):
+                                    announce(DEBUG_EXTRACT, "r%s#%d: deleting %s" \
+                                                 % (revision, n+1, ignorepath))
                                     newnode = StreamParser.NodeAction()
                                     newnode.path = ignorepath
                                     newnode.revision = revision
@@ -4628,9 +4630,10 @@ class StreamParser:
                         branchcopy = node.from_path in self.branches \
                                          and node.path in self.branches \
                                          and node.path not in self.branchdeletes
-                        announce(DEBUG_TOPOLOGY, "r%s: directory copy to %s from " \
+                        announce(DEBUG_TOPOLOGY, "r%s#%d: directory copy to %s from " \
                                      "r%s~%s (branchcopy %s)" \
                                      % (revision,
+                                        n+1,
                                         node.path,
                                         node.from_rev,
                                         node.from_path,
@@ -4657,8 +4660,8 @@ class StreamParser:
                                     stem = source[len(node.from_path):]
                                     targetpath = node.path + stem
                                     self.propagate[targetpath] = True
-                                    announce(DEBUG_TOPOLOGY, "r%s: exec-mark %s" \
-                                             % (revision, targetpath))
+                                    announce(DEBUG_TOPOLOGY, "r%s#%d: exec-mark %s" \
+                                             % (revision, n+1, targetpath))
                         else:
                             self.branchdeletes.discard(node.path)
                             # Generate copy ops for generated .gitignore files
@@ -4685,8 +4688,8 @@ class StreamParser:
                             for source in node.from_set:
                                 lookback = filemaps[node.from_rev][source]
                                 if lookback is None:
-                                    raise Fatal("r%s: can't find ancestor %s" \
-                                             % (revision, source))
+                                    raise Fatal("r%s#%d: can't find ancestor %s" \
+                                             % (revision, n+1, source))
                                 subnode = StreamParser.NodeAction()
                                 subnode.path = node.path + \
                                         source[len(node.from_path):]
@@ -4697,8 +4700,9 @@ class StreamParser:
                                 subnode.props = lookback.props
                                 subnode.action = SD_ADD
                                 subnode.kind = SD_FILE
-                                announce(DEBUG_TOPOLOGY, "r%s: generated copy r%s~%s -> %s" \
+                                announce(DEBUG_TOPOLOGY, "r%s#%d: generated copy r%s~%s -> %s" \
                                              % (revision,
+                                                n+1,
                                                 subnode.from_rev,
                                                 subnode.from_path,
                                                 subnode.path))
@@ -4707,8 +4711,8 @@ class StreamParser:
                     # Property settings can be present on either
                     # SD_ADD or SD_CHANGE actions.
                     if node.propchange and node.props is not None:
-                        announce(DEBUG_EXTRACT, "r%s: setting properties %s on %s" \
-                                     % (revision, goify_map(node.props), node.path))
+                        announce(DEBUG_EXTRACT, "r%s#%d: setting properties %s on %s" \
+                                     % (revision, n+1, goify_map(node.props), node.path))
                         # svn:ignore gets handled here,
                         if '--user-ignores' not in options:
                             if node.path == os.sep:
@@ -4745,7 +4749,7 @@ class StreamParser:
                                 newnode.blob = blob
                                 newnode.content_hash = \
                                         hashlib.md5(polybytes(ignore)).hexdigest()
-                                announce(DEBUG_IGNORES, "r%s: queuing up %s generation with: %s." % (revision, newnode.path, node.props["svn:ignore"]))
+                                announce(DEBUG_IGNORES, "r%s#%d: queuing up %s generation with: %s." % (revision, n+1, newnode.path, node.props["svn:ignore"]))
                                 # Must append rather than simply performing.
                                 # Otherwise when the property is unset we
                                 # won't have the right thing happen.
@@ -4758,7 +4762,7 @@ class StreamParser:
                                 newnode.revision = revision
                                 newnode.action = SD_DELETE
                                 newnode.kind = SD_FILE
-                                announce(DEBUG_IGNORES, "r%s: queuing up %s deletion." % (revision, newnode.path))
+                                announce(DEBUG_IGNORES, "r%s#%d: queuing up %s deletion." % (revision, n+1, newnode.path))
                                 newnode.generated = True
                                 expanded_nodes.append(newnode)
                                 del self.active_gitignores[gitignore_path]
@@ -4769,9 +4773,9 @@ class StreamParser:
             # the M node happens to be missing its hash it will be seen as
             # unmodified and only the D will be issued.
             seen = set()
-            for node in reversed(expanded_nodes):
+            for (n, node) in enumerate(reversed(expanded_nodes)):
                 if node.action == SD_DELETE and node.path in seen:
-		    announce(DEBUG_EXTRACT, "r%s: cvs2svn junk pair detected, omitting %s deletion." % (revision, node.path))
+		    announce(DEBUG_EXTRACT, "r%s#%d: cvs2svn junk pair detected, omitting %s deletion." % (revision, n+1, node.path))
                     node.action = None
                 seen.add(node.path)
             # Create actions corresponding to both

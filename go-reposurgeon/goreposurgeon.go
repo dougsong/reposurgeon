@@ -6804,13 +6804,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				//assert node.fromRev < revision
 				filemap.copyFrom(node.path, filemaps[node.fromRev],
 					node.fromPath)
-				announce(debugFILEMAP, "r%d~%s copied to %s",
-					node.fromRev, node.fromPath, node.path)
+				announce(debugFILEMAP, "r%d#%d: r%d~%s copied to %s",
+					revision, idx+1, node.fromRev, node.fromPath, node.path)
 			}
 			// Mutate the filemap according to adds/deletes/changes
 			if node.action == sdADD && node.kind == sdFILE {
 				filemap.set(node.path, node)
-				announce(debugFILEMAP, "r%d~%s added", node.revision, node.path)
+				announce(debugFILEMAP, "r%d#%d: %s added", node.revision, idx+1, node.path)
 			} else if node.action == sdDELETE || (node.action == sdREPLACE && node.kind == sdDIR) {
 				if node.kind == sdNONE {
 					if filemap.contains(node.path) {
@@ -6819,17 +6819,17 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						node.kind = sdDIR
 					}
 				}
-				//announce(debugFILEMAP, "r%d: deduced type for %s", node.revision, node)
+				//announce(debugFILEMAP, "r%d#%d: deduced type for %s", node.revision, idx+1, node)
 				// Snapshot the deleted paths before
 				// removing them.
 				node.fromSet = newPathMap()
 				node.fromSet.copyFrom(node.path, filemap, node.path)
 				filemap.remove(node.path)
-				announce(debugFILEMAP, "r%d~%s deleted",
-					node.revision, node.path)
+				announce(debugFILEMAP, "r%d#%d: %s deleted",
+					node.revision, idx+1, node.path)
 			} else if (node.action == sdCHANGE || node.action == sdREPLACE) && node.kind == sdFILE {
 				filemap.set(node.path, node)
-				announce(debugFILEMAP, "r%d~%s changed", node.revision, node.path)
+				announce(debugFILEMAP, "r%d#%d: %s changed", node.revision, idx+1, node.path)
 			}
 		}
 		filemaps[revision] = filemap.snapshot()
@@ -6996,7 +6996,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		for n := range record.nodes {
 			node := &record.nodes[n]
 			if debugEnable(debugEXTRACT) {
-				announce(debugEXTRACT, fmt.Sprintf("r%d:%d: %s", revision, n+1, node))
+				announce(debugEXTRACT, fmt.Sprintf("r%d#%d: %s", revision, n+1, node))
 			} else if node.kind == sdDIR &&
 				node.action != sdCHANGE && debugEnable(debugTOPOLOGY) {
 				announce(debugSHOUT, node.String())
@@ -7027,11 +7027,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					}
 					if len(eligible) == 0 {
 						if hasProperties.Contains(node.path) {
-							sp.gripe(fmt.Sprintf("r%d~%s: properties cleared.", node.revision, node.path))
+							sp.gripe(fmt.Sprintf("r%d#%d~%s: properties cleared.", node.revision, n+1, node.path))
 							hasProperties.Remove(node.path)
 						}
 					} else {
-						sp.gripe(fmt.Sprintf("r%d~%s properties set:", node.revision, node.path))
+						sp.gripe(fmt.Sprintf("r%d#%d~%s properties set:", node.revision, n+1, node.path))
 						for _, pair := range eligible {
 							sp.gripe(fmt.Sprintf("\t%s = '%s'", pair[0], pair[1]))
 						}
@@ -7079,7 +7079,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						// The deleteall will also delete .gitignore files
 						for ignorepath := range sp.activeGitignores {
 							if strings.HasPrefix(ignorepath, node.path) {
-								announce(debugIGNORES, "r%d: deleting %s", revision, ignorepath)
+								announce(debugIGNORES, "r%d#%d: deleting %s", revision, n+1, ignorepath)
 								delete(sp.activeGitignores, ignorepath)
 							}
 						}
@@ -7089,7 +7089,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						// We can just ignore that case. Otherwise...
 						if node.fromSet != nil {
 							for _, child := range node.fromSet.pathnames() {
-								announce(debugEXTRACT, "r%d: deleting %s", revision, child)
+								announce(debugEXTRACT, "r%d#%d: deleting %s", revision, n+1, child)
 								newnode := new(NodeAction)
 								newnode.path = child
 								newnode.revision = revision
@@ -7105,6 +7105,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						// .gitignore files we now must delete
 						for ignorepath := range sp.activeGitignores {
 							if strings.HasPrefix(ignorepath, node.path) {
+								announce(debugEXTRACT, "r%d#%d: deleting %s", revision, n+1, ignorepath)
 								newnode := new(NodeAction)
 								newnode.path = ignorepath
 								newnode.revision = revision
@@ -7130,8 +7131,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					branchcopy := sp.isBranch(node.fromPath) &&
 						sp.isBranch(node.path) &&
 						!sp.isBranchDeleted(node.path)
-					announce(debugTOPOLOGY, "r%d: directory copy to %s from r%d~%s (branchcopy %s)",
-						revision, node.path, node.fromRev, node.fromPath, pythonbool(branchcopy))
+					announce(debugTOPOLOGY, "r%d#%d: directory copy to %s from r%d~%s (branchcopy %s)",
+						revision, n+1, node.path, node.fromRev, node.fromPath, pythonbool(branchcopy))
 					// Update our .gitignore list so that it includes those
 					// in the newly created copy, to ensure they correctly
 					// get deleted during a future directory deletion.
@@ -7158,7 +7159,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 								stem := source[len(node.fromPath):]
 								targetpath := node.path + stem
 								sp.propagate[targetpath] = true
-								announce(debugTOPOLOGY, "r%d: exec-mark %s", revision, targetpath)
+								announce(debugTOPOLOGY, "r%d#%d: exec-mark %s", revision, n+1, targetpath)
 							}
 						}
 					} else {
@@ -7190,8 +7191,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							lookback := filemaps[node.fromRev].get(source)
 							found, ok := lookback.(*NodeAction)
 							if !ok {
-								panic(fmt.Errorf("r%d: can't find ancestor of %s at r%d",
-									revision, source, node.fromRev))
+								panic(fmt.Errorf("r%d#%d: can't find ancestor of %s at r%d",
+									revision, n+1, source, node.fromRev))
 							}
 							subnode := new(NodeAction)
 							subnode.path = node.path + source[len(node.fromPath):]
@@ -7202,8 +7203,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							subnode.props = found.props
 							subnode.action = sdADD
 							subnode.kind = sdFILE
-							announce(debugTOPOLOGY, "r%d: generated copy r%d~%s -> %s",
-								revision, subnode.fromRev, subnode.fromPath, subnode.path)
+							announce(debugTOPOLOGY, "r%d#%d: generated copy r%d~%s -> %s",
+								revision, n+1, subnode.fromRev, subnode.fromPath, subnode.path)
 							subnode.generated = true
 							expandedNodes = append(expandedNodes, subnode)
 						}
@@ -7212,8 +7213,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				// Property settings can be present on either
 				// sdADD or sdCHANGE actions.
 				if node.propchange && node.hasProperties() {
-					announce(debugEXTRACT, "r%d: setting properties %v on %s",
-						revision, node.props, node.path)
+					announce(debugEXTRACT, "r%d#%d: setting properties %v on %s",
+						revision, n+1, node.props, node.path)
 					// svn:ignore gets handled here,
 					if !options.Contains("--user-ignores") {
 						var gitignore_path string
@@ -7253,8 +7254,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							newnode.kind = sdFILE
 							newnode.blob = blob
 							newnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
-							announce(debugIGNORES, "r%d: queuing up %s generation with: %v.",
-								revision, newnode.path, node.props.get("svn:ignore"))
+							announce(debugIGNORES, "r%d#%d: queuing up %s generation with: %v.",
+								revision, n+1, newnode.path, node.props.get("svn:ignore"))
 							// Must append rather than simply performing.
 							// Otherwise when the property is unset we
 							// won't have the right thing happen.
@@ -7267,7 +7268,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							newnode.revision = revision
 							newnode.action = sdDELETE
 							newnode.kind = sdFILE
-							announce(debugIGNORES, "r%d: queuing up %s deletion.", revision, newnode.path)
+							announce(debugIGNORES, "r%d#%d: queuing up %s deletion.", revision, n+1, newnode.path)
 							newnode.generated = true
 							expandedNodes = append(expandedNodes, newnode)
 							delete(sp.activeGitignores, gitignore_path)
@@ -7286,7 +7287,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		for idx := len(expandedNodes) - 1; idx >= 0; idx-- {
 			node := expandedNodes[idx]
 			if node.action == sdDELETE && seen.Contains(node.path) {
-				announce(debugEXTRACT, "r%d: cvs2svn junk pair detected, omitting %s deletion.", revision, node.path)
+				announce(debugEXTRACT, "r%d#%d: cvs2svn junk pair detected, omitting %s deletion.", revision, idx+1, node.path)
 				node.action = sdNONE
 			}
 			seen.Add(node.path)

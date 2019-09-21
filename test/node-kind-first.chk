@@ -1,4 +1,4 @@
-reposurgeon: r1~assemblies properties set:
+reposurgeon: r1#1~assemblies properties set:
 reposurgeon: 	svn:date = '2010-10-28T11:46:57.761945Z'
 #reposurgeon sourcetype svn
 blob
