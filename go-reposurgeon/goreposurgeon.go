@@ -2662,11 +2662,6 @@ func newOrderedMap() OrderedMap {
 	return *d
 }
 
-// isZerp tells if this is an uninitialized ordered map
-func (d OrderedMap) isZero() bool {
-	return d.keys == nil
-}
-
 func (d *OrderedMap) get(hd string) string {
 	payload, ok := d.dict[hd]
 	if !ok {
@@ -5702,7 +5697,7 @@ type NodeAction struct {
 	contentHash string
 	fromHash    string
 	blob        *Blob
-	props       OrderedMap
+	props       *OrderedMap
 	propchange  bool
 	// These are set during the analysis phase
 	fromSet   *PathMap
@@ -5734,6 +5729,10 @@ func (action NodeAction) String() string {
 		}
 	}
 	return out + ">"
+}
+
+func (action NodeAction) hasProperties() bool {
+	return action.props != nil
 }
 
 // RevisionRecord is a list of NodeActions at a rev in a Subversion dump
@@ -5791,7 +5790,7 @@ type StreamParser struct {
 	generatedDeletes     []*Commit
 	revisions            []RevisionRecord
 	hashmap              map[string]*NodeAction
-	propertyStash        map[string]OrderedMap
+	propertyStash        map[string]*OrderedMap
 	fileopBranchlinks    stringSet
 	directoryBranchlinks stringSet
 	activeGitignores     map[string]string
@@ -5823,7 +5822,7 @@ func newStreamParser(repo *Repository) *StreamParser {
 	sp.generatedDeletes = make([]*Commit, 0)
 	sp.revisions = make([]RevisionRecord, 0)
 	sp.hashmap = make(map[string]*NodeAction)
-	sp.propertyStash = make(map[string]OrderedMap)
+	sp.propertyStash = make(map[string]*OrderedMap)
 	sp.fileopBranchlinks = newStringSet()
 	sp.directoryBranchlinks = newStringSet()
 	sp.activeGitignores = make(map[string]string)
@@ -6028,7 +6027,7 @@ func (sp *StreamParser) sdReadBlob(length int) string {
 	return string(buf[:length])
 }
 
-func (sp *StreamParser) sdReadProps(target string, checklength int) OrderedMap {
+func (sp *StreamParser) sdReadProps(target string, checklength int) *OrderedMap {
 	// Parse a Subversion properties section, return as an OrderedMap.
 	props := newOrderedMap()
 	start := sp.ccount
@@ -6065,7 +6064,7 @@ func (sp *StreamParser) sdReadProps(target string, checklength int) OrderedMap {
 				target, key, value)
 		}
 	}
-	return props
+	return &props
 }
 
 func (sp *StreamParser) branchlist() []string {
@@ -6110,7 +6109,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 			plen := parseInt(sp.sdRequireHeader("Prop-content-length"))
 			sp.sdRequireHeader("Content-length")
 			sp.sdRequireSpacer()
-			props := sp.sdReadProps("commit", plen)
+			props := *sp.sdReadProps("commit", plen)
 			// Parsing of the revision header is done
 			var node *NodeAction
 			nodes := make([]NodeAction, 0)
@@ -6223,7 +6222,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 						// out the empty nodes
 						// produced by format
 						// 7 dumps.
-						if !(node.action == sdCHANGE && len(node.props.keys) == 0 && node.blob == nil && node.fromRev == 0) {
+						if !(node.action == sdCHANGE && !node.hasProperties() && node.blob == nil && node.fromRev == 0) {
 							nodes = append(nodes, *node)
 						}
 						node = nil
@@ -6657,12 +6656,14 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 //
 func nodePermissions(node NodeAction) string {
 	// Fileop permissions from node properties
-	if node.props.has("svn:executable") {
-		return "100755"
-	} else if node.props.has("svn:special") {
-		// Map to git symlink, which behaves the same way.
-		// Blob contents is the path the link should resolve to.
-		return "120000"
+	if node.hasProperties() {
+		if node.props.has("svn:executable") {
+			return "100755"
+		} else if node.props.has("svn:special") {
+			// Map to git symlink, which behaves the same way.
+			// Blob contents is the path the link should resolve to.
+			return "120000"
+		}
 	}
 	return "100644"
 }
@@ -6926,7 +6927,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 
 			// FIXME: Someday rescue these sanity checks
 			//        assert node.blob != nil ||
-			//               node.props != nil ||
+			//               node.hasProperties() ||
 			//               node.fromRev ||
 			//               node.action in (sdADD, sdDELETE)
 			//        assert node.kind != sdNONE || node.action == sdDELETE
@@ -7001,7 +7002,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				announce(debugSHOUT, node.String())
 			}
 			// Handle per-path properties.
-			if node.props.Len() > 0 {
+			if node.hasProperties() {
 				if node.props.has("cvs2svn:cvs-rev") {
 					cvskey := fmt.Sprintf("CVS:%s:%s", node.path, node.props.get("cvs2svn:cvs-rev"))
 					sp.repo.legacyMap[cvskey] = commit
@@ -7051,8 +7052,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 				if node.action == sdADD || node.action == sdCHANGE {
 					if sp.isBranch(node.path) {
-						if node.props.isZero() {
-							node.props = newOrderedMap()
+						if !node.hasProperties() {
+							var newprops = newOrderedMap()
+							node.props = &newprops
 						}
 						var ignore, startwith string
 						if !options.Contains("--noignores") {	
@@ -7209,7 +7211,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 				// Property settings can be present on either
 				// sdADD or sdCHANGE actions.
-				if node.propchange && !node.props.isZero() {
+				if node.propchange && node.hasProperties() {
 					announce(debugEXTRACT, "r%d: setting properties %v on %s",
 						revision, node.props, node.path)
 					// svn:ignore gets handled here,
@@ -7966,44 +7968,46 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				// gather and ignore those.
 				existingMerges := getMerges(mergeinfo, node.path)
 				ownMerges := newStringSet()
-				info := node.props.get("svn:mergeinfo")
-				if info != "" {
-					for _, line := range strings.Split(info, "\n") {
-						fields := strings.Split(line, ":")
-						if len(fields) != 2 {
-							continue
-						}
-						// One path, one range list
-						fromPath, ranges := fields[0], fields[1]
-						for _, span := range strings.Split(ranges, ",") {
-							// Ignore single-rev fields, they are cherry-picks.
-							// TODO: maybe we should even test if minRev
-							// corresponds to some fromRev + 1 to ensure no
-							// commit has been skipped.
-							fields = strings.Split(span, "-")
+				if node.hasProperties() {
+					info := node.props.get("svn:mergeinfo")
+					if info != "" {
+						for _, line := range strings.Split(info, "\n") {
+							fields := strings.Split(line, ":")
 							if len(fields) != 2 {
 								continue
 							}
-							minRev, fromRev := fields[0], fields[1]
-							// ignore non-inheritable revision ranges
-							if fromRev[len(fromRev)-1] == '*' {
-								fromRev = fromRev[:len(fromRev)-1]
-							}
-							// Import mergeinfo from merged branches
-							pastMerges := getMerges(mergeinfos[parseInt(fromRev)], fromPath)
-							existingMerges = existingMerges.Union(pastMerges)
-							// SVN doesn't fit the merge range to commits on
-							// the source branch; we need to find the latest
-							// commit between minRev and fromRev made on
-							// that branch.
-							fromCommit := lastRelevantCommit(sp, parseInt(fromRev), fromPath, "Branch")
-							if fromCommit == nil {
-								sp.gripe(fmt.Sprintf("cannot resolve mergeinfo source from revision %s for path %s.",
-									fromRev, node.path))
-							} else {
-								legacyFields := strings.Split(fromCommit.legacyID, ".")
-								if parseInt(legacyFields[0]) >= parseInt(minRev) {
-									ownMerges.Add(fromCommit.mark)
+							// One path, one range list
+							fromPath, ranges := fields[0], fields[1]
+							for _, span := range strings.Split(ranges, ",") {
+								// Ignore single-rev fields, they are cherry-picks.
+								// TODO: maybe we should even test if minRev
+								// corresponds to some fromRev + 1 to ensure no
+								// commit has been skipped.
+								fields = strings.Split(span, "-")
+								if len(fields) != 2 {
+									continue
+								}
+								minRev, fromRev := fields[0], fields[1]
+								// ignore non-inheritable revision ranges
+								if fromRev[len(fromRev)-1] == '*' {
+									fromRev = fromRev[:len(fromRev)-1]
+								}
+								// Import mergeinfo from merged branches
+								pastMerges := getMerges(mergeinfos[parseInt(fromRev)], fromPath)
+								existingMerges = existingMerges.Union(pastMerges)
+								// SVN doesn't fit the merge range to commits on
+								// the source branch; we need to find the latest
+								// commit between minRev and fromRev made on
+								// that branch.
+								fromCommit := lastRelevantCommit(sp, parseInt(fromRev), fromPath, "Branch")
+								if fromCommit == nil {
+									sp.gripe(fmt.Sprintf("cannot resolve mergeinfo source from revision %s for path %s.",
+										fromRev, node.path))
+								} else {
+									legacyFields := strings.Split(fromCommit.legacyID, ".")
+									if parseInt(legacyFields[0]) >= parseInt(minRev) {
+										ownMerges.Add(fromCommit.mark)
+									}
 								}
 							}
 						}
