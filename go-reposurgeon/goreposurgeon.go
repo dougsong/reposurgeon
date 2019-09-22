@@ -5720,7 +5720,7 @@ func (action NodeAction) String() string {
 	if action.generated {
 		out += " generated"
 	}
-	if action.props.Len() > 0 {
+	if action.hasProperties() {
 		out += " properties="
 		if newStringSet(action.props.keys...).Equal(newStringSet("svn:ignore")) && action.props.get("svn:ignore") == subversionDefaultIgnores {
 			out += "{SUBVERSION DEFAULT IGNORES}"

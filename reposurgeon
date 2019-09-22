@@ -3606,7 +3606,7 @@ class StreamParser:
             self.blobmark = None
             self.generated = False
         def __str__(self):
-            if self.props is None or len(self.props) == 0:
+            if self.props is None:
                 show = ""
             elif self.props.keys() == ["svn:ignore"] and self.props["svn:ignore"] == subversion_default_ignores:
                 show = "{SUBVERSION DEFAULT IGNORES}"
