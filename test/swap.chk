@@ -173,7 +173,7 @@ data 78
 Revision is 10, file path is activeedi/trunk/lib/novo_sistema/obrigatorio.rb.
 
 commit refs/heads/activeedi
-#legacy-id 10
+#legacy-id 5
 mark :26
 committer pablo.lerina <pablo.lerina> 1250280258 +0000
 data 24
@@ -189,7 +189,7 @@ data 75
 Revision is 13, file path is activeedi/trunk/lib/active_edi/attributes.rb.
 
 commit refs/heads/activeedi
-#legacy-id 13
+#legacy-id 6
 mark :28
 committer pablo.lerina <pablo.lerina> 1250546931 +0000
 data 60
@@ -218,7 +218,7 @@ data 77
 Revision is 14, file path is activeedi/trunk/lib/novo_sistema/produto_54.rb.
 
 commit refs/heads/activeedi
-#legacy-id 14
+#legacy-id 7
 mark :33
 committer pablo.lerina <pablo.lerina> 1250601465 +0000
 data 63
@@ -237,7 +237,7 @@ data 89
 Revision is 16, file path is activeedi/trunk/lib/novo_sistema/produto_nota_fiscal_54.rb.
 
 commit refs/heads/activeedi
-#legacy-id 16
+#legacy-id 8
 mark :35
 committer pablo.lerina <pablo.lerina> 1250601949 +0000
 data 42
@@ -267,7 +267,7 @@ data 93
 Revision is 17, file path is activeedi/trunk/lib/novo_sistema/conhecimento_transporte_70.rb.
 
 commit refs/heads/activeedi
-#legacy-id 17
+#legacy-id 9
 mark :40
 committer pablo.targa <pablo.targa> 1250604513 +0000
 data 27
@@ -284,7 +284,7 @@ data 75
 Revision is 18, file path is activeedi/trunk/lib/novo_sistema/issqn_80.rb.
 
 commit refs/heads/activeedi
-#legacy-id 18
+#legacy-id 10
 mark :42
 committer pablo.targa <pablo.targa> 1250605346 +0000
 data 21
@@ -308,7 +308,7 @@ data 71
 Revision is 19, file path is activeedi/trunk/test/obrigatorio_test.rb.
 
 commit refs/heads/activeedi
-#legacy-id 19
+#legacy-id 11
 mark :46
 committer pablo.lerina <pablo.lerina> 1250605767 +0000
 data 75
@@ -326,7 +326,7 @@ data 56
 Revision is 25, file path is activeedi/trunk/CHANGELOG.
 
 commit refs/heads/activeedi
-#legacy-id 25
+#legacy-id 12
 mark :48
 committer pablo.lerina <pablo.lerina> 1250789497 +0000
 data 22
@@ -340,7 +340,7 @@ data 70
 Revision is 32, file path is activeedi/trunk/pkg/activeedi-1.0.0.gem.
 
 commit refs/heads/activeedi
-#legacy-id 32
+#legacy-id 13
 mark :50
 committer pablo.lerina <pablo.lerina> 1251473830 +0000
 data 30
@@ -359,7 +359,7 @@ data 68
 Revision is 34, file path is activeedi/trunk/pkg/activeedi-1.1.gem.
 
 commit refs/heads/activeedi
-#legacy-id 34
+#legacy-id 14
 mark :53
 committer pablo.lerina <pablo.lerina> 1251485201 +0000
 data 12
@@ -389,7 +389,7 @@ data 68
 Revision is 35, file path is activeedi/trunk/test/property_test.rb.
 
 commit refs/heads/activeedi
-#legacy-id 35
+#legacy-id 15
 mark :58
 committer pablo.lerina <pablo.lerina> 1251813816 +0000
 data 104
@@ -416,7 +416,7 @@ data 68
 Revision is 38, file path is activeedi/trunk/pkg/activeedi-1.2.gem.
 
 commit refs/heads/activeedi
-#legacy-id 38
+#legacy-id 16
 mark :62
 committer pablo.lerina <pablo.lerina> 1251827841 +0000
 data 83
@@ -432,7 +432,7 @@ data 59
 Revision is 40, file path is brazilian-nfse/trunk/nfse.rb.
 
 commit refs/heads/brazilian-nfse
-#legacy-id 40
+#legacy-id 17
 mark :64
 committer pablo.targa <pablo.targa> 1365730102 +0000
 data 104
@@ -456,7 +456,7 @@ data 59
 Revision is 41, file path is brazilian-nfse/trunk/nfse.rb.
 
 commit refs/heads/brazilian-nfse
-#legacy-id 41
+#legacy-id 18
 mark :68
 committer pablo.targa <pablo.targa> 1365799495 +0000
 data 88
@@ -472,7 +472,7 @@ data 53
 Revision is 42, file path is git_nfse/trunk/nfse.rb.
 
 commit refs/heads/git_nfse
-#legacy-id 42
+#legacy-id 19
 mark :70
 committer pablo.targa <pablo.targa> 1366053589 +0000
 data 97
@@ -733,7 +733,7 @@ data 65
 Revision is 43, file path is git_nfse/trunk/test/test_helper.rb.
 
 commit refs/heads/git_nfse
-#legacy-id 43
+#legacy-id 20
 mark :122
 committer pablo.targa <pablo.targa> 1366055396 +0000
 data 49
@@ -823,7 +823,7 @@ data 77
 Revision is 44, file path is git_nfse/trunk/spec/types/simple_types_spec.rb.
 
 commit refs/heads/git_nfse
-#legacy-id 44
+#legacy-id 21
 mark :129
 committer pablo.targa <pablo.targa> 1366056752 +0000
 data 63
@@ -908,7 +908,7 @@ data 70
 Revision is 45, file path is git_nfse/trunk/spec/validations_spec.rb.
 
 commit refs/heads/git_nfse
-#legacy-id 45
+#legacy-id 22
 mark :144
 committer pablo.targa <pablo.targa> 1366057607 +0000
 data 84
@@ -975,7 +975,7 @@ data 65
 Revision is 46, file path is git_nfse/trunk/spec/spec_helper.rb.
 
 commit refs/heads/git_nfse
-#legacy-id 46
+#legacy-id 23
 mark :154
 committer pablo.targa <pablo.targa> 1366132716 +0000
 data 77
@@ -1037,7 +1037,7 @@ data 67
 Revision is 47, file path is git_nfse/trunk/spec/git_nfse_spec.rb.
 
 commit refs/heads/git_nfse
-#legacy-id 47
+#legacy-id 24
 mark :164
 committer pablo.targa <pablo.targa> 1366745033 +0000
 data 94
@@ -1092,7 +1092,7 @@ data 64
 Revision is 64, file path is mozilla/thunderbird/greprefs/a.js.
 
 commit refs/heads/mozilla
-#legacy-id 64
+#legacy-id 26
 mark :169
 committer ronie <ronie> 1375114664 +0000
 data 102
@@ -1104,7 +1104,7 @@ M 100644 :166 thunderbird/greprefs/.gitignore
 M 100644 :168 thunderbird/greprefs/a.js
 
 commit refs/heads/mozilla
-#legacy-id 66
+#legacy-id 27
 mark :170
 committer ronie <ronie> 1376451459 +0000
 data 148
@@ -1132,7 +1132,7 @@ data 61
 Revision is 71, file path is git_nfse/trunk/lib/git_nfse.rb.
 
 commit refs/heads/git_nfse
-#legacy-id 71
+#legacy-id 28
 mark :174
 committer edivan.camargo <edivan.camargo> 1380118390 +0000
 data 103
@@ -1144,7 +1144,7 @@ M 100644 :171 trunk/lib/git_nfse/types/complex.rb
 M 100644 :172 trunk/lib/git_nfse/validations.rb
 
 commit refs/heads/git_nfse
-#legacy-id 79
+#legacy-id 29
 mark :175
 committer renan.dhein <renan.dhein> 1380560331 +0000
 data 61
@@ -1211,7 +1211,7 @@ data 61
 Revision is 80, file path is git_nfse/trunk/lib/git_nfse.rb.
 
 commit refs/heads/git_nfse
-#legacy-id 80
+#legacy-id 30
 mark :177
 committer renan.dhein <renan.dhein> 1380563536 +0000
 data 61
@@ -1241,7 +1241,7 @@ data 60
 Revision is 83, file path is git_nfse/trunk/lib/signers.rb.
 
 commit refs/heads/git_nfse
-#legacy-id 83
+#legacy-id 31
 mark :182
 committer edivan.camargo <edivan.camargo> 1380819057 +0000
 data 290
@@ -1288,7 +1288,7 @@ data 60
 Revision is 86, file path is git_nfse/trunk/lib/signers.rb.
 
 commit refs/heads/git_nfse
-#legacy-id 86
+#legacy-id 32
 mark :190
 committer edivan.camargo <edivan.camargo> 1381839666 +0000
 data 368
@@ -1315,7 +1315,7 @@ data 73
 Revision is 92, file path is git_nfse/trunk/lib/validates_uri_format.rb.
 
 commit refs/heads/git_nfse
-#legacy-id 92
+#legacy-id 33
 mark :193
 committer edivan.camargo <edivan.camargo> 1382455148 +0000
 data 529
@@ -1335,7 +1335,7 @@ data 68
 Revision is 93, file path is git_nfse/trunk/lib/git_validations.rb.
 
 commit refs/heads/git_nfse
-#legacy-id 93
+#legacy-id 34
 mark :196
 committer ronie <ronie> 1382487714 +0000
 data 88
@@ -1351,7 +1351,7 @@ data 66
 Revision is 99, file path is git_nfse/trunk/lib/git_nfse/base.rb.
 
 commit refs/heads/git_nfse
-#legacy-id 99
+#legacy-id 35
 mark :198
 committer edivan.camargo <edivan.camargo> 1382986785 +0000
 data 313
@@ -1365,7 +1365,7 @@ data 67
 Revision is 101, file path is rubyrails/trunk/lib/git_encoding.rb.
 
 commit refs/heads/rubyrails
-#legacy-id 101
+#legacy-id 37
 mark :200
 committer ronie <ronie> 1383245683 +0000
 data 165
@@ -1383,7 +1383,7 @@ data 73
 Revision is 108, file path is rubyrails/trunk/lib/proxies/hash_proxy.rb.
 
 commit refs/heads/rubyrails
-#legacy-id 108
+#legacy-id 38
 mark :203
 committer renan.dhein <renan.dhein> 1437167264 +0000
 data 153
@@ -1398,7 +1398,7 @@ data 62
 Revision is 109, file path is rubyrails/trunk/lib/proxies.rb.
 
 commit refs/heads/rubyrails
-#legacy-id 109
+#legacy-id 39
 mark :205
 committer renan.dhein <renan.dhein> 1437167679 +0000
 data 82
@@ -1422,7 +1422,7 @@ data 62
 Revision is 110, file path is rubyrails/trunk/lib/proxies.rb.
 
 commit refs/heads/rubyrails
-#legacy-id 110
+#legacy-id 40
 mark :209
 committer ronie <ronie> 1437171620 +0000
 data 100
@@ -1444,7 +1444,7 @@ data 62
 Revision is 111, file path is rubyrails/trunk/lib/proxies.rb.
 
 commit refs/heads/rubyrails
-#legacy-id 111
+#legacy-id 41
 mark :212
 committer renan.dhein <renan.dhein> 1438119452 +0000
 data 114
@@ -1466,7 +1466,7 @@ data 63
 Revision is 113, file path is rubyrails/trunk/lib/git_nfse.rb.
 
 commit refs/heads/rubyrails
-#legacy-id 113
+#legacy-id 42
 mark :215
 committer lucas.correa <lucas.correa> 1443642033 +0000
 data 51
@@ -1486,7 +1486,7 @@ data 69
 Revision is 117, file path is sublime_text/packages/user/README.txt.
 
 commit refs/heads/sublime_text
-#legacy-id 117
+#legacy-id 43
 mark :218
 committer ronie <ronie> 1456461020 +0000
 data 66
@@ -1506,7 +1506,7 @@ data 62
 Revision is 119, file path is mozilla/thunderbird/README.txt.
 
 commit refs/heads/mozilla
-#legacy-id 119
+#legacy-id 44
 mark :221
 committer ronie <ronie> 1456462577 +0000
 data 81
@@ -1523,7 +1523,7 @@ data 77
 Revision is 122, file path is rubyrails/trunk/lib/git_nfse/types/complex.rb.
 
 commit refs/heads/rubyrails
-#legacy-id 122
+#legacy-id 45
 mark :223
 committer renan.dhein <renan.dhein> 1480959946 +0000
 data 105
@@ -1537,7 +1537,7 @@ data 73
 Revision is 124, file path is sublime_text/packages/user/before_save.py.
 
 commit refs/heads/sublime_text
-#legacy-id 124
+#legacy-id 46
 mark :225
 committer ronie <ronie> 1484877329 +0000
 data 97
@@ -1551,7 +1551,7 @@ data 73
 Revision is 127, file path is rubyrails/trunk/lib/proxies/proxy_hash.rb.
 
 commit refs/heads/rubyrails
-#legacy-id 127
+#legacy-id 47
 mark :227
 committer ronie <ronie> 1508435521 +0000
 data 214
@@ -1630,7 +1630,7 @@ data 62
 Revision is 130, file path is rubyrails/trunk/lib/signers.rb.
 
 commit refs/heads/rubyrails
-#legacy-id 130
+#legacy-id 48
 mark :242
 committer ronie <ronie> 1510598749 +0000
 data 87
@@ -1662,7 +1662,7 @@ Criando estrutura de repositorio (trunk, branches, tags)
 [[Tag from zero-fileop commit at Subversion r2]]
 
 tag tipdelete-brazilian-nfse
-#legacy-id 42.1
+#legacy-id 19.1
 from :68
 tagger pablo.targa <pablo.targa> 1366053589 +0000
 data 135
@@ -1671,14 +1671,14 @@ fixes #9863 - Renomeado o nome do projeto para git_nfse e alteradas as tags para
 [[Split portion of a mixed commit.]]
 
 tag tipdelete-activeedi
-#legacy-id 63
+#legacy-id 25
 from :62
 tagger ronie <ronie> 1372444186 +0000
 data 92
 Removido diretorio da gem activeedi pois a mesma foi descontinuada ha mais de 3 anos atras.
 
 tag tipdelete-git_nfse
-#legacy-id 100
+#legacy-id 36
 from :198
 tagger ronie <ronie> 1383229155 +0000
 data 142

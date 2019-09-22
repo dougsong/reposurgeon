@@ -6182,7 +6182,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 							// non-sym
 							// link.
 							if strings.HasPrefix(text, "link ") {
-								if node.props.has("svn:special") {
+								if node.hasProperties() && node.props.has("svn:special") {
 									trackSymlinks.Add(node.path)
 								}
 								if trackSymlinks.Contains(node.path) {
@@ -7157,7 +7157,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						for _, source := range node.fromSet.pathnames() {
 							lookback := filemaps[node.fromRev].get(source)
 							found, ok := lookback.(*NodeAction)
-							if ok && found.props.has("svn:executable") {
+							if ok && found.hasProperties() && found.props.has("svn:executable") {
 								stem := source[len(node.fromPath):]
 								targetpath := node.path + stem
 								sp.propagate[targetpath] = true

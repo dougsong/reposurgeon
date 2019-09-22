@@ -1,2 +1,2 @@
-reposurgeon: r5~trunk/README properties set:
+reposurgeon: r5#1~trunk/README properties set:
 reposurgeon: 	foo = 'bar'
