@@ -13279,7 +13279,9 @@ to re-set it.
                     list(map(split_regex, line.split()))
         if global_options['svn_branchify_mapping']:
             announce(DEBUG_SHOUT, "branchify_map, regex -> branch name:")
-            for match, replace in global_options['svn_branchify_mapping']:
+            mapping = global_options['svn_branchify_mapping'][:]
+            mapping.sort()
+            for (match, replace) in mapping:
                 announce(DEBUG_SHOUT,  "\t" + match + " -> " + replace)
         else:
             complain("branchify_map is empty.")

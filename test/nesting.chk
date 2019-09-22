@@ -1,7 +1,7 @@
 reposurgeon: branchify cpp-msbuild/trunk cpp-msbuild/branches/* cpp-msbuild/tags/*
 reposurgeon: branchify_map, regex -> branch name:
-reposurgeon: 	cpp-msbuild/trunk/ -> heads/master
 reposurgeon: 	cpp-msbuild/tags/(.*)/ -> tags/\1
+reposurgeon: 	cpp-msbuild/trunk/ -> heads/master
 #reposurgeon sourcetype svn
 blob
 mark :1

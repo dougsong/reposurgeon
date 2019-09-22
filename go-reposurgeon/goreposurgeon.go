@@ -19396,13 +19396,13 @@ func (rs *Reposurgeon) DoBranchify_map(line string) bool {
 	}
 	if len(context.mapOptions["svn_branchify_mapping"]) != 0 {
 		announce(debugSHOUT, "branchify_map, regex -> branch name:")
-		for match, replace := range context.mapOptions["svn_branchify_mapping"] {
-			announce(debugSHOUT, "\t"+match+" -> "+replace)
-			// These announcements were sometimes coming out in the wrong order.
-			// It's a random fluky bug that is really only noticeable when
-			// running regression tests.  
-			// This is a voodoo attempt to prevent it by giving up our timeslice.
-			time.Sleep(0)
+		keys := make([]string, 0)
+		for match := range context.mapOptions["svn_branchify_mapping"] {
+			keys = append(keys, match)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			announce(debugSHOUT, "\t"+k+" -> "+context.mapOptions["svn_branchify_mapping"][k])
 		}
 	} else {
 		croak("branchify_map is empty.")
