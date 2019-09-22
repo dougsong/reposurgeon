@@ -6128,7 +6128,9 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 					} else {
 						if plen > -1 {
 							node.props = sp.sdReadProps(node.path, plen)
-							node.propchange = true
+							if plen > 1 {
+								node.propchange = true
+							}
 						}
 						if tlen > -1 {
 							start := sp.tell()
@@ -6204,7 +6206,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 							sp.propertyStash[node.path] = node.props
 						} else if node.action == sdADD && node.fromPath != "" {
 							for _, oldnode := range sp.revisions[node.fromRev].nodes {
-								if oldnode.path == node.fromPath {
+								if oldnode.path == node.fromPath && oldnode.propchange {
 									sp.propertyStash[node.path] = oldnode.props
 								}
 							}

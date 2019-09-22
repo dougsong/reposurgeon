@@ -3903,7 +3903,8 @@ class StreamParser:
                                     else:
                                         if plen > -1:
                                             node.props = self.sd_read_props(node.path, plen)
-                                            node.propchange = True
+                                            if plen > 0:
+                                                node.propchange = True
                                         if tlen > -1:
                                             start = self.tell()
                                             # This is a crock. It is
@@ -3950,7 +3951,7 @@ class StreamParser:
                                             self.property_stash[node.path] = node.props
                                         elif node.action == SD_ADD and node.from_path:
                                             for oldnode in self.revisions[node.from_rev].nodes:
-                                                if oldnode.path == node.from_path:
+                                                if oldnode.path == node.from_path and oldnode.propchange:
                                                     self.property_stash[node.path] = oldnode.props
                                             #sys.stderr.write("Copy node %s:%s stashes %s\n" % (node.revision, node.path, self.property_stash[node.path]))
                                         if node.action == SD_DELETE:
