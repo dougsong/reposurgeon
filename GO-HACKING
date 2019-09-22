@@ -45,9 +45,6 @@ Python version passes all these tests.
 
 The following Subversion load tests presently fail:
 
-myers1.svn
-swap.svn
-too-many-parents.svn
 wrong-mergeinfo.svn
 
 The next steps after these will be testing extractor classes.

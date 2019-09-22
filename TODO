@@ -24,3 +24,12 @@
 
 * repcutter reumber needs a test that demonstates patching of
   Node-copyftom-rev fields.
+
+* repocutter needs to patch meregeinfo revisions.
+
+* Restore the ability to work with discontinuous revision sequences.
+  Can be tested with a version of swap.svn from before 2019-09-22.
+
+* After the above is done, bring back the too-many-parents.svn test
+  from before 2019-09-22 (has both discontinuous revisions and
+  mergeinfo properties).
