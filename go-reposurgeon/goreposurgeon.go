@@ -6888,7 +6888,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		if splitCommits[maxRev] == 0 {
 			legacyID = fmt.Sprintf("SVN:%d", maxRev)
 		} else {
-			legacyID = fmt.Sprintf("SVN:%d.%d", maxRev, splitCommits[maxRev]+1)
+			legacyID = fmt.Sprintf("SVN:%d.%d", maxRev, splitCommits[maxRev])
 		}
 		// Find the commit object...
 		obj, ok := sp.repo.legacyMap[legacyID]
