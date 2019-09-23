@@ -773,7 +773,7 @@ func (vcs VCS) hasReference(comment []byte) bool {
 type Importer struct {
 	name    string      // importer name
 	visible bool        // should it be selectable?
-	engine  interface{} // Import engine, either a VCS or extractor class
+	engine  Extractor   // Import engine, either a VCS or extractor class
 	basevcs *VCS        // Underlying VCS if engine is an extractor
 }
 
@@ -1198,7 +1198,7 @@ core
 		importers = append(importers, Importer{
 			name:    vcs.name,
 			visible: true,
-			engine:  vcs,
+			engine:  nil,
 			basevcs: vcs,
 		})
 	}
@@ -10737,12 +10737,11 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 		}
 	}
 	hitcount := 0
-	var extractor *Extractor
+	var extractor Extractor
 	var vcs *VCS
 	for _, possible := range importers {
-		switch possible.engine.(type) {
-		case *VCS:
-			trialVCS := possible.engine.(*VCS)
+		if possible.engine == nil {
+			trialVCS := possible.basevcs
 			if preferred != nil && possible.name != preferred.name {
 				continue
 			}
@@ -10753,8 +10752,8 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 				vcs = trialVCS
 				hitcount++
 			}
-		case *Extractor:
-			trialExtractor := possible.engine.(*Extractor)
+		} else {
+			trialExtractor := possible.engine
 			if preferred != nil && !newStringSet(preferred.name, preferred.name+"-extractor").Contains(possible.name) {
 				continue
 			}
@@ -10793,7 +10792,7 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 	// We found a matching custom extractor
 	if extractor != nil {
 		repo.stronghint = true
-		streamer := newRepoStreamer(*extractor)
+		streamer := newRepoStreamer(extractor)
 		streamer.extract(repo, vcs, context.verbose > 0)
 		return repo, nil
 	}
@@ -14888,7 +14887,7 @@ func (rs *Reposurgeon) DoPrefer(line string) bool {
 		rs.preferred = nil
 		for _, repotype := range importers {
 			if repotype.basevcs != nil && strings.ToLower(line) == repotype.name {
-				rs.preferred = repotype.engine.(*VCS)
+				rs.preferred = repotype.basevcs
 				break
 			}
 			if repotype.visible {
@@ -18673,7 +18672,6 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 					for _, attr := range []string{"Path", "Source", "Target"} {
 						oldpath, ok := getAttr(fileop, attr)
 						if ok {
-
 							if ok && strings.HasSuffix(oldpath, rs.ignorename) {
 								newpath := filepath.Join(filepath.Dir(oldpath),
 									rs.preferred.ignorename)
