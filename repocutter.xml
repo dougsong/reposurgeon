@@ -261,7 +261,7 @@ to be clever about this won't work; the problem is inherent in the data model
 of Subversion.</para>
 
 <para>In steeams with mergeinfo properties, renumbering will not fix them up. This
-means merge data will be lot or garbled. This may be fixed in a future release.<para>
+means merge data will be lot or garbled. This may be fixed in a future release.</para>
 
 </refsect1>
 

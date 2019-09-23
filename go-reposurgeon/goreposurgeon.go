@@ -5516,7 +5516,7 @@ type pathMapItem struct {
 // have been overengineering. It couldn't save value space provided
 // the value type is either a pointer to shared storage (as in the
 // dumpfile reader) or an integral scalar that fits in a pointer
-// (other uses).  It could hashtable spave only proportional to the
+// (other uses).  It could save hashtable space only proportional to the
 // number of directory-copy operations in the history.
 
 //
@@ -7996,7 +7996,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 									fromRev = fromRev[:len(fromRev)-1]
 								}
 								// Import mergeinfo from merged branches
-								pastMerges := getMerges(mergeinfos[parseInt(fromRev)], fromPath)
+								past, ok := mergeinfos[parseInt(fromRev)]
+								if !ok {
+									past = newPathMap()
+								}
+								pastMerges := getMerges(past, fromPath)
 								existingMerges = existingMerges.Union(pastMerges)
 								// SVN doesn't fit the merge range to commits on
 								// the source branch; we need to find the latest
