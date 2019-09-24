@@ -10728,7 +10728,7 @@ func (repo *Repository) dumptimes() {
 }
 
 // Read a repository using fast-import.
-func readRepo(source string, options stringSet, preferred *VCS) (*Repository, error) {
+func readRepo(source string, options stringSet, preferred *VCS, extractor Extractor) (*Repository, error) {
 	if debugEnable(debugSHUFFLE) {
 		if preferred != nil {
 			announce(debugSHOUT, fmt.Sprintf("looking for a %s repo...", preferred.name))
@@ -10737,7 +10737,6 @@ func readRepo(source string, options stringSet, preferred *VCS) (*Repository, er
 		}
 	}
 	hitcount := 0
-	var extractor Extractor
 	var vcs *VCS
 	for _, possible := range importers {
 		if possible.engine == nil {
@@ -13096,6 +13095,7 @@ type Reposurgeon struct {
 	defaultSelection orderedIntSet
 	history          []string
 	preferred        *VCS
+	extractor        Extractor
 	startTime        time.Time
 	promptFormat     string
 	ignorename       string
@@ -14888,6 +14888,7 @@ func (rs *Reposurgeon) DoPrefer(line string) bool {
 		for _, repotype := range importers {
 			if repotype.basevcs != nil && strings.ToLower(line) == repotype.name {
 				rs.preferred = repotype.basevcs
+				rs.extractor = repotype.engine
 				break
 			}
 			if repotype.visible {
@@ -15231,14 +15232,14 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 			croak(err2.Error())
 			return false
 		}
-		repo, err2 = readRepo(cdir, parse.options, rs.preferred)
+		repo, err2 = readRepo(cdir, parse.options, rs.preferred, rs.extractor)
 		if err2 != nil {
 			croak(err2.Error())
 			return false
 		}
 	} else if isdir(parse.line) {
 		var err2 error
-		repo, err2 = readRepo(parse.line, parse.options, rs.preferred)
+		repo, err2 = readRepo(parse.line, parse.options, rs.preferred, rs.extractor)
 		if err2 != nil {
 			croak(err2.Error())
 			return false
