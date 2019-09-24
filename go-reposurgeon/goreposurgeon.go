@@ -10738,42 +10738,29 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 		}
 	}
 	// Trickier-than-it-looks department:
-	// There are several cases here.
+	// There are three cases here.
 	// 1. extractor and preferred both non-nil.  Use the extractor if there's a matching repo here.
 	// 2. preferred non-nil.  Use that type if there's a matching repo here.
-	// 3. extractor and preferred both nil. Look for anything we can read.
+	// 3. extractor and preferred both nil. Look for anything we can read, use the base impoter only.
 	// hitcount can only go over 1 in the third case.
 	haveMatching := func(vcs *VCS) bool {
 		subdir := source + "/" + vcs.subdirectory
 		subdir = filepath.FromSlash(subdir)
 		return exists(subdir) && isdir(subdir) && vcs.exporter != ""
 	}
+
 	hitcount := 0
 	var vcs *VCS
-	for _, possible := range importers {
-		if possible.engine == nil {
-			if preferred != nil && possible.name != preferred.name {
-				continue
-			}
-			extractor = nil
-			if haveMatching(possible.basevcs) {
+	if extractor != nil || preferred != nil {
+		if haveMatching(preferred) {
+			hitcount = 1
+			vcs = preferred	// if extractor is non-null it gets picked up below
+		}
+	} else {
+		for _, possible := range importers {
+			if haveMatching(possible.basevcs) && possible.engine == nil {
 				vcs = possible.basevcs
 				hitcount++
-			}
-		} else {
-			trialExtractor := possible.engine
-			if preferred != nil && !newStringSet(preferred.name, preferred.name+"-extractor").Contains(possible.name) {
-				continue
-			}
-			trialVCS := possible.basevcs
-			subdir := source + "/" + trialVCS.subdirectory
-			subdir = filepath.FromSlash(subdir)
-			if exists(subdir) && isdir(subdir) {
-				if (possible.visible || preferred != nil) && trialVCS.name == preferred.name {
-					vcs = trialVCS
-					extractor = trialExtractor
-					hitcount++
-				}
 			}
 		}
 	}
@@ -10799,6 +10786,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 	chdir(repo.sourcedir, "repository directory")
 	// We found a matching custom extractor
 	if extractor != nil {
+		announce(debugEXTRACT, "extracting from %s repository", vcs.name)
 		repo.stronghint = true
 		streamer := newRepoStreamer(extractor)
 		streamer.extract(repo, vcs, context.verbose > 0)
