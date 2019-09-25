@@ -1450,6 +1450,7 @@ func (ge GitExtractor) gatherCommitData(rs *RepoStreamer) error {
 	hook := func(line string, rs *RepoStreamer) error {
 		line = strings.Trim(line, "\n")
 		fields := strings.Split(line, "|")
+		rs.meta[fields[0]] = new(CommitMeta)
 		rs.meta[fields[0]].ci = fields[1]
 		rs.meta[fields[0]].ai = fields[2]
 		return nil
@@ -10789,8 +10790,8 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 		announce(debugEXTRACT, "extracting from %s repository", vcs.name)
 		repo.stronghint = true
 		streamer := newRepoStreamer(extractor)
-		streamer.extract(repo, vcs, context.verbose > 0)
-		return repo, nil
+		repo, err := streamer.extract(repo, vcs, context.verbose > 0)
+		return repo, err
 	}
 	// We found a matching VCS type
 	if vcs != nil {
