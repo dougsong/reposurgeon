@@ -2159,7 +2159,6 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 		}
 		panic(throw("extractor", "Did not find revision IDs in revlist"))
 	}
-	// FIXME: This might need to be SortStable
 	sort.Sort(rs.refs)
 	rs.baton.twirl("")
 	rs.extractor.colorBranches(rs)
@@ -2183,7 +2182,6 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 	copy(consume, rs.revlist)
 	for _, revision := range consume {
 		commit := newCommit(repo)
-		commit.setMark(repo.newmark())
 		rs.baton.twirl("")
 		present := rs.extractor.checkout(revision)
 		parents := rs.getParents(revision)
@@ -2191,6 +2189,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 		if err != nil {
 			panic(throw("extract", "garbled commit attribution: %v", err))
 		}
+		rs.visibleFiles[revision] = make(map[string]signature)
 		commit.committer = *attrib
 		for _, a := range rs.getAuthors(revision) {
 			attrib, err = newAttribution(a)
@@ -2207,14 +2206,16 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 		if debugEnable(debugEXTRACT) {
 			msg := strconv.Quote(commit.Comment)
 			announce(debugEXTRACT,
-				"r%s: comment '%s'", revision, msg)
+				"%s: comment '%s'", revision, msg)
 		}
 		// Git fast-import constructs the tree from the first parent only
 		// for a merge commit; fileops from all other parents have to be
 		// added explicitly
-		for _, rev := range parents[:1] {
-			for k, v := range rs.visibleFiles[rev] {
-				rs.visibleFiles[revision][k] = v
+		if len(parents) > 1 {
+			for _, rev := range parents[:1] {
+				for k, v := range rs.visibleFiles[rev] {
+					rs.visibleFiles[revision][k] = v
+				}
 			}
 		}
 
@@ -2225,22 +2226,21 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 					continue
 				}
 				if !exists(pathname) {
-					croak("r%s: expected path %s does not exist!",
+					croak("%s: expected path %s does not exist!",
 						revision, pathname)
 					continue
 				}
 				newsig := newSignature(pathname)
-				if rs.hashToMark[newsig.hashval] == "" {
-					//if debugEnable(debugEXTRACT) {
-					//    announce(debugSHOUT, "r%s: %s has old hash",
-					//             revision, pathname)
-					// }
+				if _, ok := rs.hashToMark[newsig.hashval]; ok {
+					if debugEnable(debugEXTRACT) {
+						announce(debugSHOUT, "%s: %s has old hash %v", revision, pathname, newsig.hashval)
+					}
 					// The file's hash corresponds
 					// to an existing blob;
 					// generate modify, copy, or
 					// rename as appropriate.
 					if _, ok := rs.visibleFiles[revision][pathname]; !ok || rs.visibleFiles[revision][pathname] != *newsig {
-						announce(debugEXTRACT, "r%s: update for %s", revision, pathname)
+						announce(debugEXTRACT, "%s: update for %s", revision, pathname)
 						found := false
 						var deletia []string
 						for oldpath, oldsig := range rs.visibleFiles[revision] {
@@ -2278,13 +2278,14 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 				} else {
 					// Content hash doesn't match
 					// any existing blobs
-					announce(debugEXTRACT, "r%s: %s has new hash",
-						revision, pathname)
+					announce(debugEXTRACT, "%s: %s has new hash %v",
+						revision, pathname, newsig.hashval)
 					blobmark := repo.newmark()
 					rs.hashToMark[newsig.hashval] = blobmark
 					// Actual content enters the representation
 					blob := newBlob(repo)
 					blob.setMark(blobmark)
+					announce(debugEXTRACT, "%s: blob gets mark %s", revision, blob.mark)
 					filecopy(blob.getBlobfile(true), pathname)
 					blob.addalias(pathname)
 					repo.addEvent(blob)
@@ -2310,7 +2311,9 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 		commit.legacyID = revision
 		commit.properties = newOrderedMap()
 		rs.commitMap[revision] = commit
-		announce(debugEXTRACT, "r%s: gets mark %s (%d ops)", revision, commit.mark, len(commit.operations()))
+		commit.setMark(repo.newmark())
+		announce(debugEXTRACT, "%s: commit gets mark %s (%d ops)", revision, commit.mark, len(commit.operations()))
+		repo.addEvent(commit)
 	}
 	// Now append reset objects
 	// Note: we time-sorted the resets when they were picked up;
@@ -2333,7 +2336,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 		// Hashes produced by the GitExtractor are turned into proper
 		// committish marks here.
 		c, ok := rs.commitMap[tag.committish]
-		if !ok {
+		if ok {
 			tag.remember(repo, c.mark)
 		} else {
 			return nil, fmt.Errorf("no commit corresponds to %s", tag.committish)
@@ -5449,15 +5452,22 @@ func newSignature(path string) *signature {
 		if _, err := io.Copy(h, file); err != nil {
 			log.Fatal(err)
 		}
+		// WARNING: as of 2019-09-25 the actual interface of Sum()
+		// does not match the documentation at
+		// https://golang.org/pkg/crypto/sha1
+		// This interface might be unstable.
+		for i, v := range h.Sum(nil) { 
+			ps.hashval[i] = v
+		}
 		perms := st.Mode()
 		// Map to the restricted set of modes that are allowed in
 		// the stream format.
-		if (perms & 0100700) == 0100700 {
+		if (perms & 0000700) == 0000700 {
 			perms = 0100755
-		} else if (perms & 0100600) == 0100600 {
+		} else if (perms & 0000600) == 0000600 {
 			perms = 0100644
 		}
-		ps.perms = fmt.Sprintf("%6o", perms)
+		ps.perms = fmt.Sprintf("%06o", perms)
 	}
 	return ps
 }
