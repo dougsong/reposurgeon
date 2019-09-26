@@ -2286,7 +2286,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 					blob := newBlob(repo)
 					blob.setMark(blobmark)
 					announce(debugEXTRACT, "%s: blob gets mark %s", revision, blob.mark)
-					filecopy(blob.getBlobfile(true), pathname)
+					filecopy(pathname, blob.getBlobfile(true))
 					blob.addalias(pathname)
 					repo.addEvent(blob)
 					// Its new fileop is added to the commit
