@@ -2157,7 +2157,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 		}
 		panic(throw("extractor", "Did not find revision IDs in revlist"))
 	}
-	sort.Sort(rs.refs)
+	sort.Stable(rs.refs)
 	rs.baton.twirl("")
 	rs.extractor.colorBranches(rs)
 
@@ -2317,12 +2317,11 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 	// Note: we time-sorted the resets when they were picked up;
 	// this is to ensure that the ordering is (a) deterministic,
 	// and (b) easily understood.
-	for resetname, revision := range rs.refs.dict {
+	for _, resetname := range rs.refs.keys {
 		if !strings.Contains(resetname, "/tags/") {
 			// FIXME: what if revision is unknown?
 			// keep previous behavior for now
-			reset := newReset(repo, resetname, rs.commitMap[revision].mark)
-			reset.ref = resetname
+			reset := newReset(repo, resetname, rs.commitMap[rs.refs.get(resetname)].mark)
 			repo.addEvent(reset)
 		}
 	}
