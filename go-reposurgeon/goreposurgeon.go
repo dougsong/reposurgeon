@@ -1514,6 +1514,7 @@ func (ge GitExtractor) gatherAllReferences(rs *RepoStreamer) error {
 		cf := bufio.NewReader(cfout)
 		tagger := ""
 		comment := ""
+		inBody := false
 		for {
 			line, err3 := cf.ReadString(byte('\n'))
 			if err3 == io.EOF {
@@ -1524,9 +1525,6 @@ func (ge GitExtractor) gatherAllReferences(rs *RepoStreamer) error {
 			} else if err3 != nil {
 				return err3
 			}
-			comment = ""
-			tagger = ""
-			inBody := false
 			line = strings.Trim(line, "\n")
 			if strings.HasPrefix(line, "tagger ") {
 				tagger = line[len("tagger "):]
