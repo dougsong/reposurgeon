@@ -2336,6 +2336,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 		c, ok := rs.commitMap[tag.committish]
 		if ok {
 			tag.remember(repo, c.mark)
+			repo.addEvent(&tag)
 		} else {
 			return nil, fmt.Errorf("no commit corresponds to %s", tag.committish)
 		}
