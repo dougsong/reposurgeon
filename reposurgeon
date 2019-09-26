@@ -6538,6 +6538,8 @@ class Repository:
         if target and target.name == "svn":
             SubversionDumper(self).dump(selection, fp, progress)
             return
+        elif hasattr(target, "vcstype"):
+            target = target.vcstype
         if selection != self.all():
             implied = set(selection)
             for ei in selection:
@@ -7643,6 +7645,8 @@ def rebuild_repo(repo, target, options, preferred):
     else:
         raise Recoverable("no default destination for rebuild")
     vcs = preferred or repo.vcs
+    if hasattr(preferred, "vcstype"):	# Step down from extractor class
+        preferred = preferred.vcstype
     if not vcs:
         raise Recoverable("please prefer a repo type first")
     if not hasattr(vcs, "exporter") or vcs.importer is None:
