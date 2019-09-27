@@ -2198,7 +2198,6 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 		if err != nil {
 			panic(throw("extract", "garbled commit attribution: %v", err))
 		}
-		rs.visibleFiles[revision] = make(map[string]signature)
 		commit.committer = *attrib
 		for _, a := range rs.getAuthors(revision) {
 			attrib, err = newAttribution(a)
@@ -2219,14 +2218,17 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 		}
 		// Git fast-import constructs the tree from the first parent only
 		// for a merge commit; fileops from all other parents have to be
-		// added explicitly
+		// added explicitly.
+		rs.visibleFiles[revision] = make(map[string]signature)
 		if len(parents) > 0 {
-			for _, rev := range parents[:1] {
-				for k, v := range rs.visibleFiles[rev] {
-					rs.visibleFiles[revision][k] = v
-				}
+			parent := parents[0]
+			for k, v := range rs.visibleFiles[parent] {
+				rs.visibleFiles[revision][k] = v
 			}
 		}
+
+		announce(debugEXTRACT,
+			"%s: visible files '%s'", trunc(revision), rs.visibleFiles[revision])
 
 		if len(present) > 0 {
 			removed := rs.fileSetAt(revision).Subtract(present)
@@ -2275,7 +2277,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 						for _, item := range deletia {
 							delete(rs.visibleFiles[revision], item)
 						}
-						if found {
+						if !found {
 							op := newFileOp(repo)
 							op.construct("M",
 								newsig.perms,
