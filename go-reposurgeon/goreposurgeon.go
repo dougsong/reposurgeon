@@ -2176,12 +2176,23 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 	}
 	rs.baton.twirl("")
 
+	// these two functions should chsnge only in sync
+	shortdump := func(hash [sha1.Size]byte) string {
+		return fmt.Sprintf("%02x%02x%02x%02x%02x%02x",
+			hash[0], hash[1], hash[2], hash[3], hash[4], hash[5])
+	}
+	trunc := func(instr string) string {
+		return instr[:12]
+	}
+
 	consume := make([]string, len(rs.revlist))
 	copy(consume, rs.revlist)
 	for _, revision := range consume {
 		commit := newCommit(repo)
 		rs.baton.twirl("")
 		present := rs.extractor.checkout(revision)
+		announce(debugEXTRACT,
+			"%s: present %v", trunc(revision), present)
 		parents := rs.getParents(revision)
 		attrib, err := newAttribution(rs.getCommitter(revision))
 		if err != nil {
@@ -2204,12 +2215,12 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 		if debugEnable(debugEXTRACT) {
 			msg := strconv.Quote(commit.Comment)
 			announce(debugEXTRACT,
-				"%s: comment '%s'", revision, msg)
+				"%s: comment '%s'", trunc(revision), msg)
 		}
 		// Git fast-import constructs the tree from the first parent only
 		// for a merge commit; fileops from all other parents have to be
 		// added explicitly
-		if len(parents) > 1 {
+		if len(parents) > 0 {
 			for _, rev := range parents[:1] {
 				for k, v := range rs.visibleFiles[rev] {
 					rs.visibleFiles[revision][k] = v
@@ -2217,15 +2228,6 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 			}
 		}
 
-		// these two functions should chsnge only in sync
-		shortdump := func(hash [sha1.Size]byte) string {
-			return fmt.Sprintf("%02x%02x%02x%02x%02x%02x",
-				hash[0], hash[1], hash[2], hash[3], hash[4], hash[5])
-		}
-		trunc := func(instr string) string {
-			return instr[:12]
-		}
-		
 		if len(present) > 0 {
 			removed := rs.fileSetAt(revision).Subtract(present)
 			for _, pathname := range present {
@@ -2250,11 +2252,9 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 						announce(debugEXTRACT, "%s: update for %s", trunc(revision), pathname)
 						found := false
 						var deletia []string
-						fmt.Printf("XXX looking for %v in %v\n", newsig, rs.visibleFiles[revision])
 						for oldpath, oldsig := range rs.visibleFiles[revision] {
 							if oldsig == *newsig {
 								found = true
-								fmt.Printf("XXX found true for %s\n", pathname)
 								if removed.Contains(oldpath) {
 									op := newFileOp(repo)
 									op.construct("R", oldpath, pathname)
@@ -5438,7 +5438,7 @@ func (p *Passthrough) moveto(*Repository) {
 
 // signature is a file signature - path, hash value of content and permissions."
 type signature struct {
-	pathname string
+	//pathname string
 	hashval  [sha1.Size]byte
 	perms    string
 }
@@ -5455,7 +5455,6 @@ func newSignature(path string) *signature {
 	}
 
 	ps := new(signature)
-	ps.pathname = path
 	if !st.IsDir() {
 		h := sha1.New()
 		if _, err := io.Copy(h, file); err != nil {
@@ -5482,14 +5481,12 @@ func newSignature(path string) *signature {
 }
 
 func (s signature) String() string {
-	return fmt.Sprintf("<%s:%s:%02x%02x%02x%02x%02x%02x>",
-		s.pathname, s.perms, s.hashval[0], s.hashval[1], s.hashval[2], s.hashval[3], s.hashval[4], s.hashval[5])
+	return fmt.Sprintf("<%s:%02x%02x%02x%02x%02x%02x>",
+		s.perms, s.hashval[0], s.hashval[1], s.hashval[2], s.hashval[3], s.hashval[4], s.hashval[5])
 }
 
 func (s signature) Equal(other signature) bool {
-	return s.pathname == other.pathname &&
-		s.hashval == other.hashval &&
-		s.perms == other.perms
+	return s.hashval == other.hashval && s.perms == other.perms
 }
 
 // capture runs a specified command, capturing the output.
