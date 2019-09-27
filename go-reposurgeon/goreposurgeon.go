@@ -2217,6 +2217,15 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 			}
 		}
 
+		// these two functions should chsnge only in sync
+		shortdump := func(hash [sha1.Size]byte) string {
+			return fmt.Sprintf("%02x%02x%02x%02x%02x%02x",
+				hash[0], hash[1], hash[2], hash[3], hash[4], hash[5])
+		}
+		trunc := func(instr string) string {
+			return instr[:12]
+		}
+		
 		if len(present) > 0 {
 			removed := rs.fileSetAt(revision).Subtract(present)
 			for _, pathname := range present {
@@ -2225,25 +2234,27 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 				}
 				if !exists(pathname) {
 					croak("%s: expected path %s does not exist!",
-						revision, pathname)
+						trunc(revision), pathname)
 					continue
 				}
 				newsig := newSignature(pathname)
 				if _, ok := rs.hashToMark[newsig.hashval]; ok {
 					if debugEnable(debugEXTRACT) {
-						announce(debugSHOUT, "%s: %s has old hash %v", revision, pathname, newsig.hashval)
+						announce(debugSHOUT, "%s: %s has old hash %v", trunc(revision), pathname, shortdump(newsig.hashval))
 					}
 					// The file's hash corresponds
 					// to an existing blob;
 					// generate modify, copy, or
 					// rename as appropriate.
 					if _, ok := rs.visibleFiles[revision][pathname]; !ok || rs.visibleFiles[revision][pathname] != *newsig {
-						announce(debugEXTRACT, "%s: update for %s", revision, pathname)
+						announce(debugEXTRACT, "%s: update for %s", trunc(revision), pathname)
 						found := false
 						var deletia []string
+						fmt.Printf("XXX looking for %v in %v\n", newsig, rs.visibleFiles[revision])
 						for oldpath, oldsig := range rs.visibleFiles[revision] {
 							if oldsig == *newsig {
 								found = true
+								fmt.Printf("XXX found true for %s\n", pathname)
 								if removed.Contains(oldpath) {
 									op := newFileOp(repo)
 									op.construct("R", oldpath, pathname)
@@ -2277,13 +2288,13 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 					// Content hash doesn't match
 					// any existing blobs
 					announce(debugEXTRACT, "%s: %s has new hash %v",
-						revision, pathname, newsig.hashval)
+						trunc(revision), pathname, shortdump(newsig.hashval))
 					blobmark := repo.newmark()
 					rs.hashToMark[newsig.hashval] = blobmark
 					// Actual content enters the representation
 					blob := newBlob(repo)
 					blob.setMark(blobmark)
-					announce(debugEXTRACT, "%s: blob gets mark %s", revision, blob.mark)
+					announce(debugEXTRACT, "%s: blob gets mark %s", trunc(revision), blob.mark)
 					filecopy(pathname, blob.getBlobfile(true))
 					blob.addalias(pathname)
 					repo.addEvent(blob)
@@ -2310,7 +2321,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 		commit.properties = newOrderedMap()
 		rs.commitMap[revision] = commit
 		commit.setMark(repo.newmark())
-		announce(debugEXTRACT, "%s: commit gets mark %s (%d ops)", revision, commit.mark, len(commit.operations()))
+		announce(debugEXTRACT, "%s: commit gets mark %s (%d ops)", trunc(revision), commit.mark, len(commit.operations()))
 		repo.addEvent(commit)
 	}
 	// Now append reset objects
@@ -5471,8 +5482,8 @@ func newSignature(path string) *signature {
 }
 
 func (s signature) String() string {
-	return fmt.Sprintf("<%s:%s:%s>",
-		s.pathname, s.perms, s.hashval)
+	return fmt.Sprintf("<%s:%s:%02x%02x%02x%02x%02x%02x>",
+		s.pathname, s.perms, s.hashval[0], s.hashval[1], s.hashval[2], s.hashval[3], s.hashval[4], s.hashval[5])
 }
 
 func (s signature) Equal(other signature) bool {
