@@ -208,6 +208,21 @@ func relpath(dir string) string {
 	return wd
 }
 
+func abspath(dir string) string {
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	if !strings.HasPrefix(dir, "/") {
+		dir = "/" + dir
+	}
+	wd, err = filepath.Abs(dir)
+	if err != nil {
+		panic(err)
+	}
+	return wd
+}
+
 func getsize(pathname string) int64 {
 	st, err := os.Stat(pathname)
 	if err != nil {
@@ -1690,7 +1705,7 @@ func (he HgExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
 		return nil
 	}
 	err := lineByLine(rs,
-		"hg log --template {node|short} {p1node|short} {p2node|short}\\n",
+		`hg log --template '{node|short} {p1node|short} {p2node|short}\n'`,
 		"hg's gatherRevisionIDs: %v",
 		hook)
 	// No way to reverse the log order, so it has to be done here
@@ -1714,12 +1729,13 @@ func (he HgExtractor) gatherCommitData(rs *RepoStreamer) error {
 		// defaulting itself.  But let's not count on it, since we
 		// might be handing the history stream to somebody's importer
 		// that handles that edge case differently.
+		rs.meta[hash] = new(CommitMeta)
 		rs.meta[hash].ci = ci
 		rs.meta[hash].ai = ci
 		return nil
 	}
 	return lineByLine(rs,
-		`{node|short}|{sub(r"<([^>]*)>", "", author|person)} <{author|email}> {date|rfc822date}\n`,
+		`hg log --template '{node|short}|{sub(r"<([^>]*)>", "", author|person)} <{author|email}> {date|rfc822date}\n'`,
 		"hg's gatherCommitData: %v",
 		hook)
 }
@@ -1820,7 +1836,7 @@ func (he HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
 	}
 	he.tagsFound = true
 	err = lineByLine(rs,
-		"log --rev=tag() --template={tags}\t{node}\n",
+		`hg log --rev='tag()' --template='{tags}\t{node}\n'`,
 		"fetching hg tags",
 		hook3)
 	if err != nil {
@@ -1836,7 +1852,7 @@ func (he HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
 func (he HgExtractor) _hgBranchItems() map[string]string {
 	out := make(map[string]string)
 	err := lineByLine(nil,
-		"hg log --template {node|short} {branch}\\n",
+		`hg log --template '{node|short} {branch}\n'`,
 		"in _hgBranchItems: %v",
 		func(line string, rs *RepoStreamer) error {
 			fields := strings.Fields(line)
@@ -10751,7 +10767,7 @@ func (repo *Repository) dumptimes() {
 func readRepo(source string, options stringSet, preferred *VCS, extractor Extractor) (*Repository, error) {
 	if debugEnable(debugSHUFFLE) {
 		if preferred != nil {
-			announce(debugSHOUT, fmt.Sprintf("looking for a %s repo...", preferred.name))
+			announce(debugSHOUT, fmt.Sprintf("looking for a %s repo st %s...", preferred.name, source))
 		} else {
 			announce(debugSHOUT, "reposurgeon: looking for any repo at %s...", source)
 		}
@@ -10765,7 +10781,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 	haveMatching := func(vcs *VCS) bool {
 		subdir := source + "/" + vcs.subdirectory
 		subdir = filepath.FromSlash(subdir)
-		return exists(subdir) && isdir(subdir) && vcs.exporter != ""
+		return exists(subdir) && isdir(subdir) && (vcs.exporter != "" || extractor != nil)
 	}
 
 	hitcount := 0
@@ -10784,9 +10800,9 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 		}
 	}
 	if hitcount == 0 {
-		return nil, fmt.Errorf("couldn't find a repo under %s", relpath(source))
+		return nil, fmt.Errorf("couldn't find a repo under %s", abspath(source))
 	} else if hitcount > 1 {
-		return nil, fmt.Errorf("too many repos under %s", relpath(source))
+		return nil, fmt.Errorf("too many repos under %s", abspath(source))
 	} else if debugEnable(debugSHUFFLE) {
 		announce(debugSHUFFLE, "found %s repository", vcs.name)
 	}
