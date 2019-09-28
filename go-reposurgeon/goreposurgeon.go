@@ -213,9 +213,6 @@ func abspath(dir string) string {
 	if err != nil {
 		panic(err)
 	}
-	if !strings.HasPrefix(dir, "/") {
-		dir = "/" + dir
-	}
 	wd, err = filepath.Abs(dir)
 	if err != nil {
 		panic(err)

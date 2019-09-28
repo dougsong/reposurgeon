@@ -212,7 +212,7 @@ git-regress-tags:
 	then \
 	    for test in $(GITTAGS); do \
 		if (echo "  $${test}.fi" >&2; \
-		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
+		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >/tmp/regress$$$$; \
 		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
 		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
 	    done; \

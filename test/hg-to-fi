@@ -25,9 +25,11 @@
 # Required because $PWD seems to be undefined in Gitlab's CI environment
 BIN=`realpath ..`
 
-extract=True
+build=True
 stream=True
 cleanup=True
+extract=""
+verbose=0
 
 pecho() { printf %s\\n "$*"; }
 log() { pecho "$@"; }
@@ -35,11 +37,12 @@ error() { log "ERROR: $@" >&2; }
 fatal() { error "$@"; exit 1; }
 try() { "$@" || fatal "'$@' failed"; }
 
-while getopts nr opt
+while getopts nre opt
 do
     case $opt in
-	n) extract=True ;  stream=False ; cleanup=False ;;
-    r) extract=False ; stream=True  ; cleanup=False ;;
+	n) build=True ;  stream=False ; cleanup=False ;;
+	r) build=False ; stream=True  ; cleanup=False ;;
+	e) extract='prefer hg-extractor'
     esac
 done
 shift $(($OPTIND - 1))
@@ -48,7 +51,7 @@ shift $(($OPTIND - 1))
 testrepo=${1:-/tmp/test-repo$$}
 
 # Should we build a repo from the input file?
-if [ $extract = True ]
+if [ $build = True ]
 then
 	# Go via git, because hg convert is standard and hg fastimport isn't
     try rm -fr $testrepo.git $testrepo
@@ -67,7 +70,7 @@ fi
 # Should we stream the repo?
 if [ $stream = True ]
 then
-    try ${BIN}/${REPOSURGEON:-reposurgeon} "read $testrepo" "sourcetype git" "write -"
+    try ${BIN}/${REPOSURGEON:-reposurgeon} "verbose $verbose" $extract "read $testrepo" "sourcetype git" "write -"
 fi
 
 # Should we clean up the test directory
