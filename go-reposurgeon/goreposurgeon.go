@@ -10768,20 +10768,24 @@ func (repo *Repository) dumptimes() {
 
 // Read a repository using fast-import.
 func readRepo(source string, options stringSet, preferred *VCS, extractor Extractor) (*Repository, error) {
-	if debugEnable(debugSHUFFLE) {
-		if preferred != nil {
-			announce(debugSHOUT, fmt.Sprintf("looking for a %s repo st %s...", preferred.name, source))
-		} else {
-			announce(debugSHOUT, "reposurgeon: looking for any repo at %s...", source)
-		}
-	}
+        if debugEnable(debugSHUFFLE) {
+                var legend string = "nil"
+                if extractor != nil {
+                        legend = "non-nil"
+                }
+                if preferred != nil {
+                        announce(debugSHOUT, "looking for a %s repo st %s (extractor %s...", preferred.name, source, legend)
+                } else {
+                        announce(debugSHOUT, "reposurgeon: looking for any repo at %s (extractor %s)...", source, legend)
+                }
+        }
 	// Trickier-than-it-looks department:
 	// There are three cases here.
 	// 1. extractor and preferred both non-nil.  Use the extractor if there's a matching repo here.
 	// 2. preferred non-nil.  Use that type if there's a matching repo here.
 	// 3. extractor and preferred both nil. Look for anything we can read, use the base impoter only.
 	// hitcount can only go over 1 in the third case.
-	haveMatching := func(vcs *VCS) bool {
+	baseMatch := func(vcs *VCS) bool {
 		subdir := source + "/" + vcs.subdirectory
 		subdir = filepath.FromSlash(subdir)
 		return exists(subdir) && isdir(subdir) && (vcs.exporter != "" || extractor != nil)
@@ -10790,13 +10794,13 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 	hitcount := 0
 	var vcs *VCS
 	if extractor != nil || preferred != nil {
-		if haveMatching(preferred) {
+		if baseMatch(preferred) {
 			hitcount = 1
 			vcs = preferred	// if extractor is non-null it gets picked up below
 		}
 	} else {
 		for _, possible := range importers {
-			if haveMatching(possible.basevcs) && possible.engine == nil {
+			if baseMatch(possible.basevcs) && possible.engine == nil {
 				vcs = possible.basevcs
 				hitcount++
 			}
@@ -10805,9 +10809,13 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 	if hitcount == 0 {
 		return nil, fmt.Errorf("couldn't find a repo under %s", abspath(source))
 	} else if hitcount > 1 {
-		return nil, fmt.Errorf("too many repos under %s", abspath(source))
+		return nil, fmt.Errorf("too many repos (%d) under %s", abspath(source), hitcount)
 	} else if debugEnable(debugSHUFFLE) {
-		announce(debugSHUFFLE, "found %s repository", vcs.name)
+                var legend string = "base"
+                if  extractor != nil {
+                        legend = "extractor"
+                }
+                announce(debugSHUFFLE, "found %s repository (%s)", vcs.name, legend)
 	}
 	repo := newRepository("")
 	repo.sourcedir = source

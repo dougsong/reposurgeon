@@ -7514,7 +7514,7 @@ def read_repo(source, options, preferred):
     if hitcount == 0:
         raise Recoverable("couldn't find a repo under %s" % os.path.relpath(source))
     elif hitcount > 1:
-        raise Recoverable("too many repos under %s" % os.path.relpath(source))
+        raise Recoverable("too many repos (%d) under %s" % (os.path.relpath(source), hitcount))
     elif debug_enable(DEBUG_SHUFFLE):
         announce(DEBUG_SHUFFLE, "found %s repository" % getattr(vcs or extractor, "name"))
     repo = Repository()
