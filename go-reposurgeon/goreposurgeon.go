@@ -1916,6 +1916,9 @@ func (he HgExtractor) colorBranches(rs *RepoStreamer) error {
 		// If the repo will give us a complete list of (commit
 		// hash, branch name) pairs, use that to do the coloring
 		for h, color := range colorItems {
+			if rs.meta[h] == nil {
+				rs.meta[h] = new(CommitMeta)
+			}
 			rs.meta[h].branch = color
 		}
 	} else {
@@ -2179,6 +2182,9 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 
 	var uncolored []string
 	for _, revision := range rs.revlist {
+		if rs.meta[revision] == nil {
+			rs.meta[revision] = new(CommitMeta)
+		}
 		if rs.meta[revision].branch == "" {
 			uncolored = append(uncolored, revision)
 		}
