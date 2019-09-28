@@ -1720,7 +1720,7 @@ func (he HgExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
 // gatherCommitData gets all other per-commit data except branch IDs
 func (he HgExtractor) gatherCommitData(rs *RepoStreamer) error {
 	hook := func(line string, rs *RepoStreamer) error {
-		fields := strings.Fields(line)
+		fields := strings.Split(line, "|")
 		hash := fields[0]
 		ci := fields[1]
 		// Because hg doesn't store separate author and committer info,
@@ -2056,7 +2056,7 @@ func (he HgExtractor) checkout(rev string) stringSet {
 
 // getComment returns a commit's change comment as a string.
 func (he HgExtractor) getComment(rev string) string {
-	data, err := captureFromProcess("hg log -r " + rev + " --template {desc}\\n")
+	data, err := captureFromProcess("hg log -r " + rev + ` --template '{desc}\n'`)
 	if err != nil {
 		panic(throw("extractor", "Couldn't spawn hg log: %v", err))
 	}
