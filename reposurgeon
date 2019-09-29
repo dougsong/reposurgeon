@@ -1331,6 +1331,7 @@ class HgExtractor(Extractor):
                 yield (h, "refs/heads/" + branch)
     def _branch_color_items(self):
         if not self.tags_found and not self.bookmarks_found:
+	    announce(DEBUG_SHUFFLE, "no tags or bookmarks.")
             # If we didn't find any tags or bookmarks, we can safely color all
             # commits using hg branch names, since hg stores them with commit
             # metadata; note, however, that the coloring this will produce
@@ -1567,7 +1568,7 @@ def debug_enable(level):
 
 def nuke(directory, legend):
     "Remove a (large) directory, with a progress indicator."
-    with Baton(legend, enable=debug_enable(DEBUG_SHUFFLE)) as baton:
+    with Baton(legend, enable=debug_enable(DEBUG_SHUFFLE) and not quiet) as baton:
         for root, dirs, files in os.walk(directory, topdown=False):
             for name in files:
                 os.remove(os.path.join(root, name))
@@ -3445,7 +3446,7 @@ class RepoStreamer:
                     msg = commit.comment
                     if msg is None:
                         msg = ""
-                    announce(DEBUG_EXTRACT, "r%s: comment '%s'" % (revision, msg.strip()))
+                    #announce(DEBUG_EXTRACT, "r%s: comment '%s'" % (revision, msg.strip()))
                 self.filemap[revision] = {}
                 # Git fast-import constructs the tree from the first parent only
                 # for a merge commit; fileops from all other parents have to be
@@ -3471,7 +3472,7 @@ class RepoStreamer:
                             # appropriate.
                             if path not in self.filemap[revision] \
                                    or self.filemap[revision][path]!=newsig:
-                                announce(DEBUG_EXTRACT, "r%s: update for %s" % (revision, path))
+                                #announce(DEBUG_EXTRACT, "r%s: update for %s" % (revision, path))
                                 # Iterating through dict items (with
                                 # items() or itemsview() for
                                 # instance) while mutating the
@@ -3501,8 +3502,8 @@ class RepoStreamer:
                                     commit.append_operation(op)
                         else:
                             # Content hash doesn't match any existing blobs
-                            announce(DEBUG_EXTRACT, "r%s: %s has new hash" \
-                                         % (revision, path))
+                            #announce(DEBUG_EXTRACT, "r%s: %s has new hash" \
+                            #             % (revision, path))
                             blobmark = repo.newmark()
                             self.hash_to_mark[newsig.hashval] = blobmark
                             # Actual content enters the representation
@@ -3533,7 +3534,7 @@ class RepoStreamer:
                 commit.properties.update(self.extractor.get_properties(revision))
                 commit.set_mark(repo.newmark())
                 self.commit_map[revision] = commit
-                announce(DEBUG_EXTRACT, "r%s: gets mark %s (%d ops)" % (revision, commit.mark, len(commit.operations())))
+                #announce(DEBUG_EXTRACT, "r%s: commit gets mark %s (%d ops)" % (revision, commit.mark, len(commit.operations())))
                 repo.addEvent(commit)
             # Now append reset objects
             # Note: we sort the resets by the mark number of their associated revisions; this
@@ -7485,7 +7486,7 @@ class Repository:
         if self.seekstream:
             self.seekstream.close()
 
-def read_repo(source, options, preferred):
+def read_repo(source, options, preferred, quiet):
     "Read a repository using fast-import."
     if debug_enable(DEBUG_SHUFFLE):
         if preferred:
@@ -7522,7 +7523,7 @@ def read_repo(source, options, preferred):
     if vcs:
         repo.hint(vcs.name, strong=True)
         repo.preserve_set = vcs.preserve
-        showprogress = (verbose > 0) and "export-progress" not in repo.export_style()
+        showprogress = (verbose > 0) and "export-progress" not in repo.export_style() and not quiet
         context = {"basename": os.path.basename(repo.sourcedir)}
     try:
         here = os.getcwd()
@@ -7605,7 +7606,7 @@ def read_repo(source, options, preferred):
         if extractor:
             repo.stronghint=True
             streamer = RepoStreamer(extractor)
-            streamer.extract(repo, progress=verbose>0)
+            streamer.extract(repo, progress=verbose>0 and not quiet)
     finally:
         os.chdir(here)
     return repo
@@ -9664,8 +9665,8 @@ developers only.
         sys.stdout.write("""
 Without an argument, this command requests a report of the quiet
 boolean; with the argument 'on' or 'off' it is changed.  When quiet is
-on, time-varying report fields which would otherwise cause spurious
-failures in regression testing are suppressed.
+on, progress meters and time-varying report fields which would otherwise
+cause spurious failures in regression testing are suppressed.
 """)
     def do_quiet(self, line):
         global quiet
@@ -10419,9 +10420,9 @@ For a list of supported types, invoke the 'prefer' command.
             # This is slightly asymmetrical with the write side, which
             # interprets an empty argument list as '-'
             elif not parse.line or parse.line == '.':
-                repo = read_repo(os.getcwd(), parse.options, self.preferred)
+                repo = read_repo(os.getcwd(), parse.options, self.preferred, quiet)
             elif os.path.isdir(parse.line):
-                repo = read_repo(parse.line, parse.options, self.preferred)
+                repo = read_repo(parse.line, parse.options, self.preferred, quiet)
             else:
                 raise Recoverable("read no longer takes a filename argument - use < redirection instead")
         self.repolist.append(repo)

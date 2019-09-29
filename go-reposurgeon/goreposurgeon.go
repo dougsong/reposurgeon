@@ -58,16 +58,17 @@ package main
 
 // This code was translated from Python. It retains, for internal
 // documentation purposes, the Python convention of using leading
-// underscores on field names to flag fields tht should never be
+// underscores on field names to flag fields that should never be
 // referenced outside a method of the associated struct.
 //
 // The capitalization of other fieldnames looks inconsistent because
 // the code tries to retain the lowercase Python names and
 // compartmentalize as much as possible to be visible only within the
 // declaring package.  Some fields are capitalized for backwards
-// compatibility with the Python setfield command, others (like some
-// members of FileOp) because there's an internal requirement that
-// they be settable by the Go reflection primitives.
+// compatibility with the setfield command in the Python
+// implementation, others (like some members of FileOp) because
+// there's an internal requirement that they be settable by the Go
+// reflection primitives.
 //
 // Do 'help news' for a summary of recent changes.
 
@@ -1888,6 +1889,7 @@ func (he HgExtractor) gatherChildTimestamps(rs *RepoStreamer) map[string]time.Ti
 
 func (he HgExtractor) _branchColorItems() map[string]string {
 	if !he.tagsFound && !he.bookmarksFound {
+		announce(debugSHUFFLE, "no tags or bookmarks.")
 		// If we didn't find any tags or bookmarks, we can
 		// safely color all commits using hg branch names,
 		// since hg stores them with commit metadata; note,
@@ -2198,10 +2200,10 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 	rs.baton.twirl("")
 
 	// these two functions should chsnge only in sync
-	shortdump := func(hash [sha1.Size]byte) string {
-		return fmt.Sprintf("%02x%02x%02x%02x%02x%02x",
-			hash[0], hash[1], hash[2], hash[3], hash[4], hash[5])
-	}
+	//shortdump := func(hash [sha1.Size]byte) string {
+	//	return fmt.Sprintf("%02x%02x%02x%02x%02x%02x",
+	//		hash[0], hash[1], hash[2], hash[3], hash[4], hash[5])
+	//}
 	trunc := func(instr string) string {
 		return instr[:12]
 	}
@@ -2212,8 +2214,8 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 		commit := newCommit(repo)
 		rs.baton.twirl("")
 		present := rs.extractor.checkout(revision)
-		announce(debugEXTRACT,
-			"%s: present %v", trunc(revision), present)
+		//announce(debugEXTRACT,
+		//	"%s: present %v", trunc(revision), present)
 		parents := rs.getParents(revision)
 		attrib, err := newAttribution(rs.getCommitter(revision))
 		if err != nil {
@@ -2232,11 +2234,11 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 		}
 		commit.setBranch(rs.meta[revision].branch)
 		commit.Comment = rs.extractor.getComment(revision)
-		if debugEnable(debugEXTRACT) {
-			msg := strconv.Quote(commit.Comment)
-			announce(debugEXTRACT,
-				"%s: comment '%s'", trunc(revision), msg)
-		}
+		//if debugEnable(debugEXTRACT) {
+		//	msg := strconv.Quote(commit.Comment)
+		//	announce(debugEXTRACT,
+		//		"%s: comment '%s'", trunc(revision), msg)
+		//}
 		// Git fast-import constructs the tree from the first parent only
 		// for a merge commit; fileops from all other parents have to be
 		// added explicitly.
@@ -2248,8 +2250,8 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 			}
 		}
 
-		announce(debugEXTRACT,
-			"%s: visible files '%s'", trunc(revision), rs.visibleFiles[revision])
+		//announce(debugEXTRACT,
+		//	"%s: visible files '%s'", trunc(revision), rs.visibleFiles[revision])
 
 		if len(present) > 0 {
 			removed := rs.fileSetAt(revision).Subtract(present)
@@ -2264,15 +2266,15 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 				}
 				newsig := newSignature(pathname)
 				if _, ok := rs.hashToMark[newsig.hashval]; ok {
-					if debugEnable(debugEXTRACT) {
-						announce(debugSHOUT, "%s: %s has old hash %v", trunc(revision), pathname, shortdump(newsig.hashval))
-					}
+					//if debugEnable(debugEXTRACT) {
+					//	announce(debugSHOUT, "%s: %s has old hash %v", trunc(revision), pathname, shortdump(newsig.hashval))
+					//}
 					// The file's hash corresponds
 					// to an existing blob;
 					// generate modify, copy, or
 					// rename as appropriate.
 					if _, ok := rs.visibleFiles[revision][pathname]; !ok || rs.visibleFiles[revision][pathname] != *newsig {
-						announce(debugEXTRACT, "%s: update for %s", trunc(revision), pathname)
+						//announce(debugEXTRACT, "%s: update for %s", trunc(revision), pathname)
 						found := false
 						var deletia []string
 						// FIXME: This optimization is almost correct.
@@ -2312,14 +2314,14 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 				} else {
 					// Content hash doesn't match
 					// any existing blobs
-					announce(debugEXTRACT, "%s: %s has new hash %v",
-						trunc(revision), pathname, shortdump(newsig.hashval))
+					//announce(debugEXTRACT, "%s: %s has new hash %v",
+					//	trunc(revision), pathname, shortdump(newsig.hashval))
 					blobmark := repo.newmark()
 					rs.hashToMark[newsig.hashval] = blobmark
 					// Actual content enters the representation
 					blob := newBlob(repo)
 					blob.setMark(blobmark)
-					announce(debugEXTRACT, "%s: blob gets mark %s", trunc(revision), blob.mark)
+					//announce(debugEXTRACT, "%s: blob gets mark %s", trunc(revision), blob.mark)
 					filecopy(pathname, blob.getBlobfile(true))
 					blob.addalias(pathname)
 					repo.addEvent(blob)
@@ -2346,7 +2348,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 		commit.properties = newOrderedMap()
 		rs.commitMap[revision] = commit
 		commit.setMark(repo.newmark())
-		announce(debugEXTRACT, "%s: commit gets mark %s (%d ops)", trunc(revision), commit.mark, len(commit.operations()))
+		//announce(debugEXTRACT, "%s: commit gets mark %s (%d ops)", trunc(revision), commit.mark, len(commit.operations()))
 		repo.addEvent(commit)
 	}
 	// Now append reset objects
@@ -2647,6 +2649,7 @@ func debugEnable(level int) bool {
 
 // nuke removed a (large) directory, reporting elapsed time.
 func nuke(directory string, legend string) {
+	// FIXME: Suppress progress meteing when quiet on?
 	baton := newBaton(legend, "", debugEnable(debugSHUFFLE))
 	defer baton.exit("")
 	// FIXME: Redo with filepath.Walk and a more granular baton
@@ -10771,7 +10774,7 @@ func (repo *Repository) dumptimes() {
 
 
 // Read a repository using fast-import.
-func readRepo(source string, options stringSet, preferred *VCS, extractor Extractor) (*Repository, error) {
+func readRepo(source string, options stringSet, preferred *VCS, extractor Extractor, quiet bool) (*Repository, error) {
         if debugEnable(debugSHUFFLE) {
                 var legend string = "nil"
                 if extractor != nil {
@@ -10848,17 +10851,16 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 	chdir(repo.sourcedir, "repository directory")
 	// We found a matching custom extractor
 	if extractor != nil {
-		announce(debugEXTRACT, "extracting from %s repository", vcs.name)
 		repo.stronghint = true
 		streamer := newRepoStreamer(extractor)
-		repo, err := streamer.extract(repo, vcs, context.verbose > 0)
+		repo, err := streamer.extract(repo, vcs, context.verbose > 0 && !quiet)
 		return repo, err
 	}
 	// We found a matching VCS type
 	if vcs != nil {
 		repo.hint("", vcs.name, true)
 		repo.preserveSet = vcs.preserve
-		showprogress := (context.verbose > 0) && !repo.exportStyle().Contains("export-progress")
+		showprogress := (context.verbose > 0) && !repo.exportStyle().Contains("export-progress") && !quiet
 		context := map[string]string{"basename": filepath.Base(repo.sourcedir)}
 		mapper := func(sub string) string {
 			for k, v := range context {
@@ -15291,14 +15293,14 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 			croak(err2.Error())
 			return false
 		}
-		repo, err2 = readRepo(cdir, parse.options, rs.preferred, rs.extractor)
+		repo, err2 = readRepo(cdir, parse.options, rs.preferred, rs.extractor, rs.quiet)
 		if err2 != nil {
 			croak(err2.Error())
 			return false
 		}
 	} else if isdir(parse.line) {
 		var err2 error
-		repo, err2 = readRepo(parse.line, parse.options, rs.preferred, rs.extractor)
+		repo, err2 = readRepo(parse.line, parse.options, rs.preferred, rs.extractor, rs.quiet)
 		if err2 != nil {
 			croak(err2.Error())
 			return false
@@ -20495,8 +20497,8 @@ func (rs *Reposurgeon) HelpQuiet() {
 	rs.helpOutput(`
 Without an argument, this command requests a report of the quiet
 boolean; with the argument 'on' or 'off' it is changed.  When quiet is
-on, time-varying report fields which would otherwise cause spurious
-failures in regression testing are suppressed.
+on, progress meters and time-varying report fields which would otherwise
+cause spurious failures in regression testing are suppressed.
 `)
 }
 
