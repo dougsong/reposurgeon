@@ -1935,7 +1935,9 @@ func (he HgExtractor) postExtract(repo *Repository) {
 					event.(*Commit).Branch = "refs/heads/master"
 				}
 			case *Reset:
-				event.(*Reset).ref = "refs/heads/master"
+				if event.(*Reset).ref == "refs/heads/default" {
+					event.(*Reset).ref = "refs/heads/master"
+				}
 			}
 		}
 	}
