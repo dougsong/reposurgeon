@@ -10810,7 +10810,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 		if hitcount == 0 {
 			return nil, fmt.Errorf("couldn't find a repo under %s", abspath(source))
 		} else if hitcount > 1 {
-			return nil, fmt.Errorf("too many repos (%d) under %s", abspath(source), hitcount)
+			return nil, fmt.Errorf("too many repos (%d) under %s", hitcount, abspath(source))
 		}
 		// There's only one base match, and vcs is set.  Forward to a matching extractor if need be 
 		if vcs.exporter == "" {
