@@ -2273,6 +2273,8 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 						announce(debugEXTRACT, "%s: update for %s", trunc(revision), pathname)
 						found := false
 						var deletia []string
+						// FIXME: This optimization is almost correct.
+						// but there are more important things to deal with.
 						//for oldpath, oldsig := range rs.visibleFiles[revision] {
 						//	if oldsig == *newsig {
 						//		found = true
