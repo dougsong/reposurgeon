@@ -19,6 +19,7 @@ BIN=`realpath ..`
 build=True
 stream=True
 cleanup=True
+verbose=0
 
 pecho() { printf %s\\n "$*"; }
 log() { pecho "$@"; }
@@ -26,11 +27,12 @@ error() { log "ERROR: $@" >&2; }
 fatal() { error "$@"; exit 1; }
 try() { "$@" || fatal "'$@' failed"; }
 
-while getopts nr opt
+while getopts nrv: opt
 do
     case $opt in
     n) build=True; stream=False ; cleanup=False ;;
     r) build=False; stream=True  ; cleanup=False ;;
+    v) verbose=$OPTARG;;
     esac
 done
 shift $(($OPTIND - 1))
@@ -71,7 +73,7 @@ fi
 # Should we stream the repo?
 if [ $stream = True ]
 then
-    try ${BIN}/${REPOSURGEON:-reposurgeon} "read $testrepo" "sourcetype git" "write -"
+    try ${BIN}/${REPOSURGEON:-reposurgeon} "verbose $verbose" "read $testrepo" "sourcetype git" "write -"
 fi
 
 # Should we clean up the test directory
