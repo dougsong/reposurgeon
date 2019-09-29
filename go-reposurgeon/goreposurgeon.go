@@ -2273,22 +2273,22 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 						announce(debugEXTRACT, "%s: update for %s", trunc(revision), pathname)
 						found := false
 						var deletia []string
-						for oldpath, oldsig := range rs.visibleFiles[revision] {
-							if oldsig == *newsig {
-								found = true
-								if removed.Contains(oldpath) {
-									op := newFileOp(repo)
-									op.construct("R", oldpath, pathname)
-									commit.appendOperation(*op)
-									deletia = append(deletia, oldpath)
-								} else if oldpath != pathname {
-									op := newFileOp(repo)
-									op.construct("C", oldpath, pathname)
-									commit.appendOperation(*op)
-								}
-								break
-							}
-						}
+						//for oldpath, oldsig := range rs.visibleFiles[revision] {
+						//	if oldsig == *newsig {
+						//		found = true
+						//		if removed.Contains(oldpath) {
+						//			op := newFileOp(repo)
+						//			op.construct("R", oldpath, pathname)
+						//			commit.appendOperation(*op)
+						//			deletia = append(deletia, oldpath)
+						//		} else if oldpath != pathname {
+						//			op := newFileOp(repo)
+						//			op.construct("C", oldpath, pathname)
+						//			commit.appendOperation(*op)
+						//		}
+						//		break
+						//	}
+						//}
 						// Avoid deleting
 						// items from map
 						// while iterating

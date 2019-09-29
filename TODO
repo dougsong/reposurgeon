@@ -33,3 +33,5 @@
 * After the above is done, bring back the too-many-parents.svn test
   from before 2019-09-22 (has both discontinuous revisions and
   mergeinfo properties).
+
+* Fix up generation of R and C in the Mercurial exporter.
