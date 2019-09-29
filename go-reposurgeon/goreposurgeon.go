@@ -10782,35 +10782,47 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 	// Trickier-than-it-looks department:
 	// There are three cases here.
 	// 1. extractor and preferred both non-nil.  Use the extractor if there's a matching repo here.
-	// 2. preferred non-nil.  Use that type if there's a matching repo here.
-	// 3. extractor and preferred both nil. Look for anything we can read, use the base impoter only.
-	// hitcount can only go over 1 in the third case.
+	// 2. preferred is non-nil.  Use that type if there's a matching repo here.
+	// 3. extractor and preferred both nil. Look for anything we can read.
 	baseMatch := func(vcs *VCS) bool {
 		subdir := source + "/" + vcs.subdirectory
 		subdir = filepath.FromSlash(subdir)
-		return exists(subdir) && isdir(subdir) && (vcs.exporter != "" || extractor != nil)
+		return exists(subdir) && isdir(subdir)
 	}
 
-	hitcount := 0
 	var vcs *VCS
 	if extractor != nil || preferred != nil {
 		if baseMatch(preferred) {
-			hitcount = 1
 			vcs = preferred	// if extractor is non-null it gets picked up below
+		} else {
+			return nil, fmt.Errorf("couldn't find a repo of desiret type %s under %s", preferred.name, abspath(source))
 		}
 	} else {
-		for _, possible := range importers {
-			if baseMatch(possible.basevcs) && possible.engine == nil {
-				vcs = possible.basevcs
+		hitcount := 0
+		for i, possible := range vcstypes {
+			if baseMatch(&possible) {
+				vcs = &vcstypes[i]
 				hitcount++
 			}
 		}
+		if hitcount == 0 {
+			return nil, fmt.Errorf("couldn't find a repo under %s", abspath(source))
+		} else if hitcount > 1 {
+			return nil, fmt.Errorf("too many repos (%d) under %s", abspath(source), hitcount)
+		}
+		// There's only one base match, and vcs is set.  Forward to a matching extractor if need be 
+		if vcs.exporter == "" {
+			for _, possible := range importers {
+				if baseMatch(possible.basevcs) {
+					extractor = possible.engine
+				}
+			}
+			if extractor == nil {
+				return nil, fmt.Errorf("couldn't find an exporter matching %s under %s", vcs.name, abspath(source))
+			}
+		}
 	}
-	if hitcount == 0 {
-		return nil, fmt.Errorf("couldn't find a repo under %s", abspath(source))
-	} else if hitcount > 1 {
-		return nil, fmt.Errorf("too many repos (%d) under %s", abspath(source), hitcount)
-	} else if debugEnable(debugSHUFFLE) {
+	if debugEnable(debugSHUFFLE) {
                 var legend string = "base"
                 if  extractor != nil {
                         legend = "extractor"
