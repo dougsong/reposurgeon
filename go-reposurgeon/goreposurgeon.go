@@ -1334,8 +1334,12 @@ func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
 	}
 	// This will be used in _branchColor below
 	cm.childStamps = mc.gatherChildTimestamps(base)
-	for refname, refobj := range base.refs.dict {
-		cm._branchColor(refobj, refname, base)
+	// Depends on the order of the revlist to be correct.
+	// The Python gode did a sort by timestamp here -
+	// not necessary id your VCS dumps branches in
+	// revlist-tip order.
+	for _, refname := range base.refs.keys {
+		cm._branchColor(base.refs.get(refname), refname, base)
 	}
 }
 
@@ -1786,10 +1790,10 @@ func (he *HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
 		"hg branches --closed",
 		"fetching hg branches",
 		hook1)
+
 	if err != nil {
 		panic(throw("extractor", "while fetching hg branches: %v", err))
 	}
-
 	if bookmarkRef != "" {
 		hook2 := func(line string, rs *RepoStreamer) error {
 			fields := strings.Fields(line)
