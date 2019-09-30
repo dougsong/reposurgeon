@@ -1819,6 +1819,7 @@ func (he HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
 			panic(throw("extractor", "while fetching hg bookmarks: %v", err))
 		}
 	}
+	he.tagsFound = false
 	hook3 := func(line string, rs *RepoStreamer) error {
 		// In Python this was:
 		/* n, h = tuple(map(polystr, line.strip().rsplit(b'\t', 1))) */
@@ -1829,10 +1830,10 @@ func (he HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
 		if n == "tip" { // pseudo-tag for most recent commit
 			return nil // We don't want it
 		}
+		he.tagsFound = true
 		rs.refs.set("refs/tags/"+n, h[:12])
 		return nil
 	}
-	he.tagsFound = true
 	err = lineByLine(rs,
 		`hg log --rev='tag()' --template='{tags}\t{node}\n'`,
 		"fetching hg tags",
@@ -1889,7 +1890,7 @@ func (he HgExtractor) gatherChildTimestamps(rs *RepoStreamer) map[string]time.Ti
 
 func (he HgExtractor) _branchColorItems() map[string]string {
 	if !he.tagsFound && !he.bookmarksFound {
-		announce(debugSHUFFLE, "no tags or bookmarks.")
+		announce(debugEXTRACT, "no tags or bookmarks.")
 		// If we didn't find any tags or bookmarks, we can
 		// safely color all commits using hg branch names,
 		// since hg stores them with commit metadata; note,
