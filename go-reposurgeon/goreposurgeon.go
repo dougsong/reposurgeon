@@ -1271,7 +1271,7 @@ var fileFilters = map[string]struct {
 // particular, RFC3339 dates are good. and so is git's native
 // integer-Unix-timestamp/timezone pairs.
 
-// CommitMeta is the extractor's idea of per-commit metadata
+ // CommitMeta is the extractor's idea of per-commit metadata
 type CommitMeta struct {
 	ci     string
 	ai     string
@@ -1317,12 +1317,6 @@ type ColorMixer struct {
 	base         *RepoStreamer
 	commitStamps map[string]time.Time // icommit -> timestamp
 	childStamps  map[string]time.Time // commit -> timestamp of latest child
-}
-
-func (cm *ColorMixer) colorMixerInit(base *RepoStreamer) {
-	cm.base = base
-	cm.commitStamps = make(map[string]time.Time)
-	cm.childStamps = make(map[string]time.Time)
 }
 
 // simulateGitColoring colors branches in the order the tips occur.
@@ -1446,7 +1440,7 @@ func newGitExtractor() *GitExtractor {
 	return ge
 }
 
-func (ge GitExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
+func (ge *GitExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
 	hook := func(line string, rs *RepoStreamer) error {
 		fields := strings.Fields(line)
 		rs.revlist = append(rs.revlist, fields[0])
@@ -1459,7 +1453,7 @@ func (ge GitExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
 		hook)
 }
 
-func (ge GitExtractor) gatherCommitData(rs *RepoStreamer) error {
+func (ge *GitExtractor) gatherCommitData(rs *RepoStreamer) error {
 	hook := func(line string, rs *RepoStreamer) error {
 		line = strings.Trim(line, "\n")
 		fields := strings.Split(line, "|")
@@ -1474,7 +1468,7 @@ func (ge GitExtractor) gatherCommitData(rs *RepoStreamer) error {
 		hook)
 }
 
-func (ge GitExtractor) gatherAllReferences(rs *RepoStreamer) error {
+func (ge *GitExtractor) gatherAllReferences(rs *RepoStreamer) error {
 	err := filepath.Walk(".git/refs", func(pathname string, info os.FileInfo, err error) error {
 		if err != nil {
 			// Prevent panic by handling failure accessing a path
@@ -1565,7 +1559,7 @@ func (ge GitExtractor) gatherAllReferences(rs *RepoStreamer) error {
 }
 
 // colorBranches colors all commits with their branch name.
-func (ge GitExtractor) colorBranches(rs *RepoStreamer) error {
+func (ge *GitExtractor) colorBranches(rs *RepoStreamer) error {
 	// This is really cheating since fast-export could give us the
 	// whole repo, but it's the only way I've found to get the correct
 	// mapping of commits to branches, and we still want to test the
@@ -1621,7 +1615,7 @@ func (ge GitExtractor) colorBranches(rs *RepoStreamer) error {
 	return nil
 }
 
-func (ge GitExtractor) _metadata(rev string, format string) string {
+func (ge *GitExtractor) _metadata(rev string, format string) string {
 	line, err := captureFromProcess(fmt.Sprintf("git log -1 --format='%s' %s", format, rev))
 	if err != nil {
 		panic(throw("extractor", "Couldn't spawn git log: %v", err))
@@ -1632,7 +1626,7 @@ func (ge GitExtractor) _metadata(rev string, format string) string {
 	return line
 }
 
-func (ge GitExtractor) postExtract(_repo *Repository) {
+func (ge *GitExtractor) postExtract(_repo *Repository) {
 	cmd := exec.Command("git", "checkout", "--quiet", "master")
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -1641,7 +1635,7 @@ func (ge GitExtractor) postExtract(_repo *Repository) {
 }
 
 // isClean is a predicate;  return true if repo has no unsaved changes.
-func (ge GitExtractor) isClean() bool {
+func (ge *GitExtractor) isClean() bool {
 	data, err := captureFromProcess("git ls-files --modified")
 	if err != nil {
 		panic(throw("extractor", "Couldn't spawn git ls-files --modified: %v", err))
@@ -1650,7 +1644,7 @@ func (ge GitExtractor) isClean() bool {
 }
 
 // checkout checks the repository out to a specified revision.
-func (ge GitExtractor) checkout(rev string) stringSet {
+func (ge *GitExtractor) checkout(rev string) stringSet {
 	exec.Command("git", "checkout", "--quiet", rev).Run()
 	data, err := captureFromProcess("git ls-files")
 	if err != nil {
@@ -1664,7 +1658,7 @@ func (ge GitExtractor) checkout(rev string) stringSet {
 }
 
 // getComment returns a commit's change comment as a string.
-func (ge GitExtractor) getComment(rev string) string {
+func (ge *GitExtractor) getComment(rev string) string {
 	return ge._metadata(rev, "%B")
 }
 
@@ -1684,7 +1678,9 @@ func newHgExtractor() *HgExtractor {
 }
 
 //gatherRevisionIDs gets the topologically-ordered list of revisions and parents.
-func (he HgExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
+func (he *HgExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
+	// Belated initalization
+	he.base = rs
 	// hg changesets can only have up to two parents
 	// we have to use short (12-nibble) hashes because that's all "hg tags"
 	// and "hg branches" give us.  Hg's CLI is rubbish.
@@ -1716,7 +1712,7 @@ func (he HgExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
 }
 
 // gatherCommitData gets all other per-commit data except branch IDs
-func (he HgExtractor) gatherCommitData(rs *RepoStreamer) error {
+func (he *HgExtractor) gatherCommitData(rs *RepoStreamer) error {
 	hook := func(line string, rs *RepoStreamer) error {
 		fields := strings.Split(line, "|")
 		hash := fields[0]
@@ -1739,7 +1735,7 @@ func (he HgExtractor) gatherCommitData(rs *RepoStreamer) error {
 }
 
 // gatherCommitTimestamps updates the ColorMixer mapping of hash -> timestamp
-func (he HgExtractor) gatherCommitTimestamps() error {
+func (he *HgExtractor) gatherCommitTimestamps() error {
 	he.commitStamps = make(map[string]time.Time)
 	hook := func(line string, rs *RepoStreamer) error {
 		fields := strings.Fields(line)
@@ -1849,7 +1845,7 @@ func (he *HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
 	return nil
 }
 
-func (he HgExtractor) _hgBranchItems() map[string]string {
+func (he *HgExtractor) _hgBranchItems() map[string]string {
 	out := make(map[string]string)
 	err := lineByLine(nil,
 		`hg log --template '{node|short} {branch}\n'`,
@@ -1866,7 +1862,7 @@ func (he HgExtractor) _hgBranchItems() map[string]string {
 }
 
 // Return initial mapping of commit hash -> timestamp of child it is colored from
-func (he HgExtractor) gatherChildTimestamps(rs *RepoStreamer) map[string]time.Time {
+func (he *HgExtractor) gatherChildTimestamps(rs *RepoStreamer) map[string]time.Time {
 	results := make(map[string]time.Time)
 	for h, branch := range he._hgBranchItems() {
 		// Fill in the branch as a default; this will ensure
@@ -1889,7 +1885,7 @@ func (he HgExtractor) gatherChildTimestamps(rs *RepoStreamer) map[string]time.Ti
 	return results
 }
 
-func (he HgExtractor) _branchColorItems() map[string]string {
+func (he *HgExtractor) _branchColorItems() map[string]string {
 	if !he.tagsFound && !he.bookmarksFound {
 		announce(debugEXTRACT, "no tags or bookmarks.")
 		// If we didn't find any tags or bookmarks, we can
@@ -1911,7 +1907,7 @@ func (he HgExtractor) _branchColorItems() map[string]string {
 }
 
 // colorBanches assigns branches to commits in an extracted repository
-func (he HgExtractor) colorBranches(rs *RepoStreamer) error {
+func (he *HgExtractor) colorBranches(rs *RepoStreamer) error {
 	colorItems := he._branchColorItems()
 	if colorItems != nil {
 		// If the repo will give us a complete list of (commit
@@ -1929,7 +1925,7 @@ func (he HgExtractor) colorBranches(rs *RepoStreamer) error {
 	return nil
 }
 
-func (he HgExtractor) postExtract(repo *Repository) {
+func (he *HgExtractor) postExtract(repo *Repository) {
 	he.checkout("tip")
 	if !repo.branchset().Contains("refs/heads/master") {
 		for _, event := range repo.events {
@@ -1948,7 +1944,7 @@ func (he HgExtractor) postExtract(repo *Repository) {
 }
 
 // isClean returns true if repo has no unsaved changes
-func (he HgExtractor) isClean() bool {
+func (he *HgExtractor) isClean() bool {
 	data, err := captureFromProcess("hg status --modified")
 	if err != nil {
 		panic(throw("extractor", "Couldn't spawn hg status --modified: %v", err))
