@@ -1740,9 +1740,10 @@ func (he HgExtractor) gatherCommitData(rs *RepoStreamer) error {
 
 // gatherCommitTimestamps updates the ColorMixer mapping of hash -> timestamp
 func (he HgExtractor) gatherCommitTimestamps() error {
+	he.commitStamps = make(map[string]time.Time)
 	hook := func(line string, rs *RepoStreamer) error {
 		fields := strings.Fields(line)
-		d, err := newDate(fields[1] + " " + fields[2])
+		d, err := newDate(fields[1])
 		if err != nil {
 			panic(throw("unrecognized date format in %q: %v", line, err))
 		}
@@ -1751,13 +1752,13 @@ func (he HgExtractor) gatherCommitTimestamps() error {
 	}
 
 	return lineByLine(nil,
-		"log --template {node|short} {date|hgdate}\\n",
+		`hg log --template '{node|short} {date|rfc3339date}\n'`,
 		"hg's gatherCommitTimestamps",
 		hook)
 }
 
 // gatherAllReferences finds all branch heads and tags
-func (he HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
+func (he *HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
 	// Some versions of mercurial can return an error for showconfig
 	// when the config is not present. This isn't an error.
 	bookmarkRef, errcode := captureFromProcess("hg showconfig reposurgeon.bookmarks")
