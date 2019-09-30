@@ -1348,10 +1348,12 @@ class HgExtractor(Extractor):
     def get_commit_timestamps(self):
         """Return mapping of commit hash -> Unix timestamp"""
         timestamps = {}
-        with self.hg_or_die("log", "--template", "{node|short} {date|hgdate}\\n") as fp:
+        with self.hg_or_die("log", "--template", "{node|short}!{date|rfc3339date}\\n") as fp:
             for line in fp:
-                fields = polystr(line).strip().split()
-                timestamps[fields[0]] = int(fields[1])
+                fields = polystr(line).strip().split("!")
+                timestamps[fields[0]] = fields[1]
+        for key, value in timestamps.items():
+            timestamps[key] = Date(value).timestamp 
         return timestamps
     def _init_child_timestamps(self):
         """Return initial mapping of commit hash -> timestamp of child it is colored from"""
@@ -1830,7 +1832,11 @@ class Date(object):
             # time.mktime throws this when it gets None:
             # TypeError: argument must be 9-item sequence, not None
             pass
-        # Also accept RFC3339 dates in Zulu time, just because I like them.
+        # RFC3339 with zone - looks like 2016-03-13T14:55:50-04.
+        # Mung the TZ suffix into a Git-like form
+        if len(text) > 18 and (text[-6] in ('-','+')) and text[-3] == ":":
+            text = text[:-6] + " " + text[-6:-3] + text[-2:]
+        # Also accept RFC3339 dates in Zulu time.  Mercurial makes these. 
         # May optionally be followed by a timezome spec.
         try:
             fields = text.split()
@@ -1844,7 +1850,9 @@ class Date(object):
                 tz = Date.fast0000
             # Discard subsecond precision, import-stream format can't use it.
             text = polystr(re.sub(Date.subsecond_re, b"Z", polybytes(text)))
-            rfc3339date = time.strptime(text, "%Y-%m-%dT%H:%M:%SZ")
+            if text[-1] == "Z":
+                text = text[:-1]
+            rfc3339date = time.strptime(text, "%Y-%m-%dT%H:%M:%S")
             self.timestamp = calendar.timegm(rfc3339date)
             self.set_tz(tz)
             return
