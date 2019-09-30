@@ -1335,10 +1335,7 @@ func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
 	// This will be used in _branchColor below
 	cm.childStamps = mc.gatherChildTimestamps(base)
 	for refname, refobj := range base.refs.dict {
-		if base.branchesAreColored && strings.HasPrefix(refname, "refs/heads/") {
-			return
-		}
-		cm._branchColor(refobj, refname)
+		cm._branchColor(refobj, refname, base)
 	}
 }
 
@@ -1347,7 +1344,10 @@ func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
 // that's greater.  In fact it is 292277026596-12-04 10:30:07 -0500 EST
 var farFuture = time.Unix(1<<63-1, 0)
 
-func (cm *ColorMixer) _branchColor(rev, color string) {
+func (cm *ColorMixer) _branchColor(rev, color string, base *RepoStreamer) {
+	if base.branchesAreColored && strings.HasPrefix(color, "refs/heads/") {
+		return
+	}
 	// This ensures that a branch tip rev never gets colored over
 	if _, ok := cm.childStamps[rev]; !ok {
 		cm.childStamps[rev] = farFuture
@@ -1380,7 +1380,7 @@ func (cm *ColorMixer) _branchColor(rev, color string) {
 		// Mark each parent with the timestamp of the child it is
 		// being colored from
 		cm.childStamps[parent] = timestamp
-		cm._branchColor(parent, color)
+		cm._branchColor(parent, color, base)
 	}
 }
 
