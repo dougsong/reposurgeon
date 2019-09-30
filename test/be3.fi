@@ -3,8 +3,8 @@ mark :1
 data 13
 Test file 1.
 
-reset refs/tags/0.1
-commit refs/tags/0.1
+reset refs/tags/bbb
+commit refs/tags/bbb
 mark :2
 author J. Random Hacker <jrh@foobar.com> 1456976347 -0500
 committer J. Random Hacker <jrh@foobar.com> 1456976347 -0500
@@ -17,7 +17,7 @@ mark :3
 data 13
 Test file 2.
 
-commit refs/tags/0.1a
+commit refs/tags/aaa
 mark :4
 author J. Random Hacker <jrh@foobar.com> 1456976408 -0500
 committer J. Random Hacker <jrh@foobar.com> 1456976408 -0500
@@ -31,7 +31,7 @@ mark :5
 data 13
 Test file 3.
 
-commit refs/tags/0.1
+commit refs/tags/bbb
 mark :6
 author J. Random Hacker <jrh@foobar.com> 1456976475 -0500
 committer J. Random Hacker <jrh@foobar.com> 1456976475 -0500
@@ -40,7 +40,7 @@ Commit test file 3.
 from :2
 M 100644 :5 testfile3
 
-commit refs/tags/1.0
+commit refs/tags/ccc
 mark :7
 author J. Random Hacker <jrh@foobar.com> 1456976606 -0500
 committer J. Random Hacker <jrh@foobar.com> 1456976606 -0500
@@ -55,7 +55,7 @@ mark :8
 data 13
 Test file 4.
 
-commit refs/tags/1.0a
+commit refs/tags/ddd
 mark :9
 author J. Random Hacker <jrh@foobar.com> 1456976715 -0500
 committer J. Random Hacker <jrh@foobar.com> 1456976715 -0500
@@ -69,7 +69,7 @@ mark :10
 data 13
 Test file 5.
 
-commit refs/tags/1.1
+commit refs/tags/eee
 mark :11
 author J. Random Hacker <jrh@foobar.com> 1456976798 -0500
 committer J. Random Hacker <jrh@foobar.com> 1456976798 -0500
