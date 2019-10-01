@@ -1334,12 +1334,18 @@ func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
 	}
 	// This will be used in _branchColor below
 	cm.childStamps = mc.gatherChildTimestamps(base)
+        if debugEnable(debugTOPOLOGY) {
+		for _, rev := range cm.base.revlist {
+			fmt.Printf("Revision %s has branch '%s'\n", rev, cm.base.meta[rev].branch)
+		}
+	}
 	// Depends on the order of the revlist to be correct.
 	// The Python gode did a sort by timestamp here -
 	// not necessary id your VCS dumps branches in
 	// revlist-tip order.
 	for _, refname := range base.refs.keys {
-		cm._branchColor(base.refs.get(refname), refname, base)
+		announce(debugTOPOLOGY, "outside branch coloring %s %s", base.refs.get(refname), refname)
+		cm._branchColor(base.refs.get(refname), refname)
 	}
 }
 
@@ -1348,43 +1354,70 @@ func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
 // that's greater.  In fact it is 292277026596-12-04 10:30:07 -0500 EST
 var farFuture = time.Unix(1<<63-1, 0)
 
-func (cm *ColorMixer) _branchColor(rev, color string, base *RepoStreamer) {
-	if base.branchesAreColored && strings.HasPrefix(color, "refs/heads/") {
-		return
-	}
+func (cm *ColorMixer) _branchColor(rev, color string) {
+	announce(debugTOPOLOGY, "inside branch coloring %s %s", rev, color)
+	//if base.branchesAreColored && strings.HasPrefix(color, "refs/heads/") {
+	//	return
+	//}
 	// This ensures that a branch tip rev never gets colored over
 	if _, ok := cm.childStamps[rev]; !ok {
 		cm.childStamps[rev] = farFuture
 	}
 	// This is used below to ensure that a branch color is never colored
 	// back to a tag
-	isBranch := strings.HasPrefix(color, "refs/heads/")
+	isBranchColor := strings.HasPrefix(color, "refs/heads/")
+	announce(debugTOPOLOGY, "%s is-a-branch is %v", color, isBranchColor)
+	unassigned := func(rev string) bool {
+		u := (cm.base.meta[rev].branch == "")
+		announce(debugTOPOLOGY, "%s assigned is %v", rev, u)
+		return u
+	}
+	onTagBranch := func(rev string) bool {
+		return strings.HasPrefix(cm.base.meta[rev].branch, "refs/tags/")
+	}
 	// No need for a condition here because we will only be starting
 	// this while loop from an initial call with a branch tip or from
 	// a recursive call with a parent we know we want to color; the
 	// loop exit is controlled by filtering out the parents that are
 	// already colored properly
-	timestamp := cm.commitStamps[rev]
-	cm.base.meta[rev].branch = color
-	// We only want to color back to parents that don't have a branch
-	// assigned or whose assigned branch was from an earlier commit
-	// than the one we're coloring from now; this emulates the git
-	// algorithm that assigns the color of the latest child commit to
-	// a parent that has multiple children; note also that tags take
-	// precedence over branches, so we never color back to a tag with
-	// a branch color
-	var parents []string
-	for _, p := range cm.base.getParents(rev) {
-		if cm.base.meta[p].branch == "" || ((!(isBranch && cm.base.isTag(p))) && (cm.childStamps[p].Before(timestamp))) {
-			parents = append(parents, p)
+	for {
+		timestamp := cm.commitStamps[rev]
+		cm.base.meta[rev].branch = color
+		// We only want to color back to parents that don't have a branch
+		// assigned or whose assigned branch was from an earlier commit
+		// than the one we're coloring from now; this emulates the git
+		// algorithm that assigns the color of the latest child commit to
+		// a parent that has multiple children; note also that tags take
+		// precedence over branches, so we never color back to a tag with
+		// a branch color
+		var parents []string
+		announce(debugTOPOLOGY, "parents of %s (%s) before filtering %v", rev, timestamp.UTC(), cm.base.getParents(rev))
+		for _, p := range cm.base.getParents(rev) {
+			if unassigned(p) || ((!(isBranchColor && onTagBranch(p))) && (cm.childStamps[p].Before(timestamp))) {
+				parents = append(parents, p)
+			}
 		}
-	}
+		announce(debugTOPOLOGY, "parents of %s are %v", rev, parents)
 
-	for _, parent := range parents {
-		// Mark each parent with the timestamp of the child it is
-		// being colored from
-		cm.childStamps[parent] = timestamp
-		cm._branchColor(parent, color, base)
+		if len(parents) == 0 {
+			break
+		} else if len(parents) == 1 {
+			// This case avoids munching excessive stack space by recursing
+			// too deep on large repos.
+			rev = parents[0]
+			// Mark the parent with the timestamp of the child it is
+			// being colored from
+			cm.childStamps[rev] = timestamp
+			continue
+		} else {
+			for _, parent := range parents {
+				// Mark each parent with the timestamp of the child it is
+				// being colored from
+				cm.childStamps[parent] = timestamp
+				cm._branchColor(parent, color)
+			}
+			break
+		}
 	}
 }
 
@@ -1849,14 +1882,14 @@ func (he *HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
 	return nil
 }
 
-func (he *HgExtractor) _hgBranchItems() map[string]string {
-	out := make(map[string]string)
+func (he *HgExtractor) _hgBranchItems() OrderedMap {
+	out := newOrderedMap()
 	err := lineByLine(nil,
 		`hg log --template '{node|short} {branch}\n'`,
 		"in _hgBranchItems: %v",
 		func(line string, rs *RepoStreamer) error {
 			fields := strings.Fields(line)
-			out[fields[0]] = "refs/heads/" + fields[1]
+			out.set(fields[0], "refs/heads/" + fields[1])
 			return nil
 		})
 	if err != nil {
@@ -1868,12 +1901,15 @@ func (he *HgExtractor) _hgBranchItems() map[string]string {
 // Return initial mapping of commit hash -> timestamp of child it is colored from
 func (he *HgExtractor) gatherChildTimestamps(rs *RepoStreamer) map[string]time.Time {
 	results := make(map[string]time.Time)
-	for h, branch := range he._hgBranchItems() {
+	items := he._hgBranchItems()
+	for _, h := range items.keys {
+		branch := items.get(h)
 		// Fill in the branch as a default; this will ensure
 		// that any commit that is not in the ancestor tree of
 		// a tag will get the correct hg branch name, even if
 		// the hg branch coloring is not compatible with the
 		// git coloring algorithm
+		announce(debugTOPOLOGY, "setting default branch of %s to %s", h, branch)
 		rs.meta[h].branch = branch
 		// Fill in the branch tips with child timestamps to
 		// ensure that they can't be over-colored (other
@@ -1885,11 +1921,11 @@ func (he *HgExtractor) gatherChildTimestamps(rs *RepoStreamer) map[string]time.T
 			results[h] = farFuture
 		}
 	}
-	rs.branchesAreColored = true
+	//rs.branchesAreColored = true
 	return results
 }
 
-func (he *HgExtractor) _branchColorItems() map[string]string {
+func (he *HgExtractor) _branchColorItems() *OrderedMap {
 	if !he.tagsFound && !he.bookmarksFound {
 		announce(debugEXTRACT, "no tags or bookmarks.")
 		// If we didn't find any tags or bookmarks, we can
@@ -1900,7 +1936,8 @@ func (he *HgExtractor) _branchColorItems() map[string]string {
 		// fast-import stream and used to construct a git
 		// repo, because hg branches can store colorings that
 		// do not match the git coloring algorithm
-		return he._hgBranchItems()
+		items := he._hgBranchItems()
+		return &items
 	}
 	// Otherwise we have to use the emulated git algorithm to color
 	// any commits that are tags or the ancestors of tags, since git
@@ -1916,10 +1953,12 @@ func (he *HgExtractor) colorBranches(rs *RepoStreamer) error {
 	if colorItems != nil {
 		// If the repo will give us a complete list of (commit
 		// hash, branch name) pairs, use that to do the coloring
-		for h, color := range colorItems {
+		for _, h := range colorItems.keys {
+			color := colorItems.get(h)
 			if rs.meta[h] == nil {
 				rs.meta[h] = new(CommitMeta)
 			}
+			announce(debugTOPOLOGY, "setting branch from color items, %s to %s", h, color)
 			rs.meta[h].branch = color
 		}
 	} else {
@@ -2100,11 +2139,6 @@ func newRepoStreamer(extractor Extractor) *RepoStreamer {
 // getParents returns the list of commit IDs of a commit's parents.
 func (rs *RepoStreamer) getParents(rev string) []string {
 	return rs.parents[rev]
-}
-
-// isTag ia a previcate; does rev refer to a tag?
-func (rs *RepoStreamer) isTag(rev string) bool {
-	return strings.HasPrefix(rs.meta[rev].branch, "refs/tags/")
 }
 
 // getCommitter returns the committer's ID/date as a string.

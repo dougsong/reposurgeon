@@ -832,6 +832,13 @@ def goify_map(d):
     if len(d) > 0:
         out = out[:-2]
     return out + "}"
+def goify_bool(b):
+    if b:
+        return "true"
+    else:
+        return "false"
+def goify_timestamp(t):
+    return rfc3339(t).replace("Z", " +0000 UTC").replace("T", " ")
 
 # How to write extractor classes:
 #
@@ -908,6 +915,7 @@ class Extractor(object):
             # hash, branch name) pairs, use that to do the coloring
             # (this will be the case for git)
             for h, color in color_items:
+		announce(DEBUG_TOPOLOGY, "setting branch from color items, %s to %s" % (h, color))
                 self.meta[h]['branch'] = color
         else:
             # Otherwise we have to emulate the git coloring algorithm
@@ -939,9 +947,12 @@ class Extractor(object):
             raise Fatal("Could not retrieve commit timestamps.")
         # This will be used in _branch_color below
         self.child_timestamps = self._init_child_timestamps()
+        if debug_enable(DEBUG_TOPOLOGY):
+            for rev in self.revlist:
+                sys.stdout.write("Revision %s has branch '%s'\n" % (rev, self.meta[rev].get("branch", "")))
         for refname, refobj in sorted(self.refs.items(),
                                       key=lambda ref: self.revlist.index(ref[1])):
-            #sys.stdout.write("XXX outside branch coloring %s %s\n" % (refobj, refname))
+            announce(DEBUG_TOPOLOGY, "outside branch coloring %s %s" % (refobj, refname))
             self._branch_color(refobj, refname)
     def get_commit_timestamps(self):
         """Return mapping of commit hash -> Unix timestamp"""
@@ -956,16 +967,21 @@ class Extractor(object):
         return {}
     def _branch_color(self, rev, color):
         # This ensures that a branch tip rev never gets colored over
-        #sys.stdout.write("XXX inside branch coloring %s %s\n" % (rev, color))
+        announce(DEBUG_TOPOLOGY, "inside branch coloring %s %s" % (rev, color))
         if rev not in self.child_timestamps:
             self.child_timestamps[rev] = sys.maxsize
         # This is used below to ensure that a branch color is never colored
         # back to a tag
         is_branch_color = color.startswith('refs/heads/')
+	announce(DEBUG_TOPOLOGY, "%s is-a-branch is %s" % (color, goify_bool(is_branch_color)))
         def unassigned(p):
-            return 'branch' not in self.meta[p]
+            u = 'branch' not in self.meta[p]
+            announce(DEBUG_TOPOLOGY, "%s assigned is %s" % (p, goify_bool(u)))
+            return u
         def on_tag_branch(p):
-            return self.meta[p]['branch'].startswith('refs/tags/')
+            u = self.meta[p]['branch'].startswith('refs/tags/')
+            announce(DEBUG_TOPOLOGY, "%s on branch is %s" % (p, goify_bool(u)))
+            return u
         # No need for a condition here because we will only be starting
         # this while loop from an initial call with a branch tip or from
         # a recursive call with a parent we know we want to color; the
@@ -981,11 +997,13 @@ class Extractor(object):
             # a parent that has multiple children; note also that tags take
             # precedence over branches, so we never color back to a tag with
             # a branch color
+	    announce(DEBUG_TOPOLOGY, "parents of %s (%s) before filtering %s" % (rev, goify_timestamp(timestamp), goify_str(self.get_parents(rev))))
             parents = []
             for p in self.get_parents(rev):
                 if unassigned(p) or ((not (is_branch_color and on_tag_branch(p))) \
                                      and (self.child_timestamps.get(p, 0) < timestamp)):
                     parents.append(p)
+	    announce(DEBUG_TOPOLOGY, "parents of %s are %s" % (rev, goify_str(parents)))
             if not parents:
                 break
             elif len(parents) == 1:
@@ -1338,7 +1356,7 @@ class HgExtractor(Extractor):
                 yield (h, "refs/heads/" + branch)
     def _branch_color_items(self):
         if not self.tags_found and not self.bookmarks_found:
-	    announce(DEBUG_SHUFFLE, "no tags or bookmarks.")
+	    announce(DEBUG_EXTRACT, "no tags or bookmarks.")
             # If we didn't find any tags or bookmarks, we can safely color all
             # commits using hg branch names, since hg stores them with commit
             # metadata; note, however, that the coloring this will produce
@@ -1370,6 +1388,7 @@ class HgExtractor(Extractor):
             # is not in the ancestor tree of a tag will get the correct hg branch name,
             # even if the hg branch coloring is not compatible with the git coloring
             # algorithm
+	    announce(DEBUG_TOPOLOGY, "setting default branch of %s to %s" % (h, branch))
             self.meta[h]['branch'] = branch
             # Fill in the branch tips with child timestamps to ensure that they can't
             # be over-colored (other commits in the ancestor tree of a branch can be
