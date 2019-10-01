@@ -941,6 +941,7 @@ class Extractor(object):
         self.child_timestamps = self._init_child_timestamps()
         for refname, refobj in sorted(self.refs.items(),
                                       key=lambda ref: self.revlist.index(ref[1])):
+            #sys.stdout.write("XXX outside branch coloring %s %s\n" % (refobj, refname))
             self._branch_color(refobj, refname)
     def get_commit_timestamps(self):
         """Return mapping of commit hash -> Unix timestamp"""
@@ -955,11 +956,16 @@ class Extractor(object):
         return {}
     def _branch_color(self, rev, color):
         # This ensures that a branch tip rev never gets colored over
+        #sys.stdout.write("XXX inside branch coloring %s %s\n" % (rev, color))
         if rev not in self.child_timestamps:
             self.child_timestamps[rev] = sys.maxsize
         # This is used below to ensure that a branch color is never colored
         # back to a tag
-        is_branch = color.startswith('refs/heads/')
+        is_branch_color = color.startswith('refs/heads/')
+        def unassigned(p):
+            return 'branch' not in self.meta[p]
+        def on_tag_branch(p):
+            return self.meta[p]['branch'].startswith('refs/tags/')
         # No need for a condition here because we will only be starting
         # this while loop from an initial call with a branch tip or from
         # a recursive call with a parent we know we want to color; the
@@ -975,10 +981,11 @@ class Extractor(object):
             # a parent that has multiple children; note also that tags take
             # precedence over branches, so we never color back to a tag with
             # a branch color
-            parents = [p for p in self.get_parents(rev)
-                       if ('branch' not in self.meta[p])
-                       or ((not (is_branch and self.meta[p]['branch'].startswith('refs/tags/')))
-                           and (self.child_timestamps.get(p, 0) < timestamp))]
+            parents = []
+            for p in self.get_parents(rev):
+                if unassigned(p) or ((not (is_branch_color and on_tag_branch(p))) \
+                                     and (self.child_timestamps.get(p, 0) < timestamp)):
+                    parents.append(p)
             if not parents:
                 break
             elif len(parents) == 1:
