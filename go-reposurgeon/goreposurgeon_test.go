@@ -441,7 +441,7 @@ func TestDateFormats(t *testing.T) {
 		}
 		return d.String()
 	}
-	toRFC3339 := func(from string) string {
+	toRFC3339Z := func(from string) string {
 		d, err := newDate(from)
 		if err != nil {
 			t.Errorf("ill-formed date %v error %v", from, err)
@@ -466,16 +466,33 @@ func TestDateFormats(t *testing.T) {
 	const LogSample = "Wed Oct 27 18:43:32 +0000 2010" // Bogus
 	testTable := []harness{
 		{DumpSample, toGitdump, DumpSample},
-		{DumpSample, toRFC3339, RFC3339Sample},
+		{DumpSample, toRFC3339Z, RFC3339Sample},
 		{DumpSample, toGitlog, LogSample},
 		{RFC3339Sample, toGitdump, DumpSample},
-		{RFC3339Sample, toRFC3339, RFC3339Sample},
+		{RFC3339Sample, toRFC3339Z, RFC3339Sample},
 		{RFC3339Sample, toGitlog, LogSample},
 		{LogSample, toGitdump, DumpSample},
-		{LogSample, toRFC3339, RFC3339Sample},
+		{LogSample, toRFC3339Z, RFC3339Sample},
 		{LogSample, toGitlog, LogSample},
 	}
 	for _, item := range testTable {
+		conversion := item.converter(item.from)
+		if conversion != item.expected {
+			t.Errorf("date conversion from %s: expected %s saw %s",
+				item.from, item.expected, conversion)
+		}
+	}
+	testTable2 := []harness{
+		{"2016-03-13T14:55:50-04:00", toRFC3339Z, "2016-03-13T18:55:50Z"},
+		{"2016-03-13T14:55:29-04:00", toRFC3339Z, "2016-03-13T18:55:29Z"},
+		{"2016-03-02T22:46:38-05:00", toRFC3339Z, "2016-03-03T03:46:38Z"},
+		{"2016-03-02T22:45:15-05:00", toRFC3339Z, "2016-03-03T03:45:15Z"},
+		{"2016-03-02T22:43:26-05:00", toRFC3339Z, "2016-03-03T03:43:26Z"},
+		{"2018-03-02T22:41:15-05:00", toRFC3339Z, "2018-03-03T03:41:15Z"},
+		{"2018-05-02T22:40:08-05:00", toRFC3339Z, "2018-05-03T03:40:08Z"},
+		{"2018-06-02T22:39:07-05:00", toRFC3339Z, "2018-06-03T03:39:07Z"},
+	}
+	for _, item := range testTable2 {
 		conversion := item.converter(item.from)
 		if conversion != item.expected {
 			t.Errorf("date conversion from %s: expected %s saw %s",
