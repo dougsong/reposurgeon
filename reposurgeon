@@ -838,7 +838,7 @@ def goify_bool(b):
     else:
         return "false"
 def goify_timestamp(t):
-    return rfc3339(t).replace("Z", " +0000 UTC").replace("T", " ")
+    return rfc3339(t).replace("T", " ").replace("Z", " +0000 UTC")
 
 # How to write extractor classes:
 #
@@ -1825,6 +1825,7 @@ class Date(object):
     def __init__(self, text, error=Fatal):
         "Recognize date formats that exporters or email programs might emit."
         # Special case: we may want current time
+        self.timestamp = 0
         if text is None:
             self.timestamp = int(time.time())
             self.tz_offset = 0
@@ -1879,8 +1880,8 @@ class Date(object):
             if text[-1] == "Z":
                 text = text[:-1]
             rfc3339date = time.strptime(text, "%Y-%m-%dT%H:%M:%S")
-            self.timestamp = calendar.timegm(rfc3339date)
             self.set_tz(tz)
+            self.timestamp = calendar.timegm(rfc3339date)  - self.tz_offset
             return
         except ValueError:
             # time.strptime() throws this
