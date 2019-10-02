@@ -1828,19 +1828,15 @@ func (he *HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
 		panic(throw("extractor", "while fetching hg branches: %v", err))
 	}
 	if bookmarkRef != "" {
+		refRE := regexp.MustCompile(`\s*(?:\*\s+)?(\S+)\s+\d+:([0-9a-fA-F]+)(?: \(inactive|closed\))?`)
 		hook2 := func(line string, rs *RepoStreamer) error {
-			fields := strings.Fields(line)
-			if len(fields[0]) < 1 {
+			matches := refRE.FindStringSubmatch(line)
+			if len(matches) != 3 {
 				panic(throw("extractor",
-					"Empty 'hg bookmarks' line: %q", line))
+					"Empty or garbled 'hg bookmarks' line: %q", line))
 			}
-			n := string(fields[0])
-			seqref := strings.Split(fields[1], ":")
-			if len(fields[0]) < 2 {
-				panic(throw("extractor",
-					"Missing colon in 'hg bookmarks' line: %q", line))
-			}
-			h := string(seqref[1])
+			n := matches[1]
+			h := matches[2]
 			rs.refs.set("refs/"+bookmarkRef+n, h)
 			he.bookmarksFound = true
 			return nil
