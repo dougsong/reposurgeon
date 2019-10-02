@@ -53,7 +53,7 @@ defines a common language of primitive operations for
 
 <para>Fully supported systems (those for which
 <command>reposurgeon</command> can both read and write repositories)
-include git, hg, bzr, svn, darcs, bk, RCS, and SRC.  For a complete list, with
+include git, hg, bzr, darcs, bk, RCS, and SRC.  For a complete list, with
 dependencies and technical notes, type <command>prefer</command> to
 the <command>reposurgeon</command> prompt.</para>
 
@@ -63,17 +63,13 @@ and has some serious limitations because those systems cannot
 represent all the metadata in a git-fast-export stream. Consult that
 tool's documentation for details and partial workarounds.</para>
 
-<para>Writing Subversion repositories also has some
-significant limitations, discussed in the section on <link
-linkend="subversion">Working With Subversion</link>.</para>
-
 <para>Fossil repository files can be read in using the
 <option>--format=fossil</option> option of the <command>read</command>
 command and written out with the <option>--format=fossil</option> option of
 the <command>write</command>. Ignore patterns are not translated
 in either direction.</para>
 
-<para>CVS is supported for read only, not write.  For CVS,
+<para>SVN and CVS are supported for read only, not write.  For CVS,
 <command>reposurgeon</command> must be run from within a repository
 directory (one with a CVSROOT subdirectory). Each module becomes
 a subdirectory in the the <command>reposurgeon</command>
@@ -3202,8 +3198,7 @@ disambiguate as necessary.</para>
 <refsect1 id='subversion'><title>WORKING WITH SUBVERSION</title>
 
 <para><application>reposurgeon</application> can read Subversion
-dumpfiles or edit a Subversion repository (and you must point it at a
-repository, not a checkout directory).</para>
+dumpfiles. You must point it at a repository, not a checkout directory.</para>
 
 <refsect2><title>READING SUBVERSION REPOSITORIES</title>
 
@@ -3492,79 +3487,6 @@ into a branch.</para>
 </varlistentry>
 </variablelist>
 
-</refsect2>
-<refsect2><title>WRITING SUBVERSION REPOSITORIES</title>
-
-<para><application>reposurgeon</application> has support for writing
-Subversion repositories.  Due to mismatches between the ontology of
-Subversion and that of git import streams, this support has some
-significant limitations and bugs.</para>
-
-<para>In summary, Subversion repository histories do not round-trip
-through <application>reposurgeon</application> editing. File content
-changes are preserved but some metadata is unavoidably lost.
-Furthermore, writing out a DVCS history in Subversion also loses
-significant portions of its metadata.  Details follow.</para>
-
-<para>Writing a Subversion repository or dump stream discards author
-information, the committer's name, and the hostname part of the commit
-address; only the commit timestamp and the local part of the
-committer's email address are preserved, the latter becoming the
-Subversion author field.  However, reading a Subversion repository and
-writing it out again will preserve the author fields.</para>
-
-<para>Import-stream timestamps have 1-second granularity. The sub-second
-parts of Subversion commit timestamps will be lost on their way through
-reposurgeon.</para>
-
-<para>Empty directories aren't represented in import
-streams. Consequently, reading and writing Subversion repositories
-preserves file content, but not empty directories.  It is also not
-guaranteed that after editing a Subversion repository that the sequence
-of directory creations and deletions relative to other operations will
-be identical; the only guarantee is that enclosing directories will
-be created before any files in them are.</para>
-
-<para>When reading a Subversion repository,
-<application>reposurgeon</application> discards the special
-directory-copy nodes associated with branch creations.  These can't be
-recreated if and when the repository is written back out to
-Subversion; rather, each branch copy node from the original translates
-into a branch creation plus the first set of file modifications on the
-branch.</para>
-
-<para>When reading a Subversion repository,
-<application>reposurgeon</application> also automatically breaks apart
-mixed-branch commits. These are not re-united if the repository
-is written back out.</para>
-
-<para>When writing to a Subversion repository, all lightweight tags
-become Subversion tag copies with empty log comments, named for the
-tag basename.  The committer name and timestamp are copied from the
-commit the tag points to. The distinction between heads and tags is
-lost.</para>
-
-<para>Because of the preceding two points, it is not guaranteed that
-even revision numbers will be stable when a Subversion repository
-is read in and then written out!</para>
-
-<para>Subversion repositories are always written with a standard
-(trunk/tags/branches) layout. Thus, a repository with a nonstandard
-shape that has been analyzed by <application>reposurgeon</application>
-won't be written out with the same shape.</para>
-
-<para>When writing a Subversion repository, branch merges are
-translated into svn:mergeinfo properties in the simplest possible way -
-as an svn:mergeinfo property of the translated merge commit listing
-the merge source revisions.</para>
-
-<para>Subversion has a concept of "flows"; that is, named segments of
-history corresponding to files or directories that are created when the
-path is added, cloned when the path is copied, and deleted when the
-path is deleted. This information is not preserved in import streams or
-the internal representation that <application>reposurgeon</application>
-uses.  Thus, after editing, the flow boundaries of a Subversion history
-may be arbitrarily changed. </para>
 </refsect2>
 </refsect1>
 

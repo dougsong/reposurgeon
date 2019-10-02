@@ -13,9 +13,6 @@
 
 * Can gitspace merges be deduced from svk:merge and svnmerge properties?
 
-* The Subversion dumper is pretty weak, more a proof of concept than
-  anything useful for production. Improving it might be useful.
-  
 * Also see https://gitlab.com/esr/reposurgeon/issues for two minor problems.
 
 * It would be nice to restore the toposort code from Python, removed

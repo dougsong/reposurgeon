@@ -45,7 +45,7 @@ python: listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce \
 		svnload-regress \
 		git-regress git-regress-branches git-regress-merges \
 		git-regress-tags hg-extractor \
-		liftcheck-regress legacy-regress svndump-regress \
+		liftcheck-regress legacy-regress \
 		svncheck-regress
 
 hg-extractor: hg-regress hg-regress-branches hg-regress-merges \
@@ -418,32 +418,6 @@ legacy-regress:
 	    else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi; \
 	done
 	@rm -f /tmp/regress$$$$
-
-# Test dumping to Subversion
-DUMPLOADS=bs svnfodder
-svndump-buildregress:
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
-	for f in $(DUMPLOADS); \
-	do \
-	    echo "Remaking $${f}.chk"; \
-	    $(REPOSURGEON) "read <$${f}.fi" "prefer svn" "write -" | svn-to-svn -s >$${f}.chk \
-		|| exit $(STOPOUT); \
-	done
-	@make --quiet clean
-svndump-regress:
-	@echo "=== Test dumping of Subversion streams:"
-	@for test in $(DUMPLOADS); \
-	do \
-	    if [ ! -f $${test}.tst ] ; \
-	    then \
-		if echo "  $${test}.fi" >&2; \
-		$(REPOSURGEON) "read <$${test}.fi" "prefer svn" "write -" | tee /tmp/prestripped$$$$ | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
-		then diff --text -u $${test}.chk /tmp/stripped$$$$ || exit $(STOPOUT); \
-		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi;\
-	    fi \
-	done
-	@make --quiet clean
-	@rm -f /tmp/prestripped$$$$ /tmp/stripped$$$$
 
 # Check idempotency of read/dump/read on Subversion repos
 # This can only succeed for linear repos.  At the moment it fails on
