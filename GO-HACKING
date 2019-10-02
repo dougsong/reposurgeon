@@ -44,7 +44,6 @@ output in foo.chk.  No output other than the test notice is good.  The
 Python version passes all these tests.
 
 The following tests still fail
-* Hg extractor multiple-branch load with bookmarks (be-bookmarks)
 * Hg pathological-load cases
 
 == Tuning for speed ==

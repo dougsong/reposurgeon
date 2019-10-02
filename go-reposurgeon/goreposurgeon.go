@@ -1354,10 +1354,10 @@ func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
 var farFuture = time.Unix(1<<63-1, 0)
 
 func (cm *ColorMixer) _branchColor(rev, color string) {
+	if cm.base.branchesAreColored && strings.HasPrefix(color, "refs/heads/") {
+		return
+	}
 	announce(debugTOPOLOGY, "inside branch coloring %s %s", rev, color)
-	//if base.branchesAreColored && strings.HasPrefix(color, "refs/heads/") {
-	//	return
-	//}
 	// This ensures that a branch tip rev never gets colored over
 	if _, ok := cm.childStamps[rev]; !ok {
 		cm.childStamps[rev] = farFuture
@@ -1916,7 +1916,7 @@ func (he *HgExtractor) gatherChildTimestamps(rs *RepoStreamer) map[string]time.T
 			results[h] = farFuture
 		}
 	}
-	//rs.branchesAreColored = true
+	rs.branchesAreColored = true
 	return results
 }
 
@@ -2382,10 +2382,25 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 		//announce(debugEXTRACT, "%s: commit gets mark %s (%d ops)", trunc(revision), commit.mark, len(commit.operations()))
 		repo.addEvent(commit)
 	}
-	// Now append reset objects
-	// Note: we time-sorted the resets when they were picked up;
-	// this is to ensure that the ordering is (a) deterministic,
-	// and (b) easily understood.
+	// Now append branch reset objects
+	// Note: we time-sort these to ensure that the ordering is
+	// (a) deterministic, and (b) easily understood.
+	sort.SliceStable(rs.refs.keys, func(i, j int) bool {
+		refToCommit := func(refname string) *Commit {
+			return rs.commitMap[rs.refs.dict[refname]]
+		}
+		a := refToCommit(rs.refs.keys[i])
+		b := refToCommit(rs.refs.keys[j])
+		m, _ := strconv.Atoi(a.mark[1:])
+		n, _ := strconv.Atoi(b.mark[1:])
+		if m < n {
+			return true
+		}
+		if m == n && !a.committer.date.timestamp.After(b.committer.date.timestamp) {
+			return true
+		}
+		return false
+	})
 	for _, resetname := range rs.refs.keys {
 		if !strings.Contains(resetname, "/tags/") {
 			// FIXME: what if revision is unknown?
