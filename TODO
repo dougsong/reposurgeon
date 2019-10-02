@@ -18,7 +18,7 @@
 * The toposort code is back in, but the calls to the resort() function
   in the reorder and reoarent commands have been commented out in both
   Go and Python. The Python version works, the Go version neefs
-  fixing. There's a commented-out section documenting topsort,
+  fixing. There's a commented-out section documenting toposort,
 
 * repocutter renumber needs a test that demonstates patching of
   Node-copyfrom-rev fields.
