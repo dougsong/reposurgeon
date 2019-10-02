@@ -6366,9 +6366,10 @@ class Repository:
             raise Recoverable("bad syntax in legacy map.")
     def write_legacymap(self, fp):
         "Dump legacy references."
-        for cookie, commit in sorted(
-                self.legacy_map.items(),
-                key=lambda f: (f[1].committer.date.timestamp, f[0])):
+        keylist = list(self.legacy_map.keys())
+        keylist.sort()
+        for cookie in keylist:
+            commit = self.legacy_map[cookie]
             if "SVN" in cookie and StreamParser.SplitSep in cookie:
                 serial = ':' + cookie.split(StreamParser.SplitSep)[1]
             else:

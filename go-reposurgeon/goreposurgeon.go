@@ -9074,14 +9074,8 @@ func (repo *Repository) writeLegacyMap(fp io.Writer) error {
 		keylist = append(keylist, key)
 	}
 	sort.Slice(keylist, func(i, j int) bool {
-		if repo.legacyMap[keylist[i]].committer.date.Before(repo.legacyMap[keylist[i]].committer.date) {
-			return true
-		} else if keylist[i] < keylist[j] {
-			return true
-		}
-		return false
+		return keylist[i] < keylist[j]
 	})
-
 	for _, cookie := range keylist {
 		commit := repo.legacyMap[cookie]
 		var serial string
@@ -21017,9 +21011,8 @@ func (sd *SubversionDumper) directoryCreate(fp io.Writer, revision int,
 			creations = append(creations, Creation{svnout, fromRev, fromBranch})
 			// Careful about the following - the path map
 			// gets mutated in this loop, you need to get
-			// a list of the keys up front or Python will
-			// barf.  Thing is, in Python 3 keys() returns
-			// an iterator...
+			// a list of the keys up front or your map
+			// implementatin may barf.  Python's did.
 			for key := range sd.pathmap[fromRev] {
 				if strings.HasPrefix(fromBranch+svnSep, key) && key != fromBranch {
 					counterpart := svnout + key[len(fromBranch):]
@@ -21030,7 +21023,6 @@ func (sd *SubversionDumper) directoryCreate(fp io.Writer, revision int,
 			}
 		} else {
 			creations = append(creations, Creation{svnout, 0, ""})
-
 		}
 	}
 	// Create all directory segments required

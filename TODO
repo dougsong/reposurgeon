@@ -22,7 +22,7 @@
   not merely because porting it to Go failed but because the attempt
   opened up a can of worms about the operation's nonlocal effects.
 
-* repcutter reumber needs a test that demonstates patching of
+* repocutter renumber needs a test that demonstates patching of
   Node-copyfrom-rev fields.
 
 * repocutter needs to patch mergeinfo revisions.
