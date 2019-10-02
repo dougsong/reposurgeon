@@ -865,6 +865,8 @@ def goify_timestamp(t):
 # particular, RFC3339 dates are good, so are RFC822 (email) dates,
 # and so is git's native integer-Unix-timestamp/timezone pairs.
 
+far_future = 2^32-1
+
 class Extractor(object):
     "Base class for repository extractors."
     # Written around commonalities between git and hg; extending further
@@ -969,7 +971,7 @@ class Extractor(object):
         # This ensures that a branch tip rev never gets colored over
         announce(DEBUG_TOPOLOGY, "inside branch coloring %s %s" % (rev, color))
         if rev not in self.child_timestamps:
-            self.child_timestamps[rev] = sys.maxsize
+            self.child_timestamps[rev] = far_future
         # This is used below to ensure that a branch color is never colored
         # back to a tag
         is_branch_color = color.startswith('refs/heads/')
@@ -1395,7 +1397,7 @@ class HgExtractor(Extractor):
             # over-colored if they are in a tag's ancestor tree, so we don't fill in
             # any child timestamp for them here)
             if self.refs[branch] == h:
-                results[h] = sys.maxsize
+                results[h] = far_future
         return results
     def _branch_color(self, rev, color):
         # Branches are not colored here (they already were in init_child_timestamps above)
