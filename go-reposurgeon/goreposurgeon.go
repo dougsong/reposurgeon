@@ -77,6 +77,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"container/heap"
 	"crypto/md5"
 	"crypto/sha1"
 	"errors"
@@ -10255,6 +10256,169 @@ func (repo *Repository) frontEvents() []Event {
 	return front
 }
 
+type DAGedges struct {
+	eout orderedIntSet
+	ein  orderedIntSet
+}
+
+func (d DAGedges) String() string {
+	return fmt.Sprintf("<%v | %v>", d.ein, d.eout)
+}
+
+type DAG map[int]*DAGedges
+
+func (d *DAG) setdefault(key int, e *DAGedges) *DAGedges {
+	_, ok := (*d)[key]
+	if !ok {
+		(*d)[key] = e
+	}
+	return (*d)[key]
+}
+
+// From https://golang.org/pkg/container/heap/#example__intHeap
+
+// An IntHeap is a min-heap of ints.
+type IntHeap []int
+
+func (h IntHeap) Len() int           { return len(h) }
+func (h IntHeap) Less(i, j int) bool { return h[i] < h[j] }
+func (h IntHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+
+func (h *IntHeap) Push(x interface{}) {
+	// Push and Pop use pointer receivers because they modify the slice's length,
+	// not just its contents.
+	*h = append(*h, x.(int))
+}
+
+func (h *IntHeap) Pop() interface{} {
+	old := *h
+	n := len(old)
+	x := old[n-1]
+	*h = old[0 : n-1]
+	return x
+}
+
+// resort topologically sorts the events in this repository.
+// It reorders self.events so that objects referenced by other objects
+// appear first.  The sort is stable to avoid unnecessary churn.
+func (repo *Repository) resort() {
+	var dag DAG = make(map[int]*DAGedges)
+	start := repo.all()
+
+	// helper for constructing the dag
+	handle := func(x int, ymark string) {
+		//assert(ymark != nil)
+		if ymark == "inline" {
+			return
+		}
+		//assert(ymark[0] == ":")
+		y := repo.markToIndex(ymark)
+		//assert(y != nil)
+		//assert(x != y)
+		start.Remove(x)
+		dag.setdefault(x, new(DAGedges)).eout.Add(y)
+		dag.setdefault(y, new(DAGedges)).ein.Add(x)
+	}
+
+	// construct the DAG
+	for n, node := range repo.events {
+		edges := dag.setdefault(n, new(DAGedges))
+		switch node.(type) {
+		case *Commit:
+			commit := node.(*Commit)
+			for _, parent := range commit.parents() {
+				p := repo.eventToIndex(parent)
+				//assert(n != p)
+				start.Remove(n)
+				edges.eout.Add(p)
+				dag.setdefault(p, new(DAGedges)).ein.Add(n)
+			}
+			for _, o := range commit.operations() {
+				if o.op == opM {
+					handle(n, o.ref)
+				} else if o.op == opN {
+					handle(n, o.ref)
+					handle(n, o.committish)
+				}
+			}
+		case *Blob:
+			continue
+		case *Tag:
+			handle(n, node.(*Tag).committish)
+		case *Reset:
+			reset := node.(*Reset)
+			if reset.committish != "" {
+				t := repo.markToIndex(reset.committish)
+				//assert(n != t)
+				start.Remove(n)
+				edges.eout.Add(t)
+				dag.setdefault(t, new(DAGedges)).ein.Add(n)
+			}
+		case *Passthrough:
+			continue
+		default:
+			panic("unexpected event type")
+
+		}
+	}
+	// now topologically sort the dag, using a priority queue to
+	// provide a stable topological sort (each event's priority is
+	// its original index)
+	s := new(IntHeap)
+	heap.Init(s)
+	for _, elt := range start {
+		heap.Push(s, elt)
+	}
+	tsorted := newOrderedIntSet()
+	oldIndexToNew := make(map[int]int)
+	for len(*s) > 0 {
+		n := heap.Pop(s).(int)
+		//assert n not in old_index_to_new
+		oldIndexToNew[n] = len(tsorted)
+		tsorted.Add(n)
+		ein := dag[n].ein
+		for len(ein) > 0 {
+			m := ein.Pop()
+			medges := dag[m]
+			medges.eout.Remove(n)
+			if len(medges.eout) == 0 {
+				heap.Push(s, m)
+			}
+		}
+	}
+
+	orig := repo.all()
+	//assert len(t) == len(tsorted)
+	if !tsorted.Equal(orig) {
+		//fmt.Sprintf("Sort order: %v\n", tsorted)
+		//assert len(t - o) == 0
+		leftout := orig.Subtract(tsorted)
+		if len(leftout) > 0 {
+			croak("event re-sort failed due to one or more dependency cycles involving the following events: %v", leftout)
+			return
+		}
+		newEvents := make([]Event, len(repo.events))
+		for i, j := range tsorted {
+			newEvents[i] = repo.events[j]
+		}
+		repo.events = newEvents
+		if context.verbose > 0 {
+			announce(debugSHOUT, "re-sorted events")
+		}
+		// assignments will be fixed so don't pass anything to
+		// declareSequenceMutation() to tell it to warn about
+		// invalidated assignments
+		repo.declareSequenceMutation("")
+		for k, v := range repo.assignments {
+			old := v
+			repo.assignments[k] = make([]int, len(v))
+			for i := range v {
+				repo.assignments[k][i] = oldIndexToNew[old[i]]
+			}
+		}
+	}
+}
+
 // Re-order a contiguous range of commits.
 func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 	if len(v) <= 1 {
@@ -10361,6 +10525,7 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 			}
 		}
 	}
+	repo.resort()
 }
 
 // Renumber the marks in a repo starting from a specified origin.
@@ -18017,14 +18182,16 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 	useOrder := parse.options.Contains("--use-order")
 	// Determine whether an event resort might be needed.  it is
 	// assumed that ancestor commits already have a lower event
-	// index before this function is called; thus, a cycle can re
-	// introduced only if --use-order is passed and a
+	// index before this function is called, which should be true
+	// as long as every function that modifies the DAG calls
+	// Repository.resort() when needed.  thus, a call to resort()
+	// should only be necessary if --use-order is passed and a
 	// parent will have an index higher than the modified commit.
-	var cyclePossible bool
+	var doResort bool
 	if useOrder {
 		for _, idx := range rs.selection[:len(rs.selection)-1] {
 			if idx > rs.selection[len(rs.selection)-1] {
-				cyclePossible = true
+				doResort = true
 			}
 		}
 	} else {
@@ -18039,7 +18206,7 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 	for i, c := range selected[:len(selected)-1] {
 		parents[i] = c
 	}
-	if cyclePossible {
+	if doResort {
 		for _, p := range parents {
 			if p.(*Commit).descendedFrom(child) {
 				complain("reparenting a commit to its own descendant would introduce a cycle")
@@ -18065,6 +18232,10 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 		child.sortOperations()
 	}
 	child.setParents(parents)
+	// Restore this when we have toposort working identically in Go and Python.
+	//if doResort {
+	//	repo.resort()
+	//}
 	return false
 }
 
