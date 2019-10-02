@@ -20768,7 +20768,7 @@ func main() {
 
 /*
  * Report repository as a Subversion stream dump.
- * Does not round-trip
+ * Does not round-trip.
  */
 
 type SubversionDumper struct {
@@ -20829,23 +20829,23 @@ func dumpRevprops(fp io.Writer, revision int, date *Date, author string, log str
 	// than branch merging - but it's better than nothing, and
 	// should at least round-trip with the logic in the Subversion
 	// dump parser.
-	ancestral := ""
 	if len(parents) > 1 {
+		ancestral := ""
 		sort.Ints(parents)
 		for _, p := range parents[1:] { // ignore main parent
 			ancestral += "." + fmt.Sprintf(".%d", p)
 		}
 		ancestral = ancestral[1:]
+		mergeinfo := newOrderedMap()
+		mergeinfo.set("svn:mergeinfo", ancestral)
+		parts = append(parts, svnprops(mergeinfo))
+		parts = append(parts, "PROPS-END\n")
+		parts = append(parts, "\n")
+		revprops := strings.Join(parts, "")
+		fmt.Fprintf(fp, "Prop-content-length: %d\n", len(revprops)-1)
+		fmt.Fprintf(fp, "Content-length: %d\n\n", len(revprops)-1)
+		fmt.Fprint(fp, revprops)
 	}
-	mergeinfo := newOrderedMap()
-	mergeinfo.set("svn:mergeinfo", ancestral)
-	parts = append(parts, svnprops(mergeinfo))
-	parts = append(parts, "PROPS-END\n")
-	parts = append(parts, "\n")
-	revprops := strings.Join(parts, "")
-	fmt.Fprintf(fp, "Prop-content-length: %d\n", len(revprops)-1)
-	fmt.Fprintf(fp, "Content-length: %d\n\n", len(revprops)-1)
-	fmt.Fprint(fp, revprops)
 }
 
 func dumpNode(fp io.Writer, dpath string,

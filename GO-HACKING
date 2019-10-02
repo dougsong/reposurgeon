@@ -43,7 +43,11 @@ will check the actual result of the script in foo.tst against its expected
 output in foo.chk.  No output other than the test notice is good.  The
 Python version passes all these tests.
 
-The extractor-class tests currently fail.
+The following tesrs still fail
+* Hg extractor multiple-branch load with bookmarks (be-bookmarks)
+* Hg pathological-load cases
+* Legacy map generation
+* Suversion dump generation
 
 == Tuning for speed ==
 

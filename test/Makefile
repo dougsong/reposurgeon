@@ -40,7 +40,7 @@ portcheck: check
 	@./setpypy pypy 2>/dev/null || :
 	@echo "=== No diff output is good news."
 
-# Note: must reintegrare repocutter/repotool/repomapper test when the transpation is done
+# Note: must reintegrate repocutter/repotool/repomapper test when the translation is done
 python: listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce \
 		svnload-regress \
 		git-regress git-regress-branches git-regress-merges \
