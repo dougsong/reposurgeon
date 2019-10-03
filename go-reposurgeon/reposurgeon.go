@@ -2548,10 +2548,13 @@ func (baton *Baton) exit(override string) {
 }
 
 func (baton *Baton) readProgress(ccount int64, filesize int64) {
-	frac := float64(ccount) / float64(filesize)
-	if frac > baton.lastfrac+0.01 {
-		baton.twirl(fmt.Sprintf("%f%%", frac*100))
-		baton.lastfrac = frac
+	if filesize > 10000000000 {
+		frac := float64(ccount) / float64(filesize)
+		if frac > baton.lastfrac+0.01 {
+			baton.twirl(fmt.Sprintf("%.2f%%", frac*100))
+			baton.lastfrac = frac
+			time.Sleep(time.Second)
+		}
 	}
 	baton.twirl("")
 }
@@ -14668,7 +14671,7 @@ func (rs *Reposurgeon) DoIndex(lineIn string) bool {
 			}
 			fmt.Fprintf(parse.stdout, "%6d branch %6s    %s\n", eventid+1, committish, e.ref)
 		default:
-			fmt.Fprintf(parse.stdout, "?      -      %s\n", e)
+			fmt.Fprintf(parse.stdout, "     ?             -    %s", e)
 		}
 	}
 	return false
