@@ -7889,7 +7889,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			last = commit
 		}
 	} else {
-		// GO-FINALIZE: Makes debug listings look lkke Python's.make
+		// GO-FINALIZE: Makes debug listings look like Python's.
 		const impossibleFilename = "None"
 		// Instead, determine a branch for each commit...
 		announce(debugEXTRACT, fmt.Sprintf("Branches: %s", sp.branches))
@@ -20939,124 +20939,6 @@ func main() {
 		}
 	}
 	interpreter.PostLoop()
-}
-
-/*
- * Report repository as a Subversion stream dump.
- * Does not round-trip.
- */
-
-type SubversionDumper struct {
-	repo            *Repository
-	nobranch        bool
-	pathmap         map[int]map[string]*FlowState
-	markToRevision  map[string]int
-	branchesCreated stringSet
-	vcs             *VCS
-}
-
-func newSubversionDumper(repo *Repository, nobranch bool) *SubversionDumper {
-	sd := new(SubversionDumper)
-	sd.repo = repo
-	sd.nobranch = nobranch
-	sd.pathmap = make(map[int]map[string]*FlowState)
-	sd.markToRevision = make(map[string]int)
-	sd.branchesCreated = newStringSet()
-	sd.vcs = findVCS("svn")
-	return sd
-}
-
-type FlowState struct {
-	rev         int
-	isDirectory bool
-	subfiles    int
-	props       OrderedMap
-}
-
-func newFlowState(rev int) *FlowState {
-	return &FlowState{rev: rev, isDirectory: false, subfiles: 0, props: newOrderedMap()}
-}
-
-func svnprops(pdict OrderedMap) string {
-	var out string
-	for _, k := range pdict.keys {
-		val := pdict.get(k)
-		out += fmt.Sprintf("K %d\n%s\nV %d\n%s\n", len(k), k, len(val), val)
-	}
-	return out
-}
-
-// Emit a Revision-number record describing unversioned properties.
-// Last argument is a list of revision numbers corresponig to parent commits.
-// FIXME: Last four arguments were optional in Python, fix at callsite
-func dumpRevprops(fp io.Writer, revision int, date *Date, author string, log string, parents []int) {
-	fmt.Fprintf(fp, "Revision-number: %d\n", revision)
-	parts := make([]string, 0)
-	attrib := newOrderedMap()
-	attrib.set("svn:log", log)
-	attrib.set("svn:author", author)
-	// Ugh.  Subversion apparently insists on those decimal places
-	d := date.rfc3339()
-	attrib.set("svn:date", d[:len(d)-1]+".000000Z")
-	parts = append(parts, svnprops(attrib))
-	// Hack merge links into mergeinfo properties.  This is a kluge
-	// - the Subversion model is really like cherrypicking rather
-	// than branch merging - but it's better than nothing, and
-	// should at least round-trip with the logic in the Subversion
-	// dump parser.
-	if len(parents) > 1 {
-		ancestral := ""
-		sort.Ints(parents)
-		for _, p := range parents[1:] { // ignore main parent
-			ancestral += "." + fmt.Sprintf(".%d", p)
-		}
-		ancestral = ancestral[1:]
-		mergeinfo := newOrderedMap()
-		mergeinfo.set("svn:mergeinfo", ancestral)
-		parts = append(parts, svnprops(mergeinfo))
-		parts = append(parts, "PROPS-END\n")
-		parts = append(parts, "\n")
-		revprops := strings.Join(parts, "")
-		fmt.Fprintf(fp, "Prop-content-length: %d\n", len(revprops)-1)
-		fmt.Fprintf(fp, "Content-length: %d\n\n", len(revprops)-1)
-		fmt.Fprint(fp, revprops)
-	}
-}
-
-func dumpNode(fp io.Writer, dpath string,
-	kind string, action string, content string,
-	fromRev int, fromPath string, props *OrderedMap) {
-	// Emit a Node record describing versioned properties and content.
-	fmt.Fprintf(fp, "Node-path: %s\n", dpath)
-	fmt.Fprintf(fp, "Node-kind: %s\n", kind)
-	fmt.Fprintf(fp, "Node-action: %s\n", action)
-	if fromRev != 0 {
-		fmt.Fprintf(fp, "Node-copyfrom-rev: %d\n", fromRev)
-	}
-	if fromPath != "" {
-		fmt.Fprintf(fp, "Node-copyfrom-path: %s\n", fromPath)
-	}
-	var nodeprops string
-	if props != nil {
-		nodeprops = svnprops(*props) + "PROPS-END\n"
-		fmt.Fprintf(fp, "Prop-content-length: %d\n", len(nodeprops))
-	}
-	if content != "" {
-		fmt.Fprintf(fp, "Text-content-length: %d\n", len(content))
-		// Checksum validation in svnload works if we do sha1 but
-		// not if we try md5.  It's unknown why - possibly svn load
-		// is simply ignoring sha1.
-		//fp.write("Text-content-md5: %x\n" % md5.Sum([]byte(content)))
-		fmt.Fprintf(fp, "Text-content-sha1: %x\n", sha1.Sum([]byte(content)))
-	}
-	fmt.Fprintf(fp, "Content-length: %d\n\n", len(nodeprops)+len(content))
-	if props != nil {
-		fmt.Fprint(fp, nodeprops)
-	}
-	if content != "" {
-		fmt.Fprint(fp, content)
-	}
-	fmt.Fprint(fp, "\n\n")
 }
 
 // end
