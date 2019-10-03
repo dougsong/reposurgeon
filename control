@@ -12,8 +12,6 @@ Description: A tool for editing version-control repository history.
  files directly and can thus be used to script production of very
  high-quality conversions from Subversion to any supported DVCS.
 
-XBS-Destinations: mailto:ubuntu-devel-discuss@lists.ubuntu.com
-
 Homepage: http://www.catb.org/~esr/reposurgeon
 
 XBS-HTML-Target: index.html
