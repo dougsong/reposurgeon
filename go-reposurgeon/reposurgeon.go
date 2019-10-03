@@ -1082,7 +1082,7 @@ _darcs
 			styleflags:   newStringSet("import-defaults", "export-progress"),
 			extensions:   newStringSet(),
 			initializer:  "svnadmin create .",
-			importer:     "svnadmin load .",
+			importer:     "",
 			checkout:     "",
 			lister:       "",
 			prenuke:      newStringSet(),
