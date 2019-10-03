@@ -2592,6 +2592,9 @@ into sections of the input stream instead).
 		`Disable some features that cause output to be vary depending on wall time, 
 screen width, and the ID of the invoking user. Use in regression-test loads.
 `},
+	{"tighten",
+		`Memory is at a premium, trade higher speed for lower usage.
+`},
 	{"bigprofile",
 		`Extra profiling for large repositories.  Mainly of interest to reposurgeon
 developers.
@@ -3467,7 +3470,7 @@ func (b Blob) getMark() string {
 
 // setMark sets the blob's mark
 func (b *Blob) setMark(mark string) string {
-	if b.repo != nil {
+	if b.repo != nil && !context.flagOptions["tighten"] {
 		if b.repo._eventByMark == nil {
 			b.repo.memoizeMarks()
 		}
@@ -3831,8 +3834,10 @@ func newReset(repo *Repository, ref string, committish string) *Reset {
 	reset := new(Reset)
 	reset.repo = repo
 	reset.ref = ref
-	reset.committish = committish
-	reset.remember(repo, committish)
+	if committish != "" {
+		reset.committish = committish
+		reset.remember(repo, committish)
+	}
 	return reset
 }
 
@@ -4717,7 +4722,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 
 // setMark sets the commit's mark
 func (commit *Commit) setMark(mark string) string {
-	if commit.repo != nil {
+	if commit.repo != nil && !context.flagOptions["tighten"] {
 		if commit.repo._eventByMark == nil {
 			commit.repo.memoizeMarks()
 		}
@@ -7004,7 +7009,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 
 	// If the repo is large, we'll give up on some diagnostic info in order
 	// to reduce the working set size.
-	if len(sp.revisions) > 50000 {
+	if context.flagOptions["tighten"] {
 		sp.large = true
 	}
 	for revision, record := range sp.revisions {
@@ -8536,23 +8541,36 @@ func (repo *Repository) cleanup() {
 
 // memoizeMarks rebuilds the mark cache
 func (repo *Repository) memoizeMarks() {
-	repo._eventByMark = make(map[string]Event)
-	for _, event := range repo.events {
-		key := event.getMark()
-		if key != "" {
-			repo._eventByMark[key] = event
+	if !context.flagOptions["tighten"] {
+		repo._eventByMark = make(map[string]Event)
+		for _, event := range repo.events {
+			key := event.getMark()
+			if key != "" {
+				repo._eventByMark[key] = event
+			}
 		}
 	}
 }
 
 // markToEvent finds an object by mark
 func (repo *Repository) markToEvent(mark string) Event {
-	if repo._eventByMark == nil {
-		repo.memoizeMarks()
-	}
-	d, ok := repo._eventByMark[mark]
-	if ok {
-		return d
+	if  context.flagOptions["tighten"] {
+		if mark == "" {
+			return nil
+		}
+		for _, event := range repo.events {
+			if event.getMark() == mark {
+				return event
+			}
+		}
+	} else {
+		if repo._eventByMark == nil {
+			repo.memoizeMarks()
+		}
+		d, ok := repo._eventByMark[mark]
+		if ok {
+			return d
+		}
 	}
 	return nil
 }
@@ -8577,6 +8595,15 @@ func (repo *Repository) eventToIndex(obj Event) int {
 
 // find gets an object index by mark
 func (repo *Repository) markToIndex(mark string) int {
+	if context.flagOptions["tighten"] {
+		for ind, event := range repo.events {
+			if event.getMark() == mark {
+				return ind
+			}
+		}
+		return -1
+	}
+
 	if repo._markToIndex == nil {
 		repo._markToIndex = make(map[string]int)
 		for ind, event := range repo.events {

@@ -8640,7 +8640,7 @@ developers.
         SelectionParser.__init__(self)
         self.use_rawinput = True
         self.echo = 0
-        self.prompt = "preposurgeon% "
+        self.prompt = "pyreposurgeon% "
         self.prompt_format = "pyreposurgeon%% "
         self.preferred = None
         self.ignorename = None

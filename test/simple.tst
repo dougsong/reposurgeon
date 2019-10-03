@@ -4,7 +4,6 @@ read <simple.fi
 index
 :76 tip
 tags
-history
 verbose 1
 paths
 1..$ expunge theory.txt

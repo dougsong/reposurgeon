@@ -39,9 +39,6 @@
 * The pathological-load Hg cases fail, that should be fixed.
   They succeeded in Python.
 
-* Need to optimize the allocation code for the main object array;
-  appending does way too many copies.
-
 == Testing the code ==
 
 There are tools and makefile productions for finer-grained testing.  

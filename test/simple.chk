@@ -65,15 +65,6 @@ tags
    114	commit	refs/tags/annotated-sample
    130	reset	refs/heads/master
    131	tag	annotated-sample
-history
-script simple.tst testing123
-## Test of index, tip, tags, history, paths, expunge and checkout
-echo 1
-read <simple.fi
-index
-:76 tip
-tags
-history
 verbose 1
 reposurgeon: verbose 1
 paths

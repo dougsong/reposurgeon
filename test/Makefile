@@ -114,6 +114,15 @@ fi-regress:
 	    else echo "*** Nonzero return status on $${file}!"; exit $(STOPOUT); fi \
 	done
 	@rm -f /tmp/regress$$$$
+fi-regress-tighten:
+	@echo "=== Running general tests with tighten option:"
+	@for file in $(TESTLOADS); do \
+	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.tst  || echo ' ## (no description)'; \
+	    if $(REPOSURGEON) "set tighten" "script $${file}.tst testing123" >/tmp/regress$$$$ 2>&1; \
+	    then diff --text -u $${file}.chk /tmp/regress$$$$ || exit $(STOPOUT); \
+	    else echo "*** Nonzero return status on $${file}!"; exit $(STOPOUT); fi \
+	done
+	@rm -f /tmp/regress$$$$
 
 # Test coalescence operation.
 COALESCE=uncoalesced
