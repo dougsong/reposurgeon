@@ -7,7 +7,7 @@
 # scripts from parent directory.  Note that using $PWD seems to fail
 # here under Gitlab's CI environment.
 PATH := $(realpath ..):$(realpath .):${PATH}
-REPOSURGEON := reposurgeon 
+REPOSURGEON := goreposurgeon 
 REPOCUTTER := repocutter 
 REPOTOOL := repotool 
 REPOMAPPER := repomapper

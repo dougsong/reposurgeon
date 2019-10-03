@@ -14,7 +14,7 @@ PYVERSION=2.7
 pyinclude?=$(shell pkg-config --cflags python-$(PYVERSION) || echo "-I/usr/include/python$(PYVERSION)")
 pylib?=$(shell pkg-config --libs python-$(PYVERSION) || echo "-lpython$(PYVERSION)")
 
-VERS=$(shell sed <reposurgeon -n -e '/version=\"\(.*\)\"/s//\1/p')
+VERS=$(shell sed <go-reposurgeon/reposurgeon.go -n -e '/const *version *= *\"\(.*\)\"/s//\1/p')
 SOURCES += docbook-extra.xml nofooter.conf
 SOURCES += \
 	reposurgeon reposurgeon.xml \
@@ -65,10 +65,6 @@ dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc -f nofooter.conf
 #
 # Auxilary Go productions
 #
-
-# Temporary; it's here to track which test sections have succeeded
-goregress: gotest
-	 cd test; $(MAKE) STOPOUT=$(STOPOUT) REPOSURGEON=goreposurgeon
 
 govet:
 	go vet ./go-repocutter
