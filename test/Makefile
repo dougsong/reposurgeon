@@ -156,7 +156,7 @@ coalesce:
 GITLOADS = bs
 git-regress:
 	@echo "=== Testing git-extractor:"
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	if command -v git >/dev/null 2>&1 ; \
 	then \
 	    for test in $(GITLOADS); do \
@@ -173,7 +173,7 @@ git-regress:
 GITBRANCHES = be bb
 git-regress-branches:
 	@echo "=== Testing git-extractor with multiple git branches:"
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	if command -v git >/dev/null 2>&1 ; \
 	then \
 	    for test in $(GITBRANCHES); do \
@@ -190,7 +190,7 @@ git-regress-branches:
 GITMERGES = be2 be3 be4 be5 be6
 git-regress-merges:
 	@echo "=== Testing git-extractor with merges:"
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	if command -v git >/dev/null 2>&1 ; \
 	then \
 	    for test in $(GITMERGES); do \
@@ -207,7 +207,7 @@ git-regress-merges:
 GITTAGS = bt bt2
 git-regress-tags:
 	@echo "=== Testing git-extractor with tags:"
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	if command -v git >/dev/null 2>&1 ; \
 	then \
 	    for test in $(GITTAGS); do \
@@ -224,7 +224,7 @@ git-regress-tags:
 HGLOADS = testrepo2
 hg-regress:
 	@echo "=== Testing hg-extractor:"
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	if command -v hg >/dev/null 2>&1 && command -v git >/dev/null 2>&1 ; \
 	then \
 	    for test in $(HGLOADS); do \
@@ -241,7 +241,7 @@ hg-regress:
 # NOTE: the bb-alt test demonstrates an hg repo with coloring that git cannot reproduce
 HGBRANCHES = be be2 be3 bb-alt be-bookmarks
 hg-buildregress-branches:
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	for file in $(HGBRANCHES); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
@@ -249,7 +249,7 @@ hg-buildregress-branches:
 	done
 hg-regress-branches:
 	@echo "=== Testing hg-extractor with multiple hg branches:"
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	if command -v hg >/dev/null 2>&1 ; \
 	then \
 	    for test in $(HGBRANCHES); do \
@@ -265,7 +265,7 @@ hg-regress-branches:
 # Test the hg extractor with merges
 HGMERGES = be2 be3 be4 be5 be6
 hg-buildregress-merges:
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	for file in $(HGMERGES); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
@@ -273,7 +273,7 @@ hg-buildregress-merges:
 	done
 hg-regress-merges:
 	@echo "=== Testing hg-extractor with merges:"
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	if command -v hg >/dev/null 2>&1 ; \
 	then \
 	    for test in $(HGMERGES); do \
@@ -289,7 +289,7 @@ hg-regress-merges:
 # Test the hg extractor with tags
 HGTAGS = bt bt2
 hg-buildregress-tags:
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	for file in $(HGTAGS); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
@@ -297,7 +297,7 @@ hg-buildregress-tags:
 	done
 hg-regress-tags:
 	@echo "=== Testing hg-extractor with tags:"
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	if command -v hg >/dev/null 2>&1 ; \
 	then \
 	    for test in $(HGTAGS); do \
@@ -313,7 +313,7 @@ hg-regress-tags:
 # Test the hg extractor with pathological loads
 HGPATHO = be-subrepo be-subrepo2
 hg-buildregress-patho:
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	for file in $(HGPATHO); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test 2>/dev/null | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
@@ -321,7 +321,7 @@ hg-buildregress-patho:
 	done
 hg-regress-patho:
 	@echo "=== Testing hg-extractor with pathological loads:"
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	if command -v hg >/dev/null 2>&1 ; \
 	then \
 	    for test in $(HGPATHO); do \
@@ -337,7 +337,7 @@ hg-regress-patho:
 # Test loading from Subversion
 SVNLOADS := $(shell ls *.svn | sed '/.svn$$/s///')
 svnload-buildregress:
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	for test in $(SVNLOADS); do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
@@ -348,7 +348,7 @@ svnload-buildregress:
 	done
 svnload-regress:
 	@echo "== Testing loading of Subversion streams:"
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	for test in $(SVNLOADS); \
 	do \
 	    if [ ! -f $${test}.tst ] ; \
@@ -380,7 +380,7 @@ SVNCLEAN := binary.svn blob-id.svn deletion.svn deepdirs.svn delignore.svn \
 	squash-id.svn subdir.svn svnignores.svn
 liftcheck-regress:
 	@echo "== Testing conversion correctness of Subversion streams:"
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	if  command -v git >/dev/null 2>&1 &&  command -v svn >/dev/null 2>&1; \
 	then \
 		for test in $(SVNCLEAN); \
@@ -400,7 +400,7 @@ liftcheck-dirty:
 
 REFLOADS=references mergeinfo-with-split
 legacy-buildregress:
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	for test in $(REFLOADS); \
 	do \
 	    echo "Remaking $${test}.map"; \
@@ -409,7 +409,7 @@ legacy-buildregress:
 	done
 legacy-regress:
 	@echo "=== Testing legacy-map generation:"
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	for test in $(REFLOADS); \
 	do \
 	    if echo "  $${test}.svn" >&2; \
@@ -424,7 +424,7 @@ legacy-regress:
 # all repos.
 SVNCHECK=pangram
 svncheck:
-	@REPOSURGEON=$$REPOSURGEON; export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
 	for test in $(SVNCHECK); \
 	do \
 	    if [ ! -f $${test}.tst ] ; \
