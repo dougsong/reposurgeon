@@ -122,22 +122,22 @@ particularly complex node structure.
 	"expunge": `expunge: usage: repocutter [-r SELECTION ] expunge PATTERN...
 
 Delete all operations with Node-path headers matching specified
-Python regular expressions (opposite of 'sift').  Any revision
+Golang regular expressions (opposite of 'sift').  Any revision
 left with no Node records after this filtering has its Revision
 record removed as well.
 `,
 	"sift": `sift: usage: repocutter [-r SELECTION ] sift PATTERN...
 
 Delete all operations with Node-path headers *not* matching specified
-Python regular expressions (opposite of 'expunge').  Any revision left
+Golang regular expressions (opposite of 'expunge').  Any revision left
 ith no Node records after this filtering has its Revision record
 removed as well.
 `,
 	"pathrename": `pathrename: usage: repocutter [-r SELECTION ] pathrename FROM TO
 
 Modify Node-path headers, Node-copyfrom-path headers, and
-svn:mergeinfo properties matching the specified Python regular
-expression FROM; replace with TO.  TO may contain Go-style
+svn:mergeinfo properties matching the specified Golang regular
+expression FROM; replace with TO.  TO may contain Golang-style
 backreferences (${1}, ${2} etc - parentheses not optional) to
 parenthesized portions of FROM.
 `,

@@ -183,7 +183,7 @@ Subversion distribution. It had functional overlap with
 because it was directly ancestral to that code. It was moved to the 
 <citerefentry><refentrytitle>reposurgeon</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 distribution in January 2016.</para>
-<para>This program was ported from Python to Go in Aygust 2018, at
+<para>This program was ported from Python to Go in August 2018, at
 which time the obsolete "squash" command was retired.</para>
 </refsect1>
 
