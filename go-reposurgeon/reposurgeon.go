@@ -118,6 +118,10 @@ import _ "net/http/pprof"
 
 const version = "4.0-pre"
 
+// Maximim number of 64-bit things (pointers) to allocate at once.
+// Used in some code for efficient exponential chunk grabbing.
+const maxAlloc = 100000
+
 // Go's panic/defer/recover feature is a weak primitive for catchable
 // exceptions, but it's all we have. So we write a throw/catch pair;
 // throw() must pass its exception payload to panic(), catch() can only be
@@ -670,6 +674,13 @@ func (s fastOrderedIntSet) String() string {
 	}
 	b.WriteRune(']')
 	return b.String()
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 /*
@@ -6186,6 +6197,23 @@ func (sp *StreamParser) timeMark(label string) {
 	sp.repo.timings = append(sp.repo.timings, TimeMark{label, time.Now()})
 }
 
+
+// Fast append avoids doing a full copy of the slice on every allocation
+// Code trivially modified from AppendByte on "Go Slices: usage and internals".
+func appendRevisionRecords(slice []RevisionRecord, data ...RevisionRecord) []RevisionRecord {
+	m := len(slice)
+	n := m + len(data)
+	if n > cap(slice) { // if necessary, reallocate
+		// allocate double what's needed, for future growth.
+		newSlice := make([]RevisionRecord, max((n+1)*2, maxAlloc))
+		copy(newSlice, slice)
+		slice = newSlice
+	}
+	slice = slice[0:n]
+	copy(slice[m:n], data)
+	return slice
+}
+
 func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesize int64) {
 	trackSymlinks := newStringSet()
 	for {
@@ -6406,7 +6434,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 				// Node processing ends
 			}
 			// Node list parsing ends
-			sp.revisions = append(sp.revisions, *newRevisionRecord(nodes, props, revision))
+			sp.revisions = appendRevisionRecords(sp.revisions, *newRevisionRecord(nodes, props, revision))
 			sp.repo.legacyCount++
 			announce(debugSVNPARSE, "revision parsing, line %d: ends with %d records", sp.importLine, sp.repo.legacyCount)
 			// End Revision processing
@@ -9530,7 +9558,7 @@ func appendEvents(slice []Event, data ...Event) []Event {
 	n := m + len(data)
 	if n > cap(slice) { // if necessary, reallocate
 		// allocate double what's needed, for future growth.
-		newSlice := make([]Event, (n+1)*2)
+		newSlice := make([]Event, max((n+1)*2, maxAlloc))
 		copy(newSlice, slice)
 		slice = newSlice
 	}
