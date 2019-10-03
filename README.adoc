@@ -35,22 +35,12 @@ support working directly with action stamps in git.
 Finally, an Emacs Lisp mode with useful functions for editing large
 comment message-boxes is included.
 
-The hashbang lines in these tools invoke PyPy, an alternative Python
-implementation that performs much better than CPython on this code. You
-can use python2 or python3 to run these scripts, but it is best to
-have pypy installed.  The performance difference is dramatic on large
-repositories.
-
-We are in the process of moving this suite of tools from Python to Go
-for large performance increases. You will require Go 1.11 or later.
-To build the Go tools, simply run "make" in the toplevel directory.
+To build the tools, simply run "make" in the toplevel directory.
 This also builds the suite documentation.
 
 There is an extensive regression-test suite in the `test/` directory.
-To test the correctness of this software, ensure that `pypy` and
-`pylint` and `golang` are installed and then type `make check`.  For a
-portability check that includes Python 2 and Python 3 as well, do
-"make portcheck".
+To test the correctness of this software, ensure that Golang is
+installed and then type `make check`.
 
 See `reporting-bugs.asc` for advice on how to troubleshoot problems
 with `reposurgeon` and report bugs.

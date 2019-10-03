@@ -204,6 +204,9 @@ edit                   ;; edit all editable objects
 </programlisting>
 
 
+<para>The regular expressions should be in <ulink
+url="https://github.com/google/re2/wiki/Syntax">Golang's</ulink>. format.</para>
+
 <refsect2 id='selections'><title>SELECTION SYNTAX</title>
 
 <para>A selection set is ordered; that is, any given element may occur
@@ -464,9 +467,9 @@ only the second in the set.</para>
 </varlistentry>
 <varlistentry>
 <term><firstterm>text search</firstterm></term>
-<listitem><para>A text search expression is a Python regular expression
+<listitem><para>A text search expression is a regular expression
 surrounded by forward slashes (to embed a forward slash in it, use a
-Python string escape such as \x2f).</para>
+C-like string escape such as \x2f).</para>
 
 <para>A text search normally matches against the comment fields of commits and
 annotated tags, or against their author/committer names, or against
@@ -572,7 +575,7 @@ select purely matching blobs or matching commits, compose a path
 expression with =B or =C.</para>
 
 <para>If you need to embed '[^/]' into your regular expression (e.g. to
-express "all characters but a slash") you can use a Python string
+express "all characters but a slash") you can use a C-like string
 escape such as \x2f.</para>
 
 </listitem>
@@ -1278,7 +1281,7 @@ the repo is not divided.</para>
 <listitem>
 <para>Expunge files from the selected portion of the repo history; the
 default is the entire history.  The arguments to this command may be
-paths or Python regular expressions matching paths (regexps must
+paths or regular expressions matching paths (regexps must
 be marked by being surrounded with //).</para>
 
 <para>All filemodify (M) operations and delete (D) operations
@@ -1549,11 +1552,11 @@ empty nor consists of the CVS empty-comment marker.</para>
 <listitem>
 <para>In the selected objects (defaulting to none) set every instance
 of a named field to a string value.  The string may be quoted to
-include whitespace, and use backslash escapes interpreted by the
-Python string-escape codec, such as \n and \t. </para>
+include whitespace, and use C-style backslash escapes, such as \n and
+\t. </para>
 
 <para>Attempts to set nonexistent attributes are ignored. Valid values
-for the attribute are internal Python field names; in particular, for 
+for the attribute are internal field names; in particular, for 
 commits, <quote>comment</quote> and <quote>branch</quote> are legal.
 Consult the source code for other interesting values.</para>
 
@@ -1586,7 +1589,7 @@ paths, patch the permission field to the first argument value.</para>
 <para>Append text to the comments of commits and tags in the specified
 selection set. The text is the first token of the command and may
 be a quoted string. C-style escape sequences in the string are
-interpreted using Python's string_decode codec.</para>
+interpreted as one would expect.</para>
 
 <para>If the option --rstrip is given, the comment is right-stripped before
 the new text is appended.</para>
@@ -1615,7 +1618,7 @@ shell command. Each blob or comment is presented to the filter on
 standard input; the content is replaced with whatever the filter emits
 to standard output.</para>
 
-<para>With --regex, the remainder of the line is expected to be a Python
+<para>With --regex, the remainder of the line is expected to be a
 regular expression substitution written as /from/to/ with from and
 to being passed as arguments to the standard re.sub() function and
 it applied to modify the content. Actually, any non-space character will
@@ -1652,7 +1655,7 @@ in commits is filtered when the selection set contains (only) blobs
 and the commit is within the range bounded by the earliest and latest
 blob in the specification.</para>
 
-<para>The encoding argument must name one of the codecs known to the Python
+<para>The encoding argument must name one of the codecs known to the Golang
 standard codecs library. In particular, 'latin1' is a valid codec name.</para>
 
 <para>Errors in this command are fatal, because an error may leave
@@ -1767,7 +1770,7 @@ of the grafted repository.</para>
 <listitem>
 <para>Rename a path in every fileop of every selected commit.  The
 default selection set is all commits. The first argument is interpreted as a
-Python regular expression to match against paths; the second may contain
+regular expression to match against paths; the second may contain
 back-reference syntax.</para>
 
 <para>Ordinarily, if the target path already exists in the fileops, or
@@ -1976,8 +1979,8 @@ numbers after the operation.</para>
 <listitem>
 <para>Rename or delete a branch (and any associated resets).  First argument
 must be an existing branch name; second argument must one of the verbs
-'rename' or 'delete'. The branchname may use backslash escapes
-interpreted by the Python string-escape codec, such as \s.</para>
+'rename' or 'delete'. The branchname may use C-style backslash escapes
+such as \s.</para>
 
 <para>For a 'rename', the third argument may be any token that is a
 syntactically valid branch name (but not the name of an existing
@@ -2019,8 +2022,7 @@ delete may be a regexp wrapped in //; if so, all objects of the
 specified type with names matching the regexp are deleted.  This is
 useful for mass deletion of junk tags such as CVS branch-root tags.</para>
 
-<para>The tagname may use backslash escapes interpreted by the Python
-string-escape codec, such as \s.</para>
+<para>The tagname may use C-style backslash escapes , such as \s.</para>
 
 <para>The behavior of this command is complex because features which
 present as tags may be any of three things: (1) True tag objects, (2)
@@ -2070,8 +2072,7 @@ existing reset name; second argument must be one of the verbs
 <quote>move</quote>, <quote>rename</quote>, or
 <quote>delete</quote>.</para>
 
-<para>The reset name may use backslash escapes interpreted by the Python
-string-escape codec, such as \s.</para>
+<para>The reset name may use C-style backslash escapes, such as \s.</para>
 
 <para>For a <quote>move</quote>, a third argument must be a singleton
 selection set. For a <quote>rename</quote>, the third argument may be
@@ -2194,7 +2195,7 @@ intersection, and '~' negation, and function calls @min(), @max(), @amp(),
 @pre(), @suc(), @srt().
 Attributions can also be selected by visibility set '=C' for committers, '=A'
 for authors, and '=T' for taggers.
-Finally, /<emphasis>regex</emphasis>/ will attempt to match the Python regular
+Finally, /<emphasis>regex</emphasis>/ will attempt to match the regular
 expression <emphasis>regex</emphasis> against an attribution name and email
 address; '/n' limits the match to only the name, and '/e' to only the email
 address.
@@ -2814,10 +2815,8 @@ shown. Passing 'reset' will clear the mapping.</para>
 <para>The branchify command will match each branch name against regex1
 and if it matches rewrite its branch name to branch1. If not it will
 try regex2 and so forth until it either found a matching regex or
-there are no regexs left. The regular expressions should be in <ulink
-url="http://docs.python.org/2/library/re.html">Python's</ulink>. format. The
-branch name can use backreferences (see the re.sub function in the Python
-documentation).</para>
+there are no regexs left. The branch name can use Go
+backreferences.</para>
 
 <para>Note that the regular expressions are appended to 'refs/'
 without either the needed 'heads/' or 'tags/'. This allows for
@@ -2849,7 +2848,7 @@ results if you forget to re-set it.</para>
 </term>
 <listitem>
 <para>Takes an optional selection set argument defaulting to all commits, and
-an optional Python regular expression. For each commit in the selection set,
+an optional regular expression. For each commit in the selection set,
 print the mapping of all paths in that commit tree to the corresponding blob
 marks, mirroring what files would be created in a checkout of the commit. If a
 regular expression is given, only print "path -> mark" lines for paths matching
@@ -3077,7 +3076,7 @@ reference.</para>
 <listitem>
 <para>Set the command prompt format to the value of the command line; with
 an empty command line, display it. The prompt format is evaluated in
-Python after each command with the following dictionary substitutions:</para>
+after each command with the following dictionary substitutions:</para>
 
 <variablelist>
 <varlistentry>

@@ -162,15 +162,6 @@ for you, interpreting your $(PROJECT).lift file, when you type "make".
 You may have to watch the baton spin for a few minutes.  For very
 large repositories it could be more than a few minutes.
 
-I have found that reposurgeon run under PyPy is both significantly
-faster on larger repositories than reposurgeon run under CPython and
-tops out with a smaller memory footprint.  This advantage does not
-show on small repositories, such as the ones in reposurgeon's
-regression tests (PyPy's JIT compilation needs a substantial fraction
-of a second to warm up) but for large ones it can be quite dramatic
-and it seems to increase with size.  Accordingly, the hashbang lines
-of these tools invoke pypy.
-
 === CVS ===
 
 If you are exporting from CVS, it may be a good idea to run some
@@ -829,7 +820,8 @@ Makefile.
      Recommend PyPy for speeding up large conversions.
 
 Repository head::
-     Track the name change of the mailbox commands. 
+     Track the name change of the mailbox commands.
+     Reposurgeon has moved to Go.
 
 // Local Variables:
 // compile-command: "make dvcs-migration-guide.html"

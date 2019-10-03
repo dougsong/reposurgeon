@@ -22,7 +22,7 @@
   Go and Python. The Python version works, the Go version neefs
   fixing. There's a commented-out section documenting toposort,
 
-* repocutter renumber needs a test that demonstates patching of
+* repocutter renumber needs a test that demonstrates patching of
   Node-copyfrom-rev fields.
 
 * repocutter needs to patch mergeinfo revisions.
@@ -39,12 +39,15 @@
 * The pathological-load Hg cases fail, that should be fixed.
   They succeeded in Python.
 
+* Need to optimize the allocation code for the main object array;
+  appending does way too many copies.
+
 == Testing the code ==
 
 There are tools and makefile productions for finer-grained testing.  
-Their behavior is cinrolled by two variables:
+Their behavior is controlled by two variables:
 
-REPOSURGEON: either reposurgeon (the default) or goreposurgeon
+REPOSURGEON: either reposurgeon (the default) or pyreposurgeon
 
 STOPOUT: 1 (the default) produces a bailout after the first failed
 test.  Set it to 0 to continue after failed tests - you have to do
@@ -85,7 +88,7 @@ Have graphviz installed and do
 
 go tool pprof goreposurgeon rs.prof
 
-There are lots of ways to explore the data but single most interesting one
+There are lots of ways to explore the data but the single most interesting one
 is to enter "web" and look at your browser. The size of each box is proportional
 to the number of profiler samples it appears in.  "top10" gives you the same
 data in tabular form:
