@@ -13372,8 +13372,7 @@ func newReposurgeon() *Reposurgeon {
 	rs.startTime = time.Now()
 	rs.definitions = make(map[string][]string)
 	rs.inputIsStdin = true
-	// GO-FINALIZE: Change this back when the port is verified
-	rs.promptFormat = "goreposurgeon% "
+	rs.promptFormat = "reposurgeon% "
 	// These are globals and should probably be set in init().
 	for _, option := range optionFlags {
 		context.listOptions[option[0]] = newStringSet()

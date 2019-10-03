@@ -1,5 +1,8 @@
 = reposurgeon project news =
 
+Repository head::
+     Production reposurgeon is now in Go.
+
 3.48: 2019-10-02::
      Last Python release.  4.0 will ship in Go.
      Corrected a minor error in Hg branch coloring.
