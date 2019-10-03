@@ -33,3 +33,6 @@
   mergeinfo properties).
 
 * Fix up generation of R and C in the Mercurial exporter.
+
+* The pathological-load Hg cases fail, that should be fixed.
+  They succeeded in Python.

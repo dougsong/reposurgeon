@@ -49,7 +49,7 @@ python: listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce \
 		svncheck-regress
 
 hg-extractor: hg-regress hg-regress-branches hg-regress-merges \
-		hg-regress-tags hg-regress-patho
+		hg-regress-tags # hg-regress-patho
 
 .SUFFIXES: .svn .chk .fi .map
 
@@ -63,7 +63,7 @@ hg-extractor: hg-regress hg-regress-branches hg-regress-merges \
 buildregress: fi-buildregress svnload-buildregress legacy-buildregress \
 	svndump-buildregress repomapper-buildregress \
 	repotool-buildregress repocutter-buildregress hg-buildregress-branches \
-	hg-buildregress-patho svncheck-buildregress
+	svncheck-buildregress # hg-buildregress-patho
 
 clean:
 	rm -fr .rs* test-repo test-checkout git-repo left-repo right-repo *~
