@@ -24,25 +24,14 @@ TERM := dumb
 
 default: check
 
-# Speed check - test under the default in the hashbang line
-python:
-	#@if command -v pylint >/dev/null 2>&1; then echo "=== Running pylint" && (cd ..; make -e --quiet pylint); else echo "pylint missing; skipping tests"; fi
-	@if { ./setpypy pypy || ./setpypy python; } 2>/dev/null; then echo "=== Running built-in tests" && $(REPOSURGEON) "runtests"; else echo "pypy/python missing; skipping built-in tests"; fi
-	@if { ./setpypy pypy || ./setpypy python; } 2>/dev/null; then time make -e --quiet python; else echo "pypy/python missing; skipping tests"; fi
-	@./setpypy pypy 2>/dev/null || :
-	#@time make nonpython
-	@echo "=== No diff output is good news."
-
-# Note: must reintegrate repocutter/repotool/repomapper test when the translation is done
 check: listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce \
 		svnload-regress \
-		git-regress git-regress-branches git-regress-merges \
-		git-regress-tags hg-extractor \
-		liftcheck-regress legacy-regress \
-		svncheck-regress
+		git-regress git-regress-branches git-regress-merges git-regress-tags \
+		hg-regress hg-regress-branches hg-regress-merges hg-regress-tags \
+		liftcheck-regress legacy-regress svncheck-regress \
+		repocutter-regress repomapper-regress repotool-regress
 
-hg-extractor: hg-regress hg-regress-branches hg-regress-merges \
-		hg-regress-tags # hg-regress-patho
+# hg-regress-patho is not part of the normal test sequence.
 
 .SUFFIXES: .svn .chk .fi .map
 
@@ -56,7 +45,8 @@ hg-extractor: hg-regress hg-regress-branches hg-regress-merges \
 buildregress: fi-buildregress svnload-buildregress legacy-buildregress \
 	svndump-buildregress repomapper-buildregress \
 	repotool-buildregress repocutter-buildregress hg-buildregress-branches \
-	svncheck-buildregress # hg-buildregress-patho
+	svncheck-buildregress \
+	repocutter-buildregress repomapper-buildregress repotool-buildregress
 
 clean:
 	rm -fr .rs* test-repo test-checkout git-repo left-repo right-repo *~

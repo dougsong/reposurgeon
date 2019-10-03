@@ -10,10 +10,6 @@ prefix?=/usr/local
 mandir?=share/man
 target=$(DESTDIR)$(prefix)
 
-PYVERSION=2.7
-pyinclude?=$(shell pkg-config --cflags python-$(PYVERSION) || echo "-I/usr/include/python$(PYVERSION)")
-pylib?=$(shell pkg-config --libs python-$(PYVERSION) || echo "-lpython$(PYVERSION)")
-
 VERS=$(shell sed <go-reposurgeon/reposurgeon.go -n -e '/const *version *= *\"\(.*\)\"/s//\1/p')
 SOURCES += docbook-extra.xml nofooter.conf
 SOURCES += \
@@ -43,7 +39,7 @@ HTMLFILES = $(MANPAGES:.1=.html) \
             dvcs-migration-guide.html features.html reporting-bugs.html
 SHARED    = $(DOCS) reposurgeon-git-aliases $(HTMLFILES)
 
-# THe following would produce reproducible builds, but it breaks Gitlab CI.
+# The following would produce reproducible builds, but it breaks Gitlab CI.
 #GOFLAGS=-gcflags 'all=-N -l -trimpath $(GOPATH)/src' -asmflags 'all=-trimpath $(GOPATH)/src'
 
 GOFLAGS=-gcflags '-N -l'
@@ -120,18 +116,8 @@ version:
 # Code validation
 #
 
-COMMON_PYLINT = --rcfile=/dev/null --reports=n \
-	--msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" \
-	--dummy-variables-rgx='^_'
-PYLINTOPTS1 = "C0103,C0111,C0301,C0302,C0322,C0324,C0325,C0321,C0323,C0330,C0410,C0411,C0412,C0413,C1001,C1801,R0201,R0101,R0204,R0902,R0903,R0904,R0911,R0912,R0913,R0914,R0915,R1705,W0108,W0110,W0123,W0122,W0141,W0142,W0212,W0221,W0232,W0233,W0603,W0632,W0633,W0640,W0511,W0611,E0611,E1101,E1103,E1124,E1133,I0011,F0401"
-pylint:
-	@$(PYLINT) $(COMMON_PYLINT) --disable=$(PYLINTOPTS1) reposurgeon
-
 check:
 	$(MAKE) all; cd test; $(MAKE) --quiet check
-
-portcheck:
-	cd test; $(MAKE) --quiet portcheck
 
 #
 # Continuous integration.  More specifics are in the ci/ directory
