@@ -7,7 +7,7 @@
 # scripts from parent directory.  Note that using $PWD seems to fail
 # here under Gitlab's CI environment.
 PATH := $(realpath ..):$(realpath .):${PATH}
-REPOSURGEON := goreposurgeon 
+REPOSURGEON := reposurgeon 
 REPOCUTTER := repocutter 
 REPOTOOL := repotool 
 REPOMAPPER := repomapper
@@ -25,7 +25,7 @@ TERM := dumb
 default: check
 
 # Speed check - test under the default in the hashbang line
-check:
+python:
 	#@if command -v pylint >/dev/null 2>&1; then echo "=== Running pylint" && (cd ..; make -e --quiet pylint); else echo "pylint missing; skipping tests"; fi
 	@if { ./setpypy pypy || ./setpypy python; } 2>/dev/null; then echo "=== Running built-in tests" && $(REPOSURGEON) "runtests"; else echo "pypy/python missing; skipping built-in tests"; fi
 	@if { ./setpypy pypy || ./setpypy python; } 2>/dev/null; then time make -e --quiet python; else echo "pypy/python missing; skipping tests"; fi
@@ -33,15 +33,8 @@ check:
 	#@time make nonpython
 	@echo "=== No diff output is good news."
 
-# Portability check - tests all dialects
-portcheck: check
-	@if ./setpypy python2; then time make -e --quiet python; else echo "python2 missing; skipping tests"; fi
-	@if ./setpypy python3; then time make -e --quiet python; else echo "python3 missing; skipping tests"; fi
-	@./setpypy pypy 2>/dev/null || :
-	@echo "=== No diff output is good news."
-
 # Note: must reintegrate repocutter/repotool/repomapper test when the translation is done
-python: listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce \
+check: listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce \
 		svnload-regress \
 		git-regress git-regress-branches git-regress-merges \
 		git-regress-tags hg-extractor \

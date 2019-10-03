@@ -21,8 +21,8 @@ SOURCES += \
 	repotool repotool.xml \
 	go-repocutter/repocutter.go \
 	go-repomapper/repomapper.go \
-	go-reposurgeon/goreposurgeon.go \
-	go-reposurgeon/goreposurgeon_test.go \
+	go-reposurgeon/reposurgeon.go \
+	go-reposurgeon/reposurgeon_test.go \
 	go-reposurgeon/intern.go \
 	repomapper.xml repocutter.xml \
 	reporting-bugs.adoc features.adoc dvcs-migration-guide.adoc \
@@ -50,7 +50,7 @@ GOFLAGS=-gcflags '-N -l'
 all:  $(MANPAGES) $(HTMLFILES)
 	go build $(GOFLAGS) -o repocutter ./go-repocutter
 	go build $(GOFLAGS) -o repomapper ./go-repomapper
-	go build $(GOFLAGS) -o goreposurgeon ./go-reposurgeon
+	go build $(GOFLAGS) -o reposurgeon ./go-reposurgeon
 
 %.1: %.xml
 	$(XMLTO) $(XMLTOOPTS) man $<
