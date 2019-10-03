@@ -11331,7 +11331,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		runProcess(cmd, "repository import")
 		os.Remove(tfdesc.Name())
 	} else {
-		cmd := os.Expand(repo.vcs.importer, mapper)
+		cmd := os.Expand(vcs.importer, mapper)
 		tp, cls, err := writeToProcess(cmd)
 		if err != nil {
 			return err
@@ -11407,7 +11407,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 			src := ljoin(target, sub.Name())
 			dst := ljoin(savedir, sub.Name())
 			announce(debugSHUFFLE, "%s -> %s", src, dst)
-			if sub.Name() == repo.vcs.subdirectory {
+			if sub.Name() == vcs.subdirectory {
 				shutil.CopyTree(src, dst, nil)
 			} else {
 				os.Rename(src, dst)
@@ -11420,9 +11420,9 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		if err != nil {
 			return err
 		}
-		announce(debugSHUFFLE, "Copy staging %s to target %s (excluding %s)", staging, target, repo.vcs.subdirectory)
+		announce(debugSHUFFLE, "Copy staging %s to target %s (excluding %s)", staging, target, vcs.subdirectory)
 		for _, sub := range entries {
-			if sub.Name() == repo.vcs.subdirectory {
+			if sub.Name() == vcs.subdirectory {
 				continue
 			}
 			announce(debugSHUFFLE, "%s -> %s",
@@ -11438,9 +11438,9 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 	}
 	// This is how we clear away hooks directories in
 	// newly-created repos
-	announce(debugSHUFFLE, "Nuking %v from staging %s", repo.vcs.prenuke, staging)
-	if repo.vcs.prenuke != nil {
-		for _, path := range repo.vcs.prenuke {
+	announce(debugSHUFFLE, "Nuking %v from staging %s", vcs.prenuke, staging)
+	if vcs.prenuke != nil {
+		for _, path := range vcs.prenuke {
 			os.RemoveAll(ljoin(staging, path))
 		}
 	}
