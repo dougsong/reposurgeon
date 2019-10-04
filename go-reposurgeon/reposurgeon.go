@@ -6224,6 +6224,11 @@ func appendRevisionRecords(slice []RevisionRecord, data ...RevisionRecord) []Rev
 }
 
 func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesize int64) {
+	// If the repo is large, we'll give up on some diagnostic info in order
+	// to reduce the working set size.
+	if context.flagOptions["tighten"] {
+		sp.large = true
+	}
 	trackSymlinks := newStringSet()
 	for {
 		line := sp.readline()
@@ -6877,15 +6882,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// no-preserve ends begins here
 
 	// Find all copy sources && compute the set of branches
-	announce(debugEXTRACT, "Pass 1: compute copy sets and branches")
+	announce(debugEXTRACT, "Pass 1: compute copy branches")
+	if sp.large {
+		baton.speak("1")
+	}
 	nobranch := options.Contains("--nobranch")
-	copynodes := make([]*NodeAction, 0)
-	for i, record := range sp.revisions {
-		for j, node := range record.nodes {
-			if node.fromPath != "" {
-				copynodes = append(copynodes, &sp.revisions[i].nodes[j])
-				announce(debugEXTRACT, fmt.Sprintf("copynode at %s", node))
-			}
+	for _, record := range sp.revisions {
+		for _, node := range record.nodes {
 			np := node.path + svnSep
 			if node.action == sdADD && node.kind == sdDIR && !sp.isBranch(np) && !nobranch {
 				for _, trial := range context.listOptions["svn_branchify"] {
@@ -6905,9 +6908,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// Per-commit spinner disabled because this pass is fast
 		//baton.twirl("")
 	}
-	sort.Slice(copynodes, func(i int, j int) bool {
-		return copynodes[i].fromRev < copynodes[j].fromRev
-	})
 
 	timeit := func(tag string) {
 		sp.timeMark("tag")
@@ -6936,6 +6936,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	*/
 	// Build filemaps.
 	announce(debugEXTRACT, "Pass 2: build filemaps for %d Subversion revisions", len(sp.revisions))
+	if sp.large {
+		baton.speak("2")
+	}
 	filemaps := make(map[int]*PathMap)
 	filemap := newPathMap()
 	for revision, record := range sp.revisions {
@@ -6986,30 +6989,18 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			fmt.Printf("r%d: %v\n", revision, filemaps[revision])
 		}
 	}
-
-	// Build from sets in each directory copy record.
-	announce(debugEXTRACT, "Pass 3")
-	for _, copynode := range copynodes {
-		if debugEnable(debugFILEMAP) {
-			// Conditional retained because computing this filemap
-			// slice can be expensive enough to look like a hang forever
-			// on a sufficiently large repository - GCC was the type case.
-			announce(debugFILEMAP, "r%d copynode filemap is %s",
-				copynode.fromRev, filemaps[copynode.fromRev])
-		}
-		copynode.fromSet = newPathMap()
-		copynode.fromSet.copyFrom(copynode.fromPath,
-			filemaps[copynode.fromRev],
-			copynode.fromPath)
-		baton.twirl("")
+	if sp.large {
+		baton.speak("3")
 	}
-	timeit("copysets")
 
 	// Build commits
 	// This code can eat your processor, so we make it give up
 	// its timeslice at reasonable intervals. Needed because
 	// it does not hit the disk.
 	announce(debugEXTRACT, "Pass 4")
+	if sp.large {
+		baton.speak("4")
+	}
 
 	var previous int
 
@@ -7050,10 +7041,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		return nil
 	}
 
-	// If the repo is large, we'll give up on some diagnostic info in order
-	// to reduce the working set size.
-	if context.flagOptions["tighten"] {
-		sp.large = true
+	if sp.large {
+		baton.speak("5")
 	}
 	for revision, record := range sp.revisions {
 		announce(debugEXTRACT, "Revision %d:", revision)
@@ -7143,6 +7132,20 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				node.action != sdCHANGE && debugEnable(debugTOPOLOGY) {
 				announce(debugSHOUT, node.String())
 			}
+
+			// Compute the node's copy set
+			if node.fromPath != "" {
+				if debugEnable(debugFILEMAP) {
+					// Conditional retained because computing this filemap
+					// slice can be expensive enough to look like a hang forever
+					// on a sufficiently large repository - GCC was the type case.
+					announce(debugFILEMAP, "r%d copynode filemap is %s",
+						node.fromRev, filemaps[node.fromRev])
+				}
+				node.fromSet = newPathMap()
+				node.fromSet.copyFrom(node.fromPath, filemaps[node.fromRev], node.fromPath)
+			}
+
 			// Handle per-path properties.
 			if node.hasProperties() {
 				if node.props.has("cvs2svn:cvs-rev") {
@@ -7881,6 +7884,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 	} // end of revision loop
 
+	if sp.large {
+		baton.speak("6")
+	}
 	// Filemaps are no longer needed, allow them to be garbage collectedc
 	filemaps = nil
 	// Bail out if we have read no commits
@@ -8208,7 +8214,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 	}
 	// Code controlled by --nobranch option ends.
-	baton.twirl("")
+	if sp.large {
+		baton.speak("7")
+	} else {
+		baton.twirl("")
+	}
 	// Canonicalize all commits to ensure all ops actually do something.
 	for _, commit := range sp.repo.commits(nil) {
 		commit.canonicalize()
@@ -8249,7 +8259,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	}
 	sp.repo.delete(deleteables, []string{"--tagback"})
 	sp.repo.events = append(sp.repo.events, newtags...)
-	baton.twirl("")
+	if sp.large {
+		baton.speak("8")
+	} else {
+		baton.twirl("")
+	}
 	timeit("junk")
 	announce(debugEXTRACT, "after cvs2svn artifact removal")
 	// Now we need to tagify all other commits without fileops, because git
@@ -8318,6 +8332,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	for key, value := range context.mapOptions["svn_branchify_mapping"] {
 		branchMappings = append(branchMappings, branchMapping{regexp.MustCompile(key), value})
 	}
+	if sp.large {
+		baton.speak("9")
+	} else {
+		baton.twirl("")
+	}
 	// Now pretty up the branch names
 	deletia := make([]int, 0)
 	for index, event := range sp.repo.events {
@@ -8370,6 +8389,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 		baton.twirl("")
 	}
+	if sp.large {
+		baton.speak("10")
+	} else {
+		baton.twirl("")
+	}
 	sp.repo.delete(deletia, nil)
 	timeit("polishing")
 	announce(debugEXTRACT, "after branch name mapping")
@@ -8407,6 +8431,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		commit.setOperations(nonnil)
 		baton.twirl("")
 	}
+	if sp.large {
+		baton.speak("11")
+	} else {
+		baton.twirl("")
+	}
 	timeit("tagcleaning")
 	announce(debugEXTRACT, "after delete/copy canonicalization")
 	// Remove spurious parent links caused by random cvs2svn file copies.
@@ -8432,6 +8461,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 		// Per-commit spinner disabled because this pass is fast
 		//baton.twirl("")
+	}
+	if sp.large {
+		baton.speak("12")
+	} else {
+		baton.twirl("")
 	}
 	timeit("debubbling")
 	sp.repo.renumber(1, baton)
