@@ -6908,72 +6908,16 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	   followed by a deletion, followed by a move of another branch to the
 	   deleted name.
 	*/
-	// Build filemaps.
-	announce(debugEXTRACT, "Pass 1: build filemaps for %d Subversion revisions", len(sp.revisions))
-	if sp.large {
-		baton.speak("1")
-	}
-	filemaps := make(map[int]*PathMap)
-	filemap := newPathMap()
-	for revision, record := range sp.revisions {
-		for idx := range record.nodes {
-			node := &record.nodes[idx]
-			// Mutate the filemap according to copies
-			if node.fromRev > 0 {
-				//assert node.fromRev < revision
-				filemap.copyFrom(node.path, filemaps[node.fromRev],
-					node.fromPath)
-				announce(debugFILEMAP, "r%d#%d: r%d~%s copied to %s",
-					revision, idx+1, node.fromRev, node.fromPath, node.path)
-			}
-			// Mutate the filemap according to adds/deletes/changes
-			if node.action == sdADD && node.kind == sdFILE {
-				filemap.set(node.path, node)
-				announce(debugFILEMAP, "r%d#%d: %s added", node.revision, idx+1, node.path)
-			} else if node.action == sdDELETE || (node.action == sdREPLACE && node.kind == sdDIR) {
-				if node.kind == sdNONE {
-					if filemap.contains(node.path) {
-						node.kind = sdFILE
-					} else {
-						node.kind = sdDIR
-					}
-				}
-				//announce(debugFILEMAP, "r%d#%d: deduced type for %s", node.revision, idx+1, node)
-				// Snapshot the deleted paths before
-				// removing them.
-				node.fromSet = newPathMap()
-				node.fromSet.copyFrom(node.path, filemap, node.path)
-				filemap.remove(node.path)
-				announce(debugFILEMAP, "r%d#%d: %s deleted",
-					node.revision, idx+1, node.path)
-			} else if (node.action == sdCHANGE || node.action == sdREPLACE) && node.kind == sdFILE {
-				filemap.set(node.path, node)
-				announce(debugFILEMAP, "r%d#%d: %s changed", node.revision, idx+1, node.path)
-			}
-		}
-		filemaps[revision] = filemap.snapshot()
-		baton.twirl("")
-	}
-
-	timeit("filemaps")
-	// Blows up huge on large repos...
-	if debugEnable(debugFILEMAP) {
-		fmt.Printf("Filemaps for %d revisions:\n", len(sp.revisions))
-		for revision := range sp.revisions {
-			fmt.Printf("r%d: %v\n", revision, filemaps[revision])
-		}
-	}
-	if sp.large {
-		baton.speak("2")
-	}
+	visible := make(map[int]*PathMap)
+	visibleHere := newPathMap()
 
 	// Build commits
 	// This code can eat your processor, so we make it give up
 	// its timeslice at reasonable intervals. Needed because
 	// it does not hit the disk.
-	announce(debugEXTRACT, "Pass 4")
+	announce(debugEXTRACT, "Pass 1")
 	if sp.large {
-		baton.speak("3")
+		baton.speak("1")
 	}
 
 	var previous int
@@ -7016,7 +6960,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	}
 
 	if sp.large {
-		baton.speak("4")
+		baton.speak("2")
 	}
 	for revision, record := range sp.revisions {
 		announce(debugEXTRACT, "Revision %d:", revision)
@@ -7096,6 +7040,45 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		if revision == 0 {
 			continue
 		}
+
+		// Build the visibility map for this revision
+		for idx := range record.nodes {
+			node := &record.nodes[idx]
+			// Mutate the filemap according to copies
+			if node.fromRev > 0 {
+				//assert node.fromRev < revision
+				visibleHere.copyFrom(node.path, visible[node.fromRev],
+					node.fromPath)
+				announce(debugFILEMAP, "r%d#%d: r%d~%s copied to %s",
+					revision, idx+1, node.fromRev, node.fromPath, node.path)
+			}
+			// Mutate the filemap according to adds/deletes/changes
+			if node.action == sdADD && node.kind == sdFILE {
+				visibleHere.set(node.path, node)
+				announce(debugFILEMAP, "r%d#%d: %s added", node.revision, idx+1, node.path)
+			} else if node.action == sdDELETE || (node.action == sdREPLACE && node.kind == sdDIR) {
+				if node.kind == sdNONE {
+					if visibleHere.contains(node.path) {
+						node.kind = sdFILE
+					} else {
+						node.kind = sdDIR
+					}
+				}
+				//announce(debugFILEMAP, "r%d#%d: deduced type for %s", node.revision, idx+1, node)
+				// Snapshot the deleted paths before
+				// removing them.
+				node.fromSet = newPathMap()
+				node.fromSet.copyFrom(node.path, visibleHere, node.path)
+				visibleHere.remove(node.path)
+				announce(debugFILEMAP, "r%d#%d: %s deleted",
+					node.revision, idx+1, node.path)
+			} else if (node.action == sdCHANGE || node.action == sdREPLACE) && node.kind == sdFILE {
+				visibleHere.set(node.path, node)
+				announce(debugFILEMAP, "r%d#%d: %s changed", node.revision, idx+1, node.path)
+			}
+		}
+		visible[revision] = visibleHere.snapshot()
+
 		expandedNodes := make([]*NodeAction, 0)
 		hasProperties := newStringSet()
 		for n := range record.nodes {
@@ -7133,10 +7116,10 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					// slice can be expensive enough to look like a hang forever
 					// on a sufficiently large repository - GCC was the type case.
 					announce(debugFILEMAP, "r%d copynode filemap is %s",
-						node.fromRev, filemaps[node.fromRev])
+						node.fromRev, visible[node.fromRev])
 				}
 				node.fromSet = newPathMap()
-				node.fromSet.copyFrom(node.fromPath, filemaps[node.fromRev], node.fromPath)
+				node.fromSet.copyFrom(node.fromPath, visible[node.fromRev], node.fromPath)
 			}
 
 			// Handle per-path properties.
@@ -7291,7 +7274,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						// to preserve any other properties, sp.propagate
 						// would need to have property maps as values.
 						for _, source := range node.fromSet.pathnames() {
-							lookback := filemaps[node.fromRev].get(source)
+							lookback := visible[node.fromRev].get(source)
 							found, ok := lookback.(*NodeAction)
 							if ok && found.hasProperties() && found.props.has("svn:executable") {
 								stem := source[len(node.fromPath):]
@@ -7326,7 +7309,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						}
 						// Now generate copies for all files in the copy source directory
 						for _, source := range node.fromSet.pathnames() {
-							lookback := filemaps[node.fromRev].get(source)
+							lookback := visible[node.fromRev].get(source)
 							found, ok := lookback.(*NodeAction)
 							if !ok {
 								panic(fmt.Errorf("r%d#%d: can't find ancestor of %s at r%d",
@@ -7477,7 +7460,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					// this node is.
 					if node.fromPath != "" || node.fromHash != "" {
 						// Try first via fromPath
-						fm, ok := filemaps[node.fromRev]
+						fm, ok := visible[node.fromRev]
 						if ok {
 							var trialnode interface{}
 							trialnode = fm.get(node.fromPath)
@@ -7513,7 +7496,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						if ok {
 							ancestor = lookback
 						} else {
-							lookback2 := filemaps[previous].get(node.path)
+							lookback2 := visible[previous].get(node.path)
 							if lookback2 != nil {
 								ancestor = lookback2.(*NodeAction)
 							} else {
@@ -7877,11 +7860,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 	} // end of revision loop
 
+	// Visibility map is no longer needed, allow it to be garbage collectedc
+	visible = nil
+
 	if sp.large {
-		baton.speak("5")
+		baton.speak("3")
 	}
-	// Filemaps are no longer needed, allow them to be garbage collectedc
-	filemaps = nil
+
 	// Bail out if we have read no commits
 	if len(sp.repo.commits(nil)) == 0 {
 		sp.gripe("empty stream or repository.")
@@ -8208,7 +8193,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	}
 	// Code controlled by --nobranch option ends.
 	if sp.large {
-		baton.speak("6")
+		baton.speak("4")
 	} else {
 		baton.twirl("")
 	}
@@ -8253,7 +8238,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	sp.repo.delete(deleteables, []string{"--tagback"})
 	sp.repo.events = append(sp.repo.events, newtags...)
 	if sp.large {
-		baton.speak("7")
+		baton.speak("5")
 	} else {
 		baton.twirl("")
 	}
@@ -8326,7 +8311,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		branchMappings = append(branchMappings, branchMapping{regexp.MustCompile(key), value})
 	}
 	if sp.large {
-		baton.speak("8")
+		baton.speak("6")
 	} else {
 		baton.twirl("")
 	}
@@ -8383,7 +8368,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		baton.twirl("")
 	}
 	if sp.large {
-		baton.speak("9")
+		baton.speak("7")
 	} else {
 		baton.twirl("")
 	}
@@ -8425,7 +8410,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		baton.twirl("")
 	}
 	if sp.large {
-		baton.speak("10")
+		baton.speak("8")
 	} else {
 		baton.twirl("")
 	}
@@ -8456,7 +8441,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		//baton.twirl("")
 	}
 	if sp.large {
-		baton.speak("11")
+		baton.speak("9")
 	} else {
 		baton.twirl("")
 	}
