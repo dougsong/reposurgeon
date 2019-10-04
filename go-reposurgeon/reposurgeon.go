@@ -118,9 +118,14 @@ import _ "net/http/pprof"
 
 const version = "4.0-pre"
 
+// Tuning constants
+
 // Maximim number of 64-bit things (pointers) to allocate at once.
 // Used in some code for efficient exponential chunk grabbing.
 const maxAlloc = 100000
+
+// trigger percentage display in progress meters
+const hyperGiant = 10000000000	// shout-out the Nick Johnston
 
 // Go's panic/defer/recover feature is a weak primitive for catchable
 // exceptions, but it's all we have. So we write a throw/catch pair;
@@ -2539,13 +2544,17 @@ func (baton *Baton) twirl(ch string) {
 				baton.stream.WriteString("*")
 			} else if baton.counter > 0 && (baton.counter%(1*1000)) == 0 {
 				baton.stream.WriteString("+")
-			} else {
+			} else if baton.counter > 0 && (baton.counter%(10)) == 0 {
 				baton.stream.Write([]byte{"-/|\\"[baton.counter%4]})
 				baton.erase = true
 			}
 			baton.counter++
 		}
 	}
+}
+
+func (baton *Baton) speak(legend string) {
+	baton.stream.WriteString(legend)
 }
 
 func (baton *Baton) exit(override string) {
@@ -2559,7 +2568,7 @@ func (baton *Baton) exit(override string) {
 }
 
 func (baton *Baton) readProgress(ccount int64, filesize int64) {
-	if filesize > 10000000000 {
+	if filesize > hyperGiant {
 		frac := float64(ccount) / float64(filesize)
 		if frac > baton.lastfrac+0.01 {
 			baton.twirl(fmt.Sprintf("%.2f%%", frac*100))
@@ -5801,8 +5810,8 @@ type NodeAction struct {
 	// These are set during parsing.  Can all initially have zero values
 	revision    int
 	path        string
-	kind        int
-	action      int // initially sdNONE
+	kind        uint8
+	action      uint8 // initially sdNONE
 	fromRev     int
 	fromPath    string
 	contentHash string
@@ -6378,7 +6387,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 					kind := sdBody(line)
 					for i, v := range pathTypeValues {
 						if v == kind {
-							node.kind = i
+							node.kind = uint8(i & 0xff) 
 						}
 					}
 					if node.kind == sdNONE {
@@ -6391,7 +6400,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 					action := sdBody(line)
 					for i, v := range actionValues {
 						if v == action {
-							node.action = i
+							node.action = uint8(i & 0xff)
 						}
 					}
 					if node.action == sdNONE {
@@ -6739,6 +6748,9 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 		sp.parseSubversion(&options, baton, filesize)
 		// End of Subversion dump parsing
 		sp.timeMark("parsing")
+		if sp.large {
+			baton.speak("$")
+		}
 		sp.svnProcess(options, baton)
 		elapsed := time.Since(baton.starttime)
 		baton.twirl(fmt.Sprintf("...%d svn revisions (%d/s)",
@@ -19765,6 +19777,12 @@ func (rs *Reposurgeon) CompleteSet(text string) []string {
 	return out
 }
 
+func performOptionSideEffect(opt string, val bool) {
+	if opt == "tighten" {
+		enableIntern(val)
+	}
+}
+
 func tweakFlagOptions(line string, val bool) {
 	if strings.TrimSpace(line) == "" {
 		for _, opt := range optionFlags {
@@ -19776,6 +19794,7 @@ func tweakFlagOptions(line string, val bool) {
 			for _, opt := range optionFlags {
 				if name == opt[0] {
 					context.flagOptions[opt[0]] = val
+					performOptionSideEffect(opt[0], val)
 					break good
 				}
 			}
@@ -19813,7 +19832,7 @@ func (rs *Reposurgeon) CompleteClear(text string) []string {
 }
 
 func (rs *Reposurgeon) DoClear(line string) bool {
-	tweakFlagOptions(line, true)
+	tweakFlagOptions(line, false)
 	return false
 }
 

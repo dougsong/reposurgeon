@@ -15,6 +15,7 @@ var pool *Pool
 // enableIntern - choose to reduce memory footprint at the cost of speed
 func enableIntern(b bool) {
 	if b {
+		pool = new(Pool)
 		pool.lookup = make(map[string]string)
 		return
 	}
