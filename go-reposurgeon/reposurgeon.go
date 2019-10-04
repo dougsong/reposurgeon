@@ -6881,33 +6881,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	}
 	// no-preserve ends begins here
 
-	// Find all copy sources && compute the set of branches
-	announce(debugEXTRACT, "Pass 1: compute copy branches")
-	if sp.large {
-		baton.speak("1")
-	}
 	nobranch := options.Contains("--nobranch")
-	for _, record := range sp.revisions {
-		for _, node := range record.nodes {
-			np := node.path + svnSep
-			if node.action == sdADD && node.kind == sdDIR && !sp.isBranch(np) && !nobranch {
-				for _, trial := range context.listOptions["svn_branchify"] {
-					if !strings.Contains(trial, "*") && trial == node.path {
-						sp.branches[np] = nil
-					} else if strings.HasSuffix(trial, svnSep+"*") && filepath.Dir(trial) == filepath.Dir(node.path) && !context.listOptions["svn_branchify"].Contains(np+"*") {
-						sp.branches[np] = nil
-					} else if trial == "*" && !context.listOptions["svn_branchify"].Contains(np+"*") && strings.Count(node.path, svnSep) < 1 {
-						sp.branches[np] = nil
-					}
-				}
-				if sp.isBranch(np) && debugEnable(debugTOPOLOGY) {
-					announce(debugSHOUT, "%s recognized as a branch", np)
-				}
-			}
-		}
-		// Per-commit spinner disabled because this pass is fast
-		//baton.twirl("")
-	}
 
 	timeit := func(tag string) {
 		sp.timeMark("tag")
@@ -6935,9 +6909,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	   deleted name.
 	*/
 	// Build filemaps.
-	announce(debugEXTRACT, "Pass 2: build filemaps for %d Subversion revisions", len(sp.revisions))
+	announce(debugEXTRACT, "Pass 1: build filemaps for %d Subversion revisions", len(sp.revisions))
 	if sp.large {
-		baton.speak("2")
+		baton.speak("1")
 	}
 	filemaps := make(map[int]*PathMap)
 	filemap := newPathMap()
@@ -6990,7 +6964,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 	}
 	if sp.large {
-		baton.speak("3")
+		baton.speak("2")
 	}
 
 	// Build commits
@@ -6999,7 +6973,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// it does not hit the disk.
 	announce(debugEXTRACT, "Pass 4")
 	if sp.large {
-		baton.speak("4")
+		baton.speak("3")
 	}
 
 	var previous int
@@ -7042,7 +7016,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	}
 
 	if sp.large {
-		baton.speak("5")
+		baton.speak("4")
 	}
 	for revision, record := range sp.revisions {
 		announce(debugEXTRACT, "Revision %d:", revision)
@@ -7131,6 +7105,25 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			} else if node.kind == sdDIR &&
 				node.action != sdCHANGE && debugEnable(debugTOPOLOGY) {
 				announce(debugSHOUT, node.String())
+			}
+
+			// Recognize branches
+			if !nobranch {
+				np := node.path + svnSep
+				if node.action == sdADD && node.kind == sdDIR && !sp.isBranch(np) {
+					for _, trial := range context.listOptions["svn_branchify"] {
+						if !strings.Contains(trial, "*") && trial == node.path {
+							sp.branches[np] = nil
+						} else if strings.HasSuffix(trial, svnSep+"*") && filepath.Dir(trial) == filepath.Dir(node.path) && !context.listOptions["svn_branchify"].Contains(np+"*") {
+							sp.branches[np] = nil
+						} else if trial == "*" && !context.listOptions["svn_branchify"].Contains(np+"*") && strings.Count(node.path, svnSep) < 1 {
+							sp.branches[np] = nil
+						}
+					}
+					if sp.isBranch(np) && debugEnable(debugTOPOLOGY) {
+						announce(debugSHOUT, "%s recognized as a branch", np)
+					}
+				}
 			}
 
 			// Compute the node's copy set
@@ -7885,7 +7878,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	} // end of revision loop
 
 	if sp.large {
-		baton.speak("6")
+		baton.speak("5")
 	}
 	// Filemaps are no longer needed, allow them to be garbage collectedc
 	filemaps = nil
@@ -8215,7 +8208,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	}
 	// Code controlled by --nobranch option ends.
 	if sp.large {
-		baton.speak("7")
+		baton.speak("6")
 	} else {
 		baton.twirl("")
 	}
@@ -8260,7 +8253,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	sp.repo.delete(deleteables, []string{"--tagback"})
 	sp.repo.events = append(sp.repo.events, newtags...)
 	if sp.large {
-		baton.speak("8")
+		baton.speak("7")
 	} else {
 		baton.twirl("")
 	}
@@ -8333,7 +8326,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		branchMappings = append(branchMappings, branchMapping{regexp.MustCompile(key), value})
 	}
 	if sp.large {
-		baton.speak("9")
+		baton.speak("8")
 	} else {
 		baton.twirl("")
 	}
@@ -8390,7 +8383,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		baton.twirl("")
 	}
 	if sp.large {
-		baton.speak("10")
+		baton.speak("9")
 	} else {
 		baton.twirl("")
 	}
@@ -8432,7 +8425,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		baton.twirl("")
 	}
 	if sp.large {
-		baton.speak("11")
+		baton.speak("10")
 	} else {
 		baton.twirl("")
 	}
@@ -8463,7 +8456,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		//baton.twirl("")
 	}
 	if sp.large {
-		baton.speak("12")
+		baton.speak("11")
 	} else {
 		baton.twirl("")
 	}
