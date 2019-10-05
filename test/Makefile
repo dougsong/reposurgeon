@@ -43,10 +43,9 @@ check: listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce \
 	$(REPOSURGEON) "read <$<" "legacy write -" >$@
 
 buildregress: fi-buildregress svnload-buildregress legacy-buildregress \
-	svndump-buildregress repomapper-buildregress \
-	repotool-buildregress repocutter-buildregress hg-buildregress-branches \
-	svncheck-buildregress \
-	repocutter-buildregress repomapper-buildregress repotool-buildregress
+	repomapper-buildregress repotool-buildregress hg-buildregress-branches \
+	svncheck-buildregress repocutter-buildregress repomapper-buildregress \
+	repotool-buildregress
 
 clean:
 	rm -fr .rs* test-repo test-checkout git-repo left-repo right-repo *~

@@ -2589,7 +2589,7 @@ const debugTOPOLOGY = 2 // Debug repo-extractor logic (coarse-grained)
 const debugEXTRACT = 2  // Debug repo-extractor logic (fine-grained)
 const debugFILEMAP = 3  // Debug building of filemaps
 const debugDELETE = 3   // Debug canonicalization after deletes
-const debugIGNORES = 3  // Debug ignore generation
+const debugIGNORES = 4  // Debug ignore generation
 const debugSVNPARSE = 4 // Lower-level Subversion parsing details
 const debugEMAILIN = 4  // Debug round-tripping through msg{out|in}
 const debugSHUFFLE = 4  // Debug file and directory handling
@@ -2621,6 +2621,10 @@ screen width, and the ID of the invoking user. Use in regression-test loads.
 	{"bigprofile",
 		`Extra profiling for large repositories.  Mainly of interest to reposurgeon
 developers.
+`},
+	{"experimental",
+		`This flag is reserved for developer use.  If you set it, it could do
+anything up to and including making demons fly out of your nose.
 `},
 }
 
@@ -6367,7 +6371,10 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 						// produced by format
 						// 7 dumps.
 						if !(node.action == sdCHANGE && !node.hasProperties() && node.blob == nil && node.fromRev == 0) {
+							announce(debugSVNPARSE, "node parsing, line %d: node %s appended", sp.importLine, node)
 							nodes = append(nodes, *node)
+						} else {
+							announce(debugSVNPARSE, "node parsing, line %d: empty node rejected", sp.importLine)
 						}
 						node = nil
 					}
@@ -6448,12 +6455,14 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 				// Node processing ends
 			}
 			// Node list parsing ends
-			sp.revisions = appendRevisionRecords(sp.revisions, *newRevisionRecord(nodes, props, revision))
+			newRecord := newRevisionRecord(nodes, props, revision)
+			announce(debugSVNPARSE, "revision parsing, line %d: r%d ends with %d nodes", sp.importLine, newRecord.revision, len(newRecord.nodes))
+			sp.revisions = appendRevisionRecords(sp.revisions, *newRecord)
 			sp.repo.legacyCount++
-			announce(debugSVNPARSE, "revision parsing, line %d: ends with %d records", sp.importLine, sp.repo.legacyCount)
 			// End Revision processing
 			baton.readProgress(sp.ccount, filesize)
 		}
+		announce(debugSVNPARSE, "revision parsing, line %d: ends with %d records", sp.importLine, sp.repo.legacyCount)
 	}
 }
 
@@ -6836,24 +6845,31 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	announce(debugEXTRACT, "Pass 0: dead-branch deletion")
 	if !options.Contains("--preserve") {
 		// Identify Subversion tag/branch directories with
-		// tipdeletes && nuke them. Thety're going to turn into
-		// gitspace branch and tag entities that don't die.		
-		// Happens well before tip deletes are tagified, the
-		// behavior if --preserve is on.  This pass doesn't
-		// touch trunk - any tipdelete on trunk we presume to
-		// be some kind of operator error that needs to show
-		// up under lint && be manually corrected.
-		// FIXME: Last sentence may reflect incorrect assumption.
+		// tipdeletes && nuke them. Otherwise they're going to
+		// turn into gitspace branch and tag entities that
+		// don't die.  Happens well before tip deletes are
+		// tagified, the behavior if --preserve is on.  This
+		// pass doesn't touch trunk - any tipdelete on trunk
+		// we presume to be some kind of operator error that
+		// needs to show up under lint && be manually
+		// corrected.  FIXME: Last sentence may reflect
+		// incorrect assumption.
 		deadbranches := newStringSet()
+		resurrectees := newStringSet()
 		for i := range sp.revisions {
 			backup := len(sp.revisions) - i - 1
 			for j := range sp.revisions[backup].nodes {
-				node := &sp.revisions[backup].nodes[j]
+				node := &sp.revisions[backup].nodes[len(sp.revisions[backup].nodes) - j - 1]
 				if !strings.HasPrefix(node.path, "tags") && !strings.HasPrefix(node.path, "branches") {
 					continue
 				}
-				if node.action == sdDELETE && node.kind == sdDIR {
-					deadbranches = append(deadbranches, node.path)
+				// Not a real tip delete if the directory is re-added later on.  We're scanning
+				// backwards, so the resurrection gets picked up first.
+				if node.action == sdADD && node.kind == sdDIR && !deadbranches.Contains(node.path) {
+					resurrectees.Add(node.path)
+				}
+				if node.action == sdDELETE && node.kind == sdDIR && !resurrectees.Contains(node.path) {
+					deadbranches.Add(node.path)
 					announce(debugSHOUT, fmt.Sprintf("r%d~%s nuked by tip delete", backup, node.path))
 				}
 				if deadbranches.Contains(node.path) {
@@ -6893,6 +6909,19 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 	}
 
+	// On large repositories memory required for visibility-map storage can blow up horribly.
+	// We compute these maps as needed.  So the garbage collector can do its job, we need to
+	// know where to put forward references to copy maps so they won't be GCed.
+	copySources := make(map[int]bool)
+	for rdx := range sp.revisions {
+		for idx := range sp.revisions[rdx].nodes {
+			node := &sp.revisions[rdx].nodes[idx]
+			if node.fromRev > 0 {
+				copySources[node.fromRev] = true
+			}
+		}
+	}
+	announce(debugFILEMAP, "copy sources: %v", copySources)
 	timeit("copynodes")
 
 	/*
@@ -7470,11 +7499,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 								lookback, ok2 := trialnode.(*NodeAction)
 								if ok2 {
 									ancestor = lookback
-									announce(debugTOPOLOGY, "r%d~%s -> %v (via filemap)",
-										node.revision, node.path, ancestor)
+									announce(debugTOPOLOGY, "r%d~%s -> %v (via filemap of %d)",
+										node.revision, node.path, ancestor, node.fromRev)
 								} else {
-									announce(debugTOPOLOGY, "r%d~%s has no ancestor (via filemap)",
-											node.revision, node.path)
+									announce(debugTOPOLOGY, "r%d~%s has no ancestor (via filemap %d)",
+											node.revision, node.path, node.fromRev)
 								}
 							}
 						}
@@ -7840,8 +7869,18 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// Report progress, and give up our scheduler slot
 		// so as not to eat the processor.
 		baton.twirl("")
-		time.Sleep(0)
+		// To hold down the size of our working set, toss out vibility map
+		// unless it's a c<ooysource and thus will be needed later/
+		if context.flagOptions["experimental"] {
+			if _, ok := visible[previous-1]; ok {
+				if !copySources[previous-1] {
+					announce(debugTOPOLOGY, "r%d: deleting visibility map for %d", record.revision, previous-1) 
+					delete(visible, previous-1)
+				}
+			}
+		}
 		previous = revision
+		time.Sleep(0)
 		// End of processing for this Subversion revision.  If the
 		// repo is large, we throw out file records for this node in
 		// order to reduce the maximum working set from proportional
