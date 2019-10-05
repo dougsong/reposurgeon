@@ -1090,8 +1090,6 @@ _darcs
 			notes:   "Exporter is buggy, occasionally emitting negative timestamps.",
 		},
 		{
-			// Styleflags may need tweaking for round-tripping
-			// Export is experimental and doesn't round-trip
 			name:         "svn",
 			subdirectory: "locks",
 			exporter:     "svnadmin dump .",
@@ -7488,9 +7486,18 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					// Try to figure out who the ancestor of
 					// this node is.
 					if node.fromPath != "" || node.fromHash != "" {
-						// Try first via fromPath
+						// Try first via fromRev/fromPath.
+						// The reason we have to use the
+						// filemap at the copy source rather
+						// than simply walking through the
+						// old nodes to look for the path
+						// match is because the source
+						// revision might have been the
+						// target of a directory copy
+						// that created the ancestor we
+						// are looking for
 						fm, ok := visible[node.fromRev]
-						if ok {
+						if ok && node.fromRev > 0 {
 							var trialnode interface{}
 							trialnode = fm.get(node.fromPath)
 							if trialnode == nil {
@@ -7870,12 +7877,21 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// so as not to eat the processor.
 		baton.twirl("")
 		// To hold down the size of our working set, toss out vibility map
-		// unless it's a c<ooysource and thus will be needed later/
+		// unless it's a c<ooysource and thus will be needed later, or
+		// it's referenced in the map about to become current 
 		if context.flagOptions["experimental"] {
 			if _, ok := visible[previous-1]; ok {
 				if !copySources[previous-1] {
-					announce(debugTOPOLOGY, "r%d: deleting visibility map for %d", record.revision, previous-1) 
-					delete(visible, previous-1)
+					var referenced bool
+					for _, node := range sp.revisions[revision].nodes {
+						if node.fromRev == previous - 1 {
+							referenced = true
+						}
+					}
+					if !referenced {
+						announce(debugTOPOLOGY, "r%d: deleting visibility map for %d", record.revision, previous-1) 
+						delete(visible, previous-1)
+					}
 				}
 			}
 		}
