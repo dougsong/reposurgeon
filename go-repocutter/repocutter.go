@@ -429,6 +429,7 @@ type DumpfileSource struct {
 	Lbs              LineBufferedSource
 	Baton            *Baton
 	Revision         int
+	Index            int
 	EmittedRevisions map[string]bool
 }
 
@@ -459,6 +460,7 @@ func (ds *DumpfileSource) ReadRevisionHeader(PropertyHook func(*Properties)) ([]
 		os.Exit(1)
 	}
 	ds.Revision = rval
+	ds.Index = 0
 	stash = append(stash, ds.Lbs.Require("Prop-content-length:")...)
 	stash = append(stash, ds.Lbs.Require("Content-length:")...)
 	stash = append(stash, ds.Lbs.Require(linesep)...)
@@ -658,6 +660,7 @@ func (ds *DumpfileSource) Report(selection SubversionRange,
 	var nodecount int
 	var line []byte
 	for {
+		ds.Index = 0
 		nodecount = 0
 		stash, _ := ds.ReadRevisionHeader(prophook)
 		if !selection.Contains(ds.Revision) {
@@ -665,6 +668,7 @@ func (ds *DumpfileSource) Report(selection SubversionRange,
 				return
 			}
 			ds.ReadUntilNext("Revision-number:", nil)
+			ds.Index = 0
 			continue
 		}
 		for {
@@ -695,6 +699,9 @@ func (ds *DumpfileSource) Report(selection SubversionRange,
 			}
 			if strings.HasPrefix(string(line), "Node-") {
 				nodecount++
+				if strings.HasPrefix(string(line), "Node-path: ") {
+					ds.Index++
+				}
 				ds.Lbs.Push(line)
 				header, properties, content := ds.ReadNode(prophook)
 				if debug {
@@ -1223,7 +1230,8 @@ func see(source DumpfileSource, selection SubversionRange) {
 			path = append(path, []byte(fmt.Sprintf(" from %s:%s", fromrev, frompath))...)
 			action = []byte("copy")
 		}
-		fmt.Printf("%-5d %-8s %s\n", source.Revision, action, path)
+		leader := fmt.Sprintf("%d-%d", source.Revision, source.Index)
+		fmt.Printf("%-5s %-8s %s\n", leader, action, path)
 		return nil
 	}
 	source.Report(selection, seenode, nil, false, true)
