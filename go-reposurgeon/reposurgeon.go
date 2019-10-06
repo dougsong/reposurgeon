@@ -5811,6 +5811,7 @@ var ignoreProperties = map[string]bool{
 type NodeAction struct {
 	// These are set during parsing.  Can all initially have zero values
 	revision    int
+	index       int
 	path        string
 	kind        uint8
 	action      uint8 // initially sdNONE
@@ -5822,14 +5823,14 @@ type NodeAction struct {
 	props       *OrderedMap
 	propchange  bool
 	// These are set during the analysis phase
-	fromSet   *PathMap
-	blobmark  string
-	generated bool
+	fromSet     *PathMap
+	blobmark    string
+	generated   bool
 }
 
 func (action NodeAction) String() string {
 	out := "<NodeAction: "
-	out += fmt.Sprintf("r%d", action.revision)
+	out += fmt.Sprintf("r%d#%d", action.revision, action.index)
 	out += " " + actionValues[action.action]
 	out += " " + pathTypeValues[action.kind]
 	out += " '" + action.path + "'"
@@ -6370,6 +6371,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 						// 7 dumps.
 						if !(node.action == sdCHANGE && !node.hasProperties() && node.blob == nil && node.fromRev == 0) {
 							announce(debugSVNPARSE, "node parsing, line %d: node %s appended", sp.importLine, node)
+							node.index = len(nodes)
 							nodes = append(nodes, *node)
 						} else {
 							announce(debugSVNPARSE, "node parsing, line %d: empty node rejected", sp.importLine)
@@ -6837,6 +6839,95 @@ const svnSep = "/"
 
 var blankline = regexp.MustCompile(`(?m:^\s*\n)`)
 
+
+// Try to figure out who the ancestor of this node is.
+func (sp *StreamParser) seekAncestor(node *NodeAction, visible map[int]*PathMap, previous int) *NodeAction {
+	// Easy case: dump stream has intact hashes, and there is one.
+	// This should habdle file copies.
+	if node.fromHash != "" {
+		ancestor, ok := sp.hashmap[node.fromHash]
+		if ok {
+			announce(debugTOPOLOGY, "r%d~%s -> %s (via hashmap)",
+				node.revision, node.path, ancestor)
+			return ancestor
+		} else {
+			panic(throw("extract", "missing from hash %s", node.fromHash))
+		}
+	}
+	/*
+	// Run backwards looking for a matching path. If we
+	// find a directory copy that would step on this path,
+	// recurse through it.  Normal case is done
+	// iteratively not recursively because there's a
+	// serious risk that a pure recursive implementation
+	// could blow the stack on large repositories.
+	startup = node.index - 1
+	for idx := node.revision; idx > 0; idx-- {
+		for ndx := startup; ndx >= 0; ndx-- {
+			lookback := &sp.revisions[idx].nodes[ndx]
+			// Look for a matching directory-copy
+			// operation; if you find it, chase
+			// back through using the pre-copy
+			// name.
+			if lookback.fromRev != 0 && strings.HasPrefix(node.path, lookback.path + svnSep) {
+				fmt.Printf("XXXX GOT TO THE WACKY CASE!!!\n")
+				newnode := *lookback
+				newnode.path += node.path[len(lookback.path):]
+				return sp.seekAncestor(&newnode, visible, lookback.fromRev-1)
+			}
+
+			// Exact match with no intervening copy targets
+			if lookback.fromPath == "" && lookback.path == node.path {
+				if lookback.action == sdDELETE {
+					return nil
+				}
+				return lookback
+			}
+		}
+		if idx > 0 {
+			startup = len(sp.revisions[idx-1].nodes-1)
+		}
+	}
+	*/
+
+	if node.fromPath != "" {
+		// Try first via fromRev/fromPath.  The reason
+		// we have to use the filemap at the copy
+		// source rather than simply walking through
+		// the old nodes to look for the path match is
+		// because the source revision might have been
+		// the target of a directory copy that created
+		// the ancestor we are looking for
+		fm, ok := visible[node.fromRev]
+		if ok && node.fromRev > 0 {
+			var trialnode interface{}
+			trialnode = fm.get(node.fromPath)
+			if trialnode != nil {
+				lookback, ok2 := trialnode.(*NodeAction)
+				if ok2 {
+					announce(debugTOPOLOGY, "r%d~%s -> %v (via filemap of %d)",
+						node.revision, node.path, lookback, node.fromRev)
+					return lookback
+				}
+			}
+		}
+		if !strings.HasSuffix(node.path, ".gitignore") {
+			sp.gripe(fmt.Sprintf("r%d~%s: missing ancestor node for non-.gitignore.",
+				node.revision, node.path))
+		}
+	} else if node.action != sdADD {
+		// Ordinary inheritance, no node copy.  For
+		// robustness, we don't assume revisions are
+		// consecutive numbers.
+		lookback2 := visible[previous].get(node.path)
+		if lookback2 != nil {
+			return lookback2.(*NodeAction)
+		}
+	}
+
+	return nil
+}
+
 func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// Subversion actions to import-stream commits.
 	sp.repo.addEvent(newPassthrough(sp.repo, "#reposurgeon sourcetype svn\n"))
@@ -6983,57 +7074,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 			}
 		}
-		return nil
-	}
-
-	// Try to figure out who the ancestor of this node is.
-	seekAncestor := func(node *NodeAction, visible map[int]*PathMap, previous int) *NodeAction {
-		// Easy case: dump stream has intact hashes, and there is one
-		if node.fromHash != "" {
-			ancestor, ok := sp.hashmap[node.fromHash]
-			if ok {
-				announce(debugTOPOLOGY, "r%d~%s -> %s (via hashmap)",
-					node.revision, node.path, ancestor)
-				return ancestor
-			} else {
-				panic(throw("extract", "missing from hash %s", node.fromHash))
-			}
-		}
-		if node.fromPath != "" {
-			// Try first via fromRev/fromPath.  The reason
-			// we have to use the filemap at the copy
-			// source rather than simply walking through
-			// the old nodes to look for the path match is
-			// because the source revision might have been
-			// the target of a directory copy that created
-			// the ancestor we are looking for
-			fm, ok := visible[node.fromRev]
-			if ok && node.fromRev > 0 {
-				var trialnode interface{}
-				trialnode = fm.get(node.fromPath)
-				if trialnode != nil {
-					lookback, ok2 := trialnode.(*NodeAction)
-					if ok2 {
-						announce(debugTOPOLOGY, "r%d~%s -> %v (via filemap of %d)",
-							node.revision, node.path, lookback, node.fromRev)
-						return lookback
-					}
-				}
-			}
-			if !strings.HasSuffix(node.path, ".gitignore") {
-				sp.gripe(fmt.Sprintf("r%d~%s: missing ancestor node for non-.gitignore.",
-					node.revision, node.path))
-			}
-		} else if node.action != sdADD {
-			// Ordinary inheritance, no node copy.  For
-			// robustness, we don't assume revisions are
-			// consecutive numbers.
-			lookback2 := visible[previous].get(node.path)
-			if lookback2 != nil {
-				return lookback2.(*NodeAction)
-			}
-		}
-
 		return nil
 	}
 
@@ -7532,7 +7572,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					fileop.construct("D", node.path)
 					actions = append(actions, fiAction{*node, *fileop})
 				} else if node.action == sdADD || node.action == sdCHANGE || node.action == sdREPLACE {
-					ancestor = seekAncestor(node, visible, previous)
+					ancestor = sp.seekAncestor(node, visible, previous)
 					// Time for fileop generation
 					if node.blob != nil {
 						if lookback, ok := sp.hashmap[node.contentHash]; ok {
@@ -7581,7 +7621,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						continue
 					}
 					if node.blobmark == "" {
-						panic("impossibly empty blob mark")
+						panic("impossibly empty blob mark in " + node.String())
 					}
 					// Time for fileop generation.
 					perms := nodePermissions(*node)
