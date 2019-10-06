@@ -5830,7 +5830,7 @@ type NodeAction struct {
 
 func (action NodeAction) String() string {
 	out := "<NodeAction: "
-	out += fmt.Sprintf("r%d#%d", action.revision, action.index)
+	out += fmt.Sprintf("r%d-%d", action.revision, action.index)
 	out += " " + actionValues[action.action]
 	out += " " + pathTypeValues[action.kind]
 	out += " '" + action.path + "'"
@@ -6371,7 +6371,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 						// 7 dumps.
 						if !(node.action == sdCHANGE && !node.hasProperties() && node.blob == nil && node.fromRev == 0) {
 							announce(debugSVNPARSE, "node parsing, line %d: node %s appended", sp.importLine, node)
-							node.index = len(nodes)
+							node.index = len(nodes)+1
 							nodes = append(nodes, *node)
 						} else {
 							announce(debugSVNPARSE, "node parsing, line %d: empty node rejected", sp.importLine)
@@ -6841,7 +6841,7 @@ var blankline = regexp.MustCompile(`(?m:^\s*\n)`)
 
 
 // Try to figure out who the ancestor of this node is.
-func (sp *StreamParser) seekAncestor(node *NodeAction, visible map[int]*PathMap, previous int) *NodeAction {
+func (sp *StreamParser) seekAncestor(node *NodeAction, visible map[int]*PathMap) *NodeAction {
 	// Easy case: dump stream has intact hashes, and there is one.
 	// This should habdle file copies.
 	if node.fromHash != "" {
@@ -6854,42 +6854,6 @@ func (sp *StreamParser) seekAncestor(node *NodeAction, visible map[int]*PathMap,
 			panic(throw("extract", "missing from hash %s", node.fromHash))
 		}
 	}
-	/*
-	// Run backwards looking for a matching path. If we
-	// find a directory copy that would step on this path,
-	// recurse through it.  Normal case is done
-	// iteratively not recursively because there's a
-	// serious risk that a pure recursive implementation
-	// could blow the stack on large repositories.
-	startup = node.index - 1
-	for idx := node.revision; idx > 0; idx-- {
-		for ndx := startup; ndx >= 0; ndx-- {
-			lookback := &sp.revisions[idx].nodes[ndx]
-			// Look for a matching directory-copy
-			// operation; if you find it, chase
-			// back through using the pre-copy
-			// name.
-			if lookback.fromRev != 0 && strings.HasPrefix(node.path, lookback.path + svnSep) {
-				fmt.Printf("XXXX GOT TO THE WACKY CASE!!!\n")
-				newnode := *lookback
-				newnode.path += node.path[len(lookback.path):]
-				return sp.seekAncestor(&newnode, visible, lookback.fromRev-1)
-			}
-
-			// Exact match with no intervening copy targets
-			if lookback.fromPath == "" && lookback.path == node.path {
-				if lookback.action == sdDELETE {
-					return nil
-				}
-				return lookback
-			}
-		}
-		if idx > 0 {
-			startup = len(sp.revisions[idx-1].nodes-1)
-		}
-	}
-	*/
-
 	if node.fromPath != "" {
 		// Try first via fromRev/fromPath.  The reason
 		// we have to use the filemap at the copy
@@ -6916,10 +6880,8 @@ func (sp *StreamParser) seekAncestor(node *NodeAction, visible map[int]*PathMap,
 				node.revision, node.path))
 		}
 	} else if node.action != sdADD {
-		// Ordinary inheritance, no node copy.  For
-		// robustness, we don't assume revisions are
-		// consecutive numbers.
-		lookback2 := visible[previous].get(node.path)
+		// Ordinary inheritance, no node copy.
+		lookback2 := visible[node.revision-1].get(node.path)
 		if lookback2 != nil {
 			return lookback2.(*NodeAction)
 		}
@@ -6942,7 +6904,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// we presume to be some kind of operator error that
 		// needs to show up under lint && be manually
 		// corrected.  FIXME: Last sentence may reflect
-		// incorrect assumption.
+		// incorrect assumption.  This should probbly
+		// be done late. not early.
 		deadbranches := newStringSet()
 		resurrectees := newStringSet()
 		for i := range sp.revisions {
@@ -7037,8 +7000,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	if sp.large {
 		baton.speak("1")
 	}
-
-	var previous int
 
 	splitCommits := make(map[int]int)
 	lastRelevantCommit := func(sp *StreamParser, maxRev int, path string, attr string) *Commit {
@@ -7198,6 +7159,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		visible[revision] = visibleHere.snapshot()
 
 		expandedNodes := make([]*NodeAction, 0)
+		appendExpanded := func(newnode *NodeAction) {
+			newnode.generated = true
+			newnode.index = len(record.nodes) + len(expandedNodes) + 1 
+			expandedNodes = append(expandedNodes, newnode)
+		}
 		hasProperties := newStringSet()
 		for n := range record.nodes {
 			node := &record.nodes[n]
@@ -7334,8 +7300,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 								newnode.revision = revision
 								newnode.action = sdDELETE
 								newnode.kind = sdFILE
-								newnode.generated = true
-								expandedNodes = append(expandedNodes, newnode)
+								appendExpanded(newnode)
 							}
 						}
 						// Emit delete actions for the .gitignore files we
@@ -7350,8 +7315,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 								newnode.revision = revision
 								newnode.action = sdDELETE
 								newnode.kind = sdFILE
-								newnode.generated = true
-								expandedNodes = append(expandedNodes, newnode)
+								appendExpanded(newnode)
 								delete(sp.activeGitignores, ignorepath)
 							}
 						}
@@ -7420,8 +7384,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 									subnode.kind = sdFILE
 									subnode.blob = blob
 									subnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
-									subnode.generated = true
-									expandedNodes = append(expandedNodes, subnode)
+									appendExpanded(subnode)
 								}
 							}
 						}
@@ -7442,10 +7405,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							subnode.props = found.props
 							subnode.action = sdADD
 							subnode.kind = sdFILE
-							announce(debugTOPOLOGY, "r%d-%d: generated copy r%d~%s -> %s",
-								revision, n+1, subnode.fromRev, subnode.fromPath, subnode.path)
-							subnode.generated = true
-							expandedNodes = append(expandedNodes, subnode)
+							announce(debugTOPOLOGY, "r%d-%d: generated copy r%d~%s -> %s %s",
+								revision, n+1, subnode.fromRev, subnode.fromPath, subnode.path, subnode)
+							appendExpanded(subnode)
 						}
 					}
 				}
@@ -7498,8 +7460,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							// Must append rather than simply performing.
 							// Otherwise when the property is unset we
 							// won't have the right thing happen.
-							newnode.generated = true
-							expandedNodes = append(expandedNodes, newnode)
+							appendExpanded(newnode)
 							sp.activeGitignores[gitignore_path] = ignore
 						} else if _, ok := sp.activeGitignores[gitignore_path]; ok {
 							newnode := new(NodeAction)
@@ -7508,8 +7469,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							newnode.action = sdDELETE
 							newnode.kind = sdFILE
 							announce(debugIGNORES, "r%d-%d: queuing up %s deletion.", revision, n+1, newnode.path)
-							newnode.generated = true
-							expandedNodes = append(expandedNodes, newnode)
+							appendExpanded(newnode)
 							delete(sp.activeGitignores, gitignore_path)
 						}
 					}
@@ -7572,7 +7532,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					fileop.construct("D", node.path)
 					actions = append(actions, fiAction{*node, *fileop})
 				} else if node.action == sdADD || node.action == sdCHANGE || node.action == sdREPLACE {
-					ancestor = sp.seekAncestor(node, visible, previous)
+					ancestor = sp.seekAncestor(node, visible)
 					// Time for fileop generation
 					if node.blob != nil {
 						if lookback, ok := sp.hashmap[node.contentHash]; ok {
@@ -7907,25 +7867,24 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// so as not to eat the processor.
 		baton.twirl("")
 		// To hold down the size of our working set, toss out vibility map
-		// unless it's a c<ooysource and thus will be needed later, or
+		// unless it's a copysource and thus will be needed later, or
 		// it's referenced in the map about to become current 
 		if context.flagOptions["experimental"] {
-			if _, ok := visible[previous-1]; ok {
-				if !copySources[previous-1] {
+			if _, ok := visible[revision-1]; ok {
+				if !copySources[revision-1] {
 					var referenced bool
 					for _, node := range sp.revisions[revision].nodes {
-						if node.fromRev == previous - 1 {
+						if node.fromRev == revision-1 {
 							referenced = true
 						}
 					}
 					if !referenced {
-						announce(debugTOPOLOGY, "r%d: deleting visibility map for %d", record.revision, previous-1) 
-						delete(visible, previous-1)
+						announce(debugTOPOLOGY, "r%d: deleting visibility map for %d", record.revision, revision-1) 
+						delete(visible, revision-1)
 					}
 				}
 			}
 		}
-		previous = revision
 		time.Sleep(0)
 		// End of processing for this Subversion revision.  If the
 		// repo is large, we throw out file records for this node in
