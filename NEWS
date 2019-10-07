@@ -2,14 +2,13 @@
 
 Repository head::
      Production reposurgeon is now in Go.
-     repocutter now patches merfeinfo referebces correctly when renumbering.
-     repotool checkout has a -c option to chdir befire operating.
+     repocutter now patches mergeinfo referebces correctly when renumbering.
+     repotool checkout has a -c option to chdir before operating.
 
 3.48: 2019-10-02::
      Last Python release.  4.0 will ship in Go.
      Corrected a minor error in Hg branch coloring.
      Subversion write support has been deemed too weak to live and removed.
-
      Fix for a crash bug when backing out of a script failure.
      Fix for an error that caused premature exit from the divide command.
      Repositories created by expunge command now have correct ancestor marks.

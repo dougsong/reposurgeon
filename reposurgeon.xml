@@ -3473,20 +3473,6 @@ sure the renamed branch is connected to master.</para>
 </listitem>
 </varlistentry>
 <varlistentry>
-<term>mid-branch deleteall</term>
-<listitem>
-<para>A deleteall operation has been found in the middle of a branch
-history.  This usually indicates that a Subversion tag or branch was
-created by mistake, and someone later tried to undo the error by
-deleting the tag/branch directory before recreating it with a copy
-operation.  Examine the topology near the deleteall closely, it may
-need hand-hacking. It is fairly likely that both (a) the
-<command>reposurgeon</command> translation will be different from what
-other translators (such as <command>git-svn</command>) produce,
-and (b) it will not be immediately obvious which is right.</para>
-</listitem>
-</varlistentry>
-<varlistentry>
 <term>lookback for XXX failed, not making branch link</term>
 <listitem>
 <para>Branch analysis failed, probably due to a set of file copies that
@@ -3497,7 +3483,28 @@ into a branch.</para>
 </listitem>
 </varlistentry>
 </variablelist>
+</refsect2>
 
+<refsect2><title>MID-BRANCH DELETIONS</title>
+
+<para>When a branch A is deleted and a branch B is
+copied to the name A, the Subversion intent is to replace the contents of
+branch A with the contents of branch B, keeping the A name.  This is a
+poor man's merge from before "svn merge" existed. Many Subversion
+users who formed their habits before svn merge existed still operate
+this way.</para>
+
+<para>In git terms, this almost corresponds to a merge of A into B
+followed by a rename of B to A.  Branch B continues to exist, however,
+so we can't do that in translation.  The
+<command>reposurgeon</command> logic does not try to be clever about this,
+because "clever would have rebarbative edge cases; the sequence is
+translated into a deleteall followed by a commit operation that
+recreates the B files under corresponding A names. No merge link is
+created.</para>
+
+<para>This case is mentioned here because it is likely to confuse
+the merge-tracking algorithms used, e.g., by git diff.</para>
 </refsect2>
 </refsect1>
 
