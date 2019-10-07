@@ -3211,7 +3211,7 @@ func parseAttributionLine(line string) (string, string, string, error) {
 		date := string(bytes.TrimSpace(m[3]))
 		return name, address, date, nil
 	}
-	err := fmt.Errorf("malformed attribution on '%s'\n", line)
+	err := fmt.Errorf("malformed attribution on '%s'", line)
 	return "", "", "", err
 }
 
