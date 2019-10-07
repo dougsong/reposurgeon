@@ -1192,6 +1192,7 @@ func renumber(source DumpfileSource) {
 	renumbering := make(map[string]int)
 	counter := 0
 	var p []byte
+	var state int
 	for {
 		line := source.Lbs.Readline()
 		if len(line) == 0 {
@@ -1204,7 +1205,42 @@ func renumber(source DumpfileSource) {
 		} else if p = payload("Node-copyfrom-rev", line); p != nil {
 			fmt.Printf("Node-copyfrom-rev: %d\n", renumbering[string(p)])
 		} else {
+			// A typical merginfo entry looks like this:
+			// K 13
+			// svn:mergeinfo
+			// V 18
+			// /branches/v1.0:4-6
+			// PROPS-END
+			if bytes.HasPrefix(line, []byte("svn:mergeinfo")) {
+				state = 1
+			} else if state == 1 && bytes.HasPrefix(line, []byte("V ")) {
+				state = 2
+			} else if bytes.HasPrefix(line, []byte("PROPS-END")) {
+				state = 0
+			}
+			if state == 3 {
+				fields := bytes.Split(line, []byte(":"))
+				fields[0] = append(fields[0], []byte(":")...)
+				out := make([]byte, 0)
+				digits := make([]byte, 0)
+				for _, c := range fields[1] {
+					if bytes.ContainsAny([]byte{c}, "0123456789") {
+						digits = append(digits, c)
+					} else {
+						if len(digits) > 0 {
+							d := fmt.Sprintf("%d", renumbering[string(digits)])
+							out = append(out, []byte(d)...)
+							digits = make([]byte, 0)
+						}
+						out = append(out, c)
+					}
+				}
+				line = append(fields[0], out...)
+			}
 			os.Stdout.Write(line)
+			if state == 2 {
+				state = 3
+			}
 		}
 	}
 }
