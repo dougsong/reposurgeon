@@ -19,13 +19,6 @@
 * The pathological-load Hg cases fail, that should be fixed.
   They succeeded in Python.
 
-* Dump streams from branchy Subversion repositories with no trunk are
-  processed correctly by reposurgeon, but because it fails to rename
-  any branch to "master" git will not import the result. Examples in
-  the test suite include branchmap.svn, branchify.svn,
-  delete-copy.svn, expunge-copyfrom.svn, nesting.svn,
-  node-kind-first.svn, swap.svn. Warn about these.
-
 == Testing the code ==
 
 "make check" runs a complete set of regression tests.

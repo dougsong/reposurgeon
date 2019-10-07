@@ -11329,8 +11329,8 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 			vcs.name)
 
 	}
-	if !repo.branchset().Contains("refs/heads/master") {
-		croak("repository has no branch named master. git will have no HEAD commit after the import; consider using the branch command to rename one of your branches to master.")
+	if preferred.name == "git" && !repo.branchset().Contains("refs/heads/master") {
+		return fmt.Errorf("%s has no master branch and thus will not rebuild properly", repo.name)
 	}
 	chdir := func(directory string, legend string) {
 		os.Chdir(directory)
