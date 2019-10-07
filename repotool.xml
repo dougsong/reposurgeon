@@ -68,7 +68,7 @@ repository. It must be called from within the repository. It takes one
 required argument - the checkout directory location.</para>
 
 <para>The checkout option may take a revision, tag, or branch
-specifaction, given with the -r, -t, or -b options. If the spec is
+specification, given with the -r, -t, or -b options. If the spec is
 omitted, the tip of the main line of the repository will be used; this
 is equivalent to specifying branch 'master' (git terminology, which is
 translated by reposurgeon to 'trunk' or whatever the underlying VCS
@@ -133,7 +133,7 @@ name containing the string "detached".</para>
 
 <para>Due to extreme slowness of the Subversion checkout operation,
 the compare head, tag, and branch modes assume that if one of the
-direcvtories is a Subversion checkout you have done a full checkout of
+directories is a Subversion checkout you have done a full checkout of
 HEAD before calling this tool; thus no svn update operation is
 required unless you give an -r option.  Spurious errors will be
 reported if the directory is not a full checkout of HEAD.  To avoid
