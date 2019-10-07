@@ -253,15 +253,14 @@ repocutter pathrename '^trunk/TheAppIWantToMigrate/' 'trunk/'
 
 <refsect1 id='limitations'><title>LIMITATIONS</title>
 
-<para>The sift and expunge operations can produce output dumps that are invalid.
-The problem is copyfrom operations (Subversion branch creations).  If an included revision
-includes a copyfrom reference to an excluded one, the reference target won't be in the
-emitted dump; it won't load correctly in either Subversion or reposurgeon. Attempts
-to be clever about this won't work; the problem is inherent in the data model
-of Subversion.</para>
-
-<para>In steeams with mergeinfo properties, renumbering will not fix them up. This
-means merge data will be lot or garbled. This may be fixed in a future release.</para>
+<para>The sift and expunge operations can produce output dumps that
+are invalid.  The problem is copyfrom operations (Subversion branch
+creations).  If an included revision includes a copyfrom reference to
+an excluded one, the reference target won't be in the emitted dump; it
+won't load correctly in either Subversion or reposurgeon. The revision
+number in a copyfrom header pointing to a missing revision will be
+zero. Attempts to be clever about this won't work; the problem is
+inherent in the data model of Subversion.</para>
 
 </refsect1>
 
