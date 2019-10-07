@@ -10,7 +10,7 @@ read --nobranch <split-dir.svn
 reposurgeon: new commits are events 3 and 4.
 # Expect the split on zed to fail
 :5 split by zed
-reposurgeon: couldn't find 'zed' in a fileop path.
+reposurgeon: couldn't find 'zed' in a fileop path
 :5 split by f
 reposurgeon: new commits are events 7 and 8.
 inspect
