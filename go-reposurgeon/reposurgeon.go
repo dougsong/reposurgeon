@@ -125,7 +125,7 @@ const version = "4.0-pre"
 const maxAlloc = 100000
 
 // trigger percentage display in progress meters
-const hyperGiant = 10000000000	// shout-out the Nick Johnston
+const hyperGiant = 10000000000 // shout-out the Nick Johnston
 
 // Go's panic/defer/recover feature is a weak primitive for catchable
 // exceptions, but it's all we have. So we write a throw/catch pair;
@@ -800,10 +800,10 @@ func (vcs VCS) hasReference(comment []byte) bool {
 }
 
 type Importer struct {
-	name    string      // importer name
-	visible bool        // should it be selectable?
-	engine  Extractor   // Import engine, either a VCS or extractor class
-	basevcs *VCS        // Underlying VCS if engine is an extractor
+	name    string    // importer name
+	visible bool      // should it be selectable?
+	engine  Extractor // Import engine, either a VCS or extractor class
+	basevcs *VCS      // Underlying VCS if engine is an extractor
 }
 
 var vcstypes []VCS
@@ -1285,7 +1285,7 @@ var fileFilters = map[string]struct {
 // particular, RFC3339 dates are good. and so is git's native
 // integer-Unix-timestamp/timezone pairs.
 
- // CommitMeta is the extractor's idea of per-commit metadata
+// CommitMeta is the extractor's idea of per-commit metadata
 type CommitMeta struct {
 	ci     string
 	ai     string
@@ -1348,7 +1348,7 @@ func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
 	}
 	// This will be used in _branchColor below
 	cm.childStamps = mc.gatherChildTimestamps(base)
-        if debugEnable(debugTOPOLOGY) {
+	if debugEnable(debugTOPOLOGY) {
 		for _, rev := range cm.base.revlist {
 			fmt.Printf("Revision %s has branch '%s'\n", rev, cm.base.meta[rev].branch)
 		}
@@ -1899,7 +1899,7 @@ func (he *HgExtractor) _hgBranchItems() OrderedMap {
 		"in _hgBranchItems: %v",
 		func(line string, rs *RepoStreamer) error {
 			fields := strings.Fields(line)
-			out.set(fields[0], "refs/heads/" + fields[1])
+			out.set(fields[0], "refs/heads/"+fields[1])
 			return nil
 		})
 	if err != nil {
@@ -4885,7 +4885,7 @@ func (commit *Commit) setParentMarks(marks []string) {
 }
 
 func (commit *Commit) addParentCommit(newparent *Commit) {
-	
+
 	commit._parentNodes = append(commit._parentNodes, newparent)
 	newparent._childNodes = append(newparent._childNodes, commit)
 	commit.invalidateManifests()
@@ -5083,7 +5083,7 @@ func (commit *Commit) visible(argpath string) *Commit {
 			}
 		}
 	}
-	return nil
+	// unreachable
 }
 
 // manifest returns a map from all pathnames visible at this commit
@@ -5544,8 +5544,8 @@ func (p *Passthrough) moveto(*Repository) {
 // signature is a file signature - path, hash value of content and permissions."
 type signature struct {
 	//pathname string
-	hashval  [sha1.Size]byte
-	perms    string
+	hashval [sha1.Size]byte
+	perms   string
 }
 
 func newSignature(path string) *signature {
@@ -5569,7 +5569,7 @@ func newSignature(path string) *signature {
 		// does not match the documentation at
 		// https://golang.org/pkg/crypto/sha1
 		// This interface might be unstable.
-		for i, v := range h.Sum(nil) { 
+		for i, v := range h.Sum(nil) {
 			ps.hashval[i] = v
 		}
 		perms := st.Mode()
@@ -5641,7 +5641,7 @@ type pathMapItem struct {
 // (other uses).  It could save hashtable space only proportional to the
 // number of directory-copy operations in the history.
 
-//
+// PathMap is a string-to-value map. possibly with magic internals.
 type PathMap struct {
 	store map[string]interface{}
 }
@@ -5671,7 +5671,7 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 	}
 	presentAsDirname := func(dir string, pm *PathMap) bool {
 		for subPath := range sourcePathMap.store {
-			if strings.HasPrefix(subPath, dir + svnSep) {
+			if strings.HasPrefix(subPath, dir+svnSep) {
 				return true
 			}
 		}
@@ -5680,7 +5680,7 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 	if presentAsDirname(sourcePath, sourcePathMap) {
 		// Exists in source map as a directory, do directory copy to under target path.
 		for subPath, value := range sourcePathMap.store {
-			if strings.HasPrefix(subPath, sourcePath + svnSep) {
+			if strings.HasPrefix(subPath, sourcePath+svnSep) {
 				target := targetPath + subPath[len(sourcePath):]
 				pm.store[target] = value
 			}
@@ -5721,7 +5721,7 @@ func (pm *PathMap) remove(path string) {
 		return
 	}
 	for k := range pm.store {
-		if strings.HasPrefix(k, path + svnSep) {
+		if strings.HasPrefix(k, path+svnSep) {
 			delete(pm.store, k)
 		}
 	}
@@ -5744,24 +5744,24 @@ func (pm PathMap) size() int {
 
 // Derived PathMap code, independent of the store implementation
 
-func (p *PathMap) isEmpty() bool {
-	return p.size() == 0
+func (pm *PathMap) isEmpty() bool {
+	return pm.size() == 0
 }
 
-func (p *PathMap) String() string {
+func (pm *PathMap) String() string {
 	out := "{"
-	for _, item := range p.items() {
+	for _, item := range pm.items() {
 		out += fmt.Sprintf("%s: %v, ", item.name, item.value)
 	}
-	if p.size() > 0 {
+	if pm.size() > 0 {
 		out = out[:len(out)-2]
 	}
 	return out + "}"
 }
 
 // names returns a sorted list of the pathnames in the set
-func (p *PathMap) pathnames() []string {
-	items := p.items()
+func (pm *PathMap) pathnames() []string {
+	items := pm.items()
 	v := make([]string, len(items))
 	for i := 0; i < len(items); i++ {
 		v[i] = items[i].name
@@ -5823,9 +5823,9 @@ type NodeAction struct {
 	props       *OrderedMap
 	propchange  bool
 	// These are set during the analysis phase
-	fromSet     *PathMap
-	blobmark    string
-	generated   bool
+	fromSet   *PathMap
+	blobmark  string
+	generated bool
 }
 
 func (action NodeAction) String() string {
@@ -6209,7 +6209,6 @@ func (sp *StreamParser) timeMark(label string) {
 	sp.repo.timings = append(sp.repo.timings, TimeMark{label, time.Now()})
 }
 
-
 // Fast append avoids doing a full copy of the slice on every allocation
 // Code trivially modified from AppendByte on "Go Slices: usage and internals".
 func appendRevisionRecords(slice []RevisionRecord, data ...RevisionRecord) []RevisionRecord {
@@ -6372,7 +6371,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 						// 7 dumps.
 						if !(node.action == sdCHANGE && !node.hasProperties() && node.blob == nil && node.fromRev == 0) {
 							announce(debugSVNPARSE, "node parsing, line %d: node %s appended", sp.importLine, node)
-							node.index = len(nodes)+1
+							node.index = len(nodes) + 1
 							nodes = append(nodes, *node)
 						} else {
 							announce(debugSVNPARSE, "node parsing, line %d: empty node rejected", sp.importLine)
@@ -6400,7 +6399,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 					kind := sdBody(line)
 					for i, v := range pathTypeValues {
 						if v == kind {
-							node.kind = uint8(i & 0xff) 
+							node.kind = uint8(i & 0xff)
 						}
 					}
 					if node.kind == sdNONE {
@@ -6840,7 +6839,6 @@ const svnSep = "/"
 
 var blankline = regexp.MustCompile(`(?m:^\s*\n)`)
 
-
 // Try to figure out who the ancestor of this node is.
 func (sp *StreamParser) seekAncestor(node *NodeAction, visible map[int]*PathMap) *NodeAction {
 	// Easy case: dump stream has intact hashes, and there is one.
@@ -6923,7 +6921,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		for i := range sp.revisions {
 			backup := len(sp.revisions) - i - 1
 			for j := range sp.revisions[backup].nodes {
-				node := &sp.revisions[backup].nodes[len(sp.revisions[backup].nodes) - j - 1]
+				node := &sp.revisions[backup].nodes[len(sp.revisions[backup].nodes)-j-1]
 				if !strings.HasPrefix(node.path, "tags") && !strings.HasPrefix(node.path, "branches") {
 					continue
 				}
@@ -7136,7 +7134,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		expandedNodes := make([]*NodeAction, 0)
 		appendExpanded := func(newnode *NodeAction) {
 			newnode.generated = true
-			newnode.index = len(record.nodes) + len(expandedNodes) + 1 
+			newnode.index = len(record.nodes) + len(expandedNodes) + 1
 			expandedNodes = append(expandedNodes, newnode)
 		}
 		hasProperties := newStringSet()
@@ -7237,7 +7235,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							node.props = &newprops
 						}
 						var ignore, startwith string
-						if !options.Contains("--noignores") {	
+						if !options.Contains("--noignores") {
 							startwith = subversionDefaultIgnores
 						}
 						if rootignores := node.props.get("svn:ignore"); rootignores != "" {
@@ -7393,11 +7391,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						record.revision, n+1, node.props, node.path)
 					// svn:ignore gets handled here,
 					if !options.Contains("--user-ignores") {
-						var gitignore_path string
+						var gitignorePath string
 						if node.path == svnSep {
-							gitignore_path = ".gitignore"
+							gitignorePath = ".gitignore"
 						} else {
-							gitignore_path = filepath.Join(node.path,
+							gitignorePath = filepath.Join(node.path,
 								".gitignore")
 						}
 						// There are no other directory properties that can
@@ -7925,8 +7923,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		const impossibleFilename = "None"
 		// Instead, determine a branch for each commit...
 		announce(debugEXTRACT, fmt.Sprintf("Branches: %s", sp.branches))
-		var lastbranch string = impossibleFilename
-		var branch string = impossibleFilename
+		lastbranch := impossibleFilename
+		branch := impossibleFilename
 		for _, commit := range sp.repo.commits(nil) {
 			//announce(debugEXTRACT, "seeking branch assignment for %s with common prefix '%s'", commit.mark, commit.common)
 			if lastbranch != impossibleFilename && strings.HasPrefix(commit.common, lastbranch) {
@@ -7971,11 +7969,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// ...then rebuild parent links so they follow the branches
 		for _, commit := range sp.repo.commits(nil) {
 			if sp.branches[commit.Branch] == nil {
-				announce(debugEXTRACT,"commit %s branch %s is rootless", commit.mark, commit.Branch)
+				announce(debugEXTRACT, "commit %s branch %s is rootless", commit.mark, commit.Branch)
 				branchroots = append(branchroots, commit)
 				commit.setParents(nil)
 			} else {
-				announce(debugEXTRACT,"commit %s has parent %s on branch %s", commit.mark, sp.branches[commit.Branch], commit.Branch)
+				announce(debugEXTRACT, "commit %s has parent %s on branch %s", commit.mark, sp.branches[commit.Branch], commit.Branch)
 				commit.setParents([]CommitLike{sp.branches[commit.Branch]})
 			}
 			sp.branches[commit.Branch] = commit
@@ -8592,7 +8590,7 @@ func (repo *Repository) memoizeMarks() {
 
 // markToEvent finds an object by mark
 func (repo *Repository) markToEvent(mark string) Event {
-	if  context.flagOptions["tighten"] {
+	if context.flagOptions["tighten"] {
 		if mark == "" {
 			return nil
 		}
@@ -9278,7 +9276,7 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 				}
 				if nameFunc != nil {
 					name = nameFunc(commit)
- 					if name == "" {
+					if name == "" {
 						name = defaultEmptyTagName(commit)
 					}
 				} else {
@@ -10174,11 +10172,11 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				}
 				// use a copy of attachments since it
 				// will be mutated
-				attachments_copy := make([]Event, 0)
+				attachmentsCopy := make([]Event, 0)
 				for _, e := range commit.attachments {
-					attachments_copy = append(attachments_copy, e)
+					attachmentsCopy = append(attachmentsCopy, e)
 				}
-				for _, e := range attachments_copy {
+				for _, e := range attachmentsCopy {
 					announce(debugDELETE, "moving attachment %s of %s to %s", commit.mark, e.idMe(), newTarget.getMark())
 					switch e.(type) {
 					case *Tag:
@@ -10535,7 +10533,7 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 		}
 		return false
 	}
-	for i := 0; i  < len(sortedEvents)-1; i++ {
+	for i := 0; i < len(sortedEvents)-1; i++ {
 		if !isChildOf(sortedEvents[i+1], sortedEvents[i]) {
 			croak("selected commit range not contiguous")
 			return
@@ -10949,7 +10947,7 @@ func (repo *Repository) splitCommit(where int, splitfunc func([]FileOp) ([]FileO
 }
 
 func (repo *Repository) splitCommitByIndex(where int, splitpoint int) error {
-	// FIXME: validity-check the split index 
+	// FIXME: validity-check the split index
 	return repo.splitCommit(where,
 		func(ops []FileOp) ([]FileOp, []FileOp, error) {
 			return ops[:splitpoint], ops[splitpoint:], nil
@@ -10978,7 +10976,7 @@ func (repo *Repository) splitCommitByPrefix(where int, prefix string) error {
 					without = append(without, op)
 				}
 			}
-			
+
 			return without, with, err
 		})
 }
@@ -11039,20 +11037,19 @@ func (repo *Repository) dumptimes() {
 		int(float64(time.Duration(commitCount)*time.Second)/float64(total)))
 }
 
-
 // Read a repository using fast-import.
 func readRepo(source string, options stringSet, preferred *VCS, extractor Extractor, quiet bool) (*Repository, error) {
-        if debugEnable(debugSHUFFLE) {
-                var legend string = "nil"
-                if extractor != nil {
-                        legend = "non-nil"
-                }
-                if preferred != nil {
-                        announce(debugSHOUT, "looking for a %s repo st %s (extractor %s...", preferred.name, source, legend)
-                } else {
-                        announce(debugSHOUT, "reposurgeon: looking for any repo at %s (extractor %s)...", source, legend)
-                }
-        }
+	if debugEnable(debugSHUFFLE) {
+		legend := "nil"
+		if extractor != nil {
+			legend = "non-nil"
+		}
+		if preferred != nil {
+			announce(debugSHOUT, "looking for a %s repo st %s (extractor %s...", preferred.name, source, legend)
+		} else {
+			announce(debugSHOUT, "reposurgeon: looking for any repo at %s (extractor %s)...", source, legend)
+		}
+	}
 	// Trickier-than-it-looks department:
 	// There are three cases here.
 	// 1. extractor and preferred both non-nil.  Use the extractor if there's a matching repo here.
@@ -11067,7 +11064,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 	var vcs *VCS
 	if extractor != nil || preferred != nil {
 		if baseMatch(preferred) {
-			vcs = preferred	// if extractor is non-null it gets picked up below
+			vcs = preferred // if extractor is non-null it gets picked up below
 		} else {
 			return nil, fmt.Errorf("couldn't find a repo of desiret type %s under %s", preferred.name, abspath(source))
 		}
@@ -11084,7 +11081,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 		} else if hitcount > 1 {
 			return nil, fmt.Errorf("too many repos (%d) under %s", hitcount, abspath(source))
 		}
-		// There's only one base match, and vcs is set.  Forward to a matching extractor if need be 
+		// There's only one base match, and vcs is set.  Forward to a matching extractor if need be
 		if vcs.exporter == "" {
 			for _, possible := range importers {
 				if baseMatch(possible.basevcs) {
@@ -11097,11 +11094,11 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 		}
 	}
 	if debugEnable(debugSHUFFLE) {
-                var legend string = "base"
-                if  extractor != nil {
-                        legend = "extractor"
-                }
-                announce(debugSHUFFLE, "found %s repository (%s)", vcs.name, legend)
+		legend := "base"
+		if extractor != nil {
+			legend = "extractor"
+		}
+		announce(debugSHUFFLE, "found %s repository (%s)", vcs.name, legend)
 	}
 	repo := newRepository("")
 	repo.sourcedir = source
@@ -11962,7 +11959,7 @@ func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
 		// modify ops in the branch root.
 		if options.Contains("--prune") {
 			deletes := make([]FileOp, 0)
-			for path, _ := range mostRecent.manifest() {
+			for path := range mostRecent.manifest() {
 				fileop := newFileOp(union)
 				fileop.construct("D", path)
 				deletes = append(deletes, *fileop)
@@ -15140,7 +15137,7 @@ func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 	}
 	if parse.options.Empty() || parse.options.Contains("--uniqueness") || parse.options.Contains("-u") {
 		rs.chosen().checkUniqueness(true, func(s string) {
-			fmt.Fprint(parse.stdout, "reposurgeon: " + s + "\n")
+			fmt.Fprint(parse.stdout, "reposurgeon: "+s+"\n")
 		})
 	}
 	if parse.options.Contains("--options") || parse.options.Contains("-?") {
@@ -19383,7 +19380,7 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 		getterPairs := []getterPair{
 			{`\[\[CVS:[^:\]]+:[0-9.]+\]\]`,
 				func(p string) *Commit {
-					p = p[2:len(p)-2]
+					p = p[2 : len(p)-2]
 					if c := repo.legacyMap[p]; c != nil {
 						return c
 					}
@@ -19391,7 +19388,7 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 				}},
 			{`\[\[SVN:[0-9]+\]\]`,
 				func(p string) *Commit {
-					p = p[2:len(p)-2]
+					p = p[2 : len(p)-2]
 					if c := repo.legacyMap[p]; c != nil {
 						return c
 					}
@@ -19399,12 +19396,12 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 				}},
 			{`\[\[HG:[0-9a-f]+\]\]`,
 				func(p string) *Commit {
-					p = p[2:len(p)-2]
+					p = p[2 : len(p)-2]
 					return repo.legacyMap[p]
 				}},
 			{`\[\[:[0-9]+\]\]`,
 				func(p string) *Commit {
-					p = p[2:len(p)-2]
+					p = p[2 : len(p)-2]
 					event := repo.markToEvent(p)
 					commit, ok := event.(*Commit)
 					if ok {
@@ -20159,10 +20156,10 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		// This corresponds to Go ANSIC format.
 		fields := strings.Fields(line)
 		if len(fields) >= 5 {
-			possible_date := strings.Join(fields[:5], " ")
+			possibleDate := strings.Join(fields[:5], " ")
 			// Doesn't matter that TZ is wrong here, we're only going
 			// to use the day part at most.
-			_, err := time.Parse(time.ANSIC, possible_date)
+			_, err := time.Parse(time.ANSIC, possibleDate)
 			if err != nil {
 				return ""
 			}

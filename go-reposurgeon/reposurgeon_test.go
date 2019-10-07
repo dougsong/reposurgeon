@@ -1665,5 +1665,5 @@ func TestPathMap(t *testing.T) {
 	p.remove("gronk")
 	assertTrue(t, !p.contains("gronk/baz/qux"))
 	assertEqual(t, p.String(), "{}")
-		
+
 }
