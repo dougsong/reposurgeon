@@ -6350,6 +6350,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 						if node.propchange {
 							sp.propertyStash[node.path] = node.props
 						} else if node.action == sdADD && node.fromPath != "" {
+							//FIXME: Contiguity assumption here
 							for _, oldnode := range sp.revisions[node.fromRev].nodes {
 								if oldnode.path == node.fromPath && oldnode.propchange {
 									sp.propertyStash[node.path] = oldnode.props
@@ -6881,6 +6882,7 @@ func (sp *StreamParser) seekAncestor(node *NodeAction, visible map[int]*PathMap)
 		}
 	} else if node.action != sdADD {
 		// Ordinary inheritance, no node copy.
+		//FIXME: Contiguity assumption here
 		lookback2 := visible[node.revision-1].get(node.path)
 		if lookback2 != nil {
 			return lookback2.(*NodeAction)
@@ -6892,6 +6894,16 @@ func (sp *StreamParser) seekAncestor(node *NodeAction, visible map[int]*PathMap)
 
 func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// Subversion actions to import-stream commits.
+	timeit := func(tag string) {
+		sp.timeMark("tag")
+		if context.flagOptions["bigprofile"] {
+			e := len(sp.repo.timings) - 1
+			baton.twirl(fmt.Sprintf("%s:%v...", tag, sp.repo.timings[e].stamp.Sub(sp.repo.timings[e-1].stamp)))
+		} else {
+			baton.twirl("")
+		}
+	}
+
 	sp.repo.addEvent(newPassthrough(sp.repo, "#reposurgeon sourcetype svn\n"))
 	announce(debugEXTRACT, "Pass 0: dead-branch deletion")
 	if !options.Contains("--preserve") {
@@ -6937,58 +6949,21 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 		// Actual deletion logic.  This does no new allocation;
 		// trick from https://github.com/golang/go/wiki/SliceTricks
-		for revision, record := range sp.revisions {
+		for ri, record := range sp.revisions {
 			newnodes := record.nodes[:0]
 			for _, node := range record.nodes {
 				if node.action != sdNUKE {
 					newnodes = append(newnodes, node)
 				}
 			}
-			sp.revisions[revision].nodes = newnodes
+			sp.revisions[ri].nodes = newnodes
 		}
 	}
 	// no-preserve ends begins here
+	timeit("pruning")
 
 	nobranch := options.Contains("--nobranch")
 
-	timeit := func(tag string) {
-		sp.timeMark("tag")
-		if context.flagOptions["bigprofile"] {
-			e := len(sp.repo.timings) - 1
-			baton.twirl(fmt.Sprintf("%s:%v...", tag, sp.repo.timings[e].stamp.Sub(sp.repo.timings[e-1].stamp)))
-		} else {
-			baton.twirl("")
-		}
-	}
-
-	// On large repositories memory required for visibility-map storage can blow up horribly.
-	// We compute these maps as needed.  So the garbage collector can do its job, we need to
-	// know where to put forward references to copy maps so they won't be GCed.
-	copySources := make(map[int]bool)
-	for rdx := range sp.revisions {
-		for idx := range sp.revisions[rdx].nodes {
-			node := &sp.revisions[rdx].nodes[idx]
-			if node.fromRev > 0 {
-				copySources[node.fromRev] = true
-			}
-		}
-	}
-	announce(debugFILEMAP, "copy sources: %v", copySources)
-	timeit("copynodes")
-
-	/*
-	   FIXME: Be sure to audit for the bug described below.
-
-	   http://esr.ibiblio.org/?p=4861#comment-397256
-
-	   Actually that [COW] code wasn’t mine. Somebody named Greg Hudson wrote
-	   it in an attempt to reduce memory footprint, and in so doing enabled
-	   me to solved a fiendishly subtle bug in branch processing that had
-	   stalled the completion of the Subversion reader for six months. To
-	   invoke it, the repository had to contain a Subversion branch creation,
-	   followed by a deletion, followed by a move of another branch to the
-	   deleted name.
-	*/
 	visible := make(map[int]*PathMap)
 	visibleHere := newPathMap()
 
@@ -7041,8 +7016,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	if sp.large {
 		baton.speak("2")
 	}
-	for revision, record := range sp.revisions {
-		announce(debugEXTRACT, "Revision %d:", revision)
+	for ri, record := range sp.revisions {
+		announce(debugEXTRACT, "Revision %d:", record.revision)
 		for _, node := range record.nodes {
 			// if node.props is None, no property section.
 			// if node.blob is None, no text section.
@@ -7050,7 +7025,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			if !((node.action == sdCHANGE || node.action == sdADD || node.action == sdDELETE || node.action == sdREPLACE) &&
 				(node.kind == sdFILE || node.kind == sdDIR || node.action == sdDELETE) &&
 				((node.fromRev == 0) == (node.fromPath == ""))) {
-				panic(throw("parse", "forbidden operation in dump stream at r%d: %s", revision, node))
+				panic(throw("parse", "forbidden operation in dump stream at r%d: %s", record.revision, node))
 			}
 
 			// FIXME: Someday rescue these sanity checks
@@ -7101,7 +7076,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 		newattr, err := newAttribution(attribution)
 		if err != nil {
-			panic(throw("parse", "impossibly ill-formed attribution in dump stream at r%d", revision))
+			panic(throw("parse", "impossibly ill-formed attribution in dump stream at r%d", record.revision))
 		}
 		commit.committer = *newattr
 		// Use this with just-generated input streams
@@ -7109,14 +7084,14 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		if context.flagOptions["testmode"] {
 			commit.committer.fullname = "Fred J. Foonly"
 			commit.committer.email = "foonly@foo.com"
-			commit.committer.date.timestamp = time.Unix(int64(revision*360), 0)
+			commit.committer.date.timestamp = time.Unix(int64(ri*360), 0)
 			commit.committer.date.setTZ("UTC")
 		}
 		commit.properties = record.props
 		// Zero revision is never interesting - no operations, no
 		// comment, no author, it's just a start marker for a
 		// non-incremental dump.
-		if revision == 0 {
+		if record.revision == 0 {
 			continue
 		}
 
@@ -7129,7 +7104,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				visibleHere.copyFrom(node.path, visible[node.fromRev],
 					node.fromPath)
 				announce(debugFILEMAP, "r%d-%d: r%d~%s copied to %s",
-					revision, idx+1, node.fromRev, node.fromPath, node.path)
+					record.revision, idx+1, node.fromRev, node.fromPath, node.path)
 			}
 			// Mutate the filemap according to adds/deletes/changes
 			if node.action == sdADD && node.kind == sdFILE {
@@ -7156,7 +7131,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				announce(debugFILEMAP, "r%d-%d: %s changed", node.revision, idx+1, node.path)
 			}
 		}
-		visible[revision] = visibleHere.snapshot()
+		visible[ri] = visibleHere.snapshot()
 
 		expandedNodes := make([]*NodeAction, 0)
 		appendExpanded := func(newnode *NodeAction) {
@@ -7168,7 +7143,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		for n := range record.nodes {
 			node := &record.nodes[n]
 			if debugEnable(debugEXTRACT) {
-				announce(debugEXTRACT, fmt.Sprintf("r%d-%d: %s", revision, n+1, node))
+				announce(debugEXTRACT, fmt.Sprintf("r%d-%d: %s", record.revision, n+1, node))
 			} else if node.kind == sdDIR &&
 				node.action != sdCHANGE && debugEnable(debugTOPOLOGY) {
 				announce(debugSHOUT, node.String())
@@ -7284,7 +7259,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						// The deleteall will also delete .gitignore files
 						for ignorepath := range sp.activeGitignores {
 							if strings.HasPrefix(ignorepath, node.path) {
-								announce(debugIGNORES, "r%d-%d: deleting %s", revision, n+1, ignorepath)
+								announce(debugIGNORES, "r%d-%d: deleting %s", record.revision, n+1, ignorepath)
 								delete(sp.activeGitignores, ignorepath)
 							}
 						}
@@ -7294,10 +7269,10 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						// We can just ignore that case. Otherwise...
 						if node.fromSet != nil {
 							for _, child := range node.fromSet.pathnames() {
-								announce(debugEXTRACT, "r%d-%d: deleting %s", revision, n+1, child)
+								announce(debugEXTRACT, "r%d-%d: deleting %s", record.revision, n+1, child)
 								newnode := new(NodeAction)
 								newnode.path = child
-								newnode.revision = revision
+								newnode.revision = record.revision
 								newnode.action = sdDELETE
 								newnode.kind = sdFILE
 								appendExpanded(newnode)
@@ -7309,10 +7284,10 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						// .gitignore files we now must delete
 						for ignorepath := range sp.activeGitignores {
 							if strings.HasPrefix(ignorepath, node.path) {
-								announce(debugEXTRACT, "r%d-%d: deleting %s", revision, n+1, ignorepath)
+								announce(debugEXTRACT, "r%d-%d: deleting %s", record.revision, n+1, ignorepath)
 								newnode := new(NodeAction)
 								newnode.path = ignorepath
-								newnode.revision = revision
+								newnode.revision = record.revision
 								newnode.action = sdDELETE
 								newnode.kind = sdFILE
 								appendExpanded(newnode)
@@ -7335,7 +7310,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						sp.isBranch(node.path) &&
 						!sp.isBranchDeleted(node.path)
 					announce(debugTOPOLOGY, "r%d-%d: directory copy to %s from r%d~%s (branchcopy %s)",
-						revision, n+1, node.path, node.fromRev, node.fromPath, pythonbool(branchcopy))
+						record.revision, n+1, node.path, node.fromRev, node.fromPath, pythonbool(branchcopy))
 					// Update our .gitignore list so that it includes those
 					// in the newly created copy, to ensure they correctly
 					// get deleted during a future directory deletion.
@@ -7362,7 +7337,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 								stem := source[len(node.fromPath):]
 								targetpath := node.path + stem
 								sp.propagate[targetpath] = true
-								announce(debugTOPOLOGY, "r%d-%d: exec-mark %s", revision, n+1, targetpath)
+								announce(debugTOPOLOGY, "r%d-%d: exec-mark %s", record.revision, n+1, targetpath)
 							}
 						}
 					} else {
@@ -7379,7 +7354,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 									blob.setContent(ignore, noOffset)
 									subnode := new(NodeAction)
 									subnode.path = gipath
-									subnode.revision = revision
+									subnode.revision = record.revision
 									subnode.action = sdADD
 									subnode.kind = sdFILE
 									subnode.blob = blob
@@ -7394,11 +7369,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							found, ok := lookback.(*NodeAction)
 							if !ok {
 								panic(fmt.Errorf("r%d-%d: can't find ancestor of %s at r%d",
-									revision, n+1, source, node.fromRev))
+									record.revision, n+1, source, node.fromRev))
 							}
 							subnode := new(NodeAction)
 							subnode.path = node.path + source[len(node.fromPath):]
-							subnode.revision = revision
+							subnode.revision = record.revision
 							subnode.fromPath = found.path
 							subnode.fromRev = found.revision
 							subnode.fromHash = found.contentHash
@@ -7406,7 +7381,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							subnode.action = sdADD
 							subnode.kind = sdFILE
 							announce(debugTOPOLOGY, "r%d-%d: generated copy r%d~%s -> %s %s",
-								revision, n+1, subnode.fromRev, subnode.fromPath, subnode.path, subnode)
+								record.revision, n+1, subnode.fromRev, subnode.fromPath, subnode.path, subnode)
 							appendExpanded(subnode)
 						}
 					}
@@ -7415,7 +7390,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				// sdADD or sdCHANGE actions.
 				if node.propchange && node.hasProperties() {
 					announce(debugEXTRACT, "r%d-%d: setting properties %v on %s",
-						revision, n+1, node.props, node.path)
+						record.revision, n+1, node.props, node.path)
 					// svn:ignore gets handled here,
 					if !options.Contains("--user-ignores") {
 						var gitignore_path string
@@ -7450,13 +7425,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							blob.setContent(ignore, noOffset)
 							newnode := new(NodeAction)
 							newnode.path = gitignore_path
-							newnode.revision = revision
+							newnode.revision = record.revision
 							newnode.action = sdADD
 							newnode.kind = sdFILE
 							newnode.blob = blob
 							newnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
 							announce(debugIGNORES, "r%d-%d: queuing up %s generation with: %v.",
-								revision, n+1, newnode.path, node.props.get("svn:ignore"))
+								record.revision, n+1, newnode.path, node.props.get("svn:ignore"))
 							// Must append rather than simply performing.
 							// Otherwise when the property is unset we
 							// won't have the right thing happen.
@@ -7465,10 +7440,10 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						} else if _, ok := sp.activeGitignores[gitignore_path]; ok {
 							newnode := new(NodeAction)
 							newnode.path = gitignore_path
-							newnode.revision = revision
+							newnode.revision = record.revision
 							newnode.action = sdDELETE
 							newnode.kind = sdFILE
-							announce(debugIGNORES, "r%d-%d: queuing up %s deletion.", revision, n+1, newnode.path)
+							announce(debugIGNORES, "r%d-%d: queuing up %s deletion.", record.revision, n+1, newnode.path)
 							appendExpanded(newnode)
 							delete(sp.activeGitignores, gitignore_path)
 						}
@@ -7486,7 +7461,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		for idx := len(expandedNodes) - 1; idx >= 0; idx-- {
 			node := expandedNodes[idx]
 			if node.action == sdDELETE && seen.Contains(node.path) {
-				announce(debugEXTRACT, "r%d-%d: cvs2svn junk pair detected, omitting %s deletion.", revision, idx+1, node.path)
+				announce(debugEXTRACT, "r%d-%d: cvs2svn junk pair detected, omitting %s deletion.", record.revision, idx+1, node.path)
 				node.action = sdNONE
 			}
 			seen.Add(node.path)
@@ -7537,7 +7512,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					if node.blob != nil {
 						if lookback, ok := sp.hashmap[node.contentHash]; ok {
 							announce(debugEXTRACT, "r%d: blob of %s matches existing hash %s, assigning '%s' from %s",
-								revision, node, node.contentHash, lookback.blobmark, lookback)
+								record.revision, node, node.contentHash, lookback.blobmark, lookback)
 							// Blob matches an existing one -
 							// node was created by a
 							// non-Subversion copy followed by
@@ -7553,7 +7528,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							// This is the normal way new blobs get created
 							node.blobmark = node.blob.setMark(sp.repo.newmark())
 							announce(debugEXTRACT, "r%d: %s gets new blob '%s'",
-								revision, node, node.blobmark)
+								record.revision, node, node.blobmark)
 							sp.repo.addEvent(node.blob)
 							// Blobs generated by reposurgeon
 							// (e.g .gitignore content) have no
@@ -7567,7 +7542,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					} else if ancestor != nil {
 						node.blobmark = ancestor.blobmark
 						announce(debugEXTRACT, "r%d: %s gets blob '%s' from ancestor %s",
-							revision, node, node.blobmark, ancestor)
+							record.revision, node, node.blobmark, ancestor)
 					} else {
 						// No ancestor, no blob. Has to be a
 						// pure property change.  There's no
@@ -7619,7 +7594,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 			} else if node.action == sdDELETE || node.action == sdREPLACE {
 				// These are directory actions.
-				announce(debugEXTRACT, "r%d: deleteall %s", revision, node.path)
+				announce(debugEXTRACT, "r%d: deleteall %s", record.revision, node.path)
 				fileop := newFileOp(sp.repo)
 				fileop.construct("deleteall", node.path[:len(node.path)-1])
 				actions = append(actions, fiAction{*node, *fileop})
@@ -7670,7 +7645,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 			}
 		}
-		announce(debugEXTRACT, "r%d: %d action(s) in %d clique(s)", revision, len(actions), len(cliques))
+		announce(debugEXTRACT, "r%d: %d action(s) in %d clique(s)", record.revision, len(actions), len(cliques))
 		type branchAction struct {
 			branch  string
 			fileops []FileOp
@@ -7690,7 +7665,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		oplist := append(otherOps, deleteallOps...)
 		// Create all commits corresponding to the revision
 		newcommits := make([]Event, 0)
-		commit.legacyID = fmt.Sprintf("%d", revision)
+		commit.legacyID = fmt.Sprintf("%d", record.revision)
 		// FIXME: Questionable - should maybe be testing length of branch clique list here
 		if len(otherOps) <= 1 {
 			// In the ordinary case (1 or 0 non-delete ops), we can assign all non-deleteall fileops
@@ -7720,7 +7695,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 			}
 			commit.setMark(sp.repo.newmark())
-			announce(debugEXTRACT, "r%d gets mark %s", revision, commit.mark)
+			announce(debugEXTRACT, "r%d gets mark %s", record.revision, commit.mark)
 			newcommits = append(newcommits, commit)
 		}
 		// If the commit is mixed, or there are deletealls left over,
@@ -7744,7 +7719,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// not consisting entirely of deleteall operations.
 		if len(otherOps) > 1 {
 			// Store the number of splits
-			splitCommits[revision] = len(otherOps)
+			splitCommits[ri] = len(otherOps)
 		}
 		// Sort fileops according to git rules
 		for _, newcommit := range newcommits {
@@ -7866,25 +7841,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// Report progress, and give up our scheduler slot
 		// so as not to eat the processor.
 		baton.twirl("")
-		// To hold down the size of our working set, toss out vibility map
-		// unless it's a copysource and thus will be needed later, or
-		// it's referenced in the map about to become current 
-		if context.flagOptions["experimental"] {
-			if _, ok := visible[revision-1]; ok {
-				if !copySources[revision-1] {
-					var referenced bool
-					for _, node := range sp.revisions[revision].nodes {
-						if node.fromRev == revision-1 {
-							referenced = true
-						}
-					}
-					if !referenced {
-						announce(debugTOPOLOGY, "r%d: deleting visibility map for %d", record.revision, revision-1) 
-						delete(visible, revision-1)
-					}
-				}
-			}
-		}
 		time.Sleep(0)
 		// End of processing for this Subversion revision.  If the
 		// repo is large, we throw out file records for this node in
@@ -7893,12 +7849,12 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// What we give up is some detail in the diagnostic messages
 		// on zero-fileop commits.
 		if sp.large {
-			sp.revisions[revision].nodes = make([]NodeAction, 0)
+			sp.revisions[ri].nodes = make([]NodeAction, 0)
 			// This copy loop requires that NodeAction structures cannot contain
 			// pointers to other NodeAction structures.
 			for _, n := range record.nodes {
 				if n.kind == sdDIR {
-					sp.revisions[revision].nodes = append(sp.revisions[revision].nodes, n)
+					sp.revisions[ri].nodes = append(sp.revisions[ri].nodes, n)
 				}
 			}
 		}
@@ -8195,7 +8151,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 				// Find the correct commit in the split case
 				commit := lastRelevantCommit(sp, revision, node.path, "Branch")
-				if commit == nil || !strings.HasPrefix(commit.legacyID, fmt.Sprintf("%d", revision)) {
+				if commit == nil || !strings.HasPrefix(commit.legacyID, fmt.Sprintf("%d", record.revision)) {
 					// The reverse lookup went past the target revision
 					sp.gripe(fmt.Sprintf("cannot resolve mergeinfo destination to revision %d for path %s.",
 						revision, node.path))
