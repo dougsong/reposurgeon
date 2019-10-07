@@ -5,6 +5,7 @@ Repository head::
      repocutter now patches mergeinfo references correctly when renumbering.
      repotool checkout has a -c option to chdir before operating.
      repocutter now uses Go regex syntax in the pathrename command.
+     The awkward branchify_map command has been renamed to "branchmap"
 
 3.48: 2019-10-02::
      Last Python release.  4.0 will ship in Go.

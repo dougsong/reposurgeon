@@ -1,5 +1,5 @@
 reposurgeon: branchify ProjA/trunk ProjB/trunk
-reposurgeon: branchify_map, regex -> branch name:
+reposurgeon: branchmap, regex -> branch name:
 reposurgeon: 	^([^/]+)/(.*)/$ -> heads/\1_\2
 #reposurgeon sourcetype svn
 blob

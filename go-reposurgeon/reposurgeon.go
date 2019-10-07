@@ -7422,7 +7422,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							blob := newBlob(sp.repo)
 							blob.setContent(ignore, noOffset)
 							newnode := new(NodeAction)
-							newnode.path = gitignore_path
+							newnode.path = gitignorePath
 							newnode.revision = record.revision
 							newnode.action = sdADD
 							newnode.kind = sdFILE
@@ -7434,16 +7434,16 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							// Otherwise when the property is unset we
 							// won't have the right thing happen.
 							appendExpanded(newnode)
-							sp.activeGitignores[gitignore_path] = ignore
-						} else if _, ok := sp.activeGitignores[gitignore_path]; ok {
+							sp.activeGitignores[gitignorePath] = ignore
+						} else if _, ok := sp.activeGitignores[gitignorePath]; ok {
 							newnode := new(NodeAction)
-							newnode.path = gitignore_path
+							newnode.path = gitignorePath
 							newnode.revision = record.revision
 							newnode.action = sdDELETE
 							newnode.kind = sdFILE
 							announce(debugIGNORES, "r%d-%d: queuing up %s deletion.", record.revision, n+1, newnode.path)
 							appendExpanded(newnode)
-							delete(sp.activeGitignores, gitignore_path)
+							delete(sp.activeGitignores, gitignorePath)
 						}
 					}
 				}
@@ -8305,7 +8305,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		replace string
 	}
 	branchMappings := make([]branchMapping, 0)
-	for key, value := range context.mapOptions["svn_branchify_mapping"] {
+	for key, value := range context.mapOptions["svn_branch_mapping"] {
 		branchMappings = append(branchMappings, branchMapping{regexp.MustCompile(key), value})
 	}
 	if sp.large {
@@ -13440,7 +13440,7 @@ func newReposurgeon() *Reposurgeon {
 		context.listOptions[option[0]] = newStringSet()
 	}
 	context.listOptions["svn_branchify"] = stringSet{"trunk", "tags/*", "branches/*", "*"}
-	context.mapOptions["svn_branchify_mapping"] = make(map[string]string)
+	context.mapOptions["svn_branch_mapping"] = make(map[string]string)
 	return rs
 }
 
@@ -19667,7 +19667,7 @@ func (rs *Reposurgeon) DoBranchify(line string) bool {
 //
 // Setting branch name rewriting
 //
-func (rs *Reposurgeon) HelpBranchify_map() {
+func (rs *Reposurgeon) HelpBranchmap() {
 	rs.helpOutput(`
 Specify the list of regular expressions used for mapping the svn branches that
 are detected by branchify. If none of the expressions match, the default behavior
@@ -19677,7 +19677,7 @@ and '*' which are mapped to master and root.
 With no arguments the current regex replacement pairs are shown. Passing 'reset'
 will clear the mapping.
 
-Syntax: branchify_map /regex1/branch1/ /regex2/branch2/ ...
+Syntax: branchmap /regex1/branch1/ /regex2/branch2/ ...
 
 Will match each branch name against regex1 and if it matches rewrite its branch
 name to branch1. If not it will try regex2 and so forth until it either found a
@@ -19696,21 +19696,21 @@ common case that the paths contain slashes).
 You must give this command *before* the Subversion repository read it
 is supposed to affect!
 
-Note that the branchify_map set is a property of the reposurgeon interpreter,
+Note that the branchmap set is a property of the reposurgeon interpreter,
 not of any individual repository, and will persist across Subversion
 dumpfile reads. This may lead to unexpected results if you forget
 to re-set it.
 `)
 }
 
-func (rs *Reposurgeon) DoBranchify_map(line string) bool {
+func (rs *Reposurgeon) DoBranchmap(line string) bool {
 	if rs.selection != nil {
-		croak("branchify_map does not take a selection set")
+		croak("branchmap does not take a selection set")
 		return false
 	}
 	line = strings.TrimSpace(line)
 	if line == "reset" {
-		context.mapOptions["svn_branchify_mapping"] = make(map[string]string)
+		context.mapOptions["svn_branch_mapping"] = make(map[string]string)
 	} else if line != "" {
 		for _, regex := range strings.Fields(line) {
 			separator := regex[0]
@@ -19724,21 +19724,21 @@ func (rs *Reposurgeon) DoBranchify_map(line string) bool {
 				croak("Regex '%s' has an empty search or replace part", regex)
 				return false
 			}
-			context.mapOptions["svn_branchify_mapping"][match] = replace
+			context.mapOptions["svn_branch_mapping"][match] = replace
 		}
 	}
-	if len(context.mapOptions["svn_branchify_mapping"]) != 0 {
-		announce(debugSHOUT, "branchify_map, regex -> branch name:")
+	if len(context.mapOptions["svn_branch_mapping"]) != 0 {
+		announce(debugSHOUT, "branchmap, regex -> branch name:")
 		keys := make([]string, 0)
-		for match := range context.mapOptions["svn_branchify_mapping"] {
+		for match := range context.mapOptions["svn_branch_mapping"] {
 			keys = append(keys, match)
 		}
 		sort.Strings(keys)
 		for _, k := range keys {
-			announce(debugSHOUT, "\t"+k+" -> "+context.mapOptions["svn_branchify_mapping"][k])
+			announce(debugSHOUT, "\t"+k+" -> "+context.mapOptions["svn_branch_mapping"][k])
 		}
 	} else {
-		croak("branchify_map is empty.")
+		croak("branchmap is empty.")
 	}
 	return false
 }
