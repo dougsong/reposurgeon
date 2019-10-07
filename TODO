@@ -10,25 +10,21 @@
 * Also see https://gitlab.com/esr/reposurgeon/issues for two minor problems.
 
 * The toposort code is back in, but the calls to the resort() function
-  in the reorder and reoarent commands have been commented out in both
-  Go and Python. The Python version works, the Go version neefs
+  in the reorder and reparent commands have been commented out in both
+  Go and Python. The Python version works, the Go version needs
   fixing. There's a commented-out section documenting toposort,
-
-* After the above is done, bring back the too-many-parents.svn test
-  from before 2019-09-22 (has both discontinuous revisions and
-  mergeinfo properties).
 
 * Fix up generation of R and C in the Mercurial exporter.
 
 * The pathological-load Hg cases fail, that should be fixed.
   They succeeded in Python.
 
-* Dump streams from branchy Subversion repositories with no trunk
-  are processed correctly by reposurgeon, but because it fails to rename
+* Dump streams from branchy Subversion repositories with no trunk are
+  processed correctly by reposurgeon, but because it fails to rename
   any branch to "master" git will not import the result. Examples in
-  the test suite include branchify_map.svn, branchify.svn,
-  delete-copy.svn, expunge-copyfrom.svn, nesting.svn, node-kind-first.svn,
-  swap.svn. Warn about these.
+  the test suite include branchmap.svn, branchify.svn,
+  delete-copy.svn, expunge-copyfrom.svn, nesting.svn,
+  node-kind-first.svn, swap.svn. Warn about these.
 
 == Testing the code ==
 
