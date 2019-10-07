@@ -43,7 +43,7 @@ SHARED    = $(DOCS) reposurgeon-git-aliases $(HTMLFILES)
 #GOFLAGS=-gcflags 'all=-N -l -trimpath $(GOPATH)/src' -asmflags 'all=-trimpath $(GOPATH)/src'
 
 GOFLAGS=-gcflags '-N -l'
-all:  $(MANPAGES) $(HTMLFILES)
+build:  $(MANPAGES) $(HTMLFILES)
 	go build $(GOFLAGS) -o repocutter ./cutter
 	go build $(GOFLAGS) -o repomapper ./mapper
 	go build $(GOFLAGS) -o reposurgeon ./surgeon
@@ -117,7 +117,7 @@ version:
 #
 
 check:
-	$(MAKE) all; cd test; $(MAKE) --quiet check
+	$(MAKE) golint govet build; cd test; $(MAKE) --quiet check
 
 #
 # Continuous integration.  More specifics are in the ci/ directory
