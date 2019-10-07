@@ -16350,15 +16350,15 @@ type filterCommand struct {
 }
 
 // GoReplacer bridges from Python-style back-references (\1) to Go-style ($1).
-// GO-FINALIZE: Remove this shim when the cutover to Go is final.
+// This was originally a shim for testing during the Pythjon port.  It has
+// been kept because Go's use of $n for group matches comflicys with the
+// use of $n for script arguments in reposurgeon.
 func GoReplacer(re *regexp.Regexp, fromString, toString string) string {
 	for i := 0; i < 10; i++ {
 		sdigit := fmt.Sprintf("%d", i)
 		toString = strings.Replace(toString, `\`+sdigit, `${`+sdigit+`}`, -1)
 	}
-	//fmt.Fprintf(os.Stderr, "GoReplacer in: on %q do %s -> %s\n", re.String(), fromString, toString)
 	out := re.ReplaceAllString(fromString, toString)
-	//fmt.Fprintf(os.Stderr, "GoReplacer out: on %q %q -> %q yields: %s\n", re.String(), fromString, toString, out)
 	return out
 }
 

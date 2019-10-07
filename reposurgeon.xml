@@ -205,7 +205,10 @@ edit                   ;; edit all editable objects
 
 
 <para>The regular expressions should be in <ulink
-url="https://github.com/google/re2/wiki/Syntax">Golang's</ulink>. format.</para>
+url="https://github.com/google/re2/wiki/Syntax">Golang's</ulink>. format, with
+one exception. Due to a conflist with the use of $ for arguments in the
+script command, we retain Python's use of backslashes as a leader for
+references to group matches.</para>
 
 <refsect2 id='selections'><title>SELECTION SYNTAX</title>
 

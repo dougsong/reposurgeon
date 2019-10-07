@@ -131,9 +131,10 @@ well.</para></listitem>
 <varlistentry>
 <term>pathrename</term>
 <listitem><para>Modify Node-path and Node-copyfrom-path headers
-matching a specified Python regular expression; replace with a given
-string.  The string may contain Python backreferences to parenthesized
-portions of the pattern. See the embedded help for syntax
+matching a specified regular expression; replace with a given string.
+The string may contain references to parenthesized portions of the
+pattern - note, rese must be Go-style references led by $, not by a
+backslash as in reposurgeon itself. See the embedded help for syntax
 details.</para></listitem>
 </varlistentry>
 <varlistentry>
@@ -184,7 +185,8 @@ because it was directly ancestral to that code. It was moved to the
 <citerefentry><refentrytitle>reposurgeon</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 distribution in January 2016.</para>
 <para>This program was ported from Python to Go in August 2018, at
-which time the obsolete "squash" command was retired.</para>
+which time the obsolete "squash" command was retired.  The syntax of
+regular expressions in the pathrename command changed at that time.</para>
 </refsect1>
 
 <refsect1 id='BUGS'><title>BUGS</title>
@@ -192,12 +194,6 @@ which time the obsolete "squash" command was retired.</para>
 <para>There is one regression since the Python version: repocutter no
 longer recognizes Macintosh-syle line endings consisting of a carriage
 return only. This may be addressed in a future version.</para>
-
-<para>Because the native Go regular-expression library declines to
-support backreferences (in order to scale better) the regexps in the
-pathrename comand are implemented using a third-party library that supports
-Perl regular-expression syntax.  Neither are exactly identical to the
-Python regexps supported in older versions.</para>
 
 </refsect1>
 

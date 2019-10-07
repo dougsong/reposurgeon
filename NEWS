@@ -2,8 +2,9 @@
 
 Repository head::
      Production reposurgeon is now in Go.
-     repocutter now patches mergeinfo referebces correctly when renumbering.
+     repocutter now patches mergeinfo references correctly when renumbering.
      repotool checkout has a -c option to chdir before operating.
+     repocutter now uses Go regex syntax in the pathrename command.
 
 3.48: 2019-10-02::
      Last Python release.  4.0 will ship in Go.
@@ -15,7 +16,7 @@ Repository head::
      Insert newly created blobs after front events.
      Minor repair to translation of Subversion default ignores. 
      Add --noignores read option to suppress filling in default Subversion ignores.
-     Results of reorder and reparent ae no longer toposorted. 
+     Results of reorder and reparent are no longer toposorted.
      Fix: repocutter was not patching Node-copyfrom-rev fields as it should.
 
 3.46: 2019-05-29::
