@@ -406,13 +406,13 @@ def checkout(args):
     #    version we want.
     # 2. Non-DVCS, master directory: True checkout to remote directory,
     #    add path qualifier if needed.
-    # 3. Non-DVCS, checkout directory: make outdir a symlink to the cgcjout,
-    #    then upfate to revision needed and add a parg qualifier  
+    # 3. Non-DVCS, checkout directory: make outdir a symlink to the checkout,
+    #    then update to revision needed and add a parg qualifier  
     # This can be very slow under Subversion, we want to avoid it if at all possible.
     # Other cases should error out.
     if verbose:
         print("checkout: %s" % args)
-    (options, arguments) = getopt.getopt(args, "b:r:t:")
+    (options, arguments) = getopt.getopt(args, "b:c:r:t:")
     outdir = "."
     branch = ""
     tag = ""
@@ -420,6 +420,8 @@ def checkout(args):
     for (opt, val) in options:
         if opt == '-b':
             branch = val
+        elif opt == '-c':
+            os.chdir(val)
         elif opt == '-r':
             revision = val
         elif opt == '-t':

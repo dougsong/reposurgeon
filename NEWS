@@ -3,6 +3,7 @@
 Repository head::
      Production reposurgeon is now in Go.
      repocutter now patches merfeinfo referebces correctly when renumbering.
+     repotool checkout has a -c option to chdir befire operating.
 
 3.48: 2019-10-02::
      Last Python release.  4.0 will ship in Go.
