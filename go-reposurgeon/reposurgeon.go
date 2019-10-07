@@ -14440,9 +14440,11 @@ func (rs *Reposurgeon) HelpNews() {
 	rs.helpOutput(`
 4.0 differences from the Python 3.x versions:
 
-1. whoami() does not read .lynxrc files
-2. Regular expressions use Go syntax rather than Python. Little
-   difference in practice; the biggest deal is lack of lookbehinds.
+1. whoami() no longer reads .lynxrc files
+2. Regular expressions use Go syntax rather than Python, except that.
+   group references are still Pythonically led with a backslash rather
+   than Goishly with $; this is to avoid a collision with $ used as a
+   leader for script arguments.
    Also, regexp substititions are always 'g' (all copies).
 3. We now interpret Subversion $Rev$ and $LastChangedRev$ cookies.
 4. git hooks are preserved through surgery.
@@ -14450,6 +14452,7 @@ func (rs *Reposurgeon) HelpNews() {
    However, all fieldnames for which support was documented will still work/
 6. Subversion dump streams must now be a continuous span of revitions 
    starting from zero (restriction added for performance reasons).
+7. The branchify_map command is now named branchmap.
 `)
 }
 

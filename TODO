@@ -10,8 +10,6 @@
 * Propagation of execute permission in Subversion translations seems flawed.
   Could it be mid-branch deletes causing this?
 
-* Can gitspace merges be deduced from svk:merge and svnmerge properties?
-
 * Also see https://gitlab.com/esr/reposurgeon/issues for two minor problems.
 
 * The toposort code is back in, but the calls to the resort() function
@@ -21,9 +19,6 @@
 
 * repocutter renumber needs a test that demonstrates patching of
   Node-copyfrom-rev fields.
-
-* Restore the ability to work with discontinuous revision sequences.
-  Can be tested with a version of swap.svn from before 2019-09-22.
 
 * After the above is done, bring back the too-many-parents.svn test
   from before 2019-09-22 (has both discontinuous revisions and
@@ -43,6 +38,8 @@
 
 == Testing the code ==
 
+"make check" runs a complete set of regression tests.
+
 There are tools and makefile productions for finer-grained testing.  
 Their behavior is controlled by two variables:
 
@@ -59,8 +56,14 @@ To run a single test:
    cd test; ./singletest foo
 
 will check the actual result of the script in foo.tst against its expected
-output in foo.chk.  No output other than the test notice is good.  The
-Python version passes all these tests.
+output in foo.chk.  No output other than the test notice is good.
+
+The "liftcheck" script is usefuk for testing the conversion correctness
+of a Subversion strream:
+
+   cd test; liftcheck foo.svn
+   
+No output means that a compare-all showed no errors or warnings.
 
 == Tuning for speed ==
 
