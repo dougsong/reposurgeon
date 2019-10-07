@@ -5,12 +5,7 @@ pkg
 go.sum
 *.1
 *.html
-MANIFEST
-*.tar.gz
 *.xz
 *.md5
-cy*
-cy*.c
-cy*.o
 *~
 .rs*/

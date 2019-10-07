@@ -10,16 +10,16 @@ prefix?=/usr/local
 mandir?=share/man
 target=$(DESTDIR)$(prefix)
 
-VERS=$(shell sed <go-reposurgeon/reposurgeon.go -n -e '/const *version *= *\"\(.*\)\"/s//\1/p')
+VERS=$(shell sed <surgeon/reposurgeon.go -n -e '/const *version *= *\"\(.*\)\"/s//\1/p')
 SOURCES += docbook-extra.xml nofooter.conf
 SOURCES += \
 	reposurgeon reposurgeon.xml \
 	repotool repotool.xml \
-	go-repocutter/repocutter.go \
-	go-repomapper/repomapper.go \
-	go-reposurgeon/reposurgeon.go \
-	go-reposurgeon/reposurgeon_test.go \
-	go-reposurgeon/intern.go \
+	cutter/repocutter.go \
+	mapper/repomapper.go \
+	surgeon/reposurgeon.go \
+	surgeon/reposurgeon_test.go \
+	surgeon/intern.go \
 	repomapper.xml repocutter.xml \
 	reporting-bugs.adoc features.adoc dvcs-migration-guide.adoc \
 	reposurgeon-mode.el
@@ -44,9 +44,9 @@ SHARED    = $(DOCS) reposurgeon-git-aliases $(HTMLFILES)
 
 GOFLAGS=-gcflags '-N -l'
 all:  $(MANPAGES) $(HTMLFILES)
-	go build $(GOFLAGS) -o repocutter ./go-repocutter
-	go build $(GOFLAGS) -o repomapper ./go-repomapper
-	go build $(GOFLAGS) -o reposurgeon ./go-reposurgeon
+	go build $(GOFLAGS) -o repocutter ./cutter
+	go build $(GOFLAGS) -o repomapper ./mapper
+	go build $(GOFLAGS) -o reposurgeon ./surgeon
 
 %.1: %.xml
 	$(XMLTO) $(XMLTOOPTS) man $<
@@ -63,22 +63,22 @@ dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc -f nofooter.conf
 #
 
 govet:
-	go vet ./go-repocutter
-	go vet ./go-repomapper
-	go vet ./go-reposurgeon
+	go vet ./cutter
+	go vet ./mapper
+	go vet ./surgeon
 
 gotest:
-	go test $(TESTOPTS) ./go-reposurgeon
+	go test $(TESTOPTS) ./surgeon
 
 gofmt goformat:
-	gofmt -w ./go-repocutter/
-	gofmt -w ./go-repomapper/
-	gofmt -w ./go-reposurgeon/
+	gofmt -w ./cutter/
+	gofmt -w ./mapper/
+	gofmt -w ./surgeon/
 
 golint:
-	golint ./go-repocutter | ./lintfilter 2>&1
-	golint ./go-repomapper | ./lintfilter 2>&1
-	golint ./go-reposurgeon | ./lintfilter 2>&1
+	golint ./cutter | ./lintfilter 2>&1
+	golint ./mapper | ./lintfilter 2>&1
+	golint ./surgeon | ./lintfilter 2>&1
 
 #
 # Installation
