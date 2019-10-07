@@ -3895,11 +3895,6 @@ preserves the hg branch information when reading an hg repo, so it is
 available from within reposurgeon itself, but there is no way to preserve
 it if the repo is written to git.</para>
 
-<para>Limitation: While the Subversion read-side support is in good shape,
-the write-side support is more of a sketch or proof-of-concept than a
-robust implementation;  it only works on very simple cases and does
-not round-trip. It may improve in future releases.</para>
-
 <para>Limitation: Not all BitKeeper versions have the fast-import and
 fast-export commands that <command>reposurgeon</command> requires.
 They are present back to the 7.3 opensource version.</para>
@@ -3920,7 +3915,7 @@ a line-ending comment and screw up parsing.</para>
 fast-import format, their repositories will become editable by
 <command>reposurgeon</command>.</para>
 
-<para>Limitations edescribed above are unlikely to change.  Do "help
+<para>Limitations described above are unlikely to change.  Do "help
 bugs" at the reposurgeon prompt to see up-to-date information on
 reposurgeon bugs and internal problems that are expected to be fixed
 in some future release.</para>

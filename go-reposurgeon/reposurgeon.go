@@ -3211,7 +3211,7 @@ func parseAttributionLine(line string) (string, string, string, error) {
 		date := string(bytes.TrimSpace(m[3]))
 		return name, address, date, nil
 	}
-	err := fmt.Errorf("Malformed attribution on '%s'\n", line)
+	err := fmt.Errorf("malformed attribution on '%s'\n", line)
 	return "", "", "", err
 }
 
@@ -10959,7 +10959,7 @@ func (repo *Repository) splitCommitByPrefix(where int, prefix string) error {
 		func(ops []FileOp) ([]FileOp, []FileOp, error) {
 			var without []FileOp
 			var with []FileOp
-			err := fmt.Errorf("couldn't find '%s' in a fileop path.", prefix)
+			err := fmt.Errorf("couldn't find '%s' in a fileop path", prefix)
 			for _, op := range ops {
 				// In Python: lambda ops: ([op for op
 				// in ops if
