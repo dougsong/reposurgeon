@@ -41,20 +41,6 @@
   delete-copy.svn, expunge-copyfrom.svn, nesting.svn, node-kind-first.svn,
   swap.svn. Warn about these.
 
-* Re-audit for the bug described below:
-
--------------------------------------------------------------------
-http://esr.ibiblio.org/?p=4861#comment-397256
-
-Actually that [COW] code wasn’t mine. Somebody named Greg Hudson wrote
-it in an attempt to reduce memory footprint, and in so doing enabled
-me to solved a fiendishly subtle bug in branch processing that had
-stalled the completion of the Subversion reader for six months. To
-invoke it, the repository had to contain a Subversion branch creation,
-followed by a deletion, followed by a move of another branch to the
-deleted name.
--------------------------------------------------------------------
-
 == Testing the code ==
 
 There are tools and makefile productions for finer-grained testing.  
