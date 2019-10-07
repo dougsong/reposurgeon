@@ -7267,7 +7267,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						// We can just ignore that case. Otherwise...
 						if node.fromSet != nil {
 							for _, child := range node.fromSet.pathnames() {
-								announce(debugEXTRACT, "r%d-%d: deleting %s", record.revision, n+1, child)
+								announce(debugEXTRACT, "r%d-%d~%s: deleting %s", record.revision, n+1, node.path, child)
 								newnode := new(NodeAction)
 								newnode.path = child
 								newnode.revision = record.revision
