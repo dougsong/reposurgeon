@@ -8448,23 +8448,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	timeit("debubbling")
 	sp.repo.renumber(1, baton)
 	timeit("renumbering")
-	// Look for tag and branch merges that mean we may want to undo a
-	// tag or branch creation
-	ignorableDeletealls := newStringSet()
-	for _, commit := range sp.generatedDeletes {
-		ignorableDeletealls.Add(commit.mark)
-	}
-	for _, commit := range sp.repo.commits(nil) {
-		if len(commit.operations()) > 0 &&
-			commit.operations()[0].op == "deleteall" &&
-			commit.hasChildren() &&
-			!ignorableDeletealls.Contains(commit.mark) {
-			// FIXME: Python reports a line number in this method
-			complain(fmt.Sprintf("mid-branch deleteall on %s at <%s>.",
-				commit.Branch, commit.legacyID))
-		}
-	}
-	timeit("linting")
 	// Treat this in-core state as though it was read from an SVN repo
 	sp.repo.hint("svn", "", true)
 }

@@ -1,4 +1,3 @@
-reposurgeon: mid-branch deleteall on refs/heads/master at <12>.
 #reposurgeon sourcetype svn
 blob
 mark :1

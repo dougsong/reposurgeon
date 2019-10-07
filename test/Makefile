@@ -30,6 +30,7 @@ check: listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce \
 		hg-regress hg-regress-branches hg-regress-merges hg-regress-tags \
 		liftcheck-regress legacy-regress svncheck-regress \
 		repocutter-regress repomapper-regress repotool-regress
+	@echo "=== No diff output is good news ==="
 
 # hg-regress-patho is not part of the normal test sequence.
 
@@ -365,10 +366,10 @@ svnload-regress:
 
 # Perform full regression on SVN streams that have clean conversions -
 # that is, no messages due to branch surgery or whatever.
-SVNCLEAN := binary.svn blob-id.svn deletion.svn deepdirs.svn delignore.svn \
-	executable.svn 	expunge.svn filecopy.svn gitify.svn ignore-blank.svn \
+SVNCLEAN := bad-author.svn binary.svn blob-id.svn deletion.svn deepdirs.svn delignore.svn \
+	executable.svn expunge.svn filecopy.svn gitify.svn ignore-blank.svn \
 	mkignore.svn pangram.svn permcopy2.svn permcopy.svn replace-dir.svn \
-	squash-id.svn subdir.svn svnignores.svn
+	smallref.svn squash-id.svn subdir.svn svnignores.svn
 liftcheck-regress:
 	@echo "== Testing conversion correctness of Subversion streams:"
 	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \

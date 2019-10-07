@@ -4,8 +4,8 @@
 
 * Weird combinations of Subversion copy-delete operations can produce
   content-mismatch failures detectable by repotool compare. In the test
-  suite, this problem is exhibited by agito.svn, fleetwood.svn, and
-  references.svn.
+  suite, this problem is exhibited by branchreplace.svn, emptyfrom.svn,
+  fleetwood.svn, references.svn.
 
 * Propagation of execute permission in Subversion translations seems flawed.
   Could it be mid-branch deletes causing this?
@@ -33,6 +33,13 @@
 
 * The pathological-load Hg cases fail, that should be fixed.
   They succeeded in Python.
+
+* Dump streams from branchy Subversion repositories with no trunk
+  are processed correctly by reposurgeon, but because it fails to raname
+  any branch to "master" git will not import the result. Examples in
+  the test suite include branchify_map.svn, branchify.svn,
+  delete-copy.svn, expunge-copyfrom.svn, nesting.svn, node-kind-first.svn,
+  swap.svn. Warn about these.
 
 * Re-audit for the bug described below:
 

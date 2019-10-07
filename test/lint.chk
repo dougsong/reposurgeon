@@ -3,7 +3,6 @@ read <bs.fi
 lint
 reposurgeon: All commit times in this repository are unique.
 read <agito.svn
-reposurgeon: mid-branch deleteall on refs/tags/proj-1.0 at <3>.
 lint
 mid-branch delete: on refs/tags/proj-1.0 at commit@:4=<3>
 unknown shortname: fraggle

@@ -1,6 +1,5 @@
 reposurgeon: branchify_map, regex -> branch name:
 reposurgeon: 	tags/(.*)/ -> tags/\1
-reposurgeon: mid-branch deleteall on refs/tags/1.0 at <6>.
 #reposurgeon sourcetype svn
 blob
 mark :1
