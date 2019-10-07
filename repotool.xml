@@ -72,7 +72,9 @@ specification, given with the -r, -t, or -b options. If the spec is
 omitted, the tip of the main line of the repository will be used; this
 is equivalent to specifying branch 'master' (git terminology, which is
 translated by reposurgeon to 'trunk' or whatever the underlying VCS
-uses).</para>
+uses). If given a -c option, checkout is performed from the directory
+specified; this may be onvenient when working with CVS or Subversion in order 
+to select the repository directory.</para>
 
 <para>The 'compare' action takes two repository directories. It may
 optionally take a tag-branch-revision spec as for the checkout
