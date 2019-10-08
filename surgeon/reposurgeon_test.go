@@ -559,8 +559,8 @@ func TestParseAttributionLine(t *testing.T) {
 func TestParseAttribution(t *testing.T) {
 	// Eric Sunshine's tests, minus the date formats we don't care about.
 	tests := []struct{ s, name, email, date, err string }{
-		{" ", "", "", "", "Malformed attribution on ' '"},
-		{"name", "", "", "", "Malformed attribution on 'name'"},
+		{" ", "", "", "", "malformed attribution on ' '"},
+		{"name", "", "", "", "malformed attribution on 'name'"},
 		{"name<email>1262347994 +0000", "name", "email", "1262347994 +0000", ""},
 		{"name <email> 1262347994 +0000", "name", "email", "1262347994 +0000", ""},
 		{"(no-author) <> 1262347994 +0000", "(no-author)", "", "1262347994 +0000", ""},
@@ -1666,4 +1666,78 @@ func TestPathMap(t *testing.T) {
 	assertTrue(t, !p.contains("gronk/baz/qux"))
 	assertEqual(t, p.String(), "{}")
 
+}
+
+// Factored this way because it will be used for mutiple implementations
+// of the history manager.
+func historyTester(t *testing.T, h *History) {
+	//data := digest(samplebranch)
+	//t.Errorf("I see: %v", data)
+}
+
+const samplebranch = `
+1-2   add      tags/
+1-3   add      trunk/
+2-1   add      trunk/README
+3-1   copy     branches/samplebranch/ from 2:trunk/
+4-1   change   trunk/README
+5-1   change   branches/samplebranch/README
+6-1   change   trunk/README
+7-1   change   branches/samplebranch/README
+8-1   delete   branches/samplebranch
+`
+// digest takes a string in the format emitted by repocutter see
+// and return a slice of slices of NodeAction objects.
+func digest(text string, h *History) [][]NodeAction {
+	intOrDie := func(txt string) int {
+		n, err := strconv.Atoi(txt)
+		if err != nil {
+			panic(fmt.Errorf("bad integer literal %q", txt))
+		}
+		return n
+	}
+	out := make([][]NodeAction, 0)
+	var lastrev = 0
+	for idx, line := range strings.Split(text, "\n") {
+		if len(line) == 0 {
+			continue
+		}
+		var x NodeAction 
+		fields := strings.Fields(line)
+		revind := strings.Split(fields[0], "-")
+		path := fields[2] 
+		x.revision = intOrDie(revind[0])
+		x.index = intOrDie(revind[1])
+		x.action = uint8(map[string]int{"add":sdADD,
+			"change":sdCHANGE,
+			"copy":sdADD,
+			"delete":sdDELETE,
+			"replace":sdREPLACE}[fields[1]] & 0xff)
+		if strings.HasSuffix(path, "/") {
+			x.kind = sdDIR
+			x.path = path[:len(path)-1]
+		} else {
+			x.kind = sdFILE
+			x.path = path
+		}
+		if len(fields) > 3 {
+			fromparts := strings.Split(fields[4], ":")
+			x.fromRev = intOrDie(fromparts[0])
+			x.fromPath = fromparts[1]
+		}
+		if x.revision != lastrev {
+			h.apply(idx+1, out[len(out)-1])
+			out = append(out, make([]NodeAction, 0))
+		}
+		lastrev = x.revision
+		out[len(out)-1] = append(out[len(out)-1], x)
+	}
+	return out
+}
+
+func assertAncestor(t *testing.T, h *History, data [][]NodeAction, lateRev, lateInd, earlyRev, earlyInd int) {
+}
+
+func TestHistoryManager(t *testing.T) {
+	historyTester(t, newHistory())
 }

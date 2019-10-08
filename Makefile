@@ -116,7 +116,7 @@ version:
 # Code validation
 #
 
-check: golint govet build
+check: golint govet build gotest
 	cd test; $(MAKE) --quiet check
 
 #

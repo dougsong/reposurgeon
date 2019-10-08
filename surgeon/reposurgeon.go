@@ -5774,13 +5774,17 @@ type History struct {
 	visibleHere *PathMap
 }
 
-func (h *History) init() {
+func newHistory()* History {
+	h := new(History)
 	h.visible = make(map[int]*PathMap)
 	h.visibleHere = newPathMap()
+	return h
 }
 
 func (h *History) apply(revision int, nodes []NodeAction) {
-	// Build the visibility map for this revision
+	// Digest the suookied nodes unto the fhistory.
+	// Build the visibility map for this revision.
+	// Fill in the node from-sets.
 	for idx := range nodes {
 		node := &nodes[idx]
 		// Mutate the filemap according to copies
@@ -5817,51 +5821,15 @@ func (h *History) apply(revision int, nodes []NodeAction) {
 		}
 	}
 	h.visible[revision] = h.visibleHere.snapshot()
-}
 
-func (h *History) seekAncestor(node *NodeAction) (*NodeAction, error) { 
-	if node.fromPath != "" {
-		// Try first via fromRev/fromPath.  The reason
-		// we have to use the filemap at the copy
-		// source rather than simply walking through
-		// the old nodes to look for the path match is
-		// because the source revision might have been
-		// the target of a directory copy that created
-		// the ancestor we are looking for
-		fm, ok := h.visible[node.fromRev]
-		if ok && node.fromRev > 0 {
-			var trialnode interface{}
-			trialnode = fm.get(node.fromPath)
-			if trialnode != nil {
-				lookback, ok2 := trialnode.(*NodeAction)
-				if ok2 {
-					announce(debugTOPOLOGY, "r%d~%s -> %v (via filemap of %d)",
-						node.revision, node.path, lookback, node.fromRev)
-					return lookback, nil
-				}
-			}
-		}
-		if !strings.HasSuffix(node.path, ".gitignore") {
-			return nil, fmt.Errorf("r%d~%s: missing ancestor node for non-.gitignore",
-				node.revision, node.path)
-		}
-	} else if node.action != sdADD {
-		// Ordinary inheritance, no node copy.
-		//FIXME: Contiguity assumption here
-		lookback2 := h.visible[node.revision-1].get(node.path)
-		if lookback2 != nil {
-			return lookback2.(*NodeAction), nil
+	for idx := range nodes {
+		node := &nodes[idx]
+		if node.fromRev > 0 {
+			node.fromSet = newPathMap()
+			node.fromSet.copyFrom(node.fromPath, h.visible[node.fromRev], node.fromPath)
 		}
 	}
-
-	return nil, nil
 }
-
-func (h *History) fillFromSet(node *NodeAction) {
-	node.fromSet = newPathMap()
-	node.fromSet.copyFrom(node.fromPath, h.visible[node.fromRev], node.fromPath)
-}
-
 
 func (h *History) fileMap(revision int) *PathMap {
 	return h.visible[revision]
@@ -5873,12 +5841,6 @@ func (h *History) getActionNode(revision int, source string) *NodeAction {
 		return p.(*NodeAction)
 	}
 	return nil
-}
-
-func (h *History) wrap() {
-	// Visibility map is no longer needed, allow it to be garbage collectedc
-	h.visible = nil
-	h.visibleHere = nil
 }
 
 // Stream parsing
@@ -6031,7 +5993,7 @@ type StreamParser struct {
 	activeGitignores     map[string]string
 	large                bool
 	propagate            map[string]bool
-	history              History
+	history              *History
 }
 
 type daglink struct {
@@ -6966,10 +6928,31 @@ func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
 			panic(throw("extract", "missing from hash %s", node.fromHash))
 		}
 	}
-	
-	lookback, err := sp.history.seekAncestor(node)
-	if err != nil {
-		sp.gripe(err.Error())
+
+	var lookback *NodeAction
+	if node.fromPath != "" {
+		// Try first via fromRev/fromPath.  The reason
+		// we have to use the filemap at the copy
+		// source rather than simply walking through
+		// the old nodes to look for the path match is
+		// because the source revision might have been
+		// the target of a directory copy that created
+		// the ancestor we are looking for
+		lookback = sp.history.getActionNode(node.fromRev, node.fromPath)
+		if lookback != nil {
+			announce(debugTOPOLOGY, "r%d~%s -> %v (via filemap of %d)",
+				node.revision, node.path, lookback, node.fromRev)
+		}
+	} else if node.action != sdADD {
+		// Ordinary inheritance, no node copy.
+		//FIXME: Contiguity assumption here
+		lookback = sp.history.getActionNode(node.revision-1, node.path)
+	}
+
+	// We reach here with lookback still nil if the node is a non-copy add.
+	if lookback == nil && node.fromRev > 0 &&!strings.HasSuffix(node.path, ".gitignore") {
+		sp.gripe(fmt.Sprintf("r%d~%s: missing ancestor node for non-.gitignore",
+			node.revision, node.path))
 	}
 	return lookback
 }
@@ -7046,7 +7029,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 
 	nobranch := options.Contains("--nobranch")
 
-	sp.history.init()
+	sp.history = newHistory()
 
 	// Build commits
 	// This code can eat your processor, so we make it give up
@@ -7222,7 +7205,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					announce(debugFILEMAP, "r%d copynode filemap is %s",
 						node.fromRev, sp.history.fileMap(node.fromRev))
 				}
-				sp.history.fillFromSet(node)
 			}
 
 			// Handle per-path properties.
@@ -7901,8 +7883,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 	} // end of revision loop
 
-	// Release history storage
-	sp.history.wrap()
+	// Release history storage to be GCed
+	sp.history = nil
 	
 	if sp.large {
 		baton.speak("3")
