@@ -116,8 +116,8 @@ version:
 # Code validation
 #
 
-check:
-	$(MAKE) golint govet build; cd test; $(MAKE) --quiet check
+check: golint govet build
+	cd test; $(MAKE) --quiet check
 
 #
 # Continuous integration.  More specifics are in the ci/ directory

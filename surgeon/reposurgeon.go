@@ -5769,6 +5769,118 @@ func (pm *PathMap) pathnames() []string {
 	return v
 }
 
+type History struct {
+	visible map[int]*PathMap
+	visibleHere *PathMap
+}
+
+func (h *History) init() {
+	h.visible = make(map[int]*PathMap)
+	h.visibleHere = newPathMap()
+}
+
+func (h *History) apply(revision int, nodes []NodeAction) {
+	// Build the visibility map for this revision
+	for idx := range nodes {
+		node := &nodes[idx]
+		// Mutate the filemap according to copies
+		if node.fromRev > 0 {
+			//assert node.fromRev < revision
+			h.visibleHere.copyFrom(node.path, h.visible[node.fromRev],
+				node.fromPath)
+			announce(debugFILEMAP, "r%d-%d: r%d~%s copied to %s",
+				node.revision, idx+1, node.fromRev, node.fromPath, node.path)
+		}
+		// Mutate the filemap according to adds/deletes/changes
+		if node.action == sdADD && node.kind == sdFILE {
+			h.visibleHere.set(node.path, node)
+			announce(debugFILEMAP, "r%d-%d: %s added", node.revision, idx+1, node.path)
+		} else if node.action == sdDELETE || (node.action == sdREPLACE && node.kind == sdDIR) {
+			if node.kind == sdNONE {
+				if h.visibleHere.contains(node.path) {
+					node.kind = sdFILE
+				} else {
+					node.kind = sdDIR
+				}
+			}
+			//announce(debugFILEMAP, "r%d-%d: deduced type for %s", node.revision, idx+1, node)
+			// Snapshot the deleted paths before
+			// removing them.
+			node.fromSet = newPathMap()
+			node.fromSet.copyFrom(node.path, h.visibleHere, node.path)
+			h.visibleHere.remove(node.path)
+			announce(debugFILEMAP, "r%d-%d: %s deleted",
+				node.revision, idx+1, node.path)
+		} else if (node.action == sdCHANGE || node.action == sdREPLACE) && node.kind == sdFILE {
+			h.visibleHere.set(node.path, node)
+			announce(debugFILEMAP, "r%d-%d: %s changed", node.revision, idx+1, node.path)
+		}
+	}
+	h.visible[revision] = h.visibleHere.snapshot()
+}
+
+func (h *History) seekAncestor(node *NodeAction) (*NodeAction, error) { 
+	if node.fromPath != "" {
+		// Try first via fromRev/fromPath.  The reason
+		// we have to use the filemap at the copy
+		// source rather than simply walking through
+		// the old nodes to look for the path match is
+		// because the source revision might have been
+		// the target of a directory copy that created
+		// the ancestor we are looking for
+		fm, ok := h.visible[node.fromRev]
+		if ok && node.fromRev > 0 {
+			var trialnode interface{}
+			trialnode = fm.get(node.fromPath)
+			if trialnode != nil {
+				lookback, ok2 := trialnode.(*NodeAction)
+				if ok2 {
+					announce(debugTOPOLOGY, "r%d~%s -> %v (via filemap of %d)",
+						node.revision, node.path, lookback, node.fromRev)
+					return lookback, nil
+				}
+			}
+		}
+		if !strings.HasSuffix(node.path, ".gitignore") {
+			return nil, fmt.Errorf("r%d~%s: missing ancestor node for non-.gitignore",
+				node.revision, node.path)
+		}
+	} else if node.action != sdADD {
+		// Ordinary inheritance, no node copy.
+		//FIXME: Contiguity assumption here
+		lookback2 := h.visible[node.revision-1].get(node.path)
+		if lookback2 != nil {
+			return lookback2.(*NodeAction), nil
+		}
+	}
+
+	return nil, nil
+}
+
+func (h *History) fillFromSet(node *NodeAction) {
+	node.fromSet = newPathMap()
+	node.fromSet.copyFrom(node.fromPath, h.visible[node.fromRev], node.fromPath)
+}
+
+
+func (h *History) fileMap(revision int) *PathMap {
+	return h.visible[revision]
+}
+
+func (h *History) getActionNode(revision int, source string) *NodeAction {
+	p := h.visible[revision].get(source)
+	if p != nil {
+		return p.(*NodeAction)
+	}
+	return nil
+}
+
+func (h *History) wrap() {
+	// Visibility map is no longer needed, allow it to be garbage collectedc
+	h.visible = nil
+	h.visibleHere = nil
+}
+
 // Stream parsing
 //
 // The Subversion dumpfile format is documented at
@@ -5919,6 +6031,7 @@ type StreamParser struct {
 	activeGitignores     map[string]string
 	large                bool
 	propagate            map[string]bool
+	history              History
 }
 
 type daglink struct {
@@ -6840,7 +6953,7 @@ const svnSep = "/"
 var blankline = regexp.MustCompile(`(?m:^\s*\n)`)
 
 // Try to figure out who the ancestor of this node is.
-func (sp *StreamParser) seekAncestor(node *NodeAction, visible map[int]*PathMap) *NodeAction {
+func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
 	// Easy case: dump stream has intact hashes, and there is one.
 	// This should habdle file copies.
 	if node.fromHash != "" {
@@ -6853,41 +6966,12 @@ func (sp *StreamParser) seekAncestor(node *NodeAction, visible map[int]*PathMap)
 			panic(throw("extract", "missing from hash %s", node.fromHash))
 		}
 	}
-	if node.fromPath != "" {
-		// Try first via fromRev/fromPath.  The reason
-		// we have to use the filemap at the copy
-		// source rather than simply walking through
-		// the old nodes to look for the path match is
-		// because the source revision might have been
-		// the target of a directory copy that created
-		// the ancestor we are looking for
-		fm, ok := visible[node.fromRev]
-		if ok && node.fromRev > 0 {
-			var trialnode interface{}
-			trialnode = fm.get(node.fromPath)
-			if trialnode != nil {
-				lookback, ok2 := trialnode.(*NodeAction)
-				if ok2 {
-					announce(debugTOPOLOGY, "r%d~%s -> %v (via filemap of %d)",
-						node.revision, node.path, lookback, node.fromRev)
-					return lookback
-				}
-			}
-		}
-		if !strings.HasSuffix(node.path, ".gitignore") {
-			sp.gripe(fmt.Sprintf("r%d~%s: missing ancestor node for non-.gitignore.",
-				node.revision, node.path))
-		}
-	} else if node.action != sdADD {
-		// Ordinary inheritance, no node copy.
-		//FIXME: Contiguity assumption here
-		lookback2 := visible[node.revision-1].get(node.path)
-		if lookback2 != nil {
-			return lookback2.(*NodeAction)
-		}
+	
+	lookback, err := sp.history.seekAncestor(node)
+	if err != nil {
+		sp.gripe(err.Error())
 	}
-
-	return nil
+	return lookback
 }
 
 func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
@@ -6962,8 +7046,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 
 	nobranch := options.Contains("--nobranch")
 
-	visible := make(map[int]*PathMap)
-	visibleHere := newPathMap()
+	sp.history.init()
 
 	// Build commits
 	// This code can eat your processor, so we make it give up
@@ -7093,44 +7176,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			continue
 		}
 
-		// Build the visibility map for this revision
-		for idx := range record.nodes {
-			node := &record.nodes[idx]
-			// Mutate the filemap according to copies
-			if node.fromRev > 0 {
-				//assert node.fromRev < revision
-				visibleHere.copyFrom(node.path, visible[node.fromRev],
-					node.fromPath)
-				announce(debugFILEMAP, "r%d-%d: r%d~%s copied to %s",
-					record.revision, idx+1, node.fromRev, node.fromPath, node.path)
-			}
-			// Mutate the filemap according to adds/deletes/changes
-			if node.action == sdADD && node.kind == sdFILE {
-				visibleHere.set(node.path, node)
-				announce(debugFILEMAP, "r%d-%d: %s added", node.revision, idx+1, node.path)
-			} else if node.action == sdDELETE || (node.action == sdREPLACE && node.kind == sdDIR) {
-				if node.kind == sdNONE {
-					if visibleHere.contains(node.path) {
-						node.kind = sdFILE
-					} else {
-						node.kind = sdDIR
-					}
-				}
-				//announce(debugFILEMAP, "r%d-%d: deduced type for %s", node.revision, idx+1, node)
-				// Snapshot the deleted paths before
-				// removing them.
-				node.fromSet = newPathMap()
-				node.fromSet.copyFrom(node.path, visibleHere, node.path)
-				visibleHere.remove(node.path)
-				announce(debugFILEMAP, "r%d-%d: %s deleted",
-					node.revision, idx+1, node.path)
-			} else if (node.action == sdCHANGE || node.action == sdREPLACE) && node.kind == sdFILE {
-				visibleHere.set(node.path, node)
-				announce(debugFILEMAP, "r%d-%d: %s changed", node.revision, idx+1, node.path)
-			}
-		}
-		visible[ri] = visibleHere.snapshot()
-
+		sp.history.apply(ri, record.nodes)
+		
 		expandedNodes := make([]*NodeAction, 0)
 		appendExpanded := func(newnode *NodeAction) {
 			newnode.generated = true
@@ -7173,10 +7220,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					// slice can be expensive enough to look like a hang forever
 					// on a sufficiently large repository - GCC was the type case.
 					announce(debugFILEMAP, "r%d copynode filemap is %s",
-						node.fromRev, visible[node.fromRev])
+						node.fromRev, sp.history.fileMap(node.fromRev))
 				}
-				node.fromSet = newPathMap()
-				node.fromSet.copyFrom(node.fromPath, visible[node.fromRev], node.fromPath)
+				sp.history.fillFromSet(node)
 			}
 
 			// Handle per-path properties.
@@ -7323,15 +7369,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					announce(debugIGNORES, "after update at %s active ignores are: %s\n", node.path, sp.activeGitignores)
 					if branchcopy {
 						sp.branchcopies.Add(node.path)
-						// FIXME: There's a bug somewhere in here...
 						// Store the minimum information needed to propagate
 						// executable bits across branch copies. If we needed
 						// to preserve any other properties, sp.propagate
 						// would need to have property maps as values.
 						for _, source := range node.fromSet.pathnames() {
-							lookback := visible[node.fromRev].get(source)
-							found, ok := lookback.(*NodeAction)
-							if ok && found.hasProperties() && found.props.has("svn:executable") {
+							found := sp.history.getActionNode(node.fromRev, source)
+							if found != nil && found.hasProperties() && found.props.has("svn:executable") {
 								stem := source[len(node.fromPath):]
 								targetpath := node.path + stem
 								sp.propagate[targetpath] = true
@@ -7363,9 +7407,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						}
 						// Now generate copies for all files in the copy source directory
 						for _, source := range node.fromSet.pathnames() {
-							lookback := visible[node.fromRev].get(source)
-							found, ok := lookback.(*NodeAction)
-							if !ok {
+							found := sp.history.getActionNode(node.fromRev, source)
+							if found == nil {
 								panic(fmt.Errorf("r%d-%d: can't find ancestor of %s at r%d",
 									record.revision, n+1, source, node.fromRev))
 							}
@@ -7505,7 +7548,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					fileop.construct("D", node.path)
 					actions = append(actions, fiAction{*node, *fileop})
 				} else if node.action == sdADD || node.action == sdCHANGE || node.action == sdREPLACE {
-					ancestor = sp.seekAncestor(node, visible)
+					ancestor = sp.seekAncestor(node)
 					// Time for fileop generation
 					if node.blob != nil {
 						if lookback, ok := sp.hashmap[node.contentHash]; ok {
@@ -7858,9 +7901,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 	} // end of revision loop
 
-	// Visibility map is no longer needed, allow it to be garbage collectedc
-	visible = nil
-
+	// Release history storage
+	sp.history.wrap()
+	
 	if sp.large {
 		baton.speak("3")
 	}
