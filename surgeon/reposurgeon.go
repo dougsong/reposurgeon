@@ -7409,6 +7409,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						}
 					}
 				}
+				// Allow GC to reclaim fromSet storage, we no longer need it
+				node.fromSet = nil
 				// Property settings can be present on either
 				// sdADD or sdCHANGE actions.
 				if node.propchange && node.hasProperties() {
