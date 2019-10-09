@@ -7,7 +7,8 @@ Repository head::
      repocutter now uses Go regex syntax in the pathrename command.
      The awkward branchify_map command has been renamed to "branchmap"
      The baton prompt has improved progress metering.
-     reposurgwon is now better about cleaning up old temp directories on exit.
+     reposurgeon is now better about cleaning up old temp directories on exit.
+     Added 'memory' command for reporting memory usage.
 
 3.48: 2019-10-02::
      Last Python release.  4.0 will ship in Go.

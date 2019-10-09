@@ -3169,6 +3169,19 @@ gathers statistics only on code executed via '-'.</para>
 <listitem>
 <para>Display statistics on phase timing and memory usage in repository analysis.
 Mainly of interest to developers trying to speed up the program.</para>
+
+<para>If the command has following text, this creates a new, named time mark
+that will be visible in a later report; this may be useful during 
+long-running conversion recipes.</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term><command>memory</command>
+</term>
+<listitem>
+<para>Report memory usage.  Runs a garbage-collect before reporting so the figure will better relect
+storage currently held in loaded repositories; this will not affect the reported high-water
+mark.</para>
 </listitem>
 </varlistentry>
 <varlistentry>

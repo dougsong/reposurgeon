@@ -97,6 +97,7 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
+	"runtime/debug"
 	"runtime/pprof"
 	"sort"
 	"strconv"
@@ -14738,11 +14739,15 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 
 func (rs *Reposurgeon) HelpTiming() {
 	rs.helpOutput(`
-Report phase-timing results and memory usage from repository analysis.
+Report phase-timing results from repository analysis.
+
+If the command has following text, this creates a new, named time mark
+that will be visible in a later report; this may be useful during 
+long-running conversion recipes.
 `)
 }
 
-// Report repo-analysis times and memory usage.
+// Report repo-analysis times
 func (rs *Reposurgeon) DoTiming(line string) bool {
 	if rs.chosen() == nil {
 		croak("no repo has been chosen.")
@@ -14752,7 +14757,18 @@ func (rs *Reposurgeon) DoTiming(line string) bool {
 		rs.chosen().timings = append(rs.chosen().timings, TimeMark{line, time.Now()})
 	}
 	rs.repo.dumptimes()
+	return false
+}
+
+func (rs *Reposurgeon) HelpMemory() {
+	rs.helpOutput(`
+Report memory usage.
+`)
+}
+
+func (rs *Reposurgeon) DoMemory(line string) bool {
 	var memStats runtime.MemStats
+	debug.FreeOSMemory()
 	runtime.ReadMemStats(&memStats)
 	fmt.Printf("     Total heap: %.2fMB  High water: %.2fMB\n",
 		float64(memStats.HeapAlloc)/1e6, float64(memStats.TotalAlloc)/1e6)
