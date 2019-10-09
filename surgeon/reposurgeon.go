@@ -2551,10 +2551,6 @@ func (baton *Baton) twirl(ch string) {
 	}
 }
 
-func (baton *Baton) speak(legend string) {
-	baton.stream.WriteString(legend)
-}
-
 func (baton *Baton) exit(override string) {
 	if override != "" {
 		baton.endmsg = override
@@ -6838,7 +6834,7 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 		// End of Subversion dump parsing
 		sp.timeMark("parsing")
 		if sp.large {
-			baton.speak("$")
+			baton.twirl("$")
 		}
 		sp.svnProcess(options, baton)
 		elapsed := time.Since(baton.starttime)
@@ -7037,7 +7033,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// it does not hit the disk.
 	announce(debugEXTRACT, "Pass 1")
 	if sp.large {
-		baton.speak("1")
+		baton.twirl("1")
 	}
 
 	splitCommits := make(map[int]int)
@@ -7078,7 +7074,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	}
 
 	if sp.large {
-		baton.speak("2")
+		baton.twirl("2")
 	}
 	for ri, record := range sp.revisions {
 		announce(debugEXTRACT, "Revision %d:", record.revision)
@@ -7889,7 +7885,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	sp.history = nil
 	
 	if sp.large {
-		baton.speak("3")
+		baton.twirl("3")
 	}
 
 	// Bail out if we have read no commits
@@ -8218,7 +8214,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	}
 	// Code controlled by --nobranch option ends.
 	if sp.large {
-		baton.speak("4")
+		baton.twirl("4")
 	} else {
 		baton.twirl("")
 	}
@@ -8263,7 +8259,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	sp.repo.delete(deleteables, []string{"--tagback"})
 	sp.repo.events = append(sp.repo.events, newtags...)
 	if sp.large {
-		baton.speak("5")
+		baton.twirl("5")
 	} else {
 		baton.twirl("")
 	}
@@ -8336,7 +8332,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		branchMappings = append(branchMappings, branchMapping{regexp.MustCompile(key), value})
 	}
 	if sp.large {
-		baton.speak("6")
+		baton.twirl("6")
 	} else {
 		baton.twirl("")
 	}
@@ -8393,7 +8389,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		baton.twirl("")
 	}
 	if sp.large {
-		baton.speak("7")
+		baton.twirl("7")
 	} else {
 		baton.twirl("")
 	}
@@ -8435,7 +8431,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		baton.twirl("")
 	}
 	if sp.large {
-		baton.speak("8")
+		baton.twirl("8")
 	} else {
 		baton.twirl("")
 	}
@@ -8466,7 +8462,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		//baton.twirl("")
 	}
 	if sp.large {
-		baton.speak("9")
+		baton.twirl("9")
 	} else {
 		baton.twirl("")
 	}
