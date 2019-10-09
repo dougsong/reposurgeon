@@ -2460,6 +2460,7 @@ type Baton struct {
 	countfmt  string
 	stream    *os.File
 	starttime time.Time
+	lasttick   time.Time
 	lastfrac  float64
 }
 
@@ -2513,15 +2514,22 @@ func (baton *Baton) endcounter() {
 	baton.countfmt = ""
 }
 
+// Assumption: ANSI move left works and does not erase what's under the cursor.
+const left = "\x1B[D"
+
 // twirl spins the baton
 func (baton *Baton) twirl(ch string) {
 	if baton.stream == nil {
 		return
 	}
 	if baton.erase {
-		baton.stream.WriteString(strings.Repeat("\b", baton.lastlen))
-		baton.stream.WriteString(strings.Repeat(" ", baton.lastlen))
-		baton.stream.WriteString(strings.Repeat("\b", baton.lastlen))
+		if baton.lastlen == 1 {
+			baton.stream.WriteString(left)
+		} else {
+			baton.stream.WriteString(strings.Repeat(left, baton.lastlen))
+			baton.stream.WriteString(strings.Repeat(" ", baton.lastlen))
+			baton.stream.WriteString(strings.Repeat(left, baton.lastlen))
+		}
 		baton.erase = true
 	}
 	if baton.isatty() {
@@ -2534,17 +2542,12 @@ func (baton *Baton) twirl(ch string) {
 				time.Sleep(100 * time.Millisecond)
 			}
 		} else {
-			baton.lastlen = 1
 			baton.erase = false
-			if baton.counter > 0 && (baton.counter%(100*1000)) == 0 {
-				baton.stream.WriteString("!")
-			} else if baton.counter > 0 && (baton.counter%(10*1000)) == 0 {
-				baton.stream.WriteString("*")
-			} else if baton.counter > 0 && (baton.counter%(1*1000)) == 0 {
-				baton.stream.WriteString("+")
-			} else if baton.counter > 0 && (baton.counter%(10)) == 0 {
+			if time.Since(baton.lasttick) > (100 * time.Millisecond) {
+				baton.lastlen = 1
 				baton.stream.Write([]byte{"-/|\\"[baton.counter%4]})
 				baton.erase = true
+				baton.lasttick = time.Now()
 			}
 			baton.counter++
 		}
@@ -2556,7 +2559,7 @@ func (baton *Baton) exit(override string) {
 		baton.endmsg = override
 	}
 	if baton.stream != nil {
-		fmt.Fprintf(baton.stream, "]\b...(%s) %s.\n",
+		fmt.Fprintf(baton.stream, "]" + left + "...(%s) %s.\n",
 			time.Since(baton.starttime), baton.endmsg)
 	}
 }
