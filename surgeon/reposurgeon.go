@@ -124,9 +124,6 @@ const version = "4.0-pre"
 // Used in some code for efficient exponential chunk grabbing.
 const maxAlloc = 100000
 
-// trigger percentage display in progress meters
-const hyperGiant = 10000000000 // shout-out the Nick Johnston
-
 // Go's panic/defer/recover feature is a weak primitive for catchable
 // exceptions, but it's all we have. So we write a throw/catch pair;
 // throw() must pass its exception payload to panic(), catch() can only be
@@ -2452,7 +2449,6 @@ type Baton struct {
 	stream    *os.File
 	starttime time.Time
 	lasttick   time.Time
-	lastfrac  float64
 }
 
 func newBaton(prompt string, endmsg string, enable bool) *Baton {
@@ -2556,15 +2552,11 @@ func (baton *Baton) exit(override string) {
 }
 
 func (baton *Baton) readProgress(ccount int64, filesize int64) {
-	if filesize > hyperGiant {
+	if filesize > 0 && time.Since(baton.lasttick) > (60 * time.Second) {
+		baton.lasttick = time.Now()
 		frac := float64(ccount) / float64(filesize)
-		if frac > baton.lastfrac+0.01 {
-			baton.twirl(fmt.Sprintf("%.2f%%", frac*100))
-			baton.lastfrac = frac
-			time.Sleep(time.Second)
-		}
+		baton.twirl(fmt.Sprintf("%d%%", int(frac*100)))
 	}
-	baton.twirl("")
 }
 
 /*
@@ -7322,7 +7314,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					branchcopy := sp.isBranch(node.fromPath) &&
 						sp.isBranch(node.path) &&
 						!sp.isBranchDeleted(node.path)
-					announce(debugTOPOLOGY, "r%d-%d: directory copy to %s from r%d~%s (branchcopy %s)",
+					announce(debugTOPOLOGY, "r%d-%d: directory copy to %s from r%d~%s (branchcopy %v)",
 						record.revision, n+1, node.path, node.fromRev, node.fromPath, branchcopy)
 					// Update our .gitignore list so that it includes those
 					// in the newly created copy, to ensure they correctly

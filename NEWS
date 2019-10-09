@@ -6,6 +6,8 @@ Repository head::
      repotool checkout has a -c option to chdir before operating.
      repocutter now uses Go regex syntax in the pathrename command.
      The awkward branchify_map command has been renamed to "branchmap"
+     The baton prompt has improved progress metering.
+     reposurgwon is now better about cleaning up old temp directories on exit.
 
 3.48: 2019-10-02::
      Last Python release.  4.0 will ship in Go.
