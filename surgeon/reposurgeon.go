@@ -7176,17 +7176,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 			}
 
-			// Compute the node's copy set
-			if node.fromPath != "" {
-				if debugEnable(debugFILEMAP) {
-					// Conditional retained because computing this filemap
-					// slice can be expensive enough to look like a hang forever
-					// on a sufficiently large repository - GCC was the type case.
-					announce(debugFILEMAP, "r%d copynode filemap is %s",
-						node.fromRev, sp.history.fileMap(node.fromRev))
-				}
-			}
-
 			// Handle per-path properties.
 			if node.hasProperties() {
 				if node.props.has("cvs2svn:cvs-rev") {
