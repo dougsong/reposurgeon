@@ -2385,9 +2385,12 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 	})
 	for _, resetname := range rs.refs.keys {
 		if !strings.Contains(resetname, "/tags/") {
-			// FIXME: what if revision is unknown?
-			// keep previous behavior for now
-			reset := newReset(repo, resetname, rs.commitMap[rs.refs.get(resetname)].mark)
+			committish := rs.commitMap[rs.refs.get(resetname)].mark
+			if committish == "" {
+				panic(throw("extractor", "could not get a mark for the target of %s", resetname))
+			}
+
+			reset := newReset(repo, resetname, committish)
 			repo.addEvent(reset)
 		}
 	}
@@ -6379,7 +6382,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 						if node.propchange {
 							sp.propertyStash[node.path] = node.props
 						} else if node.action == sdADD && node.fromPath != "" {
-							//FIXME: Contiguity assumption here
+							//Contiguity assumption here
 							for _, oldnode := range sp.revisions[node.fromRev].nodes {
 								if oldnode.path == node.fromPath && oldnode.propchange {
 									sp.propertyStash[node.path] = oldnode.props
@@ -6900,7 +6903,7 @@ func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
 		}
 	} else if node.action != sdADD {
 		// Ordinary inheritance, no node copy.
-		//FIXME: Contiguity assumption here
+		//Contiguity assumption here
 		lookback = sp.history.getActionNode(node.revision-1, node.path)
 	}
 
@@ -7045,14 +7048,18 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				((node.fromRev == 0) == (node.fromPath == ""))) {
 				panic(throw("parse", "forbidden operation in dump stream at r%d: %s", record.revision, node))
 			}
+			if !(node.blob != nil || node.hasProperties() ||
+				node.fromRev != 0 || node.action == sdADD || node.action == sdDELETE) {
+				panic(throw("parse", "malformed node in dum[ stream at r%d: %s", record.revision, node))
+			}
+			if node.kind == sdNONE && node.action != sdDELETE {
+				panic(throw("parse", "maissing type on a non-delete node r%d: %s", record.revision, node))
+			}
 
-			// FIXME: Someday rescue these sanity checks
-			//        assert node.blob != nil ||
-			//               node.hasProperties() ||
-			//               node.fromRev ||
-			//               node.action in (sdADD, sdDELETE)
-			//        assert node.kind != sdNONE || node.action == sdDELETE
-			//        assert node.action in (sdADD, sdREPLACE) || !node.fromRev
+			if ((node.action != sdADD && node.action != sdREPLACE) && node.fromRev > 0) {
+				panic(throw("parse", "invalid type in node with frpm revision r%d: %s", record.revision, node))
+			}
+
 		}
 
 		//memcheck(sp.repo)
@@ -8125,12 +8132,17 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					continue
 				}
 				// Alter the DAG to express merges.
+				nodups := make(map[string]bool)
 				for _, mark := range newMerges {
+					if nodups[mark] {
+						continue
+					}
+					nodups[mark] = true
 					parent := sp.repo.markToEvent(mark).(*Commit)
-					// FIXME: should add check for duplication here
 					commit.addParentCommit(parent)
 					announce(debugTOPOLOGY, "processed new mergeinfo from r%s to r%s.", parent.legacyID, commit.legacyID)
 				}
+				nodups = nil	// Not necessary, but explicit is good
 			}
 			mergeinfos[revision] = mergeinfo.snapshot()
 			baton.twirl("")
@@ -16061,8 +16073,6 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 				if rs.selection == nil || len(rs.selection) != 1 {
 					repo.addEvent(blank)
 				} else {
-					// FIXME: needs careful testing, these
-					// type conversions are weird.
 					commit, ok := repo.events[rs.selection[0]].(CommitLike)
 					if ok {
 						blank.setParents([]CommitLike{commit})
