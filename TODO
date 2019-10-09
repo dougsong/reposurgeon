@@ -2,7 +2,7 @@
 
 == Known bugs ==
 
-* Weird combinations of Subversion copy-delete operations can produce
+* Weird combinations of Subversion tag copy-delete operations can produce
   content-mismatch failures detectable by repotool compare. In the test
   suite, this problem is exhibited by branchreplace.svn, emptyfrom.svn,
   fleetwood.svn, references.svn.
@@ -13,8 +13,6 @@
   in the reorder and reparent commands have been commented out in both
   Go and Python. The Python version works, the Go version needs
   fixing. There's a commented-out section documenting toposort,
-
-* Fix up generation of R and C in the Mercurial exporter.
 
 * The pathological-load Hg cases fail, that should be fixed.
   They succeeded in Python.

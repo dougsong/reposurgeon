@@ -2312,28 +2312,6 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 						//announce(debugEXTRACT, "%s: update for %s", trunc(revision), pathname)
 						found := false
 						var deletia []string
-						// FIXME: This optimization is almost correct.
-						// but there are more important things to deal with.
-						//for oldpath, oldsig := range rs.visibleFiles[revision] {
-						//	if oldsig == *newsig {
-						//		found = true
-						//		if removed.Contains(oldpath) {
-						//			op := newFileOp(repo)
-						//			op.construct("R", oldpath, pathname)
-						//			commit.appendOperation(*op)
-						//			deletia = append(deletia, oldpath)
-						//		} else if oldpath != pathname {
-						//			op := newFileOp(repo)
-						//			op.construct("C", oldpath, pathname)
-						//			commit.appendOperation(*op)
-						//		}
-						//		break
-						//	}
-						//}
-						// Avoid deleting
-						// items from map
-						// while iterating
-						// through it.
 						for _, item := range deletia {
 							delete(rs.visibleFiles[revision], item)
 						}
@@ -5812,10 +5790,6 @@ func (h *History) apply(revision int, nodes []NodeAction) {
 	}
 }
 
-func (h *History) fileMap(revision int) *PathMap {
-	return h.visible[revision]
-}
-
 func (h *History) getActionNode(revision int, source string) *NodeAction {
 	p := h.visible[revision].get(source)
 	if p != nil {
@@ -7309,7 +7283,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					// Update our .gitignore list so that it includes those
 					// in the newly created copy, to ensure they correctly
 					// get deleted during a future directory deletion.
-					announce(debugIGNORES, "before update at %s active ignores are: %s\n", node.path, sp.activeGitignores)
+					announce(debugIGNORES, "before update at %s active ignores are: %s", node.path, sp.activeGitignores)
 					l := len(node.fromPath)
 					for sourcegi, value := range sp.activeGitignores {
 						if strings.HasPrefix(sourcegi, node.fromPath) {
@@ -7317,7 +7291,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							sp.activeGitignores[destgi] = value
 						}
 					}
-					announce(debugIGNORES, "after update at %s active ignores are: %s\n", node.path, sp.activeGitignores)
+					announce(debugIGNORES, "after update at %s active ignores are: %s", node.path, sp.activeGitignores)
 					if branchcopy {
 						sp.branchcopies.Add(node.path)
 						// Store the minimum information needed to propagate
