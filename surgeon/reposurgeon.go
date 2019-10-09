@@ -14762,7 +14762,9 @@ func (rs *Reposurgeon) DoTiming(line string) bool {
 
 func (rs *Reposurgeon) HelpMemory() {
 	rs.helpOutput(`
-Report memory usage.
+Report memory usage.  Runs a garbage-collect before reporting so the figure will better relect
+storage currently held in loaded repositories; this will not affect the reported high-water
+mark.
 `)
 }
 
