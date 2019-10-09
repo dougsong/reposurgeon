@@ -323,15 +323,6 @@ func qtoq(s string) string {
 	return "'" + s2 + "'"
 }
 
-// Render boolean values a la Python
-// GO-FINALIZE: Once the Go translation is complete, remove all calls to this,
-func pythonbool(b bool) string {
-	if b {
-		return "True"
-	}
-	return "False"
-}
-
 // This representation optimizes for small memory footprint at the expense
 // of speed.  To make the opposite trade we would do the obvious thing with
 // map[string] bool.
@@ -2631,6 +2622,7 @@ anything up to and including making demons fly out of your nose.
 
 type Context struct {
 	verbose int
+	quiet bool
 	blobseq int
 	signals chan os.Signal
 	// The abort flag
@@ -2721,12 +2713,12 @@ func debugEnable(level int) bool {
 	return context.verbose >= level
 }
 
-// nuke removed a (large) directory, reporting elapsed time.
+// nuke removes a (large) directory, reporting elapsed time.
 func nuke(directory string, legend string) {
-	// FIXME: Suppress progress meteing when quiet on?
-	baton := newBaton(legend, "", debugEnable(debugSHUFFLE))
-	defer baton.exit("")
-	// FIXME: Redo with filepath.Walk and a more granular baton
+	if !context.quiet {
+		baton := newBaton(legend, "", debugEnable(debugSHUFFLE))
+		defer baton.exit("")
+	}
 	os.RemoveAll(directory)
 }
 
@@ -4430,8 +4422,6 @@ func (commit *Commit) bump(i int) {
 
 // clone replicates this commit, without its fileops, color, children, or tags.
 func (commit *Commit) clone(repo *Repository) *Commit {
-	// FIXME: Test this against Python, which does a deeper copy.
-	// It might alter the behavior of the split operation.
 	var c = *commit // Was a Python deepcopy
 	c.authors = make([]Attribution, len(commit.authors))
 	copy(c.authors, commit.authors)
@@ -5311,7 +5301,6 @@ func (commit *Commit) head() string {
 		}
 	}
 	croak("Can't deduce a branch head for %s", commit.mark)
-	// FIXME: should we panic here?
 	return ""
 }
 
@@ -7061,7 +7050,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		if !ok {
 			return nil
 		}
-		// FIXME: Is this right? Do we need to indirect through branches in some way?
 		for revision := sp.repo.eventToIndex(obj); revision > 0; revision-- {
 			event := sp.repo.events[revision]
 			if commit, ok := event.(*Commit); ok {
@@ -7335,7 +7323,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						sp.isBranch(node.path) &&
 						!sp.isBranchDeleted(node.path)
 					announce(debugTOPOLOGY, "r%d-%d: directory copy to %s from r%d~%s (branchcopy %s)",
-						record.revision, n+1, node.path, node.fromRev, node.fromPath, pythonbool(branchcopy))
+						record.revision, n+1, node.path, node.fromRev, node.fromPath, branchcopy)
 					// Update our .gitignore list so that it includes those
 					// in the newly created copy, to ensure they correctly
 					// get deleted during a future directory deletion.
@@ -7945,8 +7933,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			last = commit
 		}
 	} else {
-		// GO-FINALIZE: Makes debug listings look like Python's.
-		const impossibleFilename = "None"
+		const impossibleFilename = "//"
 		// Instead, determine a branch for each commit...
 		announce(debugEXTRACT, fmt.Sprintf("Branches: %s", sp.branches))
 		lastbranch := impossibleFilename
@@ -10324,7 +10311,6 @@ func (repo *Repository) gcBlobs() {
 		}
 	}
 	repo.events = newEvents
-	//repo.invalidateManifests()     // Might not be needed FIXME
 	repo.declareSequenceMutation("GC")
 }
 
@@ -13215,8 +13201,7 @@ func (p *AttributionEditor) doRemove(eventNo int, e Event, attrs []attrEditAttr,
 	}
 	rev := make([]int, len(sel))
 	copy(rev, sel)
-	// FIXME: Python sort is stable, this isn't.  A problem?
-	sort.Sort(sort.Reverse(sort.IntSlice(rev)))
+	sort.Stable(sort.Reverse(sort.IntSlice(rev)))
 	for _, i := range rev {
 		attrs[i].remove(e)
 	}
@@ -13439,7 +13424,6 @@ type Reposurgeon struct {
 	CmdContext
 	RepositoryList
 	SelectionParser
-	quiet            bool
 	callstack        [][]string
 	profileLog       string
 	selection        orderedIntSet
@@ -14648,7 +14632,6 @@ Dump your command list from this session so far.
 `)
 }
 
-// FIXME: Needs real post-command hook.
 func (rs *Reposurgeon) DoHistory(_line string) bool {
 	for _, line := range rs.history {
 		fmt.Println(line)
@@ -15362,15 +15345,13 @@ func (rs *Reposurgeon) DoChoose(line string) bool {
 			return false
 		}
 	}
-	//FIXME: Load order is OK for now
-	//rs.repolist.sort(key=operator.attrgetter("name"))
 	if line == "" {
 		for _, repo := range rs.repolist {
 			status := "-"
 			if rs.chosen() != nil && repo == rs.chosen() {
 				status = "*"
 			}
-			if !rs.quiet {
+			if !context.quiet {
 				fmt.Fprint(os.Stdout, rfc3339(repo.readtime)+" ")
 			}
 			fmt.Printf("%s %s\n", status, repo.name)
@@ -15575,7 +15556,7 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 				break
 			}
 		}
-		repo.fastImport(parse.stdin, parse.options, (context.verbose == 1 && !rs.quiet), "")
+		repo.fastImport(parse.stdin, parse.options, (context.verbose == 1 && !context.quiet), "")
 	} else if parse.line == "" || parse.line == "." {
 		var err2 error
 		// This is slightly asymmetrical with the write side, which
@@ -15585,14 +15566,14 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 			croak(err2.Error())
 			return false
 		}
-		repo, err2 = readRepo(cdir, parse.options, rs.preferred, rs.extractor, rs.quiet)
+		repo, err2 = readRepo(cdir, parse.options, rs.preferred, rs.extractor, context.quiet)
 		if err2 != nil {
 			croak(err2.Error())
 			return false
 		}
 	} else if isdir(parse.line) {
 		var err2 error
-		repo, err2 = readRepo(parse.line, parse.options, rs.preferred, rs.extractor, rs.quiet)
+		repo, err2 = readRepo(parse.line, parse.options, rs.preferred, rs.extractor, context.quiet)
 		if err2 != nil {
 			croak(err2.Error())
 			return false
@@ -15688,7 +15669,7 @@ func (rs *Reposurgeon) DoWrite(line string) bool {
 				break
 			}
 		}
-		rs.chosen().fastExport(rs.selection, parse.stdout, parse.options, rs.preferred, (context.verbose == 1 && !rs.quiet))
+		rs.chosen().fastExport(rs.selection, parse.stdout, parse.options, rs.preferred, (context.verbose == 1 && !context.quiet))
 	} else if isdir(parse.line) {
 		err := rs.chosen().rebuildRepo(parse.line, parse.options, rs.preferred)
 		if err != nil {
@@ -16112,7 +16093,7 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 					commit, ok := repo.events[rs.selection[0]].(CommitLike)
 					if ok {
 						blank.setParents([]CommitLike{commit})
-						repo.insertEvent(blank, rs.selection[0]+1, "vent creation from message block")
+						repo.insertEvent(blank, rs.selection[0]+1, "event creation from message block")
 					}
 				}
 			}
@@ -20809,13 +20790,13 @@ cause spurious failures in regression testing are suppressed.
 
 func (rs *Reposurgeon) DoQuiet(lineIn string) bool {
 	if lineIn == "" {
-		if rs.quiet {
+		if context.quiet {
 			rs.helpOutput("quiet on\n")
 		} else {
 			rs.helpOutput("quiet off\n")
 		}
 	} else {
-		rs.quiet = lineIn == "on"
+		context.quiet = lineIn == "on"
 	}
 	return false
 }
@@ -20984,27 +20965,27 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 	return false
 }
 
-func (rs *Reposurgeon) cleanup() {
-	// Tell all the repos we're holding to clean up.
-	announce(debugSHUFFLE, "interpreter cleanup called.")
-	for _, repo := range rs.repolist {
-		repo.cleanup()
-	}
-}
-
 func main() {
 	context.init()
 	rs := newReposurgeon()
 	interpreter := kommandant.NewKommandant(rs)
 	interpreter.EnableReadline(true)
 
-	//FIXME: Implement a cleanup command rather than this
-	//defer func() {
-	//	if e := recover(); e != nil {
-	//		fmt.Println("reposurgeon: panic recovery: ", e)
-	//	}
-	//	go rs.cleanup()
-	//}()
+	defer func() {
+		if context.verbose <= 1 {
+			if e := recover(); e != nil {
+				fmt.Println("reposurgeon: panic recovery: ", e)
+			}
+			files, err := ioutil.ReadDir("./")
+			if err == nil {
+				for _, f := range files {
+					if strings.HasPrefix(f.Name(), ".rs") && f.IsDir() {
+						os.RemoveAll(f.Name())
+					}
+				}
+			}
+		}
+	}()
 
 	if len(os.Args[1:]) == 0 {
 		os.Args = append(os.Args, "-")

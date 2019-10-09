@@ -48,6 +48,8 @@ of a Subversion strream:
    
 No output means that a compare-all showed no errors or warnings.
 
+To allow the code to emit a stack trace, set verbose to 1 or higher.
+
 == Tuning for speed ==
 
 The goal of this port is to improve conversion performance on large
