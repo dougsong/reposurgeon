@@ -5737,19 +5737,24 @@ func (pm *PathMap) pathnames() []string {
 	return v
 }
 
-type History struct {
+type HistoryManager interface {
+	apply(int, []NodeAction)
+	getActionNode(int, string) *NodeAction
+}
+
+type FastHistory struct {
 	visible map[int]*PathMap
 	visibleHere *PathMap
 }
 
-func newHistory()* History {
-	h := new(History)
+func newFastHistory() *FastHistory {
+	h := new(FastHistory)
 	h.visible = make(map[int]*PathMap)
 	h.visibleHere = newPathMap()
 	return h
 }
 
-func (h *History) apply(revision int, nodes []NodeAction) {
+func (h *FastHistory) apply(revision int, nodes []NodeAction) {
 	// Digest the suookied nodes unto the fhistory.
 	// Build the visibility map for this revision.
 	// Fill in the node from-sets.
@@ -5799,7 +5804,7 @@ func (h *History) apply(revision int, nodes []NodeAction) {
 	}
 }
 
-func (h *History) getActionNode(revision int, source string) *NodeAction {
+func (h *FastHistory) getActionNode(revision int, source string) *NodeAction {
 	p := h.visible[revision].get(source)
 	if p != nil {
 		return p.(*NodeAction)
@@ -5957,7 +5962,7 @@ type StreamParser struct {
 	activeGitignores     map[string]string
 	large                bool
 	propagate            map[string]bool
-	history              *History
+	history              HistoryManager
 }
 
 type daglink struct {
@@ -7005,7 +7010,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 
 	nobranch := options.Contains("--nobranch")
 
-	sp.history = newHistory()
+	sp.history = newFastHistory()
 
 	// Build commits
 	// This code can eat your processor, so we make it give up

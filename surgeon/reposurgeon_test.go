@@ -1670,7 +1670,7 @@ func TestPathMap(t *testing.T) {
 
 // Factored this way because it will be used for mutiple implementations
 // of the history manager.
-func historyTester(t *testing.T, h *History) {
+func historyTester(t *testing.T, h HistoryManager) {
 	//data := digest(samplebranch)
 	//t.Errorf("I see: %v", data)
 }
@@ -1688,7 +1688,7 @@ const samplebranch = `
 `
 // digest takes a string in the format emitted by repocutter see
 // and return a slice of slices of NodeAction objects.
-func digest(text string, h *History) [][]NodeAction {
+func digest(text string, h HistoryManager) [][]NodeAction {
 	intOrDie := func(txt string) int {
 		n, err := strconv.Atoi(txt)
 		if err != nil {
@@ -1735,9 +1735,9 @@ func digest(text string, h *History) [][]NodeAction {
 	return out
 }
 
-func assertAncestor(t *testing.T, h *History, data [][]NodeAction, lateRev, lateInd, earlyRev, earlyInd int) {
+func assertAncestor(t *testing.T, h HistoryManager, data [][]NodeAction, lateRev, lateInd, earlyRev, earlyInd int) {
 }
 
 func TestHistoryManager(t *testing.T) {
-	historyTester(t, newHistory())
+	historyTester(t, newFastHistory())
 }
