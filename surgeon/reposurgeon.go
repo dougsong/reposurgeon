@@ -7541,7 +7541,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						// pure property change.  There's no
 						// way to figure out what mark to use
 						// in a fileop.
-						// FIXME: Ideally we'd like a report of source line number here.
 						if !strings.HasSuffix(node.path, ".gitignore") {
 							complain(fmt.Sprintf("r%d~%s: permission information may be lost.",
 								node.revision, node.path))
@@ -8467,6 +8466,18 @@ func (c Contributor) isEmpty() bool {
 	return c.local == ""
 }
 
+func (c ContributorID) resolve(repo *Repository) ContributorID {
+	for {
+		found, ok := repo.aliases[c]
+		if ok && !((c.fullname == "" || c.fullname == found.fullname) && c.email == found.email) {
+			c = repo.aliases[c]
+			continue
+		}
+		break
+	}
+	return c
+}
+
 // TimeMark is an elapsed-time record for profiling
 type TimeMark struct {
 	label string
@@ -8845,8 +8856,11 @@ func (repo *Repository) named(ref string) orderedIntSet {
 		}
 	}
 	emailID := ""
+	resolveAlias := func(a string) string{
+		return ContributorID{"", intern(a)}.resolve(repo).email
+	}
 	if err2 == nil && bang > -1 {
-		emailID = ref[bang+1:]
+		emailID = resolveAlias(ref[bang+1:])
 	}
 	matches := newOrderedIntSet()
 	if datematch != nil {
@@ -8857,18 +8871,16 @@ func (repo *Repository) named(ref string) orderedIntSet {
 				if !datematch(commit.committer.date) {
 					continue
 				}
-				// FIXME: Recognize aliases here
-				if len(emailID) != 0 && commit.committer.email != emailID {
+				if len(emailID) != 0 && resolveAlias(commit.committer.email) != emailID {
 					continue
 				} else {
 					matches.Add(ei)
 				}
 			case *Tag:
 				tag := event.(*Tag)
-				// FIXME: Recognize aliases here
 				if !datematch(tag.tagger.date) {
 					continue
-				} else if len(emailID) != 0 && tag.tagger.email != emailID {
+				} else if len(emailID) != 0 && resolveAlias(tag.tagger.email) != emailID {
 					continue
 				} else {
 					matches.Add(ei)
@@ -9272,8 +9284,7 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 				deletia = append(deletia, index)
 			} else {
 				msg := ""
-				if commit.legacyID != "" {
-					// FIXME: Subversion assumption
+				if commit.legacyID != "" && repo.vcs != nil && repo.vcs.name == "svn" {
 					msg += fmt.Sprintf(" r%s:", commit.legacyID)
 				} else if commit.mark != "" {
 					msg += fmt.Sprintf(" '%s':", commit.mark)
@@ -20943,6 +20954,7 @@ func main() {
 	interpreter.EnableReadline(true)
 
 	defer func() {
+		/*
 		if context.verbose <= 1 {
 			if e := recover(); e != nil {
 				fmt.Println("reposurgeon: panic recovery: ", e)
@@ -20956,6 +20968,7 @@ func main() {
 				}
 			}
 		}
+		*/
 	}()
 
 	if len(os.Args[1:]) == 0 {

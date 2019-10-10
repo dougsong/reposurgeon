@@ -452,7 +452,8 @@ to a selection set of all matching commits.</para>
       <row>
         <entry align='center'>action stamp (timestamp!email)</entry>
         <entry align='center'><para>commits or tags with that timestamp and
-        author (or committer if no author).</para></entry>
+        author (or committer if no author).  Aliases of the author
+	are also accepted.</para></entry>
       </row>
       <row>
         <entry align='center'>yyyy-mm-dd part of RFC3339 timestamp</entry>
