@@ -7659,7 +7659,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// Create all commits corresponding to the revision
 		newcommits := make([]Event, 0)
 		commit.legacyID = fmt.Sprintf("%d", record.revision)
-		// FIXME: Questionable - should maybe be testing length of branch clique list here
 		if len(otherOps) <= 1 {
 			// In the ordinary case (1 or 0 non-delete ops), we can assign all non-deleteall fileops
 			// to the base commit.
@@ -8037,13 +8036,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				item.child.addParentCommit(item.parent)
 			}
 		}
-		//FIXME: This test is not correct.  What was the Python trying to validate?
-		//for _, root := range branchroots {
-		//        if len(root.operations()) != 0 && root.Branch != ("trunk" + svnSep) {
-		//		sp.gripe(fmt.Sprintf("r%s: can't connect nonempty branch %s to origin",
-		//			root.legacyID, root.Branch))
-		///       }
-		//}
 		timeit("branchlinks")
 		// Add links due to svn:mergeinfo properties
 		mergeinfo := newPathMap()
@@ -8284,16 +8276,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 		// Otherwise, generate one for inspection.
 		legend := []string{fmt.Sprintf("[[Tag from zero-fileop commit at Subversion r%s", commit.legacyID)}
-		/* FIXME: Restore this someday - got more diffcult to do when revisions stopped being a map.
-		                // This guard can fail on a split commit
-				idx := sp.repo.eventToIndex(commit)
-				if _, split := splitCommits[idx]; split {
-					legend = append(legend, ":\n")
-					for _, node := range sp.revisions[idx].nodes {
-						legend = append(legend, node.String() + "\n")
-					}
-		                }
-		*/
 		legend = append(legend, "]]\n")
 		return strings.Join(legend, "")
 	}
@@ -20280,10 +20262,6 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 						if commit.authors[len(commit.authors)-1].email == commit.committer.email {
 							commit.authors = commit.authors[:len(commit.authors)-1]
 						}
-						/// FIXME: Re-enable
-						// Someday, detect whether target VCS allows
-						// multiple authors and append unconditonally
-						// if so.
 						if len(commit.authors) == 0 {
 							matched := false
 							for _, author := range commit.authors {
