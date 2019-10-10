@@ -14,8 +14,9 @@
   Go and Python. The Python version works, the Go version needs
   fixing. There's a commented-out section documenting toposort,
 
-* The pathological-load Hg cases fail, that should be fixed.
-  They succeeded in Python.
+* The pathological-load Hg cases fail, that should be fixed.  They
+  succeeded in Python. "make REPOSURGEON=pyreposurgeon hg-regress-patho"
+  exhibits correct behavior.
 
 == Testing the code ==
 
@@ -39,7 +40,7 @@ To run a single test:
 will check the actual result of the script in foo.tst against its expected
 output in foo.chk.  No output other than the test notice is good.
 
-The "liftcheck" script is usefuk for testing the conversion correctness
+The "liftcheck" script is useful for testing the conversion correctness
 of a Subversion strream:
 
    cd test; liftcheck foo.svn
