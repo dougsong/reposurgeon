@@ -1675,6 +1675,13 @@ func historyTester(t *testing.T, h HistoryManager) {
 	//t.Errorf("I see: %v", data)
 }
 
+type n struct {
+	rev int
+	ind int
+}
+
+type htests [][2]n
+
 const samplebranch = `
 1-2   add      tags/
 1-3   add      trunk/
@@ -1686,6 +1693,12 @@ const samplebranch = `
 7-1   change   branches/samplebranch/README
 8-1   delete   branches/samplebranch
 `
+
+var samplebranchTests = htests{
+	{{7, 1}, {5, 1}},
+	{{6, 1}, {4, 1}},
+} 
+
 // digest takes a string in the format emitted by repocutter see
 // and return a slice of slices of NodeAction objects.
 func digest(text string, h HistoryManager) [][]NodeAction {

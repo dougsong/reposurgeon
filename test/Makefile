@@ -24,7 +24,7 @@ TERM := dumb
 
 default: check
 
-check: listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce \
+check: clean listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce \
 		svnload-regress \
 		git-regress git-regress-branches git-regress-merges git-regress-tags \
 		hg-regress hg-regress-branches hg-regress-merges hg-regress-tags \
