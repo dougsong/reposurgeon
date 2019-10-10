@@ -6937,16 +6937,28 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	announce(debugEXTRACT, "Pass 0: dead-branch deletion")
 	if !options.Contains("--preserve") {
 		// Identify Subversion tag/branch directories with
-		// tipdeletes && nuke them. Otherwise they're going to
-		// turn into gitspace branch and tag entities that
-		// don't die.  Happens well before tip deletes are
-		// tagified, the behavior if --preserve is on.  This
-		// pass doesn't touch trunk - any tipdelete on trunk
-		// we presume to be some kind of operator error that
-		// needs to show up under lint && be manually
-		// corrected.  FIXME: Last sentence may reflect
-		// incorrect assumption.  This should probbly
-		// be done late. not early.
+		// tipdeletes and nuke them. Otherwise they're going
+		// to turn into gitspace branch and tag entities that
+		// don't die. We don't want this, because a Subversion
+		// branch delete is not just a command to clear the
+		// branch content, it says to remove the branch from
+		// every future vie the repository history
+		//
+		// The default of --preserve off reflects a
+		// philosophical choice that the converted Subversion
+		// repository should by default be the history the
+		// operators desided to keep, not the entire history
+		// in the Subversion database including all dead branches,
+		// In large, old repositories those branches can be a
+		// vast amount of clutter.
+		//
+		// This pass doesn't touch trunk - any tipdelete on
+		// trunk we presume to be some kind of operator error
+		// that needs to show up under lint and be manually
+		// corrected.
+		//
+		// In a later phase, if --preserve was on, the tipdeletes
+		// that weren't removed here will be tagified.
 		deadbranches := newStringSet()
 		resurrectees := newStringSet()
 		for i := range sp.revisions {

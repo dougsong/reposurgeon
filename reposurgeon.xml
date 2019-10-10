@@ -3227,6 +3227,33 @@ disambiguate as necessary.</para>
 <para><application>reposurgeon</application> can read Subversion
 dumpfiles. You must point it at a repository, not a checkout directory.</para>
 
+<para>The transaction model of Subversion is nothing like that of the 
+DVCSes (distributed version control systems) that followed it. Two of the more
+obvious differences are around tags and branches.</para>
+
+<para>A Subversion tag isn't an annotation attached to a commit, it's
+a copy of the state of an entire branch at a particular revision. This
+can be losslessly translated to an annotation only if no additional commits 
+are added to the tag branch after the copy. But nothing prevents this!
+<application>reposurgeon</application> tries to do the right thing,
+creating a DVCS-style tag when it can and otherwise preserving the branch.</para>
+
+<para>There is a subtler problem around branches themselves. In a DVCS,
+deleting a branch removes it fronm the repository history entirely, a
+fact of some significance since repositories are copied around often
+enough that keeping every discared experiment forever would eventually
+drown the live content in superannuated cruft.  Subversion repositories,
+are designed on the assumption that they sit on one server and never move.
+A Subversion branch is just a directory in the branch namespace; if you
+delete it, you won't see it in following revisions but if you update
+to an older one that content will still be there.</para>
+
+<para>By default, <application>reposurgeon</application> treats branch
+deletions in a DVCS-like way, removing the history of te branch.  This
+means that it will <emphasis>not</emphasis> be live in translated revisions
+from prior to the commit time of the deletion.  However a --preserve
+option is available that prevents the removal of dead branches.</para>
+
 <refsect2><title>READING SUBVERSION REPOSITORIES</title>
 
 <para>Certain optional modifiers on the read command change
@@ -3242,7 +3269,7 @@ its behavior when reading Subversion repositories:</para>
 <listitem><para>Never discard metadata.  In particular, preserve
 branch-creation commits (and their metadata) in full rather than turning
 commits for empty branches into bare gitspace resets.  Also, preserve
-branges and tags with following tip deletes rather than nuking them;
+branches and tags with following tip deletes rather than nuking them;
 the tip deletes become tags.</para></listitem>
 </varlistentry>
 <varlistentry>
