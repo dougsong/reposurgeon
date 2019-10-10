@@ -2606,6 +2606,12 @@ type Context struct {
 	flagOptions map[string]bool
 	listOptions map[string]stringSet
 	mapOptions  map[string]map[string]string
+	branchMappings []branchMapping
+}
+
+type branchMapping struct {
+	match   *regexp.Regexp
+	replace string
 }
 
 func (ctx *Context) init() {
@@ -8280,15 +8286,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		return strings.Join(legend, "")
 	}
 
-	//  FIXME: Do precompilation earlier and bail out on a bad regexp rather than panicking
-	type branchMapping struct {
-		match   *regexp.Regexp
-		replace string
-	}
-	branchMappings := make([]branchMapping, 0)
-	for key, value := range context.mapOptions["svn_branch_mapping"] {
-		branchMappings = append(branchMappings, branchMapping{regexp.MustCompile(key), value})
-	}
 	if sp.large {
 		baton.twirl("6")
 	} else {
@@ -8302,7 +8299,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			continue
 		}
 		matched := false
-		for _, item := range branchMappings {
+		for _, item := range context.branchMappings {
 			result := GoReplacer(item.match, commit.Branch, item.replace)
 			if result != commit.Branch {
 				matched = true
@@ -13418,7 +13415,6 @@ func newReposurgeon() *Reposurgeon {
 		context.listOptions[option[0]] = newStringSet()
 	}
 	context.listOptions["svn_branchify"] = stringSet{"trunk", "tags/*", "branches/*", "*"}
-	context.mapOptions["svn_branch_mapping"] = make(map[string]string)
 	return rs
 }
 
@@ -19701,10 +19697,12 @@ func (rs *Reposurgeon) DoBranchmap(line string) bool {
 		croak("branchmap does not take a selection set")
 		return false
 	}
+
 	line = strings.TrimSpace(line)
 	if line == "reset" {
-		context.mapOptions["svn_branch_mapping"] = make(map[string]string)
+		context.branchMappings = nil
 	} else if line != "" {
+		context.branchMappings = make([]branchMapping, 0)
 		for _, regex := range strings.Fields(line) {
 			separator := regex[0]
 			if separator != regex[len(regex)-1] {
@@ -19717,18 +19715,18 @@ func (rs *Reposurgeon) DoBranchmap(line string) bool {
 				croak("Regex '%s' has an empty search or replace part", regex)
 				return false
 			}
-			context.mapOptions["svn_branch_mapping"][match] = replace
+			re, err := regexp.Compile(match)
+			if err != nil {
+				croak("Regex '%s' is ill-formed", regex)
+				return false
+			}
+			context.branchMappings = append(context.branchMappings, branchMapping{re, replace})
 		}
 	}
-	if len(context.mapOptions["svn_branch_mapping"]) != 0 {
+	if len(context.branchMappings) != 0 {
 		announce(debugSHOUT, "branchmap, regex -> branch name:")
-		keys := make([]string, 0)
-		for match := range context.mapOptions["svn_branch_mapping"] {
-			keys = append(keys, match)
-		}
-		sort.Strings(keys)
-		for _, k := range keys {
-			announce(debugSHOUT, "\t"+k+" -> "+context.mapOptions["svn_branch_mapping"][k])
+		for _, pair := range context.branchMappings {
+			announce(debugSHOUT, "\t"+ pair.match.String() +" -> " + pair.replace)
 		}
 	} else {
 		croak("branchmap is empty.")
