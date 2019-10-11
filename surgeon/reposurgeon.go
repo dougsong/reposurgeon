@@ -106,6 +106,7 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
+	"unsafe"	// Actually safe - only uses Sizeof 
 
 	shlex "github.com/anmitsu/go-shlex"
 	orderedset "github.com/emirpasic/gods/sets/linkedhashset"
@@ -2597,7 +2598,7 @@ anything up to and including making demons fly out of your nose.
 type Context struct {
 	verbose int
 	quiet bool
-	blobseq int
+	blobseq blobidx
 	signals chan os.Signal
 	// The abort flag
 	relax       bool
@@ -3295,19 +3296,21 @@ func (c Cookie) implies() string {
 	return "svn"
 }
 
+type blobidx uint32	// Any larger makes the Blob structure 64 bytes more expensive 
+
 // Blob represents a detached blob of data referenced by a mark.
 type Blob struct {
-	repo         *Repository
-	blobseq      int
 	mark         string
-	pathlist     []string  // In-repo paths associated with this blob
-	colors       stringSet // Scratch space for grapg coloring algorithms
-	cookie       Cookie    // CVS/SVN cookie analyzed out of this file
-	start        int64     // Seek start if this blob refers into a dump
-	size         int64     // length start if this blob refers into a dump
 	abspath      string
-	deleteme     bool
+	repo         *Repository
+	pathlist     []string    // In-repo paths associated with this blob
+	start        int64       // Seek start if this blob refers into a dump
+	size         int64       // length start if this blob refers into a dump
 	_expungehook *Blob
+	cookie       Cookie      // CVS/SVN cookie analyzed out of this file
+	blobseq      blobidx
+	colors       colorSet    // Scratch space for grapg coloring algorithms
+	deleteme     bool
 }
 
 const noOffset = -1
@@ -3316,10 +3319,12 @@ func newBlob(repo *Repository) *Blob {
 	b := new(Blob)
 	b.repo = repo
 	b.pathlist = make([]string, 0) // These have an implied sequence.
-	b.colors = newStringSet()
 	b.start = noOffset
 	b.blobseq = context.blobseq
 	context.blobseq++
+	if context.blobseq == ^blobidx(0) {
+		panic("blob index overflow, rebuild with a larger size")
+	}
 	return b
 }
 
@@ -3501,7 +3506,7 @@ func (b *Blob) clone(repo *Repository) *Blob {
 	c := b // copy scalar fields
 	c.pathlist = make([]string, len(b.pathlist))
 	copy(c.pathlist, b.pathlist)
-	c.colors = newStringSet()
+	c.colors.Clear()
 	if b.hasfile() {
 		announce(debugSHUFFLE,
 			"blob clone for %s (%s) calls os.Link(): %s -> %s", b.mark, b.pathlist, b.getBlobfile(false), c.getBlobfile(false))
@@ -3567,11 +3572,11 @@ func (b Blob) String() string {
 type Tag struct {
 	repo       *Repository
 	name       string
-	color      string
 	committish string
 	tagger     *Attribution
 	Comment    string
 	legacyID   string
+	color      colorType
 	deleteme   bool
 }
 
@@ -4165,8 +4170,8 @@ type Callout struct {
 	mark        string
 	branch      string
 	_childNodes []string
+	color       colorType
 	deleteme    bool
-	color       string
 }
 
 func newCallout(mark string) *Callout {
@@ -4217,11 +4222,11 @@ type ManifestEntry struct {
 	inline string
 }
 
-func (callout Callout) getColor() string {
+func (callout Callout) getColor() colorType {
 	return callout.color
 }
 
-func (callout *Callout) setColor(color string) {
+func (callout *Callout) setColor(color colorType) {
 	callout.color = color
 }
 
@@ -4235,6 +4240,27 @@ func (m *ManifestEntry) equals(other *ManifestEntry) bool {
 	return *m == *other
 }
 
+const colorNONE = 0
+const colorEARLY = 1
+const colorLATE = 2
+type colorType uint8
+type colorSet uint8
+
+func (c colorSet) Contains(a colorType) bool {
+	return uint8(1 << a) != 0
+}
+
+func (c *colorSet) Add(a colorType) {
+	*c |= colorSet(1 << a)
+}
+
+func (c *colorSet) Remove(a colorType) {
+	*c &= colorSet(^(1 << a))
+}
+func (c *colorSet) Clear() {
+	*c = colorSet(0)
+}
+
 // Commit represents a commit event in a fast-export stream
 type Commit struct {
 	repo         *Repository
@@ -4246,14 +4272,14 @@ type Commit struct {
 	fileops      []FileOp      // blob and file operation list
 	properties   OrderedMap    // commit properties (extension)
 	_manifest    map[string]*ManifestEntry
-	color        string       // Scratch storage for graph-coloring
 	legacyID     string       // Commit's ID in an alien system
 	common       string       // Used only by the Subversion parser
-	deleteme     bool         // Flag used during deletion operations
 	attachments  []Event      // Tags and Resets pointing at this commit
 	_parentNodes []CommitLike // list of parent nodes
 	_childNodes  []CommitLike // list of child nodes
 	_expungehook *Commit
+	color        colorType    // Scratch storage for graph-coloring
+	deleteme     bool         // Flag used during deletion operations
 }
 
 func (commit Commit) getDelFlag() bool {
@@ -4280,11 +4306,11 @@ func newCommit(repo *Repository) *Commit {
 	return commit
 }
 
-func (commit Commit) getColor() string {
+func (commit Commit) getColor() colorType {
 	return commit.color
 }
 
-func (commit *Commit) setColor(color string) {
+func (commit *Commit) setColor(color colorType) {
 	commit.color = color
 }
 
@@ -4407,7 +4433,7 @@ func (commit *Commit) clone(repo *Repository) *Commit {
 	copy(c.authors, commit.authors)
 	c.setOperations(nil)
 	//c.filemap = nil
-	c.color = ""
+	c.color = colorNONE
 	if repo != nil {
 		c.repo = repo
 	}
@@ -5738,23 +5764,23 @@ func (pm *PathMap) pathnames() []string {
 }
 
 type HistoryManager interface {
-	apply(int, []NodeAction)
-	getActionNode(int, string) *NodeAction
+	apply(revidx, []NodeAction)
+	getActionNode(revidx, string) *NodeAction
 }
 
 type FastHistory struct {
-	visible map[int]*PathMap
+	visible map[revidx]*PathMap
 	visibleHere *PathMap
 }
 
 func newFastHistory() *FastHistory {
 	h := new(FastHistory)
-	h.visible = make(map[int]*PathMap)
+	h.visible = make(map[revidx]*PathMap)
 	h.visibleHere = newPathMap()
 	return h
 }
 
-func (h *FastHistory) apply(revision int, nodes []NodeAction) {
+func (h *FastHistory) apply(revision revidx, nodes []NodeAction) {
 	// Digest the suookied nodes unto the fhistory.
 	// Build the visibility map for this revision.
 	// Fill in the node from-sets.
@@ -5804,7 +5830,7 @@ func (h *FastHistory) apply(revision int, nodes []NodeAction) {
 	}
 }
 
-func (h *FastHistory) getActionNode(revision int, source string) *NodeAction {
+func (h *FastHistory) getActionNode(revision revidx, source string) *NodeAction {
 	p := h.visible[revision].get(source)
 	if p != nil {
 		return p.(*NodeAction)
@@ -5848,27 +5874,36 @@ var ignoreProperties = map[string]bool{
 	"svn:eol-style":  true, // Don't want to suppress, but cvs2svn floods these.
 }
 
+// Short types for these saves space in very large arrays of repository structures
+
+type revidx uint32
+type nodeidx uint16
+
+func intToRevidx(revint int) revidx {
+	return revidx(revint & int(^revidx(0)))
+}
+
+func intToNodeidx(nodeint int) nodeidx {
+	return nodeidx(nodeint & int(^nodeidx(0)))
+}
+
 // NodeAction represents a file-modification action in a Subversion dump stream.
-// Don't rely on addresses of these structures to be stable durung the entire
-// parse phase, there's a compacting copy that breaks that assumption.
 type NodeAction struct {
-	// These are set during parsing.  Can all initially have zero values
-	revision    int
-	index       int
 	path        string
-	kind        uint8
-	action      uint8 // initially sdNONE
-	fromRev     int
 	fromPath    string
 	contentHash string
 	fromHash    string
+	blobmark    string
 	blob        *Blob
 	props       *OrderedMap
+	fromSet     *PathMap
+	revision    revidx
+	fromRev     revidx
+	index       nodeidx
+	kind        uint8
+	action      uint8 // initially sdNONE
+	generated   bool
 	propchange  bool
-	// These are set during the analysis phase
-	fromSet   *PathMap
-	blobmark  string
-	generated bool
 }
 
 func (action NodeAction) String() string {
@@ -5907,15 +5942,15 @@ func (action NodeAction) hasProperties() bool {
 // has gaps). Processing of such streams is not well-tested and will
 // probably fail.
 type RevisionRecord struct {
-	revision int
 	nodes    []NodeAction
 	log      string
 	date     string
 	author   string
 	props    OrderedMap
+	revision revidx
 }
 
-func newRevisionRecord(nodes []NodeAction, props OrderedMap, revision int) *RevisionRecord {
+func newRevisionRecord(nodes []NodeAction, props OrderedMap, revision revidx) *RevisionRecord {
 	rr := new(RevisionRecord)
 	rr.revision = revision
 	rr.nodes = nodes
@@ -6290,10 +6325,11 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 		} else if strings.HasPrefix(line, "Revision-number: ") {
 			// Begin Revision processing
 			announce(debugSVNPARSE, "revision parsing, line %d: begins", sp.importLine)
-			revision, rerr := strconv.Atoi(sdBody(line))
+			revint, rerr := strconv.Atoi(sdBody(line))
 			if rerr != nil {
 				panic(throw("parse", "ill-formed revision number: "+line))
 			}
+			revision := intToRevidx(revint)
 			plen := parseInt(sp.sdRequireHeader("Prop-content-length"))
 			sp.sdRequireHeader("Content-length")
 			sp.sdRequireSpacer()
@@ -6415,7 +6451,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 						// 7 dumps.
 						if !(node.action == sdCHANGE && !node.hasProperties() && node.blob == nil && node.fromRev == 0) {
 							announce(debugSVNPARSE, "node parsing, line %d: node %s appended", sp.importLine, node)
-							node.index = len(nodes) + 1
+							node.index = nodeidx((len(nodes) + 1) & int(^nodeidx(0)))
 							nodes = append(nodes, *node)
 						} else {
 							announce(debugSVNPARSE, "node parsing, line %d: empty node rejected", sp.importLine)
@@ -6471,7 +6507,8 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 					if node == nil {
 						node = new(NodeAction)
 					}
-					node.fromRev = parseInt(sdBody(line))
+					uintrev, _ := strconv.ParseUint(sdBody(line), 10, int((unsafe.Sizeof(revidx(0)) * 8)) & ^int(0))
+					node.fromRev = revidx(uintrev & uint64(^revidx(0)))
 				} else if strings.HasPrefix(line, "Node-copyfrom-path: ") {
 					if node == nil {
 						node = new(NodeAction)
@@ -6503,6 +6540,9 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 			announce(debugSVNPARSE, "revision parsing, line %d: r%d ends with %d nodes", sp.importLine, newRecord.revision, len(newRecord.nodes))
 			sp.revisions = appendRevisionRecords(sp.revisions, *newRecord)
 			sp.repo.legacyCount++
+			if sp.repo.legacyCount == int(^revidx(0) - 1) {
+				panic("revision counter overflow, recompile with a larger size")
+			}
 			// End Revision processing
 			baton.readProgress(sp.ccount, filesize)
 		}
@@ -7143,12 +7183,12 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			continue
 		}
 
-		sp.history.apply(ri, record.nodes)
+		sp.history.apply(intToRevidx(ri), record.nodes)
 		
 		expandedNodes := make([]*NodeAction, 0)
 		appendExpanded := func(newnode *NodeAction) {
 			newnode.generated = true
-			newnode.index = len(record.nodes) + len(expandedNodes) + 1
+			newnode.index = intToNodeidx(len(record.nodes) + len(expandedNodes) + 1)
 			expandedNodes = append(expandedNodes, newnode)
 		}
 		hasProperties := newStringSet()
@@ -7811,7 +7851,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 				if latest != nil {
 					prev := lastRelevantCommit(sp,
-						latest.fromRev, latest.fromPath,
+						int(latest.fromRev), latest.fromPath,
 						"common")
 					if prev == nil {
 						if debugEnable(debugTOPOLOGY) {
@@ -8043,7 +8083,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		timeit("branchlinks")
 		// Add links due to svn:mergeinfo properties
 		mergeinfo := newPathMap()
-		mergeinfos := make(map[int]*PathMap)
+		mergeinfos := make(map[revidx]*PathMap)
 		getMerges := func(minfo *PathMap, path string) stringSet {
 			rawOldMerges := minfo.get(path)
 			var eMerges stringSet
@@ -8108,7 +8148,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 									fromRev = fromRev[:len(fromRev)-1]
 								}
 								// Import mergeinfo from merged branches
-								past, ok := mergeinfos[parseInt(fromRev)]
+								past, ok := mergeinfos[intToRevidx(parseInt(fromRev))]
 								if !ok {
 									past = newPathMap()
 								}
@@ -8158,7 +8198,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 				nodups = nil	// Not necessary, but explicit is good
 			}
-			mergeinfos[revision] = mergeinfo.snapshot()
+			mergeinfos[intToRevidx(revision)] = mergeinfo.snapshot()
 			baton.twirl("")
 		}
 		// Allow mergeinfo storage to be garbage-collected
@@ -8449,8 +8489,8 @@ type CommitLike interface {
 	moveto(*Repository)
 	getDelFlag() bool
 	setDelFlag(bool)
-	getColor() string
-	setColor(string)
+	getColor() colorType
+	setColor(colorType)
 }
 
 // Contributor - associate a username with a DVCS-style ID and timezone
@@ -11693,28 +11733,28 @@ func (rl *RepositoryList) cutConflict(early *Commit, late *Commit) (bool, int, e
 		return false, -1, err
 	}
 	late.removeParent(early)
-	doColor := func(commitlike CommitLike, color string) {
+	doColor := func(commitlike CommitLike, color colorType) {
 		commitlike.setColor(color)
 		if commit, ok := commitlike.(*Commit); ok {
 			for _, fileop := range commit.operations() {
 				if fileop.op == opM && fileop.ref != "inline" {
 					blob := rl.repo.markToEvent(fileop.ref)
 					//assert isinstance(repo.repo[blob], Blob)
-					blob.(*Blob).colors = append(blob.(*Blob).colors, color)
+					blob.(*Blob).colors.Add(color)
 				}
 			}
 		}
 	}
-	doColor(early, "early")
-	doColor(late, "late")
+	doColor(early, colorEARLY)
+	doColor(late,  colorLATE)
 	conflict := false
 	keepgoing := true
 	for keepgoing && !conflict {
 		keepgoing = false
 		for _, event := range rl.repo.commits(nil) {
-			if event.color != "" {
+			if event.color != 0 {
 				for _, neighbor := range event.parents() {
-					if neighbor.getColor() == "" {
+					if neighbor.getColor() == colorNONE {
 						doColor(neighbor, event.color)
 						keepgoing = true
 						break
@@ -11724,7 +11764,7 @@ func (rl *RepositoryList) cutConflict(early *Commit, late *Commit) (bool, int, e
 					}
 				}
 				for _, neighbor := range event.children() {
-					if neighbor.getColor() == "" {
+					if neighbor.getColor() == colorNONE {
 						doColor(neighbor, event.color)
 						keepgoing = true
 						break
@@ -11745,9 +11785,9 @@ func (repo *Repository) cutClear(early *Commit, late *Commit, cutIndex int) {
 	for _, event := range repo.events {
 		switch event.(type) {
 		case *Blob:
-			event.(*Blob).colors = nil
+			event.(*Blob).colors.Clear()
 		case *Commit:
-			event.(*Commit).color = ""
+			event.(*Commit).color = colorNONE
 		}
 	}
 }
@@ -11787,11 +11827,11 @@ func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
 	earlyBranches := newStringSet()
 	lateBranches := newStringSet()
 	for _, commit := range rl.repo.commits(nil) {
-		if commit.color == "" {
+		if commit.color == colorNONE {
 			croak(fmt.Sprintf("%s is uncolored!", commit.mark))
-		} else if commit.color == "early" {
+		} else if commit.color == colorEARLY {
 			earlyBranches.Add(commit.Branch)
-		} else if commit.color == "late" {
+		} else if commit.color == colorLATE {
 			lateBranches.Add(commit.Branch)
 		}
 	}
@@ -11809,10 +11849,10 @@ func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
 				latePart.addEvent(reset)
 			}
 		} else if blob, ok := event.(*Blob); ok {
-			if blob.colors.Contains("early") {
+			if blob.colors.Contains(colorEARLY) {
 				earlyPart.addEvent(blob.clone(earlyPart))
 			}
-			if blob.colors.Contains("late") {
+			if blob.colors.Contains(colorLATE) {
 				latePart.addEvent(blob.clone(latePart))
 			}
 		} else {
@@ -11829,20 +11869,20 @@ func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
 					panic(fmt.Sprintf("coloring algorithm failed on %s", event.idMe()))
 				}
 			} else if commit, ok := event.(*Commit); ok {
-				if commit.color == "early" {
+				if commit.color == colorEARLY {
 					commit.moveto(earlyPart)
 					earlyPart.addEvent(commit)
-				} else if commit.color == "late" {
+				} else if commit.color == colorLATE {
 					commit.moveto(latePart)
 					latePart.addEvent(commit)
 				} else {
 					panic(fmt.Sprintf("coloring algorithm failed on %s", event.idMe()))
 				}
 			} else if tag, ok := event.(*Tag); ok {
-				if tag.color == "early" {
+				if tag.color == colorEARLY {
 					tag.moveto(earlyPart)
 					earlyPart.addEvent(tag)
-				} else if tag.color == "late" {
+				} else if tag.color == colorLATE {
 					tag.moveto(latePart)
 					latePart.addEvent(tag)
 				} else {
@@ -20949,6 +20989,41 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 	rs.inputIsStdin = existingInputIsStdin
 
 	rs.callstack = rs.callstack[:len(rs.callstack)-1]
+	return false
+}
+
+// DoSizes is for developer use when optimizing structure packing to reduce memoru use
+// const MaxUint = ^uint(0) 
+// const MinUint = 0 
+// const MaxInt = int(MaxUint >> 1) 
+// const MinInt = -MaxInt - 1
+func (rs *Reposurgeon) DoSizeof(lineIn string) bool {
+	const wordLengthInBytes = 8
+	roundUp := func(n, m uintptr) uintptr {
+		return ((n + m - 1) / m) * m
+	}
+	explain := func(size uintptr) string {
+		out := fmt.Sprintf("%3d", size)
+		if size % wordLengthInBytes > 0 {
+			paddedSize := roundUp(size, wordLengthInBytes)
+			out += fmt.Sprintf(" (padded to %d, step down %d)", paddedSize, size % wordLengthInBytes)
+		}
+		return out
+	}
+	fmt.Printf("NodeAction:     %s\n", explain(unsafe.Sizeof(*new(NodeAction))))
+	fmt.Printf("RevisionRecord: %s\n", explain(unsafe.Sizeof(*new(RevisionRecord))))
+	fmt.Printf("Commit:         %s\n", explain(unsafe.Sizeof(*new(Commit))))
+	fmt.Printf("Callout:        %s\n", explain(unsafe.Sizeof(*new(Callout))))
+	fmt.Printf("Blob:           %s\n", explain(unsafe.Sizeof(*new(Blob))))
+	fmt.Printf("Tag:            %s\n", explain(unsafe.Sizeof(*new(Tag))))
+	fmt.Printf("Reset:          %s\n", explain(unsafe.Sizeof(*new(Reset))))
+	fmt.Printf("Attribution:    %s\n", explain(unsafe.Sizeof(*new(Attribution))))
+	fmt.Printf("blobidx:        %3d\n", unsafe.Sizeof(blobidx(0)))
+	fmt.Printf("revidx:         %3d\n", unsafe.Sizeof(revidx(0)))
+	fmt.Printf("nodeidx:        %3d\n", unsafe.Sizeof(nodeidx(0)))
+	fmt.Printf("string:         %3d\n", unsafe.Sizeof("foo"))
+	fmt.Printf("pointer:        %3d\n", unsafe.Sizeof(new(Attribution)))
+        fmt.Printf("int:            %3d\n", unsafe.Sizeof(0))
 	return false
 }
 

@@ -104,4 +104,6 @@ https://github.com/google/pprof/blob/master/doc/README.md
 
 https://www.signalfx.com/blog/a-pattern-for-optimizing-go-2/
 
-ohttp://www.agardner.me/golang/garbage/collection/gc/escape/analysis/2015/10/18/go-escape-analysis.html
+http://www.agardner.me/golang/garbage/collection/gc/escape/analysis/2015/10/18/go-escape-analysis.html
+
+https://github.com/golang/go/wiki/Performance

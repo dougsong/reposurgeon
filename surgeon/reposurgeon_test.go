@@ -1710,7 +1710,7 @@ func digest(text string, h HistoryManager) [][]NodeAction {
 		return n
 	}
 	out := make([][]NodeAction, 0)
-	var lastrev = 0
+	var lastrev revidx
 	for idx, line := range strings.Split(text, "\n") {
 		if len(line) == 0 {
 			continue
@@ -1719,8 +1719,8 @@ func digest(text string, h HistoryManager) [][]NodeAction {
 		fields := strings.Fields(line)
 		revind := strings.Split(fields[0], "-")
 		path := fields[2] 
-		x.revision = intOrDie(revind[0])
-		x.index = intOrDie(revind[1])
+		x.revision = intToRevidx(intOrDie(revind[0]))
+		x.index = intToNodeidx(intOrDie(revind[1]))
 		x.action = uint8(map[string]int{"add":sdADD,
 			"change":sdCHANGE,
 			"copy":sdADD,
@@ -1735,11 +1735,11 @@ func digest(text string, h HistoryManager) [][]NodeAction {
 		}
 		if len(fields) > 3 {
 			fromparts := strings.Split(fields[4], ":")
-			x.fromRev = intOrDie(fromparts[0])
+			x.fromRev = intToRevidx(intOrDie(fromparts[0]))
 			x.fromPath = fromparts[1]
 		}
 		if x.revision != lastrev {
-			h.apply(idx+1, out[len(out)-1])
+			h.apply(intToRevidx(idx+1), out[len(out)-1])
 			out = append(out, make([]NodeAction, 0))
 		}
 		lastrev = x.revision
