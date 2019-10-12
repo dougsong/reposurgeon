@@ -1736,6 +1736,7 @@ func digest(text string, h HistoryManager) [][]NodeAction {
 		if len(fields) > 3 {
 			fromparts := strings.Split(fields[4], ":")
 			x.fromRev = intToRevidx(intOrDie(fromparts[0]))
+			h.bumpCopycount(x.fromRev) 
 			x.fromPath = fromparts[1]
 		}
 		if x.revision != lastrev {

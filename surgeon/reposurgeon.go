@@ -2799,6 +2799,12 @@ func (d OrderedMap) Len() int {
 	return len(d.keys)
 }
 
+func (d *OrderedMap) Clear() {
+	// Allow the storage to be GCed
+	d.keys = nil
+	d.dict = nil
+}
+
 func (d OrderedMap) String() string {
 	var out = "{"
 	for _, el := range d.keys {
@@ -4291,10 +4297,10 @@ type Commit struct {
 	legacyID     string       // Commit's ID in an alien system
 	common       string       // Used only by the Subversion parser
 	mark         string        // Mark name of commit (may be None)
-	authors      []Attribution // Authors of commit
-	committer    Attribution   // Person responsible for committing it.
 	Comment      string        // Commit comment
 	Branch       string        // branch name
+	authors      []Attribution // Authors of commit
+	committer    Attribution   // Person responsible for committing it.
 	fileops      []FileOp      // blob and file operation list
 	_manifest    map[string]*ManifestEntry
 	repo         *Repository
@@ -5790,26 +5796,40 @@ func (pm *PathMap) pathnames() []string {
 	return v
 }
 
+// Now, a type to manage a collectiom of PathMaps used as a history of file visibility.
+
 type HistoryManager interface {
+	bumpCopycount(revidx)
 	apply(revidx, []NodeAction)
 	getActionNode(revidx, string) *NodeAction
+	pruneMaps()
 }
 
 type FastHistory struct {
 	visible map[revidx]*PathMap
 	visibleHere *PathMap
+	copysources map[revidx]revidx
+	nodeStash []NodeAction
+	revision revidx
 }
 
 func newFastHistory() *FastHistory {
 	h := new(FastHistory)
-	h.visible = make(map[revidx]*PathMap)
-	h.visibleHere = newPathMap()
+	h.visible = make(map[revidx]*PathMap)	// Visibility maps by revision ID
+	h.visibleHere = newPathMap()		// Snapshot of visibility after current revision ops
+	h.copysources = make(map[revidx]revidx) // Reference counts of copy source revisions.
 	return h
 }
 
+func (h *FastHistory) bumpCopycount(fromRev revidx) {
+	h.copysources[fromRev]++
+}
+
 func (h *FastHistory) apply(revision revidx, nodes []NodeAction) {
-	// Digest the suookied nodes unto the fhistory.
+	// Digest the supplied nodes into the history.
 	// Build the visibility map for this revision.
+	announce(debugFILEMAP, "r%d: copysource counts are %v",
+				revision, h.copysources)
 	// Fill in the node from-sets.
 	for idx := range nodes {
 		node := &nodes[idx]
@@ -5855,6 +5875,9 @@ func (h *FastHistory) apply(revision revidx, nodes []NodeAction) {
 			node.fromSet.copyFrom(node.fromPath, h.visible[node.fromRev], node.fromPath)
 		}
 	}
+
+	h.nodeStash = nodes	// So pruneMaps cn see it.
+	h.revision = revision
 }
 
 func (h *FastHistory) getActionNode(revision revidx, source string) *NodeAction {
@@ -5864,6 +5887,58 @@ func (h *FastHistory) getActionNode(revision revidx, source string) *NodeAction 
 	}
 	return nil
 }
+
+func (h *FastHistory) pruneMaps() {
+	// See if we can garbage-collect old visibility maps.  On
+	// large repositories the overhead of storing these can become
+	// massive.  When an entry in h.visible becomes unreachable,
+	// we want to free it.
+
+	if h.revision < 2 {
+		return
+	}
+
+	// Before this code is reached, the copysources reference
+	// counts should have been filled in.  The copy references in
+	// the current revision have been used, decrement their
+	// reference counts.  When a saved copysource revision's
+	// reference count goes to 0, we can drop it.
+	visibleRevs := make(map[revidx]bool)
+	for _, node := range h.nodeStash {
+		visibleRevs[node.revision] = true
+		if node.fromRev > 0 {
+			h.copysources[node.fromRev]--
+			if h.copysources[node.fromRev] == 0 {
+				delete(h.copysources, node.fromRev) 
+			}
+		}
+	}
+
+	// Drop every filemap for a revision that (a) has no nodes now
+	// visible, and (b) is not a reachable copysource from
+	// anywhere in the future.  Here's the reasoning:
+	// 
+	// As the revision counter increments, file paths enter the
+	// visibility map, but they never leave it.  Once introduced,
+	// the visibility map node for a path is always a modification
+	// node or a deletion.
+	//
+	// Thus, we never have to look back past
+	// the most recent visibility map to find a node ancestor
+	// *unless* we go through a copyfrom link. Which can only land
+	// on a copysource with a nonzero reference count.
+	//
+	// Assumption: revision starts at zero and is incrementsed before
+	// each call to the apply() method.
+	for rev := range h.visible {
+		if !visibleRevs[rev] && h.copysources[rev] == 0 {
+			announce(debugFILEMAP, "r%d: dropping filemaps for these revisions: %v",
+				h.revision, h.copysources)
+			delete(h.visible, rev)
+		}
+	}
+}
+
 
 // Stream parsing
 //
@@ -7029,10 +7104,14 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// that weren't removed here will be tagified.
 		deadbranches := newStringSet()
 		resurrectees := newStringSet()
+		sp.history = newFastHistory()
 		for i := range sp.revisions {
 			backup := len(sp.revisions) - i - 1
 			for j := range sp.revisions[backup].nodes {
 				node := &sp.revisions[backup].nodes[len(sp.revisions[backup].nodes)-j-1]
+				if node.fromRev > 0 {
+					sp.history.bumpCopycount(node.fromRev)
+				}
 				if !strings.HasPrefix(node.path, "tags") && !strings.HasPrefix(node.path, "branches") {
 					continue
 				}
@@ -7072,8 +7151,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	timeit("pruning")
 
 	nobranch := options.Contains("--nobranch")
-
-	sp.history = newFastHistory()
 
 	// Build commits
 	// This code can eat your processor, so we make it give up
@@ -7200,6 +7277,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 		if record.props.Len() > 0 {
 			commit.properties = &record.props
+			record.props.Clear()
 		}
 		// Zero revision is never interesting - no operations, no
 		// comment, no author, it's just a start marker for a
