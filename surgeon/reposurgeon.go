@@ -120,11 +120,18 @@ import _ "net/http/pprof"
 
 const version = "4.0-pre"
 
-// Tuning constants
+// Tuning constants and types
 
 // Maximim number of 64-bit things (pointers) to allocate at once.
 // Used in some code for efficient exponential chunk grabbing.
 const maxAlloc = 100000
+
+// Short types for these saves space in very large arrays of repository structures.
+// But they're mainly here to avoid strings, which are expensive (16 bytes) in Go.
+type markidx uint32	// Mark indicies
+type blobidx uint32	// Blob indices. Should not be narrower than mark indices.
+type revidx uint32	// Revision indices
+type nodeidx uint16	// Node indices within revisions 
 
 // Go's panic/defer/recover feature is a weak primitive for catchable
 // exceptions, but it's all we have. So we write a throw/catch pair;
@@ -2115,7 +2122,7 @@ type RepoStreamer struct {
 	tagseq             int
 	commitMap          map[string]*Commit
 	visibleFiles       map[string]map[string]signature
-	hashToMark         map[[sha1.Size]byte]string
+	hashToMark         map[[sha1.Size]byte]markidx
 	branchesAreColored bool
 	baton              *Baton
 	extractor          Extractor
@@ -2131,7 +2138,7 @@ func newRepoStreamer(extractor Extractor) *RepoStreamer {
 	rs.tagseq = 0
 	rs.commitMap = make(map[string]*Commit)
 	rs.visibleFiles = make(map[string]map[string]signature)
-	rs.hashToMark = make(map[[sha1.Size]byte]string)
+	rs.hashToMark = make(map[[sha1.Size]byte]markidx)
 	rs.extractor = extractor
 	return rs
 }
@@ -2320,7 +2327,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 							op := newFileOp(repo)
 							op.construct("M",
 								newsig.perms,
-								rs.hashToMark[newsig.hashval],
+								rs.hashToMark[newsig.hashval].String(),
 								pathname)
 							commit.appendOperation(*op)
 						}
@@ -2330,18 +2337,18 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 					// any existing blobs
 					//announce(debugEXTRACT, "%s: %s has new hash %v",
 					//	trunc(revision), pathname, shortdump(newsig.hashval))
-					blobmark := repo.newmark()
+					blobmark := markNumber(repo.newmark())
 					rs.hashToMark[newsig.hashval] = blobmark
 					// Actual content enters the representation
 					blob := newBlob(repo)
-					blob.setMark(blobmark)
+					blob.setMark(blobmark.String())
 					//announce(debugEXTRACT, "%s: blob gets mark %s", trunc(revision), blob.mark)
 					filecopy(pathname, blob.getBlobfile(true))
 					blob.addalias(pathname)
 					repo.addEvent(blob)
 					// Its new fileop is added to the commit
 					op := newFileOp(repo)
-					op.construct("M", newsig.perms, blobmark, pathname)
+					op.construct("M", newsig.perms, blobmark.String(), pathname)
 					commit.appendOperation(*op)
 				}
 				rs.visibleFiles[revision][pathname] = *newsig
@@ -3296,7 +3303,24 @@ func (c Cookie) implies() string {
 	return "svn"
 }
 
-type blobidx uint32	// Any larger makes the Blob structure 64 bytes more expensive 
+const emptyMark = markidx(0)
+const maxMark = ^markidx(0)
+
+func (m markidx) String() string {
+	if m == emptyMark {
+		return ""
+	}
+	return fmt.Sprintf(":%d", m)
+}
+
+func markNumber(markstring string) markidx {
+	n, _ := strconv.Atoi(markstring[1:])
+	return markidx(n & int(^markidx(0)))
+}
+ 
+func intToMarkidx(markint int) markidx {
+	return markidx(markint & int(^markidx(0)))
+}
 
 // Blob represents a detached blob of data referenced by a mark.
 type Blob struct {
@@ -5874,11 +5898,6 @@ var ignoreProperties = map[string]bool{
 	"svn:eol-style":  true, // Don't want to suppress, but cvs2svn floods these.
 }
 
-// Short types for these saves space in very large arrays of repository structures
-
-type revidx uint32
-type nodeidx uint16
-
 func intToRevidx(revint int) revidx {
 	return revidx(revint & int(^revidx(0)))
 }
@@ -5893,10 +5912,10 @@ type NodeAction struct {
 	fromPath    string
 	contentHash string
 	fromHash    string
-	blobmark    string
 	blob        *Blob
 	props       *OrderedMap
 	fromSet     *PathMap
+	blobmark    markidx
 	revision    revidx
 	fromRev     revidx
 	index       nodeidx
@@ -7550,7 +7569,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					if node.blob != nil {
 						if lookback, ok := sp.hashmap[node.contentHash]; ok {
 							announce(debugEXTRACT, "r%d: blob of %s matches existing hash %s, assigning '%s' from %s",
-								record.revision, node, node.contentHash, lookback.blobmark, lookback)
+								record.revision, node, node.contentHash, lookback.blobmark.String(), lookback)
 							// Blob matches an existing one -
 							// node was created by a
 							// non-Subversion copy followed by
@@ -7562,11 +7581,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							node.fromRev = ancestor.fromRev
 							node.blobmark = ancestor.blobmark
 						}
-						if node.blobmark == "" {
+						if node.blobmark == emptyMark {
 							// This is the normal way new blobs get created
-							node.blobmark = node.blob.setMark(sp.repo.newmark())
+							node.blobmark = markNumber(node.blob.setMark(sp.repo.newmark()))
 							announce(debugEXTRACT, "r%d: %s gets new blob '%s'",
-								record.revision, node, node.blobmark)
+								record.revision, node, node.blobmark.String())
 							sp.repo.addEvent(node.blob)
 							// Blobs generated by reposurgeon
 							// (e.g .gitignore content) have no
@@ -7580,7 +7599,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					} else if ancestor != nil {
 						node.blobmark = ancestor.blobmark
 						announce(debugEXTRACT, "r%d: %s gets blob '%s' from ancestor %s",
-							record.revision, node, node.blobmark, ancestor)
+							record.revision, node, node.blobmark.String(), ancestor)
 					} else {
 						// No ancestor, no blob. Has to be a
 						// pure property change.  There's no
@@ -7592,7 +7611,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						}
 						continue
 					}
-					if node.blobmark == "" {
+					if node.blobmark == emptyMark {
 						panic("impossibly empty blob mark in " + node.String())
 					}
 					// Time for fileop generation.
@@ -7621,7 +7640,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						fileop := newFileOp(sp.repo)
 						fileop.construct(opM,
 							perms,
-							node.blobmark,
+							node.blobmark.String(),
 							node.path)
 						actions = append(actions, fiAction{*node, *fileop})
 						sp.repo.markToEvent(fileop.ref).(*Blob).addalias(node.path)
@@ -21019,6 +21038,7 @@ func (rs *Reposurgeon) DoSizeof(lineIn string) bool {
 	fmt.Printf("Reset:          %s\n", explain(unsafe.Sizeof(*new(Reset))))
 	fmt.Printf("Attribution:    %s\n", explain(unsafe.Sizeof(*new(Attribution))))
 	fmt.Printf("blobidx:        %3d\n", unsafe.Sizeof(blobidx(0)))
+	fmt.Printf("markidx:        %3d\n", unsafe.Sizeof(markidx(0)))
 	fmt.Printf("revidx:         %3d\n", unsafe.Sizeof(revidx(0)))
 	fmt.Printf("nodeidx:        %3d\n", unsafe.Sizeof(nodeidx(0)))
 	fmt.Printf("string:         %3d\n", unsafe.Sizeof("foo"))
