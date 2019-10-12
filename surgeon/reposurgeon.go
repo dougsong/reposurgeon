@@ -2366,7 +2366,8 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 		}
 		commit.sortOperations()
 		commit.legacyID = revision
-		commit.properties = newOrderedMap()
+		newprops := newOrderedMap()
+		commit.properties = &newprops
 		rs.commitMap[revision] = commit
 		commit.setMark(repo.newmark())
 		//announce(debugEXTRACT, "%s: commit gets mark %s (%d ops)", trunc(revision), commit.mark, len(commit.operations()))
@@ -4287,17 +4288,17 @@ func (c *colorSet) Clear() {
 
 // Commit represents a commit event in a fast-export stream
 type Commit struct {
-	repo         *Repository
+	legacyID     string       // Commit's ID in an alien system
+	common       string       // Used only by the Subversion parser
 	mark         string        // Mark name of commit (may be None)
 	authors      []Attribution // Authors of commit
 	committer    Attribution   // Person responsible for committing it.
 	Comment      string        // Commit comment
 	Branch       string        // branch name
 	fileops      []FileOp      // blob and file operation list
-	properties   OrderedMap    // commit properties (extension)
 	_manifest    map[string]*ManifestEntry
-	legacyID     string       // Commit's ID in an alien system
-	common       string       // Used only by the Subversion parser
+	repo         *Repository
+	properties   *OrderedMap    // commit properties (extension)
 	attachments  []Event      // Tags and Resets pointing at this commit
 	_parentNodes []CommitLike // list of parent nodes
 	_childNodes  []CommitLike // list of child nodes
@@ -4323,7 +4324,6 @@ func newCommit(repo *Repository) *Commit {
 	commit.repo = repo
 	commit.authors = make([]Attribution, 0)
 	commit.fileops = make([]FileOp, 0)
-	commit.properties = newOrderedMap()
 	commit.attachments = make([]Event, 0)
 	commit._childNodes = make([]CommitLike, 0)
 	commit._parentNodes = make([]CommitLike, 0)
@@ -4482,6 +4482,9 @@ func (commit *Commit) showlegacy() string {
 	return commit.legacyID
 }
 
+func (commit *Commit) hasProperties() bool {
+	return commit.properties != nil
+}
 // lister enables do_list() to report commits.
 func (commit *Commit) lister(_modifiers stringSet, eventnum int, cols int) string {
 	topline := strings.Split(commit.Comment, "\n")[0]
@@ -4550,7 +4553,7 @@ func (commit *Commit) emailOut(modifiers stringSet,
 	if commit.legacyID != "" {
 		msg.setHeader("Legacy-ID", commit.legacyID)
 	}
-	if len(commit.properties.keys) > 0 {
+	if commit.hasProperties() && len(commit.properties.keys) > 0 {
 		for _, name := range commit.properties.keys {
 			hdr := ""
 			for _, s := range strings.Split(name, "-") {
@@ -4734,9 +4737,9 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 			newprops.set(propkey, strconv.Quote(propval))
 		}
 	}
-	propsModified := !reflect.DeepEqual(newprops, commit.properties)
+	propsModified := (!commit.hasProperties() && newprops.Len() == 0) || !reflect.DeepEqual(newprops, commit.properties)
 	if propsModified {
-		commit.properties = newprops
+		commit.properties = &newprops
 		modified = true
 	}
 	newcomment := msg.getPayload()
@@ -5471,7 +5474,7 @@ func (commit Commit) String() string {
 		}
 	}
 	if vcs != nil && vcs.extensions.Contains("commit-properties") {
-		if len(commit.properties.keys) > 0 {
+		if commit.hasProperties() && len(commit.properties.keys) > 0 {
 			for _, name := range commit.properties.keys {
 				value := commit.properties.get(name)
 				if value == "true" || value == "false" {
@@ -5961,10 +5964,10 @@ func (action NodeAction) hasProperties() bool {
 // has gaps). Processing of such streams is not well-tested and will
 // probably fail.
 type RevisionRecord struct {
-	nodes    []NodeAction
 	log      string
 	date     string
 	author   string
+	nodes    []NodeAction
 	props    OrderedMap
 	revision revidx
 }
@@ -6630,7 +6633,8 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 					commit.committer = *attrib
 					sp.repo.tzmap[attrib.email] = attrib.date.timestamp.Location()
 				} else if strings.HasPrefix(line, "property") {
-					commit.properties = newOrderedMap()
+					newprops := newOrderedMap()
+					commit.properties = &newprops
 					fields := strings.Split(line, " ")
 					if len(fields) < 3 {
 						sp.error("malformed property line")
@@ -6735,7 +6739,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				} else {
 					// Dodgy bzr autodetection hook...
 					if sp.repo.vcs == nil {
-						if commit.properties.has("branch-nick") {
+						if commit.hasProperties() && commit.properties.has("branch-nick") {
 							sp.repo.hint("", "bzr", true)
 						}
 					}
@@ -7194,7 +7198,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			commit.committer.date.timestamp = time.Unix(int64(ri*360), 0)
 			commit.committer.date.setTZ("UTC")
 		}
-		commit.properties = record.props
+		commit.properties = &record.props
 		// Zero revision is never interesting - no operations, no
 		// comment, no author, it's just a start marker for a
 		// non-incremental dump.
@@ -9407,7 +9411,7 @@ func (repo *Repository) parseDollarCookies() {
 				continue
 			}
 			blob := repo.markToEvent(fileop.ref).(*Blob)
-			if commit.properties.get("legacy") != "" {
+			if commit.hasProperties() && commit.properties.get("legacy") != "" {
 				croak("legacy property of %s overwritten",
 					commit.mark)
 			}
