@@ -19,7 +19,7 @@ STOPOUT=1
 ECHO := /bin/echo
 
 # Without this, under CentOS Python may emit invisible ANSI strings
-# that confuse diff
+# that confuse diff.  Leave this in while pyreposurgeon still exists.
 TERM := dumb
 
 default: check

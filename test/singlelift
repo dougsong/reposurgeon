@@ -12,7 +12,7 @@
 PATH=$(realpath ..):$(realpath .):${PATH}
 
 # Without this, under CentOS Python may emit invisible ANSI strings
-# that confuse diff
+# that confuse diff. Leave this in whle pyreposurgeon still exists.
 TERM=dumb
 
 mode=check

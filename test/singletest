@@ -12,11 +12,27 @@
 PATH=$(realpath ..):$(realpath .):${PATH}
 
 # Without this, under CentOS Python may emit invisible ANSI strings
-# that confuse diff
+# that confuse diff.  Leave this in while pyreposurgeon still exists.
 TERM=dumb
+
+what=`echo ${1} | sed -e '/-FAILED/s///' -e '/.tst/s///'`
+
+if [ -f ${what}.tst ]
+then
+    tst=${what}.tst
+    chk=${what}.chk
+elif [ -f ${what}.tst-FAIL ]
+then
+    tst=${what},tst-FAIL
+    chk=${what}.chk
+    echo "Expect a diff"
+else
+    echo "No script matching ${what} found"
+    exit 1
+fi
 
 for x in $*;
 do
     echo "Test $x"
-    ${REPOSURGEON:-reposurgeon} "script $1.tst" 2>&1 | diff -u $1.chk -
+    ${REPOSURGEON:-reposurgeon} "script ${tst}" 2>&1 | diff -u ${chk} -
 done
