@@ -7198,7 +7198,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			commit.committer.date.timestamp = time.Unix(int64(ri*360), 0)
 			commit.committer.date.setTZ("UTC")
 		}
-		commit.properties = &record.props
+		if record.props.Len() > 0 {
+			commit.properties = &record.props
+		}
 		// Zero revision is never interesting - no operations, no
 		// comment, no author, it's just a start marker for a
 		// non-incremental dump.
@@ -7944,10 +7946,14 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			if len(text) > 30 {
 				text = text[:27] + "..."
 			}
+			proplen := 0
+			if commit.hasProperties() {
+				proplen = commit.properties.Len()
+			}
 			announce(debugSHOUT, "r%-4s %4s %2d %2d '%s'",
 				commit.legacyID, commit.mark,
 				len(commit.operations()),
-				commit.properties.Len(),
+				proplen,
 				text)
 		}
 	}
