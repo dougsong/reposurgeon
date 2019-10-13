@@ -518,7 +518,7 @@ func (s orderedIntSet) EqualWithOrdering(other orderedIntSet) bool {
 		return false
 	}
 	// Naive O(n**2) method - don't use on large sets if you care about speed
-	for i, _ := range s {
+	for i := range s {
 		if s[i] != other[i] {
 			return false
 		}
@@ -5892,7 +5892,7 @@ func (h *FastHistory) apply(revision revidx, nodes []NodeAction) {
 		}
 	}
 
-	h.nodeStash = nodes	// So pruneMaps cn see it.
+	h.nodeStash = nodes	// So pruneMaps can see it.
 	h.revision = revision
 }
 

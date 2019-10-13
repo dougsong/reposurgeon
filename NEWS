@@ -10,6 +10,7 @@ Repository head::
      reposurgeon is now better about cleaning up old temp directories on exit.
      Added 'memory' command for reporting memory usage.
      Author aliases are recognized in timestamps.
+     Results of reorder and reparent are toposorted again.
 
 3.48: 2019-10-02::
      Last Python release.  4.0 will ship in Go.
