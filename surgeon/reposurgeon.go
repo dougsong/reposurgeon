@@ -8327,11 +8327,15 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				} else {
 					ancestorID = ancestors[0].getMark()
 				}
+				proplen := 0
+				if commit.hasProperties() {
+					proplen = commit.properties.Len()
+				}
 				announce(debugSHOUT, "r%-4s %4s %4s %2d %2d '%s'",
 					commit.legacyID,
 					commit.mark, ancestorID,
 					len(commit.operations()),
-					commit.properties.Len(),
+					proplen,
 					commit.Branch)
 			}
 		}
