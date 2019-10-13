@@ -23,10 +23,13 @@
 # The REPOSURGEON environment variable can be used to substitute in a
 # different implementation.
 #
+# The TESTOPT variable can be used to pass an early command or option setting
+# to reposurgeon.
+#
 BIN=${PWD}/..
 
 extract=True
-view=False
+view=False0
 stream=True
 cleanup=True
 
@@ -59,7 +62,7 @@ fi
 # Should we stream the repo?
 if [ $stream = True ]
 then
-    ${BIN}/${REPOSURGEON:-reposurgeon} "prefer git-extractor" "read $testrepo" "write -"
+    ${BIN}/${REPOSURGEON:-reposurgeon} "${TESTOPT}" "prefer git-extractor" "read $testrepo" "write -"
 fi
 
 # Should we clean up the test directory

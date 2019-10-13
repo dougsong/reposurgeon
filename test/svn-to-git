@@ -8,6 +8,15 @@
 # Requires two arguments: A Subversion repo directory (which must exist) 
 # and a git repo output directory (which must not exist).
 #
+# The REPOSURGEON environment variable can be used to substitute in a
+# different implementation.
+#
+# The TESTOPT variable can be used to pass an early command or option setting
+# to reposurgeon.
+#
+# FIXME:  This has not yet been fully adapted to work with unreliable $PWD.
+. common-setup.sh
+
 PATH=$PATH:..
 
 while getopts t: opt
@@ -149,7 +158,7 @@ svn2git) mkdir git-scratch; cp -r $svnrepo git-scratch;
 	    ruby -I../../externals/svn2git/lib \
 	    ../../externals/svn2git/bin/svn2git file://${PWD}/$svnrepo) && \
 	    mv git-scratch $gitrepo ;;
-*)  ${REPOSURGEON:-reposurgeon} "read $svnrepo" "rebuild $gitrepo"
+*)  ${REPOSURGEON:-reposurgeon} "${TESTOPT}" "read $svnrepo" "prefer git" "rebuild $gitrepo"
 esac
 
 ) >&2

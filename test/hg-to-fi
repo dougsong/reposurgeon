@@ -19,7 +19,9 @@
 # The REPOSURGEON environment variable can be used to substitute in a
 # different implementation.
 #
-
+# The TESTOPT variable can be used to pass an early command or option setting
+# to reposurgeon.
+#
 . common-setup.sh
 
 # Required because $PWD seems to be undefined in Gitlab's CI environment
@@ -70,7 +72,7 @@ fi
 # Should we stream the repo?
 if [ $stream = True ]
 then
-    try ${BIN}/${REPOSURGEON:-reposurgeon} "verbose $verbose" $extract "read $testrepo" "sourcetype git" "write -"
+    try ${BIN}/${REPOSURGEON:-reposurgeon} "${TESTOPTS}" "verbose $verbose" $extract "read $testrepo" "sourcetype git" "write -"
 fi
 
 # Should we clean up the test directory

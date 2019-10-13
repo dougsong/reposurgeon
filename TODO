@@ -27,6 +27,9 @@ Their behavior is controlled by two variables:
 
 REPOSURGEON: either reposurgeon (the default) or pyreposurgeon
 
+TESTOPT: Use thuis to pass in a command or option setting, such
+as "set experimental",
+
 STOPOUT: 1 (the default) produces a bailout after the first failed
 test.  Set it to 0 to continue after failed tests - you have to do
 this on the make command line, e.g. "cd test; make STOPOUT=0

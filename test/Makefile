@@ -51,6 +51,10 @@ buildregress: fi-buildregress svnload-buildregress legacy-buildregress \
 clean:
 	rm -fr .rs* test-repo test-checkout git-repo left-repo right-repo *~
 
+options:
+	@echo "REPOSURGEOM is $(REPOSURGEOM)"
+	@echo "TESTOPT is $(TESTOPT)"
+
 # Show summary lines for all tests.
 testlist:
 	@grep --text '^##' *.tst
@@ -65,7 +69,7 @@ roundtrip:
 	@echo "=== Testing stream-file round-tripping:" 
 	@for file in *.fi; do \
 	    echo "  $${file}"; \
-	    $(REPOSURGEON) "read -;write -" <$$file >/tmp/rs$$$$ || exit $(STOPOUT); \
+	    $(REPOSURGEON) "$(TESTOPT)" "read -;write -" <$$file >/tmp/rs$$$$ || exit $(STOPOUT); \
 	    [ -s /tmp/rs$$$$ ] && diff --text -u $${file} /tmp/rs$$$$ \
 		|| exit $(STOPOUT); \
 	    rm -f /tmp/rs$$$$ || exit $(STOPOUT); \
@@ -76,7 +80,7 @@ roundtrip-compress:
 	@echo "=== Testing stream-file round-tripping with compression:" 
 	@for file in *.fi; do \
 	    echo "  $${file}"; \
-	    $(REPOSURGEON) "set compressblobs" "read -;write -" \
+	    $(REPOSURGEON) "$(TESTOPT)" "set compressblobs" "read -;write -" \
 		<$$file >/tmp/rs$$$$ || exit $(STOPOUT); \
 	    [ -s /tmp/rs$$$$ ] && diff --text -u $${file} /tmp/rs$$$$ \
 		|| exit $(STOPOUT); \
@@ -89,7 +93,7 @@ messagebox:
 	@echo "=== Testing msgout/msgin roundtripping:"
 	@for file in *.fi; do \
 	    echo "  $${file}";\
-	    $(REPOSURGEON) "read <$${file}" "edit echo>/dev/null" "write -" \
+	    $(REPOSURGEON) "$(TESTOPT)" "read <$${file}" "edit echo>/dev/null" "write -" \
 		>/tmp/regress$$$$ || exit $(STOPOUT); \
 	    [ -s /tmp/regress$$$$ ] && diff --text -u $${file} /tmp/regress$$$$ \
 		|| exit $(STOPOUT); \
@@ -102,14 +106,14 @@ TESTLOADS := $(shell ls -1 *.tst | sed '/.tst/s///')
 fi-buildregress:
 	@for file in $(TESTLOADS); do \
 	    echo "Remaking $${file}.chk"; \
-	    $(REPOSURGEON) "script $${file}.tst testing123" >$${file}.chk \
+	    $(REPOSURGEON) "$(TESTOPT)" "script $${file}.tst testing123" >$${file}.chk \
 		2>&1 || exit $(STOPOUT); \
 	done
 fi-regress:
 	@echo "=== Running general tests:"
-	@for file in $(TESTLOADS); do \
+	for file in $(TESTLOADS); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.tst  || echo ' ## (no description)'; \
-	    if $(REPOSURGEON) "script $${file}.tst testing123" >/tmp/regress$$$$ 2>&1; \
+	    if $(REPOSURGEON) "$(TESTOPT)" "script $${file}.tst testing123" >/tmp/regress$$$$ 2>&1; \
 	    then diff --text -u $${file}.chk /tmp/regress$$$$ || exit $(STOPOUT); \
 	    else echo "*** Nonzero return status on $${file}!"; exit $(STOPOUT); fi \
 	done
@@ -118,7 +122,7 @@ fi-regress-tighten:
 	@echo "=== Running general tests with tighten option:"
 	@for file in $(TESTLOADS); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.tst  || echo ' ## (no description)'; \
-	    if $(REPOSURGEON) "set tighten" "script $${file}.tst testing123" >/tmp/regress$$$$ 2>&1; \
+	    if $(REPOSURGEON) "$(TESTOPT)" "set tighten" "script $${file}.tst testing123" >/tmp/regress$$$$ 2>&1; \
 	    then diff --text -u $${file}.chk /tmp/regress$$$$ || exit $(STOPOUT); \
 	    else echo "*** Nonzero return status on $${file}!"; exit $(STOPOUT); fi \
 	done
@@ -129,7 +133,7 @@ COALESCE=uncoalesced
 buildcoalesce:
 	@for file in $(COALESCE); do \
 	    echo "Rebuilding coalescence regression test using $${file}.fi"; \
-	    $(REPOSURGEON) "read <$${file}.fi; coalesce; write -" \
+	    $(REPOSURGEON) "$(TESTOPT)" "read <$${file}.fi; coalesce; write -" \
 		>$${file}.chk || exit $(STOPOUT); \
 	done
 	@rm -f /tmp/regress$$$$
@@ -137,8 +141,8 @@ coalesce:
 	@echo "=== Coalescence regression test:"
 	@for file in $(COALESCE); do \
 	    echo "  $${file}.fi"; \
-	    $(REPOSURGEON) "read <$${file}.fi; coalesce; write -" \
-		>/tmp/regress$$$$ || exit $(STOPOUT); \
+	    $(REPOSURGEON) "$(TESTOPT)" "read <$${file}.fi; coalesce; write -" \
+		>/tmp//regress$$$$ || exit $(STOPOUT); \
 	    [ -s /tmp/regress$$$$ ] && diff --text -u $${file}.chk /tmp/regress$$$$ \
 		|| exit $(STOPOUT); \
 	done
@@ -148,7 +152,7 @@ coalesce:
 GITLOADS = bs
 git-regress:
 	@echo "=== Testing git-extractor:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	if command -v git >/dev/null 2>&1 ; \
 	then \
 	    for test in $(GITLOADS); do \
@@ -165,7 +169,7 @@ git-regress:
 GITBRANCHES = be bb
 git-regress-branches:
 	@echo "=== Testing git-extractor with multiple git branches:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	if command -v git >/dev/null 2>&1 ; \
 	then \
 	    for test in $(GITBRANCHES); do \
@@ -182,7 +186,7 @@ git-regress-branches:
 GITMERGES = be2 be3 be4 be5 be6
 git-regress-merges:
 	@echo "=== Testing git-extractor with merges:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	if command -v git >/dev/null 2>&1 ; \
 	then \
 	    for test in $(GITMERGES); do \
@@ -199,7 +203,7 @@ git-regress-merges:
 GITTAGS = bt bt2
 git-regress-tags:
 	@echo "=== Testing git-extractor with tags:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	if command -v git >/dev/null 2>&1 ; \
 	then \
 	    for test in $(GITTAGS); do \
@@ -216,7 +220,7 @@ git-regress-tags:
 HGLOADS = testrepo2
 hg-regress:
 	@echo "=== Testing hg-extractor:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	if command -v hg >/dev/null 2>&1 && command -v git >/dev/null 2>&1 ; \
 	then \
 	    for test in $(HGLOADS); do \
@@ -233,7 +237,7 @@ hg-regress:
 # NOTE: the bb-alt test demonstrates an hg repo with coloring that git cannot reproduce
 HGBRANCHES = be be2 be3 bb-alt be-bookmarks
 hg-buildregress-branches:
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	for file in $(HGBRANCHES); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
@@ -241,7 +245,7 @@ hg-buildregress-branches:
 	done
 hg-regress-branches:
 	@echo "=== Testing hg-extractor with multiple hg branches:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	if command -v hg >/dev/null 2>&1 ; \
 	then \
 	    for test in $(HGBRANCHES); do \
@@ -257,7 +261,7 @@ hg-regress-branches:
 # Test the hg extractor with merges
 HGMERGES = be2 be3 be4 be5 be6
 hg-buildregress-merges:
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	for file in $(HGMERGES); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
@@ -265,7 +269,7 @@ hg-buildregress-merges:
 	done
 hg-regress-merges:
 	@echo "=== Testing hg-extractor with merges:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	if command -v hg >/dev/null 2>&1 ; \
 	then \
 	    for test in $(HGMERGES); do \
@@ -281,7 +285,7 @@ hg-regress-merges:
 # Test the hg extractor with tags
 HGTAGS = bt bt2
 hg-buildregress-tags:
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	for file in $(HGTAGS); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
@@ -289,7 +293,7 @@ hg-buildregress-tags:
 	done
 hg-regress-tags:
 	@echo "=== Testing hg-extractor with tags:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	if command -v hg >/dev/null 2>&1 ; \
 	then \
 	    for test in $(HGTAGS); do \
@@ -305,7 +309,7 @@ hg-regress-tags:
 # Test the hg extractor with pathological loads
 HGPATHO = be-subrepo be-subrepo2
 hg-buildregress-patho:
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	for file in $(HGPATHO); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test 2>/dev/null | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
@@ -313,7 +317,7 @@ hg-buildregress-patho:
 	done
 hg-regress-patho:
 	@echo "=== Testing hg-extractor with pathological loads:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	if command -v hg >/dev/null 2>&1 ; \
 	then \
 	    for test in $(HGPATHO); do \
@@ -329,7 +333,7 @@ hg-regress-patho:
 # Test loading from Subversion
 SVNLOADS := $(shell ls *.svn | sed '/.svn$$/s///')
 svnload-buildregress:
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	for test in $(SVNLOADS); do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
@@ -340,13 +344,13 @@ svnload-buildregress:
 	done
 svnload-regress:
 	@echo "== Testing loading of Subversion streams:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	for test in $(SVNLOADS); \
 	do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
 		(if { $(ECHO) -n "  $${test}.svn"; grep --text '^ ##' $${test}.svn || echo ' ## (no description)'; } >&2; \
-		$(REPOSURGEON) "read <$${test}.svn" "prefer git" "write -" >/tmp/regress$$$$ 2>&1; \
+		$(REPOSURGEON) "$(TESTOPT)" "read <$${test}.svn" "prefer git" "write -" >/tmp/regress$$$$ 2>&1; \
 		then diff --text -u $${test}.chk /tmp/regress$$$$ || exit $(STOPOUT); \
 		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi; \
 		if command -v git >/dev/null 2>&1 ; \
@@ -372,7 +376,7 @@ SVNCLEAN := bad-author.svn binary.svn blob-id.svn deletion.svn deepdirs.svn deli
 	smallref.svn squash-id.svn subdir.svn svnignores.svn
 liftcheck-regress:
 	@echo "== Testing conversion correctness of Subversion streams:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	if  command -v git >/dev/null 2>&1 &&  command -v svn >/dev/null 2>&1; \
 	then \
 		for test in $(SVNCLEAN); \
@@ -392,7 +396,7 @@ liftcheck-dirty:
 
 REFLOADS=references mergeinfo-with-split
 legacy-buildregress:
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	for test in $(REFLOADS); \
 	do \
 	    echo "Remaking $${test}.map"; \
@@ -401,11 +405,11 @@ legacy-buildregress:
 	done
 legacy-regress:
 	@echo "=== Testing legacy-map generation:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	for test in $(REFLOADS); \
 	do \
 	    if echo "  $${test}.svn" >&2; \
-	    $(REPOSURGEON) "read <$${test}.svn" "legacy write -" >/tmp/regress$$$$ 2>/dev/null; \
+	    $(REPOSURGEON) "$(TESTOPT)" "read <$${test}.svn" "legacy write -" >/tmp/regress$$$$ 2>/dev/null; \
 	    then diff --text -u $${test}.map /tmp/regress$$$$ || exit $(STOPOUT); \
 	    else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi; \
 	done
@@ -416,7 +420,7 @@ legacy-regress:
 # all repos.
 SVNCHECK=pangram
 svncheck:
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; \
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	for test in $(SVNCHECK); \
 	do \
 	    if [ ! -f $${test}.tst ] ; \
@@ -424,7 +428,7 @@ svncheck:
 		svn-to-svn -s <$${test}.svn >/tmp/checkstripped$$$$ 2>&1 \
 		    || exit $(STOPOUT); \
 		if echo "  $${test}.svn" >&2; \
-		$(REPOSURGEON) "set svn_no_autoignores" "read $${test}.svn" "prefer svn" "write -"  | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
+		$(REPOSURGEON) "$(TESTOPT)" "set svn_no_autoignores" "read $${test}.svn" "prefer svn" "write -"  | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
 		then diff --text -u /tmp/checkstripped$$$$ /tmp/stripped$$$$ \
 		    || exit $(STOPOUT); \
 		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi;\
@@ -499,14 +503,14 @@ SVNCHECK := $(shell ls -1 svncheck*.sh | sed '/.sh/s///')
 svncheck-buildregress:
 	@for file in $(SVNCHECK); do \
 	    echo "Remaking $${file}.chk"; \
-	    $(SHELL) $${file}.sh -d | $(REPOSURGEON) "set testmode" 'read -' 'prefer git' 'write -' >$${file}.chk || exit $(STOPOUT); \
+	    $(SHELL) $${file}.sh -d | $(REPOSURGEON) "$(TESTOPT)" "set testmode" 'read -' 'prefer git' 'write -' >$${file}.chk || exit $(STOPOUT); \
 	done
 svncheck-regress:
 	@echo "=== Running svncheck tests:"
 	@status=0; \
 	for file in $(SVNCHECK); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
-	    $(SHELL) $${file}.sh -d | $(REPOSURGEON) "set testmode" 'read -' 'prefer git' 'write -' | diff --text -u $${file}.chk - || status=1; \
+	    $(SHELL) $${file}.sh -d | $(REPOSURGEON) "$(TESTOPT)" "set testmode" 'read -' 'prefer git' 'write -' | diff --text -u $${file}.chk - || status=1; \
 	done; \
 	exit $${status}
 	@rm -f /tmp/regress$$$$

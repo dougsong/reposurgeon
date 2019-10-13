@@ -7997,6 +7997,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 			}
 		}
+
+		// Reclaim storage
+		if context.flagOptions["experimental"] {
+			sp.history.pruneMaps()
+		}
 	} // end of revision loop
 
 	// Release history storage to be GCed

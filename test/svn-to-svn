@@ -41,6 +41,9 @@
 # The REPOSURGEON environment variable can be used to substitute in a
 # different implementation.
 #
+# The TESTOPT variable can be used to pass an early command or option setting
+# to reposurgeon.
+#
 . common-setup.sh
 
 PATH=$PATH:../..
@@ -142,13 +145,13 @@ fi
 # Should we view the repo?
 if [ $view = T ]
 then
-    (cd $testrepo >/dev/null; {BIN}/${REPOSURGEON:-reposurgeon} "verbose $verbose" "read ." "prefer git" "rebuild /tmp/testrepo$$"; cd /tmp/testrepo$$; gitk --all --tags)
+    (cd $testrepo >/dev/null; {BIN}/${REPOSURGEON:-reposurgeon} "${TESTOPT}" "verbose $verbose" "read ." "prefer git" "rebuild /tmp/testrepo$$"; cd /tmp/testrepo$$; gitk --all --tags)
 fi
 
 # Should we stream the repo?
 if [ $stream = T ]
 then
-    ${REPOSURGEON:-reposurgeon} "verbose $verbose" "read $testrepo" "$streamopts" "write"
+    ${REPOSURGEON:-reposurgeon} "${TESTOPT}" "verbose $verbose" "read $testrepo" "$streamopts" "write"
 fi
 
 # Should we undump the repo?
