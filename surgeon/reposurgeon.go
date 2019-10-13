@@ -513,6 +513,19 @@ func (s orderedIntSet) Equal(other orderedIntSet) bool {
 	return true
 }
 
+func (s orderedIntSet) EqualWithOrdering(other orderedIntSet) bool {
+	if len(s) != len(other) {
+		return false
+	}
+	// Naive O(n**2) method - don't use on large sets if you care about speed
+	for i, _ := range s {
+		if s[i] != other[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func (s orderedIntSet) Union(other orderedIntSet) orderedIntSet {
 	// Naive O(n**2) method - don't use on large sets if you care about speed
 	var union orderedIntSet
@@ -10590,7 +10603,7 @@ func (repo *Repository) resort() {
 
 	orig := repo.all()
 	//assert len(t) == len(tsorted)
-	if !tsorted.Equal(orig) {
+	if !tsorted.EqualWithOrdering(orig) {
 		//fmt.Sprintf("Sort order: %v\n", tsorted)
 		//assert len(t - o) == 0
 		leftout := orig.Subtract(tsorted)
@@ -18444,9 +18457,9 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 	}
 	child.setParents(parents)
 	// Restore this when we have toposort working identically in Go and Python.
-	//if doResort {
-	//	repo.resort()
-	//}
+	if doResort {
+		repo.resort()
+	}
 	return false
 }
 

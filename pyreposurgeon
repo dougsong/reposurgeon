@@ -6714,6 +6714,8 @@ class Repository:
             def __init__(self):
                 self.eout = set()
                 self.ein = set()
+            def __str__(self):
+                return "<%s | %s>" % (list(self.ein), list(self.eout))
 
         dag = {}
         start = set(range(len(self.events)))
@@ -6854,7 +6856,7 @@ class Repository:
             events[i+1].set_parents([e])
         validate_operations(events, bequiet)
         # FIXME: Restore this call when Go toposort works.
-        #self.resort()
+        self.resort()
     def renumber(self, origin=1, baton=None):
         "Renumber the marks in a repo starting from a specified origin."
         markmap = {}
@@ -12009,8 +12011,8 @@ Policy:
                 child.sort_operations()
             child.set_parents(parents)
             # Restore this whemn we have toposort working identically in Gp and Python.
-            #if do_resort:
-            #    repo.resort()
+            if do_resort:
+                repo.resort()
 
     def help_reorder(self):
         sys.stdout.write("""

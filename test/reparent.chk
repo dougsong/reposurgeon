@@ -184,7 +184,7 @@ theory.txt -> :50
    124 commit   :123    refs/heads/master
 :123,:121 reparent --use-order
 :121 inspect
-Event 122 ===============================================================
+Event 124 ===============================================================
 commit refs/heads/master
 mark :121
 author Eric S. Raymond <esr@thyrsus.com> 1288203721 -0400
@@ -204,7 +204,7 @@ M 100644 :48 test/simple.dump
 M 100644 :50 theory.txt
 
 :121 manifest
-Event 122 ===============================================================
+Event 124 ===============================================================
 commit refs/heads/master
 mark :121
 
@@ -218,6 +218,6 @@ theory.txt -> :50
 (:119..:123)|(:119..:121) index
    120 commit   :119    refs/heads/master
    121 blob     :120    reposurgeon
-   122 commit   :121    refs/heads/master
-   123 blob     :122    reposurgeon
-   124 commit   :123    refs/heads/master
+   122 blob     :122    reposurgeon
+   123 commit   :123    refs/heads/master
+   124 commit   :121    refs/heads/master

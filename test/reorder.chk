@@ -165,15 +165,6 @@ The banana.sh script makes bananas with peanut butter and jelly.
 Ice cream makes a nice dessert.
 
 commit refs/heads/master
-mark :21
-author Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
-data 29
-readme: add missing greeting
-from :26
-M 100644 :20 README
-
-commit refs/heads/master
 mark :22
 author Eric Sunshine <sunshine@sunshineco.com> 1491184959 -0400
 committer Eric Sunshine <sunshine@sunshineco.com> 1491184959 -0400
@@ -213,19 +204,19 @@ from :24
 D hello.c
 M 100644 :25 hello.sh
 
+commit refs/heads/master
+mark :21
+author Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
+data 29
+readme: add missing greeting
+from :26
+M 100644 :20 README
+
 blob
 mark :27
 data 43
 Don't play ping pong while eating spinach.
-
-commit refs/heads/master
-mark :28
-author Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
-data 44
-strategy: assist those less fortunate souls
-from :30
-M 100644 :27 STRATEGY.txt
 
 blob
 mark :29
@@ -245,6 +236,15 @@ data 31
 readme: make the game official
 from :21
 M 100644 :29 README
+
+commit refs/heads/master
+mark :28
+author Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
+data 44
+strategy: assist those less fortunate souls
+from :30
+M 100644 :27 STRATEGY.txt
 
 commit refs/heads/master
 mark :31
@@ -286,15 +286,6 @@ data 15
 Banana Project
 
 reset refs/heads/master
-commit refs/heads/master
-mark :2
-author Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
-data 21
-readme: commencement
-from :5
-M 100644 :1 README
-
 blob
 mark :3
 data 52
@@ -316,6 +307,15 @@ data 34
 banana: commence banana synthesis
 M 100644 :3 README
 M 100755 :4 banana.sh
+
+commit refs/heads/master
+mark :2
+author Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
+data 21
+readme: commencement
+from :5
+M 100644 :1 README
 
 blob
 mark :6
@@ -441,15 +441,6 @@ The banana.sh script makes bananas with peanut butter and jelly.
 Ice cream makes a nice dessert.
 
 commit refs/heads/master
-mark :21
-author Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
-data 29
-readme: add missing greeting
-from :26
-M 100644 :20 README
-
-commit refs/heads/master
 mark :22
 author Eric Sunshine <sunshine@sunshineco.com> 1491184959 -0400
 committer Eric Sunshine <sunshine@sunshineco.com> 1491184959 -0400
@@ -489,19 +480,19 @@ from :24
 D hello.c
 M 100644 :25 hello.sh
 
+commit refs/heads/master
+mark :21
+author Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
+data 29
+readme: add missing greeting
+from :26
+M 100644 :20 README
+
 blob
 mark :27
 data 43
 Don't play ping pong while eating spinach.
-
-commit refs/heads/master
-mark :28
-author Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
-data 44
-strategy: assist those less fortunate souls
-from :30
-M 100644 :27 STRATEGY.txt
 
 blob
 mark :29
@@ -521,6 +512,15 @@ data 31
 readme: make the game official
 from :21
 M 100644 :29 README
+
+commit refs/heads/master
+mark :28
+author Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
+data 44
+strategy: assist those less fortunate souls
+from :30
+M 100644 :27 STRATEGY.txt
 
 commit refs/heads/master
 mark :31
@@ -562,15 +562,6 @@ data 15
 Banana Project
 
 reset refs/heads/master
-commit refs/heads/master
-mark :2
-author Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
-data 21
-readme: commencement
-from :5
-M 100644 :1 README
-
 blob
 mark :3
 data 52
@@ -592,6 +583,15 @@ data 34
 banana: commence banana synthesis
 M 100644 :3 README
 M 100755 :4 banana.sh
+
+commit refs/heads/master
+mark :2
+author Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
+data 21
+readme: commencement
+from :5
+M 100644 :1 README
 
 blob
 mark :6
@@ -717,15 +717,6 @@ The banana.sh script makes bananas with peanut butter and jelly.
 Ice cream makes a nice dessert.
 
 commit refs/heads/master
-mark :21
-author Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
-data 29
-readme: add missing greeting
-from :26
-M 100644 :20 README
-
-commit refs/heads/master
 mark :22
 author Eric Sunshine <sunshine@sunshineco.com> 1491184959 -0400
 committer Eric Sunshine <sunshine@sunshineco.com> 1491184959 -0400
@@ -765,19 +756,19 @@ from :24
 D hello.c
 M 100644 :25 hello.sh
 
+commit refs/heads/master
+mark :21
+author Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
+data 29
+readme: add missing greeting
+from :26
+M 100644 :20 README
+
 blob
 mark :27
 data 43
 Don't play ping pong while eating spinach.
-
-commit refs/heads/master
-mark :28
-author Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
-data 44
-strategy: assist those less fortunate souls
-from :30
-M 100644 :27 STRATEGY.txt
 
 blob
 mark :29
@@ -799,13 +790,13 @@ from :21
 M 100644 :29 README
 
 commit refs/heads/master
-mark :31
-author Eric Sunshine <sunshine@sunshineco.com> 1491185431 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491185431 -0400
-data 38
-readme: standardize on .txt extension
-from :33
-R "README" "README.txt"
+mark :28
+author Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
+data 44
+strategy: assist those less fortunate souls
+from :30
+M 100644 :27 STRATEGY.txt
 
 commit refs/heads/master
 mark :32
@@ -824,6 +815,15 @@ data 33
 strategy: retire Windows support
 from :32
 D STRATEGY
+
+commit refs/heads/master
+mark :31
+author Eric Sunshine <sunshine@sunshineco.com> 1491185431 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491185431 -0400
+data 38
+readme: standardize on .txt extension
+from :33
+R "README" "README.txt"
 
 reset refs/heads/master
 from :33
@@ -838,15 +838,6 @@ data 15
 Banana Project
 
 reset refs/heads/master
-commit refs/heads/master
-mark :2
-author Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
-data 21
-readme: commencement
-from :7
-M 100644 :1 README
-
 blob
 mark :3
 data 52
@@ -883,6 +874,15 @@ data 49
 theory: rudimentary banana synthesis explanation
 from :5
 M 100644 :6 THEORY.txt
+
+commit refs/heads/master
+mark :2
+author Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
+data 21
+readme: commencement
+from :7
+M 100644 :1 README
 
 blob
 mark :8
@@ -993,15 +993,6 @@ The banana.sh script makes bananas with peanut butter and jelly.
 Ice cream makes a nice dessert.
 
 commit refs/heads/master
-mark :21
-author Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
-data 29
-readme: add missing greeting
-from :26
-M 100644 :20 README
-
-commit refs/heads/master
 mark :22
 author Eric Sunshine <sunshine@sunshineco.com> 1491184959 -0400
 committer Eric Sunshine <sunshine@sunshineco.com> 1491184959 -0400
@@ -1041,19 +1032,19 @@ from :24
 D hello.c
 M 100644 :25 hello.sh
 
+commit refs/heads/master
+mark :21
+author Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
+data 29
+readme: add missing greeting
+from :26
+M 100644 :20 README
+
 blob
 mark :27
 data 43
 Don't play ping pong while eating spinach.
-
-commit refs/heads/master
-mark :28
-author Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
-data 44
-strategy: assist those less fortunate souls
-from :30
-M 100644 :27 STRATEGY.txt
 
 blob
 mark :29
@@ -1075,13 +1066,13 @@ from :21
 M 100644 :29 README
 
 commit refs/heads/master
-mark :31
-author Eric Sunshine <sunshine@sunshineco.com> 1491185431 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491185431 -0400
-data 38
-readme: standardize on .txt extension
-from :33
-R "README" "README.txt"
+mark :28
+author Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
+data 44
+strategy: assist those less fortunate souls
+from :30
+M 100644 :27 STRATEGY.txt
 
 commit refs/heads/master
 mark :32
@@ -1100,6 +1091,15 @@ data 33
 strategy: retire Windows support
 from :32
 D STRATEGY
+
+commit refs/heads/master
+mark :31
+author Eric Sunshine <sunshine@sunshineco.com> 1491185431 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491185431 -0400
+data 38
+readme: standardize on .txt extension
+from :33
+R "README" "README.txt"
 
 reset refs/heads/master
 from :33
@@ -1114,15 +1114,6 @@ data 15
 Banana Project
 
 reset refs/heads/master
-commit refs/heads/master
-mark :2
-author Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
-data 21
-readme: commencement
-from :7
-M 100644 :1 README
-
 blob
 mark :3
 data 52
@@ -1159,6 +1150,15 @@ data 49
 theory: rudimentary banana synthesis explanation
 from :5
 M 100644 :6 THEORY.txt
+
+commit refs/heads/master
+mark :2
+author Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491183915 -0400
+data 21
+readme: commencement
+from :7
+M 100644 :1 README
 
 blob
 mark :8
@@ -1230,18 +1230,6 @@ theory: explain significance of ice cream
 from :14
 M 100644 :15 THEORY.txt
 
-commit refs/heads/master
-mark :17
-author Eric Sunshine <sunshine@sunshineco.com> 1491184715 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491184715 -0400
-data 47
-pbj: merge peanut butter and jelly enhancement
-from :19
-M 100644 :10 README
-M 100644 :15 THEORY.txt
-M 100755 :11 banana.sh
-M 100755 :13 icecream.sh
-
 blob
 mark :18
 data 113
@@ -1260,6 +1248,18 @@ from :9
 merge :16
 M 100644 :18 README
 
+commit refs/heads/master
+mark :17
+author Eric Sunshine <sunshine@sunshineco.com> 1491184715 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184715 -0400
+data 47
+pbj: merge peanut butter and jelly enhancement
+from :19
+M 100644 :10 README
+M 100644 :15 THEORY.txt
+M 100755 :11 banana.sh
+M 100755 :13 icecream.sh
+
 blob
 mark :20
 data 140
@@ -1267,15 +1267,6 @@ Banana Project (shout out "hello, world")
 
 The banana.sh script makes bananas with peanut butter and jelly.
 Ice cream makes a nice dessert.
-
-commit refs/heads/master
-mark :21
-author Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
-data 29
-readme: add missing greeting
-from :26
-M 100644 :20 README
 
 commit refs/heads/master
 mark :22
@@ -1317,19 +1308,19 @@ from :24
 D hello.c
 M 100644 :25 hello.sh
 
+commit refs/heads/master
+mark :21
+author Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491184884 -0400
+data 29
+readme: add missing greeting
+from :26
+M 100644 :20 README
+
 blob
 mark :27
 data 43
 Don't play ping pong while eating spinach.
-
-commit refs/heads/master
-mark :28
-author Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
-data 44
-strategy: assist those less fortunate souls
-from :30
-M 100644 :27 STRATEGY.txt
 
 blob
 mark :29
@@ -1351,13 +1342,13 @@ from :21
 M 100644 :29 README
 
 commit refs/heads/master
-mark :31
-author Eric Sunshine <sunshine@sunshineco.com> 1491185431 -0400
-committer Eric Sunshine <sunshine@sunshineco.com> 1491185431 -0400
-data 38
-readme: standardize on .txt extension
-from :33
-R "README" "README.txt"
+mark :28
+author Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491185265 -0400
+data 44
+strategy: assist those less fortunate souls
+from :30
+M 100644 :27 STRATEGY.txt
 
 commit refs/heads/master
 mark :32
@@ -1376,6 +1367,15 @@ data 33
 strategy: retire Windows support
 from :32
 D STRATEGY
+
+commit refs/heads/master
+mark :31
+author Eric Sunshine <sunshine@sunshineco.com> 1491185431 -0400
+committer Eric Sunshine <sunshine@sunshineco.com> 1491185431 -0400
+data 38
+readme: standardize on .txt extension
+from :33
+R "README" "README.txt"
 
 reset refs/heads/master
 from :33
