@@ -6050,6 +6050,7 @@ type StreamParser struct {
 	large                bool
 	propagate            map[string]bool
 	history              HistoryManager
+	splitCommits         map[revidx]int
 }
 
 type daglink struct {
@@ -6081,6 +6082,7 @@ func newStreamParser(repo *Repository) *StreamParser {
 	sp.directoryBranchlinks = newStringSet()
 	sp.activeGitignores = make(map[string]string)
 	sp.propagate = make(map[string]bool)
+	sp.splitCommits = make(map[revidx]int)
 	return sp
 }
 
@@ -7019,6 +7021,41 @@ func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
 	return lookback
 }
 
+func (sp *StreamParser) lastRelevantCommit(maxRev revidx, path string, attr string) *Commit {
+	// Make path look like a branch
+	if path[:1] == svnSep {
+		path = path[1:]
+	}
+	if path[len(path)-1] != svnSep[0] {
+		path = path + svnSep
+	}
+	//announce(debugEXTRACT, "looking back, maxRev=%d, path='%s', attr='%s'", maxRev, path, attr)
+	// If the revision is split, try from the last split commit
+	var legacyID string
+	if sp.splitCommits[maxRev] == 0 {
+		legacyID = fmt.Sprintf("SVN:%d", maxRev)
+	} else {
+		legacyID = fmt.Sprintf("SVN:%d.%d", maxRev, sp.splitCommits[maxRev])
+	}
+	// Find the commit object...
+	obj, ok := sp.repo.legacyMap[legacyID]
+	if !ok {
+		return nil
+	}
+	for revision := sp.repo.eventToIndex(obj); revision > 0; revision-- {
+		event := sp.repo.events[revision]
+		if commit, ok := event.(*Commit); ok {
+			b, ok := getAttr(commit, attr)
+			//announce(debugEXTRACT, "looking back examines %s looking for '%s'", commit.mark, b)
+			if ok && b != "" && strings.HasPrefix(path, b) {
+				//announce(debugEXTRACT, "looking back returns %s", commit.mark)
+				return commit
+			}
+		}
+	}
+	return nil
+}
+
 func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// Subversion actions to import-stream commits.
 	timeit := func(tag string) {
@@ -7113,41 +7150,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		baton.twirl("1")
 	}
 
-	splitCommits := make(map[int]int)
-	lastRelevantCommit := func(sp *StreamParser, maxRev int, path string, attr string) *Commit {
-		// Make path look like a branch
-		if path[:1] == svnSep {
-			path = path[1:]
-		}
-		if path[len(path)-1] != svnSep[0] {
-			path = path + svnSep
-		}
-		//announce(debugEXTRACT, "looking back, maxRev=%d, path='%s', attr='%s'", maxRev, path, attr)
-		// If the revision is split, try from the last split commit
-		var legacyID string
-		if splitCommits[maxRev] == 0 {
-			legacyID = fmt.Sprintf("SVN:%d", maxRev)
-		} else {
-			legacyID = fmt.Sprintf("SVN:%d.%d", maxRev, splitCommits[maxRev])
-		}
-		// Find the commit object...
-		obj, ok := sp.repo.legacyMap[legacyID]
-		if !ok {
-			return nil
-		}
-		for revision := sp.repo.eventToIndex(obj); revision > 0; revision-- {
-			event := sp.repo.events[revision]
-			if commit, ok := event.(*Commit); ok {
-				b, ok := getAttr(commit, attr)
-				//announce(debugEXTRACT, "looking back examines %s looking for '%s'", commit.mark, b)
-				if ok && b != "" && strings.HasPrefix(path, b) {
-					//announce(debugEXTRACT, "looking back returns %s", commit.mark)
-					return commit
-				}
-			}
-		}
-		return nil
-	}
+	sp.splitCommits = make(map[revidx]int)
 
 	if sp.large {
 		baton.twirl("2")
@@ -7810,7 +7813,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// not consisting entirely of deleteall operations.
 		if len(otherOps) > 1 {
 			// Store the number of splits
-			splitCommits[ri] = len(otherOps)
+			sp.splitCommits[intToRevidx(ri)] = len(otherOps)
 		}
 		// Sort fileops according to git rules
 		for _, newcommit := range newcommits {
@@ -7905,9 +7908,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						newcommit.legacyID, copies, latest)
 				}
 				if latest != nil {
-					prev := lastRelevantCommit(sp,
-						int(latest.fromRev), latest.fromPath,
-						"common")
+					prev := sp.lastRelevantCommit(latest.fromRev, latest.fromPath, "common")
 					if prev == nil {
 						if debugEnable(debugTOPOLOGY) {
 							croak(fmt.Sprintf("lookback for %s failed, not making branch link", latest))
@@ -8217,7 +8218,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 								// the source branch; we need to find the latest
 								// commit between minRev and fromRev made on
 								// that branch.
-								fromCommit := lastRelevantCommit(sp, parseInt(fromRev), fromPath, "Branch")
+								fromCommit := sp.lastRelevantCommit(intToRevidx(parseInt(fromRev)), fromPath, "Branch")
 								if fromCommit == nil {
 									sp.gripe(fmt.Sprintf("cannot resolve mergeinfo source from revision %s for path %s.",
 										fromRev, node.path))
@@ -8237,7 +8238,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					continue
 				}
 				// Find the correct commit in the split case
-				commit := lastRelevantCommit(sp, revision, node.path, "Branch")
+				commit := sp.lastRelevantCommit(intToRevidx(revision), node.path, "Branch")
 				if commit == nil || !strings.HasPrefix(commit.legacyID, fmt.Sprintf("%d", record.revision)) {
 					// The reverse lookup went past the target revision
 					sp.gripe(fmt.Sprintf("cannot resolve mergeinfo destination to revision %d for path %s.",
