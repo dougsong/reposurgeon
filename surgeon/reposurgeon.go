@@ -5812,10 +5812,8 @@ func (pm *PathMap) pathnames() []string {
 // Now, a type to manage a collectiom of PathMaps used as a history of file visibility.
 
 type HistoryManager interface {
-	journalCopy(revidx, revidx)
 	apply(revidx, []NodeAction)
 	getActionNode(revidx, string) *NodeAction
-	pruneMaps()
 }
 
 type FastHistory struct {
@@ -5831,14 +5829,7 @@ func newFastHistory() *FastHistory {
 	h := new(FastHistory)
 	h.visible = make(map[revidx]*PathMap)	// Visibility maps by revision ID
 	h.visibleHere = newPathMap()		// Snapshot of visibility after current revision ops
-	h.copysources = make(map[revidx]bool)   // Set of copy source revisions.
-	h.copytargets = make(map[revidx]bool)   // Set of copy target revisions
 	return h
-}
-
-func (h *FastHistory) journalCopy(fromRev revidx, toRev revidx) {
-	h.copysources[fromRev] = true
-	h.copytargets[toRev] = true
 }
 
 func (h *FastHistory) apply(revision revidx, nodes []NodeAction) {
@@ -5892,7 +5883,6 @@ func (h *FastHistory) apply(revision revidx, nodes []NodeAction) {
 		}
 	}
 
-	h.nodeStash = nodes	// So pruneMaps can see it.
 	h.revision = revision
 }
 
@@ -5904,50 +5894,6 @@ func (h *FastHistory) getActionNode(revision revidx, source string) *NodeAction 
 	}
 	return nil
 }
-
-func (h *FastHistory) pruneMaps() {
-	// See if we can garbage-collect old visibility maps.  On
-	// large repositories the overhead of storing these can become
-	// massive.  When an entry in h.visible becomes unreachable,
-	// we want to free it.
-
-	if h.revision < 2 {
-		return
-	}
-
-	visibleRevs := make(map[revidx]bool)
-	for _, node := range h.nodeStash {
-		visibleRevs[node.revision] = true
-	}
-
-	// Drop every filemap for a revision that (a) has no nodes now
-	// visible, and (b) is not a reachable copysource from
-	// anywhere in the future.  Here's the reasoning:
-	// 
-	// As the revision counter increments, file paths enter the
-	// visibility map, but they never leave it.  Once introduced,
-	// the visibility map node for a path is always a modification
-	// node or a deletion.
-	//
-	// Thus, we never have to look back past
-	// the most recent visibility map to find a node ancestor
-	// *unless* we go through a copyfrom link. Which can only land
-	// on a copysource with a nonzero reference count.
-	//
-	// Assumption: revision starts at zero and is incrementsed before
-	// each call to the apply() method.
-	announce(debugFILEMAP, "r%d: just before drop attempts copysources = %v, copytargets = %v",
-		h.revision, h.copysources, h.copytargets)
-	for rev := range h.visible {
-		// FIXME: Should be possible to delete sufficiently old copysources
-		if rev < h.revision && !visibleRevs[rev] && !h.copytargets[rev] && !h.copysources[rev] {
-			announce(debugFILEMAP, "r%d: dropping filemap for revision %d",
-				h.revision, rev)
-			delete(h.visible, rev)
-		}
-	}
-}
-
 
 // Stream parsing
 //
@@ -7118,9 +7064,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			backup := len(sp.revisions) - i - 1
 			for j := range sp.revisions[backup].nodes {
 				node := &sp.revisions[backup].nodes[len(sp.revisions[backup].nodes)-j-1]
-				if node.fromRev > 0 {
-					sp.history.journalCopy(node.fromRev, node.revision)
-				}
 				if !strings.HasPrefix(node.path, "tags") && !strings.HasPrefix(node.path, "branches") {
 					continue
 				}
@@ -8005,10 +7948,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					sp.revisions[ri].nodes = append(sp.revisions[ri].nodes, n)
 				}
 			}
-		}
-
-		if context.flagOptions["experimental"] {
-			sp.history.pruneMaps()
 		}
 	} // end of revision loop
 
