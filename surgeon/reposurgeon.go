@@ -5799,7 +5799,7 @@ func (pm *PathMap) pathnames() []string {
 // Now, a type to manage a collectiom of PathMaps used as a history of file visibility.
 
 type HistoryManager interface {
-	bumpCopycount(revidx)
+	journalCopy(revidx, revidx)
 	apply(revidx, []NodeAction)
 	getActionNode(revidx, string) *NodeAction
 	pruneMaps()
@@ -5808,7 +5808,8 @@ type HistoryManager interface {
 type FastHistory struct {
 	visible map[revidx]*PathMap
 	visibleHere *PathMap
-	copysources map[revidx]revidx
+	copysources map[revidx]bool
+	copytargets map[revidx]bool
 	nodeStash []NodeAction
 	revision revidx
 }
@@ -5817,12 +5818,14 @@ func newFastHistory() *FastHistory {
 	h := new(FastHistory)
 	h.visible = make(map[revidx]*PathMap)	// Visibility maps by revision ID
 	h.visibleHere = newPathMap()		// Snapshot of visibility after current revision ops
-	h.copysources = make(map[revidx]revidx) // Reference counts of copy source revisions.
+	h.copysources = make(map[revidx]bool)   // Set of copy source revisions.
+	h.copytargets = make(map[revidx]bool)   // Set of copy target revisions
 	return h
 }
 
-func (h *FastHistory) bumpCopycount(fromRev revidx) {
-	h.copysources[fromRev]++
+func (h *FastHistory) journalCopy(fromRev revidx, toRev revidx) {
+	h.copysources[fromRev] = true
+	h.copytargets[toRev] = true
 }
 
 func (h *FastHistory) apply(revision revidx, nodes []NodeAction) {
@@ -5881,6 +5884,7 @@ func (h *FastHistory) apply(revision revidx, nodes []NodeAction) {
 }
 
 func (h *FastHistory) getActionNode(revision revidx, source string) *NodeAction {
+	announce(debugFILEMAP, "r%d: getActionMode(%s) ", revision, source)
 	p := h.visible[revision].get(source)
 	if p != nil {
 		return p.(*NodeAction)
@@ -5898,20 +5902,9 @@ func (h *FastHistory) pruneMaps() {
 		return
 	}
 
-	// Before this code is reached, the copysources reference
-	// counts should have been filled in.  The copy references in
-	// the current revision have been used, decrement their
-	// reference counts.  When a saved copysource revision's
-	// reference count goes to 0, we can drop it.
 	visibleRevs := make(map[revidx]bool)
 	for _, node := range h.nodeStash {
 		visibleRevs[node.revision] = true
-		if node.fromRev > 0 {
-			h.copysources[node.fromRev]--
-			if h.copysources[node.fromRev] == 0 {
-				delete(h.copysources, node.fromRev) 
-			}
-		}
 	}
 
 	// Drop every filemap for a revision that (a) has no nodes now
@@ -5930,10 +5923,13 @@ func (h *FastHistory) pruneMaps() {
 	//
 	// Assumption: revision starts at zero and is incrementsed before
 	// each call to the apply() method.
+	announce(debugFILEMAP, "r%d: just before drop attempts copysources = %v, copytargets = %v",
+		h.revision, h.copysources, h.copytargets)
 	for rev := range h.visible {
-		if !visibleRevs[rev] && h.copysources[rev] == 0 {
-			announce(debugFILEMAP, "r%d: dropping filemaps for these revisions: %v",
-				h.revision, h.copysources)
+		// FIXME: Should be possible to delete sufficiently old copysources
+		if rev < h.revision && !visibleRevs[rev] && !h.copytargets[rev] && !h.copysources[rev] {
+			announce(debugFILEMAP, "r%d: dropping filemap for revision %d",
+				h.revision, rev)
 			delete(h.visible, rev)
 		}
 	}
@@ -7110,7 +7106,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			for j := range sp.revisions[backup].nodes {
 				node := &sp.revisions[backup].nodes[len(sp.revisions[backup].nodes)-j-1]
 				if node.fromRev > 0 {
-					sp.history.bumpCopycount(node.fromRev)
+					sp.history.journalCopy(node.fromRev, node.revision)
 				}
 				if !strings.HasPrefix(node.path, "tags") && !strings.HasPrefix(node.path, "branches") {
 					continue
@@ -7519,8 +7515,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 							subnode.props = found.props
 							subnode.action = sdADD
 							subnode.kind = sdFILE
-							announce(debugTOPOLOGY, "r%d-%d: generated copy r%d~%s -> %s %s",
-								record.revision, n+1, subnode.fromRev, subnode.fromPath, subnode.path, subnode)
+							announce(debugTOPOLOGY, "r%d-%d: %s generated copy r%d~%s -> %s %s",
+								record.revision, n+1, node.path, subnode.fromRev, subnode.fromPath, subnode.path, subnode)
 							appendExpanded(subnode)
 						}
 					}
@@ -7864,9 +7860,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		for _, newcommit := range newcommits {
 			newcommit.(*Commit).sortOperations()
 		}
-		if len(newcommits) > 0 {
-			announce(debugEXTRACT, "New commits (%d): %v", len(newcommits), newcommits)
-		}
+		//if len(newcommits) > 0 {
+		//	announce(debugEXTRACT, "New commits (%d): %v", len(newcommits), newcommits)
+		//}
 		// Deduce links between branches on the basis of copies. This
 		// is tricky because a revision can be the target of multiple
 		// copies.  Humans don't abuse this because tracking multiple
@@ -7998,7 +7994,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			}
 		}
 
-		// Reclaim storage
 		if context.flagOptions["experimental"] {
 			sp.history.pruneMaps()
 		}
