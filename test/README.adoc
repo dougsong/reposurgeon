@@ -94,22 +94,6 @@ two pound signs.
 
 5. 'make svn-dump' will dump the new test load to stdout.
 
-== The too-many-parents test case ==
-
-In this dump,
-
-* r404 is a merge from trunk to a feature branch
-
-* r405 is a merge from a feature branch into trunk.
-
-* r406 a commit to trunk
-
-* r407 is a merge from trunk to a second feature branch
-
-* r408 is a merge from this second feature branch into trunk
-
-r408 should have two parents, r406 and r407.
-
 == The agito test case ==
 
 Samuel Howard had this to say:
