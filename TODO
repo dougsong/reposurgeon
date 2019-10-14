@@ -13,50 +13,16 @@
   succeeded in Python. "make REPOSURGEON=pyreposurgeon hg-regress-patho"
   exhibits correct behavior.
 
-== Testing the code ==
-
-"make check" runs a complete set of regression tests.
-
-There are tools and makefile productions for finer-grained testing.  
-Their behavior is controlled by two variables:
-
-REPOSURGEON: either reposurgeon (the default) or pyreposurgeon
-
-TESTOPT: Use this to pass in a command or option setting, such
-as "set experimental",
-
-STOPOUT: 1 (the default) produces a bailout after the first failed
-test.  Set it to 0 to continue after failed tests - you have to do
-this on the make command line, e.g. "cd test; make STOPOUT=0
-fi-regress".  Note, the output from this may be voluminous and
-unuseful.
-
-To run a single test:
-
-   cd test; ./singletest foo
-
-will check the actual result of the script in foo.tst against its expected
-output in foo.chk.  No output other than the test notice is good.
-
-The "liftcheck" script is useful for testing the conversion correctness
-of a Subversion strream:
-
-   cd test; liftcheck foo.svn
-   
-No output means that a compare-all showed no errors or warnings.
-
-To allow the code to emit a stack trace, set verbose to 1 or higher.
-
 == Tuning for speed ==
 
-The goal of this port is to improve conversion performance on large
-repositories by an order of magnitude or more, with the horrible
-example being the GCC subversion history.  Trial runs with the Python
-version were taking 9-10 hours!
+The goal of moving the code to Golang is to improve conversion
+performance on large repositories by an order of magnitude or more,
+with the horrible example being the GCC subversion history.  Trial
+runs with the Python version were taking 9-10 hours!
 
 If you are already a Go expert, you can help by tuning for speed.  The
-most important single operations to speed up are fast-import stream reads and
-(when the Subversion support is working) Subversion dump stream reads.
+most important single operations to speed up are fast-import stream
+reads and Subversion dump stream reads.
 
 First thing to do is make a test load.  The reposurgeon history itself is
 large enough to be a useful one.  So:
