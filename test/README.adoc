@@ -5,22 +5,15 @@ A .svn extension means it's a Subversion repo dump.
 A .chk extension means it's expected output from a test.
 A .tst extension means it's a test driver script.
 
-Additionally, reposurgeon will run unit tests when given the
-"runtests" command. These tests are written in Python and built in to
-the script itself.
-
 The "singletest" script takes the stem of a .tst file name, captures stdout
 and stderr, and diffs the result against the corresponding check file.
 
 The "singlelift" script takes the stem of a .svn file name, captures stdout
 and stderr, and diffs the resultihg Subversion and git repos.
 
-== Writing new unit tests ==
-
-New unit tests can be written by adding a new class derived from
-unittest.TestCase, then listing this class as in the "available" list
-in do_runtests(). Any methods on this class which begin with the
-prefix "test_" will be automatically run by the unit test framework.
+The "liftcheck" script takes a Subversion stram file, builds a Git
+repository from it, and checks for differences using repotool's
+compare-all function.
 
 == The scripts ==
 
@@ -201,7 +194,7 @@ After conversion the tag named '1.0' referred to the first commit with
 the first tagging message 'Release 1.0', rather than the second commit
 with the second tagging message 'Fixed release 1.0'.
 
-== A note about branchreplace.svn ==
+== A note about references.svn ==
 
 This was produced from the NUT Subversion repo as follows:
 
@@ -350,7 +343,7 @@ svncutter -q -r 0:4,6,8,56,58,61,65,350,355,356,543:546 select <nut.svn \
 >reduced.svn
 
 Later it was stripped and renumbered.  Later still, a 0 revision and
-an 89 revisiuon were added to make the revision sequence 0-origin
+an 89 revision were added to make the revision sequence 0-origin
 and continuous, which the Go implementation requires.
 
 It captures the most serious pathologies in the NUT repo.
