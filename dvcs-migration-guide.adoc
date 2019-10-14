@@ -761,7 +761,7 @@ Makefile.
      Update for reposurgeon 2.15 and cvs-fast-export.
 
 3.7 (2013-04-01)::
-     Note that reposurgeon is significantly faster under pypy.
+     Note that reposurgeon is significantly faster under pypyo.
 
 3.8 (2013-11-15)::
      Remove an obsolete paragraph.

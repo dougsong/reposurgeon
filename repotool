@@ -1,4 +1,4 @@
-#!/usr/bin/env pypy
+#!/usr/bin/env python
 # -*- mode: Python; -*-
 #
 # repotool - query and manipulate multiple repository types in a uniform way.
@@ -22,9 +22,6 @@ template = """\
 #
 # Steps to using this:
 # 1. Make sure reposurgeon and repotool are on your $PATH.
-#    For large repositories It is usually best to run reposurgeon using
-#    PyPy: set REPOSURGEON to "pypy" followed by an absolute pathname
-#    to reposurgeon.
 # 2. (Skip this step if you're starting from a stream file.) For svn, set
 #    REMOTE_URL to point at the remote repository you want to convert.
 #    If the repository is already in a DVCS such as hg or git,
