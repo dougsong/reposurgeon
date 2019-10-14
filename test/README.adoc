@@ -40,7 +40,7 @@ Build a Subversion repo from a Subversion stream dump on stdin, or
 dump an existing repo as a stream to stdout.  Can also be used to edit
 a Subversion test load, regenerating its checksums.
 
-== svn-to-git ==
+=== svn-to-git ===
 
 Build a Subversion repo from a Subversion stream dump on stdin,
 convert it to a local git repository, and stream the result to
@@ -55,7 +55,7 @@ To add a new tool for comparison, do something like:
 
 from the repo root.
 
-== liftcheck ==
+=== liftcheck ===
 
 Take a named Subversion dump and compare a checkout of it with
 its git conversion at all tags and branches.
@@ -184,6 +184,9 @@ outputs:
 	Date:   Fri Oct 2 22:36:41 2009 +0000
 
 	    Initial import.
+
+We now handle this case pproperly by renaming the earlier creation of
+the tag.
 
 == The tagretract test case ==
 
