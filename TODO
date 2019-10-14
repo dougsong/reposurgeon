@@ -2,10 +2,11 @@
 
 == Known bugs ==
 
-* Weird combinations of Subversion tag copy-delete operations can produce
-  content-mismatch failures detectable by repotool compare. In the test
-  suite, this problem is exhibited by branchreplace.svn, emptyfrom.svn,
-  fleetwood.svn, references.svn.
+* Weird combinations of Subversion tag creation followed by tag delete
+  and renaming operations can produce content-mismatch failures
+  detectable by repotool compare. In the test suite, this problem is
+  exhibited by branchreplace.svn, emptyfrom.svn, fleetwood.svn,
+  references.svn.
 
 * Also see https://gitlab.com/esr/reposurgeon/issues for two minor problems.
 
@@ -22,7 +23,7 @@ Their behavior is controlled by two variables:
 
 REPOSURGEON: either reposurgeon (the default) or pyreposurgeon
 
-TESTOPT: Use thuis to pass in a command or option setting, such
+TESTOPT: Use this to pass in a command or option setting, such
 as "set experimental",
 
 STOPOUT: 1 (the default) produces a bailout after the first failed
