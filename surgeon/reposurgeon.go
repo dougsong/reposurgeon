@@ -7181,17 +7181,22 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						}
 					}
 				}
-				// Then, run forward patching copy operations
-				// FIXME: These might already have been moved out
-				// of the way by a *previous* tag deletion.
-				// To prevent this we need to stop scanning forward when we
-				// encounter another tag deletion.
-				// FIXME2: To really bulletproof this we need to
-				// also patch any copy operations later in this revision.
+				// Then, run forward patching copy
+				// operations To really bulletproof
+				// this we need to also patch any copy
+				// operations later in this delete revision.
+				// But that too would be pretty malformed.
 				for forward := ri + 1;  forward < len(sp.revisions); forward++ {
 					future := &sp.revisions[forward]
 					for i := range future.nodes {
 						lookforward := &future.nodes[i]
+						if lookforward.path == node.path && node.action == sdDELETE {
+							// Another deletion of this tag?  OK, stop patching copies.
+							// We'll deal with it in a new pass once the outer loop gets
+							// there
+							goto nextrevision
+						}
+						
 						if strings.HasSuffix(lookforward.fromPath, node.path) {
 							newfrom := newname + lookforward.fromPath[len(node.path):]
 							announce(debugEXTRACT, "r%d#%d~%s: on tag deletion from-path mapped to %s.",
@@ -7203,6 +7208,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				// Leave the delete in place as a mark that this tag is dead.
 			}
 		}
+	nextrevision:
 	}
 
 	// Build commits

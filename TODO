@@ -27,7 +27,7 @@ reads and Subversion dump stream reads.
 First thing to do is make a test load.  The reposurgeon history itself is
 large enough to be a useful one.  So:
 
-$ goreposurgeon "read ." "write >reposurgeon.fi"
+$ goreposurgeon "read ." "write >rs.fi"
 
 The ability to dump profile data is built into reposurgeon itself:
 
