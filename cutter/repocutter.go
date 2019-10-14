@@ -1441,9 +1441,13 @@ func main() {
 	case "renumber":
 		renumber(NewDumpfileSource(input, baton))
 	case "reduce":
+		if len(flag.Args()) < 2 {
+			fmt.Fprintf(os.Stderr, "repocutter: reduce requires a file argument.\n")
+			os.Exit(1)
+		}
 		f, err := os.Open(flag.Args()[1])
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "repocutter: can't open stream ro reduce\n")
+			fmt.Fprintf(os.Stderr, "repocutter: can't open stream to reduce.\n")
 			os.Exit(1)
 		}
 		doreduce(NewDumpfileSource(f, baton))
