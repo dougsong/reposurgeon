@@ -6968,6 +6968,10 @@ func (sp *StreamParser) isBranch(pathname string) bool {
 	return ok
 }
 
+func (sp *StreamParser) isTag(pathname string) bool {
+	return strings.HasPrefix(pathname, "tags/")
+}
+
 func (sp *StreamParser) isBranchDeleted(pathname string) bool {
 	return sp.branchdeletes.Contains(pathname)
 }
@@ -7140,6 +7144,66 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	timeit("pruning")
 
 	nobranch := options.Contains("--nobranch")
+
+	// Intervene to prevent lossage from tag deletions. The Subversion data model is that a history
+	// is a sequence of surgica; operations on a tree, and a tag is just another branch
+	// of the tree. Tag deletions are a place where this clashes badly with the changeset-DAG
+	// model used by git and oter DVCSes. Especially if the same tag is recreated later.
+	// The stupid, obvious thing to do would be to just nuke the tag history from  here back to
+	// its branch point, but that will cause problens if a future copy operation is ever sourced
+	// in the deleted branch and this does happen!) We deal with this by renaming the deleted branch
+	// and patching any copy operations from it in the future.
+	for ri, record := range sp.revisions {
+		for n := range record.nodes {
+			node := &record.nodes[n]
+			if sp.isTag(node.path) && node.action == sdDELETE {
+				newname := node.path[:len(node.path)] + fmt.Sprintf("-deleted-r%d-%d", node.revision, node.index) 
+				announce(debugEXTRACT, "r%d#%d~%s: tag deletion, renaming to %s.",
+					node.revision, node.index, node.path, newname)
+				// First, run backward performing the
+				// branch rename Note, because we scan
+				// for deletions in forward order, any
+				// previous deletions of this tag gave
+				// already been patched.  This could fail 
+				// weirdly if there is an operation on the
+				// tag in the same revision as the delete
+				// but *after* it, but that would be pretty
+				// malformed and probably cannot be produced
+				// by the Subversion CLI.
+				for back := ri - 1; back >= 0; back-- {
+					past := &sp.revisions[back]
+					for i := range past.nodes {
+						lookback := &past.nodes[i]
+						if lookback.path == node.path {
+							announce(debugEXTRACT, "r%d#%d~%s: on tag deletion path mapped to %s.",
+								lookback.revision, lookback.index, lookback.path, newname)
+							lookback.path = newname
+						}
+					}
+				}
+				// Then, run forward patching copy operations
+				// FIXME: These might already have been moved out
+				// of the way by a *previous* tag deletion.
+				// To prevent this we need to stop scanning forward when we
+				// encounter another tag deletion.
+				// FIXME2: To really bulletproof this we need to
+				// also patch any copy operations later in this revision.
+				for forward := ri + 1;  forward < len(sp.revisions); forward++ {
+					future := &sp.revisions[forward]
+					for i := range future.nodes {
+						lookforward := &future.nodes[i]
+						if strings.HasSuffix(lookforward.fromPath, node.path) {
+							newfrom := newname + lookforward.fromPath[len(node.path):]
+							announce(debugEXTRACT, "r%d#%d~%s: on tag deletion from-path mapped to %s.",
+								lookforward.revision, lookforward.index, lookforward.fromPath, newfrom)
+							lookforward.fromPath = newfrom
+						}
+					}
+				}
+				// Leave the delete in place as a mark that this tag is dead.
+			}
+		}
+	}
 
 	// Build commits
 	// This code can eat your processor, so we make it give up
@@ -9400,12 +9464,12 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 				}
 				msg += " deleting parentless "
 				if len(commit.operations()) > 0 {
-					msg += fmt.Sprintf("tip delete of %s.\n", commit.Branch)
+					msg += fmt.Sprintf("tip delete of %s.", commit.Branch)
 				} else {
-					msg += fmt.Sprintf("zero-op commit on %s.\n", commit.Branch)
+					msg += fmt.Sprintf("zero-op commit on %s.", commit.Branch)
 				}
 				if gripe != nil {
-					gripe(msg[1:])
+					announce(debugEXTRACT, msg[1:])
 				}
 				deletia = append(deletia, index)
 			}

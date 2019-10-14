@@ -3232,28 +3232,48 @@ dumpfiles. You must point it at a repository, not a checkout directory.</para>
 DVCSes (distributed version control systems) that followed it. Two of the more
 obvious differences are around tags and branches.</para>
 
-<para>A Subversion tag isn't an annotation attached to a commit, it's
-a copy of the state of an entire branch at a particular revision. This
-can be losslessly translated to an annotation only if no additional commits 
+<para>A Subversion tag isn't an annotation attached to a commit. The
+Subversion data model is that a history is a sequence of surgical
+operations on a tree; there are no annotation tags as such, a tag is
+just another branch of the tree.  Accordingly a Subversion tag, a copy
+of the state of an entire branch at a particular revision. This can be
+losslessly translated to an annotation only if no additional commits
 are added to the tag branch after the copy. But nothing prevents this!
 <application>reposurgeon</application> tries to do the right thing,
-creating a DVCS-style tag when it can and otherwise preserving the branch.</para>
+creating a DVCS-style tag when it can and otherwise preserving the
+branch.</para>
 
-<para>There is a subtler problem around branches themselves. In a DVCS,
-deleting a branch removes it fronm the repository history entirely, a
-fact of some significance since repositories are copied around often
-enough that keeping every discared experiment forever would eventually
-drown the live content in superannuated cruft.  Subversion repositories,
-are designed on the assumption that they sit on one server and never move.
-A Subversion branch is just a directory in the branch namespace; if you
-delete it, you won't see it in following revisions but if you update
-to an older one that content will still be there.</para>
+<para>There is a subtler problem around branches themselves. In a
+DVCS, deleting a branch removes it fronm the repository history
+entirely, a fact of some significance since repositories are copied
+around often enough that keeping every discared experiment forever
+would eventually drown the live content in superannuated cruft.
+Subversion repositories, on the other hand, are designed on the
+assumption that they sit on one server and never move.  A Subversion
+branch is just a directory in the branch namespace; if you delete it,
+you won't see it in following revisions but if you update to an older
+one that content will still be there.</para>
 
 <para>By default, <application>reposurgeon</application> treats branch
-deletions in a DVCS-like way, removing the history of te branch.  This
+deletions in a DVCS-like way, removing the history of the branch.  This
 means that it will <emphasis>not</emphasis> be live in translated revisions
 from prior to the commit time of the deletion.  However a --preserve
 option is available that prevents the removal of dead branches.</para>
+
+<para>Bad things can happen when a tag directory is created, copied
+from, deleted, then recreated from a different source directory. This
+is a place where the Subversion model of tags clashes badly with the
+changeset-DAG model used by git and oter DVCSes. Especially if the
+same tag is recreated later!  The obvious thing to do when convetubg
+this sequence would be to just nuke the tag history from from the
+deletion back to its branch point, but that will cause problens if a
+copy operation was ever sourced in the deleted (branch and this does
+happen!).</para>
+
+<para>We deal with this by renaming the deleted branch and patching
+any copy operations from it later in the history. This gandles
+many tag-delete-copy cases, but not all.  Some particularly perverse
+cases will convert incorrectly and require hand intervention.</para>
 
 <refsect2><title>READING SUBVERSION REPOSITORIES</title>
 
@@ -3899,6 +3919,11 @@ or warn you when they cannot do so.</para>
 commit-properties extension, correctly passing through property
 items including those with embedded newlines. (Such properties
 are also editable in the message-box format.)</para>
+
+<para>Limitation: In Subversion, sufficiently weird sequences of tag
+creations, branch copies from tags, and tag deletions followed by
+recreations of the tag can confuse reposurgeon, causing visible
+content matches.</para>
 
 <para>Limitation: Because <command>reposurgeon</command>
 relies on other programs to generate and interpret the fast-import command

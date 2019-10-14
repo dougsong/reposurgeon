@@ -76,8 +76,8 @@ committer frank <frank> 1439420741 +0000
 data 3
 r7
 from :2
-M 100755 :7 sim/regress_rdb.pl
-M 100644 :5 sim/test_lib/temp/.keepme
+M 100755 :7 sim-deleted-r13-1/regress_rdb.pl
+M 100644 :5 sim-deleted-r13-1/test_lib/temp/.keepme
 
 blob
 mark :10
@@ -109,7 +109,7 @@ committer frank <frank> 1443475423 +0000
 data 4
 r44
 from :9
-D sim/test_lib/temp/.keepme
+merge :12
 
 blob
 mark :14
