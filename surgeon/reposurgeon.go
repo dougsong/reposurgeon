@@ -2459,6 +2459,9 @@ func newBaton(prompt string, endmsg string, enable bool) *Baton {
 	me := new(Baton)
 	me.prompt = prompt
 	me.endmsg = endmsg
+	if me.endmsg == "" {
+		me.endmsg = "\b"
+	}
 	if enable {
 		me.stream = os.Stdout
 		me.stream.WriteString(me.prompt + "...[\b")
@@ -2551,15 +2554,15 @@ func (baton *Baton) exit(override string) {
 	}
 	if baton.stream != nil {
 		fmt.Fprintf(baton.stream, "]" + left + "...(%s) %s.\n",
-			time.Since(baton.starttime), baton.endmsg)
+			time.Since(baton.starttime).Round(time.Millisecond * 10), baton.endmsg)
 	}
 }
 
-func (baton *Baton) readProgress(ccount int64, filesize int64) {
-	if filesize > 0 && time.Since(baton.lasttick) > (60 * time.Second) {
+func (baton *Baton) percentProgress(legend string, ccount int64, expected int64) {
+	if expected > 0 && time.Since(baton.lasttick) > (250 * time.Millisecond) {
 		baton.lasttick = time.Now()
-		frac := float64(ccount) / float64(filesize)
-		baton.twirl(fmt.Sprintf("%d%%", int(frac*100)))
+		frac := float64(ccount) / float64(expected)
+		baton.twirl(fmt.Sprintf(legend + " %d%%", int(frac*100)))
 	}
 }
 
@@ -6598,7 +6601,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 				panic("revision counter overflow, recompile with a larger size")
 			}
 			// End Revision processing
-			baton.readProgress(sp.ccount, filesize)
+			baton.percentProgress("Stream deserialization:", sp.ccount, filesize)
 		}
 		announce(debugSVNPARSE, "revision parsing, line %d: ends with %d records", sp.importLine, sp.repo.legacyCount)
 	}
@@ -6741,13 +6744,13 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 						// This is a submodule
 						// link.  The ref
 						// field is a SHA1
-						// hash && the path is
+						// hash and the path is
 						// an external
 						// reference name.
 						// Don't try to
 						// collect data, just
 						// pass it through.
-						sp.warn("submodule link")
+						//sp.warn("submodule link")
 					} else {
 						// 100644, 100755, 120000.
 						sp.fiParseFileop(fileop)
@@ -6838,7 +6841,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			// Simply pass through any line we do not understand.
 			sp.repo.addEvent(newPassthrough(sp.repo, line))
 		}
-		baton.readProgress(sp.ccount, filesize)
+		baton.percentProgress("Stream deserialization:", sp.ccount, filesize)
 	}
 	for _, event := range sp.repo.events {
 		switch event.(type) {
@@ -6892,6 +6895,10 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 	sp.repo.legacyCount = 0
 	// First, determine the input type
 	line := sp.readline()
+	rate := func(count int) string {
+		elapsed := time.Since(baton.starttime)
+		return fmt.Sprintf("%dK/s", int(float64(elapsed)/float64(count * 1000)))
+	}
 	if strings.HasPrefix(line, "SVN-fs-dump-format-version: ") {
 		body := sdBody(line)
 		if body != "1" && body != "2" {
@@ -6901,22 +6908,18 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 		sp.parseSubversion(&options, baton, filesize)
 		// End of Subversion dump parsing
 		sp.timeMark("parsing")
-		if sp.large {
-			baton.twirl("$")
-		}
 		sp.svnProcess(options, baton)
-		elapsed := time.Since(baton.starttime)
-		baton.twirl(fmt.Sprintf("...%d svn revisions (%d/s)",
-			sp.repo.legacyCount,
-			int(sp.repo.legacyCount/int(elapsed))))
+		baton.twirl(fmt.Sprintf("...%d svn revisions (%s)",
+			sp.repo.legacyCount, rate(sp.repo.legacyCount)))
 	} else {
 		sp.pushback(line)
 		sp.parseFastImport(options, baton, filesize)
 		sp.timeMark("parsing")
 		if sp.repo.stronghint {
-			baton.twirl(fmt.Sprintf("%d %s events", len(sp.repo.events), sp.repo.vcs.name))
+			baton.twirl(fmt.Sprintf("%d %s events (%s)",
+				len(sp.repo.events), sp.repo.vcs.name, rate(len(sp.repo.events))))
 		} else {
-			baton.twirl(fmt.Sprintf("%d events", len(sp.repo.events)))
+			baton.twirl(fmt.Sprintf("%d events (%s)", len(sp.repo.events), rate(len(sp.repo.events))))
 		}
 	}
 	baton.exit("")
@@ -8020,6 +8023,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 			}
 		}
+		baton.percentProgress("Analysis:", int64(ri), int64(len(sp.revisions)))
 	} // end of revision loop
 
 	// Release history storage to be GCed
