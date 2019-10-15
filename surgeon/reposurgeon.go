@@ -2746,11 +2746,13 @@ func debugEnable(level int) bool {
 
 // nuke removes a (large) directory, reporting elapsed time.
 func nuke(directory string, legend string) {
-	if !context.quiet {
-		baton := newBaton(legend, "", debugEnable(debugSHUFFLE))
-		defer baton.exit("")
+	if exists(directory) {
+		if !context.quiet {
+			baton := newBaton(legend, "", debugEnable(debugSHUFFLE))
+			defer baton.exit("")
+		}
+		os.RemoveAll(directory)
 	}
-	os.RemoveAll(directory)
 }
 
 func complain(msg string, args ...interface{}) {
@@ -5296,6 +5298,7 @@ func (commit *Commit) checkout(directory string) string {
 		directory = filepath.FromSlash(commit.repo.subdir("") + "/" + commit.mark)
 	}
 	if !exists(directory) {
+		commit.repo.makedir()
 		os.Mkdir(directory, userReadWriteMode)
 	}
 
@@ -6903,7 +6906,6 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 func (sp *StreamParser) fastImport(fp io.Reader,
 	options stringSet, progress bool, source string) {
 	// Initialize the repo from a fast-import stream or Subversion dump.
-	sp.repo.makedir()
 	sp.timeMark("start")
 	var filesize int64 = -1
 	sp.fp = bufio.NewReader(fp)
@@ -9741,10 +9743,12 @@ func (repo *Repository) preservable() stringSet {
 // Rename the repo.
 func (repo *Repository) rename(newname string) error {
 	// Can fail if the target directory exists.
-	announce(debugSHUFFLE, fmt.Sprintf("repository rename %s->%s calls os.Rename(%q, %q)", repo.name, newname, repo.subdir(""), repo.subdir(newname)))
-	err := os.Rename(repo.subdir(""), repo.subdir(newname))
-	if err != nil {
-		return fmt.Errorf("repo rename %s -> %s failed: %s", repo.subdir(""), repo.subdir(newname), err)
+	if exists(repo.subdir("")) {
+		announce(debugSHUFFLE, fmt.Sprintf("repository rename %s->%s calls os.Rename(%q, %q)", repo.name, newname, repo.subdir(""), repo.subdir(newname)))
+		err := os.Rename(repo.subdir(""), repo.subdir(newname))
+		if err != nil {
+			return fmt.Errorf("repo rename %s -> %s failed: %s", repo.subdir(""), repo.subdir(newname), err)
+		}
 	}
 	repo.name = newname
 	return nil
@@ -20646,6 +20650,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 	}
 
 	announce(debugSHUFFLE, "extracting %s into %s", parse.line, repo.subdir(""))
+	repo.makedir()
 	headers, err := extractTar(repo.subdir(""), tarfile)
 	if err != nil {
 		croak("error while extracting tarball %s: %s", parse.line, err.Error())
