@@ -2455,6 +2455,7 @@ type Baton struct {
 	lasttick  time.Time
 	startprog time.Time
 	lastprog time.Time
+	channel  chan string
 }
 
 func newBaton(prompt string, endmsg string, enable bool) *Baton {
@@ -2464,11 +2465,18 @@ func newBaton(prompt string, endmsg string, enable bool) *Baton {
 	if me.endmsg == "" {
 		me.endmsg = "\b"
 	}
+	me.channel = make(chan string)
 	if enable {
+		go func() {
+			for {
+				v := <- me.channel
+				me.stream.WriteString(v)
+			}
+		}()
 		me.stream = os.Stdout
-		me.stream.WriteString(me.prompt + "...[\b")
+		me.channel <- me.prompt + "...[\b"
 		if me.isatty() {
-			me.stream.WriteString(" \b")
+			me.channel <- " \b"
 		}
 		me.counter = 0
 		me.starttime = time.Now()
@@ -2494,8 +2502,7 @@ func (baton *Baton) bumpcounter() {
 	if baton.isatty() {
 		if baton.countfmt != "" {
 			update := fmt.Sprintf(baton.countfmt, baton.counter)
-			baton.stream.WriteString(update + strings.Repeat("\b", len(update)))
-			//baton.stream.Flush()
+			baton.channel <- update + strings.Repeat("\b", len(update))
 		} else {
 			baton.twirl("")
 		}
@@ -2506,8 +2513,7 @@ func (baton *Baton) bumpcounter() {
 func (baton *Baton) endcounter() {
 	if baton.stream != nil {
 		w := len(fmt.Sprintf(baton.countfmt, baton.counter))
-		baton.stream.WriteString(strings.Repeat(" ", w) + strings.Repeat("\b", w))
-		//baton.stream.Flush()
+		baton.channel <- strings.Repeat(" ", w) + strings.Repeat("\b", w)
 	}
 	baton.countfmt = ""
 }
@@ -2522,19 +2528,18 @@ func (baton *Baton) twirl(ch string) {
 	}
 	if baton.erase {
 		if baton.lastlen == 1 {
-			baton.stream.WriteString(left)
+			baton.channel <- left
 		} else {
-			baton.stream.WriteString(strings.Repeat(left, baton.lastlen))
-			baton.stream.WriteString(strings.Repeat(" ", baton.lastlen))
-			baton.stream.WriteString(strings.Repeat(left, baton.lastlen))
+			baton.channel <- strings.Repeat(left, baton.lastlen)
+			baton.channel <- strings.Repeat(" ", baton.lastlen)
+			baton.channel <- strings.Repeat(left, baton.lastlen)
 		}
 		baton.erase = true
 	}
 	if baton.isatty() {
 		if ch != "" {
 			baton.lastlen = len(ch)
-			baton.stream.WriteString(ch)
-			//baton.stream.Flush()
+			baton.channel <- ch
 			baton.erase = strings.Contains(ch, "%")
 			if baton.erase {
 				time.Sleep(500 * time.Millisecond)
@@ -2543,7 +2548,7 @@ func (baton *Baton) twirl(ch string) {
 			baton.erase = false
 			if time.Since(baton.lasttick) > (100 * time.Millisecond) {
 				baton.lastlen = 1
-				baton.stream.Write([]byte{"-/|\\"[baton.counter%4]})
+				baton.channel <- string([]byte{"-/|\\"[baton.counter%4]})
 				baton.erase = true
 				baton.lasttick = time.Now()
 			}
