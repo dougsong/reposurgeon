@@ -2452,7 +2452,9 @@ type Baton struct {
 	countfmt  string
 	stream    *os.File
 	starttime time.Time
-	lasttick   time.Time
+	lasttick  time.Time
+	startprog time.Time
+	lastprog time.Time
 }
 
 func newBaton(prompt string, endmsg string, enable bool) *Baton {
@@ -2470,6 +2472,8 @@ func newBaton(prompt string, endmsg string, enable bool) *Baton {
 		}
 		me.counter = 0
 		me.starttime = time.Now()
+		me.startprog = time.Now()
+		me.lastprog = time.Now()
 	}
 	return me
 }
@@ -2533,7 +2537,7 @@ func (baton *Baton) twirl(ch string) {
 			//baton.stream.Flush()
 			baton.erase = strings.Contains(ch, "%")
 			if baton.erase {
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(500 * time.Millisecond)
 			}
 		} else {
 			baton.erase = false
@@ -2560,10 +2564,27 @@ func (baton *Baton) exit(override string) {
 
 func (baton *Baton) percentProgress(legend string, ccount int64, expected int64) {
 	if expected > 0 && time.Since(baton.lasttick) > (250 * time.Millisecond) {
-		baton.lasttick = time.Now()
 		frac := float64(ccount) / float64(expected)
-		baton.twirl(fmt.Sprintf(legend + " %d%%", int(frac*100)))
+		percent := fmt.Sprintf(legend + " %d%%", int(frac*100))
+		if time.Since(baton.lastprog) > time.Duration(10 * time.Second) {
+			// Dumb linear estimate, but better than nothing
+			elapsed := time.Since(baton.startprog)
+			rate := float64(ccount)/float64(elapsed / time.Second)
+			percent += fmt.Sprintf(" %d/%d, %v elapsed, rate %dK/s, %v ETC",
+				ccount,
+				expected,
+				elapsed.Round(time.Second),
+				int(rate / 1000),
+				time.Duration(float64(elapsed)/frac).Round(time.Second))
+			baton.lastprog = time.Now()
+			time.Sleep(250 * time.Millisecond)
+		}
+		baton.twirl(percent)
 	}
+}
+
+func (baton *Baton) resetProgress() {
+	baton.startprog = time.Now()
 }
 
 /*
@@ -7065,6 +7086,8 @@ func (sp *StreamParser) lastRelevantCommit(maxRev revidx, path string, attr stri
 
 func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// Subversion actions to import-stream commits.
+	baton.resetProgress()
+	
 	timeit := func(tag string) {
 		sp.timeMark("tag")
 		if context.flagOptions["bigprofile"] {
