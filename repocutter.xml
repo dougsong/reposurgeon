@@ -55,11 +55,11 @@ integer followed by a colon followed by HEAD.</para>
 error; each turn means another revision has been filtered. The -q (or
 --quiet) option suppresses this.</para>
 
-<para> The -d command enabled debug messages on standard error. These
+<para>The -d command enabled debug messages on standard error. These
 are probably only of interest to repocutter developers.</para>
 
-<para> The -i command sets the input source to a specified filename.
-This is primarilseey useful when running the program under a debugger.</para>
+<para>The -i command sets the input source to a specified filename.
+This is primarily useful when running the program under a debugger.</para>
 
 <para>Generally, if you need to use this program at all, you will find
 that you need to pipe your dump file through multiple instances of it
