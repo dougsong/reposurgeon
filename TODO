@@ -64,6 +64,8 @@ Some references:
 
 https://blog.golang.org/profiling-go-programs
 
+https://artem.krylysov.com/blog/2017/03/13/profiling-and-optimizing-go-web-applications/
+
 https://github.com/google/pprof/blob/master/doc/README.md
 
 https://www.signalfx.com/blog/a-pattern-for-optimizing-go-2/

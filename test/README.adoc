@@ -3,6 +3,10 @@
 "make" here in the test directoy runs a complete set of regression
 tests. It's what "make check" in the main directory redirects to.
 
+If you get a failure on the repotool-initialize-cvs-git test, but
+nowgere else, try updating your versions of CVS and cvs-fast-export
+ansd trying again.
+
 There are tools and makefile productions for finer-grained testing.  
 Their behavior is controlled by two variables:
 
