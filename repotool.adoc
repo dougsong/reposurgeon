@@ -1,0 +1,157 @@
+= cvs-fast-export(1) =
+:doctype: manpage
+
+== NAME ==
+repotool - operate on a CVS, SVN, git, bzr, hg, or darcs repository in a uniform way
+
+== SYNOPSIS ==
+
+*repotool* [-v] 'command' [args...]
+
+// In case we ever want to go back to DocBook
+//<cmdsynopsis>
+//  <command>repotool</command>
+//      <arg choice='opt'><option>-v</option></arg>
+//      <arg><replaceable>action</replaceable></arg>
+//      <arg choice='opt'><replaceable>URL-or-dir</replaceable></arg>
+//</cmdsynopsis>
+//</refsynopsisdiv>
+
+[[description]]
+== DESCRIPTION ==
+
+repotool is a script wrapper around repository operations that differ
+by version-control system.  It is little use by itself, existing
+mainly to generate and simplify a conversion makefile usable with
+reposurgeon(1).
+
+Not all actions are supported on all systems.  You will get an
+error message and a return value of 1 when attempting an unsupported
+action.
+
+With the -v option, report the commands executed just before
+they are run.
+
+The "initialize" option takes a project name (and, optionally,
+following source and target VCS types) and generates a
+Makefile that will sequence various steps of a repository
+conversion. It also generates stub lift and options files. This is
+meant to be run in an empty work directory, and it is an error to do
+'initialize' where any of these files already exist.  Afterwards, you
+will need to set some variables in the Makefile; read its header
+comment.
+
+The 'export' action, run from within a repository directory,
+dumps a copy of a CVS, Subversion, git, bzr, hg, or darcs repository
+to a flat history file readable by reposurgeon. The format is usually
+a git-fast-import stream, except that Subversion repositories export
+as Subversion dump files; the point is to be a lossless
+representation, or as close to one as possible.
+
+The 'tags' option, run from within a repository directory,
+returns a list of the repository's release tags.
+
+The 'branches' option, run from within a repository directory ,
+returns a list of the repository's branch names.
+
+The 'checkout' option checks out a working copy of the
+repository. It must be called from within the repository. It takes one
+required argument - the checkout directory location.
+
+The checkout option may take a revision, tag, or branch
+specification, given with the -r, -t, or -b options. If the spec is
+omitted, the tip of the main line of the repository will be used; this
+is equivalent to specifying branch 'master' (git terminology, which is
+translated by reposurgeon to 'trunk' or whatever the underlying VCS
+uses). If given a -c option, checkout is performed from the directory
+specified; this may be onvenient when working with CVS or Subversion in order 
+to select the repository directory.
+
+The 'compare' action takes two repository directories. It may
+optionally take a tag-branch-revision spec as for the checkout
+option. The selected versions are compared with diff -q -r, with noise
+due to SCCS/RCS/CVS keyword expansion ignored.  You can follow the
+command verb with one or more -x options followed by basenames of
+paths to exclude from comparison. You can get a context-diff report on
+file differences with the -u option. File permissions well as content
+are checked, any mismatches will be shown after the diff listing.
+
+The 'compare-tags' action takes two repository directories,
+extracts a list of tags from the first, then compares the repository
+contents at each tag in the list, generating a compare report for
+each.  You can follow the command verb with one or more -x options
+followed by basenames of paths to exclude from comparison. You can get
+a context-diff report on file differences with the -u option.
+
+The 'compare-branches' action takes two repository directories,
+extracts a list of branches common to both, then compares the repository
+contents at each branch in the list, generating a compare report for
+each.  You can follow the command verb with one or more -x options
+followed by basenames of paths to exclude from comparison. You can get
+a context-diff report on file differences with the -u option.
+
+The 'compare-all' action takes two repository directories, and
+runs all three above compare actions on them. Even if the same name is a
+tag in one repository and a branch in the other, it will compare them
+against each other. Not distinguishing them is useful as CVS tags that
+are not applied to every file in the repository may get converted to
+branches.  The options are the same as 'compare-tags'.
+
+The 'mirror' action makes or updates a local mirror of a
+Subversion, CVS, git, or hg repo. It requires a single argument,
+either a repository URL or the name of a local mirror directory
+created by a previous run. The first form creates a local mirror of
+the repository in a directory named after the last segment of the URL,
+with the suffix "-mirror" (the local mirror name can be
+overridden by an optional second argument). The second form updates
+the local mirror, doing an incremental fetch; just give the mirror
+directory name.
+
+Subversion URLs are as specified in the public documentation for
+Subversion.  CVS URLs must specify a host and repository path,
+followed by a '#', followed by a module name.  URLs for git and hg
+should be in the form normally used for clone commands
+
+[[environment]]
+== ENVIRONMENT VARIABLES ==
+
+This program uses the $TMPDIR environment variable, defaulting
+to '/tmp' if it is not set.
+
+[[bugs]]
+== BUGS ==
+
+Tag comparisons with git will not cope well with a branch
+name containing the string "detached".
+
+Due to extreme slowness of the Subversion checkout operation,
+the compare head, tag, and branch modes assume that if one of the
+directories is a Subversion checkout you have done a full checkout of
+HEAD before calling this tool; thus no svn update operation is
+required unless you give an -r option.  Spurious errors will be
+reported if the directory is not a full checkout of HEAD.  To avoid
+this optimization and force updating, do "-r HEAD".
+
+
+[[requirements]]
+== REQUIREMENTS ==
+
+The export action is a wrapper around either native export facilities
+or the following engines: cvs-fast-export(1) (for CVS), svnadmin(1)
+(for SVN), hg-fast-export.py(1) (for hg).  You must have the
+appropriate engine in your $PATH for whatever kind of repository you
+are streaming.
+
+ [[see_also]]
+== SEE ALSO ==
+
+reposurgeon(1).
+
+[[author]]
+== AUTHOR ==
+
+Eric S. Raymond <esr@thyrsus.com>. This tool is distributed with
+reposurgeon; see the http://www.catb.org/~esr/reposurgeon[project
+page].
+
+// end

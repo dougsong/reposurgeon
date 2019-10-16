@@ -2,8 +2,6 @@
 # makefile for reposurgeon
 #
 INSTALL=install
-XMLTO=xmlto
-XMLTOOPTS=-m docbook-extra.xml
 ASCIIDOC=asciidoc
 PYLINT=pylint
 prefix?=/usr/local
@@ -11,16 +9,16 @@ mandir?=share/man
 target=$(DESTDIR)$(prefix)
 
 VERS=$(shell sed <surgeon/reposurgeon.go -n -e '/const *version *= *\"\(.*\)\"/s//\1/p')
-SOURCES += docbook-extra.xml nofooter.conf
+SOURCES += nofooter.conf
 SOURCES += \
-	reposurgeon reposurgeon.xml \
-	repotool repotool.xml \
+	reposurgeon reposurgeon.adoc \
+	repotool repotool.adoc \
 	cutter/repocutter.go \
 	mapper/repomapper.go \
 	surgeon/reposurgeon.go \
 	surgeon/reposurgeon_test.go \
 	surgeon/intern.go \
-	repomapper.xml repocutter.xml \
+	repomapper.adoc repocutter.adoc \
 	reporting-bugs.adoc features.adoc dvcs-migration-guide.adoc \
 	reposurgeon-mode.el
 SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
@@ -48,15 +46,14 @@ build:  $(MANPAGES) $(HTMLFILES)
 	go build $(GOFLAGS) -o repomapper ./mapper
 	go build $(GOFLAGS) -o reposurgeon ./surgeon
 
-%.1: %.xml
-	$(XMLTO) $(XMLTOOPTS) man $<
+# Requires asciidoc and xsltproc/docbook stylesheets.
+.SUFFIXES: .html .adoc .1
 
-%.html: %.xml
-	$(XMLTO) $(XMLTOOPTS) html-nochunks $<
-
-dvcs-migration-guide.html: ASCIIDOC_ARGS=-a toc -f nofooter.conf
-%.html: %.adoc
-	$(ASCIIDOC) $(ASCIIDOC_ARGS) $<
+.adoc.1:
+	a2x --doctype manpage --format manpage $<
+.adoc.html:
+	a2x --doctype manpage --format xhtml -D . $<
+	rm -f docbook-xsl.css
 
 #
 # Auxilary Go productions

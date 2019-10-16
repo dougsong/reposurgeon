@@ -1,0 +1,233 @@
+= repocutter(1) =
+:doctype: manpage
+
+== NAME ==
+repocutter - surgical and filtering operations on Subversion dump files 
+
+== SYNOPSIS ==
+
+*repocutter* [-q] [-d] [-i 'filename'] [-r 'selection;] 'subcommand'
+
+// In case we ever want to go back to DocBook
+//<cmdsynopsis>
+//  <command>repocutter</command>
+//      <arg choice="opt">-q</arg>
+//      <arg choice="opt">-r <replaceable>selection</replaceable></arg>
+//      <arg choice='plain'><replaceable>subcommand</replaceable></arg>
+//      <arg choice="opt">-d</arg>
+//      <arg choice="opt">-i</arg>
+//</cmdsynopsis>
+//</refsynopsisdiv>
+
+[[description]]
+== DESCRIPTION ==
+
+This program does surgical and filtering operations on Subversion dump
+files.  While it is is not as flexible as reposurgeon(1), it can
+perform Subversion-specific transformations that reposurgeon cannot,
+and can be useful for processing Subversion repositories into a form
+suitable for conversion.
+
+(As a matter of possible historical interest, the reason for the
+partial functional overlap between repocutter and reposurgeon is that
+repocutter was first written earlier and became a testbed for some of
+the design concepts in reposurgeon. After reposurgeon was written, the
+author learned that it could not naturally support some useful
+operations very specific to Subversion, and enhanced repocutter to do
+those.)
+
+In all commands, the -r (or --range) option limits the selection
+of revisions over which an operation will be performed. A selection
+consists of one or more comma-separated ranges. A range may consist of
+an integer revision number or the special name HEAD for the head
+revision. Or it may be a colon-separated pair of integers, or an
+integer followed by a colon followed by HEAD.
+
+Normally, each subcommand produces a progress spinner on standard
+error; each turn means another revision has been filtered. The -q (or
+--quiet) option suppresses this.
+
+The -d command enables debug messages on standard error. These
+are probably only of interest to repocutter developers.
+
+The -i command sets the input source to a specified filename.
+This is primarily useful when running the program under a debugger.
+
+Generally, if you need to use this program at all, you will find
+that you need to pipe your dump file through multiple instances of it
+doing one kind of operation each.  This is not as expensive as it
+sounds; with the exception of the reduce subcommand, the working set
+of this program is bounded by the size of the largest commit metadata
+item.  It does not need to hold the entire repo metadata in
+memory.
+
+The following subcommands are available:
+
+help::
+Without arguments, list available commands. With a
+command-name argument, show detailed help for that subcommand.
+
+select::
+The 'select' subcommand selects a range and permits
+only revisions in that range to pass to standard output.  A range
+beginning with 0 includes the dumpfile header.
+
+propset::
+Set a property to a value. May be restricted by a
+revision selection. You may specify multiple property settings. See
+the embedded help for syntax details.
+
+propdel::
+Delete the named property. May be restricted by a revision
+selection. You may specify multiple properties to be deleted. See
+the embedded help for syntax details.
+
+proprename::
+Rename a property. May be restricted by a
+revision selection. You may specify multiple properties to be
+renamed. See the embedded help for syntax details.
+
+log::
+enerate a log report, same format as the output of svn
+log on a repository, to standard output.
+
+setlog::
+Replace the log entries in the input dumpfile with the
+corresponding entries in a specified file, which should be in the
+format of an svn log output.  Replacements may be restricted to a
+specified range. See the embedded help for syntax
+details.
+
+strip::
+Replace content with unique generated cookies on all node paths
+matching the specified regular expressions; if no expressions are
+given, match all paths.  Useful when you need to examine a
+particularly complex node structure.
+
+expunge::
+Delete all operations with Node-path headers matching
+specified Python regular expressions.  Any revision left with no Node
+records after this filtering has its Revision record removed as
+well.
+
+pathrename::
+Modify Node-path and Node-copyfrom-path headers
+matching a specified regular expression; replace with a given string.
+The string may contain references to parenthesized portions of the
+pattern - note, rese must be Go-style references led by $, not by a
+backslash as in reposurgeon itself. See the embedded help for syntax
+details.
+
+renumber::
+Renumber all revisions, patching Node-copyfrom headers
+as required.  Any selection option is ignored. Takes no
+arguments.
+
+reduce::
+Strip revisions out of a dump so the only parts left those likely to
+be relevant to a conversion problem. See the embedded help for syntax
+details and the relevance filter.
+
+see::
+Render a very condensed report on the repository node
+structure, mainly useful for examining strange and pathological
+repositories. File content is ignored.  You get one line per
+repository operation, reporting the revision, operation type, file
+path, and the copy source (if any).  Directory paths are distinguished
+by a trailing slash.  The 'copy' operation is really an 'add' with a
+directory source and target; the display name is changed to make them
+easier to see.
+
+swap::
+Swap the top two components of every path.  This is
+sometimes useful when converting a multi-project Subversion repository
+that has normal trunk/branch/tag structure under each top-level
+directory (of course the alternative is to break it into componebts
+using multiple strip operations).
+
+[[history]]
+== HISTORY ==
+
+Under the name "snvcutter", an ancestor of this program traveled in
+the 'contrib/' director of the Subversion
+distribution. It had functional overlap with reposurgeon(1) because it
+was directly ancestral to that code. It was moved to the
+reposurgeon(1) distribution in January 2016.  This program was ported
+from Python to Go in August 2018, at which time the obsolete "squash"
+command was retired.  The syntax of regular expressions in the
+pathrename command changed at that time.
+
+
+[[BUGS]]
+== BUGS ==
+
+There is one regression since the Python version: repocutter no
+longer recognizes Macintosh-syle line endings consisting of a carriage
+return only. This may be addressed in a future version.
+
+[[see_also]]
+== SEE ALSO ==
+
+reposurgeon(1).
+
+[[example]]
+== EXAMPLE ==
+
+Suppose you have a Subversion repository with the following
+semi-pathological structure:
+
+----
+Directory1/ (with unrelated content)
+Directory2/ (with unrelated content)
+TheDirIWantToMigrate/
+                branches/
+                               crazy-feature/
+                                               UnrelatedApp1/
+                                               TheAppIWantToMigrate/
+                tags/
+                               v1.001/
+                                               UnrelatedApp1/
+                                               UnrelatedApp2/
+                                               TheAppIWantToMigrate/
+                trunk/
+                               UnrelatedApp1/
+                               UnrelatedApp2/
+                               TheAppIWantToMigrate/
+----
+
+You want to transform the dump file so that TheAppIWantToMigrate can be
+subject to a regular branchy lift. A way to dissect out the code of
+interest would be with the following series of filters applied:
+
+----
+repocutter expunge '^Directory1' '^Directory2'
+repocutter pathrename '^TheDirIWantToMigrate/' ''
+repocutter expunge '^branches/crazy-feature/UnrelatedApp1/
+repocutter pathrename 'branches/crazy-feature/TheAppIWantToMigrate/' 'branches/crazy-feature/'
+repocutter expunge '^tags/v1.001/UnrelatedApp1/'
+repocutter expunge '^tags/v1.001/UnrelatedApp2/'
+repocutter pathrename '^tags/v1.001/TheAppIWantToMigrate/' 'tags/v1.001/'
+repocutter expunge '^trunk/UnrelatedApp1/'
+repocutter expunge '^trunk/UnrelatedApp2/'
+repocutter pathrename '^trunk/TheAppIWantToMigrate/' 'trunk/'
+----
+
+[[limitations]]
+== LIMITATIONS ==
+
+The sift and expunge operations can produce output dumps that are
+invalid.  The problem is copyfrom operations (Subversion branch and
+tag creations).  If an included revision includes a copyfrom reference
+to an excluded one, the reference target won't be in the emitted dump;
+it won't load correctly in either Subversion or reposurgeon. The
+revision number in a copyfrom header pointing to a missing revision
+will be zero. Attempts to be clever about this won't work; the problem
+is inherent in the data model of Subversion.
+
+[[author]]
+== AUTHOR ==
+Eric S. Raymond <esr@thyrsus.com>. This tool is
+distributed with reposurgeon; see the
+http://www.catb.org/~esr/reposurgeon[project page].
+
+// end

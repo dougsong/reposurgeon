@@ -14642,11 +14642,11 @@ func (rs *Reposurgeon) HelpNews() {
    group references are still Pythonically led with a backslash rather
    than Goishly with $; this is to avoid a collision with $ used as a
    leader for script arguments.
-   Also, regexp substititions are always 'g' (all copies).
+   Also, regexp substitutions are always 'g' (all copies).
 3. We now interpret Subversion $Rev$ and $LastChangedRev$ cookies.
 4. git hooks are preserved through surgery.
 5. The set of structure fieldnames that can be used with setfield is smaller.
-   However, all fieldnames for which support was documented will still work/
+   However, all fieldnames for which support was documented will still work.
 6. Subversion dump streams must now be a continuous span of revitions 
    starting from zero (restriction added for performance reasons).
 7. The branchify_map command is now named branchmap.

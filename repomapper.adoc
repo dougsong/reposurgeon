@@ -1,0 +1,121 @@
+= repomapper(1) =
+:doctype: manpage
+
+== NAME ==
+repomapper - update and manipulate contributor maps
+
+== SYNOPSIS ==
+
+*repomapper* [-i] [-p 'passwordfile'] [-u 'updatefile'] [-h 'host'] 'contribmap'
+
+// In case we ever want to go back to DocBook
+//<cmdsynopsis>
+//  <command>repomapper</command>
+//      <arg choice="opt">-i</arg>
+//      <arg choice="opt">-p <replaceable>passwordfile</replaceable></arg>
+//      <arg choice="opt">-u <replaceable>updatefile</replaceable></arg>
+//      <arg choice="opt">-h <replaceable>host</replaceable></arg>
+//      <arg choice='plain'><replaceable>contribmap</replaceable></arg>
+//</cmdsynopsis>
+//</refsynopsisdiv>
+
+[[description]]
+== DESCRIPTION ==
+
+Older, centralized version-control systems such as CVS and
+SVN centralize a repository on one host and identify users by their
+account names on that host.  Distributed version-control systems such
+as git and Mercurial identify users by a netwide-unique ID consisting
+of a name-among-humans followed by an email address.
+
+When moving a repository from a centralized to a distributed
+system, therefore, one of the prerequisites is a contributor map that
+associates each account name on the old system to a DVCS-style ID
+on the new one.  This tool automates parts of that process.
+
+The main argument file must be a contributor map such as is read by
+the "authors read" subcommand of reposurgeon(1). It may be a fresh or
+stub map, produced by "authors write" before any human-name or email
+information has been added to the repository.  Or it may have
+name-among-humans and email information filled in for some entries.
+
+A stub map entry looks something like this:
+
+----
+foonly = foonly <foonly>
+----
+
+The same entry, fully filled in, might look something like this:
+
+----
+foonly = Fred Foonly <foonly@fubar.net>
+----
+
+The default behavior of the tool is to report all map entries,
+in effect a sorting copy of the file.
+
+With -i, it reports only entries that are not yet in DVCS form -
+that is, either the fullname field on the right side of the equals
+sign is identical to the account name on the left, or the email field
+contains no @-sign, or both.
+
+With the -p option, this tool fills in the full-name field using the
+password file given as the option's argument. Only the username and
+the comment (or 'gecos') field containing the user's name-among-humans
+are used. Other fields are ignored, including the password-hash field.
+(On modern Unixes this field does not contain the actual hash, which
+lives in a different file named '/etc/shadow', so '/etc/passwd' can be
+shared without security risk.)
+
+In the -p mode, for each entry in the contrib file the program
+looks for a username in the password file matching the name to the
+left of the equal sign.  If a match is found, the user's
+name-among-humans is extracted from the gecos field and replaces the
+text between the "=" and the "<".
+
+Thus, the stub line above and the '/etc/passwd' line
+
+----
+foonly:x:1000:1000:Fred Foonly,,,:/home/foonly:/bin/bash
+----
+
+will combine to produce this on output:
+
+----
+foonly = Fred Foonly <foonly>
+----
+
+Note that the email-address part (and, if present, the
+optional trailing timezone field) are not normally modified.
+
+However, if the -h option is given, the argument is taken to be
+a host name which should be appended (after a @) to every email field
+that does not already contain a @.  The argument would typically be the
+fully-qualified domain name of the repository host.
+
+Thus, if the passwd file still contains an entry for every
+committer (which might not be the case if inactive committer accounts
+were ever removed), -p mode combined with an -h option can produce
+an entire, valid contributor map.
+
+In the -u mode of operation, the option argument must be a
+second contributor file, which is taken as a source of updates.  Each
+contributor entry with a username not matching any in the first
+contributor map is copied into the first map, which is output.
+
+Output from this tool is always a contribution map sorted by
+username.
+
+[[see_also]]
+== SEE ALSO ==
+
+reposurgeon(1).
+
+[[author]]
+== AUTHOR ==
+
+Eric S. Raymond <esr@thyrsus.com>. This tool is distributed with
+reposurgeon; see the http://www.catb.org/~esr/reposurgeon[project
+page].
+
+// end
