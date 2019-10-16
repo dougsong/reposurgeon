@@ -1,6 +1,6 @@
 ## Test authors read, legacy-ID refs, heredocs, comment editing
-read <references.svn
 relax
+read <references.svn
 <1>,<2>,<13> resolve
 <1>..<2> resolve
 <3>..<7> resolve

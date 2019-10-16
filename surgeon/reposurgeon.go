@@ -7997,10 +7997,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					}
 				}
 				if latest != nil {
+					//fmt.Printf("XXXX adding directory branchlink = %s\n", newcommit.common)
 					sp.directoryBranchlinks.Add(newcommit.common)
 					announce(debugTOPOLOGY, "r%s: directory copy with %s finds %s",
 						newcommit.legacyID, copies, latest)
-				} else if len(copies) > 1 &&
+				} else if len(copies) > 1 && newcommit.common != "" &&
 					!sp.directoryBranchlinks.Contains(newcommit.common) {
 					for _, node := range copies {
 						if latest == nil || node.fromRev > latest.fromRev {
@@ -8011,12 +8012,14 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						newcommit.legacyID, copies, latest)
 				}
 				if latest != nil {
+					//fmt.Printf("XXXX before adding fileop branchlink = %s\n", newcommit.common)
 					prev := sp.lastRelevantCommit(latest.fromRev, latest.fromPath, "common")
 					if prev == nil {
 						if debugEnable(debugTOPOLOGY) {
 							croak(fmt.Sprintf("lookback for %s failed, not making branch link", latest))
 						}
 					} else {
+						//fmt.Printf("XXXX adding fileop branchlink = %s\n", newcommit.common)
 						sp.fileopBranchlinks.Add(newcommit.common)
 						sp.branchlink[newcommit.mark] = daglink{newcommit, prev}
 						announce(debugTOPOLOGY, "r%s: link %s (%s) back to r%d (mark=%s, common='%s')",
