@@ -15956,7 +15956,7 @@ func (rs *Reposurgeon) DoStrip(line string) bool {
 	if striptypes.Contains("blobs") {
 		for _, ei := range rs.selection {
 			if blob, ok := repo.events[ei].(*Blob); ok {
-				blob.setContent(fmt.Sprintf("Blob at %s\n", blob.mark), -1)
+				blob.setContent(fmt.Sprintf("Blob at %s\n", blob.mark), noOffset)
 			}
 		}
 	}
@@ -17245,7 +17245,7 @@ func (rs *Reposurgeon) DoBlob(line string) bool {
 		croak("while reading blob content: %v", err)
 		return false
 	}
-	blob.setContent(string(content), -1)
+	blob.setContent(string(content), noOffset)
 	repo.declareSequenceMutation("adding blob")
 	repo.invalidateNamecache()
 	return false
@@ -19193,7 +19193,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 				if !hasIgnoreBlob {
 					blob := newBlob(repo)
 					blob.addalias(rs.ignorename)
-					blob.setContent(rs.preferred.dfltignores, -1)
+					blob.setContent(rs.preferred.dfltignores, noOffset)
 					blob.mark = ":insert"
 					repo.insertEvent(blob, repo.eventToIndex(earliest), "ignore-blob creation")
 					repo.declareSequenceMutation("ignore creation")
@@ -19237,7 +19237,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 				if blob, ok := event.(*Blob); ok && isIgnore(blob) {
 					if rs.preferred.name == "hg" {
 						if !strings.HasPrefix(blob.getContent(), "syntax: glob\n") {
-							blob.setContent("syntax: glob\n"+blob.getContent(), -1)
+							blob.setContent("syntax: glob\n"+blob.getContent(), noOffset)
 							changecount++
 						}
 					}

@@ -50,7 +50,7 @@ and stderr, and diffs the result against the corresponding check file.
 The "singlelift" script takes the stem of a .svn file name, captures stdout
 and stderr, and diffs the resultihg Subversion and git repos.
 
-The "liftcheck" script takes a Subversion stram file, builds a Git
+The "liftcheck" script takes a Subversion stream file, builds a Git
 repository from it, and checks for differences using repotool's
 compare-all function.
 
