@@ -5696,24 +5696,8 @@ type pathMapItem struct {
 	value interface{}
 }
 
-// In the ancestral Python this was implemented with tricky
-// CoW. Sadly, attempting to port that to Go failed with subtle bugs,
-// probably due to the difference between Python pass-by-reference and
-// Go pass-by-value.
-//
-// The API has been preserved in case anybody needs to try
-// implementing CoW again.  The reason would be working-set size on
-// large repositories, but Go per-object overhead is enough lower than
-// Python's that it probably wins without CoW.
-//
-// This is not, however, a thing to try lightly. The Python CoW may
-// have been overengineering. It couldn't save value space provided
-// the value type is either a pointer to shared storage (as in the
-// dumpfile reader) or an integral scalar that fits in a pointer
-// (other uses).  It could save hashtable space only proportional to the
-// number of directory-copy operations in the history.
+// PathMap is a string-to-value map.
 
-// PathMap is a string-to-value map. possibly with magic internals.
 type PathMap struct {
 	store map[string]interface{}
 }
@@ -5726,6 +5710,9 @@ func newPathMap() *PathMap {
 
 // snapshot returns a snapshot of the current state of an evolving filemap.
 func (pm PathMap) snapshot() *PathMap {
+	// The shapshot will share its direct children with the PathMap, which is
+	// OK since except the toplevel one, every PathMap is considered immutable
+	// and a copy will be made before any modification.
 	r := newPathMap()
 	for k, v := range pm.store {
 		r.store[k] = v
@@ -5733,36 +5720,26 @@ func (pm PathMap) snapshot() *PathMap {
 	return r
 }
 
+// not part of the interface, but a convenience helper
+func (pm *PathMap) maybe_get(path string) (interface{}, bool) {
+	var element interface{} = pm
+	for _, component := range strings.Split(path, svnSep) {
+		parent, ok := element.(*PathMap);
+		if ok {
+			element, ok = parent.store[component]
+		}
+		if !ok {
+			return nil, false
+		}
+	}
+	return element, true
+}
+
 // copyFrom inserts at targetPath, a snapshot of sourcePath in sourcePathMap.
 func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePath string) {
-	if sourcePathMap.isEmpty() {
-		return
-	}
-	if sourcePath == "" {
-		panic("empty string as copy source path")
-	}
-	presentAsDirname := func(dir string, pm *PathMap) bool {
-		for subPath := range sourcePathMap.store {
-			if strings.HasPrefix(subPath, dir+svnSep) {
-				return true
-			}
-		}
-		return false
-	}
-	if presentAsDirname(sourcePath, sourcePathMap) {
-		// Exists in source map as a directory, do directory copy to under target path.
-		for subPath, value := range sourcePathMap.store {
-			if strings.HasPrefix(subPath, sourcePath+svnSep) {
-				target := targetPath + subPath[len(sourcePath):]
-				pm.store[target] = value
-			}
-		}
-		return
-	}
-	if sourcePathMap.contains(sourcePath) {
-		// Exists in source map as a file.
-		pm.store[targetPath] = sourcePathMap.store[sourcePath]
-		return
+	if source, ok := sourcePathMap.maybe_get(sourcePath); ok {
+		// Here, source can be a directory (a PathMap instance), or a single file
+		pm.set(targetPath, source)
 	}
 	// Yes, there's a fallthrough case where we do nothing.  In the ancestral Python
 	// the function ended with the equivalent of the next line of code, but nil is
@@ -5772,38 +5749,99 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 
 // contains return true if path is present in the map as a file.
 func (pm *PathMap) contains(path string) bool {
-	_, ok := pm.store[path]
-	return ok
+	element, ok := pm.maybe_get(path)
+	if ok {
+		_, isdir := element.(*PathMap)
+		return !isdir
+	}
+	return false
 }
 
 // get returns the value associated with a specified path.
 func (pm PathMap) get(path string) interface{} {
-	return pm.store[path]
+	element, ok := pm.maybe_get(path)
+	if ok {
+		if _, isdir := element.(*PathMap); !isdir {
+			return element
+		}
+	}
+	return nil
 }
 
 // set adds a filename to the map, with associated value.
 func (pm PathMap) set(path string, value interface{}) {
-	pm.store[path] = value
+	components := strings.Split(path, svnSep)
+	// Walk along the "dirname", creating missing directories as we go
+	parent := &pm
+	for _, component := range components[:len(components)-1] {
+		element, ok := parent.store[component]
+		if ok {
+			subdir, ok := element.(*PathMap)
+			if !ok {
+				panic(fmt.Sprintf(
+					"Impossible to add '%s': '%s' exists and is not a directory",
+					path, component))
+			}
+			// The component already exists. Replace it by a snaphot of it so that
+			// it can be modified without messing with other PathMaps
+			subdir = subdir.snapshot()
+			parent.store[component] = subdir
+			parent = subdir
+		} else {
+			// create the component as a directory
+			newdir := newPathMap()
+			parent.store[component] = newdir
+			parent = newdir
+		}
+	}
+	// Insert the value, maybe overwriting what is already there
+	name := components[len(components)-1]
+	parent.store[name] = value
 }
 
 // remove removes a filename, or all descendents of a directory name, from the map.
 func (pm *PathMap) remove(path string) {
-	if _, ok := pm.store[path]; ok {
-		delete(pm.store, path)
-		return
-	}
-	for k := range pm.store {
-		if strings.HasPrefix(k, path+svnSep) {
-			delete(pm.store, k)
+	components := strings.Split(path, svnSep)
+	// Walk along the "dirname"
+	parent := pm
+	for _, component := range components[:len(components)-1] {
+		element, ok := parent.store[component]
+		if ok {
+			subdir, ok := element.(*PathMap)
+			if !ok {
+				// Impossible to remove '%s': '%s' exists and is not a directory
+				// FIXME: log a warning ?
+				return
+			}
+			// The component already exists. Replace it by a snaphot of it so that
+			// it can be modified without messing with other PathMaps
+			subdir = subdir.snapshot()
+			parent.store[component] = subdir
+			parent = subdir
+		} else {
+			// Impossible to remove '%s': '%s' does not exist
+			// FIXME: log a warning ?
+			return
 		}
 	}
+	name := components[len(components)-1]
+	delete(parent.store, name)
+}
+
+func (pm *PathMap) _items_aux(items []pathMapItem, prefix string) []pathMapItem {
+	for cmp1, elt := range pm.store {
+		if element, ok := elt.(*PathMap); ok {
+			items = element._items_aux(items, prefix + cmp1 + svnSep)
+		} else {
+			items = append(items, pathMapItem{prefix + cmp1, elt})
+		}
+	}
+	return items
 }
 
 func (pm PathMap) items() []pathMapItem {
 	items := make([]pathMapItem, 0)
-	for k, v := range pm.store {
-		items = append(items, pathMapItem{k, v})
-	}
+	items = pm._items_aux(items, "")
 	sort.Slice(items, func(i, j int) bool {
 		return items[i].name < items[j].name
 	})
@@ -5811,14 +5849,14 @@ func (pm PathMap) items() []pathMapItem {
 }
 
 func (pm PathMap) size() int {
-	return len(pm.store)
+	return len(pm.items())
+}
+
+func (pm *PathMap) isEmpty() bool {
+	return len(pm.store) == 0
 }
 
 // Derived PathMap code, independent of the store implementation
-
-func (pm *PathMap) isEmpty() bool {
-	return pm.size() == 0
-}
 
 func (pm *PathMap) String() string {
 	out := "{"
