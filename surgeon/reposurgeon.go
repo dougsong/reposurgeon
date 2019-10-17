@@ -5690,6 +5690,13 @@ func branchbase(branch string) string {
 // A PathMap represents a mapping from a set of filenames visible in a
 // Subversion revision to some kind of value object.  The main use is
 // by the dumpfile parser, in which the value object is a NodeAction.
+//
+// The reason to prefer this over a naive implementation is that
+// without the copy-on-write storage sharing of snapshots, the
+// cost to keep a per-revision array of snapshots can blow up
+// pretty badly.
+//
+// This implementation cannot use directories as keys.
 
 type pathMapItem struct {
 	name  string
@@ -5710,9 +5717,10 @@ func newPathMap() *PathMap {
 
 // snapshot returns a snapshot of the current state of an evolving filemap.
 func (pm PathMap) snapshot() *PathMap {
-	// The shapshot will share its direct children with the PathMap, which is
-	// OK since except the toplevel one, every PathMap is considered immutable
-	// and a copy will be made before any modification.
+	// The shapshot will share its direct children with the source
+	// PathMap, which is OK since except the toplevel one, every
+	// PathMap is considered immutable and a copy will be made
+	// before any modification.
 	r := newPathMap()
 	for k, v := range pm.store {
 		r.store[k] = v
@@ -5720,8 +5728,10 @@ func (pm PathMap) snapshot() *PathMap {
 	return r
 }
 
-// not part of the interface, but a convenience helper
-func (pm *PathMap) maybe_get(path string) (interface{}, bool) {
+// _maybeGet gets both a retrieved value and a membership bool,
+// so there doesn't have to be an out-of-band not-there value. 
+// It is not part of the interface, but a convenience helper
+func (pm *PathMap) _maybeGet(path string) (interface{}, bool) {
 	var element interface{} = pm
 	for _, component := range strings.Split(path, svnSep) {
 		parent, ok := element.(*PathMap);
@@ -5735,9 +5745,9 @@ func (pm *PathMap) maybe_get(path string) (interface{}, bool) {
 	return element, true
 }
 
-// copyFrom inserts at targetPath, a snapshot of sourcePath in sourcePathMap.
+// copyFrom inserts at targetPath a snapshot of sourcePath in sourcePathMap.
 func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePath string) {
-	if source, ok := sourcePathMap.maybe_get(sourcePath); ok {
+	if source, ok := sourcePathMap._maybeGet(sourcePath); ok {
 		// Here, source can be a directory (a PathMap instance), or a single file
 		pm.set(targetPath, source)
 	}
@@ -5749,7 +5759,7 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 
 // contains return true if path is present in the map as a file.
 func (pm *PathMap) contains(path string) bool {
-	element, ok := pm.maybe_get(path)
+	element, ok := pm._maybeGet(path)
 	if ok {
 		_, isdir := element.(*PathMap)
 		return !isdir
@@ -5759,7 +5769,7 @@ func (pm *PathMap) contains(path string) bool {
 
 // get returns the value associated with a specified path.
 func (pm PathMap) get(path string) interface{} {
-	element, ok := pm.maybe_get(path)
+	element, ok := pm._maybeGet(path)
 	if ok {
 		if _, isdir := element.(*PathMap); !isdir {
 			return element
@@ -5828,10 +5838,11 @@ func (pm *PathMap) remove(path string) {
 	delete(parent.store, name)
 }
 
-func (pm *PathMap) _items_aux(items []pathMapItem, prefix string) []pathMapItem {
+// _itemsInner recursively walks the pathMap CoW tree estracting its items
+func (pm *PathMap) _itemsInner(items []pathMapItem, prefix string) []pathMapItem {
 	for cmp1, elt := range pm.store {
 		if element, ok := elt.(*PathMap); ok {
-			items = element._items_aux(items, prefix + cmp1 + svnSep)
+			items = element._itemsInner(items, prefix + cmp1 + svnSep)
 		} else {
 			items = append(items, pathMapItem{prefix + cmp1, elt})
 		}
@@ -5841,7 +5852,7 @@ func (pm *PathMap) _items_aux(items []pathMapItem, prefix string) []pathMapItem 
 
 func (pm PathMap) items() []pathMapItem {
 	items := make([]pathMapItem, 0)
-	items = pm._items_aux(items, "")
+	items = pm._itemsInner(items, "")
 	sort.Slice(items, func(i, j int) bool {
 		return items[i].name < items[j].name
 	})
