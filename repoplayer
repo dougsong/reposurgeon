@@ -6,7 +6,8 @@
 #TODO: Ignores after initial defaults.
 #TODO: Make the baton more like Go reposurgeon's.
 #TODO: Write tests
-#TODO: Translare to Go.
+#TODO: Translate to Go. Low priority, what it cals is slow.
+#TODO: Handle mergeinfos better.
 #
 # By ESR, October 2019.  Some of this code was part of the original Python
 # implementation of reposurgeon.
