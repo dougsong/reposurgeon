@@ -186,12 +186,16 @@ def initializeReplay(repodir, checkoutdir):
     # git repository.
     doOrDie("svn %s co file://%s %s" % (suppression, repodir, checkoutdir))
     doOrDie("git init %s %s" % (suppression, checkoutdir))
-    os.chdir(checkoutdir)
-    with open(".gitignore", "w") as wp:
-        wp.write(subversion_default_ignores)
-    doOrDie("git add .gitignore; git commit %s -a -m 'Simulate Subversion ignores.'" % suppression)
-    maxRevision = int(capture("svn info --show-item revision"))
-    print("repoplayer: initialization complete, %d Subversion revisions found." % maxRevision)
+    here = os.getcwd()
+    try:
+        os.chdir(checkoutdir)
+        with open(".gitignore", "w") as wp:
+            wp.write(subversion_default_ignores)
+        doOrDie("git add .gitignore; git commit %s -a -m 'Simulate Subversion ignores.'" % suppression)
+        maxRevision = int(capture("svn info --show-item revision"))
+    finally:
+        os.chdir(here)
+    print("repoplayer: %d Subversion revisions found, converting in %s." % (maxRevision, checkoutdir))
     return maxRevision
 
 if __name__ == '__main__':
@@ -219,10 +223,12 @@ if __name__ == '__main__':
         croak("no such directory as " + repodir)
     try:
         startFrom = os.getcwd()
-        if usetmp:
+        if len(arguments) >= 2 and not os.path.exists(arguments[1]) and not usetmp:
+            checkoutdir = arguments[1]
+        elif usetmp:
             checkoutdir = tempfile.mkdtemp()
         else:
-            print("not yet supported")
+            print("repoplayer: is confused")
             sys.exit(1)
         if suppression == "":
             print("repoplayer: conversion of %s in %s" % (repodir, checkoutdir))
@@ -255,8 +261,9 @@ if __name__ == '__main__':
             shutil.rmtree(".svn")
             os.chdir(startFrom)
             os.rename(checkoutdir, stem + "-git")
+        else:
+            print("repoplayer: %s is a mixed repository" % checkoutdir)
     except OSError as oe:
         print(oe)
-        shutil.rmtree(tempdir)
 
 # end
