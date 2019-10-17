@@ -2248,7 +2248,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Rep
 	}
 
 	if len(uncolored) > 0 {
-		if context.verbose >= 1 {
+		if context.isInteractive() {
 			return nil, fmt.Errorf("missing branch attribute for %v", uncolored)
 		}
 		return nil, fmt.Errorf("some branches do not have local ref names")
@@ -2658,6 +2658,10 @@ type Context struct {
 	listOptions map[string]stringSet
 	mapOptions  map[string]map[string]string
 	branchMappings []branchMapping
+}
+
+func (ctx *Context) isInteractive() bool {
+	return ctx.verbose > 0
 }
 
 type branchMapping struct {
@@ -9363,7 +9367,7 @@ func (repo *Repository) readLegacyMap(fp io.Reader) error {
 		}
 	}
 
-	if context.verbose >= 1 {
+	if context.isInteractive() {
 		logit(logSHOUT, "%d matched, %d unmatched, %d total",
 			matched, unmatched, matched+unmatched)
 	}
@@ -10714,7 +10718,7 @@ func (repo *Repository) resort() {
 			newEvents[i] = repo.events[j]
 		}
 		repo.events = newEvents
-		if context.verbose > 0 {
+		if context.isInteractive() {
 			logit(logSHOUT, "re-sorted events")
 		}
 		// assignments will be fixed so don't pass anything to
@@ -11366,14 +11370,14 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 	if extractor != nil {
 		repo.stronghint = true
 		streamer := newRepoStreamer(extractor)
-		repo, err := streamer.extract(repo, vcs, context.verbose > 0 && !quiet)
+		repo, err := streamer.extract(repo, vcs, context.isInteractive() && !quiet)
 		return repo, err
 	}
 	// We found a matching VCS type
 	if vcs != nil {
 		repo.hint("", vcs.name, true)
 		repo.preserveSet = vcs.preserve
-		showprogress := (context.verbose > 0) && !repo.exportStyle().Contains("export-progress") && !quiet
+		showprogress := (context.isInteractive()) && !repo.exportStyle().Contains("export-progress") && !quiet
 		context := map[string]string{"basename": filepath.Base(repo.sourcedir)}
 		mapper := func(sub string) string {
 			for k, v := range context {
@@ -11634,7 +11638,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		}
 		// Ship to the tempfile
 		repo.fastExport(repo.all(), tfdesc,
-			options, preferred, context.verbose > 0)
+			options, preferred, context.isInteractive())
 		tfdesc.Close()
 		// Pick up the tempfile
 		params["tempfile"] = tfdesc.Name()
@@ -11648,7 +11652,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 			return err
 		}
 		repo.fastExport(repo.all(), tp,
-			options, preferred, context.verbose > 0)
+			options, preferred, context.isInteractive())
 		tp.Close()
 		cls.Wait()
 	}
@@ -11672,7 +11676,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		croak("checkout not supported for %s skipping", vcs.name)
 
 	}
-	if context.verbose > 0 {
+	if context.isInteractive() {
 		logit(logSHOUT, "rebuild is complete.")
 
 	}
@@ -11724,7 +11728,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 				os.Rename(src, dst)
 			}
 		}
-		if context.verbose > 0 {
+		if context.isInteractive() {
 			logit(logSHOUT, "repo backed up to %s.", relpath(savedir))
 		}
 		entries, err = ioutil.ReadDir(staging)
@@ -11742,7 +11746,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 			os.Rename(ljoin(staging, sub.Name()),
 				ljoin(target, sub.Name()))
 		}
-		if context.verbose > 0 {
+		if context.isInteractive() {
 			logit(logSHOUT, "modified repo moved to %s.", target)
 		}
 		// Critical region ends
@@ -11779,10 +11783,10 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 				}
 			}
 		}
-		if context.verbose > 0 {
+		if context.isInteractive() {
 			logit(logSHOUT, "preserved files restored.")
 		}
-	} else if context.verbose > 0 {
+	} else if context.isInteractive() {
 		logit(logSHOUT, "no preservations.")
 	}
 	return nil
@@ -12316,7 +12320,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			var targetdelete bool
 			if fileop.op == opD {
 				keepers = append(keepers, fileop)
-				if context.verbose > 0 {
+				if context.isInteractive() {
 					logit(logSHOUT, "at %d, expunging D %s",
 						ei+1, fileop.Path)
 				}
@@ -12328,7 +12332,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 					//assert(isinstance(blob, Blob))
 					blobs = append(blobs, blob)
 				}
-				if context.verbose > 0 {
+				if context.isInteractive() {
 					logit(logSHOUT, "at %d, expunging M %s", ei+1, fileop.Path)
 				}
 			} else if fileop.op == opR || fileop.op == opC {
@@ -15488,7 +15492,7 @@ func (rs *Reposurgeon) DoPrefer(line string) bool {
 			croak("known types are: %s\n", known)
 		}
 	}
-	if context.verbose > 0 {
+	if context.isInteractive() {
 		if rs.preferred == nil {
 			fmt.Fprint(os.Stdout, "No preferred type has been set.\n")
 		} else {
@@ -15593,7 +15597,7 @@ func (rs *Reposurgeon) DoChoose(line string) bool {
 		return false
 	}
 	if len(rs.repolist) == 0 && len(line) > 0 {
-		if context.verbose > 0 {
+		if context.isInteractive() {
 			croak("no repositories are loaded, can't find %q.", line)
 			return false
 		}
@@ -15612,7 +15616,7 @@ func (rs *Reposurgeon) DoChoose(line string) bool {
 	} else {
 		if newStringSet(rs.reponames()...).Contains(line) {
 			rs.choose(rs.repoByName(line))
-			if context.verbose < 0 {
+			if context.isInteractive() {
 				rs.DoStats(line)
 			}
 		} else {
@@ -15636,7 +15640,7 @@ func (rs *Reposurgeon) CompleteDrop(text string) []string {
 // Drop a repo from reposurgeon's list.
 func (rs *Reposurgeon) DoDrop(line string) bool {
 	if len(rs.reponames()) == 0 {
-		if context.verbose > 0 {
+		if context.isInteractive() {
 			croak("no repositories are loaded.")
 			return false
 		}
@@ -15662,7 +15666,7 @@ func (rs *Reposurgeon) DoDrop(line string) bool {
 	} else {
 		croak("no such repo as %s", line)
 	}
-	if context.verbose > 0 {
+	if context.isInteractive() {
 		// Emit listing of remaining repos
 		rs.DoChoose("")
 	}
@@ -15850,7 +15854,7 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 		}
 		rs.chosen().rename(rs.uniquify(filepath.Base(name)))
 	}
-	if context.verbose > 0 {
+	if context.isInteractive() {
 		rs.DoChoose("")
 	}
 	return false
@@ -16494,7 +16498,7 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 			}
 		}
 	}
-	if context.verbose > 0 {
+	if context.isInteractive() {
 		if len(changers) == 0 {
 			logit(logSHOUT, "no events modified by msgin.")
 		} else {
@@ -17147,7 +17151,7 @@ func (rs *Reposurgeon) DoCoalesce(line string) bool {
 		}
 		repo.squash(squashable, stringSet{"--coalesce"})
 	}
-	if context.verbose > 0 {
+	if context.isInteractive() {
 		logit(logSHOUT, "%d spans coalesced.", len(squashes))
 	}
 	return false
@@ -17683,7 +17687,7 @@ func (rs *Reposurgeon) DoDivide(_line string) bool {
 	rs.selection = nil
 	// Try the topological cut first
 	if rs.cut(earlyCommit, lateCommit) {
-		if context.verbose > 0 {
+		if context.isInteractive() {
 			logit(logSHOUT, "topological cut succeeded")
 		}
 	} else {
@@ -17706,7 +17710,7 @@ func (rs *Reposurgeon) DoDivide(_line string) bool {
 			}
 		}
 	}
-	if context.verbose > 0 {
+	if context.isInteractive() {
 		rs.DoChoose("")
 	}
 	return false
@@ -17834,7 +17838,7 @@ func (rs *Reposurgeon) DoSplit(line string) bool {
 		croak("don't know what to do for preposition %s", prep)
 		return false
 	}
-	if context.verbose > 0 {
+	if context.isInteractive() {
 		logit(logSHOUT, "new commits are events %d and %d.", where+1, where+2)
 	}
 	return false
@@ -17884,7 +17888,7 @@ func (rs *Reposurgeon) DoUnite(line string) bool {
 		return false
 	}
 	rs.unite(factors, parse.options)
-	if context.verbose > 0 {
+	if context.isInteractive() {
 		rs.DoChoose("")
 	}
 	return false
@@ -20841,7 +20845,7 @@ func (rs *Reposurgeon) DoVersion(line string) bool {
 		}
 		if major != vmajor {
 			panic("major version mismatch, aborting.")
-		} else if context.verbose > 0 {
+		} else if context.isInteractive() {
 			logit(logSHOUT, "version check passed.")
 
 		}
@@ -21023,7 +21027,7 @@ func (rs *Reposurgeon) DoVerbose(lineIn string) bool {
 			context.verbose = nverbose
 		}
 	}
-	if len(lineIn) == 0 || context.verbose > 0 {
+	if len(lineIn) == 0 || context.isInteractive() {
 		logit(logSHOUT, "verbose %d", context.verbose)
 	}
 	return false
@@ -21066,7 +21070,7 @@ func (rs *Reposurgeon) DoEcho(lineIn string) bool {
 			rs.echo = echo
 		}
 	}
-	if context.verbose > 0 {
+	if context.isInteractive() {
 		logit(logSHOUT, "echo %d", rs.echo)
 	}
 	return false
@@ -21284,7 +21288,7 @@ func main() {
 		for _, acmd := range strings.Split(arg, ";") {
 			if acmd == "-" {
 				if context.verbose == 0 {
-					context.verbose = 1
+					context.verbose = 1	// The only place interactivity is set
 				}
 				interpreter.CmdLoop("")
 			} else {
