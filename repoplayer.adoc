@@ -6,7 +6,7 @@ replayer - slow but sure replay-based Subversion lifts.
 
 == SYNOPSIS ==
 
-*repoplayer* [-v] [-q] svn-repo 
+*repoplayer* [-v] [-q] [-t] svn-repo
 
 [[description]]
 == DESCRIPTION ==
@@ -15,6 +15,12 @@ This is a proof of concept, not yet a production-quality tool.
 
 Brute-force Subversion-to-git conversion by history replay.  The
 results of this tool are intended to be postprocesed with reposurgeon.
+
+With the -t option, you need only specify a Subversion repository
+directory to be converted.  The conversion will be performed in
+a temporary directory and the git repository returned under the
+name of the Subversion repository suffixed with "-git".  This nay
+be convenient for converting small repositories abd running tests.
 
 The SVN and git command-line tools are used to replay the enture
 history of a Subversion repository into a new Git repository.

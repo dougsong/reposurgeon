@@ -180,6 +180,7 @@ class Baton:
 
 def initializeReplay(repodir, checkoutdir):
     "Initialize a conversion replay."
+    repodir = os.path.realpath(repodir)
     # The beginning of the horrible hack.  Create a single directory
     # that is both a Subversion checkout directory and an empty
     # git repository.
@@ -195,17 +196,20 @@ def initializeReplay(repodir, checkoutdir):
 
 if __name__ == '__main__':
     try:
-        (options, arguments) = getopt.getopt(sys.argv[1:], "qv")
+        (options, arguments) = getopt.getopt(sys.argv[1:], "qtv")
     except getopt.GetoptError as e:
         print(e)
         sys.exit(1)
     suppression = "-q"
+    usetmp = False
     quiet = False
     for (switch, val) in options:
-        if switch == '-v':
-            suppression = ""
         if switch == '-q':
             quiet = True
+        if switch == '-t':
+            usetmp = True
+        if switch == '-v':
+            suppression = ""
     if len(arguments) == 0:
         croak("a repository directory name is required.")
 
@@ -215,12 +219,15 @@ if __name__ == '__main__':
         croak("no such directory as " + repodir)
     try:
         startFrom = os.getcwd()
-        tempdir = tempfile.mkdtemp()
+        if usetmp:
+            checkoutdir = tempfile.mkdtemp()
+        else:
+            print("not yet supported")
+            sys.exit(1)
         if suppression == "":
-            print("repoplayer: conversion of %s in %s" % (repodir, tempdir))
-        repodir = os.path.realpath(repodir)
-        os.chdir(tempdir)
-        maxRevision = initializeReplay(repodir, "checkout")
+            print("repoplayer: conversion of %s in %s" % (repodir, checkoutdir))
+        maxRevision = initializeReplay(repodir, checkoutdir)
+        os.chdir(checkoutdir)
         with Baton("repoplayer", enable=not quiet) as baton:
             baton.startcounter("%%d of %d" % (maxRevision+1))
             for revision in range(1, maxRevision+1):
@@ -244,10 +251,10 @@ if __name__ == '__main__':
                             % (suppression, author, date, wp.name))
                 baton.bumpcounter()
             baton.endcounter()
-        shutil.rmtree(".svn")
-        os.chdir(startFrom)
-        # Hm. Must delete svn metadata when done.
-        os.rename(tempdir + "/checkout", stem + "-git")
+        if usetmp:
+            shutil.rmtree(".svn")
+            os.chdir(startFrom)
+            os.rename(checkoutdir, stem + "-git")
     except OSError as oe:
         print(oe)
         shutil.rmtree(tempdir)
