@@ -1,4 +1,4 @@
-= cvs-fast-export(1) =
+= repotool(1) =
 :doctype: manpage
 
 == NAME ==
@@ -7,15 +7,6 @@ repotool - operate on a CVS, SVN, git, bzr, hg, or darcs repository in a uniform
 == SYNOPSIS ==
 
 *repotool* [-v] 'command' [args...]
-
-// In case we ever want to go back to DocBook
-//<cmdsynopsis>
-//  <command>repotool</command>
-//      <arg choice='opt'><option>-v</option></arg>
-//      <arg><replaceable>action</replaceable></arg>
-//      <arg choice='opt'><replaceable>URL-or-dir</replaceable></arg>
-//</cmdsynopsis>
-//</refsynopsisdiv>
 
 [[description]]
 == DESCRIPTION ==

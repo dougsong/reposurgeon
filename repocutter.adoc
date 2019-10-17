@@ -8,17 +8,6 @@ repocutter - surgical and filtering operations on Subversion dump files
 
 *repocutter* [-q] [-d] [-i 'filename'] [-r 'selection;] 'subcommand'
 
-// In case we ever want to go back to DocBook
-//<cmdsynopsis>
-//  <command>repocutter</command>
-//      <arg choice="opt">-q</arg>
-//      <arg choice="opt">-r <replaceable>selection</replaceable></arg>
-//      <arg choice='plain'><replaceable>subcommand</replaceable></arg>
-//      <arg choice="opt">-d</arg>
-//      <arg choice="opt">-i</arg>
-//</cmdsynopsis>
-//</refsynopsisdiv>
-
 [[description]]
 == DESCRIPTION ==
 

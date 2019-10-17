@@ -8,17 +8,6 @@ repomapper - update and manipulate contributor maps
 
 *repomapper* [-i] [-p 'passwordfile'] [-u 'updatefile'] [-h 'host'] 'contribmap'
 
-// In case we ever want to go back to DocBook
-//<cmdsynopsis>
-//  <command>repomapper</command>
-//      <arg choice="opt">-i</arg>
-//      <arg choice="opt">-p <replaceable>passwordfile</replaceable></arg>
-//      <arg choice="opt">-u <replaceable>updatefile</replaceable></arg>
-//      <arg choice="opt">-h <replaceable>host</replaceable></arg>
-//      <arg choice='plain'><replaceable>contribmap</replaceable></arg>
-//</cmdsynopsis>
-//</refsynopsisdiv>
-
 [[description]]
 == DESCRIPTION ==
 

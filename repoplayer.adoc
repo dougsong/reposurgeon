@@ -24,32 +24,47 @@ With the -t option, you need only specify a Subversion repository
 directory to be converted.  The conversion will be performed in
 a temporary directory and the git repository returned under the
 name of the Subversion repository suffixed with "-git".  This may
-be convenient for converting small repositories abd running tests.
+be convenient for converting small repositories and running tests.
 
 If you get the message "repoplayer: is confused", you have given it a 
 combination of arguments it doesn't know what to do with.
 
 After having been run without -t, the new repository directory is 
-actually both a Git repository and a Subversion checkout. TThe
-program finished by reminding you that the conversion is a 
+actually both a Git repository and a Subversion checkout. The
+program will finish by reminding you that the conversion is a 
 mixed repository.
 
 That mixed repository can be updated as the Subversion master 
-repository it is based on gets more revisions checked it.  If
-you call the program with a single directory argument which is a
-mixed repositoty, it will update the Subversion side and then check 
+repository it is based on gets more revisions checked in.  If
+you call this program with a single directory argument which is a
+mixed repository, it will update the Subversion side and then check 
 any new commits onto the Git side.
 
 This will usually work, for example, even if a previous conversion was
 interrupted.  Worst case, if repoplayer was interrupted after checkout
-but before the correspomding git commit completed, one revision may be
+but before the corresponding git commit completed, one revision may be
 skipped.
 
-The SVN and git command-line tools are used to replay the history of
-the Subversion repository into a new Git repository.  While this is
-much slower than reposurgeon's dump-stream analyzer, it produces
-correct conversions even in the presence of tag-rename anomalies, and
-does not require huge amounts of RAM to process large repositories.
+It is possible for an incremental update to convert more revisions
+than it initially reported available if checkins to the master
+repository occur while it is running.
+
+== OPTIONS ==
+
+-q:: quiet - no progress meter even if on a tty.
+
+-t:: Build the conversion in a temporary directory.
+
+-v:: verbose progress messages. Probably only of interest to developers.
+
+== CONVERSION ISSUES ==
+
+Under the hood, the SVN and git command-line tools are used to replay
+the history of the Subversion repository into the Git repository.
+While this is much slower than reposurgeon's dump-stream analyzer, it
+produces correct conversions even in the presence of tag-rename
+anomalies, and does not require large amounts of RAM to process large
+repositories.
 
 All Subversion commits are preserved, even empty ones due to tag copies and
 deletes. No git branches or tags are created; instead, the repository keeps the
@@ -61,28 +76,21 @@ and (as an unavoidable conversion artifact) it also ignores .svn.
 Commit comments and commit dates are preserved.  A line of the form "Legacy-ID:" 
 followed by a Subversion revision is appended to each comment.
 
-Files with the the Subversion svn:executable propetrties will have have 755 mode
+Files with the the Subversion svn:executable property will have have 755 mode
 bits in the git repository.
 
-Mergeinfo properties are copied as svn log --use-merge-history dunps them:
+Mergeinfo properties are copied as svn log --use-merge-history dumps them:
 Twxt afte the line of dashes is a copy of the comment for the merge source commmit,
 annotated with a "Merged via:" line referencing the target.
 
 Subversion usernames are mapped to  fake email addresses such that "foo"
 becomes "foo <foo@unknown.net>". The Subversion "(no author)" becomes "no-author."
 
-== Options ==
-
--q:: quiet - no progress meter even if on a tty.
-
--t:: Build the converion in a temooary directory.
-
--v:: verbose progress messages. Probably only of interest to developers.
-
 == BUGS ==
 
 Subversion ignore property settings after initial defaults are not
-yet interpreted. nor are mergeino properties.
+yet captured.  Capture of mergeinfos is crude and requires that they 
+be actually applied by postprocessing.
 
 [[see_also]]
 == SEE ALSO ==
