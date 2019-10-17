@@ -1,4 +1,4 @@
-= reposugeon(1) =
+= reposurgeon(1) =
 :doctype: manpage
 
 == NAME ==
@@ -1254,7 +1254,7 @@ temporary file, and that file fed to the command and afterwards deleted. EOF
 may be replaced by any string. Backslashes have no special meaning while
 reading a here-document.
 +
-Scripts may have comments.  Any line beginning with a '#' is
+Scripts may have comments.  Any line beginning with a pound sign is
 ignored. If a line has a trailing position that begins with one or more
 whitespace characters followed by '#', that trailing portion is
 ignored.
@@ -1956,8 +1956,8 @@ included in the table.
 |  _to hg_   | no !     | all      | no !            | all     | no RE:, no ! | plain      | all      | all
 |  _to bzr_  | all      | all      | all             | all     | all          | plain      | all      | all
 | _to darcs_ | plain    | plain    | plain           | plain   | plain        | all        | all      | all
-|  _to SRC_  | no !     | all      | no !            | all     | no RE:, no ! | plain       |all       | all
-|===============================================================================================================
+|  _to SRC_  | no !     | all      | no !            | all     | no RE:, no ! | plain      | all      | all
+|==============================================================================================================
 
 The hg rows and columns of the table describes compatibility to
 hg's glob syntax rather than its default regular-expression syntax.
@@ -1995,13 +1995,14 @@ It is good practice to include, in the comment for the root
 commit of the repository, a note dating and attributing the conversion
 work and explaining these conventions.  Example:
 
-[quote]
-\[[This repository was converted from Subversion to git on 2011-10-24
+--------
+[[This repository was converted from Subversion to git on 2011-10-24
 by Eric S. Raymond <esr@thyrsus.com>.  Here and elsewhere, conversion
 notes are enclosed in double square brackets. Junk commits generated
 by cvs2svn have been removed, commit references have been mapped into
 a uniform VCS-independent syntax, and some comments edited into
 summary-plus-continuation form.]]
+--------
 
 It is also good practice to include a generated tag at the
 point of conversion. E.g

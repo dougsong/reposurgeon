@@ -2,7 +2,6 @@
 # makefile for reposurgeon
 #
 INSTALL=install
-ASCIIDOC=asciidoc
 PYLINT=pylint
 prefix?=/usr/local
 mandir?=share/man
@@ -47,13 +46,14 @@ build:  $(MANPAGES) $(HTMLFILES)
 	go build $(GOFLAGS) -o reposurgeon ./surgeon
 
 # Requires asciidoc and xsltproc/docbook stylesheets.
+# To debug asciidoc problems, you may need to run "xmllint" --nonet --noout --valid"
+# on the intermediate XML.
 .SUFFIXES: .html .adoc .1
 
 .adoc.1:
-	a2x --doctype manpage --format manpage $<
+	asciidoctor -b manpage $<
 .adoc.html:
-	a2x --doctype manpage --format xhtml -D . $<
-	rm -f docbook-xsl.css
+	asciidoctor $<
 
 #
 # Auxilary Go productions
