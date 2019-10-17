@@ -227,6 +227,16 @@ if __name__ == '__main__':
             checkoutdir = arguments[1]
         elif usetmp:
             checkoutdir = tempfile.mkdtemp()
+        elif os.path.exists(repodir + "/.svn") and os.path.exists(repodir + "/.git"):
+            os.chdir(repodir)
+            before = int(capture("svn info --show-item revision"))
+            print("replayer: %d revisions before updating..." % before)
+            doOrDie("svn %s update" % suppression)
+            after = int(capture("svn info --show-item revision"))
+            print("replayer: %d revisions after updating." % before)
+            if before == after:
+                print("replayer: conversion is up to date.")
+            sys.exit(0)
         else:
             print("repoplayer: is confused")
             sys.exit(1)

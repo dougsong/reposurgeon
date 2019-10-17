@@ -35,7 +35,15 @@ program finished by reminding you that the conversion is a
 mixed repository.
 
 That mixed repository can be updated as the Subversion master 
-repository it is based on gets more revisions checked it.
+repository it is based on gets more revisions checked it.  If
+you call the program with a single directory argument which is a
+mixed repositoty, it will update the Subversion side and then check 
+any new commits onto the Git side.
+
+This will usually work, for example, even if a previous conversion was
+interrupted.  Worst case, if repoplayer was interrupted after checkout
+but before the correspomding git commit completed, one revision may be
+skipped.
 
 The SVN and git command-line tools are used to replay the history of
 the Subversion repository into a new Git repository.  While this is
