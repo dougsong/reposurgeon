@@ -5744,7 +5744,7 @@ func (pm PathMap) snapshot() *PathMap {
 }
 
 // _maybeGet gets both a retrieved value and a membership bool,
-// so there doesn't have to be an out-of-band not-there value. 
+// so there doesn't have to be an out-of-band not-there value.
 // It is not part of the interface, but a convenience helper
 func (pm *PathMap) _maybeGet(path string) (interface{}, bool) {
 	var element interface{} = pm
@@ -5772,25 +5772,19 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 	//pm.store[targetPath] = nil
 }
 
-// contains return true if path is present in the map as a file.
-func (pm *PathMap) contains(path string) bool {
-	element, ok := pm._maybeGet(path)
-	if ok {
-		_, isdir := element.(*PathMap)
-		return !isdir
-	}
-	return false
-}
-
-// get returns the value associated with a specified path.
-func (pm PathMap) get(path string) interface{} {
+// get takes a path as argument, and returns the file that is stored at that
+// path, if any. In that case the second return value is the boolean true.
+// If there is no file in the PathMap corresponding to that path, the first
+// return value is nil (the null value of the interface{} type) and the second
+// return value is the boolean false
+func (pm PathMap) get(path string) (interface{}, bool) {
 	element, ok := pm._maybeGet(path)
 	if ok {
 		if _, isdir := element.(*PathMap); !isdir {
-			return element
+			return element, true
 		}
 	}
-	return nil
+	return nil, false
 }
 
 // set adds a filename to the map, with associated value.
@@ -5950,7 +5944,7 @@ func (h *FastHistory) apply(revision revidx, nodes []NodeAction) {
 			logit(logFILEMAP, "r%d-%d: %s added", node.revision, idx+1, node.path)
 		} else if node.action == sdDELETE || (node.action == sdREPLACE && node.kind == sdDIR) {
 			if node.kind == sdNONE {
-				if h.visibleHere.contains(node.path) {
+				if _, ok := h.visibleHere.get(node.path); ok {
 					node.kind = sdFILE
 				} else {
 					node.kind = sdDIR
@@ -5984,7 +5978,7 @@ func (h *FastHistory) apply(revision revidx, nodes []NodeAction) {
 
 func (h *FastHistory) getActionNode(revision revidx, source string) *NodeAction {
 	logit(logFILEMAP, "r%d: getActionMode(%s) ", revision, source)
-	p := h.visible[revision].get(source)
+	p, _ := h.visible[revision].get(source)
 	if p != nil {
 		return p.(*NodeAction)
 	}
@@ -8358,7 +8352,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		mergeinfo := newPathMap()
 		mergeinfos := make(map[revidx]*PathMap)
 		getMerges := func(minfo *PathMap, path string) stringSet {
-			rawOldMerges := minfo.get(path)
+			rawOldMerges, _ := minfo.get(path)
 			var eMerges stringSet
 			if rawOldMerges == nil {
 				eMerges = newStringSet()
