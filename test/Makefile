@@ -111,7 +111,7 @@ fi-buildregress:
 	done
 fi-regress:
 	@echo "=== Running general tests:"
-	for file in $(TESTLOADS); do \
+	@for file in $(TESTLOADS); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.tst  || echo ' ## (no description)'; \
 	    if $(REPOSURGEON) "$(TESTOPT)" "script $${file}.tst testing123" >/tmp/regress$$$$ 2>&1; \
 	    then diff --text -u $${file}.chk /tmp/regress$$$$ || exit $(STOPOUT); \

@@ -7149,7 +7149,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	baton.resetProgress()
 	
 	timeit := func(tag string) {
-		sp.timeMark("tag")
+		sp.timeMark(tag)
 		if context.flagOptions["bigprofile"] {
 			e := len(sp.repo.timings) - 1
 			baton.twirl(fmt.Sprintf("%s:%v...", tag, sp.repo.timings[e].stamp.Sub(sp.repo.timings[e-1].stamp)))
@@ -11254,13 +11254,13 @@ func (repo *Repository) blobAncestor(commit *Commit, path string) *Blob {
 	return nil
 }
 
-func (repo *Repository) dumptimes() {
+func (repo *Repository) dumptimes(w io.Writer) {
 	total := repo.timings[len(repo.timings)-1].stamp.Sub(repo.timings[0].stamp)
 	commitCount := len(repo.commits(nil))
 	if repo.legacyCount <= 0 {
-		fmt.Printf("        commits: %d\n", commitCount)
+		fmt.Fprintf(w, "        commits:\t%d\n", commitCount)
 	} else {
-		fmt.Printf("        commits: %d (from %d)\n", commitCount, repo.legacyCount)
+		fmt.Fprintf(w, "        commits:\t%d\t(from %d)\n", commitCount, repo.legacyCount)
 	}
 	totalf := float64(total)
 	for i := range repo.timings {
@@ -11268,12 +11268,13 @@ func (repo *Repository) dumptimes() {
 			interval := repo.timings[i].stamp.Sub(repo.timings[i-1].stamp)
 			phase := repo.timings[i].label
 			intervalf := float64(interval)
-			fmt.Printf("%15s: %v (%2.2f%%)\n",
-				phase, interval, (intervalf*100)/totalf)
+			fmt.Fprintf(w, "%15s:\t%2.2f%%\t%v\n",
+				phase, (intervalf*100)/totalf, interval)
 		}
 	}
-	fmt.Printf("          total: %v (%d/sec)\n", total,
-		int(float64(time.Duration(commitCount)*time.Second)/float64(total)))
+	fmt.Fprintf(w, "          total:\t%d/sec\t%v\n",
+		int(float64(time.Duration(commitCount)*time.Second)/float64(total)),
+		total)
 }
 
 // Read a repository using fast-import.
@@ -14986,10 +14987,12 @@ func (rs *Reposurgeon) DoTiming(line string) bool {
 		croak("no repo has been chosen.")
 		return false
 	}
-	if line != "" {
+	parse := rs.newLineParse(line, stringSet{"stdout"})
+	defer parse.Closem()
+	if parse.line != "" {
 		rs.chosen().timings = append(rs.chosen().timings, TimeMark{line, time.Now()})
 	}
-	rs.repo.dumptimes()
+	rs.repo.dumptimes(parse.stdout)
 	return false
 }
 
@@ -21248,6 +21251,7 @@ func main() {
 	interpreter.EnableReadline(true)
 
 	defer func() {
+		pprof.StopCPUProfile()
 		/*
 		if context.verbose <= 1 {
 			if e := recover(); e != nil {

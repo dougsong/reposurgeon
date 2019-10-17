@@ -666,7 +666,7 @@ output filename with ">" and give it as a following
 argument.  If you use ">>" the file is opened
 for append rather than write.
 
-+list+ [ >__outfile__]::
++list+ [ >__outfile__ ]::
    This is the main command for identifying the events
    you want to modify.  It lists commits in the selection set by event
    sequence number with summary information. The first column is raw
@@ -674,12 +674,12 @@ for append rather than write.
    has legacy IDs, they will be displayed in the third column. The
    leading portion of the comment follows.
 
-+stamp+ [ >__outfile__]::
++stamp+ [ >__outfile__ ]::
    Alternative form of listing that displays full action
    stamps, usable as references in selections. Supports >
    redirection.
 
-+tip+ [ >__outfile__]::
++tip+ [ >__outfile__ ]::
    Display the branch tip names associated with commits
    in the selection set.  These will not necessarily be the same as their
    branch fields (which will often be tag names if the repo contains
@@ -691,25 +691,25 @@ children, then if there is a child with a matching branch name its tip
 is the child's tip.  Otherwise this function throws a recoverable
 error.
 
-+tags+ [>__outfile__]::
++tags+ [>__outfile__ ]::
    Display tags and resets: three fields, an event number and a type and a name.
    Branch tip commits associated with tags are also displayed with the type
    field 'commit'. Supports > redirection.
 
-+stats+ [ __repo-name__...] [>__outfile__]::
++stats+ [ __repo-name__...] [>__outfile__ ]::
    Report size statistics and import/export method information about
    named repositories, or with no argument the currently chosen repository.
 
-+count+ [>__outfile__]::
++count+ [>__outfile__ ]::
    Report a count of items in the selection set. Default set is everything
    in the currently-selected repo. Supports > redirection.
 
-+inspect+ [>__outfile__]::
++inspect+ [>__outfile__ ]::
    Dump a fast-import stream representing selected events to standard
    output.  Just like a write, except (1) the progress meter is disabled,
    and (2) there is an identifying header before each event dump.
 
-+graph+ [>__outfile__]::
++graph+ [>__outfile__ ]::
    Emit a visualization of the commit graph in the DOT markup language
    used by the graphviz tool suite.  This can be fed as input to the main
    graphviz rendering program dot(1), which will yield a viewable
@@ -724,7 +724,7 @@ shell dot </tmp/foo$$ -Tpng | display -; rm /tmp/foo$$
 +
 You can substitute in your own preferred image viewer, of course.
 
-+sizes+ [>__outfile__]::
++sizes+ [>__outfile__ ]::
    Print a report on data volume per branch; takes a selection set,
    defaulting to all events. The numbers tally the size of uncompressed
    blobs, commit and tag comments, and other metadata strings (a blob is
@@ -735,7 +735,7 @@ intended mainly as a way to get information on how to efficiently
 partition a repository that has become large enough to be
 unwieldy.
 
-+lint+ [>__outfile__]::
++lint+ [>__outfile__ ]::
    Look for DAG and metadata configurations that may indicate a
    problem. Presently checks for: (1) Mid-branch deletes, (2)
    disconnected commits, (3) parentless commits, (4) the existence of
@@ -1048,7 +1048,7 @@ find possible CVS and Subversion references with the +references+ or
 information in the legacy-reference map) without having to do the
 lookup by hand.
 
-+references+ [ +list+ | +edit+ | +lift+ ] [>__outfile__]::
++references+ [ +list+ | +edit+ | +lift+ ] [>__outfile__ ]::
    With the modifier 'list', list commit and tag comments for strings
    that might be CVS- or Subversion-style revision identifiers. This will
    be useful when you want to replace them with equivalent cookies that
@@ -1168,7 +1168,7 @@ that would otherwise be performed repeatedly, e.g. in macro calls.
     assigned.
 
 
-+names+ [>__outfile__]::
++names+ [>__outfile__ ]::
    List the names of all known branches and tags.  Tells
    you what things are legal within angle brackets and
    parentheses.
@@ -1373,7 +1373,7 @@ results if you forget to re-set it.
 [[examining-tree-states]]
 === EXAMINING TREE STATES ===
 
-+manifest+ [ _regular expression_ ] [>__outfile__]::
++manifest+ [ _regular expression_ ] [>__outfile__ ]::
    Takes an optional selection set argument defaulting to all commits, and
    an optional regular expression. For each commit in the selection set,
    print the mapping of all paths in that commit tree to the corresponding blob
@@ -1387,7 +1387,7 @@ results if you forget to re-set it.
    name.  The state of the code tree at that commit is materialized beneath
    the directory.
 
-+diff+ [>__outfile__]::
++diff+ [>__outfile__ ]::
    Display the difference between commits. Takes a selection-set
    argument which must resolve to exactly two commits. Supports output
    redirection.
@@ -1460,7 +1460,7 @@ a named output file. Where indicated in the syntax, you can prefix the
 output filename with ">" and give it as a following
 argument.
 
-+index+ [>__outfile__]::
++index+ [>__outfile__ ]::
    Display four columns of info on objects in the selection set:
    their number, their type, the associate mark (or '-' if no mark) and a
    summary field varying by type.  For a branch or tag it's the
@@ -1479,7 +1479,7 @@ except blobs.
 Implemented mainly for regression testing, but may be useful
 for exploring the selection-set language.
 
-_selection_ +resolve+ [>__outfile__] [ _label-text..._ ]::
+_selection_ +resolve+ [>__outfile__ ] [ _label-text..._ ]::
    Does nothing but resolve an attribution selection-set expression for
    the selected events and echo the resulting attribution-number set to
    standard output. The remainder of the line after the command is used
@@ -1581,8 +1581,8 @@ disk space.
    given as argument. Must be one of the initial command-line arguments, and
    gathers statistics only on code executed via '-'.
 
-+timing+::
-   Display statistics on phase timing and memory usage in repository analysis.
++timing+ [>__outfile__ ]::
+   Display statistics on phase timing in repository analysis.
    Mainly of interest to developers trying to speed up the program.
 +
 If the command has following text, this creates a new, named time mark
