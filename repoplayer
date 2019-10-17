@@ -4,7 +4,6 @@
 # See the manual page for deytils.
 #
 #TODO: Ignores after initial defaults.
-#TODO: Make the baton more like Go reposurgeon's.
 #TODO: Write tests
 #TODO: Translate to Go. Low priority, what it cals is slow.
 #TODO: Handle mergeinfos better.
@@ -219,6 +218,7 @@ if __name__ == '__main__':
         if suppression == "":
             print("repoplayer: initialization complete, %d Subversion revisions found." % maxRevision)
         with Baton("repoplayer", enable=not quiet) as baton:
+            baton.startcounter("%%d of %d" % (maxRevision+1))
             for revision in range(1, maxRevision+1):
                 doOrDie("svn update -r%d %s" % (revision, suppression))
                 # Parse the log entry.  Here's an example header line to make the code clearer:
@@ -238,7 +238,8 @@ if __name__ == '__main__':
                     wp.flush()
                     doOrDie("git commit %s --author='%s' --date='%s' --allow-empty --allow-empty-message -a -F %s" \
                             % (suppression, author, date, wp.name))
-                baton.twirl()
+                baton.bumpcounter()
+            baton.endcounter()
         shutil.rmtree(".svn")
         os.chdir(startFrom)
         os.rename(tempdir + "/checkout", stem + "-git")
