@@ -178,6 +178,21 @@ class Baton:
                               % (humanize(time.time() - self.time), self.endmsg))
         return False
 
+def initializeReplay(repodir, checkoutdir):
+    "Initialize a conversion replay."
+    # The beginning of the horrible hack.  Create a single directory
+    # that is both a Subversion checkout directory and an empty
+    # git repository.
+    doOrDie("svn %s co file://%s %s" % (suppression, repodir, checkoutdir))
+    doOrDie("git init %s %s" % (suppression, checkoutdir))
+    os.chdir(checkoutdir)
+    with open(".gitignore", "w") as wp:
+        wp.write(subversion_default_ignores)
+    doOrDie("git add .gitignore; git commit %s -a -m 'Simulate Subversion ignores.'" % suppression)
+    maxRevision = int(capture("svn info --show-item revision"))
+    print("repoplayer: initialization complete, %d Subversion revisions found." % maxRevision)
+    return maxRevision
+
 if __name__ == '__main__':
     try:
         (options, arguments) = getopt.getopt(sys.argv[1:], "qv")
@@ -203,20 +218,9 @@ if __name__ == '__main__':
         tempdir = tempfile.mkdtemp()
         if suppression == "":
             print("repoplayer: conversion of %s in %s" % (repodir, tempdir))
-        repodir = os.path.realpath(arguments[0])
+        repodir = os.path.realpath(repodir)
         os.chdir(tempdir)
-        # The beginning of the horrible hack.  Create a single directory
-        # that is both a Subversion checkout directory and an empty
-        # git repository.
-        doOrDie("svn %s co file://%s checkout" % (suppression, repodir))
-        doOrDie("git init %s checkout" % suppression)
-        os.chdir("checkout")
-        with open(".gitignore", "w") as wp:
-            wp.write(subversion_default_ignores)
-        doOrDie("git add .gitignore; git commit %s -a -m 'Simulate Subversion ignores.'" % suppression)
-        maxRevision = int(capture("svn info --show-item revision"))
-        if suppression == "":
-            print("repoplayer: initialization complete, %d Subversion revisions found." % maxRevision)
+        maxRevision = initializeReplay(repodir, "checkout")
         with Baton("repoplayer", enable=not quiet) as baton:
             baton.startcounter("%%d of %d" % (maxRevision+1))
             for revision in range(1, maxRevision+1):
@@ -242,6 +246,7 @@ if __name__ == '__main__':
             baton.endcounter()
         shutil.rmtree(".svn")
         os.chdir(startFrom)
+        # Hm. Must delete svn metadata when done.
         os.rename(tempdir + "/checkout", stem + "-git")
     except OSError as oe:
         print(oe)
