@@ -12,6 +12,7 @@ SOURCES += nofooter.conf
 SOURCES += \
 	reposurgeon reposurgeon.adoc \
 	repotool repotool.adoc \
+	repoplayer repoplayer.adoc \
 	cutter/repocutter.go \
 	mapper/repomapper.go \
 	surgeon/reposurgeon.go \

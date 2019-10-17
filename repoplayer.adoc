@@ -1,0 +1,69 @@
+= repoplayer1) =
+:doctype: manpage
+
+== NAME ==
+replayer - slow but sure replay-based Subversion lifts.
+
+== SYNOPSIS ==
+
+*repoplayer* [-v] [-q] svn-repo 
+
+[[description]]
+== DESCRIPTION ==
+
+This is a proof of concept, not yet a production-quality tool.
+
+Brute-force Subversion-to-git conversion by history replay.  The
+results of this tool are intended to be postprocesed with reposurgeon.
+
+The SVN and git command-line tools are used to replay the enture
+history of a Subversion repository into a new Git repository.
+While this is much slower than reposurgeon's dump-stream analyzer, it
+produces correct conversions even in the presence of tag-rename
+anomalies, and does not require huge amounts of RAM to process large
+repositories.
+
+All Subversion commits are preserved, even empty ones due to tag copies and
+deletes. No git branches or tags are created; instead, the repository keeps the
+Subversion directory structure.
+
+An initial commit creating a .gitignore with Subversion defaults is made,
+and (as an unavoidable conversion artifact) it also ignores .svn.
+
+Commit comments and commit dates are preserved.  A line of the form "Legacy-ID:" 
+followed by a Subversion revision is appended to each comment.
+
+Files with the the Subversion svn:executable propetrties will have have 755 mode
+bits in the git repository.
+
+Mergeinfo properties are copied as svn log --use-merge-history dunps them:
+Twxt afte the line of dashes is a copy of the comment for the merge source commmit,
+annotated with a "Merged via:" line referencing the target.
+
+Subversion usernames are mapped to  fake email addresses such that "foo"
+becomes "foo <foo@unknown.net>". The Subversion "(no author)" becomes "no-author."
+
+== Options ==
+
+-v:: verbose progress messages. Probably only of interest to developers.
+
+-q:: quiet - no progress meter even if on a tty.
+
+== BUGS ==
+
+Subversion ignore propert settings after initial defaults are not
+yet interpreted.
+
+[[see_also]]
+== SEE ALSO ==
+
+reposurgeon(1).
+
+[[author]]
+== AUTHOR ==
+
+Eric S. Raymond <esr@thyrsus.com>. This tool is distributed with
+reposurgeon; see the http://www.catb.org/~esr/reposurgeon[project
+page].
+
+// end

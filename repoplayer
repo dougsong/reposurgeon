@@ -1,39 +1,12 @@
 #!/usr/bin/env python
 #
-# Brute-force Subversion-to-git conversion by history replay.  Intended
-# to be postprocesed with reposurgeon.  Much slower than reposurgeon's
-# dump-stream analyzer but produces correct conversions even in the 
-# presence of tag-rename anomalies, and does not require huge amounts
-# of RAM to process large repositories.
-#
-# All Subversion commits are preserved, even empty ones due to tag copies and
-# deletes. No git branches or tags are created; instead, the repository keeps the
-# Subversion directory structure.
-#
-# An initial commit creating a .gitignore with Subversion defaults is made,
-# and (as an unavoidable conversion artifact) it also ignores .svn.
-#
-# Commit comments and commit dates are preserved.  A line of the form "Legacy-ID:" 
-# followed by a Subversion revision is appended to each comment.
-#
-# Files with the the Subversion svn:executable propetrties will have have 755 mode
-# bits in the git repository.
-#
-# Mergeinfo proprties are copied as svn log --use-merge-history dunps them:
-# Twxt afte the line of dashes is a copy of the comment for the merge source commmit,
-# annotated with a "Merged via:" line referencing the target.
-#
-# Subversion usernames are mapped to  fake email addresses such that "foo"
-# becomes "foo <foo@unknown.net>". The Subversion "(no author)" becomes "no-author."
-#
-# Options:
-#
-# -v: verbose progress messages. Probably only of interest to developers.
-#
-# -q: quiet - no progress meter even if on a tty
+# Brute-force Subversion-to-git conversion by history replay.
+# See the manual page for deytils.
 #
 #TODO: Ignores after initial defaults.
 #TODO: Make the baton more like Go reposurgeon's.
+#TODO: Write tests
+#TODO: Translare to Go.
 #
 # By ESR, October 2019.  Some of this code was part of the original Python
 # implementation of reposurgeon.
