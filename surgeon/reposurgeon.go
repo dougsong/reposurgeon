@@ -7159,7 +7159,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	}
 
 	sp.repo.addEvent(newPassthrough(sp.repo, "#reposurgeon sourcetype svn\n"))
-	logit(logEXTRACT, "Pass 0: dead-branch deletion")
+	logit(logEXTRACT, "Pass 1: pruning dead branches")
+	baton.twirl("1")
 	if !options.Contains("--preserve") {
 		// Identify Subversion tag/branch directories with
 		// tipdeletes and nuke them. Otherwise they're going
@@ -7186,7 +7187,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// that weren't removed here will be tagified.
 		deadbranches := newStringSet()
 		resurrectees := newStringSet()
-		sp.history = newFastHistory()
 		for i := range sp.revisions {
 			backup := len(sp.revisions) - i - 1
 			for j := range sp.revisions[backup].nodes {
@@ -7231,6 +7231,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 
 	nobranch := options.Contains("--nobranch")
 
+	logit(logEXTRACT, "Pass 1: clean tags to prevent anomalies.")
+	baton.twirl("1")
 	// Intervene to prevent lossage from tag deletions. The Subversion data model is that a history
 	// is a sequence of surgica; operations on a tree, and a tag is just another branch
 	// of the tree. Tag deletions are a place where this clashes badly with the changeset-DAG
@@ -7296,21 +7298,23 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 	nextrevision:
 	}
+	timeit("cleaning")
 
+	logit(logEXTRACT, "Pass 2: build filemaps")
+	baton.twirl("2")
+	sp.history = newFastHistory()
+	for ri, record := range sp.revisions {
+		sp.history.apply(intToRevidx(ri), record.nodes)
+	}
+	timeit("filemaps")
+	
 	// Build commits
 	// This code can eat your processor, so we make it give up
 	// its timeslice at reasonable intervals. Needed because
 	// it does not hit the disk.
-	logit(logEXTRACT, "Pass 1")
-	if sp.large {
-		baton.twirl("1")
-	}
-
+	logit(logEXTRACT, "Pass 3: build commits")
+	baton.twirl("3")
 	sp.splitCommits = make(map[revidx]int)
-
-	if sp.large {
-		baton.twirl("2")
-	}
 	for ri, record := range sp.revisions {
 		logit(logEXTRACT, "Revision %d:", record.revision)
 		for _, node := range record.nodes {
@@ -7397,8 +7401,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			continue
 		}
 
-		sp.history.apply(intToRevidx(ri), record.nodes)
-		
 		expandedNodes := make([]*NodeAction, 0)
 		appendExpanded := func(newnode *NodeAction) {
 			newnode.generated = true
