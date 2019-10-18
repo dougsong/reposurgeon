@@ -2592,7 +2592,7 @@ func (baton *Baton) percentProgress(ccount int64, expected int64) {
 		elapsed := time.Since(baton.startprog).Round(time.Second)
 		rate := int64(float64(ccount)/float64(elapsed / time.Second))
 		// Dumb linear estimate of ETC, but better than nothing
-		etc := time.Duration(float64(elapsed)/frac).Round(time.Second)
+		etc := time.Duration(float64(rate) * (1 - frac)).Round(time.Second)
 		percent := fmt.Sprintf("{%.2f%% %s/%s, %v @ %s/s ETC %v}",
 			frac * 100, scale(ccount), scale(expected), elapsed, scale(rate), etc)
 		baton.lastprog = time.Now()
