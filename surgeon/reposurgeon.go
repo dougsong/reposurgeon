@@ -2593,7 +2593,7 @@ func (baton *Baton) percentProgress(ccount int64, expected int64) {
 		rate := int64(float64(ccount)/float64(elapsed / time.Second))
 		// Dumb linear estimate of ETC, but better than nothing
 		etc := time.Duration(float64(elapsed)/frac).Round(time.Second)
-		percent := fmt.Sprintf("{%.2f%% %s/%s, %v elapsed, rate %s/s, %v ETC}",
+		percent := fmt.Sprintf("{%.2f%% %s/%s, %v @ %s/s ETC %v}",
 			frac * 100, scale(ccount), scale(expected), elapsed, scale(rate), etc)
 		baton.lastprog = time.Now()
 		baton.twirl(percent)
@@ -7282,7 +7282,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					}
 				}
 				// Then, run forward patching copy
-				// operations To really bulletproof
+				// operations. To really bulletproof
 				// this we need to also patch any copy
 				// operations later in this delete revision.
 				// But that too would be pretty malformed.
@@ -7309,6 +7309,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			}
 		}
 	nextrevision:
+		baton.percentProgress(int64(ri), int64(len(sp.revisions)))
 	}
 	timeit("cleaning")
 
