@@ -7254,7 +7254,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	for ri, record := range sp.revisions {
 		for n := range record.nodes {
 			node := &record.nodes[n]
-			if sp.isTag(node.path) && node.action == sdDELETE {
+			if node.action == sdDELETE && sp.isTag(node.path) {
 				newname := node.path[:len(node.path)] + fmt.Sprintf("-deleted-r%d-%d", node.revision, node.index) 
 				logit(logEXTRACT, "r%d#%d~%s: tag deletion, renaming to %s.",
 					node.revision, node.index, node.path, newname)
