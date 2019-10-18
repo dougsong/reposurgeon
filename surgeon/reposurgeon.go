@@ -2458,6 +2458,10 @@ type Baton struct {
 	channel  chan string
 }
 
+const tickInterval     = 100 * time.Millisecond	// Rate-limit baton twirls
+const progressInterval = 10  * time.Second	// Rate-limit progress messages 
+const pauseInterval    = 500 * time.Millisecond	// How long to delay before erasing progress message
+
 func newBaton(prompt string, endmsg string, enable bool) *Baton {
 	me := new(Baton)
 	me.prompt = prompt
@@ -2469,8 +2473,36 @@ func newBaton(prompt string, endmsg string, enable bool) *Baton {
 	if enable {
 		go func() {
 			for {
-				v := <- me.channel
-				me.stream.WriteString(v)
+				ch := <- me.channel
+				if me.erase {
+					if me.lastlen == 1 {
+						me.stream.WriteString(left)
+					} else {
+						me.stream.WriteString(strings.Repeat(left, me.lastlen))
+						me.stream.WriteString(strings.Repeat(" ", me.lastlen))
+						me.stream.WriteString(strings.Repeat(left, me.lastlen))
+					}
+					me.erase = true
+				}
+				if me.isatty() {
+					if ch != "" {
+						me.lastlen = len(ch)
+						me.stream.WriteString(ch)
+						me.erase = strings.Contains(ch, "%")
+						if me.erase {
+							time.Sleep(pauseInterval)
+						}
+					} else {
+						me.erase = false
+						if time.Since(me.lasttick) > tickInterval {
+							me.lastlen = 1
+							me.stream.WriteString(string([]byte{"-/|\\"[me.counter%4]}))
+							me.erase = true
+							me.lasttick = time.Now()
+						}
+						me.counter++
+					}
+				}
 			}
 		}()
 		me.stream = os.Stdout
@@ -2526,35 +2558,7 @@ func (baton *Baton) twirl(ch string) {
 	if baton.stream == nil {
 		return
 	}
-	if baton.erase {
-		if baton.lastlen == 1 {
-			baton.channel <- left
-		} else {
-			baton.channel <- strings.Repeat(left, baton.lastlen)
-			baton.channel <- strings.Repeat(" ", baton.lastlen)
-			baton.channel <- strings.Repeat(left, baton.lastlen)
-		}
-		baton.erase = true
-	}
-	if baton.isatty() {
-		if ch != "" {
-			baton.lastlen = len(ch)
-			baton.channel <- ch
-			baton.erase = strings.Contains(ch, "%")
-			if baton.erase {
-				time.Sleep(500 * time.Millisecond)
-			}
-		} else {
-			baton.erase = false
-			if time.Since(baton.lasttick) > (100 * time.Millisecond) {
-				baton.lastlen = 1
-				baton.channel <- string([]byte{"-/|\\"[baton.counter%4]})
-				baton.erase = true
-				baton.lasttick = time.Now()
-			}
-			baton.counter++
-		}
-	}
+	baton.channel <- ch
 }
 
 func (baton *Baton) exit(override string) {
@@ -2567,23 +2571,31 @@ func (baton *Baton) exit(override string) {
 	}
 }
 
-func (baton *Baton) percentProgress(legend string, ccount int64, expected int64) {
-	if expected > 0 && time.Since(baton.lasttick) > (250 * time.Millisecond) {
-		frac := float64(ccount) / float64(expected)
-		percent := fmt.Sprintf(legend + " %d%%", int(frac*100))
-		if time.Since(baton.lastprog) > time.Duration(10 * time.Second) {
-			// Dumb linear estimate, but better than nothing
-			elapsed := time.Since(baton.startprog)
-			rate := float64(ccount)/float64(elapsed / time.Second)
-			percent += fmt.Sprintf(" %d/%d, %v elapsed, rate %dK/s, %v ETC",
-				ccount,
-				expected,
-				elapsed.Round(time.Second),
-				int(rate / 1000),
-				time.Duration(float64(elapsed)/frac).Round(time.Second))
-			baton.lastprog = time.Now()
-			time.Sleep(250 * time.Millisecond)
+func (baton *Baton) percentProgress(ccount int64, expected int64) {
+	scale := func(n int64) string {
+		if n < 1000 {
+			return fmt.Sprintf("%d", n)
 		}
+		if n < 1000000 {
+			return fmt.Sprintf("%dK", int(n / 1000))
+		}
+		if n < 1000000000 {
+			return fmt.Sprintf("%dM", int(n / 1000000))
+		}
+		if n < 1000000000000 {
+			return fmt.Sprintf("%dG", int(n / 1000000000))
+		}
+		return fmt.Sprintf("%dT", int(n / 1000000000000))
+	}
+	if expected > 0 && time.Since(baton.lastprog) > progressInterval {
+		frac := float64(ccount) / float64(expected)
+		elapsed := time.Since(baton.startprog).Round(time.Second)
+		rate := int64(float64(ccount)/float64(elapsed / time.Second))
+		// Dumb linear estimate of ETC, but better than nothing
+		etc := time.Duration(float64(elapsed)/frac).Round(time.Second)
+		percent := fmt.Sprintf("{%.2f%% %s/%s, %v elapsed, rate %s/s, %v ETC}",
+			frac * 100, scale(ccount), scale(expected), elapsed, scale(rate), etc)
+		baton.lastprog = time.Now()
 		baton.twirl(percent)
 	}
 }
@@ -6683,7 +6695,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 				panic("revision counter overflow, recompile with a larger size")
 			}
 			// End Revision processing
-			baton.percentProgress("Stream deserialization:", sp.ccount, filesize)
+			baton.percentProgress(sp.ccount, filesize)
 		}
 		logit(logSVNPARSE, "revision parsing, line %d: ends with %d records", sp.importLine, sp.repo.legacyCount)
 	}
@@ -6923,7 +6935,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			// Simply pass through any line we do not understand.
 			sp.repo.addEvent(newPassthrough(sp.repo, line))
 		}
-		baton.percentProgress("Stream deserialization:", sp.ccount, filesize)
+		baton.percentProgress(sp.ccount, filesize)
 	}
 	for _, event := range sp.repo.events {
 		switch event.(type) {
@@ -6990,17 +7002,17 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 		// End of Subversion dump parsing
 		sp.timeMark("parsing")
 		sp.svnProcess(options, baton)
-		baton.twirl(fmt.Sprintf("...%d svn revisions (%s)",
-			sp.repo.legacyCount, rate(sp.repo.legacyCount)))
+		baton.endmsg = fmt.Sprintf("%d svn revisions (%s)",
+			sp.repo.legacyCount, rate(sp.repo.legacyCount))
 	} else {
 		sp.pushback(line)
 		sp.parseFastImport(options, baton, filesize)
 		sp.timeMark("parsing")
 		if sp.repo.stronghint {
-			baton.twirl(fmt.Sprintf("%d %s events (%s)",
-				len(sp.repo.events), sp.repo.vcs.name, rate(len(sp.repo.events))))
+			baton.endmsg = fmt.Sprintf("%d %s events (%s)",
+				len(sp.repo.events), sp.repo.vcs.name, rate(len(sp.repo.events)))
 		} else {
-			baton.twirl(fmt.Sprintf("%d events (%s)", len(sp.repo.events), rate(len(sp.repo.events))))
+			baton.endmsg = fmt.Sprintf("%d events (%s)", len(sp.repo.events), rate(len(sp.repo.events)))
 		}
 	}
 	baton.exit("")
@@ -7305,7 +7317,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	sp.history = newFastHistory()
 	for ri, record := range sp.revisions {
 		sp.history.apply(intToRevidx(ri), record.nodes)
-		baton.twirl("")
+		baton.percentProgress(int64(ri), int64(len(sp.revisions)))
 	}
 	timeit("filemaps")
 	
@@ -8112,7 +8124,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 			}
 		}
-		baton.percentProgress("Analysis:", int64(ri), int64(len(sp.revisions)))
+		baton.percentProgress(int64(ri), int64(len(sp.revisions)))
 	} // end of revision loop
 
 	// Release history storage to be GCed
@@ -8455,9 +8467,10 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	logit(logEXTRACT, "Phase 6: canonicalizarion")
 	baton.twirl("6")
 	// Canonicalize all commits to ensure all ops actually do something.
-	for _, commit := range sp.repo.commits(nil) {
+	all := sp.repo.commits(nil)
+	for idx, commit := range all {
 		commit.canonicalize()
-		baton.twirl("")
+		baton.percentProgress(int64(idx), int64(len(all)))
 	}
 	timeit("canonicalize")
 
