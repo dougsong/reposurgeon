@@ -2591,7 +2591,7 @@ func (baton *Baton) percentProgress(ccount int64, expected int64) {
 		frac := float64(ccount) / float64(expected)
 		elapsed := time.Since(baton.startprog).Round(time.Second)
 		rate := int64(float64(ccount)/float64(elapsed / time.Second))
-		percent := fmt.Sprintf("{%.2f%% %s/%s, %v @ %s/s}",
+		percent := fmt.Sprintf(" %.2f%% %s/%s, %v @ %s/s",
 			frac * 100, scale(ccount), scale(expected), elapsed, scale(rate))
 		baton.lastprog = time.Now()
 		baton.twirl(percent)
@@ -7223,20 +7223,21 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					}
 				}
 			}
-		}
-		// Actual deletion logic.  This does no new allocation;
-		// trick from https://github.com/golang/go/wiki/SliceTricks
-		for ri, record := range sp.revisions {
-			newnodes := record.nodes[:0]
-			for _, node := range record.nodes {
+
+			// Actual deletion logic.  This does no new allocation;
+			// trick from https://github.com/golang/go/wiki/SliceTricks
+			newnodes := sp.revisions[backup].nodes[:0]
+			for j := range sp.revisions[backup].nodes {
+				node := &sp.revisions[backup].nodes[j]
 				if node.action != sdNUKE {
-					newnodes = append(newnodes, node)
+					newnodes = append(newnodes, *node)
 				}
 			}
-			sp.revisions[ri].nodes = newnodes
+			sp.revisions[backup].nodes = newnodes
+			baton.percentProgress(int64(i), int64(len(sp.revisions)))
 		}
 	}
-	// no-preserve ends begins here
+	// no-preserve code ends here
 	timeit("pruning")
 
 	nobranch := options.Contains("--nobranch")
