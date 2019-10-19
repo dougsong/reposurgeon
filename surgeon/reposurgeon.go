@@ -6029,6 +6029,8 @@ var ignoreProperties = map[string]bool{
 	"svn:eol-style":  true, // Don't want to suppress, but cvs2svn floods these.
 }
 
+const maxRevidx = int(^revidx(0))	// Use for bounds-checking in range loops.
+
 func intToRevidx(revint int) revidx {
 	return revidx(revint & int(^revidx(0)))
 }
@@ -6696,7 +6698,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 			logit(logSVNPARSE, "revision parsing, line %d: r%d ends with %d nodes", sp.importLine, newRecord.revision, len(newRecord.nodes))
 			sp.revisions = appendRevisionRecords(sp.revisions, *newRecord)
 			sp.repo.legacyCount++
-			if sp.repo.legacyCount == int(^revidx(0) - 1) {
+			if sp.repo.legacyCount == maxRevidx - 1 {
 				panic("revision counter overflow, recompile with a larger size")
 			}
 			// End Revision processing
@@ -7094,7 +7096,7 @@ func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
 				node.revision, node.path, ancestor)
 			return ancestor
 		} else {
-			logit(logTOPOLOGY, "r%d~%s -> %s expected node from-hash is missing - stream may be corrupt",
+			logit(logTOPOLOGY, "r%d~%s -> expected node from-hash is missing - stream may be corrupt",
 				node.revision, node.path)
 		}
 	}
