@@ -372,9 +372,11 @@ svnload-regress:
 # that is, no messages due to branch surgery or whatever.
 SVNCLEAN := bad-author.svn binary.svn blob-id.svn branch-drop-add.svn \
 	debranch.svn deletion.svn deepdirs.svn delignore.svn \
-	emptybranch.svn executable.svn expunge.svn filecopy.svn gitify.svn ignore-blank.svn mergeinfo.svn mixedbranch.svn \
-	mkignore.svn nontipcopy.svn nullignores.svn pangram.svn permcopy2.svn permcopy.svn replace-dir.svn \
-	smallref.svn squash-id.svn subdir.svn svnignores.svn
+	emptybranch.svn executable.svn expunge.svn filecopy.svn \
+	gitify.svn ignore-blank.svn mergeinfo.svn mergeinfo-with-split.svn \
+	mixedbranch.svn mkignore.svn nontipcopy.svn nullignores.svn \
+	pangram.svn permcopy2.svn permcopy.svn replace-dir.svn \
+	simpletag.svn smallref.svn squash-id.svn subdir.svn svnignores.svn
 liftcheck-regress:
 	@echo "== Testing conversion correctness of Subversion streams:"
 	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
