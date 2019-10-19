@@ -7326,7 +7326,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					// We'll deal with it in a new pass once the outer loop gets
 					// there
 					logit(logTAGFIX, "r%d#%d~%s: tag patching stopping on duplicate.",
-						srcnode.revision, srcnode.index, srcnode.path, newname)
+						srcnode.revision, srcnode.index, srcnode.path)
 					goto breakout
 				}
 				if strings.HasPrefix(tnode.fromPath, srcnode.path) {
@@ -7859,7 +7859,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						continue
 					}
 					if node.blobmark == emptyMark {
-						panic("impossibly empty blob mark in " + node.String())
+						logit(logEXTRACT, "r%d: %s gets impossibly empty blob mark from ancestor %s, skipping",
+							record.revision, node, ancestor)
+						continue
 					}
 					// Time for fileop generation.
 					perms := nodePermissions(*node)
