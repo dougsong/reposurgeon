@@ -43,8 +43,17 @@ V 8
 afranzen
 PROPS-END
 
+Node-path: trunk
 Node-kind: dir
-Node-path: assemblies
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-kind: dir
+Node-path: trunk/assemblies
 Node-action: add
 Prop-content-length: 10
 Content-length: 10
