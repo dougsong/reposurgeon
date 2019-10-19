@@ -89,7 +89,7 @@ from the repo root.
 
 === liftcheck ===
 
-Take a named Subversion dump and compare a checkout of it with
+Takes a named Subversion dump and compare a checkout of it with
 its git conversion at all tags and branches.
 
 == The tests ==
@@ -201,7 +201,7 @@ outputs:
 
 	    Initial import.
 
-We now handle this case pproperly by renaming the earlier creation of
+We now handle this case properly by renaming the earlier creation of
 the tag.
 
 == The tagretract test case ==
@@ -386,6 +386,109 @@ an 89 revision were added to make the revision sequence 0-origin
 and continuous, which the Go implementation requires.
 
 It captures the most serious pathologies in the NUT repo.
+
+== Known Issues ==
+
+This is a list of test loads that fail to pass liftcheck,
+with explanations. "Not used in any test" means *.tst and *.sh
+files - each of these is used as a stability test of the
+Subversion lift code.
+
+adventitious.svn::
+   A root-level branch defeats the comparison algorithm liftcheck
+   uses. Not used by any test.  Cosmetically annoying but not a bug.
+
+agito.svn::
+   Processing is correct - the unmatched tags on the Git side are
+   from renaming the earlier, deleted version of a tag.  Used by
+   lint.tst.
+
+branchify.svn::
+   Doesn't build, no trunk branch. Used by branchify.tst.
+
+branchmap.svn::
+   Doesn't build, no trunk branch. Used by branchmap.tst.
+
+branchreplace.svn::
+   BUG: needs analysis. Used in a repocutter test test. Derived 
+   from references.svn.
+
+delete-copy.svn::
+   Doesn't build, no trunk branch. Not used by any test.
+
+emptyfrom.svn::
+   BUG: Needs analysis. Not used by any test.
+
+expunge-copyfrom.svn::
+   Doesn't build, no trunk branch. Used by expunge-copyfrom.tst.
+
+fleetwood.svn::
+   Has empytcommits and a deleted-renamed commit; these are junk. 
+   The tags/1.0rc1/ omn the SVN side is never instantiated in the
+   git lift because it has no content. Used in tagretract.tst.
+
+format7.svn::
+   Has emptycommits. The translation is correct. Not used by any test. 
+
+gitignore.svn::
+   Has an emptycommit. Generates a warning about the user-created
+   .gitigmore, as it should. Trsnslation is correct.  Used by 
+   userignores.tst
+
+myers1.svn::
+   Has an emptycommit. Translation is correct. Not used by any test.
+
+nesting.svn::
+   Doesn't build, no trunk branch. Used by nesting.tst.
+
+node-kind-first.svn::
+   Translation is corrext, but one of the proprty settings triggers
+   a spurious message. Not a real bug.  Not used by any test.
+
+references.svn::
+   BUG: needs analysis. Used by the legacy-map test.
+
+rootfile.svn::
+   Translation is correct, exiguous file produces a root branch.
+   Used in a repocutter test.
+
+rootfirst.svn::
+   Doesn't build, no trunk branch. Not used by any test.
+
+samplebranch.svn::
+   BUG: Git translation preserves a deleted branch, and probably
+   should not unless the --preserve read option is on. Uses in
+   branchdelete.tst and branchrename.tst.
+
+snarl.svn::
+   Translation is correct.  Has empytcommits. A contentless branch
+   is not translated. Mot used in any test. Derived from references.svn.
+
+split-dir.svn::
+   Translation is correct.  root tag is because root-level directories
+   not matching the standard branch structure were created.  Used in
+   split-dir.tst.
+
+subclipse.svn::
+   Trsnslation is correct.  Has an emptycommit. Not used in any test.
+
+swap.svn::
+   Doesn't build, no trunk branch. Used in a repocutter test.
+
+symlink.svn::
+   BUG: Probably in repotool. Not used in any test.
+
+treecontents.svn::
+   BUG: Possibly in repotool. Why the .gitignore message? Not used in
+   any test.
+
+vanilla.svn::
+   Translation is orrect.  Has an enptycommit, and there's a messqge
+   due to a peroperty setting. Used in repocutter and repotool tests.
+
+wrong-mergeinfo.svn::
+   Translation is correct, produces a message due to unresolved
+   mergeinfo. Not used in any test.
 
 == Sporadic tests ==
 
