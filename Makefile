@@ -46,13 +46,15 @@ build:  $(MANPAGES) $(HTMLFILES)
 	go build $(GOFLAGS) -o repomapper ./mapper
 	go build $(GOFLAGS) -o reposurgeon ./surgeon
 
-# Requires asciidoc and xsltproc/docbook stylesheets.
+# Requires asciidoctor and xsltproc/docbook stylesheets.
+# Note: to suppress the footers with timestamps being generated in HTML,
+# we use "-a nofooter".
 # To debug asciidoc problems, you may need to run "xmllint" --nonet --noout --valid"
 # on the intermediate XML.
 .SUFFIXES: .html .adoc .1
 
 .adoc.1:
-	asciidoctor -b manpage $<
+	asciidoctor -a nofooter -b manpage $<
 .adoc.html:
 	asciidoctor $<
 
