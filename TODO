@@ -5,7 +5,7 @@
 * Weird combinations of Subversion tag creation followed by tag delete
   and renaming operations can produce content-mismatch failures
   detectable by repotool compare. In the test suite, this problem is
-  exhibited by branchreplace.svn, emptyfrom.svn, references.svn.
+  exhibited by branchreplace.svn, flerwood.svn, emptyfrom.svn, references.svn.
 
 * Also see https://gitlab.com/esr/reposurgeon/issues for two minor problems.
 

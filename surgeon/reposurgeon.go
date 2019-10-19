@@ -1,6 +1,6 @@
 package main
 
-// This code is intended to be hackable to support for special-purpose or
+// This codlogSHe is intended to be hackable to support for special-purpose or
 // custom operations, though it's even better if you can come up with a new
 // surgical primitive general enough to ship with the stock version.  For
 // either case, here's a guide to the architecture.
@@ -2607,9 +2607,10 @@ func (baton *Baton) resetProgress() {
  */
 
 const logSHOUT = 0    // Unconditional
-const logSVNDUMP = 2  // Log Subversion dumping
-const logTOPOLOGY = 2 // Log repo-extractor logic (coarse-grained)
-const logEXTRACT = 2  // Log repo-extractor logic (fine-grained)
+const logTAGFIX = 2   // Log tagfixups
+const logSVNDUMP = 3  // Log Subversion dumping
+const logTOPOLOGY = 3 // Log repo-extractor logic (coarse-grained)
+const logEXTRACT = 3  // Log repo-extractor logic (fine-grained)
 const logFILEMAP = 3  // Log building of filemaps
 const logDELETE = 3   // Log canonicalization after deletes
 const logIGNORES = 4  // Log ignore generation
@@ -6146,6 +6147,7 @@ type StreamParser struct {
 	propagate            map[string]bool
 	history              HistoryManager
 	splitCommits         map[revidx]int
+	tagnodes             []*NodeAction
 }
 
 type daglink struct {
@@ -6602,6 +6604,9 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 							logit(logSVNPARSE, "node parsing, line %d: node %s appended", sp.importLine, node)
 							node.index = nodeidx((len(nodes) + 1) & int(^nodeidx(0)))
 							nodes = append(nodes, *node)
+							if sp.isTag(node.path) {
+								sp.tagnodes = append(sp.tagnodes, &nodes[len(nodes)-1])
+							}
 						} else {
 							logit(logSVNPARSE, "node parsing, line %d: empty node rejected", sp.importLine)
 						}
@@ -7252,64 +7257,63 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// its branch point, but that will cause problens if a future copy operation is ever sourced
 	// in the deleted branch and this does happen!) We deal with this by renaming the deleted branch
 	// and patching any copy operations from it in the future.
-	for ri, record := range sp.revisions {
-		for n := range record.nodes {
-			node := &record.nodes[n]
-			if node.action == sdDELETE && sp.isTag(node.path) {
-				newname := node.path[:len(node.path)] + fmt.Sprintf("-deleted-r%d-%d", node.revision, node.index) 
-				logit(logEXTRACT, "r%d#%d~%s: tag deletion, renaming to %s.",
-					node.revision, node.index, node.path, newname)
-				// First, run backward performing the
-				// branch rename Note, because we scan
-				// for deletions in forward order, any
-				// previous deletions of this tag gave
-				// already been patched.  This could fail 
-				// weirdly if there is an operation on the
-				// tag in the same revision as the delete
-				// but *after* it, but that would be pretty
-				// malformed and probably cannot be produced
-				// by the Subversion CLI.
-				for back := ri - 1; back >= 0; back-- {
-					past := &sp.revisions[back]
-					for i := range past.nodes {
-						lookback := &past.nodes[i]
-						if lookback.path == node.path {
-							logit(logEXTRACT, "r%d#%d~%s: on tag deletion path mapped to %s.",
-								lookback.revision, lookback.index, lookback.path, newname)
-							lookback.path = newname
-						}
-					}
+	logit(logTAGFIX, "before fixups: %v", sp.tagnodes)
+	for i := range sp.tagnodes {
+		srcnode := sp.tagnodes[i]
+		if sp.tagnodes[i].action == sdDELETE {
+			newname := srcnode.path[:len(srcnode.path)] + fmt.Sprintf("-deleted-r%d-%d", srcnode.revision, srcnode.index) 
+			logit(logTAGFIX, "r%d#%d~%s: tag deletion, renaming to %s.",
+				srcnode.revision, srcnode.index, srcnode.path, newname)
+			// First, run backward performing the branch
+			// rename. Note, because we scan for deletions
+			// in forward order, any previous deletions of
+			// this tag gave already been patched.  This
+			// could fail weirdly if there is an operation
+			// on the tag in the same revision as the
+			// delete but *after* it, but that would be
+			// pretty malformed and probably cannot be
+			// produced by the Subversion CLI.
+			for j := i - 1; j >= 0; j-- {
+				tnode := sp.tagnodes[j]
+				if strings.HasPrefix(tnode.path, srcnode.path) {
+					newpath := newname + tnode.path[len(srcnode.path):]
+					logit(logTAGFIX, "r%d#%d~%s: on tag deletion path mapped to %s.",
+						tnode.revision, tnode.index, tnode.path, newname)
+					tnode.path = newpath
 				}
-				// Then, run forward patching copy
-				// operations. To really bulletproof
-				// this we need to also patch any copy
-				// operations later in this delete revision.
-				// But that too would be pretty malformed.
-				for forward := ri + 1;  forward < len(sp.revisions); forward++ {
-					future := &sp.revisions[forward]
-					for i := range future.nodes {
-						lookforward := &future.nodes[i]
-						if lookforward.path == node.path && node.action == sdDELETE {
-							// Another deletion of this tag?  OK, stop patching copies.
-							// We'll deal with it in a new pass once the outer loop gets
-							// there
-							goto nextrevision
-						}
-						
-						if strings.HasSuffix(lookforward.fromPath, node.path) {
-							newfrom := newname + lookforward.fromPath[len(node.path):]
-							logit(logEXTRACT, "r%d#%d~%s: on tag deletion from-path mapped to %s.",
-								lookforward.revision, lookforward.index, lookforward.fromPath, newfrom)
-							lookforward.fromPath = newfrom
-						}
-					}
-				}
-				// Leave the delete in place as a mark that this tag is dead.
 			}
+			// Then, run forward patching copy
+			// operations. To really bulletproof this we
+			// need to also patch any copy operations
+			// later in this delete revision.  But that
+			// too would be pretty malformed.
+			for j := i + 1; j < len(sp.tagnodes); j++ {
+				tnode := sp.tagnodes[j]
+				if tnode.action == sdDELETE && tnode.path == srcnode.path {
+					// Another deletion of this tag?  OK, stop patching copies.
+					// We'll deal with it in a new pass once the outer loop gets
+					// there
+					logit(logTAGFIX, "r%d#%d~%s: tag patching stopping on duplicate.",
+						srcnode.revision, srcnode.index, srcnode.path, newname)
+					goto breakout
+				}
+				if strings.HasPrefix(tnode.fromPath, srcnode.path) {
+					newfrom := newname + tnode.fromPath[len(srcnode.path):]
+					logit(logEXTRACT, "r%d#%d~%s: on tag deletion from-path mapped to %s.",
+						tnode.revision, tnode.index, tnode.fromPath, newfrom)
+					tnode.fromPath = newfrom
+				}
+			}
+			logit(logTAGFIX, "r%d#%d: tag %s renamed to %s.",
+				srcnode.revision, srcnode.index,
+				srcnode.path, newname)
+			srcnode.path = newname
 		}
-	nextrevision:
-		baton.percentProgress(int64(ri), int64(len(sp.revisions)))
+	breakout:
+		baton.percentProgress(int64(i), int64(len(sp.tagnodes)))
 	}
+	logit(logTAGFIX, "after fixups: %v", sp.tagnodes)
+	sp.tagnodes = nil
 	timeit("cleaning")
 
 	logit(logEXTRACT, "Pass 3: build filemaps")

@@ -60,3 +60,10 @@ tagger fraggle <fraggle> 1254523027 +0000
 data 58
 Creating a tag in a BROKEN way, like how cvs2svn does it.
 
+tag tipdelete-proj-1.0-deleted-r3-1
+#legacy-id 3
+from :3
+tagger fraggle <fraggle> 1254523044 +0000
+data 21
+Removing broken tag.
+

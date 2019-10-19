@@ -84,14 +84,12 @@ tagger mike <mike> 1437858607 +0000
 data 12
 Release 1.0
 
-tag emptycommit-6
+tag tipdelete-1.0-deleted-r6-2
 #legacy-id 6
-from :2
+from :4
 tagger mike <mike> 1437858613 +0000
-data 71
+data 21
 No release ready yet
-
-[[Tag from zero-fileop commit at Subversion r6]]
 
 tag 1.0
 #legacy-id 8
