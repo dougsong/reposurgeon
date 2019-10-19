@@ -8221,6 +8221,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			sp.gripe("could not tagify root commit.")
 		}
 	}
+	baton.twirl("")
 	timeit("rootcommit")
 	// Now, branch analysis.
 	branchroots := make([]*Commit, 0)
@@ -8240,7 +8241,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		logit(logEXTRACT, fmt.Sprintf("Branches: %s", sp.branches))
 		lastbranch := impossibleFilename
 		branch := impossibleFilename
-		for _, commit := range sp.repo.commits(nil) {
+		for idx, commit := range sp.repo.commits(nil) {
 			//logit(logEXTRACT, "seeking branch assignment for %s with common prefix '%s'", commit.mark, commit.common)
 			if lastbranch != impossibleFilename && strings.HasPrefix(commit.common, lastbranch) {
 				logit(logEXTRACT, "branch assignment for %s from lastbranch '%s'", commit.mark, lastbranch)
@@ -8278,7 +8279,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				sp.branches["root"] = nil
 			}
 			lastbranch = branch
-			baton.twirl("")
+			// FIXME: should use a real commit count here
+			baton.percentProgress("a", int64(idx), int64(len(sp.repo.events)))
 		}
 		timeit("branches")
 		// ...then rebuild parent links so they follow the branches
@@ -8477,7 +8479,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				nodups = nil	// Not necessary, but explicit is good
 			}
 			mergeinfos[intToRevidx(revision)] = mergeinfo.snapshot()
-			baton.twirl("")
+			// FIXME: should use a real commit count here
+			baton.percentProgress("b", int64(revision), int64(len(sp.revisions)))
 		}
 		// Allow mergeinfo storage to be garbage-collected
 		mergeinfo = nil
@@ -8548,7 +8551,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			if len(m) > 0 && !commit.hasChildren() {
 				deleteables = append(deleteables, i)
 			}
-			baton.twirl("")
+
+			baton.percentProgress("", int64(i), int64(len(sp.revisions)))
 		}
 	}
 	sp.repo.delete(deleteables, []string{"--tagback"})
@@ -8653,12 +8657,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 			}
 		}
-		baton.twirl("")
+		baton.percentProgress("", int64(index), int64(len(sp.repo.events)))
 	}
 	sp.repo.delete(deletia, nil)
 	timeit("polishing")
 
 	logit(logEXTRACT, "Phase 9: tagify empties")
+	baton.twirl("9")
 	sp.repo.tagifyEmpty(nil,
 		/* tipdeletes*/ true,
 		/* tagifyMerges */ false,
@@ -8675,7 +8680,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// filecopies on the same node when it's generating tag commits.
 	// These are lots of examples of this in the nut.svn test load.
 	// These show up as redundant (D, M) fileop pairs.
-	for _, commit := range sp.repo.commits(nil) {
+	for idx, commit := range sp.repo.commits(nil) {
 		for i := range commit.operations() {
 			if i < len(commit.operations())-1 {
 				if commit.operations()[i].op == opD && commit.operations()[i+1].op == opM {
@@ -8692,7 +8697,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			}
 		}
 		commit.setOperations(nonnil)
-		baton.twirl("")
+		baton.percentProgress("", int64(idx), int64(len(sp.repo.events)))
 	}
 	timeit("tagcleaning")
 
