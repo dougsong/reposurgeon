@@ -1,4 +1,4 @@
-reposurgeon: r1#1~assemblies properties set:
+reposurgeon: r1#2~trunk/assemblies properties set:
 reposurgeon: 	svn:date = '2010-10-28T11:46:57.761945Z'
 #reposurgeon sourcetype svn
 blob
@@ -22,7 +22,7 @@ data 225
 /.DS_store
 # Simulated Subversion default ignores end here
 
-commit refs/heads/assemblies
+commit refs/heads/master
 #legacy-id 1
 mark :2
 committer afranzen <afranzen> 1288266357 +0000
