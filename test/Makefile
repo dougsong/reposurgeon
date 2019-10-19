@@ -370,9 +370,9 @@ svnload-regress:
 
 # Perform full regression on SVN streams that have clean conversions -
 # that is, no messages due to branch surgery or whatever.
-SVNCLEAN := bad-author.svn binary.svn blob-id.svn deletion.svn deepdirs.svn delignore.svn \
-	executable.svn expunge.svn filecopy.svn gitify.svn ignore-blank.svn \
-	mkignore.svn pangram.svn permcopy2.svn permcopy.svn replace-dir.svn \
+SVNCLEAN := bad-author.svn binary.svn blob-id.svn debranch.svn deletion.svn deepdirs.svn delignore.svn \
+	emptybranch.svn executable.svn expunge.svn filecopy.svn gitify.svn ignore-blank.svn mergeinfo.svn mixedbranch.svn \
+	mkignore.svn nontipcopy.svn nullignores.svn pangram.svn permcopy2.svn permcopy.svn replace-dir.svn \
 	smallref.svn squash-id.svn subdir.svn svnignores.svn
 liftcheck-regress:
 	@echo "== Testing conversion correctness of Subversion streams:"
@@ -391,6 +391,7 @@ liftcheck-regress:
 # List Subversion streams that don't convert clean 
 liftcheck-dirty:
 	@for x in $(SVNCLEAN); do echo $${x} >>goodlist$$; done
+	@sort -o goodlist$$ goodlist$$
 	@ls *.svn | comm -23 - goodlist$$
 	@rm goodlist$$
 

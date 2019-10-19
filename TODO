@@ -6,6 +6,8 @@
   and renaming operations can produce content-mismatch failures
   detectable by repotool compare. In the test suite, this problem is
   exhibited by branchreplace.svn, fleetwood.svn, emptyfrom.svn, references.svn.
+  Also branch-add-drop.svn needs antheer look. Run "make listcheck-dirty"
+  in test/ for a longer list of borderline cases.
 
 * Also see https://gitlab.com/esr/reposurgeon/issues for two minor problems.
 

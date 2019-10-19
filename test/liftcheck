@@ -37,6 +37,16 @@ then
     exit 1
 fi
 
+what=$1
+if [ -f ${what}.svn ]
+then
+    what=${what}.svn
+elif [ ! -f ${whwt} ]
+then
+    echo "No script matching ${what} found"
+    exit 1
+fi
+
 stem=liftcheck$$
 
 rm -fr liftcheck[0123456789]*
@@ -47,10 +57,10 @@ then
 fi
 
 # Make a Subversion repo from the dump
-svn-to-svn ${svnquiet} -c <$1 ${stem}
+svn-to-svn ${svnquiet} -c <${what} ${stem}
 
 # Make a git repo from the dump using reposurgeon
-${REPOSURGEON:-reposurgeon} "${TESTOPT}" "read <$1" "prefer git" "rebuild ${stem}-git"
+${REPOSURGEON:-reposurgeon} "${TESTOPT}" "read <${what}" "prefer git" "rebuild ${stem}-git"
 
 # Compare the original with the lift
 repotool ${repotoolopt} compare-all ${compareopt} ${stem}-checkout ${stem}-git

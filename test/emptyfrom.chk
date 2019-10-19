@@ -102,28 +102,37 @@ r43
 from :11
 D sim/test_lib/temp/.keepme
 
-blob
+commit refs/tags/silver
+#legacy-id 10
 mark :13
+committer frank <frank> 1443475423 +0000
+data 4
+r44
+from :9
+merge :12
+
+blob
+mark :14
 data 56
 Revision is 340, file path is trunk/sim/regress_rdb.pl.
 
 commit refs/heads/master
 #legacy-id 12
-mark :14
+mark :15
 committer frank <frank> 1443478350 +0000
 data 4
 r46
 from :12
-M 100755 :13 sim/regress_rdb.pl
+M 100755 :14 sim/regress_rdb.pl
 
 commit refs/tags/silver
 #legacy-id 13
-mark :15
+mark :16
 committer frank <frank> 1443478431 +0000
 data 4
 r47
-from :9
-M 100755 :13 sim/regress_rdb.pl
+from :13
+M 100755 :14 sim/regress_rdb.pl
 
 tag emptycommit-2
 #legacy-id 2
@@ -140,15 +149,6 @@ from :2
 tagger thuang <thuang> 1438190959 +0000
 data 3
 r3
-
-tag emptycommit-10
-#legacy-id 10
-from :9
-tagger frank <frank> 1443475423 +0000
-data 55
-r44
-
-[[Tag from zero-fileop commit at Subversion r10]]
 
 tag emptycommit-11
 #legacy-id 11
