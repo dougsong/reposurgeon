@@ -5,7 +5,7 @@
 REPOSURGEON_DIR=$(pwd)
 
 apt-get update -qy && apt-get install -qy --no-install-recommends \
-    asciidoc \
+    asciidoctor \
     bison \
     cvs \
     flex \
