@@ -2571,7 +2571,7 @@ func (baton *Baton) exit(override string) {
 	}
 }
 
-func (baton *Baton) percentProgress(ccount int64, expected int64) {
+func (baton *Baton) percentProgress(subtag string, ccount int64, expected int64) {
 	scale := func(n int64) string {
 		if n < 1000 {
 			return fmt.Sprintf("%d", n)
@@ -2591,8 +2591,8 @@ func (baton *Baton) percentProgress(ccount int64, expected int64) {
 		frac := float64(ccount) / float64(expected)
 		elapsed := time.Since(baton.startprog).Round(time.Second)
 		rate := int64(float64(ccount)/float64(elapsed / time.Second))
-		percent := fmt.Sprintf(" %.2f%% %s/%s, %v @ %s/s",
-			frac * 100, scale(ccount), scale(expected), elapsed, scale(rate))
+		percent := fmt.Sprintf("%s %.2f%% %s/%s, %v @ %s/s",
+			subtag, frac * 100, scale(ccount), scale(expected), elapsed, scale(rate))
 		baton.lastprog = time.Now()
 		baton.twirl(percent)
 	}
@@ -6702,7 +6702,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 				panic("revision counter overflow, recompile with a larger size")
 			}
 			// End Revision processing
-			baton.percentProgress(sp.ccount, filesize)
+			baton.percentProgress("", sp.ccount, filesize)
 		}
 		logit(logSVNPARSE, "revision parsing, line %d: ends with %d records", sp.importLine, sp.repo.legacyCount)
 	}
@@ -6942,7 +6942,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			// Simply pass through any line we do not understand.
 			sp.repo.addEvent(newPassthrough(sp.repo, line))
 		}
-		baton.percentProgress(sp.ccount, filesize)
+		baton.percentProgress("", sp.ccount, filesize)
 	}
 	for _, event := range sp.repo.events {
 		switch event.(type) {
@@ -7243,7 +7243,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 			}
 			sp.revisions[backup].nodes = newnodes
-			baton.percentProgress(int64(i), int64(len(sp.revisions)))
+			baton.percentProgress("", int64(i), int64(len(sp.revisions)))
 		}
 	}
 	// no-preserve code ends here
@@ -7316,7 +7316,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			processed++
 		}
 	breakout:
-		baton.percentProgress(int64(processed), int64(sp.ntagdeletes))
+		baton.percentProgress("", int64(processed), int64(len(sp.tagnodes)))
 	}
 	logit(logTAGFIX, "after fixups: %v", sp.tagnodes)
 	sp.tagnodes = nil
@@ -7327,7 +7327,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	sp.history = newFastHistory()
 	for ri, record := range sp.revisions {
 		sp.history.apply(intToRevidx(ri), record.nodes)
-		baton.percentProgress(int64(ri), int64(len(sp.revisions)))
+		baton.percentProgress("", int64(ri), int64(len(sp.revisions)))
 	}
 	timeit("filemaps")
 	
@@ -8134,7 +8134,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 			}
 		}
-		baton.percentProgress(int64(ri), int64(len(sp.revisions)))
+		baton.percentProgress("", int64(ri), int64(len(sp.revisions)))
 	} // end of revision loop
 
 	// Release history storage to be GCed
@@ -8480,7 +8480,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	all := sp.repo.commits(nil)
 	for idx, commit := range all {
 		commit.canonicalize()
-		baton.percentProgress(int64(idx), int64(len(all)))
+		baton.percentProgress("", int64(idx), int64(len(all)))
 	}
 	timeit("canonicalize")
 
