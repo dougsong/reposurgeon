@@ -6148,7 +6148,6 @@ type StreamParser struct {
 	history              HistoryManager
 	splitCommits         map[revidx]int
 	tagnodes             []*NodeAction
-	ntagdeletes          int
 }
 
 type daglink struct {
@@ -6605,11 +6604,8 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 							logit(logSVNPARSE, "node parsing, line %d: node %s appended", sp.importLine, node)
 							node.index = intToNodeidx(len(nodes) + 1)
 							nodes = append(nodes, *node)
-							if sp.isTag(node.path) {
+							if sp.isTag(node.path) || sp.isTag(node.fromPath) {
 								sp.tagnodes = append(sp.tagnodes, &nodes[len(nodes)-1])
-								if node.action == sdDELETE {
-									sp.ntagdeletes++
-								}
 							}
 						} else {
 							logit(logSVNPARSE, "node parsing, line %d: empty node rejected", sp.importLine)
@@ -7261,6 +7257,37 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// its branch point, but that will cause problens if a future copy operation is ever sourced
 	// in the deleted branch and this does happen!) We deal with this by renaming the deleted branch
 	// and patching any copy operations from it in the future.
+	//
+	// Our first step is to refine our list so we only need to walk through tags created more than once,
+	// otherwise this pass can become a pig on large repositories.  Remember that initially sp.tagnodes
+	// is a list of all nodes that have paths in the tag namespace.
+	refcounts := make(map[string]int)
+	for i, tagnode := range sp.tagnodes {
+		if tagnode.action == sdADD && tagnode.kind == sdDIR {
+			refcounts[tagnode.path]++
+		}
+		baton.percentProgress("a", int64(i), int64(len(sp.tagnodes)))
+	}
+	logit(logTAGFIX, "tag reference counts: %v", refcounts)
+	// Use https://github.com/golang/go/wiki/SliceTricks recipe for filter in place
+	// to select out nodes relevant to tag additions that step on each other and
+	// their references.
+	n := 0
+	relevant := func(x *NodeAction) bool {
+		return refcounts[x.path] > 1 || refcounts[filepath.Dir(x.path)] > 1 ||
+			refcounts[x.fromPath] > 1 || refcounts[filepath.Dir(x.fromPath)] > 1
+	}
+	oldlength := len(sp.tagnodes)
+	for i, x := range sp.tagnodes {
+		if relevant(x) {
+			sp.tagnodes[n] = x
+			n++
+		}
+		baton.percentProgress("b", int64(i), int64(oldlength))
+	}
+	sp.tagnodes = sp.tagnodes[:n]
+	logit(logTAGFIX, "multiply-added tags: %v", sp.tagnodes)
+
 	processed := 0
 	logit(logTAGFIX, "before fixups: %v", sp.tagnodes)
 	for i := range sp.tagnodes {
