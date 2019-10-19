@@ -6148,6 +6148,7 @@ type StreamParser struct {
 	history              HistoryManager
 	splitCommits         map[revidx]int
 	tagnodes             []*NodeAction
+	ntagdeletes          int
 }
 
 type daglink struct {
@@ -6606,6 +6607,9 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 							nodes = append(nodes, *node)
 							if sp.isTag(node.path) {
 								sp.tagnodes = append(sp.tagnodes, &nodes[len(nodes)-1])
+								if node.action == sdDELETE {
+									sp.ntagdeletes++
+								}
 							}
 						} else {
 							logit(logSVNPARSE, "node parsing, line %d: empty node rejected", sp.importLine)
@@ -7257,6 +7261,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// its branch point, but that will cause problens if a future copy operation is ever sourced
 	// in the deleted branch and this does happen!) We deal with this by renaming the deleted branch
 	// and patching any copy operations from it in the future.
+	processed := 0
 	logit(logTAGFIX, "before fixups: %v", sp.tagnodes)
 	for i := range sp.tagnodes {
 		srcnode := sp.tagnodes[i]
@@ -7308,9 +7313,10 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				srcnode.revision, srcnode.index,
 				srcnode.path, newname)
 			srcnode.path = newname
+			processed++
 		}
 	breakout:
-		baton.percentProgress(int64(i), int64(len(sp.tagnodes)))
+		baton.percentProgress(int64(processed), int64(sp.ntagdeletes))
 	}
 	logit(logTAGFIX, "after fixups: %v", sp.tagnodes)
 	sp.tagnodes = nil
