@@ -5872,7 +5872,11 @@ func (pm PathMap) items() []pathMapItem {
 }
 
 func (pm PathMap) size() int {
-	return len(pm.items())
+	size := len(pm.blobs)
+	for _, subdir := range pm.dirs {
+		size += subdir.size()
+	}
+	return size
 }
 
 // isEmpty returns true iff the PathMap contains no file
