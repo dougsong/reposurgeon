@@ -182,8 +182,8 @@ commit refs/heads/v1.0
 #legacy-id 11
 mark :23
 committer db48x <db48x> 1352540153 +0000
-data 43
-emergency bugfix for v1.0, releasing 1.0.1
+data 52
+emergency bugfix for branches/v1.0, releasing 1.0.1
 from :17
 M 100644 :21 VERSION
 M 100644 :22 src

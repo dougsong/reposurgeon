@@ -40,6 +40,15 @@ Content-length: 10
 PROPS-END
 
 
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
 Revision-number: 2
 Prop-content-length: 137
 Content-length: 137
@@ -156,7 +165,7 @@ V 5
 db48x
 PROPS-END
 
-Node-path: v1.0
+Node-path: branches/v1.0
 Node-kind: dir
 Node-action: add
 Node-copyfrom-rev: 3
@@ -181,7 +190,7 @@ V 5
 db48x
 PROPS-END
 
-Node-path: v1.0/VERSION
+Node-path: branches/v1.0/VERSION
 Node-kind: file
 Node-action: change
 Text-content-length: 4
@@ -252,7 +261,7 @@ V 5
 db48x
 PROPS-END
 
-Node-path: v1.0
+Node-path: branches/v1.0
 Node-action: delete
 
 
@@ -274,7 +283,7 @@ V 5
 db48x
 PROPS-END
 
-Node-path: v1.0
+Node-path: branches/v1.0
 Node-kind: dir
 Node-action: add
 Node-copyfrom-rev: 7
@@ -299,7 +308,7 @@ V 5
 db48x
 PROPS-END
 
-Node-path: v1.0/VERSION
+Node-path: branches/v1.0/VERSION
 Node-kind: file
 Node-action: change
 Text-content-length: 4
@@ -363,15 +372,15 @@ V 27
 2012-11-10T09:35:53.963730Z
 K 7
 svn:log
-V 42
-emergency bugfix for v1.0, releasing 1.0.1
+V 51
+emergency bugfix for branches/v1.0, releasing 1.0.1
 K 10
 svn:author
 V 5
 db48x
 PROPS-END
 
-Node-path: v1.0/VERSION
+Node-path: branches/v1.0/VERSION
 Node-kind: file
 Node-action: change
 Text-content-length: 6
@@ -382,7 +391,7 @@ Content-length: 6
 1.0.1
 
 
-Node-path: v1.0/src
+Node-path: branches/v1.0/src
 Node-kind: file
 Node-action: change
 Text-content-length: 75
@@ -422,8 +431,8 @@ Content-length: 45
 
 K 13
 svn:mergeinfo
-V 10
-/v1.0:8-11
+V 19
+/branches/v1.0:8-11
 PROPS-END
 
 
