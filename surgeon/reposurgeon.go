@@ -6603,7 +6603,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 						// 7 dumps.
 						if !(node.action == sdCHANGE && !node.hasProperties() && node.blob == nil && node.fromRev == 0) {
 							logit(logSVNPARSE, "node parsing, line %d: node %s appended", sp.importLine, node)
-							node.index = nodeidx((len(nodes) + 1) & int(^nodeidx(0)))
+							node.index = intToNodeidx(len(nodes) + 1)
 							nodes = append(nodes, *node)
 							if sp.isTag(node.path) {
 								sp.tagnodes = append(sp.tagnodes, &nodes[len(nodes)-1])
