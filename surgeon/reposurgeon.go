@@ -7094,7 +7094,8 @@ func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
 				node.revision, node.path, ancestor)
 			return ancestor
 		} else {
-			panic(throw("extract", "missing from hash %s", node.fromHash))
+			logit(logTOPOLOGY, "r%d~%s -> %s expected node from-hash is missing - stream may be corrupt",
+				node.revision, node.path)
 		}
 	}
 
