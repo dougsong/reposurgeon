@@ -33,6 +33,6 @@ fi
 
 for x in $*;
 do
-    echo "Test $x"
+    grep '^##' ${tst} 2>/dev/null
     ${REPOSURGEON:-reposurgeon} "script ${tst}" 2>&1 | diff -u ${chk} -
 done
