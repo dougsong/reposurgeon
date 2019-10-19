@@ -5710,23 +5710,21 @@ func branchbase(branch string) string {
 // without the copy-on-write storage sharing of snapshots, the
 // cost to keep a per-revision array of snapshots can blow up
 // pretty badly.
-//
-// This implementation cannot use directories as keys.
 
 type pathMapItem struct {
 	name  string
 	value interface{}
 }
 
-// PathMap is a string-to-value map.
-
 type PathMap struct {
-	store map[string]interface{}
+	dirs map[string]*PathMap
+	blobs map[string]interface{}
 }
 
 func newPathMap() *PathMap {
 	pm := new(PathMap)
-	pm.store = make(map[string]interface{})
+	pm.dirs = make(map[string]*PathMap)
+	pm.blobs = make(map[string]interface{})
 	return pm
 }
 
@@ -5737,39 +5735,63 @@ func (pm PathMap) snapshot() *PathMap {
 	// PathMap is considered immutable and a copy will be made
 	// before any modification.
 	r := newPathMap()
-	for k, v := range pm.store {
-		r.store[k] = v
+	for k, v := range pm.dirs {
+		r.dirs[k] = v
+	}
+	for k, v := range pm.blobs {
+		r.blobs[k] = v
 	}
 	return r
 }
 
-// _maybeGet gets both a retrieved value and a membership bool,
-// so there doesn't have to be an out-of-band not-there value.
+// _createTree ensures the hierarchy contains the directory whose path is given
+// as a slice of components, creating and snapshotting PathMaps as needed.
 // It is not part of the interface, but a convenience helper
-func (pm *PathMap) _maybeGet(path string) (interface{}, bool) {
-	var element interface{} = pm
-	for _, component := range strings.Split(path, svnSep) {
-		parent, ok := element.(*PathMap);
+func (pm PathMap) _createTree(path []string) *PathMap {
+	tree := &pm
+	for _, component := range path {
+		subtree, ok := tree.dirs[component]
 		if ok {
-			element, ok = parent.store[component]
+			// The component already exists. Replace it by a snaphot of it so that
+			// it can be modified without messing with other PathMaps
+			subtree = subtree.snapshot()
+		} else {
+			// Create the component as a directory
+			subtree = newPathMap()
 		}
-		if !ok {
-			return nil, false
-		}
+		// Put the new or snapshot tree in place, and go down a level
+		tree.dirs[component] = subtree
+		tree = subtree
 	}
-	return element, true
+	return tree
 }
 
 // copyFrom inserts at targetPath a snapshot of sourcePath in sourcePathMap.
 func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePath string) {
-	if source, ok := sourcePathMap._maybeGet(sourcePath); ok {
-		// Here, source can be a directory (a PathMap instance), or a single file
-		pm.set(targetPath, source)
+	parts := strings.Split(sourcePath, svnSep)
+	sourceDir, sourceName := parts[:len(parts)-1], parts[len(parts)-1]
+	// Walk along the "dirname" in sourcePath
+	sourceParent := sourcePathMap
+	for _, component := range sourceDir {
+		var ok bool
+		if sourceParent, ok = sourceParent.dirs[component]; !ok {
+			// The source path does not exist, bail out
+			// FIXME: should we warn ? panic ? return false ?
+			return
+		}
 	}
-	// Yes, there's a fallthrough case where we do nothing.  In the ancestral Python
-	// the function ended with the equivalent of the next line of code, but nil is
-	// not an ignored value in this implementation.
-	//pm.store[targetPath] = nil
+	// Decompose targetPath into components
+	parts = strings.Split(targetPath, svnSep)
+	targetDir, targetName := parts[:len(parts)-1], parts[len(parts)-1]
+	// And perform the copy. In normal cases, only one of the dir and file exist
+	if tree, ok := sourceParent.dirs[sourceName]; ok {
+		pm._createTree(targetDir).dirs[targetName] = tree
+	}
+	if blob, ok := sourceParent.blobs[sourceName]; ok {
+		pm._createTree(targetDir).blobs[targetName] = blob
+	}
+	// When the last component of sourcePath does not exist, we do nothing
+	// FIXME: should we warn ? panic ? return false ?
 }
 
 // get takes a path as argument, and returns the file that is stored at that
@@ -5778,83 +5800,64 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 // return value is nil (the null value of the interface{} type) and the second
 // return value is the boolean false
 func (pm PathMap) get(path string) (interface{}, bool) {
-	element, ok := pm._maybeGet(path)
-	if ok {
-		if _, isdir := element.(*PathMap); !isdir {
-			return element, true
+	components := strings.Split(path, svnSep)
+	// Walk along the "dirname"
+	parent := &pm;
+	for _, component := range components[:len(components)-1] {
+		var ok bool
+		if parent, ok = parent.dirs[component]; !ok {
+			return nil, false
 		}
 	}
-	return nil, false
+	// Now fetch the "basename"
+	element, ok := parent.blobs[ components[len(components)-1] ]
+	return element, ok
 }
 
 // set adds a filename to the map, with associated value.
 func (pm PathMap) set(path string, value interface{}) {
-	components := strings.Split(path, svnSep)
-	// Walk along the "dirname", creating missing directories as we go
-	parent := &pm
-	for _, component := range components[:len(components)-1] {
-		element, ok := parent.store[component]
-		if ok {
-			subdir, ok := element.(*PathMap)
-			if !ok {
-				panic(fmt.Sprintf(
-					"Impossible to add '%s': '%s' exists and is not a directory",
-					path, component))
-			}
-			// The component already exists. Replace it by a snaphot of it so that
-			// it can be modified without messing with other PathMaps
-			subdir = subdir.snapshot()
-			parent.store[component] = subdir
-			parent = subdir
-		} else {
-			// create the component as a directory
-			newdir := newPathMap()
-			parent.store[component] = newdir
-			parent = newdir
-		}
-	}
-	// Insert the value, maybe overwriting what is already there
-	name := components[len(components)-1]
-	parent.store[name] = value
+	parts := strings.Split(path, svnSep)
+	dir, name := parts[:len(parts)-1], parts[len(parts)-1]
+	pm._createTree(dir).blobs[name] = value
 }
 
 // remove removes a filename, or all descendents of a directory name, from the map.
 func (pm *PathMap) remove(path string) {
-	components := strings.Split(path, svnSep)
-	// Walk along the "dirname"
-	parent := pm
-	for _, component := range components[:len(components)-1] {
-		element, ok := parent.store[component]
-		if ok {
-			subdir, ok := element.(*PathMap)
-			if !ok {
-				// Impossible to remove '%s': '%s' exists and is not a directory
-				// FIXME: log a warning ?
-				return
-			}
-			// The component already exists. Replace it by a snaphot of it so that
-			// it can be modified without messing with other PathMaps
-			subdir = subdir.snapshot()
-			parent.store[component] = subdir
-			parent = subdir
-		} else {
-			// Impossible to remove '%s': '%s' does not exist
-			// FIXME: log a warning ?
+	// Separate the first component and the rest in the path
+	components := strings.SplitN(path, svnSep, 2)
+	component := components[0]
+	if len(components) == 1 {
+		// The path to delete is at pm's toplevel
+		delete(pm.dirs, component)
+		delete(pm.blobs, component)
+	} else {
+		// Try to go down a level
+		subtree, ok := pm.dirs[component]
+		if !ok {
+			// A component in the path doesn't exist as a directory; bail out
+			// FIXME: should we warn ? panic ? return false ?
 			return
 		}
+		// The component exists. Replace it by a snaphot of it so that
+		// it can be modified without messing with other PathMaps
+		subtree = subtree.snapshot()
+		pm.dirs[component] = subtree
+		// Now ask the subdir to do the removal, using the rest of the path
+		subtree.remove(components[1])
+		// Do not keep empty subdirectories around
+		if subtree.isEmpty() {
+			delete(pm.dirs, component)
+		}
 	}
-	name := components[len(components)-1]
-	delete(parent.store, name)
 }
 
 // _itemsInner recursively walks the pathMap CoW tree estracting its items
 func (pm *PathMap) _itemsInner(items []pathMapItem, prefix string) []pathMapItem {
-	for cmp1, elt := range pm.store {
-		if element, ok := elt.(*PathMap); ok {
-			items = element._itemsInner(items, prefix + cmp1 + svnSep)
-		} else {
-			items = append(items, pathMapItem{prefix + cmp1, elt})
-		}
+	for cmp1, subdir := range pm.dirs {
+		items = subdir._itemsInner(items, prefix + cmp1 + svnSep)
+	}
+	for cmp1, elt := range pm.blobs {
+		items = append(items, pathMapItem{prefix + cmp1, elt})
 	}
 	return items
 }
@@ -5872,8 +5875,9 @@ func (pm PathMap) size() int {
 	return len(pm.items())
 }
 
+// isEmpty returns true iff the PathMap contains no file
 func (pm *PathMap) isEmpty() bool {
-	return len(pm.store) == 0
+	return len(pm.dirs) + len(pm.blobs) == 0
 }
 
 // Derived PathMap code, independent of the store implementation
