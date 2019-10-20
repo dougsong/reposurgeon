@@ -7199,6 +7199,25 @@ func (sp *StreamParser) expandNode(offset int, node *NodeAction, options stringS
 	if node.kind == sdFILE {
 		expandedNodes = append(expandedNodes, node)
 	} else if node.kind == sdDIR {
+		// Recognize branches
+		if !options.Contains("--nobranch") {
+			np := node.path + svnSep
+			if node.action == sdADD && !sp.isBranch(np) {
+				for _, trial := range context.listOptions["svn_branchify"] {
+					if !strings.Contains(trial, "*") && trial == node.path {
+						sp.branches[np] = nil
+					} else if strings.HasSuffix(trial, svnSep+"*") && filepath.Dir(trial) == filepath.Dir(node.path) && !context.listOptions["svn_branchify"].Contains(np+"*") {
+						sp.branches[np] = nil
+					} else if trial == "*" && !context.listOptions["svn_branchify"].Contains(np+"*") && strings.Count(node.path, svnSep) < 1 {
+						sp.branches[np] = nil
+					}
+				}
+				if sp.isBranch(np) {
+					logit(logTOPOLOGY, "%s recognized as a branch", np)
+				}
+			}
+		}
+
 		// svnSep is appended to avoid collisions with path
 		// prefixes.
 		node.path += svnSep
@@ -7732,25 +7751,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			} else if node.kind == sdDIR &&
 				node.action != sdCHANGE && logEnable(logTOPOLOGY) {
 				logit(logSHOUT, node.String())
-			}
-
-			// Recognize branches
-			if !nobranch {
-				np := node.path + svnSep
-				if node.action == sdADD && node.kind == sdDIR && !sp.isBranch(np) {
-					for _, trial := range context.listOptions["svn_branchify"] {
-						if !strings.Contains(trial, "*") && trial == node.path {
-							sp.branches[np] = nil
-						} else if strings.HasSuffix(trial, svnSep+"*") && filepath.Dir(trial) == filepath.Dir(node.path) && !context.listOptions["svn_branchify"].Contains(np+"*") {
-							sp.branches[np] = nil
-						} else if trial == "*" && !context.listOptions["svn_branchify"].Contains(np+"*") && strings.Count(node.path, svnSep) < 1 {
-							sp.branches[np] = nil
-						}
-					}
-					if sp.isBranch(np) && logEnable(logTOPOLOGY) {
-						logit(logSHOUT, "%s recognized as a branch", np)
-					}
-				}
 			}
 
 			// Handle per-path properties.
