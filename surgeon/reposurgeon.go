@@ -2457,13 +2457,11 @@ type Baton struct {
 	startprog time.Time
 	lastprog time.Time
 	channel  chan string
-	ticker   *time.Ticker
 }
 
-const twirlInterval    = 100 * time.Millisecond	// Rate-limit baton twirls
+const tickInterval     = 100 * time.Millisecond	// Rate-limit baton twirls
 const progressInterval = 10  * time.Second	// Rate-limit progress messages 
 const pauseInterval    = 750 * time.Millisecond	// How long to delay before erasing progress message
-const tickInterval     = 1   * time.Second	// How often ticker should fire if no twirls.
 
 func newBaton(prompt string, endmsg string, enable bool) *Baton {
 	me := new(Baton)
@@ -2472,19 +2470,11 @@ func newBaton(prompt string, endmsg string, enable bool) *Baton {
 	if me.endmsg == "" {
 		me.endmsg = "\b"
 	}
-	me.channel = make(chan string, 32)
-	me.ticker = time.NewTicker(tickInterval)
+	me.channel = make(chan string)
 	if enable {
 		go func() {
 			for {
-				var ch string
-				select {
-				case ch = <- me.channel:
-					break
-				case <- me.ticker.C:
-					ch = "*"
-					break
-				}
+				ch := <- me.channel
 				if me.erase {
 					if me.lastlen == 1 {
 						me.stream.WriteString(left)
@@ -2496,19 +2486,12 @@ func newBaton(prompt string, endmsg string, enable bool) *Baton {
 					me.erase = true
 				}
 				if me.isatty() {
-					if ch != "" && ch != "*" {
+					if ch != "" {
 						me.lastlen = len(ch)
 						me.stream.WriteString(ch)
 						me.erase = strings.Contains(ch, "%")
 						if me.erase {
 							time.Sleep(pauseInterval)
-						}
-					} else if ch == "*" {
-						me.erase = false
-						if time.Since(me.lasttick) > twirlInterval {
-							me.lastlen = 1
-							me.stream.WriteString("*")
-							me.erase = true
 						}
 					} else {
 						me.erase = false
