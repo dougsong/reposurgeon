@@ -7183,6 +7183,247 @@ func (sp *StreamParser) lastRelevantCommit(maxRev revidx, path string, attr stri
 	return nil
 }
 
+func (sp *StreamParser) expandNode(offset int, node *NodeAction, options stringSet) []*NodeAction {
+	expandedNodes := make([]*NodeAction, 0)
+	appendExpanded := func(newnode *NodeAction) {
+		newnode.generated = true
+		newnode.index = intToNodeidx(offset + len(expandedNodes) + 1)
+		expandedNodes = append(expandedNodes, newnode)
+	}
+	// Starting with the nodes in the Subversion dump, expand them into a set that
+	// unpacks all directory operations into equivalent sets of file operations.
+	if node.kind == sdFILE {
+		expandedNodes = append(expandedNodes, node)
+	} else if node.kind == sdDIR {
+		// svnSep is appended to avoid collisions with path
+		// prefixes.
+		node.path += svnSep
+		if node.fromPath != "" {
+			node.fromPath += svnSep
+		}
+		if node.action == sdADD || node.action == sdCHANGE {
+			if sp.isBranch(node.path) {
+				if !node.hasProperties() {
+					var newprops = newOrderedMap()
+					node.props = &newprops
+				}
+				var ignore, startwith string
+				if !options.Contains("--noignores") {
+					startwith = subversionDefaultIgnores
+				}
+				if rootignores := node.props.get("svn:ignore"); rootignores != "" {
+					ignore = startwith +
+						"# The contents of the svn:ignore property on the branch root.\n" +
+						rootignores
+				} else {
+					ignore = startwith
+				}
+				if ignore != "" {
+					logit(logIGNORES, "initializing %s ignores as %s\n", node.path, ignore)
+					node.props.set("svn:ignore", ignore)
+				}
+			}
+		} else if node.action == sdDELETE || node.action == sdREPLACE {
+			if sp.isBranch(node.path) {
+				sp.branchdeletes.Add(node.path)
+				expandedNodes = append(expandedNodes, node)
+				// The deleteall will also delete .gitignore files
+				for ignorepath := range sp.activeGitignores {
+					if strings.HasPrefix(ignorepath, node.path) {
+						logit(logIGNORES, "r%d-%d: deleting %s", node.revision, node.index, ignorepath)
+						delete(sp.activeGitignores, ignorepath)
+					}
+				}
+			} else {
+				// A delete or replace with no from set
+				// can occur if the directory is empty.
+				// We can just ignore that case. Otherwise...
+				if node.fromSet != nil {
+					for _, child := range node.fromSet.pathnames() {
+						logit(logEXTRACT, "r%d-%d~%s: deleting %s", node.revision, node.index, node.path, child)
+						newnode := new(NodeAction)
+						newnode.path = child
+						newnode.revision = node.revision
+						newnode.action = sdDELETE
+						newnode.kind = sdFILE
+						appendExpanded(newnode)
+					}
+				}
+				// Emit delete actions for the .gitignore files we
+				// have generated. Note that even with a directory
+				// with no files from SVN, we might have added
+				// .gitignore files we now must delete
+				for ignorepath := range sp.activeGitignores {
+					if strings.HasPrefix(ignorepath, node.path) {
+						logit(logEXTRACT, "r%d-%d: deleting %s", node.revision, node.index, ignorepath)
+						newnode := new(NodeAction)
+						newnode.path = ignorepath
+						newnode.revision = node.revision
+						newnode.action = sdDELETE
+						newnode.kind = sdFILE
+						appendExpanded(newnode)
+						delete(sp.activeGitignores, ignorepath)
+					}
+				}
+			}
+		}
+		// Handle directory copies.  If this is a copy
+		// between branches, no fileop should be issued
+		// until there is an actual file modification on
+		// the new branch. Instead, remember that the
+		// branch root inherits the tree of the source
+		// branch and should not start with a deleteall.
+		// Exception: If the target branch has been
+		// deleted, perform a normal copy and interpret
+		// this as an ad-hoc branch merge.
+		if node.fromPath != "" {
+			branchcopy := sp.isBranch(node.fromPath) &&
+				sp.isBranch(node.path) &&
+				!sp.isBranchDeleted(node.path)
+			logit(logTOPOLOGY, "r%d-%d: directory copy to %s from r%d~%s (branchcopy %v)",
+				node.revision, node.index, node.path, node.fromRev, node.fromPath, branchcopy)
+			// Update our .gitignore list so that it includes those
+			// in the newly created copy, to ensure they correctly
+			// get deleted during a future directory deletion.
+			logit(logIGNORES, "before update at %s active ignores are: %s", node.path, sp.activeGitignores)
+			l := len(node.fromPath)
+			for sourcegi, value := range sp.activeGitignores {
+				if strings.HasPrefix(sourcegi, node.fromPath) {
+					destgi := node.path + sourcegi[l:]
+					sp.activeGitignores[destgi] = value
+				}
+			}
+			logit(logIGNORES, "after update at %s active ignores are: %s", node.path, sp.activeGitignores)
+			if branchcopy {
+				sp.branchcopies.Add(node.path)
+				// Store the minimum information needed to propagate
+				// executable bits across branch copies. If we needed
+				// to preserve any other properties, sp.propagate
+				// would need to have property maps as values.
+				for _, source := range node.fromSet.pathnames() {
+					found := sp.history.getActionNode(node.fromRev, source)
+					if found != nil && found.hasProperties() && found.props.has("svn:executable") {
+						stem := source[len(node.fromPath):]
+						targetpath := node.path + stem
+						sp.propagate[targetpath] = true
+						logit(logTOPOLOGY, "r%d-%d: exec-mark %s", node.revision, node.index, targetpath)
+					}
+				}
+			} else {
+				sp.branchdeletes.Remove(node.path)
+				// Generate copy ops for generated .gitignore files
+				// to match the copy of svn:ignore props on the
+				// Subversion side. We use the just updated
+				// activeGitignores dict for that purpose.
+				logit(logIGNORES, "state of active ignores: %s\n", sp.activeGitignores)
+				if !options.Contains("--user-ignores") {
+					for gipath, ignore := range sp.activeGitignores {
+						if strings.HasPrefix(gipath, node.path) {
+							blob := newBlob(sp.repo)
+							blob.setContent(ignore, noOffset)
+							subnode := new(NodeAction)
+							subnode.path = gipath
+							subnode.revision = node.revision
+							subnode.action = sdADD
+							subnode.kind = sdFILE
+							subnode.blob = blob
+							subnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
+							appendExpanded(subnode)
+						}
+					}
+				}
+				// Now generate copies for all files in the copy source directory
+				for _, source := range node.fromSet.pathnames() {
+					found := sp.history.getActionNode(node.fromRev, source)
+					if found == nil {
+						logit(logSHOUT,"r%d-%d: can't find ancestor of %s at r%d",
+							node.revision, node.index, source, node.fromRev)
+						continue
+					}
+					subnode := new(NodeAction)
+					subnode.path = node.path + source[len(node.fromPath):]
+					subnode.revision = node.revision
+					subnode.fromPath = found.path
+					subnode.fromRev = found.revision
+					subnode.fromHash = found.contentHash
+					subnode.props = found.props
+					subnode.action = sdADD
+					subnode.kind = sdFILE
+					logit(logTOPOLOGY, "r%d-%d: %s generated copy r%d~%s -> %s %s",
+						node.revision, node.index, node.path, subnode.fromRev, subnode.fromPath, subnode.path, subnode)
+					appendExpanded(subnode)
+				}
+			}
+		}
+		// Allow GC to reclaim fromSet storage, we no longer need it
+		node.fromSet = nil
+		// Property settings can be present on either
+		// sdADD or sdCHANGE actions.
+		if node.propchange && node.hasProperties() {
+			logit(logEXTRACT, "r%d-%d: setting properties %v on %s",
+				node.revision, node.index, node.props, node.path)
+			// svn:ignore gets handled here,
+			if !options.Contains("--user-ignores") {
+				var gitignorePath string
+				if node.path == svnSep {
+					gitignorePath = ".gitignore"
+				} else {
+					gitignorePath = filepath.Join(node.path,
+						".gitignore")
+				}
+				// There are no other directory properties that can
+				// turn into fileops.
+				ignore := node.props.get("svn:ignore")
+				if ignore != "" {
+					// svn:ignore properties are nonrecursive
+					// to lower directories, but .gitignore
+					// patterns are recursive.  Thus we need to
+					// anchor the translated pattern with
+					// leading / in order to render the
+					// Subversion behavior accurately.  However,
+					// if done naively this clobbers the branch-root
+					// ignore defaults, which are already anchored.
+					ignorelines := make([]string, 0)
+					for _, line := range strings.Split(ignore, "\n") {
+						if strings.HasPrefix(line, "#") || strings.HasPrefix(line, "/") || line == "" {
+							ignorelines = append(ignorelines, line)
+						} else {
+							ignorelines = append(ignorelines, "/"+line)
+						}
+					}
+					ignore = strings.Join(ignorelines, "\n")
+					blob := newBlob(sp.repo)
+					blob.setContent(ignore, noOffset)
+					newnode := new(NodeAction)
+					newnode.path = gitignorePath
+					newnode.revision = node.revision
+					newnode.action = sdADD
+					newnode.kind = sdFILE
+					newnode.blob = blob
+					newnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
+					logit(logIGNORES, "r%d-%d: queuing up %s generation with: %v.",
+						node.revision, node.index, newnode.path, node.props.get("svn:ignore"))
+					// Must append rather than simply performing.
+					// Otherwise when the property is unset we
+					// won't have the right thing happen.
+					appendExpanded(newnode)
+					sp.activeGitignores[gitignorePath] = ignore
+				} else if _, ok := sp.activeGitignores[gitignorePath]; ok {
+					newnode := new(NodeAction)
+					newnode.path = gitignorePath
+					newnode.revision = node.revision
+					newnode.action = sdDELETE
+					newnode.kind = sdFILE
+					logit(logIGNORES, "r%d-%d: queuing up %s deletion.", node.revision, node.index, newnode.path)
+					appendExpanded(newnode)
+					delete(sp.activeGitignores, gitignorePath)
+				}
+			}
+		}
+	}
+	return expandedNodes
+}
+
 func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// Subversion actions to import-stream commits.
 	baton.resetProgress()
@@ -7407,12 +7648,12 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				continue
 			}
 			if node.kind == sdNONE && node.action != sdDELETE {
-				logit(logSHOUT, "maissing type on a non-delete node r%d: %s", record.revision, node)
+				logit(logSHOUT, "missing type on a non-delete node r%d: %s", record.revision, node)
 				continue
 			}
 
 			if ((node.action != sdADD && node.action != sdREPLACE) && node.fromRev > 0) {
-				logit(logSHOUT, "invalid type in node with frpm revision r%d: %s", record.revision, node)
+				logit(logSHOUT, "invalid type in node with from revision r%d: %s", record.revision, node)
 				continue
 			}
 		}
@@ -7479,16 +7720,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 
 		expandedNodes := make([]*NodeAction, 0)
-		appendExpanded := func(newnode *NodeAction) {
-			newnode.generated = true
-			newnode.index = intToNodeidx(len(record.nodes) + len(expandedNodes) + 1)
-			expandedNodes = append(expandedNodes, newnode)
-		}
 		hasProperties := newStringSet()
 		for n := range record.nodes {
 			node := &record.nodes[n]
 			if logEnable(logEXTRACT) {
-				logit(logEXTRACT, fmt.Sprintf("r%d-%d: %s", record.revision, n+1, node))
+				logit(logEXTRACT, fmt.Sprintf("r%d-%d: %s", record.revision, node.index, node))
 			} else if node.kind == sdDIR &&
 				node.action != sdCHANGE && logEnable(logTOPOLOGY) {
 				logit(logSHOUT, node.String())
@@ -7551,237 +7787,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					}
 				}
 			}
-			// Starting with the nodes in the Subversion dump, expand them into a set that
-			// unpacks all directory operations into equivalent sets of file operations.
-			if node.kind == sdFILE {
-				expandedNodes = append(expandedNodes, node)
-			} else if node.kind == sdDIR {
-				// svnSep is appended to avoid collisions with path
-				// prefixes.
-				node.path += svnSep
-				if node.fromPath != "" {
-					node.fromPath += svnSep
-				}
-				if node.action == sdADD || node.action == sdCHANGE {
-					if sp.isBranch(node.path) {
-						if !node.hasProperties() {
-							var newprops = newOrderedMap()
-							node.props = &newprops
-						}
-						var ignore, startwith string
-						if !options.Contains("--noignores") {
-							startwith = subversionDefaultIgnores
-						}
-						if rootignores := node.props.get("svn:ignore"); rootignores != "" {
-							ignore = startwith +
-								"# The contents of the svn:ignore property on the branch root.\n" +
-								rootignores
-						} else {
-							ignore = startwith
-						}
-						if ignore != "" {
-							logit(logIGNORES, "initializing %s ignores as %s\n", node.path, ignore)
-							node.props.set("svn:ignore", ignore)
-						}
-					}
-				} else if node.action == sdDELETE || node.action == sdREPLACE {
-					if sp.isBranch(node.path) {
-						sp.branchdeletes.Add(node.path)
-						expandedNodes = append(expandedNodes, node)
-						// The deleteall will also delete .gitignore files
-						for ignorepath := range sp.activeGitignores {
-							if strings.HasPrefix(ignorepath, node.path) {
-								logit(logIGNORES, "r%d-%d: deleting %s", record.revision, n+1, ignorepath)
-								delete(sp.activeGitignores, ignorepath)
-							}
-						}
-					} else {
-						// A delete or replace with no from set
-						// can occur if the directory is empty.
-						// We can just ignore that case. Otherwise...
-						if node.fromSet != nil {
-							for _, child := range node.fromSet.pathnames() {
-								logit(logEXTRACT, "r%d-%d~%s: deleting %s", record.revision, n+1, node.path, child)
-								newnode := new(NodeAction)
-								newnode.path = child
-								newnode.revision = record.revision
-								newnode.action = sdDELETE
-								newnode.kind = sdFILE
-								appendExpanded(newnode)
-							}
-						}
-						// Emit delete actions for the .gitignore files we
-						// have generated. Note that even with a directory
-						// with no files from SVN, we might have added
-						// .gitignore files we now must delete
-						for ignorepath := range sp.activeGitignores {
-							if strings.HasPrefix(ignorepath, node.path) {
-								logit(logEXTRACT, "r%d-%d: deleting %s", record.revision, n+1, ignorepath)
-								newnode := new(NodeAction)
-								newnode.path = ignorepath
-								newnode.revision = record.revision
-								newnode.action = sdDELETE
-								newnode.kind = sdFILE
-								appendExpanded(newnode)
-								delete(sp.activeGitignores, ignorepath)
-							}
-						}
-					}
-				}
-				// Handle directory copies.  If this is a copy
-				// between branches, no fileop should be issued
-				// until there is an actual file modification on
-				// the new branch. Instead, remember that the
-				// branch root inherits the tree of the source
-				// branch and should not start with a deleteall.
-				// Exception: If the target branch has been
-				// deleted, perform a normal copy and interpret
-				// this as an ad-hoc branch merge.
-				if node.fromPath != "" {
-					branchcopy := sp.isBranch(node.fromPath) &&
-						sp.isBranch(node.path) &&
-						!sp.isBranchDeleted(node.path)
-					logit(logTOPOLOGY, "r%d-%d: directory copy to %s from r%d~%s (branchcopy %v)",
-						record.revision, n+1, node.path, node.fromRev, node.fromPath, branchcopy)
-					// Update our .gitignore list so that it includes those
-					// in the newly created copy, to ensure they correctly
-					// get deleted during a future directory deletion.
-					logit(logIGNORES, "before update at %s active ignores are: %s", node.path, sp.activeGitignores)
-					l := len(node.fromPath)
-					for sourcegi, value := range sp.activeGitignores {
-						if strings.HasPrefix(sourcegi, node.fromPath) {
-							destgi := node.path + sourcegi[l:]
-							sp.activeGitignores[destgi] = value
-						}
-					}
-					logit(logIGNORES, "after update at %s active ignores are: %s", node.path, sp.activeGitignores)
-					if branchcopy {
-						sp.branchcopies.Add(node.path)
-						// Store the minimum information needed to propagate
-						// executable bits across branch copies. If we needed
-						// to preserve any other properties, sp.propagate
-						// would need to have property maps as values.
-						for _, source := range node.fromSet.pathnames() {
-							found := sp.history.getActionNode(node.fromRev, source)
-							if found != nil && found.hasProperties() && found.props.has("svn:executable") {
-								stem := source[len(node.fromPath):]
-								targetpath := node.path + stem
-								sp.propagate[targetpath] = true
-								logit(logTOPOLOGY, "r%d-%d: exec-mark %s", record.revision, n+1, targetpath)
-							}
-						}
-					} else {
-						sp.branchdeletes.Remove(node.path)
-						// Generate copy ops for generated .gitignore files
-						// to match the copy of svn:ignore props on the
-						// Subversion side. We use the just updated
-						// activeGitignores dict for that purpose.
-						logit(logIGNORES, "state of active ignores: %s\n", sp.activeGitignores)
-						if !options.Contains("--user-ignores") {
-							for gipath, ignore := range sp.activeGitignores {
-								if strings.HasPrefix(gipath, node.path) {
-									blob := newBlob(sp.repo)
-									blob.setContent(ignore, noOffset)
-									subnode := new(NodeAction)
-									subnode.path = gipath
-									subnode.revision = record.revision
-									subnode.action = sdADD
-									subnode.kind = sdFILE
-									subnode.blob = blob
-									subnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
-									appendExpanded(subnode)
-								}
-							}
-						}
-						// Now generate copies for all files in the copy source directory
-						for _, source := range node.fromSet.pathnames() {
-							found := sp.history.getActionNode(node.fromRev, source)
-							if found == nil {
-								logit(logSHOUT,"r%d-%d: can't find ancestor of %s at r%d",
-									record.revision, n+1, source, node.fromRev)
-								continue
-							}
-							subnode := new(NodeAction)
-							subnode.path = node.path + source[len(node.fromPath):]
-							subnode.revision = record.revision
-							subnode.fromPath = found.path
-							subnode.fromRev = found.revision
-							subnode.fromHash = found.contentHash
-							subnode.props = found.props
-							subnode.action = sdADD
-							subnode.kind = sdFILE
-							logit(logTOPOLOGY, "r%d-%d: %s generated copy r%d~%s -> %s %s",
-								record.revision, n+1, node.path, subnode.fromRev, subnode.fromPath, subnode.path, subnode)
-							appendExpanded(subnode)
-						}
-					}
-				}
-				// Allow GC to reclaim fromSet storage, we no longer need it
-				node.fromSet = nil
-				// Property settings can be present on either
-				// sdADD or sdCHANGE actions.
-				if node.propchange && node.hasProperties() {
-					logit(logEXTRACT, "r%d-%d: setting properties %v on %s",
-						record.revision, n+1, node.props, node.path)
-					// svn:ignore gets handled here,
-					if !options.Contains("--user-ignores") {
-						var gitignorePath string
-						if node.path == svnSep {
-							gitignorePath = ".gitignore"
-						} else {
-							gitignorePath = filepath.Join(node.path,
-								".gitignore")
-						}
-						// There are no other directory properties that can
-						// turn into fileops.
-						ignore := node.props.get("svn:ignore")
-						if ignore != "" {
-							// svn:ignore properties are nonrecursive
-							// to lower directories, but .gitignore
-							// patterns are recursive.  Thus we need to
-							// anchor the translated pattern with
-							// leading / in order to render the
-							// Subversion behavior accurately.  However,
-							// if done naively this clobbers the branch-root
-							// ignore defaults, which are already anchored.
-							ignorelines := make([]string, 0)
-							for _, line := range strings.Split(ignore, "\n") {
-								if strings.HasPrefix(line, "#") || strings.HasPrefix(line, "/") || line == "" {
-									ignorelines = append(ignorelines, line)
-								} else {
-									ignorelines = append(ignorelines, "/"+line)
-								}
-							}
-							ignore = strings.Join(ignorelines, "\n")
-							blob := newBlob(sp.repo)
-							blob.setContent(ignore, noOffset)
-							newnode := new(NodeAction)
-							newnode.path = gitignorePath
-							newnode.revision = record.revision
-							newnode.action = sdADD
-							newnode.kind = sdFILE
-							newnode.blob = blob
-							newnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
-							logit(logIGNORES, "r%d-%d: queuing up %s generation with: %v.",
-								record.revision, n+1, newnode.path, node.props.get("svn:ignore"))
-							// Must append rather than simply performing.
-							// Otherwise when the property is unset we
-							// won't have the right thing happen.
-							appendExpanded(newnode)
-							sp.activeGitignores[gitignorePath] = ignore
-						} else if _, ok := sp.activeGitignores[gitignorePath]; ok {
-							newnode := new(NodeAction)
-							newnode.path = gitignorePath
-							newnode.revision = record.revision
-							newnode.action = sdDELETE
-							newnode.kind = sdFILE
-							logit(logIGNORES, "r%d-%d: queuing up %s deletion.", record.revision, n+1, newnode.path)
-							appendExpanded(newnode)
-							delete(sp.activeGitignores, gitignorePath)
-						}
-					}
-				}
-			}
+
+			// expand directory copy operations 
+			expandedNodes = append(expandedNodes, sp.expandNode(len(record.nodes), node, options)...)
 		}
 		logit(logEXTRACT, "%d expanded Subversion nodes", len(expandedNodes))
 		// Ugh.  Because cvs2svn is brain-dead and issues D/M pairs
