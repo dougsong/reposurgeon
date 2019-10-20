@@ -1,5 +1,6 @@
 ## Test content filtering
 read <sample1.fi
+set interactive
 print Testing shell filtering of blobs
 =B filter --shell tr e X
 print Testing shell filtering of commits
@@ -18,4 +19,5 @@ print Testing replace filtering of commits (all fields)
 =C filter --replace /Eric/Thranduil/
 print Testing replace filtering of tags
 =T filter --replace /Eric/Thorin/
+clear interactive
 write -

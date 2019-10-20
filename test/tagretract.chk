@@ -1,5 +1,3 @@
-reposurgeon: branchmap, regex -> branch name:
-reposurgeon: 	tags/(.*)/ -> tags/\1
 #reposurgeon sourcetype svn
 blob
 mark :1

@@ -1,5 +1,4 @@
 ## Test subversion tags nested below the root
-verbose 0
 branchify cpp-msbuild/trunk cpp-msbuild/branches/* cpp-msbuild/tags/*
 branchmap \
    :cpp-msbuild/trunk/:heads/master: \

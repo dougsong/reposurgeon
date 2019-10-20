@@ -1,4 +1,5 @@
 read <deleteall.fi
+set interactive
 :13 manifest
 Event 17 ================================================================
 commit refs/heads/samplebranch2

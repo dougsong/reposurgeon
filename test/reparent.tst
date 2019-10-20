@@ -2,6 +2,7 @@
 echo 1
 relax
 read <simple.fi
+set interactive
 127 inspect
 127..$ manifest
 127,29 reparent

@@ -1,4 +1,3 @@
-reposurgeon: branchify nontrunk nontrunkbranch
 #reposurgeon sourcetype svn
 blob
 mark :1

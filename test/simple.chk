@@ -66,7 +66,6 @@ tags
    130	reset	refs/heads/master
    131	tag	annotated-sample
 verbose 1
-reposurgeon: verbose 1
 paths
 .gitignore
 Makefile
@@ -78,11 +77,6 @@ test/Makefile
 test/simple.dump
 theory.txt
 1..$ expunge theory.txt
-reposurgeon: at 7, expunging M theory.txt
-reposurgeon: at 10, expunging M theory.txt
-reposurgeon: at 24, expunging M theory.txt
-reposurgeon: at 29, expunging M theory.txt
-reposurgeon: at 52, expunging M theory.txt
 paths
 .gitignore
 Makefile

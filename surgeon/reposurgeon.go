@@ -2646,6 +2646,9 @@ screen width, and the ID of the invoking user. Use in regression-test loads.
 		`Extra profiling for large repositories.  Mainly of interest to reposurgeon
 developers.
 `},
+	{"interactive",
+		`Enable interactive responses even when not on a tty.
+`},
 	{"experimental",
 		`This flag is reserved for developer use.  If you set it, it could do
 anything up to and including making demons fly out of your nose.
@@ -2672,7 +2675,7 @@ type Context struct {
 }
 
 func (ctx *Context) isInteractive() bool {
-	return ctx.verbose > 0
+	return ctx.flagOptions["interactive"]
 }
 
 type branchMapping struct {
@@ -2751,7 +2754,7 @@ func screenwidth() int {
 }
 
 /*
- * Logging and utility
+ * Logging responding
  */
 
 // logEnable is a hook to set up log-message filtering.
@@ -2789,6 +2792,16 @@ func logit(lvl int, msg string, args ...interface{}) {
 		os.Stdout.WriteString("reposurgeon: " + content + "\n")
 	}
 }
+
+// respond is to be used for console messages that shouldn't be logged
+func respond(msg string, args ...interface{}) {
+	if context.isInteractive() {
+		content := fmt.Sprintf(msg, args...)
+		os.Stdout.WriteString("reposurgeon: " + content + "\n")
+	}
+}
+
+// Utility classes
 
 // emptyComment says whether comment info should be considered disposable?
 func emptyComment(c string) bool {
@@ -9415,11 +9428,8 @@ func (repo *Repository) readLegacyMap(fp io.Reader) error {
 		}
 	}
 
-	if context.isInteractive() {
-		logit(logSHOUT, "%d matched, %d unmatched, %d total",
-			matched, unmatched, matched+unmatched)
-	}
-
+	respond("%d matched, %d unmatched, %d total",
+		matched, unmatched, matched+unmatched)
 	return nil
 }
 
@@ -9690,7 +9700,7 @@ func (repo *Repository) parseDollarCookies() {
 }
 
 // Audit the repository for uniqueness properties.
-func (repo *Repository) checkUniqueness(verbosely bool, logitr func(string)) {
+func (repo *Repository) checkUniqueness(chatty bool, logHook func(string)) {
 	repo.uniqueness = ""
 	timecheck := make(map[string]Event)
 	timeCollisions := make(map[string][]Event)
@@ -9707,17 +9717,17 @@ func (repo *Repository) checkUniqueness(verbosely bool, logitr func(string)) {
 	}
 	if len(timeCollisions) == 0 {
 		repo.uniqueness = "committer_date"
-		if verbosely {
-			logitr("All commit times in this repository are unique.")
+		if chatty {
+			logHook("All commit times in this repository are unique.")
 		}
 		return
 	}
-	if logitr != nil {
+	if logHook != nil {
 		reps := make([]string, 0)
 		for k := range timeCollisions {
 			reps = append(reps, k)
 		}
-		logitr("These timestamps have multiple commits: %s" +
+		logHook("These timestamps have multiple commits: %s" +
 			strings.Join(reps, " "))
 	}
 	stampCollisions := newStringSet()
@@ -9738,13 +9748,13 @@ func (repo *Repository) checkUniqueness(verbosely bool, logitr func(string)) {
 	}
 	if len(stampCollisions) == 0 {
 		repo.uniqueness = "committer_stamp"
-		if logitr != nil {
-			logitr("All commit stamps in this repository are unique.")
+		if logHook != nil {
+			logHook("All commit stamps in this repository are unique.")
 		}
 		return
 	}
-	if logitr != nil {
-		logitr("These marks are in stamp collisions: " +
+	if logHook != nil {
+		logHook("These marks are in stamp collisions: " +
 			strings.Join(stampCollisions, " "))
 	}
 }
@@ -10766,9 +10776,7 @@ func (repo *Repository) resort() {
 			newEvents[i] = repo.events[j]
 		}
 		repo.events = newEvents
-		if context.isInteractive() {
-			logit(logSHOUT, "re-sorted events")
-		}
+		respond("re-sorted events")
 		// assignments will be fixed so don't pass anything to
 		// declareSequenceMutation() to tell it to warn about
 		// invalidated assignments
@@ -11347,9 +11355,9 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 			legend = "non-nil"
 		}
 		if preferred != nil {
-			logit(logSHOUT, "looking for a %s repo st %s (extractor %s...", preferred.name, source, legend)
+			respond("looking for a %s repo st %s (extractor %s...", preferred.name, source, legend)
 		} else {
-			logit(logSHOUT, "reposurgeon: looking for any repo at %s (extractor %s)...", source, legend)
+			respond("reposurgeon: looking for any repo at %s (extractor %s)...", source, legend)
 		}
 	}
 	// Trickier-than-it-looks department:
@@ -11725,10 +11733,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		croak("checkout not supported for %s skipping", vcs.name)
 
 	}
-	if context.isInteractive() {
-		logit(logSHOUT, "rebuild is complete.")
-
-	}
+	respond("rebuild is complete.")
 	ljoin := func(sup string, sub string) string {
 		return filepath.FromSlash(sup + "/" + sub)
 	}
@@ -11777,9 +11782,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 				os.Rename(src, dst)
 			}
 		}
-		if context.isInteractive() {
-			logit(logSHOUT, "repo backed up to %s.", relpath(savedir))
-		}
+		respond("repo backed up to %s.", relpath(savedir))
 		entries, err = ioutil.ReadDir(staging)
 		if err != nil {
 			return err
@@ -11795,9 +11798,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 			os.Rename(ljoin(staging, sub.Name()),
 				ljoin(target, sub.Name()))
 		}
-		if context.isInteractive() {
-			logit(logSHOUT, "modified repo moved to %s.", target)
-		}
+		respond("modified repo moved to %s.", target)
 		// Critical region ends
 	}
 	// This is how we clear away hooks directories in
@@ -11832,11 +11833,9 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 				}
 			}
 		}
-		if context.isInteractive() {
-			logit(logSHOUT, "preserved files restored.")
-		}
-	} else if context.isInteractive() {
-		logit(logSHOUT, "no preservations.")
+		respond("preserved files restored.")
+	} else {
+		respond("no preservations.")
 	}
 	return nil
 }
@@ -12315,7 +12314,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 					targetdelete := expunge.MatchString(fileop.Target)
 					if sourcedelete {
 						deletia = append(deletia, i)
-						logit(logSHOUT, "following %s of %s to %s", fileop.op, fileop.Source, fileop.Target)
+						//logit(logSHOUT, "following %s of %s to %s", fileop.op, fileop.Source, fileop.Target)
 						if fileop.op == opR {
 							newmatchers := make([]string, 0)
 							for _, m := range matchers {
@@ -12369,10 +12368,8 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			var targetdelete bool
 			if fileop.op == opD {
 				keepers = append(keepers, fileop)
-				if context.isInteractive() {
-					logit(logSHOUT, "at %d, expunging D %s",
+				respond("at %d, expunging D %s",
 						ei+1, fileop.Path)
-				}
 			} else if fileop.op == opM {
 				keepers = append(keepers, fileop)
 				if fileop.ref != "inline" {
@@ -12381,9 +12378,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 					//assert(isinstance(blob, Blob))
 					blobs = append(blobs, blob)
 				}
-				if context.isInteractive() {
-					logit(logSHOUT, "at %d, expunging M %s", ei+1, fileop.Path)
-				}
+				respond("at %d, expunging M %s", ei+1, fileop.Path)
 			} else if fileop.op == opR || fileop.op == opC {
 				//assert(sourcedelete || targetdelete)
 				if sourcedelete && targetdelete {
@@ -12493,9 +12488,9 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			}
 		}
 		if len(toDelete) == 0 {
-			logit(logSHOUT, "deletion set is empty.")
+			respond("deletion set is empty.")
 		} else {
-			logit(logSHOUT, "deleting blobs and empty commits %v", toDelete)
+			respond("deleting blobs and empty commits %v", toDelete)
 		}
 	}
 	// First delete the blobs.  Use the SliceTricks idiom for filtering
@@ -13767,12 +13762,16 @@ func (rs *Reposurgeon) helpOutput(help string) {
 	fmt.Print(help)
 }
 
+func (rs *Reposurgeon) inScript() bool {
+	return len(rs.callstack) > 0
+}
+
 //
 // Command implementation begins here
 //
 func (rs *Reposurgeon) DoEOF(lineIn string) bool {
 	if rs.inputIsStdin {
-		os.Stdout.WriteString("\n")
+		respond("\n")
 	}
 	return true
 }
@@ -14547,7 +14546,7 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 			return
 		}
 		if islink(editor) && exists(realEditor) {
-			logit(logSHOUT, "using %s -> %s instead", editor, realEditor)
+			respond("using %s -> %s instead", editor, realEditor)
 
 		} else {
 			return
@@ -14603,7 +14602,7 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 }
 
 // Filter commit metadata (and possibly blobs) through a specified hook.
-func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, attributes stringSet, safety bool) {
+func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, attributes stringSet, safety bool, quiet bool) {
 	blobs := false
 	nonblobs := false
 	for _, ei := range rs.selection {
@@ -14639,7 +14638,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 		}
 		rs.selection.Sort()
 	}
-	baton := newBaton(prompt, "", context.verbose == 1)
+	baton := newBaton(prompt, "", context.isInteractive() && !quiet)
 	defer baton.exit("")
 	altered := 0
 	for _, ei := range rs.selection {
@@ -14728,7 +14727,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 		}
 		baton.twirl("")
 	}
-	logit(logSHOUT, "%d items modified by %s.", altered, strings.ToLower(prompt))
+	respond("%d items modified by %s.", altered, strings.ToLower(prompt))
 }
 
 //
@@ -14773,7 +14772,7 @@ for exploring the selection-set language.
 // Display the set of event numbers generated by a selection set.
 func (rs *Reposurgeon) DoResolve(line string) bool {
 	if rs.selection == nil {
-		os.Stdout.WriteString("No selection\n")
+		respond("No selection\n")
 	} else {
 		if line != "" {
 			os.Stdout.WriteString(fmt.Sprintf("%s: ", line))
@@ -14782,7 +14781,7 @@ func (rs *Reposurgeon) DoResolve(line string) bool {
 		for _, i := range rs.selection {
 			oneOrigin.Add(i + 1)
 		}
-		os.Stdout.WriteString(fmt.Sprintf("%v\n", oneOrigin))
+		fmt.Printf("%v\n", oneOrigin)
 	}
 	return false
 }
@@ -14817,7 +14816,7 @@ func (rs *Reposurgeon) DoAssign(line string) bool {
 			return false
 		} else {
 			for n, v := range repo.assignments {
-				logit(logSHOUT, fmt.Sprintf("%s = %v", n, v))
+				respond(fmt.Sprintf("%s = %v", n, v))
 			}
 			return false
 		}
@@ -15020,7 +15019,7 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 	rs.profileLog = line
 	if rs.profileLog == "" {
 		pprof.StopCPUProfile()
-		logit(logSHOUT, "profiling disabled.")
+		respond("profiling disabled.")
 	} else {
 		// Recipe from https://blog.golang.org/profiling-go-programs
 		f, err := os.Create(rs.profileLog)
@@ -15028,7 +15027,7 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 			log.Fatal(err)
 		}
 		pprof.StartCPUProfile(f)
-		logit(logSHOUT, "profiling enabled.")
+		respond("profiling enabled.")
 	}
 	return false
 }
@@ -15770,7 +15769,7 @@ func (rs *Reposurgeon) DoPreserve(line string) bool {
 	for _, filename := range strings.Fields(line) {
 		rs.chosen().preserve(filename)
 	}
-	logit(logSHOUT, "preserving %s.", rs.chosen().preservable())
+	respond("preserving %s.", rs.chosen().preservable())
 	return false
 }
 
@@ -15796,7 +15795,7 @@ func (rs *Reposurgeon) DoUnpreserve(line string) bool {
 	for _, filename := range strings.Fields(line) {
 		rs.chosen().unpreserve(filename)
 	}
-	logit(logSHOUT, "preserving %s.", rs.chosen().preservable())
+	respond("preserving %s.", rs.chosen().preservable())
 	return false
 }
 
@@ -15864,7 +15863,7 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 				break
 			}
 		}
-		repo.fastImport(parse.stdin, parse.options, (context.verbose == 1 && !context.quiet), "")
+		repo.fastImport(parse.stdin, parse.options, (context.isInteractive() && !context.quiet), "")
 	} else if parse.line == "" || parse.line == "." {
 		var err2 error
 		// This is slightly asymmetrical with the write side, which
@@ -15977,7 +15976,7 @@ func (rs *Reposurgeon) DoWrite(line string) bool {
 				break
 			}
 		}
-		rs.chosen().fastExport(rs.selection, parse.stdout, parse.options, rs.preferred, (context.verbose == 1 && !context.quiet))
+		rs.chosen().fastExport(rs.selection, parse.stdout, parse.options, rs.preferred, (context.isInteractive() && !context.quiet))
 	} else if isdir(parse.line) {
 		err := rs.chosen().rebuildRepo(parse.line, parse.options, rs.preferred)
 		if err != nil {
@@ -16110,7 +16109,7 @@ func (rs *Reposurgeon) DoStrip(line string) bool {
 			}
 		}
 		repo.delete(deletia, nil)
-		logit(logSHOUT, "From %d to %d events.", oldlen, len(repo.events))
+		respond("From %d to %d events.", oldlen, len(repo.events))
 	}
 	return false
 }
@@ -16551,9 +16550,9 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 	}
 	if context.isInteractive() {
 		if len(changers) == 0 {
-			logit(logSHOUT, "no events modified by msgin.")
+			respond("no events modified by msgin.")
 		} else {
-			logit(logSHOUT, "%d events modified by msgin.", len(changers))
+			respond("%d events modified by msgin.", len(changers))
 		}
 	}
 	if parse.stdout != os.Stdout {
@@ -16797,7 +16796,8 @@ func (rs *Reposurgeon) DoFilter(line string) (StopOut bool) {
 		rs.dataTraverse("Filtering",
 			filterhook.do,
 			filterhook.attributes,
-			!strings.HasPrefix(line, "--dedos"))
+			!strings.HasPrefix(line, "--dedos"),
+			rs.inScript())
 	}
 	return false
 }
@@ -16849,7 +16849,7 @@ func (rs *Reposurgeon) DoTranscode(line string) bool {
 	rs.dataTraverse("Transcoding",
 		transcode,
 		newStringSet("c", "a", "C"),
-		true)
+		true, !rs.inScript())
 	return false
 }
 
@@ -16961,7 +16961,7 @@ func (rs *Reposurgeon) DoSetperm(line string) bool {
 		croak("unexpected permission literal %s", perm)
 		return false
 	}
-	baton := newBaton("patching modes", "", context.verbose == 1)
+	baton := newBaton("patching modes", "", context.isInteractive())
 	for _, ei := range rs.selection {
 		if commit, ok := rs.chosen().events[ei].(*Commit); ok {
 			for i, op := range commit.fileops {
@@ -17138,15 +17138,15 @@ func (rs *Reposurgeon) DoCoalesce(line string) bool {
 		return strings.Contains(commit.Comment, "empty log message") && len(commit.operations()) == 1 && commit.operations()[0].op == opM && strings.HasSuffix(commit.operations()[0].Path, "ChangeLog")
 	}
 	coalesceMatch := func(cthis *Commit, cnext *Commit) bool {
-		verbose := context.verbose >= logDELETE || parse.options.Contains("--debug")
+		croakOnFail := logEnable(logDELETE) || parse.options.Contains("--debug")
 		if cthis.committer.email != cnext.committer.email {
-			if verbose {
+			if croakOnFail {
 				croak("committer email mismatch at %s", cnext.idMe())
 			}
 			return false
 		}
 		if cthis.committer.date.delta(cnext.committer.date) >= time.Duration(timefuzz)*time.Second {
-			if verbose {
+			if croakOnFail {
 				croak("time fuzz exceeded at %s", cnext.idMe())
 			}
 			return false
@@ -17155,7 +17155,7 @@ func (rs *Reposurgeon) DoCoalesce(line string) bool {
 			return true
 		}
 		if cthis.Comment != cnext.Comment {
-			if verbose {
+			if croakOnFail {
 				croak("comment mismatch at %s", cnext.idMe())
 			}
 			return false
@@ -17202,9 +17202,7 @@ func (rs *Reposurgeon) DoCoalesce(line string) bool {
 		}
 		repo.squash(squashable, stringSet{"--coalesce"})
 	}
-	if context.isInteractive() {
-		logit(logSHOUT, "%d spans coalesced.", len(squashes))
-	}
+	respond("%d spans coalesced.", len(squashes))
 	return false
 }
 
@@ -17738,17 +17736,15 @@ func (rs *Reposurgeon) DoDivide(_line string) bool {
 	rs.selection = nil
 	// Try the topological cut first
 	if rs.cut(earlyCommit, lateCommit) {
-		if context.isInteractive() {
-			logit(logSHOUT, "topological cut succeeded")
-		}
+		respond("topological cut succeeded")
 	} else {
 		// If that failed, cut anyway and rename the branch segments
 		lateCommit.removeParent(earlyCommit)
 		if earlyCommit.Branch != lateCommit.Branch {
-			logit(logSHOUT, "no branch renames were required")
+			respond("no branch renames were required")
 		} else {
 			basename := earlyCommit.Branch
-			logit(logSHOUT, "%s has been split into %s-early and %s-late",
+			respond("%s has been split into %s-early and %s-late",
 				basename, basename, basename)
 			for i, event := range rs.chosen().events {
 				if commit, ok := event.(*Commit); ok && commit.Branch == basename {
@@ -17889,9 +17885,7 @@ func (rs *Reposurgeon) DoSplit(line string) bool {
 		croak("don't know what to do for preposition %s", prep)
 		return false
 	}
-	if context.isInteractive() {
-		logit(logSHOUT, "new commits are events %d and %d.", where+1, where+2)
-	}
+	respond("new commits are events %d and %d.", where+1, where+2)
 	return false
 }
 
@@ -18407,7 +18401,7 @@ func (rs *Reposurgeon) DoTagify(line string) bool {
 		true,
 		func(msg string) { fmt.Print(msg) })
 	after := len(repo.commits(nil))
-	logit(logSHOUT, "%d commits tagified.", before-after)
+	respond("%d commits tagified.", before-after)
 	return false
 }
 
@@ -18436,7 +18430,7 @@ func (rs *Reposurgeon) DoMerge(_line string) bool {
 	late.addParentCommit(early)
 	//earlyID = fmt.Sprintf("%s (%s)", early.mark, early.Branch)
 	//lateID = fmt.Sprintf("%s (%s)", late.mark, late.Branch)
-	//logit(logSHOUT, "%s added as a parent of %s", earlyID, lateID)
+	//respond("%s added as a parent of %s", earlyID, lateID)
 	return false
 }
 
@@ -19308,9 +19302,9 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 					newop.construct("M", "100644", ":insert", rs.ignorename)
 					earliest.appendOperation(*newop)
 					repo.renumber(1, nil)
-					logit(logSHOUT, fmt.Sprintf("initial %s created.", rs.ignorename))
+					respond(fmt.Sprintf("initial %s created.", rs.ignorename))
 				}
-				logit(logSHOUT, fmt.Sprintf("%d %s blobs modified.", changecount, rs.ignorename))
+				respond(fmt.Sprintf("%d %s blobs modified.", changecount, rs.ignorename))
 			}
 		} else if verb == "rename" {
 			changecount := 0
@@ -19335,7 +19329,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 					}
 				}
 			}
-			logit(logSHOUT, "%d ignore files renamed (%s -> %s).",
+			respond("%d ignore files renamed (%s -> %s).",
 				changecount, rs.ignorename, rs.preferred.ignorename)
 			rs.ignorename = rs.preferred.ignorename
 		} else if verb == "translate" {
@@ -19350,7 +19344,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 					}
 				}
 			}
-			logit(logSHOUT, fmt.Sprintf("%d %s blobs modified.", changecount, rs.ignorename))
+			respond(fmt.Sprintf("%d %s blobs modified.", changecount, rs.ignorename))
 		} else {
 			croak("unknown verb %s in ignores line", verb)
 			return false
@@ -19736,7 +19730,7 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 					})
 			}
 		}
-		logit(logSHOUT, "%d references resolved.", hits)
+		respond("%d references resolved.", hits)
 		repo.writeLegacy = true
 	} else {
 		//FIXME: Maybe this should filter rather than making a new set?
@@ -19797,7 +19791,7 @@ func (rs *Reposurgeon) DoGitify(_line string) bool {
 		rs.selection = rs.chosen().all()
 	}
 	lineEnders := stringSet{".", ",", ";", ":", "?", "!"}
-	baton := newBaton("gitifying comments", "", context.verbose == 1)
+	baton := newBaton("gitifying comments", "", context.isInteractive())
 	for _, ei := range rs.selection {
 		event := rs.chosen().events[ei]
 		if commit, ok := event.(*Commit); ok {
@@ -19976,7 +19970,7 @@ func (rs *Reposurgeon) DoBranchify(line string) bool {
 	if strings.TrimSpace(line) != "" {
 		context.listOptions["svn_branchify"] = strings.Fields(strings.TrimSpace(line))
 	}
-	logit(logSHOUT, "branchify "+strings.Join(context.listOptions["svn_branchify"], " "))
+	respond("branchify "+strings.Join(context.listOptions["svn_branchify"], " "))
 	return false
 }
 
@@ -20051,9 +20045,9 @@ func (rs *Reposurgeon) DoBranchmap(line string) bool {
 		}
 	}
 	if len(context.branchMappings) != 0 {
-		logit(logSHOUT, "branchmap, regex -> branch name:")
+		respond("branchmap, regex -> branch name:")
 		for _, pair := range context.branchMappings {
-			logit(logSHOUT, "\t"+ pair.match.String() +" -> " + pair.replace)
+			respond("\t"+ pair.match.String() +" -> " + pair.replace)
 		}
 	} else {
 		croak("branchmap is empty.")
@@ -20340,7 +20334,7 @@ func (rs *Reposurgeon) DoTimequake(line string) bool {
 	if rs.selection == nil {
 		rs.selection = rs.chosen().all()
 	}
-	baton := newBaton("reposurgeon: disambiguating", "", context.verbose == 1)
+	baton := newBaton("reposurgeon: disambiguating", "", context.isInteractive())
 	modified := 0
 	for _, event := range repo.commits(rs.selection) {
 		parents := event.parents()
@@ -20355,7 +20349,7 @@ func (rs *Reposurgeon) DoTimequake(line string) bool {
 		baton.twirl("")
 	}
 	baton.exit("")
-	logit(logSHOUT, "%d events modified", modified)
+	respond("%d events modified", modified)
 	repo.invalidateNamecache()
 	return false
 }
@@ -20490,7 +20484,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		addr := strings.TrimSpace(line[m[1]:])
 		return addr
 	}
-	baton := newBaton("reposurgeon: parsing changelogs", "", context.verbose == 1)
+	baton := newBaton("reposurgeon: parsing changelogs", "", context.isInteractive())
 	for _, commit := range repo.commits(nil) {
 		cc++
 		// If a changeset is *all* ChangeLog mods, it is probably either
@@ -20614,7 +20608,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		}
 	}
 	repo.invalidateNamecache()
-	logit(logSHOUT, "fills %d of %d authorships, changing %d, from %d ChangeLogs.", cm, cc, cd, cl)
+	respond("fills %d of %d authorships, changing %d, from %d ChangeLogs.", cm, cc, cd, cl)
 	return false
 }
 
@@ -20880,7 +20874,7 @@ func (rs *Reposurgeon) DoVersion(line string) bool {
 				supported = append(supported, x.name)
 			}
 		}
-		logit(logSHOUT, "reposurgeon "+version+" supporting "+strings.Join(supported, " "))
+		respond("reposurgeon "+version+" supporting "+strings.Join(supported, " "))
 	} else {
 		fields := strings.Split(version, ".")
 		vmajor := fields[0]
@@ -20897,7 +20891,7 @@ func (rs *Reposurgeon) DoVersion(line string) bool {
 		if major != vmajor {
 			panic("major version mismatch, aborting.")
 		} else if context.isInteractive() {
-			logit(logSHOUT, "version check passed.")
+			respond("version check passed.")
 
 		}
 	}
@@ -20914,7 +20908,7 @@ Desplay elapsed time since start.
 }
 
 func (rs *Reposurgeon) DoElapsed(_line string) bool {
-	logit(logSHOUT, "elapsed time %v.", time.Now().Sub(rs.startTime))
+	respond("elapsed time %v.", time.Now().Sub(rs.startTime))
 	return false
 }
 
@@ -20927,7 +20921,7 @@ Typing EOT (usually Ctrl-D) will exit quietly.
 }
 
 func (rs *Reposurgeon) DoExit(_line string) bool {
-	logit(logSHOUT, "exiting, elapsed time %v.", time.Now().Sub(rs.startTime))
+	respond("exiting, elapsed time %v.", time.Now().Sub(rs.startTime))
 	return true
 }
 
@@ -21079,7 +21073,7 @@ func (rs *Reposurgeon) DoVerbose(lineIn string) bool {
 		}
 	}
 	if len(lineIn) == 0 || context.isInteractive() {
-		logit(logSHOUT, "verbose %d", context.verbose)
+		respond("verbose %d", context.verbose)
 	}
 	return false
 }
@@ -21121,9 +21115,7 @@ func (rs *Reposurgeon) DoEcho(lineIn string) bool {
 			rs.echo = echo
 		}
 	}
-	if context.isInteractive() {
-		logit(logSHOUT, "echo %d", rs.echo)
-	}
+	respond("echo %d", rs.echo)
 	return false
 }
 
@@ -21339,9 +21331,7 @@ func main() {
 	for _, arg := range os.Args[1:] {
 		for _, acmd := range strings.Split(arg, ";") {
 			if acmd == "-" {
-				if context.verbose == 0 {
-					context.verbose = 1	// The only place interactivity is set
-				}
+				context.flagOptions["interactive"] = terminal.IsTerminal(0)
 				interpreter.CmdLoop("")
 			} else {
 				// A minor concession to people used

@@ -1,5 +1,6 @@
 This exercises many combine cases in the test repo
 read <testrepo.fi
+set interactive
 coverage
 commit 3, mark :2:
 0: M 100644 :1 README
@@ -421,7 +422,9 @@ M 100644 :24 renamed1
 M 100644 :24 copy1
 M 100644 :31 bar
 
+][D...(0s) .
 drop testrepo
+clear interactive
 read <testrepo.fi
 coverage
 commit 3, mark :2:

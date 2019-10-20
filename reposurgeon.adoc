@@ -111,7 +111,7 @@ The program can be run in one of two modes, either as an
 interactive command interpreter or in batch mode to execute commands
 given as arguments on the reposurgeon invocation
 line. The only differences between these modes are (1) the interactive
-one begins by turning on the 'verbose 1' option, (2) in batch mode all
+one begins by turning on the 'interactive' option, (2) in batch mode all
 errors (including normally recoverable errors in selection-set syntax)
 are fatal, and (3) each command-line argument beginning with
 "--" has that stripped off (which, in particular means

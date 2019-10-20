@@ -1,6 +1,7 @@
 ## Legacy-ID pattern-matching
 read <legacy.fi
 print Initially no sourcetype is set, so =N should be empty
+set interactive
 =N resolve
 sourcetype cvs
 print Expect 2 CVS results

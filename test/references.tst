@@ -1,6 +1,7 @@
 ## Test authors read, legacy-ID refs, heredocs, comment editing
 relax
 read <references.svn
+set interactive
 <1>,<2>,<13> resolve
 <1>..<2> resolve
 <3>..<7> resolve
@@ -40,4 +41,5 @@ EOF
 <352> inspect
 references lift
 prefer git
+clear interactive
 write -

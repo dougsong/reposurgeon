@@ -1,6 +1,7 @@
 ## Tests of selection-set syntax and parser features
 echo 1
 read <simple.fi
+set interactive
 =H resolve Special set resolution
 15 resolve Event number resolution
 =TR resolve Special combination

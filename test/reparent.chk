@@ -1,5 +1,6 @@
 relax
 read <simple.fi
+set interactive
 127 inspect
 Event 127 ===============================================================
 commit refs/heads/master
@@ -183,6 +184,7 @@ theory.txt -> :50
    123 blob     :122    reposurgeon
    124 commit   :123    refs/heads/master
 :123,:121 reparent --use-order
+reposurgeon: re-sorted events
 :121 inspect
 Event 124 ===============================================================
 commit refs/heads/master

@@ -2,6 +2,7 @@
 !echo This exercises many combine cases in the test repo
 echo 1
 read <testrepo.fi
+set interactive
 coverage
 :7,:8 squash
 coverage       # Expect this to show case 1 covered.
@@ -18,6 +19,7 @@ coverage       # Expect this to show case 6 covered.
 1..$ resolve
 write -
 drop testrepo
+clear interactive
 read <testrepo.fi
 coverage
 :4,:7 squash --pushback --coalesce
