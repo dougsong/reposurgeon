@@ -119,6 +119,7 @@ parents of octopus merge: [3, 127]
 # this next one should fail because it would create a cycle
 :123,:121 reparent --use-order
 reposurgeon: reparenting a commit to its own descendant would introduce a cycle
+reposurgeon: 1 new log message(s)
 :121 inspect
 Event 122 ===============================================================
 commit refs/heads/master

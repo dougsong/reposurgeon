@@ -2665,6 +2665,7 @@ type Context struct {
 	verbose int
 	quiet bool
 	logfp *os.File
+	logcounter int
 	blobseq blobidx
 	signals chan os.Signal
 	// The abort flag
@@ -2790,6 +2791,7 @@ func logit(lvl int, msg string, args ...interface{}) {
 	if logEnable(lvl) {
 		content := fmt.Sprintf(msg, args...)
 		context.logfp.WriteString("reposurgeon: " + content + "\n")
+		context.logcounter++
 	}
 }
 
@@ -6143,7 +6145,7 @@ const splitSep = "."
 type StreamParser struct {
 	repo        *Repository
 	fp          *bufio.Reader // Can't be os.File, unit tests will fail
-	fileName    string
+	source      string
 	importLine  int
 	ccount      int64
 	linebuffers []string
@@ -6208,8 +6210,8 @@ func (sp *StreamParser) errorLocation() string {
 	// Alas, must use old format here because of the leading log tag
 	if sp.importLine > 0 {
 		leader := ""
-		if sp.fileName != "" {
-			leader = fmt.Sprintf(`"%s", `, sp.fileName)
+		if sp.source != "" {
+			leader = fmt.Sprintf(`"%s", `, sp.source)
 		}
 		return fmt.Sprintf(leader + "line %d: ", sp.importLine)
 	}
@@ -7010,6 +7012,7 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 	if source == "" && sp.repo.seekstream != nil {
 		source = sp.repo.seekstream.Name()
 	}
+	sp.source = source
 	baton := newBaton(fmt.Sprintf("reposurgeon: from %s", source), "", progress)
 	sp.repo.legacyCount = 0
 	// First, determine the input type
@@ -13726,6 +13729,7 @@ type Reposurgeon struct {
 	extractor        Extractor
 	startTime        time.Time
 	promptFormat     string
+	logHighwater	 int
 	ignorename       string
 }
 
@@ -13841,12 +13845,16 @@ func (rs *Reposurgeon) PreCmd(line string) string {
 		}
 	}
 
+	rs.logHighwater = context.logcounter
 	rs.buildPrompt()
 
 	return rest
 }
 
 func (rs *Reposurgeon) PostCmd(stop bool, lineIn string) bool {
+	if context.logcounter > rs.logHighwater {
+		respond("%d new log message(s)", context.logcounter - rs.logHighwater)
+	}
 	return stop
 }
 

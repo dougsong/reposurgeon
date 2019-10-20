@@ -1,4 +1,4 @@
-reposurgeon: line 167: cannot resolve mergeinfo source from revision 9 for path trunk/.
+reposurgeon: "wrong-mergeinfo.svn", line 167: cannot resolve mergeinfo source from revision 9 for path trunk/.
 #reposurgeon sourcetype svn
 blob
 mark :1

@@ -1,5 +1,5 @@
-reposurgeon: line 76: r1#2~trunk/assemblies properties set:
-reposurgeon: line 76: 	svn:date = '2010-10-28T11:46:57.761945Z'
+reposurgeon: "node-kind-first.svn", line 76: r1#2~trunk/assemblies properties set:
+reposurgeon: "node-kind-first.svn", line 76: 	svn:date = '2010-10-28T11:46:57.761945Z'
 #reposurgeon sourcetype svn
 blob
 mark :1

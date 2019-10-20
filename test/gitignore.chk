@@ -1,4 +1,4 @@
-reposurgeon: line 333: r4~trunk/.gitignore: user-created .gitignore ignored.
+reposurgeon: "gitignore.svn", line 333: r4~trunk/.gitignore: user-created .gitignore ignored.
 #reposurgeon sourcetype svn
 blob
 mark :1

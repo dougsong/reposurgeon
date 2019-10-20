@@ -1,5 +1,5 @@
-reposurgeon: line 193: r5#1~trunk/README properties set:
-reposurgeon: line 193: 	foo = 'bar'
+reposurgeon: "vanilla.svn", line 193: r5#1~trunk/README properties set:
+reposurgeon: "vanilla.svn", line 193: 	foo = 'bar'
 #reposurgeon sourcetype svn
 blob
 mark :1
