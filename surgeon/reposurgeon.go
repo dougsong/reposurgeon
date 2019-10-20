@@ -2662,6 +2662,7 @@ anything up to and including making demons fly out of your nose.
 type Context struct {
 	verbose int
 	quiet bool
+	logfp *os.File
 	blobseq blobidx
 	signals chan os.Signal
 	// The abort flag
@@ -2688,6 +2689,7 @@ func (ctx *Context) init() {
 	ctx.listOptions = make(map[string]stringSet)
 	ctx.mapOptions = make(map[string]map[string]string)
 	ctx.signals = make(chan os.Signal, 1)
+	ctx.logfp = os.Stderr
 	signal.Notify(context.signals, os.Interrupt)
 	go func() {
 		for {
@@ -2789,7 +2791,7 @@ func croak(msg string, args ...interface{}) {
 func logit(lvl int, msg string, args ...interface{}) {
 	if logEnable(lvl) {
 		content := fmt.Sprintf(msg, args...)
-		os.Stdout.WriteString("reposurgeon: " + content + "\n")
+		context.logfp.WriteString("reposurgeon: " + content + "\n")
 	}
 }
 
@@ -7392,20 +7394,23 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			if !((node.action == sdCHANGE || node.action == sdADD || node.action == sdDELETE || node.action == sdREPLACE) &&
 				(node.kind == sdFILE || node.kind == sdDIR || node.action == sdDELETE) &&
 				((node.fromRev == 0) == (node.fromPath == ""))) {
-				panic(throw("parse", "forbidden operation in dump stream at r%d: %s", record.revision, node))
+				logit(logSHOUT, "forbidden operation in dump stream at r%d: %s", record.revision, node)
+				continue
 			}
 			if !(node.blob != nil || node.hasProperties() ||
 				node.fromRev != 0 || node.action == sdADD || node.action == sdDELETE) {
-				panic(throw("parse", "malformed node in dum[ stream at r%d: %s", record.revision, node))
+				logit(logSHOUT, "malformed node in dump stream at r%d: %s", record.revision, node)
+				continue
 			}
 			if node.kind == sdNONE && node.action != sdDELETE {
-				panic(throw("parse", "maissing type on a non-delete node r%d: %s", record.revision, node))
+				logit(logSHOUT, "maissing type on a non-delete node r%d: %s", record.revision, node)
+				continue
 			}
 
 			if ((node.action != sdADD && node.action != sdREPLACE) && node.fromRev > 0) {
-				panic(throw("parse", "invalid type in node with frpm revision r%d: %s", record.revision, node))
+				logit(logSHOUT, "invalid type in node with frpm revision r%d: %s", record.revision, node)
+				continue
 			}
-
 		}
 
 		//memcheck(sp.repo)
@@ -7688,8 +7693,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						for _, source := range node.fromSet.pathnames() {
 							found := sp.history.getActionNode(node.fromRev, source)
 							if found == nil {
-								panic(fmt.Errorf("r%d-%d: can't find ancestor of %s at r%d",
-									record.revision, n+1, source, node.fromRev))
+								logit(logSHOUT,"r%d-%d: can't find ancestor of %s at r%d",
+									record.revision, n+1, source, node.fromRev)
+								continue
 							}
 							subnode := new(NodeAction)
 							subnode.path = node.path + source[len(node.fromPath):]
