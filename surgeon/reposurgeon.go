@@ -2453,13 +2453,13 @@ type Baton struct {
 	countfmt  string
 	stream    *os.File
 	starttime time.Time
-	lasttick  time.Time
+	lasttwirl time.Time
 	startprog time.Time
-	lastprog time.Time
-	channel  chan string
+	lastprog  time.Time
+	channel   chan string
 }
 
-const tickInterval     = 100 * time.Millisecond	// Rate-limit baton twirls
+const twirlInterval     = 100 * time.Millisecond	// Rate-limit baton twirls
 const progressInterval = 10  * time.Second	// Rate-limit progress messages 
 const pauseInterval    = 750 * time.Millisecond	// How long to delay before erasing progress message
 
@@ -2491,15 +2491,15 @@ func newBaton(prompt string, endmsg string, enable bool) *Baton {
 						me.stream.WriteString(ch)
 						me.erase = strings.Contains(ch, "%")
 						if me.erase {
-							time.Sleep(pauseInterval)
+							me.lasttwirl.Add(pauseInterval)
 						}
 					} else {
 						me.erase = false
-						if time.Since(me.lasttick) > tickInterval {
+						if time.Since(me.lasttwirl) > twirlInterval {
 							me.lastlen = 1
 							me.stream.WriteString(string([]byte{"-/|\\"[me.counter%4]}))
 							me.erase = true
-							me.lasttick = time.Now()
+							me.lasttwirl = time.Now()
 						}
 						me.counter++
 					}
@@ -2593,8 +2593,11 @@ func (baton *Baton) percentProgress(subtag string, ccount int64, expected int64)
 		total := time.Since(baton.starttime).Round(time.Second)
 		elapsed := time.Since(baton.startprog).Round(time.Second)
 		rate := int64(float64(ccount)/float64(elapsed / time.Second))
-		percent := fmt.Sprintf("%s %.2f%% %s/%s, %v (%v) @ %s/s",
-			subtag, frac * 100, scale(ccount), scale(expected), elapsed, total, scale(rate))
+		percent := fmt.Sprintf("%s %.2f%% %s/%s, %v @ %s/s",
+			subtag, frac * 100, scale(ccount), scale(expected), elapsed, scale(rate))
+		if baton.lastprog.After(baton.starttime) {
+			percent += fmt.Sprintf(" (%v)", total)
+		}
 		baton.lastprog = time.Now()
 		baton.twirl(percent)
 	}
