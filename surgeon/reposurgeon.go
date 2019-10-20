@@ -21324,6 +21324,7 @@ func (rs *Reposurgeon) DoSizeof(lineIn string) bool {
 	fmt.Printf("RevisionRecord: %s\n", explain(unsafe.Sizeof(*new(RevisionRecord))))
 	fmt.Printf("Commit:         %s\n", explain(unsafe.Sizeof(*new(Commit))))
 	fmt.Printf("Callout:        %s\n", explain(unsafe.Sizeof(*new(Callout))))
+	fmt.Printf("FileOp:         %s\n", explain(unsafe.Sizeof(*new(FileOp))))
 	fmt.Printf("Blob:           %s\n", explain(unsafe.Sizeof(*new(Blob))))
 	fmt.Printf("Tag:            %s\n", explain(unsafe.Sizeof(*new(Tag))))
 	fmt.Printf("Reset:          %s\n", explain(unsafe.Sizeof(*new(Reset))))
