@@ -2461,7 +2461,7 @@ type Baton struct {
 
 const tickInterval     = 100 * time.Millisecond	// Rate-limit baton twirls
 const progressInterval = 10  * time.Second	// Rate-limit progress messages 
-const pauseInterval    = 500 * time.Millisecond	// How long to delay before erasing progress message
+const pauseInterval    = 750 * time.Millisecond	// How long to delay before erasing progress message
 
 func newBaton(prompt string, endmsg string, enable bool) *Baton {
 	me := new(Baton)
@@ -2590,10 +2590,11 @@ func (baton *Baton) percentProgress(subtag string, ccount int64, expected int64)
 	}
 	if expected > 0 && time.Since(baton.lastprog) > progressInterval {
 		frac := float64(ccount) / float64(expected)
+		total := time.Since(baton.starttime).Round(time.Second)
 		elapsed := time.Since(baton.startprog).Round(time.Second)
 		rate := int64(float64(ccount)/float64(elapsed / time.Second))
-		percent := fmt.Sprintf("%s %.2f%% %s/%s, %v @ %s/s",
-			subtag, frac * 100, scale(ccount), scale(expected), elapsed, scale(rate))
+		percent := fmt.Sprintf("%s %.2f%% %s/%s, %v (%v) @ %s/s",
+			subtag, frac * 100, scale(ccount), scale(expected), elapsed, total, scale(rate))
 		baton.lastprog = time.Now()
 		baton.twirl(percent)
 	}
@@ -8155,23 +8156,24 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						newcommit.legacyID, copies, latest)
 				}
 				if latest != nil {
-					//fmt.Printf("XXXX before adding fileop branchlink = %s\n", newcommit.common)
-					prev := sp.lastRelevantCommit(latest.fromRev, latest.fromPath, "common")
-					if prev == nil {
-						if logEnable(logTOPOLOGY) {
-							croak(fmt.Sprintf("lookback for %s failed, not making branch link", latest))
-						}
+					if latest.fromRev == 0 || latest.fromPath == "" {
+						logit(logSHOUT, "r%s: copy source informatiopn invalid at %v. lookback failed", newcommit.legacyID, latest)
 					} else {
-						//fmt.Printf("XXXX adding fileop branchlink = %s\n", newcommit.common)
-						sp.fileopBranchlinks.Add(newcommit.common)
-						sp.branchlink[newcommit.mark] = daglink{newcommit, prev}
-						logit(logTOPOLOGY, "r%s: link %s (%s) back to r%d (mark=%s, common='%s')",
-							newcommit.legacyID,
-							newcommit.mark,
-							newcommit.common,
-							latest.fromRev,
-							prev.mark,
-							prev.common)
+						prev := sp.lastRelevantCommit(latest.fromRev, latest.fromPath, "common")
+						if prev == nil {
+							logit(logTOPOLOGY, "lookback for %s failed, not making branch link", latest)
+						} else {
+							//fmt.Printf("XXXX adding fileop branchlink = %s\n", newcommit.common)
+							sp.fileopBranchlinks.Add(newcommit.common)
+							sp.branchlink[newcommit.mark] = daglink{newcommit, prev}
+							logit(logTOPOLOGY, "r%s: link %s (%s) back to r%d (mark=%s, common='%s')",
+								newcommit.legacyID,
+								newcommit.mark,
+								newcommit.common,
+								latest.fromRev,
+								prev.mark,
+								prev.common)
+						}
 					}
 				}
 			}
