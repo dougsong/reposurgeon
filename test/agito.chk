@@ -42,9 +42,18 @@ Initial import.
 M 100644 :1 .gitignore
 M 100644 :2 proj/hello.c
 
+commit refs/tags/proj-1.0-deleted-r3-1
+#legacy-id 2
+mark :4
+committer fraggle <fraggle> 1254523027 +0000
+data 58
+Creating a tag in a BROKEN way, like how cvs2svn does it.
+from :3
+M 100644 :1 .gitignore
+
 commit refs/tags/proj-1.0
 #legacy-id 4
-mark :4
+mark :5
 committer fraggle <fraggle> 1254523062 +0000
 data 29
 Recreating the tag properly.
@@ -53,16 +62,9 @@ deleteall
 M 100644 :1 .gitignore
 M 100644 :2 hello.c
 
-tag proj-1.0-deleted-r3-1
-#legacy-id 2
-from :3
-tagger fraggle <fraggle> 1254523027 +0000
-data 58
-Creating a tag in a BROKEN way, like how cvs2svn does it.
-
 tag tipdelete-proj-1.0-deleted-r3-1
 #legacy-id 3
-from :3
+from :4
 tagger fraggle <fraggle> 1254523044 +0000
 data 21
 Removing broken tag.

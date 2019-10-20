@@ -42,12 +42,12 @@ Develop
 from :2
 M 100644 :3 hello
 
-tag emptycommit-3
+commit refs/heads/master
 #legacy-id 3
-from :4
-tagger khan <khan> 1354595761 +0000
-data 110
+mark :5
+committer khan <khan> 1354595761 +0000
+data 60
 Replace file with a copy of the previous revision of itself
-
-[[Tag from zero-fileop commit at Subversion r3]]
+from :4
+M 100644 :3 hello
 

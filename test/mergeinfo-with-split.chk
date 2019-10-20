@@ -116,6 +116,7 @@ data 58
 merge 1.0.1 bugfix into trunk, bumping the version to 1.2
 from :10
 merge :7
+M 100644 :1 .gitignore
 M 100644 :13 VERSION
 
 blob
@@ -173,5 +174,6 @@ data 60
 merge 1.0.1 bugfixes into trunk, bumping the version to 1.4
 from :20
 merge :18
+M 100644 :1 .gitignore
 M 100644 :21 VERSION
 

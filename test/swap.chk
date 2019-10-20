@@ -480,6 +480,7 @@ fixes #9863 - Renomeado o nome do projeto para git_nfse e alteradas as tags para
 from :64
 M 100644 :65 trunk/data.yml
 M 100644 :66 trunk/lista.yml
+M 100644 :67 trunk/nfse.rb
 M 100644 :69 trunk/nfse.rb
 
 blob
@@ -1474,6 +1475,7 @@ refs #9865 - NFSe was using unnecessary validation
 from :212
 M 100644 :214 trunk/lib/git_nfse.rb
 M 100644 :213 trunk/lib/git_nfse/types/complex.rb
+D trunk/lib/git_nfse/validations.rb
 
 blob
 mark :216

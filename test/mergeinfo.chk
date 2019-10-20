@@ -140,6 +140,7 @@ data 61
 merge bugfixes from 1.0.1 into trunk, bumping version to 1.2
 from :12
 merge :15
+M 100644 :1 .gitignore
 M 100644 :16 VERSION
 M 100644 :17 src
 
@@ -237,6 +238,7 @@ data 61
 merge bugfixes from 1.0.3 into trunk, bumping version to 1.4
 from :21
 merge :24
+M 100644 :1 .gitignore
 M 100644 :28 VERSION
 M 100644 :29 src
 
@@ -345,6 +347,7 @@ committer db48x <db48x> 1352206652 +0000
 data 61
 merge bugfixes from 2.0.1 into trunk, bumping version to 2.2
 from :36
+M 100644 :1 .gitignore
 M 100644 :40 VERSION
 M 100644 :41 src
 

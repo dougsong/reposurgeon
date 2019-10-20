@@ -2022,6 +2022,7 @@ committer no-author <no-author> 1109582047 +0000
 data 67
 This commit was manufactured by cvs2svn to create branch 'Stable'.
 from :307
+M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
 
@@ -2032,6 +2033,7 @@ committer no-author <no-author> 1109582047 +0000
 data 68
 This commit was manufactured by cvs2svn to create branch 'Testing'.
 from :307
+M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
 
@@ -2042,6 +2044,7 @@ committer no-author <no-author> 1109582047 +0000
 data 67
 This commit was manufactured by cvs2svn to create branch 'r2.0.1'.
 from :307
+M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
 
@@ -2052,6 +2055,7 @@ committer no-author <no-author> 1109582047 +0000
 data 67
 This commit was manufactured by cvs2svn to create branch 'v2.1.0'.
 from :307
+M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
 
@@ -4799,6 +4803,7 @@ data 78
 This commit was manufactured by cvs2svn to create tag
 'alioth_SVN_migration'.
 from :307
+M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :317 data/driver.list
 
@@ -5505,6 +5510,7 @@ data 76
 This commit was manufactured by cvs2svn to create branch
 'Tripp_Lite_Omni'.
 from :307
+M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :820 data/driver.list
 M 100644 :675 data/evolution500.dev
@@ -5541,6 +5547,10 @@ M 100644 :615 debian/nut.postrm
 M 100644 :616 debian/nut.preinst
 M 100644 :617 debian/nut.prerm
 M 100644 :618 debian/nut.templates
+M 100644 :619 debian/patches/00list
+D debian/patches/00list
+M 100644 :620 debian/patches/01_upsstatsCgiNoHostCrash.dpatch
+D debian/patches/01_upsstatsCgiNoHostCrash.dpatch
 M 100644 :621 debian/po/POTFILES.in
 M 100644 :622 debian/po/ca.po
 M 100644 :623 debian/po/cs.po
@@ -5562,6 +5572,7 @@ M 100644 :633 packaging/mandriva/upsd
 M 100644 :634 packaging/mandriva/upsmon
 M 100644 :817 scripts/hotplug/README
 M 100644 :859 scripts/hotplug/libhid.usermap
+M 100644 :272 scripts/hotplug/libhidups.in
 
 blob
 mark :873
@@ -6403,6 +6414,7 @@ committer no-author <no-author> 1126575581 +0000
 data 73
 This commit was manufactured by cvs2svn to create branch 'regex_branch'.
 from :307
+M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :990 data/driver.list
 M 100644 :675 data/evolution500.dev
@@ -6439,6 +6451,10 @@ M 100644 :615 debian/nut.postrm
 M 100644 :616 debian/nut.preinst
 M 100644 :617 debian/nut.prerm
 M 100644 :618 debian/nut.templates
+M 100644 :619 debian/patches/00list
+D debian/patches/00list
+M 100644 :620 debian/patches/01_upsstatsCgiNoHostCrash.dpatch
+D debian/patches/01_upsstatsCgiNoHostCrash.dpatch
 M 100644 :621 debian/po/POTFILES.in
 M 100644 :622 debian/po/ca.po
 M 100644 :623 debian/po/cs.po
@@ -6457,6 +6473,8 @@ M 100644 :852 drivers/bcmxcp.h
 M 100644 :853 drivers/bcmxcp_io.h
 M 100644 :854 drivers/bcmxcp_ser.c
 M 100644 :855 drivers/bcmxcp_usb.c
+M 100644 :99 drivers/belkin.c
+M 100644 :100 drivers/belkin.h
 M 100644 :943 drivers/belkinunv.c
 M 100644 :944 drivers/belkinunv.h
 M 100644 :945 drivers/bestfcom.c
@@ -6471,6 +6489,8 @@ M 100644 :506 drivers/cpsups.c
 M 100644 :507 drivers/cpsups.h
 M 100644 :953 drivers/cyberpower.c
 M 100644 :954 drivers/cyberpower.h
+M 100644 :109 drivers/dstate.c
+M 100644 :110 drivers/dstate.h
 M 100644 :763 drivers/dummy-ups.c
 M 100644 :764 drivers/dummy-ups.h
 D drivers/dummycons.c
@@ -6488,8 +6508,13 @@ M 100644 :814 drivers/gamatronic.h
 M 100755 :961 drivers/gendb
 M 100644 :665 drivers/genericups.c
 M 100644 :805 drivers/genericups.h
+M 100644 :121 drivers/hid-usb.h
 M 100644 :912 drivers/hidparser.c
+M 100644 :123 drivers/hidparser.h
 M 100644 :913 drivers/hidtypes.h
+M 100644 :125 drivers/hidups.c
+M 100644 :126 drivers/hidups.h
+M 100644 :127 drivers/ietfmib.h
 M 100644 :962 drivers/ippon.c
 M 100644 :963 drivers/ippon.h
 M 100644 :964 drivers/isbmex.c
@@ -6500,6 +6525,7 @@ M 100644 :998 drivers/libusb.c
 M 100644 :966 drivers/liebert.c
 M 100644 :967 drivers/liebert.h
 M 100644 :807 drivers/main.c
+M 100644 :135 drivers/main.h
 M 100644 :968 drivers/masterguard.c
 M 100644 :969 drivers/masterguard.h
 M 100644 :970 drivers/metasys.c
@@ -6518,10 +6544,20 @@ M 100644 :999 drivers/newhidups.c
 M 100644 :917 drivers/newhidups.h
 M 100644 :857 drivers/nut_usb.c
 M 100644 :858 drivers/nut_usb.h
+M 100644 :147 drivers/oneac.c
+M 100644 :148 drivers/oneac.h
+M 100644 :149 drivers/powercom.c
 M 100644 :321 drivers/powercom.h
 M 100644 :974 drivers/powermust.c
 M 100644 :975 drivers/powermust.h
 M 100644 :528 drivers/pwmib.h
+M 100644 :152 drivers/safenet.c
+M 100644 :153 drivers/safenet.h
+M 100644 :154 drivers/serial.c
+M 100644 :155 drivers/serial.h
+M 100644 :156 drivers/skel.c
+M 100644 :157 drivers/sms.c
+M 100644 :158 drivers/sms.h
 M 100644 :529 drivers/snmp-ups.c
 M 100644 :530 drivers/snmp-ups.h
 M 100644 :666 drivers/solis.c
@@ -6548,6 +6584,7 @@ M 100644 :633 packaging/mandriva/upsd
 M 100644 :634 packaging/mandriva/upsmon
 M 100644 :817 scripts/hotplug/README
 M 100644 :859 scripts/hotplug/libhid.usermap
+M 100644 :272 scripts/hotplug/libhidups.in
 
 blob
 mark :1002
@@ -6729,6 +6766,7 @@ data 76
 This commit was manufactured by cvs2svn to create tag
 'regex_branch_base0'.
 from :307
+M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :1012 data/driver.list
 M 100644 :675 data/evolution500.dev
@@ -6765,6 +6803,10 @@ M 100644 :615 debian/nut.postrm
 M 100644 :616 debian/nut.preinst
 M 100644 :617 debian/nut.prerm
 M 100644 :618 debian/nut.templates
+M 100644 :619 debian/patches/00list
+D debian/patches/00list
+M 100644 :620 debian/patches/01_upsstatsCgiNoHostCrash.dpatch
+D debian/patches/01_upsstatsCgiNoHostCrash.dpatch
 M 100644 :621 debian/po/POTFILES.in
 M 100644 :622 debian/po/ca.po
 M 100644 :623 debian/po/cs.po
@@ -6784,6 +6826,8 @@ M 100644 :853 drivers/bcmxcp_io.h
 M 100644 :854 drivers/bcmxcp_ser.c
 M 100644 :855 drivers/bcmxcp_usb.c
 M 100644 :1024 drivers/belkin-hid.h
+M 100644 :99 drivers/belkin.c
+M 100644 :100 drivers/belkin.h
 M 100644 :943 drivers/belkinunv.c
 M 100644 :944 drivers/belkinunv.h
 M 100644 :945 drivers/bestfcom.c
@@ -6798,6 +6842,8 @@ M 100644 :506 drivers/cpsups.c
 M 100644 :507 drivers/cpsups.h
 M 100644 :953 drivers/cyberpower.c
 M 100644 :954 drivers/cyberpower.h
+M 100644 :109 drivers/dstate.c
+M 100644 :110 drivers/dstate.h
 M 100644 :763 drivers/dummy-ups.c
 M 100644 :764 drivers/dummy-ups.h
 D drivers/dummycons.c
@@ -6815,8 +6861,13 @@ M 100644 :814 drivers/gamatronic.h
 M 100755 :961 drivers/gendb
 M 100644 :665 drivers/genericups.c
 M 100644 :805 drivers/genericups.h
+M 100644 :121 drivers/hid-usb.h
 M 100644 :912 drivers/hidparser.c
+M 100644 :123 drivers/hidparser.h
 M 100644 :913 drivers/hidtypes.h
+M 100644 :125 drivers/hidups.c
+M 100644 :126 drivers/hidups.h
+M 100644 :127 drivers/ietfmib.h
 M 100644 :962 drivers/ippon.c
 M 100644 :963 drivers/ippon.h
 M 100644 :964 drivers/isbmex.c
@@ -6827,6 +6878,7 @@ M 100644 :1018 drivers/libusb.c
 M 100644 :966 drivers/liebert.c
 M 100644 :967 drivers/liebert.h
 M 100644 :807 drivers/main.c
+M 100644 :135 drivers/main.h
 M 100644 :968 drivers/masterguard.c
 M 100644 :969 drivers/masterguard.h
 M 100644 :970 drivers/metasys.c
@@ -6845,10 +6897,20 @@ M 100644 :1019 drivers/newhidups.c
 M 100644 :1025 drivers/newhidups.h
 M 100644 :857 drivers/nut_usb.c
 M 100644 :858 drivers/nut_usb.h
+M 100644 :147 drivers/oneac.c
+M 100644 :148 drivers/oneac.h
+M 100644 :149 drivers/powercom.c
 M 100644 :321 drivers/powercom.h
 M 100644 :974 drivers/powermust.c
 M 100644 :975 drivers/powermust.h
 M 100644 :528 drivers/pwmib.h
+M 100644 :152 drivers/safenet.c
+M 100644 :153 drivers/safenet.h
+M 100644 :154 drivers/serial.c
+M 100644 :155 drivers/serial.h
+M 100644 :156 drivers/skel.c
+M 100644 :157 drivers/sms.c
+M 100644 :158 drivers/sms.h
 M 100644 :529 drivers/snmp-ups.c
 M 100644 :530 drivers/snmp-ups.h
 M 100644 :666 drivers/solis.c
@@ -6875,6 +6937,7 @@ M 100644 :633 packaging/mandriva/upsd
 M 100644 :634 packaging/mandriva/upsmon
 M 100644 :817 scripts/hotplug/README
 M 100644 :859 scripts/hotplug/libhid.usermap
+M 100644 :272 scripts/hotplug/libhidups.in
 
 blob
 mark :1028
@@ -8033,6 +8096,7 @@ data 78
 This commit was manufactured by cvs2svn to create tag
 'CFL_TL_pre_Dev_merge'.
 from :307
+M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :820 data/driver.list
 M 100644 :675 data/evolution500.dev
@@ -8069,6 +8133,10 @@ M 100644 :615 debian/nut.postrm
 M 100644 :616 debian/nut.preinst
 M 100644 :617 debian/nut.prerm
 M 100644 :618 debian/nut.templates
+M 100644 :619 debian/patches/00list
+D debian/patches/00list
+M 100644 :620 debian/patches/01_upsstatsCgiNoHostCrash.dpatch
+D debian/patches/01_upsstatsCgiNoHostCrash.dpatch
 M 100644 :621 debian/po/POTFILES.in
 M 100644 :622 debian/po/ca.po
 M 100644 :623 debian/po/cs.po
@@ -9932,6 +10000,7 @@ committer no-author <no-author> 1132072688 +0000
 data 70
 This commit was manufactured by cvs2svn to create branch 'reportbuf'.
 from :307
+M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :1481 data/driver.list
 M 100644 :675 data/evolution500.dev
@@ -9995,6 +10064,8 @@ M 100644 :1206 drivers/bcmxcp_ser.c
 M 100644 :855 drivers/bcmxcp_usb.c
 M 100644 :1443 drivers/belkin-hid.c
 M 100644 :1153 drivers/belkin-hid.h
+M 100644 :99 drivers/belkin.c
+M 100644 :100 drivers/belkin.h
 M 100644 :943 drivers/belkinunv.c
 M 100644 :944 drivers/belkinunv.h
 M 100644 :945 drivers/bestfcom.c
@@ -10010,6 +10081,7 @@ M 100644 :507 drivers/cpsups.h
 M 100644 :953 drivers/cyberpower.c
 M 100644 :954 drivers/cyberpower.h
 M 100644 :1432 drivers/dstate.c
+M 100644 :110 drivers/dstate.h
 M 100644 :763 drivers/dummy-ups.c
 M 100644 :764 drivers/dummy-ups.h
 D drivers/dummycons.c
@@ -10033,6 +10105,9 @@ D drivers/hid-usb.h
 M 100644 :1460 drivers/hidparser.c
 M 100644 :1461 drivers/hidparser.h
 M 100644 :1462 drivers/hidtypes.h
+M 100644 :125 drivers/hidups.c
+M 100644 :126 drivers/hidups.h
+M 100644 :127 drivers/ietfmib.h
 M 100644 :962 drivers/ippon.c
 M 100644 :963 drivers/ippon.h
 M 100644 :964 drivers/isbmex.c
@@ -10044,6 +10119,7 @@ M 100644 :1412 drivers/libusb.h
 M 100644 :966 drivers/liebert.c
 M 100644 :967 drivers/liebert.h
 M 100644 :1433 drivers/main.c
+M 100644 :135 drivers/main.h
 M 100644 :968 drivers/masterguard.c
 M 100644 :969 drivers/masterguard.h
 M 100644 :1424 drivers/megatec.c
@@ -10067,10 +10143,19 @@ M 100644 :1384 drivers/nitram.c
 M 100644 :1385 drivers/nitram.h
 M 100644 :1262 drivers/nut_usb.c
 M 100644 :858 drivers/nut_usb.h
+M 100644 :147 drivers/oneac.c
+M 100644 :148 drivers/oneac.h
+M 100644 :149 drivers/powercom.c
 M 100644 :321 drivers/powercom.h
 D drivers/powermust.c
 M 100644 :528 drivers/pwmib.h
+M 100644 :152 drivers/safenet.c
+M 100644 :153 drivers/safenet.h
+M 100644 :154 drivers/serial.c
+M 100644 :155 drivers/serial.h
 M 100644 :1138 drivers/skel.c
+M 100644 :157 drivers/sms.c
+M 100644 :158 drivers/sms.h
 M 100644 :529 drivers/snmp-ups.c
 M 100644 :530 drivers/snmp-ups.h
 M 100644 :666 drivers/solis.c
@@ -10100,6 +10185,7 @@ M 100644 :633 packaging/mandriva/upsd
 M 100644 :634 packaging/mandriva/upsmon
 M 100644 :817 scripts/hotplug/README
 M 100644 :1240 scripts/hotplug/libhid.usermap
+M 100644 :272 scripts/hotplug/libhidups.in
 
 commit refs/tags/reportbuf_base
 #legacy-id 273
@@ -10109,6 +10195,7 @@ data 72
 This commit was manufactured by cvs2svn to create tag
 'reportbuf_base'.
 from :307
+M 100644 :60 data/Makefile.in
 M 100644 :316 data/cmdvartab
 M 100644 :1481 data/driver.list
 M 100644 :675 data/evolution500.dev
@@ -10172,6 +10259,8 @@ M 100644 :1206 drivers/bcmxcp_ser.c
 M 100644 :855 drivers/bcmxcp_usb.c
 M 100644 :1443 drivers/belkin-hid.c
 M 100644 :1153 drivers/belkin-hid.h
+M 100644 :99 drivers/belkin.c
+M 100644 :100 drivers/belkin.h
 M 100644 :943 drivers/belkinunv.c
 M 100644 :944 drivers/belkinunv.h
 M 100644 :945 drivers/bestfcom.c
@@ -10187,6 +10276,7 @@ M 100644 :507 drivers/cpsups.h
 M 100644 :953 drivers/cyberpower.c
 M 100644 :954 drivers/cyberpower.h
 M 100644 :1432 drivers/dstate.c
+M 100644 :110 drivers/dstate.h
 M 100644 :763 drivers/dummy-ups.c
 M 100644 :764 drivers/dummy-ups.h
 D drivers/dummycons.c
@@ -10210,6 +10300,9 @@ D drivers/hid-usb.h
 M 100644 :1460 drivers/hidparser.c
 M 100644 :1461 drivers/hidparser.h
 M 100644 :1462 drivers/hidtypes.h
+M 100644 :125 drivers/hidups.c
+M 100644 :126 drivers/hidups.h
+M 100644 :127 drivers/ietfmib.h
 M 100644 :962 drivers/ippon.c
 M 100644 :963 drivers/ippon.h
 M 100644 :964 drivers/isbmex.c
@@ -10221,6 +10314,7 @@ M 100644 :1412 drivers/libusb.h
 M 100644 :966 drivers/liebert.c
 M 100644 :967 drivers/liebert.h
 M 100644 :1433 drivers/main.c
+M 100644 :135 drivers/main.h
 M 100644 :968 drivers/masterguard.c
 M 100644 :969 drivers/masterguard.h
 M 100644 :1424 drivers/megatec.c
@@ -10244,10 +10338,19 @@ M 100644 :1384 drivers/nitram.c
 M 100644 :1385 drivers/nitram.h
 M 100644 :1262 drivers/nut_usb.c
 M 100644 :858 drivers/nut_usb.h
+M 100644 :147 drivers/oneac.c
+M 100644 :148 drivers/oneac.h
+M 100644 :149 drivers/powercom.c
 M 100644 :321 drivers/powercom.h
 D drivers/powermust.c
 M 100644 :528 drivers/pwmib.h
+M 100644 :152 drivers/safenet.c
+M 100644 :153 drivers/safenet.h
+M 100644 :154 drivers/serial.c
+M 100644 :155 drivers/serial.h
 M 100644 :1138 drivers/skel.c
+M 100644 :157 drivers/sms.c
+M 100644 :158 drivers/sms.h
 M 100644 :529 drivers/snmp-ups.c
 M 100644 :530 drivers/snmp-ups.h
 M 100644 :666 drivers/solis.c
@@ -10277,6 +10380,7 @@ M 100644 :633 packaging/mandriva/upsd
 M 100644 :634 packaging/mandriva/upsmon
 M 100644 :817 scripts/hotplug/README
 M 100644 :1240 scripts/hotplug/libhid.usermap
+M 100644 :272 scripts/hotplug/libhidups.in
 
 blob
 mark :1485
@@ -11627,37 +11731,232 @@ This commit was manufactured by cvs2svn to create tag
 'reportbuf_base0'.
 from :1673
 D clients/.gitignore
+M 100644 :15 clients/Makefile.in
+M 100644 :16 clients/cgilib.c
+M 100644 :17 clients/cgilib.h
+M 100644 :18 clients/status.h
+M 100644 :19 clients/upsc.c
+M 100644 :20 clients/upsclient.c
+M 100644 :21 clients/upsclient.h
+M 100644 :22 clients/upscmd.c
+M 100644 :23 clients/upsimage.c
+M 100644 :24 clients/upsimagearg.h
+M 100644 :25 clients/upslog.c
+M 100644 :26 clients/upslog.h
+M 100644 :27 clients/upsmon.c
+M 100644 :28 clients/upsmon.h
+M 100644 :29 clients/upsrw.c
+M 100755 :30 clients/upssched-cmd
+M 100644 :31 clients/upssched.c
+M 100644 :32 clients/upssched.h
+M 100644 :33 clients/upsset.c
 M 100644 :34 clients/upsstats.c
+M 100644 :35 clients/upsstats.h
 D common/.gitignore
+M 100644 :36 common/Makefile.in
+M 100644 :37 common/atexit.c
+M 100644 :38 common/common.c
+M 100644 :39 common/inet_aton.c
+M 100644 :40 common/parseconf.c
+M 100644 :41 common/setenv.c
+M 100644 :42 common/snprintf.c
+M 100644 :43 common/state.c
+M 100644 :44 common/strerror.c
+M 100644 :45 common/upsconf.c
 D conf/.gitignore
+M 100644 :46 conf/Makefile.in
+M 100644 :47 conf/hosts.conf
+M 100644 :48 conf/ups.conf
+M 100644 :49 conf/upsd.conf
+M 100644 :50 conf/upsd.users
+M 100644 :51 conf/upsmon.conf
+M 100644 :52 conf/upssched.conf
+M 100644 :53 conf/upsset.conf
 M 100644 :54 conf/upsstats-single.html
 M 100644 :55 conf/upsstats.html
 M 100644 :63 docs/FAQ
+M 100644 :64 docs/README
+M 100644 :65 docs/big-servers.txt
+M 100644 :66 docs/cables/apc-rs500-serial.txt
+M 100644 :67 docs/cables/apc.txt
+M 100644 :68 docs/cables/ge-imv-victron.txt
+M 100644 :69 docs/cables/imv.txt
+M 100644 :70 docs/cables/mgeups.txt
 M 100644 :71 docs/cables/powerware.txt
+M 100644 :72 docs/cables/repotec.txt
+M 100644 :73 docs/cables/sms.txt
+M 100644 :74 docs/chroot.txt
+M 100644 :75 docs/commands.txt
+M 100644 :76 docs/config-files.txt
+M 100644 :77 docs/configure.txt
+M 100644 :78 docs/contact-closure.txt
+M 100644 :79 docs/data-room.txt
+M 100644 :80 docs/design.txt
+M 100644 :81 docs/developers.txt
+M 100644 :82 docs/ideas.txt
 M 100644 :83 docs/new-drivers.txt
 M 100644 :84 docs/new-names.txt
+M 100644 :85 docs/osd-notify.txt
+M 100644 :86 docs/pager.txt
+M 100644 :87 docs/powersaving.txt
+M 100644 :88 docs/protocol.txt
+M 100644 :89 docs/shutdown.txt
+M 100644 :90 docs/snmp.txt
+M 100644 :91 docs/sock-protocol.txt
+M 100644 :92 docs/ssl.txt
 M 100644 :93 docs/upssched.txt
 D include/.gitignore
+M 100644 :165 include/attribute.h
 M 100644 :166 include/common.h
 M 100644 :167 include/config.h.in
+M 100644 :168 include/extstate.h
+M 100644 :169 include/parseconf.h
+M 100644 :170 include/proto.h
+M 100644 :171 include/stamp-h.in
+M 100644 :172 include/state.h
+M 100644 :173 include/timehead.h
+M 100644 :174 include/upsconf.h
+M 100644 :175 include/upshandler.h
 M 100644 :177 include/version.h
 M 100644 :176 include/version
 D lib/.gitignore
+M 100644 :179 lib/Makefile.in
+M 100644 :180 lib/README
+M 100644 :181 lib/libupsclient-config.in
+M 100644 :182 lib/libupsclient.pc.in
 D man/.gitignore
 M 100644 :183 man/Makefile.in
+M 100644 :184 man/apcsmart.8
+M 100644 :185 man/belkin.8
 M 100644 :186 man/belkinunv.8
+M 100644 :187 man/bestfcom.8
+M 100644 :188 man/bestuferrups.8
+M 100644 :189 man/bestups.8
+M 100644 :190 man/cpsups.8
+M 100644 :191 man/cyberpower.8
+M 100644 :192 man/dummycons.8
+D man/dummycons.8
+M 100644 :193 man/energizerups.8
+M 100644 :194 man/etapro.8
+M 100644 :195 man/everups.8
+M 100644 :196 man/fentonups.8
 M 100644 :197 man/genericups.8
+M 100644 :198 man/hidups.8
+M 100644 :199 man/hosts.conf.5
+M 100644 :200 man/ippon.8
+M 100644 :201 man/isbmex.8
+M 100644 :202 man/liebert.8
+M 100644 :203 man/masterguard.8
+M 100644 :204 man/metasys.8
 M 100644 :205 man/mge-shut.8
 M 100644 :206 man/mge-utalk.8
+M 100644 :207 man/mustek.8
 M 100644 :208 man/newhidups.8
+M 100644 :209 man/nutupsdrv.8
+M 100644 :210 man/oneac.8
+M 100644 :211 man/powercom.8
+M 100644 :212 man/powermust.8
+D man/powermust.8
+M 100644 :213 man/safenet.8
+M 100644 :214 man/sms.8
 M 100644 :215 man/snmp-ups.8
+M 100644 :216 man/tripplite.8
+M 100644 :217 man/tripplitesu.8
+M 100644 :218 man/ups.conf.5
+M 100644 :219 man/upsc.8
+M 100644 :220 man/upscli_connect.3
+M 100644 :221 man/upscli_disconnect.3
+M 100644 :222 man/upscli_fd.3
+M 100644 :223 man/upscli_get.3
+M 100644 :224 man/upscli_list_next.3
+M 100644 :225 man/upscli_list_start.3
+M 100644 :226 man/upscli_readline.3
+M 100644 :227 man/upscli_sendline.3
+M 100644 :228 man/upscli_splitname.3
+M 100644 :229 man/upscli_ssl.3
+M 100644 :230 man/upscli_strerror.3
+M 100644 :231 man/upscli_upserror.3
+M 100644 :232 man/upsclient.3
+M 100644 :233 man/upscmd.8
+M 100644 :234 man/upsd.8
+M 100644 :235 man/upsd.conf.5
+M 100644 :236 man/upsd.users.5
 M 100644 :237 man/upsdrvctl.8
+M 100644 :238 man/upsimage.cgi.8
+M 100644 :239 man/upslog.8
+M 100644 :240 man/upsmon.8
+M 100644 :241 man/upsmon.conf.5
+M 100644 :242 man/upsrw.8
+M 100644 :243 man/upssched.8
+M 100644 :244 man/upssched.conf.5
+M 100644 :245 man/upsset.cgi.8
+M 100644 :246 man/upsset.conf.5
+M 100644 :247 man/upsstats.cgi.8
+M 100644 :248 man/upsstats.html.5
+M 100644 :249 man/victronups.8
+M 100644 :252 scripts/HP-UX/Makefile
+M 100755 :254 scripts/HP-UX/nut-drvctl.sh
+M 100644 :253 scripts/HP-UX/nut-drvctl
+M 100755 :256 scripts/HP-UX/nut-upsd.sh
+M 100644 :255 scripts/HP-UX/nut-upsd
+M 100755 :258 scripts/HP-UX/nut-upsmon.sh
+M 100644 :257 scripts/HP-UX/nut-upsmon
+M 100644 :259 scripts/README
+M 100644 :260 scripts/RedHat/README
+M 100644 :261 scripts/RedHat/halt.patch
+M 100644 :262 scripts/RedHat/ups
+M 100644 :264 scripts/RedHat/upsd.in
+M 100644 :263 scripts/RedHat/upsd
+M 100644 :266 scripts/RedHat/upsmon.in
+M 100644 :265 scripts/RedHat/upsmon
+M 100755 :267 scripts/Solaris8/S99upsmon
+M 100644 :268 scripts/Windows/Makefile
+M 100644 :269 scripts/Windows/halt.c
 D scripts/hotplug-ng/README
 D scripts/hotplug-ng/nut-usbups.hotplug.in
 D scripts/hotplug-ng/nut-usbups.rules.in
+M 100644 :1654 scripts/hotplug/.gitignore
+M 100644 :270 scripts/hotplug/README
+M 100644 :817 scripts/hotplug/README
+M 100644 :271 scripts/hotplug/libhid.usermap
+M 100644 :1503 scripts/hotplug/libhid.usermap
+M 100644 :272 scripts/hotplug/libhidups.in
+M 100644 :272 scripts/hotplug/libhidups.in
+M 100644 :273 scripts/misc/osd-notify
 D server/.gitignore
+M 100644 :274 server/Makefile.in
+M 100644 :275 server/access.c
+M 100644 :276 server/access.h
 M 100644 :277 server/conf.c
+M 100644 :278 server/conf.h
+M 100644 :279 server/ctype.h
+M 100644 :280 server/desc.c
+M 100644 :281 server/desc.h
+M 100644 :282 server/netcmds.h
+M 100644 :283 server/neterr.h
+M 100644 :284 server/netget.c
+M 100644 :285 server/netget.h
+M 100644 :286 server/netinstcmd.c
+M 100644 :287 server/netinstcmd.h
+M 100644 :288 server/netlist.c
+M 100644 :289 server/netlist.h
+M 100644 :290 server/netmisc.c
+M 100644 :291 server/netmisc.h
+M 100644 :292 server/netset.c
+M 100644 :293 server/netset.h
+M 100644 :294 server/netuser.c
+M 100644 :295 server/netuser.h
+M 100644 :296 server/sockdebug.c
+M 100644 :297 server/ssl.c
+M 100644 :298 server/ssl.h
 M 100644 :299 server/sstate.c
+M 100644 :300 server/sstate.h
+M 100644 :301 server/upsd.c
+M 100644 :302 server/upsd.h
+M 100644 :303 server/upstype.h
+M 100644 :304 server/user-data.h
+M 100644 :305 server/user.c
+M 100644 :306 server/user.h
 
 blob
 mark :1675

@@ -210,6 +210,7 @@ data 61
 merge bugfixes from 1.0.1 into trunk, bumping version to 1.2
 from :20
 merge :23
+M 100644 :1 .gitignore
 M 100644 :24 VERSION
 M 100644 :25 src
 

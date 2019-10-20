@@ -110,6 +110,7 @@ data 33
 Merge cool-feature back to trunk
 from :6
 merge :8
+M 100644 :5 .gitignore
 M 100644 :7 README
 
 blob
