@@ -187,7 +187,8 @@ func catch(accept string, x interface{}) *exception {
 }
 
 // Change these in the unlikely the event this is ported to Windows
-const userReadWriteMode = 0775 // rwxrwxr-x
+const userReadWriteMode       = 0644 // rw-r--r--
+const userReadWriteSearchMode = 0775 // rwxrwxr-x
 
 func exists(pathname string) bool {
 	_, err := os.Stat(pathname)
@@ -2607,6 +2608,7 @@ func (baton *Baton) resetProgress() {
  */
 
 const logSHOUT = 0    // Unconditional
+const logWARN = 1     // Exceptional condition, probably not bug
 const logTAGFIX = 2   // Log tagfixups
 const logSVNDUMP = 3  // Log Subversion dumping
 const logTOPOLOGY = 3 // Log repo-extractor logic (coarse-grained)
@@ -2690,6 +2692,7 @@ func (ctx *Context) init() {
 	ctx.mapOptions = make(map[string]map[string]string)
 	ctx.signals = make(chan os.Signal, 1)
 	ctx.logfp = os.Stderr
+	ctx.verbose = logWARN
 	signal.Notify(context.signals, os.Interrupt)
 	go func() {
 		for {
@@ -2773,11 +2776,6 @@ func nuke(directory string, legend string) {
 		}
 		os.RemoveAll(directory)
 	}
-}
-
-func complain(msg string, args ...interface{}) {
-	content := fmt.Sprintf(msg, args...)
-	os.Stderr.WriteString("reposurgeon: " + content + "\n")
 }
 
 func croak(msg string, args ...interface{}) {
@@ -3477,7 +3475,7 @@ func (b *Blob) getBlobfile(create bool) string {
 		[]string{"blobs", stem[0:3], stem[3:6], stem[6:]}...)
 	if create {
 		dir := strings.Join(parts[0:len(parts)-1], "/")
-		err := os.MkdirAll(filepath.FromSlash(dir), userReadWriteMode)
+		err := os.MkdirAll(filepath.FromSlash(dir), userReadWriteSearchMode)
 		if err != nil {
 			panic(fmt.Errorf("Blob creation: %v", err))
 		}
@@ -5329,7 +5327,7 @@ func (commit *Commit) checkout(directory string) string {
 	}
 	if !exists(directory) {
 		commit.repo.makedir()
-		os.Mkdir(directory, userReadWriteMode)
+		os.Mkdir(directory, userReadWriteSearchMode)
 	}
 
 	defer func() {
@@ -5349,7 +5347,7 @@ func (commit *Commit) checkout(directory string) string {
 			var dpath string
 			for i := range parts[0 : len(parts)-1] {
 				dpath = filepath.FromSlash(strings.Join(parts[:i+1], "/"))
-				err := os.Mkdir(dpath, userReadWriteMode)
+				err := os.Mkdir(dpath, userReadWriteSearchMode)
 				if err != nil && !os.IsExist(err) {
 					panic(fmt.Errorf("Directory creation failed during checkout: %v", err))
 				}
@@ -6145,10 +6143,10 @@ const splitSep = "."
 type StreamParser struct {
 	repo        *Repository
 	fp          *bufio.Reader // Can't be os.File, unit tests will fail
+	fileName    string
 	importLine  int
 	ccount      int64
 	linebuffers []string
-	warnings    []string
 	lastcookie  Cookie
 	// Everything below here is Subversion-specific
 	branches             map[string]*Commit // Points to branch root commits
@@ -6184,7 +6182,6 @@ func newStreamParser(repo *Repository) *StreamParser {
 	sp := new(StreamParser)
 	sp.repo = repo
 	sp.linebuffers = make([]string, 0)
-	sp.warnings = make([]string, 0)
 	// Everything below here is Subversion-specific
 	sp.branches = make(map[string]*Commit)
 	sp.branchlink = make(map[string]daglink)
@@ -6204,25 +6201,31 @@ func newStreamParser(repo *Repository) *StreamParser {
 
 func (sp *StreamParser) error(msg string) {
 	// Throw fatal error during parsing.
-	panic(throw("parse", "%s at line %d", msg, sp.importLine))
+	panic(throw("parse", "%d: %s", sp.importLine, msg))
 }
+
+func (sp *StreamParser) errorLocation() string {
+	// Alas, must use old format here because of the leading log tag
+	if sp.importLine > 0 {
+		leader := ""
+		if sp.fileName != "" {
+			leader = fmt.Sprintf(`"%s", `, sp.fileName)
+		}
+		return fmt.Sprintf(leader + "line %d: ", sp.importLine)
+	}
+	return ""	
+}
+
 
 func (sp *StreamParser) warn(msg string) {
 	// Display a parse warning associated with a line but don't error out.
-	if sp.importLine > 0 {
-		complain("%s at line %d", msg, sp.importLine)
-	} else {
-		complain(msg)
-	}
+	logit(logWARN, sp.errorLocation() +  msg)
 }
 
-func (sp *StreamParser) gripe(msg string) {
-	// Display or queue up an error message for end of parse.
-	if context.verbose < 2 {
-		sp.warnings = append(sp.warnings, msg)
-	} else {
-		complain(msg)
-	}
+func (sp *StreamParser) shout(msg string) {
+	// A gripe with line number
+	logit(logSHOUT, sp.errorLocation() + msg)
+
 }
 
 func (sp *StreamParser) read(n int) string {
@@ -6966,7 +6969,8 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			if reset.committish != "" {
 				commit := sp.repo.markToEvent(reset.committish).(*Commit)
 				if commit == nil {
-					sp.gripe(fmt.Sprintf("unresolved committish in reset %s", reset.committish))
+
+					sp.shout(fmt.Sprintf("unresolved committish in reset %s", reset.committish))
 				}
 				commit.attach(reset)
 			}
@@ -6975,7 +6979,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			if tag.committish != "" {
 				commit := sp.repo.markToEvent(tag.committish).(*Commit)
 				if commit == nil {
-					sp.gripe(fmt.Sprintf("unresolved committish in tag %s", tag.committish))
+					sp.shout(fmt.Sprintf("unresolved committish in tag %s", tag.committish))
 				}
 				commit.attach(tag)
 			}
@@ -7042,9 +7046,6 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 	sp.importLine = 0
 	if len(sp.repo.events) == 0 {
 		sp.error("ignoring empty repository")
-	}
-	for _, warning := range sp.warnings {
-		croak(warning)
 	}
 
 	// FIXME: Fire the defer on signal. First attempt at this failed.
@@ -7138,7 +7139,7 @@ func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
 
 	// We reach here with lookback still nil if the node is a non-copy add.
 	if lookback == nil && node.fromRev > 0 &&!strings.HasSuffix(node.path, ".gitignore") {
-		sp.gripe(fmt.Sprintf("r%d~%s: missing ancestor node for non-.gitignore",
+		sp.shout(fmt.Sprintf("r%d~%s: missing ancestor node for non-.gitignore",
 			node.revision, node.path))
 	}
 	return lookback
@@ -7535,13 +7536,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					}
 					if len(eligible) == 0 {
 						if hasProperties.Contains(node.path) {
-							sp.gripe(fmt.Sprintf("r%d#%d~%s: properties cleared.", node.revision, n+1, node.path))
+							sp.shout(fmt.Sprintf("r%d#%d~%s: properties cleared.", node.revision, n+1, node.path))
 							hasProperties.Remove(node.path)
 						}
 					} else {
-						sp.gripe(fmt.Sprintf("r%d#%d~%s properties set:", node.revision, n+1, node.path))
+						sp.shout(fmt.Sprintf("r%d#%d~%s properties set:", node.revision, n+1, node.path))
 						for _, pair := range eligible {
-							sp.gripe(fmt.Sprintf("\t%s = '%s'", pair[0], pair[1]))
+							sp.shout(fmt.Sprintf("\t%s = '%s'", pair[0], pair[1]))
 						}
 						hasProperties.Add(node.path)
 					}
@@ -7824,7 +7825,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				if strings.HasSuffix(node.path, ".gitignore") {
 					if !node.generated &&
 						!options.Contains("--user-ignores") {
-						sp.gripe(fmt.Sprintf("r%d~%s: user-created .gitignore ignored.",
+						sp.shout(fmt.Sprintf("r%d~%s: user-created .gitignore ignored.",
 							node.revision, node.path))
 						continue
 					}
@@ -7877,8 +7878,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 						// way to figure out what mark to use
 						// in a fileop.
 						if !strings.HasSuffix(node.path, ".gitignore") {
-							complain(fmt.Sprintf("r%d~%s: permission information may be lost.",
-								node.revision, node.path))
+							logit(logWARN, "r%d~%s: permission information may be lost.",
+									node.revision, node.path)
 						}
 						continue
 					}
@@ -8195,13 +8196,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	
 	// Bail out if we have read no commits
 	if len(sp.repo.commits(nil)) == 0 {
-		sp.gripe("empty stream or repository.")
+		sp.shout("empty stream or repository.")
 		return
 	}
 	// Warn about dubious branch links
 	sp.fileopBranchlinks.Remove("trunk" + svnSep)
 	if links := sp.fileopBranchlinks.Subtract(sp.directoryBranchlinks); !links.Empty() {
-		sp.gripe(fmt.Sprintf("branch links detected by file ops only: %v", links))
+		sp.warn(fmt.Sprintf("branch links detected by file ops only: %v", links))
 	}
 	timeit("commits")
 
@@ -8237,7 +8238,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					true)
 			}
 		} else {
-			sp.gripe("could not tagify root commit.")
+			sp.shout("could not tagify root commit.")
 		}
 	}
 	baton.twirl("")
@@ -8459,7 +8460,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 								// that branch.
 								fromCommit := sp.lastRelevantCommit(intToRevidx(parseInt(fromRev)), fromPath, "Branch")
 								if fromCommit == nil {
-									sp.gripe(fmt.Sprintf("cannot resolve mergeinfo source from revision %s for path %s.",
+									sp.shout(fmt.Sprintf("cannot resolve mergeinfo source from revision %s for path %s.",
 										fromRev, node.path))
 								} else {
 									legacyFields := strings.Split(fromCommit.legacyID, ".")
@@ -8480,7 +8481,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				commit := sp.lastRelevantCommit(intToRevidx(revision), node.path, "Branch")
 				if commit == nil || !strings.HasPrefix(commit.legacyID, fmt.Sprintf("%d", record.revision)) {
 					// The reverse lookup went past the target revision
-					sp.gripe(fmt.Sprintf("cannot resolve mergeinfo destination to revision %d for path %s.",
+					sp.shout(fmt.Sprintf("cannot resolve mergeinfo destination to revision %d for path %s.",
 						revision, node.path))
 					continue
 				}
@@ -8552,7 +8553,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			// empty commits.  If that's the case it can't very
 			// well have CVS artifacts in it.
 			if commit.Comment == "" {
-				sp.gripe(fmt.Sprintf("r%s has no comment", commit.legacyID))
+				sp.shout(fmt.Sprintf("r%s has no comment", commit.legacyID))
 				continue
 			}
 			// Commits that cvs2svn created as tag surrogates
@@ -8690,7 +8691,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		/* nameFunc */ tagname,
 		/* legendFunc */ taglegend,
 		/* createTags */ true,
-		/* gripe */ sp.gripe)
+		/* gripe */ sp.shout)
 	sp.timeMark("tagifying")
 
 	logit(logEXTRACT, "Phase A: delete/copy canonicalization")
@@ -8734,7 +8735,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			continue
 		}
 		if a.getMark() == b.getMark() {
-			sp.gripe(fmt.Sprintf("r%s: duplicate parent marks", commit.legacyID))
+			sp.shout(fmt.Sprintf("r%s: duplicate parent marks", commit.legacyID))
 		} else if a.Branch == commit.Branch && b.Branch == commit.Branch {
 			if b.committer.date.Before(a.committer.date) {
 				a, b = b, a
@@ -8983,7 +8984,7 @@ func (repo *Repository) makedir() {
 	target := repo.subdir("")
 	logit(logSHUFFLE, "repository fast import creates "+target)
 	if _, err1 := os.Stat(target); os.IsNotExist(err1) {
-		err2 := os.Mkdir(target, userReadWriteMode)
+		err2 := os.Mkdir(target, userReadWriteSearchMode)
 		if err2 != nil {
 			panic("Can't create repository directory")
 		}
@@ -9572,6 +9573,9 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 			commit.canonicalize()
 		}
 	}
+	if gripe == nil {
+		gripe = func(msg string) {logit(logEXTRACT, msg)}
+	}
 	// Tagify commits without fileops
 	var isTipdelete = func(commit *Commit) bool { return false }
 	if tipdeletes {
@@ -9628,9 +9632,7 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 				} else {
 					msg += fmt.Sprintf("zero-op commit on %s.", commit.Branch)
 				}
-				if gripe != nil {
-					logit(logEXTRACT, msg[1:])
-				}
+				gripe(msg[1:])
 				deletia = append(deletia, index)
 			}
 		}
@@ -10265,10 +10267,10 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 			if delete {
 				speak := fmt.Sprintf("warning: commit %s to be deleted has ", commit.mark)
 				if strings.Contains(commit.Branch, "/") && !strings.Contains(commit.Branch, "/heads/") {
-					complain(speak + fmt.Sprintf("non-head branch attribute %s", commit.Branch))
+					logit(logWARN, speak + fmt.Sprintf("non-head branch attribute %s", commit.Branch))
 				}
 				if !commit.alldeletes(nil) {
-					complain(speak + "non-delete fileops.")
+					logit(logWARN, speak + "non-delete fileops.")
 				}
 			}
 			if !delete {
@@ -10539,7 +10541,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 			if (!policy.Contains("--coalesce") && !delete) || logEnable(logDELETE) {
 				for path, oplist := range cliques {
 					if len(oplist) > 1 && !dquiet {
-						complain("commit %s has multiple Ms for %s", commit.mark, path)
+						logit(logWARN, "commit %s has multiple Ms for %s", commit.mark, path)
 					}
 				}
 			}
@@ -10899,7 +10901,7 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 		if !fileopSliceEqual(ops, c.operations()) {
 			c.setOperations(ops)
 			if !bequiet && len(ops) == 0 {
-				complain("%s no fileops remain after re-order", c.idMe())
+				logit(logWARN, "%s no fileops remain after re-order", c.idMe())
 			}
 		}
 	}
@@ -11656,7 +11658,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 	var staging string
 	if !exists(target) {
 		staging = target
-		err := os.Mkdir(target, userReadWriteMode)
+		err := os.Mkdir(target, userReadWriteSearchMode)
 		if err != nil {
 			return fmt.Errorf("target directory creation failed: %v", err)
 		}
@@ -11665,7 +11667,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		if !filepath.IsAbs(target) || !filepath.IsAbs(staging) {
 			return fmt.Errorf("internal error: target (%s) and staging paths (%s) should be absolute", target, staging)
 		}
-		err := os.Mkdir(staging, userReadWriteMode)
+		err := os.Mkdir(staging, userReadWriteSearchMode)
 		if err != nil {
 			return fmt.Errorf("staging directory creation failed: %v", err)
 		}
@@ -11762,7 +11764,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		if !filepath.IsAbs(savedir) {
 			return fmt.Errorf("internal error, savedir %q should be absolute", savedir)
 		}
-		os.Mkdir(savedir, userReadWriteMode)
+		os.Mkdir(savedir, userReadWriteSearchMode)
 
 		// This is a critical region.  Ignore all signals
 		// until we're done.
@@ -11830,7 +11832,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 			if exists(src) {
 				dstdir := filepath.Dir(dst)
 				if !exists(dstdir) {
-					os.MkdirAll(dstdir, userReadWriteMode)
+					os.MkdirAll(dstdir, userReadWriteSearchMode)
 				}
 				if isdir(src) {
 					shutil.CopyTree(src, dst, nil)
@@ -12117,9 +12119,9 @@ func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
 	}
 	// Now it's time to do the actual partitioning
 	earlyPart := newRepository(rl.repo.name + "-early")
-	os.Mkdir(earlyPart.subdir(""), userReadWriteMode)
+	os.Mkdir(earlyPart.subdir(""), userReadWriteSearchMode)
 	latePart := newRepository(rl.repo.name + "-late")
-	os.Mkdir(latePart.subdir(""), userReadWriteMode)
+	os.Mkdir(latePart.subdir(""), userReadWriteSearchMode)
 	for _, event := range rl.repo.events {
 		if reset, ok := event.(*Reset); ok {
 			if earlyBranches.Contains(reset.ref) {
@@ -12202,7 +12204,7 @@ func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
 		uname += "+" + x.name
 	}
 	union := newRepository(uname[1:])
-	os.Mkdir(union.subdir(""), userReadWriteMode)
+	os.Mkdir(union.subdir(""), userReadWriteSearchMode)
 	factorOrder := func(i, j int) bool {
 		return !factors[i].earliest().After(factors[j].earliest())
 	}
@@ -13625,7 +13627,7 @@ func (rl *RepositoryList) newLineParse(line string, capabilities stringSet) *Lin
 			} else {
 				mode |= os.O_CREATE
 			}
-			lp.stdout, err = os.OpenFile(lp.outfile, mode, 0644)
+			lp.stdout, err = os.OpenFile(lp.outfile, mode, userReadWriteMode)
 			if err != nil {
 				panic(throw("command", "can't open %s for writing", lp.outfile))
 			}
@@ -16772,13 +16774,13 @@ func (fc *filterCommand) do(content string) string {
 		cmd.Stdin = strings.NewReader(content)
 		content, err := cmd.CombinedOutput()
 		if err != nil {
-			complain("filter command failed")
+			logit(logWARN, "filter command failed")
 		}
 		return string(content)
 	} else if fc.sub != nil {
 		return fc.sub(content)
 	} else {
-		complain("unknown mode in filter command")
+		logit(logWARN, "unknown mode in filter command")
 	}
 	return content
 }
@@ -16847,7 +16849,7 @@ func (rs *Reposurgeon) DoTranscode(line string) bool {
 	transcode := func(txt string) string {
 		out, err := decoder.Bytes([]byte(txt))
 		if err != nil {
-			complain("decode error during transcoding: %v", err)
+			logit(logWARN, "decode error during transcoding: %v", err)
 			rs.unchoose()
 		}
 		return string(out)
@@ -18156,7 +18158,7 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 	sourcePattern, line = popToken(line)
 	sourceRE, err1 := regexp.Compile(sourcePattern)
 	if err1 != nil {
-		complain("source path regexp compilation failed: %v", err1)
+		logit(logWARN, "source path regexp compilation failed: %v", err1)
 		return false
 	}
 	var verb string
@@ -18167,7 +18169,7 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 		force := parse.options.Contains("--force")
 		targetPattern, _ := popToken(parse.line)
 		if targetPattern == "" {
-			complain("no target specified in rename")
+			logit(logWARN, "no target specified in rename")
 			return false
 		}
 		actions := make([]pathAction, 0)
@@ -18179,10 +18181,10 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 						if ok && oldpath != "" && sourceRE.MatchString(oldpath) {
 							newpath := GoReplacer(sourceRE, oldpath, targetPattern)
 							if !force && commit.visible(newpath) != nil {
-								complain("rename of %s at %s failed, %s visible in ancestry", oldpath, commit.idMe(), newpath)
+								logit(logWARN, "rename of %s at %s failed, %s visible in ancestry", oldpath, commit.idMe(), newpath)
 								return false
 							} else if !force && commit.paths(nil).Contains(newpath) {
-								complain("rename of %s at %s failed, %s exists there", oldpath, commit.idMe(), newpath)
+								logit(logWARN, "rename of %s at %s failed, %s exists there", oldpath, commit.idMe(), newpath)
 								return false
 							} else {
 								actions = append(actions, pathAction{fileop, commit, attr, newpath})
@@ -18197,7 +18199,7 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 			setAttr(action.fileop, action.attr, action.newpath)
 		}
 	} else {
-		complain("unknown verb '%s' in path command.", verb)
+		logit(logWARN, "unknown verb '%s' in path command.", verb)
 	}
 	return false
 }
@@ -18294,7 +18296,7 @@ This command supports > redirection.
 // Print all files (matching the regex) in the selected commits trees.
 func (rs *Reposurgeon) DoManifest(line string) bool {
 	if rs.chosen() == nil {
-		complain("no repo has been chosen")
+		logit(logWARN, "no repo has been chosen")
 		return false
 	}
 	if rs.selection == nil {
@@ -18307,7 +18309,7 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 	if line != "" {
 		filterRE, err := regexp.Compile(line)
 		if err != nil {
-			complain("invalid regular expression: %v", err)
+			logit(logWARN, "invalid regular expression: %v", err)
 			return false
 		}
 		filterFunc = func(s string) bool {
@@ -18576,7 +18578,7 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 	}
 	selected := repo.commits(rs.selection)
 	if len(selected) == 0 || len(rs.selection) != len(selected) {
-		complain("reparent requires one or more selected commits")
+		logit(logWARN, "reparent requires one or more selected commits")
 	}
 	child := selected[len(selected)-1]
 	parents := make([]CommitLike, len(rs.selection)-1)
@@ -18586,7 +18588,7 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 	if doResort {
 		for _, p := range parents {
 			if p.(*Commit).descendedFrom(child) {
-				complain("reparenting a commit to its own descendant would introduce a cycle")
+				logit(logWARN, "reparenting a commit to its own descendant would introduce a cycle")
 				return false
 			}
 		}
@@ -18961,7 +18963,7 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 			}
 		}
 		if len(commits) > 0 {
-			complain("warning - tag move does not modify branch fields")
+			logit(logWARN, "warning - tag move does not modify branch fields")
 		}
 	} else if verb == "rename" {
 		if len(tags) > 1 {
@@ -19681,7 +19683,7 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 			// legend was matchobj.group(0) in Python
 			commit := getter(legend)
 			if commit == nil {
-				complain("no commit matches %q", legend)
+				logit(logWARN, "no commit matches %q", legend)
 				return legend // no replacement
 			} else {
 				text := commit.actionStamp()
@@ -19888,13 +19890,13 @@ func (rs *Reposurgeon) DoDiff(line string) bool {
 		rs.selection = rs.chosen().all()
 	}
 	if len(rs.selection) != 2 {
-		complain("a pair of commits is required.")
+		logit(logWARN, "a pair of commits is required.")
 		return false
 	}
 	lower, ok1 := repo.events[rs.selection[0]].(*Commit)
 	upper, ok2 := repo.events[rs.selection[1]].(*Commit)
 	if !ok1 || !ok2 {
-		complain("a pair of commits is required.")
+		logit(logWARN, "a pair of commits is required.")
 		return false
 	}
 	dir1 := newStringSet()
@@ -19936,7 +19938,7 @@ func (rs *Reposurgeon) DoDiff(line string) bool {
 		} else if dir2.Contains(path) {
 			fmt.Fprintf(parse.stdout, "%s: added\n", path)
 		} else {
-			complain("internal error - missing path in diff")
+			logit(logWARN, "internal error - missing path in diff")
 			return false
 		}
 	}
@@ -21084,6 +21086,28 @@ func (rs *Reposurgeon) DoVerbose(lineIn string) bool {
 	return false
 }
 
+func (rs *Reposurgeon) HelpLogfile() {
+	rs.helpOutput(`
+Set the name of the file to which output willl be redirected.
+Without an argument, this command reports what logfile is set.
+`)
+}
+
+func (rs *Reposurgeon) DoLogfile(lineIn string) bool {
+	if len(lineIn) != 0 {
+		fp, err := os.OpenFile(lineIn, os.O_WRONLY|os.O_CREATE, userReadWriteMode)
+		if err != nil {
+			respond("log file open failed: %v", err)
+		} else {
+			context.logfp = fp
+		}
+	}
+	if len(lineIn) == 0 || context.isInteractive() {
+		respond("logfile %s", context.logfp.Name())
+	}
+	return false
+}
+
 func (rs *Reposurgeon) HelpQuiet() {
 	rs.helpOutput(`
 Without an argument, this command requests a report of the quiet
@@ -21253,7 +21277,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 		// When it is set, we abort out of every nested
 		// script call.
 		if context.getAbort() {
-			logit(logSHOUT, "script abort at line %d: %q", lineno, scriptline)
+			logit(logSHOUT, "%d: script abort on %q", lineno, scriptline)
 			break
 		}
 		if stop {

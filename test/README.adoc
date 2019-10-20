@@ -483,8 +483,8 @@ treecontents.svn::
    any test.
 
 vanilla.svn::
-   Translation is orrect.  Has an enptycommit, and there's a messqge
-   due to a peroperty setting. Used in repocutter and repotool tests.
+   Translation is correct.  Has an enptycommit, and there's a messqge
+   due to a poperty setting. Used in repocutter and repotool tests.
 
 wrong-mergeinfo.svn::
    Translation is correct, produces a message due to unresolved

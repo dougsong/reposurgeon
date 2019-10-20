@@ -1489,9 +1489,14 @@ Implemented mainly for regression testing, but may be useful
 for exploring the selection-set language.
 
 +verbose+ [ _n_ ]::
-   'verbose 1' enables the progress meter and messages,
+   'verbose 1' (the deault) enables error and warning messages,
    'verbose 0' disables them. Higher levels of verbosity are available
    but intended for developers only.
+
++logfile path+ [ _n_ ]::
+   Error, warning, and diagnostic messages are normall emitted to standard
+   error.  This commandm with a nonempty path argument, directs them to 
+   the specified file instead.
 
 +quiet+ [ _on_ | _off_ ]::
    Without an argument, this command requests a report of the quiet
