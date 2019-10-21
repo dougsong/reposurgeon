@@ -8705,7 +8705,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// filecopies on the same node when it's generating tag commits.
 	// These are lots of examples of this in the nut.svn test load.
 	// These show up as redundant (D, M) fileop pairs.
-	for idx, commit := range sp.repo.commits(nil) {
+	commits := sp.repo.commits(nil)
+	for idx, commit := range commits {
 		for i := range commit.operations() {
 			if i < len(commit.operations())-1 {
 				if commit.operations()[i].op == opD && commit.operations()[i+1].op == opM {
@@ -8722,7 +8723,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			}
 		}
 		commit.setOperations(nonnil)
-		baton.percentProgress("", int64(idx), int64(len(sp.repo.events)))
+		baton.percentProgress("", int64(idx), int64(len(commits)))
 	}
 	timeit("tagcleaning")
 
