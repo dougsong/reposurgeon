@@ -7815,18 +7815,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			record.props.Clear()
 		}
 
-		if !options.Contains("--ignore-properties") {
-			for n := range expandedNodes {
-				node := expandedNodes[n]
-				if node.hasProperties() {
-					if node.props.has("cvs2svn:cvs-rev") {
-						cvskey := fmt.Sprintf("CVS:%s:%s", node.path, node.props.get("cvs2svn:cvs-rev"))
-						sp.repo.legacyMap[cvskey] = commit
-						node.props.delete("cvs2svn:cvs-rev")
-					}
-				}
-			}
-		}
 
 		// Create actions corresponding to both
 		// parsed and generated nodes.
@@ -7838,6 +7826,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		for _, node := range expandedNodes {
 			if node.action == sdNONE {
 				continue
+			}
+			if node.hasProperties() {
+				if node.props.has("cvs2svn:cvs-rev") {
+					cvskey := fmt.Sprintf("CVS:%s:%s", node.path, node.props.get("cvs2svn:cvs-rev"))
+					sp.repo.legacyMap[cvskey] = commit
+					node.props.delete("cvs2svn:cvs-rev")
+				}
 			}
 			var ancestor *NodeAction
 			if node.kind == sdFILE {
