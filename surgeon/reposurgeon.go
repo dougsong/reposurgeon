@@ -7452,6 +7452,31 @@ func (sp *StreamParser) expandAllNodes(nodelist []NodeAction, options stringSet)
 	hasProperties := newStringSet()
 	for n := range nodelist {
 		node := &nodelist[n]
+
+		// if node.props is None, no property section.
+		// if node.blob is None, no text section.
+		// Delete actions may be issued without a dir or file kind
+		if !((node.action == sdCHANGE || node.action == sdADD || node.action == sdDELETE || node.action == sdREPLACE) &&
+			(node.kind == sdFILE || node.kind == sdDIR || node.action == sdDELETE) &&
+			((node.fromRev == 0) == (node.fromPath == ""))) {
+			logit(logSHOUT, "forbidden operation in dump stream at r%d: %s", node.revision, node)
+			continue
+		}
+		if !(node.blob != nil || node.hasProperties() ||
+			node.fromRev != 0 || node.action == sdADD || node.action == sdDELETE) {
+			logit(logSHOUT, "malformed node in dump stream at r%d: %s", node.revision, node)
+			continue
+		}
+		if node.kind == sdNONE && node.action != sdDELETE {
+			logit(logSHOUT, "missing type on a non-delete node r%d: %s", node.revision, node)
+			continue
+		}
+
+		if ((node.action != sdADD && node.action != sdREPLACE) && node.fromRev > 0) {
+			logit(logSHOUT, "invalid type in node with from revision r%d: %s", node.revision, node)
+			continue
+		}
+
 		if logEnable(logEXTRACT) {
 			logit(logEXTRACT, fmt.Sprintf("r%d-%d: %s", node.revision, node.index, node))
 		} else if node.kind == sdDIR &&
@@ -7709,33 +7734,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	baton.twirl("4")
 	sp.splitCommits = make(map[revidx]int)
 	for ri, record := range sp.revisions {
-		logit(logEXTRACT, "Revision %d:", record.revision)
-		for _, node := range record.nodes {
-			// if node.props is None, no property section.
-			// if node.blob is None, no text section.
-			// Delete actions may be issued without a dir or file kind
-			if !((node.action == sdCHANGE || node.action == sdADD || node.action == sdDELETE || node.action == sdREPLACE) &&
-				(node.kind == sdFILE || node.kind == sdDIR || node.action == sdDELETE) &&
-				((node.fromRev == 0) == (node.fromPath == ""))) {
-				logit(logSHOUT, "forbidden operation in dump stream at r%d: %s", record.revision, node)
-				continue
-			}
-			if !(node.blob != nil || node.hasProperties() ||
-				node.fromRev != 0 || node.action == sdADD || node.action == sdDELETE) {
-				logit(logSHOUT, "malformed node in dump stream at r%d: %s", record.revision, node)
-				continue
-			}
-			if node.kind == sdNONE && node.action != sdDELETE {
-				logit(logSHOUT, "missing type on a non-delete node r%d: %s", record.revision, node)
-				continue
-			}
-
-			if ((node.action != sdADD && node.action != sdREPLACE) && node.fromRev > 0) {
-				logit(logSHOUT, "invalid type in node with from revision r%d: %s", record.revision, node)
-				continue
-			}
-		}
-
 		// Zero revision is never interesting - no operations, no
 		// comment, no author, it's just a start marker for a
 		// non-incremental dump.
@@ -7743,6 +7741,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			continue
 		}
 
+		logit(logEXTRACT, "Revision %d:", record.revision)
 		expandedNodes := sp.expandAllNodes(sp.revisions[ri].nodes, options)
 
 		//memcheck(sp.repo)
