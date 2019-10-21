@@ -8277,7 +8277,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		logit(logEXTRACT, fmt.Sprintf("Branches: %s", sp.branches))
 		lastbranch := impossibleFilename
 		branch := impossibleFilename
-		for idx, commit := range sp.repo.commits(nil) {
+		commits := sp.repo.commits(nil)
+		for idx, commit := range commits {
 			//logit(logEXTRACT, "seeking branch assignment for %s with common prefix '%s'", commit.mark, commit.common)
 			if lastbranch != impossibleFilename && strings.HasPrefix(commit.common, lastbranch) {
 				logit(logEXTRACT, "branch assignment for %s from lastbranch '%s'", commit.mark, lastbranch)
@@ -8315,8 +8316,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				sp.branches["root"] = nil
 			}
 			lastbranch = branch
-			// FIXME: should use a real commit count here
-			baton.percentProgress("a", int64(idx), int64(len(sp.repo.events)))
+			baton.percentProgress("a", int64(idx), int64(len(commits)))
 		}
 		timeit("branches")
 		// ...then rebuild parent links so they follow the branches
