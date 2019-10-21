@@ -7681,60 +7681,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			}
 		}
 
-		//memcheck(sp.repo)
-		commit := newCommit(sp.repo)
-		ad := record.date
-		if ad == "" {
-			sp.error("missing required date field")
-		}
-		var au string
-		if record.author != "" {
-			au = record.author
-		} else {
-			au = "no-author"
-		}
-		if record.log != "" {
-			commit.Comment = record.log
-			if !strings.HasSuffix(commit.Comment, "\n") {
-				commit.Comment += "\n"
-			}
-		}
-		attribution := ""
-		if strings.Count(au, "@") == 1 {
-			// This is a thing that happens occasionally.  A DVCS-style
-			// attribution (name + email) gets stuffed in a Subversion
-			// author field
-			// First, check to see if it's a fully-formed address
-			if strings.Count(au, "<") == 1 && strings.Count(au, ">") == 1 && strings.Count(au, " ") > 0 {
-				attribution = au + " " + ad
-			} else {
-				// Punt...
-				parts := strings.Split(au, "@")
-				au, ah := parts[0], parts[1]
-				attribution = au + " <" + au + "@" + ah + "> " + ad
-			}
-		} else if options.Contains("--use-uuid") {
-			attribution = fmt.Sprintf("%s <%s@%s> %s", au, au, sp.repo.uuid, ad)
-		} else {
-			attribution = fmt.Sprintf("%s <%s> %s", au, au, ad)
-		}
-		newattr, err := newAttribution(attribution)
-		if err != nil {
-			panic(throw("parse", "impossibly ill-formed attribution in dump stream at r%d", record.revision))
-		}
-		commit.committer = *newattr
-		// Use this with just-generated input streams
-		// that have wall times in them.
-		if context.flagOptions["testmode"] {
-			commit.committer.fullname = "Fred J. Foonly"
-			commit.committer.email = "foonly@foo.com"
-			commit.committer.date.timestamp = time.Unix(int64(ri*360), 0)
-			commit.committer.date.setTZ("UTC")
-		}
-		if record.props.Len() > 0 {
-			commit.properties = &record.props
-			record.props.Clear()
-		}
 		// Zero revision is never interesting - no operations, no
 		// comment, no author, it's just a start marker for a
 		// non-incremental dump.
@@ -7792,6 +7738,63 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			// expand directory copy operations 
 			expandedNodes = append(expandedNodes, sp.expandNode(len(record.nodes), node, options)...)
 		}
+
+
+		//memcheck(sp.repo)
+		commit := newCommit(sp.repo)
+		ad := record.date
+		if ad == "" {
+			sp.error("missing required date field")
+		}
+		var au string
+		if record.author != "" {
+			au = record.author
+		} else {
+			au = "no-author"
+		}
+		if record.log != "" {
+			commit.Comment = record.log
+			if !strings.HasSuffix(commit.Comment, "\n") {
+				commit.Comment += "\n"
+			}
+		}
+		attribution := ""
+		if strings.Count(au, "@") == 1 {
+			// This is a thing that happens occasionally.  A DVCS-style
+			// attribution (name + email) gets stuffed in a Subversion
+			// author field
+			// First, check to see if it's a fully-formed address
+			if strings.Count(au, "<") == 1 && strings.Count(au, ">") == 1 && strings.Count(au, " ") > 0 {
+				attribution = au + " " + ad
+			} else {
+				// Punt...
+				parts := strings.Split(au, "@")
+				au, ah := parts[0], parts[1]
+				attribution = au + " <" + au + "@" + ah + "> " + ad
+			}
+		} else if options.Contains("--use-uuid") {
+			attribution = fmt.Sprintf("%s <%s@%s> %s", au, au, sp.repo.uuid, ad)
+		} else {
+			attribution = fmt.Sprintf("%s <%s> %s", au, au, ad)
+		}
+		newattr, err := newAttribution(attribution)
+		if err != nil {
+			panic(throw("parse", "impossibly ill-formed attribution in dump stream at r%d", record.revision))
+		}
+		commit.committer = *newattr
+		// Use this with just-generated input streams
+		// that have wall times in them.
+		if context.flagOptions["testmode"] {
+			commit.committer.fullname = "Fred J. Foonly"
+			commit.committer.email = "foonly@foo.com"
+			commit.committer.date.timestamp = time.Unix(int64(ri*360), 0)
+			commit.committer.date.setTZ("UTC")
+		}
+		if record.props.Len() > 0 {
+			commit.properties = &record.props
+			record.props.Clear()
+		}
+
 		if !options.Contains("--ignore-properties") {
 			for n := range expandedNodes {
 				node := expandedNodes[n]
