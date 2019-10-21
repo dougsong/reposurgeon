@@ -9821,7 +9821,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 	}
 	repo.realized = make(map[string]bool) // Track what branches are made
 	baton := newBaton("reposurgeon: exporting", "", progress)
-	for _, ei := range selection {
+	for idx, ei := range selection {
 		baton.twirl("")
 		event := repo.events[ei]
 		if passthrough, ok := event.(*Passthrough); ok {
@@ -9842,6 +9842,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 		if err != nil {
 			panic(fmt.Errorf("export error: %v", err))
 		}
+		baton.percentProgress("", int64(idx), int64(len(repo.events)))
 	}
 	repo.realized = nil
 	baton.exit("")
@@ -20499,14 +20500,15 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 			if err != nil {
 				return ""
 			}
+			skipre := regexp.MustCompile(strings.Join(strings.Fields(line)[:5], `\s+`))
+			m := skipre.FindStringIndex(line)
+			if m == nil {
+				return ""
+			}
+			addr := strings.TrimSpace(line[m[1]:])
+			return addr
 		}
-		skipre := regexp.MustCompile(strings.Join(strings.Fields(line)[:5], `\s+`))
-		m := skipre.FindStringIndex(line)
-		if m == nil {
-			return ""
-		}
-		addr := strings.TrimSpace(line[m[1]:])
-		return addr
+		return ""
 	}
 	baton := newBaton("reposurgeon: parsing changelogs", "", context.isInteractive())
 	for _, commit := range repo.commits(nil) {
@@ -20542,7 +20544,8 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				//print("Analyzing Changelog at %s." % commit.mark)
 				comparison, err := differ.Compare(then, now)
 				if err != nil {
-					panic(err) // Should never happen.
+					logit(logSHOUT, "differ threw a should-never-happen error on path %s at %s", op.Path, commit.mark)
+					goto bailout
 				}
 				for _, diffline := range comparison {
 					if diffline[0] != ' ' {
@@ -20587,7 +20590,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 					newattr.fullname = strings.TrimSpace(flds[0])
 					// This assumes email addreses of contributors are unique.
 					// We could get wacky results if two people with different
-					// human naames but identicall email addresses were run through
+					// human names but identicall email addresses were run through
 					// this code, but that outcome seems wildly unlikely.
 					if newattr.fullname == "" {
 						for _, mapentry := range repo.authormap {
@@ -20630,6 +20633,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				}
 			}
 		}
+	bailout:
 	}
 	repo.invalidateNamecache()
 	respond("fills %d of %d authorships, changing %d, from %d ChangeLogs.", cm, cc, cd, cl)
