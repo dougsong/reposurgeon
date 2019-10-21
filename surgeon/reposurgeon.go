@@ -10051,7 +10051,7 @@ var nilOp FileOp // Zero fileop, to be used as a deletion marker
 // 2: Op to replace the second with (nil means delete)
 // 3: string: if nomempty, a warning to emit
 // 4: Case number, for coverage analysis
-func (repo *Repository) _compose(commit *Commit, left FileOp, right FileOp) (bool, FileOp, FileOp, string, int) {
+func (commit *Commit) _compose(left FileOp, right FileOp) (bool, FileOp, FileOp, string, int) {
 	pair := [2]string{left.op, right.op}
 	//
 	// First op M
@@ -10185,8 +10185,8 @@ func (repo *Repository) _compose(commit *Commit, left FileOp, right FileOp) (boo
 	panic(throw("command", "in %s, can't compose op '%s' and '%s'", commit.idMe(), left, right))
 }
 
-// Canonicalize the list of file operations in this commit.
-func (repo *Repository) canonicalize(commit *Commit) orderedIntSet {
+// Simplify the list of file operations in this commit.
+func (commit *Commit) simplify() orderedIntSet {
 	// Doesn't need to be ordered, but I'm not going to write a whole
 	// 'nother set class just for this.
 	coverage := newOrderedIntSet()
@@ -10210,7 +10210,7 @@ func (repo *Repository) canonicalize(commit *Commit) orderedIntSet {
 				a := commit.operations()[i]
 				b := commit.operations()[j]
 				if a != nilOp && b != nilOp && a.relevant(&b) {
-					modified, newa, newb, warn, cn := repo._compose(commit, a, b)
+					modified, newa, newb, warn, cn := commit._compose(a, b)
 					logit(logDELETE, fmt.Sprintf("Reduction case %d fired on (%d, %d)", cn, i, j))
 					if modified {
 						mutated = true
@@ -10555,7 +10555,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 				logit(logDELETE, "Before canonicalization:")
 				commit.fileopDump()
 			}
-			repo.caseCoverage = repo.caseCoverage.Union(repo.canonicalize(commit))
+			repo.caseCoverage = repo.caseCoverage.Union(commit.simplify())
 			if logEnable(logDELETE) {
 				logit(logDELETE, "After canonicalization:")
 				commit.fileopDump()
