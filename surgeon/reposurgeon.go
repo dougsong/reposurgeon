@@ -8209,7 +8209,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 
 	// Release history storage to be GCed
 	sp.history = nil
-	
+
 	// Bail out if we have read no commits
 	if len(sp.repo.commits(nil)) == 0 {
 		sp.shout("empty stream or repository.")
@@ -8259,12 +8259,16 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	}
 	baton.twirl("")
 	timeit("rootcommit")
+
+	// Computing this is expensive, so we try to do it seldom
+	commits := sp.repo.commits(nil)
+
 	// Now, branch analysis.
 	branchroots := make([]*Commit, 0)
 	if len(sp.branches) == 0 || nobranch {
 		logit(logEXTRACT, "no branch analysis")
 		var last *Commit
-		for _, commit := range sp.repo.commits(nil) {
+		for _, commit := range commits {
 			commit.setBranch(filepath.Join("refs", "heads", "master") + svnSep)
 			if last != nil {
 				commit.setParents([]CommitLike{last})
@@ -8277,7 +8281,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		logit(logEXTRACT, fmt.Sprintf("Branches: %s", sp.branches))
 		lastbranch := impossibleFilename
 		branch := impossibleFilename
-		commits := sp.repo.commits(nil)
 		for idx, commit := range commits {
 			//logit(logEXTRACT, "seeking branch assignment for %s with common prefix '%s'", commit.mark, commit.common)
 			if lastbranch != impossibleFilename && strings.HasPrefix(commit.common, lastbranch) {
@@ -8320,7 +8323,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		}
 		timeit("branches")
 		// ...then rebuild parent links so they follow the branches
-		for _, commit := range sp.repo.commits(nil) {
+		for _, commit := range commits {
 			if sp.branches[commit.Branch] == nil {
 				logit(logEXTRACT, "commit %s branch %s is rootless", commit.mark, commit.Branch)
 				branchroots = append(branchroots, commit)
@@ -8339,7 +8342,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// we didn't get the information to connect it to trunk in the
 		// last phase.
 		var rootcommit *Commit
-		for _, c := range sp.repo.commits(nil) {
+		for _, c := range commits {
 			if c.Branch == "root" {
 				rootcommit = c
 				break
@@ -8361,6 +8364,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			// Python version only displayed the branchlink values
 			logit(logEXTRACT, "branch roots: %v, links: %v", rootmarks, sp.branchlink)
 		}
+		idx:= 0
 		for _, item := range sp.branchlink {
 			if item.parent.repo != sp.repo {
 				// The parent has been deleted since, don't add the link;
@@ -8395,6 +8399,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			if !found {
 				item.child.addParentCommit(item.parent)
 			}
+			baton.percentProgress("b", int64(idx), int64(len(sp.branchlink)))
+			idx++
 		}
 		timeit("branchlinks")
 		// Add links due to svn:mergeinfo properties
@@ -8515,8 +8521,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				nodups = nil	// Not necessary, but explicit is good
 			}
 			mergeinfos[intToRevidx(revision)] = mergeinfo.snapshot()
-			// FIXME: should use a real commit count here
-			baton.percentProgress("b", int64(revision), int64(len(sp.revisions)))
+			baton.percentProgress("c", int64(revision), int64(len(sp.revisions)))
 		}
 		// Allow mergeinfo storage to be garbage-collected
 		mergeinfo = nil
@@ -8524,7 +8529,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		timeit("mergeinfo")
 		if logEnable(logEXTRACT) {
 			logit(logEXTRACT, "after branch analysis")
-			for _, commit := range sp.repo.commits(nil) {
+			for _, commit := range commits {
 				var ancestorID string
 				ancestors := commit.parents()
 				if len(ancestors) == 0 {
@@ -8705,7 +8710,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// filecopies on the same node when it's generating tag commits.
 	// These are lots of examples of this in the nut.svn test load.
 	// These show up as redundant (D, M) fileop pairs.
-	commits := sp.repo.commits(nil)
+	commits = sp.repo.commits(nil)
 	for idx, commit := range commits {
 		for i := range commit.operations() {
 			if i < len(commit.operations())-1 {
