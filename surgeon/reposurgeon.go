@@ -7447,6 +7447,61 @@ func (sp *StreamParser) expandNode(offset int, node *NodeAction, options stringS
 	return expandedNodes
 }
 
+func (sp *StreamParser) expandAllNodes(nodelist []NodeAction, options stringSet) []*NodeAction {
+	expandedNodes := make([]*NodeAction, 0)
+	hasProperties := newStringSet()
+	for n := range nodelist {
+		node := &nodelist[n]
+		if logEnable(logEXTRACT) {
+			logit(logEXTRACT, fmt.Sprintf("r%d-%d: %s", node.revision, node.index, node))
+		} else if node.kind == sdDIR &&
+			node.action != sdCHANGE && logEnable(logTOPOLOGY) {
+			logit(logSHOUT, node.String())
+		}
+
+		// Handle per-path properties.
+		if node.hasProperties() {
+			// Remove blank lines from svn:ignore property values.
+			if node.props.has("svn:ignore") {
+				oldIgnore := node.props.get("svn:ignore")
+				newIgnore := blankline.ReplaceAllLiteralString(oldIgnore, "")
+				node.props.set("svn:ignore", newIgnore)
+			}
+			if !options.Contains("--ignore-properties") {
+				tossThese := make([][2]string, 0)
+				for prop, val := range node.props.dict {
+					if ignoreProperties[prop] {
+						continue
+					}
+					// Pass through the properties that can't be processed until we're ready to
+					// generate commits
+					if prop == "cvs2svn:cvs-rev" || (prop == "svn:mergeinfo" && node.kind == sdDIR) {
+						continue
+					}
+					tossThese = append(tossThese, [2]string{prop, val})
+				}
+				if len(tossThese) == 0 {
+					if hasProperties.Contains(node.path) {
+						sp.shout(fmt.Sprintf("r%d#%d~%s: properties cleared.", node.revision, n+1, node.path))
+						hasProperties.Remove(node.path)
+					}
+				} else {
+					sp.shout(fmt.Sprintf("r%d#%d~%s properties set:", node.revision, n+1, node.path))
+					for _, pair := range tossThese {
+						sp.shout(fmt.Sprintf("\t%s = '%s'", pair[0], pair[1]))
+					}
+					hasProperties.Add(node.path)
+				}
+			}
+		}
+
+		// expand directory copy operations 
+		expandedNodes = append(expandedNodes, sp.expandNode(len(nodelist), node, options)...)
+	}
+
+	return expandedNodes
+}
+
 func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// Subversion actions to import-stream commits.
 	baton.resetProgress()
@@ -7688,57 +7743,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			continue
 		}
 
-		expandedNodes := make([]*NodeAction, 0)
-		hasProperties := newStringSet()
-		for n := range record.nodes {
-			node := &record.nodes[n]
-			if logEnable(logEXTRACT) {
-				logit(logEXTRACT, fmt.Sprintf("r%d-%d: %s", record.revision, node.index, node))
-			} else if node.kind == sdDIR &&
-				node.action != sdCHANGE && logEnable(logTOPOLOGY) {
-				logit(logSHOUT, node.String())
-			}
-
-			// Handle per-path properties.
-			if node.hasProperties() {
-				// Remove blank lines from svn:ignore property values.
-				if node.props.has("svn:ignore") {
-					oldIgnore := node.props.get("svn:ignore")
-					newIgnore := blankline.ReplaceAllLiteralString(oldIgnore, "")
-					node.props.set("svn:ignore", newIgnore)
-				}
-				if !options.Contains("--ignore-properties") {
-					tossThese := make([][2]string, 0)
-					for prop, val := range node.props.dict {
-						if ignoreProperties[prop] {
-							continue
-						}
-						// Pass through the properties that can't be processed until we're ready to
-						// generate commits
-						if prop == "cvs2svn:cvs-rev" || (prop == "svn:mergeinfo" && node.kind == sdDIR) {
-							continue
-						}
-						tossThese = append(tossThese, [2]string{prop, val})
-					}
-					if len(tossThese) == 0 {
-						if hasProperties.Contains(node.path) {
-							sp.shout(fmt.Sprintf("r%d#%d~%s: properties cleared.", node.revision, n+1, node.path))
-							hasProperties.Remove(node.path)
-						}
-					} else {
-						sp.shout(fmt.Sprintf("r%d#%d~%s properties set:", node.revision, n+1, node.path))
-						for _, pair := range tossThese {
-							sp.shout(fmt.Sprintf("\t%s = '%s'", pair[0], pair[1]))
-						}
-						hasProperties.Add(node.path)
-					}
-				}
-			}
-
-			// expand directory copy operations 
-			expandedNodes = append(expandedNodes, sp.expandNode(len(record.nodes), node, options)...)
-		}
-
+		expandedNodes := sp.expandAllNodes(sp.revisions[ri].nodes, options)
 
 		//memcheck(sp.repo)
 		commit := newCommit(sp.repo)
