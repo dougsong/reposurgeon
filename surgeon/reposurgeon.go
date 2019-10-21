@@ -7755,11 +7755,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 
 			// Handle per-path properties.
 			if node.hasProperties() {
-				if node.props.has("cvs2svn:cvs-rev") {
-					cvskey := fmt.Sprintf("CVS:%s:%s", node.path, node.props.get("cvs2svn:cvs-rev"))
-					sp.repo.legacyMap[cvskey] = commit
-					node.props.delete("cvs2svn:cvs-rev")
-				}
 				// Remove blank lines from svn:ignore property values.
 				if node.props.has("svn:ignore") {
 					oldIgnore := node.props.get("svn:ignore")
@@ -7767,24 +7762,26 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 					node.props.set("svn:ignore", newIgnore)
 				}
 				if !options.Contains("--ignore-properties") {
-					eligible := make([][2]string, 0)
+					tossThese := make([][2]string, 0)
 					for prop, val := range node.props.dict {
 						if ignoreProperties[prop] {
 							continue
 						}
-						if prop == "svn:mergeinfo" && node.kind == sdDIR {
+						// Pass through the properties that can't be processed until we're ready to
+						// generate commits
+						if prop == "cvs2svn:cvs-rev" || (prop == "svn:mergeinfo" && node.kind == sdDIR) {
 							continue
 						}
-						eligible = append(eligible, [2]string{prop, val})
+						tossThese = append(tossThese, [2]string{prop, val})
 					}
-					if len(eligible) == 0 {
+					if len(tossThese) == 0 {
 						if hasProperties.Contains(node.path) {
 							sp.shout(fmt.Sprintf("r%d#%d~%s: properties cleared.", node.revision, n+1, node.path))
 							hasProperties.Remove(node.path)
 						}
 					} else {
 						sp.shout(fmt.Sprintf("r%d#%d~%s properties set:", node.revision, n+1, node.path))
-						for _, pair := range eligible {
+						for _, pair := range tossThese {
 							sp.shout(fmt.Sprintf("\t%s = '%s'", pair[0], pair[1]))
 						}
 						hasProperties.Add(node.path)
@@ -7794,6 +7791,18 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 
 			// expand directory copy operations 
 			expandedNodes = append(expandedNodes, sp.expandNode(len(record.nodes), node, options)...)
+		}
+		if !options.Contains("--ignore-properties") {
+			for n := range expandedNodes {
+				node := expandedNodes[n]
+				if node.hasProperties() {
+					if node.props.has("cvs2svn:cvs-rev") {
+						cvskey := fmt.Sprintf("CVS:%s:%s", node.path, node.props.get("cvs2svn:cvs-rev"))
+						sp.repo.legacyMap[cvskey] = commit
+						node.props.delete("cvs2svn:cvs-rev")
+					}
+				}
+			}
 		}
 		logit(logEXTRACT, "%d expanded Subversion nodes", len(expandedNodes))
 		// Ugh.  Because cvs2svn is brain-dead and issues D/M pairs
