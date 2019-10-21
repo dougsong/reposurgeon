@@ -7524,6 +7524,22 @@ func (sp *StreamParser) expandAllNodes(nodelist []NodeAction, options stringSet)
 		expandedNodes = append(expandedNodes, sp.expandNode(len(nodelist), node, options)...)
 	}
 
+	logit(logEXTRACT, "%d expanded Subversion nodes", len(expandedNodes))
+	// Ugh.  Because cvs2svn is brain-dead and issues D/M pairs
+	// for identical paths in generated commits, we have to remove those
+	// D ops here.  Otherwise later on when we're generating ops, if
+	// the M node happens to be missing its hash it will be seen as
+	// unmodified and only the D will be issued.
+	seen := newStringSet()
+	for idx := len(expandedNodes) - 1; idx >= 0; idx-- {
+		node := expandedNodes[idx]
+		if node.action == sdDELETE && seen.Contains(node.path) {
+			logit(logEXTRACT, "r%d-%d: cvs2svn junk pair detected, omitting %s deletion.", node.revision, node.index, node.path)
+			node.action = sdNONE
+		}
+		seen.Add(node.path)
+	}
+
 	return expandedNodes
 }
 
@@ -7811,21 +7827,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 			}
 		}
-		logit(logEXTRACT, "%d expanded Subversion nodes", len(expandedNodes))
-		// Ugh.  Because cvs2svn is brain-dead and issues D/M pairs
-		// for identical paths in generated commits, we have to remove those
-		// D ops here.  Otherwise later on when we're generating ops, if
-		// the M node happens to be missing its hash it will be seen as
-		// unmodified and only the D will be issued.
-		seen := newStringSet()
-		for idx := len(expandedNodes) - 1; idx >= 0; idx-- {
-			node := expandedNodes[idx]
-			if node.action == sdDELETE && seen.Contains(node.path) {
-				logit(logEXTRACT, "r%d-%d: cvs2svn junk pair detected, omitting %s deletion.", record.revision, idx+1, node.path)
-				node.action = sdNONE
-			}
-			seen.Add(node.path)
-		}
+
 		// Create actions corresponding to both
 		// parsed and generated nodes.
 		type fiAction struct {
