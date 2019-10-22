@@ -2,8 +2,6 @@
 
 == Known bugs ==
 
-* Propagate drectory deletes to subnodes.
-
 * Weird combinations of Subversion tag creation followed by tag delete
   and renaming operations can produce content-mismatch failures
   detectable by repotool compare. In the test suite, this problem is

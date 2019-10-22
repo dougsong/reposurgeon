@@ -6170,7 +6170,7 @@ type StreamParser struct {
 	propagate            map[string]bool
 	history              HistoryManager
 	splitCommits         map[revidx]int
-	implicands             []*NodeAction
+	implicands           []*NodeAction
 }
 
 type daglink struct {
@@ -7684,13 +7684,14 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	logit(logEXTRACT, "Phase 2: clean tags to prevent anomalies.")
 	baton.twirl("2")
 	// Phase 2:
-	// Intervene to prevent lossage from tag deletions. The Subversion data model is that a history
-	// is a sequence of surgica; operations on a tree, and a tag is just another branch
-	// of the tree. Tag deletions are a place where this clashes badly with the changeset-DAG
-	// model used by git and oter DVCSes. Especially if the same tag is recreated later.
-	// The stupid, obvious thing to do would be to just nuke the tag history from  here back to
-	// its branch point, but that will cause problens if a future copy operation is ever sourced
-	// in the deleted branch and this does happen!) We deal with this by renaming the deleted branch
+
+	// Intervene to prevent lossage from tag/branch/trunk deletions. The Subversion data model is that a history
+	// is a sequence of surgical operations on a tree, and a tag is just another branch
+	// of the tree. Tag/branch deletions are a place where this clashes badly with the changeset-DAG
+	// model used by git and oter DVCSes. Especially if the same tag/branch is recreated later.
+	// The stupid, obvious thing to do would be to just nuke the tag/branch history from  here back to
+	// its origin point, but that will cause problems if a future copy operation is ever sourced
+	// in the deleted branch (and this does happen!) We deal with this by renaming the deleted branch
 	// and patching any copy operations from it in the future.
 	//
 	// Our first step is to refine our list so we only need to walk through tags created more than once,
@@ -7699,8 +7700,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	//
 	// The exit contract of this phase is that there (1) are no branches with colliding names attached to
 	// different revisions, (2) all branches but the most recent branch in a collision clique get renamed in
-	// a predictable way, and (3) all references to renamed brabches in the stream are patched
-	// with the reaname,
+	// a predictable way, and (3) all references to renamed tags and branches in the stream are patched
+	// with the rename.
 	//
 	// This branch is linear-time and quite fast even on very large repositories.
 	refcounts := make(map[string]int)
@@ -7728,25 +7729,20 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		baton.percentProgress("b", int64(i), int64(oldlength))
 	}
 	sp.implicands = sp.implicands[:n]
-	logit(logTAGFIX, "multiply-added tags: %v", sp.implicands)
+	logit(logTAGFIX, "multiply-added directories: %v", sp.implicands)
 
 	processed := 0
 	logit(logTAGFIX, "before fixups: %v", sp.implicands)
 	for i := range sp.implicands {
 		srcnode := sp.implicands[i]
-		if sp.implicands[i].action == sdDELETE {
+		if sp.implicands[i].kind != sdFILE && sp.implicands[i].action == sdDELETE {
 			newname := srcnode.path[:len(srcnode.path)] + fmt.Sprintf("-deleted-r%d-%d", srcnode.revision, srcnode.index) 
 			logit(logTAGFIX, "r%d#%d~%s: tag deletion, renaming to %s.",
 				srcnode.revision, srcnode.index, srcnode.path, newname)
 			// First, run backward performing the branch
 			// rename. Note, because we scan for deletions
 			// in forward order, any previous deletions of
-			// this tag gave already been patched.  This
-			// could fail weirdly if there is an operation
-			// on the tag in the same revision as the
-			// delete but *after* it, but that would be
-			// pretty malformed and probably cannot be
-			// produced by the Subversion CLI.
+			// this tag have already been patched.
 			for j := i - 1; j >= 0; j-- {
 				tnode := sp.implicands[j]
 				if strings.HasPrefix(tnode.path, srcnode.path) {
@@ -7757,10 +7753,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 			}
 			// Then, run forward patching copy
-			// operations. To really bulletproof this we
-			// need to also patch any copy operations
-			// later in this delete revision.  But that
-			// too would be pretty malformed.
+			// operations.
 			for j := i + 1; j < len(sp.implicands); j++ {
 				tnode := sp.implicands[j]
 				if tnode.action == sdDELETE && tnode.path == srcnode.path {
