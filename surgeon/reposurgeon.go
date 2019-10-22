@@ -2882,6 +2882,24 @@ func (d OrderedMap) String() string {
 	return out + "}"
 }
 
+func (d OrderedMap) vcString() string {
+	var out = "{"
+	for _, el := range d.keys {
+		val := d.dict[el]
+		for _, vcs := range vcstypes {
+			if val == vcs.dfltignores {
+				val = "{{" + vcs.name + "-defaults}}"
+				break
+			}
+		}
+		out += "'" + el + "': '" + val + "', "
+	}
+	if len(d.keys) > 0 {
+		out = out[:len(out)-2]
+	}
+	return out + "}"
+}
+
 // Less returns true if the sort method says the value for key i is
 // less than the value for key j. Useful with the Go library sort.
 func (d OrderedMap) Less(i int, j int) bool {
@@ -6074,12 +6092,7 @@ func (action NodeAction) String() string {
 		out += " generated"
 	}
 	if action.hasProperties() {
-		out += " properties="
-		if newStringSet(action.props.keys...).Equal(newStringSet("svn:ignore")) && action.props.get("svn:ignore") == subversionDefaultIgnores {
-			out += "{SUBVERSION DEFAULT IGNORES}"
-		} else {
-			out += action.props.String()
-		}
+		out += " props=" + action.props.vcString()
 	}
 	return out + ">"
 }
@@ -7366,8 +7379,8 @@ func (sp *StreamParser) expandNode(offset int, node *NodeAction, options stringS
 		// Property settings can be present on either
 		// sdADD or sdCHANGE actions.
 		if node.propchange && node.hasProperties() {
-			logit(logEXTRACT, "r%d-%d: setting properties %v on %s",
-				node.revision, node.index, node.props, node.path)
+			logit(logEXTRACT, "r%d-%d: setting properties %s on %s",
+				node.revision, node.index, node.props.vcString(), node.path)
 			// svn:ignore gets handled here,
 			if !options.Contains("--user-ignores") {
 				var gitignorePath string
