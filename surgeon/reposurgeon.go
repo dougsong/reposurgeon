@@ -5924,8 +5924,6 @@ type HistoryManager interface {
 type FastHistory struct {
 	visible map[revidx]*PathMap
 	visibleHere *PathMap
-	copysources map[revidx]bool
-	copytargets map[revidx]bool
 	nodeStash []NodeAction
 	revision revidx
 }
@@ -5940,8 +5938,6 @@ func newFastHistory() *FastHistory {
 func (h *FastHistory) apply(revision revidx, nodes []*NodeAction) {
 	// Digest the supplied nodes into the history.
 	// Build the visibility map for this revision.
-	logit(logFILEMAP, "r%d: copysource counts are %v",
-				revision, h.copysources)
 	// Fill in the node from-sets.
 	for _, node := range nodes {
 		// Mutate the filemap according to copies
