@@ -6170,7 +6170,7 @@ type StreamParser struct {
 	propagate            map[string]bool
 	history              HistoryManager
 	splitCommits         map[revidx]int
-	tagnodes             []*NodeAction
+	implicands             []*NodeAction
 }
 
 type daglink struct {
@@ -6632,8 +6632,14 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 							logit(logSVNPARSE, "node parsing, line %d: node %s appended", sp.importLine, node)
 							node.index = intToNodeidx(len(nodes) + 1)
 							nodes = append(nodes, *node)
-							if sp.isTag(node.path) || sp.isTag(node.fromPath) {
-								sp.tagnodes = append(sp.tagnodes, &nodes[len(nodes)-1])
+							implicated := func(node *NodeAction) bool {
+								return strings.HasPrefix(node.path, "tags") || 
+									strings.HasPrefix(node.fromPath, "tags") ||
+									strings.HasPrefix(node.path, "branches") || 
+									strings.HasPrefix(node.fromPath, "branches")
+							}
+							if implicated(node) {
+								sp.implicands = append(sp.implicands, &nodes[len(nodes)-1])
 							}
 						} else {
 							logit(logSVNPARSE, "node parsing, line %d: empty node rejected", sp.importLine)
@@ -7094,10 +7100,6 @@ func (sp *StreamParser) isBranch(pathname string) bool {
 	return ok
 }
 
-func (sp *StreamParser) isTag(pathname string) bool {
-	return strings.HasPrefix(pathname, "tags/")
-}
-
 func (sp *StreamParser) isBranchDeleted(pathname string) bool {
 	return sp.branchdeletes.Contains(pathname)
 }
@@ -7545,8 +7547,53 @@ func (sp *StreamParser) expandAllNodes(nodelist []NodeAction, options stringSet)
 
 func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// Subversion actions to import-stream commits.
+
+	// This function starts with a deserialization of a Subversion
+	// import stream that carres all the information in it. It
+	// proceeds through a sequence of phases to massage the data
+	// into a form from which a sequence of Gitspace objects
+	// isomorphic to a GFIS (Git fast-import stream) can be
+	// generated.
+	//
+	// At a high level, a Subversion stream dump is not unlike a GFIS -
+	// a sequence of addition/modification operations with parent-child
+	// relationships corresponding to time order. But there are two central
+	// problems this code has to solve.
+	//
+	// One is a basic ontological mismatch between Subversions's
+	// model of revision history and Git's.  A Subversion history
+	// is a sequence of surgical operations on a file tree in
+	// which some namespaces have onventional roles (tags/*,
+	// branches/*, trunk).  In Subversion-land it's perfectly
+	// legitimate to start a branch, delete it, and then recreate
+	// it in a later revision.  The content on the deleted branch
+	// has to be kept in the revision store because content on
+	// it might have been grafted forward while it was live.
+	//
+	// Git has a more timeless view. Tree structure isn't central
+	// at all. The model is a DAG (directed acyclic graph) of
+	// revisions, ordered by parent-child relationships. When a
+	// branch is deleted the content is just gone - you may
+	// recreate a branch with thec same name later, but you never
+	// have to be cognizamt of the content on the old branch.
+	//
+	// The other major issue is that Subversion dump streams have
+	// poor semantic locality.  One of the basic tree-surgery
+	// operations expressed in them is a wildcarded directory copy
+	// - copy everything in the source directory at a soecified
+	// revision to the target directory in present time.  To
+	// resolve this wildcard, one may have to look arbitrarily far
+	// back in the history.
+	//
+	// A minor issue is that branch creations and tags are both
+	// biormally expressed in stream dumps as commit-like objwcts
+	// with no attached file delete/add/modify operations.  There
+	// is no ntural place for these in gitspsce, but the comments
+	// in them could be interesting.  They're saved as sythetic
+	// tags, most of which should typically be junked after conversion
+	//
+	// Search forward for the word "Phase" to find phase descriptions.  
 	baton.resetProgress()
-	
 	timeit := func(tag string) {
 		sp.timeMark(tag)
 		if context.flagOptions["bigprofile"] {
@@ -7558,16 +7605,17 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	}
 
 	sp.repo.addEvent(newPassthrough(sp.repo, "#reposurgeon sourcetype svn\n"))
-	logit(logEXTRACT, "Pass 1: pruning dead branches")
+	logit(logEXTRACT, "Phase 1: pruning dead branches")
 	baton.twirl("1")
 	if !options.Contains("--preserve") {
+		// Phase 1:
 		// Identify Subversion tag/branch directories with
 		// tipdeletes and nuke them. Otherwise they're going
 		// to turn into gitspace branch and tag entities that
 		// don't die. We don't want this, because a Subversion
 		// branch delete is not just a command to clear the
 		// branch content, it says to remove the branch from
-		// every future vie the repository history
+		// every future view of the repository history.
 		//
 		// The default of --preserve off reflects a
 		// philosophical choice that the converted Subversion
@@ -7584,6 +7632,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		//
 		// In a later phase, if --preserve was on, the tipdeletes
 		// that weren't removed here will be tagified.
+		//
+		// This branch is linear-time and quite fast even on very large repositories.
 		deadbranches := newStringSet()
 		resurrectees := newStringSet()
 		for i := range sp.revisions {
@@ -7631,8 +7681,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 
 	nobranch := options.Contains("--nobranch")
 
-	logit(logEXTRACT, "Pass 2: clean tags to prevent anomalies.")
+	logit(logEXTRACT, "Phase 2: clean tags to prevent anomalies.")
 	baton.twirl("2")
+	// Phase 2:
 	// Intervene to prevent lossage from tag deletions. The Subversion data model is that a history
 	// is a sequence of surgica; operations on a tree, and a tag is just another branch
 	// of the tree. Tag deletions are a place where this clashes badly with the changeset-DAG
@@ -7643,14 +7694,21 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// and patching any copy operations from it in the future.
 	//
 	// Our first step is to refine our list so we only need to walk through tags created more than once,
-	// otherwise this pass can become a pig on large repositories.  Remember that initially sp.tagnodes
+	// otherwise this pass can become a pig on large repositories.  Remember that initially sp.implicands
 	// is a list of all nodes that have paths in the tag namespace.
+	//
+	// The exit contract of this phase is that there (1) are no branches with colliding names attached to
+	// different revisions, (2) all branches but the most recent branch in a collision clique get renamed in
+	// a predictable way, and (3) all references to renamed brabches in the stream are patched
+	// with the reaname,
+	//
+	// This branch is linear-time and quite fast even on very large repositories.
 	refcounts := make(map[string]int)
-	for i, tagnode := range sp.tagnodes {
+	for i, tagnode := range sp.implicands {
 		if tagnode.action == sdADD && tagnode.kind == sdDIR {
 			refcounts[tagnode.path]++
 		}
-		baton.percentProgress("a", int64(i), int64(len(sp.tagnodes)))
+		baton.percentProgress("a", int64(i), int64(len(sp.implicands)))
 	}
 	logit(logTAGFIX, "tag reference counts: %v", refcounts)
 	// Use https://github.com/golang/go/wiki/SliceTricks recipe for filter in place
@@ -7661,22 +7719,22 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		return refcounts[x.path] > 1 || refcounts[filepath.Dir(x.path)] > 1 ||
 			refcounts[x.fromPath] > 1 || refcounts[filepath.Dir(x.fromPath)] > 1
 	}
-	oldlength := len(sp.tagnodes)
-	for i, x := range sp.tagnodes {
+	oldlength := len(sp.implicands)
+	for i, x := range sp.implicands {
 		if relevant(x) {
-			sp.tagnodes[n] = x
+			sp.implicands[n] = x
 			n++
 		}
 		baton.percentProgress("b", int64(i), int64(oldlength))
 	}
-	sp.tagnodes = sp.tagnodes[:n]
-	logit(logTAGFIX, "multiply-added tags: %v", sp.tagnodes)
+	sp.implicands = sp.implicands[:n]
+	logit(logTAGFIX, "multiply-added tags: %v", sp.implicands)
 
 	processed := 0
-	logit(logTAGFIX, "before fixups: %v", sp.tagnodes)
-	for i := range sp.tagnodes {
-		srcnode := sp.tagnodes[i]
-		if sp.tagnodes[i].action == sdDELETE {
+	logit(logTAGFIX, "before fixups: %v", sp.implicands)
+	for i := range sp.implicands {
+		srcnode := sp.implicands[i]
+		if sp.implicands[i].action == sdDELETE {
 			newname := srcnode.path[:len(srcnode.path)] + fmt.Sprintf("-deleted-r%d-%d", srcnode.revision, srcnode.index) 
 			logit(logTAGFIX, "r%d#%d~%s: tag deletion, renaming to %s.",
 				srcnode.revision, srcnode.index, srcnode.path, newname)
@@ -7690,7 +7748,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			// pretty malformed and probably cannot be
 			// produced by the Subversion CLI.
 			for j := i - 1; j >= 0; j-- {
-				tnode := sp.tagnodes[j]
+				tnode := sp.implicands[j]
 				if strings.HasPrefix(tnode.path, srcnode.path) {
 					newpath := newname + tnode.path[len(srcnode.path):]
 					logit(logTAGFIX, "r%d#%d~%s: on tag deletion path mapped to %s.",
@@ -7703,8 +7761,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			// need to also patch any copy operations
 			// later in this delete revision.  But that
 			// too would be pretty malformed.
-			for j := i + 1; j < len(sp.tagnodes); j++ {
-				tnode := sp.tagnodes[j]
+			for j := i + 1; j < len(sp.implicands); j++ {
+				tnode := sp.implicands[j]
 				if tnode.action == sdDELETE && tnode.path == srcnode.path {
 					// Another deletion of this tag?  OK, stop patching copies.
 					// We'll deal with it in a new pass once the outer loop gets
@@ -7727,13 +7785,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			processed++
 		}
 	breakout:
-		baton.percentProgress("", int64(processed), int64(len(sp.tagnodes)))
+		baton.percentProgress("", int64(processed), int64(len(sp.implicands)))
 	}
-	logit(logTAGFIX, "after fixups: %v", sp.tagnodes)
-	sp.tagnodes = nil
+	logit(logTAGFIX, "after fixups: %v", sp.implicands)
+	sp.implicands = nil
 	timeit("cleaning")
 
-	logit(logEXTRACT, "Pass 3: build filemaps")
+	logit(logEXTRACT, "Phase 3: build filemaps")
 	baton.twirl("3")
 	sp.history = newFastHistory()
 	for ri, record := range sp.revisions {
@@ -7746,7 +7804,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// This code can eat your processor, so we make it give up
 	// its timeslice at reasonable intervals. Needed because
 	// it does not hit the disk.
-	logit(logEXTRACT, "Pass 4: build commits")
+	logit(logEXTRACT, "Phase 4: build commits")
 	baton.twirl("4")
 	sp.splitCommits = make(map[revidx]int)
 	for ri, record := range sp.revisions {
