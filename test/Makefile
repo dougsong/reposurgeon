@@ -370,7 +370,8 @@ svnload-regress:
 
 # Perform full regression on SVN streams that have clean conversions -
 # that is, no messages due to branch surgery or whatever.
-SVNCLEAN := bad-author.svn binary.svn blob-id.svn branch-drop-add.svn \
+# FIXME: We should reoort error and stop if the outout is nonempty.
+SVNCLEAN := bad-author.svn binary.svn blob-id.svn \
 	debranch.svn deletion.svn deepdirs.svn delignore.svn \
 	emptybranch.svn executable.svn expunge.svn filecopy.svn \
 	gitify.svn ignore-blank.svn mergeinfo.svn mergeinfo-with-split.svn \

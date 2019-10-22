@@ -5917,7 +5917,7 @@ func (pm *PathMap) pathnames() []string {
 // Now, a type to manage a collectiom of PathMaps used as a history of file visibility.
 
 type HistoryManager interface {
-	apply(revidx, []NodeAction)
+	apply(revidx, []*NodeAction)
 	getActionNode(revidx, string) *NodeAction
 }
 
@@ -5937,26 +5937,25 @@ func newFastHistory() *FastHistory {
 	return h
 }
 
-func (h *FastHistory) apply(revision revidx, nodes []NodeAction) {
+func (h *FastHistory) apply(revision revidx, nodes []*NodeAction) {
 	// Digest the supplied nodes into the history.
 	// Build the visibility map for this revision.
 	logit(logFILEMAP, "r%d: copysource counts are %v",
 				revision, h.copysources)
 	// Fill in the node from-sets.
-	for idx := range nodes {
-		node := &nodes[idx]
+	for _, node := range nodes {
 		// Mutate the filemap according to copies
 		if node.fromRev > 0 {
 			//assert node.fromRev < revision
 			h.visibleHere.copyFrom(node.path, h.visible[node.fromRev],
 				node.fromPath)
 			logit(logFILEMAP, "r%d-%d: r%d~%s copied to %s",
-				node.revision, idx+1, node.fromRev, node.fromPath, node.path)
+				node.revision, node.index, node.fromRev, node.fromPath, node.path)
 		}
 		// Mutate the filemap according to adds/deletes/changes
 		if node.action == sdADD && node.kind == sdFILE {
 			h.visibleHere.set(node.path, node)
-			logit(logFILEMAP, "r%d-%d: %s added", node.revision, idx+1, node.path)
+			logit(logFILEMAP, "r%d-%d: %s added", node.revision, node.index, node.path)
 		} else if node.action == sdDELETE || (node.action == sdREPLACE && node.kind == sdDIR) {
 			if node.kind == sdNONE {
 				if _, ok := h.visibleHere.get(node.path); ok {
@@ -5965,23 +5964,22 @@ func (h *FastHistory) apply(revision revidx, nodes []NodeAction) {
 					node.kind = sdDIR
 				}
 			}
-			//logit(logFILEMAP, "r%d-%d: deduced type for %s", node.revision, idx+1, node)
+			//logit(logFILEMAP, "r%d-%d: deduced type for %s", node.revision, node.index, node)
 			// Snapshot the deleted paths before
 			// removing them.
 			node.fromSet = newPathMap()
 			node.fromSet.copyFrom(node.path, h.visibleHere, node.path)
 			h.visibleHere.remove(node.path)
 			logit(logFILEMAP, "r%d-%d: %s deleted",
-				node.revision, idx+1, node.path)
+				node.revision, node.index, node.path)
 		} else if (node.action == sdCHANGE || node.action == sdREPLACE) && node.kind == sdFILE {
 			h.visibleHere.set(node.path, node)
-			logit(logFILEMAP, "r%d-%d: %s changed", node.revision, idx+1, node.path)
+			logit(logFILEMAP, "r%d-%d: %s changed", node.revision, node.index, node.path)
 		}
 	}
 	h.visible[revision] = h.visibleHere.snapshot()
 
-	for idx := range nodes {
-		node := &nodes[idx]
+	for _, node := range nodes {
 		if node.fromRev > 0 {
 			node.fromSet = newPathMap()
 			node.fromSet.copyFrom(node.fromPath, h.visible[node.fromRev], node.fromPath)
@@ -6104,12 +6102,12 @@ type RevisionRecord struct {
 	log      string
 	date     string
 	author   string
-	nodes    []NodeAction
+	nodes    []*NodeAction
 	props    OrderedMap
 	revision revidx
 }
 
-func newRevisionRecord(nodes []NodeAction, props OrderedMap, revision revidx) *RevisionRecord {
+func newRevisionRecord(nodes []*NodeAction, props OrderedMap, revision revidx) *RevisionRecord {
 	rr := new(RevisionRecord)
 	rr.revision = revision
 	rr.nodes = nodes
@@ -6503,7 +6501,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 			props := *sp.sdReadProps("commit", plen)
 			// Parsing of the revision header is done
 			var node *NodeAction
-			nodes := make([]NodeAction, 0)
+			nodes := make([]*NodeAction, 0)
 			plen = -1
 			tlen := -1
 			// Node list parsing begins
@@ -6619,7 +6617,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 						if !(node.action == sdCHANGE && !node.hasProperties() && node.blob == nil && node.fromRev == 0) {
 							logit(logSVNPARSE, "node parsing, line %d: node %s appended", sp.importLine, node)
 							node.index = intToNodeidx(len(nodes) + 1)
-							nodes = append(nodes, *node)
+							nodes = append(nodes, node)
 							implicated := func(node *NodeAction) bool {
 								return strings.HasPrefix(node.path, "tags") || 
 									strings.HasPrefix(node.fromPath, "tags") ||
@@ -6627,7 +6625,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 									strings.HasPrefix(node.fromPath, "branches")
 							}
 							if implicated(node) {
-								sp.implicands = append(sp.implicands, &nodes[len(nodes)-1])
+								sp.implicands = append(sp.implicands, node)
 							}
 						} else {
 							logit(logSVNPARSE, "node parsing, line %d: empty node rejected", sp.importLine)
@@ -7437,12 +7435,10 @@ func (sp *StreamParser) expandNode(offset int, node *NodeAction, options stringS
 	return expandedNodes
 }
 
-func (sp *StreamParser) expandAllNodes(nodelist []NodeAction, options stringSet) []*NodeAction {
+func (sp *StreamParser) expandAllNodes(nodelist []*NodeAction, options stringSet) []*NodeAction {
 	expandedNodes := make([]*NodeAction, 0)
 	hasProperties := newStringSet()
-	for n := range nodelist {
-		node := &nodelist[n]
-
+	for _, node := range nodelist {
 		// if node.props is None, no property section.
 		// if node.blob is None, no text section.
 		// Delete actions may be issued without a dir or file kind
@@ -7497,11 +7493,11 @@ func (sp *StreamParser) expandAllNodes(nodelist []NodeAction, options stringSet)
 				}
 				if len(tossThese) == 0 {
 					if hasProperties.Contains(node.path) {
-						sp.shout(fmt.Sprintf("r%d#%d~%s: properties cleared.", node.revision, n+1, node.path))
+						sp.shout(fmt.Sprintf("r%d#%d~%s: properties cleared.", node.revision, node.index, node.path))
 						hasProperties.Remove(node.path)
 					}
 				} else {
-					sp.shout(fmt.Sprintf("r%d#%d~%s properties set:", node.revision, n+1, node.path))
+					sp.shout(fmt.Sprintf("r%d#%d~%s properties set:", node.revision, node.index, node.path))
 					for _, pair := range tossThese {
 						sp.shout(fmt.Sprintf("\t%s = '%s'", pair[0], pair[1]))
 					}
@@ -7627,7 +7623,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		for i := range sp.revisions {
 			backup := len(sp.revisions) - i - 1
 			for j := range sp.revisions[backup].nodes {
-				node := &sp.revisions[backup].nodes[len(sp.revisions[backup].nodes)-j-1]
+				node := sp.revisions[backup].nodes[len(sp.revisions[backup].nodes)-j-1]
 				if !strings.HasPrefix(node.path, "tags") && !strings.HasPrefix(node.path, "branches") {
 					continue
 				}
@@ -7655,9 +7651,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 			// trick from https://github.com/golang/go/wiki/SliceTricks
 			newnodes := sp.revisions[backup].nodes[:0]
 			for j := range sp.revisions[backup].nodes {
-				node := &sp.revisions[backup].nodes[j]
+				node := sp.revisions[backup].nodes[j]
 				if node.action != sdNUKE {
-					newnodes = append(newnodes, *node)
+					newnodes = append(newnodes, node)
 				}
 			}
 			sp.revisions[backup].nodes = newnodes
@@ -8156,8 +8152,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				}
 				newcommit := newcommits[i].(*Commit)
 				copies := make([]*NodeAction, 0)
-				for j := range record.nodes {
-					noderef := &record.nodes[j]
+				for _, noderef := range record.nodes {
 					if noderef.fromRev != 0 && strings.HasPrefix(noderef.path, newcommit.common) {
 						copies = append(copies, noderef)
 					}
@@ -8260,7 +8255,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// What we give up is some detail in the diagnostic messages
 		// on zero-fileop commits.
 		if sp.large {
-			sp.revisions[ri].nodes = make([]NodeAction, 0)
+			sp.revisions[ri].nodes = make([]*NodeAction, 0)
 			// This copy loop requires that NodeAction structures cannot contain
 			// pointers to other NodeAction structures.
 			for _, n := range record.nodes {

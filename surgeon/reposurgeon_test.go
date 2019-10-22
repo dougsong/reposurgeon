@@ -1707,7 +1707,7 @@ var samplebranchTests = htests{
 
 // digest takes a string in the format emitted by repocutter see
 // and return a slice of slices of NodeAction objects.
-func digest(text string, h HistoryManager) [][]NodeAction {
+func digest(text string, h HistoryManager) [][]*NodeAction {
 	intOrDie := func(txt string) int {
 		n, err := strconv.Atoi(txt)
 		if err != nil {
@@ -1715,7 +1715,7 @@ func digest(text string, h HistoryManager) [][]NodeAction {
 		}
 		return n
 	}
-	out := make([][]NodeAction, 0)
+	out := make([][]*NodeAction, 0)
 	var lastrev revidx
 	for idx, line := range strings.Split(text, "\n") {
 		if len(line) == 0 {
@@ -1746,10 +1746,10 @@ func digest(text string, h HistoryManager) [][]NodeAction {
 		}
 		if x.revision != lastrev {
 			h.apply(intToRevidx(idx+1), out[len(out)-1])
-			out = append(out, make([]NodeAction, 0))
+			out = append(out, make([]*NodeAction, 0))
 		}
 		lastrev = x.revision
-		out[len(out)-1] = append(out[len(out)-1], x)
+		out[len(out)-1] = append(out[len(out)-1], &x)
 	}
 	return out
 }

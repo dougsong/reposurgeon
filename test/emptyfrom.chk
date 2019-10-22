@@ -132,6 +132,8 @@ committer frank <frank> 1443478431 +0000
 data 4
 r47
 from :13
+D sim-deleted-r13-1/regress_rdb.pl
+D sim-deleted-r13-1/test_lib/temp/.keepme
 M 100755 :14 sim/regress_rdb.pl
 
 tag emptycommit-2
