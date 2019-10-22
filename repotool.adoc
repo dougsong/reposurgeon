@@ -109,6 +109,13 @@ should be in the form normally used for clone commands
 This program uses the $TMPDIR environment variable, defaulting
 to '/tmp' if it is not set.
 
+[[return-values]]
+== RETURN VALUES ==
+
+1 on invalid arguments or if a command called by the script failed, 0
+otherwise.  A return value of 0 on a compare operation does *not*
+necesarily indicate a clean comparison; only empty output does that.
+
 [[bugs]]
 == BUGS ==
 
