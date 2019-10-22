@@ -5990,7 +5990,6 @@ func (h *FastHistory) apply(revision revidx, nodes []*NodeAction) {
 }
 
 func (h *FastHistory) getActionNode(revision revidx, source string) *NodeAction {
-	logit(logFILEMAP, "r%d: getActionMode(%s) ", revision, source)
 	p, _ := h.visible[revision].get(source)
 	if p != nil {
 		return p.(*NodeAction)
