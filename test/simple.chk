@@ -57,7 +57,7 @@ index
    127 commit   :126    refs/heads/master
    129 commit   :128    refs/heads/master
    130 branch   :128    refs/heads/master
-   131 tag      :113    'annotated-sample'
+   131 tag      :113    annotated-sample
 :76 tip
 tags
      2	reset	refs/tags/lightweight-sample

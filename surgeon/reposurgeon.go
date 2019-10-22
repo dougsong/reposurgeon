@@ -122,7 +122,7 @@ const version = "4.0-pre"
 
 // Tuning constants and types
 
-// Maximim number of 64-bit things (pointers) to allocate at once.
+// Maximu nm number of 64-bit things (pointers) to allocate at once.
 // Used in some code for efficient exponential chunk grabbing.
 const maxAlloc = 100000
 
@@ -316,18 +316,6 @@ func stringEscape(s string) (string, error) {
 		s = `"` + s + `"`
 	}
 	return strconv.Unquote(s)
-}
-
-// pstr is called on format-string arguments for which Python had a %q format.
-// Python's %q wraps the escapified string representation in single quotes,
-// Go's %q in double quotes.  Bridge the gap.
-// GO-FINALIZE: Once the Go translation is complete, remove all calls to this,
-// change corresponding %s format elements to %q, and rebuild the regression
-// tests
-func qtoq(s string) string {
-	s1 := fmt.Sprintf("%q", s)
-	s2 := s1[1 : len(s1)-1]
-	return "'" + s2 + "'"
 }
 
 // This representation optimizes for small memory footprint at the expense
@@ -8752,8 +8740,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				parentEvent := commit.parents()[0]
 				parent, ok := parentEvent.(*Commit)
 				if ok && parent.Branch != commit.Branch && len(commit.operations()) == 0 {
-					logit(logEXTRACT, "branch root of %s with comment %s discarded",
-						commit.Branch, qtoq(commit.Comment))
+					logit(logEXTRACT, "branch root of %s with comment %q discarded",
+						commit.Branch, commit.Comment)
 					// FIXME: Adding a reset for the new branch at the end
 					// of the event sequence was erroneous - caused later
 					// commits to be ignored. Possibly we should add a reset
@@ -15096,8 +15084,7 @@ func (rs *Reposurgeon) DoIndex(lineIn string) bool {
 			}
 			fmt.Fprintf(parse.stdout, "%6d commit %6s    %s\n", eventid+1, mark, e.Branch)
 		case *Tag:
-			// GO-FINALIZE: when port is done, remove single quotes?
-			fmt.Fprintf(parse.stdout, "%6d tag    %6s    '%4s'\n", eventid+1, e.committish, e.name)
+			fmt.Fprintf(parse.stdout, "%6d tag    %6s    %4s\n", eventid+1, e.committish, e.name)
 		case *Reset:
 			committish := e.committish
 			if committish == "" {
@@ -16628,7 +16615,7 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 		update := updateList[i]
 		check := strings.TrimSpace(update.getHeader("Check-Text"))
 		if check != "" && !strings.HasPrefix(strings.TrimSpace(event.getComment()), check) {
-			croak("check text mismatch at %s (input %d of %d), expected %s saw %s, bailing out", event.(*Commit).actionStamp(), i+1, len(updateList), qtoq(check), qtoq(event.getComment()))
+			croak("check text mismatch at %s (input %d of %d), expected %q saw %q, bailing out", event.(*Commit).actionStamp(), i+1, len(updateList), check, event.getComment())
 			return false
 		}
 		if parse.options.Contains("--empty-only") {

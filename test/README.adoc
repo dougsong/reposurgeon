@@ -404,7 +404,7 @@ agito.svn::
    lint.tst.
 
 branch-drop-add::
-   Proceesing is correct - the unmatched tags on the Git side are
+   Processing is correct - the unmatched tags on the Git side are
    from renaming the earlier, deleted version of a branch. Not used
    by any test.
 

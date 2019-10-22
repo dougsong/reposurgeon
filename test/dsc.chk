@@ -18,7 +18,7 @@
     30 commit    :29    refs/heads/alternate
     32 commit    :31    refs/heads/master
     33 branch    :31    refs/heads/master
-    34 tag       :17    'annotated'
+    34 tag       :17    annotated
 expect all commmits following :19: [20, 22, 28, 24, 30, 25, 32, 26]
 expect both commits on alternate branch and the last merge: [28, 30, 32]
 expect all master-branch commits :23 and after: [24, 25, 26, 32]
