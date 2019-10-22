@@ -7791,6 +7791,19 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	sp.implicands = nil
 	timeit("cleaning")
 
+	// Phase 3:
+	// This is where we build file visibility maps The visibility
+	// map for each revision maps a file paths to the Subversion
+	// node for the version yoo see at that revision, which mihjy
+	// not have been modified for any number of revisions back,
+	// If the path ever existed at any revision, the only way it
+	// can fail to be visible is if the last thing done to it was
+	// a delete.
+	//
+	// This phase is moderaely expensive, but once the maps are
+	// built they render unnecessary compuations that would have
+	// been prohibitively expensive in later passe. Notably the
+	// maps are everything necessary to compute ancestry. 
 	logit(logEXTRACT, "Phase 3: build filemaps")
 	baton.twirl("3")
 	sp.history = newFastHistory()
