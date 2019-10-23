@@ -122,7 +122,7 @@ const version = "4.0-pre"
 
 // Tuning constants and types
 
-// Maximu nm number of 64-bit things (pointers) to allocate at once.
+// Maximum number of 64-bit things (pointers) to allocate at once.
 // Used in some code for efficient exponential chunk grabbing.
 const maxAlloc = 100000
 
@@ -2601,7 +2601,7 @@ func (baton *Baton) resetProgress() {
 
 const logSHOUT = 0    // Unconditional
 const logWARN = 1     // Exceptional condition, probably not bug
-const logTAGFIX = 2   // Log tagfixups
+const logTAGFIX = 2   // Log tag fixups
 const logSVNDUMP = 3  // Log Subversion dumping
 const logTOPOLOGY = 3 // Log repo-extractor logic (coarse-grained)
 const logEXTRACT = 3  // Log repo-extractor logic (fine-grained)
@@ -5942,7 +5942,6 @@ type HistoryManager interface {
 type FastHistory struct {
 	visible map[revidx]*PathMap
 	visibleHere *PathMap
-	nodeStash []NodeAction
 	revision revidx
 }
 
@@ -6103,7 +6102,7 @@ func (action NodeAction) hasProperties() bool {
 
 // RevisionRecord is a list of NodeActions at a rev in a Subversion dump
 // Note that the revision field differs from the index in the revisions
-// array only if the sreream is complete (missing leading revisions or
+// array only if the stream is complete (missing leading revisions or
 // has gaps). Processing of such streams is not well-tested and will
 // probably fail.
 type RevisionRecord struct {
@@ -7584,7 +7583,12 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// in them could be interesting.  They're saved as sythetic
 	// tags, most of which should typically be junked after conversion
 	//
-	// Search forward for the word "Phase" to find phase descriptions.  
+	// Search forward for the word "Phase" to find phase descriptions.
+	//
+	// An important invariant of ths code is that once a NodeAction is
+	// created, it is never copied.  Though there may be multiple pointers
+	// to the record for node N of revision M, they all point to the
+	// same structure originally created to deserialize it.
 	baton.resetProgress()
 	timeit := func(tag string) {
 		sp.timeMark(tag)
@@ -7601,6 +7605,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	baton.twirl("1")
 	if !options.Contains("--preserve") {
 		// Phase 1:
+		//
 		// Identify Subversion tag/branch directories with
 		// tipdeletes and nuke them. Otherwise they're going
 		// to turn into gitspace branch and tag entities that
@@ -7625,7 +7630,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// In a later phase, if --preserve was on, the tipdeletes
 		// that weren't removed here will be tagified.
 		//
-		// This branch is linear-time and quite fast even on very large repositories.
+		// This branch is linear-time in the number of nodes
+		// and quite fast even on very large repositories.
 		deadbranches := newStringSet()
 		resurrectees := newStringSet()
 		for i := range sp.revisions {
@@ -7676,26 +7682,36 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	logit(logEXTRACT, "Phase 2: clean tags to prevent anomalies.")
 	baton.twirl("2")
 	// Phase 2:
-
-	// Intervene to prevent lossage from tag/branch/trunk deletions. The Subversion data model is that a history
-	// is a sequence of surgical operations on a tree, and a tag is just another branch
-	// of the tree. Tag/branch deletions are a place where this clashes badly with the changeset-DAG
-	// model used by git and oter DVCSes. Especially if the same tag/branch is recreated later.
-	// The stupid, obvious thing to do would be to just nuke the tag/branch history from  here back to
-	// its origin point, but that will cause problems if a future copy operation is ever sourced
-	// in the deleted branch (and this does happen!) We deal with this by renaming the deleted branch
-	// and patching any copy operations from it in the future.
 	//
-	// Our first step is to refine our list so we only need to walk through tags created more than once,
-	// otherwise this pass can become a pig on large repositories.  Remember that initially sp.implicands
-	// is a list of all nodes that have paths in the tag namespace.
+	// Intervene to prevent lossage from tag/branch/trunk
+	// deletions. The Subversion data model is that a history is a
+	// sequence of surgical operations on a tree, and a tag is
+	// just another branch of the tree. Tag/branch deletions are a
+	// place where this clashes badly with the changeset-DAG model
+	// used by git and oter DVCSes. Especially if the same
+	// tag/branch is recreated later.  The stupid, obvious thing
+	// to do would be to just nuke the tag/branch history from
+	// here back to its origin point, but that will cause problems
+	// if a future copy operation is ever sourced in the deleted
+	// branch (and this does happen!) We deal with this by
+	// renaming the deleted branch and patching any copy
+	// operations from it in the future.
 	//
-	// The exit contract of this phase is that there (1) are no branches with colliding names attached to
-	// different revisions, (2) all branches but the most recent branch in a collision clique get renamed in
-	// a predictable way, and (3) all references to renamed tags and branches in the stream are patched
-	// with the rename.
+	// Our first step is to refine our list so we only need to
+	// walk through tags created more than once, otherwise this
+	// pass can become a pig on large repositories.  Remember that
+	// initially sp.implicands is a list of all nodes that have
+	// paths in the tag namespace.
 	//
-	// This branch is linear-time and quite fast even on very large repositories.
+	// The exit contract of this phase is that there (1) are no
+	// branches with colliding names attached to different
+	// revisions, (2) all branches but the most recent branch in a
+	// collision clique get renamed in a predictable way, and (3)
+	// all references to renamed tags and branches in the stream
+	// are patched with the rename.
+	//
+	// This branch is linear-time in the number of nodes and quite
+	// fast even on very large repositories.
 	refcounts := make(map[string]int)
 	for i, tagnode := range sp.implicands {
 		if tagnode.action == sdADD && tagnode.kind == sdDIR {
@@ -7785,7 +7801,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// can fail to be visible is if the last thing done to it was
 	// a delete.
 	//
-	// This phase is moderaely expensive, but once the maps are
+	// This phase is moderately expensive, but once the maps are
 	// built they render unnecessary compuations that would have
 	// been prohibitively expensive in later passe. Notably the
 	// maps are everything necessary to compute ancestry. 
