@@ -5872,7 +5872,7 @@ func newPathMap() *PathMap {
 }
 
 // snapshot returns a snapshot of the current state of an evolving filemap.
-func (pm PathMap) snapshot() *PathMap {
+func (pm *PathMap) snapshot() *PathMap {
 	// The shapshot will share its direct children with the source
 	// PathMap, which is OK since except the toplevel one, every
 	// PathMap is considered immutable and a copy will be made
@@ -5890,8 +5890,8 @@ func (pm PathMap) snapshot() *PathMap {
 // _createTree ensures the hierarchy contains the directory whose path is given
 // as a slice of components, creating and snapshotting PathMaps as needed.
 // It is not part of the interface, but a convenience helper
-func (pm PathMap) _createTree(path []string) *PathMap {
-	tree := &pm
+func (pm *PathMap) _createTree(path []string) *PathMap {
+	tree := pm
 	for _, component := range path {
 		subtree, ok := tree.dirs[component]
 		if ok {
@@ -5942,10 +5942,10 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 // If there is no file in the PathMap corresponding to that path, the first
 // return value is nil (the null value of the interface{} type) and the second
 // return value is the boolean false
-func (pm PathMap) get(path string) (interface{}, bool) {
+func (pm *PathMap) get(path string) (interface{}, bool) {
 	components := strings.Split(path, svnSep)
 	// Walk along the "dirname"
-	parent := &pm;
+	parent := pm;
 	for _, component := range components[:len(components)-1] {
 		var ok bool
 		if parent, ok = parent.dirs[component]; !ok {
@@ -5958,7 +5958,7 @@ func (pm PathMap) get(path string) (interface{}, bool) {
 }
 
 // set adds a filename to the map, with associated value.
-func (pm PathMap) set(path string, value interface{}) {
+func (pm *PathMap) set(path string, value interface{}) {
 	parts := strings.Split(path, svnSep)
 	dir, name := parts[:len(parts)-1], parts[len(parts)-1]
 	pm._createTree(dir).blobs[name] = value
@@ -6005,7 +6005,7 @@ func (pm *PathMap) _itemsInner(items []pathMapItem, prefix string) []pathMapItem
 	return items
 }
 
-func (pm PathMap) items() []pathMapItem {
+func (pm *PathMap) items() []pathMapItem {
 	items := make([]pathMapItem, 0)
 	items = pm._itemsInner(items, "")
 	sort.Slice(items, func(i, j int) bool {
@@ -6014,7 +6014,7 @@ func (pm PathMap) items() []pathMapItem {
 	return items
 }
 
-func (pm PathMap) size() int {
+func (pm *PathMap) size() int {
 	size := len(pm.blobs)
 	for _, subdir := range pm.dirs {
 		size += subdir.size()
