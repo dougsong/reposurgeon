@@ -5871,10 +5871,17 @@ func newPathMap() *PathMap {
 // When pm.shared is true, at least two Pathmaps have pm in their hierarchy,
 // which means that pm should be replaced by a snapshot before any
 // modification.
+// It is not part of the interface, but a convenience helper
 func (pm *PathMap) _markShared() {
-	pm.shared = true
-	for _, v := range pm.dirs {
-		v._markShared()
+	// We make use of the fact that pm.shared is made true only via this
+	// function, and that it is never reset to false (In new snapshots it
+	// will be false of course). In particular, if pm.shared is already
+	// true, there is no need to recurse.
+	if !pm.shared {
+		pm.shared = true
+		for _, v := range pm.dirs {
+			v._markShared()
+		}
 	}
 }
 
@@ -5901,6 +5908,7 @@ func (pm *PathMap) snapshot() *PathMap {
 // When the shared attribute of the PathMap is false, _unshare returns that
 // PathMap unchanged. If the shared attribute is true, _unshare returns a
 // snapshot of the PathMap.
+// It is not part of the interface, but a convenience helper
 func (pm *PathMap) _unshare() *PathMap {
 	if pm.shared {
 		return pm.snapshot()
