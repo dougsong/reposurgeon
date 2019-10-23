@@ -385,7 +385,6 @@ func (s orderedStringSet) Intersection(other orderedStringSet) orderedStringSet 
 }
 
 func (s orderedStringSet) Union(other orderedStringSet) orderedStringSet {
-	// Naive O(n**2) method - don't use on large sets if you care about speed
 	var union orderedStringSet
 	union = s[:]
 	for _, item := range other {
@@ -478,11 +477,6 @@ func (s stringSet) Intersection(other stringSet) stringSet {
 	intersection := newStringSet()
 	for item := range s.store {
 		if other.store[item] {
-			intersection.store[item] = true
-		}
-	}
-	for item := range other.store {
-		if s.store[item] {
 			intersection.store[item] = true
 		}
 	}
