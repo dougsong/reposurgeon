@@ -15354,6 +15354,23 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 	return false
 }
 
+func (rs *Reposurgeon) DoMemProfile(line string) bool {
+	respond("writing heap profile.")
+	f, err := os.Create(line+".before-gc")
+	if err != nil {
+		log.Fatal(err)
+	}
+	pprof.WriteHeapProfile(f)
+	runtime.GC()
+	f, err = os.Create(line+".after-gc")
+	if err != nil {
+		log.Fatal(err)
+	}
+	pprof.WriteHeapProfile(f)
+	respond("wrote heap profile.")
+	return false
+}
+
 func (rs *Reposurgeon) HelpTiming() {
 	rs.helpOutput(`
 Report phase-timing results from repository analysis.
