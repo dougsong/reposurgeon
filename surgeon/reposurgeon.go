@@ -3520,7 +3520,7 @@ func markNumber(markstring string) markidx {
 	n, _ := strconv.Atoi(markstring[1:])
 	return markidx(n & int(^markidx(0)))
 }
- 
+
 func intToMarkidx(markint int) markidx {
 	return markidx(markint & int(^markidx(0)))
 }
@@ -6302,6 +6302,7 @@ type StreamParser struct {
 	lastcookie  Cookie
 	// Everything below here is Subversion-specific
 	branches             map[string]*Commit // Points to branch root commits
+	_branches_sorted     []string
 	branchlink           map[string]daglink
 	branchdeletes        orderedStringSet
 	branchcopies         orderedStringSet
@@ -6336,6 +6337,7 @@ func newStreamParser(repo *Repository) *StreamParser {
 	sp.linebuffers = make([]string, 0)
 	// Everything below here is Subversion-specific
 	sp.branches = make(map[string]*Commit)
+	sp._branches_sorted = nil
 	sp.branchlink = make(map[string]daglink)
 	sp.branchdeletes = newOrderedStringSet()
 	sp.branchcopies = newOrderedStringSet()
@@ -6349,6 +6351,12 @@ func newStreamParser(repo *Repository) *StreamParser {
 	sp.propagate = make(map[string]bool)
 	sp.splitCommits = make(map[revidx]int)
 	return sp
+}
+
+func (sp *StreamParser) addBranch(name string) {
+	sp.branches[name] = nil
+	sp._branches_sorted = nil
+	return
 }
 
 func (sp *StreamParser) error(msg string) {
@@ -6596,17 +6604,22 @@ func (sp *StreamParser) sdReadProps(target string, checklength int) *OrderedMap 
 
 func (sp *StreamParser) branchlist() []string {
 	//The branch list in deterministic order, most specific branches first.
-	out := make([]string, 0)
-	for key := range sp.branches {
-		out = append(out, key)
+	if sp._branches_sorted != nil {
+		return sp._branches_sorted
 	}
-	sort.Slice(out, func(i, j int) bool {
-		if len(out[i]) > len(out[j]) {
+	sp._branches_sorted = make([]string, len(sp.branches))
+	idx := 0
+	for key := range sp.branches {
+		sp._branches_sorted[idx] = key
+		idx += 1
+	}
+	sort.Slice(sp._branches_sorted, func(i, j int) bool {
+		if len(sp._branches_sorted[i]) > len(sp._branches_sorted[j]) {
 			return true
 		}
-		return out[i] > out[j]
+		return sp._branches_sorted[i] > sp._branches_sorted[j]
 	})
-	return out
+	return sp._branches_sorted
 }
 
 func (sp *StreamParser) timeMark(label string) {
@@ -7353,11 +7366,11 @@ func (sp *StreamParser) expandNode(node *NodeAction, options orderedStringSet) [
 			if node.action == sdADD && !sp.isBranch(np) {
 				for _, trial := range context.listOptions["svn_branchify"] {
 					if !strings.Contains(trial, "*") && trial == node.path {
-						sp.branches[np] = nil
+						sp.addBranch(np)
 					} else if strings.HasSuffix(trial, svnSep+"*") && filepath.Dir(trial) == filepath.Dir(node.path) && !context.listOptions["svn_branchify"].Contains(np+"*") {
-						sp.branches[np] = nil
+						sp.addBranch(np)
 					} else if trial == "*" && !context.listOptions["svn_branchify"].Contains(np+"*") && strings.Count(node.path, svnSep) < 1 {
-						sp.branches[np] = nil
+						sp.addBranch(np)
 					}
 				}
 				if sp.isBranch(np) {
@@ -8591,7 +8604,7 @@ func svnProcessBranches(sp *StreamParser, options orderedStringSet, baton *Baton
 				}
 			} else {
 				commit.setBranch("root")
-				sp.branches["root"] = nil
+				sp.addBranch("root")
 			}
 			lastbranch = branch
 			baton.percentProgress("a", int64(idx), int64(len(commits)))
