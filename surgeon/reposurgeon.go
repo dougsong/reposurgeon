@@ -15334,6 +15334,10 @@ func (rs *Reposurgeon) DoIndex(lineIn string) bool {
 func (rs *Reposurgeon) HelpProfile() {
 	rs.helpOutput(`
 Enable profiling. Profile statistics are dumped to the path given as argument.
+They are in the format used by "go tool pprof". 
+
+The profle is dumped when you either invoke "profile" without argument or
+on normal program exit.
 `)
 }
 
@@ -15354,20 +15358,35 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 	return false
 }
 
+func (rs *Reposurgeon) MemProfile() {
+	rs.helpOutput(`
+Dump two memory profiles in the format used by "go tool pprof". One
+is immmediate, then a GC is performed, then another memory profile
+is dumped.  The optional argument is a prefix for the profile name.
+The command reports the names of the profiles dunped.
+`)
+}
+
 func (rs *Reposurgeon) DoMemProfile(line string) bool {
 	respond("writing heap profile.")
-	f, err := os.Create(line+".before-gc")
+	prefix := ""
+	if line != "" {
+		prefix = line + "-"
+	}
+	before := prefix + "before-gc.prof"
+	f, err := os.Create(before)
 	if err != nil {
 		log.Fatal(err)
 	}
 	pprof.WriteHeapProfile(f)
 	runtime.GC()
-	f, err = os.Create(line+".after-gc")
+	after := prefix + "after-gc.prof"
+	f, err = os.Create(after)
 	if err != nil {
 		log.Fatal(err)
 	}
 	pprof.WriteHeapProfile(f)
-	respond("wrote heap profile.")
+	respond("Memory profilres written to %s and %s.", before, after)
 	return false
 }
 

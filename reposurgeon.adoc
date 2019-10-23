@@ -1581,11 +1581,6 @@ disk space.
 +clear+ [ _option_ ]::
    Turn off an option flag.  With no arguments, list all options
 
-+profile+ [ _path_ ]::
-   Enable profiling. Profile statistics are dumped to the path
-   given as argument. Must be one of the initial command-line arguments, and
-   gathers statistics only on code executed via '-'.
-
 +timing+ [>__outfile__ ]::
    Display statistics on phase timing in repository analysis.
    Mainly of interest to developers trying to speed up the program.
@@ -1598,6 +1593,18 @@ long-running conversion recipes.
    Report memory usage.  Runs a garbage-collect before reporting so the figure will better relect
    storage currently held in loaded repositories; this will not affect the reported high-water
    mark.
+
++profile+ [ _path_ ]::
+   Enable profiling. Profile statistics are dumped to the path
+   given as argument. Profile data is dumped either when you invoke
+   "profile" without argument or the program exits normally.  Profile
+   data is in the format used by "go tool ppreof".
+
++memprofile+ [ _path_ ]::
+   Dump two memory profiles in the format used by "go tool pprof". One
+   is immmediate, then a GC is performed, then another memory profile
+   is dumped.  The optional argument is a prefix for the profile name.
+   The command reports the names of the profiles dunped.
 
 +exit+::
    Exit, reporting the time. Included here because, while EOT will
