@@ -7183,11 +7183,11 @@ func (sp *StreamParser) lastRelevantCommit(maxRev revidx, path string, attr stri
 	return nil
 }
 
-func (sp *StreamParser) expandNode(offset int, node *NodeAction, options stringSet) []*NodeAction {
+func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeAction {
 	expandedNodes := make([]*NodeAction, 0)
 	appendExpanded := func(newnode *NodeAction) {
 		newnode.generated = true
-		newnode.index = intToNodeidx(offset + len(expandedNodes) + 1)
+		newnode.index = intToNodeidx(len(expandedNodes) + 1)
 		expandedNodes = append(expandedNodes, newnode)
 	}
 	// Starting with the nodes in the Subversion dump, expand them into a set that
@@ -7515,7 +7515,7 @@ func (sp *StreamParser) expandAllNodes(nodelist []*NodeAction, options stringSet
 		}
 
 		// expand directory copy operations 
-		expandedNodes = append(expandedNodes, sp.expandNode(len(nodelist), node, options)...)
+		expandedNodes = append(expandedNodes, sp.expandNode(node, options)...)
 	}
 
 	logit(logEXTRACT, "%d expanded Subversion nodes", len(expandedNodes))
