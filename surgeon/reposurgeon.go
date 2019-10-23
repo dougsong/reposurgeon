@@ -5949,6 +5949,7 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 	targetDir, targetName := parts[:len(parts)-1], parts[len(parts)-1]
 	// And perform the copy. In normal cases, only one of the dir and file exist
 	if tree, ok := sourceParent.dirs[sourceName]; ok {
+		tree._markShared()
 		pm._createTree(targetDir).dirs[targetName] = tree
 	}
 	if blob, ok := sourceParent.blobs[sourceName]; ok {
