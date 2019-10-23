@@ -321,14 +321,14 @@ func stringEscape(s string) (string, error) {
 // This representation optimizes for small memory footprint at the expense
 // of speed.  To make the opposite trade we would do the obvious thing with
 // map[string] bool.
-type stringSet []string
+type orderedStringSet []string
 
-func newStringSet(elements ...string) stringSet {
+func newOrderedStringSet(elements ...string) orderedStringSet {
 	set := make([]string, 0)
 	return append(set, elements...)
 }
 
-func (s stringSet) Contains(item string) bool {
+func (s orderedStringSet) Contains(item string) bool {
 	for _, el := range s {
 		if item == el {
 			return true
@@ -337,7 +337,7 @@ func (s stringSet) Contains(item string) bool {
 	return false
 }
 
-func (s *stringSet) Remove(item string) bool {
+func (s *orderedStringSet) Remove(item string) bool {
 	for i, el := range *s {
 		if item == el {
 			// Zero out the deleted element so it's GCed
@@ -350,7 +350,7 @@ func (s *stringSet) Remove(item string) bool {
 	return false
 }
 
-func (s *stringSet) Add(item string) {
+func (s *orderedStringSet) Add(item string) {
 	for _, el := range *s {
 		if el == item {
 			return
@@ -359,8 +359,8 @@ func (s *stringSet) Add(item string) {
 	*s = append(*s, item)
 }
 
-func (s stringSet) Subtract(other stringSet) stringSet {
-	var diff stringSet
+func (s orderedStringSet) Subtract(other orderedStringSet) orderedStringSet {
+	var diff orderedStringSet
 	for _, outer := range s {
 		for _, inner := range other {
 			if outer == inner {
@@ -373,9 +373,9 @@ func (s stringSet) Subtract(other stringSet) stringSet {
 	return diff
 }
 
-func (s stringSet) Intersection(other stringSet) stringSet {
+func (s orderedStringSet) Intersection(other orderedStringSet) orderedStringSet {
 	// Naive O(n**2) method - don't use on large sets if you care about speed
-	var intersection stringSet
+	var intersection orderedStringSet
 	for _, item := range s {
 		if other.Contains(item) {
 			intersection = append(intersection, item)
@@ -384,9 +384,9 @@ func (s stringSet) Intersection(other stringSet) stringSet {
 	return intersection
 }
 
-func (s stringSet) Union(other stringSet) stringSet {
+func (s orderedStringSet) Union(other orderedStringSet) orderedStringSet {
 	// Naive O(n**2) method - don't use on large sets if you care about speed
-	var union stringSet
+	var union orderedStringSet
 	union = s[:]
 	for _, item := range other {
 		if !s.Contains(item) {
@@ -396,7 +396,7 @@ func (s stringSet) Union(other stringSet) stringSet {
 	return union
 }
 
-func (s stringSet) String() string {
+func (s orderedStringSet) String() string {
 	if len(s) == 0 {
 		return "[]"
 	}
@@ -409,7 +409,7 @@ func (s stringSet) String() string {
 	return rep[0:len(rep)-2] + "]"
 }
 
-func (s stringSet) Equal(other stringSet) bool {
+func (s orderedStringSet) Equal(other orderedStringSet) bool {
 	if len(s) != len(other) {
 		return false
 	}
@@ -422,11 +422,124 @@ func (s stringSet) Equal(other stringSet) bool {
 	return true
 }
 
-func (s stringSet) Empty() bool {
+func (s orderedStringSet) Empty() bool {
 	return len(s) == 0
 }
 
-// A copy of the stringSet code with the names changed to protect the innocent.
+type stringSet struct {
+	store map[string]bool
+}
+
+func newStringSet(elements ...string) stringSet {
+	var ns stringSet
+	ns.store = make(map[string]bool, 0)
+	for _, el := range elements {
+		ns.store[el] = true
+	}
+	return ns
+}
+
+// Elements bares the underlying map so we can iterate over its keys
+func (s stringSet) Iterate() map[string]bool {
+	return s.store
+}
+
+func (s stringSet) Ordered() orderedStringSet {
+	oset := newOrderedStringSet()
+	for item := range s.store {
+		oset.Add(item)
+	}
+	return oset
+}
+
+func (s stringSet) Contains(item string) bool {
+	return s.store[item]
+}
+
+func (s *stringSet) Remove(item string) {
+	delete(s.store, item)
+}
+
+func (s *stringSet) Add(item string) {
+	s.store[item] = true
+}
+
+func (s stringSet) Subtract(other stringSet) stringSet {
+	diff := newStringSet()
+	for item := range s.store {
+		if !other.store[item] {
+			diff.store[item] = true
+		}
+	}
+	return diff
+}
+
+func (s stringSet) Intersection(other stringSet) stringSet {
+	intersection := newStringSet()
+	for item := range s.store {
+		if other.store[item] {
+			intersection.store[item] = true
+		}
+	}
+	for item := range other.store {
+		if s.store[item] {
+			intersection.store[item] = true
+		}
+	}
+	return intersection
+}
+
+func (s stringSet) Union(other stringSet) stringSet {
+	// Naive O(n**2) method - don't use on large sets if you care about speed
+	union := newStringSet()
+	for item := range s.store {
+		union.store[item] = true
+	}
+	for item := range other.store {
+		union.store[item] = true
+	}
+	return union
+}
+
+func (s stringSet) String() string {
+	if len(s.store) == 0 {
+		return "[]"
+	}
+	rep := "["
+	for el := range s.store {
+		rep += "\""
+		rep += el
+		rep += "\", "
+	}
+	return rep[0:len(rep)-2] + "]"
+}
+
+func (s stringSet) Equal(other stringSet) bool {
+	if len(s.store) != len(other.store) {
+		return false
+	}
+	for item := range s.store {
+		if !other.store[item] {
+			return false
+		}
+	}
+	for item := range other.store {
+		if !s.store[item] {
+			return false
+		}
+	}
+	return true
+}
+
+func (s stringSet) Empty() bool {
+	return len(s.store) == 0
+}
+
+func (s stringSet) Len() int {
+	return len(s.store)
+}
+
+// A copy of the orderedStringSet code with the names changed to protect the innocent.
 // Lack of generics is annoying.
 type orderedIntSet []int
 
@@ -732,14 +845,14 @@ type VCS struct {
 	name         string
 	subdirectory string
 	exporter     string
-	styleflags   stringSet
-	extensions   stringSet
+	styleflags   orderedStringSet
+	extensions   orderedStringSet
 	initializer  string
 	lister       string
 	importer     string
 	checkout     string
-	preserve     stringSet
-	prenuke      stringSet
+	preserve     orderedStringSet
+	prenuke      orderedStringSet
 	authormap    string
 	ignorename   string
 	dfltignores  string
@@ -754,7 +867,7 @@ const tokenNumeric = `\s` + suffixNumeric
 const dottedNumeric = `\s[0-9]+(\.[0-9]+)`
 
 func (vcs VCS) String() string {
-	realignores := newStringSet()
+	realignores := newOrderedStringSet()
 	for _, item := range strings.Split(strings.Trim(vcs.dfltignores, "\n"), "\n") {
 		if len(item) > 0 && !strings.HasPrefix(item, "# ") {
 			realignores.Add(item)
@@ -805,8 +918,11 @@ type Importer struct {
 	basevcs *VCS      // Underlying VCS if engine is an extractor
 }
 
+
 var vcstypes []VCS
 var importers []Importer
+var nullStringSet stringSet
+var nullOrderedStringSet orderedStringSet
 
 // This one is special because it's used directly in the Subversion
 // dump parser, as well as in the VCS capability table.
@@ -835,14 +951,14 @@ func init() {
 			name:         "git",
 			subdirectory: ".git",
 			exporter:     "git fast-export --signed-tags=verbatim --tag-of-filtered-object=drop --all",
-			styleflags:   newStringSet(),
-			extensions:   newStringSet(),
+			styleflags:   newOrderedStringSet(),
+			extensions:   newOrderedStringSet(),
 			initializer:  "git init --quiet",
 			importer:     "git fast-import --quiet",
 			checkout:     "git checkout",
 			lister:       "git ls-files",
-			prenuke:      newStringSet(".git/config", ".git/hooks"),
-			preserve:     newStringSet(".git/config", ".git/hooks"),
+			prenuke:      newOrderedStringSet(".git/config", ".git/hooks"),
+			preserve:     newOrderedStringSet(".git/config", ".git/hooks"),
 			authormap:    ".git/cvs-authors",
 			ignorename:   ".gitignore",
 			dfltignores:  "",
@@ -854,19 +970,19 @@ func init() {
 			name:         "bzr",
 			subdirectory: ".bzr",
 			exporter:     "bzr fast-export --no-plain ${basename}",
-			styleflags: newStringSet(
+			styleflags: newOrderedStringSet(
 				"export-progress",
 				"no-nl-after-commit",
 				"nl-after-comment"),
-			extensions: newStringSet(
+			extensions: newOrderedStringSet(
 				"empty-directories",
 				"multiple-authors", "commit-properties"),
 			initializer: "",
 			lister:      "",
 			importer:    "bzr fast-import -",
 			checkout:    "bzr checkout",
-			prenuke:     newStringSet(".bzr/plugins"),
-			preserve:    newStringSet(),
+			prenuke:     newOrderedStringSet(".bzr/plugins"),
+			preserve:    newOrderedStringSet(),
 			authormap:   "",
 			project:     "http://bazaar.canonical.com/en/",
 			ignorename:  ".bzrignore",
@@ -891,17 +1007,17 @@ bzr-orphans
 			name:         "hg",
 			subdirectory: ".hg",
 			exporter:     "",
-			styleflags: newStringSet(
+			styleflags: newOrderedStringSet(
 				"import-defaults",
 				"nl-after-comment",
 				"export-progress"),
-			extensions:  newStringSet(),
+			extensions:  newOrderedStringSet(),
 			initializer: "hg init",
 			lister:      "hg status -macn",
 			importer:    "hg fastimport ${tempfile}",
 			checkout:    "hg checkout",
-			prenuke:     newStringSet(".hg/hgrc"),
-			preserve:    newStringSet(".hg/hgrc"),
+			prenuke:     newOrderedStringSet(".hg/hgrc"),
+			preserve:    newOrderedStringSet(".hg/hgrc"),
 			authormap:   "",
 			ignorename:  ".hgignore",
 			dfltignores: "",
@@ -918,14 +1034,14 @@ branch is renamed to 'master'.
 			name:         "darcs",
 			subdirectory: "_darcs",
 			exporter:     "darcs fastconvert export",
-			styleflags:   newStringSet(),
-			extensions:   newStringSet(),
+			styleflags:   newOrderedStringSet(),
+			extensions:   newOrderedStringSet(),
 			initializer:  "",
 			lister:       "darcs show files",
 			importer:     "darcs fastconvert import",
 			checkout:     "",
-			prenuke:      newStringSet(),
-			preserve:     newStringSet(),
+			prenuke:      newOrderedStringSet(),
+			preserve:     newOrderedStringSet(),
 			authormap:    "",
 			ignorename:   "_darcs/prefs/boring",
 			dfltignores: `
@@ -1036,14 +1152,14 @@ core
 			name:         "mtn",
 			subdirectory: "_MTN",
 			exporter:     "mtn git_export",
-			styleflags:   newStringSet(),
-			extensions:   newStringSet(),
+			styleflags:   newOrderedStringSet(),
+			extensions:   newOrderedStringSet(),
 			initializer:  "",
 			lister:       "mtn list known",
 			importer:     "",
 			checkout:     "",
-			prenuke:      newStringSet(),
-			preserve:     newStringSet(),
+			prenuke:      newOrderedStringSet(),
+			preserve:     newOrderedStringSet(),
 			authormap:    "",
 			ignorename:   ".mtn_ignore", // Assumes default hooks
 			dfltignores: `
@@ -1092,14 +1208,14 @@ _darcs
 			name:         "svn",
 			subdirectory: "locks",
 			exporter:     "svnadmin dump .",
-			styleflags:   newStringSet("import-defaults", "export-progress"),
-			extensions:   newStringSet(),
+			styleflags:   newOrderedStringSet("import-defaults", "export-progress"),
+			extensions:   newOrderedStringSet(),
 			initializer:  "svnadmin create .",
 			importer:     "",
 			checkout:     "",
 			lister:       "",
-			prenuke:      newStringSet(),
-			preserve:     newStringSet("hooks"),
+			prenuke:      newOrderedStringSet(),
+			preserve:     newOrderedStringSet("hooks"),
 			authormap:    "",
 			ignorename:   "",
 			// Note dangerous hack here: the leading
@@ -1115,14 +1231,14 @@ _darcs
 			name:         "cvs",
 			subdirectory: "CVSROOT", // Can't be Attic, that doesn't always exist.
 			exporter:     "find . -name '*,v' -print | cvs-fast-export --reposurgeon",
-			styleflags:   newStringSet("import-defaults", "export-progress"),
-			extensions:   newStringSet(),
+			styleflags:   newOrderedStringSet("import-defaults", "export-progress"),
+			extensions:   newOrderedStringSet(),
 			initializer:  "",
 			importer:     "",
 			checkout:     "",
 			lister:       "",
-			prenuke:      newStringSet(),
-			preserve:     newStringSet(),
+			prenuke:      newOrderedStringSet(),
+			preserve:     newOrderedStringSet(),
 			authormap:    "",
 			ignorename:   "",
 			dfltignores: `
@@ -1163,13 +1279,13 @@ core
 			name:         "rcs",
 			subdirectory: "RCS",
 			exporter:     "find . -name '*,v' -print | cvs-fast-export --reposurgeon",
-			styleflags:   newStringSet("export-progress"),
-			extensions:   newStringSet(),
+			styleflags:   newOrderedStringSet("export-progress"),
+			extensions:   newOrderedStringSet(),
 			initializer:  "",
 			importer:     "",
 			checkout:     "",
 			lister:       "",
-			preserve:     newStringSet(),
+			preserve:     newOrderedStringSet(),
 			authormap:    "",
 			ignorename:   "",
 			dfltignores:  "", // Has none
@@ -1181,14 +1297,14 @@ core
 			name:         "src",
 			subdirectory: ".src",
 			exporter:     "src fast-export",
-			styleflags:   newStringSet(),
-			extensions:   newStringSet(),
+			styleflags:   newOrderedStringSet(),
+			extensions:   newOrderedStringSet(),
 			initializer:  "src init",
 			importer:     "",
 			checkout:     "",
 			lister:       "src ls",
-			prenuke:      newStringSet(),
-			preserve:     newStringSet(),
+			prenuke:      newOrderedStringSet(),
+			preserve:     newOrderedStringSet(),
 			authormap:    "",
 			ignorename:   "",
 			dfltignores:  "", // Has none
@@ -1201,14 +1317,14 @@ core
 			name:         "bk",
 			subdirectory: ".bk",
 			exporter:     "bk fast-export -q --no-bk-keys",
-			styleflags:   newStringSet(),
-			extensions:   newStringSet(),
+			styleflags:   newOrderedStringSet(),
+			extensions:   newOrderedStringSet(),
 			initializer:  "", // bk setup doesn't work here
 			lister:       "bk gfiles -U",
 			importer:     "bk fast-import -q",
 			checkout:     "",
-			prenuke:      newStringSet(),
-			preserve:     newStringSet(),
+			prenuke:      newOrderedStringSet(),
+			preserve:     newOrderedStringSet(),
 			authormap:    "",
 			ignorename:   "BitKeeper/etc/ignore",
 			dfltignores:  "",                    // Has none
@@ -1241,6 +1357,8 @@ core
 		engine:  newHgExtractor(),
 		basevcs: findVCS("hg"),
 	})
+	nullStringSet = newStringSet()
+	nullOrderedStringSet = newOrderedStringSet()
 }
 
 // Import and export filter methods for VCSes that use magic files rather
@@ -1308,7 +1426,7 @@ type Extractor interface {
 	// Return true if repo has no unsaved changes.
 	isClean() bool
 	// Check the directory out to a specified revision, return a manifest.
-	checkout(string) stringSet
+	checkout(string) orderedStringSet
 	// Return a commit's change comment as a string.
 	getComment(string) string
 }
@@ -1694,7 +1812,7 @@ func (ge *GitExtractor) isClean() bool {
 }
 
 // checkout checks the repository out to a specified revision.
-func (ge *GitExtractor) checkout(rev string) stringSet {
+func (ge *GitExtractor) checkout(rev string) orderedStringSet {
 	exec.Command("git", "checkout", "--quiet", rev).Run()
 	data, err := captureFromProcess("git ls-files")
 	if err != nil {
@@ -1704,7 +1822,7 @@ func (ge *GitExtractor) checkout(rev string) stringSet {
 	if manifest[len(manifest)-1] == "" {
 		manifest = manifest[:len(manifest)-1]
 	}
-	return newStringSet(manifest...)
+	return newOrderedStringSet(manifest...)
 }
 
 // getComment returns a commit's change comment as a string.
@@ -2025,7 +2143,7 @@ func mustCaptureFromProcess(command string, errorclass string) string {
 }
 
 // checkout checka the directory out to a specified revision, return a manifest.
-func (he HgExtractor) checkout(rev string) stringSet {
+func (he HgExtractor) checkout(rev string) orderedStringSet {
 	pwd, err := os.Getwd()
 	if err != nil {
 		panic(throw("extractor", "Could not get working directory: %v", err))
@@ -2102,7 +2220,7 @@ func (he HgExtractor) checkout(rev string) stringSet {
 	}
 	data := mustCaptureFromProcess("hg manifest", "extractor")
 	manifest := strings.Trim(data, "\n")
-	return newStringSet(strings.Split(manifest, "\n")...)
+	return newOrderedStringSet(strings.Split(manifest, "\n")...)
 }
 
 // getComment returns a commit's change comment as a string.
@@ -2161,8 +2279,8 @@ func (rs *RepoStreamer) getAuthors(rev string) []string {
 }
 
 // fileSetAt returns the set of all files visible at a revision
-func (rs *RepoStreamer) fileSetAt(revision string) stringSet {
-	var fs stringSet
+func (rs *RepoStreamer) fileSetAt(revision string) orderedStringSet {
+	var fs orderedStringSet
 	for key := range rs.visibleFiles[revision] {
 		fs.Add(key)
 	}
@@ -2665,7 +2783,7 @@ type Context struct {
 	abortScript bool
 	abortLock   sync.Mutex
 	flagOptions map[string]bool
-	listOptions map[string]stringSet
+	listOptions map[string]orderedStringSet
 	mapOptions  map[string]map[string]string
 	branchMappings []branchMapping
 }
@@ -2681,7 +2799,7 @@ type branchMapping struct {
 
 func (ctx *Context) init() {
 	ctx.flagOptions = make(map[string]bool)
-	ctx.listOptions = make(map[string]stringSet)
+	ctx.listOptions = make(map[string]orderedStringSet)
 	ctx.mapOptions = make(map[string]map[string]string)
 	ctx.signals = make(chan os.Signal, 1)
 	ctx.logfp = os.Stderr
@@ -2925,7 +3043,7 @@ var MessageBlockDivider = bytes.Repeat([]byte("-"), 78)
 // MessageBlock is similar to net/mail's type, but the body is pulled inboard
 // as a string.  This is appropriate because change comments are normally short.
 type MessageBlock struct {
-	hdnames stringSet
+	hdnames orderedStringSet
 	header  map[string]string
 	body    string
 }
@@ -3329,7 +3447,7 @@ func (attr *Attribution) clone() *Attribution {
 
 // emailOut updates a message-block object with a representation of this
 // attribution object.
-func (attr *Attribution) emailOut(modifiers stringSet, msg *MessageBlock, hdr string) {
+func (attr *Attribution) emailOut(modifiers orderedStringSet, msg *MessageBlock, hdr string) {
 	msg.setHeader(hdr, attr.fullname+" <"+attr.email+">")
 	msg.setHeader(hdr+"-Date", attr.date.rfc1123())
 }
@@ -3457,8 +3575,8 @@ func (b *Blob) idMe() string {
 }
 
 // pathlist is implemented for uniformity with commits and fileops."
-func (b *Blob) paths(_pathtype stringSet) stringSet {
-	return newStringSet(b.pathlist...)
+func (b *Blob) paths(_pathtype orderedStringSet) orderedStringSet {
+	return newOrderedStringSet(b.pathlist...)
 }
 
 func (b *Blob) addalias(argpath string) {
@@ -3779,12 +3897,12 @@ func (t *Tag) showlegacy() string {
 }
 
 // tags enables do_tags() to report tags.
-func (t *Tag) tags(modifiers stringSet, eventnum int, _cols int) string {
+func (t *Tag) tags(modifiers orderedStringSet, eventnum int, _cols int) string {
 	return fmt.Sprintf("%6d\ttag\t%s", eventnum+1, t.name)
 }
 
 // emailOut enables DoMsgout() to report tag metadata
-func (t *Tag) emailOut(modifiers stringSet, eventnum int,
+func (t *Tag) emailOut(modifiers orderedStringSet, eventnum int,
 	filterRegexp *regexp.Regexp) string {
 	msg, _ := newMessageBlock(nil)
 	msg.setHeader("Event-Number", fmt.Sprintf("%d", eventnum+1))
@@ -3907,7 +4025,7 @@ func branchname(tagname string) string {
 }
 
 // stamp enables do_stamp() to report action stamps
-func (t *Tag) stamp(_modifiers stringSet, _eventnum int, cols int) string {
+func (t *Tag) stamp(_modifiers orderedStringSet, _eventnum int, cols int) string {
 	report := "<" + t.tagger.actionStamp() + "> " + strings.Split(t.Comment, "\n")[0]
 	if cols > 0 {
 		report = report[0:cols]
@@ -4004,7 +4122,7 @@ func (reset *Reset) moveto(repo *Repository) {
 }
 
 // tags enables do_tags() to report resets."
-func (reset Reset) tags(modifiers stringSet, eventnum int, _cols int) string {
+func (reset Reset) tags(modifiers orderedStringSet, eventnum int, _cols int) string {
 	return fmt.Sprintf("%6d\treset\t%s", eventnum+1, reset.ref)
 }
 
@@ -4206,23 +4324,23 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 }
 
 // paths returns the set of all paths touched by this file op
-func (fileop *FileOp) paths(pathtype stringSet) stringSet {
+func (fileop *FileOp) paths(pathtype orderedStringSet) orderedStringSet {
 	if pathtype == nil {
-		pathtype = stringSet{opM, opD, opR, opC, opN}
+		pathtype = orderedStringSet{opM, opD, opR, opC, opN}
 	}
 	if !pathtype.Contains(fileop.op) {
-		return stringSet{}
+		return orderedStringSet{}
 	}
 	if fileop.op == opM || fileop.op == opD || fileop.op == opN {
-		return stringSet{fileop.Path}
+		return orderedStringSet{fileop.Path}
 	}
 	if fileop.op == opR || fileop.op == opC {
-		return stringSet{fileop.Source, fileop.Target}
+		return orderedStringSet{fileop.Source, fileop.Target}
 	}
 	// Ugh...this isn't right for deleteall, but since we don't expect
 	// to see that except at branch tips we'll ignore it for now.
 	if fileop.op == deleteall {
-		return stringSet{}
+		return orderedStringSet{}
 	}
 	panic("Unknown fileop type " + fileop.op)
 }
@@ -4576,7 +4694,7 @@ func (commit *Commit) hasProperties() bool {
 	return commit.properties != nil
 }
 // lister enables do_list() to report commits.
-func (commit *Commit) lister(_modifiers stringSet, eventnum int, cols int) string {
+func (commit *Commit) lister(_modifiers orderedStringSet, eventnum int, cols int) string {
 	topline := strings.Split(commit.Comment, "\n")[0]
 	summary := fmt.Sprintf("%6d %s %6s ",
 		eventnum+1, commit.date().rfc3339(), commit.mark)
@@ -4592,7 +4710,7 @@ func (commit *Commit) lister(_modifiers stringSet, eventnum int, cols int) strin
 }
 
 // stamp enables do_stamp() to report action stamps.
-func (commit *Commit) stamp(modifiers stringSet, _eventnum int, cols int) string {
+func (commit *Commit) stamp(modifiers orderedStringSet, _eventnum int, cols int) string {
 	report := "<" + commit.actionStamp() + "> " + strings.Split(commit.Comment, "\n")[0]
 	if cols > 0 && len(report) > cols {
 		report = report[:cols]
@@ -4601,12 +4719,12 @@ func (commit *Commit) stamp(modifiers stringSet, _eventnum int, cols int) string
 }
 
 // tags enables do_tags() to report tag tip commits.
-func (commit *Commit) tags(_modifiers stringSet, eventnum int, _cols int) string {
+func (commit *Commit) tags(_modifiers orderedStringSet, eventnum int, _cols int) string {
 	if commit.Branch == "" || !strings.Contains(commit.Branch, "/tags/") {
 		return ""
 	}
 	if commit.hasChildren() {
-		successorBranches := newStringSet()
+		successorBranches := newOrderedStringSet()
 		for _, child := range commit.children() {
 			switch child.(type) {
 			case *Commit:
@@ -4626,7 +4744,7 @@ func (commit *Commit) tags(_modifiers stringSet, eventnum int, _cols int) string
 }
 
 // emailOut enables DoMsgout() to report commit metadata.
-func (commit *Commit) emailOut(modifiers stringSet,
+func (commit *Commit) emailOut(modifiers orderedStringSet,
 	eventnum int, filterRegexp *regexp.Regexp) string {
 	msg, _ := newMessageBlock(nil)
 	msg.setHeader("Event-Number", fmt.Sprintf("%d", eventnum+1))
@@ -5157,8 +5275,8 @@ func (commit *Commit) fileopDump() {
 }
 
 // paths returns the set of all paths touched by this commit.
-func (commit *Commit) paths(pathtype stringSet) stringSet {
-	pathset := newStringSet()
+func (commit *Commit) paths(pathtype orderedStringSet) orderedStringSet {
+	pathset := newOrderedStringSet()
 	for _, fileop := range commit.operations() {
 		for _, item := range fileop.paths(pathtype) {
 			pathset.Add(item)
@@ -5319,9 +5437,9 @@ func (commit *Commit) canonicalize() {
 }
 
 // alldeletes is a predicate: is this an all-deletes commit?
-func (commit *Commit) alldeletes(killset stringSet) bool {
+func (commit *Commit) alldeletes(killset orderedStringSet) bool {
 	if killset == nil {
-		killset = stringSet{opD, deleteall}
+		killset = orderedStringSet{opD, deleteall}
 	}
 	for _, fileop := range commit.operations() {
 		if !killset.Contains(fileop.op) {
@@ -5429,7 +5547,7 @@ func (commit *Commit) head() string {
 }
 
 // tip enables do_tip() to report deduced branch tips.
-func (commit *Commit) tip(_modifiers stringSet, eventnum int, cols int) string {
+func (commit *Commit) tip(_modifiers orderedStringSet, eventnum int, cols int) string {
 	summary := fmt.Sprintf("%6d %s %6s ",
 		eventnum+1, commit.date().rfc3339(), commit.mark)
 	report := summary + commit.head()
@@ -5485,7 +5603,7 @@ func (commit *Commit) decodable() bool {
 }
 
 // delete severs this commit from its repository.
-func (commit *Commit) delete(policy stringSet) {
+func (commit *Commit) delete(policy orderedStringSet) {
 	commit.repo.delete([]int{commit.index()}, policy)
 }
 
@@ -5616,7 +5734,7 @@ func newPassthrough(repo *Repository, line string) *Passthrough {
 }
 
 // emailOut enables DoMsgout() to report these.
-func (p *Passthrough) emailOut(_modifiers stringSet,
+func (p *Passthrough) emailOut(_modifiers orderedStringSet,
 	eventnum int, _filterRegexp *regexp.Regexp) string {
 	msg, _ := newMessageBlock(nil)
 	msg.setHeader("Event-Number", fmt.Sprintf("%d", eventnum+1))
@@ -6150,14 +6268,14 @@ type StreamParser struct {
 	// Everything below here is Subversion-specific
 	branches             map[string]*Commit // Points to branch root commits
 	branchlink           map[string]daglink
-	branchdeletes        stringSet
-	branchcopies         stringSet
+	branchdeletes        orderedStringSet
+	branchcopies         orderedStringSet
 	generatedDeletes     []*Commit
 	revisions            []RevisionRecord
 	hashmap              map[string]*NodeAction
 	propertyStash        map[string]*OrderedMap
-	fileopBranchlinks    stringSet
-	directoryBranchlinks stringSet
+	fileopBranchlinks    orderedStringSet
+	directoryBranchlinks orderedStringSet
 	activeGitignores     map[string]string
 	large                bool
 	propagate            map[string]bool
@@ -6184,14 +6302,14 @@ func newStreamParser(repo *Repository) *StreamParser {
 	// Everything below here is Subversion-specific
 	sp.branches = make(map[string]*Commit)
 	sp.branchlink = make(map[string]daglink)
-	sp.branchdeletes = newStringSet()
-	sp.branchcopies = newStringSet()
+	sp.branchdeletes = newOrderedStringSet()
+	sp.branchcopies = newOrderedStringSet()
 	sp.generatedDeletes = make([]*Commit, 0)
 	sp.revisions = make([]RevisionRecord, 0)
 	sp.hashmap = make(map[string]*NodeAction)
 	sp.propertyStash = make(map[string]*OrderedMap)
-	sp.fileopBranchlinks = newStringSet()
-	sp.directoryBranchlinks = newStringSet()
+	sp.fileopBranchlinks = newOrderedStringSet()
+	sp.directoryBranchlinks = newOrderedStringSet()
 	sp.activeGitignores = make(map[string]string)
 	sp.propagate = make(map[string]bool)
 	sp.splitCommits = make(map[revidx]int)
@@ -6476,13 +6594,13 @@ func appendRevisionRecords(slice []RevisionRecord, data ...RevisionRecord) []Rev
 	return slice
 }
 
-func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesize int64) {
+func (sp *StreamParser) parseSubversion(options *orderedStringSet, baton *Baton, filesize int64) {
 	// If the repo is large, we'll give up on some diagnostic info in order
 	// to reduce the working set size.
 	if context.flagOptions["tighten"] {
 		sp.large = true
 	}
-	trackSymlinks := newStringSet()
+	trackSymlinks := newOrderedStringSet()
 	for {
 		line := sp.readline()
 		if line == "" {
@@ -6491,7 +6609,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 			continue
 		} else if strings.HasPrefix(line, " # reposurgeon-read-options:") {
 			payload := strings.Split(line, ":")[1]
-			*options = (*options).Union(newStringSet(strings.Fields(payload)...))
+			*options = (*options).Union(newOrderedStringSet(strings.Fields(payload)...))
 		} else if strings.HasPrefix(line, "UUID:") {
 			sp.repo.uuid = sdBody(line)
 		} else if strings.HasPrefix(line, "Revision-number: ") {
@@ -6731,7 +6849,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 	}
 }
 
-func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesize int64) {
+func (sp *StreamParser) parseFastImport(options orderedStringSet, baton *Baton, filesize int64) {
 	// Beginning of fast-import stream parsing
 	commitcount := 0
 	for {
@@ -7000,7 +7118,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 //
 
 func (sp *StreamParser) fastImport(fp io.Reader,
-	options stringSet, progress bool, source string) {
+	options orderedStringSet, progress bool, source string) {
 	// Initialize the repo from a fast-import stream or Subversion dump.
 	sp.timeMark("start")
 	var filesize int64 = -1
@@ -7182,7 +7300,7 @@ func (sp *StreamParser) lastRelevantCommit(maxRev revidx, path string, attr stri
 	return nil
 }
 
-func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeAction {
+func (sp *StreamParser) expandNode(node *NodeAction, options orderedStringSet) []*NodeAction {
 	expandedNodes := make([]*NodeAction, 0)
 	appendExpanded := func(newnode *NodeAction) {
 		newnode.generated = true
@@ -7442,9 +7560,9 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 	return expandedNodes
 }
 
-func (sp *StreamParser) expandAllNodes(nodelist []*NodeAction, options stringSet) []*NodeAction {
+func (sp *StreamParser) expandAllNodes(nodelist []*NodeAction, options orderedStringSet) []*NodeAction {
 	expandedNodes := make([]*NodeAction, 0)
-	hasProperties := newStringSet()
+	hasProperties := newOrderedStringSet()
 	for _, node := range nodelist {
 		// if node.props is None, no property section.
 		// if node.blob is None, no text section.
@@ -7523,7 +7641,7 @@ func (sp *StreamParser) expandAllNodes(nodelist []*NodeAction, options stringSet
 	// D ops here.  Otherwise later on when we're generating ops, if
 	// the M node happens to be missing its hash it will be seen as
 	// unmodified and only the D will be issued.
-	seen := newStringSet()
+	seen := newOrderedStringSet()
 	for idx := len(expandedNodes) - 1; idx >= 0; idx-- {
 		node := expandedNodes[idx]
 		if node.action == sdDELETE && seen.Contains(node.path) {
@@ -7536,7 +7654,7 @@ func (sp *StreamParser) expandAllNodes(nodelist []*NodeAction, options stringSet
 	return expandedNodes
 }
 
-func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
+func (sp *StreamParser) svnProcess(options orderedStringSet, baton *Baton) {
 	// Subversion actions to import-stream commits.
 
 	// This function starts with a deserialization of a Subversion
@@ -7632,8 +7750,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		//
 		// This branch is linear-time in the number of nodes
 		// and quite fast even on very large repositories.
-		deadbranches := newStringSet()
-		resurrectees := newStringSet()
+		deadbranches := newOrderedStringSet()
+		resurrectees := newOrderedStringSet()
 		for i := range sp.revisions {
 			backup := len(sp.revisions) - i - 1
 			for j := range sp.revisions[backup].nodes {
@@ -8490,13 +8608,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 		// Add links due to svn:mergeinfo properties
 		mergeinfo := newPathMap()
 		mergeinfos := make(map[revidx]*PathMap)
-		getMerges := func(minfo *PathMap, path string) stringSet {
+		getMerges := func(minfo *PathMap, path string) orderedStringSet {
 			rawOldMerges, _ := minfo.get(path)
-			var eMerges stringSet
+			var eMerges orderedStringSet
 			if rawOldMerges == nil {
-				eMerges = newStringSet()
+				eMerges = newOrderedStringSet()
 			} else {
-				eMerges = *rawOldMerges.(*stringSet)
+				eMerges = *rawOldMerges.(*orderedStringSet)
 			}
 			return eMerges
 		}
@@ -8528,7 +8646,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 				// mergeinfo entries of the source path, we also need to
 				// gather and ignore those.
 				existingMerges := getMerges(mergeinfo, node.path)
-				ownMerges := newStringSet()
+				ownMerges := newOrderedStringSet()
 				if node.hasProperties() {
 					info := node.props.get("svn:mergeinfo")
 					if info != "" {
@@ -8689,11 +8807,11 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	//   just might be.
 	// * All other commits without fileops get turned into an annotated tag
 	//   with name "emptycommit-<revision>".
-	rootmarks := newStringSet() // stays empty if nobranch
+	rootmarks := newOrderedStringSet() // stays empty if nobranch
 	for _, root := range branchroots {
 		rootmarks.Add(root.mark)
 	}
-	rootskip := newStringSet()
+	rootskip := newOrderedStringSet()
 	rootskip.Add("trunk" + svnSep)
 	rootskip.Add("root")
 	tagname := func(commit *Commit) string {
@@ -8929,7 +9047,7 @@ type Repository struct {
 	_markToIndex map[string]int
 	_eventByMark map[string]Event
 	_namecache   map[string][]int
-	preserveSet  stringSet
+	preserveSet  orderedStringSet
 	caseCoverage orderedIntSet
 	basedir      string
 	uuid         string
@@ -8948,8 +9066,8 @@ type Repository struct {
 	// Write control - set, if required, before each dump
 	preferred    *VCS            // overrides vcs slot for writes
 	realized     map[string]bool // clear and remake this before each dump
-	writeOptions stringSet       // options requested on this write
-	internals    stringSet       // export code computes this itself
+	writeOptions orderedStringSet       // options requested on this write
+	internals    orderedStringSet       // export code computes this itself
 }
 
 func newRepository(name string) *Repository {
@@ -8957,7 +9075,7 @@ func newRepository(name string) *Repository {
 	repo.name = name
 	repo.readtime = time.Now()
 	repo.hintlist = make([]Hint, 0)
-	repo.preserveSet = newStringSet()
+	repo.preserveSet = newOrderedStringSet()
 	repo.caseCoverage = newOrderedIntSet()
 	repo.legacyMap = make(map[string]*Commit)
 	repo.assignments = make(map[string]orderedIntSet)
@@ -9128,9 +9246,9 @@ func (repo *Repository) size() int {
 	return sz
 }
 
-func (repo *Repository) branchset() stringSet {
+func (repo *Repository) branchset() orderedStringSet {
 	// branchset returns a set of all branchnames appearing in this repo.
-	branches := newStringSet()
+	branches := newOrderedStringSet()
 	for _, e := range repo.events {
 		switch e.(type) {
 		case *Reset:
@@ -9675,7 +9793,7 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 	var isTipdelete = func(commit *Commit) bool { return false }
 	if tipdeletes {
 		isTipdelete = func(c *Commit) bool {
-			return c.alldeletes(stringSet{deleteall}) && !c.hasChildren()
+			return c.alldeletes(orderedStringSet{deleteall}) && !c.hasChildren()
 		}
 	}
 	deletia := make([]int, 0)
@@ -9747,7 +9865,7 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 }
 
 // Read a stream file and use it to populate the repo.
-func (repo *Repository) fastImport(fp io.Reader, options stringSet,
+func (repo *Repository) fastImport(fp io.Reader, options orderedStringSet,
 	progress bool, source string) {
 	newStreamParser(repo).fastImport(fp, options, progress, source)
 	repo.readtime = time.Now()
@@ -9833,7 +9951,7 @@ func (repo *Repository) checkUniqueness(chatty bool, logHook func(string)) {
 		logHook("These timestamps have multiple commits: %s" +
 			strings.Join(reps, " "))
 	}
-	stampCollisions := newStringSet()
+	stampCollisions := newOrderedStringSet()
 	for _, clique := range timeCollisions {
 		stampcheck := make(map[string]string)
 		for _, event := range clique {
@@ -9863,17 +9981,17 @@ func (repo *Repository) checkUniqueness(chatty bool, logHook func(string)) {
 }
 
 // exportStyle says how we should we tune the export dump format.
-func (repo *Repository) exportStyle() stringSet {
+func (repo *Repository) exportStyle() orderedStringSet {
 	if repo.vcs != nil {
 		return repo.vcs.styleflags
 	}
 	// Default to git style
-	return stringSet{"nl-after-commit"}
+	return orderedStringSet{"nl-after-commit"}
 }
 
 // Dump the repo object in Subversion dump or fast-export format.
 func (repo *Repository) fastExport(selection orderedIntSet,
-	fp io.Writer, options stringSet, target *VCS, progress bool) error {
+	fp io.Writer, options orderedStringSet, target *VCS, progress bool) error {
 	repo.writeOptions = options
 	repo.preferred = target
 	repo.internals = nil
@@ -9881,7 +9999,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 	// go to a representation where fileops are inline this logic will need
 	// to be modified.
 	if !selection.Equal(repo.all()) {
-		repo.internals = newStringSet()
+		repo.internals = newOrderedStringSet()
 		for _, ei := range selection {
 			event := repo.events[ei]
 			if mark := event.getMark(); mark != "" {
@@ -9954,7 +10072,7 @@ func (repo *Repository) unpreserve(filename string) error {
 }
 
 // Return the repo's preserve set.
-func (repo *Repository) preservable() stringSet {
+func (repo *Repository) preservable() orderedStringSet {
 	return repo.preserveSet
 }
 
@@ -10314,7 +10432,7 @@ func (commit *Commit) simplify() orderedIntSet {
 	return coverage
 }
 
-var allPolicies = stringSet{
+var allPolicies = orderedStringSet{
 	"--complain",
 	"--coalesce",
 	"--delete",
@@ -10328,7 +10446,7 @@ var allPolicies = stringSet{
 }
 
 // Delete a set of events, or rearrange it forward or backwards.
-func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
+func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) error {
 	logit(logDELETE, "Deletion list is %v", selected)
 	for _, qualifier := range policy {
 		if !allPolicies.Contains(qualifier) {
@@ -10673,8 +10791,8 @@ func (repo *Repository) squash(selected orderedIntSet, policy stringSet) error {
 }
 
 // Delete a set of events.
-func (repo *Repository) delete(selected orderedIntSet, policy stringSet) {
-	options := append(stringSet{"--delete", "--quiet"}, policy...)
+func (repo *Repository) delete(selected orderedIntSet, policy orderedStringSet) {
+	options := append(orderedStringSet{"--delete", "--quiet"}, policy...)
 	repo.squash(selected, options)
 }
 
@@ -11232,7 +11350,7 @@ func (repo *Repository) absorb(other *Repository) {
 const invalidGraftIndex = -1
 
 // Graft a repo on to this one at a specified point.
-func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options stringSet) error {
+func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options orderedStringSet) error {
 	var persist map[string]string
 	var anchor *Commit
 	var ok bool
@@ -11289,11 +11407,11 @@ func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options str
 }
 
 // Apply a hook to all paths, returning the set of modified paths.
-func (repo *Repository) pathWalk(selection orderedIntSet, hook func(string) string) stringSet {
+func (repo *Repository) pathWalk(selection orderedIntSet, hook func(string) string) orderedStringSet {
 	if hook == nil {
 		hook = func(s string) string { return s }
 	}
-	modified := newStringSet()
+	modified := newOrderedStringSet()
 	for _, ei := range selection {
 		event := repo.events[ei]
 		if commit, ok := event.(*Commit); ok {
@@ -11452,7 +11570,7 @@ func (repo *Repository) dumptimes(w io.Writer) {
 }
 
 // Read a repository using fast-import.
-func readRepo(source string, options stringSet, preferred *VCS, extractor Extractor, quiet bool) (*Repository, error) {
+func readRepo(source string, options orderedStringSet, preferred *VCS, extractor Extractor, quiet bool) (*Repository, error) {
 	if logEnable(logSHUFFLE) {
 		legend := "nil"
 		if extractor != nil {
@@ -11593,7 +11711,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 			rfp.Close()
 		}
 		if vcs.lister != "" {
-			registered := newStringSet()
+			registered := newOrderedStringSet()
 			stdout, cmd, err := readFromProcess(vcs.lister)
 			if err != nil {
 				return nil, err
@@ -11616,7 +11734,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 			// Get the names of all files except those in the
 			// repository metadata directory and reposurgeon
 			// scratch directories
-			var allfiles = newStringSet()
+			var allfiles = newOrderedStringSet()
 			err = filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 				if err != nil {
 					croak("path access failure %q: %v", path, err)
@@ -11717,7 +11835,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 }
 
 // Rebuild a repository from the captured state.
-func (repo *Repository) rebuildRepo(target string, options stringSet,
+func (repo *Repository) rebuildRepo(target string, options orderedStringSet,
 	preferred *VCS) error {
 	if target == "" && repo.sourcedir != "" {
 		target = repo.sourcedir
@@ -12038,7 +12156,7 @@ func (rl *RepositoryList) writeNotify(filename string) {
 }
 
 // Return a list of the names of all repositories.
-func (rl *RepositoryList) reponames() stringSet {
+func (rl *RepositoryList) reponames() orderedStringSet {
 	var lst = make([]string, len(rl.repolist))
 	for i, repo := range rl.repolist {
 		lst[i] = repo.name
@@ -12202,8 +12320,8 @@ func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
 	// Blobs can have both colors too, through references in
 	// commits on both sides of the cut, but we took care
 	// of that earlier.
-	earlyBranches := newStringSet()
-	lateBranches := newStringSet()
+	earlyBranches := newOrderedStringSet()
+	lateBranches := newOrderedStringSet()
 	for _, commit := range rl.repo.commits(nil) {
 		if commit.color == colorNONE {
 			croak(fmt.Sprintf("%s is uncolored!", commit.mark))
@@ -12282,7 +12400,7 @@ func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
 }
 
 // Unite multiple repos into a union repo.
-func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
+func (rl *RepositoryList) unite(factors []*Repository, options orderedStringSet) {
 	for _, x := range factors {
 		if len(x.commits(nil)) == 0 {
 			croak(fmt.Sprintf("empty factor %s", x.name))
@@ -12514,7 +12632,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 	expunged.events = rl.repo.frontEvents()
 	expunged.declareSequenceMutation("expunge operation")
 	expungedBranches := expunged.branchset()
-	expungedMarks := stringSet(nil)
+	expungedMarks := orderedStringSet(nil)
 	for _, event := range rl.repo.events {
 		switch event.(type) {
 		case *Blob:
@@ -13657,17 +13775,17 @@ func (p *AttributionEditor) doResolve(eventNo int, e Event, attrs []attrEditAttr
 type LineParse struct {
 	repolist     *RepositoryList
 	line         string
-	capabilities stringSet
+	capabilities orderedStringSet
 	stdin        io.ReadCloser
 	stdout       io.WriteCloser
 	infile       string
 	outfile      string
 	redirected   bool
-	options      stringSet
+	options      orderedStringSet
 	closem       []io.Closer
 }
 
-func (rl *RepositoryList) newLineParse(line string, capabilities stringSet) *LineParse {
+func (rl *RepositoryList) newLineParse(line string, capabilities orderedStringSet) *LineParse {
 	caps := make(map[string]bool)
 	for _, cap := range capabilities {
 		caps[cap] = true
@@ -13837,9 +13955,9 @@ func newReposurgeon() *Reposurgeon {
 	rs.promptFormat = "reposurgeon% "
 	// These are globals and should probably be set in init().
 	for _, option := range optionFlags {
-		context.listOptions[option[0]] = newStringSet()
+		context.listOptions[option[0]] = newOrderedStringSet()
 	}
-	context.listOptions["svn_branchify"] = stringSet{"trunk", "tags/*", "branches/*", "*"}
+	context.listOptions["svn_branchify"] = orderedStringSet{"trunk", "tags/*", "branches/*", "*"}
 	return rs
 }
 
@@ -14114,7 +14232,7 @@ func (rs *Reposurgeon) parsePathset() selEvaluator {
 			panic(throw("command", "regexp matcher missing trailing /"))
 		}
 		pattern := matcher[1:end]
-		flags := newStringSet()
+		flags := newOrderedStringSet()
 		for _, c := range matcher[end+1:] {
 			switch string(c) {
 			case "a", "c", opM, opD, opR, opC, opN:
@@ -14140,7 +14258,7 @@ func (rs *Reposurgeon) parsePathset() selEvaluator {
 // Resolve a path regex to the set of commits that refer to it.
 func (rs *Reposurgeon) evalPathsetRegex(state selEvalState,
 	preselection *fastOrderedIntSet, search *regexp.Regexp,
-	flags stringSet) *fastOrderedIntSet {
+	flags orderedStringSet) *fastOrderedIntSet {
 	if flags.Contains("c") {
 		return rs.evalPathsetFull(state, preselection,
 			search, flags.Contains("a"))
@@ -14150,7 +14268,7 @@ func (rs *Reposurgeon) evalPathsetRegex(state selEvalState,
 	if len(flags) == 0 {
 		flags = nil // paths(nil) means "all paths"
 	}
-	type vendPaths interface{ paths(stringSet) stringSet }
+	type vendPaths interface{ paths(orderedStringSet) orderedStringSet }
 	hits := newFastOrderedIntSet()
 	events := rs.chosen().events
 	it := preselection.Iterator()
@@ -14177,7 +14295,7 @@ func (rs *Reposurgeon) evalPathsetRegex(state selEvalState,
 // Resolve a path name to the set of commits that refer to it.
 func (rs *Reposurgeon) evalPathset(state selEvalState,
 	preselection *fastOrderedIntSet, matcher string) *fastOrderedIntSet {
-	type vendPaths interface{ paths(stringSet) stringSet }
+	type vendPaths interface{ paths(orderedStringSet) orderedStringSet }
 	hits := newFastOrderedIntSet()
 	events := rs.chosen().events
 	it := preselection.Iterator()
@@ -14270,7 +14388,7 @@ func (rs *Reposurgeon) visibilityTypeletters() map[rune]func(int) bool {
 		decodable() bool
 	}
 	type alldel interface {
-		alldeletes(stringSet) bool
+		alldeletes(orderedStringSet) bool
 	}
 	e := func(i int) Event {
 		return rs.chosen().events[i]
@@ -14637,7 +14755,7 @@ func (commit *Commit) findSuccessors(path string) []string {
 // edit mailboxizes and edits the non-blobs in the selection
 // Assumes that rs.chosen() and selection are not None
 func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
-	parse := rs.newLineParse(line, stringSet{"stdin", "stdout"})
+	parse := rs.newLineParse(line, orderedStringSet{"stdin", "stdout"})
 	defer parse.Closem()
 	editor := os.Getenv("EDITOR")
 	if parse.line != "" {
@@ -14711,7 +14829,7 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 }
 
 // Filter commit metadata (and possibly blobs) through a specified hook.
-func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, attributes stringSet, safety bool, quiet bool) {
+func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, attributes orderedStringSet, safety bool, quiet bool) {
 	blobs := false
 	nonblobs := false
 	for _, ei := range rs.selection {
@@ -15007,7 +15125,7 @@ func (rs *Reposurgeon) DoNames(line string) bool {
 		croak("no repo has been chosen.")
 		return false
 	}
-	parse := rs.newLineParse(line, stringSet{"stdout"})
+	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	branches := rs.chosen().branchset()
 	//sortbranches.Sort()
@@ -15047,7 +15165,7 @@ func (rs *Reposurgeon) DoCoverage(lineIn string) bool {
 		croak("no repo has been chosen.")
 		return false
 	}
-	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
+	parse := rs.newLineParse(lineIn, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	for _, commit := range repo.commits(nil) {
 		commit.fileopDump()
@@ -15089,7 +15207,7 @@ func (rs *Reposurgeon) DoIndex(lineIn string) bool {
 			}
 		}
 	}
-	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
+	parse := rs.newLineParse(lineIn, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	for _, eventid := range rs.selection {
 		event := repo.events[eventid]
@@ -15156,7 +15274,7 @@ func (rs *Reposurgeon) DoTiming(line string) bool {
 		croak("no repo has been chosen.")
 		return false
 	}
-	parse := rs.newLineParse(line, stringSet{"stdout"})
+	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	if parse.line != "" {
 		rs.chosen().timings = append(rs.chosen().timings, TimeMark{line, time.Now()})
@@ -15194,7 +15312,7 @@ currently chosen repository. Supports > redirection.
 
 // Report information on repositories.
 func (rs *Reposurgeon) DoStats(line string) bool {
-	parse := rs.newLineParse(line, stringSet{"stdout"})
+	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	if parse.line == "" {
 		if rs.chosen() == nil {
@@ -15252,7 +15370,7 @@ func (rs *Reposurgeon) DoCount(lineIn string) bool {
 	if rs.selection == nil {
 		rs.selection = rs.chosen().all()
 	}
-	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
+	parse := rs.newLineParse(lineIn, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	fmt.Fprintf(parse.stdout, "%d\n", len(rs.selection))
 	return false
@@ -15269,10 +15387,10 @@ leading portion of the comment follows. Supports > redirection.
 
 // Generate a human-friendly listing of objects.
 func (rs *Reposurgeon) DoList(lineIn string) bool {
-	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
+	parse := rs.newLineParse(lineIn, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	w := screenwidth()
-	modifiers := stringSet{}
+	modifiers := orderedStringSet{}
 	f := func(p *LineParse, i int, e Event) string {
 		c, ok := e.(*Commit)
 		if ok {
@@ -15303,10 +15421,10 @@ Supports > redirection.
 
 // Generate a human-friendly listing of objects.
 func (rs *Reposurgeon) DoTip(lineIn string) bool {
-	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
+	parse := rs.newLineParse(lineIn, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	w := screenwidth()
-	modifiers := stringSet{}
+	modifiers := orderedStringSet{}
 	f := func(p *LineParse, i int, e Event) string {
 		c, ok := e.(*Commit)
 		if ok {
@@ -15328,10 +15446,10 @@ field 'commit'. Supports > redirection.
 }
 
 func (rs *Reposurgeon) DoTags(lineIn string) bool {
-	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
+	parse := rs.newLineParse(lineIn, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	w := screenwidth()
-	modifiers := stringSet{}
+	modifiers := orderedStringSet{}
 	f := func(p *LineParse, i int, e Event) string {
 		// this is pretty stupid; pretend you didn't see it
 		switch v := e.(type) {
@@ -15358,10 +15476,10 @@ Supports > redirection.
 }
 
 func (rs *Reposurgeon) DoStamp(lineIn string) bool {
-	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
+	parse := rs.newLineParse(lineIn, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	w := screenwidth()
-	modifiers := stringSet{}
+	modifiers := orderedStringSet{}
 	f := func(p *LineParse, i int, e Event) string {
 		// this is pretty stupid; pretend you didn't see it
 		switch v := e.(type) {
@@ -15400,7 +15518,7 @@ func (rs *Reposurgeon) DoSizes(line string) bool {
 		rs.selection = rs.chosen().all()
 	}
 	sizes := make(map[string]int)
-	parse := rs.newLineParse(line, stringSet{"stdout"})
+	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	for _, i := range rs.selection {
 		if commit, ok := repo.events[i].(*Commit); ok {
@@ -15477,16 +15595,16 @@ func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 	if rs.selection == nil {
 		rs.selection = rs.chosen().all()
 	}
-	parse := rs.newLineParse(line, stringSet{"stdout"})
+	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	unmapped := regexp.MustCompile("^[^@]*$|^[^@]*@" + rs.chosen().uuid + "$")
-	shortset := newStringSet()
-	deletealls := newStringSet()
-	disconnected := newStringSet()
-	roots := newStringSet()
-	emptyaddr := newStringSet()
-	emptyname := newStringSet()
-	badaddress := newStringSet()
+	shortset := newOrderedStringSet()
+	deletealls := newOrderedStringSet()
+	disconnected := newOrderedStringSet()
+	roots := newOrderedStringSet()
+	emptyaddr := newOrderedStringSet()
+	emptyname := newOrderedStringSet()
+	badaddress := newOrderedStringSet()
 	for _, commit := range rs.chosen().commits(rs.selection) {
 		if len(commit.operations()) > 0 && commit.operations()[0].op == deleteall && commit.hasChildren() {
 			deletealls.Add(fmt.Sprintf("on %s at %s", commit.Branch, commit.idMe()))
@@ -15772,7 +15890,7 @@ func (rs *Reposurgeon) DoChoose(line string) bool {
 			fmt.Printf("%s %s\n", status, repo.name)
 		}
 	} else {
-		if newStringSet(rs.reponames()...).Contains(line) {
+		if newOrderedStringSet(rs.reponames()...).Contains(line) {
 			rs.choose(rs.repoByName(line))
 			if context.isInteractive() {
 				rs.DoStats(line)
@@ -16051,7 +16169,7 @@ func (rs *Reposurgeon) DoWrite(line string) bool {
 			line = usr.HomeDir + line[1:]
 		}
 	}
-	parse := rs.newLineParse(line, stringSet{"stdout"})
+	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	// This is slightly asymmetrical with the read side, which
 	// interprets an empty argument list as '.'
@@ -16113,7 +16231,7 @@ func (rs *Reposurgeon) DoInspect(lineIn string) bool {
 		return false
 	}
 
-	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
+	parse := rs.newLineParse(lineIn, orderedStringSet{"stdout"})
 	defer parse.Closem()
 
 	if rs.selection == nil {
@@ -16160,12 +16278,12 @@ func (rs *Reposurgeon) DoStrip(line string) bool {
 	if rs.selection == nil {
 		rs.selection = rs.chosen().all()
 	}
-	var striptypes stringSet
+	var striptypes orderedStringSet
 	var oldlen int
 	if line == "" {
-		striptypes = stringSet{"blobs"}
+		striptypes = orderedStringSet{"blobs"}
 	} else {
-		striptypes = newStringSet(strings.Fields(line)...)
+		striptypes = newOrderedStringSet(strings.Fields(line)...)
 	}
 	if striptypes.Contains("blobs") {
 		for _, ei := range rs.selection {
@@ -16175,7 +16293,7 @@ func (rs *Reposurgeon) DoStrip(line string) bool {
 		}
 	}
 	if striptypes.Contains("reduce") {
-		interesting := newStringSet()
+		interesting := newOrderedStringSet()
 		for _, event := range repo.events {
 			if tag, ok := event.(*Tag); ok {
 				interesting.Add(tag.committish)
@@ -16201,11 +16319,11 @@ func (rs *Reposurgeon) DoStrip(line string) bool {
 				}
 			}
 		}
-		neighbors := newStringSet()
+		neighbors := newOrderedStringSet()
 		for _, event := range repo.events {
 			if commit, ok := event.(*Commit); ok && interesting.Contains(commit.mark) {
-				neighbors = neighbors.Union(newStringSet(commit.parentMarks()...))
-				neighbors = neighbors.Union(newStringSet(commit.childMarks()...))
+				neighbors = neighbors.Union(newOrderedStringSet(commit.parentMarks()...))
+				neighbors = neighbors.Union(newOrderedStringSet(commit.childMarks()...))
 			}
 		}
 		interesting = interesting.Union(neighbors)
@@ -16238,7 +16356,7 @@ func (rs *Reposurgeon) DoGraph(line string) bool {
 	if rs.selection == nil {
 		rs.selection = rs.chosen().all()
 	}
-	parse := rs.newLineParse(line, stringSet{"stdout"})
+	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	fmt.Fprint(parse.stdout, "digraph {\n")
 	for _, ei := range rs.selection {
@@ -16339,7 +16457,7 @@ context the name of the header includes its trailing colon.
 
 // Generate a message-box file representing object metadata.
 func (rs *Reposurgeon) DoMsgout(lineIn string) bool {
-	parse := rs.newLineParse(lineIn, stringSet{"stdout"})
+	parse := rs.newLineParse(lineIn, orderedStringSet{"stdout"})
 	defer parse.Closem()
 
 	var filterRegexp *regexp.Regexp
@@ -16362,11 +16480,11 @@ func (rs *Reposurgeon) DoMsgout(lineIn string) bool {
 		// this is pretty stupid; pretend you didn't see it
 		switch v := e.(type) {
 		case *Passthrough:
-			return v.emailOut(stringSet{}, i, filterRegexp)
+			return v.emailOut(orderedStringSet{}, i, filterRegexp)
 		case *Commit:
-			return v.emailOut(stringSet{}, i, filterRegexp)
+			return v.emailOut(orderedStringSet{}, i, filterRegexp)
 		case *Tag:
-			return v.emailOut(stringSet{}, i, filterRegexp)
+			return v.emailOut(orderedStringSet{}, i, filterRegexp)
 		default:
 			return ""
 		}
@@ -16423,7 +16541,7 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 		return false
 	}
 	repo := rs.chosen()
-	parse := rs.newLineParse(line, stringSet{"stdin", "stdout"})
+	parse := rs.newLineParse(line, orderedStringSet{"stdin", "stdout"})
 	defer parse.Closem()
 	updateList := make([]*MessageBlock, 0)
 	r := bufio.NewReader(parse.stdin)
@@ -16749,7 +16867,7 @@ type filterCommand struct {
 	filtercmd  string
 	sub        func(string) string
 	regexp     *regexp.Regexp
-	attributes stringSet
+	attributes orderedStringSet
 }
 
 // GoReplacer bridges from Python-style back-references (\1) to Go-style ($1).
@@ -16769,13 +16887,13 @@ func GoReplacer(re *regexp.Regexp, fromString, toString string) string {
 func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
 	fc := new(filterCommand)
 	fc.repo = repo
-	fc.attributes = newStringSet()
+	fc.attributes = newOrderedStringSet()
 	// Must not use LineParse here as it would try to strip options
 	// in shell commands.
 	flagRe := regexp.MustCompile(`[0-9]*g?`)
 	if strings.HasPrefix(filtercmd, "--shell") {
 		fc.filtercmd = strings.TrimSpace(filtercmd[7:])
-		fc.attributes = newStringSet("c", "a", "C")
+		fc.attributes = newOrderedStringSet("c", "a", "C")
 	} else if strings.HasPrefix(filtercmd, "--regex") || strings.HasPrefix(filtercmd, "--replace") {
 		firstspace := strings.Index(filtercmd, " ")
 		if firstspace == -1 {
@@ -16814,7 +16932,7 @@ func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
 				}
 			}
 			if len(fc.attributes) == 0 {
-				fc.attributes = newStringSet("c", "a", "C")
+				fc.attributes = newOrderedStringSet("c", "a", "C")
 			}
 			if strings.HasPrefix(filtercmd, "--regex") {
 				pattern := parts[1]
@@ -16847,7 +16965,7 @@ func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
 		}
 	} else if strings.HasPrefix(filtercmd, "--dedos") {
 		if len(fc.attributes) == 0 {
-			fc.attributes = newStringSet("c", "a", "C")
+			fc.attributes = newOrderedStringSet("c", "a", "C")
 		}
 		fc.sub = func(s string) string {
 			out := strings.Replace(s, "\r\n", "\n", -1)
@@ -16956,7 +17074,7 @@ func (rs *Reposurgeon) DoTranscode(line string) bool {
 	}
 	rs.dataTraverse("Transcoding",
 		transcode,
-		newStringSet("c", "a", "C"),
+		newOrderedStringSet("c", "a", "C"),
 		true, !rs.inScript())
 	return false
 }
@@ -17064,8 +17182,8 @@ func (rs *Reposurgeon) DoSetperm(line string) bool {
 		return false
 	}
 	perm := fields[0]
-	paths := newStringSet(fields[1:]...)
-	if !newStringSet("100644", "100755", "120000").Contains(perm) {
+	paths := newOrderedStringSet(fields[1:]...)
+	if !newOrderedStringSet("100644", "100755", "120000").Contains(perm) {
 		croak("unexpected permission literal %s", perm)
 		return false
 	}
@@ -17308,7 +17426,7 @@ func (rs *Reposurgeon) DoCoalesce(line string) bool {
 		for _, mark := range span[:len(span)-1] {
 			squashable = append(squashable, repo.markToIndex(mark))
 		}
-		repo.squash(squashable, stringSet{"--coalesce"})
+		repo.squash(squashable, orderedStringSet{"--coalesce"})
 	}
 	respond("%d spans coalesced.", len(squashes))
 	return false
@@ -17451,7 +17569,7 @@ func (rs *Reposurgeon) DoBlob(line string) bool {
 	blob := newBlob(repo)
 	blob.setMark(":1")
 	repo.insertEvent(blob, len(repo.frontEvents()), "adding blob")
-	parse := rs.newLineParse(line, stringSet{"stdin"})
+	parse := rs.newLineParse(line, orderedStringSet{"stdin"})
 	defer parse.Closem()
 	content, err := ioutil.ReadAll(parse.stdin)
 	if err != nil {
@@ -17833,7 +17951,7 @@ func (rs *Reposurgeon) DoDivide(_line string) bool {
 			croak("last element of selection is not a commit")
 			return false
 		}
-		if !stringSet(lateCommit.parentMarks()).Contains(earlyCommit.mark) {
+		if !orderedStringSet(lateCommit.parentMarks()).Contains(earlyCommit.mark) {
 			croak("not a parent-child pair")
 			return false
 		}
@@ -18325,10 +18443,10 @@ func (rs *Reposurgeon) DoPaths(line string) bool {
 	if rs.selection == nil {
 		rs.selection = rs.chosen().all()
 	}
-	parse := rs.newLineParse(line, stringSet{"stdout"})
+	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	if !strings.HasPrefix(line, "sub") && !strings.HasPrefix(line, "sup") {
-		allpaths := newStringSet()
+		allpaths := newOrderedStringSet()
 		for _, commit := range rs.chosen().commits(rs.selection) {
 			allpaths = allpaths.Union(commit.paths(nil))
 		}
@@ -18402,7 +18520,7 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 	if rs.selection == nil {
 		rs.selection = rs.chosen().all()
 	}
-	parse := rs.newLineParse(line, stringSet{"stdout"})
+	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	var filterFunc = func(s string) bool { return true }
 	line = strings.TrimSpace(parse.line)
@@ -19560,7 +19678,7 @@ func (rs *Reposurgeon) DoAttribution(line string) bool {
 	}
 	selparser := newAttrEditSelParser()
 	machine, rest := selparser.compile(line)
-	parse := rs.newLineParse(rest, stringSet{"stdout"})
+	parse := rs.newLineParse(rest, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	fields, err := shlex.Split(parse.line, true)
 	if err != nil {
@@ -19683,7 +19801,7 @@ func (rs *Reposurgeon) DoAuthors(line string) bool {
 	}
 	if strings.HasPrefix(line, "write") {
 		line = strings.TrimSpace(line[5:])
-		parse := rs.newLineParse(line, stringSet{"stdout"})
+		parse := rs.newLineParse(line, orderedStringSet{"stdout"})
 		defer parse.Closem()
 		if len(parse.Tokens()) > 0 {
 			croak("authors write no longer takes a filename argument - use > redirection instead")
@@ -19694,7 +19812,7 @@ func (rs *Reposurgeon) DoAuthors(line string) bool {
 		if strings.HasPrefix(line, "read") {
 			line = strings.TrimSpace(line[4:])
 		}
-		parse := rs.newLineParse(line, stringSet{"stdin"})
+		parse := rs.newLineParse(line, orderedStringSet{"stdin"})
 		defer parse.Closem()
 		if len(parse.Tokens()) > 0 {
 			croak("authors read no longer takes a filename argument - use < redirection instead")
@@ -19725,7 +19843,7 @@ func (rs *Reposurgeon) DoLegacy(line string) bool {
 	}
 	if strings.HasPrefix(line, "write") {
 		line = strings.TrimSpace(line[5:])
-		parse := rs.newLineParse(line, stringSet{"stdout"})
+		parse := rs.newLineParse(line, orderedStringSet{"stdout"})
 		defer parse.Closem()
 		if len(parse.Tokens()) > 0 {
 			croak("legacy write does not take a filename argument - use > redirection instead")
@@ -19852,7 +19970,7 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 			if strings.HasPrefix(line, "edit") {
 				rs.edit(rs.selection, strings.TrimSpace(line[4:]))
 			} else {
-				parse := rs.newLineParse(line, stringSet{"stdout"})
+				parse := rs.newLineParse(line, orderedStringSet{"stdout"})
 				defer parse.Closem()
 				w := screenwidth()
 				for _, ei := range rs.selection {
@@ -19898,7 +20016,7 @@ func (rs *Reposurgeon) DoGitify(_line string) bool {
 	if rs.selection == nil {
 		rs.selection = rs.chosen().all()
 	}
-	lineEnders := stringSet{".", ",", ";", ":", "?", "!"}
+	lineEnders := orderedStringSet{".", ",", ";", ":", "?", "!"}
 	baton := newBaton("gitifying comments", "", context.isInteractive())
 	for _, ei := range rs.selection {
 		event := rs.chosen().events[ei]
@@ -19999,17 +20117,17 @@ func (rs *Reposurgeon) DoDiff(line string) bool {
 		logit(logWARN, "a pair of commits is required.")
 		return false
 	}
-	dir1 := newStringSet()
+	dir1 := newOrderedStringSet()
 	for path := range lower.manifest() {
 		dir1.Add(path)
 	}
-	dir2 := newStringSet()
+	dir2 := newOrderedStringSet()
 	for path := range upper.manifest() {
 		dir2.Add(path)
 	}
 	allpaths := dir1.Union(dir2)
 	sort.Strings(allpaths)
-	parse := rs.newLineParse(line, stringSet{"stdout"})
+	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	for _, path := range allpaths {
 		if dir1.Contains(path) && dir2.Contains(path) {
@@ -20334,7 +20452,7 @@ the command generated by the expansion.
 
 // Do a macro
 func (rs *Reposurgeon) DoDo(line string) bool {
-	parse := rs.newLineParse(line, stringSet{"stdout"})
+	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
 	defer parse.Closem()
 	words, err := shlex.Split(parse.line, true)
 	if len(words) == 0 {

@@ -87,6 +87,76 @@ func TestBackreferences(t *testing.T) {
 	assertEqual(t, string(result), expected)
 }
 
+func TestOrderedStringSet(t *testing.T) {
+	ts := newOrderedStringSet("a", "b", "c")
+
+	if ts.Contains("d") {
+		t.Error("Contain check failed on \"d\", expected false.")
+	}
+	if !ts.Contains("a") {
+		t.Error("Contain check failed on \"a\", expected true.")
+	}
+
+	ts2 := newOrderedStringSet("c", "b", "a")
+	if !ts.Equal(ts2) {
+		t.Error("Equality check failed when pass expected.")
+	}
+
+	ts3 := newOrderedStringSet("c", "b", "d")
+	if ts.Equal(ts3) {
+		t.Error("Equality check succeeded when fail expected.")
+	}
+
+	ts4 := newOrderedStringSet("c", "b", "a")
+	if !ts.Equal(ts.Intersection(ts4)) {
+		t.Error("Intersection computation failed. (1)")
+	}
+
+	ts5 := newOrderedStringSet("c", "b", "d")
+	expected5 := newOrderedStringSet("c", "b")
+	saw5 := ts.Intersection(ts5)
+	if !saw5.Equal(expected5) {
+		t.Error("Intersection computation failed. (2)")
+	}
+
+	ts6 := newOrderedStringSet("x", "y", "z")
+	expected4 := orderedStringSet{}
+	saw6 := ts.Intersection(ts6)
+	if !saw6.Equal(expected4) {
+		t.Error("Intersection computation failed. (3)")
+	}
+
+	ts7 := newOrderedStringSet("c", "b", "a")
+	ts7.Remove("b")
+	expected7 := newOrderedStringSet("c", "a")
+	if !ts7.Equal(expected7) {
+		t.Error("Remove computation failed.")
+	}
+
+	expect := `["a", "b", "c"]`
+	get := ts.String()
+	if expect != get {
+		t.Errorf("Stringer check failed, expected %s got %s.",
+			expect, get)
+	}
+
+	ts.Add("d")
+	if !ts.Contains("d") {
+		t.Error("string set add failed.")
+	}
+
+	ts8 := newOrderedStringSet("a", "b", "c", "d")
+	ts9 := newOrderedStringSet("b", "e")
+	diff := ts8.Subtract(ts9)
+	if diff[0] != "a" || diff[1] != "c" || diff[2] != "d" || len(diff) != 3 {
+		t.Errorf("unexpected result of set difference: %v", diff)
+	}
+
+	sum := ts8.Union(ts9)
+	if sum[0] != "a" || sum[1] != "b" || sum[2] != "c" || sum[4] != "e" || len(sum) != 5 {
+		t.Errorf("unexpected result of set union: %v", sum)
+	}
+}
 func TestStringSet(t *testing.T) {
 	ts := newStringSet("a", "b", "c")
 
@@ -113,7 +183,7 @@ func TestStringSet(t *testing.T) {
 	}
 
 	ts5 := newStringSet("c", "b", "d")
-	expected5 := stringSet{"c", "b"}
+	expected5 := newStringSet("c", "b")
 	saw5 := ts.Intersection(ts5)
 	if !saw5.Equal(expected5) {
 		t.Error("Intersection computation failed. (2)")
@@ -128,7 +198,7 @@ func TestStringSet(t *testing.T) {
 
 	ts7 := newStringSet("c", "b", "a")
 	ts7.Remove("b")
-	expected7 := stringSet{"c", "a"}
+	expected7 := newStringSet("c", "a")
 	if !ts7.Equal(expected7) {
 		t.Error("Remove computation failed.")
 	}
@@ -145,15 +215,16 @@ func TestStringSet(t *testing.T) {
 		t.Error("string set add failed.")
 	}
 
+	// FIXME: test difference and union
 	ts8 := newStringSet("a", "b", "c", "d")
 	ts9 := newStringSet("b", "e")
 	diff := ts8.Subtract(ts9)
-	if diff[0] != "a" || diff[1] != "c" || diff[2] != "d" || len(diff) != 3 {
+	if !(diff.Contains("a") && diff.Contains("c") && diff.Contains("d") && diff.Len() == 3) {
 		t.Errorf("unexpected result of set difference: %v", diff)
 	}
 
 	sum := ts8.Union(ts9)
-	if sum[0] != "a" || sum[1] != "b" || sum[2] != "c" || sum[4] != "e" || len(sum) != 5 {
+	if !(sum.Contains("a") && sum.Contains("b") && sum.Contains("c") && sum.Contains("e") && sum.Len() == 5) {
 		t.Errorf("unexpected result of set union: %v", sum)
 	}
 }
@@ -668,7 +739,7 @@ func TestTag(t *testing.T) {
 	}
 
 	assertEqual(t, t1.actionStamp(), "2016-03-03T03:39:07Z!jrh")
-	assertEqual(t, t1.emailOut(nil, 42, nil),
+	assertEqual(t, t1.emailOut(nullOrderedStringSet, 42, nil),
 		"------------------------------------------------------------------------------\nEvent-Number: 43\nTag-Name: sample1\nTarget-Mark: :2\nTagger: jrh <jrh>\nTagger-Date: Wed, 02 Mar 2016 22:39:07 -0500\nCheck-Text: Sample tag #1\n\nSample tag #1\n")
 	assertEqual(t, t1.String(),
 		"tag sample1\nfrom :2\ntagger jrh <jrh> 1456976347 -0500\ndata 14\nSample tag #1\n\n")
@@ -730,7 +801,7 @@ func TestFileOp(t *testing.T) {
 	assertEqual(t, "100644", fileop1.mode)
 	assertEqual(t, ":1", fileop1.ref)
 	assertEqual(t, "README", fileop1.Path)
-	if !fileop1.paths(nil).Equal(stringSet{"README"}) {
+	if !fileop1.paths(nil).Equal(orderedStringSet{"README"}) {
 		t.Error("fileop1 path extraction failed equality check")
 	}
 
@@ -739,14 +810,14 @@ func TestFileOp(t *testing.T) {
 	assertEqual(t, "100755", fileop2.mode)
 	assertEqual(t, ":2", fileop2.ref)
 	assertEqual(t, "DRINKME", fileop2.Path)
-	if !fileop2.paths(nil).Equal(stringSet{"DRINKME"}) {
+	if !fileop2.paths(nil).Equal(orderedStringSet{"DRINKME"}) {
 		t.Error("fileop2 path extraction failed equality check")
 	}
 
 	fileop3 := newFileOp(nil).construct("D", "DRINKME")
 	assertEqual(t, "D", fileop3.op)
 	assertEqual(t, "DRINKME", fileop3.Path)
-	if !fileop3.paths(nil).Equal(stringSet{"DRINKME"}) {
+	if !fileop3.paths(nil).Equal(orderedStringSet{"DRINKME"}) {
 		t.Error("fileop3 path extraction failed equality check")
 	}
 
@@ -754,7 +825,7 @@ func TestFileOp(t *testing.T) {
 	assertEqual(t, "R", fileop4.op)
 	assertEqual(t, "DRINKME", fileop4.Source)
 	assertEqual(t, "EATME", fileop4.Target)
-	if !fileop4.paths(nil).Equal(stringSet{"EATME", "DRINKME"}) {
+	if !fileop4.paths(nil).Equal(orderedStringSet{"EATME", "DRINKME"}) {
 		t.Error("fileop4 path extraction failed equality check")
 	}
 
@@ -762,7 +833,7 @@ func TestFileOp(t *testing.T) {
 	assertEqual(t, "C", fileop5.op)
 	assertEqual(t, "DRINKME", fileop5.Source)
 	assertEqual(t, "EATME", fileop5.Target)
-	if !fileop5.paths(nil).Equal(stringSet{"EATME", "DRINKME"}) {
+	if !fileop5.paths(nil).Equal(orderedStringSet{"EATME", "DRINKME"}) {
 		t.Error("fileop5 path extraction failed equality check")
 	}
 
@@ -770,13 +841,13 @@ func TestFileOp(t *testing.T) {
 	assertEqual(t, "N", fileop6.op)
 	assertEqual(t, ":3", fileop6.ref)
 	assertEqual(t, "EATME", fileop6.Path)
-	if !fileop6.paths(nil).Equal(stringSet{"EATME"}) {
+	if !fileop6.paths(nil).Equal(orderedStringSet{"EATME"}) {
 		t.Error("fileop6 path extraction failed equality check")
 	}
 
 	fileop7 := newFileOp(nil).construct("deleteall")
 	assertEqual(t, "deleteall", fileop7.op)
-	if !fileop7.paths(nil).Equal(stringSet{}) {
+	if !fileop7.paths(nil).Equal(orderedStringSet{}) {
 		t.Error("fileop7 path extraction failed equality check")
 	}
 
@@ -872,15 +943,15 @@ func TestCommitMethods(t *testing.T) {
 	}
 
 	// Check that various reports look sane, at least matching each other
-	assertEqual(t, commit.lister(nil, 42, 0),
+	assertEqual(t, commit.lister(nullOrderedStringSet, 42, 0),
 		"    43 2016-03-14T23:32:27Z     :2 Example commit for unit testing")
 	assertEqual(t, commit.actionStamp(),
 		"2016-03-14T23:32:27Z!esr@thyrsus.com")
 	assertEqual(t, commit.showlegacy(), "")
-	assertEqual(t, commit.stamp(nil, 42, 0),
+	assertEqual(t, commit.stamp(nullOrderedStringSet, 42, 0),
 		"<2016-03-14T23:32:27Z!esr@thyrsus.com> Example commit for unit testing")
 	expectout := "------------------------------------------------------------------------------\nEvent-Number: 43\nEvent-Mark: :2\nCommitter: J. Random Hacker <jrh@foobar.com>\nCommitter-Date: Wed, 02 Mar 2016 22:39:07 -0500\nAuthor: esr <esr@thyrsus.com>\nAuthor-Date: Mon, 14 Mar 2016 23:32:27 +0000\nCheck-Text: Example commit for unit testing\n\nExample commit for unit testing\n"
-	assertEqual(t, commit.emailOut(nil, 42, nil), expectout)
+	assertEqual(t, commit.emailOut(nullOrderedStringSet, 42, nil), expectout)
 	hackheader := `Event-Number: 43
 Author: Tim the Enchanter <esr@thyrsus.com>
 
@@ -893,7 +964,7 @@ Example commit for unit testing, modified.
 	}
 	commit.emailIn(msg, false)
 	hackcheck := "------------------------------------------------------------------------------\nEvent-Number: 43\nEvent-Mark: :2\nCommitter: J. Random Hacker <jrh@foobar.com>\nCommitter-Date: Wed, 02 Mar 2016 22:39:07 -0500\nAuthor: Tim the Enchanter <esr@thyrsus.com>\nAuthor-Date: Mon, 14 Mar 2016 23:32:27 +0000\nCheck-Text: Example commit for unit testing, modified.\n\nExample commit for unit testing, modified.\n"
-	assertEqual(t, commit.emailOut(nil, 42, nil), hackcheck)
+	assertEqual(t, commit.emailOut(nullOrderedStringSet, 42, nil), hackcheck)
 
 	attr1, _ := newAttribution("jrh <jrh> 1456976347 -0500")
 	newTag(repo, "sample1", ":2", attr1, "Sample tag #1\n")
@@ -1149,7 +1220,7 @@ M 100644 :3 README
 	defer repo.cleanup()
 	sp := newStreamParser(repo)
 	r := strings.NewReader(rawdump)
-	sp.fastImport(r, nil, false, "synthetic test load")
+	sp.fastImport(r, nullOrderedStringSet, false, "synthetic test load")
 
 	assertBool(t, len(repo.events) == 4, true)
 	assertBool(t, repo.events[3].getMark() == ":4", true)
@@ -1322,7 +1393,7 @@ func TestFastImportParse2(t *testing.T) {
 	defer repo.cleanup()
 	sp := newStreamParser(repo)
 	r := strings.NewReader(rawdump)
-	sp.fastImport(r, nil, false, "synthetic test load")
+	sp.fastImport(r, nullOrderedStringSet, false, "synthetic test load")
 
 	testTag1, ok1 := repo.events[len(repo.events)-1].(*Tag)
 	assertBool(t, ok1, true)
@@ -1339,7 +1410,7 @@ func TestFastImportParse2(t *testing.T) {
 	// Check roundtripping via fastExport
 	var a strings.Builder
 	if err := repo.fastExport(repo.all(), &a,
-		newStringSet(), nil, false); err != nil {
+		newOrderedStringSet(), nil, false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	assertEqual(t, rawdump, a.String())
@@ -1369,7 +1440,7 @@ data 0
 	a.Reset()
 	// Check partial export - Event 4 is the second commit
 	if err := repo.fastExport(newOrderedIntSet(4), &a,
-		newStringSet(), nil, false); err != nil {
+		newOrderedStringSet(), nil, false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	assertEqual(t, onecommit, a.String())
@@ -1431,13 +1502,13 @@ func TestDelete(t *testing.T) {
 	defer repo.cleanup()
 	sp := newStreamParser(repo)
 	r := strings.NewReader(rawdump)
-	sp.fastImport(r, nil, false, "synthetic test load")
+	sp.fastImport(r, nullOrderedStringSet, false, "synthetic test load")
 
 	thirdcommit := repo.markToIndex(":6")
 	repo.delete(orderedIntSet{thirdcommit}, nil)
 	var a strings.Builder
 	if err := repo.fastExport(repo.all(), &a,
-		newStringSet(), nil, false); err != nil {
+		newOrderedStringSet(), nil, false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -1491,7 +1562,7 @@ func TestResort(t *testing.T) {
 	defer repo.cleanup()
 	sp := newStreamParser(repo)
 	r := strings.NewReader(rawdump)
-	sp.fastImport(r, nil, false, "synthetic test load")
+	sp.fastImport(r, nullOrderedStringSet, false, "synthetic test load")
 
 	// Reverse the event array, trick from SliceTricks
 	for i := len(repo.events)/2 - 1; i >= 0; i-- {
@@ -1504,7 +1575,7 @@ func TestResort(t *testing.T) {
 
 	var a strings.Builder
 	if err := repo.fastExport(repo.all(), &a,
-		newStringSet(), nil, false); err != nil {
+		newOrderedStringSet(), nil, false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	//assertEqual(t, "", a.String())
@@ -1591,14 +1662,14 @@ this is a test tag
 	defer repo.cleanup()
 	sp := newStreamParser(repo)
 	r := strings.NewReader(doubled)
-	sp.fastImport(r, nil, false, "synthetic test load")
+	sp.fastImport(r, nullOrderedStringSet, false, "synthetic test load")
 
 	//verbose = debugUNITE
 	repo.renumber(1, nil)
 
 	var a strings.Builder
 	if err := repo.fastExport(repo.all(), &a,
-		newStringSet(), nil, false); err != nil {
+		newOrderedStringSet(), nil, false); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
