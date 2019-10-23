@@ -5862,29 +5862,56 @@ type pathMapItem struct {
 type PathMap struct {
 	dirs map[string]*PathMap
 	blobs map[string]interface{}
+	shared bool
 }
 
 func newPathMap() *PathMap {
 	pm := new(PathMap)
 	pm.dirs = make(map[string]*PathMap)
 	pm.blobs = make(map[string]interface{})
+	pm.shared = false
 	return pm
+}
+
+// _markShared sets the shared attribute on all PathMaps in the hierarchy
+// When pm.shared is true, at least two Pathmaps have pm in their hierarchy,
+// which means that pm should be replaced by a snapshot before any
+// modification.
+func (pm *PathMap) _markShared() {
+	pm.shared = true
+	for _, v := range pm.dirs {
+		v._markShared()
+	}
 }
 
 // snapshot returns a snapshot of the current state of an evolving filemap.
 func (pm *PathMap) snapshot() *PathMap {
-	// The shapshot will share its direct children with the source
-	// PathMap, which is OK since except the toplevel one, every
-	// PathMap is considered immutable and a copy will be made
-	// before any modification.
+	// The shapshot will share its direct children with the source PathMap.
+	// Mark every PathMap in the hierarchy as shared so that they are
+	// considered immutable and a snapshot will be made before any
+	// modification.
 	r := newPathMap()
 	for k, v := range pm.dirs {
 		r.dirs[k] = v
+		v._markShared()
 	}
 	for k, v := range pm.blobs {
 		r.blobs[k] = v
 	}
 	return r
+}
+
+// _unshare returns a PathMap representing the same tree as the PathMap it is
+// called on, ensuring that the returned PathMap is not shared with any other
+// PathMap, so that it can be modified without impacting other trees.
+// When the shared attribute of the PathMap is false, _unshare returns that
+// PathMap unchanged. If the shared attribute is true, _unshare returns a
+// snapshot of the PathMap.
+func (pm *PathMap) _unshare() *PathMap {
+	if pm.shared {
+		return pm.snapshot()
+	}
+	return pm
 }
 
 // _createTree ensures the hierarchy contains the directory whose path is given
@@ -5895,9 +5922,9 @@ func (pm *PathMap) _createTree(path []string) *PathMap {
 	for _, component := range path {
 		subtree, ok := tree.dirs[component]
 		if ok {
-			// The component already exists. Replace it by a snaphot of it so that
+			// The component already exists. Unshare it so that
 			// it can be modified without messing with other PathMaps
-			subtree = subtree.snapshot()
+			subtree = subtree._unshare()
 		} else {
 			// Create the component as a directory
 			subtree = newPathMap()
@@ -5981,9 +6008,9 @@ func (pm *PathMap) remove(path string) {
 			// FIXME: should we warn ? panic ? return false ?
 			return
 		}
-		// The component exists. Replace it by a snaphot of it so that
+		// The component exists. Unshare it so that
 		// it can be modified without messing with other PathMaps
-		subtree = subtree.snapshot()
+		subtree = subtree._unshare()
 		pm.dirs[component] = subtree
 		// Now ask the subdir to do the removal, using the rest of the path
 		subtree.remove(components[1])
