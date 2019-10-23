@@ -7892,7 +7892,7 @@ func (sp *StreamParser) svnProcess(options orderedStringSet, baton *Baton) {
 			// this tag have already been patched.
 			for j := i - 1; j >= 0; j-- {
 				tnode := sp.implicands[j]
-				if strings.HasPrefix(tnode.path, srcnode.path) {
+				if strings.HasPrefix(tnode.path, srcnode.path) && !strings.Contains(tnode.path, "-deleted-") {
 					newpath := newname + tnode.path[len(srcnode.path):]
 					logit(logTAGFIX, "r%d#%d~%s: on tag deletion path mapped to %s.",
 						tnode.revision, tnode.index, tnode.path, newname)
@@ -7903,7 +7903,7 @@ func (sp *StreamParser) svnProcess(options orderedStringSet, baton *Baton) {
 			// operations.
 			for j := i + 1; j < len(sp.implicands); j++ {
 				tnode := sp.implicands[j]
-				if tnode.action == sdDELETE && tnode.path == srcnode.path {
+				if tnode.action == sdDELETE && tnode.path == srcnode.path && !strings.Contains(tnode.path, "-deleted-") {
 					// Another deletion of this tag?  OK, stop patching copies.
 					// We'll deal with it in a new pass once the outer loop gets
 					// there
@@ -7911,7 +7911,7 @@ func (sp *StreamParser) svnProcess(options orderedStringSet, baton *Baton) {
 						srcnode.revision, srcnode.index, srcnode.path)
 					goto breakout
 				}
-				if strings.HasPrefix(tnode.fromPath, srcnode.path) {
+				if strings.HasPrefix(tnode.fromPath, srcnode.path) && !strings.Contains(tnode.path, "-deleted-") {
 					newfrom := newname + tnode.fromPath[len(srcnode.path):]
 					logit(logEXTRACT, "r%d#%d~%s: on tag deletion from-path mapped to %s.",
 						tnode.revision, tnode.index, tnode.fromPath, newfrom)
