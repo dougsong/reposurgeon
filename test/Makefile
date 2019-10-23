@@ -513,10 +513,14 @@ svncheck-buildregress:
 svncheck-regress:
 	@echo "=== Running svncheck tests:"
 	@status=0; \
-	for file in $(SVNCHECK); do \
-	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
-	    $(SHELL) $${file}.sh -d | $(REPOSURGEON) "$(TESTOPT)" "set testmode" 'read -' 'prefer git' 'write -' | diff --text -u $${file}.chk - || status=1; \
-	done; \
+	if command -v svn >/dev/null 2>&1 ; \
+	then \
+	    for file in $(SVNCHECK); do \
+		$(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
+		$(SHELL) $${file}.sh -d | $(REPOSURGEON) "$(TESTOPT)" "set testmode" 'read -' 'prefer git' 'write -' | diff --text -u $${file}.chk - || status=1; \
+	    done; \
+	else echo "    Skipped, svn missing."; exit 0; \
+	fi
 	exit $${status}
 	@rm -f /tmp/regress$$$$
 
