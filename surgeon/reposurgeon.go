@@ -1,6 +1,6 @@
 package main
 
-// This codlogSHe is intended to be hackable to support for special-purpose or
+// This code is intended to be hackable to support for special-purpose or
 // custom operations, though it's even better if you can come up with a new
 // surgical primitive general enough to ship with the stock version.  For
 // either case, here's a guide to the architecture.
@@ -2780,6 +2780,7 @@ type Context struct {
 	listOptions map[string]orderedStringSet
 	mapOptions  map[string]map[string]string
 	branchMappings []branchMapping
+	readLimit   uint64
 }
 
 func (ctx *Context) isInteractive() bool {
@@ -6901,9 +6902,16 @@ func (sp *StreamParser) parseSubversion(options *orderedStringSet, baton *Baton,
 			}
 			// End Revision processing
 			baton.percentProgress("", sp.ccount, filesize)
+			if context.readLimit > 0 && uint64(sp.repo.legacyCount) > context.readLimit{
+				logit(logSHOUT, "read limit %d reached.", context.readLimit)
+				break
+			}
 		}
-		logit(logSVNPARSE, "revision parsing, line %d: ends with %d records", sp.importLine, sp.repo.legacyCount)
 	}
+	if context.readLimit > 0 && uint64(sp.repo.legacyCount) <= context.readLimit {
+			logit(logSHOUT, "EOF before readlimit.")
+	}
+	logit(logSVNPARSE, "revision parsing, line %d: ends with %d records", sp.importLine, sp.repo.legacyCount)
 }
 
 func (sp *StreamParser) parseFastImport(options orderedStringSet, baton *Baton, filesize int64) {
@@ -7141,6 +7149,13 @@ func (sp *StreamParser) parseFastImport(options orderedStringSet, baton *Baton, 
 			sp.repo.addEvent(newPassthrough(sp.repo, line))
 		}
 		baton.percentProgress("", sp.ccount, filesize)
+		if context.readLimit > 0 && uint64(commitcount) >= context.readLimit{
+			logit(logSHOUT, "read limit %d reached", context.readLimit)
+			break
+		}
+	}
+	if context.readLimit > 0 && uint64(commitcount) < context.readLimit {
+		logit(logSHOUT, "EOF before readlimit.")
 	}
 	for _, event := range sp.repo.events {
 		switch event.(type) {
@@ -20506,6 +20521,27 @@ func (rs *Reposurgeon) CompleteClear(text string) []string {
 
 func (rs *Reposurgeon) DoClear(line string) bool {
 	tweakFlagOptions(line, false)
+	return false
+}
+
+func (rs *Reposurgeon) HelpReadLimit() {
+	rs.helpOutput(`
+Set a maximum number of commits to read from a stream.  If the limit
+is reached before EOF it will be logged. Mainly useful for benchmarking.
+Without arguments, report the read limit; 0 means there is none.
+`)
+}
+
+func (rs *Reposurgeon) DoReadlimit(line string) bool {
+	if line == "" {
+		respond("readlimit %d\n", context.readLimit)
+		return false
+	}
+	lim, err := strconv.ParseUint(line, 10, 64)
+	if err != nil {
+		logit(logWARN, "ill-formed readlimit argument %q: %v.", line, err)
+	}
+	context.readLimit = lim
 	return false
 }
 

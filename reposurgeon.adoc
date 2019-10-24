@@ -1589,6 +1589,12 @@ If the command has following text, this creates a new, named time mark
 that will be visible in a later report; this may be useful during 
 long-running conversion recipes.
 
++readlimit+ [number]::
+   Set a maximum number of commits to read from a stream.  If the limit
+   is reached before EOF it will be logged. Mainly useful for
+   benchmarking. Without arguments, report the read limit; 0 means
+   there is none.
+
 +memory+::
    Report memory usage.  Runs a garbage-collect before reporting so the figure will better relect
    storage currently held in loaded repositories; this will not affect the reported high-water
