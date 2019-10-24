@@ -5022,12 +5022,6 @@ func (commit *Commit) parents() []CommitLike {
 func (commit *Commit) invalidateManifests() {
 	// Do a traversal of the descendent graph, depth-first because it is the
 	// most efficient with a slice as the queue.
-	if commit._manifest == nil {
-		// Because manifests are always generated recursively backwards.
-		// when one is requested and doesn't exist, if this commit's
-		// manifest cache is nil none of its children can need clearing.
-		return
-	}
 	stack := []CommitLike{commit}
 	for len(stack) > 0 {
 		var current CommitLike
@@ -5035,6 +5029,12 @@ func (commit *Commit) invalidateManifests() {
 		stack, current = stack[:len(stack)-1], stack[len(stack)-1]
 		// remove the memoized manifest
 		if c, ok := current.(*Commit); ok {
+			if c._manifest == nil {
+				// Because manifests are always generated recursively backwards
+				// when one is requested and doesn't exist, if this commit's
+				// manifest cache is nil none of its children can need clearing.
+				continue
+			}
 			c._manifest = nil
 		}
 		// and add all children to the "todo" stack
