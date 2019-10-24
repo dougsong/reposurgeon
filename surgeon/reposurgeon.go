@@ -5018,31 +5018,22 @@ func (commit *Commit) parents() []CommitLike {
 	return commit._parentNodes
 }
 
-// invalidateManifests cleans out manifess in this commit and all descendants
+// invalidateManifests cleans out manifests in this commit and all descendants
 func (commit *Commit) invalidateManifests() {
-	// Written half-iteratively to avoid blowing the
-	// stack on large repositories. This will only
-	// recurse once per branch point.
-	c := commit
-	var ok bool
-	for {
-		//fmt.Printf("Clearing manifest at %s\n", cc.getMark())
-		c._manifest = nil
-		if len(c.children()) > 1 {
-			for _, child := range c.children()[1:] {
-				if c2, ok2 := child.(*Commit); ok2 {
-					c2.invalidateManifests()
-				}
-			}
+	// Do a traversal of the descendent graph, depth-first because it is the
+	// most efficient with a slice as the queue.
+	stack := []CommitLike{commit}
+	for len(stack) > 0 {
+		var current CommitLike
+		// pop a CommitLike from the stack
+		stack, current = stack[:len(stack)-1], stack[len(stack)-1]
+		// remove the memoized manifest
+		if c, ok := current.(*Commit); ok {
+			c._manifest = nil
 		}
-		
-		if !c.hasChildren() {
-			break
-		}
-
-		nxt := c.children()[0]
-		if c, ok = nxt.(*Commit); !ok {
-			break
+		// and add all children to the "todo" stack
+		for _, child := range current.children() {
+			stack = append(stack, child)
 		}
 	}
 }
