@@ -34,8 +34,7 @@ template = """\
 # 4. Set any required read options, such as --user-ignores or --nobranch,
 #    by setting READ_OPTIONS.
 # 5. Run 'make stubmap' to create a stub author map.
-# 6. (Optional) set REPOSURGEON to point at a faster cython build of the tool.
-# 7. Run 'make' to build a converted repository.
+# 6. Run 'make' to build a converted repository.
 #
 # The reason both first- and second-stage stream files are generated is that,
 # especially with Subversion, making the first-stage stream file is often
@@ -58,7 +57,7 @@ CVS_HOST = %(project)s.cvs.sourceforge.net
 CVS_MODULE = %(project)s
 #REMOTE_URL = cvs://$(CVS_HOST)/%(project)s\\#$(CVS_MODULE)
 READ_OPTIONS =
-VERBOSITY = "verbose 1"
+VERBOSITY =
 REPOSURGEON = reposurgeon
 
 # Configuration ends here
