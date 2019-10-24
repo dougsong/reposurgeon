@@ -5022,6 +5022,12 @@ func (commit *Commit) parents() []CommitLike {
 func (commit *Commit) invalidateManifests() {
 	// Do a traversal of the descendent graph, depth-first because it is the
 	// most efficient with a slice as the queue.
+	if commit._manifest == nil {
+		// Because manifests are always generated recursively backwards.
+		// when one is requested and doesn't exist, if this commit's
+		// manifest cache is nil none of its children can need clearing.
+		return
+	}
 	stack := []CommitLike{commit}
 	for len(stack) > 0 {
 		var current CommitLike
@@ -9096,9 +9102,7 @@ func svnProcessDebubble(sp *StreamParser, options orderedStringSet, baton *Baton
 				commit.removeParent(a)
 			}
 		}
-		// Per-commit spinner disabled because this pass is fast
 		baton.percentProgress("", int64(idx), int64(len(commits)))
-		//baton.twirl("")
 	}
 }
 
