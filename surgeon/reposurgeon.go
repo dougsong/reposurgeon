@@ -4408,6 +4408,14 @@ func newCallout(mark string) *Callout {
 	return callout
 }
 
+func (callout *Callout) children() []CommitLike {
+	var out []CommitLike
+	return out
+}
+func (callout *Callout) hasChildren() bool {
+	return false
+}
+
 func (callout Callout) getDelFlag() bool {
 	return callout.deleteme
 }
@@ -5011,32 +5019,33 @@ func (commit *Commit) parents() []CommitLike {
 
 // invalidateManifests cleans out manifess in this commit and all descendants
 func (commit *Commit) invalidateManifests() {
-	// The obvious recursive way to do this has a strong tendenct
-	// to blow Go's stack.  This way is cheaper but does too much,
-	// requiring downstream manfests on branches other than commits
-	// to be revuilt later. Fortunately that is not a common operation.
-	latch := false
-	for _, event := range commit.repo.events {
-		here, ok := event.(*Commit)
-		if ok {
-			if here == commit && !latch {
-				latch = true
+	// Written half-iteratively to avoid blowing the
+	// stack on large repositories. This will only
+	// recurse once per branch point.
+	c := commit
+	var ok bool
+	for {
+		//fmt.Printf("Clearing manifest at %s\n", cc.getMark())
+		c._manifest = nil
+		if len(c.children()) > 1 {
+			for _, child := range c.children()[1:] {
+				if c2, ok2 := child.(*Commit); ok2 {
+					c2.invalidateManifests()
+				}
 			}
-			if latch {
-				here._manifest = nil
-			}
+		}
+		
+		if !c.hasChildren() {
+			break
+		}
+
+		nxt := c.children()[0]
+		if c, ok = nxt.(*Commit); !ok {
+			break
 		}
 	}
 }
 
-// markOrNil is only used for logging
-func markOrNil(item CommitLike) string {
-	if item == nil {
-		return "nil"
-	} else {
-		return item.getMark()
-	}
-}
 
 // listMarks is only used for logging
 func listMarks(items []CommitLike) []string {
@@ -6302,7 +6311,7 @@ type StreamParser struct {
 	lastcookie  Cookie
 	// Everything below here is Subversion-specific
 	branches             map[string]*Commit // Points to branch root commits
-	_branches_sorted     []string
+	_branchesSorted      []string
 	branchlink           map[string]daglink
 	branchdeletes        orderedStringSet
 	branchcopies         orderedStringSet
@@ -6337,7 +6346,7 @@ func newStreamParser(repo *Repository) *StreamParser {
 	sp.linebuffers = make([]string, 0)
 	// Everything below here is Subversion-specific
 	sp.branches = make(map[string]*Commit)
-	sp._branches_sorted = nil
+	sp._branchesSorted = nil
 	sp.branchlink = make(map[string]daglink)
 	sp.branchdeletes = newOrderedStringSet()
 	sp.branchcopies = newOrderedStringSet()
@@ -6355,7 +6364,7 @@ func newStreamParser(repo *Repository) *StreamParser {
 
 func (sp *StreamParser) addBranch(name string) {
 	sp.branches[name] = nil
-	sp._branches_sorted = nil
+	sp._branchesSorted = nil
 	return
 }
 
@@ -6604,22 +6613,22 @@ func (sp *StreamParser) sdReadProps(target string, checklength int) *OrderedMap 
 
 func (sp *StreamParser) branchlist() []string {
 	//The branch list in deterministic order, most specific branches first.
-	if sp._branches_sorted != nil {
-		return sp._branches_sorted
+	if sp._branchesSorted != nil {
+		return sp._branchesSorted
 	}
-	sp._branches_sorted = make([]string, len(sp.branches))
+	sp._branchesSorted = make([]string, len(sp.branches))
 	idx := 0
 	for key := range sp.branches {
-		sp._branches_sorted[idx] = key
-		idx += 1
+		sp._branchesSorted[idx] = key
+		idx++
 	}
-	sort.Slice(sp._branches_sorted, func(i, j int) bool {
-		if len(sp._branches_sorted[i]) > len(sp._branches_sorted[j]) {
+	sort.Slice(sp._branchesSorted, func(i, j int) bool {
+		if len(sp._branchesSorted[i]) > len(sp._branchesSorted[j]) {
 			return true
 		}
-		return sp._branches_sorted[i] > sp._branches_sorted[j]
+		return sp._branchesSorted[i] > sp._branchesSorted[j]
 	})
-	return sp._branches_sorted
+	return sp._branchesSorted
 }
 
 func (sp *StreamParser) timeMark(label string) {
@@ -9084,6 +9093,8 @@ type Event interface {
 type CommitLike interface {
 	idMe() string
 	getMark() string
+	hasChildren() bool
+	children() []CommitLike
 	getComment() string
 	callout() string
 	String() string
@@ -21645,7 +21656,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 	return false
 }
 
-// DoSizes is for developer use when optimizing structure packing to reduce memoru use
+// DoSizes is for developer use when optimizing structure packing to reduce memory use
 // const MaxUint = ^uint(0) 
 // const MinUint = 0 
 // const MaxInt = int(MaxUint >> 1) 
@@ -21663,22 +21674,24 @@ func (rs *Reposurgeon) DoSizeof(lineIn string) bool {
 		}
 		return out
 	}
-	fmt.Printf("NodeAction:     %s\n", explain(unsafe.Sizeof(*new(NodeAction))))
-	fmt.Printf("RevisionRecord: %s\n", explain(unsafe.Sizeof(*new(RevisionRecord))))
-	fmt.Printf("Commit:         %s\n", explain(unsafe.Sizeof(*new(Commit))))
-	fmt.Printf("Callout:        %s\n", explain(unsafe.Sizeof(*new(Callout))))
-	fmt.Printf("FileOp:         %s\n", explain(unsafe.Sizeof(*new(FileOp))))
-	fmt.Printf("Blob:           %s\n", explain(unsafe.Sizeof(*new(Blob))))
-	fmt.Printf("Tag:            %s\n", explain(unsafe.Sizeof(*new(Tag))))
-	fmt.Printf("Reset:          %s\n", explain(unsafe.Sizeof(*new(Reset))))
-	fmt.Printf("Attribution:    %s\n", explain(unsafe.Sizeof(*new(Attribution))))
-	fmt.Printf("blobidx:        %3d\n", unsafe.Sizeof(blobidx(0)))
-	fmt.Printf("markidx:        %3d\n", unsafe.Sizeof(markidx(0)))
-	fmt.Printf("revidx:         %3d\n", unsafe.Sizeof(revidx(0)))
-	fmt.Printf("nodeidx:        %3d\n", unsafe.Sizeof(nodeidx(0)))
-	fmt.Printf("string:         %3d\n", unsafe.Sizeof("foo"))
-	fmt.Printf("pointer:        %3d\n", unsafe.Sizeof(new(Attribution)))
-        fmt.Printf("int:            %3d\n", unsafe.Sizeof(0))
+	fmt.Printf("NodeAction:        %s\n", explain(unsafe.Sizeof(*new(NodeAction))))
+	fmt.Printf("RevisionRecord:    %s\n", explain(unsafe.Sizeof(*new(RevisionRecord))))
+	fmt.Printf("Commit:            %s\n", explain(unsafe.Sizeof(*new(Commit))))
+	fmt.Printf("Callout:           %s\n", explain(unsafe.Sizeof(*new(Callout))))
+	fmt.Printf("FileOp:            %s\n", explain(unsafe.Sizeof(*new(FileOp))))
+	fmt.Printf("Blob:              %s\n", explain(unsafe.Sizeof(*new(Blob))))
+	fmt.Printf("Tag:               %s\n", explain(unsafe.Sizeof(*new(Tag))))
+	fmt.Printf("Reset:             %s\n", explain(unsafe.Sizeof(*new(Reset))))
+	fmt.Printf("Attribution:       %s\n", explain(unsafe.Sizeof(*new(Attribution))))
+	fmt.Printf("blobidx:           %3d\n", unsafe.Sizeof(blobidx(0)))
+	fmt.Printf("markidx:           %3d\n", unsafe.Sizeof(markidx(0)))
+	fmt.Printf("revidx:            %3d\n", unsafe.Sizeof(revidx(0)))
+	fmt.Printf("nodeidx:           %3d\n", unsafe.Sizeof(nodeidx(0)))
+	fmt.Printf("string:            %3d\n", unsafe.Sizeof("foo"))
+	fmt.Printf("pointer:           %3d\n", unsafe.Sizeof(new(Attribution)))
+        fmt.Printf("int:               %3d\n", unsafe.Sizeof(0))
+        fmt.Printf("map[string]string: %3d\n", unsafe.Sizeof(make(map[string]string)))
+        fmt.Printf("[]string:          %3d\n", unsafe.Sizeof(make([]string, 0)))
 	return false
 }
 
