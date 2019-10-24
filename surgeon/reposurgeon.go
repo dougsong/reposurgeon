@@ -5351,8 +5351,7 @@ func (commit *Commit) manifest() *PathMap {
 		}
 	}
 	// commitsToHandle now contains all the commits whose manifest need to be
-	// computed to be able to compute the one initialy asked for.
-	// Computing the manifests in the reverse order of that list will
+	// computed to be able to compute the one initially asked for.
 	// By construction, each commit in that list is the child of the next, and
 	// if ancestor._manifest is not nil, then ancestor is the parent of the
 	// last commit in commitsToHandle, and ancestor._manifest should be
