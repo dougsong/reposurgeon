@@ -499,8 +499,18 @@ func (s stringSet) String() string {
 	if len(s.store) == 0 {
 		return "[]"
 	}
-	rep := "["
+	// Need a stable ourput order because
+	// this is used in regression tests.
+	// It doesn't need to be fast.
+	ordered := make([]string, len(s.store))
+	i := 0
 	for el := range s.store {
+		ordered[i] = el
+		i++
+	}
+	sort.Strings(ordered)
+	rep := "["
+	for _, el := range ordered {
 		rep += "\""
 		rep += el
 		rep += "\", "
@@ -6336,14 +6346,14 @@ type StreamParser struct {
 	branches             map[string]*Commit // Points to branch root commits
 	_branchesSorted      []string
 	branchlink           map[string]daglink
-	branchdeletes        orderedStringSet
-	branchcopies         orderedStringSet
+	branchdeletes        stringSet
+	branchcopies         stringSet
 	generatedDeletes     []*Commit
 	revisions            []RevisionRecord
 	hashmap              map[string]*NodeAction
 	propertyStash        map[string]*OrderedMap
-	fileopBranchlinks    orderedStringSet
-	directoryBranchlinks orderedStringSet
+	fileopBranchlinks    stringSet
+	directoryBranchlinks stringSet
 	activeGitignores     map[string]string
 	large                bool
 	propagate            map[string]bool
@@ -6371,14 +6381,14 @@ func newStreamParser(repo *Repository) *StreamParser {
 	sp.branches = make(map[string]*Commit)
 	sp._branchesSorted = nil
 	sp.branchlink = make(map[string]daglink)
-	sp.branchdeletes = newOrderedStringSet()
-	sp.branchcopies = newOrderedStringSet()
+	sp.branchdeletes = newStringSet()
+	sp.branchcopies = newStringSet()
 	sp.generatedDeletes = make([]*Commit, 0)
 	sp.revisions = make([]RevisionRecord, 0)
 	sp.hashmap = make(map[string]*NodeAction)
 	sp.propertyStash = make(map[string]*OrderedMap)
-	sp.fileopBranchlinks = newOrderedStringSet()
-	sp.directoryBranchlinks = newOrderedStringSet()
+	sp.fileopBranchlinks = newStringSet()
+	sp.directoryBranchlinks = newStringSet()
 	sp.activeGitignores = make(map[string]string)
 	sp.propagate = make(map[string]bool)
 	sp.splitCommits = make(map[revidx]int)
