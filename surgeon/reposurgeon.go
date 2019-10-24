@@ -5320,38 +5320,68 @@ func (commit *Commit) manifest() *PathMap {
 	if commit._manifest != nil {
 		return commit._manifest
 	}
-	if !commit.hasParents() {
-		commit._manifest = newPathMap()
-	} else {
-		p := commit.parents()[0]
-		switch p.(type) {
+	// Git only inherits files from the first parent of a commit.
+	// The simplest idea is to ask the first parent to compute its manifest,
+	// which will ask its own first parent recursively back to the root commit,
+	// or thanks to memoization, a commit whose manifest is already known.
+	// Since this might exceed the recursion depth limit, a more robust way is
+	// to walk the chain of "first parents" until a commit whose manifest is
+	// known, remembering which commits need to have their manifest computed.
+	commitsToHandle := []*Commit{}
+	ancestor := commit
+	for ancestor._manifest == nil {
+		commitsToHandle = append(commitsToHandle, ancestor)
+		if !ancestor.hasParents() {
+			break
+		}
+		switch p := ancestor.parents()[0].(type) {
 		case *Commit:
-			// Magic recursion, force fetch or recompute
-			// of manifest back to the root commit.
-			// Git only inherits files from the first parent.
-			commit._manifest = p.(*Commit).manifest().snapshot()
+			ancestor = p
 		case *Callout:
 			croak("internal error: can't get through a callout")
+			break
 		default:
 			panic("manifest() found unexpected type in parent list")
 		}
 	}
-	// Take own fileops into account.
-	for _, fileop := range commit.operations() {
-		if fileop.op == opM {
-			commit._manifest.set(fileop.Path, &ManifestEntry{fileop.mode, fileop.ref, fileop.inline})
-		} else if fileop.op == opD {
-			commit._manifest.remove(fileop.Path)
-		} else if fileop.op == opC {
-			commit._manifest.copyFrom(fileop.Target, commit._manifest, fileop.Source)
-		} else if fileop.op == opR {
-			commit._manifest.copyFrom(fileop.Target, commit._manifest, fileop.Source)
-			commit._manifest.remove(fileop.Source)
-		} else if fileop.op == "deleteall" {
-			commit._manifest = newPathMap()
-		}
+	// commitsToHandle now contains all the commits whose manifest need to be
+	// computed to be able to compute the one initialy asked for.
+	// Computing the manifests in the reverse order of that list will
+	// By construction, each commit in that list is the child of the next, and
+	// if ancestor._manifest is not nil, then ancestor is the parent of the
+	// last commit in commitsToHandle, and ancestor._manifest should be
+	// inherited by that last commit.
+	// Else, ancestor._manifest is nil and the loop was broken because the last
+	// commit in commitsToHandle has no parent or a non-commit first parent. In
+	// that case the manifest inherited by the last commit is just empty.
+	manifest := ancestor._manifest
+	if manifest == nil {
+		manifest = newPathMap()
 	}
-	return commit._manifest
+	// Now loop over commitsToHandle, starting from the end. At the start of each iteration,
+	// manifest contains the manifest inherited from the first parent, if any.
+	for k := len(commitsToHandle) - 1; k >= 0; k-- {
+		// Take a snapshot of the manifest
+		manifest = manifest.snapshot()
+		// Take own fileops into account.
+		commit := commitsToHandle[k]
+		for _, fileop := range commit.operations() {
+			if fileop.op == opM {
+				manifest.set(fileop.Path, &ManifestEntry{fileop.mode, fileop.ref, fileop.inline})
+			} else if fileop.op == opD {
+				manifest.remove(fileop.Path)
+			} else if fileop.op == opC {
+				manifest.copyFrom(fileop.Target, manifest, fileop.Source)
+			} else if fileop.op == opR {
+				manifest.copyFrom(fileop.Target, manifest, fileop.Source)
+				manifest.remove(fileop.Source)
+			} else if fileop.op == "deleteall" {
+				manifest = newPathMap()
+			}
+		}
+		commit._manifest = manifest
+	}
+	return manifest
 }
 
 // canonicalize replaces fileops by a minimal set of D and M with same result.
