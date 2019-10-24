@@ -1055,15 +1055,15 @@ func TestParentChildMethods(t *testing.T) {
 	assertBool(t, commit3.visible("README") != nil, false)
 	addop(commit2, "M 100644 :6 randomness")
 	m := commit3.manifest()
-	if len(m) != 2 {
-		t.Errorf("expected manifest length 2 at :3, saw %d", len(m))
+	if m.size() != 2 {
+		t.Errorf("expected manifest length 2 at :3, saw %d", m.size())
 	}
-	ce, ok := m["COPYING"]
+	ce, ok := m.get("COPYING")
 	if !ok {
 		t.Errorf("expected COPYING in manifest at :3.")
 	}
-	if ce.ref != ":5" {
-		t.Errorf("expected COPYING in manifest at :3 to trace to :5, saw %q", ce.ref)
+	if ce.(*ManifestEntry).ref != ":5" {
+		t.Errorf("expected COPYING in manifest at :3 to trace to :5, saw %q", ce.(*ManifestEntry).ref)
 	}
 	commit1.canonicalize()
 	p1 := commit1.paths(nil)

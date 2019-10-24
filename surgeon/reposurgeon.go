@@ -4507,7 +4507,7 @@ type Commit struct {
 	authors      []Attribution // Authors of commit
 	committer    Attribution   // Person responsible for committing it.
 	fileops      []FileOp      // blob and file operation list
-	_manifest    map[string]*ManifestEntry
+	_manifest    *PathMap      // efficient map of *ManifestEntry values
 	repo         *Repository
 	properties   *OrderedMap    // commit properties (extension)
 	attachments  []Event      // Tags and Resets pointing at this commit
@@ -5323,30 +5323,22 @@ func (commit *Commit) visible(argpath string) *Commit {
 // manifest returns a map from all pathnames visible at this commit
 // to ManifestEntry structures. The map contents is shared as much as
 // possible with manifests from previous commits to keep working-set
-// size to a minimum.  Note, if the working set blows up horribly
-// anyway, the map overhead here is a thing to suspect - we might
-// have to go to something like the copy-on-write structure in the ancestral
-// Python.
-func (commit *Commit) manifest() map[string]*ManifestEntry {
+// size to a minimum.
+func (commit *Commit) manifest() *PathMap {
 	// yeah, baby this operation is *so* memoized...
 	if commit._manifest != nil {
 		return commit._manifest
 	}
-	commit._manifest = make(map[string]*ManifestEntry)
-	if commit.hasParents() {
+	if !commit.hasParents() {
+		commit._manifest = newPathMap()
+	} else {
 		p := commit.parents()[0]
 		switch p.(type) {
 		case *Commit:
 			// Magic recursion, force fetch or recompute
 			// of manifest back to the root commit.
 			// Git only inherits files from the first parent.
-			m := p.(*Commit).manifest()
-			for k, v := range m {
-				// map entries are pointers so that
-				// generations will share the actual
-				// entries.
-				commit._manifest[k] = v
-			}
+			commit._manifest = p.(*Commit).manifest().snapshot()
 		case *Callout:
 			croak("internal error: can't get through a callout")
 		default:
@@ -5356,16 +5348,16 @@ func (commit *Commit) manifest() map[string]*ManifestEntry {
 	// Take own fileops into account.
 	for _, fileop := range commit.operations() {
 		if fileop.op == opM {
-			commit._manifest[fileop.Path] = &ManifestEntry{fileop.mode, fileop.ref, fileop.inline}
+			commit._manifest.set(fileop.Path, &ManifestEntry{fileop.mode, fileop.ref, fileop.inline})
 		} else if fileop.op == opD {
-			delete(commit._manifest, fileop.Path)
+			commit._manifest.remove(fileop.Path)
 		} else if fileop.op == opC {
-			commit._manifest[fileop.Target] = commit._manifest[fileop.Source]
+			commit._manifest.copyFrom(fileop.Target, commit._manifest, fileop.Source)
 		} else if fileop.op == opR {
-			commit._manifest[fileop.Target] = commit._manifest[fileop.Source]
-			delete(commit._manifest, fileop.Source)
+			commit._manifest.copyFrom(fileop.Target, commit._manifest, fileop.Source)
+			commit._manifest.remove(fileop.Source)
 		} else if fileop.op == "deleteall" {
-			commit._manifest = make(map[string]*ManifestEntry)
+			commit._manifest = newPathMap()
 		}
 	}
 	return commit._manifest
@@ -5391,9 +5383,9 @@ func (commit *Commit) canonicalize() {
 	// Get paths touched by non-deleteall operations.
 	paths := commit.paths(nil)
 	// Fetch the tree state before us...
-	var previous map[string]*ManifestEntry
+	var previous *PathMap
 	if !commit.hasParents() {
-		previous = make(map[string]*ManifestEntry)
+		previous = newPathMap()
 	} else {
 		p := commit.parents()[0]
 		switch p.(type) {
@@ -5412,8 +5404,8 @@ func (commit *Commit) canonicalize() {
 	if commit.fileops[0].op != deleteall {
 		// Only files touched by non-deleteall ops might disappear.
 		for _, cpath := range paths {
-			_, old := previous[cpath]
-			_, new := current[cpath]
+			_, old := previous.get(cpath)
+			_, new := current.get(cpath)
 			if old && !new {
 				fileop := newFileOp(commit.repo)
 				fileop.construct("D", cpath)
@@ -5424,8 +5416,10 @@ func (commit *Commit) canonicalize() {
 	// Generate needed M fileops.
 	// Only paths touched by non-deleteall ops can be changed.
 	for _, cpath := range paths {
-		oe, oldok := previous[cpath]
-		ne, newok := current[cpath]
+		ioe, oldok := previous.get(cpath)
+		ine, newok := current.get(cpath)
+		oe, _ := ioe.(*ManifestEntry)
+		ne, _ := ine.(*ManifestEntry)
 		if newok && !(oldok && oe.equals(ne)) {
 			fileop := newFileOp(commit.repo)
 			fileop.construct(opM, ne.mode, ne.ref, cpath)
@@ -5470,7 +5464,8 @@ func (commit *Commit) checkout(directory string) string {
 		}
 	}()
 
-	for cpath, entry := range commit.manifest() {
+	for _, pitem := range commit.manifest().items() {
+		cpath, entry := pitem.name, pitem.value.(*ManifestEntry)
 		fullpath := filepath.FromSlash(directory +
 			"/" + cpath + "/" + entry.ref)
 		if !exists(fullpath) {
@@ -5573,10 +5568,11 @@ func (commit *Commit) references(mark string) bool {
 
 // blobByName looks up file content by name
 func (commit *Commit) blobByName(pathname string) (string, bool) {
-	entry, ok := commit.manifest()[pathname]
+	value, ok := commit.manifest().get(pathname)
 	if !ok {
 		return "", false
 	}
+	entry := value.(*ManifestEntry)
 	if entry.ref == "inline" {
 		return entry.inline, true
 	}
@@ -12604,9 +12600,9 @@ func (rl *RepositoryList) unite(factors []*Repository, options orderedStringSet)
 		// modify ops in the branch root.
 		if options.Contains("--prune") {
 			deletes := make([]FileOp, 0)
-			for path := range mostRecent.manifest() {
+			for _, elt := range mostRecent.manifest().items() {
 				fileop := newFileOp(union)
-				fileop.construct("D", path)
+				fileop.construct("D", elt.name)
 				deletes = append(deletes, *fileop)
 			}
 			root.setOperations(append(deletes, root.operations()...))
@@ -18715,7 +18711,8 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 			entry *ManifestEntry
 		}
 		manifestItems := make([]ManifestItem, 0)
-		for path, entry := range commit.manifest() {
+		for _, elt := range commit.manifest().items() {
+			path, entry := elt.name, elt.value.(*ManifestEntry)
 			if filterFunc(path) {
 				manifestItems = append(manifestItems, ManifestItem{path, entry})
 			}
@@ -18974,7 +18971,8 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 		f := *newFileOp(repo)
 		f.construct("deleteall")
 		newops := []FileOp{f}
-		for path, entry := range child.manifest() {
+		for _, elt := range child.manifest().items() {
+			path, entry := elt.name, elt.value.(*ManifestEntry)
 			f = *newFileOp(repo)
 			f.construct("M", entry.mode, entry.ref, path)
 			if entry.ref == "inline" {
@@ -20276,12 +20274,12 @@ func (rs *Reposurgeon) DoDiff(line string) bool {
 		return false
 	}
 	dir1 := newOrderedStringSet()
-	for path := range lower.manifest() {
-		dir1.Add(path)
+	for _, elt := range lower.manifest().items() {
+		dir1.Add(elt.name)
 	}
 	dir2 := newOrderedStringSet()
-	for path := range upper.manifest() {
-		dir2.Add(path)
+	for _, elt := range upper.manifest().items() {
+		dir2.Add(elt.name)
 	}
 	allpaths := dir1.Union(dir2)
 	sort.Strings(allpaths)
