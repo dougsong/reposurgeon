@@ -4745,7 +4745,7 @@ func (commit *Commit) tags(_modifiers orderedStringSet, eventnum int, _cols int)
 		return ""
 	}
 	if commit.hasChildren() {
-		successorBranches := newOrderedStringSet()
+		successorBranches := newStringSet()
 		for _, child := range commit.children() {
 			switch child.(type) {
 			case *Commit:
@@ -4757,7 +4757,7 @@ func (commit *Commit) tags(_modifiers orderedStringSet, eventnum int, _cols int)
 				panic("In tags method, unexpected type in child list")
 			}
 		}
-		if len(successorBranches) == 1 && successorBranches[0] == commit.Branch {
+		if successorBranches.Len() == 1 && successorBranches.Contains(commit.Branch) {
 			return ""
 		}
 	}
@@ -7760,7 +7760,7 @@ func (sp *StreamParser) expandAllNodes(nodelist []*NodeAction, options stringSet
 	// D ops here.  Otherwise later on when we're generating ops, if
 	// the M node happens to be missing its hash it will be seen as
 	// unmodified and only the D will be issued.
-	seen := newOrderedStringSet()
+	seen := newStringSet()
 	for idx := len(expandedNodes) - 1; idx >= 0; idx-- {
 		node := expandedNodes[idx]
 		if node.action == sdDELETE && seen.Contains(node.path) {
