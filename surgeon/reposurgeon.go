@@ -6696,7 +6696,7 @@ func appendRevisionRecords(slice []RevisionRecord, data ...RevisionRecord) []Rev
 	return slice
 }
 
-func (sp *StreamParser) parseSubversion(options *orderedStringSet, baton *Baton, filesize int64) {
+func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesize int64) {
 	// If the repo is large, we'll give up on some diagnostic info in order
 	// to reduce the working set size.
 	if context.flagOptions["tighten"] {
@@ -6711,7 +6711,7 @@ func (sp *StreamParser) parseSubversion(options *orderedStringSet, baton *Baton,
 			continue
 		} else if strings.HasPrefix(line, " # reposurgeon-read-options:") {
 			payload := strings.Split(line, ":")[1]
-			*options = (*options).Union(newOrderedStringSet(strings.Fields(payload)...))
+			*options = (*options).Union(newStringSet(strings.Fields(payload)...))
 		} else if strings.HasPrefix(line, "UUID:") {
 			sp.repo.uuid = sdBody(line)
 		} else if strings.HasPrefix(line, "Revision-number: ") {
@@ -6958,7 +6958,7 @@ func (sp *StreamParser) parseSubversion(options *orderedStringSet, baton *Baton,
 	logit(logSVNPARSE, "revision parsing, line %d: ends with %d records", sp.importLine, sp.repo.legacyCount)
 }
 
-func (sp *StreamParser) parseFastImport(options orderedStringSet, baton *Baton, filesize int64) {
+func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesize int64) {
 	// Beginning of fast-import stream parsing
 	commitcount := 0
 	for {
@@ -7234,7 +7234,7 @@ func (sp *StreamParser) parseFastImport(options orderedStringSet, baton *Baton, 
 //
 
 func (sp *StreamParser) fastImport(fp io.Reader,
-	options orderedStringSet, progress bool, source string) {
+	options stringSet, progress bool, source string) {
 	// Initialize the repo from a fast-import stream or Subversion dump.
 	sp.timeMark("start")
 	var filesize int64 = -1
@@ -7416,7 +7416,7 @@ func (sp *StreamParser) lastRelevantCommit(maxRev revidx, path string, attr stri
 	return nil
 }
 
-func (sp *StreamParser) expandNode(node *NodeAction, options orderedStringSet) []*NodeAction {
+func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeAction {
 	expandedNodes := make([]*NodeAction, 0)
 	appendExpanded := func(newnode *NodeAction) {
 		newnode.generated = true
@@ -7676,9 +7676,9 @@ func (sp *StreamParser) expandNode(node *NodeAction, options orderedStringSet) [
 	return expandedNodes
 }
 
-func (sp *StreamParser) expandAllNodes(nodelist []*NodeAction, options orderedStringSet) []*NodeAction {
+func (sp *StreamParser) expandAllNodes(nodelist []*NodeAction, options stringSet) []*NodeAction {
 	expandedNodes := make([]*NodeAction, 0)
-	hasProperties := newOrderedStringSet()
+	hasProperties := newStringSet()
 	for _, node := range nodelist {
 		// if node.props is None, no property section.
 		// if node.blob is None, no text section.
@@ -7770,7 +7770,7 @@ func (sp *StreamParser) expandAllNodes(nodelist []*NodeAction, options orderedSt
 	return expandedNodes
 }
 
-func (sp *StreamParser) svnProcess(options orderedStringSet, baton *Baton) {
+func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// Subversion actions to import-stream commits.
 
 	// This function starts with a deserialization of a Subversion
@@ -7865,7 +7865,7 @@ func (sp *StreamParser) svnProcess(options orderedStringSet, baton *Baton) {
 	sp.repo.hint("svn", "", true)
 }
 
-func svnProcessPrune(sp *StreamParser, options orderedStringSet, baton *Baton) {
+func svnProcessPrune(sp *StreamParser, options stringSet, baton *Baton) {
 	logit(logEXTRACT, "Phase 1: pruning dead branches")
 	baton.twirl("1")
 	if !options.Contains("--preserve") {
@@ -7942,7 +7942,7 @@ func svnProcessPrune(sp *StreamParser, options orderedStringSet, baton *Baton) {
 	// no-preserve code ends here
 }
 
-func svnProcessClean(sp *StreamParser, options orderedStringSet, baton *Baton) {
+func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 	logit(logEXTRACT, "Phase 2: clean tags to prevent anomalies.")
 	baton.twirl("2")
 	// Phase 2:
@@ -8056,7 +8056,7 @@ func svnProcessClean(sp *StreamParser, options orderedStringSet, baton *Baton) {
 	sp.implicands = nil
 }
 
-func svnProcessFilemaps(sp *StreamParser, options orderedStringSet, baton *Baton) {
+func svnProcessFilemaps(sp *StreamParser, options stringSet, baton *Baton) {
 	// Phase 3:
 	// This is where we build file visibility maps The visibility
 	// map for each revision maps a file paths to the Subversion
@@ -8079,7 +8079,7 @@ func svnProcessFilemaps(sp *StreamParser, options orderedStringSet, baton *Baton
 	}
 }
 
-func svnProcessCommits(sp *StreamParser, options orderedStringSet, baton *Baton) {
+func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 	nobranch := options.Contains("--nobranch")
 	// Build commits
 	// This code can eat your processor, so we make it give up
@@ -8573,7 +8573,7 @@ func svnProcessCommits(sp *StreamParser, options orderedStringSet, baton *Baton)
 	}
 }
 
-func svnProcessRoot(sp *StreamParser, options orderedStringSet, baton *Baton) {
+func svnProcessRoot(sp *StreamParser, options stringSet, baton *Baton) {
 	logit(logEXTRACT, "Phase 5: root tagification and branch analysis")
 	baton.twirl("5")
 	if logEnable(logEXTRACT) {
@@ -8612,7 +8612,7 @@ func svnProcessRoot(sp *StreamParser, options orderedStringSet, baton *Baton) {
 	baton.twirl("")
 }
 
-func svnProcessBranches(sp *StreamParser, options orderedStringSet, baton *Baton, timeit func(string)) []*Commit {
+func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timeit func(string)) []*Commit {
 	logit(logEXTRACT, "Phase 5a: root tagification and branch analysis")
 	nobranch := options.Contains("--nobranch")
 
@@ -8911,7 +8911,7 @@ func svnProcessBranches(sp *StreamParser, options orderedStringSet, baton *Baton
 	return branchroots
 }
 
-func svnProcessJunk(sp *StreamParser, options orderedStringSet, baton *Baton) {
+func svnProcessJunk(sp *StreamParser, options stringSet, baton *Baton) {
 	logit(logEXTRACT, "Phase 6: de-junking")
 	baton.twirl("6")
 	// Now clean up junk commits generated by cvs2svn.
@@ -8949,7 +8949,7 @@ func svnProcessJunk(sp *StreamParser, options orderedStringSet, baton *Baton) {
 	sp.repo.events = append(sp.repo.events, newtags...)
 }
 
-func svnProcessTags(sp *StreamParser, options orderedStringSet, baton *Baton, branchroots []*Commit) {
+func svnProcessTags(sp *StreamParser, options stringSet, baton *Baton, branchroots []*Commit) {
 	logit(logEXTRACT, "Phase 7: tagification")
 	baton.twirl("7")
 	// Now we need to tagify all other commits without fileops, because git
@@ -9023,7 +9023,7 @@ func svnProcessTags(sp *StreamParser, options orderedStringSet, baton *Baton, br
 	sp.repo.delete(deletia, nil)
 }
 
-func svnProcessTagEmpties(sp *StreamParser, options orderedStringSet, baton *Baton, branchroots []*Commit) {
+func svnProcessTagEmpties(sp *StreamParser, options stringSet, baton *Baton, branchroots []*Commit) {
 	logit(logEXTRACT, "Phase 8: tagify empties")
 	baton.twirl("8")
 
@@ -9069,7 +9069,7 @@ func svnProcessTagEmpties(sp *StreamParser, options orderedStringSet, baton *Bat
 		/* gripe */ sp.shout)
 }
 
-func svnProcessCleanTags(sp *StreamParser, options orderedStringSet, baton *Baton) {
+func svnProcessCleanTags(sp *StreamParser, options stringSet, baton *Baton) {
 	logit(logEXTRACT, "Phase 9: delete/copy canonicalization")
 	baton.twirl("9")
 	// cvs2svn likes to crap out sequences of deletes followed by
@@ -9098,7 +9098,7 @@ func svnProcessCleanTags(sp *StreamParser, options orderedStringSet, baton *Bato
 	}
 }
 
-func svnProcessDebubble(sp *StreamParser, options orderedStringSet, baton *Baton) {
+func svnProcessDebubble(sp *StreamParser, options stringSet, baton *Baton) {
 	logit(logEXTRACT, "Phase A: remove duplicate parent marks")
 	baton.twirl("A")
 	// Remove spurious parent links caused by random cvs2svn file copies.
@@ -9127,7 +9127,7 @@ func svnProcessDebubble(sp *StreamParser, options orderedStringSet, baton *Baton
 	}
 }
 
-func svnProcessRenumber(sp *StreamParser, options orderedStringSet, baton *Baton) {
+func svnProcessRenumber(sp *StreamParser, options stringSet, baton *Baton) {
 	logit(logEXTRACT, "Phase B: renumber")
 	baton.twirl("B")
 	sp.repo.renumber(1, baton)
@@ -9228,10 +9228,10 @@ type Repository struct {
 	tzmap        map[string]*time.Location // most recent email address to timezone
 	aliases      map[ContributorID]ContributorID
 	// Write control - set, if required, before each dump
-	preferred    *VCS            // overrides vcs slot for writes
-	realized     map[string]bool // clear and remake this before each dump
-	writeOptions orderedStringSet       // options requested on this write
-	internals    orderedStringSet       // export code computes this itself
+	preferred    *VCS               // overrides vcs slot for writes
+	realized     map[string]bool    // clear and remake this before each dump
+	writeOptions stringSet          // options requested on this write
+	internals    orderedStringSet   // export code computes this itself
 }
 
 func newRepository(name string) *Repository {
@@ -10029,7 +10029,7 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 }
 
 // Read a stream file and use it to populate the repo.
-func (repo *Repository) fastImport(fp io.Reader, options orderedStringSet,
+func (repo *Repository) fastImport(fp io.Reader, options stringSet,
 	progress bool, source string) {
 	newStreamParser(repo).fastImport(fp, options, progress, source)
 	repo.readtime = time.Now()
@@ -10155,7 +10155,7 @@ func (repo *Repository) exportStyle() orderedStringSet {
 
 // Dump the repo object in Subversion dump or fast-export format.
 func (repo *Repository) fastExport(selection orderedIntSet,
-	fp io.Writer, options orderedStringSet, target *VCS, progress bool) error {
+	fp io.Writer, options stringSet, target *VCS, progress bool) error {
 	repo.writeOptions = options
 	repo.preferred = target
 	repo.internals = nil
@@ -11514,7 +11514,7 @@ func (repo *Repository) absorb(other *Repository) {
 const invalidGraftIndex = -1
 
 // Graft a repo on to this one at a specified point.
-func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options orderedStringSet) error {
+func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options stringSet) error {
 	var persist map[string]string
 	var anchor *Commit
 	var ok bool
@@ -11734,7 +11734,7 @@ func (repo *Repository) dumptimes(w io.Writer) {
 }
 
 // Read a repository using fast-import.
-func readRepo(source string, options orderedStringSet, preferred *VCS, extractor Extractor, quiet bool) (*Repository, error) {
+func readRepo(source string, options stringSet, preferred *VCS, extractor Extractor, quiet bool) (*Repository, error) {
 	if logEnable(logSHUFFLE) {
 		legend := "nil"
 		if extractor != nil {
@@ -11999,7 +11999,7 @@ func readRepo(source string, options orderedStringSet, preferred *VCS, extractor
 }
 
 // Rebuild a repository from the captured state.
-func (repo *Repository) rebuildRepo(target string, options orderedStringSet,
+func (repo *Repository) rebuildRepo(target string, options stringSet,
 	preferred *VCS) error {
 	if target == "" && repo.sourcedir != "" {
 		target = repo.sourcedir
@@ -12564,7 +12564,7 @@ func (rl *RepositoryList) cut(early *Commit, late *Commit) bool {
 }
 
 // Unite multiple repos into a union repo.
-func (rl *RepositoryList) unite(factors []*Repository, options orderedStringSet) {
+func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
 	for _, x := range factors {
 		if len(x.commits(nil)) == 0 {
 			croak(fmt.Sprintf("empty factor %s", x.name))
@@ -16289,7 +16289,7 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 				break
 			}
 		}
-		repo.fastImport(parse.stdin, parse.options, (context.isInteractive() && !context.quiet), "")
+		repo.fastImport(parse.stdin, parse.options.toStringSet(), (context.isInteractive() && !context.quiet), "")
 	} else if parse.line == "" || parse.line == "." {
 		var err2 error
 		// This is slightly asymmetrical with the write side, which
@@ -16299,14 +16299,14 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 			croak(err2.Error())
 			return false
 		}
-		repo, err2 = readRepo(cdir, parse.options, rs.preferred, rs.extractor, context.quiet)
+		repo, err2 = readRepo(cdir, parse.options.toStringSet(), rs.preferred, rs.extractor, context.quiet)
 		if err2 != nil {
 			croak(err2.Error())
 			return false
 		}
 	} else if isdir(parse.line) {
 		var err2 error
-		repo, err2 = readRepo(parse.line, parse.options, rs.preferred, rs.extractor, context.quiet)
+		repo, err2 = readRepo(parse.line, parse.options.toStringSet(), rs.preferred, rs.extractor, context.quiet)
 		if err2 != nil {
 			croak(err2.Error())
 			return false
@@ -16402,9 +16402,9 @@ func (rs *Reposurgeon) DoWrite(line string) bool {
 				break
 			}
 		}
-		rs.chosen().fastExport(rs.selection, parse.stdout, parse.options, rs.preferred, (context.isInteractive() && !context.quiet))
+		rs.chosen().fastExport(rs.selection, parse.stdout, parse.options.toStringSet(), rs.preferred, (context.isInteractive() && !context.quiet))
 	} else if isdir(parse.line) {
-		err := rs.chosen().rebuildRepo(parse.line, parse.options, rs.preferred)
+		err := rs.chosen().rebuildRepo(parse.line, parse.options.toStringSet(), rs.preferred)
 		if err != nil {
 			croak(err.Error())
 		}
@@ -16632,7 +16632,7 @@ func (rs *Reposurgeon) DoRebuild(line string) bool {
 	}
 	parse := rs.newLineParse(line, nil)
 	defer parse.Closem()
-	err := rs.chosen().rebuildRepo(parse.line, parse.options, rs.preferred)
+	err := rs.chosen().rebuildRepo(parse.line, parse.options.toStringSet(), rs.preferred)
 	if err != nil {
 		croak(err.Error())
 	}
@@ -18358,7 +18358,7 @@ func (rs *Reposurgeon) DoUnite(line string) bool {
 		croak("unite requires two or more repo name arguments")
 		return false
 	}
-	rs.unite(factors, parse.options)
+	rs.unite(factors, parse.options.toStringSet())
 	if context.isInteractive() {
 		rs.DoChoose("")
 	}
@@ -18420,7 +18420,7 @@ func (rs *Reposurgeon) DoGraft(line string) bool {
 		}
 	}
 	// OK, we've got the two repos and the graft point.  Do it.
-	rs.chosen().graft(graftRepo, graftPoint, parse.options)
+	rs.chosen().graft(graftRepo, graftPoint, parse.options.toStringSet())
 	rs.removeByName(graftRepo.name)
 	return false
 }
