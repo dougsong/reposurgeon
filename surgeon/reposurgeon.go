@@ -9088,7 +9088,7 @@ func svnProcessCleanTags(sp *StreamParser, options stringSet, baton *Baton) {
 				if commit.operations()[i].op == opD && commit.operations()[i+1].op == opM {
 					if commit.operations()[i].Path == commit.operations()[i+1].Path {
 						commit.fileops[i].op = opX
-						count += 1
+						count++
 					}
 				}
 			}
