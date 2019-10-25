@@ -6247,13 +6247,14 @@ var pathTypeValues = []string{"none", "file", "dir", "ILLEGAL-TYPE"}
 // mad.  We want to let through other properties that might carry
 // useful information.
 var ignoreProperties = map[string]bool{
-	"svn:executable": true, // We special-case this one elsewhere
-	"svn:ignore":     true, // We special-case this one elsewhere
-	"svn:special":    true, // We special-case this one elsewhere
-	"svn:mime-type":  true,
-	"svn:keywords":   true,
-	"svn:needs-lock": true,
-	"svn:eol-style":  true, // Don't want to suppress, but cvs2svn floods these.
+	"svn:executable":      true, // We special-case this one elsewhere
+	"svn:ignore":          true, // We special-case this one elsewhere
+	"svn:special":         true, // We special-case this one elsewhere
+	"svn:mime-type":       true,
+	"svn:keywords":        true,
+	"svn:needs-lock":      true,
+	"svn:eol-style":       true, // Don't want to suppress, but cvs2svn floods these.
+	"svnmerge-integrated": true, // FIXME: Turn these into merges?
 }
 
 const maxRevidx = int(^revidx(0))	// Use for bounds-checking in range loops.
