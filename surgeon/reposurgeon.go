@@ -425,6 +425,14 @@ func (s orderedStringSet) Empty() bool {
 	return len(s) == 0
 }
 
+func (s orderedStringSet) toStringSet() stringSet {
+	out := newStringSet()
+	for _, item := range s {
+		out.store[item] = true
+	}
+	return out
+}
+
 type stringSet struct {
 	store map[string]bool
 }
@@ -495,13 +503,7 @@ func (s stringSet) Union(other stringSet) stringSet {
 	return union
 }
 
-func (s stringSet) String() string {
-	if len(s.store) == 0 {
-		return "[]"
-	}
-	// Need a stable ourput order because
-	// this is used in regression tests.
-	// It doesn't need to be fast.
+func (s stringSet) toOrderedStringSet() orderedStringSet {
 	ordered := make([]string, len(s.store))
 	i := 0
 	for el := range s.store {
@@ -509,8 +511,18 @@ func (s stringSet) String() string {
 		i++
 	}
 	sort.Strings(ordered)
+	return ordered
+}
+
+func (s stringSet) String() string {
+	if len(s.store) == 0 {
+		return "[]"
+	}
+	// Need a stable outxput order because
+	// this is used in regression tests.
+	// It doesn't need to be fast.
 	rep := "["
-	for _, el := range ordered {
+	for _, el := range s.toOrderedStringSet() {
 		rep += "\""
 		rep += el
 		rep += "\", "

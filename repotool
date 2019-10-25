@@ -59,6 +59,7 @@ CVS_MODULE = %(project)s
 READ_OPTIONS =
 VERBOSITY = "set interactive"
 REPOSURGEON = reposurgeon
+LOGFILE = conversion.log
 
 # Configuration ends here
 
@@ -75,7 +76,7 @@ default: %(project)s-%(target_vcs)s
 
 # Build the second-stage fast-import stream from the first-stage stream dump
 %(project)s.fi: %(project)s.%(source_vcs)s %(project)s.opts %(project)s.lift %(project)s.map $(EXTRAS)
-	$(REPOSURGEON) $(VERBOSITY) 'script %(project)s.opts' "read $(READ_OPTIONS) <%(project)s.%(source_vcs)s" 'authors read <%(project)s.map' 'sourcetype %(source_vcs)s' 'prefer git' 'script %(project)s.lift' 'legacy write >%(project)s.fo' 'write >%(project)s.fi'
+	$(REPOSURGEON) $(VERBOSITY) 'logfile $(LOGFILE)' 'script %(project)s.opts' "read $(READ_OPTIONS) <%(project)s.%(source_vcs)s" 'authors read <%(project)s.map' 'sourcetype %(source_vcs)s' 'prefer git' 'script %(project)s.lift' 'legacy write >%(project)s.fo' 'write >%(project)s.fi'
 
 # Build the first-stage stream dump from the local mirror
 %(project)s.%(source_vcs)s: %(project)s-mirror
