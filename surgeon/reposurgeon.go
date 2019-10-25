@@ -21714,6 +21714,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 		}
 
 		// finally we execute the command, plus the before/after steps
+		originalline := scriptline
 		scriptline = interpreter.PreCmd(scriptline)
 		stop := interpreter.OneCmd(scriptline)
 		stop = interpreter.PostCmd(stop, scriptline)
@@ -21726,7 +21727,11 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 		// When it is set, we abort out of every nested
 		// script call.
 		if context.getAbort() {
-			logit(logSHOUT, "%d: script abort on %q", lineno, scriptline)
+			if originalline != "" {
+				logit(logSHOUT, "script abort on line %d %q", lineno, originalline)
+			} else {
+				logit(logSHOUT, "script abort on line %d", lineno)
+			}
 			break
 		}
 		if stop {
