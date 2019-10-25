@@ -68,6 +68,12 @@ func assertEqual(t *testing.T, a string, b string) {
 	}
 }
 
+func assertRuneEqual(t *testing.T, a rune, b rune) {
+	if a != b {
+		t.Fatalf("assertEqual: expected %q == %q", a, b)
+	}
+}
+
 func assertIntEqual(t *testing.T, a int, b int) {
 	if a != b {
 		t.Errorf("assertIntEqual: expected %d == %d", a, b)
@@ -796,8 +802,8 @@ func TestStringScan(t *testing.T) {
 }
 
 func TestFileOp(t *testing.T) {
-	fileop1 := newFileOp(nil).construct("M", "100644", ":1", "README")
-	assertEqual(t, "M", fileop1.op)
+	fileop1 := newFileOp(nil).construct('M', "100644", ":1", "README")
+	assertRuneEqual(t, 'M', fileop1.op)
 	assertEqual(t, "100644", fileop1.mode)
 	assertEqual(t, ":1", fileop1.ref)
 	assertEqual(t, "README", fileop1.Path)
@@ -805,8 +811,8 @@ func TestFileOp(t *testing.T) {
 		t.Error("fileop1 path extraction failed equality check")
 	}
 
-	fileop2 := newFileOp(nil).construct("M", "100755", ":2", "DRINKME")
-	assertEqual(t, "M", fileop2.op)
+	fileop2 := newFileOp(nil).construct('M', "100755", ":2", "DRINKME")
+	assertRuneEqual(t, 'M', fileop2.op)
 	assertEqual(t, "100755", fileop2.mode)
 	assertEqual(t, ":2", fileop2.ref)
 	assertEqual(t, "DRINKME", fileop2.Path)
@@ -814,46 +820,46 @@ func TestFileOp(t *testing.T) {
 		t.Error("fileop2 path extraction failed equality check")
 	}
 
-	fileop3 := newFileOp(nil).construct("D", "DRINKME")
-	assertEqual(t, "D", fileop3.op)
+	fileop3 := newFileOp(nil).construct('D', "DRINKME")
+	assertRuneEqual(t, 'D', fileop3.op)
 	assertEqual(t, "DRINKME", fileop3.Path)
 	if !fileop3.paths(nil).Equal(orderedStringSet{"DRINKME"}) {
 		t.Error("fileop3 path extraction failed equality check")
 	}
 
-	fileop4 := newFileOp(nil).construct("R", "DRINKME", "EATME")
-	assertEqual(t, "R", fileop4.op)
+	fileop4 := newFileOp(nil).construct('R', "DRINKME", "EATME")
+	assertRuneEqual(t, 'R', fileop4.op)
 	assertEqual(t, "DRINKME", fileop4.Source)
 	assertEqual(t, "EATME", fileop4.Target)
 	if !fileop4.paths(nil).Equal(orderedStringSet{"EATME", "DRINKME"}) {
 		t.Error("fileop4 path extraction failed equality check")
 	}
 
-	fileop5 := newFileOp(nil).construct("C", "DRINKME", "EATME")
-	assertEqual(t, "C", fileop5.op)
+	fileop5 := newFileOp(nil).construct('C', "DRINKME", "EATME")
+	assertRuneEqual(t, 'C', fileop5.op)
 	assertEqual(t, "DRINKME", fileop5.Source)
 	assertEqual(t, "EATME", fileop5.Target)
 	if !fileop5.paths(nil).Equal(orderedStringSet{"EATME", "DRINKME"}) {
 		t.Error("fileop5 path extraction failed equality check")
 	}
 
-	fileop6 := newFileOp(nil).construct("N", ":3", "EATME")
-	assertEqual(t, "N", fileop6.op)
+	fileop6 := newFileOp(nil).construct('N', ":3", "EATME")
+	assertRuneEqual(t, 'N', fileop6.op)
 	assertEqual(t, ":3", fileop6.ref)
 	assertEqual(t, "EATME", fileop6.Path)
 	if !fileop6.paths(nil).Equal(orderedStringSet{"EATME"}) {
 		t.Error("fileop6 path extraction failed equality check")
 	}
 
-	fileop7 := newFileOp(nil).construct("deleteall")
-	assertEqual(t, "deleteall", fileop7.op)
+	fileop7 := newFileOp(nil).construct('d')
+	assertRuneEqual(t, 'd', fileop7.op)
 	if !fileop7.paths(nil).Equal(orderedStringSet{}) {
 		t.Error("fileop7 path extraction failed equality check")
 	}
 
 	line8 := "M 100644 :4 COPYING"
 	fileop8 := newFileOp(nil).parse(line8)
-	assertEqual(t, "M", fileop8.op)
+	assertRuneEqual(t, 'M', fileop8.op)
 	assertEqual(t, "100644", fileop8.mode)
 	assertEqual(t, ":4", fileop8.ref)
 	assertEqual(t, "COPYING", fileop8.Path)
@@ -861,7 +867,7 @@ func TestFileOp(t *testing.T) {
 
 	line9 := "M 100755 :5 runme.sh"
 	fileop9 := newFileOp(nil).parse(line9)
-	assertEqual(t, "M", fileop9.op)
+	assertRuneEqual(t, 'M', fileop9.op)
 	assertEqual(t, "100755", fileop9.mode)
 	assertEqual(t, ":5", fileop9.ref)
 	assertEqual(t, "runme.sh", fileop9.Path)
@@ -869,34 +875,34 @@ func TestFileOp(t *testing.T) {
 
 	line10 := "D deleteme"
 	fileop10 := newFileOp(nil).parse(line10)
-	assertEqual(t, "D", fileop10.op)
+	assertRuneEqual(t, 'D', fileop10.op)
 	assertEqual(t, "deleteme", fileop10.Path)
 	assertEqual(t, line10+"\n", fileop10.String())
 
 	line11 := `R "DRINKME" "EATME"`
 	fileop11 := newFileOp(nil).parse(line11)
-	assertEqual(t, "R", fileop11.op)
+	assertRuneEqual(t, 'R', fileop11.op)
 	assertEqual(t, "DRINKME", fileop11.Source)
 	assertEqual(t, "EATME", fileop11.Target)
 	assertEqual(t, line11+"\n", fileop11.String())
 
 	line12 := `C "DRINKME" "EATME"`
 	fileop12 := newFileOp(nil).parse(line12)
-	assertEqual(t, "C", fileop12.op)
+	assertRuneEqual(t, 'C', fileop12.op)
 	assertEqual(t, "DRINKME", fileop12.Source)
 	assertEqual(t, "EATME", fileop12.Target)
 	assertEqual(t, line12+"\n", fileop12.String())
 
 	line13 := "N :6 EATME"
 	fileop13 := newFileOp(nil).parse(line13)
-	assertEqual(t, "N", fileop13.op)
+	assertRuneEqual(t, 'N', fileop13.op)
 	assertEqual(t, ":6", fileop13.ref)
 	assertEqual(t, "EATME", fileop13.Path)
 	assertEqual(t, line13+"\n", fileop13.String())
 
 	line14 := "deleteall"
 	fileop14 := newFileOp(nil).parse(line14)
-	assertEqual(t, "deleteall", fileop14.op)
+	assertRuneEqual(t, 'd', fileop14.op)
 	assertEqual(t, line14+"\n", fileop14.String())
 
 	if fileop1.relevant(fileop2) {
@@ -1119,11 +1125,11 @@ func TestAlldeletes(t *testing.T) {
 	}
 
 	addop(commit1, "deleteall")
-	assertBool(t, commit1.alldeletes(nil), true)
+	assertBool(t, commit1.alldeletes(), true)
 	addop(commit1, "D README")
-	assertBool(t, commit1.alldeletes(nil), true)
+	assertBool(t, commit1.alldeletes(), true)
 	addop(commit1, "M 100644 :2 COPYING")
-	assertBool(t, commit1.alldeletes(nil), false)
+	assertBool(t, commit1.alldeletes(), false)
 }
 
 func TestBranchbase(t *testing.T) {
