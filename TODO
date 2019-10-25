@@ -14,7 +14,7 @@
   succeeded in Python. "make REPOSURGEON=pyreposurgeon hg-regress-patho"
   exhibits correct behavior.
 
-* Presently the standard-workfow makefuke does "set interactive" 
+* Presently the standard-workfow makefile does "set interactive" 
   to enable the baton. Does that flag bit need to be rethought?
 
 == Tuning for speed ==

@@ -27,8 +27,8 @@ The "initialize" option takes a project name (and, optionally,
 following source and target VCS types) and generates a
 Makefile that will sequence various steps of a repository
 conversion. It also generates stub lift and options files. This is
-meant to be run in an empty work directory, and it is an error to do
-'initialize' where any of these files already exist.  Afterwards, you
+meant to be run in an empty work directory, the tool will refuse
+to step on any of these files that already exist.  Afterwards, you
 will need to set some variables in the Makefile; read its header
 comment.
 

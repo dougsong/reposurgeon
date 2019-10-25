@@ -1,4 +1,6 @@
 repotool: generating Makefile, some variables in it need to be set.
+repotool: generating a stub options file.
+repotool: generating a stub options file.
 Return code: 0
 
 Directory contents:

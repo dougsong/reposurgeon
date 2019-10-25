@@ -154,6 +154,9 @@ def croak(msg):
     sys.stderr.write("repotool: " + msg + "\n")
     sys.exit(1)
 
+def complain(msg):
+    sys.stderr.write("repotool: " + msg + "\n")
+
 def do_or_die(dcmd, legend=""):
     "Either execute a command or raise a fatal exception."
     if legend:
@@ -247,12 +250,6 @@ def initialize(args):
     if len(args) < 1:
         croak("initialize requires a project name.")
     project = args.pop(0) 
-    if os.path.exists("Makefile"):
-        croak("a Makefile already exists here.")
-    elif os.path.exists(project + ".opts"):
-        croak("a project options file already exists here.")
-    elif os.path.exists(project + ".lift"):
-        croak("a project lift file already exists here.")
     if not args:
         source_vcs = input("repotool: what VCS do you want to convert from? ")
     else:
@@ -265,15 +262,26 @@ def initialize(args):
         target_vcs = args.pop(0)
     if target_vcs not in ("cvs", "svn", "git", "bzr", "hg", "darcs", "bk"):
         croak("unknown target VCS type %s" % target_vcs)
-    print("repotool: generating Makefile, some variables in it need to be set.")
-    with open("Makefile", "w") as wp:
-        wp.write(template % locals())
-        if target_vcs == "git":
-            wp.write(git_template_additions % locals())
-    with open(project + ".opts", "w") as wp:
-        wp.write("# Pre-read options for reposurgeon go here.\n")
-    with open(project + ".lift", "w") as wp:
-        wp.write("# Lift commands for %s\n" % project)
+    if os.path.exists("Makefile"):
+        complain("a Makefile already exists here.")    
+    else:
+        print("repotool: generating Makefile, some variables in it need to be set.")
+        with open("Makefile", "w") as wp:
+            wp.write(template % locals())
+            if target_vcs == "git":
+                wp.write(git_template_additions % locals())
+    if os.path.exists(project + ".opts"):
+        complain("a project options file already exists here.")
+    else:
+        print("repotool: generating a stub options file.")
+        with open(project + ".opts", "w") as wp:
+            wp.write("# Pre-read options for reposurgeon go here.\n")
+    if os.path.exists(project + ".lift"):
+        complain("a project lift file already exists here.")
+    else:
+        print("repotool: generating a stub options file.")
+        with open(project + ".lift", "w") as wp:
+            wp.write("# Lift commands for %s\n" % project)
 
 def export():
     "Export from the current working diretory to standard output."
