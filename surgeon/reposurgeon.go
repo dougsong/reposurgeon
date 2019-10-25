@@ -20241,7 +20241,7 @@ func (rs *Reposurgeon) DoGitify(_line string) bool {
 			if strings.Count(tag.Comment, "\n") < 2 {
 				continue
 			}
-			firsteol := strings.Index(commit.Comment, "\n")
+			firsteol := strings.Index(tag.Comment, "\n")
 			if tag.Comment[firsteol+1] == byte('\n') {
 				continue
 			}
@@ -21532,7 +21532,7 @@ func (rs *Reposurgeon) DoVerbose(lineIn string) bool {
 
 func (rs *Reposurgeon) HelpLogfile() {
 	rs.helpOutput(`
-Set the name of the file to which output willl be redirected.
+Set the name of the file to which output will be redirected.
 Without an argument, this command reports what logfile is set.
 `)
 }
