@@ -9078,6 +9078,7 @@ func svnProcessCleanTags(sp *StreamParser, options stringSet, baton *Baton) {
 	// These show up as redundant (D, M) fileop pairs.
 	commits := sp.repo.commits(nil)
 	for idx, commit := range commits {
+		count := 0
 		for i := range commit.operations() {
 			if i < len(commit.operations())-1 {
 				if commit.operations()[i].op == opD && commit.operations()[i+1].op == opM {
@@ -9087,7 +9088,7 @@ func svnProcessCleanTags(sp *StreamParser, options stringSet, baton *Baton) {
 				}
 			}
 		}
-		nonnil := make([]FileOp, 0)
+		nonnil := make([]FileOp, 0, len(commit.operations()) - count)
 		for _, op := range commit.operations() {
 			if op.op != "X" {
 				nonnil = append(nonnil, op)
