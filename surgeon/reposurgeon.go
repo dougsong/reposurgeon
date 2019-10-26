@@ -6373,7 +6373,6 @@ type StreamParser struct {
 	branches             map[string]*Commit // Points to branch root commits
 	_branchesSorted      []string
 	branchlink           map[string]daglink
-	branchdeletes        stringSet
 	branchcopies         stringSet
 	generatedDeletes     []*Commit
 	revisions            []RevisionRecord
@@ -6408,7 +6407,6 @@ func newStreamParser(repo *Repository) *StreamParser {
 	sp.branches = make(map[string]*Commit)
 	sp._branchesSorted = nil
 	sp.branchlink = make(map[string]daglink)
-	sp.branchdeletes = newStringSet()
 	sp.branchcopies = newStringSet()
 	sp.generatedDeletes = make([]*Commit, 0)
 	sp.revisions = make([]RevisionRecord, 0)
@@ -7342,10 +7340,6 @@ func (sp *StreamParser) isBranch(pathname string) bool {
 	return ok
 }
 
-func (sp *StreamParser) isBranchDeleted(pathname string) bool {
-	return sp.branchdeletes.Contains(pathname)
-}
-
 // Path separator as found in Subversion dump files. Isolated because
 // it might be "\" on OSes not to be mentioned in polite company.
 const svnSep = "/"
@@ -7494,7 +7488,6 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 			}
 		} else if node.action == sdDELETE || node.action == sdREPLACE {
 			if sp.isBranch(node.path) {
-				sp.branchdeletes.Add(node.path)
 				expandedNodes = append(expandedNodes, node)
 				// The deleteall will also delete .gitignore files
 				for ignorepath := range sp.activeGitignores {
@@ -7546,9 +7539,7 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 		// deleted, perform a normal copy and interpret
 		// this as an ad-hoc branch merge.
 		if node.fromPath != "" {
-			branchcopy := sp.isBranch(node.fromPath) &&
-				sp.isBranch(node.path) &&
-				!sp.isBranchDeleted(node.path)
+			branchcopy := sp.isBranch(node.fromPath) && sp.isBranch(node.path)
 			logit(logTOPOLOGY, "r%d-%d: directory copy to %s from r%d~%s (branchcopy %v)",
 				node.revision, node.index, node.path, node.fromRev, node.fromPath, branchcopy)
 			// Update our .gitignore list so that it includes those
@@ -7579,7 +7570,6 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 					}
 				}
 			} else {
-				sp.branchdeletes.Remove(node.path)
 				// Generate copy ops for generated .gitignore files
 				// to match the copy of svn:ignore props on the
 				// Subversion side. We use the just updated

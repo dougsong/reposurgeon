@@ -13550,437 +13550,8 @@ Retire the old trunk (CVS HEAD), in preparation for moving branches/Development
 from :761
 deleteall
 
-commit refs/heads/master
-#legacy-id 356
-mark :1925
-committer Charles Lepple <clepple+nut@gmail.com> 1140096703 +0000
-data 40
-Moving branches/Development into trunk.
-from :1924
-merge :1923
-M 100644 :1903 CHANGES
-M 100644 :4 COPYING
-M 100644 :1885 CREDITS
-M 100644 :1592 INSTALL
-M 100644 :1860 MAINTAINERS
-M 100644 :9 Makefile.dist
-M 100644 :864 Makefile.in
-M 100644 :1593 NEWS
-M 100644 :1594 README
-M 100644 :583 UPGRADING
-M 100644 :14 aclocal.m4
-M 100644 :493 clients/Makefile.in
-M 100644 :16 clients/cgilib.c
-M 100644 :17 clients/cgilib.h
-M 100644 :18 clients/status.h
-M 100644 :19 clients/upsc.c
-M 100644 :20 clients/upsclient.c
-M 100644 :311 clients/upsclient.h
-M 100644 :22 clients/upscmd.c
-M 100644 :1845 clients/upsimage.c
-M 100644 :24 clients/upsimagearg.h
-M 100644 :312 clients/upslog.c
-M 100644 :26 clients/upslog.h
-M 100644 :27 clients/upsmon.c
-M 100644 :28 clients/upsmon.h
-M 100644 :29 clients/upsrw.c
-M 100755 :30 clients/upssched-cmd
-M 100644 :31 clients/upssched.c
-M 100644 :32 clients/upssched.h
-M 100644 :33 clients/upsset.c
-M 100644 :1846 clients/upsstats.c
-M 100644 :35 clients/upsstats.h
-M 100644 :36 common/Makefile.in
-M 100644 :37 common/atexit.c
-M 100644 :1866 common/common.c
-M 100644 :39 common/inet_aton.c
-M 100644 :40 common/parseconf.c
-M 100644 :41 common/setenv.c
-M 100644 :42 common/snprintf.c
-M 100644 :43 common/state.c
-M 100644 :44 common/strerror.c
-M 100644 :45 common/upsconf.c
-M 100644 :46 conf/Makefile.in
-M 100644 :47 conf/hosts.conf
-M 100644 :313 conf/ups.conf
-M 100644 :49 conf/upsd.conf
-M 100644 :50 conf/upsd.users
-M 100644 :314 conf/upsmon.conf
-M 100644 :52 conf/upssched.conf
-M 100644 :53 conf/upsset.conf
-M 100644 :1851 conf/upsstats-single.html
-M 100644 :1852 conf/upsstats.html
-M 100755 :592 config.guess
-M 100644 :593 config.sub
-M 100644 :1234 configure.in
-M 100755 :1346 configure
-M 100644 :60 data/Makefile.in
-M 100644 :1904 data/cmdvartab
-M 100644 :1894 data/driver.list
-M 100644 :1905 data/evolution500.dev
-M 100644 :899 data/html/Makefile.in
-M 100644 :745 data/html/README
-M 100644 :746 data/html/bottom.html
-M 100644 :748 data/html/header.html.in
-M 100644 :747 data/html/header.html
-M 100644 :749 data/html/index.html
-M 100644 :750 data/html/nut-banner.png
-M 100644 :1376 debian/changelog
-M 100644 :1377 debian/control
-M 100644 :1372 debian/copyright
-M 100644 :597 debian/description.subst
-M 100644 :598 debian/nut-cgi.README.Debian
-M 100644 :1270 debian/nut-cgi.config
-M 100644 :600 debian/nut-cgi.examples
-M 100644 :1373 debian/nut-cgi.postinst
-M 100644 :602 debian/nut-cgi.postrm
-M 100644 :1271 debian/nut-cgi.preinst
-M 100644 :604 debian/nut-cgi.templates
-M 100644 :1272 debian/nut-usb.postinst
-M 100644 :1273 debian/nut-usb.prerm
-M 100644 :605 debian/nut.README.Debian
-M 100644 :606 debian/nut.TODO.Debian
-M 100644 :607 debian/nut.config
-M 100644 :608 debian/nut.default
-M 100644 :609 debian/nut.dirs
-M 100644 :610 debian/nut.docs
-M 100644 :611 debian/nut.examples
-M 100644 :612 debian/nut.init
-M 100644 :613 debian/nut.links
-M 100644 :614 debian/nut.postinst
-M 100644 :615 debian/nut.postrm
-M 100644 :616 debian/nut.preinst
-M 100644 :617 debian/nut.prerm
-M 100644 :618 debian/nut.templates
-M 100644 :621 debian/po/POTFILES.in
-M 100644 :622 debian/po/ca.po
-M 100644 :623 debian/po/cs.po
-M 100644 :1374 debian/po/fr.po
-M 100644 :625 debian/po/templates.pot
-M 100755 :1378 debian/po/vi.po
-M 100755 :1274 debian/rules
-M 100644 :627 debian/watch
-M 100644 :1891 docs/FAQ
-M 100644 :64 docs/README
-M 100644 :1906 docs/acpi.txt
-M 100644 :1907 docs/al175-vars.txt
-M 100644 :65 docs/big-servers.txt
-M 100644 :66 docs/cables/apc-rs500-serial.txt
-M 100644 :67 docs/cables/apc.txt
-M 100644 :68 docs/cables/ge-imv-victron.txt
-M 100644 :69 docs/cables/imv.txt
-M 100644 :70 docs/cables/mgeups.txt
-M 100644 :723 docs/cables/powerware.txt
-M 100644 :72 docs/cables/repotec.txt
-M 100644 :73 docs/cables/sms.txt
-M 100644 :74 docs/chroot.txt
-M 100644 :75 docs/commands.txt
-M 100644 :76 docs/config-files.txt
-M 100644 :77 docs/configure.txt
-M 100644 :78 docs/contact-closure.txt
-M 100644 :79 docs/data-room.txt
-M 100644 :80 docs/design.txt
-M 100644 :81 docs/developers.txt
-M 100644 :1399 docs/hid-subdrivers.txt
-M 100644 :82 docs/ideas.txt
-M 100644 :1148 docs/new-drivers.txt
-M 100644 :1908 docs/new-names.txt
-M 100644 :85 docs/osd-notify.txt
-M 100644 :86 docs/pager.txt
-M 100644 :87 docs/powersaving.txt
-M 100644 :1909 docs/protocol.txt
-M 100644 :89 docs/shutdown.txt
-M 100644 :90 docs/snmp.txt
-M 100644 :91 docs/sock-protocol.txt
-M 100644 :92 docs/ssl.txt
-M 100644 :1229 docs/upssched.txt
-M 100644 :1347 drivers/Doxyfile
-M 100644 :1574 drivers/Makefile.drvbuild
-M 100644 :1575 drivers/Makefile.in
-M 100644 :1910 drivers/al175.c
-M 100644 :1283 drivers/al175.h
-M 100644 :1911 drivers/apc-hid.c
-M 100644 :1151 drivers/apc-hid.h
-M 100644 :1912 drivers/apccmib.h
-M 100644 :502 drivers/apcsmart.c
-M 100644 :1913 drivers/apcsmart.h
-M 100644 :1209 drivers/bcmxcp.c
-M 100644 :852 drivers/bcmxcp.h
-M 100644 :853 drivers/bcmxcp_io.h
-M 100644 :1880 drivers/bcmxcp_ser.c
-M 100644 :855 drivers/bcmxcp_usb.c
-M 100644 :1443 drivers/belkin-hid.c
-M 100644 :1153 drivers/belkin-hid.h
-M 100644 :99 drivers/belkin.c
-M 100644 :1563 drivers/belkin.h
-M 100644 :1881 drivers/belkinunv.c
-M 100644 :944 drivers/belkinunv.h
-M 100644 :1600 drivers/bestfcom.c
-M 100644 :946 drivers/bestfcom.h
-M 100644 :947 drivers/bestuferrups.c
-M 100644 :948 drivers/bestuferrups.h
-M 100644 :949 drivers/bestups.c
-M 100644 :950 drivers/bestups.h
-M 100644 :951 drivers/blazer.c
-M 100644 :952 drivers/blazer.h
-M 100644 :506 drivers/cpsups.c
-M 100644 :507 drivers/cpsups.h
-M 100644 :953 drivers/cyberpower.c
-M 100644 :954 drivers/cyberpower.h
-M 100644 :1432 drivers/dstate.c
-M 100644 :110 drivers/dstate.h
-M 100644 :763 drivers/dummy-ups.c
-M 100644 :1914 drivers/dummy-ups.h
-M 100644 :509 drivers/energizerups.c
-M 100644 :1915 drivers/esupssmart.c
-M 100644 :956 drivers/esupssmart.h
-M 100644 :957 drivers/etapro.c
-M 100644 :958 drivers/etapro.h
-M 100644 :959 drivers/everups.c
-M 100644 :960 drivers/everups.h
-M 100644 :550 drivers/fentonups.c
-M 100644 :1499 drivers/fentonups.h
-M 100644 :813 drivers/gamatronic.c
-M 100644 :814 drivers/gamatronic.h
-M 100755 :1875 drivers/gendb
-M 100644 :1394 drivers/generic-hid.c
-M 100644 :1395 drivers/generic-hid.h
-M 100644 :1669 drivers/genericups.c
-M 100644 :805 drivers/genericups.h
-M 100644 :1896 drivers/hidparser.c
-M 100644 :1461 drivers/hidparser.h
-M 100644 :1897 drivers/hidtypes.h
-M 100644 :125 drivers/hidups.c
-M 100644 :126 drivers/hidups.h
-M 100644 :1612 drivers/ietfmib.h
-M 100644 :962 drivers/ippon.c
-M 100644 :963 drivers/ippon.h
-M 100644 :964 drivers/isbmex.c
-M 100644 :965 drivers/isbmex.h
-M 100644 :1898 drivers/libhid.c
-M 100644 :1899 drivers/libhid.h
-M 100644 :1237 drivers/libusb.c
-M 100644 :1412 drivers/libusb.h
-M 100644 :966 drivers/liebert.c
-M 100644 :967 drivers/liebert.h
-M 100644 :1433 drivers/main.c
-M 100644 :135 drivers/main.h
-M 100644 :968 drivers/masterguard.c
-M 100644 :969 drivers/masterguard.h
-M 100644 :1916 drivers/megatec.c
-M 100644 :1538 drivers/megatec.h
-M 100644 :970 drivers/metasys.c
-M 100644 :971 drivers/metasys.h
-M 100644 :1917 drivers/mge-hid.c
-M 100644 :1390 drivers/mge-hid.h
-M 100644 :1566 drivers/mge-shut.c
-M 100644 :1918 drivers/mge-shut.h
-M 100644 :830 drivers/mge-utalk.c
-M 100644 :831 drivers/mge-utalk.h
-M 100644 :1613 drivers/mgemib.h
-M 100644 :972 drivers/mustek.c
-M 100644 :973 drivers/mustek.h
-M 100644 :1614 drivers/netvisionmib.h
-M 100644 :1900 drivers/newhidups.c
-M 100644 :1901 drivers/newhidups.h
-M 100644 :1919 drivers/nitram.c
-M 100644 :1877 drivers/nitram.h
-M 100644 :1262 drivers/nut_usb.c
-M 100644 :858 drivers/nut_usb.h
-M 100644 :1920 drivers/oneac.c
-M 100644 :148 drivers/oneac.h
-M 100644 :1576 drivers/optiups.c
-M 100644 :1577 drivers/optiups.h
-M 100644 :149 drivers/powercom.c
-M 100644 :1567 drivers/powercom.h
-M 100644 :1615 drivers/pwmib.h
-M 100644 :1640 drivers/safenet.c
-M 100644 :1641 drivers/safenet.h
-M 100644 :1888 drivers/serial.c
-M 100644 :1889 drivers/serial.h
-M 100644 :1138 drivers/skel.c
-M 100644 :157 drivers/sms.c
-M 100644 :158 drivers/sms.h
-M 100644 :1624 drivers/snmp-ups.c
-M 100644 :1625 drivers/snmp-ups.h
-M 100644 :666 drivers/solis.c
-M 100644 :532 drivers/solis.h
-M 100644 :1921 drivers/tripplite-hid.c
-M 100644 :1449 drivers/tripplite-hid.h
-M 100644 :1602 drivers/tripplite.c
-M 100644 :977 drivers/tripplite.h
-M 100644 :1349 drivers/tripplite_usb.c
-M 100644 :1922 drivers/tripplitesu.c
-M 100644 :979 drivers/tripplitesu.h
-M 100644 :980 drivers/upscode2.c
-M 100644 :981 drivers/upscode2.h
-M 100644 :1870 drivers/upsdrvctl.c
-M 100644 :982 drivers/victronups.c
-M 100644 :983 drivers/victronups.h
-M 100644 :165 include/attribute.h
-M 100644 :1867 include/common.h
-M 100644 :868 include/config.h.in
-M 100644 :168 include/extstate.h
-M 100644 :323 include/parseconf.h
-M 100644 :170 include/proto.h
-M 100644 :171 include/stamp-h.in
-M 100644 :172 include/state.h
-M 100644 :173 include/timehead.h
-M 100644 :174 include/upsconf.h
-M 100644 :175 include/upshandler.h
-M 100644 :647 include/version.h
-M 100644 :646 include/version
-M 100755 :178 install-sh
-M 100644 :179 lib/Makefile.in
-M 100644 :180 lib/README
-M 100644 :181 lib/libupsclient-config.in
-M 100644 :182 lib/libupsclient.pc.in
-M 100644 :1578 man/Makefile.in
-M 100644 :1284 man/al175.8
-M 100644 :184 man/apcsmart.8
-M 100644 :1207 man/bcmxcp.8
-M 100644 :991 man/bcmxcp_usb.8
-M 100644 :185 man/belkin.8
-M 100644 :926 man/belkinunv.8
-M 100644 :187 man/bestfcom.8
-M 100644 :188 man/bestuferrups.8
-M 100644 :189 man/bestups.8
-M 100644 :190 man/cpsups.8
-M 100644 :191 man/cyberpower.8
-M 100644 :680 man/dummy-ups.8
-M 100644 :193 man/energizerups.8
-M 100644 :194 man/etapro.8
-M 100644 :195 man/everups.8
-M 100644 :539 man/fentonups.8
-M 100644 :815 man/gamatronic.8
-M 100644 :1839 man/genericups.8
-M 100644 :198 man/hidups.8
-M 100644 :199 man/hosts.conf.5
-M 100644 :200 man/ippon.8
-M 100644 :201 man/isbmex.8
-M 100644 :202 man/liebert.8
-M 100644 :203 man/masterguard.8
-M 100644 :1842 man/megatec.8
-M 100644 :204 man/metasys.8
-M 100644 :1520 man/mge-shut.8
-M 100644 :1521 man/mge-utalk.8
-M 100644 :207 man/mustek.8
-M 100644 :1532 man/newhidups.8
-M 100644 :1387 man/nitram.8
-M 100644 :543 man/nutupsdrv.8
-M 100644 :210 man/oneac.8
-M 100644 :1579 man/optiups.8
-M 100644 :211 man/powercom.8
-M 100644 :213 man/safenet.8
-M 100644 :214 man/sms.8
-M 100644 :681 man/snmp-ups.8
-M 100644 :546 man/solis.8
-M 100644 :216 man/tripplite.8
-M 100644 :1350 man/tripplite_usb.8
-M 100644 :217 man/tripplitesu.8
-M 100644 :218 man/ups.conf.5
-M 100644 :219 man/upsc.8
-M 100644 :220 man/upscli_connect.3
-M 100644 :221 man/upscli_disconnect.3
-M 100644 :222 man/upscli_fd.3
-M 100644 :223 man/upscli_get.3
-M 100644 :224 man/upscli_list_next.3
-M 100644 :225 man/upscli_list_start.3
-M 100644 :226 man/upscli_readline.3
-M 100644 :227 man/upscli_sendline.3
-M 100644 :228 man/upscli_splitname.3
-M 100644 :229 man/upscli_ssl.3
-M 100644 :230 man/upscli_strerror.3
-M 100644 :231 man/upscli_upserror.3
-M 100644 :232 man/upsclient.3
-M 100644 :233 man/upscmd.8
-M 100644 :547 man/upscode2.8
-M 100644 :234 man/upsd.8
-M 100644 :235 man/upsd.conf.5
-M 100644 :236 man/upsd.users.5
-M 100644 :1871 man/upsdrvctl.8
-M 100644 :238 man/upsimage.cgi.8
-M 100644 :239 man/upslog.8
-M 100644 :240 man/upsmon.8
-M 100644 :241 man/upsmon.conf.5
-M 100644 :242 man/upsrw.8
-M 100644 :243 man/upssched.8
-M 100644 :244 man/upssched.conf.5
-M 100644 :245 man/upsset.cgi.8
-M 100644 :246 man/upsset.conf.5
-M 100644 :247 man/upsstats.cgi.8
-M 100644 :1853 man/upsstats.html.5
-M 100644 :249 man/victronups.8
-M 100644 :628 packaging/README
-M 100644 :693 packaging/RedHat/nut.spec.in
-M 100644 :327 packaging/RedHat/nut.spec
-M 100644 :629 packaging/mandriva/bouissou2.patch_TO_BE_CHECKED
-M 100644 :630 packaging/mandriva/nut-2.0.1-lib64.patch
-M 100644 :632 packaging/mandriva/nut.spec.in
-M 100644 :631 packaging/mandriva/nut.spec
-M 100644 :633 packaging/mandriva/upsd
-M 100644 :634 packaging/mandriva/upsmon
-M 100644 :252 scripts/HP-UX/Makefile
-M 100755 :254 scripts/HP-UX/nut-drvctl.sh
-M 100644 :253 scripts/HP-UX/nut-drvctl
-M 100755 :256 scripts/HP-UX/nut-upsd.sh
-M 100644 :255 scripts/HP-UX/nut-upsd
-M 100755 :258 scripts/HP-UX/nut-upsmon.sh
-M 100644 :257 scripts/HP-UX/nut-upsmon
-M 100644 :259 scripts/README
-M 100644 :260 scripts/RedHat/README
-M 100644 :261 scripts/RedHat/halt.patch
-M 100644 :262 scripts/RedHat/ups
-M 100644 :264 scripts/RedHat/upsd.in
-M 100644 :263 scripts/RedHat/upsd
-M 100644 :266 scripts/RedHat/upsmon.in
-M 100644 :265 scripts/RedHat/upsmon
-M 100755 :267 scripts/Solaris8/S99upsmon
-M 100644 :268 scripts/Windows/Makefile
-M 100644 :269 scripts/Windows/halt.c
-M 100644 :1505 scripts/hotplug-ng/README
-M 100644 :1506 scripts/hotplug-ng/nut-usbups.hotplug.in
-M 100644 :1507 scripts/hotplug-ng/nut-usbups.rules.in
-M 100644 :817 scripts/hotplug/README
-M 100644 :1503 scripts/hotplug/libhid.usermap
-M 100644 :272 scripts/hotplug/libhidups.in
-M 100644 :273 scripts/misc/osd-notify
-M 100644 :274 server/Makefile.in
-M 100644 :275 server/access.c
-M 100644 :276 server/access.h
-M 100644 :1435 server/conf.c
-M 100644 :278 server/conf.h
-M 100644 :279 server/ctype.h
-M 100644 :280 server/desc.c
-M 100644 :281 server/desc.h
-M 100644 :282 server/netcmds.h
-M 100644 :283 server/neterr.h
-M 100644 :284 server/netget.c
-M 100644 :285 server/netget.h
-M 100644 :286 server/netinstcmd.c
-M 100644 :287 server/netinstcmd.h
-M 100644 :288 server/netlist.c
-M 100644 :289 server/netlist.h
-M 100644 :290 server/netmisc.c
-M 100644 :291 server/netmisc.h
-M 100644 :292 server/netset.c
-M 100644 :293 server/netset.h
-M 100644 :294 server/netuser.c
-M 100644 :295 server/netuser.h
-M 100644 :296 server/sockdebug.c
-M 100644 :297 server/ssl.c
-M 100644 :298 server/ssl.h
-M 100644 :1627 server/sstate.c
-M 100644 :300 server/sstate.h
-M 100644 :301 server/upsd.c
-M 100644 :302 server/upsd.h
-M 100644 :303 server/upstype.h
-M 100644 :304 server/user-data.h
-M 100644 :305 server/user.c
-M 100644 :306 server/user.h
-
 blob
-mark :1926
+mark :1925
 data 113
 /Makefile
 /upsimage.cgi
@@ -13996,7 +13567,7 @@ data 113
 
 commit refs/heads/master
 #legacy-id 358
-mark :1927
+mark :1926
 committer Charles Lepple <clepple+nut@gmail.com> 1140282414 +0000
 data 344
 In SVN, you use the svn:ignore property on a directory to ignore files.
@@ -14006,98 +13577,98 @@ and added a client library to the ignore list.
 
 Reference:
     http://svnbook.red-bean.com/en/1.1/ch07s02.html#svn-ch-7-sect-2.3.3
-from :1925
-M 100644 :1926 clients/.gitignore
+from :1924
+M 100644 :1925 clients/.gitignore
 
 blob
-mark :1928
+mark :1927
 data 45
 Revision is 359, file path is trunk/CHANGES.
 
 commit refs/heads/master
 #legacy-id 359
-mark :1929
+mark :1928
 committer Charles Lepple <clepple+nut@gmail.com> 1140527628 +0000
 data 33
 Note SVN conversion in changelog
-from :1927
-M 100644 :1928 CHANGES
+from :1926
+M 100644 :1927 CHANGES
 
 blob
-mark :1930
+mark :1929
 data 45
 Revision is 360, file path is trunk/INSTALL.
 
 commit refs/heads/master
 #legacy-id 360
-mark :1931
+mark :1930
 committer Peter Selinger <selinger@users.sourceforge.net> 1140647116 +0000
 data 53
 * clarified newhidups use of "port" value in INSTALL
-from :1929
-M 100644 :1930 INSTALL
+from :1928
+M 100644 :1929 INSTALL
 
 blob
-mark :1932
+mark :1931
 data 45
 Revision is 361, file path is trunk/CHANGES.
 
 blob
-mark :1933
+mark :1932
 data 57
 Revision is 361, file path is trunk/drivers/upsdrvctl.c.
 
 commit refs/heads/master
 #legacy-id 361
-mark :1934
+mark :1933
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1140961608 +0000
 data 54
 Remove superfluous 'xstrdup' from drivers/upsdrvctl.c
-from :1931
-M 100644 :1932 CHANGES
-M 100644 :1933 drivers/upsdrvctl.c
+from :1930
+M 100644 :1931 CHANGES
+M 100644 :1932 drivers/upsdrvctl.c
 
 blob
-mark :1935
+mark :1934
 data 45
 Revision is 362, file path is trunk/CHANGES.
 
 commit refs/heads/master
 #legacy-id 362
-mark :1936
+mark :1935
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1141056595 +0000
 data 6
 nomsg
-from :1934
-M 100644 :1935 CHANGES
+from :1933
+M 100644 :1934 CHANGES
 
 blob
-mark :1937
+mark :1936
 data 54
 Revision is 363, file path is trunk/data/driver.list.
 
 commit refs/heads/master
 #legacy-id 363
-mark :1938
+mark :1937
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1141056605 +0000
 data 6
 nomsg
-from :1936
-M 100644 :1937 data/driver.list
+from :1935
+M 100644 :1936 data/driver.list
 
 blob
-mark :1939
+mark :1938
 data 45
 Revision is 364, file path is trunk/CHANGES.
 
 commit refs/heads/master
 #legacy-id 364
-mark :1940
+mark :1939
 committer Arnaud Quette <arnaud.quette@free.fr> 1141071413 +0000
 data 27
 move debian/ to packaging/
-from :1938
-M 100644 :1939 CHANGES
+from :1937
+M 100644 :1938 CHANGES
 D debian/changelog
 D debian/control
 D debian/copyright
@@ -14170,177 +13741,177 @@ M 100755 :1274 packaging/debian/rules
 M 100644 :627 packaging/debian/watch
 
 blob
-mark :1941
+mark :1940
 data 45
 Revision is 365, file path is trunk/CHANGES.
 
 blob
-mark :1942
+mark :1941
 data 56
 Revision is 365, file path is trunk/drivers/mge-shut.h.
 
 blob
-mark :1943
+mark :1942
 data 57
 Revision is 365, file path is trunk/drivers/mge-utalk.h.
 
 blob
-mark :1944
+mark :1943
 data 56
 Revision is 365, file path is trunk/drivers/snmp-ups.c.
 
 commit refs/heads/master
 #legacy-id 365
-mark :1945
+mark :1944
 committer Arnaud Quette <arnaud.quette@free.fr> 1141072973 +0000
 data 45
 remove the zero prefix on mge-* and snmp-ups
-from :1940
-M 100644 :1941 CHANGES
-M 100644 :1942 drivers/mge-shut.h
-M 100644 :1943 drivers/mge-utalk.h
-M 100644 :1944 drivers/snmp-ups.c
+from :1939
+M 100644 :1940 CHANGES
+M 100644 :1941 drivers/mge-shut.h
+M 100644 :1942 drivers/mge-utalk.h
+M 100644 :1943 drivers/snmp-ups.c
 
 blob
-mark :1946
+mark :1945
 data 53
 Revision is 367, file path is trunk/common/common.c.
 
 commit refs/heads/master
 #legacy-id 367
-mark :1947
+mark :1946
 committer Peter Selinger <selinger@users.sourceforge.net> 1141378966 +0000
 data 67
 * set errno=ENOENT in common.c:get_user_pwent() if user not found 
-from :1945
-M 100644 :1946 common/common.c
+from :1944
+M 100644 :1945 common/common.c
 
 blob
-mark :1948
+mark :1947
 data 45
 Revision is 368, file path is trunk/CHANGES.
 
 commit refs/heads/master
 #legacy-id 368
-mark :1949
+mark :1948
 committer Peter Selinger <selinger@users.sourceforge.net> 1141390367 +0000
 data 38
 * updated CHANGES for previous commit
-from :1947
-M 100644 :1948 CHANGES
+from :1946
+M 100644 :1947 CHANGES
 
 blob
-mark :1950
+mark :1949
 data 45
 Revision is 369, file path is trunk/CHANGES.
 
 blob
-mark :1951
+mark :1950
 data 54
 Revision is 369, file path is trunk/clients/upslog.c.
 
 blob
-mark :1952
+mark :1951
 data 54
 Revision is 369, file path is trunk/clients/upsmon.c.
 
 blob
-mark :1953
+mark :1952
 data 53
 Revision is 369, file path is trunk/common/common.c.
 
 blob
-mark :1954
+mark :1953
 data 52
 Revision is 369, file path is trunk/drivers/main.c.
 
 blob
-mark :1955
+mark :1954
 data 51
 Revision is 369, file path is trunk/server/upsd.c.
 
 commit refs/heads/master
 #legacy-id 369
-mark :1956
+mark :1955
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1141417548 +0000
 data 109
 handle problems with get_user_pwent() directly, instead of first returning to the caller with a NULL pointer
-from :1949
-M 100644 :1950 CHANGES
-M 100644 :1951 clients/upslog.c
-M 100644 :1952 clients/upsmon.c
-M 100644 :1953 common/common.c
-M 100644 :1954 drivers/main.c
-M 100644 :1955 server/upsd.c
+from :1948
+M 100644 :1949 CHANGES
+M 100644 :1950 clients/upslog.c
+M 100644 :1951 clients/upsmon.c
+M 100644 :1952 common/common.c
+M 100644 :1953 drivers/main.c
+M 100644 :1954 server/upsd.c
 
 blob
-mark :1957
+mark :1956
 data 45
 Revision is 370, file path is trunk/CHANGES.
 
 blob
-mark :1958
+mark :1957
 data 55
 Revision is 370, file path is trunk/drivers/safenet.c.
 
 commit refs/heads/master
 #legacy-id 370
-mark :1959
+mark :1958
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1141482672 +0000
 data 69
 drivers/safenet.c: increase timeout for reading replies from the UPS
-from :1956
-M 100644 :1957 CHANGES
-M 100644 :1958 drivers/safenet.c
+from :1955
+M 100644 :1956 CHANGES
+M 100644 :1957 drivers/safenet.c
 
 blob
-mark :1960
+mark :1959
 data 56
 Revision is 371, file path is branches/Testing/CHANGES.
 
 blob
-mark :1961
+mark :1960
 data 65
 Revision is 371, file path is branches/Testing/data/driver.list.
 
 blob
-mark :1962
+mark :1961
 data 66
 Revision is 371, file path is branches/Testing/drivers/apc-hid.c.
 
 blob
-mark :1963
+mark :1962
 data 68
 Revision is 371, file path is branches/Testing/drivers/hidparser.c.
 
 blob
-mark :1964
+mark :1963
 data 67
 Revision is 371, file path is branches/Testing/drivers/hidtypes.h.
 
 blob
-mark :1965
+mark :1964
 data 65
 Revision is 371, file path is branches/Testing/drivers/libhid.c.
 
 blob
-mark :1966
+mark :1965
 data 65
 Revision is 371, file path is branches/Testing/drivers/libhid.h.
 
 blob
-mark :1967
+mark :1966
 data 68
 Revision is 371, file path is branches/Testing/drivers/newhidups.c.
 
 blob
-mark :1968
+mark :1967
 data 68
 Revision is 371, file path is branches/Testing/drivers/newhidups.h.
 
 commit refs/heads/Testing
 #legacy-id 371
-mark :1969
+mark :1968
 author Peter Selinger <selinger@users.sourceforge.net> 1141494281 +0000
 committer Peter Selinger <selinger@users.sourceforge.net> 1141494281 +0000
 data 325
@@ -14351,23 +13922,23 @@ extraction of logical values from report. Added Kelvin-to-Celsius
 conversion. Tweaked APC date conversion. Back-UPS BF500 support.
 Deleted unused items in HIDItem structure.
 from :1740
-M 100644 :1960 CHANGES
-M 100644 :1961 data/driver.list
-M 100644 :1962 drivers/apc-hid.c
-M 100644 :1963 drivers/hidparser.c
-M 100644 :1964 drivers/hidtypes.h
-M 100644 :1965 drivers/libhid.c
-M 100644 :1966 drivers/libhid.h
-M 100644 :1967 drivers/newhidups.c
-M 100644 :1968 drivers/newhidups.h
+M 100644 :1959 CHANGES
+M 100644 :1960 data/driver.list
+M 100644 :1961 drivers/apc-hid.c
+M 100644 :1962 drivers/hidparser.c
+M 100644 :1963 drivers/hidtypes.h
+M 100644 :1964 drivers/libhid.c
+M 100644 :1965 drivers/libhid.h
+M 100644 :1966 drivers/newhidups.c
+M 100644 :1967 drivers/newhidups.h
 
 commit refs/heads/Testing
 #legacy-id 372
-mark :1970
+mark :1969
 committer Peter Selinger <selinger@users.sourceforge.net> 1141494469 +0000
 data 74
 removed Makefile from Testing branch, because it does not belong in SVN. 
-from :1969
+from :1968
 D Makefile
 
 tag emptycommit-4
@@ -14746,13 +14317,11 @@ Cleaning up repository after initial SVN import
 [[Split portion of a mixed commit.]]
 
 tag tipdelete-Development
-#legacy-id 356.1
+#legacy-id 356
 from :1923
 tagger Charles Lepple <clepple+nut@gmail.com> 1140096703 +0000
-data 78
+data 40
 Moving branches/Development into trunk.
-
-[[Split portion of a mixed commit.]]
 
 tag tipdelete-r2.0.1
 #legacy-id 357

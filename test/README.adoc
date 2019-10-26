@@ -415,7 +415,7 @@ branchmap.svn::
    Doesn't build, no trunk branch. Used by branchmap.tst.
 
 branchreplace.svn::
-   BUG: needs analysis. Used in a repocutter test test. Derived 
+   BUG: needs analysis. Used in a repocutter test. Derived 
    from references.svn.
 
 delete-copy.svn::
