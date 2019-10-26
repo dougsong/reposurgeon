@@ -1,6 +1,7 @@
 ## Test the macro facility
 set echo
 read <simple.fi
+set interactive
 print Test that we can define and see macro definitions
 define fubar list
 define
@@ -16,4 +17,3 @@ inspect {0}
 do fubaz :49
 undefine fubaz
 print Tests complete
-

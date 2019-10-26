@@ -414,7 +414,7 @@ legacy-regress:
 	for test in $(REFLOADS); \
 	do \
 	    if echo "  $${test}.svn" >&2; \
-	    $(REPOSURGEON) "$(TESTOPT)" "read <$${test}.svn" "legacy write -" >/tmp/regress$$$$ 2>/dev/null; \
+	    $(REPOSURGEON) "$(TESTOPT)" "read <$${test}.svn" "legacy write -" | grep -v '^reposurgeon:' >/tmp/regress$$$$ 2>/dev/null; \
 	    then diff --text -u $${test}.map /tmp/regress$$$$ || exit $(STOPOUT); \
 	    else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi; \
 	done

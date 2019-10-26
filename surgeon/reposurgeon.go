@@ -561,7 +561,7 @@ func (s stringSet) Len() int {
 type orderedIntSet []int
 
 func newOrderedIntSet(elements ...int) orderedIntSet {
-	set := make([]int, 0)
+	set := make([]int, 0, len(elements))
 	return append(set, elements...)
 }
 
@@ -1484,7 +1484,7 @@ func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
 	cm.childStamps = mc.gatherChildTimestamps(base)
 	if logEnable(logTOPOLOGY) {
 		for _, rev := range cm.base.revlist {
-			fmt.Printf("Revision %s has branch '%s'\n", rev, cm.base.meta[rev].branch)
+			logit(0, "Revision %s has branch '%s'\n", rev, cm.base.meta[rev].branch)
 		}
 	}
 	// Depends on the order of the revlist to be correct.
@@ -1670,7 +1670,7 @@ func (ge *GitExtractor) gatherAllReferences(rs *RepoStreamer) error {
 		rs.refs.set(pathname[5:], strings.Trim(string(data), "\n"))
 		return nil
 	})
-	rs.baton.twirl("")
+	rs.baton.twirl()
 
 	rf, cmd, err1 := readFromProcess("git tag -l")
 	tl := bufio.NewReader(rf)
@@ -1738,7 +1738,7 @@ func (ge *GitExtractor) gatherAllReferences(rs *RepoStreamer) error {
 			tagobj := *newTag(nil, tag, objecthash, attrib, comment)
 			rs.tags = append(rs.tags, tagobj)
 		}
-		rs.baton.twirl("")
+		rs.baton.twirl()
 	}
 	return nil
 }
@@ -1764,7 +1764,7 @@ func (ge *GitExtractor) colorBranches(rs *RepoStreamer) error {
 		panic(throw("extractor", "Couldn't spawn git-fast-export: %v", err3))
 	}
 	rf := bufio.NewReader(markfile)
-	rs.baton.twirl("")
+	rs.baton.twirl()
 	marks := make(map[string]string)
 	for {
 		fline, err3 := rf.ReadString(byte('\n'))
@@ -2262,7 +2262,7 @@ type RepoStreamer struct {
 	visibleFiles       map[string]map[string]signature
 	hashToMark         map[[sha1.Size]byte]markidx
 	branchesAreColored bool
-	baton              *Baton
+	baton              *μπαγκέτα
 	extractor          Extractor
 }
 
@@ -2311,8 +2311,8 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (*Repository, error)
 		return nil, fmt.Errorf("repository directory has unsaved changes")
 	}
 
-	rs.baton = newBaton("Extracting", "")
-	defer rs.baton.exit("")
+	//context.baton.startProcess("Extracting", "")
+	//defer rs.baton.endProcess()
 
 	var err error
 	defer func(r **Repository, e *error) {
@@ -2333,17 +2333,17 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (*Repository, error)
 	if err != nil {
 		return nil, fmt.Errorf("while gathering revisions: %v", err)
 	}
-	rs.baton.twirl("")
+	rs.baton.twirl()
 	err = rs.extractor.gatherCommitData(rs)
 	if err != nil {
 		return nil, fmt.Errorf("while gathering commit data: %v", err)
 	}
-	rs.baton.twirl("")
+	rs.baton.twirl()
 	err = rs.extractor.gatherAllReferences(rs)
 	if err != nil {
 		return nil, fmt.Errorf("while gathering tag/branch refs: %v", err)
 	}
-	rs.baton.twirl("")
+	rs.baton.twirl()
 	// Sort branch/tag references by target revision ID, earliest first
 	// Needs to be done before branch coloring because the simulation
 	// of the Git branch-coloring alorithm needs it.  Also controls the
@@ -2359,7 +2359,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (*Repository, error)
 		panic(throw("extractor", "Did not find revision IDs in revlist"))
 	}
 	sort.Stable(rs.refs)
-	rs.baton.twirl("")
+	rs.baton.twirl()
 	rs.extractor.colorBranches(rs)
 
 	var uncolored []string
@@ -2378,7 +2378,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (*Repository, error)
 		}
 		return nil, fmt.Errorf("some branches do not have local ref names")
 	}
-	rs.baton.twirl("")
+	rs.baton.twirl()
 
 	// these two functions should chsnge only in sync
 	//shortdump := func(hash [sha1.Size]byte) string {
@@ -2393,7 +2393,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (*Repository, error)
 	copy(consume, rs.revlist)
 	for _, revision := range consume {
 		commit := newCommit(repo)
-		rs.baton.twirl("")
+		rs.baton.twirl()
 		present := rs.extractor.checkout(revision)
 		//logit(logEXTRACT,
 		//	"%s: present %v", trunc(revision), present)
@@ -2564,174 +2564,6 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (*Repository, error)
 // No user-serviceable parts below this line
 
 /*
- * Baton machinery
- */
-
-// Baton is the state of a progess meter that ships indications to stdout.
-type Baton struct {
-	prompt    string
-	endmsg    string
-	lastlen   int
-	erase     bool
-	counter   int
-	countfmt  string
-	stream    *os.File
-	starttime time.Time
-	lasttwirl time.Time
-	startprog time.Time
-	lastprog  time.Time
-	channel   chan string
-}
-
-const twirlInterval     = 100 * time.Millisecond	// Rate-limit baton twirls
-const progressInterval =    1 * time.Second		// Rate-limit progress messages
-const pauseInterval    =  750 * time.Millisecond	// How long to delay before erasing progress message
-
-func newBaton(prompt string, endmsg string) *Baton {
-	me := new(Baton)
-	me.prompt = prompt
-	me.endmsg = endmsg
-	if me.endmsg == "" {
-		me.endmsg = "\b"
-	}
-	me.channel = make(chan string)
-	if context.flagOptions["progress"] {
-		go func() {
-			for {
-				ch := <- me.channel
-				if me.erase {
-					if me.lastlen == 1 {
-						me.stream.WriteString(left)
-					} else {
-						me.stream.WriteString(strings.Repeat(left, me.lastlen))
-						me.stream.WriteString(strings.Repeat(" ", me.lastlen))
-						me.stream.WriteString(strings.Repeat(left, me.lastlen))
-					}
-					me.erase = true
-				}
-				if me.isatty() {
-					if ch != "" {
-						me.lastlen = len(ch)
-						me.stream.WriteString(ch)
-						me.erase = strings.Contains(ch, "%")
-						if me.erase {
-							me.lasttwirl.Add(pauseInterval)
-						}
-					} else {
-						me.erase = false
-						if time.Since(me.lasttwirl) > twirlInterval {
-							me.lastlen = 1
-							me.stream.WriteString(string([]byte{"-/|\\"[me.counter%4]}))
-							me.erase = true
-							me.lasttwirl = time.Now()
-						}
-						me.counter++
-					}
-				}
-			}
-		}()
-		me.stream = os.Stdout
-		me.channel <- me.prompt + "...[\b"
-		if me.isatty() {
-			me.channel <- " \b"
-		}
-		me.counter = 0
-		me.starttime = time.Now()
-		me.startprog = time.Now()
-		me.lastprog = time.Now()
-	}
-	return me
-}
-
-func (baton *Baton) isatty() bool {
-	return terminal.IsTerminal(int(baton.stream.Fd()))
-}
-
-func (baton *Baton) startcounter(countfmt string, initial int) {
-	baton.countfmt = countfmt
-	baton.counter = initial
-}
-
-func (baton *Baton) bumpcounter() {
-	if baton.stream == nil {
-		return
-	}
-	if baton.isatty() {
-		if baton.countfmt != "" {
-			update := fmt.Sprintf(baton.countfmt, baton.counter)
-			baton.channel <- update + strings.Repeat("\b", len(update))
-		} else {
-			baton.twirl("")
-		}
-	}
-	baton.counter++
-}
-
-func (baton *Baton) endcounter() {
-	if baton.stream != nil {
-		w := len(fmt.Sprintf(baton.countfmt, baton.counter))
-		baton.channel <- strings.Repeat(" ", w) + strings.Repeat("\b", w)
-	}
-	baton.countfmt = ""
-}
-
-// Assumption: ANSI move left works and does not erase what's under the cursor.
-const left = "\x1B[D"
-
-// twirl spins the baton
-func (baton *Baton) twirl(ch string) {
-	if baton.stream == nil {
-		return
-	}
-	baton.channel <- ch
-}
-
-func (baton *Baton) exit(override string) {
-	if override != "" {
-		baton.endmsg = override
-	}
-	if baton.stream != nil && context.flagOptions["progress"] {
-		baton.channel <- fmt.Sprintf("]" + left + "...(%s) %s.\n",
-			time.Since(baton.starttime).Round(time.Millisecond * 10), baton.endmsg)
-	}
-}
-
-func (baton *Baton) percentProgress(subtag string, ccount int64, expected int64) {
-	scale := func(n int64) string {
-		if n < 1000 {
-			return fmt.Sprintf("%d", n)
-		}
-		if n < 1000000 {
-			return fmt.Sprintf("%dK", int(n / 1000))
-		}
-		if n < 1000000000 {
-			return fmt.Sprintf("%dM", int(n / 1000000))
-		}
-		if n < 1000000000000 {
-			return fmt.Sprintf("%dG", int(n / 1000000000))
-		}
-		return fmt.Sprintf("%dT", int(n / 1000000000000))
-	}
-	if expected > 0 && time.Since(baton.lastprog) > progressInterval {
-		frac := float64(ccount) / float64(expected)
-		total := time.Since(baton.starttime).Round(time.Second)
-		elapsed := time.Since(baton.startprog).Round(time.Second)
-		rate := int64(float64(ccount)/float64(elapsed / time.Second))
-		percent := fmt.Sprintf("%s %.2f%% %s/%s, %v @ %s/s",
-			subtag, frac * 100, scale(ccount), scale(expected), elapsed, scale(rate))
-		if baton.lastprog.After(baton.starttime) {
-			percent += fmt.Sprintf(" (%v)", total)
-		}
-		baton.lastprog = time.Now()
-		baton.twirl(percent)
-	}
-}
-
-func (baton *Baton) resetProgress() {
-	baton.startprog = time.Now()
-}
-
-/*
  * Debugging and utility
  *
  * The main point of this design is to make adding abd removing log
@@ -2831,7 +2663,8 @@ screen width, and the ID of the invoking user. Use in regression-test loads.
 
 type Context struct {
 	logmask uint
-	logfp *os.File
+	logfp io.Writer
+	baton *μπαγκέτα
 	logcounter int
 	blobseq blobidx
 	signals chan os.Signal
@@ -2859,14 +2692,17 @@ func (ctx *Context) init() {
 	ctx.listOptions = make(map[string]orderedStringSet)
 	ctx.mapOptions = make(map[string]map[string]string)
 	ctx.signals = make(chan os.Signal, 1)
-	ctx.logfp = os.Stderr
 	ctx.logmask = (1 << logWARN) - 1
+	baton := newBaton(context.isInteractive());
+	var b interface{} = baton
+	ctx.logfp = b.(io.Writer)
+	ctx.baton = baton
 	signal.Notify(context.signals, os.Interrupt)
 	go func() {
 		for {
 			<-context.signals
 			context.setAbort(true)
-			fmt.Printf("Interrupt\n")
+			respond("Interrupt\n")
 		}
 	}()
 
@@ -2939,18 +2775,25 @@ func logEnable(logbits uint) bool {
 func nuke(directory string, legend string) {
 	if exists(directory) {
 		if !context.flagOptions["quiet"] {
-			baton := newBaton(legend, "")
-			defer baton.exit("")
+			//context.baton.startProcess(legend, "")
+			//defer context.baton.endProcess()
 		}
 		os.RemoveAll(directory)
 	}
 }
 
-// logit logs error/warning/informational messages
+func croak(msg string, args ...interface{}) {
+	content := fmt.Sprintf(msg, args...)
+	context.baton.printLogString("reposurgeon: " + content + "\n")
+	if !context.flagOptions["relax"] {
+		context.setAbort(true)
+	}
+}
+
 func logit(lvl uint, msg string, args ...interface{}) {
 	if logEnable(lvl) {
 		content := fmt.Sprintf(msg, args...)
-		context.logfp.WriteString("reposurgeon: " + content + "\n")
+		context.logfp.Write([]byte("reposurgeon: " + content + "\n"))
 		context.logcounter++
 	}
 }
@@ -2959,17 +2802,7 @@ func logit(lvl uint, msg string, args ...interface{}) {
 func respond(msg string, args ...interface{}) {
 	if context.isInteractive() {
 		content := fmt.Sprintf(msg, args...)
-		os.Stdout.WriteString("reposurgeon: " + content + "\n")
-	}
-}
-
-// croak is for console failure messages that shouldn't be logged.
-// It aborts out of script execution.
-func croak(msg string, args ...interface{}) {
-	content := fmt.Sprintf(msg, args...)
-	os.Stderr.WriteString("reposurgeon: " + content + "\n")
-	if !context.flagOptions["relax"] {
-		context.setAbort(true)
+		context.baton.printLogString("reposurgeon: " + content + "\n")
 	}
 }
 
@@ -3245,7 +3078,7 @@ func zoneFromEmail(addr string) string {
 	if len(isocodeToZone) == 0 {
 		file, err := os.Open("/usr/share/zoneinfo/zone.tab")
 		if err != nil {
-			fmt.Fprint(os.Stderr, "reposurgeon: no country-code to timezone mapping")
+			croak("no country-code to timezone mapping")
 		} else {
 			defer file.Close()
 
@@ -5338,11 +5171,9 @@ func (commit *Commit) cliques() map[string][]int {
 
 // fileopDump reports file ops without data or inlines; used for logging only.
 func (commit *Commit) fileopDump() {
-	banner := fmt.Sprintf("commit %d, mark %s:\n", commit.repo.markToIndex(commit.mark)+1, commit.mark)
-	os.Stdout.WriteString(banner)
+	fmt.Fprintf(context.baton, "commit %d, mark %s:\n", commit.repo.markToIndex(commit.mark)+1, commit.mark)
 	for i, op := range commit.operations() {
-		report := fmt.Sprintf("%d: %s", i, op.String())
-		os.Stdout.WriteString(report)
+		fmt.Fprintf(context.baton, "%d: %s", i, op.String())
 	}
 }
 
@@ -5934,7 +5765,7 @@ func captureFromProcess(command string) (string, error) {
 	cmd := exec.Command("sh", "-c", command)
 	content, err := cmd.CombinedOutput()
 	if logEnable(logCOMMANDS) {
-		os.Stderr.Write(content)
+		context.baton.printLog(content)
 	}
 	return string(content), err
 }
@@ -6252,6 +6083,7 @@ func (h *FastHistory) apply(revision revidx, nodes []*NodeAction) {
 			h.visibleHere.set(node.path, node)
 			logit(logFILEMAP, "r%d-%d: %s changed", node.revision, node.index, node.path)
 		}
+		context.baton.twirl()
 	}
 	h.visible[revision] = h.visibleHere.snapshot()
 
@@ -6260,6 +6092,7 @@ func (h *FastHistory) apply(revision revidx, nodes []*NodeAction) {
 			node.fromSet = newPathMap()
 			node.fromSet.copyFrom(node.fromPath, h.visible[node.fromRev], node.fromPath)
 		}
+		context.baton.twirl()
 	}
 
 	h.revision = revision
@@ -6751,13 +6584,14 @@ func appendRevisionRecords(slice []RevisionRecord, data ...RevisionRecord) []Rev
 	return slice
 }
 
-func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesize int64) {
+func (sp *StreamParser) parseSubversion(options *stringSet, baton *μπαγκέτα, filesize int64) {
 	// If the repo is large, we'll give up on some diagnostic info in order
 	// to reduce the working set size.
 	if context.flagOptions["tighten"] {
 		sp.large = true
 	}
 	trackSymlinks := newOrderedStringSet()
+	baton.startProgress("parsing Subversion dump file", uint64(filesize))
 	for {
 		line := sp.readline()
 		if len(line) == 0 {
@@ -6982,6 +6816,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 					continue
 				}
 				// Node processing ends
+				baton.twirl()
 			}
 			// Node list parsing ends
 			newRecord := newRevisionRecord(nodes, props, revision)
@@ -6992,22 +6827,24 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 				panic("revision counter overflow, recompile with a larger size")
 			}
 			// End Revision processing
-			baton.percentProgress("", sp.ccount, filesize)
+			baton.percentProgress(uint64(sp.ccount))
 			if context.readLimit > 0 && uint64(sp.repo.legacyCount) > context.readLimit{
 				logit(logSHOUT, "read limit %d reached.", context.readLimit)
 				break
 			}
 		}
 	}
+	context.baton.endProgress()
 	if context.readLimit > 0 && uint64(sp.repo.legacyCount) <= context.readLimit {
 			logit(logSHOUT, "EOF before readlimit.")
 	}
 	logit(logSVNPARSE, "revision parsing, line %d: ends with %d records", sp.importLine, sp.repo.legacyCount)
 }
 
-func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesize int64) {
+func (sp *StreamParser) parseFastImport(options stringSet, baton *μπαγκέτα, filesize int64) {
 	// Beginning of fast-import stream parsing
 	commitcount := 0
+	baton.startProgress("parse fast import stream", uint64(filesize))
 	for {
 		line := sp.fiReadline()
 		if len(line) == 0 {
@@ -7027,11 +6864,11 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				sp.error("missing mark after blob")
 			}
 			sp.repo.addEvent(blob)
-			baton.twirl("")
+			baton.twirl()
 		} else if bytes.HasPrefix(line, []byte("data")) {
 			sp.error("unexpected data object")
 		} else if bytes.HasPrefix(line, []byte("commit")) {
-			baton.twirl("")
+			baton.twirl()
 			commitbegin := sp.importLine
 			commit := newCommit(sp.repo)
 			commit.setBranch(strings.Fields(string(line))[1])
@@ -7179,6 +7016,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 					sp.pushback(line)
 					break
 				}
+				baton.twirl()
 			}
 			if !(commit.mark != "" && commit.committer.fullname != "") {
 				sp.importLine = commitbegin
@@ -7189,7 +7027,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			}
 			sp.repo.addEvent(commit)
 			commitcount++
-			baton.twirl("")
+			baton.twirl()
 		} else if bytes.HasPrefix(line, []byte("reset")) {
 			reset := newReset(sp.repo, "", "")
 			reset.ref = string(bytes.TrimSpace(line[6:]))
@@ -7201,7 +7039,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				sp.pushback(line)
 			}
 			sp.repo.addEvent(reset)
-			baton.twirl("")
+			baton.twirl()
 		} else if bytes.HasPrefix(line, []byte("tag")) {
 			var tagger *Attribution
 			tagname := string(bytes.TrimSpace(line[4:]))
@@ -7239,12 +7077,13 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			// Simply pass through any line we do not understand.
 			sp.repo.addEvent(newPassthrough(sp.repo, string(line)))
 		}
-		baton.percentProgress("", sp.ccount, filesize)
+		baton.percentProgress(uint64(sp.ccount))
 		if context.readLimit > 0 && uint64(commitcount) >= context.readLimit{
 			logit(logSHOUT, "read limit %d reached", context.readLimit)
 			break
 		}
 	}
+	baton.endProgress()
 	if context.readLimit > 0 && uint64(commitcount) < context.readLimit {
 		logit(logSHOUT, "EOF before readlimit.")
 	}
@@ -7283,7 +7122,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 func (sp *StreamParser) fastImport(fp io.Reader, options stringSet, source string) {
 	// Initialize the repo from a fast-import stream or Subversion dump.
 	sp.timeMark("start")
-	var filesize int64 = -1
+	var filesize int64
 	sp.fp = bufio.NewReader(fp)
 	fileobj, ok := fp.(*os.File)
 	// Optimization: if we're reading from a plain stream dump,
@@ -7296,13 +7135,18 @@ func (sp *StreamParser) fastImport(fp io.Reader, options stringSet, source strin
 		source = sp.repo.seekstream.Name()
 	}
 	sp.source = source
-	baton := newBaton(fmt.Sprintf("reposurgeon: from %s", source), "")
+	baton := context.baton
+	//baton.startProcess(fmt.Sprintf("reposurgeon: from %s", source), "")
 	sp.repo.legacyCount = 0
 	// First, determine the input type
 	line := sp.readline()
 	rate := func(count int) string {
-		elapsed := time.Since(baton.starttime)
-		return fmt.Sprintf("%dK/s", int(float64(elapsed)/float64(count * 1000)))
+		if baton != nil {
+			elapsed := time.Since(baton.progress.start)
+			return fmt.Sprintf("%dK/s", int(float64(elapsed)/float64(count * 1000)))
+		} else {
+			return ""
+		}
 	}
 	if bytes.HasPrefix(line, []byte("SVN-fs-dump-format-version: ")) {
 		body := string(sdBody(line))
@@ -7314,20 +7158,25 @@ func (sp *StreamParser) fastImport(fp io.Reader, options stringSet, source strin
 		// End of Subversion dump parsing
 		sp.timeMark("parsing")
 		sp.svnProcess(options, baton)
-		baton.endmsg = fmt.Sprintf("%d svn revisions (%s)",
-			sp.repo.legacyCount, rate(sp.repo.legacyCount))
+		if context.flagOptions["progress"] {
+			fmt.Fprintf(baton, "%d svn revisions (%s)",
+				sp.repo.legacyCount, rate(sp.repo.legacyCount * 1000))
+		}
 	} else {
 		sp.pushback(line)
 		sp.parseFastImport(options, baton, filesize)
 		sp.timeMark("parsing")
-		if sp.repo.stronghint {
-			baton.endmsg = fmt.Sprintf("%d %s events (%s)",
-				len(sp.repo.events), sp.repo.vcs.name, rate(len(sp.repo.events)))
-		} else {
-			baton.endmsg = fmt.Sprintf("%d events (%s)", len(sp.repo.events), rate(len(sp.repo.events)))
+		if context.flagOptions["progress"] {
+			if sp.repo.stronghint {
+				fmt.Fprintf(baton, "%d %s events (%s)",
+					len(sp.repo.events), sp.repo.vcs.name, rate(len(sp.repo.events)))
+			} else {
+				fmt.Fprintf(baton, "%d events (%s)",
+					len(sp.repo.events), rate(len(sp.repo.events)))
+			}
 		}
 	}
-	baton.exit("")
+	//baton.endProcess()
 	baton = nil
 	sp.importLine = 0
 	if len(sp.repo.events) == 0 {
@@ -7338,7 +7187,7 @@ func (sp *StreamParser) fastImport(fp io.Reader, options stringSet, source strin
 	defer func() {
 		if e := catch("parse", recover()); e != nil {
 			if baton != nil {
-				baton.exit("interrupted by error")
+				//baton.endProcess("interrupted by error")
 			}
 			croak(e.message)
 			nuke(sp.repo.subdir(""), fmt.Sprintf("import interrupted, removing %s", sp.repo.subdir("")))
@@ -7804,7 +7653,7 @@ func (sp *StreamParser) expandAllNodes(nodelist []*NodeAction, options stringSet
 	return expandedNodes
 }
 
-func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
+func (sp *StreamParser) svnProcess(options stringSet, baton *μπαγκέτα) {
 	// Subversion actions to import-stream commits.
 
 	// This function starts with a deserialization of a Subversion
@@ -7857,14 +7706,14 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// created, it is never copied.  Though there may be multiple pointers
 	// to the record for node N of revision M, they all point to the
 	// same structure originally created to deserialize it.
-	baton.resetProgress()
+	//baton.startProcess("?", "")
 	timeit := func(tag string) {
 		sp.timeMark(tag)
 		if context.flagOptions["bigprofile"] {
 			e := len(sp.repo.timings) - 1
-			baton.twirl(fmt.Sprintf("%s:%v...", tag, sp.repo.timings[e].stamp.Sub(sp.repo.timings[e-1].stamp)))
+			fmt.Fprintf(baton, "%s:%v...", tag, sp.repo.timings[e].stamp.Sub(sp.repo.timings[e-1].stamp))
 		} else {
-			baton.twirl("")
+			baton.twirl()
 		}
 	}
 
@@ -7899,9 +7748,9 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	sp.repo.hint("svn", "", true)
 }
 
-func svnProcessPrune(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessPrune(sp *StreamParser, options stringSet, baton *μπαγκέτα) {
 	logit(logEXTRACT, "Phase 1: pruning dead branches")
-	baton.twirl("1")
+	baton.startProgress("process SVN, phase 1: pruning dead branches", uint64(len(sp.revisions)))
 	if !options.Contains("--preserve") {
 		// Phase 1:
 		//
@@ -7958,6 +7807,7 @@ func svnProcessPrune(sp *StreamParser, options stringSet, baton *Baton) {
 						break
 					}
 				}
+				baton.twirl()
 			}
 
 			// Actual deletion logic.  This does no new allocation;
@@ -7970,15 +7820,15 @@ func svnProcessPrune(sp *StreamParser, options stringSet, baton *Baton) {
 				}
 			}
 			sp.revisions[backup].nodes = newnodes
-			baton.percentProgress("", int64(i), int64(len(sp.revisions)))
+			baton.percentProgress(uint64(i)+1)
 		}
 	}
+	baton.endProgress()
 	// no-preserve code ends here
 }
 
-func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessClean(sp *StreamParser, options stringSet, baton *μπαγκέτα) {
 	logit(logEXTRACT, "Phase 2: clean tags to prevent anomalies.")
-	baton.twirl("2")
 	// Phase 2:
 	//
 	// Intervene to prevent lossage from tag/branch/trunk
@@ -8010,13 +7860,15 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 	// This branch is linear-time in the number of nodes and quite
 	// fast even on very large repositories.
 	refcounts := make(map[string]int)
+	baton.startProgress("process SVN, phase 2a: count tag references", uint64(len(sp.streamview)))
 	for i, tagnode := range sp.streamview {
 		if tagnode.action == sdADD && tagnode.kind == sdDIR {
 			refcounts[tagnode.path]++
 		}
-		baton.percentProgress("a", int64(i), int64(len(sp.streamview)))
+		baton.percentProgress(uint64(i)+1)
 	}
 	logit(logTAGFIX, "tag reference counts: %v", refcounts)
+	baton.endProgress()
 	// Use https://github.com/golang/go/wiki/SliceTricks recipe for filter in place
 	// to select out nodes relevant to tag additions that step on each other and
 	// their references.
@@ -8026,16 +7878,19 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 	}
 	multiples := make([]*NodeAction, 0)
 	oldlength := len(sp.streamview)
+	baton.startProgress("process SVN, phase 2b: check tag relevance", uint64(oldlength))
 	for i, x := range sp.streamview {
 		if relevant(x) {
 			multiples = append(multiples, x)
 		}
-		baton.percentProgress("b", int64(i), int64(oldlength))
+		baton.percentProgress(uint64(i)+1)
 	}
 	logit(logTAGFIX, "multiply-added directories: %v", sp.streamview)
+	baton.endProgress()
 
 	processed := 0
 	logit(logTAGFIX, "before fixups: %v", sp.streamview)
+	baton.startProgress("process SVN, phase 2c: clean tags to prevent anomalies", uint64(len(sp.streamview)))
 	for i := range multiples {
 		srcnode := multiples[i]
 		if multiples[i].kind != sdFILE && multiples[i].action == sdDELETE {
@@ -8054,6 +7909,7 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 						tnode.revision, tnode.index, tnode.path, newname)
 					tnode.path = newpath
 				}
+				baton.twirl()
 			}
 			// Then, run forward patching copy
 			// operations.
@@ -8073,6 +7929,7 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 						tnode.revision, tnode.index, tnode.fromPath, newfrom)
 					tnode.fromPath = newfrom
 				}
+				baton.twirl()
 			}
 			logit(logTAGFIX, "r%d#%d: tag %s renamed to %s.",
 				srcnode.revision, srcnode.index,
@@ -8081,10 +7938,11 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 			processed++
 		}
 	breakout:
-		baton.percentProgress("c", int64(processed), int64(len(multiples)))
+		baton.percentProgress(uint64(i)+1)
 	}
 	logit(logTAGFIX, "after fixups: %v", multiples)
 	multiples = nil		// Allow GC
+	baton.endProgress()
 
 	// Recognize branches
 	if !options.Contains("--nobranch") {
@@ -8098,7 +7956,7 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 	sp.streamview = nil	// Allow that view to be GCed
 }
 
-func svnProcessFilemaps(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessFilemaps(sp *StreamParser, options stringSet, baton *μπαγκέτα) {
 	// Phase 3:
 	// This is where we build file visibility maps. The visibility
 	// map for each revision maps file paths to the Subversion
@@ -8113,20 +7971,21 @@ func svnProcessFilemaps(sp *StreamParser, options stringSet, baton *Baton) {
 	// been prohibitively expensive in later passes. Notably the
 	// maps are everything necessary to compute node ancestry. 
 	logit(logEXTRACT, "Phase 3: build filemaps")
-	baton.twirl("3")
+	baton.startProgress("process SVN, phase 3: build filemaps", uint64(len(sp.revisions)))
 	sp.history = newFastHistory()
 	for ri, record := range sp.revisions {
 		sp.history.apply(intToRevidx(ri), record.nodes)
-		baton.percentProgress("", int64(ri), int64(len(sp.revisions)))
+		baton.percentProgress(uint64(ri))
 	}
+	baton.endProgress()
 }
 
-func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessCommits(sp *StreamParser, options stringSet, baton *μπαγκέτα) {
 	nobranch := options.Contains("--nobranch")
 	// Build commits
 	logit(logEXTRACT, "Phase 4: build commits")
-	baton.twirl("4")
 	sp.splitCommits = make(map[revidx]int)
+	baton.startProgress("process SVN, phase 4: build commits", uint64(len(sp.revisions)))
 	for ri, record := range sp.revisions {
 		// Zero revision is never interesting - no operations, no
 		// comment, no author, it's just a start marker for a
@@ -8335,12 +8194,13 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 				fileop.construct(deleteall)
 				actions = append(actions, fiAction{node, fileop})
 			}
+			baton.twirl()
 		}
 		if logEnable(logEXTRACT) {
 			fmt.Println("Actions:")
 			for _, action := range actions {
 				// Format-string not \n terminated because the Node stringer does it.
-				fmt.Printf("reposurgeon: %v -> %v", action.node, action.fileop)
+				logit(0, "reposurgeon: %v -> %v", action.node, action.fileop)
 			}
 		}
 		// Time to generate commits from actions and fileops.
@@ -8360,6 +8220,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 				}
 			}
 			cliques[branch] = append(cliques[branch], action.fileop)
+			baton.twirl()
 		}
 		logit(logEXTRACT, "r%d: %d action(s) in %d clique(s)", record.revision, len(actions), len(cliques))
 		// We say a clique is trivial if it contains a single fileop and that
@@ -8555,6 +8416,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 						}
 					}
 				}
+				baton.twirl()
 			}
 		}
 		// We're done, add all the new commits
@@ -8576,9 +8438,9 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 				}
 			}
 		}
-		baton.twirl("")
-		baton.percentProgress("", int64(ri), int64(len(sp.revisions)))
+		baton.percentProgress(uint64(ri))
 	} // end of revision loop
+	baton.endProgress()
 
 	// Release history storage to be GCed
 	sp.history = nil
@@ -8595,9 +8457,9 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 	}
 }
 
-func svnProcessRoot(sp *StreamParser, options stringSet, baton *Baton) {
-	logit(logEXTRACT, "Phase 5: root tagification and branch analysis")
-	baton.twirl("5")
+func svnProcessRoot(sp *StreamParser, options stringSet, baton *μπαγκέτα) {
+	logit(logEXTRACT, "Phase 5: root tagification")
+	baton.twirl()
 	if logEnable(logEXTRACT) {
 		logit(logEXTRACT, "at post-parsing time:")
 		for _, commit := range sp.repo.commits(nil) {
@@ -8631,11 +8493,11 @@ func svnProcessRoot(sp *StreamParser, options stringSet, baton *Baton) {
 			sp.shout("could not tagify root commit.")
 		}
 	}
-	baton.twirl("")
+	baton.twirl()
 }
 
-func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timeit func(string)) []*Commit {
-	logit(logEXTRACT, "Phase 5a: root tagification and branch analysis")
+func svnProcessBranches(sp *StreamParser, options stringSet, baton *μπαγκέτα, timeit func(string)) []*Commit {
+	logit(logEXTRACT, "Phase 5a: branch analysis")
 	nobranch := options.Contains("--nobranch")
 
 	// Computing this is expensive, so we try to do it seldom
@@ -8659,6 +8521,7 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 		logit(logEXTRACT, fmt.Sprintf("Branches: %s", sp.branches))
 		lastbranch := impossibleFilename
 		branch := impossibleFilename
+		baton.startProgress("process SVN, phase 5a: branch analysis", uint64(len(commits)))
 		for idx, commit := range commits {
 			//logit(logEXTRACT, "seeking branch assignment for %s with common prefix '%s'", commit.mark, commit.common)
 			if lastbranch != impossibleFilename && strings.HasPrefix(commit.common, lastbranch) {
@@ -8697,11 +8560,13 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 				sp.addBranch("root")
 			}
 			lastbranch = branch
-			baton.percentProgress("a", int64(idx), int64(len(commits)))
+			baton.percentProgress(uint64(idx))
 		}
+		baton.endProgress()
 		timeit("branches")
+		baton.startProgress("process SVN, phase 5b: rebuild parent links", uint64(len(commits)))
 		// ...then rebuild parent links so they follow the branches
-		for _, commit := range commits {
+		for idx, commit := range commits {
 			if sp.branches[commit.Branch] == nil {
 				logit(logEXTRACT, "commit %s branch %s is rootless", commit.mark, commit.Branch)
 				branchroots = append(branchroots, commit)
@@ -8712,10 +8577,11 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 			}
 			sp.branches[commit.Branch] = commit
 			// Per-commit spinner disabled because this pass is fast
-			//baton.twirl("")
+			baton.percentProgress(uint64(idx))
 		}
+		baton.endProgress()
 		sp.timeMark("parents")
-		baton.twirl("")
+		baton.twirl()
 		// The root branch is special. It wasn't made by a copy, so
 		// we didn't get the information to connect it to trunk in the
 		// last phase.
@@ -8743,6 +8609,7 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 			logit(logEXTRACT, "branch roots: %v, links: %v", rootmarks, sp.branchlink)
 		}
 		idx:= 0
+		baton.startProgress("process SVN, phase 5c: fixup branch links", uint64(len(sp.branchlink)))
 		for _, item := range sp.branchlink {
 			if item.parent.repo != sp.repo {
 				// The parent has been deleted since, don't add the link;
@@ -8777,9 +8644,10 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 			if !found {
 				item.child.addParentCommit(item.parent)
 			}
-			baton.percentProgress("b", int64(idx), int64(len(sp.branchlink)))
+			baton.percentProgress(uint64(idx))
 			idx++
 		}
+		baton.endProgress()
 		timeit("branchlinks")
 		// Add links due to svn:mergeinfo properties
 		mergeinfo := newPathMap()
@@ -8794,6 +8662,7 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 			}
 			return eMerges
 		}
+		baton.startProgress("process SVN, phase 5d: resolve mergeinfo", uint64(len(sp.revisions)))
 		for revision, record := range sp.revisions {
 			for _, node := range record.nodes {
 				// We're only looking at directory nodes
@@ -8899,8 +8768,9 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 				nodups = nil	// Not necessary, but explicit is good
 			}
 			mergeinfos[intToRevidx(revision)] = mergeinfo.snapshot()
-			baton.percentProgress("c", int64(revision), int64(len(sp.revisions)))
+			baton.percentProgress(uint64(revision)+1)
 		}
+		baton.endProgress()
 		// Allow mergeinfo storage to be garbage-collected
 		mergeinfo = nil
 		mergeinfos = nil
@@ -8933,12 +8803,12 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 	return branchroots
 }
 
-func svnProcessJunk(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessJunk(sp *StreamParser, options stringSet, baton *μπαγκέτα) {
 	logit(logEXTRACT, "Phase 6: de-junking")
-	baton.twirl("6")
 	// Now clean up junk commits generated by cvs2svn.
 	deleteables := make([]int, 0)
 	newtags := make([]Event, 0)
+	baton.startProgress("process SVN, phase 6: de-junking", uint64(len(sp.repo.events)))
 	for i, event := range sp.repo.events {
 		if commit, ok := event.(*Commit); ok {
 			// It is possible for commit.Comment to be None if
@@ -8947,7 +8817,7 @@ func svnProcessJunk(sp *StreamParser, options stringSet, baton *Baton) {
 			// well have CVS artifacts in it.
 			if commit.Comment == "" {
 				sp.shout(fmt.Sprintf("r%s has no comment", commit.legacyID))
-				continue
+				goto loopend
 			}
 			// Commits that cvs2svn created as tag surrogates
 			// get turned into actual tags.
@@ -8965,15 +8835,16 @@ func svnProcessJunk(sp *StreamParser, options stringSet, baton *Baton) {
 				deleteables = append(deleteables, i)
 			}
 		}
-		baton.percentProgress("", int64(i), int64(len(sp.revisions)))
+loopend:
+		baton.percentProgress(uint64(i)+1)
 	}
+	baton.endProgress()
 	sp.repo.delete(deleteables, []string{"--tagback"})
 	sp.repo.events = append(sp.repo.events, newtags...)
 }
 
-func svnProcessTags(sp *StreamParser, options stringSet, baton *Baton, branchroots []*Commit) {
+func svnProcessTags(sp *StreamParser, options stringSet, baton *μπαγκέτα, branchroots []*Commit) {
 	logit(logEXTRACT, "Phase 7: tagification")
-	baton.twirl("7")
 	// Now we need to tagify all other commits without fileops, because git
 	// is going to just discard them when we build a live repo and they
 	// might possibly contain interesting metadata.
@@ -8990,6 +8861,7 @@ func svnProcessTags(sp *StreamParser, options stringSet, baton *Baton, branchroo
 	//   with name "emptycommit-<revision>".
 	// Now pretty up the branch names
 	deletia := make([]int, 0)
+	baton.startProgress("process SVN, phase 7: tagification", uint64(len(sp.repo.events)))
 	for index, event := range sp.repo.events {
 		commit, ok := event.(*Commit)
 		if !ok {
@@ -9040,14 +8912,15 @@ func svnProcessTags(sp *StreamParser, options stringSet, baton *Baton, branchroo
 				}
 			}
 		}
-		baton.percentProgress("", int64(index), int64(len(sp.repo.events)))
+		baton.percentProgress(uint64(index)+1)
 	}
+	baton.endProgress()
 	sp.repo.delete(deletia, nil)
 }
 
-func svnProcessTagEmpties(sp *StreamParser, options stringSet, baton *Baton, branchroots []*Commit) {
+func svnProcessTagEmpties(sp *StreamParser, options stringSet, baton *μπαγκέτα, branchroots []*Commit) {
 	logit(logEXTRACT, "Phase 8: tagify empties")
-	baton.twirl("8")
+	baton.twirl()
 
 	rootmarks := newOrderedStringSet() // stays empty if nobranch
 	for _, root := range branchroots {
@@ -9091,14 +8964,14 @@ func svnProcessTagEmpties(sp *StreamParser, options stringSet, baton *Baton, bra
 		/* gripe */ sp.shout)
 }
 
-func svnProcessCleanTags(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessCleanTags(sp *StreamParser, options stringSet, baton *μπαγκέτα) {
 	logit(logEXTRACT, "Phase 9: delete/copy canonicalization")
-	baton.twirl("9")
 	// cvs2svn likes to crap out sequences of deletes followed by
 	// filecopies on the same node when it's generating tag commits.
 	// These are lots of examples of this in the nut.svn test load.
 	// These show up as redundant (D, M) fileop pairs.
 	commits := sp.repo.commits(nil)
+	baton.startProgress("process SVN, phase 9: delete/copy canonicalization", uint64(len(commits)))
 	for idx, commit := range commits {
 		count := 0
 		for i := range commit.operations() {
@@ -9118,15 +8991,16 @@ func svnProcessCleanTags(sp *StreamParser, options stringSet, baton *Baton) {
 			}
 		}
 		commit.setOperations(nonnil)
-		baton.percentProgress("", int64(idx), int64(len(commits)))
+		baton.percentProgress(uint64(idx)+1)
 	}
+	baton.endProgress()
 }
 
-func svnProcessDebubble(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessDebubble(sp *StreamParser, options stringSet, baton *μπαγκέτα) {
 	logit(logEXTRACT, "Phase A: remove duplicate parent marks")
-	baton.twirl("A")
 	// Remove spurious parent links caused by random cvs2svn file copies.
 	commits := sp.repo.commits(nil)
+	baton.startProgress("process SVN, phase A: remove duplicate parent marks", uint64(len(commits)))
 	for idx, commit := range commits {
 		parents := commit.parents()
 		if len(parents) != 2 {
@@ -9147,13 +9021,13 @@ func svnProcessDebubble(sp *StreamParser, options stringSet, baton *Baton) {
 				commit.removeParent(a)
 			}
 		}
-		baton.percentProgress("", int64(idx), int64(len(commits)))
+		baton.percentProgress(uint64(idx)+1)
 	}
+	baton.endProgress()
 }
 
-func svnProcessRenumber(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessRenumber(sp *StreamParser, options stringSet, baton *μπαγκέτα) {
 	logit(logEXTRACT, "Phase B: renumber")
-	baton.twirl("B")
 	sp.repo.renumber(1, baton)
 }
 
@@ -10209,9 +10083,10 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 		selection.Sort()
 	}
 	repo.realized = make(map[string]bool) // Track what branches are made
-	baton := newBaton("reposurgeon: exporting", "")
+	baton := context.baton
+	baton.startProgress("export", uint64(len(repo.events)))
 	for idx, ei := range selection {
-		baton.twirl("")
+		baton.twirl()
 		event := repo.events[ei]
 		if passthrough, ok := event.(*Passthrough); ok {
 			// Support writing bzr repos to plain git if they don't
@@ -10231,10 +10106,10 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 		if err != nil {
 			panic(fmt.Errorf("export error: %v", err))
 		}
-		baton.percentProgress("", int64(idx), int64(len(repo.events)))
+		baton.percentProgress(uint64(idx)+1, )
 	}
+	baton.endProgress()
 	repo.realized = nil
-	baton.exit("")
 	return nil
 }
 
@@ -11310,7 +11185,7 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 }
 
 // Renumber the marks in a repo starting from a specified origin.
-func (repo *Repository) renumber(origin int, baton *Baton) {
+func (repo *Repository) renumber(origin int, baton *μπαγκέτα) {
 	markmap := make(map[string]int)
 	remark := func(m string, id string) string {
 		_, ok := markmap[m]
@@ -11319,10 +11194,6 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
 		} else {
 			panic(fmt.Sprintf("unknown mark %s in %s cannot be renumbered!", m, id))
 		}
-	}
-	if baton != nil {
-		count := len(repo.events)
-		baton.startcounter(" %d of "+fmt.Sprintf("%d", count), 0)
 	}
 	repo.markseq = 0
 	for _, event := range repo.events {
@@ -11386,6 +11257,10 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
 				reset.committish = newmark
 			}
 		}
+	}
+	if baton != nil {
+		count := len(repo.commits(nil))
+		baton.startcounter("renumbering %d of "+fmt.Sprintf("%d", count)+" commits", 0)
 	}
 	for _, commit := range repo.commits(nil) {
 		for i, fileop := range commit.operations() {
@@ -12280,7 +12155,7 @@ func readFromProcess(command string) (io.ReadCloser, *exec.Cmd, error) {
 		return nil, nil, err
 	}
 	if logEnable(logCOMMANDS) {
-		fmt.Fprintf(os.Stderr, "%s: reading from '%s'\n",
+		croak("%s: reading from '%s'\n",
 			rfc3339(time.Now()), command)
 	}
 	err = cmd.Start()
@@ -12300,7 +12175,7 @@ func writeToProcess(command string) (io.WriteCloser, *exec.Cmd, error) {
 		return nil, nil, err
 	}
 	if logEnable(logCOMMANDS) {
-		fmt.Fprintf(os.Stderr, "%s: writing to '%s'\n",
+		croak("%s: writing to '%s'\n",
 			rfc3339(time.Now()), command)
 	}
 	err = cmd.Start()
@@ -13982,7 +13857,7 @@ func (rl *RepositoryList) newLineParse(line string, capabilities orderedStringSe
 		line:         line,
 		capabilities: capabilities,
 		stdin:        os.Stdin,
-		stdout:       os.Stdout,
+		stdout:       context.baton,
 		redirected:   false,
 		options:      make([]string, 0),
 		closem:       make([]io.Closer, 0),
@@ -14217,8 +14092,7 @@ func (rs *Reposurgeon) PreCmd(line string) string {
 		rs.history = append(rs.history, trimmed)
 	}
 	if context.flagOptions["echo"] {
-		os.Stdout.WriteString(trimmed)
-		os.Stdout.WriteString("\n")
+		context.baton.printLogString(trimmed)
 	}
 	rs.selection = rs.defaultSelection
 	if strings.HasPrefix(line, "#") {
@@ -15051,8 +14925,9 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 		}
 		rs.selection.Sort()
 	}
-	baton := newBaton(prompt, "")
-	defer baton.exit("")
+	baton := context.baton
+	//baton.startProcess(prompt, "")
+	//defer baton.endProcess()
 	altered := 0
 	for _, ei := range rs.selection {
 		event := rs.chosen().events[ei]
@@ -15138,7 +15013,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 				altered++
 			}
 		}
-		baton.twirl("")
+		baton.twirl()
 	}
 	respond("%d items modified by %s.", altered, strings.ToLower(prompt))
 }
@@ -15187,14 +15062,15 @@ func (rs *Reposurgeon) DoResolve(line string) bool {
 	if rs.selection == nil {
 		respond("No selection\n")
 	} else {
-		if line != "" {
-			os.Stdout.WriteString(fmt.Sprintf("%s: ", line))
-		}
 		oneOrigin := newOrderedIntSet()
 		for _, i := range rs.selection {
 			oneOrigin.Add(i + 1)
 		}
-		fmt.Printf("%v\n", oneOrigin)
+		if line != "" {
+			context.baton.printLogString(fmt.Sprintf("%s: %v", line, oneOrigin))
+		} else {
+			context.baton.printLogString(fmt.Sprintf("%v\n", oneOrigin))
+		}
 	}
 	return false
 }
@@ -15547,7 +15423,7 @@ func (rs *Reposurgeon) DoMemory(line string) bool {
 	var memStats runtime.MemStats
 	debug.FreeOSMemory()
 	runtime.ReadMemStats(&memStats)
-	fmt.Printf("     Total heap: %.2fMB  High water: %.2fMB\n",
+	respond("     Total heap: %.2fMB  High water: %.2fMB\n",
 		float64(memStats.HeapAlloc)/1e6, float64(memStats.TotalAlloc)/1e6)
 	return false
 }
@@ -15989,10 +15865,10 @@ func (rs *Reposurgeon) CompletePrefer(text string) []string {
 func (rs *Reposurgeon) DoPrefer(line string) bool {
 	if line == "" {
 		for _, vcs := range vcstypes {
-			fmt.Fprint(os.Stdout, vcs.String()+"\n")
+			context.baton.printLogString(vcs.String()+"\n")
 		}
 		for option := range fileFilters {
-			fmt.Fprintf(os.Stdout, "read and write have a --format=%s option that supports %s files.\n", option, strings.ToTitle(option))
+			context.baton.printLogString(fmt.Sprintf("read and write have a --format=%s option that supports %s files.\n", option, strings.ToTitle(option)))
 		}
 		extractable := make([]string, 0)
 		for _, importer := range importers {
@@ -16001,7 +15877,7 @@ func (rs *Reposurgeon) DoPrefer(line string) bool {
 			}
 		}
 		if len(extractable) > 0 {
-			fmt.Fprintf(os.Stdout, "Other systems supported for read only: %s\n\n", strings.Join(extractable, " "))
+			context.baton.printLogString(fmt.Sprintf("Other systems supported for read only: %s\n\n", strings.Join(extractable, " ")))
 		}
 	} else {
 		known := ""
@@ -16022,9 +15898,9 @@ func (rs *Reposurgeon) DoPrefer(line string) bool {
 	}
 	if context.isInteractive() {
 		if rs.preferred == nil {
-			fmt.Fprint(os.Stdout, "No preferred type has been set.\n")
+			context.baton.printLogString("No preferred type has been set.\n")
 		} else {
-			fmt.Fprint(os.Stdout, fmt.Sprintf("%s is the preferred type.\n", rs.preferred.name))
+			context.baton.printLogString(fmt.Sprintf("%s is the preferred type.\n", rs.preferred.name))
 		}
 	}
 	return false
@@ -16068,9 +15944,9 @@ func (rs *Reposurgeon) DoSourcetype(line string) bool {
 	repo := rs.chosen()
 	if line == "" {
 		if rs.chosen().vcs != nil {
-			fmt.Printf("%s: %s\n", repo.name, repo.vcs.name)
+			fmt.Fprintf(context.baton, "%s: %s\n", repo.name, repo.vcs.name)
 		} else {
-			fmt.Printf("%s: no preferred type.\n", repo.name)
+			fmt.Fprintf(context.baton, "%s: no preferred type.\n", repo.name)
 		}
 	} else {
 		known := ""
@@ -16137,9 +16013,9 @@ func (rs *Reposurgeon) DoChoose(line string) bool {
 				status = "*"
 			}
 			if !context.flagOptions["quiet"] {
-				fmt.Fprint(os.Stdout, rfc3339(repo.readtime)+" ")
+				fmt.Fprint(context.baton, rfc3339(repo.readtime)+" ")
 			}
-			fmt.Printf("%s %s\n", status, repo.name)
+			fmt.Fprintf(context.baton, "%s %s\n", status, repo.name)
 		}
 	} else {
 		if newOrderedStringSet(rs.reponames()...).Contains(line) {
@@ -17439,7 +17315,8 @@ func (rs *Reposurgeon) DoSetperm(line string) bool {
 		croak("unexpected permission literal %s", perm)
 		return false
 	}
-	baton := newBaton("patching modes", "")
+	baton := context.baton
+	//baton.startProcess("patching modes", "")
 	for _, ei := range rs.selection {
 		if commit, ok := rs.chosen().events[ei].(*Commit); ok {
 			for i, op := range commit.fileops {
@@ -17447,10 +17324,10 @@ func (rs *Reposurgeon) DoSetperm(line string) bool {
 					commit.fileops[i].mode = perm
 				}
 			}
-			baton.twirl("")
+			baton.twirl()
 		}
 	}
-	baton.exit("")
+	//baton.endProcess()
 	return false
 }
 
@@ -20272,7 +20149,8 @@ func (rs *Reposurgeon) DoGitify(_line string) bool {
 		rs.selection = rs.chosen().all()
 	}
 	lineEnders := orderedStringSet{".", ",", ";", ":", "?", "!"}
-	baton := newBaton("gitifying comments", "")
+	baton := context.baton
+	//baton.startProcess("gitifying comments", "")
 	for _, ei := range rs.selection {
 		event := rs.chosen().events[ei]
 		if commit, ok := event.(*Commit); ok {
@@ -20304,9 +20182,9 @@ func (rs *Reposurgeon) DoGitify(_line string) bool {
 					tag.Comment[firsteol:]
 			}
 		}
-		baton.twirl("")
+		baton.twirl()
 	}
-	baton.exit("")
+	//baton.endProcess()
 	return false
 }
 
@@ -20565,13 +20443,15 @@ func (rs *Reposurgeon) CompleteSet(text string) []string {
 func performOptionSideEffect(opt string, val bool) {
 	if opt == "tighten" {
 		enableIntern(val)
+	} else if opt == "progress" {
+		context.baton.setInteractivity(val)
 	}
 }
 
 func tweakFlagOptions(line string, val bool) {
 	if strings.TrimSpace(line) == "" {
 		for _, opt := range optionFlags {
-			fmt.Printf("\t%s = %v\n", opt[0], context.flagOptions[opt[0]])
+			respond("\t%s = %v\n", opt[0], context.flagOptions[opt[0]])
 		}
 	} else {
 		for _, name := range strings.Fields(line) {
@@ -20701,13 +20581,13 @@ func (rs *Reposurgeon) DoDefine(lineIn string) bool {
 	} else {
 		for name, body := range rs.definitions {
 			if len(body) == 1 {
-				fmt.Printf("define %s %s\n", name, body[0])
+				respond("define %s %s\n", name, body[0])
 			} else {
-				fmt.Printf("define %s {\n", name)
+				respond("define %s {\n", name)
 				for _, line := range body {
-					fmt.Println("\t", line)
+					respond("\t%s", line)
 				}
-				fmt.Println("}")
+				respond("}")
 			}
 		}
 	}
@@ -20836,7 +20716,8 @@ func (rs *Reposurgeon) DoTimequake(line string) bool {
 	if rs.selection == nil {
 		rs.selection = rs.chosen().all()
 	}
-	baton := newBaton("reposurgeon: disambiguating", "")
+	baton := context.baton
+	//baton.startProcess("reposurgeon: disambiguating", "")
 	modified := 0
 	for _, event := range repo.commits(rs.selection) {
 		parents := event.parents()
@@ -20848,9 +20729,9 @@ func (rs *Reposurgeon) DoTimequake(line string) bool {
 				}
 			}
 		}
-		baton.twirl("")
+		baton.twirl()
 	}
-	baton.exit("")
+	//baton.endProcess()
 	respond("%d events modified", modified)
 	repo.invalidateNamecache()
 	return false
@@ -20987,7 +20868,9 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		}
 		return ""
 	}
-	baton := newBaton("reposurgeon: parsing changelogs", "")
+	baton := context.baton
+	//baton.startProcess("reposurgeon: parsing changelogs", "")
+	//defer baton.endProcess()
 	for _, commit := range repo.commits(nil) {
 		cc++
 		// If a changeset is *all* ChangeLog mods, it is probably either
@@ -21003,7 +20886,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 			continue
 		}
 		for _, op := range commit.operations() {
-			baton.twirl("")
+			baton.twirl()
 			if op.op == opM && filepath.Base(op.Path) == "ChangeLog" {
 				cl++
 				blobfile := repo.markToEvent(op.ref).(*Blob).materialize()
@@ -21657,11 +21540,17 @@ func (rs *Reposurgeon) DoLogfile(lineIn string) bool {
 		if err != nil {
 			respond("log file open failed: %v", err)
 		} else {
-			context.logfp = fp
+			var i interface{} = &fp
+			context.logfp = i.(io.Writer)
 		}
 	}
 	if len(lineIn) == 0 || context.isInteractive() {
-		respond("logfile %s", context.logfp.Name())
+		switch v := context.logfp.(type) {
+			case *os.File:
+			respond("logfile %s", v.Name())
+			case *μπαγκέτα:
+			respond("logfile stdout")
+		}
 	}
 	return false
 }
@@ -21823,24 +21712,24 @@ func (rs *Reposurgeon) DoSizeof(lineIn string) bool {
 		}
 		return out
 	}
-	fmt.Printf("NodeAction:        %s\n", explain(unsafe.Sizeof(*new(NodeAction))))
-	fmt.Printf("RevisionRecord:    %s\n", explain(unsafe.Sizeof(*new(RevisionRecord))))
-	fmt.Printf("Commit:            %s\n", explain(unsafe.Sizeof(*new(Commit))))
-	fmt.Printf("Callout:           %s\n", explain(unsafe.Sizeof(*new(Callout))))
-	fmt.Printf("FileOp:            %s\n", explain(unsafe.Sizeof(*new(FileOp))))
-	fmt.Printf("Blob:              %s\n", explain(unsafe.Sizeof(*new(Blob))))
-	fmt.Printf("Tag:               %s\n", explain(unsafe.Sizeof(*new(Tag))))
-	fmt.Printf("Reset:             %s\n", explain(unsafe.Sizeof(*new(Reset))))
-	fmt.Printf("Attribution:       %s\n", explain(unsafe.Sizeof(*new(Attribution))))
-	fmt.Printf("blobidx:           %3d\n", unsafe.Sizeof(blobidx(0)))
-	fmt.Printf("markidx:           %3d\n", unsafe.Sizeof(markidx(0)))
-	fmt.Printf("revidx:            %3d\n", unsafe.Sizeof(revidx(0)))
-	fmt.Printf("nodeidx:           %3d\n", unsafe.Sizeof(nodeidx(0)))
-	fmt.Printf("string:            %3d\n", unsafe.Sizeof("foo"))
-	fmt.Printf("pointer:           %3d\n", unsafe.Sizeof(new(Attribution)))
-        fmt.Printf("int:               %3d\n", unsafe.Sizeof(0))
-        fmt.Printf("map[string]string: %3d\n", unsafe.Sizeof(make(map[string]string)))
-        fmt.Printf("[]string:          %3d\n", unsafe.Sizeof(make([]string, 0)))
+	respond("NodeAction:        %s\n", explain(unsafe.Sizeof(*new(NodeAction))))
+	respond("RevisionRecord:    %s\n", explain(unsafe.Sizeof(*new(RevisionRecord))))
+	respond("Commit:            %s\n", explain(unsafe.Sizeof(*new(Commit))))
+	respond("Callout:           %s\n", explain(unsafe.Sizeof(*new(Callout))))
+	respond("FileOp:            %s\n", explain(unsafe.Sizeof(*new(FileOp))))
+	respond("Blob:              %s\n", explain(unsafe.Sizeof(*new(Blob))))
+	respond("Tag:               %s\n", explain(unsafe.Sizeof(*new(Tag))))
+	respond("Reset:             %s\n", explain(unsafe.Sizeof(*new(Reset))))
+	respond("Attribution:       %s\n", explain(unsafe.Sizeof(*new(Attribution))))
+	respond("blobidx:           %3d\n", unsafe.Sizeof(blobidx(0)))
+	respond("markidx:           %3d\n", unsafe.Sizeof(markidx(0)))
+	respond("revidx:            %3d\n", unsafe.Sizeof(revidx(0)))
+	respond("nodeidx:           %3d\n", unsafe.Sizeof(nodeidx(0)))
+	respond("string:            %3d\n", unsafe.Sizeof("foo"))
+	respond("pointer:           %3d\n", unsafe.Sizeof(new(Attribution)))
+	respond("int:               %3d\n", unsafe.Sizeof(0))
+	respond("map[string]string: %3d\n", unsafe.Sizeof(make(map[string]string)))
+	respond("[]string:          %3d\n", unsafe.Sizeof(make([]string, 0)))
 	return false
 }
 
@@ -21851,6 +21740,8 @@ func main() {
 	interpreter.EnableReadline(true)
 
 	defer func() {
+		context.baton.Sync()
+		//fmt.Print("\n")
 		pprof.StopCPUProfile()
 		/*
 		if context.logmask <= 1 {
@@ -21879,6 +21770,7 @@ func main() {
 			if acmd == "-" {
 				context.flagOptions["interactive"] = terminal.IsTerminal(0)
 				context.flagOptions["progress"] = terminal.IsTerminal(1)
+				context.baton.setInteractivity(context.flagOptions["interactive"])
 				interpreter.CmdLoop("")
 			} else {
 				// A minor concession to people used

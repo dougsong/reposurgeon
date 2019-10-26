@@ -1,9 +1,11 @@
 read <simple.fi
+set interactive
 print Test that we can define and see macro definitions
 Test that we can define and see macro definitions
 define fubar list
 define
-define fubar list
+reposurgeon: define fubar list
+
 print Test that invoking the macro produces output
 Test that invoking the macro produces output
 :49 do fubar
@@ -34,4 +36,3 @@ M 100644 :48 test/simple.dump
 undefine fubaz
 print Tests complete
 Tests complete
-
