@@ -4631,6 +4631,16 @@ func (commit *Commit) setOperations(ops []FileOp) {
 	commit.invalidateManifests()
 }
 
+// setOperations replaces the set of fileops associated with this commit.
+func (commit *Commit) copyOperations(ptrs []*FileOp) {
+	ops := make([]FileOp, len(ptrs))
+	for idx, p := range ptrs {
+		ops[idx] = *p
+	}
+	commit.fileops = ops
+	commit.invalidateManifests()
+}
+
 // appendOperation appends to the set of fileops associated with this commit.
 func (commit *Commit) appendOperation(op FileOp) {
 	commit.fileops = append(commit.fileops, op)
@@ -8162,8 +8172,8 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		// Create actions corresponding to both
 		// parsed and generated nodes.
 		type fiAction struct {
-			node   NodeAction
-			fileop FileOp
+			node   *NodeAction
+			fileop *FileOp
 		}
 		actions := make([]fiAction, 0)
 		for _, node := range expandedNodes {
@@ -8205,7 +8215,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 					//assert node.blob == nil
 					fileop := newFileOp(sp.repo)
 					fileop.construct(opD, node.path)
-					actions = append(actions, fiAction{*node, *fileop})
+					actions = append(actions, fiAction{node, fileop})
 				} else if node.action == sdADD || node.action == sdCHANGE || node.action == sdREPLACE {
 					ancestor = sp.seekAncestor(node)
 					// Time for fileop generation
@@ -8287,7 +8297,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 							perms,
 							node.blobmark.String(),
 							node.path)
-						actions = append(actions, fiAction{*node, *fileop})
+						actions = append(actions, fiAction{node, fileop})
 						sp.repo.markToEvent(fileop.ref).(*Blob).addalias(node.path)
 					} else if logEnable(logEXTRACT) {
 						logit(logEXTRACT, "r%d~%s: unmodified", node.revision, node.path)
@@ -8298,7 +8308,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 				logit(logEXTRACT, "r%d: deleteall %s", record.revision, node.path)
 				fileop := newFileOp(sp.repo)
 				fileop.construct(deleteall, node.path[:len(node.path)-1])
-				actions = append(actions, fiAction{*node, *fileop})
+				actions = append(actions, fiAction{node, fileop})
 			}
 		}
 		if logEnable(logEXTRACT) {
@@ -8314,7 +8324,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		// but in Subversion (unlike git) it is possible to make
 		// a commit that modifies multiple branches. In order to
 		// cope with this case we must first recognize it.
-		cliques := make(map[string][]FileOp)
+		cliques := make(map[string][]*FileOp)
 		cliqueBranches := make([]string, 0)
 		lastbranch := ""
 		for _, action := range actions {
@@ -8349,7 +8359,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		logit(logEXTRACT, "r%d: %d action(s) in %d clique(s)", record.revision, len(actions), len(cliques))
 		type branchAction struct {
 			branch  string
-			fileops []FileOp
+			fileops []*FileOp
 		}
 		// Make two operation lists from the cliques, sorting cliques
 		// containing only branch deletes from other cliques.
@@ -8373,7 +8383,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 			sp.repo.legacyMap[fmt.Sprintf("SVN:%s", commit.legacyID)] = commit
 			if len(oplist) > 0 {
 				commit.common = oplist[0].branch
-				commit.setOperations(oplist[0].fileops)
+				commit.copyOperations(oplist[0].fileops)
 				oplist = oplist[1:]
 			} else if len(record.nodes) == 0 {
 				commit.common = ""
@@ -8412,7 +8422,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 			sp.repo.legacyMap[fmt.Sprintf("SVN:%s", split.legacyID)] = split
 			split.Comment += "\n[[Split portion of a mixed commit.]]\n"
 			split.setMark(sp.repo.newmark())
-			split.setOperations(action.fileops)
+			split.copyOperations(action.fileops)
 			newcommits = append(newcommits, split)
 		}
 		// The revision is truly mixed if there is more than one clique
