@@ -87,6 +87,8 @@ import (
 	"io/ioutil"
 	"log"
 	"math"
+	"net/http"
+	_ "net/http/pprof"
 	"net/mail"
 	"os"
 	"os/exec"
@@ -116,7 +118,6 @@ import (
 	terminal "golang.org/x/crypto/ssh/terminal"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
 )
-import _ "net/http/pprof"
 
 const version = "4.0-pre"
 
@@ -14112,7 +14113,6 @@ type Reposurgeon struct {
 	RepositoryList
 	SelectionParser
 	callstack        [][]string
-	profileLog       string
 	selection        orderedIntSet
 	defaultSelection orderedIntSet
 	history          []string
@@ -15417,60 +15417,64 @@ func (rs *Reposurgeon) DoIndex(lineIn string) bool {
 
 func (rs *Reposurgeon) HelpProfile() {
 	rs.helpOutput(`
-Enable profiling. Profile statistics are dumped to the path given as argument.
-They are in the format used by "go tool pprof". 
-
-The profle is dumped when you either invoke "profile" without argument or
-on normal program exit.
+start and stop profiling
 `)
 }
 
 func (rs *Reposurgeon) DoProfile(line string) bool {
-	rs.profileLog = line
-	if rs.profileLog == "" {
-		pprof.StopCPUProfile()
-		respond("profiling disabled.")
+	profiles := pprof.Profiles()
+	names := make([]string, len(profiles)+1)
+	for idx, profile := range profiles {
+		names[idx] = profile.Name()
+	}
+	names[len(profiles)-1] = "cpu"
+	if line == "" {
+		respond("available profiles are %v", names)
 	} else {
-		// Recipe from https://blog.golang.org/profiling-go-programs
-		f, err := os.Create(rs.profileLog)
-		if err != nil {
-			log.Fatal(err)
+		verb, line := popToken(line)
+		switch verb {
+		case "live":
+			port, _ := popToken(line)
+			if port != "" {
+				go func() {
+					http.ListenAndServe("localhost:" + port, nil)
+				}()
+				respond("pprof server started on http://localhost:%s/debug/pprof", port)
+			} else {
+				croak("you must specify a port number")
+			}
+		case "start":
+			subject, line := popToken(line)
+			if subject == "cpu" {
+				f, err := os.Create(line)
+				if err != nil {
+					croak("failed to create file %#v [%s]", line, err)
+				} else {
+					pprof.StartCPUProfile(f)
+					respond("cpu profiling enabled.")
+				}
+			} else {
+				respond("the %s profile starts automatically when you start reposurgeon.", subject)
+			}
+		case "save":
+			subject, line := popToken(line)
+			if subject == "cpu" {
+				pprof.StopCPUProfile()
+				respond("cpu profiling stopped.")
+			} else {
+				f, err := os.Create(line)
+				if err != nil {
+					croak("failed to create file %#v [%s]", line, err)
+				} else {
+					runtime.GC()
+					pprof.Lookup(subject).WriteTo(f, 0)
+					respond("%s profile saved to %#v", subject, line)
+				}
+			}
+		default:
+			croak("I don't know how to %s.", verb);
 		}
-		pprof.StartCPUProfile(f)
-		respond("profiling enabled.")
 	}
-	return false
-}
-
-func (rs *Reposurgeon) MemProfile() {
-	rs.helpOutput(`
-Dump two memory profiles in the format used by "go tool pprof". One
-is immmediate, then a GC is performed, then another memory profile
-is dumped.  The optional argument is a prefix for the profile name.
-The command reports the names of the profiles dunped.
-`)
-}
-
-func (rs *Reposurgeon) DoMemProfile(line string) bool {
-	respond("writing heap profile.")
-	prefix := ""
-	if line != "" {
-		prefix = line + "-"
-	}
-	before := prefix + "before-gc.prof"
-	f, err := os.Create(before)
-	if err != nil {
-		log.Fatal(err)
-	}
-	pprof.WriteHeapProfile(f)
-	runtime.GC()
-	after := prefix + "after-gc.prof"
-	f, err = os.Create(after)
-	if err != nil {
-		log.Fatal(err)
-	}
-	pprof.WriteHeapProfile(f)
-	respond("Memory profilres written to %s and %s.", before, after)
 	return false
 }
 
