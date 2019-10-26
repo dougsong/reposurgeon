@@ -7431,6 +7431,21 @@ func (sp *StreamParser) lastRelevantCommit(maxRev revidx, path string, attr stri
 	return nil
 }
 
+// isDeclaredBranch returns true iff the user requested that this path be trated as a branch or tag.
+func isDeclaredBranch(path string) bool {
+	np := path + svnSep
+	for _, trial := range context.listOptions["svn_branchify"] {
+		if !strings.Contains(trial, "*") && trial == path {
+			return true
+		} else if strings.HasSuffix(trial, svnSep+"*") && filepath.Dir(trial) == filepath.Dir(path) && !context.listOptions["svn_branchify"].Contains(np+"*") {
+			return true
+		} else if trial == "*" && !context.listOptions["svn_branchify"].Contains(np+"*") && strings.Count(path, svnSep) < 1 {
+			return true
+		}
+	}
+	return false
+}
+
 func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeAction {
 	expandedNodes := make([]*NodeAction, 0)
 	appendExpanded := func(newnode *NodeAction) {
@@ -7444,22 +7459,9 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 		expandedNodes = append(expandedNodes, node)
 	} else if node.kind == sdDIR {
 		// Recognize branches
-		if !options.Contains("--nobranch") {
-			np := node.path + svnSep
-			if node.action == sdADD && !sp.isBranch(np) {
-				for _, trial := range context.listOptions["svn_branchify"] {
-					if !strings.Contains(trial, "*") && trial == node.path {
-						sp.addBranch(np)
-					} else if strings.HasSuffix(trial, svnSep+"*") && filepath.Dir(trial) == filepath.Dir(node.path) && !context.listOptions["svn_branchify"].Contains(np+"*") {
-						sp.addBranch(np)
-					} else if trial == "*" && !context.listOptions["svn_branchify"].Contains(np+"*") && strings.Count(node.path, svnSep) < 1 {
-						sp.addBranch(np)
-					}
-				}
-				if sp.isBranch(np) {
-					logit(logTOPOLOGY, "%s recognized as a branch", np)
-				}
-			}
+		if !options.Contains("--nobranch") && node.action == sdADD && !sp.isBranch(node.path + svnSep) && isDeclaredBranch(node.path) {
+			sp.addBranch(node.path + svnSep)
+			logit(logTOPOLOGY, "%s recognized as a branch", node.path + svnSep)
 		}
 
 		// svnSep is appended to avoid collisions with path
