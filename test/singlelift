@@ -35,12 +35,6 @@ do
 done
 shift $(($OPTIND - 1))
 
-
-
-case $1 in
-    --view) mode=view; shift ;;
-esac
-
 for x in $*;
 do
     grep '^ #' ${x}.svn 2>/dev/null
@@ -48,6 +42,6 @@ do
 	dump)
 	    ${REPOSURGEON:-reposurgeon} "verbose $verbose" "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1;;
 	*)
-	    ${REPOSURGEON:-reposurgeon} "read <${x}.svn" "prefer git" "write -" 2>&1 | diff -u ${x}.chk - ;;
+	    ${REPOSURGEON:-reposurgeon} "verbose $verbose" "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1 | diff -u ${x}.chk - ;;
     esac
 done
