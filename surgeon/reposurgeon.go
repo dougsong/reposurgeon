@@ -8357,7 +8357,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		}
 		cliqueBranches = newBranches
 		// Create all commits corresponding to the revision
-		newcommits := make([]Event, 0)
+		newcommits := make([]Event, 0, len(cliques))
 		commit.legacyID = fmt.Sprintf("%d", record.revision)
 		if nontrivialCount <= 1 {
 			// In the ordinary case (1 or 0 non-delete ops), we can assign all non-deleteall fileops
