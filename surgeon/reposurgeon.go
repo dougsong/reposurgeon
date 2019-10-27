@@ -8312,16 +8312,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		// cope with this case we must first recognize it.
 		cliques := make(map[string][]*FileOp)
 		cliqueBranches := make([]string, 0)
-		lastbranch := ""
 		for _, action := range actions {
-			// Try last seen branch first
-			if lastbranch != "" && strings.HasPrefix(action.node.path, lastbranch) {
-				cliques[lastbranch] = append(cliques[lastbranch], action.fileop)
-				if len(cliqueBranches) == 0 || lastbranch != cliqueBranches[len(cliqueBranches)-1] {
-					cliqueBranches = append(cliqueBranches, lastbranch)
-				}
-				continue
-			}
 			// Preferentially match longest branches
 			explicitMatch := false
 			for _, branch := range sp.branchlist() {
@@ -8330,7 +8321,6 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 					if len(cliqueBranches) == 0 || branch != cliqueBranches[len(cliqueBranches)-1] {
 						cliqueBranches = append(cliqueBranches, branch)
 					}
-					lastbranch = branch
 					explicitMatch = true
 					break
 				}
