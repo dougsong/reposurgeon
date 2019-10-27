@@ -372,7 +372,7 @@ svnload-regress:
 # that is, no messages due to branch surgery or whatever.
 # FIXME: We should reoort error and stop if the outout is nonempty.
 SVNCLEAN := bad-author.svn binary.svn blob-id.svn \
-	debranch.svn deletion.svn deepdirs.svn delignore.svn \
+	debranch.svn deletion.svn deepdirs.svn \
 	emptybranch.svn executable.svn expunge.svn filecopy.svn \
 	gitify.svn ignore-blank.svn mergeinfo.svn mergeinfo-with-split.svn \
 	mixedbranch.svn mkignore.svn nontipcopy.svn nullignores.svn \

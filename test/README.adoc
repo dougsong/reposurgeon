@@ -421,6 +421,10 @@ branchreplace.svn::
 delete-copy.svn::
    Doesn't build, no trunk branch. Not used by any test.
 
+delignore/svn::
+   Translation correct. One message due to branch delete
+   followed by rename.
+
 emptyfrom.svn::
    BUG: Needs analysis. Not used by any test.
 

@@ -6385,7 +6385,7 @@ type StreamParser struct {
 	propagate            map[string]bool
 	history              HistoryManager
 	splitCommits         map[revidx]int
-	implicands           []*NodeAction
+	streamview           []*NodeAction	// All nodes in streeam order
 }
 
 type daglink struct {
@@ -6858,15 +6858,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 							logit(logSVNPARSE, "node parsing, line %d: node %s appended", sp.importLine, node)
 							node.index = intToNodeidx(len(nodes) + 1)
 							nodes = append(nodes, node)
-							implicated := func(node *NodeAction) bool {
-								return strings.HasPrefix(node.path, "tags") || 
-									strings.HasPrefix(node.fromPath, "tags") ||
-									strings.HasPrefix(node.path, "branches") || 
-									strings.HasPrefix(node.fromPath, "branches")
-							}
-							if implicated(node) {
-								sp.implicands = append(sp.implicands, node)
-							}
+							sp.streamview = append(sp.streamview, node)
 						} else {
 							logit(logSVNPARSE, "node parsing, line %d: empty node rejected", sp.importLine)
 						}
@@ -7971,7 +7963,7 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 	// Our first step is to refine our list so we only need to
 	// walk through tags created more than once, otherwise this
 	// pass can become a pig on large repositories.  Remember that
-	// initially sp.implicands is a list of all nodes that have
+	// initially sp.streamview is a list of all nodes that have
 	// paths in the tag namespace.
 	//
 	// The exit contract of this phase is that there (1) are no
@@ -7984,11 +7976,11 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 	// This branch is linear-time in the number of nodes and quite
 	// fast even on very large repositories.
 	refcounts := make(map[string]int)
-	for i, tagnode := range sp.implicands {
+	for i, tagnode := range sp.streamview {
 		if tagnode.action == sdADD && tagnode.kind == sdDIR {
 			refcounts[tagnode.path]++
 		}
-		baton.percentProgress("a", int64(i), int64(len(sp.implicands)))
+		baton.percentProgress("a", int64(i), int64(len(sp.streamview)))
 	}
 	logit(logTAGFIX, "tag reference counts: %v", refcounts)
 	// Use https://github.com/golang/go/wiki/SliceTricks recipe for filter in place
@@ -7999,22 +7991,22 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 		return refcounts[x.path] > 1 || refcounts[filepath.Dir(x.path)] > 1 ||
 			refcounts[x.fromPath] > 1 || refcounts[filepath.Dir(x.fromPath)] > 1
 	}
-	oldlength := len(sp.implicands)
-	for i, x := range sp.implicands {
+	oldlength := len(sp.streamview)
+	for i, x := range sp.streamview {
 		if relevant(x) {
-			sp.implicands[n] = x
+			sp.streamview[n] = x
 			n++
 		}
 		baton.percentProgress("b", int64(i), int64(oldlength))
 	}
-	sp.implicands = sp.implicands[:n]
-	logit(logTAGFIX, "multiply-added directories: %v", sp.implicands)
+	sp.streamview = sp.streamview[:n]
+	logit(logTAGFIX, "multiply-added directories: %v", sp.streamview)
 
 	processed := 0
-	logit(logTAGFIX, "before fixups: %v", sp.implicands)
-	for i := range sp.implicands {
-		srcnode := sp.implicands[i]
-		if sp.implicands[i].kind != sdFILE && sp.implicands[i].action == sdDELETE {
+	logit(logTAGFIX, "before fixups: %v", sp.streamview)
+	for i := range sp.streamview {
+		srcnode := sp.streamview[i]
+		if sp.streamview[i].kind != sdFILE && sp.streamview[i].action == sdDELETE {
 			newname := srcnode.path[:len(srcnode.path)] + fmt.Sprintf("-deleted-r%d-%d", srcnode.revision, srcnode.index) 
 			logit(logTAGFIX, "r%d#%d~%s: tag deletion, renaming to %s.",
 				srcnode.revision, srcnode.index, srcnode.path, newname)
@@ -8023,7 +8015,7 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 			// in forward order, any previous deletions of
 			// this tag have already been patched.
 			for j := i - 1; j >= 0; j-- {
-				tnode := sp.implicands[j]
+				tnode := sp.streamview[j]
 				if strings.HasPrefix(tnode.path, srcnode.path) && !strings.Contains(tnode.path, "-deleted-") {
 					newpath := newname + tnode.path[len(srcnode.path):]
 					logit(logTAGFIX, "r%d#%d~%s: on tag deletion path mapped to %s.",
@@ -8033,8 +8025,8 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 			}
 			// Then, run forward patching copy
 			// operations.
-			for j := i + 1; j < len(sp.implicands); j++ {
-				tnode := sp.implicands[j]
+			for j := i + 1; j < len(sp.streamview); j++ {
+				tnode := sp.streamview[j]
 				if tnode.action == sdDELETE && tnode.path == srcnode.path && !strings.Contains(tnode.path, "-deleted-") {
 					// Another deletion of this tag?  OK, stop patching copies.
 					// We'll deal with it in a new pass once the outer loop gets
@@ -8057,10 +8049,10 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 			processed++
 		}
 	breakout:
-		baton.percentProgress("", int64(processed), int64(len(sp.implicands)))
+		baton.percentProgress("", int64(processed), int64(len(sp.streamview)))
 	}
-	logit(logTAGFIX, "after fixups: %v", sp.implicands)
-	sp.implicands = nil
+	logit(logTAGFIX, "after fixups: %v", sp.streamview)
+	sp.streamview = nil
 }
 
 func svnProcessFilemaps(sp *StreamParser, options stringSet, baton *Baton) {

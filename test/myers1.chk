@@ -76,14 +76,14 @@ data 18
 Commit message 9.
 from :2
 merge :6
+M 100644 :3 d1/d2/d3/d4/d5-deleted-r14-1/d6/f0
+M 100644 :3 d1/d2/d3/d4/d5-deleted-r14-1/d6/f0
+M 100644 :4 d1/d2/d3/d4/d5-deleted-r14-1/d6/f9
+M 100644 :4 d1/d2/d3/d4/d5-deleted-r14-1/d6/f9
 M 100644 :3 d1/d2/d3/d4/d5/d6/f0
 M 100644 :3 d1/d2/d3/d4/d5/d6/f0
 M 100644 :3 d1/d2/d3/d4/d5/d6/f0
 M 100644 :3 d1/d2/d3/d4/d5/d6/f0
-M 100644 :3 d1/d2/d3/d4/d5/d6/f0
-M 100644 :3 d1/d2/d3/d4/d5/d6/f0
-M 100644 :4 d1/d2/d3/d4/d5/d6/f9
-M 100644 :4 d1/d2/d3/d4/d5/d6/f9
 M 100644 :4 d1/d2/d3/d4/d5/d6/f9
 M 100644 :4 d1/d2/d3/d4/d5/d6/f9
 M 100644 :4 d1/d2/d3/d4/d5/d6/f9
@@ -141,8 +141,9 @@ committer test <test> 1476403200 +0000
 data 19
 Commit message 14.
 from :7
+D d1/d2/d3/d4/d5-deleted-r14-1/d6/f0
+D d1/d2/d3/d4/d5-deleted-r14-1/d6/f9
 M 100755 :10 d1/d2/d3/d4/d5/d6/f0
-D d1/d2/d3/d4/d5/d6/f9
 
 tag emptycommit-3
 #legacy-id 3
