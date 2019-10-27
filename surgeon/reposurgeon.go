@@ -8294,7 +8294,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 				// These are directory actions.
 				logit(logEXTRACT, "r%d: deleteall %s", record.revision, node.path)
 				fileop := newFileOp(sp.repo)
-				fileop.construct(deleteall, node.path[:len(node.path)-1])
+				fileop.construct(deleteall)
 				actions = append(actions, fiAction{node, fileop})
 			}
 		}
