@@ -7444,12 +7444,6 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 	if node.kind == sdFILE {
 		expandedNodes = append(expandedNodes, node)
 	} else if node.kind == sdDIR {
-		// Recognize branches
-		if !options.Contains("--nobranch") && node.action == sdADD && !sp.isBranch(node.path + svnSep) && isDeclaredBranch(node.path) {
-			sp.addBranch(node.path + svnSep)
-			logit(logTOPOLOGY, "%s recognized as a branch", node.path + svnSep)
-		}
-
 		// svnSep is appended to avoid collisions with path
 		// prefixes.
 		node.path += svnSep
@@ -7963,8 +7957,7 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 	// Our first step is to refine our list so we only need to
 	// walk through tags created more than once, otherwise this
 	// pass can become a pig on large repositories.  Remember that
-	// initially sp.streamview is a list of all nodes that have
-	// paths in the tag namespace.
+	// initially sp.streamview is a list of all nodes.
 	//
 	// The exit contract of this phase is that there (1) are no
 	// branches with colliding names attached to different
@@ -8050,9 +8043,18 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 		baton.percentProgress("c", int64(processed), int64(len(multiples)))
 	}
 	logit(logTAGFIX, "after fixups: %v", multiples)
-	multiples = nil
+	multiples = nil		// Allow GC
 
-	// sp.streamview is still available for a later processing phase
+	// Recognize branches
+	if !options.Contains("--nobranch") {
+		for _, node := range sp.streamview {
+			if node.kind != sdFILE && node.action == sdADD && isDeclaredBranch(node.path) {
+				sp.addBranch(node.path + svnSep)
+				logit(logTOPOLOGY, "%s recognized as a branch", node.path + svnSep)
+			}
+		}
+	}
+	sp.streamview = nil	// Allow that view to be GCed
 }
 
 func svnProcessFilemaps(sp *StreamParser, options stringSet, baton *Baton) {
