@@ -1600,17 +1600,11 @@ long-running conversion recipes.
    storage currently held in loaded repositories; this will not affect the reported high-water
    mark.
 
-+profile+ [ _path_ ]::
-   Enable profiling. Profile statistics are dumped to the path
-   given as argument. Profile data is dumped either when you invoke
-   "profile" without argument or the program exits normally.  Profile
-   data is in the format used by "go tool ppreof".
-
-+memprofile+ [ _path_ ]::
-   Dump two memory profiles in the format used by "go tool pprof". One
-   is immmediate, then a GC is performed, then another memory profile
-   is dumped.  The optional argument is a prefix for the profile name.
-   The command reports the names of the profiles dunped.
++profile+ [ +live+ | +start+ | +save+ ] [ _args..._ ]::
+    Profiling is enabled by default, but viewing the profile data
+    requires either starting the http server with "profile live", or
+    saving it to a file with "profile save". When no arguments are
+    given it prints out the available types of profiles.
 
 +exit+::
    Exit, reporting the time. Included here because, while EOT will
