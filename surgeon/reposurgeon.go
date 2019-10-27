@@ -8343,19 +8343,6 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 				nontrivialClique = branch
 			}
 		}
-		newBranches := make([]string, 0, len(cliqueBranches))
-		if nontrivialCount > 0 {
-			newBranches = append(newBranches, nontrivialClique)
-		}
-		if trivialClique != nil {
-			newBranches = append(newBranches, trivialClique.(string))
-		}
-		for _, branch := range cliqueBranches {
-			if (nontrivialCount == 0 || branch != nontrivialClique) && (branch != trivialClique) {
-				newBranches = append(newBranches, branch)
-			}
-		}
-		cliqueBranches = newBranches
 		// Create all commits corresponding to the revision
 		newcommits := make([]Event, 0, len(cliques))
 		commit.legacyID = fmt.Sprintf("%d", record.revision)
@@ -8363,10 +8350,17 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 			// In the ordinary case (1 or 0 non-delete ops), we can assign all non-deleteall fileops
 			// to the base commit.
 			sp.repo.legacyMap[fmt.Sprintf("SVN:%s", commit.legacyID)] = commit
-			if len(cliqueBranches) > 0 {
-				commit.common = cliqueBranches[0]
+			if nontrivialCount == 1 {
+				commit.common = nontrivialClique
+				commit.copyOperations(cliques[nontrivialClique])
+				delete(cliques, nontrivialClique)
+			} else if trivialClique != nil {
+				// contrary to what the above comment tells, the previous code
+				// added the first clique even if it was a deleteall, if there
+				// were only such cliques.
+				commit.common = trivialClique.(string)
 				commit.copyOperations(cliques[commit.common])
-				cliqueBranches = cliqueBranches[1:]
+				delete(cliques, commit.common)
 			} else {
 				// No file operation at all. Try nevertheless to assign a
 				// common path to the commit using the longest common prefix of
@@ -8395,16 +8389,20 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		// handle that.
 		sort.Strings(cliqueBranches)
 		var split *Commit
-		for i, branch := range cliqueBranches {
-			split = commit.clone(sp.repo)
-			split.common = branch
-			// Sequence numbers for split commits are 1-origin
-			split.legacyID += splitSep + strconv.Itoa(i+1)
-			sp.repo.legacyMap[fmt.Sprintf("SVN:%s", split.legacyID)] = split
-			split.Comment += "\n[[Split portion of a mixed commit.]]\n"
-			split.setMark(sp.repo.newmark())
-			split.copyOperations(cliques[branch])
-			newcommits = append(newcommits, split)
+		i := 0
+		for _, branch := range cliqueBranches {
+			if fileops, ok := cliques[branch]; ok {
+				split = commit.clone(sp.repo)
+				split.common = branch
+				// Sequence numbers for split commits are 1-origin
+				split.legacyID += splitSep + strconv.Itoa(i+1)
+				sp.repo.legacyMap[fmt.Sprintf("SVN:%s", split.legacyID)] = split
+				split.Comment += "\n[[Split portion of a mixed commit.]]\n"
+				split.setMark(sp.repo.newmark())
+				split.copyOperations(fileops)
+				newcommits = append(newcommits, split)
+				i++
+			}
 		}
 		// The revision is truly mixed if there is more than one clique
 		// not consisting entirely of deleteall operations.
