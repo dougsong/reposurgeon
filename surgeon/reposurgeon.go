@@ -15417,35 +15417,59 @@ func (rs *Reposurgeon) DoIndex(lineIn string) bool {
 
 func (rs *Reposurgeon) HelpProfile() {
 	rs.helpOutput(`
-start and stop profiling
-`)
-}
+DESCRIPTION
+    Manages profiling.
+
+SYNOPSIS
+    profile [<verb>] [<subject>]
+
+VERBS
+    live
+	profile live [<port>]
+	    Starts an http server on the specified port which serves
+	    the profiling data. If no port is specified, it defaults
+	    to port 1234. Use in combination with pprof:
+		go tool pprof -http=":8080" http://localhost:1234/debug/pprof/<profile>
+
+    start
+	profile start <profile> <filename>
+	    Starts the named profiler, and tells it to save to the
+	    named file, which will be overwritten. Currently only the
+	    cpu profiler requires you to specifically start it; all
+	    the others start automatically.
+
+    save
+	profile save <profile> <filename>
+	    Saves the data from the named profiler to the named file,
+	    which will be overwritten.
+`) }
 
 func (rs *Reposurgeon) DoProfile(line string) bool {
 	profiles := pprof.Profiles()
-	names := make([]string, len(profiles)+1)
-	for idx, profile := range profiles {
-		names[idx] = profile.Name()
+	names := newStringSet()
+	for _, profile := range profiles {
+		names.Add(profile.Name())
 	}
-	names[len(profiles)-1] = "cpu"
+	names.Add("cpu")
 	if line == "" {
-		respond("available profiles are %v", names)
+		respond("The available profiles are %v", names)
 	} else {
 		verb, line := popToken(line)
 		switch verb {
 		case "live":
 			port, _ := popToken(line)
-			if port != "" {
-				go func() {
-					http.ListenAndServe("localhost:" + port, nil)
-				}()
-				respond("pprof server started on http://localhost:%s/debug/pprof", port)
-			} else {
-				croak("you must specify a port number")
+			if port == "" {
+				port = "1234"
 			}
+			go func() {
+				http.ListenAndServe("localhost:" + port, nil)
+			}()
+			respond("pprof server started on http://localhost:%s/debug/pprof", port)
 		case "start":
 			subject, line := popToken(line)
-			if subject == "cpu" {
+			if !names.Contains(subject) {
+				croak("I don't recognize %#v as a profile name. The names I do recognize are %v.", subject, names)
+			} else if subject == "cpu" {
 				f, err := os.Create(line)
 				if err != nil {
 					croak("failed to create file %#v [%s]", line, err)
@@ -15454,11 +15478,13 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 					respond("cpu profiling enabled.")
 				}
 			} else {
-				respond("the %s profile starts automatically when you start reposurgeon.", subject)
+				respond("The %s profile starts automatically when you start reposurgeon.", subject)
 			}
 		case "save":
 			subject, line := popToken(line)
-			if subject == "cpu" {
+			if !names.Contains(subject) {
+				croak("I don't recognize %#v as a profile name. The names I do recognize are %v.", subject, names)
+			} else if subject == "cpu" {
 				pprof.StopCPUProfile()
 				respond("cpu profiling stopped.")
 			} else {
@@ -15472,7 +15498,7 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 				}
 			}
 		default:
-			croak("I don't know how to %s.", verb);
+			croak("I don't know how to %s. Possible verbs are [live, start, save].", verb);
 		}
 	}
 	return false
