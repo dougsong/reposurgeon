@@ -3,6 +3,10 @@
 #
 # The REPOSURGEON environment variable can be used to substitute in a
 # different implementation.
+#
+# With -v, set the verbosity level.  (Not likely to give useful results.)
+#
+# With -x, set the experimental bit.
 
 . ./common-setup.sh
 
@@ -14,6 +18,17 @@ PATH=$(realpath ..):$(realpath .):${PATH}
 # Without this, under CentOS Python may emit invisible ANSI strings
 # that confuse diff.  Leave this in while pyreposurgeon still exists.
 TERM=dumb
+
+verbose=0
+experimental=""
+while getopts v:x opt
+do
+    case $opt in
+	v) verbose="$OPTARG" ;;
+	x) experimental="set experimental"
+    esac
+done
+shift $(($OPTIND - 1))
 
 what=`echo ${1} | sed -e '/-FAILED/s///' -e '/.tst/s///'`
 
@@ -34,5 +49,5 @@ fi
 for x in $*;
 do
     grep '^##' ${tst} 2>/dev/null
-    ${REPOSURGEON:-reposurgeon} "script ${tst}" 2>&1 | diff -u ${chk} -
+    ${REPOSURGEON:-reposurgeon} "verbose $verbose" "$experimental" "script ${tst}" 2>&1 | diff -u ${chk} -
 done

@@ -1,6 +1,13 @@
 #!/bin/sh
 # singlelift - run a single Subversion conversion test
 #
+# With -d, dump the conversion to stdout rather than diffing against
+# the check file.
+#
+# With -v, set the verbosity level. (Probaly only useful in dump mode.)
+#
+# With -x, set the experimental bit.
+#
 # The REPOSURGEON environment variable can be used to substitute in a
 # different implementation.
 
@@ -16,6 +23,20 @@ PATH=$(realpath ..):$(realpath .):${PATH}
 TERM=dumb
 
 mode=check
+verbose=0
+experimental=""
+while getopts dv:x opt
+do
+    case $opt in
+	d) mode=dump;;
+	v) verbose="$OPTARG" ;;
+	x) experimental="set experimental"
+    esac
+done
+shift $(($OPTIND - 1))
+
+
+
 case $1 in
     --view) mode=view; shift ;;
 esac
@@ -24,8 +45,8 @@ for x in $*;
 do
     grep '^ #' ${x}.svn 2>/dev/null
     case $mode in
-	view)
-	    ${REPOSURGEON:-reposurgeon} "read <${x}.svn" "prefer git" "write -" 2>&1;;
+	dump)
+	    ${REPOSURGEON:-reposurgeon} "verbose $verbose" "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1;;
 	*)
 	    ${REPOSURGEON:-reposurgeon} "read <${x}.svn" "prefer git" "write -" 2>&1 | diff -u ${x}.chk - ;;
     esac
