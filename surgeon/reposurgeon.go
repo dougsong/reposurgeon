@@ -8367,24 +8367,25 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 				commit.common = cliqueBranches[0]
 				commit.copyOperations(cliques[commit.common])
 				cliqueBranches = cliqueBranches[1:]
-			} else if len(record.nodes) == 0 {
-				commit.common = ""
 			} else {
-				// Find common prefix of all node paths.
-				commit.common = record.nodes[0].path
-				var j int
-				for _, node := range record.nodes {
-					for j = 0; j < len(commit.common); j++ {
-						if node.path[j] != commit.common[j] {
-							commit.common = commit.common[:j]
-							break
+				// No file operation at all. Try nevertheless to assign a
+				// common path to the commit using the longest common prefix of
+				// all node paths.
+				common := ""
+				for i, node := range record.nodes {
+					if i == 0 {
+						common = node.path
+					} else {
+						for j := 0; j < len(common); j++ {
+							if j > len(node.path) || node.path[j] != common[j] {
+								common = common[:j]
+								break
+							}
 						}
 					}
 				}
 				// Prefix must end in a path separator
-				for len(commit.common) > 0 && !strings.HasSuffix(commit.common, svnSep) {
-					commit.common = commit.common[:len(commit.common)-1]
-				}
+				commit.common = common[:strings.LastIndex(common, svnSep)+1]
 			}
 			commit.setMark(sp.repo.newmark())
 			logit(logEXTRACT, "r%d gets mark %s", record.revision, commit.mark)
