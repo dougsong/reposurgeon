@@ -8059,9 +8059,9 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 
 func svnProcessFilemaps(sp *StreamParser, options stringSet, baton *Baton) {
 	// Phase 3:
-	// This is where we build file visibility maps The visibility
-	// map for each revision maps a file paths to the Subversion
-	// node for the version yoo see at that revision, which mihjy
+	// This is where we build file visibility maps. The visibility
+	// map for each revision maps file paths to the Subversion
+	// node for the version you see at that revision, which might
 	// not have been modified for any number of revisions back,
 	// If the path ever existed at any revision, the only way it
 	// can fail to be visible is if the last thing done to it was
@@ -8069,8 +8069,8 @@ func svnProcessFilemaps(sp *StreamParser, options stringSet, baton *Baton) {
 	//
 	// This phase is moderately expensive, but once the maps are
 	// built they render unnecessary compuations that would have
-	// been prohibitively expensive in later passe. Notably the
-	// maps are everything necessary to compute ancestry. 
+	// been prohibitively expensive in later passes. Notably the
+	// maps are everything necessary to compute node ancestry. 
 	logit(logEXTRACT, "Phase 3: build filemaps")
 	baton.twirl("3")
 	sp.history = newFastHistory()
@@ -8083,9 +8083,6 @@ func svnProcessFilemaps(sp *StreamParser, options stringSet, baton *Baton) {
 func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 	nobranch := options.Contains("--nobranch")
 	// Build commits
-	// This code can eat your processor, so we make it give up
-	// its timeslice at reasonable intervals. Needed because
-	// it does not hit the disk.
 	logit(logEXTRACT, "Phase 4: build commits")
 	baton.twirl("4")
 	sp.splitCommits = make(map[revidx]int)
@@ -8536,10 +8533,6 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		// We're done, add all the new commits
 		sp.repo.events = append(sp.repo.events, newcommits...)
 		sp.repo.declareSequenceMutation("adding new commits")
-		// Report progress, and give up our scheduler slot
-		// so as not to eat the processor.
-		baton.twirl("")
-		time.Sleep(0)
 		// End of processing for this Subversion revision.  If the
 		// repo is large, we throw out file records for this node in
 		// order to reduce the maximum working set from proportional
@@ -8556,6 +8549,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 				}
 			}
 		}
+		baton.twirl("")
 		baton.percentProgress("", int64(ri), int64(len(sp.revisions)))
 	} // end of revision loop
 
