@@ -8377,9 +8377,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		}
 		// If the commit is mixed, or there are deletealls left over,
 		// handle that.
-		sort.SliceStable(cliqueBranches, func(i, j int) bool {
-			return cliqueBranches[i] < cliqueBranches[j]
-		})
+		sort.Strings(cliqueBranches)
 		var split *Commit
 		for i, branch := range cliqueBranches {
 			split = commit.clone(sp.repo)
