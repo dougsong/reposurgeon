@@ -8312,8 +8312,6 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		// cope with this case we must first recognize it.
 		cliques := make(map[string][]*FileOp)
 		cliqueBranches := make([]string, 0)
-		repeatClique := make(map[string]int)
-		var lastbranch interface{} // string or nil
 		for _, action := range actions {
 			// This preferentially matches longest branches because
 			// sp.branchlist() is sorted that way.
@@ -8328,10 +8326,6 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 			if len(cliques[branch]) == 1 { // first time we see this branch
 				cliqueBranches = append(cliqueBranches, branch)
 			}
-			if branch != lastbranch {
-				repeatClique[branch]++
-				lastbranch = branch
-			}
 		}
 		logit(logEXTRACT, "r%d: %d action(s) in %d clique(s)", record.revision, len(actions), len(cliques))
 		type branchAction struct {
@@ -8345,13 +8339,9 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		for _, branch := range cliqueBranches {
 			ops := cliques[branch]
 			if len(ops) == 1 && ops[0].op == deleteall {
-				for k := 0; k < repeatClique[branch]; k++ {
-					deleteallOps = append(deleteallOps, branchAction{branch, ops})
-				}
+				deleteallOps = append(deleteallOps, branchAction{branch, ops})
 			} else {
-				for k := 0; k < repeatClique[branch]; k++ {
-					otherOps = append(otherOps, branchAction{branch, ops})
-				}
+				otherOps = append(otherOps, branchAction{branch, ops})
 			}
 		}
 		oplist := append(otherOps, deleteallOps...)
