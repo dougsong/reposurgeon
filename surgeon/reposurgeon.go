@@ -8330,21 +8330,36 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		logit(logEXTRACT, "r%d: %d action(s) in %d clique(s)", record.revision, len(actions), len(cliques))
 		// Make two operation lists from the cliques, sorting cliques
 		// containing only branch deletes from other cliques.
-		trivialCliques := make([]string, 0, len(cliqueBranches))
-		otherCliques := make([]string, 0, len(cliqueBranches))
-		for _, branch := range cliqueBranches {
+		nontrivialCount := 0
+		var nontrivialClique string
+		var trivialClique interface{} // string or nil
+		for k := len(cliqueBranches)-1; k >=0; k-- {
+			branch := cliqueBranches[k]
 			ops := cliques[branch]
 			if len(ops) == 1 && ops[0].op == deleteall {
-				trivialCliques = append(trivialCliques, branch)
+				trivialClique = branch
 			} else {
-				otherCliques = append(otherCliques, branch)
+				nontrivialCount++
+				nontrivialClique = branch
 			}
 		}
-		cliqueBranches = append(otherCliques, trivialCliques...)
+		newBranches := make([]string, 0, len(cliqueBranches))
+		if nontrivialCount > 0 {
+			newBranches = append(newBranches, nontrivialClique)
+		}
+		if trivialClique != nil {
+			newBranches = append(newBranches, trivialClique.(string))
+		}
+		for _, branch := range cliqueBranches {
+			if (nontrivialCount == 0 || branch != nontrivialClique) && (branch != trivialClique) {
+				newBranches = append(newBranches, branch)
+			}
+		}
+		cliqueBranches = newBranches
 		// Create all commits corresponding to the revision
 		newcommits := make([]Event, 0)
 		commit.legacyID = fmt.Sprintf("%d", record.revision)
-		if len(otherCliques) <= 1 {
+		if nontrivialCount <= 1 {
 			// In the ordinary case (1 or 0 non-delete ops), we can assign all non-deleteall fileops
 			// to the base commit.
 			sp.repo.legacyMap[fmt.Sprintf("SVN:%s", commit.legacyID)] = commit
@@ -8392,9 +8407,9 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		}
 		// The revision is truly mixed if there is more than one clique
 		// not consisting entirely of deleteall operations.
-		if len(otherCliques) > 1 {
+		if nontrivialCount > 1 {
 			// Store the number of splits
-			sp.splitCommits[intToRevidx(ri)] = len(otherCliques)
+			sp.splitCommits[intToRevidx(ri)] = nontrivialCount
 		}
 		// Sort fileops according to git rules
 		for _, newcommit := range newcommits {
