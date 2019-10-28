@@ -8311,7 +8311,6 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		// a commit that modifies multiple branches. In order to
 		// cope with this case we must first recognize it.
 		cliques := make(map[string][]*FileOp)
-		cliqueBranches := make([]string, 0)
 		for _, action := range actions {
 			// This preferentially matches longest branches because
 			// sp.branchlist() is sorted that way.
@@ -8323,20 +8322,14 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 				}
 			}
 			cliques[branch] = append(cliques[branch], action.fileop)
-			if len(cliques[branch]) == 1 { // first time we see this branch
-				cliqueBranches = append(cliqueBranches, branch)
-			}
 		}
 		logit(logEXTRACT, "r%d: %d action(s) in %d clique(s)", record.revision, len(actions), len(cliques))
 		// Make two operation lists from the cliques, sorting cliques
 		// containing only branch deletes from other cliques.
 		nontrivialCount := 0
 		var nontrivialClique string
-		for k := len(cliqueBranches)-1; k >=0; k-- {
-			branch := cliqueBranches[k]
-			ops := cliques[branch]
-			if len(ops) == 1 && ops[0].op == deleteall {
-			} else {
+		for branch, ops := range cliques {
+			if !(len(ops) == 1 && ops[0].op == deleteall) {
 				nontrivialCount++
 				nontrivialClique = branch
 			}
@@ -8344,7 +8337,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		// Create all commits corresponding to the revision
 		newcommits := make([]Event, 0, len(cliques))
 		commit.legacyID = fmt.Sprintf("%d", record.revision)
-		if nontrivialCount == 1 || len(cliqueBranches) == 0 {
+		if nontrivialCount == 1 || len(cliques) == 0 {
 			// In the ordinary case (1 or 0 non-delete ops), we can assign all non-deleteall fileops
 			// to the base commit.
 			sp.repo.legacyMap[fmt.Sprintf("SVN:%s", commit.legacyID)] = commit
@@ -8378,24 +8371,26 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 			newcommits = append(newcommits, commit)
 		}
 		// If the commit is mixed, or there are deletealls left over,
-		// handle that.
+		// handle that. Sort the split commits by branch name
+		cliqueBranches := make([]string, len(cliques))
+		k := 0
+		for branch := range cliques {
+			cliqueBranches[k] = branch
+			k++
+		}
 		sort.Strings(cliqueBranches)
 		var split *Commit
-		i := 0
-		for _, branch := range cliqueBranches {
-			if fileops, ok := cliques[branch]; ok {
-				split = commit.clone(sp.repo)
-				split.common = branch
-				// Sequence numbers for split commits are 1-origin
-				split.legacyID += splitSep + strconv.Itoa(i+1)
-				sp.repo.legacyMap[fmt.Sprintf("SVN:%s", split.legacyID)] = split
-				split.Comment += "\n[[Split portion of a mixed commit.]]\n"
-				split.setMark(sp.repo.newmark())
-				split.copyOperations(fileops)
-				split.sortOperations()
-				newcommits = append(newcommits, split)
-				i++
-			}
+		for i, branch := range cliqueBranches {
+			split = commit.clone(sp.repo)
+			split.common = branch
+			// Sequence numbers for split commits are 1-origin
+			split.legacyID += splitSep + strconv.Itoa(i+1)
+			sp.repo.legacyMap[fmt.Sprintf("SVN:%s", split.legacyID)] = split
+			split.Comment += "\n[[Split portion of a mixed commit.]]\n"
+			split.setMark(sp.repo.newmark())
+			split.copyOperations(cliques[branch])
+			split.sortOperations()
+			newcommits = append(newcommits, split)
 		}
 		// The revision is truly mixed if there is more than one clique
 		// not consisting entirely of deleteall operations.
