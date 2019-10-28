@@ -1673,16 +1673,20 @@ fixes #9863 - Renomeado o nome do projeto para git_nfse e alteradas as tags para
 [[Split portion of a mixed commit.]]
 
 tag tipdelete-activeedi
-#legacy-id 25
+#legacy-id 25.1
 from :62
 tagger ronie <ronie> 1372444186 +0000
-data 92
+data 130
 Removido diretorio da gem activeedi pois a mesma foi descontinuada ha mais de 3 anos atras.
 
+[[Split portion of a mixed commit.]]
+
 tag tipdelete-git_nfse
-#legacy-id 36
+#legacy-id 36.1
 from :198
 tagger ronie <ronie> 1383229155 +0000
-data 142
+data 180
 refs #9865 - A partir desta revision, rubyrails passa a ser o diretorio para codigo open source desenvolvido pela GIT Sistemas em Ruby/Rails.
+
+[[Split portion of a mixed commit.]]
 

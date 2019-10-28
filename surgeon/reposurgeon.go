@@ -8332,12 +8332,10 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		// containing only branch deletes from other cliques.
 		nontrivialCount := 0
 		var nontrivialClique string
-		var trivialClique interface{} // string or nil
 		for k := len(cliqueBranches)-1; k >=0; k-- {
 			branch := cliqueBranches[k]
 			ops := cliques[branch]
 			if len(ops) == 1 && ops[0].op == deleteall {
-				trivialClique = branch
 			} else {
 				nontrivialCount++
 				nontrivialClique = branch
@@ -8346,7 +8344,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		// Create all commits corresponding to the revision
 		newcommits := make([]Event, 0, len(cliques))
 		commit.legacyID = fmt.Sprintf("%d", record.revision)
-		if nontrivialCount <= 1 {
+		if nontrivialCount == 1 || len(cliqueBranches) == 0 {
 			// In the ordinary case (1 or 0 non-delete ops), we can assign all non-deleteall fileops
 			// to the base commit.
 			sp.repo.legacyMap[fmt.Sprintf("SVN:%s", commit.legacyID)] = commit
@@ -8354,13 +8352,6 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 				commit.common = nontrivialClique
 				commit.copyOperations(cliques[nontrivialClique])
 				delete(cliques, nontrivialClique)
-			} else if trivialClique != nil {
-				// contrary to what the above comment tells, the previous code
-				// added the first clique even if it was a deleteall, if there
-				// were only such cliques.
-				commit.common = trivialClique.(string)
-				commit.copyOperations(cliques[commit.common])
-				delete(cliques, commit.common)
 			} else {
 				// No file operation at all. Try nevertheless to assign a
 				// common path to the commit using the longest common prefix of

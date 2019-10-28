@@ -83,11 +83,13 @@ data 12
 Release 1.0
 
 tag tipdelete-1.0-deleted-r6-2
-#legacy-id 6
+#legacy-id 6.1
 from :4
 tagger mike <mike> 1437858613 +0000
-data 21
+data 59
 No release ready yet
+
+[[Split portion of a mixed commit.]]
 
 tag 1.0
 #legacy-id 8

@@ -170,11 +170,13 @@ from :8
 M 100644 :21 drivers/serial.c
 
 commit refs/heads/trunk-deleted-r12-1
-#legacy-id 12
+#legacy-id 12.1
 mark :23
 committer clepple-guest <clepple-guest> 1140096558 +0000
-data 80
+data 118
 Retire the old trunk (CVS HEAD), in preparation for moving branches/Development
+
+[[Split portion of a mixed commit.]]
 from :2
 deleteall
 
@@ -269,9 +271,11 @@ Initial CVS import from nut testing release 2.0.1-pre4
 [[Tag from zero-fileop commit at Subversion r4]]
 
 tag tipdelete-Development
-#legacy-id 13
+#legacy-id 13.1
 from :22
 tagger clepple-guest <clepple-guest> 1140096703 +0000
-data 40
+data 78
 Moving branches/Development into trunk.
+
+[[Split portion of a mixed commit.]]
 
