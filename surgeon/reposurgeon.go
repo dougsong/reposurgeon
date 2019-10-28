@@ -2305,12 +2305,12 @@ func (rs *RepoStreamer) fileSetAt(revision string) orderedStringSet {
 	return fs
 }
 
-func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS, progress bool) (*Repository, error) {
+func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (*Repository, error) {
 	if !rs.extractor.isClean() {
 		return nil, fmt.Errorf("repository directory has unsaved changes")
 	}
 
-	rs.baton = newBaton("Extracting", "", progress)
+	rs.baton = newBaton("Extracting", "")
 	defer rs.baton.exit("")
 
 	var err error
@@ -2586,7 +2586,7 @@ const twirlInterval     = 100 * time.Millisecond	// Rate-limit baton twirls
 const progressInterval =    1 * time.Second		// Rate-limit progress messages
 const pauseInterval    =  750 * time.Millisecond	// How long to delay before erasing progress message
 
-func newBaton(prompt string, endmsg string, enable bool) *Baton {
+func newBaton(prompt string, endmsg string) *Baton {
 	me := new(Baton)
 	me.prompt = prompt
 	me.endmsg = endmsg
@@ -2594,7 +2594,7 @@ func newBaton(prompt string, endmsg string, enable bool) *Baton {
 		me.endmsg = "\b"
 	}
 	me.channel = make(chan string)
-	if enable {
+	if context.flagOptions["progress"] {
 		go func() {
 			for {
 				ch := <- me.channel
@@ -2689,8 +2689,8 @@ func (baton *Baton) exit(override string) {
 	if override != "" {
 		baton.endmsg = override
 	}
-	if baton.stream != nil {
-		fmt.Fprintf(baton.stream, "]" + left + "...(%s) %s.\n",
+	if baton.stream != nil && context.flagOptions["progress"] {
+		baton.channel <- fmt.Sprintf("]" + left + "...(%s) %s.\n",
 			time.Since(baton.starttime).Round(time.Millisecond * 10), baton.endmsg)
 	}
 }
@@ -2777,6 +2777,9 @@ developers.
 `},
 	{"interactive",
 		`Enable interactive responses even when not on a tty.
+`},
+	{"progress",
+		`Enable fancy progress messages even when not on a tty.
 `},
 	{"experimental",
 		`This flag is reserved for developer use.  If you set it, it could do
@@ -2900,7 +2903,7 @@ func logEnable(level int) bool {
 func nuke(directory string, legend string) {
 	if exists(directory) {
 		if !context.quiet {
-			baton := newBaton(legend, "", logEnable(logSHUFFLE))
+			baton := newBaton(legend, "")
 			defer baton.exit("")
 		}
 		os.RemoveAll(directory)
@@ -3560,7 +3563,7 @@ type Blob struct {
 	_expungehook *Blob
 	cookie       Cookie      // CVS/SVN cookie analyzed out of this file
 	blobseq      blobidx
-	colors       colorSet    // Scratch space for grapg coloring algorithms
+	colors       colorSet    // Scratch space for graph-coloring algorithms
 	deleteme     bool
 }
 
@@ -7238,8 +7241,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 // The main event
 //
 
-func (sp *StreamParser) fastImport(fp io.Reader,
-	options stringSet, progress bool, source string) {
+func (sp *StreamParser) fastImport(fp io.Reader, options stringSet, source string) {
 	// Initialize the repo from a fast-import stream or Subversion dump.
 	sp.timeMark("start")
 	var filesize int64 = -1
@@ -7255,7 +7257,7 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 		source = sp.repo.seekstream.Name()
 	}
 	sp.source = source
-	baton := newBaton(fmt.Sprintf("reposurgeon: from %s", source), "", progress)
+	baton := newBaton(fmt.Sprintf("reposurgeon: from %s", source), "")
 	sp.repo.legacyCount = 0
 	// First, determine the input type
 	line := sp.readline()
@@ -10026,9 +10028,8 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 }
 
 // Read a stream file and use it to populate the repo.
-func (repo *Repository) fastImport(fp io.Reader, options stringSet,
-	progress bool, source string) {
-	newStreamParser(repo).fastImport(fp, options, progress, source)
+func (repo *Repository) fastImport(fp io.Reader, options stringSet, source string) {
+	newStreamParser(repo).fastImport(fp, options, source)
 	repo.readtime = time.Now()
 }
 
@@ -10152,7 +10153,7 @@ func (repo *Repository) exportStyle() orderedStringSet {
 
 // Dump the repo object in Subversion dump or fast-export format.
 func (repo *Repository) fastExport(selection orderedIntSet,
-	fp io.Writer, options stringSet, target *VCS, progress bool) error {
+	fp io.Writer, options stringSet, target *VCS) error {
 	repo.writeOptions = options
 	repo.preferred = target
 	repo.internals = nil
@@ -10183,7 +10184,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 		selection.Sort()
 	}
 	repo.realized = make(map[string]bool) // Track what branches are made
-	baton := newBaton("reposurgeon: exporting", "", progress)
+	baton := newBaton("reposurgeon: exporting", "")
 	for idx, ei := range selection {
 		baton.twirl("")
 		event := repo.events[ei]
@@ -11810,17 +11811,17 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 	if extractor != nil {
 		repo.stronghint = true
 		streamer := newRepoStreamer(extractor)
-		repo, err := streamer.extract(repo, vcs, context.isInteractive() && !quiet)
+		repo, err := streamer.extract(repo, vcs)
 		return repo, err
 	}
 	// We found a matching VCS type
 	if vcs != nil {
 		repo.hint("", vcs.name, true)
 		repo.preserveSet = vcs.preserve
-		showprogress := (context.isInteractive()) && !repo.exportStyle().Contains("export-progress") && !quiet
-		context := map[string]string{"basename": filepath.Base(repo.sourcedir)}
+		suppressBaton := context.flagOptions["progress"] && repo.exportStyle().Contains("export-progress")
+		commandContext := map[string]string{"basename": filepath.Base(repo.sourcedir)}
 		mapper := func(sub string) string {
-			for k, v := range context {
+			for k, v := range commandContext {
 				from := "${" + k + "}"
 				sub = strings.Replace(sub, from, v, -1)
 			}
@@ -11833,7 +11834,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 			}
 			defer tfdesc.Close()
 			defer os.Remove(tfdesc.Name())
-			context["tempfile"] = tfdesc.Name()
+			commandContext["tempfile"] = tfdesc.Name()
 			cmd := os.Expand(repo.vcs.exporter, mapper)
 			runProcess(cmd, "repository export")
 			tfdesc.Close()
@@ -11841,7 +11842,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 			if err != nil {
 				return nil, err
 			}
-			repo.fastImport(tp, options, showprogress, source)
+			repo.fastImport(tp, options, source)
 			tp.Close()
 		} else {
 			cmd := os.Expand(repo.vcs.exporter, mapper)
@@ -11849,8 +11850,11 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 			if err != nil {
 				return nil, err
 			}
-			repo.fastImport(tp, options, showprogress, source)
+			repo.fastImport(tp, options, source)
 			tp.Close()
+		}
+		if suppressBaton {
+			context.flagOptions["progress"] = true
 		}
 		if repo.vcs.authormap != "" && exists(repo.vcs.authormap) {
 			logit(logSHOUT, "reading author map.")
@@ -12077,8 +12081,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 			return err
 		}
 		// Ship to the tempfile
-		repo.fastExport(repo.all(), tfdesc,
-			options, preferred, context.isInteractive())
+		repo.fastExport(repo.all(), tfdesc, options, preferred)
 		tfdesc.Close()
 		// Pick up the tempfile
 		params["tempfile"] = tfdesc.Name()
@@ -12091,8 +12094,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		if err != nil {
 			return err
 		}
-		repo.fastExport(repo.all(), tp,
-			options, preferred, context.isInteractive())
+		repo.fastExport(repo.all(), tp, options, preferred)
 		tp.Close()
 		cls.Wait()
 	}
@@ -15025,7 +15027,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 		}
 		rs.selection.Sort()
 	}
-	baton := newBaton(prompt, "", context.isInteractive() && !quiet)
+	baton := newBaton(prompt, "")
 	defer baton.exit("")
 	altered := 0
 	for _, ei := range rs.selection {
@@ -16315,7 +16317,7 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 				break
 			}
 		}
-		repo.fastImport(parse.stdin, parse.options.toStringSet(), (context.isInteractive() && !context.quiet), "")
+		repo.fastImport(parse.stdin, parse.options.toStringSet(), "")
 	} else if parse.line == "" || parse.line == "." {
 		var err2 error
 		// This is slightly asymmetrical with the write side, which
@@ -16428,7 +16430,7 @@ func (rs *Reposurgeon) DoWrite(line string) bool {
 				break
 			}
 		}
-		rs.chosen().fastExport(rs.selection, parse.stdout, parse.options.toStringSet(), rs.preferred, (context.isInteractive() && !context.quiet))
+		rs.chosen().fastExport(rs.selection, parse.stdout, parse.options.toStringSet(), rs.preferred)
 	} else if isdir(parse.line) {
 		err := rs.chosen().rebuildRepo(parse.line, parse.options.toStringSet(), rs.preferred)
 		if err != nil {
@@ -17413,7 +17415,7 @@ func (rs *Reposurgeon) DoSetperm(line string) bool {
 		croak("unexpected permission literal %s", perm)
 		return false
 	}
-	baton := newBaton("patching modes", "", context.isInteractive())
+	baton := newBaton("patching modes", "")
 	for _, ei := range rs.selection {
 		if commit, ok := rs.chosen().events[ei].(*Commit); ok {
 			for i, op := range commit.fileops {
@@ -20246,7 +20248,7 @@ func (rs *Reposurgeon) DoGitify(_line string) bool {
 		rs.selection = rs.chosen().all()
 	}
 	lineEnders := orderedStringSet{".", ",", ";", ":", "?", "!"}
-	baton := newBaton("gitifying comments", "", context.isInteractive())
+	baton := newBaton("gitifying comments", "")
 	for _, ei := range rs.selection {
 		event := rs.chosen().events[ei]
 		if commit, ok := event.(*Commit); ok {
@@ -20810,7 +20812,7 @@ func (rs *Reposurgeon) DoTimequake(line string) bool {
 	if rs.selection == nil {
 		rs.selection = rs.chosen().all()
 	}
-	baton := newBaton("reposurgeon: disambiguating", "", context.isInteractive())
+	baton := newBaton("reposurgeon: disambiguating", "")
 	modified := 0
 	for _, event := range repo.commits(rs.selection) {
 		parents := event.parents()
@@ -20961,7 +20963,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		}
 		return ""
 	}
-	baton := newBaton("reposurgeon: parsing changelogs", "", context.isInteractive())
+	baton := newBaton("reposurgeon: parsing changelogs", "")
 	for _, commit := range repo.commits(nil) {
 		cc++
 		// If a changeset is *all* ChangeLog mods, it is probably either
@@ -21841,6 +21843,7 @@ func main() {
 		for _, acmd := range strings.Split(arg, ";") {
 			if acmd == "-" {
 				context.flagOptions["interactive"] = terminal.IsTerminal(0)
+				context.flagOptions["progress"] = terminal.IsTerminal(1)
 				interpreter.CmdLoop("")
 			} else {
 				// A minor concession to people used

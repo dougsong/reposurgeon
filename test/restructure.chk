@@ -423,7 +423,6 @@ M 100644 :24 renamed1
 M 100644 :24 copy1
 M 100644 :31 bar
 
-][D...(0s) .
 drop testrepo
 clear interactive
 read <testrepo.fi
