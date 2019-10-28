@@ -59,27 +59,27 @@ build:  $(MANPAGES) $(HTMLFILES)
 	asciidoctor $<
 
 #
-# Auxilary Go productions
+# Auxilary Go tooling productions
 #
 
-govet:
+get:
+	go get -u	# go get -u=patch for patch releases
+
+test:
+	go test $(TESTOPTS) ./surgeon
+
+lint:
+	golint ./cutter | ./lintfilter 2>&1
+	golint ./mapper | ./lintfilter 2>&1
+	golint ./surgeon | ./lintfilter 2>&1
 	go vet ./cutter
 	go vet ./mapper
 	go vet ./surgeon
 
-gotest:
-	go test $(TESTOPTS) ./surgeon
-
-gofmt goformat:
+fmt:
 	gofmt -w ./cutter/
 	gofmt -w ./mapper/
 	gofmt -w ./surgeon/
-
-golint:
-	golint ./cutter | ./lintfilter 2>&1
-	golint ./mapper | ./lintfilter 2>&1
-	golint ./surgeon | ./lintfilter 2>&1
-
 #
 # Installation
 #
@@ -116,7 +116,7 @@ version:
 # Code validation
 #
 
-check: golint govet build gotest
+check: lint build test
 	cd test; $(MAKE) --quiet check
 
 #
