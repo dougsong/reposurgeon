@@ -8330,28 +8330,28 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		logit(logEXTRACT, "r%d: %d action(s) in %d clique(s)", record.revision, len(actions), len(cliques))
 		// Make two operation lists from the cliques, sorting cliques
 		// containing only branch deletes from other cliques.
-		deleteallOps := make([]string, 0, len(cliqueBranches))
-		otherOps := make([]string, 0, len(cliqueBranches))
+		trivialCliques := make([]string, 0, len(cliqueBranches))
+		otherCliques := make([]string, 0, len(cliqueBranches))
 		for _, branch := range cliqueBranches {
 			ops := cliques[branch]
 			if len(ops) == 1 && ops[0].op == deleteall {
-				deleteallOps = append(deleteallOps, branch)
+				trivialCliques = append(trivialCliques, branch)
 			} else {
-				otherOps = append(otherOps, branch)
+				otherCliques = append(otherCliques, branch)
 			}
 		}
-		oplist := append(otherOps, deleteallOps...)
+		cliqueBranches = append(otherCliques, trivialCliques...)
 		// Create all commits corresponding to the revision
 		newcommits := make([]Event, 0)
 		commit.legacyID = fmt.Sprintf("%d", record.revision)
-		if len(otherOps) <= 1 {
+		if len(otherCliques) <= 1 {
 			// In the ordinary case (1 or 0 non-delete ops), we can assign all non-deleteall fileops
 			// to the base commit.
 			sp.repo.legacyMap[fmt.Sprintf("SVN:%s", commit.legacyID)] = commit
-			if len(oplist) > 0 {
-				commit.common = oplist[0]
+			if len(cliqueBranches) > 0 {
+				commit.common = cliqueBranches[0]
 				commit.copyOperations(cliques[commit.common])
-				oplist = oplist[1:]
+				cliqueBranches = cliqueBranches[1:]
 			} else if len(record.nodes) == 0 {
 				commit.common = ""
 			} else {
@@ -8377,11 +8377,11 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		}
 		// If the commit is mixed, or there are deletealls left over,
 		// handle that.
-		sort.SliceStable(oplist, func(i, j int) bool {
-			return oplist[i] < oplist[j]
+		sort.SliceStable(cliqueBranches, func(i, j int) bool {
+			return cliqueBranches[i] < cliqueBranches[j]
 		})
 		var split *Commit
-		for i, branch := range oplist {
+		for i, branch := range cliqueBranches {
 			split = commit.clone(sp.repo)
 			split.common = branch
 			// Sequence numbers for split commits are 1-origin
@@ -8394,9 +8394,9 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		}
 		// The revision is truly mixed if there is more than one clique
 		// not consisting entirely of deleteall operations.
-		if len(otherOps) > 1 {
+		if len(otherCliques) > 1 {
 			// Store the number of splits
-			sp.splitCommits[intToRevidx(ri)] = len(otherOps)
+			sp.splitCommits[intToRevidx(ri)] = len(otherCliques)
 		}
 		// Sort fileops according to git rules
 		for _, newcommit := range newcommits {
