@@ -8328,20 +8328,16 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 			}
 		}
 		logit(logEXTRACT, "r%d: %d action(s) in %d clique(s)", record.revision, len(actions), len(cliques))
-		type branchAction struct {
-			branch  string
-			fileops []*FileOp
-		}
 		// Make two operation lists from the cliques, sorting cliques
 		// containing only branch deletes from other cliques.
-		deleteallOps := make([]branchAction, 0)
-		otherOps := make([]branchAction, 0)
+		deleteallOps := make([]string, 0, len(cliqueBranches))
+		otherOps := make([]string, 0, len(cliqueBranches))
 		for _, branch := range cliqueBranches {
 			ops := cliques[branch]
 			if len(ops) == 1 && ops[0].op == deleteall {
-				deleteallOps = append(deleteallOps, branchAction{branch, ops})
+				deleteallOps = append(deleteallOps, branch)
 			} else {
-				otherOps = append(otherOps, branchAction{branch, ops})
+				otherOps = append(otherOps, branch)
 			}
 		}
 		oplist := append(otherOps, deleteallOps...)
@@ -8353,8 +8349,8 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 			// to the base commit.
 			sp.repo.legacyMap[fmt.Sprintf("SVN:%s", commit.legacyID)] = commit
 			if len(oplist) > 0 {
-				commit.common = oplist[0].branch
-				commit.copyOperations(oplist[0].fileops)
+				commit.common = oplist[0]
+				commit.copyOperations(cliques[commit.common])
 				oplist = oplist[1:]
 			} else if len(record.nodes) == 0 {
 				commit.common = ""
@@ -8382,18 +8378,18 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		// If the commit is mixed, or there are deletealls left over,
 		// handle that.
 		sort.SliceStable(oplist, func(i, j int) bool {
-			return oplist[i].branch < oplist[j].branch
+			return oplist[i] < oplist[j]
 		})
 		var split *Commit
-		for i, action := range oplist {
+		for i, branch := range oplist {
 			split = commit.clone(sp.repo)
-			split.common = action.branch
+			split.common = branch
 			// Sequence numbers for split commits are 1-origin
 			split.legacyID += splitSep + strconv.Itoa(i+1)
 			sp.repo.legacyMap[fmt.Sprintf("SVN:%s", split.legacyID)] = split
 			split.Comment += "\n[[Split portion of a mixed commit.]]\n"
 			split.setMark(sp.repo.newmark())
-			split.copyOperations(action.fileops)
+			split.copyOperations(cliques[branch])
 			newcommits = append(newcommits, split)
 		}
 		// The revision is truly mixed if there is more than one clique
