@@ -8383,6 +8383,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 			}
 			commit.setMark(sp.repo.newmark())
 			logit(logEXTRACT, "r%d gets mark %s", record.revision, commit.mark)
+			commit.sortOperations()
 			newcommits = append(newcommits, commit)
 		}
 		// If the commit is mixed, or there are deletealls left over,
@@ -8400,6 +8401,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 				split.Comment += "\n[[Split portion of a mixed commit.]]\n"
 				split.setMark(sp.repo.newmark())
 				split.copyOperations(fileops)
+				split.sortOperations()
 				newcommits = append(newcommits, split)
 				i++
 			}
@@ -8409,10 +8411,6 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		if nontrivialCount > 1 {
 			// Store the number of splits
 			sp.splitCommits[intToRevidx(ri)] = nontrivialCount
-		}
-		// Sort fileops according to git rules
-		for _, newcommit := range newcommits {
-			newcommit.(*Commit).sortOperations()
 		}
 		//if len(newcommits) > 0 {
 		//	logit(logEXTRACT, "New commits (%d): %v", len(newcommits), newcommits)
