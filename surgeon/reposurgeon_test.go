@@ -703,9 +703,9 @@ func TestBlobfile(t *testing.T) {
 
 	nuke("foo", "") // In case last unit test didn't execute cleanly
 	const sampleContent = "Abracadabra!"
-	blob1.setContent(sampleContent, 0)
+	blob1.setContent([]byte(sampleContent), 0)
 	saw := blob1.getContent()
-	assertEqual(t, sampleContent, saw)
+	assertEqual(t, string(sampleContent), string(saw))
 	nuke("foo", "")
 }
 
@@ -1164,9 +1164,9 @@ func TestCapture(t *testing.T) {
 }
 
 func TestSVNParse(t *testing.T) {
-	saw := sdBody("Content-Length: 23\n")
+	saw := sdBody([]byte("Content-Length: 23\n"))
 	expected := "23"
-	assertEqual(t, saw, expected)
+	assertEqual(t, string(saw), string(expected))
 
 	rawmsg := `K 7
 svn:log
@@ -1187,8 +1187,8 @@ PROPS-END
 	sp.fp = bufio.NewReader(strings.NewReader(rawmsg))
 	om := sp.sdReadProps("test", len(rawmsg))
 	expected = "{'svn:log': 'A vanilla repository - standard layout, linear history, no tags, no branches. \n', 'svn:author': 'esr', 'svn:date': '2011-11-30T16:41:55.154754Z'}"
-	saw = om.String()
-	assertEqual(t, saw, expected)
+	saw2 := om.String()
+	assertEqual(t, saw2, string(expected))
 }
 
 func TestFastImportParse1(t *testing.T) {
@@ -1230,7 +1230,7 @@ M 100644 :3 README
 
 	assertBool(t, len(repo.events) == 4, true)
 	assertBool(t, repo.events[3].getMark() == ":4", true)
-	assertEqual(t, repo.markToEvent(":3").(*Blob).getContent(), "0123456789012345678\n")
+	assertEqual(t, string(repo.markToEvent(":3").(*Blob).getContent()), "0123456789012345678\n")
 	assertEqual(t, repo.markToEvent(":2").(*Commit).Comment, "First commit.\n")
 	commit2 := repo.events[3].(*Commit)
 	assertEqual(t, commit2.String(), rawdump[len(rawdump)-len(commit2.String()):])

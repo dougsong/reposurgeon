@@ -3637,14 +3637,14 @@ func (b *Blob) hasfile() bool {
 }
 
 // getContent gets the content of the blob as a string.
-func (b *Blob) getContent() string {
+func (b *Blob) getContent() []byte {
 	if !b.hasfile() {
 		var data = make([]byte, b.size)
 		_, err := b.repo.seekstream.ReadAt(data, b.start)
 		if err != nil {
 			panic(fmt.Errorf("Blob fetch: %v", err))
 		}
-		return string(data)
+		return data
 	}
 	var data []byte
 	file, err := os.Open(b.getBlobfile(false))
@@ -3665,14 +3665,14 @@ func (b *Blob) getContent() string {
 	if err != nil {
 		panic(fmt.Errorf("Blob read: %v", err))
 	}
-	return string(data)
+	return data
 }
 
 // setContent sets the content of the blob from a string.
 // tell is the start offset of the data in the input source;
 // if it noOffset, there is no seek stream and creation of
 // an on-disk blob is forced.
-func (b *Blob) setContent(text string, tell int64) {
+func (b *Blob) setContent(text []byte, tell int64) {
 	b.start = tell
 	b.size = int64(len(text))
 	if b.hasfile() {
@@ -3686,9 +3686,9 @@ func (b *Blob) setContent(text string, tell int64) {
 			output := gzip.NewWriter(file)
 
 			defer output.Close()
-			_, err = io.WriteString(output, text)
+			_, err = output.Write(text)
 		} else {
-			_, err = io.WriteString(file, text)
+			_, err = file.Write(text)
 		}
 		if err != nil {
 			panic(fmt.Errorf("Blob writer: %v", err))
@@ -3706,7 +3706,7 @@ func (b *Blob) materialize() string {
 
 // what to treat as a coment when message-boxing
 func (b Blob) getComment() string {
-	return b.getContent()
+	return string(b.getContent())
 }
 
 // sha returns the SHA-1 hash of the blob content. Used only for indexing,
@@ -3816,7 +3816,7 @@ func (b Blob) String() string {
 	}
 	content := b.getContent()
 	data := fmt.Sprintf("blob\nmark %s\ndata %d\n", b.mark, len(content))
-	return data + content + "\n"
+	return data + string(content) + "\n"
 }
 
 //Tag describes a a gitspace annotated tag object
@@ -5567,7 +5567,7 @@ func (commit *Commit) checkout(directory string) string {
 					if err4 != nil {
 						panic(fmt.Errorf("File creation failed during checkout: %v", err4))
 					}
-					file.WriteString(blob.getContent())
+					file.Write(blob.getContent())
 					file.Close()
 				}
 			}
@@ -5641,7 +5641,7 @@ func (commit *Commit) blobByName(pathname string) (string, bool) {
 	retrieved := commit.repo.markToEvent(entry.ref)
 	switch retrieved.(type) {
 	case *Blob:
-		return retrieved.(*Blob).getContent(), true
+		return string(retrieved.(*Blob).getContent()), true
 	default:
 		errmsg := fmt.Sprintf("Unexpected type while attempting to fetch %s content at %s", pathname, entry.ref)
 		panic(errmsg)
@@ -6367,7 +6367,7 @@ type StreamParser struct {
 	source      string
 	importLine  int
 	ccount      int64
-	linebuffers []string
+	linebuffers [][]byte
 	lastcookie  Cookie
 	// Everything below here is Subversion-specific
 	branches             map[string]*Commit // Points to branch root commits
@@ -6402,7 +6402,7 @@ func (dl daglink) String() string {
 func newStreamParser(repo *Repository) *StreamParser {
 	sp := new(StreamParser)
 	sp.repo = repo
-	sp.linebuffers = make([]string, 0)
+	sp.linebuffers = make([][]byte, 0)
 	// Everything below here is Subversion-specific
 	sp.branches = make(map[string]*Commit)
 	sp._branchesSorted = nil
@@ -6455,7 +6455,7 @@ func (sp *StreamParser) shout(msg string) {
 
 }
 
-func (sp *StreamParser) read(n int) string {
+func (sp *StreamParser) read(n int) []byte {
 	// Read possibly binary data
 	buf := make([]byte, n)
 	_, err := io.ReadFull(sp.fp, buf)
@@ -6464,10 +6464,10 @@ func (sp *StreamParser) read(n int) string {
 	}
 	sp.ccount += int64(n)
 	sp.importLine += bytes.Count(buf, []byte("\n"))
-	return string(buf)
+	return buf
 }
 
-func (sp *StreamParser) readline() string {
+func (sp *StreamParser) readline() []byte {
 	// Read a newline-terminated string, returning "" at EOF
 	var line []byte
 	if len(sp.linebuffers) > 0 {
@@ -6486,7 +6486,7 @@ func (sp *StreamParser) readline() string {
 	}
 	sp.ccount += int64(len(line))
 	sp.importLine++
-	return string(line)
+	return line
 }
 
 func (sp *StreamParser) tell() int64 {
@@ -6497,7 +6497,7 @@ func (sp *StreamParser) tell() int64 {
 	return sp.ccount
 }
 
-func (sp *StreamParser) pushback(line string) {
+func (sp *StreamParser) pushback(line []byte) {
 	sp.ccount -= int64(len(line))
 	sp.importLine--
 	sp.linebuffers = append(sp.linebuffers, line)
@@ -6505,16 +6505,16 @@ func (sp *StreamParser) pushback(line string) {
 
 // Helpers for import-stream files
 
-func (sp *StreamParser) fiReadline() string {
+func (sp *StreamParser) fiReadline() []byte {
 	// Read a line, stashing comments as we go.
 	for {
 		line := sp.readline()
-		if len(line) > 0 && strings.HasPrefix(line, "#") && !strings.HasPrefix(line, "#legacy-id") {
-			sp.repo.addEvent(newPassthrough(sp.repo, line))
-			if strings.HasPrefix(line, "#reposurgeon") {
+		if len(line) > 0 && bytes.HasPrefix(line, []byte("#")) && !bytes.HasPrefix(line, []byte("#legacy-id")) {
+			sp.repo.addEvent(newPassthrough(sp.repo, string(line)))
+			if bytes.HasPrefix(line, []byte("#reposurgeon")) {
 				// Extension command generated by some exporter's
 				// --reposurgeon mode.
-				fields := strings.Fields(line)
+				fields := strings.Fields(string(line))
 				if fields[1] == "sourcetype" && len(fields) == 3 {
 					sp.repo.hint("", fields[2], true)
 				}
@@ -6526,50 +6526,49 @@ func (sp *StreamParser) fiReadline() string {
 	}
 }
 
-func (sp *StreamParser) fiReadData(line string) (string, int64) {
+func (sp *StreamParser) fiReadData(line []byte) ([]byte, int64) {
 	// Read a fast-import data section.
-	if line == "" {
+	if len(line) == 0 {
 		line = sp.fiReadline()
 	}
-	var data string
+	data := make([]byte, 0)
 	var start int64
-	if strings.HasPrefix(line, "data <<") {
+	if bytes.HasPrefix(line, []byte("data <<")) {
 		delim := line[7:]
-		data = ""
 		start = sp.ccount
 		for {
 			dataline := sp.readline()
-			if dataline == delim {
+			if string(dataline) == string(delim) {
 				break
-			} else if dataline == "" {
+			} else if len(dataline) == 0 {
 				sp.error("EOF while reading blob")
 			} else {
-				data += dataline
+				data = append(data, dataline...)
 			}
 		}
-	} else if strings.HasPrefix(line, "data") {
-		count, err := strconv.Atoi(strings.TrimSpace(line[5:]))
+	} else if bytes.HasPrefix(line, []byte("data")) {
+		count, err := strconv.Atoi(strings.TrimSpace(string(line[5:])))
 		if err != nil {
-			sp.error("bad count in data: " + line[5:])
+			sp.error("bad count in data: " + string(line[5:]))
 		}
 		start = sp.ccount
 		data = sp.read(count)
-	} else if strings.HasPrefix(line, "property") {
+	} else if bytes.HasPrefix(line, []byte("property")) {
 		line = line[9:]                        // Skip this token
-		line = line[strings.Index(line, " "):] // Skip the property name
-		nextws := strings.Index(line, " ")
-		count, err := strconv.Atoi(strings.TrimSpace(line[:nextws-1]))
+		line = line[bytes.IndexByte(line, ' '):] // Skip the property name
+		nextws := bytes.IndexByte(line, ' ')
+		count, err := strconv.Atoi(strings.TrimSpace(string(line[:nextws-1])))
 		if err != nil {
 			sp.error("bad count in property")
 		}
 		start = sp.ccount
 		buf := sp.read(count)
-		data = line[nextws:] + buf
+		data = append(line[nextws:], buf...)
 	} else {
 		sp.error("malformed data header")
 	}
 	line = sp.readline()
-	if line != "\n" {
+	if string(line) != "\n" {
 		sp.pushback(line) // Data commands optionally end with LF
 	}
 	return data, start
@@ -6580,8 +6579,8 @@ func (sp *StreamParser) fiParseFileop(fileop *FileOp) {
 	if fileop.ref[0] == ':' {
 		return
 	} else if fileop.ref == "inline" {
-		data, _ := sp.fiReadData("")
-		fileop.inline = data
+		data, _ := sp.fiReadData([]byte{})
+		fileop.inline = string(data)
 	} else {
 		sp.error("unknown content type in filemodify")
 	}
@@ -6599,15 +6598,16 @@ func parseInt(s string) int {
 
 // Helpers for Subversion dumpfiles
 
-func sdBody(line string) string {
+func sdBody(line []byte) []byte {
 	// Parse the body from a Subversion header line
-	return strings.TrimSpace(strings.SplitN(line, ":", 2)[1])
+	// FIXME Ugh...any way to avoid all this conversion?
+	return []byte(strings.TrimSpace(strings.SplitN(string(line), ":", 2)[1]))
 }
 
-func (sp *StreamParser) sdRequireHeader(hdr string) string {
+func (sp *StreamParser) sdRequireHeader(hdr string) []byte {
 	// Consume a required header line
 	line := sp.readline()
-	if !strings.HasPrefix(line, hdr) {
+	if !bytes.HasPrefix(line, []byte(hdr)) {
 		sp.error("required header missing: " + hdr)
 	}
 	return sdBody(line)
@@ -6615,18 +6615,18 @@ func (sp *StreamParser) sdRequireHeader(hdr string) string {
 
 func (sp *StreamParser) sdRequireSpacer() {
 	line := sp.readline()
-	if strings.TrimSpace(line) != "" {
-		sp.error("found " + strconv.Quote(line) + " expecting blank line")
+	if len(bytes.TrimSpace(line)) > 0 {
+		sp.error("found " + strconv.Quote(string(line)) + " expecting blank line")
 	}
 }
 
-func (sp *StreamParser) sdReadBlob(length int) string {
+func (sp *StreamParser) sdReadBlob(length int) []byte {
 	// Read a Subversion file-content blob.
 	buf := sp.read(length + 1)
 	if buf[length] != '\n' {
 		sp.error("EOL not seen where expected, Content-Length incorrect")
 	}
-	return string(buf[:length])
+	return buf[:length]
 }
 
 func (sp *StreamParser) sdReadProps(target string, checklength int) *OrderedMap {
@@ -6637,7 +6637,7 @@ func (sp *StreamParser) sdReadProps(target string, checklength int) *OrderedMap 
 		line := sp.readline()
 		logit(logSVNPARSE, "readprops, line %d: %q",
 			sp.importLine, line)
-		if strings.HasPrefix(line, "PROPS-END") {
+		if bytes.HasPrefix(line, []byte("PROPS-END")) {
 			// This test should be !=, but I get random
 			// off-by-ones from real dumpfiles - I don't
 			// know why.
@@ -6647,19 +6647,19 @@ func (sp *StreamParser) sdReadProps(target string, checklength int) *OrderedMap 
 
 			}
 			break
-		} else if strings.TrimSpace(line) == "" {
+		} else if len(bytes.TrimSpace(line)) == 0 {
 			continue
 		} else if line[0] == 'K' {
-			payloadLength := func(s string) int {
-				n, _ := strconv.Atoi(strings.Fields(s)[1])
+			payloadLength := func(s []byte) int {
+				n, _ := strconv.Atoi(string(bytes.Fields(s)[1]))
 				return n
 			}
-			key := sp.sdReadBlob(payloadLength(line))
+			key := string(sp.sdReadBlob(payloadLength(line)))
 			line := sp.readline()
 			if line[0] != 'V' {
 				sp.error("property value garbled")
 			}
-			value := sp.sdReadBlob(payloadLength(line))
+			value := string(sp.sdReadBlob(payloadLength(line)))
 			props.set(key, value)
 			logit(logSVNPARSE,
 				"readprops: on %s, setting %s = %q",
@@ -6718,24 +6718,24 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 	trackSymlinks := newOrderedStringSet()
 	for {
 		line := sp.readline()
-		if line == "" {
+		if len(line) == 0 {
 			break
-		} else if strings.TrimSpace(line) == "" {
+		} else if len(bytes.TrimSpace(line)) == 0 {
 			continue
-		} else if strings.HasPrefix(line, " # reposurgeon-read-options:") {
-			payload := strings.Split(line, ":")[1]
-			*options = (*options).Union(newStringSet(strings.Fields(payload)...))
-		} else if strings.HasPrefix(line, "UUID:") {
-			sp.repo.uuid = sdBody(line)
-		} else if strings.HasPrefix(line, "Revision-number: ") {
+		} else if bytes.HasPrefix(line, []byte(" # reposurgeon-read-options:")) {
+			payload := bytes.Split(line, []byte(":"))[1]
+			*options = (*options).Union(newStringSet(strings.Fields(string(payload))...))
+		} else if bytes.HasPrefix(line, []byte("UUID:")) {
+			sp.repo.uuid = string(sdBody(line))
+		} else if bytes.HasPrefix(line, []byte("Revision-number: ")) {
 			// Begin Revision processing
 			logit(logSVNPARSE, "revision parsing, line %d: begins", sp.importLine)
-			revint, rerr := strconv.Atoi(sdBody(line))
+			revint, rerr := strconv.Atoi(string(sdBody(line)))
 			if rerr != nil {
-				panic(throw("parse", "ill-formed revision number: "+line))
+				panic(throw("parse", "ill-formed revision number: " + string(line)))
 			}
 			revision := intToRevidx(revint)
-			plen := parseInt(sp.sdRequireHeader("Prop-content-length"))
+			plen := parseInt(string(sp.sdRequireHeader("Prop-content-length")))
 			sp.sdRequireHeader("Content-length")
 			sp.sdRequireSpacer()
 			props := *sp.sdReadProps("commit", plen)
@@ -6751,7 +6751,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 					sp.importLine, line)
 				if len(line) == 0 {
 					break
-				} else if strings.TrimSpace(line) == "" {
+				} else if len(bytes.TrimSpace(line)) == 0 {
 					if node == nil {
 						continue
 					} else {
@@ -6810,7 +6810,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 							// as a
 							// non-sym
 							// link.
-							if strings.HasPrefix(text, "link ") {
+							if bytes.HasPrefix(text, []byte("link ")) {
 								if node.hasProperties() && node.props.has("svn:special") {
 									trackSymlinks.Add(node.path)
 								}
@@ -6864,25 +6864,25 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 						}
 						node = nil
 					}
-				} else if strings.HasPrefix(line, "Revision-number: ") {
+				} else if bytes.HasPrefix(line, []byte("Revision-number: ")) {
 					sp.pushback(line)
 					break
-				} else if strings.HasPrefix(line, "Node-path: ") {
+				} else if bytes.HasPrefix(line, []byte("Node-path: ")) {
 					// Node processing begins
 					// Normal case
 					if node == nil {
 						node = new(NodeAction)
 					}
-					node.path = intern(sdBody(line))
+					node.path = intern(string(sdBody(line)))
 					plen = -1
 					tlen = -1
-				} else if strings.HasPrefix(line, "Node-kind: ") {
+				} else if bytes.HasPrefix(line, []byte("Node-kind: ")) {
 					// svndumpfilter sometimes emits output
 					// with the node kind first
 					if node == nil {
 						node = new(NodeAction)
 					}
-					kind := sdBody(line)
+					kind := string(sdBody(line))
 					for i, v := range pathTypeValues {
 						if v == kind {
 							node.kind = uint8(i & 0xff)
@@ -6891,11 +6891,11 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 					if node.kind == sdNONE {
 						sp.error(fmt.Sprintf("unknown kind %s", kind))
 					}
-				} else if strings.HasPrefix(line, "Node-action: ") {
+				} else if bytes.HasPrefix(line, []byte("Node-action: ")) {
 					if node == nil {
 						node = new(NodeAction)
 					}
-					action := sdBody(line)
+					action := string(sdBody(line))
 					for i, v := range actionValues {
 						if v == action {
 							node.action = uint8(i & 0xff)
@@ -6909,31 +6909,31 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 							trackSymlinks.Remove(node.path)
 						}
 					}
-				} else if strings.HasPrefix(line, "Node-copyfrom-rev: ") {
+				} else if bytes.HasPrefix(line, []byte("Node-copyfrom-rev: ")) {
 					if node == nil {
 						node = new(NodeAction)
 					}
-					uintrev, _ := strconv.ParseUint(sdBody(line), 10, int((unsafe.Sizeof(revidx(0)) * 8)) & ^int(0))
+					uintrev, _ := strconv.ParseUint(string(sdBody(line)), 10, int((unsafe.Sizeof(revidx(0)) * 8)) & ^int(0))
 					node.fromRev = revidx(uintrev & uint64(^revidx(0)))
-				} else if strings.HasPrefix(line, "Node-copyfrom-path: ") {
+				} else if bytes.HasPrefix(line, []byte("Node-copyfrom-path: ")) {
 					if node == nil {
 						node = new(NodeAction)
 					}
-					node.fromPath = intern(sdBody(line))
-				} else if strings.HasPrefix(line, "Text-copy-source-md5: ") {
+					node.fromPath = intern(string(sdBody(line)))
+				} else if bytes.HasPrefix(line, []byte("Text-copy-source-md5: ")) {
 					if node == nil {
 						node = new(NodeAction)
 					}
-					node.fromHash = intern(sdBody(line))
-				} else if strings.HasPrefix(line, "Text-content-md5: ") {
-					node.contentHash = intern(sdBody(line))
-				} else if strings.HasPrefix(line, "Text-content-sha1: ") {
+					node.fromHash = intern(string(sdBody(line)))
+				} else if bytes.HasPrefix(line, []byte("Text-content-md5: ")) {
+					node.contentHash = intern(string(sdBody(line)))
+				} else if bytes.HasPrefix(line, []byte("Text-content-sha1: ")) {
 					continue
-				} else if strings.HasPrefix(line, "Text-content-length: ") {
-					tlen = parseInt(sdBody(line))
-				} else if strings.HasPrefix(line, "Prop-content-length: ") {
-					plen = parseInt(sdBody(line))
-				} else if strings.HasPrefix(line, "Content-length: ") {
+				} else if bytes.HasPrefix(line, []byte("Text-content-length: ")) {
+					tlen = parseInt(string(sdBody(line)))
+				} else if bytes.HasPrefix(line, []byte("Prop-content-length: ")) {
+					plen = parseInt(string(sdBody(line)))
+				} else if bytes.HasPrefix(line, []byte("Content-length: ")) {
 					continue
 				} else {
 					logit(logSVNPARSE, "node list parsing, line %d: uninterpreted line %q", sp.importLine, line)
@@ -6968,119 +6968,119 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 	commitcount := 0
 	for {
 		line := sp.fiReadline()
-		if line == "" {
+		if len(line) == 0 {
 			break
-		} else if strings.TrimSpace(line) == "" {
+		} else if len(bytes.TrimSpace(line)) == 0 {
 			continue
-		} else if strings.HasPrefix(line, "blob") {
+		} else if bytes.HasPrefix(line, []byte("blob")) {
 			blob := newBlob(sp.repo)
 			line = sp.fiReadline()
-			if strings.HasPrefix(line, "mark") {
+			if bytes.HasPrefix(line, []byte("mark")) {
 				sp.repo.markseq++
-				blob.setMark(strings.TrimSpace(line[5:]))
-				blobcontent, blobstart := sp.fiReadData("")
+				blob.setMark(strings.TrimSpace(string(line[5:])))
+				blobcontent, blobstart := sp.fiReadData([]byte{})
 				blob.setContent(blobcontent, blobstart)
-				sp.lastcookie = blob.parseCookie(blobcontent)
+				sp.lastcookie = blob.parseCookie(string(blobcontent))
 			} else {
 				sp.error("missing mark after blob")
 			}
 			sp.repo.addEvent(blob)
 			baton.twirl("")
-		} else if strings.HasPrefix(line, "data") {
+		} else if bytes.HasPrefix(line, []byte("data")) {
 			sp.error("unexpected data object")
-		} else if strings.HasPrefix(line, "commit") {
+		} else if bytes.HasPrefix(line, []byte("commit")) {
 			baton.twirl("")
 			commitbegin := sp.importLine
 			commit := newCommit(sp.repo)
-			commit.setBranch(strings.Fields(line)[1])
+			commit.setBranch(strings.Fields(string(line))[1])
 			for {
 				line = sp.fiReadline()
-				if line == "" {
+				if len(line) == 0 {
 					break
-				} else if strings.HasPrefix(line, "#legacy-id") {
+				} else if bytes.HasPrefix(line, []byte("#legacy-id")) {
 					// reposurgeon extension, expected to
 					// be immediately after "commit" if present
-					commit.legacyID = strings.Fields(line)[1]
+					commit.legacyID = string(bytes.Fields(line)[1])
 					if sp.repo.vcs != nil {
 						sp.repo.legacyMap[strings.ToUpper(sp.repo.vcs.name)+":"+commit.legacyID] = commit
 					} else {
 						sp.repo.legacyMap[commit.legacyID] = commit
 					}
-				} else if strings.HasPrefix(line, "mark") {
+				} else if bytes.HasPrefix(line, []byte("mark")) {
 					sp.repo.markseq++
-					commit.setMark(strings.TrimSpace(line[5:]))
-				} else if strings.HasPrefix(line, "author") {
-					attrib, err := newAttribution(line[7:])
+					commit.setMark(string(bytes.TrimSpace(line[5:])))
+				} else if bytes.HasPrefix(line, []byte("author")) {
+					attrib, err := newAttribution(string(line[7:]))
 					if err != nil {
 						panic(throw("parse", "in author field: %v", err))
 					}
 					commit.authors = append(commit.authors, *attrib)
 					sp.repo.tzmap[attrib.email] = attrib.date.timestamp.Location()
-				} else if strings.HasPrefix(line, "committer") {
-					attrib, err := newAttribution(line[10:])
+				} else if bytes.HasPrefix(line, []byte("committer")) {
+					attrib, err := newAttribution(string(line[10:]))
 					if err != nil {
 						panic(throw("parse", "in committer field: %v", err))
 					}
 					commit.committer = *attrib
 					sp.repo.tzmap[attrib.email] = attrib.date.timestamp.Location()
-				} else if strings.HasPrefix(line, "property") {
+				} else if bytes.HasPrefix(line, []byte("property")) {
 					newprops := newOrderedMap()
 					commit.properties = &newprops
-					fields := strings.Split(line, " ")
+					fields := bytes.Split(line, []byte(" "))
 					if len(fields) < 3 {
 						sp.error("malformed property line")
 					} else if len(fields) == 3 {
-						commit.properties.set(fields[1], "true")
+						commit.properties.set(string(fields[1]), "true")
 					} else {
 						name := fields[1]
-						length := parseInt(fields[2])
-						value := strings.Join(fields[3:], " ")
+						length := parseInt(string(fields[2]))
+						value := bytes.Join(fields[3:], []byte(" "))
 						if len(value) < length {
-							value += sp.read(length - len(value))
-							if sp.read(1) != "\n" {
+							value = append(value, sp.read(length - len(value))...)
+							if string(sp.read(1)) != "\n" {
 								sp.error("trailing junk on property value")
 							}
 						} else if len(value) == length+1 {
 							value = value[:len(value)-1] // Trim '\n'
 						} else {
-							value += sp.read(length - len(value))
-							if sp.read(1) != "\n" {
+							value = append(value, sp.read(length - len(value))...)
+							if string(sp.read(1)) != "\n" {
 								sp.error("newline not found where expected")
 							}
 						}
-						commit.properties.set(name, value)
+						commit.properties.set(string(name), string(value))
 						// Generated by cvs-fast-export
-						if name == "cvs-revisions" {
+						if string(name) == "cvs-revisions" {
 							if !sp.repo.stronghint {
 								logit(logSHOUT, "cvs_revisions property hints at CVS.")
 							}
 							sp.repo.hint("cvs", "", true)
-							for _, line := range strings.Split(value, "\n") {
+							for _, line := range strings.Split(string(value), "\n") {
 								if line != "" {
 									sp.repo.legacyMap["CVS:"+line] = commit
 								}
 							}
 						}
 					}
-				} else if strings.HasPrefix(line, "data") {
+				} else if bytes.HasPrefix(line, []byte("data")) {
 					d, _ := sp.fiReadData(line)
-					commit.Comment = d
+					commit.Comment = string(d)
 					if context.flagOptions["canonicalize"] {
 						commit.Comment = strings.Replace(strings.TrimSpace(commit.Comment), "\r\n", "\n", -1) + "\n"
 					}
-				} else if strings.HasPrefix(line, "from") || strings.HasPrefix(line, "merge") {
-					mark := strings.Fields(line)[1]
+				} else if bytes.HasPrefix(line, []byte("from")) || bytes.HasPrefix(line, []byte("merge")) {
+					mark := string(bytes.Fields(line)[1])
 					if isCallout(mark) {
 						commit.addCallout(mark)
 					} else {
 						commit.addParentByMark(mark)
 					}
 				} else if line[0] == 'C' || line[0] == 'D' || line[0] == 'R' {
-					commit.appendOperation(*newFileOp(sp.repo).parse(line))
-				} else if line == "deleteall\n" {
-					commit.appendOperation(*newFileOp(sp.repo).parse(line))
+					commit.appendOperation(*newFileOp(sp.repo).parse(string(line)))
+				} else if string(line) == "deleteall\n" {
+					commit.appendOperation(*newFileOp(sp.repo).parse(string(line)))
 				} else if line[0] == opM {
-					fileop := newFileOp(sp.repo).parse(line)
+					fileop := newFileOp(sp.repo).parse(string(line))
 					if fileop.ref != "inline" {
 						ref := sp.repo.markToEvent(fileop.ref)
 						if ref != nil {
@@ -7113,11 +7113,11 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 					}
 					commit.appendOperation(*fileop)
 				} else if line[0] == opN {
-					fileop := newFileOp(sp.repo).parse(line)
+					fileop := newFileOp(sp.repo).parse(string(line))
 					commit.appendOperation(*fileop)
 					sp.fiParseFileop(fileop)
 					sp.repo.inlines++
-				} else if strings.TrimSpace(line) == "" {
+				} else if len(bytes.TrimSpace(line)) == 0 {
 					// This handles slightly broken
 					// exporters like the bzr-fast-export
 					// one that may tack an extra LF onto
@@ -7148,40 +7148,40 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			sp.repo.addEvent(commit)
 			commitcount++
 			baton.twirl("")
-		} else if strings.HasPrefix(line, "reset") {
+		} else if bytes.HasPrefix(line, []byte("reset")) {
 			reset := newReset(sp.repo, "", "")
-			reset.ref = strings.TrimSpace(line[6:])
+			reset.ref = string(bytes.TrimSpace(line[6:]))
 			line = sp.fiReadline()
-			if strings.HasPrefix(line, "from") {
-				committish := strings.TrimSpace(line[5:])
+			if bytes.HasPrefix(line, []byte("from")) {
+				committish := string(bytes.TrimSpace(line[5:]))
 				reset.remember(sp.repo, committish)
 			} else {
 				sp.pushback(line)
 			}
 			sp.repo.addEvent(reset)
 			baton.twirl("")
-		} else if strings.HasPrefix(line, "tag") {
+		} else if bytes.HasPrefix(line, []byte("tag")) {
 			var tagger *Attribution
-			tagname := strings.TrimSpace(line[4:])
+			tagname := string(bytes.TrimSpace(line[4:]))
 			line = sp.fiReadline()
 			legacyID := ""
-			if strings.HasPrefix(line, "#legacy-id ") {
+			if bytes.HasPrefix(line, []byte("#legacy-id ")) {
 				// reposurgeon extension, expected to
 				// be immediately after "tag" line if
 				// present
-				legacyID = strings.Fields(line)[1]
+				legacyID = string(bytes.Fields(line)[1])
 				line = sp.fiReadline()
 			}
 			var referent string
-			if strings.HasPrefix(line, "from") {
-				referent = strings.TrimSpace(line[5:])
+			if bytes.HasPrefix(line, []byte("from")) {
+				referent = string(bytes.TrimSpace(line[5:]))
 			} else {
 				sp.error("missing from after tag")
 			}
 			line = sp.fiReadline()
-			if strings.HasPrefix(line, "tagger") {
+			if bytes.HasPrefix(line, []byte("tagger")) {
 				var err error
-				tagger, err = newAttribution(line[7:])
+				tagger, err = newAttribution(string(line[7:]))
 				if err != nil {
 					panic(throw("parse", "in tagger field: %v", err))
 				}
@@ -7189,13 +7189,13 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				sp.warn("missing tagger after from in tag")
 				sp.pushback(line)
 			}
-			d, _ := sp.fiReadData("")
-			tag := newTag(sp.repo, tagname, referent, tagger, d)
+			d, _ := sp.fiReadData([]byte{})
+			tag := newTag(sp.repo, tagname, referent, tagger, string(d))
 			tag.legacyID = legacyID
 			sp.repo.addEvent(tag)
 		} else {
 			// Simply pass through any line we do not understand.
-			sp.repo.addEvent(newPassthrough(sp.repo, line))
+			sp.repo.addEvent(newPassthrough(sp.repo, string(line)))
 		}
 		baton.percentProgress("", sp.ccount, filesize)
 		if context.readLimit > 0 && uint64(commitcount) >= context.readLimit{
@@ -7263,8 +7263,8 @@ func (sp *StreamParser) fastImport(fp io.Reader,
 		elapsed := time.Since(baton.starttime)
 		return fmt.Sprintf("%dK/s", int(float64(elapsed)/float64(count * 1000)))
 	}
-	if strings.HasPrefix(line, "SVN-fs-dump-format-version: ") {
-		body := sdBody(line)
+	if bytes.HasPrefix(line, []byte("SVN-fs-dump-format-version: ")) {
+		body := string(sdBody(line))
 		if body != "1" && body != "2" {
 			sp.error("unsupported dump format version " + body)
 		}
@@ -7565,7 +7565,7 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 					for gipath, ignore := range sp.activeGitignores {
 						if strings.HasPrefix(gipath, node.path) {
 							blob := newBlob(sp.repo)
-							blob.setContent(ignore, noOffset)
+							blob.setContent([]byte(ignore), noOffset)
 							subnode := new(NodeAction)
 							subnode.path = gipath
 							subnode.revision = node.revision
@@ -7638,7 +7638,7 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 					}
 					ignore = strings.Join(ignorelines, "\n")
 					blob := newBlob(sp.repo)
-					blob.setContent(ignore, noOffset)
+					blob.setContent([]byte(ignore), noOffset)
 					newnode := new(NodeAction)
 					newnode.path = gitignorePath
 					newnode.revision = node.revision
@@ -14767,7 +14767,7 @@ func (rs *Reposurgeon) evalTextSearch(state selEvalState,
 		}
 		if checkBlobs {
 			if b, ok := e.(*Blob); ok &&
-				search.MatchString(b.getContent()) {
+				search.MatchString(string(b.getContent())) {
 				matchers.Add(it.Value())
 			}
 		}
@@ -15105,10 +15105,10 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 				}
 			}
 		} else if blob, ok := event.(*Blob); ok {
-			content := blob.getContent()
+			content := string(blob.getContent())
 			modified := hook(content)
 			if content != modified {
-				blob.setContent(modified, noOffset)
+				blob.setContent([]byte(modified), noOffset)
 				altered++
 			}
 		}
@@ -16514,7 +16514,7 @@ func (rs *Reposurgeon) DoStrip(line string) bool {
 	if striptypes.Contains("blobs") {
 		for _, ei := range rs.selection {
 			if blob, ok := repo.events[ei].(*Blob); ok {
-				blob.setContent(fmt.Sprintf("Blob at %s\n", blob.mark), noOffset)
+				blob.setContent([]byte(fmt.Sprintf("Blob at %s\n", blob.mark)), noOffset)
 			}
 		}
 	}
@@ -17802,7 +17802,7 @@ func (rs *Reposurgeon) DoBlob(line string) bool {
 		croak("while reading blob content: %v", err)
 		return false
 	}
-	blob.setContent(string(content), noOffset)
+	blob.setContent(content, noOffset)
 	repo.declareSequenceMutation("adding blob")
 	repo.invalidateNamecache()
 	return false
@@ -19732,7 +19732,8 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 				// Modify existing ignore files
 				for _, event := range repo.events {
 					if blob, ok := event.(*Blob); ok && isIgnore(blob) {
-						blob.setContent(rs.preferred.dfltignores+blob.getContent(), -1)
+						// FIXME: Cut down on ugly conversions
+						blob.setContent([]byte(rs.preferred.dfltignores + string(blob.getContent())), -1)
 						changecount++
 					}
 				}
@@ -19748,7 +19749,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 				if !hasIgnoreBlob {
 					blob := newBlob(repo)
 					blob.addalias(rs.ignorename)
-					blob.setContent(rs.preferred.dfltignores, noOffset)
+					blob.setContent([]byte(rs.preferred.dfltignores), noOffset)
 					blob.mark = ":insert"
 					repo.insertEvent(blob, repo.eventToIndex(earliest), "ignore-blob creation")
 					repo.declareSequenceMutation("ignore creation")
@@ -19791,8 +19792,8 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 			for _, event := range repo.events {
 				if blob, ok := event.(*Blob); ok && isIgnore(blob) {
 					if rs.preferred.name == "hg" {
-						if !strings.HasPrefix(blob.getContent(), "syntax: glob\n") {
-							blob.setContent("syntax: glob\n"+blob.getContent(), noOffset)
+						if !bytes.HasPrefix(blob.getContent(), []byte("syntax: glob\n")) {
+							blob.setContent([]byte("syntax: glob\n" + string(blob.getContent())), noOffset)
 							changecount++
 						}
 					}
