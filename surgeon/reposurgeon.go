@@ -8313,23 +8313,18 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		cliques := make(map[string][]*FileOp)
 		cliqueBranches := make([]string, 0)
 		for _, action := range actions {
-			// Preferentially match longest branches
-			explicitMatch := false
-			for _, branch := range sp.branchlist() {
-				if strings.HasPrefix(action.node.path, branch) {
-					cliques[branch] = append(cliques[branch], action.fileop)
-					if len(cliqueBranches) == 0 || branch != cliqueBranches[len(cliqueBranches)-1] {
-						cliqueBranches = append(cliqueBranches, branch)
-					}
-					explicitMatch = true
+			// This preferentially matches longest branches because
+			// sp.branchlist() is sorted that way.
+			branch := ""
+			for _, b := range sp.branchlist() {
+				if strings.HasPrefix(action.node.path, b) {
+					branch = b
 					break
 				}
 			}
-			if !explicitMatch {
-				cliques[""] = append(cliques[""], action.fileop)
-				if len(cliqueBranches) == 0 || "" != cliqueBranches[len(cliqueBranches)-1] {
-					cliqueBranches = append(cliqueBranches, "")
-				}
+			cliques[branch] = append(cliques[branch], action.fileop)
+			if len(cliqueBranches) == 0 || branch != cliqueBranches[len(cliqueBranches)-1] {
+				cliqueBranches = append(cliqueBranches, branch)
 			}
 		}
 		logit(logEXTRACT, "r%d: %d action(s) in %d clique(s)", record.revision, len(actions), len(cliques))
