@@ -1488,12 +1488,18 @@ _selection_ +resolve+ [>__outfile__ ] [ _label-text..._ ]::
 Implemented mainly for regression testing, but may be useful
 for exploring the selection-set language.
 
-+verbose+ [ _logclasses..._ ]::
-   Without an argument, list log message classes.
-   With an argument, enable logging of specified message classses (0
-   for none). Normally the message types "shout" and "warn" are
-   enabled. You can get a list of other log message types from "help
-   verbose".
++log+ [ _logclasses..._ ]::
+    Without an argument, list all log message classes, predending a + if
+    that class is enabled and a - if not.
+    Else, it expects a space-separated list of "<+ or -><log message class>"
+    entries, and enables (with +) or disables (with -) the corresponding
+    log message class. The special keyword "all" can be used to affect all
+    the clases at the same time.
++
+For instance, "log -all +shout +warn" will disable all classes except
+"shout" and "warn", which is the default setting. "log +all -svnparse"
+would enable logging everything but messages from the svn parser.
+You can get a list of other log message classes from "help log".
 
 +logfile path+ [ _n_ ]::
    Error, warning, and diagnostic messages are normall emitted to standard

@@ -1,7 +1,6 @@
 read <bzr.fi
 set quiet
 :1 divide
-verbose 0
 choose bzr-early
 write -
 feature commit-properties

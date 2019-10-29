@@ -7,7 +7,6 @@ tags
 paths
 1..$ expunge theory.txt
 paths
-verbose 0
 116 checkout foobar
 !ls foobar
 !rm -fr foobar

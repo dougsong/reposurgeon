@@ -40,8 +40,8 @@ do
     grep '^ #' ${x}.svn 2>/dev/null
     case $mode in
 	dump)
-	    ${REPOSURGEON:-reposurgeon} "verbose $verbose" "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1;;
+	    ${REPOSURGEON:-reposurgeon} "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1;;
 	*)
-	    ${REPOSURGEON:-reposurgeon} "verbose $verbose" "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1 | diff -u ${x}.chk - ;;
+	    ${REPOSURGEON:-reposurgeon} "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1 | diff -u ${x}.chk - ;;
     esac
 done

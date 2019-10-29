@@ -21549,13 +21549,21 @@ remaining arguments are available to the command logic.
 `)
 }
 
-func (rs *Reposurgeon) HelpVerbose() {
+func (rs *Reposurgeon) HelpLog() {
 	rs.helpOutput(`
-Without an argument, list  log message classes.
-With an argument, enable logging onof specified message classses (0
-for none). Normally the message types "shout" and "warn" are
-enabled. A list of available message classes follows; most above "warn"
-level or above are only of interest to xevelopers, consult the source
+Without an argument, list all log message classes, predending a + if
+that class is enabled and a - if not.
+Else, it expects a space-separated list of "<+ or -><log message class>"
+entries, and enables (with +) or disables (with -) the corresponding
+log message class. The special keyword "all" can be used to affect all
+the clases at the same time.
+
+For instance, "log -all +shout +warn" will disable all classes except
+"shout" and "warn", which is the default setting. "log +all -svnparse"
+would enable logging everything but messages from the svn parser.
+
+A list of available message classes follows; most above "warn"
+level or above are only of interest to developers, consult the source
 code to learn more.
 
 `)
@@ -21581,42 +21589,46 @@ func verbosityLevelList() []assoc {
 	return items
 }
 
-func (rs *Reposurgeon) DoVerbose(lineIn string) bool {
-	intToMask := func(n uint) uint {return (1 << n) - 1}
-	if len(lineIn) != 0 {
-		var newlogmask uint
-		for _, tok := range strings.Fields(lineIn) {
-			nverbose, err := strconv.ParseUint(lineIn, 10, 64)
-			if err == nil {
-				newlogmask = intToMask(uint(nverbose))
-			} else if v, ok := logtags[tok]; ok {
-				newlogmask |= v
+func (rs *Reposurgeon) DoLog(lineIn string) bool {
+	for _, tok := range strings.Fields(lineIn) {
+		enable := tok[0] == '+'
+		if !(enable || tok[0] == '-') {
+			croak("an entry should start with a + or a -")
+			goto breakout
+		}
+		tok = tok[1:]
+		mask, ok := logtags[tok]
+		if !ok {
+			if tok == "all" {
+				mask = ^uint(0)
 			} else {
 				croak("no such log class as %s", tok)
 				goto breakout
 			}
 		}
-		context.logmask = newlogmask
+		if enable {
+			context.logmask |= mask
+		} else {
+			context.logmask &= ^mask
+		}
 	}
 breakout:
 	if len(lineIn) == 0 || context.isInteractive() {
 		// We make the capabilities display in ascending value order
-		out := "verbose"
-		var i uint
-		for _, item := range verbosityLevelList() {
-			out += " " + item.k
-			if logEnable(i) {
-				out += ":on"
+		out := "log"
+		for i, item := range verbosityLevelList() {
+			if logEnable(item.v) {
+				out += " +"
 			} else {
-				out += ":off"
+				out += " -"
 			}
-			i++
-			if i % 4 == 0 {
-				out += "\n\t\t\t"
+			out += item.k
+			if (i+1) % 4 == 0 {
+				out += "\n\t\t"
 			}
 		}
 		respond(out)
-		}
+	}
 	return false
 }
 

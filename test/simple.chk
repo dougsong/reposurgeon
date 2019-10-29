@@ -85,7 +85,6 @@ reposurgeon.xml
 rs
 test/Makefile
 test/simple.dump
-verbose 0
 116 checkout foobar
 !ls foobar
 Makefile

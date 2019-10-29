@@ -145,13 +145,13 @@ fi
 # Should we view the repo?
 if [ $view = T ]
 then
-    (cd $testrepo >/dev/null; {BIN}/${REPOSURGEON:-reposurgeon} "${TESTOPT}" "verbose $verbose" "read ." "prefer git" "rebuild /tmp/testrepo$$"; cd /tmp/testrepo$$; gitk --all --tags)
+    (cd $testrepo >/dev/null; {BIN}/${REPOSURGEON:-reposurgeon} "${TESTOPT}" "read ." "prefer git" "rebuild /tmp/testrepo$$"; cd /tmp/testrepo$$; gitk --all --tags)
 fi
 
 # Should we stream the repo?
 if [ $stream = T ]
 then
-    ${REPOSURGEON:-reposurgeon} "${TESTOPT}" "verbose $verbose" "read $testrepo" "$streamopts" "write"
+    ${REPOSURGEON:-reposurgeon} "${TESTOPT}" "read $testrepo" "$streamopts" "write"
 fi
 
 # Should we undump the repo?

@@ -3,7 +3,6 @@ set echo
 read <bzr.fi
 set quiet
 :1 divide
-verbose 0
 choose bzr-early
 write -
 choose bzr-late

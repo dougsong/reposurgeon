@@ -49,5 +49,5 @@ fi
 for x in $*;
 do
     grep '^##' ${tst} 2>/dev/null
-    ${REPOSURGEON:-reposurgeon} "verbose $verbose" "$experimental" "script ${tst}" 2>&1 | diff -u ${chk} -
+    ${REPOSURGEON:-reposurgeon} "$experimental" "script ${tst}" 2>&1 | diff -u ${chk} -
 done
