@@ -2732,6 +2732,13 @@ func (baton *Baton) resetProgress() {
 
 /*
  * Debugging and utility
+ *
+ * The main point of this design is to make adding abd removing log
+ * classes simple enough that it can be done ad-hoc for specific
+ * debugging missions.  All you need to do to create a new class is
+ * add a constant to the iota initializer and a corresponding entry to
+ * logtags, then yoyu can use the constant in logit() and logEnable(). 
+ * To remove a class just delete its entry pair.
  */
 
 const (
@@ -2919,7 +2926,7 @@ func screenwidth() int {
 }
 
 /*
- * Logging responding
+ * Logging and responding
  */
 
 // logEnable is a hook to set up log-message filtering.
@@ -8503,7 +8510,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 					}
 				}
 				if latest != nil {
-					//fmt.Printf("XXXX adding directory branchlink = %s\n", newcommit.common)
+					//fmt.Printf("adding directory branchlink = %s\n", newcommit.common)
 					sp.directoryBranchlinks.Add(newcommit.common)
 					logit(logTOPOLOGY, "r%s: directory copy with %s finds %s",
 						newcommit.legacyID, copies, latest)
@@ -8525,7 +8532,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 						if prev == nil {
 							logit(logTOPOLOGY, "lookback for %s failed, not making branch link", latest)
 						} else {
-							//fmt.Printf("XXXX adding fileop branchlink = %s\n", newcommit.common)
+							//fmt.Printf("adding fileop branchlink = %s\n", newcommit.common)
 							sp.fileopBranchlinks.Add(newcommit.common)
 							sp.branchlink[newcommit.mark] = daglink{newcommit, prev}
 							logit(logTOPOLOGY, "r%s: link %s (%s) back to r%d (mark=%s, common='%s')",
@@ -21585,7 +21592,7 @@ func (rs *Reposurgeon) DoVerbose(lineIn string) bool {
 			} else if v, ok := logtags[tok]; ok {
 				newlogmask |= v
 			} else {
-				croak("no such log level as %s", tok)
+				croak("no such log class as %s", tok)
 				goto breakout
 			}
 		}
