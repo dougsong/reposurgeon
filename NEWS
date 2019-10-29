@@ -13,6 +13,7 @@ Repository head::
      Results of reorder and reparent are toposorted again.
      More pathological tag-deletion cases are coped with gracefully.
      All documentation moved to asciidoc for better web rendering.
+     Logging now has facility flags rather than a single level.
 
 3.48: 2019-10-02::
      Last Python release.  4.0 will ship in Go.

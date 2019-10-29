@@ -1,7 +1,6 @@
 set interactive
 set quiet
 read <mergeinfo.svn
-* mergeinfo
 :6 split at 2
 reposurgeon: new commits are events 7 and 8.
 prefer git

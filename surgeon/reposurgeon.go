@@ -16174,7 +16174,7 @@ func (rs *Reposurgeon) DoDrop(line string) bool {
 	} else {
 		croak("no such repo as %s", line)
 	}
-	if context.isInteractive() {
+	if context.isInteractive() && !context.flagOptions["quiet"] {
 		// Emit listing of remaining repos
 		rs.DoChoose("")
 	}
@@ -16362,7 +16362,7 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 		}
 		rs.chosen().rename(rs.uniquify(filepath.Base(name)))
 	}
-	if context.isInteractive() {
+	if context.isInteractive() && !context.flagOptions["quiet"] {
 		rs.DoChoose("")
 	}
 	return false
@@ -18215,7 +18215,7 @@ func (rs *Reposurgeon) DoDivide(_line string) bool {
 			}
 		}
 	}
-	if context.isInteractive() {
+	if context.isInteractive() && !context.flagOptions["quiet"] {
 		rs.DoChoose("")
 	}
 	return false
@@ -18391,7 +18391,7 @@ func (rs *Reposurgeon) DoUnite(line string) bool {
 		return false
 	}
 	rs.unite(factors, parse.options.toStringSet())
-	if context.isInteractive() {
+	if context.isInteractive() && !context.flagOptions["quiet"] {
 		rs.DoChoose("")
 	}
 	return false
@@ -20554,16 +20554,16 @@ func tweakFlagOptions(line string, val bool) {
 			fmt.Printf("\t%s = %v\n", opt[0], context.flagOptions[opt[0]])
 		}
 	} else {
-	good:
 		for _, name := range strings.Fields(line) {
 			for _, opt := range optionFlags {
 				if name == opt[0] {
 					context.flagOptions[opt[0]] = val
 					performOptionSideEffect(opt[0], val)
-					break good
+					goto good
 				}
 			}
 			croak("no such option flag as '%s'", name)
+		good:
 		}
 	}
 }
@@ -21838,7 +21838,7 @@ func main() {
 	defer func() {
 		pprof.StopCPUProfile()
 		/*
-		if context.verbose <= 1 {
+		if context.logmask <= 1 {
 			if e := recover(); e != nil {
 				fmt.Println("reposurgeon: panic recovery: ", e)
 			}
