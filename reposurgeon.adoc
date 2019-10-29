@@ -1489,16 +1489,18 @@ Implemented mainly for regression testing, but may be useful
 for exploring the selection-set language.
 
 +log+ [ _logclasses..._ ]::
-    Without an argument, list all log message classes, predending a + if
-    that class is enabled and a - if not.
-    Else, it expects a space-separated list of "<+ or -><log message class>"
-    entries, and enables (with +) or disables (with -) the corresponding
-    log message class. The special keyword "all" can be used to affect all
-    the clases at the same time.
+    Without an argument, list all log message classes, prepending a +
+    if that class is enabled and a - if not.
 +
+Otherswise , it expects a space-separated list of "<+ or -><log
+message class>" entries, and enables (with +) or disables (with -) the
+corresponding log message class. The special keyword "all" can be used
+to affect all the clases at the same time.
++ 
 For instance, "log -all +shout +warn" will disable all classes except
 "shout" and "warn", which is the default setting. "log +all -svnparse"
 would enable logging everything but messages from the svn parser.
++
 You can get a list of other log message classes from "help log".
 
 +logfile path+ [ _n_ ]::

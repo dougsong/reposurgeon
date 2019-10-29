@@ -21551,12 +21551,13 @@ remaining arguments are available to the command logic.
 
 func (rs *Reposurgeon) HelpLog() {
 	rs.helpOutput(`
-Without an argument, list all log message classes, predending a + if
+Without an argument, list all log message classes, prepending a + if
 that class is enabled and a - if not.
-Else, it expects a space-separated list of "<+ or -><log message class>"
-entries, and enables (with +) or disables (with -) the corresponding
-log message class. The special keyword "all" can be used to affect all
-the clases at the same time.
+
+Otherwise, it expects a space-separated list of "<+ or -><log message
+class>" entries, and enables (with +) or disables (with -) the
+corresponding log message class. The special keyword "all" can be used
+to affect all the clases at the same time.
 
 For instance, "log -all +shout +warn" will disable all classes except
 "shout" and "warn", which is the default setting. "log +all -svnparse"
