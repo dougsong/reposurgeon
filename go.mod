@@ -1,3 +1,4 @@
+// -*- mode: Go;-*-
 module gitlab.com/esr/reposurgeon
 
 require (
@@ -8,11 +9,11 @@ require (
 	github.com/ianbruene/go-difflib v1.1.2
 	github.com/termie/go-shutil v0.0.0-20140729215957-bcacb06fecae
 	gitlab.com/ianbruene/kommandant v0.5.2
-	golang.org/x/crypto v0.0.0-20191028145041-f83a4685e152
+	golang.org/x/crypto v0.0.0-20191029031824-8986dd9e96cf
 	golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
-	golang.org/x/sys v0.0.0-20191028164358-195ce5e7f934 // indirect
+	golang.org/x/sys v0.0.0-20191029155521-f43be2a4598c // indirect
 	golang.org/x/text v0.3.2
-	golang.org/x/tools v0.0.0-20191028194131-d78a1f2664a0 // indirect
+	golang.org/x/tools v0.0.0-20191029190741-b9c20aec41a5 // indirect
 	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898 // indirect
 )
