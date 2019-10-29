@@ -1,6 +1,6 @@
 ## Test the assignment command
 echo 1
-relax
+set relax
 read <testrepo.fi
 <2010-11-06T10:49:58Z> list
 <2010-11-06T10:49:58Z> assign fubar

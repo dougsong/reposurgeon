@@ -1,5 +1,5 @@
 ## Test Check-Text match and mismatch
-relax
+set relax
 read <min.fi
 msgin <<EOF
 ------------------------------------------------------------------------------

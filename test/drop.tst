@@ -1,7 +1,7 @@
 ## Test drop command
 
 echo 1
-relax
+set relax
 drop
 
 read <min.fi

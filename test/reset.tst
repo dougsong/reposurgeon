@@ -1,6 +1,6 @@
 ## Reset tests
 echo 1
-relax
+set relax
 read <be-bookmarks.fi
 =R index
 reset D move :6

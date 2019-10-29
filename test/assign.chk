@@ -1,4 +1,4 @@
-relax
+set relax
 read <testrepo.fi
 <2010-11-06T10:49:58Z> list
     14 2010-11-06T10:49:58Z    :13 Create the third doomed file.

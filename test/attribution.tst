@@ -1,5 +1,5 @@
 ## Test attribution manipulation
-relax
+set relax
 echo 1
 
 # error: no repo

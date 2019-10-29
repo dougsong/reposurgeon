@@ -1,8 +1,11 @@
-verbose 1
+set interactive
 quiet on
 read <mergeinfo.svn
+* mergeinfo
 :6 split at 2
+reposurgeon: new commits are events 7 and 8.
 prefer git
+git is the preferred type.
 inspect
 Event 1 =================================================================
 #reposurgeon sourcetype svn

@@ -1,5 +1,5 @@
 ## Test file expunge operation
-verbose 1
+set interactive
 echo 1
 quiet on
 # There's a --nobranch embedded in the test load so it can be checked standalone.

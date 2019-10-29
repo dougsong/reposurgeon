@@ -1,4 +1,4 @@
-relax
+set relax
 read <be-bookmarks.fi
 =R index
      2 branch      -    refs/heads/default

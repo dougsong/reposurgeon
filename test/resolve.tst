@@ -1,5 +1,5 @@
 ## Test selection sets
-relax
+set relax
 read <testrepo.fi
 echo 1
 set interactive

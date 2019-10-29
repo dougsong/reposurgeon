@@ -1,6 +1,6 @@
 ## Reparenting parents with and w/o tree preservation
 echo 1
-relax
+set relax
 read <simple.fi
 set interactive
 127 inspect

@@ -1,5 +1,5 @@
 ## Test authors read, legacy-ID refs, heredocs, comment editing
-relax
+set relax
 read <references.svn
 set interactive
 <1>,<2>,<13> resolve

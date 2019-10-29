@@ -2734,21 +2734,41 @@ func (baton *Baton) resetProgress() {
  * Debugging and utility
  */
 
-const logSHOUT = 0    // Unconditional
-const logWARN = 1     // Exceptional condition, probably not bug
-const logTAGFIX = 2   // Log tag fixups
-const logSVNDUMP = 3  // Log Subversion dumping
-const logTOPOLOGY = 3 // Log repo-extractor logic (coarse-grained)
-const logEXTRACT = 3  // Log repo-extractor logic (fine-grained)
-const logFILEMAP = 3  // Log building of filemaps
-const logDELETE = 3   // Log canonicalization after deletes
-const logIGNORES = 4  // Log ignore generation
-const logSVNPARSE = 4 // Lower-level Subversion parsing details
-const logEMAILIN = 4  // Log round-tripping through msg{out|in}
-const logSHUFFLE = 4  // Log file and directory handling
-const logCOMMANDS = 5 // Show commands as they are executed
-const logUNITE = 5    // Log mark assignments in merging
-const logLEXER = 6    // Log selection-language parsing
+const (
+	logSHOUT uint = 1 << iota	// Errors and urgent messages
+	logWARN 			// Exceptional condition, probably not bug
+	logTAGFIX			// Log tag fixups
+	logSVNDUMP			// Log Subversion dumping
+	logTOPOLOGY			// Log repo-extractor logic (coarse-grained)
+	logEXTRACT			// Log repo-extractor logic (fine-grained)
+	logFILEMAP			// Log building of filemaps
+	logDELETE			// Log canonicalization after deletes
+	logIGNORES			// Log ignore generation
+	logSVNPARSE			// Lower-level Subversion parsing details
+	logEMAILIN			// Log round-tripping through msg{out|in}
+	logSHUFFLE			// Log file and directory handling
+	logCOMMANDS			// Show commands as they are executed
+	logUNITE			// Log mark assignments in merging
+	logLEXER			// Log selection-language parsing
+)
+
+var logtags = map[string]uint{
+	"shout": logSHOUT,
+	"warn": logWARN,
+	"tagfix": logTAGFIX,
+	"svndump": logSVNDUMP,
+	"topology": logTOPOLOGY,
+	"extract": logEXTRACT,
+	"filemap": logFILEMAP,
+	"delete": logDELETE,
+	"ignores": logIGNORES,
+	"svnparse": logSVNPARSE,
+	"emailin": logEMAILIN,
+	"shuffle": logSHUFFLE,
+	"commands": logCOMMANDS,
+	"unite": logUNITE,
+	"lexer": logLEXER,
+}
 
 var optionFlags = [...][2]string{
 	{"canonicalize",
@@ -2778,6 +2798,9 @@ developers.
 	{"interactive",
 		`Enable interactive responses even when not on a tty.
 `},
+	{"relax",
+		`Continue script execution on error, do not bail out.
+`},
 	{"progress",
 		`Enable fancy progress messages even when not on a tty.
 `},
@@ -2792,14 +2815,13 @@ anything up to and including making demons fly out of your nose.
  */
 
 type Context struct {
-	verbose int
+	logmask uint
 	quiet bool
 	logfp *os.File
 	logcounter int
 	blobseq blobidx
 	signals chan os.Signal
 	// The abort flag
-	relax       bool
 	abortScript bool
 	abortLock   sync.Mutex
 	flagOptions map[string]bool
@@ -2824,7 +2846,7 @@ func (ctx *Context) init() {
 	ctx.mapOptions = make(map[string]map[string]string)
 	ctx.signals = make(chan os.Signal, 1)
 	ctx.logfp = os.Stderr
-	ctx.verbose = logWARN
+	ctx.logmask = (1 << logWARN) - 1
 	signal.Notify(context.signals, os.Interrupt)
 	go func() {
 		for {
@@ -2895,8 +2917,8 @@ func screenwidth() int {
  */
 
 // logEnable is a hook to set up log-message filtering.
-func logEnable(level int) bool {
-	return context.verbose >= level
+func logEnable(logbits uint) bool {
+	return (context.logmask & logbits) != 0
 }
 
 // nuke removes a (large) directory, reporting elapsed time.
@@ -2910,15 +2932,8 @@ func nuke(directory string, legend string) {
 	}
 }
 
-func croak(msg string, args ...interface{}) {
-	content := fmt.Sprintf(msg, args...)
-	os.Stderr.WriteString("reposurgeon: " + content + "\n")
-	if !context.relax {
-		context.setAbort(true)
-	}
-}
-
-func logit(lvl int, msg string, args ...interface{}) {
+// logit logs error/warning/informational messages
+func logit(lvl uint, msg string, args ...interface{}) {
 	if logEnable(lvl) {
 		content := fmt.Sprintf(msg, args...)
 		context.logfp.WriteString("reposurgeon: " + content + "\n")
@@ -2931,6 +2946,16 @@ func respond(msg string, args ...interface{}) {
 	if context.isInteractive() {
 		content := fmt.Sprintf(msg, args...)
 		os.Stdout.WriteString("reposurgeon: " + content + "\n")
+	}
+}
+
+// croak is for console failure messages that shouldn't be logged.
+// It aborts out of script execution.
+func croak(msg string, args ...interface{}) {
+	content := fmt.Sprintf(msg, args...)
+	os.Stderr.WriteString("reposurgeon: " + content + "\n")
+	if !context.flagOptions["relax"] {
+		context.setAbort(true)
 	}
 }
 
@@ -21514,25 +21539,72 @@ remaining arguments are available to the command logic.
 
 func (rs *Reposurgeon) HelpVerbose() {
 	rs.helpOutput(`
-Without an argument, this command requests a report of the verbosity
-level.  'verbose 1' enables progress messages, 'verbose 0' disables
-them. Higher levels of verbosity are available but intended for
-developers only.
+Without an argument, list  log message classes.
+With an argument, enable logging onof specified message classses (0
+for none). Normally the message types "shout" and "warn" are
+enabled. A list of available message classes follows; most above "warn"
+level or above are only of interest to xevelopers, consult the source
+code to learn more.
+
 `)
+	for _, item := range verbosityLevelList() {
+		fmt.Println(item.k)
+	}
+	fmt.Println("")
+}
+
+type assoc struct {
+	k string
+	v uint
+}
+
+func verbosityLevelList() []assoc {
+	items := make([]assoc, 0)
+	for k, v := range(logtags) {
+		items = append(items, assoc{k, v})
+	}
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].v < items[j].v
+	})
+	return items
 }
 
 func (rs *Reposurgeon) DoVerbose(lineIn string) bool {
+	intToMask := func(n uint) uint {return (1 << n) - 1}
 	if len(lineIn) != 0 {
-		nverbose, err := strconv.Atoi(lineIn)
-		if err != nil {
-			rs.helpOutput("verbosity value must be an integer\n")
-		} else {
-			context.verbose = nverbose
+		var newlogmask uint
+		for _, tok := range strings.Fields(lineIn) {
+			nverbose, err := strconv.ParseUint(lineIn, 10, 64)
+			if err == nil {
+				newlogmask = intToMask(uint(nverbose))
+			} else if v, ok := logtags[tok]; ok {
+				newlogmask |= v
+			} else {
+				croak("no such log level as %s", tok)
+				goto breakout
+			}
 		}
+		context.logmask = newlogmask
 	}
+breakout:
 	if len(lineIn) == 0 || context.isInteractive() {
-		respond("verbose %d", context.verbose)
-	}
+		// We make the capabilities display in ascending value order
+		out := "verbose"
+		var i uint
+		for _, item := range verbosityLevelList() {
+			out += " " + item.k
+			if logEnable(i) {
+				out += ":on"
+			} else {
+				out += ":off"
+			}
+			i++
+			if i % 4 == 0 {
+				out += "\n\t\t\t"
+			}
+		}
+		respond(out)
+		}
 	return false
 }
 
@@ -21607,15 +21679,6 @@ func (rs *Reposurgeon) DoPrint(lineIn string) bool {
 	parse := rs.newLineParse(lineIn, []string{"stdout"})
 	defer parse.Closem()
 	fmt.Fprintf(parse.stdout, "%s\n", parse.line)
-	return false
-}
-
-func (rs *Reposurgeon) HelpRelax() {
-	rs.helpOutput("Make command errors non-fatal in scripts.\n")
-}
-
-func (rs *Reposurgeon) DoRelax(lineIn string) bool {
-	context.relax = true
 	return false
 }
 

@@ -1,4 +1,4 @@
-relax
+set relax
 read <reorder.fi
 
 # basic operation

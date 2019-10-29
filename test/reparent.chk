@@ -1,4 +1,4 @@
-relax
+set relax
 read <simple.fi
 set interactive
 127 inspect

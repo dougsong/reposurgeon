@@ -1488,10 +1488,12 @@ _selection_ +resolve+ [>__outfile__ ] [ _label-text..._ ]::
 Implemented mainly for regression testing, but may be useful
 for exploring the selection-set language.
 
-+verbose+ [ _n_ ]::
-   'verbose 1' (the deault) enables error and warning messages,
-   'verbose 0' disables them. Higher levels of verbosity are available
-   but intended for developers only.
++verbose+ [ _logclasses..._ ]::
+   Without an argument, list log message classes.
+   With an argument, enable logging of specified message classses (0
+   for none). Normally the message types "shout" and "warn" are
+   enabled. You can get a list of other log message types from "help
+   verbose".
 
 +logfile path+ [ _n_ ]::
    Error, warning, and diagnostic messages are normall emitted to standard
@@ -1503,12 +1505,6 @@ for exploring the selection-set language.
    boolean; with the argument 'on' or 'off' it is changed.  When quiet is
    on, time-varying report fields which would otherwise cause spurious
    failures in regression testing are suppressed.
-
-+relax+::
-   Normally, a command error aborts the execution of an
-   enclosing script. The relax command suppresses this behavior. It is
-   useful when writing regression tests that exercise failure
-   cases.
 
 +print+ _output-text..._::
    Does nothing but ship its argument line to standard

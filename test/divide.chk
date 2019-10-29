@@ -1,5 +1,4 @@
 read <bzr.fi
-verbose 1
 quiet on
 :1 divide
 verbose 0
