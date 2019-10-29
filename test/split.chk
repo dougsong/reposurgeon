@@ -1,5 +1,5 @@
 set interactive
-quiet on
+set quiet
 read <mergeinfo.svn
 * mergeinfo
 :6 split at 2

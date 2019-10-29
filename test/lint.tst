@@ -1,6 +1,6 @@
 ## Make sure the lint command works
 echo 1
-quiet on
+set quiet
 read <bs.fi
 lint
 read <agito.svn

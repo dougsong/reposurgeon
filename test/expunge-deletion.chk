@@ -1,4 +1,4 @@
-quiet on
+set quiet
 read <deletion.svn
 expunge doomed
 choose deletion-expunges

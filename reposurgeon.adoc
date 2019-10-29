@@ -1500,12 +1500,6 @@ for exploring the selection-set language.
    error.  This commandm with a nonempty path argument, directs them to 
    the specified file instead.
 
-+quiet+ [ _on_ | _off_ ]::
-   Without an argument, this command requests a report of the quiet
-   boolean; with the argument 'on' or 'off' it is changed.  When quiet is
-   on, time-varying report fields which would otherwise cause spurious
-   failures in regression testing are suppressed.
-
 +print+ _output-text..._::
    Does nothing but ship its argument line to standard
    output. Useful in regression tests.

@@ -2798,6 +2798,9 @@ developers.
 	{"interactive",
 		`Enable interactive responses even when not on a tty.
 `},
+	{"quiet",
+		`Suppress time-varying parts of reports.
+`},
 	{"relax",
 		`Continue script execution on error, do not bail out.
 `},
@@ -2816,7 +2819,6 @@ anything up to and including making demons fly out of your nose.
 
 type Context struct {
 	logmask uint
-	quiet bool
 	logfp *os.File
 	logcounter int
 	blobseq blobidx
@@ -2924,7 +2926,7 @@ func logEnable(logbits uint) bool {
 // nuke removes a (large) directory, reporting elapsed time.
 func nuke(directory string, legend string) {
 	if exists(directory) {
-		if !context.quiet {
+		if !context.flagOptions["quiet"] {
 			baton := newBaton(legend, "")
 			defer baton.exit("")
 		}
@@ -16114,7 +16116,7 @@ func (rs *Reposurgeon) DoChoose(line string) bool {
 			if rs.chosen() != nil && repo == rs.chosen() {
 				status = "*"
 			}
-			if !context.quiet {
+			if !context.flagOptions["quiet"] {
 				fmt.Fprint(os.Stdout, rfc3339(repo.readtime)+" ")
 			}
 			fmt.Printf("%s %s\n", status, repo.name)
@@ -16329,14 +16331,14 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 			croak(err2.Error())
 			return false
 		}
-		repo, err2 = readRepo(cdir, parse.options.toStringSet(), rs.preferred, rs.extractor, context.quiet)
+		repo, err2 = readRepo(cdir, parse.options.toStringSet(), rs.preferred, rs.extractor, context.flagOptions["quiet"])
 		if err2 != nil {
 			croak(err2.Error())
 			return false
 		}
 	} else if isdir(parse.line) {
 		var err2 error
-		repo, err2 = readRepo(parse.line, parse.options.toStringSet(), rs.preferred, rs.extractor, context.quiet)
+		repo, err2 = readRepo(parse.line, parse.options.toStringSet(), rs.preferred, rs.extractor, context.flagOptions["quiet"])
 		if err2 != nil {
 			croak(err2.Error())
 			return false
@@ -21626,28 +21628,6 @@ func (rs *Reposurgeon) DoLogfile(lineIn string) bool {
 	}
 	if len(lineIn) == 0 || context.isInteractive() {
 		respond("logfile %s", context.logfp.Name())
-	}
-	return false
-}
-
-func (rs *Reposurgeon) HelpQuiet() {
-	rs.helpOutput(`
-Without an argument, this command requests a report of the quiet
-boolean; with the argument 'on' or 'off' it is changed.  When quiet is
-on, progress meters and time-varying report fields which would otherwise
-cause spurious failures in regression testing are suppressed.
-`)
-}
-
-func (rs *Reposurgeon) DoQuiet(lineIn string) bool {
-	if lineIn == "" {
-		if context.quiet {
-			rs.helpOutput("quiet on\n")
-		} else {
-			rs.helpOutput("quiet off\n")
-		}
-	} else {
-		context.quiet = lineIn == "on"
 	}
 	return false
 }
