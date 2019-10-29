@@ -1,0 +1,43 @@
+= Installation instructions =
+
+== Quick recipe for systems using apt ==
+
+--------------------------------------------
+sudo apt-get golang-1.12 asciidoctor 
+sudo apt-get subversion mercurial
+make get
+make
+--------------------------------------------
+
+== Prerequisites ==
+
+You will need the Go compiler at revision 1.12 or later.  Note, you
+may have to tweak your $PATH variable to make the Go tools visible.
+
+Once you have the Go tooling intalled, invoke "make get" to download
+the Go modules this program uses.
+
+Some of the auxiliary tools are wtitten in Python. They will run under
+Python 2 or Python 3.  Python is almost certainly already installed on
+your system.
+
+A few scripts are written in shell. Any Bourne-shell-like
+implementation will do. The restricted shell shipped on Debian/Ubuntu
+will work. Shell is almost certainly already installed on your system.
+
+You will need asciidoctor to format the documentation.
+
+== Building the software ==
+
+To build the tools, simply run "make" in the toplevel directory.  This
+also builds the suite documentation.
+
+== Testing the software ==
+
+There is an extensive regression-test suite in the `test/` directory.
+To run it, however, you will need to install Subversion and Mercurial.
+
+To test the correctness of this software once these prerequisites are
+installed, invoke `make check`.
+
+// end

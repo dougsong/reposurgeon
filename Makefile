@@ -23,7 +23,7 @@ SOURCES += \
 	reposurgeon-mode.el
 SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
 SOURCES += Dockerfile ci/prepare.sh ci/requirements.txt .gitlab-ci.yml
-DOCS = README.adoc NEWS TODO
+DOCS = README.adoc INSTALL.adoc NEWS TODO
 
 STOPOUT=1
 

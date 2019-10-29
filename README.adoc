@@ -35,13 +35,8 @@ support working directly with action stamps in git.
 Finally, an Emacs Lisp mode with useful functions for editing large
 comment message-boxes is included.
 
-To build the tools, simply run "make" in the toplevel directory.
-This also builds the suite documentation.  You will need to have the
-Goo compiler at version 1.12 or later installed, and aciidoctor 
-
-There is an extensive regression-test suite in the `test/` directory.
-To test the correctness of this software, ensure that Golang is
-installed and then type `make check`.
+See INSTALL.adoc for inbstructions om building the software and its
+prerequisites.
 
 See `reporting-bugs.adoc` for advice on how to troubleshoot problems
 with `reposurgeon` and report bugs.
