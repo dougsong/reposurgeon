@@ -1,6 +1,6 @@
 ## Test drop command
 
-echo 1
+set echo
 set relax
 drop
 

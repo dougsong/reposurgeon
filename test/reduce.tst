@@ -1,5 +1,5 @@
 ## Test of strip blobs reduce command
-echo 1
+set echo
 read <roundup.fi
 strip blobs reduce
 write -

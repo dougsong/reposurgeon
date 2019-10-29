@@ -1,5 +1,5 @@
 ## Test topological-divide and renumber operations
-echo 1
+set echo
 read <bzr.fi
 set quiet
 :1 divide

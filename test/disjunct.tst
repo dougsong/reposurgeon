@@ -1,5 +1,5 @@
 ## Test errors parsing and evaluating disjunctions
-echo 1
+set echo
 
 set testmode
 

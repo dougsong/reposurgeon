@@ -1,6 +1,6 @@
 ## Test commit re-ordering
 set quiet
-echo 1
+set echo
 set relax
 read <reorder.fi
 

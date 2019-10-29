@@ -1,7 +1,7 @@
 ## Test selection sets
 set relax
 read <testrepo.fi
-echo 1
+set echo
 set interactive
 1,3 resolve
 1..3 resolve

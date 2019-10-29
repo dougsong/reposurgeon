@@ -1504,13 +1504,6 @@ for exploring the selection-set language.
    Does nothing but ship its argument line to standard
    output. Useful in regression tests.
 
-+echo+ [_number_]::
-   'echo 1' causes each
-   reposurgeon command to be echoed to standard
-   output just before its output.  This can be useful in constructing regression
-   tests that are easily checked by eyeball.
-   +version+
-
 +version+ [_version_...]::
    With no argument, display the program version and the list of
    VCSes directly supported.  With argument, declare the major version

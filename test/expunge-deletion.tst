@@ -1,5 +1,5 @@
 ## test expunging delete ops
-echo 1
+set echo
 set quiet
 read <deletion.svn
 expunge doomed

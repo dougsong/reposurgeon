@@ -2771,6 +2771,10 @@ var logtags = map[string]uint{
 }
 
 var optionFlags = [...][2]string{
+	{"bigprofile",
+		`Extra profiling for large repositories.  Mainly of interest to reposurgeon
+developers.
+`},
 	{"canonicalize",
 		`If set, import stream reads and msgin and edit will canonicalize
 comments by replacing CR-LF with LF, stripping leading and trailing whitespace,
@@ -2784,6 +2788,23 @@ repositories. No effect if the edit input was a dump stream; in that
 case, reposurgeon doesn't make on-disk blob copies at all (it points
 into sections of the input stream instead).
 `},
+	{"echo",
+		`Echo commands before executing them. Setting this im test scripts may
++make the output easuer to read.
+`},
+	{"experimental",
+		`This flag is reserved for developer use.  If you set it, it could do
+anything up to and including making demons fly out of your nose.
+`},
+	{"interactive",
+		`Enable interactive responses even when not on a tty.
+`},
+	{"progress",
+		`Enable fancy progress messages even when not on a tty.
+`},
+	{"relax",
+		`Continue script execution on error, do not bail out.
+`},
 	{"testmode",
 		`Disable some features that cause output to be vary depending on wall time, 
 screen width, and the ID of the invoking user. Use in regression-test loads.
@@ -2791,25 +2812,8 @@ screen width, and the ID of the invoking user. Use in regression-test loads.
 	{"tighten",
 		`Memory is at a premium, trade higher speed for lower usage.
 `},
-	{"bigprofile",
-		`Extra profiling for large repositories.  Mainly of interest to reposurgeon
-developers.
-`},
-	{"interactive",
-		`Enable interactive responses even when not on a tty.
-`},
 	{"quiet",
 		`Suppress time-varying parts of reports.
-`},
-	{"relax",
-		`Continue script execution on error, do not bail out.
-`},
-	{"progress",
-		`Enable fancy progress messages even when not on a tty.
-`},
-	{"experimental",
-		`This flag is reserved for developer use.  If you set it, it could do
-anything up to and including making demons fly out of your nose.
 `},
 }
 
@@ -14084,7 +14088,6 @@ func (lp *LineParse) Closem() {
 
 type CmdContext struct {
 	cmd          *kommandant.Kmdt
-	echo         int
 	definitions  map[string][]string
 	inputIsStdin bool
 }
@@ -14196,7 +14199,7 @@ func (rs *Reposurgeon) PreCmd(line string) string {
 	if len(trimmed) != 0 {
 		rs.history = append(rs.history, trimmed)
 	}
-	if rs.echo > 0 {
+	if context.flagOptions["echo"] {
 		os.Stdout.WriteString(trimmed)
 		os.Stdout.WriteString("\n")
 	}
@@ -21629,25 +21632,6 @@ func (rs *Reposurgeon) DoLogfile(lineIn string) bool {
 	if len(lineIn) == 0 || context.isInteractive() {
 		respond("logfile %s", context.logfp.Name())
 	}
-	return false
-}
-
-func (rs *Reposurgeon) HelpEcho() {
-	rs.helpOutput(`
-Set or clear echoing of commands before processing.
-`)
-}
-
-func (rs *Reposurgeon) DoEcho(lineIn string) bool {
-	if len(lineIn) != 0 {
-		echo, err := strconv.Atoi(lineIn)
-		if err != nil {
-			croak("echo value must be an integer.")
-		} else {
-			rs.echo = echo
-		}
-	}
-	respond("echo %d", rs.echo)
 	return false
 }
 

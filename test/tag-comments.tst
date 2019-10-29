@@ -1,5 +1,5 @@
 ## Test tag comment handling
-echo 1
+set echo
 read <tag-comments.fi
 tags
 names

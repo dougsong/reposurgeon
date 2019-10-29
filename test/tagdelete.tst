@@ -1,5 +1,5 @@
 ## Test of tag deletion by regexp
-echo 1
+set echo
 read <tagify.fi
 tagify
 <emptycommit-mark5> inspect

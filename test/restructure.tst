@@ -1,6 +1,6 @@
 ## Test of canonicalization-after-commit cases
 !echo This exercises many combine cases in the test repo
-echo 1
+set echo
 read <testrepo.fi
 set interactive
 coverage

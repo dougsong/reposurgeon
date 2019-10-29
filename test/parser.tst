@@ -1,5 +1,5 @@
 ## Tests of selection-set syntax and parser features
-echo 1
+set echo
 read <simple.fi
 set interactive
 =H resolve Special set resolution
@@ -59,11 +59,11 @@ annotated-sample resolve Tag implicit
 @suc(<2010-10-27T17:25:36Z>) resolve successor function call 
 @pre(<2010-10-27T17:25:36Z>) resolve predecessor function call 
 # Test here-doc syntax
-echo 0
+clear echo
 :2 authors read <<EOF
 esr = Eric Raymond <esr@thyrsus.com>
 EOF
-echo 1
+set echo
 :2 inspect
 # Test multiline commands
 <annotated-sample> \

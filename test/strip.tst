@@ -1,5 +1,5 @@
 ## Test of strip command
-echo 1
+set echo
 read <simple.fi
 strip blobs
 write -

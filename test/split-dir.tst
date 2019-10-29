@@ -1,5 +1,5 @@
 ## Split a commit based on a directory prefix
-echo 1
+set echo
 set relax
 set interactive 
 set quiet

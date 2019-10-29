@@ -21,7 +21,7 @@
 read <debranch3.fi
 debranch alternate master
 write -
-echo 1
+set echo
 :17 paths
 :15 paths
 :13 paths

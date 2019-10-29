@@ -1,5 +1,5 @@
 ## Tag move test
 read <sample1.fi
-echo 1
+set echo
 tag annotated move :15
 <annotated> inspect

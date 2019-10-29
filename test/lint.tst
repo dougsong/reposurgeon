@@ -1,5 +1,5 @@
 ## Make sure the lint command works
-echo 1
+set echo
 set quiet
 read <bs.fi
 lint

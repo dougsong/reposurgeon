@@ -1,5 +1,5 @@
 ## Test the assignment command
-echo 1
+set echo
 set relax
 read <testrepo.fi
 <2010-11-06T10:49:58Z> list

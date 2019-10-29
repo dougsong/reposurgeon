@@ -1,5 +1,5 @@
 ## Test the macro facility
-echo 1
+set echo
 read <simple.fi
 print Test that we can define and see macro definitions
 define fubar list

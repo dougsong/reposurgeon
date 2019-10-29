@@ -1,5 +1,5 @@
 ## Test if commands handling tree contents understand deleteall
-echo 1
+set echo
 read <deleteall.fi
 set interactive
 :13 manifest

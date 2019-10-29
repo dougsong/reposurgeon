@@ -1,5 +1,5 @@
 ## Test squash --pushback
-echo 1
+set echo
 read <roundup.fi
 set interactive
 :1? resolve

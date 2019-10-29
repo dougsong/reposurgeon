@@ -1,5 +1,5 @@
 ## Test the split command
-echo 1
+set echo
 set interactive
 set quiet
 read <mergeinfo.svn

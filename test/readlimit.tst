@@ -1,5 +1,5 @@
 ## Test readlimit
-echo 1
+set echo
 readlimit 3
 read <simpletag.svn
 prefer git

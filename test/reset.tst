@@ -1,5 +1,5 @@
 ## Reset tests
-echo 1
+set echo
 set relax
 read <be-bookmarks.fi
 =R index

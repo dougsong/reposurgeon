@@ -1,5 +1,5 @@
 ## Reparenting parents with inline data w/o tree preservation
-echo 1
+set echo
 read <inline-simple.fi
 2 inspect
 1,2 manifest
