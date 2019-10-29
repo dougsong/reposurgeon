@@ -8346,8 +8346,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		// First, break the file operations into branch cliques.
 		// In the normal case there will be only one such clique,
 		// but in Subversion (unlike git) it is possible to make
-		// a commit that modifies multiple branches. In order to
-		// cope with this case we must first recognize it.
+		// a commit that modifies multiple branches.
 		cliques := make(map[string][]*FileOp)
 		for _, action := range actions {
 			// This preferentially matches longest branches because
@@ -8362,8 +8361,9 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 			cliques[branch] = append(cliques[branch], action.fileop)
 		}
 		logit(logEXTRACT, "r%d: %d action(s) in %d clique(s)", record.revision, len(actions), len(cliques))
-		// Make two operation lists from the cliques, sorting cliques
-		// containing only branch deletes from other cliques.
+		// We say a clique is trivial if it contains a single fileop and that
+		// fileop is a deleteall. We now count the number of non-trivial ones
+		// and remember one of them, to use when it is in fact the only one.
 		nontrivialCount := 0
 		var nontrivialClique string
 		for branch, ops := range cliques {
@@ -8376,8 +8376,11 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		newcommits := make([]Event, 0, len(cliques))
 		commit.legacyID = fmt.Sprintf("%d", record.revision)
 		if nontrivialCount == 1 || len(cliques) == 0 {
-			// In the ordinary case (1 or 0 non-delete ops), we can assign all non-deleteall fileops
-			// to the base commit.
+			// If there are no cliques at all, there are no fileops, and we
+			// generate a single empty commit. If there is only a single branch
+			// non-trivial clique, it makes sense to affect the corresponding
+			// fileops to the base commit. In the ordinary case there will be
+			// no other clique because only one branch is modified.
 			sp.repo.legacyMap[fmt.Sprintf("SVN:%s", commit.legacyID)] = commit
 			if nontrivialCount == 1 {
 				commit.common = nontrivialClique
@@ -8408,8 +8411,14 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 			commit.sortOperations()
 			newcommits = append(newcommits, commit)
 		}
-		// If the commit is mixed, or there are deletealls left over,
-		// handle that. Sort the split commits by branch name
+		// It might be that the revision impacts several branches. If the other
+		// impacted branches only are targets of a deleteall, then we already
+		// added a commit to represent the meaty part of the revision. If there
+		// are several non-trivial cliques, then we have no reason to treat one
+		// as more important than the others, so no commit was previously
+		// added. In all cases, we now create additional "split" commits
+		// containing the changes from the revison separated by branches, and
+		// sorted by branch name for reproducibility.
 		cliqueBranches := make([]string, len(cliques))
 		k := 0
 		for branch := range cliques {
@@ -8433,7 +8442,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		// The revision is truly mixed if there is more than one clique
 		// not consisting entirely of deleteall operations.
 		if nontrivialCount > 1 {
-			// Store the number of splits
+			// Store the number of non-trivial splits
 			sp.splitCommits[intToRevidx(ri)] = nontrivialCount
 		}
 		//if len(newcommits) > 0 {
