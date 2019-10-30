@@ -19162,6 +19162,7 @@ For a 'delete', no third argument is required.  The name portion of a
 delete may be a regexp wrapped in //; if so, all objects of the
 specified type with names matching the regexp are deleted.  This is
 useful for mass deletion of junk tags such as CVS branch-root tags.
+Such deletions can be restricted by a selection set in the normal way.
 
 Tag names may use backslash escapes interpreted by the Python
 string-escape codec, such as \s.
@@ -19259,7 +19260,11 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 	if tagname[0] == '/' && tagname[len(tagname)-1] == '/' {
 		// Regexp - can refer to a list of tags matched
 		tagre := regexp.MustCompile(tagname[1 : len(tagname)-1])
-		for _, event := range repo.events {
+		if rs.selection == nil {
+			rs.selection = repo.all()
+		}
+		for _, idx := range rs.selection {
+			event := repo.events[idx]
 			if tag, ok := event.(*Tag); ok && tagre.MatchString(tag.name) {
 				tags = append(tags, tag)
 			} else if reset, ok := event.(*Reset); ok && tagre.MatchString(reset.ref[11:]) {
