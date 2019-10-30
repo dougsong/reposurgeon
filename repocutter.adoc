@@ -6,7 +6,7 @@ repocutter - surgical and filtering operations on Subversion dump files
 
 == SYNOPSIS ==
 
-*repocutter* [-q] [-d] [-i 'filename'] [-r 'selection;] 'subcommand'
+*repocutter* [-q] [-d] [-i 'filename'] [-r 'selection'] 'subcommand'
 
 [[description]]
 == DESCRIPTION ==
@@ -41,6 +41,8 @@ are probably only of interest to repocutter developers.
 
 The -i option sets the input source to a specified filename.
 This is primarily useful when running the program under a debugger.
+When this option is not present the orogram expects to read a 
+stream from standard input.
 
 Generally, if you need to use this program at all, you will find
 that you need to pipe your dump file through multiple instances of it
