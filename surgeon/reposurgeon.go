@@ -77,6 +77,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"container/heap"
 	"crypto/md5"
 	"crypto/sha1"
@@ -117,6 +118,7 @@ import (
 	kommandant "gitlab.com/ianbruene/kommandant"
 	terminal "golang.org/x/crypto/ssh/terminal"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
+	semaphore "golang.org/x/sync/semaphore"
 )
 
 const version = "4.0-pre"
@@ -2116,7 +2118,7 @@ func (he *HgExtractor) colorBranches(rs *RepoStreamer) error {
 func (he *HgExtractor) postExtract(repo *Repository) {
 	he.checkout("tip")
 	if !repo.branchset().Contains("refs/heads/master") {
-		allEvents(repo.events, func(event Event) {
+		walkEvents(repo.events, func(_ int, event Event) {
 			switch event.(type) {
 			case *Commit:
 				if event.(*Commit).Branch == "refs/heads/default" {
@@ -2311,7 +2313,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (*Repository, error)
 		return nil, fmt.Errorf("repository directory has unsaved changes")
 	}
 
-	//context.baton.startProcess("Extracting", "")
+	//control.baton.startProcess("Extracting", "")
 	//defer rs.baton.endProcess()
 
 	var err error
@@ -2373,7 +2375,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (*Repository, error)
 	}
 
 	if len(uncolored) > 0 {
-		if context.isInteractive() {
+		if control.isInteractive() {
 			return nil, fmt.Errorf("missing branch attribute for %v", uncolored)
 		}
 		return nil, fmt.Errorf("some branches do not have local ref names")
@@ -2658,10 +2660,11 @@ screen width, and the ID of the invoking user. Use in regression-test loads.
 }
 
 /*
- * Global context. Eventually all globals should live here.
+ * Global context. Used to be named Context until its global
+ * collided with the Go context package.
  */
 
-type Context struct {
+type Control struct {
 	logmask uint
 	logfp io.Writer
 	baton *Baton
@@ -2678,7 +2681,7 @@ type Context struct {
 	readLimit   uint64
 }
 
-func (ctx *Context) isInteractive() bool {
+func (ctx *Control) isInteractive() bool {
 	return ctx.flagOptions["interactive"]
 }
 
@@ -2687,36 +2690,36 @@ type branchMapping struct {
 	replace string
 }
 
-func (ctx *Context) init() {
+func (ctx *Control) init() {
 	ctx.flagOptions = make(map[string]bool)
 	ctx.listOptions = make(map[string]orderedStringSet)
 	ctx.mapOptions = make(map[string]map[string]string)
 	ctx.signals = make(chan os.Signal, 1)
 	ctx.logmask = (1 << logWARN) - 1
-	baton := newBaton(context.isInteractive());
+	baton := newBaton(control.isInteractive());
 	var b interface{} = baton
 	ctx.logfp = b.(io.Writer)
 	ctx.baton = baton
-	signal.Notify(context.signals, os.Interrupt)
+	signal.Notify(control.signals, os.Interrupt)
 	go func() {
 		for {
-			<-context.signals
-			context.setAbort(true)
+			<-control.signals
+			control.setAbort(true)
 			respond("Interrupt\n")
 		}
 	}()
 
 }
 
-var context Context
+var control Control
 
-func (ctx *Context) getAbort() bool {
+func (ctx *Control) getAbort() bool {
 	ctx.abortLock.Lock()
 	defer ctx.abortLock.Unlock()
 	return ctx.abortScript
 }
 
-func (ctx *Context) setAbort(cond bool) {
+func (ctx *Control) setAbort(cond bool) {
 	ctx.abortLock.Lock()
 	defer ctx.abortLock.Unlock()
 	ctx.abortScript = cond
@@ -2724,7 +2727,7 @@ func (ctx *Context) setAbort(cond bool) {
 
 // whoami - ask various programs that keep track of who you are
 func whoami() (string, string) {
-	if context.flagOptions["testmode"] {
+	if control.flagOptions["testmode"] {
 		return "Fred J. Foonly", "foonly@foo.com"
 	}
 	// Git version-control system
@@ -2752,7 +2755,7 @@ func whoami() (string, string) {
 // screenwidth returns the current width of the terminal window.
 func screenwidth() int {
 	width := 80
-	if !context.flagOptions["testmode"] && terminal.IsTerminal(0) {
+	if !control.flagOptions["testmode"] && terminal.IsTerminal(0) {
 		var err error
 		width, _, err = terminal.GetSize(0)
 		if err != nil {
@@ -2768,15 +2771,15 @@ func screenwidth() int {
 
 // logEnable is a hook to set up log-message filtering.
 func logEnable(logbits uint) bool {
-	return (context.logmask & logbits) != 0
+	return (control.logmask & logbits) != 0
 }
 
 // nuke removes a (large) directory, reporting elapsed time.
 func nuke(directory string, legend string) {
 	if exists(directory) {
-		if !context.flagOptions["quiet"] {
-			//context.baton.startProcess(legend, "")
-			//defer context.baton.endProcess()
+		if !control.flagOptions["quiet"] {
+			//control.baton.startProcess(legend, "")
+			//defer control.baton.endProcess()
 		}
 		os.RemoveAll(directory)
 	}
@@ -2784,9 +2787,9 @@ func nuke(directory string, legend string) {
 
 func croak(msg string, args ...interface{}) {
 	content := fmt.Sprintf(msg, args...)
-	context.baton.printLogString("reposurgeon: " + content + "\n")
-	if !context.flagOptions["relax"] {
-		context.setAbort(true)
+	control.baton.printLogString("reposurgeon: " + content + "\n")
+	if !control.flagOptions["relax"] {
+		control.setAbort(true)
 	}
 }
 
@@ -2794,21 +2797,21 @@ func logit(lvl uint, msg string, args ...interface{}) {
 	if logEnable(lvl) {
 		var leader string
 		content := fmt.Sprintf(msg, args...)
-		if _, ok := context.logfp.(*os.File); ok {
+		if _, ok := control.logfp.(*os.File); ok {
 			leader = rfc3339(time.Now())
 		} else {
 			leader = "reposurgeon"
 		}
-		context.logfp.Write([]byte(leader + ": " + content + "\n"))
-		context.logcounter++
+		control.logfp.Write([]byte(leader + ": " + content + "\n"))
+		control.logcounter++
 	}
 }
 
 // respond is to be used for console messages that shouldn't be logged
 func respond(msg string, args ...interface{}) {
-	if context.isInteractive() {
+	if control.isInteractive() {
 		content := fmt.Sprintf(msg, args...)
-		context.baton.printLogString("reposurgeon: " + content + "\n")
+		control.baton.printLogString("reposurgeon: " + content + "\n")
 	}
 }
 
@@ -3452,9 +3455,9 @@ func newBlob(repo *Repository) *Blob {
 	b.repo = repo
 	b.pathlist = make([]string, 0) // These have an implied sequence.
 	b.start = noOffset
-	b.blobseq = context.blobseq
-	context.blobseq++
-	if context.blobseq == ^blobidx(0) {
+	b.blobseq = control.blobseq
+	control.blobseq++
+	if control.blobseq == ^blobidx(0) {
 		panic("blob index overflow, rebuild with a larger size")
 	}
 	return b
@@ -3533,7 +3536,7 @@ func (b *Blob) getContent() []byte {
 		panic(fmt.Errorf("Blob read: %v", err))
 	}
 	defer file.Close()
-	if context.flagOptions["compressblobs"] {
+	if control.flagOptions["compressblobs"] {
 		input, err2 := gzip.NewReader(file)
 		if err2 != nil {
 			panic(err.Error())
@@ -3563,7 +3566,7 @@ func (b *Blob) setContent(text []byte, tell int64) {
 			panic(fmt.Errorf("Blob write: %v", err))
 		}
 		defer file.Close()
-		if context.flagOptions["compressblobs"] {
+		if control.flagOptions["compressblobs"] {
 			output := gzip.NewWriter(file)
 
 			defer output.Close()
@@ -3603,7 +3606,7 @@ func (b Blob) getMark() string {
 
 // setMark sets the blob's mark
 func (b *Blob) setMark(mark string) string {
-	if b.repo != nil && !context.flagOptions["tighten"] {
+	if b.repo != nil && !control.flagOptions["tighten"] {
 		if b.repo._eventByMark == nil {
 			b.repo.memoizeMarks()
 		}
@@ -3884,7 +3887,7 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 		t.legacyID = legacy
 	}
 	newcomment := msg.getPayload()
-	if context.flagOptions["canonicalize"] {
+	if control.flagOptions["canonicalize"] {
 		newcomment = strings.TrimSpace(newcomment)
 		newcomment = strings.Replace(newcomment, "\r\n", "\n", 1)
 		newcomment += "\n"
@@ -4864,7 +4867,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 		modified = true
 	}
 	newcomment := msg.getPayload()
-	if context.flagOptions["canonicalize"] {
+	if control.flagOptions["canonicalize"] {
 		newcomment = strings.TrimSpace(newcomment)
 		newcomment = strings.Replace(newcomment, "\r\n", "\n", 1)
 		newcomment += "\n"
@@ -4890,7 +4893,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 
 // setMark sets the commit's mark
 func (commit *Commit) setMark(mark string) string {
-	if commit.repo != nil && !context.flagOptions["tighten"] {
+	if commit.repo != nil && !control.flagOptions["tighten"] {
 		if commit.repo._eventByMark == nil {
 			commit.repo.memoizeMarks()
 		}
@@ -5177,9 +5180,9 @@ func (commit *Commit) cliques() map[string][]int {
 
 // fileopDump reports file ops without data or inlines; used for logging only.
 func (commit *Commit) fileopDump() {
-	fmt.Fprintf(context.baton, "commit %d, mark %s:\n", commit.repo.markToIndex(commit.mark)+1, commit.mark)
+	fmt.Fprintf(control.baton, "commit %d, mark %s:\n", commit.repo.markToIndex(commit.mark)+1, commit.mark)
 	for i, op := range commit.operations() {
-		fmt.Fprintf(context.baton, "%d: %s", i, op.String())
+		fmt.Fprintf(control.baton, "%d: %s", i, op.String())
 	}
 }
 
@@ -5770,7 +5773,7 @@ func captureFromProcess(command string) (string, error) {
 	cmd := exec.Command("sh", "-c", command)
 	content, err := cmd.CombinedOutput()
 	if logEnable(logCOMMANDS) {
-		context.baton.printLog(content)
+		control.baton.printLog(content)
 	}
 	return string(content), err
 }
@@ -6088,7 +6091,7 @@ func (h *FastHistory) apply(revision revidx, nodes []*NodeAction) {
 			h.visibleHere.set(node.path, node)
 			logit(logFILEMAP, "r%d-%d: %s changed", node.revision, node.index, node.path)
 		}
-		context.baton.twirl()
+		control.baton.twirl()
 	}
 	h.visible[revision] = h.visibleHere.snapshot()
 
@@ -6097,7 +6100,7 @@ func (h *FastHistory) apply(revision revidx, nodes []*NodeAction) {
 			node.fromSet = newPathMap()
 			node.fromSet.copyFrom(node.fromPath, h.visible[node.fromRev], node.fromPath)
 		}
-		context.baton.twirl()
+		control.baton.twirl()
 	}
 
 	h.revision = revision
@@ -6592,7 +6595,7 @@ func appendRevisionRecords(slice []RevisionRecord, data ...RevisionRecord) []Rev
 func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesize int64) {
 	// If the repo is large, we'll give up on some diagnostic info in order
 	// to reduce the working set size.
-	if context.flagOptions["tighten"] {
+	if control.flagOptions["tighten"] {
 		sp.large = true
 	}
 	trackSymlinks := newOrderedStringSet()
@@ -6833,14 +6836,14 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 			}
 			// End Revision processing
 			baton.percentProgress(uint64(sp.ccount))
-			if context.readLimit > 0 && uint64(sp.repo.legacyCount) > context.readLimit{
-				logit(logSHOUT, "read limit %d reached.", context.readLimit)
+			if control.readLimit > 0 && uint64(sp.repo.legacyCount) > control.readLimit{
+				logit(logSHOUT, "read limit %d reached.", control.readLimit)
 				break
 			}
 		}
 	}
-	context.baton.endProgress()
-	if context.readLimit > 0 && uint64(sp.repo.legacyCount) <= context.readLimit {
+	control.baton.endProgress()
+	if control.readLimit > 0 && uint64(sp.repo.legacyCount) <= control.readLimit {
 			logit(logSHOUT, "EOF before readlimit.")
 	}
 	logit(logSVNPARSE, "revision parsing, line %d: ends with %d records", sp.importLine, sp.repo.legacyCount)
@@ -6949,7 +6952,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				} else if bytes.HasPrefix(line, []byte("data")) {
 					d, _ := sp.fiReadData(line)
 					commit.Comment = string(d)
-					if context.flagOptions["canonicalize"] {
+					if control.flagOptions["canonicalize"] {
 						commit.Comment = strings.Replace(strings.TrimSpace(commit.Comment), "\r\n", "\n", -1) + "\n"
 					}
 				} else if bytes.HasPrefix(line, []byte("from")) || bytes.HasPrefix(line, []byte("merge")) {
@@ -7083,16 +7086,16 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			sp.repo.addEvent(newPassthrough(sp.repo, string(line)))
 		}
 		baton.percentProgress(uint64(sp.ccount))
-		if context.readLimit > 0 && uint64(commitcount) >= context.readLimit{
-			logit(logSHOUT, "read limit %d reached", context.readLimit)
+		if control.readLimit > 0 && uint64(commitcount) >= control.readLimit{
+			logit(logSHOUT, "read limit %d reached", control.readLimit)
 			break
 		}
 	}
 	baton.endProgress()
-	if context.readLimit > 0 && uint64(commitcount) < context.readLimit {
+	if control.readLimit > 0 && uint64(commitcount) < control.readLimit {
 		logit(logSHOUT, "EOF before readlimit.")
 	}
-	allEvents(sp.repo.events, func(event Event) {
+	walkEvents(sp.repo.events, func(_ int, event Event) {
 		switch event.(type) {
 		case *Reset:
 			reset := event.(*Reset)
@@ -7140,7 +7143,7 @@ func (sp *StreamParser) fastImport(fp io.Reader, options stringSet, source strin
 		source = sp.repo.seekstream.Name()
 	}
 	sp.source = source
-	baton := context.baton
+	baton := control.baton
 	//baton.startProcess(fmt.Sprintf("reposurgeon: from %s", source), "")
 	sp.repo.legacyCount = 0
 	// First, determine the input type
@@ -7162,7 +7165,7 @@ func (sp *StreamParser) fastImport(fp io.Reader, options stringSet, source strin
 		// End of Subversion dump parsing
 		sp.timeMark("parsing")
 		sp.svnProcess(options, baton)
-		if context.flagOptions["progress"] {
+		if control.flagOptions["progress"] {
 			fmt.Fprintf(baton, "%d svn revisions (%s)",
 				sp.repo.legacyCount, rate(sp.repo.legacyCount * 1000))
 		}
@@ -7170,7 +7173,7 @@ func (sp *StreamParser) fastImport(fp io.Reader, options stringSet, source strin
 		sp.pushback(line)
 		sp.parseFastImport(options, baton, filesize)
 		sp.timeMark("parsing")
-		if context.flagOptions["progress"] {
+		if control.flagOptions["progress"] {
 			if sp.repo.stronghint {
 				fmt.Fprintf(baton, "%d %s events (%s)",
 					len(sp.repo.events), sp.repo.vcs.name, rate(len(sp.repo.events)))
@@ -7313,12 +7316,12 @@ func (sp *StreamParser) lastRelevantCommit(maxRev revidx, path string, attr stri
 // isDeclaredBranch returns true iff the user requested that this path be trated as a branch or tag.
 func isDeclaredBranch(path string) bool {
 	np := path + svnSep
-	for _, trial := range context.listOptions["svn_branchify"] {
+	for _, trial := range control.listOptions["svn_branchify"] {
 		if !strings.Contains(trial, "*") && trial == path {
 			return true
-		} else if strings.HasSuffix(trial, svnSep+"*") && filepath.Dir(trial) == filepath.Dir(path) && !context.listOptions["svn_branchify"].Contains(np+"*") {
+		} else if strings.HasSuffix(trial, svnSep+"*") && filepath.Dir(trial) == filepath.Dir(path) && !control.listOptions["svn_branchify"].Contains(np+"*") {
 			return true
-		} else if trial == "*" && !context.listOptions["svn_branchify"].Contains(np+"*") && strings.Count(path, svnSep) < 1 {
+		} else if trial == "*" && !control.listOptions["svn_branchify"].Contains(np+"*") && strings.Count(path, svnSep) < 1 {
 			return true
 		}
 	}
@@ -7712,7 +7715,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	//baton.startProcess("?", "")
 	timeit := func(tag string) {
 		sp.timeMark(tag)
-		if context.flagOptions["bigprofile"] {
+		if control.flagOptions["bigprofile"] {
 			e := len(sp.repo.timings) - 1
 			fmt.Fprintf(baton, "%s:%v...", tag, sp.repo.timings[e].stamp.Sub(sp.repo.timings[e-1].stamp))
 		} else {
@@ -8044,7 +8047,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		commit.committer = *newattr
 		// Use this with just-generated input streams
 		// that have wall times in them.
-		if context.flagOptions["testmode"] {
+		if control.flagOptions["testmode"] {
 			commit.committer.fullname = "Fred J. Foonly"
 			commit.committer.email = "foonly@foo.com"
 			commit.committer.date.timestamp = time.Unix(int64(ri*360), 0)
@@ -8871,7 +8874,7 @@ func svnProcessTags(sp *StreamParser, options stringSet, baton *Baton, branchroo
 			continue
 		}
 		matched := false
-		for _, item := range context.branchMappings {
+		for _, item := range control.branchMappings {
 			result := GoReplacer(item.match, commit.Branch, item.replace)
 			if result != commit.Branch {
 				matched = true
@@ -9051,10 +9054,43 @@ type Event interface {
 // This is intended to bew parallelized.  Apply only when the
 // computation has no dependency on the order in which commits
 // are processed.
-func allEvents(events []Event, hook func(Event)) {
+func walkEvents(events []Event, hook func(int, Event)) {
 	// Someday this will parallelize through a worker pool
-	for _, e := range events {
-		hook(e)
+	for i, e := range events {
+		hook(i, e)
+	}
+}
+
+// Mimics the code from https://www.godoc.org/golang.org/x/sync/semaphore
+func walkEventsConcurrent(events []Event, hook func(int, Event)) {
+	ctx := context.TODO()
+
+	var (
+		maxWorkers = runtime.GOMAXPROCS(0)
+		sem        = semaphore.NewWeighted(int64(maxWorkers))
+	)
+
+	// Visit and process events using up to maxWorkers goroutines at a time.
+	for i, e := range events {
+		// When maxWorkers goroutines are in flight, Acquire blocks until one of the
+		// workers finishes.
+		if err := sem.Acquire(ctx, 1); err != nil {
+			log.Printf("Failed to acquire semaphore: %v", err)
+			break
+		}
+
+		go func(i int, e Event) {
+			defer sem.Release(1)
+			hook(i, e)
+		}(i, e)
+	}
+
+	// Acquire all of the tokens to wait for any remaining workers to finish.
+	//
+	// If you are already waiting for the workers by some other means (such as an
+	// errgroup.Group), you can omit this final Acquire call.
+	if err := sem.Acquire(ctx, int64(maxWorkers)); err != nil {
+		log.Printf("Failed to acquire semaphore: %v", err)
 	}
 }
 
@@ -9186,7 +9222,7 @@ func (repo *Repository) cleanup() {
 
 // memoizeMarks rebuilds the mark cache
 func (repo *Repository) memoizeMarks() {
-	if !context.flagOptions["tighten"] {
+	if !control.flagOptions["tighten"] {
 		repo._eventByMark = make(map[string]Event)
 		for _, event := range repo.events {
 			key := event.getMark()
@@ -9199,7 +9235,7 @@ func (repo *Repository) memoizeMarks() {
 
 // markToEvent finds an object by mark
 func (repo *Repository) markToEvent(mark string) Event {
-	if context.flagOptions["tighten"] {
+	if control.flagOptions["tighten"] {
 		if mark == "" {
 			return nil
 		}
@@ -9240,7 +9276,7 @@ func (repo *Repository) eventToIndex(obj Event) int {
 
 // find gets an object index by mark
 func (repo *Repository) markToIndex(mark string) int {
-	if context.flagOptions["tighten"] {
+	if control.flagOptions["tighten"] {
 		for ind, event := range repo.events {
 			if event.getMark() == mark {
 				return ind
@@ -9410,7 +9446,7 @@ func (repo *Repository) invalidateNamecache() {
 }
 
 func (repo *Repository) named(ref string) orderedIntSet {
-	// Resolve named reference in the context of this repository.
+	// Resolve named reference in the control of this repository.
 	selection := newOrderedIntSet()
 	// For matches that require iterating across the entire event
 	// sequence, building an entire name lookup table is !much
@@ -10097,7 +10133,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 		selection.Sort()
 	}
 	repo.realized = make(map[string]bool) // Track what branches are made
-	baton := context.baton
+	baton := control.baton
 	baton.startProgress("export", uint64(len(repo.events)))
 	for idx, ei := range selection {
 		baton.twirl()
@@ -11724,10 +11760,10 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 	if vcs != nil {
 		repo.hint("", vcs.name, true)
 		repo.preserveSet = vcs.preserve
-		suppressBaton := context.flagOptions["progress"] && repo.exportStyle().Contains("export-progress")
-		commandContext := map[string]string{"basename": filepath.Base(repo.sourcedir)}
+		suppressBaton := control.flagOptions["progress"] && repo.exportStyle().Contains("export-progress")
+		commandControl := map[string]string{"basename": filepath.Base(repo.sourcedir)}
 		mapper := func(sub string) string {
-			for k, v := range commandContext {
+			for k, v := range commandControl {
 				from := "${" + k + "}"
 				sub = strings.Replace(sub, from, v, -1)
 			}
@@ -11740,7 +11776,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 			}
 			defer tfdesc.Close()
 			defer os.Remove(tfdesc.Name())
-			commandContext["tempfile"] = tfdesc.Name()
+			commandControl["tempfile"] = tfdesc.Name()
 			cmd := os.Expand(repo.vcs.exporter, mapper)
 			runProcess(cmd, "repository export")
 			tfdesc.Close()
@@ -11760,7 +11796,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 			tp.Close()
 		}
 		if suppressBaton {
-			context.flagOptions["progress"] = true
+			control.flagOptions["progress"] = true
 		}
 		if repo.vcs.authormap != "" && exists(repo.vcs.authormap) {
 			logit(logSHOUT, "reading author map.")
@@ -13863,7 +13899,7 @@ func (rl *RepositoryList) newLineParse(line string, capabilities orderedStringSe
 		line:         line,
 		capabilities: capabilities,
 		stdin:        os.Stdin,
-		stdout:       context.baton,
+		stdout:       control.baton,
 		redirected:   false,
 		options:      make([]string, 0),
 		closem:       make([]io.Closer, 0),
@@ -13984,19 +14020,19 @@ func (lp *LineParse) Closem() {
 	}
 }
 
-type CmdContext struct {
+type CmdControl struct {
 	cmd          *kommandant.Kmdt
 	definitions  map[string][]string
 	inputIsStdin bool
 }
 
-func (md CmdContext) SetCore(k *kommandant.Kmdt) {
+func (md CmdControl) SetCore(k *kommandant.Kmdt) {
 	md.cmd = k
 }
 
 // Reposurgeon tells Kommandant what our local commands are
 type Reposurgeon struct {
-	CmdContext
+	CmdControl
 	RepositoryList
 	SelectionParser
 	callstack        [][]string
@@ -14022,9 +14058,9 @@ func newReposurgeon() *Reposurgeon {
 	rs.promptFormat = "reposurgeon% "
 	// These are globals and should probably be set in init().
 	for _, option := range optionFlags {
-		context.listOptions[option[0]] = newOrderedStringSet()
+		control.listOptions[option[0]] = newOrderedStringSet()
 	}
-	context.listOptions["svn_branchify"] = orderedStringSet{"trunk", "tags/*", "branches/*", "*"}
+	control.listOptions["svn_branchify"] = orderedStringSet{"trunk", "tags/*", "branches/*", "*"}
 	return rs
 }
 
@@ -14097,8 +14133,8 @@ func (rs *Reposurgeon) PreCmd(line string) string {
 	if len(trimmed) != 0 {
 		rs.history = append(rs.history, trimmed)
 	}
-	if context.flagOptions["echo"] {
-		context.baton.printLogString(trimmed)
+	if control.flagOptions["echo"] {
+		control.baton.printLogString(trimmed)
 	}
 	rs.selection = rs.defaultSelection
 	if strings.HasPrefix(line, "#") {
@@ -14122,15 +14158,15 @@ func (rs *Reposurgeon) PreCmd(line string) string {
 		}
 	}
 
-	rs.logHighwater = context.logcounter
+	rs.logHighwater = control.logcounter
 	rs.buildPrompt()
 
 	return rest
 }
 
 func (rs *Reposurgeon) PostCmd(stop bool, lineIn string) bool {
-	if context.logcounter > rs.logHighwater {
-		respond("%d new log message(s)", context.logcounter - rs.logHighwater)
+	if control.logcounter > rs.logHighwater {
+		respond("%d new log message(s)", control.logcounter - rs.logHighwater)
 	}
 	return stop
 }
@@ -14778,7 +14814,7 @@ func (rs *Reposurgeon) reportSelect(parse *LineParse, display func(*LineParse, i
 				fmt.Fprintln(parse.stdout, summary)
 			}
 		}
-		if context.getAbort() {
+		if control.getAbort() {
 			break
 		}
 	}
@@ -14843,7 +14879,7 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 		} else {
 			return
 		}
-		context.setAbort(false)
+		control.setAbort(false)
 	}
 	// Special case: user selected a single blob
 	if len(selection) == 1 {
@@ -14930,7 +14966,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 		}
 		rs.selection.Sort()
 	}
-	baton := context.baton
+	baton := control.baton
 	//baton.startProcess(prompt, "")
 	//defer baton.endProcess()
 	altered := 0
@@ -15072,9 +15108,9 @@ func (rs *Reposurgeon) DoResolve(line string) bool {
 			oneOrigin.Add(i + 1)
 		}
 		if line != "" {
-			context.baton.printLogString(fmt.Sprintf("%s: %v", line, oneOrigin))
+			control.baton.printLogString(fmt.Sprintf("%s: %v", line, oneOrigin))
 		} else {
-			context.baton.printLogString(fmt.Sprintf("%v\n", oneOrigin))
+			control.baton.printLogString(fmt.Sprintf("%v\n", oneOrigin))
 		}
 	}
 	return false
@@ -15866,10 +15902,10 @@ func (rs *Reposurgeon) CompletePrefer(text string) []string {
 func (rs *Reposurgeon) DoPrefer(line string) bool {
 	if line == "" {
 		for _, vcs := range vcstypes {
-			context.baton.printLogString(vcs.String()+"\n")
+			control.baton.printLogString(vcs.String()+"\n")
 		}
 		for option := range fileFilters {
-			context.baton.printLogString(fmt.Sprintf("read and write have a --format=%s option that supports %s files.\n", option, strings.ToTitle(option)))
+			control.baton.printLogString(fmt.Sprintf("read and write have a --format=%s option that supports %s files.\n", option, strings.ToTitle(option)))
 		}
 		extractable := make([]string, 0)
 		for _, importer := range importers {
@@ -15878,7 +15914,7 @@ func (rs *Reposurgeon) DoPrefer(line string) bool {
 			}
 		}
 		if len(extractable) > 0 {
-			context.baton.printLogString(fmt.Sprintf("Other systems supported for read only: %s\n\n", strings.Join(extractable, " ")))
+			control.baton.printLogString(fmt.Sprintf("Other systems supported for read only: %s\n\n", strings.Join(extractable, " ")))
 		}
 	} else {
 		known := ""
@@ -15897,11 +15933,11 @@ func (rs *Reposurgeon) DoPrefer(line string) bool {
 			croak("known types are: %s\n", known)
 		}
 	}
-	if context.isInteractive() {
+	if control.isInteractive() {
 		if rs.preferred == nil {
-			context.baton.printLogString("No preferred type has been set.\n")
+			control.baton.printLogString("No preferred type has been set.\n")
 		} else {
-			context.baton.printLogString(fmt.Sprintf("%s is the preferred type.\n", rs.preferred.name))
+			control.baton.printLogString(fmt.Sprintf("%s is the preferred type.\n", rs.preferred.name))
 		}
 	}
 	return false
@@ -15945,9 +15981,9 @@ func (rs *Reposurgeon) DoSourcetype(line string) bool {
 	repo := rs.chosen()
 	if line == "" {
 		if rs.chosen().vcs != nil {
-			fmt.Fprintf(context.baton, "%s: %s\n", repo.name, repo.vcs.name)
+			fmt.Fprintf(control.baton, "%s: %s\n", repo.name, repo.vcs.name)
 		} else {
-			fmt.Fprintf(context.baton, "%s: no preferred type.\n", repo.name)
+			fmt.Fprintf(control.baton, "%s: no preferred type.\n", repo.name)
 		}
 	} else {
 		known := ""
@@ -16002,7 +16038,7 @@ func (rs *Reposurgeon) DoChoose(line string) bool {
 		return false
 	}
 	if len(rs.repolist) == 0 && len(line) > 0 {
-		if context.isInteractive() {
+		if control.isInteractive() {
 			croak("no repositories are loaded, can't find %q.", line)
 			return false
 		}
@@ -16013,15 +16049,15 @@ func (rs *Reposurgeon) DoChoose(line string) bool {
 			if rs.chosen() != nil && repo == rs.chosen() {
 				status = "*"
 			}
-			if !context.flagOptions["quiet"] {
-				fmt.Fprint(context.baton, rfc3339(repo.readtime)+" ")
+			if !control.flagOptions["quiet"] {
+				fmt.Fprint(control.baton, rfc3339(repo.readtime)+" ")
 			}
-			fmt.Fprintf(context.baton, "%s %s\n", status, repo.name)
+			fmt.Fprintf(control.baton, "%s %s\n", status, repo.name)
 		}
 	} else {
 		if newOrderedStringSet(rs.reponames()...).Contains(line) {
 			rs.choose(rs.repoByName(line))
-			if context.isInteractive() {
+			if control.isInteractive() {
 				rs.DoStats(line)
 			}
 		} else {
@@ -16045,7 +16081,7 @@ func (rs *Reposurgeon) CompleteDrop(text string) []string {
 // Drop a repo from reposurgeon's list.
 func (rs *Reposurgeon) DoDrop(line string) bool {
 	if len(rs.reponames()) == 0 {
-		if context.isInteractive() {
+		if control.isInteractive() {
 			croak("no repositories are loaded.")
 			return false
 		}
@@ -16071,7 +16107,7 @@ func (rs *Reposurgeon) DoDrop(line string) bool {
 	} else {
 		croak("no such repo as %s", line)
 	}
-	if context.isInteractive() && !context.flagOptions["quiet"] {
+	if control.isInteractive() && !control.flagOptions["quiet"] {
 		// Emit listing of remaining repos
 		rs.DoChoose("")
 	}
@@ -16228,14 +16264,14 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 			croak(err2.Error())
 			return false
 		}
-		repo, err2 = readRepo(cdir, parse.options.toStringSet(), rs.preferred, rs.extractor, context.flagOptions["quiet"])
+		repo, err2 = readRepo(cdir, parse.options.toStringSet(), rs.preferred, rs.extractor, control.flagOptions["quiet"])
 		if err2 != nil {
 			croak(err2.Error())
 			return false
 		}
 	} else if isdir(parse.line) {
 		var err2 error
-		repo, err2 = readRepo(parse.line, parse.options.toStringSet(), rs.preferred, rs.extractor, context.flagOptions["quiet"])
+		repo, err2 = readRepo(parse.line, parse.options.toStringSet(), rs.preferred, rs.extractor, control.flagOptions["quiet"])
 		if err2 != nil {
 			croak(err2.Error())
 			return false
@@ -16259,7 +16295,7 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 		}
 		rs.chosen().rename(rs.uniquify(filepath.Base(name)))
 	}
-	if context.isInteractive() && !context.flagOptions["quiet"] {
+	if control.isInteractive() && !control.flagOptions["quiet"] {
 		rs.DoChoose("")
 	}
 	return false
@@ -16580,7 +16616,7 @@ presently, blobs and resets). Supports > redirection.
 
 May have an option --filter, followed by = and a /-enclosed regular expression.
 If this is given, only headers with names matching it are emitted.  In this
-context the name of the header includes its trailing colon.
+control the name of the header includes its trailing colon.
 `)
 }
 
@@ -16903,7 +16939,7 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 			}
 		}
 	}
-	if context.isInteractive() {
+	if control.isInteractive() {
 		if len(changers) == 0 {
 			respond("no events modified by msgin.")
 		} else {
@@ -17315,7 +17351,7 @@ func (rs *Reposurgeon) DoSetperm(line string) bool {
 		croak("unexpected permission literal %s", perm)
 		return false
 	}
-	baton := context.baton
+	baton := control.baton
 	//baton.startProcess("patching modes", "")
 	for _, ei := range rs.selection {
 		if commit, ok := rs.chosen().events[ei].(*Commit); ok {
@@ -18111,7 +18147,7 @@ func (rs *Reposurgeon) DoDivide(_line string) bool {
 			}
 		}
 	}
-	if context.isInteractive() && !context.flagOptions["quiet"] {
+	if control.isInteractive() && !control.flagOptions["quiet"] {
 		rs.DoChoose("")
 	}
 	return false
@@ -18286,7 +18322,7 @@ func (rs *Reposurgeon) DoUnite(line string) bool {
 		return false
 	}
 	rs.unite(factors, parse.options.toStringSet())
-	if context.isInteractive() && !context.flagOptions["quiet"] {
+	if control.isInteractive() && !control.flagOptions["quiet"] {
 		rs.DoChoose("")
 	}
 	return false
@@ -18306,7 +18342,7 @@ commits in the currently chosen repo.
 
 Labels and branches in the named repo are prefixed with its name; then
 it is grafted to the selected one. Any other callouts in the named repo are also
-resolved in the context of the currently chosen one. Finally, the
+resolved in the control of the currently chosen one. Finally, the
 named repo is removed from the load list.
 
 With the option --prune, prepend a deleteall operation into the root
@@ -20149,7 +20185,7 @@ func (rs *Reposurgeon) DoGitify(_line string) bool {
 		rs.selection = rs.chosen().all()
 	}
 	lineEnders := orderedStringSet{".", ",", ";", ":", "?", "!"}
-	baton := context.baton
+	baton := control.baton
 	//baton.startProcess("gitifying comments", "")
 	for _, ei := range rs.selection {
 		event := rs.chosen().events[ei]
@@ -20327,9 +20363,9 @@ func (rs *Reposurgeon) DoBranchify(line string) bool {
 		return false
 	}
 	if strings.TrimSpace(line) != "" {
-		context.listOptions["svn_branchify"] = strings.Fields(strings.TrimSpace(line))
+		control.listOptions["svn_branchify"] = strings.Fields(strings.TrimSpace(line))
 	}
-	respond("branchify "+strings.Join(context.listOptions["svn_branchify"], " "))
+	respond("branchify "+strings.Join(control.listOptions["svn_branchify"], " "))
 	return false
 }
 
@@ -20380,9 +20416,9 @@ func (rs *Reposurgeon) DoBranchmap(line string) bool {
 
 	line = strings.TrimSpace(line)
 	if line == "reset" {
-		context.branchMappings = nil
+		control.branchMappings = nil
 	} else if line != "" {
-		context.branchMappings = make([]branchMapping, 0)
+		control.branchMappings = make([]branchMapping, 0)
 		for _, regex := range strings.Fields(line) {
 			separator := regex[0]
 			if separator != regex[len(regex)-1] {
@@ -20400,12 +20436,12 @@ func (rs *Reposurgeon) DoBranchmap(line string) bool {
 				croak("Regex '%s' is ill-formed", regex)
 				return false
 			}
-			context.branchMappings = append(context.branchMappings, branchMapping{re, replace})
+			control.branchMappings = append(control.branchMappings, branchMapping{re, replace})
 		}
 	}
-	if len(context.branchMappings) != 0 {
+	if len(control.branchMappings) != 0 {
 		respond("branchmap, regex -> branch name:")
-		for _, pair := range context.branchMappings {
+		for _, pair := range control.branchMappings {
 			respond("\t"+ pair.match.String() +" -> " + pair.replace)
 		}
 	} else {
@@ -20432,7 +20468,7 @@ options. The following flags and options are defined:
 func (rs *Reposurgeon) CompleteSet(text string) []string {
 	out := make([]string, 0)
 	for _, x := range optionFlags {
-		if strings.HasPrefix(x[0], text) && !context.flagOptions[x[0]] {
+		if strings.HasPrefix(x[0], text) && !control.flagOptions[x[0]] {
 			out = append(out, x[0])
 		}
 	}
@@ -20444,20 +20480,20 @@ func performOptionSideEffect(opt string, val bool) {
 	if opt == "tighten" {
 		enableIntern(val)
 	} else if opt == "progress" {
-		context.baton.setInteractivity(val)
+		control.baton.setInteractivity(val)
 	}
 }
 
 func tweakFlagOptions(line string, val bool) {
 	if strings.TrimSpace(line) == "" {
 		for _, opt := range optionFlags {
-			respond("\t%s = %v\n", opt[0], context.flagOptions[opt[0]])
+			respond("\t%s = %v\n", opt[0], control.flagOptions[opt[0]])
 		}
 	} else {
 		for _, name := range strings.Fields(line) {
 			for _, opt := range optionFlags {
 				if name == opt[0] {
-					context.flagOptions[opt[0]] = val
+					control.flagOptions[opt[0]] = val
 					performOptionSideEffect(opt[0], val)
 					goto good
 				}
@@ -20488,7 +20524,7 @@ following flags and options are defined:
 func (rs *Reposurgeon) CompleteClear(text string) []string {
 	out := make([]string, 0)
 	for _, x := range optionFlags {
-		if strings.HasPrefix(x[0], text) && context.flagOptions[x[0]] {
+		if strings.HasPrefix(x[0], text) && control.flagOptions[x[0]] {
 			out = append(out, x[0])
 		}
 	}
@@ -20511,14 +20547,14 @@ Without arguments, report the read limit; 0 means there is none.
 
 func (rs *Reposurgeon) DoReadlimit(line string) bool {
 	if line == "" {
-		respond("readlimit %d\n", context.readLimit)
+		respond("readlimit %d\n", control.readLimit)
 		return false
 	}
 	lim, err := strconv.ParseUint(line, 10, 64)
 	if err != nil {
 		logit(logWARN, "ill-formed readlimit argument %q: %v.", line, err)
 	}
-	context.readLimit = lim
+	control.readLimit = lim
 	return false
 }
 
@@ -20716,7 +20752,7 @@ func (rs *Reposurgeon) DoTimequake(line string) bool {
 	if rs.selection == nil {
 		rs.selection = rs.chosen().all()
 	}
-	baton := context.baton
+	baton := control.baton
 	//baton.startProcess("reposurgeon: disambiguating", "")
 	modified := 0
 	for _, event := range repo.commits(rs.selection) {
@@ -20868,13 +20904,8 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		}
 		return ""
 	}
-	context.baton.startProgress("processing changelogs", uint64(len(repo.events)))
-	allEvents(repo.events, func(e Event) {
-		var commit *Commit
-		var ok bool
-		if commit, ok = e.(*Commit); !ok {
-			return
-		}
+	control.baton.startProgress("processing changelogs", uint64(len(repo.events)))
+	for i, commit := range repo.commits(nil) { 
 		cc++
 		// If a changeset is *all* ChangeLog mods, it is probably either
 		// a log rotation or a maintainer fixing a typo. In either case,
@@ -20886,10 +20917,9 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 			}
 		}
 		if !notChangelog {
-			return
+			continue
 		}
 		for _, op := range commit.operations() {
-			context.baton.twirl()
 			if op.op == opM && filepath.Base(op.Path) == "ChangeLog" {
 				cl++
 				blobfile := repo.markToEvent(op.ref).(*Blob).materialize()
@@ -20991,14 +21021,14 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 								cd++
 							}
 						}
-
 					}
 				}
 			}
+			control.baton.percentProgress(uint64(i))
 		}
 	bailout:
-		context.baton.endProgress()
-	})
+		control.baton.endProgress()
+	}
 	repo.invalidateNamecache()
 	respond("fills %d of %d authorships, changing %d, from %d ChangeLogs.", cm, cc, cd, cl)
 	return false
@@ -21178,7 +21208,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 
 	repo.declareSequenceMutation("")
 	repo.invalidateObjectMap()
-	if !context.flagOptions["testmode"] {
+	if !control.flagOptions["testmode"] {
 		blank.committer.date = Date{timestamp: newest}
 	}
 
@@ -21283,7 +21313,7 @@ func (rs *Reposurgeon) DoVersion(line string) bool {
 		}
 		if major != vmajor {
 			panic("major version mismatch, aborting.")
-		} else if context.isInteractive() {
+		} else if control.isInteractive() {
 			respond("version check passed.")
 
 		}
@@ -21506,13 +21536,13 @@ func (rs *Reposurgeon) DoLog(lineIn string) bool {
 			}
 		}
 		if enable {
-			context.logmask |= mask
+			control.logmask |= mask
 		} else {
-			context.logmask &= ^mask
+			control.logmask &= ^mask
 		}
 	}
 breakout:
-	if len(lineIn) == 0 || context.isInteractive() {
+	if len(lineIn) == 0 || control.isInteractive() {
 		// We make the capabilities display in ascending value order
 		out := "log"
 		for i, item := range verbosityLevelList() {
@@ -21545,11 +21575,11 @@ func (rs *Reposurgeon) DoLogfile(lineIn string) bool {
 			respond("log file open failed: %v", err)
 		} else {
 			var i interface{} = fp
-			context.logfp = i.(io.Writer)
+			control.logfp = i.(io.Writer)
 		}
 	}
-	if len(lineIn) == 0 || context.isInteractive() {
-		switch v := context.logfp.(type) {
+	if len(lineIn) == 0 || control.isInteractive() {
+		switch v := control.logfp.(type) {
 			case *os.File:
 			respond("logfile %s", v.Name())
 			case *Baton:
@@ -21581,7 +21611,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 		return false
 	}
 	if len(rs.callstack) == 0 {
-		context.setAbort(false)
+		control.setAbort(false)
 	}
 	words := strings.Split(lineIn, " ")
 	rs.callstack = append(rs.callstack, words)
@@ -21678,7 +21708,7 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 		// Abort flag is set by croak() and signals.
 		// When it is set, we abort out of every nested
 		// script call.
-		if context.getAbort() {
+		if control.getAbort() {
 			if originalline != "" {
 				logit(logSHOUT, "script abort on line %d %q", lineno, originalline)
 			} else {
@@ -21738,17 +21768,17 @@ func (rs *Reposurgeon) DoSizeof(lineIn string) bool {
 }
 
 func main() {
-	context.init()
+	control.init()
 	rs := newReposurgeon()
 	interpreter := kommandant.NewKommandant(rs)
 	interpreter.EnableReadline(true)
 
 	defer func() {
-		context.baton.Sync()
+		control.baton.Sync()
 		//fmt.Print("\n")
 		pprof.StopCPUProfile()
 		/*
-		if context.logmask <= 1 {
+		if control.logmask <= 1 {
 			if e := recover(); e != nil {
 				fmt.Println("reposurgeon: panic recovery: ", e)
 			}
@@ -21772,9 +21802,9 @@ func main() {
 	for _, arg := range os.Args[1:] {
 		for _, acmd := range strings.Split(arg, ";") {
 			if acmd == "-" {
-				context.flagOptions["interactive"] = terminal.IsTerminal(0)
-				context.flagOptions["progress"] = terminal.IsTerminal(1)
-				context.baton.setInteractivity(context.flagOptions["interactive"])
+				control.flagOptions["interactive"] = terminal.IsTerminal(0)
+				control.flagOptions["progress"] = terminal.IsTerminal(1)
+				control.baton.setInteractivity(control.flagOptions["interactive"])
 				interpreter.CmdLoop("")
 			} else {
 				// A minor concession to people used
