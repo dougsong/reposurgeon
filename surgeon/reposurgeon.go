@@ -5195,23 +5195,22 @@ func (commit *Commit) visible(argpath string) *Commit {
 		parents := ancestor.parents()
 		if len(parents) == 0 {
 			return nil
-		} else {
-			switch parents[0].(type) {
-			case *Callout:
-				return nil
-			case *Commit:
-				ancestor = parents[0].(*Commit)
-				// This loop assumes that the op sequence has no
-				// M/C/R foo after D foo pairs. If this condition
-				// is violated it can throw false negatives.
-				for _, fileop := range ancestor.operations() {
-					if fileop.op == opD && fileop.Path == argpath {
-						return nil
-					} else if fileop.op == opM && fileop.Path == argpath {
-						return ancestor
-					} else if (fileop.op == opR || fileop.op == opC) && fileop.Target == argpath {
-						return ancestor
-					}
+		}
+		switch parents[0].(type) {
+		case *Callout:
+			return nil
+		case *Commit:
+			ancestor = parents[0].(*Commit)
+			// This loop assumes that the op sequence has no
+			// M/C/R foo after D foo pairs. If this condition
+			// is violated it can throw false negatives.
+			for _, fileop := range ancestor.operations() {
+				if fileop.op == opD && fileop.Path == argpath {
+					return nil
+				} else if fileop.op == opM && fileop.Path == argpath {
+					return ancestor
+				} else if (fileop.op == opR || fileop.op == opC) && fileop.Target == argpath {
+					return ancestor
 				}
 			}
 		}
@@ -7144,9 +7143,8 @@ func (sp *StreamParser) fastImport(fp io.Reader, options stringSet, source strin
 		if baton != nil {
 			elapsed := time.Since(baton.progress.start)
 			return fmt.Sprintf("%dK/s", int(float64(elapsed)/float64(count * 1000)))
-		} else {
-			return ""
 		}
+		return ""
 	}
 	if bytes.HasPrefix(line, []byte("SVN-fs-dump-format-version: ")) {
 		body := string(sdBody(line))
@@ -7238,10 +7236,9 @@ func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
 			logit(logTOPOLOGY, "r%d~%s -> %s (via hashmap)",
 				node.revision, node.path, ancestor)
 			return ancestor
-		} else {
-			logit(logTOPOLOGY, "r%d~%s -> expected node from-hash is missing - stream may be corrupt",
-				node.revision, node.path)
 		}
+		logit(logTOPOLOGY, "r%d~%s -> expected node from-hash is missing - stream may be corrupt",
+				node.revision, node.path)
 	}
 
 	var lookback *NodeAction
@@ -10316,9 +10313,8 @@ func (commit *Commit) _compose(left FileOp, right FileOp) (bool, FileOp, FileOp,
 		// Or, could reduce to nothing if M a was the only modify..
 		if commit.ancestorCount(left.Path) == 1 {
 			return true, nilOp, nilOp, "", 1
-		} else {
-			return true, right, nilOp, "", 2
 		}
+		return true, right, nilOp, "", 2
 	} else if left.op == opM && right.op == opR {
 		// M a + R a b -> R a b M b, so R falls towards start of list
 		if left.Path == right.Source {
@@ -10326,11 +10322,10 @@ func (commit *Commit) _compose(left FileOp, right FileOp) (bool, FileOp, FileOp,
 				// M a has no ancestors, preceding R can be dropped
 				left.Path = right.Target
 				return true, left, nilOp, "", 3
-			} else {
-				// M a has ancestors, R is still needed
-				left.Path = right.Target
-				return true, right, left, "", 4
 			}
+			// M a has ancestors, R is still needed
+			left.Path = right.Target
+			return true, right, left, "", 4
 		} else if left.Path == right.Target {
 			// M b + R a b can't happen.  If you try to
 			// generate this with git mv it throws an
@@ -10365,9 +10360,8 @@ func (commit *Commit) _compose(left FileOp, right FileOp) (bool, FileOp, FileOp,
 		if left.Path == right.Source {
 			return false, left, right,
 				fmt.Sprintf("R or C of %s after deletion?", left.Path), -3
-		} else {
-			return false, left, right, "", 8
 		}
+		return false, left, right, "", 8
 	} else if pair == [2]rune{opR, opD} {
 		//
 		// First op R
@@ -10377,13 +10371,12 @@ func (commit *Commit) _compose(left FileOp, right FileOp) (bool, FileOp, FileOp,
 			// composes to source delete
 			right.Path = left.Source
 			return true, nilOp, right, "", 9
-		} else {
-			// On rename followed by delete of source
-			// discard the delete but user should be
-			// warned.
-			return false, left, nilOp,
-				fmt.Sprintf("delete of %s after renaming to %s?", right.Path, left.Source), -4
 		}
+		// On rename followed by delete of source
+		// discard the delete but user should be
+		// warned.
+		return false, left, nilOp, fmt.Sprintf("delete of %s after renaming to %s?", right.Path, left.Source), -4
+
 	} else if pair == [2]rune{opR, deleteall} && left.Target == right.Path {
 		// Rename followed by deleteall shouldn't be possible
 		return false, nilOp, right,
@@ -10396,10 +10389,8 @@ func (commit *Commit) _compose(left FileOp, right FileOp) (bool, FileOp, FileOp,
 		if left.Target == right.Source {
 			left.Target = right.Target
 			return true, left, nilOp, "", 11
-		} else {
-			return false, left, right,
-				fmt.Sprintf("R %s %s is inconsistent with following operation", left.Source, left.Target), -6
 		}
+		return false, left, right, fmt.Sprintf("R %s %s is inconsistent with following operation", left.Source, left.Target), -6
 	}
 	// We could do R a b + C b c -> C a c + R a b, but why?
 	if left.op == opR && right.op == opC {
@@ -10420,12 +10411,11 @@ func (commit *Commit) _compose(left FileOp, right FileOp) (bool, FileOp, FileOp,
 		if left.Source == right.Source {
 			// No reduction
 			return false, left, right, "", 15
-		} else {
-			// Copy followed by a rename of the target reduces to single copy
-			if left.Target == right.Source {
-				left.Target = right.Target
-				return true, left, nilOp, "", 16
-			}
+		}
+		// Copy followed by a rename of the target reduces to single copy
+		if left.Target == right.Source {
+			left.Target = right.Target
+			return true, left, nilOp, "", 16
 		}
 	} else if pair == [2]rune{opC, opC} {
 		// No reduction
@@ -11191,9 +11181,8 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
 		_, ok := markmap[m]
 		if ok {
 			return fmt.Sprintf(":%d", markmap[m])
-		} else {
-			panic(fmt.Sprintf("unknown mark %s in %s cannot be renumbered!", m, id))
 		}
+		panic(fmt.Sprintf("unknown mark %s in %s cannot be renumbered!", m, id))
 	}
 	repo.markseq = 0
 	for _, event := range repo.events {
@@ -13948,9 +13937,9 @@ func (lp *LineParse) OptVal(opt string) (val string, present bool) {
 			parts := strings.Split(option, "=")
 			if len(parts) > 1 && parts[0] == opt {
 				return parts[1], true
-			} else {
-				return "", true
 			}
+			return "", true
+
 		} else if option == opt {
 			return "", true
 		}
@@ -14308,10 +14297,9 @@ func (rs *Reposurgeon) parsePathset() selEvaluator {
 		return func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
 			return rs.evalPathsetRegex(x, s, search, flags)
 		}
-	} else {
-		return func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
-			return rs.evalPathset(x, s, matcher)
-		}
+	}
+	return func(x selEvalState, s *fastOrderedIntSet) *fastOrderedIntSet {
+		return rs.evalPathset(x, s, matcher)
 	}
 }
 
@@ -15103,12 +15091,11 @@ func (rs *Reposurgeon) DoAssign(line string) bool {
 		if line != "" {
 			croak("No selection")
 			return false
-		} else {
-			for n, v := range repo.assignments {
-				respond(fmt.Sprintf("%s = %v", n, v))
-			}
-			return false
 		}
+		for n, v := range repo.assignments {
+			respond(fmt.Sprintf("%s = %v", n, v))
+		}
+		return false
 	}
 	parse := rs.newLineParse(line, nil)
 	defer parse.Closem()
@@ -15454,32 +15441,31 @@ func (rs *Reposurgeon) DoStats(line string) bool {
 		if repo == nil {
 			croak("no such repo as %s", name)
 			return false
-		} else {
-			var blobs, commits, tags, resets, passthroughs int
-			for _, event := range repo.events {
-				switch event.(type) {
-				case *Blob:
-					blobs++
-				case *Tag:
-					tags++
-				case *Reset:
-					resets++
-				case *Passthrough:
-					passthroughs++
-				case *Commit:
-					commits++
-				}
-			}
-			fmt.Fprintf(parse.stdout, "%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s.\n",
-				repo.name, float64(repo.size())/1000.0, len(repo.events),
-				blobs, commits, tags, resets,
-				rfc3339(repo.readtime))
-			if repo.sourcedir != "" {
-				fmt.Fprintf(parse.stdout, "  Loaded from %s\n", repo.sourcedir)
-			}
-			//if repo.vcs {
-			//    parse.stdout.WriteString(polystr(repo.vcs) + "\n")
 		}
+		var blobs, commits, tags, resets, passthroughs int
+		for _, event := range repo.events {
+			switch event.(type) {
+			case *Blob:
+				blobs++
+			case *Tag:
+				tags++
+			case *Reset:
+				resets++
+			case *Passthrough:
+				passthroughs++
+			case *Commit:
+				commits++
+			}
+		}
+		fmt.Fprintf(parse.stdout, "%s: %.0fK, %d events, %d blobs, %d commits, %d tags, %d resets, %s.\n",
+			repo.name, float64(repo.size())/1000.0, len(repo.events),
+			blobs, commits, tags, resets,
+			rfc3339(repo.readtime))
+		if repo.sourcedir != "" {
+			fmt.Fprintf(parse.stdout, "  Loaded from %s\n", repo.sourcedir)
+		}
+		//if repo.vcs {
+		//    parse.stdout.WriteString(polystr(repo.vcs) + "\n")
 	}
 	return false
 }
@@ -15523,9 +15509,8 @@ func (rs *Reposurgeon) DoList(lineIn string) bool {
 		c, ok := e.(*Commit)
 		if ok {
 			return c.lister(modifiers, i, w)
-		} else {
-			return ""
 		}
+		return ""
 	}
 	rs.reportSelect(parse, f)
 	return false
@@ -15557,9 +15542,8 @@ func (rs *Reposurgeon) DoTip(lineIn string) bool {
 		c, ok := e.(*Commit)
 		if ok {
 			return c.tip(modifiers, i, w)
-		} else {
-			return ""
 		}
+		return ""
 	}
 	rs.reportSelect(parse, f)
 	return false
@@ -17073,17 +17057,16 @@ func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
 				fc.sub = func(s string) string {
 					if subcount == -1 {
 						return GoReplacer(fc.regexp, s, parts[2])
-					} else {
-						replacecount := subcount
-						replacer := func(s string) string {
-							replacecount--
-							if replacecount > -1 {
-								return parts[2]
-							}
-							return s
-						}
-						return fc.regexp.ReplaceAllStringFunc(s, replacer)
 					}
+					replacecount := subcount
+					replacer := func(s string) string {
+						replacecount--
+						if replacecount > -1 {
+							return parts[2]
+						}
+						return s
+					}
+					return fc.regexp.ReplaceAllStringFunc(s, replacer)
 				}
 			} else if strings.HasPrefix(filtercmd, "--replace") {
 				fc.sub = func(s string) string {
@@ -17821,9 +17804,8 @@ func (rs *Reposurgeon) DoRemove(line string) bool {
 			if !ok {
 				croak("event %d is not a commit", target+1)
 				return false
-			} else {
-				commit.appendOperation(removed)
 			}
+			commit.appendOperation(removed)
 			// Blob might have to move, too - we need to keep the
 			// relocated op from having an unresolvable forward
 			// mark reference.
@@ -18279,9 +18261,8 @@ func (rs *Reposurgeon) DoUnite(line string) bool {
 		if repo == nil {
 			croak("no such repo as %s", name)
 			return false
-		} else {
-			factors = append(factors, repo)
 		}
+		factors = append(factors, repo)
 	}
 	if len(factors) < 2 {
 		croak("unite requires two or more repo name arguments")
@@ -18600,9 +18581,8 @@ func (rs *Reposurgeon) DoPaths(line string) bool {
 					slash := strings.Index(f, "/")
 					if slash == -1 {
 						return f
-					} else {
-						return f[slash+1:]
 					}
+					return f[slash+1:]
 				})
 			sort.Strings(modified)
 			fmt.Fprint(parse.stdout, strings.Join(modified, "\n")+"\n")
@@ -18615,9 +18595,8 @@ func (rs *Reposurgeon) DoPaths(line string) bool {
 				func(f string) string {
 					if strings.HasPrefix(f, prefix) {
 						return f[len(prefix):]
-					} else {
-						return f
 					}
+					return f
 				})
 			sort.Strings(modified)
 			fmt.Fprint(parse.stdout, strings.Join(modified, "\n")+"\n")
@@ -20040,11 +20019,10 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 			if commit == nil {
 				logit(logWARN, "no commit matches %q", legend)
 				return legend // no replacement
-			} else {
-				text := commit.actionStamp()
-				hits++
-				return text
 			}
+			text := commit.actionStamp()
+			hits++
+			return text
 		}
 		type getterPair struct {
 			pattern string

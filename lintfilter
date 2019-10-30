@@ -3,8 +3,7 @@
 # Some of golint's warnings are useful.  Some are just annoying.
 # Throw out the annoying ones
 
-sed -e \
-       "/if block ends with a return statement, so drop this else and outdent its block/d" \
+sed \
     -e "/exported const .* should have comment or be unexported/d" \
     -e "/exported type .* should have comment or be unexported/d" \
     -e "/exported method .* should have comment or be unexported/d" \
