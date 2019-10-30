@@ -13,21 +13,21 @@ import (
 	"time"
 )
 
-// the overall state of the output
-type μπαγκέτα struct {
+// Baton is the overall state of the output
+type Baton struct {
 	progressEnabled bool
 	stream *os.File
 	channel chan Message
 	progressLine []byte
 	start time.Time
-	baton Baton
+	twirly Twirly
 	counter Counter
 	progress Progress
 	process Process
 }
 
-// Baton is the state of a twirly indefinite progess meter that ships indications to stdout.
-type Baton struct {
+// Twirly is the state of a twirly indefinite progess meter that ships indications to stdout.
+type Twirly struct {
 	lastupdate time.Time
 	count uint8
 }
@@ -78,11 +78,11 @@ type Message struct {
 	currentProgress []byte
 }
 
-const twirlInterval     = 100 * time.Millisecond	// Rate-limit baton twirls
+const twirlInterval     = 100 * time.Millisecond	// Rate-limit twirly twirls
 const progressInterval  =   1 * time.Second		// Rate-limit progress messages
 
-func newBaton(interactive bool) *μπαγκέτα {
-	me := new(μπαγκέτα)
+func newBaton(interactive bool) *Baton {
+	me := new(Baton)
 	me.start = time.Now()
 	tiColZero := getTerminfoString("hpa", "0")
 	tiClrEol := getTerminfoString("el")
@@ -126,173 +126,173 @@ func newBaton(interactive bool) *μπαγκέτα {
 	return me
 }
 
-func (self *μπαγκέτα) setInteractivity(enabled bool) {
-	if self != nil {
-		self.channel<- Message{SYNC, nil, nil}
-		self.progressEnabled = enabled
-		<-self.channel
+func (baton *Baton) setInteractivity(enabled bool) {
+	if baton != nil {
+		baton.channel<- Message{SYNC, nil, nil}
+		baton.progressEnabled = enabled
+		<-baton.channel
 	}
 }
 
 // log prints out a simple log message
-func (self *μπαγκέτα) printLog(str []byte) {
-	if self != nil {
-		self.channel <- Message{LOG, _copyb(str), _copyb(self.progressLine)}
+func (baton *Baton) printLog(str []byte) {
+	if baton != nil {
+		baton.channel <- Message{LOG, _copyb(str), _copyb(baton.progressLine)}
 	}
 }
 
-func (self *μπαγκέτα) printLogString(str string) {
-	if self != nil {
-		self.channel <- Message{LOG, _copystr(str), _copyb(self.progressLine)}
+func (baton *Baton) printLogString(str string) {
+	if baton != nil {
+		baton.channel <- Message{LOG, _copystr(str), _copyb(baton.progressLine)}
 	}
 }
 
 // progress prints out a progress message in the status line
-func (self *μπαγκέτα) printProgress() {
-	if self != nil && self.progressEnabled {
+func (baton *Baton) printProgress() {
+	if baton != nil && baton.progressEnabled {
 		var buf bytes.Buffer
-		self.render(&buf)
-		self.progressLine = buf.Bytes()
-		self.channel <- Message{PROGRESS, nil, _copyb(self.progressLine)}
+		baton.render(&buf)
+		baton.progressLine = buf.Bytes()
+		baton.channel <- Message{PROGRESS, nil, _copyb(baton.progressLine)}
 	}
 }
 
-// twirl spins the baton
-func (self *μπαγκέτα) twirl() {
-	if self != nil && self.progressEnabled {
-		if time.Since(self.baton.lastupdate) > twirlInterval {
-			self.baton.count = (self.baton.count + 1) % 4
-			self.printProgress()
-			self.baton.lastupdate = time.Now()
+// twirl spins the twirly
+func (baton *Baton) twirl() {
+	if baton != nil && baton.progressEnabled {
+		if time.Since(baton.twirly.lastupdate) > twirlInterval {
+			baton.twirly.count = (baton.twirly.count + 1) % 4
+			baton.printProgress()
+			baton.twirly.lastupdate = time.Now()
 		}
 	}
 }
 
-func (self *μπαγκέτα) startProcess(startmsg string, endmsg string) {
-	if self != nil && self.progressEnabled {
-		self.process.startmsg = []byte(startmsg)
-		self.process.endmsg = []byte(endmsg)
-		self.process.start = time.Now()
+func (baton *Baton) startProcess(startmsg string, endmsg string) {
+	if baton != nil && baton.progressEnabled {
+		baton.process.startmsg = []byte(startmsg)
+		baton.process.endmsg = []byte(endmsg)
+		baton.process.start = time.Now()
 	}
 }
 
-func (self *μπαγκέτα) endProcess(endmsg ...string) {
-	if self != nil && self.progressEnabled {
+func (baton *Baton) endProcess(endmsg ...string) {
+	if baton != nil && baton.progressEnabled {
 		if endmsg != nil {
-			self.process.endmsg = []byte(strings.Join(endmsg, " "))
+			baton.process.endmsg = []byte(strings.Join(endmsg, " "))
 		}
-		fmt.Fprintf(self, "%s ...(%s) %s.",
-			self.process.startmsg,
-			time.Since(self.process.start).Round(time.Millisecond * 10),
-			self.process.endmsg)
-		self.process.startmsg = nil
-		self.process.endmsg = nil
+		fmt.Fprintf(baton, "%s ...(%s) %s.",
+			baton.process.startmsg,
+			time.Since(baton.process.start).Round(time.Millisecond * 10),
+			baton.process.endmsg)
+		baton.process.startmsg = nil
+		baton.process.endmsg = nil
 	}
 }
 
-func (self *μπαγκέτα) startcounter(countfmt string, initial uint64) {
-	if self != nil && self.progressEnabled {
-		self.counter.format = countfmt
-		self.counter.count = initial
+func (baton *Baton) startcounter(countfmt string, initial uint64) {
+	if baton != nil && baton.progressEnabled {
+		baton.counter.format = countfmt
+		baton.counter.count = initial
 	}
 }
 
-func (self *μπαγκέτα) bumpcounter() {
-	if self != nil && self.progressEnabled {
-		if self.counter.format != "" {
-			self.counter.count += 1
-			self.printProgress()
+func (baton *Baton) bumpcounter() {
+	if baton != nil && baton.progressEnabled {
+		if baton.counter.format != "" {
+			baton.counter.count++
+			baton.printProgress()
 		} else {
-			self.twirl()
+			baton.twirl()
 		}
 	}
 }
 
-func (self *μπαγκέτα) endcounter() {
-	if self != nil && self.progressEnabled {
-		self.counter.render(self)
-		self.counter.format = ""
-		self.counter.count = 0
+func (baton *Baton) endcounter() {
+	if baton != nil && baton.progressEnabled {
+		baton.counter.render(baton)
+		baton.counter.format = ""
+		baton.counter.count = 0
 	}
 }
 
-func (self *μπαγκέτα) startProgress(tag string, expected uint64) {
-	if self != nil && self.progressEnabled {
-		self.progress.start = time.Now()
-		self.progress.lastupdate = self.progress.start
-		self.progress.tag = []byte(tag)
-		self.progress.count = 0
-		self.progress.expected = expected
+func (baton *Baton) startProgress(tag string, expected uint64) {
+	if baton != nil && baton.progressEnabled {
+		baton.progress.start = time.Now()
+		baton.progress.lastupdate = baton.progress.start
+		baton.progress.tag = []byte(tag)
+		baton.progress.count = 0
+		baton.progress.expected = expected
 	}
 }
 
-func (self *μπαγκέτα) percentProgress(ccount uint64) {
-	if self != nil && self.progressEnabled &&
-		(time.Since(self.progress.lastupdate) > progressInterval || ccount == self.progress.expected) {
-		self.progress.count = ccount
-		self.progress.lastupdate = time.Now()
-		self.printProgress()
+func (baton *Baton) percentProgress(ccount uint64) {
+	if baton != nil && baton.progressEnabled &&
+		(time.Since(baton.progress.lastupdate) > progressInterval || ccount == baton.progress.expected) {
+		baton.progress.count = ccount
+		baton.progress.lastupdate = time.Now()
+		baton.printProgress()
 	}
 }
 
-func (self *μπαγκέτα) endProgress() {
-	if self != nil && self.progressEnabled {
-		self.progress.render(self)
-		self.progress.tag = nil
-		self.progress.count = 0
-		self.progress.expected = 0
+func (baton *Baton) endProgress() {
+	if baton != nil && baton.progressEnabled {
+		baton.progress.render(baton)
+		baton.progress.tag = nil
+		baton.progress.count = 0
+		baton.progress.expected = 0
 	}
 }
 
-func (self *μπαγκέτα) WriteString(s string) (n int, err error) {
-	if self != nil {
-		self.printLog([]byte(s))
+func (baton *Baton) WriteString(s string) (n int, err error) {
+	if baton != nil {
+		baton.printLog([]byte(s))
 	}
 	return len(s), nil
 }
 
-func (self *μπαγκέτα) Write(b []byte) (n int, err error) {
-	if self != nil {
-		self.printLog(b)
+func (baton *Baton) Write(b []byte) (n int, err error) {
+	if baton != nil {
+		baton.printLog(b)
 	}
 	return len(b), nil
 }
 
-func (self *μπαγκέτα) Close() error {
+func (baton *Baton) Close() error {
 	return nil
 }
 
-func (self *μπαγκέτα) Sync() {
-	if self != nil {
-		self.channel <- Message{SYNC, nil, nil}
-		<-self.channel
+func (baton *Baton) Sync() {
+	if baton != nil {
+		baton.channel <- Message{SYNC, nil, nil}
+		<-baton.channel
 	}
 }
 
-func (self *μπαγκέτα) render(buf io.Writer) {
-	self.process.renderPre(buf)
-	self.counter.render(buf)
-	self.progress.render(buf)
-	fmt.Fprintf(buf, " (%v)", time.Since(self.start).Round(time.Second))
-	self.baton.render(buf)
-	self.process.renderPost(buf)
+func (baton *Baton) render(buf io.Writer) {
+	baton.process.renderPre(buf)
+	baton.counter.render(buf)
+	baton.progress.render(buf)
+	fmt.Fprintf(buf, " (%v)", time.Since(baton.start).Round(time.Second))
+	baton.twirly.render(buf)
+	baton.process.renderPost(buf)
 }
 
-func (self *Baton) render(b io.Writer) {
-	character := "-\\|/"[self.count]
+func (baton *Twirly) render(b io.Writer) {
+	character := "-\\|/"[baton.count]
 	b.Write([]byte{32, character})
 }
 
-func (self *Counter) render(b io.Writer) {
-	if self.format != "" {
-		n, _ := fmt.Fprintf(b, self.format, self.count)
+func (baton *Counter) render(b io.Writer) {
+	if baton.format != "" {
+		n, _ := fmt.Fprintf(b, baton.format, baton.count)
 		if n > 0 {
 			b.Write([]byte{' '})
 		}
 	}
 }
 
-func (self *Progress) render(b io.Writer) {
+func (baton *Progress) render(b io.Writer) {
 	scale := func(n float64) string {
 		if n < 1000 {
 			return fmt.Sprintf("%.2f", n)
@@ -306,10 +306,10 @@ func (self *Progress) render(b io.Writer) {
 			return fmt.Sprintf("%.2fT", n / 1000000000000)
 		}
 	}
-	if self.expected > 0 {
-		frac := float64(self.count) / float64(self.expected)
-		elapsed := self.lastupdate.Sub(self.start)
-		rate := float64(self.count) / elapsed.Seconds()
+	if baton.expected > 0 {
+		frac := float64(baton.count) / float64(baton.expected)
+		elapsed := baton.lastupdate.Sub(baton.start)
+		rate := float64(baton.count) / elapsed.Seconds()
 		var ratemsg string
 		if elapsed.Seconds() == 0 || math.IsInf(rate, 0) {
 			ratemsg = "∞"
@@ -320,15 +320,15 @@ func (self *Progress) render(b io.Writer) {
 			elapsed = elapsed.Round(time.Second)
 		}
 		fmt.Fprintf(b, "%s %.2f%% %s/%s, %v @ %s/s",
-			self.tag, frac * 100, scale(float64(self.count)), scale(float64(self.expected)), elapsed, ratemsg)
+			baton.tag, frac * 100, scale(float64(baton.count)), scale(float64(baton.expected)), elapsed, ratemsg)
 	}
 }
 
-func (self *Process) renderPre(b io.Writer) {
-	b.Write(self.startmsg)
+func (baton *Process) renderPre(b io.Writer) {
+	b.Write(baton.startmsg)
 }
-func (self *Process) renderPost(b io.Writer) {
-	b.Write(self.endmsg)
+func (baton *Process) renderPost(b io.Writer) {
+	b.Write(baton.endmsg)
 }
 
 func _copystr(s string) []byte {
