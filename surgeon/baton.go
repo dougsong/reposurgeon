@@ -32,12 +32,14 @@ type Baton struct {
 	count uint8
 }
 
+// Counter is usually used for "N of M" type progress, but the caller can supply any format string they want
 type Counter struct {
 	lastupdate time.Time
 	format string
 	count uint64
 }
 
+// Progress is the evolved form of the counter which shows the percentage of completion and the rate of progress in addition to the count
 type Progress struct {
 	start time.Time
 	lastupdate time.Time
@@ -46,6 +48,7 @@ type Progress struct {
 	expected uint64
 }
 
+// Process prints a message before and after the other status messages
 type Process struct {
 	lastupdate time.Time
 	startmsg []byte
@@ -55,9 +58,17 @@ type Process struct {
 
 type msgType uint8
 const (
+	// NONE is the abscence of a message
 	NONE msgType = iota
+	// LOG represents a message that should be printed once, as if
+	// to a logfile
 	LOG
+	// PROGRESS messages are printed to the status line,
+	// overwriting whatever was already there
 	PROGRESS
+	// SYNC allows for synchronization between the goroutine and
+	// the calling code; the goroutine replies but takes no other
+	// action
 	SYNC
 )
 
