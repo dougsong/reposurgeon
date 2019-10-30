@@ -78,7 +78,7 @@ type Message struct {
 	currentProgress []byte
 }
 
-const twirlInterval     = 100 * time.Millisecond	// Rate-limit twirly twirls
+const twirlInterval     = 100 * time.Millisecond	// Rate-limit baton twirls
 const progressInterval  =   1 * time.Second		// Rate-limit progress messages
 
 func newBaton(interactive bool) *Baton {
@@ -157,7 +157,7 @@ func (baton *Baton) printProgress() {
 	}
 }
 
-// twirl spins the twirly
+// twirl spins the baton
 func (baton *Baton) twirl() {
 	if baton != nil && baton.progressEnabled {
 		if time.Since(baton.twirly.lastupdate) > twirlInterval {
