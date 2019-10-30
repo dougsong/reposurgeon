@@ -36,10 +36,10 @@ Normally, each subcommand produces a progress spinner on standard
 error; each turn means another revision has been filtered. The -q (or
 --quiet) option suppresses this.
 
-The -d command enables debug messages on standard error. These
+The -d option enables debug messages on standard error. These
 are probably only of interest to repocutter developers.
 
-The -i command sets the input source to a specified filename.
+The -i option sets the input source to a specified filename.
 This is primarily useful when running the program under a debugger.
 
 Generally, if you need to use this program at all, you will find

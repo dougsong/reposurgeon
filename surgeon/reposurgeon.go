@@ -1758,6 +1758,7 @@ func (ge *GitExtractor) colorBranches(rs *RepoStreamer) error {
 	if err2 != nil {
 		return err1
 	}
+	defer markfile.Close()
 	data, err3 := captureFromProcess("git fast-export --all --export-marks=" + file.Name())
 	if err3 != nil {
 		panic(throw("extractor", "Couldn't spawn git-fast-export: %v", err3))
@@ -5883,10 +5884,10 @@ type signature struct {
 
 func newSignature(path string) *signature {
 	file, err1 := os.Open(path)
-	defer file.Close()
 	if err1 != nil {
 		panic(throw("extractor", "Can't open %q\n", path))
 	}
+	defer file.Close()
 	st, err2 := file.Stat()
 	if err2 != nil {
 		panic(throw("extractor", "Can't stat %q\n", path))
@@ -21145,10 +21146,10 @@ func extractTar(dst string, r io.Reader) ([]tar.Header, error) {
 			if err != nil {
 				return nil, err
 			}
+			defer f.Close()
 			if _, err := io.Copy(f, tr); err != nil {
 				return nil, err
 			}
-			f.Close()
 		}
 	}
 }
@@ -21253,6 +21254,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		croak("open or read failed on %s", parse.line)
 		return false
 	}
+	defer tarfile.Close()
 
 	logit(logSHUFFLE, "extracting %s into %s", parse.line, repo.subdir(""))
 	repo.makedir()
