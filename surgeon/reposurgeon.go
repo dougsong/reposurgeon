@@ -2116,7 +2116,7 @@ func (he *HgExtractor) colorBranches(rs *RepoStreamer) error {
 func (he *HgExtractor) postExtract(repo *Repository) {
 	he.checkout("tip")
 	if !repo.branchset().Contains("refs/heads/master") {
-		for _, event := range repo.events {
+		allEvents(repo.events, func(event Event) {
 			switch event.(type) {
 			case *Commit:
 				if event.(*Commit).Branch == "refs/heads/default" {
@@ -2127,7 +2127,7 @@ func (he *HgExtractor) postExtract(repo *Repository) {
 					event.(*Reset).ref = "refs/heads/master"
 				}
 			}
-		}
+		})
 	}
 }
 
@@ -7092,7 +7092,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 	if context.readLimit > 0 && uint64(commitcount) < context.readLimit {
 		logit(logSHOUT, "EOF before readlimit.")
 	}
-	for _, event := range sp.repo.events {
+	allEvents(sp.repo.events, func(event Event) {
 		switch event.(type) {
 		case *Reset:
 			reset := event.(*Reset)
@@ -7114,7 +7114,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				commit.attach(tag)
 			}
 		}
-	}
+	})
 	if !sp.lastcookie.isEmpty() {
 		sp.repo.hint("", sp.lastcookie.implies(), false)
 	}
@@ -9045,6 +9045,17 @@ type Event interface {
 	moveto(*Repository)
 	getDelFlag() bool
 	setDelFlag(bool)
+}
+
+// walkEvents walks an event list applying a hook function.
+// This is intended to bew parallelized.  Apply only when the
+// computation has no dependency on the order in which commits
+// are processed.
+func allEvents(events []Event, hook func(Event)) {
+	// Someday this will parallelize through a worker pool
+	for _, e := range events {
+		hook(e)
+	}
 }
 
 // CommitLike is a Commit or Callout
@@ -20857,10 +20868,13 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		}
 		return ""
 	}
-	baton := context.baton
-	//baton.startProcess("reposurgeon: parsing changelogs", "")
-	//defer baton.endProcess()
-	for _, commit := range repo.commits(nil) {
+	context.baton.startProgress("processing changelogs", uint64(len(repo.events)))
+	allEvents(repo.events, func(e Event) {
+		var commit *Commit
+		var ok bool
+		if commit, ok = e.(*Commit); !ok {
+			return
+		}
 		cc++
 		// If a changeset is *all* ChangeLog mods, it is probably either
 		// a log rotation or a maintainer fixing a typo. In either case,
@@ -20872,10 +20886,10 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 			}
 		}
 		if !notChangelog {
-			continue
+			return
 		}
 		for _, op := range commit.operations() {
-			baton.twirl()
+			context.baton.twirl()
 			if op.op == opM && filepath.Base(op.Path) == "ChangeLog" {
 				cl++
 				blobfile := repo.markToEvent(op.ref).(*Blob).materialize()
@@ -20983,7 +20997,8 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 			}
 		}
 	bailout:
-	}
+		context.baton.endProgress()
+	})
 	repo.invalidateNamecache()
 	respond("fills %d of %d authorships, changing %d, from %d ChangeLogs.", cm, cc, cd, cl)
 	return false
