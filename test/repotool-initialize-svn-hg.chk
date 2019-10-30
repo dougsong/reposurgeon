@@ -9,6 +9,6 @@ xyzzy.lift
 xyzzy.opts
 
 Checksums to make sure file contents correct:
-904100bd0f15093c8b84da99ff07f23f  ./Makefile
+2849f15e590913656dfee3d150a3d6fa  ./Makefile
 8f44c96b9942ad7655b17fec218e75f7  ./xyzzy.lift
 4b72635a7976f13fbd51a7c79a142733  ./xyzzy.opts
