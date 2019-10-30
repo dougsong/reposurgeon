@@ -15,6 +15,11 @@ REPOMAPPER := repomapper
 # Setting this to 0 allows tests to continue on error.
 STOPOUT=1
 
+# Force pure serial execution when rebuilding check files.  Slower,
+# but makes them deterministic and may help smoke out bugs in
+# concurrent code.
+BUILDOPT="'set serial'"
+
 # Defeat annoying behavior under Mac OS X - builtin echo doesn't do -n
 ECHO := /bin/echo
 
@@ -34,6 +39,8 @@ check: clean listcheck roundtrip roundtrip-compress messagebox fi-regress coales
 
 # hg-regress-patho is not part of the normal test sequence.
 
+# FIXME: is log -all really correct when regeneting the map checks?
+
 .SUFFIXES: .svn .chk .fi .map
 
 .svn.chk:
@@ -41,7 +48,7 @@ check: clean listcheck roundtrip roundtrip-compress messagebox fi-regress coales
 .svn.fi:
 	$(REPOSURGEON) "read <$<" "prefer git" "write -" >$@
 .svn.map:
-	$(REPOSURGEON) "read <$<" "legacy write -" >$@
+	$(REPOSURGEON) "log -all" "read <$<" "legacy write -" >$@
 
 buildregress: fi-buildregress svnload-buildregress legacy-buildregress \
 	repomapper-buildregress repotool-buildregress hg-buildregress-branches \
@@ -106,7 +113,7 @@ TESTLOADS := $(shell ls -1 *.tst | sed '/.tst/s///')
 fi-buildregress:
 	@for file in $(TESTLOADS); do \
 	    echo "Remaking $${file}.chk"; \
-	    $(REPOSURGEON) "$(TESTOPT)" "script $${file}.tst testing123" >$${file}.chk \
+	    $(REPOSURGEON) "$(BUILDOPT)" "$(TESTOPT)" "script $${file}.tst testing123" >$${file}.chk \
 		2>&1 || exit $(STOPOUT); \
 	done
 fi-regress:
@@ -133,7 +140,7 @@ COALESCE=uncoalesced
 buildcoalesce:
 	@for file in $(COALESCE); do \
 	    echo "Rebuilding coalescence regression test using $${file}.fi"; \
-	    $(REPOSURGEON) "$(TESTOPT)" "read <$${file}.fi; coalesce; write -" \
+	    $(REPOSURGEON) "$(BUILDOPT)" "$(TESTOPT)" "read <$${file}.fi; coalesce; write -" \
 		>$${file}.chk || exit $(STOPOUT); \
 	done
 	@rm -f /tmp/regress$$$$
@@ -237,7 +244,7 @@ hg-regress:
 # NOTE: the bb-alt test demonstrates an hg repo with coloring that git cannot reproduce
 HGBRANCHES = be be2 be3 bb-alt be-bookmarks
 hg-buildregress-branches:
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT; BUILDOPT="$(BUILDOPT)"; export BUILDOPT;\
 	for file in $(HGBRANCHES); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
@@ -285,7 +292,7 @@ hg-regress-merges:
 # Test the hg extractor with tags
 HGTAGS = bt bt2
 hg-buildregress-tags:
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT; BUILDOPT="$(BUILDOPT)"; export BUILDOPT;\
 	for file in $(HGTAGS); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
@@ -309,7 +316,7 @@ hg-regress-tags:
 # Test the hg extractor with pathological loads
 HGPATHO = be-subrepo be-subrepo2
 hg-buildregress-patho:
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT; BUILDOPT="$(BUILDOPT)"; export BUILDOPT;\
 	for file in $(HGPATHO); do \
 	    echo "Remaking $${file}.fi"; \
 	    ./hg-$${file}-test 2>/dev/null | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >$${file}.fi \
@@ -344,13 +351,13 @@ svnload-buildregress:
 	done
 svnload-regress:
 	@echo "== Testing loading of Subversion streams:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT; BUILDOPT="$(BUILDOPT)"; export BUILDOPT;\
 	for test in $(SVNLOADS); \
 	do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
 		(if { $(ECHO) -n "  $${test}.svn"; grep --text '^ ##' $${test}.svn || echo ' ## (no description)'; } >&2; \
-		$(REPOSURGEON) "$(TESTOPT)" "read <$${test}.svn" "prefer git" "write -" >/tmp/regress$$$$ 2>&1; \
+		$(REPOSURGEON) "$(TESTOPT)" "$(TESTOPT)" "read <$${test}.svn" "prefer git" "write -" >/tmp/regress$$$$ 2>&1; \
 		then diff --text -u $${test}.chk /tmp/regress$$$$ || exit $(STOPOUT); \
 		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi; \
 		if command -v git >/dev/null 2>&1 ; \

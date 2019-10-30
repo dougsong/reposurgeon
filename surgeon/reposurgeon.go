@@ -2647,6 +2647,9 @@ anything up to and including making demons fly out of your nose.
 	{"relax",
 		`Continue script execution on error, do not bail out.
 `},
+	{"serial",
+		`Disable parallelism in code. Use for generating test loads.
+`},
 	{"testmode",
 		`Disable some features that cause output to be vary depending on wall time, 
 screen width, and the ID of the invoking user. Use in regression-test loads.
@@ -9055,14 +9058,14 @@ type Event interface {
 // computation has no dependency on the order in which commits
 // are processed.
 func walkEvents(events []Event, hook func(int, Event)) {
-	// Someday this will parallelize through a worker pool
-	for i, e := range events {
-		hook(i, e)
+	if control.flagOptions["serial"] {
+		for i, e := range events {
+			hook(i, e)
+		}
+		return
 	}
-}
 
-// Mimics the code from https://www.godoc.org/golang.org/x/sync/semaphore
-func walkEventsConcurrent(events []Event, hook func(int, Event)) {
+	// Adapted from example at https://www.godoc.org/golang.org/x/sync/semaphore
 	ctx := context.TODO()
 
 	var (
