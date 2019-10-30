@@ -21545,7 +21545,7 @@ func (rs *Reposurgeon) DoLogfile(lineIn string) bool {
 		if err != nil {
 			respond("log file open failed: %v", err)
 		} else {
-			var i interface{} = &fp
+			var i interface{} = fp
 			context.logfp = i.(io.Writer)
 		}
 	}
