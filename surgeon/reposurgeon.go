@@ -3448,7 +3448,7 @@ type Attribution struct {
 	date     Date
 }
 
-var attributionRE = regexp.MustCompile(`([^<]*\s*)<([^>]*)>(\s*.*)`)
+var attributionRE = regexp.MustCompile(`([^<]*\s*)<([^>]*)>+(\s*.*)`)
 
 // parseAttributionLine parses a Git attribution line into its fields
 func parseAttributionLine(line string) (string, string, string, error) {
