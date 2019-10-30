@@ -57,7 +57,7 @@ CVS_HOST = %(project)s.cvs.sourceforge.net
 CVS_MODULE = %(project)s
 #REMOTE_URL = cvs://$(CVS_HOST)/%(project)s\\#$(CVS_MODULE)
 READ_OPTIONS =
-VERBOSITY = "set interactive"
+VERBOSITY = "set progress"
 REPOSURGEON = reposurgeon
 LOGFILE = conversion.log
 
@@ -72,7 +72,7 @@ default: %(project)s-%(target_vcs)s
 
 # Build the converted repo from the second-stage fast-import stream
 %(project)s-%(target_vcs)s: %(project)s.fi
-	rm -fr %(project)s-%(target_vcs)s; $(REPOSURGEON) 'read <%(project)s.fi' 'prefer %(target_vcs)s' 'rebuild %(project)s-%(target_vcs)s'
+	rm -fr %(project)s-%(target_vcs)s; $(REPOSURGEON) $(VERBOSITY) 'read <%(project)s.fi' 'prefer %(target_vcs)s' 'rebuild %(project)s-%(target_vcs)s'
 
 # Build the second-stage fast-import stream from the first-stage stream dump
 %(project)s.fi: %(project)s.%(source_vcs)s %(project)s.opts %(project)s.lift %(project)s.map $(EXTRAS)
@@ -104,7 +104,7 @@ remote-clobber: local-clobber
 
 # Get the (empty) state of the author mapping from the first-stage stream
 stubmap: %(project)s.%(source_vcs)s
-	$(REPOSURGEON) "read $(READ_OPTIONS) <%(project)s.%(source_vcs)s" 'authors write >%(project)s.map'
+	$(REPOSURGEON) $(VERBOSITY) "read $(READ_OPTIONS) <%(project)s.%(source_vcs)s" 'authors write >%(project)s.map'
 
 # Compare the histories of the unconverted and converted repositories at head
 # and all tags.
