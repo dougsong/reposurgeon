@@ -1484,7 +1484,7 @@ func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
 	cm.childStamps = mc.gatherChildTimestamps(base)
 	if logEnable(logTOPOLOGY) {
 		for _, rev := range cm.base.revlist {
-			logit(0, "Revision %s has branch '%s'\n", rev, cm.base.meta[rev].branch)
+			logit(logSHOUT, "Revision %s has branch '%s'\n", rev, cm.base.meta[rev].branch)
 		}
 	}
 	// Depends on the order of the revlist to be correct.
@@ -2792,8 +2792,14 @@ func croak(msg string, args ...interface{}) {
 
 func logit(lvl uint, msg string, args ...interface{}) {
 	if logEnable(lvl) {
+		var leader string
 		content := fmt.Sprintf(msg, args...)
-		context.logfp.Write([]byte("reposurgeon: " + content + "\n"))
+		if _, ok := context.logfp.(*os.File); ok {
+			leader = rfc3339(time.Now())
+		} else {
+			leader = "reposurgeon"
+		}
+		context.logfp.Write([]byte(leader + ": " + content + "\n"))
 		context.logcounter++
 	}
 }
@@ -6590,7 +6596,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 		sp.large = true
 	}
 	trackSymlinks := newOrderedStringSet()
-	baton.startProgress("parsing Subversion dump file", uint64(filesize))
+	baton.startProgress("process SVN, phase 0: read dump file", uint64(filesize))
 	for {
 		line := sp.readline()
 		if len(line) == 0 {
@@ -7887,7 +7893,7 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 
 	processed := 0
 	logit(logTAGFIX, "before fixups: %v", sp.streamview)
-	baton.startProgress("process SVN, phase 2c: clean tags to prevent anomalies", uint64(len(sp.streamview)))
+	baton.startProgress("process SVN, phase 2c: recolor anomalous tags", uint64(len(sp.streamview)))
 	for i := range multiples {
 		srcnode := multiples[i]
 		if multiples[i].kind != sdFILE && multiples[i].action == sdDELETE {
@@ -8197,7 +8203,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 			fmt.Println("Actions:")
 			for _, action := range actions {
 				// Format-string not \n terminated because the Node stringer does it.
-				logit(0, "reposurgeon: %v -> %v", action.node, action.fileop)
+				logit(logSHOUT, "reposurgeon: %v -> %v", action.node, action.fileop)
 			}
 		}
 		// Time to generate commits from actions and fileops.
