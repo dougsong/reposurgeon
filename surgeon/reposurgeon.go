@@ -20844,6 +20844,7 @@ that zone is used.
 }
 
 var ymdRE = regexp.MustCompile("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]")
+var addressRE = regexp.MustCompile(`[^<@>]+\s<[^<@>\s]+@[^<@>\s]+>`)
 
 // Mine repository changelogs for authorship data.
 func (rs *Reposurgeon) DoChangelogs(line string) bool {
@@ -20979,6 +20980,12 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 					}
 				}
 				if attribution != "" {
+					// Invalid addresses will cause fatal errors if they get into a
+					// fast-import stream. Filter out bogons...
+					if !addressRE.MatchString(strings.TrimSpace(attribution)) {
+						logit(logSHOUT, "invalid attribution %q in blob %s", attribution, op.ref)
+						continue
+					}
 					cm++
 					newattr := commit.committer.clone()
 					flds := strings.Split(attribution, "<")
