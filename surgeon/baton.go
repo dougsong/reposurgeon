@@ -12,6 +12,7 @@ import (
 	"math"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -30,12 +31,14 @@ type Baton struct {
 
 // Twirly is the state of a twirly indefinite progess meter that ships indications to stdout.
 type Twirly struct {
+	sync.RWMutex
 	lastupdate time.Time
 	count uint8
 }
 
 // Counter is usually used for "N of M" type progress, but the caller can supply any format string they want
 type Counter struct {
+	sync.RWMutex
 	lastupdate time.Time
 	format string
 	count uint64
@@ -43,6 +46,7 @@ type Counter struct {
 
 // Progress is the evolved form of the counter which shows the percentage of completion and the rate of progress in addition to the count
 type Progress struct {
+	sync.RWMutex
 	start time.Time
 	lastupdate time.Time
 	tag []byte
@@ -52,6 +56,7 @@ type Progress struct {
 
 // Process prints a message before and after the other status messages
 type Process struct {
+	sync.RWMutex
 	lastupdate time.Time
 	startmsg []byte
 	endmsg []byte
@@ -162,16 +167,22 @@ func (baton *Baton) printProgress() {
 // twirl spins the baton
 func (baton *Baton) twirl() {
 	if baton != nil && baton.progressEnabled {
+		baton.twirly.Lock()
 		if time.Since(baton.twirly.lastupdate) > twirlInterval {
 			baton.twirly.count = (baton.twirly.count + 1) % 4
-			baton.printProgress()
 			baton.twirly.lastupdate = time.Now()
+			baton.twirly.Unlock()
+			baton.printProgress()
+		} else {
+			baton.twirly.Unlock()
 		}
 	}
 }
 
 func (baton *Baton) startProcess(startmsg string, endmsg string) {
 	if baton != nil && baton.progressEnabled {
+		baton.progress.Lock()
+		defer baton.progress.Unlock()
 		baton.process.startmsg = []byte(startmsg)
 		baton.process.endmsg = []byte(endmsg)
 		baton.process.start = time.Now()
@@ -180,6 +191,8 @@ func (baton *Baton) startProcess(startmsg string, endmsg string) {
 
 func (baton *Baton) endProcess(endmsg ...string) {
 	if baton != nil && baton.progressEnabled {
+		baton.progress.Lock()
+		defer baton.progress.Unlock()
 		if endmsg != nil {
 			baton.process.endmsg = []byte(strings.Join(endmsg, " "))
 		}
@@ -194,6 +207,8 @@ func (baton *Baton) endProcess(endmsg ...string) {
 
 func (baton *Baton) startcounter(countfmt string, initial uint64) {
 	if baton != nil && baton.progressEnabled {
+		baton.counter.Lock()
+		defer baton.counter.Unlock()
 		baton.counter.format = countfmt
 		baton.counter.count = initial
 	}
@@ -201,10 +216,13 @@ func (baton *Baton) startcounter(countfmt string, initial uint64) {
 
 func (baton *Baton) bumpcounter() {
 	if baton != nil && baton.progressEnabled {
+		baton.counter.Lock()
 		if baton.counter.format != "" {
 			baton.counter.count++
+			baton.counter.Unlock()
 			baton.printProgress()
 		} else {
+			baton.counter.Unlock()
 			baton.twirl()
 		}
 	}
@@ -213,6 +231,8 @@ func (baton *Baton) bumpcounter() {
 func (baton *Baton) endcounter() {
 	if baton != nil && baton.progressEnabled {
 		baton.counter.render(baton)
+		baton.counter.Lock()
+		defer baton.counter.Unlock()
 		baton.counter.format = ""
 		baton.counter.count = 0
 	}
@@ -220,6 +240,8 @@ func (baton *Baton) endcounter() {
 
 func (baton *Baton) startProgress(tag string, expected uint64) {
 	if baton != nil && baton.progressEnabled {
+		baton.progress.Lock()
+		defer baton.progress.Unlock()
 		baton.progress.start = time.Now()
 		baton.progress.lastupdate = baton.progress.start
 		baton.progress.tag = []byte(tag)
@@ -229,17 +251,24 @@ func (baton *Baton) startProgress(tag string, expected uint64) {
 }
 
 func (baton *Baton) percentProgress(ccount uint64) {
-	if baton != nil && baton.progressEnabled &&
-		(time.Since(baton.progress.lastupdate) > progressInterval || ccount == baton.progress.expected) {
-		baton.progress.count = ccount
-		baton.progress.lastupdate = time.Now()
-		baton.printProgress()
+	if baton != nil && baton.progressEnabled {
+		baton.progress.Lock()
+		if time.Since(baton.progress.lastupdate) > progressInterval || ccount == baton.progress.expected {
+			baton.progress.count = ccount
+			baton.progress.lastupdate = time.Now()
+			baton.progress.Unlock()
+			baton.printProgress()
+		} else {
+			baton.progress.Unlock()
+		}
 	}
 }
 
 func (baton *Baton) endProgress() {
 	if baton != nil && baton.progressEnabled {
 		baton.progress.render(baton)
+		baton.progress.Lock()
+		defer baton.progress.Unlock()
 		baton.progress.tag = nil
 		baton.progress.count = 0
 		baton.progress.expected = 0
@@ -281,11 +310,15 @@ func (baton *Baton) render(buf io.Writer) {
 }
 
 func (baton *Twirly) render(b io.Writer) {
+	baton.RLock()
+	defer baton.RUnlock()
 	character := "-\\|/"[baton.count]
 	b.Write([]byte{32, character})
 }
 
 func (baton *Counter) render(b io.Writer) {
+	baton.RLock()
+	defer baton.RUnlock()
 	if baton.format != "" {
 		n, _ := fmt.Fprintf(b, baton.format, baton.count)
 		if n > 0 {
@@ -295,6 +328,8 @@ func (baton *Counter) render(b io.Writer) {
 }
 
 func (baton *Progress) render(b io.Writer) {
+	baton.RLock()
+	defer baton.RUnlock()
 	scale := func(n float64) string {
 		if n < 1000 {
 			return fmt.Sprintf("%.2f", n)
@@ -327,9 +362,13 @@ func (baton *Progress) render(b io.Writer) {
 }
 
 func (baton *Process) renderPre(b io.Writer) {
+	baton.RLock()
+	defer baton.RUnlock()
 	b.Write(baton.startmsg)
 }
 func (baton *Process) renderPost(b io.Writer) {
+	baton.RLock()
+	defer baton.RUnlock()
 	b.Write(baton.endmsg)
 }
 
