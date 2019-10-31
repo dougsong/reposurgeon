@@ -21,7 +21,6 @@ type Baton struct {
 	progressEnabled bool
 	stream *os.File
 	channel chan Message
-	progressLine []byte
 	start time.Time
 	twirly Twirly
 	counter Counter
@@ -82,7 +81,6 @@ const (
 type Message struct {
 	ty msgType
 	str []byte
-	currentProgress []byte
 }
 
 const twirlInterval     = 100 * time.Millisecond	// Rate-limit baton twirls
@@ -97,6 +95,7 @@ func newBaton(interactive bool) *Baton {
 	me.channel = make(chan Message)
 	me.progressEnabled = interactive
 	go func() {
+		lastProgress := &[]byte{}
 		for {
 			msg := <- me.channel
 			if msg.ty == SYNC {
@@ -111,7 +110,7 @@ func newBaton(interactive bool) *Baton {
 							me.stream.Write(tiScrollForward)
 						}
 						me.stream.Write(tiColZero)
-						me.stream.Write(msg.currentProgress)
+						me.stream.Write(*lastProgress)
 					} else {
 						if len(msg.str) != 0 {
 							me.stream.Write(msg.str)
@@ -123,7 +122,8 @@ func newBaton(interactive bool) *Baton {
 				} else if msg.ty == PROGRESS {
 					me.stream.Write(tiColZero)
 					me.stream.Write(tiClrEol)
-					me.stream.Write(msg.currentProgress)
+					me.stream.Write(msg.str)
+					lastProgress = &msg.str
 				}
 			}
 		}
@@ -135,7 +135,7 @@ func newBaton(interactive bool) *Baton {
 
 func (baton *Baton) setInteractivity(enabled bool) {
 	if baton != nil {
-		baton.channel<- Message{SYNC, nil, nil}
+		baton.channel<- Message{SYNC, nil}
 		baton.progressEnabled = enabled
 		<-baton.channel
 	}
@@ -144,13 +144,13 @@ func (baton *Baton) setInteractivity(enabled bool) {
 // log prints out a simple log message
 func (baton *Baton) printLog(str []byte) {
 	if baton != nil {
-		baton.channel <- Message{LOG, _copyb(str), _copyb(baton.progressLine)}
+		baton.channel <- Message{LOG, _copyb(str)}
 	}
 }
 
 func (baton *Baton) printLogString(str string) {
 	if baton != nil {
-		baton.channel <- Message{LOG, _copystr(str), _copyb(baton.progressLine)}
+		baton.channel <- Message{LOG, _copystr(str)}
 	}
 }
 
@@ -159,8 +159,7 @@ func (baton *Baton) printProgress() {
 	if baton != nil && baton.progressEnabled {
 		var buf bytes.Buffer
 		baton.render(&buf)
-		baton.progressLine = buf.Bytes()
-		baton.channel <- Message{PROGRESS, nil, _copyb(baton.progressLine)}
+		baton.channel <- Message{PROGRESS, _copyb(buf.Bytes())}
 	}
 }
 
@@ -295,7 +294,7 @@ func (baton *Baton) Close() error {
 
 func (baton *Baton) Sync() {
 	if baton != nil {
-		baton.channel <- Message{SYNC, nil, nil}
+		baton.channel <- Message{SYNC, nil}
 		<-baton.channel
 	}
 }
