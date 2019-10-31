@@ -20844,7 +20844,7 @@ that zone is used.
 }
 
 var ymdRE = regexp.MustCompile("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]")
-var addressRE = regexp.MustCompile(`[^<@>]+\s<[^<@>\s]+@[^<@>\s]+>`)
+var addressRE = regexp.MustCompile(`([^<@>]+\S)\s+<([^<@>\s]+@[^<@>\s]+)>`)
 
 // Mine repository changelogs for authorship data.
 func (rs *Reposurgeon) DoChangelogs(line string) bool {
@@ -20982,15 +20982,15 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				if attribution != "" {
 					// Invalid addresses will cause fatal errors if they get into a
 					// fast-import stream. Filter out bogons...
-					if !addressRE.MatchString(strings.TrimSpace(attribution)) {
+					matches := addressRE.FindAllStringSubmatch(strings.TrimSpace(attribution), -1)
+					if matches == nil {
 						logit(logSHOUT, "invalid attribution %q in blob %s", attribution, op.ref)
 						continue
 					}
 					cm++
 					newattr := commit.committer.clone()
-					flds := strings.Split(attribution, "<")
-					newattr.email = strings.TrimSpace(flds[1][:len(flds[1])-1])
-					newattr.fullname = strings.TrimSpace(flds[0])
+					newattr.email = matches[0][2]
+					newattr.fullname = matches[0][1]
 					// This assumes email addreses of contributors are unique.
 					// We could get wacky results if two people with different
 					// human names but identicall email addresses were run through
