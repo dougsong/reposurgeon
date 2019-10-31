@@ -21136,7 +21136,6 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 	repo := rs.chosen()
 	cc, cl, cm, cd := 0, 0, 0, 0
 
-	differ := difflib.NewDiffer()
 	parseAttributionLine := func(line string) string {
 		// Parse an attributuinn line in a ChangeLog entry, get an email address
 		if len(line) <= 10 || unicode.IsSpace(rune(line[0])) {
@@ -21190,7 +21189,15 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		return ""
 	}
 	control.baton.startProgress("processing changelogs", uint64(len(repo.events)))
-	for i, commit := range repo.commits(nil) { 
+	attributions := make([][]string, len(repo.events))
+	blobRefs := make([][]string, len(repo.events))
+	evts := 0 // shared between threads, for progression only
+	walkEvents(repo.events, func(event_id int, event Event) {
+		commit, iscommit := event.(*Commit)
+		evts++
+		if !iscommit {
+			return
+		}
 		cc++
 		// If a changeset is *all* ChangeLog mods, it is probably either
 		// a log rotation or a maintainer fixing a typo. In either case,
@@ -21202,8 +21209,9 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 			}
 		}
 		if !notChangelog {
-			continue
+			return
 		}
+		differ := difflib.NewDiffer()
 		for _, op := range commit.operations() {
 			if op.op == opM && filepath.Base(op.Path) == "ChangeLog" {
 				cl++
@@ -21221,7 +21229,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				comparison, err := differ.Compare(then, now)
 				if err != nil {
 					logit(logSHOUT, "differ threw a should-never-happen error on path %s at %s", op.Path, commit.mark)
-					goto bailout
+					return
 				}
 				for _, diffline := range comparison {
 					if diffline[0] != ' ' {
@@ -21259,64 +21267,73 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 					}
 				}
 				if attribution != "" {
-					// Invalid addresses will cause fatal errors if they get into a
-					// fast-import stream. Filter out bogons...
-					matches := addressRE.FindAllStringSubmatch(strings.TrimSpace(attribution), -1)
-					if matches == nil {
-						logit(logSHOUT, "invalid attribution %q in blob %s", attribution, op.ref)
-						continue
-					}
-					cm++
-					newattr := commit.committer.clone()
-					newattr.email = matches[0][2]
-					newattr.fullname = matches[0][1]
-					// This assumes email addreses of contributors are unique.
-					// We could get wacky results if two people with different
-					// human names but identicall email addresses were run through
-					// this code, but that outcome seems wildly unlikely.
-					if newattr.fullname == "" {
-						for _, mapentry := range repo.authormap {
-							if newattr.email == mapentry.email {
-								newattr.fullname = mapentry.fullname
-								break
-							}
-						}
-					}
-					if tz, ok := repo.tzmap[newattr.email]; ok { //&& unicode.IsLetter(rune(tz.String()[0])) {
-						newattr.date.timestamp = newattr.date.timestamp.In(tz)
-					} else if zone := zoneFromEmail(newattr.email); zone != "" {
-						newattr.date.setTZ(zone)
-					}
-					if val, ok := repo.aliases[ContributorID{fullname: newattr.fullname, email: newattr.email}]; ok {
-						newattr.fullname, newattr.email = val.fullname, val.email
-					}
-					if len(commit.authors) == 0 {
-						commit.authors = append(commit.authors, *newattr)
-					} else {
-						// Required because git sometimes fills in the
-						// author field from the committer.
-						if commit.authors[len(commit.authors)-1].email == commit.committer.email {
-							commit.authors = commit.authors[:len(commit.authors)-1]
-						}
-						if len(commit.authors) == 0 {
-							matched := false
-							for _, author := range commit.authors {
-								if author.email == newattr.email {
-									matched = true
-								}
-							}
-							if !matched {
-								commit.authors = append(commit.authors, *newattr)
-								cd++
-							}
-						}
+					attributions[event_id] = append(attributions[event_id], attribution)
+					blobRefs[event_id] = append(blobRefs[event_id], op.ref)
+				}
+			}
+		}
+		control.baton.percentProgress(uint64(evts))
+	})
+	control.baton.endProgress()
+	for event_id, event := range repo.events {
+		commit, iscommit := event.(*Commit)
+		if !iscommit {
+			continue
+		}
+		for i, attribution := range attributions[event_id] {
+			// Invalid addresses will cause fatal errors if they get into a
+			// fast-import stream. Filter out bogons...
+			matches := addressRE.FindAllStringSubmatch(strings.TrimSpace(attribution), -1)
+			if matches == nil {
+				logit(logSHOUT, "invalid attribution %q in blob %s", attribution, blobRefs[event_id][i])
+				continue
+			}
+			cm++
+			newattr := commit.committer.clone()
+			newattr.email = matches[0][2]
+			newattr.fullname = matches[0][1]
+			// This assumes email addreses of contributors are unique.
+			// We could get wacky results if two people with different
+			// human names but identicall email addresses were run through
+			// this code, but that outcome seems wildly unlikely.
+			if newattr.fullname == "" {
+				for _, mapentry := range repo.authormap {
+					if newattr.email == mapentry.email {
+						newattr.fullname = mapentry.fullname
+						break
 					}
 				}
 			}
-			control.baton.percentProgress(uint64(i))
+			if tz, ok := repo.tzmap[newattr.email]; ok { //&& unicode.IsLetter(rune(tz.String()[0])) {
+				newattr.date.timestamp = newattr.date.timestamp.In(tz)
+			} else if zone := zoneFromEmail(newattr.email); zone != "" {
+				newattr.date.setTZ(zone)
+			}
+			if val, ok := repo.aliases[ContributorID{fullname: newattr.fullname, email: newattr.email}]; ok {
+				newattr.fullname, newattr.email = val.fullname, val.email
+			}
+			if len(commit.authors) == 0 {
+				commit.authors = append(commit.authors, *newattr)
+			} else {
+				// Required because git sometimes fills in the
+				// author field from the committer.
+				if commit.authors[len(commit.authors)-1].email == commit.committer.email {
+					commit.authors = commit.authors[:len(commit.authors)-1]
+				}
+				if len(commit.authors) == 0 {
+					matched := false
+					for _, author := range commit.authors {
+						if author.email == newattr.email {
+							matched = true
+						}
+					}
+					if !matched {
+						commit.authors = append(commit.authors, *newattr)
+						cd++
+					}
+				}
+			}
 		}
-	bailout:
-		control.baton.endProgress()
 	}
 	repo.invalidateNamecache()
 	respond("fills %d of %d authorships, changing %d, from %d ChangeLogs.", cm, cc, cd, cl)
