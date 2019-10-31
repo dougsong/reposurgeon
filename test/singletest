@@ -21,9 +21,11 @@ TERM=dumb
 
 verbose=0
 experimental=""
-while getopts v:x opt
+serial=""
+while getopts sv:x opt
 do
     case $opt in
+	s) serial="set serial";;
 	v) verbose="$OPTARG" ;;
 	x) experimental="set experimental"
     esac
@@ -49,5 +51,5 @@ fi
 for x in $*;
 do
     grep '^##' ${tst} 2>/dev/null
-    ${REPOSURGEON:-reposurgeon} "$experimental" "script ${tst}" 2>&1 | diff -u ${chk} -
+    ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "script ${tst}" 2>&1 | diff -u ${chk} -
 done

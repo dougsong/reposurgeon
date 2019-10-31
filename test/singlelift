@@ -25,10 +25,11 @@ TERM=dumb
 mode=check
 verbose=0
 experimental=""
-while getopts dv:x opt
+while getopts dsv:x opt
 do
     case $opt in
 	d) mode=dump;;
+	s) serial="set serial"
 	v) verbose="$OPTARG" ;;
 	x) experimental="set experimental"
     esac
@@ -40,7 +41,7 @@ do
     grep '^ #' ${x}.svn 2>/dev/null
     case $mode in
 	dump)
-	    ${REPOSURGEON:-reposurgeon} "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1;;
+	    ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1;;
 	*)
 	    ${REPOSURGEON:-reposurgeon} "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1 | diff -u ${x}.chk - ;;
     esac
