@@ -9193,9 +9193,12 @@ func svnProcessCleanTags(sp *StreamParser, options stringSet, baton *Baton) {
 	// filecopies on the same node when it's generating tag commits.
 	// These are lots of examples of this in the nut.svn test load.
 	// These show up as redundant (D, M) fileop pairs.
-	commits := sp.repo.commits(nil)
-	baton.startProgress("process SVN, phase 9: delete/copy canonicalization", uint64(len(commits)))
-	for idx, commit := range commits {
+	baton.startProgress("process SVN, phase 9: delete/copy canonicalization", uint64(len(sp.repo.events)))
+	walkEvents(sp.repo.events, func(idx int, event Event) {
+		commit, ok := event.(*Commit)
+		if !ok {
+			return
+		}
 		count := 0
 		for i := range commit.operations() {
 			if i < len(commit.operations())-1 {
@@ -9215,24 +9218,27 @@ func svnProcessCleanTags(sp *StreamParser, options stringSet, baton *Baton) {
 		}
 		commit.setOperations(nonnil)
 		baton.percentProgress(uint64(idx)+1)
-	}
+	})
 	baton.endProgress()
 }
 
 func svnProcessDebubble(sp *StreamParser, options stringSet, baton *Baton) {
 	logit(logEXTRACT, "Phase A: remove duplicate parent marks")
 	// Remove spurious parent links caused by random cvs2svn file copies.
-	commits := sp.repo.commits(nil)
-	baton.startProgress("process SVN, phase A: remove duplicate parent marks", uint64(len(commits)))
-	for idx, commit := range commits {
+	baton.startProgress("process SVN, phase A: remove duplicate parent marks", uint64(len(sp.repo.events)))
+	walkEvents(sp.repo.events, func(idx int, event Event) {
+		commit, ok := event.(*Commit)
+		if !ok {
+			return
+		}
 		parents := commit.parents()
 		if len(parents) != 2 {
-			continue
+			return
 		}
 		a, ok1 := parents[0].(*Commit)
 		b, ok2 := parents[1].(*Commit)
 		if !ok1 || !ok2 {
-			continue
+			return
 		}
 		if a.getMark() == b.getMark() {
 			sp.shout(fmt.Sprintf("r%s: duplicate parent marks", commit.legacyID))
@@ -9245,7 +9251,7 @@ func svnProcessDebubble(sp *StreamParser, options stringSet, baton *Baton) {
 			}
 		}
 		baton.percentProgress(uint64(idx)+1)
-	}
+	})
 	baton.endProgress()
 }
 
