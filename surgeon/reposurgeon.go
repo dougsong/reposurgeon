@@ -21190,13 +21190,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		return ""
 	}
 	control.baton.startProgress("processing changelogs", uint64(len(repo.events)))
-	evts := 0
-	walkEvents(repo.events, func(_ int, event Event) {
-		evts++
-		commit, iscommit := event.(*Commit)
-		if !iscommit {
-			return
-		}
+	for i, commit := range repo.commits(nil) { 
 		cc++
 		// If a changeset is *all* ChangeLog mods, it is probably either
 		// a log rotation or a maintainer fixing a typo. In either case,
@@ -21208,7 +21202,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 			}
 		}
 		if !notChangelog {
-			return
+			continue
 		}
 		for _, op := range commit.operations() {
 			if op.op == opM && filepath.Base(op.Path) == "ChangeLog" {
@@ -21227,6 +21221,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				comparison, err := differ.Compare(then, now)
 				if err != nil {
 					logit(logSHOUT, "differ threw a should-never-happen error on path %s at %s", op.Path, commit.mark)
+					goto bailout
 				}
 				for _, diffline := range comparison {
 					if diffline[0] != ' ' {
@@ -21269,7 +21264,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 					matches := addressRE.FindAllStringSubmatch(strings.TrimSpace(attribution), -1)
 					if matches == nil {
 						logit(logSHOUT, "invalid attribution %q in blob %s", attribution, op.ref)
-						return
+						continue
 					}
 					cm++
 					newattr := commit.committer.clone()
@@ -21318,10 +21313,11 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 					}
 				}
 			}
+			control.baton.percentProgress(uint64(i))
 		}
-		control.baton.percentProgress(uint64(evts))
-	})
-	control.baton.endProgress()
+	bailout:
+		control.baton.endProgress()
+	}
 	repo.invalidateNamecache()
 	respond("fills %d of %d authorships, changing %d, from %d ChangeLogs.", cm, cc, cd, cl)
 	return false
