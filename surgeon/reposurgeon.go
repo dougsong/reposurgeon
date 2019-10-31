@@ -3706,6 +3706,17 @@ func (b Blob) String() string {
 	return data + string(content) + "\n"
 }
 
+func (b Blob) Save(w io.Writer) {
+	if b.hasfile() {
+		fn := b.getBlobfile(false)
+		if !exists(fn) {
+			return
+		}
+	}
+	content := b.getContent()
+	fmt.Fprintf(w, "blob\nmark %s\ndata %d\n%s\n", b.mark, len(content), content)
+}
+
 //Tag describes a a gitspace annotated tag object
 type Tag struct {
 	repo       *Repository
@@ -3960,6 +3971,24 @@ func (t Tag) String() string {
 	return strings.Join(parts, "") + comment + "\n"
 }
 
+// String dumps this tag in import-stream format
+func (t Tag) Save(w io.Writer) {
+	fmt.Fprintf(w, "tag %s\n", t.name)
+	if t.legacyID != "" {
+		fmt.Fprintf(w, "#legacy-id %s\n", t.legacyID)
+	}
+	fmt.Fprintf(w, "from %s\n", t.committish)
+	if t.tagger != nil {
+		fmt.Fprintf(w, "tagger %s\n", t.tagger)
+	}
+	comment := t.Comment
+	if t.Comment != "" && t.repo.writeOptions.Contains("--legacy") && t.legacyID != "" {
+		w.Write([]byte(comment))
+		fmt.Fprintf(w, "\nLegacy-ID: %s\n", t.legacyID)
+	}
+	fmt.Fprintf(w, "data %d\n%s\n", len(comment), comment)
+}
+
 // Reset represents a branch creation."
 type Reset struct {
 	repo       *Repository
@@ -4045,6 +4074,21 @@ func (reset Reset) String() string {
 		return st
 	}
 	return st + fmt.Sprintf("from %s\n\n", reset.committish)
+}
+
+// String dumps this reset in import-stream format
+func (reset Reset) Save(w io.Writer) {
+	if reset.repo.realized != nil {
+		var branch = reset.ref
+		if strings.Contains(reset.ref, "^") {
+			branch = strings.Split(reset.ref, "^")[0]
+		}
+		reset.repo.realized[branch] = true
+	}
+	fmt.Fprintf(w, "reset %s\n", reset.ref)
+	if reset.committish != "" {
+		fmt.Fprintf(w, "from %s\n\n", reset.committish)
+	}
 }
 
 // FileOp is a gitspace file modification attached to a commit
@@ -4299,6 +4343,40 @@ func (fileop FileOp) String() string {
 	panic(throw("command", "Unexpected op %q while writing", fileop.op))
 }
 
+// String dumps this fileop in import-stream format
+func (fileop FileOp) Save(w io.Writer) {
+	quotifyIfNeeded := func(cpath string) string {
+		if len(strings.Fields(cpath)) > 1 {
+			return strconv.Quote(cpath)
+		}
+		return cpath
+	}
+	if fileop.op == opM {
+		fmt.Fprintf(w, "M %s %s %s\n", fileop.mode, fileop.ref, quotifyIfNeeded(fileop.Path))
+		if fileop.ref == "inline" {
+			fmt.Fprintf(w, "data %d\n%s\n", len(fileop.inline), fileop.inline)
+		}
+		//return parts
+	} else if fileop.op == opN {
+		fmt.Fprintf(w, "N %s %s\n", fileop.ref, quotifyIfNeeded(fileop.Path))
+		if fileop.ref == "inline" {
+			fmt.Fprintf(w, "data %d\n%s\n", len(fileop.inline), fileop.inline)
+		}
+		//return parts
+	} else if fileop.op == opD {
+		fmt.Fprintf(w, "D %s\n", quotifyIfNeeded(fileop.Path))
+	} else if fileop.op == opR || fileop.op == opC {
+		fmt.Fprintf(w, `%c %q %q\n`, fileop.op, fileop.Source, fileop.Target)
+	} else if fileop.op == deleteall {
+		w.Write([]byte("deleteall\n"))
+	} else if fileop.op == 0 {
+		// It's a nilOp, sometimes dumped during diagnostics
+		w.Write([]byte("X\n"))
+	} else {
+		panic(throw("command", "Unexpected op %q while writing", fileop.op))
+	}
+}
+
 // Callout is a stub object for callout marks in incomplete repository segments.
 type Callout struct {
 	mark        string
@@ -4350,6 +4428,11 @@ func (callout Callout) getComment() string {
 // Stub to satisfy Event interface - should never be used
 func (callout Callout) String() string {
 	return fmt.Sprintf("callout-%s", callout.mark)
+}
+
+// Stub to satisfy Event interface - should never be used
+func (callout Callout) Save(w io.Writer) {
+	fmt.Fprintf(w, "callout-%s", callout.mark)
 }
 
 // moveto changes the repo this callout is associated with."
@@ -5652,6 +5735,102 @@ func (commit Commit) String() string {
 	return strings.Join(parts, "")
 }
 
+// Save this commit to a stream in fast-import format
+func (commit Commit) Save(w io.Writer) {
+	vcs := commit.repo.preferred
+	if vcs == nil && commit.repo.vcs != nil && commit.repo.vcs.importer != "" {
+		vcs = commit.repo.vcs
+	}
+	incremental := false
+	if !commit.repo.writeOptions.Contains("--noincremental") {
+		if commit.repo.realized != nil && commit.hasParents() {
+			if _, ok := commit.repo.realized[commit.Branch]; !ok {
+				parent := commit.parents()[0]
+				switch parent.(type) {
+				case *Commit:
+					pbranch := parent.(*Commit).Branch
+					if !commit.repo.realized[pbranch] {
+						incremental = true
+					}
+				}
+			}
+		}
+	}
+	if incremental {
+		fmt.Fprintf(w, "reset %s^0\n\n", commit.Branch)
+	}
+	fmt.Fprintf(w, "commit %s\n", commit.Branch)
+	if commit.legacyID != "" {
+		fmt.Fprintf(w, "#legacy-id %s\n", commit.legacyID)
+	}
+	if commit.repo.realized != nil {
+		commit.repo.realized[commit.Branch] = true
+	}
+	if commit.mark != "" {
+		fmt.Fprintf(w, "mark %s\n", commit.mark)
+	}
+	if len(commit.authors) > 0 {
+		for _, author := range commit.authors {
+			fmt.Fprintf(w, "author %s\n", author)
+		}
+	}
+	if commit.committer.fullname != "" {
+		fmt.Fprintf(w, "committer %s\n", commit.committer)
+	}
+	// As of git 2.13.6 (possibly earlier) the comment fields of
+	// commit is no longer optional - you have to emit data 0 if there
+	// is no comment, otherwise the importer gets confused.
+	comment := commit.Comment
+	if commit.repo.writeOptions.Contains("--legacy") && commit.legacyID != "" {
+		fmt.Fprintf(w, "\nLegacy-ID: %s\n", commit.legacyID)
+	}
+	fmt.Fprintf(w, "data %d\n%s", len(comment), comment)
+	if commit.repo.exportStyle().Contains("nl-after-comment") {
+		w.Write([]byte{'\n'})
+	}
+	parents := commit.parents()
+	doCallouts := commit.repo.writeOptions.Contains("--callout")
+	if len(parents) > 0 {
+		ancestor := parents[0]
+		if (commit.repo.internals == nil && !incremental) || commit.repo.internals.Contains(ancestor.getMark()) {
+			fmt.Fprintf(w, "from %s\n", ancestor.getMark())
+		} else if doCallouts {
+			fmt.Fprintf(w, "from %s\n", ancestor.callout())
+		}
+		for _, ancestor := range parents[1:] {
+			var nugget string
+			if commit.repo.internals == nil || commit.repo.internals.Contains(ancestor.getMark()) {
+				nugget = ancestor.getMark()
+			} else if doCallouts {
+				nugget = ancestor.callout()
+			}
+			if nugget != "" {
+				fmt.Fprintf(w, "merge %s\n", nugget)
+			}
+		}
+	}
+	if vcs != nil && vcs.extensions.Contains("commit-properties") {
+		if commit.hasProperties() && len(commit.properties.keys) > 0 {
+			for _, name := range commit.properties.keys {
+				value := commit.properties.get(name)
+				if value == "true" || value == "false" {
+					if value != "" {
+						fmt.Fprintf(w, "property %s\n", name)
+					}
+				} else {
+					fmt.Fprintf(w, "property %s %d %s\n", name, len(value), value)
+				}
+			}
+		}
+	}
+	for _, op := range commit.operations() {
+		w.Write([]byte(op.String()))
+	}
+	if !commit.repo.exportStyle().Contains("no-nl-after-commit") {
+		w.Write([]byte{'\n'})
+	}
+}
+
 //Passthrough represents a passthrough line.
 type Passthrough struct {
 	repo     *Repository
@@ -5708,6 +5887,11 @@ func (p Passthrough) getComment() string { return p.text }
 // String reports this passthrough in import-stream format.
 func (p Passthrough) String() string {
 	return p.text
+}
+
+// Save reports this passthrough in import-stream format.
+func (p Passthrough) Save(w io.Writer) {
+	w.Write([]byte(p.text))
 }
 
 // moveto changes the repo this passthrough is associated with."
@@ -9048,6 +9232,7 @@ type Event interface {
 	getMark() string
 	getComment() string
 	String() string
+	Save(io.Writer)
 	moveto(*Repository)
 	getDelFlag() bool
 	setDelFlag(bool)
@@ -9106,6 +9291,7 @@ type CommitLike interface {
 	getComment() string
 	callout() string
 	String() string
+	Save(io.Writer)
 	moveto(*Repository)
 	getDelFlag() bool
 	setDelFlag(bool)
@@ -10155,10 +10341,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 				logit(logSHOUT, fmt.Sprintf("writing %d %s", ei, event.getMark()))
 			}
 		}
-		_, err := fp.Write([]byte(event.String()))
-		if err != nil {
-			panic(fmt.Errorf("export error: %v", err))
-		}
+		event.Save(fp)
 		baton.percentProgress(uint64(idx)+1, )
 	}
 	baton.endProgress()
