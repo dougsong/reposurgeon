@@ -9267,6 +9267,10 @@ type Event interface {
 // This is intended to bew parallelized.  Apply only when the
 // computation has no dependency on the order in which commits
 // are processed.
+//
+// Note: There's a clone of this code that walks selection sets.
+// Go is not quite generic enough to make unifying the two convenient.
+// We need to mke sure they say in sync.
 func walkEvents(events []Event, hook func(int, Event)) {
 	if control.flagOptions["serial"] {
 		for i, e := range events {
@@ -14403,6 +14407,49 @@ func (rs *Reposurgeon) DoShell(line string) bool {
 		croak("spawn of %s returned error: %v", shell, err)
 	}
 	return false
+}
+
+// walkEvents walks a selection applying a hook function.to the events
+// This metod needs to be ke[s in sync with the walkEvents function.
+func (rs *Reposurgeon) walkEvents(events []Event, hook func(int, Event)) {
+	repo := rs.chosen()
+	if control.flagOptions["serial"] {
+		for i, e := range rs.selection {
+			hook(i, repo.events[e])
+		}
+		return
+	}
+
+	// Adapted from example at https://www.godoc.org/golang.org/x/sync/semaphore
+	ctx := context.TODO()
+
+	var (
+		maxWorkers = runtime.GOMAXPROCS(0)
+		sem        = semaphore.NewWeighted(int64(maxWorkers))
+	)
+
+	// Visit and process events using up to maxWorkers goroutines at a time.
+	for i, e := range rs.selection {
+		// When maxWorkers goroutines are in flight, Acquire blocks until one of the
+		// workers finishes.
+		if err := sem.Acquire(ctx, 1); err != nil {
+			log.Printf("Failed to acquire semaphore: %v", err)
+			break
+		}
+
+		go func(idx int, ei int) {
+			defer sem.Release(1)
+			hook(idx, repo.events[ei])
+		}(i, e)
+	}
+
+	// Acquire all of the tokens to wait for any remaining workers to finish.
+	//
+	// If you are already waiting for the workers by some other means (such as an
+	// errgroup.Group), you can omit this final Acquire call.
+	if err := sem.Acquire(ctx, int64(maxWorkers)); err != nil {
+		log.Printf("Failed to acquire semaphore: %v", err)
+	}
 }
 
 //
