@@ -9863,8 +9863,7 @@ func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) err
 		}
 	}
 
-	for _, ei := range selection {
-		event := repo.events[ei]
+	repo.walkEvents(selection, func(idx int, event Event) {
 		switch event.(type) {
 		case *Commit:
 			c := event.(*Commit)
@@ -9875,7 +9874,7 @@ func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) err
 		case *Tag:
 			event.(*Tag).tagger.remap(repo.authormap)
 		}
-	}
+	})
 	// Email addresses have changed.
 	// Force rebuild of action-stamp mapping on next lookup
 	repo.invalidateNamecache()
@@ -14423,10 +14422,9 @@ func (rs *Reposurgeon) DoShell(line string) bool {
 
 // walkEvents walks a selection applying a hook function.to the events
 // This metod needs to be ke[s in sync with the walkEvents function.
-func (rs *Reposurgeon) walkEvents(events []Event, hook func(int, Event)) {
-	repo := rs.chosen()
+func (repo *Repository) walkEvents(selection orderedIntSet, hook func(i int, event Event)) {
 	if control.flagOptions["serial"] {
-		for i, e := range rs.selection {
+		for i, e := range selection {
 			hook(i, repo.events[e])
 		}
 		return
@@ -14441,7 +14439,7 @@ func (rs *Reposurgeon) walkEvents(events []Event, hook func(int, Event)) {
 	)
 
 	// Visit and process events using up to maxWorkers goroutines at a time.
-	for i, e := range rs.selection {
+	for i, e := range selection {
 		// When maxWorkers goroutines are in flight, Acquire blocks until one of the
 		// workers finishes.
 		if err := sem.Acquire(ctx, 1); err != nil {
@@ -21275,17 +21273,17 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		control.baton.percentProgress(uint64(evts))
 	})
 	control.baton.endProgress()
-	for event_id, event := range repo.events {
+	for eventID, event := range repo.events {
 		commit, iscommit := event.(*Commit)
 		if !iscommit {
 			continue
 		}
-		for i, attribution := range attributions[event_id] {
+		for i, attribution := range attributions[eventID] {
 			// Invalid addresses will cause fatal errors if they get into a
 			// fast-import stream. Filter out bogons...
 			matches := addressRE.FindAllStringSubmatch(strings.TrimSpace(attribution), -1)
 			if matches == nil {
-				logit(logSHOUT, "invalid attribution %q in blob %s", attribution, blobRefs[event_id][i])
+				logit(logSHOUT, "invalid attribution %q in blob %s", attribution, blobRefs[eventID][i])
 				continue
 			}
 			cm++
