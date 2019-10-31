@@ -3624,6 +3624,10 @@ func (b *Blob) forget() {
 	b.repo = nil
 }
 
+func (b Blob) isCommit() bool {
+	return false
+}
+
 // moveto changes the repo this blob is associated with."
 func (b *Blob) moveto(repo *Repository) {
 	if b.hasfile() {
@@ -3971,7 +3975,7 @@ func (t Tag) String() string {
 	return strings.Join(parts, "") + comment + "\n"
 }
 
-// String dumps this tag in import-stream format
+// Dump this tag in import-stream format without constructing a string,
 func (t Tag) Save(w io.Writer) {
 	fmt.Fprintf(w, "tag %s\n", t.name)
 	if t.legacyID != "" {
@@ -3987,6 +3991,10 @@ func (t Tag) Save(w io.Writer) {
 		fmt.Fprintf(w, "\nLegacy-ID: %s\n", t.legacyID)
 	}
 	fmt.Fprintf(w, "data %d\n%s\n", len(comment), comment)
+}
+	
+func (t Tag) isCommit() bool {
+	return false
 }
 
 // Reset represents a branch creation."
@@ -4015,6 +4023,10 @@ func (reset Reset) getDelFlag() bool {
 
 func (reset *Reset) setDelFlag(b bool) {
 	reset.deleteme = b
+}
+
+func (reset Reset) isCommit() bool {
+	return false
 }
 
 // idMe IDs this reset for humans.
@@ -4440,6 +4452,10 @@ func (callout *Callout) moveto(*Repository) {
 	// Has no repo field
 }
 
+func (callout Callout) isCommit() bool {
+	return false
+}
+
 // ManifestEntry is visibility data about a file at a commit where it has no M
 type ManifestEntry struct {
 	mode   string
@@ -4528,6 +4544,10 @@ func newCommit(repo *Repository) *Commit {
 	commit._childNodes = make([]CommitLike, 0)
 	commit._parentNodes = make([]CommitLike, 0)
 	return commit
+}
+
+func (commit Commit) isCommit() bool {
+	return true
 }
 
 func (commit Commit) getColor() colorType {
@@ -5897,6 +5917,10 @@ func (p Passthrough) Save(w io.Writer) {
 // moveto changes the repo this passthrough is associated with."
 func (p *Passthrough) moveto(*Repository) {
 	// Has no repo field
+}
+
+func (p Passthrough) isCommit() bool {
+	return false
 }
 
 // Generic extractor code begins here
@@ -9236,6 +9260,7 @@ type Event interface {
 	moveto(*Repository)
 	getDelFlag() bool
 	setDelFlag(bool)
+	isCommit() bool
 }
 
 // walkEvents walks an event list applying a hook function.
@@ -9297,6 +9322,7 @@ type CommitLike interface {
 	setDelFlag(bool)
 	getColor() colorType
 	setColor(colorType)
+	isCommit() bool
 }
 
 // Contributor - associate a username with a DVCS-style ID and timezone
@@ -19580,6 +19606,11 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 		if len(resets) > 0 {
 			repo.declareSequenceMutation("reset deletion")
 		}
+		// Strictly speak it doesn't matter what new tag identifier we patch in to
+		// replace the deleted one(s), because when thev repos is imported only the
+		// names of the resets will matter.  The goal here is to produce something
+		// similar enough to what git-fast-export would dump that it would coincide
+		// in most cases, because that eases regression testing.
 		if len(commits) > 0 {
 			successors := make([]string, 0)
 			for _, child := range commits[len(commits)-1].children() {
@@ -19597,13 +19628,21 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 			}
 
 			//successors := {child.Branch for child in commits[-1].children() if child.parents()[0] == commits[-1]}
-			if len(successors) == 1 {
+			if len(successors) >= 1 {
 				for _, event := range commits {
 					event.Branch = successors[0]
 				}
 			} else {
-				croak("couldn't determine a unique successor for %s at %s", tagname, commits[len(commits)-1].idMe())
-				return false
+				for _, event := range commits {
+					if event.hasParents() && event.isCommit() && event.parents()[0].isCommit() {
+						event.Branch = event.parents()[0].(*Commit).Branch
+					} else {
+						// Must be a root commit. This should
+						// work unless rgee repo is multiroot
+						// and probably eon't foo up even then.
+						event.Branch = "refs/heads/master"
+					}
+				}
 			}
 		}
 	} else {
