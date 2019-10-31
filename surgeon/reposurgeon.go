@@ -21109,15 +21109,13 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		for _, op := range commit.operations() {
 			if op.op == opM && filepath.Base(op.Path) == "ChangeLog" {
 				cl++
-				blobfile := repo.markToEvent(op.ref).(*Blob).materialize()
 				// Figure out where we should look for changes in
 				// this blob by comparing it to its nearest ancestor.
 				then := make([]string, 0)
 				if ob := repo.blobAncestor(commit, op.Path); ob != nil {
-					oldcontent, _ := ioutil.ReadFile(ob.materialize())
-					then = strings.Split(string(oldcontent), "\n")
+					then = strings.Split(string(ob.getContent()), "\n")
 				}
-				newcontent, _ := ioutil.ReadFile(blobfile)
+				newcontent := repo.markToEvent(op.ref).(*Blob).getContent()
 				now := strings.Split(string(newcontent), "\n")
 				before := true
 				var attribution, inherited, new string
