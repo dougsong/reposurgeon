@@ -21304,14 +21304,22 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 					// band to stick because there is none *in*
 					// the change band. If there's more than one,
 					// assume the most recent is the latest and
-					// correct.
-					for _, diffline := range comparison {
+					// correct. First count the lines before the
+					// first change...
+					var commonCount int;
+					var diffline string
+					for commonCount, diffline = range comparison {
 						if diffline[0] != ' ' {
 							break
 						}
-						newAttribution := parseAttributionLine(diffline[2:])
+					}
+					// Then parse the attributions in reverse order to
+					// avoid parsing and tossing away a lot of them.
+					for i := commonCount-1; i >= 0; i-- {
+						newAttribution := parseAttributionLine(now[i])
 						if newAttribution != "" {
 							attribution = newAttribution
+							break
 						}
 					}
 				}
