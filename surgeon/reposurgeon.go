@@ -5001,6 +5001,8 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 // setMark sets the commit's mark
 func (commit *Commit) setMark(mark string) string {
 	if commit.repo != nil && !control.flagOptions["tighten"] {
+		commit.repo.maplock.Lock()
+		defer commit.repo.maplock.Unlock()
 		if commit.repo._eventByMark == nil {
 			commit.repo.memoizeMarks()
 		}
@@ -9396,7 +9398,8 @@ type Repository struct {
 	basedir      string
 	uuid         string
 	writeLegacy  bool
-	dollarMap    map[string]*Commit // From dollar cookies in files
+	dollarMap    sync.Map 	// From dollar cookies in files
+	dollarOnce   sync.Once
 	legacyMap    map[string]*Commit // From anything that doesn't survive rebuild
 	legacyCount  int
 	timings      []TimeMark
@@ -9456,8 +9459,6 @@ func (repo *Repository) cleanup() {
 // memoizeMarks rebuilds the mark cache
 func (repo *Repository) memoizeMarks() {
 	if !control.flagOptions["tighten"] {
-		repo.maplock.Lock()
-		defer repo.maplock.Unlock()
 		repo._eventByMark = make(map[string]Event)
 		for _, event := range repo.events {
 			key := event.getMark()
@@ -9480,6 +9481,8 @@ func (repo *Repository) markToEvent(mark string) Event {
 			}
 		}
 	} else {
+		repo.maplock.Lock()
+		defer repo.maplock.Unlock()
 		if repo._eventByMark == nil {
 			repo.memoizeMarks()
 		}
@@ -10218,9 +10221,6 @@ func (repo *Repository) fastImport(fp io.Reader, options stringSet, source strin
 
 // Extract info about legacy references from CVS/SVN header cookies.
 func (repo *Repository) parseDollarCookies() {
-	if repo.dollarMap != nil {
-		return
-	}
 	// Set commit legacy properties from $Id$ && $Subversion$
 	// cookies in blobs. In order to throw away stale headers from
 	// after, e.g., a CVS-to-SVN or SVN-to-git conversion, we
@@ -10229,8 +10229,11 @@ func (repo *Repository) parseDollarCookies() {
 	// CVS. Might be we should explicitly time-check in the latter
 	// case, but CVS timestamps aren't reliable so it might not
 	// include conversion quality any.
-	repo.dollarMap = make(map[string]*Commit)
-	for _, commit := range repo.commits(nil) {
+	walkEvents(repo.events, func(idx int, event Event) {
+		commit, iscommit := event.(*Commit)
+		if !iscommit {
+			return
+		}
 		for _, fileop := range commit.operations() {
 			if fileop.op != opM {
 				continue
@@ -10242,9 +10245,7 @@ func (repo *Repository) parseDollarCookies() {
 			}
 			if blob.cookie.implies() == "SVN" {
 				svnkey := "SVN:" + blob.cookie.rev
-				if _, ok := repo.dollarMap[svnkey]; !ok {
-					repo.dollarMap[svnkey] = commit
-				}
+				repo.dollarMap.LoadOrStore(svnkey, commit)
 			} else if !blob.cookie.isEmpty() {
 				if filepath.Base(fileop.Path) != blob.cookie.path {
 					// Usually the
@@ -10257,12 +10258,10 @@ func (repo *Repository) parseDollarCookies() {
 						fileop.Path, commit.mark, blob.cookie.path, blob.mark)
 				}
 				cvskey := fmt.Sprintf("CVS:%s:%s", fileop.Path, blob.cookie.path)
-				if _, ok := repo.dollarMap[cvskey]; !ok {
-					repo.dollarMap[cvskey] = commit
-				}
+				repo.dollarMap.LoadOrStore(cvskey, commit)
 			}
 		}
-	}
+	})
 }
 
 // Audit the repository for uniqueness properties.
@@ -14748,7 +14747,8 @@ func (rs *Reposurgeon) evalPathsetFull(state selEvalState,
 
 // Does an event contain something that looks like a legacy reference?
 func (rs *Reposurgeon) hasReference(event Event) bool {
-	rs.chosen().parseDollarCookies()
+	repo := rs.chosen()
+	repo.dollarOnce.Do(func() {repo.parseDollarCookies()})
 	var text string
 	type commentGetter interface{ getComment() string }
 	if g, ok := event.(commentGetter); ok {
@@ -14756,10 +14756,10 @@ func (rs *Reposurgeon) hasReference(event Event) bool {
 	} else {
 		return false
 	}
-	if rs.chosen().vcs == nil {
+	if repo.vcs == nil {
 		return false
 	}
-	result := rs.chosen().vcs.hasReference([]byte(text))
+	result := repo.vcs.hasReference([]byte(text))
 	return result
 }
 
@@ -20425,7 +20425,11 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 					if c := repo.legacyMap[p]; c != nil {
 						return c
 					}
-					return repo.dollarMap[p]
+					c, ok := repo.dollarMap.Load(p)
+					if ok {
+						return c.(*Commit)
+					}
+					return nil
 				}},
 			{`\[\[SVN:[0-9]+\]\]`,
 				func(p string) *Commit {
@@ -20433,7 +20437,11 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 					if c := repo.legacyMap[p]; c != nil {
 						return c
 					}
-					return repo.dollarMap[p]
+					c, ok := repo.dollarMap.Load(p)
+					if ok {
+						return c.(*Commit)
+					}
+					return nil
 				}},
 			{`\[\[HG:[0-9a-f]+\]\]`,
 				func(p string) *Commit {
