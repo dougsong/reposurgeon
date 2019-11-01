@@ -9406,6 +9406,7 @@ type Repository struct {
 	authormap    map[string]Contributor
 	tzmap        map[string]*time.Location // most recent email address to timezone
 	aliases      map[ContributorID]ContributorID
+	maplock	     sync.Mutex
 	// Write control - set, if required, before each dump
 	preferred    *VCS               // overrides vcs slot for writes
 	realized     map[string]bool    // clear and remake this before each dump
@@ -9454,6 +9455,8 @@ func (repo *Repository) cleanup() {
 // memoizeMarks rebuilds the mark cache
 func (repo *Repository) memoizeMarks() {
 	if !control.flagOptions["tighten"] {
+		repo.maplock.Lock()
+		defer repo.maplock.Unlock()
 		repo._eventByMark = make(map[string]Event)
 		for _, event := range repo.events {
 			key := event.getMark()
@@ -15244,7 +15247,13 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 	if !quiet {
 		control.baton.startProgress(prompt, uint64(len(rs.selection)))
 	}
+	var countlock sync.Mutex
 	altered := 0
+	safebump := func() {
+		countlock.Lock()
+		altered++
+		countlock.Unlock()
+	}
 	rs.chosen().walkEvents(rs.selection, func(idx int, event Event) {
 		if tag, ok := event.(*Tag); ok {
 			if nonblobs {
@@ -15263,7 +15272,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 					anychanged = anychanged || true
 				}
 				if anychanged {
-					altered++
+					safebump()
 				}
 			}
 		} else if commit, ok := event.(*Commit); ok {
@@ -15306,7 +15315,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 					}
 				}
 				if anychanged {
-					altered++
+					safebump()
 				}
 			}
 			if blobs {
@@ -15315,7 +15324,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 						oldinline := fileop.inline
 						fileop.inline = hook(fileop.inline)
 						if fileop.inline != oldinline {
-							altered++
+							safebump()
 						}
 					}
 				}
@@ -15325,7 +15334,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 			modified := hook(content)
 			if content != modified {
 				blob.setContent([]byte(modified), noOffset)
-				altered++
+				safebump()
 			}
 		}
 		if !quiet {
