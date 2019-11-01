@@ -15645,7 +15645,7 @@ func saveProfile(subject string, name string) {
 	}
 }
 
-func startCpuProfiling(name string) {
+func startCPUProfiling(name string) {
 	filename := name + ".cpu.prof"
 	f, err := os.Create(filename)
 	if err != nil {
@@ -15656,7 +15656,7 @@ func startCpuProfiling(name string) {
 	}
 }
 
-func stopCpuProfiling() {
+func stopCPUProfiling() {
 	pprof.StopCPUProfile()
 	respond("cpu profiling stopped.")
 }
@@ -15718,9 +15718,9 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 				croak("I don't recognize %#v as a profile name. The names I do recognize are %v.", subject, names)
 			} else if subject == "all" {
 				control.profilename = line
-				startCpuProfiling(line)
+				startCPUProfiling(line)
 			} else if subject == "cpu" {
-				startCpuProfiling(line)
+				startCPUProfiling(line)
 			} else {
 				respond("The %s profile starts automatically when you start reposurgeon.", subject)
 			}
@@ -15732,14 +15732,14 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 				croak("I don't recognize %#v as a profile name. The names I do recognize are %v.", subject, names)
 			} else if subject == "all" {
 				runtime.GC()
-				stopCpuProfiling()
+				stopCPUProfiling()
 				for subject := range names.Iterate() {
 					if subject != "all" && subject != "cpu" {
 						saveProfile(subject, filename)
 					}
 				}
 			} else if subject == "cpu" {
-				stopCpuProfiling()
+				stopCPUProfiling()
 			} else {
 				saveProfile(subject, filename)
 			}
