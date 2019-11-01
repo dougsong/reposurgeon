@@ -735,7 +735,7 @@ intended mainly as a way to get information on how to efficiently
 partition a repository that has become large enough to be
 unwieldy.
 
-+lint+ [>__outfile__ ]::
++lint+ [ options ] [>__outfile__ ]::
    Look for DAG and metadata configurations that may indicate a
    problem. Presently checks for: (1) Mid-branch deletes, (2)
    disconnected commits, (3) parentless commits, (4) the existence of

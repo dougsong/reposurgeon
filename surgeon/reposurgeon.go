@@ -16064,12 +16064,14 @@ func (rs *Reposurgeon) DoSizes(line string) bool {
 func (rs *Reposurgeon) HelpLint() {
 	rs.helpOutput(`
 Look for DAG and metadata configurations that may indicate a
-problem. Presently checks for: (1) Mid-branch deletes, (2)
+problem. Presently can check for: (1) Mid-branch deletes, (2)
 disconnected commits, (3) parentless commits, (4) the existance of
 multiple roots, (5) committer and author IDs that don't look
 well-formed as DVCS IDs, (6) multiple child links with identical
 branch labels descending from the same commit, (7) time and
 action-stamp collisions.
+
+Give it the -? option for a list of available options.
 
 Supports > redirection.
 `)
@@ -16086,6 +16088,7 @@ func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 	}
 	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
 	defer parse.Closem()
+	var lintmutex sync.Mutex
 	unmapped := regexp.MustCompile("^[^@]*$|^[^@]*@" + rs.chosen().uuid + "$")
 	shortset := newOrderedStringSet()
 	deletealls := newOrderedStringSet()
@@ -16094,46 +16097,72 @@ func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 	emptyaddr := newOrderedStringSet()
 	emptyname := newOrderedStringSet()
 	badaddress := newOrderedStringSet()
-	for _, commit := range rs.chosen().commits(rs.selection) {
+	rs.chosen().walkEvents(rs.selection, func(idx int, event Event) {
+		commit, iscommit := event.(*Commit)
+		if !iscommit {
+			return
+		}
 		if len(commit.operations()) > 0 && commit.operations()[0].op == deleteall && commit.hasChildren() {
+			lintmutex.Lock()
 			deletealls.Add(fmt.Sprintf("on %s at %s", commit.Branch, commit.idMe()))
+			lintmutex.Unlock()
 		}
 		if !commit.hasParents() && !commit.hasChildren() {
+			lintmutex.Lock()
 			disconnected.Add(commit.idMe())
+			lintmutex.Unlock()
 		} else if !commit.hasParents() {
+			lintmutex.Lock()
 			roots.Add(commit.idMe())
+			lintmutex.Unlock()
 		}
 		if unmapped.MatchString(commit.committer.email) {
+			lintmutex.Lock()
 			shortset.Add(commit.committer.email)
+			lintmutex.Unlock()
 		}
 		for _, person := range commit.authors {
+			lintmutex.Lock()
 			if unmapped.MatchString(person.email) {
 				shortset.Add(person.email)
 			}
+			lintmutex.Unlock()
 		}
 		if commit.committer.email == "" {
+			lintmutex.Lock()
 			emptyaddr.Add(commit.idMe())
+			lintmutex.Unlock()
 		} else if !strings.Contains(commit.committer.email, "@") {
+			lintmutex.Lock()
 			badaddress.Add(commit.idMe())
+			lintmutex.Unlock()
 		}
 		for _, author := range commit.authors {
 			if author.email == "" {
+				lintmutex.Lock()
 				emptyaddr.Add(commit.idMe())
+				lintmutex.Unlock()
 			} else if !strings.Contains(author.email, "@") {
+				lintmutex.Lock()
 				badaddress.Add(commit.idMe())
+				lintmutex.Unlock()
 			}
 		}
 		if commit.committer.fullname == "" {
+			lintmutex.Lock()
 			emptyname.Add(commit.idMe())
 		}
 		for _, author := range commit.authors {
 			if author.fullname == "" {
+				lintmutex.Lock()
 				emptyname.Add(commit.idMe())
 
 			}
 		}
-	}
-	if parse.options.Empty() || parse.options.Contains("--deletealls") || parse.options.Contains("-d") {
+	})
+	// This check isn't done by default because these are common in Subverrsion repos
+	// and do not necessarily indicate a problem.
+	if parse.options.Contains("--deletealls") || parse.options.Contains("-d") {
 		sort.Strings(deletealls)
 		for _, item := range deletealls {
 			fmt.Fprintf(parse.stdout, "mid-branch delete: %s\n", item)
