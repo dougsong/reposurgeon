@@ -11140,13 +11140,17 @@ func (repo *Repository) delete(selected orderedIntSet, policy orderedStringSet) 
 // Replace references to duplicate blobs according to the given dup_map,
 // which maps marks of duplicate blobs to canonical marks`
 func (repo *Repository) dedup(dupMap map[string]string) {
-	for _, commit := range repo.commits(nil) {
+	walkEvents(repo.events, func(idx int, event Event) {
+		commit, ok := event.(*Commit)
+		if !ok {
+			return
+		}
 		for _, fileop := range commit.operations() {
 			if fileop.op == opM && dupMap[fileop.ref] != "" {
 				fileop.ref = dupMap[fileop.ref]
 			}
 		}
-	}
+	})
 	repo.gcBlobs()
 }
 
