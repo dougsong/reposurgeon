@@ -21311,7 +21311,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 							//print("Inherited: %s" % repr(inherited))
 						}
 						if diffline[0] == '+' || diffline[0] == '?' {
-							if attribution != "" && new == "" {
+							if new == "" {
 								new = attribution
 								//print("New: %s" % repr(new))
 								break
