@@ -265,6 +265,9 @@ func (baton *Baton) percentProgress(ccount uint64) {
 
 func (baton *Baton) endProgress() {
 	if baton != nil && baton.progressEnabled {
+		baton.progress.Lock()
+		baton.progress.count = baton.progress.expected
+		baton.progress.Unlock()
 		baton.progress.render(baton)
 		baton.progress.Lock()
 		defer baton.progress.Unlock()
