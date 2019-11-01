@@ -11059,7 +11059,13 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 	// Preserve assignments
 	repo.filterAssignments(func(e Event) bool { return e.getDelFlag() })
 	// Do the actual deletions
-	survivors := make([]Event, 0)
+	var count int64
+	for _, e := range repo.events {
+		if !e.getDelFlag() {
+			count += 1
+		}
+	}
+	survivors := make([]Event, 0, count)
 	for _, e := range repo.events {
 		if !e.getDelFlag() {
 			survivors = append(survivors, e)
