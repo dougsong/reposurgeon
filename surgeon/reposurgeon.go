@@ -20472,18 +20472,16 @@ func (rs *Reposurgeon) DoGitify(_line string) bool {
 		rs.selection = rs.chosen().all()
 	}
 	lineEnders := orderedStringSet{".", ",", ";", ":", "?", "!"}
-	baton := control.baton
-	//baton.startProcess("gitifying comments", "")
-	for _, ei := range rs.selection {
-		event := rs.chosen().events[ei]
+	control.baton.startProgress("gitifying comments", uint64(len(rs.selection)))
+	rs.chosen().walkEvents(rs.selection, func(idx int, event Event) {
 		if commit, ok := event.(*Commit); ok {
 			commit.Comment = strings.TrimSpace(commit.Comment) + "\n"
 			if strings.Count(commit.Comment, "\n") < 2 {
-				continue
+				return
 			}
 			firsteol := strings.Index(commit.Comment, "\n")
 			if commit.Comment[firsteol+1] == byte('\n') {
-				continue
+				return
 			}
 			if lineEnders.Contains(string(commit.Comment[firsteol-1])) {
 				commit.Comment = commit.Comment[:firsteol] +
@@ -20493,11 +20491,11 @@ func (rs *Reposurgeon) DoGitify(_line string) bool {
 		} else if tag, ok := event.(*Tag); ok {
 			tag.Comment = strings.TrimSpace(tag.Comment) + "\n"
 			if strings.Count(tag.Comment, "\n") < 2 {
-				continue
+				return
 			}
 			firsteol := strings.Index(tag.Comment, "\n")
 			if tag.Comment[firsteol+1] == byte('\n') {
-				continue
+				return
 			}
 			if lineEnders.Contains(string(tag.Comment[firsteol-1])) {
 				tag.Comment = tag.Comment[:firsteol] +
@@ -20505,9 +20503,9 @@ func (rs *Reposurgeon) DoGitify(_line string) bool {
 					tag.Comment[firsteol:]
 			}
 		}
-		baton.twirl()
-	}
-	//baton.endProcess()
+		control.baton.percentProgress(uint64(idx))
+	})
+	control.baton.endProgress()
 	return false
 }
 
