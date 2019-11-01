@@ -144,13 +144,21 @@ func (baton *Baton) setInteractivity(enabled bool) {
 // log prints out a simple log message
 func (baton *Baton) printLog(str []byte) {
 	if baton != nil {
-		baton.channel <- Message{LOG, _copyb(str)}
+		if baton.progressEnabled {
+			baton.channel <- Message{LOG, _copyb(str)}
+		} else {
+			baton.stream.Write(str)
+		}
 	}
 }
 
 func (baton *Baton) printLogString(str string) {
 	if baton != nil {
-		baton.channel <- Message{LOG, _copystr(str)}
+		if baton.progressEnabled {
+			baton.channel <- Message{LOG, _copystr(str)}
+		} else {
+			baton.stream.WriteString(str)
+		}
 	}
 }
 

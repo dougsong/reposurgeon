@@ -2483,7 +2483,8 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (*Repository, error)
 					blob := newBlob(repo)
 					blob.setMark(blobmark.String())
 					//logit(logEXTRACT, "%s: blob gets mark %s", trunc(revision), blob.mark)
-					filecopy(pathname, blob.getBlobfile(true))
+					nBytes, _ := filecopy(pathname, blob.getBlobfile(true))
+					blob.size = nBytes
 					blob.addalias(pathname)
 					repo.addEvent(blob)
 					// Its new fileop is added to the commit
@@ -3495,6 +3496,9 @@ func (b *Blob) addalias(argpath string) {
 }
 
 func (b *Blob) setBlobfile(argpath string) {
+	file, _ := os.Open(argpath)
+	info, _ := file.Stat()
+	b.size = info.Size()
 	b.abspath = argpath
 }
 
@@ -3554,6 +3558,36 @@ func (b *Blob) getContent() []byte {
 		panic(fmt.Errorf("Blob read: %v", err))
 	}
 	return data
+}
+
+type SectionReader struct {
+	*io.SectionReader
+}
+func NewSectionReader(r io.ReaderAt, off int64, n int64) *SectionReader {
+	return &SectionReader{io.NewSectionReader(r, off, n)}
+}
+func (sr SectionReader) Close() error {
+	return nil
+}
+
+// getContentStream gets the content of the blob as a Reader.
+func (b *Blob) getContentStream() io.ReadCloser {
+	if !b.hasfile() {
+		return NewSectionReader(b.repo.seekstream, b.start, b.size)
+	}
+	file, err := os.Open(b.getBlobfile(false))
+	if err != nil {
+		panic(fmt.Errorf("Blob read: %v", err))
+	}
+	if control.flagOptions["compressblobs"] {
+		input, err2 := gzip.NewReader(file)
+		if err2 != nil {
+			panic(err.Error())
+		}
+		return input
+	} else {
+		return file
+	}
 }
 
 // setContent sets the content of the blob from a string.
@@ -3711,15 +3745,18 @@ func (b Blob) String() string {
 	return data + string(content) + "\n"
 }
 
-func (b Blob) Save(w io.Writer) {
+func (b *Blob) Save(w io.Writer) {
 	if b.hasfile() {
 		fn := b.getBlobfile(false)
 		if !exists(fn) {
 			return
 		}
 	}
-	content := b.getContent()
-	fmt.Fprintf(w, "blob\nmark %s\ndata %d\n%s\n", b.mark, len(content), content)
+	content := b.getContentStream()
+	defer content.Close()
+	fmt.Fprintf(w, "blob\nmark %s\ndata %d\n", b.mark, b.size)
+	io.Copy(w, content)
+	w.Write([]byte{'\n'})
 }
 
 //Tag describes a a gitspace annotated tag object
@@ -3977,7 +4014,7 @@ func (t Tag) String() string {
 }
 
 // Dump this tag in import-stream format without constructing a string,
-func (t Tag) Save(w io.Writer) {
+func (t *Tag) Save(w io.Writer) {
 	fmt.Fprintf(w, "tag %s\n", t.name)
 	if t.legacyID != "" {
 		fmt.Fprintf(w, "#legacy-id %s\n", t.legacyID)
@@ -4090,7 +4127,7 @@ func (reset Reset) String() string {
 }
 
 // String dumps this reset in import-stream format
-func (reset Reset) Save(w io.Writer) {
+func (reset *Reset) Save(w io.Writer) {
 	if reset.repo.realized != nil {
 		var branch = reset.ref
 		if strings.Contains(reset.ref, "^") {
@@ -4357,7 +4394,7 @@ func (fileop FileOp) String() string {
 }
 
 // String dumps this fileop in import-stream format
-func (fileop FileOp) Save(w io.Writer) {
+func (fileop *FileOp) Save(w io.Writer) {
 	quotifyIfNeeded := func(cpath string) string {
 		if len(strings.Fields(cpath)) > 1 {
 			return strconv.Quote(cpath)
@@ -4444,7 +4481,7 @@ func (callout Callout) String() string {
 }
 
 // Stub to satisfy Event interface - should never be used
-func (callout Callout) Save(w io.Writer) {
+func (callout *Callout) Save(w io.Writer) {
 	fmt.Fprintf(w, "callout-%s", callout.mark)
 }
 
@@ -5547,6 +5584,7 @@ func (commit *Commit) checkout(directory string) string {
 					panic(fmt.Errorf("File creation for inline failed during checkout: %v", err3))
 				}
 				file.Write([]byte(entry.inline))
+				blob.size = int64(len(entry.inline))
 				file.Close()
 			} else {
 				if blob.hasfile() {
@@ -5557,7 +5595,9 @@ func (commit *Commit) checkout(directory string) string {
 					if err4 != nil {
 						panic(fmt.Errorf("File creation failed during checkout: %v", err4))
 					}
-					file.Write(blob.getContent())
+					content := blob.getContent()
+					file.Write(content)
+					blob.size = int64(len(content))
 					file.Close()
 				}
 			}
@@ -5759,7 +5799,7 @@ func (commit Commit) String() string {
 }
 
 // Save this commit to a stream in fast-import format
-func (commit Commit) Save(w io.Writer) {
+func (commit *Commit) Save(w io.Writer) {
 	vcs := commit.repo.preferred
 	if vcs == nil && commit.repo.vcs != nil && commit.repo.vcs.importer != "" {
 		vcs = commit.repo.vcs
@@ -5913,7 +5953,7 @@ func (p Passthrough) String() string {
 }
 
 // Save reports this passthrough in import-stream format.
-func (p Passthrough) Save(w io.Writer) {
+func (p *Passthrough) Save(w io.Writer) {
 	w.Write([]byte(p.text))
 }
 
@@ -14374,7 +14414,7 @@ func (rs *Reposurgeon) PreCmd(line string) string {
 		rs.history = append(rs.history, trimmed)
 	}
 	if control.flagOptions["echo"] {
-		control.baton.printLogString(trimmed)
+		control.baton.printLogString(trimmed+"\n")
 	}
 	rs.selection = rs.defaultSelection
 	if strings.HasPrefix(line, "#") {
@@ -15402,7 +15442,7 @@ func (rs *Reposurgeon) DoResolve(line string) bool {
 			oneOrigin.Add(i + 1)
 		}
 		if line != "" {
-			control.baton.printLogString(fmt.Sprintf("%s: %v", line, oneOrigin))
+			control.baton.printLogString(fmt.Sprintf("%s: %v\n", line, oneOrigin))
 		} else {
 			control.baton.printLogString(fmt.Sprintf("%v\n", oneOrigin))
 		}
