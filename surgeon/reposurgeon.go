@@ -21311,19 +21311,13 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 							//print("Inherited: %s" % repr(inherited))
 						}
 						if diffline[0] == '+' || diffline[0] == '?' {
-							if new == "" {
-								new = attribution
-								//print("New: %s" % repr(new))
-								break
-							}
+							new = attribution
+							//print("New: %s" % repr(new))
+							break
 						}
 					}
 					//print("Attributions: %s %s" % (inherited, new))
-					if new != "" {
-						attribution = new
-					} else {
-						attribution = inherited
-					}
+					attribution = inherited
 				}
 				if attribution != "" {
 					attributions[event_id] = append(attributions[event_id], attribution)
