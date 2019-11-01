@@ -21283,7 +21283,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				newcontent := repo.markToEvent(op.ref).(*Blob).getContent()
 				now := strings.Split(string(newcontent), "\n")
 				before := true
-				var attribution, inherited, new string
+				var attribution, inherited string
 				//print("Analyzing Changelog at %s." % commit.mark)
 				comparison, err := differ.Compare(then, now)
 				if err != nil {
@@ -21311,7 +21311,6 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 							//print("Inherited: %s" % repr(inherited))
 						}
 						if diffline[0] == '+' || diffline[0] == '?' {
-							new = attribution
 							//print("New: %s" % repr(new))
 							break
 						}
