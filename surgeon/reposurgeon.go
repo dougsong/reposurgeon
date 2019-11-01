@@ -11065,7 +11065,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 	var count int64
 	for _, e := range repo.events {
 		if !e.getDelFlag() {
-			count += 1
+			count++
 		}
 	}
 	survivors := make([]Event, 0, count)
