@@ -2682,6 +2682,7 @@ type Control struct {
 	mapOptions  map[string]map[string]string
 	branchMappings []branchMapping
 	readLimit   uint64
+	profilename string
 }
 
 func (ctx *Control) isInteractive() bool {
@@ -15626,6 +15627,40 @@ func (rs *Reposurgeon) DoIndex(lineIn string) bool {
 	return false
 }
 
+func saveAllProfiles(name string) {
+	profiles := pprof.Profiles()
+	for _, profile := range profiles {
+		saveProfile(profile.Name(), name)
+	}
+}
+
+func saveProfile(subject string, name string) {
+	filename := fmt.Sprintf("%s.%s.prof", name, subject)
+	f, err := os.Create(filename)
+	if err != nil {
+		croak("failed to create file %#v [%s]", filename, err)
+	} else {
+		pprof.Lookup(subject).WriteTo(f, 0)
+		respond("%s profile saved to %#v", subject, filename)
+	}
+}
+
+func startCpuProfiling(name string) {
+	filename := name + ".cpu.prof"
+	f, err := os.Create(filename)
+	if err != nil {
+		croak("failed to create file %#v [%s]", filename, err)
+	} else {
+		pprof.StartCPUProfile(f)
+		respond("all profiling enabled.")
+	}
+}
+
+func stopCpuProfiling() {
+	pprof.StopCPUProfile()
+	respond("cpu profiling stopped.")
+}
+
 func (rs *Reposurgeon) HelpProfile() {
 	rs.helpOutput(`
 DESCRIPTION
@@ -15662,6 +15697,7 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 		names.Add(profile.Name())
 	}
 	names.Add("cpu")
+	names.Add("all")
 	if line == "" {
 		respond("The available profiles are %v", names)
 	} else {
@@ -15680,33 +15716,32 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 			subject, line := popToken(line)
 			if !names.Contains(subject) {
 				croak("I don't recognize %#v as a profile name. The names I do recognize are %v.", subject, names)
+			} else if subject == "all" {
+				control.profilename = line
+				startCpuProfiling(line)
 			} else if subject == "cpu" {
-				f, err := os.Create(line)
-				if err != nil {
-					croak("failed to create file %#v [%s]", line, err)
-				} else {
-					pprof.StartCPUProfile(f)
-					respond("cpu profiling enabled.")
-				}
+				startCpuProfiling(line)
 			} else {
 				respond("The %s profile starts automatically when you start reposurgeon.", subject)
 			}
 		case "save":
 			subject, line := popToken(line)
+			filename, line := popToken(line)
+			fmt.Fprintf(os.Stderr, "save; subject=%#v, filename=%#v\n", subject, filename)
 			if !names.Contains(subject) {
 				croak("I don't recognize %#v as a profile name. The names I do recognize are %v.", subject, names)
-			} else if subject == "cpu" {
-				pprof.StopCPUProfile()
-				respond("cpu profiling stopped.")
-			} else {
-				f, err := os.Create(line)
-				if err != nil {
-					croak("failed to create file %#v [%s]", line, err)
-				} else {
-					runtime.GC()
-					pprof.Lookup(subject).WriteTo(f, 0)
-					respond("%s profile saved to %#v", subject, line)
+			} else if subject == "all" {
+				runtime.GC()
+				stopCpuProfiling()
+				for subject := range names.Iterate() {
+					if subject != "all" && subject != "cpu" {
+						saveProfile(subject, filename)
+					}
 				}
+			} else if subject == "cpu" {
+				stopCpuProfiling()
+			} else {
+				saveProfile(subject, filename)
 			}
 		default:
 			croak("I don't know how to %s. Possible verbs are [live, start, save].", verb);
@@ -22099,6 +22134,9 @@ func main() {
 		control.baton.Sync()
 		//fmt.Print("\n")
 		pprof.StopCPUProfile()
+		if len(control.profilename) > 0 {
+			saveAllProfiles(control.profilename)
+		}
 		/*
 		if control.logmask <= 1 {
 			if e := recover(); e != nil {
