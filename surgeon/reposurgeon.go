@@ -21282,8 +21282,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				}
 				newcontent := repo.markToEvent(op.ref).(*Blob).getContent()
 				now := strings.Split(string(newcontent), "\n")
-				before := true
-				var attribution, inherited string
+				var attribution string
 				//print("Analyzing Changelog at %s." % commit.mark)
 				comparison, err := differ.Compare(then, now)
 				if err != nil {
@@ -21291,32 +21290,30 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 					return
 				}
 				for _, diffline := range comparison {
-					if diffline[0] != ' ' {
-						//print("Change encountered")
-						before = false
-					}
-					//print("I see: %q" % diffline)
-					line := diffline[2:]
-					attribution = parseAttributionLine(line)
-					if attribution != "" {
-						//print("I notice: %s %s %s" % (diffline[0], attribution, before))
-						// This is the tricky part.  We want the
-						// last attribution from before the change
-						// band to stick unless there's one *in*
-						// the change band. If there's more than one,
-						// assume the most recent is the latest and
-						// correct.
-						if before {
-							inherited = attribution
-							//print("Inherited: %s" % repr(inherited))
-						}
-						if diffline[0] == '+' || diffline[0] == '?' {
-							//print("New: %s" % repr(new))
+					if diffline[0] == '+' || diffline[0] == '?' {
+						newAttribution := parseAttributionLine(diffline[2:])
+						if newAttribution != "" {
+							attribution = newAttribution
 							break
 						}
 					}
-					//print("Attributions: %s %s" % (inherited, new))
-					attribution = inherited
+				}
+				if attribution == "" {
+					// This is the tricky part.  We want the
+					// last attribution from before the change
+					// band to stick because there is none *in*
+					// the change band. If there's more than one,
+					// assume the most recent is the latest and
+					// correct.
+					for _, diffline := range comparison {
+						if diffline[0] != ' ' {
+							break
+						}
+						newAttribution := parseAttributionLine(diffline[2:])
+						if newAttribution != "" {
+							attribution = newAttribution
+						}
+					}
 				}
 				if attribution != "" {
 					attributions[event_id] = append(attributions[event_id], attribution)
