@@ -15235,12 +15235,11 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 		}
 		rs.selection.Sort()
 	}
-	baton := control.baton
-	//baton.startProcess(prompt, "")
-	//defer baton.endProcess()
+	if !quiet {
+		control.baton.startProgress(prompt, uint64(len(rs.selection)))
+	}
 	altered := 0
-	for _, ei := range rs.selection {
-		event := rs.chosen().events[ei]
+	rs.chosen().walkEvents(rs.selection, func(idx int, event Event) {
 		if tag, ok := event.(*Tag); ok {
 			if nonblobs {
 				oldcomment := tag.Comment
@@ -15323,9 +15322,15 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 				altered++
 			}
 		}
-		baton.twirl()
+		if !quiet {
+			control.baton.percentProgress(uint64(idx))
+		}
+	})
+	if !quiet {
+		control.baton.endProgress()
+	} else {
+		respond("%d items modified by %s.", altered, strings.ToLower(prompt))
 	}
-	respond("%d items modified by %s.", altered, strings.ToLower(prompt))
 }
 
 //
