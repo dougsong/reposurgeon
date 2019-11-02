@@ -563,17 +563,18 @@ $ goreposurgeon "read ." "write >rs.fi"
 
 The ability to dump profile data is built into reposurgeon itself:
 
-$ goreposurgeon "verbose 1" "profile reposurgeon.prof" "read <rs.fi" "profile"
+$ goreposurgeon "verbose 1" "profile all reposurgeon" "read <rs.fi"
 
 Once you have the profile data you can sic the profile viewer on it.
 Have graphviz installed and do
 
-go tool pprof goreposurgeon rs.prof
+go tool pprof -http=":" ./reposurgeon reposurgeon.cpu.prof
 
-There are lots of ways to explore the data but the single most interesting one
-is to enter "web" and look at your browser. The size of each box is proportional
-to the number of profiler samples it appears in.  "top10" gives you the same
-data in tabular form:
+There are lots of ways to explore the data but the single most
+interesting one to start with is the graph view. The size of each box
+is proportional to the number of profiler samples it appears in, and
+the arrows are sized in proportion to the time spent calling them.
+The 'top' view gives you the same data in tabular form:
 
       flat  flat%   sum%        cum   cum%
      1.41s 22.45% 22.45%      1.43s 22.77%  syscall.Syscall
@@ -591,6 +592,15 @@ good news - it suggests we don't have a big-O/algorithmic problem.
 The obvious thing to do first is a search-and-destroy for heap escapes.
 We can't avoid doing a lot of allocation; what we can do is avoid creating
 lots of short-lived heap objects that will churn heap storage and trigger GC.
+
+You can view the allocation profile with this command:
+
+go tool pprof -http=":" -sample_index=alloc_space ./reposurgeon reposurgeon.cpu.prof
+
+This shows all allocations over the entire run of the program, not
+just what was still live at a particular point in time. Using the
+option -sample_index=alloc_space instead will show the count of all
+objects allocated instead of the space that they occupied.
 
 Some references:
 
