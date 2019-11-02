@@ -510,7 +510,7 @@ Start by reading this:
 
 https://svn.apache.org/repos/asf/subversion/trunk/notes/dump-load-format.txt
 
-Then read rthe sectuin on working with Subversion in the manual.
+Then read the section on working with Subversion in the manual.
 
 Then read a simple dumpfile - like, say, samplebranch.svn - to see how
 dump streams look in practice. Next run
@@ -527,6 +527,9 @@ You can use liftcheck to see exactly how a conversion goes wrong;
 you'll get a diff. Try this on a member of the awkward squad, like
 emptyfrom.svn
 
+You can use singlelift -d to dump a fast import stream made
+from a named Subversion dump.
+
 The objective is to fix reposurgeon so that all those diffs go away.
 
 == Sporadic tests ==
@@ -541,6 +544,69 @@ svncheck2.sh:
 
 svncheck3.sh
    Variant of previous test with different op order.
+
+== Tuning for speed ==
+
+The goal of moving the code to Golang is to improve conversion
+performance on large repositories by an order of magnitude or more,
+with the horrible example being the GCC subversion history.  Trial
+runs with the Python version were taking 9-10 hours!
+
+If you are already a Go expert, you can help by tuning for speed.  The
+most important single operations to speed up are fast-import stream
+reads and Subversion dump stream reads.
+
+First thing to do is make a test load.  The reposurgeon history itself is
+large enough to be a useful one.  So:
+
+$ goreposurgeon "read ." "write >rs.fi"
+
+The ability to dump profile data is built into reposurgeon itself:
+
+$ goreposurgeon "verbose 1" "profile reposurgeon.prof" "read <rs.fi" "profile"
+
+Once you have the profile data you can sic the profile viewer on it.
+Have graphviz installed and do
+
+go tool pprof goreposurgeon rs.prof
+
+There are lots of ways to explore the data but the single most interesting one
+is to enter "web" and look at your browser. The size of each box is proportional
+to the number of profiler samples it appears in.  "top10" gives you the same
+data in tabular form:
+
+      flat  flat%   sum%        cum   cum%
+     1.41s 22.45% 22.45%      1.43s 22.77%  syscall.Syscall
+     1.11s 17.68% 40.13%      2.22s 35.35%  runtime.scanobject
+     0.75s 11.94% 52.07%      0.75s 11.94%  runtime.greyobject
+     0.58s  9.24% 61.31%      0.58s  9.24%  runtime.memmove
+
+This is telling us that (a) disk I/O (syscall.Syscall) is slow, but garbage
+collection overhead dominates (runtime.scanobject and runtime.greyobject, 47%).
+That runtime.memmove is probably array copies during append operations.
+
+To go faster we need to exercise the allocator less.  In a way this is
+good news - it suggests we don't have a big-O/algorithmic problem.
+
+The obvious thing to do first is a search-and-destroy for heap escapes.
+We can't avoid doing a lot of allocation; what we can do is avoid creating
+lots of short-lived heap objects that will churn heap storage and trigger GC.
+
+Some references:
+
+https://blog.golang.org/profiling-go-programs
+
+https://artem.krylysov.com/blog/2017/03/13/profiling-and-optimizing-go-web-applications/
+
+https://github.com/google/pprof/blob/master/doc/README.md
+
+https://www.signalfx.com/blog/a-pattern-for-optimizing-go-2/
+
+http://www.agardner.me/golang/garbage/collection/gc/escape/analysis/2015/10/18/go-escape-analysis.html
+
+https://github.com/golang/go/wiki/Performance
+
+https://groups.google.com/forum/#!msg/golang-nuts/pxfhKGqHNv0/If4Gz09r_2gJ
 
 // end
 

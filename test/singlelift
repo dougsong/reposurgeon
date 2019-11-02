@@ -29,7 +29,7 @@ while getopts dsv:x opt
 do
     case $opt in
 	d) mode=dump;;
-	s) serial="set serial"
+	s) serial="set serial";;
 	v) verbose="$OPTARG" ;;
 	x) experimental="set experimental"
     esac
