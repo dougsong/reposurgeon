@@ -7747,7 +7747,7 @@ func (sp *StreamParser) expandAllNodes(nodelist []*NodeAction, options stringSet
 					}
 					// Pass through the properties that can't be processed until we're ready to
 					// generate commits
-					if prop == "cvs2svn:cvs-rev" || (prop == "svn:mergeinfo" && node.kind == sdDIR) {
+					if prop == "cvs2svn:cvs-rev" || ((prop == "svn:mergeinfo" || prop == "svnmerge-integrated") && node.kind == sdDIR) {
 						continue
 					}
 					tossThese = append(tossThese, [2]string{prop, val})
@@ -8786,7 +8786,7 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 		}
 		baton.endProgress()
 		timeit("branchlinks")
-		// Add links due to svn:mergeinfo properties
+		// Add links due to svn:mergeinfo and svnmerge-integrated properties
 		mergeinfo := newPathMap()
 		mergeinfos := make(map[revidx]*PathMap)
 		getMerges := func(minfo *PathMap, path string) orderedStringSet {
@@ -8831,6 +8831,9 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 				ownMerges := newOrderedStringSet()
 				if node.hasProperties() {
 					info := node.props.get("svn:mergeinfo")
+					if info == "" {
+						info = node.props.get("svnmerge-integrated")
+					}
 					if info != "" {
 						for _, line := range strings.Split(info, "\n") {
 							fields := strings.Split(line, ":")
@@ -10186,6 +10189,9 @@ func (repo *Repository) checkUniqueness(chatty bool, logHook func(string)) {
 	repo.uniqueness = ""
 	timecheck := make(map[string]Event)
 	timeCollisions := make(map[string][]Event)
+	// Not worth parallelizing this loop, there isn't enough going on
+	// outside of the actual mapn accesses - which must be locked and
+	// serialized.
 	commits := repo.commits(nil)
 	for _, event := range commits {
 		when := event.when().String()

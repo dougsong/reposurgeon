@@ -11,9 +11,10 @@ Repository head::
      Added 'memory' command for reporting memory usage.
      Author aliases are recognized in timestamps.
      Results of reorder and reparent are toposorted again.
-     More pathological tag-deletion cases are coped with gracefully.
+     More pathological tag-rename cases are coped with gracefully.
      All documentation moved to asciidoc for better web rendering.
      Logging now has facility flags rather than a single level.
+     The svnmerge-inregrated properties creaed by svnmerge.py are handled.
 
 3.48: 2019-10-02::
      Last Python release.  4.0 will ship in Go.
