@@ -3618,10 +3618,36 @@ func (b *Blob) setContent(text []byte, tell int64) {
 	}
 }
 
+// setContent sets the content of the blob from a string.
+func (b *Blob) setContentFromStream(s io.ReadCloser) {
+	// maybe the caller should close it?
+	defer s.Close()
+	b.start = noOffset
+	file, err := os.OpenFile(b.getBlobfile(true),
+		os.O_WRONLY|os.O_CREATE, userReadWriteMode)
+	if err != nil {
+		panic(fmt.Errorf("Blob write: %v", err))
+	}
+	defer file.Close()
+	var nBytes int64
+	if control.flagOptions["compressblobs"] {
+		output := gzip.NewWriter(file)
+
+		defer output.Close()
+		nBytes, err = io.Copy(output, s)
+	} else {
+		nBytes, err = io.Copy(file, s)
+	}
+	if err != nil {
+		panic(fmt.Errorf("Blob writer: %v", err))
+	}
+	b.size = nBytes
+}
+
 // materialize stores this content as a separate file, if it isn't already.
 func (b *Blob) materialize() string {
 	if b.start != noOffset {
-		b.setContent(b.getContent(), noOffset)
+		b.setContentFromStream(b.getContentStream())
 	}
 	return b.getBlobfile(false)
 }
