@@ -3585,9 +3585,8 @@ func (b *Blob) getContentStream() io.ReadCloser {
 			panic(err.Error())
 		}
 		return input
-	} else {
-		return file
 	}
+	return file
 }
 
 // setContent sets the content of the blob from a string.
@@ -3759,18 +3758,7 @@ func (b *Blob) parseCookie(content string) Cookie {
 	return b.cookie
 }
 
-func (b Blob) String() string {
-	if b.hasfile() {
-		fn := b.getBlobfile(false)
-		if !exists(fn) {
-			return ""
-		}
-	}
-	content := b.getContent()
-	data := fmt.Sprintf("blob\nmark %s\ndata %d\n", b.mark, len(content))
-	return data + string(content) + "\n"
-}
-
+// Save this blob in import-stream format without constructing a string
 func (b *Blob) Save(w io.Writer) {
 	if b.hasfile() {
 		fn := b.getBlobfile(false)
@@ -3785,7 +3773,14 @@ func (b *Blob) Save(w io.Writer) {
 	w.Write([]byte{'\n'})
 }
 
-//Tag describes a a gitspace annotated tag object
+// String serializes this blob into a string
+func (b Blob) String() string {
+	var bld strings.Builder
+	b.Save(&bld)
+	return bld.String()
+}
+
+// Tag describes a a gitspace annotated tag object
 type Tag struct {
 	repo       *Repository
 	name       string
@@ -4017,29 +4012,7 @@ func (t *Tag) stamp(_modifiers orderedStringSet, _eventnum int, cols int) string
 	return report
 }
 
-// String dumps this tag in import-stream format
-func (t Tag) String() string {
-	parts := []string{fmt.Sprintf("tag %s\n", t.name)}
-	if t.legacyID != "" {
-		id := fmt.Sprintf("#legacy-id %s\n", t.legacyID)
-		parts = append(parts, id)
-	}
-	parts = append(parts, fmt.Sprintf("from %s\n", t.committish))
-	if t.tagger != nil {
-		tagger := fmt.Sprintf("tagger %s\n", t.tagger)
-		parts = append(parts, tagger)
-	}
-	comment := t.Comment
-	if t.Comment != "" && t.repo.writeOptions.Contains("--legacy") && t.legacyID != "" {
-		comment += fmt.Sprintf("\nLegacy-ID: %s\n", t.legacyID)
-		parts = append(parts, comment)
-	}
-	data := fmt.Sprintf("data %d\n", len(comment))
-	parts = append(parts, data)
-	return strings.Join(parts, "") + comment + "\n"
-}
-
-// Dump this tag in import-stream format without constructing a string,
+// Save this tag in import-stream format without constructing a string
 func (t *Tag) Save(w io.Writer) {
 	fmt.Fprintf(w, "tag %s\n", t.name)
 	if t.legacyID != "" {
@@ -4057,6 +4030,13 @@ func (t *Tag) Save(w io.Writer) {
 	fmt.Fprintf(w, "data %d\n%s\n", len(comment), comment)
 }
 	
+// String serializes this tag in import-stream format
+func (t Tag) String() string {
+	var bld strings.Builder
+	t.Save(&bld)
+	return bld.String()
+}
+
 func (t Tag) isCommit() bool {
 	return false
 }
@@ -4136,23 +4116,7 @@ func (reset Reset) tags(modifiers orderedStringSet, eventnum int, _cols int) str
 	return fmt.Sprintf("%6d\treset\t%s", eventnum+1, reset.ref)
 }
 
-// String dumps this reset in import-stream format
-func (reset Reset) String() string {
-	if reset.repo.realized != nil {
-		var branch = reset.ref
-		if strings.Contains(reset.ref, "^") {
-			branch = strings.Split(reset.ref, "^")[0]
-		}
-		reset.repo.realized[branch] = true
-	}
-	st := fmt.Sprintf("reset %s\n", reset.ref)
-	if reset.committish == "" {
-		return st
-	}
-	return st + fmt.Sprintf("from %s\n\n", reset.committish)
-}
-
-// String dumps this reset in import-stream format
+// Save this reset in import-stream format without constructing a string
 func (reset *Reset) Save(w io.Writer) {
 	if reset.repo.realized != nil {
 		var branch = reset.ref
@@ -4165,6 +4129,13 @@ func (reset *Reset) Save(w io.Writer) {
 	if reset.committish != "" {
 		fmt.Fprintf(w, "from %s\n\n", reset.committish)
 	}
+}
+
+// String serializes this reset into a string
+func (reset Reset) String() string {
+	var bld strings.Builder
+	reset.Save(&bld)
+	return bld.String()
 }
 
 // FileOp is a gitspace file modification attached to a commit
@@ -4382,44 +4353,6 @@ func (fileop *FileOp) equals(other *FileOp) bool {
 }
 
 // String dumps this fileop in import-stream format
-func (fileop FileOp) String() string {
-	quotifyIfNeeded := func(cpath string) string {
-		if len(strings.Fields(cpath)) > 1 {
-			return strconv.Quote(cpath)
-		}
-		return cpath
-	}
-	if fileop.op == opM {
-		parts := "M " + fileop.mode + " " + fileop.ref
-		parts += " " + quotifyIfNeeded(fileop.Path) + "\n"
-		if fileop.ref == "inline" {
-			parts += fmt.Sprintf("data %d\n", len(fileop.inline))
-			parts += fileop.inline + "\n"
-		}
-		return parts
-	} else if fileop.op == opN {
-		parts := "N " + fileop.ref
-		parts += " " + quotifyIfNeeded(fileop.Path) + "\n"
-		if fileop.ref == "inline" {
-			parts += fmt.Sprintf("data %d\n", len(fileop.inline))
-			parts += fileop.inline + "\n"
-		}
-		return parts
-	} else if fileop.op == opD {
-		return "D " + quotifyIfNeeded(fileop.Path) + "\n"
-	} else if fileop.op == opR || fileop.op == opC {
-		return fmt.Sprintf(`%c %q %q`, fileop.op,
-			fileop.Source, fileop.Target) + "\n"
-	} else if fileop.op == deleteall {
-		return "deleteall\n"
-	} else if fileop.op == 0 {
-		// It's a nilOp, sometimes dumped during diagnostics
-		return "X\n"
-	}
-	panic(throw("command", "Unexpected op %q while writing", fileop.op))
-}
-
-// String dumps this fileop in import-stream format
 func (fileop *FileOp) Save(w io.Writer) {
 	quotifyIfNeeded := func(cpath string) string {
 		if len(strings.Fields(cpath)) > 1 {
@@ -4442,7 +4375,7 @@ func (fileop *FileOp) Save(w io.Writer) {
 	} else if fileop.op == opD {
 		fmt.Fprintf(w, "D %s\n", quotifyIfNeeded(fileop.Path))
 	} else if fileop.op == opR || fileop.op == opC {
-		fmt.Fprintf(w, `%c %q %q\n`, fileop.op, fileop.Source, fileop.Target)
+		fmt.Fprintf(w, "%c %q %q\n", fileop.op, fileop.Source, fileop.Target)
 	} else if fileop.op == deleteall {
 		w.Write([]byte("deleteall\n"))
 	} else if fileop.op == 0 {
@@ -4451,6 +4384,13 @@ func (fileop *FileOp) Save(w io.Writer) {
 	} else {
 		panic(throw("command", "Unexpected op %q while writing", fileop.op))
 	}
+}
+
+// String serializes this FileOp in import-stream format
+func (fileop FileOp) String() string {
+	var bld strings.Builder
+	fileop.Save(&bld)
+	return bld.String()
 }
 
 // Callout is a stub object for callout marks in incomplete repository segments.
@@ -4501,16 +4441,17 @@ func (callout Callout) getComment() string {
 	return ""
 }
 
-// Stub to satisfy Event interface - should never be used
-func (callout Callout) String() string {
-	return fmt.Sprintf("callout-%s", callout.mark)
-}
-
-// Stub to satisfy Event interface - should never be used
+// Save this blob in import-stream format without constructing a string
 func (callout *Callout) Save(w io.Writer) {
 	fmt.Fprintf(w, "callout-%s", callout.mark)
 }
 
+// String serializes this Callout in import-stream format
+func (callout Callout) String() string {
+	var bld strings.Builder
+	callout.Save(&bld)
+	return bld.String()
+}
 // moveto changes the repo this callout is associated with."
 func (callout *Callout) moveto(*Repository) {
 	// Has no repo field
@@ -5725,105 +5666,6 @@ func (commit *Commit) delete(policy orderedStringSet) {
 	commit.repo.delete([]int{commit.index()}, policy)
 }
 
-// dump reports this commit in import-stream format.
-func (commit Commit) String() string {
-	vcs := commit.repo.preferred
-	if vcs == nil && commit.repo.vcs != nil && commit.repo.vcs.importer != "" {
-		vcs = commit.repo.vcs
-	}
-	parts := make([]string, 0)
-	incremental := false
-	if !commit.repo.writeOptions.Contains("--noincremental") {
-		if commit.repo.realized != nil && commit.hasParents() {
-			if _, ok := commit.repo.realized[commit.Branch]; !ok {
-				parent := commit.parents()[0]
-				switch parent.(type) {
-				case *Commit:
-					pbranch := parent.(*Commit).Branch
-					if !commit.repo.realized[pbranch] {
-						incremental = true
-					}
-				}
-			}
-		}
-	}
-	if incremental {
-		parts = append(parts, fmt.Sprintf("reset %s^0\n\n", commit.Branch))
-	}
-	parts = append(parts, fmt.Sprintf("commit %s\n", commit.Branch))
-	if commit.legacyID != "" {
-		parts = append(parts, fmt.Sprintf("#legacy-id %s\n", commit.legacyID))
-	}
-	if commit.repo.realized != nil {
-		commit.repo.realized[commit.Branch] = true
-	}
-	if commit.mark != "" {
-		parts = append(parts, fmt.Sprintf("mark %s\n", commit.mark))
-	}
-	if len(commit.authors) > 0 {
-		for _, author := range commit.authors {
-			parts = append(parts, fmt.Sprintf("author %s\n", author))
-		}
-	}
-	if commit.committer.fullname != "" {
-		parts = append(parts, fmt.Sprintf("committer %s\n", commit.committer))
-	}
-	// As of git 2.13.6 (possibly earlier) the comment fields of
-	// commit is no longer optional - you have to emit data 0 if there
-	// is no comment, otherwise the importer gets confused.
-	comment := commit.Comment
-	if commit.repo.writeOptions.Contains("--legacy") && commit.legacyID != "" {
-		comment += fmt.Sprintf("\nLegacy-ID: %s\n", commit.legacyID)
-	}
-	parts = append(parts, fmt.Sprintf("data %d\n%s", len(comment), comment))
-	if commit.repo.exportStyle().Contains("nl-after-comment") {
-		parts = append(parts, "\n")
-	}
-	parents := commit.parents()
-	doCallouts := commit.repo.writeOptions.Contains("--callout")
-	if len(parents) > 0 {
-		ancestor := parents[0]
-		if (commit.repo.internals == nil && !incremental) || commit.repo.internals.Contains(ancestor.getMark()) {
-			parts = append(parts, fmt.Sprintf("from %s\n", ancestor.getMark()))
-		} else if doCallouts {
-			parts = append(parts, fmt.Sprintf("from %s\n", ancestor.callout()))
-		}
-		for _, ancestor := range parents[1:] {
-			var nugget string
-			if commit.repo.internals == nil || commit.repo.internals.Contains(ancestor.getMark()) {
-				nugget = ancestor.getMark()
-			} else if doCallouts {
-				nugget = ancestor.callout()
-			}
-			if nugget != "" {
-				parts = append(parts, fmt.Sprintf("merge %s\n", nugget))
-			}
-		}
-	}
-	if vcs != nil && vcs.extensions.Contains("commit-properties") {
-		if commit.hasProperties() && len(commit.properties.keys) > 0 {
-			for _, name := range commit.properties.keys {
-				value := commit.properties.get(name)
-				if value == "true" || value == "false" {
-					if value != "" {
-						parts = append(parts, fmt.Sprintf("property %s\n", name))
-					}
-				} else {
-					parts = append(parts,
-						fmt.Sprintf("property %s %d %s\n", name, len(value), value))
-				}
-			}
-		}
-	}
-	for _, op := range commit.operations() {
-		parts = append(parts, op.String())
-	}
-	if !commit.repo.exportStyle().Contains("no-nl-after-commit") {
-		parts = append(parts, "\n")
-	}
-	return strings.Join(parts, "")
-}
-
 // Save this commit to a stream in fast-import format
 func (commit *Commit) Save(w io.Writer) {
 	vcs := commit.repo.preferred
@@ -5918,6 +5760,13 @@ func (commit *Commit) Save(w io.Writer) {
 	if !commit.repo.exportStyle().Contains("no-nl-after-commit") {
 		w.Write([]byte{'\n'})
 	}
+}
+
+// String serializes this commit in import-stream format
+func (commit Commit) String() string {
+	var bld strings.Builder
+	commit.Save(&bld)
+	return bld.String()
 }
 
 //Passthrough represents a passthrough line.
