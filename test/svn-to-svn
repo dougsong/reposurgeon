@@ -30,6 +30,10 @@
 # With the -e option, edit a Subversion dumpfile and rebuild it, fixing
 # the checksum headers.
 #
+# With the -l option, limit the number of Subversion revisions processed
+# from the input dump; the specified argument is the humber of the last
+# revision emitted.
+#
 # If an argument is specified after the options, it is used as the repository
 # directory name; otherwise 'test-repo' is used.
 #
@@ -58,6 +62,7 @@ strip=F
 co=F
 verbose="0"
 quiet=""
+limit=""
 # Suppress legacy emission by default
 streamopts='prefer git'
 
@@ -65,7 +70,7 @@ streamopts='prefer git'
 # when stripping... 
 ECHO=/bin/echo
 
-while getopts cdegnrstv:q opt
+while getopts cdegl:nrstv:q opt
 do
     case $opt in
         e) build=F; view=F; edit=T; stream=F; undump=F; cleanup=T; strip=F; co=F;;
@@ -77,6 +82,7 @@ do
         s) build=F; view=F; edit=F; stream=F; undump=F; cleanup=F; strip=T; co=F;;
 	t) streamopts="" ;;
 	q) quiet=-q ;;
+	l) limit="$OPTARG" ;;
 	v) verbose="$OPTARG" ;;
     esac
 done
@@ -104,12 +110,21 @@ then
     done
 fi
 
+# Was there a limit option?
+if [ -z "$limit" ]
+then
+    source=/dev/stdin
+else
+    source="/tmp/svn-to-svn-$$"
+    repocutter -r "0:${limit}" select >$source
+fi
+
 # Should we build a repo from a dump presented on standard input?
 if [ $build = T ]
 then
     rm -fr $testrepo $testrepo-checkout
     svnadmin create $testrepo
-    if svnadmin load ${quiet} $testrepo
+    if svnadmin load ${quiet} $testrepo <$source
     then
 	:
     else
