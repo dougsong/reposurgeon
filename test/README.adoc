@@ -499,6 +499,36 @@ wrong-mergeinfo.svn::
    Translation is correct, produces a message due to unresolved
    mergeinfo. Not used in any test.
 
+== Troubleshooting incorrect conversions ==
+
+Test loads that convert incorrectly arge tagged with "BUG:" in the 
+list above.  These seem to reveal bugs in reposurgeon's interpretation
+of dump stream semantics. It is a safe bet that these have to do with 
+odd combinations of branch-copy operations.
+
+Start by reading this:
+
+https://svn.apache.org/repos/asf/subversion/trunk/notes/dump-load-format.txt
+
+Then read rthe sectuin on working with Subversion in the manual.
+
+Then read a simple dumpfile - like, say, samplebranch.svn - to see how
+dump streams look in practice. Next run
+
+-----------------------------------------------------------
+repocutter -q see <samplebranch.svn
+-----------------------------------------------------------
+
+for a condensed version of the structure that leaves out the blobs.
+The "M-N" at the left margin expands to "Revision M, node N"; copy 
+is just add with a copy source.
+
+You can use liftcheck to see exactly how a conversion goes wrong;
+you'll get a diff. Try this on a member of the awkward squad, like
+emptyfrom.svn
+
+The objective is to fix reposurgeon so that all those diffs go away.
+
 == Sporadic tests ==
 
 We have some scripts intended to check Subversion's behavior.
