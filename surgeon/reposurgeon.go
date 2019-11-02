@@ -3659,7 +3659,9 @@ func (b Blob) getComment() string {
 // sha returns the SHA-1 hash of the blob content. Used only for indexing,
 // does not need to be crypto-quality
 func (b *Blob) sha() string {
-	return fmt.Sprintf("%x", sha1.Sum([]byte(b.getContent())))
+	h = sha.New()
+	io.Copy(h, b.getContentStream())
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
 // getMark returns the blob's identifying mark
