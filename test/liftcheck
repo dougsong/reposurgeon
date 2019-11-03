@@ -8,6 +8,7 @@
 # The -d option disables removal of the generated repositories after the run
 # The -a option enables progress messages from the Subversion loader.
 # The -s option enables display of common files
+# The -r option sets a revision to check rather than trunk.
 #
 # The REPOSURGEON environment variable can be used to substitute in a
 # different implementation.
@@ -19,12 +20,15 @@ set -e
 repotoolopt=""
 debug=no
 svnquiet=-q
-while getopts adisuv opt
+slimit=""
+rlimit=""
+while getopts adir:suv opt
 do
     case $opt in
 	d) debug=yes;;
 	a) svnquiet="";;
 	i|s|u) compareopt="$compareopt -$opt";;
+	r) slimit="-l $OPTARG" rlimit="readlimit $OPTARG";;
 	v) repotoolopt="$repotoolopt -$opt";;
 	u) compareopt="$compareopt -$opt";;
     esac
@@ -41,7 +45,7 @@ what=$1
 if [ -f ${what}.svn ]
 then
     what=${what}.svn
-elif [ ! -f ${whwt} ]
+elif [ ! -f ${what} ]
 then
     echo "No script matching ${what} found"
     exit 1
@@ -53,14 +57,14 @@ rm -fr liftcheck[0123456789]*
 
 if [ $debug = no ]
 then
-    trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}*~" 0 2 15
+    trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}*~" 0 1 2 15
 fi
 
 # Make a Subversion repo from the dump
-svn-to-svn ${svnquiet} -c <${what} ${stem}
+svn-to-svn ${svnquiet} ${slimit} -c <${what} ${stem}
 
 # Make a git repo from the dump using reposurgeon
-${REPOSURGEON:-reposurgeon} "${TESTOPT}" "read <${what}" "prefer git" "rebuild ${stem}-git"
+${REPOSURGEON:-reposurgeon} "${TESTOPT}" "${rlimit}" "read <${what}" "prefer git" "rebuild ${stem}-git"
 
 # Compare the original with the lift
 repotool ${repotoolopt} compare-all ${compareopt} ${stem}-checkout ${stem}-git
