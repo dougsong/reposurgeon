@@ -4,17 +4,21 @@
 #
 # Intended for reposurgeon roundtripping tests with Mercurial.
 #
+# To add complexity to a test load, do -n, then edit the test repo with
+# hg, then use -d.
+#
+# With the -e option, specify using the Mercurual extractor rarther than
+# the native support.
+#
 # With the -n option, create a repo corresponding to the input file
 # and check out a working copy for editing, but do not stream the
 # result to stdout and do not delete the repo.  A following argument,
 # if present, becomes the name of the repo; otherwise, it is created 
-# under /tmp.
+# under $TMPDIR if that environment variable is specified, falling
+# back to /tmp.
 #
-# With the -r option, expect the repo to exist, and throw a
+# With the -o option, expect the repo to exist, and throw a
 # stream dump to stdout; then do not delete the repo.
-#
-# To add complexity to a test load, do -n, then edit the test repo with
-# hg, then use -d.
 #
 # The REPOSURGEON environment variable can be used to substitute in a
 # different implementation.
@@ -39,18 +43,20 @@ error() { log "ERROR: $@" >&2; }
 fatal() { error "$@"; exit 1; }
 try() { "$@" || fatal "'$@' failed"; }
 
-while getopts nre opt
+while getopts noe opt
 do
     case $opt in
 	n) build=True ;  stream=False ; cleanup=False ;;
-	r) build=False ; stream=True  ; cleanup=False ;;
+	o) build=False ; stream=True  ; cleanup=False ;;
 	e) extract='prefer hg-extractor'
     esac
 done
 shift $(($OPTIND - 1))
 
+tmpdir=${TMPDIR:-/tmp}
+
 # This lets us set the repo location 
-testrepo=${1:-/tmp/test-repo$$}
+testrepo=${1:-${tmpdir}/test-repo$$}
 
 # Should we build a repo from the input file?
 if [ $build = True ]

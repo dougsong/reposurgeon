@@ -2,23 +2,34 @@
 #
 # svn-to-svn - Subversion dump on stdin to dump on stdout
 #
-# With the -n option, create a repo corresponding to the input stream;
-# do not stream the result to stdout and do not delete the repo.
-#
 # With the -c option, build the repo and check it out to a working
 # copy.  The name of the working copy is the repo name suffixed with
 # '-checkout'.
 #
-# The -q option suppresses progress messages from svnadmin load. 
-#
 # With the -d option, expect the repo to exist, undump the repo to
 # a Subversion dump file; then do not delete the repo.
 #
-# With the -r option, expect the repo to exist, pick it up with
+# With the -e option, edit a Subversion dumpfile and rebuild it, fixing
+# the checksum headers.
+#
+# With the -g option, make a Git repo from the Subversion dump and view
+# it in gitk
+#
+# Any -l option argument will be used to set reposurgeon's log option.
+#
+# With the -n option, create a repo corresponding to the input stream;
+# do not stream the result to stdout and do not delete the repo.
+#
+# With the -o option, expect the repo to exist, pick it up with
 # reposurgeon, and throw the result to stdout as an import stream;
 # then do not delete the repo.
 #
-# The -v option argument will be used to set reposurgeon's verbose option.
+# With the -q option. suppress progress messages from svnadmin load
+# and checkout.
+#
+# With the -r option, limit the number of Subversion revisions processed
+# from the input dump; the specified argument is the humber of the last
+# revision emitted.
 #
 # The -s option strips out generated time-varying headers - the UUID and
 # the timestamp in revision zero.  This is necessary for file comparisons 
@@ -26,13 +37,6 @@
 #
 # The -t option allows property extensions to be generated.  It's turned
 # off by default because git-import chokes on it.
-#
-# With the -e option, edit a Subversion dumpfile and rebuild it, fixing
-# the checksum headers.
-#
-# With the -l option, limit the number of Subversion revisions processed
-# from the input dump; the specified argument is the humber of the last
-# revision emitted.
 #
 # If an argument is specified after the options, it is used as the repository
 # directory name; otherwise 'test-repo' is used.
@@ -60,7 +64,7 @@ undump=T
 cleanup=T
 strip=F
 co=F
-verbose="0"
+log=""
 quiet=""
 limit=""
 # Suppress legacy emission by default
@@ -70,23 +74,25 @@ streamopts='prefer git'
 # when stripping... 
 ECHO=/bin/echo
 
-while getopts cdegl:nrstv:q opt
+while getopts cdegl:noqr:st opt
 do
     case $opt in
-        e) build=F; view=F; edit=T; stream=F; undump=F; cleanup=T; strip=F; co=F;;
-	c) build=T; view=F; edit=F; stream=F; undump=F; cleanup=F; strip=F; co=T;;
-	n) build=T; view=F; edit=F; stream=F; undump=F; cleanup=F; strip=F; co=F;;
-        g) build=F; view=T; edit=F; stream=F; undump=F; cleanup=F; strip=F; co=F;;
-        r) build=F; view=F; edit=F; stream=T; undump=F; cleanup=F; strip=F; co=F;;
-        d) build=F; view=F; edit=F; stream=F; undump=T; cleanup=F; strip=F; co=F;;
-        s) build=F; view=F; edit=F; stream=F; undump=F; cleanup=F; strip=T; co=F;;
+        e) build=F; view=F; edit=T; stream=F; dump=F; cleanup=T; strip=F; co=F;;
+	c) build=T; view=F; edit=F; stream=F; dump=F; cleanup=F; strip=F; co=T;;
+	n) build=T; view=F; edit=F; stream=F; dump=F; cleanup=F; strip=F; co=F;;
+        g) build=F; view=T; edit=F; stream=F; dump=F; cleanup=F; strip=F; co=F;;
+        o) build=F; view=F; edit=F; stream=T; dump=F; cleanup=F; strip=F; co=F;;
+        d) build=F; view=F; edit=F; stream=F; dump=T; cleanup=F; strip=F; co=F;;
+        s) build=F; view=F; edit=F; stream=F; dump=F; cleanup=F; strip=T; co=F;;
 	t) streamopts="" ;;
 	q) quiet=-q ;;
-	l) limit="$OPTARG" ;;
-	v) verbose="$OPTARG" ;;
+	r) limit="$OPTARG" ;;
+	l) log="log $OPTARG" ;;
     esac
 done
 shift $(($OPTIND - 1))
+
+tmpdir=${TMPDIR:-/tmp}
 
 # This lets us set the repo location 
 testrepo=`realpath \`dirname ${1:-test-repo$$}\``/`basename ${1:-test-repo$$}`
@@ -115,7 +121,7 @@ if [ -z "$limit" ]
 then
     source=/dev/stdin
 else
-    source="/tmp/svn-to-svn-$$"
+    source="${tmpdir}/svn-to-svn-$$"
     repocutter -r "0:${limit}" select >$source
 fi
 
@@ -160,17 +166,17 @@ fi
 # Should we view the repo?
 if [ $view = T ]
 then
-    (cd $testrepo >/dev/null; {BIN}/${REPOSURGEON:-reposurgeon} "${TESTOPT}" "read ." "prefer git" "rebuild /tmp/testrepo$$"; cd /tmp/testrepo$$; gitk --all --tags)
+    (cd $testrepo >/dev/null; {BIN}/${REPOSURGEON:-reposurgeon} "${log}" "${TESTOPT}" "read ." "prefer git" "rebuild ${tmpdir}/testrepo$$"; cd ${tmpdir}/testrepo$$; gitk --all --tags)
 fi
 
-# Should we stream the repo?
+# Should we dump a conversion of the repo as a fast-import stream?
 if [ $stream = T ]
 then
-    ${REPOSURGEON:-reposurgeon} "${TESTOPT}" "read $testrepo" "$streamopts" "write"
+    ${REPOSURGEON:-reposurgeon} "${log}" "${TESTOPT}" "read $testrepo" "$streamopts" "write"
 fi
 
-# Should we undump the repo?
-if [ $undump = T ]
+# Should we dump the repo as a Subversion stream?
+if [ $dump = T ]
 then
     svnadmin dump $testrepo
 fi

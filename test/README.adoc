@@ -525,10 +525,13 @@ is just add with a copy source.
 
 You can use liftcheck to see exactly how a conversion goes wrong;
 you'll get a diff. Try this on a member of the awkward squad, like
-emptyfrom.svn
+emptyfrom.svn.  By default liftcheck examines the head revision;
+with the -r option you can check correctness at a specified 
+esrtlier one.
 
-You can use singlelift -d to dump a fast import stream made
-from a named Subversion dump.
+You can use singlelift -o to dump a fast import stream made
+from a named Subversion dump.  In this more you can also use
+-l to set reposurgeon log flags.
 
 The objective is to fix reposurgeon so that all those diffs go away.
 

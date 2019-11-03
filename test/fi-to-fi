@@ -4,21 +4,22 @@
 #
 # Intended for reposurgeon roundtripping tests.
 #
-# With the -n option, create a repo corresponding to the input file
-# and check out a working copy for editing, but do not stream the
-# result to stdout and do not delete the repo.  A following argument,
-# if present, becomes the name of the repo; otherwise, it is created 
-# under /tmp.
-#
-# With the -r option, expect the repo to exist, and throw a
-# steam dump to stdout; then do not delete the repo.
-#
 # With the -g option, build a repo from the stream input and view it
 # for gitk.  Useful for eyeball-checking whether the DAG has the
 # shape you think it should.
 #
+# With the -n option, create a repo corresponding to the input file
+# and check out a working copy for editing, but do not stream the
+# result to stdout and do not delete the repo.  A following argument,
+# if present, becomes the name of the repo; otherwise, it is created 
+# under $TMPDIR if that environmeent variable is set, falling
+# back to /tmp.
+#
+# With the -o option, expect the repo to exist, and throw a
+# stream dump to stdout; then do not delete the repo.
+#
 # To add complexity to a test load, do -n, then edit the test repo with
-# git, then use -r.
+# git, then use -o.
 #
 # The REPOSURGEON environment variable can be used to substitute in a
 # different implementation.
@@ -33,18 +34,20 @@ view=False0
 stream=True
 cleanup=True
 
-while getopts gnr opt
+tmpdir=${TMPDIR:-/tmp}
+
+while getopts gno opt
 do
     case $opt in
 	g) extract=True ;  view=True; stream=False ; cleanup=False ;;
 	n) extract=True ;  view=False; stream=False ; cleanup=False ;;
-        r) extract=False ; view=False; stream=True  ; cleanup=False ;;
+        o) extract=False ; view=False; stream=True  ; cleanup=False ;;
     esac
 done
 shift $(($OPTIND - 1))
 
 # This lets us set the repo location 
-testrepo=${1:-/tmp/test-repo$$}
+testrepo=${1:-${tmpdir}/test-repo$$}
 
 # Should we build a repo from the input file?
 if [ $extract = True ]

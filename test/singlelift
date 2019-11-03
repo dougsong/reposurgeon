@@ -1,12 +1,14 @@
 #!/bin/sh
 # singlelift - run a single Subversion conversion test
 #
-# With -d, dump the conversion to stdout rather than diffing against
+# With -l, set reposurgeon log flags (dump mode only).
+#
+# With -s, force serial execution - disables parallelism.
+#
+# With -o, dump the conversion to stdout rather than diffing against
 # the check file.
 #
-# With -v, set the verbosity level. (Probaly only useful in dump mode.)
-#
-# With -x, set the experimental bit.
+# With -x, set the experimental flag.
 #
 # The REPOSURGEON environment variable can be used to substitute in a
 # different implementation.
@@ -23,14 +25,14 @@ PATH=$(realpath ..):$(realpath .):${PATH}
 TERM=dumb
 
 mode=check
-verbose=0
+log=""
 experimental=""
-while getopts dsv:x opt
+while getopts l:osx opt
 do
     case $opt in
-	d) mode=dump;;
+	l) log="log $OPTARG" ;;
+	o) mode=dump;;
 	s) serial="set serial";;
-	v) verbose="$OPTARG" ;;
 	x) experimental="set experimental"
     esac
 done
@@ -41,8 +43,8 @@ do
     grep '^ #' ${x}.svn 2>/dev/null
     case $mode in
 	dump)
-	    ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1;;
+	    ${REPOSURGEON:-reposurgeon} "$log" "$serial" "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1;;
 	*)
-	    ${REPOSURGEON:-reposurgeon} "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1 | diff -u ${x}.chk - ;;
+	    ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1 | diff -u ${x}.chk - ;;
     esac
 done

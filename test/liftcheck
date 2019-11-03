@@ -28,7 +28,7 @@ do
 	d) debug=yes;;
 	a) svnquiet="";;
 	i|s|u) compareopt="$compareopt -$opt";;
-	r) slimit="-l $OPTARG" rlimit="readlimit $OPTARG";;
+	r) slimit="-r $OPTARG" rlimit="readlimit $OPTARG";;
 	v) repotoolopt="$repotoolopt -$opt";;
 	u) compareopt="$compareopt -$opt";;
     esac

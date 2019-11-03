@@ -4,9 +4,9 @@
 # The REPOSURGEON environment variable can be used to substitute in a
 # different implementation.
 #
-# With -v, set the verbosity level.  (Not likely to give useful results.)
+# With -s, set the serial flag to disable parallelism
 #
-# With -x, set the experimental bit.
+# With -x, set the experimental flag.
 
 . ./common-setup.sh
 
@@ -19,14 +19,12 @@ PATH=$(realpath ..):$(realpath .):${PATH}
 # that confuse diff.  Leave this in while pyreposurgeon still exists.
 TERM=dumb
 
-verbose=0
 experimental=""
 serial=""
-while getopts sv:x opt
+while getopts sx opt
 do
     case $opt in
 	s) serial="set serial";;
-	v) verbose="$OPTARG" ;;
 	x) experimental="set experimental"
     esac
 done
@@ -40,7 +38,7 @@ then
     chk=${what}.chk
 elif [ -f ${what}.tst-FAIL ]
 then
-    tst=${what},tst-FAIL
+    tst=${what}.tst-FAIL
     chk=${what}.chk
     echo "Expect a diff"
 else
