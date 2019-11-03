@@ -152,6 +152,28 @@ Revision is 2, file path is trunk/drivers/serial.c.
 
 
 Revision-number: 3
+Prop-content-length: 151
+Content-length: 151
+
+K 8
+svn:date
+V 27
+2005-01-27T14:33:14.000000Z
+K 7
+svn:log
+V 77
+This commit was manufactured by cvs2svn to create branch
+'INITIAL_IMPORT_AQ'.
+PROPS-END
+
+Node-path: branches/INITIAL_IMPORT_AQ
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk
+
+
+Revision-number: 4
 Prop-content-length: 157
 Content-length: 157
 
@@ -170,7 +192,7 @@ V 27
 2005-01-27T14:33:22.000000Z
 PROPS-END
 
-Revision-number: 4
+Revision-number: 5
 Prop-content-length: 151
 Content-length: 151
 
@@ -210,36 +232,6 @@ Content-length: 62
 PROPS-END
 Revision is 5, file path is trunk/data/driver.list.
 
-
-Revision-number: 5
-Prop-content-length: 141
-Content-length: 141
-
-K 8
-svn:date
-V 27
-2005-02-28T09:14:07.000000Z
-K 7
-svn:log
-V 67
-This commit was manufactured by cvs2svn to create branch 'Testing'.
-PROPS-END
-
-Node-path: branches/Testing
-Node-kind: dir
-Node-action: add
-Node-copyfrom-rev: 3
-Node-copyfrom-path: branches/INITIAL_IMPORT_AQ
-
-Node-path: branches/Testing/data
-Node-kind: dir
-Node-action: delete
-
-Node-path: branches/Testing/data
-Node-kind: dir
-Node-action: add
-Node-copyfrom-rev: 4
-Node-copyfrom-path: trunk/data
 
 Revision-number: 6
 Prop-content-length: 168
