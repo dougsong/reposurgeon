@@ -8296,32 +8296,32 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 						perms = "100755"
 						delete(sp.propagate, node.path)
 					}
-					// This ugly nasty guard is critically important.
-					// We need to generate a modify if {
-					// 1. There is new content.
-					// 2. This node was generated as an
-					// expansion of a directory copy.
-					// 3. The node was produced by an explicit
-					// Subversion file copy (not a directory copy)
-					// in which case it has an MD5 hash that points
-					// back to a source.
-					// 4. The permissions for this path have changed;
+
+					fileop := newFileOp(sp.repo)
+					fileop.construct(opM,
+						perms,
+						node.blobmark.String(),
+						node.path)
+					actions = append(actions, fiAction{node, fileop})
+					sp.repo.markToEvent(fileop.ref).(*Blob).addalias(node.path)
+
+					// Sanity check: should be the case that 
+					// 1. The node is an add.  This sweeps
+					// in several cases: normal creation of
+					// a new file, expansion of a directory
+					// copy, an explicit Subversion file (not
+					// directory) copy (in which case it has
+					// an MD5 hash that points back to a
+					// source.)  Or,
+					// 2. There is new content. This sweeps in change
+					// nodes with attached blobs. Or,
+					// 3. The permissions for this path have changed;
 					// we need to generate a modify with an old mark
 					// but new permissions.
-					generatedFileCopy := node.generated
-					newContent := (node.blob != nil)
-					subversionFileCopy := (node.fromHash != "")
-					if newContent || generatedFileCopy || subversionFileCopy || node.propchange {
-						//assert perms
-						fileop := newFileOp(sp.repo)
-						fileop.construct(opM,
-							perms,
-							node.blobmark.String(),
-							node.path)
-						actions = append(actions, fiAction{node, fileop})
-						sp.repo.markToEvent(fileop.ref).(*Blob).addalias(node.path)
-					} else if logEnable(logEXTRACT) {
-						logit(logEXTRACT, "r%d~%s: unmodified", node.revision, node.path)
+					if logEnable(logEXTRACT) {
+						if !(node.action == sdADD || (node.blob != nil) || node.propchange) {
+							logit(logEXTRACT, "r%d~%s: unmodified", node.revision, node.path)
+						}
 					}
 				}
 			} else if node.action == sdDELETE || node.action == sdREPLACE {
@@ -8337,7 +8337,8 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 			fmt.Println("Actions:")
 			for _, action := range actions {
 				// Format-string not \n terminated because the Node stringer does it.
-				logit(logSHOUT, "reposurgeon: %v -> %v", action.node, action.fileop)
+				opr := strings.TrimSpace(action.fileop.String())
+				logit(logSHOUT, "reposurgeon: %v -> %v", action.node, opr)
 			}
 		}
 		// Time to generate commits from actions and fileops.

@@ -61,7 +61,7 @@ then
 fi
 
 # Make a Subversion repo from the dump
-svn-to-svn ${svnquiet} ${slimit} -c <${what} ${stem}
+./svn-to-svn ${svnquiet} ${slimit} -c <${what} ${stem}
 
 # Make a git repo from the dump using reposurgeon
 ${REPOSURGEON:-reposurgeon} "${TESTOPT}" "${rlimit}" "read <${what}" "prefer git" "rebuild ${stem}-git"
