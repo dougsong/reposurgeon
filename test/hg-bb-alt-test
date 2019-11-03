@@ -14,7 +14,8 @@
 # The REPOSURGEON environment variable can be used to substitute in a
 # different implementation.
 
-. common-setup.sh
+cd "$(readlink -f "$(dirname $0)")"
+. ./common-setup.sh
 
 # Required because $PWD seems to be undefined in Gitlab's CI environment
 BIN=`realpath ..`

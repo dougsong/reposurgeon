@@ -15,7 +15,7 @@
 # to reposurgeon.
 #
 # FIXME:  This has not yet been fully adapted to work with unreliable $PWD.
-. common-setup.sh
+. ./common-setup.sh
 
 PATH=$PATH:..
 

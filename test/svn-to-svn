@@ -52,7 +52,7 @@
 # The TESTOPT variable can be used to pass an early command or option setting
 # to reposurgeon.
 #
-. common-setup.sh
+. ./common-setup.sh
 
 PATH=$PATH:../..
 
