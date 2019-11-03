@@ -78,15 +78,6 @@ V 7
 aquette
 PROPS-END
 
-Node-path: trunk/conf
-Node-kind: dir
-Node-action: add
-Prop-content-length: 10
-Content-length: 10
-
-PROPS-END
-
-
 Node-path: trunk/data
 Node-kind: dir
 Node-action: add
