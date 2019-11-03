@@ -539,6 +539,9 @@ The objective is to fix reposurgeon so that all those diffs go away.
 
 We have some scripts intended to check Subversion's behavior.
 
+svncheck0.sh:
+   General test of dump stream operations.
+
 svncheck1.sh:
    Simple check that a file copy propagates the executable bit.
 
@@ -562,11 +565,11 @@ reads and Subversion dump stream reads.
 First thing to do is make a test load.  The reposurgeon history itself is
 large enough to be a useful one.  So:
 
-$ goreposurgeon "read ." "write >rs.fi"
+$ reposurgeon "read ." "write >rs.fi"
 
 The ability to dump profile data is built into reposurgeon itself:
 
-$ goreposurgeon "verbose 1" "profile all reposurgeon" "read <rs.fi"
+$ reposurgeon "verbose 1" "profile all reposurgeon" "read <rs.fi"
 
 Once you have the profile data you can sic the profile viewer on it.
 Have graphviz installed and do
