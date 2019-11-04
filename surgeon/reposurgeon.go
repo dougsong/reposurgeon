@@ -6281,6 +6281,15 @@ var ignoreProperties = map[string]bool{
 	"svn:eol-style":       true, // Don't want to suppress, but cvs2svn floods these.
 }
 
+// These properties, on the other hand, shouldn't be tossed out even
+// if --ignore-properties is set.
+var preserveProperties = map[string]bool{
+	"cvs2svn:cvs-rev":     true,
+	"svn:executable":      true,
+	"svn:mergeinfo":       true,
+	"svnmerge-integrated": true,
+}	
+
 const maxRevidx = int(^revidx(0))	// Use for bounds-checking in range loops.
 
 func intToRevidx(revint int) revidx {
@@ -6333,6 +6342,41 @@ func (action NodeAction) String() string {
 
 func (action NodeAction) hasProperties() bool {
 	return action.props != nil
+}
+
+func (action NodeAction) isBogon() bool {
+	// if node.props is None, no property section.
+	// if node.blob is None, no text section.
+	// Delete actions may be issued without a dir or file kind
+	if !((action.action == sdCHANGE || action.action == sdADD || action.action == sdDELETE || action.action == sdREPLACE) &&
+		(action.kind == sdFILE || action.kind == sdDIR || action.action == sdDELETE) &&
+		((action.fromRev == 0) == (action.fromPath == ""))) {
+		logit(logSHOUT, "forbidden operation in dump stream at r%d: %s", action.revision, action)
+		return true
+	}
+	if !(action.blob != nil || action.hasProperties() ||
+		action.fromRev != 0 || action.action == sdADD || action.action == sdDELETE) {
+		logit(logSHOUT, "malformed node in dump stream at r%d: %s", action.revision, action)
+		return true
+	}
+	if action.kind == sdNONE && action.action != sdDELETE {
+		logit(logSHOUT, "missing type on a non-delete node r%d: %s", action.revision, action)
+		return true
+	}
+
+	if ((action.action != sdADD && action.action != sdREPLACE) && action.fromRev > 0) {
+		logit(logSHOUT, "invalid type in node with from revision r%d: %s", action.revision, action)
+		return true
+	}
+
+	// This guard filters out the empty nodes produced by format 7
+	// dumps.
+	if (action.action == sdCHANGE && !action.hasProperties() && action.blob == nil && action.fromRev == 0) {
+		logit(logSHOUT, "empty node rejected at r%d: %v", action.revision, action)
+		return true
+	}
+
+	return false 
 }
 
 // RevisionRecord is a list of NodeActions at a rev in a Subversion dump
@@ -6720,6 +6764,7 @@ func appendRevisionRecords(slice []RevisionRecord, data ...RevisionRecord) []Rev
 	return slice
 }
 
+
 func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesize int64) {
 	// If the repo is large, we'll give up on some diagnostic info in order
 	// to reduce the working set size.
@@ -6866,7 +6911,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 							// this also
 							// forwards
 							// empty
-							// prperty
+							// property
 							// sets, which
 							// are
 							// different
@@ -6875,17 +6920,17 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 							// properties.
 							node.props = propertyStash[node.path]
 						}
-						// This guard filters
-						// out the empty nodes
-						// produced by format
-						// 7 dumps.
-						if !(node.action == sdCHANGE && !node.hasProperties() && node.blob == nil && node.fromRev == 0) {
+						if !node.isBogon() {
 							logit(logSVNPARSE, "node parsing, line %d: node %s appended", sp.importLine, node)
 							node.index = intToNodeidx(len(nodes) + 1)
 							nodes = append(nodes, node)
 							sp.streamview = append(sp.streamview, node)
-						} else {
-							logit(logSVNPARSE, "node parsing, line %d: empty node rejected", sp.importLine)
+							if logEnable(logEXTRACT) {
+								logit(logEXTRACT, fmt.Sprintf("r%d-%d: %s", node.revision, node.index, node))
+							} else if node.kind == sdDIR &&
+								node.action != sdCHANGE && logEnable(logTOPOLOGY) {
+								logit(logSHOUT, node.String())
+							}
 						}
 						node = nil
 					}
@@ -7708,75 +7753,7 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 
 func (sp *StreamParser) expandAllNodes(nodelist []*NodeAction, options stringSet) []*NodeAction {
 	expandedNodes := make([]*NodeAction, 0)
-	hasProperties := newStringSet()
 	for _, node := range nodelist {
-		// if node.props is None, no property section.
-		// if node.blob is None, no text section.
-		// Delete actions may be issued without a dir or file kind
-		if !((node.action == sdCHANGE || node.action == sdADD || node.action == sdDELETE || node.action == sdREPLACE) &&
-			(node.kind == sdFILE || node.kind == sdDIR || node.action == sdDELETE) &&
-			((node.fromRev == 0) == (node.fromPath == ""))) {
-			logit(logSHOUT, "forbidden operation in dump stream at r%d: %s", node.revision, node)
-			continue
-		}
-		if !(node.blob != nil || node.hasProperties() ||
-			node.fromRev != 0 || node.action == sdADD || node.action == sdDELETE) {
-			logit(logSHOUT, "malformed node in dump stream at r%d: %s", node.revision, node)
-			continue
-		}
-		if node.kind == sdNONE && node.action != sdDELETE {
-			logit(logSHOUT, "missing type on a non-delete node r%d: %s", node.revision, node)
-			continue
-		}
-
-		if ((node.action != sdADD && node.action != sdREPLACE) && node.fromRev > 0) {
-			logit(logSHOUT, "invalid type in node with from revision r%d: %s", node.revision, node)
-			continue
-		}
-
-		if logEnable(logEXTRACT) {
-			logit(logEXTRACT, fmt.Sprintf("r%d-%d: %s", node.revision, node.index, node))
-		} else if node.kind == sdDIR &&
-			node.action != sdCHANGE && logEnable(logTOPOLOGY) {
-			logit(logSHOUT, node.String())
-		}
-
-		// Handle per-path properties.
-		if node.hasProperties() {
-			// Remove blank lines from svn:ignore property values.
-			if node.props.has("svn:ignore") {
-				oldIgnore := node.props.get("svn:ignore")
-				newIgnore := blankline.ReplaceAllLiteralString(oldIgnore, "")
-				node.props.set("svn:ignore", newIgnore)
-			}
-			if !options.Contains("--ignore-properties") {
-				tossThese := make([][2]string, 0)
-				for prop, val := range node.props.dict {
-					if ignoreProperties[prop] {
-						continue
-					}
-					// Pass through the properties that can't be processed until we're ready to
-					// generate commits
-					if prop == "cvs2svn:cvs-rev" || ((prop == "svn:mergeinfo" || prop == "svnmerge-integrated") && node.kind == sdDIR) {
-						continue
-					}
-					tossThese = append(tossThese, [2]string{prop, val})
-				}
-				if len(tossThese) == 0 {
-					if hasProperties.Contains(node.path) {
-						sp.shout(fmt.Sprintf("r%d#%d~%s: properties cleared.", node.revision, node.index, node.path))
-						hasProperties.Remove(node.path)
-					}
-				} else {
-					sp.shout(fmt.Sprintf("r%d#%d~%s properties set:", node.revision, node.index, node.path))
-					for _, pair := range tossThese {
-						sp.shout(fmt.Sprintf("\t%s = '%s'", pair[0], pair[1]))
-					}
-					hasProperties.Add(node.path)
-				}
-			}
-		}
-
 		// expand directory copy operations 
 		expandedNodes = append(expandedNodes, sp.expandNode(node, options)...)
 	}
@@ -8100,6 +8077,51 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 			}
 		}
 	}
+
+	// Filter properties. This could be parallelized.
+	var hasProperties stringSet
+	for i, node := range sp.streamview {
+		if i == 0 || sp.streamview[i].revision != sp.streamview[i-1].revision {
+			hasProperties = newStringSet()
+		}
+		// Handle per-path properties.
+		if node.hasProperties() {
+			// Remove blank lines from svn:ignore property values.
+			if node.props.has("svn:ignore") {
+				oldIgnore := node.props.get("svn:ignore")
+				newIgnore := blankline.ReplaceAllLiteralString(oldIgnore, "")
+				node.props.set("svn:ignore", newIgnore)
+			}
+			if !options.Contains("--ignore-properties") {
+				tossThese := make([][2]string, 0)
+				for prop, val := range node.props.dict {
+					if ignoreProperties[prop] {
+						continue
+					}
+					// Pass through the properties that can't be processed until we're ready to
+					// generate commits
+					if prop == "cvs2svn:cvs-rev" || ((prop == "svn:mergeinfo" || prop == "svnmerge-integrated") && node.kind == sdDIR) {
+						continue
+					}
+					tossThese = append(tossThese, [2]string{prop, val})
+				}
+				if len(tossThese) == 0 {
+					if hasProperties.Contains(node.path) {
+						sp.shout(fmt.Sprintf("r%d#%d~%s: properties cleared.", node.revision, node.index, node.path))
+						hasProperties.Remove(node.path)
+					}
+				} else {
+					sp.shout(fmt.Sprintf("r%d#%d~%s properties set:", node.revision, node.index, node.path))
+					for _, pair := range tossThese {
+						sp.shout(fmt.Sprintf("\t%s = '%s'", pair[0], pair[1]))
+					}
+					hasProperties.Add(node.path)
+				}
+			}
+		}
+
+	}
+	
 	sp.streamview = nil	// Allow that view to be GCed
 }
 

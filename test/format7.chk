@@ -1,3 +1,4 @@
+reposurgeon: malformed node in dump stream at r3: <NodeAction: r3-0 change file 'applications/rendering/osmarender/testdata/border.osm'>
 #reposurgeon sourcetype svn
 blob
 mark :1
