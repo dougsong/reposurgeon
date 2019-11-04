@@ -2675,6 +2675,7 @@ type Control struct {
 	logcounter int
 	blobseq blobidx
 	signals chan os.Signal
+	logmutex sync.Mutex
 	// The abort flag
 	abortScript bool
 	abortLock   sync.Mutex
@@ -2807,8 +2808,10 @@ func logit(lvl uint, msg string, args ...interface{}) {
 		} else {
 			leader = "reposurgeon"
 		}
+		control.logmutex.Lock()
 		control.logfp.Write([]byte(leader + ": " + content + "\n"))
 		control.logcounter++
+		control.logmutex.Unlock()
 	}
 }
 
