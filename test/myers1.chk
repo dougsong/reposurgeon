@@ -119,31 +119,43 @@ from :2
 M 100644 :3 d1/d2/d3/d4/d5/d6/f0
 M 100644 :4 d1/d2/d3/d4/d5/d6/f9
 
-blob
+commit refs/heads/b6
+#legacy-id 12
 mark :10
+committer test <test> 1476230400 +0000
+data 19
+Commit message 12.
+from :7
+M 100644 :3 d1/d2/d3/d4/d5-deleted-r14-1/d6/f0
+M 100644 :4 d1/d2/d3/d4/d5-deleted-r14-1/d6/f9
+M 100644 :3 d1/d2/d3/d4/d5/d6/f0
+M 100644 :4 d1/d2/d3/d4/d5/d6/f9
+
+blob
+mark :11
 data 63
 Revision is 13, file path is branches/b6/d1/d2/d3/d4/d5/d6/f0.
 
 commit refs/heads/b6
 #legacy-id 13
-mark :11
+mark :12
 committer test <test> 1476316800 +0000
 data 19
 Commit message 13.
-from :7
-M 100755 :10 d1/d2/d3/d4/d5/d6/f0
+from :10
+M 100755 :11 d1/d2/d3/d4/d5/d6/f0
 D d1/d2/d3/d4/d5/d6/f9
 
 commit refs/heads/master
 #legacy-id 14
-mark :12
+mark :13
 committer test <test> 1476403200 +0000
 data 19
 Commit message 14.
 from :7
 D d1/d2/d3/d4/d5-deleted-r14-1/d6/f0
 D d1/d2/d3/d4/d5-deleted-r14-1/d6/f9
-M 100755 :10 d1/d2/d3/d4/d5/d6/f0
+M 100755 :11 d1/d2/d3/d4/d5/d6/f0
 
 tag emptycommit-3
 #legacy-id 3

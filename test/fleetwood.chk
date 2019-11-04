@@ -42,20 +42,38 @@ commit one
 from :2
 M 100644 :3 test.txt
 
-blob
+commit refs/tags/1.0-deleted-r6-2
+#legacy-id 5
 mark :5
+committer mike <mike> 1437858607 +0000
+data 12
+Release 1.0
+from :4
+M 100644 :3 test.txt
+
+blob
+mark :6
 data 8
 one
 two
 
 commit refs/heads/master
 #legacy-id 7
-mark :6
+mark :7
 committer mike <mike> 1437858621 +0000
 data 11
 commit two
 from :4
-M 100644 :5 test.txt
+M 100644 :6 test.txt
+
+commit refs/tags/1.0
+#legacy-id 8
+mark :8
+committer mike <mike> 1437858625 +0000
+data 18
+Fixed release 1.0
+from :7
+M 100644 :6 test.txt
 
 tag emptycommit-2
 #legacy-id 2
@@ -75,26 +93,12 @@ Create branches directory
 
 [[Tag from zero-fileop commit at Subversion r3]]
 
-tag 1.0-deleted-r6-2
-#legacy-id 5
-from :4
-tagger mike <mike> 1437858607 +0000
-data 12
-Release 1.0
-
 tag tipdelete-1.0-deleted-r6-2
 #legacy-id 6.1
-from :4
+from :5
 tagger mike <mike> 1437858613 +0000
 data 59
 No release ready yet
 
 [[Split portion of a mixed commit.]]
-
-tag 1.0
-#legacy-id 8
-from :6
-tagger mike <mike> 1437858625 +0000
-data 18
-Fixed release 1.0
 

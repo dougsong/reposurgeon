@@ -50,6 +50,7 @@ data 58
 Creating a tag in a BROKEN way, like how cvs2svn does it.
 from :3
 M 100644 :1 .gitignore
+M 100644 :2 proj/hello.c
 
 commit refs/tags/proj-1.0
 #legacy-id 4

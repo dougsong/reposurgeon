@@ -415,8 +415,7 @@ branchmap.svn::
    Doesn't build, no trunk branch. Used by branchmap.tst.
 
 branchreplace.svn::
-   BUG: needs analysis. Used in a repocutter test. Derived 
-   from references.svn.
+   Conversion is correct - messages due to trimmed branches.
 
 delete-copy.svn::
    Doesn't build, no trunk branch. Not used by any test.
@@ -424,6 +423,10 @@ delete-copy.svn::
 delignore/svn::
    Translation correct. One message due to branch delete
    followed by rename.
+
+emptybranch.svn::
+   BUG: But not a serious one. The unrealized Subversion emptybranch
+   is created on the Git side and should not be.
 
 emptyfrom.svn::
    BUG: Needs analysis. Not used by any test.

@@ -42,3 +42,12 @@ Initial README content.
 from :2
 M 100644 :3 README
 
+commit refs/heads/emptybranch
+#legacy-id 3
+mark :5
+committer esr <esr> 1323167895 +0000
+data 73
+Create an empty top-level branch for test purposes.  Should be tagified.
+from :4
+M 100644 :3 README
+

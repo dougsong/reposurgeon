@@ -42,10 +42,12 @@ import project state
 from :2
 M 100644 :3 file
 
-tag 2.5.1
+commit refs/tags/2.5.1
 #legacy-id 3
-from :4
-tagger iay <iay> 1436022529 +0000
+mark :5
+committer iay <iay> 1436022529 +0000
 data 14
 tag a version
+from :4
+M 100644 :3 file
 

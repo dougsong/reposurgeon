@@ -42,8 +42,17 @@ Initial README content.
 from :2
 M 100644 :3 README
 
-blob
+commit refs/heads/realbranch
+#legacy-id 3
 mark :5
+committer esr <esr> 1323170783 +0000
+data 53
+We're going to put some real content on this branch.
+from :4
+M 100644 :3 README
+
+blob
+mark :6
 data 99
 This is a test Subversion repository
 
@@ -51,10 +60,10 @@ This is a modification that goes in the branch version only.
 
 commit refs/heads/realbranch
 #legacy-id 4
-mark :6
+mark :7
 committer esr <esr> 1323170893 +0000
 data 55
 Modification on the branch so it doesn't get tagified.
-from :4
-M 100644 :5 README
+from :5
+M 100644 :6 README
 

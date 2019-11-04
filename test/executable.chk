@@ -156,8 +156,19 @@ from :14
 M 100644 :15 README
 M 100755 :16 goodbye
 
-blob
+commit refs/heads/testbranch
+#legacy-id 11
 mark :18
+committer esr <esr> 1516112392 +0000
+data 52
+Committing after "svn cp trunk branches/testbranch"
+from :17
+M 100644 :15 README
+M 100755 :16 goodbye
+M 100755 :8 hello
+
+blob
+mark :19
 data 50
 #!/bin/sh
 
@@ -165,10 +176,10 @@ echo "Not quite goodbye, cruel world!"
 
 commit refs/heads/testbranch
 #legacy-id 12
-mark :19
+mark :20
 committer esr <esr> 1516112581 +0000
 data 36
 Verify retention of executable bit.
-from :17
-M 100755 :18 goodbye
+from :18
+M 100755 :19 goodbye
 

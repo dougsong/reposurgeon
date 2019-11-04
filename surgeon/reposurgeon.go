@@ -6438,7 +6438,6 @@ type StreamParser struct {
 	directoryBranchlinks stringSet
 	activeGitignores     map[string]string
 	large                bool
-	propagate            map[string]bool
 	history              HistoryManager
 	splitCommits         map[revidx]int
 	streamview           []*NodeAction	// All nodes in streeam order
@@ -6470,7 +6469,6 @@ func newStreamParser(repo *Repository) *StreamParser {
 	sp.fileopBranchlinks = newStringSet()
 	sp.directoryBranchlinks = newStringSet()
 	sp.activeGitignores = make(map[string]string)
-	sp.propagate = make(map[string]bool)
 	sp.splitCommits = make(map[revidx]int)
 	return sp
 }
@@ -7624,19 +7622,6 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 			logit(logIGNORES, "after update at %s active ignores are: %s", node.path, sp.activeGitignores)
 			if branchcopy {
 				sp.branchcopies.Add(node.path)
-				// Store the minimum information needed to propagate
-				// executable bits across branch copies. If we needed
-				// to preserve any other properties, sp.propagate
-				// would need to have property maps as values.
-				for _, source := range node.fromSet.pathnames() {
-					found := sp.history.getActionNode(node.fromRev, source)
-					if found != nil && found.hasProperties() && found.props.has("svn:executable") {
-						stem := source[len(node.fromPath):]
-						targetpath := node.path + stem
-						sp.propagate[targetpath] = true
-						logit(logTOPOLOGY, "r%d-%d: exec-mark %s", node.revision, node.index, targetpath)
-					}
-				}
 			} else {
 				// Generate copy ops for generated .gitignore files
 				// to match the copy of svn:ignore props on the
@@ -7659,27 +7644,43 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 						}
 					}
 				}
-				// Now generate copies for all files in the copy source directory
-				for _, source := range node.fromSet.pathnames() {
-					found := sp.history.getActionNode(node.fromRev, source)
-					if found == nil {
-						logit(logSHOUT,"r%d-%d: can't find ancestor of %s at r%d",
-							node.revision, node.index, source, node.fromRev)
-						continue
-					}
-					subnode := new(NodeAction)
-					subnode.path = node.path + source[len(node.fromPath):]
-					subnode.revision = node.revision
-					subnode.fromPath = found.path
-					subnode.fromRev = found.revision
-					subnode.fromHash = found.contentHash
-					subnode.props = found.props
-					subnode.action = sdADD
-					subnode.kind = sdFILE
-					logit(logTOPOLOGY, "r%d-%d: %s generated copy r%d~%s -> %s %s",
-						node.revision, node.index, node.path, subnode.fromRev, subnode.fromPath, subnode.path, subnode)
-					appendExpanded(subnode)
+			}
+			// Now generate copies for all files in the
+			// copy source directory.  We used to suppress
+			// this on branch copies, counting on git's
+			// branch behavior.  But there's a corner case
+			// where there are never any mods in the
+			// Subversion stream after the branch copy,
+			// but there *are* copies from it, that this
+			// strategy got wrong. Emitting these
+			// uncoditionally sometimes ships fileops that
+			// are redunant with later ones in gitspace,
+			// but it's safer.
+			//
+			// FIXME: Gives wrong results if a branch is
+			// created and copied from but is never modified
+			// after creation - the branch then exis on the
+			// git side but not in a corresppnding Subversion
+			// checkout.
+			for _, source := range node.fromSet.pathnames() {
+				found := sp.history.getActionNode(node.fromRev, source)
+				if found == nil {
+					  logit(logSHOUT,"r%d-%d: can't find ancestor of %s at r%d",
+						  node.revision, node.index, source, node.fromRev)
+					  continue
 				}
+				subnode := new(NodeAction)
+				subnode.path = node.path + source[len(node.fromPath):]
+				subnode.revision = node.revision
+				subnode.fromPath = found.path
+				subnode.fromRev = found.revision
+				subnode.fromHash = found.contentHash
+				subnode.props = found.props
+				subnode.action = sdADD
+				subnode.kind = sdFILE
+				logit(logTOPOLOGY, "r%d-%d: %s generated copy r%d~%s -> %s %s",
+					node.revision, node.index, node.path, subnode.fromRev, subnode.fromPath, subnode.path, subnode)
+				appendExpanded(subnode)
 			}
 		}
 		// Allow GC to reclaim fromSet storage, we no longer need it
@@ -8221,7 +8222,6 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 			record.props.Clear()
 		}
 
-
 		// Create actions corresponding to both
 		// parsed and generated nodes.
 		type fiAction struct {
@@ -8322,16 +8322,15 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 							record.revision, node, ancestor)
 						continue
 					}
-					// Time for fileop generation.
-					perms := nodePermissions(*node)
-					if sp.propagate[node.path] {
-						perms = "100755"
-						delete(sp.propagate, node.path)
+
+					if !node.hasProperties() && ancestor != nil && ancestor.hasProperties() {
+						node.props = ancestor.props
 					}
 
+					// Time for fileop generation.
 					fileop := newFileOp(sp.repo)
 					fileop.construct(opM,
-						perms,
+						nodePermissions(*node),
 						node.blobmark.String(),
 						node.path)
 					actions = append(actions, fiAction{node, fileop})

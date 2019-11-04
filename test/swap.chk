@@ -480,6 +480,7 @@ fixes #9863 - Renomeado o nome do projeto para git_nfse e alteradas as tags para
 from :64
 M 100644 :65 trunk/data.yml
 M 100644 :66 trunk/lista.yml
+M 100644 :63 trunk/nfse.rb
 M 100644 :67 trunk/nfse.rb
 M 100644 :69 trunk/nfse.rb
 
@@ -1360,298 +1361,319 @@ fixes #9865 - Adicionado condição *:allow_blank => true* para a validação n�
 from :196
 M 100644 :197 trunk/lib/git_nfse/base.rb
 
-blob
+commit refs/heads/rubyrails
+#legacy-id 36
 mark :199
+committer ronie <ronie> 1383229155 +0000
+data 142
+refs #9865 - A partir desta revision, rubyrails passa a ser o diretorio para codigo open source desenvolvido pela GIT Sistemas em Ruby/Rails.
+from :198
+M 100644 :194 trunk/lib/git_nfse.rb
+M 100644 :197 trunk/lib/git_nfse/base.rb
+M 100644 :184 trunk/lib/git_nfse/cancel_nfse.rb
+M 100644 :185 trunk/lib/git_nfse/consult_nfse.rb
+M 100644 :123 trunk/lib/git_nfse/helpers.rb
+M 100644 :158 trunk/lib/git_nfse/parsers.rb
+M 100644 :186 trunk/lib/git_nfse/rps_lot_nfse.rb
+M 100644 :187 trunk/lib/git_nfse/types/complex.rb
+M 100644 :161 trunk/lib/git_nfse/types/simple.rb
+M 100644 :172 trunk/lib/git_nfse/validations.rb
+M 100644 :195 trunk/lib/git_validations.rb
+M 100644 :189 trunk/lib/signers.rb
+
+blob
+mark :200
 data 67
 Revision is 101, file path is rubyrails/trunk/lib/git_encoding.rb.
 
 commit refs/heads/rubyrails
 #legacy-id 37
-mark :200
+mark :201
 committer ronie <ronie> 1383245683 +0000
 data 165
 refs #10402 - Desenvolvida lib GitEncoding contendo metodos para deteccao e conversao de character encoding do conteudo de objetos das classes File/String/StringIO.
-M 100644 :199 trunk/lib/git_encoding.rb
+from :199
+M 100644 :200 trunk/lib/git_encoding.rb
 
 blob
-mark :201
+mark :202
 data 81
 Revision is 108, file path is rubyrails/trunk/lib/proxies/default_scope_hash.rb.
 
 blob
-mark :202
+mark :203
 data 73
 Revision is 108, file path is rubyrails/trunk/lib/proxies/hash_proxy.rb.
 
 commit refs/heads/rubyrails
 #legacy-id 38
-mark :203
+mark :204
 committer renan.dhein <renan.dhein> 1437167264 +0000
 data 153
 refs #4797 - As of rails 2.3.15, default_scope does not accept lambda nor proc, so we need to use this proxy to add lambda/proc support to default_scope
-from :200
-M 100644 :201 trunk/lib/proxies/default_scope_hash.rb
-M 100644 :202 trunk/lib/proxies/hash_proxy.rb
+from :201
+M 100644 :202 trunk/lib/proxies/default_scope_hash.rb
+M 100644 :203 trunk/lib/proxies/hash_proxy.rb
 
 blob
-mark :204
+mark :205
 data 62
 Revision is 109, file path is rubyrails/trunk/lib/proxies.rb.
 
 commit refs/heads/rubyrails
 #legacy-id 39
-mark :205
+mark :206
 committer renan.dhein <renan.dhein> 1437167679 +0000
 data 82
 refs #4797 - Revision r108 was missing the load of HashProxy and DefaultScopeHash
-from :203
-M 100644 :204 trunk/lib/proxies.rb
+from :204
+M 100644 :205 trunk/lib/proxies.rb
 
 blob
-mark :206
+mark :207
 data 81
 Revision is 110, file path is rubyrails/trunk/lib/proxies/default_scope_hash.rb.
 
 blob
-mark :207
+mark :208
 data 68
 Revision is 110, file path is rubyrails/trunk/lib/proxies/proxy.rb.
 
 blob
-mark :208
+mark :209
 data 62
 Revision is 110, file path is rubyrails/trunk/lib/proxies.rb.
 
 commit refs/heads/rubyrails
 #legacy-id 40
-mark :209
+mark :210
 committer ronie <ronie> 1437171620 +0000
 data 100
 refs #4797 - HashProxy is a generic proxy, so the class name Proxy makes more sense than HashProxy.
-from :205
-M 100644 :208 trunk/lib/proxies.rb
-M 100644 :206 trunk/lib/proxies/default_scope_hash.rb
+from :206
+M 100644 :209 trunk/lib/proxies.rb
+M 100644 :207 trunk/lib/proxies/default_scope_hash.rb
 D trunk/lib/proxies/hash_proxy.rb
-M 100644 :207 trunk/lib/proxies/proxy.rb
+M 100644 :208 trunk/lib/proxies/proxy.rb
 
 blob
-mark :210
+mark :211
 data 73
 Revision is 111, file path is rubyrails/trunk/lib/proxies/proxy_hash.rb.
 
 blob
-mark :211
+mark :212
 data 62
 Revision is 111, file path is rubyrails/trunk/lib/proxies.rb.
 
 commit refs/heads/rubyrails
 #legacy-id 41
-mark :212
+mark :213
 committer renan.dhein <renan.dhein> 1438119452 +0000
 data 114
 refs #4797 - DefaultScopeHash does not work with procs inside sub-hashes, so we had to refactor it into ProxyHash
-from :209
-M 100644 :211 trunk/lib/proxies.rb
+from :210
+M 100644 :212 trunk/lib/proxies.rb
 D trunk/lib/proxies/default_scope_hash.rb
 D trunk/lib/proxies/proxy.rb
-M 100644 :210 trunk/lib/proxies/proxy_hash.rb
+M 100644 :211 trunk/lib/proxies/proxy_hash.rb
 
 blob
-mark :213
+mark :214
 data 77
 Revision is 113, file path is rubyrails/trunk/lib/git_nfse/types/complex.rb.
 
 blob
-mark :214
+mark :215
 data 63
 Revision is 113, file path is rubyrails/trunk/lib/git_nfse.rb.
 
 commit refs/heads/rubyrails
 #legacy-id 42
-mark :215
+mark :216
 committer lucas.correa <lucas.correa> 1443642033 +0000
 data 51
 refs #9865 - NFSe was using unnecessary validation
-from :212
-M 100644 :214 trunk/lib/git_nfse.rb
-M 100644 :213 trunk/lib/git_nfse/types/complex.rb
+from :213
+M 100644 :215 trunk/lib/git_nfse.rb
+M 100644 :214 trunk/lib/git_nfse/types/complex.rb
 D trunk/lib/git_nfse/validations.rb
 
 blob
-mark :216
+mark :217
 data 87
 Revision is 117, file path is sublime_text/packages/user/Preferences.sublime-settings.
 
 blob
-mark :217
+mark :218
 data 69
 Revision is 117, file path is sublime_text/packages/user/README.txt.
 
 commit refs/heads/sublime_text
 #legacy-id 43
-mark :218
+mark :219
 committer ronie <ronie> 1456461020 +0000
 data 66
 Sublime Text 3 installations should always use the same settings.
 M 100644 :1 .gitignore
-M 100644 :216 packages/user/Preferences.sublime-settings
-M 100644 :217 packages/user/README.txt
+M 100644 :217 packages/user/Preferences.sublime-settings
+M 100644 :218 packages/user/README.txt
 
 blob
-mark :219
+mark :220
 data 7
 /a.cfg
 
 blob
-mark :220
+mark :221
 data 62
 Revision is 119, file path is mozilla/thunderbird/README.txt.
 
 commit refs/heads/mozilla
 #legacy-id 44
-mark :221
+mark :222
 committer ronie <ronie> 1456462577 +0000
 data 81
 Documentation regarding where to place Mozilla Thunderbird settings was missing.
 from :170
-M 100644 :219 thunderbird/.gitignore
-M 100644 :220 thunderbird/README.txt
-M 100644 :219 thunderbird/defaults/.gitignore
-M 100644 :219 thunderbird/defaults/pref/.gitignore
+M 100644 :220 thunderbird/.gitignore
+M 100644 :221 thunderbird/README.txt
+M 100644 :220 thunderbird/defaults/.gitignore
+M 100644 :220 thunderbird/defaults/pref/.gitignore
 
 blob
-mark :222
+mark :223
 data 77
 Revision is 122, file path is rubyrails/trunk/lib/git_nfse/types/complex.rb.
 
 commit refs/heads/rubyrails
 #legacy-id 45
-mark :223
+mark :224
 committer renan.dhein <renan.dhein> 1480959946 +0000
 data 105
 refs #11860 - The withheld issqn fields have been implemented and can now be corerctly sent when present
-from :215
-M 100644 :222 trunk/lib/git_nfse/types/complex.rb
+from :216
+M 100644 :223 trunk/lib/git_nfse/types/complex.rb
 
 blob
-mark :224
+mark :225
 data 73
 Revision is 124, file path is sublime_text/packages/user/before_save.py.
 
 commit refs/heads/sublime_text
 #legacy-id 46
-mark :225
+mark :226
 committer ronie <ronie> 1484877329 +0000
 data 97
 refs #11924 - We need Sublime Text to automatically convert tabs to spaces before saving a file.
-from :218
-M 100644 :224 packages/user/before_save.py
+from :219
+M 100644 :225 packages/user/before_save.py
 
 blob
-mark :226
+mark :227
 data 73
 Revision is 127, file path is rubyrails/trunk/lib/proxies/proxy_hash.rb.
 
 commit refs/heads/rubyrails
 #legacy-id 47
-mark :227
+mark :228
 committer ronie <ronie> 1508435521 +0000
 data 214
 refs #4797 - Proxies::ProxyHash#[] method was calling all subhashes' procs instead of calling just the current key's proc; Calling Hash#deep_merge method on a Proxies::ProxyHash object was returning a Hash object.
-from :223
-M 100644 :226 trunk/lib/proxies/proxy_hash.rb
+from :224
+M 100644 :227 trunk/lib/proxies/proxy_hash.rb
 
 blob
-mark :228
+mark :229
 data 67
 Revision is 130, file path is rubyrails/trunk/lib/git_encoding.rb.
 
 blob
-mark :229
+mark :230
 data 68
 Revision is 130, file path is rubyrails/trunk/lib/git_nfse/base.rb.
 
 blob
-mark :230
+mark :231
 data 75
 Revision is 130, file path is rubyrails/trunk/lib/git_nfse/cancel_nfse.rb.
 
 blob
-mark :231
+mark :232
 data 76
 Revision is 130, file path is rubyrails/trunk/lib/git_nfse/consult_nfse.rb.
 
 blob
-mark :232
+mark :233
 data 71
 Revision is 130, file path is rubyrails/trunk/lib/git_nfse/helpers.rb.
 
 blob
-mark :233
+mark :234
 data 71
 Revision is 130, file path is rubyrails/trunk/lib/git_nfse/parsers.rb.
 
 blob
-mark :234
+mark :235
 data 76
 Revision is 130, file path is rubyrails/trunk/lib/git_nfse/rps_lot_nfse.rb.
 
 blob
-mark :235
+mark :236
 data 77
 Revision is 130, file path is rubyrails/trunk/lib/git_nfse/types/complex.rb.
 
 blob
-mark :236
+mark :237
 data 76
 Revision is 130, file path is rubyrails/trunk/lib/git_nfse/types/simple.rb.
 
 blob
-mark :237
+mark :238
 data 63
 Revision is 130, file path is rubyrails/trunk/lib/git_nfse.rb.
 
 blob
-mark :238
+mark :239
 data 70
 Revision is 130, file path is rubyrails/trunk/lib/git_validations.rb.
 
 blob
-mark :239
+mark :240
 data 73
 Revision is 130, file path is rubyrails/trunk/lib/proxies/proxy_hash.rb.
 
 blob
-mark :240
+mark :241
 data 62
 Revision is 130, file path is rubyrails/trunk/lib/proxies.rb.
 
 blob
-mark :241
+mark :242
 data 62
 Revision is 130, file path is rubyrails/trunk/lib/signers.rb.
 
 commit refs/heads/rubyrails
 #legacy-id 48
-mark :242
+mark :243
 committer ronie <ronie> 1510598749 +0000
 data 87
 refs #12123 - Ruby version 1.9.3 requires source code encoding to be set on .rb files.
-from :227
-M 100644 :228 trunk/lib/git_encoding.rb
-M 100644 :237 trunk/lib/git_nfse.rb
-M 100644 :229 trunk/lib/git_nfse/base.rb
-M 100644 :230 trunk/lib/git_nfse/cancel_nfse.rb
-M 100644 :231 trunk/lib/git_nfse/consult_nfse.rb
-M 100644 :232 trunk/lib/git_nfse/helpers.rb
-M 100644 :233 trunk/lib/git_nfse/parsers.rb
-M 100644 :234 trunk/lib/git_nfse/rps_lot_nfse.rb
-M 100644 :235 trunk/lib/git_nfse/types/complex.rb
-M 100644 :236 trunk/lib/git_nfse/types/simple.rb
-M 100644 :238 trunk/lib/git_validations.rb
-M 100644 :240 trunk/lib/proxies.rb
-M 100644 :239 trunk/lib/proxies/proxy_hash.rb
-M 100644 :241 trunk/lib/signers.rb
+from :228
+M 100644 :229 trunk/lib/git_encoding.rb
+M 100644 :238 trunk/lib/git_nfse.rb
+M 100644 :230 trunk/lib/git_nfse/base.rb
+M 100644 :231 trunk/lib/git_nfse/cancel_nfse.rb
+M 100644 :232 trunk/lib/git_nfse/consult_nfse.rb
+M 100644 :233 trunk/lib/git_nfse/helpers.rb
+M 100644 :234 trunk/lib/git_nfse/parsers.rb
+M 100644 :235 trunk/lib/git_nfse/rps_lot_nfse.rb
+M 100644 :236 trunk/lib/git_nfse/types/complex.rb
+M 100644 :237 trunk/lib/git_nfse/types/simple.rb
+M 100644 :239 trunk/lib/git_validations.rb
+M 100644 :241 trunk/lib/proxies.rb
+M 100644 :240 trunk/lib/proxies/proxy_hash.rb
+M 100644 :242 trunk/lib/signers.rb
 
 tag emptycommit-2
 #legacy-id 2
