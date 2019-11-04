@@ -6279,7 +6279,6 @@ var ignoreProperties = map[string]bool{
 	"svn:keywords":        true,
 	"svn:needs-lock":      true,
 	"svn:eol-style":       true, // Don't want to suppress, but cvs2svn floods these.
-	"svnmerge-integrated": true, // FIXME: Turn these into merges?
 }
 
 const maxRevidx = int(^revidx(0))	// Use for bounds-checking in range loops.
