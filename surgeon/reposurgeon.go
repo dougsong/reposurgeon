@@ -6170,25 +6170,20 @@ func (pm *PathMap) pathnames() []string {
 
 // Now, a type to manage a collectiom of PathMaps used as a history of file visibility.
 
-type HistoryManager interface {
-	apply(revidx, []*NodeAction)
-	getActionNode(revidx, string) *NodeAction
-}
-
-type FastHistory struct {
+type History struct {
 	visible map[revidx]*PathMap
 	visibleHere *PathMap
 	revision revidx
 }
 
-func newFastHistory() *FastHistory {
-	h := new(FastHistory)
+func newHistory() *History {
+	h := new(History)
 	h.visible = make(map[revidx]*PathMap)	// Visibility maps by revision ID
 	h.visibleHere = newPathMap()		// Snapshot of visibility after current revision ops
 	return h
 }
 
-func (h *FastHistory) apply(revision revidx, nodes []*NodeAction) {
+func (h *History) apply(revision revidx, nodes []*NodeAction) {
 	// Digest the supplied nodes into the history.
 	// Build the visibility map for this revision.
 	// Fill in the node from-sets.
@@ -6240,7 +6235,7 @@ func (h *FastHistory) apply(revision revidx, nodes []*NodeAction) {
 	h.revision = revision
 }
 
-func (h *FastHistory) getActionNode(revision revidx, source string) *NodeAction {
+func (h *History) getActionNode(revision revidx, source string) *NodeAction {
 	p, _ := h.visible[revision].get(source)
 	if p != nil {
 		return p.(*NodeAction)
@@ -6441,7 +6436,7 @@ type StreamParser struct {
 	directoryBranchlinks stringSet
 	activeGitignores     map[string]string
 	large                bool
-	history              HistoryManager
+	history              *History
 	splitCommits         map[revidx]int
 	streamview           []*NodeAction	// All nodes in streeam order
 }
@@ -8145,7 +8140,7 @@ func svnProcessFilemaps(sp *StreamParser, options stringSet, baton *Baton) {
 	// maps are everything necessary to compute node ancestry. 
 	logit(logEXTRACT, "Phase 3: build filemaps")
 	baton.startProgress("process SVN, phase 3: build filemaps", uint64(len(sp.revisions)))
-	sp.history = newFastHistory()
+	sp.history = newHistory()
 	for ri, record := range sp.revisions {
 		sp.history.apply(intToRevidx(ri), record.nodes)
 		baton.percentProgress(uint64(ri))
