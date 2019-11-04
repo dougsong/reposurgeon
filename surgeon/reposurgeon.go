@@ -6391,7 +6391,6 @@ type StreamParser struct {
 	generatedDeletes     []*Commit
 	revisions            []RevisionRecord
 	hashmap              map[string]*NodeAction
-	propertyStash        map[string]*OrderedMap
 	fileopBranchlinks    stringSet
 	directoryBranchlinks stringSet
 	activeGitignores     map[string]string
@@ -6425,7 +6424,6 @@ func newStreamParser(repo *Repository) *StreamParser {
 	sp.generatedDeletes = make([]*Commit, 0)
 	sp.revisions = make([]RevisionRecord, 0)
 	sp.hashmap = make(map[string]*NodeAction)
-	sp.propertyStash = make(map[string]*OrderedMap)
 	sp.fileopBranchlinks = newStringSet()
 	sp.directoryBranchlinks = newStringSet()
 	sp.activeGitignores = make(map[string]string)
@@ -6730,6 +6728,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 		sp.large = true
 	}
 	trackSymlinks := newOrderedStringSet()
+	propertyStash := make(map[string]*OrderedMap)
 	baton.startProgress("process SVN, phase 0: read dump file", uint64(filesize))
 	for {
 		line := sp.readline()
@@ -6847,23 +6846,35 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 						// property fields of
 						// their own.
 						if node.propchange {
-							sp.propertyStash[node.path] = node.props
+							propertyStash[node.path] = node.props
 						} else if node.action == sdADD && node.fromPath != "" {
 							//Contiguity assumption here
 							for _, oldnode := range sp.revisions[node.fromRev].nodes {
 								if oldnode.path == node.fromPath && oldnode.propchange {
-									sp.propertyStash[node.path] = oldnode.props
+									propertyStash[node.path] = oldnode.props
 								}
 							}
 							//fmt.Fprintf(os.Stderr, "Copy node %d:%s stashes %s\n", node.revision, node.path, sp.propertyStash[node.path])
 						}
 						if node.action == sdDELETE {
-							if _, ok := sp.propertyStash[node.path]; ok {
-								delete(sp.propertyStash, node.path)
+							if _, ok := propertyStash[node.path]; ok {
+								delete(propertyStash, node.path)
 							}
 						} else {
-							// The forward propagation.
-							node.props = sp.propertyStash[node.path]
+							// The forward
+							// propagation.
+							// Importanntly,
+							// this also
+							// forwards
+							// empty
+							// prperty
+							// sets, which
+							// are
+							// different
+							// from having
+							// no
+							// properties.
+							node.props = propertyStash[node.path]
 						}
 						// This guard filters
 						// out the empty nodes
@@ -7444,7 +7455,7 @@ func (sp *StreamParser) lastRelevantCommit(maxRev revidx, path string, attr stri
 	return nil
 }
 
-// isDeclaredBranch returns true iff the user requested that this path be trated as a branch or tag.
+// isDeclaredBranch returns true iff the user requested that this path be treated as a branch or tag.
 func isDeclaredBranch(path string) bool {
 	np := path + svnSep
 	for _, trial := range control.listOptions["svn_branchify"] {
@@ -7825,7 +7836,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// The other major issue is that Subversion dump streams have
 	// poor semantic locality.  One of the basic tree-surgery
 	// operations expressed in them is a wildcarded directory copy
-	// - copy everything in the source directory at a soecified
+	// - copy everything in the source directory at a specified
 	// revision to the target directory in present time.  To
 	// resolve this wildcard, one may have to look arbitrarily far
 	// back in the history.
