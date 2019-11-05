@@ -420,7 +420,7 @@ branchreplace.svn::
 delete-copy.svn::
    Doesn't build, no trunk branch. Not used by any test.
 
-delignore/svn::
+delignore.svn::
    Translation correct. One message due to branch delete
    followed by rename.
 
@@ -443,17 +443,14 @@ gitignore.svn::
    .gitigmore, as it should. Trsnslation is correct.  Used by 
    userignores.tst
 
-ignore-blank.svn::
-   Translation cottect, but has emptycommits.
-
 myers1.svn::
-   Has an emptycommit. Translation is correct. Not used by any test.
+   BUG: Content mismatch.
 
 nesting.svn::
    Doesn't build, no trunk branch. Used by nesting.tst.
 
 node-kind-first.svn::
-   Translation is corrext, but one of the proprty settings triggers
+   Translation is corrext, but one of the property settings triggers
    a spurious message. Not a real bug.  Not used by any test.
 
 nontipcopy.svn::
@@ -478,10 +475,6 @@ samplebranch.svn::
    should not unless the --preserve read option is on. Uses in
    branchdelete.tst and branchrename.tst.
 
-snarl.svn::
-   Translation is correct.  Has empytcommits. A contentless branch
-   is not translated. Mot used in any test. Derived from references.svn.
-
 split-dir.svn::
    Translation is correct.  root tag is because root-level directories
    not matching the standard branch structure were created.  Used in
@@ -501,7 +494,7 @@ treecontents.svn::
    any test.
 
 vanilla.svn::
-   Translation is correct.  Has an enptycommit, and there's a messqge
+   Translation is correct.  Has an enptycommit, and there's a message
    due to a poperty setting. Used in repocutter and repotool tests.
 
 wrong-mergeinfo.svn::

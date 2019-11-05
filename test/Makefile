@@ -377,13 +377,15 @@ svnload-regress:
 
 # Perform full regression on SVN streams that have clean conversions -
 # that is, no messages due to branch surgery or whatever.
-# FIXME: We should reoort error and stop if the outout is nonempty.
-SVNCLEAN := bad-author.svn binary.svn blob-id.svn \ debranch.svn deletion.svn deepdirs.svn \
-	emptybranch.svn executable.svn expunge.svn filecopy.svn \
-	gitify.svn mergeinfo.svn mergeinfo-with-split.svn \
-	mixedbranch.svn mkignore.svn nullignores.svn \
-	pangram.svn permcopy.svn replace-dir.svn \
-	simpletag.svn smallref.svn squash-id.svn subdir.svn svnignores.svn
+# Empty-commit tags generated in gitspace corresponding to branch
+# copies are ignored.
+# FIXME: We should report error and stop if the outout is nonempty.
+SVNCLEAN := bad-author.svn binary.svn blob-id.svn debranch.svn deletion.svn \
+	deepdirs.svn emptybranch.svn executable.svn expunge.svn filecopy.svn \
+	gitify.svn ignore-blank.svn mergeinfo.svn mergeinfo-with-split.svn \
+	mixedbranch.svn mkignore.svn nullignores.svn nontipcopy.svn \
+	pangram.svn permcopy.svn replace-dir.svn simpletag.svn smallref.svn \
+	snarl.svn squash-id.svn subdir.svn subclipse.svn svnignores.svn
 liftcheck-regress:
 	@echo "== Testing conversion correctness of Subversion streams:"
 	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
@@ -392,7 +394,7 @@ liftcheck-regress:
 		for test in $(SVNCLEAN); \
 		do \
 		    { $(ECHO) -n "  $${test}"; grep --text '^ ##' $${test} || echo ' ## (no description)'; } >&2; \
-		    liftcheck $${test} || { echo "*** Failed on $${test}!"; exit $(STOPOUT); } \
+		    liftcheck -e emptycommit $${test} || { echo "*** Failed on $${test}!"; exit $(STOPOUT); } \
 		done \
 	else \
 		echo "     Skipped, either git or svn is missing"; \
