@@ -417,9 +417,6 @@ branchmap.svn::
 branchreplace.svn::
    Conversion is correct - messages due to trimmed branches.
 
-delete-copy.svn::
-   Doesn't build, no trunk branch. Not used by any test.
-
 delignore.svn::
    Translation correct. One message due to branch delete
    followed by rename.
@@ -432,7 +429,7 @@ expunge-copyfrom.svn::
 
 fleetwood.svn::
    Has empytcommits and a deleted-renamed commit; these are junk. 
-   The tags/1.0rc1/ omn the SVN side is never instantiated in the
+   The tags/1.0rc1/ on the SVN side is never instantiated in the
    git lift because it has no content. Used in tagretract.tst.
 
 format7.svn::
