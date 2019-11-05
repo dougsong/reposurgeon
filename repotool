@@ -535,7 +535,7 @@ def compare(args):
     "Compare two repositories at a specified revision, defaulting to mainline tip."
     if verbose:
         print("compare: %s" % args)
-    (options, arguments) = getopt.getopt(args, "b:ir:st:ux:")
+    (options, arguments) = getopt.getopt(args, "b:e:ir:st:ux:")
     outdir = "."
     branch = ""
     tag = ""
@@ -554,7 +554,7 @@ def compare(args):
         elif opt == '-x':
             diff_args.append(opt)
             diff_args.append(val)
-        elif op == '-i':
+        elif opt == '-i':
             seeignores = True
     if verbose:
         print("Checkout arguments: %s" % checkout_args)
@@ -595,7 +595,7 @@ def compare(args):
             print("Comparing %s to %s" % (sourcedir, targetdir))
         do_or_die("diff -r %(diffopts)s --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %(sourcedir)s %(targetdir)s || exit 0" % locals())
         def dirlist(top, excl=None):
-            "Get list of all paths under specied top node, with optional excusion."
+            "Get list of all paths under specied top node, with optional exclusion."
             m = []
             trunc = len(top) + 1
             for (dirpath, dirnames, filenames) in os.walk(top):
@@ -620,8 +620,9 @@ def compare(args):
 
 def compare_engine(singular, plural, lister, comparer, args):
     "Compare two repositories at all revisions implied by a specified command."
-    (options, arguments) = getopt.getopt(args, "isux:")
+    (options, arguments) = getopt.getopt(args, "e:isux:")
     diff_args = []
+    excludes = []
     seeignores = False
     for (opt, val) in options:
         if opt in ('-q', '-s', '-u'):
@@ -631,6 +632,8 @@ def compare_engine(singular, plural, lister, comparer, args):
             diff_args.append(val)
         elif opt == '-i':
             seeignores = True
+        elif opt == '-e':
+            excludes.append(val)
     if len(arguments) != 2:
         croak("compare requires exactly two repository-name arguments.")
     args = args[:]
@@ -644,8 +647,12 @@ def compare_engine(singular, plural, lister, comparer, args):
         targettags = capture_or_die(lister).strip().split()
     common = set(sourcetags) & set(targettags)
     sourceonly = list(set(sourcetags) - common)
+    for regexp in excludes:
+        sourceonly = [x for x in sourceonly if re.compile(regexp).search(x) == None]
     sourceonly.sort()
     targetonly = list(set(targettags) - common)
+    for regexp in excludes:
+        targetonly = [x for x in targetonly if re.compile(regexp).search(x) == None]
     targetonly.sort()
     common = list(common)
     common.sort()

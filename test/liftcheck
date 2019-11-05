@@ -9,6 +9,7 @@
 # The -a option enables progress messages from the Subversion loader.
 # The -s option enables display of common files
 # The -r option sets a revision to check rather than trunk.
+# The -e option sets exckude patterbs to ignore uninteresting tags and branches 
 #
 # The REPOSURGEON environment variable can be used to substitute in a
 # different implementation.
@@ -19,18 +20,20 @@ set -e
 
 repotoolopt=""
 debug=no
+compareopt=""
 svnquiet=-q
 slimit=""
 rlimit=""
-while getopts adir:suv opt
+while getopts ade:ir:suv opt
 do
     case $opt in
 	d) debug=yes;;
+        e) compareopt="${compareopt} -e ${OPTARG}";;
 	a) svnquiet="";;
-	i|s|u) compareopt="$compareopt -$opt";;
-	r) slimit="-r $OPTARG" rlimit="readlimit $OPTARG";;
-	v) repotoolopt="$repotoolopt -$opt";;
-	u) compareopt="$compareopt -$opt";;
+	i|s|u) compareopt="${compareopt} -${opt}";;
+	r) slimit="-r ${OPTARG}" rlimit="readlimit ${OPTARG}";;
+	v) repotoolopt="${repotoolopt} -${opt}";;
+	u) compareopt="${compareopt} -${opt}";;
     esac
 done
 shift $(($OPTIND - 1))

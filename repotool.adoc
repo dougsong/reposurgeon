@@ -66,6 +66,8 @@ command verb with one or more -x options followed by basenames of
 paths to exclude from comparison. You can get a context-diff report on
 file differences with the -u option. File permissions well as content
 are checked, any mismatches will be shown after the diff listing.
+The -e option sets exclude patterns for tag names abd branches that
+should be ignored.
 
 The 'compare-tags' action takes two repository directories,
 extracts a list of tags from the first, then compares the repository
