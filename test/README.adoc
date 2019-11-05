@@ -428,13 +428,13 @@ expunge-copyfrom.svn::
    Doesn't build, no trunk branch. Used by expunge-copyfrom.tst.
 
 fleetwood.svn::
-   Has empytcommits and a deleted-renamed commit; these are junk. 
+   Has emptycommits and a deleted-renamed commit; these are junk. 
    The tags/1.0rc1/ on the SVN side is never instantiated in the
    git lift because it has no content. Used in tagretract.tst.
 
 gitignore.svn::
    Has an emptycommit. Generates a warning about the user-created
-   .gitigmore, as it should. Trsnslation is correct.  Used by 
+   .gitigmore, as it should. Translation is correct.  Used by 
    userignores.tst
 
 myers1.svn::
@@ -444,14 +444,11 @@ nesting.svn::
    Doesn't build, no trunk branch. Used by nesting.tst.
 
 node-kind-first.svn::
-   Translation is corrext, but one of the property settings triggers
+   Translation is correct, but one of the property settings triggers
    a spurious message. Not a real bug.  Not used by any test.
 
-nontipcopy.svn::
-   Translation cottect, but has emptycommits.
-
 permcopy2.svn::
-   Translation is correct. Hascan emptycommit. An empy spource branch
+   Translation is correct. Has an emptycommit. An empty source branch
    is discarded.  This Test load should be replaced. 
 
 references.svn::
@@ -462,20 +459,19 @@ rootfile.svn::
    Used in a repocutter test.
 
 rootfirst.svn::
-   Doesn't build, no trunk branch. Not used by any test.
+   Translation correct; spurious message due to empty branch. 
+   Not used by any test.  Should be replaced by a stream that 
+   builds.
 
 samplebranch.svn::
    BUG: Git translation preserves a deleted branch, and probably
-   should not unless the --preserve read option is on. Uses in
+   should not unless the --preserve read option is on. Used in
    branchdelete.tst and branchrename.tst.
 
 split-dir.svn::
-   Translation is correct.  root tag is because root-level directories
+   Translation is correct; the root tag is because root-level directories
    not matching the standard branch structure were created.  Used in
    split-dir.tst.
-
-subclipse.svn::
-   Trsnslation is correct.  Has an emptycommit. Not used in any test.
 
 swap.svn::
    Doesn't build, no trunk branch. Used in a repocutter test.
@@ -489,7 +485,7 @@ treecontents.svn::
 
 vanilla.svn::
    Translation is correct.  Has an enptycommit, and there's a message
-   due to a poperty setting. Used in repocutter and repotool tests.
+   due to a property setting. Used in repocutter and repotool tests.
 
 wrong-mergeinfo.svn::
    Translation is correct, produces a message due to unresolved
