@@ -20836,7 +20836,7 @@ func tweakFlagOptions(line string, val bool) {
 			respond("\t%s = %v\n", opt[0], control.flagOptions[opt[0]])
 		}
 	} else {
-		line = strings.ReplaceAll(line, ",", " ")
+		line = strings.Replace(line, ",", " ",-1)
 		for _, name := range strings.Fields(line) {
 			for _, opt := range optionFlags {
 				if name == opt[0] {
@@ -21886,7 +21886,7 @@ func verbosityLevelList() []assoc {
 }
 
 func (rs *Reposurgeon) DoLog(lineIn string) bool {
-	lineIn = strings.ReplaceAll(lineIn, ",", " ")
+	lineIn = strings.Replace(lineIn, ",", " ",-1)
 	for _, tok := range strings.Fields(lineIn) {
 		enable := tok[0] == '+'
 		if !(enable || tok[0] == '-') {
