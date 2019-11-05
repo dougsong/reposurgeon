@@ -424,10 +424,6 @@ delignore/svn::
    Translation correct. One message due to branch delete
    followed by rename.
 
-emptybranch.svn::
-   BUG: But not a serious one. The unrealized Subversion emptybranch
-   is created on the Git side and should not be.
-
 emptyfrom.svn::
    BUG: Needs analysis. Not used by any test.
 
@@ -447,6 +443,9 @@ gitignore.svn::
    .gitigmore, as it should. Trsnslation is correct.  Used by 
    userignores.tst
 
+ignore-blank.svn::
+   Translation cottect, but has emptycommits.
+
 myers1.svn::
    Has an emptycommit. Translation is correct. Not used by any test.
 
@@ -456,6 +455,13 @@ nesting.svn::
 node-kind-first.svn::
    Translation is corrext, but one of the proprty settings triggers
    a spurious message. Not a real bug.  Not used by any test.
+
+nontipcopy.svn::
+   Translation cottect, but has emptycommits.
+
+permcopy2.svn::
+   Translation is correct. Hascan emptycommit. An empy spource branch
+   is discarded.  This Test load should be replaced. 
 
 references.svn::
    BUG: needs analysis. Used by the legacy-map test.

@@ -4146,7 +4146,6 @@ func (reset Reset) String() string {
 // FileOp is a gitspace file modification attached to a commit
 type FileOp struct {
 	repo       *Repository
-	op         rune
 	committish string
 	Source     string
 	Target     string
@@ -4154,6 +4153,8 @@ type FileOp struct {
 	Path       string
 	ref        string
 	inline     string
+	op         rune
+	genflag    bool
 }
 
 func newFileOp(repo *Repository) *FileOp {
@@ -8266,6 +8267,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 					//assert node.blob == nil
 					fileop := newFileOp(sp.repo)
 					fileop.construct(opD, node.path)
+					fileop.genflag = node.generated
 					actions = append(actions, fiAction{node, fileop})
 				} else if node.action == sdADD || node.action == sdCHANGE || node.action == sdREPLACE {
 					ancestor = sp.seekAncestor(node)
@@ -8331,6 +8333,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 						nodePermissions(*node),
 						node.blobmark.String(),
 						node.path)
+					fileop.genflag = node.generated
 					actions = append(actions, fiAction{node, fileop})
 					sp.repo.markToEvent(fileop.ref).(*Blob).addalias(node.path)
 
@@ -8358,6 +8361,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 				logit(logEXTRACT, "r%d: deleteall %s", record.revision, node.path)
 				fileop := newFileOp(sp.repo)
 				fileop.construct(deleteall)
+				fileop.genflag = node.generated
 				actions = append(actions, fiAction{node, fileop})
 			}
 			baton.twirl()
@@ -9004,12 +9008,24 @@ func svnProcessJunk(sp *StreamParser, options stringSet, baton *Baton) {
 					commit.parentMarks()[0]))
 				safedelete(i)
 			}
-			// Childless generated branch commits carry no informationn,
+			// cvs2svn-generated branch commits carry no informationn,
 			// and just get removed.
 			m = cvs2svnBranchRE.FindStringSubmatch(commit.Comment)
 			if len(m) > 0 && !commit.hasChildren() {
 				safedelete(i)
 			}
+			// Branch copies with no later commits on the branch should
+			// lose their fileops so they'll be tagified in a later phase.
+			if !commit.hasChildren() && len(commit.operations()) > 0 {
+				for _, op := range commit.operations() {
+					if !op.genflag {
+						goto nodrop
+					}
+				}
+				logit(logEXTRACT, "pruning empty branch copy commit %s", commit.idMe())
+				commit.setOperations(nil)
+			nodrop:
+			}				
 		}
 loopend:
 		baton.percentProgress(uint64(i)+1)
@@ -22097,24 +22113,26 @@ func (rs *Reposurgeon) DoSizeof(lineIn string) bool {
 		}
 		return out
 	}
-	respond("NodeAction:        %s\n", explain(unsafe.Sizeof(*new(NodeAction))))
-	respond("RevisionRecord:    %s\n", explain(unsafe.Sizeof(*new(RevisionRecord))))
-	respond("Commit:            %s\n", explain(unsafe.Sizeof(*new(Commit))))
-	respond("Callout:           %s\n", explain(unsafe.Sizeof(*new(Callout))))
-	respond("FileOp:            %s\n", explain(unsafe.Sizeof(*new(FileOp))))
-	respond("Blob:              %s\n", explain(unsafe.Sizeof(*new(Blob))))
-	respond("Tag:               %s\n", explain(unsafe.Sizeof(*new(Tag))))
-	respond("Reset:             %s\n", explain(unsafe.Sizeof(*new(Reset))))
-	respond("Attribution:       %s\n", explain(unsafe.Sizeof(*new(Attribution))))
-	respond("blobidx:           %3d\n", unsafe.Sizeof(blobidx(0)))
-	respond("markidx:           %3d\n", unsafe.Sizeof(markidx(0)))
-	respond("revidx:            %3d\n", unsafe.Sizeof(revidx(0)))
-	respond("nodeidx:           %3d\n", unsafe.Sizeof(nodeidx(0)))
-	respond("string:            %3d\n", unsafe.Sizeof("foo"))
-	respond("pointer:           %3d\n", unsafe.Sizeof(new(Attribution)))
-	respond("int:               %3d\n", unsafe.Sizeof(0))
-	respond("map[string]string: %3d\n", unsafe.Sizeof(make(map[string]string)))
-	respond("[]string:          %3d\n", unsafe.Sizeof(make([]string, 0)))
+	// Don't use respond() here, we wabt to be abke to do "reposurgeon sizeof"
+	// and get a result.
+	fmt.Printf("NodeAction:        %s\n", explain(unsafe.Sizeof(*new(NodeAction))))
+	fmt.Printf("RevisionRecord:    %s\n", explain(unsafe.Sizeof(*new(RevisionRecord))))
+	fmt.Printf("Commit:            %s\n", explain(unsafe.Sizeof(*new(Commit))))
+	fmt.Printf("Callout:           %s\n", explain(unsafe.Sizeof(*new(Callout))))
+	fmt.Printf("FileOp:            %s\n", explain(unsafe.Sizeof(*new(FileOp))))
+	fmt.Printf("Blob:              %s\n", explain(unsafe.Sizeof(*new(Blob))))
+	fmt.Printf("Tag:               %s\n", explain(unsafe.Sizeof(*new(Tag))))
+	fmt.Printf("Reset:             %s\n", explain(unsafe.Sizeof(*new(Reset))))
+	fmt.Printf("Attribution:       %s\n", explain(unsafe.Sizeof(*new(Attribution))))
+	fmt.Printf("blobidx:           %3d\n", unsafe.Sizeof(blobidx(0)))
+	fmt.Printf("markidx:           %3d\n", unsafe.Sizeof(markidx(0)))
+	fmt.Printf("revidx:            %3d\n", unsafe.Sizeof(revidx(0)))
+	fmt.Printf("nodeidx:           %3d\n", unsafe.Sizeof(nodeidx(0)))
+	fmt.Printf("string:            %3d\n", unsafe.Sizeof("foo"))
+	fmt.Printf("pointer:           %3d\n", unsafe.Sizeof(new(Attribution)))
+	fmt.Printf("int:               %3d\n", unsafe.Sizeof(0))
+	fmt.Printf("map[string]string: %3d\n", unsafe.Sizeof(make(map[string]string)))
+	fmt.Printf("[]string:          %3d\n", unsafe.Sizeof(make([]string, 0)))
 	return false
 }
 

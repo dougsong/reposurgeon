@@ -66,15 +66,6 @@ commit two
 from :4
 M 100644 :6 test.txt
 
-commit refs/tags/1.0
-#legacy-id 8
-mark :8
-committer mike <mike> 1437858625 +0000
-data 18
-Fixed release 1.0
-from :7
-M 100644 :6 test.txt
-
 tag emptycommit-2
 #legacy-id 2
 from :2
@@ -101,4 +92,11 @@ data 59
 No release ready yet
 
 [[Split portion of a mixed commit.]]
+
+tag 1.0
+#legacy-id 8
+from :7
+tagger mike <mike> 1437858625 +0000
+data 18
+Fixed release 1.0
 

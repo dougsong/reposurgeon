@@ -109,19 +109,9 @@ M 100644 :4 d1/d2/d3/d4/d5/d6/f9
 M 100644 :4 d1/d2/d3/d4/d5/d6/f9
 M 100644 :4 d1/d2/d3/d4/d5/d6/f9
 
-commit refs/heads/b3
-#legacy-id 11
-mark :9
-committer test <test> 1476144000 +0000
-data 19
-Commit message 11.
-from :2
-M 100644 :3 d1/d2/d3/d4/d5/d6/f0
-M 100644 :4 d1/d2/d3/d4/d5/d6/f9
-
 commit refs/heads/b6
 #legacy-id 12
-mark :10
+mark :9
 committer test <test> 1476230400 +0000
 data 19
 Commit message 12.
@@ -132,30 +122,19 @@ M 100644 :3 d1/d2/d3/d4/d5/d6/f0
 M 100644 :4 d1/d2/d3/d4/d5/d6/f9
 
 blob
-mark :11
+mark :10
 data 63
 Revision is 13, file path is branches/b6/d1/d2/d3/d4/d5/d6/f0.
 
 commit refs/heads/b6
 #legacy-id 13
-mark :12
+mark :11
 committer test <test> 1476316800 +0000
 data 19
 Commit message 13.
-from :10
-M 100755 :11 d1/d2/d3/d4/d5/d6/f0
+from :9
+M 100755 :10 d1/d2/d3/d4/d5/d6/f0
 D d1/d2/d3/d4/d5/d6/f9
-
-commit refs/heads/master
-#legacy-id 14
-mark :13
-committer test <test> 1476403200 +0000
-data 19
-Commit message 14.
-from :7
-D d1/d2/d3/d4/d5-deleted-r14-1/d6/f0
-D d1/d2/d3/d4/d5-deleted-r14-1/d6/f9
-M 100755 :11 d1/d2/d3/d4/d5/d6/f0
 
 tag emptycommit-3
 #legacy-id 3
@@ -165,4 +144,22 @@ data 68
 Commit message 3.
 
 [[Tag from zero-fileop commit at Subversion r3]]
+
+tag emptycommit-11
+#legacy-id 11
+from :2
+tagger test <test> 1476144000 +0000
+data 70
+Commit message 11.
+
+[[Tag from zero-fileop commit at Subversion r11]]
+
+tag emptycommit-14
+#legacy-id 14
+from :7
+tagger test <test> 1476403200 +0000
+data 70
+Commit message 14.
+
+[[Tag from zero-fileop commit at Subversion r14]]
 
