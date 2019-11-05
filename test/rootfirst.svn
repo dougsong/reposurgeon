@@ -1,5 +1,6 @@
 SVN-fs-dump-format-version: 2
  ## No branches, first commit is on root
+ # reposurgeon-read-options: --nobranch
 
 UUID: 73540b90-235f-47be-8c78-0b4270956806
 
