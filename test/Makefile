@@ -29,12 +29,14 @@ TERM := dumb
 
 default: check
 
-check: clean listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce \
-		svnload-regress \
-		git-regress git-regress-branches git-regress-merges git-regress-tags \
-		hg-regress hg-regress-branches hg-regress-merges hg-regress-tags \
-		liftcheck-regress legacy-regress svncheck-regress \
-		repocutter-regress repomapper-regress repotool-regress
+# Define test groups
+BASIC = listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce
+SUBVERSION = svnload-regress liftcheck-regress legacy-regress svncheck-regress
+GIT_EXTRACTOR = git-regress git-regress-branches git-regress-merges git-regress-tags
+HG_EXTRACTOR = hg-regress hg-regress-branches hg-regress-merges hg-regress-tags
+AUXTOOLS = repocutter-regress repomapper-regress repotool-regress
+
+check: clean $(BASIC) $(SUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXVERSION)
 	@echo "=== No diff output is good news ==="
 
 # hg-regress-patho is not part of the normal test sequence.
@@ -528,7 +530,7 @@ svncheck-regress:
 		$(SHELL) $${file}.sh -d | $(REPOSURGEON) "$(TESTOPT)" "set testmode" 'read -' 'prefer git' 'write -' | diff --text -u $${file}.chk - || status=1; \
 	    done; \
 	else echo "    Skipped, svn missing."; exit 0; \
-	fi
+	fi; \
 	exit $${status}
 	@rm -f /tmp/regress$$$$
 
