@@ -6350,9 +6350,17 @@ func (action NodeAction) isBogon() bool {
 	if !((action.action == sdCHANGE || action.action == sdADD || action.action == sdDELETE || action.action == sdREPLACE) &&
 		(action.kind == sdFILE || action.kind == sdDIR || action.action == sdDELETE) &&
 		((action.fromRev == 0) == (action.fromPath == ""))) {
-		logit(logSHOUT, "forbidden operation in dump stream at r%d: %s", action.revision, action)
+		logit(logSHOUT, "forbidden operation in dump stream (versoin 7?) at r%d: %s", action.revision, action)
 		return true
 	}
+
+	// This guard filters out the empty nodes produced by format 7
+	// dumps.  Not necessarily a bogon, actually/
+	if (action.action == sdCHANGE && !action.hasProperties() && action.blob == nil && action.fromRev == 0) {
+		logit(logEXTRACT, "empty node rejected at r%d: %v", action.revision, action)
+		return true
+	}
+
 	if !(action.blob != nil || action.hasProperties() ||
 		action.fromRev != 0 || action.action == sdADD || action.action == sdDELETE) {
 		logit(logSHOUT, "malformed node in dump stream at r%d: %s", action.revision, action)
@@ -6365,13 +6373,6 @@ func (action NodeAction) isBogon() bool {
 
 	if ((action.action != sdADD && action.action != sdREPLACE) && action.fromRev > 0) {
 		logit(logSHOUT, "invalid type in node with from revision r%d: %s", action.revision, action)
-		return true
-	}
-
-	// This guard filters out the empty nodes produced by format 7
-	// dumps.
-	if (action.action == sdCHANGE && !action.hasProperties() && action.blob == nil && action.fromRev == 0) {
-		logit(logSHOUT, "empty node rejected at r%d: %v", action.revision, action)
 		return true
 	}
 

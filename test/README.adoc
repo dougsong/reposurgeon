@@ -432,9 +432,6 @@ fleetwood.svn::
    The tags/1.0rc1/ on the SVN side is never instantiated in the
    git lift because it has no content. Used in tagretract.tst.
 
-format7.svn::
-   Has emptycommits. The translation is correct. Not used by any test. 
-
 gitignore.svn::
    Has an emptycommit. Generates a warning about the user-created
    .gitigmore, as it should. Trsnslation is correct.  Used by 
