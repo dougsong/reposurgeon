@@ -6777,7 +6777,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 	}
 	trackSymlinks := newOrderedStringSet()
 	propertyStash := make(map[string]*OrderedMap)
-	baton.startProgress("process SVN, phase 0: read dump file", uint64(filesize))
+	baton.startProgress("SVN Phase 1: read dump file", uint64(filesize))
 	for {
 		line := sp.readline()
 		if len(line) == 0 {
@@ -7850,8 +7850,6 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 
 	sp.repo.addEvent(newPassthrough(sp.repo, "#reposurgeon sourcetype svn\n"))
 
-	svnProcessPrune(sp, options, baton)
-	timeit("pruning")
 	svnProcessClean(sp, options, baton)
 	timeit("cleaning")
 	svnProcessFilemaps(sp, options, baton)
@@ -7879,87 +7877,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	sp.repo.hint("svn", "", true)
 }
 
-func svnProcessPrune(sp *StreamParser, options stringSet, baton *Baton) {
-	logit(logEXTRACT, "Phase 1: pruning dead branches")
-	baton.startProgress("process SVN, phase 1: pruning dead branches", uint64(len(sp.revisions)))
-	if !options.Contains("--preserve") {
-		// Phase 1:
-		//
-		// Identify Subversion tag/branch directories with
-		// tipdeletes and nuke them. Otherwise they're going
-		// to turn into gitspace branch and tag entities that
-		// don't die. We don't want this, because a Subversion
-		// branch delete is not just a command to clear the
-		// branch content, it says to remove the branch from
-		// every future view of the repository history.
-		//
-		// The default of --preserve off reflects a
-		// philosophical choice that the converted Subversion
-		// repository should by default be the history the
-		// operators desided to keep, not the entire history
-		// in the Subversion database including all dead branches,
-		// In large, old repositories those branches can be a
-		// vast amount of clutter.
-		//
-		// This pass doesn't touch trunk - any tipdelete on
-		// trunk we presume to be some kind of operator error
-		// that needs to show up under lint and be manually
-		// corrected.
-		//
-		// In a later phase, if --preserve was on, the tipdeletes
-		// that weren't removed here will be tagified.
-		//
-		// This branch is linear-time in the number of nodes
-		// and quite fast even on very large repositories.
-		deadbranches := newOrderedStringSet()
-		resurrectees := newOrderedStringSet()
-		for i := range sp.revisions {
-			backup := len(sp.revisions) - i - 1
-			for j := range sp.revisions[backup].nodes {
-				node := sp.revisions[backup].nodes[len(sp.revisions[backup].nodes)-j-1]
-				if !strings.HasPrefix(node.path, "tags") && !strings.HasPrefix(node.path, "branches") {
-					continue
-				}
-				// Not a real tip delete if the directory is re-added later on.  We're scanning
-				// backwards, so the resurrection gets picked up first.
-				if node.action == sdADD && node.kind == sdDIR && !deadbranches.Contains(node.path) {
-					resurrectees.Add(node.path)
-				}
-				if node.action == sdDELETE && node.kind == sdDIR && !resurrectees.Contains(node.path) {
-					deadbranches.Add(node.path)
-					logit(logSHOUT, fmt.Sprintf("r%d~%s nuked by tip delete", backup, node.path))
-				}
-				if deadbranches.Contains(node.path) {
-					node.action = sdNUKE
-				}
-				for _, deadwood := range deadbranches {
-					if strings.HasPrefix(node.path, deadwood+"/") {
-						node.action = sdNUKE
-						break
-					}
-				}
-				baton.twirl()
-			}
-
-			// Actual deletion logic.  This does no new allocation;
-			// trick from https://github.com/golang/go/wiki/SliceTricks
-			newnodes := sp.revisions[backup].nodes[:0]
-			for j := range sp.revisions[backup].nodes {
-				node := sp.revisions[backup].nodes[j]
-				if node.action != sdNUKE {
-					newnodes = append(newnodes, node)
-				}
-			}
-			sp.revisions[backup].nodes = newnodes
-			baton.percentProgress(uint64(i)+1)
-		}
-	}
-	baton.endProgress()
-	// no-preserve code ends here
-}
-
 func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
-	logit(logEXTRACT, "Phase 2: clean tags to prevent anomalies.")
+	logit(logEXTRACT, "SVN Phase 2: clean tags to prevent anomalies.")
 	// Phase 2:
 	//
 	// Intervene to prevent lossage from tag/branch/trunk
@@ -8146,7 +8065,7 @@ func svnProcessFilemaps(sp *StreamParser, options stringSet, baton *Baton) {
 	// built they render unnecessary compuations that would have
 	// been prohibitively expensive in later passes. Notably the
 	// maps are everything necessary to compute node ancestry. 
-	logit(logEXTRACT, "Phase 3: build filemaps")
+	logit(logEXTRACT, "SVN Phase 3: build filemaps")
 	baton.startProgress("process SVN, phase 3: build filemaps", uint64(len(sp.revisions)))
 	sp.history = newHistory()
 	for ri, record := range sp.revisions {
@@ -8159,7 +8078,7 @@ func svnProcessFilemaps(sp *StreamParser, options stringSet, baton *Baton) {
 func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 	nobranch := options.Contains("--nobranch")
 	// Build commits
-	logit(logEXTRACT, "Phase 4: build commits")
+	logit(logEXTRACT, "SVN Phase 4: build commits")
 	sp.splitCommits = make(map[revidx]int)
 	baton.startProgress("process SVN, phase 4: build commits", uint64(len(sp.revisions)))
 	for ri, record := range sp.revisions {
@@ -8636,7 +8555,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 }
 
 func svnProcessRoot(sp *StreamParser, options stringSet, baton *Baton) {
-	logit(logEXTRACT, "Phase 5: root tagification")
+	logit(logEXTRACT, "SVN Phase 5: root tagification")
 	baton.twirl()
 	if logEnable(logEXTRACT) {
 		logit(logEXTRACT, "at post-parsing time:")
@@ -8675,7 +8594,7 @@ func svnProcessRoot(sp *StreamParser, options stringSet, baton *Baton) {
 }
 
 func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timeit func(string)) []*Commit {
-	logit(logEXTRACT, "Phase 5a: branch analysis")
+	logit(logEXTRACT, "SVN Phase 5a: branch analysis")
 	nobranch := options.Contains("--nobranch")
 
 	// Computing this is expensive, so we try to do it seldom
@@ -8985,7 +8904,7 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 }
 
 func svnProcessJunk(sp *StreamParser, options stringSet, baton *Baton) {
-	logit(logEXTRACT, "Phase 6: de-junking")
+	logit(logEXTRACT, "SVN Phase 6: de-junking")
 	// Now clean up junk commits generated by cvs2svn.
 	deleteables := make([]int, 0)
 	newtags := make([]Event, 0)
@@ -9043,7 +8962,7 @@ loopend:
 }
 
 func svnProcessTags(sp *StreamParser, options stringSet, baton *Baton, branchroots []*Commit) {
-	logit(logEXTRACT, "Phase 7: tagification")
+	logit(logEXTRACT, "SVN Phase 7: tagification")
 	// Now we need to tagify all other commits without fileops, because git
 	// is going to just discard them when we build a live repo and they
 	// might possibly contain interesting metadata.
@@ -9118,7 +9037,7 @@ func svnProcessTags(sp *StreamParser, options stringSet, baton *Baton, branchroo
 }
 
 func svnProcessTagEmpties(sp *StreamParser, options stringSet, baton *Baton, branchroots []*Commit) {
-	logit(logEXTRACT, "Phase 8: tagify empties")
+	logit(logEXTRACT, "SVN Phase 8: tagify empties")
 	baton.twirl()
 
 	rootmarks := newOrderedStringSet() // stays empty if nobranch
@@ -9164,7 +9083,7 @@ func svnProcessTagEmpties(sp *StreamParser, options stringSet, baton *Baton, bra
 }
 
 func svnProcessCleanTags(sp *StreamParser, options stringSet, baton *Baton) {
-	logit(logEXTRACT, "Phase 9: delete/copy canonicalization")
+	logit(logEXTRACT, "SVN Phase 9: delete/copy canonicalization")
 	// cvs2svn likes to crap out sequences of deletes followed by
 	// filecopies on the same node when it's generating tag commits.
 	// These are lots of examples of this in the nut.svn test load.
@@ -9199,7 +9118,7 @@ func svnProcessCleanTags(sp *StreamParser, options stringSet, baton *Baton) {
 }
 
 func svnProcessDebubble(sp *StreamParser, options stringSet, baton *Baton) {
-	logit(logEXTRACT, "Phase A: remove duplicate parent marks")
+	logit(logEXTRACT, "SVN Phase A: remove duplicate parent marks")
 	// Remove spurious parent links caused by random cvs2svn file copies.
 	baton.startProgress("process SVN, phase A: remove duplicate parent marks", uint64(len(sp.repo.events)))
 	walkEvents(sp.repo.events, func(idx int, event Event) {
@@ -9232,7 +9151,7 @@ func svnProcessDebubble(sp *StreamParser, options stringSet, baton *Baton) {
 }
 
 func svnProcessRenumber(sp *StreamParser, options stringSet, baton *Baton) {
-	logit(logEXTRACT, "Phase B: renumber")
+	logit(logEXTRACT, "SVN Phase B: renumber")
 	sp.repo.renumber(1, baton)
 }
 

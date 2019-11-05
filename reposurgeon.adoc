@@ -480,11 +480,6 @@ command.
 If the read location is a file and the --format=fossil
 is used, the file is interpreted as a Fossil repository.
 +
-The --preserve is interpreted in a way
-dependent of the type of the incoming repository or stream. Presently
-it only affects the processing of Subversion repositories; see
-<xref linkend='subversion'/> for details.
-+
 The just-read-in repo is added to the list of loaded
 repositories and becomes the current one, selected for surgery. If it
 was read from a plain file and the file name ends with one of the
@@ -1660,12 +1655,6 @@ branch is just a directory in the branch namespace; if you delete it,
 you won't see it in following revisions but if you update to an older
 one that content will still be there.
 
-By default, reposurgeon treats branch
-deletions in a DVCS-like way, removing the history of the branch.  This
-means that it will _not_ be live in translated revisions
-from prior to the commit time of the deletion.  However a --preserve
-option is available that prevents the removal of dead branches.
-
 Bad things can happen when a tag directory is created, copied
 from, deleted, then recreated from a different source directory. This
 is a place where the Subversion model of tags clashes badly with the
@@ -1688,13 +1677,6 @@ its behavior when reading Subversion repositories:
 
 --nobranch::
 Suppress branch analysis.
-
---preserve::
-Never discard metadata.  In particular, preserve
-branch-creation commits (and their metadata) in full rather than turning
-commits for empty branches into bare gitspace resets.  Also, preserve
-branches and tags with following tip deletes rather than nuking them;
-the tip deletes become tags.
 
 --ignore-properties::
 Suppress read-time warnings about discarded property
@@ -1762,19 +1744,13 @@ considered potential branches.
 * Files in the top-level directory are assigned to a
 synthetic branch named 'root'.
 
-* Each potential branch is checked to see if it has
-commits on it after the initial creation or copy.  If there are such
-commits, it becomes a branch.  If not, it may become a tag in order to
-preserve the commit metadata (see the description of the --preserve
-option below).  In all cases, the name of any created tag or branch is
-the basename of the directory.
+* Each potential branch is checked to see if it has commits on it
+after the initial creation or copy.  If there are such commits, it
+becomes a branch.  If not, it may become a tag in order to preserve
+the commit metadata. In all cases, the name of any created tag or
+branch is the basename of the directory.
 
-Branch-creation operations with no following commits are treated
-differently depending on whether or not the --preserve option is
-on. If it is off (the default) the branch creation becomes an empty
-gitspace branch represented by a reset operation; any comment on the
-commit is issued with a warning.  If --preserve is on, the comment
-metadata is preserved in an empty commit attached to the branchpoint.
+Branch-creation operations with no following commits are tagified.
 
 Otherwise, each commit that only creates or deletes directories
 (in particular, copy commits for tags and branches, and commits that
