@@ -27,7 +27,7 @@ ECHO := /bin/echo
 # that confuse diff.  Leave this in while pyreposurgeon still exists.
 TERM := dumb
 
-default: check
+default: fastcheck
 
 # Define test groups
 BASIC = listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce
@@ -36,7 +36,12 @@ GIT_EXTRACTOR = git-regress git-regress-branches git-regress-merges git-regress-
 HG_EXTRACTOR = hg-regress hg-regress-branches hg-regress-merges hg-regress-tags
 AUXTOOLS = repocutter-regress repomapper-regress repotool-regress
 
-check: clean $(BASIC) $(SUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXVERSION)
+# This series can change depending on the current development focus
+fastcheck: clean $(BASIC) $(SUBVERSION)
+	@echo "=== No diff output is good news ==="
+
+# This should always be a full test
+fullcheck: clean $(BASIC) $(SUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXVERSION)
 	@echo "=== No diff output is good news ==="
 
 # hg-regress-patho is not part of the normal test sequence.
