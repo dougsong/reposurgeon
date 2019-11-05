@@ -4152,9 +4152,22 @@ type FileOp struct {
 	mode       string
 	Path       string
 	ref        string
-	inline     string
+	inline     []byte
 	op         rune
 	genflag    bool
+}
+
+func (me *FileOp) Equals (other *FileOp) bool {
+	return me.repo == other.repo &&
+		me.committish == other.committish &&
+		me.Source == other.Source &&
+		me.Target == other.Target &&
+		me.mode == other.mode &&
+		me.Path == other.Path &&
+		me.ref == other.ref &&
+		bytes.Equal(me.inline, other.inline) &&
+		me.op == other.op &&
+		me.genflag == other.genflag
 }
 
 func newFileOp(repo *Repository) *FileOp {
@@ -4351,13 +4364,6 @@ func (fileop *FileOp) relevant(other *FileOp) bool {
 	return len(fileop.paths(nil).Intersection(other.paths(nil))) > 0
 }
 
-// equals tells if two fileops have the same content
-// Not yet used.
-func (fileop *FileOp) equals(other *FileOp) bool {
-	// Relies on structs being compared member-by-member
-	return *fileop == *other
-}
-
 // String dumps this fileop in import-stream format
 func (fileop *FileOp) Save(w io.Writer) {
 	quotifyIfNeeded := func(cpath string) string {
@@ -4471,7 +4477,7 @@ func (callout Callout) isCommit() bool {
 type ManifestEntry struct {
 	mode   string
 	ref    string
-	inline string
+	inline []byte
 }
 
 func (callout Callout) getColor() colorType {
@@ -4488,8 +4494,8 @@ func (m ManifestEntry) String() string {
 }
 
 func (m *ManifestEntry) equals(other *ManifestEntry) bool {
-	// TRelies on member-by-member structure comparison
-	return *m == *other
+	return m.mode == other.mode && m.ref == other.ref &&
+		bytes.Equal(m.inline, other.inline)
 }
 
 const colorNONE = 0
@@ -5632,10 +5638,10 @@ func (commit *Commit) references(mark string) bool {
 }
 
 // blobByName looks up file content by name
-func (commit *Commit) blobByName(pathname string) (string, bool) {
+func (commit *Commit) blobByName(pathname string) ([]byte, bool) {
 	value, ok := commit.manifest().get(pathname)
 	if !ok {
-		return "", false
+		return []byte{}, false
 	}
 	entry := value.(*ManifestEntry)
 	if entry.ref == "inline" {
@@ -5644,7 +5650,7 @@ func (commit *Commit) blobByName(pathname string) (string, bool) {
 	retrieved := commit.repo.markToEvent(entry.ref)
 	switch retrieved.(type) {
 	case *Blob:
-		return string(retrieved.(*Blob).getContent()), true
+		return retrieved.(*Blob).getContent(), true
 	default:
 		errmsg := fmt.Sprintf("Unexpected type while attempting to fetch %s content at %s", pathname, entry.ref)
 		panic(errmsg)
@@ -6633,7 +6639,7 @@ func (sp *StreamParser) fiParseFileop(fileop *FileOp) {
 		return
 	} else if fileop.ref == "inline" {
 		data, _ := sp.fiReadData([]byte{})
-		fileop.inline = string(data)
+		fileop.inline = data
 	} else {
 		sp.error("unknown content type in filemodify")
 	}
@@ -10704,7 +10710,7 @@ func (commit *Commit) simplify() orderedIntSet {
 			for j := i + 1; j < len(commit.operations()); j++ {
 				a := commit.operations()[i]
 				b := commit.operations()[j]
-				if a != nilOp && b != nilOp && a.relevant(&b) {
+				if !a.Equals(&nilOp) && !b.Equals(&nilOp) && a.relevant(&b) {
 					modified, newa, newb, warn, cn := commit._compose(a, b)
 					logit(logDELETE, fmt.Sprintf("Reduction case %d fired on (%d, %d)", cn, i, j))
 					if modified {
@@ -10728,7 +10734,7 @@ func (commit *Commit) simplify() orderedIntSet {
 		}
 		newOps := make([]FileOp, 0)
 		for _, x := range commit.operations() {
-			if x != nilOp {
+			if !x.Equals(&nilOp) {
 				newOps = append(newOps, x)
 			}
 		}
@@ -15211,7 +15217,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 			event := rs.chosen().events[ei]
 			if commit, ok := event.(*Commit); ok {
 				for _, fileop := range commit.operations() {
-					if fileop.inline != "" {
+					if len(fileop.inline) > 0 {
 						rs.selection = append(rs.selection, ei)
 					}
 				}
@@ -15295,10 +15301,10 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 			}
 			if blobs {
 				for _, fileop := range commit.operations() {
-					if fileop.inline != "" {
+					if len(fileop.inline) > 0 {
 						oldinline := fileop.inline
-						fileop.inline = hook(fileop.inline)
-						if fileop.inline != oldinline {
+						fileop.inline = []byte(hook(string(fileop.inline)))
+						if !bytes.Equal(fileop.inline, oldinline) {
 							safebump()
 						}
 					}
@@ -18844,7 +18850,7 @@ func (pa pathAction) String() string {
 	var i int
 	var op FileOp
 	for i, op = range pa.commit.fileops {
-		if op == *pa.fileop {
+		if op.Equals(pa.fileop) {
 			break
 		}
 	}
@@ -20651,9 +20657,9 @@ func (rs *Reposurgeon) DoDiff(line string) bool {
 			fromtext, _ := lower.blobByName(path)
 			totext, _ := upper.blobByName(path)
 			// Don't list identical files
-			if fromtext != totext {
-				lines0 := difflib.SplitLines(fromtext)
-				lines1 := difflib.SplitLines(totext)
+			if !bytes.Equal(fromtext, totext) {
+				lines0 := difflib.SplitLines(string(fromtext))
+				lines1 := difflib.SplitLines(string(totext))
 				file0 := path + " (" + lower.mark + ")"
 				file1 := path + " (" + upper.mark + ")"
 				diff := difflib.UnifiedDiff{

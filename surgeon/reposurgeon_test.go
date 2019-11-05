@@ -1209,7 +1209,7 @@ M 100644 :3 README
 	commit2 := repo.events[3].(*Commit)
 	assertEqual(t, commit2.String(), rawdump[len(rawdump)-len(commit2.String()):])
 	d, _ := commit2.blobByName("README")
-	assertEqual(t, d, "0123456789012345678\n")
+	assertEqual(t, string(d), "0123456789012345678\n")
 	assertIntEqual(t, repo.size(), len(rawdump))
 	saw2 := repo.branchset()
 	exp2 := []string{"refs/heads/master"}
