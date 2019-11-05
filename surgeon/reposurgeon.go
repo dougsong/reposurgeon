@@ -4157,17 +4157,17 @@ type FileOp struct {
 	genflag    bool
 }
 
-func (me *FileOp) Equals (other *FileOp) bool {
-	return me.repo == other.repo &&
-		me.committish == other.committish &&
-		me.Source == other.Source &&
-		me.Target == other.Target &&
-		me.mode == other.mode &&
-		me.Path == other.Path &&
-		me.ref == other.ref &&
-		bytes.Equal(me.inline, other.inline) &&
-		me.op == other.op &&
-		me.genflag == other.genflag
+func (fileop *FileOp) Equals (other *FileOp) bool {
+	return fileop.repo == other.repo &&
+		fileop.committish == other.committish &&
+		fileop.Source == other.Source &&
+		fileop.Target == other.Target &&
+		fileop.mode == other.mode &&
+		fileop.Path == other.Path &&
+		fileop.ref == other.ref &&
+		bytes.Equal(fileop.inline, other.inline) &&
+		fileop.op == other.op &&
+		fileop.genflag == other.genflag
 }
 
 func newFileOp(repo *Repository) *FileOp {
