@@ -21202,7 +21202,6 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		if !notChangelog {
 			return
 		}
-		differ := difflib.NewDiffer()
 		for _, op := range commit.operations() {
 			if op.op == opM && filepath.Base(op.Path) == "ChangeLog" {
 				cl++
@@ -21216,17 +21215,16 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				now := strings.Split(string(newcontent), "\n")
 				var attribution string
 				//print("Analyzing Changelog at %s." % commit.mark)
-				comparison, err := differ.Compare(then, now)
-				if err != nil {
-					logit(logSHOUT, "differ threw a should-never-happen error on path %s at %s", op.Path, commit.mark)
-					return
-				}
-				for _, diffline := range comparison {
-					if diffline[0] == '+' || diffline[0] == '?' {
-						newAttribution := parseAttributionLine(diffline[2:])
-						if newAttribution != "" {
-							attribution = newAttribution
-							break
+				differ := difflib.NewMatcherWithJunk(then, now, true, nil)
+				comparison := differ.GetOpCodes()
+				for _, difflines := range comparison {
+					if difflines.Tag == 'i' || difflines.Tag == 'r' {
+						for _, diffline := range now[difflines.J1:difflines.J2] {
+							newAttribution := parseAttributionLine(diffline)
+							if newAttribution != "" {
+								attribution = newAttribution
+								break
+							}
 						}
 					}
 				}
@@ -21238,10 +21236,11 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 					// assume the most recent is the latest and
 					// correct. First count the lines before the
 					// first change...
-					var commonCount int;
-					var diffline string
-					for commonCount, diffline = range comparison {
-						if diffline[0] != ' ' {
+					var commonCount int
+					for _, difflines := range comparison {
+						if difflines.Tag == 'e' {
+							commonCount = difflines.I2
+						} else {
 							break
 						}
 					}
