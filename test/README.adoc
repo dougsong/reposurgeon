@@ -403,11 +403,6 @@ agito.svn::
    from renaming the earlier, deleted version of a tag.  Used by
    lint.tst.
 
-branch-drop-add::
-   Processing is correct - the unmatched tags on the Git side are
-   from renaming the earlier, deleted version of a branch. Not used
-   by any test.
-
 branchify.svn::
    Doesn't build, no trunk branch. Used by branchify.tst.
 
