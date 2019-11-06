@@ -6208,6 +6208,9 @@ func (h *History) apply(revision revidx, nodes []*NodeAction) {
 			h.visibleHere.set(node.path, node)
 			logit(logFILEMAP, "r%d-%d: %s added", node.revision, node.index, node.path)
 		} else if node.action == sdDELETE || (node.action == sdREPLACE && node.kind == sdDIR) {
+			// This test can't be moved back further, because both
+			// directory and file deletion ops are sometimes issued
+			// without a Node-kind field. 
 			if node.kind == sdNONE {
 				if _, ok := h.visibleHere.get(node.path); ok {
 					node.kind = sdFILE
