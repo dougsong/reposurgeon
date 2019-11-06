@@ -6388,6 +6388,14 @@ func (action NodeAction) isBogon() bool {
 	return false 
 }
 
+func (action NodeAction) deleteTag() string {
+	return action.path[:len(action.path)] + fmt.Sprintf("-deleted-r%d-%d", action.revision, action.index)
+}
+
+func (action NodeAction) hasDeleteTag() bool {
+	return strings.Contains(action.path, "-deleted-")
+}
+
 // RevisionRecord is a list of NodeActions at a rev in a Subversion dump
 // Note that the revision field differs from the index in the revisions
 // array only if the stream is complete (missing leading revisions or
@@ -7947,7 +7955,7 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 	for i := range multiples {
 		srcnode := multiples[i]
 		if multiples[i].kind != sdFILE && multiples[i].action == sdDELETE {
-			newname := srcnode.path[:len(srcnode.path)] + fmt.Sprintf("-deleted-r%d-%d", srcnode.revision, srcnode.index) 
+			newname := srcnode.deleteTag()
 			logit(logTAGFIX, "r%d#%d~%s: tag deletion, renaming to %s.",
 				srcnode.revision, srcnode.index, srcnode.path, newname)
 			// First, run backward performing the branch
@@ -7956,7 +7964,7 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 			// this tag have already been patched.
 			for j := i - 1; j >= 0; j-- {
 				tnode := multiples[j]
-				if strings.HasPrefix(tnode.path, srcnode.path) && !strings.Contains(tnode.path, "-deleted-") {
+				if strings.HasPrefix(tnode.path, srcnode.path) && !tnode.hasDeleteTag() {
 					newpath := newname + tnode.path[len(srcnode.path):]
 					logit(logTAGFIX, "r%d#%d~%s: on tag deletion path mapped to %s.",
 						tnode.revision, tnode.index, tnode.path, newname)
@@ -7968,7 +7976,7 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 			// operations.
 			for j := i + 1; j < len(multiples); j++ {
 				tnode := multiples[j]
-				if tnode.action == sdDELETE && tnode.path == srcnode.path && !strings.Contains(tnode.path, "-deleted-") {
+				if tnode.action == sdDELETE && tnode.path == srcnode.path && !tnode.hasDeleteTag() {
 					// Another deletion of this tag?  OK, stop patching copies.
 					// We'll deal with it in a new pass once the outer loop gets
 					// there
@@ -7976,7 +7984,7 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 						srcnode.revision, srcnode.index, srcnode.path)
 					goto breakout
 				}
-				if strings.HasPrefix(tnode.fromPath, srcnode.path) && !strings.Contains(tnode.path, "-deleted-") {
+				if strings.HasPrefix(tnode.fromPath, srcnode.path) && !tnode.hasDeleteTag() {
 					newfrom := newname + tnode.fromPath[len(srcnode.path):]
 					logit(logEXTRACT, "r%d#%d~%s: on tag deletion from-path mapped to %s.",
 						tnode.revision, tnode.index, tnode.fromPath, newfrom)
