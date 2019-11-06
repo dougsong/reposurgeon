@@ -76,10 +76,6 @@ data 18
 Commit message 9.
 from :2
 merge :6
-M 100644 :3 d1/d2/d3/d4/d5-deleted-r14-1/d6/f0
-M 100644 :3 d1/d2/d3/d4/d5-deleted-r14-1/d6/f0
-M 100644 :4 d1/d2/d3/d4/d5-deleted-r14-1/d6/f9
-M 100644 :4 d1/d2/d3/d4/d5-deleted-r14-1/d6/f9
 M 100644 :3 d1/d2/d3/d4/d5/d6/f0
 M 100644 :3 d1/d2/d3/d4/d5/d6/f0
 M 100644 :3 d1/d2/d3/d4/d5/d6/f0
@@ -116,8 +112,6 @@ committer test <test> 1476230400 +0000
 data 19
 Commit message 12.
 from :7
-M 100644 :3 d1/d2/d3/d4/d5-deleted-r14-1/d6/f0
-M 100644 :4 d1/d2/d3/d4/d5-deleted-r14-1/d6/f9
 M 100644 :3 d1/d2/d3/d4/d5/d6/f0
 M 100644 :4 d1/d2/d3/d4/d5/d6/f9
 

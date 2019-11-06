@@ -73,8 +73,6 @@ data 61
 This follows "svn propset svn:ignore *.pyc foo foo/bar baz".
 from :6
 M 100644 :7 baz/.gitignore
-M 100644 :7 foo-deleted-r5-1/.gitignore
-M 100644 :7 foo-deleted-r5-1/bar/.gitignore
 
 commit refs/heads/master
 #legacy-id 5
@@ -85,18 +83,18 @@ This follows "svn del foo" and "svn del baz".
 from :8
 D baz/.gitignore
 
-commit refs/heads/master
+tag emptycommit-6
 #legacy-id 6
-mark :10
-committer esr <esr> 1352220744 +0000
-data 67
-Reintroduce foo to then delete it. There should be a M .gitignore.
 from :9
-M 100644 :7 foo-deleted-r7-1/.gitignore
+tagger esr <esr> 1352220744 +0000
+data 117
+Reintroduce foo to then delete it. There should be a M .gitignore.
+
+[[Tag from zero-fileop commit at Subversion r6]]
 
 tag emptycommit-7
 #legacy-id 7
-from :10
+from :9
 tagger esr <esr> 1352220901 +0000
 data 100
 Delete foo again; there should be a D .gitignore.

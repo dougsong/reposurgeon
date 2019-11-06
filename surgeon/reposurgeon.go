@@ -7612,15 +7612,7 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 				}
 			}
 		}
-		// Handle directory copies.  If this is a copy
-		// between branches, no fileop should be issued
-		// until there is an actual file modification on
-		// the new branch. Instead, remember that the
-		// branch root inherits the tree of the source
-		// branch and should not start with a deleteall.
-		// Exception: If the target branch has been
-		// deleted, perform a normal copy and interpret
-		// this as an ad-hoc branch merge.
+		// Handle directory copies.
 		if node.fromPath != "" {
 			branchcopy := sp.isBranch(node.fromPath) && sp.isBranch(node.path)
 			logit(logTOPOLOGY, "r%d-%d: directory copy to %s from r%d~%s (branchcopy %v)",
@@ -8169,6 +8161,14 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 			if node.action == sdNONE {
 				continue
 			}
+			// Ignore nodes on dead branches.  These needed
+			// to be kept around as sources for branch copies but should not
+			// appear in the conversion.  If there is ever going to be a
+			// preserve option again it should operate here.
+			if node.hasDeleteTag() {
+				continue
+			}
+
 			if node.hasProperties() {
 				if node.props.has("cvs2svn:cvs-rev") {
 					cvskey := fmt.Sprintf("CVS:%s:%s", node.path, node.props.get("cvs2svn:cvs-rev"))

@@ -75,38 +75,13 @@ from :6
 M 100644 :7 VERSION
 M 100644 :8 src
 
-commit refs/heads/v1.0-deleted-r7-1
-#legacy-id 4
+blob
 mark :10
-committer db48x <db48x> 1352540139 +0000
-data 32
-create a release branch for 1.0
-from :9
-M 100644 :3 README
-M 100644 :7 VERSION
-M 100644 :8 src
-
-blob
-mark :11
-data 4
-1.0
-
-commit refs/heads/v1.0-deleted-r7-1
-#legacy-id 5
-mark :12
-committer db48x <db48x> 1352540141 +0000
-data 27
-bump version number to 1.0
-from :10
-M 100644 :11 VERSION
-
-blob
-mark :13
 data 4
 0.3
 
 blob
-mark :14
+mark :11
 data 66
 feature development A
 feature development B
@@ -114,40 +89,46 @@ feature development C
 
 commit refs/heads/master
 #legacy-id 6
-mark :15
+mark :12
 committer db48x <db48x> 1352540143 +0000
 data 38
 trunk development proceeds; feature C
 from :9
-M 100644 :13 VERSION
-M 100644 :14 src
+M 100644 :10 VERSION
+M 100644 :11 src
 
 commit refs/heads/v1.0
 #legacy-id 8
-mark :16
+mark :13
 committer db48x <db48x> 1352540147 +0000
 data 32
 create a release branch for 1.0
+from :12
 M 100644 :3 README
-M 100644 :13 VERSION
-M 100644 :14 src
+M 100644 :10 VERSION
+M 100644 :11 src
+
+blob
+mark :14
+data 4
+1.0
 
 commit refs/heads/v1.0
 #legacy-id 9
-mark :17
+mark :15
 committer db48x <db48x> 1352540149 +0000
 data 27
 bump version number to 1.0
-from :16
-M 100644 :11 VERSION
+from :13
+M 100644 :14 VERSION
 
 blob
-mark :18
+mark :16
 data 4
 1.1
 
 blob
-mark :19
+mark :17
 data 88
 feature development A
 feature development B
@@ -156,21 +137,21 @@ feature development D
 
 commit refs/heads/master
 #legacy-id 10
-mark :20
+mark :18
 committer db48x <db48x> 1352540151 +0000
 data 38
 trunk development proceeds; feature D
-from :15
-M 100644 :18 VERSION
-M 100644 :19 src
+from :12
+M 100644 :16 VERSION
+M 100644 :17 src
 
 blob
-mark :21
+mark :19
 data 6
 1.0.1
 
 blob
-mark :22
+mark :20
 data 75
 feature development A
 feature development B
@@ -179,21 +160,21 @@ bugfix 1
 
 commit refs/heads/v1.0
 #legacy-id 11
-mark :23
+mark :21
 committer db48x <db48x> 1352540153 +0000
 data 52
 emergency bugfix for branches/v1.0, releasing 1.0.1
-from :17
-M 100644 :21 VERSION
-M 100644 :22 src
+from :15
+M 100644 :19 VERSION
+M 100644 :20 src
 
 blob
-mark :24
+mark :22
 data 4
 1.2
 
 blob
-mark :25
+mark :23
 data 97
 feature development A
 feature development B
@@ -203,18 +184,18 @@ bugfix 1
 
 commit refs/heads/master
 #legacy-id 12
-mark :26
+mark :24
 committer db48x <db48x> 1352540156 +0000
 data 61
 merge bugfixes from 1.0.1 into trunk, bumping version to 1.2
-from :20
-merge :23
+from :18
+merge :21
 M 100644 :1 .gitignore
-M 100644 :24 VERSION
-M 100644 :25 src
+M 100644 :22 VERSION
+M 100644 :23 src
 
 blob
-mark :27
+mark :25
 data 119
 feature development A
 feature development B
@@ -225,19 +206,28 @@ feature development E
 
 commit refs/heads/master
 #legacy-id 13
-mark :28
+mark :26
 committer db48x <db48x> 1352540158 +0000
 data 38
 trunk development proceeds; feature E
-from :26
-M 100644 :27 src
+from :24
+M 100644 :25 src
 
-tag tipdelete-v1.0-deleted-r7-1
-#legacy-id 7.1
-from :12
+tag emptycommit-5
+#legacy-id 5
+from :9
+tagger db48x <db48x> 1352540141 +0000
+data 77
+bump version number to 1.0
+
+[[Tag from zero-fileop commit at Subversion r5]]
+
+tag emptycommit-7
+#legacy-id 7
+from :9
 tagger db48x <db48x> 1352540145 +0000
-data 66
+data 78
 delete incorrect 1.0 branch
 
-[[Split portion of a mixed commit.]]
+[[Tag from zero-fileop commit at Subversion r7]]
 
