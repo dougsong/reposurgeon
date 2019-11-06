@@ -364,7 +364,7 @@ def mirror(operand, mirrordir):
         croak("%s does not look like a repository mirror." % operand)
 
 def tags():
-    "List tags from the current working diretory to standard output."
+    "List tags from the current working directory to standard output."
     m = {
         # CVS code will screw up if any tag is not common to all files
         "cvs": "module=`ls -1 | grep -v CVSROOT`; \
@@ -412,7 +412,7 @@ def checkout(args):
     # 2. Non-DVCS, master directory: True checkout to remote directory,
     #    add path qualifier if needed.
     # 3. Non-DVCS, checkout directory: make outdir a symlink to the checkout,
-    #    then update to revision needed and add a parg qualifier  
+    #    then update to revision needed and add a qualifier  
     # This can be very slow under Subversion, we want to avoid it if at all possible.
     # Other cases should error out.
     if verbose:
