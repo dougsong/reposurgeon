@@ -21222,6 +21222,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				newcontent := repo.markToEvent(op.ref).(*Blob).getContent()
 				now := strings.Split(string(newcontent), "\n")
 				var attribution string
+				var commonCount int
 				//print("Analyzing Changelog at %s." % commit.mark)
 				differ := difflib.NewMatcherWithJunk(then, now, true, nil)
 				comparison := differ.GetOpCodes()
@@ -21231,41 +21232,38 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 							newAttribution := parseAttributionLine(diffline)
 							if newAttribution != "" {
 								attribution = newAttribution
-								break
+								goto attributionFound
 							}
 						}
 					}
 				}
-				if attribution == "" {
-					// This is the tricky part.  We want the
-					// last attribution from before the change
-					// band to stick because there is none *in*
-					// the change band. If there's more than one,
-					// assume the most recent is the latest and
-					// correct. First count the lines before the
-					// first change...
-					var commonCount int
-					for _, difflines := range comparison {
-						if difflines.Tag == 'e' {
-							commonCount = difflines.I2
-						} else {
-							break
-						}
-					}
-					// Then parse the attributions in reverse order to
-					// avoid parsing and tossing away a lot of them.
-					for i := commonCount-1; i >= 0; i-- {
-						newAttribution := parseAttributionLine(now[i])
-						if newAttribution != "" {
-							attribution = newAttribution
-							break
-						}
+				// This is the tricky part.  We want the
+				// last attribution from before the change
+				// band to stick because there is none *in*
+				// the change band. If there's more than one,
+				// assume the most recent is the latest and
+				// correct. First count the lines before the
+				// first change...
+				for _, difflines := range comparison {
+					if difflines.Tag == 'e' {
+						commonCount = difflines.I2
+					} else {
+						break
 					}
 				}
-				if attribution != "" {
-					attributions[event_id] = append(attributions[event_id], attribution)
-					blobRefs[event_id] = append(blobRefs[event_id], op.ref)
+				// Then parse the attributions in reverse order to
+				// avoid parsing and tossing away a lot of them.
+				for i := commonCount-1; i >= 0; i-- {
+					newAttribution := parseAttributionLine(now[i])
+					if newAttribution != "" {
+						attribution = newAttribution
+						goto attributionFound
+					}
 				}
+				continue
+				attributionFound:
+				attributions[event_id] = append(attributions[event_id], attribution)
+				blobRefs[event_id] = append(blobRefs[event_id], op.ref)
 			}
 		}
 		control.baton.percentProgress(uint64(evts))
