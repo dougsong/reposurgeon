@@ -422,7 +422,9 @@ delignore.svn::
    followed by rename.
 
 emptyfrom.svn::
-   BUG: Needs analysis. Not used by any test.
+   Conversion is correct.  Has emptycommits. One spurious
+   message due to an empty directory. Should probably be
+   replaced.
 
 expunge-copyfrom.svn::
    Doesn't build, no trunk branch. Used by expunge-copyfrom.tst.
@@ -464,8 +466,7 @@ rootfirst.svn::
    builds.
 
 samplebranch.svn::
-   BUG: Git translation preserves a deleted branch, and probably
-   should not unless the --preserve read option is on. Used in
+   BUG: Git translation preserves a deleted branch. Used in
    branchdelete.tst and branchrename.tst.
 
 split-dir.svn::
@@ -484,7 +485,7 @@ treecontents.svn::
    any test.
 
 vanilla.svn::
-   Translation is correct.  Has an enptycommit, and there's a message
+   Translation is correct.  Has an emptycommit, and there's a message
    due to a property setting. Used in repocutter and repotool tests.
 
 wrong-mergeinfo.svn::
