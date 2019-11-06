@@ -21229,9 +21229,8 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				for _, difflines := range comparison {
 					if difflines.Tag == 'i' || difflines.Tag == 'r' {
 						for _, diffline := range now[difflines.J1:difflines.J2] {
-							newAttribution := parseAttributionLine(diffline)
-							if newAttribution != "" {
-								attribution = newAttribution
+							attribution = parseAttributionLine(diffline)
+							if attribution != "" {
 								goto attributionFound
 							}
 						}
@@ -21254,9 +21253,8 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				// Then parse the attributions in reverse order to
 				// avoid parsing and tossing away a lot of them.
 				for i := commonCount-1; i >= 0; i-- {
-					newAttribution := parseAttributionLine(now[i])
-					if newAttribution != "" {
-						attribution = newAttribution
+					attribution = parseAttributionLine(now[i])
+					if attribution != "" {
 						goto attributionFound
 					}
 				}
