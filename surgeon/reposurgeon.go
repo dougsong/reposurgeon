@@ -77,8 +77,8 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
-	"context"
 	"container/heap"
+	"context"
 	"crypto/md5"
 	"crypto/sha1"
 	"errors"
@@ -109,7 +109,7 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
-	"unsafe"	// Actually safe - only uses Sizeof 
+	"unsafe" // Actually safe - only uses Sizeof
 
 	shlex "github.com/anmitsu/go-shlex"
 	orderedset "github.com/emirpasic/gods/sets/linkedhashset"
@@ -117,8 +117,8 @@ import (
 	shutil "github.com/termie/go-shutil"
 	kommandant "gitlab.com/ianbruene/kommandant"
 	terminal "golang.org/x/crypto/ssh/terminal"
-	ianaindex "golang.org/x/text/encoding/ianaindex"
 	semaphore "golang.org/x/sync/semaphore"
+	ianaindex "golang.org/x/text/encoding/ianaindex"
 )
 
 const version = "4.0-pre"
@@ -131,10 +131,10 @@ const maxAlloc = 100000
 
 // Short types for these saves space in very large arrays of repository structures.
 // But they're mainly here to avoid strings, which are expensive (16 bytes) in Go.
-type markidx uint32	// Mark indicies
-type blobidx uint32	// Blob indices. Should not be narrower than mark indices.
-type revidx uint32	// Revision indices
-type nodeidx uint16	// Node indices within revisions 
+type markidx uint32 // Mark indicies
+type blobidx uint32 // Blob indices. Should not be narrower than mark indices.
+type revidx uint32  // Revision indices
+type nodeidx uint16 // Node indices within revisions
 
 // Go's panic/defer/recover feature is a weak primitive for catchable
 // exceptions, but it's all we have. So we write a throw/catch pair;
@@ -190,7 +190,7 @@ func catch(accept string, x interface{}) *exception {
 }
 
 // Change these in the unlikely the event this is ported to Windows
-const userReadWriteMode       = 0644 // rw-r--r--
+const userReadWriteMode = 0644       // rw-r--r--
 const userReadWriteSearchMode = 0775 // rwxrwxr-x
 
 func exists(pathname string) bool {
@@ -936,7 +936,6 @@ type Importer struct {
 	engine  Extractor // Import engine, either a VCS or extractor class
 	basevcs *VCS      // Underlying VCS if engine is an extractor
 }
-
 
 var vcstypes []VCS
 var importers []Importer
@@ -2573,44 +2572,44 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (*Repository, error)
  * classes simple enough that it can be done ad-hoc for specific
  * debugging missions.  All you need to do to create a new class is
  * add a constant to the iota initializer and a corresponding entry to
- * logtags, then yoyu can use the constant in logit() and logEnable(). 
+ * logtags, then yoyu can use the constant in logit() and logEnable().
  * To remove a class just delete its entry pair.
  */
 
 const (
-	logSHOUT uint = 1 << iota	// Errors and urgent messages
-	logWARN 			// Exceptional condition, probably not bug
-	logTAGFIX			// Log tag fixups
-	logSVNDUMP			// Log Subversion dumping
-	logTOPOLOGY			// Log repo-extractor logic (coarse-grained)
-	logEXTRACT			// Log repo-extractor logic (fine-grained)
-	logFILEMAP			// Log building of filemaps
-	logDELETE			// Log canonicalization after deletes
-	logIGNORES			// Log ignore generation
-	logSVNPARSE			// Lower-level Subversion parsing details
-	logEMAILIN			// Log round-tripping through msg{out|in}
-	logSHUFFLE			// Log file and directory handling
-	logCOMMANDS			// Show commands as they are executed
-	logUNITE			// Log mark assignments in merging
-	logLEXER			// Log selection-language parsing
+	logSHOUT    uint = 1 << iota // Errors and urgent messages
+	logWARN                      // Exceptional condition, probably not bug
+	logTAGFIX                    // Log tag fixups
+	logSVNDUMP                   // Log Subversion dumping
+	logTOPOLOGY                  // Log repo-extractor logic (coarse-grained)
+	logEXTRACT                   // Log repo-extractor logic (fine-grained)
+	logFILEMAP                   // Log building of filemaps
+	logDELETE                    // Log canonicalization after deletes
+	logIGNORES                   // Log ignore generation
+	logSVNPARSE                  // Lower-level Subversion parsing details
+	logEMAILIN                   // Log round-tripping through msg{out|in}
+	logSHUFFLE                   // Log file and directory handling
+	logCOMMANDS                  // Show commands as they are executed
+	logUNITE                     // Log mark assignments in merging
+	logLEXER                     // Log selection-language parsing
 )
 
 var logtags = map[string]uint{
-	"shout": logSHOUT,
-	"warn": logWARN,
-	"tagfix": logTAGFIX,
-	"svndump": logSVNDUMP,
+	"shout":    logSHOUT,
+	"warn":     logWARN,
+	"tagfix":   logTAGFIX,
+	"svndump":  logSVNDUMP,
 	"topology": logTOPOLOGY,
-	"extract": logEXTRACT,
-	"filemap": logFILEMAP,
-	"delete": logDELETE,
-	"ignores": logIGNORES,
+	"extract":  logEXTRACT,
+	"filemap":  logFILEMAP,
+	"delete":   logDELETE,
+	"ignores":  logIGNORES,
 	"svnparse": logSVNPARSE,
-	"emailin": logEMAILIN,
-	"shuffle": logSHUFFLE,
+	"emailin":  logEMAILIN,
+	"shuffle":  logSHUFFLE,
 	"commands": logCOMMANDS,
-	"unite": logUNITE,
-	"lexer": logLEXER,
+	"unite":    logUNITE,
+	"lexer":    logLEXER,
 }
 
 var optionFlags = [...][2]string{
@@ -2669,22 +2668,22 @@ screen width, and the ID of the invoking user. Use in regression-test loads.
  */
 
 type Control struct {
-	logmask uint
-	logfp io.Writer
-	baton *Baton
+	logmask    uint
+	logfp      io.Writer
+	baton      *Baton
 	logcounter int
-	blobseq blobidx
-	signals chan os.Signal
-	logmutex sync.Mutex
+	blobseq    blobidx
+	signals    chan os.Signal
+	logmutex   sync.Mutex
 	// The abort flag
-	abortScript bool
-	abortLock   sync.Mutex
-	flagOptions map[string]bool
-	listOptions map[string]orderedStringSet
-	mapOptions  map[string]map[string]string
+	abortScript    bool
+	abortLock      sync.Mutex
+	flagOptions    map[string]bool
+	listOptions    map[string]orderedStringSet
+	mapOptions     map[string]map[string]string
 	branchMappings []branchMapping
-	readLimit   uint64
-	profilename string
+	readLimit      uint64
+	profilename    string
 }
 
 func (ctx *Control) isInteractive() bool {
@@ -2702,7 +2701,7 @@ func (ctx *Control) init() {
 	ctx.mapOptions = make(map[string]map[string]string)
 	ctx.signals = make(chan os.Signal, 1)
 	ctx.logmask = (1 << logWARN) - 1
-	baton := newBaton(control.isInteractive());
+	baton := newBaton(control.isInteractive())
 	var b interface{} = baton
 	ctx.logfp = b.(io.Writer)
 	ctx.baton = baton
@@ -3446,13 +3445,13 @@ type Blob struct {
 	mark         string
 	abspath      string
 	repo         *Repository
-	pathlist     []string    // In-repo paths associated with this blob
-	start        int64       // Seek start if this blob refers into a dump
-	size         int64       // length start if this blob refers into a dump
+	pathlist     []string // In-repo paths associated with this blob
+	start        int64    // Seek start if this blob refers into a dump
+	size         int64    // length start if this blob refers into a dump
 	_expungehook *Blob
-	cookie       Cookie      // CVS/SVN cookie analyzed out of this file
+	cookie       Cookie // CVS/SVN cookie analyzed out of this file
 	blobseq      blobidx
-	colors       colorSet    // Scratch space for graph-coloring algorithms
+	colors       colorSet // Scratch space for graph-coloring algorithms
 	deleteme     bool
 }
 
@@ -3566,6 +3565,7 @@ func (b *Blob) getContent() []byte {
 type SectionReader struct {
 	*io.SectionReader
 }
+
 func NewSectionReader(r io.ReaderAt, off int64, n int64) *SectionReader {
 	return &SectionReader{io.NewSectionReader(r, off, n)}
 }
@@ -4034,7 +4034,7 @@ func (t *Tag) Save(w io.Writer) {
 	}
 	fmt.Fprintf(w, "data %d\n%s\n", len(comment), comment)
 }
-	
+
 // String serializes this tag in import-stream format
 func (t Tag) String() string {
 	var bld strings.Builder
@@ -4157,7 +4157,7 @@ type FileOp struct {
 	genflag    bool
 }
 
-func (fileop *FileOp) Equals (other *FileOp) bool {
+func (fileop *FileOp) Equals(other *FileOp) bool {
 	return fileop.repo == other.repo &&
 		fileop.committish == other.committish &&
 		fileop.Source == other.Source &&
@@ -4464,6 +4464,7 @@ func (callout Callout) String() string {
 	callout.Save(&bld)
 	return bld.String()
 }
+
 // moveto changes the repo this callout is associated with."
 func (callout *Callout) moveto(*Repository) {
 	// Has no repo field
@@ -4501,11 +4502,12 @@ func (m *ManifestEntry) equals(other *ManifestEntry) bool {
 const colorNONE = 0
 const colorEARLY = 1
 const colorLATE = 2
+
 type colorType uint8
 type colorSet uint8
 
 func (c colorSet) Contains(a colorType) bool {
-	return uint8(1 << a) != 0
+	return uint8(1<<a) != 0
 }
 
 func (c *colorSet) Add(a colorType) {
@@ -4521,8 +4523,8 @@ func (c *colorSet) Clear() {
 
 // Commit represents a commit event in a fast-export stream
 type Commit struct {
-	legacyID     string       // Commit's ID in an alien system
-	common       string       // Used only by the Subversion parser
+	legacyID     string        // Commit's ID in an alien system
+	common       string        // Used only by the Subversion parser
 	mark         string        // Mark name of commit (may be None)
 	Comment      string        // Commit comment
 	Branch       string        // branch name
@@ -4531,13 +4533,13 @@ type Commit struct {
 	fileops      []FileOp      // blob and file operation list
 	_manifest    *PathMap      // efficient map of *ManifestEntry values
 	repo         *Repository
-	properties   *OrderedMap    // commit properties (extension)
+	properties   *OrderedMap  // commit properties (extension)
 	attachments  []Event      // Tags and Resets pointing at this commit
 	_parentNodes []CommitLike // list of parent nodes
 	_childNodes  []CommitLike // list of child nodes
 	_expungehook *Commit
-	color        colorType    // Scratch storage for graph-coloring
-	deleteme     bool         // Flag used during deletion operations
+	color        colorType // Scratch storage for graph-coloring
+	deleteme     bool      // Flag used during deletion operations
 }
 
 func (commit Commit) getDelFlag() bool {
@@ -4732,6 +4734,7 @@ func (commit *Commit) showlegacy() string {
 func (commit *Commit) hasProperties() bool {
 	return commit.properties != nil
 }
+
 // lister enables do_list() to report commits.
 func (commit *Commit) lister(_modifiers orderedStringSet, eventnum int, cols int) string {
 	topline := strings.Split(commit.Comment, "\n")[0]
@@ -5081,7 +5084,6 @@ func (commit *Commit) invalidateManifests() {
 		}
 	}
 }
-
 
 // listMarks is only used for logging
 func listMarks(items []CommitLike) []string {
@@ -5944,8 +5946,8 @@ type pathMapItem struct {
 }
 
 type PathMap struct {
-	dirs map[string]*PathMap
-	blobs map[string]interface{}
+	dirs   map[string]*PathMap
+	blobs  map[string]interface{}
 	shared bool
 }
 
@@ -6070,7 +6072,7 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 func (pm *PathMap) get(path string) (interface{}, bool) {
 	components := strings.Split(path, svnSep)
 	// Walk along the "dirname"
-	parent := pm;
+	parent := pm
 	for _, component := range components[:len(components)-1] {
 		var ok bool
 		if parent, ok = parent.dirs[component]; !ok {
@@ -6078,7 +6080,7 @@ func (pm *PathMap) get(path string) (interface{}, bool) {
 		}
 	}
 	// Now fetch the "basename"
-	element, ok := parent.blobs[ components[len(components)-1] ]
+	element, ok := parent.blobs[components[len(components)-1]]
 	return element, ok
 }
 
@@ -6122,7 +6124,7 @@ func (pm *PathMap) remove(path string) {
 // _itemsInner recursively walks the pathMap CoW tree estracting its items
 func (pm *PathMap) _itemsInner(items []pathMapItem, prefix string) []pathMapItem {
 	for cmp1, subdir := range pm.dirs {
-		items = subdir._itemsInner(items, prefix + cmp1 + svnSep)
+		items = subdir._itemsInner(items, prefix+cmp1+svnSep)
 	}
 	for cmp1, elt := range pm.blobs {
 		items = append(items, pathMapItem{prefix + cmp1, elt})
@@ -6149,7 +6151,7 @@ func (pm *PathMap) size() int {
 
 // isEmpty returns true iff the PathMap contains no file
 func (pm *PathMap) isEmpty() bool {
-	return len(pm.dirs) + len(pm.blobs) == 0
+	return len(pm.dirs)+len(pm.blobs) == 0
 }
 
 // Derived PathMap code, independent of the store implementation
@@ -6178,15 +6180,15 @@ func (pm *PathMap) pathnames() []string {
 // Now, a type to manage a collectiom of PathMaps used as a history of file visibility.
 
 type History struct {
-	visible map[revidx]*PathMap
+	visible     map[revidx]*PathMap
 	visibleHere *PathMap
-	revision revidx
+	revision    revidx
 }
 
 func newHistory() *History {
 	h := new(History)
-	h.visible = make(map[revidx]*PathMap)	// Visibility maps by revision ID
-	h.visibleHere = newPathMap()		// Snapshot of visibility after current revision ops
+	h.visible = make(map[revidx]*PathMap) // Visibility maps by revision ID
+	h.visibleHere = newPathMap()          // Snapshot of visibility after current revision ops
 	return h
 }
 
@@ -6210,7 +6212,7 @@ func (h *History) apply(revision revidx, nodes []*NodeAction) {
 		} else if node.action == sdDELETE || (node.action == sdREPLACE && node.kind == sdDIR) {
 			// This test can't be moved back further, because both
 			// directory and file deletion ops are sometimes issued
-			// without a Node-kind field. 
+			// without a Node-kind field.
 			if node.kind == sdNONE {
 				if _, ok := h.visibleHere.get(node.path); ok {
 					node.kind = sdFILE
@@ -6280,13 +6282,13 @@ var pathTypeValues = []string{"none", "file", "dir", "ILLEGAL-TYPE"}
 // mad.  We want to let through other properties that might carry
 // useful information.
 var ignoreProperties = map[string]bool{
-	"svn:executable":      true, // We special-case this one elsewhere
-	"svn:ignore":          true, // We special-case this one elsewhere
-	"svn:special":         true, // We special-case this one elsewhere
-	"svn:mime-type":       true,
-	"svn:keywords":        true,
-	"svn:needs-lock":      true,
-	"svn:eol-style":       true, // Don't want to suppress, but cvs2svn floods these.
+	"svn:executable": true, // We special-case this one elsewhere
+	"svn:ignore":     true, // We special-case this one elsewhere
+	"svn:special":    true, // We special-case this one elsewhere
+	"svn:mime-type":  true,
+	"svn:keywords":   true,
+	"svn:needs-lock": true,
+	"svn:eol-style":  true, // Don't want to suppress, but cvs2svn floods these.
 }
 
 // These properties, on the other hand, shouldn't be tossed out even
@@ -6296,9 +6298,9 @@ var preserveProperties = map[string]bool{
 	"svn:executable":      true,
 	"svn:mergeinfo":       true,
 	"svnmerge-integrated": true,
-}	
+}
 
-const maxRevidx = int(^revidx(0))	// Use for bounds-checking in range loops.
+const maxRevidx = int(^revidx(0)) // Use for bounds-checking in range loops.
 
 func intToRevidx(revint int) revidx {
 	return revidx(revint & int(^revidx(0)))
@@ -6365,7 +6367,7 @@ func (action NodeAction) isBogon() bool {
 
 	// This guard filters out the empty nodes produced by format 7
 	// dumps.  Not necessarily a bogon, actually/
-	if (action.action == sdCHANGE && !action.hasProperties() && action.blob == nil && action.fromRev == 0) {
+	if action.action == sdCHANGE && !action.hasProperties() && action.blob == nil && action.fromRev == 0 {
 		logit(logEXTRACT, "empty node rejected at r%d: %v", action.revision, action)
 		return true
 	}
@@ -6380,12 +6382,12 @@ func (action NodeAction) isBogon() bool {
 		return true
 	}
 
-	if ((action.action != sdADD && action.action != sdREPLACE) && action.fromRev > 0) {
+	if (action.action != sdADD && action.action != sdREPLACE) && action.fromRev > 0 {
 		logit(logSHOUT, "invalid type in node with from revision r%d: %s", action.revision, action)
 		return true
 	}
 
-	return false 
+	return false
 }
 
 func (action NodeAction) deleteTag() string {
@@ -6457,7 +6459,7 @@ type StreamParser struct {
 	large                bool
 	history              *History
 	splitCommits         map[revidx]int
-	streamview           []*NodeAction	// All nodes in streeam order
+	streamview           []*NodeAction // All nodes in streeam order
 }
 
 type daglink struct {
@@ -6508,20 +6510,19 @@ func (sp *StreamParser) errorLocation() string {
 		if sp.source != "" {
 			leader = fmt.Sprintf(`"%s", `, sp.source)
 		}
-		return fmt.Sprintf(leader + "line %d: ", sp.importLine)
+		return fmt.Sprintf(leader+"line %d: ", sp.importLine)
 	}
-	return ""	
+	return ""
 }
-
 
 func (sp *StreamParser) warn(msg string) {
 	// Display a parse warning associated with a line but don't error out.
-	logit(logWARN, sp.errorLocation() +  msg)
+	logit(logWARN, sp.errorLocation()+msg)
 }
 
 func (sp *StreamParser) shout(msg string) {
 	// A gripe with line number
-	logit(logSHOUT, sp.errorLocation() + msg)
+	logit(logSHOUT, sp.errorLocation()+msg)
 
 }
 
@@ -6624,7 +6625,7 @@ func (sp *StreamParser) fiReadData(line []byte) ([]byte, int64) {
 		start = sp.ccount
 		data = sp.read(count)
 	} else if bytes.HasPrefix(line, []byte("property")) {
-		line = line[9:]                        // Skip this token
+		line = line[9:]                          // Skip this token
 		line = line[bytes.IndexByte(line, ' '):] // Skip the property name
 		nextws := bytes.IndexByte(line, ' ')
 		count, err := strconv.Atoi(strings.TrimSpace(string(line[:nextws-1])))
@@ -6779,7 +6780,6 @@ func appendRevisionRecords(slice []RevisionRecord, data ...RevisionRecord) []Rev
 	return slice
 }
 
-
 func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesize int64) {
 	// If the repo is large, we'll give up on some diagnostic info in order
 	// to reduce the working set size.
@@ -6805,7 +6805,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 			logit(logSVNPARSE, "revision parsing, line %d: begins", sp.importLine)
 			revint, rerr := strconv.Atoi(string(sdBody(line)))
 			if rerr != nil {
-				panic(throw("parse", "ill-formed revision number: " + string(line)))
+				panic(throw("parse", "ill-formed revision number: "+string(line)))
 			}
 			revision := intToRevidx(revint)
 			plen := parseInt(string(sp.sdRequireHeader("Prop-content-length")))
@@ -6998,7 +6998,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 					if node == nil {
 						node = new(NodeAction)
 					}
-					uintrev, _ := strconv.ParseUint(string(sdBody(line)), 10, int((unsafe.Sizeof(revidx(0)) * 8)) & ^int(0))
+					uintrev, _ := strconv.ParseUint(string(sdBody(line)), 10, int((unsafe.Sizeof(revidx(0))*8)) & ^int(0))
 					node.fromRev = revidx(uintrev & uint64(^revidx(0)))
 				} else if bytes.HasPrefix(line, []byte("Node-copyfrom-path: ")) {
 					if node == nil {
@@ -7032,12 +7032,12 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 			logit(logSVNPARSE, "revision parsing, line %d: r%d ends with %d nodes", sp.importLine, newRecord.revision, len(newRecord.nodes))
 			sp.revisions = appendRevisionRecords(sp.revisions, *newRecord)
 			sp.repo.legacyCount++
-			if sp.repo.legacyCount == maxRevidx - 1 {
+			if sp.repo.legacyCount == maxRevidx-1 {
 				panic("revision counter overflow, recompile with a larger size")
 			}
 			// End Revision processing
 			baton.percentProgress(uint64(sp.ccount))
-			if control.readLimit > 0 && uint64(sp.repo.legacyCount) > control.readLimit{
+			if control.readLimit > 0 && uint64(sp.repo.legacyCount) > control.readLimit {
 				logit(logSHOUT, "read limit %d reached.", control.readLimit)
 				break
 			}
@@ -7045,7 +7045,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 	}
 	control.baton.endProgress()
 	if control.readLimit > 0 && uint64(sp.repo.legacyCount) <= control.readLimit {
-			logit(logSHOUT, "EOF before readlimit.")
+		logit(logSHOUT, "EOF before readlimit.")
 	}
 	logit(logSVNPARSE, "revision parsing, line %d: ends with %d records", sp.importLine, sp.repo.legacyCount)
 }
@@ -7124,14 +7124,14 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 						length := parseInt(string(fields[2]))
 						value := bytes.Join(fields[3:], []byte(" "))
 						if len(value) < length {
-							value = append(value, sp.read(length - len(value))...)
+							value = append(value, sp.read(length-len(value))...)
 							if string(sp.read(1)) != "\n" {
 								sp.error("trailing junk on property value")
 							}
 						} else if len(value) == length+1 {
 							value = value[:len(value)-1] // Trim '\n'
 						} else {
-							value = append(value, sp.read(length - len(value))...)
+							value = append(value, sp.read(length-len(value))...)
 							if string(sp.read(1)) != "\n" {
 								sp.error("newline not found where expected")
 							}
@@ -7287,7 +7287,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			sp.repo.addEvent(newPassthrough(sp.repo, string(line)))
 		}
 		baton.percentProgress(uint64(sp.ccount))
-		if control.readLimit > 0 && uint64(commitcount) >= control.readLimit{
+		if control.readLimit > 0 && uint64(commitcount) >= control.readLimit {
 			logit(logSHOUT, "read limit %d reached", control.readLimit)
 			break
 		}
@@ -7352,7 +7352,7 @@ func (sp *StreamParser) fastImport(fp io.Reader, options stringSet, source strin
 	rate := func(count int) string {
 		if baton != nil {
 			elapsed := time.Since(baton.progress.start)
-			return fmt.Sprintf("%dK/s", int(float64(elapsed)/float64(count * 1000)))
+			return fmt.Sprintf("%dK/s", int(float64(elapsed)/float64(count*1000)))
 		}
 		return ""
 	}
@@ -7368,7 +7368,7 @@ func (sp *StreamParser) fastImport(fp io.Reader, options stringSet, source strin
 		sp.svnProcess(options, baton)
 		if control.flagOptions["progress"] {
 			fmt.Fprintf(baton, "%d svn revisions (%s)",
-				sp.repo.legacyCount, rate(sp.repo.legacyCount * 1000))
+				sp.repo.legacyCount, rate(sp.repo.legacyCount*1000))
 		}
 	} else {
 		sp.pushback(line)
@@ -7448,7 +7448,7 @@ func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
 			return ancestor
 		}
 		logit(logTOPOLOGY, "r%d~%s -> expected node from-hash is missing - stream may be corrupt",
-				node.revision, node.path)
+			node.revision, node.path)
 	}
 
 	var lookback *NodeAction
@@ -7472,7 +7472,7 @@ func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
 	}
 
 	// We reach here with lookback still nil if the node is a non-copy add.
-	if lookback == nil && node.fromRev > 0 &&!strings.HasSuffix(node.path, ".gitignore") {
+	if lookback == nil && node.fromRev > 0 && !strings.HasSuffix(node.path, ".gitignore") {
 		sp.shout(fmt.Sprintf("r%d~%s: missing ancestor node for non-.gitignore",
 			node.revision, node.path))
 	}
@@ -7674,9 +7674,9 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 			for _, source := range node.fromSet.pathnames() {
 				found := sp.history.getActionNode(node.fromRev, source)
 				if found == nil {
-					  logit(logSHOUT,"r%d-%d: can't find ancestor of %s at r%d",
-						  node.revision, node.index, source, node.fromRev)
-					  continue
+					logit(logSHOUT, "r%d-%d: can't find ancestor of %s at r%d",
+						node.revision, node.index, source, node.fromRev)
+					continue
 				}
 				subnode := new(NodeAction)
 				subnode.path = node.path + source[len(node.fromPath):]
@@ -7764,7 +7764,7 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 func (sp *StreamParser) expandAllNodes(nodelist []*NodeAction, options stringSet) []*NodeAction {
 	expandedNodes := make([]*NodeAction, 0)
 	for _, node := range nodelist {
-		// expand directory copy operations 
+		// expand directory copy operations
 		expandedNodes = append(expandedNodes, sp.expandNode(node, options)...)
 	}
 
@@ -7918,7 +7918,7 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 		if tagnode.action == sdADD && tagnode.kind == sdDIR {
 			refcounts[tagnode.path]++
 		}
-		baton.percentProgress(uint64(i)+1)
+		baton.percentProgress(uint64(i) + 1)
 	}
 	logit(logTAGFIX, "tag reference counts: %v", refcounts)
 	baton.endProgress()
@@ -7936,7 +7936,7 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 		if relevant(x) {
 			multiples = append(multiples, x)
 		}
-		baton.percentProgress(uint64(i)+1)
+		baton.percentProgress(uint64(i) + 1)
 	}
 	logit(logTAGFIX, "multiply-added directories: %v", sp.streamview)
 	baton.endProgress()
@@ -7991,10 +7991,10 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 			processed++
 		}
 	breakout:
-		baton.percentProgress(uint64(i)+1)
+		baton.percentProgress(uint64(i) + 1)
 	}
 	logit(logTAGFIX, "after fixups: %v", multiples)
-	multiples = nil		// Allow GC
+	multiples = nil // Allow GC
 	baton.endProgress()
 
 	// Recognize branches
@@ -8002,7 +8002,7 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 		for _, node := range sp.streamview {
 			if node.kind != sdFILE && node.action == sdADD && isDeclaredBranch(node.path) {
 				sp.addBranch(node.path + svnSep)
-				logit(logTOPOLOGY, "%s recognized as a branch", node.path + svnSep)
+				logit(logTOPOLOGY, "%s recognized as a branch", node.path+svnSep)
 			}
 		}
 	}
@@ -8050,8 +8050,8 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 		}
 
 	}
-	
-	sp.streamview = nil	// Allow that view to be GCed
+
+	sp.streamview = nil // Allow that view to be GCed
 }
 
 func svnProcessFilemaps(sp *StreamParser, options stringSet, baton *Baton) {
@@ -8067,7 +8067,7 @@ func svnProcessFilemaps(sp *StreamParser, options stringSet, baton *Baton) {
 	// This phase is moderately expensive, but once the maps are
 	// built they render unnecessary compuations that would have
 	// been prohibitively expensive in later passes. Notably the
-	// maps are everything necessary to compute node ancestry. 
+	// maps are everything necessary to compute node ancestry.
 	logit(logEXTRACT, "SVN Phase 3: build filemaps")
 	baton.startProgress("process SVN, phase 3: build filemaps", uint64(len(sp.revisions)))
 	sp.history = newHistory()
@@ -8250,7 +8250,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 						// in a fileop.
 						if !strings.HasSuffix(node.path, ".gitignore") {
 							logit(logWARN, "r%d~%s: permission information may be lost.",
-									node.revision, node.path)
+								node.revision, node.path)
 						}
 						continue
 					}
@@ -8274,7 +8274,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 					actions = append(actions, fiAction{node, fileop})
 					sp.repo.markToEvent(fileop.ref).(*Blob).addalias(node.path)
 
-					// Sanity check: should be the case that 
+					// Sanity check: should be the case that
 					// 1. The node is an add.  This sweeps
 					// in several cases: normal creation of
 					// a new file, expansion of a directory
@@ -8716,7 +8716,7 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 			// Python version only displayed the branchlink values
 			logit(logEXTRACT, "branch roots: %v, links: %v", rootmarks, sp.branchlink)
 		}
-		idx:= 0
+		idx := 0
 		baton.startProgress("process SVN, phase 5c: fixup branch links", uint64(len(sp.branchlink)))
 		for _, item := range sp.branchlink {
 			if item.parent.repo != sp.repo {
@@ -8876,10 +8876,10 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 					commit.addParentCommit(parent)
 					logit(logTOPOLOGY, "processed new mergeinfo from r%s to r%s.", parent.legacyID, commit.legacyID)
 				}
-				nodups = nil	// Not necessary, but explicit is good
+				nodups = nil // Not necessary, but explicit is good
 			}
 			mergeinfos[intToRevidx(revision)] = mergeinfo.snapshot()
-			baton.percentProgress(uint64(revision)+1)
+			baton.percentProgress(uint64(revision) + 1)
 		}
 		baton.endProgress()
 		// Allow mergeinfo storage to be garbage-collected
@@ -8962,10 +8962,10 @@ func svnProcessJunk(sp *StreamParser, options stringSet, baton *Baton) {
 				logit(logEXTRACT, "pruning empty branch copy commit %s", commit.idMe())
 				commit.setOperations(nil)
 			nodrop:
-			}				
+			}
 		}
-loopend:
-		baton.percentProgress(uint64(i)+1)
+	loopend:
+		baton.percentProgress(uint64(i) + 1)
 	})
 	baton.endProgress()
 	sp.repo.delete(deleteables, []string{"--tagback"})
@@ -9041,7 +9041,7 @@ func svnProcessTags(sp *StreamParser, options stringSet, baton *Baton, branchroo
 				}
 			}
 		}
-		baton.percentProgress(uint64(index)+1)
+		baton.percentProgress(uint64(index) + 1)
 	}
 	baton.endProgress()
 	sp.repo.delete(deletia, nil)
@@ -9116,14 +9116,14 @@ func svnProcessCleanTags(sp *StreamParser, options stringSet, baton *Baton) {
 				}
 			}
 		}
-		nonnil := make([]FileOp, 0, len(commit.operations()) - count)
+		nonnil := make([]FileOp, 0, len(commit.operations())-count)
 		for _, op := range commit.operations() {
 			if op.op != opX {
 				nonnil = append(nonnil, op)
 			}
 		}
 		commit.setOperations(nonnil)
-		baton.percentProgress(uint64(idx)+1)
+		baton.percentProgress(uint64(idx) + 1)
 	})
 	baton.endProgress()
 }
@@ -9156,7 +9156,7 @@ func svnProcessDebubble(sp *StreamParser, options stringSet, baton *Baton) {
 				commit.removeParent(a)
 			}
 		}
-		baton.percentProgress(uint64(idx)+1)
+		baton.percentProgress(uint64(idx) + 1)
 	})
 	baton.endProgress()
 }
@@ -9301,7 +9301,7 @@ type Repository struct {
 	basedir      string
 	uuid         string
 	writeLegacy  bool
-	dollarMap    sync.Map 	// From dollar cookies in files
+	dollarMap    sync.Map // From dollar cookies in files
 	dollarOnce   sync.Once
 	legacyMap    map[string]*Commit // From anything that doesn't survive rebuild
 	legacyCount  int
@@ -9313,12 +9313,12 @@ type Repository struct {
 	authormap    map[string]Contributor
 	tzmap        map[string]*time.Location // most recent email address to timezone
 	aliases      map[ContributorID]ContributorID
-	maplock	     sync.Mutex
+	maplock      sync.Mutex
 	// Write control - set, if required, before each dump
-	preferred    *VCS               // overrides vcs slot for writes
-	realized     map[string]bool    // clear and remake this before each dump
-	writeOptions stringSet          // options requested on this write
-	internals    orderedStringSet   // export code computes this itself
+	preferred    *VCS             // overrides vcs slot for writes
+	realized     map[string]bool  // clear and remake this before each dump
+	writeOptions stringSet        // options requested on this write
+	internals    orderedStringSet // export code computes this itself
 }
 
 func newRepository(name string) *Repository {
@@ -9659,7 +9659,7 @@ func (repo *Repository) named(ref string) orderedIntSet {
 		}
 	}
 	emailID := ""
-	resolveAlias := func(a string) string{
+	resolveAlias := func(a string) string {
 		return ContributorID{"", intern(a)}.resolve(repo).email
 	}
 	if err2 == nil && bang > -1 {
@@ -10039,7 +10039,7 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 		}
 	}
 	if gripe == nil {
-		gripe = func(msg string) {logit(logEXTRACT, msg)}
+		gripe = func(msg string) { logit(logEXTRACT, msg) }
 	}
 	// Tagify commits without fileops
 	var isTipdelete = func(commit *Commit) bool { return false }
@@ -10292,7 +10292,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 			}
 		}
 		event.Save(fp)
-		baton.percentProgress(uint64(idx)+1, )
+		baton.percentProgress(uint64(idx) + 1)
 	}
 	baton.endProgress()
 	repo.realized = nil
@@ -10722,10 +10722,10 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 			if delete {
 				speak := fmt.Sprintf("warning: commit %s to be deleted has ", commit.mark)
 				if strings.Contains(commit.Branch, "/") && !strings.Contains(commit.Branch, "/heads/") {
-					logit(logWARN, speak + fmt.Sprintf("non-head branch attribute %s", commit.Branch))
+					logit(logWARN, speak+fmt.Sprintf("non-head branch attribute %s", commit.Branch))
 				}
 				if !commit.alldeletes(opD, deleteall) {
-					logit(logWARN, speak + "non-delete fileops.")
+					logit(logWARN, speak+"non-delete fileops.")
 				}
 			}
 			if !delete {
@@ -12493,7 +12493,7 @@ func (rl *RepositoryList) cutConflict(early *Commit, late *Commit) (bool, int, e
 		}
 	}
 	doColor(early, colorEARLY)
-	doColor(late,  colorLATE)
+	doColor(late, colorLATE)
 	conflict := false
 	keepgoing := true
 	for keepgoing && !conflict {
@@ -12842,7 +12842,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			if fileop.op == opD {
 				keepers = append(keepers, fileop)
 				respond("at %d, expunging D %s",
-						ei+1, fileop.Path)
+					ei+1, fileop.Path)
 			} else if fileop.op == opM {
 				keepers = append(keepers, fileop)
 				if fileop.ref != "inline" {
@@ -14189,7 +14189,7 @@ type Reposurgeon struct {
 	extractor        Extractor
 	startTime        time.Time
 	promptFormat     string
-	logHighwater	 int
+	logHighwater     int
 	ignorename       string
 }
 
@@ -14280,7 +14280,7 @@ func (rs *Reposurgeon) PreCmd(line string) string {
 		rs.history = append(rs.history, trimmed)
 	}
 	if control.flagOptions["echo"] {
-		control.baton.printLogString(trimmed+"\n")
+		control.baton.printLogString(trimmed + "\n")
 	}
 	rs.selection = rs.defaultSelection
 	if strings.HasPrefix(line, "#") {
@@ -14312,7 +14312,7 @@ func (rs *Reposurgeon) PreCmd(line string) string {
 
 func (rs *Reposurgeon) PostCmd(stop bool, lineIn string) bool {
 	if control.logcounter > rs.logHighwater {
-		respond("%d new log message(s)", control.logcounter - rs.logHighwater)
+		respond("%d new log message(s)", control.logcounter-rs.logHighwater)
 	}
 	return stop
 }
@@ -14557,7 +14557,9 @@ func (rs *Reposurgeon) evalPathsetRegex(state selEvalState,
 	if len(flags) == 0 {
 		flags = nil // paths(nil) means "all paths"
 	}
-	type vendPaths interface{ paths(orderedStringSet) orderedStringSet }
+	type vendPaths interface {
+		paths(orderedStringSet) orderedStringSet
+	}
 	hits := newFastOrderedIntSet()
 	events := rs.chosen().events
 	it := preselection.Iterator()
@@ -14584,7 +14586,9 @@ func (rs *Reposurgeon) evalPathsetRegex(state selEvalState,
 // Resolve a path name to the set of commits that refer to it.
 func (rs *Reposurgeon) evalPathset(state selEvalState,
 	preselection *fastOrderedIntSet, matcher string) *fastOrderedIntSet {
-	type vendPaths interface{ paths(orderedStringSet) orderedStringSet }
+	type vendPaths interface {
+		paths(orderedStringSet) orderedStringSet
+	}
 	hits := newFastOrderedIntSet()
 	events := rs.chosen().events
 	it := preselection.Iterator()
@@ -14658,7 +14662,7 @@ func (rs *Reposurgeon) evalPathsetFull(state selEvalState,
 // Does an event contain something that looks like a legacy reference?
 func (rs *Reposurgeon) hasReference(event Event) bool {
 	repo := rs.chosen()
-	repo.dollarOnce.Do(func() {repo.parseDollarCookies()})
+	repo.dollarOnce.Do(func() { repo.parseDollarCookies() })
 	var text string
 	type commentGetter interface{ getComment() string }
 	if g, ok := event.(commentGetter); ok {
@@ -15598,7 +15602,8 @@ VERBS
 	profile save <profile> <filename>
 	    Saves the data from the named profiler to the named file,
 	    which will be overwritten.
-`) }
+`)
+}
 
 func (rs *Reposurgeon) DoProfile(line string) bool {
 	profiles := pprof.Profiles()
@@ -15619,7 +15624,7 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 				port = "1234"
 			}
 			go func() {
-				http.ListenAndServe("localhost:" + port, nil)
+				http.ListenAndServe("localhost:"+port, nil)
 			}()
 			respond("pprof server started on http://localhost:%s/debug/pprof", port)
 		case "start":
@@ -15654,7 +15659,7 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 				saveProfile(subject, filename)
 			}
 		default:
-			croak("I don't know how to %s. Possible verbs are [live, start, save].", verb);
+			croak("I don't know how to %s. Possible verbs are [live, start, save].", verb)
 		}
 	}
 	return false
@@ -16165,7 +16170,7 @@ func (rs *Reposurgeon) CompletePrefer(text string) []string {
 func (rs *Reposurgeon) DoPrefer(line string) bool {
 	if line == "" {
 		for _, vcs := range vcstypes {
-			control.baton.printLogString(vcs.String()+"\n")
+			control.baton.printLogString(vcs.String() + "\n")
 		}
 		for option := range fileFilters {
 			control.baton.printLogString(fmt.Sprintf("read and write have a --format=%s option that supports %s files.\n", option, strings.ToTitle(option)))
@@ -19949,7 +19954,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 				for _, event := range repo.events {
 					if blob, ok := event.(*Blob); ok && isIgnore(blob) {
 						// FIXME: Cut down on ugly conversions
-						blob.setContent([]byte(rs.preferred.dfltignores + string(blob.getContent())), -1)
+						blob.setContent([]byte(rs.preferred.dfltignores+string(blob.getContent())), -1)
 						changecount++
 					}
 				}
@@ -20009,7 +20014,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 				if blob, ok := event.(*Blob); ok && isIgnore(blob) {
 					if rs.preferred.name == "hg" {
 						if !bytes.HasPrefix(blob.getContent(), []byte("syntax: glob\n")) {
-							blob.setContent([]byte("syntax: glob\n" + string(blob.getContent())), noOffset)
+							blob.setContent([]byte("syntax: glob\n"+string(blob.getContent())), noOffset)
 							changecount++
 						}
 					}
@@ -20647,7 +20652,7 @@ func (rs *Reposurgeon) DoBranchify(line string) bool {
 	if strings.TrimSpace(line) != "" {
 		control.listOptions["svn_branchify"] = strings.Fields(strings.TrimSpace(line))
 	}
-	respond("branchify "+strings.Join(control.listOptions["svn_branchify"], " "))
+	respond("branchify " + strings.Join(control.listOptions["svn_branchify"], " "))
 	return false
 }
 
@@ -20724,7 +20729,7 @@ func (rs *Reposurgeon) DoBranchmap(line string) bool {
 	if len(control.branchMappings) != 0 {
 		respond("branchmap, regex -> branch name:")
 		for _, pair := range control.branchMappings {
-			respond("\t"+ pair.match.String() +" -> " + pair.replace)
+			respond("\t" + pair.match.String() + " -> " + pair.replace)
 		}
 	} else {
 		croak("branchmap is empty.")
@@ -20772,7 +20777,7 @@ func tweakFlagOptions(line string, val bool) {
 			respond("\t%s = %v\n", opt[0], control.flagOptions[opt[0]])
 		}
 	} else {
-		line = strings.Replace(line, ",", " ",-1)
+		line = strings.Replace(line, ",", " ", -1)
 		for _, name := range strings.Fields(line) {
 			for _, opt := range optionFlags {
 				if name == opt[0] {
@@ -21252,14 +21257,14 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				}
 				// Then parse the attributions in reverse order to
 				// avoid parsing and tossing away a lot of them.
-				for i := commonCount-1; i >= 0; i-- {
+				for i := commonCount - 1; i >= 0; i-- {
 					attribution = parseAttributionLine(now[i])
 					if attribution != "" {
 						goto attributionFound
 					}
 				}
 				continue
-				attributionFound:
+			attributionFound:
 				attributions[event_id] = append(attributions[event_id], attribution)
 				blobRefs[event_id] = append(blobRefs[event_id], op.ref)
 			}
@@ -21595,7 +21600,7 @@ func (rs *Reposurgeon) DoVersion(line string) bool {
 				supported = append(supported, x.name)
 			}
 		}
-		respond("reposurgeon "+version+" supporting "+strings.Join(supported, " "))
+		respond("reposurgeon " + version + " supporting " + strings.Join(supported, " "))
 	} else {
 		fields := strings.Split(version, ".")
 		vmajor := fields[0]
@@ -21807,7 +21812,7 @@ type assoc struct {
 
 func verbosityLevelList() []assoc {
 	items := make([]assoc, 0)
-	for k, v := range(logtags) {
+	for k, v := range logtags {
 		items = append(items, assoc{k, v})
 	}
 	sort.Slice(items, func(i, j int) bool {
@@ -21817,7 +21822,7 @@ func verbosityLevelList() []assoc {
 }
 
 func (rs *Reposurgeon) DoLog(lineIn string) bool {
-	lineIn = strings.Replace(lineIn, ",", " ",-1)
+	lineIn = strings.Replace(lineIn, ",", " ", -1)
 	for _, tok := range strings.Fields(lineIn) {
 		enable := tok[0] == '+'
 		if !(enable || tok[0] == '-') {
@@ -21851,7 +21856,7 @@ breakout:
 				out += " -"
 			}
 			out += item.k
-			if (i+1) % 4 == 0 {
+			if (i+1)%4 == 0 {
 				out += "\n\t\t"
 			}
 		}
@@ -21879,9 +21884,9 @@ func (rs *Reposurgeon) DoLogfile(lineIn string) bool {
 	}
 	if len(lineIn) == 0 || control.isInteractive() {
 		switch v := control.logfp.(type) {
-			case *os.File:
+		case *os.File:
 			respond("logfile %s", v.Name())
-			case *Baton:
+		case *Baton:
 			respond("logfile stdout")
 		}
 	}
@@ -22028,9 +22033,9 @@ func (rs *Reposurgeon) DoScript(lineIn string) bool {
 }
 
 // DoSizes is for developer use when optimizing structure packing to reduce memory use
-// const MaxUint = ^uint(0) 
-// const MinUint = 0 
-// const MaxInt = int(MaxUint >> 1) 
+// const MaxUint = ^uint(0)
+// const MinUint = 0
+// const MaxInt = int(MaxUint >> 1)
 // const MinInt = -MaxInt - 1
 func (rs *Reposurgeon) DoSizeof(lineIn string) bool {
 	const wordLengthInBytes = 8
@@ -22039,9 +22044,9 @@ func (rs *Reposurgeon) DoSizeof(lineIn string) bool {
 	}
 	explain := func(size uintptr) string {
 		out := fmt.Sprintf("%3d", size)
-		if size % wordLengthInBytes > 0 {
+		if size%wordLengthInBytes > 0 {
 			paddedSize := roundUp(size, wordLengthInBytes)
-			out += fmt.Sprintf(" (padded to %d, step down %d)", paddedSize, size % wordLengthInBytes)
+			out += fmt.Sprintf(" (padded to %d, step down %d)", paddedSize, size%wordLengthInBytes)
 		}
 		return out
 	}
@@ -22082,19 +22087,19 @@ func main() {
 			saveAllProfiles(control.profilename)
 		}
 		/*
-		if control.logmask <= 1 {
-			if e := recover(); e != nil {
-				fmt.Println("reposurgeon: panic recovery: ", e)
-			}
-			files, err := ioutil.ReadDir("./")
-			if err == nil {
-				for _, f := range files {
-					if strings.HasPrefix(f.Name(), ".rs") && f.IsDir() {
-						os.RemoveAll(f.Name())
+			if control.logmask <= 1 {
+				if e := recover(); e != nil {
+					fmt.Println("reposurgeon: panic recovery: ", e)
+				}
+				files, err := ioutil.ReadDir("./")
+				if err == nil {
+					for _, f := range files {
+						if strings.HasPrefix(f.Name(), ".rs") && f.IsDir() {
+							os.RemoveAll(f.Name())
+						}
 					}
 				}
 			}
-		}
 		*/
 	}()
 

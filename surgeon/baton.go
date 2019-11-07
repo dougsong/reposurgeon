@@ -5,6 +5,7 @@
  */
 
 package main
+
 import (
 	"bytes"
 	"fmt"
@@ -19,50 +20,51 @@ import (
 // Baton is the overall state of the output
 type Baton struct {
 	progressEnabled bool
-	stream *os.File
-	channel chan Message
-	start time.Time
-	twirly Twirly
-	counter Counter
-	progress Progress
-	process Process
+	stream          *os.File
+	channel         chan Message
+	start           time.Time
+	twirly          Twirly
+	counter         Counter
+	progress        Progress
+	process         Process
 }
 
 // Twirly is the state of a twirly indefinite progess meter that ships indications to stdout.
 type Twirly struct {
 	sync.RWMutex
 	lastupdate time.Time
-	count uint8
+	count      uint8
 }
 
 // Counter is usually used for "N of M" type progress, but the caller can supply any format string they want
 type Counter struct {
 	sync.RWMutex
 	lastupdate time.Time
-	format string
-	count uint64
+	format     string
+	count      uint64
 }
 
 // Progress is the evolved form of the counter which shows the percentage of completion and the rate of progress in addition to the count
 type Progress struct {
 	sync.RWMutex
-	start time.Time
+	start      time.Time
 	lastupdate time.Time
-	tag []byte
-	count uint64
-	expected uint64
+	tag        []byte
+	count      uint64
+	expected   uint64
 }
 
 // Process prints a message before and after the other status messages
 type Process struct {
 	sync.RWMutex
 	lastupdate time.Time
-	startmsg []byte
-	endmsg []byte
-	start time.Time
+	startmsg   []byte
+	endmsg     []byte
+	start      time.Time
 }
 
 type msgType uint8
+
 const (
 	// NONE is the abscence of a message
 	NONE msgType = iota
@@ -79,12 +81,12 @@ const (
 )
 
 type Message struct {
-	ty msgType
+	ty  msgType
 	str []byte
 }
 
-const twirlInterval     = 100 * time.Millisecond	// Rate-limit baton twirls
-const progressInterval  =   1 * time.Second		// Rate-limit progress messages
+const twirlInterval = 100 * time.Millisecond // Rate-limit baton twirls
+const progressInterval = 1 * time.Second     // Rate-limit progress messages
 
 func newBaton(interactive bool) *Baton {
 	me := new(Baton)
@@ -97,9 +99,9 @@ func newBaton(interactive bool) *Baton {
 	go func() {
 		lastProgress := &[]byte{}
 		for {
-			msg := <- me.channel
+			msg := <-me.channel
 			if msg.ty == SYNC {
-				me.channel<-msg
+				me.channel <- msg
 			} else if me.stream != nil {
 				if msg.ty == LOG {
 					if me.progressEnabled {
@@ -135,7 +137,7 @@ func newBaton(interactive bool) *Baton {
 
 func (baton *Baton) setInteractivity(enabled bool) {
 	if baton != nil {
-		baton.channel<- Message{SYNC, nil}
+		baton.channel <- Message{SYNC, nil}
 		baton.progressEnabled = enabled
 		<-baton.channel
 	}
@@ -205,7 +207,7 @@ func (baton *Baton) endProcess(endmsg ...string) {
 		}
 		fmt.Fprintf(baton, "%s ...(%s) %s.",
 			baton.process.startmsg,
-			time.Since(baton.process.start).Round(time.Millisecond * 10),
+			time.Since(baton.process.start).Round(time.Millisecond*10),
 			baton.process.endmsg)
 		baton.process.startmsg = nil
 		baton.process.endmsg = nil
@@ -344,13 +346,13 @@ func (baton *Progress) render(b io.Writer) {
 		if n < 1000 {
 			return fmt.Sprintf("%.2f", n)
 		} else if n < 1000000 {
-			return fmt.Sprintf("%.2fK", n / 1000)
+			return fmt.Sprintf("%.2fK", n/1000)
 		} else if n < 1000000000 {
-			return fmt.Sprintf("%.2fM", n / 1000000)
+			return fmt.Sprintf("%.2fM", n/1000000)
 		} else if n < 1000000000000 {
-			return fmt.Sprintf("%.2fG", n / 1000000000)
+			return fmt.Sprintf("%.2fG", n/1000000000)
 		} else {
-			return fmt.Sprintf("%.2fT", n / 1000000000000)
+			return fmt.Sprintf("%.2fT", n/1000000000000)
 		}
 	}
 	if baton.expected > 0 {
@@ -367,7 +369,7 @@ func (baton *Progress) render(b io.Writer) {
 			elapsed = elapsed.Round(time.Second)
 		}
 		fmt.Fprintf(b, "%s %.2f%% %s/%s, %v @ %s/s",
-			baton.tag, frac * 100, scale(float64(baton.count)), scale(float64(baton.expected)), elapsed, ratemsg)
+			baton.tag, frac*100, scale(float64(baton.count)), scale(float64(baton.expected)), elapsed, ratemsg)
 	}
 }
 
@@ -393,7 +395,6 @@ func _copyb(s []byte) []byte {
 	copy(temp, s)
 	return temp
 }
-
 
 func getTerminfoString(cap string, params ...string) []byte {
 	reader, _, err := readFromProcess("tput " + cap + " " + strings.Join(params, " "))

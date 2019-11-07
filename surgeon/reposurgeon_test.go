@@ -626,7 +626,7 @@ func TestParseAttribution(t *testing.T) {
 
 func TestChangelogParseAttribution(t *testing.T) {
 	// Wacky cases from ChangeLog files that we have to be able to handle
-	tests := []struct{attribution, name, email string}{
+	tests := []struct{ attribution, name, email string }{
 		{"Andreas Jaeger  <aj@suse.de>, rkl@connect.org.uk", "Andreas Jaeger", "aj@suse.de"},
 	}
 	for _, x := range tests {
