@@ -124,6 +124,15 @@ r46
 from :12
 M 100755 :14 sim/regress_rdb.pl
 
+commit refs/tags/silver
+#legacy-id 13
+mark :16
+committer frank <frank> 1443478431 +0000
+data 4
+r47
+from :13
+M 100755 :14 sim/regress_rdb.pl
+
 tag emptycommit-2
 #legacy-id 2
 from :2
@@ -148,13 +157,4 @@ data 55
 r45
 
 [[Tag from zero-fileop commit at Subversion r11]]
-
-tag emptycommit-13
-#legacy-id 13
-from :13
-tagger frank <frank> 1443478431 +0000
-data 55
-r47
-
-[[Tag from zero-fileop commit at Subversion r13]]
 

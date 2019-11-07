@@ -8953,16 +8953,16 @@ func svnProcessJunk(sp *StreamParser, options stringSet, baton *Baton) {
 			}
 			// Branch copies with no later commits on the branch should
 			// lose their fileops so they'll be tagified in a later phase.
-			if !commit.hasChildren() && len(commit.operations()) > 0 {
-				for _, op := range commit.operations() {
-					if !op.genflag {
-						goto nodrop
-					}
-				}
-				logit(logEXTRACT, "pruning empty branch copy commit %s", commit.idMe())
-				commit.setOperations(nil)
-			nodrop:
-			}
+			//if !commit.hasChildren() && len(commit.operations()) > 0 {
+			//	for _, op := range commit.operations() {
+			//		if !op.genflag {
+			//			goto nodrop
+			//		}
+			//	}
+			//	logit(logEXTRACT, "pruning empty branch copy commit %s", commit.idMe())
+			//	commit.setOperations(nil)
+			//nodrop:
+			//}
 		}
 	loopend:
 		baton.percentProgress(uint64(i) + 1)

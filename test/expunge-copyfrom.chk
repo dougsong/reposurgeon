@@ -1,4 +1,3 @@
-reposurgeon: "expunge-copyfrom.svn", line 96: ':3': deleting parentless zero-op commit on refs/heads/b.
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -27,5 +26,13 @@ mark :2
 committer sivachenko <sivachenko> 1454366405 +0000
 data 21
 Created directory A.
+M 100644 :1 .gitignore
+
+commit refs/heads/b
+#legacy-id 2
+mark :3
+committer sivachenko <sivachenko> 1454366421 +0000
+data 21
+Created directory B.
 M 100644 :1 .gitignore
 

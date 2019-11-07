@@ -84,81 +84,98 @@ And in yet another file
 from :8
 M 100644 :9 baz.txt
 
-blob
+commit refs/heads/stable
+#legacy-id 6
 mark :11
+committer Fred J. Foonly <foonly@foo.com> 2160 +0000
+data 21
+First directory copy
+from :10
+M 100644 :3 README
+M 100644 :7 bar.txt
+M 100644 :9 baz.txt
+M 100644 :5 foo.txt
+
+blob
+mark :12
 data 32
 Whether tis nobler in the mind.
 
 commit refs/heads/master
 #legacy-id 7
-mark :12
+mark :13
 committer Fred J. Foonly <foonly@foo.com> 2520 +0000
 data 26
 Hamlet the Dane said this
 from :10
-M 100644 :11 foo.txt
+M 100644 :12 foo.txt
 
 blob
-mark :13
+mark :14
 data 42
 or to take arms against a sea of troubles
 
 commit refs/heads/master
 #legacy-id 8
-mark :14
+mark :15
 committer Fred J. Foonly <foonly@foo.com> 2880 +0000
 data 13
 He continued
-from :12
-M 100644 :13 bar.txt
+from :13
+M 100644 :14 bar.txt
 
 blob
-mark :15
+mark :16
 data 25
 and by opposing end them
 
 commit refs/heads/master
 #legacy-id 9
-mark :16
+mark :17
 committer Fred J. Foonly <foonly@foo.com> 3240 +0000
 data 13
 The build-up
-from :14
-M 100644 :15 baz.txt
+from :15
+M 100644 :16 baz.txt
 
 blob
-mark :17
+mark :18
 data 7
 to be,
 
 commit refs/heads/master
 #legacy-id 10
-mark :18
+mark :19
 committer Fred J. Foonly <foonly@foo.com> 3600 +0000
 data 24
 Famous soliloquy begins
-from :16
-M 100644 :17 foo.txt
+from :17
+M 100644 :18 foo.txt
 
 blob
-mark :19
+mark :20
 data 14
 or not to be.
 
 commit refs/heads/root
 #legacy-id 11
-mark :20
+mark :21
 committer Fred J. Foonly <foonly@foo.com> 3960 +0000
 data 14
 And continues
 from :2
 deleteall
-M 100644 :19 branches/foo.txt
+M 100644 :20 branches/foo.txt
 
-tag 1.0
+commit refs/tags/1.0
 #legacy-id 12
-from :18
-tagger Fred J. Foonly <foonly@foo.com> 4320 +0000
+mark :22
+committer Fred J. Foonly <foonly@foo.com> 4320 +0000
 data 15
 First tag copy
+from :19
+M 100644 :3 README
+M 100644 :14 bar.txt
+M 100644 :16 baz.txt
+M 100644 :18 foo.txt
 

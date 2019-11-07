@@ -57,6 +57,15 @@ commit two
 from :4
 M 100644 :5 test.txt
 
+commit refs/tags/1.0
+#legacy-id 8
+mark :7
+committer mike <mike> 1437858625 +0000
+data 18
+Fixed release 1.0
+from :6
+M 100644 :5 test.txt
+
 tag emptycommit-2
 #legacy-id 2
 from :2
@@ -90,11 +99,4 @@ data 71
 No release ready yet
 
 [[Tag from zero-fileop commit at Subversion r6]]
-
-tag 1.0
-#legacy-id 8
-from :6
-tagger mike <mike> 1437858625 +0000
-data 18
-Fixed release 1.0
 

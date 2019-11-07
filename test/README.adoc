@@ -416,6 +416,11 @@ delignore.svn::
    Translation correct. One message due to branch delete
    followed by rename.
 
+emptybranch.svn::
+   BUG: The empty branch should be tagified but is not.
+   Look for a way to fix this that doesn't break rhe
+   myers1 case.
+
 emptyfrom.svn::
    Conversion is correct.  Has emptycommits. One spurious
    message due to an empty directory. Should probably be
@@ -435,7 +440,7 @@ gitignore.svn::
    userignores.tst
 
 myers1.svn::
-   BUG: Content mismatch.
+   Content is correct.  One message due to empty branch.
 
 nesting.svn::
    Doesn't build, no trunk branch. Used by nesting.tst.

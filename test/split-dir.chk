@@ -10,7 +10,7 @@ reposurgeon: new commits are events 3 and 4.
 :5 split by zed
 reposurgeon: couldn't find 'zed' in a fileop path
 :5 split by f
-reposurgeon: couldn't find 'f' in a fileop path
+reposurgeon: new commits are events 7 and 8.
 inspect
 Event 1 =================================================================
 #reposurgeon sourcetype svn
@@ -33,7 +33,7 @@ M 100644 :1 foo/src
 Event 4 =================================================================
 commit refs/heads/master
 #legacy-id 2.split
-mark :5
+mark :6
 committer brooksd <brooksd> 1353813663 +0000
 data 33
 add a new file in each directory
@@ -54,12 +54,33 @@ mark :4
 committer brooksd <brooksd> 1353813665 +0000
 data 34
 modify the file in each directory
-from :5
+from :6
 M 100644 :3 bar/src
 M 100644 :3 baz/src
 M 100644 :3 foo/src
 
 Event 7 =================================================================
+commit refs/heads/master
+#legacy-id 4
+mark :5
+committer brooksd <brooksd> 1353813667 +0000
+data 27
+copy the three directories
+from :4
+M 100644 :3 bar2/src
+M 100644 :3 baz2/src
+
+Event 8 =================================================================
+commit refs/heads/master
+#legacy-id 4.split
+mark :7
+committer brooksd <brooksd> 1353813667 +0000
+data 27
+copy the three directories
+from :5
+M 100644 :3 foo2/src
+
+Event 9 =================================================================
 tag root
 #legacy-id 1
 from :2
@@ -68,14 +89,4 @@ data 59
 add directories
 
 [[Tag from root commit at Subversion r1]]
-
-Event 8 =================================================================
-tag emptycommit-4
-#legacy-id 4
-from :4
-tagger brooksd <brooksd> 1353813667 +0000
-data 77
-copy the three directories
-
-[[Tag from zero-fileop commit at Subversion r4]]
 

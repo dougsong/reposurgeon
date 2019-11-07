@@ -52,6 +52,16 @@ This commit was manufactured by cvs2svn to create branch
 from :4
 M 100644 :3 CHANGES
 
+commit refs/tags/INITIAL_IMPORT_V2_0_1_pre4
+#legacy-id 5
+mark :6
+committer no-author <no-author> 1106836402 +0000
+data 84
+This commit was manufactured by cvs2svn to create tag
+'INITIAL_IMPORT_V2_0_1_pre4'.
+from :5
+M 100644 :3 CHANGES
+
 tag emptycommit-4
 #legacy-id 4
 from :2
@@ -60,14 +70,6 @@ data 105
 Initial CVS import from nut testing release 2.0.1-pre4
 
 [[Tag from zero-fileop commit at Subversion r4]]
-
-tag INITIAL_IMPORT_V2_0_1_pre4
-#legacy-id 5
-from :5
-tagger no-author <no-author> 1106836402 +0000
-data 84
-This commit was manufactured by cvs2svn to create tag
-'INITIAL_IMPORT_V2_0_1_pre4'.
 
 tag emptycommit-6
 #legacy-id 6

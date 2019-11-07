@@ -51,12 +51,12 @@ Make dir1/file executable.
 from :4
 M 100755 :3 dir1/file
 
-tag emptycommit-4
+commit refs/heads/master
 #legacy-id 4
-from :5
-tagger jsm28 <jsm28> 1512747139 +0000
-data 69
+mark :6
+committer jsm28 <jsm28> 1512747139 +0000
+data 19
 Copy dir1 to dir2.
-
-[[Tag from zero-fileop commit at Subversion r4]]
+from :5
+M 100755 :3 dir2/file
 
