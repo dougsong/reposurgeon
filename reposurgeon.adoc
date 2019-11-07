@@ -1615,6 +1615,15 @@ It is presently an error to insert a new committer or tagger
 attribution.  To change a committer or tagger, use +set+
 instead.
 
+_gitify_::
+   Attempt to massage comments into a git-friendly form with a blank
+   separator line after a summary line.  This code assumes it can insert
+   a blank line if the first line of the comment ends with '.', ',', ':',
+   ';', '?', or '!'.  If the separator line is already present, the comment
+   won't be touched.
++
+Takes a selection set, defaulting to all commits and tags.
+
 [[reference-lifting]]
 === REFERENCE LIFTING ===
 
