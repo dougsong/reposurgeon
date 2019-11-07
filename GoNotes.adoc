@@ -77,8 +77,6 @@ set-of-string classes.  That was a surprisingly light hit.  What I
 really missed was generic map-function-over-slice, which could be
 handled by adding a much narrower feature.
 
-Iterators. In an early version of this reoi
-
 // DATE-SENSITIVE
 The positive part of my summation is that hand-translation of Python
 to Go even at this scale and complexity is not horrible.  It's not
@@ -645,6 +643,92 @@ frame of a defer(). It can be in a helper called by the defer clause
 (but still within the call scope of a defer). For safety we'd need
 an additional rule that a go clause in the helper puts the code it
 runs out of scope for purposes of this check.
+
+=== Absence of iterators ===
+
+Having Python iterators go missing is really annoying for reposurgeon,
+in which lazy evaluation of very long lists is a frequent requirement.
+
+Here's the type example.  I have in my repository representation a
+list of possibly hundreds of thousands of events.  A subset of these
+events is Commit objects.  I would like to be able to write
+
+---------------------------------------------------------------
+
+        for i, commit := range repo.commits() {
+	        do_stuff_to(commit)
+	}
+
+---------------------------------------------------------------
+
+In Python it is easy and natural to write commits() as an iterator
+which lazily walks the repository event list looking for Commit
+objects. Each time it is called it either returns with "yield",
+handing back the next commit, or actually returns - which is a signal
+that the for loop should terminate.
+
+I can't do this in Go; I have to write commits() to return an entire
+constructed slice made by filtering the event list.  Which is annoying
+for long lists, especially when it might well terminate early.
+
+Sure, there's an alternative.  It looks like this...
+
+---------------------------------------------------------------
+        for i, event := range self.events {
+	        switch.event.(type) {
+		case *Commit:
+		        do_stuff_to(event.(*Commit))
+	}
+---------------------------------------------------------------
+
+...and about which what I have to say is "Ugh!".  That code does not
+say "walk through all commits", it says "walk through all events and
+do something to the ones that happen to be commits".  I don't want to
+wander into event-land here; that type-assertion/cast pair looks
+altogether too much like a defect attractor. Also, unnecessary eyeball
+friction.
+
+I had no good idea what could be done about this.  I read Ewen
+Cheslack-Postava's excellent discussion of
+https://ewencp.org/blog/golang-iterators/index.html[iterator patterns
+in Go] and agreed with him that none of them are really satisfactory.
+
+Annoyingly, the iterator pattern he suggests is almost the right
+thing - except for the part where early break from a channel-based
+iterator leaves its goroutine running and some uncollectible garbage.
+
+Then, on my second reading, I had a brainstorm.  I found the trivial
+Go extension that would give iterators with no new syntax, no hidden
+magic, and no yield/return distinction:
+
+New evaluation rule on how to interpret for loops when the range
+operand is a callable: the loop runs as a generator, yielding each
+value in succession, until the callable returns the zero value of its
+type.
+
+So, with that I could write a Repository method like this:
+
+---------------------------------------------------------------
+func (repo *Repository) commits() func() *Commit {
+	idx := -1
+	return func() *Commit {
+		for {
+			if idx++; idx >= len(self.events) {
+			       return nil
+			}
+			if _, ok = self.events[idx].(*Commit); ok {
+				return self.events[idx]
+			}
+		 }
+	}
+}
+---------------------------------------------------------------
+
+...and there I have it.  An iterator, with exactly the same lifetime
+as the for loop.
+
+I suggest that this be adopted for a future release of Go. Small, easy
+new evaluation rule, big gain in expressiveness.
 
 === Hieratic documentation ===
 
