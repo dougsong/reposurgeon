@@ -412,10 +412,6 @@ branchmap.svn::
 branchreplace.svn::
    Conversion is correct - messages due to trimmed branches.
 
-delignore.svn::
-   Translation correct. One message due to branch delete
-   followed by rename.
-
 emptybranch.svn::
    BUG: The empty branch should be tagified but is not.
    Look for a way to fix this that doesn't break rhe
@@ -438,9 +434,6 @@ gitignore.svn::
    Has an emptycommit. Generates a warning about the user-created
    .gitigmore, as it should. Translation is correct.  Used by 
    userignores.tst
-
-myers1.svn::
-   Content is correct.  One message due to empty branch.
 
 nesting.svn::
    Doesn't build, no trunk branch. Used by nesting.tst.

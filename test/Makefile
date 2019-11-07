@@ -388,9 +388,9 @@ svnload-regress:
 # copies are ignored.
 # FIXME: We should report error and stop if the outout is nonempty.
 SVNCLEAN := bad-author.svn binary.svn branch-drop-add.svn blob-id.svn debranch.svn \
-	deletion.svn deepdirs.svn executable.svn expunge.svn \
+	deletion.svn delignore.svn deepdirs.svn executable.svn expunge.svn \
 	filecopy.svn format7.svn gitify.svn ignore-blank.svn mergeinfo.svn \
-	mergeinfo-with-split.svn mixedbranch.svn mkignore.svn nullignores.svn \
+	mergeinfo-with-split.svn mixedbranch.svn mkignore.svn myers1.svn nullignores.svn \
 	nontipcopy.svn pangram.svn permcopy.svn replace-dir.svn simpletag.svn \
 	smallref.svn snarl.svn squash-id.svn subdir.svn subclipse.svn svnignores.svn
 liftcheck-regress:

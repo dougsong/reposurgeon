@@ -7915,7 +7915,7 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 	refcounts := make(map[string]int)
 	baton.startProgress("process SVN, phase 2a: count tag references", uint64(len(sp.streamview)))
 	for i, tagnode := range sp.streamview {
-		if tagnode.action == sdADD && tagnode.kind == sdDIR {
+		if tagnode.action == sdADD && tagnode.kind == sdDIR && isDeclaredBranch(tagnode.path) {
 			refcounts[tagnode.path]++
 		}
 		baton.percentProgress(uint64(i) + 1)
