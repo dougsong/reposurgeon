@@ -9182,13 +9182,13 @@ type Event interface {
 }
 
 // walkEvents walks an event list applying a hook function.
-// This is intended to bew parallelized.  Apply only when the
+// This is intended to be parallelized.  Apply only when the
 // computation has no dependency on the order in which commits
 // are processed.
 //
 // Note: There's a clone of this code that walks selection sets.
 // Go is not quite generic enough to make unifying the two convenient.
-// We need to mke sure they say in sync.
+// We need to make sure they stay in sync.
 func walkEvents(events []Event, hook func(int, Event)) {
 	if control.flagOptions["serial"] {
 		for i, e := range events {
