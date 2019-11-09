@@ -2507,6 +2507,8 @@ committer no-author <no-author> 1109582047 +0000
 data 67
 This commit was manufactured by cvs2svn to create branch 'Stable'.
 from :289
+D CHANGES
+D UPGRADING
 M 100644 :1 clients/Makefile.in
 M 100644 :291 clients/Makefile.in
 M 100644 :2 clients/cgilib.c
@@ -2822,6 +2824,8 @@ committer no-author <no-author> 1109582047 +0000
 data 68
 This commit was manufactured by cvs2svn to create branch 'Testing'.
 from :289
+D CHANGES
+D UPGRADING
 M 100644 :1 clients/Makefile.in
 M 100644 :291 clients/Makefile.in
 M 100644 :2 clients/cgilib.c
@@ -3137,6 +3141,8 @@ committer no-author <no-author> 1109582047 +0000
 data 67
 This commit was manufactured by cvs2svn to create branch 'r2.0.1'.
 from :289
+D CHANGES
+D UPGRADING
 M 100644 :1 clients/Makefile.in
 M 100644 :291 clients/Makefile.in
 M 100644 :2 clients/cgilib.c
@@ -3452,6 +3458,8 @@ committer no-author <no-author> 1109582047 +0000
 data 67
 This commit was manufactured by cvs2svn to create branch 'v2.1.0'.
 from :289
+D CHANGES
+D UPGRADING
 M 100644 :1 clients/Makefile.in
 M 100644 :291 clients/Makefile.in
 M 100644 :2 clients/cgilib.c
@@ -6821,6 +6829,9 @@ data 78
 This commit was manufactured by cvs2svn to create tag
 'alioth_SVN_migration'.
 from :289
+D CHANGES
+D Makefile
+D UPGRADING
 M 100644 :1 clients/Makefile.in
 M 100644 :291 clients/Makefile.in
 M 100644 :2 clients/cgilib.c
@@ -16286,14 +16297,17 @@ This commit was manufactured by cvs2svn to create tag
 'reportbuf_base0'.
 from :1649
 M 100644 :1647 CHANGES
+D COPYING
 M 100644 :1637 CREDITS
 M 100644 :1568 INSTALL
 M 100644 :1253 MAINTAINERS
+D Makefile.dist
 M 100644 :840 Makefile.in
 M 100644 :1569 NEWS
 M 100644 :1570 README
 M 100644 :564 UPGRADING
 M 100644 :564 UPGRADING
+D aclocal.m4
 D clients/.gitignore
 M 100644 :474 clients/Makefile.in
 M 100644 :1 clients/Makefile.in
@@ -16683,6 +16697,7 @@ M 100644 :629 include/version.h
 M 100644 :628 include/version
 M 100644 :158 include/version
 M 100644 :628 include/version
+D install-sh
 D lib/.gitignore
 M 100644 :160 lib/Makefile.in
 M 100644 :160 lib/Makefile.in

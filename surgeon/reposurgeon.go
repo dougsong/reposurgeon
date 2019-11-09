@@ -6198,7 +6198,7 @@ func (h *History) apply(revision revidx, nodes []*NodeAction) {
 	// Fill in the node from-sets.
 	for _, node := range nodes {
 		// Mutate the filemap according to copies
-		if node.fromRev > 0 {
+		if node.isCopy() {
 			//assert node.fromRev < revision
 			h.visibleHere.copyFrom(node.path, h.visible[node.fromRev],
 				node.fromPath)
@@ -6237,7 +6237,7 @@ func (h *History) apply(revision revidx, nodes []*NodeAction) {
 	h.visible[revision] = h.visibleHere.snapshot()
 
 	for _, node := range nodes {
-		if node.fromRev > 0 {
+		if node.isCopy() {
 			node.fromSet = newPathMap()
 			node.fromSet.copyFrom(node.fromPath, h.visible[node.fromRev], node.fromPath)
 		}
@@ -6245,6 +6245,7 @@ func (h *History) apply(revision revidx, nodes []*NodeAction) {
 	}
 
 	h.revision = revision
+	logit(logFILEMAP, "Filemap at %d: %v", revision, h.visible[revision]) 
 }
 
 func (h *History) getActionNode(revision revidx, source string) *NodeAction {
@@ -6354,6 +6355,10 @@ func (action NodeAction) hasProperties() bool {
 	return action.props != nil
 }
 
+func (action NodeAction) isCopy() bool {
+	return action.fromRev > 0
+}
+
 func (action NodeAction) isBogon() bool {
 	// if node.props is None, no property section.
 	// if node.blob is None, no text section.
@@ -6367,7 +6372,7 @@ func (action NodeAction) isBogon() bool {
 
 	// This guard filters out the empty nodes produced by format 7
 	// dumps.  Not necessarily a bogon, actually/
-	if action.action == sdCHANGE && !action.hasProperties() && action.blob == nil && action.fromRev == 0 {
+	if action.action == sdCHANGE && !action.hasProperties() && action.blob == nil && !action.isCopy() {
 		logit(logEXTRACT, "empty node rejected at r%d: %v", action.revision, action)
 		return true
 	}
@@ -6382,7 +6387,7 @@ func (action NodeAction) isBogon() bool {
 		return true
 	}
 
-	if (action.action != sdADD && action.action != sdREPLACE) && action.fromRev > 0 {
+	if (action.action != sdADD && action.action != sdREPLACE) && action.isCopy() {
 		logit(logSHOUT, "invalid type in node with from revision r%d: %s", action.revision, action)
 		return true
 	}
@@ -7472,7 +7477,7 @@ func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
 	}
 
 	// We reach here with lookback still nil if the node is a non-copy add.
-	if lookback == nil && node.fromRev > 0 && !strings.HasSuffix(node.path, ".gitignore") {
+	if lookback == nil && node.isCopy() && !strings.HasSuffix(node.path, ".gitignore") {
 		sp.shout(fmt.Sprintf("r%d~%s: missing ancestor node for non-.gitignore",
 			node.revision, node.path))
 	}
@@ -7769,21 +7774,6 @@ func (sp *StreamParser) expandAllNodes(nodelist []*NodeAction, options stringSet
 	}
 
 	logit(logEXTRACT, "%d expanded Subversion nodes", len(expandedNodes))
-	// Ugh.  Because cvs2svn is brain-dead and issues D/M pairs
-	// for identical paths in generated commits, we have to remove those
-	// D ops here.  Otherwise later on when we're generating ops, if
-	// the M node happens to be missing its hash it will be seen as
-	// unmodified and only the D will be issued.
-	seen := newStringSet()
-	for idx := len(expandedNodes) - 1; idx >= 0; idx-- {
-		node := expandedNodes[idx]
-		if node.action == sdDELETE && seen.Contains(node.path) {
-			logit(logEXTRACT, "r%d-%d: cvs2svn junk pair detected, omitting %s deletion.", node.revision, node.index, node.path)
-			node.action = sdNONE
-		}
-		seen.Add(node.path)
-	}
-
 	return expandedNodes
 }
 
