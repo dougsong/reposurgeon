@@ -7548,7 +7548,6 @@ func isDeclaredBranch(path string) bool {
 func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeAction {
 	expandedNodes := make([]*NodeAction, 0)
 	appendExpanded := func(newnode *NodeAction) {
-		newnode.generated = true
 		newnode.index = intToNodeidx(len(expandedNodes) + 1)
 		expandedNodes = append(expandedNodes, newnode)
 	}
@@ -7607,6 +7606,7 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 						newnode.revision = node.revision
 						newnode.action = sdDELETE
 						newnode.kind = sdFILE
+						newnode.generated = false
 						appendExpanded(newnode)
 					}
 				}
@@ -7622,6 +7622,7 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 						newnode.revision = node.revision
 						newnode.action = sdDELETE
 						newnode.kind = sdFILE
+						newnode.generated = true
 						appendExpanded(newnode)
 						delete(sp.activeGitignores, ignorepath)
 					}
@@ -7657,7 +7658,7 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 					for gipath, ignore := range sp.activeGitignores {
 						if strings.HasPrefix(gipath, node.path) {
 							blob := newBlob(sp.repo)
-							blob.setContent([]byte(ignore), noOffset)
+							blob.setContent([]byte(subversionDefaultIgnores + ignore), noOffset)
 							subnode := new(NodeAction)
 							subnode.path = gipath
 							subnode.revision = node.revision
@@ -7665,6 +7666,7 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 							subnode.kind = sdFILE
 							subnode.blob = blob
 							subnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
+							subnode.generated = true
 							appendExpanded(subnode)
 						}
 					}
@@ -7703,6 +7705,7 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 				subnode.props = found.props
 				subnode.action = sdADD
 				subnode.kind = sdFILE
+				subnode.generated = false
 				logit(logTOPOLOGY, "r%d-%d: %s generated copy r%d~%s -> %s %s",
 					node.revision, node.index, node.path, subnode.fromRev, subnode.fromPath, subnode.path, subnode)
 				appendExpanded(subnode)
@@ -7736,15 +7739,17 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 					// Subversion behavior accurately.  However,
 					// if done naively this clobbers the branch-root
 					// ignore defaults, which are already anchored.
-					ignorelines := make([]string, 0)
-					for _, line := range strings.Split(ignore, "\n") {
-						if strings.HasPrefix(line, "#") || strings.HasPrefix(line, "/") || line == "" {
-							ignorelines = append(ignorelines, line)
-						} else {
-							ignorelines = append(ignorelines, "/"+line)
+					if ignore != "" {
+						ignorelines := make([]string, 0)
+						for _, line := range strings.Split(ignore, "\n") {
+							if strings.HasPrefix(line, "#") || strings.HasPrefix(line, "/") || line == "" {
+								ignorelines = append(ignorelines, line)
+							} else {
+								ignorelines = append(ignorelines, "/"+line)
+							}
 						}
+						ignore = strings.Join(ignorelines, "\n")
 					}
-					ignore = strings.Join(ignorelines, "\n")
 					blob := newBlob(sp.repo)
 					blob.setContent([]byte(ignore), noOffset)
 					newnode := new(NodeAction)
@@ -7754,6 +7759,7 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 					newnode.kind = sdFILE
 					newnode.blob = blob
 					newnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
+					newnode.generated = ignore == ""
 					logit(logIGNORES, "r%d-%d: queuing up %s generation with: %v.",
 						node.revision, node.index, newnode.path, node.props.get("svn:ignore"))
 					// Must append rather than simply performing.
@@ -7767,6 +7773,7 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 					newnode.revision = node.revision
 					newnode.action = sdDELETE
 					newnode.kind = sdFILE
+					newnode.generated = true
 					logit(logIGNORES, "r%d-%d: queuing up %s deletion.", node.revision, node.index, newnode.path)
 					appendExpanded(newnode)
 					delete(sp.activeGitignores, gitignorePath)
@@ -8954,18 +8961,18 @@ func svnProcessJunk(sp *StreamParser, options stringSet, baton *Baton) {
 			}
 			// Branch copies with no later commits on the branch should
 			// lose their fileops so they'll be tagified in a later phase.
-			//if !commit.hasChildren() && len(commit.operations()) > 0 {
-			//	for _, op := range commit.operations() {
-			//		if !op.genflag {
-			//			goto nodrop
-			//		}
-			//	}
-			//	logit(logEXTRACT, "pruning empty branch copy commit %s", commit.idMe())
-			//	commit.setOperations(nil)
-			//nodrop:
-			//}
+			if !commit.hasChildren() && len(commit.operations()) > 0 {
+				for _, op := range commit.operations() {
+					if !op.genflag {
+						goto nodrop
+					}
+				}
+				logit(logEXTRACT, "pruning empty branch copy commit %s", commit.idMe())
+				commit.setOperations(nil)
+			nodrop:
+			}
 		}
-	loopend:
+loopend:
 		baton.percentProgress(uint64(i) + 1)
 	})
 	baton.endProgress()
@@ -10088,20 +10095,22 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 				}
 				deletia = append(deletia, index)
 			} else {
-				msg := ""
-				if commit.legacyID != "" && repo.vcs != nil && repo.vcs.name == "svn" {
-					msg += fmt.Sprintf(" r%s:", commit.legacyID)
-				} else if commit.mark != "" {
-					msg += fmt.Sprintf(" '%s':", commit.mark)
+				if commit.Branch != "refs/heads/master" {
+					msg := ""
+					if commit.legacyID != "" && repo.vcs != nil && repo.vcs.name == "svn" {
+						msg += fmt.Sprintf(" r%s:", commit.legacyID)
+					} else if commit.mark != "" {
+						msg += fmt.Sprintf(" '%s':", commit.mark)
+					}
+					msg += " deleting parentless "
+					if len(commit.operations()) > 0 {
+						msg += fmt.Sprintf("tip delete of %s.", commit.Branch)
+					} else {
+						msg += fmt.Sprintf("zero-op commit on %s.", commit.Branch)
+					}
+					gripe(msg[1:])
+					deletia = append(deletia, index)
 				}
-				msg += " deleting parentless "
-				if len(commit.operations()) > 0 {
-					msg += fmt.Sprintf("tip delete of %s.", commit.Branch)
-				} else {
-					msg += fmt.Sprintf("zero-op commit on %s.", commit.Branch)
-				}
-				gripe(msg[1:])
-				deletia = append(deletia, index)
 			}
 		}
 

@@ -1,5 +1,6 @@
 set quiet
 read <deletion.svn
+reposurgeon: "deletion.svn", line 150: r1~trunk/.gitignore: user-created .gitignore ignored.
 expunge doomed
 choose deletion-expunges
 inspect
@@ -7,23 +8,23 @@ Event 1 =================================================================
 #reposurgeon sourcetype svn
 Event 2 =================================================================
 blob
-mark :5
+mark :3
 data 77
 This file is doomed.  It exists only so we can check translation of deletes.
 
 Event 3 =================================================================
 commit refs/heads/master
 #legacy-id 3
-mark :6
+mark :4
 committer esr <esr> 1323707473 +0000
 data 71
 Create a doomed file so we can delete it and see the fileop generated.
-M 100644 :5 doomed
+M 100644 :3 doomed
 
 Event 4 =================================================================
 commit refs/heads/master
 #legacy-id 4
-mark :7
+mark :5
 committer esr <esr> 1323707585 +0000
 data 77
 The import stream representation of this commit should have a delete fileop.
