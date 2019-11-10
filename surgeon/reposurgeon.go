@@ -8963,22 +8963,9 @@ func svnProcessJunk(sp *StreamParser, options stringSet, baton *Baton) {
 }
 
 func svnProcessTags(sp *StreamParser, options stringSet, baton *Baton, branchroots []*Commit) {
-	logit(logEXTRACT, "SVN Phase 7: tagification")
-	// Now we need to tagify all other commits without fileops, because git
-	// is going to just discard them when we build a live repo and they
-	// might possibly contain interesting metadata.
-	// * Commits from tag creation often have no fileops since they come
-	//   from a directory copy in Subversion. The annotated tag name is the
-	//   basename of the SVN tag directory.
-	// * Same for branch-root commits. The tag name is the basename of the
-	//   branch directory in SVN, with "-root" appended to distinguish them
-	//   from SVN tags.
-	// * Commits at a branch tip that consist only of deleteall are also
-	//   tagified: their fileops aren't worth saving; the comment metadata
-	//   just might be.
-	// * All other commits without fileops get turned into an annotated tag
-	//   with name "emptycommit-<revision>".
-	// Now pretty up the branch names
+	logit(logEXTRACT, "SVN Phase 7: branch renaming and mapping")
+	// Change the branch names from Subversion style to git style.
+	// This is also where branch mappings get applied.
 	deletia := make([]int, 0)
 	baton.startProgress("process SVN, phase 7: tagification", uint64(len(sp.repo.events)))
 	for index, event := range sp.repo.events {
@@ -9038,7 +9025,22 @@ func svnProcessTags(sp *StreamParser, options stringSet, baton *Baton, branchroo
 }
 
 func svnProcessTagEmpties(sp *StreamParser, options stringSet, baton *Baton, branchroots []*Commit) {
-	logit(logEXTRACT, "SVN Phase 8: tagify empties")
+	logit(logEXTRACT, "SVN Phase 8: tagify empty commits")
+	// Now we need to tagify all other commits without fileops, because git
+	// is going to just discard them when we build a live repo and they
+	// might possibly contain interesting metadata.
+	// * Commits from tag creation often have no fileops since they come
+	//   from a directory copy in Subversion and have their fileops removed
+	//   in the de-junking ohase. The annotated tag name is the basename
+	//   of the SVN tag directory.
+	// * Same for branch-root commits. The tag name is the basename of the
+	//   branch directory in SVN, with "-root" appended to distinguish them
+	//   from SVN tags.
+	// * Commits at a branch tip that consist only of deleteall are also
+	//   tagified: their fileops aren't worth saving; the comment metadata
+	//   just might be.
+	// * All other commits without fileops get turned into an annotated tag
+	//   with name "emptycommit-<revision>".
 	baton.twirl()
 
 	rootmarks := newOrderedStringSet() // stays empty if nobranch
