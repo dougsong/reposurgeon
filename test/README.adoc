@@ -412,11 +412,6 @@ branchmap.svn::
 branchreplace.svn::
    Conversion is correct - messages due to trimmed branches.
 
-emptybranch.svn::
-   BUG: The empty branch should be tagified but is not.
-   Look for a way to fix this that doesn't break rhe
-   myers1 case.
-
 emptyfrom.svn::
    Conversion is correct.  Has emptycommits. One spurious
    message due to an empty directory. Should probably be
