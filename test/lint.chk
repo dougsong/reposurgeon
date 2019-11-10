@@ -3,10 +3,8 @@ read <bs.fi
 lint
 reposurgeon: All commit times in this repository are unique.
 read <agito.svn
-reposurgeon: "agito.svn", line 175: r1~trunk/.gitignore: user-created .gitignore ignored.
-reposurgeon: "agito.svn", line 175: r4~tags/proj-1.0/.gitignore: user-created .gitignore ignored.
 lint
 unknown shortname: fraggle
-email address missing @: commit@:2=<1>
-email address missing @: commit@:3=<4>
+email address missing @: commit@:3=<1>
+email address missing @: commit@:4=<4>
 reposurgeon: All commit times in this repository are unique.

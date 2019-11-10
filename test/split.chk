@@ -1,11 +1,6 @@
 set interactive
 set quiet
 read <mergeinfo.svn
-reposurgeon: "mergeinfo.svn", line 732: r1~trunk/.gitignore: user-created .gitignore ignored.
-reposurgeon: "mergeinfo.svn", line 732: r7~trunk/.gitignore: user-created .gitignore ignored.
-reposurgeon: "mergeinfo.svn", line 732: r11~trunk/.gitignore: user-created .gitignore ignored.
-reposurgeon: "mergeinfo.svn", line 732: r16~trunk/.gitignore: user-created .gitignore ignored.
-reposurgeon: 4 new log message(s)
 :6 split at 2
 reposurgeon: selection doesn't point at a commit
 reposurgeon: script abort on line 6 ":6 split at 2"

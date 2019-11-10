@@ -1,4 +1,3 @@
-reposurgeon: "svnignores.svn", line 175: r2~.gitignore: user-created .gitignore ignored.
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -16,31 +15,45 @@ M 100644 :1 README
 
 blob
 mark :3
+data 7
+/*.pyc
+
+commit refs/heads/master
+#legacy-id 2
+mark :4
+committer esr <esr> 1322694494 +0000
+data 47
+All this commit does is set an ignore property
+from :2
+M 100644 :3 .gitignore
+
+blob
+mark :5
 data 49
 Now we modify the README just as a placeholder.
  
 commit refs/heads/master
 #legacy-id 3
-mark :4
+mark :6
 committer esr <esr> 1322694572 +0000
 data 29
 Modify the one visible file.
-from :2
-M 100644 :3 README
+from :4
+M 100644 :5 README
 
 commit refs/heads/master
 #legacy-id 4
-mark :5
+mark :7
 committer esr <esr> 1322694685 +0000
 data 103
 Time to delete the svn:ignore property.
 
 The result we want is that .gitignore is no longer generated.
-from :4
+from :6
 D .gitignore
 
 blob
-mark :6
+mark :8
 data 79
 Put another change here just so we have a commit after the property delete.
 
@@ -48,19 +61,10 @@ Put another change here just so we have a commit after the property delete.
 
 commit refs/heads/master
 #legacy-id 5
-mark :7
+mark :9
 committer esr <esr> 1322694737 +0000
 data 12
 We're done.
-from :5
-M 100644 :6 README
-
-tag emptycommit-2
-#legacy-id 2
-from :2
-tagger esr <esr> 1322694494 +0000
-data 97
-All this commit does is set an ignore property
-
-[[Tag from zero-fileop commit at Subversion r2]]
+from :7
+M 100644 :8 README
 

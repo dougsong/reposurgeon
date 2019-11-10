@@ -1,5 +1,3 @@
-reposurgeon: "expunge-copyfrom.svn", line 96: r1~a/.gitignore: user-created .gitignore ignored.
-reposurgeon: "expunge-copyfrom.svn", line 96: r2~b/.gitignore: user-created .gitignore ignored.
 reposurgeon: "expunge-copyfrom.svn", line 96: ':2': deleting parentless zero-op commit on refs/heads/b.
 reposurgeon: "expunge-copyfrom.svn", line 96: ':3': deleting parentless zero-op commit on refs/heads/c.
 #reposurgeon sourcetype svn

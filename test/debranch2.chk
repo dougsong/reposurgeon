@@ -1,7 +1,8 @@
-reposurgeon: "debranch.svn", line 510: r1~trunk/.gitignore: user-created .gitignore ignored.
-reposurgeon: "debranch.svn", line 510: r3~branches/resources/.gitignore: user-created .gitignore ignored.
-reposurgeon: "debranch.svn", line 510: ':4': deleting parentless zero-op commit on refs/heads/resources.
+reposurgeon: "debranch.svn", line 510: ':5': deleting parentless zero-op commit on refs/heads/resources.
+.gitignore
 README
 random
+.gitignore
 README
+resources/.gitignore
 resources/random

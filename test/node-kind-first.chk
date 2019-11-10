@@ -1,6 +1,5 @@
 reposurgeon: "node-kind-first.svn", line 76: r1#2~trunk/assemblies properties set:
 reposurgeon: "node-kind-first.svn", line 76: 	svn:date = '2010-10-28T11:46:57.761945Z'
-reposurgeon: "node-kind-first.svn", line 76: r1~trunk/.gitignore: user-created .gitignore ignored.
 #reposurgeon sourcetype svn
 commit refs/heads/master
 #legacy-id 1
