@@ -15,6 +15,7 @@ Repository head::
      All documentation moved to asciidoc for better web rendering.
      Logging now has facility flags rather than a single level.
      The svnmerge-inregrated properties creaed by svnmerge.py are handled.
+     Use Bazaar config file for identity if it's availalable.
 
 3.48: 2019-10-02::
      Last Python release.  4.0 will ship in Go.

@@ -2735,6 +2735,7 @@ func whoami() (string, string) {
 	if control.flagOptions["testmode"] {
 		return "Fred J. Foonly", "foonly@foo.com"
 	}
+
 	// Git version-control system
 	out1, err1 := exec.Command("git", "config", "user.name").CombinedOutput()
 	out2, err2 := exec.Command("git", "config", "user.email").CombinedOutput()
@@ -2746,6 +2747,16 @@ func whoami() (string, string) {
 	out3, err3 := exec.Command("hg", "config", "ui.username").CombinedOutput()
 	if err3 == nil && len(out3) != 0 {
 		e, err := mail.ParseAddress(strings.Trim(string(out3), "\n"))
+		if err != nil {
+			log.Fatal(err)
+		}
+		return e.Name, e.Address
+	}
+
+	// Bazaar version control system
+	out4, err4 := exec.Command("bzr", "config", "email").CombinedOutput()
+	if err4 == nil && len(out4) != 0 {
+		e, err := mail.ParseAddress(strings.Trim(string(out4), "\n"))
 		if err != nil {
 			log.Fatal(err)
 		}
