@@ -425,11 +425,6 @@ fleetwood.svn::
    The tags/1.0rc1/ on the SVN side is never instantiated in the
    git lift because it has no content. Used in tagretract.tst.
 
-gitignore.svn::
-   Has an emptycommit. Generates a warning about the user-created
-   .gitigmore, as it should. Translation is correct.  Used by 
-   userignores.tst
-
 nesting.svn::
    Doesn't build, no trunk branch. Used by nesting.tst.
 
@@ -449,8 +444,8 @@ rootfile.svn::
    Used in a repocutter test.
 
 rootfirst.svn::
-   Translation correct; spurious message due to empty branch. 
-   Not used by any test.  Should be replaced by a stream that 
+   Translation correct; spurious message due to empty branch.
+   Not used by any test.  Should be replaced by a stream that
    builds.
 
 samplebranch.svn::
@@ -471,14 +466,6 @@ symlink.svn::
 treecontents.svn::
    BUG: Possibly in repotool. Why the .gitignore message? Not used in
    any test.
-
-vanilla.svn::
-   Translation is correct.  Has an emptycommit, and there's a message
-   due to a property setting. Used in repocutter and repotool tests.
-
-wrong-mergeinfo.svn::
-   Translation is correct, produces a message due to unresolved
-   mergeinfo. Not used in any test.
 
 == Troubleshooting incorrect conversions ==
 
