@@ -54,15 +54,6 @@ This revision exists to be a tag target.
 from :3
 M 100644 :4 README
 
-tag root
-#legacy-id 1
-from :3
-tagger esr <esr> 1322672455 +0000
-data 73
-Linear history with tip tags.
-
-[[Tag from root commit at Subversion r1]]
-
 # This should yield an EOF message.
 read <binary.svn
 reposurgeon: EOF before readlimit.

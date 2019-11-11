@@ -1617,7 +1617,6 @@ CVS:trunk/server/upstype.h:1.1	2005-01-27T14:33:14Z!aquette
 CVS:trunk/server/user-data.h:1.1	2005-01-27T14:33:14Z!aquette
 CVS:trunk/server/user.c:1.1	2005-01-27T14:33:14Z!aquette
 CVS:trunk/server/user.h:1.1	2005-01-27T14:33:14Z!aquette
-SVN:1	2005-01-27T14:33:14Z!no-author
 SVN:10	2005-02-28T09:14:07Z!no-author
 SVN:100	2005-08-01T11:29:41Z!aquette
 SVN:101	2005-08-01T13:54:16Z!aquette
@@ -1901,6 +1900,7 @@ SVN:351	2006-02-11T16:18:40Z!adkorte-guest
 SVN:352	2006-02-12T21:46:27Z!selinger-guest
 SVN:353	2006-02-15T10:21:15Z!keyson-guest
 SVN:354.1	2006-02-16T13:25:06Z!clepple-guest:1
+SVN:354.2	2006-02-16T13:25:06Z!clepple-guest:2
 SVN:356	2006-02-16T13:31:43Z!clepple-guest
 SVN:358	2006-02-18T17:06:54Z!clepple-guest
 SVN:359	2006-02-21T13:13:48Z!clepple-guest

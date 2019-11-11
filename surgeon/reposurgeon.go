@@ -8115,6 +8115,14 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		logit(logEXTRACT, "Revision %d:", record.revision)
 		expandedNodes := sp.expandAllNodes(sp.revisions[ri].nodes, options)
 
+		// The first revision in an SVN repository frequently just
+		// creates the traditional trunk, branches, and tags directories
+		// with nothing in them. expandedNodes will be empty in that
+		// case, since no actual files were created. We skip this
+		// revision entirely in order to avoid creating an empty commit.
+		if ri == 1 && len(expandedNodes) == 0 {
+			continue
+		}
 		//memcheck(sp.repo)
 		commit := newCommit(sp.repo)
 		ad := record.date

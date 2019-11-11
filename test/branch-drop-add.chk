@@ -205,15 +205,6 @@ trunk development proceeds; feature E
 from :23
 M 100644 :24 src
 
-tag root
-#legacy-id 1
-from :5
-tagger db48x <db48x> 1352540133 +0000
-data 69
-default repository layout
-
-[[Tag from root commit at Subversion r1]]
-
 tag emptycommit-5
 #legacy-id 5
 from :8

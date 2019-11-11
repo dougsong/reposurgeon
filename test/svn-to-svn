@@ -122,7 +122,7 @@ then
     source=/dev/stdin
 else
     source="${tmpdir}/svn-to-svn-$$"
-    repocutter -r "0:${limit}" select >$source
+    ../repocutter -r "0:${limit}" select >$source
 fi
 
 # Should we build a repo from a dump presented on standard input?

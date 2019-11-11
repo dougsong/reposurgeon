@@ -43,12 +43,3 @@ tag a version
 from :3
 M 100644 :2 file
 
-tag root
-#legacy-id 1
-from :3
-tagger iay <iay> 1436022529 +0000
-data 79
-Project structure for msbuild files
-
-[[Tag from root commit at Subversion r1]]
-

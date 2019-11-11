@@ -1,10 +1,5 @@
 reposurgeon: "node-kind-first.svn", line 76: r1#2~trunk/assemblies properties set:
 reposurgeon: "node-kind-first.svn", line 76: 	svn:date = '2010-10-28T11:46:57.761945Z'
-#reposurgeon sourcetype svn
-commit refs/heads/master
-#legacy-id 1
-mark :1
-committer afranzen <afranzen> 1288266357 +0000
-data 15
-Initial Import
-
+reposurgeon: "node-kind-first.svn", line 76: empty stream or repository.
+reposurgeon: repository has no commits
+reposurgeon: no repo has been chosen.

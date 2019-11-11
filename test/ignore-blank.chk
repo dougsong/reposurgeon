@@ -34,15 +34,6 @@ comment for svn revision 2
 M 100644 :1 .gitignore
 M 100644 :2 file
 
-tag root
-#legacy-id 1
-from :3
-tagger iay <iay> 1435318258 +0000
-data 61
-Project structure
-
-[[Tag from root commit at Subversion r1]]
-
 tag emptycommit-3
 #legacy-id 3
 from :3

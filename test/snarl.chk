@@ -54,15 +54,6 @@ This commit was manufactured by cvs2svn to create tag
 from :4
 M 100644 :2 CHANGES
 
-tag root
-#legacy-id 1
-from :3
-tagger no-author <no-author> 1106836394 +0000
-data 82
-New repository initialized by cvs2svn.
-
-[[Tag from root commit at Subversion r1]]
-
 tag emptycommit-4
 #legacy-id 4
 from :3

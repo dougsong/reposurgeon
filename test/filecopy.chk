@@ -100,12 +100,3 @@ Add some content after the file copy
 from :9
 M 100644 :10 README
 
-tag root
-#legacy-id 1
-from :3
-tagger esr <esr> 1323741971 +0000
-data 61
-Directory layout.
-
-[[Tag from root commit at Subversion r1]]
-

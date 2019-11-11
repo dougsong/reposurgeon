@@ -364,12 +364,3 @@ from :37
 M 100644 :41 VERSION
 M 100644 :42 src
 
-tag root
-#legacy-id 1
-from :5
-tagger db48x <db48x> 1352206622 +0000
-data 69
-default repository layout
-
-[[Tag from root commit at Subversion r1]]
-

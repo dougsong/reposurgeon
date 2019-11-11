@@ -1,4 +1,4 @@
-reposurgeon: "branchreplace.svn", line 643: ':26': deleting parentless zero-op commit on refs/heads/trunk-deleted-r12-1.
+reposurgeon: "branchreplace.svn", line 643: ':25': deleting parentless zero-op commit on refs/heads/trunk-deleted-r12-1.
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -237,20 +237,6 @@ data 153
  - updated dependencies for rhino
 from :26
 M 100644 :27 drivers/Makefile.drvbuild
-
-tag root
-#legacy-id 1
-from :7
-tagger no-author <no-author> 1106836394 +0000
-data 457
-This is a severely hacked and stripped-down extraction from the NUT repository 
-intended to trap its major pathologies where they can be put under a 
-microscope and used as a regression test.  It includes a multibranch commit
-and a mid-branch delete followed by a branch rename to on top
-of the deleted branch.  The original file content has been replaced with small
-unique cookies, but the structure left intact.
-
-[[Tag from root commit at Subversion r1]]
 
 tag emptycommit-4
 #legacy-id 4

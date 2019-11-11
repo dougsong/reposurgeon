@@ -53,12 +53,3 @@ from :4
 M 100644 :2 dir2/file
 M 100755 :2 dir2/file
 
-tag root
-#legacy-id 1
-from :3
-tagger Fred J. Foonly <foonly@foo.com> 360 +0000
-data 57
-Create trunk.
-
-[[Tag from root commit at Subversion r1]]
-

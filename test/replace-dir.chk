@@ -49,12 +49,3 @@ from :3
 D d1/f1
 M 100644 :4 d1/f2
 
-tag root
-#legacy-id 1
-from :3
-tagger jsm28 <jsm28> 1497308012 +0000
-data 57
-Create trunk.
-
-[[Tag from root commit at Subversion r1]]
-

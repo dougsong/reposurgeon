@@ -57,12 +57,3 @@ The import stream representation of this commit should have a delete fileop.
 from :5
 D doomed
 
-tag root
-#legacy-id 1
-from :3
-tagger esr <esr> 1323707257 +0000
-data 61
-Directory layout.
-
-[[Tag from root commit at Subversion r1]]
-

@@ -88,12 +88,3 @@ Add another commit so we can see if the .gitignore gets created.
 from :7
 M 100644 :8 README
 
-tag root
-#legacy-id 1
-from :3
-tagger esr <esr> 1352221383 +0000
-data 61
-Directory layout.
-
-[[Tag from root commit at Subversion r1]]
-

@@ -131,15 +131,6 @@ Explain the final expected result.
 from :9
 M 100644 :10 README
 
-tag root
-#legacy-id 1
-from :3
-tagger chungy <chungy> 1391603574 +0000
-data 70
-Create standard SVN layout
-
-[[Tag from root commit at Subversion r1]]
-
 tag emptycommit-3
 #legacy-id 3
 from :3

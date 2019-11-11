@@ -61,12 +61,3 @@ A random modification on the branch side.
 from :4
 M 100644 :5 README
 
-tag root
-#legacy-id 1
-from :3
-tagger esr <esr> 1352756454 +0000
-data 68
-Ceci n'est pas un trunk.
-
-[[Tag from root commit at Subversion r1]]
-

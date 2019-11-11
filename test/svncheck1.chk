@@ -57,12 +57,3 @@ Copy of sourcedir/sourcefile.txt to targetdir.
 from :5
 M 100755 :4 targetdir/sourcefile.txt
 
-tag root
-#legacy-id 1
-from :3
-tagger Fred J. Foonly <foonly@foo.com> 360 +0000
-data 61
-Directory layout.
-
-[[Tag from root commit at Subversion r1]]
-

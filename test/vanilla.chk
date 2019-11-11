@@ -79,12 +79,3 @@ Adding a property setting.
 from :7
 M 100644 :6 README
 
-tag root
-#legacy-id 1
-from :3
-tagger esr <esr> 1322671315 +0000
-data 122
-A vanilla repository - standard layout, linear history, no tags, no branches. 
-
-[[Tag from root commit at Subversion r1]]
-

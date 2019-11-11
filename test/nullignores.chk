@@ -76,12 +76,3 @@ Create a bookend.
 from :7
 M 100644 :8 README
 
-tag root
-#legacy-id 1
-from :3
-tagger esr <esr> 1568561651 +0000
-data 61
-Directory layout.
-
-[[Tag from root commit at Subversion r1]]
-

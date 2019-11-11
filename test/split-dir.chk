@@ -96,13 +96,3 @@ M 100644 :4 bar2/src
 M 100644 :4 baz2/src
 M 100644 :4 foo2/src
 
-Event 9 =================================================================
-tag root
-#legacy-id 1
-from :3
-tagger brooksd <brooksd> 1353813660 +0000
-data 59
-add directories
-
-[[Tag from root commit at Subversion r1]]
-

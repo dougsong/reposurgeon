@@ -88,15 +88,6 @@ Reintroduce foo to then delete it. There should be a M .gitignore.
 from :8
 M 100644 :6 foo/.gitignore
 
-tag root
-#legacy-id 1
-from :3
-tagger esr <esr> 1352219253 +0000
-data 61
-Directory layout.
-
-[[Tag from root commit at Subversion r1]]
-
 tag emptycommit-7
 #legacy-id 7
 from :9

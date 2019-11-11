@@ -144,12 +144,3 @@ svn copy file://${PWD}/test-repo/branches/foocopy/bar/child3 file://${PWD}/test-
 from :15
 M 100644 :4 child3
 
-tag root
-#legacy-id 1
-from :3
-tagger esr <esr> 1324128964 +0000
-data 61
-Directory layout.
-
-[[Tag from root commit at Subversion r1]]
-

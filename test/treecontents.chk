@@ -233,16 +233,6 @@ subdir/subfile2
 from :18
 M 100644 :19 file4
 
-Event 22 ================================================================
-tag root
-#legacy-id 1
-from :5
-tagger frnchfrgg <frnchfrgg> 1366743176 +0000
-data 74
-Create the standard SVN layout
-
-[[Tag from root commit at Subversion r1]]
-
 manifest
 Event 6 =================================================================
 # Legacy-ID: 2

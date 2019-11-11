@@ -1,5 +1,4 @@
 reposurgeon: "swap.svn", line 4058: branch links detected by file ops only: ["activeedi/"]
-reposurgeon: "swap.svn", line 4058: ':2': deleting parentless zero-op commit on refs/heads/activeedi.
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -89,7 +88,6 @@ committer pablo.lerina <pablo.lerina> 1250103338 +0000
 data 17
 Initial import.
 
-deleteall
 M 100644 :1 .gitignore
 M 100644 :2 trunk/README
 M 100644 :3 trunk/Rakefile
@@ -1647,6 +1645,16 @@ M 100644 :237 trunk/lib/git_validations.rb
 M 100644 :239 trunk/lib/proxies.rb
 M 100644 :238 trunk/lib/proxies/proxy_hash.rb
 M 100644 :240 trunk/lib/signers.rb
+
+tag root
+#legacy-id 2
+from :14
+tagger pablo.lerina <pablo.lerina> 1250102929 +0000
+data 101
+Criando estrutura de repositorio (trunk, branches, tags)
+
+
+[[Tag from root commit at Subversion r2]]
 
 tag tipdelete-brazilian-nfse
 #legacy-id 19.1

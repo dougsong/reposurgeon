@@ -43,12 +43,3 @@ appended to legacy rev 2 comment
 M 100644 :3 .gitignore
 M 100644 :4 file
 
-tag root
-#legacy-id 1
-from :5
-tagger iay <iay> 1435920920 +0000
-data 61
-Project structure
-
-[[Tag from root commit at Subversion r1]]
-

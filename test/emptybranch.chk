@@ -43,12 +43,3 @@ Create an empty top-level branch for test purposes.  Should be tagified.
 from :3
 M 100644 :2 README
 
-tag root
-#legacy-id 1
-from :3
-tagger esr <esr> 1323167840 +0000
-data 61
-Directory layout.
-
-[[Tag from root commit at Subversion r1]]
-

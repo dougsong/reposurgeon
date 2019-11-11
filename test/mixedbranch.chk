@@ -70,12 +70,3 @@ This is an evil mixed-branch commit.
 from :3
 M 100644 :5 README
 
-tag root
-#legacy-id 1
-from :3
-tagger esr <esr> 1355183327 +0000
-data 61
-Directory layout.
-
-[[Tag from root commit at Subversion r1]]
-

@@ -171,12 +171,3 @@ M 100644 :13 bar.txt
 M 100644 :15 baz.txt
 M 100644 :17 foo.txt
 
-tag root
-#legacy-id 1
-from :3
-tagger Fred J. Foonly <foonly@foo.com> 360 +0000
-data 61
-Directory layout.
-
-[[Tag from root commit at Subversion r1]]
-

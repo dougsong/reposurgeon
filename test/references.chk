@@ -34,7 +34,7 @@ reposurgeon: "references.svn", line 53289: r326~tags/reportbuf_base0/aclocal.m4:
 reposurgeon: r326~tags/reportbuf_base0/aclocal.m4: permission information may be lost.
 reposurgeon: "references.svn", line 53289: r326~tags/reportbuf_base0/install-sh: missing ancestor node for non-.gitignore
 reposurgeon: r326~tags/reportbuf_base0/install-sh: permission information may be lost.
-reposurgeon: "references.svn", line 53289: ':756': deleting parentless zero-op commit on refs/heads/trunk-deleted-r355-1.
+reposurgeon: "references.svn", line 53289: ':755': deleting parentless zero-op commit on refs/heads/trunk-deleted-r355-1.
 reposurgeon: couldn't match a name at <1>
 reposurgeon: couldn't match a name at <1>
 [291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312]
@@ -19354,15 +19354,6 @@ data 74
 removed Makefile from Testing branch, because it does not belong in SVN. 
 from :1945
 D Makefile
-
-tag root
-#legacy-id 1
-from :289
-tagger no-author <no-author> 1106836394 +0000
-data 82
-New repository initialized by cvs2svn.
-
-[[Tag from root commit at Subversion r1]]
 
 reset refs/tags/v2.0.1
 from :290

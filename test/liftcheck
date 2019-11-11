@@ -67,10 +67,10 @@ fi
 ./svn-to-svn ${svnquiet} ${slimit} -c <${what} ${stem}
 
 # Make a git repo from the dump using reposurgeon
-${REPOSURGEON:-reposurgeon} "${TESTOPT}" "${rlimit}" "read <${what}" "prefer git" "rebuild ${stem}-git"
+${REPOSURGEON:-../reposurgeon} "${TESTOPT}" "${rlimit}" "read <${what}" "prefer git" "rebuild ${stem}-git"
 
 # Compare the original with the lift
-repotool ${repotoolopt} compare-all ${compareopt} ${stem}-checkout ${stem}-git
+../repotool ${repotoolopt} compare-all ${compareopt} ${stem}-checkout ${stem}-git
 
 if [ $debug != no ]
 then

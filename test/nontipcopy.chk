@@ -132,15 +132,6 @@ Another modification, to make the history graph more interesting.
 from :7
 M 100644 :12 README
 
-tag root
-#legacy-id 1
-from :3
-tagger esr <esr> 1322088070 +0000
-data 64
-Initial repo layout.
-
-[[Tag from root commit at Subversion r1]]
-
 tag emptycommit-9
 #legacy-id 9
 from :13

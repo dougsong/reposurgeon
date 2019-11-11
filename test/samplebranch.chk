@@ -103,15 +103,6 @@ Create another node on the branch side.
 from :8
 M 100644 :11 README
 
-tag root
-#legacy-id 1
-from :3
-tagger esr <esr> 1322682380 +0000
-data 108
-This repo illustrates simple branching with interleaved commits.
-
-[[Tag from root commit at Subversion r1]]
-
 tag tipdelete-samplebranch
 #legacy-id 8.1
 from :12

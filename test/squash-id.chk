@@ -63,12 +63,3 @@ comment for svn revision 5
 from :7
 M 100644 :8 file
 
-tag root
-#legacy-id 1
-from :3
-tagger iay <iay> 1435159042 +0000
-data 61
-Project structure
-
-[[Tag from root commit at Subversion r1]]
-

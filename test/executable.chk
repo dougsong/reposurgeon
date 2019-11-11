@@ -176,12 +176,3 @@ from :17
 M 100644 :1 .gitignore
 M 100755 :18 goodbye
 
-tag root
-#legacy-id 1
-from :3
-tagger esr <esr> 1323737921 +0000
-data 61
-Directory layout.
-
-[[Tag from root commit at Subversion r1]]
-

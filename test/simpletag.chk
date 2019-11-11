@@ -98,12 +98,3 @@ from :10
 M 100644 :9 README
 M 100644 :7 creation-example
 
-tag root
-#legacy-id 1
-from :3
-tagger esr <esr> 1322672455 +0000
-data 73
-Linear history with tip tags.
-
-[[Tag from root commit at Subversion r1]]
-
