@@ -425,6 +425,9 @@ fleetwood.svn::
    The tags/1.0rc1/ on the SVN side is never instantiated in the
    git lift because it has no content. Used in tagretract.tst.
 
+format7.svn::
+   Produces a root branch
+
 nesting.svn::
    Doesn't build, no trunk branch. Used by nesting.tst.
 
