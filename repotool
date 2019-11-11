@@ -237,13 +237,13 @@ def is_dvcs_or_checkout(d="."):
 
 def vcsignores():
     "Return ignorable directories."
-    return [d for d in (".svn",
-                        "CVS", ".cvsignore",
-                        ".git", ".gitignore",
-                        ".hg", ".hgignore",
-                        ".bzr", ".bzrignore",
-                        ".bk", ".bkignore",
-                        "_darcs") if os.path.isdir(d) or os.path.isfile(d)]
+    return [".svn",
+            "CVS", ".cvsignore",
+            ".git", ".gitignore",
+            ".hg", ".hgignore",
+            ".bzr", ".bzrignore",
+            ".bk", ".bkignore",
+            "_darcs"]
 
 def initialize(args):
     "Initialize project-conversion machinery."
