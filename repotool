@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- mode: Python; -*-
 #
 # repotool - query and manipulate multiple repository types in a uniform way.
@@ -609,8 +609,8 @@ def compare(args):
         common.sort()
         try:
             for path in common:
-                sstat = os.stat(os.path.join(sourcedir, path))[stat.ST_MODE]
-                tstat = os.stat(os.path.join(targetdir, path))[stat.ST_MODE]
+                sstat = os.stat(os.path.join(sourcedir, path), follow_symlinks=False)[stat.ST_MODE]
+                tstat = os.stat(os.path.join(targetdir, path), follow_symlinks=False)[stat.ST_MODE]
                 if sstat != tstat:
                     print("{}: 0{:o} -> 0{:o}".format(path, sstat, tstat))
         except OSError:

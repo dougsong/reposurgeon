@@ -464,11 +464,8 @@ swap.svn::
    Doesn't build, no trunk branch. Used in a repocutter test.
 
 symlink.svn::
-   BUG: Probably in repotool. Not used in any test.
-
-treecontents.svn::
-   BUG: Possibly in repotool. Why the .gitignore message? Not used in
-   any test.
+   BUG: diff tries to follow the symlink inside the repository, which
+   fails
 
 == Troubleshooting incorrect conversions ==
 
