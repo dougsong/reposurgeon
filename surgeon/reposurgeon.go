@@ -8983,7 +8983,7 @@ func svnProcessJunk(sp *StreamParser, options stringSet, baton *Baton) {
 			// lose their fileops so they'll be tagified in a later phase.
 			if !commit.hasChildren() && len(commit.operations()) > 0 {
 				for _, op := range commit.operations() {
-					if !op.genflag {
+					if !op.genflag || (op.genflag && op.op == opD) {
 						goto nodrop
 					}
 				}

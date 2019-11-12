@@ -88,12 +88,12 @@ Reintroduce foo to then delete it. There should be a M .gitignore.
 from :8
 M 100644 :6 foo/.gitignore
 
-tag emptycommit-7
+commit refs/heads/master
 #legacy-id 7
-from :9
-tagger esr <esr> 1352220901 +0000
-data 100
+mark :10
+committer esr <esr> 1352220901 +0000
+data 50
 Delete foo again; there should be a D .gitignore.
-
-[[Tag from zero-fileop commit at Subversion r7]]
+from :9
+D foo/.gitignore
 
