@@ -90,7 +90,6 @@ import (
 	"math"
 	"net/http"
 	_ "net/http/pprof"
-	"net/mail"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -119,6 +118,7 @@ import (
 	terminal "golang.org/x/crypto/ssh/terminal"
 	semaphore "golang.org/x/sync/semaphore"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
+	fqme "gitlab.com/esr/fqme"
 )
 
 const version = "4.0-pre"
@@ -2736,33 +2736,11 @@ func whoami() (string, string) {
 		return "Fred J. Foonly", "foonly@foo.com"
 	}
 
-	// Git version-control system
-	out1, err1 := exec.Command("git", "config", "user.name").CombinedOutput()
-	out2, err2 := exec.Command("git", "config", "user.email").CombinedOutput()
-	if err1 == nil && len(out1) != 0 && err2 == nil && len(out2) != 0 {
-		return strings.Trim(string(out1), "\n"), strings.Trim(string(out2), "\n")
+	name, email, err := fqme.WhoAmI()
+	if err == nil {
+		return name, email
 	}
-
-	// Mercurial version control system
-	out3, err3 := exec.Command("hg", "config", "ui.username").CombinedOutput()
-	if err3 == nil && len(out3) != 0 {
-		e, err := mail.ParseAddress(strings.Trim(string(out3), "\n"))
-		if err != nil {
-			log.Fatal(err)
-		}
-		return e.Name, e.Address
-	}
-
-	// Bazaar version control system
-	out4, err4 := exec.Command("bzr", "config", "email").CombinedOutput()
-	if err4 == nil && len(out4) != 0 {
-		e, err := mail.ParseAddress(strings.Trim(string(out4), "\n"))
-		if err != nil {
-			log.Fatal(err)
-		}
-		return e.Name, e.Address
-	}
-
+	
 	// Out of alternatives
 	log.Fatal("can't deduce user identity!")
 	return "", ""

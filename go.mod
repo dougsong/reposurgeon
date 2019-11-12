@@ -8,6 +8,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/ianbruene/go-difflib v1.1.2
 	github.com/termie/go-shutil v0.0.0-20140729215957-bcacb06fecae
+	gitlab.com/esr/fqme v0.0.0-20191112080350-9ad76c3712c8
 	gitlab.com/ianbruene/kommandant v0.5.2
 	golang.org/x/crypto v0.0.0-20191029031824-8986dd9e96cf
 	golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271 // indirect
