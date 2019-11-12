@@ -453,12 +453,7 @@ rootfirst.svn::
 
 samplebranch.svn::
    Git translation preserves a deleted branch, which causes liftcheck
-   to complain. Used in branchdelete.tst and branchrename.tst. This
-   does have a minor bug; the final commit has a single operation, to
-   delete the branch directory. This is turned into a single deleteall
-   op. This is considered a trivial clique, but because it is the only
-   clique we mistakenly split this commit. The result is a spurious
-   "[[Split portion of a mixed commit.]]" added to the commit message.
+   to complain. Used in branchdelete.tst and branchrename.tst.
 
 split-dir.svn::
    Translation is correct; the root tag is because root-level directories
