@@ -19785,11 +19785,9 @@ Obsolete branch names:
 [[Split portion of a mixed commit.]]
 
 tag tipdelete-regex_branch
-#legacy-id 366.1
+#legacy-id 366
 from :1088
 tagger Peter Selinger <selinger@users.sourceforge.net> 1141237476 +0000
-data 103
+data 65
 Removing regex_branch, because it was merged into trunk in r197.
-
-[[Split portion of a mixed commit.]]
 

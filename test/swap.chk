@@ -1666,13 +1666,11 @@ fixes #9863 - Renomeado o nome do projeto para git_nfse e alteradas as tags para
 [[Split portion of a mixed commit.]]
 
 tag tipdelete-activeedi
-#legacy-id 25.1
+#legacy-id 25
 from :61
 tagger ronie <ronie> 1372444186 +0000
-data 130
+data 92
 Removido diretorio da gem activeedi pois a mesma foi descontinuada ha mais de 3 anos atras.
-
-[[Split portion of a mixed commit.]]
 
 tag tipdelete-git_nfse
 #legacy-id 36.1

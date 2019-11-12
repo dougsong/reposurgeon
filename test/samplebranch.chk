@@ -104,11 +104,9 @@ from :8
 M 100644 :11 README
 
 tag tipdelete-samplebranch
-#legacy-id 8.1
+#legacy-id 8
 from :12
 tagger esr <esr> 1324127616 +0000
-data 113
+data 75
 This is an example of a branch tip delete which should become a deleteall.
-
-[[Split portion of a mixed commit.]]
 
