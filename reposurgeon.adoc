@@ -8,12 +8,6 @@ reposurgeon - surgical operations on repositories
 
 *reosurgeon* [command...]
 
-// In case we ever want to go back to DocBook
-//<cmdsynopsis>
-//  +reposurgeon+
-//  <arg choice='opt' rep='repeat'><replaceable>command</replaceable></arg>
-//</cmdsynopsis>
-
 [[description]]
 == DESCRIPTION ==
 
@@ -1980,7 +1974,7 @@ without -A.
 With the 'write' modifier, write a mapping file that could be
 interpreted by +authors read+, with entries for each
 unique committer, author, and tagger (to standard output or a
-<-redirected mapping file). This may be helpful as a start on
+>-redirected mapping file). This may be helpful as a start on
 building an authors file, though each part to the right of an equals
 sign will need editing.
 
@@ -2351,7 +2345,7 @@ their tip commits.
 
 --ignore-properties::
 Suppress read-time warnings about discarded property
-settings.
+settings. 
 
 --user-ignores::
 Don't generate .gitignore files from svn:ignore
