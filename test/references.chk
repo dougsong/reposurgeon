@@ -18609,9 +18609,42 @@ M 100644 :1897 drivers/oneac.c
 M 100644 :1898 drivers/tripplite-hid.c
 M 100644 :1899 drivers/tripplitesu.c
 
+commit refs/tags/CFL_TL_pre_Dev_merge
+#legacy-id 354.1
+mark :1901
+committer Charles Lepple <clepple+nut@gmail.com> 1140096306 +0000
+data 86
+Cleaning up repository after initial SVN import
+
+[[Split portion of a mixed commit.]]
+from :1176
+deleteall
+
+commit refs/tags/INITIAL_IMPORT_V2_0_1_pre4
+#legacy-id 354.2
+mark :1902
+committer Charles Lepple <clepple+nut@gmail.com> 1140096306 +0000
+data 86
+Cleaning up repository after initial SVN import
+
+[[Split portion of a mixed commit.]]
+from :291
+deleteall
+
+commit refs/tags/alioth_SVN_migration
+#legacy-id 354.3
+mark :1903
+committer Charles Lepple <clepple+nut@gmail.com> 1140096306 +0000
+data 86
+Cleaning up repository after initial SVN import
+
+[[Split portion of a mixed commit.]]
+from :739
+deleteall
+
 commit refs/heads/master
 #legacy-id 356
-mark :1901
+mark :1904
 committer Charles Lepple <clepple+nut@gmail.com> 1140096703 +0000
 data 40
 Moving branches/Development into trunk.
@@ -19034,8 +19067,61 @@ M 100644 :286 server/user-data.h
 M 100644 :287 server/user.c
 M 100644 :288 server/user.h
 
+commit refs/heads/Development
+#legacy-id 356.1
+mark :1905
+committer Charles Lepple <clepple+nut@gmail.com> 1140096703 +0000
+data 78
+Moving branches/Development into trunk.
+
+[[Split portion of a mixed commit.]]
+from :1900
+deleteall
+
+commit refs/heads/INITIAL_IMPORT_AQ
+#legacy-id 357.1
+mark :1906
+committer Charles Lepple <clepple+nut@gmail.com> 1140278138 +0000
+data 310
+Obsolete branch names:
+ * INITIAL_IMPORT_AQ: left over from 'cvs import'; this is effectively revision 3 in SVN.
+ * r2.0.1: Not sure why this is a branch tag.
+ * v2.1.0: This corresponds to what was source:branches/Development back in May 2005, but it is now source:trunk
+
+[[Split portion of a mixed commit.]]
+from :290
+deleteall
+
+commit refs/heads/r2.0.1
+#legacy-id 357.2
+mark :1907
+committer Charles Lepple <clepple+nut@gmail.com> 1140278138 +0000
+data 310
+Obsolete branch names:
+ * INITIAL_IMPORT_AQ: left over from 'cvs import'; this is effectively revision 3 in SVN.
+ * r2.0.1: Not sure why this is a branch tag.
+ * v2.1.0: This corresponds to what was source:branches/Development back in May 2005, but it is now source:trunk
+
+[[Split portion of a mixed commit.]]
+from :313
+deleteall
+
+commit refs/heads/v2.1.0
+#legacy-id 357.3
+mark :1908
+committer Charles Lepple <clepple+nut@gmail.com> 1140278138 +0000
+data 310
+Obsolete branch names:
+ * INITIAL_IMPORT_AQ: left over from 'cvs import'; this is effectively revision 3 in SVN.
+ * r2.0.1: Not sure why this is a branch tag.
+ * v2.1.0: This corresponds to what was source:branches/Development back in May 2005, but it is now source:trunk
+
+[[Split portion of a mixed commit.]]
+from :472
+deleteall
+
 blob
-mark :1902
+mark :1909
 data 113
 /Makefile
 /upsimage.cgi
@@ -19051,7 +19137,7 @@ data 113
 
 commit refs/heads/master
 #legacy-id 358
-mark :1903
+mark :1910
 committer Charles Lepple <clepple+nut@gmail.com> 1140282414 +0000
 data 344
 In SVN, you use the svn:ignore property on a directory to ignore files.
@@ -19061,271 +19147,280 @@ and added a client library to the ignore list.
 
 Reference:
     http://svnbook.red-bean.com/en/1.1/ch07s02.html#svn-ch-7-sect-2.3.3
-from :1901
-M 100644 :1902 clients/.gitignore
+from :1904
+M 100644 :1909 clients/.gitignore
 
 blob
-mark :1904
+mark :1911
 data 45
 Revision is 359, file path is trunk/CHANGES.
 
 commit refs/heads/master
 #legacy-id 359
-mark :1905
+mark :1912
 committer Charles Lepple <clepple+nut@gmail.com> 1140527628 +0000
 data 33
 Note SVN conversion in changelog
-from :1903
-M 100644 :1904 CHANGES
-
-blob
-mark :1906
-data 45
-Revision is 360, file path is trunk/INSTALL.
-
-commit refs/heads/master
-#legacy-id 360
-mark :1907
-committer Peter Selinger <selinger@users.sourceforge.net> 1140647116 +0000
-data 53
-* clarified newhidups use of "port" value in INSTALL
-from :1905
-M 100644 :1906 INSTALL
-
-blob
-mark :1908
-data 45
-Revision is 361, file path is trunk/CHANGES.
-
-blob
-mark :1909
-data 57
-Revision is 361, file path is trunk/drivers/upsdrvctl.c.
-
-commit refs/heads/master
-#legacy-id 361
-mark :1910
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1140961608 +0000
-data 54
-Remove superfluous 'xstrdup' from drivers/upsdrvctl.c
-from :1907
-M 100644 :1908 CHANGES
-M 100644 :1909 drivers/upsdrvctl.c
-
-blob
-mark :1911
-data 45
-Revision is 362, file path is trunk/CHANGES.
-
-commit refs/heads/master
-#legacy-id 362
-mark :1912
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1141056595 +0000
-data 6
-nomsg
 from :1910
 M 100644 :1911 CHANGES
 
 blob
 mark :1913
+data 45
+Revision is 360, file path is trunk/INSTALL.
+
+commit refs/heads/master
+#legacy-id 360
+mark :1914
+committer Peter Selinger <selinger@users.sourceforge.net> 1140647116 +0000
+data 53
+* clarified newhidups use of "port" value in INSTALL
+from :1912
+M 100644 :1913 INSTALL
+
+blob
+mark :1915
+data 45
+Revision is 361, file path is trunk/CHANGES.
+
+blob
+mark :1916
+data 57
+Revision is 361, file path is trunk/drivers/upsdrvctl.c.
+
+commit refs/heads/master
+#legacy-id 361
+mark :1917
+committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1140961608 +0000
+data 54
+Remove superfluous 'xstrdup' from drivers/upsdrvctl.c
+from :1914
+M 100644 :1915 CHANGES
+M 100644 :1916 drivers/upsdrvctl.c
+
+blob
+mark :1918
+data 45
+Revision is 362, file path is trunk/CHANGES.
+
+commit refs/heads/master
+#legacy-id 362
+mark :1919
+committer Kjell Claesson <keyson-guest@alioth.debian.org> 1141056595 +0000
+data 6
+nomsg
+from :1917
+M 100644 :1918 CHANGES
+
+blob
+mark :1920
 data 54
 Revision is 363, file path is trunk/data/driver.list.
 
 commit refs/heads/master
 #legacy-id 363
-mark :1914
+mark :1921
 committer Kjell Claesson <keyson-guest@alioth.debian.org> 1141056605 +0000
 data 6
 nomsg
-from :1912
-M 100644 :1913 data/driver.list
+from :1919
+M 100644 :1920 data/driver.list
 
 blob
-mark :1915
+mark :1922
 data 45
 Revision is 364, file path is trunk/CHANGES.
 
 commit refs/heads/master
 #legacy-id 364
-mark :1916
+mark :1923
 committer Arnaud Quette <arnaud.quette@free.fr> 1141071413 +0000
 data 27
 move debian/ to packaging/
-from :1914
-M 100644 :1915 CHANGES
+from :1921
+M 100644 :1922 CHANGES
 
 blob
-mark :1917
+mark :1924
 data 45
 Revision is 365, file path is trunk/CHANGES.
 
 blob
-mark :1918
+mark :1925
 data 56
 Revision is 365, file path is trunk/drivers/mge-shut.h.
 
 blob
-mark :1919
+mark :1926
 data 57
 Revision is 365, file path is trunk/drivers/mge-utalk.h.
 
 blob
-mark :1920
+mark :1927
 data 56
 Revision is 365, file path is trunk/drivers/snmp-ups.c.
 
 commit refs/heads/master
 #legacy-id 365
-mark :1921
+mark :1928
 committer Arnaud Quette <arnaud.quette@free.fr> 1141072973 +0000
 data 45
 remove the zero prefix on mge-* and snmp-ups
-from :1916
-M 100644 :1917 CHANGES
-M 100644 :1918 drivers/mge-shut.h
-M 100644 :1919 drivers/mge-utalk.h
-M 100644 :1920 drivers/snmp-ups.c
+from :1923
+M 100644 :1924 CHANGES
+M 100644 :1925 drivers/mge-shut.h
+M 100644 :1926 drivers/mge-utalk.h
+M 100644 :1927 drivers/snmp-ups.c
+
+commit refs/heads/regex_branch
+#legacy-id 366
+mark :1929
+committer Peter Selinger <selinger@users.sourceforge.net> 1141237476 +0000
+data 65
+Removing regex_branch, because it was merged into trunk in r197.
+from :1088
+deleteall
 
 blob
-mark :1922
+mark :1930
 data 53
 Revision is 367, file path is trunk/common/common.c.
 
 commit refs/heads/master
 #legacy-id 367
-mark :1923
+mark :1931
 committer Peter Selinger <selinger@users.sourceforge.net> 1141378966 +0000
 data 67
 * set errno=ENOENT in common.c:get_user_pwent() if user not found 
-from :1921
-M 100644 :1922 common/common.c
+from :1928
+M 100644 :1930 common/common.c
 
 blob
-mark :1924
+mark :1932
 data 45
 Revision is 368, file path is trunk/CHANGES.
 
 commit refs/heads/master
 #legacy-id 368
-mark :1925
+mark :1933
 committer Peter Selinger <selinger@users.sourceforge.net> 1141390367 +0000
 data 38
 * updated CHANGES for previous commit
-from :1923
-M 100644 :1924 CHANGES
+from :1931
+M 100644 :1932 CHANGES
 
 blob
-mark :1926
+mark :1934
 data 45
 Revision is 369, file path is trunk/CHANGES.
 
 blob
-mark :1927
+mark :1935
 data 54
 Revision is 369, file path is trunk/clients/upslog.c.
 
 blob
-mark :1928
+mark :1936
 data 54
 Revision is 369, file path is trunk/clients/upsmon.c.
 
 blob
-mark :1929
+mark :1937
 data 53
 Revision is 369, file path is trunk/common/common.c.
 
 blob
-mark :1930
+mark :1938
 data 52
 Revision is 369, file path is trunk/drivers/main.c.
 
 blob
-mark :1931
+mark :1939
 data 51
 Revision is 369, file path is trunk/server/upsd.c.
 
 commit refs/heads/master
 #legacy-id 369
-mark :1932
+mark :1940
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1141417548 +0000
 data 109
 handle problems with get_user_pwent() directly, instead of first returning to the caller with a NULL pointer
-from :1925
-M 100644 :1926 CHANGES
-M 100644 :1927 clients/upslog.c
-M 100644 :1928 clients/upsmon.c
-M 100644 :1929 common/common.c
-M 100644 :1930 drivers/main.c
-M 100644 :1931 server/upsd.c
+from :1933
+M 100644 :1934 CHANGES
+M 100644 :1935 clients/upslog.c
+M 100644 :1936 clients/upsmon.c
+M 100644 :1937 common/common.c
+M 100644 :1938 drivers/main.c
+M 100644 :1939 server/upsd.c
 
 blob
-mark :1933
+mark :1941
 data 45
 Revision is 370, file path is trunk/CHANGES.
 
 blob
-mark :1934
+mark :1942
 data 55
 Revision is 370, file path is trunk/drivers/safenet.c.
 
 commit refs/heads/master
 #legacy-id 370
-mark :1935
+mark :1943
 committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1141482672 +0000
 data 69
 drivers/safenet.c: increase timeout for reading replies from the UPS
-from :1932
-M 100644 :1933 CHANGES
-M 100644 :1934 drivers/safenet.c
+from :1940
+M 100644 :1941 CHANGES
+M 100644 :1942 drivers/safenet.c
 
 blob
-mark :1936
+mark :1944
 data 56
 Revision is 371, file path is branches/Testing/CHANGES.
 
 blob
-mark :1937
+mark :1945
 data 65
 Revision is 371, file path is branches/Testing/data/driver.list.
 
 blob
-mark :1938
+mark :1946
 data 66
 Revision is 371, file path is branches/Testing/drivers/apc-hid.c.
 
 blob
-mark :1939
+mark :1947
 data 68
 Revision is 371, file path is branches/Testing/drivers/hidparser.c.
 
 blob
-mark :1940
+mark :1948
 data 67
 Revision is 371, file path is branches/Testing/drivers/hidtypes.h.
 
 blob
-mark :1941
+mark :1949
 data 65
 Revision is 371, file path is branches/Testing/drivers/libhid.c.
 
 blob
-mark :1942
+mark :1950
 data 65
 Revision is 371, file path is branches/Testing/drivers/libhid.h.
 
 blob
-mark :1943
+mark :1951
 data 68
 Revision is 371, file path is branches/Testing/drivers/newhidups.c.
 
 blob
-mark :1944
+mark :1952
 data 68
 Revision is 371, file path is branches/Testing/drivers/newhidups.h.
 
 commit refs/heads/Testing
 #legacy-id 371
-mark :1945
+mark :1953
 author Peter Selinger <selinger@users.sourceforge.net> 1141494281 +0000
 committer Peter Selinger <selinger@users.sourceforge.net> 1141494281 +0000
 data 325
@@ -19336,23 +19431,23 @@ extraction of logical values from report. Added Kelvin-to-Celsius
 conversion. Tweaked APC date conversion. Back-UPS BF500 support.
 Deleted unused items in HIDItem structure.
 from :1717
-M 100644 :1936 CHANGES
-M 100644 :1937 data/driver.list
-M 100644 :1938 drivers/apc-hid.c
-M 100644 :1939 drivers/hidparser.c
-M 100644 :1940 drivers/hidtypes.h
-M 100644 :1941 drivers/libhid.c
-M 100644 :1942 drivers/libhid.h
-M 100644 :1943 drivers/newhidups.c
-M 100644 :1944 drivers/newhidups.h
+M 100644 :1944 CHANGES
+M 100644 :1945 data/driver.list
+M 100644 :1946 drivers/apc-hid.c
+M 100644 :1947 drivers/hidparser.c
+M 100644 :1948 drivers/hidtypes.h
+M 100644 :1949 drivers/libhid.c
+M 100644 :1950 drivers/libhid.h
+M 100644 :1951 drivers/newhidups.c
+M 100644 :1952 drivers/newhidups.h
 
 commit refs/heads/Testing
 #legacy-id 372
-mark :1946
+mark :1954
 committer Peter Selinger <selinger@users.sourceforge.net> 1141494469 +0000
 data 74
 removed Makefile from Testing branch, because it does not belong in SVN. 
-from :1945
+from :1953
 D Makefile
 
 reset refs/tags/v2.0.1
@@ -19711,83 +19806,4 @@ data 111
 file .cvsignore was initially added on branch Development.
 
 [[Tag from zero-fileop commit at Subversion r317]]
-
-tag tipdelete-CFL_TL_pre_Dev_merge
-#legacy-id 354.1
-from :1176
-tagger Charles Lepple <clepple+nut@gmail.com> 1140096306 +0000
-data 86
-Cleaning up repository after initial SVN import
-
-[[Split portion of a mixed commit.]]
-
-tag tipdelete-INITIAL_IMPORT_V2_0_1_pre4
-#legacy-id 354.2
-from :291
-tagger Charles Lepple <clepple+nut@gmail.com> 1140096306 +0000
-data 86
-Cleaning up repository after initial SVN import
-
-[[Split portion of a mixed commit.]]
-
-tag tipdelete-alioth_SVN_migration
-#legacy-id 354.3
-from :739
-tagger Charles Lepple <clepple+nut@gmail.com> 1140096306 +0000
-data 86
-Cleaning up repository after initial SVN import
-
-[[Split portion of a mixed commit.]]
-
-tag tipdelete-Development
-#legacy-id 356.1
-from :1900
-tagger Charles Lepple <clepple+nut@gmail.com> 1140096703 +0000
-data 78
-Moving branches/Development into trunk.
-
-[[Split portion of a mixed commit.]]
-
-tag tipdelete-INITIAL_IMPORT_AQ
-#legacy-id 357.1
-from :290
-tagger Charles Lepple <clepple+nut@gmail.com> 1140278138 +0000
-data 310
-Obsolete branch names:
- * INITIAL_IMPORT_AQ: left over from 'cvs import'; this is effectively revision 3 in SVN.
- * r2.0.1: Not sure why this is a branch tag.
- * v2.1.0: This corresponds to what was source:branches/Development back in May 2005, but it is now source:trunk
-
-[[Split portion of a mixed commit.]]
-
-tag tipdelete-r2.0.1
-#legacy-id 357.2
-from :313
-tagger Charles Lepple <clepple+nut@gmail.com> 1140278138 +0000
-data 310
-Obsolete branch names:
- * INITIAL_IMPORT_AQ: left over from 'cvs import'; this is effectively revision 3 in SVN.
- * r2.0.1: Not sure why this is a branch tag.
- * v2.1.0: This corresponds to what was source:branches/Development back in May 2005, but it is now source:trunk
-
-[[Split portion of a mixed commit.]]
-
-tag tipdelete-v2.1.0
-#legacy-id 357.3
-from :472
-tagger Charles Lepple <clepple+nut@gmail.com> 1140278138 +0000
-data 310
-Obsolete branch names:
- * INITIAL_IMPORT_AQ: left over from 'cvs import'; this is effectively revision 3 in SVN.
- * r2.0.1: Not sure why this is a branch tag.
- * v2.1.0: This corresponds to what was source:branches/Development back in May 2005, but it is now source:trunk
-
-[[Split portion of a mixed commit.]]
-
-tag tipdelete-regex_branch
-#legacy-id 366
-from :1088
-tagger Peter Selinger <selinger@users.sourceforge.net> 1141237476 +0000
-data 65
-Removing regex_branch, because it was merged into trunk in r197.
 

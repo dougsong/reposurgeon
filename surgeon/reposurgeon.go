@@ -9101,7 +9101,7 @@ func svnProcessTagEmpties(sp *StreamParser, options stringSet, baton *Baton, bra
 		return strings.Join(legend, "")
 	}
 	sp.repo.tagifyEmpty(nil,
-		/* tipdeletes*/ true,
+		/* tipdeletes*/ options.Contains("--nobranch"),
 		/* tagifyMerges */ false,
 		/* canonicalize */ false,
 		/* nameFunc */ tagname,

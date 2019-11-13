@@ -208,35 +208,46 @@ M 100644 :14 drivers/Makefile.drvbuild
 M 100644 :19 drivers/libusb.c
 M 100644 :22 drivers/serial.c
 
-blob
+commit refs/heads/Development
+#legacy-id 13.1
 mark :25
+committer clepple-guest <clepple-guest> 1140096703 +0000
+data 78
+Moving branches/Development into trunk.
+
+[[Split portion of a mixed commit.]]
+from :23
+deleteall
+
+blob
+mark :26
 data 62
 Revision is 14, file path is trunk/drivers/Makefile.drvbuild.
 
 commit refs/heads/master
 #legacy-id 14
-mark :26
+mark :27
 committer clepple-guest <clepple-guest> 1160101851 +0000
 data 57
 Ran 'make depend' to get rid of errors regarding rhino.h
 from :24
-M 100644 :25 drivers/Makefile.drvbuild
+M 100644 :26 drivers/Makefile.drvbuild
 
 blob
-mark :27
+mark :28
 data 62
 Revision is 15, file path is trunk/drivers/Makefile.drvbuild.
 
 commit refs/heads/master
 #legacy-id 15
-mark :28
+mark :29
 committer selinger-guest <selinger-guest> 1160443983 +0000
 data 153
  - mge-shut: made report buffer mechanism compatible with newmge-shut,
    cleaned up an unused variable from mge-shut.
  - updated dependencies for rhino
-from :26
-M 100644 :27 drivers/Makefile.drvbuild
+from :27
+M 100644 :28 drivers/Makefile.drvbuild
 
 tag emptycommit-4
 #legacy-id 4
@@ -246,13 +257,4 @@ data 105
 Initial CVS import from nut testing release 2.0.1-pre4
 
 [[Tag from zero-fileop commit at Subversion r4]]
-
-tag tipdelete-Development
-#legacy-id 13.1
-from :23
-tagger clepple-guest <clepple-guest> 1140096703 +0000
-data 78
-Moving branches/Development into trunk.
-
-[[Split portion of a mixed commit.]]
 

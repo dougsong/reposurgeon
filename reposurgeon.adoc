@@ -2296,8 +2296,8 @@ disambiguate as necessary.
 [[subversion]]
 == WORKING WITH SUBVERSION ==
 
-reposurgeon can read Subversion
-dumpfiles. You must point it at a repository, not a checkout directory.
+reposurgeon can read Subversion dumpfiles. You must point it at a
+repository, not a checkout directory.
 
 The transaction model of Subversion is nothing like that of the 
 DVCSes (distributed version control systems) that followed it. Two of the more

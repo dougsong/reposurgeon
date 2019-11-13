@@ -435,10 +435,6 @@ node-kind-first.svn::
    Translation is correct, but one of the property settings triggers
    a spurious message. Not a real bug.  Not used by any test.
 
-permcopy2.svn::
-   Translation is correct. Has an emptycommit. An empty source branch
-   is discarded.  This test load should be replaced. 
-
 references.svn::
    BUG: needs analysis. Used by the legacy-map test.
 

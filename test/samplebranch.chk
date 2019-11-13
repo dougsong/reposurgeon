@@ -103,10 +103,12 @@ Create another node on the branch side.
 from :8
 M 100644 :11 README
 
-tag tipdelete-samplebranch
+commit refs/heads/samplebranch
 #legacy-id 8
-from :12
-tagger esr <esr> 1324127616 +0000
+mark :13
+committer esr <esr> 1324127616 +0000
 data 75
 This is an example of a branch tip delete which should become a deleteall.
+from :12
+deleteall
 
