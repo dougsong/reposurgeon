@@ -2346,7 +2346,8 @@ Certain optional modifiers on the read command change
 its behavior when reading Subversion repositories:
 
 --nobranch::
-Suppress branch analysis.
+Suppress branch analysis. Keep deleted branches, tagifying
+their tip commits.
 
 --ignore-properties::
 Suppress read-time warnings about discarded property
