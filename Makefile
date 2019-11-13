@@ -2,7 +2,6 @@
 # makefile for reposurgeon
 #
 INSTALL=install
-PYLINT=pylint
 prefix?=/usr/local
 mandir?=share/man
 target=$(DESTDIR)$(prefix)
@@ -27,7 +26,7 @@ DOCS = README.adoc INSTALL.adoc NEWS TODO
 
 STOPOUT=1
 
-.PHONY: all install clean uninstall version pylint check zip release refresh \
+.PHONY: all install clean uninstall version check zip release refresh \
     docker-build docker-check docker-check-noscm \
     govet gotest goformat gofmt golint
 
