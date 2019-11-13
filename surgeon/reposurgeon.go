@@ -10029,8 +10029,8 @@ func defaultEmptyTagName(commit *Commit) string {
                           tipdeletes = false,
                           tagifyMerges = false,
                           canonicalize = true,
-                          nameFunc = lambda _: nil,
-                          legendFunc = lambda _: "",
+                          nameFunc = nil,
+                          legendFunc = nil,
                           createTags = true,
                           gripe = complain
                          ):
@@ -10044,7 +10044,7 @@ func defaultEmptyTagName(commit *Commit) string {
                       * legendFunc:    custom function for choosing the legend
                                        of a tag; no fallback is provided. By
                                        default it always returns "".
-                      * createTags    whether to create tags."""
+                      * createTags    whether to create tags.
 */
 
 func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, tagifyMerges bool, canonicalize bool, nameFunc func(*Commit) string, legendFunc func(*Commit) string, createTags bool, gripe func(string)) {
