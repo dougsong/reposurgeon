@@ -15290,7 +15290,7 @@ func (rs *Reposurgeon) HelpNews() {
 	rs.helpOutput(`
 4.0 differences from the Python 3.x versions:
 
-1. whoami() no longer reads .lynxrc files
+1. whoami() can get useful idenity data out of .muttrc files.
 2. Regular expressions use Go syntax rather than Python, except that.
    group references are still Pythonically led with a backslash rather
    than Goishly with $; this is to avoid a collision with $ used as a

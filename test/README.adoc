@@ -437,7 +437,7 @@ node-kind-first.svn::
 
 permcopy2.svn::
    Translation is correct. Has an emptycommit. An empty source branch
-   is discarded.  This Test load should be replaced. 
+   is discarded.  This test load should be replaced. 
 
 references.svn::
    BUG: needs analysis. Used by the legacy-map test.
