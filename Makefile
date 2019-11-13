@@ -26,9 +26,9 @@ DOCS = README.adoc INSTALL.adoc NEWS TODO
 
 STOPOUT=1
 
-.PHONY: all install clean uninstall version check zip release refresh \
+.PHONY: all install clean uninstall version check release refresh \
     docker-build docker-check docker-check-noscm \
-    govet gotest goformat gofmt golint
+    vet test fmt lint
 
 BINARIES = reposurgeon repotool repomapper repocutter
 MANPAGES = reposurgeon.1 repotool.1 repomapper.1 repocutter.1
@@ -153,9 +153,6 @@ dist: reposurgeon-$(VERS).tar.xz reposurgeon.1 repocutter.1 repotool.1 repomappe
 
 reposurgeon-$(VERS).md5: reposurgeon-$(VERS).tar.xz
 	@md5sum reposurgeon-$(VERS).tar.xz >reposurgeon-$(VERS).md5
-
-zip: $(SOURCES) $(DOCS)
-	zip -r reposurgeon-$(VERS).zip $(SOURCES) $(DOCS)
 
 release: reposurgeon-$(VERS).tar.xz reposurgeon-$(VERS).md5 reposurgeon.html repocutter.html repomapper.html reporting-bugs.html dvcs-migration-guide.html features.html
 	shipper version=$(VERS) | sh -e -x
