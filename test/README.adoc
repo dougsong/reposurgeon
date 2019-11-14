@@ -463,6 +463,11 @@ symlink.svn::
    BUG: diff tries to follow the symlink inside the repository, which
    fails
 
+tagpollute.svn::
+   BUG: Tag root attrbuted to wromng place due to partial copy.
+   Content mismatch, isiolating one defect. This is derived from
+   references.svn, isolating one defect.
+
 == Troubleshooting incorrect conversions ==
 
 Test loads that convert incorrectly arge tagged with "BUG:" in the 
