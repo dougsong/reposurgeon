@@ -9909,6 +9909,7 @@ func (repo *Repository) readLegacyMap(fp io.Reader) error {
 		} else {
 			unmatched++
 		}
+		control.baton.twirl()
 	}
 
 	respond("%d matched, %d unmatched, %d total",
@@ -9967,6 +9968,7 @@ func (repo *Repository) writeLegacyMap(fp io.Writer) error {
 				commit.committer.email,
 				serial)
 		}
+		control.baton.twirl()
 	}
 	return nil
 }
@@ -10281,6 +10283,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 					selection.Add(repo.eventToIndex(tag))
 				}
 			}
+			control.baton.twirl()
 		}
 		selection.Sort()
 	}
@@ -19560,11 +19563,13 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 			} else if _, ok := event.(*Commit); ok {
 				lastcommit = i
 			}
+			control.baton.twirl()
 		}
 		if lasttag == 0 {
 			lasttag = lastcommit
 		}
 		repo.insertEvent(tag, lasttag+1, "tag creation")
+		control.baton.twirl()
 		return false
 	}
 	tags := make([]*Tag, 0)
@@ -19587,6 +19592,7 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 				// len("refs/tags/") = 10
 				commits = append(commits, commit)
 			}
+			control.baton.twirl()
 		}
 	} else {
 		// Non-regexp - can only refer to a single tag
@@ -19599,6 +19605,7 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 			} else if commit, ok := event.(*Commit); ok && commit.Branch == fulltagname {
 				commits = append(commits, commit)
 			}
+			control.baton.twirl()
 		}
 	}
 	if len(tags) == 0 && len(resets) == 0 && len(commits) == 0 {
@@ -19620,6 +19627,7 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 			for _, tag := range tags {
 				tag.forget()
 				tag.remember(repo, target.mark)
+				control.baton.twirl()
 			}
 		}
 		if len(resets) > 0 {
@@ -19628,6 +19636,7 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 			} else {
 				croak("cannot move multiple tags.")
 			}
+			control.baton.twirl()
 		}
 		if len(commits) > 0 {
 			logit(logWARN, "warning - tag move does not modify branch fields")
@@ -19651,6 +19660,7 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 				}
 			}
 			tags[0].name = newname
+			control.baton.twirl()
 		}
 		fullnewname := branchname(newname)
 		for _, reset := range resets {
@@ -19664,6 +19674,7 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 			// the order here in important
 			repo.delete([]int{tag.index()}, nil)
 			tag.forget()
+			control.baton.twirl()
 		}
 		if len(tags) > 0 {
 			repo.declareSequenceMutation("tag deletion")
@@ -19713,6 +19724,7 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 					}
 				}
 			}
+			control.baton.twirl()
 		}
 	} else {
 		croak("unknown verb '%s' in tag command.", verb)

@@ -51,6 +51,7 @@ type Progress struct {
 	lastupdate time.Time
 	tag        []byte
 	count      uint64
+	lastcount  uint64
 	expected   uint64
 }
 
@@ -263,6 +264,7 @@ func (baton *Baton) percentProgress(ccount uint64) {
 	if baton != nil && baton.progressEnabled {
 		baton.progress.Lock()
 		if time.Since(baton.progress.lastupdate) > progressInterval || ccount == baton.progress.expected {
+			baton.progress.lastcount = baton.progress.count
 			baton.progress.count = ccount
 			baton.progress.lastupdate = time.Now()
 			baton.progress.Unlock()
@@ -277,13 +279,15 @@ func (baton *Baton) endProgress() {
 	if baton != nil && baton.progressEnabled {
 		baton.progress.Lock()
 		baton.progress.count = baton.progress.expected
+		baton.progress.lastupdate = time.Now()
 		baton.progress.Unlock()
 		baton.progress.render(baton)
 		baton.progress.Lock()
-		defer baton.progress.Unlock()
 		baton.progress.tag = nil
 		baton.progress.count = 0
 		baton.progress.expected = 0
+		baton.channel <- Message{PROGRESS, nil}
+		baton.progress.Unlock()
 	}
 }
 
@@ -344,7 +348,7 @@ func (baton *Progress) render(b io.Writer) {
 	defer baton.RUnlock()
 	scale := func(n float64) string {
 		if n < 1000 {
-			return fmt.Sprintf("%.2f", n)
+			return fmt.Sprintf("%.0f", n)
 		} else if n < 1000000 {
 			return fmt.Sprintf("%.2fK", n/1000)
 		} else if n < 1000000000 {
@@ -365,11 +369,18 @@ func (baton *Progress) render(b io.Writer) {
 		} else {
 			ratemsg = scale(rate)
 		}
+		var ratemsg2 string
+		rate2 := float64(baton.count - baton.lastcount)
+		if math.IsInf(rate2, 0) {
+			ratemsg2 = "∞"
+		} else {
+			ratemsg2 = scale(rate2)
+		}
 		if elapsed.Seconds() > 1 {
 			elapsed = elapsed.Round(time.Second)
 		}
-		fmt.Fprintf(b, "%s %.2f%% %s/%s, %v @ %s/s",
-			baton.tag, frac*100, scale(float64(baton.count)), scale(float64(baton.expected)), elapsed, ratemsg)
+		fmt.Fprintf(b, "%s %.2f%% %s/%s, %v @ %s/s, %s/s",
+			baton.tag, frac * 100, scale(float64(baton.count)), scale(float64(baton.expected)), elapsed, ratemsg, ratemsg2)
 	}
 }
 
