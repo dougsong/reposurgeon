@@ -4666,14 +4666,17 @@ func (commit *Commit) sortOperations() {
 	// As it says, 'Handle files below a directory first, in case they are
 	// all deleted and the directory changes to a file or symlink.'
 	// First sort the renames last, then sort lexicographically
-	// We append a sentinel to make sure "a/b/c" < "a/b" < "a".
+	// We check the directory depth to make sure that "a/b/c" < "a/b" < "a".
 	lessthan := func(i, j int) bool {
 		if commit.fileops[i].op != opR && commit.fileops[j].op == opR {
 			return true
 		}
-		left := pathpart(commit.fileops[i]) + sortkeySentinel
-		right := pathpart(commit.fileops[j]) + sortkeySentinel
-		return left < right
+		left := pathpart(commit.fileops[i])
+		lleft := strings.Count(left, "/")
+		right := pathpart(commit.fileops[j])
+		lright := strings.Count(right, "/")
+		lt := lleft > lright || left < right
+		return lt
 	}
 	sort.SliceStable(commit.fileops, lessthan)
 }

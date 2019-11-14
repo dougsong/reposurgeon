@@ -885,17 +885,39 @@ func TestFileOp(t *testing.T) {
 	if !fileop2.relevant(fileop3) {
 		t.Error("relevance check failed where success expected")
 	}
+}
 
-	repo := newRepository("fubar")
-	defer repo.cleanup()
-	commit := newCommit(repo)
-	repo.addEvent(commit)
-	// Appending these in opposite order from how they should sort
-	commit.appendOperation(*fileop1) // README
-	commit.appendOperation(*fileop2) // DRINKME
-	commit.sortOperations()
-	assertEqual(t, commit.fileops[0].Path, "DRINKME")
-	assertEqual(t, commit.fileops[1].Path, "README")
+func TestFileopSort(t *testing.T) {
+	test := func (as []string, bs []string) {
+		if len(as) != len(bs) {
+			t.Fatalf("sort test must have two slices of the same length")
+		}
+		repo := newRepository("fubar")
+		defer repo.cleanup()
+		commit := newCommit(repo)
+		repo.addEvent(commit)
+		for _, a := range as {
+			fileop := newFileOp(nil).construct('M', "100644", ":1", a)
+			commit.appendOperation(*fileop)
+		}
+		commit.sortOperations()
+		sorted := make([]string, len(as))
+		for i := range as {
+			sorted[i] = commit.fileops[i].Path
+		}
+		if !reflect.DeepEqual(sorted, bs) {
+			t.Fatalf("fileops didn't get sorted correctly; expected %#v == %#v", sorted, bs)
+		}
+	}
+
+	test([]string{"a", "a/b", "a/b/c"},
+		[]string{"a/b/c", "a/b", "a"})
+	test([]string{"b/a", "b/b", "a"},
+		[]string{"a", "b/a", "b/b"})
+	test([]string{"README", "DRINKME"},
+		[]string{"DRINKME", "README"})
+	test([]string{"clients/upslog.c", "clients/upsmon.c", "CHANGES"},
+		[]string{"CHANGES", "clients/upslog.c", "clients/upsmon.c"})
 }
 
 func TestCommitMethods(t *testing.T) {

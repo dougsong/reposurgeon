@@ -31,8 +31,8 @@ mark :3
 committer aquette <aquette> 1106836394 +0000
 data 17
 Initial revision
-M 100644 :1 .gitignore
 M 100644 :2 data/cmdvartab
+M 100644 :1 .gitignore
 
 commit refs/heads/import
 #legacy-id 3

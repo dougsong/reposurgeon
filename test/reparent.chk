@@ -54,16 +54,16 @@ Switch selection sets from prefix to postfix.
 The prefix position what triggering some obscure bug in the Python cmd
 class; the symptom was that "$ verbose" wouldn't parse properly.
 from :28
-M 100644 :62 .gitignore
-deleteall
-M 100644 :76 Makefile
-M 100644 :45 READ[ME].txt
-M 100644 :125 reposurgeon.xml
-M 100644 :125 reposurgeon.xml
-M 100755 :124 reposurgeon
-M 100755 :124 reposurgeon
 M 100644 :68 test/Makefile
 M 100644 :48 test/simple.dump
+deleteall
+M 100644 :62 .gitignore
+M 100644 :76 Makefile
+M 100644 :45 READ[ME].txt
+M 100755 :124 reposurgeon
+M 100755 :124 reposurgeon
+M 100644 :125 reposurgeon.xml
+M 100644 :125 reposurgeon.xml
 M 100644 :50 theory.txt
 
 127..$ manifest
@@ -71,23 +71,21 @@ Event 127 ===============================================================
 commit refs/heads/master
 mark :126
 
+.gitignore -> :62
 Makefile -> :76
 READ[ME].txt -> :45
 reposurgeon -> :124
 reposurgeon.xml -> :125
-test/Makefile -> :68
-test/simple.dump -> :48
 theory.txt -> :50
 Event 129 ===============================================================
 commit refs/heads/master
 mark :128
 
+.gitignore -> :62
 Makefile -> :76
 READ[ME].txt -> :45
 reposurgeon -> :127
 reposurgeon.xml -> :125
-test/Makefile -> :68
-test/simple.dump -> :48
 theory.txt -> :50
 129,3 reparent --rebase
 129 inspect
@@ -155,15 +153,15 @@ committer Eric S. Raymond <esr@thyrsus.com> 1288204205 -0400
 data 37
 Cut down on expensive input editing.
 from :119
-M 100644 :62 .gitignore
-deleteall
-M 100644 :76 Makefile
-M 100644 :45 READ[ME].txt
-M 100644 :114 reposurgeon.xml
-M 100755 :122 reposurgeon
-M 100755 :122 reposurgeon
 M 100644 :68 test/Makefile
 M 100644 :48 test/simple.dump
+deleteall
+M 100644 :62 .gitignore
+M 100644 :76 Makefile
+M 100644 :45 READ[ME].txt
+M 100755 :122 reposurgeon
+M 100755 :122 reposurgeon
+M 100644 :114 reposurgeon.xml
 M 100644 :50 theory.txt
 
 :123 manifest
@@ -171,12 +169,11 @@ Event 124 ===============================================================
 commit refs/heads/master
 mark :123
 
+.gitignore -> :62
 Makefile -> :76
 READ[ME].txt -> :45
 reposurgeon -> :122
 reposurgeon.xml -> :114
-test/Makefile -> :68
-test/simple.dump -> :48
 theory.txt -> :50
 (:119..:123)|(:119..:121) index
    120 commit   :119    refs/heads/master
@@ -195,15 +192,15 @@ committer Eric S. Raymond <esr@thyrsus.com> 1288203721 -0400
 data 27
 Document a failed attempt.
 from :123
-M 100644 :62 .gitignore
-deleteall
-M 100644 :76 Makefile
-M 100644 :45 READ[ME].txt
-M 100644 :114 reposurgeon.xml
-M 100755 :120 reposurgeon
-M 100755 :120 reposurgeon
 M 100644 :68 test/Makefile
 M 100644 :48 test/simple.dump
+deleteall
+M 100644 :62 .gitignore
+M 100644 :76 Makefile
+M 100644 :45 READ[ME].txt
+M 100755 :120 reposurgeon
+M 100755 :120 reposurgeon
+M 100644 :114 reposurgeon.xml
 M 100644 :50 theory.txt
 
 :121 manifest
@@ -211,12 +208,11 @@ Event 124 ===============================================================
 commit refs/heads/master
 mark :121
 
+.gitignore -> :62
 Makefile -> :76
 READ[ME].txt -> :45
 reposurgeon -> :120
 reposurgeon.xml -> :114
-test/Makefile -> :68
-test/simple.dump -> :48
 theory.txt -> :50
 (:119..:123)|(:119..:121) index
    120 commit   :119    refs/heads/master

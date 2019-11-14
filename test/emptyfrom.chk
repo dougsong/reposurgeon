@@ -32,8 +32,8 @@ mark :3
 committer frank <frank> 1439419551 +0000
 data 3
 r4
-M 100644 :1 .gitignore
 M 100755 :2 sim/regress_rdb.pl
+M 100644 :1 .gitignore
 
 blob
 mark :4
@@ -69,8 +69,8 @@ committer frank <frank> 1439420741 +0000
 data 3
 r7
 deleteall
-M 100755 :6 sim/regress_rdb.pl
 M 100644 :4 sim/test_lib/temp/.keepme
+M 100755 :6 sim/regress_rdb.pl
 
 blob
 mark :9
