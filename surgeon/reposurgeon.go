@@ -7858,7 +7858,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	timeit("branches")
 	svnProcessJunk(sp, options, baton)
 	timeit("dejunk")
-	svnRenameBranches(sp, options, baton)
+	svnProcessRenames(sp, options, baton)
 	timeit("polishing")
 	svnProcessTagEmpties(sp, options, baton, branchroots)
 	sp.timeMark("tagifying")
@@ -8985,7 +8985,7 @@ func svnProcessJunk(sp *StreamParser, options stringSet, baton *Baton) {
 	sp.repo.events = append(sp.repo.events, newtags...)
 }
 
-func svnRenameBranches(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessRenames(sp *StreamParser, options stringSet, baton *Baton) {
 	logit(logEXTRACT, "SVN Phase 7: branch renaming and mapping")
 	// Change the branch names from Subversion style to git style.
 	// This is also where branch mappings get applied.
@@ -9052,7 +9052,7 @@ func svnProcessTagEmpties(sp *StreamParser, options stringSet, baton *Baton, bra
 	// Now we need to tagify all other commits without fileops, because git
 	// is going to just discard them when we build a live repo and they
 	// might possibly contain interesting metadata.
-	// * Commits from tag creation often have no fileopsv since they come
+	// * Commits from tag creation often have no fileops since they come
 	//   from a directory copy in Subversion and have their fileops removed
 	//   in the de-junking phase. The annotated tag name is the basename
 	//   of the SVN tag directory.
