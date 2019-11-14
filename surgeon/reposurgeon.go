@@ -7862,13 +7862,13 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	timeit("commits")
 	svnProcessRoot(sp, options, baton)
 	timeit("rootcommit")
-	branchroots := svnProcessBranches(sp, options, baton, timeit)
+	svnProcessBranches(sp, options, baton, timeit)
 	timeit("branches")
 	svnProcessJunk(sp, options, baton)
 	timeit("dejunk")
 	svnProcessRenames(sp, options, baton)
 	timeit("polishing")
-	svnProcessTagEmpties(sp, options, baton, branchroots)
+	svnProcessTagEmpties(sp, options, baton)
 	sp.timeMark("tagifying")
 	svnProcessCleanTags(sp, options, baton)
 	timeit("tagcleaning")
@@ -8622,7 +8622,7 @@ func svnProcessRoot(sp *StreamParser, options stringSet, baton *Baton) {
 	baton.twirl()
 }
 
-func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timeit func(string)) []*Commit {
+func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timeit func(string)) {
 	logit(logEXTRACT, "SVN Phase 5a: branch analysis")
 	nobranch := options.Contains("--nobranch")
 
@@ -8630,7 +8630,6 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 	commits := sp.repo.commits(nil)
 
 	// Now, branch analysis.
-	branchroots := make([]*Commit, 0)
 	if len(sp.branches) == 0 || nobranch {
 		logit(logEXTRACT, "no branch analysis")
 		var last *Commit
@@ -8697,7 +8696,6 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 				logit(logEXTRACT, "commit %s branch %s is rootless", commit.mark, commit.Branch)
 				sp.branches[commit.Branch] = new(branchMeta)
 				sp.branches[commit.Branch].root = commit
-				branchroots = append(branchroots, commit)
 				commit.setParents(nil)
 			//} else if strings.Contains(commit.branch, "tags/") {
 			//	logit(logEXTRACT, "commit %s branch %s is rootless", commit.mark, commit.Branch)
@@ -8732,8 +8730,8 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 		// Add links due to Subversion copy operations
 		if logEnable(logEXTRACT) {
 			rootmarks := make([]string, 0)
-			for _, commit := range branchroots {
-				rootmarks = append(rootmarks, commit.mark)
+			for _, meta := range sp.branches {
+				rootmarks = append(rootmarks, meta.root.mark)
 			}
 			// Python version only displayed the branchlink values
 			logit(logEXTRACT, "branch roots: %v, links: %v", rootmarks, sp.branchlink)
@@ -8933,8 +8931,6 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 		}
 	}
 	// Code controlled by --nobranch option ends.
-
-	return branchroots
 }
 
 func svnProcessJunk(sp *StreamParser, options stringSet, baton *Baton) {
@@ -9057,7 +9053,7 @@ func svnProcessRenames(sp *StreamParser, options stringSet, baton *Baton) {
 	sp.repo.delete(deletia, nil)
 }
 
-func svnProcessTagEmpties(sp *StreamParser, options stringSet, baton *Baton, branchroots []*Commit) {
+func svnProcessTagEmpties(sp *StreamParser, options stringSet, baton *Baton) {
 	logit(logEXTRACT, "SVN Phase 8: tagify empty commits")
 	// Now we need to tagify all other commits without fileops, because git
 	// is going to just discard them when we build a live repo and they
@@ -9077,8 +9073,10 @@ func svnProcessTagEmpties(sp *StreamParser, options stringSet, baton *Baton, bra
 	baton.twirl()
 
 	rootmarks := newOrderedStringSet() // stays empty if nobranch
-	for _, root := range branchroots {
-		rootmarks.Add(root.mark)
+	for _, meta := range sp.branches {
+		if meta != nil {	// This condition skips dead branches
+			rootmarks.Add(meta.root.mark)
+		}
 	}
 	rootskip := newOrderedStringSet()
 	rootskip.Add("trunk" + svnSep)
