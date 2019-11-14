@@ -6430,6 +6430,14 @@ var cvs2svnBranchRE = regexp.MustCompile("This commit was manufactured by cvs2sv
 // Separator used for split part in a processed Subversion ID.
 const splitSep = "."
 
+
+type branchMeta struct {
+	root *Commit
+	tip *Commit
+}
+
+
+
 // StreamParser parses a fast-import stream or Subversion dump to
 // populate a Repository.
 type StreamParser struct {
@@ -6441,7 +6449,7 @@ type StreamParser struct {
 	linebuffers [][]byte
 	lastcookie  Cookie
 	// Everything below here is Subversion-specific
-	branches             map[string]*Commit // Points to branch root commits
+	branches             map[string]*branchMeta // Points to branch root commits
 	_branchesSorted      []string
 	branchlink           map[string]daglink
 	branchcopies         stringSet
@@ -6475,7 +6483,7 @@ func newStreamParser(repo *Repository) *StreamParser {
 	sp.repo = repo
 	sp.linebuffers = make([][]byte, 0)
 	// Everything below here is Subversion-specific
-	sp.branches = make(map[string]*Commit)
+	sp.branches = make(map[string]*branchMeta)
 	sp._branchesSorted = nil
 	sp.branchlink = make(map[string]daglink)
 	sp.branchcopies = newStringSet()
@@ -8636,7 +8644,7 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 	} else {
 		const impossibleFilename = "//"
 		// Instead, determine a branch for each commit...
-		logit(logEXTRACT, fmt.Sprintf("Branches: %s", sp.branches))
+		logit(logEXTRACT, fmt.Sprintf("Branches: %v", sp.branches))
 		lastbranch := impossibleFilename
 		branch := impossibleFilename
 		baton.startProgress("process SVN, phase 5a: branch analysis", uint64(len(commits)))
@@ -8687,15 +8695,17 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 		for idx, commit := range commits {
 			if sp.branches[commit.Branch] == nil {
 				logit(logEXTRACT, "commit %s branch %s is rootless", commit.mark, commit.Branch)
+				sp.branches[commit.Branch] = new(branchMeta)
+				sp.branches[commit.Branch].root = commit
 				branchroots = append(branchroots, commit)
 				commit.setParents(nil)
 			//} else if strings.Contains(commit.branch, "tags/") {
 			//	logit(logEXTRACT, "commit %s branch %s is rootless", commit.mark, commit.Branch)
 			} else {
-				logit(logEXTRACT, "commit %s has parent %s on branch %s", commit.mark, sp.branches[commit.Branch], commit.Branch)
-				commit.setParents([]CommitLike{sp.branches[commit.Branch]})
+				logit(logEXTRACT, "commit %s has parent %s on branch %s", commit.mark, sp.branches[commit.Branch].tip.mark, commit.Branch)
+				commit.setParents([]CommitLike{sp.branches[commit.Branch].tip})
 			}
-			sp.branches[commit.Branch] = commit
+			sp.branches[commit.Branch].tip = commit
 			// Per-commit spinner disabled because this pass is fast
 			baton.percentProgress(uint64(idx))
 		}
