@@ -4514,7 +4514,7 @@ func (c *colorSet) Clear() {
 type Commit struct {
 	legacyID     string        // Commit's ID in an alien system
 	common       string        // Used only by the Subversion parser
-	mark         string        // Mark name of commit (may be None)
+	mark         string        // Mark name of commit (may transiently be "")
 	Comment      string        // Commit comment
 	Branch       string        // branch name
 	authors      []Attribution // Authors of commit
