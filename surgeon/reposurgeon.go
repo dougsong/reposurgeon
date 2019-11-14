@@ -7857,7 +7857,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	timeit("branches")
 	svnProcessJunk(sp, options, baton)
 	timeit("dejunk")
-	svnProcessTags(sp, options, baton, branchroots)
+	svnRenameBranches(sp, options, baton, branchroots)
 	timeit("polishing")
 	svnProcessTagEmpties(sp, options, baton, branchroots)
 	sp.timeMark("tagifying")
@@ -8981,7 +8981,7 @@ func svnProcessJunk(sp *StreamParser, options stringSet, baton *Baton) {
 	sp.repo.events = append(sp.repo.events, newtags...)
 }
 
-func svnProcessTags(sp *StreamParser, options stringSet, baton *Baton, branchroots []*Commit) {
+func svnRenameBranches(sp *StreamParser, options stringSet, baton *Baton, branchroots []*Commit) {
 	logit(logEXTRACT, "SVN Phase 7: branch renaming and mapping")
 	// Change the branch names from Subversion style to git style.
 	// This is also where branch mappings get applied.
@@ -9050,14 +9050,14 @@ func svnProcessTagEmpties(sp *StreamParser, options stringSet, baton *Baton, bra
 	// might possibly contain interesting metadata.
 	// * Commits from tag creation often have no fileops since they come
 	//   from a directory copy in Subversion and have their fileops removed
-	//   in the de-junking ohase. The annotated tag name is the basename
+	//   in the de-junking phase. The annotated tag name is the basename
 	//   of the SVN tag directory.
 	// * Same for branch-root commits. The tag name is the basename of the
 	//   branch directory in SVN, with "-root" appended to distinguish them
 	//   from SVN tags.
 	// * Commits at a branch tip that consist only of deleteall are also
-	//   tagified: their fileops aren't worth saving; the comment metadata
-	//   just might be.
+	//   tagified if --nobranch is on.  It behaves as a directiobve to
+	//   preserve as much as possible of the tree structure for postprocessing.	
 	// * All other commits without fileops get turned into an annotated tag
 	//   with name "emptycommit-<revision>".
 	baton.twirl()
