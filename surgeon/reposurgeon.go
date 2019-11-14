@@ -7858,7 +7858,7 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	timeit("branches")
 	svnProcessJunk(sp, options, baton)
 	timeit("dejunk")
-	svnRenameBranches(sp, options, baton, branchroots)
+	svnRenameBranches(sp, options, baton)
 	timeit("polishing")
 	svnProcessTagEmpties(sp, options, baton, branchroots)
 	sp.timeMark("tagifying")
@@ -8689,6 +8689,8 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 				logit(logEXTRACT, "commit %s branch %s is rootless", commit.mark, commit.Branch)
 				branchroots = append(branchroots, commit)
 				commit.setParents(nil)
+			//} else if strings.Contains(commit.branch, "tags/") {
+			//	logit(logEXTRACT, "commit %s branch %s is rootless", commit.mark, commit.Branch)
 			} else {
 				logit(logEXTRACT, "commit %s has parent %s on branch %s", commit.mark, sp.branches[commit.Branch], commit.Branch)
 				commit.setParents([]CommitLike{sp.branches[commit.Branch]})
@@ -8749,6 +8751,7 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 					fileop := newFileOp(sp.repo)
 					fileop.construct(deleteall)
 					commit.prependOperation(*fileop)
+					logit(logEXTRACT, "prepending delete at %s", commit.idMe())
 					sp.generatedDeletes = append(sp.generatedDeletes, commit)
 				}
 			}
@@ -8982,7 +8985,7 @@ func svnProcessJunk(sp *StreamParser, options stringSet, baton *Baton) {
 	sp.repo.events = append(sp.repo.events, newtags...)
 }
 
-func svnRenameBranches(sp *StreamParser, options stringSet, baton *Baton, branchroots []*Commit) {
+func svnRenameBranches(sp *StreamParser, options stringSet, baton *Baton) {
 	logit(logEXTRACT, "SVN Phase 7: branch renaming and mapping")
 	// Change the branch names from Subversion style to git style.
 	// This is also where branch mappings get applied.
@@ -9049,7 +9052,7 @@ func svnProcessTagEmpties(sp *StreamParser, options stringSet, baton *Baton, bra
 	// Now we need to tagify all other commits without fileops, because git
 	// is going to just discard them when we build a live repo and they
 	// might possibly contain interesting metadata.
-	// * Commits from tag creation often have no fileops since they come
+	// * Commits from tag creation often have no fileopsv since they come
 	//   from a directory copy in Subversion and have their fileops removed
 	//   in the de-junking phase. The annotated tag name is the basename
 	//   of the SVN tag directory.
