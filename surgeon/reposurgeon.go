@@ -4660,7 +4660,7 @@ func (commit *Commit) sortOperations() {
 			return fileop.Path
 		}
 		if fileop.Source != "" {
-			return fileop.Path
+			return fileop.Source
 		}
 		return ""
 	}
