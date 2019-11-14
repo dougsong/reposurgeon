@@ -7673,12 +7673,6 @@ func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeA
 			// uncoditionally sometimes ships fileops that
 			// are redunant with later ones in gitspace,
 			// but it's safer.
-			//
-			// FIXME: Gives wrong results if a branch is
-			// created and copied from but is never modified
-			// after creation - the branch then exis on the
-			// git side but not in a corresppnding Subversion
-			// checkout.
 			for _, source := range node.fromSet.pathnames() {
 				found := sp.history.getActionNode(node.fromRev, source)
 				if found == nil {
@@ -19972,7 +19966,6 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 				// Modify existing ignore files
 				for _, event := range repo.events {
 					if blob, ok := event.(*Blob); ok && isIgnore(blob) {
-						// FIXME: Cut down on ugly conversions
 						blob.setContent([]byte(rs.preferred.dfltignores+string(blob.getContent())), -1)
 						changecount++
 					}
