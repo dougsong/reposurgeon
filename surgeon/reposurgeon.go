@@ -4653,7 +4653,6 @@ func (commit *Commit) prependOperation(op FileOp) {
 
 // sortOperations sorts fileops on a commit the same way git-fast-export does
 func (commit *Commit) sortOperations() {
-	const sortkeySentinel = "@"
 	pathpart := func(fileop FileOp) string {
 		if fileop.Path != "" {
 			return fileop.Path
@@ -4664,19 +4663,25 @@ func (commit *Commit) sortOperations() {
 		return ""
 	}
 	// As it says, 'Handle files below a directory first, in case they are
-	// all deleted and the directory changes to a file or symlink.'
-	// First sort the renames last, then sort lexicographically
-	// We check the directory depth to make sure that "a/b/c" < "a/b" < "a".
+	// all deleted and the directory changes to a file or symlink.'  First
+	// sort the deletealls first, the renames last, then sort
+	// lexicographically. We check the directory depth to make sure that
+	// "a/b/c" < "a/b" < "a".
 	lessthan := func(i, j int) bool {
-		if commit.fileops[i].op != opR && commit.fileops[j].op == opR {
+		if commit.fileops[i].op == deleteall {
 			return true
-		}
-		left := pathpart(commit.fileops[i])
-		right := pathpart(commit.fileops[j])
-		if len(left) > len(right) {
-			return left[:len(right)] <= right
+		} else if commit.fileops[j].op == deleteall {
+			return false
+		} else if (commit.fileops[i].op != opR && commit.fileops[j].op == opR) {
+			return true
 		} else {
-			return left < right[:len(left)]
+			left := pathpart(commit.fileops[i])
+			right := pathpart(commit.fileops[j])
+			if len(left) > len(right) {
+				return left[:len(right)] <= right
+			} else {
+				return left < right[:len(left)]
+			}
 		}
 	}
 	sort.SliceStable(commit.fileops, lessthan)
