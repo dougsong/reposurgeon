@@ -78,7 +78,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"container/heap"
-	"context"
 	"crypto/md5"
 	"crypto/sha1"
 	"errors"
@@ -117,7 +116,6 @@ import (
 	shutil "github.com/termie/go-shutil"
 	kommandant "gitlab.com/ianbruene/kommandant"
 	terminal "golang.org/x/crypto/ssh/terminal"
-	semaphore "golang.org/x/sync/semaphore"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
 	fqme "gitlab.com/esr/fqme"
 )
@@ -9220,36 +9218,31 @@ func walkEvents(events []Event, hook func(int, Event)) {
 		return
 	}
 
-	// Adapted from example at https://www.godoc.org/golang.org/x/sync/semaphore
-	ctx := context.TODO()
-
 	var (
 		maxWorkers = runtime.GOMAXPROCS(0)
-		sem        = semaphore.NewWeighted(int64(maxWorkers))
+		channel    = make(chan int, maxWorkers)
+		done       = make(chan bool, maxWorkers)
 	)
 
-	// Visit and process events using up to maxWorkers goroutines at a time.
-	for i, e := range events {
-		// When maxWorkers goroutines are in flight, Acquire blocks until one of the
-		// workers finishes.
-		if err := sem.Acquire(ctx, 1); err != nil {
-			log.Printf("Failed to acquire semaphore: %v", err)
-			break
-		}
-
-		go func(i int, e Event) {
-			defer sem.Release(1)
-			hook(i, e)
-		}(i, e)
+	// Create the workers that will loop though events
+	for n := 0; n < maxWorkers; n++ {
+		go func() {
+			// The for loop will stop when channel is closed
+			for i := range channel {
+				hook(i, events[i])
+			}
+			done <- true
+		}()
 	}
 
-	// Acquire all of the tokens to wait for any remaining workers to finish.
-	//
-	// If you are already waiting for the workers by some other means (such as an
-	// errgroup.Group), you can omit this final Acquire call.
-	if err := sem.Acquire(ctx, int64(maxWorkers)); err != nil {
-		log.Printf("Failed to acquire semaphore: %v", err)
+	// Populate the channel with the events
+	for i := range events {
+		channel <- i
 	}
+	close(channel)
+
+	// Wait for all workers to finish
+	for n := 0; n < maxWorkers; n++ { <-done }
 }
 
 // CommitLike is a Commit or Callout
@@ -14359,36 +14352,31 @@ func (repo *Repository) walkEvents(selection orderedIntSet, hook func(i int, eve
 		return
 	}
 
-	// Adapted from example at https://www.godoc.org/golang.org/x/sync/semaphore
-	ctx := context.TODO()
-
 	var (
 		maxWorkers = runtime.GOMAXPROCS(0)
-		sem        = semaphore.NewWeighted(int64(maxWorkers))
+		channel    = make(chan int, maxWorkers)
+		done       = make(chan bool, maxWorkers)
 	)
 
-	// Visit and process events using up to maxWorkers goroutines at a time.
-	for i, e := range selection {
-		// When maxWorkers goroutines are in flight, Acquire blocks until one of the
-		// workers finishes.
-		if err := sem.Acquire(ctx, 1); err != nil {
-			log.Printf("Failed to acquire semaphore: %v", err)
-			break
-		}
-
-		go func(idx int, ei int) {
-			defer sem.Release(1)
-			hook(idx, repo.events[ei])
-		}(i, e)
+	// Create the workers that will loop though events
+	for n := 0; n < maxWorkers; n++ {
+		go func() {
+			// The for loop will stop when channel is closed
+			for i := range channel {
+				hook(i, repo.events[selection[i]])
+			}
+			done <- true
+		}()
 	}
 
-	// Acquire all of the tokens to wait for any remaining workers to finish.
-	//
-	// If you are already waiting for the workers by some other means (such as an
-	// errgroup.Group), you can omit this final Acquire call.
-	if err := sem.Acquire(ctx, int64(maxWorkers)); err != nil {
-		log.Printf("Failed to acquire semaphore: %v", err)
+	// Populate the channel with the events
+	for i := range selection {
+		channel <- i
 	}
+	close(channel)
+
+	// Wait for all workers to finish
+	for n := 0; n < maxWorkers; n++ { <-done }
 }
 
 //
