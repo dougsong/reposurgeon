@@ -7440,7 +7440,7 @@ func (sp *StreamParser) isBranch(pathname string) bool {
 
 // Path separator as found in Subversion dump files. Isolated because
 // it might be "\" on OSes not to be mentioned in polite company.
-const svnSep = "/"
+var svnSep = string([]byte{os.PathSeparator})
 
 var blankline = regexp.MustCompile(`(?m:^\s*\n)`)
 
@@ -9023,7 +9023,7 @@ func svnProcessRenames(sp *StreamParser, options stringSet, baton *Baton) {
 	// Change the branch names from Subversion style to git style.
 	// This is also where branch mappings get applied.
 	deletia := make([]int, 0)
-	baton.startProgress("process SVN, phase 7: tagification", uint64(len(sp.repo.events)))
+	baton.startProgress("process SVN, phase 7: branch renaming and mapping", uint64(len(sp.repo.events)))
 	for index, event := range sp.repo.events {
 		commit, ok := event.(*Commit)
 		if !ok {
