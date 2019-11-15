@@ -88,6 +88,9 @@ committer pablo.lerina <pablo.lerina> 1250103338 +0000
 data 17
 Initial import.
 
+M 100644 :1 .gitignore
+M 100644 :2 trunk/README
+M 100644 :3 trunk/Rakefile
 M 100644 :6 trunk/lib/active_edi.rb
 M 100644 :4 trunk/lib/active_edi/attributes.rb
 M 100644 :5 trunk/lib/active_edi/base.rb
@@ -98,9 +101,6 @@ M 100644 :10 trunk/test/basic.rb
 M 100644 :11 trunk/test/exemplo_importacao_novosistema.txt
 M 100644 :12 trunk/test/obrigatorio_test.rb
 M 100644 :13 trunk/test/teste.rb
-M 100644 :2 trunk/README
-M 100644 :3 trunk/Rakefile
-M 100644 :1 .gitignore
 
 blob
 mark :15
@@ -139,6 +139,7 @@ committer pablo.lerina <pablo.lerina> 1250106567 +0000
 data 24
 reorganizando estrutura
 from :14
+M 100644 :15 trunk/Rakefile
 M 100644 :17 trunk/lib/active_edi.rb
 M 100644 :16 trunk/lib/active_edi/base.rb
 D trunk/lib/icms.rb
@@ -146,7 +147,6 @@ M 100644 :18 trunk/lib/novo_sistema/icms.rb
 M 100644 :19 trunk/lib/novo_sistema/obrigatorio.rb
 D trunk/lib/obrigatorio.rb
 M 100644 :20 trunk/test/obrigatorio_test.rb
-M 100644 :15 trunk/Rakefile
 
 blob
 mark :22
@@ -170,9 +170,9 @@ committer pablo.lerina <pablo.lerina> 1250280258 +0000
 data 24
 adicionado arquivo TODO
 from :21
+M 100644 :22 trunk/TODO
 M 100644 :23 trunk/lib/active_edi/attributes.rb
 M 100644 :24 trunk/lib/novo_sistema/obrigatorio.rb
-M 100644 :22 trunk/TODO
 
 blob
 mark :26
@@ -305,11 +305,11 @@ committer pablo.lerina <pablo.lerina> 1250605767 +0000
 data 75
 renomeado arquivo do teste basico e incluida rake task para geracao de gem
 from :41
+M 100644 :42 trunk/Rakefile
 D trunk/test/basic.rb
 M 100644 :43 trunk/test/basic_test.rb
 M 100644 :44 trunk/test/obrigatorio_test.rb
 D trunk/test/teste.rb
-M 100644 :42 trunk/Rakefile
 
 blob
 mark :46
@@ -356,8 +356,8 @@ committer pablo.lerina <pablo.lerina> 1251485201 +0000
 data 12
 release 1.1
 from :49
-M 100644 :51 trunk/pkg/activeedi-1.1.gem
 M 100644 :50 trunk/Rakefile
+M 100644 :51 trunk/pkg/activeedi-1.1.gem
 
 blob
 mark :53
@@ -386,10 +386,10 @@ committer pablo.lerina <pablo.lerina> 1251813816 +0000
 data 104
 #2117 - inclusao do metodo de classe property e correcoes para continuar usando schema, bem como testes
 from :52
+M 100644 :53 trunk/Rakefile
 M 100644 :54 trunk/lib/active_edi/attributes.rb
 M 100644 :55 trunk/lib/active_edi/base.rb
 M 100644 :56 trunk/test/property_test.rb
-M 100644 :53 trunk/Rakefile
 
 blob
 mark :58
@@ -413,9 +413,9 @@ committer pablo.lerina <pablo.lerina> 1251827841 +0000
 data 83
 removendo include do ruby-debug da classe base e atualizando a gem para versao 1.2
 from :57
+M 100644 :58 trunk/Rakefile
 M 100644 :59 trunk/lib/active_edi/base.rb
 M 100644 :60 trunk/pkg/activeedi-1.2.gem
-M 100644 :58 trunk/Rakefile
 
 blob
 mark :62
@@ -428,8 +428,8 @@ mark :63
 committer pablo.targa <pablo.targa> 1365730102 +0000
 data 104
 refs #9863 - Adicionado schema de pastas e arquivo com esboço inicial do parser e das classes da NFs-e
-M 100644 :62 trunk/nfse.rb
 M 100644 :1 .gitignore
+M 100644 :62 trunk/nfse.rb
 
 blob
 mark :64
@@ -744,14 +744,38 @@ committer pablo.targa <pablo.targa> 1366055396 +0000
 data 49
 refs #9863 - Adicionada estrutura da gem GitNFSe
 from :69
+M 100644 :71 trunk/.rspec
+M 100644 :72 trunk/Gemfile
+M 100644 :73 trunk/MIT-LICENSE
+M 100644 :74 trunk/README.rdoc
+M 100644 :75 trunk/Rakefile
+M 100644 :76 trunk/git_nfse.gemspec
+M 100644 :86 trunk/lib/git_nfse.rb
+M 100644 :77 trunk/lib/git_nfse/builders.rb
+M 100644 :78 trunk/lib/git_nfse/exceptions.rb
+M 100644 :79 trunk/lib/git_nfse/helpers/string.rb
+M 100644 :80 trunk/lib/git_nfse/parsers.rb
+M 100644 :81 trunk/lib/git_nfse/services.rb
+M 100644 :82 trunk/lib/git_nfse/types/complex.rb
+M 100644 :83 trunk/lib/git_nfse/types/simple.rb
+M 100644 :84 trunk/lib/git_nfse/validations.rb
+M 100644 :85 trunk/lib/git_nfse/version.rb
+M 100644 :87 trunk/lib/tasks/git_nfse_tasks.rake
 D trunk/nfse.rb
+M 100644 :88 trunk/test/dummy/README.rdoc
+M 100644 :89 trunk/test/dummy/Rakefile
 M 100644 :90 trunk/test/dummy/app/assets/javascripts/application.js
 M 100644 :91 trunk/test/dummy/app/assets/stylesheets/application.css
-M 100644 :96 trunk/test/dummy/app/views/layouts/application.html.erb
 M 100644 :92 trunk/test/dummy/app/controllers/application_controller.rb
 M 100644 :93 trunk/test/dummy/app/helpers/application_helper.rb
 M 100644 :94 trunk/test/dummy/app/mailers/.gitkeep
 M 100644 :95 trunk/test/dummy/app/models/.gitkeep
+M 100644 :96 trunk/test/dummy/app/views/layouts/application.html.erb
+M 100644 :112 trunk/test/dummy/config.ru
+M 100644 :97 trunk/test/dummy/config/application.rb
+M 100644 :98 trunk/test/dummy/config/boot.rb
+M 100644 :99 trunk/test/dummy/config/database.yml
+M 100644 :100 trunk/test/dummy/config/environment.rb
 M 100644 :101 trunk/test/dummy/config/environments/development.rb
 M 100644 :102 trunk/test/dummy/config/environments/production.rb
 M 100644 :103 trunk/test/dummy/config/environments/test.rb
@@ -760,42 +784,18 @@ M 100644 :105 trunk/test/dummy/config/initializers/inflections.rb
 M 100644 :106 trunk/test/dummy/config/initializers/mime_types.rb
 M 100644 :107 trunk/test/dummy/config/initializers/secret_token.rb
 M 100644 :108 trunk/test/dummy/config/initializers/session_store.rb
-M 100644 :113 trunk/test/dummy/lib/assets/.gitkeep
-M 100644 :112 trunk/test/dummy/config.ru
 M 100644 :109 trunk/test/dummy/config/initializers/wrap_parameters.rb
 M 100644 :110 trunk/test/dummy/config/locales/en.yml
-M 100644 :86 trunk/lib/git_nfse.rb
-M 100644 :79 trunk/lib/git_nfse/helpers/string.rb
-M 100644 :82 trunk/lib/git_nfse/types/complex.rb
-M 100644 :83 trunk/lib/git_nfse/types/simple.rb
-M 100644 :97 trunk/test/dummy/config/application.rb
-M 100644 :98 trunk/test/dummy/config/boot.rb
-M 100644 :99 trunk/test/dummy/config/database.yml
-M 100644 :100 trunk/test/dummy/config/environment.rb
 M 100644 :111 trunk/test/dummy/config/routes.rb
+M 100644 :113 trunk/test/dummy/lib/assets/.gitkeep
 M 100644 :114 trunk/test/dummy/log/.gitkeep
 M 100644 :115 trunk/test/dummy/public/404.html
 M 100644 :116 trunk/test/dummy/public/422.html
 M 100644 :117 trunk/test/dummy/public/500.html
 M 100644 :118 trunk/test/dummy/public/favicon.ico
 M 100755 :119 trunk/test/dummy/script/rails
-M 100644 :77 trunk/lib/git_nfse/builders.rb
-M 100644 :78 trunk/lib/git_nfse/exceptions.rb
-M 100644 :80 trunk/lib/git_nfse/parsers.rb
-M 100644 :81 trunk/lib/git_nfse/services.rb
-M 100644 :84 trunk/lib/git_nfse/validations.rb
-M 100644 :85 trunk/lib/git_nfse/version.rb
-M 100644 :87 trunk/lib/tasks/git_nfse_tasks.rake
-M 100644 :88 trunk/test/dummy/README.rdoc
-M 100644 :89 trunk/test/dummy/Rakefile
 M 100644 :120 trunk/test/git_nfse_test.rb
 M 100644 :121 trunk/test/test_helper.rb
-M 100644 :71 trunk/.rspec
-M 100644 :72 trunk/Gemfile
-M 100644 :73 trunk/MIT-LICENSE
-M 100644 :74 trunk/README.rdoc
-M 100644 :75 trunk/Rakefile
-M 100644 :76 trunk/git_nfse.gemspec
 
 blob
 mark :123
@@ -835,12 +835,12 @@ data 63
 refs #9863 - Adicionada estrututura para testes na gem GitNFSe
 from :122
 M 100644 :126 trunk/lib/git_nfse.rb
-D trunk/lib/git_nfse/helpers/string.rb
-M 100644 :125 trunk/lib/git_nfse/types/simple.rb
 M 100644 :123 trunk/lib/git_nfse/helpers.rb
+D trunk/lib/git_nfse/helpers/string.rb
 M 100644 :124 trunk/lib/git_nfse/services.rb
-M 100644 :128 trunk/spec/types/simple_types_spec.rb
+M 100644 :125 trunk/lib/git_nfse/types/simple.rb
 M 100644 :127 trunk/spec/spec_helper.rb
+M 100644 :128 trunk/spec/types/simple_types_spec.rb
 
 blob
 mark :130
@@ -920,18 +920,18 @@ data 84
 refs #9863 - Corrigidas dependencias e adicionados arquivos de teste na gem GitNFSe
 from :129
 M 100644 :135 trunk/lib/git_nfse.rb
-M 100644 :132 trunk/lib/git_nfse/types/complex.rb
-M 100644 :133 trunk/lib/git_nfse/types/simple.rb
 M 100644 :130 trunk/lib/git_nfse/builders.rb
 M 100644 :131 trunk/lib/git_nfse/parsers.rb
+M 100644 :132 trunk/lib/git_nfse/types/complex.rb
+M 100644 :133 trunk/lib/git_nfse/types/simple.rb
 M 100644 :134 trunk/lib/git_nfse/validations.rb
-M 100644 :141 trunk/spec/types/complex_types_spec.rb
-M 100644 :142 trunk/spec/types/simple_types_spec.rb
 M 100644 :136 trunk/spec/builders_spec.rb
 M 100644 :137 trunk/spec/exceptions_spec.rb
 M 100644 :138 trunk/spec/helpers_spec.rb
 M 100644 :139 trunk/spec/parsers_spec.rb
 M 100644 :140 trunk/spec/services_spec.rb
+M 100644 :141 trunk/spec/types/complex_types_spec.rb
+M 100644 :142 trunk/spec/types/simple_types_spec.rb
 M 100644 :143 trunk/spec/validations_spec.rb
 
 blob
@@ -986,15 +986,15 @@ committer pablo.targa <pablo.targa> 1366132716 +0000
 data 77
 refs #9865 - Implementado o parser para recuperar a informação da resposta
 from :144
+M 100644 :145 trunk/Gemfile
 M 100644 :150 trunk/lib/git_nfse.rb
-M 100644 :149 trunk/lib/git_nfse/types/complex.rb
 M 100644 :146 trunk/lib/git_nfse/builders.rb
 M 100644 :147 trunk/lib/git_nfse/parsers.rb
 M 100644 :148 trunk/lib/git_nfse/services.rb
+M 100644 :149 trunk/lib/git_nfse/types/complex.rb
 M 100644 :151 trunk/lib/xml_schemas/servico_enviar_lote_rps_resposta.xsd
 M 100644 :152 trunk/spec/parsers_spec.rb
 M 100644 :153 trunk/spec/spec_helper.rb
-M 100644 :145 trunk/Gemfile
 
 blob
 mark :155
@@ -1048,15 +1048,15 @@ committer pablo.targa <pablo.targa> 1366745033 +0000
 data 94
 fixes #9865 - Adicionada funcionalidade para enviar e parsear a resposta do envio do lote rps
 from :154
+M 100644 :155 trunk/Gemfile
+M 100644 :156 trunk/data.yml
 M 100644 :162 trunk/lib/git_nfse.rb
-M 100644 :160 trunk/lib/git_nfse/types/complex.rb
-M 100644 :161 trunk/lib/git_nfse/types/simple.rb
 M 100644 :157 trunk/lib/git_nfse/builders.rb
 M 100644 :158 trunk/lib/git_nfse/parsers.rb
 M 100644 :159 trunk/lib/git_nfse/services.rb
+M 100644 :160 trunk/lib/git_nfse/types/complex.rb
+M 100644 :161 trunk/lib/git_nfse/types/simple.rb
 M 100755 :163 trunk/spec/git_nfse_spec.rb
-M 100644 :155 trunk/Gemfile
-M 100644 :156 trunk/data.yml
 
 commit refs/heads/activeedi
 #legacy-id 25
@@ -1088,12 +1088,12 @@ mark :169
 committer ronie <ronie> 1375114664 +0000
 data 102
 Adicionados arquivos de configuracoes automaticas do aplicativo cliente de email Mozilla Thunderbird.
-M 100644 :166 thunderbird/greprefs/.gitignore
-M 100644 :168 thunderbird/greprefs/a.js
-M 100644 :166 thunderbird/.gitignore
-M 100644 :167 thunderbird/a.cfg
 M 100644 :166 .gitignore
 M 100644 :1 .gitignore
+M 100644 :166 thunderbird/.gitignore
+M 100644 :167 thunderbird/a.cfg
+M 100644 :166 thunderbird/greprefs/.gitignore
+M 100644 :168 thunderbird/greprefs/a.js
 
 commit refs/heads/mozilla
 #legacy-id 27
@@ -1102,9 +1102,9 @@ committer ronie <ronie> 1376451459 +0000
 data 148
 Atualizada estrutura de diretorios das configuracoes automaticas do cliente de email Mozilla Thunderbird para ficar compativel com a versao 17.0.x.
 from :169
+M 100644 :166 thunderbird/defaults/.gitignore
 M 100644 :166 thunderbird/defaults/pref/.gitignore
 M 100644 :168 thunderbird/defaults/pref/a.js
-M 100644 :166 thunderbird/defaults/.gitignore
 D thunderbird/greprefs/.gitignore
 D thunderbird/greprefs/a.js
 
@@ -1142,13 +1142,40 @@ committer renan.dhein <renan.dhein> 1380560331 +0000
 data 61
 fixes #9863 - Removidos arquivos referentes a gem do projeto
 from :174
+D trunk/.rspec
+D trunk/Gemfile
+D trunk/MIT-LICENSE
+D trunk/README.rdoc
+D trunk/Rakefile
+D trunk/data.yml
+D trunk/git_nfse.gemspec
+D trunk/lib/git_nfse/version.rb
+D trunk/lib/tasks/git_nfse_tasks.rake
+D trunk/lista.yml
+D trunk/spec/builders_spec.rb
+D trunk/spec/exceptions_spec.rb
+D trunk/spec/git_nfse_spec.rb
+D trunk/spec/helpers_spec.rb
+D trunk/spec/parsers_spec.rb
+D trunk/spec/services_spec.rb
+D trunk/spec/spec_helper.rb
+D trunk/spec/types/complex_types_spec.rb
+D trunk/spec/types/simple_types_spec.rb
+D trunk/spec/validations_spec.rb
+D trunk/test/dummy/README.rdoc
+D trunk/test/dummy/Rakefile
 D trunk/test/dummy/app/assets/javascripts/application.js
 D trunk/test/dummy/app/assets/stylesheets/application.css
-D trunk/test/dummy/app/views/layouts/application.html.erb
 D trunk/test/dummy/app/controllers/application_controller.rb
 D trunk/test/dummy/app/helpers/application_helper.rb
 D trunk/test/dummy/app/mailers/.gitkeep
 D trunk/test/dummy/app/models/.gitkeep
+D trunk/test/dummy/app/views/layouts/application.html.erb
+D trunk/test/dummy/config.ru
+D trunk/test/dummy/config/application.rb
+D trunk/test/dummy/config/boot.rb
+D trunk/test/dummy/config/database.yml
+D trunk/test/dummy/config/environment.rb
 D trunk/test/dummy/config/environments/development.rb
 D trunk/test/dummy/config/environments/production.rb
 D trunk/test/dummy/config/environments/test.rb
@@ -1159,43 +1186,16 @@ D trunk/test/dummy/config/initializers/secret_token.rb
 D trunk/test/dummy/config/initializers/session_store.rb
 D trunk/test/dummy/config/initializers/wrap_parameters.rb
 D trunk/test/dummy/config/locales/en.yml
-D trunk/test/dummy/lib/assets/.gitkeep
-D trunk/test/dummy/config/application.rb
-D trunk/test/dummy/config/boot.rb
-D trunk/test/dummy/config/database.yml
-D trunk/test/dummy/config/environment.rb
 D trunk/test/dummy/config/routes.rb
+D trunk/test/dummy/lib/assets/.gitkeep
 D trunk/test/dummy/log/.gitkeep
 D trunk/test/dummy/public/404.html
 D trunk/test/dummy/public/422.html
 D trunk/test/dummy/public/500.html
 D trunk/test/dummy/public/favicon.ico
 D trunk/test/dummy/script/rails
-D trunk/test/dummy/README.rdoc
-D trunk/test/dummy/Rakefile
-D trunk/test/dummy/config.ru
-D trunk/.rspec
-D trunk/Gemfile
-D trunk/MIT-LICENSE
-D trunk/README.rdoc
-D trunk/Rakefile
-D trunk/data.yml
-D trunk/git_nfse.gemspec
-D trunk/lib/git_nfse/version.rb
-D trunk/lib/tasks/git_nfse_tasks.rake
-D trunk/spec/types/complex_types_spec.rb
-D trunk/spec/types/simple_types_spec.rb
-D trunk/spec/builders_spec.rb
-D trunk/spec/exceptions_spec.rb
-D trunk/spec/git_nfse_spec.rb
-D trunk/spec/helpers_spec.rb
-D trunk/spec/parsers_spec.rb
-D trunk/spec/services_spec.rb
-D trunk/spec/spec_helper.rb
-D trunk/spec/validations_spec.rb
 D trunk/test/git_nfse_test.rb
 D trunk/test/test_helper.rb
-D trunk/lista.yml
 
 blob
 mark :176
@@ -1209,8 +1209,8 @@ committer renan.dhein <renan.dhein> 1380563536 +0000
 data 61
 fixes #9863 - Removido xsd de configuracao que nao era usado
 from :175
-D trunk/lib/xml_schemas/servico_enviar_lote_rps_resposta.xsd
 M 100644 :176 trunk/lib/git_nfse.rb
+D trunk/lib/xml_schemas/servico_enviar_lote_rps_resposta.xsd
 
 blob
 mark :178
@@ -1240,8 +1240,8 @@ data 290
 fixes #9865 - Refatorado a parte de assinatura da NFS-e. Separado para um modulo diferente do GitNfse, adicionado no modulo Signers que será o responsavel pela asinatura de documentos XML visto que a forma como isso é feito é padrão tanto para NFS-e quando NF-e. Feito testes, tudo Ok.
 from :177
 M 100644 :180 trunk/lib/git_nfse.rb
-M 100644 :179 trunk/lib/git_nfse/types/complex.rb
 M 100644 :178 trunk/lib/git_nfse/builders.rb
+M 100644 :179 trunk/lib/git_nfse/types/complex.rb
 M 100644 :181 trunk/lib/signers.rb
 
 blob
@@ -1287,13 +1287,13 @@ data 368
 fixes #9865 - Feito novas correções de acordo com o que conversei com *Ronie* no dia 08/10/2013. Separado os serviços que ficavam agrupados em *lib/git/git_nfse/git_nfse/services.rb* para ficar em uma classe que define cada um. Os serviços de consulta ficaram na classe *lib/git/git_nfse/git_nfse/consult_nfse.rb* proque me pareceu mais coerente. Feito teste, Ok.
 from :182
 M 100644 :188 trunk/lib/git_nfse.rb
-M 100644 :187 trunk/lib/git_nfse/types/complex.rb
 M 100644 :183 trunk/lib/git_nfse/base.rb
 D trunk/lib/git_nfse/builders.rb
 M 100644 :184 trunk/lib/git_nfse/cancel_nfse.rb
 M 100644 :185 trunk/lib/git_nfse/consult_nfse.rb
 M 100644 :186 trunk/lib/git_nfse/rps_lot_nfse.rb
 D trunk/lib/git_nfse/services.rb
+M 100644 :187 trunk/lib/git_nfse/types/complex.rb
 M 100644 :189 trunk/lib/signers.rb
 
 blob
@@ -1358,16 +1358,16 @@ committer ronie <ronie> 1383229155 +0000
 data 142
 refs #9865 - A partir desta revision, rubyrails passa a ser o diretorio para codigo open source desenvolvido pela GIT Sistemas em Ruby/Rails.
 from :198
-M 100644 :187 trunk/lib/git_nfse/types/complex.rb
-M 100644 :161 trunk/lib/git_nfse/types/simple.rb
+M 100644 :194 trunk/lib/git_nfse.rb
 M 100644 :197 trunk/lib/git_nfse/base.rb
 M 100644 :184 trunk/lib/git_nfse/cancel_nfse.rb
 M 100644 :185 trunk/lib/git_nfse/consult_nfse.rb
 M 100644 :123 trunk/lib/git_nfse/helpers.rb
 M 100644 :158 trunk/lib/git_nfse/parsers.rb
 M 100644 :186 trunk/lib/git_nfse/rps_lot_nfse.rb
+M 100644 :187 trunk/lib/git_nfse/types/complex.rb
+M 100644 :161 trunk/lib/git_nfse/types/simple.rb
 M 100644 :172 trunk/lib/git_nfse/validations.rb
-M 100644 :194 trunk/lib/git_nfse.rb
 M 100644 :195 trunk/lib/git_validations.rb
 M 100644 :189 trunk/lib/signers.rb
 
@@ -1394,8 +1394,8 @@ committer ronie <ronie> 1383245683 +0000
 data 165
 refs #10402 - Desenvolvida lib GitEncoding contendo metodos para deteccao e conversao de character encoding do conteudo de objetos das classes File/String/StringIO.
 from :199
-M 100644 :201 trunk/lib/git_encoding.rb
 M 100644 :1 .gitignore
+M 100644 :201 trunk/lib/git_encoding.rb
 
 blob
 mark :203
@@ -1517,9 +1517,9 @@ mark :220
 committer ronie <ronie> 1456461020 +0000
 data 66
 Sublime Text 3 installations should always use the same settings.
+M 100644 :1 .gitignore
 M 100644 :218 packages/user/Preferences.sublime-settings
 M 100644 :219 packages/user/README.txt
-M 100644 :1 .gitignore
 
 blob
 mark :221
@@ -1538,10 +1538,10 @@ committer ronie <ronie> 1456462577 +0000
 data 81
 Documentation regarding where to place Mozilla Thunderbird settings was missing.
 from :170
-M 100644 :221 thunderbird/defaults/pref/.gitignore
-M 100644 :221 thunderbird/defaults/.gitignore
 M 100644 :221 thunderbird/.gitignore
 M 100644 :222 thunderbird/README.txt
+M 100644 :221 thunderbird/defaults/.gitignore
+M 100644 :221 thunderbird/defaults/pref/.gitignore
 
 blob
 mark :224
@@ -1662,19 +1662,19 @@ committer ronie <ronie> 1510598749 +0000
 data 87
 refs #12123 - Ruby version 1.9.3 requires source code encoding to be set on .rb files.
 from :229
-M 100644 :237 trunk/lib/git_nfse/types/complex.rb
-M 100644 :238 trunk/lib/git_nfse/types/simple.rb
+M 100644 :230 trunk/lib/git_encoding.rb
+M 100644 :239 trunk/lib/git_nfse.rb
 M 100644 :231 trunk/lib/git_nfse/base.rb
 M 100644 :232 trunk/lib/git_nfse/cancel_nfse.rb
 M 100644 :233 trunk/lib/git_nfse/consult_nfse.rb
 M 100644 :234 trunk/lib/git_nfse/helpers.rb
 M 100644 :235 trunk/lib/git_nfse/parsers.rb
 M 100644 :236 trunk/lib/git_nfse/rps_lot_nfse.rb
-M 100644 :241 trunk/lib/proxies/proxy_hash.rb
-M 100644 :230 trunk/lib/git_encoding.rb
-M 100644 :239 trunk/lib/git_nfse.rb
+M 100644 :237 trunk/lib/git_nfse/types/complex.rb
+M 100644 :238 trunk/lib/git_nfse/types/simple.rb
 M 100644 :240 trunk/lib/git_validations.rb
 M 100644 :242 trunk/lib/proxies.rb
+M 100644 :241 trunk/lib/proxies/proxy_hash.rb
 M 100644 :243 trunk/lib/signers.rb
 
 tag root

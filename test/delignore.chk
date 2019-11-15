@@ -65,8 +65,8 @@ data 61
 This follows "svn propset svn:ignore *.pyc foo foo/bar baz".
 from :5
 M 100644 :6 baz/.gitignore
-M 100644 :6 foo/bar/.gitignore
 M 100644 :6 foo/.gitignore
+M 100644 :6 foo/bar/.gitignore
 
 commit refs/heads/master
 #legacy-id 5
@@ -76,8 +76,8 @@ data 46
 This follows "svn del foo" and "svn del baz".
 from :7
 D baz/.gitignore
-D foo/bar/.gitignore
 D foo/.gitignore
+D foo/bar/.gitignore
 
 commit refs/heads/master
 #legacy-id 6

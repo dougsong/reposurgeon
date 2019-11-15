@@ -41,9 +41,9 @@ committer test <test> 1475712000 +0000
 data 18
 Commit message 6.
 deleteall
+M 100644 :1 .gitignore
 M 100644 :2 d1/d2/d3/d4/d5/d6/f0
 M 100644 :3 d1/d2/d3/d4/d5/d6/f9
-M 100644 :1 .gitignore
 
 commit refs/heads/b5
 #legacy-id 8

@@ -31,8 +31,8 @@ mark :3
 committer jsm28 <jsm28> 1497308028 +0000
 data 10
 Add file.
-M 100644 :2 d1/f1
 M 100644 :1 .gitignore
+M 100644 :2 d1/f1
 
 blob
 mark :4

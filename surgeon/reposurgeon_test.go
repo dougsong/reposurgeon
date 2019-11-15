@@ -910,12 +910,16 @@ func TestFileopSort(t *testing.T) {
 		}
 	}
 
+	test([]string{"README", "DRINKME"},
+		[]string{"DRINKME", "README"})
 	test([]string{"a", "a/b", "a/b/c"},
 		[]string{"a/b/c", "a/b", "a"})
 	test([]string{"b/a", "b/b", "a"},
 		[]string{"a", "b/a", "b/b"})
-	test([]string{"README", "DRINKME"},
-		[]string{"DRINKME", "README"})
+	test([]string{"z/t/u/v", "a/b/c", "a/b"},
+		[]string{"a/b/c", "a/b", "z/t/u/v"})
+	test([]string{"abc/def", "abcdef/", "a/b", "a/b/c"},
+		[]string{"a/b/c", "a/b", "abc/def", "abcdef/"})
 	test([]string{"clients/upslog.c", "clients/upsmon.c", "CHANGES"},
 		[]string{"CHANGES", "clients/upslog.c", "clients/upsmon.c"})
 }

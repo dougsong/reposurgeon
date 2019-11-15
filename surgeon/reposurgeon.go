@@ -4672,11 +4672,12 @@ func (commit *Commit) sortOperations() {
 			return true
 		}
 		left := pathpart(commit.fileops[i])
-		lleft := strings.Count(left, "/")
 		right := pathpart(commit.fileops[j])
-		lright := strings.Count(right, "/")
-		lt := lleft > lright || left < right
-		return lt
+		if len(left) > len(right) {
+			return left[:len(right)] <= right
+		} else {
+			return left < right[:len(left)]
+		}
 	}
 	sort.SliceStable(commit.fileops, lessthan)
 }

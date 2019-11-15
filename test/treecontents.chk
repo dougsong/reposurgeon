@@ -51,10 +51,10 @@ mark :5
 committer frnchfrgg <frnchfrgg> 1366743542 +0000
 data 39
 Create some files on the master branch
-M 100644 :3 subdir/subfile1
-M 100644 :4 subdir/subfile2
 M 100644 :1 .gitignore
 M 100644 :2 master-branch4
+M 100644 :3 subdir/subfile1
+M 100644 :4 subdir/subfile2
 
 Event 7 =================================================================
 commit refs/heads/branch1
@@ -140,10 +140,10 @@ data 44
 Create branch3, importing trunk as a subdir
 from :5
 deleteall
+M 100644 :1 .gitignore
+M 100644 :2 trunk/master-branch4
 M 100644 :3 trunk/subdir/subfile1
 M 100644 :4 trunk/subdir/subfile2
-M 100644 :2 trunk/master-branch4
-M 100644 :1 .gitignore
 
 Event 14 ================================================================
 blob
@@ -206,10 +206,10 @@ mark :18
 committer frnchfrgg <frnchfrgg> 1366745242 +0000
 data 41
 Create branch4 by a normal copy of trunk
-M 100644 :3 subdir/subfile1
-M 100644 :4 subdir/subfile2
 M 100644 :1 .gitignore
 M 100644 :2 master-branch4
+M 100644 :3 subdir/subfile1
+M 100644 :4 subdir/subfile2
 
 Event 20 ================================================================
 blob

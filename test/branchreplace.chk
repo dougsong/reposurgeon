@@ -52,12 +52,12 @@ mark :7
 committer aquette <aquette> 1106836394 +0000
 data 17
 Initial revision
+M 100644 :1 .gitignore
 M 100644 :2 data/cmdvartab
 M 100644 :3 data/driver.list
 M 100644 :4 drivers/Makefile.drvbuild
 M 100644 :5 drivers/libusb.c
 M 100644 :6 drivers/serial.c
-M 100644 :1 .gitignore
 
 commit refs/heads/INITIAL_IMPORT_AQ
 #legacy-id 3
@@ -130,10 +130,10 @@ committer aquette <aquette> 1115199397 +0000
 data 66
 bring 2.0.2-pre1 testing release in sync with development release
 from :12
+M 100644 :1 .gitignore
 M 100644 :13 data/driver.list
 M 100644 :14 drivers/Makefile.drvbuild
 M 100644 :15 drivers/libusb.c
-M 100644 :1 .gitignore
 
 blob
 mark :17
