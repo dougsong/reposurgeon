@@ -15571,7 +15571,6 @@ func startCPUProfiling(name string) {
 
 func stopCPUProfiling() {
 	pprof.StopCPUProfile()
-	respond("cpu profiling stopped.")
 }
 
 func startTracing(name string) {
@@ -15587,7 +15586,6 @@ func startTracing(name string) {
 
 func stopTracing() {
 	trace.Stop()
-	respond("tracing stopped.")
 }
 
 func (rs *Reposurgeon) HelpProfile() {
@@ -15673,12 +15671,16 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 						saveProfile(subject, filename)
 					}
 				}
+				respond("all profiling stopped.")
 			} else if subject == "cpu" {
 				stopCPUProfiling()
+				respond("cpu profiling stopped.")
 			} else if subject == "trace" {
 				stopTracing()
+				respond("tracing stopped.")
 			} else {
 				saveProfile(subject, filename)
+				respond("%s profiling stopped.", subject)
 			}
 		default:
 			croak("I don't know how to %s. Possible verbs are [live, start, save].", verb)
