@@ -229,7 +229,7 @@ def vcstype(d):
     elif os.path.isdir(os.path.join(d, ".bk")):
         return "bk"
     else:
-        croak("%s does not look like a repository of known type." % d)
+        croak("%s does not look like a repository of known type." % os.path.abspath(d))
 
 def is_dvcs_or_checkout(d="."):
     "Is this a DVCS or checkout where we can compare files?"
