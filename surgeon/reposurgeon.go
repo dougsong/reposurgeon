@@ -6428,13 +6428,20 @@ var cvs2svnBranchRE = regexp.MustCompile("This commit was manufactured by cvs2sv
 // Separator used for split part in a processed Subversion ID.
 const splitSep = "."
 
-
 type branchMeta struct {
 	root *Commit
 	tip *Commit
 }
 
+type daglink struct {
+	child  *Commit
+	parent *Commit
+}
 
+type revlink struct {
+	source revidx
+	target revidx
+}
 
 // StreamParser parses a fast-import stream or Subversion dump to
 // populate a Repository.
@@ -6463,11 +6470,7 @@ type StreamParser struct {
 	streamview           []*NodeAction // All nodes in streeam order
 	initialBranchIgnores map[string]bool // a flag for each branch where we have put the implicit svn's implicit
 					     // ignore rules into a .gitignore file
-}
-
-type daglink struct {
-	child  *Commit
-	parent *Commit
+	lastcopy             map[string]revlink
 }
 
 // Only used in diagnostics
@@ -6493,6 +6496,7 @@ func newStreamParser(repo *Repository) *StreamParser {
 	sp.activeGitignores = make(map[string]string)
 	sp.splitCommits = make(map[revidx]int)
 	sp.initialBranchIgnores = make(map[string]bool)
+	sp.lastcopy = make(map[string]revlink)
 	return sp
 }
 
@@ -8006,7 +8010,7 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 		}
 	}
 
-	// Filter properties. This could be parallelized.
+	// Filter properties and build the revlinks map. This could be parallelized.
 	var hasProperties stringSet
 	for i, node := range sp.streamview {
 		if i == 0 || sp.streamview[i].revision != sp.streamview[i-1].revision {
@@ -8048,6 +8052,31 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 			}
 		}
 
+		if node.isCopy() {
+			// Record branch copies in a form that is convenient for dealing with
+			// improper tag copies like the tagpollute.svn testload.
+			var targetbranch string
+			if sp.isBranch(node.path + svnSep) {
+				targetbranch = node.path + svnSep
+			} else {
+				for _, bn := range sp.branchlist() {
+					if strings.HasPrefix(node.path, bn) {
+						targetbranch = bn
+						logit(logEXTRACT, "r%d#%d: impure branch copy %s corrected to %s",
+							node.revision, node.index, node.path, targetbranch)
+						break
+					}
+				}
+			}
+			if targetbranch != "" {
+				// Record the last copy to the target branch.  Copies to subdirectories
+				// are mapped to the most specific including branch.  These branch paths
+				// have to be remapped before they can be used in gitspace, but this
+				// should be all the information required to make gitspace branch links.
+				// Ugh...unless a copy is based on a nontrivially split commit!
+				sp.lastcopy[targetbranch] = revlink{source:node.fromRev, target:node.revision}
+			}
+		}
 	}
 
 	sp.streamview = nil // Allow that view to be GCed
