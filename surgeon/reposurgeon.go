@@ -101,6 +101,7 @@ import (
 	"runtime"
 	"runtime/debug"
 	"runtime/pprof"
+	"runtime/trace"
 	"sort"
 	"strconv"
 	"strings"
@@ -15564,13 +15565,29 @@ func startCPUProfiling(name string) {
 		croak("failed to create file %#v [%s]", filename, err)
 	} else {
 		pprof.StartCPUProfile(f)
-		respond("all profiling enabled.")
+		respond("cpu profiling enabled.")
 	}
 }
 
 func stopCPUProfiling() {
 	pprof.StopCPUProfile()
 	respond("cpu profiling stopped.")
+}
+
+func startTracing(name string) {
+	filename := name + ".trace.prof"
+	f, err := os.Create(filename)
+	if err != nil {
+		croak("failed to create file %#v [%s]", filename, err)
+	} else {
+		trace.Start(f)
+		respond("tracing enabled.")
+	}
+}
+
+func stopTracing() {
+	trace.Stop()
+	respond("tracing stopped.")
 }
 
 func (rs *Reposurgeon) HelpProfile() {
@@ -15610,6 +15627,7 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 		names.Add(profile.Name())
 	}
 	names.Add("cpu")
+	names.Add("trace")
 	names.Add("all")
 	if line == "" {
 		respond("The available profiles are %v", names)
@@ -15632,8 +15650,11 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 			} else if subject == "all" {
 				control.profilename = line
 				startCPUProfiling(line)
+				startTracing(line)
 			} else if subject == "cpu" {
 				startCPUProfiling(line)
+			} else if subject == "trace" {
+				startTracing(line)
 			} else {
 				respond("The %s profile starts automatically when you start reposurgeon.", subject)
 			}
@@ -15645,6 +15666,7 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 				croak("I don't recognize %#v as a profile name. The names I do recognize are %v.", subject, names)
 			} else if subject == "all" {
 				runtime.GC()
+				stopTracing()
 				stopCPUProfiling()
 				for subject := range names.Iterate() {
 					if subject != "all" && subject != "cpu" {
@@ -15653,6 +15675,8 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 				}
 			} else if subject == "cpu" {
 				stopCPUProfiling()
+			} else if subject == "trace" {
+				stopTracing()
 			} else {
 				saveProfile(subject, filename)
 			}
@@ -22088,7 +22112,8 @@ func main() {
 	defer func() {
 		control.baton.Sync()
 		//fmt.Print("\n")
-		pprof.StopCPUProfile()
+		stopCPUProfiling()
+		stopTracing()
 		if len(control.profilename) > 0 {
 			saveAllProfiles(control.profilename)
 		}
