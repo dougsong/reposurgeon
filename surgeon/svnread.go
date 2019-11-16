@@ -37,6 +37,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"runtime/trace"
 	"sort"
 	"strconv"
 	"strings"
@@ -315,7 +316,8 @@ func appendRevisionRecords(slice []RevisionRecord, data ...RevisionRecord) []Rev
 	return slice
 }
 
-func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesize int64) {
+func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet, baton *Baton, filesize int64) {
+	defer trace.StartRegion(ctx, "SVN Phase 1: read dump file").End()
 	sp.branches = make(map[string]*branchMeta)
 	sp._branchesSorted = nil
 	sp.revlinks = make(map[revidx]revidx)
@@ -597,7 +599,7 @@ func (sp *StreamParser) parseSubversion(options *stringSet, baton *Baton, filesi
 	}
 	logit(logSVNPARSE, "revision parsing, line %d: ends with %d records", sp.importLine, sp.repo.legacyCount)
 	sp.timeMark("parsing")
-	sp.svnProcess(*options, baton)
+	sp.svnProcess(ctx, *options, baton)
 }
 
 const maxRevidx = int(^revidx(0)) // Use for bounds-checking in range loops.
@@ -1165,7 +1167,7 @@ func (sp *StreamParser) expandAllNodes(nodelist []*NodeAction, options stringSet
 	return expandedNodes
 }
 
-func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
+func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton *Baton) {
 	// Subversion actions to import-stream commits.
 
 	// This function starts with a deserialization of a Subversion
@@ -1231,34 +1233,35 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 
 	sp.repo.addEvent(newPassthrough(sp.repo, "#reposurgeon sourcetype svn\n"))
 
-	svnProcessClean(sp, options, baton)
+	svnProcessClean(ctx, sp, options, baton)
 	timeit("cleaning")
-	svnProcessFilemaps(sp, options, baton)
+	svnProcessFilemaps(ctx, sp, options, baton)
 	timeit("filemaps")
-	svnProcessCommits(sp, options, baton)
+	svnProcessCommits(ctx, sp, options, baton)
 	timeit("commits")
-	svnProcessRoot(sp, options, baton)
+	svnProcessRoot(ctx, sp, options, baton)
 	timeit("rootcommit")
-	svnProcessBranches(sp, options, baton, timeit)
+	svnProcessBranches(ctx, sp, options, baton, timeit)
 	timeit("branches")
-	svnProcessJunk(sp, options, baton)
+	svnProcessJunk(ctx, sp, options, baton)
 	timeit("dejunk")
-	svnProcessRenames(sp, options, baton)
+	svnProcessRenames(ctx, sp, options, baton)
 	timeit("polishing")
-	svnProcessTagEmpties(sp, options, baton)
+	svnProcessTagEmpties(ctx, sp, options, baton)
 	sp.timeMark("tagifying")
-	svnProcessCleanTags(sp, options, baton)
+	svnProcessCleanTags(ctx, sp, options, baton)
 	timeit("tagcleaning")
-	svnProcessDebubble(sp, options, baton)
+	svnProcessDebubble(ctx, sp, options, baton)
 	timeit("debubbling")
-	svnProcessRenumber(sp, options, baton)
+	svnProcessRenumber(ctx, sp, options, baton)
 	timeit("renumbering")
 
 	// Treat this in-core state as though it was read from an SVN repo
 	sp.repo.hint("svn", "", true)
 }
 
-func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessClean(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	defer trace.StartRegion(ctx, "SVN Phase 2: clean tags to prevent anomalies.").End()
 	logit(logEXTRACT, "SVN Phase 2: clean tags to prevent anomalies.")
 	// Phase 2:
 	//
@@ -1462,7 +1465,7 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 	sp.streamview = nil // Allow that view to be GCed
 }
 
-func svnProcessFilemaps(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessFilemaps(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
 	// Phase 3:
 	// This is where we build file visibility maps. The visibility
 	// map for each revision maps file paths to the Subversion
@@ -1476,6 +1479,7 @@ func svnProcessFilemaps(sp *StreamParser, options stringSet, baton *Baton) {
 	// built they render unnecessary compuations that would have
 	// been prohibitively expensive in later passes. Notably the
 	// maps are everything necessary to compute node ancestry.
+	defer trace.StartRegion(ctx, "SVN Phase 3: build filemaps").End()
 	logit(logEXTRACT, "SVN Phase 3: build filemaps")
 	baton.startProgress("process SVN, phase 3: build filemaps", uint64(len(sp.revisions)))
 	sp.history = newHistory()
@@ -1486,7 +1490,8 @@ func svnProcessFilemaps(sp *StreamParser, options stringSet, baton *Baton) {
 	baton.endProgress()
 }
 
-func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessCommits(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	defer trace.StartRegion(ctx, "SVN Phase 4: build commits").End()
 	nobranch := options.Contains("--nobranch")
 	// Build commits
 	logit(logEXTRACT, "SVN Phase 4: build commits")
@@ -2024,7 +2029,8 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 	}
 }
 
-func svnProcessRoot(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessRoot(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	defer trace.StartRegion(ctx, "SVN Phase 5: root tagification").End()
 	logit(logEXTRACT, "SVN Phase 5: root tagification")
 	baton.twirl()
 	if logEnable(logEXTRACT) {
@@ -2063,7 +2069,8 @@ func svnProcessRoot(sp *StreamParser, options stringSet, baton *Baton) {
 	baton.twirl()
 }
 
-func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timeit func(string)) {
+func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton, timeit func(string)) {
+	defer trace.StartRegion(ctx, "SVN Phase 5a: branch analysis").End()
 	logit(logEXTRACT, "SVN Phase 5a: branch analysis")
 	nobranch := options.Contains("--nobranch")
 
@@ -2366,7 +2373,8 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 	// Code controlled by --nobranch option ends.
 }
 
-func svnProcessJunk(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	defer trace.StartRegion(ctx, "SVN Phase 6: de-junking").End()
 	logit(logEXTRACT, "SVN Phase 6: de-junking")
 	// Now clean up junk commits generated by cvs2svn.
 	deleteables := make([]int, 0)
@@ -2424,7 +2432,8 @@ func svnProcessJunk(sp *StreamParser, options stringSet, baton *Baton) {
 	sp.repo.events = append(sp.repo.events, newtags...)
 }
 
-func svnProcessRenames(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessRenames(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	defer trace.StartRegion(ctx, "SVN Phase 7: branch renaming and mapping").End()
 	logit(logEXTRACT, "SVN Phase 7: branch renaming and mapping")
 	// Change the branch names from Subversion style to git style.
 	// This is also where branch mappings get applied.
@@ -2486,7 +2495,8 @@ func svnProcessRenames(sp *StreamParser, options stringSet, baton *Baton) {
 	sp.repo.delete(deletia, nil)
 }
 
-func svnProcessTagEmpties(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	defer trace.StartRegion(ctx, "SVN Phase 8: tagify empty commits").End()
 	logit(logEXTRACT, "SVN Phase 8: tagify empty commits")
 	// Now we need to tagify all other commits without fileops, because git
 	// is going to just discard them when we build a live repo and they
@@ -2549,7 +2559,8 @@ func svnProcessTagEmpties(sp *StreamParser, options stringSet, baton *Baton) {
 		/* gripe */ sp.shout)
 }
 
-func svnProcessCleanTags(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessCleanTags(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	defer trace.StartRegion(ctx, "SVN Phase 9: delete/copy canonicalization").End()
 	logit(logEXTRACT, "SVN Phase 9: delete/copy canonicalization")
 	// cvs2svn likes to crap out sequences of deletes followed by
 	// filecopies on the same node when it's generating tag commits.
@@ -2584,7 +2595,8 @@ func svnProcessCleanTags(sp *StreamParser, options stringSet, baton *Baton) {
 	baton.endProgress()
 }
 
-func svnProcessDebubble(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessDebubble(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	defer trace.StartRegion(ctx, "SVN Phase A: remove duplicate parent marks").End()
 	logit(logEXTRACT, "SVN Phase A: remove duplicate parent marks")
 	// Remove spurious parent links caused by random cvs2svn file copies.
 	baton.startProgress("process SVN, phase A: remove duplicate parent marks", uint64(len(sp.repo.events)))
@@ -2617,7 +2629,8 @@ func svnProcessDebubble(sp *StreamParser, options stringSet, baton *Baton) {
 	baton.endProgress()
 }
 
-func svnProcessRenumber(sp *StreamParser, options stringSet, baton *Baton) {
+func svnProcessRenumber(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	defer trace.StartRegion(ctx, "SVN Phase B: renumber").End()
 	logit(logEXTRACT, "SVN Phase B: renumber")
 	sp.repo.renumber(1, baton)
 }

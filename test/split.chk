@@ -4,4 +4,3 @@ read <mergeinfo.svn
 :6 split at 2
 reposurgeon: selection doesn't point at a commit
 reposurgeon: script abort on line 6 ":6 split at 2"
-reposurgeon: 1 new log message(s)

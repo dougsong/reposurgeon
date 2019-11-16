@@ -6656,7 +6656,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 // The main event
 //
 
-func (sp *StreamParser) fastImport(fp io.Reader, options stringSet, source string) {
+func (sp *StreamParser) fastImport(ctx context.Context, fp io.Reader, options stringSet, source string) {
 	// Initialize the repo from a fast-import stream or Subversion dump.
 	sp.timeMark("start")
 	var filesize int64
@@ -6690,7 +6690,7 @@ func (sp *StreamParser) fastImport(fp io.Reader, options stringSet, source strin
 			sp.error("unsupported dump format version " + body)
 		}
 		// Beginning of Subversion dump parsing
-		sp.parseSubversion(&options, baton, filesize)
+		sp.parseSubversion(ctx, &options, baton, filesize)
 		// End of Subversion dump parsing
 		if control.flagOptions["progress"] {
 			fmt.Fprintf(baton, "%d svn revisions (%s)",
@@ -7664,8 +7664,8 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 }
 
 // Read a stream file and use it to populate the repo.
-func (repo *Repository) fastImport(fp io.Reader, options stringSet, source string) {
-	newStreamParser(repo).fastImport(fp, options, source)
+func (repo *Repository) fastImport(ctx context.Context, fp io.Reader, options stringSet, source string) {
+	newStreamParser(repo).fastImport(ctx, fp, options, source)
 	repo.readtime = time.Now()
 }
 
@@ -9476,7 +9476,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 			if err != nil {
 				return nil, err
 			}
-			repo.fastImport(tp, options, source)
+			repo.fastImport(context.TODO(), tp, options, source)
 			tp.Close()
 		} else {
 			cmd := os.Expand(repo.vcs.exporter, mapper)
@@ -9484,7 +9484,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 			if err != nil {
 				return nil, err
 			}
-			repo.fastImport(tp, options, source)
+			repo.fastImport(context.TODO(), tp, options, source)
 			tp.Close()
 		}
 		if suppressBaton {
@@ -14088,7 +14088,7 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 				break
 			}
 		}
-		repo.fastImport(parse.stdin, parse.options.toStringSet(), "")
+		repo.fastImport(context.TODO(), parse.stdin, parse.options.toStringSet(), "")
 	} else if parse.line == "" || parse.line == "." {
 		var err2 error
 		// This is slightly asymmetrical with the write side, which
