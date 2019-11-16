@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -1273,7 +1274,7 @@ M 100644 :3 README
 	defer repo.cleanup()
 	sp := newStreamParser(repo)
 	r := strings.NewReader(rawdump)
-	sp.fastImport(r, nullStringSet, "synthetic test load")
+	sp.fastImport(context.TODO(), r, nullStringSet, "synthetic test load")
 
 	assertBool(t, len(repo.events) == 4, true)
 	assertBool(t, repo.events[3].getMark() == ":4", true)
@@ -1446,7 +1447,7 @@ func TestFastImportParse2(t *testing.T) {
 	defer repo.cleanup()
 	sp := newStreamParser(repo)
 	r := strings.NewReader(rawdump)
-	sp.fastImport(r, nullStringSet, "synthetic test load")
+	sp.fastImport(context.TODO(), r, nullStringSet, "synthetic test load")
 
 	testTag1, ok1 := repo.events[len(repo.events)-1].(*Tag)
 	assertBool(t, ok1, true)
@@ -1553,7 +1554,7 @@ func TestDelete(t *testing.T) {
 	defer repo.cleanup()
 	sp := newStreamParser(repo)
 	r := strings.NewReader(rawdump)
-	sp.fastImport(r, nullStringSet, "synthetic test load")
+	sp.fastImport(context.TODO(), r, nullStringSet, "synthetic test load")
 
 	thirdcommit := repo.markToIndex(":6")
 	repo.delete(orderedIntSet{thirdcommit}, nil)
@@ -1612,7 +1613,7 @@ func TestResort(t *testing.T) {
 	defer repo.cleanup()
 	sp := newStreamParser(repo)
 	r := strings.NewReader(rawdump)
-	sp.fastImport(r, nullStringSet, "synthetic test load")
+	sp.fastImport(context.TODO(), r, nullStringSet, "synthetic test load")
 
 	// Reverse the event array, trick from SliceTricks
 	for i := len(repo.events)/2 - 1; i >= 0; i-- {
@@ -1711,7 +1712,7 @@ this is a test tag
 	defer repo.cleanup()
 	sp := newStreamParser(repo)
 	r := strings.NewReader(doubled)
-	sp.fastImport(r, nullStringSet, "synthetic test load")
+	sp.fastImport(context.TODO(), r, nullStringSet, "synthetic test load")
 
 	//verbose = debugUNITE
 	repo.renumber(1, nil)
