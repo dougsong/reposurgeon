@@ -18710,16 +18710,22 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		// Massage old-style addresses into newstyle
 		line = strings.Replace(line, "(", "<", -1)
 		line = strings.Replace(line, ")", ">", -1)
-		// Deal with some address masking
+		// Deal with some address masking that can interfere with next stages
 		line = strings.Replace(line, " <at> ", "@", -1)
 		// Malformation in a GCC Changelog that might be
 		// replicated elsewhere.
 		if strings.HasSuffix(line, ">>") {
 			line = line[:len(line)-1]
 		}
-		// Line must contain an email address
-		if !(strings.Count(line, "<") == 1 && strings.Count(line, ">") == 1) {
+		// Line must contain an email address. Find it.
+		addrStart := strings.LastIndex(line, "<")
+		addrEnd := strings.LastIndex(line, ">")
+		if addrStart < 0 || addrEnd < addrStart {
 			return ""
+		}
+		if strings.Contains(line[addrStart:addrEnd], " at ") {
+			addr := line[addrStart:addrEnd]
+			line = line[:addrStart] + strings.Replace(addr, " at ", "@", 1) + line[addrEnd:]
 		}
 		if unicode.IsDigit(rune(line[0])) && unicode.IsDigit(rune(line[0])) {
 			space := strings.Index(line, " ")
