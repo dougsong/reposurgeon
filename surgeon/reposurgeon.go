@@ -4679,9 +4679,8 @@ func (commit *Commit) sortOperations() {
 			right := pathpart(commit.fileops[j])
 			if len(left) > len(right) {
 				return left[:len(right)] <= right
-			} else {
-				return left < right[:len(left)]
 			}
+			return left < right[:len(left)]
 		}
 	}
 	sort.SliceStable(commit.fileops, lessthan)
