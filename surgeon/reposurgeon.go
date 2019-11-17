@@ -18530,9 +18530,7 @@ func (rs *Reposurgeon) DoDo(ctx context.Context, line string) bool {
 		}
 		// Call the base method so RecoverableExceptions
 		// won't be caught; we want them to abort macros.
-		r := trace.StartRegion(ctx, expansion)
 		rs.cmd.OneCmd(ctx, expansion)
-		r.End()
 	}
 
 	return false
@@ -19497,7 +19495,6 @@ func (rs *Reposurgeon) DoScript(ctx context.Context, lineIn string) bool {
 		return false
 	}
 	defer scriptfp.Close()
-	defer trace.StartRegion(ctx, "script").End()
 	script := bufio.NewReader(scriptfp)
 
 	existingInputIsStdin := rs.inputIsStdin
@@ -19574,9 +19571,7 @@ func (rs *Reposurgeon) DoScript(ctx context.Context, lineIn string) bool {
 		// finally we execute the command, plus the before/after steps
 		originalline := scriptline
 		scriptline = interpreter.PreCmd(ctx, scriptline)
-		r := trace.StartRegion(ctx, scriptline)
 		stop := interpreter.OneCmd(ctx, scriptline)
-		r.End()
 		stop = interpreter.PostCmd(ctx, stop, scriptline)
 
 		// and then we have to put the stdin back where it
@@ -19707,9 +19702,7 @@ func main() {
 					acmd = acmd[2:]
 				}
 				acmd = interpreter.PreCmd(ctx, acmd)
-				r := trace.StartRegion(ctx, acmd)
 				stop = interpreter.OneCmd(ctx, acmd)
-				r.End()
 				stop = interpreter.PostCmd(ctx, stop, acmd)
 				if stop {
 					break
