@@ -6459,6 +6459,7 @@ type StreamParser struct {
 	// Everything below here is Subversion-specific
 	branches             map[string]*branchMeta // Points to branch root commits
 	_branchesSorted      []string
+	revlinks             map[revidx]revidx
 	branchlink           map[string]daglink
 	branchcopies         stringSet
 	generatedDeletes     []*Commit
@@ -6473,7 +6474,6 @@ type StreamParser struct {
 	streamview           []*NodeAction // All nodes in streeam order
 	initialBranchIgnores map[string]bool // a flag for each branch where we have put the implicit svn's implicit
 					     // ignore rules into a .gitignore file
-	lastcopy             map[string]revlink
 }
 
 // Only used in diagnostics
@@ -6489,6 +6489,7 @@ func newStreamParser(repo *Repository) *StreamParser {
 	// Everything below here is Subversion-specific
 	sp.branches = make(map[string]*branchMeta)
 	sp._branchesSorted = nil
+	sp.revlinks = make(map[revidx]revidx)
 	sp.branchlink = make(map[string]daglink)
 	sp.branchcopies = newStringSet()
 	sp.generatedDeletes = make([]*Commit, 0)
@@ -6499,7 +6500,6 @@ func newStreamParser(repo *Repository) *StreamParser {
 	sp.activeGitignores = make(map[string]string)
 	sp.splitCommits = make(map[revidx]int)
 	sp.initialBranchIgnores = make(map[string]bool)
-	sp.lastcopy = make(map[string]revlink)
 	return sp
 }
 
@@ -7836,8 +7836,8 @@ func (sp *StreamParser) svnProcess(options stringSet, baton *Baton) {
 	// A minor issue is that branch creations and tags are both
 	// biormally expressed in stream dumps as commit-like objwcts
 	// with no attached file delete/add/modify operations.  There
-	// is no ntural place for these in gitspsce, but the comments
-	// in them could be interesting.  They're saved as sythetic
+	// is no ntural place for these in gitspace, but the comments
+	// in them could be interesting.  They're saved as synthetic
 	// tags, most of which should typically be junked after conversion
 	//
 	// Search forward for the word "Phase" to find phase descriptions.
@@ -8014,6 +8014,7 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 	}
 
 	// Filter properties and build the revlinks map. This could be parallelized.
+	lastcopy := make(map[string]revlink)
 	for _, node := range sp.streamview {
 		// Handle per-path properties.
 		if node.hasProperties() {
@@ -8073,14 +8074,21 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 			if targetbranch != "" {
 				// Record the last copy to the target branch.  Copies to subdirectories
 				// are mapped to the most specific including branch.  These branch paths
-				// have to be remapped before they can be used in gitspace, but this
+				// wpuld have to be remapped before they can be used in gitspace, but this
 				// should be all the information required to make gitspace branch links.
 				// Ugh...unless a copy is based on a nontrivially split commit!
-				sp.lastcopy[targetbranch] = revlink{source:node.fromRev, target:node.revision}
+				lastcopy[targetbranch] = revlink{source:node.fromRev, target:node.revision}
 			}
 		}
 	}
 
+	// Now that we've collected all these connections, we can throw out the actual branches
+	// and index by the way we're going to need to look these up.
+	for _, v := range lastcopy {
+		sp.revlinks[v.target] = v.source
+	}
+	logit(logEXTRACT, "revlinks are %v", sp.revlinks)
+	
 	sp.streamview = nil // Allow that view to be GCed
 }
 
@@ -8477,6 +8485,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		// copy. Fortunately, we can resolve such sets by the simple
 		// expedient of picking the *latest* revision in them!
 		// No code uses the result if branch analysis is turned off.
+		// FIXME: Now that we have sp.revlinks, this could be simpler. 
 		if !nobranch {
 			for i := range newcommits {
 				if _, ok := sp.branchlink[commit.mark]; ok {
