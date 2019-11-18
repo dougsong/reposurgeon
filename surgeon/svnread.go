@@ -1439,10 +1439,15 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 	// Build commits
 	logit(logEXTRACT, "SVN Phase 4: build commits")
 	sp.splitCommits = make(map[revidx]int)
-	baton.startProgress("process SVN, phase 4a: build commits", uint64(len(sp.revisions)))
+	baton.startProgress("process SVN, phase 4a: prepare commits and actions", uint64(len(sp.revisions)))
+	type fiAction struct {
+		node   *NodeAction
+		fileop *FileOp
+	}
 	baseCommits    := make([]*Commit,    len(sp.revisions))
 	createdBlobs   := make([][]Event,    len(sp.revisions))
 	createdCommits := make([][]Event,    len(sp.revisions))
+	fiActions      := make([][]fiAction, len(sp.revisions))
 	for ri, record := range sp.revisions {
 		// Zero revision is never interesting - no operations, no
 		// comment, no author, it's just a start marker for a
@@ -1519,10 +1524,6 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 
 		// Create actions corresponding to both
 		// parsed and generated nodes.
-		type fiAction struct {
-			node   *NodeAction
-			fileop *FileOp
-		}
 		actions := make([]fiAction, 0)
 		for _, node := range expandedNodes {
 			if node.action == sdNONE {
@@ -1680,6 +1681,17 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		}
 		commit.setMark(sp.repo.newmark())
 		baseCommits[ri] = commit
+		fiActions[ri] = actions
+		baton.percentProgress(uint64(ri))
+	}
+	baton.endProgress()
+	baton.startProgress("process SVN, phase 4b: create commits from actions", uint64(len(sp.revisions)))
+	for ri, record := range sp.revisions {
+		commit := baseCommits[ri]
+		if commit == nil {
+			continue
+		}
+		actions := fiActions[ri]
 		// Time to generate commits from actions and fileops.
 		// First, break the file operations into branch cliques.
 		// In the normal case there will be only one such clique,
@@ -1798,8 +1810,9 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		createdCommits[ri] = newcommits
 		baton.percentProgress(uint64(ri))
 	}
+	fiActions = nil // Clear unneeded storage early
 	baton.endProgress()
-	baton.startProgress("process SVN, phase 4b: create branchlinks and append events",
+	baton.startProgress("process SVN, phase 4c: create branchlinks and append events",
 	                    uint64(len(sp.revisions)))
 	for ri, record := range sp.revisions {
 		// Deduce links between branches on the basis of copies. This
