@@ -1678,6 +1678,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 				logit(logSHOUT, "reposurgeon: %v -> %v", action.node, opr)
 			}
 		}
+		commit.setMark(sp.repo.newmark())
 		baseCommits[ri] = commit
 		// Time to generate commits from actions and fileops.
 		// First, break the file operations into branch cliques.
@@ -1751,7 +1752,6 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 				// Prefix must end in a path separator
 				commit.common = common[:strings.LastIndex(common, svnSep)+1]
 			}
-			commit.setMark(sp.repo.newmark())
 			logit(logEXTRACT, "r%d gets mark %s", record.revision, commit.mark)
 			commit.sortOperations()
 			newcommits = append(newcommits, commit)
