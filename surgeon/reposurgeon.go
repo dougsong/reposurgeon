@@ -22155,21 +22155,19 @@ func main() {
 		if len(control.profilename) > 0 {
 			saveAllProfiles(control.profilename)
 		}
-		/*
-			if control.logmask <= 1 {
-				if e := recover(); e != nil {
-					fmt.Println("reposurgeon: panic recovery: ", e)
-				}
-				files, err := ioutil.ReadDir("./")
-				if err == nil {
-					for _, f := range files {
-						if strings.HasPrefix(f.Name(), ".rs") && f.IsDir() {
-							os.RemoveAll(f.Name())
-						}
+		if control.logmask != 0 {
+			if e := recover(); e != nil {
+				fmt.Println("reposurgeon: panic recovery: ", e)
+			}
+			files, err := ioutil.ReadDir("./")
+			if err == nil {
+				for _, f := range files {
+					if strings.HasPrefix(f.Name(), ".rs") && f.IsDir() {
+						os.RemoveAll(f.Name())
 					}
 				}
 			}
-		*/
+		}
 	}()
 
 	if len(os.Args[1:]) == 0 {
