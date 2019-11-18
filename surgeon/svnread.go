@@ -35,6 +35,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -711,6 +712,41 @@ func newRevisionRecord(nodes []*NodeAction, props OrderedMap, revision revidx) *
 	props.delete("svn:date")
 	rr.props = props
 	return rr
+}
+
+func walkRevisions(revs []RevisionRecord, hook func(int, *RevisionRecord)) {
+	if control.flagOptions["serial"] {
+		for i := range revs {
+			hook(i, &revs[i])
+		}
+		return
+	}
+
+	var (
+		maxWorkers = runtime.GOMAXPROCS(0)
+		channel    = make(chan int, maxWorkers)
+		done       = make(chan bool, maxWorkers)
+	)
+
+	// Create the workers that will loop though events
+	for n := 0; n < maxWorkers; n++ {
+		go func() {
+			// The for loop will stop when channel is closed
+			for i := range channel {
+				hook(i, &revs[i])
+			}
+			done <- true
+		}()
+	}
+
+	// Populate the channel with the events
+	for i := range revs {
+		channel <- i
+	}
+	close(channel)
+
+	// Wait for all workers to finish
+	for n := 0; n < maxWorkers; n++ { <-done }
 }
 
 // Cruft recognizers
@@ -1688,10 +1724,12 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 	baton.startProgress("process SVN, phase 4b: create commits from actions", uint64(len(sp.revisions)))
 	var mutex sync.Mutex
 	branchlist := sp.branchlist()
-	for ri, record := range sp.revisions {
+	seenRevisions := 0
+	walkRevisions(sp.revisions, func(ri int, record *RevisionRecord) {
+		seenRevisions++
 		commit := baseCommits[ri]
 		if commit == nil {
-			continue
+			return
 		}
 		actions := fiActions[ri]
 		// Time to generate commits from actions and fileops.
@@ -1808,8 +1846,8 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		//	logit(logEXTRACT, "New commits (%d): %v", len(newcommits), newcommits)
 		//}
 		createdCommits[ri] = newcommits
-		baton.percentProgress(uint64(ri))
-	}
+		baton.percentProgress(uint64(seenRevisions))
+	})
 	fiActions = nil // Clear unneeded storage early
 	baton.endProgress()
 	baton.startProgress("process SVN, phase 4c: create branchlinks and append events",
