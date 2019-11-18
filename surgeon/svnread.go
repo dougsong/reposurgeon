@@ -1978,6 +1978,8 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		// We're done, add all the new blobs and commits
 		sp.repo.events = append(sp.repo.events, createdBlobs[ri]...)
 		sp.repo.events = append(sp.repo.events, createdCommits[ri]...)
+		createdBlobs[ri] = nil
+		createdCommits[ri] = nil
 		sp.repo.declareSequenceMutation("adding new commits")
 		// End of processing for this Subversion revision.  If the
 		// repo is large, we throw out file records for this node in
