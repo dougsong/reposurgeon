@@ -1,2 +1,2 @@
-reposurgeon: "vanilla.svn", line 193: r5#1~trunk/README properties set:
-reposurgeon: "vanilla.svn", line 193: 	foo = 'bar'
+reposurgeon: r5#1~trunk/README properties set:
+reposurgeon: 	foo = 'bar'

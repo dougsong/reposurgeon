@@ -6269,28 +6269,27 @@ const sdNUKE = 5 // Not part of the Subversion data model
 var actionValues = []string{"none", "add", "delete", "change", "replace"}
 var pathTypeValues = []string{"none", "file", "dir", "ILLEGAL-TYPE"}
 
-// Native Subversion properties that we don't suppress: svn:externals
 // The reason for these suppressions is to avoid a huge volume of
 // junk file properties - cvs2svn in particular generates them like
 // mad.  We want to let through other properties that might carry
 // useful information.
 var ignoreProperties = map[string]bool{
-	"svn:executable": true, // We special-case this one elsewhere
-	"svn:ignore":     true, // We special-case this one elsewhere
-	"svn:special":    true, // We special-case this one elsewhere
-	"svn:mime-type":  true,
-	"svn:keywords":   true,
-	"svn:needs-lock": true,
-	"svn:eol-style":  true, // Don't want to suppress, but cvs2svn floods these.
+	"svn:mime-type":   true,
+	"svn:keywords":    true,
+	"svn:needs-lock":  true,
+	"svn:eol-style":   true, // Don't want to suppress, but cvs2svn floods these.
 }
 
 // These properties, on the other hand, shouldn't be tossed out even
-// if --ignore-properties is set.
+// if --ignore-properties is set.  svn:mergeinfo and svnmerge-integrated
+// are not in this list because they need to be preserved conditionally
+// on directories only.
 var preserveProperties = map[string]bool{
-	"cvs2svn:cvs-rev":     true,
-	"svn:executable":      true,
-	"svn:mergeinfo":       true,
-	"svnmerge-integrated": true,
+	"cvs2svn:cvs-rev": true,
+	"svn:executable":  true,
+	"svn:externals":   true,
+	"svn:ignore":      true,
+	"svn:special":     true,
 }
 
 const maxRevidx = int(^revidx(0)) // Use for bounds-checking in range loops.
@@ -8015,43 +8014,42 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 	}
 
 	// Filter properties and build the revlinks map. This could be parallelized.
-	var hasProperties stringSet
-	for i, node := range sp.streamview {
-		if i == 0 || sp.streamview[i].revision != sp.streamview[i-1].revision {
-			hasProperties = newStringSet()
-		}
+	for _, node := range sp.streamview {
 		// Handle per-path properties.
 		if node.hasProperties() {
+			// Some properties should be quietly ignored
+			for k := range ignoreProperties {
+				node.props.delete(k)
+			}
 			// Remove blank lines from svn:ignore property values.
 			if node.props.has("svn:ignore") {
 				oldIgnore := node.props.get("svn:ignore")
 				newIgnore := blankline.ReplaceAllLiteralString(oldIgnore, "")
 				node.props.set("svn:ignore", newIgnore)
 			}
-			if !options.Contains("--ignore-properties") {
-				tossThese := make([][2]string, 0)
-				for prop, val := range node.props.dict {
-					if ignoreProperties[prop] {
-						continue
-					}
-					// Pass through the properties that can't be processed until we're ready to
-					// generate commits
-					if prop == "cvs2svn:cvs-rev" || ((prop == "svn:mergeinfo" || prop == "svnmerge-integrated") && node.kind == sdDIR) {
-						continue
-					}
-					tossThese = append(tossThese, [2]string{prop, val})
+			tossThese := make([][2]string, 0)
+			for prop, val := range node.props.dict {
+				// Pass through the properties that can't be processed until we're ready to
+				// generate commits
+				if preserveProperties[prop] || ((prop == "svn:mergeinfo" || prop == "svnmerge-integrated") && node.kind == sdDIR) {
+					continue
 				}
-				if len(tossThese) == 0 {
-					if hasProperties.Contains(node.path) {
-						sp.shout(fmt.Sprintf("r%d#%d~%s: properties cleared.", node.revision, node.index, node.path))
-						hasProperties.Remove(node.path)
-					}
-				} else {
-					sp.shout(fmt.Sprintf("r%d#%d~%s properties set:", node.revision, node.index, node.path))
+				tossThese = append(tossThese, [2]string{prop, val})
+				node.props.delete(prop)
+			}
+			if !options.Contains("--ignore-properties") {
+				// It would be good to emit messages
+				// when a nonempty property set on a
+				// path is entirely cleared.
+				// Unfortunately, the Subversion dumper
+				// spams empty property sets, emitting
+				// them lots of places they're not
+				// necessary.
+				if len(tossThese) > 0 {
+					logit(logSHOUT, "r%d#%d~%s properties set:", node.revision, node.index, node.path)
 					for _, pair := range tossThese {
-						sp.shout(fmt.Sprintf("\t%s = '%s'", pair[0], pair[1]))
+						logit(logSHOUT, "\t%s = '%s'", pair[0], pair[1])
 					}
-					hasProperties.Add(node.path)
 				}
 			}
 		}
