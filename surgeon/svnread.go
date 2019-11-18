@@ -1732,7 +1732,6 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 			// clique, we can also output a single commit.  If there are
 			// multiple cliques but only one is non-trivial, it makes sense
 			// to affect the corresponding fileops to the base commit.
-			sp.repo.legacyMap[fmt.Sprintf("SVN:%s", commit.legacyID)] = commit
 			if nontrivialCount == 1 {
 				commit.common = nontrivialClique
 				commit.copyOperations(cliques[nontrivialClique])
@@ -1764,7 +1763,6 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 				// Prefix must end in a path separator
 				commit.common = common[:strings.LastIndex(common, svnSep)+1]
 			}
-			logit(logEXTRACT, "r%d gets mark %s", record.revision, commit.mark)
 			commit.sortOperations()
 			newcommits = append(newcommits, commit)
 		}
@@ -1790,9 +1788,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 				split.common = branch
 				// Sequence numbers for split commits are 1-origin
 				split.legacyID += splitSep + strconv.Itoa(i+1)
-				sp.repo.legacyMap[fmt.Sprintf("SVN:%s", split.legacyID)] = split
 				split.Comment += "\n[[Split portion of a mixed commit.]]\n"
-				split.setMark(sp.repo.newmark())
 				split.copyOperations(cliques[branch])
 				split.sortOperations()
 				newcommits = append(newcommits, split)
@@ -1815,6 +1811,18 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 	baton.startProgress("process SVN, phase 4c: create branchlinks and append events",
 	                    uint64(len(sp.revisions)))
 	for ri, record := range sp.revisions {
+		// Make marks of split commits different from that of their base,
+		// and populate the legacy map linearly to avoid unpredictable
+		// mark creation ordering or concurrent map access.
+		base := baseCommits[ri]
+		for _, evt := range createdCommits[ri] {
+			commit := evt.(*Commit)
+			sp.repo.legacyMap[fmt.Sprintf("SVN:%s", commit.legacyID)] = commit
+			if commit != base {
+				commit.setMark(sp.repo.newmark())
+			}
+			logit(logEXTRACT, "r%d gets mark %s", record.revision, commit.mark)
+		}
 		// Deduce links between branches on the basis of copies. This
 		// is tricky because a revision can be the target of multiple
 		// copies.  Humans don't abuse this because tracking multiple
@@ -1830,7 +1838,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		// FIXME: Now that we have sp.revlinks, this could be simpler. 
 		if !nobranch {
 			for _, event := range createdCommits[ri] {
-				if _, ok := sp.branchlink[baseCommits[ri].mark]; ok {
+				if _, ok := sp.branchlink[base.mark]; ok {
 					continue
 				}
 				newcommit := event.(*Commit)
