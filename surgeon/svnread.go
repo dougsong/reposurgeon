@@ -1687,6 +1687,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 	baton.endProgress()
 	baton.startProgress("process SVN, phase 4b: create commits from actions", uint64(len(sp.revisions)))
 	var mutex sync.Mutex
+	branchlist := sp.branchlist()
 	for ri, record := range sp.revisions {
 		commit := baseCommits[ri]
 		if commit == nil {
@@ -1703,7 +1704,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 			// This preferentially matches longest branches because
 			// sp.branchlist() is sorted that way.
 			branch := ""
-			for _, b := range sp.branchlist() {
+			for _, b := range branchlist {
 				if strings.HasPrefix(action.node.path, b) {
 					branch = b
 					break
