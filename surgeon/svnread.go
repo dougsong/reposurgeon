@@ -1686,6 +1686,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 	}
 	baton.endProgress()
 	baton.startProgress("process SVN, phase 4b: create commits from actions", uint64(len(sp.revisions)))
+	var mutex sync.Mutex
 	for ri, record := range sp.revisions {
 		commit := baseCommits[ri]
 		if commit == nil {
@@ -1798,7 +1799,9 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		// not consisting entirely of deleteall operations.
 		if nontrivialCount > 1 {
 			// Store the number of non-trivial splits
+			mutex.Lock()
 			sp.splitCommits[intToRevidx(ri)] = nontrivialCount
+			mutex.Unlock()
 		}
 		//if len(newcommits) > 0 {
 		//	logit(logEXTRACT, "New commits (%d): %v", len(newcommits), newcommits)
