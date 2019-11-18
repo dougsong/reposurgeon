@@ -1235,10 +1235,6 @@ _darcs
 			preserve:     newOrderedStringSet("hooks"),
 			authormap:    "",
 			ignorename:   "",
-			// Note dangerous hack here: the leading
-			// slashes are there to mark lines which
-			// should *not* be anchored, and will be
-			// removed later in processing.
 			dfltignores: subversionDefaultIgnores,
 			cookies:     reMake(`\sr?\d+([.])?\s`),
 			project:     "http://subversion.apache.org/",
