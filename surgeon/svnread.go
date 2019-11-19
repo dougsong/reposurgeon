@@ -807,7 +807,7 @@ var blankline = regexp.MustCompile(`(?m:^\s*\n)`)
 // Try to figure out who the ancestor of this node is.
 func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
 	// Easy case: dump stream has intact hashes, and there is one.
-	// This should habdle file copies.
+	// This should handle file copies.
 	if node.fromHash != "" {
 		ancestor, ok := sp.hashmap[node.fromHash]
 		if ok {
@@ -835,7 +835,7 @@ func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
 		}
 	} else if node.action != sdADD {
 		// Ordinary inheritance, no node copy.
-		//Contiguity assumption here
+		// Contiguity assumption here
 		lookback = sp.history.getActionNode(node.revision-1, node.path)
 	}
 
@@ -1483,8 +1483,9 @@ func svnProcessCommits(ctx context.Context, sp *StreamParser, options stringSet,
 	sp.splitCommits = make(map[revidx]int)
 	baton.startProgress("process SVN, phase 4a: prepare commits and actions", uint64(len(sp.revisions)))
 	type fiAction struct {
-		node   *NodeAction
-		fileop *FileOp
+		node     *NodeAction
+		ancestor *NodeAction
+		fileop   *FileOp
 	}
 	baseCommits    := make([]*Commit,    len(sp.revisions))
 	createdBlobs   := make([][]Event,    len(sp.revisions))
@@ -1610,15 +1611,14 @@ func svnProcessCommits(ctx context.Context, sp *StreamParser, options stringSet,
 						continue
 					}
 				}
+				ancestor = sp.seekAncestor(node)
 				if node.action == sdDELETE {
 					//assert node.blob == nil
 					fileop := newFileOp(sp.repo)
 					fileop.construct(opD, node.path)
 					fileop.genflag = node.generated
-					actions = append(actions, fiAction{node, fileop})
+					actions = append(actions, fiAction{node, ancestor, fileop})
 				} else if node.action == sdADD || node.action == sdCHANGE || node.action == sdREPLACE {
-					ancestor = sp.seekAncestor(node)
-					// Time for fileop generation
 					if node.blob != nil {
 						if lookback, ok := sp.hashmap[node.contentHash]; ok {
 							logit(logEXTRACT, "r%d: blob of %s matches existing hash %s, assigning '%s' from %s",
@@ -1681,7 +1681,7 @@ func svnProcessCommits(ctx context.Context, sp *StreamParser, options stringSet,
 						node.blobmark.String(),
 						node.path)
 					fileop.genflag = node.generated
-					actions = append(actions, fiAction{node, fileop})
+					actions = append(actions, fiAction{node, ancestor, fileop})
 					sp.repo.markToEvent(fileop.ref).(*Blob).addalias(node.path)
 
 					// Sanity check: should be the case that
@@ -1709,7 +1709,7 @@ func svnProcessCommits(ctx context.Context, sp *StreamParser, options stringSet,
 				fileop := newFileOp(sp.repo)
 				fileop.construct(deleteall)
 				fileop.genflag = node.generated
-				actions = append(actions, fiAction{node, fileop})
+				actions = append(actions, fiAction{node, ancestor, fileop})
 			}
 			baton.twirl()
 		}
