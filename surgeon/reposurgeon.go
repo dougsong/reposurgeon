@@ -3432,6 +3432,7 @@ type Blob struct {
 	abspath      string
 	repo         *Repository
 	pathlist     []string // In-repo paths associated with this blob
+	pathlistmap  map[string]bool // optimisation for the above, kept in sync
 	start        int64    // Seek start if this blob refers into a dump
 	size         int64    // length start if this blob refers into a dump
 	_expungehook *Blob
@@ -3447,6 +3448,7 @@ func newBlob(repo *Repository) *Blob {
 	b := new(Blob)
 	b.repo = repo
 	b.pathlist = make([]string, 0) // These have an implied sequence.
+	b.pathlistmap = map[string]bool{} // optimisation for pathlist
 	b.start = noOffset
 	b.blobseq = control.blobseq
 	control.blobseq++
@@ -3475,12 +3477,17 @@ func (b *Blob) paths(_pathtype orderedStringSet) orderedStringSet {
 }
 
 func (b *Blob) addalias(argpath string) {
-	for _, el := range b.pathlist {
-		if el == argpath {
-			return
-		}
+	if _, ok := b.pathlistmap[argpath]; ok {
+		return
 	}
 	b.pathlist = append(b.pathlist, argpath)
+	b.pathlistmap[argpath] = true
+}
+
+func (b *Blob) replacealias(pos int, argpath string) {
+	delete(b.pathlistmap, b.pathlist[pos])
+	b.pathlist[pos] = argpath
+	b.pathlistmap[argpath] = true
 }
 
 func (b *Blob) setBlobfile(argpath string) {
@@ -3699,6 +3706,10 @@ func (b *Blob) clone(repo *Repository) *Blob {
 	c := b // copy scalar fields
 	c.pathlist = make([]string, len(b.pathlist))
 	copy(c.pathlist, b.pathlist)
+	c.pathlistmap = map[string]bool{}
+	for k := range b.pathlistmap {
+		c.pathlistmap[k] = true
+	}
 	c.colors.Clear()
 	if b.hasfile() {
 		logit(logSHUFFLE,
@@ -17560,7 +17571,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 								if fileop.op == opM {
 									blob := repo.markToEvent(fileop.ref).(*Blob)
 									if blob.pathlist[0] == oldpath {
-										blob.pathlist[0] = newpath
+										blob.replacealias(0, newpath)
 									}
 								}
 							}
