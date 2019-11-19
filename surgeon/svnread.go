@@ -1738,6 +1738,7 @@ func svnProcessCommits(ctx context.Context, sp *StreamParser, options stringSet,
 			return
 		}
 		actions := fiActions[ri]
+		fiActions[ri] = nil
 		// Time to generate commits from actions and fileops.
 		// First, break the file operations into branch cliques.
 		// In the normal case there will be only one such clique,
@@ -1854,7 +1855,6 @@ func svnProcessCommits(ctx context.Context, sp *StreamParser, options stringSet,
 		createdCommits[ri] = newcommits
 		baton.percentProgress(uint64(seenRevisions))
 	})
-	fiActions = nil // Clear unneeded storage early
 	baton.endProgress()
 	baton.startProgress("process SVN, phase 4c: create branchlinks and append events",
 	                    uint64(len(sp.revisions)))
