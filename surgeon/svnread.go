@@ -260,6 +260,9 @@ func (sp *StreamParser) sdReadProps(target string, checklength int) *OrderedMap 
 
 func (sp *StreamParser) branchtrie() trie.Tree {
 	//The branch list in deterministic order, most specific branches first.
+	if len(sp.branches) == 0 {
+		return nil
+	}
 	if sp._branchesSorted != nil {
 		return sp._branchesSorted
 	}
@@ -277,6 +280,9 @@ func (sp *StreamParser) branchtrie() trie.Tree {
 
 func longestPrefix(t trie.Tree, key []byte) []byte {
 	var prefix []byte
+	if t == nil {
+		return prefix
+	}
 	for i, c := range []byte(key) {
 		if t = t.TraceByte(c); t == nil {
 			break
