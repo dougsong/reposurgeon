@@ -12,37 +12,31 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	trie "github.com/acomagu/trie"
 )
 
 func assertBool(t *testing.T, see bool, expect bool) {
-	t.Helper()
 	if see != expect {
 		t.Errorf("assertBool: expected %v saw %v", expect, see)
 	}
 }
 
 func assertTrue(t *testing.T, see bool) {
-	t.Helper()
 	assertBool(t, see, true)
 }
 
 func assertEqual(t *testing.T, a string, b string) {
-	t.Helper()
 	if a != b {
 		t.Fatalf("assertEqual: expected %q == %q", a, b)
 	}
 }
 
 func assertRuneEqual(t *testing.T, a rune, b rune) {
-	t.Helper()
 	if a != b {
 		t.Fatalf("assertEqual: expected %q == %q", a, b)
 	}
 }
 
 func assertIntEqual(t *testing.T, a int, b int) {
-	t.Helper()
 	if a != b {
 		t.Errorf("assertIntEqual: expected %d == %d", a, b)
 	}
@@ -1797,28 +1791,4 @@ func TestPathMap(t *testing.T) {
 	assertTrue(t, !contains)
 	assertEqual(t, p.String(), "{}")
 
-}
-
-func TestLongestMatch(t *testing.T) {
-	branches := [][]byte{
-		[]byte("foo/"),
-		[]byte("foo/bar/"),
-		[]byte("bar/"),
-		[]byte("baz"),
-	}
-	values := []interface{}{1, 2, 3, 4}
-	b := trie.New(branches, values)
-	tests := [][]string{
-		[]string{"foo/bar/.gitignore", "foo/bar/"},
-		[]string{"foo/.gitignore", "foo/"},
-		[]string{"foo/bar/baz/.gitignore", "foo/bar/"},
-		[]string{"x/.gitignore", ""},
-	}
-	for idx, pair := range tests {
-		t.Run(fmt.Sprint(idx),
-			func (t *testing.T) {
-				result := longestPrefix(b, []byte(pair[0]))
-				assertEqual(t, string(result), pair[1])
-			})
-	}
 }
