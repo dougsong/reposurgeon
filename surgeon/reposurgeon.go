@@ -18754,7 +18754,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				return ""
 			}
 			addr := strings.TrimSpace(line[space+1:])
-			return addr
+			return fmt.Sprintf("%s", addr) // Force a realloc to free the blob
 		}
 		// Scan for old-style date like "Tue Dec  9 01:16:06 1997"
 		// This corresponds to Go ANSIC format.
@@ -18773,7 +18773,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				return ""
 			}
 			addr := strings.TrimSpace(line[m[1]:])
-			return addr
+			return fmt.Sprintf("%s", addr) // Force a realloc to free the blob
 		}
 		return ""
 	}
