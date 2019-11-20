@@ -42,11 +42,12 @@ import (
 	"sync"
 	"time"
 	"unsafe" // Actually safe - only uses Sizeof
+	trie "github.com/acomagu/trie"
 )
 
 type svnReader struct {
 	branches             map[string]*branchMeta // Points to branch root commits
-	_branchesSorted      []string
+	_branchesSorted      trie.Tree
 	revlinks             map[revidx]revidx
 	branchlink           map[string]daglink
 	branchcopies         stringSet
@@ -257,24 +258,34 @@ func (sp *StreamParser) sdReadProps(target string, checklength int) *OrderedMap 
 	return &props
 }
 
-func (sp *StreamParser) branchlist() []string {
+func (sp *StreamParser) branchtrie() trie.Tree {
 	//The branch list in deterministic order, most specific branches first.
 	if sp._branchesSorted != nil {
 		return sp._branchesSorted
 	}
-	sp._branchesSorted = make([]string, len(sp.branches))
+	branches := make([][]byte, len(sp.branches))
+	branchIndexes := make([]interface{}, len(branches))
 	idx := 0
 	for key := range sp.branches {
-		sp._branchesSorted[idx] = key
+		branches[idx] = []byte(key)
+		branchIndexes[idx] = true // we don't care about the value we put into the trie
 		idx++
 	}
-	sort.Slice(sp._branchesSorted, func(i, j int) bool {
-		if len(sp._branchesSorted[i]) > len(sp._branchesSorted[j]) {
-			return true
-		}
-		return sp._branchesSorted[i] > sp._branchesSorted[j]
-	})
+	sp._branchesSorted = trie.New(branches, branchIndexes)
 	return sp._branchesSorted
+}
+
+func longestPrefix(t trie.Tree, key []byte) []byte {
+	var prefix []byte
+	for i, c := range []byte(key) {
+		if t = t.TraceByte(c); t == nil {
+			break
+		}
+		if _, ok := t.Terminal(); ok {
+			prefix = key[:i+1]
+		}
+	}
+	return prefix
 }
 
 func (sp *StreamParser) timeMark(label string) {
@@ -1416,13 +1427,11 @@ func svnProcessClean(sp *StreamParser, options stringSet, baton *Baton) {
 			if sp.isBranch(node.path + svnSep) {
 				targetbranch = node.path + svnSep
 			} else {
-				for _, bn := range sp.branchlist() {
-					if strings.HasPrefix(node.path, bn) {
-						targetbranch = bn
-						logit(logEXTRACT, "r%d#%d: impure branch copy %s corrected to %s",
-							node.revision, node.index, node.path, targetbranch)
-						break
-					}
+				branch := longestPrefix(sp.branchtrie(), []byte(node.path))
+				if branch != nil {
+					targetbranch = string(branch)
+					logit(logEXTRACT, "r%d#%d: impure branch copy %s corrected to %s",
+						node.revision, node.index, node.path, targetbranch)
 				}
 			}
 			if targetbranch != "" {
@@ -1723,7 +1732,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 	baton.endProgress()
 	baton.startProgress("process SVN, phase 4b: create commits from actions", uint64(len(sp.revisions)))
 	var mutex sync.Mutex
-	branchlist := sp.branchlist()
+	branchtrie := sp.branchtrie()
 	seenRevisions := 0
 	walkRevisions(sp.revisions, func(ri int, record *RevisionRecord) {
 		seenRevisions++
@@ -1740,15 +1749,7 @@ func svnProcessCommits(sp *StreamParser, options stringSet, baton *Baton) {
 		// a commit that modifies multiple branches.
 		cliques := make(map[string][]*FileOp)
 		for _, action := range actions {
-			// This preferentially matches longest branches because
-			// sp.branchlist() is sorted that way.
-			branch := ""
-			for _, b := range branchlist {
-				if strings.HasPrefix(action.node.path, b) {
-					branch = b
-					break
-				}
-			}
+			branch := string(longestPrefix(branchtrie, []byte(action.node.path)))
 			cliques[branch] = append(cliques[branch], action.fileop)
 			baton.twirl()
 		}
@@ -2088,17 +2089,11 @@ func svnProcessBranches(sp *StreamParser, options stringSet, baton *Baton, timei
 			} else {
 				// Prefer the longest possible branch
 				// The branchlist is sorted, longest first
-				prefmatch := impossibleFilename
-				for _, b := range sp.branchlist() {
-					if strings.HasPrefix(commit.common, b) {
-						prefmatch = b
-						break
-					}
-				}
-				if prefmatch != impossibleFilename {
-					branch = prefmatch
-				} else {
+				m := longestPrefix(sp.branchtrie(), []byte(commit.common))
+				if m == nil {
 					branch = impossibleFilename
+				} else {
+					branch = string(m)
 				}
 			}
 			logit(logEXTRACT, "branch assignment for %s is '%s'", commit.mark, branch)

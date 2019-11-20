@@ -2,6 +2,7 @@
 module gitlab.com/esr/reposurgeon
 
 require (
+	github.com/acomagu/trie v1.0.0
 	github.com/anmitsu/go-shlex v0.0.0-20161002113705-648efa622239
 	github.com/emirpasic/gods v1.12.0
 	github.com/google/go-cmp v0.3.1
