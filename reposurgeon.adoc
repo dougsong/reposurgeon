@@ -1745,8 +1745,9 @@ derived from a patch and committed by a project maintainer,
 but the ChangeLog entry names the actual author, this information
 can be recovered.
 
-Use the "changelogs" command/  This takes neither arguments nor
-a selection set. It mines the ChangeLog files for authorship data. 
+Use the "changelogs" command.  This takes no arguments, but may
+take a selection set; the default is all commits. It mines the
+selected ChangeLog files for authorship data. 
 
 It assumes such files have the basename 'ChangeLog',
 and that they are in the format used by FSF projects: entry header

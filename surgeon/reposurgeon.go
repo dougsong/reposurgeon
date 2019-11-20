@@ -18677,7 +18677,9 @@ func (rs *Reposurgeon) DoTimebump(line string) bool {
 //
 func (rs *Reposurgeon) HelpChangelogs() {
 	rs.helpOutput(`
-Mine the ChangeLog files for authorship data.
+Mine ChangeLog files for authorship data.
+
+Takes a selection set.  If no set is specified, proces all changelogs.
 
 Assume such files have basename 'ChangeLog', and that they are in the
 format used by FSF projects: entry header lines begin with YYYY-MM-DD
@@ -18711,10 +18713,14 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		return false
 	}
 	repo := rs.chosen()
+	if rs.selection == nil {
+		rs.selection = rs.chosen().all()
+	}
+
 	cc, cl, cm, cd := 0, 0, 0, 0
 
 	parseAttributionLine := func(line string) string {
-		// Parse an attributuinn line in a ChangeLog entry, get an email address
+		// Parse an attribution line in a ChangeLog entry, get an email address
 		if len(line) <= 10 || unicode.IsSpace(rune(line[0])) {
 			return ""
 		}
@@ -18775,7 +18781,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 	attributions := make([][]string, len(repo.events))
 	blobRefs := make([][]string, len(repo.events))
 	evts := 0 // shared between threads, for progression only
-	walkEvents(repo.events, func(event_id int, event Event) {
+	repo.walkEvents(rs.selection, func(event_id int, event Event) {
 		commit, iscommit := event.(*Commit)
 		evts++
 		if !iscommit {
@@ -18851,8 +18857,8 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		control.baton.percentProgress(uint64(evts))
 	})
 	control.baton.endProgress()
-	for eventID, event := range repo.events {
-		commit, iscommit := event.(*Commit)
+	for _, eventID := range rs.selection {
+		commit, iscommit := repo.events[eventID].(*Commit)
 		if !iscommit {
 			continue
 		}
