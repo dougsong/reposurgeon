@@ -6623,7 +6623,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 	if control.readLimit > 0 && uint64(commitcount) < control.readLimit {
 		logit(logSHOUT, "EOF before readlimit.")
 	}
-	walkEvents(sp.repo.events, func(_ int, event Event) {
+	for _, event := range sp.repo.events {
 		switch event.(type) {
 		case *Reset:
 			reset := event.(*Reset)
@@ -6645,7 +6645,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				commit.attach(tag)
 			}
 		}
-	})
+	}
 	if !sp.lastcookie.isEmpty() {
 		sp.repo.hint("", sp.lastcookie.implies(), false)
 	}
