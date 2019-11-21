@@ -3746,16 +3746,16 @@ func (b *Blob) parseCookie(content string) Cookie {
 			if strings.HasSuffix(fields[1], ",v") {
 				b.cookie.path = fields[1][:len(fields[1])-2]
 			} else {
-				b.cookie.path = fields[1]
+				b.cookie.path = stringCopy(fields[1])
 			}
-			b.cookie.rev = fields[2]
+			b.cookie.rev = stringCopy(fields[2])
 		}
 	}
 	for _, m := range dollarRevision.FindAllStringSubmatch(content, 0) {
-		b.cookie.rev = strings.TrimSpace(m[1])
+		b.cookie.rev = stringCopy(strings.TrimSpace(m[1]))
 	}
 	for _, m := range dollarLastChanged.FindAllStringSubmatch(content, 0) {
-		b.cookie.rev = strings.TrimSpace(m[1])
+		b.cookie.rev = stringCopy(strings.TrimSpace(m[1]))
 	}
 	return b.cookie
 }
