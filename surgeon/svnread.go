@@ -2232,6 +2232,7 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 			return eMerges
 		}
 		baton.startProgress("process SVN, phase 5d: resolve mergeinfo", uint64(len(sp.revisions)))
+		sp.repo.cacheMarkToIndex()
 		for revision, record := range sp.revisions {
 			for _, node := range record.nodes {
 				// We're only looking at directory nodes
