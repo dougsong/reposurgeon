@@ -2576,7 +2576,6 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (*Repository, error)
 const (
 	logSHOUT    uint = 1 << iota // Errors and urgent messages
 	logWARN                      // Exceptional condition, probably not bug
-	logTRACE                     // Allow stack trace to issue
 	logTAGFIX                    // Log tag fixups
 	logSVNDUMP                   // Log Subversion dumping
 	logTOPOLOGY                  // Log repo-extractor logic (coarse-grained)
@@ -2595,7 +2594,6 @@ const (
 var logtags = map[string]uint{
 	"shout":    logSHOUT,
 	"warn":     logWARN,
-	"trace":    logTRACE,
 	"tagfix":   logTAGFIX,
 	"svndump":  logSVNDUMP,
 	"topology": logTOPOLOGY,
@@ -19683,6 +19681,7 @@ func main() {
 	interpreter.EnableReadline(true)
 
 	defer func() {
+		maybePanic := recover()
 		control.baton.Sync()
 		//fmt.Print("\n")
 		stopCPUProfiling()
@@ -19690,18 +19689,16 @@ func main() {
 		if len(control.profilename) > 0 {
 			saveAllProfiles(control.profilename)
 		}
-		if (control.logmask & logTRACE) == 0 {
-			if e := recover(); e != nil {
-				fmt.Println("reposurgeon: panic recovery: ", e)
-			}
-			files, err := ioutil.ReadDir("./")
-			if err == nil {
-				for _, f := range files {
-					if strings.HasPrefix(f.Name(), ".rs") && f.IsDir() {
-						os.RemoveAll(f.Name())
-					}
+		files, err := ioutil.ReadDir("./")
+		if err == nil {
+			for _, f := range files {
+				if strings.HasPrefix(f.Name(), ".rs") && f.IsDir() {
+					os.RemoveAll(f.Name())
 				}
 			}
+		}
+		if maybePanic != nil {
+			panic(maybePanic)
 		}
 	}()
 
