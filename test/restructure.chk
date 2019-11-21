@@ -226,6 +226,7 @@ Case coverage: [1, 2, 3, 4, 6]
 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
 :34 delete     # Test the code that checks for non-D fileops present.
 reposurgeon: warning: commit :34 to be deleted has non-delete fileops.
+reposurgeon: 1 new log message(s)
 1..$ resolve
 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
 write -
