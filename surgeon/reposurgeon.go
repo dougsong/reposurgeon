@@ -4025,9 +4025,11 @@ func (t *Tag) Save(w io.Writer) {
 		fmt.Fprintf(w, "tagger %s\n", t.tagger)
 	}
 	comment := t.Comment
-	if t.Comment != "" && t.repo.writeOptions.Contains("--legacy") && t.legacyID != "" {
-		w.Write([]byte(comment))
-		fmt.Fprintf(w, "\nLegacy-ID: %s\n", t.legacyID)
+	if t.repo.writeOptions.Contains("--legacy") && t.legacyID != "" {
+		if comment != "" {
+			comment += "\n"
+		}
+		comment += fmt.Sprintf("Legacy-ID: %s\n", t.legacyID)
 	}
 	fmt.Fprintf(w, "data %d\n%s\n", len(comment), comment)
 }
@@ -5727,12 +5729,15 @@ func (commit *Commit) Save(w io.Writer) {
 	if commit.committer.fullname != "" {
 		fmt.Fprintf(w, "committer %s\n", commit.committer)
 	}
-	// As of git 2.13.6 (possibly earlier) the comment fields of
+	// As of git 2.13.6 (possibly earlier) the comment field of
 	// commit is no longer optional - you have to emit data 0 if there
 	// is no comment, otherwise the importer gets confused.
 	comment := commit.Comment
 	if commit.repo.writeOptions.Contains("--legacy") && commit.legacyID != "" {
-		fmt.Fprintf(w, "\nLegacy-ID: %s\n", commit.legacyID)
+		if comment != "" {
+			comment += "\n"
+		}
+		comment += fmt.Sprintf("Legacy-ID: %s\n", commit.legacyID)
 	}
 	fmt.Fprintf(w, "data %d\n%s", len(comment), comment)
 	if commit.repo.exportStyle().Contains("nl-after-comment") {
