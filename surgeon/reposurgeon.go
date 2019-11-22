@@ -18743,6 +18743,10 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		// Massage old-style addresses into newstyle
 		line = strings.Replace(line, "(", "<", -1)
 		line = strings.Replace(line, ")", ">", -1)
+		// If this results in an aunreasonable number of address delinmiters, punt
+		if strings.Count(line, "<") != 1 || strings.Count(line, ">") != 1 {
+			return ""
+		}
 		// Deal with some address masking that can interfere with next stages
 		line = strings.Replace(line, " <at> ", "@", -1)
 		// Malformation in a GCC Changelog that might be
