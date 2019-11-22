@@ -37,7 +37,7 @@ No output means that a compare-all showed no errors or warnings.
 
 To allow the code to emit a stack trace, set anny log bit.
 
-= Notes on the test machinery = 
+== Notes on the test machinery ==
 
 A .fi extension means it's a git fast-import stream.  
 A .svn extension means it's a Subversion repo dump.
@@ -534,16 +534,16 @@ reads and Subversion dump stream reads.
 First thing to do is make a test load.  The reposurgeon history itself is
 large enough to be a useful one.  So:
 
-$ reposurgeon "read ." "write >rs.fi"
+  $ reposurgeon "read ." "write >rs.fi"
 
 The ability to dump profile data is built into reposurgeon itself:
 
-$ reposurgeon "verbose 1" "profile all reposurgeon" "read <rs.fi"
+  $ reposurgeon "verbose 1" "profile start all reposurgeon" "read <rs.fi"
 
 Once you have the profile data you can sic the profile viewer on it.
 Have graphviz installed and do
 
-go tool pprof -http=":" ./reposurgeon reposurgeon.cpu.prof
+  $ go tool pprof -http=":" ./reposurgeon reposurgeon.cpu.prof
 
 There are lots of ways to explore the data but the single most
 interesting one to start with is the graph view. The size of each box
@@ -551,18 +551,28 @@ is proportional to the number of profiler samples it appears in, and
 the arrows are sized in proportion to the time spent calling them.
 The 'top' view gives you the same data in tabular form:
 
-      flat  flat%   sum%        cum   cum%
-     1.41s 22.45% 22.45%      1.43s 22.77%  syscall.Syscall
-     1.11s 17.68% 40.13%      2.22s 35.35%  runtime.scanobject
-     0.75s 11.94% 52.07%      0.75s 11.94%  runtime.greyobject
-     0.58s  9.24% 61.31%      0.58s  9.24%  runtime.memmove
+     Flat  Flat%    Sum%      Cum    Cum%  Name
+  257.19s  8.98%   8.98%  257.19s   8.98%  main.orderedIntSet.Contains
+  229.12s  8.00%  16.99%  258.46s   9.03%  runtime.findObject
+  144.93s  5.06%  22.05%  215.61s   7.53%  syscall.Syscall
+  114.48s  4.00%  26.05%  433.07s  15.13%  runtime.mapassign_faststr
+   99.77s  3.48%  29.53%   99.77s   3.48%  memeqbody
 
-This is telling us that (a) disk I/O (syscall.Syscall) is slow, but garbage
-collection overhead dominates (runtime.scanobject and runtime.greyobject, 47%).
-That runtime.memmove is probably array copies during append operations.
+This is telling us that (a) disk I/O (syscall.Syscall) is slow, (b)
+garbage collection is a little worse (runtime.findObject), (c)
+membership tests on orderedIntSets are taking quite a lot of time
+(main.orderedIntSet.Contains), and (d) that assigning things to maps
+is actually worse (runtiem.mapassign_faststr).
 
-To go faster we need to exercise the allocator less.  In a way this is
-good news - it suggests we don't have a big-O/algorithmic problem.
+The relative balance of these things does depend a lot on your
+hardware. Most of the syscalls are for reading or writing files, so if
+your disks are slower then that will be higher in the list. Reading
+and/or writing less data would help (though it might be
+impractical). Exercising the allocator less will be (and has been) a
+good source of improvements. In a way these are good news - it
+suggests we don't have a big-O/algorithmic problem. On the other hand
+if we could query our orderedIntSets less frequently, that'd be a good
+speed improvement as well.
 
 The obvious thing to do first is a search-and-destroy for heap escapes.
 We can't avoid doing a lot of allocation; what we can do is avoid creating
@@ -570,14 +580,58 @@ lots of short-lived heap objects that will churn heap storage and trigger GC.
 
 You can view the allocation profile with this command:
 
-go tool pprof -http=":" -sample_index=alloc_space ./reposurgeon reposurgeon.cpu.prof
+  $ go tool pprof -http=":" -sample_index=alloc_space ./reposurgeon reposurgeon.cpu.prof
 
 This shows all allocations over the entire run of the program, not
 just what was still live at a particular point in time. Using the
 option -sample_index=alloc_space instead will show the count of all
 objects allocated instead of the space that they occupied.
 
-Some references:
+Finally, a trace of the execution is also recorded. This tracks which
+threads are started, and which goroutines are running on them, at a
+very high resolution. This trace is particularly useful for those
+parts of Reposurgeon which are parallelized, as it is possible to see
+where cpus are left idle. View the trace with this command:
+
+  $ go tool trace reposurgeon.trace.prof
+
+It will automatically open a page in your default web browser, but
+unfortunately the trace viewer itself only works in Chrome or
+Chromium; you'll need to open it there yourself if you prefer a
+different browser.
+
+In addition to the trace, this also provides a list of tasks, regions,
+and associated log messages. Reposurgeon does not use this logging
+capability very extensively, but it is used enough that you can see a
+timeline of what Reposurgeon was doing:
+
+  When                 Elapsed  Goroutine ID  Events
+  0.000000000s  1m7.920970625s                Task 1 (incomplete)
+  0.000125812      .                       1  region logfile started (duration: 15.964µs)
+  0.000220496      .    94684              1  region readlimit started (duration: 3.431µs)
+  0.000239855      .    19359              1  region set started (duration: 4.551µs)
+  0.000281811      .    41956              1  region script started (duration: 260.3µs)
+  0.000425845      .   144034              1  region branchify started (duration: 11.982µs)
+  0.000472494      .    46649              1  region branchmap started (duration: 48.515µs)
+  0.000557453      .    84959              1  region read started (duration: 33.919414851s)
+  33.958593745   33.958036292              1  region authors started (duration: 3.646869ms)
+
+Reposurgeon surrounds each command executed by the user with a region,
+and each region adds a log entry; the duration of the region is also
+calcuated. The 'elapsed' column shows the time in nanoseconds that has
+elapsed since the previous log message. These regions can be nested,
+although this is not shown very clearly. In particular, the 'script'
+regions will contain regions of all the commands that were in the
+script that was run.
+
+It may be useful to add additional logging of this type. The Go trace
+library is used to add new regions to the trace file. Its first
+argument is a Context object from the Go context library, which needs
+to be passed down the call tree. The Context objects can have metadata
+associated with them which is supposed to show up in the trace viewer,
+but I haven't yet explored this feature.
+
+=== Some references ===
 
 https://blog.golang.org/profiling-go-programs
 
@@ -594,4 +648,3 @@ https://github.com/golang/go/wiki/Performance
 https://groups.google.com/forum/#!msg/golang-nuts/pxfhKGqHNv0/If4Gz09r_2gJ
 
 // end
-
