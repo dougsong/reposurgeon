@@ -1,4 +1,4 @@
-reposurgeon: fills 8 of 9 authorships, changing 8, from 8 ChangeLogs.
+reposurgeon: fills 9 of 9 authorships, changing 8, from 9 ChangeLogs.
 #reposurgeon sourcetype git
 blob
 mark :1
@@ -383,6 +383,28 @@ from :23
 M 100644 :24 ChangeLog
 M 100644 :25 sample.txt
 
+blob
+mark :27
+data 153
+Wed Sep  9 23:31:36 1998  (a name) <email@domain.example.com>
+
+        * A pathological attribution from the GCC history
+	  contributed by Joseph Myers.
+
+blob
+mark :28
+data 10
+test file
+
+commit refs/heads/master
+mark :29
+author a name> <email@domain.example.com> 1574388086 +0000
+committer jmyers <jmyers> 1574388086 +0000
+data 12
+test commit
+M 100644 :27 ChangeLog
+M 100644 :28 test-file
+
 reset refs/heads/master
-from :26
+from :29
 
