@@ -1,4 +1,4 @@
-reposurgeon: fills 8 of 10 authorships, changing 8, from 9 ChangeLogs.
+reposurgeon: fills 9 of 10 authorships, changing 8, from 9 ChangeLogs.
 #reposurgeon sourcetype git
 blob
 mark :1
@@ -398,6 +398,7 @@ test file
 
 commit refs/heads/master
 mark :29
+author (a name) <email@domain.example.com> 1574388086 +0000
 committer jmyers <jmyers> 1574388086 +0000
 data 12
 test commit

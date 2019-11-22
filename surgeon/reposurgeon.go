@@ -18743,27 +18743,26 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		// Massage old-style addresses into newstyle
 		line = strings.Replace(line, "(", "<", -1)
 		line = strings.Replace(line, ")", ">", -1)
-		// If this results in an aunreasonable number of address delinmiters, punt
-		if strings.Count(line, "<") != 1 || strings.Count(line, ">") != 1 {
-			return ""
-		}
 		// Deal with some address masking that can interfere with next stages
 		line = strings.Replace(line, " <at> ", "@", -1)
-		// Malformation in a GCC Changelog that might be
-		// replicated elsewhere.
-		if strings.HasSuffix(line, ">>") {
-			line = line[:len(line)-1]
-		}
 		// Line must contain an email address. Find it.
 		addrStart := strings.LastIndex(line, "<")
-		addrEnd := strings.LastIndex(line, ">")
-		if addrStart < 0 || addrEnd < addrStart {
+		addrEnd := strings.Index(line[addrStart+1:], ">") + addrStart + 1
+		if addrStart < 0 || addrEnd < 0 {
 			return ""
 		}
-		if strings.Contains(line[addrStart:addrEnd], " at ") {
-			addr := line[addrStart:addrEnd]
-			line = line[:addrStart] + strings.Replace(addr, " at ", "@", 1) + line[addrEnd:]
-		}
+		// Remove all other < and > delimiters to avoid malformed attributions
+		// After the address, they can be dropped, but before they might come
+		// legit parenthesis that was converted above.
+		pre := strings.Replace(
+		           strings.Replace(line[:addrStart], "<", "(", -1),
+		           ">", ")", -1)
+		post := strings.Replace(line[addrEnd+1:], ">", "", -1)
+		email := line[addrStart:addrEnd+1]
+		// Detect more types of address masking
+		email = strings.Replace(email, " at ", "@", 1)
+		// Regenerate cleaned up attribution
+		line = pre + email + post
 		if unicode.IsDigit(rune(line[0])) && unicode.IsDigit(rune(line[0])) {
 			space := strings.Index(line, " ")
 			if space < 0 {
