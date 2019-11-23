@@ -7284,12 +7284,12 @@ func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) err
 	// Read an author-mapping file and apply it to the repo.
 	scanner := bufio.NewScanner(fp)
 	var principal Contributor
-	var current_linenumber uint64
+	var currentLineNumber uint64
 	complain := func (msg string, args ...interface{}) {
-		logit(logSHOUT, "in readAuthorMap, while parsing line %d: " + msg, append([]interface{}{current_linenumber}, args)...)
+		logit(logSHOUT, "in readAuthorMap, while parsing line %d: " + msg, append([]interface{}{currentLineNumber}, args)...)
 	}
 	for scanner.Scan() {
-		current_linenumber++
+		currentLineNumber++
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
