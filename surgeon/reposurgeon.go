@@ -3594,7 +3594,7 @@ func (b *Blob) setContent(text []byte, tell int64) {
 	b.size = int64(len(text))
 	if b.hasfile() {
 		file, err := os.OpenFile(b.getBlobfile(true),
-			os.O_WRONLY|os.O_CREATE, userReadWriteMode)
+			os.O_WRONLY|os.O_CREATE|os.O_TRUNC, userReadWriteMode)
 		if err != nil {
 			panic(fmt.Errorf("Blob write: %v", err))
 		}
@@ -3619,7 +3619,7 @@ func (b *Blob) setContentFromStream(s io.ReadCloser) {
 	defer s.Close()
 	b.start = noOffset
 	file, err := os.OpenFile(b.getBlobfile(true),
-		os.O_WRONLY|os.O_CREATE, userReadWriteMode)
+		os.O_WRONLY|os.O_CREATE|os.O_TRUNC, userReadWriteMode)
 	if err != nil {
 		panic(fmt.Errorf("Blob write: %v", err))
 	}
@@ -5567,7 +5567,7 @@ func (commit *Commit) checkout(directory string) string {
 			blob := commit.repo.markToEvent(entry.ref).(*Blob)
 			if entry.ref == "inline" {
 				file, err3 := os.OpenFile(blob.getBlobfile(true),
-					os.O_WRONLY|os.O_CREATE, mode)
+					os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
 				if err3 != nil {
 					panic(fmt.Errorf("File creation for inline failed during checkout: %v", err3))
 				}
@@ -5579,7 +5579,7 @@ func (commit *Commit) checkout(directory string) string {
 					os.Link(blob.getBlobfile(false), fullpath)
 				} else {
 					file, err4 := os.OpenFile(blob.getBlobfile(true),
-						os.O_WRONLY|os.O_CREATE, mode)
+						os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
 					if err4 != nil {
 						panic(fmt.Errorf("File creation failed during checkout: %v", err4))
 					}
@@ -9770,7 +9770,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 	if repo.writeLegacy {
 		legacyfile := filepath.FromSlash(vcs.subdirectory + "/legacy-map")
 		wfp, err := os.OpenFile(legacyfile,
-			os.O_WRONLY|os.O_CREATE, userReadWriteMode)
+			os.O_WRONLY|os.O_CREATE|os.O_TRUNC, userReadWriteMode)
 		if err != nil {
 			return fmt.Errorf("legacy-map file %s could not be written: %v",
 				legacyfile, err)
@@ -11669,9 +11669,9 @@ func (rl *RepositoryList) newLineParse(line string, capabilities orderedStringSe
 			rl.writeNotify(lp.outfile)
 			mode := os.O_WRONLY
 			if match[2*1+1]-match[2*1+0] > 1 {
-				mode |= os.O_APPEND
+				mode |= os.O_CREATE | os.O_APPEND
 			} else {
-				mode |= os.O_CREATE
+				mode |= os.O_CREATE | os.O_TRUNC
 			}
 			lp.stdout, err = os.OpenFile(lp.outfile, mode, userReadWriteMode)
 			if err != nil {
@@ -18995,7 +18995,7 @@ func extractTar(dst string, r io.Reader) ([]tar.Header, error) {
 			}
 		} else if header.Typeflag == tar.TypeReg {
 			files = append(files, *header)
-			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			f, err := os.OpenFile(target, os.O_CREATE|os.O_TRUNC|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
 				return nil, err
 			}
@@ -19507,7 +19507,7 @@ Without an argument, this command reports what logfile is set.
 
 func (rs *Reposurgeon) DoLogfile(lineIn string) bool {
 	if len(lineIn) != 0 {
-		fp, err := os.OpenFile(lineIn, os.O_WRONLY|os.O_CREATE, userReadWriteMode)
+		fp, err := os.OpenFile(lineIn, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, userReadWriteMode)
 		if err != nil {
 			respond("log file open failed: %v", err)
 		} else {
