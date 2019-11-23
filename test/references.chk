@@ -38,6 +38,8 @@ reposurgeon: "references.svn", line 53289: ':755': deleting parentless zero-op c
 reposurgeon: couldn't match a name at <1>
 reposurgeon: couldn't match a name at <1>
 [291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312]
+reposurgeon: in readAuthorMap, while parsing line 21: timezone lookup: [ill-formed timezone offset Europ/Moscow]
+reposurgeon: 1 new log message(s)
 reposurgeon: 1 events modified by msgin.
 Event 1880 ==============================================================
 commit refs/heads/Development

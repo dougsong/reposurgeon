@@ -25,6 +25,9 @@ carlosefr-guest = Carlos Rodrigues <cefrodrigues@gmail.com>
 nba-guest = Niels Baggesen <nba@users.sourceforge.net>
 lyrgard-guest = Jonathan Dion <lyrgard-guest@alioth.debian.org>
 jongough-guest = Jon Gough <jon.gough@eclipsesystems.com.au>
+tobi = Tobias Schlüter <tobias.schlueter@physik.uni-muenchen.de> Europe/Berlin
+tocarip = Ilya Tocar <tocarip@gmail.com> Europ/Moscow
+tomby = Tomas Bily <tbily@suse.cz> Europe/Prague
 EOF
 msgin <<EOF
 ------------------------------------------------------------------------------

@@ -7284,7 +7284,12 @@ func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) err
 	// Read an author-mapping file and apply it to the repo.
 	scanner := bufio.NewScanner(fp)
 	var principal Contributor
+	var current_linenumber uint64
+	complain := func (msg string, args ...interface{}) {
+		logit(logSHOUT, "in readAuthorMap, while parsing line %d: " + msg, append([]interface{}{current_linenumber}, args)...)
+	}
 	for scanner.Scan() {
+		current_linenumber++
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
@@ -7295,17 +7300,20 @@ func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) err
 			netwide := strings.TrimSpace(fields[1])
 			name, mail, timezone, err := parseAttributionLine(netwide)
 			if err != nil {
-				return fmt.Errorf("in readAuthorMap: %v", err)
+				complain("%v", err)
+				continue
 			}
 			if mail == "" {
-				return fmt.Errorf("can't recognize address in '%s'", netwide)
+				complain("can't recognize address in '%s'", netwide)
+				continue
 			}
 			if timezone != "" {
 				loc, err2 := time.LoadLocation(timezone)
 				if err2 != nil {
 					loc, err2 = locationFromZoneOffset(timezone)
 					if err2 != nil {
-						return fmt.Errorf("in readAuthorMap entry lookup: %v", err2)
+						complain("timezone lookup: %v", err2)
+						continue
 					}
 				}
 				repo.tzmap[mail] = loc
@@ -7317,12 +7325,14 @@ func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) err
 		// Process aliases gathered from Changelog entries
 		if line[0] == '+' {
 			if principal.isEmpty() {
-				return fmt.Errorf("alias entry before any principal")
+				complain("alias entry before any principal")
+				continue
 			}
 			line = strings.TrimSpace(line[1:])
 			aname, aemail, atimezone, aerr := parseAttributionLine(line)
 			if aerr != nil {
-				return fmt.Errorf("bad contributor alias: %v", aerr)
+				complain("bad contributor alias: %v", aerr)
+				continue
 			}
 			repo.aliases[ContributorID{aname, aemail}] = ContributorID{principal.fullname, principal.email}
 			if atimezone != "" {
@@ -7330,7 +7340,8 @@ func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) err
 				if err2 != nil {
 					loc, err2 = locationFromZoneOffset(atimezone)
 					if err2 != nil {
-						return fmt.Errorf("in readAuthorMap alias lookup: %v", err2)
+						complain("timezone lookup: %v", err2)
+						continue
 					}
 				}
 				repo.tzmap[aemail] = loc
