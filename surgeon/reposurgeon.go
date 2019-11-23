@@ -14678,13 +14678,12 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 				croak("event number garbled in update %d: %v", i+1, err)
 				errorCount++
 			} else {
-				eventnum--
-				if eventnum < 0 || eventnum >= len(repo.events) {
+				if eventnum < 1 || eventnum > len(repo.events) {
 					croak("event number %d out of range in update %d",
 						eventnum, i+1)
 					errorCount++
 				} else {
-					event = repo.events[eventnum]
+					event = repo.events[eventnum - 1]
 				}
 			}
 		} else if message.getHeader("Legacy-ID") != "" {
