@@ -40,6 +40,9 @@ shift $(($OPTIND - 1))
 
 for x in $*;
 do
+    case $x in
+	*.svn) x=`echo "$x" | sed '/.svn/s///'`;;
+    esac
     grep '^ #' ${x}.svn 2>/dev/null
     case $mode in
 	dump)
