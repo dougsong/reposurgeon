@@ -6041,7 +6041,11 @@ func (pm *PathMap) _createTree(path []string) *PathMap {
 }
 
 // copyFrom inserts at targetPath a copy of sourcePath in sourcePathMap.
-// targetPath must be non empty and sourcePath might point to a value and/or a
+// If targetPath is empty, then sourcePath must point to a directory in
+// sourcePathMap, and the contents of pm are replaced by those of that
+// directory, sharing the inner PathMaps for efficiency (pm itself cannot be
+// replaced since it is a toplevel PathMap owned by calling code).
+// If targetPath is empty, then sourcePath might point to a value and/or a
 // directory in sourcePathMap. Both will be copied over if existing.
 // The directory will be shared with sourcePathMap unless sourcePath is empty,
 // in which case a snapshot of sourcePathMap is used so that sourcePathMap, a
@@ -6059,25 +6063,52 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 			return
 		}
 	}
-	// Decompose targetPath into components
-	parts = strings.Split(targetPath, svnSep)
-	targetDir, targetName := parts[:len(parts)-1], parts[len(parts)-1]
-	// And perform the copy. In normal cases, only one of the dir and file exist
-	if sourcePath == "" {
-		// use a snapshot instead of marking as shared, since toplevel PathMaps
-		// are never expected to be shared.
-		pm._createTree(targetDir).dirs[targetName] = sourceParent.snapshot()
+	if targetPath == "" {
+		var tree *PathMap
+		if sourcePath == "" {
+			tree = sourceParent // no need to snapshot, it will not be shared
+		} else {
+			var ok bool
+			tree, ok = sourceParent.dirs[sourceName]
+			if !ok {
+				// The source path does not exist, bail out
+				// FIXME: should we warn ? panic ? return false ?
+				return
+			}
+		}
+		// Same as if we were doing a new snapshot, but in place.
+		dirs := make(map[string]*PathMap)
+		blobs := make(map[string]interface{})
+		for k, v := range tree.dirs {
+			dirs[k] = v
+			v._markShared()
+		}
+		for k, v := range tree.blobs {
+			blobs[k] = v
+		}
+		pm.dirs = dirs
+		pm.blobs = blobs
 	} else {
-		if tree, ok := sourceParent.dirs[sourceName]; ok {
-			tree._markShared()
-			pm._createTree(targetDir).dirs[targetName] = tree
+		// Decompose targetPath into components
+		parts = strings.Split(targetPath, svnSep)
+		targetDir, targetName := parts[:len(parts)-1], parts[len(parts)-1]
+		// And perform the copy. In normal cases, only one of the dir and file exist
+		if sourcePath == "" {
+			// use a snapshot instead of marking as shared, since toplevel PathMaps
+			// are never expected to be shared.
+			pm._createTree(targetDir).dirs[targetName] = sourceParent.snapshot()
+		} else {
+			if tree, ok := sourceParent.dirs[sourceName]; ok {
+				tree._markShared()
+				pm._createTree(targetDir).dirs[targetName] = tree
+			}
+			if blob, ok := sourceParent.blobs[sourceName]; ok {
+				pm._createTree(targetDir).blobs[targetName] = blob
+			}
 		}
-		if blob, ok := sourceParent.blobs[sourceName]; ok {
-			pm._createTree(targetDir).blobs[targetName] = blob
-		}
+		// When the last component of sourcePath does not exist, we do nothing
+		// FIXME: should we warn ? panic ? return false ?
 	}
-	// When the last component of sourcePath does not exist, we do nothing
-	// FIXME: should we warn ? panic ? return false ?
 }
 
 // get takes a path as argument, and returns the file that is stored at that
