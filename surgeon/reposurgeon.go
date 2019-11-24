@@ -6040,10 +6040,12 @@ func (pm *PathMap) _createTree(path []string) *PathMap {
 	return tree
 }
 
-// copyFrom inserts at targetPath a snapshot of sourcePath in sourcePathMap.
-// targetPath should not be empty, that is the destination of the copy should
-// be somewhere inside the destination PathMap, not its root. sourcePath can
-// be empty, which means the complete sourcePathMap will be copied.
+// copyFrom inserts at targetPath a copy of sourcePath in sourcePathMap.
+// targetPath must be non empty and sourcePath might point to a value and/or a
+// directory in sourcePathMap. Both will be copied over if existing.
+// The directory will be shared with sourcePathMap unless sourcePath is empty,
+// in which case a snapshot of sourcePathMap is used so that sourcePathMap, a
+// toplevel PathMap, is not shared.
 func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePath string) {
 	parts := strings.Split(sourcePath, svnSep)
 	sourceDir, sourceName := parts[:len(parts)-1], parts[len(parts)-1]
@@ -6061,14 +6063,18 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 	parts = strings.Split(targetPath, svnSep)
 	targetDir, targetName := parts[:len(parts)-1], parts[len(parts)-1]
 	// And perform the copy. In normal cases, only one of the dir and file exist
-	if targetName == "" {
+	if sourcePath == "" {
+		// use a snapshot instead of marking as shared, since toplevel PathMaps
+		// are never expected to be shared.
 		pm._createTree(targetDir).dirs[targetName] = sourceParent.snapshot()
-	} else if tree, ok := sourceParent.dirs[sourceName]; ok {
-		tree._markShared()
-		pm._createTree(targetDir).dirs[targetName] = tree
-	}
-	if blob, ok := sourceParent.blobs[sourceName]; ok {
-		pm._createTree(targetDir).blobs[targetName] = blob
+	} else {
+		if tree, ok := sourceParent.dirs[sourceName]; ok {
+			tree._markShared()
+			pm._createTree(targetDir).dirs[targetName] = tree
+		}
+		if blob, ok := sourceParent.blobs[sourceName]; ok {
+			pm._createTree(targetDir).blobs[targetName] = blob
+		}
 	}
 	// When the last component of sourcePath does not exist, we do nothing
 	// FIXME: should we warn ? panic ? return false ?

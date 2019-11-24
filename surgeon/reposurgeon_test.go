@@ -1797,7 +1797,17 @@ func TestPathMap(t *testing.T) {
 	_, contains = p.get("gronk/baz/qux")
 	assertTrue(t, !contains)
 	assertEqual(t, p.String(), "{}")
-
+	// Test copyFrom
+	p.set("foo/bar", 42)
+	p.copyFrom("baz/qux", p, "foo")
+	_, contains = p.get("baz/qux/bar")
+	assertTrue(t, contains)
+	p.set("gronk", 0)
+	p.copyFrom("bat", p, "")
+	_, contains = p.get("bat/baz/qux/bar")
+	assertTrue(t, contains)
+	_, contains = p.get("bat/gronk")
+	assertTrue(t, contains)
 }
 
 func TestLongestMatch(t *testing.T) {
