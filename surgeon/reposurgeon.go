@@ -14714,6 +14714,7 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 		return false
 	}
 	// Normal case - no --create
+	repo.cacheMarkToIndex()
 	events := make([]Event, 0)
 	errorCount := 0
 	var event Event
