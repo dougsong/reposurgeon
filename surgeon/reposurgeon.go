@@ -9789,7 +9789,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 			return err
 		}
 		// Ship to the tempfile
-		repo.fastExport(repo.all(), tfdesc, options, preferred)
+		repo.fastExport(nil, tfdesc, options, preferred)
 		tfdesc.Close()
 		// Pick up the tempfile
 		params["tempfile"] = tfdesc.Name()
@@ -9802,7 +9802,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		if err != nil {
 			return err
 		}
-		repo.fastExport(repo.all(), tp, options, preferred)
+		repo.fastExport(nil, tp, options, preferred)
 		tp.Close()
 		cls.Wait()
 	}
