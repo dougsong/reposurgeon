@@ -552,17 +552,16 @@ the arrows are sized in proportion to the time spent calling them.
 The 'top' view gives you the same data in tabular form:
 
      Flat  Flat%    Sum%      Cum    Cum%  Name
-  257.19s  8.98%   8.98%  257.19s   8.98%  main.orderedIntSet.Contains
-  229.12s  8.00%  16.99%  258.46s   9.03%  runtime.findObject
-  144.93s  5.06%  22.05%  215.61s   7.53%  syscall.Syscall
-  114.48s  4.00%  26.05%  433.07s  15.13%  runtime.mapassign_faststr
-   99.77s  3.48%  29.53%   99.77s   3.48%  memeqbody
+  203.36s  9.51%   9.51%  224.91s  10.52%  runtime.findObject
+  132.43s  6.20%  15.71%  197.87s   9.26%  syscall.Syscall
+   99.48s  4.65%  20.36%  107.34s   5.02%  syscall.Syscall6
+   93.39s  4.37%  24.73%  395.22s  18.49%  runtime.mapassign_faststr
+   84.39s  3.95%  28.68%  346.39s  16.20%  runtime.scanobject
 
-This is telling us that (a) disk I/O (syscall.Syscall) is slow, (b)
-garbage collection is a little worse (runtime.findObject), (c)
-membership tests on orderedIntSets are taking quite a lot of time
-(main.orderedIntSet.Contains), and (d) that assigning things to maps
-is actually worse (runtiem.mapassign_faststr).
+This is telling us that (a) disk I/O (syscall.Syscall,
+syscall.Syscall6) is slow, (b) assigning things to maps is a little
+slower still (runtiem.mapassign_faststr), and (c) that garbage
+collection is worse (runtime.scanobject, runtime.findObject).
 
 The relative balance of these things does depend a lot on your
 hardware. Most of the syscalls are for reading or writing files, so if
@@ -570,9 +569,8 @@ your disks are slower then that will be higher in the list. Reading
 and/or writing less data would help (though it might be
 impractical). Exercising the allocator less will be (and has been) a
 good source of improvements. In a way these are good news - it
-suggests we don't have a big-O/algorithmic problem. On the other hand
-if we could query our orderedIntSets less frequently, that'd be a good
-speed improvement as well.
+suggests we don't have a big-O/algorithmic problem. On the other hand,
+it could just mean that they will only show up on larger repositories.
 
 The obvious thing to do first is a search-and-destroy for heap escapes.
 We can't avoid doing a lot of allocation; what we can do is avoid creating
