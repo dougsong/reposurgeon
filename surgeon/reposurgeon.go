@@ -6895,6 +6895,8 @@ type Repository struct {
 	seekstream   *os.File
 	events       []Event // A list of the events encountered, in order
 	_markToIndex map[string]int
+	_markToIndexCalls int // Call count between last invalidation and cache creation
+	_markToIndexLock sync.Mutex
 	_eventByMark map[string]Event
 	_namecache   map[string][]int
 	preserveSet  orderedStringSet
@@ -7021,6 +7023,20 @@ func (repo *Repository) markToIndex(mark string) int {
 	if repo._markToIndex != nil {
 		return repo._markToIndex[mark] - 1
 	}
+	repo._markToIndexLock.Lock()
+	repo._markToIndexCalls++
+	if repo._markToIndexCalls > 2 {
+		repo._markToIndex = map[string]int{}
+		for ind, event := range repo.events {
+			mark := event.getMark()
+			if mark != "" {
+				repo._markToIndex[mark] = ind + 1
+			}
+		}
+		repo._markToIndexLock.Unlock()
+		return repo._markToIndex[mark] - 1
+	}
+	repo._markToIndexLock.Unlock()
 	for ind, event := range repo.events {
 		if event.getMark() == mark {
 			return ind
@@ -7029,17 +7045,9 @@ func (repo *Repository) markToIndex(mark string) int {
 	return -1
 }
 
-func (repo *Repository) cacheMarkToIndex() {
-	if control.flagOptions["tighten"] {
-		return
-	}
-	repo._markToIndex = make(map[string]int)
-	for ind, event := range repo.events {
-		mark := event.getMark()
-		if mark != "" {
-			repo._markToIndex[mark] = ind + 1
-		}
-	}
+func (repo *Repository) invalidateMarkToIndex() {
+	repo._markToIndex = nil
+	repo._markToIndexCalls = 0
 }
 
 func (repo *Repository) newmark() string {
@@ -8025,7 +8033,7 @@ func (repo *Repository) filterAssignments(f func(Event) bool) {
 
 // Mark the repo event sequence modified.
 func (repo *Repository) declareSequenceMutation(warning string) {
-	repo._markToIndex = nil
+	repo.invalidateMarkToIndex()
 	repo._namecache = nil
 	if len(repo.assignments) > 0 && warning != "" {
 		repo.assignments = nil
@@ -9098,7 +9106,7 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
 	}
 	// Previous maps won't be valid
 	repo.invalidateObjectMap()
-	repo._markToIndex = nil
+	repo.invalidateMarkToIndex()
 	if baton != nil {
 		baton.endcounter()
 	}
@@ -14714,7 +14722,6 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 		return false
 	}
 	// Normal case - no --create
-	repo.cacheMarkToIndex()
 	events := make([]Event, 0)
 	errorCount := 0
 	var event Event
