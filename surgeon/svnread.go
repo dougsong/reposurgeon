@@ -2114,7 +2114,7 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 			if branch != impossibleFilename {
 				commit.setBranch(branch)
 				for i := range commit.fileops {
-					fileop := &commit.fileops[i]
+					fileop := commit.fileops[i]
 					if fileop.op == opM || fileop.op == opD {
 						fileop.Path = fileop.Path[len(branch):]
 					} else if fileop.op == opR || fileop.op == opC {
@@ -2198,7 +2198,7 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 				if len(commit.operations()) > 0 || commit.hasChildren() {
 					fileop := newFileOp(sp.repo)
 					fileop.construct(deleteall)
-					commit.prependOperation(*fileop)
+					commit.prependOperation(fileop)
 					logit(logEXTRACT, "prepending delete at %s", commit.idMe())
 					sp.generatedDeletes = append(sp.generatedDeletes, commit)
 				}
@@ -2583,7 +2583,7 @@ func svnProcessCleanTags(ctx context.Context, sp *StreamParser, options stringSe
 				}
 			}
 		}
-		nonnil := make([]FileOp, 0, len(commit.operations())-count)
+		nonnil := make([]*FileOp, 0, len(commit.operations())-count)
 		for _, op := range commit.operations() {
 			if op.op != opX {
 				nonnil = append(nonnil, op)

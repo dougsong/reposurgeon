@@ -2465,7 +2465,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (*Repository, error)
 								newsig.perms,
 								rs.hashToMark[newsig.hashval].String(),
 								pathname)
-							commit.appendOperation(*op)
+							commit.appendOperation(op)
 						}
 					}
 				} else {
@@ -2486,14 +2486,14 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (*Repository, error)
 					// Its new fileop is added to the commit
 					op := newFileOp(repo)
 					op.construct(opM, newsig.perms, blobmark.String(), pathname)
-					commit.appendOperation(*op)
+					commit.appendOperation(op)
 				}
 				rs.visibleFiles[revision][pathname] = *newsig
 			}
 			for _, tbd := range removed {
 				op := newFileOp(repo)
 				op.construct(opD, tbd)
-				commit.appendOperation(*op)
+				commit.appendOperation(op)
 				delete(rs.visibleFiles[revision], tbd)
 			}
 		}
@@ -4404,6 +4404,21 @@ func (fileop FileOp) String() string {
 	return bld.String()
 }
 
+func (fileop *FileOp) Copy() *FileOp {
+	newop := newFileOp(fileop.repo)
+	newop.committish = stringCopy(fileop.committish)
+	newop.Source = stringCopy(fileop.Source)
+	newop.Target = stringCopy(fileop.Target)
+	newop.mode = stringCopy(fileop.mode)
+	newop.Path = stringCopy(fileop.Path)
+	newop.ref = stringCopy(fileop.ref)
+	newop.inline = make([]byte, len(fileop.inline))
+	copy(newop.inline, fileop.inline)
+	newop.op = fileop.op
+	newop.genflag = fileop.genflag
+	return newop
+}
+
 // Callout is a stub object for callout marks in incomplete repository segments.
 type Callout struct {
 	mark        string
@@ -4529,7 +4544,7 @@ type Commit struct {
 	Branch       string        // branch name
 	authors      []Attribution // Authors of commit
 	committer    Attribution   // Person responsible for committing it.
-	fileops      []FileOp      // blob and file operation list
+	fileops      []*FileOp      // blob and file operation list
 	_manifest    *PathMap      // efficient map of *ManifestEntry values
 	repo         *Repository
 	properties   *OrderedMap  // commit properties (extension)
@@ -4557,7 +4572,7 @@ func newCommit(repo *Repository) *Commit {
 	commit := new(Commit)
 	commit.repo = repo
 	commit.authors = make([]Attribution, 0)
-	commit.fileops = make([]FileOp, 0)
+	commit.fileops = make([]*FileOp, 0)
 	commit.attachments = make([]Event, 0)
 	commit._childNodes = make([]CommitLike, 0)
 	commit._parentNodes = make([]CommitLike, 0)
@@ -4630,41 +4645,49 @@ func (commit *Commit) setBranch(branch string) {
 
 // operations returns a list of ileops associated with this commit;
 // it hides how this is represented.
-func (commit *Commit) operations() []FileOp {
+func (commit *Commit) operations() []*FileOp {
 	return commit.fileops
 }
 
 // setOperations replaces the set of fileops associated with this commit.
-func (commit *Commit) setOperations(ops []FileOp) {
+func (commit *Commit) setOperations(ops []*FileOp) {
 	commit.fileops = ops
 	commit.invalidateManifests()
 }
 
 // setOperations replaces the set of fileops associated with this commit.
 func (commit *Commit) copyOperations(ptrs []*FileOp) {
-	ops := make([]FileOp, len(ptrs))
+	ops := make([]*FileOp, len(ptrs))
 	for idx, p := range ptrs {
-		ops[idx] = *p
+		ops[idx] = p.Copy()
 	}
 	commit.fileops = ops
 	commit.invalidateManifests()
 }
 
 // appendOperation appends to the set of fileops associated with this commit.
-func (commit *Commit) appendOperation(op FileOp) {
+func (commit *Commit) appendOperation(op *FileOp) {
 	commit.fileops = append(commit.fileops, op)
 	commit.invalidateManifests()
 }
 
 // prependOperation prepends to the set of fileops associated with this commit.
-func (commit *Commit) prependOperation(op FileOp) {
-	commit.fileops = append([]FileOp{op}, commit.fileops...)
+func (commit *Commit) prependOperation(op *FileOp) {
+	commit.fileops = append([]*FileOp{op}, commit.fileops...)
+	commit.invalidateManifests()
+}
+
+func (commit *Commit) prependOperations(ops []*FileOp) {
+	newops := make([]*FileOp, 0, len(commit.operations()) + len(ops))
+	newops = append(newops, ops...)
+	newops = append(newops, commit.operations()...)
+	commit.fileops = newops
 	commit.invalidateManifests()
 }
 
 // sortOperations sorts fileops on a commit the same way git-fast-export does
 func (commit *Commit) sortOperations() {
-	pathpart := func(fileop FileOp) string {
+	pathpart := func(fileop *FileOp) string {
 		if fileop.Path != "" {
 			return fileop.Path
 		}
@@ -5469,7 +5492,7 @@ func (commit *Commit) canonicalize() {
 		}
 	}
 	current := commit.manifest()
-	newops := make([]FileOp, 0)
+	newops := make([]*FileOp, 0)
 	// Generate needed D fileops.
 	if commit.fileops[0].op != deleteall {
 		// Only files touched by non-deleteall ops might disappear.
@@ -5479,7 +5502,7 @@ func (commit *Commit) canonicalize() {
 			if old && !new {
 				fileop := newFileOp(commit.repo)
 				fileop.construct(opD, cpath)
-				newops = append(newops, *fileop)
+				newops = append(newops, fileop)
 			}
 		}
 	}
@@ -5496,7 +5519,7 @@ func (commit *Commit) canonicalize() {
 			if ne.ref == "inline" {
 				fileop.inline = ne.inline
 			}
-			newops = append(newops, *fileop)
+			newops = append(newops, fileop)
 		}
 	}
 	commit.setOperations(newops)
@@ -6534,9 +6557,9 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 						commit.addParentByMark(mark)
 					}
 				} else if line[0] == 'C' || line[0] == 'D' || line[0] == 'R' {
-					commit.appendOperation(*newFileOp(sp.repo).parse(string(line)))
+					commit.appendOperation(newFileOp(sp.repo).parse(string(line)))
 				} else if string(line) == "deleteall\n" {
-					commit.appendOperation(*newFileOp(sp.repo).parse(string(line)))
+					commit.appendOperation(newFileOp(sp.repo).parse(string(line)))
 				} else if line[0] == opM {
 					fileop := newFileOp(sp.repo).parse(string(line))
 					if fileop.ref != "inline" {
@@ -6569,10 +6592,10 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 						// 100644, 100755, 120000.
 						sp.fiParseFileop(fileop)
 					}
-					commit.appendOperation(*fileop)
+					commit.appendOperation(fileop)
 				} else if line[0] == opN {
 					fileop := newFileOp(sp.repo).parse(string(line))
-					commit.appendOperation(*fileop)
+					commit.appendOperation(fileop)
 					sp.fiParseFileop(fileop)
 					sp.repo.inlines++
 				} else if len(bytes.TrimSpace(line)) == 0 {
@@ -8117,7 +8140,7 @@ var nilOp FileOp // Zero fileop, to be used as a deletion marker
 // 2: Op to replace the second with (nil means delete)
 // 3: string: if nomempty, a warning to emit
 // 4: Case number, for coverage analysis
-func (commit *Commit) _compose(left FileOp, right FileOp) (bool, FileOp, FileOp, string, int) {
+func (commit *Commit) _compose(left *FileOp, right *FileOp) (bool, *FileOp, *FileOp, string, int) {
 	pair := [2]rune{left.op, right.op}
 	//
 	// First op M
@@ -8129,16 +8152,16 @@ func (commit *Commit) _compose(left FileOp, right FileOp) (bool, FileOp, FileOp,
 		// M a + D a -> D a
 		// Or, could reduce to nothing if M a was the only modify..
 		if commit.ancestorCount(left.Path) == 1 {
-			return true, nilOp, nilOp, "", 1
+			return true, &nilOp, &nilOp, "", 1
 		}
-		return true, right, nilOp, "", 2
+		return true, right, &nilOp, "", 2
 	} else if left.op == opM && right.op == opR {
 		// M a + R a b -> R a b M b, so R falls towards start of list
 		if left.Path == right.Source {
 			if commit.ancestorCount(left.Path) == 1 {
 				// M a has no ancestors, preceding R can be dropped
 				left.Path = right.Target
-				return true, left, nilOp, "", 3
+				return true, left, &nilOp, "", 3
 			}
 			// M a has ancestors, R is still needed
 			left.Path = right.Target
@@ -8147,7 +8170,7 @@ func (commit *Commit) _compose(left FileOp, right FileOp) (bool, FileOp, FileOp,
 			// M b + R a b can't happen.  If you try to
 			// generate this with git mv it throws an
 			// error.  An ordinary mv results in D b M a.
-			return true, right, nilOp, "M followed by R to the M operand?", -1
+			return true, right, &nilOp, "M followed by R to the M operand?", -1
 		}
 	} else if left.op == opM && right.op == opC {
 		// Correct reduction for this would be M a + C a b ->
@@ -8160,7 +8183,7 @@ func (commit *Commit) _compose(left FileOp, right FileOp) (bool, FileOp, FileOp,
 		//
 		// Delete followed by modify undoes delete, since M
 		// carries whole files.
-		return true, nilOp, right, "", 6
+		return true, &nilOp, right, "", 6
 	} else if pair == [2]rune{deleteall, opM} {
 		// But we have to leave deletealls in place, since
 		// they affect right ops
@@ -8172,7 +8195,7 @@ func (commit *Commit) _compose(left FileOp, right FileOp) (bool, FileOp, FileOp,
 		return false, left, right,
 			"Non-M operation after deleteall?", -1
 	} else if left.op == opD && right.op == opD {
-		return true, left, nilOp, "", -2
+		return true, left, &nilOp, "", -2
 	} else if left.op == opD && (right.op == opR || right.op == opC) {
 		if left.Path == right.Source {
 			return false, left, right,
@@ -8187,16 +8210,16 @@ func (commit *Commit) _compose(left FileOp, right FileOp) (bool, FileOp, FileOp,
 			// Rename followed by delete of target
 			// composes to source delete
 			right.Path = left.Source
-			return true, nilOp, right, "", 9
+			return true, &nilOp, right, "", 9
 		}
 		// On rename followed by delete of source
 		// discard the delete but user should be
 		// warned.
-		return false, left, nilOp, fmt.Sprintf("delete of %s after renaming to %s?", right.Path, left.Source), -4
+		return false, left, &nilOp, fmt.Sprintf("delete of %s after renaming to %s?", right.Path, left.Source), -4
 
 	} else if pair == [2]rune{opR, deleteall} && left.Target == right.Path {
 		// Rename followed by deleteall shouldn't be possible
-		return false, nilOp, right,
+		return false, &nilOp, right,
 			"rename before deleteall not removed?", -5
 	} else if pair == [2]rune{opR, opM} || pair == [2]rune{opC, opM} {
 		// Leave rename || copy followed by modify alone
@@ -8205,7 +8228,7 @@ func (commit *Commit) _compose(left FileOp, right FileOp) (bool, FileOp, FileOp,
 		// Compose renames where possible
 		if left.Target == right.Source {
 			left.Target = right.Target
-			return true, left, nilOp, "", 11
+			return true, left, &nilOp, "", 11
 		}
 		return false, left, right, fmt.Sprintf("R %s %s is inconsistent with following operation", left.Source, left.Target), -6
 	}
@@ -8219,10 +8242,10 @@ func (commit *Commit) _compose(left FileOp, right FileOp) (bool, FileOp, FileOp,
 		if left.Source == right.Path {
 			// Copy followed by delete of the source is a rename.
 			left.setOp(opR)
-			return true, left, nilOp, "", 13
+			return true, left, &nilOp, "", 13
 		} else if left.Target == right.Path {
 			// This delete undoes the copy
-			return true, nilOp, nilOp, "", 14
+			return true, &nilOp, &nilOp, "", 14
 		}
 	} else if pair == [2]rune{opC, opR} {
 		if left.Source == right.Source {
@@ -8232,7 +8255,7 @@ func (commit *Commit) _compose(left FileOp, right FileOp) (bool, FileOp, FileOp,
 		// Copy followed by a rename of the target reduces to single copy
 		if left.Target == right.Source {
 			left.Target = right.Target
-			return true, left, nilOp, "", 16
+			return true, left, &nilOp, "", 16
 		}
 	} else if pair == [2]rune{opC, opC} {
 		// No reduction
@@ -8268,7 +8291,7 @@ func (commit *Commit) simplify() orderedIntSet {
 			for j := i + 1; j < len(commit.operations()); j++ {
 				a := commit.operations()[i]
 				b := commit.operations()[j]
-				if !a.Equals(&nilOp) && !b.Equals(&nilOp) && a.relevant(&b) {
+				if !a.Equals(&nilOp) && !b.Equals(&nilOp) && a.relevant(b) {
 					modified, newa, newb, warn, cn := commit._compose(a, b)
 					logit(logDELETE, fmt.Sprintf("Reduction case %d fired on (%d, %d)", cn, i, j))
 					if modified {
@@ -8290,7 +8313,7 @@ func (commit *Commit) simplify() orderedIntSet {
 		if !mutated {
 			break
 		}
-		newOps := make([]FileOp, 0)
+		newOps := make([]*FileOp, 0)
 		for _, x := range commit.operations() {
 			if !x.Equals(&nilOp) {
 				newOps = append(newOps, x)
@@ -8481,10 +8504,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 				// parent,and mark each such child as needing
 				// resolution.
 				if pushforward && child.parents()[0] == commit {
-					newops := make([]FileOp, len(commit.operations()))
-					copy(newops, commit.operations())
-					newops = append(newops, child.operations()...)
-					child.setOperations(newops)
+					child.prependOperations(commit.operations())
 					// Also prepend event's
 					// comment, ignoring empty log
 					// messages.
@@ -8511,7 +8531,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 				if eventPos == 0 && !commit.hasParents() {
 					fileop := newFileOp(repo)
 					fileop.construct(deleteall)
-					child.prependOperation(*fileop)
+					child.prependOperation(fileop)
 					altered = append(altered, child)
 				}
 			}
@@ -8638,7 +8658,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 			if policy.Contains("--coalesce") {
 				// Only keep last M of each clique,
 				// leaving other ops alone
-				newOps := make([]FileOp, 0)
+				newOps := make([]*FileOp, 0)
 				for i, op := range commit.operations() {
 					if op.op != opM {
 						newOps = append(newOps, op)
@@ -8684,6 +8704,7 @@ func (repo *Repository) dedup(dupMap map[string]string) {
 				fileop.ref = dupMap[fileop.ref]
 			}
 		}
+		control.baton.twirl()
 	})
 	repo.gcBlobs()
 }
@@ -8961,7 +8982,7 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 	for i, e := range events[:len(events)-1] {
 		events[i+1].setParents([]CommitLike{e})
 	}
-	fileopSliceEqual := func(a, b []FileOp) bool {
+	fileopSliceEqual := func(a, b []*FileOp) bool {
 		if len(a) != len(b) {
 			return false
 		}
@@ -8975,7 +8996,7 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 	// Check if fileops still make sense after re-ordering events.
 	// FIXME: The Python used to check child events too.
 	for _, c := range events {
-		ops := make([]FileOp, 0)
+		ops := make([]*FileOp, 0)
 		for _, op := range c.operations() {
 			var path string
 			if op.op == opD {
@@ -9258,7 +9279,7 @@ func (repo *Repository) graft(graftRepo *Repository, graftPoint int, options str
 		// Prepend a deleteall. Roots have nothing upline to preserve.
 		delop := newFileOp(repo)
 		delop.construct(deleteall)
-		graftroot.prependOperation(*delop)
+		graftroot.prependOperation(delop)
 	}
 	repo.renumber(1, nil)
 	// Resolve all callouts
@@ -9319,7 +9340,7 @@ func (repo *Repository) pathWalk(selection orderedIntSet, hook func(string) stri
 	return modified
 }
 
-func (repo *Repository) splitCommit(where int, splitfunc func([]FileOp) ([]FileOp, []FileOp, error)) error {
+func (repo *Repository) splitCommit(where int, splitfunc func([]*FileOp) ([]*FileOp, []*FileOp, error)) error {
 	event := repo.events[where]
 	// Fileop split happens here
 	commit, ok := event.(*Commit)
@@ -9358,16 +9379,16 @@ func (repo *Repository) splitCommit(where int, splitfunc func([]FileOp) ([]FileO
 func (repo *Repository) splitCommitByIndex(where int, splitpoint int) error {
 	// FIXME: validity-check the split index
 	return repo.splitCommit(where,
-		func(ops []FileOp) ([]FileOp, []FileOp, error) {
+		func(ops []*FileOp) ([]*FileOp, []*FileOp, error) {
 			return ops[:splitpoint], ops[splitpoint:], nil
 		})
 }
 
 func (repo *Repository) splitCommitByPrefix(where int, prefix string) error {
 	return repo.splitCommit(where,
-		func(ops []FileOp) ([]FileOp, []FileOp, error) {
-			var without []FileOp
-			var with []FileOp
+		func(ops []*FileOp) ([]*FileOp, []*FileOp, error) {
+			var without []*FileOp
+			var with []*FileOp
 			err := fmt.Errorf("couldn't find '%s' in a fileop path", prefix)
 			for _, op := range ops {
 				// In Python: lambda ops: ([op for op
@@ -10360,11 +10381,11 @@ func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
 		// grafted branch unless they have
 		// modify ops in the branch root.
 		if options.Contains("--prune") {
-			deletes := make([]FileOp, 0)
+			deletes := make([]*FileOp, 0)
 			for _, elt := range mostRecent.manifest().items() {
 				fileop := newFileOp(union)
 				fileop.construct(opD, elt.name)
-				deletes = append(deletes, *fileop)
+				deletes = append(deletes, fileop)
 			}
 			root.setOperations(append(deletes, root.operations()...))
 			root.canonicalize()
@@ -10461,7 +10482,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			continue
 		}
 		commit := rl.repo.events[ei].(*Commit)
-		keepers := make([]FileOp, 0)
+		keepers := make([]*FileOp, 0)
 		blobs := make([]*Blob, 0)
 		for _, j := range deletia {
 			fileop := commit.fileops[j]
@@ -10488,7 +10509,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 			}
 		}
 
-		nondeletia := make([]FileOp, 0)
+		nondeletia := make([]*FileOp, 0)
 		deletiaSet := newOrderedIntSet(deletia...)
 		for i, op := range commit.operations() {
 			if !deletiaSet.Contains(i) {
@@ -15629,7 +15650,7 @@ func (rs *Reposurgeon) DoAdd(line string) bool {
 		} else if optype == opR || optype == opC {
 			fileop.construct(rune(optype), source, target)
 		}
-		commit.appendOperation(*fileop)
+		commit.appendOperation(fileop)
 	}
 	return false
 }
@@ -15719,7 +15740,7 @@ func (rs *Reposurgeon) DoRemove(line string) bool {
 			return false
 		}
 		if opindex == "deletes" {
-			ops := make([]FileOp, 0)
+			ops := make([]*FileOp, 0)
 			for _, op := range event.operations() {
 				if op.op != opD {
 					ops = append(ops, op)
@@ -15845,6 +15866,7 @@ func (rs *Reposurgeon) DoDedup(line string) bool {
 				blobMap[sha] = blob.mark
 			}
 		}
+		control.baton.twirl()
 	}
 	rs.chosen().dedup(dupMap)
 	return false
@@ -16383,7 +16405,7 @@ func (rs *Reposurgeon) DoDebranch(line string) bool {
 	pref := filepath.Base(source)
 	for _, ci := range scommits {
 		for idx := range repo.events[ci].(*Commit).operations() {
-			fileop := &(repo.events[ci].(*Commit).fileops[idx])
+			fileop := repo.events[ci].(*Commit).fileops[idx]
 			if fileop.op == opD || fileop.op == opM {
 				fileop.Path = filepath.Join(pref, fileop.Path)
 			} else if fileop.op == opR || fileop.op == opC {
@@ -16441,7 +16463,7 @@ type pathAction struct {
 
 func (pa pathAction) String() string {
 	var i int
-	var op FileOp
+	var op *FileOp
 	for i, op = range pa.commit.fileops {
 		if op.Equals(pa.fileop) {
 			break
@@ -16484,8 +16506,8 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 		for _, commit := range repo.commits(selection) {
 			for idx := range commit.fileops {
 				for _, attr := range []string{"Path", "Source", "Target"} {
-					fileop := &commit.fileops[idx]
-					if oldpath, ok := getAttr(*fileop, attr); ok {
+					fileop := commit.fileops[idx]
+					if oldpath, ok := getAttr(fileop, attr); ok {
 						if ok && oldpath != "" && sourceRE.MatchString(oldpath) {
 							newpath := GoReplacer(sourceRE, oldpath, targetPattern)
 							if !force && commit.visible(newpath) != nil {
@@ -16905,12 +16927,12 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 	}
 	if !parse.options.Contains("--rebase") {
 		// Recreate the state of the tree
-		f := *newFileOp(repo)
+		f := newFileOp(repo)
 		f.construct(deleteall)
-		newops := []FileOp{f}
+		newops := []*FileOp{f}
 		for _, elt := range child.manifest().items() {
 			path, entry := elt.name, elt.value.(*ManifestEntry)
-			f = *newFileOp(repo)
+			f = newFileOp(repo)
 			f.construct(opM, entry.mode, entry.ref, path)
 			if entry.ref == "inline" {
 				f.inline = entry.inline
@@ -17652,7 +17674,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 					repo.declareSequenceMutation("ignore creation")
 					newop := newFileOp(rs.chosen())
 					newop.construct(opM, "100644", ":insert", rs.ignorename)
-					earliest.appendOperation(*newop)
+					earliest.appendOperation(newop)
 					repo.renumber(1, nil)
 					respond(fmt.Sprintf("initial %s created.", rs.ignorename))
 				}
@@ -17668,7 +17690,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 							if ok && strings.HasSuffix(oldpath, rs.ignorename) {
 								newpath := filepath.Join(filepath.Dir(oldpath),
 									rs.preferred.ignorename)
-								setAttr(&commit.fileops[idx], attr, newpath)
+								setAttr(commit.fileops[idx], attr, newpath)
 								changecount++
 								if fileop.op == opM {
 									blob := repo.markToEvent(fileop.ref).(*Blob)
@@ -19211,7 +19233,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 			mode = 0100755
 		}
 		op.construct(opM, strconv.FormatInt(int64(mode), 8), b.mark, fn)
-		blank.appendOperation(*op)
+		blank.appendOperation(op)
 	}
 
 	repo.declareSequenceMutation("")
@@ -19260,7 +19282,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 				if !c.paths(nil).Contains(path) {
 					op := newFileOp(repo)
 					op.construct(opD, path)
-					c.appendOperation(*op)
+					c.appendOperation(op)
 				}
 			}
 		}
@@ -19272,7 +19294,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 				if !blankPathList.Contains(leaker) {
 					op := newFileOp(repo)
 					op.construct(opD, leaker)
-					blank.appendOperation(*op)
+					blank.appendOperation(op)
 				}
 			}
 		}
