@@ -4685,8 +4685,21 @@ func (commit *Commit) prependOperations(ops []*FileOp) {
 	commit.invalidateManifests()
 }
 
+// Since a deleteall clears all the content, no operation before it can impact
+// the final result. The following helper discards all these file operations
+// without changing the commit manifest.
+func (commit *Commit) discardOpsBeforeLastDeleteAll() {
+	for i := len(commit.fileops) - 1; i > 0; i-- {
+		if commit.fileops[i].op == deleteall {
+			commit.fileops = commit.fileops[i:]
+			break
+		}
+	}
+}
+
 // sortOperations sorts fileops on a commit the same way git-fast-export does
 func (commit *Commit) sortOperations() {
+	commit.discardOpsBeforeLastDeleteAll()
 	pathpart := func(fileop *FileOp) string {
 		if fileop.Path != "" {
 			return fileop.Path
@@ -5458,17 +5471,8 @@ func (commit *Commit) manifest() *PathMap {
 
 // canonicalize replaces fileops by a minimal set of D and M with same result.
 func (commit *Commit) canonicalize() {
-	if len(commit.fileops) == 0 {
-		return
-	}
 	// Discard everything before the last deletall
-	lastdel := 0
-	for i, op := range commit.operations() {
-		if op.op == deleteall {
-			lastdel = i
-		}
-	}
-	commit.fileops = commit.fileops[lastdel:len(commit.fileops)]
+	commit.discardOpsBeforeLastDeleteAll()
 	ops := commit.operations()
 	if len(ops) == 0 || ops[0].op == deleteall {
 		return

@@ -933,9 +933,6 @@ func TestFileopSort(t *testing.T) {
 		[]string{"CHANGES", "clients/.gitignore", "clients/upslog.c", "clients/upsmon.c"})
 
 	test2 := func (as []*FileOp, bs []*FileOp) {
-		if len(as) != len(bs) {
-			t.Fatalf("sort test must have two slices of the same length")
-		}
 		repo := newRepository("fubar")
 		defer repo.cleanup()
 		commit := newCommit(repo)
@@ -947,6 +944,9 @@ func TestFileopSort(t *testing.T) {
 		quasiEquals := func (a *FileOp, b *FileOp) bool {
 			return a.op == b.op && a.Path == b.Path
 		}
+		if len(commit.fileops) != len(bs) {
+			t.Fatalf("sort test did not result in two slices of the same length")
+		}
 		for idx, b := range bs {
 			if !quasiEquals(commit.fileops[idx], b) {
 				t.Fatalf("fileops didn't get sorted correctly; expected %#v == %#v", commit.fileops, bs)
@@ -957,21 +957,21 @@ func TestFileopSort(t *testing.T) {
 
 	// These are not super readable; perhaps there's a better way?
 
-	// b, a → a, b (in spite of the differing ops
+	// b, a → a, b (in spite of the differing ops)
 	test2([]*FileOp{newFileOp(nil).construct(opD, "b"), newFileOp(nil).construct(opM, "100644", ":1", "a")},
 		[]*FileOp{newFileOp(nil).construct(opM, "100644", ":1", "a"), newFileOp(nil).construct(opD, "b")})
 
-	// modify, deleteall → deleteall, modify
+	// modify, deleteall → deleteall (to keep the manifest unchanged)
 	test2([]*FileOp{newFileOp(nil).construct(opM, "100644", ":1", "foo/bar"), newFileOp(nil).construct(deleteall)},
-		[]*FileOp{newFileOp(nil).construct(deleteall), newFileOp(nil).construct(opM, "100644", ":1", "foo/bar")})
+		[]*FileOp{newFileOp(nil).construct(deleteall)})
 	// deleteall, modify → deleteall, modify
 	test2([]*FileOp{newFileOp(nil).construct(deleteall), newFileOp(nil).construct(opM, "100644", ":1", "foo/bar")},
 		[]*FileOp{newFileOp(nil).construct(deleteall), newFileOp(nil).construct(opM, "100644", ":1", "foo/bar")})
-	// deleteall, deleteall → deleteall, deleteall (shouldn't
+	// deleteall, deleteall → deleteall (shouldn't
 	// actually occur in real commits, but shouldn't break
 	// anything either)
 	test2([]*FileOp{newFileOp(nil).construct(deleteall), newFileOp(nil).construct(deleteall)},
-		[]*FileOp{newFileOp(nil).construct(deleteall), newFileOp(nil).construct(deleteall)})
+		[]*FileOp{newFileOp(nil).construct(deleteall)})
 
 	// rename, modify → modify, rename
 	test2([]*FileOp{newFileOp(nil).construct(opR, "a", "aa"), newFileOp(nil).construct(opM, "100644", ":1", "z")},
