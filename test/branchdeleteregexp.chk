@@ -1,0 +1,92 @@
+blob
+mark :1
+data 60
+This is the trunk version of README, without modifications.
+
+commit refs/heads/master
+mark :2
+committer esr <esr> 1322682431 +0000
+data 38
+README, base version on trunk branch.
+M 100644 :1 README
+
+blob
+mark :3
+data 73
+This is the trunk version of README, with an illustrative modifications.
+
+commit refs/heads/master
+mark :4
+committer esr <esr> 1322682994 +0000
+data 24
+Second commit on trunk.
+from :2
+M 100644 :3 README
+
+blob
+mark :5
+data 71
+This is the branch version of README, after we've actually changed it.
+
+reset refs/heads/samplebranch
+commit refs/heads/samplebranch
+mark :6
+committer esr <esr> 1322683160 +0000
+data 39
+First modification on the branch side.
+from :2
+M 100644 :5 README
+
+blob
+mark :7
+data 61
+This is the trunk version of README, with its typo removed.
+
+
+commit refs/heads/master
+mark :8
+committer esr <esr> 1322683251 +0000
+data 23
+Third commit on trunk.
+from :4
+M 100644 :7 README
+
+blob
+mark :9
+data 107
+This is the branch version of README, after we've actually changed it.
+
+Second modification to the README.
+
+commit refs/heads/samplebranch
+mark :10
+committer esr <esr> 1322691357 +0000
+data 40
+Create another node on the branch side.
+from :6
+M 100644 :9 README
+
+commit refs/heads/samplebranch
+mark :11
+committer esr <esr> 1324127616 +0000
+data 75
+This is an example of a branch tip delete which should become a deleteall.
+from :10
+deleteall
+
+tag root
+from :2
+tagger esr <esr> 1322682380 +0000
+data 130
+This repo illustrates simple branching with interleaved commits.
+
+[[Tag from directory creation or copy commit at Subversion r1]]
+
+tag samplebranch
+from :2
+tagger esr <esr> 1322682540 +0000
+data 109
+A branch created for illustrative purposes.
+
+[[Tag from directory creation or copy commit at Subversion r3]]
+

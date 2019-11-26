@@ -17065,16 +17065,16 @@ func (rs *Reposurgeon) DoBranch(line string) bool {
 		croak("while selecting branch: %v", err)
 		return false
 	}
-	if !strings.Contains(branchname, "/") {
-		branchname = "refs/heads/" + branchname
-	}
-	if !repo.branchset().Contains(branchname) {
-		croak("no such branch as %s", branchname)
-		return false
-	}
 	var verb string
 	verb, line = popToken(line)
 	if verb == "rename" {
+		if !strings.Contains(branchname, "/") {
+			branchname = "refs/heads/" + branchname
+		}
+		if !repo.branchset().Contains(branchname) {
+			croak("no such branch as %s", branchname)
+			return false
+		}
 		var newname string
 		newname, line = popToken(line)
 		if newname == "" {
@@ -17100,18 +17100,33 @@ func (rs *Reposurgeon) DoBranch(line string) bool {
 			}
 		}
 	} else if verb == "delete" {
-		deletia := make([]int, 0)
-		for ei := range repo.events {
-			event := repo.events[ei]
-			if commit, ok := event.(*Commit); ok {
-				if commit.Branch == branchname {
-					deletia = append(deletia, ei)
-				}
-			} else if reset, ok := event.(*Reset); ok {
-				if reset.ref == branchname {
-					deletia = append(deletia, ei)
-				}
+		selection := rs.selection
+		if selection == nil {
+			selection = repo.all()
+		}
+		var branchre *regexp.Regexp
+		if branchname[0] == '/' && branchname[len(branchname)-1] == '/' {
+			// Regexp - can refer to a list of branchs matched
+			branchre = regexp.MustCompile(branchname[1 : len(branchname)-1])
+		} else {
+			if !strings.Contains(branchname, "/") {
+				branchname = "refs/heads/" + branchname
 			}
+			if !repo.branchset().Contains(branchname) {
+				croak("no such branch as %s", branchname)
+				return false
+			}
+			branchre = regexp.MustCompile("^"+regexp.QuoteMeta(branchname)+"$")
+		}
+		deletia := make([]int, 0)
+		for _, ei := range selection {
+			event := repo.events[ei]
+			if reset, ok := event.(*Reset); ok && branchre.MatchString(reset.ref) {
+				deletia = append(deletia, ei)
+			} else if commit, ok := event.(*Commit); ok && branchre.MatchString(commit.Branch) {
+				deletia = append(deletia, ei)
+			}
+			control.baton.twirl()
 		}
 		repo.delete(orderedIntSet(deletia), nil)
 	} else {
