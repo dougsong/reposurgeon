@@ -260,6 +260,12 @@ func (sp *StreamParser) sdReadProps(target string, checklength int) *OrderedMap 
 	return &props
 }
 
+func (sp *StreamParser) addBranch(name string) {
+	sp.branches[name] = nil
+	sp._branchesSorted = nil
+	return
+}
+
 func (sp *StreamParser) branchtrie() trie.Tree {
 	//The branch list in deterministic order, most specific branches first.
 	if len(sp.branches) == 0 {

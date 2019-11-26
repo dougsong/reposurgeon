@@ -6268,12 +6268,6 @@ func newStreamParser(repo *Repository) *StreamParser {
 	return sp
 }
 
-func (sp *StreamParser) addBranch(name string) {
-	sp.branches[name] = nil
-	sp._branchesSorted = nil
-	return
-}
-
 func (sp *StreamParser) error(msg string) {
 	// Throw fatal error during parsing.
 	panic(throw("parse", "%d: %s", sp.importLine, msg))
