@@ -17039,16 +17039,18 @@ func (rs *Reposurgeon) HelpBranch() {
 	rs.helpOutput(`
 Rename or delete a branch (and any associated resets).  First argument
 must be an existing branch name; second argument must one of the verbs
-'rename' or 'delete'. The branchname may use backslash escapes
-interpreted by the Python string-escape codec, such as \\s.
+'rename' or 'delete'.
 
 For a 'rename', the third argument may be any token that is a syntactically
-valid branch name (but not the name of an existing branch). For a 'delete',
-no third argument is required.
+valid branch name (but not the name of an existing branch).  If it does not
+contain a '/' the prefix 'heads/' is prepended.  If it does not begin with
+'refs/', then 'refs/' is prepended.
 
-For either name, if it does not contain a '/' the prefix 'heads/'
-is prepended. If it does not begin with 'refs/', 'refs/' is prepended.
-`)
+For a 'delete', the name may optionally be a regular expression wrapped in //;
+if so, all objects of the specified type with names matching the regexp are
+deleted.  This is useful for mass deletion of branches.  Such deletions can be
+restricted by a selection set in the normal way.  No third argument is
+required.`)
 }
 
 // Rename a branch or delete it.
