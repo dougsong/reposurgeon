@@ -14979,8 +14979,8 @@ type filterCommand struct {
 }
 
 // GoReplacer bridges from Python-style back-references (\1) to Go-style ($1).
-// This was originally a shim for testing during the Pythjon port.  It has
-// been kept because Go's use of $n for group matches comflicys with the
+// This was originally a shim for testing during the port from Python.  It has
+// been kept because Go's use of $n for group matches conflicts with the
 // use of $n for script arguments in reposurgeon.
 func GoReplacer(re *regexp.Regexp, fromString, toString string) string {
 	for i := 0; i < 10; i++ {
