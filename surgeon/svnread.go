@@ -374,10 +374,13 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 	defer trace.StartRegion(ctx, "SVN Phase 1: read dump file").End()
 	sp.revisions = make([]RevisionRecord, 0)
 	sp.hashmap = make(map[string]*NodeAction)
-	trackSymlinks := newOrderedStringSet()
-	propertyStash := make(map[string]*OrderedMap)
 	sp.branches = make(map[string]*branchMeta)
 	sp._branchesSorted = nil
+	sp.splitCommits = make(map[revidx]int)
+
+	trackSymlinks := newOrderedStringSet()
+	propertyStash := make(map[string]*OrderedMap)
+
 	baton.startProgress("SVN Phase 1: read dump file", uint64(filesize))
 	for {
 		line := sp.readline()
@@ -1546,9 +1549,9 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 		base.legacyID += ".1"
 		for j := 1; j <= len(split.splits); j++ {
 			fragment := sp.repo.events[split.loc+j].(*Commit)
-			//fragment.setParents(nil)		// No mark means parent is previous
 			fragment.legacyID = baseID + "." + strconv.Itoa(j+1)
 			fragment.Comment += splitwarn
+			sp.splitCommits[intToRevidx(i)]++
 		}
 		baton.percentProgress(uint64(i) + 1)
 	}
