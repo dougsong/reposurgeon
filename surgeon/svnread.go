@@ -1970,9 +1970,6 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 		baton.percentProgress(uint64(revision) + 1)
 	}
 	baton.endProgress()
-	// Allow mergeinfo storage to be garbage-collected
-	mergeinfo = nil
-	mergeinfos = nil
 }
 
 func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
