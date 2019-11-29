@@ -1,12 +1,4 @@
 #!/bin/sh
-# singletest - run a single regression test
-#
-# The REPOSURGEON environment variable can be used to substitute in a
-# different implementation.
-#
-# With -s, set the serial flag to disable parallelism
-#
-# With -x, set the experimental flag.
 
 . ././common-setup.sh
 
@@ -21,11 +13,28 @@ TERM=dumb
 
 experimental=""
 serial=""
-while getopts sx opt
+diff=yes
+while getopts shox opt
 do
     case $opt in
+	o) diff=no ;;
 	s) serial="set serial";;
-	x) experimental="set experimental"
+	x) experimental="set experimental";;
+	*) cat <<EOF
+singletest - run a single regression test
+
+The REPOSURGEON environment variable can be used to substitute in a
+different implementation.
+
+With -h, display this option summary.
+
+With -o, domp the test output rather than diffing against the checkfile
+
+With -s, set the serial flag to disable parallelism
+
+With -x, set the experimental flag.
+EOF
+	   exit 0;;
     esac
 done
 shift $(($OPTIND - 1))
@@ -41,6 +50,9 @@ then
     tst=${what}.tst-FAIL
     chk=${what}.chk
     echo "Expect a diff"
+elif [ -z ${what} ]
+then
+    exec $0 -h
 else
     echo "No script matching ${what} found"
     exit 1
@@ -49,5 +61,10 @@ fi
 for x in $*;
 do
     grep '^##' ${tst} 2>/dev/null
-    ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "script ${tst}" 2>&1 | diff -u ${chk} -
+    if [ $diff = yes ]
+    then
+        ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "script ${tst}" 2>&1 | diff -u ${chk} -
+    else
+        ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "script ${tst}" 2>&1
+    fi
 done
