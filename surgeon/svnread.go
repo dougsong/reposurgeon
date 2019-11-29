@@ -44,27 +44,115 @@ import (
 	"sync"
 	"time"
 	"unsafe" // Actually safe - only uses Sizeof
+
 	trie "github.com/acomagu/trie"
 )
 
+// FIXME: When we merge to master, move this to reposugeon.go
+// and remove the "common" member of the Commit structure.
+// Also remove the copyOperations method
+const colorGEN = 4
+
+type branchMeta struct {
+	root *Commit
+	tip *Commit
+}
+
+type revlink struct {
+	source revidx
+	target revidx
+	copycount int
+}
+
 type svnReader struct {
+	revisions            []RevisionRecord
+	streamview           []*NodeAction // All nodes in stream order
+	hashmap              map[string]*NodeAction
+	history              *History
+	branchlinks          map[revidx]revidx
 	branches             map[string]*branchMeta // Points to branch root commits
 	_branchesSorted      trie.Tree
-	revlinks             map[revidx]revidx
-	branchlink           map[string]daglink
-	branchcopies         stringSet
-	generatedDeletes     []*Commit
-	revisions            []RevisionRecord
-	hashmap              map[string]*NodeAction
-	fileopBranchlinks    stringSet
-	directoryBranchlinks stringSet
-	activeGitignores     map[string]string
-	large                bool
-	history              *History
-	splitCommits         map[revidx]int
-	streamview           []*NodeAction // All nodes in stream order
-	initialBranchIgnores map[string]bool // a flag for each branch where we have put the implicit svn's implicit
-					     // ignore rules into a .gitignore file
+}
+
+// Helpers for branch analysis
+
+func (sp *StreamParser) addBranch(name string) {
+	sp.branches[name] = nil
+	sp._branchesSorted = nil
+	return
+}
+
+// isDeclaredBranch returns true iff the user requested that this path be treated as a branch or tag.
+func isDeclaredBranch(path string) bool {
+	np := path
+	if !strings.HasSuffix(path, svnSep) {
+		np += svnSep
+	}
+	for _, trial := range control.listOptions["svn_branchify"] {
+		if !strings.Contains(trial, "*") && trial == path {
+			return true
+		} else if strings.HasSuffix(trial, svnSep+"*") && filepath.Dir(trial) == filepath.Dir(path) && !control.listOptions["svn_branchify"].Contains(np+"*") {
+			return true
+		} else if trial == "*" && !control.listOptions["svn_branchify"].Contains(np+"*") && strings.Count(path, svnSep) < 1 {
+			return true
+		}
+	}
+	return false
+}
+
+// splitSVNBranchPath splits a node path into the part that identifies the branch and the rest, as determined by the current branch map
+func splitSVNBranchPath(path string) (string, string) {
+	segments := strings.Split(path, svnSep)
+	for i := len(segments) - 1; i >= 0; i-- {
+		candidate := strings.Join(segments[0:i], svnSep)
+		if isDeclaredBranch(candidate) {
+			return candidate, strings.Join(segments[i:], svnSep)
+		}
+	}
+	return "", path
+}
+
+// Fast branch lookup and retrieval - NOT USED YET
+
+func (sp *StreamParser) isBranch(pathname string) bool {
+	_, ok := sp.branches[pathname]
+	return ok
+}
+
+func (sp *StreamParser) branchtrie() trie.Tree {
+	//The branch list in deterministic order, most specific branches first.
+	if len(sp.branches) == 0 {
+		return nil
+	}
+	if sp._branchesSorted != nil {
+		return sp._branchesSorted
+	}
+	branches := make([][]byte, len(sp.branches))
+	branchIndexes := make([]interface{}, len(branches))
+	idx := 0
+	for key := range sp.branches {
+		branches[idx] = []byte(key)
+		branchIndexes[idx] = true // we don't care about the value we put into the trie
+		idx++
+	}
+	sp._branchesSorted = trie.New(branches, branchIndexes)
+	return sp._branchesSorted
+}
+
+func longestPrefix(t trie.Tree, key []byte) []byte {
+	var prefix []byte
+	if t == nil {
+		return prefix
+	}
+	for i, c := range []byte(key) {
+		if t = t.TraceByte(c); t == nil {
+			break
+		}
+		if _, ok := t.Terminal(); ok {
+			prefix = key[:i+1]
+		}
+	}
+	return prefix
 }
 
 // A type to manage a collection of PathMaps used as a history of file visibility.
@@ -260,48 +348,6 @@ func (sp *StreamParser) sdReadProps(target string, checklength int) *OrderedMap 
 	return &props
 }
 
-func (sp *StreamParser) addBranch(name string) {
-	sp.branches[name] = nil
-	sp._branchesSorted = nil
-	return
-}
-
-func (sp *StreamParser) branchtrie() trie.Tree {
-	//The branch list in deterministic order, most specific branches first.
-	if len(sp.branches) == 0 {
-		return nil
-	}
-	if sp._branchesSorted != nil {
-		return sp._branchesSorted
-	}
-	branches := make([][]byte, len(sp.branches))
-	branchIndexes := make([]interface{}, len(branches))
-	idx := 0
-	for key := range sp.branches {
-		branches[idx] = []byte(key)
-		branchIndexes[idx] = true // we don't care about the value we put into the trie
-		idx++
-	}
-	sp._branchesSorted = trie.New(branches, branchIndexes)
-	return sp._branchesSorted
-}
-
-func longestPrefix(t trie.Tree, key []byte) []byte {
-	var prefix []byte
-	if t == nil {
-		return prefix
-	}
-	for i, c := range []byte(key) {
-		if t = t.TraceByte(c); t == nil {
-			break
-		}
-		if _, ok := t.Terminal(); ok {
-			prefix = key[:i+1]
-		}
-	}
-	return prefix
-}
-
 func (sp *StreamParser) timeMark(label string) {
 	sp.repo.timings = append(sp.repo.timings, TimeMark{label, time.Now()})
 }
@@ -324,26 +370,12 @@ func appendRevisionRecords(slice []RevisionRecord, data ...RevisionRecord) []Rev
 
 func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet, baton *Baton, filesize int64) {
 	defer trace.StartRegion(ctx, "SVN Phase 1: read dump file").End()
-	sp.branches = make(map[string]*branchMeta)
-	sp._branchesSorted = nil
-	sp.revlinks = make(map[revidx]revidx)
-	sp.branchlink = make(map[string]daglink)
-	sp.branchcopies = newStringSet()
-	sp.generatedDeletes = make([]*Commit, 0)
 	sp.revisions = make([]RevisionRecord, 0)
 	sp.hashmap = make(map[string]*NodeAction)
-	sp.fileopBranchlinks = newStringSet()
-	sp.directoryBranchlinks = newStringSet()
-	sp.activeGitignores = make(map[string]string)
-	sp.splitCommits = make(map[revidx]int)
-	sp.initialBranchIgnores = make(map[string]bool)
-	// If the repo is large, we'll give up on some diagnostic info in order
-	// to reduce the working set size.
-	if control.flagOptions["tighten"] {
-		sp.large = true
-	}
 	trackSymlinks := newOrderedStringSet()
 	propertyStash := make(map[string]*OrderedMap)
+	sp.branches = make(map[string]*branchMeta)
+	sp._branchesSorted = nil
 	baton.startProgress("SVN Phase 1: read dump file", uint64(filesize))
 	for {
 		line := sp.readline()
@@ -395,50 +427,15 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 							text := sp.sdReadBlob(tlen)
 							node.blob = newBlob(sp.repo)
 							node.blob.setContent(text, start)
-							// Ugh - cope
-							// with
-							// strange
-							// undocumented
-							// Subversion
-							// format for
-							// storing
-							// links.
-							// Apparently
-							// the dumper
-							// puts "link
-							// " in front
-							// of the path
-							// and the
-							// loader (or
-							// at least
-							// git-svn)
-							// removes it.
-							// But the
-							// link op is
-							// only marked
-							// with
-							// property
-							// svn:special
-							// on
-							// creation,
-							// on
-							// modification.
-							// So we have
-							// to track
-							// which paths
-							// are
-							// currently
-							// symlinks,
-							// && take off
-							// that mark
-							// when a path
-							// is deleted
-							// in case it
-							// later gets
-							// recreated
-							// as a
-							// non-sym
-							// link.
+							// Ugh - cope with strange undocumented Subversion
+							// format for storing links.  Apparently the dumper
+							// puts "link " in front of the path and the loader
+							// (or at least git-svn) removes it.  But the link
+							// op is only marked with property svn:special on
+							// creation, on modification.  So we have to track
+							// which paths are currently symlinks, && take off
+							// that mark when a path is deleted in case it
+							// later gets recreated as a non-sym link.
 							if bytes.HasPrefix(text, []byte("link ")) {
 								if node.hasProperties() && node.props.has("svn:special") {
 									trackSymlinks.Add(node.path)
@@ -450,18 +447,16 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 							}
 						}
 						node.revision = revision
-						// If there are
-						// property changes on
-						// this node, stash
-						// them so they will
-						// be propagated
-						// forward on later
-						// nodes matching this
-						// path but with no
-						// property fields of
-						// their own.
+						// If there are property changes on this node, stash
+						// them so they will be propagated forward on later
+						// nodes matching this path but with no property fields
+						// of their own.
 						if node.propchange {
 							propertyStash[node.path] = node.props
+							// ...exceopt for this one.  Later we're going to want
+							// to interpret these only at the revisions where they
+							// are actually set.
+							propertyStash[node.path].delete("svn:ignore")
 						} else if node.action == sdADD && node.fromPath != "" {
 							//Contiguity assumption here
 							for _, oldnode := range sp.revisions[node.fromRev].nodes {
@@ -476,19 +471,9 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 								delete(propertyStash, node.path)
 							}
 						} else {
-							// The forward
-							// propagation.
-							// Importanntly,
-							// this also
-							// forwards
-							// empty
-							// property
-							// sets, which
-							// are
-							// different
-							// from having
-							// no
-							// properties.
+							// The forward propagation.  Importanntly, this
+							// also forwards empty property sets, which are
+							// different from having no properties.
 							node.props = propertyStash[node.path]
 						}
 						if !node.isBogon() {
@@ -779,28 +764,14 @@ func walkRevisions(revs []RevisionRecord, hook func(int, *RevisionRecord)) {
 var cvs2svnTagRE = regexp.MustCompile("This commit was manufactured by cvs2svn to create tag.*'([^']*)'")
 var cvs2svnBranchRE = regexp.MustCompile("This commit was manufactured by cvs2svn to create branch.*'([^']*)'")
 
+var blankline = regexp.MustCompile(`(?m:^\s*\n)`)
+
 // Separator used for split part in a processed Subversion ID.
 const splitSep = "."
 
-type branchMeta struct {
-	root *Commit
-	tip *Commit
-}
-
-type daglink struct {
-	child  *Commit
-	parent *Commit
-}
-
-type revlink struct {
-	source revidx
-	target revidx
-}
-
-// Only used in diagnostics
-func (dl daglink) String() string {
-	return fmt.Sprintf("%s->%s", dl.child.mark, dl.parent.mark)
-}
+// Path separator as found in Subversion dump files. Isolated because
+// it might be "\" on OSes not to be mentioned in polite company.
+var svnSep = string([]byte{os.PathSeparator})
 
 func nodePermissions(node NodeAction) string {
 	// Fileop permissions from node properties
@@ -815,17 +786,6 @@ func nodePermissions(node NodeAction) string {
 	}
 	return "100644"
 }
-
-func (sp *StreamParser) isBranch(pathname string) bool {
-	_, ok := sp.branches[pathname]
-	return ok
-}
-
-// Path separator as found in Subversion dump files. Isolated because
-// it might be "\" on OSes not to be mentioned in polite company.
-var svnSep = string([]byte{os.PathSeparator})
-
-var blankline = regexp.MustCompile(`(?m:^\s*\n)`)
 
 // Try to figure out who the ancestor of this node is.
 func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
@@ -868,309 +828,6 @@ func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
 			node.revision, node.path))
 	}
 	return lookback
-}
-
-func (sp *StreamParser) lastRelevantCommit(maxRev revidx, path string, attr string) *Commit {
-	// Make path look like a branch
-	if path[:1] == svnSep {
-		path = path[1:]
-	}
-	if path[len(path)-1] != svnSep[0] {
-		path = path + svnSep
-	}
-	//logit(logEXTRACT, "looking back, maxRev=%d, path='%s', attr='%s'", maxRev, path, attr)
-	// If the revision is split, try from the last split commit
-	var legacyID string
-	if sp.splitCommits[maxRev] == 0 {
-		legacyID = fmt.Sprintf("SVN:%d", maxRev)
-	} else {
-		legacyID = fmt.Sprintf("SVN:%d.%d", maxRev, sp.splitCommits[maxRev])
-	}
-	// Find the commit object...
-	obj, ok := sp.repo.legacyMap[legacyID]
-	if !ok {
-		return nil
-	}
-	for revision := sp.repo.eventToIndex(obj); revision > 0; revision-- {
-		event := sp.repo.events[revision]
-		if commit, ok := event.(*Commit); ok {
-			b, ok := getAttr(commit, attr)
-			//logit(logEXTRACT, "looking back examines %s looking for '%s'", commit.mark, b)
-			if ok && b != "" && strings.HasPrefix(path, b) {
-				//logit(logEXTRACT, "looking back returns %s", commit.mark)
-				return commit
-			}
-		}
-	}
-	return nil
-}
-
-// isDeclaredBranch returns true iff the user requested that this path be treated as a branch or tag.
-func isDeclaredBranch(path string) bool {
-	np := path + svnSep
-	for _, trial := range control.listOptions["svn_branchify"] {
-		if !strings.Contains(trial, "*") && trial == path {
-			return true
-		} else if strings.HasSuffix(trial, svnSep+"*") && filepath.Dir(trial) == filepath.Dir(path) && !control.listOptions["svn_branchify"].Contains(np+"*") {
-			return true
-		} else if trial == "*" && !control.listOptions["svn_branchify"].Contains(np+"*") && strings.Count(path, svnSep) < 1 {
-			return true
-		}
-	}
-	return false
-}
-
-// split a node path into the part that identifies the branch and the rest, as determined by the current branch map
-func splitSVNBranchPath(path string) (string, string) {
-	segments := strings.Split(path, svnSep)
-	for i := len(segments) - 1; i >= 0; i-- {
-		candidate := strings.Join(segments[0:i], svnSep)
-		if isDeclaredBranch(candidate) {
-			return candidate, strings.Join(segments[i:], svnSep)
-		}
-	}
-	return "", path
-}
-
-func (sp *StreamParser) expandNode(node *NodeAction, options stringSet) []*NodeAction {
-	expandedNodes := make([]*NodeAction, 0)
-	appendExpanded := func(newnode *NodeAction) {
-		newnode.index = intToNodeidx(len(expandedNodes) + 1)
-		expandedNodes = append(expandedNodes, newnode)
-	}
-	// Starting with the nodes in the Subversion dump, expand them into a set that
-	// unpacks all directory operations into equivalent sets of file operations.
-	if node.kind == sdFILE {
-		branch, _ := splitSVNBranchPath(node.path)
-		if branch != "" && !sp.initialBranchIgnores[branch] {
-			filename := branch + svnSep + ".gitignore"
-			logit(logIGNORES, "inserting svn default ignores as %s\n", filename)
-			sp.initialBranchIgnores[branch] = true
-			blob := newBlob(sp.repo)
-			blob.setContent([]byte(subversionDefaultIgnores), noOffset)
-			subnode := new(NodeAction)
-			subnode.path = filename
-			subnode.revision = node.revision
-			subnode.action = sdADD
-			subnode.kind = sdFILE
-			subnode.blob = blob
-			subnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(subversionDefaultIgnores)))
-			subnode.generated = true
-			appendExpanded(subnode)
-		}
-		expandedNodes = append(expandedNodes, node)
-	} else if node.kind == sdDIR {
-		// svnSep is appended to avoid collisions with path
-		// prefixes.
-		node.path += svnSep
-		if node.fromPath != "" {
-			node.fromPath += svnSep
-		}
-		// No special actions need to be taken when directories are added or changed, but see below for actions
-		// that are taken in all cases.
-		if node.action == sdDELETE || node.action == sdREPLACE {
-			if sp.isBranch(node.path) {
-				expandedNodes = append(expandedNodes, node)
-				// The deleteall will also delete .gitignore files
-				for ignorepath := range sp.activeGitignores {
-					if strings.HasPrefix(ignorepath, node.path) {
-						logit(logIGNORES, "r%d-%d: deleting %s", node.revision, node.index, ignorepath)
-						delete(sp.activeGitignores, ignorepath)
-					}
-				}
-			} else {
-				// A delete or replace with no from set
-				// can occur if the directory is empty.
-				// We can just ignore that case. Otherwise...
-				if node.fromSet != nil {
-					for _, child := range node.fromSet.pathnames() {
-						logit(logEXTRACT, "r%d-%d~%s: deleting %s", node.revision, node.index, node.path, child)
-						newnode := new(NodeAction)
-						newnode.path = child
-						newnode.revision = node.revision
-						newnode.action = sdDELETE
-						newnode.kind = sdFILE
-						newnode.generated = false
-						appendExpanded(newnode)
-					}
-				}
-				// Emit delete actions for the .gitignore files we
-				// have generated. Note that even with a directory
-				// with no files from SVN, we might have added
-				// .gitignore files we now must delete
-				for ignorepath := range sp.activeGitignores {
-					if strings.HasPrefix(ignorepath, node.path) {
-						logit(logEXTRACT, "r%d-%d: deleting %s", node.revision, node.index, ignorepath)
-						newnode := new(NodeAction)
-						newnode.path = ignorepath
-						newnode.revision = node.revision
-						newnode.action = sdDELETE
-						newnode.kind = sdFILE
-						newnode.generated = true
-						appendExpanded(newnode)
-						delete(sp.activeGitignores, ignorepath)
-					}
-				}
-			}
-		}
-		// Handle directory copies.
-		if node.fromPath != "" {
-			branchcopy := sp.isBranch(node.fromPath) && sp.isBranch(node.path)
-			logit(logTOPOLOGY, "r%d-%d: directory copy to %s from r%d~%s (branchcopy %v)",
-				node.revision, node.index, node.path, node.fromRev, node.fromPath, branchcopy)
-			// Update our .gitignore list so that it includes those
-			// in the newly created copy, to ensure they correctly
-			// get deleted during a future directory deletion.
-			logit(logIGNORES, "before update at %s active ignores are: %s", node.path, sp.activeGitignores)
-			l := len(node.fromPath)
-			for sourcegi, value := range sp.activeGitignores {
-				if strings.HasPrefix(sourcegi, node.fromPath) {
-					destgi := node.path + sourcegi[l:]
-					sp.activeGitignores[destgi] = value
-				}
-			}
-			logit(logIGNORES, "after update at %s active ignores are: %s", node.path, sp.activeGitignores)
-			if branchcopy {
-				sp.branchcopies.Add(node.path)
-			} else {
-				// Generate copy ops for generated .gitignore files
-				// to match the copy of svn:ignore props on the
-				// Subversion side. We use the just updated
-				// activeGitignores dict for that purpose.
-				logit(logIGNORES, "state of active ignores: %s\n", sp.activeGitignores)
-				if !options.Contains("--user-ignores") {
-					for gipath, ignore := range sp.activeGitignores {
-						if strings.HasPrefix(gipath, node.path) {
-							blob := newBlob(sp.repo)
-							blob.setContent([]byte(subversionDefaultIgnores + ignore), noOffset)
-							subnode := new(NodeAction)
-							subnode.path = gipath
-							subnode.revision = node.revision
-							subnode.action = sdADD
-							subnode.kind = sdFILE
-							subnode.blob = blob
-							subnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
-							subnode.generated = true
-							appendExpanded(subnode)
-						}
-					}
-				}
-			}
-			// Now generate copies for all files in the
-			// copy source directory.  We used to suppress
-			// this on branch copies, counting on git's
-			// branch behavior.  But there's a corner case
-			// where there are never any mods in the
-			// Subversion stream after the branch copy,
-			// but there *are* copies from it, that this
-			// strategy got wrong. Emitting these
-			// uncoditionally sometimes ships fileops that
-			// are redunant with later ones in gitspace,
-			// but it's safer.
-			for _, source := range node.fromSet.pathnames() {
-				found := sp.history.getActionNode(node.fromRev, source)
-				if found == nil {
-					logit(logSHOUT, "r%d-%d: can't find ancestor of %s at r%d",
-						node.revision, node.index, source, node.fromRev)
-					continue
-				}
-				subnode := new(NodeAction)
-				subnode.path = node.path + source[len(node.fromPath):]
-				subnode.revision = node.revision
-				subnode.fromPath = found.path
-				subnode.fromRev = found.revision
-				subnode.fromHash = found.contentHash
-				subnode.props = found.props
-				subnode.action = sdADD
-				subnode.kind = sdFILE
-				subnode.generated = false
-				logit(logTOPOLOGY, "r%d-%d: %s generated copy r%d~%s -> %s %s",
-					node.revision, node.index, node.path, subnode.fromRev, subnode.fromPath, subnode.path, subnode)
-				appendExpanded(subnode)
-			}
-		}
-		// Allow GC to reclaim fromSet storage, we no longer need it
-		node.fromSet = nil
-		// Property settings can be present on either
-		// sdADD or sdCHANGE actions.
-		if node.propchange && node.hasProperties() {
-			logit(logEXTRACT, "r%d-%d: setting properties %s on %s",
-				node.revision, node.index, node.props.vcString(), node.path)
-			// svn:ignore gets handled here,
-			if !options.Contains("--user-ignores") {
-				var gitignorePath string
-				if node.path == svnSep {
-					gitignorePath = ".gitignore"
-				} else {
-					gitignorePath = filepath.Join(node.path,
-						".gitignore")
-				}
-				// There are no other directory properties that can
-				// turn into fileops.
-				ignore := node.props.get("svn:ignore")
-				if ignore != "" {
-					// svn:ignore properties are nonrecursive
-					// to lower directories, but .gitignore
-					// patterns are recursive.  Thus we need to
-					// anchor the translated pattern with
-					// leading / in order to render the
-					// Subversion behavior accurately.  However,
-					// if done naively this clobbers the branch-root
-					// ignore defaults, which are already anchored.
-					if ignore != "" {
-						ignorelines := make([]string, 0)
-						for _, line := range strings.Split(ignore, "\n") {
-							if strings.HasPrefix(line, "#") || strings.HasPrefix(line, "/") || line == "" {
-								ignorelines = append(ignorelines, line)
-							} else {
-								ignorelines = append(ignorelines, "/"+line)
-							}
-						}
-						ignore = strings.Join(ignorelines, "\n")
-					}
-					blob := newBlob(sp.repo)
-					blob.setContent([]byte(ignore), noOffset)
-					newnode := new(NodeAction)
-					newnode.path = gitignorePath
-					newnode.revision = node.revision
-					newnode.action = sdADD
-					newnode.kind = sdFILE
-					newnode.blob = blob
-					newnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignore)))
-					newnode.generated = true
-					logit(logIGNORES, "r%d-%d: queuing up %s generation with: %v.",
-						node.revision, node.index, newnode.path, node.props.get("svn:ignore"))
-					// Must append rather than simply performing.
-					// Otherwise when the property is unset we
-					// won't have the right thing happen.
-					appendExpanded(newnode)
-					sp.activeGitignores[gitignorePath] = ignore
-				} else if _, ok := sp.activeGitignores[gitignorePath]; ok {
-					newnode := new(NodeAction)
-					newnode.path = gitignorePath
-					newnode.revision = node.revision
-					newnode.action = sdDELETE
-					newnode.kind = sdFILE
-					newnode.generated = true
-					logit(logIGNORES, "r%d-%d: queuing up %s deletion.", node.revision, node.index, newnode.path)
-					appendExpanded(newnode)
-					delete(sp.activeGitignores, gitignorePath)
-				}
-			}
-		}
-	}
-	return expandedNodes
-}
-
-func (sp *StreamParser) expandAllNodes(nodelist []*NodeAction, options stringSet) []*NodeAction {
-	expandedNodes := make([]*NodeAction, 0)
-	for _, node := range nodelist {
-		// expand directory copy operations
-		expandedNodes = append(expandedNodes, sp.expandNode(node, options)...)
-	}
-
-	logit(logEXTRACT, "%d expanded Subversion nodes", len(expandedNodes))
-	return expandedNodes
 }
 
 func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton *Baton) {
@@ -1226,7 +883,7 @@ func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton
 	// created, it is never copied.  Though there may be multiple pointers
 	// to the record for node N of revision M, they all point to the
 	// same structure originally created to deserialize it.
-	//baton.startProcess("?", "")
+	//
 	timeit := func(tag string) {
 		sp.timeMark(tag)
 		if control.flagOptions["bigprofile"] {
@@ -1239,20 +896,26 @@ func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton
 
 	sp.repo.addEvent(newPassthrough(sp.repo, "#reposurgeon sourcetype svn\n"))
 
-	svnProcessClean(ctx, sp, options, baton)
-	timeit("cleaning")
-	svnProcessFilemaps(ctx, sp, options, baton)
+	svnFilterProperties(ctx, sp, options, baton)
+	timeit("filterprops")
+	svnBuildFilemaps(ctx, sp, options, baton)
 	timeit("filemaps")
-	svnProcessCommits(ctx, sp, options, baton)
+	svnExpandCopies(ctx, sp, options, baton)
+	timeit("filemaps")
+	svnGenerateCommits(ctx, sp, options, baton)
 	timeit("commits")
-	svnProcessRoot(ctx, sp, options, baton)
-	timeit("rootcommit")
-	svnProcessBranches(ctx, sp, options, baton, timeit)
+	svnSplitResolve(ctx, sp, options, baton)
+	timeit("splits")
+	svnProcessBranches(ctx, sp, options, baton)
 	timeit("branches")
+	svnLinkFixups(ctx, sp, options, baton)
+	timeit("links")
+
+	//svnProcessRoot(ctx, sp, options, baton)
+	//timeit("rootcommit")
+
 	svnProcessJunk(ctx, sp, options, baton)
 	timeit("dejunk")
-	svnProcessRenames(ctx, sp, options, baton)
-	timeit("polishing")
 	svnProcessTagEmpties(ctx, sp, options, baton)
 	sp.timeMark("tagifying")
 	svnProcessCleanTags(ctx, sp, options, baton)
@@ -1264,6 +927,1101 @@ func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton
 
 	// Treat this in-core state as though it was read from an SVN repo
 	sp.repo.hint("svn", "", true)
+}
+
+func svnFilterProperties(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	// Phase 2:
+	// Filter properties, throwing out everything that is not going to be of interest
+	// to later analysis. Log warnings where we might be throwing away information.
+	// Canonicalize svn:ignore propeerties (no more convenient place to do it).
+	// FIXME: Profile this to see if it should be parallelized.
+	//
+	defer trace.StartRegion(ctx, "SVN Phase 2: filter properties").End()
+	logit(logEXTRACT, "SVN Phase 2: filter properties")
+	baton.startProgress("process SVN, phase 2: filter properties", uint64(len(sp.streamview)))
+	for si, node := range sp.streamview {
+		// Handle per-path properties.
+		if node.hasProperties() {
+			// Some properties should be quietly ignored
+			for k := range ignoreProperties {
+				node.props.delete(k)
+			}
+			// Remove blank lines from svn:ignore property values.
+			if node.props.has("svn:ignore") {
+				oldIgnore := node.props.get("svn:ignore")
+				newIgnore := blankline.ReplaceAllLiteralString(oldIgnore, "")
+				node.props.set("svn:ignore", newIgnore)
+			}
+			tossThese := make([][2]string, 0)
+			for prop, val := range node.props.dict {
+				// Pass through the properties that can't be processed until we're ready to
+				// generate commits. Delete the rest.
+				if !preserveProperties[prop] && !((prop == "svn:mergeinfo" || prop == "svnmerge-integrated") && node.kind == sdDIR) {
+					tossThese = append(tossThese, [2]string{prop, val})
+					node.props.delete(prop)
+				}
+			}
+			if !options.Contains("--ignore-properties") {
+				// It would be good to emit messages
+				// when a nonempty property set on a
+				// path is entirely cleared.
+				// Unfortunately, the Subversion dumper
+				// spams empty property sets, emitting
+				// them lots of places they're not
+				// necessary.
+				if len(tossThese) > 0 {
+					logit(logSHOUT, "r%d#%d~%s properties set:", node.revision, node.index, node.path)
+					for _, pair := range tossThese {
+						logit(logSHOUT, "\t%s = %q", pair[0], pair[1])
+					}
+				}
+			}
+		}
+		baton.percentProgress(uint64(si))
+	}
+	baton.endProgress()
+}
+
+func svnBuildFilemaps(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	// Phase 3:
+	// This is where we build file visibility maps. The visibility
+	// map for each revision maps file paths to the Subversion
+	// node for the version you see at that revision, which might
+	// not have been modified for any number of revisions back,
+	// If the path ever existed at any revision, the only way it
+	// can fail to be visible is if the last thing done to it was
+	// a delete.
+	//
+	// This phase is moderately expensive, but once the maps are
+	// built they render unnecessary compuations that would have
+	// been prohibitively expensive in later passes. Notably the
+	// maps are everything necessary to compute node ancestry.
+	//
+	// This phase has revision-order dependency in spades and
+	// cannot be parallelized. After the filemaps are built they
+	// should not be modified by later phases.  Part of their
+	// purpose is to express the web of relationships between
+	// entities in the stream in a timeless way so that later
+	// operations *don't* need to have revision-order dependencies
+	// and can be safely parallelized.
+	//
+	defer trace.StartRegion(ctx, "SVN Phase 3: build filemaps").End()
+	logit(logEXTRACT, "SVN Phase 3: build filemaps")
+	baton.startProgress("process SVN, phase 3: build filemaps", uint64(len(sp.revisions)))
+	sp.history = newHistory()
+	for ri, record := range sp.revisions {
+		sp.history.apply(intToRevidx(ri), record.nodes)
+		baton.percentProgress(uint64(ri))
+	}
+	baton.endProgress()
+}
+
+func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	// Phase 4:
+	// Subversion dump files have one serious nonlocality. One of
+	// the stream operations is a wildcarded directory copy.  This
+	// phase expands these so that all of the implied file add
+	// operations become explicit.  This is the main thing for
+	// which we needed the file visibility map.
+	//
+	// Note that the directory copy nodes are not removed, as they
+	// may carry properties we're going to need later - notably
+	// mergeinfo properties.  svn:ignore is handled here.
+	//
+	// This phase looks like it should have revision-order
+	// dependencies, but it doesn't.  Having file visibility
+	// information pre-computed for all revisions forestalls that.
+	// Thus, it can be parallelized.
+	//
+	// This pass is almost entirely indifferent to Subversion
+	// branch structure.  One exceptions in what it does to
+	// directory delete operations.  On a branch directory a
+	// Subversion delete becomes a Git deleteall; on a non-branch
+	// directory it is expanded to a set of file deletes for the
+	// contents of the directory.
+	//
+	// The reason for turning branch deletes into deletealls
+	// is so that when an importer interprets them, it will
+	// clobber the branch so that it's not visible from
+	// any revision after the deletion. This is the intended behavor
+	// of a Subversion D operation and is simpler that expanding
+	// the D into a recursive delete of the directory contents
+	//
+	// This pass also notices branch structure when it checks
+	// where it should create copies of the default .gitignore
+	// file.  We want this to happen at branch roots before
+	// the first fileop, abd only at branch roots.
+	//
+	// The exit contract of this phase is that all file content
+	// modifications are expressed as file ops, every one of
+	// which has a computable ancestor node.  If an ancestor
+	// couldn't be found, that is logged as an error condition
+	// and the node is skipped. Such a log message implies
+	// a metadata malformation.  Generated nodes are marked
+	// for later redundancy checking.
+	//
+	// Its is also here that ignore properties on directory nodes
+	// are mapped to nodes for .gitignore files, then removed.
+	//
+	defer trace.StartRegion(ctx, "SVN Phase 4: directory copy expansion").End()
+	logit(logEXTRACT, "SVN Phase 4: directory copy expansion")
+	baton.startProgress("process SVN, phase 4: directory copy expansion", uint64(len(sp.revisions)))
+
+	ignorenode := func(nodepath string, explicit string) *NodeAction {
+		blob := newBlob(sp.repo)
+		ignores := subversionDefaultIgnores + explicit
+		blob.setContent([]byte(ignores), noOffset)
+		subnode := new(NodeAction)
+		subnode.path = filepath.Join(nodepath, ".gitignore")
+		subnode.action = sdADD
+		subnode.kind = sdFILE
+		subnode.blob = blob
+		subnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignores)))
+		subnode.generated = true
+		return subnode
+	}
+
+	nobranch := options.Contains("--nobranch")
+	branchLatch := newStringSet()
+	for ri, record := range sp.revisions {
+		expandedNodes := make([]*NodeAction, 0)
+		for _, node := range record.nodes {
+			appendExpanded := func(newnode *NodeAction) {
+				newnode.index = intToNodeidx(len(expandedNodes) + 1)
+				newnode.revision = intToRevidx(ri)
+				expandedNodes = append(expandedNodes, newnode)
+			}
+			prependExpanded := func(newnode *NodeAction) {
+				newnode.index = intToNodeidx(len(expandedNodes) + 1)
+				newnode.revision = intToRevidx(ri)
+				expandedNodes = append([]*NodeAction{newnode}, expandedNodes...)
+			}
+			// Starting with the nodes in the Subversion
+			// dump, expand them into a set that unpacks
+			// all directory operations into equivalent
+			// sets of file operations.
+			//
+			// Set up default ignores just before the first file node
+			// of each branch
+			if node.kind == sdFILE && (isDeclaredBranch(filepath.Dir(node.path)) && !branchLatch.Contains(node.path)) {
+				prependExpanded(ignorenode(filepath.Dir(node.path), ""))
+				branchLatch.Add(node.path)
+			}
+			// We always preserve the unexpanded directory
+			// node. Many of these won't have an explicit
+			// gitspace representation, but they may carry
+			// properties that we will require in later
+			// phases.
+			expandedNodes = append(expandedNodes, node)
+			if node.kind == sdDIR {
+				// svnSep is appended to avoid collisions with path
+				// prefixes.
+				node.path += svnSep
+				if node.fromPath != "" {
+					node.fromPath += svnSep
+				}
+				// Whenever an svn:ignore property is set on a directory,
+				// we want to generate a corresponding .gitignore
+				if node.hasProperties() && node.props.has("svn:ignore") {
+					prependExpanded(ignorenode(node.path, node.props.get("svn:ignore")))
+					node.props.delete("svn:ignore")
+				}
+				// No special actions need to be taken when directories are added or changed, but see below for actions
+				// that are taken in all cases.  The reason we suppress expansion on a declared branch is that
+				// we are later going to turn this directory delete into a git deleteall for the branch.
+				if (node.action == sdDELETE && (nobranch || !isDeclaredBranch(node.path))) || node.action == sdREPLACE {
+					// A delete or replace with no from set
+					// can occur if the directory is empty.
+					// We can just ignore that case. Otherwise...
+					if node.fromSet != nil {
+						for _, child := range node.fromSet.pathnames() {
+							logit(logEXTRACT, "r%d-%d~%s: deleting %s", node.revision, node.index, node.path, child)
+							newnode := new(NodeAction)
+							newnode.path = child
+							newnode.revision = node.revision
+							newnode.action = sdDELETE
+							newnode.kind = sdFILE
+							newnode.generated = true
+							appendExpanded(newnode)
+						}
+					}
+				}
+				// Handle directory copies.
+				if node.fromPath != "" {
+					logit(logEXTRACT, "r%d-%d: directory copy to %s from r%d~%s",
+						node.revision, node.index, node.path, node.fromRev, node.fromPath)
+					// Now generate copies for all files in the
+					// copy source directory.
+					for _, source := range node.fromSet.pathnames() {
+						found := sp.history.getActionNode(node.fromRev, source)
+						if found == nil {
+							logit(logSHOUT, "r%d-%d: can't find ancestor of %s at r%d",
+								node.revision, node.index, source, node.fromRev)
+							continue
+						}
+						subnode := new(NodeAction)
+						subnode.path = node.path + source[len(node.fromPath):]
+						subnode.revision = node.revision
+						subnode.fromPath = found.path
+						subnode.fromRev = found.revision
+						subnode.fromHash = found.contentHash
+						subnode.props = found.props
+						subnode.action = sdADD
+						subnode.kind = sdFILE
+						subnode.generated = true
+						logit(logTOPOLOGY, "r%d-%d: %s generated copy r%d~%s -> %s %s",
+							node.revision, node.index, node.path, subnode.fromRev, subnode.fromPath, subnode.path, subnode)
+						appendExpanded(subnode)
+					}
+				}
+				// Allow GC to reclaim fromSet storage, we no longer need it
+				node.fromSet = nil
+			}
+		}
+		sp.revisions[ri].nodes = expandedNodes
+	}
+
+	baton.endProgress()
+}
+
+func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	// Phase 5:
+	// Transform the revisions into a sequence of gitspace commits.
+	// This is a deliberately literal translation that is near
+	// useless in itself; no branch analysis, no tagification of
+	// redundant commits, etc.  The goal is to get everything into
+	// gitspace where we have good surgical tools.  Then we can
+	// mutate it to a proper git DAG in small steps.
+	//
+	// The only Subversion metadata this does not copy into
+	// commits is per-directory properties. We processed and
+	// removed svn:ignore properties in the last phase, but
+	// svn:mergeinfo properties remain, to be handled in a later
+	// phase.
+	//
+	// Interpretation of svn:executable is done in this phase.
+	// The commit branch is set here in case we want to dump a
+	// --nobranch analysis, but the from and merge fields are not.
+	// That will happen in a later phase.
+	//
+	// Revisions with no nodes are skipped here. This guarantees
+	// being able to assign them to a branch later.
+	//
+	defer trace.StartRegion(ctx, "SVN Phase 5: build commits").End()
+	logit(logEXTRACT, "SVN Phase 5: build commits")
+	baton.startProgress("process SVN, phase 5: build commits", uint64(len(sp.revisions)))
+
+	var lastmark string
+	for ri, record := range sp.revisions {
+		// Zero revision is never interesting - no operations, no
+		// comment, no author, it's just a start marker for a
+		// non-incremental dump.
+		if record.revision == 0 {
+			continue
+		}
+
+		logit(logEXTRACT, "Revision %d:", record.revision)
+
+		commit := newCommit(sp.repo)
+		ad := record.date
+		if ad == "" {
+			sp.error("missing required date field")
+		}
+		var au string
+		if record.author != "" {
+			au = record.author
+		} else {
+			au = "no-author"
+		}
+		if record.log != "" {
+			commit.Comment = record.log
+			if !strings.HasSuffix(commit.Comment, "\n") {
+				commit.Comment += "\n"
+			}
+		}
+		attribution := ""
+		if strings.Count(au, "@") == 1 {
+			// This is a thing that happens occasionally.  A DVCS-style
+			// attribution (name + email) gets stuffed in a Subversion
+			// author field
+			// First, check to see if it's a fully-formed address
+			if strings.Count(au, "<") == 1 && strings.Count(au, ">") == 1 && strings.Count(au, " ") > 0 {
+				attribution = au + " " + ad
+			} else {
+				// Punt...
+				parts := strings.Split(au, "@")
+				au, ah := parts[0], parts[1]
+				attribution = au + " <" + au + "@" + ah + "> " + ad
+			}
+		} else if options.Contains("--use-uuid") {
+			attribution = fmt.Sprintf("%s <%s@%s> %s", au, au, sp.repo.uuid, ad)
+		} else {
+			attribution = fmt.Sprintf("%s <%s> %s", au, au, ad)
+		}
+		newattr, err := newAttribution(attribution)
+		if err != nil {
+			panic(throw("parse", "impossibly ill-formed attribution in dump stream at r%d", record.revision))
+		}
+		commit.committer = *newattr
+		// Use this with just-generated input streams
+		// that have wall times in them.
+		if control.flagOptions["testmode"] {
+			commit.committer.fullname = "Fred J. Foonly"
+			commit.committer.email = "foonly@foo.com"
+			commit.committer.date.timestamp = time.Unix(int64(ri*360), 0)
+			commit.committer.date.setTZ("UTC")
+		}
+		if record.props.Len() > 0 {
+			commit.properties = &record.props
+			record.props.Clear()
+		}
+
+		commit.legacyID = fmt.Sprintf("%d", record.revision)
+		commit.setColor(colorGEN)
+		for _, node := range record.nodes {
+			if node.action == sdNONE {
+				continue
+			}
+			if node.hasProperties() {
+				if node.props.has("cvs2svn:cvs-rev") {
+					cvskey := fmt.Sprintf("CVS:%s:%s", node.path, node.props.get("cvs2svn:cvs-rev"))
+					sp.repo.legacyMap[cvskey] = commit
+					node.props.delete("cvs2svn:cvs-rev")
+				}
+			}
+			var ancestor *NodeAction
+			if node.kind == sdDIR && isDeclaredBranch(node.path) {
+				fileop := newFileOp(sp.repo)
+				fileop.construct(deleteall, node.path)
+				if !node.generated {
+					commit.setColor(colorNONE)
+				}
+				commit.appendOperation(fileop)
+			} else if node.kind == sdFILE {
+				// All .cvsignores should be ignored as remnants from
+				// a previous up-conversion to Subversion.
+				// This is a philosophical choice; we're taking the
+				//users' Subversion settings as authoritative
+				// rather than trying to mimic the exact CVS behavior.
+				if strings.HasSuffix(node.path, ".cvsignore") {
+					continue
+				}
+				// Ignore and complain about explicit .gitignores
+				// created, e.g, by git-svn.  In an ideal world we
+				// would merge these with svn:ignore properties. but
+				// this would be hairy and bug-prone. So we give
+				// the user a heads-up and expect these to be
+				// merged by hand.
+				if strings.HasSuffix(node.path, ".gitignore") {
+					if !node.generated &&
+						!options.Contains("--user-ignores") {
+						sp.shout(fmt.Sprintf("r%d~%s: user-created .gitignore ignored.",
+							node.revision, node.path))
+						continue
+					}
+				}
+				ancestor = sp.seekAncestor(node)
+				if node.action == sdDELETE {
+					//assert node.blob == nil
+					fileop := newFileOp(sp.repo)
+					fileop.construct(opD, node.path)
+					if !node.generated {
+						commit.setColor(colorNONE)
+					}
+					commit.appendOperation(fileop)
+				} else if node.action == sdADD || node.action == sdCHANGE || node.action == sdREPLACE {
+					if node.blob != nil {
+						if lookback, ok := sp.hashmap[node.contentHash]; ok {
+							logit(logEXTRACT, "r%d: blob of %s matches existing hash %s, assigning '%s' from %s",
+								record.revision, node, node.contentHash, lookback.blobmark.String(), lookback)
+							// Blob matches an existing one -
+							// node was created by a
+							// non-Subversion copy followed by
+							// add.  Get the ancestry right,
+							// otherwise parent pointers won't
+							// be computed properly.
+							ancestor = lookback
+							node.fromPath = ancestor.fromPath
+							node.fromRev = ancestor.fromRev
+							node.blobmark = ancestor.blobmark
+						}
+						if node.blobmark == emptyMark {
+							// This is the normal way new blobs get created
+							node.blobmark = markNumber(node.blob.setMark(sp.repo.newmark()))
+							logit(logEXTRACT, "r%d: %s gets new blob '%s'",
+								record.revision, node, node.blobmark.String())
+							// Blobs generated by reposurgeon
+							// (e.g .gitignore content) have no
+							// content hash.  Don't record
+							// them, otherwise they'll all
+							// collide :-)
+							if node.contentHash != "" {
+								sp.hashmap[node.contentHash] = node
+							}
+							sp.repo.addEvent(node.blob)
+							sp.repo.declareSequenceMutation("adding new blob")
+						}
+					} else if ancestor != nil {
+						node.blobmark = ancestor.blobmark
+						logit(logEXTRACT, "r%d: %s gets blob '%s' from ancestor %s",
+							record.revision, node, node.blobmark.String(), ancestor)
+					} else {
+						// No ancestor, no blob. Has to be a
+						// pure property change.  There's no
+						// way to figure out what mark to use
+						// in a fileop.
+						logit(logWARN, "r%d~%s: permission information may be lost.",
+							node.revision, node.path)
+						continue
+					}
+					if node.blobmark == emptyMark {
+						logit(logEXTRACT, "r%d: %s gets impossibly empty blob mark from ancestor %s, skipping",
+							record.revision, node, ancestor)
+						continue
+					}
+
+					if !node.hasProperties() && ancestor != nil && ancestor.hasProperties() {
+						node.props = ancestor.props
+					}
+
+					// Time for fileop generation.
+					fileop := newFileOp(sp.repo)
+					fileop.construct(opM,
+						nodePermissions(*node),
+						node.blobmark.String(),
+						node.path)
+					if !node.generated {
+						commit.setColor(colorNONE)
+					}
+					commit.appendOperation(fileop)
+					sp.repo.markToEvent(fileop.ref).(*Blob).addalias(node.path)
+
+					// Sanity check: should be the case that
+					// 1. The node is an add.  This sweeps
+					// in several cases: normal creation of
+					// a new file, expansion of a directory
+					// copy, an explicit Subversion file (not
+					// directory) copy (in which case it has
+					// an MD5 hash that points back to a
+					// source.)  Or,
+					// 2. There is new content. This sweeps in change
+					// nodes with attached blobs. Or,
+					// 3. The permissions for this path have changed;
+					// we need to generate a modify with an old mark
+					// but new permissions.
+					if logEnable(logEXTRACT) {
+						if !(node.action == sdADD || (node.blob != nil) || node.propchange) {
+							logit(logEXTRACT, "r%d~%s: unmodified", node.revision, node.path)
+						}
+					}
+				}
+			} else if node.action == sdDELETE || node.action == sdREPLACE {
+				// These are directory actions.
+				logit(logEXTRACT, "r%d: deleteall %s", record.revision, node.path)
+				fileop := newFileOp(sp.repo)
+				fileop.construct(deleteall)
+				if !node.generated {
+					commit.setColor(colorNONE)
+				}
+				commit.appendOperation(fileop)
+			}
+			baton.twirl()
+		}
+
+		// This early in processing, a commit with zero
+		// fileops can only represent a dumpfile revision with
+		// no nodes. This is pathological and probably means
+		// the dump has been hand-edited, probably in a
+		// well-meant attempt to produce a minimal test case.
+		//
+		// Wer log this as an error and do not generate a commit
+		// for it.  That way we know that every commit has at
+		// last one fileop.  It's a shame that we lose the
+		// comment, but without at least fileoop we can't even
+		// assign the commit to a branch, a defect which would cause
+		// a lot of complications in the analysis later on.
+		if len(commit.fileops) == 0 {
+			logit(logEXTRACT, "empty revision at <%d>, comment %s, skipping.",
+				ri, strconv.Quote(commit.Comment))
+			continue
+		}
+
+		// We're not trying to do branch structure yet.
+		// Everything becomes a directory tree on master.
+		// And because we don't know what the branches
+		// are, we don't want to sort the fileops into
+		// git canonical order yet, either.
+		commit.setBranch("refs/heads/master")
+
+		// No branching, therefore linear history.
+		// If we do branch analysis in a later phase
+		// (that is, unless --nobranch is on) we will
+		// create a new set of parent links.
+		if lastmark != "" {
+			commit.setParentMarks([]string{lastmark})
+		}
+		lastmark = commit.mark
+
+		commit.setMark(sp.repo.newmark())
+		sp.repo.addEvent(commit)
+		sp.repo.declareSequenceMutation("adding new commit")
+	}
+	baton.endProgress()
+}
+
+func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	// Phase 6:
+	// Split mixed commits (that is, commits with file paths on
+	// multiple Subversion branches). Needs to be done before
+	// branch assignment, Use parallelized search to find them,
+	// but the mutation of the event list has to be serialized
+	// else havoc will ensue.
+	//
+	// The exit contract for this phase is that every commit has
+	// all its fileops on the same Subversion branch.  In addition,
+	// the Source and Target member of each file have been filled
+	// with the fileop path's branch and (sub-branch) filename.
+	//
+	// A side-effect of this pass is that fileops are sorted by
+	// lexicographic order of pathname.
+	//
+	if options.Contains("--nobranch") {
+		logit(logEXTRACT, "SVN Phase 6: split resolution (skipped due to --nobranch)")
+		return
+	}
+	defer trace.StartRegion(ctx, "SVN Phase 6: split resolution").End()
+	logit(logEXTRACT, "SVN Phase 6: split resolution")
+
+	type splitRequest struct {
+		loc int
+		splits []int
+	}
+	splits := make([]splitRequest, 0)
+	var reqlock sync.Mutex
+
+	baton.startProgress("process SVN, phase 6a: split detection", uint64(len(sp.repo.events)))
+	walkEvents(sp.repo.events, func(i int, event Event) {
+		if commit, ok := event.(*Commit); ok {
+			commit.sortOperations()
+			var oldbranch string
+			cliqueIndices := make([]int, 0)
+			// We only generated M and D ops.  Therefore every
+			// fileop has a Path member.  Wacky hack: by stashing
+			// the split components in the unused Source and Target
+			// nembers, we avoid having to recompute these when we
+			// actually have to use tem
+			for j, fileop := range commit.fileops {
+				commit.fileops[j].Source, commit.fileops[j].Target = splitSVNBranchPath(fileop.Path)
+				if commit.fileops[j].Source != oldbranch {
+					cliqueIndices = append([]int{j}, cliqueIndices...)
+					oldbranch = commit.fileops[j].Source
+				}
+			}
+			if len(cliqueIndices) > 1 {
+				reqlock.Lock()
+				splits = append([]splitRequest{splitRequest{i, cliqueIndices[:len(cliqueIndices)-1]}}, splits...)
+				reqlock.Unlock()
+			}
+		}
+		// Clique indices and requests were generated back to front
+		// so that when we process them we never have to worry about
+		// a commit index changing due to insertion.
+		baton.percentProgress(uint64(i) + 1)
+	})
+	baton.endProgress()
+
+	baton.startProgress("process SVN, phase 6b: split resolution", uint64(len(splits)))
+	// Can't parallelize this. That's OK, should be an unusual case.
+	// Sort the splits in case parallel execution generatesd them out of order.
+	const splitwarn = "\n[[Split portion of a mixed commit.]]\n"
+	sort.Slice(splits, func(i, j int) bool {return splits[i].loc > splits[j].loc})
+	for i, split := range splits {
+		logit(logEXTRACT, "split commit at %d resolving to %d", split.loc, len(split.splits)+1)
+		for _, idx := range split.splits {
+			sp.repo.splitCommitByIndex(split.loc, idx)
+		}
+		base := sp.repo.events[split.loc].(*Commit)
+		baseID := base.legacyID
+		base.Comment += splitwarn
+		base.legacyID += ".1"
+		for j := 1; j <= len(split.splits); j++ {
+			fragment := sp.repo.events[split.loc+j].(*Commit)
+			//fragment.setParents(nil)		// No mark means parent is previous
+			fragment.legacyID = baseID + "." + strconv.Itoa(j+1)
+			fragment.Comment += splitwarn
+		}
+		baton.percentProgress(uint64(i) + 1)
+	}
+	baton.endProgress()
+}
+
+func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	// Phase 7:
+	// Rewrite branch names from Subversion form to Git form.  The
+	// previous phase did the analysis into branch and filename
+	// because it had to; the first thing we have to do here is
+	// shuffle those strings into place.
+	//
+	// That does not yet put the branchames in final form, however.
+	// To get there we need to perform any branch mappings the user
+	// requested, then massage the branchname into the reference form
+	// that Git wants.
+	//
+	// After this phase branchnames are immutable and almost define the
+	// topology, but parent marks have not yet been fixed up.
+	//
+	if options.Contains("--nobranch") {
+		logit(logEXTRACT, "SVN Phase 7: branch renames (skipped due to --nobranch)")
+		return
+	}
+	defer trace.StartRegion(ctx, "SVN Phase 7: branch renames").End()
+	walkEvents(sp.repo.events, func(i int, event Event) {
+		if commit, ok := event.(*Commit); ok {
+			for i := range commit.fileops {
+				fileop := commit.fileops[i]
+				commit.Branch = fileop.Source
+				fileop.Source = ""
+				fileop.Path = fileop.Target
+				fileop.Target = ""
+			}
+			matched := false
+			for _, item := range control.branchMappings {
+				result := GoReplacer(item.match, commit.Branch + svnSep, item.replace)
+				if result != commit.Branch {
+					matched = true
+					commit.setBranch(filepath.Join("refs", result))
+					break
+				}
+			}
+			if !matched {
+				if commit.Branch == "" {
+					// File or directory is not under any recognizable branch.
+					// Shuffle it off to a root branch.
+					commit.setBranch(filepath.Join("refs", "heads", "root"))
+				} else if commit.Branch == "trunk" {
+					commit.setBranch(filepath.Join("refs", "heads", "master"))
+				} else if strings.HasPrefix(commit.Branch, "tags") {
+					commit.setBranch(filepath.Join("refs", "tags", filepath.Base(commit.Branch)))
+				} else {
+					// An ordinary branch.
+					commit.setBranch(filepath.Join("refs", "heads", filepath.Base(commit.Branch)))
+				}
+			}
+		}
+	})
+}
+
+func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	defer trace.StartRegion(ctx, "SVN Phase 8: parent link fixups").End()
+	// Phase 8:
+	// The branches we colored in during the last phase almost
+	// completely define the topology of the DAG, except for the
+	// location of their root points. At first sight computing the
+	// root points seems tricky, since a branch root revision can
+	// be the target of multiple copies from different revision
+	// and they can be a mix of directory and file copies.
+	//
+	// All of those copies need to be re-played to compute thee
+	// content at each revision properly, but in computing branch
+	// links it's the location of the *last copy* to to the root
+	// commit of each branch that we want.
+	//
+	// If there was only ever one Subversion directory copy life
+	// is easy - at every revision the copy point looks the same.
+	// Looking for the last copy will pick that up.
+	//
+	// The tricky cases are:
+	//
+	// 1. Botched Subversion branch creation. This is a revision
+	// consisting of a directory add, or possibly directory copy,
+	// followed by a one or more file copies to the new branch
+	// directory *not* using svn cp. Some of the file copies look
+	// like adds in the dumpfile but can be matched up to their
+	// source by hash. There's no ambiguity about where the link is.
+	// We need not even complain about these.
+	//
+	// 2. Subversion branch creation, followed by deletion,
+	// followed by recreation by a copy from a later revision
+	// under the same name.  There really is no right answer here
+	// - that is, no way to emulate Subversion's view of versions
+	// from before the recreation in a Git DAG.  Choosing that
+	// second (re-creating) branch copy favors the view from the
+	// future.
+	//
+	// 3. Branch or tag creations followed by partial updates.
+	// There's a case like this in tagpollute.svn in the test
+	// suite.  Again, there is no ideal answer here, for the same
+	// reason as in case 2.  And choosing the source revision of
+	// the last partial update recreates the view from the future.
+	//
+	// 4. Subversion dumpfile traces left by cv2svn's attempt
+	// to synthesize Subversion branches fromn CVS branch creations.
+	// These have no directory copy operations at all.
+	// When cvs2svn created branches, it tried to copy each file
+	// from the commit corresponding to the CVS revision where the
+	// file was last changed before the branch creation, which
+	// could potentually be a different revision for each file in
+	// the new branch. And CVS didn't actually record branch
+	// creation times.  But the branch creation can't have been
+	// before the last copy.
+	//
+	if options.Contains("--nobranch") {
+		logit(logEXTRACT, "SVN Phase 8: parent link fixups (skipped due to --nobranch)")
+		return
+	}
+	logit(logEXTRACT, "SVN Phase 8a: branch link compilation")
+	baton.startProgress("process SVN, phase 8a: branch link compilation", uint64(len(sp.streamview)))
+	lastcopy := make(map[string]revlink)
+	for index, node := range sp.streamview {
+		if node.isCopy() {
+			// Record branch copies in a form that is convenient for dealing with
+			// improper tag copies like the tagpollute.svn testload.
+			var targetbranch string
+			if sp.isBranch(node.path) {
+				targetbranch = node.path
+			} else {
+				branch := longestPrefix(sp.branchtrie(), []byte(node.path))
+				if branch != nil {
+					targetbranch = string(branch)
+					logit(logEXTRACT, "r%d#%d: impure branch copy %s corrected to %s",
+						node.revision, node.index, node.path, targetbranch)
+				}
+			}
+			if targetbranch != "" {
+				oldlink := lastcopy[targetbranch]
+				// Record the last copy to the target branch.  Copies to subdirectories
+				// are mapped to the most specific including branch.  These branch paths
+				// wpuld have to be remapped before they can be used in gitspace, but this
+				// should be all the information required to make gitspace branch links.
+				// Ugh...unless a copy is based on a nontrivially split commit!
+				var increment int
+				if oldlink.source != node.fromRev {
+					increment++
+				}
+				lastcopy[targetbranch] = revlink{source:node.fromRev,
+					target:node.revision,
+					copycount:oldlink.copycount+increment}
+			}
+		}
+		baton.percentProgress(uint64(index) + 1)
+	}
+
+	// Now that we've collected all these connections, we can throw out the actual branches
+	// and index by the way we're going to need to look these up.
+	for _, v := range lastcopy {
+		if v.copycount > 1 {
+			logit(logSHOUT, "dubious copy set with links from %d revisions has target <%d>", v.copycount, v.target)
+		}
+		sp.branchlinks[v.target] = v.source
+	}
+	logit(logEXTRACT, "branchlinks are %v", sp.branchlinks)
+
+	logit(logEXTRACT, "SVN Phase 8b: parent link fixups")
+	baton.startProgress("process SVN, phase 8b: parent link fixups", uint64(len(sp.repo.events)))
+	for index, event := range sp.repo.events {
+		commit, ok := event.(*Commit)
+		if !ok {
+			continue
+		}
+		if sp.branches[commit.Branch] == nil {
+			logit(logEXTRACT, "commit %s branch %s is rootless", commit.mark, commit.Branch)
+			sp.branches[commit.Branch] = new(branchMeta)
+			sp.branches[commit.Branch].root = commit
+			rootmark, err := strconv.Atoi(commit.mark[1:])
+			if err != nil {
+				logit(logEXTRACT, "ill-formed mark %s at branch root of %s", commit.mark, commit)
+				continue
+			} else {
+				parent := sp.branchlinks[intToRevidx(rootmark)]
+				if parent == 0 {
+					logit(logEXTRACT, "missing parent for %s", commit.idMe())
+				} else {
+					// Because there is no revidxToMarkidx
+					commit.setParentMarks([]string{fmt.Sprintf(":%d", rootmark)})
+				}
+			}
+		} else {
+			logit(logEXTRACT, "commit %s has parent %s on branch %s", commit.mark, sp.branches[commit.Branch].tip.mark, commit.Branch)
+			commit.setParents([]CommitLike{sp.branches[commit.Branch].tip})
+		}
+		sp.branches[commit.Branch].tip = commit
+		baton.percentProgress(uint64(index) + 1)
+	}
+	baton.endProgress()
+	// FIXME: Make branch-tip resets
+}
+
+func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	defer trace.StartRegion(ctx, "SVN Phase 9: de-junking").End()
+	logit(logEXTRACT, "SVN Phase 9: de-junking")
+	// Now clean up junk commits generated by cvs2svn.
+	deleteables := make([]int, 0)
+	newtags := make([]Event, 0)
+	var mutex sync.Mutex
+	safedelete := func(i int) {
+		mutex.Lock()
+		deleteables = append(deleteables, i)
+		mutex.Unlock()
+	}
+	baton.startProgress("process SVN, phase 9: de-junking", uint64(len(sp.repo.events)))
+	walkEvents(sp.repo.events, func(i int, event Event) {
+		if commit, ok := event.(*Commit); ok {
+			// It is possible for commit.Comment to be None if
+			// the repository has been dumpfiltered and has
+			// empty commits.  If that's the case it can't very
+			// well have CVS artifacts in it.
+			if commit.Comment == "" {
+				sp.shout(fmt.Sprintf("r%s has no comment", commit.legacyID))
+				goto loopend
+			}
+			// Commits that cvs2svn created as tag surrogates
+			// get turned into actual tags.
+			m := cvs2svnTagRE.FindStringSubmatch(commit.Comment)
+			if len(m) > 1 && !commit.hasChildren() {
+				fulltag := filepath.Join("refs", "tags", m[1])
+				newtags = append(newtags, newReset(sp.repo, fulltag,
+					commit.parentMarks()[0]))
+				safedelete(i)
+			}
+			// cvs2svn-generated branch commits carry no informationn,
+			// and just get removed.
+			m = cvs2svnBranchRE.FindStringSubmatch(commit.Comment)
+			if len(m) > 0 && !commit.hasChildren() {
+				safedelete(i)
+			}
+			// Branch copies with no later commits on the branch should
+			// lose their fileops so they'll be tagified in a later phase.
+			if !commit.hasChildren() && len(commit.operations()) > 0  && commit.getColor() == colorGEN {
+				logit(logEXTRACT, "pruning empty branch copy commit %s", commit.idMe())
+				commit.setOperations(nil)
+			}
+		}
+	loopend:
+		baton.percentProgress(uint64(i) + 1)
+	})
+	baton.endProgress()
+	sp.repo.delete(deleteables, []string{"--tagback"})
+	sp.repo.events = append(sp.repo.events, newtags...)
+}
+
+func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	// Phase A:
+	// Now we need to tagify all other commits without fileops, because git
+	// is going to just discard them when we build a live repo and they
+	// might possibly contain interesting metadata.
+	//
+	// * Commits from tag creation often have no real fileops since they come
+	//   from a directory copy in Subversion and have their fileops removed
+	//   in the de-junking phase. The annotated tag name is the basename
+	//   of the SVN tag directory.  Note: Thi code relies on the previous
+	//   pass to remove the fileeops from generated commits.
+	//
+	// * Same for branch-root commits. The tag name is the basename of the
+	//   branch directory in SVN, with "-root" appended to distinguish them
+	//   from SVN tags.
+	//
+	// * Commits at a branch tip that consist only of deleteall are also
+	//   tagified if --nobranch is on.  It behaves as a directiobve to
+	//   preserve as much as possible of the tree structure for postprocessing.
+	//
+	// * All other commits without fileops get turned into an annotated tag
+	//   with name "emptycommit-<revision>".
+	//
+	defer trace.StartRegion(ctx, "SVN Phase A: tagify empty commits").End()
+	logit(logEXTRACT, "SVN Phase A: tagify empty commits")
+	baton.twirl()
+
+	rootmarks := newOrderedStringSet() // stays empty if nobranch
+	for _, meta := range sp.branches {
+		if meta != nil {	// This condition skips dead branches
+			rootmarks.Add(meta.root.mark)
+		}
+	}
+	rootskip := newOrderedStringSet()
+	rootskip.Add("trunk" + svnSep)
+	rootskip.Add("root")
+	tagname := func(commit *Commit) string {
+		// Give branch and tag roots a special name, except for "trunk" and
+		// "root" which do not come from a regular branch copy.
+		if rootmarks.Contains(commit.mark) {
+			name := branchbase(commit.Branch)
+			if !rootskip.Contains(name) {
+				if strings.HasPrefix(commit.Branch, "refs/tags/") {
+					return name
+				}
+				return name + "-root"
+			}
+		}
+		// Fallback to standard rules.
+		return ""
+	}
+	taglegend := func(commit *Commit) string {
+		// Tipdelete commits and branch roots don't get any legend.
+		if len(commit.operations()) > 0 || (rootmarks.Contains(commit.mark) && !rootskip.Contains(branchbase(commit.Branch))) {
+			return ""
+		}
+		// Otherwise, generate one for inspection.
+		legend := []string{fmt.Sprintf("[[Tag from zero-fileop commit at Subversion r%s", commit.legacyID)}
+		legend = append(legend, "]]\n")
+		return strings.Join(legend, "")
+	}
+	sp.repo.tagifyEmpty(nil,
+		/* tipdeletes */ options.Contains("--nobranch"),
+		/* tagifyMerges */  false,
+		/* canonicalize */  false,
+		/* nameFunc */ tagname,
+		/* legendFunc */  taglegend,
+		/* createTags */ true,
+		/* gripe */ sp.shout)
+}
+
+func svnProcessCleanTags(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	defer trace.StartRegion(ctx, "SVN Phase B: delete/copy canonicalization").End()
+	// Phase B:
+	// cvs2svn likes to crap out sequences of deletes followed by
+	// filecopies on the same node when it's generating tag commits.
+	// These are lots of examples of this in the nut.svn test load.
+	// These show up as redundant (D, M) fileop pairs.
+	logit(logEXTRACT, "SVN Phase B: delete/copy canonicalization")
+	baton.startProgress("process SVN, phase B: delete/copy canonicalization", uint64(len(sp.repo.events)))
+	walkEvents(sp.repo.events, func(idx int, event Event) {
+		commit, ok := event.(*Commit)
+		if !ok {
+			return
+		}
+		count := 0
+		for i := range commit.operations() {
+			if i < len(commit.operations())-1 {
+				if commit.operations()[i].op == opD && commit.operations()[i+1].op == opM {
+					if commit.operations()[i].Path == commit.operations()[i+1].Path {
+						commit.fileops[i].op = opX
+						count++
+					}
+				}
+			}
+		}
+		nonnil := make([]*FileOp, 0, len(commit.operations())-count)
+		for _, op := range commit.operations() {
+			if op.op != opX {
+				nonnil = append(nonnil, op)
+			}
+		}
+		commit.setOperations(nonnil)
+		baton.percentProgress(uint64(idx) + 1)
+	})
+	baton.endProgress()
+}
+
+func svnProcessDebubble(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	defer trace.StartRegion(ctx, "SVN Phase C: remove duplicate parent marks").End()
+	logit(logEXTRACT, "SVN Phase C: remove duplicate parent marks")
+	// Remove spurious parent links caused by random cvs2svn file copies.
+	// FIXME: Is this necessary given the way the branch links are now built?
+	baton.startProgress("process SVN, phase C: remove duplicate parent marks", uint64(len(sp.repo.events)))
+	walkEvents(sp.repo.events, func(idx int, event Event) {
+		commit, ok := event.(*Commit)
+		if !ok {
+			return
+		}
+		parents := commit.parents()
+		if len(parents) != 2 {
+			return
+		}
+		a, ok1 := parents[0].(*Commit)
+		b, ok2 := parents[1].(*Commit)
+		if !ok1 || !ok2 {
+			return
+		}
+		if a.getMark() == b.getMark() {
+			sp.shout(fmt.Sprintf("r%s: duplicate parent marks", commit.legacyID))
+		} else if a.Branch == commit.Branch && b.Branch == commit.Branch {
+			if b.committer.date.Before(a.committer.date) {
+				a, b = b, a
+			}
+			if b.descendedFrom(a) {
+				commit.removeParent(a)
+			}
+		}
+		baton.percentProgress(uint64(idx) + 1)
+	})
+	baton.endProgress()
+}
+
+func svnProcessRenumber(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	defer trace.StartRegion(ctx, "SVN Phase C: renumber").End()
+	logit(logEXTRACT, "SVN Phase C: renumber")
+	sp.repo.renumber(1, baton)
+}
+
+// end
+
+/*
+The parts of the old code that have no equivalents in the new
+
+type svnReader struct {
+	branchlink           map[string]daglink
+	branchcopies         stringSet
+	generatedDeletes     []*Commit
+	fileopBranchlinks    stringSet
+	directoryBranchlinks stringSet
+	activeGitignores     map[string]string
+	large                bool
+	splitCommits         map[revidx]int
+	initialBranchIgnores map[string]bool // a flag for each branch where we have put the implicit svn's implicit
+					     // ignore rules into a .gitignore file
+}
+
+func (action NodeAction) deleteTag() string {
+	return action.path[:len(action.path)] + fmt.Sprintf("-deleted-r%d-%d", action.revision, action.index)
+}
+
+func (action NodeAction) hasDeleteTag() bool {
+	return strings.Contains(action.path, "-deleted-")
+}
+
+type daglink struct {
+	child  *Commit
+	parent *Commit
+}
+
+// Only used in diagnostics
+func (dl daglink) String() string {
+	return fmt.Sprintf("%s->%s", dl.child.mark, dl.parent.mark)
+}
+
+func (sp *StreamParser) lastRelevantCommit(maxRev revidx, path string, attr string) *Commit {
+	// Make path look like a branch
+	if path[:1] == svnSep {
+		path = path[1:]
+	}
+	if path[len(path)-1] != svnSep[0] {
+		path = path + svnSep
+	}
+	//logit(logEXTRACT, "looking back, maxRev=%d, path='%s', attr='%s'", maxRev, path, attr)
+	// If the revision is split, try from the last split commit
+	var legacyID string
+	if sp.splitCommits[maxRev] == 0 {
+		legacyID = fmt.Sprintf("SVN:%d", maxRev)
+	} else {
+		legacyID = fmt.Sprintf("SVN:%d.%d", maxRev, sp.splitCommits[maxRev])
+	}
+	// Find the commit object...
+	obj, ok := sp.repo.legacyMap[legacyID]
+	if !ok {
+		return nil
+	}
+	for revision := sp.repo.eventToIndex(obj); revision > 0; revision-- {
+		event := sp.repo.events[revision]
+		if commit, ok := event.(*Commit); ok {
+			b, ok := getAttr(commit, attr)
+			//logit(logEXTRACT, "looking back examines %s looking for '%s'", commit.mark, b)
+			if ok && b != "" && strings.HasPrefix(path, b) {
+				//logit(logEXTRACT, "looking back returns %s", commit.mark)
+				return commit
+			}
+		}
+	}
+	return nil
 }
 
 func svnProcessClean(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
@@ -1395,105 +2153,7 @@ func svnProcessClean(ctx context.Context, sp *StreamParser, options stringSet, b
 	}
 
 	// Filter properties and build the revlinks map. This could be parallelized.
-	lastcopy := make(map[string]revlink)
-	for _, node := range sp.streamview {
-		// Handle per-path properties.
-		if node.hasProperties() {
-			// Some properties should be quietly ignored
-			for k := range ignoreProperties {
-				node.props.delete(k)
-			}
-			// Remove blank lines from svn:ignore property values.
-			if node.props.has("svn:ignore") {
-				oldIgnore := node.props.get("svn:ignore")
-				newIgnore := blankline.ReplaceAllLiteralString(oldIgnore, "")
-				node.props.set("svn:ignore", newIgnore)
-			}
-			tossThese := make([][2]string, 0)
-			for prop, val := range node.props.dict {
-				// Pass through the properties that can't be processed until we're ready to
-				// generate commits
-				if preserveProperties[prop] || ((prop == "svn:mergeinfo" || prop == "svnmerge-integrated") && node.kind == sdDIR) {
-					continue
-				}
-				tossThese = append(tossThese, [2]string{prop, val})
-				node.props.delete(prop)
-			}
-			if !options.Contains("--ignore-properties") {
-				// It would be good to emit messages
-				// when a nonempty property set on a
-				// path is entirely cleared.
-				// Unfortunately, the Subversion dumper
-				// spams empty property sets, emitting
-				// them lots of places they're not
-				// necessary.
-				if len(tossThese) > 0 {
-					logit(logSHOUT, "r%d#%d~%s properties set:", node.revision, node.index, node.path)
-					for _, pair := range tossThese {
-						logit(logSHOUT, "\t%s = %q", pair[0], pair[1])
-					}
-				}
-			}
-		}
-
-		if node.isCopy() {
-			// Record branch copies in a form that is convenient for dealing with
-			// improper tag copies like the tagpollute.svn testload.
-			var targetbranch string
-			if sp.isBranch(node.path + svnSep) {
-				targetbranch = node.path + svnSep
-			} else {
-				branch := longestPrefix(sp.branchtrie(), []byte(node.path))
-				if branch != nil {
-					targetbranch = string(branch)
-					logit(logEXTRACT, "r%d#%d: impure branch copy %s corrected to %s",
-						node.revision, node.index, node.path, targetbranch)
-				}
-			}
-			if targetbranch != "" {
-				// Record the last copy to the target branch.  Copies to subdirectories
-				// are mapped to the most specific including branch.  These branch paths
-				// wpuld have to be remapped before they can be used in gitspace, but this
-				// should be all the information required to make gitspace branch links.
-				// Ugh...unless a copy is based on a nontrivially split commit!
-				lastcopy[targetbranch] = revlink{source:node.fromRev, target:node.revision}
-			}
-		}
-	}
-
-	// Now that we've collected all these connections, we can throw out the actual branches
-	// and index by the way we're going to need to look these up.
-	for _, v := range lastcopy {
-		sp.revlinks[v.target] = v.source
-	}
-	logit(logEXTRACT, "revlinks are %v", sp.revlinks)
-	
 	sp.streamview = nil // Allow that view to be GCed
-}
-
-func svnProcessFilemaps(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	// Phase 3:
-	// This is where we build file visibility maps. The visibility
-	// map for each revision maps file paths to the Subversion
-	// node for the version you see at that revision, which might
-	// not have been modified for any number of revisions back,
-	// If the path ever existed at any revision, the only way it
-	// can fail to be visible is if the last thing done to it was
-	// a delete.
-	//
-	// This phase is moderately expensive, but once the maps are
-	// built they render unnecessary compuations that would have
-	// been prohibitively expensive in later passes. Notably the
-	// maps are everything necessary to compute node ancestry.
-	defer trace.StartRegion(ctx, "SVN Phase 3: build filemaps").End()
-	logit(logEXTRACT, "SVN Phase 3: build filemaps")
-	baton.startProgress("process SVN, phase 3: build filemaps", uint64(len(sp.revisions)))
-	sp.history = newHistory()
-	for ri, record := range sp.revisions {
-		sp.history.apply(intToRevidx(ri), record.nodes)
-		baton.percentProgress(uint64(ri))
-	}
-	baton.endProgress()
 }
 
 func svnProcessCommits(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
@@ -1513,78 +2173,8 @@ func svnProcessCommits(ctx context.Context, sp *StreamParser, options stringSet,
 	createdCommits := make([][]Event,    len(sp.revisions))
 	fiActions      := make([][]fiAction, len(sp.revisions))
 	for ri, record := range sp.revisions {
-		// Zero revision is never interesting - no operations, no
-		// comment, no author, it's just a start marker for a
-		// non-incremental dump.
-		if record.revision == 0 {
-			continue
-		}
 
-		logit(logEXTRACT, "Revision %d:", record.revision)
-		expandedNodes := sp.expandAllNodes(sp.revisions[ri].nodes, options)
-
-		// The first revision in an SVN repository frequently just
-		// creates the traditional trunk, branches, and tags directories
-		// with nothing in them. expandedNodes will be empty in that
-		// case, since no actual files were created. We skip this
-		// revision entirely in order to avoid creating an empty commit.
-		if ri == 1 && len(expandedNodes) == 0 {
-			continue
-		}
-		//memcheck(sp.repo)
-		commit := newCommit(sp.repo)
-		ad := record.date
-		if ad == "" {
-			sp.error("missing required date field")
-		}
-		var au string
-		if record.author != "" {
-			au = record.author
-		} else {
-			au = "no-author"
-		}
-		if record.log != "" {
-			commit.Comment = record.log
-			if !strings.HasSuffix(commit.Comment, "\n") {
-				commit.Comment += "\n"
-			}
-		}
-		attribution := ""
-		if strings.Count(au, "@") == 1 {
-			// This is a thing that happens occasionally.  A DVCS-style
-			// attribution (name + email) gets stuffed in a Subversion
-			// author field
-			// First, check to see if it's a fully-formed address
-			if strings.Count(au, "<") == 1 && strings.Count(au, ">") == 1 && strings.Count(au, " ") > 0 {
-				attribution = au + " " + ad
-			} else {
-				// Punt...
-				parts := strings.Split(au, "@")
-				au, ah := parts[0], parts[1]
-				attribution = au + " <" + au + "@" + ah + "> " + ad
-			}
-		} else if options.Contains("--use-uuid") {
-			attribution = fmt.Sprintf("%s <%s@%s> %s", au, au, sp.repo.uuid, ad)
-		} else {
-			attribution = fmt.Sprintf("%s <%s> %s", au, au, ad)
-		}
-		newattr, err := newAttribution(attribution)
-		if err != nil {
-			panic(throw("parse", "impossibly ill-formed attribution in dump stream at r%d", record.revision))
-		}
-		commit.committer = *newattr
-		// Use this with just-generated input streams
-		// that have wall times in them.
-		if control.flagOptions["testmode"] {
-			commit.committer.fullname = "Fred J. Foonly"
-			commit.committer.email = "foonly@foo.com"
-			commit.committer.date.timestamp = time.Unix(int64(ri*360), 0)
-			commit.committer.date.setTZ("UTC")
-		}
-		if record.props.Len() > 0 {
-			commit.properties = &record.props
-			record.props.Clear()
-		}
+		// Revision-property processing
 
 		// Create actions corresponding to both
 		// parsed and generated nodes.
@@ -2117,7 +2707,7 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 			if branch != impossibleFilename {
 				commit.setBranch(branch)
 				for i := range commit.fileops {
-					fileop := commit.fileops[i]
+					fileop := &commit.fileops[i]
 					if fileop.op == opM || fileop.op == opD {
 						fileop.Path = fileop.Path[len(branch):]
 					} else if fileop.op == opR || fileop.op == opC {
@@ -2201,7 +2791,7 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 				if len(commit.operations()) > 0 || commit.hasChildren() {
 					fileop := newFileOp(sp.repo)
 					fileop.construct(deleteall)
-					commit.prependOperation(fileop)
+					commit.prependOperation(*fileop)
 					logit(logEXTRACT, "prepending delete at %s", commit.idMe())
 					sp.generatedDeletes = append(sp.generatedDeletes, commit)
 				}
@@ -2376,266 +2966,4 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 	// Code controlled by --nobranch option ends.
 }
 
-func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	defer trace.StartRegion(ctx, "SVN Phase 6: de-junking").End()
-	logit(logEXTRACT, "SVN Phase 6: de-junking")
-	// Now clean up junk commits generated by cvs2svn.
-	deleteables := make([]int, 0)
-	newtags := make([]Event, 0)
-	var mutex sync.Mutex
-	safedelete := func(i int) {
-		mutex.Lock()
-		deleteables = append(deleteables, i)
-		mutex.Unlock()
-	}
-	baton.startProgress("process SVN, phase 6: de-junking", uint64(len(sp.repo.events)))
-	walkEvents(sp.repo.events, func(i int, event Event) {
-		if commit, ok := event.(*Commit); ok {
-			// It is possible for commit.Comment to be None if
-			// the repository has been dumpfiltered and has
-			// empty commits.  If that's the case it can't very
-			// well have CVS artifacts in it.
-			if commit.Comment == "" {
-				sp.shout(fmt.Sprintf("r%s has no comment", commit.legacyID))
-				goto loopend
-			}
-			// Commits that cvs2svn created as tag surrogates
-			// get turned into actual tags.
-			m := cvs2svnTagRE.FindStringSubmatch(commit.Comment)
-			if len(m) > 1 && !commit.hasChildren() {
-				fulltag := filepath.Join("refs", "tags", m[1])
-				newtags = append(newtags, newReset(sp.repo, fulltag,
-					commit.parentMarks()[0]))
-				safedelete(i)
-			}
-			// cvs2svn-generated branch commits carry no informationn,
-			// and just get removed.
-			m = cvs2svnBranchRE.FindStringSubmatch(commit.Comment)
-			if len(m) > 0 && !commit.hasChildren() {
-				safedelete(i)
-			}
-			// Branch copies with no later commits on the branch should
-			// lose their fileops so they'll be tagified in a later phase.
-			if !commit.hasChildren() && len(commit.operations()) > 0 {
-				for _, op := range commit.operations() {
-					if !op.genflag || (op.genflag && op.op == opD) {
-						goto nodrop
-					}
-				}
-				logit(logEXTRACT, "pruning empty branch copy commit %s", commit.idMe())
-				commit.setOperations(nil)
-			nodrop:
-			}
-		}
-	loopend:
-		baton.percentProgress(uint64(i) + 1)
-	})
-	baton.endProgress()
-	sp.repo.delete(deleteables, []string{"--tagback"})
-	sp.repo.events = append(sp.repo.events, newtags...)
-}
-
-func svnProcessRenames(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	defer trace.StartRegion(ctx, "SVN Phase 7: branch renaming and mapping").End()
-	logit(logEXTRACT, "SVN Phase 7: branch renaming and mapping")
-	// Change the branch names from Subversion style to git style.
-	// This is also where branch mappings get applied.
-	deletia := make([]int, 0)
-	baton.startProgress("process SVN, phase 7: branch renaming and mapping", uint64(len(sp.repo.events)))
-	for index, event := range sp.repo.events {
-		commit, ok := event.(*Commit)
-		if !ok {
-			continue
-		}
-		matched := false
-		for _, item := range control.branchMappings {
-			result := GoReplacer(item.match, commit.Branch, item.replace)
-			if result != commit.Branch {
-				matched = true
-				commit.setBranch(filepath.Join("refs", result))
-				break
-			}
-		}
-		if matched {
-			continue
-		}
-		if commit.Branch == "root" {
-			commit.setBranch(filepath.Join("refs", "heads", "root"))
-		} else if strings.HasPrefix(commit.Branch, "tags"+svnSep) {
-			branch := commit.Branch
-			if strings.HasSuffix(branch, svnSep) {
-				branch = branch[:len(branch)-1]
-			}
-			commit.setBranch(filepath.Join("refs", "tags", filepath.Base(branch)))
-		} else if commit.Branch == "trunk"+svnSep {
-			commit.setBranch(filepath.Join("refs", "heads", "master"))
-		} else {
-			if commit.Branch != "" {
-				basename := filepath.Base(commit.Branch[:len(commit.Branch)-1])
-				commit.setBranch(filepath.Join("refs", "heads", basename))
-				// Some of these should turn into resets.  Is this a branchroot
-				// commit with no fileops?
-				if !options.Contains("--preserve") && len(commit.parents()) == 1 {
-					parentEvent := commit.parents()[0]
-					parent, ok := parentEvent.(*Commit)
-					if ok && parent.Branch != commit.Branch && len(commit.operations()) == 0 {
-						logit(logEXTRACT, "branch root of %s with comment %s discarded",
-							commit.Branch, commit.Comment)
-						// FIXME: Adding a reset for the new branch at the end
-						// of the event sequence was erroneous - caused later
-						// commits to be ignored. Possibly we should add a reset
-						// where the branch commit was?
-						//sp.repo.addEvent(Reset(sp.repo, ref=commit.Branch,
-						//                          target=parent))
-						deletia = append(deletia, index)
-					}
-				}
-			}
-		}
-		baton.percentProgress(uint64(index) + 1)
-	}
-	baton.endProgress()
-	sp.repo.delete(deletia, nil)
-}
-
-func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	defer trace.StartRegion(ctx, "SVN Phase 8: tagify empty commits").End()
-	logit(logEXTRACT, "SVN Phase 8: tagify empty commits")
-	// Now we need to tagify all other commits without fileops, because git
-	// is going to just discard them when we build a live repo and they
-	// might possibly contain interesting metadata.
-	// * Commits from tag creation often have no fileops since they come
-	//   from a directory copy in Subversion and have their fileops removed
-	//   in the de-junking phase. The annotated tag name is the basename
-	//   of the SVN tag directory.
-	// * Same for branch-root commits. The tag name is the basename of the
-	//   branch directory in SVN, with "-root" appended to distinguish them
-	//   from SVN tags.
-	// * Commits at a branch tip that consist only of deleteall are also
-	//   tagified if --nobranch is on.  It behaves as a directiobve to
-	//   preserve as much as possible of the tree structure for postprocessing.	
-	// * All other commits without fileops get turned into an annotated tag
-	//   with name "emptycommit-<revision>".
-	baton.twirl()
-
-	rootmarks := newOrderedStringSet() // stays empty if nobranch
-	for _, meta := range sp.branches {
-		if meta != nil {	// This condition skips dead branches
-			rootmarks.Add(meta.root.mark)
-		}
-	}
-	rootskip := newOrderedStringSet()
-	rootskip.Add("trunk" + svnSep)
-	rootskip.Add("root")
-	tagname := func(commit *Commit) string {
-		// Give branch and tag roots a special name, except for "trunk" and
-		// "root" which do not come from a regular branch copy.
-		if rootmarks.Contains(commit.mark) {
-			name := branchbase(commit.Branch)
-			if !rootskip.Contains(name) {
-				if strings.HasPrefix(commit.Branch, "refs/tags/") {
-					return name
-				}
-				return name + "-root"
-			}
-		}
-		// Fallback to standard rules.
-		return ""
-	}
-	taglegend := func(commit *Commit) string {
-		// Tipdelete commits and branch roots don't get any legend.
-		if len(commit.operations()) > 0 || (rootmarks.Contains(commit.mark) && !rootskip.Contains(branchbase(commit.Branch))) {
-			return ""
-		}
-		// Otherwise, generate one for inspection.
-		legend := []string{fmt.Sprintf("[[Tag from zero-fileop commit at Subversion r%s", commit.legacyID)}
-		legend = append(legend, "]]\n")
-		return strings.Join(legend, "")
-	}
-	sp.repo.tagifyEmpty(nil,
-		/* tipdeletes*/ options.Contains("--nobranch"),
-		/* tagifyMerges */ false,
-		/* canonicalize */ false,
-		/* nameFunc */ tagname,
-		/* legendFunc */ taglegend,
-		/* createTags */ true,
-		/* gripe */ sp.shout)
-}
-
-func svnProcessCleanTags(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	defer trace.StartRegion(ctx, "SVN Phase 9: delete/copy canonicalization").End()
-	logit(logEXTRACT, "SVN Phase 9: delete/copy canonicalization")
-	// cvs2svn likes to crap out sequences of deletes followed by
-	// filecopies on the same node when it's generating tag commits.
-	// These are lots of examples of this in the nut.svn test load.
-	// These show up as redundant (D, M) fileop pairs.
-	baton.startProgress("process SVN, phase 9: delete/copy canonicalization", uint64(len(sp.repo.events)))
-	walkEvents(sp.repo.events, func(idx int, event Event) {
-		commit, ok := event.(*Commit)
-		if !ok {
-			return
-		}
-		count := 0
-		for i := range commit.operations() {
-			if i < len(commit.operations())-1 {
-				if commit.operations()[i].op == opD && commit.operations()[i+1].op == opM {
-					if commit.operations()[i].Path == commit.operations()[i+1].Path {
-						commit.fileops[i].op = opX
-						count++
-					}
-				}
-			}
-		}
-		nonnil := make([]*FileOp, 0, len(commit.operations())-count)
-		for _, op := range commit.operations() {
-			if op.op != opX {
-				nonnil = append(nonnil, op)
-			}
-		}
-		commit.setOperations(nonnil)
-		baton.percentProgress(uint64(idx) + 1)
-	})
-	baton.endProgress()
-}
-
-func svnProcessDebubble(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	defer trace.StartRegion(ctx, "SVN Phase A: remove duplicate parent marks").End()
-	logit(logEXTRACT, "SVN Phase A: remove duplicate parent marks")
-	// Remove spurious parent links caused by random cvs2svn file copies.
-	baton.startProgress("process SVN, phase A: remove duplicate parent marks", uint64(len(sp.repo.events)))
-	walkEvents(sp.repo.events, func(idx int, event Event) {
-		commit, ok := event.(*Commit)
-		if !ok {
-			return
-		}
-		parents := commit.parents()
-		if len(parents) != 2 {
-			return
-		}
-		a, ok1 := parents[0].(*Commit)
-		b, ok2 := parents[1].(*Commit)
-		if !ok1 || !ok2 {
-			return
-		}
-		if a.getMark() == b.getMark() {
-			sp.shout(fmt.Sprintf("r%s: duplicate parent marks", commit.legacyID))
-		} else if a.Branch == commit.Branch && b.Branch == commit.Branch {
-			if b.committer.date.Before(a.committer.date) {
-				a, b = b, a
-			}
-			if b.descendedFrom(a) {
-				commit.removeParent(a)
-			}
-		}
-		baton.percentProgress(uint64(idx) + 1)
-	})
-	baton.endProgress()
-}
-
-func svnProcessRenumber(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	defer trace.StartRegion(ctx, "SVN Phase B: renumber").End()
-	logit(logEXTRACT, "SVN Phase B: renumber")
-	sp.repo.renumber(1, baton)
-}
-
-// end
+*/
