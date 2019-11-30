@@ -1671,6 +1671,9 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	// creation times.  But the branch creation can't have been
 	// before the last copy.
 	//
+	// These cases are rebarbative. Dealing with them is by far the
+	// most likely source og bugs in the analyzer.
+	//
 	if options.Contains("--nobranch") {
 		logit(logEXTRACT, "SVN Phase 8: parent link fixups (skipped due to --nobranch)")
 		return
@@ -1742,7 +1745,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 				if parent == 0 {
 					logit(logEXTRACT, "missing parent for %s", commit.idMe())
 					// Must do this explicitly, because a default parent
-					// mark was srt back in Phase 4.
+					// mark was set back in Phase 4.
 					commit.setParentMarks(nil)
 				} else {
 					// Because there is no revidxToMarkidx
