@@ -60,7 +60,11 @@ to select the repository directory.
 
 The 'compare' action takes two repository directories. It may
 optionally take a tag-branch-revision spec as for the checkout
-option. The selected versions are compared with diff -q -r, with noise
+option. You can also pass two revisions separated by a colon to the
+-r option, to have the first one checked out in the first repository
+and the second one in the second repository. That permits to compare
+two different revisions, or the same revision referenced differently in
+two VCS. The selected versions are compared with diff -q -r, with noise
 due to SCCS/RCS/CVS keyword expansion ignored.  You can follow the
 command verb with one or more -x options followed by basenames of
 paths to exclude from comparison. You can get a context-diff report on

@@ -541,14 +541,25 @@ def compare(args):
     tag = ""
     revision = ""
     checkout_args = []
+    checkout1_args = []
+    checkout2_args = []
     diff_args = []
     seeignores = False
     if verbose:
         print("Options: %s" % options)
     for (opt, val) in options:
-        if opt in ('-b', '-t', '-r'):
+        if opt in ('-b', '-t'):
             checkout_args.append(opt)
             checkout_args.append(val)
+        elif opt == '-r':
+            vals = val.split(":", 1)
+            if 1 <= len(vals) <= 2:
+                checkout1_args.append(opt)
+                checkout1_args.append(vals[0])
+                checkout2_args.append(opt)
+                checkout2_args.append(vals[-1])
+            else:
+                croak("incorrect value for compare -r option.")
         elif opt in ('-q', '-s', '-u'):
             diff_args.append(opt)
         elif opt == '-x':
@@ -556,8 +567,11 @@ def compare(args):
             diff_args.append(val)
         elif opt == '-i':
             seeignores = True
+    checkout1_args = checkout_args + checkout1_args
+    checkout2_args = checkout_args + checkout2_args
     if verbose:
-        print("Checkout arguments: %s" % checkout_args)
+        print("Checkout 1 arguments: %s" % checkout1_args)
+        print("Checkout 2 arguments: %s" % checkout2_args)
     if len(arguments) != 2:
         croak("compare requires exactly two repository-name arguments.")
     args = args[:]
@@ -577,7 +591,7 @@ def compare(args):
             sourceignores = vcsignores()
             for f in sourceignores:
                 diffopts += ["-x", f]
-        sourcedir = checkout(checkout_args + [rsource])
+        sourcedir = checkout(checkout1_args + [rsource])
         assert(sourcedir)
     targetignores = []
     with directory_context(target):
@@ -585,7 +599,7 @@ def compare(args):
             targetignores = vcsignores()
             for f in targetignores:
                 diffopts += ["-x", f]
-        targetdir = checkout(checkout_args + [rtarget])
+        targetdir = checkout(checkout2_args + [rtarget])
         assert(targetdir)
     diffopts += diff_args
     diffopts = " ".join(diffopts)
