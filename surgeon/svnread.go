@@ -1539,7 +1539,7 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 	const splitwarn = "\n[[Split portion of a mixed commit.]]\n"
 	sort.Slice(splits, func(i, j int) bool {return splits[i].loc > splits[j].loc})
 	for i, split := range splits {
-		logit(logEXTRACT, "split commit at %d resolving to %d", split.loc, len(split.splits)+1)
+		logit(logEXTRACT, "split commit at %d resolving to %d commits", split.loc, len(split.splits)+1)
 		for _, idx := range split.splits {
 			sp.repo.splitCommitByIndex(split.loc, idx)
 		}
@@ -1604,10 +1604,13 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 				} else if commit.Branch == "trunk" {
 					commit.setBranch(filepath.Join("refs", "heads", "master"))
 				} else if strings.HasPrefix(commit.Branch, "tags") {
-					commit.setBranch(filepath.Join("refs", "tags", filepath.Base(commit.Branch)))
+					commit.setBranch(filepath.Join("refs", commit.Branch))
+				} else if strings.HasPrefix(commit.Branch, "branches") {
+					commit.setBranch(filepath.Join("refs", commit.Branch[9:]))
 				} else {
-					// An ordinary branch.
-					commit.setBranch(filepath.Join("refs", "heads", filepath.Base(commit.Branch)))
+					// Uh oh
+					commit.setBranch(filepath.Join("refs", "heads", commit.Branch))
+					logit(logSHOUT, "unclassifieed branch %s at %s", commit.Branch, commit.idMe())
 				}
 			}
 		}
