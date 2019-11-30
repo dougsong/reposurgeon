@@ -1610,7 +1610,7 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 				} else {
 					// Uh oh
 					commit.setBranch(filepath.Join("refs", "heads", commit.Branch))
-					logit(logSHOUT, "unclassifieed branch %s at %s", commit.Branch, commit.idMe())
+					logit(logEXTRACT, "nonstandard branch %s at %s", commit.Branch, commit.idMe())
 				}
 			}
 		}
@@ -1741,6 +1741,9 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 				parent := sp.branchlinks[intToRevidx(rootmark)]
 				if parent == 0 {
 					logit(logEXTRACT, "missing parent for %s", commit.idMe())
+					// Must do this explicitly, because a default parent
+					// mark was srt back in Phase 4.
+					commit.setParentMarks(nil)
 				} else {
 					// Because there is no revidxToMarkidx
 					commit.setParentMarks([]string{fmt.Sprintf(":%d", rootmark)})
