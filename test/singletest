@@ -14,9 +14,11 @@ TERM=dumb
 experimental=""
 serial=""
 diff=yes
-while getopts shox opt
+log=""
+while getopts hl:osx opt
 do
     case $opt in
+	l) log="log $OPTARG" ;;
 	o) diff=no ;;
 	s) serial="set serial";;
 	x) experimental="set experimental";;
@@ -27,6 +29,8 @@ The REPOSURGEON environment variable can be used to substitute in a
 different implementation.
 
 With -h, display this option summary.
+
+With -l, set log bits (only with -o)
 
 With -o, domp the test output rather than diffing against the checkfile
 
@@ -65,6 +69,6 @@ do
     then
         ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "script ${tst}" 2>&1 | diff -u ${chk} -
     else
-        ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "script ${tst}" 2>&1
+        ${REPOSURGEON:-reposurgeon} "$log" "$serial" "$experimental" "script ${tst}" 2>&1
     fi
 done
