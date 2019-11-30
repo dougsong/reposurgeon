@@ -1606,7 +1606,7 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 				} else if strings.HasPrefix(commit.Branch, "tags") {
 					commit.setBranch(filepath.Join("refs", commit.Branch))
 				} else if strings.HasPrefix(commit.Branch, "branches") {
-					commit.setBranch(filepath.Join("refs", commit.Branch[9:]))
+					commit.setBranch(filepath.Join("refs", "heads", commit.Branch[9:]))
 				} else {
 					// Uh oh
 					commit.setBranch(filepath.Join("refs", "heads", commit.Branch))
