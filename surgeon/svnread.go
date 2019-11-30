@@ -6,8 +6,8 @@
 // in this module. 
 //
 // The single entry point is parseSubversion(), which extends
-// RepoStreamer.  The result of calling is to fill in the repo member
-// of the calling instance with a repository state.
+// RepoStreamer.  The result of calling it is to fill in the repo
+// member of the calling instance with a repository state.
 //
 // The Subversion dumpfile format that this reads is documented at
 //
