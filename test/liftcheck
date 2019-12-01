@@ -12,6 +12,7 @@
 # The -R option sets a read limit to the dump parsing, for speed
 # The -e option sets exckude patterbs to ignore uninteresting tags and branches
 # The -B option makes liftcheck use --nobranch to compare against a flat repository.
+#               If the repository has no trunk, this option is enforced.
 #
 # The REPOSURGEON environment variable can be used to substitute in a
 # different implementation.
@@ -84,6 +85,11 @@ then
     cd ..
     compareopt="${compareopt} -r ${revision}:${sha}"
     compare="compare"
+fi
+
+if [ ! -e ${stem}-checkout/trunk ]
+then
+    nobranch=--nobranch
 fi
 
 # Compare the original with the lift
