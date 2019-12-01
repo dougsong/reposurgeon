@@ -14,6 +14,52 @@ V 27
 PROPS-END
 
 Revision-number: 1
+Prop-content-length: 163
+Content-length: 163
+
+K 8
+svn:date
+V 27
+2011-11-30T19:46:20.235780Z
+K 7
+svn:log
+V 65
+This repo illustrates simple branching with interleaved commits.
+
+K 10
+svn:author
+V 3
+esr
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
 Prop-content-length: 215
 Content-length: 215
 
@@ -33,7 +79,7 @@ This is a boringly typical example of a run-on content which should
 
 PROPS-END
 
-Node-path: READ.ME
+Node-path: trunk/READ.ME
 Node-kind: file
 Node-action: add
 Text-content-md5: 757c278ef7d6eba131844c520b277a91
@@ -46,7 +92,7 @@ PROPS-END
 Lorem ipsum.
 
 
-Revision-number: 2
+Revision-number: 3
 Prop-content-length: 229
 Content-length: 229
 
@@ -66,7 +112,7 @@ It ends with a period, which is one of gitify's clues.
 
 PROPS-END
 
-Node-path: READ.ME
+Node-path: trunk/READ.ME
 Node-kind: file
 Node-action: change
 Text-content-md5: f4df74b116a62b336e08b7871c4f30fa
@@ -78,7 +124,7 @@ Lorem ipsum.
 dolor sit amet.
 
 
-Revision-number: 3
+Revision-number: 4
 Prop-content-length: 157
 Content-length: 157
 
@@ -97,7 +143,7 @@ Check that gitify doesn't futz with single-line comments.
 
 PROPS-END
 
-Node-path: READ.ME
+Node-path: trunk/READ.ME
 Node-kind: file
 Node-action: change
 Text-content-md5: 12f622ad1bb72eb9b3914774482381c3
@@ -110,7 +156,7 @@ dolor sit amet,
 consectetur adipiscing elit,
 
 
-Revision-number: 4
+Revision-number: 5
 Prop-content-length: 204
 Content-length: 204
 
@@ -130,7 +176,7 @@ which is considered a line-ender for this purpose.
 
 PROPS-END
 
-Node-path: READ.ME
+Node-path: trunk/READ.ME
 Node-kind: file
 Node-action: change
 Text-content-md5: 370f51d81c90b3d45dfb2ebf43472717
@@ -144,9 +190,9 @@ consectetur adipiscing elit,
 sed do eiusmod tempor incididunt ut labore et dolore magna alicqua.
 
 
-Revision-number: 5
-Prop-content-length: 236
-Content-length: 236
+Revision-number: 6
+Prop-content-length: 235
+Content-length: 235
 
 K 10
 svn:author
@@ -158,14 +204,14 @@ V 27
 2017-12-15T10:55:49.312893Z
 K 7
 svn:log
-V 137
-Check that we do not mess with a comment that alreeady has a separator line.
+V 136
+Check that we do not mess with a comment that already has a separator line.
 
 Even if it had a period which would normally trigger that.
 
 PROPS-END
 
-Node-path: READ.ME
+Node-path: trunk/READ.ME
 Node-kind: file
 Node-action: change
 Text-content-md5: 7d82a50511df29546286025b1c7b053a
