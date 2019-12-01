@@ -732,6 +732,11 @@ def compare_branches(args):
 
 def compare_all(args):
     "Compare two repos on mainline and at all tags and branches."
+    if "--nobranch" in args:
+        if verbose:
+            print("Comparing the complete repository...")
+        compare(args)
+        return
     if verbose:
         print("Comparing master...")
     compare(args)
