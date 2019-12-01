@@ -613,6 +613,22 @@ def compare(args):
         assert(targetdir)
     diffopts += diff_args
     diffopts = " ".join(diffopts)
+    # add missing empty directories in checkouts of VCSs that do not support them
+    dirs_to_nuke = []
+    if vcstype(source) not in ("git", "hg") and vcstype(target) in ("git", "hg"):
+        with directory_context(sourcedir):
+            for (dirpath, _, _) in os.walk("."):
+                matching = os.path.join(targetdir, dirpath)
+                if not os.path.exists(matching):
+                    dirs_to_nuke.append(matching)
+                    os.mkdir(matching)
+    if vcstype(target) not in ("git", "hg") and vcstype(source) in ("git", "hg"):
+        with directory_context(targetdir):
+            for (dirpath, _, _) in os.walk("."):
+                matching = os.path.join(sourcedir, dirpath)
+                if not os.path.exists(matching):
+                    dirs_to_nuke.append(matching)
+                    os.mkdir(matching)
     with directory_context(tmpdir):
         # FIXME: use difflib here?
         if verbose:
@@ -639,6 +655,9 @@ def compare(args):
                     print("{}: 0{:o} -> 0{:o}".format(path, sstat, tstat))
         except OSError:
             sys.stderr.write("repotool: can't find %s for permissions check.\n" % path)
+    # cleanup in case the checkouts were a symlink to an existing worktree
+    for d in reversed(dirs_to_nuke):
+        os.rmdir(d)
     nuke(rsource)
     nuke(rtarget)
 
