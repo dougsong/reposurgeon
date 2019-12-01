@@ -1,4 +1,3 @@
-reposurgeon: "swap.svn", line 4058: branch links detected by file ops only: ["activeedi/"]
 #reposurgeon sourcetype svn
 blob
 mark :1

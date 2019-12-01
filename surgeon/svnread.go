@@ -2030,9 +2030,6 @@ func svnProcessCommits(ctx context.Context, sp *StreamParser, options stringSet,
 	}
 	// Warn about dubious branch links
 	sp.fileopBranchlinks.Remove("trunk" + svnSep)
-	if links := sp.fileopBranchlinks.Subtract(sp.directoryBranchlinks); !links.Empty() {
-		sp.warn(fmt.Sprintf("branch links detected by file ops only: %v", links))
-	}
 }
 
 func svnProcessRoot(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {

@@ -1,6 +1,5 @@
 set relax
 read <treecontents.svn
-reposurgeon: "treecontents.svn", line 525: branch links detected by file ops only: ["branches/branch2/", "branches/branch3/"]
 inspect
 Event 1 =================================================================
 #reposurgeon sourcetype svn
