@@ -9,7 +9,9 @@
 # The -a option enables progress messages from the Subversion loader.
 # The -s option enables display of common files
 # The -r option sets a revision to check rather than trunk.
-# The -e option sets exckude patterbs to ignore uninteresting tags and branches 
+# The -R option sets a read limit to the dump parsing, for speed
+# The -e option sets exckude patterbs to ignore uninteresting tags and branches
+# The -B option makes liftcheck use --nobranch to compare against a flat repository.
 #
 # The REPOSURGEON environment variable can be used to substitute in a
 # different implementation.
@@ -24,16 +26,20 @@ compareopt=""
 svnquiet=-q
 slimit=""
 rlimit=""
-while getopts ade:ir:suv opt
+compare="compare-all"
+nobranch=""
+while getopts ade:ir:R:suvB opt
 do
     case $opt in
 	d) debug=yes;;
         e) compareopt="${compareopt} -e ${OPTARG}";;
 	a) svnquiet="";;
 	i|s|u) compareopt="${compareopt} -${opt}";;
-	r) slimit="-r ${OPTARG}" rlimit="readlimit ${OPTARG}";;
+	R) slimit="-r ${OPTARG}" rlimit="readlimit ${OPTARG}";;
+	r) revision="${OPTARG}";;
 	v) repotoolopt="${repotoolopt} -${opt}";;
 	u) compareopt="${compareopt} -${opt}";;
+	B) nobranch="--nobranch";;
     esac
 done
 shift $(($OPTIND - 1))
@@ -60,17 +66,28 @@ rm -fr liftcheck[0123456789]*
 
 if [ $debug = no ]
 then
-    trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}*~" 0 1 2 15
+    trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}.legacy ${stem}*~" 0 1 2 15
 fi
 
 # Make a Subversion repo from the dump
 ./svn-to-svn ${svnquiet} ${slimit} -c <${what} ${stem}
 
 # Make a git repo from the dump using reposurgeon
-${REPOSURGEON:-../reposurgeon} "${TESTOPT}" "${rlimit}" "read <${what}" "prefer git" "rebuild ${stem}-git" >&-
+${REPOSURGEON:-../reposurgeon} "${TESTOPT}" "${rlimit}" "read ${nobranch} <${what}" "prefer git" "rebuild ${stem}-git" "legacy write>${stem}.legacy" >&-
+
+# Find out the revision to pass
+if [ -n "${revision}" ]
+then
+    dt=`grep "^SVN:${revision}[[:space:]]" ${stem}.legacy | sed 's/^.*\t\(.*\)!.*$/\1/'`
+    cd ${stem}-git
+    sha=`git rev-list --all --until ${dt} --since ${dt}`
+    cd ..
+    compareopt="${compareopt} -r ${revision}:${sha}"
+    compare="compare"
+fi
 
 # Compare the original with the lift
-../repotool ${repotoolopt} compare-all ${compareopt} ${stem}-checkout ${stem}-git
+../repotool ${repotoolopt} ${compare} ${compareopt} ${nobranch} ${stem}-checkout ${stem}-git
 
 if [ $debug != no ]
 then
