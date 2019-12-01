@@ -541,7 +541,7 @@ def compare(args):
     "Compare two repositories at a specified revision, defaulting to mainline tip."
     if verbose:
         print("compare: %s" % args)
-    (options, arguments) = getopt.getopt(args, "b:e:ir:st:ux:")
+    (options, arguments) = getopt.getopt(args, "b:e:ir:st:ux:", ["nobranch"])
     outdir = "."
     branch = ""
     tag = ""
@@ -568,6 +568,8 @@ def compare(args):
                     checkout2_args.append(vals[-1])
             else:
                 croak("incorrect value for compare -r option.")
+        elif opt == '--nobranch':
+            checkout_args.append(opt)
         elif opt in ('-q', '-s', '-u'):
             diff_args.append(opt)
         elif opt == '-x':
