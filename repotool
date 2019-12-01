@@ -488,9 +488,10 @@ def checkout(args):
         os.symlink(os.path.join(pwd, relpath), outdir)
         return outdir
     elif vcs == "git":
-        if not (branch or tag or revision):
-            branch = "master"
-        do_or_die("git checkout --quiet %(branch)s %(tag)s %(revision)s" % locals())
+        # Only one revision should be given to git checkout
+        # Use the passed-in arguments, in some order of specificity.
+        revision = revision or tag or branch or "master"
+        do_or_die("git checkout --quiet %s" % revision)
         if outdir == '.':
             return os.getcwd()
         elif os.path.exists(outdir):
@@ -504,9 +505,9 @@ def checkout(args):
         spec = ""
         if revision:
             spec = "-r " + revision
-        if tag:
+        elif tag:
             spec = "-r " + tag
-        if branch:
+        elif branch:
             spec = "-r " + branch
         do_or_die("hg update -q %(spec)s" % locals())
         if outdir == '.':
@@ -554,10 +555,12 @@ def compare(args):
         elif opt == '-r':
             vals = val.split(":", 1)
             if 1 <= len(vals) <= 2:
-                checkout1_args.append(opt)
-                checkout1_args.append(vals[0])
-                checkout2_args.append(opt)
-                checkout2_args.append(vals[-1])
+                if vals[0]:
+                    checkout1_args.append(opt)
+                    checkout1_args.append(vals[0])
+                if vals[-1]:
+                    checkout2_args.append(opt)
+                    checkout2_args.append(vals[-1])
             else:
                 croak("incorrect value for compare -r option.")
         elif opt in ('-q', '-s', '-u'):

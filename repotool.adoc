@@ -50,21 +50,32 @@ repository. It must be called from within the repository. It takes one
 required argument - the checkout directory location.
 
 The checkout option may take a revision, tag, or branch
-specification, given with the -r, -t, or -b options. If the spec is
+specification, given with the -r, -t, or -b options.
+If you specify multiple conflicting specifications, the revision
+takes precedence, then the tag, then the branch. If the spec is
 omitted, the tip of the main line of the repository will be used; this
 is equivalent to specifying branch 'master' (git terminology, which is
 translated by reposurgeon to 'trunk' or whatever the underlying VCS
-uses). If given a -c option, checkout is performed from the directory
-specified; this may be onvenient when working with CVS or Subversion in order 
-to select the repository directory.
+uses). In VCSs like SVN where branches and tags are not part of the
+history model, it is possible to specify both a branch specification
+and a revision too get the contents of the branch as seen from a given
+revision. With git checkouts, the -r, -t, and -b options are essentially
+synonyms. If given a -c option, checkout is performed from the directory
+specified; this may be convenient when working with CVS or Subversion in
+order to select the repository directory.
 
 The 'compare' action takes two repository directories. It may
 optionally take a tag-branch-revision spec as for the checkout
 option. You can also pass two revisions separated by a colon to the
 -r option, to have the first one checked out in the first repository
 and the second one in the second repository. That permits to compare
-two different revisions, or the same revision referenced differently in
-two VCS. The selected versions are compared with diff -q -r, with noise
+two different revisions, or the same revision referenced differently
+in two VCS. You can leave one of the two revisions empty, then the -r
+option will not be passed to the corresponding repository checkout.
+This is useful to compare a git tag or branch to the corresponding tag
+or branch in SVN as seen at a particular revision (specifying both a
+branch and revision makes sense in SVN, but not in git).
+The selected versions are compared with diff -q -r, with noise
 due to SCCS/RCS/CVS keyword expansion ignored.  You can follow the
 command verb with one or more -x options followed by basenames of
 paths to exclude from comparison. You can get a context-diff report on
