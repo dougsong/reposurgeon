@@ -1,4 +1,4 @@
 ## test the dedup function
-read <swap.svn
+read <dedup.fi
 dedup
 write -
