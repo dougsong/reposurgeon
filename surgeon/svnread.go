@@ -1086,6 +1086,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 
 	nobranch := options.Contains("--nobranch")
 	branchLatch := newStringSet()
+	fileLatch := false
 	for ri, record := range sp.revisions {
 		expandedNodes := make([]*NodeAction, 0)
 		for _, node := range record.nodes {
@@ -1106,9 +1107,10 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 			//
 			// Set up default ignores just before the first file node
 			// of each branch
-			if node.kind == sdFILE && (isDeclaredBranch(filepath.Dir(node.path)) && !branchLatch.Contains(node.path)) {
+			if node.kind == sdFILE && (!fileLatch || (isDeclaredBranch(filepath.Dir(node.path)) && !branchLatch.Contains(node.path))) {
 				prependExpanded(ignorenode(filepath.Dir(node.path), ""))
 				branchLatch.Add(node.path)
+				fileLatch = true
 			}
 			// We always preserve the unexpanded directory
 			// node. Many of these won't have an explicit
@@ -1672,7 +1674,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	// before the last copy.
 	//
 	// These cases are rebarbative. Dealing with them is by far the
-	// most likely source og bugs in the analyzer.
+	// most likely source of bugs in the analyzer.
 	//
 	if options.Contains("--nobranch") {
 		logit(logEXTRACT, "SVN Phase 8: parent link fixups (skipped due to --nobranch)")
@@ -1818,9 +1820,9 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 
 
 func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	defer trace.StartRegion(ctx, "SVN Phase A: de-junking").End()
-	logit(logEXTRACT, "SVN Phase A: de-junking")
-	baton.startProgress("process SVN, phase A: resolve mergeinfo", uint64(len(sp.revisions)))
+	defer trace.StartRegion(ctx, "SVN Phase A: mergeinfo processing").End()
+	logit(logEXTRACT, "SVN Phase A: mergeinfo processing")
+	baton.startProgress("process SVN, phase A: mergeinfo pocessing", uint64(len(sp.revisions)))
 
 	lastRelevantCommit := func(sp *StreamParser, maxRev revidx, path string, attr string) *Commit {
 		// Make path look like a branch
@@ -1993,7 +1995,7 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 	// * Commits from tag creation often have no real fileops since they come
 	//   from a directory copy in Subversion and have their fileops removed
 	//   in the de-junking phase. The annotated tag name is the basename
-	//   of the SVN tag directory.  Note: Thi code relies on the previous
+	//   of the SVN tag directory.  Note: This code relies on the previous
 	//   pass to remove the fileeops from generated commits.
 	//
 	// * Same for branch-root commits. The tag name is the basename of the
