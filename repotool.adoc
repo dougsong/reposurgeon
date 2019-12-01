@@ -57,9 +57,12 @@ omitted, the tip of the main line of the repository will be used; this
 is equivalent to specifying branch 'master' (git terminology, which is
 translated by reposurgeon to 'trunk' or whatever the underlying VCS
 uses). In VCSs like SVN where branches and tags are not part of the
-history model, it is possible to specify both a branch specification
-and a revision too get the contents of the branch as seen from a given
-revision. With git checkouts, the -r, -t, and -b options are essentially
+history model, it is possible to specify both a revision and a branch
+or tag specification to get the contents of the branch or tag as seen
+from the given revision. With these VCS types, you can also use the
+--nobranch option to checkout the complete repository instead, where
+all branches and tags are simply subdirectories.
+With most DVCS checkouts, the -r, -t, and -b options are essentially
 synonyms. If given a -c option, checkout is performed from the directory
 specified; this may be convenient when working with CVS or Subversion in
 order to select the repository directory.

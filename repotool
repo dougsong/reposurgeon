@@ -417,20 +417,24 @@ def checkout(args):
     # Other cases should error out.
     if verbose:
         print("checkout: %s" % args)
-    (options, arguments) = getopt.getopt(args, "b:c:r:t:")
+    (options, arguments) = getopt.getopt(args, "b:c:r:t:", ["nobranch"])
     outdir = "."
     branch = ""
     tag = ""
     revision = ""
+    nobranch = False
     for (opt, val) in options:
         if opt == '-b':
             branch = val
+        elif opt == '--nobranch':
+            nobranch = True
         elif opt == '-c':
             os.chdir(val)
         elif opt == '-r':
             revision = val
         elif opt == '-t':
             tag = val
+    if nobranch: branch == "" # nobranch will also prevent the automatic switch to "trunk"
     outdir = arguments[0]
     if outdir[0] != os.sep:
         croak("checkout requires absolute target path")
@@ -453,8 +457,9 @@ def checkout(args):
         if revision:
             revision = "-r " + revision
         do_or_die("svn co -q %(revision)s file://%(pwd)s %(outdir)s" % locals())
-        # This logic will foo up on flat repositories
-        if tag:
+        if nobranch:
+            pass # flat repository
+        elif tag:
             outdir = os.path.join(outdir, "tags", tag)
         elif branch in ("", "master", "trunk"):
             outdir = os.path.join(outdir, "trunk")
@@ -470,12 +475,12 @@ def checkout(args):
             # was supplied.
             do_or_die("svn up -q " + revision)
         relpath = ""
-        if tag and os.path.isdir("tags"):
+        if nobranch:
+            pass # flat repository
+        elif tag and os.path.isdir("tags"):
             relpath = os.path.join("tags", tag)
         elif branch in ("", "master", "trunk") and os.path.isdir("trunk"):
             relpath = "trunk"
-        elif branch == "":        # Desperate hack to accommodate flat repos.
-            pass
         elif branch and os.path.isdir("branches"):
             relpath = os.path.join("branches", branch)
         else:
