@@ -64,7 +64,8 @@ fi
 
 for x in $*;
 do
-    grep '^##' ${tst} 2>/dev/null
+    # This redirect to stderr is so this script can be used to rebuild checkfiles
+    (grep '^##' ${tst} 2>/dev/null) 1>&2
     if [ $diff = yes ]
     then
         ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "script ${tst}" 2>&1 | diff -u ${chk} -
