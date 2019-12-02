@@ -8,7 +8,12 @@
 # The -d option disables removal of the generated repositories after the run
 # The -a option enables progress messages from the Subversion loader.
 # The -s option enables display of common files
-# The -r option sets a revision to check rather than trunk.
+# The -r option sets a revision to check rather than trunk, branches and tags of HEAD.
+#               The corresponding git commit is found with the legacy map, which means
+#               only the branch modified in the revision will be compared, unless the
+#               -B option is also used to make a flat repository.
+#               You can use an integer range min-max, or "all", to check multiple
+#               revisions in a row. Non-existing revisions are silently ignored.
 # The -R option sets a read limit to the dump parsing, for speed
 # The -e option sets exckude patterbs to ignore uninteresting tags and branches
 # The -B option makes liftcheck use --nobranch to compare against a flat repository.
@@ -27,13 +32,12 @@ compareopt=""
 svnquiet=-q
 slimit=""
 rlimit=""
-compare="compare-all"
 nobranch=""
 while getopts ade:ir:R:suvB opt
 do
     case $opt in
 	d) debug=yes;;
-        e) compareopt="${compareopt} -e ${OPTARG}";;
+	e) compareopt="${compareopt} -e ${OPTARG}";;
 	a) svnquiet="";;
 	i|s|u) compareopt="${compareopt} -${opt}";;
 	R) slimit="-r ${OPTARG}" rlimit="readlimit ${OPTARG}";;
@@ -76,24 +80,44 @@ fi
 # Make a git repo from the dump using reposurgeon
 ${REPOSURGEON:-../reposurgeon} "${TESTOPT}" "${rlimit}" "read ${nobranch} <${what}" "prefer git" "rebuild ${stem}-git" "legacy write>${stem}.legacy" >&-
 
-# Find out the revision to pass
-if [ -n "${revision}" ]
-then
-    dt=`grep "^SVN:${revision}[[:space:]]" ${stem}.legacy | sed 's/^.*\t\(.*\)!.*$/\1/'`
-    cd ${stem}-git
-    sha=`git rev-list --all --until ${dt} --since ${dt}`
-    cd ..
-    compareopt="${compareopt} -r ${revision}:${sha}"
-    compare="compare"
-fi
-
 if [ ! -e ${stem}-checkout/trunk ]
 then
     nobranch=--nobranch
 fi
 
-# Compare the original with the lift
-../repotool ${repotoolopt} ${compare} ${compareopt} ${nobranch} ${stem}-checkout ${stem}-git
+if [ -n "${revision}" ]
+then
+    if [ ${revision} = "all" ]
+    then
+        min=1
+        max=`cat ${stem}.legacy | wc -l`
+    else
+        min=`echo ${revision} | sed 's/-.*$//'`
+        max=`echo ${revision} | sed 's/^.*-//'`
+    fi
+    for revision in `seq ${min} ${max}`
+    do
+        # Find out the git revision to pass
+        dt=`grep "^SVN:${revision}[[:space:]]" ${stem}.legacy | sed 's/^.*\t\(.*\)!.*$/\1/'`
+        if [ -n "${dt}" ]
+        then
+            cd ${stem}-git
+            sha=`git rev-list --all --until ${dt} --since ${dt}`
+            cd ..
+
+            echo $revision
+            # Compare the original with the lift
+            ../repotool ${repotoolopt} compare ${compareopt} ${nobranch} -r ${revision}:${sha} \
+                                               ${stem}-checkout ${stem}-git
+        fi
+    done
+else
+
+    # Compare the original with the lift
+    ../repotool ${repotoolopt} compare-all ${compareopt} ${nobranch} \
+                                           ${stem}-checkout ${stem}-git
+
+fi
 
 if [ $debug != no ]
 then
