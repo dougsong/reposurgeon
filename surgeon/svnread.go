@@ -1282,6 +1282,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 		}
 
 		commit.legacyID = fmt.Sprintf("%d", record.revision)
+		sp.repo.legacyMap["SVN:" + commit.legacyID] = commit
 		commit.setColor(colorGEN)
 		for _, node := range record.nodes {
 			if node.action == sdNONE {
@@ -1552,6 +1553,7 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 		for j := 1; j <= len(split.splits); j++ {
 			fragment := sp.repo.events[split.loc+j].(*Commit)
 			fragment.legacyID = baseID + "." + strconv.Itoa(j+1)
+			sp.repo.legacyMap["SVN:" + fragment.legacyID] = fragment
 			fragment.Comment += splitwarn
 			sp.splitCommits[intToRevidx(i)]++
 		}
