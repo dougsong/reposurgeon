@@ -1561,10 +1561,10 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 		// the dump has been hand-edited, probably in a
 		// well-meant attempt to produce a minimal test case.
 		//
-		// Wer log this as an error and do not generate a commit
+		// We log this as an error and do not generate a commit
 		// for it.  That way we know that every commit has at
 		// last one fileop.  It's a shame that we lose the
-		// comment, but without at least fileoop we can't even
+		// comment, but without at least fileop we can't even
 		// assign the commit to a branch, a defect which would cause
 		// a lot of complications in the analysis later on.
 		if len(commit.fileops) == 0 {
