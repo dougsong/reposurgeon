@@ -1134,20 +1134,24 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 				// No special actions need to be taken when directories are added or changed, but see below for actions
 				// that are taken in all cases.  The reason we suppress expansion on a declared branch is that
 				// we are later going to turn this directory delete into a git deleteall for the branch.
-				if (node.action == sdDELETE && (nobranch || !isDeclaredBranch(node.path))) || node.action == sdREPLACE {
-					// A delete or replace with no from set
-					// can occur if the directory is empty.
-					// We can just ignore that case. Otherwise...
-					if node.fromSet != nil {
-						for _, child := range node.fromSet.pathnames() {
-							logit(logEXTRACT, "r%d-%d~%s: deleting %s", node.revision, node.index, node.path, child)
-							newnode := new(NodeAction)
-							newnode.path = child
-							newnode.revision = node.revision
-							newnode.action = sdDELETE
-							newnode.kind = sdFILE
-							newnode.generated = true
-							appendExpanded(newnode)
+				if node.action == sdDELETE || node.action == sdREPLACE {
+					if !nobranch && isDeclaredBranch(node.path) {
+						node.action = sdNUKE
+					} else {
+						// A delete or replace with no from set
+						// can occur if the directory is empty.
+						// We can just ignore that case. Otherwise...
+						if node.fromSet != nil {
+							for _, child := range node.fromSet.pathnames() {
+								logit(logEXTRACT, "r%d-%d~%s: deleting %s", node.revision, node.index, node.path, child)
+								newnode := new(NodeAction)
+								newnode.path = child
+								newnode.revision = node.revision
+								newnode.action = sdDELETE
+								newnode.kind = sdFILE
+								newnode.generated = true
+								appendExpanded(newnode)
+							}
 						}
 					}
 				}
@@ -1296,12 +1300,11 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 				}
 			}
 			var ancestor *NodeAction
-			if node.kind == sdDIR && isDeclaredBranch(node.path) {
+			if node.action == sdNUKE {
+				logit(logEXTRACT, "r%d: deleteall %s", record.revision, node.path)
 				fileop := newFileOp(sp.repo)
-				fileop.construct(deleteall, node.path)
-				if !node.generated {
-					commit.setColor(colorNONE)
-				}
+				fileop.construct(deleteall)
+				commit.setColor(colorNONE)
 				commit.appendOperation(fileop)
 			} else if node.kind == sdFILE {
 				// All .cvsignores should be ignored as remnants from
@@ -1421,15 +1424,6 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 						}
 					}
 				}
-			} else if node.action == sdDELETE || node.action == sdREPLACE {
-				// These are directory actions.
-				logit(logEXTRACT, "r%d: deleteall %s", record.revision, node.path)
-				fileop := newFileOp(sp.repo)
-				fileop.construct(deleteall)
-				if !node.generated {
-					commit.setColor(colorNONE)
-				}
-				commit.appendOperation(fileop)
 			}
 			baton.twirl()
 		}
