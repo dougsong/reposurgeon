@@ -1733,17 +1733,14 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	//
 	// 2. Subversion branch creation, followed by deletion,
 	// followed by recreation by a copy from a later revision
-	// under the same name.  There really is no right answer here
-	// - that is, no way to emulate Subversion's view of versions
-	// from before the recreation in a Git DAG.  Choosing that
-	// second (re-creating) branch copy favors the view from the
-	// future.
+	// under the same name. Due to the branch recoloring in
+	// Phase 2 the deleted branch can't cause confusion here.
 	//
 	// 3. Branch or tag creations followed by partial updates.
 	// There's a case like this in tagpollute.svn in the test
-	// suite.  Again, there is no ideal answer here, for the same
-	// reason as in case 2.  And choosing the source revision of
-	// the last partial update recreates the view from the future.
+	// suite. There is no ideal answer here; choosing the source
+	// revision of the last partial update recreates the view from
+	// the future.
 	//
 	// 4. Subversion dumpfile traces left by cv2svn's attempt
 	// to synthesize Subversion branches fromn CVS branch creations.
