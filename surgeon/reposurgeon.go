@@ -18935,10 +18935,10 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		return ""
 	}
 	control.baton.startProgress("processing changelogs", uint64(len(repo.events)))
-	attributions := make([][]string, len(repo.events))
-	blobRefs := make([][]string, len(repo.events))
+	attributions := make([][]string, len(selection))
+	blobRefs := make([][]string, len(selection))
 	evts := 0 // shared between threads, for progression only
-	repo.walkEvents(selection, func(event_id int, event Event) {
+	repo.walkEvents(selection, func(eventRank int, event Event) {
 		commit, iscommit := event.(*Commit)
 		evts++
 		if !iscommit {
@@ -19007,24 +19007,24 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				}
 				continue
 			attributionFound:
-				attributions[event_id] = append(attributions[event_id], attribution)
-				blobRefs[event_id] = append(blobRefs[event_id], op.ref)
+				attributions[eventRank] = append(attributions[eventRank], attribution)
+				blobRefs[eventRank] = append(blobRefs[eventRank], op.ref)
 			}
 		}
 		control.baton.percentProgress(uint64(evts))
 	})
 	control.baton.endProgress()
-	for _, eventID := range selection {
+	for eventRank, eventID := range selection {
 		commit, iscommit := repo.events[eventID].(*Commit)
 		if !iscommit {
 			continue
 		}
-		for i, attribution := range attributions[eventID] {
+		for i, attribution := range attributions[eventRank] {
 			// Invalid addresses will cause fatal errors if they get into a
 			// fast-import stream. Filter out bogons...
 			matches := addressRE.FindAllStringSubmatch(strings.TrimSpace(attribution), -1)
 			if matches == nil {
-				logit(logSHOUT, "invalid attribution %q in blob %s", attribution, blobRefs[eventID][i])
+				logit(logSHOUT, "invalid attribution %q in blob %s", attribution, blobRefs[eventRank][i])
 				continue
 			}
 			cm++
