@@ -86,19 +86,30 @@ func (sp *StreamParser) addBranch(name string) {
 // isDeclaredBranch returns true iff the user requested that this path be treated as a branch or tag.
 func isDeclaredBranch(path string) bool {
 	np := path
-	if !strings.HasSuffix(path, svnSep) {
-		np += svnSep
+	if strings.HasSuffix(path, svnSep) {
+		np = path[:len(path)-1]
 	}
+	maybeBranch := false
+	isNamespace := false
 	for _, trial := range control.listOptions["svn_branchify"] {
-		if !strings.Contains(trial, "*") && trial == path {
-			return true
-		} else if strings.HasSuffix(trial, svnSep+"*") && filepath.Dir(trial) == filepath.Dir(path) && !control.listOptions["svn_branchify"].Contains(np+"*") {
-			return true
-		} else if trial == "*" && !control.listOptions["svn_branchify"].Contains(np+"*") && strings.Count(path, svnSep) < 1 {
-			return true
+		if strings.HasSuffix(trial, svnSep+"*") {
+			trialBase := trial[:len(trial)-2]
+			if trialBase == np {
+				isNamespace = true
+			} else if trialBase == filepath.Dir(np) {
+				maybeBranch = true
+			}
+		} else {
+			if strings.HasSuffix(trial, svnSep) {
+				trial = trial[:len(trial)-1]
+			}
+			if trial == np {
+				// Exact match
+				return true
+			}
 		}
 	}
-	return false
+	return maybeBranch && !isNamespace
 }
 
 // splitSVNBranchPath splits a node path into the part that identifies the branch and the rest, as determined by the current branch map
