@@ -202,7 +202,7 @@ class directory_context:
         else:
             enclosing = os.path.dirname(self.target)
             if enclosing:
-                os.chdir()
+                os.chdir(enclosing)
     def __exit__(self, extype, value_unused, traceback_unused):
         os.chdir(self.source)
 
@@ -614,6 +614,14 @@ def compare(args):
     diffopts += diff_args
     diffopts = " ".join(diffopts)
     # add missing empty directories in checkouts of VCSs that do not support them
+    if not os.path.exists(sourcedir):
+        # replace by empty directory
+        nuke(sourcedir)
+        os.mkdir(sourcedir)
+    if not os.path.exists(targetdir):
+        # replace by empty directory
+        nuke(targetdir)
+        os.mkdir(targetdir)
     dirs_to_nuke = []
     if vcstype(source) not in ("git", "hg") and vcstype(target) in ("git", "hg"):
         with directory_context(sourcedir):
