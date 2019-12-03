@@ -103,11 +103,25 @@ then
         then
             cd ${stem}-git
             sha=`git rev-list --all --until ${dt} --since ${dt}`
+            if [ -z "${sha}" ]
+            then
+                dt=`echo ${dt} | sed 's/Z$/+00:00/'`
+                sha=`git for-each-ref --format '%(objectname) %(creatordate:iso-strict)' | grep ${dt} | sed 's/ .*$//; q'`
+            fi
+            ref=`git for-each-ref --contains ${sha} --format '%(refname:lstrip=1)' --sort=creatordate --count=1`
             cd ..
 
-            echo $revision
+            if [ ${ref} = "heads/master" ]
+            then
+                refopt="-b trunk"
+            else
+                refopt=`echo ${ref} | sed 's!^deleted/r[[:digit:]]*/!!; s!^tags/!-t !; s!^heads/!-b !'`
+            fi
+
+            echo "Checking lift at r${revision} (${refopt})"
             # Compare the original with the lift
-            ../repotool ${repotoolopt} compare ${compareopt} ${nobranch} -r ${revision}:${sha} \
+            ../repotool ${repotoolopt} compare ${compareopt} \
+                                               ${nobranch} ${refopt} -r ${revision}:${sha} \
                                                ${stem}-checkout ${stem}-git
         fi
     done
