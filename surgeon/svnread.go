@@ -1273,6 +1273,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 				// we are later going to turn this directory delete into a git deleteall for the branch.
 				if node.action == sdDELETE || node.action == sdREPLACE {
 					if !nobranch && isDeclaredBranch(node.path) {
+						logit(logEXTRACT, "r%d-%d~%s: declaring as sdNUKE", node.revision, node.index, node.path)
 						node.action = sdNUKE
 					} else {
 						// A delete or replace with no from set
@@ -1440,8 +1441,14 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 			var ancestor *NodeAction
 			if node.action == sdNUKE {
 				logit(logEXTRACT, "r%d: deleteall %s", record.revision, node.path)
+				// Generate a deletall operation, but with a path, contrary to
+				// the git-fast-import specification. This is so that the pass
+				// splitting the commits and setting the branch from the paths
+				// will be able to affect this deleteall to the correct branch
+				// then remove the spec-violating path.
 				fileop := newFileOp(sp.repo)
 				fileop.construct(deleteall)
+				fileop.Path = node.path
 				commit.setColor(colorNONE)
 				commit.appendOperation(fileop)
 			} else if node.kind == sdFILE {
@@ -1643,7 +1650,8 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 			commit.sortOperations()
 			var oldbranch string
 			cliqueIndices := make([]int, 0)
-			// We only generated M and D ops.  Therefore every
+			// We only generated M and D ops, or special deleteall
+			// ops with their path set, therefore every
 			// fileop has a Path member.  Wacky hack: by stashing
 			// the split components in the unused Source and Target
 			// nembers, we avoid having to recompute these when we
