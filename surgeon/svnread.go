@@ -1624,9 +1624,9 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 					commit.setBranch(filepath.Join("refs", "heads", "root"))
 				} else if commit.Branch == "trunk" {
 					commit.setBranch(filepath.Join("refs", "heads", "master"))
-				} else if strings.HasPrefix(commit.Branch, "tags") {
+				} else if strings.HasPrefix(commit.Branch, "tags/") {
 					commit.setBranch(filepath.Join("refs", commit.Branch))
-				} else if strings.HasPrefix(commit.Branch, "branches") {
+				} else if strings.HasPrefix(commit.Branch, "branches/") {
 					commit.setBranch(filepath.Join("refs", "heads", commit.Branch[9:]))
 				} else {
 					// Uh oh
@@ -1666,6 +1666,7 @@ func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSe
 	}
 	// For each branch, iterate through commits with that branch, searching for
 	// deleteall-only commits that mean the branch is being deleted.
+	usedRefs := map[string]int{}
 	processed := 0
 	seen := 0
 	baton.startProgress("process SVN, phase 8: disambiguate deleted refs.", uint64(commitCount))
@@ -1676,7 +1677,16 @@ func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSe
 			if len(ops) > 0 && ops[len(ops)-1].op == deleteall {
 				// Fix the branch of all the previous commits whose branch has
 				// not yet been fixed.
-				newname := branch + fmt.Sprintf("-deleted-r%s-%d", commit.legacyID, 1)
+				if !strings.HasPrefix(branch, "refs/") {
+					croak("r%s (%s): Impossible branch %s",
+					      commit.legacyID, commit.mark, branch)
+				}
+				newname := "refs/deleted/" + branch[len("refs/"):]
+				used := usedRefs[newname]
+				usedRefs[newname]++
+				if used > 0 {
+					newname += fmt.Sprintf("-%d", used)
+				}
 				for j := lastFixed + 1; j <= i; j++ {
 					commits[j].setBranch(newname)
 				}
