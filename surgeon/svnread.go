@@ -44,8 +44,6 @@ import (
 	"sync"
 	"time"
 	"unsafe" // Actually safe - only uses Sizeof
-
-	trie "github.com/acomagu/trie"
 )
 
 // FIXME: When we merge to master, move this to reposugeon.go
@@ -71,17 +69,10 @@ type svnReader struct {
 	history              *History
 	branchlinks          map[revidx]revidx
 	branches             map[string]*branchMeta // Points to branch root commits
-	_branchesSorted      trie.Tree
 	splitCommits         map[revidx]int
 }
 
 // Helpers for branch analysis
-
-func (sp *StreamParser) addBranch(name string) {
-	sp.branches[name] = nil
-	sp._branchesSorted = nil
-	return
-}
 
 // isDeclaredBranch returns true iff the user requested that this path be treated as a branch or tag.
 func isDeclaredBranch(path string) bool {
@@ -122,50 +113,6 @@ func splitSVNBranchPath(path string) (string, string) {
 		}
 	}
 	return "", path
-}
-
-// Fast branch lookup and retrieval
-
-func (sp *StreamParser) isBranch(pathname string) bool {
-	// FIXME: not used. Can we replace isXeclaredBranch() ca;;s with this?
-	_, ok := sp.branches[pathname]
-	return ok
-}
-
-func (sp *StreamParser) branchtrie() trie.Tree {
-	//The branch list in deterministic order, most specific branches first.
-	if len(sp.branches) == 0 {
-		return nil
-	}
-	if sp._branchesSorted != nil {
-		return sp._branchesSorted
-	}
-	branches := make([][]byte, len(sp.branches))
-	branchIndexes := make([]interface{}, len(branches))
-	idx := 0
-	for key := range sp.branches {
-		branches[idx] = []byte(key)
-		branchIndexes[idx] = true // we don't care about the value we put into the trie
-		idx++
-	}
-	sp._branchesSorted = trie.New(branches, branchIndexes)
-	return sp._branchesSorted
-}
-
-func longestPrefix(t trie.Tree, key []byte) []byte {
-	var prefix []byte
-	if t == nil {
-		return prefix
-	}
-	for i, c := range []byte(key) {
-		if t = t.TraceByte(c); t == nil {
-			break
-		}
-		if _, ok := t.Terminal(); ok {
-			prefix = key[:i+1]
-		}
-	}
-	return prefix
 }
 
 // A type to manage a collection of PathMaps used as a history of file visibility.
@@ -386,8 +333,8 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 	sp.revisions = make([]RevisionRecord, 0)
 	sp.hashmap = make(map[string]*NodeAction)
 	sp.branches = make(map[string]*branchMeta)
-	sp._branchesSorted = nil
 	sp.splitCommits = make(map[revidx]int)
+	sp.branchlinks = make(map[revidx]revidx)
 
 	trackSymlinks := newOrderedStringSet()
 	propertyStash := make(map[string]*OrderedMap)
@@ -1766,15 +1713,16 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	lastcopy := make(map[string]revlink)
 	for index, node := range sp.streamview {
 		if node.isCopy() {
+			logit(logEXTRACT, "looking at %v", node)
 			// Record branch copies in a form that is convenient for dealing with
 			// improper tag copies like the tagpollute.svn testload.
 			var targetbranch string
-			if sp.isBranch(node.path) {
+			if isDeclaredBranch(node.path) {
 				targetbranch = node.path
 			} else {
-				branch := longestPrefix(sp.branchtrie(), []byte(node.path))
-				if branch != nil {
-					targetbranch = string(branch)
+				branch, _ := splitSVNBranchPath(node.path)
+				if branch != "" {
+					targetbranch = branch
 					logit(logEXTRACT, "r%d#%d: impure branch copy %s corrected to %s",
 						node.revision, node.index, node.path, targetbranch)
 				}
@@ -1800,9 +1748,10 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 
 	// Now that we've collected all these connections, we can throw out the actual branches
 	// and index by the way we're going to need to look these up.
+	logit(logEXTRACT, "lastcopy is %v", lastcopy)
 	for _, v := range lastcopy {
 		if v.copycount > 1 {
-			logit(logSHOUT, "dubious copy set with links from %d revisions has target <%d>", v.copycount, v.target)
+			logit(logEXTRACT, "dubious copy set with links from %d revisions has target <%d>", v.copycount, v.target)
 		}
 		sp.branchlinks[v.target] = v.source
 	}

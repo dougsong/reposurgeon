@@ -1819,27 +1819,3 @@ func TestPathMap(t *testing.T) {
 	p.remove("bar")
 	assertEqual(t, p.String(), "{}")
 }
-
-func TestLongestMatch(t *testing.T) {
-	branches := [][]byte{
-		[]byte("foo/"),
-		[]byte("foo/bar/"),
-		[]byte("bar/"),
-		[]byte("baz"),
-	}
-	values := []interface{}{1, 2, 3, 4}
-	b := trie.New(branches, values)
-	tests := [][]string{
-		[]string{"foo/bar/.gitignore", "foo/bar/"},
-		[]string{"foo/.gitignore", "foo/"},
-		[]string{"foo/bar/baz/.gitignore", "foo/bar/"},
-		[]string{"x/.gitignore", ""},
-	}
-	for idx, pair := range tests {
-		t.Run(fmt.Sprint(idx),
-			func(t *testing.T) {
-				result := longestPrefix(b, []byte(pair[0]))
-				assertEqual(t, string(result), pair[1])
-			})
-	}
-}
