@@ -914,8 +914,6 @@ func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton
 
 	svnFilterProperties(ctx, sp, options, baton)
 	timeit("filterprops")
-	svnProcessClean(ctx, sp, options, baton)
-	timeit("filterprops")
 	svnBuildFilemaps(ctx, sp, options, baton)
 	timeit("filemaps")
 	svnExpandCopies(ctx, sp, options, baton)
@@ -926,6 +924,8 @@ func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton
 	timeit("splits")
 	svnProcessBranches(ctx, sp, options, baton)
 	timeit("branches")
+	svnDisambiguateRefs(ctx, sp, options, baton)
+	timeit("disambiguate")
 	svnLinkFixups(ctx, sp, options, baton)
 	timeit("links")
 	svnProcessJunk(ctx, sp, options, baton)
@@ -998,132 +998,8 @@ func svnFilterProperties(ctx context.Context, sp *StreamParser, options stringSe
 	baton.endProgress()
 }
 
-func svnProcessClean(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	// Phase 3:
-	// Intervene to prevent lossage from tag/branch/trunk
-	// deletions followed by re-creations.
-	//
-	// The Subversion data model is that a history is a
-	// sequence of surgical operations on a tree, and a tag is
-	// just another branch of the tree. Tag/branch deletions are a
-	// place where this clashes badly with the changeset-DAG model
-	// used by git and oter DVCSes. Especially if the same
-	// tag/branch is recreated later.  The stupid, obvious thing
-	// to do would be to just nuke the tag/branch history from
-	// here back to its origin point, but that will cause problems
-	// if a future copy operation is ever sourced in the deleted
-	// branch (and this does happen!) We deal with this by
-	// renaming the deleted branch and patching any copy
-	// operations from it in the future.
-	//
-	// Our first step is to refine our list so we only need to
-	// walk through tags created more than once, otherwise this
-	// pass can become a pig on large repositories.  Remember that
-	// initially sp.streamview is a list of all nodes.
-	//
-	// The exit contract of this phase is that there (1) are no
-	// branches with colliding names attached to different
-	// revisions, (2) all branches but the most recent branch in a
-	// collision clique get renamed in a predictable way, and (3)
-	// all references to renamed tags and branches in the stream
-	// are patched with the rename.
-	//
-	// Without this pass, and later suppression of commit generation for
-	// dead branches, the agito.svn testload will not convert correctly.
-	//
-	// This branch is linear-time in the number of nodes and quite
-	// fast even on very large repositories.
-	//
-	defer trace.StartRegion(ctx, "SVN Phase 3: clean tags to prevent anomalies.").End()
-	logit(logEXTRACT, "SVN Phase 3: clean tags to prevent anomalies.")
-	refcounts := make(map[string]int)
-	baton.startProgress("process SVN, phase 2a: count tag references", uint64(len(sp.streamview)))
-	for i, tagnode := range sp.streamview {
-		if tagnode.action == sdADD && tagnode.kind == sdDIR && isDeclaredBranch(tagnode.path) {
-			refcounts[tagnode.path]++
-		}
-		baton.percentProgress(uint64(i) + 1)
-	}
-	logit(logTAGFIX, "tag reference counts: %v", refcounts)
-	baton.endProgress()
-	// Use https://github.com/golang/go/wiki/SliceTricks recipe for filter in place
-	// to select out nodes relevant to tag additions that step on each other and
-	// their references.
-	relevant := func(x *NodeAction) bool {
-		return refcounts[x.path] > 1 || refcounts[filepath.Dir(x.path)] > 1 ||
-			refcounts[x.fromPath] > 1 || refcounts[filepath.Dir(x.fromPath)] > 1
-	}
-	multiples := make([]*NodeAction, 0)
-	oldlength := len(sp.streamview)
-	baton.startProgress("process SVN, phase 2b: check tag relevance", uint64(oldlength))
-	for i, x := range sp.streamview {
-		if relevant(x) {
-			multiples = append(multiples, x)
-		}
-		baton.percentProgress(uint64(i) + 1)
-	}
-	logit(logTAGFIX, "multiply-added directories: %v", sp.streamview)
-	baton.endProgress()
-
-	processed := 0
-	logit(logTAGFIX, "before fixups: %v", sp.streamview)
-	baton.startProgress("process SVN, phase 2c: recolor anomalous tags", uint64(len(sp.streamview)))
-	for i := range multiples {
-		srcnode := multiples[i]
-		if multiples[i].kind != sdFILE && multiples[i].action == sdDELETE {
-			newname := srcnode.deleteTag()
-			logit(logTAGFIX, "r%d#%d~%s: tag deletion, renaming to %s.",
-				srcnode.revision, srcnode.index, srcnode.path, newname)
-			// First, run backward performing the branch
-			// rename. Note, because we scan for deletions
-			// in forward order, any previous deletions of
-			// this tag have already been patched.
-			for j := i - 1; j >= 0; j-- {
-				tnode := multiples[j]
-				if strings.HasPrefix(tnode.path, srcnode.path) && !tnode.hasDeleteTag() {
-					newpath := newname + tnode.path[len(srcnode.path):]
-					logit(logTAGFIX, "r%d#%d~%s: on tag deletion path mapped to %s.",
-						tnode.revision, tnode.index, tnode.path, newname)
-					tnode.path = newpath
-				}
-				baton.twirl()
-			}
-			// Then, run forward patching copy
-			// operations.
-			for j := i + 1; j < len(multiples); j++ {
-				tnode := multiples[j]
-				if tnode.action == sdDELETE && tnode.path == srcnode.path && !tnode.hasDeleteTag() {
-					// Another deletion of this tag?  OK, stop patching copies.
-					// We'll deal with it in a new pass once the outer loop gets
-					// there
-					logit(logTAGFIX, "r%d#%d~%s: tag patching stopping on duplicate.",
-						srcnode.revision, srcnode.index, srcnode.path)
-					goto breakout
-				}
-				if strings.HasPrefix(tnode.fromPath, srcnode.path) && !tnode.hasDeleteTag() {
-					newfrom := newname + tnode.fromPath[len(srcnode.path):]
-					logit(logEXTRACT, "r%d#%d~%s: on tag deletion from-path mapped to %s.",
-						tnode.revision, tnode.index, tnode.fromPath, newfrom)
-					tnode.fromPath = newfrom
-				}
-				baton.twirl()
-			}
-			logit(logTAGFIX, "r%d#%d: tag %s renamed to %s.",
-				srcnode.revision, srcnode.index,
-				srcnode.path, newname)
-			srcnode.path = newname
-			processed++
-		}
-	breakout:
-		baton.percentProgress(uint64(i) + 1)
-	}
-	logit(logTAGFIX, "after fixups: %v", multiples)
-	multiples = nil // Allow GC
-	baton.endProgress()
-}
-
 func svnBuildFilemaps(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	// Phase 4:
+	// Phase 3:
 	// This is where we build file visibility maps. The visibility
 	// map for each revision maps file paths to the Subversion
 	// node for the version you see at that revision, which might
@@ -1157,7 +1033,7 @@ func svnBuildFilemaps(ctx context.Context, sp *StreamParser, options stringSet, 
 }
 
 func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	// Phase 5:
+	// Phase 4:
 	// Subversion dump files have one serious nonlocality. One of
 	// the stream operations is a wildcarded directory copy.  This
 	// phase expands these so that all of the implied file add
@@ -1203,9 +1079,9 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 	// Its is also here that ignore properties on directory nodes
 	// are mapped to nodes for .gitignore files, then removed.
 	//
-	defer trace.StartRegion(ctx, "SVN Phase 5: directory copy expansion").End()
-	logit(logEXTRACT, "SVN Phase 5: directory copy expansion")
-	baton.startProgress("process SVN, phase 5: directory copy expansion", uint64(len(sp.revisions)))
+	defer trace.StartRegion(ctx, "SVN Phase 4: directory copy expansion").End()
+	logit(logEXTRACT, "SVN Phase 4: directory copy expansion")
+	baton.startProgress("process SVN, phase 4: directory copy expansion", uint64(len(sp.revisions)))
 
 	ignorenode := func(nodepath string, explicit string) *NodeAction {
 		blob := newBlob(sp.repo)
@@ -1332,7 +1208,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 }
 
 func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	// Phase 6:
+	// Phase 5:
 	// Transform the revisions into a sequence of gitspace commits.
 	// This is a deliberately literal translation that is near
 	// useless in itself; no branch analysis, no tagification of
@@ -1354,9 +1230,9 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 	// Revisions with no nodes are skipped here. This guarantees
 	// being able to assign them to a branch later.
 	//
-	defer trace.StartRegion(ctx, "SVN Phase 6: build commits").End()
-	logit(logEXTRACT, "SVN Phase 6: build commits")
-	baton.startProgress("process SVN, phase 6: build commits", uint64(len(sp.revisions)))
+	defer trace.StartRegion(ctx, "SVN Phase 5: build commits").End()
+	logit(logEXTRACT, "SVN Phase 5: build commits")
+	baton.startProgress("process SVN, phase 5: build commits", uint64(len(sp.revisions)))
 
 	var lastmark string
 	for ri, record := range sp.revisions {
@@ -1615,7 +1491,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 }
 
 func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	// Phase 7:
+	// Phase 6:
 	// Split mixed commits (that is, commits with file paths on
 	// multiple Subversion branches). Needs to be done before
 	// branch assignment, Use parallelized search to find them,
@@ -1631,11 +1507,11 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 	// lexicographic order of pathname.
 	//
 	if options.Contains("--nobranch") {
-		logit(logEXTRACT, "SVN Phase 7: split resolution (skipped due to --nobranch)")
+		logit(logEXTRACT, "SVN Phase 6: split resolution (skipped due to --nobranch)")
 		return
 	}
-	defer trace.StartRegion(ctx, "SVN Phase 7: split resolution").End()
-	logit(logEXTRACT, "SVN Phase 7: split resolution")
+	defer trace.StartRegion(ctx, "SVN Phase 6: split resolution").End()
+	logit(logEXTRACT, "SVN Phase 6: split resolution")
 
 	type splitRequest struct {
 		loc int
@@ -1644,7 +1520,7 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 	splits := make([]splitRequest, 0)
 	var reqlock sync.Mutex
 
-	baton.startProgress("process SVN, phase 7a: split detection", uint64(len(sp.repo.events)))
+	baton.startProgress("process SVN, phase 6a: split detection", uint64(len(sp.repo.events)))
 	walkEvents(sp.repo.events, func(i int, event Event) {
 		if commit, ok := event.(*Commit); ok {
 			commit.sortOperations()
@@ -1676,7 +1552,7 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 	})
 	baton.endProgress()
 
-	baton.startProgress("process SVN, phase 7b: split resolution", uint64(len(splits)))
+	baton.startProgress("process SVN, phase 6b: split resolution", uint64(len(splits)))
 	// Can't parallelize this. That's OK, should be an unusual case.
 	// Sort the splits in case parallel execution generatesd them out of order.
 	const splitwarn = "\n[[Split portion of a mixed commit.]]\n"
@@ -1718,11 +1594,11 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 	// topology, but parent marks have not yet been fixed up.
 	//
 	if options.Contains("--nobranch") {
-		logit(logEXTRACT, "SVN Phase 8: branch renames (skipped due to --nobranch)")
+		logit(logEXTRACT, "SVN Phase 7: branch renames (skipped due to --nobranch)")
 		return
 	}
-	defer trace.StartRegion(ctx, "SVN Phase 8: branch renames").End()
-	logit(logEXTRACT, "SVN Phase 8: branch renames")
+	defer trace.StartRegion(ctx, "SVN Phase 7: branch renames").End()
+	logit(logEXTRACT, "SVN Phase 7: branch renames")
 	walkEvents(sp.repo.events, func(i int, event Event) {
 		if commit, ok := event.(*Commit); ok {
 			for i := range commit.fileops {
@@ -1762,8 +1638,63 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 	})
 }
 
-func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
 	// Phase 8:
+	// Intervene to prevent lossage from tag/branch/trunk deletions.
+	//
+	// The Subversion data model is that a history is a sequence of surgical
+	// operations on a tree, and a tag is just another branch of the tree.
+	// Tag/branch deletions are a place where this clashes badly with the
+	// changeset-DAG model used by git and oter DVCSes, especially if the same
+	// tag/branch is recreated later.
+	//
+	// To avoid loosing history, when a tag or branch is deleted we move it to
+	// the refs/deleted/ namespace, with a suffix in case of clashes. A branch
+	// is considered deleted when we encounter a commit with a single deleteall
+	// fileop.
+	defer trace.StartRegion(ctx, "SVN Phase 8: disambiguate deleted refs.").End()
+	logit(logEXTRACT, "SVN Phase 8: disambiguate deleted refs.")
+	// First we build a map from branches to commits with that branch, to avoid
+	// an O(n^2) computation cost.
+	branchToCommits := map[string] []*Commit{}
+	commitCount := 0
+	for _, event := range sp.repo.events {
+		if commit, ok := event.(*Commit); ok {
+			branchToCommits[commit.Branch] = append(branchToCommits[commit.Branch], commit)
+			commitCount++
+		}
+	}
+	// For each branch, iterate through commits with that branch, searching for
+	// deleteall-only commits that mean the branch is being deleted.
+	processed := 0
+	seen := 0
+	baton.startProgress("process SVN, phase 8: disambiguate deleted refs.", uint64(commitCount))
+	for branch, commits := range branchToCommits {
+		lastFixed := -1
+		for i, commit := range commits {
+			ops := commit.operations()
+			if len(ops) > 0 && ops[len(ops)-1].op == deleteall {
+				// Fix the branch of all the previous commits whose branch has
+				// not yet been fixed.
+				newname := branch + fmt.Sprintf("-deleted-r%s-%d", commit.legacyID, 1)
+				for j := lastFixed + 1; j <= i; j++ {
+					commits[j].setBranch(newname)
+				}
+				lastFixed = i
+				logit(logTAGFIX, "r%s (%s): deleted ref %s renamed to %s.",
+					commit.legacyID, commit.mark, branch, newname)
+				processed++
+			}
+			seen++
+			baton.percentProgress(uint64(seen))
+		}
+	}
+	logit(logTAGFIX, "%d tags were put away.", processed)
+	baton.endProgress()
+}
+
+func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	// Phase 9:
 	// The branches we colored in during the last phase almost
 	// completely define the topology of the DAG, except for the
 	// location of their root points. At first sight computing the
