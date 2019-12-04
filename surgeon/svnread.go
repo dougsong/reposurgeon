@@ -105,14 +105,17 @@ func isDeclaredBranch(path string) bool {
 
 // splitSVNBranchPath splits a node path into the part that identifies the branch and the rest, as determined by the current branch map
 func splitSVNBranchPath(path string) (string, string) {
-	segments := strings.Split(path, svnSep)
-	for i := len(segments) - 1; i >= 0; i-- {
-		candidate := strings.Join(segments[0:i], svnSep)
+	candidate := path
+	for {
+		split := strings.LastIndex(candidate, svnSep)
+		if split == -1 {
+			return "", path
+		}
+		candidate = path[:split]
 		if isDeclaredBranch(candidate) {
-			return candidate, strings.Join(segments[i:], svnSep)
+			return candidate, path[split+1:]
 		}
 	}
-	return "", path
 }
 
 // A type to manage a collection of PathMaps used as a history of file visibility.
