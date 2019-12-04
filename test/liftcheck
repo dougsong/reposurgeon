@@ -71,7 +71,7 @@ rm -fr liftcheck[0123456789]*
 
 if [ $debug = no ]
 then
-    trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}.legacy ${stem}*~" 0 1 2 15
+    trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}.legacy ${stem}.gitmap ${stem}*~" 0 1 2 15
 fi
 
 # Make a Subversion repo from the dump
@@ -87,43 +87,51 @@ fi
 
 if [ -n "${revision}" ]
 then
+    cd ${stem}-git
+    git log --format="%cd!%an	%H" --date=iso-strict --all | sed 's/+00:00/Z/' > ../${stem}.gitmap
+    git for-each-ref --format='%(creatordate:iso-strict)!%(taggername)%(authorname)	%(objectname)' \
+        | sed 's/+00:00/Z/' >> ../${stem}.gitmap
+    cd ..
+
     if [ ${revision} = "all" ]
     then
         min=1
-        max=`cat ${stem}.legacy | wc -l`
+        max=`cat ${stem}.gitmap | wc -l`
     else
         min=`echo ${revision} | sed 's/-.*$//'`
         max=`echo ${revision} | sed 's/^.*-//'`
     fi
+
     for revision in `seq ${min} ${max}`
     do
         # Find out the git revision to pass
-        dt=`grep "^SVN:${revision}[[:space:]]" ${stem}.legacy | sed 's/^.*\t\(.*\)!.*$/\1/'`
-        if [ -n "${dt}" ]
+        id=`grep "^SVN:${revision}[[:space:]]" ${stem}.legacy --max-count=1 | sed 's/^.*\t//; s/:[^!:]*$//'`
+        if [ -z "${id}" ]
         then
-            cd ${stem}-git
-            sha=`git rev-list --all --until ${dt} --since ${dt}`
-            if [ -z "${sha}" ]
-            then
-                dt=`echo ${dt} | sed 's/Z$/+00:00/'`
-                sha=`git for-each-ref --format '%(objectname) %(creatordate:iso-strict)' | grep ${dt} | sed 's/ .*$//; q'`
-            fi
-            ref=`git for-each-ref --contains ${sha} --format '%(refname:lstrip=1)' --sort=creatordate --count=1`
-            cd ..
-
-            if [ ${ref} = "heads/master" ]
-            then
-                refopt="-b trunk"
-            else
-                refopt=`echo ${ref} | sed 's!^deleted/r[[:digit:]]*/!!; s!^tags/!-t !; s!^heads/!-b !'`
-            fi
-
-            echo "Checking lift at r${revision} (${refopt})"
-            # Compare the original with the lift
-            ../repotool ${repotoolopt} compare ${compareopt} \
-                                               ${nobranch} ${refopt} -r ${revision}:${sha} \
-                                               ${stem}-checkout ${stem}-git
+            continue
         fi
+        sha=`grep "^${id}" ${stem}.gitmap --max-count=1 | cut -f 2`
+        if [ -z "${sha}" ]
+        then
+            continue
+        fi
+
+        cd ${stem}-git
+        ref=`git for-each-ref --contains ${sha} --format '%(refname:lstrip=1)' --sort=creatordate --count=1`
+        cd ..
+
+        if [ "${ref}" = "heads/master" ]
+        then
+            refopt="-b trunk"
+        else
+            refopt=`echo ${ref} | sed 's!^deleted/r[[:digit:]]*/!!; s!^tags/!-t !; s!^heads/!-b !'`
+        fi
+
+        echo "Checking lift at r${revision} (${refopt})"
+        # Compare the original with the lift
+        ../repotool ${repotoolopt} compare ${compareopt} \
+            ${nobranch} ${refopt} -r ${revision}:${sha} \
+            ${stem}-checkout ${stem}-git
     done
 else
 
