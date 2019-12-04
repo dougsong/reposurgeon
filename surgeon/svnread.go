@@ -1035,7 +1035,10 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 
 	ignorenode := func(nodepath string, explicit string) *NodeAction {
 		blob := newBlob(sp.repo)
-		ignores := subversionDefaultIgnores + explicit
+		ignores := explicit
+		if nodepath == "" || isDeclaredBranch(nodepath) {
+			ignores = subversionDefaultIgnores + explicit
+		}
 		blob.setContent([]byte(ignores), noOffset)
 		subnode := new(NodeAction)
 		subnode.path = filepath.Join(nodepath, ".gitignore")
@@ -1048,8 +1051,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 	}
 
 	nobranch := options.Contains("--nobranch")
-	branchLatch := newStringSet()
-	fileLatch := false
+	branchesWithDefaultIgnore := newStringSet()
 	for ri, record := range sp.revisions {
 		expandedNodes := make([]*NodeAction, 0)
 		for _, node := range record.nodes {
@@ -1070,10 +1072,15 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 			//
 			// Set up default ignores just before the first file node
 			// of each branch
-			if node.kind == sdFILE && (!fileLatch || (isDeclaredBranch(filepath.Dir(node.path)) && !branchLatch.Contains(node.path))) {
-				prependExpanded(ignorenode(filepath.Dir(node.path), ""))
-				branchLatch.Add(node.path)
-				fileLatch = true
+			if node.kind == sdFILE {
+				curbranch := ""
+				if !nobranch {
+					curbranch, _ = splitSVNBranchPath(node.path)
+				}
+				if !branchesWithDefaultIgnore.Contains(curbranch) {
+					prependExpanded(ignorenode(curbranch, ""))
+					branchesWithDefaultIgnore.Add(curbranch)
+				}
 			}
 			// We always preserve the unexpanded directory
 			// node. Many of these won't have an explicit
