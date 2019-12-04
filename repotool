@@ -641,7 +641,7 @@ def compare(args):
         # FIXME: use difflib here?
         if verbose:
             print("Comparing %s to %s" % (sourcedir, targetdir))
-        do_or_die("diff -r %(diffopts)s --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %(sourcedir)s %(targetdir)s || exit 0" % locals())
+        diff = capture_or_die("diff -r %(diffopts)s --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %(sourcedir)s %(targetdir)s || exit 0" % locals())
         def dirlist(top, excl=None):
             "Get list of all paths under specied top node, with optional exclusion."
             m = []
@@ -668,6 +668,8 @@ def compare(args):
         os.rmdir(d)
     nuke(rsource)
     nuke(rtarget)
+    if diff != "":
+        croak("Non-empty diff:\n" + diff)
 
 def compare_engine(singular, plural, lister, comparer, args):
     "Compare two repositories at all revisions implied by a specified command."
