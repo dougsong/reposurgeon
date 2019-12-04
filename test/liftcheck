@@ -3,6 +3,7 @@
 # liftcheck - compare reposurgeon lift of a Subversion repo with a checkout
 #
 # The -v option reveals executed subcommands.
+# The -p option shows revision numbers when comparing multiple revisions
 # The -u option enables context-diffing in the compare operation
 # The -i option disables the normal suppression of ignore comparisons
 # The -d option disables removal of the generated repositories after the run
@@ -33,10 +34,12 @@ svnquiet=-q
 slimit=""
 rlimit=""
 nobranch=""
-while getopts ade:ir:R:suvB opt
+progress=no
+while getopts ade:ir:R:suvBp opt
 do
     case $opt in
 	d) debug=yes;;
+	p) progress=yes;;
 	e) compareopt="${compareopt} -e ${OPTARG}";;
 	a) svnquiet="";;
 	i|s|u) compareopt="${compareopt} -${opt}";;
@@ -127,7 +130,10 @@ then
             refopt=`echo ${ref} | sed 's!^deleted/r[^/]*/!!; s!^tags/!-t !; s!^heads/!-b !'`
         fi
 
-        echo "Checking lift at r${revision} (${refopt})"
+        if [ ${progress} != no ]
+        then
+            echo "Checking lift at r${revision} (${refopt})"
+        fi
         # Compare the original with the lift
         ../repotool ${repotoolopt} compare ${compareopt} \
             ${nobranch} ${refopt} -r ${revision}:${sha} \
