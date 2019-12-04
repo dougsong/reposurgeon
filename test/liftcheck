@@ -124,7 +124,7 @@ then
         then
             refopt="-b trunk"
         else
-            refopt=`echo ${ref} | sed 's!^deleted/r[[:digit:]]*/!!; s!^tags/!-t !; s!^heads/!-b !'`
+            refopt=`echo ${ref} | sed 's!^deleted/r[^/]*/!!; s!^tags/!-t !; s!^heads/!-b !'`
         fi
 
         echo "Checking lift at r${revision} (${refopt})"
