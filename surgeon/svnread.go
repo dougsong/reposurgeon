@@ -1052,6 +1052,9 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 
 	nobranch := options.Contains("--nobranch")
 	branchesWithDefaultIgnore := newStringSet()
+	// Generated .gitignore files from explicit svn:ignore props have to be
+	// tracked separately since we won't modify pathmaps.
+	presentGitIgnores := newStringSet()
 	for ri, record := range sp.revisions {
 		expandedNodes := make([]*NodeAction, 0)
 		for _, node := range record.nodes {
@@ -1100,6 +1103,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 				if node.hasProperties() && node.props.has("svn:ignore") {
 					prependExpanded(ignorenode(node.path, node.props.get("svn:ignore")))
 					node.props.delete("svn:ignore")
+					presentGitIgnores.Add(node.path)
 				}
 				// No special actions need to be taken when directories are added or changed, but see below for actions
 				// that are taken in all cases.  The reason we suppress expansion on a declared branch is that
@@ -1123,6 +1127,17 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 								newnode.generated = true
 								appendExpanded(newnode)
 							}
+						}
+						// Maybe we generated a gitignore and need to remove it now
+						if presentGitIgnores.Contains(node.path) {
+							presentGitIgnores.Remove(node.path)
+							newnode := new(NodeAction)
+							newnode.path = node.path + svnSep + ".gitignore"
+							newnode.revision = node.revision
+							newnode.action = sdDELETE
+							newnode.kind = sdFILE
+							newnode.generated = true
+							appendExpanded(newnode)
 						}
 					}
 				}
