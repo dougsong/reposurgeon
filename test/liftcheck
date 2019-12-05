@@ -74,14 +74,16 @@ rm -fr liftcheck[0123456789]*
 
 if [ $debug = no ]
 then
-    trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}.legacy ${stem}.gitmap ${stem}*~" 0 1 2 15
+    trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}.legacy ${stem}.gitmap ${stem}.gfi ${stem}*~" 0 1 2 15
 fi
 
 # Make a Subversion repo from the dump
 ./svn-to-svn ${svnquiet} ${slimit} -c <${what} ${stem}
 
 # Make a git repo from the dump using reposurgeon
-${REPOSURGEON:-../reposurgeon} "${TESTOPT}" "${rlimit}" "read ${nobranch} <${what}" "prefer git" "rebuild ${stem}-git" "legacy write>${stem}.legacy" >&-
+${REPOSURGEON:-../reposurgeon} "${TESTOPT}" "${rlimit}" "read ${nobranch} <${what}" \
+    "prefer git" "rebuild ${stem}-git" "write >${stem}.gfi" \
+    "legacy write>${stem}.legacy" >&-
 
 if [ ! -e ${stem}-checkout/trunk ]
 then
@@ -90,11 +92,17 @@ fi
 
 if [ -n "${revision}" ]
 then
+    # Create a list of commits with corresponding legacy map entries
     cd ${stem}-git
     git log --format="%cd!%an	%H" --date=iso-strict --all | sed 's/+00:00/Z/' > ../${stem}.gitmap
     git for-each-ref --format='%(creatordate:iso-strict)!%(taggername)%(authorname)	%(objectname)' \
         | sed 's/+00:00/Z/' >> ../${stem}.gitmap
     cd ..
+
+    # Filter the git-fast-import stream to keep only the refs of the commits
+    grep -B 1 '^#legacy-id' ${stem}.gfi > ${stem}.gfi2
+    rm ${stem}.gfi
+    mv ${stem}.gfi2 ${stem}.gfi
 
     if [ ${revision} = "all" ]
     then
@@ -119,16 +127,14 @@ then
             continue
         fi
 
-        cd ${stem}-git
-        ref=`git for-each-ref --contains ${sha} --format '%(refname:lstrip=1)' --sort=creatordate --count=1`
-        cd ..
-
-        if [ "${ref}" = "heads/master" ]
+        # Find the corresponding ref to checkout in SVN
+        ref=`grep "^#legacy-id ${revision}$" -B 1 --max-count=1 ${stem}.gfi | sed -n 's!^commit refs/!!; t print; q; :print; p; q'`
+        if [ -z "${ref}" ]
         then
-            refopt="-b trunk"
-        else
-            refopt=`echo ${ref} | sed 's!^deleted/r[^/]*/!!; s!^tags/!-t !; s!^heads/!-b !'`
+            continue
         fi
+
+        refopt=`echo ${ref} | sed 's!^deleted/r[^/]*/!!; s!^tags/!-t !; s!^heads/!-b !'`
 
         if [ ${progress} != no ]
         then
