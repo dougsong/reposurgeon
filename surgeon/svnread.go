@@ -1665,7 +1665,7 @@ func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSe
 					croak("r%s (%s): Impossible branch %s",
 					      commit.legacyID, commit.mark, branch)
 				}
-				newname := "refs/deleted/" + branch[len("refs/"):]
+				newname := fmt.Sprintf("refs/deleted/r%s/%s", commit.legacyID, branch[len("refs/"):])
 				used := usedRefs[newname]
 				usedRefs[newname]++
 				if used > 0 {
