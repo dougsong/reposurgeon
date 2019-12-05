@@ -49,8 +49,6 @@ func assertIntEqual(t *testing.T, a int, b int) {
 	}
 }
 
-// This is pretty strange.  According to the Go documentation, there
-// are no backreferences. Yet this works under 1.10.4
 func TestBackreferences(t *testing.T) {
 	from := []byte("aaabxbcccc")
 	pattern := "b(.)b"
@@ -1818,4 +1816,28 @@ func TestPathMap(t *testing.T) {
 	assertTrue(t, contains)
 	p.remove("bar")
 	assertEqual(t, p.String(), "{}")
+}
+
+func TestBranchSplit(t *testing.T) {
+	control.listOptions = make(map[string]orderedStringSet)
+	control.listOptions["svn_branchify"] = orderedStringSet{"trunk", "tags/*", "branches/*", "*"}
+	type splitTestEntry struct {
+		raw    string
+		branch string
+		path   string
+	}
+	var splitTestTable = []splitTestEntry{
+		{"trunk/README", "trunk", "README"},
+		{"foobar/README", "", "foobar/README"},
+		{"trunk/", "trunk", ""},
+		//{"trunk", "trunk", ""},
+		{"README", "", "README"},
+		{"branches/foo/bar", "branches/foo", "bar"},
+		{"branches/foo/bar/baz", "branches/foo", "bar/baz"},
+	}
+	for _, tst := range splitTestTable {
+		b, p := splitSVNBranchPath(tst.raw)
+		assertEqual(t, b, tst.branch)
+		assertEqual(t, p, tst.path)
+	}
 }
