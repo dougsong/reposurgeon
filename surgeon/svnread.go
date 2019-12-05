@@ -67,6 +67,7 @@ type svnReader struct {
 	streamview           []*NodeAction // All nodes in stream order
 	hashmap              map[string]*NodeAction
 	history              *History
+	revmarks             map[revidx]string
 	branchlinks          map[revidx]revidx
 	branches             map[string]*branchMeta // Points to branch root commits
 	splitCommits         map[revidx]int
@@ -338,6 +339,7 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 	sp.branches = make(map[string]*branchMeta)
 	sp.splitCommits = make(map[revidx]int)
 	sp.branchlinks = make(map[revidx]revidx)
+	sp.revmarks = make(map[revidx]string)
 
 	trackSymlinks := newOrderedStringSet()
 	propertyStash := make(map[string]*OrderedMap)
@@ -1457,6 +1459,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 
 		commit.setMark(sp.repo.newmark())
 		sp.repo.addEvent(commit)
+		sp.revmarks[intToRevidx(ri)] = commit.mark
 		sp.repo.declareSequenceMutation("adding new commit")
 	}
 	baton.endProgress()
@@ -1781,6 +1784,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 		sp.branchlinks[v.target] = v.source
 	}
 	logit(logEXTRACT, "branchlinks are %v", sp.branchlinks)
+	logit(logEXTRACT, "revmarks are are %v", sp.revmarks)
 
 	logit(logEXTRACT, "SVN Phase 9b: parent link fixups")
 	baton.startProgress("process SVN, phase 9b: parent link fixups", uint64(len(sp.repo.events)))
@@ -1790,23 +1794,26 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 			continue
 		}
 		if sp.branches[commit.Branch] == nil {
-			logit(logEXTRACT, "commit %s branch %s is rootless", commit.mark, commit.Branch)
+			logit(logEXTRACT, "commit %s is root of branch %s", commit.mark, commit.Branch)
 			sp.branches[commit.Branch] = new(branchMeta)
 			sp.branches[commit.Branch].root = commit
-			rootmark, err := strconv.Atoi(commit.mark[1:])
+			rootrev, err := strconv.Atoi(commit.legacyID)
 			if err != nil {
-				logit(logEXTRACT, "ill-formed mark %s at branch root of %s", commit.mark, commit)
+				// This can happen if the first commit of a branch is split.  That would be so weird
+				// that we're not gonna believe it until we see it.
+				logit(logEXTRACT, "ill-formed legacy ID %s at branch root of %s", commit.legacyID, commit.Branch)
 				continue
 			} else {
-				parent := sp.branchlinks[intToRevidx(rootmark)]
-				if parent == 0 {
+				parent, ok := sp.branchlinks[intToRevidx(rootrev)]
+				if !ok {
 					logit(logEXTRACT, "missing parent for %s", commit.idMe())
 					// Must do this explicitly, because a default parent
 					// mark was set back in Phase 4.
 					commit.setParentMarks(nil)
 				} else {
 					// Because there is no revidxToMarkidx
-					commit.setParentMarks([]string{fmt.Sprintf(":%d", rootmark)})
+					logit(logEXTRACT, "parent link for %s is %s", commit.idMe(), sp.revmarks[parent])
+					commit.setParentMarks([]string{sp.revmarks[parent]})
 				}
 			}
 		} else {
