@@ -1818,6 +1818,31 @@ func TestPathMap(t *testing.T) {
 	assertEqual(t, p.String(), "{}")
 }
 
+func TestDeclaredBranch(t *testing.T) {
+	control.listOptions = make(map[string]orderedStringSet)
+	control.listOptions["svn_branchify"] = orderedStringSet{"trunk", "tags/*", "branches/*"}
+	assertTrue(t, isDeclaredBranch("trunk"))
+	assertTrue(t, !isDeclaredBranch("foobar"))
+	assertTrue(t, isDeclaredBranch("branches/foobar"))
+	assertTrue(t, !isDeclaredBranch("branches/foobar/test"))
+	assertTrue(t, isDeclaredBranch("tags/foobar"))
+	assertTrue(t, !isDeclaredBranch("tags/foobar/cetc"))
+	assertTrue(t, !isDeclaredBranch("tag/foobar"))
+	assertTrue(t, !isDeclaredBranch("tags"))
+	assertTrue(t, !isDeclaredBranch("branches"))
+	control.listOptions["svn_branchify"] = orderedStringSet{"trunk", "tags/*", "branches/*", "*"}
+	assertTrue(t, isDeclaredBranch("trunk"))
+	assertTrue(t, isDeclaredBranch("foobar"))
+	assertTrue(t, isDeclaredBranch("branches/foobar"))
+	assertTrue(t, !isDeclaredBranch("branches/foobar/test"))
+	assertTrue(t, isDeclaredBranch("tags/foobar"))
+	assertTrue(t, !isDeclaredBranch("tags/foobar/cetc"))
+	assertTrue(t, !isDeclaredBranch("tag/foobar"))
+	assertTrue(t, isDeclaredBranch("tag"))
+	assertTrue(t, !isDeclaredBranch("tags"))
+	assertTrue(t, !isDeclaredBranch("branches"))
+}
+
 func TestBranchSplit(t *testing.T) {
 	control.listOptions = make(map[string]orderedStringSet)
 	control.listOptions["svn_branchify"] = orderedStringSet{"trunk", "tags/*", "branches/*", "*"}
@@ -1828,7 +1853,7 @@ func TestBranchSplit(t *testing.T) {
 	}
 	var splitTestTable = []splitTestEntry{
 		{"trunk/README", "trunk", "README"},
-		{"foobar/README", "", "foobar/README"},
+		{"foobar/README", "foobar", "README"},
 		{"trunk/", "trunk", ""},
 		{"trunk", "trunk", ""},
 		{"README", "", "README"},

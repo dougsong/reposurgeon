@@ -84,7 +84,12 @@ func isDeclaredBranch(path string) bool {
 	maybeBranch := false
 	isNamespace := false
 	for _, trial := range control.listOptions["svn_branchify"] {
-		if strings.HasSuffix(trial, svnSep+"*") {
+		if trial == "*" {
+			// A value of "./*" for trial will be trimmed to "." later which
+			// is what filepath.Dir() returns for paths without any separator
+			trial = "." + svnSep + "*"
+		}
+		if strings.HasSuffix(trial, svnSep + "*") {
 			trialBase := trial[:len(trial)-2]
 			if trialBase == np {
 				isNamespace = true
