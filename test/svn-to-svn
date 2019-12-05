@@ -54,7 +54,7 @@
 #
 . ./common-setup.sh
 
-PATH=$PATH:../..
+PATH=$PATH:./..
 
 build=T
 view=F

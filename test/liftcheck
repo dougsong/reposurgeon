@@ -27,6 +27,8 @@
 # to reposurgeon.
 set -e
 
+export LANG=C
+
 repotoolopt=""
 debug=no
 compareopt=""
