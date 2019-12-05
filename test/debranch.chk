@@ -87,6 +87,7 @@ mark :10
 committer esr <esr> 1361656199 +0000
 data 30
 Creation of alternate branch.
+from :9
 M 100644 :1 .gitignore
 M 100644 :8 README
 
