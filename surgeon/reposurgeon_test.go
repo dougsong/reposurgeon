@@ -1830,7 +1830,7 @@ func TestBranchSplit(t *testing.T) {
 		{"trunk/README", "trunk", "README"},
 		{"foobar/README", "", "foobar/README"},
 		{"trunk/", "trunk", ""},
-		//{"trunk", "trunk", ""},
+		{"trunk", "trunk", ""},
 		{"README", "", "README"},
 		{"branches/foo/bar", "branches/foo", "bar"},
 		{"branches/foo/bar/baz", "branches/foo", "bar/baz"},
