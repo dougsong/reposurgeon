@@ -1835,9 +1835,13 @@ func TestBranchSplit(t *testing.T) {
 		{"branches/foo/bar", "branches/foo", "bar"},
 		{"branches/foo/bar/baz", "branches/foo", "bar/baz"},
 	}
-	for _, tst := range splitTestTable {
-		b, p := splitSVNBranchPath(tst.raw)
-		assertEqual(t, b, tst.branch)
-		assertEqual(t, p, tst.path)
+	for idx, tst := range splitTestTable {
+		t.Run(fmt.Sprint(idx),
+			func (t *testing.T) {
+				t.Parallel()
+				b, p := splitSVNBranchPath(tst.raw)
+				assertEqual(t, b, tst.branch)
+				assertEqual(t, p, tst.path)
+			})
 	}
 }
