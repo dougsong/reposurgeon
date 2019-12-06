@@ -96,7 +96,7 @@ if [ -n "${revision}" ]
 then
     # Create a list of commits with corresponding legacy map entries
     cd ${stem}-git
-    git log --format="%cd!%an	%H" --date=iso-strict --all | sed 's/+00:00/Z/' > ../${stem}.gitmap
+    git log --reverse --format="%cd!%an	%H" --date=iso-strict --all | sed 's/+00:00/Z/' > ../${stem}.gitmap
     git for-each-ref --format='%(creatordate:iso-strict)!%(taggername)%(authorname)	%(objectname)' \
         | sed 's/+00:00/Z/' >> ../${stem}.gitmap
     cd ..
@@ -118,12 +118,19 @@ then
     for revision in `seq ${min} ${max}`
     do
         # Find out the git revision to pass
-        id=`grep "^SVN:${revision}[[:space:]]" ${stem}.legacy --max-count=1 | sed 's/^.*\t//; s/:[^!:]*$//'`
+        id=`grep "^SVN:${revision}[[:space:]]" ${stem}.legacy --max-count=1 | cut -f 2`
+        count=`echo ${id} | sed 's/^.*![^:]*\($\|.*:\)//'`
+        id=`echo ${id} | sed 's/\(!.*\):[^:]*/\1/'`
+
         if [ -z "${id}" ]
         then
             continue
         fi
-        sha=`grep "^${id}" ${stem}.gitmap --max-count=1 | cut -f 2`
+        if [ -z "${count}" ]
+        then
+            count=1
+        fi
+        sha=`grep "^${id}" ${stem}.gitmap --max-count=${count} | tail -n 1 | cut -f 2`
         if [ -z "${sha}" ]
         then
             continue
