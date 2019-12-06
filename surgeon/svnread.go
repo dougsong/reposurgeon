@@ -1833,7 +1833,35 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 		baton.percentProgress(uint64(index) + 1)
 	}
 	baton.endProgress()
-	// FIXME: Make branch-tip resets
+
+	if logEnable(logEXTRACT) {
+		logit(logEXTRACT, "after branch analysis")
+		for _, event := range sp.repo.events {
+			commit, ok := event.(*Commit)
+			if !ok {
+				continue
+			}
+			var ancestorID string
+			ancestors := commit.parents()
+			if len(ancestors) == 0 {
+				ancestorID = "-"
+			} else {
+				ancestorID = ancestors[0].getMark()
+			}
+			proplen := 0
+			if commit.hasProperties() {
+				proplen = commit.properties.Len()
+			}
+			logit(logSHOUT, "r%-4s %4s %4s %2d %2d '%s'",
+				commit.legacyID,
+				commit.mark, ancestorID,
+				len(commit.operations()),
+				proplen,
+				commit.Branch)
+		}
+	}
+
+	// FIXME: Make branch-tip resets?
 }
 
 func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
@@ -2751,178 +2779,6 @@ func svnProcessRoot(ctx context.Context, sp *StreamParser, options stringSet, ba
 	baton.twirl()
 }
 
-func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton, timeit func(string)) {
-	defer trace.StartRegion(ctx, "SVN Phase 5a: branch analysis").End()
-	logit(logEXTRACT, "SVN Phase 5a: branch analysis")
-	nobranch := options.Contains("--nobranch")
-
-	// Computing this is expensive, so we try to do it seldom
-	commits := sp.repo.commits(nil)
-
-	// Now, branch analysis.
-	if len(sp.branches) == 0 || nobranch {
-		logit(logEXTRACT, "no branch analysis")
-		var last *Commit
-		for _, commit := range commits {
-			commit.setBranch(filepath.Join("refs", "heads", "master") + svnSep)
-			if last != nil {
-				commit.setParents([]CommitLike{last})
-			}
-			last = commit
-		}
-	} else {
-		const impossibleFilename = "//"
-		// Instead, determine a branch for each commit...
-		logit(logEXTRACT, fmt.Sprintf("Branches: %v", sp.branches))
-		lastbranch := impossibleFilename
-		branch := impossibleFilename
-		baton.startProgress("process SVN, phase 5a: branch analysis", uint64(len(commits)))
-		for idx, commit := range commits {
-			//logit(logEXTRACT, "seeking branch assignment for %s with common prefix '%s'", commit.mark, commit.common)
-			if lastbranch != impossibleFilename && strings.HasPrefix(commit.common, lastbranch) {
-				logit(logEXTRACT, "branch assignment for %s from lastbranch '%s'", commit.mark, lastbranch)
-				branch = lastbranch
-			} else {
-				// Prefer the longest possible branch
-				// The branchlist is sorted, longest first
-				m := longestPrefix(sp.branchtrie(), []byte(commit.common))
-				if m == nil {
-					branch = impossibleFilename
-				} else {
-					branch = string(m)
-				}
-			}
-			logit(logEXTRACT, "branch assignment for %s is '%s'", commit.mark, branch)
-			if branch != impossibleFilename {
-				commit.setBranch(branch)
-				for i := range commit.fileops {
-					fileop := &commit.fileops[i]
-					if fileop.op == opM || fileop.op == opD {
-						fileop.Path = fileop.Path[len(branch):]
-					} else if fileop.op == opR || fileop.op == opC {
-						fileop.Source = fileop.Source[len(branch):]
-						fileop.Target = fileop.Target[len(branch):]
-					}
-				}
-			} else {
-				commit.setBranch("root")
-				sp.addBranch("root")
-			}
-			lastbranch = branch
-			baton.percentProgress(uint64(idx))
-		}
-		baton.endProgress()
-		timeit("branches")
-		baton.startProgress("process SVN, phase 5b: rebuild parent links", uint64(len(commits)))
-		// ...then rebuild parent links so they follow the branches
-		for idx, commit := range commits {
-			if sp.branches[commit.Branch] == nil {
-				logit(logEXTRACT, "commit %s branch %s is rootless", commit.mark, commit.Branch)
-				sp.branches[commit.Branch] = new(branchMeta)
-				sp.branches[commit.Branch].root = commit
-				commit.setParents(nil)
-			} else {
-				logit(logEXTRACT, "commit %s has parent %s on branch %s", commit.mark, sp.branches[commit.Branch].tip.mark, commit.Branch)
-				commit.setParents([]CommitLike{sp.branches[commit.Branch].tip})
-			}
-			sp.branches[commit.Branch].tip = commit
-			// Per-commit spinner disabled because this pass is fast
-			baton.percentProgress(uint64(idx))
-		}
-		baton.endProgress()
-		sp.timeMark("parents")
-		baton.twirl()
-		// The root branch is special. It wasn't made by a copy, so
-		// we didn't get the information to connect it to trunk in the
-		// last phase.
-		var rootcommit *Commit
-		for _, c := range commits {
-			if c.Branch == "root" {
-				rootcommit = c
-				break
-			}
-		}
-		if rootcommit != nil {
-			earliest := sp.repo.earliestCommit()
-			if rootcommit != earliest {
-				sp.branchlink[rootcommit.mark] = daglink{rootcommit, earliest}
-			}
-		}
-		timeit("root")
-		// Add links due to Subversion copy operations
-		if logEnable(logEXTRACT) {
-			rootmarks := make([]string, 0)
-			for _, meta := range sp.branches {
-				rootmarks = append(rootmarks, meta.root.mark)
-			}
-			// Python version only displayed the branchlink values
-			logit(logEXTRACT, "branch roots: %v, links: %v", rootmarks, sp.branchlink)
-		}
-		idx := 0
-		baton.startProgress("process SVN, phase 5c: fixup branch links", uint64(len(sp.branchlink)))
-		for _, item := range sp.branchlink {
-			if item.parent.repo != sp.repo {
-				// The parent has been deleted since, don't add the link;
-				// this can only happen if parent was the now tagified root.
-				continue
-			}
-			if !item.child.hasParents() && !sp.branchcopies.Contains(item.child.Branch) {
-				// The branch wasn't created by copying another branch and
-				// is instead populated by fileops. Prepend a deleteall to
-				// ensure that it starts with a clean tree instead of
-				// inheriting that of its soon to be added first parent.
-				// The deleteall is put on the first commit of the branch
-				// which has fileops or more than one child.
-				commit := item.child
-				for len(commit.children()) == 1 && len(commit.operations()) == 0 {
-					commit = commit.firstChild()
-				}
-				if len(commit.operations()) > 0 || commit.hasChildren() {
-					fileop := newFileOp(sp.repo)
-					fileop.construct(deleteall)
-					commit.prependOperation(*fileop)
-					logit(logEXTRACT, "prepending delete at %s", commit.idMe())
-					sp.generatedDeletes = append(sp.generatedDeletes, commit)
-				}
-			}
-			var found bool
-			for _, p := range item.child.parents() {
-				if p == item.parent {
-					found = true
-					break
-				}
-			}
-			if !found {
-				item.child.addParentCommit(item.parent)
-			}
-			baton.percentProgress(uint64(idx))
-			idx++
-		}
-		baton.endProgress()
-		timeit("branchlinks")
-		timeit("mergeinfo")
-		if logEnable(logEXTRACT) {
-			logit(logEXTRACT, "after branch analysis")
-			for _, commit := range commits {
-				var ancestorID string
-				ancestors := commit.parents()
-				if len(ancestors) == 0 {
-					ancestorID = "-"
-				} else {
-					ancestorID = ancestors[0].getMark()
-				}
-				proplen := 0
-				if commit.hasProperties() {
-					proplen = commit.properties.Len()
-				}
-				logit(logSHOUT, "r%-4s %4s %4s %2d %2d '%s'",
-					commit.legacyID,
-					commit.mark, ancestorID,
-					len(commit.operations()),
-					proplen,
-					commit.Branch)
-			}
-		}
 	}
 	// Code controlled by --nobranch option ends.
 }
