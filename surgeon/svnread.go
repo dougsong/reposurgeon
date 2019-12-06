@@ -1759,7 +1759,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 			} else {
 				branch, _ := splitSVNBranchPath(node.path)
 				if branch != "" {
-					targetbranch = branch
+					targetbranch = branch + svnSep
 					logit(logEXTRACT, "r%d#%d: impure branch copy %s corrected to %s",
 						node.revision, node.index, node.path, targetbranch)
 				}
