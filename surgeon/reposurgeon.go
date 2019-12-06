@@ -6851,6 +6851,19 @@ func walkEvents(events []Event, hook func(int, Event)) {
 	for n := 0; n < maxWorkers; n++ { <-done }
 }
 
+// Safecounter is the simplest possible thread-safe counter,
+// to be used inside walkEvents.
+type Safecounter struct {
+	sync.Mutex
+	value int
+}
+
+func (c *Safecounter) bump() {
+	c.Lock()
+	c.value++
+	c.Unlock()
+}
+
 // CommitLike is a Commit or Callout
 type CommitLike interface {
 	idMe() string
@@ -12808,13 +12821,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 	if !quiet {
 		control.baton.startProgress(prompt, uint64(len(rs.selection)))
 	}
-	var countlock sync.Mutex
-	altered := 0
-	safebump := func() {
-		countlock.Lock()
-		altered++
-		countlock.Unlock()
-	}
+	altered := new(Safecounter)
 	rs.chosen().walkEvents(rs.selection, func(idx int, event Event) {
 		if tag, ok := event.(*Tag); ok {
 			if nonblobs {
@@ -12833,7 +12840,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 					anychanged = anychanged || true
 				}
 				if anychanged {
-					safebump()
+					altered.bump()
 				}
 			}
 		} else if commit, ok := event.(*Commit); ok {
@@ -12876,7 +12883,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 					}
 				}
 				if anychanged {
-					safebump()
+					altered.bump()
 				}
 			}
 			if blobs {
@@ -12885,7 +12892,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 						oldinline := fileop.inline
 						fileop.inline = []byte(hook(string(fileop.inline)))
 						if !bytes.Equal(fileop.inline, oldinline) {
-							safebump()
+							altered.bump()
 						}
 					}
 				}
@@ -12895,7 +12902,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 			modified := hook(content)
 			if content != modified {
 				blob.setContent([]byte(modified), noOffset)
-				safebump()
+				altered.bump()
 			}
 		}
 		if !quiet {
@@ -12905,7 +12912,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 	if !quiet {
 		control.baton.endProgress()
 	} else {
-		respond("%d items modified by %s.", altered, strings.ToLower(prompt))
+		respond("%d items modified by %s.", altered.value, strings.ToLower(prompt))
 	}
 }
 
@@ -18871,7 +18878,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		selection = rs.chosen().all()
 	}
 
-	cc, cl, cm, cd := 0, 0, 0, 0
+	cm, cd := 0, 0
 
 	parseAttributionLine := func(line string) string {
 		// Parse an attribution line in a ChangeLog entry, get an email address
@@ -18937,14 +18944,16 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 	control.baton.startProgress("processing changelogs", uint64(len(repo.events)))
 	attributions := make([][]string, len(selection))
 	blobRefs := make([][]string, len(selection))
-	evts := 0 // shared between threads, for progression only
+	evts := new(Safecounter) // shared between threads, for progression only
+	cc := new(Safecounter)
+	cl := new(Safecounter)
 	repo.walkEvents(selection, func(eventRank int, event Event) {
 		commit, iscommit := event.(*Commit)
-		evts++
+		evts.bump()
 		if !iscommit {
 			return
 		}
-		cc++
+		cc.bump()
 		// If a changeset is *all* ChangeLog mods, it is probably either
 		// a log rotation or a maintainer fixing a typo. In either case,
 		// best not to re-attribute this.
@@ -18959,7 +18968,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		}
 		for _, op := range commit.operations() {
 			if op.op == opM && filepath.Base(op.Path) == "ChangeLog" {
-				cl++
+				cl.bump()
 				// Figure out where we should look for changes in
 				// this blob by comparing it to its nearest ancestor.
 				then := make([]string, 0)
@@ -19011,7 +19020,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				blobRefs[eventRank] = append(blobRefs[eventRank], op.ref)
 			}
 		}
-		control.baton.percentProgress(uint64(evts))
+		control.baton.percentProgress(uint64(evts.value))
 	})
 	control.baton.endProgress()
 	for eventRank, eventID := range selection {
@@ -19075,7 +19084,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		}
 	}
 	repo.invalidateNamecache()
-	respond("fills %d of %d authorships, changing %d, from %d ChangeLogs.", cm, cc, cd, cl)
+	respond("fills %d of %d authorships, changing %d, from %d ChangeLogs.", cm, cc.value, cd, cl.value)
 	return false
 }
 
