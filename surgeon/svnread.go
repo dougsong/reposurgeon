@@ -1464,12 +1464,13 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 		if lastmark != "" {
 			commit.setParentMarks([]string{lastmark})
 		}
-		lastmark = commit.mark
 
 		commit.setMark(sp.repo.newmark())
 		sp.repo.addEvent(commit)
 		sp.revmarks[intToRevidx(ri)] = commit.mark
 		sp.repo.declareSequenceMutation("adding new commit")
+
+		lastmark = commit.mark
 	}
 	baton.endProgress()
 }
@@ -1876,6 +1877,9 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 		deleteables = append(deleteables, i)
 		mutex.Unlock()
 	}
+	isTag := func(branch string) bool {
+		return strings.HasPrefix(branch, "/refs/tags") && strings.HasPrefix(branch, "/refs/deleted/tags")
+	}
 	baton.startProgress("process SVN, phase A: de-junking", uint64(len(sp.repo.events)))
 	walkEvents(sp.repo.events, func(i int, event Event) {
 		if commit, ok := event.(*Commit); ok {
@@ -1902,10 +1906,10 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 			if len(m) > 0 && !commit.hasChildren() {
 				safedelete(i)
 			}
-			// Branch copies with no later commits on the branch should
+			// Tag copies with no later commits on the branch should
 			// lose their fileops so they'll be tagified in a later phase.
-			if !commit.hasChildren() && len(commit.operations()) > 0  && commit.getColor() == colorGEN {
-				logit(logEXTRACT, "pruning empty branch copy commit %s", commit.idMe())
+			if len(commit.operations()) > 0 && isTag(commit.Branch) && commit.getColor() == colorGEN {
+				logit(logEXTRACT, "pruning tag copy commit %s", commit.idMe())
 				commit.setOperations(nil)
 			}
 		}
