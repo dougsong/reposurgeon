@@ -1877,9 +1877,6 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 		deleteables = append(deleteables, i)
 		mutex.Unlock()
 	}
-	isTag := func(branch string) bool {
-		return strings.HasPrefix(branch, "/refs/tags") && strings.HasPrefix(branch, "/refs/deleted/tags")
-	}
 	baton.startProgress("process SVN, phase A: de-junking", uint64(len(sp.repo.events)))
 	walkEvents(sp.repo.events, func(i int, event Event) {
 		if commit, ok := event.(*Commit); ok {
@@ -1906,11 +1903,10 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 			if len(m) > 0 && !commit.hasChildren() {
 				safedelete(i)
 			}
-			// Tag copies with no later commits on the branch should
-			// lose their fileops so they'll be tagified in a later phase.
-			if len(commit.operations()) > 0 && isTag(commit.Branch) && commit.getColor() == colorGEN {
-				logit(logEXTRACT, "pruning tag copy commit %s", commit.idMe())
+			// Nuke everything we threw in the deleted namespace
+			if strings.HasPrefix(commit.Branch, "refs/deleted/") {
 				commit.setOperations(nil)
+				safedelete(i)
 			}
 		}
 	loopend:
