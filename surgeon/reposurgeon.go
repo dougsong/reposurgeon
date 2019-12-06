@@ -7587,31 +7587,30 @@ func (repo *Repository) commits(selection orderedIntSet) []*Commit {
 // Dump legacy references.
 func (repo *Repository) writeLegacyMap(fp io.Writer) error {
 	keylist := make([]string, 0)
-	for key := range repo.legacyMap {
-		keylist = append(keylist, key)
+	for key, commit := range repo.legacyMap {
+		if commit.legacyID != "" && commit.mark != "" && repo.markToIndex(commit.mark) != -1 {
+			keylist = append(keylist, key)
+		}
 	}
 	sort.Slice(keylist, func(i, j int) bool {
-		return keylist[i] < keylist[j]
+		ki := keylist[i]
+		ci := repo.eventToIndex(repo.legacyMap[ki])
+		kj := keylist[j]
+		cj := repo.eventToIndex(repo.legacyMap[kj])
+		return ci < cj || (ci == cj && ki < kj)
 	})
+	seen := map[string]int{}
 	for _, cookie := range keylist {
 		commit := repo.legacyMap[cookie]
-		var serial string
-		if strings.Contains(cookie, "SVN") && strings.Contains(cookie, splitSep) {
-			serial = ":" + strings.Split(cookie, splitSep)[1]
-		} else {
-			serial = ""
-		}
-		// The markToEvent test is needed in case this
-		// repo is an expunge fragment with a copied
-		// legacy map.  It's a simple substitute for
-		// partitioning the map at expunge time.
-		if repo.markToEvent(commit.mark) != nil && commit.legacyID != "" {
-			// Someday check errors here?
-			fmt.Fprintf(fp, "%s\t%s!%s%s\n", cookie,
+		id := fmt.Sprintf("%s!%s",
 				commit.committer.date.rfc3339(),
-				commit.committer.email,
-				serial)
+				commit.committer.email)
+		serial := ""
+		if seen[id] > 0 {
+			serial += fmt.Sprintf(":%d", seen[id]+1)
 		}
+		seen[id] += 1
+		fmt.Fprintf(fp, "%s\t%s%s\n", cookie, id, serial)
 		control.baton.twirl()
 	}
 	return nil
