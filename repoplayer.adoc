@@ -1,4 +1,4 @@
-= repoplayer1) =
+= repoplayer(1) =
 :doctype: manpage
 
 == NAME ==
