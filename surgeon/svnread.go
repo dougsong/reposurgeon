@@ -77,10 +77,7 @@ type svnReader struct {
 
 // isDeclaredBranch returns true iff the user requested that this path be treated as a branch or tag.
 func isDeclaredBranch(path string) bool {
-	np := path
-	if strings.HasSuffix(path, svnSep) {
-		np = path[:len(path)-1]
-	}
+	np := strings.TrimRight(path, svnSep)
 	maybeBranch := false
 	isNamespace := false
 	for _, trial := range control.listOptions["svn_branchify"] {
@@ -96,14 +93,9 @@ func isDeclaredBranch(path string) bool {
 			} else if trialBase == filepath.Dir(np) {
 				maybeBranch = true
 			}
-		} else {
-			if strings.HasSuffix(trial, svnSep) {
-				trial = trial[:len(trial)-1]
-			}
-			if trial == np {
-				// Exact match
-				return true
-			}
+		} else if strings.TrimRight(trial, svnSep) == np {
+			// Exact match
+			return true
 		}
 	}
 	return maybeBranch && !isNamespace
