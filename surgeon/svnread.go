@@ -1740,94 +1740,85 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 		return
 	}
 	defer trace.StartRegion(ctx, "SVN Phase 9: parent link fixups").End()
-	logit(logEXTRACT, "SVN Phase 9a: branch link compilation")
-	baton.startProgress("process SVN, phase 9a: branch link compilation", uint64(len(sp.streamview)))
-	lastcopy := make(map[string]revlink)
-	for index, node := range sp.streamview {
-		if node.isCopy() {
-			logit(logEXTRACT, "looking at %v", node)
-			// Record branch copies in a form that is convenient for dealing with
-			// improper tag copies like the tagpollute.svn testload.
-			var targetbranch string
-			if isDeclaredBranch(node.path) {
-				targetbranch = node.path
-			} else {
-				branch, _ := splitSVNBranchPath(node.path)
-				if branch != "" {
-					targetbranch = branch + svnSep
-					logit(logEXTRACT, "r%d#%d: impure branch copy %s corrected to %s",
-						node.revision, node.index, node.path, targetbranch)
-				}
-			}
-			if targetbranch != "" {
-				oldlink := lastcopy[targetbranch]
-				// Record the last copy to the target branch.  Copies to subdirectories
-				// are mapped to the most specific including branch.  These branch paths
-				// wpuld have to be remapped before they can be used in gitspace, but this
-				// should be all the information required to make gitspace branch links.
-				// Ugh...unless a copy is based on a nontrivially split commit!
-				var increment int
-				if oldlink.source != node.fromRev {
-					increment++
-				}
-				lastcopy[targetbranch] = revlink{source:node.fromRev,
-					target:node.revision,
-					copycount:oldlink.copycount+increment}
-			}
-		}
-		baton.percentProgress(uint64(index) + 1)
-	}
-
-	// Now that we've collected all these connections, we can throw out the actual branches
-	// and index by the way we're going to need to look these up.
-	logit(logEXTRACT, "lastcopy is %v", lastcopy)
-	for _, v := range lastcopy {
-		if v.copycount > 1 {
-			logit(logEXTRACT, "dubious copy set with links from %d revisions has target <%d>", v.copycount, v.target)
-		}
-		sp.branchlinks[v.target] = v.source
-	}
-	logit(logEXTRACT, "branchlinks are %v", sp.branchlinks)
-	logit(logEXTRACT, "revmarks are are %v", sp.revmarks)
-
-	logit(logEXTRACT, "SVN Phase 9b: parent link fixups")
-	baton.startProgress("process SVN, phase 9b: parent link fixups", uint64(len(sp.repo.events)))
+	logit(logEXTRACT, "SVN Phase 9a: restore content-impacting links")
+	baton.startProgress("process SVN, phase 9a: restore content-impacting links",
+	                    uint64(len(sp.repo.events)))
+	lastCommitOnBranch := map[string] *Commit{}
+	maybeRoots := make([]int, 0);
 	for index, event := range sp.repo.events {
-		commit, ok := event.(*Commit)
-		if !ok {
-			continue
-		}
-		if sp.branches[commit.Branch] == nil {
-			logit(logEXTRACT, "commit %s is root of branch %s", commit.mark, commit.Branch)
-			sp.branches[commit.Branch] = new(branchMeta)
-			sp.branches[commit.Branch].root = commit
-			rootrev, err := strconv.Atoi(commit.legacyID)
-			if err != nil {
-				// This can happen if the first commit of a branch is split.  That would be so weird
-				// that we're not gonna believe it until we see it.
-				logit(logEXTRACT, "ill-formed legacy ID %s at branch root of %s", commit.legacyID, commit.Branch)
-				continue
+		if commit, ok := event.(*Commit); ok {
+			branch := sp.markToSVNBranch[commit.mark]
+			if prev, found := lastCommitOnBranch[branch]; found {
+				commit.setParents([]CommitLike{prev})
 			} else {
-				parent, ok := sp.branchlinks[intToRevidx(rootrev)]
-				if !ok {
-					logit(logEXTRACT, "missing parent for %s", commit.idMe())
-					// Must do this explicitly, because a default parent
-					// mark was set back in Phase 4.
-					commit.setParentMarks(nil)
-				} else if parentMark, ok := sp.revmarks[parent]; ok {
-					// Because there is no revidxToMarkidx
-					logit(logEXTRACT, "parent link for %s is %s", commit.idMe(), sp.revmarks[parent])
-					commit.setParentMarks([]string{parentMark})
-				} else {
-					logit(logEXTRACT, "parent link for %s defaults to previous", commit.idMe())
+				commit.setParents(nil)
+				maybeRoots = append(maybeRoots, index)
+			}
+			ops := commit.operations()
+			if len(ops) > 0 && ops[len(ops)-1].op == deleteall {
+				// Anything after this commit on the branch is unrelated
+				delete(lastCommitOnBranch, branch)
+			} else {
+				lastCommitOnBranch[branch] = commit
+			}
+		}
+		baton.percentProgress(uint64(index) + 1)
+	}
+	lastCommitOnBranch = nil
+	baton.endProgress()
+	logit(logEXTRACT, "SVN Phase 9b: find the parent of branch roots")
+	baton.startProgress("process SVN, phase 9b: find the parent of branch roots", uint64(len(maybeRoots)))
+	var parentlock sync.Mutex
+	reparent := func(commit, parent *Commit) {
+		// Prepend a deleteall to avoid inheriting our new parent's content
+		parentlock.Lock()
+		fileop := newFileOp(sp.repo)
+		fileop.construct(deleteall)
+		commit.prependOperation(fileop)
+		commit.setParents([]CommitLike{parent})
+		parentlock.Unlock()
+	}
+	for _, myindex := range maybeRoots {
+		commit := sp.repo.events[myindex].(*Commit) // All events in maybeRoots are commits
+		branch := sp.markToSVNBranch[commit.mark]
+		rev, _ := strconv.Atoi(commit.legacyID)
+		if rev > 0 && rev < len(sp.revisions) {
+			record := sp.revisions[rev]
+			for _, node := range record.nodes {
+				if node.kind == sdDIR {
+					nodepath := strings.TrimRight(node.path, svnSep)
+					if nodepath == branch && node.fromRev != 0 {
+						index := -1
+						// Find the first revision that has a commit
+						for fromrev := int(node.fromRev); fromrev < len(sp.revisions); fromrev++ {
+							if parent, ok := sp.repo.legacyMap[fmt.Sprintf("SVN:%d", fromrev)]; ok {
+								index = sp.repo.eventToIndex(parent)
+								break
+							}
+						}
+						if index == -1 {
+							return
+						}
+						// Now find the first commit with the correct branch
+						frompath := strings.TrimRight(node.fromPath, svnSep)
+						for ; index < myindex; index++ {
+							if parent, ok := sp.repo.events[index].(*Commit); ok {
+								parentbranch := sp.markToSVNBranch[parent.mark]
+								l := len(parentbranch)
+								if strings.HasPrefix(frompath, parentbranch) &&
+										(len(frompath) == l || frompath[l:l+1] == svnSep) {
+									logit(logTOPOLOGY,
+										"Link from %s (r%s) to %s (r%d) found by copy-from",
+										parent.mark, parent.legacyID, commit.mark, rev)
+									reparent(commit, parent)
+									return
+								}
+							}
+						}
+					}
 				}
 			}
-		} else {
-			logit(logEXTRACT, "commit %s has parent %s on branch %s", commit.mark, sp.branches[commit.Branch].tip.mark, commit.Branch)
-			commit.setParents([]CommitLike{sp.branches[commit.Branch].tip})
 		}
-		sp.branches[commit.Branch].tip = commit
-		baton.percentProgress(uint64(index) + 1)
 	}
 	baton.endProgress()
 
