@@ -18,7 +18,6 @@
 # The -R option sets a read limit to the dump parsing, for speed
 # The -e option sets exckude patterbs to ignore uninteresting tags and branches
 # The -B option makes liftcheck use --nobranch to compare against a flat repository.
-#               If the repository has no trunk, this option is enforced.
 #
 # The REPOSURGEON environment variable can be used to substitute in a
 # different implementation.
@@ -87,11 +86,6 @@ ${REPOSURGEON:-../reposurgeon} "${TESTOPT}" "${rlimit}" "read ${nobranch} <${wha
     "prefer git" "rebuild ${stem}-git" "write >${stem}.gfi" \
     "legacy write>${stem}.legacy" >&-
 
-if [ ! -e ${stem}-checkout/trunk ]
-then
-    nobranch=--nobranch
-fi
-
 if [ -n "${revision}" ]
 then
     # Create a list of commits with corresponding legacy map entries
@@ -155,6 +149,11 @@ then
             ${stem}-checkout ${stem}-git
     done
 else
+
+    if [ ! -e ${stem}-checkout/trunk ]
+    then
+        compareopt="$compareopt --notrunk"
+    fi
 
     # Compare the original with the lift
     ../repotool ${repotoolopt} compare-all ${compareopt} ${nobranch} \
