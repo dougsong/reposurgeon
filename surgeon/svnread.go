@@ -1540,6 +1540,8 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 		baseID := base.legacyID
 		base.Comment += splitwarn
 		base.legacyID += ".1"
+		sp.repo.legacyMap["SVN:" + base.legacyID] = base
+		delete(sp.repo.legacyMap, "SVN:" + baseID)
 		for j := 1; j <= len(split.splits); j++ {
 			fragment := sp.repo.events[split.loc+j].(*Commit)
 			fragment.legacyID = baseID + "." + strconv.Itoa(j+1)
@@ -1724,9 +1726,18 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 					nodepath := strings.TrimRight(node.path, svnSep)
 					if nodepath == branch && node.fromRev != 0 {
 						index := -1
-						// Find the first revision that has a commit
-						for fromrev := int(node.fromRev); fromrev < len(sp.revisions); fromrev++ {
+						// Maybe the "fromRev" revision has no commit associated
+						// with it, because it was empty and was pruned early in
+						// 0GenerateCommits(). Find out the first revision in the
+						// [fromRev;rev] interval that has a commit. We also try
+						// appending a ".1" to the legacy cookie in case the
+						// commit was split.
+						for fromrev := int(node.fromRev); fromrev <= rev; fromrev++ {
 							if parent, ok := sp.repo.legacyMap[fmt.Sprintf("SVN:%d", fromrev)]; ok {
+								index = sp.repo.eventToIndex(parent)
+								break
+							}
+							if parent, ok := sp.repo.legacyMap[fmt.Sprintf("SVN:%d.1", fromrev)]; ok {
 								index = sp.repo.eventToIndex(parent)
 								break
 							}
@@ -1734,7 +1745,10 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 						if index == -1 {
 							return
 						}
-						// Now find the first commit with the correct branch
+						// With bad luck, the commit we found did not happen on the branch
+						// from which the copy was. Find the first commit on the correct
+						// branch, stopping when we reach ourselves to not create a link
+						// from the future.
 						frompath := strings.TrimRight(node.fromPath, svnSep)
 						for ; index < myindex; index++ {
 							if parent, ok := sp.repo.events[index].(*Commit); ok {
