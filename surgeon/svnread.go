@@ -1743,7 +1743,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 							}
 						}
 						if index == -1 {
-							return
+							goto next
 						}
 						// With bad luck, the commit we found did not happen on the branch
 						// from which the copy was. Find the first commit on the correct
@@ -1754,13 +1754,14 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 							if parent, ok := sp.repo.events[index].(*Commit); ok {
 								parentbranch := sp.markToSVNBranch[parent.mark]
 								l := len(parentbranch)
+								logit(logTOPOLOGY, "LINK: %v | %v", parentbranch, frompath)
 								if strings.HasPrefix(frompath, parentbranch) &&
 										(len(frompath) == l || frompath[l:l+1] == svnSep) {
 									logit(logTOPOLOGY,
 										"Link from %s (r%s) to %s (r%d) found by copy-from",
 										parent.mark, parent.legacyID, commit.mark, rev)
 									reparent(commit, parent)
-									return
+									goto next
 								}
 							}
 						}
@@ -1768,6 +1769,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 				}
 			}
 		}
+		next:
 	}
 	baton.endProgress()
 
