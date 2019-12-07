@@ -5474,7 +5474,7 @@ func (commit *Commit) canonicalize() {
 	// Discard everything before the last deletall
 	commit.discardOpsBeforeLastDeleteAll()
 	ops := commit.operations()
-	if len(ops) == 0 || ops[0].op == deleteall {
+	if len(ops) == 0 || (len(ops) == 1 && ops[0].op == deleteall) {
 		return
 	}
 	// Get paths touched by non-deleteall operations.
@@ -5498,7 +5498,15 @@ func (commit *Commit) canonicalize() {
 	current := commit.manifest()
 	newops := make([]*FileOp, 0)
 	// Generate needed D fileops.
-	if commit.fileops[0].op != deleteall {
+	if commit.fileops[0].op == deleteall {
+		for _, cpath := range previous.pathnames() {
+			if _, found := current.get(cpath); !found {
+				fileop := newFileOp(commit.repo)
+				fileop.construct(opD, cpath)
+				newops = append(newops, fileop)
+			}
+		}
+	} else {
 		// Only files touched by non-deleteall ops might disappear.
 		for _, cpath := range paths {
 			_, old := previous.get(cpath)
