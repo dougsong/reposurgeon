@@ -17136,10 +17136,7 @@ func (rs *Reposurgeon) DoBranch(line string) bool {
 				return false
 			}
 		} else {
-			if !strings.Contains(branchname, "/") {
-				branchname = "refs/heads/" + branchname
-			}
-			if !repo.branchset().Contains(branchname) {
+			if !repo.branchset().Contains("refs/heads/" + branchname) {
 				croak("no such branch as %s", branchname)
 				return false
 			}
@@ -17148,9 +17145,9 @@ func (rs *Reposurgeon) DoBranch(line string) bool {
 		deletia := make([]int, 0)
 		for _, ei := range selection {
 			event := repo.events[ei]
-			if reset, ok := event.(*Reset); ok && branchre.MatchString(reset.ref) {
+			if reset, ok := event.(*Reset); ok && reset.ref[:11] == "refs/heads/" && branchre.MatchString(reset.ref[11:]) {
 				deletia = append(deletia, ei)
-			} else if commit, ok := event.(*Commit); ok && branchre.MatchString(commit.Branch) {
+			} else if commit, ok := event.(*Commit); ok && commit.Branch[:11] == "refs/heads/" && branchre.MatchString(commit.Branch[11:]) {
 				deletia = append(deletia, ei)
 			}
 			control.baton.twirl()
@@ -17300,10 +17297,10 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 			event := repo.events[idx]
 			if tag, ok := event.(*Tag); ok && tagre.MatchString(tag.name) {
 				tags = append(tags, tag)
-			} else if reset, ok := event.(*Reset); ok && tagre.MatchString(reset.ref[11:]) {
+			} else if reset, ok := event.(*Reset); ok && reset.ref[:11] == "refs/heads/" && tagre.MatchString(reset.ref[11:]) {
 				// len("refs/heads/") = 11
 				resets = append(resets, reset)
-			} else if commit, ok := event.(*Commit); ok && tagre.MatchString(commit.Branch[10:]) {
+			} else if commit, ok := event.(*Commit); ok && commit.Branch[:10] == "refs/tags/" && tagre.MatchString(commit.Branch[10:]) {
 				// len("refs/tags/") = 10
 				commits = append(commits, commit)
 			}

@@ -1,8 +1,7 @@
 ## Test of tag deletion by regexp
 set echo
-read <tagify.fi
+read <snarl.svn
 tagify
-<emptycommit-mark5> inspect
-tag /emptycommit/ delete
+<emptycommit-6> inspect
+tag /INITIAL_IMPORT/ delete
 write -
-
