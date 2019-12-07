@@ -874,10 +874,10 @@ func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton
 	timeit("splits")
 	svnProcessBranches(ctx, sp, options, baton)
 	timeit("branches")
-	svnDisambiguateRefs(ctx, sp, options, baton)
-	timeit("disambiguate")
 	svnLinkFixups(ctx, sp, options, baton)
 	timeit("links")
+	svnDisambiguateRefs(ctx, sp, options, baton)
+	timeit("disambiguate")
 	svnProcessJunk(ctx, sp, options, baton)
 	timeit("dejunk")
 	svnProcessTagEmpties(ctx, sp, options, baton)
@@ -1617,73 +1617,8 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 	})
 }
 
-func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	// Phase 8:
-	// Intervene to prevent lossage from tag/branch/trunk deletions.
-	//
-	// The Subversion data model is that a history is a sequence of surgical
-	// operations on a tree, and a tag is just another branch of the tree.
-	// Tag/branch deletions are a place where this clashes badly with the
-	// changeset-DAG model used by git and oter DVCSes, especially if the same
-	// tag/branch is recreated later.
-	//
-	// To avoid loosing history, when a tag or branch is deleted we move it to
-	// the refs/deleted/ namespace, with a suffix in case of clashes. A branch
-	// is considered deleted when we encounter a commit with a single deleteall
-	// fileop.
-	defer trace.StartRegion(ctx, "SVN Phase 8: disambiguate deleted refs.").End()
-	logit(logEXTRACT, "SVN Phase 8: disambiguate deleted refs.")
-	// First we build a map from branches to commits with that branch, to avoid
-	// an O(n^2) computation cost.
-	branchToCommits := map[string] []*Commit{}
-	commitCount := 0
-	for _, event := range sp.repo.events {
-		if commit, ok := event.(*Commit); ok {
-			branchToCommits[commit.Branch] = append(branchToCommits[commit.Branch], commit)
-			commitCount++
-		}
-	}
-	// For each branch, iterate through commits with that branch, searching for
-	// deleteall-only commits that mean the branch is being deleted.
-	usedRefs := map[string]int{}
-	processed := 0
-	seen := 0
-	baton.startProgress("process SVN, phase 8: disambiguate deleted refs.", uint64(commitCount))
-	for branch, commits := range branchToCommits {
-		lastFixed := -1
-		for i, commit := range commits {
-			ops := commit.operations()
-			if len(ops) > 0 && ops[len(ops)-1].op == deleteall {
-				// Fix the branch of all the previous commits whose branch has
-				// not yet been fixed.
-				if !strings.HasPrefix(branch, "refs/") {
-					croak("r%s (%s): Impossible branch %s",
-					      commit.legacyID, commit.mark, branch)
-				}
-				newname := fmt.Sprintf("refs/deleted/r%s/%s", commit.legacyID, branch[len("refs/"):])
-				used := usedRefs[newname]
-				usedRefs[newname]++
-				if used > 0 {
-					newname += fmt.Sprintf("-%d", used)
-				}
-				for j := lastFixed + 1; j <= i; j++ {
-					commits[j].setBranch(newname)
-				}
-				lastFixed = i
-				logit(logTAGFIX, "r%s (%s): deleted ref %s renamed to %s.",
-					commit.legacyID, commit.mark, branch, newname)
-				processed++
-			}
-			seen++
-			baton.percentProgress(uint64(seen))
-		}
-	}
-	logit(logTAGFIX, "%d deleted refs were put away.", processed)
-	baton.endProgress()
-}
-
 func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	// Phase 9:
+	// Phase 8:
 	// The branches we colored in during the last phase almost
 	// completely define the topology of the DAG, except for the
 	// location of their root points. At first sight computing the
@@ -1736,12 +1671,12 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	// most likely source of bugs in the analyzer.
 	//
 	if options.Contains("--nobranch") {
-		logit(logEXTRACT, "SVN Phase 9: parent link fixups (skipped due to --nobranch)")
+		logit(logEXTRACT, "SVN Phase 8: parent link fixups (skipped due to --nobranch)")
 		return
 	}
-	defer trace.StartRegion(ctx, "SVN Phase 9: parent link fixups").End()
-	logit(logEXTRACT, "SVN Phase 9a: restore content-impacting links")
-	baton.startProgress("process SVN, phase 9a: restore content-impacting links",
+	defer trace.StartRegion(ctx, "SVN Phase 8: parent link fixups").End()
+	logit(logEXTRACT, "SVN Phase 8a: restore content-impacting links")
+	baton.startProgress("process SVN, phase 8a: restore content-impacting links",
 	                    uint64(len(sp.repo.events)))
 	lastCommitOnBranch := map[string] *Commit{}
 	maybeRoots := make([]int, 0);
@@ -1766,8 +1701,8 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	}
 	lastCommitOnBranch = nil
 	baton.endProgress()
-	logit(logEXTRACT, "SVN Phase 9b: find the parent of branch roots")
-	baton.startProgress("process SVN, phase 9b: find the parent of branch roots", uint64(len(maybeRoots)))
+	logit(logEXTRACT, "SVN Phase 8b: find the parent of branch roots")
+	baton.startProgress("process SVN, phase 8b: find the parent of branch roots", uint64(len(maybeRoots)))
 	var parentlock sync.Mutex
 	reparent := func(commit, parent *Commit) {
 		// Prepend a deleteall to avoid inheriting our new parent's content
@@ -1850,6 +1785,71 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	}
 
 	// FIXME: Make branch-tip resets?
+}
+
+func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	// Phase 9:
+	// Intervene to prevent lossage from tag/branch/trunk deletions.
+	//
+	// The Subversion data model is that a history is a sequence of surgical
+	// operations on a tree, and a tag is just another branch of the tree.
+	// Tag/branch deletions are a place where this clashes badly with the
+	// changeset-DAG model used by git and oter DVCSes, especially if the same
+	// tag/branch is recreated later.
+	//
+	// To avoid loosing history, when a tag or branch is deleted we move it to
+	// the refs/deleted/ namespace, with a suffix in case of clashes. A branch
+	// is considered deleted when we encounter a commit with a single deleteall
+	// fileop.
+	defer trace.StartRegion(ctx, "SVN Phase 9: disambiguate deleted refs.").End()
+	logit(logEXTRACT, "SVN Phase 9: disambiguate deleted refs.")
+	// First we build a map from branches to commits with that branch, to avoid
+	// an O(n^2) computation cost.
+	branchToCommits := map[string] []*Commit{}
+	commitCount := 0
+	for _, event := range sp.repo.events {
+		if commit, ok := event.(*Commit); ok {
+			branchToCommits[commit.Branch] = append(branchToCommits[commit.Branch], commit)
+			commitCount++
+		}
+	}
+	// For each branch, iterate through commits with that branch, searching for
+	// deleteall-only commits that mean the branch is being deleted.
+	usedRefs := map[string]int{}
+	processed := 0
+	seen := 0
+	baton.startProgress("process SVN, phase 9: disambiguate deleted refs.", uint64(commitCount))
+	for branch, commits := range branchToCommits {
+		lastFixed := -1
+		for i, commit := range commits {
+			ops := commit.operations()
+			if len(ops) > 0 && ops[len(ops)-1].op == deleteall {
+				// Fix the branch of all the previous commits whose branch has
+				// not yet been fixed.
+				if !strings.HasPrefix(branch, "refs/") {
+					croak("r%s (%s): Impossible branch %s",
+					      commit.legacyID, commit.mark, branch)
+				}
+				newname := fmt.Sprintf("refs/deleted/r%s/%s", commit.legacyID, branch[len("refs/"):])
+				used := usedRefs[newname]
+				usedRefs[newname]++
+				if used > 0 {
+					newname += fmt.Sprintf("-%d", used)
+				}
+				for j := lastFixed + 1; j <= i; j++ {
+					commits[j].setBranch(newname)
+				}
+				lastFixed = i
+				logit(logTAGFIX, "r%s (%s): deleted ref %s renamed to %s.",
+					commit.legacyID, commit.mark, branch, newname)
+				processed++
+			}
+			seen++
+			baton.percentProgress(uint64(seen))
+		}
+	}
+	logit(logTAGFIX, "%d deleted refs were put away.", processed)
+	baton.endProgress()
 }
 
 func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
