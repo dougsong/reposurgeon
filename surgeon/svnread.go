@@ -115,11 +115,7 @@ func splitSVNBranchPath(path string) (string, string) {
 	for {
 		split := strings.LastIndex(candidate, svnSep)
 		if split == -1 {
-			if isDeclaredBranch(path) {
-				return path, ""
-			} else {
-				return "", path
-			}
+			return "", path
 		}
 		candidate = path[:split]
 		if isDeclaredBranch(candidate) {
