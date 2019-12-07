@@ -1271,7 +1271,6 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 		}
 
 		commit.legacyID = fmt.Sprintf("%d", record.revision)
-		sp.repo.legacyMap["SVN:" + commit.legacyID] = commit
 		commit.setColor(colorGEN)
 		for _, node := range record.nodes {
 			if node.action == sdNONE {
@@ -1459,6 +1458,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 		sp.repo.declareSequenceMutation("adding new commit")
 
 		lastmark = commit.mark
+		sp.repo.legacyMap["SVN:" + commit.legacyID] = commit
 	}
 	baton.endProgress()
 }
