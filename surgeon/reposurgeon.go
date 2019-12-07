@@ -9773,9 +9773,6 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 			vcs.name)
 
 	}
-	if preferred.name == "git" && !repo.branchset().Contains("refs/heads/master") {
-		return fmt.Errorf("%s has no master branch and thus will not rebuild properly", repo.name)
-	}
 	chdir := func(directory string, legend string) {
 		os.Chdir(directory)
 		logit(logSHUFFLE, "changing directory to %s: %s", legend, directory)
@@ -9857,6 +9854,18 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		err = repo.writeLegacyMap(wfp)
 		if err != nil {
 			return err
+		}
+	}
+	if preferred.name == "git" {
+		// Prefer master, but choose another one if master does not exist
+		var branch string
+		for _, branch = range repo.branchset() {
+			if branch == "refs/heads/master" {
+				break
+			}
+		}
+		if branch != "" {
+			runProcess(fmt.Sprintf("git symbolic-ref HEAD %s", branch), "setting default branch")
 		}
 	}
 	if vcs.checkout != "" {
