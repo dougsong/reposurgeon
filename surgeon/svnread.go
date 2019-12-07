@@ -1879,9 +1879,11 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 			// get turned into actual tags.
 			m := cvs2svnTagRE.FindStringSubmatch(commit.Comment)
 			if len(m) > 1 && !commit.hasChildren() {
-				fulltag := filepath.Join("refs", "tags", m[1])
-				newtags = append(newtags, newReset(sp.repo, fulltag,
-					commit.parentMarks()[0]))
+				if commit.hasParents() {
+					fulltag := filepath.Join("refs", "tags", m[1])
+					newtags = append(newtags, newReset(sp.repo, fulltag,
+						commit.parentMarks()[0]))
+				}
 				safedelete(i)
 			}
 			// cvs2svn-generated branch commits carry no informationn,
