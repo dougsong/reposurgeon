@@ -17074,6 +17074,14 @@ restricted by a selection set in the normal way.  No third argument is
 required.`)
 }
 
+func branchNameMatches(name string, regex *regexp.Regexp) bool {
+	return strings.HasPrefix(name, "refs/heads/") && regex.MatchString(name[11:])
+}
+
+func tagNameMatches(name string, regex *regexp.Regexp) bool {
+	return strings.HasPrefix(name, "refs/tags/") && regex.MatchString(name[10:])
+}
+
 // Rename a branch or delete it.
 func (rs *Reposurgeon) DoBranch(line string) bool {
 	if rs.chosen() == nil {
@@ -17145,9 +17153,9 @@ func (rs *Reposurgeon) DoBranch(line string) bool {
 		deletia := make([]int, 0)
 		for _, ei := range selection {
 			event := repo.events[ei]
-			if reset, ok := event.(*Reset); ok && reset.ref[:11] == "refs/heads/" && branchre.MatchString(reset.ref[11:]) {
+			if reset, ok := event.(*Reset); ok && branchNameMatches(reset.ref, branchre) {
 				deletia = append(deletia, ei)
-			} else if commit, ok := event.(*Commit); ok && commit.Branch[:11] == "refs/heads/" && branchre.MatchString(commit.Branch[11:]) {
+			} else if commit, ok := event.(*Commit); ok && branchNameMatches(commit.Branch, branchre) {
 				deletia = append(deletia, ei)
 			}
 			control.baton.twirl()
@@ -17295,13 +17303,11 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 		}
 		for _, idx := range selection {
 			event := repo.events[idx]
-			if tag, ok := event.(*Tag); ok && tagre.MatchString(tag.name) {
+			if tag, ok := event.(*Tag); ok && tagNameMatches(tag.name, tagre) {
 				tags = append(tags, tag)
-			} else if reset, ok := event.(*Reset); ok && reset.ref[:11] == "refs/heads/" && tagre.MatchString(reset.ref[11:]) {
-				// len("refs/heads/") = 11
+			} else if reset, ok := event.(*Reset); ok && tagNameMatches(reset.ref, tagre) {
 				resets = append(resets, reset)
-			} else if commit, ok := event.(*Commit); ok && commit.Branch[:10] == "refs/tags/" && tagre.MatchString(commit.Branch[10:]) {
-				// len("refs/tags/") = 10
+			} else if commit, ok := event.(*Commit); ok && tagNameMatches(commit.Branch, tagre) {
 				commits = append(commits, commit)
 			}
 			control.baton.twirl()
