@@ -13,8 +13,8 @@
 #               The corresponding git commit is found with the legacy map, which means
 #               only the branch modified in the revision will be compared, unless the
 #               -B option is also used to make a flat repository.
-#               You can use an integer range min-max, or "all", to check multiple
-#               revisions in a row. Non-existing revisions are silently ignored.
+#               You can use the "all" keyword or a range min-max to check multiple
+#               revisions in a row. Non-existing revisions are silently ignored,
 # The -R option sets a read limit to the dump parsing, for speed
 # The -e option sets exckude patterbs to ignore uninteresting tags and branches
 # The -B option makes liftcheck use --nobranch to compare against a flat repository.
@@ -100,21 +100,33 @@ then
     rm ${stem}.gfi
     mv ${stem}.gfi2 ${stem}.gfi
 
+    # Filter the legacy map to keep only SVN: entries
+    grep '^SVN:' ${stem}.legacy > ${stem}.legacy2
+    rm ${stem}.legacy
+    mv ${stem}.legacy2 ${stem}.legacy
+
     if [ ${revision} = "all" ]
     then
         min=1
-        max=`cat ${stem}.gitmap | wc -l`
+        max=`tail -n 1 ${stem}.legacy | sed 's/^SVN://; s/\t.*$//; s/\..*$//'`
     else
-        min=`echo ${revision} | sed 's/-.*$//'`
-        max=`echo ${revision} | sed 's/^.*-//'`
+        min=0`echo ${revision} | sed 's/-.*$//'`
+        max=0`echo ${revision} | sed 's/^.*-//'`
     fi
 
-    for revision in `seq ${min} ${max}`
+    while read -r line # input file at the end of the loop
     do
+        revision=`echo "${line}" | sed 's/^SVN://; s/\t.*$//'`
+        intrev=`echo "${revision}" | cut -d. -f1`
+        if [ ${intrev} -lt ${min} -o ${intrev} -gt ${max} ]
+        then
+            continue
+        fi
+
         # Find out the git revision to pass
-        id=`grep "^SVN:${revision}[[:space:]]" ${stem}.legacy --max-count=1 | cut -f 2`
-        count=`echo ${id} | sed 's/^.*![^:]*\($\|.*:\)//'`
-        id=`echo ${id} | sed 's/\(!.*\):[^:]*/\1/'`
+        id=`echo "${line}" | cut -f 2`
+        count=`echo "${id}" | sed 's/^.*![^:]*\($\|.*:\)//'`
+        id=`echo "${id}" | sed 's/\(!.*\):[^:]*/\1/'`
 
         if [ -z "${id}" ]
         then
@@ -124,6 +136,7 @@ then
         then
             count=1
         fi
+
         sha=`grep "^${id}" ${stem}.gitmap --max-count=${count} | tail -n 1 | cut -f 2`
         if [ -z "${sha}" ]
         then
@@ -137,7 +150,7 @@ then
             continue
         fi
 
-        refopt=`echo ${ref} | sed 's!^deleted/r[^/]*/!!; s!^tags/!-t !; s!^heads/!-b !'`
+        refopt=`echo "${ref}" | sed 's!^deleted/r[^/]*/!!; s!^tags/!-t !; s!^heads/!-b !'`
 
         if [ ${progress} != no ]
         then
@@ -145,9 +158,9 @@ then
         fi
         # Compare the original with the lift
         ../repotool ${repotoolopt} compare ${compareopt} \
-            ${nobranch} ${refopt} -r ${revision}:${sha} \
+            ${nobranch} ${refopt} -r ${intrev}:${sha} \
             ${stem}-checkout ${stem}-git
-    done
+    done < ${stem}.legacy
 else
 
     if [ ! -e ${stem}-checkout/trunk ]
