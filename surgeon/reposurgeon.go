@@ -17130,7 +17130,11 @@ func (rs *Reposurgeon) DoBranch(line string) bool {
 		var branchre *regexp.Regexp
 		if branchname[0] == '/' && branchname[len(branchname)-1] == '/' {
 			// Regexp - can refer to a list of branchs matched
-			branchre = regexp.MustCompile(branchname[1 : len(branchname)-1])
+			branchre, err = regexp.Compile(branchname[1 : len(branchname)-1])
+			if err != nil {
+				croak("in branch command: %v", err)
+				return false
+			}
 		} else {
 			if !strings.Contains(branchname, "/") {
 				branchname = "refs/heads/" + branchname
@@ -17283,7 +17287,11 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 	commits := make([]*Commit, 0)
 	if tagname[0] == '/' && tagname[len(tagname)-1] == '/' {
 		// Regexp - can refer to a list of tags matched
-		tagre := regexp.MustCompile(tagname[1 : len(tagname)-1])
+		tagre, err := regexp.Compile(tagname[1 : len(tagname)-1])
+		if err != nil {
+			croak("in tag command: %v", err)
+			return false
+		}
 		selection := rs.selection
 		if selection == nil {
 			selection = repo.all()
