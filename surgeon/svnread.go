@@ -71,6 +71,7 @@ type svnReader struct {
 	branchlinks          map[revidx]revidx
 	branches             map[string]*branchMeta // Points to branch root commits
 	splitCommits         map[revidx]int
+	markToSVNBranch      map[string]string
 }
 
 // Helpers for branch analysis
@@ -1572,6 +1573,8 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 	}
 	defer trace.StartRegion(ctx, "SVN Phase 7: branch renames").End()
 	logit(logEXTRACT, "SVN Phase 7: branch renames")
+	var maplock sync.Mutex
+	sp.markToSVNBranch = make(map[string]string)
 	walkEvents(sp.repo.events, func(i int, event Event) {
 		if commit, ok := event.(*Commit); ok {
 			for i := range commit.fileops {
@@ -1581,6 +1584,9 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 				fileop.Path = fileop.Target
 				fileop.Target = ""
 			}
+			maplock.Lock()
+			sp.markToSVNBranch[commit.mark] = commit.Branch
+			maplock.Unlock()
 			matched := false
 			for _, item := range control.branchMappings {
 				result := GoReplacer(item.match, commit.Branch + svnSep, item.replace)
@@ -1672,7 +1678,7 @@ func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSe
 			baton.percentProgress(uint64(seen))
 		}
 	}
-	logit(logTAGFIX, "%d tags were put away.", processed)
+	logit(logTAGFIX, "%d deleted refs were put away.", processed)
 	baton.endProgress()
 }
 
