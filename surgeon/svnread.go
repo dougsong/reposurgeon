@@ -1820,10 +1820,12 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 					// Must do this explicitly, because a default parent
 					// mark was set back in Phase 4.
 					commit.setParentMarks(nil)
-				} else {
+				} else if parentMark, ok := sp.revmarks[parent]; ok {
 					// Because there is no revidxToMarkidx
 					logit(logEXTRACT, "parent link for %s is %s", commit.idMe(), sp.revmarks[parent])
-					commit.setParentMarks([]string{sp.revmarks[parent]})
+					commit.setParentMarks([]string{parentMark})
+				} else {
+					logit(logEXTRACT, "parent link for %s defaults to previous", commit.idMe())
 				}
 			}
 		} else {
