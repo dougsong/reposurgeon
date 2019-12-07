@@ -481,7 +481,13 @@ def checkout(args):
             relpath = os.path.join("tags", tag)
         elif branch in ("", "master", "trunk") and os.path.isdir("trunk"):
             relpath = "trunk"
+        elif branch and os.path.isdir(os.path.join("branches", branch)):
+            relpath = os.path.join("branches", branch)
+        elif branch and os.path.isdir(branch):
+            complain("branch '%s' found at the root which is non-standard" % branch)
+            relpath = branch
         elif branch and os.path.isdir("branches"):
+            # we know it doesn't exist, treat it as an empty branch
             relpath = os.path.join("branches", branch)
         else:
             croak("invalid branch or tag")
