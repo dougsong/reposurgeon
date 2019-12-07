@@ -753,9 +753,12 @@ def compare_all(args):
             print("Comparing the complete repository...")
         compare(args)
         return
-    if verbose:
-        print("Comparing master...")
-    compare(args)
+    if "--notrunk" in args:
+        args.remove("--notrunk")
+    else:
+        if verbose:
+            print("Comparing master...")
+        compare(args)
     if verbose:
         print("Comparing tags...")
     compare_tags(args)
