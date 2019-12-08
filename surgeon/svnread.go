@@ -1068,11 +1068,6 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 				newnode.revision = intToRevidx(ri)
 				expandedNodes = append(expandedNodes, newnode)
 			}
-			prependExpanded := func(newnode *NodeAction) {
-				newnode.index = intToNodeidx(len(expandedNodes) + 1)
-				newnode.revision = intToRevidx(ri)
-				expandedNodes = append([]*NodeAction{newnode}, expandedNodes...)
-			}
 			// Starting with the nodes in the Subversion
 			// dump, expand them into a set that unpacks
 			// all directory operations into equivalent
@@ -1086,7 +1081,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 					curbranch, _ = splitSVNBranchPath(node.path)
 				}
 				if !branchesWithDefaultIgnore.Contains(curbranch) {
-					prependExpanded(ignorenode(curbranch, ""))
+					appendExpanded(ignorenode(curbranch, ""))
 					branchesWithDefaultIgnore.Add(curbranch)
 				}
 			}
@@ -1106,7 +1101,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 				// Whenever an svn:ignore property is set on a directory,
 				// we want to generate a corresponding .gitignore
 				if node.hasProperties() && node.props.has("svn:ignore") {
-					prependExpanded(ignorenode(node.path, node.props.get("svn:ignore")))
+					appendExpanded(ignorenode(node.path, node.props.get("svn:ignore")))
 					node.props.delete("svn:ignore")
 					presentGitIgnores.Add(node.path)
 				}
