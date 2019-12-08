@@ -134,7 +134,15 @@ then
         # Find the corresponding ref to checkout in SVN
         ref=`echo "${line}" | cut -f 3 | sed 's!refs/!!'`
 
-        if [ -n "${nobranch}" -o "${ref}" = "heads/root" ]
+        # Skip the comparison if the revision is "out of namespaces"
+        # because the Git side will only contain that outside part
+        # while the SVN side will contain the whole repository
+        if [ "${ref}" = "heads/root" ]
+        then
+            continue
+        fi
+
+        if [ -n "${nobranch}" ]
         then
             refopt=--nobranch
         else
