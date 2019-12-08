@@ -134,7 +134,12 @@ then
         # Find the corresponding ref to checkout in SVN
         ref=`echo "${line}" | cut -f 3 | sed 's!refs/!!'`
 
-        refopt=`echo "${ref}" | sed 's!^deleted/r[^/]*/!!; s!^tags/!-t !; s!^heads/!-b !'`
+        if [ -n "${nobranch}" ]
+        then
+            refopt=--nobranch
+        else
+            refopt=`echo "${ref}" | sed 's!^deleted/r[^/]*/!!; s!^tags/!-t !; s!^heads/!-b !'`
+        fi
 
         if [ ${progress} != no ]
         then
@@ -142,7 +147,7 @@ then
         fi
         # Compare the original with the lift
         ../repotool ${repotoolopt} compare ${compareopt} \
-            ${nobranch} --accept-missing ${refopt} -r ${intrev}:${sha} \
+            --accept-missing ${refopt} -r ${intrev}:${sha} \
             ${stem}-checkout ${stem}-git
     done < ${stem}.info
 else
