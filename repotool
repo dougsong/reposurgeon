@@ -550,7 +550,8 @@ def compare(args):
     "Compare two repositories at a specified revision, defaulting to mainline tip."
     if verbose:
         print("compare: %s" % args)
-    (options, arguments) = getopt.getopt(args, "b:e:ir:st:ux:", ["nobranch"])
+    (options, arguments) = getopt.getopt(args, "b:e:ir:st:ux:",
+                                        ["nobranch", "accept-missing"])
     outdir = "."
     branch = ""
     tag = ""
@@ -560,6 +561,7 @@ def compare(args):
     checkout2_args = []
     diff_args = []
     seeignores = False
+    accept_missing = False
     if verbose:
         print("Options: %s" % options)
     for (opt, val) in options:
@@ -578,6 +580,9 @@ def compare(args):
             else:
                 croak("incorrect value for compare -r option.")
         elif opt == '--nobranch':
+            checkout_args.append(opt)
+        elif opt == '--accept-missing':
+            accept_missing = True
             checkout_args.append(opt)
         elif opt in ('-q', '-s', '-u'):
             diff_args.append(opt)
@@ -622,15 +627,16 @@ def compare(args):
         assert(targetdir)
     diffopts += diff_args
     diffopts = " ".join(diffopts)
+    if accept_missing:
+        if not os.path.exists(sourcedir):
+            # replace by empty directory
+            nuke(sourcedir)
+            os.mkdir(sourcedir)
+        if not os.path.exists(targetdir):
+            # replace by empty directory
+            nuke(targetdir)
+            os.mkdir(targetdir)
     # add missing empty directories in checkouts of VCSs that do not support them
-    if not os.path.exists(sourcedir):
-        # replace by empty directory
-        nuke(sourcedir)
-        os.mkdir(sourcedir)
-    if not os.path.exists(targetdir):
-        # replace by empty directory
-        nuke(targetdir)
-        os.mkdir(targetdir)
     dirs_to_nuke = []
     if vcstype(source) not in ("git", "hg") and vcstype(target) in ("git", "hg"):
         with directory_context(sourcedir):

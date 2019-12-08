@@ -82,6 +82,13 @@ option will not be passed to the corresponding repository checkout.
 This is useful to compare a git tag or branch to the corresponding tag
 or branch in SVN as seen at a particular revision (specifying both a
 branch and revision makes sense in SVN, but not in git).
+The --no-branch option is passed to the individual checkout commands
+which means that in cases where it makes sense the complete repository
+will be checked out flatly, treating branch and tag namespaces as simple
+directories. You can also use the --accept-missing option to use an
+empty directory as the checkout if the asked branch or tag cannot be
+found, instead of erroring out without any comparison. This is useful
+when if the other repository uses empty content for deleted refs.
 The selected versions are compared with diff -q -r, with noise
 due to SCCS/RCS/CVS keyword expansion ignored.  You can follow the
 command verb with one or more -x options followed by basenames of
