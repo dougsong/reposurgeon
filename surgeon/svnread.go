@@ -51,6 +51,11 @@ import (
 // Also remove the copyOperations method
 const colorGEN = 4
 
+// FIXME: When we merge, move this
+func (b branchMapping) String() string {
+	return fmt.Sprintf("{match=%s, replace=%s}", b.match, b.replace)
+}
+
 type branchMeta struct {
 	root *Commit
 	tip *Commit
@@ -1592,7 +1597,7 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 			matched := false
 			for _, item := range control.branchMappings {
 				result := GoReplacer(item.match, commit.Branch + svnSep, item.replace)
-				if result != commit.Branch {
+				if result != commit.Branch + svnSep {
 					matched = true
 					commit.setBranch(filepath.Join("refs", result))
 					break

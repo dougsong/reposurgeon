@@ -41,5 +41,6 @@ committer iay <iay> 1436022529 +0000
 data 14
 tag a version
 from :3
+deleteall
 M 100644 :2 file
 
