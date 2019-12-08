@@ -1,5 +1,6 @@
 SVN-fs-dump-format-version: 2
  ## One commit with one byte of binary content.
+ # reposurgeon-read-options: --nobranch
 
 UUID: 2fe81d11-5c7c-4394-a05f-1bfbb52a6bc5
 
