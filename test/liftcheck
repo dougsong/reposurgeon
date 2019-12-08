@@ -142,7 +142,7 @@ then
         fi
         # Compare the original with the lift
         ../repotool ${repotoolopt} compare ${compareopt} \
-            ${nobranch} ${refopt} -r ${intrev}:${sha} \
+            ${nobranch} --accept-missing ${refopt} -r ${intrev}:${sha} \
             ${stem}-checkout ${stem}-git
     done < ${stem}.info
 else
