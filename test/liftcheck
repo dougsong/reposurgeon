@@ -83,8 +83,7 @@ fi
 
 # Make a git repo from the dump using reposurgeon
 ${REPOSURGEON:-../reposurgeon} "${TESTOPT}" "${rlimit}" "read ${nobranch} <${what}" \
-    "prefer git" "rebuild ${stem}-git" "write >${stem}.gfi" \
-    "legacy write>${stem}.legacy" >&-
+    "prefer git" "rebuild ${stem}-git" "write >${stem}.gfi" >&-
 
 if [ -n "${revision}" ]
 then
