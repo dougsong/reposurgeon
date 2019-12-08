@@ -61,7 +61,11 @@ history model, it is possible to specify both a revision and a branch
 or tag specification to get the contents of the branch or tag as seen
 from the given revision. With these VCS types, you can also use the
 --nobranch option to checkout the complete repository instead, where
-all branches and tags are simply subdirectories.
+all branches and tags are simply subdirectories. You can also use the
+--accept-missing option to let 'repotool checkout' return a dangling
+symlink instead of stopping its execution when the asked branch or tag
+has not been found in the SVN namespace (this is currently the default
+for SVN repositories that are yet checked out).
 With most DVCS checkouts, the -r, -t, and -b options are essentially
 synonyms. If given a -c option, checkout is performed from the directory
 specified; this may be convenient when working with CVS or Subversion in

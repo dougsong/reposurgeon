@@ -417,17 +417,21 @@ def checkout(args):
     # Other cases should error out.
     if verbose:
         print("checkout: %s" % args)
-    (options, arguments) = getopt.getopt(args, "b:c:r:t:", ["nobranch"])
+    (options, arguments) = getopt.getopt(args, "b:c:r:t:",
+                                        ["nobranch", "accept-missing"])
     outdir = "."
     branch = ""
     tag = ""
     revision = ""
     nobranch = False
+    accept_missing = False
     for (opt, val) in options:
         if opt == '-b':
             branch = val
         elif opt == '--nobranch':
             nobranch = True
+        elif opt == '--accept-missing':
+            accept_missing = True
         elif opt == '-c':
             os.chdir(val)
         elif opt == '-r':
@@ -477,7 +481,7 @@ def checkout(args):
         relpath = ""
         if nobranch:
             pass # flat repository
-        elif tag and os.path.isdir("tags"):
+        elif tag and (accept_missing or os.path.isdir("tags")):
             relpath = os.path.join("tags", tag)
         elif branch in ("", "master", "trunk") and os.path.isdir("trunk"):
             relpath = "trunk"
@@ -486,8 +490,7 @@ def checkout(args):
         elif branch and os.path.isdir(branch):
             complain("branch '%s' found at the root which is non-standard" % branch)
             relpath = branch
-        elif branch and os.path.isdir("branches"):
-            # we know it doesn't exist, treat it as an empty branch
+        elif branch and accept_missing:
             relpath = os.path.join("branches", branch)
         else:
             croak("invalid branch or tag")
