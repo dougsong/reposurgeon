@@ -1497,7 +1497,6 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 	baton.startProgress("process SVN, phase 6a: split detection", uint64(len(sp.repo.events)))
 	walkEvents(sp.repo.events, func(i int, event Event) {
 		if commit, ok := event.(*Commit); ok {
-			commit.sortOperations()
 			var oldbranch string
 			cliqueIndices := make([]int, 0)
 			// We only generated M and D ops, or special deleteall
@@ -1579,6 +1578,7 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 	sp.markToSVNBranch = make(map[string]string)
 	walkEvents(sp.repo.events, func(i int, event Event) {
 		if commit, ok := event.(*Commit); ok {
+			commit.sortOperations()
 			for i := range commit.fileops {
 				fileop := commit.fileops[i]
 				commit.Branch = fileop.Source
