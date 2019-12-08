@@ -757,14 +757,16 @@ def compare_branches(args):
 
 def compare_all(args):
     "Compare two repos on mainline and at all tags and branches."
+    notrunk = False
+    if "--notrunk" in args:
+        notrunk = True
+        args.remove("--notrunk")
     if "--nobranch" in args:
         if verbose:
             print("Comparing the complete repository...")
         compare(args)
         return
-    if "--notrunk" in args:
-        args.remove("--notrunk")
-    else:
+    if not notrunk:
         if verbose:
             print("Comparing master...")
         compare(args)
