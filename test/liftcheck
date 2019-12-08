@@ -134,7 +134,7 @@ then
         # Find the corresponding ref to checkout in SVN
         ref=`echo "${line}" | cut -f 3 | sed 's!refs/!!'`
 
-        if [ -n "${nobranch}" ]
+        if [ -n "${nobranch}" -o "${ref}" = "heads/root" ]
         then
             refopt=--nobranch
         else
