@@ -973,7 +973,7 @@ func init() {
 			styleflags:   newOrderedStringSet(),
 			extensions:   newOrderedStringSet(),
 			initializer:  "git init --quiet",
-			importer:     "git fast-import --quiet",
+			importer:     "git fast-import --quiet --export-marks=.git/marks",
 			checkout:     "git checkout",
 			lister:       "git ls-files",
 			prenuke:      newOrderedStringSet(".git/config", ".git/hooks"),

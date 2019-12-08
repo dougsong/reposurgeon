@@ -75,7 +75,7 @@ rm -fr liftcheck[0123456789]*
 
 if [ $debug = no ]
 then
-    trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}.legacy ${stem}.gitmap ${stem}.gfi ${stem}*~" 0 1 2 15
+    trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}.gfi ${stem}.info ${stem}*~" 0 1 2 15
 fi
 
 # Make a Subversion repo from the dump
@@ -88,67 +88,52 @@ ${REPOSURGEON:-../reposurgeon} "${TESTOPT}" "${rlimit}" "read ${nobranch} <${wha
 
 if [ -n "${revision}" ]
 then
-    # Create a list of commits with corresponding legacy map entries
-    cd ${stem}-git
-    git log --reverse --format="%cd!%an	%H" --date=iso-strict --all | sed 's/+00:00/Z/' > ../${stem}.gitmap
-    git for-each-ref --format='%(creatordate:iso-strict)!%(taggername)%(authorname)	%(objectname)' \
-        | sed 's/+00:00/Z/' >> ../${stem}.gitmap
-    cd ..
+    if [ ! -f ${stem}-git/.git/marks ]
+    then
+        echo Missing git marks file, unable to compare. >&2
+        exit 1
+    fi
 
-    # Filter the git-fast-import stream to keep only the refs of the commits
-    grep -B 1 '^#legacy-id' ${stem}.gfi > ${stem}.gfi2
-    rm ${stem}.gfi
-    mv ${stem}.gfi2 ${stem}.gfi
-
-    # Filter the legacy map to keep only SVN: entries
-    grep '^SVN:' ${stem}.legacy > ${stem}.legacy2
-    rm ${stem}.legacy
-    mv ${stem}.legacy2 ${stem}.legacy
+    # Generate a <legacy-id>TAB<mark>TAB<ref> file from the git-fast-import stream
+    cat ${stem}.gfi | sed -n '/^commit / h;
+                              /^#legacy-id / H;
+                              /^mark / {
+                                    H; s/^.*$//; x;
+                                    t next; :next;
+                                    s/^commit \(.*\)\n#legacy-id \(.*\)\nmark \(:.*\)$/\2\t\3\t\1/;
+                                    t ok; d;
+                                    :ok; p
+                                }' > ${stem}.info
+    rm -f ${stem}.gfi
 
     if [ ${revision} = "all" ]
     then
         min=1
-        max=`tail -n 1 ${stem}.legacy | sed 's/^SVN://; s/\t.*$//; s/\..*$//'`
+        max=`tail -n 1 ${stem}.info | cut -f 1 | cut -d. -f 1`
     else
-        min=0`echo ${revision} | sed 's/-.*$//'`
-        max=0`echo ${revision} | sed 's/^.*-//'`
+        min=`echo ${revision} | sed 's/-.*$//'`
+        max=`echo ${revision} | sed 's/^.*-//'`
     fi
 
     while read -r line # input file at the end of the loop
     do
-        revision=`echo "${line}" | sed 's/^SVN://; s/\t.*$//'`
-        intrev=`echo "${revision}" | cut -d. -f1`
+        revision=`echo "${line}" | cut -f 1`
+        intrev=`echo "${revision}" | cut -d. -f 1`
         if [ ${intrev} -lt ${min} -o ${intrev} -gt ${max} ]
         then
             continue
         fi
 
         # Find out the git revision to pass
-        id=`echo "${line}" | cut -f 2`
-        count=`echo "${id}" | sed 's/^.*![^:]*\($\|.*:\)//'`
-        id=`echo "${id}" | sed 's/\(!.*\):[^:]*/\1/'`
-
-        if [ -z "${id}" ]
-        then
-            continue
-        fi
-        if [ -z "${count}" ]
-        then
-            count=1
-        fi
-
-        sha=`grep "^${id}" ${stem}.gitmap --max-count=${count} | tail -n 1 | cut -f 2`
+        mark=`echo "${line}" | cut -f 2`
+        sha=`grep "^${mark}" ${stem}-git/.git/marks --max-count=1 | cut -d" " -f 2`
         if [ -z "${sha}" ]
         then
             continue
         fi
 
         # Find the corresponding ref to checkout in SVN
-        ref=`grep "^#legacy-id ${revision}$" -B 1 --max-count=1 ${stem}.gfi | sed -n 's!^commit refs/!!; t print; q; :print; p; q'`
-        if [ -z "${ref}" ]
-        then
-            continue
-        fi
+        ref=`echo "${line}" | cut -f 3 | sed 's!refs/!!'`
 
         refopt=`echo "${ref}" | sed 's!^deleted/r[^/]*/!!; s!^tags/!-t !; s!^heads/!-b !'`
 
@@ -160,7 +145,7 @@ then
         ../repotool ${repotoolopt} compare ${compareopt} \
             ${nobranch} ${refopt} -r ${intrev}:${sha} \
             ${stem}-checkout ${stem}-git
-    done < ${stem}.legacy
+    done < ${stem}.info
 else
 
     if [ ! -e ${stem}-checkout/trunk ]
