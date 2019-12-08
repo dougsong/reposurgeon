@@ -35,35 +35,6 @@ reposurgeon: r326~tags/reportbuf_base0/aclocal.m4: permission information may be
 reposurgeon: "references.svn", line 53289: r326~tags/reportbuf_base0/install-sh: missing ancestor node for non-.gitignore
 reposurgeon: r326~tags/reportbuf_base0/install-sh: permission information may be lost.
 reposurgeon: "references.svn", line 53289: ':755': deleting parentless zero-op commit on refs/heads/trunk-deleted-r355-1.
-reposurgeon: couldn't match a name at <1>
-reposurgeon: couldn't match a name at <1>
-[291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312]
-reposurgeon: in readAuthorMap, while parsing line 21: timezone lookup: [ill-formed timezone offset Europ/Moscow]
-reposurgeon: 1 new log message(s)
-reposurgeon: 1 events modified by msgin.
-Event 1880 ==============================================================
-commit refs/heads/Development
-#legacy-id 352
-mark :1879
-committer Peter Selinger <selinger@users.sourceforge.net> 1139780787 +0000
-data 251
- - newhidups: rewrote logical-to-physical value conversion. Rewrote
-   extraction of logical values from report. Added Kelvin-to-Celsius
-   conversion. Tweaked APC date conversion. Back-UPS BF500 support.
-   Deleted unused items in HIDItem structure.
-from :1869
-M 100644 :1870 CHANGES
-M 100644 :1871 data/driver.list
-M 100644 :1872 drivers/apc-hid.c
-M 100644 :1873 drivers/hidparser.c
-M 100644 :1874 drivers/hidtypes.h
-M 100644 :1875 drivers/libhid.c
-M 100644 :1876 drivers/libhid.h
-M 100644 :1877 drivers/newhidups.c
-M 100644 :1878 drivers/newhidups.h
-
-reposurgeon: 1 references resolved.
-git is the preferred type.
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -1524,7 +1495,7 @@ Revision is 2, file path is trunk/server/user.h.
 commit refs/heads/master
 #legacy-id 2
 mark :289
-committer Arnaud Quette <arnaud.quette@free.fr> 1106836394 +0000
+committer aquette <aquette> 1106836394 +0000
 data 17
 Initial revision
 M 100644 :1 .gitignore
@@ -2501,7 +2472,7 @@ Revision is 6, file path is trunk/packaging/RedHat/nut.spec.
 commit refs/heads/master
 #legacy-id 6
 mark :310
-committer Arnaud Quette <arnaud.quette@free.fr> 1109582047 +0000
+committer aquette <aquette> 1109582047 +0000
 data 49
 Bring CVS tree in sync with the new 2.0.1 stable
 from :289
@@ -3829,7 +3800,7 @@ Revision is 12, file path is branches/v2.1.0/man/genericups.8.
 commit refs/heads/v2.1.0
 #legacy-id 12
 mark :321
-committer Arnaud Quette <arnaud.quette@free.fr> 1111154978 +0000
+committer aquette <aquette> 1111154978 +0000
 data 43
 Development tree fork, merge Patch #301143
 from :314
@@ -3858,7 +3829,7 @@ Revision is 13, file path is branches/v2.1.0/man/nutupsdrv.8.
 commit refs/heads/v2.1.0
 #legacy-id 13
 mark :325
-committer Arnaud Quette <arnaud.quette@free.fr> 1111155858 +0000
+committer aquette <aquette> 1111155858 +0000
 data 47
 Merge Alioth Patch #301145 from Niels Baggesen
 from :321
@@ -3879,7 +3850,7 @@ Revision is 14, file path is branches/v2.1.0/data/driver.list.
 commit refs/heads/v2.1.0
 #legacy-id 14
 mark :328
-committer Arnaud Quette <arnaud.quette@free.fr> 1111156878 +0000
+committer aquette <aquette> 1111156878 +0000
 data 55
 Add the missing Powerware 5119 RM (genericups type=20)
 from :325
@@ -3899,7 +3870,7 @@ Revision is 15, file path is branches/v2.1.0/drivers/tripplite.c.
 commit refs/heads/v2.1.0
 #legacy-id 15
 mark :331
-committer Arnaud Quette <arnaud.quette@free.fr> 1111420841 +0000
+committer aquette <aquette> 1111420841 +0000
 data 21
 Alioth Patch #301271
 from :328
@@ -3924,7 +3895,7 @@ Revision is 16, file path is branches/v2.1.0/drivers/powermust.c.
 commit refs/heads/v2.1.0
 #legacy-id 16
 mark :335
-committer Arnaud Quette <arnaud.quette@free.fr> 1111487067 +0000
+committer aquette <aquette> 1111487067 +0000
 data 21
 Alioth Patch #301146
 from :331
@@ -3945,7 +3916,7 @@ Revision is 17, file path is branches/v2.1.0/drivers/energizerups.c.
 commit refs/heads/v2.1.0
 #legacy-id 17
 mark :338
-committer Arnaud Quette <arnaud.quette@free.fr> 1111495710 +0000
+committer aquette <aquette> 1111495710 +0000
 data 21
 Alioth Patch #301279
 from :335
@@ -3970,7 +3941,7 @@ Revision is 18, file path is branches/v2.1.0/drivers/fentonups.h.
 commit refs/heads/v2.1.0
 #legacy-id 18
 mark :342
-committer Arnaud Quette <arnaud.quette@free.fr> 1111503828 +0000
+committer aquette <aquette> 1111503828 +0000
 data 21
 Alioth Patch #301281
 from :338
@@ -3991,7 +3962,7 @@ Revision is 19, file path is branches/v2.1.0/drivers/apccmib.h.
 commit refs/heads/v2.1.0
 #legacy-id 19
 mark :345
-committer Arnaud Quette <arnaud.quette@free.fr> 1111507691 +0000
+committer aquette <aquette> 1111507691 +0000
 data 21
 Alioth Patch #301283
 from :342
@@ -4056,7 +4027,7 @@ Revision is 20, file path is branches/v2.1.0/man/mge-utalk.8.
 commit refs/heads/v2.1.0
 #legacy-id 20
 mark :357
-committer Arnaud Quette <arnaud.quette@free.fr> 1111594003 +0000
+committer aquette <aquette> 1111594003 +0000
 data 21
 MGE patch-set 230305
 from :345
@@ -4090,7 +4061,7 @@ Revision is 21, file path is branches/v2.1.0/man/powermust.8.
 commit refs/heads/v2.1.0
 #legacy-id 21
 mark :361
-committer Arnaud Quette <arnaud.quette@free.fr> 1111594897 +0000
+committer aquette <aquette> 1111594897 +0000
 data 21
 Alioth Patch #301289
 from :357
@@ -4146,7 +4117,7 @@ Revision is 24, file path is branches/v2.1.0/drivers/newhidups.h.
 commit refs/heads/v2.1.0
 #legacy-id 24
 mark :371
-committer Arnaud Quette <arnaud.quette@free.fr> 1113564273 +0000
+committer aquette <aquette> 1113564273 +0000
 data 41
 MGE patch-set for mge-shut and newhidups
 from :361
@@ -4189,7 +4160,7 @@ Revision is 25, file path is branches/v2.1.0/drivers/cpsups.h.
 commit refs/heads/v2.1.0
 #legacy-id 25
 mark :377
-committer Arnaud Quette <arnaud.quette@free.fr> 1113566691 +0000
+committer aquette <aquette> 1113566691 +0000
 data 30
 Alioth Patch #301282, #301461
 from :371
@@ -4227,7 +4198,7 @@ Revision is 26, file path is branches/v2.1.0/man/snmp-ups.8.
 commit refs/heads/v2.1.0
 #legacy-id 26
 mark :383
-committer Arnaud Quette <arnaud.quette@free.fr> 1113569162 +0000
+committer aquette <aquette> 1113569162 +0000
 data 45
 Netvision MIB support (Alioth Patch #301296)
 from :377
@@ -4280,7 +4251,7 @@ Revision is 30, file path is branches/v2.1.0/man/bcmxcp.8.
 commit refs/heads/v2.1.0
 #legacy-id 30
 mark :392
-committer Arnaud Quette <arnaud.quette@free.fr> 1114168368 +0000
+committer aquette <aquette> 1114168368 +0000
 data 47
 merge new bcmxcp driver (Alioth Patch #301290)
 from :383
@@ -4301,7 +4272,7 @@ Revision is 32, file path is branches/v2.1.0/drivers/netvisionmib.h.
 commit refs/heads/v2.1.0
 #legacy-id 32
 mark :394
-committer Arnaud Quette <arnaud.quette@free.fr> 1114168464 +0000
+committer aquette <aquette> 1114168464 +0000
 data 64
 add the forgotten drivers/netvisionmib.h (Alioth Patch #301296)
 from :392
@@ -4320,7 +4291,7 @@ Revision is 33, file path is branches/v2.1.0/drivers/main.c.
 commit refs/heads/v2.1.0
 #legacy-id 33
 mark :397
-committer Arnaud Quette <arnaud.quette@free.fr> 1114285306 +0000
+committer aquette <aquette> 1114285306 +0000
 data 54
 move initups after become_user (Alioth patch #301284)
 from :394
@@ -4345,7 +4316,7 @@ Revision is 34, file path is branches/v2.1.0/drivers/cyberpower.c.
 commit refs/heads/v2.1.0
 #legacy-id 34
 mark :401
-committer Arnaud Quette <arnaud.quette@free.fr> 1114285876 +0000
+committer aquette <aquette> 1114285876 +0000
 data 21
 Alioth patch #301288
 from :397
@@ -4366,7 +4337,7 @@ Revision is 35, file path is branches/v2.1.0/drivers/etapro.c.
 commit refs/heads/v2.1.0
 #legacy-id 35
 mark :404
-committer Arnaud Quette <arnaud.quette@free.fr> 1114369758 +0000
+committer aquette <aquette> 1114369758 +0000
 data 67
 [ Alioth patch #301505 ] etapro: fix brokeness due to ser_get_line
 from :401
@@ -4396,7 +4367,7 @@ Revision is 36, file path is branches/v2.1.0/drivers/Makefile.in.
 commit refs/heads/v2.1.0
 #legacy-id 36
 mark :409
-committer Arnaud Quette <arnaud.quette@free.fr> 1114460201 +0000
+committer aquette <aquette> 1114460201 +0000
 data 54
 [ Alioth patch #301508 ] build should respect LDFLAGS
 from :404
@@ -4418,7 +4389,7 @@ Revision is 37, file path is branches/v2.1.0/drivers/Makefile.in.
 commit refs/heads/v2.1.0
 #legacy-id 37
 mark :412
-committer Arnaud Quette <arnaud.quette@free.fr> 1114460457 +0000
+committer aquette <aquette> 1114460457 +0000
 data 64
 drivers/Makefile.in: remove unneeded STRLCPY flag for newhidups
 from :409
@@ -4448,7 +4419,7 @@ Revision is 38, file path is branches/v2.1.0/drivers/Makefile.in.
 commit refs/heads/v2.1.0
 #legacy-id 38
 mark :417
-committer Arnaud Quette <arnaud.quette@free.fr> 1114712580 +0000
+committer aquette <aquette> 1114712580 +0000
 data 35
 check which USB driver(s) to build
 from :412
@@ -4475,7 +4446,7 @@ Revision is 39, file path is branches/v2.1.0/drivers/apcsmart.h.
 commit refs/heads/v2.1.0
 #legacy-id 39
 mark :421
-committer Arnaud Quette <arnaud.quette@free.fr> 1114793924 +0000
+committer aquette <aquette> 1114793924 +0000
 data 54
 [ Alioth patch #301287 ] apcsmart: fix APC600 support
 from :417
@@ -4511,7 +4482,7 @@ Revision is 41, file path is branches/v2.1.0/man/snmp-ups.8.
 commit refs/heads/v2.1.0
 #legacy-id 41
 mark :427
-committer Arnaud Quette <arnaud.quette@free.fr> 1115032950 +0000
+committer aquette <aquette> 1115032950 +0000
 data 61
 [ Alioth patch #301568 ] snmp-ups: add Powerware MIB support
 from :421
@@ -4544,7 +4515,7 @@ Revision is 42, file path is branches/v2.1.0/man/Makefile.in.
 commit refs/heads/v2.1.0
 #legacy-id 42
 mark :432
-committer Arnaud Quette <arnaud.quette@free.fr> 1115034152 +0000
+committer aquette <aquette> 1115034152 +0000
 data 38
 check which USB manpage(s) to install
 from :427
@@ -4566,7 +4537,7 @@ Revision is 43, file path is branches/v2.1.0/man/Makefile.in.
 commit refs/heads/v2.1.0
 #legacy-id 43
 mark :435
-committer Arnaud Quette <arnaud.quette@free.fr> 1115034255 +0000
+committer aquette <aquette> 1115034255 +0000
 data 38
 suppress snmp-ups manpage duplication
 from :432
@@ -4606,7 +4577,7 @@ Revision is 44, file path is branches/v2.1.0/drivers/newhidups.h.
 commit refs/heads/v2.1.0
 #legacy-id 44
 mark :442
-committer Arnaud Quette <arnaud.quette@free.fr> 1115111508 +0000
+committer aquette <aquette> 1115111508 +0000
 data 53
 USB improvements (interrupt and reconnexion support)
 from :435
@@ -4625,7 +4596,7 @@ Revision is 45, file path is branches/v2.1.0/CHANGES.
 commit refs/heads/v2.1.0
 #legacy-id 45
 mark :444
-committer Arnaud Quette <arnaud.quette@free.fr> 1115111677 +0000
+committer aquette <aquette> 1115111677 +0000
 data 46
 fix typo in CHANGES (cpups instead of cpsups)
 from :442
@@ -4674,7 +4645,7 @@ Revision is 48, file path is branches/v2.1.0/man/upscode2.8.
 commit refs/heads/v2.1.0
 #legacy-id 48
 mark :453
-committer Arnaud Quette <arnaud.quette@free.fr> 1115114980 +0000
+committer aquette <aquette> 1115114980 +0000
 data 53
 [ Alioth patch #301144 ] merge new upscode II driver
 from :444
@@ -4700,7 +4671,7 @@ Revision is 49, file path is branches/v2.1.0/data/driver.list.
 commit refs/heads/v2.1.0
 #legacy-id 49
 mark :456
-committer Arnaud Quette <arnaud.quette@free.fr> 1115121121 +0000
+committer aquette <aquette> 1115121121 +0000
 data 52
 [ Alioth patch #301573 ] Add POWERWARE 3110 support
 from :453
@@ -4730,7 +4701,7 @@ Revision is 50, file path is branches/v2.1.0/man/fentonups.8.
 commit refs/heads/v2.1.0
 #legacy-id 50
 mark :461
-committer Arnaud Quette <arnaud.quette@free.fr> 1115130747 +0000
+committer aquette <aquette> 1115130747 +0000
 data 72
 [ Alioth patch #301574 ] Add Michel Bouissou's patches (fentonups part)
 from :456
@@ -4782,7 +4753,7 @@ Revision is 54, file path is branches/v2.1.0/man/solis.8.
 commit refs/heads/v2.1.0
 #legacy-id 54
 mark :470
-committer Arnaud Quette <arnaud.quette@free.fr> 1115192424 +0000
+committer aquette <aquette> 1115192424 +0000
 data 38
 [ Alioth patch #301272 ] solis driver
 from :461
@@ -4803,7 +4774,7 @@ Revision is 55, file path is branches/v2.1.0/README.
 commit refs/heads/v2.1.0
 #legacy-id 55
 mark :472
-committer Arnaud Quette <arnaud.quette@free.fr> 1115193564 +0000
+committer aquette <aquette> 1115193564 +0000
 data 37
 Update the driver compatibility list
 from :470
@@ -5097,7 +5068,7 @@ Revision is 56, file path is branches/Testing/man/upscode2.8.
 commit refs/heads/Testing
 #legacy-id 56
 mark :530
-committer Arnaud Quette <arnaud.quette@free.fr> 1115199397 +0000
+committer aquette <aquette> 1115199397 +0000
 data 66
 bring 2.0.2-pre1 testing release in sync with development release
 from :312
@@ -5197,7 +5168,7 @@ Revision is 58, file path is branches/Testing/scripts/hotplug/libhid.usermap.
 commit refs/heads/Testing
 #legacy-id 58
 mark :538
-committer Arnaud Quette <arnaud.quette@free.fr> 1117110147 +0000
+committer aquette <aquette> 1117110147 +0000
 data 48
 various 2.0.2-pre2 changes, mostly on newhidups
 from :530
@@ -5242,7 +5213,7 @@ Revision is 59, file path is branches/Testing/drivers/newhidups.h.
 commit refs/heads/Testing
 #legacy-id 59
 mark :545
-committer Arnaud Quette <arnaud.quette@free.fr> 1117655129 +0000
+committer aquette <aquette> 1117655129 +0000
 data 39
 newhidups improvements and apc support
 from :538
@@ -5281,7 +5252,7 @@ Revision is 60, file path is branches/Testing/scripts/hotplug/libhid.usermap.
 commit refs/heads/Testing
 #legacy-id 60
 mark :551
-committer Arnaud Quette <arnaud.quette@free.fr> 1117804226 +0000
+committer aquette <aquette> 1117804226 +0000
 data 28
 minor newhidups corrections
 from :545
@@ -5339,7 +5310,7 @@ Revision is 61, file path is branches/Testing/drivers/tripplite.c.
 commit refs/heads/Testing
 #legacy-id 61
 mark :561
-committer Arnaud Quette <arnaud.quette@free.fr> 1119425976 +0000
+committer aquette <aquette> 1119425976 +0000
 data 68
 various mge-shut, newhidups and tripplite improvements and buxfixes
 from :551
@@ -5396,7 +5367,7 @@ Revision is 62, file path is branches/Testing/include/version.h.
 commit refs/heads/Testing
 #legacy-id 62
 mark :570
-committer Arnaud Quette <arnaud.quette@free.fr> 1119442233 +0000
+committer aquette <aquette> 1119442233 +0000
 data 28
 final update for 2.0.2-pre2
 from :561
@@ -5417,7 +5388,7 @@ Revision is 64, file path is branches/Testing/CHANGES.
 commit refs/heads/Testing
 #legacy-id 64
 mark :572
-committer Arnaud Quette <arnaud.quette@free.fr> 1119553881 +0000
+committer aquette <aquette> 1119553881 +0000
 data 63
 fix a wrong numbering in CHANGES file (-pre1 instead of -pre2)
 from :570
@@ -6014,7 +5985,7 @@ Revision is 66, file path is branches/Development/packaging/mandriva/upsmon.
 commit refs/heads/Development
 #legacy-id 66
 mark :618
-committer Arnaud Quette <arnaud.quette@free.fr> 1119560962 +0000
+committer aquette <aquette> 1119560962 +0000
 data 44
 2.1 fork and start of packaging integration
 from :573
@@ -6066,7 +6037,7 @@ M 100644 :617 packaging/mandriva/upsmon
 commit refs/heads/Development
 #legacy-id 67
 mark :619
-committer Arnaud Quette <arnaud.quette@free.fr> 1119564571 +0000
+committer aquette <aquette> 1119564571 +0000
 data 25
 remove debian host patch
 from :618
@@ -6086,7 +6057,7 @@ Revision is 68, file path is branches/Testing/data/driver.list.
 commit refs/heads/Testing
 #legacy-id 68
 mark :622
-committer Arnaud Quette <arnaud.quette@free.fr> 1119860693 +0000
+committer aquette <aquette> 1119860693 +0000
 data 24
 final changes for 2.0.2
 from :572
@@ -6106,7 +6077,7 @@ Revision is 69, file path is branches/Development/data/driver.list.
 commit refs/heads/Development
 #legacy-id 69
 mark :625
-committer Arnaud Quette <arnaud.quette@free.fr> 1119862770 +0000
+committer aquette <aquette> 1119862770 +0000
 data 48
 remove mgehid.h and sync Dev. branch with 2.0.2
 from :619
@@ -6142,7 +6113,7 @@ Revision is 70, file path is branches/Development/include/version.h.
 commit refs/heads/Development
 #legacy-id 70
 mark :631
-committer Arnaud Quette <arnaud.quette@free.fr> 1119971078 +0000
+committer aquette <aquette> 1119971078 +0000
 data 57
 SU_TYPE_TIME changes in *mib.h and bump version to 2.1.0
 from :625
@@ -6170,7 +6141,7 @@ Revision is 71, file path is branches/Testing/drivers/mgemib.h.
 commit refs/heads/Testing
 #legacy-id 71
 mark :635
-committer Arnaud Quette <arnaud.quette@free.fr> 1119971483 +0000
+committer aquette <aquette> 1119971483 +0000
 data 31
 SU_TYPE_TIME changes in *mib.h
 from :622
@@ -6201,7 +6172,7 @@ Revision is 72, file path is branches/Testing/include/version.h.
 commit refs/heads/Testing
 #legacy-id 72
 mark :640
-committer Arnaud Quette <arnaud.quette@free.fr> 1120139016 +0000
+committer aquette <aquette> 1120139016 +0000
 data 60
 update version, patch for Solis and Solaris naming colision
 from :635
@@ -6223,7 +6194,7 @@ Revision is 73, file path is branches/Testing/drivers/solis.c.
 commit refs/heads/Testing
 #legacy-id 73
 mark :643
-committer Arnaud Quette <arnaud.quette@free.fr> 1120139170 +0000
+committer aquette <aquette> 1120139170 +0000
 data 26
 bum solis release to 0.41
 from :640
@@ -6243,7 +6214,7 @@ Revision is 74, file path is branches/Testing/drivers/genericups.c.
 commit refs/heads/Testing
 #legacy-id 74
 mark :646
-committer Arnaud Quette <arnaud.quette@free.fr> 1120206766 +0000
+committer aquette <aquette> 1120206766 +0000
 data 48
 Add some trace to genericups for overriden data
 from :643
@@ -6268,7 +6239,7 @@ Revision is 75, file path is branches/Development/drivers/solis.c.
 commit refs/heads/Development
 #legacy-id 75
 mark :650
-committer Arnaud Quette <arnaud.quette@free.fr> 1120207188 +0000
+committer aquette <aquette> 1120207188 +0000
 data 117
 Apply the same changes as in Testing (genericups traces overriden data, and solis fix a naming collision on Solaris)
 from :631
@@ -6289,7 +6260,7 @@ Revision is 76, file path is branches/Development/drivers/isbmex.c.
 commit refs/heads/Development
 #legacy-id 76
 mark :653
-committer Arnaud Quette <arnaud.quette@free.fr> 1120224823 +0000
+committer aquette <aquette> 1120224823 +0000
 data 32
 revert back to B9600 for isbmex
 from :650
@@ -6309,7 +6280,7 @@ Revision is 77, file path is branches/Testing/drivers/isbmex.c.
 commit refs/heads/Testing
 #legacy-id 77
 mark :656
-committer Arnaud Quette <arnaud.quette@free.fr> 1120224945 +0000
+committer aquette <aquette> 1120224945 +0000
 data 32
 revert back to B9600 for isbmex
 from :646
@@ -6359,7 +6330,7 @@ Revision is 78, file path is branches/Development/man/snmp-ups.8.
 commit refs/heads/Development
 #legacy-id 78
 mark :665
-committer Arnaud Quette <arnaud.quette@free.fr> 1120570729 +0000
+committer aquette <aquette> 1120570729 +0000
 data 44
 Changes for dummy-ups, and minor other typo
 from :653
@@ -6382,7 +6353,7 @@ Revision is 79, file path is branches/Development/drivers/dummy-ups.c.
 commit refs/heads/Development
 #legacy-id 79
 mark :667
-committer Arnaud Quette <arnaud.quette@free.fr> 1120571857 +0000
+committer aquette <aquette> 1120571857 +0000
 data 40
 Remove an unneeded trace in dummy-ups.c
 from :665
@@ -6406,7 +6377,7 @@ Revision is 80, file path is branches/Testing/packaging/RedHat/nut.spec.in.
 commit refs/heads/Testing
 #legacy-id 80
 mark :671
-committer Arnaud Quette <arnaud.quette@free.fr> 1121856341 +0000
+committer aquette <aquette> 1121856341 +0000
 data 49
 fix the ID string for Sysgration UPGUARDS Pro650
 from :656
@@ -6442,7 +6413,7 @@ Revision is 81, file path is branches/Development/packaging/RedHat/nut.spec.in.
 commit refs/heads/Development
 #legacy-id 81
 mark :677
-committer Arnaud Quette <arnaud.quette@free.fr> 1121859397 +0000
+committer aquette <aquette> 1121859397 +0000
 data 63
 various changes on fentonups, isbmex, nut.spec and driver.list
 from :667
@@ -6470,7 +6441,7 @@ Revision is 82, file path is branches/Testing/drivers/isbmex.c.
 commit refs/heads/Testing
 #legacy-id 82
 mark :681
-committer Arnaud Quette <arnaud.quette@free.fr> 1121859428 +0000
+committer aquette <aquette> 1121859428 +0000
 data 13
 isbmex fixes
 from :671
@@ -6491,7 +6462,7 @@ Revision is 83, file path is branches/Development/drivers/libusb.c.
 commit refs/heads/Development
 #legacy-id 83
 mark :684
-committer Arnaud Quette <arnaud.quette@free.fr> 1121867657 +0000
+committer aquette <aquette> 1121867657 +0000
 data 45
 newhidups adaptation for other manufacturers
 from :677
@@ -6511,7 +6482,7 @@ Revision is 84, file path is branches/Testing/drivers/libusb.c.
 commit refs/heads/Testing
 #legacy-id 84
 mark :687
-committer Arnaud Quette <arnaud.quette@free.fr> 1121867936 +0000
+committer aquette <aquette> 1121867936 +0000
 data 36
 newhidups adaptation for other mfrs
 from :681
@@ -6536,7 +6507,7 @@ Revision is 85, file path is branches/Development/drivers/gendb.
 commit refs/heads/Development
 #legacy-id 85
 mark :691
-committer Arnaud Quette <arnaud.quette@free.fr> 1121955345 +0000
+committer aquette <aquette> 1121955345 +0000
 data 60
 add Belkin F6C1100-UNV and fix the LDFLAGS support in gendb
 from :684
@@ -6562,7 +6533,7 @@ Revision is 86, file path is branches/Testing/drivers/gendb.
 commit refs/heads/Testing
 #legacy-id 86
 mark :695
-committer Arnaud Quette <arnaud.quette@free.fr> 1121955482 +0000
+committer aquette <aquette> 1121955482 +0000
 data 60
 add Belkin F6C1100-UNV and fix the LDFLAGS support in gendb
 from :687
@@ -6603,7 +6574,7 @@ Revision is 87, file path is branches/Development/man/newhidups.8.
 commit refs/heads/Development
 #legacy-id 87
 mark :702
-committer Arnaud Quette <arnaud.quette@free.fr> 1122032683 +0000
+committer aquette <aquette> 1122032683 +0000
 data 43
 various changes on newhidups and dummy-ups
 from :691
@@ -6632,7 +6603,7 @@ Revision is 88, file path is branches/Development/drivers/genericups.h.
 commit refs/heads/Development
 #legacy-id 88
 mark :706
-committer Arnaud Quette <arnaud.quette@free.fr> 1122035323 +0000
+committer aquette <aquette> 1122035323 +0000
 data 24
 powerware 5119 RM cable
 from :702
@@ -6648,7 +6619,7 @@ Revision is 89, file path is branches/Testing/CHANGES.
 commit refs/heads/Testing
 #legacy-id 89
 mark :708
-committer Arnaud Quette <arnaud.quette@free.fr> 1122049384 +0000
+committer aquette <aquette> 1122049384 +0000
 data 22
 dummy commit inserted
 from :695
@@ -6672,7 +6643,7 @@ Revision is 90, file path is branches/Testing/drivers/newhidups.h.
 commit refs/heads/Testing
 #legacy-id 90
 mark :712
-committer Arnaud Quette <arnaud.quette@free.fr> 1122049444 +0000
+committer aquette <aquette> 1122049444 +0000
 data 21
 claim if. correction
 from :708
@@ -6693,7 +6664,7 @@ Revision is 91, file path is branches/Testing/drivers/bcmxcp.c.
 commit refs/heads/Testing
 #legacy-id 91
 mark :715
-committer Arnaud Quette <arnaud.quette@free.fr> 1122452815 +0000
+committer aquette <aquette> 1122452815 +0000
 data 50
 typo fixes, and add Bill Richter for APC600 patch
 from :712
@@ -6708,7 +6679,7 @@ Revision is 92, file path is branches/Testing/drivers/bcmxcp.c.
 commit refs/heads/Testing
 #legacy-id 92
 mark :717
-committer Arnaud Quette <arnaud.quette@free.fr> 1122452923 +0000
+committer aquette <aquette> 1122452923 +0000
 data 29
 typo fixes (final) in bcmxcp
 from :715
@@ -6722,7 +6693,7 @@ Revision is 93, file path is branches/Testing/CHANGES.
 commit refs/heads/Testing
 #legacy-id 93
 mark :719
-committer Arnaud Quette <arnaud.quette@free.fr> 1122453015 +0000
+committer aquette <aquette> 1122453015 +0000
 data 26
 *** empty log message ***
 from :717
@@ -6791,7 +6762,7 @@ Revision is 94, file path is branches/Development/data/html/nut-banner.png.
 commit refs/heads/Development
 #legacy-id 94
 mark :732
-committer Arnaud Quette <arnaud.quette@free.fr> 1122499175 +0000
+committer aquette <aquette> 1122499175 +0000
 data 23
 cgi enhancements step1
 from :706
@@ -6816,7 +6787,7 @@ Revision is 95, file path is branches/Development/Makefile.in.
 commit refs/heads/Development
 #legacy-id 95
 mark :734
-committer Arnaud Quette <arnaud.quette@free.fr> 1122533678 +0000
+committer aquette <aquette> 1122533678 +0000
 data 53
 forgotten include of install-cgi-html in install-cgi
 from :732
@@ -6830,7 +6801,7 @@ Revision is 96, file path is branches/Development/drivers/bcmxcp.c.
 commit refs/heads/Development
 #legacy-id 96
 mark :736
-committer Arnaud Quette <arnaud.quette@free.fr> 1122895603 +0000
+committer aquette <aquette> 1122895603 +0000
 data 26
 *** empty log message ***
 from :734
@@ -6844,7 +6815,7 @@ Revision is 97, file path is branches/Development/man/genericups.8.
 commit refs/heads/Development
 #legacy-id 97
 mark :738
-committer Arnaud Quette <arnaud.quette@free.fr> 1122895648 +0000
+committer aquette <aquette> 1122895648 +0000
 data 30
 add powerware cable reference
 from :736
@@ -7188,7 +7159,7 @@ Revision is 100, file path is branches/Development/drivers/newhidups.c.
 commit refs/heads/Development
 #legacy-id 100
 mark :743
-committer Arnaud Quette <arnaud.quette@free.fr> 1122895781 +0000
+committer aquette <aquette> 1122895781 +0000
 data 66
 dummy-ups improvements, and newhidups typo about LB cleared by OL
 from :738
@@ -7214,7 +7185,7 @@ Revision is 101, file path is branches/Development/drivers/newhidups.h.
 commit refs/heads/Development
 #legacy-id 101
 mark :747
-committer Arnaud Quette <arnaud.quette@free.fr> 1122904456 +0000
+committer aquette <aquette> 1122904456 +0000
 data 45
 newhidups: handle the status clearing for LB
 from :743
@@ -7250,7 +7221,7 @@ Revision is 102, file path is branches/Development/drivers/newhidups.h.
 commit refs/heads/Development
 #legacy-id 102
 mark :753
-committer Arnaud Quette <arnaud.quette@free.fr> 1122982203 +0000
+committer aquette <aquette> 1122982203 +0000
 data 47
 better handling of return from LB in newhidups
 from :747
@@ -7278,7 +7249,7 @@ Revision is 103, file path is branches/Development/drivers/newhidups.h.
 commit refs/heads/Development
 #legacy-id 103
 mark :757
-committer Arnaud Quette <arnaud.quette@free.fr> 1123060431 +0000
+committer aquette <aquette> 1123060431 +0000
 data 28
 add belkin VID to newhidups
 from :753
@@ -7294,7 +7265,7 @@ Revision is 104, file path is branches/Development/drivers/libusb.c.
 commit refs/heads/Development
 #legacy-id 104
 mark :759
-committer Arnaud Quette <arnaud.quette@free.fr> 1123061201 +0000
+committer aquette <aquette> 1123061201 +0000
 data 23
 add belkin recognition
 from :757
@@ -7363,7 +7334,7 @@ Revision is 105, file path is branches/Development/scripts/hotplug/libhid.userma
 commit refs/heads/Development
 #legacy-id 105
 mark :772
-committer Arnaud Quette <arnaud.quette@free.fr> 1123675568 +0000
+committer aquette <aquette> 1123675568 +0000
 data 41
 various newhidups, mge-shut, cgi changes
 from :759
@@ -7413,7 +7384,7 @@ Revision is 106, file path is branches/Testing/drivers/mge-shut.h.
 commit refs/heads/Testing
 #legacy-id 106
 mark :779
-committer Arnaud Quette <arnaud.quette@free.fr> 1124190184 +0000
+committer aquette <aquette> 1124190184 +0000
 data 41
 various backport from Development branch
 from :719
@@ -7452,7 +7423,7 @@ Revision is 107, file path is branches/Development/drivers/main.c.
 commit refs/heads/Development
 #legacy-id 107
 mark :785
-committer Arnaud Quette <arnaud.quette@free.fr> 1124192911 +0000
+committer aquette <aquette> 1124192911 +0000
 data 44
 various changes on genericups and newhidups
 from :772
@@ -7510,7 +7481,7 @@ Revision is 111, file path is branches/Development/scripts/hotplug/README.
 commit refs/heads/Development
 #legacy-id 111
 mark :795
-committer Arnaud Quette <arnaud.quette@free.fr> 1124201426 +0000
+committer aquette <aquette> 1124201426 +0000
 data 35
 add gamatronic, and various update
 from :785
@@ -7537,7 +7508,7 @@ Revision is 112, file path is branches/Development/data/driver.list.
 commit refs/heads/Development
 #legacy-id 112
 mark :798
-committer Arnaud Quette <arnaud.quette@free.fr> 1124225738 +0000
+committer aquette <aquette> 1124225738 +0000
 data 16
 soyntec support
 from :795
@@ -7557,7 +7528,7 @@ Revision is 113, file path is branches/Testing/data/driver.list.
 commit refs/heads/Testing
 #legacy-id 113
 mark :801
-committer Arnaud Quette <arnaud.quette@free.fr> 1124225964 +0000
+committer aquette <aquette> 1124225964 +0000
 data 16
 soyntec support
 from :779
@@ -7582,7 +7553,7 @@ Revision is 114, file path is branches/Testing/UPGRADING.
 commit refs/heads/Testing
 #legacy-id 114
 mark :805
-committer Arnaud Quette <arnaud.quette@free.fr> 1124229374 +0000
+committer aquette <aquette> 1124229374 +0000
 data 24
 2.0.3 final preparation
 from :801
@@ -7613,7 +7584,7 @@ Revision is 115, file path is branches/Development/man/mge-utalk.8.
 commit refs/heads/Development
 #legacy-id 115
 mark :810
-committer Arnaud Quette <arnaud.quette@free.fr> 1124368165 +0000
+committer aquette <aquette> 1124368165 +0000
 data 40
 mge-utalk old units support improvement
 from :798
@@ -7645,7 +7616,7 @@ Revision is 116, file path is branches/Testing/drivers/mge-utalk.h.
 commit refs/heads/Testing
 #legacy-id 116
 mark :815
-committer Arnaud Quette <arnaud.quette@free.fr> 1124369141 +0000
+committer aquette <aquette> 1124369141 +0000
 data 37
 mge-utalk improvements for old units
 from :805
@@ -7692,7 +7663,7 @@ Revision is 117, file path is branches/Testing/scripts/hotplug/README.
 commit refs/heads/Testing
 #legacy-id 117
 mark :823
-committer Arnaud Quette <arnaud.quette@free.fr> 1124782754 +0000
+committer aquette <aquette> 1124782754 +0000
 data 43
 add gamatronic, update hotplug README file
 from :815
@@ -7772,7 +7743,7 @@ Revision is 123, file path is branches/Development/scripts/hotplug/libhid.userma
 commit refs/heads/Development
 #legacy-id 123
 mark :837
-committer Charles Lepple <clepple+nut@gmail.com> 1125116335 +0000
+committer clepple-guest <clepple-guest> 1125116335 +0000
 data 128
 Added Wolfgang Ocker's patch to split the powerware driver into a serial and a
 USB driver (bcmxcp and bcmxcp_usb, respectively)
@@ -7799,7 +7770,7 @@ Revision is 124, file path is branches/Development/drivers/libhid.c.
 commit refs/heads/Development
 #legacy-id 124
 mark :839
-committer Charles Lepple <clepple+nut@gmail.com> 1125117374 +0000
+committer clepple-guest <clepple-guest> 1125117374 +0000
 data 19
 Prototype mismatch
 from :837
@@ -7838,7 +7809,7 @@ Revision is 125, file path is branches/Development/include/config.h.in.
 commit refs/heads/Development
 #legacy-id 125
 mark :846
-committer Charles Lepple <clepple+nut@gmail.com> 1125117776 +0000
+committer clepple-guest <clepple-guest> 1125117776 +0000
 data 134
 Really fixed things so that bcmxcp_usb would compile via 'make usb' (i.e.
 don't change Makefiles unless you change Makefile.in, etc.)
@@ -7858,7 +7829,7 @@ Revision is 126, file path is branches/Development/drivers/Makefile.in.
 commit refs/heads/Development
 #legacy-id 126
 mark :848
-committer Charles Lepple <clepple+nut@gmail.com> 1125542538 +0000
+committer clepple-guest <clepple-guest> 1125542538 +0000
 data 94
 Followup to PowerWare patch: the bcmxcp_usb driver was not being removed
 during 'make clean'.
@@ -8341,7 +8312,7 @@ Revision is 129, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 129
 mark :854
-committer Charles Lepple <clepple+nut@gmail.com> 1125769870 +0000
+committer clepple-guest <clepple-guest> 1125769870 +0000
 data 43
 Skeleton driver for Tripp Lite Omni models
 from :849
@@ -8358,7 +8329,7 @@ Revision is 130, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 130
 mark :856
-committer Charles Lepple <clepple+nut@gmail.com> 1125773439 +0000
+committer clepple-guest <clepple-guest> 1125773439 +0000
 data 102
 Compiles, but is having trouble with usb_interrupt_read() on OS X (10.3);
 switching to Debian for now
@@ -8378,7 +8349,7 @@ Revision is 131, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 131
 mark :859
-committer Charles Lepple <clepple+nut@gmail.com> 1125776006 +0000
+committer clepple-guest <clepple-guest> 1125776006 +0000
 data 135
  * tripplite_usb finds and opens device; send_cmd() works (though it isn't pretty...)
  * turned down verbosity of usb_interrupt_read()
@@ -8394,7 +8365,7 @@ Revision is 132, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 132
 mark :861
-committer Charles Lepple <clepple+nut@gmail.com> 1125784323 +0000
+committer clepple-guest <clepple-guest> 1125784323 +0000
 data 36
 Tripp Lite USB driver seems to work
 from :859
@@ -8413,7 +8384,7 @@ Revision is 133, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 133
 mark :864
-committer Charles Lepple <clepple+nut@gmail.com> 1125787610 +0000
+committer clepple-guest <clepple-guest> 1125787610 +0000
 data 38
 Cleaning up the Tripp Lite USB driver
 from :861
@@ -8428,7 +8399,7 @@ Revision is 134, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 134
 mark :866
-committer Charles Lepple <clepple+nut@gmail.com> 1125788173 +0000
+committer clepple-guest <clepple-guest> 1125788173 +0000
 data 22
 Better error checking
 from :864
@@ -8442,7 +8413,7 @@ Revision is 135, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 135
 mark :868
-committer Charles Lepple <clepple+nut@gmail.com> 1125793465 +0000
+committer clepple-guest <clepple-guest> 1125793465 +0000
 data 21
 Debugging statements
 from :866
@@ -8456,7 +8427,7 @@ Revision is 136, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 136
 mark :870
-committer Charles Lepple <clepple+nut@gmail.com> 1125804571 +0000
+committer clepple-guest <clepple-guest> 1125804571 +0000
 data 40
 Starting to implement shutdown routines
 from :868
@@ -8470,7 +8441,7 @@ Revision is 137, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 137
 mark :872
-committer Charles Lepple <clepple+nut@gmail.com> 1125805270 +0000
+committer clepple-guest <clepple-guest> 1125805270 +0000
 data 52
 Disable some features that don't work at the moment
 from :870
@@ -8484,7 +8455,7 @@ Revision is 138, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 138
 mark :874
-committer Charles Lepple <clepple+nut@gmail.com> 1126185391 +0000
+committer clepple-guest <clepple-guest> 1126185391 +0000
 data 35
 Better parsing of the model string
 from :872
@@ -8503,7 +8474,7 @@ Revision is 139, file path is branches/Development/data/html/Makefile.in.
 commit refs/heads/Development
 #legacy-id 139
 mark :877
-committer Arnaud Quette <arnaud.quette@free.fr> 1126263012 +0000
+committer aquette <aquette> 1126263012 +0000
 data 49
 approval for powerware/bcmxcp split (serial/usb)
 from :848
@@ -8528,7 +8499,7 @@ Revision is 140, file path is branches/Development/drivers/tripplite_usb.c.
 commit refs/heads/Development
 #legacy-id 140
 mark :881
-committer Arnaud Quette <arnaud.quette@free.fr> 1126267606 +0000
+committer aquette <aquette> 1126267606 +0000
 data 22
 approve tripplite_usb
 from :877
@@ -8544,7 +8515,7 @@ Revision is 141, file path is branches/Tripp_Lite_Omni/data/driver.list.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 141
 mark :883
-committer Charles Lepple <clepple+nut@gmail.com> 1126268122 +0000
+committer clepple-guest <clepple-guest> 1126268122 +0000
 data 20
 Updated driver.list
 from :874
@@ -8563,7 +8534,7 @@ Revision is 143, file path is branches/Tripp_Lite_Omni/man/tripplite_usb.8.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 143
 mark :886
-committer Charles Lepple <clepple+nut@gmail.com> 1126270517 +0000
+committer clepple-guest <clepple-guest> 1126270517 +0000
 data 20
 Added documentation
 from :883
@@ -8613,7 +8584,7 @@ Revision is 144, file path is branches/Development/drivers/newhidups.h.
 commit refs/heads/Development
 #legacy-id 144
 mark :895
-committer Arnaud Quette <arnaud.quette@free.fr> 1126276359 +0000
+committer aquette <aquette> 1126276359 +0000
 data 43
 apply PSE patch set (Alioth patch #302101)
 from :881
@@ -8639,7 +8610,7 @@ Revision is 145, file path is branches/Development/docs/new-names.txt.
 commit refs/heads/Development
 #legacy-id 145
 mark :898
-committer Arnaud Quette <arnaud.quette@free.fr> 1126277072 +0000
+committer aquette <aquette> 1126277072 +0000
 data 59
 completed new-names.txt as per the nut-cvs-patch-APC patch
 from :895
@@ -8654,7 +8625,7 @@ Revision is 146, file path is branches/Development/docs/new-names.txt.
 commit refs/heads/Development
 #legacy-id 146
 mark :900
-committer Arnaud Quette <arnaud.quette@free.fr> 1126279494 +0000
+committer aquette <aquette> 1126279494 +0000
 data 34
 add the missing ups.beeper.status
 from :898
@@ -8678,7 +8649,7 @@ Revision is 147, file path is branches/Development/man/belkinunv.8.
 commit refs/heads/Development
 #legacy-id 147
 mark :904
-committer Arnaud Quette <arnaud.quette@free.fr> 1126281698 +0000
+committer aquette <aquette> 1126281698 +0000
 data 66
 belkinunv: NUT variable naming conformance (Alioth patch #302117)
 from :900
@@ -8694,7 +8665,7 @@ Revision is 148, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 148
 mark :906
-committer Charles Lepple <clepple+nut@gmail.com> 1126322693 +0000
+committer clepple-guest <clepple-guest> 1126322693 +0000
 data 19
 Some SMARTPRO info
 from :886
@@ -8713,7 +8684,7 @@ Revision is 150, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 150
 mark :909
-committer Charles Lepple <clepple+nut@gmail.com> 1126387009 +0000
+committer clepple-guest <clepple-guest> 1126387009 +0000
 data 19
 Some documentation
 from :906
@@ -8733,7 +8704,7 @@ Revision is 151, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 151
 mark :912
-committer Charles Lepple <clepple+nut@gmail.com> 1126392959 +0000
+committer clepple-guest <clepple-guest> 1126392959 +0000
 data 64
  * Implemented reconnection
  * Adjusted some Doxygen parameters
@@ -8749,7 +8720,7 @@ Revision is 152, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 152
 mark :914
-committer Charles Lepple <clepple+nut@gmail.com> 1126483619 +0000
+committer clepple-guest <clepple-guest> 1126483619 +0000
 data 118
  * Looks like I goofed on the variables. It's probably input.voltage, not
 input.frequency.
@@ -8765,7 +8736,7 @@ Revision is 153, file path is branches/Tripp_Lite_Omni/scripts/hotplug/libhid.us
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 153
 mark :916
-committer Charles Lepple <clepple+nut@gmail.com> 1126485165 +0000
+committer clepple-guest <clepple-guest> 1126485165 +0000
 data 30
 Hotplug for Tripp Lite models
 from :914
@@ -8779,7 +8750,7 @@ Revision is 154, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 154
 mark :918
-committer Charles Lepple <clepple+nut@gmail.com> 1126485478 +0000
+committer clepple-guest <clepple-guest> 1126485478 +0000
 data 80
 Fixes error when two copies of driver are attempting to control the same device
 from :916
@@ -8998,7 +8969,7 @@ Revision is 155, file path is branches/Development/drivers/victronups.h.
 commit refs/heads/Development
 #legacy-id 155
 mark :961
-committer Arnaud Quette <arnaud.quette@free.fr> 1126528716 +0000
+committer aquette <aquette> 1126528716 +0000
 data 46
 add headers deps generation for every drivers
 from :904
@@ -9053,7 +9024,7 @@ Revision is 156, file path is branches/Development/Makefile.
 commit refs/heads/Development
 #legacy-id 156
 mark :963
-committer Arnaud Quette <arnaud.quette@free.fr> 1126529023 +0000
+committer aquette <aquette> 1126529023 +0000
 data 47
 Restore Makefile.dist as the standard Makefile
 from :961
@@ -9087,7 +9058,7 @@ Revision is 158, file path is branches/Development/man/bcmxcp_usb.8.
 commit refs/heads/Development
 #legacy-id 158
 mark :969
-committer Arnaud Quette <arnaud.quette@free.fr> 1126530130 +0000
+committer aquette <aquette> 1126530130 +0000
 data 46
 complete bcmxcp_usb support (manpage, compat)
 from :963
@@ -9110,7 +9081,7 @@ Revision is 159, file path is branches/Development/drivers/newhidups.c.
 commit refs/heads/Development
 #legacy-id 159
 mark :972
-committer Peter Selinger <selinger@users.sourceforge.net> 1126547712 +0000
+committer selinger-guest <selinger-guest> 1126547712 +0000
 data 127
  - newhidups: fixed logic in upsdrv_shutdown(): return after first
    command succeeds, don't print "Shutdown command failed".
@@ -9141,7 +9112,7 @@ Revision is 160, file path is branches/Development/drivers/newhidups.c.
 commit refs/heads/Development
 #legacy-id 160
 mark :977
-committer Peter Selinger <selinger@users.sourceforge.net> 1126575581 +0000
+committer selinger-guest <selinger-guest> 1126575581 +0000
 data 96
  - newhidups: in libhid.h, removed iProduct from HIDDevice structure.
    Use ProductID instead.
@@ -9739,7 +9710,7 @@ Revision is 162, file path is branches/regex_branch/man/newhidups.8.
 commit refs/heads/regex_branch
 #legacy-id 162
 mark :987
-committer Peter Selinger <selinger@users.sourceforge.net> 1126589842 +0000
+committer selinger-guest <selinger-guest> 1126589842 +0000
 data 489
  - newhidups: added options -x vendor=X, -x vendorid=X, -x product=X,
    -x productid=X, -x serial=X, that let the user select a specific
@@ -9773,7 +9744,7 @@ Revision is 163, file path is branches/Development/data/driver.list.
 commit refs/heads/Development
 #legacy-id 163
 mark :990
-committer Arnaud Quette <arnaud.quette@free.fr> 1126601371 +0000
+committer aquette <aquette> 1126601371 +0000
 data 80
 [ #301881 ] Powerware 5119 = Exide NETUPS SE = Deltec name was PowerRite Pro II
 from :977
@@ -9818,7 +9789,7 @@ Revision is 165, file path is branches/Development/drivers/newhidups.h.
 commit refs/heads/Development
 #legacy-id 165
 mark :998
-committer Peter Selinger <selinger@users.sourceforge.net> 1126645866 +0000
+committer selinger-guest <selinger-guest> 1126645866 +0000
 data 257
  - newhidups: added Belkin support. Also added some new variables and
    instant commands (some of these were already used by other
@@ -9858,7 +9829,7 @@ Revision is 166, file path is branches/Development/drivers/newhidups.h.
 commit refs/heads/Development
 #legacy-id 166
 mark :1003
-committer Peter Selinger <selinger@users.sourceforge.net> 1126715194 +0000
+committer selinger-guest <selinger-guest> 1126715194 +0000
 data 95
  - newhidups: renamed ups.devicechemistry as battery.type, bumped
    newhidups driver release.
@@ -10433,7 +10404,7 @@ Revision is 168, file path is branches/regex_branch/drivers/newhidups.c.
 commit refs/heads/regex_branch
 #legacy-id 168
 mark :1008
-committer Peter Selinger <selinger@users.sourceforge.net> 1126722985 +0000
+committer selinger-guest <selinger-guest> 1126722985 +0000
 data 253
 The following changes are in the "regex_branch":
 
@@ -10485,7 +10456,7 @@ Revision is 169, file path is branches/regex_branch/drivers/newhidups.h.
 commit refs/heads/regex_branch
 #legacy-id 169
 mark :1016
-committer Peter Selinger <selinger@users.sourceforge.net> 1126723806 +0000
+committer selinger-guest <selinger-guest> 1126723806 +0000
 data 160
 Merging changes from Development branch up to "regex_branch_base0"
 into regex_branch. This means, regex_branch is now logically rooted at
@@ -10537,7 +10508,7 @@ Revision is 170, file path is branches/regex_branch/drivers/newhidups.c.
 commit refs/heads/regex_branch
 #legacy-id 170
 mark :1024
-committer Peter Selinger <selinger@users.sourceforge.net> 1126747027 +0000
+committer selinger-guest <selinger-guest> 1126747027 +0000
 data 461
  - newhidups: Belkin now detects serial number correctly; removed
    temporary "ups.serial.internal" variable.
@@ -10591,7 +10562,7 @@ Revision is 171, file path is branches/regex_branch/drivers/newhidups.c.
 commit refs/heads/regex_branch
 #legacy-id 171
 mark :1031
-committer Peter Selinger <selinger@users.sourceforge.net> 1126755611 +0000
+committer selinger-guest <selinger-guest> 1126755611 +0000
 data 483
  - newhidups: changed implementation of regular expression device
    matching to use a callback function called a "matcher" (similar,
@@ -10628,7 +10599,7 @@ Revision is 172, file path is branches/Development/data/driver.list.
 commit refs/heads/Development
 #legacy-id 172
 mark :1035
-committer Peter Selinger <selinger@users.sourceforge.net> 1126756583 +0000
+committer selinger-guest <selinger-guest> 1126756583 +0000
 data 93
  - added Belkin and APC models to supported hardware list in README and
    data/driver.list.
@@ -10660,7 +10631,7 @@ Revision is 173, file path is branches/regex_branch/drivers/newhidups.c.
 commit refs/heads/regex_branch
 #legacy-id 173
 mark :1040
-committer Peter Selinger <selinger@users.sourceforge.net> 1126814093 +0000
+committer selinger-guest <selinger-guest> 1126814093 +0000
 data 62
  - newhidups: eliminated some unused arguments from functions
 from :1031
@@ -10687,7 +10658,7 @@ Revision is 174, file path is branches/regex_branch/drivers/newhidups.c.
 commit refs/heads/regex_branch
 #legacy-id 174
 mark :1044
-committer Peter Selinger <selinger@users.sourceforge.net> 1126832764 +0000
+committer selinger-guest <selinger-guest> 1126832764 +0000
 data 64
  - newhidups: make sure correct matcher is used for reopenings.
 from :1040
@@ -10718,7 +10689,7 @@ Revision is 175, file path is branches/Development/drivers/gendb.
 commit refs/heads/Development
 #legacy-id 175
 mark :1049
-committer Peter Selinger <selinger@users.sourceforge.net> 1126834591 +0000
+committer selinger-guest <selinger-guest> 1126834591 +0000
 data 126
  - drivers/: updated gendb and Makefile.in to automatically generate
    correct *.h dependencies. Added "make depend" target.
@@ -10741,7 +10712,7 @@ Revision is 176, file path is branches/Development/drivers/gendb.
 commit refs/heads/Development
 #legacy-id 176
 mark :1052
-committer Peter Selinger <selinger@users.sourceforge.net> 1126916971 +0000
+committer selinger-guest <selinger-guest> 1126916971 +0000
 data 147
  - drivers/Makefile.in: don't run gendb on "make clean", only on
    "make depend". This way, only maintainers need to re-generate
@@ -10758,7 +10729,7 @@ Revision is 177, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 177
 mark :1054
-committer Charles Lepple <clepple+nut@gmail.com> 1126985329 +0000
+committer clepple-guest <clepple-guest> 1126985329 +0000
 data 36
 Added detection for SMARTPRO series
 from :918
@@ -10772,7 +10743,7 @@ Revision is 178, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 178
 mark :1056
-committer Charles Lepple <clepple+nut@gmail.com> 1126986818 +0000
+committer clepple-guest <clepple-guest> 1126986818 +0000
 data 23
 Better model detection
 from :1054
@@ -10786,7 +10757,7 @@ Revision is 179, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 179
 mark :1058
-committer Charles Lepple <clepple+nut@gmail.com> 1126988862 +0000
+committer clepple-guest <clepple-guest> 1126988862 +0000
 data 30
 Fixed up model detection code
 from :1056
@@ -10800,7 +10771,7 @@ Revision is 180, file path is branches/Development/CHANGES.
 commit refs/heads/Development
 #legacy-id 180
 mark :1060
-committer Peter Selinger <selinger@users.sourceforge.net> 1126989517 +0000
+committer selinger-guest <selinger-guest> 1126989517 +0000
 data 40
 - added last night's changes to CHANGES
 from :1052
@@ -10814,7 +10785,7 @@ Revision is 181, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 181
 mark :1062
-committer Charles Lepple <clepple+nut@gmail.com> 1126992855 +0000
+committer clepple-guest <clepple-guest> 1126992855 +0000
 data 45
 Added load.on/load.off instcmds for SMARTPRO
 from :1058
@@ -10828,7 +10799,7 @@ Revision is 182, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 182
 mark :1064
-committer Charles Lepple <clepple+nut@gmail.com> 1126995251 +0000
+committer clepple-guest <clepple-guest> 1126995251 +0000
 data 18
 Battery test mode
 from :1062
@@ -10842,7 +10813,7 @@ Revision is 183, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 183
 mark :1066
-committer Charles Lepple <clepple+nut@gmail.com> 1127081880 +0000
+committer clepple-guest <clepple-guest> 1127081880 +0000
 data 40
 Differences between SMARTPRO and OMNIVS
 from :1064
@@ -10856,7 +10827,7 @@ Revision is 184, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 184
 mark :1068
-committer Charles Lepple <clepple+nut@gmail.com> 1127084428 +0000
+committer clepple-guest <clepple-guest> 1127084428 +0000
 data 24
 More SMARTPRO debugging
 from :1066
@@ -10870,7 +10841,7 @@ Revision is 185, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 185
 mark :1070
-committer Charles Lepple <clepple+nut@gmail.com> 1127087329 +0000
+committer clepple-guest <clepple-guest> 1127087329 +0000
 data 23
 Fix SMARTPRO debugging
 from :1068
@@ -10884,7 +10855,7 @@ Revision is 186, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 186
 mark :1072
-committer Charles Lepple <clepple+nut@gmail.com> 1127088758 +0000
+committer clepple-guest <clepple-guest> 1127088758 +0000
 data 44
 Also monitor "S" value on non-OMNIVS models
 from :1070
@@ -10903,7 +10874,7 @@ Revision is 187, file path is branches/Development/drivers/gendb.
 commit refs/heads/Development
 #legacy-id 187
 mark :1075
-committer Peter Selinger <selinger@users.sourceforge.net> 1127146364 +0000
+committer selinger-guest <selinger-guest> 1127146364 +0000
 data 51
  - drivers/gendb: added test for gcc availability.
 from :1060
@@ -10923,7 +10894,7 @@ Revision is 188, file path is branches/Development/drivers/Makefile.in.
 commit refs/heads/Development
 #legacy-id 188
 mark :1078
-committer Peter Selinger <selinger@users.sourceforge.net> 1127148214 +0000
+committer selinger-guest <selinger-guest> 1127148214 +0000
 data 51
 - do not remove Makefile.drvbuild on "make clean".
 from :1075
@@ -10938,7 +10909,7 @@ Revision is 189, file path is branches/Development/CHANGES.
 commit refs/heads/Development
 #legacy-id 189
 mark :1080
-committer Peter Selinger <selinger@users.sourceforge.net> 1127148312 +0000
+committer selinger-guest <selinger-guest> 1127148312 +0000
 data 72
  - drivers/Makefile.in: don't remove Makefile.drvbuild on "make clean".
 from :1078
@@ -10972,7 +10943,7 @@ Revision is 190, file path is branches/regex_branch/drivers/newhidups.c.
 commit refs/heads/regex_branch
 #legacy-id 190
 mark :1086
-committer Peter Selinger <selinger@users.sourceforge.net> 1127152308 +0000
+committer selinger-guest <selinger-guest> 1127152308 +0000
 data 76
  - newhidups: added -x bus=X option to open a device on a specific USB bus.
 from :1044
@@ -10990,7 +10961,7 @@ Revision is 191, file path is branches/regex_branch/man/newhidups.8.
 commit refs/heads/regex_branch
 #legacy-id 191
 mark :1088
-committer Peter Selinger <selinger@users.sourceforge.net> 1127171035 +0000
+committer selinger-guest <selinger-guest> 1127171035 +0000
 data 53
  - added -x bus=<regex> option to newhidups man page
 from :1086
@@ -11089,7 +11060,7 @@ Revision is 196, file path is branches/Development/drivers/tripplite_usb.c.
 commit refs/heads/Development
 #legacy-id 196
 mark :1107
-committer Peter Selinger <selinger@users.sourceforge.net> 1127178958 +0000
+committer selinger-guest <selinger-guest> 1127178958 +0000
 data 325
  - newhidups: cleaned up code so that *.h files contain headers, *.c
    files contain sources. Declared all non-exported variables and
@@ -11166,7 +11137,7 @@ Revision is 197, file path is branches/Development/man/newhidups.8.
 commit refs/heads/Development
 #legacy-id 197
 mark :1117
-committer Peter Selinger <selinger@users.sourceforge.net> 1127181565 +0000
+committer selinger-guest <selinger-guest> 1127181565 +0000
 data 62
 - merging changes from regex_branch into Developement branch.
 from :1107
@@ -11203,7 +11174,7 @@ Revision is 198, file path is branches/Development/drivers/tripplite_usb.c.
 commit refs/heads/Development
 #legacy-id 198
 mark :1122
-committer Peter Selinger <selinger@users.sourceforge.net> 1127182384 +0000
+committer selinger-guest <selinger-guest> 1127182384 +0000
 data 83
  - tripplite_usb: made minor adjustments reflecting recent changes in
    libhid.h.
@@ -11286,7 +11257,7 @@ Revision is 200, file path is branches/Development/drivers/newhidups.h.
 commit refs/heads/Development
 #legacy-id 200
 mark :1137
-committer Peter Selinger <selinger@users.sourceforge.net> 1127520984 +0000
+committer selinger-guest <selinger-guest> 1127520984 +0000
 data 681
  - newhidups: moved most vendor-specific code into X-hid.c, where
    X=mge,apc,belkin. This eliminates the various switch(hd->VendorID)
@@ -11363,7 +11334,7 @@ Revision is 201, file path is branches/Development/drivers/tripplite_usb.c.
 commit refs/heads/Development
 #legacy-id 201
 mark :1147
-committer Peter Selinger <selinger@users.sourceforge.net> 1127523038 +0000
+committer selinger-guest <selinger-guest> 1127523038 +0000
 data 55
  - newhidups: eliminated global variables from libusb.
 from :1137
@@ -11385,7 +11356,7 @@ Revision is 202, file path is branches/Development/CHANGES.
 commit refs/heads/Development
 #legacy-id 202
 mark :1149
-committer Peter Selinger <selinger@users.sourceforge.net> 1127525566 +0000
+committer selinger-guest <selinger-guest> 1127525566 +0000
 data 55
  - newhidups: eliminated global variables from libusb.
 from :1147
@@ -11399,7 +11370,7 @@ Revision is 203, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 203
 mark :1151
-committer Charles Lepple <clepple+nut@gmail.com> 1127526503 +0000
+committer clepple-guest <clepple-guest> 1127526503 +0000
 data 23
 Fix protocol detection
 from :1072
@@ -11453,7 +11424,7 @@ Revision is 204, file path is branches/Development/drivers/tripplite_usb.c.
 commit refs/heads/Development
 #legacy-id 204
 mark :1161
-committer Peter Selinger <selinger@users.sourceforge.net> 1127529542 +0000
+committer selinger-guest <selinger-guest> 1127529542 +0000
 data 204
  - libhid.c: reduced number of global variables in libhid to 3. Also
    simplified logic in HIDGetItemValue() and fixed a bug where the
@@ -11517,7 +11488,7 @@ Revision is 205, file path is branches/Development/drivers/newhidups.h.
 commit refs/heads/Development
 #legacy-id 205
 mark :1171
-committer Peter Selinger <selinger@users.sourceforge.net> 1127536645 +0000
+committer selinger-guest <selinger-guest> 1127536645 +0000
 data 243
  - newhidups: moved remaining vendor-specific code into the X-hid.c
    subdrivers. Vendor specific usage strings are now defined in
@@ -11544,7 +11515,7 @@ Revision is 206, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 206
 mark :1173
-committer Charles Lepple <clepple+nut@gmail.com> 1127790847 +0000
+committer clepple-guest <clepple-guest> 1127790847 +0000
 data 39
 More Smartpro (3003) protocol decoding
 from :1151
@@ -11558,7 +11529,7 @@ Revision is 207, file path is branches/Tripp_Lite_Omni/drivers/tripplite_usb.c.
 commit refs/heads/Tripp_Lite_Omni
 #legacy-id 207
 mark :1175
-committer Charles Lepple <clepple+nut@gmail.com> 1127793462 +0000
+committer clepple-guest <clepple-guest> 1127793462 +0000
 data 24
 More Smartpro variables
 from :1173
@@ -12032,7 +12003,7 @@ Revision is 209, file path is branches/Development/docs/acpi.txt.
 commit refs/heads/Development
 #legacy-id 209
 mark :1179
-committer Arnaud Quette <arnaud.quette@free.fr> 1128113371 +0000
+committer aquette <aquette> 1128113371 +0000
 data 70
 doc/acpi.txt: start investigation on ACPI bridging (Alioth task #258)
 from :1171
@@ -12067,7 +12038,7 @@ Revision is 210, file path is branches/Development/man/bcmxcp.8.
 commit refs/heads/Development
 #legacy-id 210
 mark :1185
-committer Arnaud Quette <arnaud.quette@free.fr> 1128114489 +0000
+committer aquette <aquette> 1128114489 +0000
 data 51
 bcmxcp baud_rate parameter and HP R3000 XR support
 from :1179
@@ -12085,7 +12056,7 @@ Revision is 211, file path is branches/Development/drivers/bcmxcp.c.
 commit refs/heads/Development
 #legacy-id 211
 mark :1187
-committer Arnaud Quette <arnaud.quette@free.fr> 1128114639 +0000
+committer aquette <aquette> 1128114639 +0000
 data 21
 typo error on Modell
 from :1185
@@ -12099,7 +12070,7 @@ Revision is 212, file path is branches/Development/data/driver.list.
 commit refs/heads/Development
 #legacy-id 212
 mark :1189
-committer Arnaud Quette <arnaud.quette@free.fr> 1128115342 +0000
+committer aquette <aquette> 1128115342 +0000
 data 19
 missing blank line
 from :1187
@@ -12133,7 +12104,7 @@ Revision is 213, file path is branches/Testing/man/bcmxcp.8.
 commit refs/heads/Testing
 #legacy-id 213
 mark :1195
-committer Arnaud Quette <arnaud.quette@free.fr> 1128115451 +0000
+committer aquette <aquette> 1128115451 +0000
 data 43
 bcmxcp baud_rate parameter and HP R3000 XR
 from :823
@@ -12156,7 +12127,7 @@ Revision is 214, file path is branches/Development/data/driver.list.
 commit refs/heads/Development
 #legacy-id 214
 mark :1198
-committer Arnaud Quette <arnaud.quette@free.fr> 1128117884 +0000
+committer aquette <aquette> 1128117884 +0000
 data 26
 models support completion
 from :1189
@@ -12171,7 +12142,7 @@ Revision is 215, file path is branches/Testing/CHANGES.
 commit refs/heads/Testing
 #legacy-id 215
 mark :1200
-committer Arnaud Quette <arnaud.quette@free.fr> 1128118101 +0000
+committer aquette <aquette> 1128118101 +0000
 data 27
 missing Alioth # reference
 from :1195
@@ -12185,7 +12156,7 @@ Revision is 216, file path is branches/Development/CHANGES.
 commit refs/heads/Development
 #legacy-id 216
 mark :1202
-committer Arnaud Quette <arnaud.quette@free.fr> 1128118105 +0000
+committer aquette <aquette> 1128118105 +0000
 data 27
 missing Alioth # reference
 from :1198
@@ -12204,7 +12175,7 @@ Revision is 217, file path is branches/Development/docs/upssched.txt.
 commit refs/heads/Development
 #legacy-id 217
 mark :1205
-committer Arnaud Quette <arnaud.quette@free.fr> 1128190832 +0000
+committer aquette <aquette> 1128190832 +0000
 data 21
 Alioth patch #302107
 from :1202
@@ -12219,7 +12190,7 @@ Revision is 218, file path is branches/Development/docs/upssched.txt.
 commit refs/heads/Development
 #legacy-id 218
 mark :1207
-committer Arnaud Quette <arnaud.quette@free.fr> 1128190997 +0000
+committer aquette <aquette> 1128190997 +0000
 data 32
 update the Date of upssched.txt
 from :1205
@@ -12238,7 +12209,7 @@ Revision is 219, file path is branches/Testing/docs/upssched.txt.
 commit refs/heads/Testing
 #legacy-id 219
 mark :1210
-committer Arnaud Quette <arnaud.quette@free.fr> 1128191153 +0000
+committer aquette <aquette> 1128191153 +0000
 data 21
 Alioth patch #302107
 from :1200
@@ -12283,7 +12254,7 @@ Revision is 220, file path is branches/Development/scripts/hotplug/libhid.userma
 commit refs/heads/Development
 #legacy-id 220
 mark :1218
-committer Charles Lepple <clepple+nut@gmail.com> 1128204677 +0000
+committer clepple-guest <clepple-guest> 1128204677 +0000
 data 261
  * driver.list: Updated for SMARTPRO series
  * man/tripplite_usb.8: Added man page
@@ -12307,7 +12278,7 @@ Revision is 221, file path is branches/Development/CHANGES.
 commit refs/heads/Development
 #legacy-id 221
 mark :1220
-committer Peter Selinger <selinger@users.sourceforge.net> 1128206595 +0000
+committer selinger-guest <selinger-guest> 1128206595 +0000
 data 50
 merging an update to CHANGES previously forgotten
 from :1218
@@ -12321,7 +12292,7 @@ Revision is 222, file path is branches/Development/drivers/tripplite_usb.c.
 commit refs/heads/Development
 #legacy-id 222
 mark :1222
-committer Charles Lepple <clepple+nut@gmail.com> 1128206702 +0000
+committer clepple-guest <clepple-guest> 1128206702 +0000
 data 51
 Added basic reconnection support for tripplite_usb
 from :1220
@@ -12340,7 +12311,7 @@ Revision is 223, file path is branches/Development/man/tripplite_usb.8.
 commit refs/heads/Development
 #legacy-id 223
 mark :1225
-committer Charles Lepple <clepple+nut@gmail.com> 1128207497 +0000
+committer clepple-guest <clepple-guest> 1128207497 +0000
 data 31
 Updated tripplite_usb man page
 from :1222
@@ -12355,7 +12326,7 @@ Revision is 224, file path is branches/Development/drivers/tripplite_usb.c.
 commit refs/heads/Development
 #legacy-id 224
 mark :1227
-committer Charles Lepple <clepple+nut@gmail.com> 1128217573 +0000
+committer clepple-guest <clepple-guest> 1128217573 +0000
 data 76
 If the Tripp Lite protocol number is recognized, don't output "ups.debug.0"
 from :1225
@@ -12374,7 +12345,7 @@ Revision is 225, file path is branches/Development/drivers/newhidups.c.
 commit refs/heads/Development
 #legacy-id 225
 mark :1230
-committer Peter Selinger <selinger@users.sourceforge.net> 1128376387 +0000
+committer selinger-guest <selinger-guest> 1128376387 +0000
 data 56
 newhidups: removed bug that made all variables writable
 from :1227
@@ -12399,7 +12370,7 @@ Revision is 226, file path is branches/Development/drivers/belkin-hid.c.
 commit refs/heads/Development
 #legacy-id 226
 mark :1234
-committer Peter Selinger <selinger@users.sourceforge.net> 1128376892 +0000
+committer selinger-guest <selinger-guest> 1128376892 +0000
 data 70
 newhidups: fixed declarations of writable variables in APC and Belkin
 from :1230
@@ -12425,7 +12396,7 @@ Revision is 227, file path is branches/Development/drivers/belkin-hid.c.
 commit refs/heads/Development
 #legacy-id 227
 mark :1238
-committer Peter Selinger <selinger@users.sourceforge.net> 1128396877 +0000
+committer selinger-guest <selinger-guest> 1128396877 +0000
 data 66
 newhidups: fixed string length declarations in writable variables
 from :1234
@@ -12441,7 +12412,7 @@ Revision is 228, file path is branches/Development/drivers/nut_usb.c.
 commit refs/heads/Development
 #legacy-id 228
 mark :1240
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1128584322 +0000
+committer keyson-guest <keyson-guest> 1128584322 +0000
 data 36
 Fix of idVendor for powerware 3110.
 from :1238
@@ -12460,7 +12431,7 @@ Revision is 229, file path is branches/Testing/man/gamatronic.8.
 commit refs/heads/Testing
 #legacy-id 229
 mark :1243
-committer Arnaud Quette <arnaud.quette@free.fr> 1128673774 +0000
+committer aquette <aquette> 1128673774 +0000
 data 55
 add missing driver.list entries and gamatronic manpage
 from :1210
@@ -12510,7 +12481,7 @@ Revision is 230, file path is branches/Development/debian/rules.
 commit refs/heads/Development
 #legacy-id 230
 mark :1252
-committer Arnaud Quette <arnaud.quette@free.fr> 1128806501 +0000
+committer aquette <aquette> 1128806501 +0000
 data 14
 bring in sync
 from :1240
@@ -12571,7 +12542,7 @@ Revision is 231, file path is branches/Development/man/al175.8.
 commit refs/heads/Development
 #legacy-id 231
 mark :1262
-committer Arnaud Quette <arnaud.quette@free.fr> 1128807543 +0000
+committer aquette <aquette> 1128807543 +0000
 data 30
 add the modified al175 driver
 from :1252
@@ -12593,7 +12564,7 @@ Revision is 232, file path is branches/Development/CHANGES.
 commit refs/heads/Development
 #legacy-id 232
 mark :1264
-committer Charles Lepple <clepple+nut@gmail.com> 1128815190 +0000
+committer clepple-guest <clepple-guest> 1128815190 +0000
 data 46
 Mention last week's changes for tripplite_usb
 from :1262
@@ -12612,7 +12583,7 @@ Revision is 233, file path is branches/Development/drivers/libhid.c.
 commit refs/heads/Development
 #legacy-id 233
 mark :1267
-committer Peter Selinger <selinger@users.sourceforge.net> 1128825731 +0000
+committer selinger-guest <selinger-guest> 1128825731 +0000
 data 58
 added some missing usages (from USB/HID spec) to libhid.c
 from :1264
@@ -12652,7 +12623,7 @@ Revision is 234, file path is branches/Development/drivers/newhidups.h.
 commit refs/heads/Development
 #legacy-id 234
 mark :1274
-committer Peter Selinger <selinger@users.sourceforge.net> 1128835977 +0000
+committer selinger-guest <selinger-guest> 1128835977 +0000
 data 42
 newhidups: fixed handling of status flags
 from :1267
@@ -12676,7 +12647,7 @@ Revision is 235, file path is branches/Testing/Makefile.in.
 commit refs/heads/Testing
 #legacy-id 235
 mark :1277
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1128889764 +0000
+committer keyson-guest <keyson-guest> 1128889764 +0000
 data 119
 Backport of splitted bcmxcp - bcmxcp_usb driver from Development tagg. Update to makefiles and gendb to make it build.
 from :1243
@@ -12741,7 +12712,7 @@ Revision is 236, file path is branches/Testing/man/bcmxcp_usb.8.
 commit refs/heads/Testing
 #legacy-id 236
 mark :1289
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1128890310 +0000
+committer keyson-guest <keyson-guest> 1128890310 +0000
 data 34
 bcmxcp backport from development.
 from :1277
@@ -12770,7 +12741,7 @@ Revision is 237, file path is branches/Testing/configure.in.
 commit refs/heads/Testing
 #legacy-id 237
 mark :1292
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1128893078 +0000
+committer keyson-guest <keyson-guest> 1128893078 +0000
 data 27
 Fix for bcmxcp_usb driver.
 from :1289
@@ -12880,7 +12851,7 @@ Revision is 238, file path is branches/Testing/man/newhidups.8.
 commit refs/heads/Testing
 #legacy-id 238
 mark :1313
-committer Peter Selinger <selinger@users.sourceforge.net> 1128896340 +0000
+committer selinger-guest <selinger-guest> 1128896340 +0000
 data 152
 * backported all of the newhidups developement (up to tag
   after_PSE_10) from the Development branch to Testing.
@@ -12951,7 +12922,7 @@ Revision is 239, file path is branches/Testing/scripts/hotplug/libhid.usermap.
 commit refs/heads/Testing
 #legacy-id 239
 mark :1322
-committer Charles Lepple <clepple+nut@gmail.com> 1128910373 +0000
+committer clepple-guest <clepple-guest> 1128910373 +0000
 data 45
 Added tripplite_usb driver to Testing branch
 from :1313
@@ -12977,7 +12948,7 @@ Revision is 240, file path is branches/Development/drivers/Doxyfile.
 commit refs/heads/Development
 #legacy-id 240
 mark :1325
-committer Charles Lepple <clepple+nut@gmail.com> 1128910734 +0000
+committer clepple-guest <clepple-guest> 1128910734 +0000
 data 31
 Leftover tripplite_usb changes
 from :1274
@@ -12997,7 +12968,7 @@ Revision is 241, file path is branches/Development/man/tripplite_usb.8.
 commit refs/heads/Development
 #legacy-id 241
 mark :1328
-committer Charles Lepple <clepple+nut@gmail.com> 1128910797 +0000
+committer clepple-guest <clepple-guest> 1128910797 +0000
 data 63
 Sync'd tripplite_usb.c documentation changes from Testing tree
 from :1325
@@ -13012,7 +12983,7 @@ Revision is 242, file path is branches/Testing/CHANGES.
 commit refs/heads/Testing
 #legacy-id 242
 mark :1330
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1128952772 +0000
+committer keyson-guest <keyson-guest> 1128952772 +0000
 data 48
 Added comments in CHANGES for bcmxcp back-port.
 from :1322
@@ -13026,7 +12997,7 @@ Revision is 243, file path is branches/Development/drivers/al175.c.
 commit refs/heads/Development
 #legacy-id 243
 mark :1332
-committer Arnaud Quette <arnaud.quette@free.fr> 1128973434 +0000
+committer aquette <aquette> 1128973434 +0000
 data 61
 really fix al175 compilation, while waiting for more cleanup
 from :1328
@@ -13045,7 +13016,7 @@ Revision is 244, file path is branches/Development/data/driver.list.
 commit refs/heads/Development
 #legacy-id 244
 mark :1335
-committer Arnaud Quette <arnaud.quette@free.fr> 1128975619 +0000
+committer aquette <aquette> 1128975619 +0000
 data 22
 driver.list for al175
 from :1332
@@ -13065,7 +13036,7 @@ Revision is 245, file path is branches/Testing/drivers/gendb.
 commit refs/heads/Testing
 #legacy-id 245
 mark :1338
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1128977420 +0000
+committer keyson-guest <keyson-guest> 1128977420 +0000
 data 40
 Removed unnecessary double declaration.
 from :1330
@@ -13090,7 +13061,7 @@ Revision is 246, file path is branches/Testing/data/driver.list.
 commit refs/heads/Testing
 #legacy-id 246
 mark :1342
-committer Arnaud Quette <arnaud.quette@free.fr> 1129014162 +0000
+committer aquette <aquette> 1129014162 +0000
 data 24
 add missing bcmxcp info
 from :1338
@@ -13111,7 +13082,7 @@ Revision is 247, file path is branches/Testing/data/driver.list.
 commit refs/heads/Testing
 #legacy-id 247
 mark :1345
-committer Peter Selinger <selinger@users.sourceforge.net> 1129066536 +0000
+committer selinger-guest <selinger-guest> 1129066536 +0000
 data 72
 Added info about newhidups supported models to README, data/driver.list
 from :1342
@@ -13151,7 +13122,7 @@ Revision is 248, file path is branches/Development/debian/po/fr.po.
 commit refs/heads/Development
 #legacy-id 248
 mark :1352
-committer Arnaud Quette <arnaud.quette@free.fr> 1129724011 +0000
+committer aquette <aquette> 1129724011 +0000
 data 20
 more debian/ update
 from :1335
@@ -13180,7 +13151,7 @@ Revision is 249, file path is branches/Development/debian/po/vi.po.
 commit refs/heads/Development
 #legacy-id 249
 mark :1356
-committer Arnaud Quette <arnaud.quette@free.fr> 1129754142 +0000
+committer aquette <aquette> 1129754142 +0000
 data 23
 debian sync and update
 from :1352
@@ -13231,7 +13202,7 @@ Revision is 250, file path is branches/Development/man/nitram.8.
 commit refs/heads/Development
 #legacy-id 250
 mark :1365
-committer Arnaud Quette <arnaud.quette@free.fr> 1129754699 +0000
+committer aquette <aquette> 1129754699 +0000
 data 22
 add the nitram driver
 from :1356
@@ -13257,7 +13228,7 @@ Revision is 251, file path is branches/Development/drivers/mge-hid.h.
 commit refs/heads/Development
 #legacy-id 251
 mark :1368
-committer Peter Selinger <selinger@users.sourceforge.net> 1129864201 +0000
+committer selinger-guest <selinger-guest> 1129864201 +0000
 data 29
 corrected a typo in comments
 from :1365
@@ -13292,7 +13263,7 @@ Revision is 252, file path is branches/Development/drivers/newhidups.c.
 commit refs/heads/Development
 #legacy-id 252
 mark :1374
-committer Peter Selinger <selinger@users.sourceforge.net> 1129864779 +0000
+committer selinger-guest <selinger-guest> 1129864779 +0000
 data 123
 * newhidups: added "-x generic" option for connecting to a (yet)
   unsupported device and collecting HID dump information.
@@ -13331,7 +13302,7 @@ Revision is 253, file path is branches/Development/man/newhidups.8.
 commit refs/heads/Development
 #legacy-id 253
 mark :1380
-committer Peter Selinger <selinger@users.sourceforge.net> 1129866672 +0000
+committer selinger-guest <selinger-guest> 1129866672 +0000
 data 139
  - newhidups: enforce using "-x vendorid" together with "-x generic".
  - newhidups: added new info to man page and docs/hid-subdrivers.txt
@@ -13375,7 +13346,7 @@ Revision is 254, file path is branches/Development/drivers/mge-shut.h.
 commit refs/heads/Development
 #legacy-id 254
 mark :1387
-committer Peter Selinger <selinger@users.sourceforge.net> 1129916631 +0000
+committer selinger-guest <selinger-guest> 1129916631 +0000
 data 109
  - newhidups: added missing "usage" definitions from HID Power
    Device specification, corrected spellings.
@@ -13400,7 +13371,7 @@ Revision is 255, file path is branches/Development/drivers/libusb.h.
 commit refs/heads/Development
 #legacy-id 255
 mark :1390
-committer Peter Selinger <selinger@users.sourceforge.net> 1130045257 +0000
+committer selinger-guest <selinger-guest> 1130045257 +0000
 data 27
 - fixed C++-style comments
 from :1387
@@ -13435,7 +13406,7 @@ Revision is 256, file path is branches/Development/drivers/newhidups.h.
 commit refs/heads/Development
 #legacy-id 256
 mark :1396
-committer Peter Selinger <selinger@users.sourceforge.net> 1130045805 +0000
+committer selinger-guest <selinger-guest> 1130045805 +0000
 data 47
 newhidups: added support for CyberPower 685AVR
 from :1390
@@ -13488,7 +13459,7 @@ Revision is 257, file path is branches/Development/man/megatec.8.
 commit refs/heads/Development
 #legacy-id 257
 mark :1405
-committer Arnaud Quette <arnaud.quette@free.fr> 1130158839 +0000
+committer aquette <aquette> 1130158839 +0000
 data 15
 megatec commit
 from :1396
@@ -13512,7 +13483,7 @@ Revision is 258, file path is branches/Development/drivers/Makefile.drvbuild.
 commit refs/heads/Development
 #legacy-id 258
 mark :1407
-committer Arnaud Quette <arnaud.quette@free.fr> 1130180530 +0000
+committer aquette <aquette> 1130180530 +0000
 data 253
 missing Makefile.drvbuild after megatec commit
 `CVS:' are removed automatically CVS: CVS: Committing in . CVS: CVS: Modified Files: CVS: Tag: Development CVS:
@@ -13548,7 +13519,7 @@ Revision is 259, file path is branches/Development/server/conf.c.
 commit refs/heads/Development
 #legacy-id 259
 mark :1413
-committer Arnaud Quette <arnaud.quette@free.fr> 1131312459 +0000
+committer aquette <aquette> 1131312459 +0000
 data 37
 driver - server socket naming change
 from :1407
@@ -13566,7 +13537,7 @@ Revision is 260, file path is branches/Development/man/newhidups.8.
 commit refs/heads/Development
 #legacy-id 260
 mark :1415
-committer Charles Lepple <clepple+nut@gmail.com> 1131342348 +0000
+committer clepple-guest <clepple-guest> 1131342348 +0000
 data 110
 Updated newhidups man page: mention APC, CyberPower, Belkin.
 
@@ -13617,7 +13588,7 @@ Revision is 261, file path is branches/Development/drivers/newhidups.h.
 commit refs/heads/Development
 #legacy-id 261
 mark :1424
-committer Peter Selinger <selinger@users.sourceforge.net> 1131401660 +0000
+committer selinger-guest <selinger-guest> 1131401660 +0000
 data 69
 added rudimentary Tripp Lite support (still incomplete and unstable)
 from :1415
@@ -13643,7 +13614,7 @@ Revision is 262, file path is branches/Development/drivers/tripplite-hid.h.
 commit refs/heads/Development
 #legacy-id 262
 mark :1427
-committer Peter Selinger <selinger@users.sourceforge.net> 1131418757 +0000
+committer selinger-guest <selinger-guest> 1131418757 +0000
 data 36
 - added missing tripplite-hid files
 from :1424
@@ -13683,7 +13654,7 @@ Revision is 263, file path is branches/Development/drivers/newhidups.h.
 commit refs/heads/Development
 #legacy-id 263
 mark :1434
-committer Peter Selinger <selinger@users.sourceforge.net> 1131502616 +0000
+committer selinger-guest <selinger-guest> 1131502616 +0000
 data 38
 - newhidups: cleaned up dependencies.
 from :1427
@@ -13732,7 +13703,7 @@ Revision is 264, file path is branches/Development/drivers/mge-shut.c.
 commit refs/heads/Development
 #legacy-id 264
 mark :1442
-committer Peter Selinger <selinger@users.sourceforge.net> 1131772736 +0000
+committer selinger-guest <selinger-guest> 1131772736 +0000
 data 119
 changed HID parser interface to parse report descriptor into a data
 structure, instead of re-scanning it all the time.
@@ -13788,7 +13759,7 @@ Revision is 268, file path is branches/Testing/scripts/hotplug-ng/nut-usbups.rul
 commit refs/heads/Testing
 #legacy-id 268
 mark :1451
-committer Arnaud Quette <arnaud.quette@free.fr> 1132000632 +0000
+committer aquette <aquette> 1132000632 +0000
 data 35
 hotplug/udev and other docs update
 from :1345
@@ -13809,7 +13780,7 @@ Revision is 269, file path is branches/Testing/configure.in.
 commit refs/heads/Testing
 #legacy-id 269
 mark :1453
-committer Arnaud Quette <arnaud.quette@free.fr> 1132002440 +0000
+committer aquette <aquette> 1132002440 +0000
 data 109
 add missing configure rules for generating hotplug-ng scripts, and a basic autodetection of hotplug and udev
 from :1451
@@ -13828,7 +13799,7 @@ Revision is 270, file path is branches/Testing/data/driver.list.
 commit refs/heads/Testing
 #legacy-id 270
 mark :1456
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1132072270 +0000
+committer keyson-guest <keyson-guest> 1132072270 +0000
 data 31
 Add HP R5500 XR to driver.list
 from :1453
@@ -13848,7 +13819,7 @@ Revision is 271, file path is branches/Development/data/driver.list.
 commit refs/heads/Development
 #legacy-id 271
 mark :1459
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1132072688 +0000
+committer keyson-guest <keyson-guest> 1132072688 +0000
 data 32
 Add HP R5500 XR to driver.list.
 from :1442
@@ -15032,7 +15003,7 @@ Revision is 274, file path is branches/reportbuf/drivers/newhidups.c.
 commit refs/heads/reportbuf
 #legacy-id 274
 mark :1471
-committer Peter Selinger <selinger@users.sourceforge.net> 1132804550 +0000
+committer selinger-guest <selinger-guest> 1132804550 +0000
 data 98
 newhidups: Redesigned report retrieval system. Implementation
 changes in various data structures.
@@ -15060,7 +15031,7 @@ Revision is 275, file path is branches/Development/man/newhidups.8.
 commit refs/heads/Development
 #legacy-id 275
 mark :1474
-committer Peter Selinger <selinger@users.sourceforge.net> 1132811584 +0000
+committer selinger-guest <selinger-guest> 1132811584 +0000
 data 58
 updated newhidups man page to reflect multi-UPS mechanism
 from :1459
@@ -15080,7 +15051,7 @@ Revision is 276, file path is branches/Development/drivers/fentonups.h.
 commit refs/heads/Development
 #legacy-id 276
 mark :1477
-committer Arnaud Quette <arnaud.quette@free.fr> 1132929756 +0000
+committer aquette <aquette> 1132929756 +0000
 data 29
 update INELT Monolith 1000LT
 from :1474
@@ -15105,7 +15076,7 @@ Revision is 277, file path is branches/Development/scripts/hotplug/libhid.userma
 commit refs/heads/Development
 #legacy-id 277
 mark :1481
-committer Peter Selinger <selinger@users.sourceforge.net> 1133842095 +0000
+committer selinger-guest <selinger-guest> 1133842095 +0000
 data 111
  - added Belkin F6C800-UNV to scripts/hotplug/libhid.usermap
  - added Belkin F6C1500-TW-RK to data/driver.list
@@ -15132,7 +15103,7 @@ Revision is 278, file path is branches/Development/scripts/hotplug-ng/nut-usbups
 commit refs/heads/Development
 #legacy-id 278
 mark :1485
-committer Charles Lepple <clepple+nut@gmail.com> 1133879793 +0000
+committer clepple-guest <clepple-guest> 1133879793 +0000
 data 47
 Copying hotplug-ng from Testing to Development
 from :1481
@@ -15168,7 +15139,7 @@ Revision is 279, file path is branches/Testing/man/newhidups.8.
 commit refs/heads/Testing
 #legacy-id 279
 mark :1491
-committer Arnaud Quette <arnaud.quette@free.fr> 1134769309 +0000
+committer aquette <aquette> 1134769309 +0000
 data 39
 documentation and compatibility update
 from :1456
@@ -15186,7 +15157,7 @@ Revision is 280, file path is branches/Testing/CHANGES.
 commit refs/heads/Testing
 #legacy-id 280
 mark :1493
-committer Arnaud Quette <arnaud.quette@free.fr> 1134769942 +0000
+committer aquette <aquette> 1134769942 +0000
 data 27
 use minus instead of start
 from :1491
@@ -15225,7 +15196,7 @@ Revision is 281, file path is branches/Development/man/newhidups.8.
 commit refs/heads/Development
 #legacy-id 281
 mark :1500
-committer Arnaud Quette <arnaud.quette@free.fr> 1134981718 +0000
+committer aquette <aquette> 1134981718 +0000
 data 81
 USB documentation update (forport from Testing), and minor mge-* manpages update
 from :1485
@@ -15244,7 +15215,7 @@ Revision is 282, file path is branches/Development/conf/upsstats.html.
 commit refs/heads/Development
 #legacy-id 282
 mark :1502
-committer Charles Lepple <clepple+nut@gmail.com> 1135214299 +0000
+committer clepple-guest <clepple-guest> 1135214299 +0000
 data 78
 Somehow, I don't think this C code will ever get compiled in an HTML file :-)
 from :1500
@@ -15258,7 +15229,7 @@ Revision is 283, file path is branches/Testing/data/driver.list.
 commit refs/heads/Testing
 #legacy-id 283
 mark :1504
-committer Arnaud Quette <arnaud.quette@free.fr> 1135258531 +0000
+committer aquette <aquette> 1135258531 +0000
 data 36
 split Pulsar / Comet EXtreme compat
 from :1493
@@ -15282,7 +15253,7 @@ Revision is 284, file path is branches/Testing/include/version.h.
 commit refs/heads/Testing
 #legacy-id 284
 mark :1508
-committer Arnaud Quette <arnaud.quette@free.fr> 1135261781 +0000
+committer aquette <aquette> 1135261781 +0000
 data 19
 2.0.3-pre2 release
 from :1504
@@ -15298,7 +15269,7 @@ Revision is 286, file path is branches/Development/man/newhidups.8.
 commit refs/heads/Development
 #legacy-id 286
 mark :1510
-committer Charles Lepple <clepple+nut@gmail.com> 1135355353 +0000
+committer clepple-guest <clepple-guest> 1135355353 +0000
 data 141
 Changed example regex per discussion on nut-upsdev
 
@@ -15315,7 +15286,7 @@ Revision is 287, file path is branches/Testing/man/newhidups.8.
 commit refs/heads/Testing
 #legacy-id 287
 mark :1512
-committer Charles Lepple <clepple+nut@gmail.com> 1135355368 +0000
+committer clepple-guest <clepple-guest> 1135355368 +0000
 data 141
 Changed example regex per discussion on nut-upsdev
 
@@ -15347,7 +15318,7 @@ Revision is 288, file path is branches/Development/man/megatec.8.
 commit refs/heads/Development
 #legacy-id 288
 mark :1517
-committer Carlos Rodrigues <cefrodrigues@gmail.com> 1136254541 +0000
+committer carlosefr-guest <carlosefr-guest> 1136254541 +0000
 data 76
 megatec: new "lowbatt" parameter (overrides the hardware low battery level)
 from :1510
@@ -15374,7 +15345,7 @@ Revision is 289, file path is branches/Development/man/megatec.8.
 commit refs/heads/Development
 #legacy-id 289
 mark :1521
-committer Carlos Rodrigues <cefrodrigues@gmail.com> 1137255844 +0000
+committer carlosefr-guest <carlosefr-guest> 1137255844 +0000
 data 93
 megatec: minor changes to the manpage
 driver.list: added "Trust UPS 1000 Management PW-4105"
@@ -15401,7 +15372,7 @@ Revision is 290, file path is branches/Testing/man/mge-utalk.8.
 commit refs/heads/Testing
 #legacy-id 290
 mark :1525
-committer Arnaud Quette <arnaud.quette@free.fr> 1137422368 +0000
+committer aquette <aquette> 1137422368 +0000
 data 15
 mge-utalk 0.87
 from :1512
@@ -15427,7 +15398,7 @@ Revision is 291, file path is branches/Testing/man/powermust.8.
 commit refs/heads/Testing
 #legacy-id 291
 mark :1529
-committer Carlos Rodrigues <cefrodrigues@gmail.com> 1137450165 +0000
+committer carlosefr-guest <carlosefr-guest> 1137450165 +0000
 data 97
 powermust: minor changes to the manpage
 added "Trust UPS 1000 Management PW-4105" to driver.list
@@ -15454,7 +15425,7 @@ Revision is 292, file path is branches/Testing/man/powermust.8.
 commit refs/heads/Testing
 #legacy-id 292
 mark :1533
-committer Carlos Rodrigues <cefrodrigues@gmail.com> 1137628762 +0000
+committer carlosefr-guest <carlosefr-guest> 1137628762 +0000
 data 67
 added "Tecnoware Easy Power 1200" to "powermust.8" and driver.list
 from :1529
@@ -15480,7 +15451,7 @@ Revision is 293, file path is branches/Development/man/megatec.8.
 commit refs/heads/Development
 #legacy-id 293
 mark :1537
-committer Carlos Rodrigues <cefrodrigues@gmail.com> 1137629085 +0000
+committer carlosefr-guest <carlosefr-guest> 1137629085 +0000
 data 118
 added "Tecnoware Easy Power 1200" to "megatec.8" and driver.list
 point "Megatec Protocol" to "megatec" in driver.list
@@ -15547,7 +15518,7 @@ Revision is 294, file path is branches/Development/include/common.h.
 commit refs/heads/Development
 #legacy-id 294
 mark :1549
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1137771159 +0000
+committer keyson-guest <keyson-guest> 1137771159 +0000
 data 70
 - Change include from sys/termios.h to "serial.h". Patch from Niklas.
 from :1537
@@ -15601,7 +15572,7 @@ Revision is 298, file path is branches/Development/man/optiups.8.
 commit refs/heads/Development
 #legacy-id 298
 mark :1557
-committer Arnaud Quette <arnaud.quette@free.fr> 1137874347 +0000
+committer aquette <aquette> 1137874347 +0000
 data 23
 optiups Alioth #302891
 from :1549
@@ -15636,7 +15607,7 @@ Revision is 299, file path is branches/Testing/README.
 commit refs/heads/Testing
 #legacy-id 299
 mark :1562
-committer Arnaud Quette <arnaud.quette@free.fr> 1138010695 +0000
+committer aquette <aquette> 1138010695 +0000
 data 16
 more doc update
 from :1533
@@ -15653,7 +15624,7 @@ Revision is 300, file path is branches/Testing/INSTALL.
 commit refs/heads/Testing
 #legacy-id 300
 mark :1564
-committer Arnaud Quette <arnaud.quette@free.fr> 1138011773 +0000
+committer aquette <aquette> 1138011773 +0000
 data 30
 newhidups auto value for port
 from :1562
@@ -15667,7 +15638,7 @@ Revision is 301, file path is branches/Testing/CHANGES.
 commit refs/heads/Testing
 #legacy-id 301
 mark :1566
-committer Arnaud Quette <arnaud.quette@free.fr> 1138012183 +0000
+committer aquette <aquette> 1138012183 +0000
 data 16
 more doc update
 from :1564
@@ -15706,7 +15677,7 @@ Revision is 302, file path is branches/Development/docs/FAQ.
 commit refs/heads/Development
 #legacy-id 302
 mark :1573
-committer Arnaud Quette <arnaud.quette@free.fr> 1138025087 +0000
+committer aquette <aquette> 1138025087 +0000
 data 24
 doc update from Testing
 from :1557
@@ -15725,7 +15696,7 @@ Revision is 303, file path is branches/Development/data/driver.list.
 commit refs/heads/Development
 #legacy-id 303
 mark :1575
-committer Arnaud Quette <arnaud.quette@free.fr> 1138031118 +0000
+committer aquette <aquette> 1138031118 +0000
 data 26
 add optiups compatibility
 from :1573
@@ -15754,7 +15725,7 @@ Revision is 304, file path is branches/Development/drivers/tripplite.c.
 commit refs/heads/Development
 #legacy-id 304
 mark :1580
-committer Arnaud Quette <arnaud.quette@free.fr> 1138139400 +0000
+committer aquette <aquette> 1138139400 +0000
 data 25
 Arjen (and SuSE) patches
 from :1575
@@ -15786,7 +15757,7 @@ Revision is 305, file path is branches/Testing/drivers/tripplite.c.
 commit refs/heads/Testing
 #legacy-id 305
 mark :1585
-committer Arnaud Quette <arnaud.quette@free.fr> 1138139480 +0000
+committer aquette <aquette> 1138139480 +0000
 data 25
 Arjen (and SuSE) patches
 from :1566
@@ -15843,7 +15814,7 @@ Revision is 306, file path is branches/Development/drivers/snmp-ups.h.
 commit refs/heads/Development
 #legacy-id 306
 mark :1595
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1138292746 +0000
+committer keyson-guest <keyson-guest> 1138292746 +0000
 data 39
 Patch from Niklas for snmp and 3phase.
 from :1580
@@ -15870,7 +15841,7 @@ Revision is 307, file path is branches/Development/drivers/apc-hid.c.
 commit refs/heads/Development
 #legacy-id 307
 mark :1598
-committer Peter Selinger <selinger@users.sourceforge.net> 1138374293 +0000
+committer selinger-guest <selinger-guest> 1138374293 +0000
 data 61
 newhidups: added usage path components for APC Back-UPS 500.
 from :1595
@@ -15900,7 +15871,7 @@ Revision is 308, file path is branches/Development/drivers/snmp-ups.h.
 commit refs/heads/Development
 #legacy-id 308
 mark :1603
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1138382229 +0000
+committer keyson-guest <keyson-guest> 1138382229 +0000
 data 42
 - Update to snmp-ups driver and apccmibs.
 from :1598
@@ -15917,7 +15888,7 @@ Revision is 309, file path is branches/Development/server/sstate.c.
 commit refs/heads/Development
 #legacy-id 309
 mark :1605
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138459138 +0000
+committer adkorte-guest <adkorte-guest> 1138459138 +0000
 data 370
 
 Move update_time() inline in the code (used only once, it improves
@@ -15939,7 +15910,7 @@ Revision is 310, file path is branches/Development/CHANGES.
 commit refs/heads/Development
 #legacy-id 310
 mark :1607
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138460074 +0000
+committer adkorte-guest <adkorte-guest> 1138460074 +0000
 data 151
 
 Update to sstate.c to fix bug with upsd declaring driver stale after
@@ -15961,7 +15932,7 @@ Revision is 311, file path is branches/Development/drivers/safenet.h.
 commit refs/heads/Development
 #legacy-id 311
 mark :1610
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138463062 +0000
+committer adkorte-guest <adkorte-guest> 1138463062 +0000
 data 96
 
 Remove defined TRUE/FALSE, which were not very helpful in making the code
@@ -15978,7 +15949,7 @@ Revision is 312, file path is branches/Development/drivers/safenet.c.
 commit refs/heads/Development
 #legacy-id 312
 mark :1612
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138466710 +0000
+committer adkorte-guest <adkorte-guest> 1138466710 +0000
 data 41
 
 Forgot to update driver version earlier
@@ -15998,7 +15969,7 @@ Revision is 313, file path is branches/Development/drivers/genericups.c.
 commit refs/heads/Development
 #legacy-id 313
 mark :1615
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138650690 +0000
+committer adkorte-guest <adkorte-guest> 1138650690 +0000
 data 91
 
  -  Fixes bug #302338 (genericups: custom configuration through ups.conf
@@ -16025,7 +15996,7 @@ Revision is 314, file path is branches/Development/drivers/safenet.h.
 commit refs/heads/Development
 #legacy-id 314
 mark :1619
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138743571 +0000
+committer adkorte-guest <adkorte-guest> 1138743571 +0000
 data 55
 
 Code cleanup of safenet driver (no new functionality)
@@ -16047,7 +16018,7 @@ Revision is 315, file path is branches/Development/drivers/apc-hid.c.
 commit refs/heads/Development
 #legacy-id 315
 mark :1622
-committer Peter Selinger <selinger@users.sourceforge.net> 1138790469 +0000
+committer selinger-guest <selinger-guest> 1138790469 +0000
 data 75
 newhidups: fixed battery manufacturing date conversion for some APC models
 from :1619
@@ -16057,7 +16028,7 @@ M 100644 :1621 drivers/apc-hid.c
 commit refs/heads/Development
 #legacy-id 316
 mark :1623
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138808231 +0000
+committer adkorte-guest <adkorte-guest> 1138808231 +0000
 data 44
 
 Remove generated files from the repository
@@ -16087,7 +16058,7 @@ data 96
 commit refs/heads/Development
 #legacy-id 318
 mark :1626
-committer Peter Selinger <selinger@users.sourceforge.net> 1138817815 +0000
+committer selinger-guest <selinger-guest> 1138817815 +0000
 data 71
 added .cvsignore files in each relevant directory, to reduce CVS noise
 from :1623
@@ -16169,7 +16140,7 @@ data 15
 commit refs/heads/Development
 #legacy-id 319
 mark :1633
-committer Peter Selinger <selinger@users.sourceforge.net> 1138817821 +0000
+committer selinger-guest <selinger-guest> 1138817821 +0000
 data 71
 added .cvsignore files in each relevant directory, to reduce CVS noise
 from :1626
@@ -16202,7 +16173,7 @@ Revision is 320, file path is branches/Development/man/upsdrvctl.8.
 commit refs/heads/Development
 #legacy-id 320
 mark :1637
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138915495 +0000
+committer adkorte-guest <adkorte-guest> 1138915495 +0000
 data 174
 
 Added 'status' command to upsdrvctl and removed passing of 'port' in
@@ -16221,7 +16192,7 @@ Revision is 321, file path is branches/Development/CREDITS.
 commit refs/heads/Development
 #legacy-id 321
 mark :1639
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138915697 +0000
+committer adkorte-guest <adkorte-guest> 1138915697 +0000
 data 14
 
 Added myself
@@ -16236,7 +16207,7 @@ Revision is 322, file path is branches/Development/drivers/upsdrvctl.c.
 commit refs/heads/Development
 #legacy-id 322
 mark :1641
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138916263 +0000
+committer adkorte-guest <adkorte-guest> 1138916263 +0000
 data 56
 
 Forgot to paste one line from the previous code, added
@@ -16256,7 +16227,7 @@ Revision is 323, file path is branches/Development/drivers/upsdrvctl.c.
 commit refs/heads/Development
 #legacy-id 323
 mark :1644
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1138999366 +0000
+committer adkorte-guest <adkorte-guest> 1138999366 +0000
 data 141
 
 Use old style pid names for the drivers too, for backwards compatibility.
@@ -16278,7 +16249,7 @@ Revision is 324, file path is branches/Development/drivers/genericups.c.
 commit refs/heads/Development
 #legacy-id 324
 mark :1647
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139084494 +0000
+committer adkorte-guest <adkorte-guest> 1139084494 +0000
 data 129
 drivers/genericups.c: check for invalid overrides for signals
 (don't accept output signal if an input is expected or vice-versa)
@@ -16299,7 +16270,7 @@ Revision is 325, file path is branches/Development/drivers/upsdrvctl.c.
 commit refs/heads/Development
 #legacy-id 325
 mark :1650
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139088241 +0000
+committer adkorte-guest <adkorte-guest> 1139088241 +0000
 data 29
 minor changes (coding style)
 from :1647
@@ -17266,7 +17237,7 @@ Revision is 327, file path is branches/reportbuf/server/sstate.c.
 commit refs/heads/reportbuf
 #legacy-id 327
 mark :1699
-committer Peter Selinger <selinger@users.sourceforge.net> 1139223108 +0000
+committer selinger-guest <selinger-guest> 1139223108 +0000
 data 105
 * merged changes from Development branch (reportbuf_base until
   reportbuf_base0) into reportbuf branch.
@@ -17341,7 +17312,7 @@ Revision is 328, file path is branches/Testing/man/powermust.8.
 commit refs/heads/Testing
 #legacy-id 328
 mark :1701
-committer Arnaud Quette <arnaud.quette@free.fr> 1139306503 +0000
+committer aquette <aquette> 1139306503 +0000
 data 16
 update the date
 from :1585
@@ -17355,7 +17326,7 @@ Revision is 329, file path is branches/Testing/docs/FAQ.
 commit refs/heads/Testing
 #legacy-id 329
 mark :1703
-committer Arnaud Quette <arnaud.quette@free.fr> 1139306649 +0000
+committer aquette <aquette> 1139306649 +0000
 data 22
 a bit more FAQ update
 from :1701
@@ -17389,7 +17360,7 @@ Revision is 330, file path is branches/Testing/install-sh.
 commit refs/heads/Testing
 #legacy-id 330
 mark :1709
-committer Arnaud Quette <arnaud.quette@free.fr> 1139313020 +0000
+committer aquette <aquette> 1139313020 +0000
 data 32
 final changes for 2.0.3 release
 from :1703
@@ -17417,7 +17388,7 @@ Revision is 331, file path is branches/Testing/include/version.h.
 commit refs/heads/Testing
 #legacy-id 331
 mark :1713
-committer Arnaud Quette <arnaud.quette@free.fr> 1139313473 +0000
+committer aquette <aquette> 1139313473 +0000
 data 24
 missing version* update
 from :1709
@@ -17433,7 +17404,7 @@ Revision is 332, file path is branches/Testing/Makefile.
 commit refs/heads/Testing
 #legacy-id 332
 mark :1715
-committer Arnaud Quette <arnaud.quette@free.fr> 1139313556 +0000
+committer aquette <aquette> 1139313556 +0000
 data 48
 restore Makefile.dist as the top level Makefile
 from :1713
@@ -17447,7 +17418,7 @@ Revision is 333, file path is branches/Testing/INSTALL.
 commit refs/heads/Testing
 #legacy-id 333
 mark :1717
-committer Arnaud Quette <arnaud.quette@free.fr> 1139314191 +0000
+committer aquette <aquette> 1139314191 +0000
 data 50
 add a mention for libusb and Net-SNMP requirement
 from :1715
@@ -17616,7 +17587,7 @@ Revision is 334, file path is branches/Stable/scripts/hotplug-ng/nut-usbups.rule
 commit refs/heads/Stable
 #legacy-id 334
 mark :1750
-committer Arnaud Quette <arnaud.quette@free.fr> 1139322717 +0000
+committer aquette <aquette> 1139322717 +0000
 data 26
 new files added to Stable
 from :311
@@ -17977,7 +17948,7 @@ Revision is 335, file path is branches/Stable/scripts/hotplug/libhid.usermap.
 commit refs/heads/Stable
 #legacy-id 335
 mark :1815
-committer Arnaud Quette <arnaud.quette@free.fr> 1139322980 +0000
+committer aquette <aquette> 1139322980 +0000
 data 68
 uncommited Stable files, following the merge from Testing to Stable
 from :1750
@@ -18054,7 +18025,7 @@ Revision is 337, file path is branches/Development/man/genericups.8.
 commit refs/heads/Development
 #legacy-id 337
 mark :1817
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139343543 +0000
+committer adkorte-guest <adkorte-guest> 1139343543 +0000
 data 302
 
 Remove the "connection monitoring" chapter from the man page.
@@ -18079,7 +18050,7 @@ Revision is 338, file path is branches/Development/man/megatec.8.
 commit refs/heads/Development
 #legacy-id 338
 mark :1820
-committer Carlos Rodrigues <cefrodrigues@gmail.com> 1139354808 +0000
+committer carlosefr-guest <carlosefr-guest> 1139354808 +0000
 data 37
 minor change to man/megatec.8 (date)
 from :1817
@@ -18114,7 +18085,7 @@ Revision is 339, file path is branches/Development/conf/upsstats.html.
 commit refs/heads/Development
 #legacy-id 339
 mark :1826
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1139469643 +0000
+committer keyson-guest <keyson-guest> 1139469643 +0000
 data 41
 - Update's to cgi client and html pages.
 from :1820
@@ -18147,7 +18118,7 @@ Revision is 340, file path is branches/Development/man/upsstats.html.5.
 commit refs/heads/Development
 #legacy-id 340
 mark :1831
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1139490850 +0000
+committer keyson-guest <keyson-guest> 1139490850 +0000
 data 23
 - Update to cgi patch.
 from :1826
@@ -18164,7 +18135,7 @@ Revision is 341, file path is branches/Development/CHANGES.
 commit refs/heads/Development
 #legacy-id 341
 mark :1833
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1139491553 +0000
+committer keyson-guest <keyson-guest> 1139491553 +0000
 data 37
 - Included the right text i CHANGES.
 from :1831
@@ -18183,7 +18154,7 @@ Revision is 342, file path is branches/Development/drivers/belkinunv.c.
 commit refs/heads/Development
 #legacy-id 342
 mark :1836
-committer Peter Selinger <selinger@users.sourceforge.net> 1139500870 +0000
+committer selinger-guest <selinger-guest> 1139500870 +0000
 data 44
 * belkinunv: reduced gcc4 compiler warnings
 from :1833
@@ -18198,7 +18169,7 @@ Revision is 343, file path is branches/Development/MAINTAINERS.
 commit refs/heads/Development
 #legacy-id 343
 mark :1838
-committer Peter Selinger <selinger@users.sourceforge.net> 1139501290 +0000
+committer selinger-guest <selinger-guest> 1139501290 +0000
 data 15
 * added myself
 from :1836
@@ -18217,7 +18188,7 @@ Revision is 344, file path is branches/Development/drivers/bcmxcp_ser.c.
 commit refs/heads/Development
 #legacy-id 344
 mark :1841
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1139513225 +0000
+committer keyson-guest <keyson-guest> 1139513225 +0000
 data 33
 - Reduced gcc4 compiler warnings
 from :1838
@@ -18242,7 +18213,7 @@ Revision is 345, file path is branches/Development/include/common.h.
 commit refs/heads/Development
 #legacy-id 345
 mark :1845
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139517729 +0000
+committer adkorte-guest <adkorte-guest> 1139517729 +0000
 data 130
 
 sendsignalfn() and sendsignal() let caller know if a signal was sent
@@ -18270,7 +18241,7 @@ Revision is 346, file path is branches/Development/man/upsdrvctl.8.
 commit refs/heads/Development
 #legacy-id 346
 mark :1849
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139518807 +0000
+committer adkorte-guest <adkorte-guest> 1139518807 +0000
 data 171
 
 upsdrvctl: code cleanup and bug fix (the previous update introduced a bug
@@ -18309,7 +18280,7 @@ Revision is 347, file path is branches/Development/drivers/nitram.h.
 commit refs/heads/Development
 #legacy-id 347
 mark :1855
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1139564973 +0000
+committer keyson-guest <keyson-guest> 1139564973 +0000
 data 54
 - Patch from Niels. And fix of line ending in nitram.
 from :1849
@@ -18347,7 +18318,7 @@ Revision is 348, file path is branches/Development/drivers/serial.h.
 commit refs/heads/Development
 #legacy-id 348
 mark :1861
-committer Peter Selinger <selinger@users.sourceforge.net> 1139610472 +0000
+committer selinger-guest <selinger-guest> 1139610472 +0000
 data 194
  - serial.c: changed several generic serial port communication
    functions to use buffers of type "unsigned char" instead of "char".
@@ -18367,7 +18338,7 @@ Revision is 349, file path is branches/Development/CREDITS.
 commit refs/heads/Development
 #legacy-id 349
 mark :1863
-committer Peter Selinger <selinger@users.sourceforge.net> 1139651014 +0000
+committer selinger-guest <selinger-guest> 1139651014 +0000
 data 20
 * updated own entry
 from :1861
@@ -18391,7 +18362,7 @@ Revision is 350, file path is branches/Development/drivers/serial.h.
 commit refs/heads/Development
 #legacy-id 350
 mark :1867
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139674045 +0000
+committer adkorte-guest <adkorte-guest> 1139674045 +0000
 data 64
 
 changed ser_send_char to use "unsigned char" instead of "char"
@@ -18408,7 +18379,7 @@ Revision is 351, file path is branches/Development/docs/FAQ.
 commit refs/heads/Development
 #legacy-id 351
 mark :1869
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1139674720 +0000
+committer adkorte-guest <adkorte-guest> 1139674720 +0000
 data 195
 
 This FAQ entry is no longer applicable, since starting from version 1.4.0,
@@ -18465,7 +18436,7 @@ Revision is 352, file path is branches/Development/drivers/newhidups.h.
 commit refs/heads/Development
 #legacy-id 352
 mark :1879
-committer Peter Selinger <selinger@users.sourceforge.net> 1139780787 +0000
+committer selinger-guest <selinger-guest> 1139780787 +0000
 data 251
  - newhidups: rewrote logical-to-physical value conversion. Rewrote
    extraction of logical values from report. Added Kelvin-to-Celsius
@@ -18585,7 +18556,7 @@ Revision is 353, file path is branches/Development/drivers/tripplitesu.c.
 commit refs/heads/Development
 #legacy-id 353
 mark :1900
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1139998875 +0000
+committer keyson-guest <keyson-guest> 1139998875 +0000
 data 104
 - Replaces output.voltage.target.battery and
    output.voltage.target.line with output.voltage.nominal.
@@ -18614,7 +18585,7 @@ M 100644 :1899 drivers/tripplitesu.c
 commit refs/tags/CFL_TL_pre_Dev_merge
 #legacy-id 354.1
 mark :1901
-committer Charles Lepple <clepple+nut@gmail.com> 1140096306 +0000
+committer clepple-guest <clepple-guest> 1140096306 +0000
 data 86
 Cleaning up repository after initial SVN import
 
@@ -18625,7 +18596,7 @@ deleteall
 commit refs/tags/INITIAL_IMPORT_V2_0_1_pre4
 #legacy-id 354.2
 mark :1902
-committer Charles Lepple <clepple+nut@gmail.com> 1140096306 +0000
+committer clepple-guest <clepple-guest> 1140096306 +0000
 data 86
 Cleaning up repository after initial SVN import
 
@@ -18636,7 +18607,7 @@ deleteall
 commit refs/tags/alioth_SVN_migration
 #legacy-id 354.3
 mark :1903
-committer Charles Lepple <clepple+nut@gmail.com> 1140096306 +0000
+committer clepple-guest <clepple-guest> 1140096306 +0000
 data 86
 Cleaning up repository after initial SVN import
 
@@ -18647,7 +18618,7 @@ deleteall
 commit refs/heads/master
 #legacy-id 356
 mark :1904
-committer Charles Lepple <clepple+nut@gmail.com> 1140096703 +0000
+committer clepple-guest <clepple-guest> 1140096703 +0000
 data 40
 Moving branches/Development into trunk.
 from :310
@@ -19072,7 +19043,7 @@ M 100644 :288 server/user.h
 commit refs/heads/Development
 #legacy-id 356.1
 mark :1905
-committer Charles Lepple <clepple+nut@gmail.com> 1140096703 +0000
+committer clepple-guest <clepple-guest> 1140096703 +0000
 data 78
 Moving branches/Development into trunk.
 
@@ -19083,7 +19054,7 @@ deleteall
 commit refs/heads/INITIAL_IMPORT_AQ
 #legacy-id 357.1
 mark :1906
-committer Charles Lepple <clepple+nut@gmail.com> 1140278138 +0000
+committer clepple-guest <clepple-guest> 1140278138 +0000
 data 310
 Obsolete branch names:
  * INITIAL_IMPORT_AQ: left over from 'cvs import'; this is effectively revision 3 in SVN.
@@ -19097,7 +19068,7 @@ deleteall
 commit refs/heads/r2.0.1
 #legacy-id 357.2
 mark :1907
-committer Charles Lepple <clepple+nut@gmail.com> 1140278138 +0000
+committer clepple-guest <clepple-guest> 1140278138 +0000
 data 310
 Obsolete branch names:
  * INITIAL_IMPORT_AQ: left over from 'cvs import'; this is effectively revision 3 in SVN.
@@ -19111,7 +19082,7 @@ deleteall
 commit refs/heads/v2.1.0
 #legacy-id 357.3
 mark :1908
-committer Charles Lepple <clepple+nut@gmail.com> 1140278138 +0000
+committer clepple-guest <clepple-guest> 1140278138 +0000
 data 310
 Obsolete branch names:
  * INITIAL_IMPORT_AQ: left over from 'cvs import'; this is effectively revision 3 in SVN.
@@ -19140,7 +19111,7 @@ data 113
 commit refs/heads/master
 #legacy-id 358
 mark :1910
-committer Charles Lepple <clepple+nut@gmail.com> 1140282414 +0000
+committer clepple-guest <clepple-guest> 1140282414 +0000
 data 344
 In SVN, you use the svn:ignore property on a directory to ignore files.
 The cvs2svn conversion process imported the .cvsignore files, so I am
@@ -19160,7 +19131,7 @@ Revision is 359, file path is trunk/CHANGES.
 commit refs/heads/master
 #legacy-id 359
 mark :1912
-committer Charles Lepple <clepple+nut@gmail.com> 1140527628 +0000
+committer clepple-guest <clepple-guest> 1140527628 +0000
 data 33
 Note SVN conversion in changelog
 from :1910
@@ -19174,7 +19145,7 @@ Revision is 360, file path is trunk/INSTALL.
 commit refs/heads/master
 #legacy-id 360
 mark :1914
-committer Peter Selinger <selinger@users.sourceforge.net> 1140647116 +0000
+committer selinger-guest <selinger-guest> 1140647116 +0000
 data 53
 * clarified newhidups use of "port" value in INSTALL
 from :1912
@@ -19193,7 +19164,7 @@ Revision is 361, file path is trunk/drivers/upsdrvctl.c.
 commit refs/heads/master
 #legacy-id 361
 mark :1917
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1140961608 +0000
+committer adkorte-guest <adkorte-guest> 1140961608 +0000
 data 54
 Remove superfluous 'xstrdup' from drivers/upsdrvctl.c
 from :1914
@@ -19208,7 +19179,7 @@ Revision is 362, file path is trunk/CHANGES.
 commit refs/heads/master
 #legacy-id 362
 mark :1919
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1141056595 +0000
+committer keyson-guest <keyson-guest> 1141056595 +0000
 data 6
 nomsg
 from :1917
@@ -19222,7 +19193,7 @@ Revision is 363, file path is trunk/data/driver.list.
 commit refs/heads/master
 #legacy-id 363
 mark :1921
-committer Kjell Claesson <keyson-guest@alioth.debian.org> 1141056605 +0000
+committer keyson-guest <keyson-guest> 1141056605 +0000
 data 6
 nomsg
 from :1919
@@ -19236,7 +19207,7 @@ Revision is 364, file path is trunk/CHANGES.
 commit refs/heads/master
 #legacy-id 364
 mark :1923
-committer Arnaud Quette <arnaud.quette@free.fr> 1141071413 +0000
+committer aquette <aquette> 1141071413 +0000
 data 27
 move debian/ to packaging/
 from :1921
@@ -19265,7 +19236,7 @@ Revision is 365, file path is trunk/drivers/snmp-ups.c.
 commit refs/heads/master
 #legacy-id 365
 mark :1928
-committer Arnaud Quette <arnaud.quette@free.fr> 1141072973 +0000
+committer aquette <aquette> 1141072973 +0000
 data 45
 remove the zero prefix on mge-* and snmp-ups
 from :1923
@@ -19277,7 +19248,7 @@ M 100644 :1927 drivers/snmp-ups.c
 commit refs/heads/regex_branch
 #legacy-id 366
 mark :1929
-committer Peter Selinger <selinger@users.sourceforge.net> 1141237476 +0000
+committer selinger-guest <selinger-guest> 1141237476 +0000
 data 65
 Removing regex_branch, because it was merged into trunk in r197.
 from :1088
@@ -19291,7 +19262,7 @@ Revision is 367, file path is trunk/common/common.c.
 commit refs/heads/master
 #legacy-id 367
 mark :1931
-committer Peter Selinger <selinger@users.sourceforge.net> 1141378966 +0000
+committer selinger-guest <selinger-guest> 1141378966 +0000
 data 67
 * set errno=ENOENT in common.c:get_user_pwent() if user not found 
 from :1928
@@ -19305,7 +19276,7 @@ Revision is 368, file path is trunk/CHANGES.
 commit refs/heads/master
 #legacy-id 368
 mark :1933
-committer Peter Selinger <selinger@users.sourceforge.net> 1141390367 +0000
+committer selinger-guest <selinger-guest> 1141390367 +0000
 data 38
 * updated CHANGES for previous commit
 from :1931
@@ -19344,7 +19315,7 @@ Revision is 369, file path is trunk/server/upsd.c.
 commit refs/heads/master
 #legacy-id 369
 mark :1940
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1141417548 +0000
+committer adkorte-guest <adkorte-guest> 1141417548 +0000
 data 109
 handle problems with get_user_pwent() directly, instead of first returning to the caller with a NULL pointer
 from :1933
@@ -19368,7 +19339,7 @@ Revision is 370, file path is trunk/drivers/safenet.c.
 commit refs/heads/master
 #legacy-id 370
 mark :1943
-committer Arjen de Korte <adkorte-guest@alioth.debian.org> 1141482672 +0000
+committer adkorte-guest <adkorte-guest> 1141482672 +0000
 data 69
 drivers/safenet.c: increase timeout for reading replies from the UPS
 from :1940
@@ -19423,15 +19394,13 @@ Revision is 371, file path is branches/Testing/drivers/newhidups.h.
 commit refs/heads/Testing
 #legacy-id 371
 mark :1953
-author Peter Selinger <selinger@users.sourceforge.net> 1141494281 +0000
-committer Peter Selinger <selinger@users.sourceforge.net> 1141494281 +0000
-data 325
-backported 2006-02-12T21:46:27Z!selinger@users.sourceforge.net from trunk to Testing
-
-newhidups: rewrote logical-to-physical value conversion. Rewrote
-extraction of logical values from report. Added Kelvin-to-Celsius
-conversion. Tweaked APC date conversion. Back-UPS BF500 support.
-Deleted unused items in HIDItem structure.
+committer selinger-guest <selinger-guest> 1141494281 +0000
+data 290
+backported r352 from trunk to Testing:
+   newhidups: rewrote logical-to-physical value conversion. Rewrote
+   extraction of logical values from report. Added Kelvin-to-Celsius
+   conversion. Tweaked APC date conversion. Back-UPS BF500 support.
+   Deleted unused items in HIDItem structure.
 from :1717
 M 100644 :1944 CHANGES
 M 100644 :1945 data/driver.list
@@ -19446,7 +19415,7 @@ M 100644 :1952 drivers/newhidups.h
 commit refs/heads/Testing
 #legacy-id 372
 mark :1954
-committer Peter Selinger <selinger@users.sourceforge.net> 1141494469 +0000
+committer selinger-guest <selinger-guest> 1141494469 +0000
 data 74
 removed Makefile from Testing branch, because it does not belong in SVN. 
 from :1953
@@ -19470,7 +19439,7 @@ from :290
 tag emptycommit-4
 #legacy-id 4
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1106836402 +0000
+tagger aquette <aquette> 1106836402 +0000
 data 105
 Initial CVS import from nut testing release 2.0.1-pre4
 
@@ -19479,7 +19448,7 @@ Initial CVS import from nut testing release 2.0.1-pre4
 tag emptycommit-22
 #legacy-id 22
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1113564272 +0000
+tagger aquette <aquette> 1113564272 +0000
 data 104
 file mge-hid.h was initially added on branch v2_1_0.
 
@@ -19488,7 +19457,7 @@ file mge-hid.h was initially added on branch v2_1_0.
 tag emptycommit-23
 #legacy-id 23
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1113564272 +0000
+tagger aquette <aquette> 1113564272 +0000
 data 104
 file apc-hid.h was initially added on branch v2_1_0.
 
@@ -19497,7 +19466,7 @@ file apc-hid.h was initially added on branch v2_1_0.
 tag emptycommit-27
 #legacy-id 27
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1114168367 +0000
+tagger aquette <aquette> 1114168367 +0000
 data 103
 file bcmxcp.8 was initially added on branch v2_1_0.
 
@@ -19506,7 +19475,7 @@ file bcmxcp.8 was initially added on branch v2_1_0.
 tag emptycommit-28
 #legacy-id 28
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1114168367 +0000
+tagger aquette <aquette> 1114168367 +0000
 data 103
 file bcmxcp.c was initially added on branch v2_1_0.
 
@@ -19515,7 +19484,7 @@ file bcmxcp.c was initially added on branch v2_1_0.
 tag emptycommit-29
 #legacy-id 29
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1114168367 +0000
+tagger aquette <aquette> 1114168367 +0000
 data 103
 file bcmxcp.h was initially added on branch v2_1_0.
 
@@ -19524,7 +19493,7 @@ file bcmxcp.h was initially added on branch v2_1_0.
 tag emptycommit-31
 #legacy-id 31
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1114168463 +0000
+tagger aquette <aquette> 1114168463 +0000
 data 109
 file netvisionmib.h was initially added on branch v2_1_0.
 
@@ -19533,7 +19502,7 @@ file netvisionmib.h was initially added on branch v2_1_0.
 tag emptycommit-40
 #legacy-id 40
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1115032949 +0000
+tagger aquette <aquette> 1115032949 +0000
 data 102
 file pwmib.h was initially added on branch v2_1_0.
 
@@ -19542,7 +19511,7 @@ file pwmib.h was initially added on branch v2_1_0.
 tag emptycommit-46
 #legacy-id 46
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1115114979 +0000
+tagger aquette <aquette> 1115114979 +0000
 data 105
 file upscode2.8 was initially added on branch v2_1_0.
 
@@ -19551,7 +19520,7 @@ file upscode2.8 was initially added on branch v2_1_0.
 tag emptycommit-47
 #legacy-id 47
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1115114979 +0000
+tagger aquette <aquette> 1115114979 +0000
 data 105
 file upscode2.c was initially added on branch v2_1_0.
 
@@ -19560,7 +19529,7 @@ file upscode2.c was initially added on branch v2_1_0.
 tag emptycommit-51
 #legacy-id 51
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1115192423 +0000
+tagger aquette <aquette> 1115192423 +0000
 data 102
 file solis.c was initially added on branch v2_1_0.
 
@@ -19569,7 +19538,7 @@ file solis.c was initially added on branch v2_1_0.
 tag emptycommit-52
 #legacy-id 52
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1115192423 +0000
+tagger aquette <aquette> 1115192423 +0000
 data 102
 file solis.h was initially added on branch v2_1_0.
 
@@ -19578,7 +19547,7 @@ file solis.h was initially added on branch v2_1_0.
 tag emptycommit-53
 #legacy-id 53
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1115192423 +0000
+tagger aquette <aquette> 1115192423 +0000
 data 102
 file solis.8 was initially added on branch v2_1_0.
 
@@ -19587,7 +19556,7 @@ file solis.8 was initially added on branch v2_1_0.
 tag emptycommit-108
 #legacy-id 108
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1124201425 +0000
+tagger aquette <aquette> 1124201425 +0000
 data 113
 file gamatronic.h was initially added on branch Development.
 
@@ -19596,7 +19565,7 @@ file gamatronic.h was initially added on branch Development.
 tag emptycommit-109
 #legacy-id 109
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1124201425 +0000
+tagger aquette <aquette> 1124201425 +0000
 data 113
 file gamatronic.8 was initially added on branch Development.
 
@@ -19605,7 +19574,7 @@ file gamatronic.8 was initially added on branch Development.
 tag emptycommit-110
 #legacy-id 110
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1124201425 +0000
+tagger aquette <aquette> 1124201425 +0000
 data 113
 file gamatronic.c was initially added on branch Development.
 
@@ -19614,7 +19583,7 @@ file gamatronic.c was initially added on branch Development.
 tag emptycommit-118
 #legacy-id 118
 from :289
-tagger Charles Lepple <clepple+nut@gmail.com> 1125116334 +0000
+tagger clepple-guest <clepple-guest> 1125116334 +0000
 data 110
 file nut_usb.c was initially added on branch Development.
 
@@ -19623,7 +19592,7 @@ file nut_usb.c was initially added on branch Development.
 tag emptycommit-119
 #legacy-id 119
 from :289
-tagger Charles Lepple <clepple+nut@gmail.com> 1125116334 +0000
+tagger clepple-guest <clepple-guest> 1125116334 +0000
 data 113
 file bcmxcp_ser.c was initially added on branch Development.
 
@@ -19632,7 +19601,7 @@ file bcmxcp_ser.c was initially added on branch Development.
 tag emptycommit-120
 #legacy-id 120
 from :289
-tagger Charles Lepple <clepple+nut@gmail.com> 1125116334 +0000
+tagger clepple-guest <clepple-guest> 1125116334 +0000
 data 112
 file bcmxcp_io.h was initially added on branch Development.
 
@@ -19641,7 +19610,7 @@ file bcmxcp_io.h was initially added on branch Development.
 tag emptycommit-121
 #legacy-id 121
 from :289
-tagger Charles Lepple <clepple+nut@gmail.com> 1125116334 +0000
+tagger clepple-guest <clepple-guest> 1125116334 +0000
 data 113
 file bcmxcp_usb.c was initially added on branch Development.
 
@@ -19650,7 +19619,7 @@ file bcmxcp_usb.c was initially added on branch Development.
 tag emptycommit-122
 #legacy-id 122
 from :289
-tagger Charles Lepple <clepple+nut@gmail.com> 1125116334 +0000
+tagger clepple-guest <clepple-guest> 1125116334 +0000
 data 110
 file nut_usb.h was initially added on branch Development.
 
@@ -19659,7 +19628,7 @@ file nut_usb.h was initially added on branch Development.
 tag emptycommit-128
 #legacy-id 128
 from :289
-tagger Charles Lepple <clepple+nut@gmail.com> 1125769869 +0000
+tagger clepple-guest <clepple-guest> 1125769869 +0000
 data 120
 file tripplite_usb.c was initially added on branch Tripp_Lite_Omni.
 
@@ -19668,7 +19637,7 @@ file tripplite_usb.c was initially added on branch Tripp_Lite_Omni.
 tag emptycommit-142
 #legacy-id 142
 from :289
-tagger Charles Lepple <clepple+nut@gmail.com> 1126270516 +0000
+tagger clepple-guest <clepple-guest> 1126270516 +0000
 data 120
 file tripplite_usb.8 was initially added on branch Tripp_Lite_Omni.
 
@@ -19677,7 +19646,7 @@ file tripplite_usb.8 was initially added on branch Tripp_Lite_Omni.
 tag emptycommit-149
 #legacy-id 149
 from :289
-tagger Charles Lepple <clepple+nut@gmail.com> 1126387008 +0000
+tagger clepple-guest <clepple-guest> 1126387008 +0000
 data 113
 file Doxyfile was initially added on branch Tripp_Lite_Omni.
 
@@ -19686,7 +19655,7 @@ file Doxyfile was initially added on branch Tripp_Lite_Omni.
 tag emptycommit-157
 #legacy-id 157
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1126530129 +0000
+tagger aquette <aquette> 1126530129 +0000
 data 113
 file bcmxcp_usb.8 was initially added on branch Development.
 
@@ -19695,7 +19664,7 @@ file bcmxcp_usb.8 was initially added on branch Development.
 tag emptycommit-164
 #legacy-id 164
 from :289
-tagger Peter Selinger <selinger@users.sourceforge.net> 1126645864 +0000
+tagger selinger-guest <selinger-guest> 1126645864 +0000
 data 113
 file belkin-hid.h was initially added on branch Development.
 
@@ -19704,7 +19673,7 @@ file belkin-hid.h was initially added on branch Development.
 tag emptycommit-192
 #legacy-id 192
 from :289
-tagger Peter Selinger <selinger@users.sourceforge.net> 1127178957 +0000
+tagger selinger-guest <selinger-guest> 1127178957 +0000
 data 110
 file apc-hid.c was initially added on branch Development.
 
@@ -19713,7 +19682,7 @@ file apc-hid.c was initially added on branch Development.
 tag emptycommit-193
 #legacy-id 193
 from :289
-tagger Peter Selinger <selinger@users.sourceforge.net> 1127178957 +0000
+tagger selinger-guest <selinger-guest> 1127178957 +0000
 data 109
 file libusb.h was initially added on branch Development.
 
@@ -19722,7 +19691,7 @@ file libusb.h was initially added on branch Development.
 tag emptycommit-194
 #legacy-id 194
 from :289
-tagger Peter Selinger <selinger@users.sourceforge.net> 1127178957 +0000
+tagger selinger-guest <selinger-guest> 1127178957 +0000
 data 110
 file mge-hid.c was initially added on branch Development.
 
@@ -19731,7 +19700,7 @@ file mge-hid.c was initially added on branch Development.
 tag emptycommit-195
 #legacy-id 195
 from :289
-tagger Peter Selinger <selinger@users.sourceforge.net> 1127178957 +0000
+tagger selinger-guest <selinger-guest> 1127178957 +0000
 data 113
 file belkin-hid.c was initially added on branch Development.
 
@@ -19740,7 +19709,7 @@ file belkin-hid.c was initially added on branch Development.
 tag emptycommit-199
 #legacy-id 199
 from :289
-tagger Peter Selinger <selinger@users.sourceforge.net> 1127520982 +0000
+tagger selinger-guest <selinger-guest> 1127520982 +0000
 data 119
 file hid-subdrivers.txt was initially added on branch Development.
 
@@ -19749,7 +19718,7 @@ file hid-subdrivers.txt was initially added on branch Development.
 tag emptycommit-265
 #legacy-id 265
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1132000630 +0000
+tagger aquette <aquette> 1132000630 +0000
 data 118
 file nut-usbups.hotplug.in was initially added on branch Testing.
 
@@ -19758,7 +19727,7 @@ file nut-usbups.hotplug.in was initially added on branch Testing.
 tag emptycommit-266
 #legacy-id 266
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1132000630 +0000
+tagger aquette <aquette> 1132000630 +0000
 data 103
 file README was initially added on branch Testing.
 
@@ -19767,7 +19736,7 @@ file README was initially added on branch Testing.
 tag emptycommit-267
 #legacy-id 267
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1132000630 +0000
+tagger aquette <aquette> 1132000630 +0000
 data 116
 file nut-usbups.rules.in was initially added on branch Testing.
 
@@ -19776,7 +19745,7 @@ file nut-usbups.rules.in was initially added on branch Testing.
 tag emptycommit-295
 #legacy-id 295
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1137874342 +0000
+tagger aquette <aquette> 1137874342 +0000
 data 110
 file optiups.c was initially added on branch Development.
 
@@ -19785,7 +19754,7 @@ file optiups.c was initially added on branch Development.
 tag emptycommit-296
 #legacy-id 296
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1137874342 +0000
+tagger aquette <aquette> 1137874342 +0000
 data 110
 file optiups.h was initially added on branch Development.
 
@@ -19794,7 +19763,7 @@ file optiups.h was initially added on branch Development.
 tag emptycommit-297
 #legacy-id 297
 from :289
-tagger Arnaud Quette <arnaud.quette@free.fr> 1137874346 +0000
+tagger aquette <aquette> 1137874346 +0000
 data 110
 file optiups.8 was initially added on branch Development.
 
@@ -19803,7 +19772,7 @@ file optiups.8 was initially added on branch Development.
 tag emptycommit-317
 #legacy-id 317
 from :289
-tagger Peter Selinger <selinger@users.sourceforge.net> 1138817815 +0000
+tagger selinger-guest <selinger-guest> 1138817815 +0000
 data 111
 file .cvsignore was initially added on branch Development.
 
