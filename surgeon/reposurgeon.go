@@ -7617,7 +7617,7 @@ func (repo *Repository) writeLegacyMap(fp io.Writer) error {
 		if seen[id] > 0 {
 			serial += fmt.Sprintf(":%d", seen[id]+1)
 		}
-		seen[id] += 1
+		seen[id]++
 		fmt.Fprintf(fp, "%s\t%s%s\n", cookie, id, serial)
 		control.baton.twirl()
 	}
