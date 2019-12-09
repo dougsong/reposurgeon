@@ -404,21 +404,23 @@ agito.svn::
    lint.tst.
 
 branchify.svn::
-   Doesn't build, no trunk branch. Used by branchify.tst.
+   No standard structure, liftcheck will try to use --nobranch which
+   fails. Used by branchify.tst.
 
 branchmap.svn::
-   Doesn't build, no trunk branch. Used by branchmap.tst.
+   No standard structure, liftcheck will try to use --nobranch which
+   fails. Used by branchmap.tst.
 
 branchreplace.svn::
    Conversion is correct - messages due to trimmed branches.
 
-emptyfrom.svn::
-   Conversion is correct.  Has emptycommits. One spurious
-   message due to an empty directory. Should probably be
-   replaced.
+emptybranch.svn::
+   A branch is made outside the normal structure, which is not detected
+   by repotool branches. That branch is empty and yet not tagified.
 
 expunge-copyfrom.svn::
-   Doesn't build, no trunk branch. Used by expunge-copyfrom.tst.
+   No standard structure, liftcheck will try to use --nobranch which
+   fails. Used by expunge-copyfrom.tst.
 
 fleetwood.svn::
    Has emptycommits and a deleted-renamed commit; these are junk. 
@@ -429,7 +431,8 @@ format7.svn::
    Produces a root branch
 
 nesting.svn::
-   Doesn't build, no trunk branch. Used by nesting.tst.
+   No standard structure, liftcheck will try to use --nobranch which
+   fails. Used by nesting.tst.
 
 node-kind-first.svn::
    Translation is correct, but one of the property settings triggers
@@ -442,31 +445,24 @@ rootfile.svn::
    Translation is correct, exiguous file produces a root branch.
    Used in a repocutter test.
 
-rootfirst.svn::
-   Translation correct; spurious message due to empty branch.
-   Not used by any test.  Should be replaced by a stream that
-   builds.
-
 samplebranch.svn::
    Git translation preserves a deleted branch, which causes liftcheck
    to complain. Used in branchdelete.tst and branchrename.tst.
 
-split-dir.svn::
-   Translation is correct; the root tag is because root-level directories
-   not matching the standard branch structure were created.  Used in
-   split-dir.tst.
-
 swap.svn::
-   Doesn't build, no trunk branch. Used in a repocutter test.
-
-symlink.svn::
-   BUG: diff tries to follow the symlink inside the repository, which
-   fails
+   No standard structure, liftcheck will try to use --nobranch which
+   fails. Used in a repocutter test.
 
 tagpollute.svn::
    BUG: Tag root attrbuted to wromng place due to partial copy.
    Content mismatch, isiolating one defect. This is derived from
    references.svn, isolating one defect.
+
+Passing but with some harmless messages:
+
+symlink.svn::
+   diff tries to follow the symlink inside the repository, which fails
+
 
 == Troubleshooting incorrect conversions ==
 
