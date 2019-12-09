@@ -506,14 +506,21 @@ def checkout(args):
     elif vcs == "git":
         # Only one revision should be given to git checkout
         # Use the passed-in arguments, in some order of specificity.
-        revision = revision or tag or branch or "master"
-        do_or_die("git checkout --quiet %s" % revision)
-        if outdir == '.':
-            return os.getcwd()
-        elif os.path.exists(outdir):
+        handle_missing = False
+        if not revision:
+            revision = tag or branch or "master"
+            handle_missing = accept_missing and \
+                (capture_or_die(
+                        "git rev-parse --verify -q %s >/dev/null || echo no" % revision))
+        if handle_missing:
+            path = pwd + ".git/this/path/does/not/exist"
+        else:
+            do_or_die("git checkout --quiet %s" % revision)
+            path = pwd
+        if os.path.exists(outdir):
             if os.path.islink(outdir):
                 os.remove(outdir)
-        os.symlink(pwd, outdir)
+        os.symlink(path, outdir)
         return outdir
     elif vcs == "bzr":
         croak("checkout is not yet supported in bzr.")
