@@ -3,6 +3,7 @@
 # liftcheck - compare reposurgeon lift of a Subversion repo with a checkout
 #
 # The -v option reveals executed subcommands.
+# The -q option makes repotool extra quiet and report only errors.
 # The -p option shows revision numbers when comparing multiple revisions
 # The -u option enables context-diffing in the compare operation
 # The -i option disables the normal suppression of ignore comparisons
@@ -38,7 +39,7 @@ slimit=""
 rlimit=""
 nobranch=""
 progress=no
-while getopts ade:ir:R:suvBp opt
+while getopts ade:ir:R:suvBpq opt
 do
     case $opt in
 	d) debug=yes;;
@@ -48,7 +49,7 @@ do
 	i|s|u) compareopt="${compareopt} -${opt}";;
 	R) slimit="-r ${OPTARG}" rlimit="readlimit ${OPTARG}";;
 	r) revision="${OPTARG}";;
-	v) repotoolopt="${repotoolopt} -${opt}";;
+	v|q) repotoolopt="${repotoolopt} -${opt}";;
 	u) compareopt="${compareopt} -${opt}";;
 	B) nobranch="--nobranch";;
     esac
