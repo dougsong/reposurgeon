@@ -1729,7 +1729,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 		commit.setParents([]CommitLike{parent})
 		parentlock.Unlock()
 	}
-	for _, myindex := range maybeRoots {
+	for count, myindex := range maybeRoots {
 		commit := sp.repo.events[myindex].(*Commit) // All events in maybeRoots are commits
 		branch := sp.markToSVNBranch[commit.mark]
 		rev, _ := strconv.Atoi(commit.legacyID)
@@ -1787,6 +1787,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 			}
 		}
 		next:
+		baton.percentProgress(uint64(count) + 1)
 	}
 	baton.endProgress()
 
