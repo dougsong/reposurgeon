@@ -675,7 +675,7 @@ def compare(args):
                 sstat = os.stat(os.path.join(sourcedir, path), follow_symlinks=False)[stat.ST_MODE]
                 tstat = os.stat(os.path.join(targetdir, path), follow_symlinks=False)[stat.ST_MODE]
                 if sstat != tstat:
-                    print("{}: 0{:o} -> 0{:o}".format(path, sstat, tstat))
+                    diff += "{}: 0{:o} -> 0{:o}\n".format(path, sstat, tstat)
         except OSError:
             sys.stderr.write("repotool: can't find %s for permissions check.\n" % path)
     # cleanup in case the checkouts were a symlink to an existing worktree
@@ -724,24 +724,27 @@ def compare_engine(singular, plural, lister, comparer, args):
     targetonly.sort()
     common = list(common)
     common.sort()
+    compare_result = ""
     if sourceonly:
-        print("----------------------------------------------------------------")
-        print("%s only in source:" % plural)
+        compare_result += "----------------------------------------------------------------\n"
+        compare_result += "%s only in source:\n" % plural
         for item in sourceonly:
-            print(item)
+            compare_result += item + "\n"
     if targetonly:
-        print("----------------------------------------------------------------")
-        print("%s only in target:" % plural)
+        compare_result += "----------------------------------------------------------------\n"
+        compare_result += "%s only in target:\n" % plural
         for item in targetonly:
-            print(item)
+            compare_result += item + "\n"
     if common:
         for item in common:
             cmd = " ".join([comparer, item] + diff_args + [source, target])
             comparison = capture_or_die(cmd)
             if comparison:
-                print("----------------------------------------------------------------")
-                print("%s %s:" % (singular, item))
-                sys.stdout.write(comparison)
+                compare_result += "----------------------------------------------------------------\n"
+                compare_result += "%s %s:\n" % (singular, item)
+                compare_result += str(comparison)
+    if compare_result != "":
+        croak(compare_result)
 
 def compare_tags(args):
     "Compare two repos at all tags."
