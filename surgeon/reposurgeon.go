@@ -3798,11 +3798,26 @@ func newTag(repo *Repository,
 	name string, committish string,
 	tagger *Attribution, comment string) *Tag {
 	t := new(Tag)
-	t.name = name
+	if strings.HasPrefix(name, "refs/tags/") {
+		t.name = name
+	} else {
+		t.name = "refs/tags/" + name
+	}
 	t.tagger = tagger
 	t.Comment = comment
 	t.remember(repo, committish)
 	return t
+}
+
+func (t *Tag) getHumanName() string {
+	if t.name == "" {
+		return ""
+	}
+	return t.name[10:]
+}
+
+func (t *Tag) setHumanName(n string) {
+	t.name = "refs/tags/" + n
 }
 
 func (t Tag) getDelFlag() bool {
@@ -3887,7 +3902,7 @@ func (t *Tag) emailOut(modifiers orderedStringSet, eventnum int,
 	filterRegexp *regexp.Regexp) string {
 	msg, _ := newMessageBlock(nil)
 	msg.setHeader("Event-Number", fmt.Sprintf("%d", eventnum+1))
-	msg.setHeader("Tag-Name", t.name)
+	msg.setHeader("Tag-Name", t.getHumanName())
 	msg.setHeader("Target-Mark", t.committish)
 	if t.tagger != nil {
 		t.tagger.emailOut(modifiers, msg, "Tagger")
@@ -3917,11 +3932,11 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 		panic(throw("msgbox", "update to tag %s is malformed", t.name))
 	}
 	modified := false
-	if t.name != tagname {
+	if t.getHumanName() != tagname {
 		logit(logEMAILIN,
 			"in tag %s, Tag-Name is modified %q -> %q",
 			msg.getHeader("Event-Number"), t.name, tagname)
-		t.name = tagname
+		t.setHumanName(tagname)
 		modified = true
 	}
 	if target := msg.getHeader("Target-Mark"); target != "" && target != t.committish {
@@ -4016,7 +4031,7 @@ func (t *Tag) stamp(_modifiers orderedStringSet, _eventnum int, cols int) string
 
 // Save this tag in import-stream format without constructing a string
 func (t *Tag) Save(w io.Writer) {
-	fmt.Fprintf(w, "tag %s\n", t.name)
+	fmt.Fprintf(w, "tag %s\n", t.getHumanName())
 	if t.legacyID != "" {
 		fmt.Fprintf(w, "#legacy-id %s\n", t.legacyID)
 	}
@@ -7227,7 +7242,7 @@ func (repo *Repository) _buildNamecache() {
 				repo._namecache[committerStamp] = append(repo._namecache[committerStamp], i)
 			}
 		case *Tag:
-			repo._namecache[event.(*Tag).name] = []int{i}
+			repo._namecache[event.(*Tag).getHumanName()] = []int{i}
 		case *Reset:
 			repo._namecache["reset@"+filepath.Base(event.(*Reset).ref)] = []int{i}
 		}
@@ -17323,7 +17338,7 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 		// Non-regexp - can only refer to a single tag
 		fulltagname := branchname(tagname)
 		for _, event := range repo.events {
-			if tag, ok := event.(*Tag); ok && tag.name == tagname {
+			if tag, ok := event.(*Tag); ok && tag.name == fulltagname {
 				tags = append(tags, tag)
 			} else if reset, ok := event.(*Reset); ok && reset.ref == fulltagname {
 				resets = append(resets, reset)
@@ -17384,7 +17399,8 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 					return false
 				}
 			}
-			tags[0].name = newname
+			tags[0].setHumanName(newname)
+
 			control.baton.twirl()
 		}
 		fullnewname := branchname(newname)

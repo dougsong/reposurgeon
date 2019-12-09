@@ -749,7 +749,7 @@ Test to be sure we can read in a tag in inbox format.
 	t2.tagger, _ = newAttribution("")
 	t2.emailIn(msg, false)
 
-	assertEqual(t, "sample2", t2.name)
+	assertEqual(t, "sample2", t2.getHumanName())
 	assertEqual(t, ":2317", t2.committish)
 
 	// XXX(mem): what's undecodable?
@@ -1457,11 +1457,11 @@ func TestFastImportParse2(t *testing.T) {
 
 	testTag1, ok1 := repo.events[len(repo.events)-1].(*Tag)
 	assertBool(t, ok1, true)
-	assertEqual(t, "with-comment", testTag1.name)
+	assertEqual(t, "refs/tags/with-comment", testTag1.name)
 
 	testTag2, ok2 := repo.events[len(repo.events)-2].(*Tag)
 	assertBool(t, ok2, true)
-	assertEqual(t, "no-comment", testTag2.name)
+	assertEqual(t, "refs/tags/no-comment", testTag2.name)
 
 	testReset, ok2 := repo.events[1].(*Reset)
 	assertBool(t, ok2, true)

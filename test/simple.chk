@@ -57,14 +57,14 @@ index
    127 commit   :126    refs/heads/master
    129 commit   :128    refs/heads/master
    130 branch   :128    refs/heads/master
-   131 tag      :113    annotated-sample
+   131 tag      :113    refs/tags/annotated-sample
 :76 tip
 tags
      2	reset	refs/tags/lightweight-sample
     83	commit	refs/tags/lightweight-sample
    114	commit	refs/tags/annotated-sample
    130	reset	refs/heads/master
-   131	tag	annotated-sample
+   131	tag	refs/tags/annotated-sample
 paths
 .gitignore
 Makefile
