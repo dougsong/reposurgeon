@@ -665,9 +665,11 @@ def compare(args):
                     os.mkdir(matching)
     with directory_context(tmpdir):
         # FIXME: use difflib here?
+        silent_diff_errors = "2>/dev/null" # for dangling symlinks or similar
         if verbose:
             print("Comparing %s to %s" % (sourcedir, targetdir))
-        diff = capture_or_die("diff -r %(diffopts)s --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %(sourcedir)s %(targetdir)s || exit 0" % locals())
+            silent_diff_errors = ""
+        diff = capture_or_die("diff -r %(diffopts)s --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %(sourcedir)s %(targetdir)s %(silent_diff_errors)s || exit 0" % locals())
         def dirlist(top, excl=None):
             "Get list of all paths under specied top node, with optional exclusion."
             m = []
