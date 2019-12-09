@@ -167,9 +167,12 @@ then
     done < ${stem}.info
 else
 
-    if [ ! -e ${stem}-checkout/trunk ]
+    if [ "(" ! -e ${stem}-checkout/trunk ")" \
+        -a "(" ! -e ${stem}-checkout/branches ")" \
+        -a "(" ! -e ${stem}-checkout/tags ")" ]
     then
-        compareopt="$compareopt --notrunk"
+        # No structure at all, use --nobranch to compare
+        compareopt="$compareopt --nobranch"
     fi
 
     # Compare the original with the lift
