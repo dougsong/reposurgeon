@@ -8714,7 +8714,9 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 	}
 
 	// Cleanup
-	repo.gcBlobs()
+	if !control.flagOptions["defergc"] {
+		repo.gcBlobs()
+	}
 	return nil
 }
 
@@ -8739,7 +8741,9 @@ func (repo *Repository) dedup(dupMap map[string]string) {
 		}
 		control.baton.twirl()
 	})
-	repo.gcBlobs()
+	if !control.flagOptions["defergc"] {
+		repo.gcBlobs()
+	}
 }
 
 // Garbage-collect blobs that no longer have references.
