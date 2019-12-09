@@ -9864,6 +9864,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 			return err
 		}
 	}
+	shouldCheckout := true
 	if preferred.name == "git" {
 		// Prefer master, but choose another one if master does not exist
 		var branch string
@@ -9874,13 +9875,19 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		}
 		if branch != "" {
 			runProcess(fmt.Sprintf("git symbolic-ref HEAD %s", branch), "setting default branch")
+		} else {
+			// Do not try to checkout a repository with no refs: it is empty
+			// and git will show a "fatal" error. Print a warning instead.
+			croak("not trying to checkout an empty repository")
+			shouldCheckout = false
 		}
 	}
-	if vcs.checkout != "" {
-		runProcess(vcs.checkout, "repository checkout")
-	} else {
-		croak("checkout not supported for %s skipping", vcs.name)
-
+	if shouldCheckout {
+		if vcs.checkout != "" {
+			runProcess(vcs.checkout, "repository checkout")
+		} else {
+			croak("checkout not supported for %s skipping", vcs.name)
+		}
 	}
 	respond("rebuild is complete.")
 	ljoin := func(sup string, sub string) string {
