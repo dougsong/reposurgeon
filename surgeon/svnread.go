@@ -1460,6 +1460,8 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 
 		lastmark = commit.mark
 		sp.repo.legacyMap["SVN:" + commit.legacyID] = commit
+
+		baton.percentProgress(uint64(ri))
 	}
 	baton.endProgress()
 }
