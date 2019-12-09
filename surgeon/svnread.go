@@ -1768,12 +1768,15 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 							if parent, ok := sp.repo.events[index].(*Commit); ok {
 								parentbranch := sp.markToSVNBranch[parent.mark]
 								l := len(parentbranch)
-								logit(logTOPOLOGY, "LINK: %v | %v", parentbranch, frompath)
 								if strings.HasPrefix(frompath, parentbranch) &&
 										(len(frompath) == l || frompath[l:l+1] == svnSep) {
 									logit(logTOPOLOGY,
 										"Link from %s (r%s) to %s (r%d) found by copy-from",
 										parent.mark, parent.legacyID, commit.mark, rev)
+									if strings.Split(parent.legacyID, ".")[0] != fmt.Sprintf("%d", node.fromRev) {
+										logit(logTOPOLOGY, "(fromRev was r%d but that revision had no commit)",
+											node.fromRev)
+									}
 									reparent(commit, parent)
 									goto next
 								}
