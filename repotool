@@ -758,14 +758,16 @@ def compare_engine(singular, plural, lister, comparer, args):
 def compare_tags(args):
     "Compare two repos at all tags."
     vtoken = "-v" if verbose else ""
-    compare_engine("Tag", "Tags", "repotool tags",
-                   "repotool %s compare -t" % vtoken, args)
+    repotool = os.path.realpath(sys.argv[0])
+    compare_engine("Tag", "Tags", repotool + " tags",
+                   "%s %s compare -t" % (repotool, vtoken), args)
 
 def compare_branches(args):
     "Compare two repos at all branches."
     vtoken = "-v" if verbose else ""
-    compare_engine("Branch", "Branches","repotool branches",
-                   "repotool %s compare -b" % vtoken, args)
+    repotool = os.path.realpath(sys.argv[0])
+    compare_engine("Branch", "Branches", repotool + " branches",
+                   "%s %s compare -b" % (repotool, vtoken), args)
 
 def compare_all(args):
     "Compare two repos on mainline and at all tags and branches."
