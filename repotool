@@ -490,6 +490,8 @@ def checkout(args):
         elif branch and os.path.isdir(branch):
             complain("branch '%s' found at the root which is non-standard" % branch)
             relpath = branch
+        elif branch in ("master", "trunk") and accept_missing:
+            relpath = "trunk"
         elif branch and accept_missing:
             relpath = os.path.join("branches", branch)
         else:
