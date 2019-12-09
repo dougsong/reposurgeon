@@ -1174,6 +1174,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 			}
 		}
 		sp.revisions[ri].nodes = expandedNodes
+		baton.percentProgress(uint64(ri))
 	}
 
 	baton.endProgress()
