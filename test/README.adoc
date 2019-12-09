@@ -418,10 +418,6 @@ emptybranch.svn::
    A branch is made outside the normal structure, which is not detected
    by repotool branches. That branch is empty and yet not tagified.
 
-expunge-copyfrom.svn::
-   No standard structure, liftcheck will try to use --nobranch which
-   fails. Used by expunge-copyfrom.tst.
-
 fleetwood.svn::
    Has emptycommits and a deleted-renamed commit; these are junk. 
    The tags/1.0rc1/ on the SVN side is never instantiated in the
