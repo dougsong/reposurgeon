@@ -6,7 +6,7 @@ repotool - operate on a CVS, SVN, git, bzr, hg, or darcs repository in a uniform
 
 == SYNOPSIS ==
 
-*repotool* [-v] 'command' [args...]
+*repotool* [(-v |-q)] 'command' [args...]
 
 [[description]]
 == DESCRIPTION ==
@@ -21,7 +21,9 @@ error message and a return value of 1 when attempting an unsupported
 action.
 
 With the -v option, report the commands executed just before
-they are run.
+they are run. With the -q option, only fatal errors are printed
+instead of non-fatal grips. The -q and -v options also disable each
+other and only the last one will take effect.
 
 The "initialize" option takes a project name (and, optionally,
 following source and target VCS types) and generates a

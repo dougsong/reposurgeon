@@ -149,13 +149,15 @@ gc: %(project)s-git
 """
 
 verbose = False
+quiet = True
 
 def croak(msg):
     sys.stderr.write("repotool: " + msg + "\n")
     sys.exit(1)
 
 def complain(msg):
-    sys.stderr.write("repotool: " + msg + "\n")
+    if not quiet:
+        sys.stderr.write("repotool: " + msg + "\n")
 
 def do_or_die(dcmd, legend=""):
     "Either execute a command or raise a fatal exception."
@@ -792,11 +794,16 @@ def compare_all(args):
         print("Done")
 
 if __name__ == "__main__":
-    (options, arguments) = getopt.getopt(sys.argv[1:], "v")
-    verbose = 0
+    (options, arguments) = getopt.getopt(sys.argv[1:], "vq")
+    verbose = False
+    quiet = False
     for (opt, val) in options:
         if opt == '-v':
             verbose = True
+            quiet = False
+        elif opt == '-q':
+            quiet = True
+            verbose = False
 
     if len(arguments) < 1:
         croak("requires an operation as first argument.")
