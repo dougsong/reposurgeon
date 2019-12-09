@@ -1908,11 +1908,6 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 			if len(m) > 0 && !commit.hasChildren() {
 				safedelete(i)
 			}
-			// Nuke everything we threw in the deleted namespace
-			if strings.HasPrefix(commit.Branch, "refs/deleted/") {
-				commit.setOperations(nil)
-				safedelete(i)
-			}
 		}
 	loopend:
 		baton.percentProgress(uint64(i) + 1)
