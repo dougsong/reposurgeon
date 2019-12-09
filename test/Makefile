@@ -32,6 +32,7 @@ default: fastcheck
 # Define test groups
 BASIC = listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce
 SUBVERSION = svnload-regress liftcheck-regress legacy-regress svncheck-regress
+FULLSUBVERSION = $(SUBVERSION) liftcheck-fullregress
 GIT_EXTRACTOR = git-regress git-regress-branches git-regress-merges git-regress-tags
 HG_EXTRACTOR = hg-regress hg-regress-branches hg-regress-merges hg-regress-tags
 AUXTOOLS = repocutter-regress repomapper-regress repotool-regress
@@ -408,6 +409,21 @@ liftcheck-regress:
 	else \
 		echo "     Skipped, either git or svn is missing"; \
 	fi
+
+liftcheck-fullregress:
+	@echo "== Testing conversion correctness of all SVN revisions:"
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
+	if  command -v git >/dev/null 2>&1 &&  command -v svn >/dev/null 2>&1; \
+	then \
+		for test in *.svn; \
+		do \
+		    { $(ECHO) -n "  $${test}"; grep --text '^ ##' $${test} || echo ' ## (no description)'; } >&2; \
+		    liftcheck -q -r all $${test} || { echo "*** Failed on $${test}!"; exit $(STOPOUT); } \
+		done \
+	else \
+		echo "     Skipped, either git or svn is missing"; \
+	fi
+
 
 # List Subversion streams that don't convert clean 
 liftcheck-dirty:
