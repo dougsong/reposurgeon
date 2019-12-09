@@ -172,7 +172,9 @@ else
         -a "(" ! -e ${stem}-checkout/tags ")" ]
     then
         # No structure at all, use --nobranch to compare
-        compareopt="$compareopt --nobranch"
+        # --accept-missing is to use an empty dir if git has no master
+        # (this will only succeed if the SVN repository has no files)
+        compareopt="$compareopt --nobranch --accept-missing"
     fi
 
     # Compare the original with the lift
