@@ -81,6 +81,16 @@ type svnReader struct {
 
 // Helpers for branch analysis
 
+// containingDir is a cut-down version of filepath.Dir
+func containingDir(s string) string {
+	i := strings.LastIndex(s, svnSep)
+	if i <= 0 {
+		return "."
+	} else {
+		return s[:i]
+	}
+}
+
 // isDeclaredBranch returns true iff the user requested that this path be treated as a branch or tag.
 func isDeclaredBranch(path string) bool {
 	np := strings.TrimRight(path, svnSep)
@@ -96,7 +106,7 @@ func isDeclaredBranch(path string) bool {
 			trialBase := trial[:len(trial)-2]
 			if trialBase == np {
 				isNamespace = true
-			} else if trialBase == filepath.Dir(np) {
+			} else if trialBase == containingDir(np) {
 				maybeBranch = true
 			}
 		} else if strings.TrimRight(trial, svnSep) == np {

@@ -1866,3 +1866,25 @@ func TestBranchSplit(t *testing.T) {
 		assertEqual(t, p, tst.path)
 	}
 }
+
+func TestContainingDir(t *testing.T) {
+	type testcase struct {
+		path string
+		dir string
+	}
+	var testcases = []testcase{
+		{"/foo/bar/baz.js", "/foo/bar"},
+		{"/foo/bar/baz", "/foo/bar"},
+		{"/foo/bar/baz/", "/foo/bar/baz"},
+		{"dev.txt", "."},
+		{"/", "."},
+		{"", "."},
+	}
+	for idx, test := range testcases {
+		test := test
+		t.Run(fmt.Sprint(idx), func(t *testing.T) {
+			t.Parallel()
+			assertEqual(t, containingDir(test.path), test.dir)
+		})
+	}
+}
