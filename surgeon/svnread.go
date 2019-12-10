@@ -1634,6 +1634,44 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 	})
 }
 
+// Return the first commit with legacyID in [minrev;maxrev] and index in
+// [0;maxindex) whose SVN branch is equal to branch, or nil if not found.
+// It needs sp.markToSVNBranch to be filled, so can only be used after
+// svnProcessBranches() has run.
+func findRelevantCommit(sp *StreamParser, branch string, minrev, maxrev revidx, maxindex int) *Commit {
+	index := -1
+	// Maybe the minrev revision has no commit associated
+	// with it, because it was empty and was pruned early in
+	// GenerateCommits(). Find out the first revision in the
+	// [minrev;maxrev] interval that has a commit. We also try
+	// appending a ".1" to the legacy cookie in case the
+	// commit was split.
+	for rev := minrev; rev <= maxrev; rev++ {
+		if commit, ok := sp.repo.legacyMap[fmt.Sprintf("SVN:%d", rev)]; ok {
+			index = sp.repo.eventToIndex(commit)
+			break
+		}
+		if commit, ok := sp.repo.legacyMap[fmt.Sprintf("SVN:%d.1", rev)]; ok {
+			index = sp.repo.eventToIndex(commit)
+			break
+		}
+	}
+	if index == -1 {
+		return nil
+	}
+	// Maybe the commit we found did not happen on the wanted branch Find the
+	// first commit on the correct branch, stopping when we reach maxindex.
+	branch = strings.TrimRight(branch, svnSep)
+	for ; index < maxindex; index++ {
+		if commit, ok := sp.repo.events[index].(*Commit); ok {
+			if branch == sp.markToSVNBranch[commit.mark] {
+				return commit
+			}
+		}
+	}
+	return nil
+}
+
 func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
 	// Phase 8:
 	// The branches we colored in during the last phase almost
@@ -1737,52 +1775,24 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 		if rev > 0 && rev < len(sp.revisions) {
 			record := sp.revisions[rev]
 			for _, node := range record.nodes {
-				if node.kind == sdDIR {
-					nodepath := strings.TrimRight(node.path, svnSep)
-					if nodepath == branch && node.fromRev != 0 {
-						index := -1
-						// Maybe the "fromRev" revision has no commit associated
-						// with it, because it was empty and was pruned early in
-						// 0GenerateCommits(). Find out the first revision in the
-						// [fromRev;rev] interval that has a commit. We also try
-						// appending a ".1" to the legacy cookie in case the
-						// commit was split.
-						for fromrev := int(node.fromRev); fromrev <= rev; fromrev++ {
-							if parent, ok := sp.repo.legacyMap[fmt.Sprintf("SVN:%d", fromrev)]; ok {
-								index = sp.repo.eventToIndex(parent)
-								break
-							}
-							if parent, ok := sp.repo.legacyMap[fmt.Sprintf("SVN:%d.1", fromrev)]; ok {
-								index = sp.repo.eventToIndex(parent)
-								break
-							}
+				if node.kind == sdDIR && node.fromRev != 0 &&
+						strings.TrimRight(node.path, svnSep) == branch {
+					frombranch := node.fromPath
+					if !isDeclaredBranch(frombranch) {
+						frombranch, _ = splitSVNBranchPath(node.fromPath)
+					}
+					parent := findRelevantCommit(sp, frombranch, node.fromRev, revidx(rev), myindex)
+					if parent != nil {
+						logit(logTOPOLOGY,
+						"Link from %s (r%s) to %s (r%d) found by copy-from",
+						parent.mark, parent.legacyID, commit.mark, rev)
+						if strings.Split(parent.legacyID, ".")[0] != fmt.Sprintf("%d", node.fromRev) {
+							logit(logTOPOLOGY,
+							"(fromRev was r%d but that revision had no commit)",
+							node.fromRev)
 						}
-						if index == -1 {
-							goto next
-						}
-						// With bad luck, the commit we found did not happen on the branch
-						// from which the copy was. Find the first commit on the correct
-						// branch, stopping when we reach ourselves to not create a link
-						// from the future.
-						frompath := strings.TrimRight(node.fromPath, svnSep)
-						for ; index < myindex; index++ {
-							if parent, ok := sp.repo.events[index].(*Commit); ok {
-								parentbranch := sp.markToSVNBranch[parent.mark]
-								l := len(parentbranch)
-								if strings.HasPrefix(frompath, parentbranch) &&
-										(len(frompath) == l || frompath[l:l+1] == svnSep) {
-									logit(logTOPOLOGY,
-										"Link from %s (r%s) to %s (r%d) found by copy-from",
-										parent.mark, parent.legacyID, commit.mark, rev)
-									if strings.Split(parent.legacyID, ".")[0] != fmt.Sprintf("%d", node.fromRev) {
-										logit(logTOPOLOGY, "(fromRev was r%d but that revision had no commit)",
-											node.fromRev)
-									}
-									reparent(commit, parent)
-									goto next
-								}
-							}
-						}
+						reparent(commit, parent)
+						goto next
 					}
 				}
 			}
