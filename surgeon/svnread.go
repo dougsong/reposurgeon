@@ -85,7 +85,7 @@ type svnReader struct {
 func containingDir(s string) string {
 	i := strings.LastIndex(s, svnSep)
 	if i <= 0 {
-		return "."
+		return ""
 	} else {
 		return s[:i]
 	}
@@ -98,9 +98,10 @@ func isDeclaredBranch(path string) bool {
 	isNamespace := false
 	for _, trial := range control.listOptions["svn_branchify"] {
 		if trial == "*" {
-			// A value of "./*" for trial will be trimmed to "." later which
-			// is what filepath.Dir() returns for paths without any separator
-			trial = "." + svnSepWithStar
+			// Replace it by svnSepWithStar so that the next test will
+			// trim it to "", which is what containingDir() returns for
+			// paths without any separator.
+			trial = svnSepWithStar
 		}
 		if strings.HasSuffix(trial, svnSepWithStar) {
 			trialBase := trial[:len(trial)-2]

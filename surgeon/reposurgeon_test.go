@@ -1876,9 +1876,9 @@ func TestContainingDir(t *testing.T) {
 		{"/foo/bar/baz.js", "/foo/bar"},
 		{"/foo/bar/baz", "/foo/bar"},
 		{"/foo/bar/baz/", "/foo/bar/baz"},
-		{"dev.txt", "."},
-		{"/", "."},
-		{"", "."},
+		{"dev.txt", ""},
+		{"/", ""},
+		{"", ""},
 	}
 	for idx, test := range testcases {
 		test := test
