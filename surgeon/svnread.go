@@ -226,8 +226,8 @@ const sdREPLACE = 4
 const sdNUKE = 5 // Not part of the Subversion data model
 
 // If these don't match the constants above, havoc will ensue
-var actionValues = []string{"none", "add", "delete", "change", "replace"}
-var pathTypeValues = []string{"none", "file", "dir", "ILLEGAL-TYPE"}
+var actionValues = [][]byte{[]byte("none"), []byte("add"), []byte("delete"), []byte("change"), []byte("replace")}
+var pathTypeValues = [][]byte{[]byte("none"), []byte("file"), []byte("dir"), []byte("ILLEGAL-TYPE")}
 
 // The reason for these suppressions is to avoid a huge volume of
 // junk file properties - cvs2svn in particular generates them like
@@ -488,9 +488,9 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 					if node == nil {
 						node = new(NodeAction)
 					}
-					kind := string(sdBody(line))
+					kind := sdBody(line)
 					for i, v := range pathTypeValues {
-						if v == kind {
+						if bytes.Equal(v, kind) {
 							node.kind = uint8(i & 0xff)
 						}
 					}
@@ -501,9 +501,9 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 					if node == nil {
 						node = new(NodeAction)
 					}
-					action := string(sdBody(line))
+					action := sdBody(line)
 					for i, v := range actionValues {
-						if v == action {
+						if bytes.Equal(v, action) {
 							node.action = uint8(i & 0xff)
 						}
 					}
@@ -605,8 +605,8 @@ type NodeAction struct {
 func (action NodeAction) String() string {
 	out := "<NodeAction: "
 	out += fmt.Sprintf("r%d-%d", action.revision, action.index)
-	out += " " + actionValues[action.action]
-	out += " " + pathTypeValues[action.kind]
+	out += " " + string(actionValues[action.action])
+	out += " " + string(pathTypeValues[action.kind])
 	out += " '" + action.path + "'"
 	if action.fromRev != 0 {
 		out += fmt.Sprintf(" from=%d", action.fromRev) + "~" + action.fromPath
