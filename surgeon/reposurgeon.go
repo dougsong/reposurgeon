@@ -9397,7 +9397,6 @@ func (repo *Repository) splitCommit(where int, splitfunc func([]*FileOp) ([]*Fil
 	// need a new mark
 	//assert(commit.mark == commit2.mark)
 	commit2.setMark(commit.repo.newmark())
-	repo.invalidateObjectMap()
 	// Fix up parent/child relationships
 	for _, child := range commit.children() {
 		child.(*Commit).replaceParent(commit, commit2)
