@@ -1550,6 +1550,7 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 			sp.repo.legacyMap["SVN:" + fragment.legacyID] = fragment
 			fragment.Comment += splitwarn
 			sp.splitCommits[intToRevidx(i)]++
+			baton.twirl()
 		}
 		baton.percentProgress(uint64(i) + 1)
 	}
