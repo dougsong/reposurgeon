@@ -256,8 +256,7 @@ var preserveProperties = map[string]bool{
 
 func sdBody(line []byte) []byte {
 	// Parse the body from a Subversion header line
-	// FIXME Ugh...any way to avoid all this conversion?
-	return []byte(strings.TrimSpace(strings.SplitN(string(line), ":", 2)[1]))
+	return bytes.TrimSpace(bytes.SplitN(line, []byte(":"), 2)[1])
 }
 
 func (sp *StreamParser) sdRequireHeader(hdr string) []byte {
