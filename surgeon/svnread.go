@@ -90,9 +90,9 @@ func isDeclaredBranch(path string) bool {
 		if trial == "*" {
 			// A value of "./*" for trial will be trimmed to "." later which
 			// is what filepath.Dir() returns for paths without any separator
-			trial = "." + svnSep + "*"
+			trial = "." + svnSepWithStar
 		}
-		if strings.HasSuffix(trial, svnSep + "*") {
+		if strings.HasSuffix(trial, svnSepWithStar) {
 			trialBase := trial[:len(trial)-2]
 			if trialBase == np {
 				isNamespace = true
@@ -743,6 +743,7 @@ const splitSep = "."
 // Path separator as found in Subversion dump files. Isolated because
 // it might be "\" on OSes not to be mentioned in polite company.
 var svnSep = string([]byte{os.PathSeparator})
+var svnSepWithStar = svnSep + "*"
 
 func nodePermissions(node NodeAction) string {
 	// Fileop permissions from node properties
