@@ -1589,6 +1589,7 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 	}
 	defer trace.StartRegion(ctx, "SVN Phase 7: branch renames").End()
 	logit(logEXTRACT, "SVN Phase 7: branch renames")
+	baton.startProgress("process SVN, phase 7: branch renames", uint64(len(sp.repo.events)))
 	var maplock sync.Mutex
 	sp.markToSVNBranch = make(map[string]string)
 	walkEvents(sp.repo.events, func(i int, event Event) {
@@ -1612,6 +1613,7 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 					commit.setBranch(filepath.Join("refs", result))
 					break
 				}
+				baton.twirl()
 			}
 			if !matched {
 				if commit.Branch == "" {
@@ -1631,7 +1633,9 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 				}
 			}
 		}
+		baton.percentProgress(uint64(i) + 1)
 	})
+	baton.endProgress()
 }
 
 // Return the first commit with legacyID in [minrev;maxrev] and index in
@@ -1795,6 +1799,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 						goto next
 					}
 				}
+				baton.twirl()
 			}
 		}
 		next:
@@ -1826,6 +1831,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 				len(commit.operations()),
 				proplen,
 				commit.Branch)
+			baton.twirl()
 		}
 	}
 
@@ -1850,20 +1856,23 @@ func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSe
 	logit(logEXTRACT, "SVN Phase 9: disambiguate deleted refs.")
 	// First we build a map from branches to commits with that branch, to avoid
 	// an O(n^2) computation cost.
+	baton.startProgress("process SVN, phase 9a: precompute branch map.", uint64(len(sp.repo.events)))
 	branchToCommits := map[string] []*Commit{}
 	commitCount := 0
-	for _, event := range sp.repo.events {
+	for idx, event := range sp.repo.events {
 		if commit, ok := event.(*Commit); ok {
 			branchToCommits[commit.Branch] = append(branchToCommits[commit.Branch], commit)
 			commitCount++
 		}
+		baton.percentProgress(uint64(idx) + 1)
 	}
+	baton.endProgress()
 	// For each branch, iterate through commits with that branch, searching for
 	// deleteall-only commits that mean the branch is being deleted.
 	usedRefs := map[string]int{}
 	processed := 0
 	seen := 0
-	baton.startProgress("process SVN, phase 9: disambiguate deleted refs.", uint64(commitCount))
+	baton.startProgress("process SVN, phase 9b: disambiguate deleted refs.", uint64(commitCount))
 	for branch, commits := range branchToCommits {
 		lastFixed := -1
 		for i, commit := range commits {
@@ -1890,7 +1899,7 @@ func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSe
 				processed++
 			}
 			seen++
-			baton.percentProgress(uint64(seen))
+			baton.percentProgress(uint64(seen) + 1)
 		}
 	}
 	logit(logTAGFIX, "%d deleted refs were put away.", processed)
@@ -1983,6 +1992,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 					return commit
 				}
 			}
+			baton.twirl()
 		}
 		return nil
 	}
@@ -2078,6 +2088,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 									ownMerges.Add(fromCommit.mark)
 								}
 							}
+							baton.twirl()
 						}
 					}
 				}
@@ -2107,6 +2118,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 				logit(logTOPOLOGY, "processed new mergeinfo from r%s to r%s.", parent.legacyID, commit.legacyID)
 			}
 			nodups = nil // Not necessary, but explicit is good
+			baton.twirl()
 		}
 		mergeinfos[intToRevidx(revision)] = mergeinfo.snapshot()
 		baton.percentProgress(uint64(revision) + 1)
@@ -2151,6 +2163,7 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 	rootskip.Add("trunk" + svnSep)
 	rootskip.Add("root")
 	tagname := func(commit *Commit) string {
+		baton.twirl()
 		// Give branch and tag roots a special name, except for "trunk" and
 		// "root" which do not come from a regular branch copy.
 		if rootmarks.Contains(commit.mark) {
@@ -2175,6 +2188,7 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 		legend = append(legend, "]]\n")
 		return strings.Join(legend, "")
 	}
+	baton.startProcess("process SVN, phase C: tagify empty commits", "")
 	sp.repo.tagifyEmpty(nil,
 		/* tipdeletes */ options.Contains("--nobranch"),
 		/* tagifyMerges */  false,
@@ -2183,6 +2197,7 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 		/* legendFunc */  taglegend,
 		/* createTags */ true,
 		/* gripe */ sp.shout)
+	baton.endProcess()
 }
 
 func svnProcessCleanTags(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
@@ -2209,6 +2224,7 @@ func svnProcessCleanTags(ctx context.Context, sp *StreamParser, options stringSe
 					}
 				}
 			}
+			baton.twirl()
 		}
 		nonnil := make([]*FileOp, 0, len(commit.operations())-count)
 		for _, op := range commit.operations() {

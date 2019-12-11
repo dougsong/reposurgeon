@@ -7897,7 +7897,7 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 				}
 			}
 		}
-
+		control.baton.twirl()
 	}
 
 	if len(selection) == 0 {
