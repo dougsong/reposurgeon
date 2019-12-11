@@ -1969,54 +1969,55 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 	logit(logEXTRACT, "SVN Phase B: mergeinfo processing")
 	baton.startProgress("process SVN, phase B: mergeinfo pocessing", uint64(len(sp.revisions)))
 
-	lastRelevantCommit := func(sp *StreamParser, maxRev revidx, path string, attr string) *Commit {
-		// Make path look like a branch
-		if path[:1] == svnSep {
-			path = path[1:]
-		}
-		if path[len(path)-1] != svnSep[0] {
-			path = path + svnSep
-		}
-		//logit(logEXTRACT, "looking back, maxRev=%d, path='%s', attr='%s'", maxRev, path, attr)
-		// If the revision is split, try from the last split commit
-		var legacyID string
-		if sp.splitCommits[maxRev] == 0 {
-			legacyID = fmt.Sprintf("SVN:%d", maxRev)
-		} else {
-			legacyID = fmt.Sprintf("SVN:%d.%d", maxRev, sp.splitCommits[maxRev])
-		}
-		// Find the commit object...
-		obj, ok := sp.repo.legacyMap[legacyID]
-		if !ok {
-			return nil
-		}
-		for revision := sp.repo.eventToIndex(obj); revision > 0; revision-- {
-			event := sp.repo.events[revision]
-			if commit, ok := event.(*Commit); ok {
-				b, ok := getAttr(commit, attr)
-				//logit(logEXTRACT, "looking back examines %s looking for '%s'", commit.mark, b)
-				if ok && b != "" && strings.HasPrefix(path, b) {
-					//logit(logEXTRACT, "looking back returns %s", commit.mark)
-					return commit
-				}
-			}
-			baton.twirl()
-		}
-		return nil
-	}
-
 	// Add links due to svn:mergeinfo and svnmerge-integrated properties
 	mergeinfo := newPathMap()
-	mergeinfos := make(map[revidx]*PathMap)
-	getMerges := func(minfo *PathMap, path string) orderedStringSet {
-		rawOldMerges, _ := minfo.get(path)
-		var eMerges orderedStringSet
-		if rawOldMerges == nil {
-			eMerges = newOrderedStringSet()
-		} else {
-			eMerges = *rawOldMerges.(*orderedStringSet)
+	mergeinfos := make([]*PathMap, len(sp.revisions))
+	getMerges := func(path string) map[string]map[int]bool {
+		if imerges, ok := mergeinfo.get(path); ok {
+			return imerges.(map[string]map[int]bool)
 		}
-		return eMerges
+		return make(map[string]map[int]bool)
+	}
+	parseMergeInfo := func(info string) map[string]map[int]bool {
+		mergeinfo := make(map[string]map[int]bool)
+		for _, line := range strings.Split(info, "\n") {
+			fields := strings.Split(line, ":")
+			if len(fields) != 2 {
+				continue
+			}
+			// One path, one range list
+			path, ranges := fields[0], fields[1]
+			revs := make(map[int]bool)
+			for _, span := range strings.Split(ranges, ",") {
+				// Ignore non-inheritable merges, they represent
+				// partial merges or cherry-picks.
+				if strings.HasSuffix(span, "*") {
+					continue
+				}
+				fields = strings.Split(span, "-")
+				if len(fields) == 1 {
+					i, _ := strconv.Atoi(fields[0])
+					revs[i] = true
+				} else if len(fields) == 2 {
+					minRev, _ := strconv.Atoi(fields[0])
+					maxRev, _ := strconv.Atoi(fields[1])
+					for i := minRev; i <= maxRev; i++ {
+						revs[i] = true
+					}
+				}
+			}
+			mergeinfo[strings.Trim(path, svnSep)] = revs
+		}
+		return mergeinfo
+	}
+	doMerge := func(commit, parent *Commit) {
+		if !commit.hasParents() {
+			// Prepend a deleteall to avoid inheriting our new parent's content
+			fileop := newFileOp(sp.repo)
+			fileop.construct(deleteall)
+			commit.prependOperation(fileop)
+		}
+		commit.addParentCommit(parent)
 	}
 
 	for revision, record := range sp.revisions {
@@ -2032,68 +2033,120 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 				if fromMerges == nil {
 					fromMerges = newPathMap()
 				}
-				mergeinfo.copyFrom(node.path, fromMerges, node.fromPath)
+				mergeinfo.copyFrom(strings.Trim(node.path, svnSep),
+				                   fromMerges,
+				                   strings.Trim(node.fromPath, svnSep))
 				logit(logEXTRACT, "r%d~%s mergeinfo copied to %s",
 					node.fromRev, node.fromPath, node.path)
 			}
 			// Mutate the filemap according to current mergeinfo.
 			// The general case is multiline: each line may describe
-			// multiple spans merging to this revision; we only consider
-			// the end revision of each span.
+			// multiple spans merging to this revision.
 			// Because svn:mergeinfo will persist like other properties,
 			// we need to compare with the already present mergeinfo and
 			// only take new entries into account when creating merge
-			// links. Also, since merging will also inherit the
-			// mergeinfo entries of the source path, we also need to
-			// gather and ignore those.
-			existingMerges := getMerges(mergeinfo, node.path)
-			ownMerges := newOrderedStringSet()
+			// links.
+			existingMerges := getMerges(node.path)
 			if node.hasProperties() {
 				info := node.props.get("svn:mergeinfo")
 				if info == "" {
 					info = node.props.get("svnmerge-integrated")
 				}
 				if info != "" {
-					for _, line := range strings.Split(info, "\n") {
-						fields := strings.Split(line, ":")
-						if len(fields) != 2 {
+					// Record the new mergeinfo
+					newMerges := parseMergeInfo(info)
+					mergeinfo.set(node.path, newMerges)
+					// Now try to make a link for each new merge
+					branch := strings.Trim(node.path, svnSep)
+					if !isDeclaredBranch(branch) {
+						continue
+					}
+					commit := lastRelevantCommit(sp, revidx(revision), branch)
+					if commit == nil {
+						logit(logWARN,
+							"Cannot resolve mergeinfo for r%d which has no commit in branch %s",
+							revision, branch)
+						continue
+					}
+					if strings.Split(commit.legacyID, ".")[0] != fmt.Sprintf("%d", revision) {
+						logit(logWARN, "Resolving mergeinfo targeting r%d on r%s (%s) instead",
+											revision, commit.legacyID, commit.mark)
+					}
+					for fromPath, revs := range newMerges {
+						if !isDeclaredBranch(fromPath) {
 							continue
 						}
-						// One path, one range list
-						fromPath, ranges := fields[0], fields[1]
-						for _, span := range strings.Split(ranges, ",") {
-							// Ignore single-rev fields, they are cherry-picks.
-							// TODO: maybe we should even test if minRev
-							// corresponds to some fromRev + 1 to ensure no
-							// commit has been skipped.
-							fields = strings.Split(span, "-")
-							if len(fields) != 2 {
+						markset := make(map[int]bool)
+						existing := existingMerges[fromPath]
+						for rev := range revs {
+							if _, ok := existing[rev]; !ok {
+								// Only add revisions that are on the correct branch
+								base := -1
+								if mark := sp.revmarks[revidx(rev)]; mark != "" {
+									base = sp.repo.markToIndex(mark)
+								}
+								if base != -1 {
+									for idx := base; idx < len(sp.repo.events); idx++ {
+										if c, ok := sp.repo.events[idx].(*Commit); ok {
+											crev, _ := strconv.Atoi(strings.Split(c.legacyID, ".")[0])
+											if crev != rev {
+												break
+											}
+											if sp.markToSVNBranch[c.mark] == fromPath {
+												imark, _ := strconv.Atoi(c.mark[1:])
+												markset[imark] = true
+												break
+											}
+										}
+									}
+								}
+							}
+						}
+						for len(markset) > 0 {
+							// In most cases there will be only one iteration because
+							// lastmark will be the descendent of all other revs
+							lastmark, firstmark := -1, len(sp.repo.events)
+							for mark := range markset {
+								if lastmark < mark {
+									lastmark = mark
+								}
+								if firstmark > mark {
+									firstmark = mark
+								}
+							}
+							delete(markset, lastmark)
+							var source *Commit
+							if x := sp.repo.markToEvent(fmt.Sprintf(":%d", lastmark)); x != nil {
+								source = x.(*Commit)
+							}
+							if source == nil {
+								// That should not be possible
 								continue
 							}
-							minRev, fromRev := fields[0], fields[1]
-							// ignore non-inheritable revision ranges
-							if fromRev[len(fromRev)-1] == '*' {
-								fromRev = fromRev[:len(fromRev)-1]
-							}
-							// Import mergeinfo from merged branches
-							past, ok := mergeinfos[intToRevidx(parseInt(fromRev))]
-							if !ok {
-								past = newPathMap()
-							}
-							pastMerges := getMerges(past, fromPath)
-							existingMerges = existingMerges.Union(pastMerges)
-							// SVN doesn't fit the merge range to commits on
-							// the source branch; we need to find the latest
-							// commit between minRev and fromRev made on
-							// that branch.
-							fromCommit := lastRelevantCommit(sp, intToRevidx(parseInt(fromRev)), fromPath, "Branch")
-							if fromCommit == nil {
-								sp.shout(fmt.Sprintf("cannot resolve mergeinfo source from revision %s for path %s.",
-									fromRev, node.path))
-							} else {
-								legacyFields := strings.Split(fromCommit.legacyID, ".")
-								if parseInt(legacyFields[0]) >= parseInt(minRev) {
-									ownMerges.Add(fromCommit.mark)
+							logit(logEXTRACT, "Found merge from %s<%s> (%s) to %s<%d> (%s)",
+								source.mark, source.legacyID, fromPath, commit.mark, revision, node.path)
+							doMerge(commit, source)
+							// walk the ancestry, pruning the revision set as we go
+							stack := []*Commit{source}
+							seen := map[string]bool{}
+							for len(stack) > 0 {
+								var current *Commit
+								// pop a CommitLike from the stack
+								stack, current = stack[:len(stack)-1], stack[len(stack)-1]
+								if _, ok := seen[current.mark]; ok {
+									continue
+								}
+								seen[current.mark] = true
+								// Remove its legacy id from the set of revisions
+								cmark, _ := strconv.Atoi(current.mark[1:])
+								if cmark >= firstmark {
+									delete(markset, cmark)
+									// and add all parents to the "todo" stack
+									for _, parent := range current.parents() {
+										if c, ok := parent.(*Commit); ok {
+											stack = append(stack, c)
+										}
+									}
 								}
 							}
 							baton.twirl()
@@ -2101,31 +2154,6 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 					}
 				}
 			}
-			mergeinfo.set(node.path, &ownMerges)
-			newMerges := ownMerges.Subtract(existingMerges)
-			if len(newMerges) == 0 {
-				continue
-			}
-			// Find the correct commit in the split case
-			commit := lastRelevantCommit(sp, intToRevidx(revision), node.path, "Branch")
-			if commit == nil || !strings.HasPrefix(commit.legacyID, fmt.Sprintf("%d", record.revision)) {
-				// The reverse lookup went past the target revision
-				sp.shout(fmt.Sprintf("cannot resolve mergeinfo destination to revision %d for path %s.",
-					revision, node.path))
-				continue
-			}
-			// Alter the DAG to express merges.
-			nodups := make(map[string]bool)
-			for _, mark := range newMerges {
-				if nodups[mark] {
-					continue
-				}
-				nodups[mark] = true
-				parent := sp.repo.markToEvent(mark).(*Commit)
-				commit.addParentCommit(parent)
-				logit(logTOPOLOGY, "processed new mergeinfo from r%s to r%s.", parent.legacyID, commit.legacyID)
-			}
-			nodups = nil // Not necessary, but explicit is good
 			baton.twirl()
 		}
 		mergeinfos[intToRevidx(revision)] = mergeinfo.snapshot()
