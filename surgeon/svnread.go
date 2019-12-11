@@ -83,7 +83,7 @@ type svnReader struct {
 
 // containingDir is a cut-down version of filepath.Dir
 func containingDir(s string) string {
-	i := strings.LastIndex(s, svnSep)
+	i := strings.LastIndexByte(s, '/')
 	if i <= 0 {
 		return ""
 	} else {
@@ -93,7 +93,10 @@ func containingDir(s string) string {
 
 // isDeclaredBranch returns true iff the user requested that this path be treated as a branch or tag.
 func isDeclaredBranch(path string) bool {
-	np := strings.TrimRight(path, svnSep)
+	np := path
+	if path[len(path) - 1] == '/' {
+		np = path[:len(path) - 1]
+	}
 	maybeBranch := false
 	isNamespace := false
 	for _, trial := range control.listOptions["svn_branchify"] {
@@ -103,14 +106,15 @@ func isDeclaredBranch(path string) bool {
 			// paths without any separator.
 			trial = svnSepWithStar
 		}
-		if strings.HasSuffix(trial, svnSepWithStar) {
+		l := len(trial)
+		if l >= 2 && trial[l - 1] == '*' && trial[l - 2] == '/' {
 			trialBase := trial[:len(trial)-2]
 			if trialBase == np {
 				isNamespace = true
 			} else if trialBase == containingDir(np) {
 				maybeBranch = true
 			}
-		} else if strings.TrimRight(trial, svnSep) == np {
+		} else if (trial[l - 1] == '/' && trial[:l - 1] == np) || trial == np {
 			// Exact match
 			return true
 		}
