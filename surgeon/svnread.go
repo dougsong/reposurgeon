@@ -1781,7 +1781,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	for count, myindex := range maybeRoots {
 		commit := sp.repo.events[myindex].(*Commit) // All events in maybeRoots are commits
 		branch := sp.markToSVNBranch[commit.mark]
-		rev, _ := strconv.Atoi(commit.legacyID)
+		rev, _ := strconv.Atoi(strings.Split(commit.legacyID, ".")[0])
 		if rev > 0 && rev < len(sp.revisions) {
 			record := sp.revisions[rev]
 			for _, node := range record.nodes {
