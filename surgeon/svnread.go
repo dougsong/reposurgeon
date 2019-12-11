@@ -77,6 +77,7 @@ type svnReader struct {
 	branches             map[string]*branchMeta // Points to branch root commits
 	splitCommits         map[revidx]int
 	markToSVNBranch      map[string]string
+	lastCommitOnBranchAt []*PathMap
 }
 
 // Helpers for branch analysis
@@ -1646,8 +1647,8 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 
 
 // Return the last commit with legacyID in (0;maxrev] whose SVN branch is equal
-// to branch, or nil if not found.  It needs sp.markToSVNBranch to be filled,
-// so can only be used after svnProcessBranches() has run.
+// to branch, or nil if not found.  It needs sp.lastCommitOnBranchAt to be
+// filled, so can only be used after phase 8a has run.
 func lastRelevantCommit(sp *StreamParser, maxrev revidx, branch string) *Commit {
 	// Make branch look like a branch
 	if branch[:1] == svnSep {
@@ -1656,29 +1657,10 @@ func lastRelevantCommit(sp *StreamParser, maxrev revidx, branch string) *Commit 
 	if branch[len(branch)-1] == svnSep[0] {
 		branch = branch[:len(branch)-1]
 	}
-	// Maybe the maxrev revision has no commit associated with it, because it
-	// was empty and was pruned early in GenerateCommits(). Find out the last
-	// revision in the [0;maxrev] interval that has a commit.
-	index := -1
-	for rev := maxrev; rev > 0; rev-- {
-		var legacyID string
-		if n := sp.splitCommits[rev]; n == 0 {
-			legacyID = fmt.Sprintf("SVN:%d", rev)
-		} else {
-			legacyID = fmt.Sprintf("SVN:%d.%d", rev, n)
-		}
-		if obj, ok := sp.repo.legacyMap[legacyID]; ok {
-			index = sp.repo.eventToIndex(obj)
-			break
-		}
-	}
-	// Maybe the commit we found did not happen on the wanted branch.
-	// Find the previous commit on the correct branch.
-	for ; index >= 0; index-- {
-		if commit, ok := sp.repo.events[index].(*Commit); ok {
-			if branch == sp.markToSVNBranch[commit.mark] {
-				return commit
-			}
+	lastCommits := sp.lastCommitOnBranchAt[maxrev]
+	if lastCommits != nil {
+		if commit, ok := lastCommits.get(branch); ok {
+			return commit.(*Commit)
 		}
 	}
 	return nil
@@ -1745,26 +1727,45 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	logit(logEXTRACT, "SVN Phase 8a: restore content-impacting links")
 	baton.startProgress("process SVN, phase 8a: restore content-impacting links",
 	                    uint64(len(sp.repo.events)))
-	lastCommitOnBranch := map[string] *Commit{}
+	lastCommitOnBranch := newPathMap()
+	sp.lastCommitOnBranchAt = make([]*PathMap, len(sp.revisions))
+	lastrev := 0
 	maybeRoots := make([]int, 0);
 	for index, event := range sp.repo.events {
 		if commit, ok := event.(*Commit); ok {
+			// If we changed revisions, snapshot lastCommitOnBranch
+			newrev, _ := strconv.Atoi(strings.Split(commit.legacyID, ".")[0])
+			if lastrev < newrev {
+				snap := lastCommitOnBranch.snapshot()
+				for ; lastrev < newrev; lastrev++ {
+					sp.lastCommitOnBranchAt[lastrev] = snap
+				}
+			}
+			// Set the commit parent to the last of the history chain
 			branch := sp.markToSVNBranch[commit.mark]
-			if prev, found := lastCommitOnBranch[branch]; found {
+			var prev *Commit
+			if x, found := lastCommitOnBranch.get(branch); found {
+				prev = x.(*Commit)
+				ops := prev.operations()
+				if len(ops) > 0 && ops[len(ops)-1].op == deleteall {
+					// The previous commit deletes its branch and is
+					// thus not part of the same history chain.
+					prev = nil
+				}
+			}
+			if prev != nil {
 				commit.setParents([]CommitLike{prev})
 			} else {
 				commit.setParents(nil)
 				maybeRoots = append(maybeRoots, index)
 			}
-			ops := commit.operations()
-			if len(ops) > 0 && ops[len(ops)-1].op == deleteall {
-				// Anything after this commit on the branch is unrelated
-				delete(lastCommitOnBranch, branch)
-			} else {
-				lastCommitOnBranch[branch] = commit
-			}
+			// Update lastCommitOnBranch
+			lastCommitOnBranch.set(branch, commit)
 		}
 		baton.percentProgress(uint64(index) + 1)
+	}
+	for ; lastrev < len(sp.revisions); lastrev++ {
+		sp.lastCommitOnBranchAt[lastrev] = lastCommitOnBranch
 	}
 	lastCommitOnBranch = nil
 	baton.endProgress()
