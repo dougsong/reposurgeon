@@ -68,17 +68,11 @@ test:
 	go test $(TESTOPTS) ./surgeon
 
 lint:
-	golint ./cutter | ./lintfilter 2>&1
-	golint ./mapper | ./lintfilter 2>&1
-	golint ./surgeon | ./lintfilter 2>&1
-	go vet ./cutter
-	go vet ./mapper
-	go vet ./surgeon
+	golint ./... | ./lintfilter 2>&1
 
 fmt:
-	gofmt -w ./cutter/
-	gofmt -w ./mapper/
-	gofmt -w ./surgeon/
+	gofmt -w ./...
+
 #
 # Installation
 #
