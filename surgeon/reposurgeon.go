@@ -116,7 +116,7 @@ import (
 	orderedset "github.com/emirpasic/gods/sets/linkedhashset"
 	difflib "github.com/ianbruene/go-difflib/difflib"
 	shutil "github.com/termie/go-shutil"
-	kommandant "gitlab.com/db48x/kommandant"
+	kommandant "gitlab.com/ianbruene/kommandant"
 	terminal "golang.org/x/crypto/ssh/terminal"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
 	fqme "gitlab.com/esr/fqme"

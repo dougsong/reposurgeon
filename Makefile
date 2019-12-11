@@ -62,7 +62,7 @@ build:  $(MANPAGES) $(HTMLFILES)
 #
 
 get:
-	go get -u	# go get -u=patch for patch releases
+	go get -u ./...	# go get -u=patch for patch releases
 
 test:
 	go test $(TESTOPTS) ./surgeon
