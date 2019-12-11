@@ -94,6 +94,9 @@ func containingDir(s string) string {
 // isDeclaredBranch returns true iff the user requested that this path be treated as a branch or tag.
 func isDeclaredBranch(path string) bool {
 	np := path
+	if path == "" {
+		return false
+	}
 	if path[len(path) - 1] == '/' {
 		np = path[:len(path) - 1]
 	}

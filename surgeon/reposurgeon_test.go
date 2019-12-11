@@ -1819,28 +1819,55 @@ func TestPathMap(t *testing.T) {
 }
 
 func TestDeclaredBranch(t *testing.T) {
+	type testcase struct {
+		path             string
+		isDeclaredBranch bool
+	}
+	var branchsets = []orderedStringSet{
+		orderedStringSet{"trunk", "tags/*", "branches/*"},
+		orderedStringSet{"trunk", "tags/*", "branches/*", "*"},
+	}
+	var testcases = [][]testcase{
+		{
+			{"trunk", true},
+			{"foobar", false},
+			{"branches/foobar", true},
+			{"branches/foobar/test", false},
+			{"tags/foobar", true},
+			{"tags/foobar/cetc", false},
+			{"tag/foobar", false},
+			{"tags", false},
+			{"branches", false},
+			{"/", false},
+			{"", false},
+		},
+		{
+			{"trunk", true},
+			{"foobar", true},
+			{"branches/foobar", true},
+			{"branches/foobar/test", false},
+			{"tags/foobar", true},
+			{"tags/foobar/cetc", false},
+			{"tag/foobar", false},
+			{"tags", false},
+			{"branches", false},
+			{"/", false},
+			{"", false},
+		},
+	}
 	control.listOptions = make(map[string]orderedStringSet)
-	control.listOptions["svn_branchify"] = orderedStringSet{"trunk", "tags/*", "branches/*"}
-	assertTrue(t, isDeclaredBranch("trunk"))
-	assertTrue(t, !isDeclaredBranch("foobar"))
-	assertTrue(t, isDeclaredBranch("branches/foobar"))
-	assertTrue(t, !isDeclaredBranch("branches/foobar/test"))
-	assertTrue(t, isDeclaredBranch("tags/foobar"))
-	assertTrue(t, !isDeclaredBranch("tags/foobar/cetc"))
-	assertTrue(t, !isDeclaredBranch("tag/foobar"))
-	assertTrue(t, !isDeclaredBranch("tags"))
-	assertTrue(t, !isDeclaredBranch("branches"))
-	control.listOptions["svn_branchify"] = orderedStringSet{"trunk", "tags/*", "branches/*", "*"}
-	assertTrue(t, isDeclaredBranch("trunk"))
-	assertTrue(t, isDeclaredBranch("foobar"))
-	assertTrue(t, isDeclaredBranch("branches/foobar"))
-	assertTrue(t, !isDeclaredBranch("branches/foobar/test"))
-	assertTrue(t, isDeclaredBranch("tags/foobar"))
-	assertTrue(t, !isDeclaredBranch("tags/foobar/cetc"))
-	assertTrue(t, !isDeclaredBranch("tag/foobar"))
-	assertTrue(t, isDeclaredBranch("tag"))
-	assertTrue(t, !isDeclaredBranch("tags"))
-	assertTrue(t, !isDeclaredBranch("branches"))
+	for idx, branchset := range branchsets {
+		branchset := branchset
+		t.Run(fmt.Sprint(idx), func(t *testing.T) {
+			for idx, test := range testcases[idx] {
+				test := test
+				t.Run(fmt.Sprint(idx), func(t *testing.T) {
+					control.listOptions["svn_branchify"] = branchset
+					assertBool(t, isDeclaredBranch(test.path), test.isDeclaredBranch)
+				})
+			}
+		})
+	}
 }
 
 func TestBranchSplit(t *testing.T) {
