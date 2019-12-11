@@ -1644,35 +1644,37 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 	baton.endProgress()
 }
 
-// Return the first commit with legacyID in [minrev;maxrev] and index in
-// [0;maxindex) whose SVN branch is equal to branch, or nil if not found.
-// It needs sp.markToSVNBranch to be filled, so can only be used after
-// svnProcessBranches() has run.
-func findRelevantCommit(sp *StreamParser, branch string, minrev, maxrev revidx, maxindex int) *Commit {
+
+// Return the last commit with legacyID in (0;maxrev] whose SVN branch is equal
+// to branch, or nil if not found.  It needs sp.markToSVNBranch to be filled,
+// so can only be used after svnProcessBranches() has run.
+func lastRelevantCommit(sp *StreamParser, maxrev revidx, branch string) *Commit {
+	// Make branch look like a branch
+	if branch[:1] == svnSep {
+		branch = branch[1:]
+	}
+	if branch[len(branch)-1] == svnSep[0] {
+		branch = branch[:len(branch)-1]
+	}
+	// Maybe the maxrev revision has no commit associated with it, because it
+	// was empty and was pruned early in GenerateCommits(). Find out the last
+	// revision in the [0;maxrev] interval that has a commit.
 	index := -1
-	// Maybe the minrev revision has no commit associated
-	// with it, because it was empty and was pruned early in
-	// GenerateCommits(). Find out the first revision in the
-	// [minrev;maxrev] interval that has a commit. We also try
-	// appending a ".1" to the legacy cookie in case the
-	// commit was split.
-	for rev := minrev; rev <= maxrev; rev++ {
-		if commit, ok := sp.repo.legacyMap[fmt.Sprintf("SVN:%d", rev)]; ok {
-			index = sp.repo.eventToIndex(commit)
-			break
+	for rev := maxrev; rev > 0; rev-- {
+		var legacyID string
+		if n := sp.splitCommits[rev]; n == 0 {
+			legacyID = fmt.Sprintf("SVN:%d", rev)
+		} else {
+			legacyID = fmt.Sprintf("SVN:%d.%d", rev, n)
 		}
-		if commit, ok := sp.repo.legacyMap[fmt.Sprintf("SVN:%d.1", rev)]; ok {
-			index = sp.repo.eventToIndex(commit)
+		if obj, ok := sp.repo.legacyMap[legacyID]; ok {
+			index = sp.repo.eventToIndex(obj)
 			break
 		}
 	}
-	if index == -1 {
-		return nil
-	}
-	// Maybe the commit we found did not happen on the wanted branch Find the
-	// first commit on the correct branch, stopping when we reach maxindex.
-	branch = strings.TrimRight(branch, svnSep)
-	for ; index < maxindex; index++ {
+	// Maybe the commit we found did not happen on the wanted branch.
+	// Find the previous commit on the correct branch.
+	for ; index >= 0; index-- {
 		if commit, ok := sp.repo.events[index].(*Commit); ok {
 			if branch == sp.markToSVNBranch[commit.mark] {
 				return commit
@@ -1791,14 +1793,14 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 					if !isDeclaredBranch(frombranch) {
 						frombranch, _ = splitSVNBranchPath(node.fromPath)
 					}
-					parent := findRelevantCommit(sp, frombranch, node.fromRev, revidx(rev), myindex)
+					parent := lastRelevantCommit(sp, node.fromRev, frombranch)
 					if parent != nil {
 						logit(logTOPOLOGY,
 						"Link from %s (r%s) to %s (r%d) found by copy-from",
 						parent.mark, parent.legacyID, commit.mark, rev)
 						if strings.Split(parent.legacyID, ".")[0] != fmt.Sprintf("%d", node.fromRev) {
 							logit(logTOPOLOGY,
-							"(fromRev was r%d but that revision had no commit)",
+							"(fromRev was r%d)",
 							node.fromRev)
 						}
 						reparent(commit, parent)
