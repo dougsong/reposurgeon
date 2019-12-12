@@ -1967,6 +1967,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	})
 	baton.endProgress()
 	sp.repo.delete(deleteables, []string{"--tagback"})
+	sort.Slice(newtags, func(i, j int) bool {return newtags[i].(*Reset).ref < newtags[j].(*Reset).ref})
 	sp.repo.events = append(sp.repo.events, newtags...)
 }
 
