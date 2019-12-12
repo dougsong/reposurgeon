@@ -1,40 +1,40 @@
-reposurgeon: "references.svn", line 53289: r7~branches/Stable/CHANGES: missing ancestor node for non-.gitignore
+reposurgeon: r7~branches/Stable/CHANGES: missing ancestor node for non-.gitignore
 reposurgeon: r7~branches/Stable/CHANGES: permission information may be lost.
-reposurgeon: "references.svn", line 53289: r7~branches/Stable/UPGRADING: missing ancestor node for non-.gitignore
+reposurgeon: r7~branches/Stable/UPGRADING: missing ancestor node for non-.gitignore
 reposurgeon: r7~branches/Stable/UPGRADING: permission information may be lost.
-reposurgeon: "references.svn", line 53289: r8~branches/Testing/CHANGES: missing ancestor node for non-.gitignore
+reposurgeon: r8~branches/Testing/CHANGES: missing ancestor node for non-.gitignore
 reposurgeon: r8~branches/Testing/CHANGES: permission information may be lost.
-reposurgeon: "references.svn", line 53289: r8~branches/Testing/UPGRADING: missing ancestor node for non-.gitignore
+reposurgeon: r8~branches/Testing/UPGRADING: missing ancestor node for non-.gitignore
 reposurgeon: r8~branches/Testing/UPGRADING: permission information may be lost.
-reposurgeon: "references.svn", line 53289: r9~branches/r2.0.1/CHANGES: missing ancestor node for non-.gitignore
+reposurgeon: r9~branches/r2.0.1/CHANGES: missing ancestor node for non-.gitignore
 reposurgeon: r9~branches/r2.0.1/CHANGES: permission information may be lost.
-reposurgeon: "references.svn", line 53289: r9~branches/r2.0.1/UPGRADING: missing ancestor node for non-.gitignore
+reposurgeon: r9~branches/r2.0.1/UPGRADING: missing ancestor node for non-.gitignore
 reposurgeon: r9~branches/r2.0.1/UPGRADING: permission information may be lost.
-reposurgeon: "references.svn", line 53289: r10~tags/v2.0.1/CHANGES: missing ancestor node for non-.gitignore
+reposurgeon: r10~tags/v2.0.1/CHANGES: missing ancestor node for non-.gitignore
 reposurgeon: r10~tags/v2.0.1/CHANGES: permission information may be lost.
-reposurgeon: "references.svn", line 53289: r10~tags/v2.0.1/UPGRADING: missing ancestor node for non-.gitignore
+reposurgeon: r10~tags/v2.0.1/UPGRADING: missing ancestor node for non-.gitignore
 reposurgeon: r10~tags/v2.0.1/UPGRADING: permission information may be lost.
-reposurgeon: "references.svn", line 53289: r11~branches/v2.1.0/CHANGES: missing ancestor node for non-.gitignore
+reposurgeon: r11~branches/v2.1.0/CHANGES: missing ancestor node for non-.gitignore
 reposurgeon: r11~branches/v2.1.0/CHANGES: permission information may be lost.
-reposurgeon: "references.svn", line 53289: r11~branches/v2.1.0/UPGRADING: missing ancestor node for non-.gitignore
+reposurgeon: r11~branches/v2.1.0/UPGRADING: missing ancestor node for non-.gitignore
 reposurgeon: r11~branches/v2.1.0/UPGRADING: permission information may be lost.
-reposurgeon: "references.svn", line 53289: r57~tags/v2.0.2_pre1/UPGRADING: missing ancestor node for non-.gitignore
+reposurgeon: r57~tags/v2.0.2_pre1/UPGRADING: missing ancestor node for non-.gitignore
 reposurgeon: r57~tags/v2.0.2_pre1/UPGRADING: permission information may be lost.
-reposurgeon: "references.svn", line 53289: r99~tags/alioth_SVN_migration/CHANGES: missing ancestor node for non-.gitignore
+reposurgeon: r99~tags/alioth_SVN_migration/CHANGES: missing ancestor node for non-.gitignore
 reposurgeon: r99~tags/alioth_SVN_migration/CHANGES: permission information may be lost.
-reposurgeon: "references.svn", line 53289: r99~tags/alioth_SVN_migration/Makefile: missing ancestor node for non-.gitignore
+reposurgeon: r99~tags/alioth_SVN_migration/Makefile: missing ancestor node for non-.gitignore
 reposurgeon: r99~tags/alioth_SVN_migration/Makefile: permission information may be lost.
-reposurgeon: "references.svn", line 53289: r99~tags/alioth_SVN_migration/UPGRADING: missing ancestor node for non-.gitignore
+reposurgeon: r99~tags/alioth_SVN_migration/UPGRADING: missing ancestor node for non-.gitignore
 reposurgeon: r99~tags/alioth_SVN_migration/UPGRADING: permission information may be lost.
-reposurgeon: "references.svn", line 53289: r326~tags/reportbuf_base0/COPYING: missing ancestor node for non-.gitignore
+reposurgeon: r326~tags/reportbuf_base0/COPYING: missing ancestor node for non-.gitignore
 reposurgeon: r326~tags/reportbuf_base0/COPYING: permission information may be lost.
-reposurgeon: "references.svn", line 53289: r326~tags/reportbuf_base0/Makefile.dist: missing ancestor node for non-.gitignore
+reposurgeon: r326~tags/reportbuf_base0/Makefile.dist: missing ancestor node for non-.gitignore
 reposurgeon: r326~tags/reportbuf_base0/Makefile.dist: permission information may be lost.
-reposurgeon: "references.svn", line 53289: r326~tags/reportbuf_base0/aclocal.m4: missing ancestor node for non-.gitignore
+reposurgeon: r326~tags/reportbuf_base0/aclocal.m4: missing ancestor node for non-.gitignore
 reposurgeon: r326~tags/reportbuf_base0/aclocal.m4: permission information may be lost.
-reposurgeon: "references.svn", line 53289: r326~tags/reportbuf_base0/install-sh: missing ancestor node for non-.gitignore
+reposurgeon: r326~tags/reportbuf_base0/install-sh: missing ancestor node for non-.gitignore
 reposurgeon: r326~tags/reportbuf_base0/install-sh: permission information may be lost.
-reposurgeon: "references.svn", line 53289: ':755': deleting parentless zero-op commit on refs/heads/trunk-deleted-r355-1.
+reposurgeon: ':755': deleting parentless zero-op commit on refs/heads/trunk-deleted-r355-1.
 #reposurgeon sourcetype svn
 blob
 mark :1

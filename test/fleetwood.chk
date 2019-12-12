@@ -1,4 +1,4 @@
-reposurgeon: "fleetwood.svn", line 238: ':2': deleting parentless zero-op commit on refs/heads/root.
+reposurgeon: ':2': deleting parentless zero-op commit on refs/heads/root.
 #reposurgeon sourcetype svn
 blob
 mark :1

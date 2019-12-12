@@ -1,7 +1,7 @@
-reposurgeon: "myers1.svn", line 727: ':2': deleting parentless zero-op commit on refs/heads/root.
-reposurgeon: "myers1.svn", line 727: ':3': deleting parentless zero-op commit on refs/heads/b3.
-reposurgeon: "myers1.svn", line 727: ':4': deleting parentless zero-op commit on refs/heads/b4.
-reposurgeon: "myers1.svn", line 727: ':9': deleting parentless zero-op commit on refs/heads/b5.
+reposurgeon: ':2': deleting parentless zero-op commit on refs/heads/root.
+reposurgeon: ':3': deleting parentless zero-op commit on refs/heads/b3.
+reposurgeon: ':4': deleting parentless zero-op commit on refs/heads/b4.
+reposurgeon: ':9': deleting parentless zero-op commit on refs/heads/b5.
 #reposurgeon sourcetype svn
 blob
 mark :1

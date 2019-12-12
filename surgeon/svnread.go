@@ -813,8 +813,8 @@ func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
 
 	// We reach here with lookback still nil if the node is a non-copy add.
 	if lookback == nil && node.isCopy() && !strings.HasSuffix(node.path, ".gitignore") {
-		sp.shout(fmt.Sprintf("r%d~%s: missing ancestor node for non-.gitignore",
-			node.revision, node.path))
+		logit(logSHOUT, "r%d~%s: missing ancestor node for non-.gitignore",
+			node.revision, node.path)
 	}
 	return lookback
 }
@@ -1333,10 +1333,9 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 				// the user a heads-up and expect these to be
 				// merged by hand.
 				if strings.HasSuffix(node.path, ".gitignore") {
-					if !node.generated &&
-						!options.Contains("--user-ignores") {
-						sp.shout(fmt.Sprintf("r%d~%s: user-created .gitignore ignored.",
-							node.revision, node.path))
+					if !node.generated && !options.Contains("--user-ignores") {
+						logit(logSHOUT, "r%d~%s: user-created .gitignore ignored.",
+							node.revision, node.path)
 						continue
 					}
 				}
@@ -1933,7 +1932,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 			// empty commits.  If that's the case it can't very
 			// well have CVS artifacts in it.
 			if commit.Comment == "" {
-				sp.shout(fmt.Sprintf("r%s has no comment", commit.legacyID))
+				logit(logSHOUT, "r%s has no comment", commit.legacyID)
 				goto loopend
 			}
 			// Commits that cvs2svn created as tag surrogates
@@ -2169,6 +2168,7 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 	rootskip := newOrderedStringSet()
 	rootskip.Add("trunk" + svnSep)
 	rootskip.Add("root")
+
 	tagname := func(commit *Commit) string {
 		baton.twirl()
 		// Give branch and tag roots a special name, except for "trunk" and
@@ -2183,7 +2183,7 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 			}
 		}
 		// Fallback to standard rules.
-		return ""
+		return defaultEmptyTagName(commit)
 	}
 	taglegend := func(commit *Commit) string {
 		// Tipdelete commits and branch roots don't get any legend.
@@ -2195,17 +2195,53 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 		legend = append(legend, "]]\n")
 		return strings.Join(legend, "")
 	}
+
+	deletia := make([]int, 0)
+	tagifyEvent := func(index int) {
+		commit, ok := sp.repo.events[index].(*Commit)
+		if !ok {
+			return
+		}
+		if len(commit.operations()) == 0 || (options.Contains("--nobranch") && commit.alldeletes(deleteall) && !commit.hasChildren()) {
+			if commit.hasParents() {
+				if len(commit.parents()) > 1 {
+					return
+				}
+				commit.setOperations(nil)
+				sp.repo.tagify(commit,
+					tagname(commit),
+					commit.parents()[0].getMark(),
+					taglegend(commit),
+					false)
+				deletia = append(deletia, index)
+			} else {
+				if commit.Branch != "refs/heads/master" {
+					msg := ""
+					if commit.legacyID != "" && sp.repo.vcs != nil && sp.repo.vcs.name == "svn" {
+						msg += fmt.Sprintf(" r%s:", commit.legacyID)
+					} else if commit.mark != "" {
+						msg += fmt.Sprintf(" '%s':", commit.mark)
+					}
+					msg += " deleting parentless "
+					if len(commit.operations()) > 0 {
+						msg += fmt.Sprintf("tip delete of %s.", commit.Branch)
+					} else {
+						msg += fmt.Sprintf("zero-op commit on %s.", commit.Branch)
+					}
+					logit(logSHOUT, msg[1:])
+					deletia = append(deletia, index)
+				}
+			}
+		}
+	}
+
 	baton.startProcess("process SVN, phase C: tagify empty commits", "")
-	sp.repo.tagifyEmpty(nil,
-		/* tipdeletes */ options.Contains("--nobranch"),
-		/* tagifyMerges */  false,
-		/* canonicalize */  false,
-		/* nameFunc */ tagname,
-		/* legendFunc */  taglegend,
-		/* createTags */ true,
-		/* gripe */ sp.shout)
-	baton.endProcess()
-}
+	for index := range sp.repo.events {
+		tagifyEvent(index)
+		baton.percentProgress(uint64(index) + 1)
+	}
+	sp.repo.delete(deletia, []string{"--tagback", "--tagify"})
+	baton.endProcess()}
 
 func svnProcessCleanTags(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
 	// Phase D:
@@ -2267,7 +2303,7 @@ func svnProcessDebubble(ctx context.Context, sp *StreamParser, options stringSet
 			return
 		}
 		if a.getMark() == b.getMark() {
-			sp.shout(fmt.Sprintf("r%s: duplicate parent marks", commit.legacyID))
+			logit(logSHOUT, "r%s: duplicate parent marks", commit.legacyID)
 		} else if a.Branch == commit.Branch && b.Branch == commit.Branch {
 			if b.committer.date.Before(a.committer.date) {
 				a, b = b, a

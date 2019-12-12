@@ -1,2 +1,2 @@
-reposurgeon: "expunge-copyfrom.svn", line 96: ':2': deleting parentless zero-op commit on refs/heads/c.
+reposurgeon: ':2': deleting parentless zero-op commit on refs/heads/c.
 #reposurgeon sourcetype svn
