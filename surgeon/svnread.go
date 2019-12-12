@@ -2219,6 +2219,8 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 
 	deletia := make([]int, 0)
 	baton.startProcess("process SVN, phase C: tagify empty commits", "")
+	// Do not parallelize, it will cause tags to be created in a nondeteministic order.
+	// There is probably not much to be gained here, anyway.
 	for index := range sp.repo.events {
 		commit, ok := sp.repo.events[index].(*Commit)
 		if !ok {
