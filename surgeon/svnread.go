@@ -1856,7 +1856,7 @@ func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSe
 	// changeset-DAG model used by git and oter DVCSes, especially if the same
 	// tag/branch is recreated later.
 	//
-	// To avoid losing history, when a tag or branch is deleted we move it to
+	// To avoid losing history, when a tag or branch is deleted we can move it to
 	// the refs/deleted/ namespace, with a suffix in case of clashes. A branch
 	// is considered deleted when we encounter a commit with a single deleteall
 	// fileop.
@@ -1927,8 +1927,15 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 		mutex.Unlock()
 	}
 	baton.startProgress("process SVN, phase A: de-junking", uint64(len(sp.repo.events)))
+	preserve := options.Contains("--nobranch")
 	walkEvents(sp.repo.events, func(i int, event Event) {
 		if commit, ok := event.(*Commit); ok {
+			// Ordinarily, drop things in the deleted
+			// namespace. If user has specifiws
+			// --nobranch we leave these in.
+			if !preserve && strings.HasPrefix(commit.Branch, "refs/deleted") {
+				safedelete(i)
+			}
 			// It is possible for commit.Comment to be None if
 			// the repository has been dumpfiltered and has
 			// empty commits.  If that's the case it can't very
@@ -2229,7 +2236,6 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 
 	// Should the argument commit be tagified?
 	tagifyable := func(commit *Commit) bool {
-		fmt.Printf("XXX %s %v\n", commit.mark, commit.getColor())
 		// If the commit has no operations, tagify it.
 		if len(commit.operations()) == 0 {
 			return true
