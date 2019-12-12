@@ -14,15 +14,18 @@ TERM=dumb
 mode=check
 log=""
 experimental=""
-while getopts hl:osx opt
+while getopts bhl:osx opt
 do
     case $opt in
+	b) mode=build;;
 	l) log="log $OPTARG" ;;
 	o) mode=dump;;
 	s) serial="set serial";;
 	x) experimental="set experimental" ;;
 	*) cat <<EOF
 singlelift - run a single Subversion conversion test
+
+With -b, rebuild the checjfile
 
 With -h, display this option summary.
 
@@ -53,11 +56,21 @@ do
     case $x in
 	*.svn) x=`echo "$x" | sed '/.svn/s///'`;;
     esac
-    grep '^ #' ${x}.svn 2>/dev/null
+    # This redirect to stderr is so this script can be used to rebuild checkfiles
+    (grep '^#' ${x} 2>/dev/null) 1>&2
     case $mode in
 	dump)
 	    ${REPOSURGEON:-reposurgeon} "$log" "$serial" "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1;;
+	build)
+	    ${REPOSURGEON:-reposurgeon} "$log" "$serial" "$experimental" "read <${x}.svn" "prefer git" "write -" >${x}.chk 2>&1 ;;
 	*)
 	    ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1 | diff -u ${x}.chk - ;;
     esac
 done
+
+# Return exit status of the last command to run.
+# In particular, if the last command was a diff,
+# this will return 0 for empty and 1 for nonempty.
+# Otherwise you'll typically get the exit status
+# of reposurgeon. 
+exit $?

@@ -14,10 +14,12 @@ TERM=dumb
 experimental=""
 serial=""
 diff=yes
+build=no
 log=""
-while getopts hl:osx opt
+while getopts bhl:osx opt
 do
     case $opt in
+	b) build=yes;; 
 	l) log="log $OPTARG" ;;
 	o) diff=no ;;
 	s) serial="set serial";;
@@ -27,6 +29,8 @@ singletest - run a single regression test
 
 The REPOSURGEON environment variable can be used to substitute in a
 different implementation.
+
+With -b. regenerate the corresponding check file
 
 With -h, display this option summary.
 
@@ -69,7 +73,17 @@ do
     if [ $diff = yes ]
     then
         ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "script ${tst}" 2>&1 | diff -u ${chk} -
+    elif [ $build = yes ] 
+    then
+        ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "script ${tst}" >${tst}.chk 2>&1
     else
         ${REPOSURGEON:-reposurgeon} "$log" "$serial" "$experimental" "script ${tst}" 2>&1
     fi
 done
+
+# Return exit status of the last command to run.
+# In particular, if the last command was a diff,
+# this will return 0 for empty and 1 for nonempty.
+# Otherwise you'll typically get the exit status
+# of reposurgeon. 
+exit $?
