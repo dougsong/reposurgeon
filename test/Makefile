@@ -402,7 +402,7 @@ SVNCLEAN := bad-author.svn binary.svn branch-drop-add.svn blob-id.svn		\
 	permcopy2.svn replace-dir.svn simpletag.svn smallref.svn snarl.svn	\
 	squash-id.svn subdir.svn subclipse.svn svnignores.svn treecontents.svn	\
 	vanilla.svn wrong-mergeinfo.svn rootfirst.svn split-dir.svn			\
-	symlink.svn emptyfrom.svn expunge-copyfrom.svn
+	symlink.svn trunkstomp.svn emptyfrom.svn expunge-copyfrom.svn
 liftcheck-regress:
 	@echo "== Testing conversion correctness of Subversion streams:"
 	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\

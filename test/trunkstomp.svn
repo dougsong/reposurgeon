@@ -1,0 +1,261 @@
+SVN-fs-dump-format-version: 2
+ ## Check that deletion of trunk followed by copy from before deletion works.
+  # Verifies fix of GitLab issue #172
+
+UUID: e60b3fe6-1799-11ea-99b3-9b2684dd6edd
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2019-12-05T20:00:34.516614Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 129
+Content-length: 129
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-05T20:00:53.971384Z
+K 7
+svn:log
+V 28
+Create directory structure.
+
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 113
+Content-length: 113
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-05T20:01:28.315713Z
+K 7
+svn:log
+V 12
+Add foo/bar.
+PROPS-END
+
+Node-path: trunk/foo
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/foo/bar
+Node-kind: file
+Node-action: add
+Text-content-md5: 4a27d17348722abb17a89ba8aff95982
+Text-content-sha1: 7eb677386f15f518f2c8bcb2563a308ca13567b9
+Prop-content-length: 10
+Text-content-length: 13
+Content-length: 23
+
+PROPS-END
+file foo/bar
+
+
+Revision-number: 3
+Prop-content-length: 112
+Content-length: 112
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-05T20:02:13.414390Z
+K 7
+svn:log
+V 11
+Add files.
+
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Text-content-md5: ba5881da1ffb37b9ce97cecb1bd7a8b0
+Text-content-sha1: 1c78ba5f80a42292d9cd2b99781f443e4b2e6dc4
+Prop-content-length: 10
+Text-content-length: 12
+Content-length: 22
+
+PROPS-END
+file README
+
+
+Node-path: trunk/foo2
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/foo2/bar2
+Node-kind: file
+Node-action: add
+Text-content-md5: 19d5331c7032aa7c56fe9623215b6b30
+Text-content-sha1: 7849107535bccf097059d455acf044335c2ce74f
+Prop-content-length: 10
+Text-content-length: 19
+Content-length: 29
+
+PROPS-END
+foo2/bar2 contents
+
+
+Revision-number: 4
+Prop-content-length: 113
+Content-length: 113
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-05T20:02:34.341471Z
+K 7
+svn:log
+V 12
+Add branch.
+
+PROPS-END
+
+Node-path: branches/example
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 3
+Node-copyfrom-path: trunk
+
+
+Revision-number: 5
+Prop-content-length: 118
+Content-length: 118
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-05T20:03:31.041691Z
+K 7
+svn:log
+V 17
+change on branch
+
+PROPS-END
+
+Node-path: branches/example/README
+Node-kind: file
+Node-action: change
+Text-content-md5: ddce269a1e3d054cae349621c198dd52
+Text-content-sha1: 7893883873a705aec69e2942901f20d7b1e28dec
+Text-content-length: 8
+Content-length: 8
+
+example
+
+
+Revision-number: 6
+Prop-content-length: 128
+Content-length: 128
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-05T20:03:45.806038Z
+K 7
+svn:log
+V 27
+Accidentally remove trunk.
+
+PROPS-END
+
+Node-path: trunk
+Node-action: delete
+
+
+Revision-number: 7
+Prop-content-length: 116
+Content-length: 116
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-05T20:04:32.685341Z
+K 7
+svn:log
+V 15
+Restore trunk.
+
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 5
+Node-copyfrom-path: trunk
+
+
