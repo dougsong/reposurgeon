@@ -2157,7 +2157,6 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 	//
 	defer trace.StartRegion(ctx, "SVN Phase C: tagify empty commits").End()
 	logit(logEXTRACT, "SVN Phase C: tagify empty commits")
-	baton.twirl()
 
 	rootmarks := newOrderedStringSet() // stays empty if nobranch
 	for _, meta := range sp.branches {
@@ -2169,8 +2168,8 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 	rootskip.Add("trunk" + svnSep)
 	rootskip.Add("root")
 
+	// What should a tag made from the argument commit be named?
 	tagname := func(commit *Commit) string {
-		baton.twirl()
 		// Give branch and tag roots a special name, except for "trunk" and
 		// "root" which do not come from a regular branch copy.
 		if rootmarks.Contains(commit.mark) {
@@ -2182,9 +2181,11 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 				return name + "-root"
 			}
 		}
-		// Fallback to standard rules.
+		// Fall back to standard rules.
 		return defaultEmptyTagName(commit)
 	}
+
+	// What distinguishing lefent should we generate for a tag mate from the argument commit?
 	taglegend := func(commit *Commit) string {
 		// Tipdelete commits and branch roots don't get any legend.
 		if len(commit.operations()) > 0 || (rootmarks.Contains(commit.mark) && !rootskip.Contains(branchbase(commit.Branch))) {
@@ -2196,13 +2197,34 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 		return strings.Join(legend, "")
 	}
 
+	// Should the argument commit be tagified?
+	tagifyable := func(commit *Commit) bool {
+		fmt.Printf("XXX %s %v\n", commit.mark, commit.getColor())
+		// If the commit has no operations, tagify it.
+		if len(commit.operations()) == 0 {
+			return true
+		}
+		// Generated commit on a branch in the tag space, no children.
+		// This correspondfs to a Subversion tag copy.
+		if commit.color == colorGEN && strings.HasPrefix(commit.Branch, "refs/tags") && !commit.hasChildren() {
+			return true
+		}
+		// In a --nobranch conversion, the object is to preserve all thew structure of the Subversion original.
+		// Thus, wwe want to tagify branch tip deletes in order to keep those brancges.
+		if options.Contains("--nobranch") && commit.alldeletes(deleteall) && !commit.hasChildren() {
+			return true
+		}
+		return false
+	}
+
 	deletia := make([]int, 0)
-	tagifyEvent := func(index int) {
+	baton.startProcess("process SVN, phase C: tagify empty commits", "")
+	for index := range sp.repo.events {
 		commit, ok := sp.repo.events[index].(*Commit)
 		if !ok {
-			return
+			continue
 		}
-		if len(commit.operations()) == 0 || (options.Contains("--nobranch") && commit.alldeletes(deleteall) && !commit.hasChildren()) {
+		if tagifyable(commit) {
 			if commit.hasParents() {
 				if len(commit.parents()) > 1 {
 					return
@@ -2233,11 +2255,6 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 				}
 			}
 		}
-	}
-
-	baton.startProcess("process SVN, phase C: tagify empty commits", "")
-	for index := range sp.repo.events {
-		tagifyEvent(index)
 		baton.percentProgress(uint64(index) + 1)
 	}
 	sp.repo.delete(deletia, []string{"--tagback", "--tagify"})
