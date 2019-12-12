@@ -42,7 +42,7 @@ fastcheck: clean $(BASIC) $(SUBVERSION)
 	@echo "=== No diff output is good news ==="
 
 # This should always be a full test
-fullcheck: clean $(BASIC) $(SUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXVERSION)
+fullcheck: clean $(BASIC) $(SUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXTOOLS)
 	@echo "=== No diff output is good news ==="
 
 # hg-regress-patho is not part of the normal test sequence.
