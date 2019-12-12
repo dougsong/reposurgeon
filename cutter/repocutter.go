@@ -106,7 +106,7 @@ revision selection. You may specify multiple properties to be renamed.
 Generate a log report, same format as the output of svn log on a
 repository, to standard output.
 `,
-	"setlog": `setlog: usage: repocutter [-r SELECTION] --logentries=LOGFILE setlog
+	"setlog": `setlog: usage: repocutter [-r SELECTION] -logentries=LOGFILE setlog
 
 Replace the log entries in the input dumpfile with the corresponding entries
 in the LOGFILE, which should be in the format of an svn log output.
@@ -1368,7 +1368,7 @@ PROPS-END
 func main() {
 	selection := NewSubversionRange("0:HEAD")
 	var quiet bool
-	var logpatch string
+	var logentries string
 	var rangestr string
 	var infile string
 	input := os.Stdin
@@ -1376,8 +1376,8 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "enable debug messages")
 	flag.StringVar(&infile, "i", "", "set input file")
 	flag.StringVar(&infile, "infile", "", "set input file")
-	flag.StringVar(&logpatch, "l", "", "pass in log patch")
-	flag.StringVar(&logpatch, "logpatch", "", "pass in log patch")
+	flag.StringVar(&logentries, "l", "", "pass in log patch")
+	flag.StringVar(&logentries, "logentries", "", "pass in log patch")
 	flag.BoolVar(&quiet, "q", false, "disable progress messages")
 	flag.BoolVar(&quiet, "quiet", false, "disable progress messages")
 	flag.StringVar(&rangestr, "r", "", "set selection range")
@@ -1425,11 +1425,11 @@ func main() {
 	case "log":
 		log(NewDumpfileSource(input, baton), selection)
 	case "setlog":
-		if logpatch == "" {
+		if logentries == "" {
 			fmt.Fprintf(os.Stderr, "repocutter: setlog requires a log entries file.\n")
 			os.Exit(1)
 		}
-		setlog(NewDumpfileSource(input, baton), logpatch, selection)
+		setlog(NewDumpfileSource(input, baton), logentries, selection)
 	case "strip":
 		strip(NewDumpfileSource(input, baton), selection, flag.Args()[1:])
 	case "pathrename":
