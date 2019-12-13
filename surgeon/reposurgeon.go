@@ -3563,21 +3563,21 @@ func (b *Blob) getContent() []byte {
 	return data
 }
 
-type SectionReader struct {
+type sectionReader struct {
 	*io.SectionReader
 }
 
-func NewSectionReader(r io.ReaderAt, off int64, n int64) *SectionReader {
-	return &SectionReader{io.NewSectionReader(r, off, n)}
+func newSectionReader(r io.ReaderAt, off int64, n int64) *sectionReader {
+	return &sectionReader{io.NewSectionReader(r, off, n)}
 }
-func (sr SectionReader) Close() error {
+func (sr sectionReader) Close() error {
 	return nil
 }
 
 // getContentStream gets the content of the blob as a Reader.
 func (b *Blob) getContentStream() io.ReadCloser {
 	if !b.hasfile() {
-		return NewSectionReader(b.repo.seekstream, b.start, b.size)
+		return newSectionReader(b.repo.seekstream, b.start, b.size)
 	}
 	file, err := os.Open(b.getBlobfile(false))
 	if err != nil {
@@ -3650,7 +3650,9 @@ func (b *Blob) setContentFromStream(s io.ReadCloser) {
 // materialize stores this content as a separate file, if it isn't already.
 func (b *Blob) materialize() string {
 	if b.start != noOffset {
-		b.setContentFromStream(b.getContentStream())
+		content := b.getContentStream()
+		defer content.Close()
+		b.setContentFromStream(content)
 	}
 	return b.getBlobfile(false)
 }
@@ -3664,7 +3666,9 @@ func (b Blob) getComment() string {
 // does not need to be crypto-quality
 func (b *Blob) sha() string {
 	h := sha1.New()
-	io.Copy(h, b.getContentStream())
+	content := b.getContentStream()
+	defer content.Close()
+	io.Copy(h, content)
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
