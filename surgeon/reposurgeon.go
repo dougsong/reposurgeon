@@ -8435,8 +8435,8 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 	for _, event := range repo.events {
 		event.setDelFlag(false)
 	}
-	var newTarget *Commit
 	for _, ei := range selected {
+		var newTarget *Commit
 		event := repo.events[ei]
 		switch event.(type) {
 		case *Blob:
@@ -8453,14 +8453,11 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 			event.setDelFlag(true)
 			commit := event.(*Commit)
 			// Decide the new target for tags
-			filterOnly := true
 			if tagforward && commit.hasChildren() {
-				filterOnly = false
 				newTarget = commit.firstChild()
 			} else if tagback && commit.hasParents() {
 				noncallout, ok := commit.parents()[0].(*Commit)
 				if ok {
-					filterOnly = false
 					newTarget = noncallout
 				}
 			}
@@ -8616,7 +8613,8 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 			}
 
 			// Move tags && attachments
-			if filterOnly {
+			if newTarget == nil {
+				// No place to move alternatives, no alternative but to nuke them.
 				for _, e := range commit.attachments {
 					e.setDelFlag(true)
 				}
