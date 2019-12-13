@@ -1040,7 +1040,7 @@ bzr-orphans
 			authormap:   "",
 			ignorename:  ".hgignore",
 			dfltignores: "",
-			cookies:     reMake(tokenNumeric, `\b[0-9a-f]{40}\b`, `\b[0-9a-f]{12}\b`),
+			cookies:     reMake(`\b[0-9a-f]{40}\b`, `\b[0-9a-f]{12}\b`),
 			project:     "http://mercurial.selenic.com/",
 			notes: `The hg fastimport method is not part of stock Mercurial.
 
