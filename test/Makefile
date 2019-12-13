@@ -9,8 +9,7 @@
 PATH := $(realpath ..):$(realpath .):${PATH}
 REPOSURGEON := reposurgeon 
 REPOCUTTER := repocutter 
-REPOTOOL := repotool 
-REPOMAPPER := repomapper
+REPOTOOL := repotool EPOMAPPER := repomapper
 
 # Setting this to 0 allows tests to continue on error.
 STOPOUT=1
