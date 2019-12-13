@@ -2264,7 +2264,7 @@ type RepoStreamer struct {
 	extractor          Extractor
 }
 
-func newRepoStreamer(extractor Extractor) *RepoStreamer {
+func newRepoStreamer(extractor Extractor, progress bool) *RepoStreamer {
 	rs := new(RepoStreamer)
 	rs.revlist = make([]string, 0)
 	rs.parents = make(map[string][]string)
@@ -2276,6 +2276,7 @@ func newRepoStreamer(extractor Extractor) *RepoStreamer {
 	rs.visibleFiles = make(map[string]map[string]signature)
 	rs.hashToMark = make(map[[sha1.Size]byte]markidx)
 	rs.extractor = extractor
+	rs.baton = newBaton(progress)
 	return rs
 }
 
@@ -9593,7 +9594,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 	// We found a matching custom extractor
 	if extractor != nil {
 		repo.stronghint = true
-		streamer := newRepoStreamer(extractor)
+		streamer := newRepoStreamer(extractor, control.flagOptions["progress"])
 		repo, err := streamer.extract(repo, vcs)
 		return repo, err
 	}
