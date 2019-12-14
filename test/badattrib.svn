@@ -1,0 +1,237 @@
+SVN-fs-dump-format-version: 2
+
+UUID: ca1c7a58-1e7d-11ea-af2f-9d2ed2962213
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2019-12-14T14:26:59.898088Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 128
+Content-length: 128
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-14T14:27:09.476572Z
+K 7
+svn:log
+V 27
+Create directory structure.
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 109
+Content-length: 109
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-14T14:28:07.502261Z
+K 7
+svn:log
+V 9
+Add foo.
+
+PROPS-END
+
+Node-path: trunk/ChangeLog
+Node-kind: file
+Node-action: add
+Text-content-md5: fbe5e07b02cb7727fe849c5e30795743
+Text-content-sha1: 712fb5d819e9b490faf9d723fd8f05feddee0b62
+Prop-content-length: 10
+Text-content-length: 69
+Content-length: 79
+
+PROPS-END
+2019-12-14  First Author  <first@author.example>
+
+	* foo: New file.
+
+
+
+Node-path: trunk/foo
+Node-kind: file
+Node-action: add
+Text-content-md5: 889894857407096e703499037a9dfd92
+Text-content-sha1: 14a3e9785dbae9489c9986f21b7e58a403395c8a
+Prop-content-length: 10
+Text-content-length: 9
+Content-length: 19
+
+PROPS-END
+test foo
+
+
+Revision-number: 3
+Prop-content-length: 109
+Content-length: 109
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-14T14:29:09.388621Z
+K 7
+svn:log
+V 9
+Add bar.
+
+PROPS-END
+
+Node-path: trunk/ChangeLog
+Node-kind: file
+Node-action: change
+Text-content-md5: fb80f73661527c8bd0699659638e1cd9
+Text-content-sha1: 42c80de5ed91475593bb1260a06ada75a9b0a02c
+Text-content-length: 140
+Content-length: 140
+
+2019-12-14  Second Author  <second@author.example>
+
+	* bar: New file.
+
+2019-12-14  First Author  <first@author.example>
+
+	* foo: New file.
+
+
+
+Node-path: trunk/bar
+Node-kind: file
+Node-action: add
+Text-content-md5: 667d37da28f3903a8ad509eec3a3117d
+Text-content-sha1: f45a58e227a9c891afd3a91814dea8fcff845f65
+Prop-content-length: 10
+Text-content-length: 9
+Content-length: 19
+
+PROPS-END
+test bar
+
+
+Revision-number: 4
+Prop-content-length: 121
+Content-length: 121
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-14T14:29:28.038666Z
+K 7
+svn:log
+V 20
+Create test branch.
+
+PROPS-END
+
+Node-path: branches/test
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 3
+Node-copyfrom-path: trunk
+
+
+Revision-number: 5
+Prop-content-length: 109
+Content-length: 109
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-14T14:30:11.576132Z
+K 7
+svn:log
+V 9
+Add baz.
+
+PROPS-END
+
+Node-path: branches/test/ChangeLog
+Node-kind: file
+Node-action: change
+Text-content-md5: 879b38748bf6b840261239c4a9a3a7eb
+Text-content-sha1: 407754336d901db9bf777a016959e90ebe96cfd8
+Text-content-length: 209
+Content-length: 209
+
+2019-12-14  Third Author  <third@author.example>
+
+	* baz: New file.
+
+2019-12-14  Second Author  <second@author.example>
+
+	* bar: New file.
+
+2019-12-14  First Author  <first@author.example>
+
+	* foo: New file.
+
+
+
+Node-path: branches/test/baz
+Node-kind: file
+Node-action: add
+Text-content-md5: 4604eb4676b6122944f2274631c84064
+Text-content-sha1: 70cfd83ecb960344e79aaaade6e7d8609625e03e
+Prop-content-length: 10
+Text-content-length: 9
+Content-length: 19
+
+PROPS-END
+test baz
+
+

@@ -13,15 +13,14 @@ TERM=dumb
 
 experimental=""
 serial=""
-diff=yes
-build=no
+mode=diff
 log=""
 while getopts bhl:osx opt
 do
     case $opt in
-	b) build=yes;; 
+	b) mode=build;; 
 	l) log="log $OPTARG" ;;
-	o) diff=no ;;
+	o) mode=view;;
 	s) serial="set serial";;
 	x) experimental="set experimental";;
 	*) cat <<EOF
@@ -47,38 +46,34 @@ EOF
 done
 shift $(($OPTIND - 1))
 
-what=`echo ${1} | sed -e '/-FAILED/s///' -e '/.tst/s///'`
-
-if [ -f ${what}.tst ]
-then
-    tst=${what}.tst
-    chk=${what}.chk
-elif [ -f ${what}.tst-FAIL ]
-then
-    tst=${what}.tst-FAIL
-    chk=${what}.chk
-    echo "Expect a diff"
-elif [ -z ${what} ]
-then
-    exec $0 -h
-else
-    echo "No script matching ${what} found"
-    exit 1
-fi
-
 for x in $*;
 do
+    what=`echo ${x} | sed -e '/-FAILED/s///' -e '/.tst/s///'`
+
+    if [ -f ${what}.tst ]
+    then
+	tst=${what}.tst
+	chk=${what}.chk
+    elif [ -f ${what}.tst-FAIL ]
+    then
+	tst=${what}.tst-FAIL
+	chk=${what}.chk
+	echo "Expect a diff"
+    elif [ -z ${what} ]
+    then
+	exec $0 -h
+	exit 1
+    else
+	echo "No script matching ${what} found"
+	exit 1
+    fi
     # This redirect to stderr is so this script can be used to rebuild checkfiles
     (grep '^##' ${tst} 2>/dev/null) 1>&2
-    if [ $diff = yes ]
-    then
-        ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "script ${tst}" 2>&1 | diff -u ${chk} -
-    elif [ $build = yes ] 
-    then
-        ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "script ${tst}" >${tst}.chk 2>&1
-    else
-        ${REPOSURGEON:-reposurgeon} "$log" "$serial" "$experimental" "script ${tst}" 2>&1
-    fi
+    case $mode in
+    build) ${REPOSURGEON:-reposurgeon} "set serial" "$experimental" "script ${tst}" >${chk} 2>&1 ;;
+    view)  ${REPOSURGEON:-reposurgeon} "$log" "$serial" "$experimental" "script ${tst}" 2>&1 ;;
+    *)     ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "script ${tst}" 2>&1 | diff -u ${chk} - ;;
+    esac
 done
 
 # Return exit status of the last command to run.
