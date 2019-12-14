@@ -1732,7 +1732,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	lastrev := 0
 	maybeRoots := make([]*Commit, 0);
 	snapshot := func(commitmap map[string]*Commit) map[string]*Commit {
-		result := make(map[string]*Commit)
+		result := make(map[string]*Commit, len(commitmap))
 		for k, v := range commitmap {
 			result[k] = v
 		}
