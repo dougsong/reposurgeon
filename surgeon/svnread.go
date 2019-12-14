@@ -1226,7 +1226,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 	logit(logEXTRACT, "SVN Phase 5: build commits")
 	baton.startProgress("process SVN, phase 5: build commits", uint64(len(sp.revisions)))
 
-	var lastmark string
+	var lastcommit *Commit
 	for ri, record := range sp.revisions {
 		// Zero revision is never interesting - no operations, no
 		// comment, no author, it's just a start marker for a
@@ -1468,8 +1468,8 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 		// If we do branch analysis in a later phase
 		// (that is, unless --nobranch is on) we will
 		// create a new set of parent links.
-		if lastmark != "" {
-			commit.setParentMarks([]string{lastmark})
+		if lastcommit != nil {
+			commit.setParents([]CommitLike{lastcommit})
 		}
 
 		commit.setMark(sp.repo.newmark())
@@ -1477,7 +1477,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 		sp.revmarks[intToRevidx(ri)] = commit.mark
 		sp.repo.declareSequenceMutation("adding new commit")
 
-		lastmark = commit.mark
+		lastcommit = commit
 		sp.repo.legacyMap["SVN:" + commit.legacyID] = commit
 
 		baton.percentProgress(uint64(ri))
