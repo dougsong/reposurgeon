@@ -2235,7 +2235,7 @@ disk space.
 +clear+ [ _option_ ]::
    Turn off an option flag.  With no arguments, list all options
 
-+timing+ [>__outfile__ ]::
++timing+ [ >__outfile__ ]::
    Display statistics on phase timing in repository analysis.
    Mainly of interest to developers trying to speed up the program.
 +
@@ -2665,7 +2665,6 @@ Marks the spot at which this repository was converted from Subversion to git.
 EOF
 --------
 
-
 [[advanced]]
 == ADVANCED EXAMPLES ==
 
@@ -2680,6 +2679,17 @@ a specified string. (The trick here is that ? extends the singleton
 set consisting of the last eligible ChangeLog blob to its set of
 referring commits, and +list+only notices the
 commits.)
+
+--------
+index >index.txt
+shell <index.txt awk '/refs\/tags/ {print $4}' | sort | uniq | while read t; do echo "tag $(basename "$t") rename $(basename "$t" | sed -e 's/sample/example/')"; done >renames.script
+script renames.script
+--------
+
+Mass-rename tags, replacing "sample" on the basename with
+"example". Illustrates a general technique of generating reposurgeon commands vis
+shell that you then execute with the "script" command. Supporting this technique
+is the reason as many commands as possible support redirects.
 
 [[extensions]]
 == STREAM SYNTAX EXTENSIONS ==
