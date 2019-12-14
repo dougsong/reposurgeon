@@ -2138,9 +2138,15 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 			// Ordinarily, drop things in the deleted
 			// namespace. If user has specifiws
 			// --nobranch we leave these in.
-			if !preserve && strings.HasPrefix(commit.Branch, "refs/deleted") {
+			// FIXME: only safe to do this at childless
+			// commits. It would need a recursive traversal
+			// from the tips to be really right.
+			// This nerfed version should make the
+			// agito test right.
+			if !preserve && strings.HasPrefix(commit.Branch, "refs/deleted") && !commit.hasChildren() {
 				safedelete(i)
 			}
+			/*
 			// It is possible for commit.Comment to be None if
 			// the repository has been dumpfiltered and has
 			// empty commits.  If that's the case it can't very
@@ -2166,8 +2172,9 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 			if len(m) > 0 && !commit.hasChildren() {
 				safedelete(i)
 			}
+			*/
 		}
-	loopend:
+	//loopend:
 		baton.percentProgress(uint64(i) + 1)
 	})
 	baton.endProgress()
