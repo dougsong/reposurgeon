@@ -2236,7 +2236,7 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 		return defaultEmptyTagName(commit)
 	}
 
-	// What distinguishing lefent should we generate for a tag mate from the argument commit?
+	// What distinguishing element should we generate for a tag made from the argument commit?
 	taglegend := func(commit *Commit) string {
 		// Tipdelete commits and branch roots don't get any legend.
 		if len(commit.operations()) > 0 || (rootmarks.Contains(commit.mark) && !rootskip.Contains(branchbase(commit.Branch))) {
@@ -2259,8 +2259,8 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 		if commit.color == colorGEN && strings.HasPrefix(commit.Branch, "refs/tags") && !commit.hasChildren() {
 			return true
 		}
-		// In a --nobranch conversion, the object is to preserve all thew structure of the Subversion original.
-		// Thus, wwe want to tagify branch tip deletes in order to keep those brancges.
+		// In a --nobranch conversion, the object is to preserve all the structure of the Subversion original.
+		// Thus, we want to tagify branch tip deletes in order to keep those brancges.
 		if options.Contains("--nobranch") && commit.alldeletes(deleteall) && !commit.hasChildren() {
 			return true
 		}
@@ -2269,7 +2269,7 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 
 	deletia := make([]int, 0)
 	baton.startProcess("process SVN, phase C: tagify empty commits", "")
-	// Do not parallelize, it will cause tags to be created in a nondeteministic order.
+	// Do not parallelize, it will cause tags to be created in a nondeterministic order.
 	// There is probably not much to be gained here, anyway.
 	for index := range sp.repo.events {
 		commit, ok := sp.repo.events[index].(*Commit)
