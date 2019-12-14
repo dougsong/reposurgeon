@@ -5182,13 +5182,16 @@ func (commit *Commit) parentMarks() []string {
 
 // commitRemove removes all instances of a commit/callout pointer from a list
 func commitRemove(commitlist []CommitLike, commit CommitLike) []CommitLike {
-	out := make([]CommitLike, 0)
-	for i := range commitlist {
-		if commitlist[i] != commit {
-			out = append(out, commitlist[i])
+	for i := len(commitlist) - 1; i >= 0; i-- {
+		if commitlist[i] == commit {
+			if i < len(commitlist) - 1 {
+				copy(commitlist[i:], commitlist[i + 1:])
+			}
+			commitlist[len(commitlist) - 1] = nil
+			commitlist = commitlist[:len(commitlist) - 1]
 		}
 	}
-	return out
+	return commitlist
 }
 
 func (commit *Commit) setParents(parents []CommitLike) {
@@ -9042,8 +9045,10 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 	}
 	lastEvent := sortedEvents[len(sortedEvents)-1]
 	events[0].setParents(sortedEvents[0].parents())
-	for _, e := range lastEvent.children() {
-		e.(*Commit).replaceParent(lastEvent, events[len(events)-1])
+	// replaceParent modifies the list that we're iterating over, so we walk backwards
+	children := lastEvent.children()
+	for i := len(children) - 1; i >= 0; i-- {
+		children[i].(*Commit).replaceParent(lastEvent, events[len(events)-1])
 	}
 	for i, e := range events[:len(events)-1] {
 		events[i+1].setParents([]CommitLike{e})
