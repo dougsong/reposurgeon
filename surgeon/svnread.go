@@ -1730,7 +1730,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	lastCommitOnBranch := make(map[string]*Commit)
 	sp.lastCommitOnBranchAt = make([]map[string]*Commit, len(sp.revisions))
 	lastrev := 0
-	maybeRoots := make([]int, 0);
+	maybeRoots := make([]*Commit, 0);
 	snapshot := func(commitmap map[string]*Commit) map[string]*Commit {
 		result := make(map[string]*Commit)
 		for k, v := range commitmap {
@@ -1764,7 +1764,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 				commit.setParents([]CommitLike{prev})
 			} else {
 				commit.setParents(nil)
-				maybeRoots = append(maybeRoots, index)
+				maybeRoots = append(maybeRoots, commit)
 			}
 			// Update lastCommitOnBranch
 			lastCommitOnBranch[branch] = commit
@@ -1788,8 +1788,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 		commit.setParents([]CommitLike{parent})
 		parentlock.Unlock()
 	}
-	for count, myindex := range maybeRoots {
-		commit := sp.repo.events[myindex].(*Commit) // All events in maybeRoots are commits
+	for count, commit := range maybeRoots {
 		branch := sp.markToSVNBranch[commit.mark]
 		rev, _ := strconv.Atoi(strings.Split(commit.legacyID, ".")[0])
 		if rev > 0 && rev < len(sp.revisions) {
