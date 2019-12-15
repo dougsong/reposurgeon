@@ -72,7 +72,6 @@ type svnReader struct {
 	streamview           []*NodeAction // All nodes in stream order
 	hashmap              map[string]*NodeAction
 	history              *History
-	revmarks             map[revidx]string
 	branchlinks          map[revidx]revidx
 	branches             map[string]*branchMeta // Points to branch root commits
 	splitCommits         map[revidx]int
@@ -360,7 +359,6 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 	sp.branches = make(map[string]*branchMeta)
 	sp.splitCommits = make(map[revidx]int)
 	sp.branchlinks = make(map[revidx]revidx)
-	sp.revmarks = make(map[revidx]string)
 
 	trackSymlinks := newOrderedStringSet()
 	propertyStash := make(map[string]*OrderedMap)
@@ -1474,7 +1472,6 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 
 		commit.setMark(sp.repo.newmark())
 		sp.repo.addEvent(commit)
-		sp.revmarks[intToRevidx(ri)] = commit.mark
 		sp.repo.declareSequenceMutation("adding new commit")
 
 		lastcommit = commit
