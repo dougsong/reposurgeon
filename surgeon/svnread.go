@@ -61,12 +61,6 @@ type branchMeta struct {
 	tip *Commit
 }
 
-type revlink struct {
-	source revidx
-	target revidx
-	copycount int
-}
-
 type svnReader struct {
 	revisions            []RevisionRecord
 	streamview           []*NodeAction // All nodes in stream order
@@ -83,7 +77,7 @@ type svnReader struct {
 
 // containingDir is a cut-down version of filepath.Dir
 func containingDir(s string) string {
-	i := strings.LastIndexByte(s, '/')
+	i := strings.LastIndexByte(s, os.PathSeparator)
 	if i <= 0 {
 		return ""
 	} else {
@@ -110,14 +104,14 @@ func isDeclaredBranch(path string) bool {
 			trial = svnSepWithStar
 		}
 		l := len(trial)
-		if l >= 2 && trial[l - 1] == '*' && trial[l - 2] == '/' {
+		if l >= 2 && trial[l - 1] == '*' && trial[l - 2] == os.PathSeparator {
 			trialBase := trial[:len(trial)-2]
 			if trialBase == np {
 				isNamespace = true
 			} else if trialBase == containingDir(np) {
 				maybeBranch = true
 			}
-		} else if (trial[l - 1] == '/' && trial[:l - 1] == np) || trial == np {
+		} else if (trial[l - 1] == os.PathSeparator && trial[:l - 1] == np) || trial == np {
 			// Exact match
 			return true
 		}
@@ -968,6 +962,7 @@ func svnFilterProperties(ctx context.Context, sp *StreamParser, options stringSe
 		baton.percentProgress(uint64(si))
 	}
 	baton.endProgress()
+	sp.streamview = nil	// Allow GC
 }
 
 func svnBuildFilemaps(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
@@ -1038,7 +1033,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 	// This pass also notices branch structure when it checks
 	// where it should create copies of the default .gitignore
 	// file.  We want this to happen at branch roots before
-	// the first fileop, abd only at branch roots.
+	// the first fileop, and only at branch roots.
 	//
 	// The exit contract of this phase is that all file content
 	// modifications are expressed as file ops, every one of
