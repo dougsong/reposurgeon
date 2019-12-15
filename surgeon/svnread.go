@@ -2112,6 +2112,15 @@ func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSe
 		}
 	}
 	logit(logTAGFIX, "%d deleted refs were put away.", processed)
+	for _, event := range sp.repo.events {
+		if commit, ok := event.(*Commit); ok {
+			if sp.branches[commit.Branch] == nil {
+				logit(logEXTRACT, "commit %s is root of branch %s", commit.mark, commit.Branch)
+				sp.branches[commit.Branch] = new(branchMeta)
+				sp.branches[commit.Branch].root = commit
+			}
+		}
+	}
 	baton.endProgress()
 }
 
