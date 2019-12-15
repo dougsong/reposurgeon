@@ -799,6 +799,16 @@ func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
 				node.revision, node.path, lookback, node.fromRev)
 		}
 	} else if node.action != sdADD {
+		// The ancestor could be a file copy node expanded
+		// from an earlier expanded directory copy.  The -2
+		// is because node indices are 1-origin
+		for i := node.index - 2; i > 0; i-- {
+			trial := sp.revisions[node.revision].nodes[i]
+			// First conjunct is nominally unnecessary.
+			if trial != node && trial.path == node.path {
+				return trial
+			}
+		}
 		// Ordinary inheritance, no node copy.
 		// Contiguity assumption here
 		lookback = sp.history.getActionNode(node.revision-1, node.path)
