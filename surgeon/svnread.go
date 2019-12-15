@@ -1968,7 +1968,10 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 						markset := make(map[int]bool)
 						existing := existingMerges[fromPath]
 						for rev := range revs {
-							if _, ok := existing[rev]; !ok {
+							// Skip revisions that were already in the
+							// mergeinfo or revisions that are later than us
+							// (which indicates a corrupt mergeinfo property)
+							if _, found := existing[rev]; rev < revision && !found {
 								// Only add revisions that are on the correct branch
 								base := -1
 								if mark := sp.revmarks[revidx(rev)]; mark != "" {
