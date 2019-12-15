@@ -1520,7 +1520,7 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 			// actually have to use tem
 			for j, fileop := range commit.fileops {
 				commit.fileops[j].Source, commit.fileops[j].Target = splitSVNBranchPath(fileop.Path)
-				if commit.fileops[j].Source != oldbranch {
+				if j == 0 || commit.fileops[j].Source != oldbranch {
 					cliqueIndices = append([]int{j}, cliqueIndices...)
 					oldbranch = commit.fileops[j].Source
 				}
