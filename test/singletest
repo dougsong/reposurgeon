@@ -35,7 +35,7 @@ With -h, display this option summary.
 
 With -l, set log bits (only with -o)
 
-With -o, domp the test output rather than diffing against the checkfile
+With -o, dump the test output rather than diffing against the checkfile
 
 With -s, set the serial flag to disable parallelism
 

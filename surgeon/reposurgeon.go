@@ -135,7 +135,7 @@ const maxAlloc = 100000
 type markidx uint32 // Mark indicies
 type blobidx uint32 // Blob indices. Should not be narrower than mark indices.
 type revidx uint32  // Revision indices
-type nodeidx uint16 // Node indices within revisions
+type nodeidx uint32 // Node indices within revisions
 
 // Go's panic/defer/recover feature is a weak primitive for catchable
 // exceptions, but it's all we have. So we write a throw/catch pair;
