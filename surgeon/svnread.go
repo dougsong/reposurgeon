@@ -1973,23 +1973,14 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 							// (which indicates a corrupt mergeinfo property)
 							if _, found := existing[rev]; rev < revision && !found {
 								// Only add revisions that are on the correct branch
-								base := -1
-								if mark := sp.revmarks[revidx(rev)]; mark != "" {
-									base = sp.repo.markToIndex(mark)
-								}
-								if base != -1 {
-									for idx := base; idx < len(sp.repo.events); idx++ {
-										if c, ok := sp.repo.events[idx].(*Commit); ok {
-											crev, _ := strconv.Atoi(strings.Split(c.legacyID, ".")[0])
-											if crev != rev {
-												break
-											}
-											if sp.markToSVNBranch[c.mark] == fromPath {
-												imark, _ := strconv.Atoi(c.mark[1:])
-												markset[imark] = true
-												break
-											}
-										}
+								c := lastRelevantCommit(sp, revidx(rev), fromPath)
+								if c != nil {
+									crev, _ := strconv.Atoi(strings.Split(c.legacyID, ".")[0])
+									if crev == rev {
+										// The last revision on the branch is |rev|,
+										// we can add the corresponding mark
+										imark, _ := strconv.Atoi(c.mark[1:])
+										markset[imark] = true
 									}
 								}
 							}
