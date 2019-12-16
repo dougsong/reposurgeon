@@ -16,6 +16,7 @@ Repository head::
      Logging now has facility flags rather than a single level.
      The svnmerge-inregrated properties creaed by svnmerge.py are handled.
      Use Bazaar config file or .muttrc for identity if availalable.
+     The expunch and brancify commands now resoect string quotes.
 
 3.48: 2019-10-02::
      Last Python release.  4.0 will ship in Go.
