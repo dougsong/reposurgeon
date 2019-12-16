@@ -18933,10 +18933,12 @@ func (rs *Reposurgeon) HelpChangelogs() {
 Mine ChangeLog files for authorship data.
 
 Takes a selection set.  If no set is specified, proces all changelogs.
+An optional following argument is a regular expression to match the basename
+of files that should be treated as changelogs; the default is "ChangeLog".
 
-Assume such files have basename 'ChangeLog', and that they are in the
-format used by FSF projects: entry header lines begin with YYYY-MM-DD
-and are followed by a fullname/address.
+This command assumes that changelogs are in the format used by FSF projects:
+entry header lines begin with YYYY-MM-DD and are followed by a
+fullname/address.
 
 When a ChangeLog file modification is found in a clique, the entry
 header at or before the section changed since its last revision is
@@ -19050,6 +19052,18 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 	evts := new(Safecounter) // shared between threads, for progression only
 	cc := new(Safecounter)
 	cl := new(Safecounter)
+	logpattern := "ChangeLog"
+	if line != "" {
+		logpattern = line
+	}
+	clRe, err := regexp.Compile(logpattern)
+	if err != nil {
+		croak("invalid regular expression for changelog matching: /%s/ (%v)", logpattern, err)
+		return false
+	}
+	isChangeLog := func(filename string) bool {
+		return clRe.MatchString(filepath.Base(filename))
+	}
 	repo.walkEvents(selection, func(eventRank int, event Event) {
 		commit, iscommit := event.(*Commit)
 		evts.bump()
@@ -19062,7 +19076,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		// best not to re-attribute this.
 		notChangelog := false
 		for _, op := range commit.operations() {
-			if op.op != opM || !strings.HasPrefix(filepath.Base(op.Path), "ChangeLog") {
+			if op.op != opM || !isChangeLog(op.Path) {
 				notChangelog = true
 			}
 		}
@@ -19070,7 +19084,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 			return
 		}
 		for _, op := range commit.operations() {
-			if op.op == opM && filepath.Base(op.Path) == "ChangeLog" {
+			if op.op == opM && isChangeLog(op.Path) {
 				cl.bump()
 				// Figure out where we should look for changes in
 				// this blob by comparing it to its nearest ancestor.

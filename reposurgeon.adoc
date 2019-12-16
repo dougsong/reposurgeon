@@ -1753,8 +1753,11 @@ Use the "changelogs" command.  This takes no arguments, but may
 take a selection set; the default is all commits. It mines the
 selected ChangeLog files for authorship data. 
 
-It assumes such files have the basename 'ChangeLog',
-and that they are in the format used by FSF projects: entry header
+An optional following argument is a regular expression to match the basename
+of files that should be treated as changelogs. The default expression
+is "ChangeLog".
+
+It assumes such files are in the format used by FSF projects: entry header
 lines begin with YYYY-MM-DD and are followed by a fullname/address.
 When a ChangeLog file modification is found in a clique, the entry
 header at or before the section changed since its last revision is
