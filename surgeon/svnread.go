@@ -1430,7 +1430,7 @@ func svnProcessClean(ctx context.Context, sp *StreamParser, options stringSet, b
 				if len(tossThese) > 0 {
 					logit(logSHOUT, "r%d#%d~%s properties set:", node.revision, node.index, node.path)
 					for _, pair := range tossThese {
-						logit(logSHOUT, "\t%s = '%s'", pair[0], pair[1])
+						logit(logSHOUT, "\t%s = %q", pair[0], pair[1])
 					}
 				}
 			}
