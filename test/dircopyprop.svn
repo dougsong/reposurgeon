@@ -1,0 +1,188 @@
+SVN-fs-dump-format-version: 2
+ ## Test copying directory and changing property in same revision
+ # reposurgeon-read-options: --nobranch
+
+UUID: 2a847626-1e14-11ea-ac71-bfc1b1298025
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2019-12-14T01:50:54.973625Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 121
+Content-length: 121
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-14T01:51:43.958967Z
+K 7
+svn:log
+V 20
+Create testdir/foo.
+
+PROPS-END
+
+Node-path: testdir
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: testdir/foo
+Node-kind: file
+Node-action: add
+Text-content-md5: fb7442ec6dea60e3dfabc9348249e19a
+Text-content-sha1: b08dac2b5f858cb9215e995ae81c325b4fc37bfb
+Prop-content-length: 10
+Text-content-length: 22
+Content-length: 32
+
+PROPS-END
+testdir/foo test file
+
+
+Revision-number: 2
+Prop-content-length: 115
+Content-length: 115
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-14T01:52:53.901392Z
+K 7
+svn:log
+V 14
+Add property.
+
+PROPS-END
+
+Node-path: testdir/foo
+Node-kind: file
+Node-action: change
+Prop-content-length: 43
+Content-length: 43
+
+K 8
+someprop
+V 14
+Test property.
+PROPS-END
+
+
+Revision-number: 3
+Prop-content-length: 118
+Content-length: 118
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-14T01:53:05.821438Z
+K 7
+svn:log
+V 17
+Change property.
+
+PROPS-END
+
+Node-path: testdir/foo
+Node-kind: file
+Node-action: change
+Prop-content-length: 53
+Content-length: 53
+
+K 8
+someprop
+V 24
+Test property modified.
+
+PROPS-END
+
+
+Revision-number: 4
+Prop-content-length: 137
+Content-length: 137
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-14T01:53:45.823328Z
+K 7
+svn:log
+V 36
+Copy directory and modify property.
+
+PROPS-END
+
+Node-path: testdir2
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 3
+Node-copyfrom-path: testdir
+
+
+Node-path: testdir2/foo
+Node-kind: file
+Node-action: change
+Prop-content-length: 79
+Content-length: 79
+
+K 8
+someprop
+V 50
+Test property modified again with directory copy.
+
+PROPS-END
+
+
+Revision-number: 5
+Prop-content-length: 125
+Content-length: 125
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-14T01:54:04.667655Z
+K 7
+svn:log
+V 24
+Another directory copy.
+
+PROPS-END
+
+Node-path: testdir3
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 4
+Node-copyfrom-path: testdir2
+
+
