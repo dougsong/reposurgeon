@@ -1295,11 +1295,11 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 
 		commit.legacyID = fmt.Sprintf("%d", record.revision)
 		commit.setColor(colorGEN)
-		hash := make(map[string]*NodeAction)
+		revisionPathHash := make(map[string]*NodeAction)
 		var lastnode *NodeAction
 		for _, node := range record.nodes {
 			if lastnode != nil {
-				hash[lastnode.path] = lastnode
+				revisionPathHash[lastnode.path] = lastnode
 			}
 			lastnode = node
 			if node.action == sdNONE {
@@ -1348,7 +1348,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 						continue
 					}
 				}
-				ancestor = sp.seekAncestor(node, hash)
+				ancestor = sp.seekAncestor(node, revisionPathHash)
 				if node.action == sdDELETE {
 					//assert node.blob == nil
 					fileop := newFileOp(sp.repo)
