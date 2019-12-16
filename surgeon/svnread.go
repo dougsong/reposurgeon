@@ -1997,7 +1997,8 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 							revision, branch)
 						continue
 					}
-					if strings.Split(commit.legacyID, ".")[0] != fmt.Sprintf("%d", revision) {
+					realrev, _ := strconv.Atoi(strings.Split(commit.legacyID, ".")[0])
+					if realrev != revision {
 						logit(logWARN, "Resolving mergeinfo targeting r%d on r%s (%s) instead",
 											revision, commit.legacyID, commit.mark)
 					}
@@ -2011,7 +2012,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 							// Skip revisions that were already in the
 							// mergeinfo or revisions that are later than us
 							// (which indicates a corrupt mergeinfo property)
-							if _, found := existing[rev]; rev < revision && !found {
+							if _, found := existing[rev]; rev < realrev && !found {
 								// Only add revisions that are on the correct branch
 								c := lastRelevantCommit(sp, revidx(rev), fromPath)
 								if c != nil {
@@ -2038,10 +2039,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 								}
 							}
 							delete(markset, lastmark)
-							var source *Commit
-							if x := sp.repo.markToEvent(fmt.Sprintf(":%d", lastmark)); x != nil {
-								source = x.(*Commit)
-							}
+							source, _ := sp.repo.markToEvent(fmt.Sprintf(":%d", lastmark)).(*Commit)
 							if source == nil {
 								// That should not be possible
 								continue
