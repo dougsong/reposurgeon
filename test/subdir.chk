@@ -42,6 +42,8 @@ committer jason <jason> 1441071264 +0000
 data 9
 mybranch
 from :3
+deleteall
+M 100644 :1 .gitignore
 M 100644 :2 README
 
 blob
@@ -57,7 +59,6 @@ committer jason <jason> 1441074771 +0000
 data 14
 add more text
 from :4
-M 100644 :1 .gitignore
 M 100644 :5 README
 
 tag emptycommit-3

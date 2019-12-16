@@ -1096,10 +1096,14 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 			//
 			// Set up default ignores just before the first file node
 			// of each branch
-			if node.kind == sdFILE {
+			if node.kind == sdFILE || (node.kind == sdDIR && isDeclaredBranch(node.path) && node.fromRev != 0) {
 				curbranch := ""
 				if !nobranch {
-					curbranch, _ = splitSVNBranchPath(node.path)
+					if isDeclaredBranch(node.path) {
+						curbranch = node.path
+					} else {
+						curbranch, _ = splitSVNBranchPath(node.path)
+					}
 				}
 				if !branchesWithDefaultIgnore.Contains(curbranch) {
 					appendExpanded(ignorenode(curbranch, ""))

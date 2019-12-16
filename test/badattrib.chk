@@ -80,6 +80,7 @@ data 20
 Create test branch.
 from :7
 deleteall
+M 100644 :1 .gitignore
 M 100644 :5 ChangeLog
 M 100644 :6 bar
 M 100644 :3 foo
@@ -113,7 +114,6 @@ committer jmyers <jmyers> 1576333811 +0000
 data 9
 Add baz.
 from :8
-M 100644 :1 .gitignore
 M 100644 :9 ChangeLog
 M 100644 :10 baz
 
