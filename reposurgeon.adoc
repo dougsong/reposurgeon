@@ -850,7 +850,8 @@ the repo is not divided.
    Expunge files from the selected portion of the repo history; the
    default is the entire history.  The arguments to this command may be
    paths or regular expressions matching paths (regexps must
-   be marked by being surrounded with //).
+   be marked by being surrounded with //). String quotes and backslash
+   escapes are interpreted when parsing the command line.
 +
 All filemodify (M) operations and delete (D) operations
 involving a matched file in the selected set of events are
@@ -1990,6 +1991,9 @@ sign will need editing.
    defaults to the 'standard layout' set of directories, plus any
    unrecognized directories in the repository root.
 +
+String quotes and backslash
+escapes are interpreted when parsing the command line.
++
 With no arguments, displays the current branchification set.
 +
 An asterisk at the end of a path in the set means 'all immediate
@@ -2001,7 +2005,7 @@ interpreter, not of any individual repository, and will persist across
 Subversion dumpfile reads. This may lead to unexpected results if you
 forget to re-set it.
 
-+branchify_map+ [ _/regex/branch/_... ] ::
++branchmap+ [ _/regex/branch/_... ] ::
    Specify the list of regular expressions used for mapping the svn
    branches that are detected by branchify. If none of the expressions
    match the default behaviour applies. This maps a branch to the name
@@ -2010,6 +2014,11 @@ forget to re-set it.
 +
 With no arguments the current regex replacement pairs are
 shown. Passing 'reset' will clear the mapping.
++
+String quotes and backslash escapes are *not* interpreted when parsing
+the command line, this would clash with the use of backslashes as
+substitution-part references. If you need to include a non-printing
+character in a regexp, use its C-style escape, e.g. \s for space.
 +
 The branchify command will match each branch name against regex1
 and if it matches rewrite its branch name to branch1. If not it will

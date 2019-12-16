@@ -16185,7 +16185,8 @@ func (rs *Reposurgeon) HelpExpunge() {
 Expunge files from the selected portion of the repo history; the
 default is the entire history.  The arguments to this command may be
 paths or regular expressions matching paths (regexps must
-be marked by being surrounded with //).
+be marked by being surrounded with //).  String quotes and backslash
+escapes are interpreted when parsing the command line.
 
 All filemodify (M) operations and delete (D) operations involving a
 matched file in the selected set of events are disconnected from the
@@ -16222,7 +16223,12 @@ func (rs *Reposurgeon) DoExpunge(line string) bool {
 		selection = rs.chosen().all()
 
 	}
-	rs.expunge(selection, strings.Fields(line))
+	fields, err := shlex.Split(line, true)
+	if err != nil {
+		croak("malformed expunge command")
+		return false
+	}
+	rs.expunge(selection, fields)
 	return false
 }
 
@@ -18459,7 +18465,12 @@ func (rs *Reposurgeon) DoBranchify(line string) bool {
 		return false
 	}
 	if strings.TrimSpace(line) != "" {
-		control.listOptions["svn_branchify"] = strings.Fields(strings.TrimSpace(line))
+		fields, err := shlex.Split(line, true)
+		if err != nil {
+			croak("malformed branchify command")
+			return false
+		}
+		control.listOptions["svn_branchify"] = fields
 	}
 	respond("branchify " + strings.Join(control.listOptions["svn_branchify"], " "))
 	return false
@@ -18479,6 +18490,11 @@ With no arguments the current regex replacement pairs are shown. Passing 'reset'
 will clear the mapping.
 
 Syntax: branchmap /regex1/branch1/ /regex2/branch2/ ...
+
+String quotes and backslash escapes are *not* interpreted when parsing
+the command line, this would clash with the use of backslashes as
+substitution-part references. If you need to include a non-printing
+character in a regexp, use its C-style escape, e.g. \s for space.
 
 Will match each branch name against regex1 and if it matches rewrite its branch
 name to branch1. If not it will try regex2 and so forth until it either found a
