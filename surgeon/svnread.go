@@ -770,7 +770,7 @@ func nodePermissions(node NodeAction) string {
 }
 
 // Try to figure out who the ancestor of this node is.
-func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
+func (sp *StreamParser) seekAncestor(node *NodeAction, hash map[string]*NodeAction) *NodeAction {
 	// Easy case: dump stream has intact hashes, and there is one.
 	// This should handle file copies.
 	if node.fromHash != "" {
@@ -801,12 +801,8 @@ func (sp *StreamParser) seekAncestor(node *NodeAction) *NodeAction {
 	} else if node.action != sdADD {
 		// The ancestor could be a file copy node expanded
 		// from an earlier expanded directory copy.
-		for i := node.index - 1; i > 0; i-- {
-			trial := sp.revisions[node.revision].nodes[i-1]
-			// First conjunct is nominally unnecessary.
-			if trial != node && trial.path == node.path {
-				return trial
-			}
+		if trial, ok := hash[node.path]; ok {
+			return trial
 		}
 		// Ordinary inheritance, no node copy.
 		// Contiguity assumption here
@@ -1299,7 +1295,13 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 
 		commit.legacyID = fmt.Sprintf("%d", record.revision)
 		commit.setColor(colorGEN)
+		hash := make(map[string]*NodeAction)
+		var lastnode *NodeAction
 		for _, node := range record.nodes {
+			if lastnode != nil {
+				hash[lastnode.path] = lastnode
+			}
+			lastnode = node
 			if node.action == sdNONE {
 				continue
 			}
@@ -1346,7 +1348,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 						continue
 					}
 				}
-				ancestor = sp.seekAncestor(node)
+				ancestor = sp.seekAncestor(node, hash)
 				if node.action == sdDELETE {
 					//assert node.blob == nil
 					fileop := newFileOp(sp.repo)
