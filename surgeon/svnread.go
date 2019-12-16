@@ -1817,6 +1817,44 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 				}
 				baton.twirl()
 			}
+			// Try to detect file-based copies, like what CVS can generate
+			// Remember the maximum value of fromRev in all nodes, or 0 if
+			// the file nodes don't all have a fromRev. We also record the
+			// minimum value, to warn if they are different.
+			maxfrom, minfrom := revidx(0), revidx(len(sp.revisions))
+			var nodefrom *NodeAction
+			for _, node := range record.nodes {
+				if node.kind == sdFILE && !strings.HasSuffix(node.path, ".gitignore") {
+					if node.fromRev == 0 {
+						maxfrom = 0
+						break
+					}
+					if node.fromRev > maxfrom {
+						maxfrom = node.fromRev
+						nodefrom = node
+					}
+					if node.fromRev < minfrom {
+						minfrom = node.fromRev
+					}
+				}
+			}
+			if maxfrom > 0 {
+				frombranch := nodefrom.fromPath
+				if !isDeclaredBranch(frombranch) {
+					frombranch, _ = splitSVNBranchPath(nodefrom.fromPath)
+				}
+				parent := lastRelevantCommit(sp, maxfrom, frombranch)
+				if parent != nil {
+					logit(logTOPOLOGY,
+						"Link from %s (r%s) to %s (r%d) found by file copies",
+						parent.mark, parent.legacyID, commit.mark, rev)
+					if minfrom < maxfrom {
+						logit(logWARN, "Detected link might be dubious (range %d-%d)", minfrom, maxfrom)
+					}
+					reparent(commit, parent)
+					goto next
+				}
+			}
 		}
 		next:
 		baton.percentProgress(uint64(count) + 1)
