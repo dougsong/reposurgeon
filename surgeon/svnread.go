@@ -70,7 +70,7 @@ type svnReader struct {
 	branches             map[string]*branchMeta // Points to branch root commits
 	splitCommits         map[revidx]int
 	markToSVNBranch      map[string]string
-	lastCommitOnBranchAt []map[string]*Commit
+	lastCommitOnBranchAt map[string][]*Commit
 }
 
 // Helpers for branch analysis
@@ -1658,11 +1658,12 @@ func lastRelevantCommit(sp *StreamParser, maxrev revidx, branch string) *Commit 
 	if branch[len(branch)-1] == svnSep[0] {
 		branch = branch[:len(branch)-1]
 	}
-	lastCommits := sp.lastCommitOnBranchAt[maxrev]
-	if lastCommits != nil {
-		if commit, ok := lastCommits[branch]; ok {
-			return commit
+	if list, ok := sp.lastCommitOnBranchAt[branch]; ok {
+		l := revidx(len(list)) - 1
+		if maxrev > l {
+			maxrev = l
 		}
+		return list[maxrev]
 	}
 	return nil
 }
@@ -1728,32 +1729,30 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	logit(logEXTRACT, "SVN Phase 8a: restore content-impacting links")
 	baton.startProgress("process SVN, phase 8a: restore content-impacting links",
 	                    uint64(len(sp.repo.events)))
-	lastCommitOnBranch := make(map[string]*Commit)
-	sp.lastCommitOnBranchAt = make([]map[string]*Commit, len(sp.revisions))
-	lastrev := 0
+	sp.lastCommitOnBranchAt = make(map[string][]*Commit, len(sp.revisions))
 	maybeRoots := make([]*Commit, 0);
-	snapshot := func(commitmap map[string]*Commit) map[string]*Commit {
-		result := make(map[string]*Commit, len(commitmap))
-		for k, v := range commitmap {
-			result[k] = v
-		}
-		return result
-	}
 	for index, event := range sp.repo.events {
 		if commit, ok := event.(*Commit); ok {
-			// If we changed revisions, snapshot lastCommitOnBranch
-			newrev, _ := strconv.Atoi(strings.Split(commit.legacyID, ".")[0])
-			if lastrev < newrev {
-				snap := snapshot(lastCommitOnBranch)
-				for ; lastrev < newrev; lastrev++ {
-					sp.lastCommitOnBranchAt[lastrev] = snap
-				}
-			}
-			// Set the commit parent to the last of the history chain
+			// Remember the last commit on every branch at each revision
+			rev, _ := strconv.Atoi(strings.Split(commit.legacyID, ".")[0])
 			branch := sp.markToSVNBranch[commit.mark]
+			list, found := sp.lastCommitOnBranchAt[branch]
+			lastrev := -1
 			var prev *Commit
-			if x, found := lastCommitOnBranch[branch]; found {
-				prev = x
+			if found {
+				lastrev = len(list) - 1
+				prev = list[lastrev]
+			} else {
+				list = make([]*Commit, rev+1, len(sp.revisions))
+			}
+			list = list[:rev+1] // enlarge the list to go up to rev
+			for i := lastrev + 1; i < rev; i++ {
+				list[i] = prev
+			}
+			list[rev] = commit
+			sp.lastCommitOnBranchAt[branch] = list
+			// Set the commit parent to the last of the history chain
+			if prev != nil {
 				ops := prev.operations()
 				if len(ops) > 0 && ops[len(ops)-1].op == deleteall {
 					// The previous commit deletes its branch and is
@@ -1767,15 +1766,9 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 				commit.setParents(nil)
 				maybeRoots = append(maybeRoots, commit)
 			}
-			// Update lastCommitOnBranch
-			lastCommitOnBranch[branch] = commit
 		}
 		baton.percentProgress(uint64(index) + 1)
 	}
-	for ; lastrev < len(sp.revisions); lastrev++ {
-		sp.lastCommitOnBranchAt[lastrev] = lastCommitOnBranch
-	}
-	lastCommitOnBranch = nil
 	baton.endProgress()
 	logit(logEXTRACT, "SVN Phase 8b: find the parent of branch roots")
 	baton.startProgress("process SVN, phase 8b: find the parent of branch roots", uint64(len(maybeRoots)))
