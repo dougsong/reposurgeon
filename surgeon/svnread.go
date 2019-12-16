@@ -1776,9 +1776,12 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	reparent := func(commit, parent *Commit) {
 		// Prepend a deleteall to avoid inheriting our new parent's content
 		parentlock.Lock()
-		fileop := newFileOp(sp.repo)
-		fileop.construct(deleteall)
-		commit.prependOperation(fileop)
+		ops := commit.operations()
+		if len(ops) == 0 || ops[0].op != deleteall {
+			fileop := newFileOp(sp.repo)
+			fileop.construct(deleteall)
+			commit.prependOperation(fileop)
+		}
 		commit.setParents([]CommitLike{parent})
 		parentlock.Unlock()
 	}
@@ -1894,7 +1897,8 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 		return mergeinfo
 	}
 	doMerge := func(commit, parent *Commit) {
-		if !commit.hasParents() {
+		ops := commit.operations()
+		if !commit.hasParents() && (len(ops) == 0 || ops[0].op != deleteall) {
 			// Prepend a deleteall to avoid inheriting our new parent's content
 			fileop := newFileOp(sp.repo)
 			fileop.construct(deleteall)
