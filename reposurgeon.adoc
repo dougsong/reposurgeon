@@ -182,7 +182,7 @@ edit                   ;; edit all editable objects
 
 The regular expressions should be in
 https://github.com/google/re2/wiki/Syntax[Golang's] format, with one
-exception. Due to a conflist with the use of $ for arguments in the
+exception. Due to a conflict with the use of $ for arguments in the
 script command, we retain Python's use of backslashes as a leader for
 references to group matches.
 
@@ -1755,7 +1755,7 @@ selected ChangeLog files for authorship data.
 
 An optional following argument is a regular expression to match the basename
 of files that should be treated as changelogs. The default expression
-is "ChangeLog".
+is "^ChangeLog$".
 
 It assumes such files are in the format used by FSF projects: entry header
 lines begin with YYYY-MM-DD and are followed by a fullname/address.

@@ -19065,7 +19065,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 	evts := new(Safecounter) // shared between threads, for progression only
 	cc := new(Safecounter)
 	cl := new(Safecounter)
-	logpattern := "ChangeLog"
+	logpattern := "^ChangeLog$"
 	if line != "" {
 		logpattern = line
 	}
