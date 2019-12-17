@@ -127,20 +127,16 @@ fi-regress:
 	@echo "=== Running general tests:"
 	@for file in $(TESTLOADS); do \
 	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.tst  || echo ' ## (no description)'; \
-	    if $(REPOSURGEON) "$(TESTOPT)" "script $${file}.tst testing123" >/tmp/regress$$$$ 2>&1; \
-	    then diff --text -u $${file}.chk /tmp/regress$$$$ || exit $(STOPOUT); \
-	    else echo "*** Nonzero return status on $${file}!"; exit $(STOPOUT); fi \
+	    $(REPOSURGEON) "$(TESTOPT)" "script $${file}.tst testing123" >/tmp/regress$$$$ 2>&1 \
+		|| (echo "*** Nonzero return status on $${file}!"; exit $(STOPOUT) ); \
+	    diff --text -u $${file}.chk /tmp/regress$$$$ >/tmp/diff$$$$; \
+	    case $$? in \
+	    0) ;; \
+	    1) cat /tmp/diff$$$$; if [ $(STOPOUT) = 1 ]; then exit 1; fi;; \
+	    *) echo "*** diff had trouble, status $$?"; exit $(STOPOUT);; \
+	    esac \
 	done
-	@rm -f /tmp/regress$$$$
-fi-regress-tighten:
-	@echo "=== Running general tests with tighten option:"
-	@for file in $(TESTLOADS); do \
-	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.tst  || echo ' ## (no description)'; \
-	    if $(REPOSURGEON) "$(TESTOPT)" "set tighten" "script $${file}.tst testing123" >/tmp/regress$$$$ 2>&1; \
-	    then diff --text -u $${file}.chk /tmp/regress$$$$ || exit $(STOPOUT); \
-	    else echo "*** Nonzero return status on $${file}!"; exit $(STOPOUT); fi \
-	done
-	@rm -f /tmp/regress$$$$
+	@rm -f /tmp/regress$$$$ /tmp/diff$$$$
 
 # Test coalescence operation.
 COALESCE=uncoalesced
