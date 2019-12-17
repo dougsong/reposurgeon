@@ -1490,6 +1490,9 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 		baton.percentProgress(uint64(ri))
 	}
 	baton.endProgress()
+
+	// We don't need the revision maps after this
+	sp.history = nil
 }
 
 func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
