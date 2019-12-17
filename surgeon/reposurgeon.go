@@ -403,13 +403,17 @@ func (s orderedStringSet) String() string {
 	if len(s) == 0 {
 		return "[]"
 	}
-	rep := "["
-	for _, el := range s {
-		rep += "\""
-		rep += el
-		rep += "\", "
+	var rep strings.Builder
+	rep.WriteByte('[')
+	lastIdx := len(s) - 1
+	for idx, el := range s {
+		fmt.Fprintf(&rep, "\"%s\"", el)
+		if idx != lastIdx {
+			rep.WriteString(", ")
+		}
 	}
-	return rep[0:len(rep)-2] + "]"
+	rep.WriteByte(']')
+	return rep.String()
 }
 
 func (s orderedStringSet) Equal(other orderedStringSet) bool {
@@ -525,13 +529,7 @@ func (s stringSet) String() string {
 	// Need a stable outxput order because
 	// this is used in regression tests.
 	// It doesn't need to be fast.
-	rep := "["
-	for _, el := range s.toOrderedStringSet() {
-		rep += "\""
-		rep += el
-		rep += "\", "
-	}
-	return rep[0:len(rep)-2] + "]"
+	return s.toOrderedStringSet().String()
 }
 
 func (s stringSet) Equal(other stringSet) bool {
@@ -684,11 +682,18 @@ func (s orderedIntSet) String() string {
 	if len(s) == 0 {
 		return "[]"
 	}
-	rep := "["
-	for _, el := range s {
-		rep += fmt.Sprintf("%d, ", el)
+	var rep strings.Builder
+	rep.Grow(8*len(s)) // 6 digits plus a comma and a space
+	rep.WriteByte('[')
+	lastIdx := len(s) - 1
+	for idx, el := range s {
+		fmt.Fprintf(&rep, "%d", el)
+		if idx != lastIdx {
+			rep.WriteString(", ")
+		}
 	}
-	return rep[0:len(rep)-2] + "]"
+	rep.WriteByte(']')
+	return rep.String()
 }
 
 /*
@@ -2894,14 +2899,17 @@ func (d *OrderedMap) Clear() {
 }
 
 func (d OrderedMap) String() string {
-	var out = "{"
-	for _, el := range d.keys {
-		out += "'" + el + "': '" + d.dict[el] + "', "
+	var rep strings.Builder
+	rep.WriteByte('{')
+	lastIdx := d.Len() - 1
+	for idx, el := range d.keys {
+		fmt.Fprintf(&rep, "'%s': '%s'", el, d.dict[el])
+		if idx != lastIdx {
+			rep.WriteString(", ")
+		}
 	}
-	if len(d.keys) > 0 {
-		out = out[:len(out)-2]
-	}
-	return out + "}"
+	rep.WriteByte('}')
+	return rep.String()
 }
 
 func (d OrderedMap) vcString() string {
@@ -3056,23 +3064,24 @@ func (msg *MessageBlock) filterHeaders(regexp *regexp.Regexp) {
 }
 
 func (msg *MessageBlock) String() string {
-	hd := string(MessageBlockDivider) + "\n"
+	var b strings.Builder
+	fmt.Fprintln(&b, string(MessageBlockDivider))
 	for _, k := range msg.hdnames {
 		if v := msg.header[k]; v != "" {
-			hd += fmt.Sprintf("%s: %s\n", k, v)
+			fmt.Fprintf(&b, "%s: %s\n", k, v)
 		}
 	}
-
-	body := ""
+	b.WriteByte('\n')
 	for _, line := range strings.Split(msg.body, "\n") {
 		// byte stuffing so we can protect instances of the delimiter
 		// within message bodies.
 		if strings.HasPrefix(line, ".") || strings.HasPrefix(line, string(MessageBlockDivider)) {
-			body += "."
+			b.WriteByte('.')
 		}
-		body += line + "\n"
+		fmt.Fprintln(&b, line)
 	}
-	return hd + "\n" + body[0:len(body)-1]
+	s := b.String()
+	return s[:len(s)-1]
 }
 
 /*
@@ -6288,14 +6297,18 @@ func (pm *PathMap) isEmpty() bool {
 // Derived PathMap code, independent of the store implementation
 
 func (pm *PathMap) String() string {
-	out := "{"
-	for _, item := range pm.items() {
-		out += fmt.Sprintf("%s: %v, ", item.name, item.value)
+	var out strings.Builder
+	out.WriteByte('{')
+	items := pm.items()
+	lastIdx := len(items) - 1
+	for idx, item := range items {
+		fmt.Fprintf(&out, "%s: %v", item.name, item.value)
+		if idx != lastIdx {
+			out.WriteString(", ")
+		}
 	}
-	if pm.size() > 0 {
-		out = out[:len(out)-2]
-	}
-	return out + "}"
+	out.WriteByte('}')
+	return out.String()
 }
 
 // names returns a sorted list of the pathnames in the set
