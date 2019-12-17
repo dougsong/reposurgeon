@@ -1,0 +1,220 @@
+SVN-fs-dump-format-version: 2
+ ## Test ref deletion
+
+UUID: 9f9bd52a-2063-11ea-bd61-a3e84ada66a5
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2019-12-17T00:24:43.996665Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 128
+Content-length: 128
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-17T00:25:16.373132Z
+K 7
+svn:log
+V 27
+Create directory structure.
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 109
+Content-length: 109
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-17T00:25:37.210744Z
+K 7
+svn:log
+V 9
+Add foo.
+
+PROPS-END
+
+Node-path: trunk/foo
+Node-kind: file
+Node-action: add
+Text-content-md5: 154d45611081dc7858043af2d9554d6f
+Text-content-sha1: fc4c444d36872cb10cffdc34ee2cbd8c2c820f80
+Prop-content-length: 10
+Text-content-length: 9
+Content-length: 19
+
+PROPS-END
+file foo
+
+
+Revision-number: 3
+Prop-content-length: 116
+Content-length: 116
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-17T00:25:50.070116Z
+K 7
+svn:log
+V 15
+Create branch.
+
+PROPS-END
+
+Node-path: branches/somebranch
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk
+
+
+Revision-number: 4
+Prop-content-length: 113
+Content-length: 113
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-17T00:26:03.869178Z
+K 7
+svn:log
+V 12
+Create tag.
+
+PROPS-END
+
+Node-path: tags/sometag
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk
+
+
+Revision-number: 5
+Prop-content-length: 119
+Content-length: 119
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-17T00:26:38.627276Z
+K 7
+svn:log
+V 18
+Change on branch.
+
+PROPS-END
+
+Node-path: branches/somebranch/foo
+Node-kind: file
+Node-action: change
+Text-content-md5: b5b197d823fc1db88019cc9f786469a9
+Text-content-sha1: 44abe502de17131ca4f64bcea88cc58b5d251050
+Text-content-length: 5
+Content-length: 5
+
+foo2
+
+
+Revision-number: 6
+Prop-content-length: 116
+Content-length: 116
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-17T00:26:48.880741Z
+K 7
+svn:log
+V 15
+Remove branch.
+
+PROPS-END
+
+Node-path: branches/somebranch
+Node-action: delete
+
+
+Revision-number: 7
+Prop-content-length: 117
+Content-length: 117
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-17T00:26:57.906369Z
+K 7
+svn:log
+V 16
+Remove sometag.
+
+PROPS-END
+
+Node-path: tags/sometag
+Node-action: delete
+
+

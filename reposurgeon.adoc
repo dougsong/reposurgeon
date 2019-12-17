@@ -2432,6 +2432,10 @@ it, simply copying the username into the address field.
 --noignores::
 Do not fill in an equivalent of default Subversion ignore patterns.
 
+--preserve::
+When a branch or tag was deleted in SVN, preserve the history up to
+deletion in a git ref under refs/deleted/.
+
 These modifiers can go anywhere in any order on the read command
 line after the read verb. They must be whitespace-separated.
 

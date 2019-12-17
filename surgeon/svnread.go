@@ -2175,12 +2175,12 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 		mutex.Unlock()
 	}
 	baton.startProgress("process SVN, phase B: de-junking", uint64(len(sp.repo.events)))
-	preserve := options.Contains("--nobranch")
+	preserve := options.Contains("--preserve")
 	walkEvents(sp.repo.events, func(i int, event Event) {
 		if commit, ok := event.(*Commit); ok {
 			// Ordinarily, drop things in the deleted
-			// namespace. If user has specifiws
-			// --nobranch we leave these in.
+			// namespace. If user has specifies
+			// --preserve we leave these in.
 			// FIXME: only safe to do this at childless
 			// commits. It would need a recursive traversal
 			// from the tips to be really right.
