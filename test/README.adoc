@@ -399,10 +399,6 @@ with explanations. "Not used in any test" means *.tst and *.sh
 files - each of these is used as a stability test of the
 Subversion lift code.
 
-adventitious.svn::
-   A root-level branch defeats the comparison algorithm liftcheck
-   uses. Not used by any test.  Cosmetically annoying but not a bug.
-
 agito.svn::
    Processing is correct - the unmatched tags on the Git side are
    from renaming the earlier, deleted version of a tag.  Used by
