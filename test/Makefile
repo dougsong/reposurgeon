@@ -411,11 +411,17 @@ liftcheck-regress:
 		for test in $(SVNCLEAN); \
 		do \
 		    { $(ECHO) -n "  $${test}"; grep --text '^ ##' $${test} || echo ' ## (no description)'; } >&2; \
-		    liftcheck -e emptycommit $${test} || { echo "*** Failed on $${test}!"; exit $(STOPOUT); } \
+		    liftcheck -e emptycommit $${test} >/tmp/diff$$$$; \
+		    case $$? in \
+		    0) ;; \
+		    1) if [ $(QUIET) = 1 ]; then echo FAILED; else cat /tmp/diff$$$$; fi; if [ $(STOPOUT) = 1 ]; then exit 1; fi;; \
+		    *) echo "*** liftcheck had trouble, status $$?"; exit $(STOPOUT);; \
+		    esac \
 		done \
 	else \
 		echo "     Skipped, either git or svn is missing"; \
-	fi
+	fi; \
+	rm -f /tmp/diff$$$
 
 liftcheck-fullregress:
 	@echo "== Testing conversion correctness of all SVN revisions:"
@@ -459,28 +465,6 @@ legacy-regress:
 	    else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi; \
 	done
 	@rm -f /tmp/regress$$$$
-
-# Check idempotency of read/dump/read on Subversion repos
-# This can only succeed for linear repos.  At the moment it fails on
-# all repos.
-SVNCHECK=pangram
-svncheck:
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
-	for test in $(SVNCHECK); \
-	do \
-	    if [ ! -f $${test}.tst ] ; \
-	    then \
-		svn-to-svn -s <$${test}.svn >/tmp/checkstripped$$$$ 2>&1 \
-		    || exit $(STOPOUT); \
-		if echo "  $${test}.svn" >&2; \
-		$(REPOSURGEON) "$(TESTOPT)" "set svn_no_autoignores" "read $${test}.svn" "prefer svn" "write -"  | svn-to-svn -s >/tmp/stripped$$$$ 2>&1; \
-		then diff --text -u /tmp/checkstripped$$$$ /tmp/stripped$$$$ \
-		    || exit $(STOPOUT); \
-		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi;\
-	    fi \
-	done
-	@make --quiet clean
-	@rm -f /tmp/prestripped$$$$ /tmp/stripped$$$$ /tmp/checkstripped$$$$
 
 # Regression-testing of repomapper; look at the *.sh and
 # corresponding *.chk files to see which tests this runs.
