@@ -13,7 +13,7 @@ paths
 101,103 diff
 101,103 manifest 
 116 manifest 
-116 manifest ^reposurgeon
+116 manifest /^reposurgeon/
 choose simple-expunges
 paths sub foo
 paths sup

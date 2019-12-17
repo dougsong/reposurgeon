@@ -162,7 +162,7 @@ reposurgeon -> :122
 reposurgeon.xml -> :114
 test/Makefile -> :68
 test/simple.dump -> :48
-116 manifest ^reposurgeon
+116 manifest /^reposurgeon/
 Event 116 ===============================================================
 commit refs/heads/master
 mark :123

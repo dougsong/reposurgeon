@@ -13025,6 +13025,8 @@ func (rs *Reposurgeon) HelpNews() {
 6. Subversion dump streams must now be a continuous span of revitions 
    starting from zero (restriction added for performance reasons).
 7. The branchify_map command is now named branchmap.
+8. The changelogs command takes an optional regexp to select changelog names.
+9. The paths and manifest command require their regexp arguments to be delimited.
 `)
 }
 
@@ -16712,12 +16714,12 @@ func (rs *Reposurgeon) DoPaths(line string) bool {
 func (rs *Reposurgeon) HelpManifest() {
 	rs.helpOutput(`
 Print commit path lists. Takes an optional selection set argument
-defaulting to all commits, and an optional Go regular expression.
-For each commit in the selection set, print the mapping of all paths in
-that commit tree to the corresponding blob marks, mirroring what files
-would be created in a checkout of the commit. If a regular expression
-is given, only print "path -> mark" lines for paths matching it.
-This command supports > redirection.
+defaulting to all commits, and an optional delimited Go regular
+expression.  For each commit in the selection set, print the mapping
+of all paths in that commit tree to the corresponding blob marks,
+mirroring what files would be created in a checkout of the commit. If
+a regular expression is given, only print "path -> mark" lines for
+paths matching it.  This command supports > redirection.
 `)
 }
 
@@ -16736,7 +16738,11 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 	var filterFunc = func(s string) bool { return true }
 	line = strings.TrimSpace(parse.line)
 	if line != "" {
-		filterRE, err := regexp.Compile(line)
+		if len(line) >= 2 && line[0] != line[len(line)-1] {
+			croak("regular expression requires matching start and end delimiters")
+			return false
+		}
+		filterRE, err := regexp.Compile(line[1:len(line)-1])
 		if err != nil {
 			logit(logWARN, "invalid regular expression: %v", err)
 			return false
@@ -18946,8 +18952,9 @@ func (rs *Reposurgeon) HelpChangelogs() {
 Mine ChangeLog files for authorship data.
 
 Takes a selection set.  If no set is specified, proces all changelogs.
-An optional following argument is a regular expression to match the basename
-of files that should be treated as changelogs; the default is "ChangeLog".
+An optional following argument is a delimited regular expression to
+match the basename of files that should be treated as changelogs; the
+default is "/^ChangeLog$/".
 
 This command assumes that changelogs are in the format used by FSF projects:
 entry header lines begin with YYYY-MM-DD and are followed by a
@@ -19065,11 +19072,15 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 	evts := new(Safecounter) // shared between threads, for progression only
 	cc := new(Safecounter)
 	cl := new(Safecounter)
-	logpattern := "^ChangeLog$"
+	logpattern := "/^ChangeLog$/"
 	if line != "" {
 		logpattern = line
 	}
-	clRe, err := regexp.Compile(logpattern)
+	if len(line) >= 2 && line[0] != line[len(line)-1] {
+		croak("regular expression requires matching start and end delimiters")
+		return false
+	}
+	clRe, err := regexp.Compile(logpattern[1:len(logpattern)-1])
 	if err != nil {
 		croak("invalid regular expression for changelog matching: /%s/ (%v)", logpattern, err)
 		return false

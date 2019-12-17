@@ -186,6 +186,20 @@ exception. Due to a conflict with the use of $ for arguments in the
 script command, we retain Python's use of backslashes as a leader for
 references to group matches.
 
+Regular expressions are not anchored.  Use ^ and $ to anchor them
+to the beginning or end of the search space, when appropriate.
+
+Some commands may also take following arguments that are regular
+expressions. In this context, they still require start and end 
+delimiters, but if you need to have a / in the expression the
+delimiters can be any printable character.  As a reminder,
+these are described in the embedded help as "delimited"
+regular expressions
+
+Also note that following-argument regular expressions may not contain
+whitespace; if you need to specify whitespace or a non-printable
+character use a standard C-style escape such as \s for space.
+
 [[selections]]
 === SELECTION SYNTAX ===
 
@@ -1753,9 +1767,9 @@ Use the "changelogs" command.  This takes no arguments, but may
 take a selection set; the default is all commits. It mines the
 selected ChangeLog files for authorship data. 
 
-An optional following argument is a regular expression to match the basename
-of files that should be treated as changelogs. The default expression
-is "^ChangeLog$".
+An optional following argument is a delimited regular expression to
+match the basename of files that should be treated as changelogs. The
+default expression is "/^ChangeLog$/".
 
 It assumes such files are in the format used by FSF projects: entry header
 lines begin with YYYY-MM-DD and are followed by a fullname/address.
@@ -2048,13 +2062,13 @@ results if you forget to re-set it.
 [[examining-tree-states]]
 === EXAMINING TREE STATES ===
 
-+manifest+ [ _regular expression_ ] [>__outfile__ ]::
++manifest+ [ _/regular expression/_ ] [>__outfile__ ]::
    Takes an optional selection set argument defaulting to all commits, and
    an optional regular expression. For each commit in the selection set,
    print the mapping of all paths in that commit tree to the corresponding blob
    marks, mirroring what files would be created in a checkout of the commit. If a
-   regular expression is given, only print "path -> mark" lines for paths matching
-   it. This command supports > redirection.
+   delimited regular expression is given, only print "path -> mark"
+   lines for paths matching it. This command supports > redirection.
 
 +checkout+ _directory_::
    Takes a selection set which must resolve to a single commit, and
