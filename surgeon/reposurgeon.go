@@ -8771,7 +8771,7 @@ func (repo *Repository) delete(selected orderedIntSet, policy orderedStringSet) 
 	repo.squash(selected, options)
 }
 
-// Replace references to duplicate blobs according to the given dup_map,
+// Replace references to duplicate blobs according to the given duMap,
 // which maps marks of duplicate blobs to canonical marks`
 func (repo *Repository) dedup(dupMap map[string]string) {
 	walkEvents(repo.events, func(idx int, event Event) {
@@ -14037,6 +14037,37 @@ func (rs *Reposurgeon) DoSourcetype(line string) bool {
 			}
 		}
 		croak("known types are %v.", known)
+	}
+	return false
+}
+
+func (rs *Reposurgeon) HelpGc() {
+	rs.helpOutput(`
+Trigger a garbage collection. Scavenges and removes all blob objects 
+that no longer have references, e.g. as a result of delete operqtions 
+on repositories. This is followed by a Go-runtime garbage collection.
+
+The optional argument, if present, is passed as a
+https://golang.org/pkg/runtime/debug/#SetGCPercent[SetPercentGC]
+call to the Go runtime. The initial value is 100; setting it lower
+causes more frequwent garbage collection and may reduces maximum
+working set, while setting it higher causes less frequent garbage
+collection and will raise maximum working set.
+`)
+}
+
+func (rs *Reposurgeon) DoGc(line string) bool {
+	for _, repo := range rs.repolist {
+		repo.gcBlobs()
+	}
+	runtime.GC()
+	if line != "" {
+		v, err := strconv.Atoi(line)
+		if err != nil {
+			croak("ill-formed numeric argument")
+			return false
+		}
+		debug.SetGCPercent(v)
 	}
 	return false
 }

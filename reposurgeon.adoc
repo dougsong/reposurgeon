@@ -2137,6 +2137,18 @@ cvs-fast-export(1) using the --reposurgeon are detected as CVS. In
 some other cases, the source system is detected from the presence of
 magic $-headers in contents blobs.
 
++gc+ [ _percent+ ]::
+   Trigger a garbage collection. Scavenges and removes all blob objects
+   that no longer have references, e.g. as a result of delete operqtions
+   on repositories. This is followed by a Go-runtime garbage collection.
++
+The optional argument, if present, is passed as a
+https://golang.org/pkg/runtime/debug/#SetGCPercent[SetPercentGC]
+call to the Go runtime. The initial value is 100; setting it lower
+causes more frequwent garbage collection and may reduces maximum
+working set, while setting it higher causes less frequent garbage
+collection and will raise maximum working set.
+
 [[instrumentation]]
 === INSTRUMENTATION ===
 
