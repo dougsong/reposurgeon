@@ -1394,16 +1394,15 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 						logit(logEXTRACT, "r%d: %s gets blob '%s' from ancestor %s",
 							record.revision, node, node.blobmark.String(), ancestor)
 					} else {
-						// No ancestor, no blob. Has to be a
-						// pure property change.  There's no
-						// way to figure out what mark to use
-						// in a fileop.
-						logit(logWARN, "r%d~%s: permission information may be lost.",
+						// This should never happen. If we can't find an ancesor for any node
+						// it means the dumpfile is malformed.
+						logit(logSHOUT, "r%d~%s: ancestor node is missing.",
 							node.revision, node.path)
 						continue
 					}
+					// This should never happen.  It indicates that file content is missing from the stream.
 					if node.blobmark == emptyMark {
-						logit(logEXTRACT, "r%d: %s gets impossibly empty blob mark from ancestor %s, skipping",
+						logit(logSHOUT, "r%d: %s gets impossibly empty blob mark from ancestor %s, skipping",
 							record.revision, node, ancestor)
 						continue
 					}
