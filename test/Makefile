@@ -14,6 +14,9 @@ REPOTOOL := repotool EPOMAPPER := repomapper
 # Setting this to 0 allows tests to continue on error.
 STOPOUT=1
 
+# Setting this to 1 suppresses diffs in favor of a FAIL tag
+QUIET=0
+
 # Force pure serial execution when rebuilding check files.  Slower,
 # but makes them deterministic and may help smoke out bugs in
 # concurrent code.
@@ -132,7 +135,7 @@ fi-regress:
 	    diff --text -u $${file}.chk /tmp/regress$$$$ >/tmp/diff$$$$; \
 	    case $$? in \
 	    0) ;; \
-	    1) cat /tmp/diff$$$$; if [ $(STOPOUT) = 1 ]; then exit 1; fi;; \
+	    1) if [ $(QUIET) = 1 ]; then echo FAILED; else cat /tmp/diff$$$$; fi; if [ $(STOPOUT) = 1 ]; then exit 1; fi;; \
 	    *) echo "*** diff had trouble, status $$?"; exit $(STOPOUT);; \
 	    esac \
 	done
@@ -151,12 +154,16 @@ coalesce:
 	@echo "=== Coalescence regression test:"
 	@for file in $(COALESCE); do \
 	    echo "  $${file}.fi"; \
-	    $(REPOSURGEON) "$(TESTOPT)" "read <$${file}.fi; coalesce; write -" \
-		>/tmp//regress$$$$ || exit $(STOPOUT); \
-	    [ -s /tmp/regress$$$$ ] && diff --text -u $${file}.chk /tmp/regress$$$$ \
-		|| exit $(STOPOUT); \
+	    $(REPOSURGEON) "$(TESTOPT)" "read <$${file}.fi; coalesce; write -" >/tmp/regress$$$$ 2>&1  \
+		|| (echo "*** Nonzero return status on $${file}!"; exit $(STOPOUT) ); \
+	    diff --text -u $${file}.chk /tmp/regress$$$$ >/tmp/diff$$$$; \
+	    case $$? in \
+	    0) ;; \
+	    1) if [ $(QUIET) = 1 ]; then echo FAILED; else cat /tmp/diff$$$$; fi; if [ $(STOPOUT) = 1 ]; then exit 1; fi;; \
+	    *) echo "*** diff had trouble, status $$?"; exit $(STOPOUT);; \
+	    esac \
 	done
-	@rm -f /tmp/regress$$$$
+	@rm -f /tmp/regress$$$$ /tmp/diff$$$$
 
 # Test the git extractor
 GITLOADS = bs
@@ -359,10 +366,15 @@ svnload-regress:
 	do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
-		(if { $(ECHO) -n "  $${test}.svn"; grep --text '^ ##' $${test}.svn || echo ' ## (no description)'; } >&2; \
-		$(REPOSURGEON) "$(TESTOPT)" "$(TESTOPT)" "read <$${test}.svn" "prefer git" "write -" >/tmp/regress$$$$ 2>&1; \
-		then diff --text -u $${test}.chk /tmp/regress$$$$ || exit $(STOPOUT); \
-		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi; \
+		{ $(ECHO) -n "  $${test}.svn"; grep --text '^ ##' $${test}.svn || echo ' ## (no description)'; } >&2; \
+		$(REPOSURGEON) "$(TESTOPT)" "$(TESTOPT)" "read <$${test}.svn" "prefer git" "write -" >/tmp/regress$$$$ 2>&1 \
+		    || (echo "*** Nonzero return status on $${file}!"; exit $(STOPOUT) ); \
+		diff --text -u $${test}.chk /tmp/regress$$$$ >/tmp/diff$$$$; \
+		case $$? in \
+		0) ;; \
+		1) if [ $(QUIET) = 1 ]; then echo FAILED; else cat /tmp/diff$$$$; fi; if [ $(STOPOUT) = 1 ]; then exit 1; fi;; \
+		*) echo "*** diff had trouble, status $$?"; exit $(STOPOUT);; \
+		esac; \
 		if command -v git >/dev/null 2>&1 ; \
 		then \
 		    mkdir /tmp/reposurgeon$$$$ || exit $(STOPOUT); \
@@ -371,9 +383,9 @@ svnload-regress:
 			grep --text -v 'reposurgeon:' /tmp/regress$$$$ | git fast-import --quiet) \
 			    || exit $(STOPOUT); \
 		    rm -fr /tmp/reposurgeon$$$$\
-		else echo "    Skipped, git missing."; \
+		else \
+		    echo "    Skipped, git missing."; \
 		fi \
-		) || exit $(STOPOUT); \
 	    fi \
 	done
 	@rm -f /tmp/regress$$$$

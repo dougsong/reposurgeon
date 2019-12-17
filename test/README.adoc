@@ -8,7 +8,7 @@ nowgere else, try updating your versions of CVS and cvs-fast-export
 and trying again.
 
 There are tools and makefile productions for finer-grained testing.  
-Their behavior is controlled by two variables:
+Their behavior is controlled by these variables:
 
 REPOSURGEON: either reposurgeon (the default) or pyreposurgeon
 
@@ -21,6 +21,11 @@ this on the make command line, e.g. "cd test; make STOPOUT=0
 fi-regress".  Note, the output from this may be voluminous and
 unuseful.
 
+QUIET: 0 (the default) allows display of a diff against the checkfile
+when a test fails. When QUIET=1 the duff is suppressed and te word
+FAILED appears instead.  This is usedul wuth STOPOUT to see a summary
+of success/fail status.
+
 To run a single test:
 
    cd test; ./singletest foo
@@ -29,9 +34,9 @@ will check the actual result of the script in foo.tst against its expected
 output in foo.chk.  No output other than the test notice is good.
 
 The "liftcheck" script is useful for testing the conversion correctness
-of a Subversion strream:
+of a Subversion stream:
 
-   cd test; liftcheck foo.svn
+   cd test; ./liftcheck foo.svn
    
 No output means that a compare-all showed no errors or warnings.
 
