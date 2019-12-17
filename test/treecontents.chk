@@ -173,6 +173,8 @@ mark :15
 committer frnchfrgg <frnchfrgg> 1366745095 +0000
 data 55
 Create a new branch and copy a subdir of trunk into it
+from :5
+deleteall
 M 100644 :3 subdir/subfile1
 M 100644 :4 subdir/subfile2
 
@@ -205,6 +207,8 @@ mark :18
 committer frnchfrgg <frnchfrgg> 1366745242 +0000
 data 41
 Create branch4 by a normal copy of trunk
+from :5
+deleteall
 M 100644 :1 .gitignore
 M 100644 :2 master-branch4
 M 100644 :3 subdir/subfile1
