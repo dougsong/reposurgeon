@@ -1,0 +1,118 @@
+SVN-fs-dump-format-version: 2
+ ## Test losdf intended to trigger lint messages
+ # Derived from Simin Howard's tag-mangling test case,
+ # but with the pathological tag creation/deletion removed
+
+UUID: f01c4a58-e860-4891-ae86-76464917f484
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2009-10-02T22:35:10.794200Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 118
+Content-length: 118
+
+K 8
+svn:date
+V 27
+2009-10-02T22:36:41.774393Z
+K 7
+svn:log
+V 16
+Initial import.
+
+K 10
+svn:author
+V 7
+fraggle
+PROPS-END
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/proj
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/proj/hello.c
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 76
+Text-content-md5: dd6f06017cec4bac7724341e8e0a3361
+Text-content-sha1: 1e3463d08451cce8342fa2ca31052552e97857e8
+Content-length: 86
+
+PROPS-END
+#include <stdio.h>
+
+int main()
+{
+	printf("hello, world!\n");
+
+	return 0;
+}
+
+
+
+Revision-number: 2
+Prop-content-length: 131
+Content-length: 131
+
+K 8
+svn:date
+V 27
+2009-10-02T22:37:42.919869Z
+K 7
+svn:log
+V 29
+Recreating the tag properly.
+
+K 10
+svn:author
+V 7
+fraggle
+PROPS-END
+
+Node-path: tags/proj-1.0
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 1
+Node-copyfrom-path: trunk/proj
+Prop-content-length: 34
+Content-length: 34
+
+K 13
+svn:mergeinfo
+V 0
+
+PROPS-END
+
+

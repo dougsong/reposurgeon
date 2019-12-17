@@ -2,9 +2,9 @@ set quiet
 read <bs.fi
 lint
 reposurgeon: All commit times in this repository are unique.
-read <agito.svn
+read <lint.svn
 lint
+disconnected commit: commit@:3=<1>
 unknown shortname: fraggle
 email address missing @: commit@:3=<1>
-email address missing @: commit@:4=<4>
 reposurgeon: All commit times in this repository are unique.
