@@ -2232,9 +2232,6 @@ func (he HgExtractor) checkout(rev string) orderedStringSet {
 		panic(throw("extractor", "Could not get working directory: %v", err))
 	}
 	_, errcode := he.capture("hg", "update", "-C", rev)
-	if errcode != nil {
-		panic(throw("extractor", "Could not check out: %v", errcode))
-	}
 	// 'hg update -C' can delete and recreate the current working
 	// directory, so cd to what should be the current directory
 	he.mustChdir(pwd, "extractor")
@@ -2255,7 +2252,7 @@ func (he HgExtractor) checkout(rev string) orderedStringSet {
 			// If there's a subrepository file, try to parse the
 			// names from it.
 			for _, subrepoLine := range strings.Split(subrepoTxt, "\n") {
-				parsed := strings.SplitN(subrepoLine, "=", 1)
+				parsed := strings.SplitN(subrepoLine, "=", 2)
 				if len(parsed) > 1 {
 					subrepoArgs = append(subrepoArgs, "--exclude")
 					subrepoArgs = append(subrepoArgs, strings.TrimSpace(parsed[0]))

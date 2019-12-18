@@ -29,8 +29,8 @@ committer J. Random Hacker <jrh@foobar.com> 1456976347 -0500
 data 12
 Add Subrepo
 from :2
-M 100644 :3 .hgsub
 M 100644 :4 .hgsubstate
+M 100644 :3 .hgsub
 
 blob
 mark :6
