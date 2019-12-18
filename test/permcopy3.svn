@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Verify that permissions aren't lost in complex copies
+ ## Verify that permissions aren't lost in complex copies (#1)
  # The following text is slightly modified from GitLab issu #189:
  # In this test: a file is created; then it has execute permission set
  # in a separate revision; then there is some other change to the
@@ -8,7 +8,6 @@ SVN-fs-dump-format-version: 2
  # those parts are needed for the ()former) bug to show up. Test with:
  # reposurgeon "read --nobranch <test.svn" "prefer git" "write -"
  # The bug is back if zfoo is missing execute permission.
- #
  # reposurgeon-read-options: --nobranch
 
 UUID: bb5da6f6-2128-11ea-8fe9-c3dde3532b26
