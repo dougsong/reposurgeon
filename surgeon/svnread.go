@@ -1442,20 +1442,24 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 
 		// This early in processing, a commit with zero
 		// fileops can only represent a dumpfile revision with
-		// no nodes. This is pathological and probably means
-		// the dump has been hand-edited, probably in a
-		// well-meant attempt to produce a minimal test case.
+		// no nodes. This can happen if the corresponding
+		// revision is a pure property change.  The initial
+		// directory creations in a dSubversion repository
+		// with standard layout also look like this.
 		//
-		// We log this as an error and do not generate a commit
-		// for it.  That way we know that every commit has at
-		// last one fileop.  It's a shame that we lose the
-		// comment, but without at least fileop we can't even
-		// assign the commit to a branch, a defect which would cause
-		// a lot of complications in the analysis later on.
+		// to avoid proliferating code paths and auxiliary
+		// data structures, we're going to punt the theoretical
+		// case of a smultaneous propert change on multiple
+		// directories.
 		if len(commit.fileops) == 0 {
-			logit(logEXTRACT, "empty revision at <%d>, comment %s, skipping.",
-				ri, strconv.Quote(commit.Comment))
-			continue
+			if len(record.nodes) != 1 {
+				logit(logEXTRACT, "pathological empty revision at <%d>, comment %q, skipping.",
+					ri, commit.Comment)
+				continue
+			}
+			// No fileops, just one directory node, pass
+			// it through.  Later we'll use this node path
+			// for branch assignment.
 		}
 
 		// We're not trying to do branch structure yet.
@@ -1604,13 +1608,26 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 	sp.markToSVNBranch = make(map[string]string)
 	walkEvents(sp.repo.events, func(i int, event Event) {
 		if commit, ok := event.(*Commit); ok {
-			commit.sortOperations()
-			for i := range commit.fileops {
-				fileop := commit.fileops[i]
-				commit.Branch = fileop.Source
-				fileop.Source = ""
-				fileop.Path = fileop.Target
-				fileop.Target = ""
+			if len(commit.fileops) == 0 {
+				// Wacky special case -- corresponding revision has exacly one node
+				n, err := strconv.Atoi(commit.legacyID)
+				if err != nil {
+					// Has to be sometghing weirder than a split commit going on - zero-op
+					// commits on multiople branches are filtered out before this.
+					panic(fmt.Errorf("Unexpectedly ill-formed legacy-id %s", commit.legacyID))
+				}
+				// Contiguity assumption
+				commit.Branch, _ = splitSVNBranchPath(sp.revisions[n].nodes[0].path)
+			} else {
+				// Normal case
+				commit.sortOperations()
+				for i := range commit.fileops {
+					fileop := commit.fileops[i]
+					commit.Branch = fileop.Source
+					fileop.Source = ""
+					fileop.Path = fileop.Target
+					fileop.Target = ""
+				}
 			}
 			maplock.Lock()
 			sp.markToSVNBranch[commit.mark] = commit.Branch
@@ -2321,6 +2338,7 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 
 	// Should the argument commit be tagified?
 	tagifyable := func(commit *Commit) bool {
+		logit(logEXTRACT, "beginning tag check on %q", commit.String())
 		// If the commit has no operations, tagify it.
 		if len(commit.operations()) == 0 {
 			return true
@@ -2343,11 +2361,13 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 	// Do not parallelize, it will cause tags to be created in a nondeterministic order.
 	// There is probably not much to be gained here, anyway.
 	for index := range sp.repo.events {
+		logit(logEXTRACT, "looking at %s", sp.repo.events[index].idMe())
 		commit, ok := sp.repo.events[index].(*Commit)
 		if !ok {
 			continue
 		}
 		if tagifyable(commit) {
+			logit(logEXTRACT, "%s might be tag-eligible", commit.idMe())
 			if commit.hasParents() {
 				if len(commit.parents()) > 1 {
 					return
