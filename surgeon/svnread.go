@@ -2003,21 +2003,39 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 						commit.mark, commit.legacyID, branch, info)
 					newMerges := parseMergeInfo(info)
 					mergeSources := make(map[int]bool, len(newMerges))
-					minIndex := int(^uint(0)>>2)
 					if seenMerges[branch] == nil {
 						seenMerges[branch] = make(map[string]map[int]bool)
 					}
+					// SVN tends to not put in mergeinfo the revisions that
+					// predate the merge base of the source and dest branch
+					// tips. Computing a merge base would be costly, but we
+					// can make a poor man's one by using the parent of the
+					// dest branch root if that parent is on the source.
+					destIndex := sp.repo.eventToIndex(commit)
+					var branchRoot *Commit
+					for _, root := range sp.branchRoots[branch] {
+						if sp.repo.eventToIndex(root) > destIndex {
+							break
+						}
+						branchRoot = root
+					}
+					var branchBase *Commit
+					branchBaseIndex := -1
+					if branchRoot != nil && branchRoot.hasParents() {
+						branchBase = branchRoot.parents()[0].(*Commit)
+						branchBaseIndex = sp.repo.eventToIndex(branchBase)
+					}
+					// Start of the loop over the mergeinfo
+					minIndex := int(^uint(0)>>2)
 					for fromPath, revs := range newMerges {
 						if !isDeclaredBranch(fromPath) {
 							continue
 						}
-						// SVN tends to not put in mergeinfo the revisions that
-						// predate the merge base of the source and dest branch
-						// tips. Computing a merge base would be costly, but we
-						// can make a poor man's one by using the parent of the
-						// dest branch root if that parent is on the source.
-
-						count := len(revs)
+						// Check if branchRoot's first parent is in the fromPath branch
+						baseIndex := -1
+						if branchBase != nil && sp.markToSVNBranch[branchBase.mark] == fromPath {
+							baseIndex = branchBaseIndex
+						}
 						// Ranges were unified when parsing if they were
 						// contiguous in terms of revisions. Now unify
 						// consecutive ranges if they are contiguous in
@@ -2025,8 +2043,12 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 						// separates them. Also, only keep ranges when the
 						// last commit just before the range is nil or a
 						// deleteall, which means the range is from the
-						// source branch start.
+						// source branch start. We also accept a range if
+						// the previous commit is earlier than the branch
+						// base, due to SVN sometimes omitting revisions
+						// prior to the merge base.
 						i, lastGood := 0, -1
+						count := len(revs)
 						for i < count {
 							// Skip all ranges not starting with the branch start
 							for ; i < count; i++ {
@@ -2037,6 +2059,9 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 								}
 								ops := before.operations()
 								if len(ops) == 1 && ops[0].op == deleteall {
+									break
+								}
+								if sp.repo.eventToIndex(before) <= baseIndex {
 									break
 								}
 							}

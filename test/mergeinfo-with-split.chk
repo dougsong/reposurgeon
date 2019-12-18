@@ -62,6 +62,7 @@ release party
 
 [[Split portion of a mixed commit.]]
 from :3
+deleteall
 M 100644 :1 .gitignore
 M 100644 :2 README
 M 100644 :6 VERSION
@@ -174,6 +175,5 @@ committer db48x <db48x> 1352199290 +0000
 data 60
 merge 1.0.1 bugfixes into trunk, bumping the version to 1.4
 from :20
-merge :18
 M 100644 :21 VERSION
 
