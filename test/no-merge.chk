@@ -1,4 +1,4 @@
-reposurgeon: Resolving mergeinfo targeting r7 on r6 (:9) instead
+reposurgeon: Resolving mergeinfo targeting r7 on :9 <6> instead
 #reposurgeon sourcetype svn
 blob
 mark :1

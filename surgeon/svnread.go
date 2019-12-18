@@ -1975,11 +1975,12 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 					}
 					realrev, _ := strconv.Atoi(strings.Split(commit.legacyID, ".")[0])
 					if realrev != revision {
-						logit(logWARN, "Resolving mergeinfo targeting r%d on r%s (%s) instead",
-							revision, commit.legacyID, commit.mark)
+						logit(logWARN, "Resolving mergeinfo targeting r%d on %s <%s> instead",
+							revision, commit.mark, commit.legacyID)
 					}
 					// Now parse the mergeinfo, and find commits for the merge points
-					logit(logTOPOLOGY, "mergeinfo for <%s> on %s is: %s", commit.legacyID, branch, info)
+					logit(logTOPOLOGY, "mergeinfo for %s <%s> on %s is: %s",
+						commit.mark, commit.legacyID, branch, info)
 					newMerges := parseMergeInfo(info)
 					mergeSources := make(map[int]bool, len(newMerges))
 					if lastMerged[branch] == nil {
@@ -2029,8 +2030,8 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 							if last != nil && last != lastMerged[branch][fromPath] {
 								lastMerged[branch][fromPath] = last
 								logit(logTOPOLOGY,
-									"MergeInfo for <%s> says %s is merged up to %s <%s>",
-									commit.legacyID, fromPath, last.mark, last.legacyID)
+									"mergeinfo says %s is merged up to %s <%s> in %s <%s>",
+									fromPath, last.mark, last.legacyID, commit.mark, commit.legacyID)
 								index := sp.repo.eventToIndex(last)
 								mergeSources[index] = true
 								if index < minIndex {
