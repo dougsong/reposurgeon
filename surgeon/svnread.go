@@ -1963,7 +1963,6 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 		}
 		return mergeinfo
 	}
-	lastMerged := make(map[string]map[string]*Commit)
 	for revision, record := range sp.revisions {
 		for _, node := range record.nodes {
 			// We're only looking at directory nodes
@@ -2000,70 +1999,87 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 						commit.mark, commit.legacyID, branch, info)
 					newMerges := parseMergeInfo(info)
 					mergeSources := make(map[int]bool, len(newMerges))
-					if lastMerged[branch] == nil {
-						lastMerged[branch] = make(map[string]*Commit)
-					}
 					minIndex := int(^uint(0)>>2)
 					for fromPath, revs := range newMerges {
 						if !isDeclaredBranch(fromPath) {
 							continue
 						}
 						count := len(revs)
-						// Find the last commit on the branch whose revision
-						// is in the leading contiguous ranges of mergeinfo.
-						// Consider ranges as contiguous if no commit on the
-						// branch separates them. When we encounter a deleteall
-						// commit between two ranges, consider these ranges as
-						// designating two different branches, which may mean
-						// two merge sources.
-						for i := -1; i < count; i++ {
-							// Find the last commit in the current range
-							var last, beforeNext *Commit
-							if i >= 0 {
-								last = lastRelevantCommit(sp, revidx(revs[i].max), fromPath)
-							}
-							if i+1 < count {
-								// and the last commit before the next range
-								beforeNext = lastRelevantCommit(sp, revidx(revs[i+1].min - 1), fromPath)
-								if last == beforeNext {
-									// There is no gap, look at the next range
-									continue
-								}
-							}
-							// This range is the last of the leading contiguous
-							// ranges in the mergeinfo. Everything on the source
-							// branch after the gap is most probably coming from
-							// cherry-picks. The last commit in this range is
-							// a good merge source candidate.
-							if last != nil {
-								lastrev, _ := strconv.Atoi(strings.Split(last.legacyID, ".")[0])
-								if lastrev > realrev {
-									// If the mergeinfo has been made on an empty
-									// commit, asking to merge revisions that were
-									// later than the last non-empty commit, clamp.
-									last = lastRelevantCommit(sp, revidx(realrev - 1), fromPath)
-								}
-							}
-							if last != nil && last != lastMerged[branch][fromPath] {
-								lastMerged[branch][fromPath] = last
-								logit(logTOPOLOGY,
-									"mergeinfo says %s is merged up to %s <%s> in %s <%s>",
-									fromPath, last.mark, last.legacyID, commit.mark, commit.legacyID)
-								index := sp.repo.eventToIndex(last)
-								mergeSources[index] = true
-								if index < minIndex {
-									minIndex = index
-								}
-							}
-							// If the commit just before the range is a deleteall,
-							// consider it as a new branch and restart the search
-							// for merge sources. If not, stop there because we do
-							// not want to generate merges for cherry-picks.
-							if beforeNext != nil {
-								ops := beforeNext.operations()
-								if len(ops) != 1 || ops[0].op != deleteall {
+						// Ranges were unified when parsing if they were
+						// contiguous in terms of revisions. Now unify
+						// consecutive ranges if they are contiguous in
+						// terms of commits, that is no commit on the branch
+						// separates them. Also, only keep ranges when the
+						// last commit just before the range is nil or a
+						// deleteall, which means the range is from the
+						// source branch start.
+						i, lastGood := 0, -1
+						for i < count {
+							// Skip all ranges not starting with the branch start
+							for ; i < count; i++ {
+								// Find the last commit just before the range
+								before := lastRelevantCommit(sp, revidx(revs[i].min - 1), fromPath)
+								if before == nil {
 									break
 								}
+								ops := before.operations()
+								if len(ops) == 1 && ops[0].op == deleteall {
+									break
+								}
+							}
+							if i >= count {
+								break
+							}
+							lastGood++
+							revs[lastGood] = revs[i]
+							// Unify the following ranges as long as we can
+							i++
+							for ; i < count; i++ {
+								// Find the last commit in the current "good" range
+								last := lastRelevantCommit(sp, revidx(revs[lastGood].max), fromPath)
+								// and the last commit just before the next range
+								beforeNext := lastRelevantCommit(sp, revidx(revs[i].min - 1), fromPath)
+								if last != beforeNext {
+									break
+								}
+								revs[lastGood].max = revs[i].max
+							}
+						}
+						revs := revs[:lastGood+1]
+						// Now we process the merges
+						for _, rng := range revs {
+							// Now that ranges are unified, there is a gap
+							// between all of them. Everything on the source
+							// branch after the gap is most probably coming
+							// from cherry-picks. The last commit in this range
+							// is a good merge source candidate.
+							last := lastRelevantCommit(sp, revidx(rng.max), fromPath)
+							if last == nil {
+								continue
+							}
+							lastrev, _ := strconv.Atoi(strings.Split(last.legacyID, ".")[0])
+							if lastrev > realrev {
+								// If the mergeinfo has been made on an empty
+								// commit, asking to merge revisions that were
+								// later than the last non-empty commit, clamp.
+								last = lastRelevantCommit(sp, revidx(realrev - 1), fromPath)
+								if last == nil {
+									continue
+								}
+								lastrev, _ = strconv.Atoi(strings.Split(last.legacyID, ".")[0])
+							}
+							if lastrev < rng.min {
+								// Snapping the revisions to existing commits
+								// went past the minimum revision in the range
+								continue
+							}
+							index := sp.repo.eventToIndex(last)
+							logit(logTOPOLOGY,
+								"mergeinfo says %s is merged up to %s <%s> in %s <%s>",
+								fromPath, last.mark, last.legacyID, commit.mark, commit.legacyID)
+							mergeSources[index] = true
+							if index < minIndex {
+								minIndex = index
 							}
 						}
 					}
