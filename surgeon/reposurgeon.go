@@ -12857,8 +12857,9 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 		}
 		file.Close()
 		cmd := exec.Command(editor, file.Name())
-		cmd.Stdin = parse.stdin
-		cmd.Stdout = parse.stdout
+		// Can't use LineParse defaults here, one point at the baton.
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err := cmd.Run()
 		if err != nil {
