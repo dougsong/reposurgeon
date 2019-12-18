@@ -1,0 +1,363 @@
+SVN-fs-dump-format-version: 2
+ ## Test permissions with more complicated copies
+ # reposurgeon-read-options: --nobranch
+
+UUID: 97aa18ca-213c-11ea-a083-e9cd2128560d
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2019-12-18T02:17:51.449397Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 128
+Content-length: 128
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-18T02:19:50.955322Z
+K 7
+svn:log
+V 27
+Add files and directories.
+
+PROPS-END
+
+Node-path: d1
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: d1/f1
+Node-kind: file
+Node-action: add
+Text-content-md5: 2b1abc6b6c5c0018851f9f8e6475563b
+Text-content-sha1: aece6dfba588900e00d95601d22b4408d49580af
+Prop-content-length: 36
+Text-content-length: 3
+Content-length: 39
+
+K 14
+svn:executable
+V 1
+*
+PROPS-END
+f1
+
+
+Node-path: d2
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: d2/f2
+Node-kind: file
+Node-action: add
+Text-content-md5: 575c5638d60271457e54ab7d07309502
+Text-content-sha1: 1c49a440c352f3473efa9512255033b94dc7def0
+Prop-content-length: 10
+Text-content-length: 3
+Content-length: 13
+
+PROPS-END
+f2
+
+
+Node-path: foo
+Node-kind: file
+Node-action: add
+Text-content-md5: d3b07384d113edec49eaa6238ad5ff00
+Text-content-sha1: f1d2d2f924e986ac86fdf7b36c94bcdf32beec15
+Prop-content-length: 36
+Text-content-length: 4
+Content-length: 40
+
+K 14
+svn:executable
+V 1
+*
+PROPS-END
+foo
+
+
+Revision-number: 2
+Prop-content-length: 126
+Content-length: 126
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-18T02:20:10.737369Z
+K 7
+svn:log
+V 25
+Make foo not executable.
+
+PROPS-END
+
+Node-path: foo
+Node-kind: file
+Node-action: change
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 3
+Prop-content-length: 121
+Content-length: 121
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-18T02:20:35.944905Z
+K 7
+svn:log
+V 20
+Remove directories.
+
+PROPS-END
+
+Node-path: d1
+Node-action: delete
+
+
+Node-path: d2
+Node-action: delete
+
+
+Revision-number: 4
+Prop-content-length: 122
+Content-length: 122
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-18T02:22:26.908820Z
+K 7
+svn:log
+V 21
+Recreate directories.
+PROPS-END
+
+Node-path: d1
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: d1/f1
+Node-kind: file
+Node-action: add
+Text-content-md5: 2b1abc6b6c5c0018851f9f8e6475563b
+Text-content-sha1: aece6dfba588900e00d95601d22b4408d49580af
+Prop-content-length: 10
+Text-content-length: 3
+Content-length: 13
+
+PROPS-END
+f1
+
+
+Node-path: d2
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: d2/f2
+Node-kind: file
+Node-action: add
+Text-content-md5: 575c5638d60271457e54ab7d07309502
+Text-content-sha1: 1c49a440c352f3473efa9512255033b94dc7def0
+Prop-content-length: 36
+Text-content-length: 3
+Content-length: 39
+
+K 14
+svn:executable
+V 1
+*
+PROPS-END
+f2
+
+
+Revision-number: 5
+Prop-content-length: 112
+Content-length: 112
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-18T02:23:20.678158Z
+K 7
+svn:log
+V 11
+Copy files.
+PROPS-END
+
+Node-path: d1/f1a
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 4
+Node-copyfrom-path: d1/f1
+Text-copy-source-md5: 2b1abc6b6c5c0018851f9f8e6475563b
+Text-copy-source-sha1: aece6dfba588900e00d95601d22b4408d49580af
+
+
+Node-path: d2/f2a
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 4
+Node-copyfrom-path: d2/f2
+Text-copy-source-md5: 575c5638d60271457e54ab7d07309502
+Text-copy-source-sha1: 1c49a440c352f3473efa9512255033b94dc7def0
+
+
+Node-path: foo2
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 4
+Node-copyfrom-path: foo
+Text-copy-source-md5: d3b07384d113edec49eaa6238ad5ff00
+Text-copy-source-sha1: f1d2d2f924e986ac86fdf7b36c94bcdf32beec15
+
+
+Revision-number: 6
+Prop-content-length: 115
+Content-length: 115
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-18T02:24:09.299341Z
+K 7
+svn:log
+V 14
+Replace file.
+
+PROPS-END
+
+Node-path: d2/f2
+Node-kind: file
+Node-action: replace
+Text-content-md5: d908d26cac8092d475f40a5179ca6347
+Text-content-sha1: 21ebaf2707b8bbd2c927a4038b5a047f3560ffb6
+Prop-content-length: 10
+Text-content-length: 9
+Content-length: 19
+
+PROPS-END
+replaced
+
+
+Revision-number: 7
+Prop-content-length: 115
+Content-length: 115
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-18T02:25:44.146813Z
+K 7
+svn:log
+V 14
+Replace file.
+
+PROPS-END
+
+Node-path: d2/f2a
+Node-kind: file
+Node-action: change
+Text-content-md5: 71e09c4a9f8c5c7ffcf552cb9b97e81c
+Text-content-sha1: 9a4d4e608ee24167f62cfc75dafa578f8a467992
+Text-content-length: 21
+Content-length: 21
+
+replace another file
+
+
+Revision-number: 8
+Prop-content-length: 120
+Content-length: 120
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-18T02:33:34.923397Z
+K 7
+svn:log
+V 19
+Really replace file
+PROPS-END
+
+Node-path: d2/f2a
+Node-kind: file
+Node-action: replace
+Text-content-md5: 6e3438b2bab0622bb8805e305bff134f
+Text-content-sha1: b418378bd0cb068ff6d7005728e97affbcb56338
+Prop-content-length: 36
+Text-content-length: 20
+Content-length: 56
+
+K 14
+svn:executable
+V 1
+*
+PROPS-END
+really replace file
+
+

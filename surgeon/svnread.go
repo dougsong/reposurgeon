@@ -771,19 +771,6 @@ func nodePermissions(node NodeAction) string {
 
 // Try to figure out who the ancestor of this node is.
 func (sp *StreamParser) seekAncestor(node *NodeAction, hash map[string]*NodeAction) *NodeAction {
-	// Easy case: dump stream has intact hashes, and there is one.
-	// This should handle file copies.
-	if node.fromHash != "" {
-		ancestor, ok := sp.hashmap[node.fromHash]
-		if ok {
-			logit(logTOPOLOGY, "r%d~%s -> %s (via hashmap)",
-				node.revision, node.path, ancestor)
-			return ancestor
-		}
-		logit(logTOPOLOGY, "r%d~%s -> expected node from-hash is missing - stream may be corrupt",
-			node.revision, node.path)
-	}
-
 	var lookback *NodeAction
 	if node.fromPath != "" {
 		// Try first via fromRev/fromPath.  The reason
@@ -814,6 +801,13 @@ func (sp *StreamParser) seekAncestor(node *NodeAction, hash map[string]*NodeActi
 		logit(logSHOUT, "r%d~%s: missing ancestor node for non-.gitignore",
 			node.revision, node.path)
 	}
+
+	// If there is a content hash, it should match.
+	if lookback != nil && lookback.contentHash != "" && node.fromHash != "" && lookback.contentHash != node.fromHash {
+		logit(logSHOUT, "r%d~%s: content hash does not match for copy",
+			node.revision, node.path)
+	}
+
 	return lookback
 }
 
@@ -1349,6 +1343,10 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 					}
 				}
 				ancestor = sp.seekAncestor(node, revisionPathHash)
+				// Propagate properties from the ancestor.
+				if (node.action == sdADD || node.action == sdCHANGE) && ancestor != nil && !node.propchange {
+					node.props = ancestor.props
+				}
 				if node.action == sdDELETE {
 					//assert node.blob == nil
 					fileop := newFileOp(sp.repo)
@@ -1405,10 +1403,6 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 						logit(logSHOUT, "r%d: %s gets impossibly empty blob mark from ancestor %s, skipping",
 							record.revision, node, ancestor)
 						continue
-					}
-
-					if !node.hasProperties() && ancestor != nil && ancestor.hasProperties() {
-						node.props = ancestor.props
 					}
 
 					// Time for fileop generation.

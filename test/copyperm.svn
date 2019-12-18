@@ -1,0 +1,136 @@
+SVN-fs-dump-format-version: 2
+ ## Test permissions with copies
+ # reposurgeon-read-options: --nobranch
+
+UUID: bb5da6f6-2128-11ea-8fe9-c3dde3532b26
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2019-12-17T23:55:41.412061Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 108
+Content-length: 108
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-17T23:55:48.285781Z
+K 7
+svn:log
+V 8
+Add foo.
+PROPS-END
+
+Node-path: foo
+Node-kind: file
+Node-action: add
+Text-content-md5: 154d45611081dc7858043af2d9554d6f
+Text-content-sha1: fc4c444d36872cb10cffdc34ee2cbd8c2c820f80
+Prop-content-length: 10
+Text-content-length: 9
+Content-length: 19
+
+PROPS-END
+file foo
+
+
+Revision-number: 2
+Prop-content-length: 121
+Content-length: 121
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-17T23:56:00.859300Z
+K 7
+svn:log
+V 20
+Make foo executable.
+PROPS-END
+
+Node-path: foo
+Node-kind: file
+Node-action: change
+Prop-content-length: 36
+Content-length: 36
+
+K 14
+svn:executable
+V 1
+*
+PROPS-END
+
+
+Revision-number: 3
+Prop-content-length: 108
+Content-length: 108
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-17T23:56:06.142924Z
+K 7
+svn:log
+V 8
+Add bar.
+PROPS-END
+
+Node-path: bar
+Node-kind: file
+Node-action: add
+Text-content-md5: 2ff17989315974cf9ce5f88df9b03a71
+Text-content-sha1: 9a9ac3e0d4d3970c334e94bc79283bee655d4b20
+Prop-content-length: 10
+Text-content-length: 9
+Content-length: 19
+
+PROPS-END
+file bar
+
+
+Revision-number: 4
+Prop-content-length: 118
+Content-length: 118
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-17T23:56:19.226125Z
+K 7
+svn:log
+V 17
+Copy foo to zfoo.
+PROPS-END
+
+Node-path: zfoo
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 3
+Node-copyfrom-path: foo
+Text-copy-source-md5: 154d45611081dc7858043af2d9554d6f
+Text-copy-source-sha1: fc4c444d36872cb10cffdc34ee2cbd8c2c820f80
+
+
