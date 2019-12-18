@@ -1963,6 +1963,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 		}
 		return mergeinfo
 	}
+	seenMerges := make(map[string]map[string]map[int]bool)
 	for revision, record := range sp.revisions {
 		for _, node := range record.nodes {
 			// We're only looking at directory nodes
@@ -2000,6 +2001,9 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 					newMerges := parseMergeInfo(info)
 					mergeSources := make(map[int]bool, len(newMerges))
 					minIndex := int(^uint(0)>>2)
+					if seenMerges[branch] == nil {
+						seenMerges[branch] = make(map[string]map[int]bool)
+					}
 					for fromPath, revs := range newMerges {
 						if !isDeclaredBranch(fromPath) {
 							continue
@@ -2047,6 +2051,9 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 						}
 						revs := revs[:lastGood+1]
 						// Now we process the merges
+						if seenMerges[branch][fromPath] == nil {
+							seenMerges[branch][fromPath] = make(map[int]bool)
+						}
 						for _, rng := range revs {
 							// Now that ranges are unified, there is a gap
 							// between all of them. Everything on the source
@@ -2074,6 +2081,10 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 								continue
 							}
 							index := sp.repo.eventToIndex(last)
+							if _, ok := seenMerges[branch][fromPath][index]; ok {
+								continue
+							}
+							seenMerges[branch][fromPath][index] = true
 							logit(logTOPOLOGY,
 								"mergeinfo says %s is merged up to %s <%s> in %s <%s>",
 								fromPath, last.mark, last.legacyID, commit.mark, commit.legacyID)
