@@ -2436,6 +2436,9 @@ Do not fill in an equivalent of default Subversion ignore patterns.
 When a branch or tag was deleted in SVN, preserve the history up to
 deletion in a git ref under refs/deleted/.
 
+--cvsignores::
+Suppress the nornal deletion of .cvsignore files.
+
 These modifiers can go anywhere in any order on the read command
 line after the read verb. They must be whitespace-separated.
 
@@ -2529,11 +2532,11 @@ this behavior is inverted by the --user-ignores option; if that is on,
 .gitignore files are passed through and Subversion svn:ignore
 properties are discarded.
 
-(Regardless of the setting of the --user-ignores option,
-.cvsignore files found in Subversion repositories always become
-.gitignores in the translation.  The assumption is that these date
-from before a CVS-to-SVN lift and should be preserved to affect
-behavior when browsing that section of the repository.)
+Normally, .cvsignore files left over from a Subversion repository's
+ancient history as a CVS repository are deleted. The assumption is
+thast the repository users want the (presumably more up-to-date)
+Subversion ignore properties to be translated.  However, this
+deletion can be prevented with the --cvsignores read option.
 
 svn:mergeinfo properties are interpreted.  Any svn:mergeinfo property
 on a revision A with a merge source range ending in revision B produces

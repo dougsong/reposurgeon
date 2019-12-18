@@ -1332,7 +1332,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 				// This is a philosophical choice; we're taking the
 				//users' Subversion settings as authoritative
 				// rather than trying to mimic the exact CVS behavior.
-				if strings.HasSuffix(node.path, ".cvsignore") {
+				if strings.HasSuffix(node.path, ".cvsignore") && !options.Contains("--cvsignores") {
 					continue
 				}
 				// Ignore and complain about explicit .gitignores
