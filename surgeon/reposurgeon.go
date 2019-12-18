@@ -2220,6 +2220,11 @@ func mustChdir(directory string, errorclass string) {
 	logit(logSHUFFLE, "changing directory to %s", directory)
 }
 
+func (he *HgExtractor) mustChdir(directory string, errorclass string) {
+	mustChdir(directory, errorclass)
+	he.hgcl.chdir(directory)
+}
+
 // checkout checka the directory out to a specified revision, return a manifest.
 func (he HgExtractor) checkout(rev string) orderedStringSet {
 	pwd, err := os.Getwd()
@@ -2232,8 +2237,7 @@ func (he HgExtractor) checkout(rev string) orderedStringSet {
 	}
 	// 'hg update -C' can delete and recreate the current working
 	// directory, so cd to what should be the current directory
-	// TODO this needs to prod the hgclient in some way
-	mustChdir(pwd, "extractor")
+	he.mustChdir(pwd, "extractor")
 
 	// Sometimes, hg update can fail because of missing subrepos. When that
 	// happens, try really hard to fake it. This is safe because subrepos
@@ -2262,10 +2266,10 @@ func (he HgExtractor) checkout(rev string) orderedStringSet {
 		// Sidesteps some issues with problematic checkins.
 		// Remove checked in files.
 		he.capture("hg", "update", "-C", "null")
-		mustChdir(pwd, "extractor")
+		he.mustChdir(pwd, "extractor")
 		// Remove extraneous files.
 		he.capture("hg", "purge", "--config", "extensions.purge=", "--all")
-		mustChdir(pwd, "extractor")
+		he.mustChdir(pwd, "extractor")
 
 		// The Python version of this code had a section
 		// beginning with the comment "Remove everything
@@ -2285,17 +2289,17 @@ func (he HgExtractor) checkout(rev string) orderedStringSet {
 		if len(subrepoArgs) > 0 {
 			revertCmd := []string{"hg", "revert", "--all", "--no-backup", "-r", rev}
 			he.capture(append(revertCmd, subrepoArgs...)...)
-			mustChdir(pwd, "extractor")
+			he.mustChdir(pwd, "extractor")
 			he.mustCapture([]string{"hg", "debugsetparents", rev}, "extractor")
-			mustChdir(pwd, "extractor")
+			he.mustChdir(pwd, "extractor")
 			he.mustCapture([]string{"hg", "debugrebuilddirstate"}, "extractor")
-			mustChdir(pwd, "extractor")
+			he.mustChdir(pwd, "extractor")
 		} else {
 			reupTxt, reupErr := he.capture("hg", "update", "-C", rev)
 			if reupErr != nil {
 				panic(throw("extractor", "Failed to update to revision %s: %s", rev, reupTxt))
 			}
-			mustChdir(pwd, "extractor")
+			he.mustChdir(pwd, "extractor")
 		}
 	}
 	data := he.mustCapture([]string{"hg", "manifest"}, "extractor")

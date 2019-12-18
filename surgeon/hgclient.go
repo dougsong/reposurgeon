@@ -25,11 +25,16 @@ type HgClient struct {
 	hgServer	*exec.Cmd
 	pipeIn		io.WriteCloser	// client write, server read
 	pipeOut		io.ReadCloser	// server write, client read
+	cwd		string
 }
 
 func NewHgClient() *HgClient {
 	var err error
 	me := new(HgClient)
+	me.cwd, err = os.Getwd()
+	if err != nil {
+		panic(throw("extractor", "NewHgClient: could not get working directory: %v", err))
+	}
 	me.hgServer = exec.Command("hg", "--config", "ui.interactive=False",
 				   "serve", "--cmdserver", "pipe")
 	me.hgServer.Env = append(os.Environ(), "HGENCODING=UTF-8")
@@ -105,6 +110,14 @@ func (hgcl *HgClient) runcommand(cmd []string) (stdout []byte, stderr []byte, er
 				 cmd, ret)
 	}
 	return
+}
+
+func (hgcl *HgClient) chdir(directory string) error {
+	if hgcl == nil {
+		return errors.New("no hgclient")
+	}
+	hgcl.cwd = directory
+	return nil
 }
 
 func (hgcl *HgClient) receiveFromHg() (string, []byte, error) {
@@ -185,6 +198,7 @@ func (hgcl *HgClient) sendToHg(cmd string, args []byte) error {
 }
 
 func (hgcl *HgClient) runInHg(command string, hgcmd []string) (stdout []byte, stderr []byte, rc int32, err error) {
+	hgcmd = append([]string{"--cwd", hgcl.cwd}, hgcmd...)
 	args := []byte(strings.Join(hgcmd, string(0x0)))
 
 	err = hgcl.sendToHg(command, args)
