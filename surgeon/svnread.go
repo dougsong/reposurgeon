@@ -56,21 +56,23 @@ func (b branchMapping) String() string {
 	return fmt.Sprintf("{match=%s, replace=%s}", b.match, b.replace)
 }
 
-type branchMeta struct {
-	root *Commit
-	tip *Commit
-}
-
 type svnReader struct {
 	revisions            []RevisionRecord
 	streamview           []*NodeAction // All nodes in stream order
 	hashmap              map[string]*NodeAction
 	history              *History
 	branchlinks          map[revidx]revidx
-	branches             map[string]*branchMeta // Points to branch root commits
 	splitCommits         map[revidx]int
+	// Filled in ProcessBranches
 	markToSVNBranch      map[string]string
+	// a map from SVN branch names to a revision-indexed list of "last commits"
+	// (not to be used directly but through lastRelevantCommit)
+	// Filled in LinkFixups
 	lastCommitOnBranchAt map[string][]*Commit
+	// a map from SVN branch names to root commits (there can be several in case
+	// of branch deletions since the commit recreating the branch is also root)
+	// Filled in LinkFixups
+	branchRoots          map[string][]*Commit
 }
 
 // Helpers for branch analysis
@@ -350,7 +352,6 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 	defer trace.StartRegion(ctx, "SVN Phase 1: read dump file").End()
 	sp.revisions = make([]RevisionRecord, 0)
 	sp.hashmap = make(map[string]*NodeAction)
-	sp.branches = make(map[string]*branchMeta)
 	sp.splitCommits = make(map[revidx]int)
 	sp.branchlinks = make(map[revidx]revidx)
 
@@ -1748,7 +1749,8 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	logit(logEXTRACT, "SVN Phase 8a: restore content-impacting links")
 	baton.startProgress("process SVN, phase 8a: restore content-impacting links",
 	                    uint64(len(sp.repo.events)))
-	sp.lastCommitOnBranchAt = make(map[string][]*Commit, len(sp.revisions))
+	sp.lastCommitOnBranchAt = make(map[string][]*Commit)
+	sp.branchRoots = make(map[string][]*Commit)
 	maybeRoots := make([]*Commit, 0);
 	for index, event := range sp.repo.events {
 		if commit, ok := event.(*Commit); ok {
@@ -1784,6 +1786,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 			} else {
 				commit.setParents(nil)
 				maybeRoots = append(maybeRoots, commit)
+				sp.branchRoots[branch] = append(sp.branchRoots[branch], commit)
 			}
 		}
 		baton.percentProgress(uint64(index) + 1)
@@ -2008,6 +2011,12 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 						if !isDeclaredBranch(fromPath) {
 							continue
 						}
+						// SVN tends to not put in mergeinfo the revisions that
+						// predate the merge base of the source and dest branch
+						// tips. Computing a merge base would be costly, but we
+						// can make a poor man's one by using the parent of the
+						// dest branch root if that parent is on the source.
+
 						count := len(revs)
 						// Ranges were unified when parsing if they were
 						// contiguous in terms of revisions. Now unify
@@ -2222,15 +2231,6 @@ func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSe
 		}
 	}
 	logit(logTAGFIX, "%d deleted refs were put away.", processed)
-	for _, event := range sp.repo.events {
-		if commit, ok := event.(*Commit); ok {
-			if sp.branches[commit.Branch] == nil {
-				logit(logEXTRACT, "commit %s is root of branch %s", commit.mark, commit.Branch)
-				sp.branches[commit.Branch] = new(branchMeta)
-				sp.branches[commit.Branch].root = commit
-			}
-		}
-	}
 	baton.endProgress()
 }
 
@@ -2325,9 +2325,9 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 	logit(logEXTRACT, "SVN Phase C: tagify empty commits")
 
 	rootmarks := newOrderedStringSet() // stays empty if nobranch
-	for _, meta := range sp.branches {
-		if meta != nil {	// This condition skips dead branches
-			rootmarks.Add(meta.root.mark)
+	for _, roots := range sp.branchRoots {
+		for _, root := range roots {
+			rootmarks.Add(root.mark)
 		}
 	}
 	rootskip := newOrderedStringSet()
