@@ -1985,12 +1985,13 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 							revision, commit.legacyID, commit.mark)
 					}
 					// Now parse the mergeinfo, and find commits for the merge points
+					logit(logTOPOLOGY, "mergeinfo for <%s> on %s is: %s", commit.legacyID, branch, info)
 					newMerges := parseMergeInfo(info)
 					mergeSources := make(map[int]bool, len(newMerges))
 					if lastMerged[branch] == nil {
 						lastMerged[branch] = make(map[string]*Commit)
 					}
-					minmark := int(^uint(0)>>2)
+					minIndex := int(^uint(0)>>2)
 					for fromPath, revs := range newMerges {
 						if !isDeclaredBranch(fromPath) {
 							continue
@@ -2003,14 +2004,16 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 						// commit between two ranges, consider these ranges as
 						// designating two different branches, which may mean
 						// two merge sources.
-						for i := 0; i < count; i++ {
+						for i := -1; i < count; i++ {
 							// Find the last commit in the current range
-							last := lastRelevantCommit(sp, revidx(revs[i].max), fromPath)
-							var before *Commit
+							var last, beforeNext *Commit
+							if i >= 0 {
+								last = lastRelevantCommit(sp, revidx(revs[i].max), fromPath)
+							}
 							if i+1 < count {
 								// and the last commit before the next range
-								before = lastRelevantCommit(sp, revidx(revs[i+1].min - 1), fromPath)
-								if last == before {
+								beforeNext = lastRelevantCommit(sp, revidx(revs[i+1].min - 1), fromPath)
+								if last == beforeNext {
 									// There is no gap, look at the next range
 									continue
 								}
@@ -2020,30 +2023,32 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 							// branch after the gap is most probably coming from
 							// cherry-picks. The last commit in this range is
 							// a good merge source candidate.
-							lastrev, _ := strconv.Atoi(strings.Split(last.legacyID, ".")[0])
-							if lastrev > realrev {
-								// If the mergeinfo has been made on an empty
-								// commit, asking to merge revisions that were
-								// later than the last non-empty commit, clamp.
-								last = lastRelevantCommit(sp, revidx(realrev - 1), fromPath)
+							if last != nil {
+								lastrev, _ := strconv.Atoi(strings.Split(last.legacyID, ".")[0])
+								if lastrev > realrev {
+									// If the mergeinfo has been made on an empty
+									// commit, asking to merge revisions that were
+									// later than the last non-empty commit, clamp.
+									last = lastRelevantCommit(sp, revidx(realrev - 1), fromPath)
+								}
 							}
 							if last != nil && last != lastMerged[branch][fromPath] {
 								lastMerged[branch][fromPath] = last
 								logit(logTOPOLOGY,
-									"MergeInfo for <%s> says %s merged up to %s <%s>",
+									"MergeInfo for <%s> says %s is merged up to %s <%s>",
 									commit.legacyID, fromPath, last.mark, last.legacyID)
-								mark, _ := strconv.Atoi(last.mark[1:])
-								mergeSources[mark] = true
-								if mark < minmark {
-									minmark = mark
+								index := sp.repo.eventToIndex(last)
+								mergeSources[index] = true
+								if index < minIndex {
+									minIndex = index
 								}
 							}
 							// If the commit just before the range is a deleteall,
 							// consider it as a new branch and restart the search
 							// for merge sources. If not, stop there because we do
 							// not want to generate merges for cherry-picks.
-							if before != nil {
-								ops := before.operations()
+							if beforeNext != nil {
+								ops := beforeNext.operations()
 								if len(ops) != 1 || ops[0].op != deleteall {
 									break
 								}
@@ -2053,27 +2058,27 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 					// Check if we need to prepend a deleteall
 					ops := commit.operations()
 					needDeleteAll := !commit.hasParents() && (len(ops) == 0 || ops[0].op != deleteall)
-					// Weed out already merged marks, then perform the merge
-					// of the highest mark still present, rinse and repeat
+					// Weed out already merged commits, then perform the merge
+					// of the highest commit still present, rinse and repeat
 					stack := []*Commit{commit}
 					for len(mergeSources) > 0 {
 						// Walk the ancestry, forgetting already merged marks
-						seen := map[string]bool{}
+						seen := map[int]bool{}
 						for len(stack) > 0 && len(mergeSources) > 0 {
 							var current *Commit
 							// pop a CommitLike from the stack
 							stack, current = stack[:len(stack)-1], stack[len(stack)-1]
-							if _, ok := seen[current.mark]; ok {
+							index := sp.repo.eventToIndex(current)
+							if _, ok := seen[index]; ok {
 								continue
 							}
-							seen[current.mark] = true
+							seen[index] = true
 							// We could reach the commit from the source, remove it
 							// from the merge sources. Only continue the traversal
-							// when the current mark is high enough for ancestors
+							// when the current index is high enough for ancestors
 							// to potentially be in sourceMerges.
-							cmark, _ := strconv.Atoi(current.mark[1:])
-							if cmark >= minmark {
-								delete(mergeSources, cmark)
+							if index >= minIndex {
+								delete(mergeSources, index)
 								// add all parents to the "todo" stack
 								for _, parent := range current.parents() {
 									if c, ok := parent.(*Commit); ok {
@@ -2082,15 +2087,16 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 								}
 							}
 						}
-						// Now perform the merge from the highest mark
-						highmark := 0
-						for mark := range mergeSources {
-							if mark > highmark {
-								highmark = mark
+						// Now perform the merge from the highest index
+						// since it cannot be a descendent of the other
+						highIndex := 0
+						for index := range mergeSources {
+							if index > highIndex {
+								highIndex = index
 							}
 						}
-						delete(mergeSources, highmark)
-						if source, ok := sp.repo.markToEvent(fmt.Sprintf(":%d", highmark)).(*Commit); ok {
+						delete(mergeSources, highIndex)
+						if source, ok := sp.repo.events[highIndex].(*Commit); ok {
 							if needDeleteAll {
 								fileop := newFileOp(sp.repo)
 								fileop.construct(deleteall)

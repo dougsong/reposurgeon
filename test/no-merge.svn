@@ -1,0 +1,264 @@
+SVN-fs-dump-format-version: 2
+ ## Test if split commits are sources of spurious merges
+
+UUID: f2d967c6-210c-11ea-af60-d70456e543c6
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2019-12-17T20:36:48.589724Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 128
+Content-length: 128
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-17T20:37:04.734423Z
+K 7
+svn:log
+V 27
+Create directory structure.
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 109
+Content-length: 109
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-17T20:37:21.202413Z
+K 7
+svn:log
+V 9
+Add foo.
+
+PROPS-END
+
+Node-path: trunk/foo
+Node-kind: file
+Node-action: add
+Text-content-md5: 154d45611081dc7858043af2d9554d6f
+Text-content-sha1: fc4c444d36872cb10cffdc34ee2cbd8c2c820f80
+Prop-content-length: 10
+Text-content-length: 9
+Content-length: 19
+
+PROPS-END
+file foo
+
+
+Revision-number: 3
+Prop-content-length: 116
+Content-length: 116
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-17T20:37:33.197323Z
+K 7
+svn:log
+V 15
+Create branch.
+
+PROPS-END
+
+Node-path: branches/somebranch
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk
+
+
+Revision-number: 4
+Prop-content-length: 124
+Content-length: 124
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-17T20:38:12.901658Z
+K 7
+svn:log
+V 23
+Add bar (split commit).
+PROPS-END
+
+Node-path: branches/somebranch/bar
+Node-kind: file
+Node-action: add
+Text-content-md5: 2ff17989315974cf9ce5f88df9b03a71
+Text-content-sha1: 9a9ac3e0d4d3970c334e94bc79283bee655d4b20
+Prop-content-length: 10
+Text-content-length: 9
+Content-length: 19
+
+PROPS-END
+file bar
+
+
+Node-path: trunk/bar
+Node-kind: file
+Node-action: add
+Text-content-md5: 2ff17989315974cf9ce5f88df9b03a71
+Text-content-sha1: 9a9ac3e0d4d3970c334e94bc79283bee655d4b20
+Prop-content-length: 10
+Text-content-length: 9
+Content-length: 19
+
+PROPS-END
+file bar
+
+
+Revision-number: 5
+Prop-content-length: 125
+Content-length: 125
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-17T20:39:07.210456Z
+K 7
+svn:log
+V 24
+Add baz (split commit).
+
+PROPS-END
+
+Node-path: branches/somebranch/baz
+Node-kind: file
+Node-action: add
+Text-content-md5: 2991309629520e935262fc39fac426bb
+Text-content-sha1: 82fe3790b2c9ff2e6a51593624212dbdc3071c12
+Prop-content-length: 10
+Text-content-length: 9
+Content-length: 19
+
+PROPS-END
+file baz
+
+
+Node-path: trunk/baz
+Node-kind: file
+Node-action: add
+Text-content-md5: 2991309629520e935262fc39fac426bb
+Text-content-sha1: 82fe3790b2c9ff2e6a51593624212dbdc3071c12
+Prop-content-length: 10
+Text-content-length: 9
+Content-length: 19
+
+PROPS-END
+file baz
+
+
+Revision-number: 6
+Prop-content-length: 118
+Content-length: 118
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-17T20:40:03.227074Z
+K 7
+svn:log
+V 17
+Create newbranch.
+PROPS-END
+
+Node-path: branches/newbranch
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 5
+Node-copyfrom-path: trunk
+
+
+Revision-number: 7
+Prop-content-length: 121
+Content-length: 121
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-17T20:40:44.680900Z
+K 7
+svn:log
+V 20
+Set merge property.
+
+PROPS-END
+
+Node-path: branches/newbranch
+Node-kind: dir
+Node-action: change
+Prop-content-length: 49
+Content-length: 49
+
+K 19
+svnmerge-integrated
+V 9
+trunk:1-5
+PROPS-END
+
+
