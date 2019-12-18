@@ -2369,9 +2369,7 @@ func (rs *RepoStreamer) fileSetAt(revision string) orderedStringSet {
 	return fs
 }
 
-func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (*Repository, error) {
-	rs.extractor.preExtract()
-
+func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, err error) {
 	if !rs.extractor.isClean() {
 		return nil, fmt.Errorf("repository directory has unsaved changes")
 	}
@@ -2379,17 +2377,16 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (*Repository, error)
 	//control.baton.startProcess("Extracting", "")
 	//defer rs.baton.endProcess()
 
-	var err error
 	defer func(r **Repository, e *error) {
 		if thrown := catch("extractor", recover()); thrown != nil {
 			if strings.HasPrefix(thrown.class, "extractor") {
-				croak(thrown.message)
 				*e = errors.New(thrown.message)
 				*r = nil
 			}
 		}
 	}(&repo, &err)
 
+	rs.extractor.preExtract()
 	repo.makedir()
 	front := fmt.Sprintf("#reposurgeon sourcetype %s\n", vcs.name)
 	repo.addEvent(newPassthrough(repo, front))
