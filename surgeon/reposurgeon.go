@@ -120,6 +120,7 @@ import (
 	terminal "golang.org/x/crypto/ssh/terminal"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
 	fqme "gitlab.com/esr/fqme"
+	shellquote "github.com/kballard/go-shellquote"
 )
 
 const version = "4.0-pre"
@@ -1431,6 +1432,8 @@ type CommitMeta struct {
 
 // Extractor specifies common features of all VCS-specific extractor classes
 type Extractor interface {
+	// Hook for any setup actions required before streaming
+	preExtract()
 	// Gather the topologically-ordered lists of revisions and the parent map
 	// (revlist and parent members)
 	gatherRevisionIDs(*RepoStreamer) error
@@ -1626,6 +1629,9 @@ func newGitExtractor() *GitExtractor {
 	// extractors.
 	ge := new(GitExtractor)
 	return ge
+}
+
+func (ge *GitExtractor) preExtract() {
 }
 
 func (ge *GitExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
@@ -1856,14 +1862,75 @@ type HgExtractor struct {
 	ColorMixer
 	tagsFound      bool
 	bookmarksFound bool
+	hgcl	       *HgClient
 }
 
 func newHgExtractor() *HgExtractor {
 	// Regardless of what revision and branch was current at
 	// start, after the hg extractor runs the tip (most recent
 	// revision on any branch) will be checked out.
-	ge := new(HgExtractor)
-	return ge
+	he := new(HgExtractor)
+	return he
+}
+
+func (he *HgExtractor) preExtract() {
+	// We have to do this at preExtract time, rather than newHgExtractor(),
+	// because the HgClient captures the cwd at the time of its creation
+	he.hgcl = NewHgClient()
+}
+
+// mimics captureFromProcess (and calls it if no HgClient)
+func (he *HgExtractor) capture(cmd ...string) (string, error) {
+	command := shellquote.Join(cmd...)
+	if he == nil || he.hgcl == nil {
+		return captureFromProcess(command)
+	}
+	logit(logCOMMANDS, "%s: capturing %s", rfc3339(time.Now()), command)
+	stdout, stderr, err := he.hgcl.runcommand(cmd)
+	content := string(stdout) + string(stderr)
+	if logEnable(logCOMMANDS) {
+		control.baton.printLog([]byte(content))
+	}
+	return content, err
+}
+
+func (he *HgExtractor) mustCapture(cmd []string, errorclass string) string {
+	data, err := he.capture(cmd...)
+	if err != nil {
+		panic(throw(errorclass,
+			"In %s, command %s failed: %v",
+			errorclass, shellquote.Join(cmd...), err))
+	}
+	return data
+}
+
+// mimics lineByLine (and calls it if no HgClient)
+func (he *HgExtractor) byLine(rs *RepoStreamer, cmd []string, errfmt string,
+			      hook func(string, *RepoStreamer) error) error {
+	command := shellquote.Join(cmd...)
+	if he == nil || he.hgcl == nil {
+		return lineByLine(rs, command, errfmt, hook)
+	}
+	if logEnable(logCOMMANDS) {
+		croak("%s: reading from '%s'\n",
+			rfc3339(time.Now()), command)
+	}
+	stdout, _, err := he.hgcl.runcommand(cmd)
+	if err != nil {
+		return err
+	}
+	last := false
+	for _, line := range strings.SplitAfter(string(stdout), "\n") {
+		if line == "" {
+			last = true
+			continue
+		}
+		if last { // can't happen
+			return errors.New("Line-splitting error")
+		}
+		hook(line, rs)
+	}
+	return nil
 }
 
 //gatherRevisionIDs gets the topologically-ordered list of revisions and parents.
@@ -1887,8 +1954,8 @@ func (he *HgExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
 		rs.parents[fields[0]] = parents
 		return nil
 	}
-	err := lineByLine(rs,
-		`hg log --template '{node|short} {p1node|short} {p2node|short}\n'`,
+	err := he.byLine(rs,
+		[]string{"hg", "log", "--template", `{node|short} {p1node|short} {p2node|short}\n`},
 		"hg's gatherRevisionIDs: %v",
 		hook)
 	// No way to reverse the log order, so it has to be done here
@@ -1917,8 +1984,8 @@ func (he *HgExtractor) gatherCommitData(rs *RepoStreamer) error {
 		rs.meta[hash].ai = ci
 		return nil
 	}
-	return lineByLine(rs,
-		`hg log --template '{node|short}|{sub(r"<([^>]*)>", "", author|person)} <{author|email}> {date|rfc822date}\n'`,
+	return he.byLine(rs,
+		[]string{"hg", "log", "--template", `{node|short}|{sub(r"<([^>]*)>", "", author|person)} <{author|email}> {date|rfc822date}\n`},
 		"hg's gatherCommitData: %v",
 		hook)
 }
@@ -1936,8 +2003,8 @@ func (he *HgExtractor) gatherCommitTimestamps() error {
 		return nil
 	}
 
-	return lineByLine(nil,
-		`hg log --template '{node|short} {date|rfc3339date}\n'`,
+	return he.byLine(nil,
+		[]string{"hg", "log", "--template", `{node|short} {date|rfc3339date}\n`},
 		"hg's gatherCommitTimestamps",
 		hook)
 }
@@ -1946,7 +2013,7 @@ func (he *HgExtractor) gatherCommitTimestamps() error {
 func (he *HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
 	// Some versions of mercurial can return an error for showconfig
 	// when the config is not present. This isn't an error.
-	bookmarkRef, errcode := captureFromProcess("hg showconfig reposurgeon.bookmarks")
+	bookmarkRef, errcode := he.capture("hg", "showconfig", "reposurgeon.bookmarks")
 	if errcode != nil {
 		bookmarkRef = ""
 	} else {
@@ -1971,8 +2038,8 @@ func (he *HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
 		rs.refs.set("refs/heads/"+n, h)
 		return nil
 	}
-	err := lineByLine(rs,
-		"hg branches --closed",
+	err := he.byLine(rs,
+		[]string{"hg", "branches", "--closed"},
 		"fetching hg branches",
 		hook1)
 
@@ -1993,8 +2060,8 @@ func (he *HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
 			he.bookmarksFound = true
 			return nil
 		}
-		err = lineByLine(rs,
-			"hg bookmarks",
+		err = he.byLine(rs,
+			[]string{"hg", "bookmarks"},
 			"fetching hg bookmarks",
 			hook2)
 		if err != nil {
@@ -2016,8 +2083,8 @@ func (he *HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
 		rs.refs.set("refs/tags/"+n, h[:12])
 		return nil
 	}
-	err = lineByLine(rs,
-		`hg log --rev='tag()' --template='{tags}\t{node}\n'`,
+	err = he.byLine(rs,
+		[]string{"hg", "log", "--rev=tag()", `--template={tags}\t{node}\n`},
 		"fetching hg tags",
 		hook3)
 	if err != nil {
@@ -2032,8 +2099,8 @@ func (he *HgExtractor) gatherAllReferences(rs *RepoStreamer) error {
 
 func (he *HgExtractor) _hgBranchItems() OrderedMap {
 	out := newOrderedMap()
-	err := lineByLine(nil,
-		`hg log --template '{node|short} {branch}\n'`,
+	err := he.byLine(nil,
+		[]string{"hg", "log", "--template", `{node|short} {branch}\n`},
 		"in _hgBranchItems: %v",
 		func(line string, rs *RepoStreamer) error {
 			fields := strings.Fields(line)
@@ -2136,7 +2203,7 @@ func (he *HgExtractor) postExtract(repo *Repository) {
 
 // isClean returns true if repo has no unsaved changes
 func (he *HgExtractor) isClean() bool {
-	data, err := captureFromProcess("hg status --modified")
+	data, err := he.capture("hg", "status", "--modified")
 	if err != nil {
 		panic(throw("extractor", "Couldn't spawn hg status --modified: %v", err))
 	}
@@ -2153,28 +2220,19 @@ func mustChdir(directory string, errorclass string) {
 	logit(logSHUFFLE, "changing directory to %s", directory)
 }
 
-func mustCaptureFromProcess(command string, errorclass string) string {
-	data, err := captureFromProcess(command)
-	if err != nil {
-		panic(throw(errorclass,
-			"In %s, command %s failed: %v",
-			errorclass, command, err))
-	}
-	return data
-}
-
 // checkout checka the directory out to a specified revision, return a manifest.
 func (he HgExtractor) checkout(rev string) orderedStringSet {
 	pwd, err := os.Getwd()
 	if err != nil {
 		panic(throw("extractor", "Could not get working directory: %v", err))
 	}
-	_, errcode := captureFromProcess("hg update -C " + rev)
+	_, errcode := he.capture("hg", "update", "-C", rev)
 	if errcode != nil {
 		panic(throw("extractor", "Could not check out: %v", errcode))
 	}
 	// 'hg update -C' can delete and recreate the current working
 	// directory, so cd to what should be the current directory
+	// TODO this needs to prod the hgclient in some way
 	mustChdir(pwd, "extractor")
 
 	// Sometimes, hg update can fail because of missing subrepos. When that
@@ -2187,7 +2245,7 @@ func (he HgExtractor) checkout(rev string) orderedStringSet {
 	// stuff in .hgsub files. This is documented poorly at best so it's
 	// unclear how things should work ideally.
 	if errcode != nil {
-		subrepoTxt, subcatErr := captureFromProcess("hg cat -r" + rev + " .hgsub")
+		subrepoTxt, subcatErr := he.capture("hg", "cat", "-r", rev, ".hgsub")
 		subrepoArgs := make([]string, 0)
 		if subcatErr == nil {
 			// If there's a subrepository file, try to parse the
@@ -2203,10 +2261,10 @@ func (he HgExtractor) checkout(rev string) orderedStringSet {
 		// Since all is not well, clear everything and try from zero.
 		// Sidesteps some issues with problematic checkins.
 		// Remove checked in files.
-		captureFromProcess("hg update -C null")
+		he.capture("hg", "update", "-C", "null")
 		mustChdir(pwd, "extractor")
 		// Remove extraneous files.
-		captureFromProcess("hg purge --config extensions.purge= --all")
+		he.capture("hg", "purge", "--config", "extensions.purge=", "--all")
 		mustChdir(pwd, "extractor")
 
 		// The Python version of this code had a section
@@ -2225,28 +2283,29 @@ func (he HgExtractor) checkout(rev string) orderedStringSet {
 		// update, but exclude the subrepo paths, which are
 		// probably borken.
 		if len(subrepoArgs) > 0 {
-			captureFromProcess("hg revert --all --no-backup -r " + rev + strings.Join(subrepoArgs, " "))
+			revertCmd := []string{"hg", "revert", "--all", "--no-backup", "-r", rev}
+			he.capture(append(revertCmd, subrepoArgs...)...)
 			mustChdir(pwd, "extractor")
-			mustCaptureFromProcess("hg debugsetparents "+rev, "extracror")
+			he.mustCapture([]string{"hg", "debugsetparents", rev}, "extractor")
 			mustChdir(pwd, "extractor")
-			mustCaptureFromProcess("hg debugrebuilddirstate", "extractor")
+			he.mustCapture([]string{"hg", "debugrebuilddirstate"}, "extractor")
 			mustChdir(pwd, "extractor")
 		} else {
-			reupTxt, reupErr := captureFromProcess("update -C" + rev)
+			reupTxt, reupErr := he.capture("hg", "update", "-C", rev)
 			if reupErr != nil {
 				panic(throw("extractor", "Failed to update to revision %s: %s", rev, reupTxt))
 			}
 			mustChdir(pwd, "extractor")
 		}
 	}
-	data := mustCaptureFromProcess("hg manifest", "extractor")
+	data := he.mustCapture([]string{"hg", "manifest"}, "extractor")
 	manifest := strings.Trim(data, "\n")
 	return newOrderedStringSet(strings.Split(manifest, "\n")...)
 }
 
 // getComment returns a commit's change comment as a string.
 func (he HgExtractor) getComment(rev string) string {
-	data, err := captureFromProcess("hg log -r " + rev + ` --template '{desc}\n'`)
+	data, err := he.capture("hg", "log", "-r", rev, "--template", `{desc}\n`)
 	if err != nil {
 		panic(throw("extractor", "Couldn't spawn hg log: %v", err))
 	}
@@ -2311,6 +2370,8 @@ func (rs *RepoStreamer) fileSetAt(revision string) orderedStringSet {
 }
 
 func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (*Repository, error) {
+	rs.extractor.preExtract()
+
 	if !rs.extractor.isClean() {
 		return nil, fmt.Errorf("repository directory has unsaved changes")
 	}

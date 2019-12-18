@@ -9,6 +9,7 @@ require (
 	github.com/google/go-cmp v0.3.1
 	github.com/google/uuid v1.1.1
 	github.com/ianbruene/go-difflib v1.1.2
+	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/termie/go-shutil v0.0.0-20140729215957-bcacb06fecae
 	gitlab.com/esr/fqme v0.1.0
 	gitlab.com/ianbruene/kommandant v0.6.0
