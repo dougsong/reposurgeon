@@ -1988,7 +1988,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 				if info == "" {
 					info = info2
 				} else if info2 != "" {
-					info = info + "," + info2
+					info = info + "\n" + info2
 				}
 				if info != "" {
 					// We can only process mergeinfo if we find a commit
