@@ -2111,19 +2111,10 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 								continue
 							}
 							lastrev, _ := strconv.Atoi(strings.Split(last.legacyID, ".")[0])
-							if lastrev > realrev {
-								// If the mergeinfo has been made on an empty
-								// commit, asking to merge revisions that were
-								// later than the last non-empty commit, clamp.
-								last = lastRelevantCommit(sp, revidx(realrev - 1), fromPath)
-								if last == nil {
-									continue
-								}
-								lastrev, _ = strconv.Atoi(strings.Split(last.legacyID, ".")[0])
-							}
 							if lastrev < rng.min {
 								// Snapping the revisions to existing commits
 								// went past the minimum revision in the range
+								logit(logWARN, "Ignoring bogus mergeinfo with no valid commit in the range")
 								continue
 							}
 							index := sp.repo.eventToIndex(last)
@@ -2134,6 +2125,10 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 							logit(logTOPOLOGY,
 								"mergeinfo says %s is merged up to %s <%s> in %s <%s>",
 								fromPath, last.mark, last.legacyID, commit.mark, commit.legacyID)
+							if index >= destIndex {
+								logit(logWARN, "Ignoring bogus mergeinfo trying to create a forward merge")
+								continue
+							}
 							mergeSources[index] = true
 							if index < minIndex {
 								minIndex = index
