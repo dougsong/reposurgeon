@@ -1928,8 +1928,14 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 				continue
 			}
 			// One path, one range list
-			path, ranges := fields[0], fields[1]
-			revs := []RevRange{}
+			branch, ranges := fields[0], fields[1]
+			if branch[:1] == svnSep {
+				branch = branch[1:]
+			}
+			if branch[len(branch)-1] == svnSep[0] {
+				branch = branch[:len(branch)-1]
+			}
+			revs := mergeinfo[branch]
 			for _, span := range strings.Split(ranges, ",") {
 				// Ignore non-inheritable merges, they represent
 				// partial merges or cherry-picks.
@@ -1946,6 +1952,9 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 					revs = append(revs, RevRange{minRev, maxRev})
 				}
 			}
+			mergeinfo[branch] = revs
+		}
+		for branch, revs := range mergeinfo {
 			sort.Slice(revs, func(i, j int) bool {
 				return revs[i].min < revs[j].min ||
 					(revs[i].min == revs[j].min && revs[i].max < revs[j].max)
@@ -1962,7 +1971,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 					last++
 				}
 			}
-			mergeinfo[strings.Trim(path, svnSep)] = revs[:last+1]
+			mergeinfo[branch] = revs[:last+1]
 		}
 		return mergeinfo
 	}
@@ -1975,8 +1984,11 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 			}
 			if node.hasProperties() {
 				info := node.props.get("svn:mergeinfo")
+				info2 := node.props.get("svnmerge-integrated")
 				if info == "" {
-					info = node.props.get("svnmerge-integrated")
+					info = info2
+				} else if info2 != "" {
+					info = info + "," + info2
 				}
 				if info != "" {
 					// We can only process mergeinfo if we find a commit
