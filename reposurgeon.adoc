@@ -2437,7 +2437,7 @@ When a branch or tag was deleted in SVN, preserve the history up to
 deletion in a git ref under refs/deleted/.
 
 --cvsignores::
-Suppress the nornal deletion of .cvsignore files.
+Suppress the normal deletion of .cvsignore files.
 
 These modifiers can go anywhere in any order on the read command
 line after the read verb. They must be whitespace-separated.
