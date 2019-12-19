@@ -1461,6 +1461,14 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 			// No fileops, just one directory node, pass
 			// it through.  Later we'll use this node path
 			// for branch assignment.
+
+			// A single-directory commit at position one
+			// pretty much has to be trunk creation.  If we
+			// were to tagify it there would be no place to
+			// put it.
+			if ri == 1 {
+				continue
+			}
 		}
 
 		// We're not trying to do branch structure yet.
