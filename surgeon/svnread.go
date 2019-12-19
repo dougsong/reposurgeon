@@ -2460,7 +2460,7 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 		baton.percentProgress(uint64(index) + 1)
 	}
 	sp.repo.delete(deletia, []string{"--tagback", "--tagify"})
-	baton.endProcess()}
+	baton.endProgress()}
 
 func svnProcessCleanTags(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
 	// Phase D:
