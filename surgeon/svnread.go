@@ -1090,7 +1090,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 			if node.kind == sdFILE || (node.kind == sdDIR && isDeclaredBranch(node.path) && node.fromRev != 0) {
 				curbranch := ""
 				if !nobranch {
-					if isDeclaredBranch(node.path) {
+					if node.kind == sdDIR && isDeclaredBranch(node.path) {
 						curbranch = node.path
 					} else {
 						curbranch, _ = splitSVNBranchPath(node.path)
@@ -1568,11 +1568,12 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 	const splitwarn = "\n[[Split portion of a mixed commit.]]\n"
 	sort.Slice(splits, func(i, j int) bool {return splits[i].loc > splits[j].loc})
 	for i, split := range splits {
-		logit(logEXTRACT, "split commit at %d resolving to %d commits", split.loc, len(split.splits)+1)
+		base := sp.repo.events[split.loc].(*Commit)
+		logit(logEXTRACT, "split commit at %s <%s> resolving to %d commits",
+			base.mark, base.legacyID, len(split.splits)+1)
 		for _, idx := range split.splits {
 			sp.repo.splitCommitByIndex(split.loc, idx)
 		}
-		base := sp.repo.events[split.loc].(*Commit)
 		baseID := base.legacyID
 		base.Comment += splitwarn
 		base.legacyID += ".1"
