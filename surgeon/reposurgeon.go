@@ -19099,8 +19099,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		return ""
 	}
 	control.baton.startProgress("processing changelogs", uint64(len(repo.events)))
-	attributions := make([][]string, len(selection))
-	blobRefs := make([][]string, len(selection))
+	attributions := make([]string, len(selection))
 	evts := new(Safecounter) // shared between threads, for progression only
 	cc := new(Safecounter)
 	cl := new(Safecounter)
@@ -19123,6 +19122,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 	repo.walkEvents(selection, func(eventRank int, event Event) {
 		commit, iscommit := event.(*Commit)
 		evts.bump()
+		defer control.baton.percentProgress(uint64(evts.value))
 		if !iscommit {
 			return
 		}
@@ -19134,11 +19134,19 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		for _, op := range commit.operations() {
 			if op.op != opM || !isChangeLog(op.Path) {
 				notChangelog = true
+				break
 			}
 		}
 		if !notChangelog {
 			return
 		}
+		foundAttribution := ""
+		// Let's say an attribution is active when its <author><date> line is
+		// newly added, or if there is a new non-whitespace line added in the
+		// block just following the <author><date> line.  If there is exactly
+		// one active attribution, we will use that for the commit author.
+		// Else, skip the commit as the attribution would be ambiguous.  This
+		// is the case in merge commits: several changelogs are incorporated.
 		for _, op := range commit.operations() {
 			if op.op == opM && isChangeLog(op.Path) {
 				cl.bump()
@@ -19150,108 +19158,109 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				}
 				newcontent := repo.markToEvent(op.ref).(*Blob).getContent()
 				now := strings.Split(string(newcontent), "\n")
-				var attribution string
-				var commonCount int
-				//print("Analyzing Changelog at %s." % commit.mark)
+				// Analyze the diff
 				differ := difflib.NewMatcherWithJunk(then, now, true, nil)
 				comparison := differ.GetOpCodes()
+				var lastUnchanged difflib.OpCode
+				var lastIsValid bool
 				for _, difflines := range comparison {
-					if difflines.Tag == 'i' || difflines.Tag == 'r' {
+					if difflines.Tag == 'e' {
+						lastUnchanged = difflines
+						lastIsValid = true
+					} else if difflines.Tag == 'i' || difflines.Tag == 'r' {
 						for _, diffline := range now[difflines.J1:difflines.J2] {
-							attribution = parseAttributionLine(diffline)
-							if attribution != "" {
-								goto attributionFound
+							if strings.TrimSpace(diffline) != "" {
+								attribution := parseAttributionLine(diffline)
+								if attribution != "" {
+									// we found an active attribution line
+									goto attributionFound
+								} else if lastIsValid {
+									// this is not an attribution line, search for
+									// the last one since we are in its block
+									for j := lastUnchanged.J2-1; j >= lastUnchanged.J1; j-- {
+										attribution = parseAttributionLine(now[j])
+										if attribution != "" {
+											// this is the active attribution
+											// corresponding to the added chunk
+											goto attributionFound
+										}
+									}
+								}
+								continue
+								attributionFound:
+								if foundAttribution != "" &&
+										foundAttribution != attribution {
+									// there is more than one active, skip the commit
+									return
+								}
+								foundAttribution = attribution
+								lastIsValid = false // it is now irrelevant
 							}
 						}
 					}
+					control.baton.twirl()
 				}
-				// This is the tricky part.  We want the
-				// last attribution from before the change
-				// band to stick because there is none *in*
-				// the change band. If there's more than one,
-				// assume the most recent is the latest and
-				// correct. First count the lines before the
-				// first change...
-				for _, difflines := range comparison {
-					if difflines.Tag == 'e' {
-						commonCount = difflines.I2
-					} else {
-						break
-					}
-				}
-				// Then parse the attributions in reverse order to
-				// avoid parsing and tossing away a lot of them.
-				for i := commonCount - 1; i >= 0; i-- {
-					attribution = parseAttributionLine(now[i])
-					if attribution != "" {
-						goto attributionFound
-					}
-				}
-				continue
-			attributionFound:
-				attributions[eventRank] = append(attributions[eventRank], attribution)
-				blobRefs[eventRank] = append(blobRefs[eventRank], op.ref)
 			}
 		}
-		control.baton.percentProgress(uint64(evts.value))
+		attributions[eventRank] = foundAttribution
 	})
 	control.baton.endProgress()
 	for eventRank, eventID := range selection {
 		commit, iscommit := repo.events[eventID].(*Commit)
-		if !iscommit {
+		attribution := attributions[eventRank]
+		if !iscommit || attribution == "" {
 			continue
 		}
-		for i, attribution := range attributions[eventRank] {
-			// Invalid addresses will cause fatal errors if they get into a
-			// fast-import stream. Filter out bogons...
-			matches := addressRE.FindAllStringSubmatch(strings.TrimSpace(attribution), -1)
-			if matches == nil {
-				logit(logSHOUT, "invalid attribution %q in blob %s", attribution, blobRefs[eventRank][i])
-				continue
-			}
-			cm++
-			newattr := commit.committer.clone()
-			newattr.email = matches[0][2]
-			newattr.fullname = matches[0][1]
-			// This assumes email addreses of contributors are unique.
-			// We could get wacky results if two people with different
-			// human names but identicall email addresses were run through
-			// this code, but that outcome seems wildly unlikely.
-			if newattr.fullname == "" {
-				for _, mapentry := range repo.authormap {
-					if newattr.email == mapentry.email {
-						newattr.fullname = mapentry.fullname
-						break
-					}
+		// Invalid addresses will cause fatal errors if they get into a
+		// fast-import stream. Filter out bogons...
+		matches := addressRE.FindAllStringSubmatch(strings.TrimSpace(attribution), -1)
+		if matches == nil {
+			logit(logSHOUT, "invalid attribution %q in commit %s <%s>",
+				attribution, commit.mark, commit.legacyID)
+			continue
+		}
+		cm++
+		newattr := commit.committer.clone()
+		newattr.email = matches[0][2]
+		newattr.fullname = matches[0][1]
+		// This assumes email addreses of contributors are unique.
+		// We could get wacky results if two people with different
+		// human names but identicall email addresses were run through
+		// this code, but that outcome seems wildly unlikely.
+		if newattr.fullname == "" {
+			for _, mapentry := range repo.authormap {
+				if newattr.email == mapentry.email {
+					newattr.fullname = mapentry.fullname
+					break
 				}
 			}
-			if tz, ok := repo.tzmap[newattr.email]; ok { //&& unicode.IsLetter(rune(tz.String()[0])) {
-				newattr.date.timestamp = newattr.date.timestamp.In(tz)
-			} else if zone := zoneFromEmail(newattr.email); zone != "" {
-				newattr.date.setTZ(zone)
-			}
-			if val, ok := repo.aliases[ContributorID{fullname: newattr.fullname, email: newattr.email}]; ok {
-				newattr.fullname, newattr.email = val.fullname, val.email
+		}
+		if tz, ok := repo.tzmap[newattr.email]; ok { //&& unicode.IsLetter(rune(tz.String()[0])) {
+			newattr.date.timestamp = newattr.date.timestamp.In(tz)
+		} else if zone := zoneFromEmail(newattr.email); zone != "" {
+			newattr.date.setTZ(zone)
+		}
+		if val, ok := repo.aliases[ContributorID{fullname: newattr.fullname, email: newattr.email}]; ok {
+			newattr.fullname, newattr.email = val.fullname, val.email
+		}
+		if len(commit.authors) == 0 {
+			commit.authors = append(commit.authors, *newattr)
+		} else {
+			// Required because git sometimes fills in the
+			// author field from the committer.
+			if commit.authors[len(commit.authors)-1].email == commit.committer.email {
+				commit.authors = commit.authors[:len(commit.authors)-1]
 			}
 			if len(commit.authors) == 0 {
-				commit.authors = append(commit.authors, *newattr)
-			} else {
-				// Required because git sometimes fills in the
-				// author field from the committer.
-				if commit.authors[len(commit.authors)-1].email == commit.committer.email {
-					commit.authors = commit.authors[:len(commit.authors)-1]
+				matched := false
+				for _, author := range commit.authors {
+					if author.email == newattr.email {
+						matched = true
+					}
 				}
-				if len(commit.authors) == 0 {
-					matched := false
-					for _, author := range commit.authors {
-						if author.email == newattr.email {
-							matched = true
-						}
-					}
-					if !matched {
-						commit.authors = append(commit.authors, *newattr)
-						cd++
-					}
+				if !matched {
+					commit.authors = append(commit.authors, *newattr)
+					cd++
 				}
 			}
 		}

@@ -75,7 +75,6 @@ M 100644 :6 bar
 commit refs/heads/test
 #legacy-id 4
 mark :8
-author First Author <first@author.example> 1576333768 +0000
 committer jmyers <jmyers> 1576333768 +0000
 data 20
 Create test branch.
