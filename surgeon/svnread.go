@@ -93,7 +93,7 @@ func isDeclaredBranch(path string) bool {
 	if path == "" {
 		return false
 	}
-	if path[len(path) - 1] == '/' {
+	if path[len(path) - 1] == svnSep[0] {
 		np = path[:len(path) - 1]
 	}
 	maybeBranch := false
@@ -1680,10 +1680,10 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 // filled, so can only be used after phase 8a has run.
 func lastRelevantCommit(sp *StreamParser, maxrev revidx, branch string) *Commit {
 	// Make branch look like a branch
-	if branch[:1] == svnSep {
+	if branch != "" && branch[:1] == svnSep {
 		branch = branch[1:]
 	}
-	if branch[len(branch)-1] == svnSep[0] {
+	if branch != "" && branch[len(branch)-1] == svnSep[0] {
 		branch = branch[:len(branch)-1]
 	}
 	if list, ok := sp.lastCommitOnBranchAt[branch]; ok {
@@ -1937,10 +1937,10 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 			}
 			// One path, one range list
 			branch, ranges := fields[0], fields[1]
-			if branch[:1] == svnSep {
+			if branch != "" && branch[:1] == svnSep {
 				branch = branch[1:]
 			}
-			if branch[len(branch)-1] == svnSep[0] {
+			if branch !="" && branch[len(branch)-1] == svnSep[0] {
 				branch = branch[:len(branch)-1]
 			}
 			revs := mergeinfo[branch]
