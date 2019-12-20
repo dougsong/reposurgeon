@@ -1,0 +1,279 @@
+SVN-fs-dump-format-version: 2
+ ## Stability test for yet another delete-rename case
+
+UUID: 0b648464-179f-11ea-9486-433ddec32310
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2019-12-05T20:37:24.660631Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 128
+Content-length: 128
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-05T20:37:42.590586Z
+K 7
+svn:log
+V 27
+Create directory structure.
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 113
+Content-length: 113
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-05T20:37:52.873968Z
+K 7
+svn:log
+V 12
+Add foo/bar.
+PROPS-END
+
+Node-path: trunk/foo
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/foo/bar
+Node-kind: file
+Node-action: add
+Text-content-md5: 7cffcd026a8fc1ad40b317d52b3ce78c
+Text-content-sha1: 391f7abfca1124c3ca937e5f85687352bcd9f261
+Prop-content-length: 10
+Text-content-length: 8
+Content-length: 18
+
+PROPS-END
+foo/bar
+
+
+Revision-number: 3
+Prop-content-length: 111
+Content-length: 111
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-05T20:38:08.358638Z
+K 7
+svn:log
+V 10
+Add files.
+PROPS-END
+
+Node-path: trunk/README
+Node-kind: file
+Node-action: add
+Text-content-md5: a165b0c48efd38c3c2725a282922c6f1
+Text-content-sha1: 0e955b66534676c5311cae5168c617b8c22576a0
+Prop-content-length: 10
+Text-content-length: 7
+Content-length: 17
+
+PROPS-END
+README
+
+
+Node-path: trunk/x
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/x/y
+Node-kind: file
+Node-action: add
+Text-content-md5: c543b900212ae1a1b6f24d809f1da4bd
+Text-content-sha1: c4b319decf07e7bc45ae08e74c2fd1c971e5d572
+Prop-content-length: 10
+Text-content-length: 9
+Content-length: 19
+
+PROPS-END
+x/y file
+
+
+Revision-number: 4
+Prop-content-length: 121
+Content-length: 121
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-05T20:38:17.775208Z
+K 7
+svn:log
+V 20
+Add example branch.
+
+PROPS-END
+
+Node-path: branches/example
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 3
+Node-copyfrom-path: trunk
+
+
+Revision-number: 5
+Prop-content-length: 118
+Content-length: 118
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-05T20:38:30.633681Z
+K 7
+svn:log
+V 17
+change on branch
+
+PROPS-END
+
+Node-path: branches/example/README
+Node-kind: file
+Node-action: change
+Text-content-md5: 1ce250af974b349a1e1828fca06a7f24
+Text-content-sha1: 61d4563075cfa7fbd5b88cced7ea628cd8f4e54f
+Text-content-length: 14
+Content-length: 14
+
+branch readme
+
+
+Revision-number: 6
+Prop-content-length: 121
+Content-length: 121
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-05T20:38:56.981100Z
+K 7
+svn:log
+V 20
+Remove directory x.
+
+PROPS-END
+
+Node-path: trunk/x
+Node-action: delete
+
+
+Revision-number: 7
+Prop-content-length: 114
+Content-length: 114
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-05T20:39:08.366552Z
+K 7
+svn:log
+V 13
+Remove trunk.
+PROPS-END
+
+Node-path: trunk
+Node-action: delete
+
+
+Revision-number: 8
+Prop-content-length: 113
+Content-length: 113
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-05T20:39:36.688708Z
+K 7
+svn:log
+V 12
+Readd trunk.
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 6
+Node-copyfrom-path: trunk
+
+
