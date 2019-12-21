@@ -349,7 +349,7 @@ func appendRevisionRecords(slice []RevisionRecord, data ...RevisionRecord) []Rev
 }
 
 func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet, baton *Baton, filesize int64) {
-	defer trace.StartRegion(ctx, "SVN Phase 1: read dump file").End()
+	defer trace.StartRegion(ctx, "SVN phase 1: read dump file").End()
 	sp.revisions = make([]RevisionRecord, 0)
 	sp.hashmap = make(map[string]*NodeAction)
 	sp.splitCommits = make(map[revidx]int)
@@ -358,7 +358,7 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 	trackSymlinks := newOrderedStringSet()
 	propertyStash := make(map[string]*OrderedMap)
 
-	baton.startProgress("SVN Phase 1: read dump file", uint64(filesize))
+	baton.startProgress("SVN phase 1: read dump file", uint64(filesize))
 	for {
 		line := sp.readline()
 		if len(line) == 0 {
@@ -1802,7 +1802,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	}
 	baton.endProgress()
 	logit(logEXTRACT, "SVN Phase 8b: find branch root parents")
-	baton.startProgress("SVN phase 8b: find the parent of branch roots", uint64(len(maybeRoots)))
+	baton.startProgress("SVN phase 8b: find branch root parents", uint64(len(maybeRoots)))
 	var parentlock sync.Mutex
 	reparent := func(commit, parent *Commit) {
 		// Prepend a deleteall to avoid inheriting our new parent's content
@@ -2225,7 +2225,7 @@ func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSe
 	logit(logEXTRACT, "SVN Phase A: disambiguate deleted refs.")
 	// First we build a map from branches to commits with that branch, to avoid
 	// an O(n^2) computation cost.
-	baton.startProgress("SVN phase Aa: precompute branch map.", uint64(len(sp.repo.events)))
+	baton.startProgress("SVN phase A1: precompute branch map.", uint64(len(sp.repo.events)))
 	branchToCommits := map[string] []*Commit{}
 	commitCount := 0
 	for idx, event := range sp.repo.events {
@@ -2241,7 +2241,7 @@ func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSe
 	usedRefs := map[string]int{}
 	processed := 0
 	seen := 0
-	baton.startProgress("SVN phase Ab: disambiguate deleted refs.", uint64(commitCount))
+	baton.startProgress("SVN phase A2: disambiguate deleted refs.", uint64(commitCount))
 	for branch, commits := range branchToCommits {
 		lastFixed := -1
 		for i, commit := range commits {
