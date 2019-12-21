@@ -12062,6 +12062,7 @@ func (rs *Reposurgeon) PreCmd(line string) string {
 }
 
 func (rs *Reposurgeon) PostCmd(stop bool, lineIn string) bool {
+	control.baton.Sync()
 	if control.logcounter > rs.logHighwater {
 		respond("%d new log message(s)", control.logcounter-rs.logHighwater)
 	}
