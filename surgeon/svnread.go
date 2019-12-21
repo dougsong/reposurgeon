@@ -1052,17 +1052,24 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 
 	ignorenode := func(nodepath string, explicit string) *NodeAction {
 		blob := newBlob(sp.repo)
-		ignores := explicit
+		var buf bytes.Buffer
 		if nodepath == "" || isDeclaredBranch(nodepath) {
-			ignores = subversionDefaultIgnores + explicit
+			buf.WriteString(subversionDefaultIgnores)
 		}
-		blob.setContent([]byte(ignores), noOffset)
+		for _, line := range strings.SplitAfter(explicit, "\n") {
+			if line != "" {
+				buf.WriteByte(svnSep[0])
+				buf.WriteString(line)
+			}
+		}
+		ignores := buf.Bytes()
+		blob.setContent(ignores, noOffset)
 		subnode := new(NodeAction)
 		subnode.path = filepath.Join(nodepath, ".gitignore")
 		subnode.action = sdADD
 		subnode.kind = sdFILE
 		subnode.blob = blob
-		subnode.contentHash = fmt.Sprintf("%x", md5.Sum([]byte(ignores)))
+		subnode.contentHash = fmt.Sprintf("%x", md5.Sum(ignores))
 		subnode.generated = true
 		return subnode
 	}
