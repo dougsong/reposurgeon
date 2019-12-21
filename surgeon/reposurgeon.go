@@ -12049,7 +12049,7 @@ func (rs *Reposurgeon) inScript() bool {
 //
 func (rs *Reposurgeon) DoEOF(lineIn string) bool {
 	if rs.inputIsStdin {
-		respond("End of file on the terminal... why?")
+		respond("\n")
 	}
 	return true
 }
