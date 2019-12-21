@@ -2917,6 +2917,17 @@ func newOrderedMap() OrderedMap {
 	return *d
 }
 
+func copyOrderedMap(source *OrderedMap) *OrderedMap {
+	d := new(OrderedMap)
+	d.keys = make([]string, len(source.keys))
+	d.dict = make(map[string]string, len(source.dict))
+	for i, k := range source.keys {
+		d.keys[i] = k
+		d.dict[k] = source.dict[k]
+	}
+	return d
+}
+
 func (d *OrderedMap) get(hd string) string {
 	payload, ok := d.dict[hd]
 	if !ok {
