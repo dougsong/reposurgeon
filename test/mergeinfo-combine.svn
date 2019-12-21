@@ -1,0 +1,331 @@
+SVN-fs-dump-format-version: 2
+ ## Test sorting / combining ranges in mergeinfo properties
+
+UUID: 193a21f4-e4d4-4e2b-8920-5321d5dfac6d
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2019-12-21T16:28:53.753624Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 128
+Content-length: 128
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-21T16:29:01.676654Z
+K 7
+svn:log
+V 27
+Create directory structure.
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 108
+Content-length: 108
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-21T16:29:12.182560Z
+K 7
+svn:log
+V 8
+Add foo.
+PROPS-END
+
+Node-path: trunk/foo
+Node-kind: file
+Node-action: add
+Text-content-md5: d3b07384d113edec49eaa6238ad5ff00
+Text-content-sha1: f1d2d2f924e986ac86fdf7b36c94bcdf32beec15
+Prop-content-length: 10
+Text-content-length: 4
+Content-length: 14
+
+PROPS-END
+foo
+
+
+Revision-number: 3
+Prop-content-length: 108
+Content-length: 108
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-21T16:29:29.992912Z
+K 7
+svn:log
+V 8
+Add bar.
+PROPS-END
+
+Node-path: trunk/bar
+Node-kind: file
+Node-action: add
+Text-content-md5: c157a79031e1c40f85931829bc5fc552
+Text-content-sha1: e242ed3bffccdf271b7fbaf34ed72d089537b42f
+Prop-content-length: 10
+Text-content-length: 4
+Content-length: 14
+
+PROPS-END
+bar
+
+
+Revision-number: 4
+Prop-content-length: 108
+Content-length: 108
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-21T16:29:39.444904Z
+K 7
+svn:log
+V 8
+Add baz.
+PROPS-END
+
+Node-path: trunk/baz
+Node-kind: file
+Node-action: add
+Text-content-md5: 258622b1688250cb619f3c9ccaefb7eb
+Text-content-sha1: 6eadeac2dade6347e87c0d24fd455feffa7069f0
+Prop-content-length: 10
+Text-content-length: 4
+Content-length: 14
+
+PROPS-END
+baz
+
+
+Revision-number: 5
+Prop-content-length: 115
+Content-length: 115
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-21T16:29:54.486081Z
+K 7
+svn:log
+V 14
+Create branch.
+PROPS-END
+
+Node-path: branches/test
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 4
+Node-copyfrom-path: trunk
+
+
+Revision-number: 6
+Prop-content-length: 106
+Content-length: 106
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-21T16:30:31.977181Z
+K 7
+svn:log
+V 6
+Add x.
+PROPS-END
+
+Node-path: trunk/x
+Node-kind: file
+Node-action: add
+Text-content-md5: 401b30e3b8b5d629635a5c613cdb7919
+Text-content-sha1: 6fcf9dfbd479ed82697fee719b9f8c610a11ff2a
+Prop-content-length: 10
+Text-content-length: 2
+Content-length: 12
+
+PROPS-END
+x
+
+
+Revision-number: 7
+Prop-content-length: 106
+Content-length: 106
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-21T16:30:40.621534Z
+K 7
+svn:log
+V 6
+Add y.
+PROPS-END
+
+Node-path: trunk/y
+Node-kind: file
+Node-action: add
+Text-content-md5: 009520053b00386d1173f3988c55d192
+Text-content-sha1: 9063a9f0e032b6239403b719cbbba56ac4e4e45f
+Prop-content-length: 10
+Text-content-length: 2
+Content-length: 12
+
+PROPS-END
+y
+
+
+Revision-number: 8
+Prop-content-length: 106
+Content-length: 106
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-21T16:30:50.594467Z
+K 7
+svn:log
+V 6
+Add z.
+PROPS-END
+
+Node-path: trunk/z
+Node-kind: file
+Node-action: add
+Text-content-md5: a8a78d0ff555c931f045b6f448129846
+Text-content-sha1: 3a710d2a84f856bc4e1c0bbb93ca517893c48691
+Prop-content-length: 10
+Text-content-length: 2
+Content-length: 12
+
+PROPS-END
+z
+
+
+Revision-number: 9
+Prop-content-length: 208
+Content-length: 208
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-21T16:33:11.582632Z
+K 7
+svn:log
+V 106
+Merge from trunk to branch, with synthetic svnmerge-integrated
+property to test sorting / merging ranges.
+
+PROPS-END
+
+Node-path: branches/test
+Node-kind: dir
+Node-action: change
+Prop-content-length: 59
+Content-length: 59
+
+K 19
+svnmerge-integrated
+V 18
+/trunk:1-4,2-3,6-8
+PROPS-END
+
+
+Node-path: branches/test/x
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 8
+Node-copyfrom-path: trunk/x
+Text-copy-source-md5: 401b30e3b8b5d629635a5c613cdb7919
+Text-copy-source-sha1: 6fcf9dfbd479ed82697fee719b9f8c610a11ff2a
+
+
+Node-path: branches/test/y
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 8
+Node-copyfrom-path: trunk/y
+Text-copy-source-md5: 009520053b00386d1173f3988c55d192
+Text-copy-source-sha1: 9063a9f0e032b6239403b719cbbba56ac4e4e45f
+
+
+Node-path: branches/test/z
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 8
+Node-copyfrom-path: trunk/z
+Text-copy-source-md5: a8a78d0ff555c931f045b6f448129846
+Text-copy-source-sha1: 3a710d2a84f856bc4e1c0bbb93ca517893c48691
+
+

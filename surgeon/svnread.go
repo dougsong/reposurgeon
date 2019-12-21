@@ -1978,6 +1978,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 				} else {
 					// There is a gap, add a range to the union
 					last++
+					revs[last] = revs[i]
 				}
 			}
 			mergeinfo[branch] = revs[:last+1]
