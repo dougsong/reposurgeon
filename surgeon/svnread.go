@@ -2487,10 +2487,10 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 			} else {
 				if commit.Branch != "refs/heads/master" {
 					msg := ""
-					if commit.legacyID != "" && sp.repo.vcs != nil && sp.repo.vcs.name == "svn" {
-						msg += fmt.Sprintf(" r%s:", commit.legacyID)
+					if commit.legacyID != "" {
+						msg = fmt.Sprintf(" r%s:", commit.legacyID)
 					} else if commit.mark != "" {
-						msg += fmt.Sprintf(" '%s':", commit.mark)
+						msg = fmt.Sprintf(" '%s':", commit.mark)
 					}
 					msg += " deleting parentless "
 					if len(commit.operations()) > 0 {
