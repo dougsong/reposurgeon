@@ -1153,15 +1153,17 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 							}
 						}
 						// Maybe we generated a gitignore and need to remove it now
-						if presentGitIgnores.Contains(node.path) {
-							presentGitIgnores.Remove(node.path)
-							newnode := new(NodeAction)
-							newnode.path = node.path + ".gitignore"
-							newnode.revision = node.revision
-							newnode.action = sdDELETE
-							newnode.kind = sdFILE
-							newnode.generated = true
-							appendExpanded(newnode)
+						for ignpath := range presentGitIgnores.Iterate() {
+							if strings.HasPrefix(ignpath, node.path) {
+								presentGitIgnores.Remove(ignpath)
+								newnode := new(NodeAction)
+								newnode.path = ignpath + ".gitignore"
+								newnode.revision = node.revision
+								newnode.action = sdDELETE
+								newnode.kind = sdFILE
+								newnode.generated = true
+								appendExpanded(newnode)
+							}
 						}
 					}
 				}
