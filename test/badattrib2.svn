@@ -1,0 +1,567 @@
+SVN-fs-dump-format-version: 2
+ ## Conflicting author lines in a Changelog cause fallback to committer
+ # GitLab issue #190
+
+UUID: 86b2da86-aee3-4429-8554-4caae9235efc
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2019-12-20T20:41:45.141130Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 128
+Content-length: 128
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-20T20:42:17.562891Z
+K 7
+svn:log
+V 27
+Create directory structure.
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 161
+Content-length: 161
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-20T20:44:05.584709Z
+K 7
+svn:log
+V 60
+Add foo (should get author extracted from ChangeLog files).
+
+PROPS-END
+
+Node-path: trunk/ChangeLog
+Node-kind: file
+Node-action: add
+Text-content-md5: dcb7ac49257574a9c78d3ff4c765d522
+Text-content-sha1: bcb37cc774bbe84b2a682408c41c5d02d774d1a4
+Prop-content-length: 10
+Text-content-length: 63
+Content-length: 73
+
+PROPS-END
+2019-12-20  An Author  <an@author.example>
+
+	* foo: New file.
+
+
+
+Node-path: trunk/foo
+Node-kind: file
+Node-action: add
+Text-content-md5: d3b07384d113edec49eaa6238ad5ff00
+Text-content-sha1: f1d2d2f924e986ac86fdf7b36c94bcdf32beec15
+Prop-content-length: 10
+Text-content-length: 4
+Content-length: 14
+
+PROPS-END
+foo
+
+
+Node-path: trunk/testsuite
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/testsuite/ChangeLog
+Node-kind: file
+Node-action: add
+Text-content-md5: fb8f33ec3ee2a60eaf23a2df8141fe69
+Text-content-sha1: af53ace3138ddd78da3d265dd51d23dd101c52a0
+Prop-content-length: 10
+Text-content-length: 68
+Content-length: 78
+
+PROPS-END
+2019-12-20  An Author  <an@author.example>
+
+	* foo.test: New file.
+
+
+
+Node-path: trunk/testsuite/foo.test
+Node-kind: file
+Node-action: add
+Text-content-md5: 45e0b970fbed57cd4816b2ca7ce54488
+Text-content-sha1: 17c42583f796547aa3cb416f0d5818d512341903
+Prop-content-length: 10
+Text-content-length: 9
+Content-length: 19
+
+PROPS-END
+foo test
+
+
+Revision-number: 3
+Prop-content-length: 140
+Content-length: 140
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-20T20:45:14.852495Z
+K 7
+svn:log
+V 39
+Add bar (should get author extracted).
+
+PROPS-END
+
+Node-path: trunk/ChangeLog
+Node-kind: file
+Node-action: change
+Text-content-md5: 948d62b84e9a445ae5d1ece2f2c36702
+Text-content-sha1: 9dfa2d55e4784285e6e92d3a31bbbdff6e0a4343
+Text-content-length: 82
+Content-length: 82
+
+2019-12-20  An Author  <an@author.example>
+
+	* bar: New file.
+
+	* foo: New file.
+
+
+
+Node-path: trunk/bar
+Node-kind: file
+Node-action: add
+Text-content-md5: c157a79031e1c40f85931829bc5fc552
+Text-content-sha1: e242ed3bffccdf271b7fbaf34ed72d089537b42f
+Prop-content-length: 10
+Text-content-length: 4
+Content-length: 14
+
+PROPS-END
+bar
+
+
+Node-path: trunk/testsuite/ChangeLog
+Node-kind: file
+Node-action: change
+Text-content-md5: fbd9c792631dac4baba21e76c565c148
+Text-content-sha1: 3fafca280ed44317ced4620a326be94150e1abd1
+Text-content-length: 136
+Content-length: 136
+
+2019-12-20  An Author  <an@author.example>
+
+	* bar.test: New file.
+
+2019-12-20  An Author  <an@author.example>
+
+	* foo.test: New file.
+
+
+
+Node-path: trunk/testsuite/bar.test
+Node-kind: file
+Node-action: add
+Text-content-md5: 7906dc1d75df8d83e39e94c5187ee725
+Text-content-sha1: 4e9580984ae3d2106704af2835dfda6075f30c43
+Prop-content-length: 10
+Text-content-length: 9
+Content-length: 19
+
+PROPS-END
+bar test
+
+
+Revision-number: 4
+Prop-content-length: 145
+Content-length: 145
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-20T20:45:50.948661Z
+K 7
+svn:log
+V 44
+Add untested (should get author extracted).
+
+PROPS-END
+
+Node-path: trunk/ChangeLog
+Node-kind: file
+Node-action: change
+Text-content-md5: bc88fac6f6efc6e35c394e7c894f8c08
+Text-content-sha1: 0c8464dfaaed7a716939bbcdaef7e2f58efe6c99
+Text-content-length: 106
+Content-length: 106
+
+2019-12-20  An Author  <an@author.example>
+
+	* untested: New file.
+
+	* bar: New file.
+
+	* foo: New file.
+
+
+
+Node-path: trunk/untested
+Node-kind: file
+Node-action: add
+Text-content-md5: 3dade0ad88b70410b60161496ab20edb
+Text-content-sha1: cdb82180a6319fef00a50d38bbf09158d90cb323
+Prop-content-length: 10
+Text-content-length: 9
+Content-length: 19
+
+PROPS-END
+untested
+
+
+Revision-number: 5
+Prop-content-length: 140
+Content-length: 140
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-20T20:47:17.174297Z
+K 7
+svn:log
+V 39
+Add baz (should get author extracted).
+
+PROPS-END
+
+Node-path: trunk/ChangeLog
+Node-kind: file
+Node-action: change
+Text-content-md5: 4d0e9aa69f7eedf18cf158bce8b8b902
+Text-content-sha1: 4173854e6035a0f15a5ebc751eab10d686a6f9f1
+Text-content-length: 177
+Content-length: 177
+
+2019-12-20  Second Author  <second@author.example>
+
+	* baz: New file.
+
+2019-12-20  An Author  <an@author.example>
+
+	* untested: New file.
+
+	* bar: New file.
+
+	* foo: New file.
+
+
+
+Node-path: trunk/baz
+Node-kind: file
+Node-action: add
+Text-content-md5: 258622b1688250cb619f3c9ccaefb7eb
+Text-content-sha1: 6eadeac2dade6347e87c0d24fd455feffa7069f0
+Prop-content-length: 10
+Text-content-length: 4
+Content-length: 14
+
+PROPS-END
+baz
+
+
+Node-path: trunk/testsuite/ChangeLog
+Node-kind: file
+Node-action: change
+Text-content-md5: 02b0fdf499fda33aaf89002a7c4aefa2
+Text-content-sha1: cf20ac7ba2e21847023fc110844efe2cfb9b2709
+Text-content-length: 212
+Content-length: 212
+
+2019-12-20  Second Author  <second@author.example>
+
+	* baz.test: New file.
+
+2019-12-20  An Author  <an@author.example>
+
+	* bar.test: New file.
+
+2019-12-20  An Author  <an@author.example>
+
+	* foo.test: New file.
+
+
+
+Node-path: trunk/testsuite/baz.test
+Node-kind: file
+Node-action: add
+Text-content-md5: 4604eb4676b6122944f2274631c84064
+Text-content-sha1: 70cfd83ecb960344e79aaaade6e7d8609625e03e
+Prop-content-length: 10
+Text-content-length: 9
+Content-length: 19
+
+PROPS-END
+test baz
+
+
+Revision-number: 6
+Prop-content-length: 160
+Content-length: 160
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-20T20:48:34.754006Z
+K 7
+svn:log
+V 59
+Add x (multiple authors, so should use committer instead).
+
+PROPS-END
+
+Node-path: trunk/ChangeLog
+Node-kind: file
+Node-action: change
+Text-content-md5: d1180fdc9caaf74cf3ad6578e03623f0
+Text-content-sha1: 5848e7ba45e7d989badd1bbd57ce704792bb7555
+Text-content-length: 236
+Content-length: 236
+
+2019-12-20  X Author  <x@author.example>
+
+	* x: New file.
+
+2019-12-20  Second Author  <second@author.example>
+
+	* baz: New file.
+
+2019-12-20  An Author  <an@author.example>
+
+	* untested: New file.
+
+	* bar: New file.
+
+	* foo: New file.
+
+
+
+Node-path: trunk/testsuite/ChangeLog
+Node-kind: file
+Node-action: change
+Text-content-md5: a5005f0fa622cb3c0f6cbc195aaec063
+Text-content-sha1: f01e5930fe6ea8d8058beb69b8db4c40c6731c1e
+Text-content-length: 285
+Content-length: 285
+
+2019-12-20  X Test Author  <xtest@author.example>
+
+	* x.test: New file.
+
+2019-12-20  Second Author  <second@author.example>
+
+	* baz.test: New file.
+
+2019-12-20  An Author  <an@author.example>
+
+	* bar.test: New file.
+
+2019-12-20  An Author  <an@author.example>
+
+	* foo.test: New file.
+
+
+
+Node-path: trunk/testsuite/x.test
+Node-kind: file
+Node-action: add
+Text-content-md5: 339cda8703eee8cf1d2e79d5ce6a68e3
+Text-content-sha1: 2e8795dc298379df245c4683e6c5c82f22f157c1
+Prop-content-length: 10
+Text-content-length: 7
+Content-length: 17
+
+PROPS-END
+x test
+
+
+Node-path: trunk/x
+Node-kind: file
+Node-action: add
+Text-content-md5: 401b30e3b8b5d629635a5c613cdb7919
+Text-content-sha1: 6fcf9dfbd479ed82697fee719b9f8c610a11ff2a
+Prop-content-length: 10
+Text-content-length: 2
+Content-length: 12
+
+PROPS-END
+x
+
+
+Revision-number: 7
+Prop-content-length: 155
+Content-length: 155
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-20T20:49:24.686233Z
+K 7
+svn:log
+V 54
+Add Y and Z (multiple authors, should use committer).
+
+PROPS-END
+
+Node-path: trunk/ChangeLog
+Node-kind: file
+Node-action: change
+Text-content-md5: 88e59a21471c8295889c7c476e626869
+Text-content-sha1: 7b04bb7eb25de990b18a910895eb6b9dd6f60352
+Text-content-length: 354
+Content-length: 354
+
+2019-12-20  Z Author  <z@author.example>
+
+	* x: New file.
+
+2019-12-20  Y Author  <y@author.example>
+
+	* y: New file.
+
+2019-12-20  X Author  <x@author.example>
+
+	* x: New file.
+
+2019-12-20  Second Author  <second@author.example>
+
+	* baz: New file.
+
+2019-12-20  An Author  <an@author.example>
+
+	* untested: New file.
+
+	* bar: New file.
+
+	* foo: New file.
+
+
+
+Node-path: trunk/y
+Node-kind: file
+Node-action: add
+Text-content-md5: 009520053b00386d1173f3988c55d192
+Text-content-sha1: 9063a9f0e032b6239403b719cbbba56ac4e4e45f
+Prop-content-length: 10
+Text-content-length: 2
+Content-length: 12
+
+PROPS-END
+y
+
+
+Node-path: trunk/z
+Node-kind: file
+Node-action: add
+Text-content-md5: a8a78d0ff555c931f045b6f448129846
+Text-content-sha1: 3a710d2a84f856bc4e1c0bbb93ca517893c48691
+Prop-content-length: 10
+Text-content-length: 2
+Content-length: 12
+
+PROPS-END
+z
+
+
+Revision-number: 8
+Prop-content-length: 139
+Content-length: 139
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-20T20:49:46.834790Z
+K 7
+svn:log
+V 38
+Create branch (should use committer).
+
+PROPS-END
+
+Node-path: branches/test
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 7
+Node-copyfrom-path: trunk
+
+
