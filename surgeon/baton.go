@@ -212,6 +212,7 @@ func (baton *Baton) endProcess(endmsg ...string) {
 			baton.process.endmsg)
 		baton.process.startmsg = nil
 		baton.process.endmsg = nil
+		baton.channel <- Message{PROGRESS, nil}
 	}
 }
 
@@ -245,6 +246,7 @@ func (baton *Baton) endcounter() {
 		defer baton.counter.Unlock()
 		baton.counter.format = ""
 		baton.counter.count = 0
+		baton.channel <- Message{PROGRESS, nil}
 	}
 }
 
