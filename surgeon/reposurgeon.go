@@ -2640,7 +2640,6 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 
 const (
 	logSHOUT    uint = 1 << iota // Errors and urgent messages
-	logBATON                     // Log messages produced by the progress meters
 	logWARN                      // Exceptional condition, probably not bug
 	logTAGFIX                    // Log tag fixups
 	logSVNDUMP                   // Log Subversion dumping
@@ -2655,6 +2654,7 @@ const (
 	logCOMMANDS                  // Show commands as they are executed
 	logUNITE                     // Log mark assignments in merging
 	logLEXER                     // Log selection-language parsing
+	logBATON                     // Log messages produced by the progress meters, for better understanding of messages that are only visible for short intervals
 )
 
 var logtags = map[string]uint{
