@@ -434,7 +434,7 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 						// nodes matching this path but with no property fields
 						// of their own.
 						if node.propchange {
-							propertyStash[node.path] = node.props
+							propertyStash[node.path] = copyOrderedMap(node.props)
 							// ...exceopt for this one.  Later we're going to want
 							// to interpret these only at the revisions where they
 							// are actually set.
@@ -452,7 +452,7 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 							if _, ok := propertyStash[node.path]; ok {
 								delete(propertyStash, node.path)
 							}
-						} else {
+						} else if !node.propchange {
 							// The forward propagation.  Importanntly, this
 							// also forwards empty property sets, which are
 							// different from having no properties.
