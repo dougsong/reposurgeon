@@ -1117,7 +1117,8 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 				// Whenever an svn:ignore property is set on a directory,
 				// we want to generate a corresponding .gitignore
 				if node.hasProperties() && node.props.has("svn:ignore") {
-					appendExpanded(ignorenode(node.path, node.props.get("svn:ignore")))
+					appendExpanded(ignorenode(node.path[:len(node.path)-1],
+					                          node.props.get("svn:ignore")))
 					node.props.delete("svn:ignore")
 					presentGitIgnores.Add(node.path)
 				}
@@ -1148,7 +1149,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 						if presentGitIgnores.Contains(node.path) {
 							presentGitIgnores.Remove(node.path)
 							newnode := new(NodeAction)
-							newnode.path = node.path + svnSep + ".gitignore"
+							newnode.path = node.path + ".gitignore"
 							newnode.revision = node.revision
 							newnode.action = sdDELETE
 							newnode.kind = sdFILE
