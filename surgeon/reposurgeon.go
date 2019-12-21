@@ -2341,7 +2341,7 @@ func newRepoStreamer(extractor Extractor, progress bool) *RepoStreamer {
 	rs.visibleFiles = make(map[string]map[string]signature)
 	rs.hashToMark = make(map[[sha1.Size]byte]markidx)
 	rs.extractor = extractor
-	rs.baton = newBaton(progress)
+	rs.baton = control.baton
 	return rs
 }
 
@@ -2640,6 +2640,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 
 const (
 	logSHOUT    uint = 1 << iota // Errors and urgent messages
+	logBATON                     // Log messages produced by the progress meters
 	logWARN                      // Exceptional condition, probably not bug
 	logTAGFIX                    // Log tag fixups
 	logSVNDUMP                   // Log Subversion dumping
@@ -2658,6 +2659,7 @@ const (
 
 var logtags = map[string]uint{
 	"shout":    logSHOUT,
+	"baton":    logBATON,
 	"warn":     logWARN,
 	"tagfix":   logTAGFIX,
 	"svndump":  logSVNDUMP,
@@ -2770,8 +2772,13 @@ func (ctx *Control) init() {
 	ctx.listOptions = make(map[string]orderedStringSet)
 	ctx.mapOptions = make(map[string]map[string]string)
 	ctx.signals = make(chan os.Signal, 1)
-	ctx.logmask = (1 << logWARN) - 1
-	baton := newBaton(control.isInteractive())
+	ctx.logmask = (logWARN << 1) - 1
+	batonLogFunc := func(s string) {
+		// it took me about an hour to realize that the
+		// percent sign inside s was breaking this
+		logit(logBATON, "%s", s)
+	}
+	baton := newBaton(control.isInteractive(), batonLogFunc)
 	var b interface{} = baton
 	ctx.logfp = b.(io.Writer)
 	ctx.baton = baton

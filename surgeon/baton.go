@@ -20,6 +20,7 @@ import (
 // Baton is the overall state of the output
 type Baton struct {
 	progressEnabled bool
+	logFunc         func(string)
 	stream          *os.File
 	channel         chan Message
 	start           time.Time
@@ -89,7 +90,10 @@ type Message struct {
 const twirlInterval = 100 * time.Millisecond // Rate-limit baton twirls
 const progressInterval = 1 * time.Second     // Rate-limit progress messages
 
-func newBaton(interactive bool) *Baton {
+// newBaton creates a new Baton object, allowing the caller to control
+// the interactivity hint and to provide a function which the baton
+// must call when it generates a log message of its own.
+func newBaton(interactive bool, logFunc func(string)) *Baton {
 	me := new(Baton)
 	me.start = time.Now()
 	tiColZero := getTerminfoString("hpa", "0")
@@ -97,6 +101,7 @@ func newBaton(interactive bool) *Baton {
 	tiScrollForward := getTerminfoString("ind")
 	me.channel = make(chan Message)
 	me.progressEnabled = interactive
+	me.logFunc = logFunc
 	go func() {
 		lastProgress := &[]byte{}
 		for {
@@ -241,7 +246,9 @@ func (baton *Baton) bumpcounter() {
 
 func (baton *Baton) endcounter() {
 	if baton != nil && baton.progressEnabled {
-		baton.counter.render(baton)
+		var buf bytes.Buffer
+		baton.counter.render(&buf)
+		baton.logFunc(buf.String())
 		baton.counter.Lock()
 		defer baton.counter.Unlock()
 		baton.counter.format = ""
@@ -283,7 +290,9 @@ func (baton *Baton) endProgress() {
 		baton.progress.count = baton.progress.expected
 		baton.progress.lastupdate = time.Now()
 		baton.progress.Unlock()
-		baton.progress.render(baton)
+		var buf bytes.Buffer
+		baton.progress.render(&buf)
+		baton.logFunc(buf.String())
 		baton.progress.Lock()
 		baton.progress.tag = nil
 		baton.progress.count = 0
