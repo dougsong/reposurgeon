@@ -301,8 +301,6 @@ committer jmyers <jmyers> 1576874986 +0000
 data 38
 Create branch (should use committer).
 from :28
-deleteall
-M 100644 :1 .gitignore
 M 100644 :25 ChangeLog
 M 100644 :8 bar
 M 100644 :16 baz
