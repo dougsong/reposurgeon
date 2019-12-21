@@ -2208,7 +2208,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 }
 
 func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	// Phase 10:
+    // Phase A:
 	// Intervene to prevent lossage from tag/branch/trunk deletions.
 	//
 	// The Subversion data model is that a history is a sequence of surgical
@@ -2221,7 +2221,7 @@ func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSe
 	// the refs/deleted/ namespace, with a suffix in case of clashes. A branch
 	// is considered deleted when we encounter a commit with a single deleteall
 	// fileop.
-	defer trace.StartRegion(ctx, "SVN Phase 10: disambiguate deleted refs.").End()
+	defer trace.StartRegion(ctx, "SVN Phase A: disambiguate deleted refs.").End()
 	logit(logEXTRACT, "SVN Phase A: disambiguate deleted refs.")
 	// First we build a map from branches to commits with that branch, to avoid
 	// an O(n^2) computation cost.
@@ -2236,12 +2236,22 @@ func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSe
 		baton.percentProgress(uint64(idx) + 1)
 	}
 	baton.endProgress()
+	// Rename refs/heads/root to refs/heads/master if the latter doesn't exist
+	baton.startProgress("SVN phase A2: rename branch 'root' to 'master' if there is none",
+		uint64(len(branchToCommits["refs/heads/root"])))
+	if _, hasMaster := branchToCommits["refs/heads/master"]; !hasMaster {
+		for i, commit := range branchToCommits["refs/heads/root"] {
+			commit.setBranch("refs/heads/master")
+			baton.percentProgress(uint64(i) + 1)
+		}
+	}
+	baton.endProgress()
 	// For each branch, iterate through commits with that branch, searching for
 	// deleteall-only commits that mean the branch is being deleted.
 	usedRefs := map[string]int{}
 	processed := 0
 	seen := 0
-	baton.startProgress("SVN phase A2: disambiguate deleted refs.", uint64(commitCount))
+	baton.startProgress("SVN phase A3: disambiguate deleted refs.", uint64(commitCount))
 	for branch, commits := range branchToCommits {
 		lastFixed := -1
 		for i, commit := range commits {
