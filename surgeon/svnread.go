@@ -1463,22 +1463,33 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 		// case of a smultaneous propert change on multiple
 		// directories.
 		if len(commit.fileops) == 0 {
-			if len(record.nodes) != 1 {
+			// A directory-only commit at position one pretty much has to be
+			// trunk and branches creation.  If we were to tagify it there
+			// would be no place to put it. Also avoid really empty revisions
+			if ri == 1 || len(record.nodes) == 0 {
+				continue
+			}
+			var foundbranch string
+			tooMany := false
+			for _, node := range record.nodes {
+				var branch string
+				if node.kind == sdDIR && isDeclaredBranch(node.path) {
+					branch = node.path
+				} else {
+					branch, _ = splitSVNBranchPath(node.path)
+				}
+				if branch != "" && foundbranch != "" && branch != foundbranch {
+					tooMany = true
+					break
+				}
+			}
+			if tooMany {
 				logit(logEXTRACT, "pathological empty revision at <%d>, comment %q, skipping.",
 					ri, commit.Comment)
 				continue
 			}
-			// No fileops, just one directory node, pass
-			// it through.  Later we'll use this node path
-			// for branch assignment.
-
-			// A single-directory commit at position one
-			// pretty much has to be trunk creation.  If we
-			// were to tagify it there would be no place to
-			// put it.
-			if ri == 1 {
-				continue
-			}
+			// No fileops, just directory nodes in a single branch, pass it
+			// through.  Later we'll use this node path for branch assignment.
 		}
 
 		// We're not trying to do branch structure yet.
@@ -1637,7 +1648,12 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 					panic(fmt.Errorf("Unexpectedly ill-formed legacy-id %s", commit.legacyID))
 				}
 				// Contiguity assumption
-				commit.Branch, _ = splitSVNBranchPath(sp.revisions[n].nodes[0].path)
+				node := sp.revisions[n].nodes[0]
+				if node.kind == sdDIR && isDeclaredBranch(node.path) {
+					commit.Branch = node.path
+				} else {
+					commit.Branch, _ = splitSVNBranchPath(node.path)
+				}
 			} else {
 				// Normal case
 				commit.sortOperations()
