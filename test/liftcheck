@@ -93,6 +93,15 @@ fi
 ${REPOSURGEON:-../reposurgeon} "${TESTOPT}" "${rlimit}" "read ${nobranch} <${what}" \
     "prefer git" "rebuild ${stem}-git" "write >${stem}.gfi" >&-
 
+if [   "(" -e ${stem}-checkout/trunk ")"    \
+    -o "(" -e ${stem}-checkout/branches ")" \
+    -o "(" -e ${stem}-checkout/tags ")"     ]
+then
+    structured=true
+else
+    structured=
+fi
+
 if [ -n "${revision}" ]
 then
     if [ ! -f ${stem}-git/.git/marks ]
@@ -150,7 +159,11 @@ then
             continue
         fi
 
-        if [ -n "${nobranch}" ]
+        # Use --nobranch if asked to, or if there is no structure and
+        # the asked branch is master
+        if [ -n "${nobranch}" -o "("                 \
+               "(" "${ref}" = "heads/master" ")"     \
+                   -a "(" -z "${structured}" ")" ")" ]
         then
             refopt=--nobranch
         else
@@ -168,9 +181,7 @@ then
     done < ${stem}.info
 else
 
-    if [ "(" ! -e ${stem}-checkout/trunk ")" \
-        -a "(" ! -e ${stem}-checkout/branches ")" \
-        -a "(" ! -e ${stem}-checkout/tags ")" ]
+    if [ -z "${structured}" ]
     then
         # No structure at all, use --nobranch to compare
         # --accept-missing is to use an empty dir if git has no master
