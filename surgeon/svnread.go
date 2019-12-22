@@ -1654,7 +1654,7 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 				}
 			} else {
 				// Normal case
-				commit.sortOperations()
+				commit.simplify()
 				for i := range commit.fileops {
 					fileop := commit.fileops[i]
 					commit.Branch = fileop.Source
