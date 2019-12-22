@@ -394,16 +394,69 @@ svnload-regress:
 # that is, no messages due to branch surgery or whatever.
 # Empty-commit tags generated in gitspace corresponding to branch
 # copies are ignored.
-SVNCLEAN := bad-author.svn binary.svn branch-drop-add.svn blob-id.svn		\
-	debranch.svn deletion.svn delignore.svn deepdirs.svn executable.svn	\
-	expunge.svn filecopy.svn gitify.svn gitignore.svn ignore-blank.svn	\
-	mergeinfo.svn mergeinfo-with-split.svn mixedbranch.svn mkignore.svn	\
-	myers1.svn nullignores.svn nontipcopy.svn pangram.svn permcopy.svn	\
-	permcopy2.svn replace-dir.svn simpletag.svn smallref.svn snarl.svn	\
-	squash-id.svn subdir.svn subclipse.svn svnignores.svn treecontents.svn	\
-	vanilla.svn wrong-mergeinfo.svn rootfirst.svn split-dir.svn		\
-	symlink.svn trunkstomp.svn emptyfrom.svn expunge-copyfrom.svn		\
-	references.svn
+SVNCLEAN := \
+	bad-author.svn \
+	badattrib.svn \
+	badattrib2.svn \
+	binary.svn \
+	blob-id.svn \
+	branch-drop-add.svn \
+	cherry-pick.svn \
+	debranch.svn \
+	deepdirs.svn \
+	deletion.svn \
+	delignore.svn \
+	dircopyprop.svn \
+	executable.svn \
+	expunge-copyfrom.svn \
+	expunge.svn \
+	filecopy.svn \
+	gitify.svn \
+	gitignore.svn \
+	ignore-blank.svn \
+	merge-with-delete.svn \
+	mergeinfo-combine.svn \
+	mergeinfo-with-split.svn \
+	mergeinfo.svn \
+	mixedbranch.svn \
+	mkignore.svn \
+	myers1.svn \
+	no-forward-merge.svn \
+	no-forward-merge2.svn \
+	no-merge.svn \
+	nontipcopy.svn \
+	nullignores.svn \
+	pangram.svn \
+	permcopy1.svn \
+	permcopy2.svn \
+	permcopy3.svn \
+	permcopy4.svn \
+	references.svn \
+	replace-dir.svn \
+	rootfirst.svn \
+	samplebranch.svn \
+	simpletag.svn \
+	smallref.svn \
+	snarl.svn \
+	split-dir.svn \
+	squash-id.svn \
+	subclipse.svn \
+	subdir.svn \
+	svnignores.svn \
+	symlink.svn \
+	tagsimple.svn \
+	tagsimpledelete.svb \
+	treecontents.svn \
+	trunkstomp.svn \
+	vanilla.svn \
+	wrong-mergeinfo.svn \
+
+# These indicate possible bugs in the Subversion dump analyzer.
+liftcheck-failures:
+	emptyfrom.svn \
+	swap.svn \
+	tagpollute.svn \
+
 liftcheck-regress:
 	@echo "== Testing conversion correctness of Subversion streams:"
 	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
