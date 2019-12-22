@@ -2327,12 +2327,11 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	baton.startProgress("SVN phase B1: purge deleted refs", uint64(len(sp.repo.events)))
 	preserve := options.Contains("--preserve")
 	if !preserve {
-		// Start from all tips of refs not in refs/deleted
+		// Start from all commits on refs not in refs/deleted
 		stack := []*Commit{}
 		for _, ev := range sp.repo.events {
 			if commit, ok := ev.(*Commit); ok &&
-					!strings.HasPrefix(commit.Branch, "refs/deleted") &&
-					!commit.hasChildren() {
+					!strings.HasPrefix(commit.Branch, "refs/deleted") {
 				stack = append(stack, commit)
 			}
 			baton.twirl()
