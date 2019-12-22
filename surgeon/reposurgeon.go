@@ -8288,197 +8288,64 @@ func (commit *Commit) ancestorCount(path string) int {
 	return count
 }
 
-var nilOp FileOp // Zero fileop, to be used as a deletion marker
-
-// Compose two relevant fileops.
-// Here's what the fields in the return value mean:
-// 0: Was this a modification
-// 1: Op to replace the first with (nil means delete)
-// 2: Op to replace the second with (nil means delete)
-// 3: string: if nomempty, a warning to emit
-// 4: Case number, for coverage analysis
-func (commit *Commit) _compose(left *FileOp, right *FileOp) (bool, *FileOp, *FileOp, string, int) {
-	pair := [2]rune{left.op, right.op}
-	//
-	// First op M
-	//
-	if pair == [2]rune{opM, opM} {
-		// Leave these in place, they get handled later.
-		return false, left, right, "", 0
-	} else if left.op == opM && right.op == opD {
-		// M a + D a -> D a
-		// Or, could reduce to nothing if M a was the only modify..
-		if commit.ancestorCount(left.Path) == 1 {
-			return true, &nilOp, &nilOp, "", 1
-		}
-		return true, right, &nilOp, "", 2
-	} else if left.op == opM && right.op == opR {
-		// M a + R a b -> R a b M b, so R falls towards start of list
-		if left.Path == right.Source {
-			if commit.ancestorCount(left.Path) == 1 {
-				// M a has no ancestors, preceding R can be dropped
-				left.Path = right.Target
-				return true, left, &nilOp, "", 3
-			}
-			// M a has ancestors, R is still needed
-			left.Path = right.Target
-			return true, right, left, "", 4
-		} else if left.Path == right.Target {
-			// M b + R a b can't happen.  If you try to
-			// generate this with git mv it throws an
-			// error.  An ordinary mv results in D b M a.
-			return true, right, &nilOp, "M followed by R to the M operand?", -1
-		}
-	} else if left.op == opM && right.op == opC {
-		// Correct reduction for this would be M a + C a b ->
-		// C a b + M a + M b, that is we'd have to duplicate
-		// the modify. We'll leave it in place for now.
-		return false, left, right, "", 5
-	} else if pair == [2]rune{opD, opM} {
-		//
-		// First op D || deleteall
-		//
-		// Delete followed by modify undoes delete, since M
-		// carries whole files.
-		return true, &nilOp, right, "", 6
-	} else if pair == [2]rune{deleteall, opM} {
-		// But we have to leave deletealls in place, since
-		// they affect right ops
-		return false, left, right, "", 7
-	} else if left.op == deleteall && right.op != opM {
-		// These cases should be impossible.  But cvs2svn
-		// actually generates adjacent deletes into Subversion
-		// dumpfiles which turn into (D, D).
-		return false, left, right,
-			"Non-M operation after deleteall?", -1
-	} else if left.op == opD && right.op == opD {
-		return true, left, &nilOp, "", -2
-	} else if left.op == opD && (right.op == opR || right.op == opC) {
-		if left.Path == right.Source {
-			return false, left, right,
-				fmt.Sprintf("R or C of %s after deletion?", left.Path), -3
-		}
-		return false, left, right, "", 8
-	} else if pair == [2]rune{opR, opD} {
-		//
-		// First op R
-		//
-		if left.Target == right.Path {
-			// Rename followed by delete of target
-			// composes to source delete
-			right.Path = left.Source
-			return true, &nilOp, right, "", 9
-		}
-		// On rename followed by delete of source
-		// discard the delete but user should be
-		// warned.
-		return false, left, &nilOp, fmt.Sprintf("delete of %s after renaming to %s?", right.Path, left.Source), -4
-
-	} else if pair == [2]rune{opR, deleteall} && left.Target == right.Path {
-		// Rename followed by deleteall shouldn't be possible
-		return false, &nilOp, right,
-			"rename before deleteall not removed?", -5
-	} else if pair == [2]rune{opR, opM} || pair == [2]rune{opC, opM} {
-		// Leave rename || copy followed by modify alone
-		return false, left, right, "", 10
-	} else if left.op == opR && right.op == opR {
-		// Compose renames where possible
-		if left.Target == right.Source {
-			left.Target = right.Target
-			return true, left, &nilOp, "", 11
-		}
-		return false, left, right, fmt.Sprintf("R %s %s is inconsistent with following operation", left.Source, left.Target), -6
-	}
-	// We could do R a b + C b c -> C a c + R a b, but why?
-	if left.op == opR && right.op == opC {
-		return false, left, right, "", 12
-	} else if pair == [2]rune{opC, opD} {
-		//
-		// First op C
-		//
-		if left.Source == right.Path {
-			// Copy followed by delete of the source is a rename.
-			left.setOp(opR)
-			return true, left, &nilOp, "", 13
-		} else if left.Target == right.Path {
-			// This delete undoes the copy
-			return true, &nilOp, &nilOp, "", 14
-		}
-	} else if pair == [2]rune{opC, opR} {
-		if left.Source == right.Source {
-			// No reduction
-			return false, left, right, "", 15
-		}
-		// Copy followed by a rename of the target reduces to single copy
-		if left.Target == right.Source {
-			left.Target = right.Target
-			return true, left, &nilOp, "", 16
-		}
-	} else if pair == [2]rune{opC, opC} {
-		// No reduction
-		return false, left, right, "", 17
-	}
-	//
-	// Case not covered
-	//
-	panic(throw("command", "in %s, can't compose op '%s' and '%s'", commit.idMe(), left, right))
-}
-
 // Simplify the list of file operations in this commit.
-func (commit *Commit) simplify() orderedIntSet {
-	// Doesn't need to be ordered, but I'm not going to write a whole
-	// 'nother set class just for this.
-	coverage := newOrderedIntSet()
-	// Handling deleteall operations is simple
-	lastdeleteall := -1
-	for i, a := range commit.operations() {
-		if a.op == deleteall {
-			lastdeleteall = i
+func (commit *Commit) simplify() {
+	commit.discardOpsBeforeLastDeleteAll()
+	oldOps := commit.operations()
+	if len(oldOps) == 0 {
+		return
+	}
+	// Replay the fileops, keeping only the last operation. Rename and copy
+	// operations whose source is here are changed into the source operation
+	// with the new path, others are kept intact. At the end of this pass, the
+	// ordering will not matter anymore.
+	visibleOps := make(map[string] *FileOp)
+	doCopy := func(fileop *FileOp) bool {
+		if prevop, ok := visibleOps[fileop.Source]; ok {
+			newop := prevop.Copy()
+			if newop.op == opM || newop.op == opD {
+				newop.Path = fileop.Target
+			} else {
+				newop.Target = fileop.Target
+			}
+			visibleOps[fileop.Target] = newop
+			return true
 		}
+		return false
 	}
-	if lastdeleteall != -1 {
-		logit(logDELETE, "removing all before rightmost deleteall")
-		commit.setOperations(commit.operations()[lastdeleteall:])
-	}
-	// Composition in the general case is trickier.
-	for {
-		// Keep making passes until nothing mutates
-		mutated := false
-		for i := range commit.operations() {
-			for j := i + 1; j < len(commit.operations()); j++ {
-				a := commit.operations()[i]
-				b := commit.operations()[j]
-				if !a.Equals(&nilOp) && !b.Equals(&nilOp) && a.relevant(b) {
-					modified, newa, newb, warn, cn := commit._compose(a, b)
-					logit(logDELETE, fmt.Sprintf("Reduction case %d fired on (%d, %d)", cn, i, j))
-					if modified {
-						mutated = true
-						commit.operations()[i] = newa
-						commit.operations()[j] = newb
-						if logEnable(logDELETE) {
-							logit(logDELETE, "During canonicalization:")
-							commit.fileopDump()
-						}
-						if warn != "" {
-							croak(warn)
-						}
-						coverage.Add(cn)
-					}
-				}
+	for _, fileop := range oldOps {
+		switch fileop.op {
+		case deleteall:
+			// Nothing to do, this is necessarily the first op
+		case opM, opD:
+			visibleOps[fileop.Path] = fileop
+		case opC:
+			if !doCopy(fileop) {
+				visibleOps[fileop.Target] = fileop
+			}
+		case opR:
+			if doCopy(fileop) {
+				delete(visibleOps, fileop.Source)
+			} else {
+				visibleOps[fileop.Target] = fileop
 			}
 		}
-		if !mutated {
-			break
-		}
-		newOps := make([]*FileOp, 0)
-		for _, x := range commit.operations() {
-			if !x.Equals(&nilOp) {
-				newOps = append(newOps, x)
-			}
-		}
-		commit.setOperations(newOps)
 	}
-	return coverage
+	var newOps []*FileOp
+	var i int
+	if oldOps[0].op == deleteall {
+		newOps = make([]*FileOp, len(visibleOps) + 1)
+		newOps[0] = oldOps[0]
+		i++
+	} else {
+		newOps = make([]*FileOp, len(visibleOps))
+	}
+	for _, fileop := range visibleOps {
+		newOps[i] = fileop
+		i++
+	}
+	commit.setOperations(newOps)
+	commit.sortOperations()
 }
 
 var allPolicies = orderedStringSet{
@@ -8795,7 +8662,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 				logit(logDELETE, "Before canonicalization:")
 				commit.fileopDump()
 			}
-			repo.caseCoverage = repo.caseCoverage.Union(commit.simplify())
+			commit.simplify()
 			if logEnable(logDELETE) {
 				logit(logDELETE, "After canonicalization:")
 				commit.fileopDump()

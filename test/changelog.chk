@@ -16,8 +16,8 @@ data 115
 (specbind): Additionally record the buffer that was
 current when a buffer-local or frame-local variable was bound.
 deleteall
-M 100644 :87000 src/eval.c
 M 100644 :87002 src/ChangeLog
+M 100644 :87000 src/eval.c
 
 blob
 mark :87004
@@ -37,8 +37,8 @@ data 74
 (battery-update): Add help-echo.
 From Pavel Jan,Bm(Bk <Pavel@Janik.cz>.
 from :87003
-M 100644 :87004 lisp/battery.el
 M 100644 :87006 lisp/ChangeLog
+M 100644 :87004 lisp/battery.el
 
 blob
 mark :87008
@@ -58,6 +58,6 @@ data 58
 Fix first line.  From Pavel Jan,Bm(Bk
 <Pavel@Janik.cz>.
 from :87007
-M 100644 :87008 lisp/play/pong.el
 M 100644 :87010 lisp/ChangeLog
+M 100644 :87008 lisp/play/pong.el
 

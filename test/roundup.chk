@@ -68,10 +68,12 @@ Added stuff to help with release generation.
  . dummy_config.py is an empty config file that replaces the config.py in the
    release
 M 100644 :18 CHANGES
+M 100644 :40 Makefile
 M 100644 :1 README
 M 100644 :19 cgitb.py
 M 100644 :20 config.py
 M 100644 :21 date.py
+M 100644 :41 dummy_config.py
 M 100644 :22 hyperdb.py
 M 100755 :23 roundup-mailgw.py
 M 100755 :24 roundup.cgi
@@ -89,6 +91,4 @@ M 100644 :35 templates/msg.index
 M 100644 :36 templates/msg.item
 M 100644 :37 templates/user.index
 M 100644 :38 templates/user.item
-M 100644 :40 Makefile
-M 100644 :41 dummy_config.py
 
