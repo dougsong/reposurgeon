@@ -135,8 +135,7 @@ func splitSVNBranchPath(path string) (string, string) {
 	}
 }
 
-// A type to manage a collection of PathMaps used as a history of file visibility.
-
+// History is a type to manage a collection of PathMaps used as a history of file visibility.
 type History struct {
 	visible     map[revidx]*PathMap
 	visibleHere *PathMap
