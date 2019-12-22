@@ -41,8 +41,6 @@ mark :4
 committer esr <esr> 1352757484 +0000
 data 46
 This follows "svn cp nontrunk nontrunkbranch"
-from :3
-deleteall
 M 100644 :1 .gitignore
 M 100644 :2 README
 

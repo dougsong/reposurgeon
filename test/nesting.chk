@@ -34,10 +34,12 @@ import project state
 M 100644 :1 .gitignore
 M 100644 :2 file
 
-tag 2.5.1
+commit refs/tags/2.5.1
 #legacy-id 3
-from :3
-tagger iay <iay> 1436022529 +0000
+mark :4
+committer iay <iay> 1436022529 +0000
 data 14
 tag a version
+from :3
+M 100644 :2 file
 

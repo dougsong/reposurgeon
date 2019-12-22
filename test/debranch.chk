@@ -1,3 +1,4 @@
+reposurgeon: "debranch.svn", line 510: ':4': deleting parentless zero-op commit on refs/heads/resources.
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -62,6 +63,7 @@ committer esr <esr> 1361652423 +0000
 data 40
 Begin to populate the resources branch.
 from :5
+deleteall
 M 100644 :1 resources/.gitignore
 M 100644 :6 resources/random
 
@@ -87,8 +89,6 @@ mark :10
 committer esr <esr> 1361656199 +0000
 data 30
 Creation of alternate branch.
-from :9
-deleteall
 M 100644 :1 .gitignore
 M 100644 :8 README
 

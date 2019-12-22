@@ -67,7 +67,6 @@ This branch should only contain subfile1 and subfile2.
 
 from :5
 deleteall
-M 100644 :1 .gitignore
 M 100644 :3 subfile1
 M 100644 :4 subfile2
 
@@ -91,6 +90,7 @@ subfile1
 subfile2
 
 from :6
+M 100644 :1 .gitignore
 M 100644 :7 file
 
 Event 10 ================================================================
@@ -173,8 +173,6 @@ mark :15
 committer frnchfrgg <frnchfrgg> 1366745095 +0000
 data 55
 Create a new branch and copy a subdir of trunk into it
-from :5
-deleteall
 M 100644 :3 subdir/subfile1
 M 100644 :4 subdir/subfile2
 
@@ -207,8 +205,6 @@ mark :18
 committer frnchfrgg <frnchfrgg> 1366745242 +0000
 data 41
 Create branch4 by a normal copy of trunk
-from :5
-deleteall
 M 100644 :1 .gitignore
 M 100644 :2 master-branch4
 M 100644 :3 subdir/subfile1
@@ -251,7 +247,6 @@ Event 7 =================================================================
 commit refs/heads/branch1
 mark :6
 
-.gitignore -> :1
 subfile1 -> :3
 subfile2 -> :4
 Event 9 =================================================================

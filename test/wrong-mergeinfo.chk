@@ -1,3 +1,4 @@
+reposurgeon: "wrong-mergeinfo.svn", line 167: cannot resolve mergeinfo source from revision 9 for path trunk/.
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -42,8 +43,6 @@ data 22
 Create branch "test"
 
 from :3
-deleteall
-M 100644 :1 .gitignore
 M 100644 :2 a
 
 commit refs/heads/test
@@ -54,6 +53,7 @@ data 36
 Another test revision, branch test
 
 from :4
+M 100644 :1 .gitignore
 M 100644 :2 b
 
 commit refs/heads/master
@@ -64,6 +64,5 @@ data 7
 Merge
 
 from :3
-merge :5
 M 100644 :2 b
 

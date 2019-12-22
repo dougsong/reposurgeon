@@ -155,8 +155,6 @@ committer esr <esr> 1516112392 +0000
 data 52
 Committing after "svn cp trunk branches/testbranch"
 from :16
-deleteall
-M 100644 :1 .gitignore
 M 100644 :14 README
 M 100755 :15 goodbye
 M 100755 :7 hello
@@ -175,5 +173,6 @@ committer esr <esr> 1516112581 +0000
 data 36
 Verify retention of executable bit.
 from :17
+M 100644 :1 .gitignore
 M 100755 :18 goodbye
 

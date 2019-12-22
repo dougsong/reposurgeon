@@ -64,8 +64,6 @@ Branch trunk to cool-feature
 This causes reposurgeon to replace the custom .gitignore with only the
 contents of svn:ignore.
 from :5
-deleteall
-M 100644 :1 .gitignore
 M 100644 :4 .gitignore
 M 100644 :2 README
 
@@ -91,6 +89,7 @@ committer chungy <chungy> 1391603993 +0000
 data 44
 Explain what the expected result should be.
 from :6
+M 100644 :1 .gitignore
 M 100644 :7 README
 
 commit refs/heads/master

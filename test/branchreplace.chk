@@ -1,4 +1,4 @@
-reposurgeon: ':25': deleting parentless zero-op commit on refs/heads/trunk-deleted-r12-1.
+reposurgeon: "branchreplace.svn", line 643: ':25': deleting parentless zero-op commit on refs/heads/trunk-deleted-r12-1.
 #reposurgeon sourcetype svn
 blob
 mark :1

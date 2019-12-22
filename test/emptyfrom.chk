@@ -1,4 +1,4 @@
-reposurgeon: ':2': deleting parentless zero-op commit on refs/tags/silver.
+reposurgeon: "emptyfrom.svn", line 450: ':2': deleting parentless zero-op commit on refs/tags/silver.
 #reposurgeon sourcetype svn
 blob
 mark :1
