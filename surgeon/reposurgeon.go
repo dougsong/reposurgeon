@@ -15391,7 +15391,9 @@ be a quoted string. C-style escape sequences in the string are
 interpreted using Go's Quote/Unquote codec from the strconv library.
 
 If the option --rstrip is given, the comment is right-stripped before
-the new text is appended.
+the new text is appended. If the option --legacy is given, the string
+%LEGACY% in the append payload is replaced with the commit's lagacy-ID
+before it is appended.
 `)
 }
 
@@ -15428,6 +15430,9 @@ func (rs *Reposurgeon) DoAppend(line string) bool {
 			commit := event.(*Commit)
 			if parse.options.Contains("--rstrip") {
 				commit.Comment = strings.TrimRight(commit.Comment, " \n\t")
+			}
+			if parse.options.Contains("--legacy") {
+				commit.Comment = strings.Replace(commit.Comment, "%LEGACY%", commit.legacyID, -1)
 			}
 			commit.Comment += line
 		case *Tag:

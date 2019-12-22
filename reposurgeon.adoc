@@ -1093,7 +1093,9 @@ address.
    interpreted as one would expect.
 +
 If the option --rstrip is given, the comment is right-stripped before
-the new text is appended.
+the new text is appended. If the option --legacy is given, the string
+%LEGACY% in the append payload is replaced with the commit's lagacy-ID
+before it is appended.
 
 +filter+ [ _--shell_ | _--regex_ | _--replace_ |_--dedos_ ]::
    Run blobs, commit comments, or tag comments in the selection set
