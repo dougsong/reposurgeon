@@ -2641,6 +2641,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 const (
 	logSHOUT    uint = 1 << iota // Errors and urgent messages
 	logWARN                      // Exceptional condition, probably not bug
+	logBATON                     // Log messages produced by the progress meters, for better understanding of messages that are only visible for short intervals
 	logTAGFIX                    // Log tag fixups
 	logSVNDUMP                   // Log Subversion dumping
 	logTOPOLOGY                  // Log repo-extractor logic (coarse-grained)
@@ -2654,7 +2655,6 @@ const (
 	logCOMMANDS                  // Show commands as they are executed
 	logUNITE                     // Log mark assignments in merging
 	logLEXER                     // Log selection-language parsing
-	logBATON                     // Log messages produced by the progress meters, for better understanding of messages that are only visible for short intervals
 )
 
 var logtags = map[string]uint{
@@ -11922,7 +11922,7 @@ func (rs *Reposurgeon) helpOutput(help string) {
 	if help[0] == '\n' {
 		help = help[1:]
 	}
-	fmt.Print(help)
+	control.baton.printLogString(help)
 }
 
 func (rs *Reposurgeon) inScript() bool {
@@ -12006,10 +12006,10 @@ func (rs *Reposurgeon) PreCmd(line string) string {
 }
 
 func (rs *Reposurgeon) PostCmd(stop bool, lineIn string) bool {
-	control.baton.Sync()
 	if control.logcounter > rs.logHighwater {
 		respond("%d new log message(s)", control.logcounter-rs.logHighwater)
 	}
+	control.baton.Sync()
 	return stop
 }
 
@@ -13144,7 +13144,7 @@ Dump your command list from this session so far.
 
 func (rs *Reposurgeon) DoHistory(_line string) bool {
 	for _, line := range rs.history {
-		fmt.Println(line)
+		control.baton.printLogString(line)
 	}
 	return false
 }
@@ -13350,7 +13350,6 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 		case "save":
 			subject, line := popToken(line)
 			filename, line := popToken(line)
-			fmt.Fprintf(os.Stderr, "save; subject=%#v, filename=%#v\n", subject, filename)
 			if !names.Contains(subject) {
 				croak("I don't recognize %#v as a profile name. The names I do recognize are %v.", subject, names)
 			} else if subject == "all" {
@@ -13711,16 +13710,27 @@ Supports > redirection.
 
 // Look for lint in a repo.
 func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
+	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
+	defer parse.Closem()
+	if parse.options.Contains("--options") || parse.options.Contains("-?") {
+		fmt.Fprint(parse.stdout, `
+--deletealls    -d     report mid-branch deletealls
+--connected     -c     report disconnected commits
+--roots         -r     report on multiple roots
+--attributions  -a     report on anomalies in usernames and attributions
+--uniqueness    -u     report on collisions among action stamps
+--options       -?     list available options
+`[1:])
+		return false
+	}
 	if rs.chosen() == nil {
 		croak("no repo has been chosen.")
-		return
+		return false
 	}
 	selection := rs.selection
 	if selection == nil {
 		selection = rs.chosen().all()
 	}
-	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
-	defer parse.Closem()
 	var lintmutex sync.Mutex
 	unmapped := regexp.MustCompile("^[^@]*$|^[^@]*@" + rs.chosen().uuid + "$")
 	shortset := newOrderedStringSet()
@@ -13835,16 +13845,6 @@ func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 		rs.chosen().checkUniqueness(true, func(s string) {
 			fmt.Fprint(parse.stdout, "reposurgeon: "+s+"\n")
 		})
-	}
-	if parse.options.Contains("--options") || parse.options.Contains("-?") {
-		fmt.Print(`\
---deletealls    -d     report mid-branch deletealls
---connected     -c     report disconnected commits
---roots         -r     report on multiple roots
---attributions  -a     report on anomalies in usernames and attributions
---uniqueness    -u     report on collisions among action stamps
---options       -?     list available options\
-`)
 	}
 	return false
 }
@@ -16070,9 +16070,9 @@ func (rs *Reposurgeon) DoWhen(LineIn string) (StopOut bool) {
 	if err != nil {
 		croak("unrecognized date format")
 	} else if strings.Contains(LineIn, "Z") {
-		fmt.Println(d.String())
+		control.baton.printLogString(d.String())
 	} else {
-		fmt.Println(d.rfc3339())
+		control.baton.printLogString(d.rfc3339())
 	}
 	return false
 }
@@ -16821,7 +16821,7 @@ func (rs *Reposurgeon) DoTagify(line string) bool {
 		nil,
 		nil,
 		true,
-		func(msg string) { fmt.Print(msg) })
+		func(msg string) { control.baton.printLogString(msg) })
 	after := len(repo.commits(nil))
 	respond("%d commits tagified.", before-after)
 	return false
@@ -18569,7 +18569,7 @@ options. The following flags and options are defined:
 
 `)
 	for _, opt := range optionFlags {
-		fmt.Print(opt[0] + ":\n" + opt[1] + "\n")
+		fmt.Fprintf(control.baton, "%s:\n%s\n", opt[0], opt[1])
 	}
 }
 
@@ -18626,7 +18626,7 @@ following flags and options are defined:
 
 `)
 	for _, opt := range optionFlags {
-		fmt.Print(opt[0] + ":\n" + opt[1] + "\n")
+		fmt.Fprintf(control.baton, "%s:\n%s\n", opt[0], opt[1])
 	}
 }
 
@@ -19789,7 +19789,7 @@ func (rs *Reposurgeon) HelpScript() {
 func (rs *Reposurgeon) DoScript(ctx context.Context, lineIn string) bool {
 	interpreter := rs.cmd
 	if len(lineIn) == 0 {
-		fmt.Print("script requires a file argument\n")
+		respond("script requires a file argument\n")
 		return false
 	}
 	if len(rs.callstack) == 0 {
@@ -19930,24 +19930,24 @@ func (rs *Reposurgeon) DoSizeof(lineIn string) bool {
 	}
 	// Don't use respond() here, we wabt to be abke to do "reposurgeon sizeof"
 	// and get a result.
-	fmt.Printf("NodeAction:        %s\n", explain(unsafe.Sizeof(*new(NodeAction))))
-	fmt.Printf("RevisionRecord:    %s\n", explain(unsafe.Sizeof(*new(RevisionRecord))))
-	fmt.Printf("Commit:            %s\n", explain(unsafe.Sizeof(*new(Commit))))
-	fmt.Printf("Callout:           %s\n", explain(unsafe.Sizeof(*new(Callout))))
-	fmt.Printf("FileOp:            %s\n", explain(unsafe.Sizeof(*new(FileOp))))
-	fmt.Printf("Blob:              %s\n", explain(unsafe.Sizeof(*new(Blob))))
-	fmt.Printf("Tag:               %s\n", explain(unsafe.Sizeof(*new(Tag))))
-	fmt.Printf("Reset:             %s\n", explain(unsafe.Sizeof(*new(Reset))))
-	fmt.Printf("Attribution:       %s\n", explain(unsafe.Sizeof(*new(Attribution))))
-	fmt.Printf("blobidx:           %3d\n", unsafe.Sizeof(blobidx(0)))
-	fmt.Printf("markidx:           %3d\n", unsafe.Sizeof(markidx(0)))
-	fmt.Printf("revidx:            %3d\n", unsafe.Sizeof(revidx(0)))
-	fmt.Printf("nodeidx:           %3d\n", unsafe.Sizeof(nodeidx(0)))
-	fmt.Printf("string:            %3d\n", unsafe.Sizeof("foo"))
-	fmt.Printf("pointer:           %3d\n", unsafe.Sizeof(new(Attribution)))
-	fmt.Printf("int:               %3d\n", unsafe.Sizeof(0))
-	fmt.Printf("map[string]string: %3d\n", unsafe.Sizeof(make(map[string]string)))
-	fmt.Printf("[]string:          %3d\n", unsafe.Sizeof(make([]string, 0)))
+	fmt.Fprintf(control.baton, "NodeAction:        %s\n", explain(unsafe.Sizeof(*new(NodeAction))))
+	fmt.Fprintf(control.baton, "RevisionRecord:    %s\n", explain(unsafe.Sizeof(*new(RevisionRecord))))
+	fmt.Fprintf(control.baton, "Commit:            %s\n", explain(unsafe.Sizeof(*new(Commit))))
+	fmt.Fprintf(control.baton, "Callout:           %s\n", explain(unsafe.Sizeof(*new(Callout))))
+	fmt.Fprintf(control.baton, "FileOp:            %s\n", explain(unsafe.Sizeof(*new(FileOp))))
+	fmt.Fprintf(control.baton, "Blob:              %s\n", explain(unsafe.Sizeof(*new(Blob))))
+	fmt.Fprintf(control.baton, "Tag:               %s\n", explain(unsafe.Sizeof(*new(Tag))))
+	fmt.Fprintf(control.baton, "Reset:             %s\n", explain(unsafe.Sizeof(*new(Reset))))
+	fmt.Fprintf(control.baton, "Attribution:       %s\n", explain(unsafe.Sizeof(*new(Attribution))))
+	fmt.Fprintf(control.baton, "blobidx:           %3d\n", unsafe.Sizeof(blobidx(0)))
+	fmt.Fprintf(control.baton, "markidx:           %3d\n", unsafe.Sizeof(markidx(0)))
+	fmt.Fprintf(control.baton, "revidx:            %3d\n", unsafe.Sizeof(revidx(0)))
+	fmt.Fprintf(control.baton, "nodeidx:           %3d\n", unsafe.Sizeof(nodeidx(0)))
+	fmt.Fprintf(control.baton, "string:            %3d\n", unsafe.Sizeof("foo"))
+	fmt.Fprintf(control.baton, "pointer:           %3d\n", unsafe.Sizeof(new(Attribution)))
+	fmt.Fprintf(control.baton, "int:               %3d\n", unsafe.Sizeof(0))
+	fmt.Fprintf(control.baton, "map[string]string: %3d\n", unsafe.Sizeof(make(map[string]string)))
+	fmt.Fprintf(control.baton, "[]string:          %3d\n", unsafe.Sizeof(make([]string, 0)))
 	return false
 }
 
@@ -19965,7 +19965,6 @@ func main() {
 	defer func() {
 		maybePanic := recover()
 		control.baton.Sync()
-		//fmt.Print("\n")
 		stopCPUProfiling()
 		stopTracing()
 		if len(control.profilename) > 0 {

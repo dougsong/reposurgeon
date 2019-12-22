@@ -1735,11 +1735,11 @@ func svnProcessCommits(ctx context.Context, sp *StreamParser, options stringSet,
 			baton.twirl()
 		}
 		if logEnable(logEXTRACT) {
-			fmt.Println("Actions:")
+			logit(logEXTRACT, "Actions:")
 			for _, action := range actions {
 				// Format-string not \n terminated because the Node stringer does it.
 				opr := strings.TrimSpace(action.fileop.String())
-				logit(logSHOUT, "reposurgeon: %v -> %v", action.node, opr)
+				logit(logEXTRACT, "reposurgeon: %v -> %v", action.node, opr)
 			}
 		}
 		commit.setMark(sp.repo.newmark())
