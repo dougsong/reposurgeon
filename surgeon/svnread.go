@@ -82,9 +82,8 @@ func containingDir(s string) string {
 	i := strings.LastIndexByte(s, os.PathSeparator)
 	if i <= 0 {
 		return ""
-	} else {
-		return s[:i]
 	}
+	return s[:i]
 }
 
 // isDeclaredBranch returns true iff the user requested that this path be treated as a branch or tag.
