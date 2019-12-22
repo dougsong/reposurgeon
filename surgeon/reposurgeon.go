@@ -10087,19 +10087,6 @@ func (rl *RepositoryList) unchoose() {
 	rl.repo = nil
 }
 
-// Unstreamify any repo about to be stepped on by a stream output.
-func (rl *RepositoryList) writeNotify(filename string) {
-	for _, repo := range rl.repolist {
-		if repo.name == filename || strings.Contains(filename, repo.name+".") {
-			for _, event := range repo.events {
-				if blob, ok := event.(*Blob); ok {
-					blob.materialize()
-				}
-			}
-		}
-	}
-}
-
 // Return a list of the names of all repositories.
 func (rl *RepositoryList) reponames() orderedStringSet {
 	var lst = make([]string, len(rl.repolist))
@@ -11779,12 +11766,22 @@ func (rl *RepositoryList) newLineParse(line string, capabilities orderedStringSe
 			}
 			// flush the outfile, if it happens to be a file
 			// that Reposurgeon has already opened
-			rl.writeNotify(lp.outfile)
 			mode := os.O_WRONLY
 			if match[2*1+1]-match[2*1+0] > 1 {
 				mode |= os.O_CREATE | os.O_APPEND
 			} else {
-				mode |= os.O_CREATE | os.O_TRUNC
+				mode |= os.O_CREATE
+				// Unix delete doesn't niuke a fuile
+				// immediately, it (a) removes te
+				// directory reference, and (b)
+				// schedules the file for actual
+				// deletion on it when the lat file
+				// descritor iopen to it is closed.
+				// Thus, by deleting the file if it
+				// already exists we ennsure that any
+				// seekstreams pointing to it will
+				// continuee to get valid data.
+				os.Remove(lp.outfile)
 			}
 			lp.stdout, err = os.OpenFile(lp.outfile, mode, userReadWriteMode)
 			if err != nil {
