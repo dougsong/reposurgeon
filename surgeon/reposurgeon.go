@@ -3264,6 +3264,7 @@ type Date struct {
 // swapped.
 //const GitLogFormat = "Mon Jan 02 15:04:05 2006 -0700"
 const GitLogFormat = "Mon Jan 02 15:04:05 -0700 2006"
+// RFC1123ZNoComma is the swapped format
 const RFC1123ZNoComma = "Mon 02 Jan 2006 15:04:05 -0700"
 
 // newDate exists mainly to wrap a parser to recognize date formats that

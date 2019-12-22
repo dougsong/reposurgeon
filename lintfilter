@@ -4,7 +4,6 @@
 # Throw out the annoying ones
 
 sed \
-    -e "/exported const .* should have comment or be unexported/d" \
     -e "/exported type .* should have comment or be unexported/d" \
     -e "/exported method .* should have comment or be unexported/d" \
     -e "/exported function .* should have comment or be unexported/d" \
