@@ -28,6 +28,7 @@ type HgClient struct {
 	cwd      string
 }
 
+// NewHgClient creates a new instance of the client robot.
 func NewHgClient() *HgClient {
 	var err error
 	me := new(HgClient)
