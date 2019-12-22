@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	trie "github.com/acomagu/trie"
 	"io"
 	"log"
 	"os"
@@ -13,7 +14,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	trie "github.com/acomagu/trie"
 )
 
 func assertBool(t *testing.T, see bool, expect bool) {
@@ -895,7 +895,7 @@ func TestFileOp(t *testing.T) {
 }
 
 func TestFileopSort(t *testing.T) {
-	test := func (as []string, bs []string) {
+	test := func(as []string, bs []string) {
 		if len(as) != len(bs) {
 			t.Fatalf("sort test must have two slices of the same length")
 		}
@@ -932,7 +932,7 @@ func TestFileopSort(t *testing.T) {
 	test([]string{"clients/upslog.c", "clients/upsmon.c", "CHANGES", "clients/.gitignore"},
 		[]string{"CHANGES", "clients/.gitignore", "clients/upslog.c", "clients/upsmon.c"})
 
-	test2 := func (as []*FileOp, bs []*FileOp) {
+	test2 := func(as []*FileOp, bs []*FileOp) {
 		repo := newRepository("fubar")
 		defer repo.cleanup()
 		commit := newCommit(repo)
@@ -941,7 +941,7 @@ func TestFileopSort(t *testing.T) {
 			commit.appendOperation(a)
 		}
 		commit.sortOperations()
-		quasiEquals := func (a *FileOp, b *FileOp) bool {
+		quasiEquals := func(a *FileOp, b *FileOp) bool {
 			return a.op == b.op && a.Path == b.Path
 		}
 		if len(commit.fileops) != len(bs) {
@@ -975,7 +975,7 @@ func TestFileopSort(t *testing.T) {
 
 	// rename, modify → modify, rename
 	test2([]*FileOp{newFileOp(nil).construct(opR, "a", "aa"), newFileOp(nil).construct(opM, "100644", ":1", "z")},
-		[]*FileOp{newFileOp(nil).construct(opM, "100644", ":1", "z"), newFileOp(nil).construct(opR, "a", "aa")},)
+		[]*FileOp{newFileOp(nil).construct(opM, "100644", ":1", "z"), newFileOp(nil).construct(opR, "a", "aa")})
 }
 
 func TestCommitMethods(t *testing.T) {
@@ -1837,7 +1837,7 @@ func TestLongestMatch(t *testing.T) {
 	}
 	for idx, pair := range tests {
 		t.Run(fmt.Sprint(idx),
-			func (t *testing.T) {
+			func(t *testing.T) {
 				result := longestPrefix(b, []byte(pair[0]))
 				assertEqual(t, string(result), pair[1])
 			})

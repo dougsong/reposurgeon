@@ -22,10 +22,10 @@ import (
 )
 
 type HgClient struct {
-	hgServer	*exec.Cmd
-	pipeIn		io.WriteCloser	// client write, server read
-	pipeOut		io.ReadCloser	// server write, client read
-	cwd		string
+	hgServer *exec.Cmd
+	pipeIn   io.WriteCloser // client write, server read
+	pipeOut  io.ReadCloser  // server write, client read
+	cwd      string
 }
 
 func NewHgClient() *HgClient {
@@ -36,7 +36,7 @@ func NewHgClient() *HgClient {
 		panic(throw("extractor", "NewHgClient: could not get working directory: %v", err))
 	}
 	me.hgServer = exec.Command("hg", "--config", "ui.interactive=False",
-				   "serve", "--cmdserver", "pipe")
+		"serve", "--cmdserver", "pipe")
 	me.hgServer.Env = append(os.Environ(), "HGENCODING=UTF-8")
 	me.pipeOut, err = me.hgServer.StdoutPipe()
 	if err != nil {
@@ -107,7 +107,7 @@ func (hgcl *HgClient) runcommand(cmd []string) (stdout []byte, stderr []byte, er
 		err = fmt.Errorf("runcommand: %s", err)
 	} else if ret != 0 {
 		err = fmt.Errorf("runcommand: %#v failed with rc %d",
-				 cmd, ret)
+			cmd, ret)
 	}
 	return
 }
@@ -257,7 +257,7 @@ func parseHgUint(s []byte) (i uint32, err error) {
 
 func parseHgInt(s []byte) (i int32, err error) {
 	u, err := parseHgUint(s)
-	if (err == nil) {
+	if err == nil {
 		i = int32(u)
 	}
 	return

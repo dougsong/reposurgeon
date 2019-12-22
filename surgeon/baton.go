@@ -391,7 +391,7 @@ func (baton *Progress) render(b io.Writer) {
 			elapsed = elapsed.Round(time.Second)
 		}
 		fmt.Fprintf(b, "%s %.2f%% %s/%s, %v @ %s/s, %s/s",
-			baton.tag, frac * 100, scale(float64(baton.count)), scale(float64(baton.expected)), elapsed, ratemsg, ratemsg2)
+			baton.tag, frac*100, scale(float64(baton.count)), scale(float64(baton.expected)), elapsed, ratemsg, ratemsg2)
 	}
 }
 

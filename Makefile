@@ -71,7 +71,7 @@ lint:
 	golint ./... | ./lintfilter 2>&1
 
 fmt:
-	gofmt -w ./...
+	gofmt -w .
 
 #
 # Installation

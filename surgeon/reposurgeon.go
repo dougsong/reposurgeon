@@ -115,12 +115,12 @@ import (
 	shlex "github.com/anmitsu/go-shlex"
 	orderedset "github.com/emirpasic/gods/sets/linkedhashset"
 	difflib "github.com/ianbruene/go-difflib/difflib"
+	shellquote "github.com/kballard/go-shellquote"
 	shutil "github.com/termie/go-shutil"
+	fqme "gitlab.com/esr/fqme"
 	kommandant "gitlab.com/ianbruene/kommandant"
 	terminal "golang.org/x/crypto/ssh/terminal"
 	ianaindex "golang.org/x/text/encoding/ianaindex"
-	fqme "gitlab.com/esr/fqme"
-	shellquote "github.com/kballard/go-shellquote"
 )
 
 const version = "4.0-pre"
@@ -684,7 +684,7 @@ func (s orderedIntSet) String() string {
 		return "[]"
 	}
 	var rep strings.Builder
-	rep.Grow(8*len(s)) // 6 digits plus a comma and a space
+	rep.Grow(8 * len(s)) // 6 digits plus a comma and a space
 	rep.WriteByte('[')
 	lastIdx := len(s) - 1
 	for idx, el := range s {
@@ -1243,10 +1243,10 @@ _darcs
 			preserve:     newOrderedStringSet("hooks"),
 			authormap:    "",
 			ignorename:   "",
-			dfltignores: subversionDefaultIgnores,
-			cookies:     reMake(`\sr?\d+([.])?\s`),
-			project:     "http://subversion.apache.org/",
-			notes:       "Run from the repository, not a checkout directory.",
+			dfltignores:  subversionDefaultIgnores,
+			cookies:      reMake(`\sr?\d+([.])?\s`),
+			project:      "http://subversion.apache.org/",
+			notes:        "Run from the repository, not a checkout directory.",
 		},
 		{
 			name:         "cvs",
@@ -1862,7 +1862,7 @@ type HgExtractor struct {
 	ColorMixer
 	tagsFound      bool
 	bookmarksFound bool
-	hgcl	       *HgClient
+	hgcl           *HgClient
 }
 
 func newHgExtractor() *HgExtractor {
@@ -1906,7 +1906,7 @@ func (he *HgExtractor) mustCapture(cmd []string, errorclass string) string {
 
 // mimics lineByLine (and calls it if no HgClient)
 func (he *HgExtractor) byLine(rs *RepoStreamer, cmd []string, errfmt string,
-			      hook func(string, *RepoStreamer) error) error {
+	hook func(string, *RepoStreamer) error) error {
 	command := shellquote.Join(cmd...)
 	if he == nil || he.hgcl == nil {
 		return lineByLine(rs, command, errfmt, hook)
@@ -2817,7 +2817,7 @@ func whoami() (string, string) {
 	if err == nil {
 		return name, email
 	}
-	
+
 	// Out of alternatives
 	log.Fatal("can't deduce user identity!")
 	return "", ""
@@ -3526,10 +3526,10 @@ type Blob struct {
 	mark         string
 	abspath      string
 	repo         *Repository
-	pathlist     []string // In-repo paths associated with this blob
+	pathlist     []string        // In-repo paths associated with this blob
 	pathlistmap  map[string]bool // optimisation for the above, kept in sync
-	start        int64    // Seek start if this blob refers into a dump
-	size         int64    // length start if this blob refers into a dump
+	start        int64           // Seek start if this blob refers into a dump
+	size         int64           // length start if this blob refers into a dump
 	_expungehook *Blob
 	cookie       Cookie // CVS/SVN cookie analyzed out of this file
 	blobseq      blobidx
@@ -3542,7 +3542,7 @@ const noOffset = -1
 func newBlob(repo *Repository) *Blob {
 	b := new(Blob)
 	b.repo = repo
-	b.pathlist = make([]string, 0) // These have an implied sequence.
+	b.pathlist = make([]string, 0)    // These have an implied sequence.
 	b.pathlistmap = map[string]bool{} // optimisation for pathlist
 	b.start = noOffset
 	b.blobseq = control.blobseq
@@ -4658,7 +4658,7 @@ type Commit struct {
 	Branch       string        // branch name
 	authors      []Attribution // Authors of commit
 	committer    Attribution   // Person responsible for committing it.
-	fileops      []*FileOp      // blob and file operation list
+	fileops      []*FileOp     // blob and file operation list
 	_manifest    *PathMap      // efficient map of *ManifestEntry values
 	repo         *Repository
 	properties   *OrderedMap  // commit properties (extension)
@@ -4792,7 +4792,7 @@ func (commit *Commit) prependOperation(op *FileOp) {
 }
 
 func (commit *Commit) prependOperations(ops []*FileOp) {
-	newops := make([]*FileOp, 0, len(commit.operations()) + len(ops))
+	newops := make([]*FileOp, 0, len(commit.operations())+len(ops))
 	newops = append(newops, ops...)
 	newops = append(newops, commit.operations()...)
 	commit.fileops = newops
@@ -4833,7 +4833,7 @@ func (commit *Commit) sortOperations() {
 			return true
 		} else if commit.fileops[j].op == deleteall {
 			return false
-		} else if (commit.fileops[i].op != opR && commit.fileops[j].op == opR) {
+		} else if commit.fileops[i].op != opR && commit.fileops[j].op == opR {
 			return true
 		} else {
 			left := pathpart(commit.fileops[i])
@@ -5270,11 +5270,11 @@ func (commit *Commit) parentMarks() []string {
 func commitRemove(commitlist []CommitLike, commit CommitLike) []CommitLike {
 	for i := len(commitlist) - 1; i >= 0; i-- {
 		if commitlist[i] == commit {
-			if i < len(commitlist) - 1 {
-				copy(commitlist[i:], commitlist[i + 1:])
+			if i < len(commitlist)-1 {
+				copy(commitlist[i:], commitlist[i+1:])
 			}
-			commitlist[len(commitlist) - 1] = nil
-			commitlist = commitlist[:len(commitlist) - 1]
+			commitlist[len(commitlist)-1] = nil
+			commitlist = commitlist[:len(commitlist)-1]
 		}
 	}
 	return commitlist
@@ -6408,7 +6408,7 @@ type StreamParser struct {
 	ccount      int64
 	linebuffers [][]byte
 	lastcookie  Cookie
-	svnReader		// Opaque state of the Subversion dump reader
+	svnReader   // Opaque state of the Subversion dump reader
 }
 
 // newSteamParser parses a fast-import stream or Subversion dump to a Repository.
@@ -6939,7 +6939,6 @@ func (sp *StreamParser) fastImport(ctx context.Context, fp io.Reader, options st
 	}()
 }
 
-
 // Generic repository-manipulation code begins here
 
 // Event is an operation in a repository's time sequence of modifications.
@@ -6995,7 +6994,9 @@ func walkEvents(events []Event, hook func(int, Event)) {
 	close(channel)
 
 	// Wait for all workers to finish
-	for n := 0; n < maxWorkers; n++ { <-done }
+	for n := 0; n < maxWorkers; n++ {
+		<-done
+	}
 }
 
 // Safecounter is the simplest possible thread-safe counter,
@@ -7067,37 +7068,37 @@ type TimeMark struct {
 
 // Repository is the entire state of a version-control repository
 type Repository struct {
-	name         string
-	readtime     time.Time
-	vcs          *VCS
-	stronghint   bool
-	hintlist     []Hint
-	sourcedir    string
-	seekstream   *os.File
-	events       []Event // A list of the events encountered, in order
-	_markToIndex map[string]int
+	name              string
+	readtime          time.Time
+	vcs               *VCS
+	stronghint        bool
+	hintlist          []Hint
+	sourcedir         string
+	seekstream        *os.File
+	events            []Event // A list of the events encountered, in order
+	_markToIndex      map[string]int
 	_markToIndexCalls int // Call count between last invalidation and cache creation
-	_markToIndexLock sync.Mutex
-	_eventByMark map[string]Event
-	_namecache   map[string][]int
-	preserveSet  orderedStringSet
-	caseCoverage orderedIntSet
-	basedir      string
-	uuid         string
-	writeLegacy  bool
-	dollarMap    sync.Map // From dollar cookies in files
-	dollarOnce   sync.Once
-	legacyMap    map[string]*Commit // From anything that doesn't survive rebuild
-	legacyCount  int
-	timings      []TimeMark
-	assignments  map[string]orderedIntSet
-	inlines      int
-	uniqueness   string // "committer_date", "committer_stamp", or ""
-	markseq      int
-	authormap    map[string]Contributor
-	tzmap        map[string]*time.Location // most recent email address to timezone
-	aliases      map[ContributorID]ContributorID
-	maplock      sync.Mutex
+	_markToIndexLock  sync.Mutex
+	_eventByMark      map[string]Event
+	_namecache        map[string][]int
+	preserveSet       orderedStringSet
+	caseCoverage      orderedIntSet
+	basedir           string
+	uuid              string
+	writeLegacy       bool
+	dollarMap         sync.Map // From dollar cookies in files
+	dollarOnce        sync.Once
+	legacyMap         map[string]*Commit // From anything that doesn't survive rebuild
+	legacyCount       int
+	timings           []TimeMark
+	assignments       map[string]orderedIntSet
+	inlines           int
+	uniqueness        string // "committer_date", "committer_stamp", or ""
+	markseq           int
+	authormap         map[string]Contributor
+	tzmap             map[string]*time.Location // most recent email address to timezone
+	aliases           map[ContributorID]ContributorID
+	maplock           sync.Mutex
 	// Write control - set, if required, before each dump
 	preferred    *VCS             // overrides vcs slot for writes
 	realized     map[string]bool  // clear and remake this before each dump
@@ -7511,8 +7512,8 @@ func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) err
 	scanner := bufio.NewScanner(fp)
 	var principal Contributor
 	var currentLineNumber uint64
-	complain := func (msg string, args ...interface{}) {
-		logit(logSHOUT, "in readAuthorMap, while parsing line %d: " + msg, append([]interface{}{currentLineNumber}, args)...)
+	complain := func(msg string, args ...interface{}) {
+		logit(logSHOUT, "in readAuthorMap, while parsing line %d: "+msg, append([]interface{}{currentLineNumber}, args)...)
 	}
 	for scanner.Scan() {
 		currentLineNumber++
@@ -7750,8 +7751,8 @@ func (repo *Repository) writeLegacyMap(fp io.Writer) error {
 	for _, cookie := range keylist {
 		commit := repo.legacyMap[cookie]
 		id := fmt.Sprintf("%s!%s",
-				commit.committer.date.rfc3339(),
-				commit.committer.email)
+			commit.committer.date.rfc3339(),
+			commit.committer.email)
 		serial := ""
 		if seen[id] > 0 {
 			serial += fmt.Sprintf(":%d", seen[id]+1)
@@ -11873,15 +11874,15 @@ type Reposurgeon struct {
 	CmdControl
 	RepositoryList
 	SelectionParser
-	callstack        [][]string
-	selection        orderedIntSet
-	history          []string
-	preferred        *VCS
-	extractor        Extractor
-	startTime        time.Time
-	promptFormat     string
-	logHighwater     int
-	ignorename       string
+	callstack    [][]string
+	selection    orderedIntSet
+	history      []string
+	preferred    *VCS
+	extractor    Extractor
+	startTime    time.Time
+	promptFormat string
+	logHighwater int
+	ignorename   string
 }
 
 var unclean = regexp.MustCompile("^[^\n]*\n[^\n]")
@@ -12069,7 +12070,9 @@ func (repo *Repository) walkEvents(selection orderedIntSet, hook func(i int, eve
 	close(channel)
 
 	// Wait for all workers to finish
-	for n := 0; n < maxWorkers; n++ { <-done }
+	for n := 0; n < maxWorkers; n++ {
+		<-done
+	}
 }
 
 //
@@ -14831,7 +14834,7 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 						eventnum, i+1)
 					errorCount++
 				} else {
-					event = repo.events[eventnum - 1]
+					event = repo.events[eventnum-1]
 				}
 			}
 		} else if message.getHeader("Legacy-ID") != "" {
@@ -16719,7 +16722,7 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 			croak("regular expression requires matching start and end delimiters")
 			return false
 		}
-		filterRE, err := regexp.Compile(line[1:len(line)-1])
+		filterRE, err := regexp.Compile(line[1 : len(line)-1])
 		if err != nil {
 			logit(logWARN, "invalid regular expression: %v", err)
 			return false
@@ -17209,7 +17212,7 @@ func (rs *Reposurgeon) DoBranch(line string) bool {
 				croak("no such branch as %s", branchname)
 				return false
 			}
-			branchre = regexp.MustCompile("^"+regexp.QuoteMeta(branchname)+"$")
+			branchre = regexp.MustCompile("^" + regexp.QuoteMeta(branchname) + "$")
 		}
 		deletia := make([]int, 0)
 		for _, ei := range selection {
@@ -19002,10 +19005,10 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		// After the address, they can be dropped, but before they might come
 		// legit parenthesis that was converted above.
 		pre := strings.Replace(
-		           strings.Replace(line[:addrStart], "<", "(", -1),
-		           ">", ")", -1)
+			strings.Replace(line[:addrStart], "<", "(", -1),
+			">", ")", -1)
 		post := strings.Replace(line[addrEnd+1:], ">", "", -1)
-		email := line[addrStart:addrEnd+1]
+		email := line[addrStart : addrEnd+1]
 		// Detect more types of address masking
 		email = strings.Replace(email, " at ", "@", 1)
 		// Regenerate cleaned up attribution
@@ -19056,7 +19059,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		croak("regular expression requires matching start and end delimiters")
 		return false
 	}
-	clRe, err := regexp.Compile(logpattern[1:len(logpattern)-1])
+	clRe, err := regexp.Compile(logpattern[1 : len(logpattern)-1])
 	if err != nil {
 		croak("invalid regular expression for changelog matching: /%s/ (%v)", logpattern, err)
 		return false
@@ -19122,7 +19125,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 								} else if lastIsValid {
 									// this is not an attribution line, search for
 									// the last one since we are in its block
-									for j := lastUnchanged.J2-1; j >= lastUnchanged.J1; j-- {
+									for j := lastUnchanged.J2 - 1; j >= lastUnchanged.J1; j-- {
 										attribution = parseAttributionLine(now[j])
 										if attribution != "" {
 											// this is the active attribution
@@ -19132,9 +19135,9 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 									}
 								}
 								continue
-								attributionFound:
+							attributionFound:
 								if foundAttribution != "" &&
-										foundAttribution != attribution {
+									foundAttribution != attribution {
 									// there is more than one active, skip the commit
 									return
 								}
