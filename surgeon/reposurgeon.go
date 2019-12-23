@@ -7750,16 +7750,13 @@ func (repo *Repository) writeLegacyMap(fp io.Writer) error {
 }
 
 // Turn a commit into a tag.
-func (repo *Repository) tagify(commit *Commit, name string, target string, legend string, delete bool) {
+func (repo *Repository) tagifyNoCheck(commit *Commit, name string, target string, legend string, delete bool) {
 	if logEnable(logEXTRACT) {
 		commitID := commit.mark
 		if commit.legacyID != "" {
 			commitID += fmt.Sprintf(" <%s>", commit.legacyID)
 		}
 		logit(logSHOUT, fmt.Sprintf("tagifying: %s -> %s", commitID, name))
-	}
-	if len(commit.operations()) > 0 {
-		panic("Attempting to tagify a commit with fileops.")
 	}
 	var pref string
 	if commit.Comment == "" {
@@ -7776,6 +7773,14 @@ func (repo *Repository) tagify(commit *Commit, name string, target string, legen
 	if delete {
 		commit.delete([]string{"--tagback"})
 	}
+}
+
+// Turn a commit into a tag.
+func (repo *Repository) tagify(commit *Commit, name string, target string, legend string, delete bool) {
+	if len(commit.operations()) > 0 {
+		panic("Attempting to tagify a commit with fileops.")
+	}
+	repo.tagifyNoCheck(commit, name, target, legend, delete)
 }
 
 // Default scheme to name tags generated from empty commits
