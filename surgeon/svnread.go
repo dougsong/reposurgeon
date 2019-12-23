@@ -2478,8 +2478,19 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 	// Should the argument commit be tagified?
 	tagifyable := func(commit *Commit) bool {
 		logit(logEXTRACT, "beginning tag check on %q", commit.String())
-		// If the commit has no operations, tagify it.
-		if len(commit.operations()) == 0 {
+		// If the commit has no operations, other than .gitignore, tagify it.
+		allignores := true
+		for _, op := range commit.operations() {
+			if op.Path == ".gitignore" {
+				blob, ok := sp.repo.markToEvent(op.ref).(*Blob)
+				if ok && string(blob.getContent()) == subversionDefaultIgnores {
+					continue
+				}
+			}
+			allignores = false
+			break
+		}
+		if allignores {
 			return true
 		}
 		// Generated commit on a branch in the tag space, no children.
@@ -2511,8 +2522,7 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 				if len(commit.parents()) > 1 {
 					continue
 				}
-				commit.setOperations(nil)
-				sp.repo.tagify(commit,
+				sp.repo.tagifyNoCheck(commit,
 					tagname(commit),
 					commit.parents()[0].getMark(),
 					taglegend(commit),
