@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	trie "github.com/acomagu/trie"
 	"io"
 	"log"
 	"os"
