@@ -41,5 +41,7 @@ committer esr <esr> 1323167895 +0000
 data 73
 Create an empty top-level branch for test purposes.  Should be tagified.
 from :3
+deleteall
+M 100644 :1 .gitignore
 M 100644 :2 README
 

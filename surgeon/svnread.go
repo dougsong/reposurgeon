@@ -2524,22 +2524,20 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 					false)
 				deletia = append(deletia, index)
 			} else {
-				if commit.Branch != "refs/heads/master" {
-					msg := ""
-					if commit.legacyID != "" {
-						msg = fmt.Sprintf(" r%s:", commit.legacyID)
-					} else if commit.mark != "" {
-						msg = fmt.Sprintf(" '%s':", commit.mark)
-					}
-					msg += " deleting parentless "
-					if len(commit.operations()) > 0 {
-						msg += fmt.Sprintf("tip delete of %s.", commit.Branch)
-					} else {
-						msg += fmt.Sprintf("zero-op commit on %s.", commit.Branch)
-					}
-					logit(logSHOUT, msg[1:])
-					deletia = append(deletia, index)
+				msg := ""
+				if commit.legacyID != "" {
+					msg = fmt.Sprintf(" r%s:", commit.legacyID)
+				} else if commit.mark != "" {
+					msg = fmt.Sprintf(" '%s':", commit.mark)
 				}
+				msg += " deleting parentless "
+				if len(commit.operations()) > 0 {
+					msg += fmt.Sprintf("tip delete of %s.", commit.Branch)
+				} else {
+					msg += fmt.Sprintf("zero-op commit on %s.", commit.Branch)
+				}
+				logit(logSHOUT, msg[1:])
+				deletia = append(deletia, index)
 			}
 		}
 		baton.percentProgress(uint64(index) + 1)
