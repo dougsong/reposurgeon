@@ -2493,9 +2493,13 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 		if allignores {
 			return true
 		}
-		// In a --nobranch conversion, the object is to preserve all the structure of the Subversion original.
-		// Thus, we want to tagify branch tip deletes in order to keep those brancges.
-		if options.Contains("--nobranch") && commit.alldeletes(deleteall) && !commit.hasChildren() {
+		// Commits with a deletall only were generated in early phases to map
+		// SVN deletions of a whole branch. This has already been mapped in git
+		// land by stashing deleted refs away, and even removing all commits
+		// reachable only from them if the --preserve option was not given.
+		// Any "alldeletes" commit remaining can now be tagified, and should,
+		// so that there are no remnants of the SVN way to delete refs.
+		if commit.alldeletes(deleteall) {
 			return true
 		}
 		return false
