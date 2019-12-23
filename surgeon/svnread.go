@@ -2493,11 +2493,6 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 		if allignores {
 			return true
 		}
-		// Generated commit on a branch in the tag space, no children.
-		// This correspondfs to a Subversion tag copy.
-		if commit.color == colorGEN && strings.HasPrefix(commit.Branch, "refs/tags") && !commit.hasChildren() {
-			return true
-		}
 		// In a --nobranch conversion, the object is to preserve all the structure of the Subversion original.
 		// Thus, we want to tagify branch tip deletes in order to keep those brancges.
 		if options.Contains("--nobranch") && commit.alldeletes(deleteall) && !commit.hasChildren() {
