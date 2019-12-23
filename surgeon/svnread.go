@@ -2509,7 +2509,7 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 			logit(logEXTRACT, "%s might be tag-eligible", commit.idMe())
 			if commit.hasParents() {
 				if len(commit.parents()) > 1 {
-					return
+					continue
 				}
 				commit.setOperations(nil)
 				sp.repo.tagify(commit,
