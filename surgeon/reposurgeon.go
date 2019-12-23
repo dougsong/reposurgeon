@@ -5468,22 +5468,6 @@ func (commit *Commit) descendedFrom(other *Commit) bool {
 	return false
 }
 
-// cliques returns a dictionary mapping filenames to associated M cliques.
-// Change in behavior from Python: the map keys are not ordered.
-func (commit *Commit) cliques() map[string][]int {
-	cliques := make(map[string][]int)
-	for i, fileop := range commit.operations() {
-		if fileop.op == opM {
-			_, ok := cliques[fileop.Path]
-			if !ok {
-				cliques[fileop.Path] = make([]int, 0)
-			}
-			cliques[fileop.Path] = append(cliques[fileop.Path], i)
-		}
-	}
-	return cliques
-}
-
 // fileopDump reports file ops without data or inlines; used for logging only.
 func (commit *Commit) fileopDump() {
 	fmt.Fprintf(control.baton, "commit %d, mark %s:\n", commit.repo.markToIndex(commit.mark)+1, commit.mark)
@@ -8352,7 +8336,7 @@ func (commit *Commit) simplify() {
 
 var allPolicies = orderedStringSet{
 	"--complain",
-	"--coalesce",
+	"--no-coalesce",
 	"--delete",
 	"--empty-only",
 	"--pushback",
@@ -8388,6 +8372,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 	tagforward := policy.Contains("--tagforward") || (!delete && !tagback)
 	pushback := policy.Contains("--pushback")
 	pushforward := policy.Contains("--pushforward") || (!delete && !pushback)
+	coalesce := !policy.Contains("--no-coalesce")
 	// Sanity checks
 	if !dquiet {
 		for _, ei := range selected {
@@ -8655,7 +8640,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 	repo.events = survivors
 	repo.declareSequenceMutation("")
 	// Canonicalize all the commits that got ops pushed to them
-	if !delete {
+	if !delete && coalesce {
 		for _, commit := range altered {
 			if commit.getDelFlag() {
 				continue
@@ -8667,38 +8652,6 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 			commit.simplify()
 			if logEnable(logDELETE) {
 				logit(logDELETE, "After canonicalization:")
-				commit.fileopDump()
-			}
-			// Now apply policy in the multiple-M case
-			cliques := commit.cliques()
-			if (!policy.Contains("--coalesce") && !delete) || logEnable(logDELETE) {
-				for path, oplist := range cliques {
-					if len(oplist) > 1 && !dquiet {
-						logit(logWARN, "commit %s has multiple Ms for %s", commit.mark, path)
-					}
-				}
-			}
-
-			if policy.Contains("--coalesce") {
-				// Only keep last M of each clique,
-				// leaving other ops alone
-				newOps := make([]*FileOp, 0)
-				for i, op := range commit.operations() {
-					if op.op != opM {
-						newOps = append(newOps, op)
-						continue
-					}
-					myclique := cliques[op.Path]
-					if i == myclique[len(myclique)-1] {
-						newOps = append(newOps, op)
-						continue
-					}
-				}
-				commit.setOperations(newOps)
-			}
-
-			if logEnable(logDELETE) {
-				logit(logDELETE, fmt.Sprintf("%s, after applying policy:", commit.idMe()))
 				commit.fileopDump()
 			}
 		}
@@ -15613,7 +15566,7 @@ func (rs *Reposurgeon) DoCoalesce(line string) bool {
 		for _, mark := range span[:len(span)-1] {
 			squashable = append(squashable, repo.markToIndex(mark))
 		}
-		repo.squash(squashable, orderedStringSet{"--coalesce"})
+		repo.squash(squashable, orderedStringSet{})
 	}
 	respond("%d spans coalesced.", len(squashes))
 	return false

@@ -473,7 +473,7 @@ commit 33, mark :32:
 commit 35, mark :34:
 0: M 100644 :33 README
 Case coverage: []
-:4,:7 squash --pushback --coalesce
+:4,:7 squash --pushback
 coverage
 commit 5, mark :2:
 0: M 100644 :5 README
@@ -514,7 +514,7 @@ commit 30, mark :32:
 commit 32, mark :34:
 0: M 100644 :33 README
 Case coverage: []
-:23..:25 squash --pushback --coalesce
+:23..:25 squash --pushback
 coverage
 commit 5, mark :2:
 0: M 100644 :5 README

@@ -802,15 +802,11 @@ normalized form detects various combinations of modification,
 deletion, and renaming and simplifies the operation sequence as much
 as it can without losing any information.
 +
-After canonicalization, a file op list may still end up containing
-multiple M operations on the same file. Normally the tool utters a
-warning when this occurs but does not try to resolve it.
-+
 The following modifiers change these policies:
 +
 |===================================================================
 | --delete      | Simply discards all file ops and tags associated with deleted commit(s).
-| --coalesce    | Discard all M operations (and associated blobs) except the last.
+| --no-coalesce | Do not normalize the modified commit operations.
 | --pushback    | Append fileops to parents, rather than prepending to children.
 | --pushforward | Prepend fileops to children. This is the default; it can be
                   specified in a lift script for explicitness about intentions.

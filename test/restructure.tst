@@ -22,8 +22,8 @@ drop testrepo
 clear interactive
 read <testrepo.fi
 coverage
-:4,:7 squash --pushback --coalesce
+:4,:7 squash --pushback
 coverage
-:23..:25 squash --pushback --coalesce
+:23..:25 squash --pushback
 coverage
 write -
