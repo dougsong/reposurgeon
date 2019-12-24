@@ -22,1125 +22,692 @@ data 210
 
 blob
 mark :2
-data 52
-Revision is 3, file path is activeedi/trunk/README.
-
-blob
-mark :3
-data 54
-Revision is 3, file path is activeedi/trunk/Rakefile.
-
-blob
-mark :4
-data 74
-Revision is 3, file path is activeedi/trunk/lib/active_edi/attributes.rb.
-
-blob
-mark :5
-data 68
-Revision is 3, file path is activeedi/trunk/lib/active_edi/base.rb.
-
-blob
-mark :6
-data 63
-Revision is 3, file path is activeedi/trunk/lib/active_edi.rb.
-
-blob
-mark :7
-data 62
-Revision is 3, file path is activeedi/trunk/lib/activeedi.rb.
-
-blob
-mark :8
-data 57
-Revision is 3, file path is activeedi/trunk/lib/icms.rb.
-
-blob
-mark :9
-data 64
-Revision is 3, file path is activeedi/trunk/lib/obrigatorio.rb.
-
-blob
-mark :10
-data 59
-Revision is 3, file path is activeedi/trunk/test/basic.rb.
-
-blob
-mark :11
-data 85
-Revision is 3, file path is activeedi/trunk/test/exemplo_importacao_novosistema.txt.
-
-blob
-mark :12
-data 70
-Revision is 3, file path is activeedi/trunk/test/obrigatorio_test.rb.
-
-blob
-mark :13
-data 59
-Revision is 3, file path is activeedi/trunk/test/teste.rb.
-
-commit refs/heads/activeedi
-#legacy-id 3
-mark :14
-committer pablo.lerina <pablo.lerina> 1250103338 +0000
-data 17
-Initial import.
-
-M 100644 :1 .gitignore
-M 100644 :2 trunk/README
-M 100644 :3 trunk/Rakefile
-M 100644 :6 trunk/lib/active_edi.rb
-M 100644 :4 trunk/lib/active_edi/attributes.rb
-M 100644 :5 trunk/lib/active_edi/base.rb
-M 100644 :7 trunk/lib/activeedi.rb
-M 100644 :8 trunk/lib/icms.rb
-M 100644 :9 trunk/lib/obrigatorio.rb
-M 100644 :10 trunk/test/basic.rb
-M 100644 :11 trunk/test/exemplo_importacao_novosistema.txt
-M 100644 :12 trunk/test/obrigatorio_test.rb
-M 100644 :13 trunk/test/teste.rb
-
-blob
-mark :15
-data 54
-Revision is 4, file path is activeedi/trunk/Rakefile.
-
-blob
-mark :16
-data 68
-Revision is 4, file path is activeedi/trunk/lib/active_edi/base.rb.
-
-blob
-mark :17
-data 63
-Revision is 4, file path is activeedi/trunk/lib/active_edi.rb.
-
-blob
-mark :18
-data 70
-Revision is 4, file path is activeedi/trunk/lib/novo_sistema/icms.rb.
-
-blob
-mark :19
-data 77
-Revision is 4, file path is activeedi/trunk/lib/novo_sistema/obrigatorio.rb.
-
-blob
-mark :20
-data 70
-Revision is 4, file path is activeedi/trunk/test/obrigatorio_test.rb.
-
-commit refs/heads/activeedi
-#legacy-id 4
-mark :21
-committer pablo.lerina <pablo.lerina> 1250106567 +0000
-data 24
-reorganizando estrutura
-from :14
-M 100644 :15 trunk/Rakefile
-M 100644 :17 trunk/lib/active_edi.rb
-M 100644 :16 trunk/lib/active_edi/base.rb
-D trunk/lib/icms.rb
-M 100644 :18 trunk/lib/novo_sistema/icms.rb
-M 100644 :19 trunk/lib/novo_sistema/obrigatorio.rb
-D trunk/lib/obrigatorio.rb
-M 100644 :20 trunk/test/obrigatorio_test.rb
-
-blob
-mark :22
-data 51
-Revision is 10, file path is activeedi/trunk/TODO.
-
-blob
-mark :23
-data 75
-Revision is 10, file path is activeedi/trunk/lib/active_edi/attributes.rb.
-
-blob
-mark :24
-data 78
-Revision is 10, file path is activeedi/trunk/lib/novo_sistema/obrigatorio.rb.
-
-commit refs/heads/activeedi
-#legacy-id 5
-mark :25
-committer pablo.lerina <pablo.lerina> 1250280258 +0000
-data 24
-adicionado arquivo TODO
-from :21
-M 100644 :22 trunk/TODO
-M 100644 :23 trunk/lib/active_edi/attributes.rb
-M 100644 :24 trunk/lib/novo_sistema/obrigatorio.rb
-
-blob
-mark :26
-data 75
-Revision is 13, file path is activeedi/trunk/lib/active_edi/attributes.rb.
-
-commit refs/heads/activeedi
-#legacy-id 6
-mark :27
-committer pablo.lerina <pablo.lerina> 1250546931 +0000
-data 60
-retorna float ou inteiro de acordo com o atributo 'decimal'
-from :25
-M 100644 :26 trunk/lib/active_edi/attributes.rb
-
-blob
-mark :28
-data 74
-Revision is 14, file path is activeedi/trunk/lib/novo_sistema/icms_50.rb.
-
-blob
-mark :29
-data 73
-Revision is 14, file path is activeedi/trunk/lib/novo_sistema/ipi_51.rb.
-
-blob
-mark :30
-data 81
-Revision is 14, file path is activeedi/trunk/lib/novo_sistema/obrigatorio_10.rb.
-
-blob
-mark :31
-data 77
-Revision is 14, file path is activeedi/trunk/lib/novo_sistema/produto_54.rb.
-
-commit refs/heads/activeedi
-#legacy-id 7
-mark :32
-committer pablo.lerina <pablo.lerina> 1250601465 +0000
-data 63
-adicionando registros tipo 54 e 51 e renomeando o tipo 10 e 50
-from :27
-D trunk/lib/novo_sistema/icms.rb
-M 100644 :28 trunk/lib/novo_sistema/icms_50.rb
-M 100644 :29 trunk/lib/novo_sistema/ipi_51.rb
-D trunk/lib/novo_sistema/obrigatorio.rb
-M 100644 :30 trunk/lib/novo_sistema/obrigatorio_10.rb
-M 100644 :31 trunk/lib/novo_sistema/produto_54.rb
-
-blob
-mark :33
-data 89
-Revision is 16, file path is activeedi/trunk/lib/novo_sistema/produto_nota_fiscal_54.rb.
-
-commit refs/heads/activeedi
-#legacy-id 8
-mark :34
-committer pablo.lerina <pablo.lerina> 1250601949 +0000
-data 42
-finalizando tipo 54 e mudando a descricao
-from :32
-D trunk/lib/novo_sistema/produto_54.rb
-M 100644 :33 trunk/lib/novo_sistema/produto_nota_fiscal_54.rb
-
-blob
-mark :35
-data 86
-Revision is 17, file path is activeedi/trunk/lib/novo_sistema/cadastro_cliente_77.rb.
-
-blob
-mark :36
-data 89
-Revision is 17, file path is activeedi/trunk/lib/novo_sistema/cadastro_fornecedor_76.rb.
-
-blob
-mark :37
-data 86
-Revision is 17, file path is activeedi/trunk/lib/novo_sistema/cadastro_produto_75.rb.
-
-blob
-mark :38
-data 93
-Revision is 17, file path is activeedi/trunk/lib/novo_sistema/conhecimento_transporte_70.rb.
-
-commit refs/heads/activeedi
-#legacy-id 9
-mark :39
-committer pablo.targa <pablo.targa> 1250604513 +0000
-data 27
-#2042 - Criacao de classes
-from :34
-M 100644 :35 trunk/lib/novo_sistema/cadastro_cliente_77.rb
-M 100644 :36 trunk/lib/novo_sistema/cadastro_fornecedor_76.rb
-M 100644 :37 trunk/lib/novo_sistema/cadastro_produto_75.rb
-M 100644 :38 trunk/lib/novo_sistema/conhecimento_transporte_70.rb
-
-blob
-mark :40
-data 75
-Revision is 18, file path is activeedi/trunk/lib/novo_sistema/issqn_80.rb.
-
-commit refs/heads/activeedi
-#legacy-id 10
-mark :41
-committer pablo.targa <pablo.targa> 1250605346 +0000
-data 21
-#2042 - Classe issqn
-from :39
-M 100644 :40 trunk/lib/novo_sistema/issqn_80.rb
-
-blob
-mark :42
-data 55
-Revision is 19, file path is activeedi/trunk/Rakefile.
-
-blob
-mark :43
-data 65
-Revision is 19, file path is activeedi/trunk/test/basic_test.rb.
-
-blob
-mark :44
-data 71
-Revision is 19, file path is activeedi/trunk/test/obrigatorio_test.rb.
-
-commit refs/heads/activeedi
-#legacy-id 11
-mark :45
-committer pablo.lerina <pablo.lerina> 1250605767 +0000
-data 75
-renomeado arquivo do teste basico e incluida rake task para geracao de gem
-from :41
-M 100644 :42 trunk/Rakefile
-D trunk/test/basic.rb
-M 100644 :43 trunk/test/basic_test.rb
-M 100644 :44 trunk/test/obrigatorio_test.rb
-D trunk/test/teste.rb
-
-blob
-mark :46
-data 56
-Revision is 25, file path is activeedi/trunk/CHANGELOG.
-
-commit refs/heads/activeedi
-#legacy-id 12
-mark :47
-committer pablo.lerina <pablo.lerina> 1250789497 +0000
-data 22
-adicionando CHANGELOG
-from :45
-M 100644 :46 trunk/CHANGELOG
-
-blob
-mark :48
-data 70
-Revision is 32, file path is activeedi/trunk/pkg/activeedi-1.0.0.gem.
-
-commit refs/heads/activeedi
-#legacy-id 13
-mark :49
-committer pablo.lerina <pablo.lerina> 1251473830 +0000
-data 30
-adicionando gem da biblioteca
-from :47
-M 100644 :48 trunk/pkg/activeedi-1.0.0.gem
-
-blob
-mark :50
-data 55
-Revision is 34, file path is activeedi/trunk/Rakefile.
-
-blob
-mark :51
-data 68
-Revision is 34, file path is activeedi/trunk/pkg/activeedi-1.1.gem.
-
-commit refs/heads/activeedi
-#legacy-id 14
-mark :52
-committer pablo.lerina <pablo.lerina> 1251485201 +0000
-data 12
-release 1.1
-from :49
-M 100644 :50 trunk/Rakefile
-M 100644 :51 trunk/pkg/activeedi-1.1.gem
-
-blob
-mark :53
-data 55
-Revision is 35, file path is activeedi/trunk/Rakefile.
-
-blob
-mark :54
-data 75
-Revision is 35, file path is activeedi/trunk/lib/active_edi/attributes.rb.
-
-blob
-mark :55
-data 69
-Revision is 35, file path is activeedi/trunk/lib/active_edi/base.rb.
-
-blob
-mark :56
-data 68
-Revision is 35, file path is activeedi/trunk/test/property_test.rb.
-
-commit refs/heads/activeedi
-#legacy-id 15
-mark :57
-committer pablo.lerina <pablo.lerina> 1251813816 +0000
-data 104
-#2117 - inclusao do metodo de classe property e correcoes para continuar usando schema, bem como testes
-from :52
-M 100644 :53 trunk/Rakefile
-M 100644 :54 trunk/lib/active_edi/attributes.rb
-M 100644 :55 trunk/lib/active_edi/base.rb
-M 100644 :56 trunk/test/property_test.rb
-
-blob
-mark :58
-data 55
-Revision is 38, file path is activeedi/trunk/Rakefile.
-
-blob
-mark :59
-data 69
-Revision is 38, file path is activeedi/trunk/lib/active_edi/base.rb.
-
-blob
-mark :60
-data 68
-Revision is 38, file path is activeedi/trunk/pkg/activeedi-1.2.gem.
-
-commit refs/heads/activeedi
-#legacy-id 16
-mark :61
-committer pablo.lerina <pablo.lerina> 1251827841 +0000
-data 83
-removendo include do ruby-debug da classe base e atualizando a gem para versao 1.2
-from :57
-M 100644 :58 trunk/Rakefile
-M 100644 :59 trunk/lib/active_edi/base.rb
-M 100644 :60 trunk/pkg/activeedi-1.2.gem
-
-blob
-mark :62
 data 59
 Revision is 40, file path is brazilian-nfse/trunk/nfse.rb.
 
-commit refs/heads/brazilian-nfse
+commit refs/deleted/r19.2/heads/brazilian-nfse
 #legacy-id 17
-mark :63
+mark :3
 committer pablo.targa <pablo.targa> 1365730102 +0000
 data 104
 refs #9863 - Adicionado schema de pastas e arquivo com esboço inicial do parser e das classes da NFs-e
 M 100644 :1 .gitignore
-M 100644 :62 trunk/nfse.rb
+M 100644 :2 trunk/nfse.rb
 
 blob
-mark :64
+mark :4
 data 60
 Revision is 41, file path is brazilian-nfse/trunk/data.yml.
 
 blob
-mark :65
+mark :5
 data 61
 Revision is 41, file path is brazilian-nfse/trunk/lista.yml.
 
 blob
-mark :66
-data 59
-Revision is 41, file path is brazilian-nfse/trunk/nfse.rb.
-
-commit refs/heads/brazilian-nfse
-#legacy-id 18
-mark :67
-committer pablo.targa <pablo.targa> 1365799495 +0000
-data 88
-refs #9863 - Reformatado e terminadas as tags para montar o xml de envio de lote de rps
-from :63
-M 100644 :64 trunk/data.yml
-M 100644 :65 trunk/lista.yml
-M 100644 :66 trunk/nfse.rb
-
-blob
-mark :68
+mark :6
 data 53
 Revision is 42, file path is git_nfse/trunk/nfse.rb.
 
-commit refs/heads/git_nfse
-#legacy-id 19
-mark :69
-committer pablo.targa <pablo.targa> 1366053589 +0000
-data 97
-fixes #9863 - Renomeado o nome do projeto para git_nfse e alteradas as tags para o namespace tc:
-from :63
-M 100644 :1 .gitignore
-M 100644 :64 trunk/data.yml
-M 100644 :65 trunk/lista.yml
-M 100644 :62 trunk/nfse.rb
-M 100644 :66 trunk/nfse.rb
-M 100644 :68 trunk/nfse.rb
-
-commit refs/heads/brazilian-nfse
+commit refs/deleted/r36.2/heads/git_nfse
 #legacy-id 19.1
-mark :70
+mark :7
 committer pablo.targa <pablo.targa> 1366053589 +0000
 data 135
 fixes #9863 - Renomeado o nome do projeto para git_nfse e alteradas as tags para o namespace tc:
 
 [[Split portion of a mixed commit.]]
-from :67
+from :3
 deleteall
+M 100644 :1 .gitignore
+M 100644 :4 trunk/data.yml
+M 100644 :5 trunk/lista.yml
+M 100644 :6 trunk/nfse.rb
 
 blob
-mark :71
+mark :8
 data 52
 Revision is 43, file path is git_nfse/trunk/.rspec.
 
 blob
-mark :72
+mark :9
 data 53
 Revision is 43, file path is git_nfse/trunk/Gemfile.
 
 blob
-mark :73
+mark :10
 data 57
 Revision is 43, file path is git_nfse/trunk/MIT-LICENSE.
 
 blob
-mark :74
+mark :11
 data 57
 Revision is 43, file path is git_nfse/trunk/README.rdoc.
 
 blob
-mark :75
+mark :12
 data 54
 Revision is 43, file path is git_nfse/trunk/Rakefile.
 
 blob
-mark :76
+mark :13
 data 62
 Revision is 43, file path is git_nfse/trunk/git_nfse.gemspec.
 
 blob
-mark :77
+mark :14
 data 70
 Revision is 43, file path is git_nfse/trunk/lib/git_nfse/builders.rb.
 
 blob
-mark :78
+mark :15
 data 72
 Revision is 43, file path is git_nfse/trunk/lib/git_nfse/exceptions.rb.
 
 blob
-mark :79
+mark :16
 data 76
 Revision is 43, file path is git_nfse/trunk/lib/git_nfse/helpers/string.rb.
 
 blob
-mark :80
+mark :17
 data 69
 Revision is 43, file path is git_nfse/trunk/lib/git_nfse/parsers.rb.
 
 blob
-mark :81
+mark :18
 data 70
 Revision is 43, file path is git_nfse/trunk/lib/git_nfse/services.rb.
 
 blob
-mark :82
+mark :19
 data 75
 Revision is 43, file path is git_nfse/trunk/lib/git_nfse/types/complex.rb.
 
 blob
-mark :83
+mark :20
 data 74
 Revision is 43, file path is git_nfse/trunk/lib/git_nfse/types/simple.rb.
 
 blob
-mark :84
+mark :21
 data 73
 Revision is 43, file path is git_nfse/trunk/lib/git_nfse/validations.rb.
 
 blob
-mark :85
+mark :22
 data 69
 Revision is 43, file path is git_nfse/trunk/lib/git_nfse/version.rb.
 
 blob
-mark :86
+mark :23
 data 61
 Revision is 43, file path is git_nfse/trunk/lib/git_nfse.rb.
 
 blob
-mark :87
+mark :24
 data 75
 Revision is 43, file path is git_nfse/trunk/lib/tasks/git_nfse_tasks.rake.
 
 blob
-mark :88
+mark :25
 data 68
 Revision is 43, file path is git_nfse/trunk/test/dummy/README.rdoc.
 
 blob
-mark :89
+mark :26
 data 65
 Revision is 43, file path is git_nfse/trunk/test/dummy/Rakefile.
 
 blob
-mark :90
+mark :27
 data 94
 Revision is 43, file path is git_nfse/trunk/test/dummy/app/assets/javascripts/application.js.
 
 blob
-mark :91
+mark :28
 data 95
 Revision is 43, file path is git_nfse/trunk/test/dummy/app/assets/stylesheets/application.css.
 
 blob
-mark :92
+mark :29
 data 98
 Revision is 43, file path is git_nfse/trunk/test/dummy/app/controllers/application_controller.rb.
 
 blob
-mark :93
+mark :30
 data 90
 Revision is 43, file path is git_nfse/trunk/test/dummy/app/helpers/application_helper.rb.
 
 blob
-mark :94
+mark :31
 data 0
 
 blob
-mark :95
+mark :32
 data 0
 
 blob
-mark :96
+mark :33
 data 95
 Revision is 43, file path is git_nfse/trunk/test/dummy/app/views/layouts/application.html.erb.
 
 blob
-mark :97
+mark :34
 data 78
 Revision is 43, file path is git_nfse/trunk/test/dummy/config/application.rb.
 
 blob
-mark :98
+mark :35
 data 71
 Revision is 43, file path is git_nfse/trunk/test/dummy/config/boot.rb.
 
 blob
-mark :99
+mark :36
 data 76
 Revision is 43, file path is git_nfse/trunk/test/dummy/config/database.yml.
 
 blob
-mark :100
+mark :37
 data 78
 Revision is 43, file path is git_nfse/trunk/test/dummy/config/environment.rb.
 
 blob
-mark :101
+mark :38
 data 91
 Revision is 43, file path is git_nfse/trunk/test/dummy/config/environments/development.rb.
 
 blob
-mark :102
+mark :39
 data 90
 Revision is 43, file path is git_nfse/trunk/test/dummy/config/environments/production.rb.
 
 blob
-mark :103
+mark :40
 data 84
 Revision is 43, file path is git_nfse/trunk/test/dummy/config/environments/test.rb.
 
 blob
-mark :104
+mark :41
 data 99
 Revision is 43, file path is git_nfse/trunk/test/dummy/config/initializers/backtrace_silencers.rb.
 
 blob
-mark :105
+mark :42
 data 91
 Revision is 43, file path is git_nfse/trunk/test/dummy/config/initializers/inflections.rb.
 
 blob
-mark :106
+mark :43
 data 90
 Revision is 43, file path is git_nfse/trunk/test/dummy/config/initializers/mime_types.rb.
 
 blob
-mark :107
+mark :44
 data 92
 Revision is 43, file path is git_nfse/trunk/test/dummy/config/initializers/secret_token.rb.
 
 blob
-mark :108
+mark :45
 data 93
 Revision is 43, file path is git_nfse/trunk/test/dummy/config/initializers/session_store.rb.
 
 blob
-mark :109
+mark :46
 data 95
 Revision is 43, file path is git_nfse/trunk/test/dummy/config/initializers/wrap_parameters.rb.
 
 blob
-mark :110
+mark :47
 data 78
 Revision is 43, file path is git_nfse/trunk/test/dummy/config/locales/en.yml.
 
 blob
-mark :111
+mark :48
 data 73
 Revision is 43, file path is git_nfse/trunk/test/dummy/config/routes.rb.
 
 blob
-mark :112
+mark :49
 data 66
 Revision is 43, file path is git_nfse/trunk/test/dummy/config.ru.
 
 blob
-mark :113
+mark :50
 data 0
 
 blob
-mark :114
+mark :51
 data 0
 
 blob
-mark :115
+mark :52
 data 72
 Revision is 43, file path is git_nfse/trunk/test/dummy/public/404.html.
 
 blob
-mark :116
+mark :53
 data 72
 Revision is 43, file path is git_nfse/trunk/test/dummy/public/422.html.
 
 blob
-mark :117
+mark :54
 data 72
 Revision is 43, file path is git_nfse/trunk/test/dummy/public/500.html.
 
 blob
-mark :118
+mark :55
 data 0
 
 blob
-mark :119
+mark :56
 data 69
 Revision is 43, file path is git_nfse/trunk/test/dummy/script/rails.
 
 blob
-mark :120
+mark :57
 data 67
 Revision is 43, file path is git_nfse/trunk/test/git_nfse_test.rb.
 
 blob
-mark :121
+mark :58
 data 65
 Revision is 43, file path is git_nfse/trunk/test/test_helper.rb.
 
-commit refs/heads/git_nfse
+commit refs/deleted/r36.2/heads/git_nfse
 #legacy-id 20
-mark :122
+mark :59
 committer pablo.targa <pablo.targa> 1366055396 +0000
 data 49
 refs #9863 - Adicionada estrutura da gem GitNFSe
-from :69
-M 100644 :71 trunk/.rspec
-M 100644 :72 trunk/Gemfile
-M 100644 :73 trunk/MIT-LICENSE
-M 100644 :74 trunk/README.rdoc
-M 100644 :75 trunk/Rakefile
-M 100644 :76 trunk/git_nfse.gemspec
-M 100644 :86 trunk/lib/git_nfse.rb
-M 100644 :77 trunk/lib/git_nfse/builders.rb
-M 100644 :78 trunk/lib/git_nfse/exceptions.rb
-M 100644 :79 trunk/lib/git_nfse/helpers/string.rb
-M 100644 :80 trunk/lib/git_nfse/parsers.rb
-M 100644 :81 trunk/lib/git_nfse/services.rb
-M 100644 :82 trunk/lib/git_nfse/types/complex.rb
-M 100644 :83 trunk/lib/git_nfse/types/simple.rb
-M 100644 :84 trunk/lib/git_nfse/validations.rb
-M 100644 :85 trunk/lib/git_nfse/version.rb
-M 100644 :87 trunk/lib/tasks/git_nfse_tasks.rake
+from :7
+M 100644 :8 trunk/.rspec
+M 100644 :9 trunk/Gemfile
+M 100644 :10 trunk/MIT-LICENSE
+M 100644 :11 trunk/README.rdoc
+M 100644 :12 trunk/Rakefile
+M 100644 :13 trunk/git_nfse.gemspec
+M 100644 :23 trunk/lib/git_nfse.rb
+M 100644 :14 trunk/lib/git_nfse/builders.rb
+M 100644 :15 trunk/lib/git_nfse/exceptions.rb
+M 100644 :16 trunk/lib/git_nfse/helpers/string.rb
+M 100644 :17 trunk/lib/git_nfse/parsers.rb
+M 100644 :18 trunk/lib/git_nfse/services.rb
+M 100644 :19 trunk/lib/git_nfse/types/complex.rb
+M 100644 :20 trunk/lib/git_nfse/types/simple.rb
+M 100644 :21 trunk/lib/git_nfse/validations.rb
+M 100644 :22 trunk/lib/git_nfse/version.rb
+M 100644 :24 trunk/lib/tasks/git_nfse_tasks.rake
 D trunk/nfse.rb
-M 100644 :88 trunk/test/dummy/README.rdoc
-M 100644 :89 trunk/test/dummy/Rakefile
-M 100644 :90 trunk/test/dummy/app/assets/javascripts/application.js
-M 100644 :91 trunk/test/dummy/app/assets/stylesheets/application.css
-M 100644 :92 trunk/test/dummy/app/controllers/application_controller.rb
-M 100644 :93 trunk/test/dummy/app/helpers/application_helper.rb
-M 100644 :94 trunk/test/dummy/app/mailers/.gitkeep
-M 100644 :95 trunk/test/dummy/app/models/.gitkeep
-M 100644 :96 trunk/test/dummy/app/views/layouts/application.html.erb
-M 100644 :112 trunk/test/dummy/config.ru
-M 100644 :97 trunk/test/dummy/config/application.rb
-M 100644 :98 trunk/test/dummy/config/boot.rb
-M 100644 :99 trunk/test/dummy/config/database.yml
-M 100644 :100 trunk/test/dummy/config/environment.rb
-M 100644 :101 trunk/test/dummy/config/environments/development.rb
-M 100644 :102 trunk/test/dummy/config/environments/production.rb
-M 100644 :103 trunk/test/dummy/config/environments/test.rb
-M 100644 :104 trunk/test/dummy/config/initializers/backtrace_silencers.rb
-M 100644 :105 trunk/test/dummy/config/initializers/inflections.rb
-M 100644 :106 trunk/test/dummy/config/initializers/mime_types.rb
-M 100644 :107 trunk/test/dummy/config/initializers/secret_token.rb
-M 100644 :108 trunk/test/dummy/config/initializers/session_store.rb
-M 100644 :109 trunk/test/dummy/config/initializers/wrap_parameters.rb
-M 100644 :110 trunk/test/dummy/config/locales/en.yml
-M 100644 :111 trunk/test/dummy/config/routes.rb
-M 100644 :113 trunk/test/dummy/lib/assets/.gitkeep
-M 100644 :114 trunk/test/dummy/log/.gitkeep
-M 100644 :115 trunk/test/dummy/public/404.html
-M 100644 :116 trunk/test/dummy/public/422.html
-M 100644 :117 trunk/test/dummy/public/500.html
-M 100644 :118 trunk/test/dummy/public/favicon.ico
-M 100755 :119 trunk/test/dummy/script/rails
-M 100644 :120 trunk/test/git_nfse_test.rb
-M 100644 :121 trunk/test/test_helper.rb
+M 100644 :25 trunk/test/dummy/README.rdoc
+M 100644 :26 trunk/test/dummy/Rakefile
+M 100644 :27 trunk/test/dummy/app/assets/javascripts/application.js
+M 100644 :28 trunk/test/dummy/app/assets/stylesheets/application.css
+M 100644 :29 trunk/test/dummy/app/controllers/application_controller.rb
+M 100644 :30 trunk/test/dummy/app/helpers/application_helper.rb
+M 100644 :31 trunk/test/dummy/app/mailers/.gitkeep
+M 100644 :32 trunk/test/dummy/app/models/.gitkeep
+M 100644 :33 trunk/test/dummy/app/views/layouts/application.html.erb
+M 100644 :49 trunk/test/dummy/config.ru
+M 100644 :34 trunk/test/dummy/config/application.rb
+M 100644 :35 trunk/test/dummy/config/boot.rb
+M 100644 :36 trunk/test/dummy/config/database.yml
+M 100644 :37 trunk/test/dummy/config/environment.rb
+M 100644 :38 trunk/test/dummy/config/environments/development.rb
+M 100644 :39 trunk/test/dummy/config/environments/production.rb
+M 100644 :40 trunk/test/dummy/config/environments/test.rb
+M 100644 :41 trunk/test/dummy/config/initializers/backtrace_silencers.rb
+M 100644 :42 trunk/test/dummy/config/initializers/inflections.rb
+M 100644 :43 trunk/test/dummy/config/initializers/mime_types.rb
+M 100644 :44 trunk/test/dummy/config/initializers/secret_token.rb
+M 100644 :45 trunk/test/dummy/config/initializers/session_store.rb
+M 100644 :46 trunk/test/dummy/config/initializers/wrap_parameters.rb
+M 100644 :47 trunk/test/dummy/config/locales/en.yml
+M 100644 :48 trunk/test/dummy/config/routes.rb
+M 100644 :50 trunk/test/dummy/lib/assets/.gitkeep
+M 100644 :51 trunk/test/dummy/log/.gitkeep
+M 100644 :52 trunk/test/dummy/public/404.html
+M 100644 :53 trunk/test/dummy/public/422.html
+M 100644 :54 trunk/test/dummy/public/500.html
+M 100644 :55 trunk/test/dummy/public/favicon.ico
+M 100755 :56 trunk/test/dummy/script/rails
+M 100644 :57 trunk/test/git_nfse_test.rb
+M 100644 :58 trunk/test/test_helper.rb
 
 blob
-mark :123
+mark :60
 data 69
 Revision is 44, file path is git_nfse/trunk/lib/git_nfse/helpers.rb.
 
 blob
-mark :124
+mark :61
 data 70
 Revision is 44, file path is git_nfse/trunk/lib/git_nfse/services.rb.
 
 blob
-mark :125
+mark :62
 data 74
 Revision is 44, file path is git_nfse/trunk/lib/git_nfse/types/simple.rb.
 
 blob
-mark :126
+mark :63
 data 61
 Revision is 44, file path is git_nfse/trunk/lib/git_nfse.rb.
 
 blob
-mark :127
+mark :64
 data 65
 Revision is 44, file path is git_nfse/trunk/spec/spec_helper.rb.
 
 blob
-mark :128
+mark :65
 data 77
 Revision is 44, file path is git_nfse/trunk/spec/types/simple_types_spec.rb.
 
-commit refs/heads/git_nfse
+commit refs/deleted/r36.2/heads/git_nfse
 #legacy-id 21
-mark :129
+mark :66
 committer pablo.targa <pablo.targa> 1366056752 +0000
 data 63
 refs #9863 - Adicionada estrututura para testes na gem GitNFSe
-from :122
-M 100644 :126 trunk/lib/git_nfse.rb
-M 100644 :123 trunk/lib/git_nfse/helpers.rb
+from :59
+M 100644 :63 trunk/lib/git_nfse.rb
+M 100644 :60 trunk/lib/git_nfse/helpers.rb
 D trunk/lib/git_nfse/helpers/string.rb
-M 100644 :124 trunk/lib/git_nfse/services.rb
-M 100644 :125 trunk/lib/git_nfse/types/simple.rb
-M 100644 :127 trunk/spec/spec_helper.rb
-M 100644 :128 trunk/spec/types/simple_types_spec.rb
+M 100644 :61 trunk/lib/git_nfse/services.rb
+M 100644 :62 trunk/lib/git_nfse/types/simple.rb
+M 100644 :64 trunk/spec/spec_helper.rb
+M 100644 :65 trunk/spec/types/simple_types_spec.rb
 
 blob
-mark :130
+mark :67
 data 70
 Revision is 45, file path is git_nfse/trunk/lib/git_nfse/builders.rb.
 
 blob
-mark :131
+mark :68
 data 69
 Revision is 45, file path is git_nfse/trunk/lib/git_nfse/parsers.rb.
 
 blob
-mark :132
+mark :69
 data 75
 Revision is 45, file path is git_nfse/trunk/lib/git_nfse/types/complex.rb.
 
 blob
-mark :133
+mark :70
 data 74
 Revision is 45, file path is git_nfse/trunk/lib/git_nfse/types/simple.rb.
 
 blob
-mark :134
+mark :71
 data 73
 Revision is 45, file path is git_nfse/trunk/lib/git_nfse/validations.rb.
 
 blob
-mark :135
+mark :72
 data 61
 Revision is 45, file path is git_nfse/trunk/lib/git_nfse.rb.
 
 blob
-mark :136
+mark :73
 data 67
 Revision is 45, file path is git_nfse/trunk/spec/builders_spec.rb.
 
 blob
-mark :137
+mark :74
 data 69
 Revision is 45, file path is git_nfse/trunk/spec/exceptions_spec.rb.
 
 blob
-mark :138
+mark :75
 data 66
 Revision is 45, file path is git_nfse/trunk/spec/helpers_spec.rb.
 
 blob
-mark :139
+mark :76
 data 66
 Revision is 45, file path is git_nfse/trunk/spec/parsers_spec.rb.
 
 blob
-mark :140
+mark :77
 data 67
 Revision is 45, file path is git_nfse/trunk/spec/services_spec.rb.
 
 blob
-mark :141
+mark :78
 data 78
 Revision is 45, file path is git_nfse/trunk/spec/types/complex_types_spec.rb.
 
 blob
-mark :142
+mark :79
 data 77
 Revision is 45, file path is git_nfse/trunk/spec/types/simple_types_spec.rb.
 
 blob
-mark :143
+mark :80
 data 70
 Revision is 45, file path is git_nfse/trunk/spec/validations_spec.rb.
 
-commit refs/heads/git_nfse
+commit refs/deleted/r36.2/heads/git_nfse
 #legacy-id 22
-mark :144
+mark :81
 committer pablo.targa <pablo.targa> 1366057607 +0000
 data 84
 refs #9863 - Corrigidas dependencias e adicionados arquivos de teste na gem GitNFSe
-from :129
-M 100644 :135 trunk/lib/git_nfse.rb
-M 100644 :130 trunk/lib/git_nfse/builders.rb
-M 100644 :131 trunk/lib/git_nfse/parsers.rb
-M 100644 :132 trunk/lib/git_nfse/types/complex.rb
-M 100644 :133 trunk/lib/git_nfse/types/simple.rb
-M 100644 :134 trunk/lib/git_nfse/validations.rb
-M 100644 :136 trunk/spec/builders_spec.rb
-M 100644 :137 trunk/spec/exceptions_spec.rb
-M 100644 :138 trunk/spec/helpers_spec.rb
-M 100644 :139 trunk/spec/parsers_spec.rb
-M 100644 :140 trunk/spec/services_spec.rb
-M 100644 :141 trunk/spec/types/complex_types_spec.rb
-M 100644 :142 trunk/spec/types/simple_types_spec.rb
-M 100644 :143 trunk/spec/validations_spec.rb
+from :66
+M 100644 :72 trunk/lib/git_nfse.rb
+M 100644 :67 trunk/lib/git_nfse/builders.rb
+M 100644 :68 trunk/lib/git_nfse/parsers.rb
+M 100644 :69 trunk/lib/git_nfse/types/complex.rb
+M 100644 :70 trunk/lib/git_nfse/types/simple.rb
+M 100644 :71 trunk/lib/git_nfse/validations.rb
+M 100644 :73 trunk/spec/builders_spec.rb
+M 100644 :74 trunk/spec/exceptions_spec.rb
+M 100644 :75 trunk/spec/helpers_spec.rb
+M 100644 :76 trunk/spec/parsers_spec.rb
+M 100644 :77 trunk/spec/services_spec.rb
+M 100644 :78 trunk/spec/types/complex_types_spec.rb
+M 100644 :79 trunk/spec/types/simple_types_spec.rb
+M 100644 :80 trunk/spec/validations_spec.rb
 
 blob
-mark :145
+mark :82
 data 53
 Revision is 46, file path is git_nfse/trunk/Gemfile.
 
 blob
-mark :146
+mark :83
 data 70
 Revision is 46, file path is git_nfse/trunk/lib/git_nfse/builders.rb.
 
 blob
-mark :147
+mark :84
 data 69
 Revision is 46, file path is git_nfse/trunk/lib/git_nfse/parsers.rb.
 
 blob
-mark :148
+mark :85
 data 70
 Revision is 46, file path is git_nfse/trunk/lib/git_nfse/services.rb.
 
 blob
-mark :149
+mark :86
 data 75
 Revision is 46, file path is git_nfse/trunk/lib/git_nfse/types/complex.rb.
 
 blob
-mark :150
+mark :87
 data 61
 Revision is 46, file path is git_nfse/trunk/lib/git_nfse.rb.
 
 blob
-mark :151
+mark :88
 data 98
 Revision is 46, file path is git_nfse/trunk/lib/xml_schemas/servico_enviar_lote_rps_resposta.xsd.
 
 blob
-mark :152
+mark :89
 data 66
 Revision is 46, file path is git_nfse/trunk/spec/parsers_spec.rb.
 
 blob
-mark :153
+mark :90
 data 65
 Revision is 46, file path is git_nfse/trunk/spec/spec_helper.rb.
 
-commit refs/heads/git_nfse
+commit refs/deleted/r36.2/heads/git_nfse
 #legacy-id 23
-mark :154
+mark :91
 committer pablo.targa <pablo.targa> 1366132716 +0000
 data 77
 refs #9865 - Implementado o parser para recuperar a informação da resposta
-from :144
-M 100644 :145 trunk/Gemfile
-M 100644 :150 trunk/lib/git_nfse.rb
-M 100644 :146 trunk/lib/git_nfse/builders.rb
-M 100644 :147 trunk/lib/git_nfse/parsers.rb
-M 100644 :148 trunk/lib/git_nfse/services.rb
-M 100644 :149 trunk/lib/git_nfse/types/complex.rb
-M 100644 :151 trunk/lib/xml_schemas/servico_enviar_lote_rps_resposta.xsd
-M 100644 :152 trunk/spec/parsers_spec.rb
-M 100644 :153 trunk/spec/spec_helper.rb
+from :81
+M 100644 :82 trunk/Gemfile
+M 100644 :87 trunk/lib/git_nfse.rb
+M 100644 :83 trunk/lib/git_nfse/builders.rb
+M 100644 :84 trunk/lib/git_nfse/parsers.rb
+M 100644 :85 trunk/lib/git_nfse/services.rb
+M 100644 :86 trunk/lib/git_nfse/types/complex.rb
+M 100644 :88 trunk/lib/xml_schemas/servico_enviar_lote_rps_resposta.xsd
+M 100644 :89 trunk/spec/parsers_spec.rb
+M 100644 :90 trunk/spec/spec_helper.rb
 
 blob
-mark :155
+mark :92
 data 53
 Revision is 47, file path is git_nfse/trunk/Gemfile.
 
 blob
-mark :156
+mark :93
 data 54
 Revision is 47, file path is git_nfse/trunk/data.yml.
 
 blob
-mark :157
+mark :94
 data 70
 Revision is 47, file path is git_nfse/trunk/lib/git_nfse/builders.rb.
 
 blob
-mark :158
+mark :95
 data 69
 Revision is 47, file path is git_nfse/trunk/lib/git_nfse/parsers.rb.
 
 blob
-mark :159
+mark :96
 data 70
 Revision is 47, file path is git_nfse/trunk/lib/git_nfse/services.rb.
 
 blob
-mark :160
+mark :97
 data 75
 Revision is 47, file path is git_nfse/trunk/lib/git_nfse/types/complex.rb.
 
 blob
-mark :161
+mark :98
 data 74
 Revision is 47, file path is git_nfse/trunk/lib/git_nfse/types/simple.rb.
 
 blob
-mark :162
+mark :99
 data 61
 Revision is 47, file path is git_nfse/trunk/lib/git_nfse.rb.
 
 blob
-mark :163
+mark :100
 data 67
 Revision is 47, file path is git_nfse/trunk/spec/git_nfse_spec.rb.
 
-commit refs/heads/git_nfse
+commit refs/deleted/r36.2/heads/git_nfse
 #legacy-id 24
-mark :164
+mark :101
 committer pablo.targa <pablo.targa> 1366745033 +0000
 data 94
 fixes #9865 - Adicionada funcionalidade para enviar e parsear a resposta do envio do lote rps
-from :154
-M 100644 :155 trunk/Gemfile
-M 100644 :156 trunk/data.yml
-M 100644 :162 trunk/lib/git_nfse.rb
-M 100644 :157 trunk/lib/git_nfse/builders.rb
-M 100644 :158 trunk/lib/git_nfse/parsers.rb
-M 100644 :159 trunk/lib/git_nfse/services.rb
-M 100644 :160 trunk/lib/git_nfse/types/complex.rb
-M 100644 :161 trunk/lib/git_nfse/types/simple.rb
-M 100755 :163 trunk/spec/git_nfse_spec.rb
-
-commit refs/heads/activeedi
-#legacy-id 25
-mark :165
-committer ronie <ronie> 1372444186 +0000
-data 92
-Removido diretorio da gem activeedi pois a mesma foi descontinuada ha mais de 3 anos atras.
-from :61
-deleteall
+from :91
+M 100644 :92 trunk/Gemfile
+M 100644 :93 trunk/data.yml
+M 100644 :99 trunk/lib/git_nfse.rb
+M 100644 :94 trunk/lib/git_nfse/builders.rb
+M 100644 :95 trunk/lib/git_nfse/parsers.rb
+M 100644 :96 trunk/lib/git_nfse/services.rb
+M 100644 :97 trunk/lib/git_nfse/types/complex.rb
+M 100644 :98 trunk/lib/git_nfse/types/simple.rb
+M 100755 :100 trunk/spec/git_nfse_spec.rb
 
 blob
-mark :166
+mark :102
 data 5
 /'*'
 
 blob
-mark :167
+mark :103
 data 56
 Revision is 64, file path is mozilla/thunderbird/a.cfg.
 
 blob
-mark :168
+mark :104
 data 64
 Revision is 64, file path is mozilla/thunderbird/greprefs/a.js.
 
 commit refs/heads/mozilla
 #legacy-id 26
-mark :169
+mark :105
 committer ronie <ronie> 1375114664 +0000
 data 102
 Adicionados arquivos de configuracoes automaticas do aplicativo cliente de email Mozilla Thunderbird.
-M 100644 :166 .gitignore
 M 100644 :1 .gitignore
-M 100644 :166 thunderbird/.gitignore
-M 100644 :167 thunderbird/a.cfg
-M 100644 :166 thunderbird/greprefs/.gitignore
-M 100644 :168 thunderbird/greprefs/a.js
+M 100644 :102 thunderbird/.gitignore
+M 100644 :103 thunderbird/a.cfg
+M 100644 :102 thunderbird/greprefs/.gitignore
+M 100644 :104 thunderbird/greprefs/a.js
 
 commit refs/heads/mozilla
 #legacy-id 27
-mark :170
+mark :106
 committer ronie <ronie> 1376451459 +0000
 data 148
 Atualizada estrutura de diretorios das configuracoes automaticas do cliente de email Mozilla Thunderbird para ficar compativel com a versao 17.0.x.
-from :169
-M 100644 :166 thunderbird/defaults/.gitignore
-M 100644 :166 thunderbird/defaults/pref/.gitignore
-M 100644 :168 thunderbird/defaults/pref/a.js
+from :105
+M 100644 :102 thunderbird/defaults/.gitignore
+M 100644 :104 thunderbird/defaults/pref/a.js
 D thunderbird/greprefs/.gitignore
 D thunderbird/greprefs/a.js
 
 blob
-mark :171
+mark :107
 data 75
 Revision is 71, file path is git_nfse/trunk/lib/git_nfse/types/complex.rb.
 
 blob
-mark :172
+mark :108
 data 73
 Revision is 71, file path is git_nfse/trunk/lib/git_nfse/validations.rb.
 
 blob
-mark :173
+mark :109
 data 61
 Revision is 71, file path is git_nfse/trunk/lib/git_nfse.rb.
 
-commit refs/heads/git_nfse
+commit refs/deleted/r36.2/heads/git_nfse
 #legacy-id 28
-mark :174
+mark :110
 committer edivan.camargo <edivan.camargo> 1380118390 +0000
 data 103
 fixes #9865 - Corrigido problema do warning que estava ocorrendo sempre na inicialização do sistema.
-from :164
-M 100644 :173 trunk/lib/git_nfse.rb
+from :101
+M 100644 :109 trunk/lib/git_nfse.rb
 D trunk/lib/git_nfse/exceptions.rb
-M 100644 :171 trunk/lib/git_nfse/types/complex.rb
-M 100644 :172 trunk/lib/git_nfse/validations.rb
+M 100644 :107 trunk/lib/git_nfse/types/complex.rb
+M 100644 :108 trunk/lib/git_nfse/validations.rb
 
-commit refs/heads/git_nfse
+commit refs/deleted/r36.2/heads/git_nfse
 #legacy-id 29
-mark :175
+mark :111
 committer renan.dhein <renan.dhein> 1380560331 +0000
 data 61
 fixes #9863 - Removidos arquivos referentes a gem do projeto
-from :174
+from :110
 D trunk/.rspec
 D trunk/Gemfile
 D trunk/MIT-LICENSE
@@ -1197,492 +764,474 @@ D trunk/test/git_nfse_test.rb
 D trunk/test/test_helper.rb
 
 blob
-mark :176
+mark :112
 data 61
 Revision is 80, file path is git_nfse/trunk/lib/git_nfse.rb.
 
-commit refs/heads/git_nfse
+commit refs/deleted/r36.2/heads/git_nfse
 #legacy-id 30
-mark :177
+mark :113
 committer renan.dhein <renan.dhein> 1380563536 +0000
 data 61
 fixes #9863 - Removido xsd de configuracao que nao era usado
-from :175
-M 100644 :176 trunk/lib/git_nfse.rb
+from :111
+M 100644 :112 trunk/lib/git_nfse.rb
 D trunk/lib/xml_schemas/servico_enviar_lote_rps_resposta.xsd
 
 blob
-mark :178
+mark :114
 data 70
 Revision is 83, file path is git_nfse/trunk/lib/git_nfse/builders.rb.
 
 blob
-mark :179
+mark :115
 data 75
 Revision is 83, file path is git_nfse/trunk/lib/git_nfse/types/complex.rb.
 
 blob
-mark :180
+mark :116
 data 61
 Revision is 83, file path is git_nfse/trunk/lib/git_nfse.rb.
 
 blob
-mark :181
+mark :117
 data 60
 Revision is 83, file path is git_nfse/trunk/lib/signers.rb.
 
-commit refs/heads/git_nfse
+commit refs/deleted/r36.2/heads/git_nfse
 #legacy-id 31
-mark :182
+mark :118
 committer edivan.camargo <edivan.camargo> 1380819057 +0000
 data 290
 fixes #9865 - Refatorado a parte de assinatura da NFS-e. Separado para um modulo diferente do GitNfse, adicionado no modulo Signers que será o responsavel pela asinatura de documentos XML visto que a forma como isso é feito é padrão tanto para NFS-e quando NF-e. Feito testes, tudo Ok.
-from :177
-M 100644 :180 trunk/lib/git_nfse.rb
-M 100644 :178 trunk/lib/git_nfse/builders.rb
-M 100644 :179 trunk/lib/git_nfse/types/complex.rb
-M 100644 :181 trunk/lib/signers.rb
+from :113
+M 100644 :116 trunk/lib/git_nfse.rb
+M 100644 :114 trunk/lib/git_nfse/builders.rb
+M 100644 :115 trunk/lib/git_nfse/types/complex.rb
+M 100644 :117 trunk/lib/signers.rb
 
 blob
-mark :183
+mark :119
 data 66
 Revision is 86, file path is git_nfse/trunk/lib/git_nfse/base.rb.
 
 blob
-mark :184
+mark :120
 data 73
 Revision is 86, file path is git_nfse/trunk/lib/git_nfse/cancel_nfse.rb.
 
 blob
-mark :185
+mark :121
 data 74
 Revision is 86, file path is git_nfse/trunk/lib/git_nfse/consult_nfse.rb.
 
 blob
-mark :186
+mark :122
 data 74
 Revision is 86, file path is git_nfse/trunk/lib/git_nfse/rps_lot_nfse.rb.
 
 blob
-mark :187
+mark :123
 data 75
 Revision is 86, file path is git_nfse/trunk/lib/git_nfse/types/complex.rb.
 
 blob
-mark :188
+mark :124
 data 61
 Revision is 86, file path is git_nfse/trunk/lib/git_nfse.rb.
 
 blob
-mark :189
+mark :125
 data 60
 Revision is 86, file path is git_nfse/trunk/lib/signers.rb.
 
-commit refs/heads/git_nfse
+commit refs/deleted/r36.2/heads/git_nfse
 #legacy-id 32
-mark :190
+mark :126
 committer edivan.camargo <edivan.camargo> 1381839666 +0000
 data 368
 fixes #9865 - Feito novas correções de acordo com o que conversei com *Ronie* no dia 08/10/2013. Separado os serviços que ficavam agrupados em *lib/git/git_nfse/git_nfse/services.rb* para ficar em uma classe que define cada um. Os serviços de consulta ficaram na classe *lib/git/git_nfse/git_nfse/consult_nfse.rb* proque me pareceu mais coerente. Feito teste, Ok.
-from :182
-M 100644 :188 trunk/lib/git_nfse.rb
-M 100644 :183 trunk/lib/git_nfse/base.rb
+from :118
+M 100644 :124 trunk/lib/git_nfse.rb
+M 100644 :119 trunk/lib/git_nfse/base.rb
 D trunk/lib/git_nfse/builders.rb
-M 100644 :184 trunk/lib/git_nfse/cancel_nfse.rb
-M 100644 :185 trunk/lib/git_nfse/consult_nfse.rb
-M 100644 :186 trunk/lib/git_nfse/rps_lot_nfse.rb
+M 100644 :120 trunk/lib/git_nfse/cancel_nfse.rb
+M 100644 :121 trunk/lib/git_nfse/consult_nfse.rb
+M 100644 :122 trunk/lib/git_nfse/rps_lot_nfse.rb
 D trunk/lib/git_nfse/services.rb
-M 100644 :187 trunk/lib/git_nfse/types/complex.rb
-M 100644 :189 trunk/lib/signers.rb
+M 100644 :123 trunk/lib/git_nfse/types/complex.rb
+M 100644 :125 trunk/lib/signers.rb
 
 blob
-mark :191
+mark :127
 data 61
 Revision is 92, file path is git_nfse/trunk/lib/git_nfse.rb.
 
 blob
-mark :192
+mark :128
 data 73
 Revision is 92, file path is git_nfse/trunk/lib/validates_uri_format.rb.
 
-commit refs/heads/git_nfse
+commit refs/deleted/r36.2/heads/git_nfse
 #legacy-id 33
-mark :193
+mark :129
 committer edivan.camargo <edivan.camargo> 1382455148 +0000
 data 529
 fixes #9865 - Criado custom validator para URL. Porem o que foi solicitado eu não consegui desenvolver visto que validates é um método de ActiveRecord::Base, e a NFS-e é uma caixa preta, eu não estou no contexto do rails, não tenho o active_record lá dentro, não tenho ideia de como utilizar esse validator que foi criado para coisas separadas. Para as classes que herdam de ActiveRecod::Base vai funcionar perfeitamente, mas acredito que não tenha muito o que fazer a respeito de outro pacote, como é o caso da NFS-e.
-from :190
-M 100644 :191 trunk/lib/git_nfse.rb
-M 100644 :192 trunk/lib/validates_uri_format.rb
+from :126
+M 100644 :127 trunk/lib/git_nfse.rb
+M 100644 :128 trunk/lib/validates_uri_format.rb
 
 blob
-mark :194
+mark :130
 data 61
 Revision is 93, file path is git_nfse/trunk/lib/git_nfse.rb.
 
 blob
-mark :195
+mark :131
 data 68
 Revision is 93, file path is git_nfse/trunk/lib/git_validations.rb.
 
-commit refs/heads/git_nfse
+commit refs/deleted/r36.2/heads/git_nfse
 #legacy-id 34
-mark :196
+mark :132
 committer ronie <ronie> 1382487714 +0000
 data 88
 refs #9865 - Movida classe validates_uri_format_of para dentro do modulo GitValidations
-from :193
-M 100644 :194 trunk/lib/git_nfse.rb
-M 100644 :195 trunk/lib/git_validations.rb
+from :129
+M 100644 :130 trunk/lib/git_nfse.rb
+M 100644 :131 trunk/lib/git_validations.rb
 D trunk/lib/validates_uri_format.rb
 
 blob
-mark :197
+mark :133
 data 66
 Revision is 99, file path is git_nfse/trunk/lib/git_nfse/base.rb.
 
-commit refs/heads/git_nfse
+commit refs/deleted/r36.2/heads/git_nfse
 #legacy-id 35
-mark :198
+mark :134
 committer edivan.camargo <edivan.camargo> 1382986785 +0000
 data 313
 fixes #9865 - Adicionado condição *:allow_blank => true* para a validação não devolver a mensagem de URI inválida quando a *validates_uri_format_of :web_service_uri* é chamada. Só devolve a mensagem de URI inválida caso tenha alguma coisa na URI do webservice, e este conteudo for inválido para um URI.
-from :196
-M 100644 :197 trunk/lib/git_nfse/base.rb
+from :132
+M 100644 :133 trunk/lib/git_nfse/base.rb
 
 commit refs/heads/rubyrails
-#legacy-id 36
-mark :199
-committer ronie <ronie> 1383229155 +0000
-data 142
-refs #9865 - A partir desta revision, rubyrails passa a ser o diretorio para codigo open source desenvolvido pela GIT Sistemas em Ruby/Rails.
-from :198
-M 100644 :194 trunk/lib/git_nfse.rb
-M 100644 :197 trunk/lib/git_nfse/base.rb
-M 100644 :184 trunk/lib/git_nfse/cancel_nfse.rb
-M 100644 :185 trunk/lib/git_nfse/consult_nfse.rb
-M 100644 :123 trunk/lib/git_nfse/helpers.rb
-M 100644 :158 trunk/lib/git_nfse/parsers.rb
-M 100644 :186 trunk/lib/git_nfse/rps_lot_nfse.rb
-M 100644 :187 trunk/lib/git_nfse/types/complex.rb
-M 100644 :161 trunk/lib/git_nfse/types/simple.rb
-M 100644 :172 trunk/lib/git_nfse/validations.rb
-M 100644 :195 trunk/lib/git_validations.rb
-M 100644 :189 trunk/lib/signers.rb
-
-commit refs/heads/git_nfse
 #legacy-id 36.1
-mark :200
+mark :135
 committer ronie <ronie> 1383229155 +0000
 data 180
 refs #9865 - A partir desta revision, rubyrails passa a ser o diretorio para codigo open source desenvolvido pela GIT Sistemas em Ruby/Rails.
 
 [[Split portion of a mixed commit.]]
-from :198
+from :134
 deleteall
+M 100644 :1 .gitignore
+M 100644 :130 trunk/lib/git_nfse.rb
+M 100644 :133 trunk/lib/git_nfse/base.rb
+M 100644 :120 trunk/lib/git_nfse/cancel_nfse.rb
+M 100644 :121 trunk/lib/git_nfse/consult_nfse.rb
+M 100644 :60 trunk/lib/git_nfse/helpers.rb
+M 100644 :95 trunk/lib/git_nfse/parsers.rb
+M 100644 :122 trunk/lib/git_nfse/rps_lot_nfse.rb
+M 100644 :123 trunk/lib/git_nfse/types/complex.rb
+M 100644 :98 trunk/lib/git_nfse/types/simple.rb
+M 100644 :108 trunk/lib/git_nfse/validations.rb
+M 100644 :131 trunk/lib/git_validations.rb
+M 100644 :125 trunk/lib/signers.rb
 
 blob
-mark :201
+mark :136
 data 67
 Revision is 101, file path is rubyrails/trunk/lib/git_encoding.rb.
 
 commit refs/heads/rubyrails
 #legacy-id 37
-mark :202
+mark :137
 committer ronie <ronie> 1383245683 +0000
 data 165
 refs #10402 - Desenvolvida lib GitEncoding contendo metodos para deteccao e conversao de character encoding do conteudo de objetos das classes File/String/StringIO.
-from :199
-M 100644 :1 .gitignore
-M 100644 :201 trunk/lib/git_encoding.rb
+from :135
+M 100644 :136 trunk/lib/git_encoding.rb
 
 blob
-mark :203
+mark :138
 data 81
 Revision is 108, file path is rubyrails/trunk/lib/proxies/default_scope_hash.rb.
 
 blob
-mark :204
+mark :139
 data 73
 Revision is 108, file path is rubyrails/trunk/lib/proxies/hash_proxy.rb.
 
 commit refs/heads/rubyrails
 #legacy-id 38
-mark :205
+mark :140
 committer renan.dhein <renan.dhein> 1437167264 +0000
 data 153
 refs #4797 - As of rails 2.3.15, default_scope does not accept lambda nor proc, so we need to use this proxy to add lambda/proc support to default_scope
-from :202
-M 100644 :203 trunk/lib/proxies/default_scope_hash.rb
-M 100644 :204 trunk/lib/proxies/hash_proxy.rb
+from :137
+M 100644 :138 trunk/lib/proxies/default_scope_hash.rb
+M 100644 :139 trunk/lib/proxies/hash_proxy.rb
 
 blob
-mark :206
+mark :141
 data 62
 Revision is 109, file path is rubyrails/trunk/lib/proxies.rb.
 
 commit refs/heads/rubyrails
 #legacy-id 39
-mark :207
+mark :142
 committer renan.dhein <renan.dhein> 1437167679 +0000
 data 82
 refs #4797 - Revision r108 was missing the load of HashProxy and DefaultScopeHash
-from :205
-M 100644 :206 trunk/lib/proxies.rb
+from :140
+M 100644 :141 trunk/lib/proxies.rb
 
 blob
-mark :208
+mark :143
 data 81
 Revision is 110, file path is rubyrails/trunk/lib/proxies/default_scope_hash.rb.
 
 blob
-mark :209
+mark :144
 data 68
 Revision is 110, file path is rubyrails/trunk/lib/proxies/proxy.rb.
 
 blob
-mark :210
+mark :145
 data 62
 Revision is 110, file path is rubyrails/trunk/lib/proxies.rb.
 
 commit refs/heads/rubyrails
 #legacy-id 40
-mark :211
+mark :146
 committer ronie <ronie> 1437171620 +0000
 data 100
 refs #4797 - HashProxy is a generic proxy, so the class name Proxy makes more sense than HashProxy.
-from :207
-M 100644 :210 trunk/lib/proxies.rb
-M 100644 :208 trunk/lib/proxies/default_scope_hash.rb
+from :142
+M 100644 :145 trunk/lib/proxies.rb
+M 100644 :143 trunk/lib/proxies/default_scope_hash.rb
 D trunk/lib/proxies/hash_proxy.rb
-M 100644 :209 trunk/lib/proxies/proxy.rb
+M 100644 :144 trunk/lib/proxies/proxy.rb
 
 blob
-mark :212
+mark :147
 data 73
 Revision is 111, file path is rubyrails/trunk/lib/proxies/proxy_hash.rb.
 
 blob
-mark :213
+mark :148
 data 62
 Revision is 111, file path is rubyrails/trunk/lib/proxies.rb.
 
 commit refs/heads/rubyrails
 #legacy-id 41
-mark :214
+mark :149
 committer renan.dhein <renan.dhein> 1438119452 +0000
 data 114
 refs #4797 - DefaultScopeHash does not work with procs inside sub-hashes, so we had to refactor it into ProxyHash
-from :211
-M 100644 :213 trunk/lib/proxies.rb
+from :146
+M 100644 :148 trunk/lib/proxies.rb
 D trunk/lib/proxies/default_scope_hash.rb
 D trunk/lib/proxies/proxy.rb
-M 100644 :212 trunk/lib/proxies/proxy_hash.rb
+M 100644 :147 trunk/lib/proxies/proxy_hash.rb
 
 blob
-mark :215
+mark :150
 data 77
 Revision is 113, file path is rubyrails/trunk/lib/git_nfse/types/complex.rb.
 
 blob
-mark :216
+mark :151
 data 63
 Revision is 113, file path is rubyrails/trunk/lib/git_nfse.rb.
 
 commit refs/heads/rubyrails
 #legacy-id 42
-mark :217
+mark :152
 committer lucas.correa <lucas.correa> 1443642033 +0000
 data 51
 refs #9865 - NFSe was using unnecessary validation
-from :214
-M 100644 :216 trunk/lib/git_nfse.rb
-M 100644 :215 trunk/lib/git_nfse/types/complex.rb
+from :149
+M 100644 :151 trunk/lib/git_nfse.rb
+M 100644 :150 trunk/lib/git_nfse/types/complex.rb
 D trunk/lib/git_nfse/validations.rb
 
 blob
-mark :218
+mark :153
 data 87
 Revision is 117, file path is sublime_text/packages/user/Preferences.sublime-settings.
 
 blob
-mark :219
+mark :154
 data 69
 Revision is 117, file path is sublime_text/packages/user/README.txt.
 
 commit refs/heads/sublime_text
 #legacy-id 43
-mark :220
+mark :155
 committer ronie <ronie> 1456461020 +0000
 data 66
 Sublime Text 3 installations should always use the same settings.
 M 100644 :1 .gitignore
-M 100644 :218 packages/user/Preferences.sublime-settings
-M 100644 :219 packages/user/README.txt
+M 100644 :153 packages/user/Preferences.sublime-settings
+M 100644 :154 packages/user/README.txt
 
 blob
-mark :221
+mark :156
 data 7
 /a.cfg
 
 blob
-mark :222
+mark :157
 data 62
 Revision is 119, file path is mozilla/thunderbird/README.txt.
 
 commit refs/heads/mozilla
 #legacy-id 44
-mark :223
+mark :158
 committer ronie <ronie> 1456462577 +0000
 data 81
 Documentation regarding where to place Mozilla Thunderbird settings was missing.
-from :170
-M 100644 :221 thunderbird/.gitignore
-M 100644 :222 thunderbird/README.txt
-M 100644 :221 thunderbird/defaults/.gitignore
-M 100644 :221 thunderbird/defaults/pref/.gitignore
+from :106
+M 100644 :156 thunderbird/.gitignore
+M 100644 :157 thunderbird/README.txt
+M 100644 :156 thunderbird/defaults/.gitignore
+M 100644 :156 thunderbird/defaults/pref/.gitignore
 
 blob
-mark :224
+mark :159
 data 77
 Revision is 122, file path is rubyrails/trunk/lib/git_nfse/types/complex.rb.
 
 commit refs/heads/rubyrails
 #legacy-id 45
-mark :225
+mark :160
 committer renan.dhein <renan.dhein> 1480959946 +0000
 data 105
 refs #11860 - The withheld issqn fields have been implemented and can now be corerctly sent when present
-from :217
-M 100644 :224 trunk/lib/git_nfse/types/complex.rb
+from :152
+M 100644 :159 trunk/lib/git_nfse/types/complex.rb
 
 blob
-mark :226
+mark :161
 data 73
 Revision is 124, file path is sublime_text/packages/user/before_save.py.
 
 commit refs/heads/sublime_text
 #legacy-id 46
-mark :227
+mark :162
 committer ronie <ronie> 1484877329 +0000
 data 97
 refs #11924 - We need Sublime Text to automatically convert tabs to spaces before saving a file.
-from :220
-M 100644 :226 packages/user/before_save.py
+from :155
+M 100644 :161 packages/user/before_save.py
 
 blob
-mark :228
+mark :163
 data 73
 Revision is 127, file path is rubyrails/trunk/lib/proxies/proxy_hash.rb.
 
 commit refs/heads/rubyrails
 #legacy-id 47
-mark :229
+mark :164
 committer ronie <ronie> 1508435521 +0000
 data 214
 refs #4797 - Proxies::ProxyHash#[] method was calling all subhashes' procs instead of calling just the current key's proc; Calling Hash#deep_merge method on a Proxies::ProxyHash object was returning a Hash object.
-from :225
-M 100644 :228 trunk/lib/proxies/proxy_hash.rb
+from :160
+M 100644 :163 trunk/lib/proxies/proxy_hash.rb
 
 blob
-mark :230
+mark :165
 data 67
 Revision is 130, file path is rubyrails/trunk/lib/git_encoding.rb.
 
 blob
-mark :231
+mark :166
 data 68
 Revision is 130, file path is rubyrails/trunk/lib/git_nfse/base.rb.
 
 blob
-mark :232
+mark :167
 data 75
 Revision is 130, file path is rubyrails/trunk/lib/git_nfse/cancel_nfse.rb.
 
 blob
-mark :233
+mark :168
 data 76
 Revision is 130, file path is rubyrails/trunk/lib/git_nfse/consult_nfse.rb.
 
 blob
-mark :234
+mark :169
 data 71
 Revision is 130, file path is rubyrails/trunk/lib/git_nfse/helpers.rb.
 
 blob
-mark :235
+mark :170
 data 71
 Revision is 130, file path is rubyrails/trunk/lib/git_nfse/parsers.rb.
 
 blob
-mark :236
+mark :171
 data 76
 Revision is 130, file path is rubyrails/trunk/lib/git_nfse/rps_lot_nfse.rb.
 
 blob
-mark :237
+mark :172
 data 77
 Revision is 130, file path is rubyrails/trunk/lib/git_nfse/types/complex.rb.
 
 blob
-mark :238
+mark :173
 data 76
 Revision is 130, file path is rubyrails/trunk/lib/git_nfse/types/simple.rb.
 
 blob
-mark :239
+mark :174
 data 63
 Revision is 130, file path is rubyrails/trunk/lib/git_nfse.rb.
 
 blob
-mark :240
+mark :175
 data 70
 Revision is 130, file path is rubyrails/trunk/lib/git_validations.rb.
 
 blob
-mark :241
+mark :176
 data 73
 Revision is 130, file path is rubyrails/trunk/lib/proxies/proxy_hash.rb.
 
 blob
-mark :242
+mark :177
 data 62
 Revision is 130, file path is rubyrails/trunk/lib/proxies.rb.
 
 blob
-mark :243
+mark :178
 data 62
 Revision is 130, file path is rubyrails/trunk/lib/signers.rb.
 
 commit refs/heads/rubyrails
 #legacy-id 48
-mark :244
+mark :179
 committer ronie <ronie> 1510598749 +0000
 data 87
 refs #12123 - Ruby version 1.9.3 requires source code encoding to be set on .rb files.
-from :229
-M 100644 :230 trunk/lib/git_encoding.rb
-M 100644 :239 trunk/lib/git_nfse.rb
-M 100644 :231 trunk/lib/git_nfse/base.rb
-M 100644 :232 trunk/lib/git_nfse/cancel_nfse.rb
-M 100644 :233 trunk/lib/git_nfse/consult_nfse.rb
-M 100644 :234 trunk/lib/git_nfse/helpers.rb
-M 100644 :235 trunk/lib/git_nfse/parsers.rb
-M 100644 :236 trunk/lib/git_nfse/rps_lot_nfse.rb
-M 100644 :237 trunk/lib/git_nfse/types/complex.rb
-M 100644 :238 trunk/lib/git_nfse/types/simple.rb
-M 100644 :240 trunk/lib/git_validations.rb
-M 100644 :242 trunk/lib/proxies.rb
-M 100644 :241 trunk/lib/proxies/proxy_hash.rb
-M 100644 :243 trunk/lib/signers.rb
-
-tag root
-#legacy-id 2
-from :14
-tagger pablo.lerina <pablo.lerina> 1250102929 +0000
-data 101
-Criando estrutura de repositorio (trunk, branches, tags)
-
-
-[[Tag from root commit at Subversion r2]]
+from :164
+M 100644 :165 trunk/lib/git_encoding.rb
+M 100644 :174 trunk/lib/git_nfse.rb
+M 100644 :166 trunk/lib/git_nfse/base.rb
+M 100644 :167 trunk/lib/git_nfse/cancel_nfse.rb
+M 100644 :168 trunk/lib/git_nfse/consult_nfse.rb
+M 100644 :169 trunk/lib/git_nfse/helpers.rb
+M 100644 :170 trunk/lib/git_nfse/parsers.rb
+M 100644 :171 trunk/lib/git_nfse/rps_lot_nfse.rb
+M 100644 :172 trunk/lib/git_nfse/types/complex.rb
+M 100644 :173 trunk/lib/git_nfse/types/simple.rb
+M 100644 :175 trunk/lib/git_validations.rb
+M 100644 :177 trunk/lib/proxies.rb
+M 100644 :176 trunk/lib/proxies/proxy_hash.rb
+M 100644 :178 trunk/lib/signers.rb
 
