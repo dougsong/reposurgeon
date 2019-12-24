@@ -68,7 +68,7 @@ then
     what=${what}.svn
 elif [ ! -f ${what} ]
 then
-    echo "No script matching ${what} found"
+    echo "No Subversion dumpfile matching ${what} found"
     exit 1
 fi
 
@@ -85,6 +85,9 @@ if [ $debug = no ]
 then
     trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}.gfi ${stem}.info ${stem}*~" 0 1 2 15
 fi
+
+# Notification
+#(grep ' ##' ${what} 2>/dev/null) 1>&2
 
 # Make a Subversion repo from the dump
 ./svn-to-svn ${svnquiet} ${slimit} -c <${what} ${stem}
