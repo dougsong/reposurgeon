@@ -2481,21 +2481,6 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 	// Should the argument commit be tagified?
 	tagifyable := func(commit *Commit) bool {
 		logit(logEXTRACT, "beginning tag check on %q", commit.String())
-		// If the commit has no operations, other than .gitignore, tagify it.
-		allignores := true
-		for _, op := range commit.operations() {
-			if op.Path == ".gitignore" {
-				blob, ok := sp.repo.markToEvent(op.ref).(*Blob)
-				if ok && string(blob.getContent()) == subversionDefaultIgnores {
-					continue
-				}
-			}
-			allignores = false
-			break
-		}
-		if allignores {
-			return true
-		}
 		// Commits with a deletall only were generated in early phases to map
 		// SVN deletions of a whole branch. This has already been mapped in git
 		// land by stashing deleted refs away, and even removing all commits
@@ -2503,6 +2488,26 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 		// Any "alldeletes" commit remaining can now be tagified, and should,
 		// so that there are no remnants of the SVN way to delete refs.
 		if commit.alldeletes(deleteall) {
+			return true
+		}
+		// If the commit has no operations, other than .gitignore, tagify it.
+		allIgnoreOrDeleteall := true
+		for _, op := range commit.operations() {
+			if op.op == deleteall {
+				// deleteall ops are common when starting a branch, and
+				// generally accompany the .gitignore creation.
+				continue
+			}
+			if op.Path == ".gitignore" {
+				blob, ok := sp.repo.markToEvent(op.ref).(*Blob)
+				if ok && string(blob.getContent()) == subversionDefaultIgnores {
+					continue
+				}
+			}
+			allIgnoreOrDeleteall = false
+			break
+		}
+		if allIgnoreOrDeleteall {
 			return true
 		}
 		return false
