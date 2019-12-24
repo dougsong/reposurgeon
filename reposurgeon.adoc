@@ -2432,6 +2432,13 @@ it, simply copying the username into the address field.
 --noignores::
 Do not fill in an equivalent of default Subversion ignore patterns.
 
+--preserve::
+When a branch or tag was deleted in SVN, preserve the history up to
+deletion in a git ref under refs/deleted/.
+
+--cvsignores::
+Suppress the normal deletion of .cvsignore files.
+
 These modifiers can go anywhere in any order on the read command
 line after the read verb. They must be whitespace-separated.
 
@@ -2525,11 +2532,11 @@ this behavior is inverted by the --user-ignores option; if that is on,
 .gitignore files are passed through and Subversion svn:ignore
 properties are discarded.
 
-(Regardless of the setting of the --user-ignores option,
-.cvsignore files found in Subversion repositories always become
-.gitignores in the translation.  The assumption is that these date
-from before a CVS-to-SVN lift and should be preserved to affect
-behavior when browsing that section of the repository.)
+Normally, .cvsignore files left over from a Subversion repository's
+ancient history as a CVS repository are deleted. The assumption is
+thast the repository users want the (presumably more up-to-date)
+Subversion ignore properties to be translated.  However, this
+deletion can be prevented with the --cvsignores read option.
 
 svn:mergeinfo properties are interpreted.  Any svn:mergeinfo property
 on a revision A with a merge source range ending in revision B produces
@@ -2562,12 +2569,12 @@ Reading a Subversion stream enables writing of the legacy map as
 'legacy' passthroughs when the repo is written to a stream
 file.
 
-reposurgeon tries hard to silently do the
-right thing, but there are Subversion edge cases in which it emits warnings
-because a human may need to intervene and perform fixups by hand. Here
-are the less obvious messages it may emit:
+reposurgeon tries hard to silently do the right thing, but there are
+Subversion edge cases in which it emits warnings because a human may
+need to intervene and perform fixups by hand. Here are the less
+obvious messages it may emit:
 
-user-generated .gitignore::
+user-created .gitignore ignored::
    This message means means reposurgeon has
    found a <filename>.gitignore_ file in the Subversion
    repository it is analyzing. This probably happened because somebody
@@ -2580,13 +2587,6 @@ user-generated .gitignore::
    user-created <filename>.gitignore_ files; in that case this
    warning will not be emitted.
 
-permission information may be lost::
-   A Subversion node change on a file sets or clears properties,
-   but no ancestor can be found for this file. Executable or symlink
-   position may be set wrongly on later revisions of this
-   file. Subversion user-defined properties may also be scrambled or
-   lost. Usually this error can be ignored.
-
 properties set::
    reposurgeon has detected a setting of a
    user-defined property, or the Subversion properties
@@ -2595,32 +2595,6 @@ properties set::
    conversion or some corrective action is required, but normally this
    error can be ignored.  This warning is suppressed by the
    --ignore-properties option.
-
-branch links detected by file ops only::
-   Branch links are normally deduced by examining Subversion directory
-   copy operations. A common user error (making a branch with a non-Subversion
-   directory copy and then doing an svn add on the contends) can defeat this.
-   While reposurgeon should detect and cope with most such
-   copies correctly, you should examine the commit graph to check that the
-   branch is rooted at the correct place.
-
-could not tagify root commit::
-   The earliest commit in your Subversion repository has file operations,
-   rather than being a pure directory creation. This probably means your
-   Subversion dump file is malformed, or you may have attempted to lift
-   from an incremental dump. Proceed with caution.
-
-deleting parentless tip delete::
-   This message may be triggered by a Subversion branch move followed by
-   a re-creation under the source name. Check near the indicated revision to make
-   sure the renamed branch is connected to master.
-
-lookback for XXX failed, not making branch link::
-   Branch analysis failed, probably due to a set of file copies that
-   reposurgeon thought it should interpret as a botched
-   branch creation but couldn't deduce a history for.  This is a warning;
-   check how the directory XXX is converted, it may need post-editing
-   into a branch.
 
 === MID-BRANCH DELETIONS ===
 

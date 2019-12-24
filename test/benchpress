@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# Benchmark fuke reads using readlimits on a big repo
+
+limit=$1
+
+bigstream=/mnt/vault/esr-vault/gcc-conversion/gcc.svn
+
+reposurgeon "set interactive" "logfile press.log" "readlimit ${limit}" "profile r${limit}.prof" "read <${bigstream}" "memory" "timing"

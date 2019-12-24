@@ -1,0 +1,11 @@
+testload=blowup
+verbosity=+extract
+
+# Select out revisions
+function rselect(){ repocutter -q -r $* select <${testload}.svn | repocutter -q renumber >/tmp/foo.svn; mv /tmp/foo.svn ${testload}.svn; }
+
+function see(){ repocutter -q see <${testload}.svn; }
+
+function expunge(){ repocutter -q expunge $* <${testload}.svn | repocutter -q renumber >/tmp/foo.svn; mv /tmp/foo.svn ${testload}.svn; }
+
+function cfilter(){ filter $*; check; }

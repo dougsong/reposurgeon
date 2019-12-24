@@ -110,7 +110,7 @@ version:
 #
 
 check: lint build test
-	cd test; $(MAKE) --quiet fullcheck
+	cd test; $(MAKE) --quiet listcheck
 
 #
 # Continuous integration.  More specifics are in the ci/ directory

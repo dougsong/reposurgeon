@@ -3,5 +3,5 @@ set echo
 set quiet
 read <bs.fi
 lint
-read <agito.svn
+read <lint.svn
 lint

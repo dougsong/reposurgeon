@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	trie "github.com/acomagu/trie"
 	"io"
 	"log"
 	"os"
@@ -49,8 +48,6 @@ func assertIntEqual(t *testing.T, a int, b int) {
 	}
 }
 
-// This is pretty strange.  According to the Go documentation, there
-// are no backreferences. Yet this works under 1.10.4
 func TestBackreferences(t *testing.T) {
 	from := []byte("aaabxbcccc")
 	pattern := "b(.)b"
@@ -1820,26 +1817,100 @@ func TestPathMap(t *testing.T) {
 	assertEqual(t, p.String(), "{}")
 }
 
-func TestLongestMatch(t *testing.T) {
-	branches := [][]byte{
-		[]byte("foo/"),
-		[]byte("foo/bar/"),
-		[]byte("bar/"),
-		[]byte("baz"),
+func TestDeclaredBranch(t *testing.T) {
+	type testcase struct {
+		path             string
+		isDeclaredBranch bool
 	}
-	values := []interface{}{1, 2, 3, 4}
-	b := trie.New(branches, values)
-	tests := [][]string{
-		[]string{"foo/bar/.gitignore", "foo/bar/"},
-		[]string{"foo/.gitignore", "foo/"},
-		[]string{"foo/bar/baz/.gitignore", "foo/bar/"},
-		[]string{"x/.gitignore", ""},
+	var branchsets = []orderedStringSet{
+		orderedStringSet{"trunk", "tags/*", "branches/*"},
+		orderedStringSet{"trunk", "tags/*", "branches/*", "*"},
 	}
-	for idx, pair := range tests {
-		t.Run(fmt.Sprint(idx),
-			func(t *testing.T) {
-				result := longestPrefix(b, []byte(pair[0]))
-				assertEqual(t, string(result), pair[1])
-			})
+	var testcases = [][]testcase{
+		{
+			{"trunk", true},
+			{"foobar", false},
+			{"branches/foobar", true},
+			{"branches/foobar/test", false},
+			{"tags/foobar", true},
+			{"tags/foobar/cetc", false},
+			{"tag/foobar", false},
+			{"tags", false},
+			{"branches", false},
+			{"/", false},
+			{"", false},
+		},
+		{
+			{"trunk", true},
+			{"foobar", true},
+			{"branches/foobar", true},
+			{"branches/foobar/test", false},
+			{"tags/foobar", true},
+			{"tags/foobar/cetc", false},
+			{"tag/foobar", false},
+			{"tags", false},
+			{"branches", false},
+			{"/", false},
+			{"", false},
+		},
+	}
+	control.listOptions = make(map[string]orderedStringSet)
+	for idx, branchset := range branchsets {
+		branchset := branchset
+		t.Run(fmt.Sprint(idx), func(t *testing.T) {
+			for idx, test := range testcases[idx] {
+				test := test
+				t.Run(fmt.Sprint(idx), func(t *testing.T) {
+					control.listOptions["svn_branchify"] = branchset
+					assertBool(t, isDeclaredBranch(test.path), test.isDeclaredBranch)
+				})
+			}
+		})
+	}
+}
+
+func TestBranchSplit(t *testing.T) {
+	control.listOptions = make(map[string]orderedStringSet)
+	control.listOptions["svn_branchify"] = orderedStringSet{"trunk", "tags/*", "branches/*", "*"}
+	type splitTestEntry struct {
+		raw    string
+		branch string
+		path   string
+	}
+	var splitTestTable = []splitTestEntry{
+		{"trunk/README", "trunk", "README"},
+		{"foobar/README", "foobar", "README"},
+		{"trunk/", "trunk", ""},
+		{"trunk", "", "trunk"},
+		{"README", "", "README"},
+		{"branches/foo/bar", "branches/foo", "bar"},
+		{"branches/foo/bar/baz", "branches/foo", "bar/baz"},
+	}
+	for _, tst := range splitTestTable {
+		b, p := splitSVNBranchPath(tst.raw)
+		assertEqual(t, b, tst.branch)
+		assertEqual(t, p, tst.path)
+	}
+}
+
+func TestContainingDir(t *testing.T) {
+	type testcase struct {
+		path string
+		dir string
+	}
+	var testcases = []testcase{
+		{"/foo/bar/baz.js", "/foo/bar"},
+		{"/foo/bar/baz", "/foo/bar"},
+		{"/foo/bar/baz/", "/foo/bar/baz"},
+		{"dev.txt", ""},
+		{"/", ""},
+		{"", ""},
+	}
+	for idx, test := range testcases {
+		test := test
+		t.Run(fmt.Sprint(idx), func(t *testing.T) {
+			t.Parallel()
+			assertEqual(t, containingDir(test.path), test.dir)
+		})
 	}
 }

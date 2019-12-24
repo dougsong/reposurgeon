@@ -43,6 +43,8 @@ Create testbranch. The command was:
 
 svn copy file://$PWD/test-repo/trunk file://$PWD/test-repo/branches/testbranch
 from :3
+deleteall
+M 100644 :1 .gitignore
 M 100644 :2 README
 
 blob
@@ -58,7 +60,6 @@ committer esr <esr> 1323742474 +0000
 data 20
 A placeholder file.
 from :4
-M 100644 :1 .gitignore
 M 100644 :5 placeholder
 
 blob

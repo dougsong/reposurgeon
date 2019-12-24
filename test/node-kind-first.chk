@@ -1,5 +1,3 @@
 reposurgeon: r1#2~trunk/assemblies properties set:
 reposurgeon: 	svn:date = "2010-10-28T11:46:57.761945Z"
-reposurgeon: "node-kind-first.svn", line 76: empty stream or repository.
-reposurgeon: repository has no commits
-reposurgeon: no repo has been chosen.
+#reposurgeon sourcetype svn

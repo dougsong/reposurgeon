@@ -50,6 +50,5 @@ committer Fred J. Foonly <foonly@foo.com> 1440 +0000
 data 19
 Copy dir1 to dir2.
 from :4
-M 100644 :2 dir2/file
 M 100755 :2 dir2/file
 

@@ -1,0 +1,105 @@
+SVN-fs-dump-format-version: 2
+ ## Test split commit with part not on any declared branch
+
+UUID: d26c33ac-1e6d-11ea-bcef-8bb925b0ddd3
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2019-12-14T12:32:41.881596Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 128
+Content-length: 128
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-14T12:33:00.619531Z
+K 7
+svn:log
+V 27
+Create directory structure.
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 154
+Content-length: 154
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-14T12:33:54.873250Z
+K 7
+svn:log
+V 53
+Split commit: change on trunk, file not on a branch.
+
+PROPS-END
+
+Node-path: branches/file-not-in-a-branch
+Node-kind: file
+Node-action: add
+Text-content-md5: 13bc3b4c50b34c6bb77330b458754d9c
+Text-content-sha1: 6ced08f15d42279fcf3ab7dd213ec27f0496a4f9
+Prop-content-length: 10
+Text-content-length: 25
+Content-length: 35
+
+PROPS-END
+one file in split commit
+
+
+Node-path: trunk/file-on-trunk
+Node-kind: file
+Node-action: add
+Text-content-md5: a13a3e10b9a2ce4ffd571bf47a75f714
+Text-content-sha1: 81a8a7b86130d19294ddf332a64fc4d8e5d7bc1a
+Prop-content-length: 10
+Text-content-length: 14
+Content-length: 24
+
+PROPS-END
+file on trunk
+
+

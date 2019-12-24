@@ -392,16 +392,17 @@ and continuous, which the Go implementation requires.
 
 It captures the most serious pathologies in the NUT repo.
 
+It's too complex for correctness to be audited in detail by eyeball,
+but it makes a good stability test. Any change that breaks the
+Subversion analyzer even subtly is likely to produce a diff on this
+test.
+
 == Known Issues ==
 
 This is a list of test loads that fail to pass liftcheck,
 with explanations. "Not used in any test" means *.tst and *.sh
 files - each of these is used as a stability test of the
 Subversion lift code.
-
-adventitious.svn::
-   A root-level branch defeats the comparison algorithm liftcheck
-   uses. Not used by any test.  Cosmetically annoying but not a bug.
 
 agito.svn::
    Processing is correct - the unmatched tags on the Git side are
@@ -438,9 +439,6 @@ nesting.svn::
 node-kind-first.svn::
    Translation is correct, but one of the property settings triggers
    a spurious message. Not a real bug.  Not used by any test.
-
-references.svn::
-   BUG: needs analysis. Used by the legacy-map test.
 
 rootfile.svn::
    Translation is correct, exiguous file produces a root branch.

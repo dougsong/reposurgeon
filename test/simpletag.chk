@@ -56,6 +56,8 @@ committer esr <esr> 1322672941 +0000
 data 24
 This is an example tag.
 from :5
+deleteall
+M 100644 :1 .gitignore
 M 100644 :4 README
 
 blob
@@ -95,6 +97,8 @@ committer esr <esr> 1322673346 +0000
 data 20
 Create a second tag
 from :10
+deleteall
+M 100644 :1 .gitignore
 M 100644 :9 README
 M 100644 :7 creation-example
 

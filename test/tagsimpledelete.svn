@@ -1,0 +1,197 @@
+SVN-fs-dump-format-version: 2
+ ## Test tag created in SVN with simple directory copy, deleted and recreated
+
+UUID: 9529dfc6-1e8b-11ea-879b-b9e8011d114c
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2019-12-14T16:05:44.007181Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 128
+Content-length: 128
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-14T16:05:52.077649Z
+K 7
+svn:log
+V 27
+Create directory structure.
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 114
+Content-length: 114
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-14T16:06:09.408680Z
+K 7
+svn:log
+V 13
+Create file.
+
+PROPS-END
+
+Node-path: trunk/foo
+Node-kind: file
+Node-action: add
+Text-content-md5: 154d45611081dc7858043af2d9554d6f
+Text-content-sha1: fc4c444d36872cb10cffdc34ee2cbd8c2c820f80
+Prop-content-length: 10
+Text-content-length: 9
+Content-length: 19
+
+PROPS-END
+file foo
+
+
+Revision-number: 3
+Prop-content-length: 113
+Content-length: 113
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-14T16:06:21.459999Z
+K 7
+svn:log
+V 12
+Create tag.
+
+PROPS-END
+
+Node-path: tags/sometag
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk
+
+
+Revision-number: 4
+Prop-content-length: 122
+Content-length: 122
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-15T20:55:17.419513Z
+K 7
+svn:log
+V 21
+Modify foo on trunk.
+
+PROPS-END
+
+Node-path: trunk/foo
+Node-kind: file
+Node-action: change
+Text-content-md5: b499f90d9c29861e715b9563fcbd38ee
+Text-content-sha1: 1b402b7f87592752856a3cbac292e751ef3116ce
+Text-content-length: 13
+Content-length: 13
+
+modified foo
+
+
+Revision-number: 5
+Prop-content-length: 113
+Content-length: 113
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-15T20:55:33.769273Z
+K 7
+svn:log
+V 12
+Remove tag.
+
+PROPS-END
+
+Node-path: tags/sometag
+Node-action: delete
+
+
+Revision-number: 6
+Prop-content-length: 143
+Content-length: 143
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-15T20:57:17.134617Z
+K 7
+svn:log
+V 42
+Recreate sometag with different contents.
+
+PROPS-END
+
+Node-path: tags/sometag
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 5
+Node-copyfrom-path: trunk
+
+

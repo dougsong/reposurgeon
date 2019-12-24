@@ -1,4 +1,4 @@
-reposurgeon: "fleetwood.svn", line 238: ':2': deleting parentless zero-op commit on refs/heads/root.
+reposurgeon: r2: deleting parentless zero-op commit on refs/heads/root.
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -35,34 +35,52 @@ commit one
 M 100644 :1 .gitignore
 M 100644 :2 test.txt
 
-blob
+commit refs/deleted/r6.2/tags/1.0
+#legacy-id 5
 mark :4
+committer mike <mike> 1437858607 +0000
+data 12
+Release 1.0
+from :3
+deleteall
+M 100644 :1 .gitignore
+M 100644 :2 test.txt
+
+commit refs/tags/1.0rc1
+#legacy-id 6.1
+mark :5
+committer mike <mike> 1437858613 +0000
+data 59
+No release ready yet
+
+[[Split portion of a mixed commit.]]
+from :4
+deleteall
+M 100644 :1 .gitignore
+M 100644 :2 test.txt
+
+blob
+mark :6
 data 8
 one
 two
 
 commit refs/heads/master
 #legacy-id 7
-mark :5
+mark :7
 committer mike <mike> 1437858621 +0000
 data 11
 commit two
 from :3
-M 100644 :4 test.txt
+M 100644 :6 test.txt
 
 commit refs/tags/1.0
 #legacy-id 8
-mark :6
+mark :8
 committer mike <mike> 1437858625 +0000
 data 18
 Fixed release 1.0
-from :5
-M 100644 :4 test.txt
-
-tag 1.0-deleted-r6-2
-#legacy-id 5
-from :3
-tagger mike <mike> 1437858607 +0000
-data 12
-Release 1.0
+from :7
+deleteall
+M 100644 :6 test.txt
 

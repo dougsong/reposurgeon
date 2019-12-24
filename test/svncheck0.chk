@@ -83,6 +83,8 @@ committer Fred J. Foonly <foonly@foo.com> 2160 +0000
 data 21
 First directory copy
 from :9
+deleteall
+M 100644 :1 .gitignore
 M 100644 :2 README
 M 100644 :6 bar.txt
 M 100644 :8 baz.txt
@@ -155,8 +157,7 @@ mark :20
 committer Fred J. Foonly <foonly@foo.com> 3960 +0000
 data 14
 And continues
-from :3
-deleteall
+M 100644 :1 .gitignore
 M 100644 :19 branches/foo.txt
 
 commit refs/tags/1.0
@@ -166,6 +167,8 @@ committer Fred J. Foonly <foonly@foo.com> 4320 +0000
 data 15
 First tag copy
 from :18
+deleteall
+M 100644 :1 .gitignore
 M 100644 :2 README
 M 100644 :13 bar.txt
 M 100644 :15 baz.txt

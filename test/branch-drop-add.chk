@@ -70,10 +70,15 @@ M 100644 :7 src
 blob
 mark :9
 data 4
-0.3
+1.0
 
 blob
 mark :10
+data 4
+0.3
+
+blob
+mark :11
 data 66
 feature development A
 feature development B
@@ -81,29 +86,25 @@ feature development C
 
 commit refs/heads/master
 #legacy-id 6
-mark :11
+mark :12
 committer db48x <db48x> 1352540143 +0000
 data 38
 trunk development proceeds; feature C
 from :8
-M 100644 :9 VERSION
-M 100644 :10 src
+M 100644 :10 VERSION
+M 100644 :11 src
 
 commit refs/heads/v1.0
 #legacy-id 8
-mark :12
+mark :13
 committer db48x <db48x> 1352540147 +0000
 data 32
 create a release branch for 1.0
-from :11
+from :12
+deleteall
 M 100644 :2 README
-M 100644 :9 VERSION
-M 100644 :10 src
-
-blob
-mark :13
-data 4
-1.0
+M 100644 :10 VERSION
+M 100644 :11 src
 
 commit refs/heads/v1.0
 #legacy-id 9
@@ -111,9 +112,8 @@ mark :14
 committer db48x <db48x> 1352540149 +0000
 data 27
 bump version number to 1.0
-from :12
-M 100644 :1 .gitignore
-M 100644 :13 VERSION
+from :13
+M 100644 :9 VERSION
 
 blob
 mark :15
@@ -134,7 +134,7 @@ mark :17
 committer db48x <db48x> 1352540151 +0000
 data 38
 trunk development proceeds; feature D
-from :11
+from :12
 M 100644 :15 VERSION
 M 100644 :16 src
 
@@ -204,22 +204,4 @@ data 38
 trunk development proceeds; feature E
 from :23
 M 100644 :24 src
-
-tag emptycommit-5
-#legacy-id 5
-from :8
-tagger db48x <db48x> 1352540141 +0000
-data 77
-bump version number to 1.0
-
-[[Tag from zero-fileop commit at Subversion r5]]
-
-tag emptycommit-7
-#legacy-id 7
-from :8
-tagger db48x <db48x> 1352540145 +0000
-data 78
-delete incorrect 1.0 branch
-
-[[Tag from zero-fileop commit at Subversion r7]]
 
