@@ -1,16 +1,4 @@
 read <snarl.svn
-tagify
-<emptycommit-6> inspect
-Event 8 =================================================================
-tag emptycommit-6
-#legacy-id 6
-from :3
-tagger aquette <aquette> 1109582047 +0000
-data 99
-Bring CVS tree in sync with the new 2.0.1 stable
-
-[[Tag from zero-fileop commit at Subversion r6]]
-
 tag /INITIAL_IMPORT/ delete
 write -
 #reposurgeon sourcetype svn
@@ -57,6 +45,8 @@ data 78
 This commit was manufactured by cvs2svn to create branch
 'INITIAL_IMPORT_AQ'.
 from :3
+deleteall
+M 100644 :1 .gitignore
 M 100644 :2 CHANGES
 
 commit refs/heads/INITIAL_IMPORT_AQ
@@ -67,23 +57,7 @@ data 84
 This commit was manufactured by cvs2svn to create tag
 'INITIAL_IMPORT_V2_0_1_pre4'.
 from :4
+deleteall
+M 100644 :1 .gitignore
 M 100644 :2 CHANGES
-
-tag emptycommit-4
-#legacy-id 4
-from :3
-tagger aquette <aquette> 1106836402 +0000
-data 105
-Initial CVS import from nut testing release 2.0.1-pre4
-
-[[Tag from zero-fileop commit at Subversion r4]]
-
-tag emptycommit-6
-#legacy-id 6
-from :3
-tagger aquette <aquette> 1109582047 +0000
-data 99
-Bring CVS tree in sync with the new 2.0.1 stable
-
-[[Tag from zero-fileop commit at Subversion r6]]
 
