@@ -1,4 +1,3 @@
-reposurgeon: Resolving mergeinfo targeting r8 on :10 <6> instead
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -86,7 +85,6 @@ committer frnchfrgg <frnchfrgg> 1576674239 +0000
 data 6
 b1_c2
 from :6
-merge :8
 M 100644 :9 x
 
 blob
@@ -102,4 +100,13 @@ data 5
 t_c3
 from :8
 M 100644 :11 b
+
+commit refs/heads/b1
+#legacy-id 8
+mark :13
+committer frnchfrgg <frnchfrgg> 1576674239 +0000
+data 6
+b1_c3
+from :10
+merge :12
 

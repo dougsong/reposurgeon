@@ -1,4 +1,4 @@
-reposurgeon: "wrong-mergeinfo.svn", line 167: cannot resolve mergeinfo source from revision 9 for path trunk/.
+reposurgeon: Ignoring bogus mergeinfo trying to create a forward merge
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -43,6 +43,8 @@ data 22
 Create branch "test"
 
 from :3
+deleteall
+M 100644 :1 .gitignore
 M 100644 :2 a
 
 commit refs/heads/test
@@ -53,7 +55,6 @@ data 36
 Another test revision, branch test
 
 from :4
-M 100644 :1 .gitignore
 M 100644 :2 b
 
 commit refs/heads/master
@@ -65,4 +66,14 @@ Merge
 
 from :3
 M 100644 :2 b
+
+commit refs/heads/test
+#legacy-id 5
+mark :7
+committer frnchfrgg <frnchfrgg> 1360157557 +0000
+data 36
+Another test revision, branch test
+
+from :5
+M 100644 :2 c
 

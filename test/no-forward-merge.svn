@@ -173,6 +173,37 @@ c
 
 
 Revision-number: 6
+Prop-content-length: 108
+Content-length: 108
+
+K 10
+svn:author
+V 9
+frnchfrgg
+K 8
+svn:date
+V 27
+2019-12-16T10:45:42.683592Z
+K 7
+svn:log
+V 5
+b1_c2
+PROPS-END
+
+Node-path: branches/b1
+Node-kind: dir
+Node-action: change
+Prop-content-length: 51
+Content-length: 51
+
+K 19
+svnmerge-integrated
+V 10
+/trunk:5-7
+PROPS-END
+
+
+Revision-number: 7
 Prop-content-length: 107
 Content-length: 107
 
@@ -201,36 +232,5 @@ Content-length: 12
 
 PROPS-END
 d
-
-
-Revision-number: 7
-Prop-content-length: 108
-Content-length: 108
-
-K 10
-svn:author
-V 9
-frnchfrgg
-K 8
-svn:date
-V 27
-2019-12-16T10:45:42.683592Z
-K 7
-svn:log
-V 5
-b1_c2
-PROPS-END
-
-Node-path: branches/b1
-Node-kind: dir
-Node-action: change
-Prop-content-length: 51
-Content-length: 51
-
-K 19
-svnmerge-integrated
-V 10
-/trunk:5-6
-PROPS-END
 
 

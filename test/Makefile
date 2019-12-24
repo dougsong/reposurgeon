@@ -411,6 +411,7 @@ SVNCLEAN := \
 	delignore.svn \
 	delref.svn \
 	dircopyprop.svn \
+	emptycommit-merge.svn \
 	emptyfrom.svn \
 	executable.svn \
 	expunge-copyfrom.svn \
@@ -431,7 +432,6 @@ SVNCLEAN := \
 	myers1.svn \
 	node-kind-first.svn \
 	no-forward-merge.svn \
-	no-forward-merge2.svn \
 	no-merge.svn \
 	nontipcopy.svn \
 	nullignores.svn \

@@ -1,4 +1,4 @@
-reposurgeon: Resolving mergeinfo targeting r7 on :6 <4> instead
+reposurgeon: Ignoring bogus mergeinfo trying to create a forward merge
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -80,11 +80,20 @@ data 2
 d
 
 commit refs/heads/master
-#legacy-id 6
+#legacy-id 7
 mark :10
 committer frnchfrgg <frnchfrgg> 1576493142 +0000
 data 5
 t_c3
 from :8
 M 100644 :9 b
+
+tag emptycommit-6
+#legacy-id 6
+from :6
+tagger frnchfrgg <frnchfrgg> 1576493142 +0000
+data 56
+b1_c2
+
+[[Tag from zero-fileop commit at Subversion r6]]
 
