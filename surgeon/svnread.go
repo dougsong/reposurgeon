@@ -1649,6 +1649,9 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 				node := sp.revisions[n].nodes[0]
 				if node.kind == sdDIR && isDeclaredBranch(node.path) {
 					commit.Branch = node.path
+					if strings.HasSuffix(commit.Branch, svnSep) {
+						commit.Branch = commit.Branch[:len(commit.Branch)-1]
+					}
 				} else {
 					commit.Branch, _ = splitSVNBranchPath(node.path)
 				}
