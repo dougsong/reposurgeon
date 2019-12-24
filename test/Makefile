@@ -481,6 +481,7 @@ liftcheck-regress:
 	fi; \
 	rm -f /tmp/diff$$$
 
+# This is not part of the normal test sequence becausr the reposurgeon tools are very slow.
 liftcheck-fullregress:
 	@echo "== Testing conversion correctness of all SVN revisions:"
 	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
