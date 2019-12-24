@@ -201,7 +201,7 @@ generality. It can even translate Subversion commits that alter
 multiple branches.
 
 Performance tip: reposurgeon should analyze Subversion repositories at
-the rate of over 10K commits per minute, but that rate can fall off
+the rate of over 100K commits per minute, but that rate can fall off
 greatly on very large repositories.
 
 Unlike CVS, Subversion repositories have real changesets and the work
@@ -263,6 +263,12 @@ RCS: reposurgeon will read an RCS collection.  It uses
 http://www.catb.org/~esr/cvs-fast-export[cvs-fast-export],
 which despite its name does not actually require CVS metadata other than
 the RCS master files that store the content.
+
+Mercurial: reposurgeon will read a Mercurial repository. It uses
+https://github.com/kilork/hg-git-fast-import[hg-git-fast-import] as an
+importer. Note that this conversion is not very well tested yet; you
+may want to run conversions with both the importer abd the hg
+extractor harness and compare them.
 
 Fossil: reposurgeon will read a Fossil repository file. It uses the
 native Fossil exporter, which is pretty good but doesn't export ignore
@@ -814,6 +820,7 @@ Makefile.
      Recommend PyPy for speeding up large conversions.
 
 Repository head::
+     New secrion on importing Mercurial repositories.
      Track the name change of the mailbox commands.
      Reposurgeon has moved to Go.
      Google Code is long dead, remove the mention.

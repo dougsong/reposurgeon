@@ -2322,10 +2322,15 @@ the bottom of your <filename>.hg/hgrc_:
 bookmarks=heads/
 --------
 
-If you do that, it's your responsibility to ensure that branch
-names do not conflict with bookmark names. You can add a prefix like
-<computeroutput>bookmarks=heads/feature-</computeroutput> to
-disambiguate as necessary.
+If you do that, it's your responsibility to ensure that branch names
+do not conflict with bookmark names. You can add a prefix like
++bookmarks=heads/feature-+ to disambiguate as necessary.
+
+Alternatively, you can import directly using
+https://github.com/kilork/hg-git-fast-import[hg-git-fast-import].
+This importer is not yet well tested, but may be sunbstntially
+faster than using the extractor harness. You may wish to run
+test conversions using both methods and compatre them.
 
 [[hg-subrepo]]
 === MERCURIAL SUBREPOSITORIES ===

@@ -18,6 +18,7 @@ Repository head::
      Use Bazaar config file or .muttrc for identity if availalable.
      The expunge and branchify commands now respect string quotes.
      The changelogs command takes an optional regexp choosing files to be mined.
+     We now use a better Mercurial importer, hg-git-fast-import.
 
 3.48: 2019-10-02::
      Last Python release.  4.0 will ship in Go.

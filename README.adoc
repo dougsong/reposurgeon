@@ -35,7 +35,7 @@ support working directly with action stamps in git.
 Finally, an Emacs Lisp mode with useful functions for editing large
 comment message-boxes is included.
 
-See INSTALL.adoc for inbstructions om building the software and its
+See INSTALL.adoc for instructions om building the software and its
 prerequisites.
 
 See `reporting-bugs.adoc` for advice on how to troubleshoot problems
