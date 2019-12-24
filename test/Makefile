@@ -395,25 +395,33 @@ svnload-regress:
 # Empty-commit tags generated in gitspace corresponding to branch
 # copies are ignored.
 SVNCLEAN := \
+	agito.svn \
 	bad-author.svn \
 	badattrib.svn \
 	badattrib2.svn \
 	binary.svn \
 	blob-id.svn \
+	branchreplace.svn \
 	branch-drop-add.svn \
 	cherry-pick.svn \
 	debranch.svn \
 	deepdirs.svn \
+	delete-rename.svn \
 	deletion.svn \
 	delignore.svn \
+	delref.svn \
 	dircopyprop.svn \
+	emptyfrom.svn \
 	executable.svn \
 	expunge-copyfrom.svn \
 	expunge.svn \
 	filecopy.svn \
+	fleetwood.svn \
+	format7.svn \
 	gitify.svn \
 	gitignore.svn \
 	ignore-blank.svn \
+	lint.svn \
 	merge-with-delete.svn \
 	mergeinfo-combine.svn \
 	mergeinfo-with-split.svn \
@@ -421,6 +429,7 @@ SVNCLEAN := \
 	mixedbranch.svn \
 	mkignore.svn \
 	myers1.svn \
+	node-kind-first.svn \
 	no-forward-merge.svn \
 	no-forward-merge2.svn \
 	no-merge.svn \
@@ -444,21 +453,16 @@ SVNCLEAN := \
 	subdir.svn \
 	svnignores.svn \
 	symlink.svn \
+	tagpollute.svn \
 	tagsimple.svn \
-	tagsimpledelete.svb \
+	tagsimpledelete.svn \
 	treecontents.svn \
 	trunkstomp.svn \
 	vanilla.svn \
 	wrong-mergeinfo.svn \
 
-# These indicate possible bugs in the Subversion dump analyzer.
-liftcheck-failures:
-	emptyfrom.svn \
-	swap.svn \
-	tagpollute.svn \
-
 liftcheck-regress:
-	@echo "== Testing conversion correctness of Subversion streams:"
+	@echo "== Testing conversion correctness of Subversion streams at head revision:"
 	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	if  command -v git >/dev/null 2>&1 &&  command -v svn >/dev/null 2>&1; \
 	then \
@@ -492,7 +496,7 @@ liftcheck-fullregress:
 	fi
 
 
-# List Subversion streams that don't convert clean 
+# List Subversion streams that don't convert clean without -q -r all
 liftcheck-dirty:
 	@for x in $(SVNCLEAN); do echo $${x} >>goodlist$$; done
 	@sort -o goodlist$$ goodlist$$
