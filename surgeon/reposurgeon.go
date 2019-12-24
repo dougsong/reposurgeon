@@ -19936,8 +19936,9 @@ func main() {
 		}
 		files, err := ioutil.ReadDir("./")
 		if err == nil {
+			mePrefix := filepath.FromSlash(fmt.Sprintf(".rs%d", os.Getpid()))
 			for _, f := range files {
-				if strings.HasPrefix(f.Name(), ".rs") && f.IsDir() {
+				if strings.HasPrefix(f.Name(), mePrefix) && f.IsDir() {
 					os.RemoveAll(f.Name())
 				}
 			}

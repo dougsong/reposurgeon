@@ -898,8 +898,6 @@ func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton
 	timeit("dejunk")
 	svnProcessTagEmpties(ctx, sp, options, baton)
 	sp.timeMark("tagifying")
-	svnProcessCleanTags(ctx, sp, options, baton)
-	timeit("tagcleaning")
 	svnProcessDebubble(ctx, sp, options, baton)
 	timeit("debubbling")
 	svnProcessRenumber(ctx, sp, options, baton)
@@ -2236,7 +2234,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 }
 
 func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-    // Phase A:
+	// Phase A:
 	// Intervene to prevent lossage from tag/branch/trunk deletions.
 	//
 	// The Subversion data model is that a history is a sequence of surgical
@@ -2557,46 +2555,8 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 	sp.repo.delete(deletia, []string{"--tagback", "--tagify"})
 	baton.endProgress()}
 
-func svnProcessCleanTags(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	// Phase D:
-	// cvs2svn likes to crap out sequences of deletes followed by
-	// filecopies on the same node when it's generating tag commits.
-	// These are lots of examples of this in the nut.svn test load.
-	// These show up as redundant (D, M) fileop pairs.
-	defer trace.StartRegion(ctx, "SVN Phase D: delete/copy canonicalization").End()
-	logit(logEXTRACT, "SVN Phase D: delete/copy canonicalization")
-	baton.startProgress("SVN phase D: delete/copy canonicalization", uint64(len(sp.repo.events)))
-	walkEvents(sp.repo.events, func(idx int, event Event) {
-		commit, ok := event.(*Commit)
-		if !ok {
-			return
-		}
-		count := 0
-		for i := range commit.operations() {
-			if i < len(commit.operations())-1 {
-				if commit.operations()[i].op == opD && commit.operations()[i+1].op == opM {
-					if commit.operations()[i].Path == commit.operations()[i+1].Path {
-						commit.fileops[i].op = opX
-						count++
-					}
-				}
-			}
-			baton.twirl()
-		}
-		nonnil := make([]*FileOp, 0, len(commit.operations())-count)
-		for _, op := range commit.operations() {
-			if op.op != opX {
-				nonnil = append(nonnil, op)
-			}
-		}
-		commit.setOperations(nonnil)
-		baton.percentProgress(uint64(idx) + 1)
-	})
-	baton.endProgress()
-}
-
 func svnProcessDebubble(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	// Phase E:
+	// Phase D:
 	// Remove spurious parent links caused by random cvs2svn file copies.
 	// FIXME: Is this necessary given the way the branch links are now built?
 	defer trace.StartRegion(ctx, "SVN Phase E: remove duplicate parent marks").End()
@@ -2632,7 +2592,7 @@ func svnProcessDebubble(ctx context.Context, sp *StreamParser, options stringSet
 }
 
 func svnProcessRenumber(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	// Phase F:
+	// Phase E:
 	// renumber all commits
 	defer trace.StartRegion(ctx, "SVN Phase F: renumber").End()
 	logit(logEXTRACT, "SVN Phase F: renumber")
