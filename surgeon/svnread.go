@@ -46,10 +46,6 @@ import (
 	"unsafe" // Actually safe - only uses Sizeof
 )
 
-// FIXME: When we merge to master, move this to reposugeon.go
-// and remove the "common" member of the Commit structure.
-// Also remove the copyOperations method
-const colorGEN = 4
 
 // FIXME: When we merge, move this
 func (b branchMapping) String() string {

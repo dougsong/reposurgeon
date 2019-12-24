@@ -4631,6 +4631,7 @@ func (m *ManifestEntry) equals(other *ManifestEntry) bool {
 const colorNONE = 0
 const colorEARLY = 1
 const colorLATE = 2
+const colorGEN = 4
 
 type colorType uint8
 type colorSet uint8
@@ -4653,7 +4654,6 @@ func (c *colorSet) Clear() {
 // Commit represents a commit event in a fast-export stream
 type Commit struct {
 	legacyID     string        // Commit's ID in an alien system
-	common       string        // Used only by the Subversion parser
 	mark         string        // Mark name of commit (may transiently be "")
 	Comment      string        // Commit comment
 	Branch       string        // branch name
@@ -4766,16 +4766,6 @@ func (commit *Commit) operations() []*FileOp {
 
 // setOperations replaces the set of fileops associated with this commit.
 func (commit *Commit) setOperations(ops []*FileOp) {
-	commit.fileops = ops
-	commit.invalidateManifests()
-}
-
-// setOperations replaces the set of fileops associated with this commit.
-func (commit *Commit) copyOperations(ptrs []*FileOp) {
-	ops := make([]*FileOp, len(ptrs))
-	for idx, p := range ptrs {
-		ops[idx] = p.Copy()
-	}
 	commit.fileops = ops
 	commit.invalidateManifests()
 }
