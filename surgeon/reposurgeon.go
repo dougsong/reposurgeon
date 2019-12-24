@@ -8416,7 +8416,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 						firstparent++
 					}
 				}
-				if firstparent > 0 {
+				if firstparent > 1 {
 					croak("can't push back to a first parent tha is a multi-child commit")
 				}
 			}
