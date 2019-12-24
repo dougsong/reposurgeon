@@ -8395,6 +8395,33 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 			}
 		}
 	}
+	// A special check on the first commit is required when pushing back
+	if pushback {
+		for _, ei := range selected {
+			event := repo.events[ei]
+			commit, ok := event.(*Commit)
+			if !ok {
+				continue
+			}
+			// The case we  want to avoid is a first
+			// parent that is also the first parent of
+			// other commits. If werere to allow pushback
+			// to it we'd have to compute an inverse
+			// fileop and push it forward to the other 
+			// children.
+			if len(commit.children()) > 1 {
+				firstparent := 0
+				for _, child := range commit.children() {
+					if childcommit, ok := child.(*Commit); ok && childcommit.parents()[0] == commit {
+						firstparent++
+					}
+				}
+				if firstparent > 0 {
+					croak("can't push back to a first parent tha is a multi-child commit")
+				}
+			}
+		}
+	}
 	altered := make([]*Commit, 0)
 	// Here are the deletions
 	for _, event := range repo.events {
