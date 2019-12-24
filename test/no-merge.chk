@@ -1,4 +1,3 @@
-reposurgeon: Resolving mergeinfo targeting r7 on :9 <6> instead
 #reposurgeon sourcetype svn
 blob
 mark :1
@@ -112,4 +111,13 @@ M 100644 :1 .gitignore
 M 100644 :5 bar
 M 100644 :8 baz
 M 100644 :2 foo
+
+tag emptycommit-7
+#legacy-id 7
+from :11
+tagger jmyers <jmyers> 1576615244 +0000
+data 70
+Set merge property.
+
+[[Tag from zero-fileop commit at Subversion r7]]
 

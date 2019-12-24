@@ -45,8 +45,7 @@ mark :5
 committer esr <esr> 1322776854 +0000
 data 37
 This is our root-level file content.
-from :3
-deleteall
+M 100644 :1 .gitignore
 M 100644 :4 EXIGUOUS
 
 blob

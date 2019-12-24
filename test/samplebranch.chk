@@ -34,81 +34,32 @@ README, base version on trunk branch.
 M 100644 :1 .gitignore
 M 100644 :2 README
 
-commit refs/heads/samplebranch
-#legacy-id 3
-mark :4
-committer esr <esr> 1322682540 +0000
-data 44
-A branch created for illustrative purposes.
-from :3
-M 100644 :2 README
-
 blob
-mark :5
+mark :4
 data 73
 This is the trunk version of README, with an illustrative modifications.
 
 commit refs/heads/master
 #legacy-id 4
-mark :6
+mark :5
 committer esr <esr> 1322682994 +0000
 data 24
 Second commit on trunk.
 from :3
-M 100644 :5 README
+M 100644 :4 README
 
 blob
-mark :7
-data 71
-This is the branch version of README, after we've actually changed it.
-
-commit refs/heads/samplebranch
-#legacy-id 5
-mark :8
-committer esr <esr> 1322683160 +0000
-data 39
-First modification on the branch side.
-from :4
-M 100644 :1 .gitignore
-M 100644 :7 README
-
-blob
-mark :9
+mark :6
 data 61
 This is the trunk version of README, with its typo removed.
 
 
 commit refs/heads/master
 #legacy-id 6
-mark :10
+mark :7
 committer esr <esr> 1322683251 +0000
 data 23
 Third commit on trunk.
-from :6
-M 100644 :9 README
-
-blob
-mark :11
-data 107
-This is the branch version of README, after we've actually changed it.
-
-Second modification to the README.
-
-commit refs/heads/samplebranch
-#legacy-id 7
-mark :12
-committer esr <esr> 1322691357 +0000
-data 40
-Create another node on the branch side.
-from :8
-M 100644 :11 README
-
-commit refs/heads/samplebranch
-#legacy-id 8
-mark :13
-committer esr <esr> 1324127616 +0000
-data 75
-This is an example of a branch tip delete which should become a deleteall.
-from :12
-deleteall
+from :5
+M 100644 :6 README
 

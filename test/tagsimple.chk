@@ -34,10 +34,14 @@ Create file.
 M 100644 :1 .gitignore
 M 100644 :2 foo
 
-tag sometag
+commit refs/tags/sometag
 #legacy-id 3
-from :3
-tagger jmyers <jmyers> 1576339581 +0000
+mark :4
+committer jmyers <jmyers> 1576339581 +0000
 data 12
 Create tag.
+from :3
+deleteall
+M 100644 :1 .gitignore
+M 100644 :2 foo
 

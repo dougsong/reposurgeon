@@ -70,21 +70,17 @@ Change on branch.
 from :4
 M 100644 :6 foo
 
-commit refs/deleted/r6/heads/somebranch
+tag tipdelete-somebranch
 #legacy-id 6
-mark :8
-committer jmyers <jmyers> 1576542408 +0000
+from :7
+tagger jmyers <jmyers> 1576542408 +0000
 data 15
 Remove branch.
-from :7
-deleteall
 
-commit refs/deleted/r7/tags/sometag
+tag tipdelete-sometag
 #legacy-id 7
-mark :9
-committer jmyers <jmyers> 1576542417 +0000
+from :5
+tagger jmyers <jmyers> 1576542417 +0000
 data 16
 Remove sometag.
-from :5
-deleteall
 

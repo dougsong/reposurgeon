@@ -40,21 +40,3 @@ M 100644 :1 .gitignore
 M 100644 :3 curling.svg
 M 100644 :2 osm-map-features-z17.xml
 
-tag root
-#legacy-id 2
-from :4
-tagger crschmidt <crschmidt> 1234496989 +0000
-data 67
-add missing image files
-
-[[Tag from root commit at Subversion r2]]
-
-tag emptycommit-4
-#legacy-id 4
-from :4
-tagger koying <koying> 1234522695 +0000
-data 235
-ADD : Styles dock + list of styles in "Tools-Styles" for quick style switching. As a consequence, a directory must be defined in the preferences where all custom styles will be stored.
-
-[[Tag from zero-fileop commit at Subversion r4]]
-

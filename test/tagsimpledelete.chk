@@ -34,34 +34,27 @@ Create file.
 M 100644 :1 .gitignore
 M 100644 :2 foo
 
-commit refs/deleted/r5/tags/sometag
-#legacy-id 3
-mark :4
-committer jmyers <jmyers> 1576339581 +0000
-data 12
-Create tag.
-from :3
-deleteall
-M 100644 :2 foo
-
 blob
-mark :5
+mark :4
 data 13
 modified foo
 
 commit refs/heads/master
 #legacy-id 4
-mark :6
+mark :5
 committer jmyers <jmyers> 1576443317 +0000
 data 21
 Modify foo on trunk.
 from :3
-M 100644 :5 foo
+M 100644 :4 foo
 
-tag sometag
+commit refs/tags/sometag
 #legacy-id 6
-from :6
-tagger jmyers <jmyers> 1576443437 +0000
+mark :6
+committer jmyers <jmyers> 1576443437 +0000
 data 42
 Recreate sometag with different contents.
+from :5
+deleteall
+M 100644 :4 foo
 

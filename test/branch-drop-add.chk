@@ -205,21 +205,3 @@ trunk development proceeds; feature E
 from :23
 M 100644 :24 src
 
-tag emptycommit-5
-#legacy-id 5
-from :8
-tagger db48x <db48x> 1352540141 +0000
-data 77
-bump version number to 1.0
-
-[[Tag from zero-fileop commit at Subversion r5]]
-
-tag emptycommit-7
-#legacy-id 7
-from :8
-tagger db48x <db48x> 1352540145 +0000
-data 78
-delete incorrect 1.0 branch
-
-[[Tag from zero-fileop commit at Subversion r7]]
-

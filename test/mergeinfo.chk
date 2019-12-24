@@ -74,6 +74,8 @@ committer db48x <db48x> 1352206628 +0000
 data 32
 create a release branch for 1.0
 from :8
+deleteall
+M 100644 :1 .gitignore
 M 100644 :2 README
 M 100644 :6 VERSION
 M 100644 :7 src
@@ -119,7 +121,6 @@ committer db48x <db48x> 1352206633 +0000
 data 43
 emergency bugfix for v1.0, releasing 1.0.1
 from :9
-M 100644 :1 .gitignore
 M 100644 :13 VERSION
 M 100644 :14 src
 
@@ -277,6 +278,8 @@ committer db48x <db48x> 1352206645 +0000
 data 32
 create a release branch for 2.0
 from :33
+deleteall
+M 100644 :1 .gitignore
 M 100644 :2 README
 M 100644 :31 VERSION
 M 100644 :32 src
@@ -332,7 +335,6 @@ committer db48x <db48x> 1352206650 +0000
 data 43
 emergency bugfix for v2.0, releasing 2.0.1
 from :34
-M 100644 :1 .gitignore
 M 100644 :38 VERSION
 M 100644 :39 src
 
