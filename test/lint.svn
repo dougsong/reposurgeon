@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Test losdf intended to trigger lint messages
+ ## Test load intended to trigger lint messages
  # Derived from Simin Howard's tag-mangling test case,
  # but with the pathological tag creation/deletion removed
 
