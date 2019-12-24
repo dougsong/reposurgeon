@@ -2535,7 +2535,7 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 					msg = fmt.Sprintf(" '%s':", commit.mark)
 				}
 				msg += " deleting parentless "
-				if len(commit.operations()) > 0 {
+				if len(commit.operations()) > 0 && commit.alldeletes(deleteall) {
 					msg += fmt.Sprintf("tip delete of %s.", commit.Branch)
 				} else {
 					msg += fmt.Sprintf("zero-op commit on %s.", commit.Branch)
