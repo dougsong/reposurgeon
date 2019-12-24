@@ -6,7 +6,8 @@ Greg Hudson <ghudson@MIT.EDU>
    Subversion dumpfile parsing and squashed a nasty bug in the older code.
 
 Julien "_FrnchFrgg_" RIVAUD <frnchfrgg@free.fr>
-   Lots of high-quality code cleanups and speed tuning.
+   Lots of high-quality code cleanups and speed tuning. Responsible for at least half of the
+   massively revamped Subversion dunop reader on the 4.0 releases.
 
 Daniel Brooks <db48x@db48x.net>
    Date unit testing, improvements for split and expunge commands.
