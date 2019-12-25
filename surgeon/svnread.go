@@ -1220,10 +1220,36 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 			}
 		}
 		sp.revisions[ri].nodes = expandedNodes
+
+		// Compute ancestry links for all file nodes
+		revisionPathHash := make(map[string]*NodeAction)
+		var lastnode *NodeAction
+		for j := range sp.revisions[ri].nodes {
+			node := sp.revisions[ri].nodes[j]
+			if lastnode != nil {
+				revisionPathHash[lastnode.path] = lastnode
+			}
+			lastnode = node
+			node.fromIdx = 0
+			if node.kind == sdFILE {
+				ancestor := sp.seekAncestor(node, revisionPathHash)
+				// It is possible for ancestor to still be nil here,
+				// if the node was a pure property change
+				if ancestor != nil {
+					node.fromRev = ancestor.revision
+					node.fromIdx = ancestor.index
+				}
+			}
+		}
+
 		baton.percentProgress(uint64(ri))
 	}
 
 	baton.endProgress()
+
+	// We don't need the hash or revision maps after ancestry links are in place
+	sp.history = nil
+	//sp.hashmap = nil
 }
 
 func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
@@ -1320,13 +1346,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 
 		commit.legacyID = fmt.Sprintf("%d", record.revision)
 		commit.setColor(colorGEN)
-		revisionPathHash := make(map[string]*NodeAction)
-		var lastnode *NodeAction
 		for _, node := range record.nodes {
-			if lastnode != nil {
-				revisionPathHash[lastnode.path] = lastnode
-			}
-			lastnode = node
 			if node.action == sdNONE {
 				continue
 			}
@@ -1373,7 +1393,9 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 						continue
 					}
 				}
-				ancestor = sp.seekAncestor(node, revisionPathHash)
+				if node.fromRev > 0 && node.fromIdx > 0 {
+					ancestor = sp.revisions[node.fromRev].nodes[node.fromIdx]
+				}
 				// Propagate properties from the ancestor.
 				if (node.action == sdADD || node.action == sdCHANGE) && ancestor != nil && !node.propchange {
 					node.props = ancestor.props
