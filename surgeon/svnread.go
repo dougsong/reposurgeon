@@ -604,6 +604,7 @@ type NodeAction struct {
 	revision    revidx
 	fromRev     revidx
 	index       nodeidx
+	fromIdx     nodeidx
 	kind        uint8
 	action      uint8 // initially sdNONE
 	generated   bool
@@ -636,7 +637,7 @@ func (action NodeAction) hasProperties() bool {
 }
 
 func (action NodeAction) isCopy() bool {
-	return action.fromRev > 0
+	return action.fromPath != ""
 }
 
 func (action NodeAction) isBogon() bool {
