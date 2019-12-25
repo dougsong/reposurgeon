@@ -396,6 +396,7 @@ svnload-regress:
 # copies are ignored.
 SVNCLEAN := \
 	agito.svn \
+	authortz.svn \
 	bad-author.svn \
 	badattrib.svn \
 	badattrib2.svn \
