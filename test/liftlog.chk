@@ -32,7 +32,7 @@ Free added a line to it.
 
 commit refs/heads/master
 mark :5
-author Fred J. Foonly <fred@foonly.org> 1508252466 -0400
+author Fred J. Foonly <fred@foonly.org> 1508252466 +0000
 committer Eric S. Raymond <esr@thyrsus.com> 1508252466 -0400
 data 50
 This changeset includes a changelog modification.
@@ -250,7 +250,7 @@ Fred rides again.
 
 commit refs/heads/master
 mark :20
-author Fred J. Foonly <fred@foonly.org> 1509512082 -0400
+author Fred J. Foonly <fred@foonly.org> 1509512082 +0000
 committer Eric S. Raymond <esr@thyrsus.com> 1509512082 -0400
 data 28
 Test Bastian's odd case #1.
@@ -310,7 +310,7 @@ Jeff Law was not here.
 
 commit refs/heads/master
 mark :23
-author Jeffrey A Law <law@cygnus.com> 1513280877 -0500
+author Jeffrey A Law <law@cygnus.com> 1513280877 +0000
 committer Eric S. Raymond <esr@thyrsus.com> 1513280877 -0500
 data 38
 Add a test from the GCC back history.

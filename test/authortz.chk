@@ -37,7 +37,7 @@ foo
 commit refs/heads/master
 #legacy-id 2
 mark :4
-author Actual Author <actual@author.example> 1577304208 -0800
+author Actual Author <actual@author.example> 1577304208 +0000
 committer Test Author <test@author.example> 1577304208 -0800
 data 16
 Initial commit.

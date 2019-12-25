@@ -19149,6 +19149,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		newattr := commit.committer.clone()
 		newattr.email = matches[0][2]
 		newattr.fullname = matches[0][1]
+		newattr.date.setTZ("UTC")
 		// This assumes email addreses of contributors are unique.
 		// We could get wacky results if two people with different
 		// human names but identicall email addresses were run through
