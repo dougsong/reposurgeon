@@ -12,6 +12,7 @@ apt-get update -qy && apt-get install -qy --no-install-recommends \
     flex \
     golang \
     libpcre3-dev \
+    parallel \
     pypy \
     python2.7 \
     python3 \
