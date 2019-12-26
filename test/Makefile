@@ -476,7 +476,6 @@ liftcheck-regress:
 	then \
 		for test in $(SVNCLEAN); \
 		do \
-		    { $(ECHO) -n "  $${test}"; grep --text '^ ##' $${test} || echo ' ## (no description)'; } >&2; \
 		    liftcheck -e emptycommit $${test} >/tmp/diff$$$$; \
 		    case $$? in \
 		    0) ;; \
@@ -497,7 +496,6 @@ liftcheck-fullregress:
 	then \
 		for test in *.svn; \
 		do \
-		    { $(ECHO) -n "  $${test}"; grep --text '^ ##' $${test} || echo ' ## (no description)'; } >&2; \
 		    liftcheck -q -r all $${test} || { echo "*** Failed on $${test}!"; exit $(STOPOUT); } \
 		done \
 	else \
