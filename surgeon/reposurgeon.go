@@ -4238,11 +4238,7 @@ func (reset Reset) tags(modifiers orderedStringSet, eventnum int, _cols int) str
 // Save this reset in import-stream format without constructing a string
 func (reset *Reset) Save(w io.Writer) {
 	if reset.repo.realized != nil {
-		var branch = reset.ref
-		if strings.Contains(reset.ref, "^") {
-			branch = strings.Split(reset.ref, "^")[0]
-		}
-		reset.repo.realized[branch] = true
+		reset.repo.realized[reset.ref] = true
 	}
 	fmt.Fprintf(w, "reset %s\n", reset.ref)
 	if reset.committish != "" {
@@ -5854,7 +5850,7 @@ func (commit *Commit) Save(w io.Writer) {
 		}
 	}
 	if incremental {
-		fmt.Fprintf(w, "reset %s^0\n\n", commit.Branch)
+		fmt.Fprintf(w, "reset %s\nfrom %s^0\n\n", commit.Branch, commit.Branch)
 	}
 	fmt.Fprintf(w, "commit %s\n", commit.Branch)
 	if commit.legacyID != "" {

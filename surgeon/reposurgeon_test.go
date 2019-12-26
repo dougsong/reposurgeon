@@ -1478,7 +1478,8 @@ This is a sample file.
 
 This is our first line of modified content.
 
-reset refs/heads/master^0
+reset refs/heads/master
+from refs/heads/master^0
 
 commit refs/heads/master
 mark :4
