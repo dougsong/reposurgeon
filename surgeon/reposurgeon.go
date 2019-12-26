@@ -18938,10 +18938,11 @@ that zone is used.
 
 var ymdRE = regexp.MustCompile("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]")
 var addressRE = regexp.MustCompile(`([^<@>]+\S)\s+<([^<@>\s]+@[^<@>\s]+)>`)
+var wsRE = regexp.MustCompile(`\s+`)
 
-// stringCopy forces crearion of a copy o f the input strimg.  This is
+// stringCopy forces crearion of a copy of the input strimg.  This is
 // useful because the Go runtime tries not to do more allcations tn
-// necessary, making string-valued references instead, Thus,
+// necessary, making string-valued references instead. Thus,
 // sectioning a small string out of a very large one may cause
 // the large string to be held in memory even thouggh the rest of the
 // contnt is no longer referenced.
@@ -19001,7 +19002,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				return ""
 			}
 			addr := strings.TrimSpace(line[space+1:])
-			return stringCopy(addr)
+			return wsRE.ReplaceAllLiteralString(addr, " ")
 		}
 		// Scan for old-style date like "Tue Dec  9 01:16:06 1997"
 		// This corresponds to Go ANSIC format.
@@ -19020,7 +19021,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				return ""
 			}
 			addr := strings.TrimSpace(line[m[1]:])
-			return stringCopy(addr)
+			return wsRE.ReplaceAllLiteralString(addr, " ")
 		}
 		return ""
 	}

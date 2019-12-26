@@ -1,0 +1,146 @@
+SVN-fs-dump-format-version: 2
+ ## Check that whitespace in Changelog attribution lines is canonicalized
+
+UUID: 5fae8a99-6fac-48f3-9365-4a16719bcdc9
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2019-12-25T20:14:00.852572Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 127
+Content-length: 127
+
+K 10
+svn:author
+V 5
+jsm28
+K 8
+svn:date
+V 27
+2019-12-25T20:14:08.069275Z
+K 7
+svn:log
+V 27
+Create directory structure.
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 108
+Content-length: 108
+
+K 10
+svn:author
+V 5
+jsm28
+K 8
+svn:date
+V 27
+2019-12-25T20:15:58.275782Z
+K 7
+svn:log
+V 9
+Add foo.
+
+PROPS-END
+
+Node-path: trunk/ChangeLog
+Node-kind: file
+Node-action: add
+Text-content-md5: 71b5fc166cb11b3af56f31c0b3304605
+Text-content-sha1: b98a2b80900d4cc679032e8737230bf6af95acba
+Prop-content-length: 10
+Text-content-length: 71
+Content-length: 81
+
+PROPS-END
+2019-12-25  Actual Author  <actual@author.example>
+
+	* foo: New file.
+
+
+
+Node-path: trunk/foo
+Node-kind: file
+Node-action: add
+Text-content-md5: d3b07384d113edec49eaa6238ad5ff00
+Text-content-sha1: f1d2d2f924e986ac86fdf7b36c94bcdf32beec15
+Prop-content-length: 10
+Text-content-length: 4
+Content-length: 14
+
+PROPS-END
+foo
+
+
+Node-path: trunk/subdir
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/subdir/ChangeLog
+Node-kind: file
+Node-action: add
+Text-content-md5: 0d395ba6cd2abbda22ed4627f9c2a684
+Text-content-sha1: 73c61821f4bf625e484989afbbd7a31694866aa4
+Prop-content-length: 10
+Text-content-length: 71
+Content-length: 81
+
+PROPS-END
+2019-12-25  Actual Author <actual@author.example>
+
+	* tfoo: New file.
+
+
+
+Node-path: trunk/subdir/tfoo
+Node-kind: file
+Node-action: add
+Text-content-md5: 690772122641fb23ab64dffdc56dbe87
+Text-content-sha1: 27b8e99aecd7c8b9285d86a565825d91574dcb97
+Prop-content-length: 10
+Text-content-length: 5
+Content-length: 15
+
+PROPS-END
+tfoo
+
+
