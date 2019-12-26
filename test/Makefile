@@ -39,6 +39,9 @@ GIT_EXTRACTOR = git-regress git-regress-branches git-regress-merges git-regress-
 HG_EXTRACTOR = hg-regress hg-regress-branches hg-regress-merges hg-regress-tags
 AUXTOOLS = repocutter-regress repomapper-regress repotool-regress
 
+# If we have GNU parallel available, the tests can exploit multiple processors
+RUNNER = $(shell if type parallel >/dev/null 2>&1; then echo "parallel"; else echo "xargs"; fi)
+
 # This series can change depending on the current development focus
 fastcheck: clean $(BASIC) $(SUBVERSION)
 	@echo "=== No diff output is good news ==="
@@ -71,6 +74,9 @@ clean:
 options:
 	@echo "REPOSURGEOM is $(REPOSURGEOM)"
 	@echo "TESTOPT is $(TESTOPT)"
+
+runner:
+	@echo $(RUNNER)
 
 # Show summary lines for all tests.
 testlist:
