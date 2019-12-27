@@ -67,6 +67,7 @@ data 16
 Recreate trunk.
 from :6
 deleteall
+M 100644 :1 .gitignore
 M 100644 :5 bar
 M 100644 :2 foo
 

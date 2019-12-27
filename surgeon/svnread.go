@@ -1128,6 +1128,8 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 					if !nobranch && isDeclaredBranch(node.path) {
 						logit(logEXTRACT, "r%d-%d~%s: declaring as sdNUKE", node.revision, node.index, node.path)
 						node.action = sdNUKE
+						curbranch := strings.Trim(node.path, svnSep)
+						branchesWithDefaultIgnore.Remove(curbranch)
 					} else {
 						// A delete or replace with no from set
 						// can occur if the directory is empty.

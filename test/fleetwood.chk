@@ -82,5 +82,6 @@ data 18
 Fixed release 1.0
 from :7
 deleteall
+M 100644 :1 .gitignore
 M 100644 :6 test.txt
 

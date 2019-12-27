@@ -15901,6 +15901,7 @@ Moving branches/Development into trunk.
 [[Split portion of a mixed commit.]]
 from :1706
 deleteall
+M 100644 :1 .gitignore
 M 100644 :1686 CHANGES
 M 100644 :3 COPYING
 M 100644 :1668 CREDITS

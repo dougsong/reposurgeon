@@ -102,6 +102,7 @@ data 32
 create a release branch for 1.0
 from :12
 deleteall
+M 100644 :1 .gitignore
 M 100644 :2 README
 M 100644 :10 VERSION
 M 100644 :11 src

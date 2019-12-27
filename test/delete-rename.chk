@@ -98,6 +98,7 @@ data 13
 Readd trunk.
 from :10
 deleteall
+M 100644 :1 .gitignore
 M 100644 :4 README
 M 100644 :2 foo/bar
 

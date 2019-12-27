@@ -56,5 +56,6 @@ data 42
 Recreate sometag with different contents.
 from :5
 deleteall
+M 100644 :1 .gitignore
 M 100644 :4 foo
 
