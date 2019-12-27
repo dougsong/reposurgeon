@@ -891,7 +891,6 @@ func TestFileOp(t *testing.T) {
 	}
 }
 
-/*
 func TestSimplify(t *testing.T) {
 	test := func(as []string, bs []string) {
 		if len(as) != len(bs) {
@@ -945,9 +944,17 @@ func TestSimplify(t *testing.T) {
 		if len(commit.fileops) != len(bs) {
 			t.Fatalf("sort test did not result in two slices of the same length")
 		}
+		compare := make([]string, len(bs))
+		for i := range bs {
+			compare[i] = bs[i].String()
+		}
+		sorted := make([]string, len(commit.fileops))
+		for i := range commit.fileops {
+			sorted[i] = commit.fileops[i].String()
+		}
 		for idx, b := range bs {
 			if !quasiEquals(commit.fileops[idx], b) {
-				t.Fatalf("fileops didn't get sorted correctly; expected %#v == %#v", commit.fileops, bs)
+				t.Fatalf("fileops didn't get sorted correctly; expected %#v == %#v", sorted, compare)
 				break
 			}
 		}
@@ -971,11 +978,10 @@ func TestSimplify(t *testing.T) {
 	test2([]*FileOp{newFileOp(nil).construct(deleteall), newFileOp(nil).construct(deleteall)},
 		[]*FileOp{newFileOp(nil).construct(deleteall)})
 
-	// rename, modify → modify, rename
-	test2([]*FileOp{newFileOp(nil).construct(opR, "a", "aa"), newFileOp(nil).construct(opM, "100644", ":1", "z")},
-		[]*FileOp{newFileOp(nil).construct(opM, "100644", ":1", "z"), newFileOp(nil).construct(opR, "a", "aa")})
+	// modify, rename → rename, modify
+	test2([]*FileOp{newFileOp(nil).construct(opM, "100644", ":1", "z"), newFileOp(nil).construct(opR, "a", "aa")},
+		[]*FileOp{newFileOp(nil).construct(opR, "a", "aa"), newFileOp(nil).construct(opM, "100644", ":1", "z")})
 }
-*/
 
 func TestCommitMethods(t *testing.T) {
 	repo := newRepository("fubar")

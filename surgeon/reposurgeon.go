@@ -8288,51 +8288,59 @@ func (commit *Commit) simplify() {
 			}
 		}
 	}
-	var newOps []*FileOp
-	var i int
-	if oldOps[0].op == deleteall {
-		newOps = make([]*FileOp, len(visibleOps)+1)
-		newOps[0] = oldOps[0]
-		i++
-	} else {
-		newOps = make([]*FileOp, len(visibleOps))
-	}
-	for _, fileop := range visibleOps {
-		newOps[i] = fileop
-		i++
-	}
-	// Now, sort operations the way git-fast-export does
-	pathpart := func(fileop *FileOp) string {
-		if fileop.Path != "" {
-			return fileop.Path
-		}
-		if fileop.Source != "" {
-			return fileop.Source
-		}
-		return ""
-	}
+	// Sort the ops paths in a consistent way, inspired by git-fast-export
 	// As it says, 'Handle files below a directory first, in case they are
 	// all deleted and the directory changes to a file or symlink.'  First
 	// sort the deletealls first, the renames last, then sort
 	// lexicographically. We check the directory depth to make sure that
 	// "a/b/c" < "a/b" < "a".
-	lessthan := func(i, j int) bool {
-		if newOps[i].op == deleteall {
-			return true
-		} else if newOps[j].op == deleteall {
-			return false
-		} else if newOps[i].op != opR && newOps[j].op == opR {
-			return true
-		} else {
-			left := pathpart(newOps[i])
-			right := pathpart(newOps[j])
-			if len(left) > len(right) {
-				return left[:len(right)] <= right
-			}
-			return left < right[:len(left)]
+	paths := make([]string, len(visibleOps))
+	i := 0
+	countRC := 0
+	for path, fileop := range visibleOps {
+		paths[i] = path
+		i++
+		// Also count the number of RC ops to reserve space later
+		if fileop.op == opR || fileop.op == opC {
+			countRC++
 		}
 	}
-	sort.SliceStable(newOps, lessthan)
+	lessthan := func(i, j int) bool {
+		left := paths[i]
+		right := paths[j]
+		if len(left) > len(right) {
+			return left[:len(right)] <= right
+		}
+		return left < right[:len(left)]
+	}
+	sort.Slice(paths, lessthan)
+	// Remake the fileop list with only the visible operations. There is an
+	// order to respect: first the deleteall, then the R and C ops, because
+	// the remaining ones have their source outside of the commit and any
+	// previous M could pollute that source. M and D operations come last.
+	var newOps []*FileOp
+	posRC := 0
+	posOther := countRC
+	// Handle the deleteall
+	if oldOps[0].op == deleteall {
+		newOps = make([]*FileOp, len(visibleOps)+1)
+		newOps[0] = oldOps[0]
+		posRC++
+		posOther++
+	} else {
+		newOps = make([]*FileOp, len(visibleOps))
+	}
+	// Handle the other ops
+	for _, path := range paths {
+		fileop := visibleOps[path]
+		if fileop.op == opR || fileop.op == opC {
+			newOps[posRC] = fileop
+			posRC++
+		} else {
+			newOps[posOther] = fileop
+			posOther++
+		}
+	}
 	// Now replace the Commit fileops. Avoid setOperations() because there
 	// is no need to invalidateManifests()
 	commit.fileops = newOps
