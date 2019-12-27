@@ -1897,7 +1897,7 @@ func TestBranchSplit(t *testing.T) {
 func TestContainingDir(t *testing.T) {
 	type testcase struct {
 		path string
-		dir string
+		dir  string
 	}
 	var testcases = []testcase{
 		{"/foo/bar/baz.js", "/foo/bar"},

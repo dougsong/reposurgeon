@@ -3264,6 +3264,7 @@ type Date struct {
 // swapped.
 //const GitLogFormat = "Mon Jan 02 15:04:05 2006 -0700"
 const GitLogFormat = "Mon Jan 02 15:04:05 -0700 2006"
+
 // RFC1123ZNoComma is the swapped format
 const RFC1123ZNoComma = "Mon 02 Jan 2006 15:04:05 -0700"
 
@@ -5859,7 +5860,7 @@ func (commit *Commit) Save(w io.Writer) {
 	if incremental {
 		fmt.Fprintf(w, "reset %s\nfrom %s^0\n\n", commit.Branch, commit.Branch)
 	} else if len(commit.parents()) == 0 &&
-			commit.repo.branchHasCommits[commit.Branch] {
+		commit.repo.branchHasCommits[commit.Branch] {
 		// getting a value from a nil map is safe
 		fmt.Fprintf(w, "reset %s\n", commit.Branch)
 	}
@@ -7085,11 +7086,11 @@ type Repository struct {
 	aliases           map[ContributorID]ContributorID
 	maplock           sync.Mutex
 	// Write control - set, if required, before each dump
-	preferred         *VCS             // overrides vcs slot for writes
-	realized          map[string]bool  // clear and remake this before each dump
-	branchHasCommits   map[string]bool  // clear and remake this before each dump
-	writeOptions      stringSet        // options requested on this write
-	internals         orderedStringSet // export code computes this itself
+	preferred        *VCS             // overrides vcs slot for writes
+	realized         map[string]bool  // clear and remake this before each dump
+	branchHasCommits map[string]bool  // clear and remake this before each dump
+	writeOptions     stringSet        // options requested on this write
+	internals        orderedStringSet // export code computes this itself
 }
 
 func newRepository(name string) *Repository {
@@ -8071,7 +8072,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 		}
 		selection.Sort()
 	}
-	repo.realized = make(map[string]bool) // Track what branches are made
+	repo.realized = make(map[string]bool)         // Track what branches are made
 	repo.branchHasCommits = make(map[string]bool) // Track what branches are made
 	baton := control.baton
 	baton.startProgress("export", uint64(len(repo.events)))
@@ -8293,7 +8294,7 @@ func (commit *Commit) simplify() {
 	// operations whose source is here are changed into the source operation
 	// with the new path, others are kept intact. At the end of this pass, the
 	// ordering will not matter anymore.
-	visibleOps := make(map[string] *FileOp)
+	visibleOps := make(map[string]*FileOp)
 	doCopy := func(fileop *FileOp) bool {
 		if prevop, ok := visibleOps[fileop.Source]; ok {
 			newop := prevop.Copy()
@@ -8328,7 +8329,7 @@ func (commit *Commit) simplify() {
 	var newOps []*FileOp
 	var i int
 	if oldOps[0].op == deleteall {
-		newOps = make([]*FileOp, len(visibleOps) + 1)
+		newOps = make([]*FileOp, len(visibleOps)+1)
 		newOps[0] = oldOps[0]
 		i++
 	} else {
@@ -8420,7 +8421,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 			// parent that is also the first parent of
 			// other commits. If werere to allow pushback
 			// to it we'd have to compute an inverse
-			// fileop and push it forward to the other 
+			// fileop and push it forward to the other
 			// children.
 			if len(commit.children()) > 1 {
 				firstparent := 0

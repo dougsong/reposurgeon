@@ -3,7 +3,7 @@
 // because reposurgeon's internal structures are designed to match
 // those entities. For Subversion dumpfiles, on the other hand,
 // there's a fair bit of impedance-matching required.  That happens
-// in this module. 
+// in this module.
 //
 // The single entry point is parseSubversion(), which extends
 // RepoStreamer.  The result of calling it is to fill in the repo
@@ -46,21 +46,20 @@ import (
 	"unsafe" // Actually safe - only uses Sizeof
 )
 
-
 // FIXME: When we merge, move this
 func (b branchMapping) String() string {
 	return fmt.Sprintf("{match=%s, replace=%s}", b.match, b.replace)
 }
 
 type svnReader struct {
-	revisions            []RevisionRecord
-	streamview           []*NodeAction // All nodes in stream order
-	hashmap              map[string]*NodeAction
-	history              *History
-	branchlinks          map[revidx]revidx
-	splitCommits         map[revidx]int
+	revisions    []RevisionRecord
+	streamview   []*NodeAction // All nodes in stream order
+	hashmap      map[string]*NodeAction
+	history      *History
+	branchlinks  map[revidx]revidx
+	splitCommits map[revidx]int
 	// Filled in ProcessBranches
-	markToSVNBranch      map[string]string
+	markToSVNBranch map[string]string
 	// a map from SVN branch names to a revision-indexed list of "last commits"
 	// (not to be used directly but through lastRelevantCommit)
 	// Filled in LinkFixups
@@ -68,7 +67,7 @@ type svnReader struct {
 	// a map from SVN branch names to root commits (there can be several in case
 	// of branch deletions since the commit recreating the branch is also root)
 	// Filled in LinkFixups
-	branchRoots          map[string][]*Commit
+	branchRoots map[string][]*Commit
 }
 
 // Helpers for branch analysis
@@ -88,8 +87,8 @@ func isDeclaredBranch(path string) bool {
 	if path == "" {
 		return false
 	}
-	if path[len(path) - 1] == svnSep[0] {
-		np = path[:len(path) - 1]
+	if path[len(path)-1] == svnSep[0] {
+		np = path[:len(path)-1]
 	}
 	maybeBranch := false
 	isNamespace := false
@@ -101,14 +100,14 @@ func isDeclaredBranch(path string) bool {
 			trial = svnSepWithStar
 		}
 		l := len(trial)
-		if l >= 2 && trial[l - 1] == '*' && trial[l - 2] == os.PathSeparator {
+		if l >= 2 && trial[l-1] == '*' && trial[l-2] == os.PathSeparator {
 			trialBase := trial[:len(trial)-2]
 			if trialBase == np {
 				isNamespace = true
 			} else if trialBase == containingDir(np) {
 				maybeBranch = true
 			}
-		} else if (trial[l - 1] == os.PathSeparator && trial[:l - 1] == np) || trial == np {
+		} else if (trial[l-1] == os.PathSeparator && trial[:l-1] == np) || trial == np {
 			// Exact match
 			return true
 		}
@@ -198,7 +197,7 @@ func (h *History) apply(revision revidx, nodes []*NodeAction) {
 	}
 
 	h.revision = revision
-	logit(logFILEMAP, "Filemap at %d: %v", revision, h.visible[revision]) 
+	logit(logFILEMAP, "Filemap at %d: %v", revision, h.visible[revision])
 }
 
 func (h *History) getActionNode(revision revidx, source string) *NodeAction {
@@ -232,10 +231,10 @@ var pathTypeValues = [][]byte{[]byte("none"), []byte("file"), []byte("dir"), []b
 // mad.  We want to let through other properties that might carry
 // useful information.
 var ignoreProperties = map[string]bool{
-	"svn:mime-type":   true,
-	"svn:keywords":    true,
-	"svn:needs-lock":  true,
-	"svn:eol-style":   true, // Don't want to suppress, but cvs2svn floods these.
+	"svn:mime-type":  true,
+	"svn:keywords":   true,
+	"svn:needs-lock": true,
+	"svn:eol-style":  true, // Don't want to suppress, but cvs2svn floods these.
 }
 
 // These properties, on the other hand, shouldn't be tossed out even
@@ -746,7 +745,9 @@ func walkRevisions(revs []RevisionRecord, hook func(int, *RevisionRecord)) {
 	close(channel)
 
 	// Wait for all workers to finish
-	for n := 0; n < maxWorkers; n++ { <-done }
+	for n := 0; n < maxWorkers; n++ {
+		<-done
+	}
 }
 
 // Cruft recognizers
@@ -967,7 +968,7 @@ func svnFilterProperties(ctx context.Context, sp *StreamParser, options stringSe
 		baton.percentProgress(uint64(si))
 	}
 	baton.endProgress()
-	sp.streamview = nil	// Allow GC
+	sp.streamview = nil // Allow GC
 }
 
 func svnBuildFilemaps(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
@@ -1134,7 +1135,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 				// we want to generate a corresponding .gitignore
 				if node.hasProperties() && node.props.has("svn:ignore") {
 					appendExpanded(ignorenode(node.path[:len(node.path)-1],
-					                          node.props.get("svn:ignore")))
+						node.props.get("svn:ignore")))
 					node.props.delete("svn:ignore")
 					presentGitIgnores.Add(node.path)
 				}
@@ -1529,7 +1530,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 		sp.repo.declareSequenceMutation("adding new commit")
 
 		lastcommit = commit
-		sp.repo.legacyMap["SVN:" + commit.legacyID] = commit
+		sp.repo.legacyMap["SVN:"+commit.legacyID] = commit
 
 		baton.percentProgress(uint64(ri))
 	}
@@ -1563,7 +1564,7 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 	logit(logEXTRACT, "SVN Phase 6: split resolution")
 
 	type splitRequest struct {
-		loc int
+		loc    int
 		splits []int
 	}
 	splits := make([]splitRequest, 0)
@@ -1604,7 +1605,7 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 	// Can't parallelize this. That's OK, should be an unusual case.
 	// Sort the splits in case parallel execution generatesd them out of order.
 	const splitwarn = "\n[[Split portion of a mixed commit.]]\n"
-	sort.Slice(splits, func(i, j int) bool {return splits[i].loc > splits[j].loc})
+	sort.Slice(splits, func(i, j int) bool { return splits[i].loc > splits[j].loc })
 	for i, split := range splits {
 		base := sp.repo.events[split.loc].(*Commit)
 		logit(logEXTRACT, "split commit at %s <%s> resolving to %d commits",
@@ -1615,12 +1616,12 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 		baseID := base.legacyID
 		base.Comment += splitwarn
 		base.legacyID += ".1"
-		sp.repo.legacyMap["SVN:" + base.legacyID] = base
-		delete(sp.repo.legacyMap, "SVN:" + baseID)
+		sp.repo.legacyMap["SVN:"+base.legacyID] = base
+		delete(sp.repo.legacyMap, "SVN:"+baseID)
 		for j := 1; j <= len(split.splits); j++ {
 			fragment := sp.repo.events[split.loc+j].(*Commit)
 			fragment.legacyID = baseID + "." + strconv.Itoa(j+1)
-			sp.repo.legacyMap["SVN:" + fragment.legacyID] = fragment
+			sp.repo.legacyMap["SVN:"+fragment.legacyID] = fragment
 			fragment.Comment += splitwarn
 			sp.splitCommits[intToRevidx(i)]++
 			baton.twirl()
@@ -1690,8 +1691,8 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 			maplock.Unlock()
 			matched := false
 			for _, item := range control.branchMappings {
-				result := GoReplacer(item.match, commit.Branch + svnSep, item.replace)
-				if result != commit.Branch + svnSep {
+				result := GoReplacer(item.match, commit.Branch+svnSep, item.replace)
+				if result != commit.Branch+svnSep {
 					matched = true
 					commit.setBranch(filepath.Join("refs", result))
 					break
@@ -1720,7 +1721,6 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 	})
 	baton.endProgress()
 }
-
 
 // Return the last commit with legacyID in (0;maxrev] whose SVN branch is equal
 // to branch, or nil if not found.  It needs sp.lastCommitOnBranchAt to be
@@ -1803,7 +1803,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	defer trace.StartRegion(ctx, "SVN Phase 8: parent link fixups").End()
 	logit(logEXTRACT, "SVN Phase 8a: make content-changing links")
 	baton.startProgress("SVN phase 8a: make content-chsnging links",
-	                    uint64(len(sp.repo.events)))
+		uint64(len(sp.repo.events)))
 	sp.lastCommitOnBranchAt = make(map[string][]*Commit)
 	sp.branchRoots = make(map[string][]*Commit)
 	totalroots := 0
@@ -1870,7 +1870,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 				record := sp.revisions[rev]
 				for _, node := range record.nodes {
 					if node.kind == sdDIR && node.fromRev != 0 &&
-							strings.TrimRight(node.path, svnSep) == branch {
+						strings.TrimRight(node.path, svnSep) == branch {
 						frombranch := node.fromPath
 						if !isDeclaredBranch(frombranch) {
 							frombranch, _ = splitSVNBranchPath(node.fromPath)
@@ -1878,12 +1878,12 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 						parent := lastRelevantCommit(sp, node.fromRev, frombranch)
 						if parent != nil {
 							logit(logTOPOLOGY,
-							"Link from %s (r%s) to %s (r%d) found by copy-from",
-							parent.mark, parent.legacyID, commit.mark, rev)
+								"Link from %s (r%s) to %s (r%d) found by copy-from",
+								parent.mark, parent.legacyID, commit.mark, rev)
 							if strings.Split(parent.legacyID, ".")[0] != fmt.Sprintf("%d", node.fromRev) {
 								logit(logTOPOLOGY,
-								"(fromRev was r%d)",
-								node.fromRev)
+									"(fromRev was r%d)",
+									node.fromRev)
 							}
 							reparent(commit, parent)
 							goto next
@@ -1930,7 +1930,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 					}
 				}
 			}
-			next:
+		next:
 			count++
 			baton.percentProgress(uint64(count))
 		}
@@ -1990,7 +1990,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 			if branch != "" && branch[:1] == svnSep {
 				branch = branch[1:]
 			}
-			if branch !="" && branch[len(branch)-1] == svnSep[0] {
+			if branch != "" && branch[len(branch)-1] == svnSep[0] {
 				branch = branch[:len(branch)-1]
 			}
 			revs := mergeinfo[branch]
@@ -2019,7 +2019,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 			})
 			last := 0
 			for i := 1; i < len(revs); i++ {
-				if revs[i].min <= revs[last].max + 1 {
+				if revs[i].min <= revs[last].max+1 {
 					// Express the union as a single range
 					if revs[last].max < revs[i].max {
 						revs[last].max = revs[i].max
@@ -2097,7 +2097,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 						branchBaseIndex = sp.repo.eventToIndex(branchBase)
 					}
 					// Start of the loop over the mergeinfo
-					minIndex := int(^uint(0)>>2)
+					minIndex := int(^uint(0) >> 2)
 					for fromPath, revs := range newMerges {
 						if !isDeclaredBranch(fromPath) {
 							continue
@@ -2124,7 +2124,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 							// Skip all ranges not starting with the branch start
 							for ; i < count; i++ {
 								// Find the last commit just before the range
-								before := lastRelevantCommit(sp, revidx(revs[i].min - 1), fromPath)
+								before := lastRelevantCommit(sp, revidx(revs[i].min-1), fromPath)
 								if before == nil {
 									break
 								}
@@ -2147,7 +2147,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 								// Find the last commit in the current "good" range
 								last := lastRelevantCommit(sp, revidx(revs[lastGood].max), fromPath)
 								// and the last commit just before the next range
-								beforeNext := lastRelevantCommit(sp, revidx(revs[i].min - 1), fromPath)
+								beforeNext := lastRelevantCommit(sp, revidx(revs[i].min-1), fromPath)
 								if last != beforeNext {
 									break
 								}
@@ -2276,7 +2276,7 @@ func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSe
 	// First we build a map from branches to commits with that branch, to avoid
 	// an O(n^2) computation cost.
 	baton.startProgress("SVN phase A1: precompute branch map.", uint64(len(sp.repo.events)))
-	branchToCommits := map[string] []*Commit{}
+	branchToCommits := map[string][]*Commit{}
 	commitCount := 0
 	for idx, event := range sp.repo.events {
 		if commit, ok := event.(*Commit); ok {
@@ -2311,7 +2311,7 @@ func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSe
 				// not yet been fixed.
 				if !strings.HasPrefix(branch, "refs/") {
 					croak("r%s (%s): Impossible branch %s",
-					      commit.legacyID, commit.mark, branch)
+						commit.legacyID, commit.mark, branch)
 				}
 				newname := fmt.Sprintf("refs/deleted/r%s/%s", commit.legacyID, branch[len("refs/"):])
 				used := usedRefs[newname]
@@ -2342,12 +2342,12 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	deleteables := make([]int, 0)
 	newtags := make([]Event, 0)
 	/*
-	var mutex sync.Mutex
-	safedelete := func(i int) {
-		mutex.Lock()
-		deleteables = append(deleteables, i)
-		mutex.Unlock()
-	}
+		var mutex sync.Mutex
+		safedelete := func(i int) {
+			mutex.Lock()
+			deleteables = append(deleteables, i)
+			mutex.Unlock()
+		}
 	*/
 	baton.startProgress("SVN phase B1: purge deleted refs", uint64(len(sp.repo.events)))
 	preserve := options.Contains("--preserve")
@@ -2356,7 +2356,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 		stack := []*Commit{}
 		for _, ev := range sp.repo.events {
 			if commit, ok := ev.(*Commit); ok &&
-					!strings.HasPrefix(commit.Branch, "refs/deleted") {
+				!strings.HasPrefix(commit.Branch, "refs/deleted") {
 				stack = append(stack, commit)
 			}
 			baton.twirl()
@@ -2398,39 +2398,39 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	baton.startProgress("SVN phase B2: clean other junk", uint64(len(sp.repo.events)))
 	walkEvents(sp.repo.events, func(i int, event Event) {
 		/*
-		if commit, ok := event.(*Commit); ok {
-			// It is possible for commit.Comment to be None if
-			// the repository has been dumpfiltered and has
-			// empty commits.  If that's the case it can't very
-			// well have CVS artifacts in it.
-			if commit.Comment == "" {
-				logit(logSHOUT, "r%s has no comment", commit.legacyID)
-				goto loopend
-			}
-			// Commits that cvs2svn created as tag surrogates
-			// get turned into actual tags.
-			m := cvs2svnTagRE.FindStringSubmatch(commit.Comment)
-			if len(m) > 1 && !commit.hasChildren() {
-				if commit.hasParents() {
-					fulltag := filepath.Join("refs", "tags", m[1])
-					newtags = append(newtags, newReset(sp.repo, fulltag,
-						commit.parentMarks()[0]))
+				if commit, ok := event.(*Commit); ok {
+					// It is possible for commit.Comment to be None if
+					// the repository has been dumpfiltered and has
+					// empty commits.  If that's the case it can't very
+					// well have CVS artifacts in it.
+					if commit.Comment == "" {
+						logit(logSHOUT, "r%s has no comment", commit.legacyID)
+						goto loopend
+					}
+					// Commits that cvs2svn created as tag surrogates
+					// get turned into actual tags.
+					m := cvs2svnTagRE.FindStringSubmatch(commit.Comment)
+					if len(m) > 1 && !commit.hasChildren() {
+						if commit.hasParents() {
+							fulltag := filepath.Join("refs", "tags", m[1])
+							newtags = append(newtags, newReset(sp.repo, fulltag,
+								commit.parentMarks()[0]))
+						}
+						safedelete(i)
+					}
+					// cvs2svn-generated branch commits carry no informationn,
+					// and just get removed.
+					m = cvs2svnBranchRE.FindStringSubmatch(commit.Comment)
+					if len(m) > 0 && !commit.hasChildren() {
+						safedelete(i)
+					}
 				}
-				safedelete(i)
-			}
-			// cvs2svn-generated branch commits carry no informationn,
-			// and just get removed.
-			m = cvs2svnBranchRE.FindStringSubmatch(commit.Comment)
-			if len(m) > 0 && !commit.hasChildren() {
-				safedelete(i)
-			}
-		}
-	loopend:
+			loopend:
 		*/
 		baton.percentProgress(uint64(i) + 1)
 	})
 	baton.endProgress()
-	sort.Slice(newtags, func(i, j int) bool {return newtags[i].(*Reset).ref < newtags[j].(*Reset).ref})
+	sort.Slice(newtags, func(i, j int) bool { return newtags[i].(*Reset).ref < newtags[j].(*Reset).ref })
 	sp.repo.events = append(sp.repo.events, newtags...)
 	sp.repo.delete(deleteables, []string{"--tagback"})
 }
@@ -2580,7 +2580,8 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 		baton.percentProgress(uint64(index) + 1)
 	}
 	sp.repo.delete(deletia, []string{"--tagback"})
-	baton.endProgress()}
+	baton.endProgress()
+}
 
 func svnProcessDebubble(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
 	// Phase D:
