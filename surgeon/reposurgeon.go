@@ -937,6 +937,8 @@ func (vcs VCS) hasReference(comment []byte) bool {
 	return false
 }
 
+// Importer is capabilities for an import path to some VCS.
+// A given VCS can have more than one importer.
 type Importer struct {
 	name    string    // importer name
 	visible bool      // should it be selectable?
@@ -2734,11 +2736,8 @@ screen width, and the ID of the invoking user. Use in regression-test loads.
 `},
 }
 
-/*
- * Global context. Used to be named Context until its global
- * collided with the Go context package.
- */
-
+// Control is global context. Used to be named Context until its global
+// collided with the Go context package.
 type Control struct {
 	logmask    uint
 	logfp      io.Writer
@@ -6105,16 +6104,15 @@ func branchbase(branch string) string {
 // without the copy-on-write storage sharing of snapshots, the
 // cost to keep a per-revision array of snapshots can blow up
 // pretty badly.
-
-type pathMapItem struct {
-	name  string
-	value interface{}
-}
-
 type PathMap struct {
 	dirs   map[string]*PathMap
 	blobs  map[string]interface{}
 	shared bool
+}
+
+type pathMapItem struct {
+	name  string
+	value interface{}
 }
 
 func newPathMap() *PathMap {
@@ -8769,15 +8767,7 @@ func (repo *Repository) frontEvents() []Event {
 	return front
 }
 
-type DAGedges struct {
-	eout orderedIntSet
-	ein  orderedIntSet
-}
-
-func (d DAGedges) String() string {
-	return fmt.Sprintf("<%v | %v>", d.ein, d.eout)
-}
-
+// A DAG is a directed acyclic graph
 type DAG map[int]*DAGedges
 
 func (d *DAG) setdefault(key int, e *DAGedges) *DAGedges {
@@ -8786,6 +8776,16 @@ func (d *DAG) setdefault(key int, e *DAGedges) *DAGedges {
 		(*d)[key] = e
 	}
 	return (*d)[key]
+}
+
+// DAGedges is a set of in and out edges to be associated with a DAG 
+type DAGedges struct {
+	eout orderedIntSet
+	ein  orderedIntSet
+}
+
+func (d DAGedges) String() string {
+	return fmt.Sprintf("<%v | %v>", d.ein, d.eout)
 }
 
 // From https://golang.org/pkg/container/heap/#example__intHeap
@@ -11693,6 +11693,7 @@ func (p *AttributionEditor) doResolve(eventNo int, e Event, attrs []attrEditAttr
 	io.WriteString(w, b.String())
 }
 
+// LineParse is state for a simple CLI parser with options and redirects.
 type LineParse struct {
 	repolist     *RepositoryList
 	line         string
@@ -11846,6 +11847,8 @@ func (lp *LineParse) Closem() {
 	}
 }
 
+// CmdControl is our control context for a Kommandant instance.
+// FIXME: Could this be merged into Reposurgeon?
 type CmdControl struct {
 	cmd          *kommandant.Kmdt
 	definitions  map[string][]string

@@ -21,6 +21,7 @@ import (
 	"unicode"
 )
 
+// HgClient is client state for a session running Mercurial
 type HgClient struct {
 	hgServer *exec.Cmd
 	pipeIn   io.WriteCloser // client write, server read

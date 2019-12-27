@@ -82,6 +82,7 @@ const (
 	SYNC
 )
 
+// Message is content for a baton display
 type Message struct {
 	ty  msgType
 	str []byte
