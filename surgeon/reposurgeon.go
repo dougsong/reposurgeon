@@ -2568,7 +2568,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 			reset := newReset(repo, commit.Branch, commit.mark)
 			repo.addEvent(reset)
 		}
-		commit.sortOperations()
+		commit.simplify()
 		commit.legacyID = revision
 		newprops := newOrderedMap()
 		commit.properties = &newprops
@@ -4805,42 +4805,6 @@ func (commit *Commit) discardOpsBeforeLastDeleteAll() {
 	}
 }
 
-// sortOperations sorts fileops on a commit the same way git-fast-export does
-func (commit *Commit) sortOperations() {
-	commit.discardOpsBeforeLastDeleteAll()
-	pathpart := func(fileop *FileOp) string {
-		if fileop.Path != "" {
-			return fileop.Path
-		}
-		if fileop.Source != "" {
-			return fileop.Source
-		}
-		return ""
-	}
-	// As it says, 'Handle files below a directory first, in case they are
-	// all deleted and the directory changes to a file or symlink.'  First
-	// sort the deletealls first, the renames last, then sort
-	// lexicographically. We check the directory depth to make sure that
-	// "a/b/c" < "a/b" < "a".
-	lessthan := func(i, j int) bool {
-		if commit.fileops[i].op == deleteall {
-			return true
-		} else if commit.fileops[j].op == deleteall {
-			return false
-		} else if commit.fileops[i].op != opR && commit.fileops[j].op == opR {
-			return true
-		} else {
-			left := pathpart(commit.fileops[i])
-			right := pathpart(commit.fileops[j])
-			if len(left) > len(right) {
-				return left[:len(right)] <= right
-			}
-			return left < right[:len(left)]
-		}
-	}
-	sort.SliceStable(commit.fileops, lessthan)
-}
-
 // bump increments the timestamps on this commit to avoid time collisions.
 func (commit *Commit) bump(i int) {
 	delta := time.Second * time.Duration(i)
@@ -5649,7 +5613,7 @@ func (commit *Commit) canonicalize() {
 	}
 	commit.setOperations(newops)
 	// Finishing touches.  Sorting always has to be done
-	commit.sortOperations()
+	commit.simplify()
 }
 
 // alldeletes is a predicate: is this an all-deletes commit?
@@ -8337,8 +8301,41 @@ func (commit *Commit) simplify() {
 		newOps[i] = fileop
 		i++
 	}
-	commit.setOperations(newOps)
-	commit.sortOperations()
+	// Now, sort operations the way git-fast-export does
+	pathpart := func(fileop *FileOp) string {
+		if fileop.Path != "" {
+			return fileop.Path
+		}
+		if fileop.Source != "" {
+			return fileop.Source
+		}
+		return ""
+	}
+	// As it says, 'Handle files below a directory first, in case they are
+	// all deleted and the directory changes to a file or symlink.'  First
+	// sort the deletealls first, the renames last, then sort
+	// lexicographically. We check the directory depth to make sure that
+	// "a/b/c" < "a/b" < "a".
+	lessthan := func(i, j int) bool {
+		if newOps[i].op == deleteall {
+			return true
+		} else if newOps[j].op == deleteall {
+			return false
+		} else if newOps[i].op != opR && newOps[j].op == opR {
+			return true
+		} else {
+			left := pathpart(newOps[i])
+			right := pathpart(newOps[j])
+			if len(left) > len(right) {
+				return left[:len(right)] <= right
+			}
+			return left < right[:len(left)]
+		}
+	}
+	sort.SliceStable(newOps, lessthan)
+	// Now replace the Commit fileops. Avoid setOperations() because there
+	// is no need to invalidateManifests()
+	commit.fileops = newOps
 }
 
 var allPolicies = orderedStringSet{
@@ -17026,7 +17023,7 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 			newops = append(newops, f)
 		}
 		child.setOperations(newops)
-		child.sortOperations()
+		child.simplify()
 	}
 	child.setParents(parents)
 	// Restore this when we have toposort working identically in Go and Python.

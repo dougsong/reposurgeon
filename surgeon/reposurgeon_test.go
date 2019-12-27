@@ -891,7 +891,7 @@ func TestFileOp(t *testing.T) {
 	}
 }
 
-func TestFileopSort(t *testing.T) {
+func TestSimplify(t *testing.T) {
 	test := func(as []string, bs []string) {
 		if len(as) != len(bs) {
 			t.Fatalf("sort test must have two slices of the same length")
@@ -904,7 +904,7 @@ func TestFileopSort(t *testing.T) {
 			fileop := newFileOp(nil).construct('M', "100644", ":1", a)
 			commit.appendOperation(fileop)
 		}
-		commit.sortOperations()
+		commit.simplify()
 		sorted := make([]string, len(as))
 		for i := range as {
 			sorted[i] = commit.fileops[i].Path
@@ -937,7 +937,7 @@ func TestFileopSort(t *testing.T) {
 		for _, a := range as {
 			commit.appendOperation(a)
 		}
-		commit.sortOperations()
+		commit.simplify()
 		quasiEquals := func(a *FileOp, b *FileOp) bool {
 			return a.op == b.op && a.Path == b.Path
 		}
