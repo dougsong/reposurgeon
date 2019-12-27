@@ -19002,8 +19002,16 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 	// Machinery for recognizing and skipping dates in
 	// ChangeLog attribution lines. To add more date formats,
 	// put Go time format specifications in the dateFormata
-	// literal. The first literal is the common case.
-	var dateFormats = []string{"2006-01-02", time.UnixDate, time.ANSIC}
+	// literal. The third literal is the common case. The
+	// first two are malformations from the GCC history that
+	// might be found elsewhere; they need to be before YYYY-MM-DD
+	// to avoid false-matching on it.
+	var dateFormats = []string{
+		"2006-01-02 15:04 -0700",
+		"2006-01-02 15:04",
+		"2006-01-02",
+		time.UnixDate,
+		time.ANSIC}
 	type dateSkipper struct {
 		format string
 		fmtCount int

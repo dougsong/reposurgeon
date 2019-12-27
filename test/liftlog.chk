@@ -486,7 +486,7 @@ baz
 
 commit refs/heads/master-test1.chk
 mark :38
-author 11:47 Next Author <next@author.example> 1577360899 +0000
+author Next Author <next@author.example> 1577360899 +0000
 committer jsm28 <jsm28> 1577360899 +0000
 data 35
 Change with time given after date.
@@ -521,7 +521,7 @@ x
 
 commit refs/heads/master
 mark :41
-author 11:47 -0500 Random Author <random@author.example> 1577360958 +0000
+author Random Author <random@author.example> 1577360958 +0000
 committer jsm28 <jsm28> 1577360958 +0000
 data 31
 Commit with time and timezone.
