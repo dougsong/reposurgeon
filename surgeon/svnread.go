@@ -351,6 +351,7 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 
 	trackSymlinks := newOrderedStringSet()
 	propertyStash := make(map[string]*OrderedMap)
+	hasIgnore := make(map[string]bool)
 
 	baton.startProgress("SVN phase 1: read dump file", uint64(filesize))
 	for {
@@ -433,6 +434,18 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 							// to interpret these only at the revisions where they
 							// are actually set.
 							propertyStash[node.path].delete("svn:ignore")
+							if node.props.has("svn:ignore") {
+								hasIgnore[node.path] = true
+							} else {
+								if hasIgnore[node.path] {
+									// There was an svn:ignore on this path,
+									// there is no more Emit a "svn:ignore"
+									// prop with empty contents, for later
+									// phases to detect it.
+									node.props.set("svn:ignore", "")
+								}
+								delete(hasIgnore, node.path)
+							}
 						} else if node.action == sdADD && node.fromPath != "" {
 							//Contiguity assumption here
 							for _, oldnode := range sp.revisions[node.fromRev].nodes {

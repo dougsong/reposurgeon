@@ -80,8 +80,19 @@ Modify the one visible file.
 from :5
 M 100644 :6 README
 
-blob
+commit refs/heads/master
+#legacy-id 4
 mark :8
+committer esr <esr> 1322694685 +0000
+data 103
+Time to delete the svn:ignore property.
+
+The result we want is that .gitignore is no longer generated.
+from :7
+M 100644 :1 .gitignore
+
+blob
+mark :9
 data 79
 Put another change here just so we have a commit after the property delete.
 
@@ -89,21 +100,10 @@ Put another change here just so we have a commit after the property delete.
 
 commit refs/heads/master
 #legacy-id 5
-mark :9
+mark :10
 committer esr <esr> 1322694737 +0000
 data 12
 We're done.
-from :7
-M 100644 :8 README
-
-tag emptycommit-4
-#legacy-id 4
-from :7
-tagger esr <esr> 1322694685 +0000
-data 153
-Time to delete the svn:ignore property.
-
-The result we want is that .gitignore is no longer generated.
-
-[[Tag from zero-fileop commit at Subversion r4]]
+from :8
+M 100644 :9 README
 
