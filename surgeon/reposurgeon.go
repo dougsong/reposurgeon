@@ -19032,24 +19032,24 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 			addr := strings.TrimSpace(line[space+1:])
 			return wsRE.ReplaceAllLiteralString(addr, " ")
 		}
-		// Scan for old-style date like "Tue Dec  9 01:16:06 1997"
-		// This corresponds to Go ANSIC format.
+		// Scan for old-style dates like "Tue Dec  9 01:16:06 1997"
 		fields := strings.Fields(line)
-		if len(fields) >= 5 {
-			possibleDate := strings.Join(fields[:5], " ")
-			// Doesn't matter that TZ is wrong here, we're only going
-			// to use the day part at most.
-			_, err := time.Parse(time.ANSIC, possibleDate)
-			if err != nil {
-				return ""
+		for _, format := range []string{time.UnixDate, time.ANSIC} {
+			fmtCount := len(strings.Fields(format))
+			if len(fields) >= fmtCount {
+				possibleDate := strings.Join(fields[:fmtCount], " ")
+				_, err := time.Parse(format, possibleDate)
+				if err != nil {
+					continue
+				}
+				skipre := regexp.MustCompile(strings.Repeat(`\S+\s+`, fmtCount))
+				m := skipre.FindStringIndex(line)
+				if m == nil {
+					continue
+				}
+				addr := strings.TrimSpace(line[m[1]:])
+				return wsRE.ReplaceAllLiteralString(addr, " ")
 			}
-			skipre := regexp.MustCompile(strings.Join(strings.Fields(line)[:5], `\s+`))
-			m := skipre.FindStringIndex(line)
-			if m == nil {
-				return ""
-			}
-			addr := strings.TrimSpace(line[m[1]:])
-			return wsRE.ReplaceAllLiteralString(addr, " ")
 		}
 		return ""
 	}

@@ -18,7 +18,7 @@ mark :3
 data 171
 	= = = Demonstrate that we can skip a header = = =
 
-2017-10-17 Fred J. Foonly <fred@foonly.org>
+2016-10-16 Fred J. Foonly <fred@foonly.org>
 
 	* sample.txt: Resembles an attribution for a patch contributed by
 	Fred.
@@ -41,14 +41,13 @@ M 100644 :4 sample.txt
 
 blob
 mark :6
-data 399
+data 398
 	= = = Demonstrate that we can skip a header = = =
 
-2017-10-17 Fred J. Foonly <fred@foonly.org>
+2016-10-16 Fred J. Foonly <fred@foonly.org>
 
 	* sample.txt: Resembles an attribution for a patch contributed by
 	Fred.
-
 
 2017-10-19 Hilda J. Foonly <hilda@foonly.org>
 
@@ -78,7 +77,7 @@ mark :9
 data 556
 	= = = Demonstrate that we can skip a header = = =
 
-2017-10-17 Fred J. Foonly <fred@foonly.org>
+2016-10-16 Fred J. Foonly <fred@foonly.org>
 
 	* sample.txt: Resembles an attribution for a patch contributed by
 	Fred.
@@ -122,7 +121,7 @@ data 751
 	* sample.txt: This header line is to verify that we can get a time
 	zone from an email address ending with a single-zone ISO country code.
 
-2017-10-17 Fred J. Foonly <fred@foonly.org>
+2016-10-16 Fred J. Foonly <fred@foonly.org>
 
 	* sample.txt: Resembles an attribution for a patch contributed by
 	Fred.
@@ -171,7 +170,7 @@ data 878
 	* sample.txt: This header line is to verify that we can get a time
 	zone from an email address ending with a single-zone ISO country code.
 
-2017-10-17 Fred J. Foonly <fred@foonly.org>
+2016-10-16 Fred J. Foonly <fred@foonly.org>
 
 	* sample.txt: Resembles an attribution for a patch contributed by
 	Fred.
@@ -220,7 +219,7 @@ data 969
 	* sample.txt: This header line is to verify that we can get a time
 	zone from an email address ending with a single-zone ISO country code.
 
-2017-10-17 Fred J. Foonly <fred@foonly.org>
+2016-10-16 Fred J. Foonly <fred@foonly.org>
 
 	* sample.txt: Resembles an attribution for a patch contributed by
 	Fred. And now we test that this incremental entry gets the right
@@ -271,7 +270,7 @@ data 1321
 	* sample.txt: This header line is to verify that we can get a time
 	zone from an email address ending with a single-zone ISO country code.
 
-2017-10-17 Fred J. Foonly <fred@foonly.org>
+2016-10-16 Fred J. Foonly <fred@foonly.org>
 
 	* sample.txt: Resembles an attribution for a patch contributed by
 	Fred. And now we test that this incremental entry gets the right
@@ -322,6 +321,10 @@ mark :24
 data 1435
 = = = Demonstrate that we can skip a header = = =
 
+2018-12-21 Hildegarde J. Foonly <hilda@not-foonly.org>
+
+	* This is a test of + aliasing lines in the author map.
+
 2017-10-22 Nikolai Fedorov <cosmist@russian-empire.gov>
 
 	* sample.txt: Demonstrate the ability to pick up committer timezones.
@@ -331,7 +334,7 @@ data 1435
 	* sample.txt: This header line is to verify that we can get a time
 	zone from an email address ending with a single-zone ISO country code.
 
-2017-10-17 Fred J. Foonly <fred@foonly.org>
+2016-10-16 Fred J. Foonly <fred@foonly.org>
 
 	* sample.txt: Resembles an attribution for a patch contributed by
 	Fred. And now we test that this incremental entry gets the right
@@ -354,10 +357,6 @@ Tue Dec  9 01:16:06 1997  Jeffrey A Law  (law@cygnus.com)
 	by (), sometimes by <>.  There are a few log entries with a hybrid
 	of old and new forms, where there is a yyyy-mm-dd date but an
 	email address surrounded by ().
-
-2017-12-21 Hildegarde J. Foonly <hilda@not-foonly.org>
-
-	* This is a test of + aliasing lines in the author map.
 
 blob
 mark :25
