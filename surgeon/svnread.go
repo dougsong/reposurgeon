@@ -1806,7 +1806,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	                    uint64(len(sp.repo.events)))
 	sp.lastCommitOnBranchAt = make(map[string][]*Commit)
 	sp.branchRoots = make(map[string][]*Commit)
-	maybeRoots := make([]*Commit, 0);
+	totalroots := 0
 	for index, event := range sp.repo.events {
 		if commit, ok := event.(*Commit); ok {
 			// Remember the last commit on every branch at each revision
@@ -1840,15 +1840,15 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 				commit.setParents([]CommitLike{prev})
 			} else {
 				commit.setParents(nil)
-				maybeRoots = append(maybeRoots, commit)
 				sp.branchRoots[branch] = append(sp.branchRoots[branch], commit)
+				totalroots++
 			}
 		}
 		baton.percentProgress(uint64(index) + 1)
 	}
 	baton.endProgress()
 	logit(logEXTRACT, "SVN Phase 8b: find branch root parents")
-	baton.startProgress("SVN phase 8b: find branch root parents", uint64(len(maybeRoots)))
+	baton.startProgress("SVN phase 8b: find branch root parents", uint64(totalroots))
 	var parentlock sync.Mutex
 	reparent := func(commit, parent *Commit) {
 		// Prepend a deleteall to avoid inheriting our new parent's content
@@ -1862,75 +1862,78 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 		commit.setParents([]CommitLike{parent})
 		parentlock.Unlock()
 	}
-	for count, commit := range maybeRoots {
-		branch := sp.markToSVNBranch[commit.mark]
-		rev, _ := strconv.Atoi(strings.Split(commit.legacyID, ".")[0])
-		if rev > 0 && rev < len(sp.revisions) {
-			record := sp.revisions[rev]
-			for _, node := range record.nodes {
-				if node.kind == sdDIR && node.fromRev != 0 &&
-						strings.TrimRight(node.path, svnSep) == branch {
-					frombranch := node.fromPath
-					if !isDeclaredBranch(frombranch) {
-						frombranch, _ = splitSVNBranchPath(node.fromPath)
+	count := 0
+	for branch, roots := range sp.branchRoots {
+		for _, commit := range roots {
+			rev, _ := strconv.Atoi(strings.Split(commit.legacyID, ".")[0])
+			if rev > 0 && rev < len(sp.revisions) {
+				record := sp.revisions[rev]
+				for _, node := range record.nodes {
+					if node.kind == sdDIR && node.fromRev != 0 &&
+							strings.TrimRight(node.path, svnSep) == branch {
+						frombranch := node.fromPath
+						if !isDeclaredBranch(frombranch) {
+							frombranch, _ = splitSVNBranchPath(node.fromPath)
+						}
+						parent := lastRelevantCommit(sp, node.fromRev, frombranch)
+						if parent != nil {
+							logit(logTOPOLOGY,
+							"Link from %s (r%s) to %s (r%d) found by copy-from",
+							parent.mark, parent.legacyID, commit.mark, rev)
+							if strings.Split(parent.legacyID, ".")[0] != fmt.Sprintf("%d", node.fromRev) {
+								logit(logTOPOLOGY,
+								"(fromRev was r%d)",
+								node.fromRev)
+							}
+							reparent(commit, parent)
+							goto next
+						}
 					}
-					parent := lastRelevantCommit(sp, node.fromRev, frombranch)
+					baton.twirl()
+				}
+				// Try to detect file-based copies, like what CVS can generate
+				// Remember the maximum value of fromRev in all nodes, or 0 if
+				// the file nodes don't all have a fromRev. We also record the
+				// minimum value, to warn if they are different.
+				maxfrom, minfrom := revidx(0), revidx(len(sp.revisions))
+				var nodefrom *NodeAction
+				for _, node := range record.nodes {
+					if node.kind == sdFILE && !strings.HasSuffix(node.path, ".gitignore") {
+						if node.fromRev == 0 {
+							maxfrom = 0
+							break
+						}
+						if node.fromRev > maxfrom {
+							maxfrom = node.fromRev
+							nodefrom = node
+						}
+						if node.fromRev < minfrom {
+							minfrom = node.fromRev
+						}
+					}
+				}
+				if maxfrom > 0 {
+					frombranch := nodefrom.fromPath
+					if !isDeclaredBranch(frombranch) {
+						frombranch, _ = splitSVNBranchPath(nodefrom.fromPath)
+					}
+					parent := lastRelevantCommit(sp, maxfrom, frombranch)
 					if parent != nil {
 						logit(logTOPOLOGY,
-						"Link from %s (r%s) to %s (r%d) found by copy-from",
-						parent.mark, parent.legacyID, commit.mark, rev)
-						if strings.Split(parent.legacyID, ".")[0] != fmt.Sprintf("%d", node.fromRev) {
-							logit(logTOPOLOGY,
-							"(fromRev was r%d)",
-							node.fromRev)
+							"Link from %s (r%s) to %s (r%d) found by file copies",
+							parent.mark, parent.legacyID, commit.mark, rev)
+						if minfrom < maxfrom {
+							logit(logWARN, "Detected link might be dubious (range %d-%d)", minfrom, maxfrom)
 						}
 						reparent(commit, parent)
 						goto next
 					}
 				}
-				baton.twirl()
 			}
-			// Try to detect file-based copies, like what CVS can generate
-			// Remember the maximum value of fromRev in all nodes, or 0 if
-			// the file nodes don't all have a fromRev. We also record the
-			// minimum value, to warn if they are different.
-			maxfrom, minfrom := revidx(0), revidx(len(sp.revisions))
-			var nodefrom *NodeAction
-			for _, node := range record.nodes {
-				if node.kind == sdFILE && !strings.HasSuffix(node.path, ".gitignore") {
-					if node.fromRev == 0 {
-						maxfrom = 0
-						break
-					}
-					if node.fromRev > maxfrom {
-						maxfrom = node.fromRev
-						nodefrom = node
-					}
-					if node.fromRev < minfrom {
-						minfrom = node.fromRev
-					}
-				}
-			}
-			if maxfrom > 0 {
-				frombranch := nodefrom.fromPath
-				if !isDeclaredBranch(frombranch) {
-					frombranch, _ = splitSVNBranchPath(nodefrom.fromPath)
-				}
-				parent := lastRelevantCommit(sp, maxfrom, frombranch)
-				if parent != nil {
-					logit(logTOPOLOGY,
-						"Link from %s (r%s) to %s (r%d) found by file copies",
-						parent.mark, parent.legacyID, commit.mark, rev)
-					if minfrom < maxfrom {
-						logit(logWARN, "Detected link might be dubious (range %d-%d)", minfrom, maxfrom)
-					}
-					reparent(commit, parent)
-					goto next
-				}
-			}
+			next:
+			count++
+			baton.percentProgress(uint64(count))
 		}
-		next:
-		baton.percentProgress(uint64(count) + 1)
 	}
 	baton.endProgress()
 
