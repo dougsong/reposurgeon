@@ -1085,6 +1085,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 	}
 
 	nobranch := options.Contains("--nobranch")
+	doignores := !options.Contains("--no-automatic-ignore")
 	branchesWithDefaultIgnore := newStringSet()
 	// Generated .gitignore files from explicit svn:ignore props have to be
 	// tracked separately since we won't modify pathmaps.
@@ -1104,7 +1105,9 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 			//
 			// Set up default ignores just before the first file node
 			// of each branch
-			if node.kind == sdFILE || (node.kind == sdDIR && isDeclaredBranch(node.path) && node.fromRev != 0) {
+			if doignores &&
+					(node.kind == sdFILE ||
+					(node.kind == sdDIR && isDeclaredBranch(node.path) && node.fromRev != 0)) {
 				curbranch := ""
 				if !nobranch {
 					if node.kind == sdDIR && isDeclaredBranch(node.path) {
@@ -1133,9 +1136,9 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 				}
 				// Whenever an svn:ignore property is set on a directory,
 				// we want to generate a corresponding .gitignore
-				if node.hasProperties() && node.props.has("svn:ignore") {
+				if doignores && node.hasProperties() && node.props.has("svn:ignore") {
 					appendExpanded(ignorenode(node.path[:len(node.path)-1],
-						node.props.get("svn:ignore")))
+					                          node.props.get("svn:ignore")))
 					node.props.delete("svn:ignore")
 					presentGitIgnores.Add(node.path)
 				}
@@ -2501,6 +2504,7 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 	}
 
 	// Should the argument commit be tagified?
+	doignores := !options.Contains("--no-automatic-ignore")
 	tagifyable := func(commit *Commit) bool {
 		logit(logEXTRACT, "beginning tag check on %q", commit.String())
 		// Commits with a deletall only were generated in early phases to map
@@ -2514,7 +2518,7 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 		}
 		// If the commit is the first of its branch and only introduces the
 		// default gitignore, tagify it.
-		if rootmarks.Contains(commit.mark) {
+		if doignores && rootmarks.Contains(commit.mark) {
 			allIgnoreOrDeleteall := true
 			for _, op := range commit.operations() {
 				if op.op == deleteall {
