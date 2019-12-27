@@ -1130,6 +1130,12 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 						node.action = sdNUKE
 						curbranch := strings.Trim(node.path, svnSep)
 						branchesWithDefaultIgnore.Remove(curbranch)
+						for ignpath := range presentGitIgnores.Iterate() {
+							if strings.HasPrefix(ignpath, node.path) {
+								// No need to emit delete nodes, but track the deletions
+								presentGitIgnores.Remove(ignpath)
+							}
+						}
 					} else {
 						// A delete or replace with no from set
 						// can occur if the directory is empty.
