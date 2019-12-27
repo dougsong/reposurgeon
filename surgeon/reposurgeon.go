@@ -4243,6 +4243,13 @@ func (reset *Reset) Save(w io.Writer) {
 	fmt.Fprintf(w, "reset %s\n", reset.ref)
 	if reset.committish != "" {
 		fmt.Fprintf(w, "from %s\n\n", reset.committish)
+		if reset.repo.branchHasCommits != nil {
+			reset.repo.branchHasCommits[reset.ref] = true
+		}
+	} else {
+		if reset.repo.branchHasCommits != nil {
+			delete(reset.repo.branchHasCommits, reset.ref)
+		}
 	}
 }
 
@@ -5851,6 +5858,13 @@ func (commit *Commit) Save(w io.Writer) {
 	}
 	if incremental {
 		fmt.Fprintf(w, "reset %s\nfrom %s^0\n\n", commit.Branch, commit.Branch)
+	} else if len(commit.parents()) == 0 &&
+			commit.repo.branchHasCommits[commit.Branch] {
+		// getting a value from a nil map is safe
+		fmt.Fprintf(w, "reset %s\n", commit.Branch)
+	}
+	if commit.repo.branchHasCommits != nil {
+		commit.repo.branchHasCommits[commit.Branch] = true
 	}
 	fmt.Fprintf(w, "commit %s\n", commit.Branch)
 	if commit.legacyID != "" {
@@ -7071,10 +7085,11 @@ type Repository struct {
 	aliases           map[ContributorID]ContributorID
 	maplock           sync.Mutex
 	// Write control - set, if required, before each dump
-	preferred    *VCS             // overrides vcs slot for writes
-	realized     map[string]bool  // clear and remake this before each dump
-	writeOptions stringSet        // options requested on this write
-	internals    orderedStringSet // export code computes this itself
+	preferred         *VCS             // overrides vcs slot for writes
+	realized          map[string]bool  // clear and remake this before each dump
+	branchHasCommits   map[string]bool  // clear and remake this before each dump
+	writeOptions      stringSet        // options requested on this write
+	internals         orderedStringSet // export code computes this itself
 }
 
 func newRepository(name string) *Repository {
@@ -8057,6 +8072,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 		selection.Sort()
 	}
 	repo.realized = make(map[string]bool) // Track what branches are made
+	repo.branchHasCommits = make(map[string]bool) // Track what branches are made
 	baton := control.baton
 	baton.startProgress("export", uint64(len(repo.events)))
 	for idx, ei := range selection {
@@ -8081,6 +8097,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 	}
 	baton.endProgress()
 	repo.realized = nil
+	repo.branchHasCommits = nil
 	return nil
 }
 

@@ -86,6 +86,7 @@ they cannot.
 
 
 
+reset refs/tags/lightweight-sample
 commit refs/tags/lightweight-sample
 mark :9
 author Eric S. Raymond <esr@thyrsus.com> 1287768418 -0400

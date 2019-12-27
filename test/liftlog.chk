@@ -402,6 +402,7 @@ author (a name) <email@domain.example.com> 1574388086 +0000
 committer jmyers <jmyers> 1574388086 +0000
 data 12
 test commit
+from :26
 M 100644 :27 ChangeLog
 M 100644 :28 test-file
 
