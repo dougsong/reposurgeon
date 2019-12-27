@@ -1056,7 +1056,6 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 	baton.startProgress("SVN phase 4: directory copy expansion", uint64(len(sp.revisions)))
 
 	ignorenode := func(nodepath string, explicit string) *NodeAction {
-		blob := newBlob(sp.repo)
 		var buf bytes.Buffer
 		if nodepath == "" || isDeclaredBranch(nodepath) {
 			buf.WriteString(subversionDefaultIgnores)
@@ -1068,13 +1067,18 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 			}
 		}
 		ignores := buf.Bytes()
-		blob.setContent(ignores, noOffset)
 		subnode := new(NodeAction)
 		subnode.path = filepath.Join(nodepath, ".gitignore")
-		subnode.action = sdADD
 		subnode.kind = sdFILE
-		subnode.blob = blob
-		subnode.contentHash = fmt.Sprintf("%x", md5.Sum(ignores))
+		if len(ignores) == 0 {
+			subnode.action = sdDELETE
+		} else {
+			subnode.action = sdADD
+			blob := newBlob(sp.repo)
+			blob.setContent(ignores, noOffset)
+			subnode.blob = blob
+			subnode.contentHash = fmt.Sprintf("%x", md5.Sum(ignores))
+		}
 		subnode.generated = true
 		return subnode
 	}
