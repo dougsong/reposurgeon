@@ -1169,7 +1169,6 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 								newnode.revision = node.revision
 								newnode.action = sdDELETE
 								newnode.kind = sdFILE
-								newnode.generated = true
 								appendExpanded(newnode)
 							}
 						}
@@ -1210,7 +1209,6 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 						subnode.props = found.props
 						subnode.action = sdADD
 						subnode.kind = sdFILE
-						subnode.generated = true
 						logit(logTOPOLOGY, "r%d-%d: %s generated copy r%d~%s -> %s %s",
 							node.revision, node.index, node.path, subnode.fromRev, subnode.fromPath, subnode.path, subnode)
 						appendExpanded(subnode)

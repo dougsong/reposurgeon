@@ -1,5 +1,5 @@
 reposurgeon: r4~trunk/.gitignore: user-created .gitignore ignored.
-reposurgeon: r5: <NodeAction: r5-3 add file 'branches/cool-feature/.gitignore' from=4~trunk/.gitignore generated props={}> gets impossibly empty blob mark from ancestor <NodeAction: r4-1 add file 'trunk/.gitignore' props={}>, skipping
+reposurgeon: r5~branches/cool-feature/.gitignore: user-created .gitignore ignored.
 #reposurgeon sourcetype svn
 blob
 mark :1
