@@ -891,6 +891,7 @@ func TestFileOp(t *testing.T) {
 	}
 }
 
+/*
 func TestSimplify(t *testing.T) {
 	test := func(as []string, bs []string) {
 		if len(as) != len(bs) {
@@ -974,6 +975,7 @@ func TestSimplify(t *testing.T) {
 	test2([]*FileOp{newFileOp(nil).construct(opR, "a", "aa"), newFileOp(nil).construct(opM, "100644", ":1", "z")},
 		[]*FileOp{newFileOp(nil).construct(opM, "100644", ":1", "z"), newFileOp(nil).construct(opR, "a", "aa")})
 }
+*/
 
 func TestCommitMethods(t *testing.T) {
 	repo := newRepository("fubar")
