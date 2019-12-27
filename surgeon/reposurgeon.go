@@ -18964,7 +18964,6 @@ that zone is used.
 `)
 }
 
-var ymdRE = regexp.MustCompile("^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]")
 var addressRE = regexp.MustCompile(`([^<@>]+\S)\s+<([^<@>\s]+@[^<@>\s]+)>`)
 var wsRE = regexp.MustCompile(`\s+`)
 
@@ -18995,8 +18994,8 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 	// Machinery for recognizing and skipping dates in
 	// ChangeLog attribution lines. To add more date formats,
 	// put Go time format specifications in the dateFormata
-	// literal.
-	var dateFormats = []string{time.UnixDate, time.ANSIC}
+	// literal. The first literal is the common case.
+	var dateFormats = []string{"2006-01-02", time.UnixDate, time.ANSIC}
 	type dateSkipper struct {
 		format string
 		fmtCount int
@@ -19028,8 +19027,8 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 			return ""
 		}
 		// Remove all other < and > delimiters to avoid malformed attributions
-		// After the address, they can be dropped, but before they might come
-		// legit parenthesis that was converted above.
+		// After the address, they can be dropped, but before them might come
+		// legit parentheses that were converted above.
 		pre := strings.Replace(
 			strings.Replace(line[:addrStart], "<", "(", -1),
 			">", ")", -1)
@@ -19039,19 +19038,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		email = strings.Replace(email, " at ", "@", 1)
 		// Regenerate cleaned up attribution
 		line = pre + email + post
-		if unicode.IsDigit(rune(line[0])) && unicode.IsDigit(rune(line[1])) {
-			space := strings.Index(line, " ")
-			if space < 0 {
-				return ""
-			}
-			date := line[:space]
-			if !ymdRE.MatchString(date) {
-				return ""
-			}
-			addr := strings.TrimSpace(line[space+1:])
-			return wsRE.ReplaceAllLiteralString(addr, " ")
-		}
-		// Scan for old-style dates like "Tue Dec  9 01:16:06 1997"
+		// Scan for a date - it's not an attribution line without one.
 		fields := strings.Fields(line)
 		for _, item := range dateSkippers {
 			if len(fields) >= item.fmtCount {
@@ -19070,6 +19057,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		}
 		return ""
 	}
+
 	control.baton.startProgress("processing changelogs", uint64(len(repo.events)))
 	attributions := make([]string, len(selection))
 	evts := new(Safecounter) // shared between threads, for progression only
