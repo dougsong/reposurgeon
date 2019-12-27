@@ -19036,10 +19036,15 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		line = strings.Replace(line, ")", ">", -1)
 		// Deal with some address masking that can interfere with next stages
 		line = strings.Replace(line, " <at> ", "@", -1)
+		// We require exactly one @
+		if strings.Count(line, "@") != 1 {
+			return ""
+		}
 		// Line must contain an email address. Find it.
 		addrStart := strings.LastIndex(line, "<")
 		addrEnd := strings.Index(line[addrStart+1:], ">") + addrStart + 1
-		if addrStart < 0 || addrEnd < 0 {
+		at := strings.Index(line, "@")
+		if addrStart < 0 || addrEnd < 0 || at < addrStart || at > addrEnd  {
 			return ""
 		}
 		// Remove all other < and > delimiters to avoid malformed attributions

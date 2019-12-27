@@ -1,6 +1,4 @@
-reposurgeon: invalid attribution "Third Author (first@author.example) <tiny change>" in commit :35 <>
-reposurgeon: fills 14 of 16 authorships, changing 8, from 15 ChangeLogs.
-reposurgeon: 1 new log message(s)
+reposurgeon: fills 13 of 16 authorships, changing 8, from 15 ChangeLogs.
 #reposurgeon sourcetype git
 blob
 mark :1
@@ -422,7 +420,6 @@ foo
 
 commit refs/heads/master
 mark :32
-author author.example), Second Author <second@author.example> 1577360708 +0000
 committer jsm28 <jsm28> 1577360708 +0000
 data 177
 Commit with two authors named in ChangeLog header.
