@@ -2492,25 +2492,28 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 		if commit.alldeletes(deleteall) {
 			return true
 		}
-		// If the commit has no operations, other than .gitignore, tagify it.
-		allIgnoreOrDeleteall := true
-		for _, op := range commit.operations() {
-			if op.op == deleteall {
-				// deleteall ops are common when starting a branch, and
-				// generally accompany the .gitignore creation.
-				continue
-			}
-			if op.Path == ".gitignore" {
-				blob, ok := sp.repo.markToEvent(op.ref).(*Blob)
-				if ok && string(blob.getContent()) == subversionDefaultIgnores {
+		// If the commit is the first of its branch and only introduces the
+		// default gitignore, tagify it.
+		if rootmarks.Contains(commit.mark) {
+			allIgnoreOrDeleteall := true
+			for _, op := range commit.operations() {
+				if op.op == deleteall {
+					// deleteall ops are common when starting a branch, and
+					// generally accompany the .gitignore creation.
 					continue
 				}
+				if op.Path == ".gitignore" {
+					blob, ok := sp.repo.markToEvent(op.ref).(*Blob)
+					if ok && string(blob.getContent()) == subversionDefaultIgnores {
+						continue
+					}
+				}
+				allIgnoreOrDeleteall = false
+				break
 			}
-			allIgnoreOrDeleteall = false
-			break
-		}
-		if allIgnoreOrDeleteall {
-			return true
+			if allIgnoreOrDeleteall {
+				return true
+			}
 		}
 		return false
 	}
