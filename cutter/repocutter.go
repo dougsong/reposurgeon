@@ -144,7 +144,8 @@ parenthesized portions of FROM.
 	"renumber": `renumber: usage: repocutter renumber
 
 Renumber all revisions, patching Node-copyfrom headers as required.
-Any selection option is ignored. Takes no arguments.
+Any selection option is ignored. Takes no arguments.  The -b option 
+1can be used to set the base to rebumber from, defaulting to 0.
 `,
 	"reduce": `reduce: usage: repocutter reduce INPUT-FILE
 
@@ -178,6 +179,8 @@ selection set. Useful following a sift operation for straightening out
 a common form of multi-project repository.
 `,
 }
+
+var base int;
 
 // Baton - ship progress indications to stderr
 type Baton struct {
@@ -1186,7 +1189,7 @@ func pathrename(source DumpfileSource, selection SubversionRange, patterns []str
 // Renumber all revisions.
 func renumber(source DumpfileSource) {
 	renumbering := make(map[string]int)
-	counter := 0
+	counter := base
 	var p []byte
 	var state int
 	for {
@@ -1382,6 +1385,8 @@ func main() {
 	flag.BoolVar(&quiet, "quiet", false, "disable progress messages")
 	flag.StringVar(&rangestr, "r", "", "set selection range")
 	flag.StringVar(&rangestr, "range", "", "set selection range")
+	flag.IntVar(&base, "b", 0, "base value to renumber from")
+	flag.IntVar(&base, "base", 0, "base value to renumber from")
 	flag.Parse()
 	if rangestr != "" {
 		selection = NewSubversionRange(rangestr)

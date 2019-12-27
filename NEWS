@@ -20,6 +20,7 @@ Repository head::
      The changelogs command takes an optional regexp choosing files to be mined.
      We now use a better Mercurial importer, hg-git-fast-import.
      There is a new --cvsignores option for SVN dump reads that keeps .cvsignores.
+     repocutter renumber takes an optional argument that's a renumbering base.
 
 3.48: 2019-10-02::
      Last Python release.  4.0 will ship in Go.

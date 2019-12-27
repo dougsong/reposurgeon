@@ -110,9 +110,9 @@ backslash as in reposurgeon itself. See the embedded help for syntax
 details.
 
 renumber::
-Renumber all revisions, patching Node-copyfrom headers
-as required.  Any selection option is ignored. Takes no
-arguments.
+Renumber all revisions, patching Node-copyfrom headers as required.
+Any selection option is ignored. Takes no arguments. The -b option set
+the base to renumber, defaulting to 0.
 
 reduce::
 Strip revisions out of a dump so the only parts left those likely to
