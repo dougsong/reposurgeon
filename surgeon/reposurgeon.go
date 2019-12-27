@@ -18964,7 +18964,7 @@ that zone is used.
 `)
 }
 
-var ymdRE = regexp.MustCompile("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]")
+var ymdRE = regexp.MustCompile("^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]")
 var addressRE = regexp.MustCompile(`([^<@>]+\S)\s+<([^<@>\s]+@[^<@>\s]+)>`)
 var wsRE = regexp.MustCompile(`\s+`)
 
@@ -19039,7 +19039,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		email = strings.Replace(email, " at ", "@", 1)
 		// Regenerate cleaned up attribution
 		line = pre + email + post
-		if unicode.IsDigit(rune(line[0])) && unicode.IsDigit(rune(line[0])) {
+		if unicode.IsDigit(rune(line[0])) && unicode.IsDigit(rune(line[1])) {
 			space := strings.Index(line, " ")
 			if space < 0 {
 				return ""
