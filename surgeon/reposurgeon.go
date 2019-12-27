@@ -18992,6 +18992,25 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 
 	cm, cd := 0, 0
 
+	// Machinery for recognizing and skipping dates in
+	// ChangeLog attribution lines. To add more date formats,
+	// put Go time format specifications in the dateFormata
+	// literal.
+	var dateFormats = []string{time.UnixDate, time.ANSIC}
+	type dateSkipper struct {
+		format string
+		fmtCount int
+		skipre *regexp.Regexp
+	}
+	dateSkippers := make([]dateSkipper, 0)
+	for _, format := range dateFormats {
+		var skip dateSkipper
+		skip.format = format
+		skip.fmtCount = len(strings.Fields(format))
+		skip.skipre = regexp.MustCompile(strings.Repeat(`\S+\s+`, skip.fmtCount))
+		dateSkippers = append(dateSkippers, skip)
+	}
+
 	parseAttributionLine := func(line string) string {
 		// Parse an attribution line in a ChangeLog entry, get an email address
 		if len(line) <= 10 || unicode.IsSpace(rune(line[0])) {
@@ -19034,16 +19053,14 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		}
 		// Scan for old-style dates like "Tue Dec  9 01:16:06 1997"
 		fields := strings.Fields(line)
-		for _, format := range []string{time.UnixDate, time.ANSIC} {
-			fmtCount := len(strings.Fields(format))
-			if len(fields) >= fmtCount {
-				possibleDate := strings.Join(fields[:fmtCount], " ")
-				_, err := time.Parse(format, possibleDate)
+		for _, item := range dateSkippers {
+			if len(fields) >= item.fmtCount {
+				possibleDate := strings.Join(fields[:item.fmtCount], " ")
+				_, err := time.Parse(item.format, possibleDate)
 				if err != nil {
 					continue
 				}
-				skipre := regexp.MustCompile(strings.Repeat(`\S+\s+`, fmtCount))
-				m := skipre.FindStringIndex(line)
+				m := item.skipre.FindStringIndex(line)
 				if m == nil {
 					continue
 				}
