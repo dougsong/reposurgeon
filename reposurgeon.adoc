@@ -1213,7 +1213,7 @@ root survive.
    first argument is always required to be the name of a loaded repo.
 +
 If the selection set is of size 1, it must identify a single commit in
-the currently chosen repo; in this case the name repo's root will
+the currently chosen repo; in this case the named repo's root will
 become a child of the specified commit. If the selection set is
 empty, the named repo must contain one or more callouts matching a
 commits in the currently chosen repo.

@@ -1,4 +1,6 @@
-reposurgeon: fills 9 of 10 authorships, changing 8, from 9 ChangeLogs.
+reposurgeon: invalid attribution "Third Author (first@author.example) <tiny change>" in commit :35 <>
+reposurgeon: fills 12 of 16 authorships, changing 8, from 15 ChangeLogs.
+reposurgeon: 1 new log message(s)
 #reposurgeon sourcetype git
 blob
 mark :1
@@ -406,6 +408,176 @@ from :26
 M 100644 :27 ChangeLog
 M 100644 :28 test-file
 
-reset refs/heads/master
+blob
+mark :30
+data 108
+2019-12-26  First Author  <first@author.example>, Second Author <second@author.example>
+
+	* foo: New file.
+
+
+blob
+mark :31
+data 4
+foo
+
+commit refs/heads/master
+mark :32
+author author.example), Second Author <second@author.example> 1577360708 +0000
+committer jsm28 <jsm28> 1577360708 +0000
+data 177
+Commit with two authors named in ChangeLog header.
+
+OK to disregard both authors, but should not treat the domain of one
+email address as part of the name of the second author.
 from :29
+M 100644 :30 ChangeLog
+M 100644 :31 foo
+
+blob
+mark :33
+data 192
+2019-12-26  Third Author  <first@author.example>  (tiny change)
+
+	* bar: New file.
+
+2019-12-26  First Author  <first@author.example>, Second Author <second@author.example>
+
+	* foo: New file.
+
+
+blob
+mark :34
+data 4
+bar
+
+commit refs/heads/master
+mark :35
+committer jsm28 <jsm28> 1577360796 +0000
+data 218
+Example of "tiny change" annotation.
+
+Illustrated why should not simply disallow all text before or after
+name and email, because in this case there is valid text after the
+email address that should just be discarded.
+from :32
+M 100644 :33 ChangeLog
+M 100644 :34 bar
+
+blob
+mark :36
+data 265
+2019-12-26 11:47  Next Author  <next@author.example>
+
+	* baz: New file.
+
+2019-12-26  Third Author  <first@author.example>  (tiny change)
+
+	* bar: New file.
+
+2019-12-26  First Author  <first@author.example>, Second Author <second@author.example>
+
+	* foo: New file.
+
+
+blob
+mark :37
+data 4
+baz
+
+commit refs/heads/master-test1.chk
+mark :38
+author 11:47 Next Author <next@author.example> 1577360899 +0000
+committer jsm28 <jsm28> 1577360899 +0000
+data 35
+Change with time given after date.
+from :35
+M 100644 :36 ChangeLog
+M 100644 :37 baz
+
+blob
+mark :39
+data 346
+2019-12-26 11:47 -0500  Random Author  <random@author.example>
+
+	* x: New file.
+
+2019-12-26 11:47  Next Author  <next@author.example>
+
+	* baz: New file.
+
+2019-12-26  Third Author  <first@author.example>  (tiny change)
+
+	* bar: New file.
+
+2019-12-26  First Author  <first@author.example>, Second Author <second@author.example>
+
+	* foo: New file.
+
+
+blob
+mark :40
+data 2
+x
+
+commit refs/heads/master
+mark :41
+author 11:47 -0500 Random Author <random@author.example> 1577360958 +0000
+committer jsm28 <jsm28> 1577360958 +0000
+data 31
+Commit with time and timezone.
+from :38
+M 100644 :39 ChangeLog
+M 100644 :40 x
+
+blob
+mark :42
+data 87
+Thu Feb  7 12:14:17 CET 2002  First Author  <first@author.example>
+
+	* baz: New file.
+
+
+blob
+mark :43
+data 4
+baz
+
+commit refs/heads/master
+mark :44
+committer jsm28 <jsm28> 1577397804 +0000
+data 56
+Add baz with another kind of old-style ChangeLog entry.
+from :41
+M 100644 :42 ChangeLog
+M 100644 :43 baz
+
+blob
+mark :45
+data 177
+Mon Jun 23 23:07:35 CEST 2003  Second Author  <second@author.example>
+
+	* qux: New file.
+
+Thu Feb  7 12:14:17 CET 2002  First Author  <first@author.example>
+
+	* baz: New file.
+
+
+blob
+mark :46
+data 4
+qux
+
+commit refs/heads/master-test2.chk
+mark :47
+committer jsm28 <jsm28> 1577397878 +0000
+data 40
+Add qux with old-style ChangeLog entry.
+from :44
+M 100644 :45 ChangeLog
+M 100644 :46 qux
+
+reset refs/heads/master
+from :47
 
