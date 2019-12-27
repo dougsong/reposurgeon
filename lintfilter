@@ -4,5 +4,4 @@
 # Throw out the annoying ones
 
 sed \
-    -e "/exported method .* should have comment or be unexported/d" \
-    -e "/comment on exported method .* should be of the form/d"
+    -e "/exported method .* should have comment or be unexported/d"
