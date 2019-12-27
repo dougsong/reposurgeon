@@ -17025,7 +17025,6 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 			}
 			newops = append(newops, f)
 		}
-		newops = append(newops, child.operations()...)
 		child.setOperations(newops)
 		child.sortOperations()
 	}

@@ -39,11 +39,6 @@ data 28
 Some content.
 More content.
 
-M 100644 inline thefile
-data 28
-Some content.
-More content.
-
 
 1,2 manifest
 Event 1 =================================================================

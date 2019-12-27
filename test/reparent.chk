@@ -59,8 +59,6 @@ M 100644 :62 .gitignore
 M 100644 :76 Makefile
 M 100644 :45 READ[ME].txt
 M 100644 :125 reposurgeon.xml
-M 100644 :125 reposurgeon.xml
-M 100755 :124 reposurgeon
 M 100755 :124 reposurgeon
 M 100644 :68 test/Makefile
 M 100644 :48 test/simple.dump
@@ -163,7 +161,6 @@ M 100644 :76 Makefile
 M 100644 :45 READ[ME].txt
 M 100644 :114 reposurgeon.xml
 M 100755 :122 reposurgeon
-M 100755 :122 reposurgeon
 M 100644 :68 test/Makefile
 M 100644 :48 test/simple.dump
 M 100644 :50 theory.txt
@@ -203,7 +200,6 @@ M 100644 :62 .gitignore
 M 100644 :76 Makefile
 M 100644 :45 READ[ME].txt
 M 100644 :114 reposurgeon.xml
-M 100755 :120 reposurgeon
 M 100755 :120 reposurgeon
 M 100644 :68 test/Makefile
 M 100644 :48 test/simple.dump
