@@ -18498,7 +18498,7 @@ func (rs *Reposurgeon) DoBranchify(line string) bool {
 
 func (rs *Reposurgeon) HelpBranchmap() {
 	rs.helpOutput(`
-Specify the list of regular expressions used for mapping the svn branches that
+Specify the list of regular expressions used for mapping the SVN branches that
 are detected by branchify. If none of the expressions match, the default behavior
 applies. This maps a branch to the name of the last directory, except for trunk
 and '*' which are mapped to master and root.
@@ -18528,7 +18528,7 @@ be used as a delimiter (and you will need to use a different one in the
 common case that the paths contain slashes).
 
 You must give this command *before* the Subversion repository read it
-is supposed to affect!
+is supposed to affect! It does not affect any other repository type.
 
 Note that the branchmap set is a property of the reposurgeon interpreter,
 not of any individual repository, and will persist across Subversion

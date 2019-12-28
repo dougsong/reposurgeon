@@ -2021,7 +2021,7 @@ Subversion dumpfile reads. This may lead to unexpected results if you
 forget to re-set it.
 
 +branchmap+ [ _/regex/branch/_... ] ::
-   Specify the list of regular expressions used for mapping the svn
+   Specify the list of regular expressions used for mapping the SVN
    branches that are detected by branchify. If none of the expressions
    match the default behaviour applies. This maps a branch to the name
    of the last directory, except for trunk and "*" which are
@@ -2050,7 +2050,8 @@ be used as a delimiter (and you will need to use a different one in the
 common case that the paths contain slashes).
 +
 You must give this command _before_ the
-Subversion repository read it is supposed to affect!
+Subversion repository read it is supposed to affect!  This will not
+affect any other repository type.
 +
 Note that the branchify_map set is a property of the reposurgeon
 interpreter, not of any individual repository, and will persist across
