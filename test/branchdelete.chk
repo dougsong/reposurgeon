@@ -24,6 +24,19 @@ from :2
 M 100644 :3 README
 
 blob
+mark :5
+data 71
+This is the branch version of README, after we've actually changed it.
+
+commit refs/heads/samplebranch2
+mark :6
+committer esr <esr> 1322683160 +0000
+data 39
+First modification on the branch side.
+from :2
+M 100644 :5 README
+
+blob
 mark :7
 data 61
 This is the trunk version of README, with its typo removed.
@@ -43,6 +56,14 @@ data 107
 This is the branch version of README, after we've actually changed it.
 
 Second modification to the README.
+
+commit refs/heads/samplebranch2
+mark :10
+committer esr <esr> 1322691357 +0000
+data 40
+Create another node on the branch side.
+from :6
+M 100644 :9 README
 
 tag root
 from :2
@@ -66,7 +87,7 @@ mark :12
 committer esr <esr> 1324127616 +0000
 data 78
 This is an example of a deleteall that should have influence on the manifest.
-from :2
+from :10
 deleteall
 
 commit refs/heads/samplebranch2

@@ -16078,32 +16078,28 @@ func (rs *Reposurgeon) DoBranch(line string) bool {
 		if selection == nil {
 			selection = repo.all()
 		}
-		var branchre *regexp.Regexp
+		var shouldDelete func(string) bool
 		if branchname[0] == '/' && branchname[len(branchname)-1] == '/' {
 			// Regexp - can refer to a list of branchs matched
-			branchre, err = regexp.Compile(branchname[1 : len(branchname)-1])
+			branchre, err := regexp.Compile(branchname[1 : len(branchname)-1])
 			if err != nil {
 				croak("in branch command: %v", err)
 				return false
 			}
+			shouldDelete = func(branch string) bool {
+				return branchNameMatches(branch, branchre)
+			}
 		} else {
-			if !repo.branchset().Contains("refs/heads/" + branchname) {
+			theref := "refs/heads/" + branchname
+			if !repo.branchset().Contains(theref) {
 				croak("no such branch as %s", branchname)
 				return false
 			}
-			branchre = regexp.MustCompile("^" + regexp.QuoteMeta(branchname) + "$")
-		}
-		deletia := make([]int, 0)
-		for _, ei := range selection {
-			event := repo.events[ei]
-			if reset, ok := event.(*Reset); ok && branchNameMatches(reset.ref, branchre) {
-				deletia = append(deletia, ei)
-			} else if commit, ok := event.(*Commit); ok && branchNameMatches(commit.Branch, branchre) {
-				deletia = append(deletia, ei)
+			shouldDelete = func(branch string) bool {
+				return branch == theref
 			}
-			control.baton.twirl()
 		}
-		repo.delete(orderedIntSet(deletia), nil)
+		repo.deleteBranch(selection, shouldDelete)
 	} else {
 		croak("unknown verb '%s' in branch command.", verb)
 		return false
