@@ -1247,9 +1247,8 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 
 	baton.endProgress()
 
-	// We don't need the hash or revision maps after ancestry links are in place
+	// We don't need the revision maps after ancestry links are in place
 	sp.history = nil
-	//sp.hashmap = nil
 }
 
 func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
@@ -1394,7 +1393,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 					}
 				}
 				if node.fromRev > 0 && node.fromIdx > 0 {
-					ancestor = sp.revisions[node.fromRev].nodes[node.fromIdx]
+					ancestor = sp.revisions[node.fromRev].nodes[node.fromIdx-1]
 				}
 				// Propagate properties from the ancestor.
 				if (node.action == sdADD || node.action == sdCHANGE) && ancestor != nil && !node.propchange {

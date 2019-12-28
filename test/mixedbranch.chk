@@ -56,6 +56,8 @@ data 75
 This is an evil mixed-branch commit.
 
 [[Split portion of a mixed commit.]]
+from :3
+deleteall
 M 100644 :1 .gitignore
 M 100644 :4 README
 
