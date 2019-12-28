@@ -19086,9 +19086,62 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		}
 		return ""
 	}
+	parseCoAuthor := func(line string) string {
+		// Parse a co-author line in a Changelog
+		// A co-author must start with a letter after leading space
+		foundSpace := false
+		for _, r := range line {
+			if unicode.IsSpace(r) {
+				foundSpace = true
+			} else if foundSpace && unicode.IsLetter(r) {
+				break
+			} else {
+				// Neither a space, nor a letter after spaces
+				return ""
+			}
+		}
+		line = strings.TrimSpace(line)
+		if line == "" {
+			return ""
+		}
+		// Deal with some address masking that can interfere with next stages
+		line = strings.Replace(line, " <at> ", "@", -1)
+		// We want a single <, followed by a single >.
+		openPos, closePos := -1, -1
+		for i := 0; i < len(line); i++ {
+			if line[i] == '<' {
+				if openPos != -1 {
+					// too many <s
+					return ""
+				}
+				openPos = i
+			} else if line[i] == '>' {
+				if openPos == -1 || closePos != -1 {
+					// the > comes before the <, or too many >s
+					return ""
+				}
+				closePos = i
+			}
+		}
+		// Address should be last in the line (spaces are already trimmed)
+		if openPos == -1 || closePos != len(line) - 1 {
+			return ""
+		}
+		// Trim spaces around the name
+		name := strings.TrimSpace(line[:openPos])
+		// Same for the address
+		address := strings.TrimSpace(line[openPos+1:closePos])
+		// There should be a single @ in the address
+		if strings.Count(address, "@") != 1 {
+			return ""
+		}
+		// OK
+		return fmt.Sprintf("%s <%s>", name, address)
+	}
 
 	control.baton.startProgress("processing changelogs", uint64(len(repo.events)))
 	attributions := make([]string, len(selection))
+	allCoAuthors := make([][]string, len(selection))
 	evts := new(Safecounter) // shared between threads, for progression only
 	cc := new(Safecounter)
 	cl := new(Safecounter)
@@ -19130,6 +19183,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 			return
 		}
 		foundAttribution := ""
+		coAuthors := make(map[string]bool, 0)
 		// Let's say an attribution is active when its <author><date> line is
 		// newly added, or if there is a new non-whitespace line added in the
 		// block just following the <author><date> line.  If there is exactly
@@ -19157,11 +19211,14 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 						lastUnchanged = difflines
 						lastIsValid = true
 					} else if difflines.Tag == 'i' || difflines.Tag == 'r' {
-						for _, diffline := range now[difflines.J1:difflines.J2] {
+						for pos := difflines.J1; pos < difflines.J2; pos++ {
+							diffline := now[pos]
 							if strings.TrimSpace(diffline) != "" {
 								attribution := parseAttributionLine(diffline)
+								foundAt := 0
 								if attribution != "" {
 									// we found an active attribution line
+									foundAt = pos
 									goto attributionFound
 								} else if lastIsValid {
 									// this is not an attribution line, search for
@@ -19171,6 +19228,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 										if attribution != "" {
 											// this is the active attribution
 											// corresponding to the added chunk
+											foundAt = j
 											goto attributionFound
 										}
 									}
@@ -19184,6 +19242,14 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 								}
 								foundAttribution = attribution
 								lastIsValid = false // it is now irrelevant
+								// Now search for co-authors below the attribution
+								for i := foundAt + 1; i < len(now); i++ {
+									coAuthor := parseCoAuthor(now[i])
+									if coAuthor == "" {
+										break
+									}
+									coAuthors[coAuthor] = true
+								}
 							}
 						}
 					}
@@ -19192,6 +19258,14 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 			}
 		}
 		attributions[eventRank] = foundAttribution
+		sorted := make([]string, len(coAuthors))
+		k := 0
+		for coAuthor := range coAuthors {
+			sorted[k] = coAuthor
+			k++
+		}
+		sort.Strings(sorted)
+		allCoAuthors[eventRank] = sorted
 	})
 	control.baton.endProgress()
 	for eventRank, eventID := range selection {
@@ -19253,6 +19327,13 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 					cd++
 				}
 			}
+		}
+		// Now fill-in the co-authors
+		if len(allCoAuthors[eventRank]) > 0 {
+			message := []string{commit.Comment}
+			message = append(message, allCoAuthors[eventRank]...)
+			message = append(message)
+			commit.Comment = strings.Join(message, "\nCo-Authored-By: ") + "\n"
 		}
 	}
 	repo.invalidateNamecache()
