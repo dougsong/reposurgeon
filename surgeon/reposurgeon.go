@@ -11458,6 +11458,87 @@ func (repo *Repository) accumulateCommits(subarg *fastOrderedIntSet,
 	return result
 }
 
+// Delete branches as git does, by forgetting all commits reachable only from
+// these branches, then renaming the branch of all commits still reachable to
+// ensure the deleted branches no longer appear anywhere
+func (repo *Repository) deleteBranch(selection orderedIntSet, shouldDelete func(string) bool) {
+	if selection == nil {
+		selection = repo.all()
+	}
+	selected := newFastOrderedIntSet(selection...)
+	// Select resets & commits to keep
+	toKeep := newFastOrderedIntSet()
+	wrongBranch := newFastOrderedIntSet()
+	for i, ev := range repo.events {
+		switch event := ev.(type) {
+		case *Reset:
+			if !shouldDelete(event.ref) {
+				toKeep.Add(i)
+				if event.committish != "" {
+					idx := repo.markToIndex(event.committish)
+					if idx != -1 {
+						toKeep.Add(idx)
+					}
+				}
+			}
+		case *Commit:
+			if shouldDelete(event.Branch) {
+				wrongBranch.Add(i)
+			} else {
+				toKeep.Add(i)
+			}
+		}
+		control.baton.twirl()
+	}
+	// Augment to all commits reachable from toKeep
+	toKeep = repo.accumulateCommits(toKeep,
+		func(c *Commit) []CommitLike { return c.parents() }, true)
+	// Select resets to delete & unreachable commits
+	deletia := []int{}
+	lastKeptIdxWithWrongBranch := -1
+	for i, ev := range repo.events {
+		switch ev.(type) {
+		case *Reset, *Commit:
+			if toKeep.Contains(i) {
+				if wrongBranch.Contains(i) {
+					lastKeptIdxWithWrongBranch = i
+				}
+			} else if selected.Contains(i) {
+				deletia = append(deletia, i)
+			}
+		}
+		control.baton.twirl()
+	}
+	// Now the last remaining commit with the correct branch has necessarily a
+	// child with a branch to keep (or it would be unreachable). It has been
+	// found in the previous loop; the event is a Commit since wrongBranch only
+	// contains commit indices.
+	if lastKeptIdxWithWrongBranch != -1 {
+		lastCommit := repo.events[lastKeptIdxWithWrongBranch].(*Commit)
+		// Use its first child's Branch for all remaining commits with the
+		// wrong branch: it will not move any ref since the first child is
+		// later and will modify where its Branch points to.
+		newBranch := ""
+		for _, child := range lastCommit.children() {
+			if commit, ok := child.(*Commit); ok && !shouldDelete(commit.Branch) {
+				newBranch = commit.Branch
+				break
+			}
+		}
+		if newBranch == "" {
+			panic("Impossible commit with no good children in deleteBranch")
+		}
+		for i, ev := range repo.events {
+			if selected.Contains(i) && toKeep.Contains(i) && wrongBranch.Contains(i) {
+				ev.(*Commit).setBranch(newBranch)
+			}
+			control.baton.twirl()
+		}
+	}
+	// Actually delete the commits only reachable from wrong branches.
+	repo.delete(orderedIntSet(deletia), nil)
+}
+
 //
 // Helpers
 //
