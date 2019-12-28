@@ -9087,7 +9087,7 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
 	}
 	var old string
 	var newmark string
-	for _, event := range repo.events {
+	for idx, event := range repo.events {
 		switch event.(type) {
 		case *Blob:
 			blob := event.(*Blob)
@@ -9096,6 +9096,7 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
 				newmark := remark(old, event.idMe())
 				logit(logUNITE, "renumbering %s -> %s in blob mark", old, newmark)
 				blob.mark = newmark
+				repo.events[idx] = blob
 			}
 		case *Commit:
 			commit := event.(*Commit)
@@ -9104,6 +9105,7 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
 				newmark := remark(old, event.idMe())
 				logit(logUNITE, "renumbering %s -> %s in commit mark", old, newmark)
 				commit.mark = newmark
+				repo.events[idx] = commit
 			}
 		case *Tag:
 			tag := event.(*Tag)
@@ -9112,6 +9114,7 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
 				newmark := remark(old, event.idMe())
 				logit(logUNITE, "renumbering %s -> %s in tag committish", old, newmark)
 				tag.committish = newmark
+				repo.events[idx] = tag
 			}
 		case *Reset:
 			reset := event.(*Reset)
@@ -9120,6 +9123,7 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
 				newmark := remark(old, event.idMe())
 				logit(logUNITE, "renumbering %s -> %s in reset committish", old, newmark)
 				reset.committish = newmark
+				repo.events[idx] = reset
 			}
 		}
 	}

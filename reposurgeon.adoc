@@ -2432,6 +2432,9 @@ it, simply copying the username into the address field.
 --noignores::
 Do not fill in an equivalent of default Subversion ignore patterns.
 
+--no-automatic-ignores::
+Do not genarate .gitignore files from svn:ignore properties.
+
 --preserve::
 When a branch or tag was deleted in SVN, preserve the history up to
 deletion in a git ref under refs/deleted/.

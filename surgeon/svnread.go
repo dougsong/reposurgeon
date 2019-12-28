@@ -1085,7 +1085,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 	}
 
 	nobranch := options.Contains("--nobranch")
-	doignores := !options.Contains("--no-automatic-ignore")
+	doignores := !options.Contains("--no-automatic-ignores")
 	branchesWithDefaultIgnore := newStringSet()
 	// Generated .gitignore files from explicit svn:ignore props have to be
 	// tracked separately since we won't modify pathmaps.
