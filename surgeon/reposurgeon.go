@@ -12713,19 +12713,23 @@ func (rs *Reposurgeon) reportSelect(parse *LineParse, display func(*LineParse, i
 }
 
 // Grab a whitespace-delimited token from the front of the line.
+// Interpret double quotes to protect spaces
 func popToken(line string) (string, string) {
 	tok := ""
-	line = strings.TrimLeft(line, " \n\t")
-	for {
-		if line == "" || line[0] == ' ' || line[0] == '\t' {
-			break
+	line = strings.TrimLeftFunc(line, unicode.IsSpace)
+	inQuotes := false
+	for pos, r := range line {
+		if !inQuotes && unicode.IsSpace(r) {
+			line = strings.TrimLeftFunc(line[pos:], unicode.IsSpace)
+			return tok, line
+		}
+		if r == '"' {
+			inQuotes = !inQuotes
 		} else {
-			tok += line[:1]
-			line = line[1:]
+			tok += string(r)
 		}
 	}
-	line = strings.TrimLeft(line, " \n\t")
-	return tok, line
+	return tok, ""
 }
 
 func (commit *Commit) findSuccessors(path string) []string {
