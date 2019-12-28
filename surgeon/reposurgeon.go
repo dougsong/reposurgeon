@@ -12718,15 +12718,20 @@ func popToken(line string) (string, string) {
 	tok := ""
 	line = strings.TrimLeftFunc(line, unicode.IsSpace)
 	inQuotes := false
+	escape := ""
 	for pos, r := range line {
-		if !inQuotes && unicode.IsSpace(r) {
+		if !inQuotes && escape == "" && unicode.IsSpace(r) {
 			line = strings.TrimLeftFunc(line[pos:], unicode.IsSpace)
 			return tok, line
 		}
-		if r == '"' {
+		s := escape + string(r)
+		escape = ""
+		if s == "\"" {
 			inQuotes = !inQuotes
+		} else if s == "\\" {
+			escape = "\\"
 		} else {
-			tok += string(r)
+			tok += s
 		}
 	}
 	return tok, ""
