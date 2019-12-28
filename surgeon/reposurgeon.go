@@ -8787,7 +8787,7 @@ func (d *DAG) setdefault(key int, e *DAGedges) *DAGedges {
 	return (*d)[key]
 }
 
-// DAGedges is a set of in and out edges to be associated with a DAG 
+// DAGedges is a set of in and out edges to be associated with a DAG
 type DAGedges struct {
 	eout orderedIntSet
 	ein  orderedIntSet
@@ -19021,9 +19021,9 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		time.UnixDate,
 		time.ANSIC}
 	type dateSkipper struct {
-		format string
+		format   string
 		fmtCount int
-		skipre *regexp.Regexp
+		skipre   *regexp.Regexp
 	}
 	dateSkippers := make([]dateSkipper, 0)
 	for _, format := range dateFormats {
@@ -19052,7 +19052,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		addrStart := strings.LastIndex(line, "<")
 		addrEnd := strings.Index(line[addrStart+1:], ">") + addrStart + 1
 		at := strings.Index(line, "@")
-		if addrStart < 0 || addrEnd < 0 || at < addrStart || at > addrEnd  {
+		if addrStart < 0 || addrEnd < 0 || at < addrStart || at > addrEnd {
 			return ""
 		}
 		// Remove all other < and > delimiters to avoid malformed attributions

@@ -180,7 +180,7 @@ a common form of multi-project repository.
 `,
 }
 
-var base int;
+var base int
 
 // Baton - ship progress indications to stderr
 type Baton struct {

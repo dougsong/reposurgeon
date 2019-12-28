@@ -1106,7 +1106,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 			// Set up default ignores just before the first file node
 			// of each branch
 			if doignores &&
-					(node.kind == sdFILE ||
+				(node.kind == sdFILE ||
 					(node.kind == sdDIR && isDeclaredBranch(node.path) && node.fromRev != 0)) {
 				curbranch := ""
 				if !nobranch {
@@ -1138,7 +1138,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 				// we want to generate a corresponding .gitignore
 				if doignores && node.hasProperties() && node.props.has("svn:ignore") {
 					appendExpanded(ignorenode(node.path[:len(node.path)-1],
-					                          node.props.get("svn:ignore")))
+						node.props.get("svn:ignore")))
 					node.props.delete("svn:ignore")
 					presentGitIgnores.Add(node.path)
 				}
