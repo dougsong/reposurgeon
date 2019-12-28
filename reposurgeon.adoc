@@ -1381,7 +1381,7 @@ numbers after the operation.
 
 +branch+ _branchname_ { +rename+ | +delete+ } [ _arg_ ]::
    Rename or delete a branch (and any associated resets).  First argument
-   must be an existing branch name; second argument must one of the verbs
+   must be an existing branch name; second argument must be one of the verbs
    'rename' or 'delete'.
 +
 For a 'rename', the third argument may be any token that is a syntactically
