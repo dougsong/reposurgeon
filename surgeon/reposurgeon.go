@@ -11422,7 +11422,11 @@ func (rs *Reposurgeon) ancHandler(state selEvalState, subarg *fastOrderedIntSet)
 
 func (rs *Reposurgeon) accumulateCommits(subarg *fastOrderedIntSet,
 	operation func(*Commit) []CommitLike, recurse bool) *fastOrderedIntSet {
-	repo := rs.chosen()
+	return rs.chosen().accumulateCommits(subarg, operation, recurse)
+}
+
+func (repo *Repository) accumulateCommits(subarg *fastOrderedIntSet,
+	operation func(*Commit) []CommitLike, recurse bool) *fastOrderedIntSet {
 	commits := repo.commits(newOrderedIntSet(subarg.Values()...))
 	if !recurse {
 		result := newFastOrderedIntSet()
