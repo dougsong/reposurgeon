@@ -5611,8 +5611,12 @@ func (commit *Commit) canonicalize() {
 			newops = append(newops, fileop)
 		}
 	}
-	commit.setOperations(newops)
-	// Finishing touches.  Sorting always has to be done
+	// Now replace the Commit fileops. Avoid setOperations() because there
+	// is no need to invalidateManifests()
+	commit.fileops = newops
+	// Finishing touches. Ops need to be sorted for consistency. simplify()
+	// is overkill here but it should not cost too much, and sorting without
+	// simplify is unreliable in other cases so has been removed.
 	commit.simplify()
 }
 
