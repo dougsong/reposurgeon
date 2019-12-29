@@ -433,6 +433,8 @@ SVNCLEAN := \
 	lint.svn \
 	merge-with-delete.svn \
 	mergeinfo-combine.svn \
+	mergeinfo-grandparent.svn \
+	mergeinfo-trunkstomp.svn \
 	mergeinfo-with-split.svn \
 	mergeinfo.svn \
 	mixedbranch.svn \
