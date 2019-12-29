@@ -16344,45 +16344,8 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 		if len(resets) > 0 {
 			repo.declareSequenceMutation("reset deletion")
 		}
-		// Strictly speak it doesn't matter what new tag identifier we patch in to
-		// replace the deleted one(s), because when thev repos is imported only the
-		// names of the resets will matter.  The goal here is to produce something
-		// similar enough to what git-fast-export would dump that it would coincide
-		// in most cases, because that eases regression testing.
 		if len(commits) > 0 {
-			successors := make([]string, 0)
-			for _, child := range commits[len(commits)-1].children() {
-				childCommit, ok := child.(*Commit)
-				if !ok {
-					continue
-				}
-				childFather, ok := childCommit.parents()[0].(*Commit)
-				if !ok {
-					continue
-				}
-				if childFather == commits[len(commits)-1] {
-					successors = append(successors, childCommit.Branch)
-				}
-			}
-
-			//successors := {child.Branch for child in commits[-1].children() if child.parents()[0] == commits[-1]}
-			if len(successors) >= 1 {
-				for _, event := range commits {
-					event.Branch = successors[0]
-				}
-			} else {
-				for _, event := range commits {
-					if event.hasParents() && event.isCommit() && event.parents()[0].isCommit() {
-						event.Branch = event.parents()[0].(*Commit).Branch
-					} else {
-						// Must be a root commit. This should
-						// work unless rgee repo is multiroot
-						// and probably eon't foo up even then.
-						event.Branch = "refs/heads/master"
-					}
-				}
-			}
-			control.baton.twirl()
+			repo.deleteBranch(selection, refMatches)
 		}
 	} else {
 		croak("unknown verb '%s' in tag command.", verb)
