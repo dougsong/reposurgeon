@@ -81,20 +81,29 @@ func containingDir(s string) string {
 	return s[:i]
 }
 
+// trimSep is an ad-hoc version of strings.Trim(xxx, svnSep)
+func trimSep(s string) string {
+	if len(s) > 0 && s[0] == svnSep[0] {
+		s = s[1:]
+	}
+	l = len(s)
+	if l > 0 && s[l-1] == svnSep[0] {
+		s = s[:l-1]
+	}
+	return s
+}
+
 // isDeclaredBranch returns true iff the user requested that this path be treated as a branch or tag.
 func isDeclaredBranch(path string) bool {
-	np := path
 	if path == "" {
 		return false
 	}
-	if path[len(path)-1] == svnSep[0] {
-		np = path[:len(path)-1]
-	}
+	np := trimSep(path)
 	maybeBranch := false
 	isNamespace := false
 	for _, trial := range control.listOptions["svn_branchify"] {
 		if trial == "*" {
-			// Replace it by svnSepWithStar so that the next test will
+			// Replace it by rvnSepWithStar so that the next test will
 			// trim it to "", which is what containingDir() returns for
 			// paths without any separator.
 			trial = svnSepWithStar
@@ -1749,14 +1758,7 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 // to branch, or nil if not found.  It needs sp.lastCommitOnBranchAt to be
 // filled, so can only be used after phase 8a has run.
 func lastRelevantCommit(sp *StreamParser, maxrev revidx, branch string) *Commit {
-	// Make branch look like a branch
-	if branch != "" && branch[:1] == svnSep {
-		branch = branch[1:]
-	}
-	if branch != "" && branch[len(branch)-1] == svnSep[0] {
-		branch = branch[:len(branch)-1]
-	}
-	if list, ok := sp.lastCommitOnBranchAt[branch]; ok {
+	if list, ok := sp.lastCommitOnBranchAt[trimSep(branch)]; ok {
 		l := revidx(len(list)) - 1
 		if maxrev > l {
 			maxrev = l
@@ -1893,7 +1895,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 				record := sp.revisions[rev]
 				for _, node := range record.nodes {
 					if node.kind == sdDIR && node.fromRev != 0 &&
-						strings.TrimRight(node.path, svnSep) == branch {
+						trimSep(node.path) == branch {
 						frombranch := node.fromPath
 						if !isDeclaredBranch(frombranch) {
 							frombranch, _ = splitSVNBranchPath(node.fromPath)
@@ -2010,12 +2012,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 			}
 			// One path, one range list
 			branch, ranges := fields[0], fields[1]
-			if branch != "" && branch[:1] == svnSep {
-				branch = branch[1:]
-			}
-			if branch != "" && branch[len(branch)-1] == svnSep[0] {
-				branch = branch[:len(branch)-1]
-			}
+			branch = trimSep(branch)
 			revs := mergeinfo[branch]
 			for _, span := range strings.Split(ranges, ",") {
 				// Ignore non-inheritable merges, they represent
@@ -2076,7 +2073,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 					// We can only process mergeinfo if we find a commit
 					// corresponding to the revision on the branch whose
 					// mergeinfo has been modified
-					branch := strings.Trim(node.path, svnSep)
+					branch := trimSep(node.path)
 					if !isDeclaredBranch(branch) {
 						continue
 					}
@@ -2122,6 +2119,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 					// Start of the loop over the mergeinfo
 					minIndex := int(^uint(0) >> 2)
 					for fromPath, revs := range newMerges {
+						fromPath = trimSep(fromPath)
 						if !isDeclaredBranch(fromPath) {
 							continue
 						}
