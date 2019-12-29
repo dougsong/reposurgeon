@@ -5315,6 +5315,7 @@ func parseInt(s string) int {
 func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesize int64) {
 	// Beginning of fast-import stream parsing
 	commitcount := 0
+	branchPosition := make(map[string]*Commit)
 	baton.startProgress("parse fast import stream", uint64(filesize))
 	for {
 		line := sp.fiReadline()
@@ -5496,7 +5497,11 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			if commit.mark == "" {
 				sp.warn("unmarked commit")
 			}
+			if p, ok := branchPosition[commit.Branch]; ok && !commit.hasParents() {
+				commit.addParentCommit(p)
+			}
 			sp.repo.addEvent(commit)
+			branchPosition[commit.Branch] = commit
 			commitcount++
 			baton.twirl()
 		} else if bytes.HasPrefix(line, []byte("reset")) {
@@ -5506,7 +5511,14 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			if bytes.HasPrefix(line, []byte("from")) {
 				committish := string(bytes.TrimSpace(line[5:]))
 				reset.remember(sp.repo, committish)
+				if commit, ok := sp.repo.markToEvent(committish).(*Commit); ok {
+					branchPosition[reset.ref] =	commit
+				} else {
+					logit(logWARN, "non-mark committish in reset")
+					delete(branchPosition, reset.ref)
+				}
 			} else {
+				delete(branchPosition, reset.ref)
 				sp.pushback(line)
 			}
 			sp.repo.addEvent(reset)
