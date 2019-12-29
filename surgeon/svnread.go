@@ -86,7 +86,7 @@ func trimSep(s string) string {
 	if len(s) > 0 && s[0] == svnSep[0] {
 		s = s[1:]
 	}
-	l = len(s)
+	l := len(s)
 	if l > 0 && s[l-1] == svnSep[0] {
 		s = s[:l-1]
 	}
@@ -2054,6 +2054,37 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 		}
 		return mergeinfo
 	}
+	forkIndices := func(commit *Commit) map[string]int {
+		// Compute all fork points from a root to the branch
+		branch := sp.markToSVNBranch[commit.mark]
+		result := make(map[string]int)
+		index := sp.repo.eventToIndex(commit)
+		for commit != nil {
+			// Find the last branch root before commit
+			for _, root := range sp.branchRoots[branch] {
+				if sp.repo.eventToIndex(root) > index {
+					break
+				}
+				commit = root
+			}
+			// The first parent is the fork point
+			var fork *Commit
+			if commit.hasParents() {
+				fork, _ = commit.parents()[0].(*Commit)
+			}
+			if fork == nil {
+				break // We didn't fork from anything
+			}
+			branch = sp.markToSVNBranch[fork.mark]
+			if branch == "" {
+				break
+			}
+			index = sp.repo.eventToIndex(fork)
+			result[branch] = index
+			commit = fork
+		}
+		return result
+	}
 	seenMerges := make(map[string]map[string]map[int]bool)
 	for revision, record := range sp.revisions {
 		for _, node := range record.nodes {
@@ -2100,22 +2131,11 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 					// SVN tends to not put in mergeinfo the revisions that
 					// predate the merge base of the source and dest branch
 					// tips. Computing a merge base would be costly, but we
-					// can make a poor man's one by using the parent of the
-					// dest branch root if that parent is on the source.
+					// can make a poor man's one by checking the fork points
+					// that is the first parent of the branch root, and that
+					// of the obtained commit, recursively.
 					destIndex := sp.repo.eventToIndex(commit)
-					var branchRoot *Commit
-					for _, root := range sp.branchRoots[branch] {
-						if sp.repo.eventToIndex(root) > destIndex {
-							break
-						}
-						branchRoot = root
-					}
-					var branchBase *Commit
-					branchBaseIndex := -1
-					if branchRoot != nil && branchRoot.hasParents() {
-						branchBase = branchRoot.parents()[0].(*Commit)
-						branchBaseIndex = sp.repo.eventToIndex(branchBase)
-					}
+					forks := forkIndices(commit)
 					// Start of the loop over the mergeinfo
 					minIndex := int(^uint(0) >> 2)
 					for fromPath, revs := range newMerges {
@@ -2123,10 +2143,11 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 						if !isDeclaredBranch(fromPath) {
 							continue
 						}
-						// Check if branchRoot's first parent is in the fromPath branch
+						// Check if the destination branch has a fork point
+						// in the source branch, and remember its index.
 						baseIndex := -1
-						if branchBase != nil && sp.markToSVNBranch[branchBase.mark] == fromPath {
-							baseIndex = branchBaseIndex
+						if forkIndex, ok := forks[fromPath]; ok {
+							baseIndex = forkIndex
 						}
 						// Ranges were unified when parsing if they were
 						// contiguous in terms of revisions. Now unify
@@ -2142,7 +2163,19 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 						i, lastGood := 0, -1
 						count := len(revs)
 						for i < count {
-							// Skip all ranges not starting with the branch start
+							// Skip all ranges not starting at the right place
+							// We accept a range [m;M] if the commit just
+							// before the range is:
+							// a) nil, if the branch started to exist at
+							//    revision m.
+							// b) a deleteall, if the branch was recreated at
+							//    revision m.
+							// c) a commit *before or equal* the fork point
+							//    from the source to the destination branch,
+							//    or the branch it forked from, and so on,
+							//    if any exists. It means that *at least* the
+							//    revisions following the fork point are
+							//    merged.
 							for ; i < count; i++ {
 								// Find the last commit just before the range
 								before := lastRelevantCommit(sp, revidx(revs[i].min-1), fromPath)
