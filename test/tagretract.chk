@@ -35,7 +35,7 @@ commit one
 M 100644 :1 .gitignore
 M 100644 :2 test.txt
 
-commit refs/deleted/r6.2/tags/1.0
+commit refs/tags/1.0rc1
 #legacy-id 5
 mark :4
 committer mike <mike> 1437858607 +0000

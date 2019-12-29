@@ -39,6 +39,7 @@ slimit=""
 rlimit=""
 nobranch=""
 progress=no
+readopt=""
 while getopts ade:ir:R:suvBpq opt
 do
     case $opt in
@@ -48,7 +49,9 @@ do
 	a) svnquiet="";;
 	i|s|u) compareopt="${compareopt} -${opt}";;
 	R) slimit="-r ${OPTARG}" rlimit="readlimit ${OPTARG}";;
-	r) revision="${OPTARG}";;
+	r) revision="${OPTARG}"; readopt="--preserve";; # --preserve is to avoid setting commit.Branch
+	                                                # to something unrelated, because we rely on it
+	                                                # to know which dir to checkout in SVN.
 	v|q) repotoolopt="${repotoolopt} -${opt}";;
 	u) compareopt="${compareopt} -${opt}";;
 	B) nobranch="--nobranch";;
@@ -93,7 +96,7 @@ fi
 ./svn-to-svn ${svnquiet} ${slimit} -c <${what} ${stem}
 
 # Make a git repo from the dump using reposurgeon
-${REPOSURGEON:-../reposurgeon} "${TESTOPT}" "${rlimit}" "read ${nobranch} <${what}" \
+${REPOSURGEON:-../reposurgeon} "${TESTOPT}" "${rlimit}" "read ${nobranch} ${readopt} <${what}" \
     "prefer git" "rebuild ${stem}-git" "write >${stem}.gfi" >&-
 
 if [   "(" -e ${stem}-checkout/trunk ")"    \

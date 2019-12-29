@@ -25,7 +25,7 @@ mark :2
 data 8
 foo/bar
 
-commit refs/deleted/r7/heads/master
+commit refs/heads/master
 #legacy-id 2
 mark :3
 committer jmyers <jmyers> 1575578272 +0000
@@ -44,7 +44,7 @@ mark :5
 data 9
 x/y file
 
-commit refs/deleted/r7/heads/master
+commit refs/heads/master
 #legacy-id 3
 mark :6
 committer jmyers <jmyers> 1575578288 +0000
@@ -81,7 +81,7 @@ change on branch
 from :7
 M 100644 :8 README
 
-commit refs/deleted/r7/heads/master
+commit refs/heads/master
 #legacy-id 6
 mark :10
 committer jmyers <jmyers> 1575578336 +0000

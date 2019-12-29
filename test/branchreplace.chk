@@ -45,7 +45,7 @@ mark :6
 data 52
 Revision is 2, file path is trunk/drivers/serial.c.
 
-commit refs/deleted/r12/heads/master
+commit refs/heads/master
 #legacy-id 2
 mark :7
 committer aquette <aquette> 1106836394 +0000
@@ -153,7 +153,7 @@ various mge-shut, newhidups and tripplite improvements and buxfixes
 from :17
 M 100644 :18 drivers/libusb.c
 
-commit refs/deleted/r13.1/heads/Development
+commit refs/heads/master
 #legacy-id 10
 mark :20
 committer no-author <no-author> 1119553881 +0000
@@ -173,7 +173,7 @@ mark :21
 data 68
 Revision is 11, file path is branches/Development/drivers/serial.c.
 
-commit refs/deleted/r13.1/heads/Development
+commit refs/heads/master
 #legacy-id 11
 mark :22
 committer adkorte-guest <adkorte-guest> 1139674045 +0000

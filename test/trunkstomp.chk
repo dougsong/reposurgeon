@@ -25,7 +25,7 @@ mark :2
 data 13
 file foo/bar
 
-commit refs/deleted/r6/heads/master
+commit refs/heads/master
 #legacy-id 2
 mark :3
 committer jmyers <jmyers> 1575576088 +0000
@@ -44,7 +44,7 @@ mark :5
 data 19
 foo2/bar2 contents
 
-commit refs/deleted/r6/heads/master
+commit refs/heads/master
 #legacy-id 3
 mark :6
 committer jmyers <jmyers> 1575576133 +0000

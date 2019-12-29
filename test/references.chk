@@ -1540,7 +1540,7 @@ mark :305
 data 49
 Revision is 2, file path is trunk/server/user.h.
 
-commit refs/deleted/r355/heads/master
+commit refs/heads/master
 #legacy-id 2
 mark :306
 committer aquette <aquette> 1106836394 +0000
@@ -1852,7 +1852,7 @@ M 100644 :303 server/user-data.h
 M 100644 :304 server/user.c
 M 100644 :305 server/user.h
 
-commit refs/deleted/r357.2/heads/INITIAL_IMPORT_AQ
+commit refs/heads/master
 #legacy-id 3
 mark :307
 committer no-author <no-author> 1106836394 +0000
@@ -4475,7 +4475,7 @@ fix a wrong numbering in CHANGES file (-pre1 instead of -pre2)
 from :429
 M 100644 :431 CHANGES
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 65
 mark :433
 committer no-author <no-author> 1119553881 +0000
@@ -5021,7 +5021,7 @@ mark :477
 data 77
 Revision is 66, file path is branches/Development/packaging/mandriva/upsmon.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 66
 mark :478
 committer aquette <aquette> 1119560962 +0000
@@ -5073,7 +5073,7 @@ M 100644 :474 packaging/mandriva/nut.spec
 M 100644 :476 packaging/mandriva/upsd
 M 100644 :477 packaging/mandriva/upsmon
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 67
 mark :479
 committer aquette <aquette> 1119564571 +0000
@@ -5113,7 +5113,7 @@ mark :484
 data 68
 Revision is 69, file path is branches/Development/data/driver.list.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 69
 mark :485
 committer aquette <aquette> 1119862770 +0000
@@ -5149,7 +5149,7 @@ mark :490
 data 69
 Revision is 70, file path is branches/Development/include/version.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 70
 mark :491
 committer aquette <aquette> 1119971078 +0000
@@ -5275,7 +5275,7 @@ mark :509
 data 67
 Revision is 75, file path is branches/Development/drivers/solis.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 75
 mark :510
 committer aquette <aquette> 1120207188 +0000
@@ -5296,7 +5296,7 @@ mark :512
 data 68
 Revision is 76, file path is branches/Development/drivers/isbmex.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 76
 mark :513
 committer aquette <aquette> 1120224823 +0000
@@ -5366,7 +5366,7 @@ mark :524
 data 66
 Revision is 78, file path is branches/Development/man/snmp-ups.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 78
 mark :525
 committer aquette <aquette> 1120570729 +0000
@@ -5389,7 +5389,7 @@ mark :526
 data 71
 Revision is 79, file path is branches/Development/drivers/dummy-ups.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 79
 mark :527
 committer aquette <aquette> 1120571857 +0000
@@ -5449,7 +5449,7 @@ mark :536
 data 80
 Revision is 81, file path is branches/Development/packaging/RedHat/nut.spec.in.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 81
 mark :537
 committer aquette <aquette> 1121859397 +0000
@@ -5498,7 +5498,7 @@ mark :543
 data 68
 Revision is 83, file path is branches/Development/drivers/libusb.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 83
 mark :544
 committer aquette <aquette> 1121867657 +0000
@@ -5543,7 +5543,7 @@ mark :550
 data 65
 Revision is 85, file path is branches/Development/drivers/gendb.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 85
 mark :551
 committer aquette <aquette> 1121955345 +0000
@@ -5610,7 +5610,7 @@ mark :561
 data 67
 Revision is 87, file path is branches/Development/man/newhidups.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 87.1
 mark :562
 committer aquette <aquette> 1122032683 +0000
@@ -5641,7 +5641,7 @@ mark :565
 data 72
 Revision is 88, file path is branches/Development/drivers/genericups.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 88
 mark :566
 committer aquette <aquette> 1122035323 +0000
@@ -5800,7 +5800,7 @@ mark :591
 data 76
 Revision is 94, file path is branches/Development/data/html/nut-banner.png.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 94.1
 mark :592
 committer aquette <aquette> 1122499175 +0000
@@ -5827,7 +5827,7 @@ mark :593
 data 63
 Revision is 95, file path is branches/Development/Makefile.in.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 95
 mark :594
 committer aquette <aquette> 1122533678 +0000
@@ -5841,7 +5841,7 @@ mark :595
 data 68
 Revision is 96, file path is branches/Development/drivers/bcmxcp.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 96
 mark :596
 committer aquette <aquette> 1122895603 +0000
@@ -5855,7 +5855,7 @@ mark :597
 data 68
 Revision is 97, file path is branches/Development/man/genericups.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 97
 mark :598
 committer aquette <aquette> 1122895648 +0000
@@ -5879,7 +5879,7 @@ mark :601
 data 72
 Revision is 100, file path is branches/Development/drivers/newhidups.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 100
 mark :602
 committer aquette <aquette> 1122895781 +0000
@@ -5905,7 +5905,7 @@ mark :605
 data 72
 Revision is 101, file path is branches/Development/drivers/newhidups.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 101
 mark :606
 committer aquette <aquette> 1122904456 +0000
@@ -5941,7 +5941,7 @@ mark :611
 data 72
 Revision is 102, file path is branches/Development/drivers/newhidups.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 102
 mark :612
 committer aquette <aquette> 1122982203 +0000
@@ -5969,7 +5969,7 @@ mark :615
 data 72
 Revision is 103, file path is branches/Development/drivers/newhidups.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 103
 mark :616
 committer aquette <aquette> 1123060431 +0000
@@ -5985,7 +5985,7 @@ mark :617
 data 69
 Revision is 104, file path is branches/Development/drivers/libusb.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 104
 mark :618
 committer aquette <aquette> 1123061201 +0000
@@ -6054,7 +6054,7 @@ mark :630
 data 83
 Revision is 105, file path is branches/Development/scripts/hotplug/libhid.usermap.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 105
 mark :631
 committer aquette <aquette> 1123675568 +0000
@@ -6143,7 +6143,7 @@ mark :643
 data 67
 Revision is 107, file path is branches/Development/drivers/main.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 107
 mark :644
 committer aquette <aquette> 1124192911 +0000
@@ -6201,7 +6201,7 @@ mark :653
 data 75
 Revision is 111, file path is branches/Development/scripts/hotplug/README.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 111
 mark :654
 committer aquette <aquette> 1124201426 +0000
@@ -6228,7 +6228,7 @@ mark :656
 data 69
 Revision is 112, file path is branches/Development/data/driver.list.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 112
 mark :657
 committer aquette <aquette> 1124225738 +0000
@@ -6304,7 +6304,7 @@ mark :668
 data 68
 Revision is 115, file path is branches/Development/man/mge-utalk.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 115
 mark :669
 committer aquette <aquette> 1124368165 +0000
@@ -6463,7 +6463,7 @@ mark :695
 data 83
 Revision is 123, file path is branches/Development/scripts/hotplug/libhid.usermap.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 123
 mark :696
 committer clepple-guest <clepple-guest> 1125116335 +0000
@@ -6490,7 +6490,7 @@ mark :697
 data 69
 Revision is 124, file path is branches/Development/drivers/libhid.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 124
 mark :698
 committer clepple-guest <clepple-guest> 1125117374 +0000
@@ -6529,7 +6529,7 @@ mark :704
 data 72
 Revision is 125, file path is branches/Development/include/config.h.in.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 125
 mark :705
 committer clepple-guest <clepple-guest> 1125117776 +0000
@@ -6549,7 +6549,7 @@ mark :706
 data 72
 Revision is 126, file path is branches/Development/drivers/Makefile.in.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 126
 mark :707
 committer clepple-guest <clepple-guest> 1125542538 +0000
@@ -7129,7 +7129,7 @@ mark :735
 data 74
 Revision is 139, file path is branches/Development/data/html/Makefile.in.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 139
 mark :736
 committer aquette <aquette> 1126263012 +0000
@@ -7154,7 +7154,7 @@ mark :739
 data 76
 Revision is 140, file path is branches/Development/drivers/tripplite_usb.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 140
 mark :740
 committer aquette <aquette> 1126267606 +0000
@@ -7239,7 +7239,7 @@ mark :753
 data 72
 Revision is 144, file path is branches/Development/drivers/newhidups.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 144
 mark :754
 committer aquette <aquette> 1126276359 +0000
@@ -7265,7 +7265,7 @@ mark :756
 data 71
 Revision is 145, file path is branches/Development/docs/new-names.txt.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 145
 mark :757
 committer aquette <aquette> 1126277072 +0000
@@ -7280,7 +7280,7 @@ mark :758
 data 71
 Revision is 146, file path is branches/Development/docs/new-names.txt.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 146
 mark :759
 committer aquette <aquette> 1126279494 +0000
@@ -7304,7 +7304,7 @@ mark :762
 data 68
 Revision is 147, file path is branches/Development/man/belkinunv.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 147
 mark :763
 committer aquette <aquette> 1126281698 +0000
@@ -7624,7 +7624,7 @@ mark :819
 data 73
 Revision is 155, file path is branches/Development/drivers/victronups.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 155
 mark :820
 committer aquette <aquette> 1126528716 +0000
@@ -7679,7 +7679,7 @@ mark :821
 data 61
 Revision is 156, file path is branches/Development/Makefile.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 156
 mark :822
 committer aquette <aquette> 1126529023 +0000
@@ -7713,7 +7713,7 @@ mark :827
 data 69
 Revision is 158, file path is branches/Development/man/bcmxcp_usb.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 158
 mark :828
 committer aquette <aquette> 1126530130 +0000
@@ -7736,7 +7736,7 @@ mark :830
 data 72
 Revision is 159, file path is branches/Development/drivers/newhidups.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 159
 mark :831
 committer selinger-guest <selinger-guest> 1126547712 +0000
@@ -7767,7 +7767,7 @@ mark :835
 data 72
 Revision is 160, file path is branches/Development/drivers/newhidups.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 160
 mark :836
 committer selinger-guest <selinger-guest> 1126575581 +0000
@@ -7790,7 +7790,7 @@ mark :838
 data 69
 Revision is 163, file path is branches/Development/data/driver.list.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 163
 mark :839
 committer aquette <aquette> 1126601371 +0000
@@ -7835,7 +7835,7 @@ mark :846
 data 72
 Revision is 165, file path is branches/Development/drivers/newhidups.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 165
 mark :847
 committer selinger-guest <selinger-guest> 1126645866 +0000
@@ -7875,7 +7875,7 @@ mark :851
 data 72
 Revision is 166, file path is branches/Development/drivers/newhidups.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 166
 mark :852
 committer selinger-guest <selinger-guest> 1126715194 +0000
@@ -8314,7 +8314,7 @@ mark :856
 data 69
 Revision is 172, file path is branches/Development/data/driver.list.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 172
 mark :857
 committer selinger-guest <selinger-guest> 1126756583 +0000
@@ -8346,7 +8346,7 @@ mark :861
 data 66
 Revision is 175, file path is branches/Development/drivers/gendb.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 175
 mark :862
 committer selinger-guest <selinger-guest> 1126834591 +0000
@@ -8369,7 +8369,7 @@ mark :864
 data 66
 Revision is 176, file path is branches/Development/drivers/gendb.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 176
 mark :865
 committer selinger-guest <selinger-guest> 1126916971 +0000
@@ -8428,7 +8428,7 @@ mark :872
 data 60
 Revision is 180, file path is branches/Development/CHANGES.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 180
 mark :873
 committer selinger-guest <selinger-guest> 1126989517 +0000
@@ -8531,7 +8531,7 @@ mark :887
 data 66
 Revision is 187, file path is branches/Development/drivers/gendb.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 187
 mark :888
 committer selinger-guest <selinger-guest> 1127146364 +0000
@@ -8551,7 +8551,7 @@ mark :890
 data 72
 Revision is 188, file path is branches/Development/drivers/Makefile.in.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 188
 mark :891
 committer selinger-guest <selinger-guest> 1127148214 +0000
@@ -8566,7 +8566,7 @@ mark :892
 data 60
 Revision is 189, file path is branches/Development/CHANGES.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 189
 mark :893
 committer selinger-guest <selinger-guest> 1127148312 +0000
@@ -8665,7 +8665,7 @@ mark :911
 data 76
 Revision is 196, file path is branches/Development/drivers/tripplite_usb.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 196
 mark :912
 committer selinger-guest <selinger-guest> 1127178958 +0000
@@ -8742,7 +8742,7 @@ mark :921
 data 68
 Revision is 197, file path is branches/Development/man/newhidups.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 197
 mark :922
 committer selinger-guest <selinger-guest> 1127181565 +0000
@@ -8779,7 +8779,7 @@ mark :926
 data 76
 Revision is 198, file path is branches/Development/drivers/tripplite_usb.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 198
 mark :927
 committer selinger-guest <selinger-guest> 1127182384 +0000
@@ -8862,7 +8862,7 @@ mark :941
 data 72
 Revision is 200, file path is branches/Development/drivers/newhidups.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 200
 mark :942
 committer selinger-guest <selinger-guest> 1127520984 +0000
@@ -8939,7 +8939,7 @@ mark :951
 data 76
 Revision is 201, file path is branches/Development/drivers/tripplite_usb.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 201
 mark :952
 committer selinger-guest <selinger-guest> 1127523038 +0000
@@ -8961,7 +8961,7 @@ mark :953
 data 60
 Revision is 202, file path is branches/Development/CHANGES.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 202
 mark :954
 committer selinger-guest <selinger-guest> 1127525566 +0000
@@ -9029,7 +9029,7 @@ mark :965
 data 76
 Revision is 204, file path is branches/Development/drivers/tripplite_usb.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 204
 mark :966
 committer selinger-guest <selinger-guest> 1127529542 +0000
@@ -9093,7 +9093,7 @@ mark :975
 data 72
 Revision is 205, file path is branches/Development/drivers/newhidups.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 205
 mark :976
 committer selinger-guest <selinger-guest> 1127536645 +0000
@@ -9153,7 +9153,7 @@ mark :982
 data 66
 Revision is 209, file path is branches/Development/docs/acpi.txt.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 209
 mark :983
 committer aquette <aquette> 1128113371 +0000
@@ -9188,7 +9188,7 @@ mark :988
 data 65
 Revision is 210, file path is branches/Development/man/bcmxcp.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 210
 mark :989
 committer aquette <aquette> 1128114489 +0000
@@ -9206,7 +9206,7 @@ mark :990
 data 69
 Revision is 211, file path is branches/Development/drivers/bcmxcp.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 211
 mark :991
 committer aquette <aquette> 1128114639 +0000
@@ -9220,7 +9220,7 @@ mark :992
 data 69
 Revision is 212, file path is branches/Development/data/driver.list.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 212
 mark :993
 committer aquette <aquette> 1128115342 +0000
@@ -9277,7 +9277,7 @@ mark :1001
 data 69
 Revision is 214, file path is branches/Development/data/driver.list.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 214
 mark :1002
 committer aquette <aquette> 1128117884 +0000
@@ -9306,7 +9306,7 @@ mark :1005
 data 60
 Revision is 216, file path is branches/Development/CHANGES.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 216
 mark :1006
 committer aquette <aquette> 1128118105 +0000
@@ -9325,7 +9325,7 @@ mark :1008
 data 70
 Revision is 217, file path is branches/Development/docs/upssched.txt.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 217
 mark :1009
 committer aquette <aquette> 1128190832 +0000
@@ -9340,7 +9340,7 @@ mark :1010
 data 70
 Revision is 218, file path is branches/Development/docs/upssched.txt.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 218
 mark :1011
 committer aquette <aquette> 1128190997 +0000
@@ -9404,7 +9404,7 @@ mark :1021
 data 83
 Revision is 220, file path is branches/Development/scripts/hotplug/libhid.usermap.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 220
 mark :1022
 committer clepple-guest <clepple-guest> 1128204677 +0000
@@ -9428,7 +9428,7 @@ mark :1023
 data 60
 Revision is 221, file path is branches/Development/CHANGES.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 221
 mark :1024
 committer selinger-guest <selinger-guest> 1128206595 +0000
@@ -9442,7 +9442,7 @@ mark :1025
 data 76
 Revision is 222, file path is branches/Development/drivers/tripplite_usb.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 222
 mark :1026
 committer clepple-guest <clepple-guest> 1128206702 +0000
@@ -9461,7 +9461,7 @@ mark :1028
 data 72
 Revision is 223, file path is branches/Development/man/tripplite_usb.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 223
 mark :1029
 committer clepple-guest <clepple-guest> 1128207497 +0000
@@ -9476,7 +9476,7 @@ mark :1030
 data 76
 Revision is 224, file path is branches/Development/drivers/tripplite_usb.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 224
 mark :1031
 committer clepple-guest <clepple-guest> 1128217573 +0000
@@ -9495,7 +9495,7 @@ mark :1033
 data 72
 Revision is 225, file path is branches/Development/drivers/newhidups.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 225
 mark :1034
 committer selinger-guest <selinger-guest> 1128376387 +0000
@@ -9520,7 +9520,7 @@ mark :1037
 data 73
 Revision is 226, file path is branches/Development/drivers/belkin-hid.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 226
 mark :1038
 committer selinger-guest <selinger-guest> 1128376892 +0000
@@ -9546,7 +9546,7 @@ mark :1041
 data 73
 Revision is 227, file path is branches/Development/drivers/belkin-hid.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 227
 mark :1042
 committer selinger-guest <selinger-guest> 1128396877 +0000
@@ -9562,7 +9562,7 @@ mark :1043
 data 70
 Revision is 228, file path is branches/Development/drivers/nut_usb.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 228
 mark :1044
 committer keyson-guest <keyson-guest> 1128584322 +0000
@@ -9631,7 +9631,7 @@ mark :1055
 data 65
 Revision is 230, file path is branches/Development/debian/rules.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 230
 mark :1056
 committer aquette <aquette> 1128806501 +0000
@@ -9692,7 +9692,7 @@ mark :1065
 data 64
 Revision is 231, file path is branches/Development/man/al175.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 231
 mark :1066
 committer aquette <aquette> 1128807543 +0000
@@ -9714,7 +9714,7 @@ mark :1067
 data 60
 Revision is 232, file path is branches/Development/CHANGES.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 232
 mark :1068
 committer clepple-guest <clepple-guest> 1128815190 +0000
@@ -9733,7 +9733,7 @@ mark :1070
 data 69
 Revision is 233, file path is branches/Development/drivers/libhid.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 233
 mark :1071
 committer selinger-guest <selinger-guest> 1128825731 +0000
@@ -9773,7 +9773,7 @@ mark :1077
 data 72
 Revision is 234, file path is branches/Development/drivers/newhidups.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 234
 mark :1078
 committer selinger-guest <selinger-guest> 1128835977 +0000
@@ -10098,7 +10098,7 @@ mark :1128
 data 69
 Revision is 240, file path is branches/Development/drivers/Doxyfile.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 240
 mark :1129
 committer clepple-guest <clepple-guest> 1128910734 +0000
@@ -10118,7 +10118,7 @@ mark :1131
 data 72
 Revision is 241, file path is branches/Development/man/tripplite_usb.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 241
 mark :1132
 committer clepple-guest <clepple-guest> 1128910797 +0000
@@ -10147,7 +10147,7 @@ mark :1135
 data 68
 Revision is 243, file path is branches/Development/drivers/al175.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 243
 mark :1136
 committer aquette <aquette> 1128973434 +0000
@@ -10166,7 +10166,7 @@ mark :1138
 data 69
 Revision is 244, file path is branches/Development/data/driver.list.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 244
 mark :1139
 committer aquette <aquette> 1128975619 +0000
@@ -10272,7 +10272,7 @@ mark :1155
 data 68
 Revision is 248, file path is branches/Development/debian/po/fr.po.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 248
 mark :1156
 committer aquette <aquette> 1129724011 +0000
@@ -10301,7 +10301,7 @@ mark :1159
 data 68
 Revision is 249, file path is branches/Development/debian/po/vi.po.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 249
 mark :1160
 committer aquette <aquette> 1129754142 +0000
@@ -10352,7 +10352,7 @@ mark :1168
 data 65
 Revision is 250, file path is branches/Development/man/nitram.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 250
 mark :1169
 committer aquette <aquette> 1129754699 +0000
@@ -10378,7 +10378,7 @@ mark :1171
 data 70
 Revision is 251, file path is branches/Development/drivers/mge-hid.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 251
 mark :1172
 committer selinger-guest <selinger-guest> 1129864201 +0000
@@ -10413,7 +10413,7 @@ mark :1177
 data 72
 Revision is 252, file path is branches/Development/drivers/newhidups.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 252
 mark :1178
 committer selinger-guest <selinger-guest> 1129864779 +0000
@@ -10452,7 +10452,7 @@ mark :1183
 data 68
 Revision is 253, file path is branches/Development/man/newhidups.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 253
 mark :1184
 committer selinger-guest <selinger-guest> 1129866672 +0000
@@ -10496,7 +10496,7 @@ mark :1190
 data 71
 Revision is 254, file path is branches/Development/drivers/mge-shut.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 254
 mark :1191
 committer selinger-guest <selinger-guest> 1129916631 +0000
@@ -10521,7 +10521,7 @@ mark :1193
 data 69
 Revision is 255, file path is branches/Development/drivers/libusb.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 255
 mark :1194
 committer selinger-guest <selinger-guest> 1130045257 +0000
@@ -10556,7 +10556,7 @@ mark :1199
 data 72
 Revision is 256, file path is branches/Development/drivers/newhidups.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 256
 mark :1200
 committer selinger-guest <selinger-guest> 1130045805 +0000
@@ -10609,7 +10609,7 @@ mark :1208
 data 66
 Revision is 257, file path is branches/Development/man/megatec.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 257
 mark :1209
 committer aquette <aquette> 1130158839 +0000
@@ -10633,7 +10633,7 @@ mark :1210
 data 78
 Revision is 258, file path is branches/Development/drivers/Makefile.drvbuild.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 258
 mark :1211
 committer aquette <aquette> 1130180530 +0000
@@ -10669,7 +10669,7 @@ mark :1216
 data 66
 Revision is 259, file path is branches/Development/server/conf.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 259
 mark :1217
 committer aquette <aquette> 1131312459 +0000
@@ -10687,7 +10687,7 @@ mark :1218
 data 68
 Revision is 260, file path is branches/Development/man/newhidups.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 260
 mark :1219
 committer clepple-guest <clepple-guest> 1131342348 +0000
@@ -10738,7 +10738,7 @@ mark :1227
 data 72
 Revision is 261, file path is branches/Development/drivers/newhidups.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 261
 mark :1228
 committer selinger-guest <selinger-guest> 1131401660 +0000
@@ -10764,7 +10764,7 @@ mark :1230
 data 76
 Revision is 262, file path is branches/Development/drivers/tripplite-hid.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 262
 mark :1231
 committer selinger-guest <selinger-guest> 1131418757 +0000
@@ -10804,7 +10804,7 @@ mark :1237
 data 72
 Revision is 263, file path is branches/Development/drivers/newhidups.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 263
 mark :1238
 committer selinger-guest <selinger-guest> 1131502616 +0000
@@ -10853,7 +10853,7 @@ mark :1245
 data 71
 Revision is 264, file path is branches/Development/drivers/mge-shut.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 264
 mark :1246
 committer selinger-guest <selinger-guest> 1131772736 +0000
@@ -10969,7 +10969,7 @@ mark :1262
 data 69
 Revision is 271, file path is branches/Development/data/driver.list.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 271
 mark :1263
 committer keyson-guest <keyson-guest> 1132072688 +0000
@@ -11917,7 +11917,7 @@ mark :1277
 data 68
 Revision is 275, file path is branches/Development/man/newhidups.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 275
 mark :1278
 committer selinger-guest <selinger-guest> 1132811584 +0000
@@ -11937,7 +11937,7 @@ mark :1280
 data 72
 Revision is 276, file path is branches/Development/drivers/fentonups.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 276
 mark :1281
 committer aquette <aquette> 1132929756 +0000
@@ -11962,7 +11962,7 @@ mark :1284
 data 83
 Revision is 277, file path is branches/Development/scripts/hotplug/libhid.usermap.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 277
 mark :1285
 committer selinger-guest <selinger-guest> 1133842095 +0000
@@ -11989,7 +11989,7 @@ mark :1288
 data 91
 Revision is 278, file path is branches/Development/scripts/hotplug-ng/nut-usbups.rules.in.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 278
 mark :1289
 committer clepple-guest <clepple-guest> 1133879793 +0000
@@ -12082,7 +12082,7 @@ mark :1303
 data 68
 Revision is 281, file path is branches/Development/man/newhidups.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 281
 mark :1304
 committer aquette <aquette> 1134981718 +0000
@@ -12101,7 +12101,7 @@ mark :1305
 data 71
 Revision is 282, file path is branches/Development/conf/upsstats.html.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 282
 mark :1306
 committer clepple-guest <clepple-guest> 1135214299 +0000
@@ -12501,7 +12501,7 @@ mark :1314
 data 68
 Revision is 286, file path is branches/Development/man/newhidups.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 286
 mark :1315
 committer clepple-guest <clepple-guest> 1135355353 +0000
@@ -12550,7 +12550,7 @@ mark :1321
 data 66
 Revision is 288, file path is branches/Development/man/megatec.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 288
 mark :1322
 committer carlosefr-guest <carlosefr-guest> 1136254541 +0000
@@ -12577,7 +12577,7 @@ mark :1325
 data 66
 Revision is 289, file path is branches/Development/man/megatec.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 289
 mark :1326
 committer carlosefr-guest <carlosefr-guest> 1137255844 +0000
@@ -12683,7 +12683,7 @@ mark :1341
 data 66
 Revision is 293, file path is branches/Development/man/megatec.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 293
 mark :1342
 committer carlosefr-guest <carlosefr-guest> 1137629085 +0000
@@ -12750,7 +12750,7 @@ mark :1353
 data 69
 Revision is 294, file path is branches/Development/include/common.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 294
 mark :1354
 committer keyson-guest <keyson-guest> 1137771159 +0000
@@ -12804,7 +12804,7 @@ mark :1361
 data 66
 Revision is 298, file path is branches/Development/man/optiups.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 298
 mark :1362
 committer aquette <aquette> 1137874347 +0000
@@ -12909,7 +12909,7 @@ mark :1377
 data 61
 Revision is 302, file path is branches/Development/docs/FAQ.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 302
 mark :1378
 committer aquette <aquette> 1138025087 +0000
@@ -12928,7 +12928,7 @@ mark :1379
 data 69
 Revision is 303, file path is branches/Development/data/driver.list.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 303
 mark :1380
 committer aquette <aquette> 1138031118 +0000
@@ -12957,7 +12957,7 @@ mark :1384
 data 72
 Revision is 304, file path is branches/Development/drivers/tripplite.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 304
 mark :1385
 committer aquette <aquette> 1138139400 +0000
@@ -13046,7 +13046,7 @@ mark :1399
 data 71
 Revision is 306, file path is branches/Development/drivers/snmp-ups.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 306
 mark :1400
 committer keyson-guest <keyson-guest> 1138292746 +0000
@@ -13073,7 +13073,7 @@ mark :1402
 data 70
 Revision is 307, file path is branches/Development/drivers/apc-hid.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 307
 mark :1403
 committer selinger-guest <selinger-guest> 1138374293 +0000
@@ -13103,7 +13103,7 @@ mark :1407
 data 71
 Revision is 308, file path is branches/Development/drivers/snmp-ups.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 308
 mark :1408
 committer keyson-guest <keyson-guest> 1138382229 +0000
@@ -13120,7 +13120,7 @@ mark :1409
 data 68
 Revision is 309, file path is branches/Development/server/sstate.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 309
 mark :1410
 committer adkorte-guest <adkorte-guest> 1138459138 +0000
@@ -13142,7 +13142,7 @@ mark :1411
 data 60
 Revision is 310, file path is branches/Development/CHANGES.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 310
 mark :1412
 committer adkorte-guest <adkorte-guest> 1138460074 +0000
@@ -13164,7 +13164,7 @@ mark :1414
 data 70
 Revision is 311, file path is branches/Development/drivers/safenet.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 311
 mark :1415
 committer adkorte-guest <adkorte-guest> 1138463062 +0000
@@ -13181,7 +13181,7 @@ mark :1416
 data 70
 Revision is 312, file path is branches/Development/drivers/safenet.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 312
 mark :1417
 committer adkorte-guest <adkorte-guest> 1138466710 +0000
@@ -13201,7 +13201,7 @@ mark :1419
 data 73
 Revision is 313, file path is branches/Development/drivers/genericups.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 313
 mark :1420
 committer adkorte-guest <adkorte-guest> 1138650690 +0000
@@ -13228,7 +13228,7 @@ mark :1423
 data 70
 Revision is 314, file path is branches/Development/drivers/safenet.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 314
 mark :1424
 committer adkorte-guest <adkorte-guest> 1138743571 +0000
@@ -13250,7 +13250,7 @@ mark :1426
 data 70
 Revision is 315, file path is branches/Development/drivers/apc-hid.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 315
 mark :1427
 committer selinger-guest <selinger-guest> 1138790469 +0000
@@ -13260,7 +13260,7 @@ from :1424
 M 100644 :1425 CHANGES
 M 100644 :1426 drivers/apc-hid.c
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 316
 mark :1428
 committer adkorte-guest <adkorte-guest> 1138808231 +0000
@@ -13307,7 +13307,7 @@ data 96
 /upsmon
 /upsrw
 /upssched
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 318
 mark :1431
 committer selinger-guest <selinger-guest> 1138817815 +0000
@@ -13389,7 +13389,7 @@ mark :1437
 data 15
 /Makefile
 /upsd
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 319
 mark :1438
 committer selinger-guest <selinger-guest> 1138817821 +0000
@@ -13422,7 +13422,7 @@ mark :1441
 data 68
 Revision is 320, file path is branches/Development/man/upsdrvctl.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 320
 mark :1442
 committer adkorte-guest <adkorte-guest> 1138915495 +0000
@@ -13441,7 +13441,7 @@ mark :1443
 data 60
 Revision is 321, file path is branches/Development/CREDITS.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 321
 mark :1444
 committer adkorte-guest <adkorte-guest> 1138915697 +0000
@@ -13456,7 +13456,7 @@ mark :1445
 data 72
 Revision is 322, file path is branches/Development/drivers/upsdrvctl.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 322
 mark :1446
 committer adkorte-guest <adkorte-guest> 1138916263 +0000
@@ -13476,7 +13476,7 @@ mark :1448
 data 72
 Revision is 323, file path is branches/Development/drivers/upsdrvctl.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 323
 mark :1449
 committer adkorte-guest <adkorte-guest> 1138999366 +0000
@@ -13498,7 +13498,7 @@ mark :1451
 data 73
 Revision is 324, file path is branches/Development/drivers/genericups.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 324
 mark :1452
 committer adkorte-guest <adkorte-guest> 1139084494 +0000
@@ -13519,7 +13519,7 @@ mark :1454
 data 72
 Revision is 325, file path is branches/Development/drivers/upsdrvctl.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 325
 mark :1455
 committer adkorte-guest <adkorte-guest> 1139088241 +0000
@@ -15331,7 +15331,7 @@ mark :1622
 data 69
 Revision is 337, file path is branches/Development/man/genericups.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 337
 mark :1623
 committer adkorte-guest <adkorte-guest> 1139343543 +0000
@@ -15356,7 +15356,7 @@ mark :1625
 data 66
 Revision is 338, file path is branches/Development/man/megatec.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 338
 mark :1626
 committer carlosefr-guest <carlosefr-guest> 1139354808 +0000
@@ -15391,7 +15391,7 @@ mark :1631
 data 71
 Revision is 339, file path is branches/Development/conf/upsstats.html.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 339
 mark :1632
 committer keyson-guest <keyson-guest> 1139469643 +0000
@@ -15424,7 +15424,7 @@ mark :1636
 data 72
 Revision is 340, file path is branches/Development/man/upsstats.html.5.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 340
 mark :1637
 committer keyson-guest <keyson-guest> 1139490850 +0000
@@ -15441,7 +15441,7 @@ mark :1638
 data 60
 Revision is 341, file path is branches/Development/CHANGES.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 341
 mark :1639
 committer keyson-guest <keyson-guest> 1139491553 +0000
@@ -15460,7 +15460,7 @@ mark :1641
 data 72
 Revision is 342, file path is branches/Development/drivers/belkinunv.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 342
 mark :1642
 committer selinger-guest <selinger-guest> 1139500870 +0000
@@ -15475,7 +15475,7 @@ mark :1643
 data 64
 Revision is 343, file path is branches/Development/MAINTAINERS.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 343
 mark :1644
 committer selinger-guest <selinger-guest> 1139501290 +0000
@@ -15494,7 +15494,7 @@ mark :1646
 data 73
 Revision is 344, file path is branches/Development/drivers/bcmxcp_ser.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 344
 mark :1647
 committer keyson-guest <keyson-guest> 1139513225 +0000
@@ -15519,7 +15519,7 @@ mark :1650
 data 69
 Revision is 345, file path is branches/Development/include/common.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 345
 mark :1651
 committer adkorte-guest <adkorte-guest> 1139517729 +0000
@@ -15547,7 +15547,7 @@ mark :1654
 data 68
 Revision is 346, file path is branches/Development/man/upsdrvctl.8.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 346
 mark :1655
 committer adkorte-guest <adkorte-guest> 1139518807 +0000
@@ -15586,7 +15586,7 @@ mark :1660
 data 69
 Revision is 347, file path is branches/Development/drivers/nitram.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 347
 mark :1661
 committer keyson-guest <keyson-guest> 1139564973 +0000
@@ -15624,7 +15624,7 @@ mark :1666
 data 69
 Revision is 348, file path is branches/Development/drivers/serial.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 348
 mark :1667
 committer selinger-guest <selinger-guest> 1139610472 +0000
@@ -15644,7 +15644,7 @@ mark :1668
 data 60
 Revision is 349, file path is branches/Development/CREDITS.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 349
 mark :1669
 committer selinger-guest <selinger-guest> 1139651014 +0000
@@ -15668,7 +15668,7 @@ mark :1672
 data 69
 Revision is 350, file path is branches/Development/drivers/serial.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 350
 mark :1673
 committer adkorte-guest <adkorte-guest> 1139674045 +0000
@@ -15685,7 +15685,7 @@ mark :1674
 data 61
 Revision is 351, file path is branches/Development/docs/FAQ.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 351
 mark :1675
 committer adkorte-guest <adkorte-guest> 1139674720 +0000
@@ -15742,7 +15742,7 @@ mark :1684
 data 72
 Revision is 352, file path is branches/Development/drivers/newhidups.h.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 352
 mark :1685
 committer selinger-guest <selinger-guest> 1139780787 +0000
@@ -15862,7 +15862,7 @@ mark :1705
 data 74
 Revision is 353, file path is branches/Development/drivers/tripplitesu.c.
 
-commit refs/deleted/r356.1/heads/Development
+commit refs/heads/master
 #legacy-id 353
 mark :1706
 committer keyson-guest <keyson-guest> 1139998875 +0000
