@@ -17851,6 +17851,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 	}
 
 	cm, cd := 0, 0
+	errlines := make([]string, 0)
 
 	// Machinery for recognizing and skipping dates in
 	// ChangeLog attribution lines. To add more date formats,
@@ -17879,10 +17880,15 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		dateSkippers = append(dateSkippers, skip)
 	}
 
-	parseAttributionLine := func(line string) string {
+	parseChangelogLine := func(line string, where string, filepath string, pos int) string {
 		// Parse an attribution line in a ChangeLog entry, get an email address
 		if len(line) <= 10 || unicode.IsSpace(rune(line[0])) {
 			return ""
+		}
+		complain := func() {
+			errlines = append(errlines,
+				fmt.Sprintf("%s at %s has garbled attribution %q",
+					filepath, where, line))
 		}
 		// Massage old-style addresses into newstyle
 		line = strings.Replace(line, "(", "<", -1)
@@ -17891,6 +17897,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		line = strings.Replace(line, " <at> ", "@", -1)
 		// We require exactly one @
 		if strings.Count(line, "@") != 1 {
+			complain()
 			return ""
 		}
 		// Line must contain an email address. Find it.
@@ -17898,6 +17905,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		addrEnd := strings.Index(line[addrStart+1:], ">") + addrStart + 1
 		at := strings.Index(line, "@")
 		if addrStart < 0 || addrEnd < 0 || at < addrStart || at > addrEnd {
+			complain()
 			return ""
 		}
 		// Remove all other < and > delimiters to avoid malformed attributions
@@ -17929,6 +17937,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 				return wsRE.ReplaceAllLiteralString(addr, " ")
 			}
 		}
+		complain()
 		return ""
 	}
 	parseCoAuthor := func(line string) string {
@@ -18059,7 +18068,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 						for pos := difflines.J1; pos < difflines.J2; pos++ {
 							diffline := now[pos]
 							if strings.TrimSpace(diffline) != "" {
-								attribution := parseAttributionLine(diffline)
+								attribution := parseChangelogLine(diffline, commit.mark, op.Path, pos)
 								foundAt := 0
 								if attribution != "" {
 									// we found an active attribution line
@@ -18069,7 +18078,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 									// this is not an attribution line, search for
 									// the last one since we are in its block
 									for j := lastUnchanged.J2 - 1; j >= lastUnchanged.J1; j-- {
-										attribution = parseAttributionLine(now[j])
+										attribution = parseChangelogLine(now[j], commit.mark, op.Path, j)
 										if attribution != "" {
 											// this is the active attribution
 											// corresponding to the added chunk
@@ -18182,6 +18191,11 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		}
 	}
 	repo.invalidateNamecache()
+	sort.Slice(errlines, func(i, j int) bool { return errlines[i] < errlines[j] })
+	// Sort is requirs to make message order deterministic
+	for _, line := range errlines {
+		logit(logSHOUT, line)
+	}
 	respond("fills %d of %d authorships, changing %d, from %d ChangeLogs.", cm, cc.value, cd, cl.value)
 	return false
 }
