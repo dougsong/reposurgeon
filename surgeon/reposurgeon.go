@@ -3015,12 +3015,14 @@ func (reset *Reset) Save(w io.Writer) {
 	fmt.Fprintf(w, "reset %s\n", reset.ref)
 	if reset.committish != "" {
 		fmt.Fprintf(w, "from %s\n\n", reset.committish)
-		if reset.repo.branchHasCommits != nil {
-			reset.repo.branchHasCommits[reset.ref] = true
+		if reset.repo.branchPosition != nil {
+			if p, ok := reset.repo.markToEvent(reset.committish).(*Commit); ok {
+				reset.repo.branchPosition[reset.ref] = p
+			}
 		}
 	} else {
-		if reset.repo.branchHasCommits != nil {
-			delete(reset.repo.branchHasCommits, reset.ref)
+		if reset.repo.branchPosition != nil {
+			delete(reset.repo.branchPosition, reset.ref)
 		}
 	}
 }
@@ -3428,22 +3430,23 @@ func (c *colorSet) Clear() {
 
 // Commit represents a commit event in a fast-export stream
 type Commit struct {
-	legacyID     string        // Commit's ID in an alien system
-	mark         string        // Mark name of commit (may transiently be "")
-	Comment      string        // Commit comment
-	Branch       string        // branch name
-	authors      []Attribution // Authors of commit
-	committer    Attribution   // Person responsible for committing it.
-	fileops      []*FileOp     // blob and file operation list
-	_manifest    *PathMap      // efficient map of *ManifestEntry values
-	repo         *Repository
-	properties   *OrderedMap  // commit properties (extension)
-	attachments  []Event      // Tags and Resets pointing at this commit
-	_parentNodes []CommitLike // list of parent nodes
-	_childNodes  []CommitLike // list of child nodes
-	_expungehook *Commit
-	color        colorType // Scratch storage for graph-coloring
-	deleteme     bool      // Flag used during deletion operations
+	legacyID       string        // Commit's ID in an alien system
+	mark           string        // Mark name of commit (may transiently be "")
+	Comment        string        // Commit comment
+	Branch         string        // branch name
+	authors        []Attribution // Authors of commit
+	committer      Attribution   // Person responsible for committing it.
+	fileops        []*FileOp     // blob and file operation list
+	_manifest      *PathMap      // efficient map of *ManifestEntry values
+	repo           *Repository
+	properties     *OrderedMap   // commit properties (extension)
+	attachments    []Event       // Tags and Resets pointing at this commit
+	_parentNodes   []CommitLike  // list of parent nodes
+	_childNodes    []CommitLike  // list of child nodes
+	_expungehook   *Commit
+	color          colorType     // Scratch storage for graph-coloring
+	deleteme       bool          // Flag used during deletion operations
+	implicitParent bool          // Whether the first parent was implicit
 }
 
 func (commit Commit) getDelFlag() bool {
@@ -4596,15 +4599,15 @@ func (commit *Commit) Save(w io.Writer) {
 			}
 		}
 	}
+	// getting a value from a nil map is safe
+	previousOnBranch := commit.repo.branchPosition[commit.Branch]
 	if incremental {
 		fmt.Fprintf(w, "reset %s\nfrom %s^0\n\n", commit.Branch, commit.Branch)
-	} else if len(commit.parents()) == 0 &&
-		commit.repo.branchHasCommits[commit.Branch] {
-		// getting a value from a nil map is safe
+	} else if len(commit.parents()) == 0 && previousOnBranch != nil {
 		fmt.Fprintf(w, "reset %s\n", commit.Branch)
 	}
-	if commit.repo.branchHasCommits != nil {
-		commit.repo.branchHasCommits[commit.Branch] = true
+	if commit.repo.branchPosition != nil {
+		commit.repo.branchPosition[commit.Branch] = commit
 	}
 	fmt.Fprintf(w, "commit %s\n", commit.Branch)
 	if commit.legacyID != "" {
@@ -4640,10 +4643,14 @@ func (commit *Commit) Save(w io.Writer) {
 	}
 	parents := commit.parents()
 	doCallouts := commit.repo.writeOptions.Contains("--callout")
+	noImplicit := commit.repo.writeOptions.Contains("--no-implicit")
 	if len(parents) > 0 {
 		ancestor := parents[0]
 		if (commit.repo.internals == nil && !incremental) || commit.repo.internals.Contains(ancestor.getMark()) {
-			fmt.Fprintf(w, "from %s\n", ancestor.getMark())
+			if noImplicit || !(commit.implicitParent &&
+				previousOnBranch == ancestor && len(parents) == 1) {
+				fmt.Fprintf(w, "from %s\n", ancestor.getMark())
+			}
 		} else if doCallouts {
 			fmt.Fprintf(w, "from %s\n", ancestor.callout())
 		}
@@ -5499,6 +5506,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			}
 			if p, ok := branchPosition[commit.Branch]; ok && !commit.hasParents() {
 				commit.addParentCommit(p)
+				commit.implicitParent = true
 			}
 			sp.repo.addEvent(commit)
 			branchPosition[commit.Branch] = commit
@@ -5838,7 +5846,7 @@ type Repository struct {
 	// Write control - set, if required, before each dump
 	preferred        *VCS             // overrides vcs slot for writes
 	realized         map[string]bool  // clear and remake this before each dump
-	branchHasCommits map[string]bool  // clear and remake this before each dump
+	branchPosition   map[string]*Commit // clear and remake this before each dump
 	writeOptions     stringSet        // options requested on this write
 	internals        orderedStringSet // export code computes this itself
 }
@@ -6823,7 +6831,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 		selection.Sort()
 	}
 	repo.realized = make(map[string]bool)         // Track what branches are made
-	repo.branchHasCommits = make(map[string]bool) // Track what branches are made
+	repo.branchPosition = make(map[string]*Commit) // Track what branches are made
 	baton := control.baton
 	baton.startProgress("export", uint64(len(repo.events)))
 	for idx, ei := range selection {
@@ -6848,7 +6856,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 	}
 	baton.endProgress()
 	repo.realized = nil
-	repo.branchHasCommits = nil
+	repo.branchPosition = nil
 	return nil
 }
 
