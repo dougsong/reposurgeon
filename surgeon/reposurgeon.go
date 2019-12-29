@@ -16229,6 +16229,7 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 	tags := make([]*Tag, 0)
 	resets := make([]*Reset, 0)
 	commits := make([]*Commit, 0)
+	var refMatches func(string) bool
 	if tagname[0] == '/' && tagname[len(tagname)-1] == '/' {
 		// Regexp - can refer to a list of tags matched
 		tagre, err := regexp.Compile(tagname[1 : len(tagname)-1])
@@ -16236,34 +16237,30 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 			croak("in tag command: %v", err)
 			return false
 		}
-		selection := rs.selection
-		if selection == nil {
-			selection = repo.all()
-		}
-		for _, idx := range selection {
-			event := repo.events[idx]
-			if tag, ok := event.(*Tag); ok && tagNameMatches(tag.name, tagre) {
-				tags = append(tags, tag)
-			} else if reset, ok := event.(*Reset); ok && tagNameMatches(reset.ref, tagre) {
-				resets = append(resets, reset)
-			} else if commit, ok := event.(*Commit); ok && tagNameMatches(commit.Branch, tagre) {
-				commits = append(commits, commit)
-			}
-			control.baton.twirl()
+		refMatches = func(branch string) bool {
+			return tagNameMatches(branch, tagre)
 		}
 	} else {
 		// Non-regexp - can only refer to a single tag
 		fulltagname := branchname(tagname)
-		for _, event := range repo.events {
-			if tag, ok := event.(*Tag); ok && tag.name == fulltagname {
-				tags = append(tags, tag)
-			} else if reset, ok := event.(*Reset); ok && reset.ref == fulltagname {
-				resets = append(resets, reset)
-			} else if commit, ok := event.(*Commit); ok && commit.Branch == fulltagname {
-				commits = append(commits, commit)
-			}
-			control.baton.twirl()
+		refMatches = func(branch string) bool {
+			return branch == fulltagname
 		}
+	}
+	selection := rs.selection
+	if selection == nil {
+		selection = repo.all()
+	}
+	for _, idx := range selection {
+		event := repo.events[idx]
+		if tag, ok := event.(*Tag); ok && refMatches(tag.name) {
+			tags = append(tags, tag)
+		} else if reset, ok := event.(*Reset); ok && refMatches(reset.ref) {
+			resets = append(resets, reset)
+		} else if commit, ok := event.(*Commit); ok && refMatches(commit.Branch) {
+			commits = append(commits, commit)
+		}
+		control.baton.twirl()
 	}
 	if len(tags) == 0 && len(resets) == 0 && len(commits) == 0 {
 		croak("no tags matching %s", tagname)
@@ -16296,7 +16293,10 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 			control.baton.twirl()
 		}
 		if len(commits) > 0 {
-			logit(logWARN, "warning - tag move does not modify branch fields")
+			// Delete everything only reachable from the old tag position,
+			// and change the Branch of every commit that happened on that
+			// old tag but is still reachable from elsewhere.
+			repo.deleteBranch(selection, refMatches)
 		}
 	} else if verb == "rename" {
 		if len(tags) > 1 {

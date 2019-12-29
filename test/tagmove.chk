@@ -1,7 +1,6 @@
 tag annotated move :15
-reposurgeon: warning - tag move does not modify branch fields
 <annotated> inspect
-Event 34 ================================================================
+Event 33 ================================================================
 tag annotated
 from :15
 tagger Eric S. Raymond <esr@thyrsus.com> 1354428193 -0500
