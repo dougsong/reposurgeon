@@ -11538,11 +11538,14 @@ func (repo *Repository) deleteBranch(selection orderedIntSet, shouldDelete func(
 		// Use its first child's Branch for all remaining commits with the
 		// wrong branch: it will not move any ref since the first child is
 		// later and will modify where its Branch points to.
+		// Check all children and take a consistent branch in case the order
+		// of these children is not reproducible.
 		newBranch := ""
 		for _, child := range lastCommit.children() {
 			if commit, ok := child.(*Commit); ok && !shouldDelete(commit.Branch) {
-				newBranch = commit.Branch
-				break
+				if commit.Branch > newBranch {
+					newBranch = commit.Branch
+				}
 			}
 		}
 		if newBranch == "" {
