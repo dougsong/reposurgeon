@@ -3409,10 +3409,12 @@ func (m *ManifestEntry) equals(other *ManifestEntry) bool {
 		bytes.Equal(m.inline, other.inline)
 }
 
-const colorNONE = 0
-const colorEARLY = 1
-const colorLATE = 2
-const colorGEN = 4
+const (
+	colorNONE = 0
+	colorEARLY    colorType = 1 << iota // Errors and urgent messages
+        colorLATE
+	colorGEN
+)
 
 type colorType uint8
 type colorSet uint8
