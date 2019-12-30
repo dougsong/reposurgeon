@@ -316,7 +316,7 @@ func setAttr(obj interface{}, name string, value string) error {
 // the shlex package.  If the argument token was wrapped by Go string quotes
 // they are stripped off.
 func stringEscape(s string) (string, error) {
-	if s[0] != '"' {
+	if s == "" || s[0] != '"' {
 		s = `"` + s + `"`
 	}
 	return strconv.Unquote(s)
