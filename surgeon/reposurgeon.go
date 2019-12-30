@@ -2936,12 +2936,13 @@ func (t Tag) isCommit() bool {
 	return false
 }
 
-// Reset represents a branch creation."
+// Reset represents a branch creation.
 type Reset struct {
-	repo       *Repository
 	ref        string
 	committish string
 	color      string
+	legacyID   string	// Sometines these are reduced Subversion commits
+	repo       *Repository
 	deleteme   bool
 }
 
@@ -2970,7 +2971,11 @@ func (reset Reset) isCommit() bool {
 
 // idMe IDs this reset for humans.
 func (reset *Reset) idMe() string {
-	return fmt.Sprintf("reset-%s@%d", reset.ref, reset.repo.eventToIndex(reset))
+	var out string
+	if reset.legacyID != "" {
+		out += fmt.Sprintf("#legacy-id %s\n", reset.legacyID)
+	}
+	return out + fmt.Sprintf("reset-%s@%d", reset.ref, reset.repo.eventToIndex(reset))
 }
 
 // getMark returns the reset's identifying mark

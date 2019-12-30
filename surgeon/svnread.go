@@ -2481,11 +2481,14 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 				return
 			}
 			// Commits that cvs2svn created as tag surrogates
-			// get turned into actual tags.
+			// get turned into actual (lightweight) tags.
 			if cvs2svnTagRE.MatchString(commit.Comment) {
 				if commit.hasParents() {
-					newtags = append(newtags, newReset(sp.repo, commit.Branch,
-						commit.parentMarks()[0]))
+					tag = newReset(sp.repo,
+						commit.Branch,
+						commit.parentMarks()[0])
+					tag.legacyID = commit.legacyID
+					newtags = append(newtags, tag)
 				}
 				safedelete(i)
 			}
