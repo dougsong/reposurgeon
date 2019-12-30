@@ -57,6 +57,8 @@ mark :6
 committer test <test> 1475971200 +0000
 data 18
 Commit message 9.
+from :5
+deleteall
 M 100644 :1 .gitignore
 M 100644 :2 d1/d2/d3/d4/d5/d6/f0
 M 100644 :3 d1/d2/d3/d4/d5/d6/f9

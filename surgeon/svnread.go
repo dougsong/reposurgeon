@@ -1911,8 +1911,8 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 						parent := lastRelevantCommit(sp, node.fromRev, frombranch)
 						if parent != nil {
 							logit(logTOPOLOGY,
-								"Link from %s (r%s) to %s (r%d) found by copy-from",
-								parent.mark, parent.legacyID, commit.mark, rev)
+								"Link from %s <%s> to %s <%s> found by copy-from",
+								parent.mark, parent.legacyID, commit.mark, commit.legacyID)
 							if strings.Split(parent.legacyID, ".")[0] != fmt.Sprintf("%d", node.fromRev) {
 								logit(logTOPOLOGY,
 									"(fromRev was r%d)",
@@ -1929,16 +1929,31 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 				// the file nodes don't all have a fromRev. We also record the
 				// minimum value, to warn if they are different.
 				maxfrom, minfrom := revidx(0), revidx(len(sp.revisions))
-				var nodefrom *NodeAction
+				var frombranch string
 				for _, node := range record.nodes {
-					if node.kind == sdFILE && !strings.HasSuffix(node.path, ".gitignore") {
+					// Don't check for isDeclaredBranch because we only use
+					// file nodes (maybe expanded from a dir copy). If the
+					// branch dir creation node had a fromRev it would have
+					// been catched by the normal logic above.
+					destbranch, _ := splitSVNBranchPath(trimSep(node.path))
+					if node.kind == sdFILE && node.action == sdADD && destbranch == branch &&
+						!strings.HasSuffix(node.path, ".gitignore") {
 						if node.fromRev == 0 {
+							maxfrom = 0
+							break
+						}
+						newfrom, _ := splitSVNBranchPath(trimSep(node.fromPath))
+						if frombranch == "" {
+							frombranch = newfrom
+						} else if frombranch != newfrom {
+							logit(logWARN,
+							"Link detection for %s <%s> failed: file copies from multiple branches",
+							commit.mark, commit.legacyID)
 							maxfrom = 0
 							break
 						}
 						if node.fromRev > maxfrom {
 							maxfrom = node.fromRev
-							nodefrom = node
 						}
 						if node.fromRev < minfrom {
 							minfrom = node.fromRev
@@ -1946,17 +1961,17 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 					}
 				}
 				if maxfrom > 0 {
-					frombranch := nodefrom.fromPath
-					if !isDeclaredBranch(frombranch) {
-						frombranch, _ = splitSVNBranchPath(nodefrom.fromPath)
-					}
 					parent := lastRelevantCommit(sp, maxfrom, frombranch)
 					if parent != nil {
-						logit(logTOPOLOGY,
-							"Link from %s (r%s) to %s (r%d) found by file copies",
-							parent.mark, parent.legacyID, commit.mark, rev)
-						if minfrom < maxfrom {
-							logit(logWARN, "Detected link might be dubious (range %d-%d)", minfrom, maxfrom)
+						if minfrom == maxfrom {
+							logit(logTOPOLOGY,
+							"Link from %s <%s> to %s <%s> found by file copies",
+							parent.mark, parent.legacyID, commit.mark, commit.legacyID)
+						} else {
+							logit(logWARN,
+							"Detected link from %s <%s> to %s <%s> might be dubious (from-rev range %d:%d)",
+							parent.mark, parent.legacyID, commit.mark, commit.legacyID,
+							minfrom, maxfrom)
 						}
 						reparent(commit, parent)
 						goto next
