@@ -17854,6 +17854,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 	}
 
 	cm, cd := 0, 0
+	var errLock sync.Mutex
 	errlines := make([]string, 0)
 
 	// Machinery for recognizing and skipping dates in
@@ -17889,9 +17890,11 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 			return ""
 		}
 		complain := func() {
+			errLock.Lock()
 			errlines = append(errlines,
 				fmt.Sprintf("%s at %s has garbled attribution %q",
 					filepath, where, line))
+			errLock.Unlock()
 		}
 		// Massage old-style addresses into newstyle
 		line = strings.Replace(line, "(", "<", -1)
@@ -18189,7 +18192,6 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		if len(allCoAuthors[eventRank]) > 0 {
 			message := []string{commit.Comment}
 			message = append(message, allCoAuthors[eventRank]...)
-			message = append(message)
 			commit.Comment = strings.Join(message, "\nCo-Authored-By: ") + "\n"
 		}
 	}
