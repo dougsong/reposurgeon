@@ -431,7 +431,6 @@ SVNCLEAN := \
 	gitignore.svn \
 	ignore-blank.svn \
 	lint.svn \
-	merge-with-delete.svn \
 	mergeinfo-combine.svn \
 	mergeinfo-grandparent.svn \
 	mergeinfo-trunkstomp.svn \
