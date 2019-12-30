@@ -1538,6 +1538,10 @@ type branchMapping struct {
 	replace string
 }
 
+func (b branchMapping) String() string {
+	return fmt.Sprintf("{match=%s, replace=%s}", b.match, b.replace)
+}
+
 func (ctx *Control) init() {
 	ctx.flagOptions = make(map[string]bool)
 	ctx.listOptions = make(map[string]orderedStringSet)
@@ -5671,7 +5675,6 @@ func (sp *StreamParser) fastImport(ctx context.Context, fp io.Reader, options st
 		sp.error("ignoring empty repository")
 	}
 
-	// FIXME: Fire the defer on signal. First attempt at this failed.
 	defer func() {
 		if e := catch("parse", recover()); e != nil {
 			if baton != nil {
@@ -6070,7 +6073,6 @@ func (repo *Repository) branchmap() map[string]string {
 	return brmap
 }
 
-// FIXME: with the compile/exec code, should be possible to do this more cheaply
 func (repo *Repository) all() orderedIntSet {
 	// Return a set that selects the entire repository.
 	s := make([]int, len(repo.events))
