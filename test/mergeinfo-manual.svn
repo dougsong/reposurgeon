@@ -1,0 +1,364 @@
+SVN-fs-dump-format-version: 2
+ ## Test that a merge manually specifying revisions is detected
+
+UUID: 37b9f476-473a-4f45-8778-e4e58d8e76c3
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2019-12-29T21:18:56.988764Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 128
+Content-length: 128
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-29T21:19:28.428201Z
+K 7
+svn:log
+V 27
+Create directory structure.
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 117
+Content-length: 117
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-29T21:20:17.271173Z
+K 7
+svn:log
+V 16
+Add t1 on trunk.
+PROPS-END
+
+Node-path: trunk/t1
+Node-kind: file
+Node-action: add
+Text-content-md5: 7533422ecb038c6cc777d324d5b669b6
+Text-content-sha1: 5db19043943a2032de8d15417f26ddc1b420b91f
+Prop-content-length: 10
+Text-content-length: 3
+Content-length: 13
+
+PROPS-END
+t1
+
+
+Revision-number: 3
+Prop-content-length: 117
+Content-length: 117
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-29T21:20:26.058260Z
+K 7
+svn:log
+V 16
+Add t2 on trunk.
+PROPS-END
+
+Node-path: trunk/t2
+Node-kind: file
+Node-action: add
+Text-content-md5: 7ac3afd84e120eea459a29e142d941a5
+Text-content-sha1: be5b813c2dd9f429b42990ca968b282f96e7890d
+Prop-content-length: 10
+Text-content-length: 3
+Content-length: 13
+
+PROPS-END
+t2
+
+
+Revision-number: 4
+Prop-content-length: 118
+Content-length: 118
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-29T21:20:46.068015Z
+K 7
+svn:log
+V 17
+Add first branch.
+PROPS-END
+
+Node-path: branches/first
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 3
+Node-copyfrom-path: trunk
+
+
+Revision-number: 5
+Prop-content-length: 117
+Content-length: 117
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-29T21:21:06.338185Z
+K 7
+svn:log
+V 16
+Add t3 on trunk.
+PROPS-END
+
+Node-path: trunk/t3
+Node-kind: file
+Node-action: add
+Text-content-md5: 7ac3afd84e120eea459a29e142d941a5
+Text-content-sha1: be5b813c2dd9f429b42990ca968b282f96e7890d
+Prop-content-length: 10
+Text-content-length: 3
+Content-length: 13
+
+PROPS-END
+t2
+
+
+Revision-number: 6
+Prop-content-length: 117
+Content-length: 117
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-29T21:21:18.147283Z
+K 7
+svn:log
+V 16
+Add t4 on trunk.
+PROPS-END
+
+Node-path: trunk/t4
+Node-kind: file
+Node-action: add
+Text-content-md5: 07fe6510e028671cdec84959c4d61e3d
+Text-content-sha1: 7e8198522aa25b59e0c4ecc960706213431b8d18
+Prop-content-length: 10
+Text-content-length: 3
+Content-length: 13
+
+PROPS-END
+t4
+
+
+Revision-number: 7
+Prop-content-length: 119
+Content-length: 119
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-29T21:21:38.142905Z
+K 7
+svn:log
+V 18
+Add second branch.
+PROPS-END
+
+Node-path: branches/second
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 6
+Node-copyfrom-path: trunk
+
+
+Revision-number: 8
+Prop-content-length: 125
+Content-length: 125
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-29T21:22:01.147023Z
+K 7
+svn:log
+V 24
+Add s1 on second branch.
+PROPS-END
+
+Node-path: branches/second/s1
+Node-kind: file
+Node-action: add
+Text-content-md5: 519f03d7d7d9a62db27918deb6d8a24d
+Text-content-sha1: d0257f733e5e1c54fcf496857e2b4f0e4148c017
+Prop-content-length: 10
+Text-content-length: 3
+Content-length: 13
+
+PROPS-END
+s1
+
+
+Revision-number: 9
+Prop-content-length: 125
+Content-length: 125
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-29T21:22:19.937008Z
+K 7
+svn:log
+V 24
+Add s2 on second branch.
+PROPS-END
+
+Node-path: branches/second/s2
+Node-kind: file
+Node-action: add
+Text-content-md5: a9adc0083a3f41b84b070d36adfafee4
+Text-content-sha1: 630081a5992e722541bc1fc6f3dee804a22b6233
+Prop-content-length: 10
+Text-content-length: 3
+Content-length: 13
+
+PROPS-END
+s2
+
+
+Revision-number: 10
+Prop-content-length: 135
+Content-length: 135
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-29T21:22:53.134177Z
+K 7
+svn:log
+V 34
+Merge from second branch to first.
+PROPS-END
+
+Node-path: branches/first
+Node-kind: dir
+Node-action: change
+Prop-content-length: 66
+Content-length: 66
+
+K 13
+svn:mergeinfo
+V 31
+/branches/second:8-9
+/trunk:4-7
+PROPS-END
+
+
+Node-path: branches/first/s1
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 9
+Node-copyfrom-path: branches/second/s1
+Text-copy-source-md5: 519f03d7d7d9a62db27918deb6d8a24d
+Text-copy-source-sha1: d0257f733e5e1c54fcf496857e2b4f0e4148c017
+
+
+Node-path: branches/first/s2
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 9
+Node-copyfrom-path: branches/second/s2
+Text-copy-source-md5: a9adc0083a3f41b84b070d36adfafee4
+Text-copy-source-sha1: 630081a5992e722541bc1fc6f3dee804a22b6233
+
+
+Node-path: branches/first/t3
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 6
+Node-copyfrom-path: trunk/t3
+Text-copy-source-md5: 7ac3afd84e120eea459a29e142d941a5
+Text-copy-source-sha1: be5b813c2dd9f429b42990ca968b282f96e7890d
+
+
+Node-path: branches/first/t4
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 6
+Node-copyfrom-path: trunk/t4
+Text-copy-source-md5: 07fe6510e028671cdec84959c4d61e3d
+Text-copy-source-sha1: 7e8198522aa25b59e0c4ecc960706213431b8d18
+
+

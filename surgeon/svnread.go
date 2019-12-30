@@ -2170,23 +2170,40 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 							//    revision m.
 							// b) a deleteall, if the branch was recreated at
 							//    revision m.
-							// c) a commit *before or equal* the fork point
+							// c) the branch root, in case people used -r
+							//    <branch-root-rev>:<last-merged-rev> where SVN
+							//    in its deep wisdom decides to start the
+							//    mergeinfo from <branch-root-rev> + 1
+							// d) a commit *before or equal* the fork point
 							//    from the source to the destination branch,
 							//    or the branch it forked from, and so on,
 							//    if any exists. It means that *at least* the
 							//    revisions following the fork point are
-							//    merged.
+							//    merged (SVN sometimes omits revisions prior
+							//    to the merge base).
 							for ; i < count; i++ {
 								// Find the last commit just before the range
 								before := lastRelevantCommit(sp, revidx(revs[i].min-1), fromPath)
-								if before == nil {
+								if before == nil { // a)
 									break
 								}
 								ops := before.operations()
-								if len(ops) == 1 && ops[0].op == deleteall {
+								if len(ops) == 1 && ops[0].op == deleteall { // b)
 									break
 								}
-								if sp.repo.eventToIndex(before) <= baseIndex {
+								index := sp.repo.eventToIndex(before)
+								if index <= baseIndex { // d)
+									break
+								}
+								// and c) which is a bit more costly
+								var branchRoot *Commit
+								for _, root := range sp.branchRoots[fromPath] {
+									if sp.repo.eventToIndex(root) > index {
+										break
+									}
+									branchRoot = root
+								}
+								if before == branchRoot {
 									break
 								}
 							}

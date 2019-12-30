@@ -363,6 +363,7 @@ committer db48x <db48x> 1352206652 +0000
 data 61
 merge bugfixes from 2.0.1 into trunk, bumping version to 2.2
 from :37
+merge :40
 M 100644 :41 VERSION
 M 100644 :42 src
 
