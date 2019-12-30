@@ -3413,7 +3413,7 @@ const (
 	colorNONE = 0
 	colorEARLY    colorType = 1 << iota // Errors and urgent messages
         colorLATE
-	colorGEN
+	colorTRIVIAL
 )
 
 type colorType uint8

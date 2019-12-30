@@ -611,7 +611,7 @@ type NodeAction struct {
 	fromIdx     nodeidx
 	kind        uint8
 	action      uint8 // initially sdNONE
-	generated   bool
+	spurious    bool
 	propchange  bool
 }
 
@@ -627,10 +627,10 @@ func (action NodeAction) String() string {
 	//if action.fromSet != nil && !action.fromSet.isEmpty() {
 	//	out += " sources=" + action.fromSet.String()
 	//}
-	if action.generated {
-		out += " generated"
+	if action.spurious {
+		out += " spurious"
 	}
-	if action.hasProperties() {
+	if action.hasProperties() && action.props.Len() > 0 {
 		out += " props=" + action.props.vcString()
 	}
 	return out + ">"
@@ -1096,7 +1096,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 			subnode.blob = blob
 			subnode.contentHash = fmt.Sprintf("%x", md5.Sum(ignores))
 		}
-		subnode.generated = true
+		subnode.spurious = true
 		return subnode
 	}
 
@@ -1197,16 +1197,21 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 								newnode.revision = node.revision
 								newnode.action = sdDELETE
 								newnode.kind = sdFILE
-								newnode.generated = true
+								newnode.spurious = true
 								appendExpanded(newnode)
 							}
 						}
 					}
 				}
 				// Handle directory copies.
-				if node.fromPath != "" {
-					logit(logEXTRACT, "r%d-%d: directory copy to %s from r%d~%s",
-						node.revision, node.index, node.path, node.fromRev, node.fromPath)
+				if node.isCopy() {
+					node.spurious = isDeclaredBranch(node.path) && isDeclaredBranch(node.fromPath)
+					copyType := "directory"
+					if node.spurious {
+						copyType = "branch"
+					}
+					logit(logEXTRACT, "r%d-%d: %s copy to %s from r%d~%s",
+						node.revision, node.index, copyType, node.path, node.fromRev, node.fromPath)
 					// Now generate copies for all files in the
 					// copy source directory.
 					for _, source := range node.fromSet.pathnames() {
@@ -1225,8 +1230,12 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 						subnode.props = found.props
 						subnode.action = sdADD
 						subnode.kind = sdFILE
-						logit(logTOPOLOGY, "r%d-%d: %s generated copy r%d~%s -> %s %s",
-							node.revision, node.index, node.path, subnode.fromRev, subnode.fromPath, subnode.path, subnode)
+						subnode.spurious = found.spurious
+						if logEnable(logTOPOLOGY) {
+							logit(logTOPOLOGY, "r%d-%d: %s %s copy r%d~%s -> %s %s",
+								node.revision, node.index, node.path, copyType,
+								subnode.fromRev, subnode.fromPath, subnode.path, subnode)
+						}
 						appendExpanded(subnode)
 					}
 				}
@@ -1289,6 +1298,10 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 	//
 	// Revisions with no nodes are skipped here. This guarantees
 	// being able to assign them to a branch later.
+	//
+	// Also, each commit has colorTRIVIAL if (and only if) it is
+	// entirely composed of ADD/CHANGE/REPLACE fileops that are
+	// marked spurious because they were expanded from a branch copy.
 	//
 	defer trace.StartRegion(ctx, "SVN Phase 5: build commits").End()
 	logit(logEXTRACT, "SVN Phase 5: build commits")
@@ -1360,7 +1373,8 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 		}
 
 		commit.legacyID = fmt.Sprintf("%d", record.revision)
-		commit.setColor(colorGEN)
+
+		commit.setColor(colorTRIVIAL)
 		for _, node := range record.nodes {
 			if node.action == sdNONE {
 				continue
@@ -1402,7 +1416,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 				// the user a heads-up and expect these to be
 				// merged by hand.
 				if strings.HasSuffix(node.path, ".gitignore") {
-					if !node.generated && !options.Contains("--user-ignores") {
+					if !node.spurious && !options.Contains("--user-ignores") {
 						logit(logSHOUT, "r%d~%s: user-created .gitignore ignored.",
 							node.revision, node.path)
 						continue
@@ -1419,9 +1433,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 					//assert node.blob == nil
 					fileop := newFileOp(sp.repo)
 					fileop.construct(opD, node.path)
-					if !node.generated {
-						commit.setColor(colorNONE)
-					}
+					commit.setColor(colorNONE)
 					commit.appendOperation(fileop)
 				} else if node.action == sdADD || node.action == sdCHANGE || node.action == sdREPLACE {
 					if node.blob != nil {
@@ -1480,7 +1492,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 						nodePermissions(*node),
 						node.blobmark.String(),
 						node.path)
-					if !node.generated {
+					if !node.spurious {
 						commit.setColor(colorNONE)
 					}
 					commit.appendOperation(fileop)
@@ -1568,6 +1580,10 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 		commit.setMark(sp.repo.newmark())
 		sp.repo.addEvent(commit)
 		sp.repo.declareSequenceMutation("adding new commit")
+
+		if commit.getColor() == colorTRIVIAL {
+			logit(logEXTRACT, "commit %s from r%s is trivial", commit.mark, commit.legacyID)
+		}
 
 		lastcommit = commit
 		sp.repo.legacyMap["SVN:"+commit.legacyID] = commit
@@ -2433,16 +2449,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	defer trace.StartRegion(ctx, "SVN Phase B: de-junking").End()
 	logit(logEXTRACT, "SVN Phase A: de-junking")
 	// Now clean up junk commits generated by cvs2svn.
-	// FIXME: Restore this code when we find a safe-deletion filter
 	newtags := make([]Event, 0)
-	/*
-		var mutex sync.Mutex
-		safedelete := func(i int) {
-			mutex.Lock()
-			deleteables = append(deleteables, i)
-			mutex.Unlock()
-		}
-	*/
 	baton.startProgress("SVN phase B1: purge deleted refs", uint64(len(sp.repo.events)))
 	preserve := options.Contains("--preserve")
 	if !preserve {
@@ -2451,45 +2458,50 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 		})
 	}
 	baton.endProgress()
+	/*
+	var mutex sync.Mutex
+	deletables := make([]int, 0)
+	safedelete := func(i int) {
+		mutex.Lock()
+		deletables = append(deletables, i)
+		mutex.Unlock()
+	}
 	baton.startProgress("SVN phase B2: clean other junk", uint64(len(sp.repo.events)))
-	deleteables := make([]int, 0)
 	walkEvents(sp.repo.events, func(i int, event Event) {
-		/*
-				if commit, ok := event.(*Commit); ok {
-					// It is possible for commit.Comment to be None if
-					// the repository has been dumpfiltered and has
-					// empty commits.  If that's the case it can't very
-					// well have CVS artifacts in it.
-					if commit.Comment == "" {
-						logit(logSHOUT, "r%s has no comment", commit.legacyID)
-						goto loopend
-					}
-					// Commits that cvs2svn created as tag surrogates
-					// get turned into actual tags.
-					m := cvs2svnTagRE.FindStringSubmatch(commit.Comment)
-					if len(m) > 1 && !commit.hasChildren() {
-						if commit.hasParents() {
-							fulltag := filepath.Join("refs", "tags", m[1])
-							newtags = append(newtags, newReset(sp.repo, fulltag,
-								commit.parentMarks()[0]))
-						}
-						safedelete(i)
-					}
-					// cvs2svn-generated branch commits carry no informationn,
-					// and just get removed.
-					m = cvs2svnBranchRE.FindStringSubmatch(commit.Comment)
-					if len(m) > 0 && !commit.hasChildren() {
-						safedelete(i)
-					}
+		if commit, ok := event.(*Commit); ok {
+			if commit.hasChildren() || commit.getColor() != colorTRIVIAL {
+				return
+			}
+			// It is possible for commit.Comment to be None if
+			// the repository has been dumpfiltered and has
+			// empty commits.  If that's the case it can't very
+			// well have CVS artifacts in it.
+			if commit.Comment == "" {
+				logit(logSHOUT, "r%s has no comment", commit.legacyID)
+				return
+			}
+			// Commits that cvs2svn created as tag surrogates
+			// get turned into actual tags.
+			if cvs2svnTagRE.MatchString(commit.Comment) {
+				if commit.hasParents() {
+					newtags = append(newtags, newReset(sp.repo, commit.Branch,
+						commit.parentMarks()[0]))
 				}
-			loopend:
-		*/
+				safedelete(i)
+			}
+			// cvs2svn-generated branch commits carry no informationn,
+			// and just get removed.
+			if cvs2svnBranchRE.MatchString(commit.Comment) {
+				safedelete(i)
+			}
+		}
 		baton.percentProgress(uint64(i) + 1)
 	})
 	baton.endProgress()
 	sort.Slice(newtags, func(i, j int) bool { return newtags[i].(*Reset).ref < newtags[j].(*Reset).ref })
+	sp.repo.delete(deletables, []string{"--tagback"})
+	*/
 	sp.repo.events = append(sp.repo.events, newtags...)
-	sp.repo.delete(deleteables, []string{"--tagback"})
 }
 
 func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
@@ -2499,17 +2511,14 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 	// might possibly contain interesting metadata.
 	//
 	// * Commits from tag creation often have no real fileops since they come
-	//   from a directory copy in Subversion and have their fileops removed
-	//   in the de-junking phase. The annotated tag name is the basename
-	//   of the SVN tag directory.  Note: This code relies on the previous
-	//   pass to remove the fileeops from generated commits.
+	//   from a directory copy
 	//
 	// * Same for branch-root commits. The tag name is the basename of the
 	//   branch directory in SVN with "-root" appended to distinguish them
 	//   from SVN tags.
 	//
 	// * Commits at a branch tip that consist only of deleteall are also
-	//   tagified if --nobranch is on.  It behaves as a directiobve to
+	//   tagified if --nobranch is on.  It behaves as a direction to
 	//   preserve as much as possible of the tree structure for postprocessing.
 	//
 	// * All other commits without fileops get turned into an annotated tag
