@@ -46,6 +46,11 @@ import (
 	"unsafe" // Actually safe - only uses Sizeof
 )
 
+var defaultIgnoreHash string
+func init() {
+	defaultIgnoreHash = fmt.Sprintf("%s", subversionDefaultIgnores)
+}
+
 type svnReader struct {
 	revisions    []RevisionRecord
 	streamview   []*NodeAction // All nodes in stream order
@@ -1230,7 +1235,13 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 						subnode.props = found.props
 						subnode.action = sdADD
 						subnode.kind = sdFILE
-						subnode.spurious = found.spurious
+						subnode.spurious = node.spurious
+						// FIXME: This special case has a bad smell. It's required so that colorTRIVIAL
+						// will be properly set on branch copies for user-generated gitignores. This
+						// may mean .gitignore processing should be deferred to a later phase.
+						if strings.HasSuffix(found.path, ".gitignore")  && node.contentHash != defaultIgnoreHash {
+							subnode.spurious = false
+						}
 						if logEnable(logTOPOLOGY) {
 							logit(logTOPOLOGY, "r%d-%d: %s %s copy r%d~%s -> %s %s",
 								node.revision, node.index, node.path, copyType,
@@ -1525,7 +1536,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 		// fileops can only represent a dumpfile revision with
 		// no nodes. This can happen if the corresponding
 		// revision is a pure property change.  The initial
-		// directory creations in a dSubversion repository
+		// directory creations in a Subversion repository
 		// with standard layout also look like this.
 		//
 		// to avoid proliferating code paths and auxiliary
@@ -2469,19 +2480,20 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 		})
 	}
 	baton.endProgress()
-	//newtags := make([]Event, 0)
+	/*
+	newtags := make([]Event, 0)
 	var mutex sync.Mutex
 	deletables := make([]int, 0)
 	safedelete := func(i int) {
 		mutex.Lock()
-		logit(logSHOUT, "CVS tag at %s scheduled fo deletion", sp.repo.events[i].getMark())
+		//logit(logSHOUT, "CVS tag at %s scheduled for deletion", sp.repo.events[i].getMark())
 		deletables = append(deletables, i)
 		mutex.Unlock()
 	}
 	baton.startProgress("SVN phase B2: clean other junk", uint64(len(sp.repo.events)))
 	walkEvents(sp.repo.events, func(i int, event Event) {
 		if commit, ok := event.(*Commit); ok {
-			if commit.hasChildren() || commit.getColor() != colorTRIVIAL {
+			if commit.getColor() != colorTRIVIAL {
 				return
 			}
 			// It is possible for commit.Comment to be None if
@@ -2495,13 +2507,13 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 			// Commits that cvs2svn created as tag surrogates
 			// get turned into actual (lightweight) tags.
 			if cvs2svnTagRE.MatchString(commit.Comment) {
-				//if commit.hasParents() {
-				//	tag = newReset(sp.repo,
-				//		commit.Branch,
-				//		commit.parentMarks()[0])
-				//	tag.legacyID = commit.legacyID
-				//	newtags = append(newtags, tag)
-				//}
+				if commit.hasParents() {
+					tag := newReset(sp.repo,
+						commit.Branch,
+						commit.parentMarks()[0])
+					tag.legacyID = commit.legacyID
+					newtags = append(newtags, tag)
+				}
 				safedelete(i)
 			}
 			// cvs2svn-generated branch commits carry no informationn,
@@ -2513,9 +2525,10 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 		baton.percentProgress(uint64(i) + 1)
 	})
 	baton.endProgress()
-	//sort.Slice(newtags, func(i, j int) bool { return newtags[i].(*Reset).ref < newtags[j].(*Reset).ref })
-	//sp.repo.delete(deletables, []string{"--tagback"})
-	//sp.repo.events = append(sp.repo.events, newtags...)
+	sort.Slice(newtags, func(i, j int) bool { return newtags[i].(*Reset).ref < newtags[j].(*Reset).ref })
+	sp.repo.events = append(sp.repo.events, newtags...)
+	sp.repo.delete(deletables, []string{"--tagback"})
+	*/
 }
 
 func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
