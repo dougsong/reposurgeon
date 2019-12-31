@@ -14341,9 +14341,10 @@ func (rs *Reposurgeon) DoAppend(line string) bool {
 				commit.Comment = strings.TrimRight(commit.Comment, " \n\t")
 			}
 			if parse.options.Contains("--legacy") {
-				commit.Comment = strings.Replace(commit.Comment, "%LEGACY%", commit.legacyID, -1)
+				commit.Comment += strings.Replace(line, "%LEGACY%", commit.legacyID, -1)
+			} else {
+				commit.Comment += line
 			}
-			commit.Comment += line
 		case *Tag:
 			tag := event.(*Tag)
 			if parse.options.Contains("--rstrip") {
