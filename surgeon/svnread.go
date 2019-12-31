@@ -2180,6 +2180,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 			// Start of the loop over the mergeinfo
 			minIndex := int(^uint(0) >> 2)
 			for fromPath, revs := range newMerges {
+				baton.twirl()
 				fromPath = trimSep(fromPath)
 				if !isDeclaredBranch(fromPath) {
 					continue
@@ -2223,6 +2224,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 					//    merged (SVN sometimes omits revisions prior
 					//    to the merge base).
 					for ; i < count; i++ {
+						baton.twirl()
 						// Find the last commit just before the range
 						before := lastRelevantCommit(sp, revidx(revs[i].min-1), fromPath)
 						if before == nil { // a)
@@ -2272,6 +2274,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 					seenMerges[branch][fromPath] = make(map[int]bool)
 				}
 				for _, rng := range revs {
+					baton.twirl()
 					// Now that ranges are unified, there is a gap
 					// between all of them. Everything on the source
 					// branch after the gap is most probably coming
@@ -2313,6 +2316,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 			// of the highest commit still present, rinse and repeat
 			stack := []*Commit{commit}
 			for len(mergeSources) > 0 {
+				baton.twirl()
 				// Walk the ancestry, forgetting already merged marks
 				seen := map[int]bool{}
 				for len(stack) > 0 && len(mergeSources) > 0 {
