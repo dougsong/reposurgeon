@@ -2124,7 +2124,12 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 		}
 		return result
 	}
-	seenMerges := make(map[string]map[string]map[int]bool)
+	type mergeDesc struct {
+		dest string
+		source string
+		index int
+	}
+	seenMerges := make(map[mergeDesc]bool)
 	for revision, record := range sp.revisions {
 		for _, node := range record.nodes {
 			baton.twirl()
@@ -2166,9 +2171,6 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 			commit.mark, commit.legacyID, branch, info)
 			newMerges := parseMergeInfo(info)
 			mergeSources := make(map[int]bool, len(newMerges))
-			if seenMerges[branch] == nil {
-				seenMerges[branch] = make(map[string]map[int]bool)
-			}
 			// SVN tends to not put in mergeinfo the revisions that
 			// predate the merge base of the source and dest branch
 			// tips. Computing a merge base would be costly, but we
@@ -2279,9 +2281,6 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 				}
 				revs := revs[:lastGood+1]
 				// Now we process the merges
-				if seenMerges[branch][fromPath] == nil {
-					seenMerges[branch][fromPath] = make(map[int]bool)
-				}
 				for _, rng := range revs {
 					baton.twirl()
 					// Now that ranges are unified, there is a gap
@@ -2301,10 +2300,11 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 						continue
 					}
 					index := sp.repo.eventToIndex(last)
-					if _, ok := seenMerges[branch][fromPath][index]; ok {
+					desc := mergeDesc{branch, fromPath, index}
+					if _, ok := seenMerges[desc]; ok {
 						continue
 					}
-					seenMerges[branch][fromPath][index] = true
+					seenMerges[desc] = true
 					logit(logTOPOLOGY,
 					"mergeinfo says %s is merged up to %s <%s> in %s <%s>",
 					fromPath, last.mark, last.legacyID, commit.mark, commit.legacyID)
