@@ -2128,8 +2128,8 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 	for revision, record := range sp.revisions {
 		for _, node := range record.nodes {
 			baton.twirl()
-			// We're only looking at directory nodes with properties
-			if !(node.kind == sdDIR && node.hasProperties()) {
+			// We're only looking at directory nodes with new properties
+			if !(node.kind == sdDIR && node.propchange && node.hasProperties()) {
 				continue
 			}
 			info := node.props.get("svn:mergeinfo")
