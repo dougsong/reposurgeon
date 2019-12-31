@@ -2127,240 +2127,239 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 	seenMerges := make(map[string]map[string]map[int]bool)
 	for revision, record := range sp.revisions {
 		for _, node := range record.nodes {
-			// We're only looking at directory nodes
-			if node.kind != sdDIR {
+			baton.twirl()
+			// We're only looking at directory nodes with properties
+			if !(node.kind == sdDIR && node.hasProperties()) {
 				continue
 			}
-			if node.hasProperties() {
-				info := node.props.get("svn:mergeinfo")
-				info2 := node.props.get("svnmerge-integrated")
-				if info == "" {
-					info = info2
-				} else if info2 != "" {
-					info = info + "\n" + info2
+			info := node.props.get("svn:mergeinfo")
+			info2 := node.props.get("svnmerge-integrated")
+			if info == "" {
+				info = info2
+			} else if info2 != "" {
+				info = info + "\n" + info2
+			}
+			if info == "" {
+				continue
+			}
+			// We can only process mergeinfo if we find a commit
+			// corresponding to the revision on the branch whose
+			// mergeinfo has been modified
+			branch := trimSep(node.path)
+			if !isDeclaredBranch(branch) {
+				continue
+			}
+			commit := lastRelevantCommit(sp, revidx(revision), branch)
+			if commit == nil {
+				logit(logWARN,
+				"Cannot resolve mergeinfo for r%d which has no commit in branch %s",
+				revision, branch)
+				continue
+			}
+			realrev, _ := strconv.Atoi(strings.Split(commit.legacyID, ".")[0])
+			if realrev != revision {
+				logit(logWARN, "Resolving mergeinfo targeting r%d on %s <%s> instead",
+				revision, commit.mark, commit.legacyID)
+			}
+			// Now parse the mergeinfo, and find commits for the merge points
+			logit(logTOPOLOGY, "mergeinfo for %s <%s> on %s is: %s",
+			commit.mark, commit.legacyID, branch, info)
+			newMerges := parseMergeInfo(info)
+			mergeSources := make(map[int]bool, len(newMerges))
+			if seenMerges[branch] == nil {
+				seenMerges[branch] = make(map[string]map[int]bool)
+			}
+			// SVN tends to not put in mergeinfo the revisions that
+			// predate the merge base of the source and dest branch
+			// tips. Computing a merge base would be costly, but we
+			// can make a poor man's one by checking the fork points
+			// that is the first parent of the branch root, and that
+			// of the obtained commit, recursively.
+			destIndex := sp.repo.eventToIndex(commit)
+			forks := forkIndices(commit)
+			// Start of the loop over the mergeinfo
+			minIndex := int(^uint(0) >> 2)
+			for fromPath, revs := range newMerges {
+				fromPath = trimSep(fromPath)
+				if !isDeclaredBranch(fromPath) {
+					continue
 				}
-				if info != "" {
-					// We can only process mergeinfo if we find a commit
-					// corresponding to the revision on the branch whose
-					// mergeinfo has been modified
-					branch := trimSep(node.path)
-					if !isDeclaredBranch(branch) {
-						continue
-					}
-					commit := lastRelevantCommit(sp, revidx(revision), branch)
-					if commit == nil {
-						logit(logWARN,
-							"Cannot resolve mergeinfo for r%d which has no commit in branch %s",
-							revision, branch)
-						continue
-					}
-					realrev, _ := strconv.Atoi(strings.Split(commit.legacyID, ".")[0])
-					if realrev != revision {
-						logit(logWARN, "Resolving mergeinfo targeting r%d on %s <%s> instead",
-							revision, commit.mark, commit.legacyID)
-					}
-					// Now parse the mergeinfo, and find commits for the merge points
-					logit(logTOPOLOGY, "mergeinfo for %s <%s> on %s is: %s",
-						commit.mark, commit.legacyID, branch, info)
-					newMerges := parseMergeInfo(info)
-					mergeSources := make(map[int]bool, len(newMerges))
-					if seenMerges[branch] == nil {
-						seenMerges[branch] = make(map[string]map[int]bool)
-					}
-					// SVN tends to not put in mergeinfo the revisions that
-					// predate the merge base of the source and dest branch
-					// tips. Computing a merge base would be costly, but we
-					// can make a poor man's one by checking the fork points
-					// that is the first parent of the branch root, and that
-					// of the obtained commit, recursively.
-					destIndex := sp.repo.eventToIndex(commit)
-					forks := forkIndices(commit)
-					// Start of the loop over the mergeinfo
-					minIndex := int(^uint(0) >> 2)
-					for fromPath, revs := range newMerges {
-						fromPath = trimSep(fromPath)
-						if !isDeclaredBranch(fromPath) {
-							continue
+				// Check if the destination branch has a fork point
+				// in the source branch, and remember its index.
+				baseIndex := -1
+				if forkIndex, ok := forks[fromPath]; ok {
+					baseIndex = forkIndex
+				}
+				// Ranges were unified when parsing if they were
+				// contiguous in terms of revisions. Now unify
+				// consecutive ranges if they are contiguous in
+				// terms of commits, that is no commit on the branch
+				// separates them. Also, only keep ranges when the
+				// last commit just before the range is nil or a
+				// deleteall, which means the range is from the
+				// source branch start. We also accept a range if
+				// the previous commit is earlier than the branch
+				// base, due to SVN sometimes omitting revisions
+				// prior to the merge base.
+				i, lastGood := 0, -1
+				count := len(revs)
+				for i < count {
+					// Skip all ranges not starting at the right place
+					// We accept a range [m;M] if the commit just
+					// before the range is:
+					// a) nil, if the branch started to exist at
+					//    revision m.
+					// b) a deleteall, if the branch was recreated at
+					//    revision m.
+					// c) the branch root, in case people used -r
+					//    <branch-root-rev>:<last-merged-rev> where SVN
+					//    in its deep wisdom decides to start the
+					//    mergeinfo from <branch-root-rev> + 1
+					// d) a commit *before or equal* the fork point
+					//    from the source to the destination branch,
+					//    or the branch it forked from, and so on,
+					//    if any exists. It means that *at least* the
+					//    revisions following the fork point are
+					//    merged (SVN sometimes omits revisions prior
+					//    to the merge base).
+					for ; i < count; i++ {
+						// Find the last commit just before the range
+						before := lastRelevantCommit(sp, revidx(revs[i].min-1), fromPath)
+						if before == nil { // a)
+							break
 						}
-						// Check if the destination branch has a fork point
-						// in the source branch, and remember its index.
-						baseIndex := -1
-						if forkIndex, ok := forks[fromPath]; ok {
-							baseIndex = forkIndex
+						ops := before.operations()
+						if len(ops) == 1 && ops[0].op == deleteall { // b)
+							break
 						}
-						// Ranges were unified when parsing if they were
-						// contiguous in terms of revisions. Now unify
-						// consecutive ranges if they are contiguous in
-						// terms of commits, that is no commit on the branch
-						// separates them. Also, only keep ranges when the
-						// last commit just before the range is nil or a
-						// deleteall, which means the range is from the
-						// source branch start. We also accept a range if
-						// the previous commit is earlier than the branch
-						// base, due to SVN sometimes omitting revisions
-						// prior to the merge base.
-						i, lastGood := 0, -1
-						count := len(revs)
-						for i < count {
-							// Skip all ranges not starting at the right place
-							// We accept a range [m;M] if the commit just
-							// before the range is:
-							// a) nil, if the branch started to exist at
-							//    revision m.
-							// b) a deleteall, if the branch was recreated at
-							//    revision m.
-							// c) the branch root, in case people used -r
-							//    <branch-root-rev>:<last-merged-rev> where SVN
-							//    in its deep wisdom decides to start the
-							//    mergeinfo from <branch-root-rev> + 1
-							// d) a commit *before or equal* the fork point
-							//    from the source to the destination branch,
-							//    or the branch it forked from, and so on,
-							//    if any exists. It means that *at least* the
-							//    revisions following the fork point are
-							//    merged (SVN sometimes omits revisions prior
-							//    to the merge base).
-							for ; i < count; i++ {
-								// Find the last commit just before the range
-								before := lastRelevantCommit(sp, revidx(revs[i].min-1), fromPath)
-								if before == nil { // a)
-									break
-								}
-								ops := before.operations()
-								if len(ops) == 1 && ops[0].op == deleteall { // b)
-									break
-								}
-								index := sp.repo.eventToIndex(before)
-								if index <= baseIndex { // d)
-									break
-								}
-								// and c) which is a bit more costly
-								var branchRoot *Commit
-								for _, root := range sp.branchRoots[fromPath] {
-									if sp.repo.eventToIndex(root) > index {
-										break
-									}
-									branchRoot = root
-								}
-								if before == branchRoot {
-									break
-								}
-							}
-							if i >= count {
+						index := sp.repo.eventToIndex(before)
+						if index <= baseIndex { // d)
+							break
+						}
+						// and c) which is a bit more costly
+						var branchRoot *Commit
+						for _, root := range sp.branchRoots[fromPath] {
+							if sp.repo.eventToIndex(root) > index {
 								break
 							}
-							lastGood++
-							revs[lastGood] = revs[i]
-							// Unify the following ranges as long as we can
-							i++
-							for ; i < count; i++ {
-								// Find the last commit in the current "good" range
-								last := lastRelevantCommit(sp, revidx(revs[lastGood].max), fromPath)
-								// and the last commit just before the next range
-								beforeNext := lastRelevantCommit(sp, revidx(revs[i].min-1), fromPath)
-								if last != beforeNext {
-									break
-								}
-								revs[lastGood].max = revs[i].max
-							}
+							branchRoot = root
 						}
-						revs := revs[:lastGood+1]
-						// Now we process the merges
-						if seenMerges[branch][fromPath] == nil {
-							seenMerges[branch][fromPath] = make(map[int]bool)
-						}
-						for _, rng := range revs {
-							// Now that ranges are unified, there is a gap
-							// between all of them. Everything on the source
-							// branch after the gap is most probably coming
-							// from cherry-picks. The last commit in this range
-							// is a good merge source candidate.
-							last := lastRelevantCommit(sp, revidx(rng.max), fromPath)
-							if last == nil {
-								continue
-							}
-							lastrev, _ := strconv.Atoi(strings.Split(last.legacyID, ".")[0])
-							if lastrev < rng.min {
-								// Snapping the revisions to existing commits
-								// went past the minimum revision in the range
-								logit(logWARN, "Ignoring bogus mergeinfo with no valid commit in the range")
-								continue
-							}
-							index := sp.repo.eventToIndex(last)
-							if _, ok := seenMerges[branch][fromPath][index]; ok {
-								continue
-							}
-							seenMerges[branch][fromPath][index] = true
-							logit(logTOPOLOGY,
-								"mergeinfo says %s is merged up to %s <%s> in %s <%s>",
-								fromPath, last.mark, last.legacyID, commit.mark, commit.legacyID)
-							if index >= destIndex {
-								logit(logWARN, "Ignoring bogus mergeinfo trying to create a forward merge")
-								continue
-							}
-							mergeSources[index] = true
-							if index < minIndex {
-								minIndex = index
-							}
+						if before == branchRoot {
+							break
 						}
 					}
-					// Check if we need to prepend a deleteall
-					ops := commit.operations()
-					needDeleteAll := !commit.hasParents() && (len(ops) == 0 || ops[0].op != deleteall)
-					// Weed out already merged commits, then perform the merge
-					// of the highest commit still present, rinse and repeat
-					stack := []*Commit{commit}
-					for len(mergeSources) > 0 {
-						// Walk the ancestry, forgetting already merged marks
-						seen := map[int]bool{}
-						for len(stack) > 0 && len(mergeSources) > 0 {
-							var current *Commit
-							// pop a CommitLike from the stack
-							stack, current = stack[:len(stack)-1], stack[len(stack)-1]
-							index := sp.repo.eventToIndex(current)
-							if _, ok := seen[index]; ok {
-								continue
-							}
-							seen[index] = true
-							// We could reach the commit from the source, remove it
-							// from the merge sources. Only continue the traversal
-							// when the current index is high enough for ancestors
-							// to potentially be in sourceMerges.
-							if index >= minIndex {
-								delete(mergeSources, index)
-								// add all parents to the "todo" stack
-								for _, parent := range current.parents() {
-									if c, ok := parent.(*Commit); ok {
-										stack = append(stack, c)
-									}
-								}
-							}
+					if i >= count {
+						break
+					}
+					lastGood++
+					revs[lastGood] = revs[i]
+					// Unify the following ranges as long as we can
+					i++
+					for ; i < count; i++ {
+						// Find the last commit in the current "good" range
+						last := lastRelevantCommit(sp, revidx(revs[lastGood].max), fromPath)
+						// and the last commit just before the next range
+						beforeNext := lastRelevantCommit(sp, revidx(revs[i].min-1), fromPath)
+						if last != beforeNext {
+							break
 						}
-						// Now perform the merge from the highest index
-						// since it cannot be a descendent of the other
-						highIndex := 0
-						for index := range mergeSources {
-							if index > highIndex {
-								highIndex = index
-							}
-						}
-						delete(mergeSources, highIndex)
-						if source, ok := sp.repo.events[highIndex].(*Commit); ok {
-							if needDeleteAll {
-								fileop := newFileOp(sp.repo)
-								fileop.construct(deleteall)
-								commit.prependOperation(fileop)
-								needDeleteAll = false
-							}
-							logit(logEXTRACT, "Merge found from %s <%s> to %s <%s>",
-								source.mark, source.legacyID, commit.mark, commit.legacyID)
-							commit.addParentCommit(source)
-							stack = append(stack, source)
-						}
+						revs[lastGood].max = revs[i].max
+					}
+				}
+				revs := revs[:lastGood+1]
+				// Now we process the merges
+				if seenMerges[branch][fromPath] == nil {
+					seenMerges[branch][fromPath] = make(map[int]bool)
+				}
+				for _, rng := range revs {
+					// Now that ranges are unified, there is a gap
+					// between all of them. Everything on the source
+					// branch after the gap is most probably coming
+					// from cherry-picks. The last commit in this range
+					// is a good merge source candidate.
+					last := lastRelevantCommit(sp, revidx(rng.max), fromPath)
+					if last == nil {
+						continue
+					}
+					lastrev, _ := strconv.Atoi(strings.Split(last.legacyID, ".")[0])
+					if lastrev < rng.min {
+						// Snapping the revisions to existing commits
+						// went past the minimum revision in the range
+						logit(logWARN, "Ignoring bogus mergeinfo with no valid commit in the range")
+						continue
+					}
+					index := sp.repo.eventToIndex(last)
+					if _, ok := seenMerges[branch][fromPath][index]; ok {
+						continue
+					}
+					seenMerges[branch][fromPath][index] = true
+					logit(logTOPOLOGY,
+					"mergeinfo says %s is merged up to %s <%s> in %s <%s>",
+					fromPath, last.mark, last.legacyID, commit.mark, commit.legacyID)
+					if index >= destIndex {
+						logit(logWARN, "Ignoring bogus mergeinfo trying to create a forward merge")
+						continue
+					}
+					mergeSources[index] = true
+					if index < minIndex {
+						minIndex = index
 					}
 				}
 			}
-			baton.twirl()
+			// Check if we need to prepend a deleteall
+			ops := commit.operations()
+			needDeleteAll := !commit.hasParents() && (len(ops) == 0 || ops[0].op != deleteall)
+			// Weed out already merged commits, then perform the merge
+			// of the highest commit still present, rinse and repeat
+			stack := []*Commit{commit}
+			for len(mergeSources) > 0 {
+				// Walk the ancestry, forgetting already merged marks
+				seen := map[int]bool{}
+				for len(stack) > 0 && len(mergeSources) > 0 {
+					var current *Commit
+					// pop a CommitLike from the stack
+					stack, current = stack[:len(stack)-1], stack[len(stack)-1]
+					index := sp.repo.eventToIndex(current)
+					if _, ok := seen[index]; ok {
+						continue
+					}
+					seen[index] = true
+					// We could reach the commit from the source, remove it
+					// from the merge sources. Only continue the traversal
+					// when the current index is high enough for ancestors
+					// to potentially be in sourceMerges.
+					if index >= minIndex {
+						delete(mergeSources, index)
+						// add all parents to the "todo" stack
+						for _, parent := range current.parents() {
+							if c, ok := parent.(*Commit); ok {
+								stack = append(stack, c)
+							}
+						}
+					}
+				}
+				// Now perform the merge from the highest index
+				// since it cannot be a descendent of the other
+				highIndex := 0
+				for index := range mergeSources {
+					if index > highIndex {
+						highIndex = index
+					}
+				}
+				delete(mergeSources, highIndex)
+				if source, ok := sp.repo.events[highIndex].(*Commit); ok {
+					if needDeleteAll {
+						fileop := newFileOp(sp.repo)
+						fileop.construct(deleteall)
+						commit.prependOperation(fileop)
+						needDeleteAll = false
+					}
+					logit(logEXTRACT, "Merge found from %s <%s> to %s <%s>",
+					source.mark, source.legacyID, commit.mark, commit.legacyID)
+					commit.addParentCommit(source)
+					stack = append(stack, source)
+				}
+			}
 		}
 		baton.percentProgress(uint64(revision) + 1)
 	}
