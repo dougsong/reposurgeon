@@ -65,145 +65,147 @@ then
     exit 1
 fi
 
-what=$1
-if [ -f ${what}.svn ]
-then
-    what=${what}.svn
-elif [ ! -f ${what} ]
-then
-    echo "No Subversion dumpfile matching ${what} found"
-    exit 1
-fi
-
-if grep '^ *# reposurgeon-read-options:.*--nobranch' "${what}" >/dev/null
-then
-    nobranch=--nobranch
-fi
-
-stem=liftcheck$$
-
-rm -fr liftcheck[0123456789]*
-
-if [ $debug = no ]
-then
-    trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}.gfi ${stem}.info ${stem}*~" 0 1 2 15
-fi
-
-# Notification
-{ echo -n "  ${what}"; grep --text '^ ##' ${what} || echo ' ## (no description)'; } >&2; \
-
-# Make a Subversion repo from the dump
-./svn-to-svn ${svnquiet} ${slimit} -c <${what} ${stem}
-
-# Make a git repo from the dump using reposurgeon
-${REPOSURGEON:-../reposurgeon} "${TESTOPT}" "${rlimit}" "read ${nobranch} ${readopt} <${what}" \
-    "prefer git" "rebuild ${stem}-git" "write >${stem}.gfi" >&-
-
-if [   "(" -e ${stem}-checkout/trunk ")"    \
-    -o "(" -e ${stem}-checkout/branches ")" \
-    -o "(" -e ${stem}-checkout/tags ")"     ]
-then
-    structured=true
-else
-    structured=
-fi
-
-if [ -n "${revision}" ]
-then
-    if [ ! -f ${stem}-git/.git/marks ]
+for what in $*
+do
+    if [ -f ${what}.svn ]
     then
-        echo Missing git marks file, unable to compare. >&2
-        exit 1
+	what=${what}.svn
+    elif [ ! -f ${what} ]
+    then
+	echo "No Subversion dumpfile matching ${what} found"
+	exit 1
     fi
 
-    # Generate a <legacy-id>TAB<mark>TAB<ref> file from the git-fast-import stream
-    cat ${stem}.gfi | sed -n '/^commit / h;
-                              /^#legacy-id / H;
-                              /^mark / {
-                                    H; s/^.*$//; x;
-                                    t next; :next;
-                                    s/^commit \(.*\)\n#legacy-id \(.*\)\nmark \(:.*\)$/\2\t\3\t\1/;
-                                    t ok; d;
-                                    :ok; p
-                                }' > ${stem}.info
-    rm -f ${stem}.gfi
-
-    if [ ${revision} = "all" ]
+    if grep '^ *# reposurgeon-read-options:.*--nobranch' "${what}" >/dev/null
     then
-        min=1
-        max=`tail -n 1 ${stem}.info | cut -f 1 | cut -d. -f 1`
+	nobranch=--nobranch
+    fi
+
+    stem=liftcheck$$
+
+    rm -fr liftcheck[0123456789]*
+
+    if [ $debug = no ]
+    then
+	trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}.gfi ${stem}.info ${stem}*~" 0 1 2 15
+    fi
+
+    # Notification
+    { echo -n "  ${what}"; grep --text '^ ##' ${what} || echo ' ## (no description)'; } >&2; \
+
+    # Make a Subversion repo from the dump
+    ./svn-to-svn ${svnquiet} ${slimit} -c <${what} ${stem}
+
+    # Make a git repo from the dump using reposurgeon
+    ${REPOSURGEON:-../reposurgeon} "${TESTOPT}" "${rlimit}" "read ${nobranch} ${readopt} <${what}" \
+	"prefer git" "rebuild ${stem}-git" "write >${stem}.gfi" >&-
+
+    if [   "(" -e ${stem}-checkout/trunk ")"    \
+	-o "(" -e ${stem}-checkout/branches ")" \
+	-o "(" -e ${stem}-checkout/tags ")"     ]
+    then
+	structured=true
     else
-        min=`echo ${revision} | sed 's/-.*$//'`
-        max=`echo ${revision} | sed 's/^.*-//'`
+	structured=
     fi
 
-    while read -r line # input file at the end of the loop
-    do
-        revision=`echo "${line}" | cut -f 1`
-        intrev=`echo "${revision}" | cut -d. -f 1`
-        if [ ${intrev} -lt ${min} -o ${intrev} -gt ${max} ]
-        then
-            continue
-        fi
-
-        # Find out the git revision to pass
-        mark=`echo "${line}" | cut -f 2`
-        sha=`grep "^${mark}" ${stem}-git/.git/marks --max-count=1 | cut -d" " -f 2`
-        if [ -z "${sha}" ]
-        then
-            continue
-        fi
-
-        # Find the corresponding ref to checkout in SVN
-        ref=`echo "${line}" | cut -f 3 | sed 's!refs/!!'`
-
-        # Skip the comparison if the revision is "out of namespaces"
-        # because the Git side will only contain that outside part
-        # while the SVN side will contain the whole repository
-        if [ "${ref}" = "heads/root" ]
-        then
-            continue
-        fi
-
-        # Use --nobranch if asked to, or if there is no structure and
-        # the asked branch is master
-        if [ -n "${nobranch}" -o "("                 \
-               "(" "${ref}" = "heads/master" ")"     \
-                   -a "(" -z "${structured}" ")" ")" ]
-        then
-            refopt=--nobranch
-        else
-            refopt=`echo "${ref}" | sed 's!^deleted/r[^/]*/!!; s!^tags/!-t !; s!^heads/!-b !'`
-        fi
-
-        if [ ${progress} != no ]
-        then
-            echo "Checking lift at r${revision} (${refopt})"
-        fi
-        # Compare the original with the lift
-        ../repotool ${repotoolopt} compare ${compareopt} \
-            --accept-missing ${refopt} -r ${intrev}:${sha} \
-            ${stem}-checkout ${stem}-git
-    done < ${stem}.info
-else
-
-    if [ -z "${structured}" ]
+    if [ -n "${revision}" ]
     then
-        # No structure at all, use --nobranch to compare
-        # --accept-missing is to use an empty dir if git has no master
-        # (this will only succeed if the SVN repository has no files)
-        compareopt="$compareopt --nobranch --accept-missing"
+	if [ ! -f ${stem}-git/.git/marks ]
+	then
+	    echo Missing git marks file, unable to compare. >&2
+	    exit 1
+	fi
+
+	# Generate a <legacy-id>TAB<mark>TAB<ref> file from the git-fast-import stream
+	cat ${stem}.gfi | sed -n '/^commit / h;
+				  /^#legacy-id / H;
+				  /^mark / {
+					H; s/^.*$//; x;
+					t next; :next;
+					s/^commit \(.*\)\n#legacy-id \(.*\)\nmark \(:.*\)$/\2\t\3\t\1/;
+					t ok; d;
+					:ok; p
+				    }' > ${stem}.info
+	rm -f ${stem}.gfi
+
+	if [ ${revision} = "all" ]
+	then
+	    min=1
+	    max=`tail -n 1 ${stem}.info | cut -f 1 | cut -d. -f 1`
+	else
+	    min=`echo ${revision} | sed 's/-.*$//'`
+	    max=`echo ${revision} | sed 's/^.*-//'`
+	fi
+
+	while read -r line # input file at the end of the loop
+	do
+	    revision=`echo "${line}" | cut -f 1`
+	    intrev=`echo "${revision}" | cut -d. -f 1`
+	    if [ ${intrev} -lt ${min} -o ${intrev} -gt ${max} ]
+	    then
+		continue
+	    fi
+
+	    # Find out the git revision to pass
+	    mark=`echo "${line}" | cut -f 2`
+	    sha=`grep "^${mark}" ${stem}-git/.git/marks --max-count=1 | cut -d" " -f 2`
+	    if [ -z "${sha}" ]
+	    then
+		continue
+	    fi
+
+	    # Find the corresponding ref to checkout in SVN
+	    ref=`echo "${line}" | cut -f 3 | sed 's!refs/!!'`
+
+	    # Skip the comparison if the revision is "out of namespaces"
+	    # because the Git side will only contain that outside part
+	    # while the SVN side will contain the whole repository
+	    if [ "${ref}" = "heads/root" ]
+	    then
+		continue
+	    fi
+
+	    # Use --nobranch if asked to, or if there is no structure and
+	    # the asked branch is master
+	    if [ -n "${nobranch}" -o "("                 \
+		   "(" "${ref}" = "heads/master" ")"     \
+		       -a "(" -z "${structured}" ")" ")" ]
+	    then
+		refopt=--nobranch
+	    else
+		refopt=`echo "${ref}" | sed 's!^deleted/r[^/]*/!!; s!^tags/!-t !; s!^heads/!-b !'`
+	    fi
+
+	    if [ ${progress} != no ]
+	    then
+		echo "Checking lift at r${revision} (${refopt})"
+	    fi
+	    # Compare the original with the lift
+	    ../repotool ${repotoolopt} compare ${compareopt} \
+		--accept-missing ${refopt} -r ${intrev}:${sha} \
+		${stem}-checkout ${stem}-git
+	done < ${stem}.info
+    else
+
+	if [ -z "${structured}" ]
+	then
+	    # No structure at all, use --nobranch to compare
+	    # --accept-missing is to use an empty dir if git has no master
+	    # (this will only succeed if the SVN repository has no files)
+	    compareopt="$compareopt --nobranch --accept-missing"
+	fi
+
+	# Compare the original with the lift
+	../repotool ${repotoolopt} compare-all ${compareopt} ${nobranch} \
+					       ${stem}-checkout ${stem}-git
+
     fi
 
-    # Compare the original with the lift
-    ../repotool ${repotoolopt} compare-all ${compareopt} ${nobranch} \
-                                           ${stem}-checkout ${stem}-git
-
-fi
-
-if [ $debug != no ]
-then
-    ls -d liftcheck[0123456789]*
-fi
-
+    if [ $debug != no ]
+    then
+	ls -d liftcheck[0123456789]*
+    fi
+done
+    
 # end
