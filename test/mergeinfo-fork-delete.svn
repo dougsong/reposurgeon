@@ -1,0 +1,503 @@
+SVN-fs-dump-format-version: 2
+ ## Test if the fork rule of merge detection works with branch deletions
+
+UUID: 08e6da47-143b-474e-91ad-4eea2f192568
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2019-12-30T20:51:25.298085Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 128
+Content-length: 128
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-30T20:51:33.768193Z
+K 7
+svn:log
+V 27
+Create directory structure.
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 118
+Content-length: 118
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-30T20:51:35.296984Z
+K 7
+svn:log
+V 17
+Add foo on trunk.
+PROPS-END
+
+Node-path: trunk/foo
+Node-kind: file
+Node-action: add
+Text-content-md5: d3b07384d113edec49eaa6238ad5ff00
+Text-content-sha1: f1d2d2f924e986ac86fdf7b36c94bcdf32beec15
+Prop-content-length: 10
+Text-content-length: 4
+Content-length: 14
+
+PROPS-END
+foo
+
+
+Revision-number: 3
+Prop-content-length: 114
+Content-length: 114
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-30T20:51:37.513985Z
+K 7
+svn:log
+V 13
+Remove trunk.
+PROPS-END
+
+Node-path: trunk
+Node-action: delete
+
+
+Revision-number: 4
+Prop-content-length: 114
+Content-length: 114
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-30T20:51:44.976548Z
+K 7
+svn:log
+V 13
+Re-add trunk.
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: trunk
+
+
+Revision-number: 5
+Prop-content-length: 117
+Content-length: 117
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-30T20:52:09.767157Z
+K 7
+svn:log
+V 16
+Add tt on trunk.
+PROPS-END
+
+Node-path: trunk/tt
+Node-kind: file
+Node-action: add
+Text-content-md5: 821ccb7eb5157bb2ab3727dc2845d62b
+Text-content-sha1: 063a0d60263f7be0a8ff36fd3c1732e802a95796
+Prop-content-length: 10
+Text-content-length: 3
+Content-length: 13
+
+PROPS-END
+tt
+
+
+Revision-number: 6
+Prop-content-length: 117
+Content-length: 117
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-30T20:52:27.647347Z
+K 7
+svn:log
+V 16
+Add uu on trunk.
+PROPS-END
+
+Node-path: trunk/uu
+Node-kind: file
+Node-action: add
+Text-content-md5: 65fc3448711c59176afb32a4f6a9f2a3
+Text-content-sha1: 7c37a4f97bb6336af8a6dbd08fc38a6182b74d6c
+Prop-content-length: 10
+Text-content-length: 3
+Content-length: 13
+
+PROPS-END
+uu
+
+
+Revision-number: 7
+Prop-content-length: 114
+Content-length: 114
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-30T20:52:37.344105Z
+K 7
+svn:log
+V 13
+Remove trunk.
+PROPS-END
+
+Node-path: trunk
+Node-action: delete
+
+
+Revision-number: 8
+Prop-content-length: 114
+Content-length: 114
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-30T20:52:47.396173Z
+K 7
+svn:log
+V 13
+Re-add trunk.
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 6
+Node-copyfrom-path: trunk
+
+
+Revision-number: 9
+Prop-content-length: 120
+Content-length: 120
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-30T20:53:00.384612Z
+K 7
+svn:log
+V 19
+Modify tt on trunk.
+PROPS-END
+
+Node-path: trunk/tt
+Node-kind: file
+Node-action: change
+Text-content-md5: b00a8abb31624670a39bd8ed79e05c4a
+Text-content-sha1: 44ff351def9ef80b7bf8f5efff73a77f5f7c87c9
+Text-content-length: 4
+Content-length: 4
+
+ttt
+
+
+Revision-number: 10
+Prop-content-length: 120
+Content-length: 120
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-30T20:53:22.516902Z
+K 7
+svn:log
+V 19
+Modify uu on trunk.
+PROPS-END
+
+Node-path: trunk/uu
+Node-kind: file
+Node-action: change
+Text-content-md5: 30ee3549d0181b3571a2e47280f417e6
+Text-content-sha1: 34765cd0b0150d0d18e28bc350524326fc469088
+Text-content-length: 4
+Content-length: 4
+
+uuu
+
+
+Revision-number: 11
+Prop-content-length: 120
+Content-length: 120
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-30T20:53:33.350468Z
+K 7
+svn:log
+V 19
+Create test branch.
+PROPS-END
+
+Node-path: branches/test
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 10
+Node-copyfrom-path: trunk
+
+
+Revision-number: 12
+Prop-content-length: 120
+Content-length: 120
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-30T20:53:48.533766Z
+K 7
+svn:log
+V 19
+Add tbar on branch.
+PROPS-END
+
+Node-path: branches/test/tbar
+Node-kind: file
+Node-action: add
+Text-content-md5: 907c76f277602a3e8441f98ae3c2ce5f
+Text-content-sha1: ac9733a901ce10dcfeff40ebb8d1d0b67e3c5b9c
+Prop-content-length: 10
+Text-content-length: 5
+Content-length: 15
+
+PROPS-END
+tbar
+
+
+Revision-number: 13
+Prop-content-length: 119
+Content-length: 119
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-30T20:53:54.076333Z
+K 7
+svn:log
+V 18
+Add tbaz on trunk.
+PROPS-END
+
+Node-path: trunk/tbaz
+Node-kind: file
+Node-action: add
+Text-content-md5: de6411781e3ce12445a4f506c2de0597
+Text-content-sha1: 1a82dba0e7956122fa014686c76be4582c2a7687
+Prop-content-length: 10
+Text-content-length: 5
+Content-length: 15
+
+PROPS-END
+tbaz
+
+
+Revision-number: 14
+Prop-content-length: 120
+Content-length: 120
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-30T20:53:55.525942Z
+K 7
+svn:log
+V 19
+Add tbaz2 on trunk.
+PROPS-END
+
+Node-path: trunk/tbaz2
+Node-kind: file
+Node-action: add
+Text-content-md5: 35c7b190fcd4271ca512097cbd226896
+Text-content-sha1: 28307d4d1415e43c13d6043e83a3ee82ddb73fbc
+Prop-content-length: 10
+Text-content-length: 6
+Content-length: 16
+
+PROPS-END
+tbaz2
+
+
+Revision-number: 15
+Prop-content-length: 117
+Content-length: 117
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-30T20:54:02.161831Z
+K 7
+svn:log
+V 16
+Add x on branch.
+PROPS-END
+
+Node-path: branches/test/x
+Node-kind: file
+Node-action: add
+Text-content-md5: 401b30e3b8b5d629635a5c613cdb7919
+Text-content-sha1: 6fcf9dfbd479ed82697fee719b9f8c610a11ff2a
+Prop-content-length: 10
+Text-content-length: 2
+Content-length: 12
+
+PROPS-END
+x
+
+
+Revision-number: 16
+Prop-content-length: 126
+Content-length: 126
+
+K 10
+svn:author
+V 6
+jmyers
+K 8
+svn:date
+V 27
+2019-12-30T20:54:23.913296Z
+K 7
+svn:log
+V 25
+Merge from trunk to test.
+PROPS-END
+
+Node-path: branches/test
+Node-kind: dir
+Node-action: change
+Prop-content-length: 47
+Content-length: 47
+
+K 13
+svn:mergeinfo
+V 12
+/trunk:11-15
+PROPS-END
+
+
+Node-path: branches/test/tbaz
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 15
+Node-copyfrom-path: trunk/tbaz
+Text-copy-source-md5: de6411781e3ce12445a4f506c2de0597
+Text-copy-source-sha1: 1a82dba0e7956122fa014686c76be4582c2a7687
+
+
+Node-path: branches/test/tbaz2
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 15
+Node-copyfrom-path: trunk/tbaz2
+Text-copy-source-md5: 35c7b190fcd4271ca512097cbd226896
+Text-copy-source-sha1: 28307d4d1415e43c13d6043e83a3ee82ddb73fbc
+
+

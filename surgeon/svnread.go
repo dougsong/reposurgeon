@@ -2093,10 +2093,10 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 		}
 		return mergeinfo
 	}
-	forkIndices := func(commit *Commit) map[string]int {
+	forkIndices := func(commit *Commit) map[string][]int {
 		// Compute all fork points from a root to the branch
 		branch := sp.markToSVNBranch[commit.mark]
-		result := make(map[string]int)
+		result := make(map[string][]int)
 		index := sp.repo.eventToIndex(commit)
 		for commit != nil {
 			// Find the last branch root before commit
@@ -2119,7 +2119,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 				break
 			}
 			index = sp.repo.eventToIndex(fork)
-			result[branch] = index
+			result[branch] = append(result[branch], index)
 			commit = fork
 		}
 		return result
@@ -2185,12 +2185,6 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 				if !isDeclaredBranch(fromPath) {
 					continue
 				}
-				// Check if the destination branch has a fork point
-				// in the source branch, and remember its index.
-				baseIndex := -1
-				if forkIndex, ok := forks[fromPath]; ok {
-					baseIndex = forkIndex
-				}
 				// Ranges were unified when parsing if they were
 				// contiguous in terms of revisions. Now unify
 				// consecutive ranges if they are contiguous in
@@ -2235,10 +2229,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 							break
 						}
 						index := sp.repo.eventToIndex(before)
-						if index <= baseIndex { // d)
-							break
-						}
-						// and c) which is a bit more costly
+						// c) is a bit more costly
 						var branchRoot *Commit
 						for _, root := range sp.branchRoots[fromPath] {
 							if sp.repo.eventToIndex(root) > index {
@@ -2247,6 +2238,24 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 							branchRoot = root
 						}
 						if before == branchRoot {
+							break
+						}
+						// and d) too
+						endIndex := -1
+						if end := lastRelevantCommit(sp, revidx(revs[i].max), fromPath); end != nil {
+							endIndex = sp.repo.eventToIndex(end)
+						}
+						baseIndex := -1
+						if forkIndices, ok := forks[fromPath]; ok {
+							for _, forkIndex := range forkIndices {
+								// They are sorted in reverse order
+								baseIndex = forkIndex
+								if forkIndex <= endIndex {
+									break
+								}
+							}
+						}
+						if index <= baseIndex {
 							break
 						}
 					}
