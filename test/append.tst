@@ -1,5 +1,7 @@
 ## Test append command
-read <min.fi
-:2 append "Quozzle glop\n"
+read <simpletag.svn
+:3 append "Squa tront\n"
+:5 append --legacy "Spa fon: %LEGACY%\n"
+prefer git
 write -
 
