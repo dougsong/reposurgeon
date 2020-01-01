@@ -412,6 +412,7 @@ SVNCLEAN := \
 	branchreplace.svn \
 	branch-drop-add.svn \
 	cherry-pick.svn \
+	cvstag.svn \
 	debranch.svn \
 	deepdirs.svn \
 	delete-rename.svn \
