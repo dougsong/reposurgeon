@@ -84,7 +84,7 @@ testlist:
 	@grep --text '^ ##' *.svn
 listcheck:
 	@for f in *.tst *.svn; do \
-	    if ( head -3 $$f | grep --text -q '^ *##' ); then :; else echo "$$f needs a description"; fi; \
+	    if ( head -3 $$f | grep --text -q '^ *##' ); then :; else echo "$$f needs a description" >&2; exit $(STOPOUT); fi;  \
 	done
 
 # Test that all stream files round-trip properly
