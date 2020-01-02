@@ -1432,6 +1432,16 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 							node.revision, node.path)
 						continue
 					}
+					if node.spurious && node.blob != nil {
+						contents := node.blob.getContent()
+						if string(contents) != subversionDefaultIgnores {
+							fileop := newFileOp(sp.repo)
+							fileop.construct(opM, nodePermissions(*node), "inline", node.path)
+							fileop.inline = contents
+							commit.appendOperation(fileop)
+							continue
+						}
+					}
 				}
 				if node.fromRev > 0 && node.fromIdx > 0 {
 					ancestor = sp.revisions[node.fromRev].nodes[node.fromIdx-1]

@@ -52,48 +52,55 @@ Explain what we're doing here.
 from :3
 M 100644 :4 README
 
-blob
-mark :6
-data 7
-/*.pyc
-
 commit refs/heads/master
 #legacy-id 4
-mark :7
+mark :6
 committer esr <esr> 1352220855 +0000
 data 61
 This follows "svn propset svn:ignore *.pyc foo foo/bar baz".
 from :5
-M 100644 :6 baz/.gitignore
-M 100644 :6 foo/.gitignore
-M 100644 :6 foo/bar/.gitignore
+M 100644 inline baz/.gitignore
+data 7
+/*.pyc
+
+M 100644 inline foo/.gitignore
+data 7
+/*.pyc
+
+M 100644 inline foo/bar/.gitignore
+data 7
+/*.pyc
+
 
 commit refs/heads/master
 #legacy-id 5
-mark :8
+mark :7
 committer esr <esr> 1352220901 +0000
 data 46
 This follows "svn del foo" and "svn del baz".
-from :7
+from :6
 D baz/.gitignore
 D foo/.gitignore
 D foo/bar/.gitignore
 
 commit refs/heads/master
 #legacy-id 6
-mark :9
+mark :8
 committer esr <esr> 1352220744 +0000
 data 67
 Reintroduce foo to then delete it. There should be a M .gitignore.
-from :8
-M 100644 :6 foo/.gitignore
+from :7
+M 100644 inline foo/.gitignore
+data 7
+/*.pyc
+
 
 commit refs/heads/master
 #legacy-id 7
-mark :10
+mark :9
 committer esr <esr> 1352220901 +0000
 data 50
 Delete foo again; there should be a D .gitignore.
-from :9
+from :8
 D foo/.gitignore
 
