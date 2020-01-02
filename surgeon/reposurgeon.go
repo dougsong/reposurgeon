@@ -6709,7 +6709,10 @@ func (repo *Repository) parseDollarCookies() {
 			if fileop.op != opM {
 				continue
 			}
-			blob := repo.markToEvent(fileop.ref).(*Blob)
+			blob, ok := repo.markToEvent(fileop.ref).(*Blob)
+			if !ok {
+				continue
+			}
 			if commit.hasProperties() && commit.properties.get("legacy") != "" {
 				croak("legacy property of %s overwritten",
 					commit.mark)
