@@ -6489,16 +6489,25 @@ func (repo *Repository) commits(selection orderedIntSet) []*Commit {
 	return out
 }
 
-// Dump legacy references.
-func (repo *Repository) writeLegacyMap(fp io.Writer) error {
-	keylist := make([]string, 0)
+func (repo *Repository) cleanLegacyMap() {
+	newMap := make(map[string] *Commit)
 	for key, commit := range repo.legacyMap {
 		if commit.legacyID != "" && commit.mark != "" {
 			i := repo.markToIndex(commit.mark)
 			if i >= 0 && i < len(repo.events) && repo.events[i] == commit {
-				keylist = append(keylist, key)
+				newMap[key] = commit
 			}
 		}
+	}
+	repo.legacyMap = newMap
+}
+
+// Dump legacy references.
+func (repo *Repository) writeLegacyMap(fp io.Writer) error {
+	keylist := make([]string, 0)
+	repo.cleanLegacyMap()
+	for key := range repo.legacyMap {
+		keylist = append(keylist, key)
 	}
 	sort.Slice(keylist, func(i, j int) bool {
 		ki := keylist[i]
@@ -7511,6 +7520,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 	}
 
 	// Cleanup
+	repo.cleanLegacyMap()
 	if !control.flagOptions["defergc"] {
 		repo.gcBlobs()
 	}
