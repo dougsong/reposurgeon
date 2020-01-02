@@ -17919,16 +17919,20 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		dateSkippers = append(dateSkippers, skip)
 	}
 
-	parseChangelogLine := func(line string, where string, filepath string, pos int) string {
+	parseChangelogLine := func(line string, commit *Commit, filepath string, pos int) string {
 		// Parse an attribution line in a ChangeLog entry, get an email address
 		if len(line) <= 10 || unicode.IsSpace(rune(line[0])) {
 			return ""
 		}
 		complain := func() {
 			errLock.Lock()
+			id := commit.idMe()
+			if commit.legacyID != "" {
+				id += fmt.Sprintf(" <%s>", commit.legacyID)
+			}
 			errlines = append(errlines,
 				fmt.Sprintf("%s at %s has garbled attribution %q",
-					filepath, where, line))
+					filepath, id, line))
 			errLock.Unlock()
 		}
 		// Massage old-style addresses into newstyle
@@ -18109,7 +18113,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 						for pos := difflines.J1; pos < difflines.J2; pos++ {
 							diffline := now[pos]
 							if strings.TrimSpace(diffline) != "" {
-								attribution := parseChangelogLine(diffline, commit.idMe(), op.Path, pos)
+								attribution := parseChangelogLine(diffline, commit, op.Path, pos)
 								foundAt := 0
 								if attribution != "" {
 									// we found an active attribution line
@@ -18119,7 +18123,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 									// this is not an attribution line, search for
 									// the last one since we are in its block
 									for j := lastUnchanged.J2 - 1; j >= lastUnchanged.J1; j-- {
-										attribution = parseChangelogLine(now[j], commit.idMe(), op.Path, j)
+										attribution = parseChangelogLine(now[j], commit, op.Path, j)
 										if attribution != "" {
 											// this is the active attribution
 											// corresponding to the added chunk
