@@ -7490,7 +7490,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 	repo.events = survivors
 	repo.declareSequenceMutation("")
 	// Canonicalize all the commits that got ops pushed to them
-	if !delete && coalesce {
+	if coalesce {
 		for _, commit := range altered {
 			if commit.getDelFlag() {
 				continue
