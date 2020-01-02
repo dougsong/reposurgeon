@@ -61,5 +61,6 @@ from :3
 M 100644 :5 data/cmdvartab
 
 reset refs/tags/v2.0.1
+#legacy-id 5
 from :4
 

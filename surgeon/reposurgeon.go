@@ -2949,10 +2949,11 @@ type Reset struct {
 	deleteme   bool
 }
 
-func newReset(repo *Repository, ref string, committish string) *Reset {
+func newReset(repo *Repository, ref string, committish string, legacy string) *Reset {
 	reset := new(Reset)
 	reset.repo = repo
 	reset.ref = ref
+	reset.legacyID = legacy
 	if committish != "" {
 		reset.committish = committish
 		reset.remember(repo, committish)
@@ -2974,11 +2975,7 @@ func (reset Reset) isCommit() bool {
 
 // idMe IDs this reset for humans.
 func (reset *Reset) idMe() string {
-	var out string
-	if reset.legacyID != "" {
-		out += fmt.Sprintf("#legacy-id %s\n", reset.legacyID)
-	}
-	return out + fmt.Sprintf("reset-%s@%d", reset.ref, reset.repo.eventToIndex(reset))
+	return fmt.Sprintf("reset-%s@%d", reset.ref, reset.repo.eventToIndex(reset))
 }
 
 // getMark returns the reset's identifying mark
@@ -3025,6 +3022,9 @@ func (reset *Reset) Save(w io.Writer) {
 		reset.repo.realized[reset.ref] = true
 	}
 	fmt.Fprintf(w, "reset %s\n", reset.ref)
+	if reset.legacyID != "" {
+		fmt.Fprintf(w, "#legacy-id %s\n", reset.legacyID)
+	}
 	if reset.committish != "" {
 		fmt.Fprintf(w, "from %s\n\n", reset.committish)
 		if reset.repo.branchPosition != nil {
@@ -5527,7 +5527,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			commitcount++
 			baton.twirl()
 		} else if bytes.HasPrefix(line, []byte("reset")) {
-			reset := newReset(sp.repo, "", "")
+			reset := newReset(sp.repo, "", "", "")
 			reset.ref = string(bytes.TrimSpace(line[6:]))
 			line = sp.fiReadline()
 			if bytes.HasPrefix(line, []byte("from")) {
@@ -7449,7 +7449,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 					// will take care of moving the
 					// attachment to the new target.
 					reset := newReset(repo,
-						commit.Branch, commit.mark)
+						commit.Branch, commit.mark, commit.legacyID)
 					repo.events[ei] = reset
 				}
 				// use a copy of attachments since it
@@ -16473,7 +16473,7 @@ func (rs *Reposurgeon) DoReset(line string) bool {
 			croak("create target is not a commit.")
 			return false
 		}
-		reset := newReset(repo, resetname, target.mark)
+		reset := newReset(repo, resetname, target.mark, target.legacyID)
 		repo.addEvent(reset)
 		repo.declareSequenceMutation("reset create")
 	} else if verb == "move" {

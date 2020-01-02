@@ -1193,7 +1193,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 			}
 		}
 		if len(parents) == 0 { // && commit.Branch != "refs/heads/master"
-			reset := newReset(repo, commit.Branch, commit.mark)
+			reset := newReset(repo, commit.Branch, commit.mark, "")
 			repo.addEvent(reset)
 		}
 		commit.simplify()
@@ -1231,7 +1231,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 				panic(throw("extractor", "could not get a mark for the target of %s", resetname))
 			}
 
-			reset := newReset(repo, resetname, committish)
+			reset := newReset(repo, resetname, committish, "")
 			repo.addEvent(reset)
 		}
 	}

@@ -2526,10 +2526,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	baton.endProgress()
 	sort.Slice(taggables, func(i, j int) bool { return taggables[i].getMark() < taggables[j].getMark()})
 	for _, commit := range taggables {
-		reset := newReset(sp.repo,
-			commit.Branch,
-			commit.parentMarks()[0])
-		reset.legacyID = commit.legacyID
+		newReset(sp.repo, commit.Branch, commit.parentMarks()[0], commit.legacyID)
 	}
 	sp.repo.delete(deletables, []string{"--tagback"})
 }
