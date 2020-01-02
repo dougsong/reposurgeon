@@ -748,16 +748,12 @@ def compare_engine(singular, plural, lister, comparer, args):
         compare_result += "%s only in target:\n" % plural
         for item in targetonly:
             compare_result += item + "\n"
+    if compare_result != "":
+        croak(compare_result)
     if common:
         for item in common:
             cmd = " ".join([comparer, item] + diff_args + [source, target])
             comparison = capture_or_die(cmd)
-            if comparison:
-                compare_result += "----------------------------------------------------------------\n"
-                compare_result += "%s %s:\n" % (singular, item)
-                compare_result += str(comparison)
-    if compare_result != "":
-        croak(compare_result)
 
 def compare_tags(args):
     "Compare two repos at all tags."
