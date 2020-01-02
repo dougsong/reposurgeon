@@ -6608,16 +6608,13 @@ func defaultEmptyTagName(commit *Commit) string {
                       * createTags    whether to create tags.
 */
 
-func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, tagifyMerges bool, canonicalize bool, nameFunc func(*Commit) string, legendFunc func(*Commit) string, createTags bool, gripe func(string)) {
+func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, tagifyMerges bool, canonicalize bool, nameFunc func(*Commit) string, legendFunc func(*Commit) string, createTags bool) error {
 	// Turn into tags commits without (meaningful) fileops.
 	// Use a separate loop because delete() invalidates manifests.
 	if canonicalize {
 		for _, commit := range repo.commits(selection) {
 			commit.canonicalize()
 		}
-	}
-	if gripe == nil {
-		gripe = func(msg string) { logit(logEXTRACT, msg) }
 	}
 	// Tagify commits without fileops
 	var isTipdelete = func(commit *Commit) bool { return false }
@@ -6626,6 +6623,7 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 			return c.alldeletes(deleteall) && !c.hasChildren()
 		}
 	}
+	var errout error
 	deletia := make([]int, 0)
 	tagifyEvent := func(index int) {
 		commit, ok := repo.events[index].(*Commit)
@@ -6676,7 +6674,7 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 					} else {
 						msg += fmt.Sprintf("zero-op commit on %s.", commit.Branch)
 					}
-					gripe(msg[1:])
+					errout = errors.New(msg[1:])
 					deletia = append(deletia, index)
 				}
 			}
@@ -6694,6 +6692,7 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 		}
 	}
 	repo.delete(deletia, []string{"--tagback", "--tagify"})
+	return errout
 }
 
 // Read a stream file and use it to populate the repo.
@@ -9251,7 +9250,7 @@ func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
 }
 
 // Expunge a set of files from the commits in the selection set.
-func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
+func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) error {
 	digest := func(toklist []string) (*regexp.Regexp, bool) {
 		digested := make([]string, 0)
 		notagify := false
@@ -9479,12 +9478,13 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) {
 		}
 	}
 	rl.repo.events = filtered
-	rl.repo.tagifyEmpty(nil, false, false, false, nil, nil, !notagify, nil)
+	errout := rl.repo.tagifyEmpty(nil, false, false, false, nil, nil, !notagify)
 	// And tell we changed the manifests and the event sequence.
 	//rl.repo.invalidateManifests()
 	rl.repo.declareSequenceMutation("expunge cleanup")
 	// At last, add the expunged repository to the loaded list.
 	rl.repolist = append(rl.repolist, expunged)
+	return errout
 }
 
 type selEvalState interface {
@@ -15155,7 +15155,10 @@ func (rs *Reposurgeon) DoExpunge(line string) bool {
 		croak("malformed expunge command")
 		return false
 	}
-	rs.expunge(selection, fields)
+	err = rs.expunge(selection, fields)
+	if err != nil {
+		respond(err.Error())
+	}
 	return false
 }
 
@@ -15748,15 +15751,17 @@ func (rs *Reposurgeon) DoTagify(line string) bool {
 		return false
 	}
 	before := len(repo.commits(nil))
-	repo.tagifyEmpty(
+	err := repo.tagifyEmpty(
 		selection,
 		parse.options.Contains("--tipdeletes"),
 		parse.options.Contains("--tagify-merges"),
 		parse.options.Contains("--canonicalize"),
 		nil,
 		nil,
-		true,
-		func(msg string) { control.baton.printLogString(msg) })
+		true)
+	if err != nil {
+		control.baton.printLogString(err.Error())
+	}
 	after := len(repo.commits(nil))
 	respond("%d commits tagified.", before-after)
 	return false
