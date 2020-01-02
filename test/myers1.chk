@@ -1,4 +1,3 @@
-reposurgeon: r2: deleting parentless zero-op commit on refs/heads/b2.
 #reposurgeon sourcetype svn
 blob
 mark :1

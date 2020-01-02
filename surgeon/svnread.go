@@ -2708,7 +2708,7 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 				} else {
 					msg += fmt.Sprintf("zero-op commit on %s.", commit.Branch)
 				}
-				logit(logSHOUT, msg)
+				logit(logEXTRACT, msg)
 				commit.Comment = "" // avoid composing with the children
 				deletia = append(deletia, index)
 			}

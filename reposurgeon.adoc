@@ -456,7 +456,7 @@ states in core.  Each has a name.  At any given time, one may be selected
 for editing. Commands in this group import repositories, export them,
 and manipulate the in-core list and the selection.
 
-+read+ [ +--format=fossil+ ] [ _directory_ | +-+ | _<infile_ ]::
++read+ [ +--format=fossil+ ] [ +--no-implicit+ ] [ _directory_ | +-+ | _<infile_ ]::
     With a directory-name argument, this command attempts
     to read in the contents of a repository in any supported
     version-control system under that directory; read with no arguments
@@ -493,6 +493,12 @@ repositories and becomes the current one, selected for surgery. If it
 was read from a plain file and the file name ends with one of the
 extensions _.fi_ or _.svn_, that
 extension is removed from the load list name.
++
+Normally, missing from links in input streams are deaulted to the
+previous commit.  The --no-implicit option disables this and may
+enable round-tripping of some streams on which it would fail (note
+however ythat git fast-export generates explict from links). This
+option will mainly be useful for testing and debugging.
 +
 Note: this command does not take a selection set.
 
