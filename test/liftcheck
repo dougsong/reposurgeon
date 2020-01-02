@@ -98,7 +98,7 @@ do
 
     # Make a git repo from the dump using reposurgeon
     ${REPOSURGEON:-../reposurgeon} "${TESTOPT}" "${rlimit}" "read ${nobranch} ${readopt} <${what}" \
-	"prefer git" "rebuild ${stem}-git" "write >${stem}.gfi" >&-
+	"prefer git" "rebuild ${stem}-git" "write >${stem}.gfi" >/dev/null
 
     if [   "(" -e ${stem}-checkout/trunk ")"    \
 	-o "(" -e ${stem}-checkout/branches ")" \
