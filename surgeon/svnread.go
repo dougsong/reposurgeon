@@ -1860,6 +1860,14 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	//
 	if options.Contains("--nobranch") {
 		logit(logEXTRACT, "SVN Phase 8: parent link fixups (skipped due to --nobranch)")
+		// There is only one branch root: the very first commit
+		sp.branchRoots = make(map[string][]*Commit)
+		for _, event := range sp.repo.events {
+			if commit, ok := event.(*Commit); ok {
+				sp.branchRoots[""] = []*Commit{commit}
+				break
+			}
+		}
 		return
 	}
 	defer trace.StartRegion(ctx, "SVN Phase 8: parent link fixups").End()
