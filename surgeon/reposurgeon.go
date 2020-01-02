@@ -6493,8 +6493,11 @@ func (repo *Repository) commits(selection orderedIntSet) []*Commit {
 func (repo *Repository) writeLegacyMap(fp io.Writer) error {
 	keylist := make([]string, 0)
 	for key, commit := range repo.legacyMap {
-		if commit.legacyID != "" && commit.mark != "" && repo.markToIndex(commit.mark) != -1 {
-			keylist = append(keylist, key)
+		if commit.legacyID != "" && commit.mark != "" {
+			i := repo.markToIndex(commit.mark)
+			if i >= 0 && i < len(repo.events) && repo.events[i] == commit {
+				keylist = append(keylist, key)
+			}
 		}
 	}
 	sort.Slice(keylist, func(i, j int) bool {
