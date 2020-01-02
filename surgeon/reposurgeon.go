@@ -17902,6 +17902,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		"2006-01-02 15:04 -0700",
 		"2006-01-02 15:04",
 		"2006-01-02",
+		"02-01-2006",
 		time.UnixDate,
 		time.ANSIC}
 	type dateSkipper struct {
