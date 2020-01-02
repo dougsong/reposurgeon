@@ -66,7 +66,6 @@ data 36
 Copy directory and modify property.
 from :5
 M 100644 :2 testdir2/foo
-M 100644 :2 testdir2/foo
 
 commit refs/heads/master
 #legacy-id 5

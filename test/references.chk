@@ -13542,6 +13542,7 @@ M 100644 :1375 NEWS
 M 100644 :1376 README
 M 100644 :424 UPGRADING
 M 100644 :13 aclocal.m4
+D clients/.gitignore
 M 100644 :333 clients/Makefile.in
 M 100644 :15 clients/cgilib.c
 M 100644 :16 clients/cgilib.h
@@ -13563,6 +13564,7 @@ M 100644 :31 clients/upssched.h
 M 100644 :32 clients/upsset.c
 M 100644 :620 clients/upsstats.c
 M 100644 :34 clients/upsstats.h
+D common/.gitignore
 M 100644 :35 common/Makefile.in
 M 100644 :36 common/atexit.c
 M 100644 :37 common/common.c
@@ -13573,6 +13575,7 @@ M 100644 :41 common/snprintf.c
 M 100644 :42 common/state.c
 M 100644 :43 common/strerror.c
 M 100644 :44 common/upsconf.c
+D conf/.gitignore
 M 100644 :45 conf/Makefile.in
 M 100644 :46 conf/hosts.conf
 M 100644 :313 conf/ups.conf
@@ -13790,6 +13793,7 @@ M 100644 :817 drivers/upscode2.h
 M 100644 :1446 drivers/upsdrvctl.c
 M 100644 :818 drivers/victronups.c
 M 100644 :819 drivers/victronups.h
+D include/.gitignore
 M 100644 :164 include/attribute.h
 M 100644 :1353 include/common.h
 M 100644 :704 include/config.h.in
@@ -13804,10 +13808,12 @@ M 100644 :174 include/upshandler.h
 M 100644 :490 include/version.h
 M 100644 :489 include/version
 M 100755 :177 install-sh
+D lib/.gitignore
 M 100644 :178 lib/Makefile.in
 M 100644 :179 lib/README
 M 100644 :180 lib/libupsclient-config.in
 M 100644 :181 lib/libupsclient.pc.in
+D man/.gitignore
 M 100644 :1360 man/Makefile.in
 M 100644 :1065 man/al175.8
 M 100644 :183 man/apcsmart.8
@@ -13916,10 +13922,12 @@ M 100644 :268 scripts/Windows/halt.c
 D scripts/hotplug-ng/README
 D scripts/hotplug-ng/nut-usbups.hotplug.in
 D scripts/hotplug-ng/nut-usbups.rules.in
+D scripts/hotplug/.gitignore
 M 100644 :653 scripts/hotplug/README
 M 100644 :1284 scripts/hotplug/libhid.usermap
 M 100644 :271 scripts/hotplug/libhidups.in
 M 100644 :272 scripts/misc/osd-notify
+D server/.gitignore
 M 100644 :273 server/Makefile.in
 M 100644 :274 server/access.c
 M 100644 :275 server/access.h
