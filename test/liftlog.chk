@@ -1,6 +1,6 @@
 reposurgeon: ChangeLog at commit@:17 has garbled attribution "= = = Demonstrate that we can skip a header = = ="
 reposurgeon: ChangeLog at commit@:32 has garbled attribution "2019-12-26  First Author  <first@author.example>, Second Author <second@author.example>"
-reposurgeon: ChangeLog at commit@:35 has garbled attribution "2019-12-26  Third Author  <first@author.example>  <tiny change>"
+reposurgeon: ChangeLog at commit@:35 has garbled attribution "2019-12-26  Third Author  <first@author.example>  (tiny change)"
 reposurgeon: fills 13 of 16 authorships, changing 8, from 15 ChangeLogs.
 reposurgeon: 3 new log message(s)
 #reposurgeon sourcetype git

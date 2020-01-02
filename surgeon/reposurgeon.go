@@ -17875,6 +17875,44 @@ func stringCopy(a string) string {
 	return (a + " ")[:len(a)]
 }
 
+// canonicalizeInlineAddress detects and cleans up an email address in a line,
+// then breaks the line around it.
+func canonicalizeInlineAddress(line string) (bool, string, string, string) {
+	// Massage old-style addresses into newstyle
+	line = strings.Replace(line, "(", "<", -1)
+	line = strings.Replace(line, ")", ">", -1)
+	// And another kind of quirks
+	line = strings.Replace(line, "&lt;", "<", -1)
+	line = strings.Replace(line, "&gt;", ">", -1)
+	// Deal with some address masking that can interfere with next stages
+	line = strings.Replace(line, " <at> ", "@", -1)
+	line = strings.Replace(line, " <dot> ", ".", -1)
+	// We require exactly one @
+	if strings.Count(line, "@") != 1 {
+		return false, "", "", ""
+	}
+	// Line must contain an email address. Find it.
+	addrStart := strings.LastIndex(line, "<")
+	addrEnd := strings.Index(line[addrStart+1:], ">") + addrStart + 1
+	at := strings.Index(line, "@")
+	if addrStart < 0 || addrEnd < 0 || at < addrStart || at > addrEnd {
+		return false, "", "", ""
+	}
+	// Remove all other < and > delimiters to avoid malformed attributions
+	// After the address, they can be dropped, but before them might come
+	// legit parentheses that were converted above.
+	pre := strings.Replace(
+		strings.Replace(line[:addrStart], "<", "(", -1),
+		">", ")", -1)
+	post := strings.Replace(line[addrEnd+1:], ">", "", -1)
+	email := line[addrStart : addrEnd+1]
+	// Detect more types of address masking
+	email = strings.Replace(email, " at ", "@", 1)
+	email = strings.Replace(email, " dot ", ".", 1)
+
+	return true, pre, email, post
+}
+
 // DoChangelogs mines repository changelogs for authorship data.
 func (rs *Reposurgeon) DoChangelogs(line string) bool {
 	if rs.chosen() == nil {
@@ -17935,39 +17973,12 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 					filepath, id, line))
 			errLock.Unlock()
 		}
-		// Massage old-style addresses into newstyle
-		line = strings.Replace(line, "(", "<", -1)
-		line = strings.Replace(line, ")", ">", -1)
-		// And another kind of quirks
-		line = strings.Replace(line, "&lt;", "<", -1)
-		line = strings.Replace(line, "&gt;", ">", -1)
-		// Deal with some address masking that can interfere with next stages
-		line = strings.Replace(line, " <at> ", "@", -1)
-		line = strings.Replace(line, " <dot> ", ".", -1)
-		// Line must contain an email address. Find it.
-		addrStart := strings.LastIndex(line, "<")
-		addrEnd := strings.Index(line[addrStart+1:], ">") + addrStart + 1
-		if addrStart < 0 || addrEnd <= addrStart {
+		ok, pre, email, post := canonicalizeInlineAddress(line)
+		if !ok {
 			complain()
 			return ""
 		}
-		// Remove all other < and > delimiters to avoid malformed attributions
-		// After the address, they can be dropped, but before them might come
-		// legit parentheses that were converted above.
-		pre := strings.Replace(
-			strings.Replace(line[:addrStart], "<", "(", -1),
-			">", ")", -1)
-		post := strings.Replace(line[addrEnd+1:], ">", "", -1)
-		email := line[addrStart : addrEnd+1]
-		// Detect more types of address masking
-		email = strings.Replace(email, " at ", "@", 1)
-		email = strings.Replace(email, " dot ", ".", 1)
-		// We require exactly one @ in the address, and none outside
-		if strings.Count(email, "@") != 1 ||
-			strings.Count(pre, "@") + strings.Count(pre, "@") > 0 {
-			complain()
-			return ""
-		}
+
 		// Regenerate cleaned up attribution
 		line = pre + email + post
 		// Scan for a date - it's not an attribution line without one.
