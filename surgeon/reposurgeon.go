@@ -17943,9 +17943,12 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		line = strings.Replace(line, "&gt;", ">", -1)
 		// Deal with some address masking that can interfere with next stages
 		if strings.Count(line, "@") == 0 {
-			line = strings.Replace(line, " <at> ", "@", -1)
 			line = strings.Replace(line, " at ", "@", -1)
-			line = strings.Replace(line, " dot ", "@", -1)
+			line = strings.Replace(line, " <at> ", "@", -1)
+		}
+		if strings.Count(line, ".") == 0 {
+			line = strings.Replace(line, " dot ", ".", -1)
+			line = strings.Replace(line, " <dot> ", ".", -1)
 		}
 		// We require exactly one @
 		if strings.Count(line, "@") != 1 {
