@@ -17942,14 +17942,8 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		line = strings.Replace(line, "&lt;", "<", -1)
 		line = strings.Replace(line, "&gt;", ">", -1)
 		// Deal with some address masking that can interfere with next stages
-		if strings.Count(line, "@") == 0 {
-			line = strings.Replace(line, " at ", "@", -1)
-			line = strings.Replace(line, " <at> ", "@", -1)
-		}
-		if strings.Count(line, ".") == 0 {
-			line = strings.Replace(line, " dot ", ".", -1)
-			line = strings.Replace(line, " <dot> ", ".", -1)
-		}
+		line = strings.Replace(line, " <at> ", "@", -1)
+		line = strings.Replace(line, " <dot> ", ".", -1)
 		// We require exactly one @
 		if strings.Count(line, "@") != 1 {
 			complain()
@@ -17973,6 +17967,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		email := line[addrStart : addrEnd+1]
 		// Detect more types of address masking
 		email = strings.Replace(email, " at ", "@", 1)
+		email = strings.Replace(email, " dot ", ".", 1)
 		// Regenerate cleaned up attribution
 		line = pre + email + post
 		// Scan for a date - it's not an attribution line without one.
