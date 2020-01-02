@@ -18090,7 +18090,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 						for pos := difflines.J1; pos < difflines.J2; pos++ {
 							diffline := now[pos]
 							if strings.TrimSpace(diffline) != "" {
-								attribution := parseChangelogLine(diffline, commit.mark, op.Path, pos)
+								attribution := parseChangelogLine(diffline, commit.idMe(), op.Path, pos)
 								foundAt := 0
 								if attribution != "" {
 									// we found an active attribution line
@@ -18100,7 +18100,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 									// this is not an attribution line, search for
 									// the last one since we are in its block
 									for j := lastUnchanged.J2 - 1; j >= lastUnchanged.J1; j-- {
-										attribution = parseChangelogLine(now[j], commit.mark, op.Path, j)
+										attribution = parseChangelogLine(now[j], commit.idMe(), op.Path, j)
 										if attribution != "" {
 											// this is the active attribution
 											// corresponding to the added chunk
