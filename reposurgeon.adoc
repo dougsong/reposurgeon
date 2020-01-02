@@ -6,7 +6,7 @@ reposurgeon - surgical operations on repositories
 
 == SYNOPSIS ==
 
-*reosurgeon* [command...]
+*reposurgeon* [command...]
 
 [[description]]
 == DESCRIPTION ==
@@ -1240,7 +1240,7 @@ of the grafted repository.
 +
 Ordinarily, if the target path already exists in the fileops, or
 is visible in the ancestry of the commit, this command throws an
-error.  With the <option>--force</option> option, these checks
+error.  With the `--force` option, these checks
 are skipped.
 
 +paths+ [ +{sub|sup}+ ] [ _dirname_ ] [ >__outfile__ ]::
@@ -1261,12 +1261,11 @@ with no argument, strip the first directory component from every path.
 +unmerge+::
    Linearize a commit. Takes a selection set argument, which must resolve
    to a single commit, and removes all its parents except for the first.
-   It is equivalent to +reparent+ --rebase</option>
-   _first_parent_, _commit_, where
+   It is equivalent to `_first_parent_, _commit_ reparent --rebase`, where
    _commit_ is the same selection set as used with
    unmerge and _first_parent_ is a set resolving
    _commit_'s first parent (see the
-   +reparent+ command below
+   +reparent+ command below.
    The main interest of the +unmerge+ is that you don't
    have to find and specify the first parent yourself, saving time and avoiding
    errors when nearby surgery would make a manual first parent argument
@@ -1327,11 +1326,11 @@ without introducing a cycle during the process, you must reparent the
 descendant commit first.
 +
 By default, the manifest of the reparented commit is computed before
-modifying it; a <literal>deleteall</literal> and some fileops are
+modifying it; a `deleteall` and some fileops are
 prepended so that the manifest stays unchanged even when the first
 parent has been changed.  This behavior can be changed by specifying a
 policy flag. +--rebase+. That inhibits the default behavior—no
-<literal>deleteall</literal> is issued and the tree contents of all
+`deleteall` is issued and the tree contents of all
 descendents can be modified as a result.
 
 +reorder+ [ --quiet ]::
@@ -1496,11 +1495,9 @@ moved, no branch fields are changed.
 +debranch+ _source-branch_ _[target-branch]_::
    Takes one or two arguments which must be the names of source and
    target branches; if the second (target) argument is omitted it
-   defaults to <filename>refs/heads/master</filename>.  Any trailing
-   segment of a branch name is accepted as a synonym for it; thus
-   <filename>master</filename> is the same as
-   <filename>refs/heads/master</filename>. Does not take a selection
-   set.
+   defaults to `refs/heads/master`.  Any trailing segment of a branch
+   name is accepted as a synonym for it; thus +master+ is the same as
+   `refs/heads/master`. Does not take a selection set.
 +
 The history of the source branch is merged into the history of
 the target branch, becoming the history of a subdirectory with the
@@ -1556,8 +1553,8 @@ default patterns.
    Inspect, modify, add, and remove commit and tag attributions.
 +
 Attributions upon which to operate are selected in much the same way as
-events are selected, as described in <link linkend='selections'>SELECTION
-SYNTAX</link>.  _selection_ is an expression composed of
+events are selected, as described in <<selections>>.
+_selection_ is an expression composed of
 1-origin attribution-sequence numbers, '$' for last attribution, '..' ranges,
 comma-separated items, '(...)' grouping, set operations '|' union, '&amp;'
 intersection, and '~' negation, and function calls @min(), @max(), @amp(),
@@ -1745,7 +1742,7 @@ With the modifier "lift", attempt to resolve Subversion and CVS
 cookies in comments into action stamps using the legacy map. An action
 stamp is a timestamp/email/sequence-number combination uniquely
 identifying the commit associated with that blob, as described in
-<xref linkend='style'/>.
+<<style>>.
 +
 It is not guaranteed that every such reference will be resolved,
 or even that any at all will be. Normally all references in history
@@ -2316,13 +2313,11 @@ Mercurial repositories.
 Mercurial branches are exported as branches in the exported
 repository and tags are exported as tags. By default, bookmarks are
 ignored. You can specify explicit handling for bookmarks by setting
-<parameter>reposurgeon.bookmarks</parameter> in your
-<filename>.hg/hgrc_. Set the value to the prefix that
-reposurgeon should use for
-bookmarks.
+`reposurgeon.bookmarks` in your `.hg/hgrc`. Set the value to the
+prefix that reposurgeon should use for bookmarks.
 
 For example, if your bookmarks represent branches, put this at
-the bottom of your <filename>.hg/hgrc_:
+the bottom of your `.hg/hgrc`:
 
 --------
 [reposurgeon]
@@ -2468,7 +2463,7 @@ Subversion repository to branches:
 paths and path wildcards which declare potential branches.
 See the documentation of the +branchify+
 for how to alter this set, which initially consists of
-{trunk, tags/*, branches/*, and '*'}.
+{`trunk`, `tags/*`, `branches/*`, and `*`}.
 
 * A repository is considered "flat" if it has no
 directory that matches a path or path wildcard in the branchify set.
@@ -2488,8 +2483,8 @@ commits.
 * If "trunk" is eligible, it always becomes the master
 branch.
 
-* If an element of the branchify set ends with *, each
-immediate subdirectory of it is considered a potential branch.  If '*'
+* If an element of the branchify set ends with +*+, each
+immediate subdirectory of it is considered a potential branch.  If `*`
 is in the branchify set (which is true by default) all top-level
 directories other than /trunk, /tags, and /branches are also
 considered potential branches.
@@ -2586,15 +2581,15 @@ obvious messages it may emit:
 
 user-created .gitignore ignored::
    This message means means reposurgeon has
-   found a <filename>.gitignore_ file in the Subversion
+   found a `.gitignore` file in the Subversion
    repository it is analyzing. This probably happened because somebody
    was using +git-svn+ as a live gateway, and created
    ignores which may or may not be congruent with those in the generated
-   <filename>.gitignore_ files that the Subversion ignore
+   `.gitignore` files that the Subversion ignore
    properties will be translated into.  You'll need to make a policy
    decision about which set of ignores to use in the conversion, and
    possibly set the --user-ignores option on read to pass through
-   user-created <filename>.gitignore_ files; in that case this
+   user-created `.gitignore` files; in that case this
    warning will not be emitted.
 
 properties set::
@@ -3058,13 +3053,13 @@ We resolve this dilemma by playing a game of three-directory monte.
 
 . First, we build the repo in a freshly-created staging
 directory.  If your target directory is named
-<filename>/path/to/foo_, the staging directory will be a
-peer named <filename>/path/to/foo-stageNNNN_, where NNNN is
+`/path/to/foo`, the staging directory will be a
+peer named `/path/to/foo-stageNNNN`, where NNNN is
 a cookie derived from reposurgeon's process
-ID.</step>
+ID.
 
 . We then make an empty backup directory.  This directory will
-be named <filename>/path/to/foo.~N~_, where N is incremented
+be named `+/path/to/foo.~N~+`, where N is incremented
 so as not to conflict with any existing backup directories.
 reposurgeon never, under any circumstances,
 ever deletes a backup directory.
