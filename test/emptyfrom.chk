@@ -70,6 +70,7 @@ committer frank <frank> 1439420741 +0000
 data 3
 r7
 deleteall
+M 100644 :1 .gitignore
 M 100755 :6 sim/regress_rdb.pl
 M 100644 :4 sim/test_lib/temp/.keepme
 

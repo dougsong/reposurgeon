@@ -2656,13 +2656,14 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 					commit.parents()[0].getMark(),
 					taglegend(commit),
 					false)
+				commit.Comment = "" // avoid composing with the children
 				deletia = append(deletia, index)
 			} else {
 				msg := ""
 				if commit.legacyID != "" {
-					msg = fmt.Sprintf(" r%s:", commit.legacyID)
+					msg = fmt.Sprintf("r%s:", commit.legacyID)
 				} else if commit.mark != "" {
-					msg = fmt.Sprintf(" '%s':", commit.mark)
+					msg = fmt.Sprintf("'%s':", commit.mark)
 				}
 				msg += " deleting parentless "
 				if len(commit.operations()) > 0 && commit.alldeletes(deleteall) {
@@ -2670,13 +2671,14 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 				} else {
 					msg += fmt.Sprintf("zero-op commit on %s.", commit.Branch)
 				}
-				logit(logSHOUT, msg[1:])
+				logit(logSHOUT, msg)
+				commit.Comment = "" // avoid composing with the children
 				deletia = append(deletia, index)
 			}
 		}
 		baton.percentProgress(uint64(index) + 1)
 	}
-	sp.repo.delete(deletia, []string{"--tagback"})
+	sp.repo.delete(deletia, []string{"--pushforward", "--tagback"})
 	baton.endProgress()
 }
 

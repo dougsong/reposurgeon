@@ -38,6 +38,7 @@ committer test <test> 1475712000 +0000
 data 18
 Commit message 6.
 deleteall
+M 100644 :1 .gitignore
 M 100644 :2 d1/d2/d3/d4/d5/d6/f0
 M 100644 :3 d1/d2/d3/d4/d5/d6/f9
 
@@ -48,6 +49,7 @@ committer test <test> 1475884800 +0000
 data 18
 Commit message 8.
 deleteall
+M 100644 :1 .gitignore
 M 100644 :2 d1/d2/d3/d4/d5/d6/f0
 M 100644 :3 d1/d2/d3/d4/d5/d6/f9
 
@@ -70,6 +72,7 @@ committer test <test> 1476057600 +0000
 data 19
 Commit message 10.
 deleteall
+M 100644 :1 .gitignore
 M 100644 :2 d1/d2/d3/d4/d5/d6/f0
 M 100644 :3 d1/d2/d3/d4/d5/d6/f9
 
@@ -80,6 +83,7 @@ committer test <test> 1476144000 +0000
 data 19
 Commit message 11.
 deleteall
+M 100644 :1 .gitignore
 M 100644 :2 d1/d2/d3/d4/d5/d6/f0
 M 100644 :3 d1/d2/d3/d4/d5/d6/f9
 
