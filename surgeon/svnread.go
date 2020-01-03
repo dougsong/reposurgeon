@@ -743,8 +743,7 @@ func walkRevisions(revs []RevisionRecord, hook func(int, *RevisionRecord)) {
 }
 
 // Cruft recognizers
-var cvs2svnTagRE = regexp.MustCompile("This commit was manufactured by cvs2svn to create tag")
-var cvs2svnBranchRE = regexp.MustCompile("This commit was manufactured by cvs2svn to create branch")
+var cvs2svnTagBranchRE = regexp.MustCompile("This commit was manufactured by cvs2svn to create ")
 
 var blankline = regexp.MustCompile(`(?m:^\s*\n)`)
 
@@ -2551,6 +2550,17 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 			if commit.getColor() != colorTRIVIAL {
 				return
 			}
+			nakedBranchroot := func(commit *Commit) bool {
+				for _, child := range commit.children() {
+					switch child.(type) {
+					case *Commit:
+						if child.(*Commit).Branch == commit.Branch {
+							return false
+						}
+					}
+				}
+				return true
+			}
 			// Commits that cvs2svn created as tag
 			// surrogates nomally need to be turned into
 			// actual (lightweight) tags, because
@@ -2560,8 +2570,8 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 			// commit in the tag namespace has child
 			// commits, those will produce a branch-tip
 			// reference and we don't need to create one.
-			if cvs2svnTagRE.MatchString(commit.Comment) {
-				if commit.hasParents() && !commit.hasChildren() {
+			if cvs2svnTagBranchRE.MatchString(commit.Comment) {
+				if commit.hasParents() && (!commit.hasChildren() || nakedBranchroot(commit)) {
 					mutex.Lock()
 					taggables = append(taggables, commit)
 					mutex.Unlock()
@@ -2569,12 +2579,6 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 				safedelete(i)
 				return
 			}
-			// cvs2svn-generated branch commits 
-			// and just get removed.
-			//if cvs2svnBranchRE.MatchString(commit.Comment) {
-			//	safedelete(i)
-			//	return
-			//}
 			// All other trivial commits can be stripped of fileops
 			// at this point, to be tagified in the next pass.
 			// commit.setOperations(nil)
@@ -2584,7 +2588,8 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	baton.endProgress()
 	sort.Slice(taggables, func(i, j int) bool { return taggables[i].getMark() < taggables[j].getMark()})
 	for _, commit := range taggables {
-		newReset(sp.repo, commit.Branch, commit.parentMarks()[0], commit.legacyID)
+		reset := newReset(sp.repo, commit.Branch, commit.parentMarks()[0], commit.legacyID)
+		sp.repo.addEvent(reset)
 	}
 	sp.repo.delete(deletables, []string{"--tagback"})
 }

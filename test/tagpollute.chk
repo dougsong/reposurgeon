@@ -34,40 +34,32 @@ Initial revision
 M 100644 :1 .gitignore
 M 100644 :2 data/cmdvartab
 
-commit refs/heads/import
-#legacy-id 3
-mark :4
-committer no-author <no-author> 1106836394 +0000
-data 78
-This commit was manufactured by cvs2svn to create branch
-'INITIAL_IMPORT_AQ'.
-from :3
-deleteall
-M 100644 :1 .gitignore
-M 100644 :2 data/cmdvartab
-
 blob
-mark :5
+mark :4
 data 50
 Revision is 4, file path is trunk/data/cmdvartab.
 
 commit refs/heads/master
 #legacy-id 4
-mark :6
+mark :5
 committer aquette <aquette> 1109582047 +0000
 data 49
 Bring CVS tree in sync with the new 2.0.1 stable
 from :3
-M 100644 :5 data/cmdvartab
+M 100644 :4 data/cmdvartab
 
 commit refs/tags/v2.0.1
 #legacy-id 5
-mark :7
+mark :6
 committer no-author <no-author> 1109582047 +0000
 data 64
 This commit was manufactured by cvs2svn to create tag 'v2.0.1'.
-from :4
+from :3
 deleteall
 M 100644 :1 .gitignore
-M 100644 :5 data/cmdvartab
+M 100644 :4 data/cmdvartab
+
+reset refs/heads/import
+#legacy-id 3
+from :3
 

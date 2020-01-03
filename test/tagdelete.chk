@@ -37,15 +37,7 @@ Initial revision
 M 100644 :1 .gitignore
 M 100644 :2 CHANGES
 
-commit refs/heads/INITIAL_IMPORT_AQ
+reset refs/heads/INITIAL_IMPORT_AQ
 #legacy-id 3
-mark :4
-committer no-author <no-author> 1106836394 +0000
-data 78
-This commit was manufactured by cvs2svn to create branch
-'INITIAL_IMPORT_AQ'.
 from :3
-deleteall
-M 100644 :1 .gitignore
-M 100644 :2 CHANGES
 
