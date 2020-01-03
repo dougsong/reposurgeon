@@ -1683,6 +1683,12 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 		}
 		baton.percentProgress(uint64(i) + 1)
 	})
+
+	// If we were going to add an end reset per branch, this would
+	// be the place to do it.  Current versions of git do not
+	// require this; they will automatically create tip references
+	// for each branch.
+
 	baton.endProgress()
 }
 
@@ -2545,21 +2551,33 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 			if commit.getColor() != colorTRIVIAL {
 				return
 			}
-			// Commits that cvs2svn created as tag surrogates
-			// get turned into actual (lightweight) tags.
+			// Commits that cvs2svn created as tag
+			// surrogates nomally need to be turned into
+			// actual (lightweight) tags, because
+			// otherwise nothing would keep the reference
+			// in existence.  In the rare (nd
+			// pathological) case that a branch-creation
+			// commit in the tag namespace has child
+			// commits, those will produce a branch-tip
+			// reference and we don't need to create one.
 			if !commit.hasChildren() && cvs2svnTagRE.MatchString(commit.Comment) {
-				if commit.hasParents() {
+				if commit.hasParents() && !commit.hasChildren() {
 					mutex.Lock()
 					taggables = append(taggables, commit)
 					mutex.Unlock()
 				}
 				safedelete(i)
+				return
 			}
 			// cvs2svn-generated branch commits carry no informationn,
 			// and just get removed.
 			//if cvs2svnBranchRE.MatchString(commit.Comment) {
 			//	safedelete(i)
+			//	return
 			//}
+			// All other trivial commits can be stripped of fileops
+			// at this point, to be tagified in the next pass.
+			// commit.setOperations(nil)
 		}
 		baton.percentProgress(uint64(i) + 1)
 	})
@@ -2757,10 +2775,12 @@ func svnProcessDebubble(ctx context.Context, sp *StreamParser, options stringSet
 
 func svnProcessRenumber(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
 	// Phase E:
-	// renumber all commits
+	// Renumber all commits and add an end event.
+	// FIXME: Enable adding end events after anything else stabilizes/
 	defer trace.StartRegion(ctx, "SVN Phase F: renumber").End()
 	logit(logEXTRACT, "SVN Phase F: renumber")
 	sp.repo.renumber(1, baton)
+	//sp.repo.events = append(sp.repo.events, newPassthrough(sp.repo, "end\n"))
 }
 
 // end
