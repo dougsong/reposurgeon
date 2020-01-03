@@ -1923,3 +1923,27 @@ func TestContainingDir(t *testing.T) {
 		})
 	}
 }
+
+func TestChangelogParse(t *testing.T) {
+	type testcase struct {
+		line  string
+		ok    bool
+		pre   string
+		email string
+		post  string
+	}
+	var testcases = []testcase{
+		{"2020-01-02 Eric S. Raymond <esr@thyrsus.com>", true, "2020-01-02 Eric S. Raymond", "<esr@thyrsus.com>", ""},
+	}
+	for idx, test := range testcases {
+		test := test
+		t.Run(fmt.Sprint(idx), func(t *testing.T) {
+			t.Parallel()
+			ok, pre, email, post := canonicalizeInlineAddress(test.line)
+			assertBool(t, ok, test.ok)
+			assertEqual(t, strings.TrimSpace(pre), test.pre)
+			assertEqual(t, email, test.email)
+			assertEqual(t, post, test.post)
+		})
+	}
+}
