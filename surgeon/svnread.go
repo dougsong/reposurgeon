@@ -2560,7 +2560,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 			// commit in the tag namespace has child
 			// commits, those will produce a branch-tip
 			// reference and we don't need to create one.
-			if !commit.hasChildren() && cvs2svnTagRE.MatchString(commit.Comment) {
+			if cvs2svnTagRE.MatchString(commit.Comment) {
 				if commit.hasParents() && !commit.hasChildren() {
 					mutex.Lock()
 					taggables = append(taggables, commit)
@@ -2569,7 +2569,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 				safedelete(i)
 				return
 			}
-			// cvs2svn-generated branch commits carry no informationn,
+			// cvs2svn-generated branch commits 
 			// and just get removed.
 			//if cvs2svnBranchRE.MatchString(commit.Comment) {
 			//	safedelete(i)
