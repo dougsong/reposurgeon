@@ -743,8 +743,8 @@ func walkRevisions(revs []RevisionRecord, hook func(int, *RevisionRecord)) {
 }
 
 // Cruft recognizers
-var cvs2svnTagRE = regexp.MustCompile("This commit was manufactured by cvs2svn to create tag.*'([^']*)'")
-var cvs2svnBranchRE = regexp.MustCompile("This commit was manufactured by cvs2svn to create branch.*'([^']*)'")
+var cvs2svnTagRE = regexp.MustCompile("This commit was manufactured by cvs2svn to create tag")
+var cvs2svnBranchRE = regexp.MustCompile("This commit was manufactured by cvs2svn to create branch")
 
 var blankline = regexp.MustCompile(`(?m:^\s*\n)`)
 

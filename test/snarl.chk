@@ -46,15 +46,7 @@ deleteall
 M 100644 :1 .gitignore
 M 100644 :2 CHANGES
 
-commit refs/tags/INITIAL_IMPORT_V2_0_1_pre4
+reset refs/tags/INITIAL_IMPORT_V2_0_1_pre4
 #legacy-id 5
-mark :5
-committer no-author <no-author> 1106836402 +0000
-data 84
-This commit was manufactured by cvs2svn to create tag
-'INITIAL_IMPORT_V2_0_1_pre4'.
 from :4
-deleteall
-M 100644 :1 .gitignore
-M 100644 :2 CHANGES
 
