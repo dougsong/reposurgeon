@@ -36,7 +36,8 @@ BASIC = listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce
 SUBVERSION = svnload-regress liftcheck-regress legacy-regress svncheck-regress
 FULLSUBVERSION = $(SUBVERSION) liftcheck-fullregress
 GIT_EXTRACTOR = git-regress git-regress-branches git-regress-merges git-regress-tags
-HG_EXTRACTOR = hg-regress hg-regress-branches hg-regress-merges hg-regress-tags
+HG_EXTRACTOR = hg-regress hg-regress-branches hg-regress-merges hg-regress-tags \
+	hg-regress-patho
 AUXTOOLS = repocutter-regress repomapper-regress repotool-regress
 
 # If we have GNU parallel available, the tests can exploit multiple processors
@@ -49,8 +50,6 @@ fastcheck: clean $(BASIC) $(SUBVERSION)
 # This should always be a full test
 fullcheck: clean $(BASIC) $(SUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXTOOLS)
 	@echo "=== No diff output is good news ==="
-
-# hg-regress-patho is not part of the normal test sequence.
 
 # FIXME: is log -all really correct when regeneting the map checks?
 
