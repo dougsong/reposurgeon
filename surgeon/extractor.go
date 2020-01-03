@@ -3,7 +3,9 @@
 // Clone one of the existing ones and mutate.
 //
 // Significant fact: None of the get* methods for extracting information about
-// a revision is called until after checkout has been called on that revision.
+// a revision is called until after manifest has been called on that revision.
+// (Thus if you implement manifest with a checkout, you can extract information
+// from the working tree / checked out revision.)
 //
 // Most methods take a native revision ID as argument. The value and type of the
 // ID don't matter to any of the code that will call the extractor, except that
@@ -24,7 +26,7 @@
 // integer-Unix-timestamp/timezone pairs.
 //
 //
-// Everything in this module is implementation for ReposStreamer.
+// Everything in this module is implementation for RepoStreamer.
 // Extractor is also used outside of here, but only trivially.
 //
 // SPDX-License-Identifier: BSD-2-Clause
@@ -34,6 +36,7 @@ package main
 import (
 	"bufio"
 	"crypto/sha1"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -50,6 +53,41 @@ import (
 
 	shellquote "github.com/kballard/go-shellquote"
 )
+
+// signature is a file signature - path, hash value of content and permissions."
+type signature struct {
+	//pathname string
+	hashval [sha1.Size]byte
+	perms   string
+}
+
+func newSignature(hashval [sha1.Size]byte, perms int) *signature {
+	ps := new(signature)
+	ps.hashval = hashval
+	// Map to the restricted set of modes that are allowed in
+	// the stream format.
+	if (perms & 0000700) == 0000700 {
+		perms = 0100755
+	} else if (perms & 0000600) == 0000600 {
+		perms = 0100644
+	}
+	ps.perms = fmt.Sprintf("%06o", perms)
+	return ps
+}
+
+func (s signature) String() string {
+	return fmt.Sprintf("<%s:%02x%02x%02x%02x%02x%02x>",
+		s.perms, s.hashval[0], s.hashval[1], s.hashval[2], s.hashval[3], s.hashval[4], s.hashval[5])
+}
+
+func (s signature) Equal(other signature) bool {
+	return s.hashval == other.hashval && s.perms == other.perms
+}
+
+type manifestEntry struct {
+	pathname string
+	sig      *signature
+}
 
 // Extractor specifies common features of all VCS-specific extractor classes.
 // It is forced to live here rather than in exreactor.go to support the Importer
@@ -71,8 +109,11 @@ type Extractor interface {
 	postExtract(*Repository)
 	// Return true if repo has no unsaved changes.
 	isClean() bool
-	// Check the directory out to a specified revision, return a manifest.
-	checkout(string) orderedStringSet
+	// Return all files in the specified revision
+	manifest(string) []manifestEntry
+	// Check out a specified path from a revision, write to a
+	// new file at dest
+	catFile(rev string, path string, dest string) error
 	// Return a commit's change comment as a string.
 	getComment(string) string
 }
@@ -242,10 +283,6 @@ type GitExtractor struct {
 }
 
 func newGitExtractor() *GitExtractor {
-	// Regardless of what revision and branch was current at start,
-	// after the git extractor runs the head revision on the master branch
-	// will be checked out.
-	//
 	// The git extractor does not attempt to recover N ops,
 	// symbolic links, gitlinks, or directory fileops.
 	//
@@ -468,18 +505,55 @@ func (ge *GitExtractor) isClean() bool {
 	return data == ""
 }
 
-// checkout checks the repository out to a specified revision.
-func (ge *GitExtractor) checkout(rev string) orderedStringSet {
-	exec.Command("git", "checkout", "--quiet", rev).Run()
-	data, err := captureFromProcess("git ls-files")
+// manifest lists all files present as of a specified revision.
+func (ge *GitExtractor) manifest(rev string) []manifestEntry {
+	data, err := captureFromProcess("git ls-tree -rz --full-tree "+rev)
 	if err != nil {
-		panic(throw("extractor", "Couldn't spawn git ls-files in checkout: %v", err))
+		panic(throw("extractor", "Couldn't spawn git ls-tree in manifest: %v", err))
 	}
-	manifest := strings.Split(data, "\n")
-	if manifest[len(manifest)-1] == "" {
-		manifest = manifest[:len(manifest)-1]
+	lines := strings.Split(data, "\000")
+	if lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1]
 	}
-	return newOrderedStringSet(manifest...)
+	var manifest = make([]manifestEntry, 0, len(lines))
+	for _, line := range lines {
+		// format of git ls-tree output:
+		// 100644 blob a8d26cb7dd7c02bcf5b332b1d306ad5641e93ab9	.dockerignore
+		// (that last whitespace, before the path, is a TAB)
+		fields := strings.SplitN(line, " ", 3)
+		var perms int
+		fmt.Sscanf(fields[0], "%o", &perms)
+		typ := fields[1]
+		if typ != "blob" {
+			// type "commit" is for submodules, which we don't
+			// currently support (we'll silently drop them)
+			continue
+		}
+		tabs := strings.SplitN(fields[2], "\t", 2)
+		hash, err := hex.DecodeString(tabs[0])
+		if err != nil {
+			panic(throw("extractor", "Malformed blob hash: %v", err))
+		}
+		var fixedhash [sha1.Size]byte
+		copy(fixedhash[:], hash)
+		sig := newSignature(fixedhash, perms)
+		var me manifestEntry
+		me.pathname = tabs[1]
+		me.sig = sig
+		manifest = append(manifest, me)
+	}
+	return manifest
+}
+
+// catFile extracts file content into a specified destination path
+func (ge *GitExtractor) catFile(rev string, path string, dest string) error {
+	cmd := exec.Command("git", "show", rev+":"+path)
+	out, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	cmd.Stdout = out
+	return cmd.Run()
 }
 
 // getComment returns a commit's change comment as a string.
@@ -496,9 +570,6 @@ type HgExtractor struct {
 }
 
 func newHgExtractor() *HgExtractor {
-	// Regardless of what revision and branch was current at
-	// start, after the hg extractor runs the tip (most recent
-	// revision on any branch) will be checked out.
 	he := new(HgExtractor)
 	return he
 }
@@ -814,7 +885,6 @@ func (he *HgExtractor) colorBranches(rs *RepoStreamer) error {
 }
 
 func (he *HgExtractor) postExtract(repo *Repository) {
-	he.checkout("tip")
 	if !repo.branchset().Contains("refs/heads/master") {
 		walkEvents(repo.events, func(_ int, event Event) {
 			switch event.(type) {
@@ -840,98 +910,71 @@ func (he *HgExtractor) isClean() bool {
 	return data == ""
 }
 
-func mustChdir(directory string, errorclass string) {
-	err := os.Chdir(directory)
-	if err != nil {
-		panic(throw(errorclass,
-			"In %s, could not change working directory to %s: %v",
-			errorclass, directory, err))
+// manifest lists all files present as of a specified revision.
+func (he HgExtractor) manifest(rev string) []manifestEntry {
+	data := he.mustCapture([]string{"hg", "manifest", "-v", "--debug",
+		"-r", rev}, "extractor")
+	lines := strings.Split(data, "\n")
+	if lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1]
 	}
-	logit(logSHUFFLE, "changing directory to %s", directory)
+	var manifest = make([]manifestEntry, 0, len(lines))
+	for _, line := range lines {
+		// format of hg manifest output:
+		// b80de5d138758541c5f05265ad144ab9fa86d1db 644 % .hgtags
+		// % is either ' ' (normal file), '*' (executable) or '@'
+		// (symlink).
+		var perms int
+		fmt.Sscanf(line[41:44], "%o", &perms)
+		switch line[45] {
+		case ' ': // regular file
+			break
+		case '*': // executable file
+			if perms != 0755 {
+				panic(throw("extractor", "perms do not match type for blob: %v", line))
+			}
+			break
+		case '@': // symlink
+			perms = 0120000
+			break
+		default:
+			panic(throw("extractor", "unrecognised type flag in manifest: %v", line))
+		}
+		var me manifestEntry
+		me.pathname = line[47:]
+		// Sadly we can't rely on hg's blob hash, because it includes
+		// metadata like filenames, so if the file gets moved we'd
+		// create a duplicate blob.  Thus, we have to cat the file
+		// and SHA it ourselves.  (If it's a novel hash, we'll cat it
+		// again later when we create the Blob; we could probably
+		// combine both cats, always creating a blobfile and then
+		// deleting it if not needed, to save GC at the expense of
+		// filesystem activity, but that would mean restructuring
+		// the calling code.)
+		contents, err := he.capture("hg", "cat", "-r", rev, me.pathname)
+		if err != nil {
+			panic(throw("extractor", "Couldn't cat blob to hash it: %v", err))
+		}
+		hash := sha1.New()
+		io.WriteString(hash, contents)
+		var fixedhash [sha1.Size]byte
+		copy(fixedhash[:], hash.Sum(nil))
+		sig := newSignature(fixedhash, perms)
+		me.sig = sig
+		manifest = append(manifest, me)
+	}
+	return manifest
 }
 
-func (he *HgExtractor) mustChdir(directory string, errorclass string) {
-	mustChdir(directory, errorclass)
-	he.hgcl.chdir(directory)
-}
-
-// checkout checka the directory out to a specified revision, return a manifest.
-func (he HgExtractor) checkout(rev string) orderedStringSet {
-	pwd, err := os.Getwd()
-	if err != nil {
-		panic(throw("extractor", "Could not get working directory: %v", err))
-	}
-	_, errcode := he.capture("hg", "update", "-C", rev)
-	// 'hg update -C' can delete and recreate the current working
-	// directory, so cd to what should be the current directory
-	he.mustChdir(pwd, "extractor")
-
-	// Sometimes, hg update can fail because of missing subrepos. When that
-	// happens, try really hard to fake it. This is safe because subrepos
-	// don't work in any case, so it's always safe to ignore them.
-	//
-	// There are tons of problems with this parsing. It doesn't safely
-	// handle subrepositories with special chars like spaces, quotes or that
-	// sort of thing. It also doesn't handle comments or other rarely used
-	// stuff in .hgsub files. This is documented poorly at best so it's
-	// unclear how things should work ideally.
-	if errcode != nil {
-		subrepoTxt, subcatErr := he.capture("hg", "cat", "-r", rev, ".hgsub")
-		subrepoArgs := make([]string, 0)
-		if subcatErr == nil {
-			// If there's a subrepository file, try to parse the
-			// names from it.
-			for _, subrepoLine := range strings.Split(subrepoTxt, "\n") {
-				parsed := strings.SplitN(subrepoLine, "=", 2)
-				if len(parsed) > 1 {
-					subrepoArgs = append(subrepoArgs, "--exclude")
-					subrepoArgs = append(subrepoArgs, strings.TrimSpace(parsed[0]))
-				}
-			}
-		}
-		// Since all is not well, clear everything and try from zero.
-		// Sidesteps some issues with problematic checkins.
-		// Remove checked in files.
-		he.capture("hg", "update", "-C", "null")
-		he.mustChdir(pwd, "extractor")
-		// Remove extraneous files.
-		he.capture("hg", "purge", "--config", "extensions.purge=", "--all")
-		he.mustChdir(pwd, "extractor")
-
-		// The Python version of this code had a section
-		// beginning with the comment "Remove everything
-		// else. Purge is supposed to do this, but doesn't."
-		// But I tested under hg 4.5.3 and it seems to actually
-		// do that now. Which is good because the way Go's
-		// filepath.Walk interface is designed it would have been a
-		// been a serious PITA to replicate the old behavior:
-		// nuke everything *including directories* except the top
-		// level .hg/.  The issue is that filepath.Walk just walks
-		// the tree in lexical order, which means directories
-		// are at inconvenient places in the sequence.
-
-		// If there are subrepos, use revert to fake an
-		// update, but exclude the subrepo paths, which are
-		// probably borken.
-		if len(subrepoArgs) > 0 {
-			revertCmd := []string{"hg", "revert", "--all", "--no-backup", "-r", rev}
-			he.capture(append(revertCmd, subrepoArgs...)...)
-			he.mustChdir(pwd, "extractor")
-			he.mustCapture([]string{"hg", "debugsetparents", rev}, "extractor")
-			he.mustChdir(pwd, "extractor")
-			he.mustCapture([]string{"hg", "debugrebuilddirstate"}, "extractor")
-			he.mustChdir(pwd, "extractor")
-		} else {
-			reupTxt, reupErr := he.capture("hg", "update", "-C", rev)
-			if reupErr != nil {
-				panic(throw("extractor", "Failed to update to revision %s: %s", rev, reupTxt))
-			}
-			he.mustChdir(pwd, "extractor")
-		}
-	}
-	data := he.mustCapture([]string{"hg", "manifest"}, "extractor")
-	manifest := strings.Trim(data, "\n")
-	return newOrderedStringSet(strings.Split(manifest, "\n")...)
+// catFile extracts file content into a specified destination path
+func (he *HgExtractor) catFile(rev string, path string, dest string) error {
+	// -o interprets various special formatting codes, like %H for
+	// the changeset hash, so we need to escape all % as %%.
+	// (The blobfile stem and suffix won't have any, but the path
+	// to the repodir might.)
+	dest = strings.ReplaceAll(dest, "%", "%%")
+	_, err := he.capture("hg", "cat", "-r", rev, path, "-o", dest)
+	return err
 }
 
 // getComment returns a commit's change comment as a string.
@@ -1087,7 +1130,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 	for _, revision := range consume {
 		commit := newCommit(repo)
 		rs.baton.twirl()
-		present := rs.extractor.checkout(revision)
+		present := rs.extractor.manifest(revision)
 		//logit(logEXTRACT,
 		//	"%s: present %v", trunc(revision), present)
 		parents := rs.getParents(revision)
@@ -1128,27 +1171,22 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 		//	"%s: visible files '%s'", trunc(revision), rs.visibleFiles[revision])
 
 		if len(present) > 0 {
-			removed := rs.fileSetAt(revision).Subtract(present)
-			for _, pathname := range present {
-				if isdir(pathname) {
+			fileList := newOrderedStringSet()
+			for _, me := range present {
+				fileList.Add(me.pathname)
+				if isdir(me.pathname) {
 					continue
 				}
-				if !exists(pathname) {
-					croak("%s: expected path %s does not exist!",
-						trunc(revision), pathname)
-					continue
-				}
-				newsig := newSignature(pathname)
-				if _, ok := rs.hashToMark[newsig.hashval]; ok {
+				if _, ok := rs.hashToMark[me.sig.hashval]; ok {
 					//if debugEnable(logEXTRACT) {
-					//	logit(logSHOUT, "%s: %s has old hash %v", trunc(revision), pathname, shortdump(newsig.hashval))
+					//	logit(logSHOUT, "%s: %s has old hash %v", trunc(revision), me.pathname, shortdump(me.sig.hashval))
 					//}
 					// The file's hash corresponds
 					// to an existing blob;
 					// generate modify, copy, or
 					// rename as appropriate.
-					if _, ok := rs.visibleFiles[revision][pathname]; !ok || rs.visibleFiles[revision][pathname] != *newsig {
-						//logit(logEXTRACT, "%s: update for %s", trunc(revision), pathname)
+					if _, ok := rs.visibleFiles[revision][me.pathname]; !ok || rs.visibleFiles[revision][me.pathname] != *me.sig {
+						//logit(logEXTRACT, "%s: update for %s", trunc(revision), me.pathname)
 						found := false
 						var deletia []string
 						for _, item := range deletia {
@@ -1157,9 +1195,9 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 						if !found {
 							op := newFileOp(repo)
 							op.construct(opM,
-								newsig.perms,
-								rs.hashToMark[newsig.hashval].String(),
-								pathname)
+								me.sig.perms,
+								rs.hashToMark[me.sig.hashval].String(),
+								me.pathname)
 							commit.appendOperation(op)
 						}
 					}
@@ -1167,24 +1205,33 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 					// Content hash doesn't match
 					// any existing blobs
 					//logit(logEXTRACT, "%s: %s has new hash %v",
-					//	trunc(revision), pathname, shortdump(newsig.hashval))
+					//	trunc(revision), me.pathname, shortdump(me.sig.hashval))
 					blobmark := markNumber(repo.newmark())
-					rs.hashToMark[newsig.hashval] = blobmark
+					rs.hashToMark[me.sig.hashval] = blobmark
 					// Actual content enters the representation
 					blob := newBlob(repo)
 					blob.setMark(blobmark.String())
 					//logit(logEXTRACT, "%s: blob gets mark %s", trunc(revision), blob.mark)
-					nBytes, _ := filecopy(pathname, blob.getBlobfile(true))
-					blob.size = nBytes
-					blob.addalias(pathname)
+					blobfile := blob.getBlobfile(true)
+					err = rs.extractor.catFile(revision, me.pathname, blobfile)
+					if err != nil {
+						panic(throw("extract", "%s: failed to extract file contents for %s: %v", trunc(revision), me.pathname, err))
+					}
+					stat, err := os.Stat(blobfile)
+					if err != nil {
+						panic(throw("extract", "%s: failed to stat blobfile for %s: %v", trunc(revision), me.pathname, err))
+					}
+					blob.size = stat.Size()
+					blob.addalias(me.pathname)
 					repo.addEvent(blob)
 					// Its new fileop is added to the commit
 					op := newFileOp(repo)
-					op.construct(opM, newsig.perms, blobmark.String(), pathname)
+					op.construct(opM, me.sig.perms, blobmark.String(), me.pathname)
 					commit.appendOperation(op)
 				}
-				rs.visibleFiles[revision][pathname] = *newsig
+				rs.visibleFiles[revision][me.pathname] = *me.sig
 			}
+			removed := rs.fileSetAt(revision).Subtract(fileList)
 			for _, tbd := range removed {
 				op := newFileOp(repo)
 				op.construct(opD, tbd)

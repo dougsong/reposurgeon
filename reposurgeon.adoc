@@ -2330,9 +2330,9 @@ do not conflict with bookmark names. You can add a prefix like
 
 Alternatively, you can import directly using
 https://github.com/kilork/hg-git-fast-import[hg-git-fast-import].
-This importer is not yet well tested, but may be sunbstntially
+This importer is not yet well tested, but may be substantially
 faster than using the extractor harness. You may wish to run
-test conversions using both methods and compatre them.
+test conversions using both methods and compare them.
 
 [[hg-subrepo]]
 === MERCURIAL SUBREPOSITORIES ===
@@ -2341,24 +2341,6 @@ it will extract the history of the top-level repo, in which .hgsub and
 .hgsubstate will be treated as regular files.  If you wish to translate
 these into the semantics of your target VCS, you will need to do so with
 surgical primitives after reading the history into reposurgeon.
-
-The hg extractor may fail on some pathological cases involving subrepos.
-This is due to limitations of the hg commandline tools themselves: if a
-subrepo is removed, checking out a revision after the removal does not
-delete it from the on-disk checkout (this is apparently by design; the
-hg documentation says "Update/merge currently can't remove subrepositories
-entirely as that might lose local-only changes"), meaning that if a
-subsequent changeset adds a file at a path that would be inside the subrepo,
-that changeset cannot be checked out.
-In this case the extractor will fail with an error message like:
-
-----
-reposurgeon: In extractor, command hg revert --all --no-backup -r 255eec6d4da5 failed: runcommand: []string{"hg", "revert", "--all", "--no-backup", "-r", "255eec6d4da5"} failed with rc 255
-----
-
-If that happens, try using an exporter such as
-https://github.com/frej/fast-export[hg-fast-export] to create a fast-import
-file, then load that in the usual way.
 
 [[subversion]]
 == WORKING WITH SUBVERSION ==

@@ -4783,59 +4783,6 @@ func (p Passthrough) isCommit() bool {
 
 // Generic extractor code begins here
 
-// signature is a file signature - path, hash value of content and permissions."
-type signature struct {
-	//pathname string
-	hashval [sha1.Size]byte
-	perms   string
-}
-
-func newSignature(path string) *signature {
-	file, err1 := os.Open(path)
-	if err1 != nil {
-		panic(throw("extractor", "Can't open %q\n", path))
-	}
-	defer file.Close()
-	st, err2 := file.Stat()
-	if err2 != nil {
-		panic(throw("extractor", "Can't stat %q\n", path))
-	}
-
-	ps := new(signature)
-	if !st.IsDir() {
-		h := sha1.New()
-		if _, err := io.Copy(h, file); err != nil {
-			log.Fatal(err)
-		}
-		// WARNING: as of 2019-09-25 the actual interface of Sum()
-		// does not match the documentation at
-		// https://golang.org/pkg/crypto/sha1
-		// This interface might be unstable.
-		for i, v := range h.Sum(nil) {
-			ps.hashval[i] = v
-		}
-		perms := st.Mode()
-		// Map to the restricted set of modes that are allowed in
-		// the stream format.
-		if (perms & 0000700) == 0000700 {
-			perms = 0100755
-		} else if (perms & 0000600) == 0000600 {
-			perms = 0100644
-		}
-		ps.perms = fmt.Sprintf("%06o", perms)
-	}
-	return ps
-}
-
-func (s signature) String() string {
-	return fmt.Sprintf("<%s:%02x%02x%02x%02x%02x%02x>",
-		s.perms, s.hashval[0], s.hashval[1], s.hashval[2], s.hashval[3], s.hashval[4], s.hashval[5])
-}
-
-func (s signature) Equal(other signature) bool {
-	return s.hashval == other.hashval && s.perms == other.perms
-}
-
 // capture runs a specified command, capturing the output.
 func captureFromProcess(command string) (string, error) {
 	logit(logCOMMANDS, "%s: capturing %s", rfc3339(time.Now()), command)
