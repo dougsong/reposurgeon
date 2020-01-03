@@ -1935,6 +1935,7 @@ func TestChangelogParse(t *testing.T) {
 		{"2001-04-29  Toomas Rosin <toomas@ns dot tklabor dot ee>", "2001-04-29  Toomas Rosin", "<toomas@ns.tklabor.ee>"},
 		{"2001-04-29 Ian Bolton\t<ian.bolton@arm.com>", "2001-04-29 Ian Bolton", "<ian.bolton@arm.com>"},
 		{"2004-04-16  Kazuhiro Inaoka <inaoka dot kazuhiro at renesas dot com>", "2004-04-16  Kazuhiro Inaoka", "<inaoka.kazuhiro@renesas.com>"},
+		{"Torsten Hilbrich <torsten.hilbrich <at> gmx.net>", "Torsten Hilbrich", "<torsten.hilbrich@gmx.net>"},
 	}
 	for idx, test := range testcases {
 		test := test

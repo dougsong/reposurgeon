@@ -17907,7 +17907,6 @@ func canonicalizeInlineAddress(line string) (bool, string, string, string) {
 	post := strings.ReplaceAll(line[addrEnd+1:], ">", "")
 	email := line[addrStart : addrEnd+1]
 	// Detect more types of address masking
-	email = strings.ReplaceAll(email, " <dot> ", ".")
 	email = strings.ReplaceAll(email, " dot ", ".")
 
 	return true, pre, email, post
