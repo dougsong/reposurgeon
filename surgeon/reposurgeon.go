@@ -17879,14 +17879,14 @@ func stringCopy(a string) string {
 // then breaks the line around it.
 func canonicalizeInlineAddress(line string) (bool, string, string, string) {
 	// Massage old-style addresses into newstyle
-	line = strings.Replace(line, "(", "<", -1)
-	line = strings.Replace(line, ")", ">", -1)
+	line = strings.ReplaceAll(line, "(", "<")
+	line = strings.ReplaceAll(line, ")", ">")
 	// And another kind of quirks
-	line = strings.Replace(line, "&lt;", "<", -1)
-	line = strings.Replace(line, "&gt;", ">", -1)
-	// Deal with some address masking that can interfere with next stages
-	line = strings.Replace(line, " <at> ", "@", -1)
-	line = strings.Replace(line, " <dot> ", ".", -1)
+	line = strings.ReplaceAll(line, "&lt;", "<")
+	line = strings.ReplaceAll(line, "&gt;", ">")
+	// Masking of @ has to be dealt with before we count them
+	line = strings.ReplaceAll(line, " <at> ", "@")
+	line = strings.ReplaceAll(line, " at ", "@")
 	// We require exactly one @
 	if strings.Count(line, "@") != 1 {
 		return false, "", "", ""
@@ -17901,14 +17901,14 @@ func canonicalizeInlineAddress(line string) (bool, string, string, string) {
 	// Remove all other < and > delimiters to avoid malformed attributions
 	// After the address, they can be dropped, but before them might come
 	// legit parentheses that were converted above.
-	pre := strings.Replace(
-		strings.Replace(line[:addrStart], "<", "(", -1),
-		">", ")", -1)
-	post := strings.Replace(line[addrEnd+1:], ">", "", -1)
+	pre := strings.ReplaceAll(
+		strings.ReplaceAll(line[:addrStart], "<", "("),
+		">", ")")
+	post := strings.ReplaceAll(line[addrEnd+1:], ">", "")
 	email := line[addrStart : addrEnd+1]
 	// Detect more types of address masking
-	email = strings.Replace(email, " at ", "@", 1)
-	email = strings.Replace(email, " dot ", ".", 1)
+	email = strings.ReplaceAll(email, " <dot> ", ".")
+	email = strings.ReplaceAll(email, " dot ", ".")
 
 	return true, pre, email, post
 }
