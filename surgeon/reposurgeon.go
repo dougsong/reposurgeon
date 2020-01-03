@@ -17829,34 +17829,36 @@ func canonicalizeInlineAddress(line string) (bool, string, string, string) {
 	line = strings.ReplaceAll(line, "(", "<")
 	line = strings.ReplaceAll(line, ")", ">")
 	// And another kind of quirks
-	line = strings.ReplaceAll(line, "&lt;", "<")
-	line = strings.ReplaceAll(line, "&gt;", ">")
-	// Masking of @ has to be dealt with before we count them
-	line = strings.ReplaceAll(line, " <at> ", "@")
-	line = strings.ReplaceAll(line, " at ", "@")
-	// We require exactly one @
-	if strings.Count(line, "@") != 1 {
-		return false, "", "", ""
-	}
+	line = strings.Replace(line, "&lt;", "<", -1)
+	line = strings.Replace(line, "&gt;", ">", -1)
+	// Deal with some address masking that can interfere with next stages
+	line = strings.Replace(line, "<at>", "@", -1)
+	line = strings.Replace(line, "<dot>", ".", -1)
 	// Line must contain an email address. Find it.
 	addrStart := strings.LastIndex(line, "<")
 	addrEnd := strings.Index(line[addrStart+1:], ">") + addrStart + 1
-	at := strings.Index(line, "@")
-	if addrStart < 0 || addrEnd < 0 || at < addrStart || at > addrEnd {
+	if addrStart < 0 || addrEnd <= addrStart {
 		return false, "", "", ""
 	}
 	// Remove all other < and > delimiters to avoid malformed attributions
 	// After the address, they can be dropped, but before them might come
 	// legit parentheses that were converted above.
-	pre := strings.ReplaceAll(
-		strings.ReplaceAll(line[:addrStart], "<", "("),
-		">", ")")
-	post := strings.ReplaceAll(line[addrEnd+1:], ">", "")
-	email := line[addrStart : addrEnd+1]
+	pre := strings.Replace(
+		strings.Replace(line[:addrStart], "<", "(", -1),
+		">", ")", -1)
+	post := strings.Replace(line[addrEnd+1:], ">", "", -1)
+	email := line[addrStart+1 : addrEnd]
 	// Detect more types of address masking
-	email = strings.ReplaceAll(email, " dot ", ".")
-
-	return true, pre, email, post
+	email = strings.Replace(email, " at ", "@", -1)
+	email = strings.Replace(email, " dot ", ".", -1)
+	email = strings.Replace(email, " @ ", "@", -1)
+	email = strings.Replace(email, " . ", ".", -1)
+	// We require exactly one @ in the address, and none outside
+	if strings.Count(email, "@") != 1 ||
+	strings.Count(pre, "@") + strings.Count(pre, "@") > 0 {
+		return false, "", "", ""
+	}
+	return true, pre, fmt.Sprintf("<%s>", strings.TrimSpace(email)), post
 }
 
 // DoChangelogs mines repository changelogs for authorship data.
@@ -17965,39 +17967,13 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		if line == "" {
 			return ""
 		}
-		// Deal with some address masking that can interfere with next stages
-		line = strings.Replace(line, " <at> ", "@", -1)
-		// We want a single <, followed by a single >.
-		openPos, closePos := -1, -1
-		for i := 0; i < len(line); i++ {
-			if line[i] == '<' {
-				if openPos != -1 {
-					// too many <s
-					return ""
-				}
-				openPos = i
-			} else if line[i] == '>' {
-				if openPos == -1 || closePos != -1 {
-					// the > comes before the <, or too many >s
-					return ""
-				}
-				closePos = i
-			}
-		}
-		// Address should be last in the line (spaces are already trimmed)
-		if openPos == -1 || closePos != len(line) - 1 {
+		// Split the address
+		ok, pre, email, post := canonicalizeInlineAddress(line)
+		if !ok || post != "" {
 			return ""
 		}
-		// Trim spaces around the name
-		name := strings.TrimSpace(line[:openPos])
-		// Same for the address
-		address := strings.TrimSpace(line[openPos+1:closePos])
-		// There should be a single @ in the address
-		if strings.Count(address, "@") != 1 {
-			return ""
-		}
-		// OK
-		return fmt.Sprintf("%s <%s>", name, address)
+		// Trim spaces around the name, email is already trimmed
+		return fmt.Sprintf("%s %s", strings.TrimSpace(pre), email)
 	}
 
 	control.baton.startProgress("processing changelogs", uint64(len(repo.events)))
