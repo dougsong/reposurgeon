@@ -3639,7 +3639,7 @@ func (commit *Commit) hasProperties() bool {
 	return commit.properties != nil
 }
 
-// lister enables do_list() to report commits.
+// lister enables DoList() to report commits.
 func (commit *Commit) lister(_modifiers orderedStringSet, eventnum int, cols int) string {
 	topline := strings.Split(commit.Comment, "\n")[0]
 	summary := fmt.Sprintf("%6d %s %6s ",
@@ -3655,7 +3655,7 @@ func (commit *Commit) lister(_modifiers orderedStringSet, eventnum int, cols int
 	return report
 }
 
-// stamp enables do_stamp() to report action stamps.
+// stamp enables DoStamp() to report action stamps.
 func (commit *Commit) stamp(modifiers orderedStringSet, _eventnum int, cols int) string {
 	report := "<" + commit.actionStamp() + "> " + strings.Split(commit.Comment, "\n")[0]
 	if cols > 0 && len(report) > cols {
@@ -3664,7 +3664,7 @@ func (commit *Commit) stamp(modifiers orderedStringSet, _eventnum int, cols int)
 	return report
 }
 
-// tags enables do_tags() to report tag tip commits.
+// tags enables DoTags() to report tag tip commits.
 func (commit *Commit) tags(_modifiers orderedStringSet, eventnum int, _cols int) string {
 	if commit.Branch == "" || !strings.Contains(commit.Branch, "/tags/") {
 		return ""
@@ -3933,6 +3933,20 @@ func (commit *Commit) setMark(mark string) string {
 	}
 	commit.mark = mark
 	return mark
+}
+
+// branchChild reurns the (unique) child of commit on its brancj
+func (commit *Commit) branchChild() *Commit {
+	for _, child := range commit.children() {
+		switch child.(type) {
+		case *Commit:
+			if child.(*Commit).Branch == commit.Branch {
+				return child.(*Commit)
+			}
+		}
+	}
+	// No such child
+	return nil
 }
 
 // forget de-links this commit from its parents.

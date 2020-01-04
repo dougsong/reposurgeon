@@ -2550,17 +2550,6 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 			if commit.getColor() != colorTRIVIAL {
 				return
 			}
-			nakedBranchroot := func(commit *Commit) bool {
-				for _, child := range commit.children() {
-					switch child.(type) {
-					case *Commit:
-						if child.(*Commit).Branch == commit.Branch {
-							return false
-						}
-					}
-				}
-				return true
-			}
 			// Commits that cvs2svn created as tag
 			// surrogates nomally need to be turned into
 			// actual (lightweight) tags, because
@@ -2571,7 +2560,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 			// commits, those will produce a branch-tip
 			// reference and we don't need to create one.
 			if cvs2svnTagBranchRE.MatchString(commit.Comment) {
-				if commit.hasParents() && (!commit.hasChildren() || nakedBranchroot(commit)) {
+				if commit.hasParents() && commit.branchChild() == nil {
 					mutex.Lock()
 					taggables = append(taggables, commit)
 					mutex.Unlock()
