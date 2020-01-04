@@ -2535,7 +2535,6 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 		})
 	}
 	baton.endProgress()
-	taggables := make([]*Commit, 0)
 	var mutex sync.Mutex
 	deletables := make([]int, 0)
 	safedelete := func(i int) {
@@ -2560,11 +2559,6 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 			// commits, those will produce a branch-tip
 			// reference and we don't need to create one.
 			if cvs2svnTagBranchRE.MatchString(commit.Comment) {
-				if commit.hasParents() && commit.branchChild() == nil {
-					mutex.Lock()
-					taggables = append(taggables, commit)
-					mutex.Unlock()
-				}
 				safedelete(i)
 				return
 			}
@@ -2575,11 +2569,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 		baton.percentProgress(uint64(i) + 1)
 	})
 	baton.endProgress()
-	sort.Slice(taggables, func(i, j int) bool { return taggables[i].getMark() < taggables[j].getMark()})
-	for _, commit := range taggables {
-		reset := newReset(sp.repo, commit.Branch, commit.parentMarks()[0], commit.legacyID)
-		sp.repo.addEvent(reset)
-	}
+	sort.Slice(deletables, func(i, j int) bool { return deletables[i] < deletables[j]})
 	sp.repo.delete(deletables, []string{"--tagback"})
 }
 

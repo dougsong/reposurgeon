@@ -3949,6 +3949,21 @@ func (commit *Commit) branchChild() *Commit {
 	return nil
 }
 
+// isBranchRoot tells us whether a commit is the first on its branch
+func (commit *Commit) isBranchRoot() bool {
+	if len(commit.parents()) != 1 {
+		return false
+	}
+	parent := commit.parents()[0]
+	switch parent.(type) {
+	case *Commit:
+		return parent.(*Commit).Branch != commit.Branch
+	case *Callout:
+		return false
+	}
+	return false
+}
+
 // forget de-links this commit from its parents.
 func (commit *Commit) forget() {
 	commit.setParents([]CommitLike{})
@@ -7411,19 +7426,13 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 					e.setDelFlag(true)
 				}
 			} else {
-				if !tagify && strings.Contains(commit.Branch, "/tags/") && newTarget.Branch != commit.Branch {
-					// By deleting the commit, we would
-					// lose the fact that it moves its
-					// branch (to create a lightweight tag
-					// for instance): replace it by a
-					// Reset which will save this very
-					// information. The following loop
-					// will take care of moving the
-					// attachment to the new target.
-					reset := newReset(repo,
-						commit.Branch, commit.mark, commit.legacyID)
-					repo.events[ei] = reset
+				// Preserve reference integrity. If we're abput to delete the last commit on a branch,
+				// create a reset wth the same name referring to the push target for attachments.
+				// This avoid spurios missing-branch messages In Subbversion lifts.
+				if !tagify && commit.isBranchRoot() && commit.branchChild() == nil {
+					repo.addEvent(newReset(repo, commit.Branch, newTarget.mark, commit.legacyID))
 				}
+
 				// use a copy of attachments since it
 				// will be mutated
 				attachmentsCopy := make([]Event, 0)
