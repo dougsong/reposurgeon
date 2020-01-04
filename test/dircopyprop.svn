@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Test copying directory and changing property in same revision
+ ## Test directory copy and property change in same revision
  # reposurgeon-read-options: --nobranch
 
 UUID: 2a847626-1e14-11ea-ac71-bfc1b1298025

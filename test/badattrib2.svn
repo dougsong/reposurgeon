@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Conflicting author lines in a Changelog cause fallback to committer
+ ## Conflicting author lines in Changelog cause fallback to committer
  # GitLab issue #190
 
 UUID: 86b2da86-aee3-4429-8554-4caae9235efc

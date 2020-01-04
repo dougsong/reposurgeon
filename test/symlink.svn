@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Test prefix stripping for both creation and modification of symlinks
+ ## Test prefix stripping for creation/modification of symlinks
 
 UUID: 358f30bb-a703-4d28-a611-601bfa3999e8
 

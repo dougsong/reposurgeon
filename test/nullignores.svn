@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Test handling of generated and user-created ignores.
+ ## Test handling of generated and user-created ignores
 
 UUID: 93cc1b8a-248f-4e9f-9ba6-b2dcc7ef1bc5
 

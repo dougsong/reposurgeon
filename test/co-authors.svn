@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Test load demonstating GCC-style co-author parsing in ChangeLogs
+ ## Demonstrate GCC-style co-author parsing in ChangeLogs
 
 UUID: fc8d4641-491d-4a53-8e3c-4b9224d48f77
 

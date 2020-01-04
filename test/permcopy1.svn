@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Test for corrected ancestry checking when setting file permissions
+ ## Test correct ancestry checking when setting file permissions
 
 UUID: ca67a77f-aaeb-45e8-beac-b33598dfb29d
 

@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Merge from parent of parent branch, not direct parent
+ ## Merge from grandparent of branch, not direct parent
 
 UUID: a0d7fe4e-2137-11ea-8df2-b186b21cbaf6
 

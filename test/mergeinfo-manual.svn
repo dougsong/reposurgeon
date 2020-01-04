@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Test that a merge manually specifying revisions is detected
+ ## Manually specifying revisions in merge is detected
 
 UUID: 37b9f476-473a-4f45-8778-e4e58d8e76c3
 

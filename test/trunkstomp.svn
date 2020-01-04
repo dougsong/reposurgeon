@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Check that deletion of trunk followed by copy from before deletion works.
+ ## Trunk deletion followed by copy from before deletion should work
   # Verifies fix of GitLab issue #172
 
 UUID: e60b3fe6-1799-11ea-99b3-9b2684dd6edd

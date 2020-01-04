@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Test sorting / combining ranges in mergeinfo properties
+ ## Test sort/combine of ranges in mergeinfo properties
 
 UUID: 193a21f4-e4d4-4e2b-8920-5321d5dfac6d
 

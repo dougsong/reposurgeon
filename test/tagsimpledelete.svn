@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Test tag created in SVN with simple directory copy, deleted and recreated
+ ## Test tag created with directory copy, deleted and recreated
 
 UUID: 9529dfc6-1e8b-11ea-879b-b9e8011d114c
 

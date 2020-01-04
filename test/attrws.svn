@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Check that whitespace in Changelog attribution lines is canonicalized
+ ## Test whitespace canonicalization in Changelog attribution lines
 
 UUID: 5fae8a99-6fac-48f3-9365-4a16719bcdc9
 

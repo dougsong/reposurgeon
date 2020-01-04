@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Node-kind first, as sometimes produced by svndumpfilter
+ ## Node-kind first as sometimes produced by svndumpfilter
 
 UUID: 5a8661ba-08f9-4943-b091-09391931849b
 

@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Test that dubious mergeinfo is not made into forward merges
+ ## Dubious mergeinfo shouldn't become forward merges
 
 UUID: 766502a5-d0c0-4034-9d37-0b81749904ce
 

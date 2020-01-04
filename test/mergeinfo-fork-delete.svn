@@ -1,5 +1,5 @@
 SVN-fs-dump-format-version: 2
- ## Test if the fork rule of merge detection works with branch deletions
+ ## Test merge detection by fork on branch deletes
 
 UUID: 08e6da47-143b-474e-91ad-4eea2f192568
 
