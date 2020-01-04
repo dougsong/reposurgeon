@@ -4335,6 +4335,53 @@ func (commit *Commit) manifest() *PathMap {
 	return manifest
 }
 
+// Walk along the repository commits, computing and forgetting manifests as we
+// go. The manifest of the commit and its first parent are guaranteed to be
+// memoized, but any other might have been forgotten to minimize the working set
+func (repo *Repository) walkManifests (
+	hook func(idx int, commit *Commit, fistParentIdx int, firstParent *Commit)) {
+	childrenToHandle := make(map[int]int)
+	for index, event := range repo.events {
+		if commit, ok := event.(*Commit); ok {
+			inheritingChildren := 0
+			for _, child := range commit.children() {
+				if childcommit, ok := child.(*Commit); ok &&
+					childcommit.parents()[0] == commit {
+					inheritingChildren++
+				}
+			}
+			childrenToHandle[index] = inheritingChildren
+			firstParentIdx := -1
+			var firstParent *Commit
+			if commit.hasParents() {
+				if parent, ok := commit.parents()[0].(*Commit); ok {
+					firstParent = parent
+					firstParentIdx = repo.eventToIndex(parent)
+				}
+			}
+			if commit._manifest != nil {
+				childrenToHandle[index] = -1 // Mark as already memoized
+			}
+			commit.manifest() // Compute and memoize
+			hook(index, commit, firstParentIdx, firstParent)
+			if firstParentIdx == -1 {
+				continue
+			}
+			childrenToHandle[firstParentIdx]--
+			if childrenToHandle[firstParentIdx] == 0 {
+				delete(childrenToHandle, firstParentIdx)
+				firstParent._manifest = nil // Forget the now unneeded manifest
+			}
+		}
+	}
+	// Cleanup remaining manifests
+	for index, val := range childrenToHandle {
+		if val >= 0 {
+			repo.events[index].(*Commit)._manifest = nil
+		}
+	}
+}
+
 // canonicalize replaces fileops by a minimal set of D and M with same result.
 func (commit *Commit) canonicalize() {
 	// Discard everything before the last deletall
