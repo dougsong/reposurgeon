@@ -17855,7 +17855,7 @@ func canonicalizeInlineAddress(line string) (bool, string, string, string) {
 	email = strings.Replace(email, " . ", ".", -1)
 	// We require exactly one @ in the address, and none outside
 	if strings.Count(email, "@") != 1 ||
-	strings.Count(pre, "@") + strings.Count(pre, "@") > 0 {
+		strings.Count(pre, "@")+strings.Count(post, "@") > 0 {
 		return false, "", "", ""
 	}
 	return true, pre, fmt.Sprintf("<%s>", strings.TrimSpace(email)), post
