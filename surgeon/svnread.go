@@ -2689,8 +2689,6 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 					commit.parents()[0].getMark(),
 					taglegend(commit),
 					false)
-				commit.Comment = "" // avoid composing with the children
-				deletia = append(deletia, index)
 			} else {
 				msg := ""
 				if commit.legacyID != "" {
@@ -2705,9 +2703,9 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 					msg += fmt.Sprintf("zero-op commit on %s.", commit.Branch)
 				}
 				logit(logEXTRACT, msg)
-				commit.Comment = "" // avoid composing with the children
-				deletia = append(deletia, index)
 			}
+			commit.Comment = "" // avoid composing with the children
+			deletia = append(deletia, index)
 		}
 		baton.percentProgress(uint64(index) + 1)
 	}
