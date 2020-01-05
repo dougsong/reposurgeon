@@ -2530,6 +2530,9 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	// If asked to, purge commits on deleted refs, but remember the original
 	// branch for tagification purposes.
 	baton.startProgress("SVN phase C1: purge deleted refs", uint64(len(sp.repo.events)))
+	// compute a map from original branches to their tip
+	branchtips := sp.repo.branchmap()
+	// Remember the original branch only if purging.
 	origBranches := make(map[string]string)
 	preserve := options.Contains("--preserve")
 	if !preserve {
@@ -2576,10 +2579,11 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	// What should a tag made from the argument commit be named?
 	tagname := func(commit *Commit) string {
 		// Give branch and tag roots a special name.
-		prefix, branch := "", commit.Branch
-		if obranch, ok := origBranches[commit.mark]; ok {
-			branch = obranch
+		origbranch := commit.Branch
+		if branch, ok := origBranches[commit.mark]; ok {
+			origbranch = branch
 		}
+		prefix, branch := "", origbranch
 		if strings.HasPrefix(branch, "refs/deleted/") {
 			// Commit comes from a deleted branch
 			split := strings.IndexRune(branch[len("refs/deleted/"):], '/') +
@@ -2588,10 +2592,20 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 			branch = "refs/" + branch[split:]
 		}
 		name := prefix + branchbase(branch)
-		if rootmarks.Contains(commit.mark) {
+		tip, _ := sp.repo.markToEvent(branchtips[origbranch]).(*Commit)
+		tipIsDelete := (tip != nil && len(tip.operations()) == 1 &&
+			tip.operations()[0].op == deleteall)
+		if (!tipIsDelete && tip == commit) ||
+			(tipIsDelete && tip.hasParents() && tip.parents()[0] == commit) {
 			if strings.HasPrefix(branch, "refs/tags/") {
+				// The empty commit is a tip but not a tipdelete, or is the
+				// last commit before the tipdelete. The tag name should be
+				// kept so that the annotated commit has the exact name of
+				// the tag.
 				return name
 			}
+		}
+		if rootmarks.Contains(commit.mark) {
 			return name + "-root"
 		}
 		// Fall back to standard rules.
