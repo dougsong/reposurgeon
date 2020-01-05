@@ -2534,25 +2534,28 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 		})
 	}
 	baton.endProgress()
-	// Now we need to tagify all other commits without fileops, because git
-	// is going to just discard them when we build a live repo and they
-	// might possibly contain interesting metadata.
+	// Now we need to tagify all other commits without fileops, because they
+	// don't fit well in a git model. In most cases we create an annotated tag
+	// pointing to their first parent, to keep any interesting metadata.
 	//
 	// * Commits from tag creation often have no real fileops since they come
-	//   from a directory copy
+	//   from a directory copy.
 	//
 	// * Same for branch-root commits. The tag name is the basename of the
 	//   branch directory in SVN with "-root" appended to distinguish them
 	//   from SVN tags.
 	//
-	// * Commits at a branch tip that consist only of deleteall are also
-	//   tagified if --nobranch is on.  It behaves as a direction to
-	//   preserve as much as possible of the tree structure for postprocessing.
-	//
 	// * All other commits without fileops get turned into an annotated tag
 	//   with name "emptycommit-<revision>".
 	//
-	rootmarks := newOrderedStringSet() // stays empty if nobranch
+	// * Commits at a branch tip that consist only of deleteall are also
+	//   tagified if --nobranch is on, because having a commit at the branch
+	//   tip that removes all files is less than useful. Such commits should
+	//   almost all be pruned because they put their branch in the
+	//   /refs/deleted namespace, but they can be kept if they are part of
+	//   another branch history (which would be a bit strange) or if the
+	//   --preserve option is used.
+	rootmarks := newOrderedStringSet()
 	for _, roots := range sp.branchRoots {
 		for _, root := range roots {
 			rootmarks.Add(root.mark)
@@ -2561,7 +2564,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 
 	// What should a tag made from the argument commit be named?
 	tagname := func(commit *Commit) string {
-		// Give branch and tag roots a special name
+		// Give branch and tag roots a special name.
 		if rootmarks.Contains(commit.mark) {
 			name := branchbase(commit.Branch)
 			if strings.HasPrefix(commit.Branch, "refs/tags/") {
