@@ -473,7 +473,7 @@ liftcheck-regress:
 	then \
 		for test in $(SVNCLEAN); \
 		do \
-		    liftcheck -e emptycommit $${test} >/tmp/diff$$$$; \
+		    liftcheck -e emptycommit -e -root $${test} >/tmp/diff$$$$; \
 		    case $$? in \
 		    0) ;; \
 		    1) if [ $(QUIET) = 1 ]; then echo FAILED; else cat /tmp/diff$$$$; fi; if [ $(STOPOUT) = 1 ]; then exit 1; fi;; \
