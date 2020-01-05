@@ -91,7 +91,7 @@ do
     fi
 
     # Notification
-    { echo -n "  ${what}"; grep --text '^ ##' ${what} || echo ' ## (no description)'; } >&2; \
+    { echo -n "  ${what}"; grep --text '^ ##' ${what} || echo ' ## (no description)'; } | sed -e '/ ## /s//: /' >&2; \
 
     # Make a Subversion repo from the dump
     ./svn-to-svn ${svnquiet} ${slimit} -c <${what} ${stem}

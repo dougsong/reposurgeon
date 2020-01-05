@@ -130,7 +130,7 @@ fi-buildregress:
 fi-regress:
 	@echo "=== Running general tests:"
 	@for file in $(TESTLOADS); do \
-	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.tst  || echo ' ## (no description)'; \
+	    ( $(ECHO) -n "  $${file} "; grep --text '##' $${file}.tst  || echo ' ## (no description)' ) | sed -e '/ ##/s//:/' ; \
 	    $(REPOSURGEON) "$(TESTOPT)" "script $${file}.tst testing123" >/tmp/regress$$$$ 2>&1 \
 		|| (echo "*** Nonzero return status on $${file}!"; exit $(STOPOUT) ); \
 	    diff --text -u $${file}.chk /tmp/regress$$$$ >/tmp/diff$$$$; \
@@ -367,7 +367,7 @@ svnload-regress:
 	do \
 	    if [ ! -f $${test}.tst ] ; \
 	    then \
-		{ $(ECHO) -n "  $${test}.svn"; grep --text '^ ##' $${test}.svn || echo ' ## (no description)'; } >&2; \
+		{ $(ECHO) -n "  $${test}.svn"; grep --text '^ ##' $${test}.svn || echo ' ## (no description)'; } | sed -e '/ ##/s//:/' >&2; \
 		$(REPOSURGEON) "$(TESTOPT)" "$(TESTOPT)" "read <$${test}.svn" "prefer git" "write -" >/tmp/regress$$$$ 2>&1 \
 		    || (echo "*** Nonzero return status on $${file}!"; exit $(STOPOUT) ); \
 		diff --text -u $${test}.chk /tmp/regress$$$$ >/tmp/diff$$$$; \
@@ -542,7 +542,7 @@ repomapper-regress:
 	@REPOMAPPER=$$REPOMAPPER; export REPOMAPPER; \
 	status=0; \
 	for file in $(MAPPERTESTS); do \
-	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
+	    ( $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)') | sed -e '/ ##/s//:/'; \
 	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || status=1; \
 	done; \
 	exit $${status}
@@ -562,7 +562,7 @@ repotool-regress:
 	@REPOTOOL=$$REPOTOOL; export REPOTOOL; \
 	status=0; \
 	for file in $(TOOLTESTS); do \
-	    $(ECHO) -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)'; \
+	    ( $(ECHO) -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)') | sed -e '/ ##/s//:/'; \
 	    $(SHELL) $${file}.sh --regress $${file} || status=1; \
 	done; \
 	exit $${status}
@@ -582,7 +582,7 @@ repocutter-regress:
 	@REPOCUTTER=$$REPOCUTTER; export REPOCUTTER; \
 	status=0; \
 	for file in $(CUTTERTESTS); do \
-	    $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
+	    ( $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)') | sed -e '/ ##/s//:/'; \
 	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || status=1; \
 	done; \
 	exit $${status}
@@ -602,7 +602,7 @@ svncheck-regress:
 	if command -v svn >/dev/null 2>&1 ; \
 	then \
 	    for file in $(SVNCHECK); do \
-		$(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)'; \
+		( $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)' ) | sed -e '/ ##/s//:/'; \
 		$(SHELL) $${file}.sh -d | $(REPOSURGEON) "$(TESTOPT)" "set testmode" 'read -' 'prefer git' 'write -' | diff --text -u $${file}.chk - || status=1; \
 	    done; \
 	else echo "    Skipped, svn missing."; exit 0; \
