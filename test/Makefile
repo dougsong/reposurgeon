@@ -65,7 +65,7 @@ fullcheck: clean $(BASIC) $(SUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXTO
 buildregress: fi-buildregress svnload-buildregress legacy-buildregress \
 	repomapper-buildregress repotool-buildregress hg-buildregress-branches \
 	svncheck-buildregress repocutter-buildregress repomapper-buildregress \
-	repotool-buildregress
+	repotool-buildregress buildcoalesce
 
 clean:
 	rm -fr .rs* test-repo test-checkout git-repo left-repo right-repo *~
