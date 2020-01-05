@@ -12,11 +12,11 @@ apt-get update -qy && apt-get install -qy --no-install-recommends \
     flex \
     golang \
     libpcre3-dev \
+    mercurial \
     parallel \
     pypy \
     python2.7 \
     python3 \
-    python-pip \
     subversion \
     time \
     xmlto \
@@ -31,8 +31,6 @@ git clone https://gitlab.com/esr/cvs-fast-export.git && \
     make install
 
 cd $REPOSURGEON_DIR
-
-pip install -r ci/requirements.txt
 
 echo
 echo ============= Dependency install complete ============= 
