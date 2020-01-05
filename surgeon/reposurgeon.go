@@ -6638,7 +6638,7 @@ func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, ta
 			tagifyEvent(index)
 		}
 	}
-	repo.delete(deletia, []string{"--tagback", "--tagify"})
+	repo.delete(deletia, []string{"--tagback", "--no-preserve-refs"})
 	return errout
 }
 
@@ -7122,7 +7122,7 @@ var allPolicies = orderedStringSet{
 	"--empty-only",
 	"--pushback",
 	"--pushforward",
-	"--tagify",
+	"--no-preserve-refs",
 	"--tagback",
 	"--tagforward",
 	"--quiet",
@@ -7148,7 +7148,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 	selected.Sort()
 	dquiet := policy.Contains("--quiet")
 	delete := policy.Contains("--delete")
-	tagify := policy.Contains("--tagify")
+	preserveRefs := !policy.Contains("--no-preserve-refs")
 	tagback := policy.Contains("--tagback")
 	tagforward := policy.Contains("--tagforward") || (!delete && !tagback)
 	pushback := policy.Contains("--pushback")
@@ -7210,7 +7210,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 	}
 	altered := make([]*Commit, 0)
 	var branchmap map[string]string
-	if !tagify {
+	if preserveRefs {
 		branchmap = repo.branchmap()
 	}
 	// Here are the deletions
@@ -7430,7 +7430,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 				// point to newTarget. If there is already a reset or tag that updates the
 				// ref, it will have been moved already to newTarget. Otherwise, we need
 				// to create one now.
-				if !tagify && needReset && newTarget.Branch != commit.Branch &&
+				if preserveRefs && needReset && newTarget.Branch != commit.Branch &&
 					commit.mark == branchmap[commit.Branch] {
 					repo.addEvent(newReset(repo, commit.Branch,
 						newTarget.mark, commit.legacyID))
@@ -11544,7 +11544,8 @@ func (repo *Repository) deleteBranch(selection orderedIntSet, shouldDelete func(
 		}
 	}
 	// Actually delete the commits only reachable from wrong branches.
-	repo.delete(orderedIntSet(deletia), nil)
+	// --no-preserve-refs is to avoid creating new resets on wrong branches
+	repo.delete(orderedIntSet(deletia), orderedStringSet{"--no-preserve-refs"})
 }
 
 //
