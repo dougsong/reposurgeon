@@ -2690,7 +2690,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 				}
 				sp.repo.tagifyNoCheck(commit,
 					tagname(commit),
-					commit.parents()[0].getMark(),
+					commit.getMark(),
 					taglegend(commit),
 					false)
 			} else {
