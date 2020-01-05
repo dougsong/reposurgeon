@@ -2622,9 +2622,8 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 			return ""
 		}
 		// Otherwise, generate one for inspection.
-		legend := []string{fmt.Sprintf("[[Tag from zero-fileop commit at Subversion r%s", commit.legacyID)}
-		legend = append(legend, "]]\n")
-		return strings.Join(legend, "")
+		return fmt.Sprintf("[[Tag from zero-fileop commit at Subversion r%s]]\n",
+			commit.legacyID)
 	}
 
 	// Should the argument commit be tagified?
