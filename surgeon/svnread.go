@@ -2602,22 +2602,16 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 			rootmarks.Add(root.mark)
 		}
 	}
-	rootskip := newOrderedStringSet()
-	rootskip.Add("trunk" + svnSep)
-	rootskip.Add("root")
 
 	// What should a tag made from the argument commit be named?
 	tagname := func(commit *Commit) string {
-		// Give branch and tag roots a special name, except for "trunk" and
-		// "root" which do not come from a regular branch copy.
+		// Give branch and tag roots a special name
 		if rootmarks.Contains(commit.mark) {
 			name := branchbase(commit.Branch)
-			if !rootskip.Contains(name) {
-				if strings.HasPrefix(commit.Branch, "refs/tags/") {
-					return name
-				}
-				return name + "-root"
+			if strings.HasPrefix(commit.Branch, "refs/tags/") {
+				return name
 			}
+			return name + "-root"
 		}
 		// Fall back to standard rules.
 		return defaultEmptyTagName(commit)
@@ -2626,7 +2620,7 @@ func svnProcessTagEmpties(ctx context.Context, sp *StreamParser, options stringS
 	// What distinguishing element should we generate for a tag made from the argument commit?
 	taglegend := func(commit *Commit) string {
 		// Tipdelete commits and branch roots don't get any legend.
-		if len(commit.operations()) > 0 || (rootmarks.Contains(commit.mark) && !rootskip.Contains(branchbase(commit.Branch))) {
+		if len(commit.operations()) > 0 || rootmarks.Contains(commit.mark) {
 			return ""
 		}
 		// Otherwise, generate one for inspection.
