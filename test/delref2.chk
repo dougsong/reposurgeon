@@ -70,14 +70,14 @@ Change on branch.
 from :4
 M 100644 :6 foo
 
-tag tipdelete-somebranch
+tag deleted/r6/somebranch-tipdelete
 #legacy-id 6
 from :7
 tagger jmyers <jmyers> 1576542408 +0000
 data 15
 Remove branch.
 
-tag tipdelete-sometag
+tag deleted/r7/sometag-tipdelete
 #legacy-id 7
 from :5
 tagger jmyers <jmyers> 1576542417 +0000

@@ -2605,11 +2605,14 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 				return name
 			}
 		}
+		if tipIsDelete && tip == commit {
+			return name + "-tipdelete"
+		}
 		if rootmarks.Contains(commit.mark) {
 			return name + "-root"
 		}
-		// Fall back to standard rules.
-		return defaultEmptyTagName(commit)
+		// Fall back to emptycommit-revision
+		return "emptycommit-" + commit.legacyID
 	}
 
 	// What distinguishing element should we generate for a tag made from the argument commit?
