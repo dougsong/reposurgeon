@@ -3935,35 +3935,6 @@ func (commit *Commit) setMark(mark string) string {
 	return mark
 }
 
-// branchChild reurns the (unique) child of commit on its brancj
-func (commit *Commit) branchChild() *Commit {
-	for _, child := range commit.children() {
-		switch child.(type) {
-		case *Commit:
-			if child.(*Commit).Branch == commit.Branch {
-				return child.(*Commit)
-			}
-		}
-	}
-	// No such child
-	return nil
-}
-
-// isBranchRoot tells us whether a commit is the first on its branch
-func (commit *Commit) isBranchRoot() bool {
-	if len(commit.parents()) != 1 {
-		return false
-	}
-	parent := commit.parents()[0]
-	switch parent.(type) {
-	case *Commit:
-		return parent.(*Commit).Branch != commit.Branch
-	case *Callout:
-		return false
-	}
-	return false
-}
-
 // forget de-links this commit from its parents.
 func (commit *Commit) forget() {
 	commit.setParents([]CommitLike{})
@@ -7238,6 +7209,10 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 		}
 	}
 	altered := make([]*Commit, 0)
+	var branchmap map[string]string
+	if !tagify {
+		branchmap = repo.branchmap()
+	}
 	// Here are the deletions
 	for _, event := range repo.events {
 		event.setDelFlag(false)
@@ -7426,27 +7401,39 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 					e.setDelFlag(true)
 				}
 			} else {
-				// Preserve reference integrity. If we're abput to delete the last commit on a branch,
-				// create a reset wth the same name referring to the push target for attachments.
-				// This avoid spurios missing-branch messages In Subbversion lifts.
-				if !tagify && commit.isBranchRoot() && commit.branchChild() == nil {
-					repo.addEvent(newReset(repo, commit.Branch, newTarget.mark, commit.legacyID))
-				}
-
 				// use a copy of attachments since it
 				// will be mutated
 				attachmentsCopy := make([]Event, 0)
 				for _, e := range commit.attachments {
 					attachmentsCopy = append(attachmentsCopy, e)
 				}
+				needReset := true
 				for _, e := range attachmentsCopy {
 					logit(logDELETE, "moving attachment %s of %s to %s", commit.mark, e.idMe(), newTarget.getMark())
-					switch e.(type) {
+					switch object := e.(type) {
 					case *Tag:
-						e.(*Tag).remember(repo, newTarget.getMark())
+						// object is already cast to Tag
+						if commit.Branch == object.name {
+							needReset = false
+						}
+						object.remember(repo, newTarget.getMark())
 					case *Reset:
-						e.(*Reset).remember(repo, newTarget.getMark())
+						// object is already cast to Reset
+						if commit.Branch == object.ref {
+							needReset = false
+						}
+						object.remember(repo, newTarget.getMark())
 					}
+				}
+				// Preserve reference integrity. If we are deleting the last event moving
+				// a ref, and newTarget is not on the same branch, then the ref will not
+				// point to newTarget. If there is already a reset or tag that updates the
+				// ref, it will have been moved already to newTarget. Otherwise, we need
+				// to create one now.
+				if !tagify && needReset && newTarget.Branch != commit.Branch &&
+					commit.mark == branchmap[commit.Branch] {
+					repo.addEvent(newReset(repo, commit.Branch,
+						newTarget.mark, commit.legacyID))
 				}
 			}
 			// And forget the deleted event
