@@ -2,15 +2,5 @@
 
 == Known bugs ==
 
-* Weird combinations of Subversion tag creation followed by tag delete
-  and renaming operations can produce content-mismatch failures
-  detectable by repotool compare. In the test suite, this problem is
-  exhibited by branchreplace.svn, emptyfrom.svn, references.svn.
-  Run "make listcheck-dirty" in test/ for a longer list of borderline cases.
-
-* Also see https://gitlab.com/esr/reposurgeon/issues for two minor problems.
-
-* The pathological-load Hg cases fail, that should be fixed.  They
-  succeeded in Python. "make REPOSURGEON=pyreposurgeon hg-regress-patho"
-  exhibits correct behavior.
+* See https://gitlab.com/esr/reposurgeon/issues for two minor problems.
 

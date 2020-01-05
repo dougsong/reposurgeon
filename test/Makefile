@@ -25,10 +25,6 @@ BUILDOPT="'set serial'"
 # Defeat annoying behavior under Mac OS X - builtin echo doesn't do -n
 ECHO := /bin/echo
 
-# Without this, under CentOS Python may emit invisible ANSI strings
-# that confuse diff.  Leave this in while pyreposurgeon still exists.
-TERM := dumb
-
 default: fastcheck
 
 # Define test groups

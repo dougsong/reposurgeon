@@ -1,7 +1,7 @@
 = Notes on the Go translation of Reposurgeon =
 version 1.6, 2019-08-15
 
-The reposurgeon codebase is moving from Python to Go because the
+The reposurgeon codebase has moved from Python to Go because the
 Python implementation is too slow on really large repositories. 
 
 This is an experience report on that translation, written in attempted

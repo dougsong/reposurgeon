@@ -10,7 +10,7 @@ and trying again.
 There are tools and makefile productions for finer-grained testing.  
 Their behavior is controlled by these variables:
 
-REPOSURGEON: either reposurgeon (the default) or pyreposurgeon
+REPOSURGEON: defaults to 'reposurgeon '
 
 TESTOPT: Use this to pass in a command or option setting, such
 as "set experimental",
