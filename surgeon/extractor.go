@@ -960,23 +960,26 @@ func (he HgExtractor) manifest(rev string) []manifestEntry {
 		copy(fixedhghash[:], hghash)
 		fixedhash, ok := he.hashTranslate[fixedhghash]
 		if !ok {
-			tempFile, err := ioutil.TempFile("", "rsc")
-			if err != nil {
-				panic(throw("extractor", "Couldn't create tempfile for hashing: %v", err))
-			}
-			defer os.Remove(tempFile.Name())
-			// See HgExtractor.catFile() below for explanation
-			dest := strings.ReplaceAll(tempFile.Name(), "%", "%%")
-			_, err = he.capture("hg", "cat", "-r", rev, me.pathname, "-o", dest)
-			if err != nil {
-				panic(throw("extractor", "Couldn't cat blob to hash it: %v", err))
-			}
-			hash := sha1.New()
-			if _, err := io.Copy(hash, tempFile); err != nil {
-				panic(throw("extractor", "Couldn't hash blob: %v", err))
-			}
-			copy(fixedhash[:], hash.Sum(nil))
-			he.hashTranslate[fixedhghash] = fixedhash
+			func () {
+				tempFile, err := ioutil.TempFile("", "rsc")
+				if err != nil {
+					panic(throw("extractor", "Couldn't create tempfile for hashing: %v", err))
+				}
+				defer os.Remove(tempFile.Name())
+				defer tempFile.Close()
+				// See HgExtractor.catFile() below for explanation
+				dest := strings.ReplaceAll(tempFile.Name(), "%", "%%")
+				_, err = he.capture("hg", "cat", "-r", rev, me.pathname, "-o", dest)
+				if err != nil {
+					panic(throw("extractor", "Couldn't cat blob to hash it: %v", err))
+				}
+				hash := sha1.New()
+				if _, err := io.Copy(hash, tempFile); err != nil {
+					panic(throw("extractor", "Couldn't hash blob: %v", err))
+				}
+				copy(fixedhash[:], hash.Sum(nil))
+				he.hashTranslate[fixedhghash] = fixedhash
+			}()
 		}
 		sig := newSignature(fixedhash, perms)
 		me.sig = sig
