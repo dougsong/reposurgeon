@@ -18337,12 +18337,8 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		croak("a singleton selection set is required.")
 		return false
 	}
-	parse := rs.newLineParse(line, nil)
+	parse := rs.newLineParse(line, orderedStringSet{"stdin"})
 	defer parse.Closem()
-	if parse.line == "" {
-		croak("no tarball specified.")
-		return false
-	}
 
 	stripstr, present := parse.OptVal("--strip")
 	var strip int
@@ -18387,9 +18383,19 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		// when they are generated
 		// FIXME: Link in firewall commit
 	}
-	
+
+	// Tarballs are any arguments on the line, plus any on redirected stdin.
 	tarballs := strings.Fields(parse.line)
-	// FIXME: read from stdin when no arguments
+	if parse.redirected {
+		data, err := ioutil.ReadAll(parse.stdin)
+		if err == nil {
+			tarballs = append(tarballs, strings.Split(string(data), "\n")...)
+		}
+	}
+	if len(tarballs) == 0 {
+		croak("no tarball specified.")
+		return false
+	}
 
 	for _, tarpath := range tarballs {
 		// Create new commit to carry the new content
