@@ -8770,36 +8770,28 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		// until we're done.
 		//
 		// Move the unmodified repo contents in target to the
-		// backup directory, leaving a copy of the VCS config
-		// in place.  Then move the staging contents
-		// (*excluding* the VCS config) to the target
-		// directory.  Finally, restore designated files from
+		// backup directory.  Then move the staging contents to the
+		// target directory.  Finally, restore designated files
+		// from backup to target.
 		// backup to target.
 		entries, err := ioutil.ReadDir(target)
 		if err != nil {
 			return err
 		}
 		logit(logSHUFFLE, "Target %s to backup%s", target, savedir)
-		for _, sub := range entries {
-			src := ljoin(target, sub.Name())
-			dst := ljoin(savedir, sub.Name())
-			logit(logSHUFFLE, "%s -> %s", src, dst)
-			if sub.Name() == vcs.subdirectory {
-				shutil.CopyTree(src, dst, nil)
-			} else {
-				os.Rename(src, dst)
-			}
+		for _, sub := range entries {	
+			logit(logSHUFFLE, "%s -> %s", ljoin(target, sub.Name()),
+				ljoin(savedir, sub.Name()))
+			os.Rename(ljoin(target, sub.Name()),
+				ljoin(savedir, sub.Name()))
 		}
 		respond("repo backed up to %s.", relpath(savedir))
 		entries, err = ioutil.ReadDir(staging)
 		if err != nil {
 			return err
 		}
-		logit(logSHUFFLE, "Copy staging %s to target %s (excluding %s)", staging, target, vcs.subdirectory)
+		logit(logSHUFFLE, "Copy staging %s to target %s", staging, target)
 		for _, sub := range entries {
-			if sub.Name() == vcs.subdirectory {
-				continue
-			}
 			logit(logSHUFFLE, "%s -> %s",
 				ljoin(staging, sub.Name()),
 				ljoin(target, sub.Name()))
