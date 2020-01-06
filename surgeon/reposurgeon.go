@@ -18369,6 +18369,23 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		}
 	}
 
+	insertMe := func(blank *Commit, loc int) {
+		if !insertAfter {
+			repo.insertEvent(blank, loc, "")
+			blank.setParents(commit.parents())
+			commit.setParents([]CommitLike{blank})
+		} else {
+			blank._parentNodes = []CommitLike{commit}
+			for _, offspring := range commit.children() {
+				c, ok := offspring.(*Commit)
+				if ok {
+					c.replaceParent(commit, blank)
+				}
+			}
+			repo.insertEvent(blank, loc, "")
+		}
+	}
+
 	if parse.options.Contains("--firewall") {
 		blank := newCommit(repo)
 		attr, _ := newAttribution("")
@@ -18381,7 +18398,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		// No need to insert explicit fileops here,
 		// this is just a place for deletes to land
 		// when they are generated
-		// FIXME: Link in firewall commit
+		insertMe(blank, loc)
 	}
 
 	// Tarballs are any arguments on the line, plus any on redirected stdin.
@@ -18456,20 +18473,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		}
 
 		// Link it into the repository
-		if !insertAfter {
-			repo.insertEvent(blank, loc, "")
-			blank.setParents(commit.parents())
-			commit.setParents([]CommitLike{blank})
-		} else {
-			blank._parentNodes = []CommitLike{commit}
-			for _, offspring := range commit.children() {
-				c, ok := offspring.(*Commit)
-				if ok {
-					c.replaceParent(commit, blank)
-				}
-			}
-			repo.insertEvent(blank, loc, "")
-		}
+		insertMe(blank, loc)
 
 		// We get here if incorporation worked OK.
 		date, present := parse.OptVal("--date")
