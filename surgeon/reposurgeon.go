@@ -7324,7 +7324,11 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 				// parent,and mark each such child as needing
 				// resolution.
 				if pushforward && child.parents()[0] == commit {
-					child.prependOperations(commit.operations())
+					myOperations := make([]*FileOp, len(commit.operations()))
+					for i, op := range commit.operations() {
+						myOperations[i] = op.Copy()
+					}
+					child.fileops = append(myOperations, child.fileops...)
 					// Also prepend event's
 					// comment, ignoring empty log
 					// messages.
@@ -7368,7 +7372,11 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 				if !ok {
 					continue // Ignore callouts
 				}
-				parent.fileops = append(parent.fileops, commit.fileops...)
+				myOperations := make([]*FileOp, len(commit.operations()))
+				for i, op := range commit.operations() {
+					myOperations[i] = op.Copy()
+				}
+				parent.fileops = append(parent.fileops, myOperations...)
 				// Also append child"s comment to its parent"s
 				if policy.Contains("--empty-only") && !emptyComment(parent.Comment) {
 					croak(fmt.Sprintf("--empty is on and %s comment is nonempty", parent.idMe()))
