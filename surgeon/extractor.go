@@ -1172,6 +1172,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 		return instr[:12]
 	}
 
+	rs.baton.startProgress("extracting commits", uint64(len(rs.revlist)))
 	consume := make([]string, len(rs.revlist))
 	copy(consume, rs.revlist)
 	for revcount, revision := range consume {
@@ -1305,7 +1306,9 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 		commit.setMark(repo.newmark())
 		//logit(logEXTRACT, "%s: commit gets mark %s (%d ops)", trunc(revision), commit.mark, len(commit.operations()))
 		repo.addEvent(commit)
+		rs.baton.percentProgress(uint64(revcount))
 	}
+	rs.baton.endProgress()
 	// Now append branch reset objects
 	// Note: we time-sort these to ensure that the ordering is
 	// (a) deterministic, and (b) easily understood.
