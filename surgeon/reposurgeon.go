@@ -4361,7 +4361,9 @@ func (repo *Repository) walkManifests (
 					inheritingChildren++
 				}
 			}
-			childrenToHandle[index] = inheritingChildren
+			if commit._manifest != nil {
+				inheritingChildren = -1 // Mark as already memoized
+			}
 			firstParentIdx := -1
 			var firstParent *Commit
 			if commit.hasParents() {
@@ -4370,11 +4372,17 @@ func (repo *Repository) walkManifests (
 					firstParentIdx = repo.eventToIndex(parent)
 				}
 			}
-			if commit._manifest != nil {
-				childrenToHandle[index] = -1 // Mark as already memoized
-			}
 			commit.manifest() // Compute and memoize
 			hook(index, commit, firstParentIdx, firstParent)
+			if inheritingChildren == 0 {
+				// Forget the manifest right away as commit has no children
+				// inheriting from it.
+				commit._manifest = nil
+			} else {
+				// Remember the number of children so that we can forget
+				// the manifest at the correct time.
+				childrenToHandle[index] = inheritingChildren
+			}
 			if firstParentIdx == -1 {
 				continue
 			}
