@@ -18325,11 +18325,11 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 	if rs.selection == nil {
 		rs.selection = []int{repo.markToIndex(repo.earliestCommit().mark)}
 	}
-	var commit *Commit
+	var anchor *Commit
 	if len(rs.selection) == 1 {
 		event := repo.events[rs.selection[0]]
 		var ok bool
-		if commit, ok = event.(*Commit); !ok {
+		if anchor, ok = event.(*Commit); !ok {
 			croak("selection is not a commit.")
 			return false
 		}
@@ -18356,9 +18356,9 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 	_, insertAfter := parse.OptVal("--after")
 	var loc int
 	if insertAfter {
-		loc = repo.markToIndex(commit.mark) + 1
+		loc = repo.markToIndex(anchor.mark) + 1
 	} else {
-		loc = repo.markToIndex(commit.mark)
+		loc = repo.markToIndex(anchor.mark)
 		for loc > 0 {
 			_, ok := repo.events[loc-1].(*Blob)
 			if ok {
@@ -18372,14 +18372,14 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 	insertMe := func(blank *Commit, loc int) {
 		if !insertAfter {
 			repo.insertEvent(blank, loc, "")
-			blank.setParents(commit.parents())
-			commit.setParents([]CommitLike{blank})
+			blank.setParents(anchor.parents())
+			anchor.setParents([]CommitLike{blank})
 		} else {
-			blank._parentNodes = []CommitLike{commit}
-			for _, offspring := range commit.children() {
+			blank._parentNodes = []CommitLike{anchor}
+			for _, offspring := range anchor.children() {
 				c, ok := offspring.(*Commit)
 				if ok {
-					c.replaceParent(commit, blank)
+					c.replaceParent(anchor, blank)
 				}
 			}
 			repo.insertEvent(blank, loc, "")
@@ -18393,13 +18393,13 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		blank.mark = repo.newmark()
 		blank.repo = repo
 		blank.committer.fullname, blank.committer.email = whoami()
-		blank.Branch = commit.Branch
+		blank.Branch = anchor.Branch
 		blank.Comment = fmt.Sprintf("Firewall commit\n")
 		// No need to insert explicit fileops here,
 		// this is just a place for deletes to land
 		// when they are generated
 		insertMe(blank, loc)
-		commit = blank
+		anchor = blank
 	}
 
 	// Tarballs are any arguments on the line, plus any on redirected stdin.
@@ -18423,7 +18423,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		blank.mark = repo.newmark()
 		blank.repo = repo
 		blank.committer.fullname, blank.committer.email = whoami()
-		blank.Branch = commit.Branch
+		blank.Branch = anchor.Branch
 		blank.Comment = fmt.Sprintf("Content from %s\n", tarpath)
 		var err error
 		blank.committer.date, err = newDate("1970-01-01T00:00:00Z")
