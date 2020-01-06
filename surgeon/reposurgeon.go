@@ -18354,19 +18354,23 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 	}
 
 	_, insertAfter := parse.OptVal("--after")
-	var loc int
-	if insertAfter {
-		loc = repo.markToIndex(anchor.mark) + 1
-	} else {
-		loc = repo.markToIndex(anchor.mark)
-		for loc > 0 {
-			_, ok := repo.events[loc-1].(*Blob)
-			if ok {
-				loc--
-			} else {
-				break
+
+	nextCommit := func(anchor *Commit, after bool) int {
+		var loc int
+		if insertAfter {
+			loc = repo.markToIndex(anchor.mark) + 1
+		} else {
+			loc = repo.markToIndex(anchor.mark) - 1
+			for loc > 0 {
+				_, ok := repo.events[loc-1].(*Commit)
+				if ok {
+					break
+				} else {
+					loc--
+				}
 			}
 		}
+		return loc
 	}
 
 	insertMe := func(blank *Commit, loc int) {
@@ -18385,6 +18389,8 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 			repo.insertEvent(blank, loc, "")
 		}
 	}
+
+	var loc int = nextCommit(anchor, insertAfter)
 
 	if parse.options.Contains("--firewall") {
 		blank := newCommit(repo)
