@@ -28,7 +28,7 @@ ECHO := /bin/echo
 default: fastcheck
 
 # Define test groups
-BASIC = listcheck roundtrip roundtrip-compress messagebox fi-regress coalesce
+BASIC = listcheck roundtrip roundtrip-compress messagebox fi-regress
 SUBVERSION = svnload-regress liftcheck-regress legacy-regress svncheck-regress
 FULLSUBVERSION = $(SUBVERSION) liftcheck-fullregress
 GIT_EXTRACTOR = git-regress git-regress-branches git-regress-merges git-regress-tags
@@ -61,7 +61,7 @@ fullcheck: clean $(BASIC) $(SUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXTO
 buildregress: fi-buildregress svnload-buildregress legacy-buildregress \
 	repomapper-buildregress repotool-buildregress hg-buildregress-branches \
 	svncheck-buildregress repocutter-buildregress repomapper-buildregress \
-	repotool-buildregress buildcoalesce
+	repotool-buildregress
 
 clean:
 	rm -fr .rs* test-repo test-checkout git-repo left-repo right-repo *~
@@ -132,30 +132,6 @@ fi-regress:
 	@for file in $(TESTLOADS); do \
 	    ( $(ECHO) -n "  $${file} "; grep --text '##' $${file}.tst  || echo ' ## (no description)' ) | sed -e '/ ##/s//:/' ; \
 	    $(REPOSURGEON) "$(TESTOPT)" "script $${file}.tst testing123" >/tmp/regress$$$$ 2>&1 \
-		|| (echo "*** Nonzero return status on $${file}!"; exit $(STOPOUT) ); \
-	    diff --text -u $${file}.chk /tmp/regress$$$$ >/tmp/diff$$$$; \
-	    case $$? in \
-	    0) ;; \
-	    1) if [ $(QUIET) = 1 ]; then echo FAILED; else cat /tmp/diff$$$$; fi; if [ $(STOPOUT) = 1 ]; then exit 1; fi;; \
-	    *) echo "*** diff had trouble, status $$?"; exit $(STOPOUT);; \
-	    esac \
-	done
-	@rm -f /tmp/regress$$$$ /tmp/diff$$$$
-
-# Test coalescence operation.
-COALESCE=uncoalesced
-buildcoalesce:
-	@for file in $(COALESCE); do \
-	    echo "Rebuilding coalescence regression test using $${file}.fi"; \
-	    $(REPOSURGEON) "$(BUILDOPT)" "$(TESTOPT)" "read <$${file}.fi; coalesce; write -" \
-		>$${file}.chk || exit $(STOPOUT); \
-	done
-	@rm -f /tmp/regress$$$$
-coalesce:
-	@echo "=== Coalescence regression test:"
-	@for file in $(COALESCE); do \
-	    echo "  $${file}.fi"; \
-	    $(REPOSURGEON) "$(TESTOPT)" "read <$${file}.fi; coalesce; write -" >/tmp/regress$$$$ 2>&1  \
 		|| (echo "*** Nonzero return status on $${file}!"; exit $(STOPOUT) ); \
 	    diff --text -u $${file}.chk /tmp/regress$$$$ >/tmp/diff$$$$; \
 	    case $$? in \
