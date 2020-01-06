@@ -497,7 +497,7 @@ extension is removed from the load list name.
 Normally, missing from links in input streams are deaulted to the
 previous commit.  The --no-implicit option disables this and may
 enable round-tripping of some streams on which it would fail (note
-however ythat git fast-export generates explict from links). This
+however that git fast-export generates explict from links). This
 option will mainly be useful for testing and debugging.
 +
 Note: this command does not take a selection set.
