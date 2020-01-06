@@ -18399,6 +18399,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		// this is just a place for deletes to land
 		// when they are generated
 		insertMe(blank, loc)
+		commit = blank
 	}
 
 	// Tarballs are any arguments on the line, plus any on redirected stdin.
