@@ -567,10 +567,12 @@ type HgExtractor struct {
 	tagsFound      bool
 	bookmarksFound bool
 	hgcl           *HgClient
+	hashTranslate  map[[sha1.Size]byte][sha1.Size]byte
 }
 
 func newHgExtractor() *HgExtractor {
 	he := new(HgExtractor)
+	he.hashTranslate = make(map[[sha1.Size]byte][sha1.Size]byte)
 	return he
 }
 
@@ -942,23 +944,40 @@ func (he HgExtractor) manifest(rev string) []manifestEntry {
 		}
 		var me manifestEntry
 		me.pathname = line[47:]
-		// Sadly we can't rely on hg's blob hash, because it includes
+		// Sadly we can't just use hg's blob hash, because it includes
 		// metadata like filenames, so if the file gets moved we'd
-		// create a duplicate blob.  Thus, we have to cat the file
-		// and SHA it ourselves.  (If it's a novel hash, we'll cat it
-		// again later when we create the Blob; we could probably
-		// combine both cats, always creating a blobfile and then
-		// deleting it if not needed, to save GC at the expense of
-		// filesystem activity, but that would mean restructuring
-		// the calling code.)
-		contents, err := he.capture("hg", "cat", "-r", rev, me.pathname)
+		// create a duplicate blob.  Thus, if the blob hash has
+		// changed we have to cat the file and SHA it ourselves.
+		// (We'll cat it again later when we create the Blob; we could
+		// probably combine both cats, always creating a blobfile and
+		// then deleting it if not needed, but that would mean
+		// restructuring the calling code.)
+		var fixedhghash [sha1.Size]byte
+		hghash, err := hex.DecodeString(line[:40])
 		if err != nil {
-			panic(throw("extractor", "Couldn't cat blob to hash it: %v", err))
+			panic(throw("extractor", "Malformed blob hash: %v", err))
 		}
-		hash := sha1.New()
-		io.WriteString(hash, contents)
-		var fixedhash [sha1.Size]byte
-		copy(fixedhash[:], hash.Sum(nil))
+		copy(fixedhghash[:], hghash)
+		fixedhash, ok := he.hashTranslate[fixedhghash]
+		if !ok {
+			tempFile, err := ioutil.TempFile("", "rsc")
+			if err != nil {
+				panic(throw("extractor", "Couldn't create tempfile for hashing: %v", err))
+			}
+			defer os.Remove(tempFile.Name())
+			// See HgExtractor.catFile() below for explanation
+			dest := strings.ReplaceAll(tempFile.Name(), "%", "%%")
+			_, err = he.capture("hg", "cat", "-r", rev, me.pathname, "-o", dest)
+			if err != nil {
+				panic(throw("extractor", "Couldn't cat blob to hash it: %v", err))
+			}
+			hash := sha1.New()
+			if _, err := io.Copy(hash, tempFile); err != nil {
+				panic(throw("extractor", "Couldn't hash blob: %v", err))
+			}
+			copy(fixedhash[:], hash.Sum(nil))
+			he.hashTranslate[fixedhghash] = fixedhash
+		}
 		sig := newSignature(fixedhash, perms)
 		me.sig = sig
 		manifest = append(manifest, me)
