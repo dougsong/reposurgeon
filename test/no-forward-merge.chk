@@ -35,62 +35,58 @@ t_c1
 M 100644 :1 .gitignore
 M 100644 :2 a
 
-commit refs/heads/b1
-#legacy-id 3
-mark :4
-committer frnchfrgg <frnchfrgg> 1576493142 +0000
-data 3
-b1
-from :3
-deleteall
-M 100644 :1 .gitignore
-M 100644 :2 a
-
 blob
-mark :5
+mark :4
 data 2
 b
 
 commit refs/heads/b1
 #legacy-id 4
-mark :6
+mark :5
 committer frnchfrgg <frnchfrgg> 1576493142 +0000
 data 6
 b1_c1
-from :4
-M 100644 :5 a
+from :3
+M 100644 :4 a
 
 blob
-mark :7
+mark :6
 data 2
 c
 
 commit refs/heads/master
 #legacy-id 5
-mark :8
+mark :7
 committer frnchfrgg <frnchfrgg> 1576493142 +0000
 data 5
 t_c2
 from :3
-M 100644 :7 a
+M 100644 :6 a
 
 blob
-mark :9
+mark :8
 data 2
 d
 
 commit refs/heads/master
 #legacy-id 7
-mark :10
+mark :9
 committer frnchfrgg <frnchfrgg> 1576493142 +0000
 data 5
 t_c3
-from :8
-M 100644 :9 b
+from :7
+M 100644 :8 b
+
+tag b1-root
+#legacy-id 3
+from :3
+tagger frnchfrgg <frnchfrgg> 1576493142 +0000
+data 3
+b1
 
 tag emptycommit-6
 #legacy-id 6
-from :6
+from :5
 tagger frnchfrgg <frnchfrgg> 1576493142 +0000
 data 56
 b1_c2

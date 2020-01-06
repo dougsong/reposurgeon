@@ -82,19 +82,8 @@ Second modification on the main branch.
 from :7
 M 100644 :8 README
 
-commit refs/heads/alternate
-#legacy-id 7
-mark :10
-committer esr <esr> 1361656199 +0000
-data 30
-Creation of alternate branch.
-from :9
-deleteall
-M 100644 :1 .gitignore
-M 100644 :8 README
-
 blob
-mark :11
+mark :10
 data 77
 This is a test Subversion repository
 
@@ -102,15 +91,15 @@ Third modification on the main branch.
 
 commit refs/heads/master
 #legacy-id 8
-mark :12
+mark :11
 committer esr <esr> 1361656236 +0000
 data 39
 Third modification on the main branch.
 from :9
-M 100644 :11 README
+M 100644 :10 README
 
 blob
-mark :13
+mark :12
 data 136
 This is a random resource file being added to the branch we'll later fold.
 
@@ -118,15 +107,15 @@ This is the first modification to the random resource file.
 
 commit refs/heads/master
 #legacy-id 9
-mark :14
+mark :13
 committer esr <esr> 1361656341 +0000
 data 60
 This is the first modification to the random resource file.
-from :12
-M 100644 :13 resources/random
+from :11
+M 100644 :12 resources/random
 
 blob
-mark :15
+mark :14
 data 78
 This is a test Subversion repository
 
@@ -134,15 +123,15 @@ Fourth modification on the main branch.
 
 commit refs/heads/master
 #legacy-id 10
-mark :16
+mark :15
 committer esr <esr> 1361656565 +0000
 data 40
 Fourth modification on the main branch.
-from :14
-M 100644 :15 README
+from :13
+M 100644 :14 README
 
 blob
-mark :17
+mark :16
 data 137
 This is a random resource file being added to the branch we'll later fold.
 
@@ -150,15 +139,15 @@ This is the second modification to the random resource file.
 
 commit refs/heads/master
 #legacy-id 11
-mark :18
+mark :17
 committer esr <esr> 1361656588 +0000
 data 61
 This is the second modification to the random resource file.
-from :16
-M 100644 :17 resources/random
+from :15
+M 100644 :16 resources/random
 
 blob
-mark :19
+mark :18
 data 82
 This is a test Subversion repository
 
@@ -166,15 +155,15 @@ First modification on the alternate branch.
 
 commit refs/heads/alternate
 #legacy-id 12
-mark :20
+mark :19
 committer esr <esr> 1361660458 +0000
 data 44
 First modification on the alternate branch.
-from :10
-M 100644 :19 README
+from :9
+M 100644 :18 README
 
 blob
-mark :21
+mark :20
 data 77
 This is a test Subversion repository
 
@@ -182,15 +171,15 @@ Fifth modification on the main branch.
 
 commit refs/heads/master
 #legacy-id 13
-mark :22
+mark :21
 committer esr <esr> 1361660576 +0000
 data 39
 Fifth modification on the main branch.
-from :18
-M 100644 :21 README
+from :17
+M 100644 :20 README
 
 blob
-mark :23
+mark :22
 data 136
 This is a random resource file being added to the branch we'll later fold.
 
@@ -198,15 +187,15 @@ This is the third modification to the random resource file.
 
 commit refs/heads/master
 #legacy-id 14
-mark :24
+mark :23
 committer esr <esr> 1361660622 +0000
 data 60
 This is the third modification to the random resource file.
-from :22
-M 100644 :23 resources/random
+from :21
+M 100644 :22 resources/random
 
 blob
-mark :25
+mark :24
 data 77
 This is a test Subversion repository
 
@@ -214,10 +203,17 @@ Sixth modification on the main branch.
 
 commit refs/heads/master
 #legacy-id 15
-mark :26
+mark :25
 committer esr <esr> 1361660657 +0000
 data 39
 Sixth modification on the main branch.
-from :24
-M 100644 :25 README
+from :23
+M 100644 :24 README
+
+tag alternate-root
+#legacy-id 7
+from :9
+tagger esr <esr> 1361656199 +0000
+data 30
+Creation of alternate branch.
 

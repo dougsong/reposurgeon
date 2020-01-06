@@ -54,51 +54,40 @@ from :3
 M 100644 :4 README
 M 100644 :5 x/y
 
-commit refs/heads/example
-#legacy-id 4
-mark :7
-committer jmyers <jmyers> 1575578297 +0000
-data 20
-Add example branch.
-from :6
-deleteall
-M 100644 :1 .gitignore
-M 100644 :4 README
-M 100644 :2 foo/bar
-M 100644 :5 x/y
-
 blob
-mark :8
+mark :7
 data 14
 branch readme
 
 commit refs/heads/example
 #legacy-id 5
-mark :9
+mark :8
 committer jmyers <jmyers> 1575578310 +0000
 data 17
 change on branch
-from :7
-M 100644 :8 README
+from :6
+M 100644 :7 README
 
 commit refs/heads/master
 #legacy-id 6
-mark :10
+mark :9
 committer jmyers <jmyers> 1575578336 +0000
 data 20
 Remove directory x.
 from :6
 D x/y
 
-commit refs/heads/master
+tag example-root
+#legacy-id 4
+from :6
+tagger jmyers <jmyers> 1575578297 +0000
+data 20
+Add example branch.
+
+tag master-root
 #legacy-id 8
-mark :11
-committer jmyers <jmyers> 1575578376 +0000
+from :9
+tagger jmyers <jmyers> 1575578376 +0000
 data 13
 Readd trunk.
-from :10
-deleteall
-M 100644 :1 .gitignore
-M 100644 :4 README
-M 100644 :2 foo/bar
 

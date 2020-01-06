@@ -34,163 +34,147 @@ Add foo on trunk.
 M 100644 :1 .gitignore
 M 100644 :2 foo
 
-commit refs/heads/master
-#legacy-id 4
-mark :4
-committer jmyers <jmyers> 1577739104 +0000
-data 14
-Re-add trunk.
-from :3
-deleteall
-M 100644 :1 .gitignore
-M 100644 :2 foo
-
 blob
-mark :5
+mark :4
 data 3
 tt
 
 commit refs/heads/master
 #legacy-id 5
-mark :6
+mark :5
 committer jmyers <jmyers> 1577739129 +0000
 data 17
 Add tt on trunk.
-from :4
-M 100644 :5 tt
+from :3
+M 100644 :4 tt
 
 blob
-mark :7
+mark :6
 data 3
 uu
 
 commit refs/heads/master
 #legacy-id 6
-mark :8
+mark :7
 committer jmyers <jmyers> 1577739147 +0000
 data 17
 Add uu on trunk.
-from :6
-M 100644 :7 uu
-
-commit refs/heads/master
-#legacy-id 8
-mark :9
-committer jmyers <jmyers> 1577739167 +0000
-data 14
-Re-add trunk.
-from :8
-deleteall
-M 100644 :1 .gitignore
-M 100644 :2 foo
-M 100644 :5 tt
-M 100644 :7 uu
+from :5
+M 100644 :6 uu
 
 blob
-mark :10
+mark :8
 data 4
 ttt
 
 commit refs/heads/master
 #legacy-id 9
-mark :11
+mark :9
 committer jmyers <jmyers> 1577739180 +0000
 data 20
 Modify tt on trunk.
-from :9
-M 100644 :10 tt
+from :7
+M 100644 :8 tt
 
 blob
-mark :12
+mark :10
 data 4
 uuu
 
 commit refs/heads/master
 #legacy-id 10
-mark :13
+mark :11
 committer jmyers <jmyers> 1577739202 +0000
 data 20
 Modify uu on trunk.
-from :11
-M 100644 :12 uu
-
-commit refs/heads/test
-#legacy-id 11
-mark :14
-committer jmyers <jmyers> 1577739213 +0000
-data 20
-Create test branch.
-from :13
-deleteall
-M 100644 :1 .gitignore
-M 100644 :2 foo
-M 100644 :10 tt
-M 100644 :12 uu
+from :9
+M 100644 :10 uu
 
 blob
-mark :15
+mark :12
 data 5
 tbar
 
 commit refs/heads/test
 #legacy-id 12
-mark :16
+mark :13
 committer jmyers <jmyers> 1577739228 +0000
 data 20
 Add tbar on branch.
-from :14
-M 100644 :15 tbar
+from :11
+M 100644 :12 tbar
 
 blob
-mark :17
+mark :14
 data 5
 tbaz
 
 commit refs/heads/master
 #legacy-id 13
-mark :18
+mark :15
 committer jmyers <jmyers> 1577739234 +0000
 data 19
 Add tbaz on trunk.
-from :13
-M 100644 :17 tbaz
+from :11
+M 100644 :14 tbaz
 
 blob
-mark :19
+mark :16
 data 6
 tbaz2
 
 commit refs/heads/master
 #legacy-id 14
-mark :20
+mark :17
 committer jmyers <jmyers> 1577739235 +0000
 data 20
 Add tbaz2 on trunk.
-from :18
-M 100644 :19 tbaz2
+from :15
+M 100644 :16 tbaz2
 
 blob
-mark :21
+mark :18
 data 2
 x
 
 commit refs/heads/test
 #legacy-id 15
-mark :22
+mark :19
 committer jmyers <jmyers> 1577739242 +0000
 data 17
 Add x on branch.
-from :16
-M 100644 :21 x
+from :13
+M 100644 :18 x
 
 commit refs/heads/test
 #legacy-id 16
-mark :23
+mark :20
 committer jmyers <jmyers> 1577739263 +0000
 data 26
 Merge from trunk to test.
-from :22
-merge :20
-M 100644 :19 tbaz2
-M 100644 :17 tbaz
+from :19
+merge :17
+M 100644 :16 tbaz2
+M 100644 :14 tbaz
+
+tag deleted/r7/master-root
+#legacy-id 4
+from :3
+tagger jmyers <jmyers> 1577739104 +0000
+data 14
+Re-add trunk.
+
+tag master-root
+#legacy-id 8
+from :7
+tagger jmyers <jmyers> 1577739167 +0000
+data 14
+Re-add trunk.
+
+tag test-root
+#legacy-id 11
+from :11
+tagger jmyers <jmyers> 1577739213 +0000
+data 20
+Create test branch.
 

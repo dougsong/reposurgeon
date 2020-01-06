@@ -298,26 +298,14 @@ M 100644 :25 ChangeLog
 M 100644 :26 y
 M 100644 :27 z
 
-commit refs/heads/test
+tag test-root
 #legacy-id 8
-mark :29
-committer jmyers <jmyers> 1576874986 +0000
+from :28
+tagger jmyers <jmyers> 1576874986 +0000
 data 38
 Create branch (should use committer).
+
+reset refs/heads/test
+#legacy-id 8
 from :28
-deleteall
-M 100644 :1 .gitignore
-M 100644 :25 ChangeLog
-M 100644 :8 bar
-M 100644 :16 baz
-M 100644 :3 foo
-M 100644 :21 testsuite/ChangeLog
-M 100644 :10 testsuite/bar.test
-M 100644 :18 testsuite/baz.test
-M 100644 :5 testsuite/foo.test
-M 100644 :22 testsuite/x.test
-M 100644 :13 untested
-M 100644 :23 x
-M 100644 :26 y
-M 100644 :27 z
 

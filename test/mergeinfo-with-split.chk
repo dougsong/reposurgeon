@@ -62,9 +62,6 @@ release party
 
 [[Split portion of a mixed commit.]]
 from :3
-deleteall
-M 100644 :1 .gitignore
-M 100644 :2 README
 M 100644 :6 VERSION
 
 commit refs/heads/master
