@@ -34,65 +34,56 @@ Add foo.
 M 100644 :1 .gitignore
 M 100644 :2 foo
 
-commit refs/heads/somebranch
-#legacy-id 3
-mark :4
-committer jmyers <jmyers> 1576607410 +0000
-data 15
-Create branch.
-from :3
-deleteall
-M 100644 :1 .gitignore
-M 100644 :2 foo
-
 blob
-mark :5
+mark :4
 data 9
 file bar
 
 commit refs/heads/master
 #legacy-id 4
-mark :6
+mark :5
 committer jmyers <jmyers> 1576607431 +0000
 data 9
 Add bar.
 from :3
-M 100644 :5 bar
-
-commit refs/heads/master
-#legacy-id 6
-mark :7
-committer jmyers <jmyers> 1576607466 +0000
-data 16
-Recreate trunk.
-from :6
-deleteall
-M 100644 :1 .gitignore
-M 100644 :5 bar
-M 100644 :2 foo
+M 100644 :4 bar
 
 blob
-mark :8
+mark :6
 data 9
 file baz
 
 commit refs/heads/master
 #legacy-id 7
-mark :9
+mark :7
 committer jmyers <jmyers> 1576607494 +0000
 data 9
 Add baz.
-from :7
-M 100644 :8 baz
+from :5
+M 100644 :6 baz
 
 commit refs/heads/somebranch
 #legacy-id 8
-mark :10
+mark :8
 committer jmyers <jmyers> 1576607542 +0000
 data 18
 Merge from trunk.
-from :4
-merge :9
-M 100644 :5 bar
-M 100644 :8 baz
+from :3
+merge :7
+M 100644 :4 bar
+M 100644 :6 baz
+
+tag somebranch-root
+#legacy-id 3
+from :3
+tagger jmyers <jmyers> 1576607410 +0000
+data 15
+Create branch.
+
+tag master-root
+#legacy-id 6
+from :5
+tagger jmyers <jmyers> 1576607466 +0000
+data 16
+Recreate trunk.
 

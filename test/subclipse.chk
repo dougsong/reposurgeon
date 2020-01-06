@@ -34,12 +34,12 @@ Develop
 M 100644 :1 .gitignore
 M 100644 :2 hello
 
-commit refs/heads/master
+tag emptycommit-3
 #legacy-id 3
-mark :4
-committer khan <khan> 1354595761 +0000
-data 60
-Replace file with a copy of the previous revision of itself
 from :3
-M 100644 :2 hello
+tagger khan <khan> 1354595761 +0000
+data 110
+Replace file with a copy of the previous revision of itself
+
+[[Tag from zero-fileop commit at Subversion r3]]
 

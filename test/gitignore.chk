@@ -68,22 +68,8 @@ data 218
 /*.html
 
 
-commit refs/heads/cool-feature
-#legacy-id 5
-mark :5
-committer chungy <chungy> 1391603866 +0000
-data 125
-Branch trunk to cool-feature
-
-This causes reposurgeon to replace the custom .gitignore with only the
-contents of svn:ignore.
-from :4
-deleteall
-M 100644 :1 .gitignore
-M 100644 :2 README
-
 blob
-mark :6
+mark :5
 data 611
 This repository is designed to demonstrate an oversight in the way
 reposurgeon handles ignores and the case of pre-existing .gitignore
@@ -99,25 +85,26 @@ as the example here.
 
 commit refs/heads/cool-feature
 #legacy-id 6
-mark :7
+mark :6
 committer chungy <chungy> 1391603993 +0000
 data 44
 Explain what the expected result should be.
-from :5
-M 100644 :6 README
+from :4
+M 100644 :1 .gitignore
+M 100644 :5 README
 
 commit refs/heads/master
 #legacy-id 7
-mark :8
+mark :7
 committer chungy <chungy> 1391604041 +0000
 data 33
 Merge cool-feature back to trunk
 from :4
-merge :7
-M 100644 :6 README
+merge :6
+M 100644 :5 README
 
 blob
-mark :9
+mark :8
 data 825
 This repository is designed to demonstrate an oversight in the way
 reposurgeon handles ignores and the case of pre-existing .gitignore
@@ -138,12 +125,12 @@ coming from svn:ignore and *.txt coming from the stored-in-svn
 
 commit refs/heads/master
 #legacy-id 8
-mark :10
+mark :9
 committer chungy <chungy> 1391604109 +0000
 data 35
 Explain the final expected result.
-from :8
-M 100644 :9 README
+from :7
+M 100644 :8 README
 
 tag emptycommit-4
 #legacy-id 4
@@ -156,4 +143,14 @@ This simulates the case of a git-svn user wishing to ignore *.txt
 files, without adding them to Subversion's native svn:ignore property.
 
 [[Tag from zero-fileop commit at Subversion r4]]
+
+tag cool-feature-root
+#legacy-id 5
+from :4
+tagger chungy <chungy> 1391603866 +0000
+data 125
+Branch trunk to cool-feature
+
+This causes reposurgeon to replace the custom .gitignore with only the
+contents of svn:ignore.
 

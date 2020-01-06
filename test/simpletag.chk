@@ -49,33 +49,22 @@ This revision exists to be a tag target.
 from :3
 M 100644 :4 README
 
-commit refs/tags/tag1
-#legacy-id 4
-mark :6
-committer esr <esr> 1322672941 +0000
-data 24
-This is an example tag.
-from :5
-deleteall
-M 100644 :1 .gitignore
-M 100644 :4 README
-
 blob
-mark :7
+mark :6
 data 43
 This file exists to be a creation example.
 
 commit refs/heads/master
 #legacy-id 5
-mark :8
+mark :7
 committer esr <esr> 1322673194 +0000
 data 25
 Our first file creation.
 from :5
-M 100644 :7 creation-example
+M 100644 :6 creation-example
 
 blob
-mark :9
+mark :8
 data 68
 Fourscore and seven years ago...
 
@@ -83,22 +72,24 @@ And another content modification.
 
 commit refs/heads/master
 #legacy-id 6
-mark :10
+mark :9
 committer esr <esr> 1322673276 +0000
 data 31
 A second content modification.
-from :8
-M 100644 :9 README
+from :7
+M 100644 :8 README
 
-commit refs/tags/tag2
+tag tag1
+#legacy-id 4
+from :5
+tagger esr <esr> 1322672941 +0000
+data 24
+This is an example tag.
+
+tag tag2
 #legacy-id 7
-mark :11
-committer esr <esr> 1322673346 +0000
+from :9
+tagger esr <esr> 1322673346 +0000
 data 20
 Create a second tag
-from :10
-deleteall
-M 100644 :1 .gitignore
-M 100644 :9 README
-M 100644 :7 creation-example
 

@@ -36,30 +36,18 @@ M 100644 :1 .gitignore
 M 100644 :2 a
 
 commit refs/heads/test
-#legacy-id 2
-mark :4
-committer frnchfrgg <frnchfrgg> 1360157278 +0000
-data 22
-Create branch "test"
-
-from :3
-deleteall
-M 100644 :1 .gitignore
-M 100644 :2 a
-
-commit refs/heads/test
 #legacy-id 3
-mark :5
+mark :4
 committer frnchfrgg <frnchfrgg> 1360157557 +0000
 data 36
 Another test revision, branch test
 
-from :4
+from :3
 M 100644 :2 b
 
 commit refs/heads/master
 #legacy-id 4
-mark :6
+mark :5
 committer frnchfrgg <frnchfrgg> 1360158403 +0000
 data 7
 Merge
@@ -69,11 +57,19 @@ M 100644 :2 b
 
 commit refs/heads/test
 #legacy-id 5
-mark :7
+mark :6
 committer frnchfrgg <frnchfrgg> 1360157557 +0000
 data 36
 Another test revision, branch test
 
-from :5
+from :4
 M 100644 :2 c
+
+tag test-root
+#legacy-id 2
+from :3
+tagger frnchfrgg <frnchfrgg> 1360157278 +0000
+data 22
+Create branch "test"
+
 

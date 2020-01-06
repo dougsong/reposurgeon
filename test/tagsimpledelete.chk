@@ -48,14 +48,10 @@ Modify foo on trunk.
 from :3
 M 100644 :4 foo
 
-commit refs/tags/sometag
+tag sometag
 #legacy-id 6
-mark :6
-committer jmyers <jmyers> 1576443437 +0000
+from :5
+tagger jmyers <jmyers> 1576443437 +0000
 data 42
 Recreate sometag with different contents.
-from :5
-deleteall
-M 100644 :1 .gitignore
-M 100644 :4 foo
 

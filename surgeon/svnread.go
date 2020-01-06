@@ -2548,6 +2548,23 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 		})
 	}
 	baton.endProgress()
+	// Canonicalize all commits except all-deletes
+	baton.startProgress("SVN phase C2: canonicalize commits", uint64(len(sp.repo.events)))
+	sp.repo.walkManifests(func(index int, commit *Commit, _ int, _ *Commit) {
+		baton.percentProgress(uint64(index) + 1)
+		origbranch := commit.Branch
+		if branch, ok := origBranches[commit.mark]; ok {
+			origbranch = branch
+		}
+		tip, _ := sp.repo.markToEvent(branchtips[origbranch]).(*Commit)
+		tipIsDelete := (tip != nil && len(tip.operations()) == 1 &&
+			tip.operations()[0].op == deleteall)
+		// Do not canonicalize tipdeletes
+		if commit != tip || !tipIsDelete {
+			commit.canonicalize()
+		}
+	})
+	baton.endProgress()
 	// Now we need to tagify all other commits without fileops, because they
 	// don't fit well in a git model. In most cases we create an annotated tag
 	// pointing to their first parent, to keep any interesting metadata.
@@ -2617,8 +2634,12 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 
 	// What distinguishing element should we generate for a tag made from the argument commit?
 	taglegend := func(commit *Commit) string {
+		// Only real tip deletes still have a single "deleteall", because other
+		// commits have been canonicalized.
+		isTipDelete := (len(commit.operations()) == 1 &&
+			commit.operations()[0].op == deleteall)
 		// Tipdelete commits and branch roots don't get any legend.
-		if len(commit.operations()) > 0 || rootmarks.Contains(commit.mark) {
+		if isTipDelete || rootmarks.Contains(commit.mark) {
 			return ""
 		}
 		// Otherwise, generate one for inspection.
@@ -2629,9 +2650,8 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	// Should the argument commit be tagified?
 	doignores := !options.Contains("--no-automatic-ignore")
 	tagifyable := func(commit *Commit) bool {
-		// Tagify empty commits created by cvs2svn
-		if commit.color == colorTRIVIAL &&
-			cvs2svnTagBranchRE.MatchString(commit.Comment) {
+		// Tagify empty commits
+		if len(commit.operations()) == 0 {
 			return true
 		}
 		// Commits with a deletall only were generated in early phases to map
@@ -2640,30 +2660,22 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 		// reachable only from them if the --preserve option was not given.
 		// Any "alldeletes" commit remaining can now be tagified, and should,
 		// so that there are no remnants of the SVN way to delete refs.
-		if commit.alldeletes(deleteall) {
+		// After canonicalization, no other commit can have a single deleteall.
+		if len(commit.operations()) == 1 &&
+			commit.operations()[0].op == deleteall {
 			return true
 		}
 		// If the commit is the first of its branch and only introduces the
 		// default gitignore, tagify it.
 		if doignores && rootmarks.Contains(commit.mark) {
-			allIgnoreOrDeleteall := true
-			for _, op := range commit.operations() {
-				if op.op == deleteall {
-					// deleteall ops are common when starting a branch, and
-					// generally accompany the .gitignore creation.
-					continue
-				}
+			if len(commit.operations()) == 1 {
+				op := commit.operations()[0]
 				if op.Path == ".gitignore" {
 					blob, ok := sp.repo.markToEvent(op.ref).(*Blob)
 					if ok && string(blob.getContent()) == subversionDefaultIgnores {
-						continue
+						return true
 					}
 				}
-				allIgnoreOrDeleteall = false
-				break
-			}
-			if allIgnoreOrDeleteall {
-				return true
 			}
 		}
 		return false
@@ -2681,7 +2693,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 		}
 		if tagifyable(commit) {
 			logit(logEXTRACT, "%s might be tag-eligible", commit.idMe())
-			if commit.color == colorTRIVIAL && cvs2svnTagBranchRE.MatchString(commit.Comment) {
+			if cvs2svnTagBranchRE.MatchString(commit.Comment) {
 				// Nothing to do, but we don't want to create an annotated tag
 				// because messages from cvs2svn are not useful.
 			} else if commit.hasParents() {
