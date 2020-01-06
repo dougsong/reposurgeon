@@ -95,6 +95,8 @@ type manifestEntry struct {
 type Extractor interface {
 	// Hook for any setup actions required before streaming
 	preExtract()
+	// Hook called periodically for various housekeeping actions
+	keepHouse() error
 	// Gather the topologically-ordered lists of revisions and the parent map
 	// (revlist and parent members)
 	gatherRevisionIDs(*RepoStreamer) error
@@ -299,6 +301,10 @@ func newGitExtractor() *GitExtractor {
 }
 
 func (ge *GitExtractor) preExtract() {
+}
+
+func (ge *GitExtractor) keepHouse() error {
+	return nil
 }
 
 func (ge *GitExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
@@ -580,6 +586,19 @@ func (he *HgExtractor) preExtract() {
 	// We have to do this at preExtract time, rather than newHgExtractor(),
 	// because the HgClient captures the cwd at the time of its creation
 	he.hgcl = NewHgClient()
+}
+
+func (he *HgExtractor) keepHouse() error {
+	// If we're using an hgclient, kill the hg server and start a new
+	// one, to limit the memory leaks
+	if he.hgcl != nil {
+		// If this fails, we ignore the error because we're going
+		// to drop our reference anyway when we start a new one.
+		he.hgcl.Close()
+	}
+	// We should still have the correct cwd, as nothing in here chdirs
+	he.hgcl = NewHgClient()
+	return nil
 }
 
 // mimics captureFromProcess (and calls it if no HgClient)
@@ -887,6 +906,12 @@ func (he *HgExtractor) colorBranches(rs *RepoStreamer) error {
 }
 
 func (he *HgExtractor) postExtract(repo *Repository) {
+	// Shut down the Hg command server, we're done with it
+	if he.hgcl != nil {
+		he.hgcl.Close()
+		// whether Close succeeded or not, we drop our reference
+		he.hgcl = nil
+	}
 	if !repo.branchset().Contains("refs/heads/master") {
 		walkEvents(repo.events, func(_ int, event Event) {
 			switch event.(type) {
@@ -1149,7 +1174,14 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 
 	consume := make([]string, len(rs.revlist))
 	copy(consume, rs.revlist)
-	for _, revision := range consume {
+	for revcount, revision := range consume {
+		// Perform housekeeping every 1000 commits
+		if (revcount % 1000) == 0 && revcount != 0 {
+			err = rs.extractor.keepHouse()
+			if err != nil {
+				panic(throw("extract", "Extractor housekeeping failed: %v", err))
+			}
+		}
 		commit := newCommit(repo)
 		rs.baton.twirl()
 		present := rs.extractor.manifest(revision)

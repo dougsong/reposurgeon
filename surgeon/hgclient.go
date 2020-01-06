@@ -51,6 +51,14 @@ func NewHgClient() *HgClient {
 	return me
 }
 
+func (hgcl *HgClient) Close() error {
+	err := hgcl.pipeIn.Close()
+	if err != nil {
+		return err
+	}
+	return hgcl.hgServer.Wait()
+}
+
 func (hgcl *HgClient) readHelloMessage() {
 	ch, hello, err := hgcl.receiveFromHg()
 
