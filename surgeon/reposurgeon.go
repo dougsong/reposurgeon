@@ -10606,16 +10606,16 @@ func (rl *RepositoryList) newLineParse(line string, capabilities orderedStringSe
 				mode |= os.O_CREATE | os.O_APPEND
 			} else {
 				mode |= os.O_CREATE
-				// Unix delete doesn't niuke a fuile
-				// immediately, it (a) removes te
+				// Unix delete doesn't nuke a file
+				// immediately, it (a) removes the
 				// directory reference, and (b)
 				// schedules the file for actual
-				// deletion on it when the lat file
-				// descritor iopen to it is closed.
+				// deletion on it when the last file
+				// descriptor open to it is closed.
 				// Thus, by deleting the file if it
 				// already exists we ennsure that any
 				// seekstreams pointing to it will
-				// continuee to get valid data.
+				// continue to get valid data.
 				os.Remove(lp.outfile)
 			}
 			lp.stdout, err = os.OpenFile(lp.outfile, mode, userReadWriteMode)
