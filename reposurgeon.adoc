@@ -2386,13 +2386,13 @@ obvious differences are around tags and branches.
 A Subversion tag isn't an annotation attached to a commit. The
 Subversion data model is that a history is a sequence of surgical
 operations on a tree; there are no annotation tags as such, a tag is
-just another branch of the tree.  Accordingly a Subversion tag, a copy
+just another branch of the tree.  Accordingly a Subversion tag is a copy
 of the state of an entire branch at a particular revision. This can be
 losslessly translated to an annotation only if no additional commits
 are added to the tag branch after the copy. But nothing prevents this!
 reposurgeon tries to do the right thing,
-creating a DVCS-style tag when it can and otherwise preserving the
-branch.
+creating a DVCS-style annotated tag when it can and otherwise preserving the
+changes as commits, using a lightweight tag to point at the tip.
 
 There is a subtler problem around branches themselves. In a
 DVCS, deleting a branch removes it fronm the repository history
@@ -2403,7 +2403,11 @@ Subversion repositories, on the other hand, are designed on the
 assumption that they sit on one server and never move.  A Subversion
 branch is just a directory in the branch namespace; if you delete it,
 you won't see it in following revisions but if you update to an older
-one that content will still be there.
+one that content will still be there. By default, reposurgeon will delete
+the corresponding branches as if the deletion was done in a DVCS, keeping
+only the commits that are also part of other branches' histories, but
+you can tell it to preserve the branches instead and give them unambiguous
+names in the refs/deleted namespace.
 
 Bad things can happen when a tag directory is created, copied
 from, deleted, then recreated from a different source directory. This
@@ -2415,28 +2419,27 @@ deletion back to its branch point, but that will cause problens if a
 copy operation was ever sourced in the deleted (branch and this does
 happen!).
 
-We deal with this by renaming the deleted branch and patching
-any copy operations from it later in the history. This gandles
-many tag-delete-copy cases, but not all.  Some particularly perverse
-cases will convert incorrectly and require hand intervention.
-
 === READING SUBVERSION REPOSITORIES ===
 
 Certain optional modifiers on the read command change
 its behavior when reading Subversion repositories:
 
 --nobranch::
-Suppress branch analysis. Keep deleted branches, tagifying
-their tip commits.
+Suppress branch analysis. The generated git repository will mirror the
+whole subversion tree, with trunk and branches as subdirectories.
+No directory deletions are translated to branch deletions, since no
+directories are seen as branches in the first place.
 
 --ignore-properties::
 Suppress read-time warnings about discarded property
 settings. 
 
 --user-ignores::
-Don't generate .gitignore files from svn:ignore
-properties.  Instead, just pass through .gitignore files found in the
-history.
+By default reposurgeon filters in-tree .gitignore files found in the history
+because they would clash with those generated from svn:ignore properties.
+Using this option makes .gitignore files be passed through. They will still
+be overridden by generated .gitignore files so this option is often used
+along with --no-automatic-ignores.
 
 --use-uuid::
 If the --use-uuid read option is set, the repository's
@@ -2444,15 +2447,14 @@ UUID will be used as the hostname when faking up email addresses, a la
 git-svn.  Otherwise, addresses will be generated the way git cvs-import does
 it, simply copying the username into the address field.
 
---noignores::
-Do not fill in an equivalent of default Subversion ignore patterns.
-
 --no-automatic-ignores::
-Do not genarate .gitignore files from svn:ignore properties.
+Do not generate .gitignore files from svn:ignore properties.
 
 --preserve::
 When a branch or tag was deleted in SVN, preserve the history up to
-deletion in a git ref under refs/deleted/.
+deletion in a git ref under refs/deleted/, instead of deleting the branch
+and only keeping the commits that are also part of the history of other
+branches.
 
 --cvsignores::
 Suppress the normal deletion of .cvsignore files.
@@ -2464,8 +2466,8 @@ It is also possible to embed a magic comment in a Subversion
 stream file to set these options. Prefix a space-separated list of
 them with the magic comment " # reposurgeon-read-options:"; the
 leading space is required. This may be useful when synthesizing test
-loads; in partticular, a stream file that does not set up a standard
-trunk/branches/tags directoryt layout can use this to perform a
+loads; in particular, a stream file that does not set up a standard
+trunk/branches/tags directory layout can use this to perform a
 mapping of all commits onto the master branch that the git importer
 will accept.
 
@@ -2495,21 +2497,26 @@ commits.
 
 * If "trunk" is eligible, it always becomes the master
 branch.
+* If an element of the branchify set ends with +/*+, it is considered
+a branch namespace: each immediate subdirectory of it is considered a
+potential branch, unless it itself appears in branchify as a namespace
+If `*` is in the branchify set (which is true by default) all top-level
+directories are also considered potential branches (other than +/trunk+
+which is mapped to master, +/tags+, and +/branches+ which are namespaces
+by default).
 
-* If an element of the branchify set ends with +*+, each
-immediate subdirectory of it is considered a potential branch.  If `*`
-is in the branchify set (which is true by default) all top-level
-directories other than /trunk, /tags, and /branches are also
-considered potential branches.
-
-* Files in the top-level directory are assigned to a
-synthetic branch named 'root'.
+* Files in the top-level directory are assigned to a synthetic branch
+named 'root'. If there is no "trunk" (or rather no master branch), then
+this synthetic 'root' branch becomes the master branch. You can map
+another directory to master using +branchify+ and +branchmap+.
 
 * Each potential branch is checked to see if it has commits on it
-after the initial creation or copy.  If there are such commits, it
+after the initial creation or copy.  If there are such commits, or if the
+branch creation or copy introduces changes other than the copy, it
 becomes a branch.  If not, it may become a tag in order to preserve
 the commit metadata. In all cases, the name of any created tag or
-branch is the basename of the directory.
+branch is the basename of the directory, unless an other mapping is
+in place.
 
 Branch-creation operations with no following commits are tagified.
 
@@ -2546,21 +2553,23 @@ Actual .gitignore files in a Subversion directory are presumed to have
 been created by git-svn users separately from native Subversion ignore
 properties and discarded with a warning. It is up to the user to merge
 the content of such files into the target repository by hand.  But
-this behavior is inverted by the --user-ignores option; if that is on,
-.gitignore files are passed through and Subversion svn:ignore
-properties are discarded.
+this behavior is changed by the --user-ignores option which disables
+filtering of in-tree .gitignore files, and the --no-automatic-ignores
+which discards Subversion svn:ignore properties without translation.
 
 Normally, .cvsignore files left over from a Subversion repository's
 ancient history as a CVS repository are deleted. The assumption is
-thast the repository users want the (presumably more up-to-date)
+that the repository users want the (presumably more up-to-date)
 Subversion ignore properties to be translated.  However, this
 deletion can be prevented with the --cvsignores read option.
 
-svn:mergeinfo properties are interpreted.  Any svn:mergeinfo property
-on a revision A with a merge source range ending in revision B produces
-a merge link such that B becomes a parent of A. The "svnmerge-integrated"
-properties produced by Subversion's svmerge.py script are handled the
-same way.
+svn:mergeinfo properties are interpreted.  Any svn:mergeinfo property on a
+revision A with a merge source containing all revisions on a branch from the
+forking point (or the branch start if the histories are independent) up to
+revision B produces a merge link such that the branch tip at revision B becomes
+a parent of A.
+The "svnmerge-integrated" properties produced by Subversion's svmerge.py script
+are handled the same way.
 
 All other Subversion properties are discarded. (This may change in a
 future release.) The property for which this is most likely to cause
@@ -2584,7 +2593,7 @@ email address. Both forms can be remapped to real address using
 the +authors read+ command.
 
 Reading a Subversion stream enables writing of the legacy map as
-'legacy' passthroughs when the repo is written to a stream
+'legacy-id' passthroughs when the repo is written to a stream
 file.
 
 reposurgeon tries hard to silently do the right thing, but there are
@@ -2614,6 +2623,13 @@ properties set::
    error can be ignored.  This warning is suppressed by the
    --ignore-properties option.
 
+Detected link from <revision> to <revision> might be dubious::
+   When trying to delect parent links from multiple file copies like what
+   cvs2svn can produce, source revisions of the different copies were not
+   all the same. The link should probably be monitored because it has a
+   non-negligible probability of being slightly wrong. This does not impact
+   the tree contents, only the quality of the history.
+
 === MID-BRANCH DELETIONS ===
 
 When a branch A is deleted and a branch B is copied to the name A, the
@@ -2629,10 +2645,14 @@ reposurgeon logic does not try to be clever about this,
 because "clever would have rebarbative edge cases; the sequence is
 translated into a deleteall followed by a commit operation that
 recreates the B files under corresponding A names. No merge link is
-created.
+created. The commit filling A with a branch copy from B will have
+B as its first parent, though, so all that would be needed is to create
+a merge link from the old A before the delete to the commit recreating A.
 
 This case is mentioned here because it is likely to confuse
-the merge-tracking algorithms used, e.g., by git diff.
+the merge-tracking algorithms used, e.g., by git diff, or if you ever
+try to merge a branch that forked off the old A to a branch spun off the new
+(and expect git to know that you do not want to incorporate old A's changes).
 
 [[ignore]]
 == IGNORE PATTERNS ==
