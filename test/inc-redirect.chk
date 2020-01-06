@@ -1,0 +1,46 @@
+blob
+mark :6
+data 25
+second sample small file
+
+blob
+mark :7
+data 24
+first sample small file
+
+commit refs/heads/master
+mark :5
+committer Fred J. Foonly <foonly@foo.com> 0 +0000
+data 24
+Content from sample.tar
+M 100755 :6 snap
+M 100644 :7 snip
+
+blob
+mark :1
+data 20
+1234567890123456789
+
+commit refs/heads/master
+mark :2
+committer Ralf Schlatterbeck <rsc@runtux.com> 0 +0000
+data 14
+First commit.
+from :5
+M 100644 :1 README
+D snap
+D snip
+
+blob
+mark :3
+data 20
+0123456789012345678
+
+commit refs/heads/master
+mark :4
+committer Ralf Schlatterbeck <rsc@runtux.com> 10 +0000
+data 15
+Second commit.
+from :2
+M 100644 :3 README
+

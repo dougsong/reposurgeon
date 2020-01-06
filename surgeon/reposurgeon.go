@@ -18405,9 +18405,13 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 	// Tarballs are any arguments on the line, plus any on redirected stdin.
 	tarballs := strings.Fields(parse.line)
 	if parse.redirected {
-		data, err := ioutil.ReadAll(parse.stdin)
-		if err == nil {
-			tarballs = append(tarballs, strings.Split(string(data), "\n")...)
+		scanner := bufio.NewScanner(parse.stdin)
+		for scanner.Scan() {
+			line := strings.TrimSpace(scanner.Text())
+			if line == "" || strings.HasPrefix(line, "#") {
+				continue
+			}
+			tarballs = append(tarballs, line)
 		}
 	}
 	if len(tarballs) == 0 {
