@@ -599,6 +599,13 @@ make-tarball:
 	here=`pwd`
 	(cd /tmp; tar cf sample.tar tarball)
 	mv /tmp/sample.tar .
+make-tarball2:
+	mkdir -p /tmp/tarball
+	echo "first sample2 small file" >/tmp/tarball/bim
+	echo "second sample2 small file" >/tmp/tarball/bam
+	here=`pwd`
+	(cd /tmp; tar cf sample2.tar tarball)
+	mv /tmp/sample2.tar .
 
 # Make a new repo and checkout directory to create a Subversion test load.
 # Reminder - a branch copy looks like this:
