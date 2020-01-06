@@ -18453,8 +18453,6 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 			blank.appendOperation(op)
 		}
 
-		repo.declareSequenceMutation("")
-		repo.invalidateObjectMap()
 		if !control.flagOptions["testmode"] {
 			blank.committer.date = Date{timestamp: newest}
 		}
@@ -18517,6 +18515,9 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 			}
 		}
 	}
+
+	repo.declareSequenceMutation("")
+	repo.invalidateObjectMap()
 
 	return false
 }
