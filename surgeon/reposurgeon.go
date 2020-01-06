@@ -8747,6 +8747,14 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 	}
 	chdir(here, "original")
 	var savedir string
+	// This is how we clear away hooks directories in
+	// newly-created repos. May not be strictly necessary.
+	logit(logSHUFFLE, "Nuking %v from staging %s", vcs.prenuke, staging)
+	if vcs.prenuke != nil {
+		for _, path := range vcs.prenuke {
+			os.RemoveAll(ljoin(staging, path))
+		}
+	}
 	if staging == target {
 		// For preservation purposes
 		savedir = here
@@ -8800,14 +8808,6 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		}
 		respond("modified repo moved to %s.", target)
 		// Critical region ends
-	}
-	// This is how we clear away hooks directories in
-	// newly-created repos
-	logit(logSHUFFLE, "Nuking %v from staging %s", vcs.prenuke, staging)
-	if vcs.prenuke != nil {
-		for _, path := range vcs.prenuke {
-			os.RemoveAll(ljoin(staging, path))
-		}
 	}
 	if len(repo.preserveSet) > 0 {
 		preserveMe := repo.preserveSet
