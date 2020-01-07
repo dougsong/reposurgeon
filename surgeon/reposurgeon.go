@@ -4231,13 +4231,17 @@ func (commit *Commit) fileopDump() {
 
 // paths returns the set of all paths touched by this commit.
 func (commit *Commit) paths(pathtype orderedStringSet) orderedStringSet {
-	pathset := newOrderedStringSet()
+	pathset := make([]string, 0)
+	seen := make(map[string]bool, len(commit.operations()))
 	for _, fileop := range commit.operations() {
 		for _, item := range fileop.paths(pathtype) {
-			pathset.Add(item)
+			if !seen[item] {
+				seen[item] = true
+				pathset = append(pathset, item)
+			}
 		}
 	}
-	return pathset
+	return orderedStringSet(pathset)
 }
 
 // visible tells if a path is modified and not deleted in the ancestors
