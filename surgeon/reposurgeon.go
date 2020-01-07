@@ -18382,7 +18382,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		}
 	}
 
-	var loc int = nextCommit(anchor, insertAfter)
+	loc := nextCommit(anchor, insertAfter)
 
 	if parse.options.Contains("--firewall") {
 		blank := newCommit(repo)
