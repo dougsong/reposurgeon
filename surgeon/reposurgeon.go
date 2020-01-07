@@ -2305,16 +2305,15 @@ func intToMarkidx(markint int) markidx {
 type Blob struct {
 	mark         string
 	abspath      string
+	cookie       Cookie	     // CVS/SVN cookie analyzed out of this file
 	repo         *Repository
 	pathlist     []string        // In-repo paths associated with this blob
 	pathlistmap  map[string]bool // optimisation for the above, kept in sync
 	start        int64           // Seek start if this blob refers into a dump
 	size         int64           // length start if this blob refers into a dump
 	_expungehook *Blob
-	cookie       Cookie // CVS/SVN cookie analyzed out of this file
 	blobseq      blobidx
-	colors       colorSet // Scratch space for graph-coloring algorithms
-	deleteme     bool
+	colors       colorSet	     // Scratch space for graph-coloring algorithms
 }
 
 const noOffset = -1
@@ -2334,11 +2333,15 @@ func newBlob(repo *Repository) *Blob {
 }
 
 func (b Blob) getDelFlag() bool {
-	return b.deleteme
+	return b.colors.Contains(colorDELETE)
 }
 
 func (b *Blob) setDelFlag(t bool) {
-	b.deleteme = t
+	if t {
+		b.colors.Add(colorDELETE)
+	} else {
+		b.colors.Remove(colorDELETE)
+	}
 }
 
 // idMe IDs this blob for humans.
@@ -2670,7 +2673,6 @@ type Tag struct {
 	Comment    string
 	legacyID   string
 	color      colorType
-	deleteme   bool
 }
 
 func newTag(repo *Repository,
@@ -2700,11 +2702,15 @@ func (t *Tag) setHumanName(n string) {
 }
 
 func (t Tag) getDelFlag() bool {
-	return t.deleteme
+	return t.color == colorDELETE
 }
 
 func (t *Tag) setDelFlag(b bool) {
-	t.deleteme = b
+	if b {
+		t.color = colorDELETE
+	} else {
+		t.color = colorNONE
+	}
 }
 
 // getMark returns the tag's identifying mark
@@ -3422,6 +3428,7 @@ const (
 	colorEARLY    colorType = 1 << iota // Errors and urgent messages
         colorLATE
 	colorTRIVIAL
+	colorDELETE
 )
 
 type colorType uint8
