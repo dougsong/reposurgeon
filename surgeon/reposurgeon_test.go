@@ -1948,32 +1948,3 @@ func TestChangelogParse(t *testing.T) {
 		})
 	}
 }
-
-func TestWalkManifests(t *testing.T) {
-	rs := newReposurgeon()
-	rs.DoRead("<../test/implicit.fi")
-	maxnum := 0
-	rs.chosen().walkManifests(func(i int, _ *Commit, _ int, _ *Commit) {
-		num := 0
-		for _, e := range rs.chosen().events {
-			if c, ok := e.(*Commit); ok {
-				if c._manifest != nil {
-					num++
-				}
-			}
-		}
-		if maxnum < num {
-			maxnum = num
-		}
-	})
-	assertTrue(t, maxnum == 6)
-	num := 0
-	for _, e := range rs.chosen().events {
-		if c, ok := e.(*Commit); ok {
-			if c._manifest != nil {
-				num++
-			}
-		}
-	}
-	assertTrue(t, num == 0)
-}
