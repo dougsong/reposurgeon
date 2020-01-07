@@ -619,6 +619,7 @@ func (he *HgExtractor) capture(cmd ...string) (string, error) {
 func (he *HgExtractor) mustCapture(cmd []string, errorclass string) string {
 	data, err := he.capture(cmd...)
 	if err != nil {
+		logit(logSHOUT, "%s", strings.TrimSpace(data))
 		panic(throw(errorclass,
 			"In %s, command %s failed: %v",
 			errorclass, shellquote.Join(cmd...), err))
@@ -637,8 +638,9 @@ func (he *HgExtractor) byLine(rs *RepoStreamer, cmd []string, errfmt string,
 		croak("%s: reading from '%s'\n",
 			rfc3339(time.Now()), command)
 	}
-	stdout, _, err := he.hgcl.runcommand(cmd)
+	stdout, stderr, err := he.hgcl.runcommand(cmd)
 	if err != nil {
+		logit(logSHOUT, "%s", strings.TrimSpace(string(stderr)))
 		return err
 	}
 	last := false
@@ -932,6 +934,7 @@ func (he *HgExtractor) postExtract(repo *Repository) {
 func (he *HgExtractor) isClean() bool {
 	data, err := he.capture("hg", "status", "--modified")
 	if err != nil {
+		logit(logSHOUT, "%s", strings.TrimSpace(data))
 		panic(throw("extractor", "Couldn't spawn hg status --modified: %v", err))
 	}
 	return data == ""
@@ -994,8 +997,9 @@ func (he HgExtractor) manifest(rev string) []manifestEntry {
 				defer tempFile.Close()
 				// See HgExtractor.catFile() below for explanation
 				dest := strings.ReplaceAll(tempFile.Name(), "%", "%%")
-				_, err = he.capture("hg", "cat", "-r", rev, me.pathname, "-o", dest)
+				data, err = he.capture("hg", "cat", "-r", rev, me.pathname, "-o", dest)
 				if err != nil {
+					logit(logSHOUT, "%s", strings.TrimSpace(data))
 					panic(throw("extractor", "Couldn't cat blob to hash it: %v", err))
 				}
 				hash := sha1.New()
@@ -1020,7 +1024,10 @@ func (he *HgExtractor) catFile(rev string, path string, dest string) error {
 	// (The blobfile stem and suffix won't have any, but the path
 	// to the repodir might.)
 	dest = strings.ReplaceAll(dest, "%", "%%")
-	_, err := he.capture("hg", "cat", "-r", rev, path, "-o", dest)
+	data, err := he.capture("hg", "cat", "-r", rev, path, "-o", dest)
+	if err != nil {
+		logit(logSHOUT, "%s", strings.TrimSpace(data))
+	}
 	return err
 }
 
@@ -1028,6 +1035,7 @@ func (he *HgExtractor) catFile(rev string, path string, dest string) error {
 func (he HgExtractor) getComment(rev string) string {
 	data, err := he.capture("hg", "log", "-r", rev, "--template", `{desc}\n`)
 	if err != nil {
+		logit(logSHOUT, "%s", strings.TrimSpace(data))
 		panic(throw("extractor", "Couldn't spawn hg log: %v", err))
 	}
 	return data

@@ -19,6 +19,8 @@ import (
 	"os/exec"
 	"strings"
 	"unicode"
+
+	shellquote "github.com/kballard/go-shellquote"
 )
 
 // HgClient is client state for a session running Mercurial
@@ -111,8 +113,8 @@ func (hgcl *HgClient) runcommand(cmd []string) (stdout []byte, stderr []byte, er
 	if err != nil {
 		err = fmt.Errorf("runcommand: %s", err)
 	} else if ret != 0 {
-		err = fmt.Errorf("runcommand: %#v failed with rc %d",
-			cmd, ret)
+		err = fmt.Errorf("runcommand: %s failed with rc %d",
+			shellquote.Join(cmd...), ret)
 	}
 	return
 }
