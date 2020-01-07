@@ -66,9 +66,8 @@ Create a branch by copying subdir from trunk
 This branch should only contain subfile1 and subfile2.
 
 from :5
-D master-branch4
-D subdir/subfile1
-D subdir/subfile2
+deleteall
+M 100644 :1 .gitignore
 M 100644 :3 subfile1
 M 100644 :4 subfile2
 
@@ -105,9 +104,8 @@ Create a branch "branch2" and copy two files from trunk
 The branch should now contain subfile1 and subfile2.
 
 from :5
-D master-branch4
-D subdir/subfile1
-D subdir/subfile2
+deleteall
+M 100644 :1 .gitignore
 M 100644 :3 subfile1
 M 100644 :4 subfile2
 
@@ -140,9 +138,8 @@ committer frnchfrgg <frnchfrgg> 1366744808 +0000
 data 44
 Create branch3, importing trunk as a subdir
 from :5
-D master-branch4
-D subdir/subfile1
-D subdir/subfile2
+deleteall
+M 100644 :1 .gitignore
 M 100644 :2 trunk/master-branch4
 M 100644 :3 trunk/subdir/subfile1
 M 100644 :4 trunk/subdir/subfile2
@@ -177,7 +174,10 @@ committer frnchfrgg <frnchfrgg> 1366745095 +0000
 data 55
 Create a new branch and copy a subdir of trunk into it
 from :5
-D master-branch4
+deleteall
+M 100644 :1 .gitignore
+M 100644 :3 subdir/subfile1
+M 100644 :4 subdir/subfile2
 
 Event 17 ================================================================
 blob
@@ -201,15 +201,29 @@ from :15
 M 100644 :16 file3b
 
 Event 19 ================================================================
-blob
+commit refs/heads/branch4
+#legacy-id 11
 mark :18
+committer frnchfrgg <frnchfrgg> 1366745242 +0000
+data 41
+Create branch4 by a normal copy of trunk
+from :5
+deleteall
+M 100644 :1 .gitignore
+M 100644 :2 master-branch4
+M 100644 :3 subdir/subfile1
+M 100644 :4 subdir/subfile2
+
+Event 20 ================================================================
+blob
+mark :19
 data 24
 This file is in branch4
 
-Event 20 ================================================================
+Event 21 ================================================================
 commit refs/heads/branch4
 #legacy-id 12
-mark :19
+mark :20
 committer frnchfrgg <frnchfrgg> 1366745333 +0000
 data 107
 Add a file to branch4
@@ -219,16 +233,8 @@ file4
 master-branch4
 subdir/subfile1
 subdir/subfile2
-from :5
-M 100644 :18 file4
-
-Event 21 ================================================================
-tag branch4-root
-#legacy-id 11
-from :5
-tagger frnchfrgg <frnchfrgg> 1366745242 +0000
-data 41
-Create branch4 by a normal copy of trunk
+from :18
+M 100644 :19 file4
 
 manifest
 Event 6 =================================================================
@@ -309,13 +315,22 @@ mark :17
 file3b -> :16
 subdir/subfile1 -> :3
 subdir/subfile2 -> :4
-Event 20 ================================================================
-# Legacy-ID: 12
+Event 19 ================================================================
+# Legacy-ID: 11
 commit refs/heads/branch4
-mark :19
+mark :18
 
 .gitignore -> :1
-file4 -> :18
+master-branch4 -> :2
+subdir/subfile1 -> :3
+subdir/subfile2 -> :4
+Event 21 ================================================================
+# Legacy-ID: 12
+commit refs/heads/branch4
+mark :20
+
+.gitignore -> :1
+file4 -> :19
 master-branch4 -> :2
 subdir/subfile1 -> :3
 subdir/subfile2 -> :4

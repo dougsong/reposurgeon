@@ -34,49 +34,53 @@ Add foo.
 M 100644 :1 .gitignore
 M 100644 :2 foo
 
-blob
+commit refs/deleted/r6/heads/somebranch
+#legacy-id 3
 mark :4
+committer jmyers <jmyers> 1576542350 +0000
+data 15
+Create branch.
+from :3
+deleteall
+M 100644 :1 .gitignore
+M 100644 :2 foo
+
+commit refs/deleted/r7/tags/sometag
+#legacy-id 4
+mark :5
+committer jmyers <jmyers> 1576542363 +0000
+data 12
+Create tag.
+from :3
+deleteall
+M 100644 :1 .gitignore
+M 100644 :2 foo
+
+blob
+mark :6
 data 5
 foo2
 
 commit refs/deleted/r6/heads/somebranch
 #legacy-id 5
-mark :5
+mark :7
 committer jmyers <jmyers> 1576542398 +0000
 data 18
 Change on branch.
-from :3
-M 100644 :4 foo
-
-tag deleted/r6/somebranch-root
-#legacy-id 3
-from :3
-tagger jmyers <jmyers> 1576542350 +0000
-data 15
-Create branch.
-
-tag deleted/r7/sometag
-#legacy-id 4
-from :3
-tagger jmyers <jmyers> 1576542363 +0000
-data 12
-Create tag.
+from :4
+M 100644 :6 foo
 
 tag deleted/r6/somebranch-tipdelete
 #legacy-id 6
-from :5
+from :7
 tagger jmyers <jmyers> 1576542408 +0000
 data 15
 Remove branch.
 
 tag deleted/r7/sometag-tipdelete
 #legacy-id 7
-from :3
+from :5
 tagger jmyers <jmyers> 1576542417 +0000
 data 16
 Remove sometag.
-
-reset refs/deleted/r7/tags/sometag
-#legacy-id 7
-from :3
 

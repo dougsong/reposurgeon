@@ -85,13 +85,11 @@ The command that produced this was:
 
 svn copy file://${PWD}/test-repo/trunk/foo file://${PWD}/test-repo/branches/foocopy
 from :9
-D README
+deleteall
+M 100644 :1 .gitignore
 M 100644 :4 bar/child3
 M 100644 :5 child1
 M 100644 :6 child2
-D foo/bar/child3
-D foo/child1
-D foo/child2
 
 blob
 mark :11

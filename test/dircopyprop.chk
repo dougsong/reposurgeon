@@ -41,38 +41,38 @@ M 100644 :1 .gitignore
 M 100644 :2 testdir/foo
 
 commit refs/heads/master
-#legacy-id 4
+#legacy-id 2
 mark :4
+committer jmyers <jmyers> 1576288373 +0000
+data 14
+Add property.
+from :3
+M 100644 :2 testdir/foo
+
+commit refs/heads/master
+#legacy-id 3
+mark :5
+committer jmyers <jmyers> 1576288385 +0000
+data 17
+Change property.
+from :4
+M 100644 :2 testdir/foo
+
+commit refs/heads/master
+#legacy-id 4
+mark :6
 committer jmyers <jmyers> 1576288425 +0000
 data 36
 Copy directory and modify property.
-from :3
+from :5
 M 100644 :2 testdir2/foo
 
 commit refs/heads/master
 #legacy-id 5
-mark :5
+mark :7
 committer jmyers <jmyers> 1576288444 +0000
 data 24
 Another directory copy.
-from :4
+from :6
 M 100644 :2 testdir3/foo
-
-tag emptycommit-2
-#legacy-id 2
-from :3
-tagger jmyers <jmyers> 1576288373 +0000
-data 64
-Add property.
-
-[[Tag from zero-fileop commit at Subversion r2]]
-
-tag emptycommit-3
-#legacy-id 3
-from :3
-tagger jmyers <jmyers> 1576288385 +0000
-data 67
-Change property.
-
-[[Tag from zero-fileop commit at Subversion r3]]
 

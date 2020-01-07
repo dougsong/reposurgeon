@@ -55,6 +55,8 @@ committer no-author <no-author> 1109582047 +0000
 data 64
 This commit was manufactured by cvs2svn to create tag 'v2.0.1'.
 from :3
+deleteall
+M 100644 :1 .gitignore
 M 100644 :4 data/cmdvartab
 
 reset refs/heads/import

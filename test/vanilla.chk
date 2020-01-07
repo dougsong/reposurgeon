@@ -70,12 +70,12 @@ Third revision.
 from :5
 M 100644 :6 README
 
-tag emptycommit-5
+commit refs/heads/master
 #legacy-id 5
-from :7
-tagger esr <esr> 1323084440 +0000
-data 77
+mark :8
+committer esr <esr> 1323084440 +0000
+data 27
 Adding a property setting.
-
-[[Tag from zero-fileop commit at Subversion r5]]
+from :7
+M 100644 :6 README
 

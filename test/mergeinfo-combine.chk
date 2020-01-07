@@ -62,65 +62,71 @@ Add baz.
 from :5
 M 100644 :6 baz
 
-blob
+commit refs/heads/test
+#legacy-id 5
 mark :8
+committer jmyers <jmyers> 1576945794 +0000
+data 15
+Create branch.
+from :7
+deleteall
+M 100644 :1 .gitignore
+M 100644 :4 bar
+M 100644 :6 baz
+M 100644 :2 foo
+
+blob
+mark :9
 data 2
 x
 
 commit refs/heads/master
 #legacy-id 6
-mark :9
+mark :10
 committer jmyers <jmyers> 1576945831 +0000
 data 7
 Add x.
 from :7
-M 100644 :8 x
+M 100644 :9 x
 
 blob
-mark :10
+mark :11
 data 2
 y
 
 commit refs/heads/master
 #legacy-id 7
-mark :11
+mark :12
 committer jmyers <jmyers> 1576945840 +0000
 data 7
 Add y.
-from :9
-M 100644 :10 y
+from :10
+M 100644 :11 y
 
 blob
-mark :12
+mark :13
 data 2
 z
 
 commit refs/heads/master
 #legacy-id 8
-mark :13
+mark :14
 committer jmyers <jmyers> 1576945850 +0000
 data 7
 Add z.
-from :11
-M 100644 :12 z
+from :12
+M 100644 :13 z
 
 commit refs/heads/test
 #legacy-id 9
-mark :14
+mark :15
 committer jmyers <jmyers> 1576945991 +0000
 data 106
 Merge from trunk to branch, with synthetic svnmerge-integrated
 property to test sorting / merging ranges.
-from :7
-merge :13
-M 100644 :8 x
-M 100644 :10 y
-M 100644 :12 z
-
-tag test-root
-#legacy-id 5
-from :7
-tagger jmyers <jmyers> 1576945794 +0000
-data 15
-Create branch.
+from :8
+merge :14
+M 100644 :9 x
+M 100644 :11 y
+M 100644 :13 z
 

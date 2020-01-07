@@ -49,6 +49,7 @@ committer fraggle <fraggle> 1254523062 +0000
 data 29
 Recreating the tag properly.
 from :3
+deleteall
+M 100644 :1 .gitignore
 M 100644 :2 hello.c
-D proj/hello.c
 

@@ -72,8 +72,21 @@ from :4
 M 100644 :5 ChangeLog
 M 100644 :6 bar
 
-blob
+commit refs/heads/test
+#legacy-id 4
 mark :8
+committer jmyers <jmyers> 1576333768 +0000
+data 20
+Create test branch.
+from :7
+deleteall
+M 100644 :1 .gitignore
+M 100644 :5 ChangeLog
+M 100644 :6 bar
+M 100644 :3 foo
+
+blob
+mark :9
 data 209
 2019-12-14  Third Author  <third@author.example>
 
@@ -89,25 +102,18 @@ data 209
 
 
 blob
-mark :9
+mark :10
 data 9
 test baz
 
 commit refs/heads/test
 #legacy-id 5
-mark :10
+mark :11
 author Third Author <third@author.example> 1576333811 +0000
 committer jmyers <jmyers> 1576333811 +0000
 data 9
 Add baz.
-from :7
-M 100644 :8 ChangeLog
-M 100644 :9 baz
-
-tag test-root
-#legacy-id 4
-from :7
-tagger jmyers <jmyers> 1576333768 +0000
-data 20
-Create test branch.
+from :8
+M 100644 :9 ChangeLog
+M 100644 :10 baz
 

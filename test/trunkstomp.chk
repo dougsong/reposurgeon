@@ -54,31 +54,43 @@ from :3
 M 100644 :4 README
 M 100644 :5 foo2/bar2
 
-blob
+commit refs/heads/example
+#legacy-id 4
 mark :7
+committer jmyers <jmyers> 1575576154 +0000
+data 12
+Add branch.
+from :6
+deleteall
+M 100644 :1 .gitignore
+M 100644 :4 README
+M 100644 :2 foo/bar
+M 100644 :5 foo2/bar2
+
+blob
+mark :8
 data 8
 example
 
 commit refs/heads/example
 #legacy-id 5
-mark :8
+mark :9
 committer jmyers <jmyers> 1575576211 +0000
 data 17
 change on branch
-from :6
-M 100644 :7 README
+from :7
+M 100644 :8 README
 
-tag example-root
-#legacy-id 4
-from :6
-tagger jmyers <jmyers> 1575576154 +0000
-data 12
-Add branch.
-
-tag master-root
+commit refs/heads/master
 #legacy-id 7
-from :6
-tagger jmyers <jmyers> 1575576272 +0000
+mark :10
+committer jmyers <jmyers> 1575576272 +0000
 data 15
 Restore trunk.
+from :6
+deleteall
+M 100644 :1 .gitignore
+M 100644 :4 README
+M 100644 :2 foo/bar
+M 100644 :5 foo2/bar2
 
