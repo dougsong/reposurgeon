@@ -598,6 +598,7 @@ type NodeAction struct {
 	fromIdx     nodeidx
 	kind        uint8
 	action      uint8 // initially sdNONE
+	spurious    bool
 	propchange  bool
 }
 
@@ -613,6 +614,9 @@ func (action NodeAction) String() string {
 	//if action.fromSet != nil && !action.fromSet.isEmpty() {
 	//	out += " sources=" + action.fromSet.String()
 	//}
+	if action.spurious {
+		out += " spurious"
+	}
 	if action.hasProperties() && action.props.Len() > 0 {
 		out += " props=" + action.props.vcString()
 	}
@@ -1106,8 +1110,9 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 				}
 				// Handle directory copies.
 				if node.isCopy() {
+					node.spurious = isDeclaredBranch(node.path) && isDeclaredBranch(node.fromPath)
 					copyType := "directory"
-					if isDeclaredBranch(node.path) && isDeclaredBranch(node.fromPath) {
+					if node.spurious {
 						copyType = "branch"
 					}
 					logit(logEXTRACT, "r%d-%d: %s copy to %s from r%d~%s",
@@ -1130,6 +1135,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 						subnode.props = found.props
 						subnode.action = sdADD
 						subnode.kind = sdFILE
+						subnode.spurious = node.spurious
 						if logEnable(logTOPOLOGY) {
 							logit(logTOPOLOGY, "r%d-%d: %s %s copy r%d~%s -> %s %s",
 								node.revision, node.index, node.path, copyType,
@@ -1197,6 +1203,11 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 	//
 	// Revisions with no nodes are skipped here. This guarantees
 	// being able to assign them to a branch later.
+	//
+	// Also, each commit has colorTRIVIAL if (and only if) it has
+	// zero ops or is entirely composed of ADD/CHANGE/REPLACE
+	// fileops that are marked spurious because they were expanded
+	// from a branch copy.
 	//
 	defer trace.StartRegion(ctx, "SVN Phase 5: build commits").End()
 	logit(logEXTRACT, "SVN Phase 5: build commits")
@@ -1269,6 +1280,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 
 		commit.legacyID = fmt.Sprintf("%d", record.revision)
 
+		commit.setColor(colorTRIVIAL)
 		for _, node := range record.nodes {
 			if node.action == sdNONE {
 				continue
@@ -1325,6 +1337,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 					fileop := newFileOp(sp.repo)
 					fileop.construct(opD, node.path)
 					logit(logEXTRACT, "%s turns off TRIVIAL", fileop)
+					commit.setColor(colorNONE)
 					commit.appendOperation(fileop)
 				} else if node.action == sdADD || node.action == sdCHANGE || node.action == sdREPLACE {
 					if node.blob != nil {
@@ -1383,6 +1396,10 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 						nodePermissions(*node),
 						node.blobmark.String(),
 						node.path)
+					// FIXME: Second part of this guard is a kludge that should go away.
+					if !node.spurious && !strings.HasSuffix(node.path, ".gitignore") {
+						commit.setColor(colorNONE)
+					}
 					commit.appendOperation(fileop)
 					sp.repo.markToEvent(fileop.ref).(*Blob).addalias(node.path)
 
@@ -1468,6 +1485,10 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 		commit.setMark(sp.repo.newmark())
 		sp.repo.addEvent(commit)
 		sp.repo.declareSequenceMutation("adding new commit")
+
+		if commit.getColor() == colorTRIVIAL {
+			logit(logEXTRACT, "commit %s from r%s is trivial", commit.mark, commit.legacyID)
+		}
 
 		lastcommit = commit
 		sp.repo.legacyMap["SVN:"+commit.legacyID] = commit
