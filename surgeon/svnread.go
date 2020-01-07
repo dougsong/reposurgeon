@@ -529,7 +529,7 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 					if node == nil {
 						node = new(NodeAction)
 					}
-					node.fromHash = intern(string(sdBody(line)))
+					//node.fromHash = intern(string(sdBody(line)))
 				} else if bytes.HasPrefix(line, []byte("Text-content-md5: ")) {
 					node.contentHash = intern(string(sdBody(line)))
 				} else if bytes.HasPrefix(line, []byte("Text-content-sha1: ")) {
@@ -587,7 +587,7 @@ type NodeAction struct {
 	path        string
 	fromPath    string
 	contentHash string
-	fromHash    string
+	//fromHash    string
 	blob        *Blob
 	props       *OrderedMap
 	fromSet     *PathMap
@@ -814,10 +814,10 @@ func (sp *StreamParser) seekAncestor(node *NodeAction, hash map[string]*NodeActi
 	}
 
 	// If there is a content hash, it should match.
-	if lookback != nil && lookback.contentHash != "" && node.fromHash != "" && lookback.contentHash != node.fromHash {
-		logit(logSHOUT, "r%d~%s: content hash does not match for copy",
-			node.revision, node.path)
-	}
+	//if lookback != nil && lookback.contentHash != "" && node.fromHash != "" && lookback.contentHash != node.fromHash {
+	//	logit(logSHOUT, "r%d~%s: content hash does not match for copy",
+	//		node.revision, node.path)
+	//}
 
 	return lookback
 }
@@ -1131,7 +1131,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 						subnode.revision = node.revision
 						subnode.fromPath = found.path
 						subnode.fromRev = found.revision
-						subnode.fromHash = found.contentHash
+						//subnode.fromHash = found.contentHash
 						subnode.props = found.props
 						subnode.action = sdADD
 						subnode.kind = sdFILE
