@@ -4913,18 +4913,27 @@ func (pm *PathMap) _markShared() {
 // snapshot returns a snapshot of the current state of an evolving filemap.
 func (pm *PathMap) snapshot() *PathMap {
 	// The shapshot will share its direct children with the source PathMap.
+	r := new(PathMap)
+	r.shared = false
+	r._inplaceSnapshot(pm)
+	return r
+}
+
+func (pm *PathMap) _inplaceSnapshot(source *PathMap) {
 	// Mark every PathMap in the hierarchy as shared so that they are
 	// considered immutable and a snapshot will be made before any
 	// modification.
-	r := newPathMap()
-	for k, v := range pm.dirs {
-		r.dirs[k] = v
+	dirs := make(map[string]*PathMap, len(source.dirs))
+	blobs := make(map[string]interface{}, len(source.blobs))
+	for k, v := range source.dirs {
+		dirs[k] = v
 		v._markShared()
 	}
-	for k, v := range pm.blobs {
-		r.blobs[k] = v
+	for k, v := range source.blobs {
+		blobs[k] = v
 	}
-	return r
+	pm.dirs = dirs
+	pm.blobs = blobs
 }
 
 // _unshare returns a PathMap representing the same tree as the PathMap it is
@@ -5000,17 +5009,7 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 			}
 		}
 		// Same as if we were doing a new snapshot, but in place.
-		dirs := make(map[string]*PathMap)
-		blobs := make(map[string]interface{})
-		for k, v := range tree.dirs {
-			dirs[k] = v
-			v._markShared()
-		}
-		for k, v := range tree.blobs {
-			blobs[k] = v
-		}
-		pm.dirs = dirs
-		pm.blobs = blobs
+		pm._inplaceSnapshot(tree)
 	} else {
 		// Decompose targetPath into components
 		parts = strings.Split(targetPath, svnSep)
