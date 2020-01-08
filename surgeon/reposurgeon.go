@@ -4512,8 +4512,8 @@ func (commit *Commit) checkout(directory string) string {
 		}
 	}()
 
-	for _, pitem := range commit.manifest().items() {
-		cpath, entry := pitem.name, pitem.value.(*ManifestEntry)
+	commit.manifest().iter(func(cpath string, pentry interface{}){
+		entry := pentry.(*ManifestEntry)
 		fullpath := filepath.FromSlash(directory +
 			"/" + cpath + "/" + entry.ref)
 		if !exists(fullpath) {
@@ -4561,7 +4561,7 @@ func (commit *Commit) checkout(directory string) string {
 				}
 			}
 		}
-	}
+	})
 	return directory
 }
 
@@ -4884,11 +4884,6 @@ type PathMap struct {
 	shared bool
 }
 
-type pathMapItem struct {
-	name  string
-	value interface{}
-}
-
 func newPathMap() *PathMap {
 	pm := new(PathMap)
 	pm.dirs = make(map[string]*PathMap)
@@ -5096,24 +5091,23 @@ func (pm *PathMap) remove(path string) {
 	}
 }
 
-// _itemsInner recursively walks the pathMap CoW tree estracting its items
-func (pm *PathMap) _itemsInner(items []pathMapItem, prefix string) []pathMapItem {
-	for cmp1, subdir := range pm.dirs {
-		items = subdir._itemsInner(items, prefix+cmp1+svnSep)
-	}
-	for cmp1, elt := range pm.blobs {
-		items = append(items, pathMapItem{prefix + cmp1, elt})
-	}
-	return items
+// iter() calls the hook for each (path, blob) pair in the PathMap
+func (pm *PathMap) iter(hook func(string, interface{})) {
+	pm._iter(&[]string{}, hook)
 }
 
-func (pm *PathMap) items() []pathMapItem {
-	items := make([]pathMapItem, 0)
-	items = pm._itemsInner(items, "")
-	sort.Slice(items, func(i, j int) bool {
-		return items[i].name < items[j].name
-	})
-	return items
+func (pm *PathMap) _iter(prefix *[]string, hook func(string, interface{})){
+	pos := len(*prefix)
+	*prefix = append(*prefix, "")
+	for component, subdir := range pm.dirs {
+		(*prefix)[pos] = component
+		subdir._iter(prefix, hook)
+	}
+	for component, elt := range pm.blobs {
+		(*prefix)[pos] = component
+		hook(strings.Join(*prefix, svnSep), elt)
+	}
+	*prefix = (*prefix)[:pos]
 }
 
 func (pm *PathMap) size() int {
@@ -5134,10 +5128,11 @@ func (pm *PathMap) isEmpty() bool {
 func (pm *PathMap) String() string {
 	var out strings.Builder
 	out.WriteByte('{')
-	items := pm.items()
-	lastIdx := len(items) - 1
-	for idx, item := range items {
-		fmt.Fprintf(&out, "%s: %v", item.name, item.value)
+	names := pm.pathnames()
+	lastIdx := len(names) - 1
+	for idx, name := range names {
+		value, _ := pm.get(name)
+		fmt.Fprintf(&out, "%s: %v", name, value)
 		if idx != lastIdx {
 			out.WriteString(", ")
 		}
@@ -5148,11 +5143,13 @@ func (pm *PathMap) String() string {
 
 // names returns a sorted list of the pathnames in the set
 func (pm *PathMap) pathnames() []string {
-	items := pm.items()
-	v := make([]string, len(items))
-	for i := 0; i < len(items); i++ {
-		v[i] = items[i].name
-	}
+	v := make([]string, pm.size())
+	i := 0
+	pm.iter(func(name string, _ interface{}){
+		v[i] = name
+		i++
+	})
+	sort.Strings(v)
 	return v
 }
 
@@ -9258,11 +9255,11 @@ func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
 		// modify ops in the branch root.
 		if options.Contains("--prune") {
 			deletes := make([]*FileOp, 0)
-			for _, elt := range mostRecent.manifest().items() {
+			mostRecent.manifest().iter(func(name string, _ interface{}){
 				fileop := newFileOp(union)
-				fileop.construct(opD, elt.name)
+				fileop.construct(opD, name)
 				deletes = append(deletes, fileop)
-			}
+			})
 			root.setOperations(append(deletes, root.operations()...))
 			root.canonicalize()
 		}
@@ -15713,12 +15710,12 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 			entry *ManifestEntry
 		}
 		manifestItems := make([]ManifestItem, 0)
-		for _, elt := range commit.manifest().items() {
-			path, entry := elt.name, elt.value.(*ManifestEntry)
+		commit.manifest().iter(func(path string, pentry interface{}){
+			entry := pentry.(*ManifestEntry)
 			if filterFunc(path) {
 				manifestItems = append(manifestItems, ManifestItem{path, entry})
 			}
-		}
+		})
 		sort.Slice(manifestItems, func(i, j int) bool { return manifestItems[i].path < manifestItems[j].path })
 		for _, item := range manifestItems {
 			fmt.Fprintf(parse.stdout, "%s -> %s\n", item.path, item.entry.ref)
@@ -15976,15 +15973,15 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 		f := newFileOp(repo)
 		f.construct(deleteall)
 		newops := []*FileOp{f}
-		for _, elt := range child.manifest().items() {
-			path, entry := elt.name, elt.value.(*ManifestEntry)
+		child.manifest().iter(func(path string, pentry interface{}){
+			entry := pentry.(*ManifestEntry)
 			f = newFileOp(repo)
 			f.construct(opM, entry.mode, entry.ref, path)
 			if entry.ref == "inline" {
 				f.inline = entry.inline
 			}
 			newops = append(newops, f)
-		}
+		})
 		child.setOperations(newops)
 		child.simplify()
 	}
@@ -17310,13 +17307,13 @@ func (rs *Reposurgeon) DoDiff(line string) bool {
 		return false
 	}
 	dir1 := newOrderedStringSet()
-	for _, elt := range lower.manifest().items() {
-		dir1.Add(elt.name)
-	}
+	lower.manifest().iter(func(name string, _ interface{}){
+		dir1.Add(name)
+	})
 	dir2 := newOrderedStringSet()
-	for _, elt := range upper.manifest().items() {
-		dir2.Add(elt.name)
-	}
+	upper.manifest().iter(func(name string, _ interface{}){
+		dir2.Add(name)
+	})
 	allpaths := dir1.Union(dir2)
 	sort.Strings(allpaths)
 	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
