@@ -4431,13 +4431,13 @@ func (commit *Commit) canonicalize() {
 	newops := make([]*FileOp, 0)
 	// Generate needed D fileops.
 	if commit.fileops[0].op == deleteall {
-		for _, cpath := range previous.pathnames() {
+		previous.iter(func(cpath string, _ interface{}){
 			if _, found := current.get(cpath); !found {
 				fileop := newFileOp(commit.repo)
 				fileop.construct(opD, cpath)
 				newops = append(newops, fileop)
 			}
-		}
+		})
 	} else {
 		// Only files touched by non-deleteall ops might disappear.
 		for _, cpath := range paths {

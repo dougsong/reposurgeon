@@ -1092,7 +1092,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 						// can occur if the directory is empty.
 						// We can just ignore that case. Otherwise...
 						if node.fromSet != nil {
-							for _, child := range node.fromSet.pathnames() {
+							node.fromSet.iter(func(child string, _ interface{}){
 								logit(logEXTRACT, "r%d-%d~%s: deleting %s", node.revision, node.index, node.path, child)
 								newnode := new(NodeAction)
 								newnode.path = child
@@ -1100,7 +1100,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 								newnode.action = sdDELETE
 								newnode.kind = sdFILE
 								appendExpanded(newnode)
-							}
+							})
 						}
 					}
 				}
@@ -1114,12 +1114,12 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 						node.revision, node.index, copyType, node.path, node.fromRev, node.fromPath)
 					// Now generate copies for all files in the
 					// copy source directory.
-					for _, source := range node.fromSet.pathnames() {
+					node.fromSet.iter(func(source string, _ interface{}){
 						found := sp.history.getActionNode(node.fromRev, source)
 						if found == nil {
 							logit(logSHOUT, "r%d-%d: can't find ancestor of %s at r%d",
 								node.revision, node.index, source, node.fromRev)
-							continue
+							return
 						}
 						subnode := new(NodeAction)
 						subnode.path = node.path + source[len(node.fromPath):]
@@ -1136,7 +1136,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 								subnode.fromRev, subnode.fromPath, subnode.path, subnode)
 						}
 						appendExpanded(subnode)
-					}
+					})
 				}
 				// Allow GC to reclaim fromSet storage, we no longer need it
 				node.fromSet = nil
@@ -2449,7 +2449,7 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 			if node.action == sdDELETE {
 				_, dirpath := splitSVNBranchPath(node.path)
 				// Also remove all subdirectory .gitignores
-				for _, childPath := range currentIgnores.pathnames() {
+				currentIgnores.iter(func(childPath string, _ interface{}){
 					if strings.HasPrefix(childPath, dirpath) {
 						if unchanged {
 							currentIgnores = currentIgnores.snapshot()
@@ -2458,7 +2458,7 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 						currentIgnores.remove(childPath)
 						commit.fileops = append(commit.fileops, ignoreOp(childPath, ""))
 					}
-				}
+				})
 			}
 			if oldvalue == newvalue {
 				continue
