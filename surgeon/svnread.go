@@ -873,6 +873,7 @@ func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton
 	// same structure originally created to deserialize it.
 	//
 	timeit := func(tag string) {
+		runtime.GC()
 		sp.timeMark(tag)
 		if control.flagOptions["bigprofile"] {
 			e := len(sp.repo.timings) - 1
