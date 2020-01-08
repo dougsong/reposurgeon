@@ -18332,11 +18332,11 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 	if rs.selection == nil {
 		rs.selection = []int{repo.markToIndex(repo.earliestCommit().mark)}
 	}
-	var anchor *Commit
+	var commit *Commit
 	if len(rs.selection) == 1 {
 		event := repo.events[rs.selection[0]]
 		var ok bool
-		if anchor, ok = event.(*Commit); !ok {
+		if commit, ok = event.(*Commit); !ok {
 			croak("selection is not a commit.")
 			return false
 		}
@@ -18360,61 +18360,6 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		}
 	}
 
-	_, insertAfter := parse.OptVal("--after")
-
-	nextCommit := func(anchor *Commit, after bool) int {
-		var loc int
-		if insertAfter {
-			loc = repo.markToIndex(anchor.mark) + 1
-		} else {
-			loc = repo.markToIndex(anchor.mark) - 1
-			for loc > 0 {
-				_, ok := repo.events[loc-1].(*Commit)
-				if ok {
-					break
-				} else {
-					loc--
-				}
-			}
-		}
-		return loc
-	}
-
-	insertMe := func(blank *Commit, loc int) {
-		if !insertAfter {
-			repo.insertEvent(blank, loc, "")
-			blank.setParents(anchor.parents())
-			anchor.setParents([]CommitLike{blank})
-		} else {
-			blank._parentNodes = []CommitLike{anchor}
-			for _, offspring := range anchor.children() {
-				c, ok := offspring.(*Commit)
-				if ok {
-					c.replaceParent(anchor, blank)
-				}
-			}
-			repo.insertEvent(blank, loc, "")
-		}
-	}
-
-	loc := nextCommit(anchor, insertAfter)
-
-	if parse.options.Contains("--firewall") {
-		blank := newCommit(repo)
-		attr, _ := newAttribution("")
-		blank.committer = *attr
-		blank.mark = repo.newmark()
-		blank.repo = repo
-		blank.committer.fullname, blank.committer.email = whoami()
-		blank.Branch = anchor.Branch
-		blank.Comment = fmt.Sprintf("Firewall commit\n")
-		// No need to insert explicit fileops here,
-		// this is just a place for deletes to land
-		// when they are generated
-		insertMe(blank, loc)
-		anchor = blank
-	}
-
 	// Tarballs are any arguments on the line, plus any on redirected stdin.
 	tarballs := strings.Fields(parse.line)
 	if parse.redirected {
@@ -18431,19 +18376,51 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		croak("no tarball specified.")
 		return false
 	}
+	// The extra three slots are for the previous commit,
+	// the firewall commit (if any) and the following commit.
+	// The slots representing leaduing and following commits
+	// could be nil if the insertion is at beginning or end of repo.
+	var fw int
+	if parse.options.Contains("--firewall") {
+		fw = 1
+	}
+	segment := make([]*Commit, len(tarballs)+2+fw)
 
-	for _, tarpath := range tarballs {
+	// Compute the point where we want to start inserting generated commits
+	var insertionPoint int
+	if _, t := parse.OptVal("--after"); t {
+		insertionPoint = repo.markToIndex(commit.mark) + 1
+		segment[0] = commit
+	} else {
+		insertionPoint = repo.markToIndex(commit.mark) - 1
+		for insertionPoint > 0 {
+			prev, ok := repo.events[insertionPoint].(*Commit)
+			if ok {
+				segment[0] = prev
+				break
+			} else {
+				insertionPoint--
+			}
+		}
+	}
+
+	// Generate tarball commits
+	for i, tarpath := range tarballs {
 		// Create new commit to carry the new content
 		blank := newCommit(repo)
 		attr, _ := newAttribution("")
 		blank.committer = *attr
-		blank.mark = repo.newmark()
 		blank.repo = repo
 		blank.committer.fullname, blank.committer.email = whoami()
-		blank.Branch = anchor.Branch
+		blank.Branch = commit.Branch
 		blank.Comment = fmt.Sprintf("Content from %s\n", tarpath)
 		var err error
 		blank.committer.date, err = newDate("1970-01-01T00:00:00Z")
+
+		// Clear the branch
+		op := newFileOp(repo)
+		op.construct(deleteall)
+		blank.appendOperation(op)
 
 		// Incorporate the tarball content
 		tarfile, err := os.Open(tarpath)
@@ -18462,17 +18439,14 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		// Pre-sorting avoids an indeterminacy bug in tarfile
 		// order traversal.
 		sort.SliceStable(headers, func(i, j int) bool { return headers[i].Name < headers[j].Name })
-
 		var newest time.Time
 		for _, header := range headers {
 			if header.ModTime.Before(newest) {
 				newest = header.ModTime
 			}
 			b := newBlob(repo)
-			repo.insertEvent(b, loc, "")
-			loc++
-			repo.declareSequenceMutation("")
-			repo.invalidateObjectMap()
+			repo.insertEvent(b, insertionPoint, "")
+			insertionPoint++
 			b.setMark(repo.newmark())
 			//b.size = header.size
 			b.setBlobfile(filepath.Join(repo.subdir(""), header.Name))
@@ -18490,8 +18464,12 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 			blank.committer.date = Date{timestamp: newest}
 		}
 
-		// Link it into the repository
-		insertMe(blank, loc)
+		// Splice it into the repository
+		blank.mark = repo.newmark()
+		repo.insertEvent(blank, insertionPoint, "")
+		insertionPoint++
+
+		segment[i+1] = blank
 
 		// We get here if incorporation worked OK.
 		date, present := parse.OptVal("--date")
@@ -18502,40 +18480,42 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 				return false
 			}
 		}
+	}
 
-		// Generate deletes into the next commit(s) so files won't
-		// leak forward. Also prevent files leaking forward from any
-		// previous commit.  We have to force deterministic path list
-		// order here, otherwise regression tests will fail in flaky
-		// ways.
-		blankPathList := blank.paths(nil)
-		sort.Slice(blankPathList, func(i, j int) bool { return blankPathList[i] < blankPathList[j] })
-		for _, path := range blankPathList {
-			for _, child := range blank.children() {
-				c, ok := child.(*Commit)
-				if ok {
-					if !c.paths(nil).Contains(path) {
-						op := newFileOp(repo)
-						op.construct(opD, path)
-						c.appendOperation(op)
-					}
-				}
-			}
-		}
-		for _, parent := range blank.parents() {
-			c, ok := parent.(*Commit)
-			if ok {
-				for _, leaker := range c.paths(nil) {
-					if !blankPathList.Contains(leaker) {
-						op := newFileOp(repo)
-						op.construct(opD, leaker)
-						blank.appendOperation(op)
-					}
-				}
-			}
+	if fw == 1 {
+		blank := newCommit(repo)
+		attr, _ := newAttribution("")
+		blank.committer = *attr
+		blank.mark = repo.newmark()
+		blank.repo = repo
+		blank.committer.fullname, blank.committer.email = whoami()
+		blank.Branch = commit.Branch
+		blank.Comment = fmt.Sprintf("Firewall commit\n")
+		op := newFileOp(repo)
+		op.construct(deleteall)
+		blank.appendOperation(op)
+		repo.insertEvent(blank, insertionPoint, "")
+		insertionPoint++
+		segment[len(tarballs)+1] = blank
+	}
+
+	// Go to next commit, if any, and add it to the segment.
+	for insertionPoint < len(repo.events) {
+		nxt, ok := repo.events[insertionPoint].(*Commit)
+		if ok {
+			segment[len(segment)-1] = nxt
+			break
+		} else {
+			insertionPoint++
 		}
 	}
 
+	// Make parent-child links
+	for i := 0; i < len(segment)-1; i++ {
+		if segment[i] != nil && segment[i+1] != nil {
+			segment[i+1].setParents([]CommitLike{segment[i]})
+		}
+	}
 	repo.declareSequenceMutation("")
 	repo.invalidateObjectMap()
 
