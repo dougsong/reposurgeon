@@ -769,7 +769,7 @@ func nodePermissions(node NodeAction) string {
 // Try to figure out who the ancestor of this node is.
 func (sp *StreamParser) seekAncestor(node *NodeAction, hash map[string]*NodeAction) *NodeAction {
 	/*
-		 * FIXME: This should replace the last bit of ancestry creatiion done in a later phase.
+		// FIXME: This should replace the last bit of ancestry creatiion done in a later phase.
 		if node.contentHash != "" {
 			if hashlook, ok := sp.hashmap[node.contentHash]; ok {
 				logit(logEXTRACT, "r%d: blob of %s matches existing hash %s, assigning '%s' from %s",
@@ -922,7 +922,9 @@ func svnFilterProperties(ctx context.Context, sp *StreamParser, options stringSe
 	// Filter properties, throwing out everything that is not going to be of interest
 	// to later analysis. Log warnings where we might be throwing away information.
 	// Canonicalize svn:ignore propeerties (no more convenient place to do it).
-	// FIXME: Profile this to see if it should be parallelized.
+	//
+	// We could in theory parallwelize this, but it's cheap even on very large repositories
+	// so we chhose to to not incur additional code comp;exity here.
 	//
 	defer trace.StartRegion(ctx, "SVN Phase 2: filter properties").End()
 	logit(logEXTRACT, "SVN Phase 2: filter properties")
@@ -2016,7 +2018,10 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 		}
 	}
 
-	// FIXME: Make branch-tip resets?
+	// We could make branch-tip resets here.  Older versions of
+	// git might have required one per branch tip.  We chose not
+	// to so the resets that are really visible die to tag
+	// reduction will stand out.
 }
 
 func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
@@ -2720,7 +2725,6 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 func svnProcessDebubble(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
 	// Phase D:
 	// Remove spurious parent links caused by random cvs2svn file copies.
-	// FIXME: Is this necessary given the way the branch links are now built?
 	defer trace.StartRegion(ctx, "SVN Phase D: remove duplicate parent marks").End()
 	logit(logEXTRACT, "SVN Phase D: remove duplicate parent marks")
 	baton.startProgress("SVN phase D: remove duplicate parent marks", uint64(len(sp.repo.events)))
@@ -2756,7 +2760,7 @@ func svnProcessDebubble(ctx context.Context, sp *StreamParser, options stringSet
 func svnProcessRenumber(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
 	// Phase E:
 	// Renumber all commits and add an end event.
-	// FIXME: Enable adding end events after anything else stabilizes/
+	// FIXME: Enable adding end events after anything else stabilizes.
 	defer trace.StartRegion(ctx, "SVN Phase E: renumber").End()
 	logit(logEXTRACT, "SVN Phase E: renumber")
 	sp.repo.renumber(1, baton)
