@@ -4306,24 +4306,9 @@ func (commit *Commit) manifest() *PathMap {
 	// Now loop over commitsToHandle, starting from the end. At the start of each iteration,
 	// manifest contains the manifest inherited from the first parent, if any.
 	for k := len(commitsToHandle) - 1; k >= 0; k-- {
-		// Take a snapshot of the manifest
-		manifest = manifest.snapshot()
 		// Take own fileops into account.
 		commit := commitsToHandle[k]
-		for _, fileop := range commit.operations() {
-			if fileop.op == opM {
-				manifest.set(fileop.Path, fileop)
-			} else if fileop.op == opD {
-				manifest.remove(fileop.Path)
-			} else if fileop.op == opC {
-				manifest.copyFrom(fileop.Target, manifest, fileop.Source)
-			} else if fileop.op == opR {
-				manifest.copyFrom(fileop.Target, manifest, fileop.Source)
-				manifest.remove(fileop.Source)
-			} else if fileop.op == deleteall {
-				manifest = newPathMap()
-			}
-		}
+		manifest = commit.applyFileOps(manifest.snapshot(), false, false)
 		commit._manifest = manifest
 	}
 	return manifest
