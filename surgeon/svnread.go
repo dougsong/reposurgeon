@@ -1054,10 +1054,11 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 	//
 	defer trace.StartRegion(ctx, "SVN Phase 4: directory copy expansion").End()
 	logit(logEXTRACT, "SVN Phase 4: directory copy expansion")
-	baton.startProgress("SVN phase 4: directory copy expansion", uint64(len(sp.revisions)))
 
+	baton.startProgress("SVN phase 4a: directory copy expansion", uint64(len(sp.revisions)))
 	nobranch := options.Contains("--nobranch")
-	for ri, record := range sp.revisions {
+	count := 0
+	walkRevisions(sp.revisions, func(ri int, record *RevisionRecord) {
 		expandedNodes := make([]*NodeAction, 0)
 		for _, node := range record.nodes {
 			appendExpanded := func(newnode *NodeAction) {
@@ -1145,7 +1146,13 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 			}
 		}
 		sp.revisions[ri].nodes = expandedNodes
+		count++
+		baton.percentProgress(uint64(count))
+	})
+	baton.endProgress()
 
+	baton.startProgress("SVN phase 4b: ancestry computations", uint64(len(sp.revisions)))
+	for ri := range sp.revisions {
 		// Compute ancestry links for all file nodes
 		revisionPathHash := make(map[string]*NodeAction)
 		var lastnode *NodeAction
