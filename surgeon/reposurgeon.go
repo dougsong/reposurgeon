@@ -4371,14 +4371,7 @@ func (repo *Repository) walkManifests(
 
 // canonicalize replaces fileops by a minimal set of D and M with same result.
 func (commit *Commit) canonicalize() {
-	// Discard everything before the last deletall
 	commit.discardOpsBeforeLastDeleteAll()
-	ops := commit.operations()
-	if len(ops) == 0 || (len(ops) == 1 && ops[0].op == deleteall) {
-		return
-	}
-	// Get paths touched by non-deleteall operations.
-	paths := commit.paths(nil)
 	// Fetch the tree state before us...
 	var previous *PathMap
 	if !commit.hasParents() {
@@ -4395,47 +4388,56 @@ func (commit *Commit) canonicalize() {
 			panic("manifest() found unexpected type in parent list")
 		}
 	}
+	// And our tree state
 	current := commit.manifest()
-	newops := make([]*FileOp, 0)
-	// Generate needed D fileops.
-	if commit.fileops[0].op == deleteall {
-		previous.iter(func(cpath string, _ interface{}) {
-			if _, found := current.get(cpath); !found {
-				fileop := newFileOp(commit.repo)
-				fileop.construct(opD, cpath)
-				newops = append(newops, fileop)
-			}
-		})
+	// Prepare our operations map
+	operations := commit.applyFileOps(newPathMap(), true, true)
+	// Replace R and C operations by their M resolution using the manifest,
+	// then prune M operations doing nothing.
+	operations.iter(func(path string, iop interface{}) {
+		op := iop.(*FileOp)
+		newOp := op
+		if op.op == opR || op.op == opC {
+			i, _ := current.get(path)
+			newOp = i.(*FileOp)
+		}
+		iold, okold := previous.get(path)
+		if okold && (iold == newOp || newOp.Equals(iold.(*FileOp))) {
+			// This M operation is a no-op
+			operations.remove(path)
+		} else if !okold && newOp.op == opD {
+			// This D operation deletes nothing, drop it
+			operations.remove(path)
+		} else if newOp != op {
+			operations.set(path, newOp)
+		}
+	})
+	// Generate missing D fileops
+	var iter func(hook func(string, interface{}))
+	if len(commit.fileops) > 0 && commit.fileops[0].op == deleteall {
+		// There was a deleteall, all paths in previous can disappear
+		iter = previous.iter
 	} else {
-		// Only files touched by non-deleteall ops might disappear.
-		for _, cpath := range paths {
-			_, old := previous.get(cpath)
-			_, new := current.get(cpath)
-			if old && !new {
-				fileop := newFileOp(commit.repo)
-				fileop.construct(opD, cpath)
-				newops = append(newops, fileop)
+		// There was no deleteall, only sources of R ops can disappear
+		// in addition to the existing D operations
+		iter = func(hook func(string, interface{})) {
+			for _, op := range commit.fileops {
+				if op.op == opR {
+					hook(op.Source, nil)
+				}
 			}
 		}
 	}
-	// Generate needed M fileops.
-	// Only paths touched by non-deleteall ops can be changed.
-	for _, cpath := range paths {
-		ioe, oldok := previous.get(cpath)
-		ine, newok := current.get(cpath)
-		oe, _ := ioe.(*FileOp)
-		ne, _ := ine.(*FileOp)
-		if newok && !(oldok && oe.Equals(ne)) {
-			newops = append(newops, ne.Copy())
+	iter(func(path string, _ interface{}) {
+		if _, ok := current.get(path); !ok {
+			fileop := newFileOp(commit.repo)
+			fileop.construct(opD, path)
+			operations.set(path, fileop)
 		}
-	}
-	// Now replace the Commit fileops. Avoid setOperations() because there
-	// is no need to invalidateManifests()
-	commit.fileops = newops
-	// Finishing touches. Ops need to be sorted for consistency. simplify()
-	// is overkill here but it should not cost too much, and sorting without
-	// simplify is unreliable in other cases so has been removed.
-	commit.simplify()
+	})
+	// Rebuild the op list
+	commit.fileops = nil // Ensure remakeFileOps does not see any deleteall
+	commit.remakeFileOps(operations)
 }
 
 // alldeletes is a predicate: is this an all-deletes commit?
