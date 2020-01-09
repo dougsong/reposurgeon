@@ -513,7 +513,7 @@ func (ge *GitExtractor) isClean() bool {
 
 // manifest lists all files present as of a specified revision.
 func (ge *GitExtractor) manifest(rev string) []manifestEntry {
-	data, err := captureFromProcess("git ls-tree -rz --full-tree "+rev)
+	data, err := captureFromProcess("git ls-tree -rz --full-tree " + rev)
 	if err != nil {
 		panic(throw("extractor", "Couldn't spawn git ls-tree in manifest: %v", err))
 	}
@@ -988,7 +988,7 @@ func (he HgExtractor) manifest(rev string) []manifestEntry {
 		copy(fixedhghash[:], hghash)
 		fixedhash, ok := he.hashTranslate[fixedhghash]
 		if !ok {
-			func () {
+			func() {
 				tempFile, err := ioutil.TempFile("", "rsc")
 				if err != nil {
 					panic(throw("extractor", "Couldn't create tempfile for hashing: %v", err))
@@ -1185,7 +1185,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 	copy(consume, rs.revlist)
 	for revcount, revision := range consume {
 		// Perform housekeeping every 1000 commits
-		if (revcount % 1000) == 0 && revcount != 0 {
+		if (revcount%1000) == 0 && revcount != 0 {
 			err = rs.extractor.keepHouse()
 			if err != nil {
 				panic(throw("extract", "Extractor housekeeping failed: %v", err))

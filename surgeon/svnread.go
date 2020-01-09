@@ -46,6 +46,7 @@ import (
 )
 
 var defaultIgnoreHash string
+
 func init() {
 	defaultIgnoreHash = fmt.Sprintf("%s", subversionDefaultIgnores)
 }
@@ -588,17 +589,17 @@ type NodeAction struct {
 	fromPath    string
 	contentHash string
 	//fromHash    string
-	blob        *Blob
-	props       *OrderedMap
-	fromSet     *PathMap
-	blobmark    markidx
-	revision    revidx
-	fromRev     revidx
-	index       nodeidx
-	fromIdx     nodeidx
-	kind        uint8
-	action      uint8 // initially sdNONE
-	propchange  bool
+	blob       *Blob
+	props      *OrderedMap
+	fromSet    *PathMap
+	blobmark   markidx
+	revision   revidx
+	fromRev    revidx
+	index      nodeidx
+	fromIdx    nodeidx
+	kind       uint8
+	action     uint8 // initially sdNONE
+	propchange bool
 }
 
 func (action NodeAction) String() string {
@@ -768,14 +769,14 @@ func nodePermissions(node NodeAction) string {
 // Try to figure out who the ancestor of this node is.
 func (sp *StreamParser) seekAncestor(node *NodeAction, hash map[string]*NodeAction) *NodeAction {
 	/*
-	 * FIXME: This should replace the last bit of ancestry creatiion done in a later phase.
-	if node.contentHash != "" {
-		if hashlook, ok := sp.hashmap[node.contentHash]; ok {
-			logit(logEXTRACT, "r%d: blob of %s matches existing hash %s, assigning '%s' from %s",
-				node.revision, node, node.contentHash, hashlook.blobmark.String(), hashlook)
-			return hashlook
+		 * FIXME: This should replace the last bit of ancestry creatiion done in a later phase.
+		if node.contentHash != "" {
+			if hashlook, ok := sp.hashmap[node.contentHash]; ok {
+				logit(logEXTRACT, "r%d: blob of %s matches existing hash %s, assigning '%s' from %s",
+					node.revision, node, node.contentHash, hashlook.blobmark.String(), hashlook)
+				return hashlook
+			}
 		}
-	}
 	*/
 
 	var lookback *NodeAction
@@ -1093,7 +1094,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 						// can occur if the directory is empty.
 						// We can just ignore that case. Otherwise...
 						if node.fromSet != nil {
-							node.fromSet.iter(func(child string, _ interface{}){
+							node.fromSet.iter(func(child string, _ interface{}) {
 								logit(logEXTRACT, "r%d-%d~%s: deleting %s", node.revision, node.index, node.path, child)
 								newnode := new(NodeAction)
 								newnode.path = child
@@ -1115,7 +1116,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 						node.revision, node.index, copyType, node.path, node.fromRev, node.fromPath)
 					// Now generate copies for all files in the
 					// copy source directory.
-					node.fromSet.iter(func(source string, _ interface{}){
+					node.fromSet.iter(func(source string, _ interface{}) {
 						found := sp.history.getActionNode(node.fromRev, source)
 						if found == nil {
 							logit(logSHOUT, "r%d-%d: can't find ancestor of %s at r%d",
@@ -1942,8 +1943,8 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 							frombranch = newfrom
 						} else if frombranch != newfrom {
 							logit(logWARN,
-							"Link detection for %s <%s> failed: file copies from multiple branches",
-							commit.mark, commit.legacyID)
+								"Link detection for %s <%s> failed: file copies from multiple branches",
+								commit.mark, commit.legacyID)
 							maxfrom = 0
 							break
 						}
@@ -1960,13 +1961,13 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 					if parent != nil {
 						if minfrom == maxfrom {
 							logit(logTOPOLOGY,
-							"Link from %s <%s> to %s <%s> found by file copies",
-							parent.mark, parent.legacyID, commit.mark, commit.legacyID)
+								"Link from %s <%s> to %s <%s> found by file copies",
+								parent.mark, parent.legacyID, commit.mark, commit.legacyID)
 						} else {
 							logit(logWARN,
-							"Detected link from %s <%s> to %s <%s> might be dubious (from-rev range %d:%d)",
-							parent.mark, parent.legacyID, commit.mark, commit.legacyID,
-							minfrom, maxfrom)
+								"Detected link from %s <%s> to %s <%s> might be dubious (from-rev range %d:%d)",
+								parent.mark, parent.legacyID, commit.mark, commit.legacyID,
+								minfrom, maxfrom)
 						}
 						reparent(commit, parent)
 						goto next
@@ -2104,9 +2105,9 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 		return result
 	}
 	type mergeDesc struct {
-		dest string
+		dest   string
 		source string
-		index int
+		index  int
 	}
 	seenMerges := make(map[mergeDesc]bool)
 	for revision, record := range sp.revisions {
@@ -2136,18 +2137,18 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 			commit := lastRelevantCommit(sp, revidx(revision), branch)
 			if commit == nil {
 				logit(logWARN,
-				"Cannot resolve mergeinfo for r%d which has no commit in branch %s",
-				revision, branch)
+					"Cannot resolve mergeinfo for r%d which has no commit in branch %s",
+					revision, branch)
 				continue
 			}
 			realrev, _ := strconv.Atoi(strings.Split(commit.legacyID, ".")[0])
 			if realrev != revision {
 				logit(logWARN, "Resolving mergeinfo targeting r%d on %s <%s> instead",
-				revision, commit.mark, commit.legacyID)
+					revision, commit.mark, commit.legacyID)
 			}
 			// Now parse the mergeinfo, and find commits for the merge points
 			logit(logTOPOLOGY, "mergeinfo for %s <%s> on %s is: %s",
-			commit.mark, commit.legacyID, branch, info)
+				commit.mark, commit.legacyID, branch, info)
 			newMerges := parseMergeInfo(info)
 			mergeSources := make(map[int]bool, len(newMerges))
 			// SVN tends to not put in mergeinfo the revisions that
@@ -2285,8 +2286,8 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 					}
 					seenMerges[desc] = true
 					logit(logTOPOLOGY,
-					"mergeinfo says %s is merged up to %s <%s> in %s <%s>",
-					fromPath, last.mark, last.legacyID, commit.mark, commit.legacyID)
+						"mergeinfo says %s is merged up to %s <%s> in %s <%s>",
+						fromPath, last.mark, last.legacyID, commit.mark, commit.legacyID)
 					if index >= destIndex {
 						logit(logWARN, "Ignoring bogus mergeinfo trying to create a forward merge")
 						continue
@@ -2347,7 +2348,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 						needDeleteAll = false
 					}
 					logit(logEXTRACT, "Merge found from %s <%s> to %s <%s>",
-					source.mark, source.legacyID, commit.mark, commit.legacyID)
+						source.mark, source.legacyID, commit.mark, commit.legacyID)
 					commit.addParentCommit(source)
 					stack = append(stack, source)
 				}
@@ -2450,7 +2451,7 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 			if node.action == sdDELETE {
 				_, dirpath := splitSVNBranchPath(node.path)
 				// Also remove all subdirectory .gitignores
-				currentIgnores.iter(func(childPath string, _ interface{}){
+				currentIgnores.iter(func(childPath string, _ interface{}) {
 					if strings.HasPrefix(childPath, dirpath) {
 						if unchanged {
 							currentIgnores = currentIgnores.snapshot()
@@ -2497,7 +2498,7 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 		blob.setContent([]byte(subversionDefaultIgnores), noOffset)
 		blob.setMark(defaultIgnoreMark)
 		sp.repo.insertEvent(blob, len(sp.repo.frontEvents()),
-		"creating default ignore")
+			"creating default ignore")
 	}
 
 	baton.endProgress()
@@ -2584,7 +2585,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 		if strings.HasPrefix(branch, "refs/deleted/") {
 			// Commit comes from a deleted branch
 			split := strings.IndexRune(branch[len("refs/deleted/"):], '/') +
-				len("refs/deleted/")+1
+				len("refs/deleted/") + 1
 			prefix = branch[len("refs/"):split]
 			branch = "refs/" + branch[split:]
 		}

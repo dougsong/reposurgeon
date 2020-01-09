@@ -2305,7 +2305,7 @@ func intToMarkidx(markint int) markidx {
 type Blob struct {
 	mark         string
 	abspath      string
-	cookie       Cookie	     // CVS/SVN cookie analyzed out of this file
+	cookie       Cookie // CVS/SVN cookie analyzed out of this file
 	repo         *Repository
 	pathlist     []string        // In-repo paths associated with this blob
 	pathlistmap  map[string]bool // optimisation for the above, kept in sync
@@ -2313,7 +2313,7 @@ type Blob struct {
 	size         int64           // length start if this blob refers into a dump
 	_expungehook *Blob
 	blobseq      blobidx
-	colors       colorSet	     // Scratch space for graph-coloring algorithms
+	colors       colorSet // Scratch space for graph-coloring algorithms
 }
 
 const noOffset = -1
@@ -2950,7 +2950,7 @@ type Reset struct {
 	ref        string
 	committish string
 	color      string
-	legacyID   string	// Sometines these are reduced Subversion commits
+	legacyID   string // Sometines these are reduced Subversion commits
 	repo       *Repository
 	deleteme   bool
 }
@@ -3407,9 +3407,9 @@ func (callout *Callout) setColor(color colorType) {
 }
 
 const (
-	colorNONE = 0
-	colorEARLY    colorType = 1 << iota // Errors and urgent messages
-        colorLATE
+	colorNONE            = 0
+	colorEARLY colorType = 1 << iota // Errors and urgent messages
+	colorLATE
 	colorTRIVIAL
 	colorDELETE
 )
@@ -3443,14 +3443,14 @@ type Commit struct {
 	fileops        []*FileOp     // blob and file operation list
 	_manifest      *PathMap      // efficient map of *Fileop values
 	repo           *Repository
-	properties     *OrderedMap   // commit properties (extension)
-	attachments    []Event       // Tags and Resets pointing at this commit
-	_parentNodes   []CommitLike  // list of parent nodes
-	_childNodes    []CommitLike  // list of child nodes
+	properties     *OrderedMap  // commit properties (extension)
+	attachments    []Event      // Tags and Resets pointing at this commit
+	_parentNodes   []CommitLike // list of parent nodes
+	_childNodes    []CommitLike // list of child nodes
 	_expungehook   *Commit
-	color          colorType     // Scratch storage for graph-coloring
-	deleteme       bool          // Flag used during deletion operations
-	implicitParent bool          // Whether the first parent was implicit
+	color          colorType // Scratch storage for graph-coloring
+	deleteme       bool      // Flag used during deletion operations
+	implicitParent bool      // Whether the first parent was implicit
 }
 
 func (commit Commit) getDelFlag() bool {
@@ -4317,7 +4317,7 @@ func (commit *Commit) manifest() *PathMap {
 // Walk along the repository commits, computing and forgetting manifests as we
 // go. The manifest of the commit and its first parent are guaranteed to be
 // memoized, but any other might have been forgotten to minimize the working set
-func (repo *Repository) walkManifests (
+func (repo *Repository) walkManifests(
 	hook func(idx int, commit *Commit, fistParentIdx int, firstParent *Commit)) {
 	childrenToHandle := make(map[int]int)
 	for index, event := range repo.events {
@@ -4399,7 +4399,7 @@ func (commit *Commit) canonicalize() {
 	newops := make([]*FileOp, 0)
 	// Generate needed D fileops.
 	if commit.fileops[0].op == deleteall {
-		previous.iter(func(cpath string, _ interface{}){
+		previous.iter(func(cpath string, _ interface{}) {
 			if _, found := current.get(cpath); !found {
 				fileop := newFileOp(commit.repo)
 				fileop.construct(opD, cpath)
@@ -4475,7 +4475,7 @@ func (commit *Commit) checkout(directory string) string {
 		}
 	}()
 
-	commit.manifest().iter(func(cpath string, pentry interface{}){
+	commit.manifest().iter(func(cpath string, pentry interface{}) {
 		entry := pentry.(*FileOp)
 		fullpath := filepath.FromSlash(directory +
 			"/" + cpath + "/" + entry.ref)
@@ -5058,7 +5058,7 @@ func (pm *PathMap) iter(hook func(string, interface{})) {
 	pm._iter(&[]string{}, hook)
 }
 
-func (pm *PathMap) _iter(prefix *[]string, hook func(string, interface{})){
+func (pm *PathMap) _iter(prefix *[]string, hook func(string, interface{})) {
 	pos := len(*prefix)
 	*prefix = append(*prefix, "")
 	for component, subdir := range pm.dirs {
@@ -5107,7 +5107,7 @@ func (pm *PathMap) String() string {
 func (pm *PathMap) pathnames() []string {
 	v := make([]string, pm.size())
 	i := 0
-	pm.iter(func(name string, _ interface{}){
+	pm.iter(func(name string, _ interface{}) {
 		v[i] = name
 		i++
 	})
@@ -5506,7 +5506,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				committish := string(bytes.TrimSpace(line[5:]))
 				reset.remember(sp.repo, committish)
 				if commit, ok := sp.repo.markToEvent(committish).(*Commit); ok {
-					branchPosition[reset.ref] =	commit
+					branchPosition[reset.ref] = commit
 				} else {
 					logit(logWARN, "non-mark committish in reset")
 					delete(branchPosition, reset.ref)
@@ -5829,11 +5829,11 @@ type Repository struct {
 	aliases           map[ContributorID]ContributorID
 	maplock           sync.Mutex
 	// Write control - set, if required, before each dump
-	preferred        *VCS             // overrides vcs slot for writes
-	realized         map[string]bool  // clear and remake this before each dump
-	branchPosition   map[string]*Commit // clear and remake this before each dump
-	writeOptions     stringSet        // options requested on this write
-	internals        orderedStringSet // export code computes this itself
+	preferred      *VCS               // overrides vcs slot for writes
+	realized       map[string]bool    // clear and remake this before each dump
+	branchPosition map[string]*Commit // clear and remake this before each dump
+	writeOptions   stringSet          // options requested on this write
+	internals      orderedStringSet   // export code computes this itself
 }
 
 func newRepository(name string) *Repository {
@@ -6462,7 +6462,7 @@ func (repo *Repository) commits(selection orderedIntSet) []*Commit {
 }
 
 func (repo *Repository) cleanLegacyMap() {
-	newMap := make(map[string] *Commit)
+	newMap := make(map[string]*Commit)
 	for key, commit := range repo.legacyMap {
 		if commit.legacyID != "" && commit.mark != "" {
 			i := repo.markToIndex(commit.mark)
@@ -6828,7 +6828,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 		}
 		selection.Sort()
 	}
-	repo.realized = make(map[string]bool)         // Track what branches are made
+	repo.realized = make(map[string]bool)          // Track what branches are made
 	repo.branchPosition = make(map[string]*Commit) // Track what branches are made
 	baton := control.baton
 	baton.startProgress("export", uint64(len(repo.events)))
@@ -7052,7 +7052,7 @@ func (commit *Commit) simplify() {
 // otherwise they are simply dropped. This removes any ordering dependency
 // between operations.
 func (commit *Commit) applyFileOps(presentOps *PathMap,
-		keepUnresolvedOps bool, keepDeleteOps bool) *PathMap {
+	keepUnresolvedOps bool, keepDeleteOps bool) *PathMap {
 	myOps := commit.operations()
 	// lastDeleteall is the index of the last deleteall or -1
 	lastDeleteall := len(myOps) - 1
@@ -8784,7 +8784,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 			return err
 		}
 		logit(logSHUFFLE, "Target %s to backup%s", target, savedir)
-		for _, sub := range entries {	
+		for _, sub := range entries {
 			logit(logSHUFFLE, "%s -> %s", ljoin(target, sub.Name()),
 				ljoin(savedir, sub.Name()))
 			os.Rename(ljoin(target, sub.Name()),
@@ -9244,7 +9244,7 @@ func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
 		// modify ops in the branch root.
 		if options.Contains("--prune") {
 			deletes := make([]*FileOp, 0)
-			mostRecent.manifest().iter(func(name string, _ interface{}){
+			mostRecent.manifest().iter(func(name string, _ interface{}) {
 				fileop := newFileOp(union)
 				fileop.construct(opD, name)
 				deletes = append(deletes, fileop)
@@ -15699,7 +15699,7 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 			entry *FileOp
 		}
 		manifestItems := make([]ManifestItem, 0)
-		commit.manifest().iter(func(path string, pentry interface{}){
+		commit.manifest().iter(func(path string, pentry interface{}) {
 			entry := pentry.(*FileOp)
 			if filterFunc(path) {
 				manifestItems = append(manifestItems, ManifestItem{path, entry})
@@ -15962,7 +15962,7 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 		f := newFileOp(repo)
 		f.construct(deleteall)
 		newops := []*FileOp{f}
-		child.manifest().iter(func(path string, pentry interface{}){
+		child.manifest().iter(func(path string, pentry interface{}) {
 			entry := pentry.(*FileOp)
 			f = newFileOp(repo)
 			f.construct(opM, entry.mode, entry.ref, path)
@@ -17296,11 +17296,11 @@ func (rs *Reposurgeon) DoDiff(line string) bool {
 		return false
 	}
 	dir1 := newOrderedStringSet()
-	lower.manifest().iter(func(name string, _ interface{}){
+	lower.manifest().iter(func(name string, _ interface{}) {
 		dir1.Add(name)
 	})
 	dir2 := newOrderedStringSet()
-	upper.manifest().iter(func(name string, _ interface{}){
+	upper.manifest().iter(func(name string, _ interface{}) {
 		dir2.Add(name)
 	})
 	allpaths := dir1.Union(dir2)
