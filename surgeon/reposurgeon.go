@@ -7057,63 +7057,88 @@ func (commit *Commit) ancestorCount(path string) int {
 // Simplify the list of file operations in this commit.
 func (commit *Commit) simplify() {
 	commit.discardOpsBeforeLastDeleteAll()
-	oldOps := commit.operations()
-	if len(oldOps) == 0 {
-		return
+	visibleOps := commit.applyFileOps(newPathMap(), true, true)
+	commit.remakeFileOps(visibleOps)
+}
+
+// Replay the fileops, keeping only the last operation. Rename and copy
+// operations whose source is here are changed into the source operation
+// with the new path, others are kept intact if keepUnresolvedOps is true,
+// otherwise they are simply dropped. This removes any ordering dependency
+// between operations.
+func (commit *Commit) applyFileOps(presentOps *PathMap,
+		keepUnresolvedOps bool, keepDeleteOps bool) *PathMap {
+	myOps := commit.operations()
+	// lastDeleteall is the index of the last deleteall or -1
+	lastDeleteall := len(myOps) - 1
+	for ; lastDeleteall >= 0; lastDeleteall-- {
+		if myOps[lastDeleteall].op == deleteall {
+			break
+		}
 	}
-	// Replay the fileops, keeping only the last operation. Rename and copy
-	// operations whose source is here are changed into the source operation
-	// with the new path, others are kept intact. At the end of this pass, the
-	// ordering will not matter anymore.
-	visibleOps := make(map[string]*FileOp)
+	if lastDeleteall >= 0 && !presentOps.isEmpty() {
+		// There is a deleteall, clear the present operations
+		presentOps = newPathMap()
+	}
 	doCopy := func(fileop *FileOp) bool {
-		if prevop, ok := visibleOps[fileop.Source]; ok {
-			newop := prevop.Copy()
+		if prevop, ok := presentOps.get(fileop.Source); ok {
+			newop := prevop.(*FileOp).Copy()
 			if newop.op == opM || newop.op == opD {
 				newop.Path = fileop.Target
 			} else {
 				newop.Target = fileop.Target
 			}
-			visibleOps[fileop.Target] = newop
+			presentOps.set(fileop.Target, newop)
 			return true
 		}
 		return false
 	}
-	for _, fileop := range oldOps {
+	// Apply the fileops after the last deleteall
+	bound := len(myOps)
+	for i := lastDeleteall + 1; i < bound; i++ {
+		fileop := myOps[i]
 		switch fileop.op {
-		case deleteall:
-			// Nothing to do, this is necessarily the first op
-		case opM, opD:
-			visibleOps[fileop.Path] = fileop
+		case opM:
+			presentOps.set(fileop.Path, fileop)
+		case opD:
+			if keepDeleteOps {
+				presentOps.set(fileop.Path, fileop)
+			} else {
+				presentOps.remove(fileop.Path)
+			}
 		case opC:
-			if !doCopy(fileop) {
-				visibleOps[fileop.Target] = fileop
+			if !doCopy(fileop) && keepUnresolvedOps {
+				presentOps.set(fileop.Target, fileop)
 			}
 		case opR:
 			if doCopy(fileop) {
-				delete(visibleOps, fileop.Source)
-			} else {
-				visibleOps[fileop.Target] = fileop
+				presentOps.remove(fileop.Source)
+			} else if keepUnresolvedOps {
+				presentOps.set(fileop.Target, fileop)
 			}
 		}
 	}
+	return presentOps
+}
+
+func (commit *Commit) remakeFileOps(visibleOps *PathMap) {
 	// Sort the ops paths in a consistent way, inspired by git-fast-export
 	// As it says, 'Handle files below a directory first, in case they are
-	// all deleted and the directory changes to a file or symlink.'  First
-	// sort the deletealls first, the renames last, then sort
-	// lexicographically. We check the directory depth to make sure that
-	// "a/b/c" < "a/b" < "a".
-	paths := make([]string, len(visibleOps))
+	// all deleted and the directory changes to a file or symlink.'
+	// Sort the deleteall first, the renames last, then sort lexicographically.
+	// We check the directory depth to make sure that "a/b/c" < "a/b" < "a".
+	paths := make([]string, visibleOps.size())
 	i := 0
 	countRC := 0
-	for path, fileop := range visibleOps {
+	visibleOps.iter(func(path string, iop interface{}) {
+		fileop := iop.(*FileOp)
 		paths[i] = path
 		i++
 		// Also count the number of RC ops to reserve space later
 		if fileop.op == opR || fileop.op == opC {
 			countRC++
 		}
-	}
+	})
 	lessthan := func(i, j int) bool {
 		left := paths[i]
 		right := paths[j]
@@ -7131,17 +7156,19 @@ func (commit *Commit) simplify() {
 	posRC := 0
 	posOther := countRC
 	// Handle the deleteall
-	if oldOps[0].op == deleteall {
-		newOps = make([]*FileOp, len(visibleOps)+1)
+	oldOps := commit.operations()
+	if len(oldOps) > 0 && oldOps[0].op == deleteall {
+		newOps = make([]*FileOp, len(paths)+1)
 		newOps[0] = oldOps[0]
 		posRC++
 		posOther++
 	} else {
-		newOps = make([]*FileOp, len(visibleOps))
+		newOps = make([]*FileOp, len(paths))
 	}
 	// Handle the other ops
 	for _, path := range paths {
-		fileop := visibleOps[path]
+		iop, _ := visibleOps.get(path)
+		fileop := iop.(*FileOp)
 		if fileop.op == opR || fileop.op == opC {
 			newOps[posRC] = fileop
 			posRC++
