@@ -10,7 +10,7 @@ first sample small file
 
 commit refs/heads/master
 mark :7
-committer Fred J. Foonly <foonly@foo.com> 1508119911 -0400
+committer Fred J. Foonly <foonly@foo.com> 1508119911 +0000
 data 24
 Content from sample.tar
 deleteall

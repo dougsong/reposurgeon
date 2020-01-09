@@ -9,7 +9,11 @@
 PATH := $(realpath ..):$(realpath .):${PATH}
 REPOSURGEON := reposurgeon 
 REPOCUTTER := repocutter 
-REPOTOOL := repotool EPOMAPPER := repomapper
+REPOTOOL := repotool
+REPOMAPPER := repomapper
+
+# Force the timezone in case CI has a different idea
+export TZ=UTC
 
 # Setting this to 0 allows tests to continue on error.
 STOPOUT=1
