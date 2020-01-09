@@ -15018,7 +15018,7 @@ date format and converts to RFC3339.
 }
 func (rs *Reposurgeon) DoWhen(LineIn string) (StopOut bool) {
 	if LineIn == "" {
-		croak("a timestamp in either integer or RFC3339 form is required.")
+		croak("a supported date format is required.")
 		return false
 	}
 	d, err := newDate(LineIn)
@@ -18415,7 +18415,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		blank.Branch = commit.Branch
 		blank.Comment = fmt.Sprintf("Content from %s\n", tarpath)
 		var err error
-		blank.committer.date, err = newDate("1970-01-01T00:00:00Z")
+		blank.committer.date, _ = newDate("1970-01-01T00:00:00Z")
 
 		// Clear the branch
 		op := newFileOp(repo)
@@ -18439,9 +18439,9 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		// Pre-sorting avoids an indeterminacy bug in tarfile
 		// order traversal.
 		sort.SliceStable(headers, func(i, j int) bool { return headers[i].Name < headers[j].Name })
-		var newest time.Time
+		newest := time.Date(1970, 1, 1, 0, 0, 0, 0, time.FixedZone("UTC", 0))
 		for _, header := range headers {
-			if header.ModTime.Before(newest) {
+			if header.ModTime.After(newest) {
 				newest = header.ModTime
 			}
 			b := newBlob(repo)
@@ -18460,9 +18460,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 			blank.appendOperation(op)
 		}
 
-		if !control.flagOptions["testmode"] {
-			blank.committer.date = Date{timestamp: newest}
-		}
+		blank.committer.date = Date{timestamp: newest}
 
 		// Splice it into the repository
 		blank.mark = repo.newmark()
