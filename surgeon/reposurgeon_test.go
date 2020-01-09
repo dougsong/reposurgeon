@@ -1126,8 +1126,8 @@ func TestParentChildMethods(t *testing.T) {
 	if !ok {
 		t.Errorf("expected COPYING in manifest at :3.")
 	}
-	if ce.(*ManifestEntry).ref != ":5" {
-		t.Errorf("expected COPYING in manifest at :3 to trace to :5, saw %q", ce.(*ManifestEntry).ref)
+	if ce.(*FileOp).ref != ":5" {
+		t.Errorf("expected COPYING in manifest at :3 to trace to :5, saw %q", ce.(*FileOp).ref)
 	}
 	commit1.canonicalize()
 	p1 := commit1.paths(nil)

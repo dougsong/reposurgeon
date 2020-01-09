@@ -3398,29 +3398,12 @@ func (callout Callout) isCommit() bool {
 	return false
 }
 
-// ManifestEntry is visibility data about a file at a commit where it has no M
-type ManifestEntry struct {
-	mode   string
-	ref    string
-	inline []byte
-}
-
 func (callout Callout) getColor() colorType {
 	return callout.color
 }
 
 func (callout *Callout) setColor(color colorType) {
 	callout.color = color
-}
-
-func (m ManifestEntry) String() string {
-	return fmt.Sprintf("<entry mode=%q ref=%q inline=%q>",
-		m.mode, m.ref, m.inline)
-}
-
-func (m *ManifestEntry) equals(other *ManifestEntry) bool {
-	return m.mode == other.mode && m.ref == other.ref &&
-		bytes.Equal(m.inline, other.inline)
 }
 
 const (
@@ -3458,7 +3441,7 @@ type Commit struct {
 	authors        []Attribution // Authors of commit
 	committer      Attribution   // Person responsible for committing it.
 	fileops        []*FileOp     // blob and file operation list
-	_manifest      *PathMap      // efficient map of *ManifestEntry values
+	_manifest      *PathMap      // efficient map of *Fileop values
 	repo           *Repository
 	properties     *OrderedMap   // commit properties (extension)
 	attachments    []Event       // Tags and Resets pointing at this commit
@@ -4275,7 +4258,7 @@ func (commit *Commit) visible(argpath string) *Commit {
 }
 
 // manifest returns a map from all pathnames visible at this commit
-// to ManifestEntry structures. The map contents is shared as much as
+// to Fileop structures. The map contents is shared as much as
 // possible with manifests from previous commits to keep working-set
 // size to a minimum.
 func (commit *Commit) manifest() *PathMap {
@@ -4329,7 +4312,7 @@ func (commit *Commit) manifest() *PathMap {
 		commit := commitsToHandle[k]
 		for _, fileop := range commit.operations() {
 			if fileop.op == opM {
-				manifest.set(fileop.Path, &ManifestEntry{fileop.mode, fileop.ref, fileop.inline})
+				manifest.set(fileop.Path, fileop)
 			} else if fileop.op == opD {
 				manifest.remove(fileop.Path)
 			} else if fileop.op == opC {
@@ -4455,15 +4438,10 @@ func (commit *Commit) canonicalize() {
 	for _, cpath := range paths {
 		ioe, oldok := previous.get(cpath)
 		ine, newok := current.get(cpath)
-		oe, _ := ioe.(*ManifestEntry)
-		ne, _ := ine.(*ManifestEntry)
-		if newok && !(oldok && oe.equals(ne)) {
-			fileop := newFileOp(commit.repo)
-			fileop.construct(opM, ne.mode, ne.ref, cpath)
-			if ne.ref == "inline" {
-				fileop.inline = ne.inline
-			}
-			newops = append(newops, fileop)
+		oe, _ := ioe.(*FileOp)
+		ne, _ := ine.(*FileOp)
+		if newok && !(oldok && oe.Equals(ne)) {
+			newops = append(newops, ne.Copy())
 		}
 	}
 	// Now replace the Commit fileops. Avoid setOperations() because there
@@ -4513,7 +4491,7 @@ func (commit *Commit) checkout(directory string) string {
 	}()
 
 	commit.manifest().iter(func(cpath string, pentry interface{}){
-		entry := pentry.(*ManifestEntry)
+		entry := pentry.(*FileOp)
 		fullpath := filepath.FromSlash(directory +
 			"/" + cpath + "/" + entry.ref)
 		if !exists(fullpath) {
@@ -4623,7 +4601,7 @@ func (commit *Commit) blobByName(pathname string) ([]byte, bool) {
 	if !ok {
 		return []byte{}, false
 	}
-	entry := value.(*ManifestEntry)
+	entry := value.(*FileOp)
 	if entry.ref == "inline" {
 		return entry.inline, true
 	}
@@ -15706,11 +15684,11 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 		fmt.Fprint(parse.stdout, "\n")
 		type ManifestItem struct {
 			path  string
-			entry *ManifestEntry
+			entry *FileOp
 		}
 		manifestItems := make([]ManifestItem, 0)
 		commit.manifest().iter(func(path string, pentry interface{}){
-			entry := pentry.(*ManifestEntry)
+			entry := pentry.(*FileOp)
 			if filterFunc(path) {
 				manifestItems = append(manifestItems, ManifestItem{path, entry})
 			}
@@ -15973,7 +15951,7 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 		f.construct(deleteall)
 		newops := []*FileOp{f}
 		child.manifest().iter(func(path string, pentry interface{}){
-			entry := pentry.(*ManifestEntry)
+			entry := pentry.(*FileOp)
 			f = newFileOp(repo)
 			f.construct(opM, entry.mode, entry.ref, path)
 			if entry.ref == "inline" {
