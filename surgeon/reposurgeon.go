@@ -8247,7 +8247,9 @@ func (repo *Repository) splitCommit(where int, splitfunc func([]*FileOp) ([]*Fil
 }
 
 func (repo *Repository) splitCommitByIndex(where int, splitpoint int) error {
-	// FIXME: validity-check the split index
+	if splitpoint < 0 || !repo.events[where].isCommit() || splitpoint > len(repo.events[where].(*Commit).operations()) - 1 {
+		return errors.New("split index out of bounds, or splitting non-commit")
+	}
 	return repo.splitCommit(where,
 		func(ops []*FileOp) ([]*FileOp, []*FileOp, error) {
 			return ops[:splitpoint], ops[splitpoint:], nil
