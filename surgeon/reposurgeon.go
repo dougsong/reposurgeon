@@ -11978,10 +11978,8 @@ func (rs *Reposurgeon) DoAssign(line string) bool {
 			return false
 		}
 	}
-	//FIXME: Incorrect - could collide with an old assignment.
-	//The logic of named needs to change.
 	if repo.named(name) != nil {
-		croak("%s conflicts with a branch, tag, legacy-ID, or date", name)
+		croak("%s conflicts with a branch, tag, legacy-ID, date, or previous assignment", name)
 		return false
 	} else if parse.options.Contains("--singleton") && len(rs.selection) != 1 {
 		croak("a singleton selection was required here")
