@@ -4940,7 +4940,7 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 		var ok bool
 		if sourceParent, ok = sourceParent.dirs[component]; !ok {
 			// The source path does not exist, bail out
-			// FIXME: should we warn ? panic ? return false ?
+			logit(logWARN, "nonexistent source %q on pathmap copy", component)
 			return
 		}
 	}
@@ -4978,7 +4978,6 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 			}
 		}
 		// When the last component of sourcePath does not exist, we do nothing
-		// FIXME: should we warn ? panic ? return false ?
 	}
 }
 

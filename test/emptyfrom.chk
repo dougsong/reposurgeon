@@ -1,3 +1,8 @@
+reposurgeon: nonexistent source "tags" on pathmap copy
+reposurgeon: nonexistent source "test_lib" on pathmap copy
+reposurgeon: nonexistent source "test_lib" on pathmap copy
+reposurgeon: nonexistent source "test_lib" on pathmap copy
+reposurgeon: nonexistent source "test_lib" on pathmap copy
 #reposurgeon sourcetype svn
 blob
 mark :1
