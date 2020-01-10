@@ -5084,6 +5084,12 @@ func (pm *PathMap) isEmpty() bool {
 	return len(pm.dirs)+len(pm.blobs) == 0
 }
 
+func (pm *PathMap) clear() {
+	if !pm.isEmpty() {
+		*pm = *newPathMap()
+	}
+}
+
 // Derived PathMap code, independent of the store implementation
 
 func (pm *PathMap) String() string {
@@ -7047,9 +7053,9 @@ func (commit *Commit) applyFileOps(presentOps *PathMap,
 			break
 		}
 	}
-	if lastDeleteall >= 0 && !presentOps.isEmpty() {
+	if lastDeleteall >= 0 {
 		// There is a deleteall, clear the present operations
-		presentOps = newPathMap()
+		presentOps.clear()
 	}
 	doCopy := func(fileop *FileOp) bool {
 		if prevop, ok := presentOps.get(fileop.Source); ok {
