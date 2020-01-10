@@ -187,7 +187,6 @@ func TestStringSet(t *testing.T) {
 		t.Error("string set add failed.")
 	}
 
-	// FIXME: test difference and union
 	ts8 := newStringSet("a", "b", "c", "d")
 	ts9 := newStringSet("b", "e")
 	diff := ts8.Subtract(ts9)
@@ -1535,7 +1534,6 @@ data 0
 	if err = repo.writeAuthorMap(repo.all(), &b); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	// FIXME; Dubious behavior - is this what we actually want?
 	expect = "esr = Eric S. Raymond <esr@thyrsus.com>\nesr = esr <esr>\n"
 	assertEqual(t, expect, b.String())
 
