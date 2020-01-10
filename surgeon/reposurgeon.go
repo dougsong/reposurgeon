@@ -7881,7 +7881,6 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 		return true
 	}
 	// Check if fileops still make sense after re-ordering events.
-	// FIXME: The Python used to check child events too.
 	for _, c := range events {
 		ops := make([]*FileOp, 0)
 		for _, op := range c.operations() {
@@ -8118,10 +8117,6 @@ func (repo *Repository) absorb(other *Repository) {
 		if ok {
 			repo.insertEvent(passthrough, front, "moving passthroughs")
 			front++
-			// FIXME: Leaks an array slot. See
-			// https://github.com/golang/go/wiki/SliceTricks
-			// for a better way.
-			other.events[0] = nil // Prevent memory leak
 			other.events = other.events[1:]
 		} else {
 			break
@@ -15924,7 +15919,6 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 		croak("no repo has been chosen.")
 		return false
 	}
-	// FIXME: Prevents infinite loop, but shouldn't be necessary.
 	for _, commit := range repo.commits(nil) {
 		commit.invalidateManifests()
 	}
@@ -17317,8 +17311,6 @@ func (rs *Reposurgeon) DoDiff(line string) bool {
 	defer parse.Closem()
 	for _, path := range allpaths {
 		if dir1.Contains(path) && dir2.Contains(path) {
-			// FIXME: Can we detect binary files and do something
-			// more useful here?
 			fromtext, _ := lower.blobByName(path)
 			totext, _ := upper.blobByName(path)
 			// Don't list identical files
