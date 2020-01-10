@@ -1109,10 +1109,6 @@ tags) throws an error. Inline content in commits is filtered when the
 selection set contains (only) blobs and the commit is within the range
 bounded by the earliest and latest blob in the specification.
 +
-When filtering blobs, if the command line contains the magic cookie
-'%PATHS%' it is replaced with a space-separated list of all paths
-that reference the blob.
-+
 With --shell, the remainder of the line specifies a filter as a
 shell command. Each blob or comment is presented to the filter on
 standard input; the content is replaced with whatever the filter emits

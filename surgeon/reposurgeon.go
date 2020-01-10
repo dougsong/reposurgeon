@@ -14090,13 +14090,6 @@ func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
 func (fc *filterCommand) do(content string) string {
 	// Perform the filter on string content or a file.
 	if fc.filtercmd != "" {
-		//FIXME: %PATHS% looks like it never worked. Repair or remove.
-		//var filtercmd string
-		//if pathsubst != "" {
-		//        filtercmd = strings.Replace(fc.filtercmd, "%PATHS%", pathsubst, -1)
-		//} else {
-		//        filtercmd = fc.filtercmd
-		//}
 		cmd := exec.Command("sh", "-c", fc.filtercmd)
 		cmd.Stdin = strings.NewReader(content)
 		content, err := cmd.CombinedOutput()
