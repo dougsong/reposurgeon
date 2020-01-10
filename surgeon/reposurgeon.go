@@ -9280,13 +9280,9 @@ func (rl *RepositoryList) unite(factors []*Repository, options stringSet) {
 		// grafted branch unless they have
 		// modify ops in the branch root.
 		if options.Contains("--prune") {
-			deletes := make([]*FileOp, 0)
-			mostRecent.manifest().iter(func(name string, _ interface{}) {
-				fileop := newFileOp(union)
-				fileop.construct(opD, name)
-				deletes = append(deletes, fileop)
-			})
-			root.setOperations(append(deletes, root.operations()...))
+			fileop := newFileOp(union)
+			fileop.construct(deleteall)
+			root.setOperations(append([]*FileOp{fileop}, root.operations()...))
 			root.canonicalize()
 		}
 	}
