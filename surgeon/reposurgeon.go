@@ -4378,15 +4378,16 @@ func (commit *Commit) canonicalize() {
 			panic("manifest() found unexpected type in parent list")
 		}
 	}
+	// And our tree state
 	current := commit.manifest()
-	newops := make([]*FileOp, 0)
+	newops := &FlatPathMap{}
 	// Generate needed D fileops.
 	if commit.fileops[0].op == deleteall {
 		previous.iter(func(cpath string, _ interface{}) {
 			if _, found := current.get(cpath); !found {
 				fileop := newFileOp(commit.repo)
 				fileop.construct(opD, cpath)
-				newops = append(newops, fileop)
+				newops.set(cpath, fileop)
 			}
 		})
 	} else {
@@ -4397,7 +4398,7 @@ func (commit *Commit) canonicalize() {
 			if old && !new {
 				fileop := newFileOp(commit.repo)
 				fileop.construct(opD, cpath)
-				newops = append(newops, fileop)
+				newops.set(cpath, fileop)
 			}
 		}
 	}
@@ -4409,16 +4410,12 @@ func (commit *Commit) canonicalize() {
 		oe, _ := ioe.(*FileOp)
 		ne, _ := ine.(*FileOp)
 		if newok && !(oldok && oe.Equals(ne)) {
-			newops = append(newops, ne.Copy())
+			newops.set(cpath, ne.Copy())
 		}
 	}
-	// Now replace the Commit fileops. Avoid setOperations() because there
-	// is no need to invalidateManifests()
-	commit.fileops = newops
-	// Finishing touches. Ops need to be sorted for consistency. simplify()
-	// is overkill here but it should not cost too much, and sorting without
-	// simplify is unreliable in other cases so has been removed.
-	commit.simplify()
+	// Now replace the Commit fileops.
+	commit.fileops = nil // ensure remakeFileOps won't see a leading deleteall
+	commit.remakeFileOps(newops)
 }
 
 // alldeletes is a predicate: is this an all-deletes commit?
