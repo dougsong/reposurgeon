@@ -17118,7 +17118,6 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 		respond("%d references resolved.", hits)
 		repo.writeLegacy = true
 	} else {
-		//FIXME: Maybe this should filter rather than making a new set?
 		selection = make([]int, 0)
 		for idx, commit := range repo.commits(nil) {
 			if rs.hasReference(commit) {
