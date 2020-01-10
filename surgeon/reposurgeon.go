@@ -4360,8 +4360,6 @@ func (commit *Commit) canonicalize() {
 	if len(ops) == 0 {
 		return
 	}
-	// Get paths touched by non-deleteall operations.
-	paths := commit.paths(nil)
 	// Fetch the tree state before us...
 	var previous PathMapLike
 	if !commit.hasParents() {
@@ -4383,6 +4381,7 @@ func (commit *Commit) canonicalize() {
 	newops := &FlatPathMap{}
 	// Generate needed D fileops.
 	if commit.fileops[0].op == deleteall {
+		// There was a deleteall, all paths in previous can disappear
 		previous.iter(func(cpath string, _ interface{}) {
 			if _, found := current.get(cpath); !found {
 				fileop := newFileOp(commit.repo)
@@ -4391,8 +4390,17 @@ func (commit *Commit) canonicalize() {
 			}
 		})
 	} else {
-		// Only files touched by non-deleteall ops might disappear.
-		for _, cpath := range paths {
+		// There was no deleteall, only sources of R operations or
+		// files with a D operation might disappear.
+		for _, fileop := range ops {
+			cpath := ""
+			if fileop.op == opR {
+				cpath = fileop.Source
+			} else if fileop.op == opD {
+				cpath = fileop.Path
+			} else {
+				continue
+			}
 			_, old := previous.get(cpath)
 			_, new := current.get(cpath)
 			if old && !new {
@@ -4402,9 +4410,17 @@ func (commit *Commit) canonicalize() {
 			}
 		}
 	}
-	// Generate needed M fileops.
-	// Only paths touched by non-deleteall ops can be changed.
-	for _, cpath := range paths {
+	// Generate needed M fileops. Only targets of R, C and M ops
+	// can be changed.
+	for _, fileop := range ops {
+		cpath := ""
+		if fileop.op == opR || fileop.op == opC {
+			cpath = fileop.Target
+		} else if fileop.op == opM {
+			cpath = fileop.Path
+		} else {
+			continue
+		}
 		ioe, oldok := previous.get(cpath)
 		ine, newok := current.get(cpath)
 		oe, _ := ioe.(*FileOp)
