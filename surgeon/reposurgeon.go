@@ -700,20 +700,6 @@ func (s orderedIntSet) String() string {
 	return rep.String()
 }
 
-/*
-// FIXME: Someday, use this so reorder doesn't need to declare a separate heap type.
-// Satisfy the heap interface
-func (s orderedIntSet) Len() int           { return len(s) }
-func (s orderedIntSet) Less(i, j int) bool { return s[i] < s[j] }
-func (s orderedIntSet) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-
-func (s orderedIntSet) Push(x interface{}) {
-	// Push and Pop use pointer receivers because they modify the
-	// slice's length, not just its contents.
-	s = append(s, x.(int))
-}
-*/
-
 // fastOrderedIntSet is like orderedIntSet but optimizes for speed at the
 // expense of space.
 type fastOrderedIntSet struct{ set *orderedset.Set }
@@ -14764,7 +14750,6 @@ func (rs *Reposurgeon) DoRemove(line string) bool {
 	}
 	orig := line
 	opindex, line := popToken(line)
-	// FIXME: This needs more general parsing
 	optypes := "DMRCN"
 	regex := regexp.MustCompile("^[DMRCN]+$")
 	match := regex.FindStringIndex(opindex)
