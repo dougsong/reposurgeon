@@ -4953,7 +4953,7 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 			tree, ok = sourceParent.dirs[sourceName]
 			if !ok {
 				// The source path does not exist, bail out
-				// FIXME: should we warn ? panic ? return false ?
+				logit(logWARN, "missing segment %q on pathmap copy to empty target", sourceName)
 				return
 			}
 		}
