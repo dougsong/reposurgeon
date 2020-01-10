@@ -2723,11 +2723,10 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 func svnProcessRenumber(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
 	// Phase D:
 	// Renumber all commits and add an end event.
-	// FIXME: Enable adding end events after anything else stabilizes.
 	defer trace.StartRegion(ctx, "SVN Phase D: renumber").End()
 	logit(logEXTRACT, "SVN Phase D: renumber")
 	sp.repo.renumber(1, baton)
-	//sp.repo.events = append(sp.repo.events, newPassthrough(sp.repo, "end\n"))
+	//sp.repo.events = append(sp.repo.events, newPassthrough(sp.repo, "done\n"))
 }
 
 // end
