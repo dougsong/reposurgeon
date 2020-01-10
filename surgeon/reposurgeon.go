@@ -259,6 +259,7 @@ func min(a, b int) int {
 	return b
 }
 
+
 // filecopy does what it says, returning bytes copied and an error indication
 func filecopy(src, dst string) (int64, error) {
 	sourceFileStat, err := os.Stat(src)
@@ -1503,9 +1504,6 @@ anything up to and including making demons fly out of your nose.
 		`Disable some features that cause output to be vary depending on wall time, 
 screen width, and the ID of the invoking user. Use in regression-test loads.
 `},
-	{"tighten",
-		`Memory is at a premium, trade higher speed for lower usage.
-`},
 	{"quiet",
 		`Suppress time-varying parts of reports.
 `},
@@ -2020,9 +2018,8 @@ func locationFromZoneOffset(offset string) (*time.Location, error) {
 		// indicate invalid zone information.
 		return nil, errors.New("dubious zone offset " + string(offset))
 	}
-	tzname := intern(offset)
 	tzoff := (hours*60 + mins) * 60
-	return time.FixedZone(tzname, tzoff), nil
+	return time.FixedZone(offset, tzoff), nil
 }
 
 // Date wraps a system time object, giving it various serialization and
@@ -2196,8 +2193,8 @@ func newAttribution(attrline string) (*Attribution, error) {
 		if fullname == "(no author)" {
 			fullname = "no-author"
 		}
-		attr.fullname = intern(fullname)
-		attr.email = intern(email)
+		attr.fullname = fullname
+		attr.email = email
 		attr.date = parsed
 	}
 	return attr, nil
@@ -2249,8 +2246,8 @@ func (attr *Attribution) remap(authors map[string]Contributor) {
 
 	for local, ae := range authors {
 		if matches(attr, local, ae) {
-			attr.fullname = intern(ae.fullname)
-			attr.email = intern(ae.email)
+			attr.fullname = ae.fullname
+			attr.email = ae.email
 			if ae.timezone != "" {
 				attr.date.setTZ(ae.timezone)
 			}
@@ -2549,7 +2546,7 @@ func (b Blob) getMark() string {
 
 // setMark sets the blob's mark
 func (b *Blob) setMark(mark string) string {
-	if b.repo != nil && !control.flagOptions["tighten"] {
+	if b.repo != nil {
 		if b.repo._eventByMark == nil {
 			b.repo.memoizeMarks()
 		}
@@ -3207,34 +3204,34 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 		fileop.op = opM
 		fileop.mode = string(fields[1])
 		fileop.ref = string(fields[2])
-		fileop.Path = intern(string(fields[3]))
+		fileop.Path = string(fields[3])
 	} else if strings.HasPrefix(opline, "N ") {
 		if len(fields) != 3 {
 			panic(throw("parse", "Bad format of N line: %q", opline))
 		}
 		fileop.op = opN
 		fileop.ref = string(fields[1])
-		fileop.Path = intern(string(fields[2]))
+		fileop.Path = string(fields[2])
 	} else if strings.HasPrefix(opline, "D ") {
 		if len(fields) != 2 {
 			panic(throw("parse", "Bad format of D line: %q", opline))
 		}
 		fileop.op = opD
-		fileop.Path = intern(string(fields[1]))
+		fileop.Path = string(fields[1])
 	} else if strings.HasPrefix(opline, "R ") {
 		if len(fields) != 3 {
 			panic(throw("parse", "Bad format of R line: %q", opline))
 		}
 		fileop.op = opR
-		fileop.Source = intern(fields[1])
-		fileop.Target = intern(fields[2])
+		fileop.Source = fields[1]
+		fileop.Target = fields[2]
 	} else if strings.HasPrefix(opline, "C ") {
 		if len(fields) != 3 {
 			panic(throw("parse", "Bad format of C line: %q", opline))
 		}
 		fileop.op = opC
-		fileop.Source = intern(fields[1])
-		fileop.Target = intern(fields[2])
+		fileop.Source = fields[1]
+		fileop.Target = fields[2]
 	} else if strings.HasPrefix(opline, "deleteall") {
 		fileop.op = deleteall
 	} else {
@@ -3537,7 +3534,7 @@ func (commit *Commit) date() Date {
 
 // setBranch sets the repo's branch field.
 func (commit *Commit) setBranch(branch string) {
-	commit.Branch = intern(branch)
+	commit.Branch = branch
 }
 
 // operations returns a list of ileops associated with this commit;
@@ -3913,7 +3910,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 
 // setMark sets the commit's mark
 func (commit *Commit) setMark(mark string) string {
-	if commit.repo != nil && !control.flagOptions["tighten"] {
+	if commit.repo != nil {
 		commit.repo.maplock.Lock()
 		defer commit.repo.maplock.Unlock()
 		if commit.repo._eventByMark == nil {
@@ -5878,38 +5875,25 @@ func (repo *Repository) cleanup() {
 
 // memoizeMarks rebuilds the mark cache
 func (repo *Repository) memoizeMarks() {
-	if !control.flagOptions["tighten"] {
-		repo._eventByMark = make(map[string]Event)
-		for _, event := range repo.events {
-			key := event.getMark()
-			if key != "" {
-				repo._eventByMark[key] = event
-			}
+	repo._eventByMark = make(map[string]Event)
+	for _, event := range repo.events {
+		key := event.getMark()
+		if key != "" {
+			repo._eventByMark[key] = event
 		}
 	}
 }
 
 // markToEvent finds an object by mark
 func (repo *Repository) markToEvent(mark string) Event {
-	if control.flagOptions["tighten"] {
-		if mark == "" {
-			return nil
-		}
-		for _, event := range repo.events {
-			if event.getMark() == mark {
-				return event
-			}
-		}
-	} else {
-		repo.maplock.Lock()
-		defer repo.maplock.Unlock()
-		if repo._eventByMark == nil {
-			repo.memoizeMarks()
-		}
-		d, ok := repo._eventByMark[mark]
-		if ok {
-			return d
-		}
+	repo.maplock.Lock()
+	defer repo.maplock.Unlock()
+	if repo._eventByMark == nil {
+		repo.memoizeMarks()
+	}
+	d, ok := repo._eventByMark[mark]
+	if ok {
+		return d
 	}
 	return nil
 }
@@ -6183,7 +6167,7 @@ func (repo *Repository) named(ref string) orderedIntSet {
 	}
 	emailID := ""
 	resolveAlias := func(a string) string {
-		return ContributorID{"", intern(a)}.resolve(repo).email
+		return ContributorID{"", a}.resolve(repo).email
 	}
 	if err2 == nil && bang > -1 {
 		emailID = resolveAlias(ref[bang+1:])
@@ -17501,9 +17485,7 @@ func (rs *Reposurgeon) CompleteSet(text string) []string {
 }
 
 func performOptionSideEffect(opt string, val bool) {
-	if opt == "tighten" {
-		enableIntern(val)
-	} else if opt == "progress" {
+	if opt == "progress" {
 		control.baton.setInteractivity(val)
 	}
 }

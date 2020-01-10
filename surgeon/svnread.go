@@ -479,7 +479,7 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 					if node == nil {
 						node = new(NodeAction)
 					}
-					node.path = intern(string(sdBody(line)))
+					node.path = string(sdBody(line))
 					plen = -1
 					tlen = -1
 				} else if bytes.HasPrefix(line, []byte("Node-kind: ")) {
@@ -525,14 +525,14 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 					if node == nil {
 						node = new(NodeAction)
 					}
-					node.fromPath = intern(string(sdBody(line)))
+					node.fromPath = string(sdBody(line))
 				} else if bytes.HasPrefix(line, []byte("Text-copy-source-md5: ")) {
 					if node == nil {
 						node = new(NodeAction)
 					}
-					//node.fromHash = intern(string(sdBody(line)))
+					//node.fromHash = string(sdBody(line))
 				} else if bytes.HasPrefix(line, []byte("Text-content-md5: ")) {
-					node.contentHash = intern(string(sdBody(line)))
+					node.contentHash = string(sdBody(line))
 				} else if bytes.HasPrefix(line, []byte("Text-content-sha1: ")) {
 					continue
 				} else if bytes.HasPrefix(line, []byte("Text-content-length: ")) {
