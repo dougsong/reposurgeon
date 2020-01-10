@@ -4370,9 +4370,9 @@ func (repo *Repository) walkManifests(
 func (commit *Commit) canonicalize() {
 	commit.discardOpsBeforeLastDeleteAll()
 	// Fetch the tree state before us...
-	var previous *PathMap
+	var previous PathMapLike
 	if !commit.hasParents() {
-		previous = newPathMap()
+		previous = &FlatPathMap{}
 	} else {
 		p := commit.parents()[0]
 		switch p.(type) {
@@ -4387,8 +4387,9 @@ func (commit *Commit) canonicalize() {
 	}
 	// And our tree state
 	current := commit.manifest()
-	// Prepare our operations map
-	operations := commit.applyFileOps(newPathMap(), true, true)
+	// Prepare our operations map. No need for a full PathMap here since no
+	// snapshot will ever be taken. Use a faster map-backed PathMapLike.
+	operations := commit.applyFileOps(&FlatPathMap{}, true, true)
 	// Replace R and C operations by their M resolution using the manifest,
 	// then prune M operations doing nothing.
 	operations.iter(func(path string, iop interface{}) {
@@ -5118,6 +5119,36 @@ func (pm *PathMap) pathnames() []string {
 	})
 	sort.Strings(v)
 	return v
+}
+
+// FlatPathMap is a go map, with an interface similar to that of PathMap
+type FlatPathMap map[string]interface{}
+
+func (fpm *FlatPathMap) get(path string) (interface{}, bool) {
+	a, b := (*fpm)[path]
+	return a, b
+}
+
+func (fpm *FlatPathMap) set(path string, value interface{}) {
+	(*fpm)[path] = value
+}
+
+func (fpm *FlatPathMap) remove(path string) {
+	delete(*fpm, path)
+}
+
+func (fpm *FlatPathMap) iter(hook func(string, interface{})) {
+	for path, value := range *fpm {
+		hook(path, value)
+	}
+}
+
+func (fpm *FlatPathMap) clear() {
+	*fpm = make(FlatPathMap)
+}
+
+func (fpm *FlatPathMap) size() int {
+	return len(*fpm)
 }
 
 // PathMapLike is any structure that can be modified or queried like a PathMap
@@ -7046,7 +7077,9 @@ func (commit *Commit) ancestorCount(path string) int {
 // Simplify the list of file operations in this commit.
 func (commit *Commit) simplify() {
 	commit.discardOpsBeforeLastDeleteAll()
-	visibleOps := commit.applyFileOps(newPathMap(), true, true)
+	// No need for a full PathMap here since no snapshot will ever be taken.
+	// Use a simple map-backed PathMapLike, which is faster.
+	visibleOps := commit.applyFileOps(&FlatPathMap{}, true, true)
 	commit.remakeFileOps(visibleOps)
 }
 
