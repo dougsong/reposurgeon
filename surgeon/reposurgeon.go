@@ -7338,21 +7338,6 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 				}
 				return a + "\n" + b
 			}
-			// FIXME: effectively duplicates listMarks
-			listCommitsByMark := func(items []CommitLike) []string {
-				// Used for diagnostics
-				marks := make([]string, 0)
-				for _, item := range items {
-					var legend string
-					if item == nil {
-						legend = "nil"
-					} else {
-						legend = fmt.Sprintf("%s", item.getMark())
-					}
-					marks = append(marks, legend)
-				}
-				return marks
-			}
 			//logit(logDELETE, "deleting %s requires %v to be reparented.", commit.getMark(), commit.childMarks())
 			for _, cchild := range commit.childMarks() {
 				if isCallout(cchild) {
@@ -7417,7 +7402,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 				// Really set the parents to the newly
 				// constructed list
 				logit(logDELETE, "Parents of %s changed from %v to %v",
-					child.getMark(), listCommitsByMark(oldParents), listCommitsByMark(newParents))
+					child.getMark(), listMarks(oldParents), listMarks(newParents))
 				child.setParents(newParents)
 				// If event was the first parent of
 				// child yet has no parents of its

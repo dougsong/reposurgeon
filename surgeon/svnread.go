@@ -908,8 +908,6 @@ func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton
 	timeit("ignores")
 	svnProcessJunk(ctx, sp, options, baton)
 	timeit("dejunk")
-	svnProcessDebubble(ctx, sp, options, baton)
-	timeit("debubbling")
 	svnProcessRenumber(ctx, sp, options, baton)
 	timeit("renumbering")
 
@@ -2722,47 +2720,12 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	baton.endProgress()
 }
 
-func svnProcessDebubble(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	// Phase D:
-	// Remove spurious parent links caused by random cvs2svn file copies.
-	defer trace.StartRegion(ctx, "SVN Phase D: remove duplicate parent marks").End()
-	logit(logEXTRACT, "SVN Phase D: remove duplicate parent marks")
-	baton.startProgress("SVN phase D: remove duplicate parent marks", uint64(len(sp.repo.events)))
-	walkEvents(sp.repo.events, func(idx int, event Event) {
-		commit, ok := event.(*Commit)
-		if !ok {
-			return
-		}
-		parents := commit.parents()
-		if len(parents) != 2 {
-			return
-		}
-		a, ok1 := parents[0].(*Commit)
-		b, ok2 := parents[1].(*Commit)
-		if !ok1 || !ok2 {
-			return
-		}
-		if a.getMark() == b.getMark() {
-			logit(logSHOUT, "r%s: duplicate parent marks", commit.legacyID)
-		} else if a.Branch == commit.Branch && b.Branch == commit.Branch {
-			if b.committer.date.Before(a.committer.date) {
-				a, b = b, a
-			}
-			if b.descendedFrom(a) {
-				commit.removeParent(a)
-			}
-		}
-		baton.percentProgress(uint64(idx) + 1)
-	})
-	baton.endProgress()
-}
-
 func svnProcessRenumber(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	// Phase E:
+	// Phase D:
 	// Renumber all commits and add an end event.
 	// FIXME: Enable adding end events after anything else stabilizes.
-	defer trace.StartRegion(ctx, "SVN Phase E: renumber").End()
-	logit(logEXTRACT, "SVN Phase E: renumber")
+	defer trace.StartRegion(ctx, "SVN Phase D: renumber").End()
+	logit(logEXTRACT, "SVN Phase D: renumber")
 	sp.repo.renumber(1, baton)
 	//sp.repo.events = append(sp.repo.events, newPassthrough(sp.repo, "end\n"))
 }
