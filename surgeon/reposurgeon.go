@@ -4305,7 +4305,7 @@ func (commit *Commit) manifest() *PathMap {
 	for k := len(commitsToHandle) - 1; k >= 0; k-- {
 		// Take own fileops into account.
 		commit := commitsToHandle[k]
-		manifest = commit.applyFileOps(manifest.snapshot(), false, false)
+		manifest = commit.applyFileOps(manifest.snapshot(), false, false).(*PathMap)
 		commit._manifest = manifest
 	}
 	return manifest
@@ -5118,6 +5118,18 @@ func (pm *PathMap) pathnames() []string {
 	})
 	sort.Strings(v)
 	return v
+}
+
+// PathMapLike is any structure that can be modified or queried like a PathMap
+// or a FlatPathMap.
+type PathMapLike interface {
+	get(path string) (interface{}, bool)
+	set(path string, value interface{})
+	remove(path string)
+	clear()
+
+	size() int
+	iter(hook func(string, interface{}))
 }
 
 // StreamParser parses a fast-import stream or Subversion dump to
@@ -7043,8 +7055,8 @@ func (commit *Commit) simplify() {
 // with the new path, others are kept intact if keepUnresolvedOps is true,
 // otherwise they are simply dropped. This removes any ordering dependency
 // between operations.
-func (commit *Commit) applyFileOps(presentOps *PathMap,
-	keepUnresolvedOps bool, keepDeleteOps bool) *PathMap {
+func (commit *Commit) applyFileOps(presentOps PathMapLike,
+	keepUnresolvedOps bool, keepDeleteOps bool) PathMapLike {
 	myOps := commit.operations()
 	// lastDeleteall is the index of the last deleteall or -1
 	lastDeleteall := len(myOps) - 1
@@ -7098,7 +7110,7 @@ func (commit *Commit) applyFileOps(presentOps *PathMap,
 	return presentOps
 }
 
-func (commit *Commit) remakeFileOps(visibleOps *PathMap) {
+func (commit *Commit) remakeFileOps(visibleOps PathMapLike) {
 	// Sort the ops paths in a consistent way, inspired by git-fast-export
 	// As it says, 'Handle files below a directory first, in case they are
 	// all deleted and the directory changes to a file or symlink.'
