@@ -10675,21 +10675,11 @@ func (lp *LineParse) Closem() {
 	}
 }
 
-// CmdControl is our control context for a Kommandant instance.
-// FIXME: Could this be merged into Reposurgeon?
-type CmdControl struct {
+// Reposurgeon tells Kommandant what our local commands are
+type Reposurgeon struct {
 	cmd          *kommandant.Kmdt
 	definitions  map[string][]string
 	inputIsStdin bool
-}
-
-func (md CmdControl) SetCore(k *kommandant.Kmdt) {
-	md.cmd = k
-}
-
-// Reposurgeon tells Kommandant what our local commands are
-type Reposurgeon struct {
-	CmdControl
 	RepositoryList
 	SelectionParser
 	callstack    [][]string
