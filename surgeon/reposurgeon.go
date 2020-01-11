@@ -5031,8 +5031,8 @@ func (pm *PathMap) remove(path string) {
 		// Try to go down a level
 		subtree, ok := pm.dirs[component]
 		if !ok {
-			// A component in the path doesn't exist as a directory; bail out
-			// FIXME: should we warn ? panic ? return false ?
+			// A component in the path doesn't exist as a directory; bail out
+			logit(logWARN, "component %q to be deleted is missing", component)
 			return
 		}
 		// The component exists. Unshare it so that

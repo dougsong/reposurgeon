@@ -1,3 +1,25 @@
+reposurgeon: component "clients" to be deleted is missing
+reposurgeon: component "common" to be deleted is missing
+reposurgeon: component "conf" to be deleted is missing
+reposurgeon: component "include" to be deleted is missing
+reposurgeon: component "lib" to be deleted is missing
+reposurgeon: component "man" to be deleted is missing
+reposurgeon: component "server" to be deleted is missing
+reposurgeon: component "patches" to be deleted is missing
+reposurgeon: component "patches" to be deleted is missing
+reposurgeon: component "patches" to be deleted is missing
+reposurgeon: component "patches" to be deleted is missing
+reposurgeon: component "clients" to be deleted is missing
+reposurgeon: component "common" to be deleted is missing
+reposurgeon: component "conf" to be deleted is missing
+reposurgeon: component "include" to be deleted is missing
+reposurgeon: component "lib" to be deleted is missing
+reposurgeon: component "man" to be deleted is missing
+reposurgeon: component "hotplug-ng" to be deleted is missing
+reposurgeon: component "hotplug-ng" to be deleted is missing
+reposurgeon: component "hotplug-ng" to be deleted is missing
+reposurgeon: component "hotplug" to be deleted is missing
+reposurgeon: component "server" to be deleted is missing
 #reposurgeon sourcetype svn
 blob
 mark :1
