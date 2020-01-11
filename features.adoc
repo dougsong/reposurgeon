@@ -386,4 +386,9 @@ GNUPLOT::
 	from tarballs. Converted by me in late 2017. Somewhat messy due to
 	vendor-branch issues.
 
+GCC::
+	SVN to git, with ancint strata of CVS and RCS. 280K commits of
+	history back to 1987, dwarfing Emacs. Converted by myself and
+	two core GCC developers. The 4.0 release came out of this.
+
 //end
