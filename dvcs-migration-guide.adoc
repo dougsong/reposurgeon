@@ -216,16 +216,10 @@ branch copy (that's what the tags/ directory name conveys).  But
 Subversion doesn't enforce any prohibition against committing to
 the tag branch, and various odd things can happen if you do
 
-Another case with surprising results is if you create a tag directory
-in Subversion and then move it.  The gitspace tag is likely to end up
-attached to the old location. Yes, this is a bug, but not a
-practically fixable one; a detailed explanation of why is possible but
-would probably make your head explode.
-
-The reposurgeon analyzer tries to warn you about these cases, and
-reposurgeon gives you tools for coping with them.  Unfortunately, the
-warnings are (unavoidably) cryptic unless you understand Subversion
-internals in detail. 
+The reposurgeon analyzer tries to warn you about pathological cases,
+and reposurgeon gives you tools for coping with them.  Unfortunately,
+the warnings are (unavoidably) cryptic unless you understand
+Subversion internals in detail.
 
 In a DVCS, a merge normally coalesces two entire branches.  Subversion
 has something close to this in newer versions; it's called a "sync
@@ -418,15 +412,7 @@ You can find empty commits as the =Z visibility set set and clean
 them up with the command `tagify`. Consult the
 reposurgeon manual page for usage details.
 			       
-The `cvs2svn` 'list' command will show you all remaining
-`cvs2svn` artifacts.  Some can be deleted; a clue to look
-for is junk commits generated to carry a tag at branch tips that have
-one or two M fileops referring to a blob much earlier than the commit.
-Very occasionally the generated commits will have real fileops on
-them; all you can do in this case is note conversion damage in the
-comment and move on.
-
-Another good way to spot junk commits is to eyeball the picture of
+A good way to spot junk commits is to eyeball the picture of
 the commit DAG created by the reposurgeon 'graph' command
 - they tend to stand out visually as leaf nodes in odd places. Be
 aware that the graph command outputs DOT, the language interpreted by
@@ -820,7 +806,7 @@ Makefile.
      Recommend PyPy for speeding up large conversions.
 
 Repository head::
-     New secrion on importing Mercurial repositories.
+     New section on importing Mercurial repositories.
      Track the name change of the mailbox commands.
      Reposurgeon has moved to Go.
      Google Code is long dead, remove the mention.

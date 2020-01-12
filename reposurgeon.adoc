@@ -1946,6 +1946,8 @@ Scripts may have comments.  Any line beginning with a pound sign is
 ignored. If a line has a trailing position that begins with one or more
 whitespace characters followed by '#', that trailing portion is
 ignored.
++
+Scripts may call other scripts to arbitary depth. 
 
 [[artifact-removal]]
 === ARTIFACT REMOVAL ===
