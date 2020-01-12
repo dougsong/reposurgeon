@@ -3,7 +3,7 @@
 # liftcheck - compare reposurgeon lift of a Subversion repo with a checkout
 #
 # The -v option reveals executed subcommands.
-# The -q option makes repotool extra quiet and report only errors.
+# The -q option makes repotool extra quiet and reports only errors.
 # The -p option shows revision numbers when comparing multiple revisions
 # The -u option enables context-diffing in the compare operation
 # The -i option disables the normal suppression of ignore comparisons
@@ -24,6 +24,10 @@
 #
 # The REPOSURGEON environment variable can be used to substitute in a
 # different implementation.
+#
+# The ENGINE variable can be used to run a different converter. This is tricky,
+# read the code befire trying to use it.  Presently the only engine supported
+# is svn2git, and that only wthout an -r option.
 #
 # The TESTOPT variable can be used to pass an early command or option setting
 # to reposurgeon.
@@ -65,6 +69,8 @@ then
     exit 1
 fi
 
+ENGINE=${ENGINE:=reposurgeon}
+
 for what in $*
 do
     if [ -f ${what}.svn ]
@@ -96,9 +102,27 @@ do
     # Make a Subversion repo from the dump
     ./svn-to-svn ${svnquiet} ${slimit} -c <${what} ${stem}
 
-    # Make a git repo from the dump using reposurgeon
-    ${REPOSURGEON:-../reposurgeon} "${TESTOPT}" "${rlimit}" "read ${nobranch} ${readopt} <${what}" \
-	"prefer git" "rebuild ${stem}-git" "write >${stem}.gfi" >/dev/null
+    case ${ENGINE} in
+	 reposurgeon)
+	     # Make a git repo from the dump using reposurgeon
+	     ${REPOSURGEON:-../reposurgeon} "${TESTOPT}" "${rlimit}" "read ${nobranch} ${readopt} <${what}" \
+					    "prefer git" "rebuild ${stem}-git" "write >${stem}.gfi" >/dev/null
+	     ;;
+	 svn2git)
+	     # svn2git needs to be run in a scratch directory; it clobbers things
+	     if [ ${progress} != no ]
+	     then
+		 outdev=stdout;
+	     else
+		 outdev=null
+	     fi
+	     svnrepo=file://${PWD}/${stem}
+	     (mkdir ${stem}-git; cd ${stem}-git >/dev/null; svn2git ${svnrepo} >/dev/${outdev};)
+	     ;;
+	 *)
+	     echo "liftcheck: unknown conversion engine ${ENGINE}" >&2; exit 1
+	     ;;
+    esac
 
     if [   "(" -e ${stem}-checkout/trunk ")"    \
 	-o "(" -e ${stem}-checkout/branches ")" \
