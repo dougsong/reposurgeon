@@ -255,14 +255,14 @@ edited) before exiting the program.
 In Go, I didn't seem to have a clean option for this.  Which was a
 problem on two levels....
 
-1. Reposurgeon is 14 KLOC of *dense* code.  At that scale, any prudent
-person in a situation like this will perform as linear and literal a
-translation as possible; to do otherwise is to risk a complexity
-explosion as you try to cross the semantic gap and rethink the design
-at the same time.  Absence of class-valued exceptions was far and away
-the biggest technical blocker.  "First make it work, then make it
-right"; the least risky path seemed to be to shim in exceptions with
-the intention of removing them later.
+1. Python reposurgeon was 14 KLOC of *dense* code.  At that scale, any
+prudent person in a situation like this will perform as linear and
+literal a translation as possible; to do otherwise is to risk a
+complexity explosion as you try to cross the semantic gap and rethink
+the design at the same time.  Absence of class-valued exceptions was
+far and away the biggest technical blocker.  "First make it work, then
+make it right"; the least risky path seemed to be to shim in
+exceptions with the intention of removing them later.
 
 Eventually, after beating on the panic/recover feature for a while, I
 found this kludge:
@@ -586,6 +586,28 @@ func (repo *Repository) commits() func() *Commit {
 ...and there I have it.  An iterator, with exactly the same lifetime
 as the for loop.
 
+Yo make this properly parallel to the way iteration via range works,
+we probably want a second form with a bool passed back:
+
+---------------------------------------------------------------
+func (repo *Repository) commits() func() *Commit {
+	idx := -1
+	return func() (*Commit, bool) {
+		for {
+			if idx++; idx >= len(self.events) {
+			       return nil, false
+			}
+			if _, ok = self.events[idx].(*Commit); ok {
+				return self.events[idx], true
+			}
+		 }
+	}
+}
+---------------------------------------------------------------
+
+With this form the iterator could pass back zero values without
+terminating.
+
 I suggest that this be adopted for a future release of Go. Small, easy
 new evaluation rule, big gain in expressiveness.
 
@@ -667,8 +689,8 @@ Attention to the problem and a good technical writer/editor can fix this.
 == Accentuating the positive ==
 
 The Go translation of reposurgeon is better - more maintainable - code
-than the Python original, not just faster.  And this is not because
-I'm rewriting or refactoring as I go; I've explained that I'm trying
+than the Python original, not just faster.  And this is because
+I rewrote or refactored as I went; as I've explained, I tried
 very hard to avoid that. It's that Go's minimalistic approch
 actually...works.
 
@@ -676,6 +698,11 @@ I see a maintainability benefit from the static typing. The Go type
 system does what a type system is supposed to do, which is express
 program invariants and assist understanding of its operational
 semantics.
+
+The CSP-derived concurrency primitives are a spectacular success
+that compensates me for the irritations in the rest of the language.
+After finishing thev straight-through transkation I was able to add
+speedups via concurrent gorotines with very little difficulty.
 
 I've also seen a maintainability benefit from how easy Go makes it to
 write unit tests in parallel with code.
@@ -690,11 +717,6 @@ sure look like a nasty botch in retrospect. Good work not falling into
 that trap.
 
 == Pass-by-reference vs. pass-by-value ==
-
-// DATE-SENSITIVE
-As I write this section, translation is complete to the point where
-all code has been moved and most of about a hundred end-to-end
-tests are working in Go; only about fifteen still turn up bugs.
 
 I think I can say now that once one has a translation from Python to
 Go that compiles, the largest single sources of bugs is the difference
@@ -726,16 +748,18 @@ minor issue is one of the larger translation barriers is interesting.
 
 1. Keyword arguments should be added to the language.
 
-2. A technical writer with an outside-in view of the language should
+2. Iyterators are felt by their absence and would be easy to add.
+
+3. A technical writer with an outside-in view of the language should
    be hired on to do an edit pass and reorganization of the documents.
 
-3. Yes, throw()/catch() needs to be writeable in the language.  Two
+4. Yes, throw()/catch() needs to be writeable in the language.  Two
    minimal relaxations of compilation rules would make writing it
    possible.
 
-4. Lookbehinds should be added to the regexp library.
+5. Lookbehinds should be added to the regexp library.
 
-5. If generics don't fly, a map-over-slice intrinsic should be added.
+6. If generics don't fly, a map-over-slice intrinsic should be added.
 
 Not quite actionable yet:
 
