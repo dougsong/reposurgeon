@@ -1783,6 +1783,13 @@ attribution header is discarded and the committer date is used.
 However, if the name is an author-map alias with an associated timezone,
 that zone is used.
 
+The Co-Athor convention described in the Linux kerne;s.
+https://git.wiki.kernel.org/index.php/CommitMessageConventions[co-author
+message conventions] is observed/ If an attribution header is followed
+by a white[ace-led line containing only a valid email address. that
+name becomes the payjoad of a a "Co-Author" header that is appended
+to the change comment for the comtaing commit.
+
 The command reports statistics on how many commits were altered.
 
 [[tarballs]]
