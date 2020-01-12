@@ -77,12 +77,11 @@ for Go before I was done, but no - not even at reposurgeon's
 complexity scale.
 
 Generics.  Yes, these would have made translation easier, but the main
-inpact turned out to be that I had to write my own set-of-int and
+impact turned out to be that I had to write my own set-of-int and
 set-of-string classes.  That was a surprisingly light hit.  What I
 really missed was generic map-function-over-slice, which could be
 handled by adding a much narrower feature.
 
-// DATE-SENSITIVE
 The positive part of my summation is that hand-translation of Python
 to Go even at this scale and complexity is not horrible.  It's not
 *easy*, exactly, but quite doable.  It is however time-intensive;
@@ -122,151 +121,6 @@ structure.
 Go presently has no such feature. This is probably the single most
 serious readability hit my translation took; it got *significantly* more
 difficult to grasp what was going on at all those callsites.
-
-=== Absence of "with" and try/finally context-manager idioms ===
-
-This is a real expressiveness problem, not just a readability issue
-like the preceding.  In Python I can do this:
-
-----------------------------------------------------------------------
-class CriticalRegion:
-    "Encapsulate operations to try and make us un-interruptible."
-    NSIG = 32
-    def __enter__(self):
-        "Begin critical region."
-        if debug_enable(DEBUG_COMMANDS):
-            complain("critical region begins...")
-        # Alas that we lack sigblock support
-        self.handlers = [None]*(CriticalRegion.NSIG+1)
-        for sig in range(1, CriticalRegion.NSIG):
-            if sig not in (signal.SIGKILL, signal.SIGSTOP):
-                self.handlers[sig] = signal.signal(sig, signal.SIG_IGN)
-    def __exit__(self, extype_unused, value_unused, traceback_unused):
-        "End critical region."
-        for sig in range(1, CriticalRegion.NSIG):
-            if sig not in (signal.SIGKILL, signal.SIGSTOP):
-                signal.signal(sig, self.handlers[sig])
-        if debug_enable(DEBUG_COMMANDS):
-            complain("critical region ends.")
-        return False
-----------------------------------------------------------------------
-
-I can then say 
-
-----------------------------------------------------------------------
-            with CriticalRegion():
-	        doUninterruptibleStuff()
-----------------------------------------------------------------------
-
-having a guarantee that __enter__() will run at the start of the
-'with' block scope and __exit__() will run at the end.
-
-This ability to create a bounded context with enter and exit hooks
-that are guaranteed to fire even if there's a return or keyboard interrupt
-signal inside the context is a *really valuable* idiom and I miss
-it extremely in Go.
-
-Without it, I have to do spooky-action-at-a-distance things.
-That's a readability/maintainability hit which I think is against the
-spirit of Go, insofar as I understand it.
-
-The Go defer statement is a valiant effort to do something
-interesting in this direction but it's not good enough by itself.
-One reason is that it enforces a cohesion between critical-region
-boundaries and function boundaries, with attendent consequences
-in name scoping.  This is an orthogonality violation in the
-language design.
-
-The problem is easily illustrated via Python-like pseudocode:
-
-----------------------------------------------------------------------
-def exampleFunction():
-    a = "Hello world"
-    with CriticalRegion():
-        a = doUninterruptibleStuff(a)
-    print(a)
-----------------------------------------------------------------------
-
-If I try to translate this to Go I'm almost forced to end up with
-something like this:
-
-----------------------------------------------------------------------
-func exampleFunction() {
-    a := "Hello world"
-    a = innerFunction(a)
-    fmt.Print(a)
-}
-
-func innerFunction(a string) string {
-    c := newCriticalRegion()
-    c.__enter__()
-    defer c.__exit__()
-    return doUninterruptibleStuff(a)
-}
-
-----------------------------------------------------------------------
-
-About the latter I can only say "Readability and expressiveness
-FAIL!".  I say "almost" forced because it is possible to improve
-on this slightly using a closure:
-
-----------------------------------------------------------------------
-func exampleFunction() {
-    a := "Hello world"
-    innerFunction := func(a string) {
-        c := newCriticalRegion()
-        c.__enter__()
-        defer c.__exit__()
-        return doUninterruptibleStuff(a)
-    }
-    a = innerFunction(a)
-    fmt.Print(a)
-}
-----------------------------------------------------------------------
-
-I hope nobody is so foolish as to try to tell me this isn't a
-substantial maintainability hit relative to the Python. The clutter is
-irritating in this toy example, and going to be worse at scale; I have
-a particular nasty example in mind from around line 7737 of reposurgeon.
-
-A try/finally syntax on the Python and Java model would be some improvement:
-
-----------------------------------------------------------------------
-func exampleFunction() {
-    a := "Hello world"
-    c := newCriticalRegion()
-    try {
-        c.enter()
-        a = doUninterruptibleStuff(a)
-    } finally {
-        c.exit()
-    }
-    a = innerFunction(a)
-    fmt.Print(a)
-}
-----------------------------------------------------------------------
-
-Or, in parallel with condition setup in Go if statements:
-
-----------------------------------------------------------------------
-func exampleFunction() {
-    a := "Hello world"
-    try c := newCriticalRegion() {
-        c.enter()
-        a = doUninterruptibleStuff(a)
-    } finally {
-        c.exit()
-    }
-    a = innerFunction(a)
-    fmt.Print(a)
-}
-----------------------------------------------------------------------
-
-This is still a bit grubby, though bit less so if it's treated like a
-conditional and c is not be exposed in the outer scope.  I don't see
-any way to get what I really want - the Python context-manager
-protocol - without introducing a very un-Go-like form of magic
-structure-member naming, so I'd settle for try/finally.
 
 === No map over slices ===
 
@@ -875,15 +729,13 @@ minor issue is one of the larger translation barriers is interesting.
 2. A technical writer with an outside-in view of the language should
    be hired on to do an edit pass and reorganization of the documents.
 
-3. try/finally should be added to the language.
-
-4. Yes, throw()/catch() needs to be writeable in the language.  Two
+3. Yes, throw()/catch() needs to be writeable in the language.  Two
    minimal relaxations of compilation rules would make writing it
    possible.
 
-5. Lookbehinds should be added to the regexp library.
+4. Lookbehinds should be added to the regexp library.
 
-6. If generics don't fly, a map-over-slice intrinsic should be added.
+5. If generics don't fly, a map-over-slice intrinsic should be added.
 
 Not quite actionable yet:
 
