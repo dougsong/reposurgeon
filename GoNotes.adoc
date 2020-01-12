@@ -1,26 +1,24 @@
 = Notes on the Go translation of Reposurgeon =
 version 1.6, 2019-08-15
 
-The reposurgeon codebase has moved from Python to Go because the
-Python implementation is too slow on really large repositories. 
+This is an afterr-action report on a Python-to-Go translation of a
+program with significant complexity, written in attempted conformance
+with the Go community's practice for grounding language enhancement
+requests not in it-would-be-nice-to-have abstractions but rather in a
+description of real-world problems.
 
-This is an experience report on that translation, written in attempted
-conformance with the Go community's practice for grounding language
-enhancement requests not in it-would-be-nice-to-have abstractions but
-rather in a description of real-world problems. The scale driver of
-this real-world problem is that, while at 14KLOC of Python reposurgeon
-is not especially large, it is very *dense*.  It's a DSL that's a
-structure editor for attributed DAGs - algorithmically complex,
-bristling with graph theory, FSMs, parsing, tricky data structures,
-two robot harnesses driving other tools, and three different
-operator-composition algebras.
+Reposurgeon is a program for editing version-control histories and
+interconverting them among version-control systems. I spent much of
+2019 moving the reposurgeon codebase from Python to Go because the
+Python implementation was too slow to be useful on on really large
+repositories.
 
-The GCC history at over 1.6M commits is the straw that broke the
+The GCC history at over 280K commits is the straw that broke the
 camel's back; using PyPy with every optimization on semi-custom
 hardware tuned for this job still yielded test conversion times of
 over 9 hours, which is death on one's recipe-debugging cycle.  A test
 translation of the auxiliary repocutter tool suggested that we could
-expect up to a 40x speedup, which is in line with published Python
+expect up to a 40x speedup, which was in line with published Python
 vs. Go comparative benchmarks.
 
 The problem directed the choice of Go, not the other way around.  I
@@ -29,17 +27,24 @@ concluded that in either case the semantic gap between Python and
 the target language was so large that translation would be
 impractical. Only Go offered me any practical hope.
 
-I did examine the automated tools for Python to Go, but rejected them
-because the generated Go code would have been a maintainability
-disaster.  Thus, translation by hand.  Though at about 22% in I wrote
-https://gitlab.com/esr/pytogo[a fast, crude, incomplete Python-to-Go
-source translator] to assist the process.
+I did examine two automated tools for Python to Go translation, but
+rejected them because I judged the generated Go code would have been a
+maintainability disaster.  Thus, translation by hand.  Though at about
+22% in I wrote https://gitlab.com/esr/pytogo[a fast, crude, incomplete
+Python-to-Go source translator] to assist the process.
 
-Accordingly, reposurgeon would be a challenge to the expressiveness of
-any language it were implemented in.  It makes a good test of the
-relative expressiveness of Python and Go, and an effective way to
-audit for places where moving from Python to Go hinders concision and
-readability.
+The man barrier to translation was that, while at 14KLOC of Python
+reposurgeon was not especially large, it was very *dense*.  It's a DSL
+that's a structure editor for attributed DAGs - algorithmically
+complex, bristling with graph theory, FSMs, parsing, tricky data
+structures, two robot harnesses driving other tools, and three
+different operator-composition algebras.  It became 21KLOC of Go.
+
+The a;gorithmic density of reposurgeon is such that it would be a
+challenge to the expressiveness of any language it were implemented
+in.  It makes a good test of the relative expressiveness of Python and
+Go, and an effective way to audit for places where moving from Python
+to Go hinders concision and readability.
 
 The skillset I approached this problem with is: Go novice, Python and
 C expert; old Unix hand; Lisp hacker of even more ancient vintage;
