@@ -1,7 +1,7 @@
 = Notes on the Go translation of Reposurgeon =
-version 1.6, 2019-08-15
+version 1.7, 2020-01-12
 
-This is an afterr-action report on a Python-to-Go translation of a
+This is an experiance report on a Python-to-Go translation of a
 program with significant complexity, written in attempted conformance
 with the Go community's practice for grounding language enhancement
 requests not in it-would-be-nice-to-have abstractions but rather in a
@@ -11,15 +11,18 @@ Reposurgeon is a program for editing version-control histories and
 interconverting them among version-control systems. I spent much of
 2019 moving the reposurgeon codebase from Python to Go because the
 Python implementation was too slow to be useful on on really large
-repositories.
+repositories.  The workflow it is designed to support is rapid
+iterative improvement of conversion recipes by a himan operator;
+long test cycles disrupt this by making experimentation painful.
 
-The GCC history at over 280K commits is the straw that broke the
-camel's back; using PyPy with every optimization on semi-custom
-hardware tuned for this job still yielded test conversion times of
-over 9 hours, which is death on one's recipe-debugging cycle.  A test
-translation of the auxiliary repocutter tool suggested that we could
-expect up to a 40x speedup, which was in line with published Python
-vs. Go comparative benchmarks.
+Sobversion-to-git conversion of the Gnu Compiler Collection history,
+at over 280K commits (over 1.6M individual change actions), was the
+straw that broke the camel's back. Using PyPy with every optimization
+on semi-custom hardware tuned for this job still yielded test
+conversion times of over 9 hours, which is death on the
+recipe-debugging cycle.  A test translation of the auxiliary
+repocutter tool suggested that we could expect up to a 40x speedup,
+which was in line with published Python vs. Go comparative benchmarks.
 
 The problem directed the choice of Go, not the other way around.  I
 seriously considered OCaml or a compiled Lisp as alternatives.  I
@@ -30,17 +33,17 @@ impractical. Only Go offered me any practical hope.
 I did examine two automated tools for Python to Go translation, but
 rejected them because I judged the generated Go code would have been a
 maintainability disaster.  Thus, translation by hand.  Though at about
-22% in I wrote https://gitlab.com/esr/pytogo[a fast, crude, incomplete
-Python-to-Go source translator] to assist the process.
+22% in I did write https://gitlab.com/esr/pytogo[a fast, crude,
+incomplete Python-to-Go source translator] to assist the process.
 
 The man barrier to translation was that, while at 14KLOC of Python
-reposurgeon was not especially large, it was very *dense*.  It's a DSL
-that's a structure editor for attributed DAGs - algorithmically
+reposurgeon was not especially large, the code is very *dense*.  It's
+a DSL that's a structure editor for attributed DAGs - algorithmically
 complex, bristling with graph theory, FSMs, parsing, tricky data
 structures, two robot harnesses driving other tools, and three
 different operator-composition algebras.  It became 21KLOC of Go.
 
-The a;gorithmic density of reposurgeon is such that it would be a
+The algorithmic density of reposurgeon is such that it would be a
 challenge to the expressiveness of any language it were implemented
 in.  It makes a good test of the relative expressiveness of Python and
 Go, and an effective way to audit for places where moving from Python
@@ -88,14 +91,16 @@ to Go even at this scale and complexity is not horrible.  It's not
 counting time to build the required unit tests in Go, I managed about
 150-200 lines a day before writing pytogo and 500-600 lines per day
 afterwards.  The entire translation, interleaved with my work on NTPsec
-and other projects, took just about 12 months in wall time.
+and other projects, took just about 12 months in wall time. Perhaps
+a third of that was spent debugging the Go result after it achieved
+first full compilation.
 
 The pain points were mainly around a handful of advanced Python
 features: iterators, generators, comprehensions, and class-valued
 exceptions.  Fortunately, even in quite advanced Python code like
 reposurgeon's these turn out to not be very common on a per-KLOC basis.
 
-== Problems that are ==
+== Problems that were ==
 
 === Keyword arguments ===
 
@@ -126,7 +131,7 @@ difficult to grasp what was going on at all those callsites.
 
 Translating Python map() calls and comprehensions produces code that
 is ugly and bulky, forcing the declaration of dummy variables that
-don't need to exist.
+shouldn't need to exist.
 
 If one graded possible Go point extensions by a figure of merit in which the
 numerator is "how much Python expressiveness this keeps" and the
@@ -141,7 +146,7 @@ This proposal can be discarded if generics are implemented, as any
 reasonable implementation of generics would make it trivial to
 implement in Go itself.
 
-=== Limitations on const ===
+=== Annoying limitations on const ===
 
 Inability to apply const to variables with structure, map, or slice
 initializers is annoying in these ways:
@@ -178,7 +183,7 @@ regexps to Go ones.  Take that "only" seriously, because regexps are a
 Swiss-army knife I use heavily; Go regexps are doing well to have no
 limits that are more annoying.
 
-=== Absence of sum/discriminated union types ===
+=== Absence of sum/discriminated-union types ===
 
 I have read issue #19412 and am aware of the objections to adding sum
 types to Go.
@@ -218,10 +223,11 @@ are well received I may write one.
 
 ===  Catchable exceptions require silly contortions ===
 
-Most of this report was written at about the 12% point of the
-translation. By twice that far in, 23%, another problem about which I
-had not originally been intending to complain became obtrusive. That
-is absence of a general facility for structured exceptions.
+Though I revised it significantly on cimpletion, much of this report
+was originally written at about the 12% point of the translation. By
+twice that far in, 23%, another problem about which I had not
+originally been intending to complain became obtrusive. That is
+absence of a general facility for structured exceptions.
 
 Yes, I'm familiar with all the reasons throw/catch wasn't included in
 Go 1.  Including the laudable goal of forcing programmers to be
@@ -246,7 +252,7 @@ situations will frequently occur in, for example, network servers.
 In a language with labeled throw/catch, or class-valued exceptions, I
 can address this by explicitly target an exception to some level of
 the call stack above the point it's raised.  In reposurgeon, for
-example, there are usually two levels of interest.  One is the
+example, there are usually two levels of interest.  One is the DSL's
 read-eval loop. The other is the outermost scope; if an exception gets
 there I want to call hooks to gracefully remove working directories
 (blob storage associated with the repository-history structures being
@@ -327,9 +333,9 @@ it is unreasonably ugly.  So why am I bringing it forward? Because...
 right to be narrow and prescriptive on this issue.  Two kinds of
 doubts grew on me:
 
-* Pragmatic doubt. Trying to be a good citizen, I kept looking at
-places where existing nonlocal control transfers in Python could
-be replaced by explicit Go-style passing upwards of an error status.
+* Pragmatic doubt. Trying to be a good Go citizen, I kept looking at
+places where existing nonlocal control transfers in Python could be
+replaced by explicit Go-style passing upwards of an error status.  But
 I noticed that there were a significant percentage of cases in which
 doing this made the code more difficult to follow rather than easier.
 
@@ -556,7 +562,7 @@ Annoyingly, the iterator pattern he suggests is almost the right
 thing - except for the part where early break from a channel-based
 iterator leaves its goroutine running and some uncollectible garbage.
 
-Then, on my second reading, I had a brainstorm.  I found the trivial
+Then, on my second reading, I had a brainstorm.  I found a trivial
 Go extension that would give iterators with no new syntax, no hidden
 magic, and no yield/return distinction:
 
@@ -568,6 +574,8 @@ type.
 So, with that I could write a Repository method like this:
 
 ---------------------------------------------------------------
+// Iterator variant A: range stops on a zero value
+
 func (repo *Repository) commits() func() *Commit {
 	idx := -1
 	return func() *Commit {
@@ -586,10 +594,12 @@ func (repo *Repository) commits() func() *Commit {
 ...and there I have it.  An iterator, with exactly the same lifetime
 as the for loop.
 
-Yo make this properly parallel to the way iteration via range works,
-we probably want a second form with a bool passed back:
+Then I thpught it might be best to make this properly parallel to the
+way iteration via range works.
 
 ---------------------------------------------------------------
+// Iterator variant B: stop variable.
+
 func (repo *Repository) commits() func() *Commit {
 	idx := -1
 	return func() (*Commit, bool) {
@@ -606,9 +616,10 @@ func (repo *Repository) commits() func() *Commit {
 ---------------------------------------------------------------
 
 With this form the iterator could pass back zero values without
-terminating.
+terminating, terminating only when the second return value from the
+function-valued range argument goes to false.
 
-I suggest that this be adopted for a future release of Go. Small, easy
+I suggest that one of these be adopted for a future release of Go. Small, easy
 new evaluation rule, big gain in expressiveness.
 
 === Hieratic documentation ===
@@ -686,12 +697,29 @@ have no way of knowing you should look.
 
 Attention to the problem and a good technical writer/editor can fix this.
 
+== Outcomes ==
+
+My performance objectives were achieved. I didn't get a fully 40x
+speedup, but only because the running time of the GCC conversion is
+dominated by the low speed of the Subversion tools.  The non-I/O
+limited part of processing fell from about 7 hours to about 20 minutes
+(about 20x), and the overall speedup over Python was about 10x.
+
+Additionally, maximum working set drastically decreased. These
+improvements re-enabled the workflow reposurgeon was designed for,
+rapid iterative improvement of conversion recipes.
+
+On January 12th the production conversion of the GC history from
+Subversion to Git actually took place.
+
+I am no longer a Go novice. :-)
+
 == Accentuating the positive ==
 
 The Go translation of reposurgeon is better - more maintainable - code
 than the Python original, not just faster.  And this is because
 I rewrote or refactored as I went; as I've explained, I tried
-very hard to avoid that. It's that Go's minimalistic approch
+very hard to avoid that. It's that Go's minimalistic approach
 actually...works.
 
 I see a maintainability benefit from the static typing. The Go type
@@ -706,6 +734,10 @@ speedups via concurrent gorotines with very little difficulty.
 
 I've also seen a maintainability benefit from how easy Go makes it to
 write unit tests in parallel with code.
+
+The Go profiling tools (especially the visualization parts) are
+extremely effective, much better at smoking out hidden
+superlinearities in algorithms than Python's.
 
 I have to call out the Go time library as a particularly good piece of
 work. Having the basic timestamp property be location-aware with its
@@ -744,22 +776,27 @@ I don't have any recommended language change around this, as I don't
 think Go's choice is wrong. I do think the fact that this relatively 
 minor issue is one of the larger translation barriers is interesting.
 
-== Envoi: Actionable recommendations, in priority order ==
+== Envoi: Actionable recommendations ==
+
+These are in what I consider rough priority order.
 
 1. Keyword arguments should be added to the language.
 
-2. Iyterators are felt by their absence and would be easy to add.
+2. True iterators are felt by their absence and would be easy to add.
 
-3. A technical writer with an outside-in view of the language should
-   be hired on to do an edit pass and reorganization of the documents.
+3. Any enlargement in the range of what can be declared const
+   would be good for safety and expressiveness.
 
 4. Yes, throw()/catch() needs to be writeable in the language.  Two
    minimal relaxations of compilation rules would make writing it
    possible.
 
-5. Lookbehinds should be added to the regexp library.
+5. A technical writer with an outside-in view of the language should
+   be hired on to do an edit pass and reorganization of the documents.
 
-6. If generics don't fly, a map-over-slice intrinsic should be added.
+6. Lookbehinds should be added to the regexp library.
+
+7. If generics don't fly, a map-over-slice intrinsic should be added.
 
 Not quite actionable yet:
 
