@@ -771,7 +771,7 @@ func TestStringScan(t *testing.T) {
 	}
 
 	for _, item := range testTable {
-		trial := stringScan(item.input)
+		trial := stringScan(item.input,99)
 		if !stringSliceEqual(trial, item.tokens) {
 			t.Errorf("%q -> %v (expected %v)\n", item.input, trial, item.tokens)
 		}

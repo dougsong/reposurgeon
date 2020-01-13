@@ -259,7 +259,6 @@ func min(a, b int) int {
 	return b
 }
 
-
 // filecopy does what it says, returning bytes copied and an error indication
 func filecopy(src, dst string) (int64, error) {
 	sourceFileStat, err := os.Stat(src)
@@ -3112,7 +3111,7 @@ func (fileop *FileOp) construct(op rune, opargs ...string) *FileOp {
 // "-quoted, in which the bounding quotes are stripped and C-style
 // backslashes interpreted in the interior. Meant to mimic the
 // behavior of git-fast-import.
-func stringScan(input string) []string {
+func stringScan(input string, limit int) []string {
 	bufs := make([][]byte, 0)
 	state := 0
 	tokenStart := func() {
@@ -3144,7 +3143,7 @@ func stringScan(input string) []string {
 				tokenContinue(c)
 			}
 		case 1: // in token
-			if unicode.IsSpace(rune(c)) {
+			if unicode.IsSpace(rune(c)) && len(bufs) < limit {
 				state = toState(c, 0)
 			} else {
 				tokenContinue(c)
@@ -3170,7 +3169,7 @@ func stringScan(input string) []string {
 		if s[0] == '"' {
 			s, _ = strconv.Unquote(s)
 		}
-		out[i] = s
+		out[i] = strings.TrimSpace(s)
 	}
 	return out
 }
@@ -3179,11 +3178,11 @@ var modifyRE = regexp.MustCompile(`(M) ([0-9]+) (\S+) (.*)`)
 
 // parse interprets a fileop dump line
 func (fileop *FileOp) parse(opline string) *FileOp {
-	fields := stringScan(opline)
-	if len(fields) == 0 {
+	if match, _ := regexp.MatchString(`^\s*$`, opline); match {
 		panic(throw("parse", "Empty fileop line %q", opline))
 	}
 	if strings.HasPrefix(opline, "M ") {
+		fields := stringScan(opline, 4)
 		if len(fields) != 4 {
 			panic(throw("parse", "Bad format of M line: %q", opline))
 		}
@@ -3192,6 +3191,7 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 		fileop.ref = string(fields[2])
 		fileop.Path = string(fields[3])
 	} else if strings.HasPrefix(opline, "N ") {
+		fields := stringScan(opline, 3)
 		if len(fields) != 3 {
 			panic(throw("parse", "Bad format of N line: %q", opline))
 		}
@@ -3199,12 +3199,14 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 		fileop.ref = string(fields[1])
 		fileop.Path = string(fields[2])
 	} else if strings.HasPrefix(opline, "D ") {
+		fields := stringScan(opline, 2)
 		if len(fields) != 2 {
 			panic(throw("parse", "Bad format of D line: %q", opline))
 		}
 		fileop.op = opD
 		fileop.Path = string(fields[1])
 	} else if strings.HasPrefix(opline, "R ") {
+		fields := stringScan(opline, 3)
 		if len(fields) != 3 {
 			panic(throw("parse", "Bad format of R line: %q", opline))
 		}
@@ -3212,6 +3214,7 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 		fileop.Source = fields[1]
 		fileop.Target = fields[2]
 	} else if strings.HasPrefix(opline, "C ") {
+		fields := stringScan(opline, 3)
 		if len(fields) != 3 {
 			panic(throw("parse", "Bad format of C line: %q", opline))
 		}
@@ -8256,7 +8259,7 @@ func (repo *Repository) splitCommit(where int, splitfunc func([]*FileOp) ([]*Fil
 }
 
 func (repo *Repository) splitCommitByIndex(where int, splitpoint int) error {
-	if splitpoint < 0 || !repo.events[where].isCommit() || splitpoint > len(repo.events[where].(*Commit).operations()) - 1 {
+	if splitpoint < 0 || !repo.events[where].isCommit() || splitpoint > len(repo.events[where].(*Commit).operations())-1 {
 		return errors.New("split index out of bounds, or splitting non-commit")
 	}
 	return repo.splitCommit(where,
@@ -14101,7 +14104,7 @@ func (fc *filterCommand) do(content string) string {
 	if fc.filtercmd != "" {
 		cmd := exec.Command("sh", "-c", fc.filtercmd)
 		cmd.Stdin = strings.NewReader(content)
-		content, err := cmd.CombinedOutput()
+		content, err := cmd.Output()
 		if err != nil {
 			logit(logWARN, "filter command failed")
 		}
