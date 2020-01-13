@@ -7,8 +7,7 @@ mandir?=share/man
 target=$(DESTDIR)$(prefix)
 
 VERS=$(shell sed <surgeon/reposurgeon.go -n -e '/const *version *= *\"\(.*\)\"/s//\1/p')
-SOURCES += nofooter.conf
-SOURCES += \
+SOURCES = \
 	reposurgeon reposurgeon.adoc \
 	repotool repotool.adoc \
 	repoplayer repoplayer.adoc \
@@ -16,12 +15,11 @@ SOURCES += \
 	mapper/repomapper.go \
 	surgeon/reposurgeon.go \
 	surgeon/reposurgeon_test.go \
-	surgeon/intern.go \
 	repomapper.adoc repocutter.adoc \
 	reporting-bugs.adoc features.adoc dvcs-migration-guide.adoc \
 	reposurgeon-mode.el
 SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
-SOURCES += Dockerfile ci/prepare.sh ci/requirements.txt .gitlab-ci.yml
+SOURCES += Dockerfile ci/prepare.sh .gitlab-ci.yml
 DOCS = README.adoc INSTALL.adoc NEWS TODO
 
 STOPOUT=1
