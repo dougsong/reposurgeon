@@ -173,18 +173,11 @@ git-regress:
 GITBRANCHES = be bb
 git-regress-branches:
 	@echo "=== Testing git-extractor with multiple git branches:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
-	if command -v git >/dev/null 2>&1 ; \
+	@if command -v git >/dev/null 2>&1 ; \
 	then \
-	    for test in $(GITBRANCHES); do \
-		if (echo "  $${test}.fi" >&2; \
-		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
-		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
-	    done; \
+		$(PARALLEL_MAKE) $(GITBRANCHES:%=git-regress-test-%); \
 	else echo "    Skipped, git missing."; exit 0; \
 	fi
-	@rm -f /tmp/regress$$$$
 
 # Test the git extractor with merges
 GITMERGES = be2 be3 be4 be5 be6
