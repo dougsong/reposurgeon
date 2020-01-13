@@ -1,7 +1,7 @@
 = Notes on the Go translation of Reposurgeon =
 version 1.7, 2020-01-12
 
-This is an experiance report on a Python-to-Go translation of a
+This is an experience report on a Python-to-Go translation of a
 program with significant complexity, written in attempted conformance
 with the Go community's practice for grounding language enhancement
 requests not in it-would-be-nice-to-have abstractions but rather in a
@@ -15,7 +15,7 @@ repositories.  The workflow it is designed to support is rapid
 iterative improvement of conversion recipes by a human operator;
 long test cycles disrupt this by making experimentation painful.
 
-Sobversion-to-git conversion of the Gnu Compiler Collection history,
+Subversion-to-git conversion of the Gnu Compiler Collection history,
 at over 280K commits (over 1.6M individual change actions), was the
 straw that broke the camel's back. Using PyPy with every optimization
 on semi-custom hardware tuned for this job still yielded test
@@ -160,7 +160,7 @@ In Python one can often get a similar effect by using tuples.  I used
 this as a form of internal documentation hint in the original Python.
 I want it back in Go.
 
-Any extension in the scope of const, even a relatively conservartive
+Any extension in the scope of const, even a relatively conservative
 one like only allowing const structures with compile-time constant
 members, would have significant benefits.
 
@@ -223,7 +223,7 @@ are well received I may write one.
 
 ===  Catchable exceptions require silly contortions ===
 
-Though I revised it significantly on cimpletion, much of this report
+Though I revised it significantly on completion, much of this report
 was originally written at about the 12% point of the translation. By
 twice that far in, 23%, another problem about which I had not
 originally been intending to complain became obtrusive. That is
@@ -594,7 +594,7 @@ func (repo *Repository) commits() func() *Commit {
 ...and there I have it.  An iterator, with exactly the same lifetime
 as the for loop.
 
-Then I thpught it might be best to make this properly parallel to the
+Then I thought it might be best to make this properly parallel to the
 way iteration via range works.
 
 ---------------------------------------------------------------
@@ -729,7 +729,7 @@ semantics.
 
 The CSP-derived concurrency primitives are a spectacular success
 that compensates me for the irritations in the rest of the language.
-After finishing thev straight-through transkation I was able to add
+After finishing the straight-through translation I was able to add
 speedups via concurrent gorotines with very little difficulty.
 
 I've also seen a maintainability benefit from how easy Go makes it to
