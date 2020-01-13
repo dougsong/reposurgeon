@@ -193,18 +193,11 @@ git-regress-merges:
 GITTAGS = bt bt2
 git-regress-tags:
 	@echo "=== Testing git-extractor with tags:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
-	if command -v git >/dev/null 2>&1 ; \
+	@if command -v git >/dev/null 2>&1 ; \
 	then \
-	    for test in $(GITTAGS); do \
-		if (echo "  $${test}.fi" >&2; \
-		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
-		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
-	    done; \
+		$(PARALLEL_MAKE) $(GITTAGS:%=git-regress-test-%); \
 	else echo "    Skipped, git missing."; exit 0; \
 	fi
-	@rm -f /tmp/regress$$$$
 
 RULES_GIT_REGRESS=$(patsubst %,git-regress-test-%, \
 			$(GITLOADS) $(GITBRANCHES) $(GITTAGS) $(GITMERGES))
