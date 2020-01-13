@@ -451,19 +451,20 @@ liftcheck-regress:
 	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	if  command -v git >/dev/null 2>&1 &&  command -v svn >/dev/null 2>&1; \
 	then \
-		for test in $(SVNCLEAN); \
-		do \
-		    liftcheck -e emptycommit -e -root $${test} >/tmp/diff$$$$; \
-		    case $$? in \
-		    0) ;; \
-		    1) if [ $(QUIET) = 1 ]; then echo FAILED; else cat /tmp/diff$$$$; fi; if [ $(STOPOUT) = 1 ]; then exit 1; fi;; \
-		    *) echo "*** liftcheck had trouble, status $$?"; exit $(STOPOUT);; \
-		    esac \
-		done \
+		make --output-sync --no-print-directory -j 8 \
+			$(SVNCLEAN:%=liftcheck-regress-%); \
 	else \
 		echo "     Skipped, either git or svn is missing"; \
 	fi; \
 	rm -f /tmp/diff$$$
+
+$(SVNCLEAN:%=liftcheck-regress-%): liftcheck-regress-%: %
+	@liftcheck -e emptycommit -e -root $< >/tmp/diff$$$$; \
+	case $$? in \
+	    0) ;; \
+	    1) if [ $(QUIET) = 1 ]; then echo FAILED; else cat /tmp/diff$$$$; fi; if [ $(STOPOUT) = 1 ]; then exit 1; fi;; \
+	    *) echo "*** liftcheck had trouble, status $$?"; exit $(STOPOUT);; \
+	esac
 
 # This is not part of the normal test sequence becausr the reposurgeon tools are very slow.
 liftcheck-fullregress:
