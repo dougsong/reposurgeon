@@ -273,10 +273,11 @@ visibility sets::
 [options=""]
 |===================================================================
 | B | blobs                           | Most default selection sets exclude
-blobs; they have to be manipulated through the commits they are attached to.
+                                        blobs; they have to be manipulated
+                                        through the commits they are attached to.
 | C | commits                         |
 | D | all-delete commits              | These are artifacts produced by some
-older repository-conversion tools.
+                                        older repository-conversion tools.
 | H | head (branch tip) commits       |
 | O | orphaned (parentless) commits   |
 | U | commits with callout parents    |
@@ -284,12 +285,13 @@ older repository-conversion tools.
 | M | merge (multi-parent) commits    |
 | F | fork (multi-child) commits      |
 | L | commits with unclean multi-line comments |  E.g. without a separating
-empty line after the first
+                                                  empty line after the first
 | I | commits for which metadata cannot be decoded to UTF-8 |
 | T | tags                            |
 | R | resets                          |
 | P | passthroughs                    | All event types simply passed through,
-including comments, `progress` commands, and `checkpoint` commands
+                                        including comments, `progress`commands,
+                                        and `checkpoint` commands
 | N | Legacy IDs                      | Any comment matching a cookie
 (legacy-ID) format.
 |===================================================================
@@ -319,7 +321,8 @@ dates and action stamps::
 | type                           | interpretation
 | RFC3339 timestamp              | commit or tag with that time/date
 | action stamp (timestamp!email) | commits or tags with that timestamp and
-author (or committer if no author).  Aliases of the author are also accepted.
+                                   author (or committer if no author).
+				   Aliases of the author are also accepted.
 | yyyy-mm-dd part of RFC3339 timestamp | all commits and tags with that date
 |===================================================================
 +
@@ -345,7 +348,7 @@ letters after the trailing slash.  These are as follows:
 | letter   | interpretation
 | a        | author name in commit
 | b        | branch name in commit; also matches blobs referenced by commits
-on matching branches, and tags which point to commmits on matching branches.
+             on matching branches, and tags which point to commits on matching branches.
 | c        | comment text of commit or tag
 | r        | committish reference in tag or reset
 | p        | text in passthrough
