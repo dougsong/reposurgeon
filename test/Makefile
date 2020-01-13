@@ -466,19 +466,19 @@ $(patsubst %,liftcheck-regress-%,$(wildcard *.svn)): liftcheck-regress-%: %
 	esac
 
 # This is not part of the normal test sequence becausr the reposurgeon tools are very slow.
+RULE_LIFTCHECK_FULLREGRESS = $(patsubst %,liftcheck-regress-full-%,$(wildcard *.svn))
 liftcheck-fullregress:
 	@echo "== Testing conversion correctness of all SVN revisions:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
-	if  command -v git >/dev/null 2>&1 &&  command -v svn >/dev/null 2>&1; \
+	@if  command -v git >/dev/null 2>&1 &&  command -v svn >/dev/null 2>&1; \
 	then \
-		for test in *.svn; \
-		do \
-		    liftcheck -q -r all $${test} || { echo "*** Failed on $${test}!"; exit $(STOPOUT); } \
-		done \
+		$(PARALLEL_MAKE) $(RULE_LIFTCHECK_FULLREGRESS); \
 	else \
 		echo "     Skipped, either git or svn is missing"; \
 	fi
 
+$(RULE_LIFTCHECK_FULLREGRESS): liftcheck-regress-full-%: %
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
+	liftcheck -q -r all $< || { echo "*** Failed on $< !"; exit $(STOPOUT); } \
 
 # List Subversion streams that don't convert clean without -q -r all
 liftcheck-dirty:
