@@ -183,18 +183,11 @@ git-regress-branches:
 GITMERGES = be2 be3 be4 be5 be6
 git-regress-merges:
 	@echo "=== Testing git-extractor with merges:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
-	if command -v git >/dev/null 2>&1 ; \
+	@if command -v git >/dev/null 2>&1 ; \
 	then \
-	    for test in $(GITMERGES); do \
-		if (echo "  $${test}.fi" >&2; \
-		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
-		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
-	    done; \
+		$(PARALLEL_MAKE) $(GITMERGES:%=git-regress-test-%); \
 	else echo "    Skipped, git missing."; exit 0; \
 	fi
-	@rm -f /tmp/regress$$$$
 
 # Test the git extractor with tags
 GITTAGS = bt bt2
