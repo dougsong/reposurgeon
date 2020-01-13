@@ -91,15 +91,17 @@ listcheck:
 	done
 
 # Test that all stream files round-trip properly
+RULES_ROUNDTRIP=$(patsubst %,roundtrip-%,$(wildcard *.fi))
 roundtrip:
-	@echo "=== Testing stream-file round-tripping:" 
-	@for file in *.fi; do \
-	    echo "  $${file}"; \
-	    $(REPOSURGEON) "$(TESTOPT)" "read -;write -" <$$file >/tmp/rs$$$$ || exit $(STOPOUT); \
-	    [ -s /tmp/rs$$$$ ] && diff --text -u $${file} /tmp/rs$$$$ \
+	@echo "=== Testing stream-file round-tripping:"
+	@$(PARALLEL_MAKE) $(RULES_ROUNDTRIP)
+
+$(RULES_ROUNDTRIP): roundtrip-%: %
+	@echo "  $<"; \
+	$(REPOSURGEON) "$(TESTOPT)" "read -;write -" <$< >/tmp/rs$$$$ || exit $(STOPOUT); \
+	[ -s /tmp/rs$$$$ ] && diff --text -u $< /tmp/rs$$$$ \
 		|| exit $(STOPOUT); \
-	    rm -f /tmp/rs$$$$ || exit $(STOPOUT); \
-	done
+	rm -f /tmp/rs$$$$ || exit $(STOPOUT)
 
 # Test that all stream files round-trip properly with compression
 roundtrip-compress:
