@@ -40,8 +40,10 @@ HG_EXTRACTOR = hg-regress hg-regress-branches hg-regress-merges hg-regress-tags 
 	hg-regress-patho
 AUXTOOLS = repocutter-regress repomapper-regress repotool-regress
 
+# See https://stackoverflow.com/questions/6481005/how-to-obtain-the-number-of-cpus-cores-in-linux-from-the-command-line
+CONCURRENT_JOBS=$(shell getconf _NPROCESSORS_ONLN || getconf NPROCESSORS_ONLN || echo 4)
+
 # Exploit make parallelism
-CONCURRENT_JOBS=$(shell grep ^cpu\\scores /proc/cpuinfo | uniq |  awk '{print $$4}')
 PARALLEL_MAKE=make --output-sync --no-print-directory -j $(CONCURRENT_JOBS)
 
 # This series can change depending on the current development focus
