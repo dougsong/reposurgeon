@@ -89,12 +89,16 @@ do
 
     stem=liftcheck$$
 
-    rm -fr liftcheck[0123456789]*
+    rm -fr $stem*
 
     if [ $debug = no ]
     then
-	trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}.gfi ${stem}.info ${stem}*~" 0 1 2 15
+	trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}.gfi ${stem}.info ${stem}*~ ${stem}-tmpdir" 0 1 2 15
     fi
+
+    TMPDIR=$(readlink -f ${stem}-tmpdir)
+    export TMPDIR
+    mkdir ${TMPDIR}
 
     # Notification
     { echo -n "  ${what}"; grep --text '^ ##' ${what} || echo ' ## (no description)'; } | sed -e '/ ## /s//: /' >&2; \
