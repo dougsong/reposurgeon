@@ -40,9 +40,6 @@ HG_EXTRACTOR = hg-regress hg-regress-branches hg-regress-merges hg-regress-tags 
 	hg-regress-patho
 AUXTOOLS = repocutter-regress repomapper-regress repotool-regress
 
-# If we have GNU parallel available, the tests can exploit multiple processors
-RUNNER = $(shell if type parallel >/dev/null 2>&1; then echo "parallel"; else echo "xargs"; fi)
-
 # Exploit make parallelism
 CONCURRENT_JOBS=8
 PARALLEL_MAKE=make --output-sync --no-print-directory -j $(CONCURRENT_JOBS)
@@ -77,9 +74,6 @@ clean:
 options:
 	@echo "REPOSURGEOM is $(REPOSURGEOM)"
 	@echo "TESTOPT is $(TESTOPT)"
-
-runner:
-	@echo $(RUNNER)
 
 # Show summary lines for all tests.
 testlist:
