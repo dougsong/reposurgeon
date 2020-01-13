@@ -1,6 +1,6 @@
 = reposurgeon project news =
 
-Repository head::
+4.0: 2020-01-13::
      Production reposurgeon is now in Go.
      repocutter now patches mergeinfo references correctly when renumbering.
      repotool checkout has a -c option to chdir before operating.

@@ -805,10 +805,10 @@ Makefile.
 4.6 (2017-12-14)::
      Recommend PyPy for speeding up large conversions.
 
-Repository head::
+4.7 (2020-01-13)::
+     Reposurgeon has moved to Go.
      New section on importing Mercurial repositories.
      Track the name change of the mailbox commands.
-     Reposurgeon has moved to Go.
      Google Code is long dead, remove the mention.
 
 // Local Variables:
