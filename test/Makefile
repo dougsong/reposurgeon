@@ -41,16 +41,19 @@ HG_EXTRACTOR = hg-regress hg-regress-branches hg-regress-merges hg-regress-tags 
 AUXTOOLS = repocutter-regress repomapper-regress repotool-regress
 
 # Exploit make parallelism
-CONCURRENT_JOBS=8
+CONCURRENT_JOBS=$(shell grep ^cpu\\scores /proc/cpuinfo | uniq |  awk '{print $$4}')
 PARALLEL_MAKE=make --output-sync --no-print-directory -j $(CONCURRENT_JOBS)
 
 # This series can change depending on the current development focus
-fastcheck: clean $(BASIC) $(SUBVERSION)
+fastcheck: clean dieclose $(BASIC) $(SUBVERSION)
 	@echo "=== No diff output is good news ==="
 
 # This should always be a full test
-fullcheck: clean $(BASIC) $(SUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXTOOLS)
+fullcheck: clean disclose $(BASIC) $(SUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXTOOLS)
 	@echo "=== No diff output is good news ==="
+
+disclose:
+	@echo "Running with $(CONCURRENT_JOBS) threads."
 
 # FIXME: is log -all really correct when regeneting the map checks?
 

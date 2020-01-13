@@ -7,7 +7,6 @@ apt-get update -qy && apt-get install -qy --no-install-recommends \
     cvs-fast-export \
     golang \
     mercurial \
-    parallel \
     python2.7 \
     python3 \
     subversion \
