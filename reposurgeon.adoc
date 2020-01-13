@@ -48,9 +48,9 @@ systems cannot represent all the metadata in a git-fast-export
 stream. Consult that tool's documentation for details and partial
 workarounds.
 
-Fossil repository files can be read in using the --format=fossil
-option of the "read" command and written out with the --format=fossil
-option of the +write+. Ignore patterns are not
+Fossil repository files can be read in using the `--format=fossil`
+option of the '```read```' command and written out with the `--format=fossil`
+option of the '```write```'. Ignore patterns are not
 translated in either direction.
 
 SVN and CVS are supported for read only, not write.  For CVS,
@@ -105,11 +105,11 @@ The program can be run in one of two modes, either as an
 interactive command interpreter or in batch mode to execute commands
 given as arguments on the reposurgeon invocation
 line. The only differences between these modes are (1) the interactive
-one begins by turning on the 'interactive' option, (2) in batch mode all
+one begins by turning on the '```interactive```' option, (2) in batch mode all
 errors (including normally recoverable errors in selection-set syntax)
 are fatal, and (3) each command-line argument beginning with
-"--" has that stripped off (which, in particular means
-that --help and --version will work as expected). Also, in interactive
+'```--```' has that stripped off (which in particular means
+that `--help` and `--version` will work as expected). Also, in interactive
 mode, Ctrl-P and Ctrl-N will be available to scroll through your
 command history and tab completion of both command keywords and name
 arguments (wherever that makes semantic sense) is available.
@@ -154,30 +154,35 @@ edit                   ;; edit all editable objects
 236..$ list            ;; List events from 236 to the last
 
 <#523> inspect         ;; Look for commit #523; they are numbered 
-                       ;; 1-origin from the beginning of the repository.
+                       ;; 1-origin from the beginning of the
+                       ;; repository.
 
-<2317> inspect         ;; Look for a tag with the name 2317, a tip commit
-                       ;; of a branch named 2317, or a commit with legacy ID
-                       ;; 2317. Inspect what is found. A plain number is
-                       ;; probably a legacy ID inherited from a Subversion
-                       ;; revision number.
+<2317> inspect         ;; Look for a tag with the name 2317, a tip
+                       ;; commit of a branch named 2317, or a commit
+                       ;; with legacy ID 2317. Inspect what is found.
+                       ;; A plain number is probably a legacy ID
+                       ;; inherited from a Subversion revision
+                       ;; number.
 
 /regression/ list      ;; list all commits and tags with comments or
-                       ;; committer headers or author headers containing
-                       ;; the string "regression"
+                       ;; committer headers or author headers
+                       ;; containing the string "regression"
 
-1..:97 &amp; =T delete     ;; delete tags from event 1 to mark 97
+1..:97 & =T delete     ;; delete tags from event 1 to mark 97
 
-[Makefile] inspect     ;; Inspect all commits with a file op touching Makefile
-                       ;; and all blobs referred to in a fileop
-                       ;; touching Makefile.
+[Makefile] inspect     ;; Inspect all commits with a file op touching
+                       ;; Makefile and all blobs referred to in a
+                       ;; fileop touching Makefile.
 
-:46 tip                ;; Display the branch tip that owns commit :46.
+:46 tip                ;; Display the branch tip that owns
+                       ;; commit :46.
 
-@dsc(:55) list         ;; Display all commits with ancestry tracing to :55 
+@dsc(:55) list         ;; Display all commits with ancestry tracing
+                       ;; to :55 
 
 @min([.gitignore]) remove .gitignore delete
-                       ;; Remove the first .gitignore fileop in the repo.
+                       ;; Remove the first .gitignore fileop in the
+                       ;; repo.
 --------
 
 The regular expressions should be in
@@ -194,11 +199,11 @@ expressions. In this context, they still require start and end
 delimiters, but if you need to have a / in the expression the
 delimiters can be any printable character.  As a reminder,
 these are described in the embedded help as "delimited"
-regular expressions
+regular expressions.
 
 Also note that following-argument regular expressions may not contain
 whitespace; if you need to specify whitespace or a non-printable
-character use a standard C-style escape such as \s for space.
+character use a standard C-style escape such as `\s` for space.
 
 [[selections]]
 === SELECTION SYNTAX ===
@@ -224,24 +229,24 @@ tag and branch names::
    The basename of a branch (including branches in the refs/tags
    namespace) refers to its tip commit.  The name of a tag is equivalent
    to its mark (that of the tag itself, not the commit it refers to). Tag
-   and branch locations are bracketed with < > (angle brackets) to
+   and branch locations are bracketed with `<` `>` (angle brackets) to
    distinguish them from command keywords.
 
 legacy IDs::
-   If the contents of name brackets (< >) does not match a tag or
+   If the contents of name brackets (`< >`) does not match a tag or
    branch name, the interpreter next searches legacy IDs of commits.  This
    is especially useful when you have imported a Subversion dump; it
    means that commits made from it can be referred to by their corresponding
    Subversion revision numbers.
 
 commit numbers::
-   A numeric literal within  name brackets (< >)
-   preceded by # is interpreted as a 1-origin
+   A numeric literal within name brackets (`< >`)
+   preceded by `#` is interpreted as a 1-origin
    commit-sequence number.
 
 reset@ names::
-   A name with the prefix 'reset@' refers to the latest reset with a
-   basename matching the part after the @. Usually there is only one such
+   A name with the prefix '```reset@```' refers to the latest reset with a
+   basename matching the part after the `@`. Usually there is only one such
    reset.
 
 $::
@@ -250,7 +255,7 @@ $::
 These may be grouped into sets in the following ways:
 
 ranges::
-   A range is two locations separated by "..", and is
+   A range is two locations separated by '```..```', and is
    the set of events beginning at the left-hand location and ending at the
    right-hand location (inclusive).
 
@@ -267,27 +272,26 @@ visibility sets::
 +
 [options=""]
 |===================================================================
-| B | blobs                           | Most default selection sets
-                                        exclude blobs; they have to
-                                        be manipulated through the 
-					commits they are attached to.
+| B | blobs                           | Most default selection sets exclude
+blobs; they have to be manipulated through the commits they are attached to.
 | C | commits                         |
-| D | all-delete commits              | These are artifacts produced by some older
-	                                repository-conversion tools.
+| D | all-delete commits              | These are artifacts produced by some
+older repository-conversion tools.
 | H | head (branch tip) commits       |
 | O | orphaned (parentless) commits   |
 | U | commits with callout parents    |
 | Z | commits with no fileops         |
 | M | merge (multi-parent) commits    |
 | F | fork (multi-child) commits      |
-| L | commits with unclean multi-line comments |  E.g. without a separating empty line after the first
+| L | commits with unclean multi-line comments |  E.g. without a separating
+empty line after the first
 | I | commits for which metadata cannot be decoded to UTF-8 |
 | T | tags                            |
 | R | resets                          |
 | P | passthroughs                    | All event types simply passed through,
-                                        including comments, +progress+ commands,
-                                        and +checkpoint+ commands
-| N | Legacy IDs                      | Any comment matching a cookie (legacy-ID) format.
+including comments, `progress` commands, and `checkpoint` commands
+| N | Legacy IDs                      | Any comment matching a cookie
+(legacy-ID) format.
 |===================================================================
 
 references::
@@ -304,7 +308,7 @@ references::
 |===================================================================
 +
 Note that if an annotated tag and a branch have the same name foo,
-<foo> will resolve to the tag rather than the branch tip commit.
+`<foo>` will resolve to the tag rather than the branch tip commit.
 
 dates and action stamps::
    A date or action stamp in angle brackets resolves
@@ -315,21 +319,19 @@ dates and action stamps::
 | type                           | interpretation
 | RFC3339 timestamp              | commit or tag with that time/date
 | action stamp (timestamp!email) | commits or tags with that timestamp and
-                                   author (or committer if no
-				   author).  Aliases of the author
-	                           are also accepted.
+author (or committer if no author).  Aliases of the author are also accepted.
 | yyyy-mm-dd part of RFC3339 timestamp | all commits and tags with that date
 |===================================================================
 +
 To refine the match to a single commit, use a 1-origin index
-suffix separated  by '#'. Thus "<2000-02-06T09:35:10Z>" can
-match multiple commits, but "<2000-02-06T09:35:10Z#2>" matches
+suffix separated by `#`. Thus `<2000-02-06T09:35:10Z>` can
+match multiple commits, but `<2000-02-06T09:35:10Z#2>` matches
 only the second in the set.
 
 text search::
     A text search expression is a regular expression
     surrounded by forward slashes (to embed a forward slash in it, use a
-    C-like string escape such as \x2f).
+    C-like string escape such as `\x2f`).
 +
 A text search normally matches against the comment fields of commits and
 annotated tags, or against their author/committer names, or against
@@ -342,9 +344,8 @@ letters after the trailing slash.  These are as follows:
 |===================================================================
 | letter   | interpretation
 | a        | author name in commit
-| b        | branch name in commit; also matches
-             blobs referenced by commits on matching branches, and tags
-             which point to commmits on matching branches.
+| b        | branch name in commit; also matches blobs referenced by commits
+on matching branches, and tags which point to commmits on matching branches.
 | c        | comment text of commit or tag
 | r        | committish reference in tag or reset
 | p        | text in passthrough
@@ -364,12 +365,13 @@ paths::
    expression. The path expression itself is either a path literal or a
    regular expression surrounded by slashes. Immediately after the
    trailing / of a path regexp you can put any number of the following
-   characters which act as flags: 'a', 'c', 'D', "M', 'R', 'C', 'N'.
+   characters which act as flags: '```a```', '```c```', '```D```', '```M```',
+   '```R```', '```C```', '```N```'.
 +
 By default, a path is related to a commit if the latter has a
 fileop that touches that file path - modifies that change it, deletes
 that remove it, renames and copies that have it as a source or
-target. When the 'c' flag is in use the meaning changes: the paths
+target. When the '```c```' flag is in use the meaning changes: the paths
 related to a commit become all paths that would be present in a
 checkout for that commit.
 +
@@ -379,74 +381,71 @@ is done). In particular a path literal won't match if it corresponds to a
 directory in the chosen repository.
 +
 A regular expression matches a commit if it matches any path related to
-the commit anywhere in the path. You can use '^' or '$' if you want the
-expression to only match at the beginning or end of paths.  When the 'a' flag is
-in use, the path expression selects commits whose every path matches the regular
-expression. This is not always a subset of commits selected without the 'a'
+the commit anywhere in the path. You can use `^` or `$` if you want the
+expression to only match at the beginning or end of paths.  When the '```a```'
+flag is in use, the path expression selects commits whose every path matches the
+regular expression. This is not always a subset of commits selected without the
+'```a```'
 flag because it also selects commits with no related paths (e.g. empty commits,
 deletealls and commits with empty trees). If you want to avoid those, you can
-use e.g. '[/regex/] &amp; [/regex/a]'.
+use e.g. '```[/regex/] & [/regex/a]```'.
 +
-The flags 'D', "M', 'R', 'C', 'N' restrict match checking to the
-corresponding fileop types.  Note that this means an 'a' match is
-easier (not harder) to achieve.  These are no-ops when used with 'c'.
+The flags '```D```', '```M```', '```R```', '```C```', '```N```' restrict match
+checking to the corresponding fileop types.  Note that this means an '```a```'
+match is
+easier (not harder) to achieve.  These are no-ops when used with '```c```'.
 +
 A path or literal matches a blob if it matches any path that
 appeared in a modification fileop that referred to that blob. To
 select purely matching blobs or matching commits, compose a path
-expression with =B or =C.
+expression with `=B` or `=C`.
 +
-If you need to embed '[^/]' into your regular expression (e.g. to
+If you need to embed '```[^/]```' into your regular expression (e.g. to
 express "all characters but a slash") you can use a C-like string
-escape such as \x2f.
+escape such as `\x2f`.
 
 function calls::
    The expression language has named special functions.  The sequence for
-   a named function is "@" followed by a function name,
+   a named function is "```@```" followed by a function name,
    followed by an argument in parentheses. Presently the following
    functions are defined:
 +
 [options="header"]
 |===================================================================
 | name   | interpretation
-| min    | minimum member of a selection set
-| max    | maximum member of a selection set
-| amp    | nonempty selection set becomes all
-           objects, empty set is returned empty
-| par    | all parents of commits in the
-	   argument set
-| chn    | all children of commits in the
-	   argument set
-| dsc    | all commits descended from the
-	   argument set (argument set included)
-| anc    | all commits whom the argument set is
-	   descended from (argument set included)
-| pre    | events before the argument set;
-           empty if the argument set includes
-           the first event.
-| suc    | events after the argument set;
-           empty if the argument set includes
-           the last event.
-| srt    | sort the argument set
-	   by event number.
+| `min`  | minimum member of a selection set
+| `max`  | maximum member of a selection set
+| `amp`  | nonempty selection set becomes all objects,
+empty set is returned empty
+| `par`  | all parents of commits in the argument set
+| `chn`  | all children of commits in the argument set
+| `dsc`  | all commits descended from the argument set
+(argument set included)
+| `anc`  | all commits whom the argument set is descended from
+(argument set included)
+| `pre`  | events before the argument set;
+empty if the argument set includes the first event.
+| `suc`  | events after the argument set;
+empty if the argument set includes the last event.
+| `srt`  | sort the argument set by event number.
 |===================================================================
 
-Set expressions may be combined with the operators | and &amp;
-which are, respectively, set union and intersection. The | has lower
-precedence than intersection, but you may use parentheses '(' and
-')' to group expressions in case there is ambiguity (this replaces the
+Set expressions may be combined with the operators '```|```' and '```&```'
+which are, respectively, set union and intersection. The `|` has lower
+precedence than intersection, but you may use parentheses '```(```' and
+'```)```' to group expressions in case there is ambiguity (this replaces the
 curly brackets used in older versions of the syntax).
 
-Any set operation may be followed by '?' to add the set
+Any set operation may be followed by '```?```' to add the set
 members' neighbors and referents.  This extends the set to include the
 parents and children of all commits in the set, and the referents of
 any tags and resets in the set. Each blob reference in the set is
-replaced by all commit events that refer to it. The '?' can be repeated
-to extend the neighborhood depth.  The result of a '?' extension is
+replaced by all commit events that refer to it. The `?` can be repeated
+to extend the neighborhood depth.  The result of a `?` extension is
 sorted so the result is in ascending order.
 
-Do set negation with prefix ~; it has higher precedence than
-&amp; and | but lower than ?
+Do set negation with prefix '```~```'; it has higher precedence than
+`&` and `|` but lower than `?`.
 
 [[import-export]]
 === IMPORT AND EXPORT ===
@@ -456,57 +455,57 @@ states in core.  Each has a name.  At any given time, one may be selected
 for editing. Commands in this group import repositories, export them,
 and manipulate the in-core list and the selection.
 
-+read+ [ +--format=fossil+ ] [ +--no-implicit+ ] [ _directory_ | +-+ | _<infile_ ]::
+`read` [ `--format=fossil` ] [ `--no-implicit` ] [ _directory_ | `-` | <__infile__ ]::
     With a directory-name argument, this command attempts
     to read in the contents of a repository in any supported
     version-control system under that directory; read with no arguments
     does this in the current directory. If output is redirected to a
     plain file, it will be read in as a fast-import stream or Subversion
-    dumpfile. With an argument of "-", this command reads a
+    dumpfile. With an argument of '```-```', this command reads a
     fast-import stream or Subversion dumpfile from standard input (this
     will be useful in filters constructed with command-line
     arguments).
 +
-If the contents is a fast-import stream, any "cvs-revision" property
+If the contents is a fast-import stream, any "```cvs-revision```" property
 on a commit is taken to be a newline-separated list of CVS revision cookies
 pointing to the commit, and used for reference lifting.
 +
-If the contents is a fast-import stream, any "legacy-id" property
+If the contents is a fast-import stream, any "```legacy-id```" property
 on a commit is taken to be a legacy ID token pointing to the commit,
 and used for reference-lifting.
 +
 If the read location is a git repository and contains a
 _.git/cvsauthors_ file (such as is left in place
-by +git cvsimport -A+) that file will be read in as
-if it had been given to the +authors read+ command.
+by '```git cvsimport -A```') that file will be read in as
+if it had been given to the '```authors read```' command.
 +
 If the read location is a directory, and its repository
 subdirectory has a file named _legacy-map_, that file
-will be read as though passed to a _legacy read_
+will be read as though passed to a '```legacy read```'
 command.
 +
-If the read location is a file and the --format=fossil
+If the read location is a file and the `--format=fossil` option
 is used, the file is interpreted as a Fossil repository.
 +
 The just-read-in repo is added to the list of loaded
 repositories and becomes the current one, selected for surgery. If it
 was read from a plain file and the file name ends with one of the
-extensions _.fi_ or _.svn_, that
+extensions '```.fi```' or '```.svn```', that
 extension is removed from the load list name.
 +
-Normally, missing from links in input streams are deaulted to the
-previous commit.  The --no-implicit option disables this and may
+Normally, missing '```from```' links in input streams are defaulted to the
+previous commit.  The `--no-implicit` option disables this and may
 enable round-tripping of some streams on which it would fail (note
-however that git fast-export generates explict from links). This
+however that `git fast-export` generates explicit '```from```' links). This
 option will mainly be useful for testing and debugging.
 +
 Note: this command does not take a selection set.
 
-+write+ [ +--legacy+ ] [ +--format=fossil+ ] [ +--noincremental+ ] [ +--callout+ ] [ _>outfile_ |_-_ ]::
+`write` [ `--legacy` ] [ `--format=fossil` ] [ `--noincremental` ] [ `--callout` ] [ >__outfile__ | `-` ]::
    Dump selected events as a fast-import stream representing the
    edited repository; the default selection set is all events. Where to
    dump to is standard output if there is no argument or the argument is
-   '-', or the target of an output redirect. 
+   '```-```', or the target of an output redirect. 
 +
 Alternatively, if there is no redirect and the argument names a
 directory, the repository is rebuilt into that directory, with any
@@ -514,10 +513,10 @@ selection set being ignored; if that target directory is nonempty its
 contents are backed up to a save directory.
 +
 If the write location is a file and the
---format=fossil is used, the file is written in
+`--format=fossil` option is used, the file is written in
 Fossil repository format.
 +
-With the --legacy option, the Legacy-ID of
+With the `--legacy` option, the Legacy-ID of
 each commit is appended to its commit comment at write time. This
 option is mainly useful for debugging conversion edge cases.
 +
@@ -525,10 +524,10 @@ If you specify a partial selection set such that some commits
 are included but their parents are not, the output will include
 incremental dump cookies for each branch with an origin outside the
 selection set, just before the first reference to that branch in a
-commit.  An incremental dump cookie looks like "refs/heads/foo^0" and
+commit.  An incremental dump cookie looks like "```refs/heads/foo^0```" and
 is a clue to export-stream loaders that the branch should be glued to
 the tip of a pre-existing branch of the same name.  The
---noincremental option suppresses this behavior.
+`--noincremental` option suppresses this behavior.
 +
 When you specify a partial selection set, including a commit
 object forces the inclusion of every blob to which it refers and
@@ -536,11 +535,11 @@ every tag that refers to it.
 +
 Specifying a partial selection may cause a situation in which
 some parent marks in merges don't correspond to commits present in the
-dump.  When this happens and --callout option was
+dump.  When this happens and `--callout` option was
 specified, the write code replaces the merge mark with a callout, the
 action stamp of the parent commit; otherwise the parent mark is
 omitted.  Importers will fail when reading a stream dump with callouts;
-it is intended to be used by the +graft+
+it is intended to be used by the '```graft```'
 command.
 +
 Specifying a write selection set with gaps in it is allowed
@@ -550,9 +549,9 @@ Property extensions will be be omitted from the output if the
 importer for the preferred repository type cannot digest them.
 +
 Note: to examine small groups of commits without the progress
-meter, use +inspect+.
+meter, use '```inspect```'.
 
-+choose+ [ _reponame_ ]::
+`choose` [ _reponame_ ]::
    Choose a named repo on which to operate.  The name of a repo is
    normally the basename of the directory or file it was loaded from, but
    repos loaded from standard input are "unnamed".
@@ -560,15 +559,15 @@ meter, use +inspect+.
    suffix if there have been multiple reads from the same source.
 +
 With no argument, lists the names of the currently stored
-repositories and their load times.  The second column is '*' for the
-currently selected repository, '-' for others.
+repositories and their load times.  The second column is '```*```' for the
+currently selected repository, '```-```' for others.
 
-+drop+ [ _reponame_ ]::
+`drop` [ _reponame_ ]::
    Drop a repo named by the argument from reposurgeon's list,
    freeing the memory used for its metadata and deleting on-disk
    blobs. With no argument, drops the currently chosen repo.
 
-+rename+ _reponame_::
+`rename` _reponame_::
    Rename the currently chosen repo; requires an argument.  Won't
    do it if there is already one by the new name.
 
@@ -578,10 +577,10 @@ currently selected repository, '-' for others.
 reposurgeon can rebuild an altered repository
 in place.  Untracked files are normally saved and restored when the
 contents of the new repository is checked out (but see the
-documentation of the "preserve" command for a
+documentation of the '```preserve```' command for a
 caveat).
 
-+rebuild+ [ _directory_ ]::
+`rebuild` [ _directory_ ]::
    Rebuild a repository from the state held by
    reposurgeon.  This command does not take a
    selection set.
@@ -591,20 +590,20 @@ which to do the rebuild; if the repository read was from a repo
 directory (and not a git-import stream), it defaults to that
 directory.  If the target directory is nonempty its contents are
 backed up to a save directory.  Files and directories on the
-repository's preserve list are copied back from the backup directory
+repository's _preserve list_ are copied back from the backup directory
 after repo rebuild. The default preserve list depends on the
-repository type, and can be displayed with the +stats+ command.
+repository type, and can be displayed with the '```stats```' command.
 +
 If reposurgeon has a nonempty legacy map,
 it will be written to a file named _legacy-map_
 in the repository subdirectory as though by a
-_legacy write_ command. (This will normally
+'```legacy write```' command. (This will normally
 be the case for Subversion and CVS conversions.)
 
-+preserve+ [ _file..._ ]::
+`preserve` [ _file..._ ]::
    Add (presumably untracked) files or directories to the repo's
    list of paths to be restored from the backup directory after a
-   +rebuild+. Each argument, if any, is interpreted as a
+   '```rebuild```'. Each argument, if any, is interpreted as a
    pathname.  The current preserve list is displayed afterwards.
 +
 It is only necessary to use this feature if your version-control
@@ -613,10 +612,10 @@ systems with such a command (which include git and hg), all files that
 are neither beneath the repository dot directory nor under reposurgeon
 temporary directories are preserved automatically.
 
-+unpreserve+ [ _file..._ ]::
+`unpreserve` [ _file..._ ]::
    Remove (presumably untracked) files or directories to
    the repo's list of paths to be restored from the backup directory
-   after a +rebuild+. Each argument, if any, is
+   after a '```rebuild```'. Each argument, if any, is
    interpreted as a pathname.  The current preserve list is displayed
    afterwards.
 
@@ -628,7 +627,7 @@ timestamp is often a useful thing to do, in order for every commit has
 a unique action stamp that can be referred to in surgical
 commands.
 
-+timequake+::
+`timequake`::
    Attempt to hack committer and author time stamps in the
    selection set (defaulting to all commits in the repository) to be
    unique.  Works by identifying collisions between parent and child,
@@ -640,10 +639,10 @@ normally do the right thing on chains of three or more commits with
 identical timestamps.
 + 
 Any timestamp collisions left after this operation are probably
-cross-branch and have to be individually dealt with using 'timebump'
+cross-branch and have to be individually dealt with using '```timebump```'
 commands.
 
-+timebump+ [ _seconds_ ]::
+`timebump` [ _seconds_ ]::
    Bump the committer and author timestamps of commits in the selection
    set (defaulting to empty) by one second.   With following integer argument,
    that many seconds. Argument may be negative.
@@ -671,11 +670,11 @@ repository.
 
 The output of these commands can individually be redirected to
 a named output file. Where indicated in the syntax, you can prefix the
-output filename with ">" and give it as a following
-argument.  If you use ">>" the file is opened
+output filename with '```>```' and give it as a following
+argument.  If you use '```>>```' the file is opened
 for append rather than write.
 
-+list+ [ >__outfile__ ]::
+`list` [ >__outfile__ ]::
    This is the main command for identifying the events
    you want to modify.  It lists commits in the selection set by event
    sequence number with summary information. The first column is raw
@@ -683,12 +682,11 @@ for append rather than write.
    has legacy IDs, they will be displayed in the third column. The
    leading portion of the comment follows.
 
-+stamp+ [ >__outfile__ ]::
+`stamp` [ >__outfile__ ]::
    Alternative form of listing that displays full action
-   stamps, usable as references in selections. Supports >
-   redirection.
+   stamps, usable as references in selections.
 
-+tip+ [ >__outfile__ ]::
+`tip` [ >__outfile__ ]::
    Display the branch tip names associated with commits
    in the selection set.  These will not necessarily be the same as their
    branch fields (which will often be tag names if the repo contains
@@ -700,29 +698,29 @@ children, then if there is a child with a matching branch name its tip
 is the child's tip.  Otherwise this function throws a recoverable
 error.
 
-+tags+ [>__outfile__ ]::
+`tags` [>__outfile__ ]::
    Display tags and resets: three fields, an event number and a type and a name.
    Branch tip commits associated with tags are also displayed with the type
-   field 'commit'. Supports > redirection.
+   field '```commit```'.
 
-+stats+ [ __repo-name__...] [>__outfile__ ]::
+`stats` [ __repo-name__...] [>__outfile__ ]::
    Report size statistics and import/export method information about
    named repositories, or with no argument the currently chosen repository.
 
-+count+ [>__outfile__ ]::
+`count` [>__outfile__ ]::
    Report a count of items in the selection set. Default set is everything
-   in the currently-selected repo. Supports > redirection.
+   in the currently-selected repo.
 
-+inspect+ [>__outfile__ ]::
+`inspect` [>__outfile__ ]::
    Dump a fast-import stream representing selected events to standard
    output.  Just like a write, except (1) the progress meter is disabled,
    and (2) there is an identifying header before each event dump.
 
-+graph+ [>__outfile__ ]::
+`graph` [>__outfile__ ]::
    Emit a visualization of the commit graph in the DOT markup language
    used by the graphviz tool suite.  This can be fed as input to the main
    graphviz rendering program dot(1), which will yield a viewable
-   image. Supports > redirection.
+   image.
 +
 You may find a script like this useful:
 +
@@ -733,7 +731,7 @@ shell dot </tmp/foo$$ -Tpng | display -; rm /tmp/foo$$
 +
 You can substitute in your own preferred image viewer, of course.
 
-+sizes+ [>__outfile__ ]::
+`sizes` [>__outfile__ ]::
    Print a report on data volume per branch; takes a selection set,
    defaulting to all events. The numbers tally the size of uncompressed
    blobs, commit and tag comments, and other metadata strings (a blob is
@@ -744,7 +742,7 @@ intended mainly as a way to get information on how to efficiently
 partition a repository that has become large enough to be
 unwieldy.
 
-+lint+ [ options ] [>__outfile__ ]::
+`lint` [ options ] [>__outfile__ ]::
    Look for DAG and metadata configurations that may indicate a
    problem. Presently checks for: (1) Mid-branch deletes, (2)
    disconnected commits, (3) parentless commits, (4) the existence of
@@ -753,13 +751,13 @@ unwieldy.
    branch labels descending from the same commit, (7) time and
    action-stamp collisions.
 +
-Options to issue only partial reports are supported; "lint
---options" or "lint -?" lists them.
+Options to issue only partial reports are supported; '```lint
+--options```' or '```lint -?```' lists them.
 +
 The options and output format of this command are unstable; they may
 change without notice as more sanity checks are added.
 
-+when+ _timespec_::
+`when` _timespec_::
    Interconvert between git timestamps (integer Unix time plus TZ) and
    RFC3339 format.  Takes one argument, autodetects the format.  Useful
    when eyeballing export streams.  Also accepts any other supported
@@ -771,11 +769,11 @@ change without notice as more sanity checks are added.
 These are the operations the rest of reposurgeon is designed
 to support.
 
-+squash+ [ _policy..._ ]::
+`squash` [ _policy..._ ]::
    Combine or delete commits in a selection set of events. The
    default selection set for this command is empty. Has no effect on
-   events other than commits unless the --delete policy is selected;
-   see the 'delete' command for discussion.
+   events other than commits unless the `--delete` policy is selected;
+   see the '```delete```' command for discussion.
 +
 Normally, when a commit is squashed, its file operation list
 (and any associated blob references) gets either prepended to the
@@ -786,17 +784,17 @@ its parents added to their parent set.
 +
 The analogous operation is performed on commit comments, so no
 comment text is ever outright discarded.  Exception: comments
-consisting of "*** empty log messages ***", as generated by
+consisting of "```++*** empty log message ***++```", as generated by
 CVS, are ignored.
 +
 The default is to squash forward, modifying children; but see the
 list of policy modifiers below for how to change this.
 +
-WARNING: It is easy to get the bounds of a squash command wrong, with
-   confusing and destructive results. Beware thinking you can squash on a
-   selection set to merge all commits except the last one into the last
-   one; what you will actually do is to merge all of them to the first
-   commit _after_ the selected set.
+WARNING: It is easy to get the bounds of a `squash` command wrong, with
+confusing and destructive results. Beware thinking you can squash on a
+selection set to merge all commits except the last one into the last
+one; what you will actually do is to merge all of them to the first
+commit _after_ the selected set.
 +
 Normally, any tag pointing to a combined commit will also be
 pushed forward.  But see the list of policy modifiers below for how to
@@ -811,23 +809,23 @@ as it can without losing any information.
 The following modifiers change these policies:
 +
 |===================================================================
-| --delete      | Simply discards all file ops and tags associated with deleted commit(s).
-| --no-coalesce | Do not normalize the modified commit operations.
-| --pushback    | Append fileops to parents, rather than prepending to children.
-| --pushforward | Prepend fileops to children. This is the default; it can be
-                  specified in a lift script for explicitness about intentions.
-| --tagforward  | With the "tagforward" modifier, any tag on the deleted commit is pushed
-                  forward to the first child rather than being deleted. This is the
-                  default; it can be specified for explicitness.
-| --tagback     | With the "--tagback" modifier, any tag on the deleted commit is pushed
-                  backward to the first parent rather than being deleted. 
-| --quiet       | Suppresses warning messages about deletion of commits with
-                  non-delete fileops.
-| --complain    | The opposite of quiet. Can be specified for explicitness.
-| --empty-only  | Complain if a squash operation modifies a nonempty comment.
+| `--delete`      | Simply discards all file ops and tags associated with deleted commit(s).
+| `--no-coalesce` | Do not normalize the modified commit operations.
+| `--pushback`    | Append fileops to parents, rather than prepending to children.
+| `--pushforward` | Prepend fileops to children. This is the default; it can be
+specified in a lift script for explicitness about intentions.
+| `--tagforward`  | Any tag on the deleted commit is pushed
+forward to the first child rather than being deleted. This is the
+default; it can be specified for explicitness.
+| `--tagback`     | Any tag on the deleted commit is pushed
+backward to the first parent rather than being deleted. 
+| `--quiet`       | Suppresses warning messages about deletion of commits with
+non-delete fileops.
+| `--complain`    | The opposite of `--quiet`. Can be specified for explicitness.
+| `--empty-only`  | Complain if a squash operation modifies a nonempty comment.
 |===================================================================
 +
-Under any of these policies except "--delete",
+Under any of these policies except `--delete`,
 deleting a commit that has children does not back out the changes made
 by that commit, as they will still be present in the blobs attached to
 versions past the end of the deletion set.  All a delete does when the
@@ -836,44 +834,44 @@ who those changes were actually made; after the delete any such
 changes will be attributed to the first undeleted children of the
 deleted commits.  It is expected that this command will be useful
 mainly for removing commits mechanically generated by repository
-converters such as +cvs2svn+.
+converters such as `cvs2svn`.
 
-+delete+ [ _policy..._ ]::
+`delete` [ _policy..._ ]::
    Delete a selection set of events. The default selection set for
    this command is empty. On a set of commits, this is equivalent to a
-   squash with the --delete flag.  It unconditionally deletes tags,
+   `squash` with the `--delete` flag.  It unconditionally deletes tags,
    resets, and passthroughs; blobs can be removed only as a side effect
    of deleting every commit that points at them.
 
 
-+divide+  _parent_ [ _child_ ]::
+`divide`::
    Attempt to partition a repo by cutting the parent-child link
    between two specified commits (they must be adjacent). Does not take a
    general selection set.  It is only necessary to specify the
    parent commit, unless it has multiple children in which case the child
    commit must follow (separate it with a comma).
 +
-If the repo was named 'foo', you will normally end up with two
-repos named 'foo-early' and 'foo-late' (option and feature events at
+If the repo was named '`_foo_`', you will normally end up with two
+repos named '`_foo_-early`' and '`_foo_-late`' (option and feature events at
 the beginning of the early segment will be duplicated onto the
 beginning of the late one.).  But if the commit graph would remain
 connected through another path after the cut, the behavior changes.
-In this case, if the parent and child were on the same branch 'qux',
-the branch segments are renamed 'qux-early' and 'qux-late' but
+In this case, if the parent and child were on the same branch '`_qux_`',
+the branch segments are renamed '`_qux_-early`' and '`_qux_-late`' but
 the repo is not divided.
 
-+expunge+ [ +--notagify+ ] [ _path_ | /__regexp__/ ]...::
+`expunge` [ `--notagify` ] [ _path_ | /__regexp__/ ]...::
    Expunge files from the selected portion of the repo history; the
    default is the entire history.  The arguments to this command may be
    paths or regular expressions matching paths (regexps must
-   be marked by being surrounded with //). String quotes and backslash
+   be marked by being surrounded with `//`). String quotes and backslash
    escapes are interpreted when parsing the command line.
 +
 All filemodify (M) operations and delete (D) operations
 involving a matched file in the selected set of events are
 disconnected from the repo and put in a removal set.  Renames are
 followed as the tool walks forward in the selection set; each triggers
-a warning message. If a selected file is a copy (C) target, the copy
+a warning message. If a selected file is a copy +(C)+ target, the copy
 will be deleted and a warning message issued. If a selected file is a
 copy source, the copy target will be added to the list of paths to be
 deleted and a warning issued.
@@ -881,44 +879,47 @@ deleted and a warning issued.
 After file expunges have been performed, any commits with no
 remaining file operations will be removed, and any tags pointing to
 them. By default each deleted commit is replaced with a tag of the form
-'emptycommit-_ident_' on the preceding commit unless
-"--notagify" is specified as an argument. Commits with deleted
+// Making the tag name monospace causes the italics to leak in manpage output.
+'`emptycommit-_ident_`' on the preceding commit unless
+`--notagify` is specified as an argument. Commits with deleted
 fileops pointing both in and outside the path set are not deleted, but are
 cloned into the removal set.
 +
 The removal set is not discarded. It is assembled into a new
-repository named after the old one with the suffix "-expunges" added.
+repository named after the old one with the suffix '```-expunges```' added.
 Thus, this command can be used to carve a repository into sections by
 file path matches.
 
-+tagify+ [ +--canonicalize+ ] [ +--tipdeletes+ ] [ +--tagify-merges+ ]::
+`tagify` [ `--canonicalize` ] [ `--tipdeletes` ] [ `--tagify-merges` ]::
    Search for empty commits and turn them into tags. Takes an optional
    selection set argument defaulting to all commits. For each commit in the
    selection set, turn it into a tag with the same message and author information
    if it has no fileops. By default merge commits are not considered, even if they
    have no fileops (thus no tree differences with their first parent). To change
-   that, use the --tagify-merges option.
+   that, use the `--tagify-merges` option.
 +
-The name of the generated tag will be 'emptycommit-__ident__', where
+// Again, we can't use monospace here because the italics leak out (adoc 1.5.6)
+The name of the generated tag will be '`emptycommit-_ident_`', where
 _ident_ is generated from the legacy ID of the deleted commit, or from
 its mark, or from its index in the repository, with a disambiguation
 suffix if needed.
 +
-With the --canonicalize, tagify tries harder to detect
+With the `--canonicalize` option, `tagify` tries harder to detect
 trivial commits by first ensuring that all fileops of selected commits will
 have an actual effect when processed by fast-import.
 +
-With the --tipdeletes, tagify also considers branch tips
+With the `--tipdeletes` option, `tagify` also considers branch tips
 with only deleteall fileops to be candidates for tagification. The
 corresponding tags get names of the form
-'tipdelete-_branchname_' rather than the default
-'emptycommit-_ident_'.
+// Two more cases where we can't use monospace.
+'`tipdelete-_branchname_`' rather than the default
+'`emptycommit-_ident_`'.
 +
-With the --tagify-merges, tagify also tagifies merge
+With the `--tagify-merges` option, `tagify` also tagifies merge
 commits that have no fileops. When this is done the merge link is move to the
-yagified commit's parent.
+tagified commit's parent.
 
-+coalesce+ [ +--debug+ | +--changelog+ ] [ _timefuzz_ ]::
+`coalesce` [ `--debug` | `--changelog` ] [ _timefuzz_ ]::
    Scan the selection set for runs of commits with identical
    comments close to each other in time (this is a common form of scar
    tissues in repository up-conversions from older file-oriented
@@ -929,15 +930,15 @@ yagified commit's parent.
 The optional second argument, if present, is a maximum time
 separation in seconds; the default is 90 seconds.
 +
-The default selection set for this command is =C, all
+The default selection set for this command is `=C`, all
 commits. Occasionally you may want to restrict it, for example to
-avoid coalescing unrelated cliques of "*** empty log message ***"
+avoid coalescing unrelated cliques of "```++*** empty log message ***++```"
 commits from CVS lifts.
 +
-With  the --debug option, show messages about mismatches.
+With the `--debug` option, show messages about mismatches.
 +
-With the --changelog option, any commit with a comment
-containing the string 'empty log message' (such as is generated by
+With the `--changelog` option, any commit with a comment
+containing the string '```empty log message```' (such as is generated by
 CVS) and containing exactly one file operation modifying a path ending
 in _ChangeLog_ is treated specially.  Such
 ChangeLog commits are considered to match any commit before them by
@@ -945,11 +946,11 @@ content, and will coalesce with it if the committer matches and the
 commit separation is small enough.  This option handles a convention
 used by Free Software Foundation projects.
 
-+split+ +{at|by}+ _item_ ::
+`split` {`at`|`by`} _item_ ::
     The first argument is required to be a commit location; the second is
     a preposition which indicates which splitting method to use. If the
-    preposition is 'at', then the third argument must be an integer
-    1-origin index of a file operation within the commit. If it is 'by',
+    preposition is '```at```', then the third argument must be an integer
+    1-origin index of a file operation within the commit. If it is '```by```',
     then the third argument must be a pathname to be prefix-matched,
     pathname match is done first).
 +
@@ -957,185 +958,182 @@ The commit is copied and inserted into a new position in the
 event sequence, immediately following itself; the duplicate becomes
 the child of the original, and replaces it as parent of the original's
 children. Commit metadata is duplicated; the new commit then gets a
-new mark. If the new commit has a legacy ID, the suffix '.split' is
+new mark. If the new commit has a legacy ID, the suffix '```.split```' is
 appended to it.
 +
-Finally, some file operations - starting at the one matched or
-indexed by the split argument - are moved forward from the original
+Finally, some file operations — starting at the one matched or
+indexed by the split argument — are moved forward from the original
 commit into the new one.  Legal indices are 2-n, where n is the number
 of file operations in the original commit.
 
-+add+ { _D_ _path_ | _M_ _perm_ _mark_ _path_ | _R_ _source_ _target_ | _C_ _source_ _target_}::
-   To a specified commit, add a specified fileop.
+`add` { `D` _path_ | `M` _perm_ _mark_ _path_ | `R` _source_ _target_ | `C` _source_ _target_}::
+   To a selected commit, add a specified fileop.
 +
-For a D operation to be valid there must be an M operation for
-the path in the commit's ancestry.  For an M operation to be valid,
-the 'perm' part must be a token ending with 755 or 644 and the 'mark'
-must refer to a blob that precedes the commit location.  For an R or C
-operation to be valid, there must be an M operation for the source in
+For a *D* operation to be valid there must be an *M* operation for
+the path in the commit's ancestry.  For an *M* operation to be valid,
+the '`_perm_`' part must be a token ending with `755` or `644` and the '`_mark_`'
+must refer to a blob that precedes the commit location.  For an *R* or *C*
+operation to be valid, there must be an *M* operation for the source in
 the commit's ancestry.
 
-+remove+ [ _index_ | _path_ | +deletes+ ] [ +to+ _commit_ ]::
-   From a specified commit, remove a specified fileop.  The op must
-   be one of (a) the keyword "deletes", (b) a file path, (c)
+`remove` [ _index_ | _path_ | `deletes` ] [ `to` _commit_ ]::
+   From a selected commit, remove a specified fileop.  The op must
+   be one of (a) the keyword '```deletes```', (b) a file path, (c)
    a file path preceded by an op type set (some subset of the letters
-   DMRCN), or (d) a 1-origin numeric index. The "deletes" keyword
-   selects all D fileops in the commit; the others select one
+   `DMRCN`), or (d) a 1-origin numeric index. The '```deletes```' keyword
+   selects all *D* fileops in the commit; the others select one
    each.
 +
-If the "to" clause is present, the removed op is
+If the '```to```' clause is present, the removed op is
 appended to the commit specified by the following singleton selection
-set. This option cannot be combined with "deletes".
+set. This option cannot be combined with '```deletes```'.
 +
 Note that this command does not attempt to scavenge blobs even
 if the deleted fileop might be the only reference to them. This
 behavior may change in a future release.
 
-+blob+::
+`blob`::
    Create a blob at mark :1 after renumbering other marks starting from
    :2.  Data is taken from stdin, which may be a here-doc.  This can be
    used with the add command to patch synthetic data into a repository.
 
-+renumber+::
+`renumber`::
    Renumber the marks in a repository, from :1 up to :<n>
    where <n> is the count of the last mark. Just in case an importer
    ever cares about mark ordering or gaps in the sequence.
 +
 A side effect of this command is to clean up stray "done"
-passthroughs that may have entered the repository via graft
+passthroughs that may have entered the repository via `graft`
 operations.  After a renumber, the repository will have at most
 one "done" and it will be at the end of the events.
 
-+dedup+::
+`dedup`::
    Deduplicate blobs in the selection set.  If multiple blobs in the
    selection set have the same SHA1, throw away all but the first, and change
    fileops referencing them to instead reference the (kept) first blob.
 
-+msgout+ [ >__outfile__ ]::
+`msgout` [ >__outfile__ ] [ ``--filter=``/__regex__/ ]::
    Emit a file of messages in RFC2822 format representing
    the contents of repository metadata. Takes a selection set; members of
    the set other than commits, annotated tags, and passthroughs are
    ignored (that is, presently, blobs and resets).
 +
-The output from this command can optionally be redirected
-to a named output file. Prefix the filename with ">"
-and give it as a following argument.
-+
-May have an option --filter, followed by = and a /-enclosed
+May have an option `--filter`, followed by `=` and a `/`-enclosed
 regular expression.  If this is given, only headers with names
 matching it are emitted.  In this context the name of the header
 includes its trailing colon.
 
-+msgin+ [ +--create+ ] [ +--empty-only+ ] [ <__infile__ ] [+--changed+ >__outfile__ ]::
+`msgin` [ `--create` ] [ `--empty-only` ] [ <__infile__ ] [ `--changed` >__outfile__ ]::
    Accept a file of messages in RFC2822 format representing the
    contents of the metadata in selected commits and annotated tags. Takes
    no selection set.  If there is an argument it will be taken as the
-   name of a message file to read from; if no argument, or one of '-', reads
-   from standard input. Supports < redirection.
+   name of a message file to read from; if no argument, or one of '```-```',
+   reads from standard input.
 +
-Users should be aware that modifying an Event-Number or
-Event-Mark field will change which event the update from that message
+Users should be aware that modifying an `Event-Number` or
+`Event-Mark` field will change which event the update from that message
 is applied to.  This is unlikely to have good results.
 +
-The header CheckText, if present, is examined to see if the comment text of
+The header `CheckText`, if present, is examined to see if the comment text of
 the associated event begins with it. If not, the item modification
 is aborted. This helps ensure that you are landing updates ob the
 events you intend.
 +
-If the "--create" modifier is present, new tags and
+If the `--create` modifier is present, new tags and
 commits will be appended to the repository. In this case it is an error
 for a tag name to match any exting tag name. Commit objects are created
-with no fileops. If Committer-Date or Tagger-Date fields are not present
+with no fileops. If `Committer-Date` or `Tagger-Date` fields are not present
 they are filled in with the time at which this command is executed. If
-Committer or Tagger fields are not present, reposurgeon will attempt to
+`Committer` or `Tagger` fields are not present, reposurgeon will attempt to
 deduce the user's git-style identity and fill it in. If a singleton
 commit set was specified for commit creations, the new commits are
 made children of that commit.
 +
-Otherwise, if the Event-Number and Event-Mark fields are absent, the
-msgin logic will attempt to match the commit or tag first by
+Otherwise, if the `Event-Number` and `Event-Mark` fields are absent, the
+`msgin` logic will attempt to match the commit or tag first by
 Legacy-ID, then by a unique committer ID and timestamp pair.
 +
-If output is redirected and the modifier "--changed"
+If output is redirected and the modifier `--changed`
 appears, a minimal set of modifications actually made is written to the
-output file in a form that can be fed back in. Supports > redirection.
+output file in a form that can be fed back in.
 +
-If the option "--empty-only" is given, this command will
+If the option `--empty-only` is given, this command will
 throw a recoverable error if it tries to alter a message body that is neither
 empty nor consists of the CVS empty-comment marker.
 
-+setfield+ _attribute_ _value_::
+`setfield` _attribute_ _value_::
    In the selected objects (defaulting to none) set every instance
    of a named field to a string value.  The string may be quoted to
-   include whitespace, and use C-style backslash escapes, such as \n and
-   \t. 
+   include whitespace, and use C-style backslash escapes, such as `\n` and
+   `\t`. 
 +
 Attempts to set nonexistent attributes are ignored. Valid values
 for the attribute are internal field names; in particular, for 
-commits, "comment" and "branch" are legal.
+commits, '```comment```' and '```branch```' are legal.
 Consult the source code for other interesting values.
 +
-The special fieldnames 'author', 'commitdate' and 'authdate'
+The special fieldnames '```author```', '```commitdate```' and '```authdate```'
 apply only to commits in the range.  The latter two sets attribution
 dates. The former sets the author's name and email address (assuming
 the value can be parsed for both), copying the committer
 timestamp. The author's timezone may be deduced from the email
 address.
 
-+setperm+ _100644|100755|120000_ _path..._::
+`setperm` {``100644``|``100755``|``120000``} _path..._::
    For the selected objects (defaulting to none) take the first argument as an
    octal literal describing permissions.  All subsequent arguments are paths.
-   For each M fileop in the selection set and exactly matching one of the
+   For each *M* fileop in the selection set and exactly matching one of the
    paths, patch the permission field to the first argument value.
 
-+append+ [ +--rstrip+ ] [__text__]::
+`append` [ `--rstrip` ] [__text__]::
    Append text to the comments of commits and tags in the specified
    selection set. The text is the first token of the command and may
    be a quoted string. C-style escape sequences in the string are
    interpreted as one would expect.
 +
-If the option --rstrip is given, the comment is right-stripped before
-the new text is appended. If the option --legacy is given, the string
-%LEGACY% in the append payload is replaced with the commit's lagacy-ID
+If the option `--rstrip` is given, the comment is right-stripped before
+the new text is appended. If the option `--legacy` is given, the string
+'```%LEGACY%```' in the append payload is replaced with the commit's legacy-ID
 before it is appended.
 
-+filter+ [ _--shell_ | _--regex_ | _--replace_ |_--dedos_ ]::
+`filter` [ `--shell` | `--regex` | `--replace` | `--dedos` ]::
    Run blobs, commit comments, or tag comments in the selection set
    through the filter specified on the command line.
 +
-In any mode other than --dedos, attempting to specify a
+In any mode other than `--dedos`, attempting to specify a
 selection set including both blobs and non-blobs (that is, commits or
 tags) throws an error. Inline content in commits is filtered when the
 selection set contains (only) blobs and the commit is within the range
 bounded by the earliest and latest blob in the specification.
 +
-With --shell, the remainder of the line specifies a filter as a
+With `--shell`, the remainder of the line specifies a filter as a
 shell command. Each blob or comment is presented to the filter on
 standard input; the content is replaced with whatever the filter emits
 to standard output.
 +
-With --regex, the remainder of the line is expected to be a
-regular expression substitution written as /from/to/ with from and
-to being passed as arguments to the standard re.sub() function and
+With `--regex`, the remainder of the line is expected to be a
+regular expression substitution written as `/from/to/` with `from` and
+`to` being passed as arguments to the standard re.sub() function and
 it applied to modify the content. Actually, any non-space character will
-work as a delimiter in place of the /; this makes it easier to use
-/ in patterns. Ordinarily only the first such
-substitution is performed; putting 'g' after the slash replaces
+work as a delimiter in place of the `/`; this makes it easier to use
+`/` in patterns. Ordinarily only the first such
+substitution is performed; putting '```g```' after the slash replaces
 globally, and a numeric literal gives the maximum number
 of substitutions to perform. Other flags available restrict substitution
-scope - 'c' for comment text only, 'C' for committer name only, 'a'
-for author names only.  Note that parsing of a --regex argument will
-be confused by any substring consisting of whitespace followed by #;
-use "\s" rather than whitespace to avoid this.
+scope - '```c```' for comment text only, '```C```' for committer name only,
+'```a```'
+for author names only.  Note that parsing of a `--regex` argument will
+be confused by any substring consisting of whitespace followed by `#`;
+use '```\s```' rather than whitespace to avoid this.
 +
-With --replace, the behavior is like --regexp but the expressions are
+With `--replace`, the behavior is like `--regex` but the expressions are
 not interpreted as regular expressions. (This is slightly
 faster).
 +
-With --dedos, DOS/Windows-style \r\n line terminators are
+With `--dedos`, DOS/Windows-style \r\n line terminators are
 replaced with \n.
 
-+transcode+ _codec_::
+`transcode` _codec_::
    Transcode blobs, commit comments and committer/author names, or tag
    comments and tag committer names in the selection set to UTF-8 from
    the character encoding specified on the command line.
@@ -1147,46 +1145,46 @@ and the commit is within the range bounded by the earliest and latest
 blob in the specification.
 +
 The encoding argument must name one of the codecs known to the Golang
-standard codecs library. In particular, 'latin1' is a valid codec name.
+standard codecs library. In particular, '```latin1```' is a valid codec name.
 +
 Errors in this command are fatal, because an error may leave
 repository objects in a damaged state.
 +
 The theory behind the design of this command is that the
 repository might contain a mixture of encodings used to enter commit
-metadata by different people at different times. After using =I to
+metadata by different people at different times. After using `=I` to
 identify metadata containing non-Unicode high bytes in text, a human
 must use context to identify which particular encodings were used in
 particular event spans and compose appropriate transcode commands
 to fix them up.
 
-+edit+::
-   Report the selection set of events to a tempfile as msgout does,
-   call an editor on it, and update from the result as msgin does.
+`edit`::
+   Report the selection set of events to a tempfile as `msgout` does,
+   call an editor on it, and update from the result as `msgin` does.
    If you do not specify an editor name as second argument, it will be
-   taken from the $EDITOR variable in your environment.
-   If $EDITOR is not set, /usr/bin/editor will be used as a fallback
+   taken from the `$EDITOR` variable in your environment.
+   If `$EDITOR` is not set, `/usr/bin/editor` will be used as a fallback
    if it exists as a symlink to your default editor, as is the case on
    Debian, Ubuntu and their derivatives.
 +
 Normally this command ignores blobs because
-+msgout+ does.  However, if you specify a
+`msgout` does.  However, if you specify a
 selection set consisting of a single blob, your editor will be called
 directly on the blob file.
 +
 Supports < and > redirection.
 
-+timeoffset+ offset [ _timezone_ ]::
+`timeoffset` _offset_ [ _timezone_ ]::
    Apply a time offset to all time/date stamps in the selected set.
-   An offset argument is required; it may be in the form [+-]ss,
-   [+-]mm:ss or [+-]hh:mm:ss.  The leading sign is required to distinguish
-   it from a selection expression.
+   An offset argument is required; it may be in the form ++[+-]++_ss_,
+   ++[+-]++_mm_:__ss__ or ++[+-]++_hh_:__mm__:__ss__.
+   The leading sign is required to distinguish it from a selection expression.
 +
-Optionally you may also specify another argument in the form [+-]hhmm, a
+Optionally you may also specify another argument in the form ++[+-]++_hhmm_, a
 timezone literal to apply.  To apply a timezone without an offset, use
-an offset literal of +0 or -0.
+an offset literal of `+0` or `-0`.
 
-+unite+ [ --prune ] _reponame_...::
+`unite` [ `--prune` ] _reponame_...::
    Unite repositories. Name any number of loaded repositories; they will
    be united into one union repo and removed from the load list.  The
    union repo will be selected.
@@ -1200,16 +1198,16 @@ duplicates will get priority over older ones). After all grafts, marks
 will be renumbered.
 +
 The name of the new repo will be the names of all parts concatenated,
-separated by '+'. It will have no source directory or preferred system
+separated by '```+```'. It will have no source directory or preferred system
 type.
 +
-With the option --prune, at each join D operations for every
+With the option `--prune`, at each join *D* operations for every
 ancestral file existing will be prepended to the root commit, then it
 will be canonicalized using the rules for squashing the effect will be
-that only files with properly matching M, R, and C operations in the
+that only files with properly matching *M*, *R*, and *C* operations in the
 root survive.
 
-+graft+ [--prune] _reponame_::
+`graft` [ `--prune` ] _reponame_::
    For when unite doesn't give you enough control. This command may have
    either of two forms, selected by the size of the selection set.  The
    first argument is always required to be the name of a loaded repo.
@@ -1225,10 +1223,10 @@ it is grafted to the selected one. Any other callouts in the named repo are also
 resolved in the context of the currently chosen one. Finally, the
 named repo is removed from the load list.
 +
-With the option --prune, prepend a deleteall operation into the root
+With the option `--prune`, prepend a deleteall operation into the root
 of the grafted repository.
 
-+path+ [ _source_ ] +rename+ [ +--force+ ] [_target_]::
+`path` _source_ `rename` [ `--force` ] _target_::
    Rename a path in every fileop of every selected commit.  The
    default selection set is all commits. The first argument is interpreted as a
    regular expression to match against paths; the second may contain
@@ -1239,42 +1237,42 @@ is visible in the ancestry of the commit, this command throws an
 error.  With the `--force` option, these checks
 are skipped.
 
-+paths+ [ +{sub|sup}+ ] [ _dirname_ ] [ >__outfile__ ]::
+`paths` [ `sub` | `sup` ] [ _dirname_ ] [ >__outfile__ ]::
    Takes a selection set. Without a modifier, list all paths
    touched by fileops in the selection set (which defaults to the entire
    repo). This reporting variant does >-redirection.
 +
-With the 'sub' modifier, take a second argument that is a
-directory name and prepend it to every path. With the 'sup' modifier,
+With the '```sub```' modifier, take a second argument that is a
+directory name and prepend it to every path. With the '```sup```' modifier,
 strip any directory argument from the start of the path if it appears there;
 with no argument, strip the first directory component from every path.
 
-+merge+::
+`merge`::
    Create a merge link. Takes a selection set argument, ignoring all but
    the lowest (source) and highest (target) members.  Creates a merge link
    from the highest member (child) to the lowest (parent).
 
-+unmerge+::
+`unmerge`::
    Linearize a commit. Takes a selection set argument, which must resolve
    to a single commit, and removes all its parents except for the first.
-   It is equivalent to `_first_parent_, _commit_ reparent --rebase`, where
+   It is equivalent to '__first_parent__, _commit_ reparent --rebase', where
    _commit_ is the same selection set as used with
-   unmerge and _first_parent_ is a set resolving
-   _commit_'s first parent (see the
-   +reparent+ command below.
-   The main interest of the +unmerge+ is that you don't
+   unmerge and __first_parent__ is a set resolving
+   __commit__'s first parent (see the
+   `reparent` command below).
+   The main interest of the `unmerge` is that you don't
    have to find and specify the first parent yourself, saving time and avoiding
    errors when nearby surgery would make a manual first parent argument
    stale.
 
-+reparent+ [ _options_... ] [ _policy_ ]::
+`reparent` [ _options_... ] [ _policy_ ]::
    Changes the parent list of a commit.  Takes a selection set,
    zero or more option arguments, and an optional policy argument.
 +
 Selection set: The selection set must resolve to one or more commits.  The
 selected commit with the highest event number (not necessarily the
 last one selected) is the commit to modify.  The remainder of the
-selected commits, if any, become its parents:  the selected commit
+selected commits, if any, become its parents: the selected commit
 with the lowest event number (which is not necessarily the first one
 selected) becomes the first parent, the selected commit with second
 lowest event number becomes the second parent, and so on.  All
@@ -1294,7 +1292,7 @@ original parent links are removed.  Examples:
 # is commit 15, second parent is 17, and third parent is 22
 22,33,15,17 reparent
 -----
-The option --use-order says to use the selection order to determine
+The option `--use-order` says to use the selection order to determine
 which selected commit is the commit to modify and which are the
 parents (and if there are multiple parents, their order).  The last
 selected commit (not necessarily the one with the highest event
@@ -1325,11 +1323,11 @@ By default, the manifest of the reparented commit is computed before
 modifying it; a `deleteall` and some fileops are
 prepended so that the manifest stays unchanged even when the first
 parent has been changed.  This behavior can be changed by specifying a
-policy flag. +--rebase+. That inhibits the default behavior—no
+policy flag. `--rebase`. That inhibits the default behavior—no
 `deleteall` is issued and the tree contents of all
 descendents can be modified as a result.
 
-+reorder+ [ --quiet ]::
+`reorder` [ `--quiet` ]::
    Re-order a contiguous range of commits.
 +
 Older revision control systems tracked change history on a per-file
@@ -1342,7 +1340,7 @@ can easily fail.  In the best case, when inference fails, a range of commits
 in the resulting conversion which should have been coalesced into a single
 changeset instead end up as a contiguous range of separate commits.  This
 situation typically can be repaired easily enough with the
-+coalesce+ or +squash+ commands.
+`coalesce` or `squash` commands.
 +
 However, in the worst case, numerous commits from several different
 _topics_, each of which should have been one or more distinct
@@ -1350,15 +1348,15 @@ changesets, may end up interleaved in an apparently chaotic fashion.
 To deal with such cases, the commits need to be re-ordered, so that
 those pertaining to each particular topic are clumped together, and
 then possibly squashed into one or more changesets pertaining to each
-topic.  This command, +reorder+, can help with the first task; the
-+squash+ command with the second.
+topic.  This command, `reorder`, can help with the first task; the
+`squash` command with the second.
 +
 Selected commits are re-arranged in the order specified; for instance:
-"+:7,:5,:9,:3 reorder+".  The specified commit range must be
+'```:7,:5,:9,:3 reorder```'.  The specified commit range must be
 contiguous; each commit must be accounted for after re-ordering.  Thus, for
-example, '+:5+' can not be omitted from "+:7,:5,:9,:3
-reorder+".  (To drop a commit, use the +delete+ or
-+squash+ command.)
+example, '```:5```' can not be omitted from '```:7,:5,:9,:3
+reorder```'.  (To drop a commit, use the `delete` or
+`squash` command.)
 +
 The selected commits must represent a linear history, however, the
 lowest numbered commit being re-ordered may have multiple parents, and
@@ -1371,8 +1369,8 @@ re-ordering. Other fileops inconsistencies may arise from re-ordering,
 both within the range of affected commits and beyond; for instance,
 moving a commit which renames a file ahead of a commit which
 references the original name. Such anomalies can be discovered via
-manual inspection and repaired with the +add+ and +remove+ (and
-possibly +path+) commands. Warnings can be suppressed with +--quiet+.
+manual inspection and repaired with the `add` and `remove` (and
+possibly `path`) commands. Warnings can be suppressed with `--quiet`.
 +
 In addition to adjusting their parent/child relationships, re-ordering
 commits also re-orders the underlying events since ancestors must appear
@@ -1380,23 +1378,25 @@ before descendants, and blobs must appear before commits which reference them.
 This means that events within the specified range will have different event
 numbers after the operation.
 
-+branch+ _branchname_ { +rename+ | +delete+ } [ _arg_ ]::
+`branch` _branchname_ { `rename` | `delete` } [ _arg_ ]::
    Rename or delete a branch (and any associated resets).  First argument
    must be an existing branch name; second argument must be one of the verbs
-   'rename' or 'delete'.
+   '```rename```' or '```delete```'.
 +
-For a 'rename', the third argument may be any token that is a syntactically
+For a '```rename```', the third argument may be any token that is a
+syntactically
 valid branch name (but not the name of an existing branch).  If it does not
-contain a '/' the prefix 'heads/' is prepended.  If it does not begin with
-'refs/', then 'refs/' is prepended.
+contain a '```/```' the prefix '```heads/```' is prepended.  If it does not
+begin with '```refs/```', then '```refs/```' is prepended.
 +
-For a 'delete', the name may optionally be a regular expression wrapped in //;
+For a '```delete```', the name may optionally be a regular expression
+wrapped in `//`;
 if so, all objects of the specified type with names matching the regexp are
 deleted.  This is useful for mass deletion of branches.  Such deletions can be
 restricted by a selection set in the normal way.  No third argument is
 required.
 
-+tag+ _tagname_ { +create+ | +move+ | +rename+ | +delete+ } [ _arg_ ]::
+`tag` _tagname_ { `create` | `move` | `rename` | `delete` } [ _arg_ ]::
    Create, move, rename, or delete a tag.
 +
 Creation is a special case.  First argument is a name, which
@@ -1408,26 +1408,26 @@ and comment fields are copied from the commit's committer, mark, and
 comment fields.
 +
 Otherwise, first argument must be an existing tag name; second
-argument must be one of the verbs "move",
-"rename", or "delete".
+argument must be one of the verbs '```move```',
+'```rename```', or '```delete```'.
 +
-For a "move", a third argument must be a singleton
+For a '```move```', a third argument must be a singleton
 selection set. For a "rename", the third argument may be
 any token that is a syntactically valid tag name (but not the name of
 an existing tag). For a "delete", no third argument is
 required.
 +
-For a 'delete', no third argument is required.  The name portion of a
-delete may be a regexp wrapped in //; if so, all objects of the
+For a '```delete```', no third argument is required.  The name portion of a
+delete may be a regexp wrapped in `//`; if so, all objects of the
 specified type with names matching the regexp are deleted.  This is
 useful for mass deletion of junk tags such as CVS branch-root tags.
 +
-The tagname may use C-style backslash escapes , such as \s.
+The tagname may use C-style backslash escapes, such as `\s`.
 +
 The behavior of this command is complex because features which
 present as tags may be any of three things: (1) True tag objects, (2)
 lightweight tags, actually sequences of commits with a common
-branchname beginning with "refs/tags" - in this case the
+branchname beginning with '```refs/tags```' - in this case the
 tag is considered to point to the last commit in the sequence, (3)
 Reset objects.  These may occur in combination; in fact, stream
 exporters from systems with annotation tags commonly express each of
@@ -1436,7 +1436,7 @@ sequence (2) in which the basename of the common branch field is
 identical to the tag name.  An exporter that generates
 lightweight-tagged commit sequences (2) may or may not generate resets
 pointing at their tip commits.
-
++
 This command tries to handle all combinations in a natural way by
 doing up to three operations on any true tag, commit sequence, and
 reset matching the source name. In a rename, all are renamed together.
@@ -1444,42 +1444,42 @@ In a delete, any matching tag or reset is deleted; then matching
 branch fields are changed to match the branch of the unique descendent
 of the tagged commit, if there is one.  When a tag is moved, no branch
 fields are changed and a warning is issued.
-
++
 Attempts to delete a lightweight tag may fail with the message
-"couldn't determine a unique successor".  When this
+"`couldn't determine a unique successor`".  When this
 happens, the tag is on a commit with multiple children that have
 different branch labels. There is a hole in the specification
 of git fast-import streams that leaves it uncertain how branch
 labels can be safely reassigned in this case; rather than do
-something risky, +reposurgeon+ throws a recoverable
+something risky, `reposurgeon` throws a recoverable
 error.
 
-+reset+ _resetname_  { +create+ | +move+ | +rename+ | +delete+ } [ _arg_ ]::
+`reset` _resetname_  { `create` | `move` | `rename` | `delete` } [ _arg_ ]::
    Create, move, rename, or delete a reset. Create is a special case; it
-   requires a singleton selection which is the associate commit for the
+   requires a singleton selection which is the associated commit for the
    reset, takes as a first argument the name of the reset (which must not
    exist), and ends with the keyword create.
 +
 In the other modes, the first argument must match an
 existing reset name; second argument must be one of the verbs
-"move", "rename", or
-"delete".
+'```move```', '```rename```', or '```delete```'.
 +
-The reset name may use C-style backslash escapes, such as \s.
+The reset name may use C-style backslash escapes, such as `\s`.
 +
-For a "move", a third argument must be a singleton
-selection set. For a "rename", the third argument may be
-any token token that matches a syntactically valid reset name (but not
-the name of an existing reset). For a "delete", no third
+For a '```move```', a third argument must be a singleton
+selection set. For a '```rename```', the third argument may be
+any token that matches a syntactically valid reset name (but not
+the name of an existing reset). For a '```delete```', no third
 argument is required.
 +
-For either name, if it does not contain a "/" the
-prefix "heads/" is prepended. If it does not begin with
-"refs/", "refs/" is prepended.
+For either name, if it does not contain a '```/```' the
+prefix '```heads/```' is prepended. If it does not begin with
+'```refs/```', '```refs/```' is prepended.
 +
 An argument matches a reset's name if it is either the entire
-reference (refs/heads/FOO or refs/tags/FOO for some some value of FOO)
-or the basename (e.g. FOO), or a suffix of the form heads/FOO or tags/FOO.
+reference (`refs/heads/FOO` or `refs/tags/FOO` for some
+value of _FOO_) or the basename (e.g. `FOO`), or a suffix of the
+form `heads/FOO` or `tags/FOO`.
 An unqualified basename is assumed to refer to a head.
 +
 When a reset is renamed, commit branch fields matching the tag are
@@ -1488,11 +1488,11 @@ fields are changed to match the branch of the unique descendent of the
 tip commit of the associated branch, if there is one.  When a reset is
 moved, no branch fields are changed.
 
-+debranch+ _source-branch_ _[target-branch]_::
+`debranch` _source-branch_ [ _target-branch_ ]::
    Takes one or two arguments which must be the names of source and
    target branches; if the second (target) argument is omitted it
    defaults to `refs/heads/master`.  Any trailing segment of a branch
-   name is accepted as a synonym for it; thus +master+ is the same as
+   name is accepted as a synonym for it; thus `master` is the same as
    `refs/heads/master`. Does not take a selection set.
 +
 The history of the source branch is merged into the history of
@@ -1500,20 +1500,20 @@ the target branch, becoming the history of a subdirectory with the
 name of the source branch.  Any resets of the source branch are
 removed.
 
-+strip+ +[blobs|reduce]+::
+`strip` [ `blobs` | `reduce` ]::
    Reduce the selected repository to make it a more tractable test
    case. Use this when reporting bugs.
 +
-With the modifier 'blobs', replace each blob in the repository
+With the modifier '```blobs```', replace each blob in the repository
 with a small, self-identifying stub, leaving all metadata and DAG
 topology intact. This is useful when you are reporting a bug, for
 reducing large repositories to test cases of manageable size.
 +
-A selection set is effective only with the 'blobs' option,
-defaulting to all blobs. The 'reduce' mode always acts on the entire
+A selection set is effective only with the '```blobs```' option,
+defaulting to all blobs. The '```reduce```' mode always acts on the entire
 repository.
 +
-With the modifier 'reduce', perform a topological reduction that
+With the modifier '```reduce```', perform a topological reduction that
 throws out uninteresting commits.  If a commit has all file
 modifications (no deletions or copies or renames) and has exactly one
 ancestor and one descendant, then it may be boring.  To be fully
@@ -1523,19 +1523,19 @@ non-boring child.
 +
 With no modifiers, this command strips blobs.
 
-+ignores+ [ +rename+ ] [ +translate+ ] [ +defaults+ ]::
+`ignores` [ `rename` ] [ `translate` ] [ `defaults` ]::
    Intelligent handling of ignore-pattern files.
    This command fails if no repository has been selected or no preferred write
    type has been set for the repository.  It does not take a selection set.
 +
 If the rename modifier is present, this command attempts to rename all
-ignore-pattern files to whatever is appropriate for the preferred type
-- e.g. .gitignore for git, .hgignore for hg, etc.  This option does not
+ignore-pattern files to whatever is appropriate for the preferred type -
+e.g. _.gitignore_ for git, _.hgignore_ for hg, etc.  This option does not
 cause any translation of the ignore files it renames.
 +
 If the translate modifier is present, syntax translation of each ignore
 file is attempted. At present, the only transformation the code knows
-is to prepend a 'syntax: glob' header if the preferred type is hg.
+is to prepend a '```syntax: glob```' header if the preferred type is hg.
 +
 If the defaults modifier is present, the command attempts to prepend
 these default patterns to all ignore files. If no ignore file is
@@ -1545,50 +1545,50 @@ that have no default ignore patterns (git and hg, in particular).  It
 will also error out when it knows the import tool has already set
 default patterns.
 
-+attribution+ [ _selection_ ] { +show+ | +set+ | +delete+ | +prepend+ |  +append+ } [ _args_ ]::
+`attribution` [ _selection_ ] { `show` | `set` | `delete` | `prepend` | `append` } [ _args_ ]::
    Inspect, modify, add, and remove commit and tag attributions.
 +
 Attributions upon which to operate are selected in much the same way as
 events are selected, as described in <<selections>>.
 _selection_ is an expression composed of
-1-origin attribution-sequence numbers, '$' for last attribution, '..' ranges,
-comma-separated items, '(...)' grouping, set operations '|' union, '&amp;'
-intersection, and '~' negation, and function calls @min(), @max(), @amp(),
-@pre(), @suc(), @srt().
-Attributions can also be selected by visibility set '=C' for committers, '=A'
-for authors, and '=T' for taggers.
-Finally, /_regex_/ will attempt to match the regular
+1-origin attribution-sequence numbers, '```$```' for last attribution,
+'```..```' ranges, comma-separated items, '```(...)```' grouping,
+set operations '```|```' union, '```&```' intersection, and '```~```' negation,
+and function calls `@min()`, `@max()`, `@amp()`, `@pre()`, `@suc()`, `@srt()`.
+Attributions can also be selected by visibility set '```=C```' for committers,
+'```=A```' for authors, and '```=T```' for taggers.
+Finally, '`/_regex_/`' will attempt to match the regular
 expression _regex_ against an attribution name and email
-address; '/n' limits the match to only the name, and '/e' to only the email
-address.
+address; '```/n```' limits the match to only the name, and '```/e```' to only
+the email address.
 +
-With the exception of +show+, all actions require an
+With the exception of '```show```', all actions require an
 explicit event selection upon which to operate. Available actions are:
---
-[_selection_] [ +show+ ] [ >__file__ ]:
++
+
+[ _selection_ ] [ `show` ] [ >__file__ ]:::
    Inspect the selected attributions of the specified events (commits and
-   tags).  The +show+ keyword is optional.  If no attribution
+   tags).  The '```show```' keyword is optional.  If no attribution
    selection expression is given, defaults to all attributions. If no event
    selection is specified, defaults to all events.  Supports > redirection.
 
-_selection_ +set+ [ _name_ ] [ _email_ ] [ _date_ ]::
+_selection_ `set` [ _name_ ] [ _email_ ] [ _date_ ]:::
    Assign _name_, _email_, _date_ to the selected attributions.  As a
    convenience, if only some fields need to be changed, the others can be
    omitted.  Arguments _name_, _email_, and _date_ can be given in any
    order.
 
-[ _selection_ ] +delete+ ::
+[ _selection_ ] `delete` :::
    Delete the selected attributions.  As a convenience, deletes all authors
    if _selection_ is not given.  It is an error to delete the
    mandatory committer and tagger attributions of commit and tag events,
    respectively.
 
-_selection_ +prepend+ [ _name_ ] [ _email_ ] [ _date_ ]::
+_selection_ `prepend` [ _name_ ] [ _email_ ] [ _date_ ]:::
    Insert a new attribution before the first attribution named by
    _selection_.  The new attribution has the same type (_committer_,
    _author_, or _tagger_) as the one before which it is being inserted.
    Arguments _name_, _email_, and _date_ can be given in any order.
---
 +
 If _name_ is omitted, an attempt is made to infer it
 from _email_ by trying to match _email_
@@ -1601,10 +1601,10 @@ As a convenience, if _selection_ is empty or not
 specified a new author is prepended to the author list.
 +
 It is presently an error to insert a new committer or tagger
-attribution.  To change a committer or tagger, use +set+
+attribution.  To change a committer or tagger, use '```set```'
 instead.
 
-_selection_ +append+ [ _name_ ] [ _email_ ] [ _date_ ]::
+_selection_ `append` [ _name_ ] [ _email_ ] [ _date_ ]:::
    Insert a new attribution after the last attribution named by
    _selection_.  The new attribution has the same type (_committer_,
    _author_, or _tagger_) as the one after which it is being inserted.
@@ -1621,15 +1621,15 @@ As a convenience, if _selection_ is empty or not
 specified a new author is appended to the author list.
 +
 It is presently an error to insert a new committer or tagger
-attribution.  To change a committer or tagger, use +set+
+attribution.  To change a committer or tagger, use '```set```'
 instead.
 
-_gitify_::
+`gitify`::
    Attempt to massage comments into a git-friendly form with a blank
    separator line after a summary line.  This code assumes it can insert
-   a blank line if the first line of the comment ends with '.', ',', ':',
-   ';', '?', or '!'.  If the separator line is already present, the comment
-   won't be touched.
+   a blank line if the first line of the comment ends with '```.```', '```,```',
+   '```:```', '```;```', '```?```', or '```!```'.  If the separator line is
+   already present, the comment won't be touched.
 +
 Takes a selection set, defaulting to all commits and tags.
 
@@ -1646,32 +1646,34 @@ hard for a machine to get right, while the second part is prone to errors
 when a human does it.
 
 A Subversion cookie is a comment substring of the form
-\[[SVN:ddddd]] (example: \[[SVN:2355]] with the revision read directly
+'```++[[SVN:ddddd]]++```' (example: '```++[[SVN:2355]]++```')
+with the revision read directly
 via the Subversion exporter, deduced from git-svn metadata, or
-matching a $Revision$ header embedded in blob data for the
+matching a `$Revision$` header embedded in blob data for the
 filename.
 
 A CVS cookie is a comment substring of the form
-\[[CVS:filename:revision]] (example: \[[CVS:src/README:1.23]] with the
-revision matching a CVS $Id$ or $Revision$ header embedded in blob
+'```++[[CVS:filename:revision]]++```'
+(example: '```++[[CVS:src/README:1.23]]++```') with the
+revision matching a CVS `$Id$` or `$Revision$` header embedded in blob
 data for the filename.
 
-A mark cookie is of the form [[:dddd]] and is simply a reference
+A mark cookie is of the form '```++[[:dddd]]++```' and is simply a reference
 to the specified mark. You may want to hand-patch this in when one of
 previous forms is inconvenient.
 
-An action stamp is an RFC3339 timestamp, followed by a '!',
+An action stamp is an RFC3339 timestamp, followed by a '```!```',
 followed by an author email address (author is preferred rather than
 committer because that timestamp is not changed when a patch is
 replayed on to a branch, but the code to make a stamp for a commit
 will fall back to the committer if no author field is present).  It
 attempts to refer to a commit without being VCS-specific.
-Thus, instead of "commit 304a53c2" or "r2355",
-"2011-10-25T15:11:09Z!fred@foonly.com".
+Thus, instead of "```commit 304a53c2```" or "```r2355```",
+"```++2011-10-25T15:11:09Z!fred@foonly.com++```".
 
 The following git aliases allow git to work directly with action
 stamps.  Append it to your _~/.gitconfig_; if you
-already have an [alias] section, leave off the first line.
+already have an `[alias]` section, leave off the first line.
 
 // Keep this updated from reposurgeon-git-aliases
 --------
@@ -1710,31 +1712,31 @@ aware of the possibility and throw a warning when it occurs.
 In order to support reference lifting, reposurgeon internally builds a
 legacy-reference map that associates revision identifiers in older
 version-control systems with commits.  The contents of this map comes
-from three places: (1) cvs2svn:rev properties if the repository was
-read from a Subversion dump stream, (2) $Id$ and $Revision$ headers in
+from three places: (1) `cvs2svn:rev` properties if the repository was
+read from a Subversion dump stream, (2) `$Id$` and `$Revision$` headers in
 repository files, and (3) the _.git/cvs-revisions_
-created by +git cvsimport+.
+created by '```git cvsimport```'.
 
 The detailed sequence for lifting possible references is this: first,
-find possible CVS and Subversion references with the +references+ or
-=N visibility set; then replace them with equivalent cookies; then run
-+references lift+ to turn the cookies into action stamps (using the
+find possible CVS and Subversion references with the `references` or
+`=N` visibility set; then replace them with equivalent cookies; then run
+`references lift` to turn the cookies into action stamps (using the
 information in the legacy-reference map) without having to do the
 lookup by hand.
 
-+references+ [ +list+ | +edit+ | +lift+ ] [>__outfile__ ]::
-   With the modifier 'list', list commit and tag comments for strings
+`references` [ `list` | `edit` | `lift` ] [ >__outfile__ ]::
+   With the modifier '```list```', list commit and tag comments for strings
    that might be CVS- or Subversion-style revision identifiers. This will
    be useful when you want to replace them with equivalent cookies that
    can automatically be translated into VCS-independent action
    stamps. This reporting command supports >-redirection.
-   It is equivalent to '=N list'.
+   It is equivalent to '```=N list```'.
 +
-With the modifier 'edit', edit the set where revision IDs are
+With the modifier '```edit```', edit the set where revision IDs are
 found.  This version of the command supports < and > redirection.
-This is equivalent to '=N edit'.
+This is equivalent to '```=N edit```'.
 +
-With the modifier "lift", attempt to resolve Subversion and CVS
+With the modifier '```lift```', attempt to resolve Subversion and CVS
 cookies in comments into action stamps using the legacy map. An action
 stamp is a timestamp/email/sequence-number combination uniquely
 identifying the commit associated with that blob, as described in
@@ -1749,24 +1751,24 @@ likely to be resolvable.
 [[changelogs]]
 === CHANGELOGS ===
 
-CVS and Subversion do not have separated notions of committer
+CVS, Subversion and Mercurial do not have separated notions of committer
 and author for changesets; when lifted to a VCS that does, like git,
 their one author field is used for both.
 
 However, if the project used the FSF ChangeLog convention,
-many changesets will include a ChangeLog modification  listing an
+many changesets will include a ChangeLog modification listing an
 author for the commit. In the common case that the changeset was
 derived from a patch and committed by a project maintainer,
 but the ChangeLog entry names the actual author, this information
 can be recovered.
 
-Use the "changelogs" command.  This takes no arguments, but may
+Use the '```changelogs```' command.  This takes no arguments, but may
 take a selection set; the default is all commits. It mines the
 selected ChangeLog files for authorship data. 
 
 An optional following argument is a delimited regular expression to
 match the basename of files that should be treated as changelogs. The
-default expression is "/^ChangeLog$/".
+default expression is '```/^ChangeLog$/```'.
 
 It assumes such files are in the format used by FSF projects: entry header
 lines begin with YYYY-MM-DD and are followed by a fullname/address.
@@ -1783,12 +1785,12 @@ attribution header is discarded and the committer date is used.
 However, if the name is an author-map alias with an associated timezone,
 that zone is used.
 
-The Co-Athor convention described in the Linux kerne;s.
-https://git.wiki.kernel.org/index.php/CommitMessageConventions[co-author
-message conventions] is observed/ If an attribution header is followed
-by a white[ace-led line containing only a valid email address. that
-name becomes the payjoad of a a "Co-Author" header that is appended
-to the change comment for the comtaing commit.
+The Co-Author convention described in the Linux kernel's
+https://git.wiki.kernel.org/index.php/CommitMessageConventions[co-author message conventions]
+is observed: If an attribution header is followed
+by a whitespace-led line containing only a valid email address. that
+name becomes the payload of a "Co-Author" header that is appended
+to the change comment for the containing commit.
 
 The command reports statistics on how many commits were altered.
 
@@ -1800,19 +1802,19 @@ there are archived releases of the project surviving from before the
 date of the repository's  initial commit.  It may be desirable to
 insert those releases at the front of the repository history.
 
-To do this, use the "incorporate" command.  This
+To do this, use the '```incorporate```' command.  This
 inserts the contents of specified tarballs as commits.  The tarball
-names are given as arguments; if no arguments, a list is red from
+names are given as arguments; if no arguments, a list is read from
 stdin.  Tarballs may be gzipped or bzipped.  The initial segment of
 each path is assumed to be a version directory and stripped off.  The
 number of segments stripped off can be set with the option
---strip=<n>, n defaulting to 1.
+`--strip=<n>`, _n_ defaulting to 1.
 
 Takes a singleton selection set.  Normally inserts before that commit; with
-the option --after, insert after it.  The default selection set is the very
+the option `--after`, insert after it.  The default selection set is the very
 first commit of the repository.
 
-The option --date can be used to set the commit date. It takes an argument,
+The option `--date` can be used to set the commit date. It takes an argument,
 which is expected to be an RFC3339 timestamp.
 
 The generated commits have a committer field (the invoking user) and
@@ -1823,7 +1825,7 @@ is generated.  A comment recording the tarball name is generated.
 Note that the import stream generated by this command is - while correct -
 not optimal, and may in particular contain duplicate blobs.
 
-With the --firewall option, generate an additional commit after the
+With the `--firewall` option, generate an additional commit after the
 sequence consisting only of deletes crafted to prevent the incorporarted
 content fromm leaking forward.
 
@@ -1836,98 +1838,97 @@ package that form so you don't need to do a lot of error-prone typing.
 For those occasions, reposurgeon supports simple
 forms of named variables and macro expansion.
 
-+assign+ [ _name_ ]::
+`assign` [ _name_ ]::
    Compute a leading selection set and assign it to a symbolic name.
    It is an error to assign to a name that is already assigned, or to
    any existing branch name.  Assignments may be cleared by sequence
    mutations (though not ordinary deletions); you will see a warning
    when this occurs.
 +
-With no selection set and no name, list all assignments.>
+With no selection set and no name, list all assignments.
 +
-If the option --singleton is given, the assignment will throw an error
+If the option `--singleton` is given, the assignment will throw an error
 if the selection set is not a singleton.
 +
 Use this to optimize out location and selection computations
 that would otherwise be performed repeatedly, e.g. in macro calls.
 
-+unassign+ _name_::
+`unassign` _name_::
    Unassign a symbolic name.  Throws an error if the name is not
    assigned.
 
-
-+names+ [>__outfile__ ]::
+`names` [ >__outfile__ ]::
    List the names of all known branches and tags.  Tells
    you what things are legal within angle brackets and
    parentheses.
    
-+define+ _name_ _body_::
+`define` _name_ _body_::
    Define a macro.  The first whitespace-separated token is the
    name; the remainder of the line is the body, unless it is
-   "{", which begins a multi-line macro terminated by
-   a line beginning with "}".
+   "```{```", which begins a multi-line macro terminated by
+   a line beginning with "```}```".
 +
-A later "do" call can invoke this macro.
+A later '```do```' call can invoke this macro.
 +
-The command "define" by itself without a name or
+The command '```define```' by itself without a name or
 body produces a macro list.
 
-+do+ _name_ _arguments_...::
+`do` _name_ _arguments_...::
    Expand and perform a macro.  The first whitespace-separated
    token is the name of the macro to be called; remaining tokens replace
-   {0}, {1}... in the macro definition. Tokens may contain whitespace if
+   `+{0}+`, `+{1}+`... in the macro definition. Tokens may contain whitespace if
    they are string-quoted; string quotes are stripped. Macros can call
    macros.
 +
 If the macro expansion does not itself begin with a selection set,
-whatever set was specified before the "do" keyword is available to
+whatever set was specified before the '```do```' keyword is available to
 the command generated by the expansion.
 
-+undefine+ _name_::
+`undefine` _name_::
    Undefine the named macro.
-+
+
 Here's an example to illustrate how you might use this.  In CVS
 repositories of projects that use the GNU ChangeLog convention, a very
-common pre-conversion artifact is a commit with the comment "*** empty
-log message ***" that modifies only a ChangeLog entry explaining the
+common pre-conversion artifact is a commit with the comment "```++*** empty
+log message ***++```" that modifies only a ChangeLog entry explaining the
 commit immediately previous to it. The following
-+
+
 --------
-define changelog <{0}> &amp; /empty log message/ squash --pushback
+define changelog <{0}> & /empty log message/ squash --pushback
 do changelog 2012-08-14T21:51:35Z
 do changelog 2012-08-08T22:52:14Z
 do changelog 2012-08-07T04:48:26Z
 do changelog 2012-08-08T07:19:09Z
 do changelog 2012-07-28T18:40:10Z
 --------
-+
+
 is equivalent to the more verbose
-+
+
 --------
-<2012-08-14T21:51:35Z> &amp; /empty log message/ squash --pushback
-<2012-08-08T22:52:14Z> &amp; /empty log message/ squash --pushback
-<2012-08-07T04:48:26Z> &amp; /empty log message/ squash --pushback
-<2012-08-08T07:19:09Z> &amp; /empty log message/ squash --pushback
-<2012-07-28T18:40:10Z> &amp; /empty log message/ squash --pushback
+<2012-08-14T21:51:35Z> & /empty log message/ squash --pushback
+<2012-08-08T22:52:14Z> & /empty log message/ squash --pushback
+<2012-08-07T04:48:26Z> & /empty log message/ squash --pushback
+<2012-08-08T07:19:09Z> & /empty log message/ squash --pushback
+<2012-07-28T18:40:10Z> & /empty log message/ squash --pushback
 --------
-+
+
 but you are less likely to make difficult-to-notice errors typing the
 first version.
-+
+
 (Also note how the text regexp acts as a failsafe against the
 possibility of typing a wrong date that doesn't refer to a commit with
 an empty comment. This was a real-world example from the CVS-to-git
 conversion of groff.)
 
-+script+ _filename_ [ _arg_... ]::
+`script` _filename_ [ _arg_... ]::
    Takes a filename and optional following arguments.
    Reads each line from the file and executes it as a command.
 +
 During execution of the script, the script name replaces the
-string $0 and the optional following arguments (if any) replace the
-strings $1, $2 ... $n in the script text. This is done before
-tokenization, so the $1 in a string like "foo$1bar" will
-be expanded.  Additionally, $$ is expanded to the current process ID
+string `$0` and the optional following arguments (if any) replace the
+strings `$1`, `$2` ... `$n` in the script text. This is done before
+tokenization, so the `$1` in a string like '```foo$1bar```' will
+be expanded.  Additionally, `$$` is expanded to the current process ID
 (which may be useful for scripts that use tempfiles).
 +
 Within scripts (and only within scripts) reposurgeon
@@ -1936,15 +1937,15 @@ that the command continues on the next line. Any number of consecutive lines
 thus escaped are concatenated, without the ending backslashes, prior to
 evaluation. Second, a command that takes an input filename argument can instead
 take literal following data in the syntax of a shell here-document. That is: if
-the filename is replaced by "<<EOF", all following lines in the script up
-to a terminating line consisting only of "EOF" will be read, placed in a
-temporary file, and that file fed to the command and afterwards deleted. EOF
+the filename is replaced by '```<<EOF```', all following lines in the script up
+to a terminating line consisting only of '```EOF```' will be read, placed in a
+temporary file, and that file fed to the command and afterwards deleted.  `EOF`
 may be replaced by any string. Backslashes have no special meaning while
 reading a here-document.
 +
-Scripts may have comments.  Any line beginning with a pound sign is
+Scripts may have comments.  Any line beginning with a '```++#++```' is
 ignored. If a line has a trailing position that begins with one or more
-whitespace characters followed by '#', that trailing portion is
+whitespace characters followed by '```++#++```', that trailing portion is
 ignored.
 +
 Scripts may call other scripts to arbitary depth. 
@@ -1955,7 +1956,7 @@ Scripts may call other scripts to arbitary depth.
 Some commands automate fixing various kinds of artifacts
 associated with repository conversions from older systems.
 
-+authors+ [ +read+ | +write+ ] [<__filename__] [>__filename+_]::
+`authors` [ `read` | `write` ] [ <__filename__ ] [ >__filename__ ]::
    Apply or dump author-map information for the specified selection
    set, defaulting to all events.
 +
@@ -1963,7 +1964,7 @@ Lifts from CVS and Subversion may have only usernames local to
 the repository host in committer and author IDs. DVCSes want email
 addresses (net-wide identifiers) and complete names. To supply the map
 from one to the other, an authors file is expected to consist of
-lines each beginning with a local user ID, followed by a '=' (possibly
+lines each beginning with a local user ID, followed by a '```=```' (possibly
 surrounded by whitespace) followed by a full name and email address,
 optionally followed by a timezone offset field.  Thus:
 +
@@ -1977,7 +1978,7 @@ An authors file may also contain lines of this form
 + Ferd J. Foonly <foonly@foobar.com> America/Los_Angeles
 --------
 +
-These are interpreted as aliases for the last preceding '='
+These are interpreted as aliases for the last preceding '```=```'
 entry that may appear in ChangeLog files. When such an alias is
 matched on a ChangeLog attribution line, the author attribution
 for the commit is mapped to the basename, but the timezone is used
@@ -1985,35 +1986,34 @@ as is.  This accommodates people with past addresses (possibly at)
 different locations) unifying such aliases in metadata so searches
 and statistical aggregation will work better.
 +
-An authors file may have comment lines beginning with '#'; these
+An authors file may have comment lines beginning with '```#```'; these
 are ignored.
 +
 When an authors file is applied, email addresses in committer and author
-metadata for which the local ID matches between < and @ are replaced
+metadata for which the local ID matches between `<` and `@` are replaced
 according to the mapping (this handles git-svn lifts). Alternatively,
 if the local ID is the entire address, this is also considered a match
 (this handles what git-cvsimport and cvs2git do). If a timezone was
 specified in the map entry, that person's author and committer dates
 are mapped to it.
 +
-With the 'read' modifier, or no modifier, apply author mapping
-data (from standard input or a <-redirected file).  May be useful
+With the '```read```' modifier, or no modifier, apply author mapping
+data (from standard input or a `<`-redirected file).  May be useful
 if you are editing a repo or dump created by
-+cvs2git+ or by +git-svn+ invoked
-without -A.
+`cvs2git` or by `git-svn` invoked without `-A`.
 +
-With the 'write' modifier, write a mapping file that could be
-interpreted by +authors read+, with entries for each
+With the '```write```' modifier, write a mapping file that could be
+interpreted by '```authors read```', with entries for each
 unique committer, author, and tagger (to standard output or a
->-redirected mapping file). This may be helpful as a start on
+`>`-redirected mapping file). This may be helpful as a start on
 building an authors file, though each part to the right of an equals
 sign will need editing.
 
-+branchify+ [ _path-set_ ]::
+`branchify` [ _path-set_ ]::
    Specify the list of directories to be treated as potential
    branches (to become tags if there are no modifications after the
    creation copies) when analyzing a Subversion repo. This list is
-   ignored when the --nobranch read option is used.  It
+   ignored when the '```--nobranch```' `read` option is used.  It
    defaults to the 'standard layout' set of directories, plus any
    unrecognized directories in the repository root.
 +
@@ -2022,38 +2022,38 @@ escapes are interpreted when parsing the command line.
 +
 With no arguments, displays the current branchification set.
 +
-An asterisk at the end of a path in the set means 'all immediate
+An asterisk at the end of a path in the set means '`__all immediate
 subdirectories of this path, unless they are part of another (longer)
-path in the branchify set'.
+path in the branchify set__`'.
 +
 Note that the branchify set is a property of the reposurgeon
 interpreter, not of any individual repository, and will persist across
 Subversion dumpfile reads. This may lead to unexpected results if you
 forget to re-set it.
 
-+branchmap+ [ _/regex/branch/_... ] ::
+`branchmap` [ _/regex/branch/_... | `reset` ] ::
    Specify the list of regular expressions used for mapping the SVN
-   branches that are detected by branchify. If none of the expressions
+   branches that are detected by `branchify`. If none of the expressions
    match the default behaviour applies. This maps a branch to the name
-   of the last directory, except for trunk and "*" which are
-   mapped to master and root.
+   of the last directory, except for `trunk` and `*` which are
+   mapped to `master` and `root`.
 +
 With no arguments the current regex replacement pairs are
-shown. Passing 'reset' will clear the mapping.
+shown. Passing '```reset```' will clear the mapping.
 +
 String quotes and backslash escapes are *not* interpreted when parsing
 the command line, this would clash with the use of backslashes as
 substitution-part references. If you need to include a non-printing
-character in a regexp, use its C-style escape, e.g. \s for space.
+character in a regexp, use its C-style escape, e.g. `\s` for space.
 +
-The branchify command will match each branch name against regex1
-and if it matches rewrite its branch name to branch1. If not it will
-try regex2 and so forth until it either found a matching regex or
-there are no regexs left. The branch name can use Go
+The `branchify` command will match each branch name against _regex1_
+and if it matches rewrite its branch name to _branch1_. If not it will
+try _regex2_ and so forth until it either found a matching regex or
+there are no regexes left. The branch name can use Go
 backreferences.
 +
-Note that the regular expressions are appended to 'refs/'
-without either the needed 'heads/' or 'tags/'. This allows for
+Note that the regular expressions are appended to '```refs/```'
+without either the needed '```heads/```' or '```tags/```'. This allows for
 choosing the right kind of branch type.
 +
 While the syntax template above uses slashes, any first character will
@@ -2064,29 +2064,29 @@ You must give this command _before_ the
 Subversion repository read it is supposed to affect!  This will not
 affect any other repository type.
 +
-Note that the branchify_map set is a property of the reposurgeon
+Note that the branchmap set is a property of the reposurgeon
 interpreter, not of any individual repository, and will persist across
-Subversion dumpfiile or repository reads. This may lead to unexpected
+Subversion dumpfile or repository reads. This may lead to unexpected
 results if you forget to re-set it.
 
 [[examining-tree-states]]
 === EXAMINING TREE STATES ===
 
-+manifest+ [ _/regular expression/_ ] [>__outfile__ ]::
+`manifest` [ _/regular expression/_ ] [ >__outfile__ ]::
    Takes an optional selection set argument defaulting to all commits, and
    an optional regular expression. For each commit in the selection set,
    print the mapping of all paths in that commit tree to the corresponding blob
    marks, mirroring what files would be created in a checkout of the commit. If a
-   delimited regular expression is given, only print "path -> mark"
+   delimited regular expression is given, only print "_path_ `+->+` _mark_"
    lines for paths matching it. This command supports > redirection.
 
-+checkout+ _directory_::
+`checkout` _directory_::
    Takes a selection set which must resolve to a single commit, and
    a second argument. The second argument is interpreted as a directory
    name.  The state of the code tree at that commit is materialized beneath
    the directory.
 
-+diff+ [>__outfile__ ]::
+`diff` [ >__outfile__ ]::
    Display the difference between commits. Takes a selection-set
    argument which must resolve to exactly two commits. Supports output
    redirection.
@@ -2097,16 +2097,16 @@ results if you forget to re-set it.
 These are backed up by the following housekeeping commands, none of
 which take a selection set:
 
-+help+::
+`help`::
    Get help on the interpreter commands. Optionally follow with
    whitespace and a command name; with no argument, lists all commands. '?'
    also invokes this.
 
-+shell+::
+`shell`::
    Execute the shell command given in the remainder of the line.
    '!' also invokes this.
 
-+prefer+ [ _repotype_ ]::
+`prefer` [ _repotype_ ]::
    With no arguments, describe capabilities of all supported
    systems. With an argument (which must be the name of a supported
    system) this has two effects:
@@ -2128,14 +2128,14 @@ command changed the type of the selected repository, if there is one.
 That behavior interacted badly with attempts to interpret legacy IDs
 and has been removed.
 
-+sourcetype+ [ _repotype_ ]::
+`sourcetype` [ _repotype_ ]::
    Report (with no arguments) or select (with one argument) the current
    repository's source type.  This type is normally set at
    repository-read time, but may remain unset if the source was a stream
    file.
 +
 The source type affects the interpretation of legacy IDs (for
-purposes of the =N visibility set and the 'references' command) by
+purposes of the `=N` visibility set and the '```references```' command) by
 controlling the regular expressions used to recognize them. If no
 preferred output type has been set, it may also change the output
 format of stream files made from the repository.
@@ -2143,19 +2143,19 @@ format of stream files made from the repository.
 The source type is reliably set whenever a live repository is read, or
 when a Subversion stream or Fossil dump is interpreted but not
 necessarily by other stream files. Streams generated by
-cvs-fast-export(1) using the --reposurgeon are detected as CVS. In
+cvs-fast-export(1) using the `--reposurgeon` option are detected as CVS. In
 some other cases, the source system is detected from the presence of
 magic $-headers in contents blobs.
 
-+gc+ [ _percent+ ]::
+`gc` [ _percent_ ]::
    Trigger a garbage collection. Scavenges and removes all blob objects
    that no longer have references, e.g. as a result of delete operqtions
    on repositories. This is followed by a Go-runtime garbage collection.
 +
 The optional argument, if present, is passed as a
-https://golang.org/pkg/runtime/debug/#SetGCPercent[SetPercentGC]
+https://golang.org/pkg/runtime/debug/#SetGCPercent[SetGCPercent]
 call to the Go runtime. The initial value is 100; setting it lower
-causes more frequwent garbage collection and may reduces maximum
+causes more frequent garbage collection and may reduce maximum
 working set, while setting it higher causes less frequent garbage
 collection and will raise maximum working set.
 
@@ -2168,20 +2168,19 @@ circumstances.
 
 The output of most of these commands can individually be redirected to
 a named output file. Where indicated in the syntax, you can prefix the
-output filename with ">" and give it as a following
-argument.
+output filename with '```>```' and give it as a following argument.
 
-+index+ [>__outfile__ ]::
+`index` [ >__outfile__ ]::
    Display four columns of info on objects in the selection set:
-   their number, their type, the associate mark (or '-' if no mark) and a
+   their number, their type, the associate mark (or '```-```' if no mark) and a
    summary field varying by type.  For a branch or tag it's the
    reference; for a commit it's the commit branch; for a blob it's the
    repository path of the file in the blob.
 +
-The default selection set for this command is =CTRU, all objects
+The default selection set for this command is `=CTRU`, all objects
 except blobs.
 
-+resolve+ [_label-text..._]::
+`resolve` [ _label-text..._ ]::
    Does nothing but resolve a selection-set expression
    and echo the resulting event-number set to standard
    output. The remainder of the line after the command is used
@@ -2190,43 +2189,35 @@ except blobs.
 Implemented mainly for regression testing, but may be useful
 for exploring the selection-set language.
 
-_selection_ +resolve+ [>__outfile__ ] [ _label-text..._ ]::
-   Does nothing but resolve an attribution selection-set expression for
-   the selected events and echo the resulting attribution-number set to
-   standard output. The remainder of the line after the command is used
-   as a label for the output.
+`log` [ _logclasses..._ ]::
+    Without an argument, list all log message classes, prepending a `+`
+    if that class is enabled and a `-` if not.
 +
-Implemented mainly for regression testing, but may be useful
-for exploring the selection-set language.
-
-+log+ [ _logclasses..._ ]::
-    Without an argument, list all log message classes, prepending a +
-    if that class is enabled and a - if not.
-+
-Otherswise , it expects a space-separated list of "<+ or -><log
-message class>" entries, and enables (with +) or disables (with -) the
-corresponding log message class. The special keyword "all" can be used
+Otherwise, it expects a space-separated list of '```++<+ or -><log
+message class>++```' entries, and enables (with `+`) or disables (with `-`) the
+corresponding log message class. The special keyword '```all```' can be used
 to affect all the classes at the same time.
 + 
-For instance, "log -all +shout +warn" will disable all classes except
-"shout" and "warn", which is the default setting. "log +all -svnparse"
+For instance, '```++log -all +shout +warn++```' will disable all classes except
+"shout" and "warn", which is the default setting. '```log +all -svnparse```'
 would enable logging everything but messages from the svn parser.
 +
-You can get a list of other log message classes from "help log".
+You can get a list of other log message classes from '```help log```'.
 
-+logfile path+ [ _n_ ]::
-   Error, warning, and diagnostic messages are normall emitted to standard
-   error.  This commandm with a nonempty path argument, directs them to 
-   the specified file instead.
+`logfile` [ _path_ ]::
+   Error, warning, and diagnostic messages are normally emitted to standard
+   error.  This command, with a nonempty _path_ argument, directs them to 
+   the specified file instead.  Without an argument, reports what logfile is
+   set.
 
-+print+ _output-text..._::
+`print` _output-text..._::
    Does nothing but ship its argument line to standard
    output. Useful in regression tests.
 
-+version+ [_version_...]::
+`version` [ _version_... ]::
    With no argument, display the program version and the list of
    VCSes directly supported.  With argument, declare the major version
-   (single digit) or full version (major.minor) under which the enclosing
+   (single digit) or full version (_major_._minor_) under which the enclosing
    script was developed.  The program will error out if the major version
    has changed (which means the surgical language is not backwards
    compatible).
@@ -2235,29 +2226,33 @@ It is good practice to start your lift script with a version
 requirement, especially if you are going to archive it for later
 reference.
 
-+prompt+ [ _format..._ ]::
+`prompt` [ _format..._ ]::
    Set the command prompt format to the value of the command line; with
    an empty command line, display it. The prompt format is evaluated in
    after each command with the following dictionary substitutions:
-   +
-*chosen:* The name of the selected repository, or None if none is currently
++
+--
+[horizontal]
+chosen::: The name of the selected repository, or None if none is currently
 selected.
-+  
-Thus, one useful format might be 'rs[%(chosen)s]%% '.
+--
++
+Thus, one useful format might be '```rs[%(chosen)s]%% ```'.
 +
 More format items may be added in the future.  The default
-prompt corresponds to the format 'reposurgeon%% '. The format line is
-evaluated with shell quotng of tokens, so that spaces can be
+prompt corresponds to the format '```reposurgeon%% ```'. The format line is
+evaluated with shell quoting of tokens, so that spaces can be
 included.
 
-+history+::
+`history`::
    List the commands you have entered this session.
 
-+legacy+ [ +read+ | +write+ ] [__<filename__] [__>filename__]::
+`legacy` [ `read` | `write` ] [ <__filename__ ] [ >__filename__ ]::
    Apply or list legacy-reference information. Does not take a
-   selection set. The 'read' variant reads from standard input or a
-   <-redirected filename; the 'write' variant writes to standard
-   output or a >-redirected filename.
+   selection set. The '```read```' variant reads from standard input or a
+   `<`-redirected filename; the '```write```' variant writes to standard
+   output or a `>`-redirected filename.  If neither is specified, defaults
+   to '```read```'.
 +
 A legacy-reference file maps reference cookies to (committer,
 commit-date, sequence-number) pairs; these in turn (should) uniquely
@@ -2267,23 +2262,23 @@ the cookie followed by an action stamp identifying the commit.
 It should not normally be necessary to use this command.  The
 legacy map is automatically preserved through repository reads and
 rebuilds, being stored in the file _legacy-map_ under
-the repository subdirectory..
+the repository subdirectory.
 
-+set+ [ _option_ ]::
-   Turn on an option flag.  With no arguments, list all options
+`set` [ _option_ ]::
+   Turn on an option flag.  With no arguments, list all options.
 +
 Most options are described in conjunction with the specific
-operations that the modify. One of general interest is
-"compressblobs"; this enables compression on the blob
+operations that they modify. One of general interest is
+'```compressblobs```'; this enables compression on the blob
 files in the internal representation reposurgeon uses for editing
 repositories. With this option, reading and writing of repositories is
 slower, but editing a repository requires less (sometimes much less)
 disk space.
 
-+clear+ [ _option_ ]::
-   Turn off an option flag.  With no arguments, list all options
+`clear` [ _option_ ]::
+   Turn off an option flag.  With no arguments, list all options.
 
-+timing+ [ >__outfile__ ]::
+`timing` [ >__outfile__ ]::
    Display statistics on phase timing in repository analysis.
    Mainly of interest to developers trying to speed up the program.
 +
@@ -2291,24 +2286,24 @@ If the command has following text, this creates a new, named time mark
 that will be visible in a later report; this may be useful during 
 long-running conversion recipes.
 
-+readlimit+ [number]::
+`readlimit` [number]::
    Set a maximum number of commits to read from a stream.  If the limit
    is reached before EOF it will be logged. Mainly useful for
    benchmarking. Without arguments, report the read limit; 0 means
    there is none.
 
-+memory+::
-   Report memory usage.  Runs a garbage-collect before reporting so the figure will better relect
-   storage currently held in loaded repositories; this will not affect the reported high-water
-   mark.
+`memory`::
+   Report memory usage.  Runs a garbage-collect before reporting so the
+   figure will better reflect storage currently held in loaded repositories;
+   this will not affect the reported high-water mark.
 
-+profile+ [ +live+ | +start+ | +save+ ] [ _args..._ ]::
+`profile` [ `live` | `start` | `save` ] [ _args..._ ]::
     Profiling is enabled by default, but viewing the profile data
-    requires either starting the http server with "profile live", or
-    saving it to a file with "profile save". When no arguments are
+    requires either starting the http server with '```profile live```', or
+    saving it to a file with '```profile save```'. When no arguments are
     given it prints out the available types of profiles.
 
-+exit+::
+`exit`::
    Exit, reporting the time. Included here because, while EOT will
    also cleanly exit the interpreter, this command reports elapsed time
    since start.
@@ -2321,11 +2316,11 @@ Mercurial repositories.
 Mercurial branches are exported as branches in the exported
 repository and tags are exported as tags. By default, bookmarks are
 ignored. You can specify explicit handling for bookmarks by setting
-`reposurgeon.bookmarks` in your `.hg/hgrc`. Set the value to the
+'```reposurgeon.bookmarks```' in your _.hg/hgrc_. Set the value to the
 prefix that reposurgeon should use for bookmarks.
 
 For example, if your bookmarks represent branches, put this at
-the bottom of your `.hg/hgrc`:
+the bottom of your _.hg/hgrc_:
 
 --------
 [reposurgeon]
@@ -2334,7 +2329,7 @@ bookmarks=heads/
 
 If you do that, it's your responsibility to ensure that branch names
 do not conflict with bookmark names. You can add a prefix like
-+bookmarks=heads/feature-+ to disambiguate as necessary.
+'```bookmarks=heads/feature-```' to disambiguate as necessary.
 
 Alternatively, you can import directly using
 https://github.com/kilork/hg-git-fast-import[hg-git-fast-import].
@@ -2345,8 +2340,8 @@ test conversions using both methods and compare them.
 [[hg-subrepo]]
 === MERCURIAL SUBREPOSITORIES ===
 The hg extractor does not attempt to recursively handle subrepos.  Rather,
-it will extract the history of the top-level repo, in which .hgsub and
-.hgsubstate will be treated as regular files.  If you wish to translate
+it will extract the history of the top-level repo, in which _.hgsub_ and
+_.hgsubstate_ will be treated as regular files.  If you wish to translate
 these into the semantics of your target VCS, you will need to do so with
 surgical primitives after reading the history into reposurgeon.
 
@@ -2384,16 +2379,16 @@ one that content will still be there. By default, reposurgeon will delete
 the corresponding branches as if the deletion was done in a DVCS, keeping
 only the commits that are also part of other branches' histories, but
 you can tell it to preserve the branches instead and give them unambiguous
-names in the refs/deleted namespace.
+names in the `refs/deleted` namespace.
 
 Bad things can happen when a tag directory is created, copied
 from, deleted, then recreated from a different source directory. This
 is a place where the Subversion model of tags clashes badly with the
-changeset-DAG model used by git and oter DVCSes. Especially if the
-same tag is recreated later!  The obvious thing to do when convetubg
-this sequence would be to just nuke the tag history from from the
+changeset-DAG model used by git and other DVCSes. Especially if the
+same tag is recreated later!  The obvious thing to do when converting
+this sequence would be to just nuke the tag history from the
 deletion back to its branch point, but that will cause problens if a
-copy operation was ever sourced in the deleted (branch and this does
+copy operation was ever sourced in the deleted branch (and this does
 happen!).
 
 === READING SUBVERSION REPOSITORIES ===
@@ -2401,50 +2396,50 @@ happen!).
 Certain optional modifiers on the read command change
 its behavior when reading Subversion repositories:
 
---nobranch::
+`--nobranch`::
 Suppress branch analysis. The generated git repository will mirror the
 whole subversion tree, with trunk and branches as subdirectories.
 No directory deletions are translated to branch deletions, since no
 directories are seen as branches in the first place.
 
---ignore-properties::
+`--ignore-properties`::
 Suppress read-time warnings about discarded property
 settings. 
 
---user-ignores::
-By default reposurgeon filters in-tree .gitignore files found in the history
-because they would clash with those generated from svn:ignore properties.
-Using this option makes .gitignore files be passed through. They will still
-be overridden by generated .gitignore files so this option is often used
-along with --no-automatic-ignores.
+`--user-ignores`::
+By default reposurgeon filters in-tree _.gitignore_ files found in the history
+because they would clash with those generated from `svn:ignore` properties.
+Using this option makes _.gitignore_ files be passed through. They will still
+be overridden by generated _.gitignore_ files so this option is often used
+along with `--no-automatic-ignores`.
 
---use-uuid::
-If the --use-uuid read option is set, the repository's
+`--use-uuid`::
+If the `--use-uuid` read option is set, the repository's
 UUID will be used as the hostname when faking up email addresses, a la
-git-svn.  Otherwise, addresses will be generated the way git cvs-import does
+`git-svn`.  Otherwise, addresses will be generated the way `git cvs-import` does
 it, simply copying the username into the address field.
 
---no-automatic-ignores::
-Do not generate .gitignore files from svn:ignore properties.
+`--no-automatic-ignores`::
+Do not generate _.gitignore_ files from `svn:ignore` properties.
 
---preserve::
+`--preserve`::
 When a branch or tag was deleted in SVN, preserve the history up to
-deletion in a git ref under refs/deleted/, instead of deleting the branch
+deletion in a git ref under `refs/deleted/`, instead of deleting the branch
 and only keeping the commits that are also part of the history of other
 branches.
 
---cvsignores::
-Suppress the normal deletion of .cvsignore files.
+`--cvsignores`::
+Suppress the normal deletion of _.cvsignore_ files.
 
 These modifiers can go anywhere in any order on the read command
 line after the read verb. They must be whitespace-separated.
 
 It is also possible to embed a magic comment in a Subversion
 stream file to set these options. Prefix a space-separated list of
-them with the magic comment " # reposurgeon-read-options:"; the
+them with the magic comment '``` # reposurgeon-read-options:```'; the
 leading space is required. This may be useful when synthesizing test
 loads; in particular, a stream file that does not set up a standard
-trunk/branches/tags directory layout can use this to perform a
+`trunk/branches/tags` directory layout can use this to perform a
 mapping of all commits onto the master branch that the git importer
 will accept.
 
@@ -2453,39 +2448,39 @@ Subversion repository to branches:
 
 * At any given time there is a set of eligible
 paths and path wildcards which declare potential branches.
-See the documentation of the +branchify+
+See the documentation of the `branchify` command
 for how to alter this set, which initially consists of
 {`trunk`, `tags/*`, `branches/*`, and `*`}.
 
-* A repository is considered "flat" if it has no
+* A repository is considered "`__flat__`" if it has no
 directory that matches a path or path wildcard in the branchify set.
-All commits in a flat repository are assigned to branch master, and
+All commits in a flat repository are assigned to branch `master`, and
 what would have been branch structure becomes directory structure.  In
 this case, we're done; all the other rules apply to non-flat
 repos.
 
-* If you give the option --nobranch when reading a Subversion
+* If you give the option `--nobranch` when reading a Subversion
 repository, branch analysis is skipped and the repository is treated
 as though flat (left as a linear sequence of commits on
-refs/heads/master).  This may be useful if your repository
+`refs/heads/master`).  This may be useful if your repository
 configuration is highly unusual and you need to do your own branch
 surgery. Note that this option will disable partitioning of mixed
 commits.
 
-* If "trunk" is eligible, it always becomes the master
+* If '```trunk```' is eligible, it always becomes the master
 branch.
-* If an element of the branchify set ends with +/*+, it is considered
+* If an element of the branchify set ends with `+/*+`, it is considered
 a branch namespace: each immediate subdirectory of it is considered a
 potential branch, unless it itself appears in branchify as a namespace
 If `*` is in the branchify set (which is true by default) all top-level
-directories are also considered potential branches (other than +/trunk+
-which is mapped to master, +/tags+, and +/branches+ which are namespaces
+directories are also considered potential branches (other than `/trunk`
+which is mapped to master, `/tags`, and `/branches` which are namespaces
 by default).
 
 * Files in the top-level directory are assigned to a synthetic branch
-named 'root'. If there is no "trunk" (or rather no master branch), then
-this synthetic 'root' branch becomes the master branch. You can map
-another directory to master using +branchify+ and +branchmap+.
+named '```root```'. If there is no "trunk" (or rather no master branch), then
+this synthetic '```root```' branch becomes the master branch. You can map
+another directory to master using `branchify` and `branchmap`.
 
 * Each potential branch is checked to see if it has commits on it
 after the initial creation or copy.  If there are such commits, or if the
@@ -2516,31 +2511,31 @@ will have a pseudo-decimal part - for example, if Subversion revision 2317
 touches three branches, the three generated commits will have IDs
 2317.1, 2317.2, and 2317.3.
 
-The svn:executable and svn:special properties are translated
-into permission settings in the input stream; svn:executable becomes
-100755 and svn:special becomes 120000 (indicating a symlink; the blob
+The `svn:executable` and `svn:special` properties are translated
+into permission settings in the input stream; `svn:executable` becomes
+100755 and `svn:special` becomes 120000 (indicating a symlink; the blob
 contents will be the path to which the symlink should resolve).
 
-Any cvs2svn:rev properties generated by
-cvs2svn are incorporated into the internal map
+Any `cvs2svn:rev` properties generated by
+`cvs2svn` are incorporated into the internal map
 used for reference-lifting, then discarded.
 
-Normally, per-directory svn:ignore properties become .gitignore files.
-Actual .gitignore files in a Subversion directory are presumed to have
+Normally, per-directory `svn:ignore` properties become _.gitignore_ files.
+Actual _.gitignore_ files in a Subversion directory are presumed to have
 been created by git-svn users separately from native Subversion ignore
 properties and discarded with a warning. It is up to the user to merge
 the content of such files into the target repository by hand.  But
-this behavior is changed by the --user-ignores option which disables
-filtering of in-tree .gitignore files, and the --no-automatic-ignores
-which discards Subversion svn:ignore properties without translation.
+this behavior is changed by the `--user-ignores` option which disables
+filtering of in-tree _.gitignore_ files, and the `--no-automatic-ignores`
+which discards Subversion `svn:ignore` properties without translation.
 
-Normally, .cvsignore files left over from a Subversion repository's
+Normally, _.cvsignore_ files left over from a Subversion repository's
 ancient history as a CVS repository are deleted. The assumption is
 that the repository users want the (presumably more up-to-date)
 Subversion ignore properties to be translated.  However, this
-deletion can be prevented with the --cvsignores read option.
+deletion can be prevented with the `--cvsignores` read option.
 
-svn:mergeinfo properties are interpreted.  Any svn:mergeinfo property on a
+`svn:mergeinfo` properties are interpreted.  Any `svn:mergeinfo` property on a
 revision A with a merge source containing all revisions on a branch from the
 forking point (or the branch start if the histories are independent) up to
 revision B produces a merge link such that the branch tip at revision B becomes
@@ -2550,7 +2545,7 @@ are handled the same way.
 
 All other Subversion properties are discarded. (This may change in a
 future release.) The property for which this is most likely to cause
-semantic problems is svn:eol-style. However, since property-change-only
+semantic problems is `svn:eol-style`. However, since property-change-only
 commits get turned into annotated tags, the translated tags will retain
 information about setting changes.
 
@@ -2562,12 +2557,12 @@ empty directories in Subversion repositories will be lost in
 translation.
 
 Normally, Subversion local usernames are mapped in the style of
-git cvs-import; thus user "foo" becomes "foo <foo>", which is
+`git cvs-import`; thus user '```foo```' becomes '```foo <foo>```', which is
 sufficient to pacify git and other systems that require email
-addresses.  With the option "svn_use_uuid", usernames are mapped in the
-git-svn style, with the repository's UUID used as a fake domain in the
+addresses.  With the option `svn_use_uuid`, usernames are mapped in the
+`git-svn` style, with the repository's UUID used as a fake domain in the
 email address. Both forms can be remapped to real address using
-the +authors read+ command.
+the `authors read` command.
 
 Reading a Subversion stream enables writing of the legacy map as
 'legacy-id' passthroughs when the repo is written to a stream
@@ -2580,29 +2575,29 @@ obvious messages it may emit:
 
 user-created .gitignore ignored::
    This message means means reposurgeon has
-   found a `.gitignore` file in the Subversion
+   found a _.gitignore_ file in the Subversion
    repository it is analyzing. This probably happened because somebody
-   was using +git-svn+ as a live gateway, and created
+   was using `git-svn` as a live gateway, and created
    ignores which may or may not be congruent with those in the generated
-   `.gitignore` files that the Subversion ignore
+   _.gitignore_ files that the Subversion ignore
    properties will be translated into.  You'll need to make a policy
    decision about which set of ignores to use in the conversion, and
-   possibly set the --user-ignores option on read to pass through
-   user-created `.gitignore` files; in that case this
+   possibly set the `--user-ignores` option on read to pass through
+   user-created _.gitignore_ files; in that case this
    warning will not be emitted.
 
 properties set::
    reposurgeon has detected a setting of a
    user-defined property, or the Subversion properties
-   svn:externals. These properties cannot be expressed in an import
+   `svn:externals`. These properties cannot be expressed in an import
    stream; the user is notified in case this is a showstopper for the
    conversion or some corrective action is required, but normally this
    error can be ignored.  This warning is suppressed by the
-   --ignore-properties option.
+   `--ignore-properties` option.
 
-Detected link from <revision> to <revision> might be dubious::
+Detected link from <__revision__> to <__revision__> might be dubious::
    When trying to delect parent links from multiple file copies like what
-   cvs2svn can produce, source revisions of the different copies were not
+   `cvs2svn` can produce, source revisions of the different copies were not
    all the same. The link should probably be monitored because it has a
    non-negligible probability of being slightly wrong. This does not impact
    the tree contents, only the quality of the history.
@@ -2619,7 +2614,7 @@ In git terms, this almost corresponds to a merge of A into B
 followed by a rename of B to A.  Branch B continues to exist, however,
 so we can't do that in translation.  The
 reposurgeon logic does not try to be clever about this,
-because "clever would have rebarbative edge cases; the sequence is
+because "clever" would have rebarbative edge cases; the sequence is
 translated into a deleteall followed by a commit operation that
 recreates the B files under corresponding A names. No merge link is
 created. The commit filling A with a branch copy from B will have
@@ -2627,7 +2622,7 @@ B as its first parent, though, so all that would be needed is to create
 a merge link from the old A before the delete to the commit recreating A.
 
 This case is mentioned here because it is likely to confuse
-the merge-tracking algorithms used, e.g., by git diff, or if you ever
+the merge-tracking algorithms used, e.g., by `git diff`, or if you ever
 try to merge a branch that forked off the old A to a branch spun off the new
 (and expect git to know that you do not want to incorporate old A's changes).
 
@@ -2635,9 +2630,9 @@ try to merge a branch that forked off the old A to a branch spun off the new
 == IGNORE PATTERNS ==
 
 reposurgeon recognizes how supported VCSes represent file ignores (CVS
-.cvsignore files lurking untranslated in older Subversion
+_.cvsignore_ files lurking untranslated in older Subversion
 repositories, Subversion ignore properties,
-.gitignore/.hgignore/.bzrignore file in other systems) and moves
+_.gitignore_/_.hgignore_/_.bzrignore_ file in other systems) and moves
 ignore declarations among these containers on repo input and
 output. This will be sufficient if the ignore patterns are exact
 filenames.
@@ -2646,7 +2641,7 @@ Translation may not, however, be perfect when the ignore patterns are
 Unix glob patterns or regular expressions.  This compatibility table
 describes which patterns will translate; "plain" indicates a plain
 filename with no glob or regexp syntax or negation, "no !" means no
-negated regexps, and "no RE:" means the RE orefix for a regular
+negated regexps, and "no RE:" means the RE prefix for a regular
 expression does not work.
 
 RCS has no ignore files or patterns and is therefore not
@@ -2669,19 +2664,19 @@ The hg rows and columns of the table describes compatibility to
 hg's glob syntax rather than its default regular-expression syntax.
 When writing to an hg repository from any other kind,
 reposurgeon prepends to the output .hgignore a
-"syntax: glob" line.
+'```syntax: glob```' line.
 
 [[style]]
 == TRANSLATION STYLE ==
 
 After converting a CVS, SVN, or BitKeeper repository, check for and remove
 $-cookies in the head revision(s) of the files. The full Subversion
-set is $Date:, $Revision:, $Author:, $HeadURL and $Id:. CVS uses
-$Author:, $Date:, $Header:, $Id:, $Log:, $Revision:, also (rarely)
-$Locker:, $Name:, $RCSfile:, $Source:, and $State:.
+set is `$Date:`, `$Revision:`, `$Author:`, `$HeadURL` and `$Id:`. CVS uses
+`$Author:`, `$Date:`, `$Header:`, `$Id:`, `$Log:`, `$Revision:`, also (rarely)
+`$Locker:`, `$Name:`, `$RCSfile:`, `$Source:`, and `$State:`.
 
 When you need to specify a commit, use the action-stamp format
-that +references lift+ generates when it can resolve
+that `references lift` generates when it can resolve
 an SVN or CVS reference in a comment. It is best that you
 _not vary from this format_, even in trivial ways
 like omitting the 'Z' or changing the 'T' or '!' or ':'. Making action
@@ -2693,7 +2688,7 @@ explanatory comment - for example, if metadata has been garbled or
 missing and you need to point to that fact. It's helpful for
 repository-browsing tools if there is a uniform syntax for this that
 is highly unlikely to show up in repository comments.  We recommend
-enclosing translation notes in [[ ]].  This has the advantage of being
+enclosing translation notes in `[[` `]]`.  This has the advantage of being
 visually similar to the [ ] traditionally used for editorial comments
 in text.
 
@@ -2726,14 +2721,14 @@ EOF
 
 --------
 define lastchange {
-@max(=B &amp; [/ChangeLog/] &amp; /{0}/B)? list
+@max(=B & [/ChangeLog/] & /{0}/B)? list
 }
 --------
 
 List the last commit that refers to a ChangeLog file containing
 a specified string. (The trick here is that ? extends the singleton
 set consisting of the last eligible ChangeLog blob to its set of
-referring commits, and +list+only notices the
+referring commits, and `list` only notices the
 commits.)
 
 --------
@@ -2743,26 +2738,26 @@ script renames.script
 --------
 
 Mass-rename tags, replacing "sample" on the basename with
-"example". Illustrates a general technique of generating reposurgeon commands vis
-shell that you then execute with the "script" command. Supporting this technique
-is the reason as many commands as possible support redirects.
+"example". Illustrates a general technique of generating reposurgeon commands via
+shell that you then execute with the '```script```' command. Supporting this
+technique is the reason as many commands as possible support redirects.
 
 [[extensions]]
 == STREAM SYNTAX EXTENSIONS ==
 
-The event-stream parser in "reposurgeon" supports some extended
-syntax. Exporters designed to work with "reposurgeon" may have a
---reposurgeon option that enables emission of extended syntax;
+The event-stream parser in `reposurgeon` supports some extended
+syntax. Exporters designed to work with `reposurgeon` may have a
+`--reposurgeon` option that enables emission of extended syntax;
 notably, this is true of cvs-fast-export(1).  The remainder of this
 section describes these syntax extensions.  The properties they set
 are (usually) preserved and re-output when the stream file is written.
 
-The token "#reposurgeon" at the start of a comment line in a
+The token '```#reposurgeon```' at the start of a comment line in a
 fast-import stream signals reposurgeon that the remainder is an
-extension command to be interpreted by "reposurgeon".
+extension command to be interpreted by `reposurgeon`.
 
-One such extension command is implemented: +#sourcetype+, which
-behaves identically to the reposurgeon +sourcetype+ command. An
+One such extension command is implemented: '```#sourcetype```', which
+behaves identically to the reposurgeon `sourcetype` command. An
 exporter for a version-control system named "frobozz" could, for
 example, say
 
@@ -2770,12 +2765,12 @@ example, say
 #reposurgeon sourcetype frobozz
 --------
 
-Within a commit, a magic comment of the form "#legacy-id" declares a
+Within a commit, a magic comment of the form '```#legacy-id```' declares a
 legacy ID from the stream file's source version-control system.
 
 Also accepted is the bzr syntax for setting per-commit
 properties. While parsing commit syntax, a line beginning with the
-token "property" must continue with a whitespace-separated
+token '```property```' must continue with a whitespace-separated
 property-name token. If it is then followed by a newline it is taken
 to set that boolean-valued property to true. Otherwise it must be
 followed by a numeric token specifying a data length, a space,
@@ -2800,7 +2795,7 @@ than bzr's will choke on them.
 [[changes]]
 == INCOMPATIBLE LANGUAGE CHANGES ==
 
-In versions before 3.23, "prefer" changed the
+In versions before 3.23, '```prefer```' changed the
 repository type as well as the preferred output format.
 
 In versions before 3.0, the general command syntax put the
@@ -2816,36 +2811,36 @@ commits, not commits and the associated blobs as well. The names
 of the "a" and "c" flags were different.
 
 In reposurgeon versions before 3.0, the delete command had the
-semantics of squash; also, the policy flags did not require a "--"
-prefix. The "--delete" flag was named "obliterate".
+semantics of squash; also, the policy flags did not require a '```--```'
+prefix. The '```--delete```' flag was named "obliterate".
 
-In reposurgeon versions before 3.0, read and
-write optionally took file arguments rather than requiring redirects
-(and the write command never wrote into directories). This was changed
+In reposurgeon versions before 3.0, `read` and
+`write` optionally took file arguments rather than requiring redirects
+(and the `write` command never wrote into directories). This was changed
 in order to allow these commands to have modifiers. These modifiers
 replaced several global options that no longer exist.
 
-In reposurgeon versions before 3.0, the earliest factor in a unite
+In reposurgeon versions before 3.0, the earliest factor in a `unite`
 command always kept its tag and branch names unaltered. The new rule
 for resolving name conflicts, giving priority to the latest factor,
 produces more natural behavior when uniting two repositories end to
 end; the master branch of the second (later) one keeps its name.
 
-In reposurgeon versions before 3.0, the tagify
+In reposurgeon versions before 3.0, the `tagify`
 command expected policies as trailing arguments to alter its behaviour. The new
 syntax uses similarly named options with leading dashes, that can appear
-anywhere after the tagify command
+anywhere after the `tagify` command.
 
-In versions before 2.9. the syntax of "authors", "legacy", "list", and
-what are now "msg{in|out}" was different (and "legacy" was
-"fossils"). They took plain filename arguments rather that using
+In versions before 2.9. the syntax of `authors`, `legacy`, `list`, and
+what are now `msg{in|out}` was different (and `legacy` was
+`fossils`). They took plain filename arguments rather than using
 redirect < and >.
 
-In versions before 4.0, msgin and msgout were named "mailbox_in"
-and "mailbox_out:"; branchify was "branchify_map". Previous
+In versions before 4.0, `msgin` and `msgout` were named "mailbox_in"
+and "mailbox_out:"; `branchify` was "branchify_map". Previous
 versions used the Python variant of regular expressions; some of
 the more idiosyncratic features of these are not replicated in the
-Go implementation..
+Go implementation.
 
 [[limitations]]
 == LIMITATIONS AND GUARANTEES ==
@@ -2875,8 +2870,8 @@ expressed in a new repository.
 Guarantee: Any line in a fast-import stream that is not a part of a
 command reposurgeon parses and understands will be passed through
 unaltered.  At present the set of potential passthroughs is known to
-include the +progress+, the +options+, and +checkpoint+ commands as
-well as comments led by #.
+include the `progress`, `options`, and `checkpoint` commands as
+well as comments led by `#`.
 
 Guarantee: All reposurgeon operations either preserve all repository
 state they are not explicitly told to modify or warn you when they
@@ -2902,7 +2897,7 @@ from a repo or created from scratch, and might or might not be
 destined to be merged to a repo one day. Its exporter only works on
 branches, but its importer creates repos.  Thus, a rebuild operation
 will produce a subdirectory structure that differs from what you
-expect.  Look for your content under the subdirectory 'trunk'.
+expect.  Look for your content under the subdirectory '```trunk```'.
 
 Limitation: under git, signed tags are imported verbatim. However, any
 operation that modifies any commit upstream of the target of the
@@ -2940,7 +2935,7 @@ differ by case only. To avoid the problem on a Mac, do all your
 surgery on an HFS+ file system formatted with case sensitivity
 specifically enabled.
 
-Limitation: If whitespace followed by # appears in a string or
+Limitation: If whitespace followed by `#` appears in a string or
 regexp command argument, it will be misinterpreted as the beginning of
 a line-ending comment and screw up parsing.
 
@@ -2948,8 +2943,8 @@ Guarantee: As version-control systems add support for the
 fast-import format, their repositories will become editable by
 reposurgeon.
 
-Limitations described above are unlikely to change.  Do "help
-bugs" at the reposurgeon prompt to see up-to-date information on
+Limitations described above are unlikely to change.  Do '```help
+bugs```' at the reposurgeon prompt to see up-to-date information on
 reposurgeon bugs and internal problems that are expected to be fixed
 in some future release.
 
@@ -2963,11 +2958,11 @@ git::
 Core git supports both export and import.
 
 bzr::
-Requires bzr plus the bzr-fast-import plugin.
+Requires bzr plus the `bzr-fast-import` plugin.
 
 hg::
-Requires core hg, the hg-fastimport plugin, and the third-party
-hg-fast-export.py script.
+Requires core hg, the `hg-fastimport` plugin, and (unless using reposurgeon's
+built-in hg-extractor) the third-party `hg-fast-export.py` script.
 
 svn::
 Stock Subversion commands support export and import.
@@ -2976,12 +2971,12 @@ darcs::
 Stock darcs commands support export.
 
 CVS::
-Requires cvs-fast-export. Note that the quality of CVS lifts may
+Requires `cvs-fast-export`. Note that the quality of CVS lifts may
 be poor, with individual lifts requiring serious hand-hacking. This
 is due to inherent problems with CVS's file-oriented model.
 
 RCS::
-Requires cvs-fast-export (yes, that's not a typo; cvs-fast-export
+Requires `cvs-fast-export` (yes, that's not a typo; `cvs-fast-export`
 handles RCS collections as well). The caveat for CVS applies.
 
 [[canonicalization]]
@@ -2992,64 +2987,63 @@ policies. Policy authors may need to know more about how a commit's
 file operation sequence is reduced to normal form after operations
 from deleted commits are prepended to it.
 
-Recall that each commit has a list of file operations, each a M
-(modify), D (delete), R (rename), C (copy), or 'deleteall' (delete all
-files). Only M operations have associated blobs.  Normally there is
-only one M operation per individual file in a commit's operation
+Recall that each commit has a list of file operations, each an *M*
+(modify), *D* (delete), *R* (rename), *C* (copy), or 'deleteall' (delete all
+files). Only *M* operations have associated blobs.  Normally there is
+only one *M* operation per individual file in a commit's operation
 list.
 
 To understand how the reduction process works, it's enough to
 understand the case where all the operation in the list are working
 on the same file. Sublists of operations referring to different
 files don't affect each other and reducing them can be thought
-of as separate operations.  Also, a "deleteall" acts as a D for
+of as separate operations.  Also, a "deleteall" acts as a *D* for
 everything and cancels all operations before it in the list. 
 
 The reduction process walks through the list from the beginning
 looking for adjacent pairs of operations it can compose.  The following table
 describes all possible cases and all but one of the reductions.
 
-// &#x2192 is a right arrow 
 |==============================================================================
-| M + D &#x2192; D                 | If a file is modified then deleted, the
-                                     as though it had been  deleted. If the M was the
-		                     only modify for the file, it's removed too.
-| M a + R a b &#x2192; R a b + M b | The purpose of this transformation is
-                                     to push renames toward the beginning of the list,
-                                     where they may become adjacent to another R or C they can
-                                     be composed with. If the M is the only modify operation for
-                                     this file, the rename is dropped.
+| M + D -> D                 | If a file is modified then deleted, the result is
+as though it had been  deleted. If the M was the
+only modify for the file, it's removed too.
+| M a + R a b -> R a b + M b | The purpose of this transformation is
+to push renames toward the beginning of the list,
+where they may become adjacent to another R or C they can
+be composed with. If the M is the only modify operation for
+this file, the rename is dropped.
 | M a + C a b                      | No reduction.
-| M b + R a b &#x2192; nothing     | Should be impossible, and may
-                                     indicate repository corruption.
-| M b + C a b &#x2192; nothing     | The copy undoes the modification.
-| D + M &#x2192; M                 | If a file is deleted and modified, the result
-                                     is as though the deletion had not taken place
-                                     (because M operations store entire files, not
-                                     deltas).
-| D + {D|R|C}                      | These cases should be impossible and would
-                                     suggest the repository has been corrupted.
+| M b + R a b -> nothing     | Should be impossible, and may
+indicate repository corruption.
+| M b + C a b -> nothing     | The copy undoes the modification.
+| D + M -> M                 | If a file is deleted and modified, the result
+is as though the deletion had not taken place
+(because M operations store entire files, not
+deltas).
+| D + {D\|R\|C}                    | These cases should be impossible and would
+suggest the repository has been corrupted.
 | R a b + D a                      | Should never happen, and is another case
-                                     case that would suggest repository corruption.
-| R a b + D b &#x2192; D a         | The delete removes the just-renamed file.
-| {R|C} + M                        | No reduction.
-| R a b + R b c &#x2192; R a c     | The b terms have to match for these
-                                     operations to have made sense when they
-                                     lived in separate commits; if they
-			             don't, it indicates repositorY corruption.
+case that would suggest repository corruption.
+| R a b + D b -> D a         | The delete removes the just-renamed file.
+| {R\|C} + M                       | No reduction.
+| R a b + R b c -> R a c     | The b terms have to match for these
+operations to have made sense when they
+lived in separate commits; if they
+don't, it indicates repository corruption.
 | R a b + C b c                    | No reduction.
-| C a b + D a &#x2192; R a b       |  Copy followed by delete of the source is a rename.
-| C a b + D b &#x2192; nothing     | This delete undoes the copy.
+| C a b + D a -> R a b       |  Copy followed by delete of the source is a rename.
+| C a b + D b -> nothing     | This delete undoes the copy.
 | C a b + R a c                    | No reduction.
-| C a b + R b c &#x2192; C a c     | Copy followed by a rename of the
-                                     target reduces to single copy.
+| C a b + R b c -> C a c     | Copy followed by a rename of the
+target reduces to single copy.
 | C + C                            | No reduction.
 |==============================================================================
 
 [[recovery]]
 == CRASH RECOVERY ==
 
-This section will become relevant only if reposurgeon or something
+This section will become relevant only if `reposurgeon` or something
 underneath it in the software and hardware stack crashes while in the
 middle of writing out a repository, in particular if the target
 directory of the rebuild is your current directory.
@@ -3069,7 +3063,7 @@ a cookie derived from reposurgeon's process
 ID.
 
 . We then make an empty backup directory.  This directory will
-be named `+/path/to/foo.~N~+`, where N is incremented
+be named `+/path/to/foo.~N~+`, where _N_ is incremented
 so as not to conflict with any existing backup directories.
 reposurgeon never, under any circumstances,
 ever deletes a backup directory.
