@@ -12,7 +12,7 @@ interconverting them among version-control systems. I spent much of
 2019 moving the reposurgeon codebase from Python to Go because the
 Python implementation was too slow to be useful on on really large
 repositories.  The workflow it is designed to support is rapid
-iterative improvement of conversion recipes by a himan operator;
+iterative improvement of conversion recipes by a human operator;
 long test cycles disrupt this by making experimentation painful.
 
 Sobversion-to-git conversion of the Gnu Compiler Collection history,
@@ -709,7 +709,7 @@ Additionally, maximum working set drastically decreased. These
 improvements re-enabled the workflow reposurgeon was designed for,
 rapid iterative improvement of conversion recipes.
 
-On January 12th the production conversion of the GC history from
+On January 12th 2020 the production conversion of the GC history from
 Subversion to Git actually took place.
 
 I am no longer a Go novice. :-)
