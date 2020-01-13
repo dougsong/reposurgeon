@@ -327,17 +327,21 @@ hg-regress-patho:
 	@rm -f /tmp/regress$$$$
 
 # Test loading from Subversion
-SVNLOADS := $(shell ls *.svn | sed '/.svn$$/s///')
+SVN_AND_TST_FILES := $(sort $(wildcard *.svn *.tst))
+SVNLOADS := $(shell echo $(SVN_AND_TST_FILES) | sed 's/\([^ ]*\)\.svn \1.tst//g; s/[^ ]*\.tst//g; s/\.svn//g')
 svnload-buildregress:
 	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	for test in $(SVNLOADS); do \
-	    if [ ! -f $${test}.tst ] ; \
+	    if [ -f $${test}.tst ] ; \
 	    then \
-		    echo "Remaking $${test}.chk"; \
-		    rm -f $${test}.chk && make --quiet $${test}.chk \
+		    echo "BUG: $${test} should have been skipped: $${test}.tst exists"; \
+		    exit 1; \
+		fi; \
+		echo "Remaking $${test}.chk"; \
+		rm -f $${test}.chk && make --quiet $${test}.chk \
 			|| exit $(STOPOUT); \
-	    fi \
 	done
+
 svnload-regress:
 	@echo "== Testing loading of Subversion streams:"
 	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT; BUILDOPT="$(BUILDOPT)"; export BUILDOPT;\
