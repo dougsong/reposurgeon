@@ -104,16 +104,18 @@ $(RULES_ROUNDTRIP): roundtrip-%: %
 	rm -f /tmp/rs$$$$ || exit $(STOPOUT)
 
 # Test that all stream files round-trip properly with compression
+RULES_ROUNDTRIP_COMPRESS=$(patsubst %,roundtrip-compress-%,$(wildcard *.fi))
 roundtrip-compress:
 	@echo "=== Testing stream-file round-tripping with compression:" 
-	@for file in *.fi; do \
-	    echo "  $${file}"; \
-	    $(REPOSURGEON) "$(TESTOPT)" "set compressblobs" "read -;write -" \
-		<$$file >/tmp/rs$$$$ || exit $(STOPOUT); \
-	    [ -s /tmp/rs$$$$ ] && diff --text -u $${file} /tmp/rs$$$$ \
+	@$(PARALLEL_MAKE) $(RULES_ROUNDTRIP_COMPRESS)
+
+$(RULES_ROUNDTRIP_COMPRESS): roundtrip-compress-%: %
+	@echo "  $<"; \
+	$(REPOSURGEON) "$(TESTOPT)" "set compressblobs" "read -;write -" \
+		<$< >/tmp/rs$$$$ || exit $(STOPOUT); \
+	[ -s /tmp/rs$$$$ ] && diff --text -u $< /tmp/rs$$$$ \
 		|| exit $(STOPOUT); \
-	    rm -f /tmp/rs$$$$ || exit $(STOPOUT); \
-	done
+	rm -f /tmp/rs$$$$ || exit $(STOPOUT)
 
 # Test that dumping metadata to msgbox form and updating from the message-box
 # is idempotent if you make no changes to the message-box.
