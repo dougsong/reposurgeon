@@ -45,7 +45,7 @@ CONCURRENT_JOBS=$(shell grep ^cpu\\scores /proc/cpuinfo | uniq |  awk '{print $$
 PARALLEL_MAKE=make --output-sync --no-print-directory -j $(CONCURRENT_JOBS)
 
 # This series can change depending on the current development focus
-fastcheck: clean dieclose $(BASIC) $(SUBVERSION)
+fastcheck: clean disclose $(BASIC) $(SUBVERSION)
 	@echo "=== No diff output is good news ==="
 
 # This should always be a full test
