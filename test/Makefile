@@ -119,16 +119,18 @@ $(RULES_ROUNDTRIP_COMPRESS): roundtrip-compress-%: %
 
 # Test that dumping metadata to msgbox form and updating from the message-box
 # is idempotent if you make no changes to the message-box.
+RULES_MESSAGE_BOX=$(patsubst %,messagebox-%,$(wildcard *.fi))
 messagebox:
 	@echo "=== Testing msgout/msgin roundtripping:"
-	@for file in *.fi; do \
-	    echo "  $${file}";\
-	    $(REPOSURGEON) "$(TESTOPT)" "read <$${file}" "edit echo>/dev/null" "write -" \
-		>/tmp/regress$$$$ || exit $(STOPOUT); \
-	    [ -s /tmp/regress$$$$ ] && diff --text -u $${file} /tmp/regress$$$$ \
-		|| exit $(STOPOUT); \
-	done
-	@rm -f /tmp/regress$$$$
+	@$(PARALLEL_MAKE) $(RULES_ROUNDTRIP_COMPRESS)
+
+$(RULES_MESSAGE_BOX): messagebox-%: %
+	@echo "  $${file}";\
+	$(REPOSURGEON) "$(TESTOPT)" "read <$<" "edit echo>/dev/null" "write -" \
+	>/tmp/regress$$$$ || exit $(STOPOUT); \
+	[ -s /tmp/regress$$$$ ] && diff --text -u $< /tmp/regress$$$$ \
+	|| exit $(STOPOUT); \
+	rm -f /tmp/regress$$$$
 
 # General regression testing of commands and output; look at the *.tst and
 # corresponding *.chk files to see which tests this runs.
