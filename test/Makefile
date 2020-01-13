@@ -344,11 +344,11 @@ svnload-buildregress:
 
 svnload-regress:
 	@echo "== Testing loading of Subversion streams:"
+	@$(PARALLEL_MAKE) $(SVNLOADS:%=svnload-regress-%)
+
+$(SVNLOADS:%=svnload-regress-%): svnload-regress-%: %.svn
 	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT; BUILDOPT="$(BUILDOPT)"; export BUILDOPT;\
-	for test in $(SVNLOADS); \
-	do \
-	    if [ ! -f $${test}.tst ] ; \
-	    then \
+	test=$(<:.svn=); \
 		{ $(ECHO) -n "  $${test}.svn"; grep --text '^ ##' $${test}.svn || echo ' ## (no description)'; } | sed -e '/ ##/s//:/' >&2; \
 		$(REPOSURGEON) "$(TESTOPT)" "$(TESTOPT)" "read <$${test}.svn" "prefer git" "write -" >/tmp/regress$$$$ 2>&1 \
 		    || (echo "*** Nonzero return status on $${file}!"; exit $(STOPOUT) ); \
@@ -368,10 +368,8 @@ svnload-regress:
 		    rm -fr /tmp/reposurgeon$$$$\
 		else \
 		    echo "    Skipped, git missing."; \
-		fi \
-	    fi \
-	done
-	@rm -f /tmp/regress$$$$
+	    fi; \
+	rm -f /tmp/regress$$$$
 
 # Perform full regression on SVN streams that have clean conversions -
 # that is, no messages due to branch surgery or whatever.
