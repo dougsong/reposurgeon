@@ -1,5 +1,8 @@
 = reposurgeon project news =
 
+Repository hread::
+     Don't fail on spsces in filenames.
+
 4.0: 2020-01-13::
      Production reposurgeon is now in Go.
      repocutter now patches mergeinfo references correctly when renumbering.
