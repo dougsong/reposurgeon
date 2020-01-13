@@ -376,6 +376,7 @@ svnload-regress:
 # Empty-commit tags generated in gitspace corresponding to branch
 # copies are ignored.
 SVNCLEAN := \
+	references.svn \
 	agito.svn \
 	attrws.svn \
 	authortz.svn \
@@ -425,7 +426,6 @@ SVNCLEAN := \
 	permcopy2.svn \
 	permcopy3.svn \
 	permcopy4.svn \
-	references.svn \
 	replace-dir.svn \
 	rootfirst.svn \
 	samplebranch.svn \
