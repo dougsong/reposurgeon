@@ -43,6 +43,10 @@ AUXTOOLS = repocutter-regress repomapper-regress repotool-regress
 # If we have GNU parallel available, the tests can exploit multiple processors
 RUNNER = $(shell if type parallel >/dev/null 2>&1; then echo "parallel"; else echo "xargs"; fi)
 
+# Exploit make parallelism
+CONCURRENT_JOBS=8
+PARALLEL_MAKE=make --output-sync --no-print-directory -j $(CONCURRENT_JOBS)
+
 # This series can change depending on the current development focus
 fastcheck: clean $(BASIC) $(SUBVERSION)
 	@echo "=== No diff output is good news ==="
@@ -448,18 +452,17 @@ SVNCLEAN := \
 
 liftcheck-regress:
 	@echo "== Testing conversion correctness of Subversion streams at head revision:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
-	if  command -v git >/dev/null 2>&1 &&  command -v svn >/dev/null 2>&1; \
+	@if  command -v git >/dev/null 2>&1 &&  command -v svn >/dev/null 2>&1; \
 	then \
-		make --output-sync --no-print-directory -j 8 \
-			$(SVNCLEAN:%=liftcheck-regress-%); \
+		$(PARALLEL_MAKE) $(SVNCLEAN:%=liftcheck-regress-%); \
 	else \
 		echo "     Skipped, either git or svn is missing"; \
 	fi; \
 	rm -f /tmp/diff$$$
 
-$(SVNCLEAN:%=liftcheck-regress-%): liftcheck-regress-%: %
-	@liftcheck -e emptycommit -e -root $< >/tmp/diff$$$$; \
+$(patsubst %,liftcheck-regress-%,$(wildcard *.svn)): liftcheck-regress-%: %
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
+	liftcheck -e emptycommit -e -root $< >/tmp/diff$$$$; \
 	case $$? in \
 	    0) ;; \
 	    1) if [ $(QUIET) = 1 ]; then echo FAILED; else cat /tmp/diff$$$$; fi; if [ $(STOPOUT) = 1 ]; then exit 1; fi;; \
