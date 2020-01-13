@@ -141,10 +141,14 @@ fi-buildregress:
 	    $(REPOSURGEON) "$(BUILDOPT)" "$(TESTOPT)" "script $${file}.tst testing123" >$${file}.chk \
 		2>&1 || exit $(STOPOUT); \
 	done
+
 fi-regress:
 	@echo "=== Running general tests:"
-	@for file in $(TESTLOADS); do \
-	    ( $(ECHO) -n "  $${file} "; grep --text '##' $${file}.tst  || echo ' ## (no description)' ) | sed -e '/ ##/s//:/' ; \
+	@$(PARALLEL_MAKE) $(TESTLOADS:%=fi-regress-%)
+
+$(TESTLOADS:%=fi-regress-%): fi-regress-%: %.tst
+	@file=$(<:.tst=); \
+	( $(ECHO) -n "  $${file} "; grep --text '##' $${file}.tst  || echo ' ## (no description)' ) | sed -e '/ ##/s//:/' ; \
 	    $(REPOSURGEON) "$(TESTOPT)" "script $${file}.tst testing123" >/tmp/regress$$$$ 2>&1 \
 		|| (echo "*** Nonzero return status on $${file}!"; exit $(STOPOUT) ); \
 	    diff --text -u $${file}.chk /tmp/regress$$$$ >/tmp/diff$$$$; \
@@ -152,9 +156,8 @@ fi-regress:
 	    0) ;; \
 	    1) if [ $(QUIET) = 1 ]; then echo FAILED; else cat /tmp/diff$$$$; fi; if [ $(STOPOUT) = 1 ]; then exit 1; fi;; \
 	    *) echo "*** diff had trouble, status $$?"; exit $(STOPOUT);; \
-	    esac \
-	done
-	@rm -f /tmp/regress$$$$ /tmp/diff$$$$
+	    esac ; \
+	rm -f /tmp/regress$$$$ /tmp/diff$$$$
 
 # Test the git extractor
 GITLOADS = bs
