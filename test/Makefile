@@ -163,18 +163,11 @@ $(TESTLOADS:%=fi-regress-%): fi-regress-%: %.tst
 GITLOADS = bs
 git-regress:
 	@echo "=== Testing git-extractor:"
-	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
-	if command -v git >/dev/null 2>&1 ; \
+	@if command -v git >/dev/null 2>&1 ; \
 	then \
-	    for test in $(GITLOADS); do \
-		if (echo "  $${test}.fi" >&2; \
-		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
-		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
-	    done; \
+		$(PARALLEL_MAKE) $(GITLOADS:%=git-regress-test-%); \
 	else echo "    Skipped, git missing."; exit 0; \
 	fi
-	@rm -f /tmp/regress$$$$
 
 # Test the git extractor with multiple git branches
 GITBRANCHES = be bb
@@ -226,6 +219,19 @@ git-regress-tags:
 	else echo "    Skipped, git missing."; exit 0; \
 	fi
 	@rm -f /tmp/regress$$$$
+
+RULES_GIT_REGRESS=$(patsubst %,git-regress-test-%, \
+			$(GITLOADS) $(GITBRANCHES) $(GITTAGS) $(GITMERGES))
+
+$(RULES_GIT_REGRESS): git-regress-test-%: %.fi
+	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
+	test=$(<:.fi=); \
+		if (echo "  $${test}.fi" >&2; \
+		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
+		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
+		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi; \
+	rm -f /tmp/regress$$$$
+
 
 # Test the hg extractor
 HGLOADS = testrepo2
