@@ -5,5 +5,5 @@ before_script:
 
 test:
   script:
-  - make -k check
-  - cd test; make liftcheck-fullregress
+  - make CONCURRENT_JOBS=4 -k check
+  - cd test; make CONCURRENT_JOBS=4 liftcheck-fullregress
