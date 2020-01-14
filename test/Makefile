@@ -465,7 +465,9 @@ $(patsubst %,liftcheck-regress-%,$(wildcard *.svn)): liftcheck-regress-%: %
 	esac
 
 # This is not part of the normal test sequence becausr the reposurgeon tools are very slow.
-RULE_LIFTCHECK_FULLREGRESS = $(patsubst %,liftcheck-regress-full-%,$(wildcard *.svn))
+# Put references.svn first because it is the longest one to run.
+LOADS_LIFTCHECK_FULLREGRESS = references.svn $(filter-out references.svn,$(wildcard *.svn))
+RULE_LIFTCHECK_FULLREGRESS = $(LOADS_LIFTCHECK_FULLREGRESS:%=liftcheck-regress-full-%)
 liftcheck-fullregress:
 	@echo "== Testing conversion correctness of all SVN revisions:"
 	@if  command -v git >/dev/null 2>&1 &&  command -v svn >/dev/null 2>&1; \
