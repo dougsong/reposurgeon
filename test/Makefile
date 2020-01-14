@@ -481,10 +481,10 @@ $(RULE_LIFTCHECK_FULLREGRESS): liftcheck-regress-full-%: %
 
 # List Subversion streams that don't convert clean without -q -r all
 liftcheck-dirty:
-	@for x in $(SVNCLEAN); do echo $${x} >>goodlist$$; done
-	@sort -o goodlist$$ goodlist$$
-	@ls *.svn | comm -23 - goodlist$$
-	@rm goodlist$$
+	@for x in $(SVNCLEAN); do echo $${x} >>goodlist$$$$; done; \
+	sort -o goodlist$$$$ goodlist$$$$; \
+	ls *.svn | comm -23 - goodlist$$$$; \
+	rm goodlist$$$$
 
 REFLOADS=references mergeinfo-with-split
 legacy-buildregress:
