@@ -314,6 +314,11 @@ You should now have a git repository, but it is likely to have a
 lot of cruft and conversion artifacts in it.  Here are some common
 forms of cruft:
 
+Commit comments and attributions containing non-UTF8 data::
+    You could have metadata in your repository in an encoding
+    incompatible with UTF-8 (Latin-1 is the ). You will probably want
+    to transcode the repo to UTF-8.
+
 Subversion and CVS commit references::
     Often Subversion references will be in the form 'r' followed by a
     string of digits referring to a Subversion commit number. But not
@@ -396,9 +401,11 @@ with reposurgeon follow.
 
 10. If there's a root branch, check for and remove junk commits on it.
 
-11. For the record, make a tag noting time and date of the repo lift.
+11. Use the transcode command to fix up metadata in non-UTF8 encoding,
 
-12. If your target was git, run  `git gc --aggressive`.
+12. For the record, make a tag noting time and date of the repo lift.
+
+14. If your target was git, run  `git gc --aggressive`.
 
 Most of the work will be in the comment-fixup and reference-lifting
 stages. I find, however, that they normally take only a couple of
@@ -436,6 +443,11 @@ Check that the creation date of tags matches what you see in the
 source reopository; this is the easiest way to spot when one has been
 attached to the wrong commit, something that can be manually fixed by
 editing its from field.
+
+The command =I will select all commits that don't decode to UTF-8
+in bothbthe commit comment and attribution parts.  You eyeball those
+to fgure out whatvthe encoding is and apply the transcode command
+to fix things,
 
 Version 2.x and later of reposurgeon have a new
 `merge` command specifically for performing branch merges.
@@ -810,6 +822,9 @@ Makefile.
      New section on importing Mercurial repositories.
      Track the name change of the mailbox commands.
      Google Code is long dead, remove the mention.
+
+Repository head::
+    Add transcoding to UTF-8 as a step.
 
 // Local Variables:
 // compile-command: "make dvcs-migration-guide.html"
