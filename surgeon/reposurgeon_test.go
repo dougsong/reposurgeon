@@ -686,6 +686,28 @@ func TestBlobfile(t *testing.T) {
 	nuke("foo", "")
 }
 
+func TestBlobColor(t *testing.T) {
+	repo := newRepository("fubar")
+	defer repo.cleanup()
+	blob := newBlob(repo)
+	assertTrue(t, blob.colors == 0)
+	assertTrue(t, !blob.colors.Contains(colorEARLY))
+	assertTrue(t, !blob.colors.Contains(colorDELETE))
+	blob.colors.Add(colorEARLY)
+	assertTrue(t, blob.colors.Contains(colorEARLY))
+	assertTrue(t, !blob.colors.Contains(colorDELETE))
+	blob.colors.Add(colorDELETE)
+	assertTrue(t, blob.colors.Contains(colorEARLY))
+	assertTrue(t, blob.colors.Contains(colorDELETE))
+	blob.colors.Remove(colorEARLY)
+	assertTrue(t, !blob.colors.Contains(colorEARLY))
+	assertTrue(t, blob.colors.Contains(colorDELETE))
+	blob.colors.Remove(colorDELETE)
+	assertTrue(t, !blob.colors.Contains(colorEARLY))
+	assertTrue(t, !blob.colors.Contains(colorDELETE))
+	assertTrue(t, blob.colors == 0)
+}
+
 func TestUndecodable(t *testing.T) {
 	var TestTable = []struct {
 		text     string

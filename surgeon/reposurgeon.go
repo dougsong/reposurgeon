@@ -3412,13 +3412,13 @@ func (c *colorSet) Add(a colorType) {
 }
 
 func (c *colorSet) Remove(a colorType) {
-	*c &= colorSet(a)
+	*c &= colorSet(^a)
 }
 func (c *colorSet) Clear() {
 	*c = 0
 }
 
-// Commitvf represents a commit event in a fast-export stream
+// Commit represents a commit event in a fast-export stream
 type Commit struct {
 	legacyID       string        // Commit's ID in an alien system
 	mark           string        // Mark name of commit (may transiently be "")
