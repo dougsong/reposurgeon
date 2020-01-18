@@ -405,7 +405,7 @@ with reposurgeon follow.
 
 12. For the record, make a tag noting time and date of the repo lift.
 
-14. If your target was git, run  `git gc --aggressive`.
+13. If your target was git, run  `git gc --aggressive`.
 
 Most of the work will be in the comment-fixup and reference-lifting
 stages. I find, however, that they normally take only a couple of
