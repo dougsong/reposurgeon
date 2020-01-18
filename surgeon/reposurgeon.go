@@ -3404,21 +3404,21 @@ type colorType uint8
 type colorSet uint8
 
 func (c colorSet) Contains(a colorType) bool {
-	return (c & colorSet(1<<a)) != 0
+	return (c & colorSet(a)) != 0
 }
 
 func (c *colorSet) Add(a colorType) {
-	*c |= colorSet(1 << a)
+	*c |= colorSet(a)
 }
 
 func (c *colorSet) Remove(a colorType) {
-	*c &= colorSet(^(1 << a))
+	*c &= colorSet(a)
 }
 func (c *colorSet) Clear() {
-	*c = colorSet(0)
+	*c = 0
 }
 
-// Commit represents a commit event in a fast-export stream
+// Commitvf represents a commit event in a fast-export stream
 type Commit struct {
 	legacyID       string        // Commit's ID in an alien system
 	mark           string        // Mark name of commit (may transiently be "")
