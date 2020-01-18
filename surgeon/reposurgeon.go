@@ -3404,7 +3404,7 @@ type colorType uint8
 type colorSet uint8
 
 func (c colorSet) Contains(a colorType) bool {
-	return uint8(1<<a) != 0
+	return (c & colorSet(1<<a)) != 0
 }
 
 func (c *colorSet) Add(a colorType) {
