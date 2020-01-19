@@ -4599,7 +4599,7 @@ func (commit *Commit) blobByName(pathname string) ([]byte, bool) {
 	}
 }
 
-// decodable tells whether this commi us enriirely composed of decodable UTF-8.
+// decodable tells whether this commit is entirely composed of decodable UTF-8.
 func (commit *Commit) decodable() bool {
 	valid := func(s string) bool {
 		return utf8.Valid([]byte(s))
@@ -5857,7 +5857,6 @@ type Repository struct {
 	_eventByMark      map[string]Event
 	_namecache        map[string][]int
 	preserveSet       orderedStringSet
-	caseCoverage      orderedIntSet
 	basedir           string
 	uuid              string
 	writeLegacy       bool
@@ -5888,7 +5887,6 @@ func newRepository(name string) *Repository {
 	repo.readtime = time.Now()
 	repo.hintlist = make([]Hint, 0)
 	repo.preserveSet = newOrderedStringSet()
-	repo.caseCoverage = newOrderedIntSet()
 	repo.legacyMap = make(map[string]*Commit)
 	repo.assignments = make(map[string]orderedIntSet)
 	repo.timings = make([]TimeMark, 0)
@@ -8106,7 +8104,6 @@ func (repo *Repository) uniquify(color string, persist map[string]string) map[st
 // otherwise name collisions could occur in the merged repo.
 func (repo *Repository) absorb(other *Repository) {
 	repo.preserveSet = repo.preserveSet.Union(other.preserveSet)
-	repo.caseCoverage = repo.caseCoverage.Union(other.caseCoverage)
 	// Strip feature events off the front, they have to stay in front.
 	front := len(repo.frontEvents())
 	for {
@@ -12082,27 +12079,6 @@ func (rs *Reposurgeon) DoHistory(_line string) bool {
 	for _, line := range rs.history {
 		control.baton.printLogString(line)
 	}
-	return false
-}
-
-func (rs *Reposurgeon) HelpCoverage() {
-	rs.helpOutput("Display the coverage-case set (developer instrumentation).")
-}
-
-// DoCoverage displays the coverage-case set (developer instrumentation).
-func (rs *Reposurgeon) DoCoverage(lineIn string) bool {
-	repo := rs.chosen()
-	if repo == nil {
-		croak("no repo has been chosen.")
-		return false
-	}
-	parse := rs.newLineParse(lineIn, orderedStringSet{"stdout"})
-	defer parse.Closem()
-	for _, commit := range repo.commits(nil) {
-		commit.fileopDump()
-	}
-	repo.caseCoverage.Sort()
-	fmt.Fprintf(parse.stdout, "Case coverage: %v\n", repo.caseCoverage)
 	return false
 }
 

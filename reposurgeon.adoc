@@ -2982,67 +2982,6 @@ RCS::
 Requires `cvs-fast-export` (yes, that's not a typo; `cvs-fast-export`
 handles RCS collections as well). The caveat for CVS applies.
 
-[[canonicalization]]
-== CANONICALIZATION RULES ==
-
-It is expected that reposurgeon will be extended with more deletion
-policies. Policy authors may need to know more about how a commit's
-file operation sequence is reduced to normal form after operations
-from deleted commits are prepended to it.
-
-Recall that each commit has a list of file operations, each an *M*
-(modify), *D* (delete), *R* (rename), *C* (copy), or 'deleteall' (delete all
-files). Only *M* operations have associated blobs.  Normally there is
-only one *M* operation per individual file in a commit's operation
-list.
-
-To understand how the reduction process works, it's enough to
-understand the case where all the operation in the list are working
-on the same file. Sublists of operations referring to different
-files don't affect each other and reducing them can be thought
-of as separate operations.  Also, a "deleteall" acts as a *D* for
-everything and cancels all operations before it in the list. 
-
-The reduction process walks through the list from the beginning
-looking for adjacent pairs of operations it can compose.  The following table
-describes all possible cases and all but one of the reductions.
-
-|==============================================================================
-| M + D -> D                 | If a file is modified then deleted, the result is
-as though it had been  deleted. If the M was the
-only modify for the file, it's removed too.
-| M a + R a b -> R a b + M b | The purpose of this transformation is
-to push renames toward the beginning of the list,
-where they may become adjacent to another R or C they can
-be composed with. If the M is the only modify operation for
-this file, the rename is dropped.
-| M a + C a b                      | No reduction.
-| M b + R a b -> nothing     | Should be impossible, and may
-indicate repository corruption.
-| M b + C a b -> nothing     | The copy undoes the modification.
-| D + M -> M                 | If a file is deleted and modified, the result
-is as though the deletion had not taken place
-(because M operations store entire files, not
-deltas).
-| D + {D\|R\|C}                    | These cases should be impossible and would
-suggest the repository has been corrupted.
-| R a b + D a                      | Should never happen, and is another case
-case that would suggest repository corruption.
-| R a b + D b -> D a         | The delete removes the just-renamed file.
-| {R\|C} + M                       | No reduction.
-| R a b + R b c -> R a c     | The b terms have to match for these
-operations to have made sense when they
-lived in separate commits; if they
-don't, it indicates repository corruption.
-| R a b + C b c                    | No reduction.
-| C a b + D a -> R a b       |  Copy followed by delete of the source is a rename.
-| C a b + D b -> nothing     | This delete undoes the copy.
-| C a b + R a c                    | No reduction.
-| C a b + R b c -> C a c     | Copy followed by a rename of the
-target reduces to single copy.
-| C + C                            | No reduction.
-|==============================================================================
-
 [[recovery]]
 == CRASH RECOVERY ==
 

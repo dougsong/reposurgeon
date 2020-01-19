@@ -40,7 +40,7 @@ The man barrier to translation was that, while at 14KLOC of Python
 reposurgeon was not especially large, the code is very *dense*.  It's
 a DSL that's a structure editor for attributed DAGs - algorithmically
 complex, bristling with graph theory, FSMs, parsing, tricky data
-structures, two robot harnesses driving other tools, and three
+structures, two robot harnesses driving other tools, and two different
 different operator-composition algebras.  It became 21KLOC of Go.
 
 The algorithmic density of reposurgeon is such that it would be a
