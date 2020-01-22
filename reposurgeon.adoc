@@ -387,7 +387,7 @@ A regular expression matches a commit if it matches any path related to
 the commit anywhere in the path. You can use `^` or `$` if you want the
 expression to only match at the beginning or end of paths.  When the '```a```'
 flag is in use, the path expression selects commits whose every path matches the
-regular expression. This is not always a subset of commits selected without the
+regular expression. This is necessarily a subset of commits selected without the
 '```a```'
 flag because it also selects commits with no related paths (e.g. empty commits,
 deletealls and commits with empty trees). If you want to avoid those, you can
