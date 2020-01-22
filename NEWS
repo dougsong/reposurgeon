@@ -3,6 +3,7 @@
 Repository hread::
      Don't fail on spsces in filenames.
      Test suite now uses as many processors as you have.
+     The index command sees blobs by default.
 
 4.0: 2020-01-13::
      Production reposurgeon is now in Go.

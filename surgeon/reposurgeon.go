@@ -11890,23 +11890,10 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 
 func (rs *Reposurgeon) HelpNews() {
 	rs.helpOutput(`
-4.0 differences from the Python 3.x versions:
+4.1 differences from 4.0:
 
-1. whoami() can get useful idenity data out of .muttrc files.
-2. Regular expressions use Go syntax rather than Python, except that.
-   group references are still Pythonically led with a backslash rather
-   than Goishly with $; this is to avoid a collision with $ used as a
-   leader for script arguments.
-   Also, regexp substitutions are always 'g' (all copies).
-3. We now interpret Subversion $Rev$ and $LastChangedRev$ cookies.
-4. git hooks are preserved through surgery.
-5. The set of structure fieldnames that can be used with setfield is smaller.
-   However, all fieldnames for which support was documented will still work.
-6. Subversion dump streams must now be a continuous span of revitions 
-   starting from zero (restriction added for performance reasons).
-7. The branchify_map command is now named branchmap.
-8. The changelogs command takes an optional regexp to select changelog names.
-9. The paths and manifest command require their regexp arguments to be delimited.
+* Stream parses cope with spaces in filenames.
+* The index command sees blobs by default.
 `)
 }
 
@@ -12106,14 +12093,7 @@ func (rs *Reposurgeon) DoIndex(lineIn string) bool {
 	// we can maintain columnation.
 	selection := rs.selection
 	if rs.selection == nil {
-		selection = make([]int, 0)
-		for _, eventid := range repo.all() {
-			event := repo.events[eventid]
-			_, isblob := event.(*Blob)
-			if !isblob {
-				selection = append(selection, eventid)
-			}
-		}
+		selection = repo.all()
 	}
 	parse := rs.newLineParse(lineIn, orderedStringSet{"stdout"})
 	defer parse.Closem()

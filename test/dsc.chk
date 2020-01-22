@@ -1,21 +1,34 @@
+     1 blob       :1    README
      2 branch      -    refs/tags/annotated
      3 commit     :2    refs/tags/annotated
+     4 blob       :3    .gitignore
      5 commit     :4    refs/tags/annotated
+     6 blob       :5    foo/bar/junk
      7 commit     :6    refs/tags/annotated
+     8 blob       :7    .gitignore
      9 commit     :8    refs/tags/annotated
+    10 blob       :9    hello
     11 commit    :10    refs/tags/annotated
     12 commit    :11    refs/tags/annotated
     13 commit    :12    refs/tags/annotated
+    14 blob      :13    README
     15 commit    :14    refs/tags/annotated
     16 commit    :15    refs/tags/annotated
+    17 blob      :16    README
     18 commit    :17    refs/tags/annotated
+    19 blob      :18    README
     20 commit    :19    refs/heads/master
+    21 blob      :20    README
     22 commit    :21    refs/heads/master
+    23 blob      :22    README README2
     24 commit    :23    refs/heads/master
     25 commit    :24    refs/heads/master
     26 commit    :25    refs/heads/master
+    27 blob      :26    README
     28 commit    :27    refs/heads/alternate
+    29 blob      :28    README
     30 commit    :29    refs/heads/alternate
+    31 blob      :30    README
     32 commit    :31    refs/heads/master
     33 branch    :31    refs/heads/master
     34 tag       :17    refs/tags/annotated

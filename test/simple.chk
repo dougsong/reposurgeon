@@ -1,5 +1,5 @@
 read <simple.fi
-index
+~=B index
      2 branch      -    refs/tags/lightweight-sample
      3 commit     :2    refs/tags/lightweight-sample
      5 commit     :4    refs/tags/lightweight-sample
