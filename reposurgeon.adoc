@@ -293,7 +293,7 @@ visibility sets::
                                         including comments, `progress`commands,
                                         and `checkpoint` commands
 | N | Legacy IDs                      | Any comment matching a cookie
-(legacy-ID) format.
+                                        (legacy-ID) format.
 |===================================================================
 
 references::
