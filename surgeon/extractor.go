@@ -1285,12 +1285,12 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 						panic(throw("extract", "%s: failed to stat blobfile for %s: %v", trunc(revision), me.pathname, err))
 					}
 					blob.size = stat.Size()
-					blob.addalias(me.pathname)
 					repo.addEvent(blob)
 					// Its new fileop is added to the commit
 					op := newFileOp(repo)
 					op.construct(opM, me.sig.perms, blobmark.String(), me.pathname)
 					commit.appendOperation(op)
+					blob.appendOperation(op)
 				}
 				rs.visibleFiles[revision][me.pathname] = *me.sig
 			}

@@ -332,7 +332,18 @@ type orderedStringSet []string
 
 func newOrderedStringSet(elements ...string) orderedStringSet {
 	set := make([]string, 0)
-	return append(set, elements...)
+	for _, el := range elements {
+		found := false
+		for _, already := range set {
+			if already == el {
+				found = true
+			}
+		}
+		if !found {
+			set = append(set, el)
+		}
+	}
+	return set
 }
 
 func (s orderedStringSet) Contains(item string) bool {
@@ -2289,7 +2300,7 @@ type Blob struct {
 	abspath      string
 	cookie       Cookie // CVS/SVN cookie analyzed out of this file
 	repo         *Repository
-	pathlist     []string        // In-repo paths associated with this blob
+	oplist       []*FileOp       // In-repo paths associated with this blob
 	pathlistmap  map[string]bool // optimisation for the above, kept in sync
 	start        int64           // Seek start if this blob refers into a dump
 	size         int64           // length start if this blob refers into a dump
@@ -2303,7 +2314,7 @@ const noOffset = -1
 func newBlob(repo *Repository) *Blob {
 	b := new(Blob)
 	b.repo = repo
-	b.pathlist = make([]string, 0)    // These have an implied sequence.
+	b.oplist = make([]*FileOp, 0)    // These have an implied sequence.
 	b.pathlistmap = map[string]bool{} // optimisation for pathlist
 	b.start = noOffset
 	b.blobseq = control.blobseq
@@ -2331,23 +2342,30 @@ func (b *Blob) idMe() string {
 	return fmt.Sprintf("blob@%s", b.mark)
 }
 
-// pathlist is implemented for uniformity with commits and fileops."
+// paths is implemented for uniformity with commits and fileops."
 func (b *Blob) paths(_pathtype orderedStringSet) orderedStringSet {
-	return newOrderedStringSet(b.pathlist...)
-}
-
-func (b *Blob) addalias(argpath string) {
-	if _, ok := b.pathlistmap[argpath]; ok {
-		return
+	lst := newOrderedStringSet()
+	for key := range b.pathlistmap {
+		lst = append(lst, key)
 	}
-	b.pathlist = append(b.pathlist, argpath)
-	b.pathlistmap[argpath] = true
+	sort.Strings(lst)
+	return lst
 }
 
-func (b *Blob) replacealias(pos int, argpath string) {
-	delete(b.pathlistmap, b.pathlist[pos])
-	b.pathlist[pos] = argpath
-	b.pathlistmap[argpath] = true
+func (b *Blob) appendOperation(op *FileOp) {
+	b.oplist = append(b.oplist, op)
+	b.pathlistmap[op.Path] = true
+}
+
+func (b *Blob) removeOperation(op *FileOp) {
+	// Apply the filter-without-allocate hack from Slice Tricks
+	newOps :=  b.oplist[:0]
+	for _, x := range b.oplist {
+		if x != op {
+			newOps = append(newOps, x)
+		}
+	}
+	b.oplist = newOps
 }
 
 func (b *Blob) setBlobfile(argpath string) {
@@ -2568,8 +2586,8 @@ func (b *Blob) moveto(repo *Repository) {
 // clone makes a fresh (uncolored) copy of this blob, pointing at the same file."
 func (b *Blob) clone(repo *Repository) *Blob {
 	c := b // copy scalar fields
-	c.pathlist = make([]string, len(b.pathlist))
-	copy(c.pathlist, b.pathlist)
+	c.oplist = make([]*FileOp, len(b.oplist))
+	copy(c.oplist, b.oplist)
 	c.pathlistmap = map[string]bool{}
 	for k := range b.pathlistmap {
 		c.pathlistmap[k] = true
@@ -2577,7 +2595,7 @@ func (b *Blob) clone(repo *Repository) *Blob {
 	c.colors.Clear()
 	if b.hasfile() {
 		logit(logSHUFFLE,
-			"blob clone for %s (%s) calls os.Link(): %s -> %s", b.mark, b.pathlist, b.getBlobfile(false), c.getBlobfile(false))
+			"blob clone for %s calls os.Link(): %s -> %s", b.mark, b.getBlobfile(false), c.getBlobfile(false))
 		err := os.Link(b.getBlobfile(false), c.getBlobfile(true))
 		if err != nil {
 			panic(fmt.Errorf("Blob clone: %v", err))
@@ -5475,7 +5493,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 					if fileop.ref != "inline" {
 						ref := sp.repo.markToEvent(fileop.ref)
 						if ref != nil {
-							ref.(*Blob).addalias(fileop.Path)
+							ref.(*Blob).appendOperation(fileop)
 						} else {
 							// Crap out on
 							// anything
@@ -13007,6 +13025,7 @@ func (rs *Reposurgeon) DoAdd(line string) bool {
 			fileop.construct(opD, argpath)
 		} else if optype == opM {
 			fileop.construct(opM, perms, mark, argpath)
+			repo.markToEvent(fileop.ref).(*Blob).appendOperation(fileop)
 		} else if optype == opR || optype == opC {
 			fileop.construct(rune(optype), source, target)
 		}
@@ -13150,7 +13169,11 @@ func (rs *Reposurgeon) DoRemove(line string) bool {
 		}
 		removed := ops[ind]
 		event.fileops = append(ops[:ind], ops[ind+1:]...)
-		if target != -1 {
+		if target == -1 {
+			if removed.op == opM {
+				repo.markToEvent(removed.ref).(*Blob).removeOperation(removed)
+			}
+		} else {
 			present := target >= 0 && target < len(repo.events)
 			if !present {
 				croak("out-of-range target event %d", target+1)
@@ -14989,11 +15012,11 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 		return false
 	}
 	isIgnore := func(blob *Blob) bool {
-		if len(blob.pathlist) == 0 {
+		if len(blob.oplist) == 0 {
 			return false
 		}
-		for _, fpath := range blob.pathlist {
-			if !strings.HasSuffix(fpath, rs.ignorename) {
+		for _, fop := range blob.oplist {
+			if !strings.HasSuffix(fop.Path, rs.ignorename) {
 				return false
 			}
 		}
@@ -15027,7 +15050,6 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 				}
 				if !hasIgnoreBlob {
 					blob := newBlob(repo)
-					blob.addalias(rs.ignorename)
 					blob.setContent([]byte(rs.preferred.dfltignores), noOffset)
 					blob.mark = ":insert"
 					repo.insertEvent(blob, repo.eventToIndex(earliest), "ignore-blob creation")
@@ -15035,6 +15057,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 					newop := newFileOp(rs.chosen())
 					newop.construct(opM, "100644", ":insert", rs.ignorename)
 					earliest.appendOperation(newop)
+					blob.appendOperation(newop)
 					repo.renumber(1, nil)
 					respond(fmt.Sprintf("initial %s created.", rs.ignorename))
 				}
@@ -15052,12 +15075,6 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 									rs.preferred.ignorename)
 								setAttr(commit.fileops[idx], attr, newpath)
 								changecount++
-								if fileop.op == opM {
-									blob := repo.markToEvent(fileop.ref).(*Blob)
-									if blob.pathlist[0] == oldpath {
-										blob.replacealias(0, newpath)
-									}
-								}
 							}
 						}
 					}

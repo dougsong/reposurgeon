@@ -1393,7 +1393,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 						node.blobmark.String(),
 						node.path)
 					commit.appendOperation(fileop)
-					sp.repo.markToEvent(fileop.ref).(*Blob).addalias(node.path)
+					sp.repo.markToEvent(fileop.ref).(*Blob).appendOperation(fileop)
 
 					// Sanity check: should be the case that
 					// 1. The node is an add.  This sweeps
