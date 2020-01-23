@@ -7322,6 +7322,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 	for _, event := range repo.events {
 		event.setDelFlag(false)
 	}
+	var delCount int
 	for _, ei := range selected {
 		var newTarget *Commit
 		event := repo.events[ei]
@@ -7338,6 +7339,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 			event.setDelFlag(delete)
 		case *Commit:
 			event.setDelFlag(true)
+			delCount++
 			commit := event.(*Commit)
 			// Decide the new target for tags
 			if tagforward && commit.hasChildren() {
@@ -7510,6 +7512,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 				// No place to move alternatives, no alternative but to nuke them.
 				for _, e := range commit.attachments {
 					e.setDelFlag(true)
+					delCount++
 				}
 			} else {
 				// use a copy of attachments since it
@@ -7554,13 +7557,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 	// Preserve assignments
 	repo.filterAssignments(func(e Event) bool { return e.getDelFlag() })
 	// Do the actual deletions
-	var count int64
-	for _, e := range repo.events {
-		if !e.getDelFlag() {
-			count++
-		}
-	}
-	survivors := make([]Event, 0, count)
+	survivors := make([]Event, 0, len(repo.events)-delCount)
 	for _, e := range repo.events {
 		if !e.getDelFlag() {
 			survivors = append(survivors, e)
