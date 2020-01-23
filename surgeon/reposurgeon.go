@@ -9388,6 +9388,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 				if fileop.ref != "inline" {
 					bi := rl.repo.markToIndex(fileop.ref)
 					blob := rl.repo.events[bi].(*Blob)
+					blob.removeOperation(fileop)
 					//assert(isinstance(blob, Blob))
 					blobs = append(blobs, blob)
 				}
@@ -9457,8 +9458,13 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 			}
 		}
 	}
-	// Patch together ancestry chains in the expunged repo
+	// Resrtore backrefs and patch together ancestry chains in the expunged repo
 	for _, commit := range expunged.commits(nil) {
+		for _, op := range commit.operations() {
+			if op.op == opM {
+				expunged.markToEvent(op.ref).(*Blob).appendOperation(op)
+			}
+		}
 		commit.setParents(nil)
 		oldparents := rl.repo.markToEvent(commit.mark).(*Commit).parentMarks()
 		for _, parent := range oldparents {
