@@ -2357,7 +2357,7 @@ func (b *Blob) appendOperation(op *FileOp) {
 	b.pathlistmap[op.Path] = true
 }
 
-func (b *Blob) removeOperation(op *FileOp) {
+func (b *Blob) removeOperation(op *FileOp) bool {
 	// Apply the filter-without-allocate hack from Slice Tricks
 	newOps :=  b.oplist[:0]
 	for _, x := range b.oplist {
@@ -2366,6 +2366,7 @@ func (b *Blob) removeOperation(op *FileOp) {
 		}
 	}
 	b.oplist = newOps
+	return len(b.oplist) > 0
 }
 
 func (b *Blob) setBlobfile(argpath string) {
@@ -7489,6 +7490,19 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 				}
 				repo.events[latest-1] = parent
 				repo.declareSequenceMutation("squash pushback")
+			}
+
+			// This is where reference counting pays off
+			if delete {
+				for _, op := range commit.operations() {
+					if op.op == opM {
+						idx := repo.markToIndex(op.ref)
+						if idx != -1  && !repo.events[idx].(*Blob).removeOperation(op) {
+							// FIXME: Make this work and nuke gCBlobs.
+							//repo.events[idx].setDelFlag(true)
+						}
+					}
+				}
 			}
 
 			// Move tags && attachments
