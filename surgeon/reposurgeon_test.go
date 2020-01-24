@@ -505,7 +505,7 @@ func TestDateFormats(t *testing.T) {
 	}
 	const DumpSample = "1288205012 +0000"
 	const RFC3339Sample = "2010-10-27T18:43:32Z"
-	const LogSample = "Wed Oct 27 18:43:32 +0000 2010" // Bogus
+	const LogSample = "Wed Oct 27 18:43:32 2010 +0000"
 	testTable := []harness{
 		{DumpSample, toGitdump, DumpSample},
 		{DumpSample, toRFC3339Z, RFC3339Sample},

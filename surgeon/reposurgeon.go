@@ -2028,13 +2028,7 @@ type Date struct {
 // In reality RFC2822 would be "Mon, 02 Aug 2006 15:04:05 -0700",
 // which is Go's RFC1123Z format. (We're ignoring obsolete variants
 // with letter zones and two-digit years.)
-//
-// FIXME: Alas, we cannot yet support GitLogFormat due to an apparent
-// bug in time.Parse() For bug-isolation purposes we're currently
-// faking it with a format Go can handle but that has the tz and year
-// swapped.
-//const GitLogFormat = "Mon Jan 02 15:04:05 2006 -0700"
-const GitLogFormat = "Mon Jan 02 15:04:05 -0700 2006"
+const GitLogFormat = "Mon Jan 02 15:04:05 2006 -0700"
 
 // RFC1123ZNoComma is the swapped format
 const RFC1123ZNoComma = "Mon 02 Jan 2006 15:04:05 -0700"
