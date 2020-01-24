@@ -1,5 +1,46 @@
 = How to report bugs =
 
+== Don't report OOM as a bug!
+
+To do its job, reposurgeon needs to hold all of your history's metadata
+in memory. That doesn't mean the content part, but does mean all of
+the changeset attributions, comments, and tags.  Given a large enough
+repository, this will overrun the RAM of a small machine. If this
+happens to you, your reposurgeon instance will die abruptly with an
+OOM (Out Of Memory) error while attempting to read in your repository.
+
+It is extremely unlikely that this is due to a bug in reposurgeon.
+Before filing an issue about it, there is a procedure you should try.
+It consists of bisecting on the parameter the Go language runtime
+uses to control the freqency of garbage collection.  You can set this
+using the envronment variable GOGC or reposurgeon's "gc" command.
+
+GGC defaults to 100, which instructs the runtime to garbage-collect
+when the heap size is 100% bigger than (i.e., twice) the size of the
+reachable objects after the last garbage collection.  To increase the
+frequency of GC, usually resulting in a lower memory high-water mark,
+decrease that percentage threshold.  To decrease gc frequency, incease
+the threshold so the runtimer tolerares a larger heap. 
+
+To troubleshoot your OOM problem, bisect on this threshold to find
+the highest value that will avoid OOM.  Start by cutting it to 50,
+then to 25, then to 12, then to 6.  If you find a value that allows
+you to read to completion, you may want to try increasing it by
+a half interval (e,g. 50 to 75, 25 to 37, etc.) to get back some
+throughput.
+
+If your repository won't read in at GOGC=6 you have a real problem.
+Unfortunately, it's not one the reposurgeon devteam can help you
+with; the correct solution to it is to do your conversion on a machine
+with more RAM.  64GB should be sufficient.  The largest repository
+the reposurgeon devteam has ever seen (the history of GCC, 280K
+Subversion commits) fit on a 128GB machine with GOGC=30.
+
+If you can't read your history onto a 128GB machine with GOGC=30,
+*then* maybe the reposurgeon devteam ought to hear about it.
+
+== How ro report non-OOM bugs
+
 reposurgeon is an extremely algorithmically complex program.  It may
 still have bugs when dealing with strange corner cases in older
 repositories.
@@ -73,11 +114,11 @@ dump so that it ends just after the error is triggered.  Again, check
 to ensure that the bug reproduces on the truncated dump.
 
 If the error message doesn't tell you where the problem occurred, try
-a bisection process.  Throw out the last half of the events in the
-dump; check to see if the bug reproduces.  If it does, repeat; it it
-does not, throw out the last quarter, then the last eighth, and so
-forth.  Keep this up until you can no longer drop events without
-making the bug go away.
+a bisection process.  Use the --readlimit option of the read to ignore
+the last half of the events in the dump; check to see if the bug
+reproduces.  If it does, repeat; it it does not, throw out the last
+quarter, then the last eighth, and so forth.  Keep this up until you
+can no longer drop events without making the bug go away.
 
 Bisection is more effective than you might expect, because the kinds
 of repository malformations that trigger misbehavior from reposurgeon
