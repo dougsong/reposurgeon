@@ -1129,7 +1129,8 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 						subnode.revision = node.revision
 						subnode.fromPath = found.path
 						subnode.fromRev = found.revision
-						//subnode.fromHash = found.contentHash
+						subnode.contentHash = found.contentHash
+						//subnode.fromHash = found.fromHash
 						subnode.props = found.props
 						subnode.action = sdADD
 						subnode.kind = sdFILE
