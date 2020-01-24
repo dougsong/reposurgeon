@@ -10140,35 +10140,35 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 			return
 		}
 		// Fall through
-
-		file, err1 := ioutil.TempFile(".", "rse")
-		if err1 != nil {
-			croak("creating tempfile for edit: %v", err1)
-			return
-		}
-		defer os.Remove(file.Name())
-		for _, i := range selection {
-			event := rs.chosen().events[i]
-			switch event.(type) {
-			case *Commit:
-				file.WriteString(event.(*Commit).emailOut(nil, i, nil))
-			case *Tag:
-				file.WriteString(event.(*Tag).emailOut(nil, i, nil))
-			}
-		}
-		file.Close()
-		cmd := exec.Command(editor, file.Name())
-		// Can't use LineParse defaults here, one point at the baton.
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err := cmd.Run()
-		if err != nil {
-			croak("running editor: %v", err)
-			return
-		}
-		rs.DoMsgin("<" + file.Name())
 	}
+
+	file, err1 := ioutil.TempFile(".", "rse")
+	if err1 != nil {
+		croak("creating tempfile for edit: %v", err1)
+		return
+	}
+	defer os.Remove(file.Name())
+	for _, i := range selection {
+		event := rs.chosen().events[i]
+		switch event.(type) {
+		case *Commit:
+			file.WriteString(event.(*Commit).emailOut(nil, i, nil))
+		case *Tag:
+			file.WriteString(event.(*Tag).emailOut(nil, i, nil))
+		}
+	}
+	file.Close()
+	cmd := exec.Command(editor, file.Name())
+	// Can't use LineParse defaults here, one point at the baton.
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		croak("running editor: %v", err)
+		return
+	}
+	rs.DoMsgin("<" + file.Name())
 }
 
 // Filter commit metadata (and possibly blobs) through a specified hook.
