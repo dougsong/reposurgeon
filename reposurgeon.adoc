@@ -1015,11 +1015,12 @@ one "done" and it will be at the end of the events.
    selection set have the same SHA1, throw away all but the first, and change
    fileops referencing them to instead reference the (kept) first blob.
 
-`msgout` [ >__outfile__ ] [ ``--filter=``/__regex__/ ]::
+`msgout` [ >__outfile__ ] [ ``--filter=``/__regex__/ ] [ `--blobs` ]::
    Emit a file of messages in RFC2822 format representing
    the contents of repository metadata. Takes a selection set; members of
    the set other than commits, annotated tags, and passthroughs are
-   ignored (that is, presently, blobs and resets).
+   ignored (that is, presently, blobs and resets), except that if the
+   `--blobs` option is passed, blobs will also be included.
 +
 May have an option `--filter`, followed by `=` and a `/`-enclosed
 regular expression.  If this is given, only headers with names
@@ -1161,7 +1162,7 @@ must use context to identify which particular encodings were used in
 particular event spans and compose appropriate transcode commands
 to fix them up.
 
-`edit`::
+`edit` [ `--blobs` | `--not-last` ] ::
    Report the selection set of events to a tempfile as `msgout` does,
    call an editor on it, and update from the result as `msgin` does.
    If you do not specify an editor name as second argument, it will be
@@ -1173,7 +1174,13 @@ to fix them up.
 Normally this command ignores blobs because
 `msgout` does.  However, if you specify a
 selection set consisting of a single blob, your editor will be called
-directly on the blob file.
+directly on the blob file; alternatively, as with `msgout`, the `--blobs`
+option will include blobs in the file.
++
+In the singleton blob case (without `--blobs`), will warn if the blob to
+be edited appears in any commits whose descendants modify the same blob
+(since changes will not propagate to the descendant versions).  This
+warning may be suppressed (e.g. in scripts) with the `--not-last` option.
 +
 Supports < and > redirection.
 

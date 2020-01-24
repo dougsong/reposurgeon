@@ -2659,6 +2659,34 @@ func (b Blob) String() string {
 	return bld.String()
 }
 
+// emailOut enables DoMsgout() to report blobs, if requested with --blobs.
+func (blob *Blob) emailOut(modifiers orderedStringSet,
+	eventnum int, filterRegexp *regexp.Regexp) string {
+	msg, _ := newMessageBlock(nil)
+	msg.setHeader("Event-Number", fmt.Sprintf("%d", eventnum+1))
+	msg.setHeader("Event-Mark", blob.mark)
+	msg.setPayload(blob.getComment())
+
+	if filterRegexp != nil {
+		msg.filterHeaders(filterRegexp)
+	}
+
+	return msg.String()
+}
+
+// emailIn updates this blob from a parsed email message.
+func (blob *Blob) emailIn(msg *MessageBlock, fill bool) bool {
+	modified := false
+	newcontent := msg.getPayload()
+	if newcontent != blob.getComment() {
+		logit(logEMAILIN, "in %s, content is modified %q -> %q",
+			blob.idMe(), blob.getComment(), newcontent)
+		modified = true
+		blob.setContent([]byte(newcontent), noOffset)
+	}
+	return modified
+}
+
 // Tag describes a a gitspace annotated tag object
 type Tag struct {
 	repo       *Repository
@@ -10174,13 +10202,13 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 		control.setAbort(false)
 	}
 	// Special case: user selected a single blob
-	if len(selection) == 1 {
+	if len(selection) == 1 && !parse.options.Contains("--blobs") {
 		singleton := rs.chosen().events[selection[0]]
 		if blob, ok := singleton.(*Blob); ok {
 			for _, commit := range rs.chosen().commits(nil) {
 				for _, fileop := range commit.operations() {
 					if fileop.op == opM && fileop.ref == singleton.getMark() {
-						if len(commit.findSuccessors(fileop.Path)) > 0 {
+						if len(commit.findSuccessors(fileop.Path)) > 0 && !parse.options.Contains("--not-last") {
 							croak("beware: not the last 'M %s' on its branch", fileop.Path)
 						}
 						break
@@ -10208,6 +10236,10 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 			file.WriteString(event.(*Commit).emailOut(nil, i, nil))
 		case *Tag:
 			file.WriteString(event.(*Tag).emailOut(nil, i, nil))
+		case *Blob:
+			if parse.options.Contains("--blobs") {
+				file.WriteString(event.(*Blob).emailOut(nil, i, nil))
+			}
 		}
 	}
 	file.Close()
@@ -12005,6 +12037,8 @@ presently, blobs and resets). Supports > redirection.
 May have an option --filter, followed by = and a /-enclosed regular expression.
 If this is given, only headers with names matching it are emitted.  In this
 control the name of the header includes its trailing colon.
+
+Blobs may be included in the output with the option --blobs.
 `)
 }
 
@@ -12038,6 +12072,11 @@ func (rs *Reposurgeon) DoMsgout(lineIn string) bool {
 			return v.emailOut(orderedStringSet{}, i, filterRegexp)
 		case *Tag:
 			return v.emailOut(orderedStringSet{}, i, filterRegexp)
+		case *Blob:
+			if parse.options.Contains("--blobs") {
+				return v.emailOut(orderedStringSet{}, i, filterRegexp)
+			}
+			return ""
 		default:
 			return ""
 		}
@@ -12324,6 +12363,11 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 			if tag.emailIn(update, false) {
 				changers = append(changers, update)
 			}
+		case *Blob:
+			blob := event.(*Blob)
+			if blob.emailIn(update, false) {
+				changers = append(changers, update)
+			}
 		}
 	}
 	if control.isInteractive() {
@@ -12355,7 +12399,8 @@ Debian, Ubuntu and their derivatives.
 
 Normally this command ignores blobs because msgout does.
 However, if you specify a selection set consisting of a single
-blob, your editor will be called on the blob file.
+blob, your editor will be called on the blob file; alternatively,
+as with msgout, the --blobs option will include blobs in the file.
 
 Supports < and > redirection.
 `)
