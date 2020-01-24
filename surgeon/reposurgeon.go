@@ -10137,6 +10137,8 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 				}
 			}
 			runProcess(editor+" "+blob.materialize(), "editing")
+			// recalculate blob.size
+			blob.setBlobfile(blob.getBlobfile(false))
 			return
 		}
 		// Fall through
