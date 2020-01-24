@@ -2308,7 +2308,7 @@ const noOffset = -1
 func newBlob(repo *Repository) *Blob {
 	b := new(Blob)
 	b.repo = repo
-	b.oplist = make([]*FileOp, 0)    // These have an implied sequence.
+	b.oplist = make([]*FileOp, 0)     // These have an implied sequence.
 	b.pathlistmap = map[string]bool{} // optimisation for pathlist
 	b.start = noOffset
 	b.blobseq = control.blobseq
@@ -2353,7 +2353,7 @@ func (b *Blob) appendOperation(op *FileOp) {
 
 func (b *Blob) removeOperation(op *FileOp) bool {
 	// Apply the filter-without-allocate hack from Slice Tricks
-	newOps :=  b.oplist[:0]
+	newOps := b.oplist[:0]
 	for _, x := range b.oplist {
 		if x != op {
 			newOps = append(newOps, x)
@@ -7493,7 +7493,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 				for _, op := range commit.operations() {
 					if op.op == opM {
 						idx := repo.markToIndex(op.ref)
-						if idx != -1  && !repo.events[idx].(*Blob).removeOperation(op) {
+						if idx != -1 && !repo.events[idx].(*Blob).removeOperation(op) {
 							// FIXME: Make this work and nuke gCBlobs.
 							//repo.events[idx].setDelFlag(true)
 						}
