@@ -7494,8 +7494,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 					if op.op == opM {
 						idx := repo.markToIndex(op.ref)
 						if idx != -1 && !repo.events[idx].(*Blob).removeOperation(op) {
-							// FIXME: Make this work and nuke gCBlobs.
-							//repo.events[idx].setDelFlag(true)
+							repo.events[idx].setDelFlag(true)
 						}
 					}
 				}
@@ -7579,6 +7578,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 
 	// Cleanup
 	repo.cleanLegacyMap()
+	// FIXME: nuke gcBlobs()
 	if !control.flagOptions["defergc"] {
 		repo.gcBlobs()
 	}
