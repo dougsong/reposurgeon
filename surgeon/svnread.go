@@ -45,12 +45,6 @@ import (
 	"unsafe" // Actually safe - only uses Sizeof
 )
 
-var defaultIgnoreHash string
-
-func init() {
-	defaultIgnoreHash = fmt.Sprintf("%s", subversionDefaultIgnores)
-}
-
 type svnReader struct {
 	revisions    []RevisionRecord
 	streamview   []*NodeAction // All nodes in stream order
@@ -2389,7 +2383,7 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 		return false
 	}
 
-	defaultIgnoreMark := ""
+	var defaultIgnoreBlob *Blob
 	ignoreOp := func(nodepath string, explicit string) *FileOp {
 		var buf bytes.Buffer
 		if nodepath == ".gitignore" {
@@ -2409,10 +2403,14 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 			op.construct(opM, "100644", "inline", nodepath)
 			op.inline = ignores
 		} else {
-			if defaultIgnoreMark == "" {
-				defaultIgnoreMark = sp.repo.newmark()
+			if defaultIgnoreBlob == nil {
+				defaultIgnoreBlob = newBlob(sp.repo)
+				defaultIgnoreBlob.setContent(
+					[]byte(subversionDefaultIgnores), noOffset)
+				defaultIgnoreBlob.setMark(sp.repo.newmark())
 			}
-			op.construct(opM, "100644", defaultIgnoreMark, nodepath)
+			op.construct(opM, "100644", defaultIgnoreBlob.getMark(), nodepath)
+			defaultIgnoreBlob.appendOperation(op)
 		}
 		return op
 	}
@@ -2504,12 +2502,9 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 		baton.percentProgress(uint64(index) + 1)
 	}
 
-	if defaultIgnoreMark != "" {
-		blob := newBlob(sp.repo)
-		blob.setContent([]byte(subversionDefaultIgnores), noOffset)
-		blob.setMark(defaultIgnoreMark)
-		sp.repo.insertEvent(blob, len(sp.repo.frontEvents()),
-			"creating default ignore")
+	if defaultIgnoreBlob != nil {
+		sp.repo.insertEvent(defaultIgnoreBlob, len(sp.repo.frontEvents()),
+			"inserting default ignore")
 	}
 
 	baton.endProgress()
