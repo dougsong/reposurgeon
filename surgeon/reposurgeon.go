@@ -7628,10 +7628,6 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 
 	// Cleanup
 	repo.cleanLegacyMap()
-	// FIXME: nuke gcBlobs()
-	if !control.flagOptions["defergc"] {
-		repo.gcBlobs()
-	}
 	return nil
 }
 
