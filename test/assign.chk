@@ -13,7 +13,7 @@ print Check that sequence mutation does not invalidate assignments
 Check that sequence mutation does not invalidate assignments
 <2010-11-05T22:47:47Z> delete
 reposurgeon: warning: commit :4 to be deleted has non-delete fileops.
-reposurgeon: assignments invalidated by GC
+reposurgeon: assignments invalidated by squash/delete
 <fubar> list
 reposurgeon: couldn't match a name at <fubar>
 print Check that deleting the assigned commit does

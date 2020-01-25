@@ -7564,7 +7564,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 		}
 	}
 	repo.events = survivors
-	repo.declareSequenceMutation("")
+	repo.declareSequenceMutation("squash/delete")
 	// Canonicalize all the commits that got ops pushed to them
 	if coalesce {
 		for _, commit := range altered {
