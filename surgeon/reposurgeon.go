@@ -2544,13 +2544,10 @@ func (b Blob) getMark() string {
 
 // setMark sets the blob's mark
 func (b *Blob) setMark(mark string) string {
-	if b.repo != nil {
-		if b.repo._eventByMark == nil {
-			b.repo.memoizeMarks()
-		}
-		b.repo._eventByMark[mark] = b
-	}
 	b.mark = mark
+	if b.repo != nil {
+		b.repo.invalidateMarkToIndex()
+	}
 	return mark
 }
 
@@ -3983,15 +3980,10 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 
 // setMark sets the commit's mark
 func (commit *Commit) setMark(mark string) string {
-	if commit.repo != nil {
-		commit.repo.maplock.Lock()
-		defer commit.repo.maplock.Unlock()
-		if commit.repo._eventByMark == nil {
-			commit.repo.memoizeMarks()
-		}
-		commit.repo._eventByMark[mark] = commit
-	}
 	commit.mark = mark
+	if commit.repo != nil {
+		commit.repo.invalidateMarkToIndex()
+	}
 	return mark
 }
 
@@ -5937,7 +5929,6 @@ type Repository struct {
 	_markToIndex      map[string]int
 	_markToIndexCalls int // Call count between last invalidation and cache creation
 	_markToIndexLock  sync.Mutex
-	_eventByMark      map[string]Event
 	_namecache        map[string][]int
 	preserveSet       orderedStringSet
 	basedir           string
@@ -6001,27 +5992,11 @@ func (repo *Repository) cleanup() {
 		fmt.Sprintf("reposurgeon: cleaning up %s", repo.subdir("")))
 }
 
-// memoizeMarks rebuilds the mark cache
-func (repo *Repository) memoizeMarks() {
-	repo._eventByMark = make(map[string]Event)
-	for _, event := range repo.events {
-		key := event.getMark()
-		if key != "" {
-			repo._eventByMark[key] = event
-		}
-	}
-}
-
 // markToEvent finds an object by mark
 func (repo *Repository) markToEvent(mark string) Event {
-	repo.maplock.Lock()
-	defer repo.maplock.Unlock()
-	if repo._eventByMark == nil {
-		repo.memoizeMarks()
-	}
-	d, ok := repo._eventByMark[mark]
-	if ok {
-		return d
+	idx := repo.markToIndex(mark)
+	if idx != -1 {
+		return repo.events[idx]
 	}
 	return nil
 }
@@ -6350,8 +6325,7 @@ func (repo *Repository) named(ref string) orderedIntSet {
 }
 
 func (repo *Repository) invalidateObjectMap() {
-	// Force an object-map rebuild on the next mark lookup or mark set.
-	repo._eventByMark = nil
+	repo.invalidateMarkToIndex()
 }
 
 func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) error {
@@ -15157,7 +15131,6 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 					repo.insertEvent(blob, repo.eventToIndex(earliest), "ignore-blob creation")
 					// FIXME: this does not force rebuild of the event map, Correct?
 					repo.declareSequenceMutation("ignore creation")
-					repo._eventByMark[":insert"] = blob
 					newop := newFileOp(rs.chosen())
 					newop.construct(opM, "100644", ":insert", rs.ignorename)
 					earliest.appendOperation(newop)
