@@ -4466,9 +4466,8 @@ func (commit *Commit) canonicalize() {
 			newops.set(cpath, ne.Copy())
 		}
 	}
-	// Now replace the Commit fileops.
-	commit.fileops = nil // ensure remakeFileOps won't see a leading deleteall
-	commit.remakeFileOps(newops)
+	// Now replace the Commit fileops, not passing through any deleteall
+	commit.remakeFileOps(newops, false)
 }
 
 // alldeletes is a predicate: is this an all-deletes commit?
@@ -7114,7 +7113,8 @@ func (commit *Commit) simplify() {
 	// No need for a full PathMap here since no snapshot will ever be taken.
 	// Use a simple map-backed PathMapLike, which is faster.
 	visibleOps := commit.applyFileOps(&FlatPathMap{}, true, true)
-	commit.remakeFileOps(visibleOps)
+	// Re-create the simplified fileops, passing any deleteadd through
+	commit.remakeFileOps(visibleOps, true)
 }
 
 // Replay the fileops, keeping only the last operation. Rename and copy
@@ -7177,7 +7177,8 @@ func (commit *Commit) applyFileOps(presentOps PathMapLike,
 	return presentOps
 }
 
-func (commit *Commit) remakeFileOps(visibleOps PathMapLike) {
+func (commit *Commit) remakeFileOps(visibleOps PathMapLike,
+                                    withDeleteall bool) {
 	// Sort the ops paths in a consistent way, inspired by git-fast-export
 	// As it says, 'Handle files below a directory first, in case they are
 	// all deleted and the directory changes to a file or symlink.'
@@ -7213,7 +7214,7 @@ func (commit *Commit) remakeFileOps(visibleOps PathMapLike) {
 	posOther := countRC
 	// Handle the deleteall
 	oldOps := commit.operations()
-	if len(oldOps) > 0 && oldOps[0].op == deleteall {
+	if withDeleteall && len(oldOps) > 0 && oldOps[0].op == deleteall {
 		newOps = make([]*FileOp, len(paths)+1)
 		newOps[0] = oldOps[0]
 		posRC++
