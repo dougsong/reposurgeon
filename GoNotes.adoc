@@ -1,5 +1,5 @@
 = Notes on the Go translation of Reposurgeon =
-version 1.7, 2020-01-12
+version 1.8, 2020-01-25
 
 This is an experience report on a Python-to-Go translation of a
 program with significant complexity, written in attempted conformance
@@ -40,7 +40,7 @@ The man barrier to translation was that, while at 14KLOC of Python
 reposurgeon was not especially large, the code is very *dense*.  It's
 a DSL that's a structure editor for attributed DAGs - algorithmically
 complex, bristling with graph theory, FSMs, parsing, tricky data
-structures, two robot harnesses driving other tools, and two different
+structures, two robot harnesses driving other tools, and three
 different operator-composition algebras.  It became 21KLOC of Go.
 
 The algorithmic density of reposurgeon is such that it would be a
@@ -659,9 +659,10 @@ one or two exceptions, but the documentation is predominantly written
 in a terse, hieratic style that implicitly assumes the reader already
 inhabits the mindset of a Go developer.
 
-It is not very good at providing an entry path into that mindset.  Not
-even for me, and I'm an extreme case of the sort of person for whom it
-*should* do an effective job if it can do that for anyone.
+The documentation is *not* very good at providing an entry path into
+that mindset.  Not even for me, and I'm an extreme case of the sort of
+person for whom it *should* do an effective job if it can do that for
+anyone.
 
 There is a fix for both problems.  It is not magic, but it is doable.
 
@@ -717,10 +718,9 @@ I am no longer a Go novice. :-)
 == Accentuating the positive ==
 
 The Go translation of reposurgeon is better - more maintainable - code
-than the Python original, not just faster.  And this is because
-I rewrote or refactored as I went; as I've explained, I tried
-very hard to avoid that. It's that Go's minimalistic approach
-actually...works.
+than the Python original, not just faster.  And this is because I
+rewrote or refactored as I went; as I've explained, I tried very hard
+to avoid that. It's that Go's minimalistic approach actually...works.
 
 I see a maintainability benefit from the static typing. The Go type
 system does what a type system is supposed to do, which is express
