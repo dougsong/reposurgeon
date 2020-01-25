@@ -5980,10 +5980,11 @@ func (repo *Repository) eventToIndex(obj Event) int {
 
 // gets an object index from its mark, or -1 if not found
 func (repo *Repository) markToIndex(mark string) int {
+	repo._markToIndexLock.Lock()
+	defer repo._markToIndexLock.Unlock()
 	if repo._markToIndex != nil {
 		return repo._markToIndex[mark] - 1
 	}
-	repo._markToIndexLock.Lock()
 	repo._markToIndexCalls++
 	if repo._markToIndexCalls > 2 {
 		repo._markToIndex = map[string]int{}
@@ -5993,10 +5994,8 @@ func (repo *Repository) markToIndex(mark string) int {
 				repo._markToIndex[mark] = ind + 1
 			}
 		}
-		repo._markToIndexLock.Unlock()
 		return repo._markToIndex[mark] - 1
 	}
-	repo._markToIndexLock.Unlock()
 	for ind, event := range repo.events {
 		if event.getMark() == mark {
 			return ind
@@ -6006,8 +6005,10 @@ func (repo *Repository) markToIndex(mark string) int {
 }
 
 func (repo *Repository) invalidateMarkToIndex() {
+	repo._markToIndexLock.Lock()
 	repo._markToIndex = nil
 	repo._markToIndexCalls = 0
+	repo._markToIndexLock.Unlock()
 }
 
 func (repo *Repository) newmark() string {
