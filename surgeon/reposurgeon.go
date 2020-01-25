@@ -5980,6 +5980,9 @@ func (repo *Repository) eventToIndex(obj Event) int {
 
 // gets an object index from its mark, or -1 if not found
 func (repo *Repository) markToIndex(mark string) int {
+	if mark == "" {
+		return -1
+	}
 	repo._markToIndexLock.Lock()
 	defer repo._markToIndexLock.Unlock()
 	if repo._markToIndex != nil {
