@@ -14345,6 +14345,8 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 			f.construct(opM, entry.mode, entry.ref, path)
 			if entry.ref == "inline" {
 				f.inline = entry.inline
+			} else {
+				f.repo.markToEvent(f.ref).(*Blob).appendOperation(f)
 			}
 			newops = append(newops, f)
 		})
@@ -16813,6 +16815,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 				mode = 0100755
 			}
 			op.construct(opM, strconv.FormatInt(int64(mode), 8), b.mark, fn)
+			b.appendOperation(op)
 			blank.appendOperation(op)
 		}
 

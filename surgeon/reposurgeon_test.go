@@ -982,6 +982,7 @@ func TestSimplify(t *testing.T) {
 	}
 
 	// These are not super readable; perhaps there's a better way?
+	// FIXME: We're not creating backreferences here.
 
 	// b, a → a, b (in spite of the differing ops)
 	test2([]*FileOp{newFileOp(nil).construct(opD, "b"), newFileOp(nil).construct(opM, "100644", ":1", "a")},

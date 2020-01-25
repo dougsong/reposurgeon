@@ -1240,7 +1240,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 				if isdir(me.pathname) {
 					continue
 				}
-				if _, ok := rs.hashToMark[me.sig.hashval]; ok {
+				if mark, ok := rs.hashToMark[me.sig.hashval]; ok {
 					//if debugEnable(logEXTRACT) {
 					//	logit(logSHOUT, "%s: %s has old hash %v", trunc(revision), me.pathname, shortdump(me.sig.hashval))
 					//}
@@ -1257,11 +1257,9 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 						}
 						if !found {
 							op := newFileOp(repo)
-							op.construct(opM,
-								me.sig.perms,
-								rs.hashToMark[me.sig.hashval].String(),
-								me.pathname)
+							op.construct(opM, me.sig.perms, mark.String(), me.pathname)
 							commit.appendOperation(op)
+							commit.repo.markToEvent(op.ref).(*Blob).appendOperation(op)
 						}
 					}
 				} else {
