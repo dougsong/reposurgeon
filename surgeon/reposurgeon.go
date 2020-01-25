@@ -3613,9 +3613,11 @@ func (commit *Commit) prependOperations(ops []*FileOp) {
 func (commit *Commit) discardOpsBeforeLastDeleteAll() {
 	for i := len(commit.fileops) - 1; i > 0; i-- {
 		if commit.fileops[i].op == deleteall {
-			//for j := 0; j < i; j++  {
-			//	commit.fileops[i].forget()
-			//}
+			// Remove backreferences from blobs to dropped operations
+			for j := 0; j < i; j++ {
+				commit.fileops[j].forget()
+			}
+			// Drop the fileops
 			commit.fileops = commit.fileops[i:]
 			break
 		}
