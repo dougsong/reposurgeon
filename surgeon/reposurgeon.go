@@ -7492,7 +7492,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 			}
 
 			// This is where reference counting pays off
-			if delete {
+			if !pushback && !pushforward {
 				for _, op := range commit.operations() {
 					if op.op == opM {
 						idx := repo.markToIndex(op.ref)
