@@ -3246,6 +3246,17 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 	return fileop
 }
 
+// forget removes the blob backreferences to a specified fileop.
+func (fileop *FileOp) forget() {
+	if fileop.repo == nil {
+		return
+	}
+	bi := fileop.repo.markToIndex(fileop.ref)
+	blob := fileop.repo.events[bi].(*Blob)
+	blob.removeOperation(fileop)
+}
+
+
 // paths returns the set of all paths touched by this file op
 func (fileop *FileOp) paths(pathtype orderedStringSet) orderedStringSet {
 	if pathtype == nil {
@@ -3551,6 +3562,9 @@ func (commit *Commit) operations() []*FileOp {
 
 // setOperations replaces the set of fileops associated with this commit.
 func (commit *Commit) setOperations(ops []*FileOp) {
+	//for _, op := range commit.fileops {
+	//	op.forget()
+	//}
 	commit.fileops = ops
 	commit.invalidateManifests()
 }
@@ -3581,6 +3595,9 @@ func (commit *Commit) prependOperations(ops []*FileOp) {
 func (commit *Commit) discardOpsBeforeLastDeleteAll() {
 	for i := len(commit.fileops) - 1; i > 0; i-- {
 		if commit.fileops[i].op == deleteall {
+			//for j := 0; j < i; j++  {
+			//	commit.fileops[i].forget()
+			//}
 			commit.fileops = commit.fileops[i:]
 			break
 		}
