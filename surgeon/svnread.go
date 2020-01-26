@@ -1388,7 +1388,6 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 						node.blobmark.String(),
 						node.path)
 					commit.appendOperation(fileop)
-					sp.repo.markToEvent(fileop.ref).(*Blob).appendOperation(fileop)
 
 					// Sanity check: should be the case that
 					// 1. The node is an add.  This sweeps
@@ -2410,7 +2409,6 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 				defaultIgnoreBlob.setMark(sp.repo.newmark())
 			}
 			op.construct(opM, "100644", defaultIgnoreBlob.getMark(), nodepath)
-			defaultIgnoreBlob.appendOperation(op)
 		}
 		return op
 	}

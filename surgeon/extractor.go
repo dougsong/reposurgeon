@@ -1259,7 +1259,6 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 							op := newFileOp(repo)
 							op.construct(opM, me.sig.perms, mark.String(), me.pathname)
 							commit.appendOperation(op)
-							commit.repo.markToEvent(op.ref).(*Blob).appendOperation(op)
 						}
 					}
 				} else {
@@ -1288,7 +1287,6 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 					op := newFileOp(repo)
 					op.construct(opM, me.sig.perms, blobmark.String(), me.pathname)
 					commit.appendOperation(op)
-					blob.appendOperation(op)
 				}
 				rs.visibleFiles[revision][me.pathname] = *me.sig
 			}

@@ -3103,6 +3103,9 @@ func (fileop *FileOp) construct(op rune, opargs ...string) *FileOp {
 		fileop.mode = opargs[0]
 		fileop.ref = opargs[1]
 		fileop.Path = opargs[2]
+		if fileop.repo != nil && fileop.ref != "inline" {
+			fileop.repo.markToEvent(fileop.ref).(*Blob).appendOperation(fileop)
+		}
 	} else if op == 'D' {
 		fileop.Path = opargs[0]
 	} else if op == 'N' {
@@ -13038,7 +13041,6 @@ func (rs *Reposurgeon) DoAdd(line string) bool {
 			fileop.construct(opD, argpath)
 		} else if optype == opM {
 			fileop.construct(opM, perms, mark, argpath)
-			repo.markToEvent(fileop.ref).(*Blob).appendOperation(fileop)
 		} else if optype == opR || optype == opC {
 			fileop.construct(rune(optype), source, target)
 		}
@@ -14345,8 +14347,6 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 			f.construct(opM, entry.mode, entry.ref, path)
 			if entry.ref == "inline" {
 				f.inline = entry.inline
-			} else {
-				f.repo.markToEvent(f.ref).(*Blob).appendOperation(f)
 			}
 			newops = append(newops, f)
 		})
@@ -15068,11 +15068,12 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 					blob.setContent([]byte(rs.preferred.dfltignores), noOffset)
 					blob.mark = ":insert"
 					repo.insertEvent(blob, repo.eventToIndex(earliest), "ignore-blob creation")
+					// FIXME: this does not force rebuild of the event map, Correct?
 					repo.declareSequenceMutation("ignore creation")
+					repo._eventByMark[":insert"] = blob
 					newop := newFileOp(rs.chosen())
 					newop.construct(opM, "100644", ":insert", rs.ignorename)
 					earliest.appendOperation(newop)
-					blob.appendOperation(newop)
 					repo.renumber(1, nil)
 					respond(fmt.Sprintf("initial %s created.", rs.ignorename))
 				}
@@ -16815,7 +16816,6 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 				mode = 0100755
 			}
 			op.construct(opM, strconv.FormatInt(int64(mode), 8), b.mark, fn)
-			b.appendOperation(op)
 			blank.appendOperation(op)
 		}
 
