@@ -3564,12 +3564,23 @@ func (commit *Commit) operations() []*FileOp {
 
 // setOperations replaces the set of fileops associated with this commit.
 func (commit *Commit) setOperations(ops []*FileOp) {
-	//for _, op := range commit.fileops {
-	//	op.forget()
-	//}
-	commit.fileops = ops
+	commit.setOperationsNoInvalidate(ops)
 	commit.invalidateManifests()
 }
+
+func (commit *Commit) setOperationsNoInvalidate(ops []*FileOp) {
+	survives := make(map[*FileOp]bool)
+	for _, op := range ops {
+		survives[op] = true
+	}
+	for _, op := range commit.fileops {
+		if !survives[op] {
+			op.forget()
+		}
+	}
+	commit.fileops = ops
+}
+
 
 // appendOperation appends to the set of fileops associated with this commit.
 func (commit *Commit) appendOperation(op *FileOp) {
