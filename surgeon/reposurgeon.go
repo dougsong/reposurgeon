@@ -3620,7 +3620,9 @@ func (commit *Commit) clone(repo *Repository) *Commit {
 	var c = *commit // Was a Python deepcopy
 	c.authors = make([]Attribution, len(commit.authors))
 	copy(c.authors, commit.authors)
-	c.setOperations(nil)
+	// DO NOT USE setOperations because it would call forget
+	// on each operation of the commit we are cloning from.
+	c.fileops = nil
 	//c.filemap = nil
 	c.color = colorNONE
 	if repo != nil {
@@ -3630,6 +3632,8 @@ func (commit *Commit) clone(repo *Repository) *Commit {
 	// use the encapsulation to set parents instead of relying
 	// on the copy, so that Commit can do its bookkeeping.
 	c._parentNodes = nil // avoid confusing set_parents()
+	// Now that parents & children are correct, invalidate the manifest
+	c.invalidateManifests()
 	c.setParents(commit.parents())
 	c.attachments = nil
 	return &c
