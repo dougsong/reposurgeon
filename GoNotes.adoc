@@ -1,5 +1,5 @@
 = Notes on the Go translation of Reposurgeon =
-version 1.8, 2020-01-25
+version 1.9, 2020-01-26
 
 This is an experience report on a Python-to-Go translation of a
 program with significant complexity, written in attempted conformance
@@ -55,6 +55,11 @@ ex-mathematician with strength in graph theory, group theory and
 combinatorics; lots of experience as a systems programmer, lots of
 exposure to odd languages, and lots of domain knowledge about
 version-control systems.  Adjust bias compensators accordingly.
+
+(The 1.8 version of these notes was shipped to golang-nuts on
+2020-01-25; the topic thread is
+https://groups.google.com/forum/#!topic/golang-nuts/u-L7PRa2Z-w[hrtr].
+A typo fixe and a clarification have been backported from the thread.)
 
 == Expected problems that weren't ==
 
@@ -718,7 +723,7 @@ I am no longer a Go novice. :-)
 == Accentuating the positive ==
 
 The Go translation of reposurgeon is better - more maintainable - code
-than the Python original, not just faster.  And this is because I
+than the Python original, not just faster.  And this is *not* because I
 rewrote or refactored as I went; as I've explained, I tried very hard
 to avoid that. It's that Go's minimalistic approach actually...works.
 
@@ -747,6 +752,28 @@ of cruft out of the handling of committer/author dates in Python.
 Now that I've seen Go strings...holy hell, Python 3 unicode strings
 sure look like a nasty botch in retrospect. Good work not falling into
 that trap.
+
+== Translation prgmatics ==
+
+The strategy of writing as literal as possible a translation of the
+Python first, at the cost of generating Go code that was initially
+clunky and unidiomatic, worked quite well.  It actually took effort
+and discipline to refrain from trying to improve the code as it passed
+through translation, but I am very glad I expended that effort.  It
+kept the translation process sane and controllable,
+
+I should note that a prerequisite for a translation like this is an
+excellent test suite.  As I write (in late January 2020), reposurgeon
+at 22KLOC, has 52 unit tests, 177 round-trip tests, 218 end-to-end
+functional tests, and a miscellany of special tests that add up to a
+total of 502 reporting items.  Only around 20 of these were added
+during the translation itself.  All these tests are run by continuous
+integration on every commit.
+
+That translation phase was completed In November 2019 when the Go code
+first passed the full test suite. The two months since has been
+sufficient to polish the literalistic mock-Python it was at that time
+into what is now, I believe, pretty clean idiomatic Go.
 
 == Pass-by-reference vs. pass-by-value ==
 
