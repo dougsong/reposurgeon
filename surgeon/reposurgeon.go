@@ -3251,9 +3251,11 @@ func (fileop *FileOp) forget() {
 	if fileop.repo == nil {
 		return
 	}
-	bi := fileop.repo.markToIndex(fileop.ref)
-	blob := fileop.repo.events[bi].(*Blob)
-	blob.removeOperation(fileop)
+	if fileop.op == opM && fileop.ref != "inline" {
+		if blob, ok := fileop.repo.markToEvent(fileop.ref).(*Blob); ok {
+			blob.removeOperation(fileop)
+		}
+	}
 }
 
 
