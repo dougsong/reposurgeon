@@ -368,7 +368,7 @@ $(SVNLOADS:%=svnload-regress-%): svnload-regress-%: %.svn
 		else \
 		    echo "    Skipped, git missing."; \
 	    fi; \
-	rm -f /tmp/regress$$$$
+	rm -f /tmp/regress$$$$ /tmp/diff$$$$
 
 # Perform full regression on SVN streams that have clean conversions -
 # that is, no messages due to branch surgery or whatever.
@@ -452,8 +452,7 @@ liftcheck-regress:
 		$(PARALLEL_MAKE) $(SVNCLEAN:%=liftcheck-regress-%); \
 	else \
 		echo "     Skipped, either git or svn is missing"; \
-	fi; \
-	rm -f /tmp/diff$$$
+	fi
 
 $(patsubst %,liftcheck-regress-%,$(wildcard *.svn)): liftcheck-regress-%: %
 	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
@@ -462,7 +461,8 @@ $(patsubst %,liftcheck-regress-%,$(wildcard *.svn)): liftcheck-regress-%: %
 	    0) ;; \
 	    1) if [ $(QUIET) = 1 ]; then echo FAILED; else cat /tmp/diff$$$$; fi; if [ $(STOPOUT) = 1 ]; then exit 1; fi;; \
 	    *) echo "*** liftcheck had trouble, status $$?"; exit $(STOPOUT);; \
-	esac
+	esac; \
+	rm -f /tmp/diff$$$
 
 # This is not part of the normal test sequence becausr the reposurgeon tools are very slow.
 # Put references.svn first because it is the longest one to run.
