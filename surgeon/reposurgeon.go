@@ -7518,12 +7518,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 			// This is where reference counting pays off
 			if !pushback && !pushforward {
 				for _, op := range commit.operations() {
-					if op.op == opM {
-						idx := repo.markToIndex(op.ref)
-						if idx != -1 && !repo.events[idx].(*Blob).removeOperation(op) {
-							repo.events[idx].setDelFlag(true)
-						}
-					}
+					op.forget()
 				}
 			}
 
@@ -7579,9 +7574,13 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 	// Do the actual deletions
 	survivors := make([]Event, 0, len(repo.events)-delCount)
 	for _, e := range repo.events {
-		if !e.getDelFlag() {
-			survivors = append(survivors, e)
+		if e.getDelFlag() {
+			continue
 		}
+		if b, ok := e.(*Blob); ok && len(b.oplist) == 0 {
+			continue
+		}
+		survivors = append(survivors, e)
 	}
 	repo.events = survivors
 	repo.declareSequenceMutation("squash/delete")
