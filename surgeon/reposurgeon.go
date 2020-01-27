@@ -7380,6 +7380,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 		case *Passthrough:
 			event.setDelFlag(delete)
 		case *Commit:
+			fileopsWerePushed := false
 			event.setDelFlag(true)
 			delCount++
 			commit := event.(*Commit)
@@ -7463,6 +7464,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 						myOperations[i] = op.Copy()
 					}
 					child.fileops = append(myOperations, child.fileops...)
+					fileopsWerePushed = true
 					// Also prepend event's
 					// comment, ignoring empty log
 					// messages.
@@ -7511,6 +7513,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 					myOperations[i] = op.Copy()
 				}
 				parent.fileops = append(parent.fileops, myOperations...)
+				fileopsWerePushed = true
 				// Also append child"s comment to its parent"s
 				if policy.Contains("--empty-only") && !emptyComment(parent.Comment) {
 					croak(fmt.Sprintf("--empty is on and %s comment is nonempty", parent.idMe()))
@@ -7537,7 +7540,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 			}
 
 			// This is where reference counting pays off
-			if !pushback && !pushforward {
+			if !fileopsWerePushed {
 				for _, op := range commit.operations() {
 					op.forget()
 				}
