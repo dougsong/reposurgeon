@@ -2416,6 +2416,9 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 				defaultIgnoreBlob.setContent(
 					[]byte(subversionDefaultIgnores), noOffset)
 				defaultIgnoreBlob.setMark(sp.repo.newmark())
+				// Append the blob instead of prepending it as that
+				// would confuse the iteration over events.
+				sp.repo.addEvent(defaultIgnoreBlob)
 			}
 			op.construct(opM, "100644", defaultIgnoreBlob.getMark(), nodepath)
 		}
@@ -2510,8 +2513,12 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 	}
 
 	if defaultIgnoreBlob != nil {
+		// Insert the ignore blob at the front
 		sp.repo.insertEvent(defaultIgnoreBlob, len(sp.repo.frontEvents()),
 			"inserting default ignore")
+		// And remove it at the end
+		sp.repo.events = sp.repo.events[:len(sp.repo.events)-1]
+		sp.repo.invalidateMarkToIndex()
 	}
 
 	baton.endProgress()
