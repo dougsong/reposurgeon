@@ -1,7 +1,8 @@
 = reposurgeon project news =
 
 Repository hread::
-     Don't fail on spsces in filenames.
+     The "defergc" kluge in the previous release is no longer required.
+     Don't fail on spaces in filenames.
      Test suite now uses as many processors as you have.
      The index command sees blobs by default.
 

@@ -7652,9 +7652,7 @@ func (repo *Repository) dedup(dupMap map[string]string) {
 		}
 		control.baton.twirl()
 	})
-	if !control.flagOptions["defergc"] {
-		repo.gcBlobs()
-	}
+	repo.gcBlobs()
 }
 
 // Garbage-collect blobs that no longer have references.
