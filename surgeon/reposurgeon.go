@@ -7258,9 +7258,8 @@ func (commit *Commit) remakeFileOps(visibleOps PathMapLike,
 			posOther++
 		}
 	}
-	// Now replace the Commit fileops. Avoid setOperations() because there
-	// is no need to invalidateManifests()
-	commit.fileops = newOps
+	// Now replace the Commit fileops.
+	commit.setOperationsNoInvalidate(newOps)
 }
 
 var allPolicies = orderedStringSet{
