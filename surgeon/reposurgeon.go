@@ -3342,6 +3342,11 @@ func (fileop *FileOp) Copy() *FileOp {
 	copy(newop.inline, fileop.inline)
 	newop.op = fileop.op
 	newop.genflag = fileop.genflag
+	if newop.repo != nil && newop.ref != "inline" {
+		if blob, ok := newop.repo.markToEvent(newop.ref).(*Blob); ok {
+			blob.appendOperation(newop)
+		}
+	}
 	return newop
 }
 
