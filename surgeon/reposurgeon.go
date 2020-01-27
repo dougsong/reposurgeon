@@ -8299,9 +8299,11 @@ func (repo *Repository) splitCommit(where int, splitfunc func([]*FileOp) ([]*Fil
 		child.(*Commit).replaceParent(commit, commit2)
 	}
 	commit2.setParents([]CommitLike{commit})
-	// and then finalize the ops
+	// and then finalize the ops. DO NOT USE setOperations for the
+	// first commit, because it would call forget on each fileop that
+	// does not stay there, but moves to the second commit.
 	commit2.setOperations(fileops2)
-	commit.setOperations(fileops)
+	commit.fileops = fileops
 	// Avoid duplicates in the legacy-ID map
 	if commit2.legacyID != "" {
 		commit2.legacyID += ".split"
