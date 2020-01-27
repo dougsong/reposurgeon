@@ -178,8 +178,10 @@ func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
 
 // Exact value of this constant is unimportant, it just needs to be
 // absurdly far in the future so no commit can have a committer date
-// that's greater.  In fact it is 292277026596-12-04 10:30:07 -0500 EST
-var farFuture = time.Unix(1<<63-1, 0)
+// that's greater.  In fact it is 109626219-06-19 07:45:03 +0000 UTC
+// We can't use the obvious 1<<63-1, because conversion to Go's epoch
+// (year 1 rather than 1970) overflows an int64.
+var farFuture = time.Unix(1<<62-1, 0)
 
 func (cm *ColorMixer) _branchColor(rev, color string) {
 	if cm.base.branchesAreColored && strings.HasPrefix(color, "refs/heads/") {
@@ -196,7 +198,7 @@ func (cm *ColorMixer) _branchColor(rev, color string) {
 	logit(logTOPOLOGY, "%s is-a-branch is %v", color, isBranchColor)
 	unassigned := func(rev string) bool {
 		u := (cm.base.meta[rev].branch == "")
-		logit(logTOPOLOGY, "%s assigned is %v", rev, u)
+		logit(logTOPOLOGY, "%s unassigned is %v", rev, u)
 		return u
 	}
 	onTagBranch := func(rev string) bool {
