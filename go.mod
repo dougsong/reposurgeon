@@ -18,8 +18,7 @@ require (
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20191210023423-ac6580df4449 // indirect
 	golang.org/x/text v0.3.2
-	golang.org/x/tools v0.0.0-20191113055240-e33b02e76616 // indirect
-	golang.org/x/xerrors v0.0.0-20191011141410-1b5146add898 // indirect
+	golang.org/x/tools v0.0.0-20200125223703-d33eef8e6825 // indirect
 )
 
 go 1.13

@@ -816,16 +816,17 @@ The following modifiers change these policies:
 | `--no-coalesce` | Do not normalize the modified commit operations.
 | `--pushback`    | Append fileops to parents, rather than prepending to children.
 | `--pushforward` | Prepend fileops to children. This is the default; it can be
-specified in a lift script for explicitness about intentions.
+                    specified in a lift script for explicitness about intentions.
 | `--tagforward`  | Any tag on the deleted commit is pushed
-forward to the first child rather than being deleted. This is the
-default; it can be specified for explicitness.
+                    forward to the first child rather than being deleted. This is the
+                    default; it can be specified for explicitness.
 | `--tagback`     | Any tag on the deleted commit is pushed
-backward to the first parent rather than being deleted. 
+                    backward to the first parent rather than being deleted.
 | `--quiet`       | Suppresses warning messages about deletion of commits with
-non-delete fileops.
+                    non-delete fileops.
 | `--complain`    | The opposite of `--quiet`. Can be specified for explicitness.
 | `--empty-only`  | Complain if a squash operation modifies a nonempty comment.
+| `--blobs`       | Allow deletion of selected blobs.
 |===================================================================
 +
 Under any of these policies except `--delete`,

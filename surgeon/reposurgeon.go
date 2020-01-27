@@ -7301,6 +7301,7 @@ var allPolicies = orderedStringSet{
 	"--tagback",
 	"--tagforward",
 	"--quiet",
+	"--blobs",
 }
 
 // Delete a set of events, or rearrange it forward or backwards.
@@ -7329,6 +7330,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 	pushback := policy.Contains("--pushback")
 	pushforward := policy.Contains("--pushforward") || (!delete && !pushback)
 	coalesce := !policy.Contains("--no-coalesce")
+	delblobs := policy.Contains("--blobs")
 	// Sanity checks
 	if !dquiet {
 		for _, ei := range selected {
@@ -7398,9 +7400,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 		event := repo.events[ei]
 		switch event.(type) {
 		case *Blob:
-			// Never delete a blob except as a side effect of
-			// deleting a commit.
-			event.setDelFlag(false)
+			event.setDelFlag(delblobs)
 		case *Tag:
 			event.setDelFlag(delete)
 		case *Reset:
