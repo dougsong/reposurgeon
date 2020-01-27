@@ -7637,7 +7637,7 @@ func (repo *Repository) delete(selected orderedIntSet, policy orderedStringSet) 
 	repo.squash(selected, options)
 }
 
-// Replace references to duplicate blobs according to the given duMap,
+// Replace references to duplicate blobs according to the given dupMap,
 // which maps marks of duplicate blobs to canonical marks`
 func (repo *Repository) dedup(dupMap map[string]string) {
 	walkEvents(repo.events, func(idx int, event Event) {
@@ -7656,6 +7656,11 @@ func (repo *Repository) dedup(dupMap map[string]string) {
 }
 
 // Garbage-collect blobs that no longer have references.
+// Note: if you find yourself using this you are probably
+// doing down a bad path. It's generally better for whatever
+// operation you are doing that might free blobs to finish
+// with a squash() call that infokes the normal code path
+// for cleaning up unreferenced blobs.
 func (repo *Repository) gcBlobs() {
 	backreferences := make(map[string]bool)
 	for _, commit := range repo.commits(nil) {

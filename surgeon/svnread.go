@@ -226,7 +226,7 @@ const sdREPLACE = 4
 const sdNUKE = 5 // Not part of the Subversion data model
 
 // If these don't match the constants above, havoc will ensue
-var actionValues = [][]byte{[]byte("none"), []byte("add"), []byte("delete"), []byte("change"), []byte("replace")}
+var actionValues = [][]byte{[]byte("none"), []byte("add"), []byte("delete"), []byte("change"), []byte("replace"), []byte("nuke")}
 var pathTypeValues = [][]byte{[]byte("none"), []byte("file"), []byte("dir"), []byte("ILLEGAL-TYPE")}
 
 // The reason for these suppressions is to avoid a huge volume of
@@ -915,8 +915,8 @@ func svnFilterProperties(ctx context.Context, sp *StreamParser, options stringSe
 	// to later analysis. Log warnings where we might be throwing away information.
 	// Canonicalize svn:ignore propeerties (no more convenient place to do it).
 	//
-	// We could in theory parallwelize this, but it's cheap even on very large repositories
-	// so we chhose to to not incur additional code comp;exity here.
+	// We could in theory parallelize this, but it's cheap even on very large repositories
+	// so we chhose to to not incur additional code complexity here.
 	//
 	defer trace.StartRegion(ctx, "SVN Phase 2: filter properties").End()
 	logit(logEXTRACT, "SVN Phase 2: filter properties")
@@ -976,7 +976,7 @@ func svnBuildFilemaps(ctx context.Context, sp *StreamParser, options stringSet, 
 	// a delete.
 	//
 	// This phase is moderately expensive, but once the maps are
-	// built they render unnecessary compuations that would have
+	// built they render unnecessary computations that would have
 	// been prohibitively expensive in later passes. Notably the
 	// maps are everything necessary to compute node ancestry.
 	//
@@ -1023,13 +1023,6 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 	// directory it is expanded to a set of file deletes for the
 	// contents of the directory.
 	//
-	// The reason for turning branch deletes into deletealls
-	// is so that when an importer interprets them, it will
-	// clobber the branch so that it's not visible from
-	// any revision after the deletion. This is the intended behavor
-	// of a Subversion D operation and is simpler that expanding
-	// the D into a recursive delete of the directory contents
-	//
 	// This pass also notices branch structure when it checks
 	// where it should create copies of the default .gitignore
 	// file.  We want this to happen at branch roots before
@@ -1037,14 +1030,11 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 	//
 	// The exit contract of this phase is that all file content
 	// modifications are expressed as file ops, every one of
-	// which has a computable ancestor node.  If an ancestor
+	// which has an udentified ancestor node.  If an ancestor
 	// couldn't be found, that is logged as an error condition
 	// and the node is skipped. Such a log message implies
 	// a metadata malformation.  Generated nodes are marked
 	// for later redundancy checking.
-	//
-	// Its is also here that ignore properties on directory nodes
-	// are mapped to nodes for .gitignore files, then removed.
 	//
 	defer trace.StartRegion(ctx, "SVN Phase 4: directory copy expansion").End()
 	logit(logEXTRACT, "SVN Phase 4: directory copy expansion")
@@ -1176,7 +1166,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 
 	// We don't need the revision maps after ancestry links are in place
 	sp.history = nil
-	// sp.hashmap
+	// sp.hashmap = nil
 }
 
 func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
@@ -1189,10 +1179,9 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 	// mutate it to a proper git DAG in small steps.
 	//
 	// The only Subversion metadata this does not copy into
-	// commits is per-directory properties. We processed and
-	// removed svn:ignore properties in the last phase, but
-	// svn:mergeinfo properties remain, to be handled in a later
-	// phase.
+	// commits is per-directory properties. Both svn:ignore abd
+	// svn:mergeinfo properties remain, to be handled in later
+	// phases.
 	//
 	// Interpretation of svn:executable is done in this phase.
 	// The commit branch is set here in case we want to dump a
@@ -1495,9 +1484,6 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 	// all its fileops on the same Subversion branch.  In addition,
 	// the Source and Target member of each file have been filled
 	// with the fileop path's branch and (sub-branch) filename.
-	//
-	// A side-effect of this pass is that fileops are sorted by
-	// lexicographic order of pathname.
 	//
 	if options.Contains("--nobranch") {
 		logit(logEXTRACT, "SVN Phase 6: split resolution (skipped due to --nobranch)")
@@ -2017,6 +2003,11 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 }
 
 func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
+	// Phase A:
+	// Turn Subversion mergeinfo propeties to gitspace branch merges.  Wer're only trying
+	// to deal with the newer style of mergeinfo that has a trunk part, not the older style
+	//  without one.
+	//
 	defer trace.StartRegion(ctx, "SVN Phase A: mergeinfo processing").End()
 	logit(logEXTRACT, "SVN Phase A: mergeinfo processing")
 	baton.startProgress("SVN phase A: mergeinfo processing", uint64(len(sp.revisions)))
@@ -2510,6 +2501,9 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 
 func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
 	// Phase C:
+	// Tagify, or entirely discard, Subversion commits that didn't corrrepond to a file
+	// alteration.
+	//
 	defer trace.StartRegion(ctx, "SVN Phase C: de-junking").End()
 	logit(logEXTRACT, "SVN Phase C: de-junking")
 	// If asked to, purge commits on deleted refs, but remember the original
