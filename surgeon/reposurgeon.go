@@ -3129,7 +3129,9 @@ func (fileop *FileOp) construct(op rune, opargs ...string) *FileOp {
 		fileop.ref = opargs[1]
 		fileop.Path = opargs[2]
 		if fileop.repo != nil && fileop.ref != "inline" {
-			fileop.repo.markToEvent(fileop.ref).(*Blob).appendOperation(fileop)
+			if blob, ok := fileop.repo.markToEvent(fileop.ref).(*Blob); ok {
+				blob.appendOperation(fileop)
+			}
 		}
 	} else if op == 'D' {
 		fileop.Path = opargs[0]
