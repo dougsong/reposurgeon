@@ -3286,7 +3286,6 @@ func (fileop *FileOp) forget() {
 	}
 }
 
-
 // paths returns the set of all paths touched by this file op
 func (fileop *FileOp) paths(pathtype orderedStringSet) orderedStringSet {
 	if pathtype == nil {
@@ -3613,7 +3612,6 @@ func (commit *Commit) setOperationsNoInvalidate(ops []*FileOp) {
 	}
 	commit.fileops = ops
 }
-
 
 // appendOperation appends to the set of fileops associated with this commit.
 func (commit *Commit) appendOperation(op *FileOp) {
@@ -7229,8 +7227,7 @@ func (commit *Commit) applyFileOps(presentOps PathMapLike,
 	return presentOps
 }
 
-func (commit *Commit) remakeFileOps(visibleOps PathMapLike,
-                                    withDeleteall bool) {
+func (commit *Commit) remakeFileOps(visibleOps PathMapLike, withDeleteall bool) {
 	// Sort the ops paths in a consistent way, inspired by git-fast-export
 	// As it says, 'Handle files below a directory first, in case they are
 	// all deleted and the directory changes to a file or symlink.'
