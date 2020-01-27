@@ -2660,12 +2660,12 @@ func (b Blob) String() string {
 }
 
 // emailOut enables DoMsgout() to report blobs, if requested with --blobs.
-func (blob *Blob) emailOut(modifiers orderedStringSet,
+func (b *Blob) emailOut(modifiers orderedStringSet,
 	eventnum int, filterRegexp *regexp.Regexp) string {
 	msg, _ := newMessageBlock(nil)
 	msg.setHeader("Event-Number", fmt.Sprintf("%d", eventnum+1))
-	msg.setHeader("Event-Mark", blob.mark)
-	msg.setPayload(blob.getComment())
+	msg.setHeader("Event-Mark", b.mark)
+	msg.setPayload(b.getComment())
 
 	if filterRegexp != nil {
 		msg.filterHeaders(filterRegexp)
@@ -2675,14 +2675,14 @@ func (blob *Blob) emailOut(modifiers orderedStringSet,
 }
 
 // emailIn updates this blob from a parsed email message.
-func (blob *Blob) emailIn(msg *MessageBlock, fill bool) bool {
+func (b *Blob) emailIn(msg *MessageBlock, fill bool) bool {
 	modified := false
 	newcontent := msg.getPayload()
-	if newcontent != blob.getComment() {
+	if newcontent != b.getComment() {
 		logit(logEMAILIN, "in %s, content is modified %q -> %q",
-			blob.idMe(), blob.getComment(), newcontent)
+			b.idMe(), b.getComment(), newcontent)
 		modified = true
-		blob.setContent([]byte(newcontent), noOffset)
+		b.setContent([]byte(newcontent), noOffset)
 	}
 	return modified
 }
