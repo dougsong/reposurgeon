@@ -13,6 +13,8 @@ Julien "_FrnchFrgg_" RIVAUD <frnchfrgg@free.fr>
 Daniel Brooks <db48x@db48x.net>
    Date unit testing, improvements for split and expunge commands.
    Assist Python to Go port.
+   Go profiling support.
+   Several reductions in total run time, total allocations, and max heap usage.
 
 Chris Lemmons <alficles@gmail.com>
    Solved some problems with inline blobs, improved interoperability with
