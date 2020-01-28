@@ -2748,7 +2748,7 @@ script renames.script
 
 Mass-rename tags, replacing "sample" on the basename with
 "example". Illustrates a general technique of generating reposurgeon commands via
-shell that you then execute with the '```script```' command. Supporting this
+shell that you then execute with the '```script```' command. Enabling this
 technique is the reason as many commands as possible support redirects.
 
 [[extensions]]
