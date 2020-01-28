@@ -328,6 +328,11 @@ func (sp *StreamParser) timeMark(label string) {
 	sp.repo.timings = append(sp.repo.timings, TimeMark{label, time.Now()})
 }
 
+func (sp *StreamParser) revision(n revidx) *RevisionRecord {
+	// Contiguity assumption here
+	return &sp.revisions[n]
+}
+
 // Fast append avoids doing a full copy of the slice on every allocation
 // Code trivially modified from AppendByte on "Go Slices: usage and internals".
 func appendRevisionRecords(slice []RevisionRecord, data ...RevisionRecord) []RevisionRecord {
@@ -432,8 +437,7 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 						if node.propchange {
 							propertyStash[node.path] = copyOrderedMap(node.props)
 						} else if node.action == sdADD && node.fromPath != "" {
-							//Contiguity assumption here
-							for _, oldnode := range sp.revisions[node.fromRev].nodes {
+							for _, oldnode := range sp.revision(node.fromRev).nodes {
 								if oldnode.path == node.fromPath && oldnode.propchange {
 									propertyStash[node.path] = oldnode.props
 								}
@@ -1307,7 +1311,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 					continue
 				}
 				if node.fromRev > 0 && node.fromIdx > 0 {
-					ancestor = sp.revisions[node.fromRev].nodes[node.fromIdx-1]
+					ancestor = sp.revision(node.fromRev).nodes[node.fromIdx-1]
 				}
 				// Propagate properties from the ancestor.
 				if (node.action == sdADD || node.action == sdCHANGE) && ancestor != nil && !node.propchange {
@@ -1595,7 +1599,7 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 					panic(fmt.Errorf("Unexpectedly ill-formed legacy-id %s", commit.legacyID))
 				}
 				// Contiguity assumption
-				node := sp.revisions[n].nodes[0]
+				node := sp.revision(intToRevidx(n)).nodes[0]
 				if node.kind == sdDIR && isDeclaredBranch(node.path) {
 					commit.Branch = node.path
 					if strings.HasSuffix(commit.Branch, svnSep) {
@@ -1883,7 +1887,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 		for _, commit := range roots {
 			rev, _ := strconv.Atoi(strings.Split(commit.legacyID, ".")[0])
 			if rev > 0 && rev < len(sp.revisions) {
-				record := sp.revisions[rev]
+				record := sp.revision(intToRevidx(rev))
 				for _, node := range record.nodes {
 					if node.kind == sdDIR && node.fromRev != 0 &&
 						trimSep(node.path) == branch {
@@ -2428,7 +2432,7 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 		mybranch := sp.markToSVNBranch[commit.mark]
 		unchanged := true
 		hasTopLevel := false
-		for _, node := range sp.revisions[revision].nodes {
+		for _, node := range sp.revision(intToRevidx(revision)).nodes {
 			if node.kind != sdDIR {
 				continue
 			}
