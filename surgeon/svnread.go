@@ -47,6 +47,7 @@ import (
 
 type svnReader struct {
 	revisions    []RevisionRecord
+	revmap       map[revidx]revidx
 	streamview   []*NodeAction // All nodes in stream order
 	hashmap      map[string]*NodeAction
 	history      *History
@@ -330,7 +331,7 @@ func (sp *StreamParser) timeMark(label string) {
 
 func (sp *StreamParser) revision(n revidx) *RevisionRecord {
 	// Contiguity assumption here
-	return &sp.revisions[n]
+	return &sp.revisions[sp.revmap[n]]
 }
 
 // Fast append avoids doing a full copy of the slice on every allocation
@@ -352,6 +353,7 @@ func appendRevisionRecords(slice []RevisionRecord, data ...RevisionRecord) []Rev
 func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet, baton *Baton, filesize int64) {
 	defer trace.StartRegion(ctx, "SVN phase 1: read dump file").End()
 	sp.revisions = make([]RevisionRecord, 0)
+	sp.revmap = make(map[revidx]revidx)
 	sp.hashmap = make(map[string]*NodeAction)
 	sp.splitCommits = make(map[revidx]int)
 	sp.branchlinks = make(map[revidx]revidx)
@@ -360,6 +362,7 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 	propertyStash := make(map[string]*OrderedMap)
 
 	baton.startProgress("SVN phase 1: read dump file", uint64(filesize))
+	var revcount revidx
 	for {
 		line := sp.readline()
 		if len(line) == 0 {
@@ -379,6 +382,8 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 				panic(throw("parse", "ill-formed revision number: "+string(line)))
 			}
 			revision := intToRevidx(revint)
+			sp.revmap[revision] = revcount
+			revcount++
 			plen := parseInt(string(sp.sdRequireHeader("Prop-content-length")))
 			sp.sdRequireHeader("Content-length")
 			sp.sdRequireSpacer()
