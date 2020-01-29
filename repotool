@@ -33,8 +33,13 @@ template = """\
 #    include the path to the CVS modules directory after the hostname.
 # 4. Set any required read options, such as --user-ignores or --nobranch,
 #    by setting READ_OPTIONS.
-# 5. Run 'make stubmap' to create a stub author map.
-# 6. Run 'make' to build a converted repository.
+# 5. Optionally, replace the default value of DUMPFILTER with a
+#    command or pipeline that actually filters the dump rather than
+#    just copying it through.  The most usual reasdon to do this is
+#    that your Subversion repository is multiproject and you want to
+#    strip out one subtree with repocutter sift and pop commands.
+# 6. Run 'make stubmap' to create a stub author map.
+# 7. Run 'make' to build a converted repository.
 #
 # The reason both first- and second-stage stream files are generated is that,
 # especially with Subversion, making the first-stage stream file is often
@@ -57,6 +62,7 @@ CVS_HOST = %(project)s.cvs.sourceforge.net
 CVS_MODULE = %(project)s
 #REMOTE_URL = cvs://$(CVS_HOST)/%(project)s\\#$(CVS_MODULE)
 READ_OPTIONS =
+DUMPFILTER = cat
 VERBOSITY = "set progress"
 REPOSURGEON = reposurgeon
 LOGFILE = conversion.log
@@ -80,7 +86,7 @@ default: %(project)s-%(target_vcs)s
 
 # Build the first-stage stream dump from the local mirror
 %(project)s.%(source_vcs)s: %(project)s-mirror
-	(cd %(project)s-mirror/ >/dev/null; repotool export) >%(project)s.%(source_vcs)s
+	(cd %(project)s-mirror/ >/dev/null; repotool export) | $(DUMPFILTER) >%(project)s.%(source_vcs)s
 
 # Build a local mirror of the remote repository
 %(project)s-mirror:
