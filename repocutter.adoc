@@ -107,6 +107,11 @@ Golang regular expressions (opposite of 'expunge').  Any revision left
 with no Node records after this filtering has its Revision record
 removed as well.
 
+pop::
+Pop initial segment off each path. May be useful after a sift command to turn
+a dump from a subproject stripped from a dump for a multiple-project repository
+into the nomal form writh trunk/tags/branches at the top level.
+
 pathrename::
 Modify Node-path and Node-copyfrom-path headers
 matching a specified regular expression; replace with a given string.

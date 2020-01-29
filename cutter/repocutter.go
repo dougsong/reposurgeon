@@ -50,6 +50,7 @@ Available subcommands:
    select
    setlog
    sift
+   pop
    strip
    swap
 
@@ -71,6 +72,7 @@ var oneliners = map[string]string{
 	"strip":      "Replace content with unique cookies, preserving structure",
 	"expunge":    "Expunge operations by Node-path header",
 	"sift":       "Sift for operations by Node-path header",
+	"pop":        "Pop the first segment off each path",
 	"pathrename": "Transform path headers with a regexp replace",
 	"renumber":   "Renumber revisions so they're contiguous",
 	"reduce":     "Topologically reduce a dump.",
@@ -132,6 +134,12 @@ Delete all operations with Node-path headers *not* matching specified
 Golang regular expressions (opposite of 'expunge').  Any revision left
 with no Node records after this filtering has its Revision record
 removed as well.
+`,
+	"pop": `pop: usage: repocutter [-r SELECTION ] pop
+
+Pop initial segment off each path. May be useful after a sift command to turn
+a dump from a subproject stripped from a dump for a multiple-project repository
+into the nomal form writh trunk/tags/branches at the top level.
 `,
 	"pathrename": `pathrename: usage: repocutter [-r SELECTION ] pathrename FROM TO
 
@@ -1150,6 +1158,45 @@ func sift(source DumpfileSource, selection SubversionRange, patterns []string) {
 	source.Report(selection, sifthook, nil, true, false)
 }
 
+// Pop the top segment off each pathname in an input dump 
+func pop(source DumpfileSource, selection SubversionRange) {
+	popSegment := func(ins string) string {
+		if strings.Contains(ins, "/") {
+			return ins[strings.Index(ins, "/")+1:]
+		} else {
+			return ""
+		}
+	}
+	revhook := func(props *Properties) {
+		if _, present := props.properties["svn:mergeinfo"]; present {
+			props.properties["svn:mergeinfo"] = popSegment(props.properties["svn:mergeinfo"])
+		}
+	}
+	nodehook := func(header []byte, properties []byte, content []byte) []byte {
+		for _, htype := range []string{"Node-path: ", "Node-copyfrom-path: "} {
+			offs := bytes.Index(header, []byte(htype))
+			if offs > -1 {
+				offs += len(htype)
+				endoffs := offs + bytes.Index(header[offs:], []byte("\n"))
+				before := header[:offs]
+				pathline := header[offs:endoffs]
+				after := make([]byte, len(header)-endoffs)
+				copy(after, header[endoffs:])
+				pathline = []byte(popSegment(string(pathline)))
+				header = before
+				header = append(header, pathline...)
+				header = append(header, after...)
+			}
+		}
+		all := make([]byte, 0)
+		all = append(all, header...)
+		all = append(all, properties...)
+		all = append(all, content...)
+		return all
+	}
+	source.Report(selection, nodehook, revhook, true, false)
+}
+
 // Hack paths by applying a regexp transformation.
 func pathrename(source DumpfileSource, selection SubversionRange, patterns []string) {
 	revhook := func(props *Properties) {
@@ -1443,6 +1490,8 @@ func main() {
 		expunge(NewDumpfileSource(input, baton), selection, flag.Args()[1:])
 	case "sift":
 		sift(NewDumpfileSource(input, baton), selection, flag.Args()[1:])
+	case "pop":
+		pop(NewDumpfileSource(input, baton), selection)
 	case "renumber":
 		renumber(NewDumpfileSource(input, baton))
 	case "reduce":
