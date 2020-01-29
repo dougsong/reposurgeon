@@ -1,7 +1,6 @@
 ## Test path-seqment popping
 ${REPOCUTTER:-repocutter} -q pop <<EOF
 SVN-fs-dump-format-version: 2
- ## Standard layout with a pre-segment. 
 
 UUID: be5bedff-a577-4def-8afe-cf522686966a
 
