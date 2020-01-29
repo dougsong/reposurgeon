@@ -2364,7 +2364,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 }
 
 func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
-	// Phase A: convert svn:ignore properties on directory nodes to .gitignore files
+	// Phase B: convert svn:ignore properties on directory nodes to .gitignore files
 	defer trace.StartRegion(ctx, "SVN Phase B: Conversion from svn:ignore to .gitignore").End()
 	logit(logEXTRACT, "SVN Phase B: Conversion from svn:ignore to .gitignore.")
 	if options.Contains("--no-automatic-ignores") {
@@ -2414,7 +2414,7 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 	}
 
 	existingIgnores := make(map[int]*PathMap)
-	baton.startProgress("SVN phase B: Conversion from svn:ignore to .gitignore",
+	baton.startProgress("SVN phase B: Conversion of svn:ignores",
 		uint64(len(sp.repo.events)))
 	for index, event := range sp.repo.events {
 		commit, ok := event.(*Commit)

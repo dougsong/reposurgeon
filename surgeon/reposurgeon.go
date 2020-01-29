@@ -11464,9 +11464,6 @@ func (rs *Reposurgeon) DoChoose(line string) bool {
 			if rs.chosen() != nil && repo == rs.chosen() {
 				status = "*"
 			}
-			if !control.flagOptions["quiet"] {
-				fmt.Fprint(control.baton, rfc3339(repo.readtime)+" ")
-			}
 			fmt.Fprintf(control.baton, "%s %s\n", status, repo.name)
 		}
 	} else {
