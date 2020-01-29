@@ -130,7 +130,7 @@ record removed as well.
 
 Delete all operations with Node-path headers *not* matching specified
 Golang regular expressions (opposite of 'expunge').  Any revision left
-ith no Node records after this filtering has its Revision record
+with no Node records after this filtering has its Revision record
 removed as well.
 `,
 	"pathrename": `pathrename: usage: repocutter [-r SELECTION ] pathrename FROM TO
