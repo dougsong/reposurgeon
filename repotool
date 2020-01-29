@@ -35,9 +35,12 @@ template = """\
 #    by setting READ_OPTIONS.
 # 5. Optionally, replace the default value of DUMPFILTER with a
 #    command or pipeline that actually filters the dump rather than
-#    just copying it through.  The most usual reasdon to do this is
+#    just copying it through.  The most usual reason to do this is
 #    that your Subversion repository is multiproject and you want to
-#    strip out one subtree with repocutter sift and pop commands.
+#    strip out one subtree for conversion with repocutter sift and pop
+#    commands.  Note that if you ever did copies across project
+#    subtrees this simple stripout will not work - you are in deep
+#    trouble and should find an expert to advise you
 # 6. Run 'make stubmap' to create a stub author map.
 # 7. Run 'make' to build a converted repository.
 #
