@@ -1163,9 +1163,8 @@ func pop(source DumpfileSource, selection SubversionRange) {
 	popSegment := func(ins string) string {
 		if strings.Contains(ins, "/") {
 			return ins[strings.Index(ins, "/")+1:]
-		} else {
-			return ""
 		}
+		return ""
 	}
 	revhook := func(props *Properties) {
 		if _, present := props.properties["svn:mergeinfo"]; present {
