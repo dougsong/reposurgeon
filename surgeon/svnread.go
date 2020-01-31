@@ -48,6 +48,7 @@ import (
 type svnReader struct {
 	revisions    []RevisionRecord
 	revmap       map[revidx]revidx
+	backfrom     map[revidx]revidx
 	streamview   []*NodeAction // All nodes in stream order
 	hashmap      map[string]*NodeAction
 	history      *History
@@ -207,6 +208,7 @@ func (h *History) apply(revision revidx, nodes []*NodeAction) {
 func (h *History) getActionNode(revision revidx, source string) *NodeAction {
 	p, _ := h.visible[revision].get(source)
 	if p != nil {
+		logit(logFILEMAP, "getActionNode(%d, %s) -> %s\n", revision, source, p.(*NodeAction))
 		return p.(*NodeAction)
 	}
 	return nil
@@ -354,6 +356,7 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 	defer trace.StartRegion(ctx, "SVN phase 1: read dump file").End()
 	sp.revisions = make([]RevisionRecord, 0)
 	sp.revmap = make(map[revidx]revidx)
+	sp.backfrom = make(map[revidx]revidx)
 	sp.hashmap = make(map[string]*NodeAction)
 	sp.splitCommits = make(map[revidx]int)
 	sp.branchlinks = make(map[revidx]revidx)
@@ -383,6 +386,9 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 			}
 			revision := intToRevidx(revint)
 			sp.revmap[revision] = revcount
+			if revcount > 0 {
+				sp.backfrom[revision] = sp.revisions[revcount-1].revision
+			}
 			revcount++
 			plen := parseInt(string(sp.sdRequireHeader("Prop-content-length")))
 			sp.sdRequireHeader("Content-length")
@@ -803,8 +809,7 @@ func (sp *StreamParser) seekAncestor(node *NodeAction, hash map[string]*NodeActi
 			return trial
 		}
 		// Ordinary inheritance, no node copy.
-		// Contiguity assumption here
-		lookback = sp.history.getActionNode(node.revision-1, node.path)
+		lookback = sp.history.getActionNode(sp.backfrom[node.revision], node.path)
 	}
 
 	// We reach here with lookback still nil if the node is a non-copy add.
@@ -1002,7 +1007,7 @@ func svnBuildFilemaps(ctx context.Context, sp *StreamParser, options stringSet, 
 	baton.startProgress("SVN phase 3: build filemaps", uint64(len(sp.revisions)))
 	sp.history = newHistory()
 	for ri, record := range sp.revisions {
-		sp.history.apply(intToRevidx(ri), record.nodes)
+		sp.history.apply(record.revision, record.nodes)
 		baton.percentProgress(uint64(ri))
 	}
 	baton.endProgress()
