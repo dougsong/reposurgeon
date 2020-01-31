@@ -1,3 +1,4 @@
+read <<SVNDUMP-EOF
 SVN-fs-dump-format-version: 2
  ##  Check that bogus mergeinfo doesn't crash reposurgeon
 
@@ -148,3 +149,6 @@ V 22
 PROPS-END
 
 
+SVNDUMP-EOF
+prefer git
+write -
