@@ -2049,13 +2049,20 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 				if len(fields) == 1 {
 					i, _ := strconv.Atoi(fields[0])
 					revs = append(revs, RevRange{i, i})
+					continue
 				} else if len(fields) == 2 {
 					minRev, _ := strconv.Atoi(fields[0])
 					maxRev, _ := strconv.Atoi(fields[1])
-					revs = append(revs, RevRange{minRev, maxRev})
+					if minRev <= maxRev {
+						revs = append(revs, RevRange{minRev, maxRev})
+						continue
+					}
 				}
+				logit(logWARN, "Ignoring corrupt mergeinfo range '%s'", span)
 			}
-			mergeinfo[branch] = revs
+			if len(revs) > 0 {
+				mergeinfo[branch] = revs
+			}
 		}
 		for branch, revs := range mergeinfo {
 			sort.Slice(revs, func(i, j int) bool {
