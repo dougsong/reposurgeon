@@ -7021,7 +7021,8 @@ func (repo *Repository) addEvent(event Event) {
 		return ok && passthrough.text == "done"
 	}
 	if len(repo.events) > 0 && isDone(repo.events[len(repo.events)-1]) {
-		repo.insertEvent(event, len(repo.events)-1, "")
+		repo.events = append(repo.events, repo.events[len(repo.events)-1])
+		repo.events[len(repo.events)-2] = event
 	} else {
 		repo.events = append(repo.events, event)
 	}
