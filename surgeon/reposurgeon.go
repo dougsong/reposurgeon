@@ -5928,7 +5928,7 @@ type Repository struct {
 	events            []Event // A list of the events encountered, in order
 	_markToIndex      map[string]int
 	_markToIndexLen   int // Cache is valid for events[:_markToIndexLen]
-	_markToIndexLock  sync.Mutex
+	_markToIndexLock  sync.RWMutex
 	_namecache        map[string][]int
 	preserveSet       orderedStringSet
 	basedir           string
@@ -6024,16 +6024,19 @@ func (repo *Repository) markToIndex(mark string) int {
 	if mark == "" {
 		return -1
 	}
-	repo._markToIndexLock.Lock()
-	defer repo._markToIndexLock.Unlock()
+	repo._markToIndexLock.RLock()
 	if index, ok := repo._markToIndex[mark]; ok {
+		repo._markToIndexLock.RUnlock()
 		return index
 	}
-	L := len(repo.events)
-	if repo._markToIndexLen < L {
+	if repo._markToIndexLen < len(repo.events) {
+		repo._markToIndexLock.RUnlock()
+		repo._markToIndexLock.Lock()
+		defer repo._markToIndexLock.Unlock()
 		if repo._markToIndex == nil {
 			repo._markToIndex = map[string]int{}
 		}
+		L := len(repo.events)
 		for i := repo._markToIndexLen; i < L; i++ {
 			seenMark := repo.events[i].getMark()
 			if seenMark != "" {
@@ -6045,6 +6048,8 @@ func (repo *Repository) markToIndex(mark string) int {
 			}
 		}
 		repo._markToIndexLen = L
+	} else {
+		repo._markToIndexLock.RUnlock()
 	}
 	return -1
 }
