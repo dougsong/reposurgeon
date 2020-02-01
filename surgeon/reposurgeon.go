@@ -7025,7 +7025,6 @@ func (repo *Repository) addEvent(event Event) {
 	} else {
 		repo.events = append(repo.events, event)
 	}
-	repo.declareSequenceMutation("")
 }
 
 // Filter assignments, warning if any of them goes empty.
