@@ -5927,7 +5927,7 @@ type Repository struct {
 	seekstream        *os.File
 	events            []Event // A list of the events encountered, in order
 	_markToIndex      map[string]int
-	_markToIndexCalls int // Call count between last invalidation and cache creation
+	_markToIndexLen   int // Cache is valid for events[:_markToIndexLen]
 	_markToIndexLock  sync.Mutex
 	_namecache        map[string][]int
 	preserveSet       orderedStringSet
@@ -6026,24 +6026,25 @@ func (repo *Repository) markToIndex(mark string) int {
 	}
 	repo._markToIndexLock.Lock()
 	defer repo._markToIndexLock.Unlock()
-	if repo._markToIndex != nil {
-		return repo._markToIndex[mark] - 1
+	if index, ok := repo._markToIndex[mark]; ok {
+		return index
 	}
-	repo._markToIndexCalls++
-	if repo._markToIndexCalls > 2 {
-		repo._markToIndex = map[string]int{}
-		for ind, event := range repo.events {
-			mark := event.getMark()
-			if mark != "" {
-				repo._markToIndex[mark] = ind + 1
+	L := len(repo.events)
+	if repo._markToIndexLen < L {
+		if repo._markToIndex == nil {
+			repo._markToIndex = map[string]int{}
+		}
+		for i := repo._markToIndexLen; i < L; i++ {
+			seenMark := repo.events[i].getMark()
+			if seenMark != "" {
+				repo._markToIndex[seenMark] = i
+				if seenMark == mark {
+					repo._markToIndexLen = i + 1
+					return i
+				}
 			}
 		}
-		return repo._markToIndex[mark] - 1
-	}
-	for ind, event := range repo.events {
-		if event.getMark() == mark {
-			return ind
-		}
+		repo._markToIndexLen = L
 	}
 	return -1
 }
@@ -6051,7 +6052,7 @@ func (repo *Repository) markToIndex(mark string) int {
 func (repo *Repository) invalidateMarkToIndex() {
 	repo._markToIndexLock.Lock()
 	repo._markToIndex = nil
-	repo._markToIndexCalls = 0
+	repo._markToIndexLen = 0
 	repo._markToIndexLock.Unlock()
 }
 
