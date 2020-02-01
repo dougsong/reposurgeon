@@ -9578,6 +9578,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 		}
 	}
 	rl.repo.events = filtered
+	rl.repo.invalidateMarkToIndex()
 	errout := rl.repo.tagifyEmpty(nil, false, false, false, nil, nil, !notagify)
 	// And tell we changed the manifests and the event sequence.
 	//rl.repo.invalidateManifests()
