@@ -2545,7 +2545,7 @@ func (b Blob) getMark() string {
 // setMark sets the blob's mark
 func (b *Blob) setMark(mark string) string {
 	if b.repo != nil {
-		b.repo.fixupMarkToIndex(b.mark, mark)
+		b.repo.fixupMarkToIndex(b, b.mark, mark)
 	}
 	b.mark = mark
 	return mark
@@ -3981,7 +3981,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 // setMark sets the commit's mark
 func (commit *Commit) setMark(mark string) string {
 	if commit.repo != nil {
-		commit.repo.fixupMarkToIndex(commit.mark, mark)
+		commit.repo.fixupMarkToIndex(commit, commit.mark, mark)
 	}
 	commit.mark = mark
 	return mark
@@ -6056,13 +6056,18 @@ func (repo *Repository) invalidateMarkToIndex() {
 	repo._markToIndexLock.Unlock()
 }
 
-func (repo *Repository) fixupMarkToIndex(oldmark, newmark string) {
+func (repo *Repository) fixupMarkToIndex(event Event, oldmark, newmark string) {
 	if oldmark == "" {
 		// maybe we are in events[:_markToIndexLen],
 		// but since we had no mark we couldn't be in
 		// it. We thus need to invalidate.
 		repo.invalidateMarkToIndex()
 	} else if index, ok := repo._markToIndex[oldmark]; ok {
+		if event != repo.events[index] {
+			logit(logSHOUT, "Multiple events with the same mark corrupted the cache")
+			repo.invalidateMarkToIndex()
+			return
+		}
 		repo._markToIndex[newmark] = index
 		delete(repo._markToIndex, oldmark)
 	}
