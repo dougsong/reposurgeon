@@ -2544,10 +2544,10 @@ func (b Blob) getMark() string {
 
 // setMark sets the blob's mark
 func (b *Blob) setMark(mark string) string {
-	b.mark = mark
 	if b.repo != nil {
-		b.repo.invalidateMarkToIndex()
+		b.repo.fixupMarkToIndex(b.mark, mark)
 	}
+	b.mark = mark
 	return mark
 }
 
@@ -3980,10 +3980,10 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 
 // setMark sets the commit's mark
 func (commit *Commit) setMark(mark string) string {
-	commit.mark = mark
 	if commit.repo != nil {
-		commit.repo.invalidateMarkToIndex()
+		commit.repo.fixupMarkToIndex(commit.mark, mark)
 	}
+	commit.mark = mark
 	return mark
 }
 
@@ -6054,6 +6054,21 @@ func (repo *Repository) invalidateMarkToIndex() {
 	repo._markToIndex = nil
 	repo._markToIndexLen = 0
 	repo._markToIndexLock.Unlock()
+}
+
+func (repo *Repository) fixupMarkToIndex(oldmark, newmark string) {
+	if oldmark == "" {
+		// maybe we are in events[:_markToIndexLen],
+		// but since we had no mark we couldn't be in
+		// it. We thus need to invalidate.
+		repo.invalidateMarkToIndex()
+	} else if index, ok := repo._markToIndex[oldmark]; ok {
+		repo._markToIndex[newmark] = index
+		delete(repo._markToIndex, oldmark)
+	}
+	// If we get here, the old mark has not been found and the event
+	// is thus guaranteed to be in the latter part of the event list,
+	// where the mark to index is not made yet. Nothing to fixup.
 }
 
 func (repo *Repository) newmark() string {
