@@ -17406,7 +17406,7 @@ func (rs *Reposurgeon) DoScript(ctx context.Context, lineIn string) bool {
 		// When it is set, we abort out of every nested
 		// script call.
 		if control.getAbort() {
-			if originalline != "" {
+			if originalline != "" && !strings.Contains(originalline, "</tmp") {
 				logit(logSHOUT, "script abort on line %d %q", lineno, originalline)
 			} else {
 				logit(logSHOUT, "script abort on line %d", lineno)
