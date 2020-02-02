@@ -10399,6 +10399,7 @@ func (rs *Reposurgeon) HelpNews() {
 
 * Stream parses cope with spaces in filenames.
 * The index command sees blobs by default.
+* Dumps with non-contiguous revisions are supported again. 
 `)
 }
 

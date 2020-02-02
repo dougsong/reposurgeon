@@ -1187,6 +1187,8 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 
 	// We don't need the revision maps after ancestry links are in place
 	sp.history = nil
+	//sp.revmap = nil
+	//sp.backfrom = nil
 	// sp.hashmap = nil
 }
 
