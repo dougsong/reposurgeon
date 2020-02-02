@@ -1061,7 +1061,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 		for _, node := range record.nodes {
 			appendExpanded := func(newnode *NodeAction) {
 				newnode.index = intToNodeidx(len(expandedNodes) + 1)
-				newnode.revision = intToRevidx(ri)
+				newnode.revision = record.revision
 				expandedNodes = append(expandedNodes, newnode)
 			}
 			// Starting with the nodes in the Subversion
