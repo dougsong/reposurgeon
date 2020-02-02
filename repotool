@@ -706,7 +706,8 @@ def compare(args):
     nuke(rsource)
     nuke(rtarget)
     if diff != "":
-        croak("Non-empty diff:\n" + diff)
+        croak("Non-empty diff for {}:\n{}".format(
+            " ".join(map(repr, args)), diff))
 
 def compare_engine(singular, plural, lister, comparer, args):
     "Compare two repositories at all revisions implied by a specified command."
