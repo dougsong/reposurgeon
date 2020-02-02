@@ -79,19 +79,17 @@ A second content modification.
 from :7
 M 100644 :8 README
 
-commit refs/tags/tag2
-#legacy-id 8
-mark :10
-committer esr <esr> 1322673346 +0000
-data 20
-Create a second tag
-M 100644 :8 README
-M 100644 :6 creation-example
-
 tag tag1
 #legacy-id 5
 from :5
 tagger esr <esr> 1322672941 +0000
 data 24
 This is an example tag.
+
+tag tag2
+#legacy-id 8
+from :9
+tagger esr <esr> 1322673346 +0000
+data 20
+Create a second tag
 

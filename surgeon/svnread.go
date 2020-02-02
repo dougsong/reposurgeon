@@ -1910,8 +1910,8 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	for branch, roots := range sp.branchRoots {
 		for _, commit := range roots {
 			rev, _ := strconv.Atoi(strings.Split(commit.legacyID, ".")[0])
-			if rev > 0 && rev < len(sp.revisions) {
-				record := sp.revision(intToRevidx(rev))
+			record := sp.revision(intToRevidx(rev))
+			if record != nil {
 				for _, node := range record.nodes {
 					if node.kind == sdDIR && node.fromRev != 0 &&
 						trimSep(node.path) == branch {
@@ -2451,7 +2451,8 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 			continue
 		}
 		revision, _ := strconv.Atoi(strings.Split(commit.legacyID, ".")[0])
-		if revision < 1 || revision >= len(sp.revisions) {
+		record := sp.revision(intToRevidx(revision))
+		if record == nil {
 			continue
 		}
 		var currentIgnores *PathMap
@@ -2466,7 +2467,7 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 		mybranch := sp.markToSVNBranch[commit.mark]
 		unchanged := true
 		hasTopLevel := false
-		for _, node := range sp.revision(intToRevidx(revision)).nodes {
+		for _, node := range record.nodes {
 			if node.kind != sdDIR {
 				continue
 			}
