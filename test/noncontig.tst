@@ -1,5 +1,6 @@
-SVN-fs-dump-format-version: 2
  ## Demonstrate that revision numbers need not be contiguous
+read <<EOF
+SVN-fs-dump-format-version: 2
 
 UUID: ce8ba131-4c05-4d3a-a8b6-67d702881f40
 
@@ -238,3 +239,5 @@ Node-copyfrom-rev: 7
 Node-copyfrom-path: trunk
 
 
+EOF
+write -
