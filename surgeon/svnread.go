@@ -339,8 +339,10 @@ func (sp *StreamParser) timeMark(label string) {
 }
 
 func (sp *StreamParser) revision(n revidx) *RevisionRecord {
-	// Contiguity assumption here
-	return &sp.revisions[sp.revmap[n]]
+	if rev, ok := sp.revmap[n]; ok {
+		return &sp.revisions[rev]
+	}
+	return nil
 }
 
 // Fast append avoids doing a full copy of the slice on every allocation
