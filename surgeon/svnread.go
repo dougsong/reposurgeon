@@ -66,6 +66,13 @@ type svnReader struct {
 	branchRoots map[string][]*Commit
 }
 
+func (sp *svnReader) maxRev() revidx {
+	if len(sp.revisions) == 0 {
+		return 0
+	}
+	return sp.revisions[len(sp.revisions)-1].revision
+}
+
 // Helpers for branch analysis
 
 // containingDir is a cut-down version of filepath.Dir
@@ -1851,7 +1858,8 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 				lastrev = len(list) - 1
 				prev = list[lastrev]
 			} else {
-				list = make([]*Commit, rev+1, len(sp.revisions))
+				// lastrev == -1, prev == nil
+				list = make([]*Commit, 0, sp.maxRev()+1)
 			}
 			list = list[:rev+1] // enlarge the list to go up to rev
 			for i := lastrev + 1; i < rev; i++ {
