@@ -1939,7 +1939,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 				// Remember the maximum value of fromRev in all nodes, or 0 if
 				// the file nodes don't all have a fromRev. We also record the
 				// minimum value, to warn if they are different.
-				maxfrom, minfrom := revidx(0), revidx(len(sp.revisions))
+				maxfrom, minfrom := revidx(0), sp.maxRev()
 				var frombranch string
 				for _, node := range record.nodes {
 					// Don't check for isDeclaredBranch because we only use
