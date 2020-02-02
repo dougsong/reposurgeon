@@ -342,7 +342,7 @@ func (sp *StreamParser) revision(n revidx) *RevisionRecord {
 	if rev, ok := sp.revmap[n]; ok {
 		return &sp.revisions[rev]
 	}
-	return nil
+	panic(throw("parse", "from-reference to nonexistent Subversion revision"))
 }
 
 // Fast append avoids doing a full copy of the slice on every allocation

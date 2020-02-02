@@ -187,8 +187,11 @@ func catch(accept string, x interface{}) *exception {
 	if x == nil {
 		return nil
 	}
-	if err, ok := x.(*exception); ok && err.class == accept {
-		return err
+	if err, ok := x.(*exception); ok {
+		if err.class == accept {
+			return err
+		}
+		fmt.Fprintf(os.Stderr, "Somebody threw a %s eexception while we were awaiting a %s exception!\n", err.class, accept)
 	}
 	panic(x)
 }
@@ -5721,6 +5724,13 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 
 func (sp *StreamParser) fastImport(ctx context.Context, fp io.Reader, options stringSet, source string) {
 	// Initialize the repo from a fast-import stream or Subversion dump.
+	defer func() {
+		if e := catch("parse", recover()); e != nil {
+			croak(e.message)
+			nuke(sp.repo.subdir(""), fmt.Sprintf("import interrupted, removing %s", sp.repo.subdir("")))
+		}
+	}()
+
 	sp.timeMark("start")
 	var filesize int64
 	sp.fp = bufio.NewReader(fp)
@@ -5780,15 +5790,6 @@ func (sp *StreamParser) fastImport(ctx context.Context, fp io.Reader, options st
 		sp.error("ignoring empty repository")
 	}
 
-	defer func() {
-		if e := catch("parse", recover()); e != nil {
-			if baton != nil {
-				//baton.endProcess("interrupted by error")
-			}
-			croak(e.message)
-			nuke(sp.repo.subdir(""), fmt.Sprintf("import interrupted, removing %s", sp.repo.subdir("")))
-		}
-	}()
 }
 
 // Generic repository-manipulation code begins here
