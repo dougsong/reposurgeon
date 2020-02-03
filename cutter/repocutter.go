@@ -1158,7 +1158,7 @@ func sift(source DumpfileSource, selection SubversionRange, patterns []string) {
 	source.Report(selection, sifthook, nil, true, false)
 }
 
-// Pop the top segment off each pathname in an input dump 
+// Pop the top segment off each pathname in an input dump
 func pop(source DumpfileSource, selection SubversionRange) {
 	popSegment := func(ins string) string {
 		if strings.Contains(ins, "/") {

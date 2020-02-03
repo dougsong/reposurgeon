@@ -5921,35 +5921,35 @@ type TimeMark struct {
 
 // Repository is the entire state of a version-control repository
 type Repository struct {
-	name              string
-	readtime          time.Time
-	vcs               *VCS
-	stronghint        bool
-	hintlist          []Hint
-	sourcedir         string
-	seekstream        *os.File
-	events            []Event // A list of the events encountered, in order
-	_markToIndex      map[string]int
-	_markToIndexLen   int // Cache is valid for events[:_markToIndexLen]
-	_markToIndexLock  sync.Mutex
-	_namecache        map[string][]int
-	preserveSet       orderedStringSet
-	basedir           string
-	uuid              string
-	writeLegacy       bool
-	dollarMap         sync.Map // From dollar cookies in files
-	dollarOnce        sync.Once
-	legacyMap         map[string]*Commit // From anything that doesn't survive rebuild
-	legacyCount       int
-	timings           []TimeMark
-	assignments       map[string]orderedIntSet
-	inlines           int
-	uniqueness        string // "committer_date", "committer_stamp", or ""
-	markseq           int
-	authormap         map[string]Contributor
-	tzmap             map[string]*time.Location // most recent email address to timezone
-	aliases           map[ContributorID]ContributorID
-	maplock           sync.Mutex
+	name             string
+	readtime         time.Time
+	vcs              *VCS
+	stronghint       bool
+	hintlist         []Hint
+	sourcedir        string
+	seekstream       *os.File
+	events           []Event // A list of the events encountered, in order
+	_markToIndex     map[string]int
+	_markToIndexLen  int // Cache is valid for events[:_markToIndexLen]
+	_markToIndexLock sync.Mutex
+	_namecache       map[string][]int
+	preserveSet      orderedStringSet
+	basedir          string
+	uuid             string
+	writeLegacy      bool
+	dollarMap        sync.Map // From dollar cookies in files
+	dollarOnce       sync.Once
+	legacyMap        map[string]*Commit // From anything that doesn't survive rebuild
+	legacyCount      int
+	timings          []TimeMark
+	assignments      map[string]orderedIntSet
+	inlines          int
+	uniqueness       string // "committer_date", "committer_stamp", or ""
+	markseq          int
+	authormap        map[string]Contributor
+	tzmap            map[string]*time.Location // most recent email address to timezone
+	aliases          map[ContributorID]ContributorID
+	maplock          sync.Mutex
 	// Write control - set, if required, before each dump
 	preferred      *VCS               // overrides vcs slot for writes
 	realized       map[string]bool    // clear and remake this before each dump
