@@ -46,9 +46,9 @@ import (
 )
 
 type svnReader struct {
-	revisions    []RevisionRecord				// Pheses 1 to B
-	revmap       map[revidx]revidx				// Pheses 1 to B
-	backfrom     map[revidx]revidx				// Pheses 1 to 5
+	revisions    []RevisionRecord				// Phases 1 to B
+	revmap       map[revidx]revidx				// Phases 1 to B
+	backfrom     map[revidx]revidx				// Phases 1 to 5
 	streamview   []*NodeAction 				// Phases 1 to 2. All nodes in stream order
 	hashmap      map[string]*NodeAction			// Phases 1 to 5
 	history      *History					// Phases 3 to 4.
