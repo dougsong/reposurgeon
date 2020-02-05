@@ -39,7 +39,7 @@ Subversion commits) fit on a 128GB machine with GOGC=30.
 If you can't read your history onto a 128GB machine with GOGC=30,
 *then* maybe the reposurgeon devteam ought to hear about it.
 
-== How ro report non-OOM bugs
+== How to report non-OOM bugs
 
 reposurgeon is an extremely algorithmically complex program.  It may
 still have bugs when dealing with strange corner cases in older
@@ -57,6 +57,9 @@ were operating on, or a pointer to where I can pull it from.
 
 (c) A script containing the sequence of reposurgeon commands that
 revealed the bug.
+
+Please use the reposurgeon projecrt's issue tracker and attach these
+files. It's helpful.
 
 == Test case reduction ==
 
