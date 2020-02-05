@@ -2377,9 +2377,9 @@ creating a DVCS-style annotated tag when it can and otherwise preserving the
 changes as commits, using a lightweight tag to point at the tip.
 
 There is a subtler problem around branches themselves. In a
-DVCS, deleting a branch removes it fronm the repository history
+DVCS, deleting a branch removes it from the repository history
 entirely, a fact of some significance since repositories are copied
-around often enough that keeping every discared experiment forever
+around often enough that keeping every discarded experiment forever
 would eventually drown the live content in superannuated cruft.
 Subversion repositories, on the other hand, are designed on the
 assumption that they sit on one server and never move.  A Subversion
