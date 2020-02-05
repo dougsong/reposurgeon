@@ -46,24 +46,22 @@ import (
 )
 
 type svnReader struct {
-	revisions    []RevisionRecord
-	revmap       map[revidx]revidx
-	backfrom     map[revidx]revidx
-	streamview   []*NodeAction // All nodes in stream order
-	hashmap      map[string]*NodeAction
-	history      *History
-	branchlinks  map[revidx]revidx
-	splitCommits map[revidx]int
+	revisions    []RevisionRecord				// Pheses 1 to B
+	revmap       map[revidx]revidx				// Pheses 1 to B
+	backfrom     map[revidx]revidx				// Pheses 1 to 5
+	streamview   []*NodeAction 				// Phases 1 to 2. All nodes in stream order
+	hashmap      map[string]*NodeAction			// Phases 1 to 5
+	history      *History					// Phases 3 to 4.
 	// Filled in ProcessBranches
-	markToSVNBranch map[string]string
+	markToSVNBranch map[string]string			// Phases 7 to B 
 	// a map from SVN branch names to a revision-indexed list of "last commits"
 	// (not to be used directly but through lastRelevantCommit)
 	// Filled in LinkFixups
-	lastCommitOnBranchAt map[string][]*Commit
+	lastCommitOnBranchAt map[string][]*Commit		// Phases 9 to A 
 	// a map from SVN branch names to root commits (there can be several in case
 	// of branch deletions since the commit recreating the branch is also root)
 	// Filled in LinkFixups
-	branchRoots map[string][]*Commit
+	branchRoots map[string][]*Commit			// Phases 9 to C
 }
 
 func (sp *svnReader) maxRev() revidx {
@@ -367,8 +365,6 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 	sp.revmap = make(map[revidx]revidx)
 	sp.backfrom = make(map[revidx]revidx)
 	sp.hashmap = make(map[string]*NodeAction)
-	sp.splitCommits = make(map[revidx]int)
-	sp.branchlinks = make(map[revidx]revidx)
 
 	trackSymlinks := newOrderedStringSet()
 	propertyStash := make(map[string]*OrderedMap)
@@ -1189,9 +1185,6 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 
 	// We don't need the revision maps after ancestry links are in place
 	sp.history = nil
-	//sp.revmap = nil
-	//sp.backfrom = nil
-	// sp.hashmap = nil
 }
 
 func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
@@ -1495,15 +1488,16 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 	}
 	baton.endProgress()
 
-	// We don't need the revision maps after this
-	sp.history = nil
+	// Some intermediate storage can now be dropped
+	sp.backfrom = nil
+	sp.hashmap = nil
 }
 
 func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
 	// Phase 6:
 	// Split mixed commits (that is, commits with file paths on
 	// multiple Subversion branches). Needs to be done before
-	// branch assignment, Use parallelized search to find them,
+	// branch assignment. Use parallelized search to find them,
 	// but the mutation of the event list has to be serialized
 	// else havoc will ensue.
 	//
@@ -1579,7 +1573,6 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 			fragment.legacyID = baseID + "." + strconv.Itoa(j+1)
 			sp.repo.legacyMap["SVN:"+fragment.legacyID] = fragment
 			fragment.Comment += splitwarn
-			sp.splitCommits[intToRevidx(i)]++
 			baton.twirl()
 		}
 		baton.percentProgress(uint64(i) + 1)
@@ -1850,6 +1843,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	sp.lastCommitOnBranchAt = make(map[string][]*Commit)
 	sp.branchRoots = make(map[string][]*Commit)
 	totalroots := 0
+	maxRev := sp.maxRev()
 	for index, event := range sp.repo.events {
 		if commit, ok := event.(*Commit); ok {
 			// Remember the last commit on every branch at each revision
@@ -1863,7 +1857,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 				prev = list[lastrev]
 			} else {
 				// lastrev == -1, prev == nil
-				list = make([]*Commit, 0, sp.maxRev()+1)
+				list = make([]*Commit, 0, maxRev+1)
 			}
 			list = list[:rev+1] // enlarge the list to go up to rev
 			for i := lastrev + 1; i < rev; i++ {
@@ -1939,7 +1933,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 				// Remember the maximum value of fromRev in all nodes, or 0 if
 				// the file nodes don't all have a fromRev. We also record the
 				// minimum value, to warn if they are different.
-				maxfrom, minfrom := revidx(0), sp.maxRev()
+				maxfrom, minfrom := revidx(0), maxRev
 				var frombranch string
 				for _, node := range record.nodes {
 					// Don't check for isDeclaredBranch because we only use
@@ -2387,6 +2381,8 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 		baton.percentProgress(uint64(revision) + 1)
 	}
 	baton.endProgress()
+
+	sp.lastCommitOnBranchAt = nil
 }
 
 func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
@@ -2540,6 +2536,11 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 	}
 
 	baton.endProgress()
+
+	// We can finally toss out the revision storage here
+	sp.revisions = nil
+	sp.revmap = nil
+	sp.markToSVNBranch = nil
 }
 
 func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
@@ -2749,6 +2750,8 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	}
 	sp.repo.delete(deletia, []string{"--pushforward", "--tagback"})
 	baton.endProgress()
+
+	sp.branchRoots = nil
 }
 
 func svnProcessRenumber(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
