@@ -13,6 +13,7 @@ done
 trap 'rm -fr test-repo test-checkout' 0 1 2 15 
 
 svnaction () {
+    # This version on svnaction does filenames or directories 
     case $1 in
 	*/)
 	    directory=$1
@@ -72,6 +73,7 @@ svnaction "project2/trunk/foo.txt" "or not to be." "And continues"
 svn up
 svn copy project2/trunk project2/tags/1.0
 svn commit -m "First tag copy"
+svn copy project2/trunk project1/evilcopy		# Evil cross-project copy
 # We're done
 cd ..
 } >/dev/$verbose 2>&1

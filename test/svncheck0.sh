@@ -13,6 +13,7 @@ done
 trap 'rm -fr test-repo test-checkout' 0 1 2 15 
 
 svnaction () {
+    # This version on svnaction does filenames only 
     filename=$1
     content=$2
     comment=$3
