@@ -569,7 +569,7 @@ repocutter-regress:
 	exit $${status}
 	@rm -f /tmp/regress$$$$
 
-# Regression-testing of Subversion permission-bit cases; look at the *.sh and
+# Regression-testing of Subversion permission-bit and other exceptional cases; look at the *.sh and
 # corresponding *.chk files to see which tests this runs.
 SVNCHECK := $(shell ls -1 svncheck*.sh | sed '/.sh/s///')
 svncheck-buildregress:

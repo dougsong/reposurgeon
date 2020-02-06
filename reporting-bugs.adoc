@@ -58,7 +58,7 @@ were operating on, or a pointer to where I can pull it from.
 (c) A script containing the sequence of reposurgeon commands that
 revealed the bug.
 
-Please use the reposurgeon projecrt's issue tracker and attach these
+Please use the reposurgeon project's issue tracker and attach these
 files. It's helpful.
 
 == Test case reduction ==
