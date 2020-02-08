@@ -15862,11 +15862,10 @@ the command line, this would clash with the use of backslashes as
 substitution-part references. If you need to include a non-printing
 character in a regexp, use its C-style escape, e.g. \s for space.
 
-Will match each branch name against regex1 and if it matches rewrite its branch
-name to branch1. If not it will try regex2 and so forth until it either found a
-matching regex or there are no regexs left. The regular expressions should be in
-python's format (see http://docs.python.org/2/library/re.html). The branch name
-can use backreferences (see the sub function in the python documentation).
+Will match each branch name against regex1 and if it matches rewrite
+its branch name to branch1. If not it will try regex2 and so forth
+until it either found a matching regex or there are no regexs
+left. The branch name can use backreferences.
 
 Note that the regular expressions are appended to 'refs/' without either the
 needed 'heads/' or 'tags/'. This allows for choosing the right kind of branch
