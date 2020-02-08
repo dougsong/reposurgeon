@@ -51,13 +51,13 @@ fastcheck: clean disclose $(BASIC) $(SUBVERSION)
 	@echo "=== No diff output is good news ==="
 
 # This should always be a full test
-fullcheck: clean disclose $(BASIC) $(SUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXTOOLS)
+fullcheck: clean disclose $(BASIC) $(FULLSUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXTOOLS)
 	@echo "=== No diff output is good news ==="
 
 disclose:
 	@echo "Running with $(CONCURRENT_JOBS) threads."
 
-# FIXME: is log -all really correct when regeneting the map checks?
+# FIXME: is log -all really correct when regenerating the map checks?
 
 .SUFFIXES: .svn .chk .fi .map
 
@@ -77,8 +77,8 @@ clean:
 	rm -fr .rs* test-repo test-checkout git-repo left-repo right-repo *~
 
 options:
-	@echo "REPOSURGEOM is $(REPOSURGEOM)"
-	@echo "TESTOPT is $(TESTOPT)"
+	@echo "REPOSURGEON is '$(REPOSURGEON)'"
+	@echo "TESTOPT is '$(TESTOPT)'"
 
 # Show summary lines for all tests.
 testlist:
