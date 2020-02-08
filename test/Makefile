@@ -74,7 +74,7 @@ buildregress: fi-buildregress svnload-buildregress legacy-buildregress \
 	repotool-buildregress
 
 clean:
-	rm -fr .rs* test-repo test-checkout git-repo left-repo right-repo svncheck4.svn *~
+	rm -fr .rs* test-repo test-checkout git-repo left-repo right-repo *~
 
 options:
 	@echo "REPOSURGEON is '$(REPOSURGEON)'"
@@ -148,6 +148,7 @@ fi-regress: svncheck4.svn
 # A generated test load
 svncheck4.svn: svncheck4.sh
 	sh svncheck4.sh -d >svncheck4.svn
+	ls -l svncheck4.svn
 
 $(TESTLOADS:%=fi-regress-%): fi-regress-%: %.tst
 	@file=$(<:.tst=); \
