@@ -10,3 +10,6 @@ go.sum
 *~
 .rs*/
 test/svncheck4.svn
+*.prof
+*.profile
+*.fi
