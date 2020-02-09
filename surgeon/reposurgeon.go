@@ -5659,7 +5659,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			if bytes.HasPrefix(line, []byte("from")) {
 				referent = string(bytes.TrimSpace(line[5:]))
 			} else {
-				sp.error("missing from after tag")
+				sp.error(fmt.Sprintf("missing 'from' field in tag %s", tagname))
 			}
 			line = sp.fiReadline()
 			if bytes.HasPrefix(line, []byte("tagger")) {
@@ -5669,7 +5669,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 					panic(throw("parse", "in tagger field: %v", err))
 				}
 			} else {
-				sp.warn("missing tagger after from in tag")
+				sp.warn(fmt.Sprintf("missing 'tagger' field after 'from' field in tag %s", tagname))
 				sp.pushback(line)
 			}
 			d, _ := sp.fiReadData([]byte{})
