@@ -79,5 +79,7 @@ cd ..
 } >/dev/$verbose 2>&1
 if [ "$dump" = yes ]
 then
-    svnadmin dump -q test-repo
+    svnadmin dump -q test-repo | sed '1a\
+ ## Multi-project repository example
+'
 fi
