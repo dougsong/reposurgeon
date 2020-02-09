@@ -6454,7 +6454,13 @@ func (repo *Repository) writeAuthorMap(selection orderedIntSet, fp io.Writer) er
 			}
 		case *Tag:
 			tag := event.(*Tag)
-			contributors[tag.tagger.userid()] = tag.tagger.who()
+			// A nil tagger field should never happen, but has been observed
+			// in the wild when reading a Git repository file with corrupted
+			// metadata: https://gitlab.com/esr/reposurgeon/issues/249
+			// Skip the invalid tag.
+			if tag.tagger != nil {
+				contributors[tag.tagger.userid()] = tag.tagger.who()
+			}
 		}
 	}
 	for userid, cid := range contributors {
