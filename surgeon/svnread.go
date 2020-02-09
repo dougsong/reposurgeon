@@ -1544,9 +1544,6 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 				reqlock.Unlock()
 			}
 		}
-		// Clique indices and requests were generated back to front
-		// so that when we process them we never have to worry about
-		// a commit index changing due to insertion.
 		baton.percentProgress(uint64(i) + 1)
 	})
 	baton.endProgress()
@@ -1554,6 +1551,9 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 	baton.startProgress("SVN phase 6b: split resolution", uint64(len(splits)))
 	// Can't parallelize this. That's OK, should be an unusual case.
 	// Sort the splits in case parallel execution generatesd them out of order.
+	// Clique indices and requests were generated back to front
+	// so that when we process them we never have to worry about
+	// a commit index changing due to insertion.
 	const splitwarn = "\n[[Split portion of a mixed commit.]]\n"
 	sort.Slice(splits, func(i, j int) bool { return splits[i].loc > splits[j].loc })
 	for i, split := range splits {
