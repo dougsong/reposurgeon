@@ -6035,7 +6035,10 @@ func (repo *Repository) markToIndex(mark string) int {
 	L := len(repo.events)
 	if repo._markToIndexLen < L {
 		if repo._markToIndex == nil {
-			repo._markToIndex = map[string]int{}
+			// Most events are Blobs and Commits and can thus be searched
+			// by mark. Use the event count as a hint to avoid growing the
+			// map a lot of times after an invalidation.
+			repo._markToIndex = make(map[string]int, len(repo.events))
 		}
 		for i := repo._markToIndexLen; i < L; i++ {
 			seenMark := repo.events[i].getMark()
