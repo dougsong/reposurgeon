@@ -3341,7 +3341,7 @@ func (fileop *FileOp) Save(w io.Writer) {
 	} else if fileop.op == opD {
 		fmt.Fprintf(w, "D %s\n", quotifyIfNeeded(fileop.Path))
 	} else if fileop.op == opR || fileop.op == opC {
-		fmt.Fprintf(w, "%c %q %q\n", fileop.op, fileop.Source, fileop.Target)
+		fmt.Fprintf(w, "%c \"%s\" \"%s\"\n", fileop.op, fileop.Source, fileop.Target)
 	} else if fileop.op == deleteall {
 		w.Write([]byte("deleteall\n"))
 	} else if fileop.op == 0 {
