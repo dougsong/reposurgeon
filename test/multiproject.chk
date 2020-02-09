@@ -28,7 +28,7 @@ Now is the time.
 commit refs/trunk
 #legacy-id 5
 mark :3
-committer esr <esr> 1581188455 +0000
+committer Fred J. Foonly <foonly@foo.com> 1800 +0000
 data 16
 Example content
 deleteall
@@ -43,7 +43,7 @@ For all good men.
 commit refs/trunk
 #legacy-id 6
 mark :5
-committer esr <esr> 1581188455 +0000
+committer Fred J. Foonly <foonly@foo.com> 2160 +0000
 data 34
 Example content in different file
 from :3
@@ -57,7 +57,7 @@ to come to the aid of their country.
 commit refs/trunk
 #legacy-id 7
 mark :7
-committer esr <esr> 1581188455 +0000
+committer Fred J. Foonly <foonly@foo.com> 2520 +0000
 data 24
 And in yet another file
 from :5
@@ -71,7 +71,7 @@ Whether tis nobler in the mind.
 commit refs/heads/master
 #legacy-id 13
 mark :9
-committer esr <esr> 1581188455 +0000
+committer Fred J. Foonly <foonly@foo.com> 4680 +0000
 data 26
 Hamlet the Dane said this
 deleteall
@@ -86,7 +86,7 @@ or to take arms against a sea of troubles
 commit refs/heads/master
 #legacy-id 14
 mark :11
-committer esr <esr> 1581188455 +0000
+committer Fred J. Foonly <foonly@foo.com> 5040 +0000
 data 13
 He continued
 from :9
@@ -100,7 +100,7 @@ and by opposing end them
 commit refs/heads/master
 #legacy-id 15
 mark :13
-committer esr <esr> 1581188456 +0000
+committer Fred J. Foonly <foonly@foo.com> 5400 +0000
 data 13
 The build-up
 from :11
@@ -114,7 +114,7 @@ to be,
 commit refs/heads/master
 #legacy-id 16
 mark :15
-committer esr <esr> 1581188456 +0000
+committer Fred J. Foonly <foonly@foo.com> 5760 +0000
 data 24
 Famous soliloquy begins
 from :13
@@ -128,7 +128,7 @@ or not to be.
 commit refs/heads/master
 #legacy-id 17
 mark :17
-committer esr <esr> 1581188456 +0000
+committer Fred J. Foonly <foonly@foo.com> 6120 +0000
 data 14
 And continues
 from :15
@@ -137,7 +137,7 @@ M 100644 :16 project2/trunk/foo.txt
 commit refs/heads/master
 #legacy-id 18
 mark :18
-committer esr <esr> 1581188456 +0000
+committer Fred J. Foonly <foonly@foo.com> 6480 +0000
 data 15
 First tag copy
 from :17
@@ -148,7 +148,7 @@ M 100644 :16 project2/tags/1.0/foo.txt
 tag stable-root
 #legacy-id 8
 from :7
-tagger esr <esr> 1581188455 +0000
+tagger Fred J. Foonly <foonly@foo.com> 2880 +0000
 data 21
 First directory copy
 
