@@ -1370,7 +1370,6 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 								sp.hashmap[node.contentHash] = node
 							}
 							sp.repo.addEvent(node.blob)
-							sp.repo.declareSequenceMutation("adding new blob")
 						}
 					} else if ancestor != nil {
 						node.blobmark = ancestor.blobmark
@@ -1479,7 +1478,6 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 
 		commit.setMark(sp.repo.newmark())
 		sp.repo.addEvent(commit)
-		sp.repo.declareSequenceMutation("adding new commit")
 
 		lastcommit = commit
 		sp.repo.legacyMap["SVN:"+commit.legacyID] = commit
