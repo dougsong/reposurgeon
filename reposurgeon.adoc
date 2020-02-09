@@ -1114,6 +1114,10 @@ shell command. Each blob or comment is presented to the filter on
 standard input; the content is replaced with whatever the filter emits
 to standard output.
 +
+When filtering blobs, if the command line contains the magic cookie
+'%PATHS%' it is replaced with a space-separated list of all paths
+that reference the blob.
++
 With `--regex`, the remainder of the line is expected to be a
 regular expression substitution written as `/from/to/` with `from` and
 `to` being passed as arguments to the standard re.sub() function and

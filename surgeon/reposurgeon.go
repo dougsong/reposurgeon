@@ -3776,8 +3776,8 @@ func (commit *Commit) emailOut(modifiers orderedStringSet,
 				hdr += strings.Title(s)
 			}
 			value := commit.properties.get(name)
-			value = strings.Replace(value, "\n", `\n`, 0)
-			value = strings.Replace(value, "\t", `\t`, 0)
+			value = strings.Replace(value, "\n", `\n`, -1)
+			value = strings.Replace(value, "\t", `\t`, -1)
 			msg.setHeader("Property-"+hdr, value)
 		}
 	}
@@ -10279,7 +10279,7 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 }
 
 // Filter commit metadata (and possibly blobs) through a specified hook.
-func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, attributes orderedStringSet, safety bool, quiet bool) {
+func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string, map[string]string) string, attributes orderedStringSet, safety bool, quiet bool) {
 	blobs := false
 	nonblobs := false
 	for _, ei := range rs.selection {
@@ -10323,10 +10323,10 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 		if tag, ok := event.(*Tag); ok {
 			if nonblobs {
 				oldcomment := tag.Comment
-				tag.Comment = hook(tag.Comment)
+				tag.Comment = hook(tag.Comment, nil)
 				anychanged := (oldcomment != tag.Comment)
 				oldtagger := tag.tagger.who()
-				newtagger := hook(oldtagger)
+				newtagger := hook(oldtagger, nil)
 				if oldtagger != newtagger {
 					newtagger += " " + tag.tagger.date.String()
 					attrib, err := newAttribution(newtagger)
@@ -10345,14 +10345,14 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 				anychanged := false
 				if attributes.Contains("c") {
 					oldcomment := commit.Comment
-					commit.Comment = hook(commit.Comment)
+					commit.Comment = hook(commit.Comment, nil)
 					if oldcomment != commit.Comment {
 						anychanged = true
 					}
 				}
 				if attributes.Contains("C") {
 					oldcommitter := commit.committer.who()
-					newcommitter := hook(oldcommitter)
+					newcommitter := hook(oldcommitter, nil)
 					changed := (oldcommitter != newcommitter)
 					if changed {
 						newcommitter += " " + commit.committer.date.String()
@@ -10367,7 +10367,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 				if attributes.Contains("a") {
 					for i := range commit.authors {
 						oldauthor := commit.authors[i].who()
-						newauthor := hook(oldauthor)
+						newauthor := hook(oldauthor, nil)
 						if oldauthor != newauthor {
 							newauthor += " " + commit.authors[i].date.String()
 							attrib, err := newAttribution(newauthor)
@@ -10387,7 +10387,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 				for _, fileop := range commit.operations() {
 					if len(fileop.inline) > 0 {
 						oldinline := fileop.inline
-						fileop.inline = []byte(hook(string(fileop.inline)))
+						fileop.inline = []byte(hook(string(fileop.inline), nil))
 						if !bytes.Equal(fileop.inline, oldinline) {
 							altered.bump()
 						}
@@ -10396,7 +10396,7 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string) string, att
 			}
 		} else if blob, ok := event.(*Blob); ok {
 			content := string(blob.getContent())
-			modified := hook(content)
+			modified := hook(content, map[string]string{"%PATHS%": fmt.Sprintf("%v", blob.paths(nil))})
 			if content != modified {
 				blob.setContent([]byte(modified), noOffset)
 				altered.bump()
@@ -12530,9 +12530,6 @@ func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
 		} else if subflags != "" && !flagRe.MatchString(subflags) {
 			croak("unrecognized filter flags")
 			return nil
-		} else if strings.Index(filtercmd, "%PATHS%") != -1 {
-			croak("%s is not yet supported in regex filters", "%PATHS%")
-			return nil
 		} else {
 			subcount := 1
 			for subflags != "" {
@@ -12595,10 +12592,14 @@ func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
 	return fc
 }
 
-func (fc *filterCommand) do(content string) string {
+func (fc *filterCommand) do(content string, substitutions map[string]string) string {
 	// Perform the filter on string content or a file.
 	if fc.filtercmd != "" {
-		cmd := exec.Command("sh", "-c", fc.filtercmd)
+		substituted := fc.filtercmd
+		for k, v := range substitutions {
+			substituted = strings.Replace(substituted, k, v, -1)
+		}
+		cmd := exec.Command("sh", "-c", substituted)
 		cmd.Stdin = strings.NewReader(content)
 		content, err := cmd.Output()
 		if err != nil {
@@ -12672,7 +12673,7 @@ func (rs *Reposurgeon) DoTranscode(line string) bool {
 	}
 	decoder := enc.NewDecoder()
 
-	transcode := func(txt string) string {
+	transcode := func(txt string, _ map[string]string) string {
 		out, err := decoder.Bytes([]byte(txt))
 		if err != nil {
 			logit(logWARN, "decode error during transcoding: %v", err)
@@ -16369,8 +16370,8 @@ func stringCopy(a string) string {
 // then breaks the line around it.
 func canonicalizeInlineAddress(line string) (bool, string, string, string) {
 	// Massage old-style addresses into newstyle
-	line = strings.ReplaceAll(line, "(", "<")
-	line = strings.ReplaceAll(line, ")", ">")
+	line = strings.Replace(line, "(", "<", -1)
+	line = strings.Replace(line, ")", ">", -1)
 	// And another kind of quirks
 	line = strings.Replace(line, "&lt;", "<", -1)
 	line = strings.Replace(line, "&gt;", ">", -1)

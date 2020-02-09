@@ -19,5 +19,7 @@ print Testing replace filtering of commits (all fields)
 =C filter --replace /Eric/Thranduil/
 print Testing replace filtering of tags
 =T filter --replace /Eric/Thorin/
+print Testing %PATHS% feature
+=B filter --shell sed /spacXr/s//%PATHS%/ || cat
 clear interactive
 write -

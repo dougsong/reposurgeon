@@ -16,6 +16,8 @@ Testing replace filtering of commits (all fields)
 reposurgeon: 18 items modified by filtering.
 Testing replace filtering of tags
 reposurgeon: 1 items modified by filtering.
+Testing %PATHS% feature
+reposurgeon: 3 items modified by filtering.
 blob
 mark :1
 data 134
@@ -114,11 +116,11 @@ M 100755 :9 hello
 
 blob
 mark :13
-data 136
+data 138
 THIS PATHETIC HEAP is a tXst rXpository intXndXd to XxXrcisX all thX
 fXaturXs of thX SubvXrsion dump codX.
 
-This is a spacXr commit.
+This is a [README] commit.
 
 
 
@@ -143,11 +145,11 @@ M 100644 :9 hello
 
 blob
 mark :16
-data 170
+data 172
 THIS PATHETIC HEAP is a tXst rXpository intXndXd to XxXrcisX all thX
 fXaturXs of thX SubvXrsion dump codX.
 
-This is anothXr spacXr commit.  This onX
+This is anothXr [README] commit.  This onX
 will havX a tag.
 
 
@@ -165,8 +167,8 @@ M 100644 :16 README
 
 blob
 mark :18
-data 27
-A third spacXr commit.
+data 29
+A third [README] commit.
 
 
 
