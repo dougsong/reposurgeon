@@ -1,0 +1,525 @@
+SVN-fs-dump-format-version: 2
+ ## Multi-project repository example
+
+UUID: a0778695-dd1c-4a6c-81ba-bd792bf18ebd
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2020-02-09T15:38:12.006181Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 116
+Content-length: 116
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-09T15:38:12.069136Z
+K 7
+svn:log
+V 18
+project1/ creation
+PROPS-END
+
+Node-path: project1
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 122
+Content-length: 122
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-09T15:38:12.121691Z
+K 7
+svn:log
+V 24
+project1/trunk/ creation
+PROPS-END
+
+Node-path: project1/trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 3
+Prop-content-length: 125
+Content-length: 125
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-09T15:38:12.173112Z
+K 7
+svn:log
+V 27
+project1/branches/ creation
+PROPS-END
+
+Node-path: project1/branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 4
+Prop-content-length: 121
+Content-length: 121
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-09T15:38:12.226104Z
+K 7
+svn:log
+V 23
+project1/tags/ creation
+PROPS-END
+
+Node-path: project1/tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 5
+Prop-content-length: 113
+Content-length: 113
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-09T15:38:12.279293Z
+K 7
+svn:log
+V 15
+Example content
+PROPS-END
+
+Node-path: project1/trunk/foo.txt
+Node-kind: file
+Node-action: add
+Text-content-md5: ed6712371d2245eb7d09bdfb749ca26a
+Text-content-sha1: 8b27e3f3022b04586568707e796b90619335e097
+Prop-content-length: 10
+Text-content-length: 17
+Content-length: 27
+
+PROPS-END
+Now is the time.
+
+
+Revision-number: 6
+Prop-content-length: 131
+Content-length: 131
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-09T15:38:12.333129Z
+K 7
+svn:log
+V 33
+Example content in different file
+PROPS-END
+
+Node-path: project1/trunk/bar.txt
+Node-kind: file
+Node-action: add
+Text-content-md5: 813a6ad7a62cd17bab9f9aaff357a634
+Text-content-sha1: 0d44d97d9ee785953d7c5221f9deaa35b50d7ab1
+Prop-content-length: 10
+Text-content-length: 18
+Content-length: 28
+
+PROPS-END
+For all good men.
+
+
+Revision-number: 7
+Prop-content-length: 121
+Content-length: 121
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-09T15:38:12.387008Z
+K 7
+svn:log
+V 23
+And in yet another file
+PROPS-END
+
+Node-path: project1/trunk/baz.txt
+Node-kind: file
+Node-action: add
+Text-content-md5: 82328f7157ff381bca47e2eafc59f02e
+Text-content-sha1: f2b07d5ed0d72b8ec1273ed3d03a6065b78c7959
+Prop-content-length: 10
+Text-content-length: 37
+Content-length: 47
+
+PROPS-END
+to come to the aid of their country.
+
+
+Revision-number: 8
+Prop-content-length: 118
+Content-length: 118
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-09T15:38:12.474049Z
+K 7
+svn:log
+V 20
+First directory copy
+PROPS-END
+
+Node-path: project1/branches/stable
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 7
+Node-copyfrom-path: project1/trunk
+
+
+Revision-number: 9
+Prop-content-length: 116
+Content-length: 116
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-09T15:38:12.526340Z
+K 7
+svn:log
+V 18
+project2/ creation
+PROPS-END
+
+Node-path: project2
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 10
+Prop-content-length: 122
+Content-length: 122
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-09T15:38:12.578768Z
+K 7
+svn:log
+V 24
+project2/trunk/ creation
+PROPS-END
+
+Node-path: project2/trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 11
+Prop-content-length: 125
+Content-length: 125
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-09T15:38:12.631801Z
+K 7
+svn:log
+V 27
+project2/branches/ creation
+PROPS-END
+
+Node-path: project2/branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 12
+Prop-content-length: 121
+Content-length: 121
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-09T15:38:12.699604Z
+K 7
+svn:log
+V 23
+project2/tags/ creation
+PROPS-END
+
+Node-path: project2/tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 13
+Prop-content-length: 123
+Content-length: 123
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-09T15:38:12.756568Z
+K 7
+svn:log
+V 25
+Hamlet the Dane said this
+PROPS-END
+
+Node-path: project2/trunk/foo.txt
+Node-kind: file
+Node-action: add
+Text-content-md5: 51ea269c2efe564096102f2eeb78c4e1
+Text-content-sha1: 9f34251aa181b41b56f522494ec135e4481094d4
+Prop-content-length: 10
+Text-content-length: 32
+Content-length: 42
+
+PROPS-END
+Whether tis nobler in the mind.
+
+
+Revision-number: 14
+Prop-content-length: 110
+Content-length: 110
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-09T15:38:12.810639Z
+K 7
+svn:log
+V 12
+He continued
+PROPS-END
+
+Node-path: project2/trunk/bar.txt
+Node-kind: file
+Node-action: add
+Text-content-md5: d892651c45704b95bf2f13179b8bd16f
+Text-content-sha1: 30bceaf3787310b6ffb48f3741a3d141cda5b24f
+Prop-content-length: 10
+Text-content-length: 42
+Content-length: 52
+
+PROPS-END
+or to take arms against a sea of troubles
+
+
+Revision-number: 15
+Prop-content-length: 110
+Content-length: 110
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-09T15:38:12.864964Z
+K 7
+svn:log
+V 12
+The build-up
+PROPS-END
+
+Node-path: project2/trunk/baz.txt
+Node-kind: file
+Node-action: add
+Text-content-md5: 32db0643a73e02a48d0b8a418d50c7dd
+Text-content-sha1: 819ab1266e9230655311b60f547e240bc900d14c
+Prop-content-length: 10
+Text-content-length: 25
+Content-length: 35
+
+PROPS-END
+and by opposing end them
+
+
+Revision-number: 16
+Prop-content-length: 121
+Content-length: 121
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-09T15:38:12.911425Z
+K 7
+svn:log
+V 23
+Famous soliloquy begins
+PROPS-END
+
+Node-path: project2/trunk/foo.txt
+Node-kind: file
+Node-action: change
+Text-content-md5: 3a0984a6b4b49778bc73b0076d3f0f78
+Text-content-sha1: 394a30bed4076e958acb3dec4308a03628a5bf6b
+Text-content-length: 7
+Content-length: 7
+
+to be,
+
+
+Revision-number: 17
+Prop-content-length: 111
+Content-length: 111
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-09T15:38:12.957359Z
+K 7
+svn:log
+V 13
+And continues
+PROPS-END
+
+Node-path: project2/trunk/foo.txt
+Node-kind: file
+Node-action: change
+Text-content-md5: 1b5d2905396e61761b55ad719457791b
+Text-content-sha1: 7431e2c4e4fdff9ac18e63e130308412746b4304
+Text-content-length: 14
+Content-length: 14
+
+or not to be.
+
+
+Revision-number: 18
+Prop-content-length: 112
+Content-length: 112
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-09T15:38:13.046191Z
+K 7
+svn:log
+V 14
+First tag copy
+PROPS-END
+
+Node-path: project2/tags/1.0
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 17
+Node-copyfrom-path: project2/trunk
+
+
