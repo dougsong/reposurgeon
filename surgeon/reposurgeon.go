@@ -5931,6 +5931,7 @@ type Repository struct {
 	events           []Event // A list of the events encountered, in order
 	_markToIndex     map[string]int
 	_markToIndexLen  int // Cache is valid for events[:_markToIndexLen]
+	_markToIndexSawN bool // whether we saw a null mark blob/commit when caching
 	_markToIndexLock sync.Mutex
 	_namecache       map[string][]int
 	preserveSet      orderedStringSet
@@ -6022,6 +6023,10 @@ func (repo *Repository) eventToIndex(obj Event) int {
 	panic(fmt.Sprintf("Internal error: object %q not matched in repository %s", fmt.Sprintf("%v", obj), repo.name))
 }
 
+type MarkSettable interface {
+	setMark(string)
+}
+
 // gets an object index from its mark, or -1 if not found
 func (repo *Repository) markToIndex(mark string) int {
 	if mark == "" {
@@ -6041,8 +6046,16 @@ func (repo *Repository) markToIndex(mark string) int {
 			repo._markToIndex = make(map[string]int, len(repo.events))
 		}
 		for i := repo._markToIndexLen; i < L; i++ {
-			seenMark := repo.events[i].getMark()
-			if seenMark != "" {
+			event := repo.events[i]
+			seenMark := event.getMark()
+			if seenMark == "" {
+				if _, ok := event.(MarkSettable); ok {
+					// Remember we saw a null mark for an event
+					// whose mark can be set, so that we know
+					// we cannot avoid invalidation in setMark
+					repo._markToIndexSawN = true
+				}
+			} else {
 				repo._markToIndex[seenMark] = i
 				if seenMark == mark {
 					repo._markToIndexLen = i + 1
@@ -6059,6 +6072,7 @@ func (repo *Repository) invalidateMarkToIndex() {
 	repo._markToIndexLock.Lock()
 	repo._markToIndex = nil
 	repo._markToIndexLen = 0
+	repo._markToIndexSawN = false
 	repo._markToIndexLock.Unlock()
 }
 
@@ -6066,8 +6080,11 @@ func (repo *Repository) fixupMarkToIndex(event Event, oldmark, newmark string) {
 	if oldmark == "" {
 		// maybe we are in events[:_markToIndexLen],
 		// but since we had no mark we couldn't be in
-		// it. We thus need to invalidate.
-		repo.invalidateMarkToIndex()
+		// the cache. We thus need to invalidate,
+		// unless no such event was seen when caching.
+		if repo._markToIndexSawN {
+			repo.invalidateMarkToIndex()
+		}
 	} else if index, ok := repo._markToIndex[oldmark]; ok {
 		if event != repo.events[index] {
 			logit(logSHOUT, "Multiple events with the same mark corrupted the cache")
