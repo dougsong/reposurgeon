@@ -9,7 +9,6 @@ go.sum
 *.md5
 *~
 .rs*/
-test/svncheck4.svn
 *.prof
 *.profile
 *.fi

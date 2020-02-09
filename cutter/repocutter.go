@@ -1155,7 +1155,7 @@ func sift(source DumpfileSource, selection SubversionRange, patterns []string) {
 		}
 		return []byte{}
 	}
-	source.Report(selection, sifthook, nil, true, false)
+	source.Report(selection, sifthook, nil, true, true)
 }
 
 // Pop the top segment off each pathname in an input dump

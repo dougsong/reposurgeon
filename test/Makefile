@@ -134,21 +134,21 @@ $(RULES_MESSAGE_BOX): messagebox-%: %
 # General regression testing of commands and output; look at the *.tst and
 # corresponding *.chk files to see which tests this runs.
 TESTLOADS := $(shell ls -1 *.tst | sed '/.tst/s///')
-fi-buildregress: svncheck4.svn
+fi-buildregress: multigen.svn
 	@for file in $(TESTLOADS); do \
 	    echo "Remaking $${file}.chk"; \
 	    $(REPOSURGEON) "$(BUILDOPT)" "$(TESTOPT)" "script $${file}.tst testing123" >$${file}.chk \
 		2>&1 || exit $(STOPOUT); \
 	done
 
-fi-regress: svncheck4.svn
+fi-regress: multigen.svn
 	@echo "=== Running general tests:"
 	@$(PARALLEL_MAKE) $(TESTLOADS:%=fi-regress-%)
 
 # A generated test load
-svncheck4.svn: svncheck4.sh
-	sh svncheck4.sh -d >svncheck4.svn
-	ls -l svncheck4.svn
+multigen.svn: multigen.sh
+	sh multigen.sh -d >multigen.svn
+	sh singlelift -b multigen
 
 $(TESTLOADS:%=fi-regress-%): fi-regress-%: %.tst
 	@file=$(<:.tst=); \
