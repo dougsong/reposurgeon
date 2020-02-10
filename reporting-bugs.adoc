@@ -37,7 +37,11 @@ the reposurgeon devteam has ever seen (the history of GCC, 280K
 Subversion commits) fit on a 128GB machine with GOGC=30.
 
 If you can't read your history onto a 128GB machine with GOGC=30,
-*then* maybe the reposurgeon devteam ought to hear about it.
+*then* maybe the reposurgeon devteam ought to hear about it. That
+said, if you can find ways to make reposurgeon more efficient, we are
+eager to accept those patches, or even just a bug report with the
+details. It's probable that there are some efficiency gains yet to be
+made.
 
 == How to report non-OOM bugs
 
@@ -163,6 +167,34 @@ slightly buggy - but you have a workaround.
 operation on two repositories. The cause is unknown, as git dies
 suddenly enough to not leave a crash report.)
 
+== Benchmarking
+
+A fair amount of effort has been expended to keep the run-time
+performance of Reposurgeon as linear as possible. This is not an easy
+state to stay in; it is unfortunately quite simple to accidentally
+regress this without noticing.
+
+To that end, there are some fairly simple scripts in the bench
+directory that can be used to check for this type of
+problem. `bench.sh` runs reposurgeon multiple times with a different
+readlimit each time, recording the run time and memory allocated at
+each iteration. Supply arguments specifying the dump file to read and
+the readlimit values to use like this:
+
+    ./bench/bench.sh your-dump-file.svn 1000 2000 20000
+
+This reads `your-dump-file.svn` 10 times, with the readlimit set first
+to 1,000, then 3,000, etc, stepping up until it reaches 20,000.
+
+This produces a `.dat` file which you can use with `plot.sh`,
+`svg.sh`, or `compare.sh` to produce graphs.
+
+For an example, see `link:bench/oops.svg[bench/oops.svg]`. This shows
+a graph made using good revision that had linear performance, several
+made with revisions that introduced a regression that made performance
+quite non-linear, and the fix. You can easily tell the difference
+visually.
+
 == Emergency help ==
 
 If you need emergency help, go to the #reposurgeon IRC channel listed
@@ -173,5 +205,3 @@ explanation, see http://esr.ibiblio.org/?p=5087[Your money or your
 spec]
 
 //end
-
-
