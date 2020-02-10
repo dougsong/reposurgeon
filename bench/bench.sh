@@ -37,10 +37,10 @@ min="${2}"
 step="${3}"
 max="${4}"
 rev="$(git rev-parse HEAD)"
+datfile="bench/${dump}_${rev}.dat"
 for readlimit in $(seq "${min}" "${step}" "${max}"); do
     sudo sh -c 'echo 3 >/proc/sys/vm/drop_caches'
-    sleep 1
-    run "bench/${rev}.dat" "bench/${rev}-${readlimit}.log" "${dump}" "${readlimit}"
+    run "${datfile}" "bench/${dump}_${rev}_${readlimit}.log" "${dump}" "${readlimit}"
 done
 
-./bench/plot.sh runtime "${file}"
+./bench/plot.sh runtime "${datfile}"

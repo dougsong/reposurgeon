@@ -12,4 +12,4 @@
 
 type="${1}"
 file="${2}"
-gnuplot --persist -e "file='${file}'" "bench-${type}.gnuplot" -
+gnuplot --persist -e "file='${file}'" "bench/bench-${type}.gnuplot" -
