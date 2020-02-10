@@ -2405,6 +2405,12 @@ deletion back to its branch point, but that will cause problens if a
 copy operation was ever sourced in the deleted branch (and this does
 happen!).
 
+What reposurgeon does instead is preserve the most recent
+branch with any given name, so the view back from the repository
+had and branch tips has correct content.  This means that if you
+check out a past revision from a time when a previous branch with the
+same name existed but was later deleted, you won't see that branch.
+
 === READING SUBVERSION REPOSITORIES ===
 
 Certain optional modifiers on the read command change
@@ -2639,6 +2645,42 @@ This case is mentioned here because it is likely to confuse
 the merge-tracking algorithms used, e.g., by `git diff`, or if you ever
 try to merge a branch that forked off the old A to a branch spun off the new
 (and expect git to know that you do not want to incorporate old A's changes).
+
+=== MULTIPROJECT REPOSITORIES ===
+
+Subversion repositories are sometimes organized to hold multiple
+projects, with the root directory containing one subdirectory per
+project and each subdirectory havong its own trunk/brances/tags
+layout.
+
+Suppose you have a stream dump from a repository with two project
+subdirectories, project1 and project2.  The pattern for dissecting out
+project1 looks like this:
+
+--------
+branchify project1/trunk project1/branches/* project1/tags *
+branchmap :project1/trunk:heads/master: :project1/tags:tags: :project1/branches:branches:
+set testmode
+read <multiproject.svn
+branch project2 delete
+--------
+
+The first command branchifies every directory underneath project1 for
+which that's required, wth project2 left as its own branch from top
+level. The second command sets up a transform of these branches into a
+standard layout.
+
+These transformations are performed when the actual read of the
+repository happens.  Following that, the unneeded project2 branch can
+be dropped.
+
+Of course we could have done the same thing with project2 and dropped
+project1.  Repeat this as many times as required to turn each partial
+into an autonomous git repository.
+
+While someting like this could be done with repocutter sift
+commands, that would not correctly resolve Subversion copies across
+projectts.  This reposurgeon procedurer handles those correctly.
 
 [[ignore]]
 == IGNORE PATTERNS ==
