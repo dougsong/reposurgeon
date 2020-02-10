@@ -2,6 +2,7 @@
 
 Repository head::
      %PATHS% capability resored to shell filtering.
+     A performance regression in reposurgeon was detected in 4.1; it's now been fixed.
 
 4.1: 2020-02-02::
      The "defergc" kluge in the previous release is no longer required.
