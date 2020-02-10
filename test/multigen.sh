@@ -73,7 +73,8 @@ svnaction "project2/trunk/foo.txt" "or not to be." "And continues"
 svn up
 svn copy project2/trunk project2/tags/1.0
 svn commit -m "First tag copy"
-svn copy project2/trunk project1/evilcopy		# Evil cross-project copy
+svn copy project2/trunk project1/trunk/evilcopy
+svn commit -m "Example cross-project copy"
 # We're done
 cd ..
 } >/dev/$verbose 2>&1

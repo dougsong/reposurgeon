@@ -1,7 +1,7 @@
 SVN-fs-dump-format-version: 2
  ## Multi-project repository example
 
-UUID: a0778695-dd1c-4a6c-81ba-bd792bf18ebd
+UUID: e86b1fe1-175c-480b-821a-f147ff5a9b3c
 
 Revision-number: 0
 Prop-content-length: 56
@@ -10,7 +10,7 @@ Content-length: 56
 K 8
 svn:date
 V 27
-2020-02-09T15:38:12.006181Z
+2020-02-10T11:44:34.912133Z
 PROPS-END
 
 Revision-number: 1
@@ -24,7 +24,7 @@ esr
 K 8
 svn:date
 V 27
-2020-02-09T15:38:12.069136Z
+2020-02-10T11:44:34.971226Z
 K 7
 svn:log
 V 18
@@ -51,7 +51,7 @@ esr
 K 8
 svn:date
 V 27
-2020-02-09T15:38:12.121691Z
+2020-02-10T11:44:35.022552Z
 K 7
 svn:log
 V 24
@@ -78,7 +78,7 @@ esr
 K 8
 svn:date
 V 27
-2020-02-09T15:38:12.173112Z
+2020-02-10T11:44:35.074635Z
 K 7
 svn:log
 V 27
@@ -105,7 +105,7 @@ esr
 K 8
 svn:date
 V 27
-2020-02-09T15:38:12.226104Z
+2020-02-10T11:44:35.125643Z
 K 7
 svn:log
 V 23
@@ -132,7 +132,7 @@ esr
 K 8
 svn:date
 V 27
-2020-02-09T15:38:12.279293Z
+2020-02-10T11:44:35.180299Z
 K 7
 svn:log
 V 15
@@ -163,7 +163,7 @@ esr
 K 8
 svn:date
 V 27
-2020-02-09T15:38:12.333129Z
+2020-02-10T11:44:35.232291Z
 K 7
 svn:log
 V 33
@@ -194,7 +194,7 @@ esr
 K 8
 svn:date
 V 27
-2020-02-09T15:38:12.387008Z
+2020-02-10T11:44:35.285843Z
 K 7
 svn:log
 V 23
@@ -225,7 +225,7 @@ esr
 K 8
 svn:date
 V 27
-2020-02-09T15:38:12.474049Z
+2020-02-10T11:44:35.370231Z
 K 7
 svn:log
 V 20
@@ -250,7 +250,7 @@ esr
 K 8
 svn:date
 V 27
-2020-02-09T15:38:12.526340Z
+2020-02-10T11:44:35.421486Z
 K 7
 svn:log
 V 18
@@ -277,7 +277,7 @@ esr
 K 8
 svn:date
 V 27
-2020-02-09T15:38:12.578768Z
+2020-02-10T11:44:35.472413Z
 K 7
 svn:log
 V 24
@@ -304,7 +304,7 @@ esr
 K 8
 svn:date
 V 27
-2020-02-09T15:38:12.631801Z
+2020-02-10T11:44:35.524508Z
 K 7
 svn:log
 V 27
@@ -331,7 +331,7 @@ esr
 K 8
 svn:date
 V 27
-2020-02-09T15:38:12.699604Z
+2020-02-10T11:44:35.576153Z
 K 7
 svn:log
 V 23
@@ -358,7 +358,7 @@ esr
 K 8
 svn:date
 V 27
-2020-02-09T15:38:12.756568Z
+2020-02-10T11:44:35.628316Z
 K 7
 svn:log
 V 25
@@ -389,7 +389,7 @@ esr
 K 8
 svn:date
 V 27
-2020-02-09T15:38:12.810639Z
+2020-02-10T11:44:35.681049Z
 K 7
 svn:log
 V 12
@@ -420,7 +420,7 @@ esr
 K 8
 svn:date
 V 27
-2020-02-09T15:38:12.864964Z
+2020-02-10T11:44:35.734803Z
 K 7
 svn:log
 V 12
@@ -451,7 +451,7 @@ esr
 K 8
 svn:date
 V 27
-2020-02-09T15:38:12.911425Z
+2020-02-10T11:44:35.779473Z
 K 7
 svn:log
 V 23
@@ -480,7 +480,7 @@ esr
 K 8
 svn:date
 V 27
-2020-02-09T15:38:12.957359Z
+2020-02-10T11:44:35.824743Z
 K 7
 svn:log
 V 13
@@ -509,7 +509,7 @@ esr
 K 8
 svn:date
 V 27
-2020-02-09T15:38:13.046191Z
+2020-02-10T11:44:35.912071Z
 K 7
 svn:log
 V 14
@@ -517,6 +517,31 @@ First tag copy
 PROPS-END
 
 Node-path: project2/tags/1.0
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 17
+Node-copyfrom-path: project2/trunk
+
+
+Revision-number: 19
+Prop-content-length: 124
+Content-length: 124
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-02-10T11:44:35.976148Z
+K 7
+svn:log
+V 26
+Example cross-project copy
+PROPS-END
+
+Node-path: project1/trunk/evilcopy
 Node-kind: dir
 Node-action: add
 Node-copyfrom-rev: 17
