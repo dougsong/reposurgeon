@@ -25,7 +25,7 @@ mark :2
 data 17
 Now is the time.
 
-commit refs/trunk
+commit refs/heads/master
 #legacy-id 5
 mark :3
 committer Fred J. Foonly <foonly@foo.com> 1800 +0000
@@ -40,7 +40,7 @@ mark :4
 data 18
 For all good men.
 
-commit refs/trunk
+commit refs/heads/master
 #legacy-id 6
 mark :5
 committer Fred J. Foonly <foonly@foo.com> 2160 +0000
@@ -54,7 +54,7 @@ mark :6
 data 37
 to come to the aid of their country.
 
-commit refs/trunk
+commit refs/heads/master
 #legacy-id 7
 mark :7
 committer Fred J. Foonly <foonly@foo.com> 2520 +0000
@@ -64,61 +64,14 @@ from :5
 M 100644 :6 baz.txt
 
 blob
-mark :8
-data 32
-Whether tis nobler in the mind.
-
-commit refs/heads/master
-#legacy-id 13
-mark :9
-committer Fred J. Foonly <foonly@foo.com> 4680 +0000
-data 26
-Hamlet the Dane said this
-deleteall
-M 100644 :1 .gitignore
-M 100644 :8 project2/trunk/foo.txt
-
-blob
 mark :10
 data 42
 or to take arms against a sea of troubles
-
-commit refs/heads/master
-#legacy-id 14
-mark :11
-committer Fred J. Foonly <foonly@foo.com> 5040 +0000
-data 13
-He continued
-from :9
-M 100644 :10 project2/trunk/bar.txt
 
 blob
 mark :12
 data 25
 and by opposing end them
-
-commit refs/heads/master
-#legacy-id 15
-mark :13
-committer Fred J. Foonly <foonly@foo.com> 5400 +0000
-data 13
-The build-up
-from :11
-M 100644 :12 project2/trunk/baz.txt
-
-blob
-mark :14
-data 7
-to be,
-
-commit refs/heads/master
-#legacy-id 16
-mark :15
-committer Fred J. Foonly <foonly@foo.com> 5760 +0000
-data 24
-Famous soliloquy begins
-from :13
-M 100644 :14 project2/trunk/foo.txt
 
 blob
 mark :16
@@ -126,24 +79,15 @@ data 14
 or not to be.
 
 commit refs/heads/master
-#legacy-id 17
-mark :17
-committer Fred J. Foonly <foonly@foo.com> 6120 +0000
-data 14
-And continues
-from :15
-M 100644 :16 project2/trunk/foo.txt
-
-commit refs/heads/master
-#legacy-id 18
-mark :18
-committer Fred J. Foonly <foonly@foo.com> 6480 +0000
-data 15
-First tag copy
-from :17
-M 100644 :10 project2/tags/1.0/bar.txt
-M 100644 :12 project2/tags/1.0/baz.txt
-M 100644 :16 project2/tags/1.0/foo.txt
+#legacy-id 19
+mark :19
+committer Fred J. Foonly <foonly@foo.com> 6840 +0000
+data 27
+Example cross-project copy
+from :7
+M 100644 :10 evilcopy/bar.txt
+M 100644 :12 evilcopy/baz.txt
+M 100644 :16 evilcopy/foo.txt
 
 tag stable-root
 #legacy-id 8
