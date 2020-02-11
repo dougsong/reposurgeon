@@ -70,8 +70,6 @@ package main
 // there's an internal requirement that they be settable by the Go
 // reflection primitives.
 //
-// Do 'help news' for a summary of recent changes.
-//
 // SPDX-License-Identifier: BSD-2-Clause
 
 import (
@@ -10417,16 +10415,6 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string, map[string]
 //
 // Command implementation begins here
 //
-
-func (rs *Reposurgeon) HelpNews() {
-	rs.helpOutput(`
-4.1 differences from 4.0:
-
-* Stream parses cope with spaces in filenames.
-* The index command sees blobs by default.
-* Dumps with non-contiguous revisions are supported again. 
-`)
-}
 
 //
 // On-line help and instrumentation
