@@ -1,6 +1,6 @@
 = reposurgeon project news =
 
-Repository head::
+4.2: 2020-02-11::
      %PATHS% capability restored to shell filtering.
      A performance regression in reposurgeon was detected in 4.1; it's now been fixed.
 
