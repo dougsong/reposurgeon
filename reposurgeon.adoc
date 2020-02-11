@@ -2401,15 +2401,16 @@ is a place where the Subversion model of tags clashes badly with the
 changeset-DAG model used by git and other DVCSes. Especially if the
 same tag is recreated later!  The obvious thing to do when converting
 this sequence would be to just nuke the tag history from the
-deletion back to its branch point, but that will cause problens if a
+deletion back to its branch point, but that will cause problems if a
 copy operation was ever sourced in the deleted branch (and this does
 happen!).
 
 What reposurgeon does instead is preserve the most recent
 branch with any given name, so the view back from the repository
-had and branch tips has correct content.  This means that if you
-check out a past revision from a time when a previous branch with the
-same name existed but was later deleted, you won't see that branch.
+had and branch tips has correct content. This does however mean that
+the conrtent of any branch with the same ptevious to the visible
+*most rtecent) one is discarded.  However, see the --preserve option
+of the read command.
 
 === READING SUBVERSION REPOSITORIES ===
 
