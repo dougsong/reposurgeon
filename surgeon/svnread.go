@@ -46,22 +46,22 @@ import (
 )
 
 type svnReader struct {
-	revisions    []RevisionRecord				// Phases 1 to B
-	revmap       map[revidx]revidx				// Phases 1 to B
-	backfrom     map[revidx]revidx				// Phases 1 to 5
-	streamview   []*NodeAction 				// Phases 1 to 2. All nodes in stream order
-	hashmap      map[string]*NodeAction			// Phases 1 to 5
-	history      *History					// Phases 3 to 4.
+	revisions  []RevisionRecord       // Phases 1 to B
+	revmap     map[revidx]revidx      // Phases 1 to B
+	backfrom   map[revidx]revidx      // Phases 1 to 5
+	streamview []*NodeAction          // Phases 1 to 2. All nodes in stream order
+	hashmap    map[string]*NodeAction // Phases 1 to 5
+	history    *History               // Phases 3 to 4.
 	// Filled in ProcessBranches
-	markToSVNBranch map[string]string			// Phases 7 to B 
+	markToSVNBranch map[string]string // Phases 7 to B
 	// a map from SVN branch names to a revision-indexed list of "last commits"
 	// (not to be used directly but through lastRelevantCommit)
 	// Filled in LinkFixups
-	lastCommitOnBranchAt map[string][]*Commit		// Phases 9 to A 
+	lastCommitOnBranchAt map[string][]*Commit // Phases 9 to A
 	// a map from SVN branch names to root commits (there can be several in case
 	// of branch deletions since the commit recreating the branch is also root)
 	// Filled in LinkFixups
-	branchRoots map[string][]*Commit			// Phases 9 to C
+	branchRoots map[string][]*Commit // Phases 9 to C
 }
 
 func (sp *svnReader) maxRev() revidx {
@@ -2578,7 +2578,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 		}
 		tip, _ := sp.repo.markToEvent(branchtips[origbranch]).(*Commit)
 		if commit == tip && len(tip.operations()) == 1 &&
-				tip.operations()[0].op == deleteall {
+			tip.operations()[0].op == deleteall {
 			// Do not canonicalize tipdeletes
 			return
 		}

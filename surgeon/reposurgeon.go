@@ -5930,7 +5930,7 @@ type Repository struct {
 	seekstream       *os.File
 	events           []Event // A list of the events encountered, in order
 	_markToIndex     map[string]int
-	_markToIndexLen  int // Cache is valid for events[:_markToIndexLen]
+	_markToIndexLen  int  // Cache is valid for events[:_markToIndexLen]
 	_markToIndexSawN bool // whether we saw a null mark blob/commit when caching
 	_markToIndexLock sync.Mutex
 	_namecache       map[string][]int
@@ -6023,6 +6023,7 @@ func (repo *Repository) eventToIndex(obj Event) int {
 	panic(fmt.Sprintf("Internal error: object %q not matched in repository %s", fmt.Sprintf("%v", obj), repo.name))
 }
 
+// MarkSettable is an iterface deckaring that an ebent has a mutable mark
 type MarkSettable interface {
 	setMark(string)
 }
