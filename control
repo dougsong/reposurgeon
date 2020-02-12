@@ -29,3 +29,5 @@ XBS-Logo: reposturgeon.png
 XBS-VC-Tag-Template: %(version)s
 
 XBS-Validate: make check
+
+XBS-Destination: Anthony Fok <foka@debian.org>
