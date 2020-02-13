@@ -1,11 +1,10 @@
 #!/bin/bash
 
 apt-get update -qy && apt-get install -qy --no-install-recommends \
-    asciidoc \
     asciidoctor \
     cvs \
     cvs-fast-export \
-    golang \
+    golint \
     mercurial \
     python2.7 \
     python3 \
@@ -13,6 +12,8 @@ apt-get update -qy && apt-get install -qy --no-install-recommends \
     time \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
+type go
+go version
 
 echo
 echo ============= Dependency install complete ============= 
