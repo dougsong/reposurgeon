@@ -8,7 +8,7 @@ target=$(DESTDIR)$(prefix)
 
 VERS=$(shell sed <surgeon/reposurgeon.go -n -e '/const *version *= *\"\(.*\)\"/s//\1/p')
 SOURCES = \
-	reposurgeon reposurgeon.adoc \
+	reposurgeon.adoc \
 	repotool repotool.adoc \
 	cutter/repocutter.go \
 	mapper/repomapper.go \
@@ -90,7 +90,7 @@ install: all
 	$(INSTALL) -m 644 $(MANPAGES) "$(target)/$(mandir)/man1"
 
 clean:
-	rm -fr goreposurgeon repocutter repomapper
+	rm -fr reposurgeon repocutter repomapper
 	rm -fr  *~ *.1 *.html *.tar.xz MANIFEST *.md5
 	rm -fr .rs .rs* test/.rs test/.rs*
 	rm -f typescript test/typescript *.pyc
