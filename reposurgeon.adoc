@@ -1962,7 +1962,7 @@ ignored. If a line has a trailing position that begins with one or more
 whitespace characters followed by '```++#++```', that trailing portion is
 ignored.
 +
-Scripts may call other scripts to arbitary depth. 
+Scripts may call other scripts to arbitrary depth.
 
 [[artifact-removal]]
 === ARTIFACT REMOVAL ===
@@ -2508,7 +2508,7 @@ after the initial creation or copy.  If there are such commits, or if the
 branch creation or copy introduces changes other than the copy, it
 becomes a branch.  If not, it may become a tag in order to preserve
 the commit metadata. In all cases, the name of any created tag or
-branch is the basename of the directory, unless an other mapping is
+branch is the basename of the directory, unless another mapping is
 in place.
 
 Branch-creation operations with no following commits are tagified.
@@ -2679,7 +2679,7 @@ Of course we could have done the same thing with project2 and dropped
 project1.  Repeat this as many times as required to turn each partial
 into an autonomous git repository.
 
-While someting like this could be done with repocutter sift
+While something like this could be done with repocutter sift
 commands, that would not correctly resolve Subversion copies across
 projectts.  This reposurgeon procedurer handles those correctly.
 

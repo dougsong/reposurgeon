@@ -77,7 +77,7 @@ The 'compare' action takes two repository directories. It may
 optionally take a tag-branch-revision spec as for the checkout
 option. You can also pass two revisions separated by a colon to the
 -r option, to have the first one checked out in the first repository
-and the second one in the second repository. That permits to compare
+and the second one in the second repository. That permits one to compare
 two different revisions, or the same revision referenced differently
 in two VCS. You can leave one of the two revisions empty, then the -r
 option will not be passed to the corresponding repository checkout.
@@ -147,7 +147,7 @@ to '/tmp' if it is not set.
 
 1 on invalid arguments or if a command called by the script failed, 0
 otherwise.  A return value of 0 on a compare operation does *not*
-necesarily indicate a clean comparison; only empty output does that.
+necessarily indicate a clean comparison; only empty output does that.
 
 [[bugs]]
 == BUGS ==
