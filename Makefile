@@ -14,12 +14,19 @@ SOURCES = \
 	mapper/repomapper.go \
 	surgeon/reposurgeon.go \
 	surgeon/reposurgeon_test.go \
+        surgeon/baton.go \
+        surgeon/extractor.go \
+        surgeon/hgclient.go \
+        surgeon/reposurgeon.go \
+        surgeon/reposurgeon_test.go \
+        surgeon/selection.go \
 	repomapper.adoc repocutter.adoc \
 	reporting-bugs.adoc features.adoc dvcs-migration-guide.adoc \
-	reposurgeon-mode.el
+	reposurgeon-mode.el \
+        go.mod
 SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
 SOURCES += Dockerfile ci/prepare.sh .gitlab-ci.yml
-DOCS = README.adoc INSTALL.adoc NEWS
+DOCS = README.adoc INSTALL.adoc NEWS AUTHORS COPYING
 
 STOPOUT=1
 
