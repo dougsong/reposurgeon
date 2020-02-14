@@ -147,6 +147,13 @@ that has normal trunk/branch/tag structure under each top-level
 directory (of course the alternative is to break it into componebts
 using multiple strip operations).
 
+testify::
+Replace commit timestamps with a monotonically increasing clock tick
+starting at the Unix epoch and advancing by 10 seconds per commit.
+Replace ll attributions with 'fred'.  Discard the repository UUID.
+Use this to neutralize procedurally-generated streams so they can be
+compared.
+
 [[history]]
 == HISTORY ==
 

@@ -1,5 +1,8 @@
 = reposurgeon project news =
 
+Repository head::
+     Added testify command to repocutter.
+
 4.3: 2020-02-12::
      Administrative release to fix a packaging error.
 

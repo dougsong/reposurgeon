@@ -63,21 +63,22 @@ var debug = false
 
 var oneliners = map[string]string{
 	//"squash":     "Squashing revisions",
-	"select":     "Selecting revisions",
-	"propdel":    "Deleting revision properties",
-	"propset":    "Setting revision properties",
-	"proprename": "Renaming revision properties",
-	"log":        "Extracting log entries",
-	"setlog":     "Mutating log entries",
-	"strip":      "Replace content with unique cookies, preserving structure",
 	"expunge":    "Expunge operations by Node-path header",
-	"sift":       "Sift for operations by Node-path header",
-	"pop":        "Pop the first segment off each path",
+	"log":        "Extracting log entries",
 	"pathrename": "Transform path headers with a regexp replace",
-	"renumber":   "Renumber revisions so they're contiguous",
+	"pop":        "Pop the first segment off each path",
+	"propdel":    "Deleting revision properties",
+	"proprename": "Renaming revision properties",
+	"propset":    "Setting revision properties",
 	"reduce":     "Topologically reduce a dump.",
+	"renumber":   "Renumber revisions so they're contiguous",
 	"see":        "Report only essential topological information",
+	"select":     "Selecting revisions",
+	"setlog":     "Mutating log entries",
+	"sift":       "Sift for operations by Node-path header",
+	"strip":      "Replace content with unique cookies, preserving structure",
 	"swap":       "Swap first two compenents of pathnames",
+	"testify":    "Massage a strwam file into a neutralized test load",
 }
 
 var helpdict = map[string]string{
@@ -185,6 +186,14 @@ the display name is changed to make them easier to see.
 Swap the top two elements of each pathname in every revision in the
 selection set. Useful following a sift operation for straightening out
 a common form of multi-project repository.
+`,
+	"testify": `testify: usage: repocutter [-r SELECTION] testify
+
+Replace commit timestamps with a monotonically increasing clock tick
+starting at the Unix epoch and advancing by 10 seconds per commit.
+Replace ll attributions with 'fred'.  Discard the repository UUID.
+Use this to neutralize procedurally-generated streams so they can be
+compared.
 `,
 }
 
@@ -1290,6 +1299,47 @@ func renumber(source DumpfileSource) {
 	}
 }
 
+// Neutralize the input test load
+func testify(source DumpfileSource) {
+	const NeutralUser = "fred"
+	counter := base
+	var p []byte
+	var state int
+	for {
+		line := source.Lbs.Readline()
+		if len(line) == 0 {
+			break
+		}
+		if p = payload("UUID", line); p != nil && source.Lbs.linenumber <= 10 {
+			continue
+		} else if p = payload("Revision-number", line); p != nil {
+			counter++
+		} else if bytes.HasPrefix(line, []byte("svn:author")) {
+			state = 1
+		} else if state == 1 && bytes.HasPrefix(line, []byte("V ")) {
+			line = []byte(fmt.Sprintf("V %d\n", len(NeutralUser)))
+			state = 2
+		} else if bytes.HasPrefix(line, []byte("svn:date")) {
+			state = 4
+		} else if bytes.HasPrefix(line, []byte("PROPS-END")) {
+			state = 0
+		}
+		if state == 3 {
+			line =  []byte(NeutralUser + "\n")
+			state = 0
+		} else if state == 6 {
+			t := time.Unix(int64((counter-1) * 10), 0).UTC().Format(time.RFC3339)
+			t2 := t[:19] + ".000000Z"
+			line = []byte(t2 + "\n")
+			state = 0
+		}
+		os.Stdout.Write(line)
+		if state >= 2 {
+			state++
+		}
+	}
+}
+
 // Strip out ops defined by a revision selection and a path regexp.
 func see(source DumpfileSource, selection SubversionRange) {
 	seenode := func(header []byte, _, _ []byte) []byte {
@@ -1508,6 +1558,8 @@ func main() {
 		see(NewDumpfileSource(input, baton), selection)
 	case "swap":
 		swap(NewDumpfileSource(input, baton), selection)
+	case "testify":
+		testify(NewDumpfileSource(input, baton))
 	case "help":
 		if len(flag.Args()) == 1 {
 			os.Stdout.WriteString(doc)
