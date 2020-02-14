@@ -11,6 +11,10 @@ make
 
 == Prerequisites ==
 
+You will need 64-bit haerdware. This code is bot intended to
+run on 32-bit mnachines (which havean address space too small to be
+usefuk for repository suregery) and won't build pn them.
+
 You will need the Go compiler at revision 1.12 or later.  Note, you
 may have to tweak your $PATH variable to make the Go tools visible.
 
