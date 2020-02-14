@@ -13376,7 +13376,7 @@ func (rs *Reposurgeon) HelpTimeoffset() {
 	rs.helpOutput(`
 Apply a time offset to all time/date stamps in the selected set.  An offset
 argument is required; it may be in the form [+-]ss, [+-]mm:ss or [+-]hh:mm:ss.
-The leading sign is required to distingush it from a selection expression.
+The leading sign is required to distinguish it from a selection expression.
 
 Optionally you may also specify another argument in the form [+-]hhmm, a
 timeone literal to apply.  To apply a timezone without an offset, use
