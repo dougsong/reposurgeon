@@ -59,7 +59,7 @@ build:  $(MANPAGES) $(HTMLFILES)
 .adoc.1:
 	asciidoctor -a nofooter -b manpage $<
 .adoc.html:
-	asciidoctor $<
+	asciidoctor -a webfonts! $<
 
 #
 # Auxilary Go tooling productions
