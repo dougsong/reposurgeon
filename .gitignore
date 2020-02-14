@@ -2,7 +2,6 @@ reposurgeon
 repocutter
 repomapper
 pkg
-go.sum
 *.1
 *.html
 *.xz
