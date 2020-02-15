@@ -1,4 +1,5 @@
 = Notes on the Go translation of Reposurgeon =
+:source-highlighter: prettify
 version 1.9, 2020-01-26
 
 This is an experience report on a Python-to-Go translation of a
@@ -38,7 +39,7 @@ incomplete Python-to-Go source translator] to assist the process.
 
 The man barrier to translation was that, while at 14KLOC of Python
 reposurgeon was not especially large, the code is very *dense*.  It's
-a DSL that's a structure editor for attributed DAGs - algorithmically
+a DSL that's a structure editor for attributed DAGs -- algorithmically
 complex, bristling with graph theory, FSMs, parsing, tricky data
 structures, two robot harnesses driving other tools, and three
 different operator-composition algebras.  It became 21KLOC of Go.
@@ -63,15 +64,15 @@ A typo fix and a clarification have been backported from the thread.)
 
 == Expected problems that weren't ==
 
-Semantic distance. In general, the translation gap between Python and
+*Semantic distance.*  In general, the translation gap between Python and
 Go is narrower than I initially expected, especially considering the
 dynamic-vs-static type-system difference.  On reflection, I think it
 turns out that GC and the existence of maps as first-class types do
 more to narrow that gap than the static/dynamic divergence in type
 systems does to widen it.
 
-Polymorphic lists.  The principal data structure of a repository's
-representation in reposurgeon is a list of events - data structures
+*Polymorphic lists.*  The principal data structure of a repository's
+representation in reposurgeon is a list of events -- data structures
 representing modification operations on sets of files.  The list is
 necessarily polymorphic because (for example) a change commit and a
 tag creation are different kinds of things.  Translating this to
@@ -79,12 +80,12 @@ static typing using interfaces proved less arduous than I had feared,
 though the process revealed a documentation issue and a problem
 with absence of sum types; I will return to both points.
 
-Operator overloading.  Good style in Python, but surprisingly easy to
+*Operator overloading.*  Good style in Python, but surprisingly easy to
 relinquish in Go.  I went in thinking that they'd be on my want list
-for Go before I was done, but no - not even at reposurgeon's
+for Go before I was done, but no -- not even at reposurgeon's
 complexity scale.
 
-Generics.  Yes, these would have made translation easier, but the main
+*Generics.*  Yes, these would have made translation easier, but the main
 impact turned out to be that I had to write my own set-of-int and
 set-of-string classes.  That was a surprisingly light hit.  What I
 really missed was generic map-function-over-slice, which could be
@@ -113,12 +114,14 @@ The problem that obtruded on me first was quite unexpected: absence of
 keyword arguments.  In Python one can write a function signature like
 this
 
+[source,python]
 ----------------------------------------------------------------------
     def EuclideanDistance(x, y):
 ----------------------------------------------------------------------
 
 and then call it like this:
 
+[source,python]
 ----------------------------------------------------------------------
     d = EuclideanDistance(x=3.0, y=9.6)
 ----------------------------------------------------------------------
@@ -140,7 +143,7 @@ shouldn't need to exist.
 
 If one graded possible Go point extensions by a figure of merit in which the
 numerator is "how much Python expressiveness this keeps" and the
-denominator is "how simple and self-contained the Go feature would be"
+denominator is "how simple and self-contained the Go feature would be",
 I think this one would be top of list.
 
 So: map as a functional builtin takes two arguments, one x = []T and a
@@ -178,7 +181,7 @@ Python regexps have both positive and negative lookbehind clauses.
 The following expression looks for possible Subversion revision
 designators in comments, excluding bug references:
 
-"(?<!bug )[0-9]+"
+ "(?<!bug )[0-9]+"
 
 Go translation reveals that it is remarkably unpleasant, verging on
 "too painful to be worth it" to do that filtering without lookbehinds.
@@ -190,26 +193,27 @@ limits that are more annoying.
 
 === Absence of sum/discriminated-union types ===
 
-I have read issue #19412 and am aware of the objections to adding sum
-types to Go.
+I have read https://github.com/golang/go/issues/19412[issue #19412]
+and am aware of the objections to adding sum types to Go.
 
 Nevertheless, I found their absence was something of a pain point in my
 translation.  Because reposurgeon events can have any one of a set of
 types (Blob, Tag, Commit, Callout, Passthrough, Reset) I found myself
 writing a lot of stupid boilerplate code like this:
 
+[source,go]
 --------------------------------------------------------------------
-    for _, child := range commit.children() {
-	    switch child.(type) {
-	    case *Commit:
-		    successorBranches.Add(child.(Commit).branch)
-	    case *Callout:
-		    complain("internal error: callouts do not have branches: %s",
-			    child.idMe())
-	    default:
-		    panic("in tags method, unexpected type in child list")
-	    }
-    }
+	for _, child := range commit.children() {
+		switch child.(type) {
+		case *Commit:
+			successorBranches.Add(child.(Commit).branch)
+		case *Callout:
+			complain("internal error: callouts do not have branches: %s",
+				child.idMe())
+		default:
+			panic("in tags method, unexpected type in child list")
+		}
+	}
 --------------------------------------------------------------------
 
 Besides being inelegant, the requirement for a runtime check to
@@ -274,10 +278,11 @@ the design at the same time.  Absence of class-valued exceptions was
 far and away the biggest technical blocker.  "First make it work, then
 make it right"; the least risky path seemed to be to shim in
 exceptions with the intention of removing them later.
-
++
 Eventually, after beating on the panic/recover feature for a while, I
 found this kludge:
-
++
+[source,go]
 ---------------------------------------------------------------------
 package main
 
@@ -326,10 +331,8 @@ func main() {
 
 	fmt.Println("Unreachable.")
 }
-
-
 ---------------------------------------------------------------------
-
++
 This works, and it works if you change the class to something other
 than "recoverable"; you get the expected rethrow and panic. But
 it is unreasonably ugly.  So why am I bringing it forward? Because...
@@ -338,118 +341,121 @@ it is unreasonably ugly.  So why am I bringing it forward? Because...
 right to be narrow and prescriptive on this issue.  Two kinds of
 doubts grew on me:
 
-* Pragmatic doubt. Trying to be a good Go citizen, I kept looking at
+* *Pragmatic doubt.* Trying to be a good Go citizen, I kept looking at
 places where existing nonlocal control transfers in Python could be
 replaced by explicit Go-style passing upwards of an error status.  But
 I noticed that there were a significant percentage of cases in which
 doing this made the code more difficult to follow rather than easier.
-
++
 A simple representative example is a call chain of several data
 transformations in which each stage has its own failure condition and
 any failure aborts the transformation.  If we there were no error
 cases we might write, in a Pythonoid sort of notation:
-
++
+[source,python]
 ----------------------------------------------------------------
- sink = transform3(transform2(transform1(source)))
+sink = transform3(transform2(transform1(source)))
 ----------------------------------------------------------------
-
++
 If a stage can error out, we might have these structural alternatives to
 consider.  One is Go style:
-
++
+[source,python]
 ---------------------------------------------------------------
 (fail1, result1) = transform1(source)
 if fail1 == true:
-     status = Exception1
+    status = Exception1
 else:
-     (fail2, result2) = transform2(result1)
-     if fail2 == true:
-         status = Exception2
-     else:
-         (fail3, result3) = transform3(result1)
-         if fail3 == true:
-	     status = Exception3
-	 else:
-	     sink = result3
-	     status = OK
+    (fail2, result2) = transform2(result1)
+    if fail2 == true:
+        status = Exception2
+    else:
+        (fail3, result3) = transform3(result1)
+        if fail3 == true:
+            status = Exception3
+        else:
+            sink = result3
+            status = OK
 ---------------------------------------------------------------
-
++
 The other style is with a catchable exception:
++
+[source,python]
 ---------------------------------------------------------------
-
 status = OK
 try:
     sink = transform3(transform2(transform1(source)))
 except (Exception1, Exception2, Exception3) as err:
     status = err
 ---------------------------------------------------------------
-
++
 I don't think there's even a colorable argument that the Go structure is
 better in a case like this. Look at all those extra variables, that
 eye-confusing ladder structure, the defect-prone near-but-not-quite
 repetition of code.
-
++
 An early reviewer pointed out that if the Go code were an entire
 function it could be expressed something like this:
-
++
+[source,go]
 ---------------------------------------------------------------
-
-func pipeline(source T)  {
-{
+func pipeline(source T) {
 	result1, err1 := transform1(source)
 	if err1 != nil {
-	  return err
+		return err
 	}
 
 	result2, err2 := transform2(result1)
 	if err2 != nil {
-	  return err
+		return err
 	}
 
 	result3, err3 := transform3(result2)
 	if err3 != nil {
-	  return err
+		return err
+	}
 
 	return nil
 }
-
 ---------------------------------------------------------------
-
++
 That's still a lot of eyeball friction compared to functional-style with
 exceptions. And it gets worse faster as the number of stages rises.
-
++
 My problem was that I kept finding analogous situations in my
 translation.  The specific one that motivated the above pseudocode
 was in a feature called "extractor classes".  There are little
 bots that run the client tools of a VCS to mine the output for its
 metadata.  It's actually a five- or six-stage process wherein
-any command failure requires an abort.  
-
+any command failure requires an abort.
++
 In these cases moving to Go style produced a serious
 loss of clarity.  And a rising feeling that I wanted my exceptions
 back (and in fact the extractor-class code now contains the one real
 instance of my exceptions kludge).  Which leads to this:
 
-* Aesthetic doubt. I've never written a general-purpose language, 
+* *Aesthetic doubt.* I've never written a general-purpose language,
 but I have designed way more than my share of DSLs and declarative
 markups, and from this I have learned a heuristic for doing engineering
 that I won't regret.  For any given capability X:
-
++
 Being able to express X elegantly is a good place to be.  Leaving out
 X entirely for safety and verifiability can be a good choice, and is
 at least defensible on those grounds.  But if you implement X in a
 half-hearted, weak way that requires ugly code to use and fails to
 actually foreclose the conceptual problems you were trying to dodge,
 that's a bad place to be.
-
++
 That bad place is where Go is right now with respect to nonlocal
 control transfers, and why I had to write my kludge.
-
++
 Interestingly, I was also able to come up with a very minimalist
 solution.  No new syntax, two minor new compilation rules.
-
++
 To motivate it, let's set the goal of being able to rewrite my example
 like this:
-
++
+[source,go]
 ---------------------------------------------------------------
 package main
 
@@ -495,20 +501,21 @@ func main() {
 	fmt.Println("Unreachable.")
 }
 ---------------------------------------------------------------
-
++
 That is rather less ugly, actually pretty reasonable if the
 implementations of throw and catch aren't staring you in the face.
 And all it would take to get there is two minor loosenings of
 restrictions.
-
-1. The panic function has a new property, "terminating". If the
++
+[arabic]
+.. The panic function has a new property, "terminating". If the
 compiler can prove that all exit paths from a function invoke
 terminating functions, it is marked "terminating".  The effect of
 this property is to suppress "missing return" errors on any code path
 from call of a terminating function to exit of its caller, *but not on
 other paths to exit*.
 
-2. A recover() call is no longer required to be within the lexical
+.. A recover() call is no longer required to be within the lexical
 frame of a defer(). It can be in a helper called by the defer clause
 (but still within the call scope of a defer). For safety we'd need
 an additional rule that a go clause in the helper puts the code it
@@ -523,18 +530,17 @@ Here's the type example.  I have in my repository representation a
 list of possibly hundreds of thousands of events.  A subset of these
 events is Commit objects.  I would like to be able to write
 
+[source,go]
 ---------------------------------------------------------------
-
-        for i, commit := range repo.commits() {
-	        do_stuff_to(commit)
+	for i, commit := range repo.commits() {
+		do_stuff_to(commit)
 	}
-
 ---------------------------------------------------------------
 
 In Python it is easy and natural to write commits() as an iterator
 which lazily walks the repository event list looking for Commit
 objects. Each time it is called it either returns with "yield",
-handing back the next commit, or actually returns - which is a signal
+handing back the next commit, or actually returns -- which is a signal
 that the for loop should terminate.
 
 I can't do this in Go; I have to write commits() to return an entire
@@ -543,11 +549,13 @@ for long lists, especially when it might well terminate early.
 
 Sure, there's an alternative.  It looks like this...
 
+[source,go]
 ---------------------------------------------------------------
-        for i, event := range self.events {
-	        switch.event.(type) {
+	for i, event := range self.events {
+		switch event.(type) {
 		case *Commit:
-		        do_stuff_to(event.(*Commit))
+			do_stuff_to(event.(*Commit))
+		}
 	}
 ---------------------------------------------------------------
 
@@ -564,7 +572,7 @@ https://ewencp.org/blog/golang-iterators/index.html[iterator patterns
 in Go] and agreed with him that none of them are really satisfactory.
 
 Annoyingly, the iterator pattern he suggests is almost the right
-thing - except for the part where early break from a channel-based
+thing -- except for the part where early break from a channel-based
 iterator leaves its goroutine running and some uncollectible garbage.
 
 Then, on my second reading, I had a brainstorm.  I found a trivial
@@ -578,6 +586,7 @@ type.
 
 So, with that I could write a Repository method like this:
 
+[source,go]
 ---------------------------------------------------------------
 // Iterator variant A: range stops on a zero value
 
@@ -586,12 +595,12 @@ func (repo *Repository) commits() func() *Commit {
 	return func() *Commit {
 		for {
 			if idx++; idx >= len(self.events) {
-			       return nil
+				return nil
 			}
 			if _, ok = self.events[idx].(*Commit); ok {
 				return self.events[idx]
 			}
-		 }
+		}
 	}
 }
 ---------------------------------------------------------------
@@ -602,6 +611,7 @@ as the for loop.
 Then I thought it might be best to make this properly parallel to the
 way iteration via range works.
 
+[source,go]
 ---------------------------------------------------------------
 // Iterator variant B: stop variable.
 
@@ -610,12 +620,12 @@ func (repo *Repository) commits() func() *Commit {
 	return func() (*Commit, bool) {
 		for {
 			if idx++; idx >= len(self.events) {
-			       return nil, false
+				return nil, false
 			}
 			if _, ok = self.events[idx].(*Commit); ok {
 				return self.events[idx], true
 			}
-		 }
+		}
 	}
 }
 ---------------------------------------------------------------
@@ -676,7 +686,7 @@ initial knowledge of Go and a directive to try to maintain an
 outside-in view of the language as he or she learns.  That specialist
 needs to be full-time on the following tasks:
 
-(1) Edit for accessibility - a less hieratic style
+(1) Edit for accessibility -- a less hieratic style
 
 (2) Maintain a documentation portal that attempts to provide a
 reasonable map of where everything is and how to find it.
@@ -722,7 +732,7 @@ I am no longer a Go novice. :-)
 
 == Accentuating the positive ==
 
-The Go translation of reposurgeon is better - more maintainable - code
+The Go translation of reposurgeon is better -- more maintainable -- code
 than the Python original, not just faster.  And this is *not* because I
 rewrote or refactored as I went; as I've explained, I tried very hard
 to avoid that. It's that Go's minimalistic approach actually...works.
@@ -782,25 +792,25 @@ Go that compiles, the largest single sources of bugs is the difference
 between Python pass-by-reference semantics for object and Go
 pass-by-value.  Especially when iterating over lists.
 
-Go "for i, node := range nodelist" looks very similar to Python 
+Go "for i, node := range nodelist" looks very similar to Python
 "for (i, node) in enumerate nodelist"; the gotcha is that Go's
-pass by value semantics means that altering members of node 
+pass-by-value semantics means that altering members of node
 will *not* mutate the nodelist.
 
 The fix isn't very difficult; this
 
+[source,go]
 -----------------------------------------------------------------
-        for i := range nodelist {
-	        node := &nodelist[i]
+	for i := range nodelist {
+		node := &nodelist[i]
 		...
 	}
-
 -----------------------------------------------------------------
 
-often suffices. 
+often suffices.
 
 I don't have any recommended language change around this, as I don't
-think Go's choice is wrong. I do think the fact that this relatively 
+think Go's choice is wrong. I do think the fact that this relatively
 minor issue is one of the larger translation barriers is interesting.
 
 == Envoi: Actionable recommendations ==
