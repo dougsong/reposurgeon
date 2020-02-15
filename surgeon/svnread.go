@@ -465,7 +465,7 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 								delete(propertyStash, node.path)
 							}
 						} else if !node.propchange {
-							// The forward propagation.  Importanntly, this
+							// The forward propagation.  Importantly, this
 							// also forwards empty property sets, which are
 							// different from having no properties.
 							node.props = propertyStash[node.path]
@@ -783,7 +783,7 @@ func nodePermissions(node NodeAction) string {
 // Try to figure out who the ancestor of this node is.
 func (sp *StreamParser) seekAncestor(node *NodeAction, hash map[string]*NodeAction) *NodeAction {
 	/*
-		// FIXME: This should replace the last bit of ancestry creatiion done in a later phase.
+		// FIXME: This should replace the last bit of ancestry creation done in a later phase.
 		if node.contentHash != "" {
 			if hashlook, ok := sp.hashmap[node.contentHash]; ok {
 				logit(logEXTRACT, "r%d: blob of %s matches existing hash %s, assigning '%s' from %s",
@@ -836,7 +836,7 @@ func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton
 	// Subversion actions to import-stream commits.
 
 	// This function starts with a deserialization of a Subversion
-	// import stream that carres all the information in it. It
+	// import stream that carries all the information in it. It
 	// proceeds through a sequence of phases to massage the data
 	// into a form from which a sequence of Gitspace objects
 	// isomorphic to a GFIS (Git fast-import stream) can be
@@ -847,10 +847,10 @@ func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton
 	// relationships corresponding to time order. But there are two central
 	// problems this code has to solve.
 	//
-	// One is a basic ontological mismatch between Subversions's
+	// One is a basic ontological mismatch between Subversion's
 	// model of revision history and Git's.  A Subversion history
 	// is a sequence of surgical operations on a file tree in
-	// which some namespaces have onventional roles (tags/*,
+	// which some namespaces have conventional roles (tags/*,
 	// branches/*, trunk).  In Subversion-land it's perfectly
 	// legitimate to start a branch, delete it, and then recreate
 	// it in a later revision.  The content on the deleted branch
@@ -861,8 +861,8 @@ func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton
 	// at all. The model is a DAG (directed acyclic graph) of
 	// revisions, ordered by parent-child relationships. When a
 	// branch is deleted the content is just gone - you may
-	// recreate a branch with thec same name later, but you never
-	// have to be cognizamt of the content on the old branch.
+	// recreate a branch with the same name later, but you never
+	// have to be cognizant of the content on the old branch.
 	//
 	// The other major issue is that Subversion dump streams have
 	// poor semantic locality.  One of the basic tree-surgery
@@ -873,15 +873,15 @@ func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton
 	// back in the history.
 	//
 	// A minor issue is that branch creations and tags are both
-	// biormally expressed in stream dumps as commit-like objwcts
+	// normally expressed in stream dumps as commit-like objects
 	// with no attached file delete/add/modify operations.  There
-	// is no ntural place for these in gitspace, but the comments
+	// is no natural place for these in gitspace, but the comments
 	// in them could be interesting.  They're saved as synthetic
 	// tags, most of which should typically be junked after conversion
 	//
 	// Search forward for the word "Phase" to find phase descriptions.
 	//
-	// An important invariant of ths code is that once a NodeAction is
+	// An important invariant of this code is that once a NodeAction is
 	// created, it is never copied.  Though there may be multiple pointers
 	// to the record for node N of revision M, they all point to the
 	// same structure originally created to deserialize it.
@@ -932,10 +932,10 @@ func svnFilterProperties(ctx context.Context, sp *StreamParser, options stringSe
 	// Phase 2:
 	// Filter properties, throwing out everything that is not going to be of interest
 	// to later analysis. Log warnings where we might be throwing away information.
-	// Canonicalize svn:ignore propeerties (no more convenient place to do it).
+	// Canonicalize svn:ignore properties (no more convenient place to do it).
 	//
 	// We could in theory parallelize this, but it's cheap even on very large repositories
-	// so we chhose to to not incur additional code complexity here.
+	// so we chose to to not incur additional code complexity here.
 	//
 	defer trace.StartRegion(ctx, "SVN Phase 2: filter properties").End()
 	logit(logEXTRACT, "SVN Phase 2: filter properties")
@@ -1049,7 +1049,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 	//
 	// The exit contract of this phase is that all file content
 	// modifications are expressed as file ops, every one of
-	// which has an udentified ancestor node.  If an ancestor
+	// which has an identified ancestor node.  If an ancestor
 	// couldn't be found, that is logged as an error condition
 	// and the node is skipped. Such a log message implies
 	// a metadata malformation.  Generated nodes are marked
@@ -1197,7 +1197,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 	// mutate it to a proper git DAG in small steps.
 	//
 	// The only Subversion metadata this does not copy into
-	// commits is per-directory properties. Both svn:ignore abd
+	// commits is per-directory properties. Both svn:ignore and
 	// svn:mergeinfo properties remain, to be handled in later
 	// phases.
 	//
@@ -1217,7 +1217,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 	for ri, record := range sp.revisions {
 		// Zero revision is almost never interesting - no operations, no
 		// comment, no author, it's usually just a start marker for a
-		// non-incremental dump.  But... 0 revision can alo derive
+		// non-incremental dump.  But... 0 revision can also derive
 		// from a botched rumber, so neutralize this skip if there
 		// are nodes attached.
 		if record.revision == 0 && len(record.nodes) == 0 {
@@ -1297,7 +1297,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 			var ancestor *NodeAction
 			if node.action == sdNUKE {
 				logit(logEXTRACT, "r%d: deleteall %s", record.revision, node.path)
-				// Generate a deletall operation, but with a path, contrary to
+				// Generate a deleteall operation, but with a path, contrary to
 				// the git-fast-import specification. This is so that the pass
 				// splitting the commits and setting the branch from the paths
 				// will be able to affect this deleteall to the correct branch
@@ -1376,7 +1376,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 						logit(logEXTRACT, "r%d: %s gets blob '%s' from ancestor %s",
 							record.revision, node, node.blobmark.String(), ancestor)
 					} else {
-						// This should never happen. If we can't find an ancesor for any node
+						// This should never happen. If we can't find an ancestor for any node
 						// it means the dumpfile is malformed.
 						logit(logSHOUT, "r%d~%s: ancestor node is missing.",
 							node.revision, node.path)
@@ -1429,7 +1429,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 		//
 		// to avoid proliferating code paths and auxiliary
 		// data structures, we're going to punt the theoretical
-		// case of a smultaneous propert change on multiple
+		// case of a simultaneous property change on multiple
 		// directories.
 		if len(commit.fileops) == 0 {
 			// A directory-only commit at position one pretty much has to be
@@ -1527,8 +1527,8 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 			// ops with their path set, therefore every
 			// fileop has a Path member.  Wacky hack: by stashing
 			// the split components in the unused Source and Target
-			// nembers, we avoid having to recompute these when we
-			// actually have to use tem
+			// members, we avoid having to recompute these when we
+			// actually have to use them
 			for j, fileop := range commit.fileops {
 				commit.fileops[j].Source, commit.fileops[j].Target = splitSVNBranchPath(fileop.Path)
 				if j == 0 || commit.fileops[j].Source != oldbranch {
@@ -1584,7 +1584,7 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 	// because it had to; the first thing we have to do here is
 	// shuffle those strings into place.
 	//
-	// That does not yet put the branchames in final form, however.
+	// That does not yet put the branchnames in final form, however.
 	// To get there we need to perform any branch mappings the user
 	// requested, then massage the branchname into the reference form
 	// that Git wants.
@@ -1604,11 +1604,11 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 	walkEvents(sp.repo.events, func(i int, event Event) {
 		if commit, ok := event.(*Commit); ok {
 			if len(commit.fileops) == 0 {
-				// Wacky special case -- corresponding revision has exacly one node
+				// Wacky special case -- corresponding revision has exactly one node
 				n, err := strconv.Atoi(commit.legacyID)
 				if err != nil {
-					// Has to be sometghing weirder than a split commit going on - zero-op
-					// commits on multiople branches are filtered out before this.
+					// Has to be something weirder than a split commit going on - zero-op
+					// commits on multiple branches are filtered out before this.
 					panic(fmt.Errorf("Unexpectedly ill-formed legacy-id %s", commit.legacyID))
 				}
 				// Contiguity assumption
@@ -1695,7 +1695,7 @@ func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSe
 	// The Subversion data model is that a history is a sequence of surgical
 	// operations on a tree, and a tag is just another branch of the tree.
 	// Tag/branch deletions are a place where this clashes badly with the
-	// changeset-DAG model used by git and oter DVCSes, especially if the same
+	// changeset-DAG model used by git and other DVCSes, especially if the same
 	// tag/branch is recreated later.
 	//
 	// To avoid losing history, when a tag or branch is deleted we can move it to
@@ -1807,13 +1807,13 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	// revision of the last partial update recreates the view from
 	// the future.
 	//
-	// 4. Subversion dumpfile traces left by cv2svn's attempt
-	// to synthesize Subversion branches fromn CVS branch creations.
+	// 4. Subversion dumpfile traces left by cvs2svn's attempt
+	// to synthesize Subversion branches from CVS branch creations.
 	// These have no directory copy operations at all.
 	// When cvs2svn created branches, it tried to copy each file
 	// from the commit corresponding to the CVS revision where the
 	// file was last changed before the branch creation, which
-	// could potentually be a different revision for each file in
+	// could potentially be a different revision for each file in
 	// the new branch. And CVS didn't actually record branch
 	// creation times.  But the branch creation can't have been
 	// before the last copy.
@@ -1835,7 +1835,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	}
 	defer trace.StartRegion(ctx, "SVN Phase : parent link fixups").End()
 	logit(logEXTRACT, "SVN Phase 9a: make content-changing links")
-	baton.startProgress("SVN phase 9a: make content-chsnging links",
+	baton.startProgress("SVN phase 9a: make content-changing links",
 		uint64(len(sp.repo.events)))
 	sp.lastCommitOnBranchAt = make(map[string][]*Commit)
 	sp.branchRoots = make(map[string][]*Commit)
@@ -1936,7 +1936,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 					// Don't check for isDeclaredBranch because we only use
 					// file nodes (maybe expanded from a dir copy). If the
 					// branch dir creation node had a fromRev it would have
-					// been catched by the normal logic above.
+					// been caught by the normal logic above.
 					destbranch, _ := splitSVNBranchPath(trimSep(node.path))
 					if node.kind == sdFILE && node.action == sdADD && destbranch == branch &&
 						!strings.HasSuffix(node.path, ".gitignore") {
@@ -2023,7 +2023,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 
 func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
 	// Phase A:
-	// Turn Subversion mergeinfo propeties to gitspace branch merges.  Wer're only trying
+	// Turn Subversion mergeinfo properties to gitspace branch merges.  We're only trying
 	// to deal with the newer style of mergeinfo that has a trunk part, not the older style
 	//  without one.
 	//
@@ -2353,7 +2353,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 					}
 				}
 				// Now perform the merge from the highest index
-				// since it cannot be a descendent of the other
+				// since it cannot be a descendant of the other
 				highIndex := 0
 				for index := range mergeSources {
 					if index > highIndex {
@@ -2542,7 +2542,7 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 
 func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
 	// Phase C:
-	// Tagify, or entirely discard, Subversion commits that didn't corrrepond to a file
+	// Tagify, or entirely discard, Subversion commits that didn't correspond to a file
 	// alteration.
 	//
 	defer trace.StartRegion(ctx, "SVN Phase C: de-junking").End()
@@ -2674,7 +2674,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 		if len(commit.operations()) == 0 {
 			return true
 		}
-		// Commits with a deletall only were generated in early phases to map
+		// Commits with a deleteall only were generated in early phases to map
 		// SVN deletions of a whole branch. This has already been mapped in git
 		// land by stashing deleted refs away, and even removing all commits
 		// reachable only from them if the --preserve option was not given.

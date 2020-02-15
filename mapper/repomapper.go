@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-// Contributor - ssociate a username with a DVCS-style ID
+// Contributor - associate a username with a DVCS-style ID
 type Contributor struct {
 	name     string
 	fullname string
@@ -107,7 +107,7 @@ func (cm *ContribMap) Write(fp *os.File, incomplete bool) {
 	}
 }
 
-// Manifest constants describning the Unix password DSV format
+// Manifest constants describing the Unix password DSV format
 const pwdFLDSEP = ":" // field separator
 const pwdNAME = 0     // field index of username
 const pwdGECOS = 4    // field index of fullname

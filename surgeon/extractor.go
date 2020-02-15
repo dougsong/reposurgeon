@@ -167,7 +167,7 @@ func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
 		}
 	}
 	// Depends on the order of the revlist to be correct.
-	// The Python gode did a sort by timestamp here -
+	// The Python code did a sort by timestamp here -
 	// not necessary id your VCS dumps branches in
 	// revlist-tip order.
 	for _, refname := range base.refs.keys {
@@ -661,7 +661,7 @@ func (he *HgExtractor) byLine(rs *RepoStreamer, cmd []string, errfmt string,
 
 //gatherRevisionIDs gets the topologically-ordered list of revisions and parents.
 func (he *HgExtractor) gatherRevisionIDs(rs *RepoStreamer) error {
-	// Belated initalization
+	// Belated initialization
 	he.base = rs
 	// hg changesets can only have up to two parents
 	// we have to use short (12-nibble) hashes because that's all "hg tags"
@@ -1139,7 +1139,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 	rs.baton.twirl()
 	// Sort branch/tag references by target revision ID, earliest first
 	// Needs to be done before branch coloring because the simulation
-	// of the Git branch-coloring alorithm needs it.  Also controls the
+	// of the Git branch-coloring algorithm needs it.  Also controls the
 	// order in which annotated tags and resets are output.
 	rs.refs.valueLess = func(a string, b string) bool {
 		for _, item := range rs.revlist {
@@ -1173,7 +1173,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 	}
 	rs.baton.twirl()
 
-	// these two functions should chsnge only in sync
+	// these two functions should change only in sync
 	//shortdump := func(hash [sha1.Size]byte) string {
 	//	return fmt.Sprintf("%02x%02x%02x%02x%02x%02x",
 	//		hash[0], hash[1], hash[2], hash[3], hash[4], hash[5])

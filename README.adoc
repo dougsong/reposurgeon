@@ -23,7 +23,7 @@ contributor maps of CVS and SVN repositories.
 
 The `repocutter` program is available for some specialized operations on
 Subversion dumpfiles; it may be useful in extracting portions of
-particularly gnarly Subversion repositories for conversion witth
+particularly gnarly Subversion repositories for conversion with
 reposurgeon.
 
 This distribution supports a generic conversion workflow using these

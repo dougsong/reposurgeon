@@ -232,7 +232,7 @@ objects. This is the one written in Ruby.
 
 If you cannot use reposurgeon for some reason, this is another
 alternative that is not too horrible. But beware of possible
-history namage if your Subversion repo has malformations that
+history damage if your Subversion repo has malformations that
 confuse git-svn.
 
 === svn2git (Schemenauer version) ===
@@ -286,7 +286,7 @@ LINEAR, NO_TAGS, NO_IGNORES, NO_DOCUMENTATION, ABANDONED.
 
 http://www.subgit.com/
 
-Nearly unique for this caregory of software in being closed-source.  Beyond
+Nearly unique for this category of software in being closed-source.  Beyond
 an evaluation period, users have to register, possibly for a cost
 (it's supposed to be free-of-charge for certain uses: open source
 projects, education, and ``startups'' -- history with BitKeeper shows
@@ -296,7 +296,7 @@ The intended outcome of this program is to provide a server with
 support for both Subversion and Git users to interact at once.  This
 may be of little value overall, as new developers are frequently
 unfamiliar with Subversion (and old ones forget the usage patterns!),
-fundamental differences in design of the two VCSes interferring with
+fundamental differences in design of the two VCSes interfering with
 the quality of both views, and increased confusion with preferred
 modes of contribution arise.
 
@@ -387,7 +387,7 @@ GNUPLOT::
 	vendor-branch issues.
 
 GCC::
-	SVN to git, with ancint strata of CVS and RCS. 280K commits of
+	SVN to git, with ancient strata of CVS and RCS. 280K commits of
 	history back to 1987, dwarfing Emacs. Converted by myself and
 	two core GCC developers. The 4.0 release came out of this.
 

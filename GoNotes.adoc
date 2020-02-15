@@ -58,8 +58,8 @@ version-control systems.  Adjust bias compensators accordingly.
 
 (The 1.8 version of these notes was shipped to golang-nuts on
 2020-01-25; the topic thread is
-https://groups.google.com/forum/#!topic/golang-nuts/u-L7PRa2Z-w[hrtr].
-A typo fixe and a clarification have been backported from the thread.)
+https://groups.google.com/forum/#!topic/golang-nuts/u-L7PRa2Z-w[here].
+A typo fix and a clarification have been backported from the thread.)
 
 == Expected problems that weren't ==
 
@@ -156,7 +156,7 @@ implement in Go itself.
 Inability to apply const to variables with structure, map, or slice
 initializers is annoying in these ways:
 
-1. Compiler can't enforce noli mi tangere
+1. Compiler can't enforce _noli me tangere_
 
 2. const functions as a declaration of programmer intent that is
    valuable at scale.
@@ -735,7 +735,7 @@ semantics.
 The CSP-derived concurrency primitives are a spectacular success
 that compensates me for the irritations in the rest of the language.
 After finishing the straight-through translation I was able to add
-speedups via concurrent gorotines with very little difficulty.
+speedups via concurrent goroutines with very little difficulty.
 
 I've also seen a maintainability benefit from how easy Go makes it to
 write unit tests in parallel with code.
@@ -753,7 +753,7 @@ Now that I've seen Go strings...holy hell, Python 3 unicode strings
 sure look like a nasty botch in retrospect. Good work not falling into
 that trap.
 
-== Translation prgmatics ==
+== Translation pragmatics ==
 
 The strategy of writing as literal as possible a translation of the
 Python first, at the cost of generating Go code that was initially

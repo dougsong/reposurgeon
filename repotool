@@ -295,7 +295,7 @@ def initialize(args):
             wp.write("# Lift commands for %s\n" % project)
 
 def export():
-    "Export from the current working diretory to standard output."
+    "Export from the current working directory to standard output."
     m = {
         "cvs": r"find . -name \*,v | cvs-fast-export -q --reposurgeon",
         "svn": "svnadmin -q dump .",
@@ -330,7 +330,7 @@ def mirror(operand, mirrordir):
             pass
         # Note: The --allow-non-empty and --steal-lock options permit
         # this to operate on a Subversion repository you have pulled
-        # in with rsync (which is very much faster than mirrorng via
+        # in with rsync (which is very much faster than mirroring via
         # SVN protocol), but they disable some safety checking.  Be
         # very sure you have not made any local changes to the repo
         # since rsyncing, or havoc will ensue.
@@ -680,7 +680,7 @@ def compare(args):
             silent_diff_errors = ""
         diff = capture_or_die("diff -r %(diffopts)s --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %(sourcedir)s %(targetdir)s %(silent_diff_errors)s || exit 0" % locals())
         def dirlist(top, excl=None):
-            "Get list of all paths under specied top node, with optional exclusion."
+            "Get list of all paths under specified top node, with optional exclusion."
             m = []
             trunc = len(top) + 1
             for (dirpath, dirnames, filenames) in os.walk(top):

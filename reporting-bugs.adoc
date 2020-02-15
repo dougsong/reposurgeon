@@ -12,15 +12,15 @@ OOM (Out Of Memory) error while attempting to read in your repository.
 It is extremely unlikely that this is due to a bug in reposurgeon.
 Before filing an issue about it, there is a procedure you should try.
 It consists of bisecting on the parameter the Go language runtime
-uses to control the freqency of garbage collection.  You can set this
-using the envronment variable GOGC or reposurgeon's "gc" command.
+uses to control the frequency of garbage collection.  You can set this
+using the environment variable GOGC or reposurgeon "gc" command.
 
-GGC defaults to 100, which instructs the runtime to garbage-collect
+GOGC defaults to 100, which instructs the runtime to garbage-collect
 when the heap size is 100% bigger than (i.e., twice) the size of the
 reachable objects after the last garbage collection.  To increase the
 frequency of GC, usually resulting in a lower memory high-water mark,
-decrease that percentage threshold.  To decrease gc frequency, incease
-the threshold so the runtimer tolerares a larger heap. 
+decrease that percentage threshold.  To decrease gc frequency, increase
+the threshold so the runtime tolerates a larger heap. 
 
 To troubleshoot your OOM problem, bisect on this threshold to find
 the highest value that will avoid OOM.  Start by cutting it to 50,

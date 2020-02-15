@@ -1405,7 +1405,7 @@ var fileFilters = map[string]struct {
 /*
  * Debugging and utility
  *
- * The main point of this design is to make adding abd removing log
+ * The main point of this design is to make adding and removing log
  * classes simple enough that it can be done ad-hoc for specific
  * debugging missions.  All you need to do to create a new class is
  * add a constant to the iota initializer and a corresponding entry to
@@ -4020,7 +4020,7 @@ func (commit *Commit) parents() []CommitLike {
 
 // invalidateManifests cleans out manifests in this commit and all descendants
 func (commit *Commit) invalidateManifests() {
-	// Do a traversal of the descendent graph, depth-first because it is the
+	// Do a traversal of the descendant graph, depth-first because it is the
 	// most efficient with a slice as the queue.
 	stack := []CommitLike{commit}
 	for len(stack) > 0 {
@@ -4247,7 +4247,7 @@ func (commit *Commit) firstChild() *Commit {
 	return commit._childNodes[0].(*Commit)
 }
 
-// descendedFrom tells if this commit a descendent of the specified other?
+// descendedFrom tells if this commit a descendant of the specified other?
 func (commit *Commit) descendedFrom(other *Commit) bool {
 	if !commit.hasParents() {
 		return false
@@ -5099,7 +5099,7 @@ func (pm *PathMap) set(path string, value interface{}) {
 	pm._createTree(dir).blobs[name] = value
 }
 
-// remove removes a filename, or all descendents of a directory name, from the map.
+// remove removes a filename, or all descendants of a directory name, from the map.
 func (pm *PathMap) remove(path string) {
 	// Separate the first component and the rest in the path
 	components := strings.SplitN(path, svnSep, 2)
@@ -6713,12 +6713,12 @@ func defaultEmptyTagName(commit *Commit) string {
                       * tipdeletes:    whether tipdeletes should be tagified
                       * canonicalize:  whether to canonicalize fileops first
                       * nameFunc:      custom function for choosing the tag
-                                       name; if it returns an emoty string,
+                                       name; if it returns an empty string,
                                        a default scheme is used
                       * legendFunc:    custom function for choosing the legend
                                        of a tag; no fallback is provided. By
                                        default it always returns "".
-                      * createTags    whether to create tags.
+                      * createTags:    whether to create tags.
 */
 
 func (repo *Repository) tagifyEmpty(selection orderedIntSet, tipdeletes bool, tagifyMerges bool, canonicalize bool, nameFunc func(*Commit) string, legendFunc func(*Commit) string, createTags bool) error {
@@ -14388,7 +14388,7 @@ Policy:
     --rebase
 
         Inhibits the default behavior -- no 'deleteall' is issued and
-        the tree contents of all descendents can be modified as a
+        the tree contents of all descendants can be modified as a
         result.
 `)
 }
@@ -14702,7 +14702,7 @@ This command tries to handle all combinations in a natural way by
 doing up to three operations on any true tag, commit sequence, and
 reset matching the source name. In a rename, all are renamed together.
 In a delete, any matching tag or reset is deleted; then matching
-branch fields are changed to match the branch of the unique descendent
+branch fields are changed to match the branch of the unique descendant
 of the tagged commit, if there is one.  When a tag is moved, no branch
 fields are changed and a warning is issued.
 `)
@@ -14929,7 +14929,7 @@ An unqualified basename is assumed to refer to a head.
 
 When a reset is renamed, commit branch fields matching the tag are
 renamed with it to match.  When a reset is deleted, matching branch
-fields are changed to match the branch of the unique descendent of the
+fields are changed to match the branch of the unique descendant of the
 tip commit of the associated branch, if there is one.  When a reset is
 moved, no branch fields are changed.
 `)

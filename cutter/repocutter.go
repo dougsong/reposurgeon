@@ -77,8 +77,8 @@ var oneliners = map[string]string{
 	"setlog":     "Mutating log entries",
 	"sift":       "Sift for operations by Node-path header",
 	"strip":      "Replace content with unique cookies, preserving structure",
-	"swap":       "Swap first two compenents of pathnames",
-	"testify":    "Massage a strwam file into a neutralized test load",
+	"swap":       "Swap first two components of pathnames",
+	"testify":    "Massage a stream file into a neutralized test load",
 }
 
 var helpdict = map[string]string{
@@ -140,7 +140,7 @@ removed as well.
 
 Pop initial segment off each path. May be useful after a sift command to turn
 a dump from a subproject stripped from a dump for a multiple-project repository
-into the nomal form writh trunk/tags/branches at the top level.
+into the normal form with trunk/tags/branches at the top level.
 `,
 	"pathrename": `pathrename: usage: repocutter [-r SELECTION ] pathrename FROM TO
 
@@ -154,7 +154,7 @@ parenthesized portions of FROM.
 
 Renumber all revisions, patching Node-copyfrom headers as required.
 Any selection option is ignored. Takes no arguments.  The -b option 
-1can be used to set the base to rebumber from, defaulting to 0.
+1can be used to set the base to renumber from, defaulting to 0.
 `,
 	"reduce": `reduce: usage: repocutter reduce INPUT-FILE
 
@@ -191,7 +191,7 @@ a common form of multi-project repository.
 
 Replace commit timestamps with a monotonically increasing clock tick
 starting at the Unix epoch and advancing by 10 seconds per commit.
-Replace ll attributions with 'fred'.  Discard the repository UUID.
+Replace all attributions with 'fred'.  Discard the repository UUID.
 Use this to neutralize procedurally-generated streams so they can be
 compared.
 `,
@@ -207,7 +207,7 @@ type Baton struct {
 	time   time.Time
 }
 
-// NewBaton - create a new Baton object with specifued start and end messages
+// NewBaton - create a new Baton object with specified start and end messages
 func NewBaton(prompt string, endmsg string) *Baton {
 	baton := Baton{
 		stream: os.Stderr,
@@ -835,7 +835,7 @@ func NewLogfile(readable io.Reader, restrict *SubversionRange) *Logfile {
 			author = bytes.TrimSpace(fields[1])
 			date = bytes.TrimSpace(fields[2])
 			//lc := bytes.TrimSpace(fields[3])
-			revstr = revstr[1:] // strip off leaing 'r'
+			revstr = revstr[1:] // strip off leading 'r'
 			rev, _ = strconv.Atoi(string(revstr))
 			state = inLogEntry
 		}
@@ -1259,7 +1259,7 @@ func renumber(source DumpfileSource) {
 		} else if p = payload("Node-copyfrom-rev", line); p != nil {
 			fmt.Printf("Node-copyfrom-rev: %d\n", renumbering[string(p)])
 		} else {
-			// A typical merginfo entry looks like this:
+			// A typical mergeinfo entry looks like this:
 			// K 13
 			// svn:mergeinfo
 			// V 18
@@ -1325,10 +1325,10 @@ func testify(source DumpfileSource) {
 			state = 0
 		}
 		if state == 3 {
-			line =  []byte(NeutralUser + "\n")
+			line = []byte(NeutralUser + "\n")
 			state = 0
 		} else if state == 6 {
-			t := time.Unix(int64((counter-1) * 10), 0).UTC().Format(time.RFC3339)
+			t := time.Unix(int64((counter-1)*10), 0).UTC().Format(time.RFC3339)
 			t2 := t[:19] + ".000000Z"
 			line = []byte(t2 + "\n")
 			state = 0

@@ -1,6 +1,6 @@
 package main
 
-// The event selector. Exoirts one class, which is used
+// The event selector. Exports one class, which is used
 // to compile and evaluate selection expressions.
 //
 // SPDX-License-Identifier: BSD-2-Clause

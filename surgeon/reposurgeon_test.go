@@ -1664,7 +1664,7 @@ func TestResort(t *testing.T) {
 }
 
 func TestRenumber(t *testing.T) {
-	// doubled is a version of rawdymp with all blob mumbers doubled
+	// doubled is a version of rawdump with all blob numbers doubled
 	doubled := `blob
 mark :2
 data 23

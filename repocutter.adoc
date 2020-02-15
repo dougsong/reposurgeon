@@ -41,7 +41,7 @@ are probably only of interest to repocutter developers.
 
 The -i option sets the input source to a specified filename.
 This is primarily useful when running the program under a debugger.
-When this option is not present the orogram expects to read a 
+When this option is not present the program expects to read a 
 stream from standard input.
 
 Generally, if you need to use this program at all, you will find
@@ -79,7 +79,7 @@ revision selection. You may specify multiple properties to be
 renamed. See the embedded help for syntax details.
 
 log::
-enerate a log report, same format as the output of svn
+Generate a log report, same format as the output of svn
 log on a repository, to standard output.
 
 setlog::
@@ -110,7 +110,7 @@ removed as well.
 pop::
 Pop initial segment off each path. May be useful after a sift command to turn
 a dump from a subproject stripped from a dump for a multiple-project repository
-into the nomal form writh trunk/tags/branches at the top level.
+into the normal form with trunk/tags/branches at the top level.
 
 pathrename::
 Modify Node-path and Node-copyfrom-path headers
@@ -144,20 +144,20 @@ swap::
 Swap the top two components of every path.  This is
 sometimes useful when converting a multi-project Subversion repository
 that has normal trunk/branch/tag structure under each top-level
-directory (of course the alternative is to break it into componebts
+directory (of course the alternative is to break it into components
 using multiple strip operations).
 
 testify::
 Replace commit timestamps with a monotonically increasing clock tick
 starting at the Unix epoch and advancing by 10 seconds per commit.
-Replace ll attributions with 'fred'.  Discard the repository UUID.
+Replace all attributions with 'fred'.  Discard the repository UUID.
 Use this to neutralize procedurally-generated streams so they can be
 compared.
 
 [[history]]
 == HISTORY ==
 
-Under the name "snvcutter", an ancestor of this program traveled in
+Under the name "svncutter", an ancestor of this program traveled in
 the 'contrib/' director of the Subversion
 distribution. It had functional overlap with reposurgeon(1) because it
 was directly ancestral to that code. It was moved to the
@@ -171,7 +171,7 @@ pathrename command changed at that time.
 == BUGS ==
 
 There is one regression since the Python version: repocutter no
-longer recognizes Macintosh-syle line endings consisting of a carriage
+longer recognizes Macintosh-style line endings consisting of a carriage
 return only. This may be addressed in a future version.
 
 [[see_also]]

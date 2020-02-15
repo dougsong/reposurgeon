@@ -11,17 +11,17 @@ make
 
 == Prerequisites ==
 
-You will need 64-bit haerdware. This code is bot intended to
-run on 32-bit mnachines (which havean address space too small to be
-usefuk for repository suregery) and won't build pn them.
+You will need 64-bit hardware. This code is not intended to
+run on 32-bit machines (which have an address space too small to be
+useful for repository surgery) and won't build on them.
 
 You will need the Go compiler at revision 1.12 or later.  Note, you
 may have to tweak your $PATH variable to make the Go tools visible.
 
-Once you have the Go tooling intalled, invoke "make get" to download
+Once you have the Go tooling installed, invoke "make get" to download
 the Go modules this program uses.
 
-Some of the auxiliary tools are wtitten in Python. They will run under
+Some of the auxiliary tools are written in Python. They will run under
 Python 2 or Python 3.  Python is almost certainly already installed on
 your system.
 

@@ -30,7 +30,7 @@ type Baton struct {
 	process         Process
 }
 
-// Twirly is the state of a twirly indefinite progess meter that ships indications to stdout.
+// Twirly is the state of a twirly indefinite progress meter that ships indications to stdout.
 type Twirly struct {
 	sync.RWMutex
 	lastupdate time.Time
@@ -68,7 +68,7 @@ type Process struct {
 type msgType uint8
 
 const (
-	// NONE is the abscence of a message
+	// NONE is the absence of a message
 	NONE msgType = iota
 	// LOG represents a message that should be printed once, as if
 	// to a logfile

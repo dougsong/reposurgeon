@@ -261,7 +261,7 @@ the RCS master files that store the content.
 Mercurial: reposurgeon will read a Mercurial repository. It uses
 https://github.com/kilork/hg-git-fast-import[hg-git-fast-import] as an
 importer. Note that this conversion is not very well tested yet; you
-may want to run conversions with both the importer abd the hg
+may want to run conversions with both the importer and the hg
 extractor harness and compare them.
 
 Fossil: reposurgeon will read a Fossil repository file. It uses the
@@ -438,15 +438,15 @@ show you tip commits which may contain only deletes and
 deletealls.
 
 Tags can be inspected with `=T inspect`. Junk tags can be removed with
-the `delete` commmand. Tag comments can be modified with `edit`.
+the `delete` command. Tag comments can be modified with `edit`.
 Check that the creation date of tags matches what you see in the
-source reopository; this is the easiest way to spot when one has been
+source repository; this is the easiest way to spot when one has been
 attached to the wrong commit, something that can be manually fixed by
 editing its from field.
 
 The command =I will select all commits that don't decode to UTF-8
-in bothbthe commit comment and attribution parts.  You eyeball those
-to fgure out whatvthe encoding is and apply the transcode command
+in both the commit comment and attribution parts.  You eyeball those
+to figure out what the encoding is and apply the transcode command
 to fix things,
 
 Version 2.x and later of reposurgeon have a new
@@ -629,7 +629,7 @@ them that they will need to re-clone it.
 == Step Five: Client Tools ==
 
 Developers who are already git fans and know how to use a git
-client will, of course, have no partiticular trouble using a git
+client will, of course, have no particular trouble using a git
 repository.
 
 Windows users accustomed to working through TortoiseSVN can move to
