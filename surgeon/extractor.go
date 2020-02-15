@@ -90,8 +90,6 @@ type manifestEntry struct {
 }
 
 // Extractor specifies common features of all VCS-specific extractor classes.
-// It is forced to live here rather than in exreactor.go to support the Importer
-// initialization at init time.
 type Extractor interface {
 	// Hook for any setup actions required before streaming
 	preExtract()

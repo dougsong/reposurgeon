@@ -4436,7 +4436,7 @@ func (repo *Repository) walkManifests(
 
 // canonicalize replaces fileops by a minimal set of D and M with same result.
 func (commit *Commit) canonicalize() {
-	// Discard everything before the last deletall
+	// Discard everything before the last deleteall
 	commit.discardOpsBeforeLastDeleteAll()
 	ops := commit.operations()
 	if len(ops) == 0 {

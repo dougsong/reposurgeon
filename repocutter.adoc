@@ -116,7 +116,7 @@ pathrename::
 Modify Node-path and Node-copyfrom-path headers
 matching a specified regular expression; replace with a given string.
 The string may contain references to parenthesized portions of the
-pattern - note, rese must be Go-style references led by $, not by a
+pattern - note, these must be Go-style references led by $, not by a
 backslash as in reposurgeon itself. See the embedded help for syntax
 details.
 

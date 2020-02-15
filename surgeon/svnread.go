@@ -1218,7 +1218,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 		// Zero revision is almost never interesting - no operations, no
 		// comment, no author, it's usually just a start marker for a
 		// non-incremental dump.  But... 0 revision can also derive
-		// from a botched rumber, so neutralize this skip if there
+		// from a botched renumber, so neutralize this skip if there
 		// are nodes attached.
 		if record.revision == 0 && len(record.nodes) == 0 {
 			continue
