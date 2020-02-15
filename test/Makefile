@@ -46,12 +46,8 @@ CONCURRENT_JOBS=$(shell getconf _NPROCESSORS_ONLN || getconf NPROCESSORS_ONLN ||
 # Exploit make parallelism
 PARALLEL_MAKE=make --output-sync --no-print-directory -j $(CONCURRENT_JOBS)
 
-# This series can change depending on the current development focus
-fastcheck: clean disclose $(BASIC) $(SUBVERSION)
-	@echo "=== No diff output is good news ==="
-
 # This should always be a full test
-fullcheck: clean disclose $(BASIC) $(FULLSUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXTOOLS)
+check: clean disclose $(BASIC) $(FULLSUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXTOOLS)
 	@echo "=== No diff output is good news ==="
 
 disclose:
