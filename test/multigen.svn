@@ -1,7 +1,6 @@
 SVN-fs-dump-format-version: 2
  ## Multi-project repository example
 
-UUID: e86b1fe1-175c-480b-821a-f147ff5a9b3c
 
 Revision-number: 0
 Prop-content-length: 56
@@ -10,7 +9,7 @@ Content-length: 56
 K 8
 svn:date
 V 27
-2020-02-10T11:44:34.912133Z
+1970-01-01T00:00:00.000000Z
 PROPS-END
 
 Revision-number: 1
@@ -19,12 +18,12 @@ Content-length: 116
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:34.971226Z
+1970-01-01T00:00:10.000000Z
 K 7
 svn:log
 V 18
@@ -46,12 +45,12 @@ Content-length: 122
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:35.022552Z
+1970-01-01T00:00:20.000000Z
 K 7
 svn:log
 V 24
@@ -73,12 +72,12 @@ Content-length: 125
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:35.074635Z
+1970-01-01T00:00:30.000000Z
 K 7
 svn:log
 V 27
@@ -100,12 +99,12 @@ Content-length: 121
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:35.125643Z
+1970-01-01T00:00:40.000000Z
 K 7
 svn:log
 V 23
@@ -127,12 +126,12 @@ Content-length: 113
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:35.180299Z
+1970-01-01T00:00:50.000000Z
 K 7
 svn:log
 V 15
@@ -158,12 +157,12 @@ Content-length: 131
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:35.232291Z
+1970-01-01T00:01:00.000000Z
 K 7
 svn:log
 V 33
@@ -189,12 +188,12 @@ Content-length: 121
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:35.285843Z
+1970-01-01T00:01:10.000000Z
 K 7
 svn:log
 V 23
@@ -220,12 +219,12 @@ Content-length: 118
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:35.370231Z
+1970-01-01T00:01:20.000000Z
 K 7
 svn:log
 V 20
@@ -245,12 +244,12 @@ Content-length: 116
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:35.421486Z
+1970-01-01T00:01:30.000000Z
 K 7
 svn:log
 V 18
@@ -272,12 +271,12 @@ Content-length: 122
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:35.472413Z
+1970-01-01T00:01:40.000000Z
 K 7
 svn:log
 V 24
@@ -299,12 +298,12 @@ Content-length: 125
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:35.524508Z
+1970-01-01T00:01:50.000000Z
 K 7
 svn:log
 V 27
@@ -326,12 +325,12 @@ Content-length: 121
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:35.576153Z
+1970-01-01T00:02:00.000000Z
 K 7
 svn:log
 V 23
@@ -353,12 +352,12 @@ Content-length: 123
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:35.628316Z
+1970-01-01T00:02:10.000000Z
 K 7
 svn:log
 V 25
@@ -384,12 +383,12 @@ Content-length: 110
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:35.681049Z
+1970-01-01T00:02:20.000000Z
 K 7
 svn:log
 V 12
@@ -415,12 +414,12 @@ Content-length: 110
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:35.734803Z
+1970-01-01T00:02:30.000000Z
 K 7
 svn:log
 V 12
@@ -446,12 +445,12 @@ Content-length: 121
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:35.779473Z
+1970-01-01T00:02:40.000000Z
 K 7
 svn:log
 V 23
@@ -475,12 +474,12 @@ Content-length: 111
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:35.824743Z
+1970-01-01T00:02:50.000000Z
 K 7
 svn:log
 V 13
@@ -504,12 +503,12 @@ Content-length: 112
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:35.912071Z
+1970-01-01T00:03:00.000000Z
 K 7
 svn:log
 V 14
@@ -529,12 +528,12 @@ Content-length: 124
 
 K 10
 svn:author
-V 3
-esr
+V 4
+fred
 K 8
 svn:date
 V 27
-2020-02-10T11:44:35.976148Z
+1970-01-01T00:03:10.000000Z
 K 7
 svn:log
 V 26

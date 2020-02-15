@@ -28,7 +28,7 @@ Now is the time.
 commit refs/heads/project1
 #legacy-id 5
 mark :3
-committer esr <esr> 1581335075 +0000
+committer fred <fred> 50 +0000
 data 16
 Example content
 deleteall
@@ -43,7 +43,7 @@ For all good men.
 commit refs/heads/project1
 #legacy-id 6
 mark :5
-committer esr <esr> 1581335075 +0000
+committer fred <fred> 60 +0000
 data 34
 Example content in different file
 from :3
@@ -57,7 +57,7 @@ to come to the aid of their country.
 commit refs/heads/project1
 #legacy-id 7
 mark :7
-committer esr <esr> 1581335075 +0000
+committer fred <fred> 70 +0000
 data 24
 And in yet another file
 from :5
@@ -66,7 +66,7 @@ M 100644 :6 trunk/baz.txt
 commit refs/heads/project1
 #legacy-id 8
 mark :8
-committer esr <esr> 1581335075 +0000
+committer fred <fred> 80 +0000
 data 21
 First directory copy
 from :7
@@ -82,7 +82,7 @@ Whether tis nobler in the mind.
 commit refs/heads/project2
 #legacy-id 13
 mark :10
-committer esr <esr> 1581335075 +0000
+committer fred <fred> 130 +0000
 data 26
 Hamlet the Dane said this
 deleteall
@@ -97,7 +97,7 @@ or to take arms against a sea of troubles
 commit refs/heads/project2
 #legacy-id 14
 mark :12
-committer esr <esr> 1581335075 +0000
+committer fred <fred> 140 +0000
 data 13
 He continued
 from :10
@@ -111,7 +111,7 @@ and by opposing end them
 commit refs/heads/project2
 #legacy-id 15
 mark :14
-committer esr <esr> 1581335075 +0000
+committer fred <fred> 150 +0000
 data 13
 The build-up
 from :12
@@ -125,7 +125,7 @@ to be,
 commit refs/heads/project2
 #legacy-id 16
 mark :16
-committer esr <esr> 1581335075 +0000
+committer fred <fred> 160 +0000
 data 24
 Famous soliloquy begins
 from :14
@@ -139,7 +139,7 @@ or not to be.
 commit refs/heads/project2
 #legacy-id 17
 mark :18
-committer esr <esr> 1581335075 +0000
+committer fred <fred> 170 +0000
 data 14
 And continues
 from :16
@@ -148,7 +148,7 @@ M 100644 :17 trunk/foo.txt
 commit refs/heads/project2
 #legacy-id 18
 mark :19
-committer esr <esr> 1581335075 +0000
+committer fred <fred> 180 +0000
 data 15
 First tag copy
 from :18
@@ -159,7 +159,7 @@ M 100644 :17 tags/1.0/foo.txt
 commit refs/heads/project1
 #legacy-id 19
 mark :20
-committer esr <esr> 1581335075 +0000
+committer fred <fred> 190 +0000
 data 27
 Example cross-project copy
 from :8

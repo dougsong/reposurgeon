@@ -80,7 +80,7 @@ cd ..
 } >/dev/$verbose 2>&1
 if [ "$dump" = yes ]
 then
-    svnadmin dump -q test-repo | sed '1a\
+    svnadmin dump -q test-repo | repocutter -q testify | sed '1a\
  ## Multi-project repository example
 '
 fi
