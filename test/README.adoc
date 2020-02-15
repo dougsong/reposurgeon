@@ -238,7 +238,7 @@ After conversion the tag named '1.0' referred to the first commit with
 the first tagging message 'Release 1.0', rather than the second commit
 with the second tagging message 'Fixed release 1.0'.
 
-== A note about references.svn ==
+== A note about nut.svn ==
 
 This was produced from the NUT Subversion repo as follows:
 
@@ -388,9 +388,11 @@ svncutter -q -r 0:4,6,8,56,58,61,65,350,355,356,543:546 select <nut.svn \
 
 Later it was stripped and renumbered.  Later still, a 0 revision and
 an 89 revision were added to make the revision sequence 0-origin
-and continuous, which the Go implementation requires.
-
-It captures the most serious pathologies in the NUT repo.
+and continuous, which the Go implementation required at the time
+(this restriction has since been removed).  Eventually it was
+truncated from 373 to 66 revisions to speed up testing; most
+of the interesting pathologies are concentrated in that leading
+segment.
 
 It's too complex for correctness to be audited in detail by eyeball,
 but it makes a good stability test. Any change that breaks the
@@ -430,8 +432,6 @@ esrtlier one.
 You can use singlelift -o to dump a fast import stream made
 from a named Subversion dump.  In this more you can also use
 -l to set reposurgeon log flags.
-
-The objective is to fix reposurgeon so that all those diffs go away.
 
 == Sporadic tests ==
 
