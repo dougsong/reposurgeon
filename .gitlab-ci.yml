@@ -6,4 +6,3 @@ before_script:
 test:
   script:
   - make CONCURRENT_JOBS=4 -k check
-  - cd test; make CONCURRENT_JOBS=4 liftcheck-fullregress
