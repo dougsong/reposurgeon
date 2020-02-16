@@ -725,7 +725,7 @@ Additionally, maximum working set drastically decreased. These
 improvements re-enabled the workflow reposurgeon was designed for,
 rapid iterative improvement of conversion recipes.
 
-On January 12th 2020 the production conversion of the GC history from
+On January 12th 2020 the production conversion of the GCC history from
 Subversion to Git actually took place.
 
 I am no longer a Go novice. :-)
@@ -770,7 +770,7 @@ Python first, at the cost of generating Go code that was initially
 clunky and unidiomatic, worked quite well.  It actually took effort
 and discipline to refrain from trying to improve the code as it passed
 through translation, but I am very glad I expended that effort.  It
-kept the translation process sane and controllable,
+kept the translation process sane and controllable.
 
 I should note that a prerequisite for a translation like this is an
 excellent test suite.  As I write (in late January 2020), reposurgeon
