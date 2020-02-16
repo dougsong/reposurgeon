@@ -17188,6 +17188,23 @@ remaining arguments are available to the command logic.
 `)
 }
 
+func (rs *Reposurgeon) HelpFunctions() {
+	rs.helpOutput(`
+The following functions are available:
+
+@min()  create singleton set of the least element in the argument
+@max()  create singleton set of the greatest element in the argument
+@amp()  nomemty selection set becomes all objects, empty set is returned 
+@par()  all parents of commits in the argument set 
+@chn()  all children of commits in the argument set
+@dsc()  all commits descended from the argument set (argument set included)
+@anc()  all commits whom the argument set is descended from (set included)
+@pre()  events before the argument set
+@suc()  events after the argument set
+@srt()  sort the argument set by event number.
+`)
+}
+
 func (rs *Reposurgeon) HelpLog() {
 	rs.helpOutput(`
 Without an argument, list all log message classes, prepending a + if
