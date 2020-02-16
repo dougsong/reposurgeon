@@ -15435,7 +15435,7 @@ part to the right of an equals sign will need editing.
 `)
 }
 
-// DoAuthors applies or dump author-mapping file.
+// DoAuthors applies or dumps author-mapping file.
 func (rs *Reposurgeon) DoAuthors(line string) bool {
 	if rs.chosen() == nil {
 		croak("no repo has been chosen.")
