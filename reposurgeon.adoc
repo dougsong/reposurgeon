@@ -2939,11 +2939,6 @@ correctly passing through property items including those with embedded
 newlines. (Such properties are also editable in the message-box
 format.)
 
-Limitation: In Subversion, sufficiently weird sequences of tag
-creations, branch copies from tags, and tag deletions followed by
-recreations of the tag can confuse reposurgeon, causing visible
-content matches.
-
 Limitation: Because reposurgeon relies on other programs to generate
 and interpret the fast-import command stream, it is subject to bugs in
 those programs.
@@ -2999,11 +2994,6 @@ a line-ending comment and screw up parsing.
 Guarantee: As version-control systems add support for the
 fast-import format, their repositories will become editable by
 reposurgeon.
-
-Limitations described above are unlikely to change.  Do '```help
-bugs```' at the reposurgeon prompt to see up-to-date information on
-reposurgeon bugs and internal problems that are expected to be fixed
-in some future release.
 
 [[requirements]]
 == REQUIREMENTS ==
