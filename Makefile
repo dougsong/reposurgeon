@@ -37,7 +37,7 @@ STOPOUT=1
 BINARIES = reposurgeon repotool repomapper repocutter
 MANPAGES = reposurgeon.1 repotool.1 repomapper.1 repocutter.1
 HTMLFILES = $(MANPAGES:.1=.html) \
-            dvcs-migration-guide.html features.html reporting-bugs.html
+            repository-editing.html dvcs-migration-guide.html features.html reporting-bugs.html
 SHARED    = $(DOCS) reposurgeon-git-aliases $(HTMLFILES)
 
 # The following would produce reproducible builds, but it breaks Gitlab CI.
