@@ -122,7 +122,7 @@ are fatal.
 [[see_also]]
 == SEE ALSO ==
 
-bzr(1), cvs(1), darcs(1), git(1), hg(1), rcs(1), svn(1). bk(1).
+bzr(1), cvs(1), darcs(1), git(1), hg(1), rcs(1), src(1), svn(1). bk(1).
 
 [[author]]
 == AUTHOR ==

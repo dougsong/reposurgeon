@@ -1478,8 +1478,8 @@ collection all at once. Currently the "tag" and "dedup" commands are the only
 ones which do this garbage collection.
 `},
 	{"echo",
-		`Echo commands before executing them. Setting this im test scripts may
-+make the output easuer to read.
+		`Echo commands before executing them. Setting this in test scripts may
++make the output easier to read.
 `},
 	{"experimental",
 		`This flag is reserved for developer use.  If you set it, it could do
