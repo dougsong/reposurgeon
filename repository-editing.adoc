@@ -1822,16 +1822,6 @@ It is presently an error to insert a new committer or tagger
 attribution.  To change a committer or tagger, use '```set```'
 instead.
 
-`timeoffset` _offset_ [ _timezone_ ]::
-   Apply a time offset to all time/date stamps in the selected set.
-   An offset argument is required; it may be in the form ++[+-]++_ss_,
-   ++[+-]++_mm_:__ss__ or ++[+-]++_hh_:__mm__:__ss__.
-   The leading sign is required to distinguish it from a selection expression.
-+
-Optionally you may also specify another argument in the form ++[+-]++_hhmm_, a
-timezone literal to apply.  To apply a timezone without an offset, use
-an offset literal of `+0` or `-0`.
-
 `append` [ `--rstrip` ] [__text__]::
    Append text to the comments of commits and tags in the specified
    selection set. The text is the first token of the command and may
@@ -1924,7 +1914,7 @@ with no argument, strip the first directory component from every path.
    paths, patch the permission field to the first argument value.
 
 [[timequakes]]
-=== Timequakes and timebumps
+=== Timequakes and time offsets
 
 Modifying a repository so every commit in it has a unique
 timestamp is often a useful thing to do, in order for every commit has
@@ -1948,11 +1938,16 @@ Any timestamp collisions left after this operation are probably
 cross-branch and have to be individually dealt with using '```timebump```'
 commands.
 
-`timebump` [ _seconds_ ]::
-   Bump the committer and author timestamps of commits in the selection
-   set (defaulting to empty) by one second.   With following integer argument,
-   that many seconds. Argument may be negative.
+`timeoffset` [ _offset_ [ _timezone_ ] ]::
+   Apply a time offset to all time/date stamps in the selected set.
+   An offset argument is required; it may be in the form ++[+-]++_ss_,
+   ++[+-]++_mm_:__ss__ or ++[+-]++_hh_:__mm__:__ss__. The leading
+   sign is optional. With no argument, the default is 1 second.
 +
+Optionally you may also specify another argument in the form ++[+-]++_hhmm_, a
+timezone literal to apply.  To apply a timezone without an offset, use
+an offset literal of `0`, `+0` or `-0`.
+
 Those of you twitchy about "rewriting history" should bear in
 mind that the commit stamps in many older repositories were never very
 reliable to begin with.
@@ -2630,6 +2625,9 @@ included.
 
 [[profiling]]
 === Profiling
+
+`elapsed`::
+  Display elapsed time since start.
 
 `timing` [ >__outfile__ ]::
    Display statistics on phase timing in repository analysis.

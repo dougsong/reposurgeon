@@ -13376,11 +13376,11 @@ func (rs *Reposurgeon) HelpTimeoffset() {
 	rs.helpOutput(`
 Apply a time offset to all time/date stamps in the selected set.  An offset
 argument is required; it may be in the form [+-]ss, [+-]mm:ss or [+-]hh:mm:ss.
-The leading sign is required to distinguish it from a selection expression.
+The leading sign is optional. With no argument, the default is 1 second.
 
 Optionally you may also specify another argument in the form [+-]hhmm, a
 timeone literal to apply.  To apply a timezone without an offset, use
-an offset literal of +0 or -0.
+an offset literal of 0, +0 or -0.
 `)
 }
 
@@ -13393,13 +13393,6 @@ func (rs *Reposurgeon) DoTimeoffset(line string) bool {
 	selection := rs.selection
 	if selection == nil {
 		selection = rs.chosen().all()
-	}
-	if line == "" {
-		croak("a signed time offset argument is required.")
-		return false
-	} else if line[0] != '-' && line[0] != '+' {
-		croak("time offset argument must begin with + or -.")
-		return false
 	}
 	offsetOf := func(hhmmss string) (int, error) {
 		h := "0"
@@ -13439,11 +13432,16 @@ func (rs *Reposurgeon) DoTimeoffset(line string) bool {
 	}
 	args := strings.Fields(line)
 	var loc *time.Location
-	noffset, err := offsetOf(args[0])
-	if err != nil {
-		return false
+	var offset time.Duration
+	if len(args) == 0 {
+		offset = time.Second
+	} else {
+		noffset, err := offsetOf(args[0])
+		if err != nil {
+			return false
+		}
+		offset = time.Duration(noffset) * time.Second
 	}
-	offset := time.Duration(noffset) * time.Second
 	if len(args) > 1 {
 		tr := regexp.MustCompile(`[+-][0-9][0-9][0-9][0-9]`)
 		if !tr.MatchString(args[1]) {
@@ -13456,6 +13454,7 @@ func (rs *Reposurgeon) DoTimeoffset(line string) bool {
 		}
 		loc = time.FixedZone(args[1], zoffset)
 	}
+	// FIXME: should this be rewritten to uaw bump?
 	for _, ei := range selection {
 		event := rs.chosen().events[ei]
 		if tag, ok := event.(*Tag); ok {
@@ -16230,7 +16229,7 @@ normally do the right thing on chains of three or more commits with
 identical timestamps.
 
 Any collisions left after this operation are probably cross-branch and have
-to be individually dealt with using 'timebump' commands.
+to be individually dealt with using 'timeoffset' commands.
 
 The normal use case for this command is early in converting CVS or Subversion
 repositories, to ensure that the surgical language can count on having a unique
@@ -16266,44 +16265,6 @@ func (rs *Reposurgeon) DoTimequake(line string) bool {
 	//baton.endProcess()
 	respond("%d events modified", modified)
 	repo.invalidateNamecache()
-	return false
-}
-
-func (rs *Reposurgeon) HelpTimebump() {
-	rs.helpOutput(`
-Bump the committer and author timestamps of commits in the selection
-set (defaulting to empty) by one second.  With following integer argument,
-that many seconds.  Argument may be negative.
-
-The normal use case for this command is early in converting CVS or Subversion
-repositories, cleaning up after 'timequake', to ensure that the surgical
-language can count on having a unique action-stamp ID for each commit.
-`)
-}
-
-func (rs *Reposurgeon) DoTimebump(line string) bool {
-	if rs.chosen() == nil {
-		croak("no repo has been chosen.")
-		return false
-	}
-	if rs.selection == nil {
-		croak("reposurgeon: no default select set for bump.")
-		return false
-	}
-	var offset int
-	var err error
-	if line == "" {
-		offset = 1
-	} else {
-		offset, err = strconv.Atoi(line)
-		if err != nil {
-			croak("in timebump: %v", err)
-			return false
-		}
-	}
-	for _, event := range rs.chosen().commits(rs.selection) {
-		event.bump(offset)
-	}
 	return false
 }
 
@@ -17035,7 +16996,7 @@ func (rs *Reposurgeon) DoVersion(line string) bool {
 
 func (rs *Reposurgeon) HelpElapsed() {
 	rs.helpOutput(`
-Desplay elapsed time since start.
+Display elapsed time since start.
 `)
 }
 
