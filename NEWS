@@ -1,6 +1,6 @@
 = reposurgeon project news =
 
-Repository head::
+4.4: 2020-02-20::
      Large reorganization of documentation.
      Added testify command to repocutter.
 
