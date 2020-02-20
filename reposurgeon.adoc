@@ -76,11 +76,8 @@ test extractor exists for git, but is normally disabled in favor of
 the regular exporter.
 
 For details on how to operate reposurgeon, see the
-http://www.catb.org/esr/repository-editing.html[Repository Editing With
-Reposurgeon].
-
-For guidance on the pragmatics of repository conversion, see the
-http://www.catb.org/esr/dvcs-migration-guide.html[DVCS Migration HOWTO].
+http://www.catb.org/esr/reposurgeon/repository-editing.html[Repository Editing and
+Conversion With Reposurgeon].
 
 [[requirements]]
 == REQUIREMENTS ==

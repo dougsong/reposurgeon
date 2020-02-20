@@ -7,8 +7,8 @@ Eric S. Raymond <esr@thyrsus.com>
 
 The material that used to live here no longer exists as a serparate
 dpcument.  It has been incorpotrated into the long-form documrnation
-for reposurgeon; look for "Repository Editing with Reposurgeon",
-specifically the major section titled "A Guide to Repository Conversion".
+for reposurgeon; look for "Repository Editing and Conversion with Reposurgeon",
+specfically the major section titled "A Guide to Repository Conversion".
 
 // Local Variables:
 // compile-command: "make dvcs-migration-guide.html"

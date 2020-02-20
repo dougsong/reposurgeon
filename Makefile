@@ -21,7 +21,7 @@ SOURCES = \
         surgeon/reposurgeon_test.go \
         surgeon/selection.go \
 	repomapper.adoc repocutter.adoc \
-	reporting-bugs.adoc features.adoc dvcs-migration-guide.adoc \
+	reporting-bugs.adoc dvcs-migration-guide.adoc \
 	reposurgeon-mode.el \
         go.mod
 SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
@@ -37,7 +37,7 @@ STOPOUT=1
 BINARIES = reposurgeon repotool repomapper repocutter
 MANPAGES = reposurgeon.1 repotool.1 repomapper.1 repocutter.1
 HTMLFILES = $(MANPAGES:.1=.html) \
-            repository-editing.html dvcs-migration-guide.html features.html reporting-bugs.html
+            repository-editing.html dvcs-migration-guide.html reporting-bugs.html
 SHARED    = $(DOCS) reposurgeon-git-aliases $(HTMLFILES)
 
 # The following would produce reproducible builds, but it breaks Gitlab CI.
@@ -152,7 +152,7 @@ dist: reposurgeon-$(VERS).tar.xz reposurgeon.1 repocutter.1 repotool.1 repomappe
 reposurgeon-$(VERS).md5: reposurgeon-$(VERS).tar.xz
 	@md5sum reposurgeon-$(VERS).tar.xz >reposurgeon-$(VERS).md5
 
-release: reposurgeon-$(VERS).tar.xz reposurgeon-$(VERS).md5 reposurgeon.html repocutter.html repomapper.html reporting-bugs.html dvcs-migration-guide.html features.html
+release: reposurgeon-$(VERS).tar.xz reposurgeon-$(VERS).md5 reposurgeon.html repocutter.html repomapper.html reporting-bugs.html repository-editing.html dvcs-migration-guide.html
 	shipper version=$(VERS) | sh -e -x
 
 refresh: reposurgeon.html repocutter.html repomapper.html reporting-bugs.html features.html
