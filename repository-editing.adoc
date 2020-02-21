@@ -10,7 +10,7 @@ As a motivating example, here are commands to do a Subversion-to
 Git lift on a repository mamed _project_ just under the current directory:
 
 --------
-# Load the project iinto main memory
+# Load the project into main memory
 # Warning: this command is slow because Subversion is slow.
 read project
 
@@ -39,7 +39,7 @@ tag /emptycommit/ delete
 # Often, your Subversion repository was a CVS repository in a past
 # life. CVS creates tags named with the suffix "-root" to mark branch
 # o[oints, and cv2svn brindly copies tham even though the Subversion
-# tools don't need that marker. This clutter can bw tossed.
+# tools don't need that marker. This clutter can be tossed.
 tag /-root$/ delete
 
 # This command illustrates how to use msgin to modify the comment
@@ -109,12 +109,11 @@ produce crude, jackleg, unidiomatic conversion that make the seam
 between the pre-conversion and post-conversion parts of the repository
 very obvious. On the other hand, a skilled operator of reposurgeon can
 produce a conversion that is fully idiomatic in the farget system,
-lowering future friction cost for developers browsing the history.
+greatly lowering future friction cost for developers browsing the
+history.
 
-The original motivation for reposurgeon was
-to clean up artifacts created by repository conversions.  It was
-foreseen that the tool would also have applications when code needs to
-be removed from repositories for legal or policy reasons.
+Another application is when code needs to be removed from a repository
+from repositories for legal or policy reasons.
 
 Fully supported systems (those for which reposurgeon can both read and
 write repositories) include git, hg, bzr, darcs, bk, RCS, and SRC.
@@ -3819,8 +3818,11 @@ more pressing issue than it is with Subversion, where changesrtts map
 tp changesets and conversions have the option of marking each target
 changeset with its revision number.
 
+[[troubleshooting]]
+== Troublesheooting and bug reports
+
 [[oom]]
-== Dealing with memory exhaustion
+=== Dealing with memory exhaustion
 
 To do its job, reposurgeon needs to hold all of your history's metadata
 in memory. That doesn't mean the content part, but does mean all of
@@ -3862,6 +3864,219 @@ said, if you can find ways to make reposurgeon more efficient, we are
 eager to accept those patches, or even just a bug report with the
 details. It's probable that there are some efficiency gains yet to be
 made.
+
+=== How to report bugs
+
+reposurgeon is an extremely algorithmically complex program.  It may
+still have bugs when dealing with strange corner cases in older
+repositories.
+
+It is often extremely difficult or impossible to reproduce those bugs
+without a copy of the history on which they occurred. When you find a
+bug, please send me:
+
+(a) An exact description of how observed behavior differed from expected
+behavior.  If reposurgeon died, include the backtrace.
+
+(b) A git fast-import or Subversion dump file of the repository you
+were operating on, or a pointer to where I can pull it from. 
+
+(c) A script containing the sequence of reposurgeon commands that
+revealed the bug.
+
+Please use the reposurgeon project's issue tracker and attach these
+files. It's helpful.
+
+==== Test case reduction
+
+If you know how to reproduce the error, the best possible test case
+is a hand-crafted repository of minimal size with content that
+explains how it breaks the tool. I turn these into regression tests
+instantly. 
+
+When you don't know the cause of the error, ship me a dump file
+derived from the real repository that triggered it.  To speed up my
+debugging process so you can get an answer more quickly, there are
+some tactics you can use to reduce the bulk of the test case you send
+me. Also, a well-reduced dump can become a regression test to ensure
+the bug does not recur.
+
+How to make dumps in Git: cd to your git repository and capture the
+output of "repotool export".
+
+How to make dumps in Subversion: cd to the toplevel directory of the
+repository master - not a checkout of it, you can tell you're
+in the right place if you see this:
+
+----------------------------------------------------------------------
+$ ls
+conf  db  format  hooks  locks  README.txt
+----------------------------------------------------------------------
+
+Then run "repotool export", capturing the output.
+
+The commands you will use for test-case reduction are reposurgeon and,
+on Subversion dumps, repocutter.
+
+==== Replace the content blobs in the dump with stubs
+
+The subcommand in both tools is 'strip'; it will usually cut the size
+of the dump by more than a factor of 10. Check that the bug still
+reproduces on the stripped dump; if it doesn't, that would be
+unprecedented and interesting in itself.
+
+If you are trying to maintain confidentiality about your code, sending
+me a stripped repo has the additional advantage that I won't see the code!
+The command preserves structure and metadata but replaces each content
+blob with a unique magic cookie.
+
+==== Truncate the dump as much as possible
+
+Try to truncate the dump to the shortest leading section that
+reproduces the bug.
+
+A reposurgeon error message will normally include a mark, event
+number, or (when reading a Subversion dump) a Subversion revision
+number.  Use a selection-set argument to reposurgeon's 'write'
+command, or the 'select' subcommand of repocutter, to pare down the
+dump so that it ends just after the error is triggered.  Again, check
+to ensure that the bug reproduces on the truncated dump.
+
+If the error message doesn't tell you where the problem occurred, try
+a bisection process.  Use the --readlimit option of the read to ignore
+the last half of the events in the dump; check to see if the bug
+reproduces.  If it does, repeat; it it does not, throw out the last
+quarter, then the last eighth, and so forth.  Keep this up until you
+can no longer drop events without making the bug go away.
+
+Bisection is more effective than you might expect, because the kinds
+of repository malformations that trigger misbehavior from reposurgeon
+tend to rise in frequency as you go back in time. The largest single
+category of them has been ancient cruft produced by cvs2svn conversions.
+
+==== Topologically reduce the dump
+
+Next, topologically reduce the dump, throwing out boring commits that are
+unlikely to be related to your problem. 
+
+If a commit has all file modifications (no additions or deletions or
+copies or renames) and has exactly one ancestor and one descendant,
+then it may be boring. In a Subversion dump it also has to not have
+any property changes; in a git dump it must not be referred to by any
+tag or reset.  Interesting commits are not boring, or have a
+not-boring parent or not-boring child. 
+
+Try using the 'reduce' subcommand of repocutter to strip boring commits
+out of a Subversion dump. For a git dump, look at "strip reduce".
+
+==== Prune irrelevant branches
+
+Try to throw away branches that are not relevant to your problem.  The
+'expunge' operation on repocutter or the 'branch delete' command in 
+reposurgeon may be helpful.  
+
+This is the attempted simplification least unlikely to make your bug
+vanish, so check that carefully after each branch deletion.
+
+=== Know how to spot possible importer bugs ==
+
+If your target VCS's importer dies during a rebuild, try writing the
+repository content to a stream instead and importing the stream by
+hand.  If the latter does not fail, the target VCS's importer may be
+slightly buggy - but you have a workaround.
+
+(This has been observed under git 2.5.0 with the result of a unite
+operation on two repositories. The cause is unknown, as git dies
+suddenly enough to not leave a crash report.)
+
+=== Benchmarking
+
+A fair amount of effort has been expended to keep the run-time
+performance of Reposurgeon as linear as possible. This is not an easy
+state to stay in; it is unfortunately quite simple to accidentally
+regress this without noticing.
+
+To that end, there are some fairly simple scripts in the bench
+directory of the source distribution that can be used to check for
+this type of problem. `bench.sh` runs reposurgeon multiple times with
+a different readlimit each time, recording the run time and memory
+allocated at each iteration. Supply arguments specifying the dump file
+to read and the readlimit values to use like this:
+
+    ./bench/bench.sh your-dump-file.svn 1000 2000 20000
+
+This reads `your-dump-file.svn` 10 times, with the readlimit set first
+to 1,000, then 3,000, etc, stepping up until it reaches 20,000.
+
+This produces a `.dat` file which you can use with `plot.sh`,
+`svg.sh`, or `compare.sh` to produce graphs.
+
+For an example, see `link:bench/oops.svg[bench/oops.svg]`. This shows
+a graph made using good revision that had linear performance, several
+made with revisions that introduced a regression that made performance
+quite non-linear, and the fix. You can easily tell the difference
+visually.
+
+[[changes]]
+=== Incompatible language changes
+
+In versions before 3.23, '```prefer```' changed the
+repository type as well as the preferred output format.
+
+In versions before 3.0, the general command syntax put the
+command verb first, then the selection set (if any) then modifiers
+(VSO).  It has changed to optional selection set first, then command
+verb, then modifiers (SVO). The change made parsing simpler, allowed
+abolishing some noise keywords, and recapitulates a successful design
+pattern in some other Unix tools - notably
+sed(1).
+
+In versions before 3.0, path expressions only matched
+commits, not commits and the associated blobs as well. The names
+of the "a" and "c" flags were different.
+
+In reposurgeon versions before 3.0, the delete command had the
+semantics of squash; also, the policy flags did not require a '```--```'
+prefix. The '```--delete```' flag was named "obliterate".
+
+In reposurgeon versions before 3.0, `read` and
+`write` optionally took file arguments rather than requiring redirects
+(and the `write` command never wrote into directories). This was changed
+in order to allow these commands to have modifiers. These modifiers
+replaced several global options that no longer exist.
+
+In reposurgeon versions before 3.0, the earliest factor in a `unite`
+command always kept its tag and branch names unaltered. The new rule
+for resolving name conflicts, giving priority to the latest factor,
+produces more natural behavior when uniting two repositories end to
+end; the master branch of the second (later) one keeps its name.
+
+In reposurgeon versions before 3.0, the `tagify`
+command expected policies as trailing arguments to alter its behavior. The new
+syntax uses similarly named options with leading dashes, that can appear
+anywhere after the `tagify` command.
+
+In versions before 2.9. the syntax of `authors`, `legacy`, `list`, and
+what are now `msg{in|out}` was different (and `legacy` was
+`fossils`). They took plain filename arguments rather than using
+redirect < and >.
+
+In versions before 4.0, `msgin` and `msgout` were named "mailbox_in"
+and "mailbox_out:"; `branchify` was "branchify_map". Previous
+versions used the Python variant of regular expressions; some of
+the more idiosyncratic features of these are not replicated in the
+Go implementation.
+
+In versions before 4.1, the `index` command did not see blobs by default.
+
+[[emergency]]
+=== Emergency help
+
+If you need emergency help, go to the #reposurgeon IRC on freenode.
+Be aware, however, that the maintainer is too busy to babysit
+difficult repository conversions unless he has explicitly volunteered
+for one or someone is paying him to care about it.  For explanation,
+see http://esr.ibiblio.org/?p=5087[Your money or your spec].
 
 [[extensions]]
 == Stream syntax extensions
@@ -3912,56 +4127,6 @@ M 644 inline README
 Unlike other extensions, bzr properties are only preserved on
 stream output if the preferred type is bzr, because any importer other
 than bzr's will choke on them.
-
-[[changes]]
-== Incompatible language changes
-
-In versions before 3.23, '```prefer```' changed the
-repository type as well as the preferred output format.
-
-In versions before 3.0, the general command syntax put the
-command verb first, then the selection set (if any) then modifiers
-(VSO).  It has changed to optional selection set first, then command
-verb, then modifiers (SVO). The change made parsing simpler, allowed
-abolishing some noise keywords, and recapitulates a successful design
-pattern in some other Unix tools - notably
-sed(1).
-
-In versions before 3.0, path expressions only matched
-commits, not commits and the associated blobs as well. The names
-of the "a" and "c" flags were different.
-
-In reposurgeon versions before 3.0, the delete command had the
-semantics of squash; also, the policy flags did not require a '```--```'
-prefix. The '```--delete```' flag was named "obliterate".
-
-In reposurgeon versions before 3.0, `read` and
-`write` optionally took file arguments rather than requiring redirects
-(and the `write` command never wrote into directories). This was changed
-in order to allow these commands to have modifiers. These modifiers
-replaced several global options that no longer exist.
-
-In reposurgeon versions before 3.0, the earliest factor in a `unite`
-command always kept its tag and branch names unaltered. The new rule
-for resolving name conflicts, giving priority to the latest factor,
-produces more natural behavior when uniting two repositories end to
-end; the master branch of the second (later) one keeps its name.
-
-In reposurgeon versions before 3.0, the `tagify`
-command expected policies as trailing arguments to alter its behavior. The new
-syntax uses similarly named options with leading dashes, that can appear
-anywhere after the `tagify` command.
-
-In versions before 2.9. the syntax of `authors`, `legacy`, `list`, and
-what are now `msg{in|out}` was different (and `legacy` was
-`fossils`). They took plain filename arguments rather than using
-redirect < and >.
-
-In versions before 4.0, `msgin` and `msgout` were named "mailbox_in"
-and "mailbox_out:"; `branchify` was "branchify_map". Previous
-versions used the Python variant of regular expressions; some of
-the more idiosyncratic features of these are not replicated in the
-Go implementation.
 
 [[limitations]]
 == Limitations and guarantees
