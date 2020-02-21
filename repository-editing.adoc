@@ -3819,6 +3819,50 @@ more pressing issue than it is with Subversion, where changesrtts map
 tp changesets and conversions have the option of marking each target
 changeset with its revision number.
 
+[[oom]]
+== Dealing with memory exhaustion
+
+To do its job, reposurgeon needs to hold all of your history's metadata
+in memory. That doesn't mean the content part, but does mean all of
+the changeset attributions, comments, and tags.  Given a large enough
+repository, this will overrun the RAM of a small machine. If this
+happens to you, your reposurgeon instance will die abruptly with an
+OOM (Out Of Memory) error while attempting to read in your repository.
+
+It is extremely unlikely that this is due to a bug in reposurgeon.
+Before filing an issue about it, there is a procedure you should try.
+It consists of bisecting on the parameter the Go language runtime
+uses to control the frequency of garbage collection.  You can set this
+using the environment variable GOGC or reposurgeon "gc" command.
+
+GOGC defaults to 100, which instructs the runtime to garbage-collect
+when the heap size is 100% bigger than (i.e., twice) the size of the
+reachable objects after the last garbage collection.  To increase the
+frequency of GC, usually resulting in a lower memory high-water mark,
+decrease that percentage threshold.  To decrease gc frequency, increase
+the threshold so the runtime tolerates a larger heap. 
+
+To troubleshoot your OOM problem, bisect on this threshold to find
+the highest value that will avoid OOM.  Start by cutting it to 50,
+then to 25, then to 12, then to 6.  If you find a value that allows
+you to read to completion, you may want to try increasing it by
+a half interval (e,g. 50 to 75, 25 to 37, etc.) to get back some
+throughput.
+
+If your repository won't read in at GOGC=6 you have a real problem.
+Unfortunately, it's not one the reposurgeon devteam can help you
+with; the correct solution to it is to do your conversion on a machine
+with more RAM.  64GB should be sufficient.  The largest repository
+the reposurgeon devteam has ever seen (the history of GCC, 280K
+Subversion commits) fit on a 128GB machine with GOGC=30.
+
+If you can't read your history onto a 128GB machine with GOGC=30,
+*then* maybe the reposurgeon devteam ought to hear about it. That
+said, if you can find ways to make reposurgeon more efficient, we are
+eager to accept those patches, or even just a bug report with the
+details. It's probable that there are some efficiency gains yet to be
+made.
+
 [[extensions]]
 == Stream syntax extensions
 
@@ -4088,8 +4132,6 @@ Subversion references like 'r1234' in git repositories, and so forth.
 There's no tag for this because tools other than reposurgeon generally
 have no support at all for lifting these.
 
-== Problems with specific tools ==
-
 To avoid repetitive text in these descriptions, I use the following
 additional bug tags:
 
@@ -4109,7 +4151,7 @@ suspect the problem is present based on other things I know about it.
 
 You should assume that none of these tools do reference-lifting.
 
-=== cvs2svn ===
+=== cvs2svn
 
 http://cvs2svn.tigris.org/features.html
 
@@ -4128,7 +4170,7 @@ less under the new target system.
 
 !LINEAR, ?MIXEDBRANCH, DOCUMENTATION
 
-=== cvs-fast-export ===
+=== cvs-fast-export
 
 http://www.catb.org/~esr/cvs-fast-export
 
@@ -4139,7 +4181,7 @@ fast and can thus be productively used even on huge repositories.
 
 !ABANDONED, !LINEAR, !NO_IGNORES, !DOCUMENTATION, !CONFIGURATION
 
-=== cvsps ===
+=== cvsps
 
 http://www.catb.org/~esr/cvsps
 
@@ -4148,7 +4190,7 @@ end-of-lifed it in favor of cvs-fast-export due to fundamental,
 unfixable problems.  It gets branch topology wrong in ways that are
 difficult to detect.
 
-=== git-svn ===
+=== git-svn
 
 git-svn, the Subversion converter in the git distribution, is really
 designed to be a two-way live gateway enabling git users to push and
@@ -4190,7 +4232,7 @@ web services.  Depending on the latter is not recommended.
 
 !ABANDONED, MIXEDBRANCH, NO_TAGS, NO_IGNORES.
 
-=== git-svnimport ===
+=== git-svnimport
 
 Formerly part of the git suite; what they had before git-svn, and inferior to
 it.  Among other problems, it can only handle Subversion repos with
@@ -4198,7 +4240,7 @@ a "standard" trunk/tags/branches layout. Now deprecated.
 
 MIXEDBRANCH, NO_TAGS, NO_IGNORES, ABANDONED.
 
-=== git-svn-import ===
+=== git-svn-import
 
 https://github.com/stevenharman/git-svn-import
 
@@ -4207,7 +4249,7 @@ apply to it as well.
 
 MIXEDBRANCH, NO_TAGS, NO_IGNORES, !ABANDONED.
 
-=== svn-fe ===
+=== svn-fe
 
 https://github.com/git/git/tree/master/contrib/svn-fe
 
@@ -4217,7 +4259,7 @@ made it into the git contrib directory and lingers there still.
 
 LINEAR, NO_TAGS, NO_IGNORES, ABANDONED.
 
-=== Tailor ===
+=== Tailor
 
 http://progetti.arstecnica.it/tailor/
 
@@ -4225,7 +4267,7 @@ Tailor aimed to be an any-to-any repository translator.
 
 LINEAR, ?NO_IGNORES, ABANDONED.
 
-=== agito ===
+=== agito
 
 https://github.com/fragglet/agito
 
@@ -4239,7 +4281,7 @@ It even handles mixed-branch commits correctly.
 If you cannot use reposurgeon for some reason, this is one of
 the best alternatives.
 
-=== svn2git (jcoglan/nirvdrum version) ===
+=== svn2git (jcoglan/nirvdrum version)
 
 https://github.com/nirvdrum/svn2git
 
@@ -4254,7 +4296,7 @@ alternative that is not too horrible. But beware of possible
 history damage if your Subversion repo has malformations that
 confuse git-svn.
 
-=== svn2git (Schemenauer version) ===
+=== svn2git (Schemenauer version)
 
 http://python.ca/nas/python/svn2git.py
 
@@ -4262,7 +4304,7 @@ Native Python. More a proof of concept than a production tool.
 
 LINEAR, NO_TAGS, NO_IGNORES, NO_DOCUMENTATION, ABANDONED.
 
-=== svn2git (Nyblom version) ===
+=== svn2git (Nyblom version)
 
 http://gitorious.org/svn2git
 
@@ -4273,7 +4315,7 @@ svn-all-fast-export, but if so they diverged in 2008.
 
 CONFIGURATION, NO_DOCUMENTATION.
 
-=== svn-fast-export ===
+=== svn-fast-export
 
 http://c133.org/code/svn-fast-export.c
 
@@ -4281,7 +4323,7 @@ Written in C.  More a proof of concept than a production tool.
 
 LINEAR, NO_TAGS, NO_IGNORES, NO_DOCUMENTATION, ABANDONED.
 
-=== svn-dump-fast-export ===
+=== svn-dump-fast-export
 
 https://github.com/barrbrain/svn-dump-fast-export/
 
@@ -4292,7 +4334,7 @@ reading the code.
 
 LINEAR, NO_TAGS, NO_IGNORES, NO_DOCUMENTATION.
 
-===  svn-all-fast-export ===
+===  svn-all-fast-export
 
 http://repo.or.cz/w/svn-all-fast-export.git
 
@@ -4301,7 +4343,7 @@ diverged in 2008.
 
 LINEAR, NO_TAGS, NO_IGNORES, NO_DOCUMENTATION, ABANDONED.
 
-=== SubGit ===
+=== SubGit
 
 http://www.subgit.com/
 
