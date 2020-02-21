@@ -742,10 +742,17 @@ system does what a type system is supposed to do, which is express
 program invariants and assist understanding of its operational
 semantics.
 
-The CSP-derived concurrency primitives are a spectacular success
-that compensates me for the irritations in the rest of the language.
-After finishing the straight-through translation I was able to add
-speedups via concurrent goroutines with very little difficulty.
+Translation from Python, which is a dreadful language to try to do
+concurrency in due to its global interpreter lock, really brought home
+to me how unobtrusively brilliant the Go implementation of
+Communicating Sequential Processes is. The primitives are right and
+the integration with the rest of the language is wonderfully
+seamless. The Go port of reposurgeon got some very large speedups at
+an incremental-complexity cost that I found to be astonishingly low.
+I am impressed both by the power of the CSP part of the design and the
+extreme simplicity and non-fussiness of the interface it presents. I
+hope it will become a model for how concurrency is managed in future
+languages.
 
 I've also seen a maintainability benefit from how easy Go makes it to
 write unit tests in parallel with code.
