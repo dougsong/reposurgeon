@@ -93,10 +93,11 @@ type manifestEntry struct {
 type Extractor interface {
 	// Hook for any setup actions required before streaming
 	preExtract()
-	// Hook called periodically for various housekeeping actions
+	// Hook called periodically (every 1000 commits) for
+	// any housekeeping actions required.  Optional.
 	keepHouse() error
-	// Gather the topologically-ordered lists of revisions and the parent map
-	// (revlist and parent members)
+	// Gather the topologically-ordered lists of revisions and the
+	// parent map (revlist and parent members)
 	gatherRevisionIDs(*RepoStreamer) error
 	// Gather all other per-commit data except branch IDs
 	// (ai and ci members in self.meta list elements)
