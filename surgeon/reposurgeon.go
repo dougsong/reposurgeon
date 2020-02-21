@@ -13433,7 +13433,9 @@ func (rs *Reposurgeon) DoTimeoffset(line string) bool {
 	args := strings.Fields(line)
 	var loc *time.Location
 	var offset time.Duration
+	var noffset int
 	if len(args) == 0 {
+		noffset = 1
 		offset = time.Second
 	} else {
 		noffset, err := offsetOf(args[0])
@@ -13454,7 +13456,6 @@ func (rs *Reposurgeon) DoTimeoffset(line string) bool {
 		}
 		loc = time.FixedZone(args[1], zoffset)
 	}
-	// FIXME: should this be rewritten to uaw bump?
 	for _, ei := range selection {
 		event := rs.chosen().events[ei]
 		if tag, ok := event.(*Tag); ok {
@@ -13465,12 +13466,11 @@ func (rs *Reposurgeon) DoTimeoffset(line string) bool {
 				}
 			}
 		} else if commit, ok := event.(*Commit); ok {
-			commit.committer.date.timestamp.Add(offset)
+			commit.bump(noffset)
 			if len(args) > 1 {
 				commit.committer.date.timestamp = commit.committer.date.timestamp.In(loc)
 			}
 			for _, author := range commit.authors {
-				author.date.timestamp.Add(offset)
 				if len(args) > 1 {
 					author.date.timestamp = author.date.timestamp.In(loc)
 				}
