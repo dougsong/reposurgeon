@@ -3819,7 +3819,7 @@ tp changesets and conversions have the option of marking each target
 changeset with its revision number.
 
 [[troubleshooting]]
-== Troublesheooting and bug reports
+== Troubleshooting and bug reports
 
 [[oom]]
 === Dealing with memory exhaustion
