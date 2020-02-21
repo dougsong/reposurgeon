@@ -38,8 +38,8 @@ comment message-boxes is included.
 See INSTALL.adoc for instructions om building the software and its
 prerequisites.
 
-See `reporting-bugs.adoc` for advice on how to troubleshoot problems
-with `reposurgeon` and report bugs.
+See `repository-editing.adoc` for completedocumentation, including
+advice on how to troubleshoot problems and report bugs.
 
 The main `reposurgeon` website along with the documentation in HTML files
 lives at http://www.catb.org/esr/reposurgeon/[www.catb.org/esr/reposurgeon/].
