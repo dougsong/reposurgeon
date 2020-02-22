@@ -99,21 +99,11 @@ repo history, (e) merging or grafting two or more repos, and (f)
 cutting a repo in two by cutting a parent-child link, preserving the
 branch structure of both child repos.
 
-A major use of reposurgeon is to assist a human operator to
-perform higher-quality conversions among version control systems than
-can be achieved with fully automated converters.
-
-Fully automated converters are very poor at dealing with the
-ontological mismatches between version-control systems; they tend to
-produce crude, jackleg, unidiomatic conversion that make the seam
-between the pre-conversion and post-conversion parts of the repository
-very obvious. On the other hand, a skilled operator of reposurgeon can
-produce a conversion that is fully idiomatic in the farget system,
-greatly lowering future friction cost for developers browsing the
-history.
-
-Another application is when code needs to be removed from a repository
-from repositories for legal or policy reasons.
+A major use of reposurgeon is to assist a human operator to perform
+higher-quality conversions among version control systems than can be
+achieved with fully automated converters. Another application is when
+code needs to be removed from a repository from repositories for legal
+or policy reasons.
 
 Fully supported systems (those for which reposurgeon can both read and
 write repositories) include git, hg, bzr, darcs, bk, RCS, and SRC.
@@ -172,6 +162,56 @@ are the cases we'll discuss in detail.  If you're using something
 older or weirder, see the short section on other VCSes for some hints,
 but you're mostly on your own.
 
+[[why-reposurgeon]]
+=== Why convert with reposurgeon?
+
+Reposurgeon is more difficult to use that any of dozens
+of fully-automated conversion tools out there; you have to make
+choices and compose a recipe. This section explains why it's
+worth the bother.
+
+In brief, it's because fully automated converters don't work very
+well.  They are very poor at dealing with the ontological mismatches
+between the data models of different version-control systems. For
+detailed discussion of the technical flaws in many common converters,
+see Appendix A.
+
+But even automated converters that are relatively good at bridging
+data-model differences tend to produce crude, jackleg, unidiomatic
+conversions that make the seam between the pre-conversion and
+post-conversion parts of the repository very obvious.
+
+An important example of this is commit references in change
+comments. These references convey important information to anyone
+reading the comments, and it is correspondingly important to change
+them from using the reference format of the old system to one that is
+intelligible in whatever your new one is.
+
+As another example, git has a convention about the form of change comments;
+they're supposed to consist of a standalone summary line, followed
+optionally by a spacer blank line and running text.  Git relies on
+this convention to produce log summeries that are easy to take in at a
+glance.
+
+Older version-control systems don't have this convention.  An ideal
+conversion changes as many comments as possible to be in Git-like form so
+that the Git summary tools see the data regularity they want.  But
+this kind of editing can't be fully automated.  The best you can hope
+for, if you ant to do it right, is that your tool aurtomates as much
+of this fixuo as it ca *and* it assists a human operator in
+applying fixups.
+
+Neither reference-lifting nor patching comments for Git-friendliness
+is a process that can be fully automated.  Both require human
+judgment; accordingly, automateds converters don't even try to
+do the right thing.  The result is often a history that is full of
+unpleasant little speedbumps and distractions.  These induce
+wasted developer effort and, correspondingly, higher defect rates. 
+
+On the other hand, a skilled operator of reposurgeon can produce a
+conversion that is fully idiomatic in the target system, significantly
+lowering future friction costs for developers browsing the history.
+
 [[commercial]]
 === Commercial Note
 
@@ -201,7 +241,7 @@ builds in new and old repositories. Until you have tried this, you
 will have no comprehension of how easy it is to get that process
 slightly but fatally wrong, and (actually more importantly) how
 difficult it is _to be sure you haven’t gotten it wrong._ This is the
-kind of friction cost that sounds minor until te first time it blows
+kind of friction cost that sounds minor until the first time it blows
 up on you and eats man-weeks of NRE.
 
 So congratulations, tracing the bug just got an order of magnitude
@@ -231,7 +271,7 @@ happened until you have an unanticipated urgent need, at which point
 whatever trouble you were in gets deeper.
 
 Spending the relatively small amount takes to have a proper full
-conversion down right is a way of controlling your downside risk.
+conversion done right is a way of bounding your downside risk.
 If you aren't a software engineer and had trouble following
 the preceding argument, propose a snapshot conversion to the
 engineer you trust the most and watch that person reaching for
