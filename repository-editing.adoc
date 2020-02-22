@@ -180,9 +180,62 @@ requirement to do a repository conversion, the author can be
 mailto:esr@thyrsus.com[engaged] to perform or assist with
 the transition.  You are likely to find this is more efficient than
 paying someone in-house for the time required to learn the tools and
-procedures. I have been very open about my methods here, but
+procedures. I (the author) have been very open about my methods here, but
 nothing substitutes for experience when you need it done quickly
 and right.
+
+If you are wondering why it's worth spending any money at all for
+a real history conversion, as opposed to just starting a new
+repository with a snapshot of the old head revision, the answer
+comes down to two words: risk management.
+
+Suppose you do a snapshot conversion, head revision only. Then you get
+a regression report with a way to reproduce the problem. What you want
+to do is bisect in the new history to identify the revision where the
+bug was introduced, because knowing what the breaking change was makes
+a fix far easier. Bzzzt! You can’t. That history is missing in the
+new system.
+
+Yes, in theory you could run a manual bisection using bracketing
+builds in new and old repositories. Until you have tried this, you
+will have no comprehension of how easy it is to get that process
+slightly but fatally wrong, and (actually more importantly) how
+difficult it is _to be sure you haven’t gotten it wrong._ This is the
+kind of friction cost that sounds minor until te first time it blows
+up on you and eats man-weeks of NRE.
+
+So congratulations, tracing the bug just got an order of magnitude
+more expensive in engineer time, and your expected time to fix changed
+proportionally. It typically only takes one of these incidents to
+justify the up-front cost of having had the conversion done right.
+
+If you go the snapshot-conversion route, maybe you’ll get lucky and
+never need visibility further back. Or maybe you’ll have a disaster
+because you increased the friction costs of debugging just enough that
+you, say, miss a critical ship date. The more experienced with
+in-the-trenches software development you are, the more plausible that
+second scenario will sound.
+
+A subtler issue is that by losing the old change comments you have
+thrown away a great deal of hard-won knowledge about why your code is
+written the way it is. Again, this may never matter – but if it does,
+it’s going to bite you on the butt, hard, probably when you least
+expect it.
+
+And if you're thinking "No problem, the old repository will still be
+around"...heh. Repositories that have become seldom-accessed are like
+other kinds of dead storage in that they have a way of quietly
+disappearing because after a few job turnovers the knowledge of why
+they’re important is lost. Typically you don’t find out this has
+happened until you have an unanticipated urgent need, at which point
+whatever trouble you were in gets deeper.
+
+Spending the relatively small amount takes to have a proper full
+conversion down right is a way of controlling your downside risk.
+If you aren't a software engineer and had trouble following
+the preceding argument, propose a snapshot conversion to the
+engineer you trust the most and watch that person reaching for
+a diplomatic way to tell you it's a stupid, shortsighted idea.
 
 [[preparation]]
 === Step Zero: Preparation
