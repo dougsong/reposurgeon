@@ -3978,7 +3978,7 @@ reposurgeon may be helpful.
 This is the attempted simplification least unlikely to make your bug
 vanish, so check that carefully after each branch deletion.
 
-=== Know how to spot possible importer bugs ==
+=== Know how to spot possible importer bugs
 
 If your target VCS's importer dies during a rebuild, try writing the
 repository content to a stream instead and importing the stream by
