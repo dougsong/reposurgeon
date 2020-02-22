@@ -407,6 +407,16 @@ BitKeeper: As of version 7.3 (and probably earlier versions under
 open-source licensing) BitKeeper has fast-import and fast-export
 subcommands, and reposurgeon now knows how to use these.
 
+Perforce: According to
+https://stackoverflow.com/questions/31051732/perforce-to-git-migration[this
+Stack Overflow answer], the magic incantation is something like `git
+p4 clone --import-labels --detect-branches //depot/path/project@all`.
+This will create a live Git repository capturing your Perforce
+bistory.  This recipe is included for completeness; it is unknown
+to te author what (if any) reposurgeon cleanup operations might be
+required, but a skim of Perforc documentation suggests that mapping
+Perforce user IDs to a Git-style name/address pair will be desirable.
+
 For other systems, see the
 https://git.wiki.kernel.org/index.php/InterfacesFrontendsAndTools#Interaction_with_other_Revision_Control_Systems[Git
 wiki page on conversion tools].
