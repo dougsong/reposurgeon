@@ -5,7 +5,8 @@
 #
 # You could use plot.sh to view the graph, and then use the viewer to
 # save an svg file. However, that has some drawbacks; in particular
-# the size of the graph will be fixed rather than dynamic.
+# the size of the graph will be fixed rather than dynamic, which means
+# that it won't resize to your browser window.
 
 type="${1}"
 datfile="${2}"
