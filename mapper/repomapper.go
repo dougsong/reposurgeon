@@ -151,7 +151,7 @@ func main() {
 		}		
 
 		// Is this a map file?
-		if strings.Contains(firstline, "=") {
+		if strings.Contains(firstline, "=") || firstline[0] == '#' {
 			updatemap := NewContribMap(flag.Arg(i))
 			for name, obj := range updatemap {
 				_, ok := contribmap[name]

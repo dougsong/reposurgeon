@@ -50,12 +50,13 @@ contains no @-sign, or both.
 
 Additional argument files are mined for entries missing in the stub map.
 
-An argument file containing an equals sign in its first line is
-interpreted as a supplementary map file. Each contributor entry with a
-username not matching any in the first contributor map is copied into
-the first map, which is output.
+An argument file containing an equals sign ("=") in its first line, or
+leading its first line with a hash sign ("#"), is interpreted as a
+supplementary map file. Each contributor entry with a username not
+matching any in the first contributor map is copied into the first
+map, which is output.
 
-An aerument file containing multiple colons on the first line is
+An argument file containing multiple colons on the first line is
 interpreted as a Unix password file. Only the username and
 the comment (or 'gecos') field containing the user's name-among-humans
 are used. Other fields are ignored. For each entry in the contrib file, this program
