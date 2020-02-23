@@ -197,8 +197,8 @@ Older version-control systems don't have this convention.  An ideal
 conversion changes as many comments as possible to be in Git-like form so
 that the Git summary tools see the data regularity they want.  But
 this kind of editing can't be fully automated.  The best you can hope
-for, if you ant to do it right, is that your tool aurtomates as much
-of this fixuo as it ca *and* it assists a human operator in
+for, if you want to do it right, is that your tool automates as much
+of this fixup as it can *and* it assists a human operator in
 applying fixups.
 
 Neither reference-lifting nor patching comments for Git-friendliness
