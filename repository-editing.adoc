@@ -212,6 +212,14 @@ On the other hand, a skilled operator of reposurgeon can produce a
 conversion that is fully idiomatic in the target system, significantly
 lowering future friction costs for developers browsing the history.
 
+One fully automatred reposurgeon feature of some significance that no
+other importrer supports is that it can parse ChangeLogs in histories
+which use that Free Software Foundation convention, and use the
+attributions in them to fill in Git author fields. This recovers
+better information about the provenance of changesets corresponding to
+patches committed by a project developer (who continues to be recorded
+as the committer of that changeset).
+
 [[commercial]]
 === Commercial Note
 
