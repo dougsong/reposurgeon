@@ -1,3 +1,4 @@
+// reposurgeon is an edito/converter for version-control histories.
 package main
 
 // This code is intended to be hackable to support for special-purpose or

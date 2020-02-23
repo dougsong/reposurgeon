@@ -1,3 +1,4 @@
+// repocutter is a tool for analyzing and diddecting Subversion stream files.
 package main
 
 // SPDX-License-Identifier: BSD-2-Clause

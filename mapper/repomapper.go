@@ -1,4 +1,4 @@
-// Package repomapper - update and manipulate contributor maps
+// repomapper updates and manipulate reposurfeon-style contributor maps
 package main
 
 // SPDX-License-Identifier: BSD-2-Clause
