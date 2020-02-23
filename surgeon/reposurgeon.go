@@ -327,6 +327,17 @@ func stringEscape(s string) (string, error) {
 	return strconv.Unquote(s)
 }
 
+// splitRuneFirst splits the string on the rune and returns the first
+// substring, but without allocating a slice of all the substrings,
+// and without iterating over the string twice
+func splitRuneFirst(s string, sep rune) (first string, rest string) {
+	idx := strings.IndexRune(s, sep)
+	if idx == -1 {
+		return s, ""
+	}
+	return s[:idx], s[idx:]
+}
+
 // This representation optimizes for small memory footprint at the expense
 // of speed.  To make the opposite trade we would do the obvious thing with
 // map[string] bool.
@@ -895,7 +906,9 @@ const dottedNumeric = `\s[0-9]+(\.[0-9]+)`
 
 func (vcs VCS) String() string {
 	realignores := newOrderedStringSet()
-	for _, item := range strings.Split(strings.Trim(vcs.dfltignores, "\n"), "\n") {
+	scanner := bufio.NewScanner(strings.NewReader(vcs.dfltignores))
+	for scanner.Scan() {
+		item := scanner.Text()
 		if len(item) > 0 && !strings.HasPrefix(item, "# ") {
 			realignores.Add(item)
 		}
@@ -1923,7 +1936,9 @@ func (msg *MessageBlock) String() string {
 		}
 	}
 	b.WriteByte('\n')
-	for _, line := range strings.Split(msg.body, "\n") {
+	scanner := bufio.NewScanner(strings.NewReader(msg.body))
+	for scanner.Scan() {
+		line := scanner.Text()
 		// byte stuffing so we can protect instances of the delimiter
 		// within message bodies.
 		if strings.HasPrefix(line, ".") || strings.HasPrefix(line, string(MessageBlockDivider)) {
@@ -1931,8 +1946,7 @@ func (msg *MessageBlock) String() string {
 		}
 		fmt.Fprintln(&b, line)
 	}
-	s := b.String()
-	return s[:len(s)-1]
+	return b.String()
 }
 
 /*
@@ -2221,7 +2235,8 @@ func (attr *Attribution) actionStamp() string {
 }
 
 func (attr *Attribution) userid() string {
-	return strings.Split(attr.email, "@")[0]
+	id, _ := splitRuneFirst(attr.email, '@')
+	return id
 }
 
 func (attr *Attribution) who() string {
@@ -2817,7 +2832,7 @@ func (t *Tag) emailOut(modifiers orderedStringSet, eventnum int,
 	if t.legacyID != "" {
 		msg.setHeader("Legacy-ID", t.legacyID)
 	}
-	check := strings.Split(t.Comment, "\n")[0]
+	check, _ := splitRuneFirst(t.Comment, '\n')
 	if len(check) > 64 {
 		check = check[0:64]
 	}
@@ -2930,7 +2945,8 @@ func branchname(tagname string) string {
 
 // stamp enables do_stamp() to report action stamps
 func (t *Tag) stamp(_modifiers orderedStringSet, _eventnum int, cols int) string {
-	report := "<" + t.tagger.actionStamp() + "> " + strings.Split(t.Comment, "\n")[0]
+	firstLine, _ := splitRuneFirst(t.Comment, '\n')
+	report := "<" + t.tagger.actionStamp() + "> " + firstLine
 	if cols > 0 {
 		report = report[0:cols]
 	}
@@ -3702,7 +3718,7 @@ func (commit *Commit) hasProperties() bool {
 
 // lister enables DoList() to report commits.
 func (commit *Commit) lister(_modifiers orderedStringSet, eventnum int, cols int) string {
-	topline := strings.Split(commit.Comment, "\n")[0]
+	topline, _ := splitRuneFirst(commit.Comment, '\n')
 	summary := fmt.Sprintf("%6d %s %6s ",
 		eventnum+1, commit.date().rfc3339(), commit.mark)
 	if commit.legacyID != "" {
@@ -3718,7 +3734,8 @@ func (commit *Commit) lister(_modifiers orderedStringSet, eventnum int, cols int
 
 // stamp enables DoStamp() to report action stamps.
 func (commit *Commit) stamp(modifiers orderedStringSet, _eventnum int, cols int) string {
-	report := "<" + commit.actionStamp() + "> " + strings.Split(commit.Comment, "\n")[0]
+	firstLine, _ := splitRuneFirst(commit.Comment, '\n')
+	report := "<" + commit.actionStamp() + "> " + firstLine
 	if cols > 0 && len(report) > cols {
 		report = report[:cols]
 	}
@@ -3780,7 +3797,7 @@ func (commit *Commit) emailOut(modifiers orderedStringSet,
 			msg.setHeader("Property-"+hdr, value)
 		}
 	}
-	check := strings.Split(commit.Comment, "\n")[0]
+	check, _ := splitRuneFirst(commit.Comment, '\n')
 	if len(check) > 54 {
 		check = check[0:54]
 	}
@@ -5079,17 +5096,22 @@ func (pm *PathMap) copyFrom(targetPath string, sourcePathMap *PathMap, sourcePat
 // return value is nil (the null value of the interface{} type) and the second
 // return value is the boolean false
 func (pm *PathMap) get(path string) (interface{}, bool) {
-	components := strings.Split(path, svnSep)
 	// Walk along the "dirname"
 	parent := pm
-	for _, component := range components[:len(components)-1] {
+	for {
+		i := strings.Index(path, svnSep)
+		if i < 0 {
+			break
+		}
+		component := path[:i]
+		path = path[i+1:]
 		var ok bool
 		if parent, ok = parent.dirs[component]; !ok {
 			return nil, false
 		}
 	}
 	// Now fetch the "basename"
-	element, ok := parent.blobs[components[len(components)-1]]
+	element, ok := parent.blobs[path]
 	return element, ok
 }
 
@@ -5524,7 +5546,9 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 								logit(logSHOUT, "cvs_revisions property hints at CVS.")
 							}
 							sp.repo.hint("cvs", "", true)
-							for _, line := range strings.Split(string(value), "\n") {
+							scanner := bufio.NewScanner(bytes.NewReader(value))
+							for scanner.Scan() {
+								line := scanner.Text()
 								if line != "" {
 									sp.repo.legacyMap["CVS:"+line] = commit
 								}
@@ -6387,7 +6411,7 @@ func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) err
 			continue
 		}
 		if strings.Contains(line, "=") {
-			fields := strings.Split(line, "=")
+			fields := strings.SplitN(line, "=", 3)
 			local := strings.TrimSpace(fields[0])
 			netwide := strings.TrimSpace(fields[1])
 			name, mail, timezone, err := parseAttributionLine(netwide)
@@ -6545,7 +6569,7 @@ func (repo *Repository) readLegacyMap(fp io.Reader) error {
 		var person, seqstr string
 		timefield, person := parts[0], parts[1]
 		if strings.Contains(person, ":") {
-			fields = strings.Split(person, ":")
+			fields = strings.SplitN(person, ":", 3)
 			person, seqstr = fields[0], fields[1]
 			d, err := strconv.Atoi(seqstr)
 			if err != nil {
@@ -9758,7 +9782,7 @@ func (lp *LineParse) Tokens() []string {
 func (lp *LineParse) OptVal(opt string) (val string, present bool) {
 	for _, option := range lp.options {
 		if strings.Contains(option, "=") {
-			parts := strings.Split(option, "=")
+			parts := strings.SplitN(option, "=", 3)
 			if len(parts) > 1 && parts[0] == opt {
 				return parts[1], true
 			}
@@ -11657,7 +11681,7 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 		repo = newRepository("")
 		for _, option := range parse.options {
 			if strings.HasPrefix(option, "--format=") {
-				vcs := strings.Split(option, "=")[1]
+				_, vcs := splitRuneFirst(option, '=')
 				infilter, ok := fileFilters[vcs]
 				if !ok {
 					croak("unrecognized --format")
@@ -11767,7 +11791,7 @@ func (rs *Reposurgeon) DoWrite(line string) bool {
 	if parse.redirected || parse.line == "" {
 		for _, option := range parse.options {
 			if strings.HasPrefix(option, "--format=") {
-				vcs := strings.Split(option, "=")[1]
+				_, vcs := splitRuneFirst(option, '=')
 				outfilter, ok := fileFilters[vcs]
 				if !ok {
 					croak("unrecognized --format")
@@ -11973,7 +11997,7 @@ func (rs *Reposurgeon) DoGraph(line string) bool {
 	for _, ei := range selection {
 		event := rs.chosen().events[ei]
 		if commit, ok := event.(*Commit); ok {
-			firstline := strings.Split(commit.Comment, "\n")[0]
+			firstline, _ := splitRuneFirst(commit.Comment, '\n')
 			if len(firstline) > 42 {
 				firstline = firstline[:42]
 			}
@@ -11996,7 +12020,8 @@ func (rs *Reposurgeon) DoGraph(line string) bool {
 			}
 		}
 		if tag, ok := event.(*Tag); ok {
-			summary := html.EscapeString(strings.Split(tag.Comment, "\n")[0][:32])
+			firstLine, _ := splitRuneFirst(tag.Comment, '\n')
+			summary := html.EscapeString(firstLine[:32])
 			fmt.Fprintf(parse.stdout, "\t\"%s\" [label=<<table cellspacing=\"0\" border=\"0\" cellborder=\"0\"><tr><td><font color=\"blue\">%s</font></td><td>%s</td></tr></table>>];\n", tag.name, tag.name, summary)
 		}
 	}
@@ -13402,11 +13427,11 @@ func (rs *Reposurgeon) DoTimeoffset(line string) bool {
 		if strings.Count(hhmmss, ":") == 0 {
 			s = hhmmss
 		} else if strings.Count(hhmmss, ":") == 1 {
-			fields := strings.Split(hhmmss, ":")
+			fields := strings.SplitN(hhmmss, ":", 3)
 			m = fields[0]
 			s = fields[1]
 		} else if strings.Count(hhmmss, ":") == 2 {
-			fields := strings.Split(hhmmss, ":")
+			fields := strings.SplitN(hhmmss, ":", 4)
 			h = fields[0]
 			m = fields[1]
 			s = fields[2]
@@ -16163,7 +16188,9 @@ func (rs *Reposurgeon) DoDo(ctx context.Context, line string) bool {
 	body := strings.NewReplacer(replacements...).Replace(strings.Join(macro, "\n"))
 	doSelection := rs.selection
 
-	for _, defline := range strings.Split(body, "\n") {
+	scanner := bufio.NewScanner(strings.NewReader(body))
+	for scanner.Scan() {
+		defline := scanner.Text()
 		// If a leading portion of the expansion body is a selection
 		// expression, use it.  Otherwise we'll restore whatever
 		// selection set came before the do keyword.
@@ -16198,7 +16225,7 @@ func (rs *Reposurgeon) CompleteUndefine(text string) []string {
 }
 
 func (rs *Reposurgeon) DoUndefine(line string) bool {
-	words := strings.SplitN(line, " ", 1)
+	words := strings.SplitN(line, " ", 2)
 	name := words[0]
 	if name == "" {
 		croak("no macro name was given.")
@@ -16969,15 +16996,15 @@ func (rs *Reposurgeon) DoVersion(line string) bool {
 		}
 		respond("reposurgeon " + version + " supporting " + strings.Join(supported, " "))
 	} else {
-		fields := strings.Split(version, ".")
-		vmajor := fields[0]
+		vmajor, _ := splitRuneFirst(version, '.')
 		var major string
 		if strings.Contains(line, ".") {
-			fields = strings.Split(strings.TrimSpace(line), ".")
+			fields := strings.Split(strings.TrimSpace(line), ".")
 			if len(fields) != 2 {
 				croak("invalid version.")
 				return false
 			}
+			major = fields[0]
 		} else {
 			major = strings.TrimSpace(line)
 		}
