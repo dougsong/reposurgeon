@@ -1364,4 +1364,40 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 	return repo, err
 }
 
+/**************************************************************************
+
+Experimental ClearCase extractor code begins here
+
+See https://stackoverflow.com/questions/60362158/in-clearcase-need-cli-invocation-to-list-all-revisions/60363075#60363075
+
+Commands used:
+
+cleartool lsbl -fmt "%n:%m:%[permissions]p:%[owner]Fp:%Nd":%l
+   %n is the full name of the element.
+   %m is the element type - typically file or directory.
+   %[permissions]p is file or directory permissions in rwx format.
+   %[owner]Fp is the user ID of the change owner.
+   %Nd will be yyyymmdd.time date; time is local in 24-hour format.
+   %l will be a comma-separated list of labels for this revision.
+   This command requires UCM.
+
+* Need one to get the parent of revision 0 on a branch.
+
+* Need one to get content from revision
+
+* Need one to get comment from revision
+
+* Need one to get filename
+
+We won't need a branch-coloring algorithm, as all revision
+names contain a branch. There are no annotated tags.
+
+How do we extract merge information?
+
+Rescue per-revision attributes?
+
+
+**************************************************************************/
+
+
 // end
