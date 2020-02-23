@@ -115,13 +115,9 @@ const pwdFLDCOUNT = 7 // required number of fields
 
 func main() {
 	var host string
-	var passwdfile string
-	var updatefile string
 	var incomplete bool
 
 	flag.StringVar(&host, "h", "", "set host for suffixing")
-	flag.StringVar(&passwdfile, "p", "", "specify password file")
-	flag.StringVar(&updatefile, "u", "", "specify update file")
 	flag.BoolVar(&incomplete, "i", false, "dump incomplete entries")
 	flag.Parse()
 
@@ -139,59 +135,78 @@ func main() {
 		contribmap.Suffix(host)
 	}
 
-	// With -p, read the password data
-	if passwdfile != "" {
-		passwd := make(map[string]string)
-		eatline := func(line string) {
-			fields := strings.Split(line, pwdFLDSEP)
-			if len(fields) != pwdFLDCOUNT {
-				fmt.Fprintf(os.Stderr,
-					"repomapper: ill-formed passwd line\n")
-				os.Exit(1)
-			}
-			name := fields[pwdNAME]
-			gecos := fields[pwdGECOS]
-			if strings.Index(gecos, ",") != 1 {
-				gecos = strings.Split(gecos, ",")[0]
-			}
-			passwd[name] = gecos
+	for i := 1; i < flag.NArg(); i++ {
+		file, err := os.Open(flag.Arg(i))
+		if err != nil {
+			log.Fatal(err)
 		}
-		bylines(passwdfile, eatline)
+		defer file.Close()
 
-		// Attempt to fill in the contribmap
-		for name, obj := range contribmap {
-			_, ok := passwd[name]
-			if !ok {
-				fmt.Fprintf(os.Stderr,
-					"repomapper: %s not in password file.\n", name)
-			} else if obj.fullname == name {
-				item := contribmap[name]
-				item.fullname = passwd[name]
-				contribmap[name] = item
-			} else {
-				fmt.Fprintf(os.Stderr,
-					"repomapper: %s -> %s should be %s.\n",
-					name, obj.fullname, passwd[name])
+		scanner := bufio.NewScanner(file)
+
+		scanner.Scan()
+		firstline := scanner.Text()
+		if err := scanner.Err(); err != nil {
+			log.Fatal(err)
+		}		
+
+		// Is this a map file?
+		if strings.Contains(firstline, "=") {
+			updatemap := NewContribMap(flag.Arg(i))
+			for name, obj := range updatemap {
+				_, ok := contribmap[name]
+				if !ok {
+					contribmap[name] = obj
+				}
 			}
+			continue
 		}
 
-		// Now dump the result
-		contribmap.Write(os.Stdout, false)
-		os.Exit(0)
-	}
+		// Is this a password file?
+		if strings.Count(firstline, ":") > 3 {
+			passwd := make(map[string]string)
 
-	// With -u, copy in all complete entries in the update file
-	if updatefile != "" {
-		updatemap := NewContribMap(updatefile)
-		for name, obj := range updatemap {
-			_, ok := contribmap[name]
-			if !ok {
-				contribmap[name] = obj
+			passwdline := func(line string) {
+				fields := strings.Split(line, pwdFLDSEP)
+				if len(fields) != pwdFLDCOUNT {
+					fmt.Fprintf(os.Stderr,
+						"repomapper: ill-formed passwd line\n")
+					os.Exit(1)
+				}
+				name := fields[pwdNAME]
+				gecos := fields[pwdGECOS]
+				if strings.Index(gecos, ",") != 1 {
+					gecos = strings.Split(gecos, ",")[0]
+				}
+				passwd[name] = gecos
 			}
+
+			passwdline(firstline)
+			for scanner.Scan() {
+				passwdline(scanner.Text())
+			}
+			if err := scanner.Err(); err != nil {
+				log.Fatal(err)
+			}		
+
+			// Attempt to fill in the contribmap
+			for name, obj := range contribmap {
+				_, ok := passwd[name]
+				if !ok {
+					fmt.Fprintf(os.Stderr,
+						"repomapper: %s not in password file.\n", name)
+				} else if obj.fullname == name {
+					item := contribmap[name]
+					item.fullname = passwd[name]
+					contribmap[name] = item
+				} else {
+					fmt.Fprintf(os.Stderr,
+						"repomapper: %s -> %s should be %s.\n",
+						name, obj.fullname, passwd[name])
+				}
+			}
+			continue
 		}
-		// Now dump the result
-		contribmap.Write(os.Stdout, false)
-		os.Exit(0)
 	}
 
 	// By default, report on incomplete entries

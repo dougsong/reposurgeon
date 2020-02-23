@@ -12,6 +12,6 @@ foonly = Fred Foonly <fred@foonly.net>
 EOF
 
 # Only the foonly line should be merged.
-${REPOMAPPER:-repomapper} -u /tmp/update$$ /tmp/contrib$$
+${REPOMAPPER:-repomapper} /tmp/contrib$$ /tmp/update$$ 
 
 #end

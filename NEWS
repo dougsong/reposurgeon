@@ -1,5 +1,8 @@
 = reposurgeon project news =
 
+Repository head::
+     The interface of repomapper has been dramatically simplified.
+
 4.4: 2020-02-20::
      Large reorganization of documentation.
      Added testify command to repocutter.

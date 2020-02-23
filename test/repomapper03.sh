@@ -13,6 +13,6 @@ EOF
 
 
 # Only the foonly line should be modified
-${REPOMAPPER:-repomapper} -p /tmp/passwd$$ /tmp/contrib$$ 2>&1 | sort
+${REPOMAPPER:-repomapper}  /tmp/contrib$$ /tmp/passwd$$ 2>&1 | sort
 
 #end

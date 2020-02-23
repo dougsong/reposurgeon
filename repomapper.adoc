@@ -6,7 +6,7 @@ repomapper - update and manipulate contributor maps
 
 == SYNOPSIS ==
 
-*repomapper* [-i] [-p 'passwordfile'] [-u 'updatefile'] [-h 'host'] 'contribmap'
+*repomapper* [-i] [-h 'host'] 'contribmap' [ updatefiles ]
 
 [[description]]
 == DESCRIPTION ==
@@ -48,15 +48,17 @@ that is, either the fullname field on the right side of the equals
 sign is identical to the account name on the left, or the email field
 contains no @-sign, or both.
 
-With the -p option, this tool fills in the full-name field using the
-password file given as the option's argument. Only the username and
-the comment (or 'gecos') field containing the user's name-among-humans
-are used. Other fields are ignored, including the password-hash field.
-(On modern Unixes this field does not contain the actual hash, which
-lives in a different file named '/etc/shadow', so '/etc/passwd' can be
-shared without security risk.)
+Additional argument files are mined for entries missing in the stub map.
 
-In the -p mode, for each entry in the contrib file the program
+An argument file containing an equals sign in its first line is
+interpreted as a supplementary map file. Each contributor entry with a
+username not matching any in the first contributor map is copied into
+the first map, which is output.
+
+An aerument file containing multiple colons on the first line is
+interpreted as a Unix password file. Only the username and
+the comment (or 'gecos') field containing the user's name-among-humans
+are used. Other fields are ignored. For each entry in the contrib file, this program
 looks for a username in the password file matching the name to the
 left of the equal sign.  If a match is found, the user's
 name-among-humans is extracted from the gecos field and replaces the
@@ -86,11 +88,6 @@ Thus, if the passwd file still contains an entry for every
 committer (which might not be the case if inactive committer accounts
 were ever removed), -p mode combined with an -h option can produce
 an entire, valid contributor map.
-
-In the -u mode of operation, the option argument must be a
-second contributor file, which is taken as a source of updates.  Each
-contributor entry with a username not matching any in the first
-contributor map is copied into the first map, which is output.
 
 Output from this tool is always a contribution map sorted by
 username.
