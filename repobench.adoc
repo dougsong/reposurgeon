@@ -21,7 +21,7 @@ repobench [-h] [-p datafile] [-o datafile] [-s runtime|rss|memory] [dumpfile min
     Generate a graph in SVG format to stdout
 
 -s::
-    Set which staistic to display in the graph. The
+    Set which statistic to display in the graph. The
     default is runtime.
 
 [[description]]
@@ -32,9 +32,9 @@ mode (the default) it runs reposurgeon multiple times with different
 readlimit values and writes out performance statistics for each run
 to a datafile.  The name of that datafile is reported.
 
-In display (-p) mode,, a benchmark-data file is sent to
-gnuplot to make a graph. An alternate displ;ay mode (with -o) ships
-the graph to standard output as an SVG
+In display (-p) mode,, a benchmark-data file is sent to gnuplot to
+make a graph. An alternate display mode (with -o) ships the graph to
+standard output as an SVG.
 
 Generate mode takes four arguments, the dump file to read followed by
 the minimum, step, and maximum values to use for readlimit.
@@ -48,7 +48,7 @@ This leaves the following files in place:
 
 The data will be recorded in a file named after the current git
 revision, as an aid to comparing multiple historical revisions of
-the code. 
+the code.
 
 New data is simply appended to the end of the data file, so it is
 useful to run this script multiple times with different step
@@ -60,10 +60,10 @@ amount of time, followed by runs with smaller step values, such as
 Generate mode uses sudo to instruct the kernel to drop everything
 from the file system cache between runs.
 
-Display mode takes a previously geneated datafile and renders it a s a
+Display mode takes a previously geneated datafile and renders it as a
 graph.  Use the -p option for interactive GNUPLOT, or the -o option to
 ship an SVG to stdout.  The -s oiption can be used to choose which
-statistic to graph
+statistic to graph.
 
 [[see_also]]
 == SEE ALSO ==
