@@ -2,7 +2,7 @@
 #
 ##repobench - generate or render reposurgeon profling results
 ##
-## usage: repobench [-h] [-b] [-p datafile.dat] [-s runtime|rss|memory] [dumpfile min step max]
+## usage: repobench [-h] [-b] [-p datafile] [-o datafile] [-s runtime|rss|memory] [dumpfile min step max]
 ##
 ## This script runs reposurgeon multiple times with different readlimit
 ## values and writes out the run time and peak RSS for each run to a
@@ -42,10 +42,11 @@
 datfile=""
 display=no
 style=runtime
-while getopts hbps: opt
+while getopts hbops: opt
 do
     case $opt in
-	p) display=yes;;
+	o) display=yes; svg=yes;;
+	p) display=yes; svg=no;;
 	s) style=$OPTARG;;
 	*) grep '^##' "${0}" | sed -e 's/##//'
 	   exit 0;;
@@ -85,7 +86,6 @@ fi
 
 if [ $display = yes ]
 then
-    echo "I see" $*
     datfile=${datfile:-$1}
     case $style in
         runtime)
@@ -137,7 +137,17 @@ EOF
     esac
 
     # The actual plotting
-    gnuplot --persist -e "file='${datfile}'" /tmp/plotme$$ -
+    if [ $svg = yes ]
+    then
+	# You could use the non-SVG mode to view the graph, and then
+	# use the viewer to save an svg file. However, that has some
+	# drawbacks; in particular the size of the graph will be fixed
+	# rather than dynamic, which means that it won't resize to
+	# your browser window.
+	gnuplot --persist -e "file='${datfile}'; set terminal svg size 1920,1080 dynamic name '${type}'" /tmp/plotme$$
+    else
+	gnuplot --persist -e "file='${datfile}'" /tmp/plotme$$ -
+    fi
     rm -f /tmp/plotme$$
 fi
 
