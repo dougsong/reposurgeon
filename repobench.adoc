@@ -37,8 +37,9 @@ make a graph. An alternate display mode (with -o) ships the graph to
 standard output as an SVG.
 
 Generate mode takes four arguments, the dump file to read followed by
-the minimum, step, and maximum values to use for readlimit.
-This leaves the following files in place:
+the minimum, step, and maximum values to use for readlimit.  The dump
+file may be specified as a path relative to the current directory.
+This leaves the following files in the current directory:
 
 * A logfile for each conversion run. Extension .log.
 

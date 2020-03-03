@@ -19,20 +19,22 @@ do
 done
 shift $(($OPTIND - 1))
 
+reposurgeon="$(dirname "${0}")/reposurgeon"
+
 if [ $# = 4 ]
 then
 	function run {
 	    datfile="${1}"	# The output benchmark data
 	    logfile="${2}"	# The logfile for the conversion
-	    dump="${3}"		# The dump to be read in
+	    dump="${3}"	# The dump to be read in
 	    readlimit="${4}"	# The nmber of revisions to read
 	    # %e = CPU real time
 	    # %M = maximum resident set size of the process in KB
 	    # %K = average total (data+stack+text) memory use in KB
 	    /usr/bin/time -f "${readlimit} %e %M %K" -a -o "${datfile}" \
-			  reposurgeon "logfile ${logfile}" \
-					"readlimit ${readlimit}" \
-					"read <${dump}"
+			  "${reposurgeon}" "logfile ${logfile}" \
+					   "readlimit ${readlimit}" \
+					   "read <${dump}"
 	}
 
 	dump="${1}"
@@ -40,11 +42,12 @@ then
 	step="${3}"
 	max="${4}"
 	rev="$(git describe HEAD)"
-	datfile=`basename ${dump}_${rev}.dat`
+	datfile="$(basename ${dump})_${rev}.dat"
+	logfile="$(basename ${dump})_${rev}_${readlimit}.log"
 	for readlimit in $(seq "${min}" "${step}" "${max}"); do
 	    # Flush all disk VM caches so the data file has to be reread
 	    sudo sh -c 'echo 3 >/proc/sys/vm/drop_caches'
-	    run "${datfile}" "${dump}_${rev}_${readlimit}.log" "${dump}" "${readlimit}"
+	    run "${datfile}" "${logfile}" "${dump}" "${readlimit}"
 	done
 	echo "Results are in ${datfile}"
 fi
@@ -53,7 +56,7 @@ if [ $display = yes ]
 then
     datfile=${datfile:-$1}
     case $style in
-        runtime)
+	runtime)
 	    cat >/tmp/plotme$$ <<EOF
 set key top lmargin
 set xlabel "number of SVN revisions read in by reposurgeon"
@@ -115,4 +118,3 @@ EOF
     fi
     rm -f /tmp/plotme$$
 fi
-
