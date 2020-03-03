@@ -46,9 +46,6 @@ This leaves the following files in place:
   two measures of memory. One entry per run in the readlimit loop.
   Extension .dat.
 
-* A fit.log describing GNUPLOT's attempts to fit the dataa to linear
-  and quadratic curves.
-
 The data will be recorded in a file named after the current git
 revision, as an aid to comparing multiple historical revisions of
 the code. 
