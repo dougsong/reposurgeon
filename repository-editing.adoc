@@ -4122,11 +4122,10 @@ to 1,000, then 3,000, etc, stepping up until it reaches 20,000.
 This produces a `.dat` file which you can use with `plot.sh`,
 `svg.sh`, or `compare.sh` to produce graphs.
 
-For an example, see `link:bench/oops.svg[bench/oops.svg]`. This shows
-a graph made using good revision that had linear performance, several
-made with revisions that introduced a regression that made performance
-quite non-linear, and the fix. You can easily tell the difference
-visually.
+For an example, see `link:oops.svg[oops.svg]`. This shows a graph made
+using good revision that had linear performance, several made with
+revisions that introduced a regression that made performance quite
+non-linear, and the fix. You can easily tell the difference visually.
 
 [[changes]]
 === Incompatible language changes
