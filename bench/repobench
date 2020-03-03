@@ -16,8 +16,10 @@
 ## * A logfile for each conversion run that generates warnings or errors.
 ##   Only generated *if* there are errors. Extension .log.
 ## * A *single* data file with lines correlating elapsed time to
-##   two measures of memory, One entry per run in the readlimit loop.
+##   two measures of memory. One entry per run in the readlimit loop.
 ##   Extension .dat.
+## * A fit.log desctubing GNUPLOT's attempts to fit the dara to linear
+##   and quadratic curves.
 ##
 ## The data will be recorded in a file named after the current git
 ## revision, as an aid to comparing multiple historical revisions of
@@ -37,24 +39,54 @@
 ## sanity, you should configure sudo not to ask you for a password
 ## every time.
 
-mode=profile
+datfile=""
+display=no
 style=runtime
-while getopts hbp:s: opt
+while getopts hbps: opt
 do
     case $opt in
-	b) mode=build;;	# Default
-	p) mode=plot; datfile=$OPTARG;;
+	p) display=yes;;
 	s) style=$OPTARG;;
 	*) grep '^##' "${0}" | sed -e 's/##//'
 	   exit 0;;
     esac
 done
-#shift $(($OPTIND - 1))
+shift $(($OPTIND - 1))
 
-function plot {
-    data=$1
-    style=$2
+if [ $# = 4 ]
+then
+	function run {
+	    datfile="${1}"	# The output benchmark data
+	    logfile="${2}"	# The logfile for the conversion
+	    dump="${3}"		# The dump to be read in
+	    readlimit="${4}"	# The nmber of revisions to read
+	    # %e = CPU real time
+	    # %M = maximum resident set size of the process in KB
+	    # %K = average total (data+stack+text) memory use in KB
+	    /usr/bin/time -f "${readlimit} %e %M %K" -a -o "${datfile}" \
+			  reposurgeon "logfile ${logfile}" \
+					"readlimit ${readlimit}" \
+					"read <${dump}"
+	}
 
+	dump="${1}"
+	min="${2}"
+	step="${3}"
+	max="${4}"
+	rev="$(git describe HEAD)"
+	datfile=`basename ${dump}_${rev}.dat`
+	for readlimit in $(seq "${min}" "${step}" "${max}"); do
+	    # Flush all disk VM caches so the data file has to be reread
+	    sudo sh -c 'echo 3 >/proc/sys/vm/drop_caches'
+	    run "${datfile}" "${dump}_${rev}_${readlimit}.log" "${dump}" "${readlimit}"
+	done
+	echo "Results are in ${datfile}"
+fi
+
+if [ $display = yes ]
+then
+    echo "I see" $*
+    datfile=${datfile:-$1}
     case $style in
         runtime)
 	    cat >/tmp/plotme$$ <<EOF
@@ -105,41 +137,7 @@ EOF
     esac
 
     # The actual plotting
-    gnuplot --persist -e "file='${data}'" /tmp/plotme$$ -
+    gnuplot --persist -e "file='${datfile}'" /tmp/plotme$$ -
     rm -f /tmp/plotme$$
-}
+fi
 
-case $mode in
-    profile)
-	function run {
-	    datfile="${1}"	# The output benchmark data
-	    logfile="${2}"	# The logfile for the conversion
-	    dump="${3}"		# The dump to be read in
-	    readlimit="${4}"	# The nmber of revisions to read
-	    # %e = CPU real time
-	    # %M = maximum resident set size of the process in KB
-	    # %K = average total (data+stack+text) memory use in KB
-	    /usr/bin/time -f "${readlimit} %e %M %K" -a -o "${datfile}" \
-			  ./reposurgeon "logfile ${logfile}" \
-					"readlimit ${readlimit}" \
-					"read <${dump}" 2>&- 1>&-
-	}
-
-	dump="${1}"
-	min="${2}"
-	step="${3}"
-	max="${4}"
-	rev="$(git rev-parse HEAD)"
-	datfile="bench/${dump}_${rev}.dat"
-	for readlimit in $(seq "${min}" "${step}" "${max}"); do
-	    # Flush all disk VM caches so the data file has to be reread
-	    sudo sh -c 'echo 3 >/proc/sys/vm/drop_caches'
-	    run "${datfile}" "bench/${dump}_${rev}_${readlimit}.log" "${dump}" "${readlimit}"
-	done
-	plot "${datfile}" $style
-	;;
-
-    plot)
-	plot "${datfile}" $style
-	;;
-esac
