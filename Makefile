@@ -20,6 +20,7 @@ SOURCES = \
         surgeon/reposurgeon.go \
         surgeon/reposurgeon_test.go \
         surgeon/selection.go \
+	repobench repobench.adoc \
 	repomapper.adoc repocutter.adoc \
 	reporting-bugs.adoc dvcs-migration-guide.adoc \
 	reposurgeon-mode.el \
@@ -147,7 +148,7 @@ docker-check-noscm: docker-check-only-bzr docker-check-only-cvs \
 reposurgeon-$(VERS).tar.xz: $(SOURCES) $(DOCS)
 	tar --transform='s:^:reposurgeon-$(VERS)/:' --show-transformed-names -cJf reposurgeon-$(VERS).tar.xz $(SOURCES) $(DOCS) test
 
-dist: reposurgeon-$(VERS).tar.xz reposurgeon.1 repocutter.1 repotool.1 repomapper.1
+dist: reposurgeon-$(VERS).tar.xz reposurgeon.1 repocutter.1 repotool.1 repobench.1 repomapper.1
 
 reposurgeon-$(VERS).md5: reposurgeon-$(VERS).tar.xz
 	@md5sum reposurgeon-$(VERS).tar.xz >reposurgeon-$(VERS).md5

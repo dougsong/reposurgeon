@@ -3,6 +3,7 @@
 Repository head::
      Lots more narrative socumentation added.
      The interface of repomapper has been dramatically simplified.
+     repobench is a new tool for benchmarking reposurgeon
 
 4.4: 2020-02-20::
      Large reorganization of documentation.

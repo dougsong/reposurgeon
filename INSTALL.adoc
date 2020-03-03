@@ -44,4 +44,10 @@ To run it, however, you will need to install Subversion and Mercurial.
 To test the correctness of this software once these prerequisites are
 installed, invoke `make check`.
 
+== Note to packagers ==
+
+It probably is not necessary to package repobench, as it is
+a bencmarking tool only of interest to developers working
+with the source distribution.
+
 // end
