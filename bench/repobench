@@ -1,51 +1,51 @@
 #!/bin/bash
 #
-# usage: repobench dumpfile min step max
-#
-# This script runs reposurgeon multiple times with different readlimit
-# values and writes out the run time and peak RSS for each run to a
-# file. The file is then sent to gnuplot to make a graph.
-#
-# Takes four arguments, the dump file to read followed by the minimum,
-# step, and maximum values to use for readlimit (just the same
-# arguments as seq).
-#
-# Leaves the following files in place:
-# * A logfile for each conversion run that generates warnings or errors.
-#   Only generated *if* there are errors. Extension .log.
-# * A *single* data file with lines correlating elapsed time to
-#   two measures of memory, One entry per run in the readlimit loop.
-#   Extension .dat.
-#
-# The data will be recorded in a file named after the current git
-# revision, as an aid to comparing multiple historical revisions of
-# the code. See plot.sh for how we graph the data, and svg.sh for
-# turning the data into an svg file you can embed in a web
-# page.
-#
-# New data is simply appended to the end of the data file, so it is
-# useful to run this script multiple times with different step
-# values. For example, the GCC repository had ~280k revisions. Running
-# this first with a step of 50k to see a rough graph in a shorter
-# amount of time, followed by runs with smaller step values, such as
-# 10k or 1k, is recommended.
-#
-# BTW, this script uses sudo to instruct the kernel to drop everything
-# from the file system cache between runs. For the sake of your own
-# sanity, you should configure sudo not to ask you for a password
-# every time.
+##repobench - generate or render reposurgeon profling results
+##
+## usage: repobench [-h] [-b] [-p datafile.dat] [-s runtime|rss|memory] [dumpfile min step max]
+##
+## This script runs reposurgeon multiple times with different readlimit
+## values and writes out the run time and peak RSS for each run to a
+## file. The file is then sent to gnuplot to make a graph.
+##
+## Takes four arguments, the dump file to read followed by the minimum,
+## step, and maximum values to use for readlimit (just the same
+## arguments as seq).
+##
+## Leaves the following files in place:
+## * A logfile for each conversion run that generates warnings or errors.
+##   Only generated *if* there are errors. Extension .log.
+## * A *single* data file with lines correlating elapsed time to
+##   two measures of memory, One entry per run in the readlimit loop.
+##   Extension .dat.
+##
+## The data will be recorded in a file named after the current git
+## revision, as an aid to comparing multiple historical revisions of
+## the code. See plot.sh for how we graph the data, and svg.sh for
+## turning the data into an svg file you can embed in a web
+## page.
+##
+## New data is simply appended to the end of the data file, so it is
+## useful to run this script multiple times with different step
+## values. For example, the GCC repository had ~280k revisions. Running
+## this first with a step of 50k to see a rough graph in a shorter
+## amount of time, followed by runs with smaller step values, such as
+## 10k or 1k, is recommended.
+##
+## BTW, this script uses sudo to instruct the kernel to drop everything
+## from the file system cache between runs. For the sake of your own
+## sanity, you should configure sudo not to ask you for a password
+## every time.
 
 mode=profile
 style=runtime
-while getopts bp:s: opt
+while getopts hbp:s: opt
 do
     case $opt in
 	b) mode=build;;	# Default
 	p) mode=plot; datfile=$OPTARG;;
 	s) style=$OPTARG;;
-	*) cat <<EOF
-repobench - generate or render reposurgeon profling results
-EOF
+	*) grep '^##' "${0}" | sed -e 's/##//'
 	   exit 0;;
     esac
 done
@@ -65,7 +65,9 @@ f(x) = a*x + b
 g(x) = c*x**2 + d*x + e
 fit f(x) file using 1:2 via a,b
 fit g(x) file using 1:2 via c,d,e
-plot file u 1:2 title "memory usage" lw 2
+plot file u 1:2 title "memory usage" lw 2, \
+     f(x) title "linear fit" lw 2, \
+     g(x) title "quadratic fit" lw 2
 EOF
 	    ;;
 	rss)
@@ -128,11 +130,11 @@ case $mode in
 	step="${3}"
 	max="${4}"
 	rev="$(git rev-parse HEAD)"
-	datfile="${dump}_${rev}.dat"
+	datfile="bench/${dump}_${rev}.dat"
 	for readlimit in $(seq "${min}" "${step}" "${max}"); do
 	    # Flush all disk VM caches so the data file has to be reread
 	    sudo sh -c 'echo 3 >/proc/sys/vm/drop_caches'
-	    run "${datfile}" "${dump}_${rev}_${readlimit}.log" "${dump}" "${readlimit}"
+	    run "${datfile}" "bench/${dump}_${rev}_${readlimit}.log" "${dump}" "${readlimit}"
 	done
 	plot "${datfile}" $style
 	;;
@@ -141,5 +143,3 @@ case $mode in
 	plot "${datfile}" $style
 	;;
 esac
-
-#./bench/plot.sh runtime "${datfile}"
