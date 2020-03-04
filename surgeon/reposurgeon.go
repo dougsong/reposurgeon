@@ -10874,7 +10874,7 @@ func (rs *Reposurgeon) DoBench(line string) bool {
 	var memStats runtime.MemStats
 	debug.FreeOSMemory()
 	runtime.ReadMemStats(&memStats)
-	respond("%d %.2f %.2f %.2f\n",
+	fmt.Printf("%d %.2f %.2f %.2f\n",
 		control.readLimit, time.Since(control.startTime).Seconds(), float64(memStats.HeapAlloc)/1e6, float64(memStats.TotalAlloc)/1e6)
 	return false
 }
