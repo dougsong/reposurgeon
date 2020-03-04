@@ -10853,7 +10853,7 @@ func (rs *Reposurgeon) DoMemory(line string) bool {
 	var memStats runtime.MemStats
 	debug.FreeOSMemory()
 	runtime.ReadMemStats(&memStats)
-	fmt.Printf("%.2f %.2fMB  High water: %.2fMB\n",
+	fmt.Printf("Heap: %.2fMB  High water: %.2fMB\n",
 		float64(memStats.HeapAlloc)/1e6, float64(memStats.TotalAlloc)/1e6)
 	return false
 }
@@ -10874,8 +10874,9 @@ func (rs *Reposurgeon) DoBench(line string) bool {
 	var memStats runtime.MemStats
 	debug.FreeOSMemory()
 	runtime.ReadMemStats(&memStats)
+	const KB = 1e6
 	fmt.Printf("%d %.2f %.2f %.2f\n",
-		control.readLimit, time.Since(control.startTime).Seconds(), float64(memStats.HeapAlloc)/1e6, float64(memStats.TotalAlloc)/1e6)
+		control.readLimit, time.Since(control.startTime).Seconds(), float64(memStats.HeapAlloc)/KB, float64(memStats.TotalAlloc)/KB)
 	return false
 }
 
