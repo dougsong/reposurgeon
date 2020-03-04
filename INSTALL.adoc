@@ -4,7 +4,7 @@
 
 --------------------------------------------
 sudo apt-get golang-1.12 asciidoctor 
-sudo apt-get subversion mercurial
+sudo apt-get subversion mercurial gnuplot
 make get
 make
 --------------------------------------------
@@ -30,6 +30,9 @@ implementation will do. The restricted shell shipped on Debian/Ubuntu
 will work. Shell is almost certainly already installed on your system.
 
 You will need asciidoctor to format the documentation.
+
+gnuplot is only required if you're planning to try performance-tuning
+with repobench.
 
 == Building the software ==
 
