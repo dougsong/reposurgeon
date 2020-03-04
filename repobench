@@ -17,7 +17,7 @@ do
 	   exit 0;;
     esac
 done
-shift $(($OPTIND - 1))
+shift $((OPTIND - 1))
 
 reposurgeon="$(dirname "${0}")/reposurgeon"
 
@@ -42,8 +42,8 @@ then
 	step="${3}"
 	max="${4}"
 	rev="$(git describe HEAD)"
-	datfile="$(basename ${dump})_${rev}.dat"
-	logfile="$(basename ${dump})_${rev}_${readlimit}.log"
+	datfile="$(basename "${dump}")_${rev}.dat"
+	logfile="$(basename "${dump}")_${rev}_${readlimit}.log"
 	for readlimit in $(seq "${min}" "${step}" "${max}"); do
 	    # Flush all disk VM caches so the data file has to be reread
 	    sudo sh -c 'echo 3 >/proc/sys/vm/drop_caches'
@@ -112,7 +112,8 @@ EOF
 	# drawbacks; in particular the size of the graph will be fixed
 	# rather than dynamic, which means that it won't resize to
 	# your browser window.
-	gnuplot --persist -e "file='${datfile}'; set terminal svg size 1920,1080 dynamic name '${type}'" /tmp/plotme$$
+	name="${style} from ${datfile}"
+	gnuplot --persist -e "file='${datfile}'; set terminal svg size 1920,1080 dynamic name '${name}'" /tmp/plotme$$
     else
 	gnuplot --persist -e "file='${datfile}'" /tmp/plotme$$ -
     fi
