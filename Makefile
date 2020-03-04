@@ -14,18 +14,19 @@ SOURCES = \
 	mapper/repomapper.go \
 	surgeon/reposurgeon.go \
 	surgeon/reposurgeon_test.go \
-        surgeon/baton.go \
-        surgeon/extractor.go \
-        surgeon/hgclient.go \
-        surgeon/reposurgeon.go \
-        surgeon/reposurgeon_test.go \
-        surgeon/selection.go \
+	surgeon/baton.go \
+	surgeon/extractor.go \
+	surgeon/hgclient.go \
+	surgeon/reposurgeon.go \
+	surgeon/reposurgeon_test.go \
+	surgeon/selection.go \
+	surgeon/svnread.go \
 	repobench repobench.adoc \
 	repomapper.adoc repocutter.adoc \
-	reporting-bugs.adoc dvcs-migration-guide.adoc \
+	reporting-bugs.adoc repository-editing.adoc dvcs-migration-guide.adoc \
 	reposurgeon-mode.el \
-        go.mod
-SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
+	go.mod go.sum
+SOURCES += Makefile control lintfilter reposturgeon.png reposurgeon-git-aliases
 SOURCES += Dockerfile ci/prepare.sh .gitlab-ci.yml
 DOCS = README.adoc INSTALL.adoc NEWS AUTHORS COPYING
 
@@ -35,8 +36,8 @@ STOPOUT=1
     docker-build docker-check docker-check-noscm \
     vet test fmt lint
 
-BINARIES = reposurgeon repotool repomapper repocutter
-MANPAGES = reposurgeon.1 repotool.1 repomapper.1 repocutter.1
+BINARIES = reposurgeon repotool repomapper repocutter repobench
+MANPAGES = reposurgeon.1 repotool.1 repomapper.1 repocutter.1 repobench.1
 HTMLFILES = $(MANPAGES:.1=.html) \
             repository-editing.html dvcs-migration-guide.html reporting-bugs.html
 SHARED    = $(DOCS) reposurgeon-git-aliases $(HTMLFILES)
@@ -156,5 +157,5 @@ reposurgeon-$(VERS).md5: reposurgeon-$(VERS).tar.xz
 release: reposurgeon-$(VERS).tar.xz reposurgeon-$(VERS).md5 reposurgeon.html repocutter.html repomapper.html reporting-bugs.html repository-editing.html dvcs-migration-guide.html
 	shipper version=$(VERS) | sh -e -x
 
-refresh: reposurgeon.html repocutter.html repomapper.html reporting-bugs.html features.html
+refresh: reposurgeon.html repocutter.html repomapper.html reporting-bugs.html repository-editing.html dvcs-migration-guide.html
 	shipper -N -w version=$(VERS) | sh -e -x
