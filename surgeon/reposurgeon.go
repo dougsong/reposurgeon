@@ -1539,6 +1539,7 @@ type Control struct {
 	branchMappings []branchMapping
 	readLimit      uint64
 	profilename    string
+	startTime      time.Time
 }
 
 func (ctx *Control) isInteractive() bool {
@@ -1577,7 +1578,7 @@ func (ctx *Control) init() {
 			respond("Interrupt\n")
 		}
 	}()
-
+	ctx.startTime = time.Now()
 }
 
 var control Control
@@ -1632,7 +1633,7 @@ func logEnable(logbits uint) bool {
 	return (control.logmask & logbits) != 0
 }
 
-// nuke removes a (large) directory, reporting elapsed time.
+// nuke removes a (large) directory
 func nuke(directory string, legend string) {
 	if exists(directory) {
 		if !control.flagOptions["quiet"] {
@@ -10842,7 +10843,7 @@ func (rs *Reposurgeon) DoTiming(line string) bool {
 
 func (rs *Reposurgeon) HelpMemory() {
 	rs.helpOutput(`
-Report memory usage.  Runs a garbage-collect before reporting so the figure will better relect
+Report memory usage.  Runs a garbage-collect before reporting so the figure will better reflect
 storage currently held in loaded repositories; this will not affect the reported high-water
 mark.
 `)
@@ -10852,8 +10853,29 @@ func (rs *Reposurgeon) DoMemory(line string) bool {
 	var memStats runtime.MemStats
 	debug.FreeOSMemory()
 	runtime.ReadMemStats(&memStats)
-	respond("     Total heap: %.2fMB  High water: %.2fMB\n",
+	fmt.Printf("%.2f %.2fMB  High water: %.2fMB\n",
 		float64(memStats.HeapAlloc)/1e6, float64(memStats.TotalAlloc)/1e6)
+	return false
+}
+
+func (rs *Reposurgeon) HelpBench() {
+	rs.helpOutput(`
+Report elapsed time and memory usage in the format expected by repobench. Note: this
+comment is not intended for interactive use or to be used by scripts other than repobench.  The
+output format may change as repobench does.
+
+Runs a garbage-collect before reporting so the figure will better reflect
+storage currently held in loaded repositories; this will not affect the reported high-water
+mark.
+`)
+}
+
+func (rs *Reposurgeon) DoBench(line string) bool {
+	var memStats runtime.MemStats
+	debug.FreeOSMemory()
+	runtime.ReadMemStats(&memStats)
+	respond("%.2f %.2f %.2f\n",
+		time.Since(control.startTime).Seconds(), float64(memStats.HeapAlloc)/1e6, float64(memStats.TotalAlloc)/1e6)
 	return false
 }
 
