@@ -1,7 +1,7 @@
 = reposurgeon project news =
 
 Repository head::
-     Lots more narrative socumentation added.
+     Lots more narrative documentation added.
      The interface of repomapper has been dramatically simplified.
      repobench is a new tool for benchmarking reposurgeon
 

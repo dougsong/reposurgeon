@@ -2350,7 +2350,7 @@ tip commit of the associated branch, if there is one.  When a reset is
 moved, no branch fields are changed.
 
 [[splitmerge]]
-=== Repository spiitting and merging
+=== Repository splitting and merging
 
 `divide`::
    Attempt to partition a repo by cutting the parent-child link

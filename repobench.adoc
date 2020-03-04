@@ -2,7 +2,7 @@
 :doctype: manpage
 
 == NAME ==
-repobench - gemerate and/or display reposurgeon benchmarks
+repobench - generate and/or display reposurgeon benchmarks
 
 == SYNOPSIS ==
 

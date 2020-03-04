@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-##repobench - generate or render reposurgeon profling results
+##repobench - generate or render reposurgeon profiling results
 ##
 ## usage: repobench [-h] [-p datafile] [-o datafile] [-m datafiles] [-s runtime|rss|memory] [dumpfile min step max]
 
