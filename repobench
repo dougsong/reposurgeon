@@ -23,7 +23,7 @@ shift $((OPTIND - 1))
 
 reposurgeon="$(dirname "${0}")/reposurgeon"
 
-if [ $# = 4 && $merge = no ]
+if [ $# = 4 ] && [ $merge = no ]
 then
 	function run {
 	    datfile="${1}"	# The output benchmark data
@@ -139,13 +139,12 @@ for i, fn in enumerate("$*".split()):
     data = []
     with open(fn) as fp:
         for line in fp:
-            fields = lines.split()
+            fields = line.split()
             keys.add(fields[0])
-            data.append((fields[0], fields[$style])
+            data.append((fields[0], fields[$style]))
     alldata.append(data)
     print(alldata)
 EOF
 fi
 
 # end
-
