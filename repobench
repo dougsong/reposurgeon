@@ -30,13 +30,11 @@ then
 	    logfile="${2}"	# The logfile for the conversion
 	    dump="${3}"	# The dump to be read in
 	    readlimit="${4}"	# The nmber of revisions to read
-	    # %e = CPU real time
-	    # %M = maximum resident set size of the process in KB
-	    # %K = average total (data+stack+text) memory use in KB
-	    /usr/bin/time -f "${readlimit} %e %M %K" -a -o "${datfile}" \
-			  "${reposurgeon}" "logfile ${logfile}" \
-					   "readlimit ${readlimit}" \
-					   "read <${dump}"
+	    # The bemch command presently dumps readlimit, runtime, heap alloc, and total alloc (highwater)
+	    "${reposurgeon}" "logfile ${logfile}" \
+			     "readlimit ${readlimit}" \
+			     "read <${dump}" \
+			     "bench >${datfile}"
 	}
 
 	dump="${1}"
@@ -62,7 +60,7 @@ then
 	    cat >/tmp/plotme$$ <<EOF
 set key top lmargin
 set xlabel "number of SVN revisions read in by reposurgeon"
-set ylabel "runtime"
+set ylabel "$style"
 f(x) = a*x + b
 g(x) = c*x**2 + d*x + e
 fit f(x) file using 1:2 via a,b
@@ -72,11 +70,11 @@ plot file u 1:2 title "memory usage" lw 2, \
      g(x) title "quadratic fit" lw 2
 EOF
 	    ;;
-	rss)
+	heap)
 	    cat >/tmp/plotme$$ <<EOF
 set key top lmargin
 set xlabel "number of SVN revisions read in by reposurgeon"
-set ylabel "RSS"
+set ylabel "$style"
 f(x) = a*x + b
 g(x) = c*x**2 + d*x + e
 fit f(x) file using 1:3 via a,b
@@ -86,11 +84,11 @@ plot file u 1:3 title "memory (max RSS)" lw 2, \
      g(x) title "quadratic fit" lw 2
 EOF
 	    ;;
-	memory)
+	highwater)
 	    cat >/tmp/plotme$$ <<EOF
 set key top lmargin
 set xlabel "number of SVN revisions read in by reposurgeon"
-set ylabel "average total memory"
+set ylabel "$style"
 f(x) = a*x + b
 g(x) = c*x**2 + d*x + e
 fit f(x) file using 1:4 via a,b
