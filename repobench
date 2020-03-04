@@ -2,18 +2,18 @@
 #
 ##repobench - generate or render reposurgeon profiling results
 ##
-## usage: repobench [-h] [-p datafile] [-o datafile] [-m datafiles] [-s runtime|rss|memory] [dumpfile min step max]
+## usage: repobench [-h] [-p datafile] [-o datafile] [-m datafiles] [-s runtime|heap|highwater] [dumpfile min step max]
 
 datfile=""
 display=no
 merge=no
 style=runtime
-while getopts hmops: opt
+while getopts hmo:p:s: opt
 do
     case $opt in
 	m) merge=yes;;
-	o) display=yes; svg=yes;;
-	p) display=yes; svg=no;;
+	o) display=yes; svg=yes; datfile=$OPTARG;;
+	p) display=yes; svg=no; datfile=$OPTARG;;
 	s) style=$OPTARG;;
 	*) grep '^##' "${0}" | sed -e 's/##//'
 	   exit 0;;
@@ -34,7 +34,7 @@ then
 	    "${reposurgeon}" "logfile ${logfile}" \
 			     "readlimit ${readlimit}" \
 			     "read <${dump}" \
-			     "bench >${datfile}"
+			     "bench" >>"${datfile}"
 	}
 
 	dump="${1}"
@@ -43,8 +43,8 @@ then
 	max="${4}"
 	rev="$(git describe HEAD)"
 	datfile="$(basename "${dump}")_${rev}.dat"
-	logfile="$(basename "${dump}")_${rev}_${readlimit}.log"
 	for readlimit in $(seq "${min}" "${step}" "${max}"); do
+	    logfile="$(basename "${dump}")_${rev}_${readlimit}.log"
 	    # Flush all disk VM caches so the data file has to be reread
 	    sudo sh -c 'echo 3 >/proc/sys/vm/drop_caches'
 	    run "${datfile}" "${logfile}" "${dump}" "${readlimit}"
@@ -79,7 +79,7 @@ f(x) = a*x + b
 g(x) = c*x**2 + d*x + e
 fit f(x) file using 1:3 via a,b
 fit g(x) file using 1:3 via c,d,e
-plot file u 1:3 title "memory (max RSS)" lw 2, \
+plot file u 1:3 title "memory (current heap size)" lw 2, \
      f(x) title "linear fit" lw 2, \
      g(x) title "quadratic fit" lw 2
 EOF
@@ -93,7 +93,7 @@ f(x) = a*x + b
 g(x) = c*x**2 + d*x + e
 fit f(x) file using 1:4 via a,b
 fit g(x) file using 1:4 via c,d,e
-plot file u 1:4 title "memory (average of total)" lw 2, \
+plot file u 1:4 title "memory (high water mark)" lw 2, \
      f(x) title "linear fit" lw 2, \
      g(x) title "quadratic fit" lw 2
 EOF
