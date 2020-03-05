@@ -16028,7 +16028,7 @@ func performOptionSideEffect(opt string, val bool) {
 func tweakFlagOptions(line string, val bool) {
 	if strings.TrimSpace(line) == "" {
 		for _, opt := range optionFlags {
-			respond("\t%s = %v\n", opt[0], control.flagOptions[opt[0]])
+			fmt.Printf("\t%s = %v\n", opt[0], control.flagOptions[opt[0]])
 		}
 	} else {
 		line = strings.Replace(line, ",", " ", -1)
