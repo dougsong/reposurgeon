@@ -2,16 +2,15 @@
 #
 ##repobench - generate or render reposurgeon profiling results
 ##
-## usage: repobench [-h] [-p datafile] [-o datafile] [-m datafiles] [-s runtime|heap|highwater] [dumpfile min step max]
+## usage: repobench [-h] [-p datafiles] [-o datafiles] [-s runtime|heap|highwater] [dumpfile min step max]
 
 datfile=""
 display=no
 merge=no
 style=runtime
-while getopts hmo:p:s: opt
+while getopts ho:p:s: opt
 do
     case $opt in
-	m) merge=yes;;
 	o) display=yes; svg=yes; datfile=$OPTARG;;
 	p) display=yes; svg=no; datfile=$OPTARG;;
 	s) style=$OPTARG;;
@@ -23,14 +22,13 @@ shift $((OPTIND - 1))
 
 reposurgeon="$(dirname "${0}")/reposurgeon"
 
-if [ $# = 4 ] && [ $merge = no ]
+if [ $# = 4 ] && [ $display = no ]
 then
 	function run {
 	    datfile="${1}"	# The output benchmark data
 	    logfile="${2}"	# The logfile for the conversion
-	    dump="${3}"	# The dump to be read in
+	    dump="${3}"		# The dump to be read in
 	    readlimit="${4}"	# The nmber of revisions to read
-	    # The bemch command presently dumps readlimit, runtime, heap alloc, and total alloc (highwater)
 	    "${reposurgeon}" "logfile ${logfile}" \
 			     "readlimit ${readlimit}" \
 			     "read <${dump}" \
@@ -54,21 +52,25 @@ fi
 
 if [ $display = yes ]
 then
+    case $style in
+	runtime) idx=2; title="running time";;
+	heap) idx=3; title="memory (heap allocation)";;
+	highwater) idx=4; title="memory (total)";;
+	*)
+	    echo "Unknown plot type $style" >&2
+	    exit 1
+	    ;;
+    esac
+fi
+
+if [ $display = yes -a "$2" = "" ]
+then
     datfile=${datfile:-$1}
     if [ ! -f "$datfile" ]
     then
 	echo "File ${datfile} is missing." >&2
 	exit 1
     fi
-    case $style in
-	runtime) idx=2; title="Running time";;
-	heap) idx=3; title="Memory (heap allocation)";;
-	highwater) idx=4; title="Memory (total)";;
-	*)
-	    echo "Unknown plot type $style" >&2
-	    exit 1
-	    ;;
-    esac
 	
     cat >/tmp/plotme$$ <<EOF
 set key top lmargin
@@ -99,29 +101,26 @@ EOF
     rm -f /tmp/plotme$$
 fi
 
-if [ $merge = yes ]
+if [ $display = yes -a "$2" != "" ]
 then
     # We have: Multiple benchmark-data files corresponding to diffrent
     # revisions.  We want: A merged plot extracting a selected statistic
-    # from all of them for comparative graphing, as GNUPLOT code on stdout.
-    python <<EOF
-alldata = []
-keys = set([])
-
-runtime = 1
-rss = 2
-memory = 3
-
-for i, fn in enumerate("$*".split()):
-    data = []
-    with open(fn) as fp:
-        for line in fp:
-            fields = line.split()
-            keys.add(fields[0])
-            data.append((fields[0], fields[$style]))
-    alldata.append(data)
-    print(alldata)
+    # from all of them for comparative graphing.
+    cat >/tmp/plotme$$ <<EOF
+set key top lmargin
+set title "comparative $title"
+set xlabel "number of revisions read in by reposurgeon"
+set ylabel "$style"
+plot for [i=1:words(files)] word(files, i) using 1:$idx title word(files, i) noenhanced lw 2
 EOF
+    # The actual plotting
+    if [ $svg = yes ]
+    then
+	gnuplot --persist -e "files='$*'; set terminal svg size 1920,1080 dynamic" /tmp/plotme$$
+    else
+	gnuplot --persist -e "files='$*'" /tmp/plotme$$ -
+    fi
+    rm -f /tmp/plotme$$
 fi
 
 # end

@@ -6,7 +6,7 @@ repobench - generate and/or display reposurgeon benchmarks
 
 == SYNOPSIS ==
 
-repobench [-h] [-p datafile] [-o datafile] [-s runtime|rss|memory] [dumpfile min step max]
+repobench [-h] [-p datafiles] [-o datafiles] [-s runtime|heap|highwater] [dumpfile min step max]
 
 [[options]]
 == OPTIONS ==
@@ -27,10 +27,15 @@ repobench [-h] [-p datafile] [-o datafile] [-s runtime|rss|memory] [dumpfile min
 [[description]]
 == DESCRIPTION ==
 
-This script has two modes; generate and display.  In generate-only
-mode (the default) it runs reposurgeon multiple times with different
-readlimit values and writes out performance statistics for each run
-to a datafile.  The name of that datafile is reported.
+This script has two modes; generate or display.  They're
+separateds so that the expensive result fom generate mode
+can be capt around for repeated visualization.
+
+=== GENERATE MODE
+
+In generate mode (the default) it runs reposurgeon multiple times with
+different readlimit values and writes out performance statistics for
+each run to a datafile.  The name of that datafile is reported.
 
 In display (-p) mode,, a benchmark-data file is sent to gnuplot to
 make a graph. An alternate display mode (with -o) ships the graph to
@@ -61,10 +66,18 @@ amount of time, followed by runs with smaller step values, such as
 Generate mode uses sudo to instruct the kernel to drop everything
 from the file system cache between runs.
 
-Display mode takes a previously geneated datafile and renders it as a
-graph.  Use the -p option for interactive GNUPLOT, or the -o option to
-ship an SVG to stdout.  The -s oiption can be used to choose which
-statistic to graph.
+=== DISPLAY MODE
+
+Display mode with a single file argument takes a previously generated
+datafile and renders it as a graph. Curve fitting is attempted. Use
+the -p option for interactive GNUPLOT, or the -o option to ship an SVG
+to stdout.  The -s option can be used to choose which statistic to
+graph.
+
+Giving multiple files with display mode suppresses curve fitting
+and produces a comparative graph. The -o, -p, and -s options
+are interpreted.  This mode is useful in checking for prerformance
+regressions.
 
 [[see_also]]
 == SEE ALSO ==
