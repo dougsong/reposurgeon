@@ -8,12 +8,12 @@ command=""
 datfile=""
 display=no
 style=runtime
-while getopts c:ho:p:s: opt
+while getopts c:hops: opt
 do
     case $opt in
 	c) command="$OPTARG";;
-	o) display=yes; svg=yes; datfile=$OPTARG;;
-	p) display=yes; svg=no; datfile=$OPTARG;;
+	o) display=yes; svg=yes;;
+	p) display=yes; svg=no;;
 	s) style=$OPTARG;;
 	*) grep '^##' "${0}" | sed -e 's/##//'
 	   exit 0;;
