@@ -3976,6 +3976,25 @@ eager to accept those patches, or even just a bug report with the
 details. It's probable that there are some efficiency gains yet to be
 made.
 
+[[stallout]]
+=== Dealing with stalled conversions
+
+Occasionally it will happen that a conversion on a particularly large
+or malformed repository seems to stall out, grinding endlessy without
+completing a conversion phase.
+
+This kind of problem is difficult to troubleshoot, and is much more
+likely than an OOM to indicate an actual bug in reposurgeon. There are
+a couple of things you can do to make a resolution hore likely.
+
+1. Identify and report the phase in which the stallout occurs.
+
+2. Use repobench to see if you can identify a revision that triggers
+   the stall.  The procedure for this is to use it to step your
+   readlimit up from zero intill you see the runtime spike.
+
+3. As always, provide a stripped version of the repository for testing.
+
 === How to report bugs
 
 reposurgeon is an extremely algorithmically complex program.  It may
@@ -3984,7 +4003,7 @@ repositories.
 
 It is often extremely difficult or impossible to reproduce those bugs
 without a copy of the history on which they occurred. When you find a
-bug, please send me:
+bug, please send te maintainers:
 
 (a) An exact description of how observed behavior differed from expected
 behavior.  If reposurgeon died, include the backtrace.
