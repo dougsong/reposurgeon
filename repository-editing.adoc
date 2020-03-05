@@ -486,7 +486,7 @@ and check your work.
 
 SCCS: Use http://www.catb.org/esr/sccs2rcs/[sccs2rcs]
 to get to RCS, then follow the directions for RCS. There is a script
-called sccs2git on CPAN which I don't recommend, as it is poorly
+called sccs2git on CPAN which is not recommended, as it is poorly
 documented and makes no attempt to group commits into changesets.
 
 RCS: reposurgeon will read an RCS collection.  It uses
@@ -738,7 +738,7 @@ missing and you need to point to that fact.
 
 It's helpful for repository-browsing tools if there is a uniform
 syntax for this that is highly unlikely to show up in repository
-comments.  I recommend enclosing translation notes in [[ ]].  This 
+comments.  Enclosing translation notes in [[ ]] is recommended; this 
 has the advantage of being visually similar to the [ ] traditionally
 used for editorial comments in text.
 
@@ -906,15 +906,15 @@ Educate your developers in the following good practices:
 
 ==== Commit references
 
-The combination of a committer email address with a ISO8601
-timestamp is a good way to refer to a commit without being
-VCS-specific.  Thus, instead of "commit 304a53c2", use
-"<2011-10-25T15:11:09Z!fred@foonly.com>". I recommend that you _not
-vary from this format_, even in trivial ways like omitting the 'Z'
-or changing the 'T' or '!'. Making these cookies uniform and
+The combination of a committer email address with a ISO8601 timestamp
+is a good way to refer to a commit without being VCS-specific.  Thus,
+instead of "commit 304a53c2", use
+"<2011-10-25T15:11:09Z!fred@foonly.com>". It is recommended that you
+_not vary from this format_, even in trivial ways like omitting the
+'Z' or changing the 'T' or '!'. Making these cookies uniform and
 machine-parseable will have good consequences for future
-repository-browsing tools. The reference-lifting code in
-reposurgeon generates them.
+repository-browsing tools. The reference-lifting code in reposurgeon
+generates them.
 
 Being careful about this has an additional benefit.  Someday your
 project may need to change VCSes yet again; on that day, it will be
@@ -4009,7 +4009,7 @@ bug, please send te maintainers:
 behavior.  If reposurgeon died, include the backtrace.
 
 (b) A git fast-import or Subversion dump file of the repository you
-were operating on, or a pointer to where I can pull it from. 
+were operating on, or a pointer to where it can be pulled from. 
 
 (c) A script containing the sequence of reposurgeon commands that
 revealed the bug.
@@ -4021,7 +4021,7 @@ files. It's helpful.
 
 If you know how to reproduce the error, the best possible test case
 is a hand-crafted repository of minimal size with content that
-explains how it breaks the tool. I turn these into regression tests
+explains how it breaks the tool. Those are turned into regression tests
 instantly. 
 
 When you don't know the cause of the error, ship me a dump file
@@ -4056,9 +4056,9 @@ reproduces on the stripped dump; if it doesn't, that would be
 unprecedented and interesting in itself.
 
 If you are trying to maintain confidentiality about your code, sending
-me a stripped repo has the additional advantage that I won't see the code!
-The command preserves structure and metadata but replaces each content
-blob with a unique magic cookie.
+me a stripped repo has the additional advantage that the code won't be
+disclosed!  The command preserves structure and metadata but replaces
+each content blob with a unique magic cookie.
 
 ==== Truncate the dump as much as possible
 
@@ -4426,11 +4426,8 @@ Subversion references like 'r1234' in git repositories, and so forth.
 There's no tag for this because tools other than reposurgeon generally
 have no support at all for lifting these.
 
-To avoid repetitive text in these descriptions, I use the following
+To avoid repetitive text in these descriptions, we use the following
 additional bug tags:
-
-CONFIGURATION: Requires elaborate configuration even for cases that
-ought to be simple.
 
 ABANDONED: Effectively abandoned by its maintainer. Some tools with
 this tag are still nominally maintained but have not been updated
@@ -4440,8 +4437,8 @@ NO_DOCUMENTATION: Poorly (if at all) documented.
 
 !FOO means the tool is known not to have problem FOO.
 
-?FOO means I have not tried the tool but have strong reason to
-suspect the problem is present based on other things I know about it.
+?FOO meansthe author has not tried the tool but has strong reason to
+suspect the problem is present based on other things known about it.
 
 You should assume that none of these tools do reference-lifting.
 
@@ -4479,10 +4476,10 @@ fast and can thus be productively used even on huge repositories.
 
 http://www.catb.org/~esr/cvsps
 
-Don't use this.  Just plain don't.  I maintained version 3.x until I
-end-of-lifed it in favor of cvs-fast-export due to fundamental,
-unfixable problems.  It gets branch topology wrong in ways that are
-difficult to detect.
+Don't use this.  Just plain don't.  The author maintained version 3.x
+until endof-of-lifing it in favor of cvs-fast-export due to
+fundamental, unfixable problems.  It gets branch topology wrong in
+ways that are difficult to detect.
 
 === git-svn
 
@@ -4504,7 +4501,7 @@ pidgin.
 Worse, git-svn has bugs that severely compromise it for full
 translations.  It tends to stumble over common repository
 malformations in Subversion, producing history damage that is
-significant but evades superficial scrutiny.  I have written about
+significant but evades superficial scrutiny. The author has written about
 this problem in detail at http://esr.ibiblio.org/?p=6778[Don't do
 svn-to-git repository conversions with git-svn!]
 
@@ -4521,8 +4518,9 @@ reference-lifting.  Subversion references like "r1234" in commit
 comments have to be left as-is to avoid creating pain for users of the
 same Subversion remote not going through git-svn.
 
-git-svn was used by both Google Code's exporter and is used GitHub importer
-web services.  Depending on the latter is not recommended.
+git-svn was used by both Google Code's exporter and is used in
+GitHub's importer web services.  Depending on the latter is not
+recommended.
 
 !ABANDONED, MIXEDBRANCH, NO_TAGS, NO_IGNORES.
 
