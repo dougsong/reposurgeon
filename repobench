@@ -78,7 +78,7 @@ f(x) = a*x + b
 g(x) = c*x**2 + d*x + e
 fit f(x) file using 1:$idx via a,b
 fit g(x) file using 1:$idx via c,d,e
-plot file u 1:2 title "$title" lw 2, \
+plot file u 1:$idx title "$title" lw 2, \
      f(x) title "linear fit" lw 2, \
      g(x) title "quadratic fit" lw 2
 EOF
