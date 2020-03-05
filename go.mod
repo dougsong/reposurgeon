@@ -9,6 +9,7 @@ require (
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
 	github.com/ianbruene/go-difflib v1.1.2
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
+	github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6
 	github.com/termie/go-shutil v0.0.0-20140729215957-bcacb06fecae
 	gitlab.com/esr/fqme v0.1.0
 	gitlab.com/ianbruene/kommandant v0.6.0

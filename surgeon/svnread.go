@@ -43,6 +43,8 @@ import (
 	"sync"
 	"time"
 	"unsafe" // Actually safe - only uses Sizeof
+
+	"github.com/orcaman/concurrent-map"
 )
 
 type svnReader struct {
@@ -2552,16 +2554,17 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	baton.startProgress("SVN phase C1: purge deleted refs", uint64(len(sp.repo.events)))
 	// compute a map from original branches to their tip
 	branchtips := sp.repo.branchmap()
-	// Remember the original branch only if purging.
-	origBranches := make(map[string]string)
-	preserve := options.Contains("--preserve")
-	for index := range sp.repo.events {
-		if commit, ok := sp.repo.events[index].(*Commit); ok {
+	// Parallelize, and use a concurrent-map implometation that has per-bucket locking,
+	// because this phase has been observed to blow up in the wild. (GitLab issue #259.)
+	origBranches := cmap.New()
+	walkEvents(sp.repo.events, func(i int, event Event) {
+		if commit, ok := event.(*Commit); ok {
 			if strings.HasPrefix(commit.Branch, "refs/deleted/") {
-				origBranches[commit.mark] = commit.Branch
+				origBranches.Set(commit.mark, commit.Branch)
 			}
 		}
-	}
+	})
+	preserve := options.Contains("--preserve")
 	if !preserve {
 		sp.repo.deleteBranch(nil, func(branch string) bool {
 			return strings.HasPrefix(branch, "refs/deleted/")
@@ -2573,8 +2576,8 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	sp.repo.walkManifests(func(index int, commit *Commit, _ int, _ *Commit) {
 		baton.percentProgress(uint64(index) + 1)
 		origbranch := commit.Branch
-		if branch, ok := origBranches[commit.mark]; ok {
-			origbranch = branch
+		if branch, ok := origBranches.Get(commit.mark); ok {
+			origbranch = branch.(string)
 		}
 		tip, _ := sp.repo.markToEvent(branchtips[origbranch]).(*Commit)
 		if commit == tip && len(tip.operations()) == 1 &&
@@ -2617,8 +2620,8 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	tagname := func(commit *Commit) string {
 		// Give branch and tag roots a special name.
 		origbranch := commit.Branch
-		if branch, ok := origBranches[commit.mark]; ok {
-			origbranch = branch
+		if branch, ok := origBranches.Get(commit.mark); ok {
+			origbranch = branch.(string)
 		}
 		prefix, branch := "", origbranch
 		if strings.HasPrefix(branch, "refs/deleted/") {
