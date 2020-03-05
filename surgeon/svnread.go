@@ -2555,14 +2555,14 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	// Remember the original branch only if purging.
 	origBranches := make(map[string]string)
 	preserve := options.Contains("--preserve")
-	if !preserve {
-		for index := range sp.repo.events {
-			if commit, ok := sp.repo.events[index].(*Commit); ok {
-				if strings.HasPrefix(commit.Branch, "refs/deleted/") {
-					origBranches[commit.mark] = commit.Branch
-				}
+	for index := range sp.repo.events {
+		if commit, ok := sp.repo.events[index].(*Commit); ok {
+			if strings.HasPrefix(commit.Branch, "refs/deleted/") {
+				origBranches[commit.mark] = commit.Branch
 			}
 		}
+	}
+	if !preserve {
 		sp.repo.deleteBranch(nil, func(branch string) bool {
 			return strings.HasPrefix(branch, "refs/deleted/")
 		})
