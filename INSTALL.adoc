@@ -3,7 +3,7 @@
 == Quick recipe for systems using apt ==
 
 --------------------------------------------
-sudo apt-get golang-1.12 asciidoctor 
+sudo apt-get golang-1.12 asciidoctor shellcheck
 sudo apt-get subversion mercurial gnuplot
 make get
 make

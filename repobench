@@ -2,15 +2,16 @@
 #
 ##repobench - generate or render reposurgeon profiling results
 ##
-## usage: repobench [-h] [-p datafiles] [-o datafiles] [-s runtime|heap|highwater] [dumpfile min step max]
+## usage: repobench [-h] [-c cmd] [-p datafiles] [-o datafiles] [-s runtime|heap|highwater] [dumpfile min step max]
 
+command=""
 datfile=""
 display=no
-merge=no
 style=runtime
-while getopts ho:p:s: opt
+while getopts c:ho:p:s: opt
 do
     case $opt in
+	c) command="$OPTARG";;
 	o) display=yes; svg=yes; datfile=$OPTARG;;
 	p) display=yes; svg=no; datfile=$OPTARG;;
 	s) style=$OPTARG;;
@@ -30,7 +31,7 @@ then
 	    dump="${3}"		# The dump to be read in
 	    readlimit="${4}"	# The nmber of revisions to read
 	    "${reposurgeon}" "logfile ${logfile}" \
-			     "readlimit ${readlimit}" \
+			     "readlimit ${readlimit}" "$command" \
 			     "read <${dump}" \
 			     "bench" >>"${datfile}"
 	}
@@ -63,7 +64,7 @@ then
     esac
 fi
 
-if [ $display = yes -a "$2" = "" ]
+if [ $display = yes ] && [ "$2" = "" ]
 then
     datfile=${datfile:-$1}
     if [ ! -f "$datfile" ]
@@ -101,7 +102,7 @@ EOF
     rm -f /tmp/plotme$$
 fi
 
-if [ $display = yes -a "$2" != "" ]
+if [ $display = yes ] && [ "$2" != "" ]
 then
     # We have: Multiple benchmark-data files corresponding to diffrent
     # revisions.  We want: A merged plot extracting a selected statistic

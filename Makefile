@@ -75,6 +75,7 @@ test:
 
 lint:
 	golint ./... | ./lintfilter 2>&1
+	-shellcheck -f gcc repobench lintfilter
 
 fmt:
 	gofmt -w .
