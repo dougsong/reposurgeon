@@ -43,8 +43,6 @@ import (
 	"sync"
 	"time"
 	"unsafe" // Actually safe - only uses Sizeof
-
-	"github.com/orcaman/concurrent-map"
 )
 
 type svnReader struct {
@@ -2556,11 +2554,11 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	branchtips := sp.repo.branchmap()
 	// Parallelize, and use a concurrent-map implometation that has per-bucket locking,
 	// because this phase has been observed to blow up in the wild. (GitLab issue #259.)
-	origBranches := cmap.New()
+	origBranches := new(sync.Map)
 	walkEvents(sp.repo.events, func(i int, event Event) {
 		if commit, ok := event.(*Commit); ok {
 			if strings.HasPrefix(commit.Branch, "refs/deleted/") {
-				origBranches.Set(commit.mark, commit.Branch)
+				origBranches.Store(commit.mark, commit.Branch)
 			}
 		}
 	})
@@ -2576,7 +2574,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	sp.repo.walkManifests(func(index int, commit *Commit, _ int, _ *Commit) {
 		baton.percentProgress(uint64(index) + 1)
 		origbranch := commit.Branch
-		if branch, ok := origBranches.Get(commit.mark); ok {
+		if branch, ok := origBranches.Load(commit.mark); ok {
 			origbranch = branch.(string)
 		}
 		tip, _ := sp.repo.markToEvent(branchtips[origbranch]).(*Commit)
@@ -2620,7 +2618,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	tagname := func(commit *Commit) string {
 		// Give branch and tag roots a special name.
 		origbranch := commit.Branch
-		if branch, ok := origBranches.Get(commit.mark); ok {
+		if branch, ok := origBranches.Load(commit.mark); ok {
 			origbranch = branch.(string)
 		}
 		prefix, branch := "", origbranch
