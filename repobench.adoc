@@ -6,10 +6,13 @@ repobench - generate and/or display reposurgeon benchmarks
 
 == SYNOPSIS ==
 
-repobench [-h] [-p datafiles] [-o datafiles] [-s runtime|heap|highwater] [dumpfile min step max]
+repobench [-h] [-c cmd] [-p datafiles] [-o datafiles] [-s runtime|heap|highwater] [dumpfile min step max]
 
 [[options]]
 == OPTIONS ==
+
+-c cmd::
+    Pass cmd to reposurgeon before the stream-file read.
 
 -h::
     Display option help
@@ -20,7 +23,7 @@ repobench [-h] [-p datafiles] [-o datafiles] [-s runtime|heap|highwater] [dumpfi
 -o::
     Generate a graph in SVG format to stdout
 
--s::
+-s style::
     Set which statistic to display in the graph. The
     default is runtime.
 
@@ -65,6 +68,9 @@ amount of time, followed by runs with smaller step values, such as
 
 Generate mode uses sudo to instruct the kernel to drop everything
 from the file system cache between runs.
+
+To change the befhavior oidf reposurgeon you can user the -c option
+to pass it a command-line argument.
 
 === DISPLAY MODE
 
