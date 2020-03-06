@@ -11,3 +11,6 @@ pkg
 *.prof
 *.profile
 *.fi
+*.log
+*.svg
+*.dat

@@ -4,6 +4,7 @@
 ##
 ## usage: repobench [-h] [-c cmd] [-p datafiles] [-o datafiles] [-s runtime|heap|highwater] [dumpfile min step max]
 
+usage=yes
 command=""
 datfile=""
 display=no
@@ -11,15 +12,20 @@ style=runtime
 while getopts c:hops: opt
 do
     case $opt in
-	c) command="$OPTARG";;
-	o) display=yes; svg=yes;;
-	p) display=yes; svg=no;;
-	s) style=$OPTARG;;
+	c) usage=no; command="$OPTARG";;
+	o) usage=no; display=yes; svg=yes;;
+	p) usage=no; display=yes; svg=no;;
+	s) usage=no; style=$OPTARG;;
 	*) grep '^##' "${0}" | sed -e 's/##//'
 	   exit 0;;
     esac
 done
 shift $((OPTIND - 1))
+
+if [[ "${usage}" == "yes" ]]; then
+    grep '^##' "${0}" | sed -e 's/##//'
+    exit 0
+fi
 
 reposurgeon="$(dirname "${0}")/reposurgeon"
 
