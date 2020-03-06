@@ -35,6 +35,7 @@ svn cp dir1 dir2
 svn commit -m "Copy dir1 to dir2."
 cd ../..
 } >/dev/$verbose 2>&1
+# shellcheck disable=SC2010
 if [ "$dump" = yes ]
 then
     svnadmin dump -q test-repo

@@ -6,7 +6,7 @@ command -v cvs-fast-export >/dev/null 2>&1 || { echo "    Skipped, cvs-fast-expo
 trap "rm -rf /tmp/test-repo$$ /tmp/target$$ /tmp/out$$" 0 12 2 15
 
 cp -r hack1.repo/ /tmp/test-repo$$
-(cd /tmp/test-repo$$ >/dev/null; ${REPOTOOL:-repotool} export 2>&1) >/tmp/out$$ 2>&1
+(cd /tmp/test-repo$$ >/dev/null || (echo "cd failed" >&2; exit 1); ${REPOTOOL:-repotool} export 2>&1) >/tmp/out$$ 2>&1
 
 case $1 in
     --regress)

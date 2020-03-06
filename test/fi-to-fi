@@ -42,8 +42,10 @@ do
 	g) extract=True ;  view=True; stream=False ; cleanup=False ;;
 	n) extract=True ;  view=False; stream=False ; cleanup=False ;;
         o) extract=False ; view=False; stream=True  ; cleanup=False ;;
+	*) echo "fi-to-fi: unknown flag $opt" >&2; exit 1;;
     esac
 done
+# shellcheck disable=SC2004
 shift $(($OPTIND - 1))
 
 # This lets us set the repo location 
@@ -52,24 +54,24 @@ testrepo=${1:-${tmpdir}/test-repo$$}
 # Should we build a repo from the input file?
 if [ $extract = True ]
 then
-    rm -fr $testrepo; mkdir $testrepo
-    (cd $testrepo >/dev/null; git init --quiet; git fast-import --quiet; git checkout) 
+    rm -fr "$testrepo"; mkdir "$testrepo"
+    (cd "$testrepo" >/dev/null || (echo "cd failed" >&2; exit 1); git init --quiet; git fast-import --quiet; git checkout) 
 fi
 
 # Should we view the repo?
 if [ $view = True ]
 then
-    (cd $testrepo >/dev/null; gitk --all --tags)
+    (cd "$testrepo" >/dev/null || (echo "cd failed" >&2; exit 1); gitk --all --tags)
 fi
 
 # Should we stream the repo?
 if [ $stream = True ]
 then
-    ${BIN}/${REPOSURGEON:-reposurgeon} "${TESTOPT}" "prefer git-extractor" "read $testrepo" "write -"
+    "${BIN}/${REPOSURGEON:-reposurgeon}" "${TESTOPT}" "prefer git-extractor" "read $testrepo" "write -"
 fi
 
 # Should we clean up the test directory
 if [ $cleanup = True ]
 then
-    rm -fr $testrepo test-checkout
+    rm -fr "$testrepo" test-checkout
 fi

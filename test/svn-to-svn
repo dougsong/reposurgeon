@@ -60,7 +60,6 @@ build=T
 view=F
 edit=F
 stream=F
-undump=T
 cleanup=T
 strip=F
 co=F
@@ -166,7 +165,7 @@ fi
 # Should we view the repo?
 if [ $view = T ]
 then
-    (cd $testrepo >/dev/null; {BIN}/${REPOSURGEON:-reposurgeon} "${log}" "${TESTOPT}" "read ." "prefer git" "rebuild ${tmpdir}/testrepo$$"; cd ${tmpdir}/testrepo$$; gitk --all --tags)
+    (cd $testrepo >/dev/null || (echo "cd failed" >&2; exit 1); ${REPOSURGEON:-reposurgeon} "${log}" "${TESTOPT}" "read ." "prefer git" "rebuild ${tmpdir}/testrepo$$"; cd ${tmpdir}/testrepo$$; gitk --all --tags)
 fi
 
 # Should we dump a conversion of the repo as a fast-import stream?

@@ -31,10 +31,10 @@ svnaction () {
 	    comment=$3
 	    if [ ! -f $filename ]
 	    then
-		if [ ! -d `dirname $filename` ]
+		if [ ! -d $(dirname "$filename") ]
 		then
-		    mkdir `dirname $filename`
-		    svn add `dirname $filename`
+		    mkdir $(dirname "$filename")
+		    svn add $(dirname "$filename")
 		fi
 		echo "$content" >$filename
 		svn add $filename

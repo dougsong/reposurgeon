@@ -42,9 +42,10 @@ EOF
 done
 shift $(($OPTIND - 1))
 
-for x in $*;
+# shellcheck disable=SC2068
+for x in $@;
 do
-    what=`echo ${x} | sed -e '/-FAILED/s///' -e '/.tst/s///'`
+    what=$(echo ${x} | sed -e '/-FAILED/s///' -e '/.tst/s///')
 
     if [ -f ${what}.tst ]
     then

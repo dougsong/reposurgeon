@@ -6,10 +6,10 @@ command -v git >/dev/null 2>&1 || { echo "    Skipped, git missing."; exit 0; }
 trap "rm -rf /tmp/test-repo$$ /tmp/target$$ /tmp/out$$" 0 12 2 15
 
 ./hg-to-fi -n /tmp/test-repo$$ < simple.fi
-cd /tmp/test-repo$$
+cd /tmp/test-repo$$ || (echo "cd failed" >&2; exit 1)
 ${REPOTOOL:-repotool} checkout /tmp/target$$
 echo Return code: $? >/tmp/out$$
-cd - >/dev/null
+cd - >/dev/null || (echo "cd failed" >&2; exit 1)
 ./dir-md5 /tmp/target$$ >>/tmp/out$$
 
 case $1 in

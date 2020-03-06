@@ -47,10 +47,11 @@ then
     exec $0 -h
 fi
 
-for x in $*;
+# spellcheck=2068
+for x in $@;
 do
     case $x in
-	*.svn) x=`echo "$x" | sed '/.svn/s///'`;;
+	*.svn) x=$(echo "$x" | sed '/.svn/s///');;
     esac
     # This redirect to stderr is so this script can be used to rebuild checkfiles
     (grep '^#' ${x} 2>/dev/null) 1>&2

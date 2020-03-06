@@ -15,11 +15,11 @@ shift $(($OPTIND - 1))
 dir=$(pwd)
 svnadmin create $dir/test-repo
 svn co file://$dir/test-repo test-checkout
-cd test-checkout
+cd test-checkout || (echo "cd failed" >&2; exit 1)
 mkdir trunk
 svn add trunk
 svn commit -m "Create trunk."
-cd trunk
+cd trunk  || (echo "cd failed" >&2; exit 1)
 mkdir dir1
 echo "file" > dir1/file
 svn add dir1
@@ -29,7 +29,7 @@ svn commit -m "Make dir1/file executable."
 svn cp dir1 dir2
 svn commit -m "Copy dir1 to dir2."
 ls -l dir1/file dir2/file
-cd ../..
+cd ../.. || (echo "cd failed" >&2; exit 1)
 } >/dev/$verbose 2>&1
 if [ "$dump" = yes ]
 then

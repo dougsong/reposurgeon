@@ -1,4 +1,0 @@
-#!/bin/sh
-../reposurgeon "set testmode" "verbose 3" "read <${1}.svn" "write -" >PYTHONIT 2>&1
-../goreposurgeon "set testmode" "verbose 3" "read <${1}.svn" "write -" >GOIT 2>&1
-diff -u PYTHONIT GOIT

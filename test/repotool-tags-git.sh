@@ -5,7 +5,7 @@ command -v git >/dev/null 2>&1 || { echo "    Skipped, git missing."; exit 0; }
 trap "rm -rf /tmp/test-repo$$ /tmp/target$$ /tmp/out$$" 0 12 2 15
 
 ./fi-to-fi -n /tmp/test-repo$$ < lighttag.fi
-(cd /tmp/test-repo$$; ${REPOTOOL:-repotool} tags /tmp/target$$) >/tmp/out$$ 2>&1
+(cd /tmp/test-repo$$ || (echo "cd failed" >&2; exit 1); ${REPOTOOL:-repotool} tags /tmp/target$$) >/tmp/out$$ 2>&1
 echo Return code: $? >>/tmp/out$$
 
 case $1 in

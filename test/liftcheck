@@ -57,10 +57,11 @@ do
 	                                                # to something unrelated, because we rely on it
 	                                                # to know which dir to checkout in SVN.
 	v|q) repotoolopt="${repotoolopt} -${opt}";;
-	u) compareopt="${compareopt} -${opt}";;
 	B) nobranch="--nobranch";;
+	*) echo "liftcheck: unknown flag $opt" >&2; exit 1;;
     esac
 done
+# shellcheck disable=SC2004
 shift $(($OPTIND - 1))
 
 if [ -z "$1" ]
@@ -71,12 +72,13 @@ fi
 
 ENGINE=${ENGINE:=reposurgeon}
 
-for what in $*
+# shellcheck disable=SC2068
+for what in $@
 do
-    if [ -f ${what}.svn ]
+    if [ -f "${what}".svn ]
     then
-	what=${what}.svn
-    elif [ ! -f ${what} ]
+	what="${what}".svn
+    elif [ ! -f "${what}" ]
     then
 	echo "No Subversion dumpfile matching ${what} found"
 	exit 1
@@ -89,19 +91,21 @@ do
 
     stem=liftcheck$$
 
-    rm -fr $stem*
+    rm -fr "$stem"*
 
     if [ $debug = no ]
     then
+	# shellcheck disable=SC2064
 	trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}.gfi ${stem}.info ${stem}*~ ${stem}-tmpdir" 0 1 2 15
     fi
 
     TMPDIR=$(readlink -f ${stem}-tmpdir)
     export TMPDIR
-    mkdir ${TMPDIR}
+    mkdir "${TMPDIR}"
 
     # Notification
-    { echo -n "  ${what}"; grep --text '^ ##' ${what} || echo ' ## (no description)'; } | sed -e '/ ## /s//: /' >&2; \
+    # shellcheck disable=SC2039
+    { echo -n "  ${what}"; grep --text '^ ##' "${what}" || echo ' ## (no description)'; } | sed -e '/ ## /s//: /' >&2; \
 
     # Make a Subversion repo from the dump
     ./svn-to-svn ${svnquiet} ${slimit} -c <${what} ${stem}
@@ -128,9 +132,9 @@ do
 	     ;;
     esac
 
-    if [   "(" -e ${stem}-checkout/trunk ")"    \
-	-o "(" -e ${stem}-checkout/branches ")" \
-	-o "(" -e ${stem}-checkout/tags ")"     ]
+    if [ -e "${stem}-checkout/trunk" ] \
+	|| [ -e "${stem}-checkout/branches" ] \
+	|| [ -e "${stem}-checkout/tags" ]
     then
 	structured=true
     else
@@ -146,7 +150,7 @@ do
 	fi
 
 	# Generate a <legacy-id>TAB<mark>TAB<ref> file from the git-fast-import stream
-	cat ${stem}.gfi | sed -n '/^commit / h;
+	cat "${stem}.gfi" | sed -n '/^commit / h;
 				  /^#legacy-id / H;
 				  /^mark / {
 					H; s/^.*$//; x;
@@ -154,37 +158,37 @@ do
 					s/^commit \(.*\)\n#legacy-id \(.*\)\nmark \(:.*\)$/\2\t\3\t\1/;
 					t ok; d;
 					:ok; p
-				    }' > ${stem}.info
-	rm -f ${stem}.gfi
+				    }' > "${stem}.info"
+	rm -f "${stem}.gfi"
 
-	if [ ${revision} = "all" ]
+	if [ "${revision}" = "all" ]
 	then
 	    min=1
-	    max=`tail -n 1 ${stem}.info | cut -f 1 | cut -d. -f 1`
+	    max=$(tail -n 1 ${stem}.info | cut -f 1 | cut -d. -f 1)
 	else
-	    min=`echo ${revision} | sed 's/-.*$//'`
-	    max=`echo ${revision} | sed 's/^.*-//'`
+	    min=$(echo "${revision}" | sed 's/-.*$//')
+	    max=$(echo "${revision}" | sed 's/^.*-//')
 	fi
 
 	while read -r line # input file at the end of the loop
 	do
-	    revision=`echo "${line}" | cut -f 1`
-	    intrev=`echo "${revision}" | cut -d. -f 1`
-	    if [ ${intrev} -lt ${min} -o ${intrev} -gt ${max} ]
+	    revision=$(echo "${line}" | cut -f 1)
+	    intrev=$(echo ""${revision}"" | cut -d. -f 1)
+	    if [ ${intrev} -lt "${min}" ] || [ "${intrev}" -gt "${max}" ]
 	    then
 		continue
 	    fi
 
 	    # Find out the git revision to pass
-	    mark=`echo "${line}" | cut -f 2`
-	    sha=`grep "^${mark}" ${stem}-git/.git/marks --max-count=1 | cut -d" " -f 2`
+	    mark=$(echo "${line}" | cut -f 2)
+	    sha=$(grep "^${mark}" ${stem}-git/.git/marks --max-count=1 | cut -d" " -f 2)
 	    if [ -z "${sha}" ]
 	    then
 		continue
 	    fi
 
 	    # Find the corresponding ref to checkout in SVN
-	    ref=`echo "${line}" | cut -f 3 | sed 's!refs/!!'`
+	    ref=$(echo "${line}" | cut -f 3 | sed 's!refs/!!')
 
 	    # Skip the comparison if the revision is "out of namespaces"
 	    # because the Git side will only contain that outside part
@@ -202,7 +206,7 @@ do
 	    then
 		refopt=--nobranch
 	    else
-		refopt=`echo "${ref}" | sed 's!^deleted/r[^/]*/!!; s!^tags/!-t !; s!^heads/!-b !'`
+		refopt=$(echo "${ref}" | sed 's!^deleted/r[^/]*/!!; s!^tags/!-t !; s!^heads/!-b !')
 	    fi
 
 	    if [ ${progress} != no ]
@@ -210,10 +214,11 @@ do
 		echo "Checking lift at r${revision} (${refopt})"
 	    fi
 	    # Compare the original with the lift
+	    # shellcheck disable=2006
 	    ../repotool ${repotoolopt} compare ${compareopt} \
 		--accept-missing ${refopt} -r ${intrev}:${sha} \
 		${stem}-checkout ${stem}-git
-	done < ${stem}.info
+	done < "${stem}.info"
     else
 
 	if [ -z "${structured}" ]
