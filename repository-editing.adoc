@@ -4128,18 +4128,18 @@ regress this without noticing.
 
 To that end, there are some fairly simple scripts in the bench
 directory of the source distribution that can be used to check for
-this type of problem. `bench.sh` runs reposurgeon multiple times with
+this type of problem. `repobench` runs reposurgeon multiple times with
 a different readlimit each time, recording the run time and memory
-allocated at each iteration. Supply arguments specifying the dump file
-to read and the readlimit values to use like this:
+allocated at each iteration. Supply arguments specifying the svn dump
+file to read and the readlimit values to use like this:
 
-    ./bench/bench.sh your-dump-file.svn 1000 2000 20000
+    ./repobench your-dump-file.svn 1000 2000 20000
 
 This reads `your-dump-file.svn` 10 times, with the readlimit set first
 to 1,000, then 3,000, etc, stepping up until it reaches 20,000.
 
-This produces a `.dat` file which you can use with `plot.sh`,
-`svg.sh`, or `compare.sh` to produce graphs.
+This produces a `.dat` file which you can use with `repobench -p`, or
+`repobench -o` to produce graphs.
 
 For an example, see `link:oops.svg[oops.svg]`. This shows a graph made
 using good revision that had linear performance, several made with
