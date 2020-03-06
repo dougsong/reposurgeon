@@ -51,7 +51,8 @@ then
     rev="$(git describe HEAD 2>/dev/null)"
     if [ "$rev" = "" ]
     then
-	set -- `reposurgeon --version`
+	# shellcheck disable=SC2046
+	set -- $(reposurgeon --version)
 	rev=$2
     fi
 
