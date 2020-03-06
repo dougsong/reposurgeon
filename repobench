@@ -60,9 +60,9 @@ fi
 if [ $display = yes ]
 then
     case $style in
-	runtime) idx=2; title="running time";;
-	heap) idx=3; title="memory (heap allocation)";;
-	highwater) idx=4; title="memory (total)";;
+	runtime) idx=2; title="running_time";;
+	heap) idx=3; title="heap_allocation)";;
+	highwater) idx=4; title="total_memory";;
 	*)
 	    echo "Unknown plot type $style" >&2
 	    exit 1
@@ -100,7 +100,7 @@ EOF
 	# drawbacks; in particular the size of the graph will be fixed
 	# rather than dynamic, which means that it won't resize to
 	# your browser window.
-	name="${style} from ${datfile}"
+	name="${style}_from_${datfile}"
 	gnuplot --persist -e "file='${datfile}'; set terminal svg size 1920,1080 dynamic name '${name}'" /tmp/plotme$$
     else
 	gnuplot --persist -e "file='${datfile}'" /tmp/plotme$$ -
@@ -115,7 +115,7 @@ then
     # from all of them for comparative graphing.
     cat >/tmp/plotme$$ <<EOF
 set key top lmargin
-set title "comparative $title"
+set title "comparative_$title"
 set xlabel "number of revisions read in by reposurgeon"
 set ylabel "$style"
 plot for [i=1:words(files)] word(files, i) using 1:$idx title word(files, i) noenhanced lw 2
