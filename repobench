@@ -29,6 +29,10 @@ fi
 
 reposurgeon="$(dirname "${0}")/reposurgeon"
 
+function alphaonly {
+    echo -n "${*}" | tr -cs 'a-z' '_'
+}
+
 if [ $# = 4 ] && [ $display = no ]
 then
 	function run {
@@ -37,7 +41,8 @@ then
 	    dump="${3}"		# The dump to be read in
 	    readlimit="${4}"	# The nmber of revisions to read
 	    "${reposurgeon}" "logfile ${logfile}" \
-			     "readlimit ${readlimit}" "$command" \
+			     "readlimit ${readlimit}" \
+			     "${command}" \
 			     "read <${dump}" \
 			     "bench" >>"${datfile}"
 	}
@@ -60,9 +65,9 @@ fi
 if [ $display = yes ]
 then
     case $style in
-	runtime) idx=2; title="running_time";;
-	heap) idx=3; title="heap_allocation)";;
-	highwater) idx=4; title="total_memory";;
+	runtime) idx=2; title="running time";;
+	heap) idx=3; title="heap size";;
+	highwater) idx=4; title="total memory";;
 	*)
 	    echo "Unknown plot type $style" >&2
 	    exit 1
@@ -78,7 +83,7 @@ then
 	echo "File ${datfile} is missing." >&2
 	exit 1
     fi
-	
+
     cat >/tmp/plotme$$ <<EOF
 set key top lmargin
 set xlabel "number of revisions read in by reposurgeon"
@@ -100,8 +105,8 @@ EOF
 	# drawbacks; in particular the size of the graph will be fixed
 	# rather than dynamic, which means that it won't resize to
 	# your browser window.
-	name="${style}_from_${datfile}"
-	gnuplot --persist -e "file='${datfile}'; set terminal svg size 1920,1080 dynamic name '${name}'" /tmp/plotme$$
+	name="$(alphaonly "${title}")_from_$(alphaonly "${datfile}")"
+	gnuplot --persist -e "file='${datfile}'; set terminal svg size 1920,1080 dynamic mouse standalone name '${name}'" /tmp/plotme$$
     else
 	gnuplot --persist -e "file='${datfile}'" /tmp/plotme$$ -
     fi
@@ -115,15 +120,16 @@ then
     # from all of them for comparative graphing.
     cat >/tmp/plotme$$ <<EOF
 set key top lmargin
-set title "comparative_$title"
+set title "comparative ${title}"
 set xlabel "number of revisions read in by reposurgeon"
-set ylabel "$style"
-plot for [i=1:words(files)] word(files, i) using 1:$idx title word(files, i) noenhanced lw 2
+set ylabel "${style}"
+plot for [i=1:words(files)] word(files, i) using 1:${idx} title word(files, i) noenhanced lw 2
 EOF
     # The actual plotting
     if [ $svg = yes ]
     then
-	gnuplot --persist -e "files='$*'; set terminal svg size 1920,1080 dynamic" /tmp/plotme$$
+	name="comparative_$(alphaonly "${title}")"
+	gnuplot --persist -e "files='$*'; set terminal svg size 1920,1080 dynamic mouse standalone name '${name}'" /tmp/plotme$$
     else
 	gnuplot --persist -e "files='$*'" /tmp/plotme$$ -
     fi
