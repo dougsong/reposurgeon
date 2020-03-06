@@ -200,7 +200,7 @@ def capture_or_die(dcmd, legend=""):
         elif e.returncode != 0:
             croak("child returned %d." % e.returncode)
 
-class directory_context:
+class directory_context(object):
     def __init__(self, target):
         self.target = target
         self.source = None
@@ -239,8 +239,8 @@ def vcstype(d):
         return "darcs"
     elif os.path.isdir(os.path.join(d, ".bk")):
         return "bk"
-    else:
-        croak("%s does not look like a repository of known type." % os.path.abspath(d))
+    croak("%s does not look like a repository of known type." % os.path.abspath(d))
+    return ""	# Pacify pylint
 
 def is_dvcs_or_checkout(d="."):
     "Is this a DVCS or checkout where we can compare files?"
@@ -260,7 +260,7 @@ def initialize(args):
     "Initialize project-conversion machinery."
     if len(args) < 1:
         croak("initialize requires a project name.")
-    project = args.pop(0) 
+    project = args.pop(0)
     if not args:
         source_vcs = input("repotool: what VCS do you want to convert from? ")
     else:
@@ -274,7 +274,7 @@ def initialize(args):
     if target_vcs not in ("cvs", "svn", "git", "bzr", "hg", "darcs", "bk"):
         croak("unknown target VCS type %s" % target_vcs)
     if os.path.exists("Makefile"):
-        complain("a Makefile already exists here.")    
+        complain("a Makefile already exists here.")
     else:
         print("repotool: generating Makefile, some variables in it need to be set.")
         with open("Makefile", "w") as wp:
@@ -315,7 +315,7 @@ def export():
 def mirror(operand, mirrordir):
     "Refresh a local mirror directory from its remote repository"
     pwd = os.getcwd()
-    if re.match("svn://|svn\+ssh://|https://|http://", operand) \
+    if re.match("svn://|svn\\+ssh://|https://|http://", operand) \
        or (operand.startswith("file://") and os.path.isdir(os.path.join(operand[7:], "locks"))):
         if mirrordir:
             locald = mirrordir
@@ -343,7 +343,7 @@ def mirror(operand, mirrordir):
         if mirrordir:
             locald = mirrordir
         else:
-            locald = re.sub("^.*#", os.path.basename(operand))
+            locald = re.sub("^.*#", os.path.basename(operand), pwd)
         os.mkdir(locald)
         do_or_die("cvssync -c -o %(locald)s %(operand)s" % locals())
         with open(locald + "/.cvssync", "w") as wp:
@@ -352,21 +352,21 @@ def mirror(operand, mirrordir):
         with open(operand + "/.cvssync") as rp:
             do_or_die("cvssync -c -o " + operand + " " + rp.read())
     elif operand.startswith("git://"):
-        if mirrord:
+        if mirrordir:
             locald = mirrordir
         else:
-            locald = re.sub("^.*#", os.path.basename(operand))
+            locald = re.sub("^.*#", os.path.basename(operand), pwd)
         do_or_die("git clone %s %s" % (operand, locald))
     elif os.path.isdir(operand + "/.git"):
         with directory_context(operand):
             do_or_die("git pull")
         do_or_die("git clone %(operand)s %(mirrordir)s" % locals())
     elif operand.startswith("hg://"):
-        if mirrord:
-           locald = mirrordir
+        if mirrordir:
+            locald = mirrordir
         else:
-            locald = re.sub("^.*#", os.path.basename(operand))
-        do_or_die("hg clone %(operand)s %(locald)s" % locals()) 
+            locald = re.sub("^.*#", os.path.basename(operand), pwd)
+        do_or_die("hg clone %(operand)s %(locald)s" % locals())
     elif os.path.isdir(operand + "/.hg"):
         with directory_context(operand):
             do_or_die("hg update")
@@ -423,12 +423,12 @@ def checkout(args):
     # 2. Non-DVCS, master directory: True checkout to remote directory,
     #    add path qualifier if needed.
     # 3. Non-DVCS, checkout directory: make outdir a symlink to the checkout,
-    #    then update to revision needed and add a qualifier  
+    #    then update to revision needed and add a qualifier
     # This can be very slow under Subversion, we want to avoid it if at all possible.
     # Other cases should error out.
     if verbose:
         print("checkout: %s" % args)
-    (options, arguments) = getopt.getopt(args, "b:c:r:t:",
+    (options, arguments) = getopt.getopt(args, "b:c:r:t:", \
                                         ["nobranch", "accept-missing"])
     outdir = "."
     branch = ""
@@ -449,7 +449,8 @@ def checkout(args):
             revision = val
         elif opt == '-t':
             tag = val
-    if nobranch: branch == "" # nobranch will also prevent the automatic switch to "trunk"
+    if nobranch:
+        branch = "" # nobranch will also prevent the automatic switch to "trunk"
     outdir = arguments[0]
     if outdir[0] != os.sep:
         croak("checkout requires absolute target path")
@@ -515,14 +516,14 @@ def checkout(args):
         os.symlink(os.path.join(pwd, relpath), outdir)
         return outdir
     elif vcs == "git":
-        # Only one revision should be given to git checkout
+        # Only one revision should be given to git checkout
         # Use the passed-in arguments, in some order of specificity.
         handle_missing = False
         if not revision:
             revision = tag or branch or "master"
             handle_missing = accept_missing and \
                 (capture_or_die(
-                        "git rev-parse --verify -q %s >/dev/null || echo no" % revision))
+                    "git rev-parse --verify -q %s >/dev/null || echo no" % revision))
         if handle_missing:
             path = pwd + ".git/this/path/does/not/exist"
         else:
@@ -555,6 +556,7 @@ def checkout(args):
         croak("checkout is not yet supported for darcs.")
     else:
         croak("checkout not supported for this repository type.")
+    return ""	# Pacify pylint
 
 def nuke(linkpath):
     "Nuke  a comparison temporary directory."
@@ -570,7 +572,7 @@ def compare(args):
     "Compare two repositories at a specified revision, defaulting to mainline tip."
     if verbose:
         print("compare: %s" % args)
-    (options, arguments) = getopt.getopt(args, "b:e:ir:st:ux:",
+    (options, arguments) = getopt.getopt(args, "b:e:ir:st:ux:", \
                                         ["nobranch", "accept-missing"])
     outdir = "."
     branch = ""
@@ -629,14 +631,14 @@ def compare(args):
     nuke(rtarget)
     diffopts = []
     sourceignores = []
-    tmpdir = os.getenv("TMPDIR") or "/tmp" 
+    tmpdir = os.getenv("TMPDIR") or "/tmp"
     with directory_context(source):
         if is_dvcs_or_checkout() and not seeignores:
             sourceignores = vcsignores()
             for f in sourceignores:
                 diffopts += ["-x", f]
         sourcedir = checkout(checkout1_args + [rsource])
-        assert(sourcedir)
+        assert sourcedir
     targetignores = []
     with directory_context(target):
         if is_dvcs_or_checkout() and not seeignores:
@@ -644,7 +646,7 @@ def compare(args):
             for f in targetignores:
                 diffopts += ["-x", f]
         targetdir = checkout(checkout2_args + [rtarget])
-        assert(targetdir)
+        assert targetdir
     diffopts += diff_args
     diffopts = " ".join(diffopts)
     if accept_missing:
@@ -689,7 +691,7 @@ def compare(args):
                     if not excl or not any(x for x in excl if x in fullpath):
                         m.append(fullpath[trunc:])
             return set(m)
-        common = dirlist(sourcedir,sourceignores) & dirlist(targetdir, targetignores)
+        common = dirlist(sourcedir, sourceignores) & dirlist(targetdir, targetignores)
         common = list(common)
         common.sort()
         try:
@@ -709,7 +711,7 @@ def compare(args):
         croak("Non-empty diff for {}:\n{}".format(
             " ".join(map(repr, args)), diff))
 
-def compare_engine(singular, plural, lister, comparer, args):
+def compare_engine(_singular, plural, lister, comparer, args):
     "Compare two repositories at all revisions implied by a specified command."
     (options, arguments) = getopt.getopt(args, "e:isux:")
     diff_args = []
@@ -739,11 +741,11 @@ def compare_engine(singular, plural, lister, comparer, args):
     common = set(sourcetags) & set(targettags)
     sourceonly = list(set(sourcetags) - common)
     for regexp in excludes:
-        sourceonly = [x for x in sourceonly if re.compile(regexp).search(x) == None]
+        sourceonly = [x for x in sourceonly if re.compile(regexp).search(x) is None]
     sourceonly.sort()
     targetonly = list(set(targettags) - common)
     for regexp in excludes:
-        targetonly = [x for x in targetonly if re.compile(regexp).search(x) == None]
+        targetonly = [x for x in targetonly if re.compile(regexp).search(x) is None]
     targetonly.sort()
     common = list(common)
     common.sort()
@@ -802,46 +804,46 @@ def compare_all(args):
         print("Done")
 
 if __name__ == "__main__":
-    (options, arguments) = getopt.getopt(sys.argv[1:], "vq")
+    (g_options, g_arguments) = getopt.getopt(sys.argv[1:], "vq")
     verbose = False
     quiet = False
-    for (opt, val) in options:
-        if opt == '-v':
+    for (g_opt, _val) in g_options:
+        if g_opt == '-v':
             verbose = True
             quiet = False
-        elif opt == '-q':
+        elif g_opt == '-q':
             quiet = True
             verbose = False
 
-    if len(arguments) < 1:
+    if len(g_arguments) < 1:
         croak("requires an operation as first argument.")
-    operation = arguments.pop(0)
+    operation = g_arguments.pop(0)
 
     TMPDIR = os.getenv("TMPDIR") or "/tmp"
 
     if operation == "initialize":
-        initialize(arguments)
+        initialize(g_arguments)
     elif operation == "export":
         export()
     elif operation == "mirror":
-        if len(arguments) == 0:
+        if len(g_arguments) == 0:
             croak("mirror [url] mirrordir")
         else:
-            mirror(arguments[0], arguments[1] if len(arguments) > 1 else None)
+            mirror(g_arguments[0], g_arguments[1] if len(g_arguments) > 1 else None)
     elif operation == "tags":
         tags()
     elif operation == "branches":
         branches()
     elif operation == "checkout":
-        checkout(arguments)
+        checkout(g_arguments)
     elif operation == "compare":
-        compare(arguments)
+        compare(g_arguments)
     elif operation == "compare-tags":
-        compare_tags(arguments)
+        compare_tags(g_arguments)
     elif operation == "compare-branches":
-        compare_branches(arguments)
+        compare_branches(g_arguments)
     elif operation == "compare-all":
-        compare_all(arguments)
+        compare_all(g_arguments)
     else:
         print("""
 repotool commands:

@@ -73,9 +73,15 @@ get:
 test:
 	go test $(TESTOPTS) ./surgeon
 
+PYLINTOPTS = --rcfile=/dev/null --reports=n \
+	--msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" \
+	--dummy-variables-rgx='^_'
+# W0612 is regrettable, but plying doesn't count %-substitutions
+PYSUPPRESSIONS = --disable="C0103,C0111,C0301,C0410,C1801,R0911,R0911,R0912,R0914,R0915,W0511,W0612,W0622"
 lint:
 	golint ./... | ./lintfilter 2>&1
 	-shellcheck -f gcc repobench lintfilter
+	-pylint $(PYLINTOPTS) $(PYSUPPRESSIONS) repotool
 
 fmt:
 	gofmt -w .

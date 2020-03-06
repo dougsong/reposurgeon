@@ -30,7 +30,7 @@ fi
 reposurgeon="$(dirname "${0}")/reposurgeon"
 
 function alphaonly {
-    echo -n "${*}" | tr -cs 'a-z' '_'
+    echo -n "${*}" | tr -cs '[:lower:]' '_'
 }
 
 if [ $# = 4 ] && [ $display = no ]

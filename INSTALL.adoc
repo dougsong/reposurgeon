@@ -3,7 +3,7 @@
 == Quick recipe for systems using apt ==
 
 --------------------------------------------
-sudo apt-get golang-1.12 asciidoctor shellcheck
+sudo apt-get golang-1.12 asciidoctor shellcheck pylint
 sudo apt-get subversion mercurial gnuplot
 make get
 make
@@ -33,6 +33,9 @@ You will need asciidoctor to format the documentation.
 
 gnuplot is only required if you're planning to try performance-tuning
 with repobench.
+
+shellcheck and pylint are required for the regression tests, but not
+for running the code.
 
 == Building the software ==
 
