@@ -4,7 +4,6 @@
 ##
 ## usage: repobench [-h] [-c cmd] [-p datafiles] [-o datafiles] [-s runtime|heap|highwater] [dumpfile min step max]
 
-usage=yes
 command=""
 datfile=""
 display=no
@@ -12,20 +11,15 @@ style=runtime
 while getopts c:hops: opt
 do
     case $opt in
-	c) usage=no; command="$OPTARG";;
-	o) usage=no; display=yes; svg=yes;;
-	p) usage=no; display=yes; svg=no;;
-	s) usage=no; style=$OPTARG;;
+	c) command="$OPTARG";;
+	o) display=yes; svg=yes;;
+	p) display=yes; svg=no;;
+	s) style=$OPTARG;;
 	*) grep '^##' "${0}" | sed -e 's/##//'
 	   exit 0;;
     esac
 done
 shift $((OPTIND - 1))
-
-if [[ "${usage}" == "yes" ]]; then
-    grep '^##' "${0}" | sed -e 's/##//'
-    exit 0
-fi
 
 reposurgeon="$(dirname "${0}")/reposurgeon"
 
@@ -35,31 +29,41 @@ function alphaonly {
 
 if [ $# = 4 ] && [ $display = no ]
 then
-	function run {
-	    datfile="${1}"	# The output benchmark data
-	    logfile="${2}"	# The logfile for the conversion
-	    dump="${3}"		# The dump to be read in
-	    readlimit="${4}"	# The nmber of revisions to read
-	    "${reposurgeon}" "logfile ${logfile}" \
-			     "readlimit ${readlimit}" \
-			     "${command}" \
-			     "read <${dump}" \
-			     "bench" >>"${datfile}"
-	}
+    function run {
+	datfile="${1}"	# The output benchmark data
+	logfile="${2}"	# The logfile for the conversion
+	dump="${3}"		# The dump to be read in
+	readlimit="${4}"	# The nmber of revisions to read
+	"${reposurgeon}" "logfile ${logfile}" \
+			 "readlimit ${readlimit}" \
+			 "${command}" \
+			 "read <${dump}" \
+			 "bench" >>"${datfile}"
+    }
 
-	dump="${1}"
-	min="${2}"
-	step="${3}"
-	max="${4}"
-	rev="$(git describe HEAD)"
-	datfile="$(basename "${dump}")_${rev}.dat"
-	for readlimit in $(seq "${min}" "${step}" "${max}"); do
-	    logfile="$(basename "${dump}")_${rev}_${readlimit}.log"
-	    # Flush all disk VM caches so the data file has to be reread
-	    sudo sh -c 'echo 3 >/proc/sys/vm/drop_caches'
-	    run "${datfile}" "${logfile}" "${dump}" "${readlimit}"
-	done
-	echo "Results are in ${datfile}"
+    dump="${1}"
+    min="${2}"
+    step="${3}"
+    max="${4}"
+
+    # This really shouldn't be run outside of the reposurgeon
+    # repository, but we set up a fallback just in case
+    rev="$(git describe HEAD 2>/dev/null)"
+    if [ "$rev" = "" ]
+    then
+	set -- `reposurgeon --version`
+	rev=$2
+    fi
+
+    datfile="$(basename "${dump}")_${rev}.dat"
+    for readlimit in $(seq "${min}" "${step}" "${max}"); do
+	logfile="$(basename "${dump}")_${rev}_${readlimit}.log"
+	# Flush all disk VM caches so the data file has to be reread
+	sudo sh -c 'echo 3 >/proc/sys/vm/drop_caches'
+	run "${datfile}" "${logfile}" "${dump}" "${readlimit}"
+    done
+    echo "Results are in ${datfile}"
+    exit 0
 fi
 
 if [ $display = yes ]
@@ -111,6 +115,7 @@ EOF
 	gnuplot --persist -e "file='${datfile}'" /tmp/plotme$$ -
     fi
     rm -f /tmp/plotme$$
+    exit 0
 fi
 
 if [ $display = yes ] && [ "$2" != "" ]
@@ -134,6 +139,10 @@ EOF
 	gnuplot --persist -e "files='$*'" /tmp/plotme$$ -
     fi
     rm -f /tmp/plotme$$
+    exit 0
 fi
+
+# Fall through to usage description
+grep '^##' "${0}" | sed -e 's/##//'
 
 # end
