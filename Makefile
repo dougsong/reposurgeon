@@ -23,7 +23,7 @@ SOURCES = \
 	surgeon/svnread.go \
 	repobench repobench.adoc \
 	repomapper.adoc repocutter.adoc \
-	reporting-bugs.adoc repository-editing.adoc dvcs-migration-guide.adoc \
+	reporting-bugs.adoc repository-editing.adoc oops.svg dvcs-migration-guide.adoc \
 	reposurgeon-mode.el \
 	go.mod go.sum
 SOURCES += Makefile control lintfilter reposturgeon.png reposurgeon-git-aliases
