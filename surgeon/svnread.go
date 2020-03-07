@@ -1105,17 +1105,6 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 
 	// Try to figure out who the ancestor of this node is.
 	seekAncestor := func(sp *StreamParser, node *NodeAction, hash map[string]*NodeAction) *NodeAction {
-		/*
-			// FIXME: This should replace the last bit of ancestry creation done in a later phase.
-			if node.contentHash != "" {
-				if hashlook, ok := sp.hashmap[node.contentHash]; ok {
-					logit(logEXTRACT, "r%d: blob of %s matches existing hash %s, assigning '%s' from %s",
-						node.revision, node, node.contentHash, hashlook.blobmark.String(), hashlook)
-					return hashlook
-				}
-			}
-		*/
-
 		var lookback *NodeAction
 		if node.fromPath != "" {
 			// Try first via fromRev/fromPath.  The reason
@@ -1145,12 +1134,6 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 			logit(logSHOUT, "r%d~%s: missing ancestor node for non-.gitignore",
 				node.revision, node.path)
 		}
-
-		// If there is a content hash, it should match.
-		//if lookback != nil && lookback.contentHash != "" && node.fromHash != "" && lookback.contentHash != node.fromHash {
-		//	logit(logSHOUT, "r%d~%s: content hash does not match for copy",
-		//		node.revision, node.path)
-		//}
 
 		return lookback
 	}
@@ -1341,7 +1324,10 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 					commit.appendOperation(fileop)
 				} else if node.action == sdADD || node.action == sdCHANGE || node.action == sdREPLACE {
 					if node.blob != nil {
-						// FIXME: This ought to have been done earlier, during node expansion
+						// It's really ugly that we're modifying node ancestry pointers at this point
+						// rather than back in Phase 4.  Unfortunartely, asttempts to move this code
+						// back there fall afoul of the way the hashmap is updated (see in particular
+					        // the next conditional where new content is introduced).
 						if lookback, ok := sp.hashmap[node.contentHash]; ok {
 							logit(logEXTRACT, "r%d: blob of %s matches existing hash %s, assigning '%s' from %s",
 								record.revision, node, node.contentHash, lookback.blobmark.String(), lookback)
