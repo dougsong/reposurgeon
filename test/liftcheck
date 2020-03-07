@@ -58,7 +58,7 @@ do
 	                                                # to know which dir to checkout in SVN.
 	v|q) repotoolopt="${repotoolopt} -${opt}";;
 	B) nobranch="--nobranch";;
-	*) echo "liftcheck: unknown flag $opt" >&2; exit 1;;
+	*) echo "$0: unknown flag $opt" >&2; exit 1;;
     esac
 done
 # shellcheck disable=SC2004
@@ -97,7 +97,7 @@ do
     if [ $debug = no ]
     then
 	# shellcheck disable=SC2064
-	trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}.gfi ${stem}.info ${stem}*~ ${stem}-tmpdir" 0 1 2 15
+	trap "rm -fr ${stem} ${stem}-checkout ${stem}-git ${stem}.gfi ${stem}.info ${stem}*~ ${stem}-tmpdir" EXIT HUP INT QUIT TERM
     fi
 
     TMPDIR=$(readlink -f ${stem}-tmpdir)

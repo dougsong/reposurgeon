@@ -1,6 +1,7 @@
+#!/bin/sh
 ## Test default mode of repomapper
 
-trap "rm -f /tmp/contrib$$" 0 12 2 15
+trap 'rm -f /tmp/contrib$$' EXIT HUP INT QUIT TERM
 
 cat >/tmp/contrib$$ <<EOF
 fubar = J. Random Fubar <j@random.net>

@@ -25,13 +25,13 @@ while getopts t: opt
 do
     case $opt in
 	t) tool="$OPTARG" ;;
-	*) echo "avn-to-git: unknown flag $opt" >&2; exit 1;;
+	*) echo "$0: unknown flag $opt" >&2; exit 1;;
     esac
 done
 # shellcheck disable=SC2004
 shift $(($OPTIND - 1))
 
-trap 'rm -fr git-scratch /tmp/agito$$' EXIT HUP INT TERM
+trap 'rm -fr git-scratch /tmp/agito$$' EXIT HUP INT QUIT TERM
 
 svnrepo=$1
 if [ -z "$svnrepo" ]

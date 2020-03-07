@@ -1,3 +1,4 @@
+#!/bin/sh
 ## Create example multi-project repository
 
 dump=no
@@ -7,10 +8,11 @@ do
     case $opt in
 	d) dump=yes;;
 	v) verbose=stdout;;
+	*) echo "$0: unknown flag $opt" >&2; exit 1;;
     esac
 done
 
-trap 'rm -fr test-repo test-checkout' 0 1 2 15 
+trap 'rm -fr test-repo test-checkout' EXIT HUP INT QUIT TERM 
 
 svnaction () {
     # This version on svnaction does filenames or directories 
@@ -20,8 +22,8 @@ svnaction () {
 	    comment=${2:-$1 creation}
 	    if [ ! -d "$directory" ]
 	    then
-		mkdir $directory
-		svn add $directory
+		mkdir "$directory"
+		svn add "$directory"
 	    fi
 	    svn commit -m "$comment"
 	;;
@@ -29,17 +31,18 @@ svnaction () {
 	    filename=$1
 	    content=$2
 	    comment=$3
-	    if [ ! -f $filename ]
+	    # shellcheck disable=SC2046
+	    if [ ! -f "$filename" ]
 	    then
 		if [ ! -d $(dirname "$filename") ]
 		then
 		    mkdir $(dirname "$filename")
 		    svn add $(dirname "$filename")
 		fi
-		echo "$content" >$filename
-		svn add $filename
+		echo "$content" >"$filename"
+		svn add "$filename"
 	    else
-		echo "$content" >$filename
+		echo "$content" >"$filename"
 	    fi
 	    svn commit -m "$comment"
 	;;
@@ -80,6 +83,7 @@ cd ..
 } >/dev/$verbose 2>&1
 if [ "$dump" = yes ]
 then
+    # shellcheck disable=SC1004
     svnadmin dump -q test-repo | repocutter -q testify | sed '1a\
  ## Multi-project repository example
 '

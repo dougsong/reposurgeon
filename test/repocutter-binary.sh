@@ -1,3 +1,4 @@
+#!/bin/sh
 ## Test repocutter handling of binary data in a log
 ${REPOCUTTER:-repocutter} -q log <<EOF
 Revision-number: 3640

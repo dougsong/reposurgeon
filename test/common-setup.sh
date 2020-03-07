@@ -1,4 +1,5 @@
-# Boilerplate code begin.
+#!/bin/sh
+# Boilerplate code begins.
 #
 # Not all platforms have a 'realpath' command, so fake one up if needed
 # using $PWD.

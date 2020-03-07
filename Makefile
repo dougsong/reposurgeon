@@ -80,7 +80,7 @@ PYLINTOPTS = --rcfile=/dev/null --reports=n \
 PYSUPPRESSIONS = --disable="C0103,C0111,C0301,C0410,C1801,R0911,R0911,R0912,R0914,R0915,W0511,W0612,W0622"
 lint:
 	golint ./... | ./lintfilter 2>&1
-	-shellcheck -f gcc repobench lintfilter test/fi-to-fi test/liftcheck test/singletest test/singlelift test/svn-to-git test/svn-to-svn # test/*.sh
+	-shellcheck -f gcc repobench lintfilter test/fi-to-fi test/liftcheck test/singletest test/singlelift test/svn-to-git test/svn-to-svn test/*.sh
 	-pylint $(PYLINTOPTS) $(PYSUPPRESSIONS) repotool
 
 fmt:

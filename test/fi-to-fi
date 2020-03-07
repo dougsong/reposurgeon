@@ -42,7 +42,7 @@ do
 	g) extract=True ;  view=True; stream=False ; cleanup=False ;;
 	n) extract=True ;  view=False; stream=False ; cleanup=False ;;
         o) extract=False ; view=False; stream=True  ; cleanup=False ;;
-	*) echo "fi-to-fi: unknown flag $opt" >&2; exit 1;;
+	*) echo "$0: unknown flag $opt" >&2; exit 1;;
     esac
 done
 # shellcheck disable=SC2004
@@ -55,13 +55,13 @@ testrepo=${1:-${tmpdir}/test-repo$$}
 if [ $extract = True ]
 then
     rm -fr "$testrepo"; mkdir "$testrepo"
-    (cd "$testrepo" >/dev/null || (echo "cd failed" >&2; exit 1); git init --quiet; git fast-import --quiet; git checkout) 
+    (cd "$testrepo" >/dev/null || (echo "$0: cd failed" >&2; exit 1); git init --quiet; git fast-import --quiet; git checkout) 
 fi
 
 # Should we view the repo?
 if [ $view = True ]
 then
-    (cd "$testrepo" >/dev/null || (echo "cd failed" >&2; exit 1); gitk --all --tags)
+    (cd "$testrepo" >/dev/null || (echo "$0: cd failed" >&2; exit 1); gitk --all --tags)
 fi
 
 # Should we stream the repo?

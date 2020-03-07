@@ -89,7 +89,7 @@ do
 	q) quiet=-q ;;
 	r) limit="$OPTARG" ;;
 	l) log="log $OPTARG" ;;
-	*) echo "svn-to-svn: unknown flag $opt" >&2; exit 1;;
+	*) echo "$0: unknown flag $opt" >&2; exit 1;;
     esac
 done
 # shellcheck disable=SC2004
@@ -170,7 +170,7 @@ fi
 # Should we view the repo?
 if [ "$view" = T ]
 then
-    (cd "$testrepo" >/dev/null || (echo "cd failed" >&2; exit 1); ${REPOSURGEON:-reposurgeon} "${log}" "${TESTOPT}" "read ." "prefer git" "rebuild ${tmpdir}/testrepo$$"; cd "${tmpdir}/testrepo$$" 2>/dev/null || (echo "cd failed"; exit 1); gitk --all --tags)
+    (cd "$testrepo" >/dev/null || (echo "$0: cd failed" >&2; exit 1); ${REPOSURGEON:-reposurgeon} "${log}" "${TESTOPT}" "read ." "prefer git" "rebuild ${tmpdir}/testrepo$$"; cd "${tmpdir}/testrepo$$" 2>/dev/null || (echo "$0: cd failed"; exit 1); gitk --all --tags)
 fi
 
 # Should we dump a conversion of the repo as a fast-import stream?

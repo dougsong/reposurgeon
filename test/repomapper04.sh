@@ -1,6 +1,7 @@
+#!/bin/sh
 ## Test processing of additional maps in repomapper
 
-trap "rm -f /tmp/contrib$$ /tmp/update$$" 0 12 2 15
+trap 'rm -f /tmp/contrib$$ /tmp/update$$' EXIT HUP INT QUIT TERM
 
 cat >/tmp/contrib$$ <<EOF
 fubar = J. Random Fubar <j@random.net>

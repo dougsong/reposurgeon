@@ -1,3 +1,4 @@
+#!/bin/sh
 ## Test propagation of executable bit by directory copy, second variant
 # This was made from gen-dump2.h. attached to issue #103.
 
@@ -8,8 +9,10 @@ do
     case $opt in
 	d) dump=yes;;
 	v) verbose=stdout;;
+	*) echo "$0: unknown flag $opt" >&2; exit 1;;
     esac
 done
+# shellcheck disable=SC2004
 shift $(($OPTIND - 1))
 {
 #! /bin/sh
@@ -17,8 +20,8 @@ shift $(($OPTIND - 1))
 set -e
 
 dir=$(pwd)
-svnadmin create $dir/test-repo
-svn co file://$dir/test-repo test-checkout
+svnadmin create "$dir/test-repo"
+svn co "file://$dir/test-repo" test-checkout
 cd test-checkout
 mkdir trunk
 svn add trunk

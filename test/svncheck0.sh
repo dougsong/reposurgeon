@@ -1,3 +1,4 @@
+#!/bin/sh
 ## General test load for ancestry-chasing logic
 
 dump=no
@@ -7,29 +8,31 @@ do
     case $opt in
 	d) dump=yes;;
 	v) verbose=stdout;;
+	*) echo "$0: unknown flag $opt" >&2; exit 1;;
     esac
 done
 
-trap 'rm -fr test-repo test-checkout' 0 1 2 15 
+trap 'rm -fr test-repo test-checkout' EXIT HUP INT QUIT TERM 
 
 svnaction () {
     # This version on svnaction does filenames only 
     filename=$1
     content=$2
     comment=$3
-    if [ ! -f $filename ]
+    if [ ! -f "$filename" ]
     then
-	if [ ! -d `dirname $filename` ]
+	# shellcheck disable=SC2046,2086
+	if [ ! -d $(dirname $filename) ]
 	then
-	    mkdir `dirname $filename`
-	    svn add `dirname $filename`
+	    mkdir $(dirname $filename)
+	    svn add $(dirname $filename)
 	fi
-        echo "$content" >$filename
-	svn add $filename
+        echo "$content" >"$filename"
+	svn add "$filename"
     else
-        echo "$content" >$filename
+        echo "$content" >"$filename"
     fi
-    svn commit -m "$comment" $filename
+    svn commit -m "$comment" "$filename"
 }
 
 {

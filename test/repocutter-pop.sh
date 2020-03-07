@@ -1,3 +1,4 @@
+#!/bin/sh
 ## Test path-seqment popping
 ${REPOCUTTER:-repocutter} -q pop <<EOF
 SVN-fs-dump-format-version: 2

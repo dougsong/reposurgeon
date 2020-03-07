@@ -1,3 +1,4 @@
+#!/bin/sh
 ## Test repocutter patching of mergeinfo references in renumber
 ${REPOCUTTER:-repocutter} -q renumber <<EOF
 SVN-fs-dump-format-version: 2
