@@ -110,10 +110,10 @@ write repositories) include git, hg, bzr, darcs, bk, RCS, and SRC.
 For a complete list, with dependencies and technical notes, type
 "prefer" to the reposurgeon prompt.
 
-Writing to the file-oriented systems RCS and SRC has some
-serious limitations because those systems cannot represent all the
-metadata in a git-fast-export stream. Consult that tool's
-documentation for details and partial workarounds.
+Writing to the file-oriented systems RCS and SRC has some serious
+limitations because those systems cannot represent all the metadata in
+a git-fast-export stream. They require rcs-fast-import as a back end;
+consult that tool's documentation for details and partial workarounds.
 
 Fossil repository files can be read in using the `--format=fossil`
 option of the '```read```' command and written out with the
@@ -212,8 +212,8 @@ On the other hand, a skilled operator of reposurgeon can produce a
 conversion that is fully idiomatic in the target system, significantly
 lowering future friction costs for developers browsing the history.
 
-One fully automatred reposurgeon feature of some significance that no
-other importrer supports is that it can parse ChangeLogs in histories
+One fully automated reposurgeon feature of some significance that no
+other importer supports is that it can parse ChangeLogs in histories
 which use that Free Software Foundation convention, and use the
 attributions in them to fill in Git author fields. This recovers
 better information about the provenance of changesets corresponding to
