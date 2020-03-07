@@ -780,58 +780,6 @@ func nodePermissions(node NodeAction) string {
 	return "100644"
 }
 
-// Try to figure out who the ancestor of this node is.
-func (sp *StreamParser) seekAncestor(node *NodeAction, hash map[string]*NodeAction) *NodeAction {
-	/*
-		// FIXME: This should replace the last bit of ancestry creation done in a later phase.
-		if node.contentHash != "" {
-			if hashlook, ok := sp.hashmap[node.contentHash]; ok {
-				logit(logEXTRACT, "r%d: blob of %s matches existing hash %s, assigning '%s' from %s",
-					node.revision, node, node.contentHash, hashlook.blobmark.String(), hashlook)
-				return hashlook
-			}
-		}
-	*/
-
-	var lookback *NodeAction
-	if node.fromPath != "" {
-		// Try first via fromRev/fromPath.  The reason
-		// we have to use the filemap at the copy
-		// source rather than simply walking through
-		// the old nodes to look for the path match is
-		// because the source revision might have been
-		// the target of a directory copy that created
-		// the ancestor we are looking for
-		lookback = sp.history.getActionNode(node.fromRev, node.fromPath)
-		if lookback != nil {
-			logit(logTOPOLOGY, "r%d~%s -> %v (via filemap of %d)",
-				node.revision, node.path, lookback, node.fromRev)
-		}
-	} else if node.action != sdADD {
-		// The ancestor could be a file copy node expanded
-		// from an earlier expanded directory copy.
-		if trial, ok := hash[node.path]; ok {
-			return trial
-		}
-		// Ordinary inheritance, no node copy.
-		lookback = sp.history.getActionNode(sp.backfrom[node.revision], node.path)
-	}
-
-	// We reach here with lookback still nil if the node is a non-copy add.
-	if lookback == nil && node.isCopy() && !strings.HasSuffix(node.path, ".gitignore") {
-		logit(logSHOUT, "r%d~%s: missing ancestor node for non-.gitignore",
-			node.revision, node.path)
-	}
-
-	// If there is a content hash, it should match.
-	//if lookback != nil && lookback.contentHash != "" && node.fromHash != "" && lookback.contentHash != node.fromHash {
-	//	logit(logSHOUT, "r%d~%s: content hash does not match for copy",
-	//		node.revision, node.path)
-	//}
-
-	return lookback
-}
-
 func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton *Baton) {
 	// Subversion actions to import-stream commits.
 
@@ -1155,6 +1103,58 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 	})
 	baton.endProgress()
 
+	// Try to figure out who the ancestor of this node is.
+	seekAncestor := func(sp *StreamParser, node *NodeAction, hash map[string]*NodeAction) *NodeAction {
+		/*
+			// FIXME: This should replace the last bit of ancestry creation done in a later phase.
+			if node.contentHash != "" {
+				if hashlook, ok := sp.hashmap[node.contentHash]; ok {
+					logit(logEXTRACT, "r%d: blob of %s matches existing hash %s, assigning '%s' from %s",
+						node.revision, node, node.contentHash, hashlook.blobmark.String(), hashlook)
+					return hashlook
+				}
+			}
+		*/
+
+		var lookback *NodeAction
+		if node.fromPath != "" {
+			// Try first via fromRev/fromPath.  The reason
+			// we have to use the filemap at the copy
+			// source rather than simply walking through
+			// the old nodes to look for the path match is
+			// because the source revision might have been
+			// the target of a directory copy that created
+			// the ancestor we are looking for
+			lookback = sp.history.getActionNode(node.fromRev, node.fromPath)
+			if lookback != nil {
+				logit(logTOPOLOGY, "r%d~%s -> %v (via filemap of %d)",
+					node.revision, node.path, lookback, node.fromRev)
+			}
+		} else if node.action != sdADD {
+			// The ancestor could be a file copy node expanded
+			// from an earlier expanded directory copy.
+			if trial, ok := hash[node.path]; ok {
+				return trial
+			}
+			// Ordinary inheritance, no node copy.
+			lookback = sp.history.getActionNode(sp.backfrom[node.revision], node.path)
+		}
+
+		// We reach here with lookback still nil if the node is a non-copy add.
+		if lookback == nil && node.isCopy() && !strings.HasSuffix(node.path, ".gitignore") {
+			logit(logSHOUT, "r%d~%s: missing ancestor node for non-.gitignore",
+				node.revision, node.path)
+		}
+
+		// If there is a content hash, it should match.
+		//if lookback != nil && lookback.contentHash != "" && node.fromHash != "" && lookback.contentHash != node.fromHash {
+		//	logit(logSHOUT, "r%d~%s: content hash does not match for copy",
+		//		node.revision, node.path)
+		//}
+
+		return lookback
+	}
+	
 	baton.startProgress("SVN phase 4b: ancestry computations", uint64(len(sp.revisions)))
 	for ri := range sp.revisions {
 		// Compute ancestry links for all file nodes
@@ -1168,7 +1168,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 			lastnode = node
 			node.fromIdx = 0
 			if node.kind == sdFILE {
-				ancestor := sp.seekAncestor(node, revisionPathHash)
+				ancestor := seekAncestor(sp, node, revisionPathHash)
 				// It is possible for ancestor to still be nil here,
 				// if the node was a pure property change
 				if ancestor != nil {
