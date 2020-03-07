@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# shellcheck disable=SC1091
 . ./common-setup.sh
 
 # Use absolute path so tests that change working directory still use 
@@ -40,28 +41,29 @@ EOF
 	   exit 0;;
     esac
 done
+# shellcheck disable=SC2004
 shift $(($OPTIND - 1))
 
-if [ -z $1 ]
+if [ -z "$1" ]
 then
-    exec $0 -h
+    exec "$0" -h
 fi
 
-# spellcheck=2068
+# shellcheck disable=SC2068
 for x in $@;
 do
     case $x in
 	*.svn) x=$(echo "$x" | sed '/.svn/s///');;
     esac
     # This redirect to stderr is so this script can be used to rebuild checkfiles
-    (grep '^#' ${x} 2>/dev/null) 1>&2
+    (grep '^#' "${x}" 2>/dev/null) 1>&2
     case $mode in
 	dump)
 	    ${REPOSURGEON:-reposurgeon} "$log" "$serial" "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1;;
 	build)
-	    ${REPOSURGEON:-reposurgeon} "$log" "$serial" "$experimental" "read <${x}.svn" "prefer git" "write -" >${x}.chk 2>&1 ;;
+	    ${REPOSURGEON:-reposurgeon} "$log" "$serial" "$experimental" "read <${x}.svn" "prefer git" "write -" >"${x}.chk" 2>&1 ;;
 	*)
-	    ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1 | diff -u ${x}.chk - ;;
+	    ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "read <${x}.svn" "prefer git" "write -" 2>&1 | diff -u "${x}.chk" - ;;
     esac
 done
 

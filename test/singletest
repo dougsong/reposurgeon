@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# shellcheck disable=SC1091
 . ././common-setup.sh
 
 # Use absolute path so tests that change working directory still use 
@@ -9,7 +10,7 @@ PATH=$(realpath ..):$(realpath .):${PATH}
 
 experimental=""
 serial=""
-mode=diff
+mode=diffing
 log=""
 while getopts bhl:osx opt
 do
@@ -40,36 +41,37 @@ EOF
 	   exit 0;;
     esac
 done
+# shellcheck disable=SC2004
 shift $(($OPTIND - 1))
 
 # shellcheck disable=SC2068
 for x in $@;
 do
-    what=$(echo ${x} | sed -e '/-FAILED/s///' -e '/.tst/s///')
+    what=$(echo "${x}" | sed -e '/-FAILED/s///' -e '/.tst/s///')
 
-    if [ -f ${what}.tst ]
+    if [ -f "${what}.tst" ]
     then
-	tst=${what}.tst
-	chk=${what}.chk
-    elif [ -f ${what}.tst-FAIL ]
+	tst="${what}.tst"
+	chk="${what}.chk"
+    elif [ -f "${what}.tst-FAIL" ]
     then
-	tst=${what}.tst-FAIL
-	chk=${what}.chk
+	tst="${what}.tst-FAIL"
+	chk="${what}.chk"
 	echo "Expect a diff"
-    elif [ -z ${what} ]
+    elif [ -z "${what}" ]
     then
-	exec $0 -h
+	exec "$0" -h
 	exit 1
     else
 	echo "No script matching ${what} found"
 	exit 1
     fi
     # This redirect to stderr is so this script can be used to rebuild checkfiles
-    (grep '^##' ${tst} 2>/dev/null) 1>&2
+    (grep '^##' "${tst}" 2>/dev/null) 1>&2
     case $mode in
-    build) ${REPOSURGEON:-reposurgeon} "set serial" "$experimental" "script ${tst}" >${chk} 2>&1 ;;
+    build) ${REPOSURGEON:-reposurgeon} "set serial" "$experimental" "script ${tst}" >"${chk}" 2>&1 ;;
     view)  ${REPOSURGEON:-reposurgeon} "$log" "$serial" "$experimental" "script ${tst}" 2>&1 ;;
-    *)     ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "script ${tst}" 2>&1 | diff -u ${chk} - ;;
+    *)     ${REPOSURGEON:-reposurgeon} "$serial" "$experimental" "script ${tst}" 2>&1 | diff -u "${chk}" - ;;
     esac
 done
 

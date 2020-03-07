@@ -108,6 +108,7 @@ do
     { echo -n "  ${what}"; grep --text '^ ##' "${what}" || echo ' ## (no description)'; } | sed -e '/ ## /s//: /' >&2; \
 
     # Make a Subversion repo from the dump
+    # shellcheck disable=SC2086
     ./svn-to-svn ${svnquiet} ${slimit} -c <${what} ${stem}
 
     case ${ENGINE} in
@@ -125,6 +126,7 @@ do
 		 outdev=null
 	     fi
 	     svnrepo=file://${PWD}/${stem}
+	     # shellcheck disable=SC2086
 	     (mkdir ${stem}-git; cd ${stem}-git >/dev/null; svn2git ${svnrepo} >/dev/${outdev};)
 	     ;;
 	 *)
@@ -150,7 +152,7 @@ do
 	fi
 
 	# Generate a <legacy-id>TAB<mark>TAB<ref> file from the git-fast-import stream
-	cat "${stem}.gfi" | sed -n '/^commit / h;
+	sed <"${stem}.gfi" -n '/^commit / h;
 				  /^#legacy-id / H;
 				  /^mark / {
 					H; s/^.*$//; x;
@@ -172,9 +174,10 @@ do
 
 	while read -r line # input file at the end of the loop
 	do
+	    # shellcheck disable=SC2086
 	    revision=$(echo "${line}" | cut -f 1)
-	    intrev=$(echo ""${revision}"" | cut -d. -f 1)
-	    if [ ${intrev} -lt "${min}" ] || [ "${intrev}" -gt "${max}" ]
+	    intrev=$(echo "${revision}" | cut -d. -f 1)
+	    if [ "${intrev}" -lt "${min}" ] || [ "${intrev}" -gt "${max}" ]
 	    then
 		continue
 	    fi
@@ -200,6 +203,7 @@ do
 
 	    # Use --nobranch if asked to, or if there is no structure and
 	    # the asked branch is master
+	    # shellcheck disable=SC2166
 	    if [ -n "${nobranch}" -o "("                 \
 		   "(" "${ref}" = "heads/master" ")"     \
 		       -a "(" -z "${structured}" ")" ")" ]
@@ -214,7 +218,7 @@ do
 		echo "Checking lift at r${revision} (${refopt})"
 	    fi
 	    # Compare the original with the lift
-	    # shellcheck disable=2006
+	    # shellcheck disable=2086
 	    ../repotool ${repotoolopt} compare ${compareopt} \
 		--accept-missing ${refopt} -r ${intrev}:${sha} \
 		${stem}-checkout ${stem}-git
@@ -230,6 +234,7 @@ do
 	fi
 
 	# Compare the original with the lift
+	# shellcheck disable=SC2086
 	../repotool ${repotoolopt} compare-all ${compareopt} ${nobranch} \
 					       ${stem}-checkout ${stem}-git
 
