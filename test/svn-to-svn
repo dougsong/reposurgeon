@@ -52,6 +52,8 @@
 # The TESTOPT variable can be used to pass an early command or option setting
 # to reposurgeon.
 #
+
+# shellcheck disable=SC1091
 . ./common-setup.sh
 
 PATH=$PATH:./..
@@ -87,13 +89,16 @@ do
 	q) quiet=-q ;;
 	r) limit="$OPTARG" ;;
 	l) log="log $OPTARG" ;;
+	*) echo "svn-to-svn: unknown flag $opt" >&2; exit 1;;
     esac
 done
+# shellcheck disable=SC2004
 shift $(($OPTIND - 1))
 
 tmpdir=${TMPDIR:-/tmp}
 
 # This lets us set the repo location 
+# shellcheck disable=SC2006,2046,2086
 testrepo=`realpath \`dirname ${1:-test-repo$$}\``/`basename ${1:-test-repo$$}`
 
 # Should we strip time-varying headers out of the input dump file?
@@ -121,15 +126,15 @@ then
     source=/dev/stdin
 else
     source="${tmpdir}/svn-to-svn-$$"
-    ../repocutter -r "0:${limit}" select >$source
+    ../repocutter -r "0:${limit}" select >"${source}"
 fi
 
 # Should we build a repo from a dump presented on standard input?
 if [ $build = T ]
 then
-    rm -fr $testrepo $testrepo-checkout
-    svnadmin create $testrepo
-    if svnadmin load ${quiet} $testrepo <$source
+    rm -fr "$testrepo" "$testrepo-checkout"
+    svnadmin create "$testrepo"
+    if svnadmin load "${quiet}" "$testrepo" <"$source"
     then
 	:
     else
@@ -137,51 +142,51 @@ then
     fi
 fi
 
-if [ $co = T ]
+if [ "$co" = T ]
 then
-    svn co ${quiet} file://$testrepo ${testrepo}-checkout >/dev/null
+    svn co "${quiet}" "file://$testrepo" "${testrepo}-checkout" >/dev/null
 fi
 
 # Should we edit the streamfile?
-if [ $edit = T ]
+if [ "$edit" = T ]
 then
     dump=$1
-    if [ -z $dump ]
+    if [ -z "$dump" ]
     then
 	echo "svn-to-svn: a file argument is required" >&2
 	exit 1
-    elif $EDITOR $1
+    elif "$EDITOR" "$1"
     then
-	rm -fr $testrepo test-checkout
-	svnadmin create $testrepo
-	sed  <$dump \
+	rm -fr "$testrepo" test-checkout
+	svnadmin create "$testrepo"
+	sed  <"$dump" \
 	    -e '/Text-content-md5: /d' -e '/Text-content-sha1: /d' \
 	    -e '/Text-copy-source-md5: /d' -e '/Text-copy-source-sha1: /d' \
-	    | svnadmin load $testrepo >/dev/null
-	svnadmin dump $testrepo >$dump
+	    | svnadmin load "$testrepo" >/dev/null
+	svnadmin dump "$testrepo" >"$dump"
     fi
 fi
 
 # Should we view the repo?
-if [ $view = T ]
+if [ "$view" = T ]
 then
-    (cd $testrepo >/dev/null || (echo "cd failed" >&2; exit 1); ${REPOSURGEON:-reposurgeon} "${log}" "${TESTOPT}" "read ." "prefer git" "rebuild ${tmpdir}/testrepo$$"; cd ${tmpdir}/testrepo$$; gitk --all --tags)
+    (cd "$testrepo" >/dev/null || (echo "cd failed" >&2; exit 1); ${REPOSURGEON:-reposurgeon} "${log}" "${TESTOPT}" "read ." "prefer git" "rebuild ${tmpdir}/testrepo$$"; cd "${tmpdir}/testrepo$$" 2>/dev/null || (echo "cd failed"; exit 1); gitk --all --tags)
 fi
 
 # Should we dump a conversion of the repo as a fast-import stream?
-if [ $stream = T ]
+if [ "$stream" = T ]
 then
     ${REPOSURGEON:-reposurgeon} "${log}" "${TESTOPT}" "read $testrepo" "$streamopts" "write"
 fi
 
 # Should we dump the repo as a Subversion stream?
-if [ $dump = T ]
+if [ "$dump" = T ]
 then
-    svnadmin dump $testrepo
+    svnadmin dump "$testrepo"
 fi
 
 # Should we clean up the test directory
-if [ $cleanup = T ]
+if [ "$cleanup" = T ]
 then
-    rm -fr $testrepo test-checkout
+    rm -fr "$testrepo" test-checkout
 fi

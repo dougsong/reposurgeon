@@ -91,7 +91,8 @@ do
 
     stem=liftcheck$$
 
-    rm -fr "$stem"*
+    # shellcheck disable=SC2086
+    rm -fr ${stem}*
 
     if [ $debug = no ]
     then

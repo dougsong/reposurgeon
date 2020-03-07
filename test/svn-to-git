@@ -15,6 +15,8 @@
 # to reposurgeon.
 #
 # FIXME:  This has not yet been fully adapted to work with unreliable $PWD.
+
+# shellcheck disable=SC1091
 . ./common-setup.sh
 
 PATH=$PATH:..
@@ -23,8 +25,10 @@ while getopts t: opt
 do
     case $opt in
 	t) tool="$OPTARG" ;;
+	*) echo "avn-to-git: unknown flag $opt" >&2; exit 1;;
     esac
 done
+# shellcheck disable=SC2004
 shift $(($OPTIND - 1))
 
 trap 'rm -fr git-scratch /tmp/agito$$' EXIT HUP INT TERM
@@ -52,7 +56,7 @@ fi
 # Convert the repo to a local git repository.
 rm -fr "$gitrepo"
 case $tool in
-git-svn) git svn clone --stdlayout --no-metadata --quiet file://${PWD}/$svnrepo $gitrepo ;;
+git-svn) git svn clone --stdlayout --no-metadata --quiet "file://${PWD}/$svnrepo" "$gitrepo" ;;
 agito) #git submodule update
 	cat >/tmp/agito$$ <<EOF
 # URL of the Subversion repository.
@@ -153,11 +157,11 @@ MERGE_CALLBACKS = {
 # vim: set ft=python:
 EOF
 	python ../externals/agito/agito.py /tmp/agito$$ ;;
-svn2git) mkdir git-scratch; cp -r $svnrepo git-scratch;
+svn2git) mkdir git-scratch; cp -r "$svnrepo" git-scratch;
 	(cd git-scratch >/dev/null && \
 	    ruby -I../../externals/svn2git/lib \
-	    ../../externals/svn2git/bin/svn2git file://${PWD}/$svnrepo) && \
-	    mv git-scratch $gitrepo ;;
+	    ../../externals/svn2git/bin/svn2git "file://${PWD}/$svnrepo") && \
+	    mv git-scratch "$gitrepo" ;;
 *)  ${REPOSURGEON:-reposurgeon} "${TESTOPT}" "read $svnrepo" "prefer git" "rebuild $gitrepo"
 esac
 
