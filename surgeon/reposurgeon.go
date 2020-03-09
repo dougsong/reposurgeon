@@ -10681,8 +10681,13 @@ func saveProfile(subject string, name string) {
 	if err != nil {
 		croak("failed to create file %#v [%s]", filename, err)
 	} else {
-		pprof.Lookup(subject).WriteTo(f, 0)
-		respond("%s profile saved to %#v", subject, filename)
+		profile := pprof.Lookup(subject)
+		if profile != nil {
+			profile.WriteTo(f, 0)
+			respond("%s profile saved to %#v", subject, filename)
+		} else {
+			respond("tried to save %s profile, but it doesn't seem to exist", subject)
+		}
 	}
 }
 
