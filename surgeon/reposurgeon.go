@@ -1538,7 +1538,7 @@ type Control struct {
 	mapOptions     map[string]map[string]string
 	branchMappings []branchMapping
 	readLimit      uint64
-	profilename    string
+	profileNames   map[string]string
 	startTime      time.Time
 }
 
@@ -10668,10 +10668,25 @@ func (rs *Reposurgeon) DoIndex(lineIn string) bool {
 	return false
 }
 
-func saveAllProfiles(name string) {
-	profiles := pprof.Profiles()
-	for _, profile := range profiles {
-		saveProfile(profile.Name(), name)
+func storeProfileName(subject string, name string) {
+	if control.profileNames == nil {
+		control.profileNames = make(map[string]string)
+	}
+	if subject == "all" {
+		profiles := pprof.Profiles()
+		for _, profile := range profiles {
+			control.profileNames[profile.Name()] = name
+		}
+	} else {
+		control.profileNames[subject] = name
+	}
+}
+
+func saveAllProfiles() {
+	stopCPUProfiling()
+	stopTracing()
+	for subject, name := range control.profileNames {
+		saveProfile(subject, name)
 	}
 }
 
@@ -10698,7 +10713,7 @@ func startCPUProfiling(name string) {
 		croak("failed to create file %#v [%s]", filename, err)
 	} else {
 		pprof.StartCPUProfile(f)
-		respond("cpu profiling enabled.")
+		respond("cpu profiling enabled and saving to %#v.", filename)
 	}
 }
 
@@ -10713,7 +10728,7 @@ func startTracing(name string) {
 		croak("failed to create file %#v [%s]", filename, err)
 	} else {
 		trace.Start(f)
-		respond("tracing enabled.")
+		respond("tracing enabled and saving to %#v.", filename)
 	}
 }
 
@@ -10776,10 +10791,10 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 			respond("pprof server started on http://localhost:%s/debug/pprof", port)
 		case "start":
 			subject, line := popToken(line)
+			storeProfileName(subject, line)
 			if !names.Contains(subject) {
 				croak("I don't recognize %#v as a profile name. The names I do recognize are %v.", subject, names)
 			} else if subject == "all" {
-				control.profilename = line
 				startCPUProfiling(line)
 				startTracing(line)
 			} else if subject == "cpu" {
@@ -10787,11 +10802,14 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 			} else if subject == "trace" {
 				startTracing(line)
 			} else {
-				respond("The %s profile starts automatically when you start reposurgeon.", subject)
+				respond("The %s profile starts automatically when you start reposurgeon; storing %#v to use as a filename to save the profile before reposurgeon exits.", subject, line)
 			}
 		case "save":
 			subject, line := popToken(line)
 			filename, line := popToken(line)
+			if filename == "" {
+				filename = control.profileNames[subject]
+			}
 			if !names.Contains(subject) {
 				croak("I don't recognize %#v as a profile name. The names I do recognize are %v.", subject, names)
 			} else if subject == "all" {
@@ -17530,11 +17548,7 @@ func main() {
 	defer func() {
 		maybePanic := recover()
 		control.baton.Sync()
-		stopCPUProfiling()
-		stopTracing()
-		if len(control.profilename) > 0 {
-			saveAllProfiles(control.profilename)
-		}
+		saveAllProfiles()
 		files, err := ioutil.ReadDir("./")
 		if err == nil {
 			mePrefix := filepath.FromSlash(fmt.Sprintf(".rs%d", os.Getpid()))
