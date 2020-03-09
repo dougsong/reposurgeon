@@ -10754,15 +10754,18 @@ VERBS
 
     start
 	profile start <profile> <filename>
-	    Starts the named profiler, and tells it to save to the
-	    named file, which will be overwritten. Currently only the
-	    cpu profiler requires you to specifically start it; all
-	    the others start automatically.
+	    Starts the named profiler, and tells it to save to the named
+	    file, which will be overwritten. Currently only the cpu and
+	    trace profilers require you to explicitly start them; all the
+	    others start automatically. For the others, the filename is
+	    stored and used to automatically save the profile before
+	    reposurgeon exits.
 
     save
-	profile save <profile> <filename>
-	    Saves the data from the named profiler to the named file,
-	    which will be overwritten.
+	profile save <profile> [<filename>]
+	    Saves the data from the named profiler to the named file, which
+	    will be overwritten. If no filename is specified, this will fall
+	    back to the filename previously stored by 'profile start'.
 `)
 }
 
