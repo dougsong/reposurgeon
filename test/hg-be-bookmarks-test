@@ -11,31 +11,33 @@
 # The REPOSURGEON environment variable can be used to substitute in a
 # different implementation.
 
-cd "$(readlink -f "$(dirname $0)")"
+# shellcheck disable=SC2086
+cd "$(readlink -f "$(dirname $0)")" || ( echo "$0: cd failed"; exit 1 )
+# shellcheck disable=SC1091
 . ./common-setup.sh
 
 # Required because $PWD seems to be undefined in Gitlab's CI environment
-BIN=`realpath ..`
+BIN=$(realpath ..)
 
 build=True
 stream=True
 cleanup=True
-verbose=0
 
 pecho() { printf %s\\n "$*"; }
 log() { pecho "$@"; }
-error() { log "ERROR: $@" >&2; }
+error() { log "ERROR: $*" >&2; }
 fatal() { error "$@"; exit 1; }
-try() { "$@" || fatal "'$@' failed"; }
+try() { "$@" || fatal "'$*' failed"; }
 
-while getopts nrv: opt
+while getopts nr opt
 do
     case $opt in
     n) build=True; stream=False ; cleanup=False ;;
     r) build=False; stream=True  ; cleanup=False ;;
-    v) verbose=$OPTARG;;
+    *) echo "$0: unknown option $opt"; exit 1;;
     esac
 done
+# shellcheck disable=SC2004
 shift $(($OPTIND - 1))
 
 testrepo=${1:-/tmp/test-repo$$}
@@ -47,13 +49,14 @@ if [ $build = True ]
 then
     # Build hg test repo with multiple hg branches
     try rm -fr $testrepo
-    try hg init $testrepo || exit 1
-    try cd $testrepo >/dev/null
+    try hg init "$testrepo" || exit 1
+    try cd "$testrepo" >/dev/null
     # The weird --date incantation in the hg commits is to ensure that the commit
     # timestamps match those in the .fi file; the 18000 is because hg wants the time zone
     # offset in seconds west of UTC, for what reason I know not--I know there are weird
     # time zones in the world but I didn't think any of them got down to one-second
     # granularity in offsets...
+    # shellcheck disable=2094
     (
         try echo tail > tail
         try hg add tail
@@ -66,7 +69,7 @@ then
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Head of A' > /dev/null
 	try hg bookmark A > /dev/null
         try hg up -r '.^^' > /dev/null
-        try cd $testrepo >/dev/null     # Workaround for error getting current working directory
+        try cd "$testrepo" >/dev/null     # Workaround for error getting current working directory
         try echo b > b
         try hg add b > /dev/null
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail of B' > /dev/null
@@ -75,12 +78,12 @@ then
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Head of B' > /dev/null
 	try hg bookmark B > /dev/null
         try hg up -r '.^^' > /dev/null
-        try cd $testrepo >/dev/null     # Workaround for error getting current working directory
+        try cd "$testrepo" >/dev/null     # Workaround for error getting current working directory
         try echo c > c
         try hg add c > /dev/null
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail 1 of C' > /dev/null
         try hg up -r '.^' > /dev/null
-        try cd $testrepo >/dev/null     # Workaround for error getting current working directory
+        try cd "$testrepo" >/dev/null     # Workaround for error getting current working directory
         try echo cc > cc
         try hg add cc > /dev/null
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail 2 of C' > /dev/null
@@ -88,7 +91,7 @@ then
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Merge of C' > /dev/null
 	try hg bookmark C > /dev/null
         try hg up -r '.^^' > /dev/null
-        try cd $testrepo >/dev/null     # Workaround for error getting current working directory
+        try cd "$testrepo" >/dev/null     # Workaround for error getting current working directory
         try echo master > master
         try hg add master > /dev/null
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail of Master' > /dev/null
@@ -97,7 +100,7 @@ then
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Head of Master' > /dev/null
 	try hg bookmark master
         try hg up -r '.^' > /dev/null
-        try cd $testrepo >/dev/null     # Workaround for error getting current working directory
+        try cd "$testrepo" >/dev/null     # Workaround for error getting current working directory
         try echo d > d
         try hg add d > /dev/null
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail of D' > /dev/null
@@ -113,7 +116,8 @@ fi
 # Should we stream the repo?
 if [ $stream = True ]
 then
-    try ${BIN}/${REPOSURGEON:-reposurgeon} ${BUILDOPT} ${TESTOPT} "set quiet" "read $testrepo" "sourcetype git" "write -"
+    # shellcheck disable=SC2086
+    try "${BIN}/${REPOSURGEON:-reposurgeon}" ${BUILDOPT} ${TESTOPT} "set quiet" "read $testrepo" "sourcetype git" "write -"
 fi
 
 # Should we clean up the test directory

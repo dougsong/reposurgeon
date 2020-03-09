@@ -11,30 +11,31 @@
 # The REPOSURGEON environment variable can be used to substitute in a
 # different implementation.
 
+# shellcheck disable=SC1091
 . ./common-setup.sh
 
 # Required because $PWD seems to be undefined in Gitlab's CI environment
-BIN=`realpath ..`
+BIN=$(realpath ..)
 
 build=True
 stream=True
 cleanup=True
-verbose=0
 
 pecho() { printf %s\\n "$*"; }
 log() { pecho "$@"; }
-error() { log "ERROR: $@" >&2; }
+error() { log "ERROR: $*" >&2; }
 fatal() { error "$@"; exit 1; }
-try() { "$@" || fatal "'$@' failed"; }
+try() { "$@" || fatal "'$*' failed"; }
 
-while getopts nrv: opt
+while getopts nr opt
 do
     case $opt in
     n) build=True; stream=False ; cleanup=False ;;
     r) build=False; stream=True  ; cleanup=False ;;
-    v) verbose=$OPTARG;;
+    *) echo "$0: unknown option $opt"; exit 1;;
     esac
 done
+# shellcheck disable=SC2004
 shift $(($OPTIND - 1))
 
 testrepo=${1:-/tmp/test-repo$$}
@@ -45,9 +46,9 @@ USER='"J. Random Hacker" <jrh@foobar.com>'
 if [ $build = True ]
 then
     # Build hg test repo with multiple hg branches
-    try rm -fr $testrepo
-    try hg init $testrepo || exit 1
-    try cd $testrepo >/dev/null
+    try rm -fr "$testrepo"
+    try hg init "$testrepo" || exit 1
+    try cd "$testrepo" >/dev/null
     # The weird --date incantation in the hg commits is to ensure that the commit
     # timestamps match those in the .fi file; the 18000 is because hg wants the time zone
     # offset in seconds west of UTC, for what reason I know not--I know there are weird
@@ -62,7 +63,7 @@ then
         try hg add testfile2 >/dev/null
         try hg commit --user "$USER" --date "1456976408 18000" -m "Commit test file 2." >/dev/null
         try hg update default >/dev/null
-        try cd $testrepo >/dev/null
+        try cd "$testrepo" >/dev/null
         try echo "Test file 3." > testfile3
         try hg add testfile3 >/dev/null
         try hg commit --user "$USER" --date "1456976475 18000" -m "Commit test file 3." >/dev/null
@@ -73,11 +74,12 @@ fi
 # Should we stream the repo?
 if [ $stream = True ]
 then
-    try ${BIN}/${REPOSURGEON:-reposurgeon} ${BUILDOPT} ${TESTOPT} "set quiet" "read $testrepo" "sourcetype git" "write -"
+    # shellcheck disable=SC2086
+    try "${BIN}/${REPOSURGEON:-reposurgeon}" ${BUILDOPT} ${TESTOPT} "set quiet" "read $testrepo" "sourcetype git" "write -"
 fi
 
 # Should we clean up the test directory
 if [ $cleanup = True ]
 then
-    try rm -fr $testrepo
+    try rm -fr "$testrepo"
 fi
