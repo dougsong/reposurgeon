@@ -121,7 +121,7 @@ import (
 	ianaindex "golang.org/x/text/encoding/ianaindex"
 )
 
-const version = "4.4"
+const version = "4.5"
 
 // Tuning constants and types
 
