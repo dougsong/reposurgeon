@@ -3195,6 +3195,7 @@ forms of named variables and macro expansion.
    when this occurs.
 +
 With no selection set and no name, list all assignments.
+This version accepts output redirection.
 +
 If the option `--singleton` is given, the assignment will throw an error
 if the selection set is not a singleton.
@@ -3440,8 +3441,8 @@ included.
 [[profiling]]
 === Profiling
 
-`elapsed`::
-  Display elapsed time since start.
+`elapsed` [ >__outfile__ ]::
+  Display elapsed time since start. 
 
 `timing` [ >__outfile__ ]::
    Display statistics on phase timing in repository analysis.
@@ -3468,7 +3469,7 @@ long-running conversion recipes.
     saving it to a file with '```profile save```'. When no arguments are
     given it prints out the available types of profiles.
 
-`exit`::
+`exit` [ >__outfile__ ]::
    Exit, reporting the time. Included here because, while EOT will
    also cleanly exit the interpreter, this command reports elapsed time
    since start.

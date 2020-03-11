@@ -8506,7 +8506,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 			legend = "non-nil"
 		}
 		if preferred != nil {
-			respond("looking for a %s repo st %s (extractor %s...", preferred.name, source, legend)
+			respond("looking for a %s repo at %s (extractor %s...", preferred.name, source, legend)
 		} else {
 			respond("reposurgeon: looking for any repo at %s (extractor %s)...", source, legend)
 		}
@@ -9816,6 +9816,12 @@ func (lp *LineParse) Closem() {
 	}
 }
 
+// respond is to be used for console messages that shouldn't be logged
+func (lp *LineParse) respond(msg string, args ...interface{}) {
+	content := fmt.Sprintf(msg, args...)
+	control.baton.printLogString(content + "\n")
+}
+
 // Reposurgeon tells Kommandant what our local commands are
 type Reposurgeon struct {
 	cmd          *kommandant.Kmdt
@@ -10485,6 +10491,7 @@ Assignments may be cleared by some sequence mutations (though not by
 ordinary deletion); you will see a warning when this occurs.
 
 With no selection set and no argument, list all assignments.
+This version accepts output redirection.
 
 If the option --singleton is given, the assignment will throw an error
 if the selection set is not a singleton.
@@ -10500,18 +10507,18 @@ func (rs *Reposurgeon) DoAssign(line string) bool {
 		croak("no repo has been chosen.")
 		return false
 	}
+	parse := rs.newLineParse(line, nil)
+	defer parse.Closem()
 	if rs.selection == nil {
 		if line != "" {
 			croak("No selection")
 			return false
 		}
 		for n, v := range repo.assignments {
-			respond(fmt.Sprintf("%s = %v", n, v))
+			parse.respond(fmt.Sprintf("%s = %v", n, v))
 		}
 		return false
 	}
-	parse := rs.newLineParse(line, nil)
-	defer parse.Closem()
 	name := strings.TrimSpace(parse.line)
 	for key := range repo.assignments {
 		if key == name {
@@ -17034,6 +17041,8 @@ means the surgical language is not backwards compatible).
 }
 
 func (rs *Reposurgeon) DoVersion(line string) bool {
+	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
+	defer parse.Closem()
 	if line == "" {
 		supported := make([]string, 0)
 		for _, v := range vcstypes {
@@ -17044,7 +17053,7 @@ func (rs *Reposurgeon) DoVersion(line string) bool {
 				supported = append(supported, x.name)
 			}
 		}
-		respond("reposurgeon " + version + " supporting " + strings.Join(supported, " "))
+		parse.respond("reposurgeon " + version + " supporting " + strings.Join(supported, " "))
 	} else {
 		vmajor, _ := splitRuneFirst(version, '.')
 		var major string
@@ -17061,7 +17070,7 @@ func (rs *Reposurgeon) DoVersion(line string) bool {
 		if major != vmajor {
 			panic("major version mismatch, aborting.")
 		} else if control.isInteractive() {
-			respond("version check passed.")
+			parse.respond("version check passed.")
 
 		}
 	}
@@ -17074,25 +17083,29 @@ func (rs *Reposurgeon) DoVersion(line string) bool {
 
 func (rs *Reposurgeon) HelpElapsed() {
 	rs.helpOutput(`
-Display elapsed time since start.
+Display elapsed time since start. Accepts output redirection.
 `)
 }
 
-func (rs *Reposurgeon) DoElapsed(_line string) bool {
-	respond("elapsed time %v.", time.Now().Sub(rs.startTime))
+func (rs *Reposurgeon) DoElapsed(line string) bool {
+	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
+	defer parse.Closem()
+	parse.respond("elapsed time %v.", time.Now().Sub(rs.startTime))
 	return false
 }
 
 func (rs *Reposurgeon) HelpExit() {
 	rs.helpOutput(`
-Exit the program cleanly, emitting a goodbye message.
+Exit cleanly, emitting a goodbye message. Accepts output redirection.
 
 Typing EOT (usually Ctrl-D) will exit quietly.
 `)
 }
 
-func (rs *Reposurgeon) DoExit(_line string) bool {
-	respond("exiting, elapsed time %v.", time.Now().Sub(rs.startTime))
+func (rs *Reposurgeon) DoExit(line string) bool {
+	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
+	defer parse.Closem()
+	parse.respond("exiting, elapsed time %v.", time.Now().Sub(rs.startTime))
 	return true
 }
 
@@ -17514,7 +17527,7 @@ func (rs *Reposurgeon) DoSizeof(lineIn string) bool {
 		}
 		return out
 	}
-	// Don't use respond() here, we wabt to be abke to do "reposurgeon sizeof"
+	// Don't use respond() here, we want to be able to do "reposurgeon sizeof"
 	// and get a result.
 	fmt.Fprintf(control.baton, "NodeAction:        %s\n", explain(unsafe.Sizeof(*new(NodeAction))))
 	fmt.Fprintf(control.baton, "RevisionRecord:    %s\n", explain(unsafe.Sizeof(*new(RevisionRecord))))
