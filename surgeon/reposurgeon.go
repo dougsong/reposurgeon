@@ -10684,7 +10684,7 @@ func storeProfileName(subject string, name string) {
 		for _, profile := range profiles {
 			control.profileNames[profile.Name()] = name
 		}
-	} else {
+	} else if subject != "cpu" && subject != "trace" {
 		control.profileNames[subject] = name
 	}
 }
@@ -10698,18 +10698,18 @@ func saveAllProfiles() {
 }
 
 func saveProfile(subject string, name string) {
-	filename := fmt.Sprintf("%s.%s.prof", name, subject)
-	f, err := os.Create(filename)
-	if err != nil {
-		croak("failed to create file %#v [%s]", filename, err)
-	} else {
-		profile := pprof.Lookup(subject)
-		if profile != nil {
+	profile := pprof.Lookup(subject)
+	if profile != nil {
+		filename := fmt.Sprintf("%s.%s.prof", name, subject)
+		f, err := os.Create(filename)
+		if err != nil {
+			croak("failed to create file %#v [%s]", filename, err)
+		} else {
 			profile.WriteTo(f, 0)
 			respond("%s profile saved to %#v", subject, filename)
-		} else {
-			respond("tried to save %s profile, but it doesn't seem to exist", subject)
 		}
+	} else {
+		respond("tried to save %s profile, but it doesn't seem to exist", subject)
 	}
 }
 
