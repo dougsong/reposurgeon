@@ -1,5 +1,8 @@
 = reposurgeon project news =
 
+Repository head::
+     repocutter obscure command added.
+
 4.5: 2020-03-09::
      Lots more narrative documentation added.
      The interface of repomapper has been dramatically simplified.
