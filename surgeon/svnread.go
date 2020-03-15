@@ -2564,14 +2564,12 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 			origbranch = branch.(string)
 		}
 		tip, _ := sp.repo.markToEvent(branchtips[origbranch]).(*Commit)
-		if !options.Contains("--nocanon") {
-			if commit == tip && len(tip.operations()) == 1 &&
-				tip.operations()[0].op == deleteall {
-				// Do not canonicalize tipdeletes
-				return
-			}
-			commit.canonicalize()
+		if commit == tip && len(tip.operations()) == 1 &&
+			tip.operations()[0].op == deleteall {
+			// Do not canonicalize tipdeletes
+			return
 		}
+		commit.canonicalize()
 	})
 	baton.endProgress()
 	// Now we need to tagify all other commits without fileops, because they
