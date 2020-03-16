@@ -72,3 +72,36 @@ V 8
 afranzen
 PROPS-END
 
+Revision-number: 2
+Prop-content-length: 122
+Content-length: 122
+
+K 7
+svn:log
+V 24
+Initial README content.
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2010-12-12T16:27:37.972750Z
+PROPS-END
+
+Node-path: trunk/assemblies/README
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 62
+Content-length: 72
+
+PROPS-END
+This file mod exists only to force creation of a trunk branch.
+
+
+
+
+
