@@ -113,8 +113,7 @@ handles RCS collections as well). The caveat for CVS applies.
 [[returns]]
 == ERROR RETURNS ==
 
-Returns 1 on fatal error, 0 otherwise.  In batch mode all errors
-are fatal.
+Returns 1 if the last command executed threw an error, 0 otherwise.
 
 [[see_also]]
 == SEE ALSO ==

@@ -17616,13 +17616,11 @@ func main() {
 	}
 	interpreter.PostLoop(ctx)
 	r.End()
-/*
 	if control.abortScript {
 		os.Exit(1)
 	} else {
 		os.Exit(0)
 	}
-*/
 }
 
 // end
