@@ -397,7 +397,6 @@ SVNCLEAN := \
 	emptycommit-merge.svn \
 	emptyfrom.svn \
 	executable.svn \
-	expunge-copyfrom.svn \
 	expunge.svn \
 	filecopy.svn \
 	fleetwood.svn \

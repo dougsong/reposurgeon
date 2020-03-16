@@ -1,4 +1,101 @@
 #!/bin/sh
 ## Test path expunge with copyfrom excision
-${REPOCUTTER:-repocutter} -q expunge '^b' <expunge-copyfrom.svn
+# This testload is inlined because it's not really well-formed -
+# git gets upsset when trying to load its conversion because
+# there aren't any fileops.
+${REPOCUTTER:-repocutter} -q expunge '^b' <<EOF
+SVN-fs-dump-format-version: 2
+
+UUID: 6e868012-05bc-44e9-9b01-24c952eac42c
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2016-02-01T22:37:27.728579Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 126
+Content-length: 126
+
+K 10
+svn:author
+V 10
+sivachenko
+K 8
+svn:date
+V 27
+2016-02-01T22:40:05.245176Z
+K 7
+svn:log
+V 20
+Created directory A.
+PROPS-END
+
+Node-path: a
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 126
+Content-length: 126
+
+K 10
+svn:author
+V 10
+sivachenko
+K 8
+svn:date
+V 27
+2016-02-01T22:40:21.423200Z
+K 7
+svn:log
+V 20
+Created directory B.
+PROPS-END
+
+Node-path: b
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 3
+Prop-content-length: 176
+Content-length: 176
+
+K 10
+svn:author
+V 10
+sivachenko
+K 8
+svn:date
+V 27
+2016-02-01T22:43:08.872679Z
+K 7
+svn:log
+V 70
+Directory A copied to C. So, directory C is a copy of A at revision 2.
+PROPS-END
+
+Node-path: c
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 2
+Node-copyfrom-path: a
+
+
+EOF
 
