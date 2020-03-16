@@ -5712,7 +5712,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 	}
 	baton.endProgress()
 	if control.readLimit > 0 && uint64(commitcount) < control.readLimit {
-		logit(logSHOUT, "EOF before readlimit.")
+		panic(throw("parse", "EOF before readlimit."))
 	}
 	for _, event := range sp.repo.events {
 		switch event.(type) {

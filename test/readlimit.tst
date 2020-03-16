@@ -1,4 +1,5 @@
 ## Test readlimit
+set relax
 set echo
 readlimit 3
 read <simpletag.svn
