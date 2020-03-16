@@ -97,7 +97,7 @@ fi
 if [ $stream = True ]
 then
     # shellcheck disable=SC2086
-    try "${BIN}/${REPOSURGEON:-reposurgeon}" ${BUILDOPT} ${TESTOPT} "set quiet" "read $testrepo" "sourcetype git" "write -"
+    try "${BIN}/${REPOSURGEON:-reposurgeon}" "${BUILDOPT}" ${TESTOPT} "set quiet" "read $testrepo" "sourcetype git" "write -"
 fi
 
 # Should we clean up the test directory

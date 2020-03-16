@@ -80,7 +80,7 @@ fi
 # Should we stream the repo?
 if [ $stream = True ]
 then
-    try "${BIN}/${REPOSURGEON:-reposurgeon}" ${BUILDOPT} ${TESTOPT} "set quiet" "read $testrepo" "sourcetype git" "write -"
+    try "${BIN}/${REPOSURGEON:-reposurgeon}" "${BUILDOPT}" ${TESTOPT} "set quiet" "read $testrepo" "sourcetype git" "write -"
 fi
 
 # Should we clean up the test directory
