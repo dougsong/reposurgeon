@@ -134,7 +134,8 @@ if [ $build = T ]
 then
     rm -fr "$testrepo" "$testrepo-checkout"
     svnadmin create "$testrepo"
-    if svnadmin load "${quiet}" "$testrepo" <"$source"
+    # shellcheck disable=2086
+    if svnadmin load ${quiet} "$testrepo" <"$source"
     then
 	:
     else
@@ -144,7 +145,8 @@ fi
 
 if [ "$co" = T ]
 then
-    svn co "${quiet}" "file://$testrepo" "${testrepo}-checkout" >/dev/null
+    # shellcheck disable=2086
+    svn co ${quiet} "file://$testrepo" "${testrepo}-checkout" >/dev/null
 fi
 
 # Should we edit the streamfile?
