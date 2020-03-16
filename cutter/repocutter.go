@@ -1215,7 +1215,7 @@ func pop(source DumpfileSource, selection SubversionRange) {
 }
 
 // Hack paths by applying a specified transformation.
-func mutatePaths(source DumpfileSource, selection SubversionRange, mutator func([]byte)[]byte) {
+func mutatePaths(source DumpfileSource, selection SubversionRange, mutator func([]byte) []byte) {
 	revhook := func(props *Properties) {
 		if _, present := props.properties["svn:mergeinfo"]; present {
 			props.properties["svn:mergeinfo"] = string(mutator(
@@ -1360,7 +1360,7 @@ func testify(source DumpfileSource) {
 func obscure(source DumpfileSource, selection SubversionRange) {
 	mutator := func(s []byte) []byte {
 		parts := strings.Split(filepath.ToSlash(string(s)), "/")
-		for i := range(parts) {
+		for i := range parts {
 			if parts[i] != "trunk" && parts[i] != "tags" && parts[i] != "branches" {
 				parts[i] = obscureString(parts[i])
 			}

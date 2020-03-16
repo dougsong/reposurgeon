@@ -1137,7 +1137,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 
 		return lookback
 	}
-	
+
 	baton.startProgress("SVN phase 4b: ancestry computations", uint64(len(sp.revisions)))
 	for ri := range sp.revisions {
 		// Compute ancestry links for all file nodes
@@ -1327,7 +1327,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 						// It's really ugly that we're modifying node ancestry pointers at this point
 						// rather than back in Phase 4.  Unfortunartely, asttempts to move this code
 						// back there fall afoul of the way the hashmap is updated (see in particular
-					        // the next conditional where new content is introduced).
+						// the next conditional where new content is introduced).
 						if lookback, ok := sp.hashmap[node.contentHash]; ok {
 							logit(logEXTRACT, "r%d: blob of %s matches existing hash %s, assigning '%s' from %s",
 								record.revision, node, node.contentHash, lookback.blobmark.String(), lookback)

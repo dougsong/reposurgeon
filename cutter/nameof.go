@@ -20,13 +20,13 @@ var phi float64
 var seenStrings map[string]string
 
 func init() {
-	phi = (1+math.Sqrt(5))/2
-	
-	color = []string {
+	phi = (1 + math.Sqrt(5)) / 2
+
+	color = []string{
 		//  "Adamant",          // 3 syllables
 		"Amber",
 		"Argent",
-		"Amethyst",         // 3 syllables
+		"Amethyst", // 3 syllables
 		"Ancient",
 		"Autumn",
 		"Azure",
@@ -36,7 +36,7 @@ func init() {
 		"Bloodstone",
 		//  "Blue",             // Same as `Azure'
 		"Bronze",
-		"Cerulean",         // 4 syllables
+		"Cerulean", // 4 syllables
 		"Cloud",
 		"Copper",
 		"Coral",
@@ -48,17 +48,17 @@ func init() {
 		"Desert",
 		"Diamond",
 		"Ebony",
-		"Electrum",         // 3 syllables
+		"Electrum", // 3 syllables
 		//   "Elven",            // Won't work with "Kraken", "Cannon", etc.
-		"Emerald",          // 3 syllables
-		"Enchanted",        // 3 syllables
-		"Exalted",          // 3 syllables
+		"Emerald",   // 3 syllables
+		"Enchanted", // 3 syllables
+		"Exalted",   // 3 syllables
 		//   "Fiery",           // Collides with "Blazing"
 		"Forest",
 		"Flying",
 		"Garnet",
 		"Ghost",
-		"Glittering",       // 3 syllables
+		"Glittering", // 3 syllables
 		"Glorious",
 		"Golden",
 		"Ice",
@@ -73,7 +73,7 @@ func init() {
 		"Leaping",
 		"Lightning",
 		"Lucky",
-		"Malachite",        // 3 syllables
+		"Malachite", // 3 syllables
 		"Marble",
 		"Midnight",
 		"Mist",
@@ -81,14 +81,14 @@ func init() {
 		"Moonstone",
 		"Mountain",
 		"Mystic",
-		"Obsidian",         // 4 syllables
+		"Obsidian", // 4 syllables
 		"Ocean",
 		"Onyx",
 		"Opal",
 		"Pearl",
-		"Perilous",         // 3 syllables
+		"Perilous", // 3 syllables
 		"Plains",
-		"Platinum",         // 3 syllables
+		"Platinum", // 3 syllables
 		"Quartz",
 		"Radiant",
 		"Rainbow",
@@ -126,12 +126,12 @@ func init() {
 		"Bear",
 		"Bell",
 		"Boar",
-		"Bolo",             // obscure
+		"Bolo", // obscure
 		"Bolt",
 		"Cannon",
 		"Centaur",
 		"Chalice",
-		"Citadel",          // 3 syllables
+		"Citadel", // 3 syllables
 		"Claymore",
 		"Cobra",
 		"Crag",
@@ -147,7 +147,7 @@ func init() {
 		"Dragon",
 		"Drum",
 		"Eagle",
-		"Falchion",         // obscure
+		"Falchion", // obscure
 		"Falcon",
 		"Fan",
 		"Fang",
@@ -165,7 +165,7 @@ func init() {
 		"Harp",
 		"Hawk",
 		"Heart",
-		"Helm",    
+		"Helm",
 		"Hound",
 		"Horn",
 		"Horse",
@@ -185,7 +185,7 @@ func init() {
 		"Mantis",
 		"Mirror",
 		"Orb",
-		"Pagoda",           // Three syllables
+		"Pagoda", // Three syllables
 		"Panther",
 		"Phoenix",
 		"Pike",
@@ -290,12 +290,12 @@ const modulus = 5333
 func scramble(n int) int {
 	return (modulus * n) % (len(color) * len(item))
 }
-	
+
 // fancyName Return fanciful name corresponding to number n.
 func fancyName(n int) string {
 	n = scramble(n)
 	m := int(n / (ncolors * nitems))
-	name := color[int(n % ncolors)] + item[int(n/ncolors) % nitems]
+	name := color[int(n%ncolors)] + item[int(n/ncolors)%nitems]
 	if m > 0 {
 		name += fmt.Sprintf("%d", m)
 	}
@@ -307,7 +307,7 @@ func obscureString(s string) string {
 	if ok {
 		return v
 	}
-	v = fancyName(len(seenStrings)+1)
+	v = fancyName(len(seenStrings) + 1)
 	seenStrings[s] = v
 	return v
 }

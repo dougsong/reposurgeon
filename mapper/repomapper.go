@@ -148,7 +148,7 @@ func main() {
 		firstline := scanner.Text()
 		if err := scanner.Err(); err != nil {
 			log.Fatal(err)
-		}		
+		}
 
 		// Is this a map file?
 		if strings.Contains(firstline, "=") || firstline[0] == '#' {
@@ -187,7 +187,7 @@ func main() {
 			}
 			if err := scanner.Err(); err != nil {
 				log.Fatal(err)
-			}		
+			}
 
 			// Attempt to fill in the contribmap
 			for name, obj := range contribmap {
