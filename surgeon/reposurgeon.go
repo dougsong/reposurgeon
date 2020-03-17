@@ -1879,7 +1879,7 @@ func newMessageBlock(bp *bufio.Reader) (*MessageBlock, error) {
 				}
 				// undo byte-stuffing *after* the delimiter check
 				if bytes.HasPrefix(line, []byte(".")) {
-					line = line[1 : len(line)-1]
+					line = line[1 : len(line)]
 				}
 				msg.body += string(line)
 			}
