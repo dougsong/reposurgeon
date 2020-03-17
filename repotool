@@ -370,7 +370,7 @@ def mirror(operand, mirrordir):
     elif os.path.isdir(operand + "/.hg"):
         with directory_context(operand):
             do_or_die("hg update")
-        do_or_die("hg clone $operand $mirrordir" % locals())
+        do_or_die("hg clone %(operand)s %(mirrordir)s" % locals())
     else:
         croak("%s does not look like a repository mirror." % operand)
 
