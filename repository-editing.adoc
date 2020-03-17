@@ -38,7 +38,7 @@ tag /emptycommit/ delete
 
 # Often, your Subversion repository was a CVS repository in a past
 # life. CVS creates tags named with the suffix "-root" to mark branch
-# o[oints, and cv2svn brindly copies tham even though the Subversion
+# points, and cv2svn blindly copies tham even though the Subversion
 # tools don't need that marker. This clutter can be tossed.
 tag /-root$/ delete
 
