@@ -62,6 +62,10 @@ then
 	# Flush all disk VM caches so the data file has to be reread
 	sudo sh -c 'echo 3 >/proc/sys/vm/drop_caches'
 	run "${datfile}" "${logfile}" "${dump}" "${readlimit}"
+	if [ $? == 1 ]	# In this context, means we got EOF before readlimit
+	then
+	    break
+	fi
     done
     echo "Results are in ${datfile}"
     exit 0
