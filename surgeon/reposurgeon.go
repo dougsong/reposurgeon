@@ -17561,7 +17561,7 @@ func main() {
 	control.init()
 	rs := newReposurgeon()
 	interpreter := kommandant.NewKommandant(rs)
-	interpreter.EnableReadline(true)
+	interpreter.EnableReadline(terminal.IsTerminal(0))
 
 	defer func() {
 		maybePanic := recover()
