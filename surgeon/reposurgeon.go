@@ -17547,7 +17547,8 @@ func (rs *Reposurgeon) DoSizeof(lineIn string) bool {
 	fmt.Fprintf(control.baton, "int:               %3d\n", unsafe.Sizeof(0))
 	fmt.Fprintf(control.baton, "map[string]string: %3d\n", unsafe.Sizeof(make(map[string]string)))
 	fmt.Fprintf(control.baton, "[]string:          %3d\n", unsafe.Sizeof(make([]string, 0)))
-	fmt.Fprintf(control.baton, "modulus:          %-5d\n", int((float64(len(color))*float64(len(item)))/phi))
+	fmt.Fprintf(control.baton, "raw modulus:      %-5d\n", len(color)*len(item))
+	fmt.Fprintf(control.baton, "modulus/phi:      %-5d\n", int((float64(len(color)*len(item)))/phi))
 	return false
 }
 
@@ -17590,8 +17591,16 @@ func main() {
 	for _, arg := range os.Args[1:] {
 		for _, acmd := range strings.Split(arg, ";") {
 			if acmd == "-" {
-				control.flagOptions["interactive"] = terminal.IsTerminal(0)
-				control.flagOptions["progress"] = terminal.IsTerminal(1)
+				// Next two conditionals are wrutten
+				// this way so that, e,g. "set
+				// interactive" before "-" can force
+				// interactive mode.
+				if terminal.IsTerminal(0) {
+					control.flagOptions["interactive"] = true
+				}
+				if terminal.IsTerminal(1) {
+					control.flagOptions["progress"] = true
+				}
 				control.baton.setInteractivity(control.flagOptions["interactive"])
 				r := trace.StartRegion(ctx, "repl")
 				interpreter.CmdLoop(ctx, "")
