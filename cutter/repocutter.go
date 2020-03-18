@@ -1361,7 +1361,7 @@ func obscure(source DumpfileSource, selection SubversionRange) {
 	mutator := func(s []byte) []byte {
 		parts := strings.Split(filepath.ToSlash(string(s)), "/")
 		for i := range parts {
-			if parts[i] != "trunk" && parts[i] != "tags" && parts[i] != "branches" {
+			if parts[i] != "trunk" && parts[i] != "tags" && parts[i] != "branches" && parts[i] != "" {
 				parts[i] = obscureString(parts[i])
 			}
 		}
