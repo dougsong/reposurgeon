@@ -1,2 +1,2 @@
 reposurgeon: from-reference to nonexistent Subversion revision
-reposurgeon: script abort on line 242
+"Avoid having a last command that fails."

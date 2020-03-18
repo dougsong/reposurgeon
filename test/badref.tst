@@ -1,5 +1,6 @@
 ## Bad from-rev in file with discontiguous revisions
 # We're testing for graceful failure here
+set relax
 read <<EOF
 SVN-fs-dump-format-version: 2
 
@@ -241,3 +242,4 @@ Node-copyfrom-path: trunk
 
 
 EOF
+print "Avoid having a last command that fails."
