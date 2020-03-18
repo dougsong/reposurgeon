@@ -1218,8 +1218,23 @@ func pop(source DumpfileSource, selection SubversionRange) {
 func mutatePaths(source DumpfileSource, selection SubversionRange, mutator func([]byte) []byte) {
 	revhook := func(props *Properties) {
 		if _, present := props.properties["svn:mergeinfo"]; present {
-			props.properties["svn:mergeinfo"] = string(mutator(
-				[]byte(props.properties["svn:mergeinfo"])))
+			mergeinfo := string(props.properties["svn:mergeinfo"])
+			var buffer bytes.Buffer
+			if len(mergeinfo) != 0 {
+				for _, line := range strings.Split(strings.TrimSuffix(mergeinfo, "\n"), "\n") {
+					if strings.Contains(line, ":") {
+						lastidx := strings.LastIndex(line, ":")
+						path, revrange := line[:lastidx-1], line[lastidx+1:]
+						buffer.Write(mutator([]byte(path)))
+						buffer.WriteString(":")
+						buffer.WriteString(revrange)
+					} else {
+						buffer.WriteString(line)
+					}
+					buffer.WriteString("\n")
+				}
+			}
+			props.properties["svn:mergeinfo"] = buffer.String()
 		}
 	}
 	nodehook := func(header []byte, properties []byte, content []byte) []byte {
