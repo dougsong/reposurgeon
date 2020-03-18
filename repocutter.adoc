@@ -155,9 +155,9 @@ Use this to neutralize procedurally-generated streams so they can be
 compared.
 
 obscure::
-Replace path segments with arbitrary but consistent names in order
-to obscure them.  The replacement algorithm is tuned to male the
-replacements readily distinguishable by eyeball.
+Replace path segments and committer IDs with arbitrary but consistent
+names in order to obscure them.  The replacement algorithm is tuned to
+male the replacements readily distinguishable by eyeball.
 
 [[history]]
 == HISTORY ==

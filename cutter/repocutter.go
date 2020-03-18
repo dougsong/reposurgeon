@@ -200,9 +200,9 @@ compared.
 `,
 	"obscure": `obscure: usage: repocutter [-r SELECTION] obscure
 
-Replace path segments with arbitrary but consistent names in order
-to obscure them. The replacement algorithm is tuned to male the
-replacements readily distinguishable by eyeball.
+Replace path segments and committer IDs with arbitrary but consistent
+names in order to obscure them. The replacement algorithm is tuned to
+make the replacements readily distinguishable by eyeball.
 `,
 }
 
@@ -1215,7 +1215,7 @@ func pop(source DumpfileSource, selection SubversionRange) {
 }
 
 // Hack paths by applying a specified transformation.
-func mutatePaths(source DumpfileSource, selection SubversionRange, mutator func([]byte) []byte) {
+func mutatePaths(source DumpfileSource, selection SubversionRange, pathMutator func([]byte) []byte, nameMutator func(string) string) {
 	revhook := func(props *Properties) {
 		if _, present := props.properties["svn:mergeinfo"]; present {
 			mergeinfo := string(props.properties["svn:mergeinfo"])
@@ -1225,7 +1225,7 @@ func mutatePaths(source DumpfileSource, selection SubversionRange, mutator func(
 					if strings.Contains(line, ":") {
 						lastidx := strings.LastIndex(line, ":")
 						path, revrange := line[:lastidx-1], line[lastidx+1:]
-						buffer.Write(mutator([]byte(path)))
+						buffer.Write(pathMutator([]byte(path)))
 						buffer.WriteString(":")
 						buffer.WriteString(revrange)
 					} else {
@@ -1235,6 +1235,9 @@ func mutatePaths(source DumpfileSource, selection SubversionRange, mutator func(
 				}
 			}
 			props.properties["svn:mergeinfo"] = buffer.String()
+		}
+		if userid, present := props.properties["svn:author"]; present && nameMutator != nil {
+			props.properties["svn:author"] = nameMutator(userid)
 		}
 	}
 	nodehook := func(header []byte, properties []byte, content []byte) []byte {
@@ -1247,7 +1250,7 @@ func mutatePaths(source DumpfileSource, selection SubversionRange, mutator func(
 				pathline := header[offs:endoffs]
 				after := make([]byte, len(header)-endoffs)
 				copy(after, header[endoffs:])
-				pathline = mutator(pathline)
+				pathline = pathMutator(pathline)
 				header = before
 				header = append(header, pathline...)
 				header = append(header, after...)
@@ -1269,7 +1272,7 @@ func pathrename(source DumpfileSource, selection SubversionRange, patterns []str
 		return r.ReplaceAll(s, []byte(patterns[1]))
 	}
 
-	mutatePaths(source, selection, mutator)
+	mutatePaths(source, selection, mutator, nil)
 }
 
 // Renumber all revisions.
@@ -1373,7 +1376,7 @@ func testify(source DumpfileSource) {
 
 // Hack pathnames to obscure them.
 func obscure(source DumpfileSource, selection SubversionRange) {
-	mutator := func(s []byte) []byte {
+	pathMutator := func(s []byte) []byte {
 		parts := strings.Split(filepath.ToSlash(string(s)), "/")
 		for i := range parts {
 			if parts[i] != "trunk" && parts[i] != "tags" && parts[i] != "branches" && parts[i] != "" {
@@ -1383,7 +1386,11 @@ func obscure(source DumpfileSource, selection SubversionRange) {
 		return []byte(filepath.FromSlash(strings.Join(parts, "/")))
 	}
 
-	mutatePaths(source, selection, mutator)
+	nameMutator := func(s string) string {
+		return strings.ToLower(obscureString(s))
+	}
+
+	mutatePaths(source, selection, pathMutator, nameMutator)
 }
 
 // Strip out ops defined by a revision selection and a path regexp.
