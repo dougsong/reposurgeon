@@ -2265,6 +2265,14 @@ func (attr *Attribution) remap(authors map[string]Contributor) {
 }
 
 /*
+ * Hashing
+ */
+
+func githash(data string) string {
+	return string(fmt.Sprintf("%040x", sha1.Sum([]byte(data))))
+}
+
+/*
  * Repository objects.  All satisfy the Event interface.
  */
 
@@ -2615,6 +2623,11 @@ func (b *Blob) clone(repo *Repository) *Blob {
 			"blob %s is not materialized.", b.mark)
 	}
 	return c
+}
+
+func (b Blob) githash() string {
+	content := b.getContent()
+	return githash(fmt.Sprintf("blob %d\x00", len(content)) + string(content))
 }
 
 // Examples of embedded VCS headers:
@@ -17506,6 +17519,38 @@ func (rs *Reposurgeon) DoScript(ctx context.Context, lineIn string) bool {
 	rs.inputIsStdin = existingInputIsStdin
 
 	rs.callstack = rs.callstack[:len(rs.callstack)-1]
+	return false
+}
+
+func (rs *Reposurgeon) HelpHash() {
+	rs.helpOutput("Report Git object hashes. This command is experimental and nod documented in the manual.\n")
+}
+
+func (rs *Reposurgeon) DoHash(lineIn string) bool {
+	repo := rs.chosen()
+	if repo == nil {
+		croak("no repo has been chosen.")
+		return false
+	}
+	selection := rs.selection
+	if rs.selection == nil {
+		selection = repo.all()
+	}
+	parse := rs.newLineParse(lineIn, orderedStringSet{"stdout"})
+	defer parse.Closem()
+	for _, eventid := range selection {
+		event := repo.events[eventid]
+		switch event.(type) {
+		case *Blob:
+			fmt.Fprintf(parse.stdout, "%d: %s\n", eventid, event.(*Blob).githash())
+		case *Commit:
+			// Not yet supported
+		case *Tag:
+			// Not yet supported
+		default:
+			// Other things don't have a hash
+		}
+	}
 	return false
 }
 
