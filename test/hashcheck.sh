@@ -6,6 +6,8 @@ repo=${PWD}/hashcheck-git-$$
 
 trap 'rm -fr ${repo}' EXIT HUP INT QUIT TERM
 
+command -v git >/dev/null 2>&1 || ( echo "$0: git is not installed"; exit 1 )
+
 git init --quiet "${repo}"
 cd "${repo}" >/dev/null
 # Required for CI
@@ -33,7 +35,8 @@ set -- $(reposurgeon 'read .' hash)
 
 if [ "${filehash}" != "$2" ]
 then
-	echo "hashcheck: file and synthetic hash for some/file.txt do not match." >&2
+    echo "hashcheck: file and synthetic hash for some/file.txt do not match." >&2
+    exit 1
 fi
 
 # end
