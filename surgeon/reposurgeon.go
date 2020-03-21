@@ -4354,6 +4354,15 @@ func (commit *Commit) visible(argpath string) *Commit {
 	// unreachable
 }
 
+func (commit *Commit) githash() string {
+	var sb strings.Builder
+	sb.WriteString("tree ")
+	sb.WriteString("DUMMY OUTER TREE HASH")
+
+	body := sb.String()
+	return fmt.Sprintf("commit %d\x00", len(body)) + body
+}
+
 // manifest returns a map from all pathnames visible at this commit
 // to Fileop structures. The map contents is shared as much as
 // possible with manifests from previous commits to keep working-set
