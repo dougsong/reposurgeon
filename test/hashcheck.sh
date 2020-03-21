@@ -8,6 +8,9 @@ trap 'rm -fr ${repo}' EXIT HUP INT QUIT TERM
 
 git init --quiet "${repo}"
 cd "${repo}" >/dev/null
+# Required for CI
+git config user.email jrh@random.net
+git config user.name "J. Random Hacker"
 mkdir some
 echo 'Hello, World!' >some/file.txt
 git add some/file.txt
