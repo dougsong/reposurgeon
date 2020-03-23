@@ -2268,7 +2268,7 @@ func (attr *Attribution) remap(authors map[string]Contributor) {
  * Hashing
  */
 
-func githash(data string) string {
+func gitHash(data string) string {
 	return string(fmt.Sprintf("%040x", sha1.Sum([]byte(data))))
 }
 
@@ -2625,9 +2625,9 @@ func (b *Blob) clone(repo *Repository) *Blob {
 	return c
 }
 
-func (b Blob) githash() string {
+func (b Blob) gitHash() string {
 	content := b.getContent()
-	return githash(fmt.Sprintf("blob %d\x00", len(content)) + string(content))
+	return gitHash(fmt.Sprintf("blob %d\x00", len(content)) + string(content))
 }
 
 // Examples of embedded VCS headers:
@@ -4354,13 +4354,24 @@ func (commit *Commit) visible(argpath string) *Commit {
 	// unreachable
 }
 
-func (commit *Commit) githash() string {
+// The object formats we're mimicking for hashing purposes are described here:
+// https://www.git-scm.com/book/en/v2/Git-Internals-Git-Objects
+// https://stackoverflow.com/questions/14790681/what-is-the-internal-format-of-a-git-tree-object
+
+func (commit *Commit) innerHash() string {
 	var sb strings.Builder
-	sb.WriteString("tree ")
-	sb.WriteString("DUMMY OUTER TREE HASH")
+	// STUB
 
 	body := sb.String()
-	return fmt.Sprintf("commit %d\x00", len(body)) + body
+	return gitHash(fmt.Sprintf("tree %d\x00", len(body)) + body)
+}
+
+func (commit *Commit) gitHash() string {
+	var sb strings.Builder
+	// STUB
+
+	body := sb.String()
+	return gitHash(fmt.Sprintf("commit %d\x00", len(body)) + body)
 }
 
 // manifest returns a map from all pathnames visible at this commit
@@ -17551,9 +17562,11 @@ func (rs *Reposurgeon) DoHash(lineIn string) bool {
 		event := repo.events[eventid]
 		switch event.(type) {
 		case *Blob:
-			fmt.Fprintf(parse.stdout, "%d: %s\n", eventid, event.(*Blob).githash())
+			fmt.Fprintf(parse.stdout, "%d: %s\n", eventid, event.(*Blob).gitHash())
 		case *Commit:
-			// Not yet supported
+			if parse.options.Contains("--inner") {
+				fmt.Fprintf(parse.stdout, "%d: %s\n", eventid, event.(*Commit).innerHash())
+			}
 		case *Tag:
 			// Not yet supported
 		default:
