@@ -2267,9 +2267,14 @@ func (attr *Attribution) remap(authors map[string]Contributor) {
 /*
  * Hashing
  */
+type gitHashType = [sha1.Size]byte
 
-func gitHash(data string) string {
-	return string(fmt.Sprintf("%040x", sha1.Sum([]byte(data))))
+func gitHash(data string) gitHashType {
+	return sha1.Sum([]byte(data))
+}
+
+func hexifyHash(h gitHashType) string {
+	return string(fmt.Sprintf("%040x", h))
 }
 
 /*
@@ -2625,7 +2630,7 @@ func (b *Blob) clone(repo *Repository) *Blob {
 	return c
 }
 
-func (b Blob) gitHash() string {
+func (b Blob) gitHash() gitHashType {
 	content := b.getContent()
 	return gitHash(fmt.Sprintf("blob %d\x00", len(content)) + string(content))
 }
@@ -4354,26 +4359,6 @@ func (commit *Commit) visible(argpath string) *Commit {
 	// unreachable
 }
 
-// The object formats we're mimicking for hashing purposes are described here:
-// https://www.git-scm.com/book/en/v2/Git-Internals-Git-Objects
-// https://stackoverflow.com/questions/14790681/what-is-the-internal-format-of-a-git-tree-object
-
-func (commit *Commit) innerHash() string {
-	var sb strings.Builder
-	// STUB
-
-	body := sb.String()
-	return gitHash(fmt.Sprintf("tree %d\x00", len(body)) + body)
-}
-
-func (commit *Commit) gitHash() string {
-	var sb strings.Builder
-	// STUB
-
-	body := sb.String()
-	return gitHash(fmt.Sprintf("commit %d\x00", len(body)) + body)
-}
-
 // manifest returns a map from all pathnames visible at this commit
 // to Fileop structures. The map contents is shared as much as
 // possible with manifests from previous commits to keep working-set
@@ -4484,6 +4469,41 @@ func (repo *Repository) walkManifests(
 			repo.events[index].(*Commit)._manifest = nil
 		}
 	}
+}
+
+// The object formats we're mimicking for hashing purposes are described here:
+// https://www.git-scm.com/book/en/v2/Git-Internals-Git-Objects
+// https://stackoverflow.com/questions/14790681/what-is-the-internal-format-of-a-git-tree-object
+
+// The gitHash method of PathMaps assumes it's a manifest (or subtree of one)
+func (pm *PathMap) gitHash() gitHashType {
+	var sb strings.Builder
+	// More complex than is ideal because the pathnames in
+	// the nanifest map do not include distinct nodes for directories
+	subnode := make(map[string]bool)
+	pm.iter(func(path string, pentry interface{}) {
+		parts := strings.Split(path, "/")
+		if len(parts) == 1 {
+			entry := pentry.(*FileOp)
+			sb.WriteString(fmt.Sprintf("%s %s\x00%s\n", entry.mode, path, gitHash(path)))
+			return
+		}
+		if !subnode[parts[0]] {
+			sb.WriteString(fmt.Sprintf("4000 %s\x00%s", parts[0], gitHash(parts[0])))
+			subnode[parts[0]] = true
+		}
+	})
+
+	body := sb.String()
+	return gitHash(fmt.Sprintf("tree %d\x00", len(body)) + body)
+}
+
+func (commit *Commit) gitHash() gitHashType {
+	var sb strings.Builder
+	// STUB
+
+	body := sb.String()
+	return gitHash(fmt.Sprintf("commit %d\x00", len(body)) + body)
 }
 
 // canonicalize replaces fileops by a minimal set of D and M with same result.
@@ -17562,10 +17582,12 @@ func (rs *Reposurgeon) DoHash(lineIn string) bool {
 		event := repo.events[eventid]
 		switch event.(type) {
 		case *Blob:
-			fmt.Fprintf(parse.stdout, "%d: %s\n", eventid, event.(*Blob).gitHash())
+			fmt.Fprintf(parse.stdout, "%d: %s\n", eventid, hexifyHash(event.(*Blob).gitHash()))
 		case *Commit:
-			if parse.options.Contains("--inner") {
-				fmt.Fprintf(parse.stdout, "%d: %s\n", eventid, event.(*Commit).innerHash())
+			if parse.options.Contains("--tree") {
+				fmt.Fprintf(parse.stdout, "%d: %s\n", eventid, hexifyHash(event.(*Commit).manifest().gitHash()))
+			} else {
+				fmt.Fprintf(parse.stdout, "%d: %s\n", eventid, hexifyHash(event.(*Commit).gitHash()))
 			}
 		case *Tag:
 			// Not yet supported

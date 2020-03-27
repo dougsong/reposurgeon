@@ -46,6 +46,7 @@ PARALLEL_MAKE=make --output-sync --no-print-directory -j $(CONCURRENT_JOBS)
 
 # This should always be a full test
 check: clean disclose $(BASIC) $(FULLSUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXTOOLS)
+	@echo "=== Sporadic tests:"
 	sh hashcheck.sh
 	@echo "=== No diff output is good news ==="
 
