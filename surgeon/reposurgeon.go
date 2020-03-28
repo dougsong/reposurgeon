@@ -17578,6 +17578,8 @@ Takes a selection set, defaulting to all.  For each eligible object in the set,
 returns its index  and the same hash that Git would generate for its 
 representation of the object. Eligible objects are blobs and commits.
 
+With the option --bare, omit the event number; list only the hash.
+
 With the option --tree, generate a tree hash for the specified commit rather 
 than the commit hash. This option is not expected to be useful for anything
 but verifying the hash code itself.
@@ -17600,19 +17602,27 @@ func (rs *Reposurgeon) DoHash(lineIn string) bool {
 	defer parse.Closem()
 	for _, eventid := range selection {
 		event := repo.events[eventid]
+		var hashrep string
 		switch event.(type) {
 		case *Blob:
-			fmt.Fprintf(parse.stdout, "%d: %s\n", eventid, hexifyHash(event.(*Blob).gitHash()))
+			hashrep = hexifyHash(event.(*Blob).gitHash())
 		case *Commit:
 			if parse.options.Contains("--tree") {
-				fmt.Fprintf(parse.stdout, "%d %s\n", eventid, hexifyHash(event.(*Commit).manifest().gitHash()))
+				hashrep = hexifyHash(event.(*Commit).manifest().gitHash())
 			} else {
-				fmt.Fprintf(parse.stdout, "%d %s\n", eventid, hexifyHash(event.(*Commit).gitHash()))
+				hashrep = hexifyHash(event.(*Commit).gitHash())
 			}
 		case *Tag:
 			// Not yet supported
 		default:
 			// Other things don't have a hash
+		}
+		if hashrep != "" {
+			if parse.options.Contains("--tree") {
+				fmt.Fprintf(parse.stdout, "%s\n", hashrep)
+			} else {
+				fmt.Fprintf(parse.stdout, "%d: %s\n", eventid, hashrep)
+			}
 		}
 	}
 	return false
