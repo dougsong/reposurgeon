@@ -2327,7 +2327,6 @@ type Blob struct {
 	repo         *Repository
 	opset        map[*FileOp]bool // Fileops associated with this blob
 	opsetLock	 sync.Mutex
-	pathlistmap  map[string]bool // optimisation for the above, kept in sync
 	start        int64           // Seek start if this blob refers into a dump
 	size         int64           // length start if this blob refers into a dump
 	_expungehook *Blob
@@ -2341,7 +2340,6 @@ func newBlob(repo *Repository) *Blob {
 	b := new(Blob)
 	b.repo = repo
 	b.opset = make(map[*FileOp]bool)
-	b.pathlistmap = map[string]bool{} // optimisation for pathlist
 	b.start = noOffset
 	b.blobseq = control.blobseq
 	control.blobseq++
@@ -2371,8 +2369,13 @@ func (b *Blob) idMe() string {
 // paths is implemented for uniformity with commits and fileops."
 func (b *Blob) paths(_pathtype orderedStringSet) orderedStringSet {
 	lst := newOrderedStringSet()
-	for key := range b.pathlistmap {
-		lst = append(lst, key)
+	seen := make(map[string]bool)
+	for op := range b.opset {
+		// The fileop is necessarily a M fileop
+		if !seen[op.Path] {
+			lst = append(lst, op.Path)
+			seen[op.Path] = true
+		}
 	}
 	sort.Strings(lst)
 	return lst
@@ -2381,7 +2384,6 @@ func (b *Blob) paths(_pathtype orderedStringSet) orderedStringSet {
 func (b *Blob) appendOperation(op *FileOp) {
 	b.opsetLock.Lock()
 	b.opset[op] = true
-	b.pathlistmap[op.Path] = true
 	b.opsetLock.Unlock()
 }
 
@@ -2613,10 +2615,6 @@ func (b *Blob) clone(repo *Repository) *Blob {
 		c.opset[op] = true
 	}
 	c.opsetLock.Unlock()
-	c.pathlistmap = map[string]bool{}
-	for k := range b.pathlistmap {
-		c.pathlistmap[k] = true
-	}
 	c.colors.Clear()
 	if b.hasfile() {
 		logit(logSHUFFLE,
