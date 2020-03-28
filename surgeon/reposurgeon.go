@@ -2325,7 +2325,8 @@ type Blob struct {
 	abspath      string
 	cookie       Cookie // CVS/SVN cookie analyzed out of this file
 	repo         *Repository
-	oplist       []*FileOp       // In-repo paths associated with this blob
+	opset        map[*FileOp]bool // Fileops associated with this blob
+	opsetLock	 sync.Mutex
 	pathlistmap  map[string]bool // optimisation for the above, kept in sync
 	start        int64           // Seek start if this blob refers into a dump
 	size         int64           // length start if this blob refers into a dump
@@ -2339,7 +2340,7 @@ const noOffset = -1
 func newBlob(repo *Repository) *Blob {
 	b := new(Blob)
 	b.repo = repo
-	b.oplist = make([]*FileOp, 0)     // These have an implied sequence.
+	b.opset = make(map[*FileOp]bool)
 	b.pathlistmap = map[string]bool{} // optimisation for pathlist
 	b.start = noOffset
 	b.blobseq = control.blobseq
@@ -2378,20 +2379,17 @@ func (b *Blob) paths(_pathtype orderedStringSet) orderedStringSet {
 }
 
 func (b *Blob) appendOperation(op *FileOp) {
-	b.oplist = append(b.oplist, op)
+	b.opsetLock.Lock()
+	b.opset[op] = true
 	b.pathlistmap[op.Path] = true
+	b.opsetLock.Unlock()
 }
 
 func (b *Blob) removeOperation(op *FileOp) bool {
-	// Apply the filter-without-allocate hack from Slice Tricks
-	newOps := b.oplist[:0]
-	for _, x := range b.oplist {
-		if x != op {
-			newOps = append(newOps, x)
-		}
-	}
-	b.oplist = newOps
-	return len(b.oplist) > 0
+	b.opsetLock.Lock()
+	delete(b.opset, op)
+	b.opsetLock.Unlock()
+	return len(b.opset) > 0
 }
 
 func (b *Blob) setBlobfile(argpath string) {
@@ -2609,8 +2607,12 @@ func (b *Blob) moveto(repo *Repository) {
 // clone makes a fresh (uncolored) copy of this blob, pointing at the same file."
 func (b *Blob) clone(repo *Repository) *Blob {
 	c := b // copy scalar fields
-	c.oplist = make([]*FileOp, len(b.oplist))
-	copy(c.oplist, b.oplist)
+	c.opsetLock.Lock()
+	c.opset = make(map[*FileOp]bool, len(b.opset))
+	for op := range b.opset {
+		c.opset[op] = true
+	}
+	c.opsetLock.Unlock()
 	c.pathlistmap = map[string]bool{}
 	for k := range b.pathlistmap {
 		c.pathlistmap[k] = true
@@ -7728,7 +7730,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 		if e.getDelFlag() {
 			continue
 		}
-		if b, ok := e.(*Blob); ok && len(b.oplist) == 0 {
+		if b, ok := e.(*Blob); ok && len(b.opset) == 0 {
 			continue
 		}
 		survivors = append(survivors, e)
@@ -15265,10 +15267,10 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 		return false
 	}
 	isIgnore := func(blob *Blob) bool {
-		if len(blob.oplist) == 0 {
+		if len(blob.opset) == 0 {
 			return false
 		}
-		for _, fop := range blob.oplist {
+		for fop := range blob.opset {
 			if !strings.HasSuffix(fop.Path, rs.ignorename) {
 				return false
 			}
