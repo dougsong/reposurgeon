@@ -2278,13 +2278,13 @@ func (attr *Attribution) remap(authors map[string]Contributor) {
  * objects depend on using these hashes internally there might
  * be a dependency there.
  */
-type gitHashType = [sha1.Size]byte
+type gitHashType [sha1.Size]byte
 
 func gitHash(data string) gitHashType {
 	return sha1.Sum([]byte(data))
 }
 
-func hexifyHash(h gitHashType) string {
+func (h gitHashType) hexify() string {
 	return string(fmt.Sprintf("%040x", h))
 }
 
@@ -4522,12 +4522,12 @@ func (pm *PathMap) gitHash() gitHashType {
 
 func (commit *Commit) gitHash() gitHashType {
 	var sb strings.Builder
-	sb.WriteString("tree " + hexifyHash(commit.manifest().gitHash()) + "\n")
+	sb.WriteString("tree " + commit.manifest().gitHash().hexify() + "\n")
 	for _, parent := range commit.parents() {
 		switch parent.(type) {
 		case *Commit:
-			// FIXME: Restore this when me,oization is working
-			//sb.WriteString("parent " + hexifyHash(parent.gitHash())  + "\n")
+			// FIXME: Restore this when memoization is working
+			// sb.WriteString("parent " + parent.gitHash().hexify()  + "\n")
 		case *Callout:
 			// Ignore this case
 		default:
@@ -17639,12 +17639,12 @@ func (rs *Reposurgeon) DoHash(lineIn string) bool {
 		var hashrep string
 		switch event.(type) {
 		case *Blob:
-			hashrep = hexifyHash(event.(*Blob).gitHash())
+			hashrep = event.(*Blob).gitHash().hexify()
 		case *Commit:
 			if parse.options.Contains("--tree") {
-				hashrep = hexifyHash(event.(*Commit).manifest().gitHash())
+				hashrep = event.(*Commit).manifest().gitHash().hexify()
 			} else {
-				hashrep = hexifyHash(event.(*Commit).gitHash())
+				hashrep = event.(*Commit).gitHash().hexify()
 			}
 		case *Tag:
 			// Not yet supported
