@@ -2,6 +2,7 @@
 
 Repository head::
      repocutter obscure command added.
+     Expunge of fileops with inline data now works.
 
 4.5: 2020-03-09::
      Lots more narrative documentation added.

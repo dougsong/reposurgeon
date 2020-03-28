@@ -9644,7 +9644,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 	// Resrtore backrefs and patch together ancestry chains in the expunged repo
 	for _, commit := range expunged.commits(nil) {
 		for _, op := range commit.operations() {
-			if op.op == opM {
+			if op.op == opM && op.ref != "inline" {
 				expunged.markToEvent(op.ref).(*Blob).appendOperation(op)
 			}
 		}

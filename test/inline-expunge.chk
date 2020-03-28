@@ -1,0 +1,12 @@
+commit refs/heads/master
+mark :1
+committer Chris Lemmons <chris.lemmons@milsoft.com> 1416001813 -0600
+data 15
+Initial commit
+
+tag emptycommit-mark2
+from :1
+tagger Chris Lemmons <chris.lemmons@milsoft.com> 1416001825 -0600
+data 12
+Next commit
+
