@@ -47,7 +47,7 @@ git commit --quiet  -a -m "Lovely commit message"
 # Verify blob hash computation
 filehash=$(git hash-object some/file.txt)
 # shellcheck disable=SC2046
-set -- $(reposurgeon 'read .' hash)
+set -- $(reposurgeon 'read .' '=B hash')
 
 if [ "${filehash}" != "$2" ]
 then
@@ -92,11 +92,11 @@ fi
 
 treehash=$(git rev-parse "HEAD^{tree}")
 # shellcheck disable=SC2046
-set -- $(reposurgeon 'read .' 'hash --tree')
+set -- $(reposurgeon 'read .' '=C hash --tree')
 
 if [ "${treehash}" != "$2" ]
 then
-    echo "hashcheck: tree and synthetic hash do not match (failure expected)." >&2
+    echo "hashcheck: tree and synthetic hashes do not match (failure expected)." >&2
     exit 0
 fi
 
@@ -114,38 +114,30 @@ fi
 # > <john@doe.com> 1234567890 -0800\ncommitter John Doe <john@doe.com>
 # > 1234567890 -0800\n\nLovely commit message\n" | sha1sum
 # > bfce3b33968e8735e722754ceb89c8756454df1a  -
-# 
-# OK, given an outer-tree hash for a commit and commit metadata I think I can see how
-# to compute the commit hash  for a commit. You last bullet point abouthow the ancestor
-# hashes are included is significant.
-# 
-# Can you unpack the tree-hash computation some more?  Maybe with an example 
-# including two files?
-# 
+
+commithash=$(git rev-parse "HEAD")
+# shellcheck disable=SC2046
+set -- $(reposurgeon 'read .' '=C hash')
+
+if [ "${commithash}" != "$2" ]
+then
+    echo "hashcheck: commit and synthetic hashes do not match (failure expected)." >&2
+    exit 0
+fi
+
 # > Some notes:
 # > 
 # >   * The number before the first null byte is the number of characters
 # >     after the first null byte.  Yes, it's redundant information but
 # >     allows git to quickly determine the size of objects.
-# 
-# Got it.
-# 
 # >   * No newlines or anything separating multiple files in a tree object;
 # >     the space character, nul character, and known length of a sha1sum
 # >     are all that are needed.
-# 
-# OK.
-# 
 # >   * Although ls-tree output always shows six characters for object modes,
 # >     leading zeros are stripped when writing into a tree object.
-# 
-# Got that too.
-# 
 # >   * Any parents to record in commit objects are listed on separate lines
 # >     between the tree and the author.  Use 'git cat-file -p' on any commit
 # >     in a repo of your choosing to see an example.
-# 
-# Ah, that is important and I think I understand it.
 
 echo "hashcheck: PASSED"
  
