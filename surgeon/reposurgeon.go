@@ -17618,7 +17618,7 @@ func (rs *Reposurgeon) DoHash(lineIn string) bool {
 			// Other things don't have a hash
 		}
 		if hashrep != "" {
-			if parse.options.Contains("--tree") {
+			if parse.options.Contains("--bare") {
 				fmt.Fprintf(parse.stdout, "%s\n", hashrep)
 			} else {
 				fmt.Fprintf(parse.stdout, "%d: %s\n", eventid, hashrep)
