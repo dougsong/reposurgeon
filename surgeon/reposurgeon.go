@@ -2265,7 +2265,14 @@ func (attr *Attribution) remap(authors map[string]Contributor) {
 }
 
 /*
- * Hashing
+ * Hashing.  These twi functions are the only place in the code 
+ * that knows what hash Git actually uses.  Elsewhere hashes
+ * are treated as uninterpreted cookies that can be formatted
+ * as hex-quad pairs of an ubspecifued length.
+ *
+ * However, because the gitHash functions on Blob and Commit
+ * objects depend on using these hashes internally there might
+ * be a dependency there.
  */
 type gitHashType = [sha1.Size]byte
 
@@ -17563,7 +17570,20 @@ func (rs *Reposurgeon) DoScript(ctx context.Context, lineIn string) bool {
 }
 
 func (rs *Reposurgeon) HelpHash() {
-	rs.helpOutput("Report Git object hashes. This command is experimental and nod documented in the manual.\n")
+	rs.helpOutput(`Report Git object hashes.  This command simulates Git hash generation.
+
+hash [--tree] [>outfile]
+
+Takes a selection set, defaulting to all.  For each eligible object in the set,
+returns its index  and the same hash that Git would generate for its 
+representation of the object. Eligible objects are blobs and commits.
+
+With the option --tree, generate a tree hash for the specified commit rather 
+than the commit hash. This option is not expected to be useful for anything
+but verifying the hash code itself.
+
+This command supports output redirection.
+`)
 }
 
 func (rs *Reposurgeon) DoHash(lineIn string) bool {
@@ -17585,9 +17605,9 @@ func (rs *Reposurgeon) DoHash(lineIn string) bool {
 			fmt.Fprintf(parse.stdout, "%d: %s\n", eventid, hexifyHash(event.(*Blob).gitHash()))
 		case *Commit:
 			if parse.options.Contains("--tree") {
-				fmt.Fprintf(parse.stdout, "%d: %s\n", eventid, hexifyHash(event.(*Commit).manifest().gitHash()))
+				fmt.Fprintf(parse.stdout, "%d %s\n", eventid, hexifyHash(event.(*Commit).manifest().gitHash()))
 			} else {
-				fmt.Fprintf(parse.stdout, "%d: %s\n", eventid, hexifyHash(event.(*Commit).gitHash()))
+				fmt.Fprintf(parse.stdout, "%d %s\n", eventid, hexifyHash(event.(*Commit).gitHash()))
 			}
 		case *Tag:
 			// Not yet supported
