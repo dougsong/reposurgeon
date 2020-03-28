@@ -4484,25 +4484,36 @@ func (repo *Repository) walkManifests(
 
 // The gitHash method of PathMaps assumes it's a manifest (or subtree of one)
 func (pm *PathMap) gitHash() gitHashType {
-	var sb strings.Builder
-	// More complex than is ideal because the pathnames in
-	// the nanifest map do not include distinct nodes for directories
-	subnode := make(map[string]bool)
-	pm.iter(func(path string, pentry interface{}) {
-		parts := strings.Split(path, "/")
-		if len(parts) == 1 {
-			entry := pentry.(*FileOp)
-			sb.WriteString(fmt.Sprintf("%s %s\x00%s\n", entry.mode, path, gitHash(path)))
-			return
-		}
-		if !subnode[parts[0]] {
-			sb.WriteString(fmt.Sprintf("4000 %s\x00%s", parts[0], gitHash(parts[0])))
-			subnode[parts[0]] = true
-		}
+	type Element struct {
+		name string
+		mode string
+		hash gitHashType
+	}
+	elements := []Element{}
+	for name, subdir := range pm.dirs {
+		elements = append(elements, Element{
+			mode: "40000",
+			name: name,
+			hash: subdir.gitHash(),
+		})
+	}
+	for name, entry := range pm.blobs {
+		op := entry.(*FileOp)
+		elements = append(elements, Element{
+			mode: op.mode,
+			name: name,
+			hash: op.repo.markToEvent(op.ref).(*Blob).gitHash(),
+		})
+	}
+	sort.Slice(elements, func(i, j int) bool {
+		return elements[i].name < elements[j].name
 	})
-
+	var sb strings.Builder
+	for _, e := range elements {
+		fmt.Fprintf(&sb, "%s %s\x00%s", e.mode, e.name, e.hash)
+	}
 	body := sb.String()
-	return gitHash(fmt.Sprintf("tree %d\x00", len(body)) + body)
+	return gitHash(fmt.Sprintf("tree %d\x00%s", len(body), body))
 }
 
 func (commit *Commit) gitHash() gitHashType {
