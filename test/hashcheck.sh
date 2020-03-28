@@ -55,8 +55,6 @@ then
     exit 1
 fi
 
-echo "hashcheck: PASSED"
- 
 # This test passes and demonstrates that I have replicated git blob hashing
 # correctly.
 # 
@@ -91,7 +89,17 @@ echo "hashcheck: PASSED"
 # > $ (printf "tree 31\0"; printf "40000 some\0"; printf
 # > 08687c1be8a39bde242c31d308baa4aba277dc02 | xxd -p -r) | sha1sum
 # > 62296ca7563b5d575acb0a914442f78f3a76db4d
-# > 
+
+treehash=$(git rev-parse "HEAD^{tree}")
+# shellcheck disable=SC2046
+set -- $(reposurgeon 'read .' 'hash --tree')
+
+if [ "${treehash}" != "$2" ]
+then
+    echo "hashcheck: tree and synthetic hash do not match (failure expected)." >&2
+    exit 0
+fi
+
 # > $ # Ask git for the commit hash, then recreate it two different ways
 # > $ git rev-parse HEAD
 # > bfce3b33968e8735e722754ceb89c8756454df1a
@@ -139,4 +147,6 @@ echo "hashcheck: PASSED"
 # 
 # Ah, that is important and I think I understand it.
 
+echo "hashcheck: PASSED"
+ 
 # end
