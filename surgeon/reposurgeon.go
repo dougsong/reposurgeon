@@ -2219,6 +2219,10 @@ func (attr *Attribution) clone() *Attribution {
 	return mycopy
 }
 
+func (attr Attribution) isEmpty() bool {
+	return attr.fullname == "" && attr.email == ""
+}
+
 // emailOut updates a message-block object with a representation of this
 // attribution object.
 func (attr *Attribution) emailOut(modifiers orderedStringSet, msg *MessageBlock, hdr string) {
@@ -3718,7 +3722,7 @@ func (commit *Commit) clone(repo *Repository) *Commit {
 	c._childNodes = nil
 	// use the encapsulation to set parents instead of relying
 	// on the copy, so that Commit can do its bookkeeping.
-	c._parentNodes = nil // avoid confusing set_parents()
+	c._parentNodes = nil // avoid confusing setParents()
 	// Now that parents & children are correct, invalidate the manifest
 	c.invalidateManifests()
 	c.setParents(commit.parents())
@@ -4518,8 +4522,27 @@ func (pm *PathMap) gitHash() gitHashType {
 
 func (commit *Commit) gitHash() gitHashType {
 	var sb strings.Builder
-	// STUB
-
+	sb.WriteString("tree " + hexifyHash(commit.manifest().gitHash()) + "\n")
+	for _, parent := range commit.parents() {
+		switch parent.(type) {
+		case *Commit:
+			// FIXME: Restore this when me,oization is working
+			//sb.WriteString("parent " + hexifyHash(parent.gitHash())  + "\n")
+		case *Callout:
+			// Ignore this case
+		default:
+			panic("In gitHash method, unexpected type in child list")
+		}
+	}
+	// Git doesn't support multiple authors, so we'll probably see
+	// bogons if there's ever more than one generated in here.
+	// But this loop is uniform
+	for _, author := range commit.authors {
+		sb.WriteString("author " + author.String() + "\n")
+	}
+	sb.WriteString("committer " + commit.committer.String() + "\n")
+	sb.WriteString("\n")
+	sb.WriteString(commit.Comment)
 	body := sb.String()
 	return gitHash(fmt.Sprintf("commit %d\x00", len(body)) + body)
 }

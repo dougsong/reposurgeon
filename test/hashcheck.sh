@@ -34,13 +34,12 @@ echo 'Hello, World!' >some/file.txt
 git add some/file.txt
 
 # shellcheck disable=SC2034
-GIT_AUTHOR_NAME="John Doe" GIT_AUTHOR_EMAIL="john@doe.com"
+GIT_AUTHOR_NAME="John Doe" GIT_AUTHOR_EMAIL="john@doe.com" GIT_AUTHOR_DATE="1234567890" 
 # shellcheck disable=SC2034
-GIT_AUTHOR_DATE="1234567890" GIT_COMMITTER_NAME="John Doe"
+GIT_COMMITTER_NAME="John Doe" GIT_COMMITTER_EMAIL="john@doe.com" GIT_COMMITTER_DATE="1234567890"
 # shellcheck disable=SC2034
-GIT_COMMITTER_EMAIL="john@doe.com" GIT_COMMITTER_DATE="1234567890"
-TZ=UTC
-export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE GIT_COMMITTER_NAME TZ
+TZ="America/Los_Angeles"
+export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_COMMITTER_DATE TZ
 
 git commit --quiet  -a -m "Lovely commit message"
 
@@ -96,8 +95,8 @@ set -- $(reposurgeon 'read .' '=C hash --tree')
 
 if [ "${treehash}" != "$2" ]
 then
-    echo "hashcheck: tree and synthetic hashes do not match (failure expected)." >&2
-    exit 0
+    echo "hashcheck: tree and synthetic hashes do not match." >&2
+    exit 1
 fi
 
 # > $ # Ask git for the commit hash, then recreate it two different ways
@@ -121,8 +120,8 @@ set -- $(reposurgeon 'read .' '=C hash')
 
 if [ "${commithash}" != "$2" ]
 then
-    echo "hashcheck: commit and synthetic hashes do not match (failure expected)." >&2
-    exit 0
+    echo "hashcheck: commit ${commithash} and synthetic ${2} hashes do not match." >&2
+    exit 1
 fi
 
 # > Some notes:
