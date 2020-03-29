@@ -2287,7 +2287,7 @@ func gitHash(data string) gitHashType {
 }
 
 func (h gitHashType) hexify() string {
-	return string(fmt.Sprintf("%040x", h))
+	return fmt.Sprintf("%040x", h)
 }
 
 func (h gitHashType) isValid() bool {
@@ -2296,6 +2296,10 @@ func (h gitHashType) isValid() bool {
 
 func (h *gitHashType) invalidate() {
 	*h = nullGitHash
+}
+
+func (h gitHashType) short() string {
+	return h.hexify()[:6]
 }
 
 /*
@@ -2867,7 +2871,7 @@ func (t *Tag) showlegacy() string {
 	return t.legacyID
 }
 
-// tags enables do_tags() to report tags.
+// tags enables DoTags() to report tags.
 func (t *Tag) tags(modifiers orderedStringSet, eventnum int, _cols int) string {
 	return fmt.Sprintf("%6d\ttag\t%s", eventnum+1, t.name)
 }
@@ -3550,7 +3554,8 @@ func (c *colorSet) Clear() {
 	*c = 0
 }
 
-type Manifest struct { // A specialized PathMap containing FileOps
+// Manifest is a specialized PathMap containing FileOps
+type Manifest struct {
 	PathMap
 }
 
@@ -3787,8 +3792,8 @@ func (commit *Commit) hasProperties() bool {
 // lister enables DoList() to report commits.
 func (commit *Commit) lister(_modifiers orderedStringSet, eventnum int, cols int) string {
 	topline, _ := splitRuneFirst(commit.Comment, '\n')
-	summary := fmt.Sprintf("%6d %s %6s ",
-		eventnum+1, commit.date().rfc3339(), commit.mark)
+	summary := fmt.Sprintf("%6d %s %6s %s ",
+		eventnum+1, commit.date().rfc3339(), commit.mark, commit.gitHash().short())
 	if commit.legacyID != "" {
 		legacy := fmt.Sprintf("<%s>", commit.legacyID)
 		summary += fmt.Sprintf("%6s ", legacy)

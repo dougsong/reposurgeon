@@ -1030,7 +1030,7 @@ func TestCommitMethods(t *testing.T) {
 
 	// Check that various reports look sane, at least matching each other
 	assertEqual(t, commit.lister(nullOrderedStringSet, 42, 0),
-		"    43 2016-03-14T23:32:27Z     :2 Example commit for unit testing")
+		"    43 2016-03-14T23:32:27Z     :2 621be4 Example commit for unit testing")
 	assertEqual(t, commit.actionStamp(),
 		"2016-03-14T23:32:27Z!esr@thyrsus.com")
 	assertEqual(t, commit.showlegacy(), "")

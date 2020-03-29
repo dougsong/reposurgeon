@@ -1,10 +1,10 @@
 set relax
 read <testrepo.fi
 <2010-11-06T10:49:58Z> list
-    14 2010-11-06T10:49:58Z    :13 Create the third doomed file.
+    14 2010-11-06T10:49:58Z    :13 1a2797 Create the third doomed file.
 <2010-11-06T10:49:58Z> assign fubar
 <fubar> list
-    14 2010-11-06T10:49:58Z    :13 Create the third doomed file.
+    14 2010-11-06T10:49:58Z    :13 1a2797 Create the third doomed file.
 <quozzle> resolve Unassigned name
 reposurgeon: couldn't match a name at <quozzle>
 1 assign fubar
@@ -26,7 +26,7 @@ print Test unassign
 Test unassign
 :32 assign glarp
 <glarp> list
-    30 2010-11-08T23:02:38Z    :32 Recreating bar.
+    30 2010-11-08T23:02:38Z    :32 e6ffee Recreating bar.
 unassign glarp
 <glarp> list
 reposurgeon: couldn't match a name at <glarp>

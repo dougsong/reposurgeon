@@ -10,7 +10,7 @@ print Test that invoking the macro produces output
 Test that invoking the macro produces output
 :49 do fubar
 list
-    50 2010-10-26T09:02:25Z    :49 Add and document a regression test.
+    50 2010-10-26T09:02:25Z    :49 91fc97 Add and document a regression test.
 print Test that undefining the only macro removes it from the internal list
 Test that undefining the only macro removes it from the internal list
 undefine fubar
