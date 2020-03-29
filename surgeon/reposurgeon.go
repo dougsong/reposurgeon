@@ -81,6 +81,7 @@ import (
 	"container/heap"
 	"context"
 	"crypto/sha1"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"html"
@@ -4554,11 +4555,24 @@ func (manifest *Manifest) gitHash() gitHashType {
 		}
 		for name, entry := range pm.blobs {
 			op := entry.(*FileOp)
-			elements = append(elements, Element{
-				mode: op.mode,
-				name: name,
-				hash: op.repo.markToEvent(op.ref).(*Blob).gitHash(),
-			})
+			if blob, ok := op.repo.markToEvent(op.ref).(*Blob); ok {
+				elements = append(elements, Element{
+					mode: op.mode,
+					name: name,
+					hash: blob.gitHash(),
+				})
+			} else {
+				// The ref is not a blob mark. This is probably a git link,
+				// or a hash given directly.
+				hashref, _ := hex.DecodeString(op.ref)
+				hash := gitHashType{}
+				copy(hash[:], hashref)
+				elements = append(elements, Element{
+					mode: op.mode,
+					name: name,
+					hash: hash,
+				})
+			}
 		}
 		sort.Slice(elements, func(i, j int) bool {
 			return elements[i].name < elements[j].name
