@@ -2279,7 +2279,6 @@ func (attr *Attribution) remap(authors map[string]Contributor) {
  * be a dependency there.
  */
 type gitHashType [sha1.Size]byte
-
 var nullGitHash gitHashType	// Do not modify rthis!
 
 func gitHash(data string) gitHashType {
@@ -3566,6 +3565,7 @@ type Commit struct {
 	_parentNodes   []CommitLike // list of parent nodes
 	_childNodes    []CommitLike // list of child nodes
 	_expungehook   *Commit
+	hash	       gitHashType
 	color          colorType // Scratch storage for graph-coloring
 	deleteme       bool      // Flag used during deletion operations
 	implicitParent bool      // Whether the first parent was implicit
@@ -3681,6 +3681,7 @@ func (commit *Commit) setOperationsNoInvalidate(ops []*FileOp) {
 		}
 	}
 	commit.fileops = ops
+	commit.hash.invalidate()
 }
 
 // appendOperation appends to the set of fileops associated with this commit.
@@ -3727,6 +3728,7 @@ func (commit *Commit) bump(i int) {
 	for _, author := range commit.authors {
 		author.date.timestamp.Add(delta)
 	}
+	commit.hash.invalidate()
 }
 
 // clone replicates this commit, without its fileops, color, children, or tags.
@@ -4049,6 +4051,9 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 			commit.committer.fullname, commit.committer.email = whoami()
 		}
 	}
+	if modified {
+		commit.hash.invalidate()
+	}
 	return modified
 }
 
@@ -4058,6 +4063,7 @@ func (commit *Commit) setMark(mark string) string {
 		commit.repo.fixupMarkToIndex(commit, commit.mark, mark)
 	}
 	commit.mark = mark
+	commit.hash.invalidate()
 	return mark
 }
 
@@ -4070,6 +4076,7 @@ func (commit *Commit) forget() {
 		}
 	}
 	commit.repo = nil
+	commit.hash.invalidate()
 }
 
 // moveto changes the repo this commit is associated with.
@@ -4082,6 +4089,7 @@ func (commit *Commit) moveto(repo *Repository) {
 		}
 	}
 	commit.repo = repo
+	commit.hash.invalidate()
 }
 
 // parents gets a list of this commit's parents.
@@ -4113,6 +4121,7 @@ func (commit *Commit) invalidateManifests() {
 			stack = append(stack, child)
 		}
 	}
+	commit.hash.invalidate()
 }
 
 // listMarks is only used for logging
@@ -4211,6 +4220,7 @@ func (commit *Commit) addParentCommit(newparent *Commit) {
 			commit.invalidateManifests()
 		}
 	}
+	commit.hash.invalidate()
 }
 
 func (commit *Commit) addParentByMark(mark string) {
@@ -4259,6 +4269,7 @@ func (commit *Commit) removeParent(event CommitLike) {
 		commit._childNodes = commitRemove(commit._childNodes, commit)
 		commit.invalidateManifests()
 	}
+	commit.hash.invalidate()
 }
 
 func (commit *Commit) replaceParent(e1, e2 *Commit) {
@@ -4544,29 +4555,32 @@ func (pm *PathMap) gitHash() gitHashType {
 }
 
 func (commit *Commit) gitHash() gitHashType {
-	var sb strings.Builder
-	sb.WriteString("tree " + commit.manifest().gitHash().hexify() + "\n")
-	for _, parent := range commit.parents() {
-		switch parent.(type) {
-		case *Commit:
-			sb.WriteString("parent " + parent.(*Commit).gitHash().hexify()  + "\n")
-		case *Callout:
-			// Ignore this case
-		default:
-			panic("In gitHash method, unexpected type in child list")
+	if !commit.hash.isValid() {
+		var sb strings.Builder
+		sb.WriteString("tree " + commit.manifest().gitHash().hexify() + "\n")
+		for _, parent := range commit.parents() {
+			switch parent.(type) {
+			case *Commit:
+				sb.WriteString("parent " + parent.(*Commit).gitHash().hexify()  + "\n")
+			case *Callout:
+				// Ignore this case
+			default:
+				panic("In gitHash method, unexpected type in child list")
+			}
 		}
+		// Git doesn't support multiple authors, so we'll probably see
+		// bogons if there's ever more than one generated in here.
+		// But this loop is uniform
+		for _, author := range commit.authors {
+			sb.WriteString("author " + author.String() + "\n")
+		}
+		sb.WriteString("committer " + commit.committer.String() + "\n")
+		sb.WriteString("\n")
+		sb.WriteString(commit.Comment)
+		body := sb.String()
+		commit.hash = gitHash(fmt.Sprintf("commit %d\x00", len(body)) + body)
 	}
-	// Git doesn't support multiple authors, so we'll probably see
-	// bogons if there's ever more than one generated in here.
-	// But this loop is uniform
-	for _, author := range commit.authors {
-		sb.WriteString("author " + author.String() + "\n")
-	}
-	sb.WriteString("committer " + commit.committer.String() + "\n")
-	sb.WriteString("\n")
-	sb.WriteString(commit.Comment)
-	body := sb.String()
-	return gitHash(fmt.Sprintf("commit %d\x00", len(body)) + body)
+	return commit.hash
 }
 
 // canonicalize replaces fileops by a minimal set of D and M with same result.
@@ -4648,6 +4662,7 @@ func (commit *Commit) canonicalize() {
 	}
 	// Now replace the Commit fileops, not passing through any deleteall
 	commit.remakeFileOps(newops, false)
+	commit.hash.invalidate()
 }
 
 // alldeletes is a predicate: is this an all-deletes commit?
@@ -12923,6 +12938,7 @@ func (rs *Reposurgeon) DoSetfield(line string) bool {
 	for _, ei := range rs.selection {
 		event := repo.events[ei]
 		if _, ok := getAttr(event, field); ok {
+			// FIXME: Uh oh, hash evaluation doesn'r get done here
 			setAttr(event, field, value)
 		} else if commit, ok := event.(*Commit); ok {
 			if field == "author" {
@@ -12945,6 +12961,7 @@ func (rs *Reposurgeon) DoSetfield(line string) bool {
 				}
 				commit.authors[0].date = newdate
 			}
+			commit.hash.invalidate()
 		}
 	}
 	return false
