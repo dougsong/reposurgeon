@@ -2280,12 +2280,22 @@ func (attr *Attribution) remap(authors map[string]Contributor) {
  */
 type gitHashType [sha1.Size]byte
 
+var nullGitHash gitHashType	// Do not modify rthis!
+
 func gitHash(data string) gitHashType {
 	return sha1.Sum([]byte(data))
 }
 
 func (h gitHashType) hexify() string {
 	return string(fmt.Sprintf("%040x", h))
+}
+
+func (h gitHashType) isValid() bool {
+	return h != nullGitHash
+}
+
+func (h *gitHashType) invalidate() {
+	*h = nullGitHash
 }
 
 /*
@@ -2342,6 +2352,7 @@ type Blob struct {
 	size         int64           // length start if this blob refers into a dump
 	_expungehook *Blob
 	blobseq      blobidx
+	hash         gitHashType
 	colors       colorSet // Scratch space for graph-coloring algorithms
 }
 
@@ -2396,12 +2407,14 @@ func (b *Blob) appendOperation(op *FileOp) {
 	b.opsetLock.Lock()
 	b.opset[op] = true
 	b.opsetLock.Unlock()
+	b.hash.invalidate()
 }
 
 func (b *Blob) removeOperation(op *FileOp) bool {
 	b.opsetLock.Lock()
 	delete(b.opset, op)
 	b.opsetLock.Unlock()
+	b.hash.invalidate()
 	return len(b.opset) > 0
 }
 
@@ -2410,6 +2423,7 @@ func (b *Blob) setBlobfile(argpath string) {
 	info, _ := file.Stat()
 	b.size = info.Size()
 	b.abspath = argpath
+	b.hash.invalidate()
 }
 
 // getBloobfile returns the path where the blob's content lives.
@@ -2526,6 +2540,7 @@ func (b *Blob) setContent(text []byte, tell int64) {
 			panic(fmt.Errorf("Blob writer: %v", err))
 		}
 	}
+	b.hash.invalidate()
 }
 
 // setContent sets the content of the blob from a string.
@@ -2552,6 +2567,7 @@ func (b *Blob) setContentFromStream(s io.ReadCloser) {
 		panic(fmt.Errorf("Blob writer: %v", err))
 	}
 	b.size = nBytes
+	b.hash.invalidate()
 }
 
 // materialize stores this content as a separate file, if it isn't already.
@@ -2570,7 +2586,8 @@ func (b Blob) getComment() string {
 }
 
 // sha returns the SHA-1 hash of the blob content. Used only for indexing,
-// does not need to be crypto-quality
+// does not need to be crypto-quality.
+// FIXME: redundant with gitHash?
 func (b *Blob) sha() string {
 	h := sha1.New()
 	content := b.getContentStream()
@@ -2614,6 +2631,7 @@ func (b *Blob) moveto(repo *Repository) {
 		if err != nil {
 			panic(err)
 		}
+		b.hash.invalidate()
 	}
 }
 
@@ -2638,12 +2656,16 @@ func (b *Blob) clone(repo *Repository) *Blob {
 		logit(logSHUFFLE,
 			"blob %s is not materialized.", b.mark)
 	}
+	b.hash.invalidate()
 	return c
 }
 
-func (b Blob) gitHash() gitHashType {
-	content := b.getContent()
-	return gitHash(fmt.Sprintf("blob %d\x00", len(content)) + string(content))
+func (b *Blob) gitHash() gitHashType {
+	if !b.hash.isValid() {
+		content := b.getContent()
+		b.hash = gitHash(fmt.Sprintf("blob %d\x00", len(content)) + string(content))
+	}
+	return b.hash
 }
 
 // Examples of embedded VCS headers:
@@ -2727,6 +2749,7 @@ func (b *Blob) emailIn(msg *MessageBlock, fill bool) bool {
 			b.idMe(), b.getComment(), newcontent)
 		modified = true
 		b.setContent([]byte(newcontent), noOffset)
+		b.hash.invalidate()
 	}
 	return modified
 }
