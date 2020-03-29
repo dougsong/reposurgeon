@@ -46,7 +46,7 @@ git commit --quiet  -a -m "Lovely commit message"
 # Verify blob hash computation
 filehash=$(git hash-object some/file.txt)
 # shellcheck disable=SC2046
-set -- $(reposurgeon 'read .' '=B hash')
+set -- $(reposurgeon 'read .' ':1 hash')
 
 if [ "${filehash}" != "$2" ]
 then
@@ -91,7 +91,7 @@ fi
 
 treehash=$(git rev-parse "HEAD^{tree}")
 # shellcheck disable=SC2046
-set -- $(reposurgeon 'read .' '=C hash --tree')
+set -- $(reposurgeon 'read .' ':2 hash --tree')
 
 if [ "${treehash}" != "$2" ]
 then
@@ -116,7 +116,7 @@ fi
 
 commithash=$(git rev-parse "HEAD")
 # shellcheck disable=SC2046
-set -- $(reposurgeon 'read .' '=C hash')
+set -- $(reposurgeon 'read .' ':2 hash')
 
 if [ "${commithash}" != "$2" ]
 then
