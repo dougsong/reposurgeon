@@ -120,7 +120,20 @@ set -- $(reposurgeon 'read .' ':2 hash')
 
 if [ "${commithash}" != "$2" ]
 then
-    echo "hashcheck: commit ${commithash} and synthetic ${2} hashes do not match." >&2
+    echo "hashcheck: commit ${commithash} at :2 and synthetic ${2} hashes do not match." >&2
+    exit 1
+fi
+
+echo "New content." >some/file.txt
+git commit --quiet -a -m "A commit through porcelain."
+
+commithash=$(git rev-parse "HEAD")
+# shellcheck disable=SC2046
+set -- $(reposurgeon 'read .' ':4 hash')
+
+if [ "${commithash}" != "$2" ]
+then
+    echo "hashcheck: commit ${commithash} at :4 and synthetic ${2} hashes do not match." >&2
     exit 1
 fi
 

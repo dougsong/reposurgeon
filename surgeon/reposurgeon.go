@@ -4526,8 +4526,7 @@ func (commit *Commit) gitHash() gitHashType {
 	for _, parent := range commit.parents() {
 		switch parent.(type) {
 		case *Commit:
-			// FIXME: Restore this when memoization is working
-			// sb.WriteString("parent " + parent.gitHash().hexify()  + "\n")
+			sb.WriteString("parent " + parent.(*Commit).gitHash().hexify()  + "\n")
 		case *Callout:
 			// Ignore this case
 		default:
