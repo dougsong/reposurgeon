@@ -3549,6 +3549,18 @@ func (c *colorSet) Clear() {
 	*c = 0
 }
 
+type Manifest struct { // A specialized PathMap containing FileOps
+	PathMap
+}
+
+func pmToManifest(pm *PathMap) *Manifest {
+	return &Manifest{*pm}
+}
+
+func newManifest() *Manifest {
+	return pmToManifest(newPathMap())
+}
+
 // Commit represents a commit event in a fast-export stream
 type Commit struct {
 	legacyID       string        // Commit's ID in an alien system
@@ -3558,7 +3570,7 @@ type Commit struct {
 	authors        []Attribution // Authors of commit
 	committer      Attribution   // Person responsible for committing it.
 	fileops        []*FileOp     // blob and file operation list
-	_manifest      *PathMap      // efficient map of *Fileop values
+	_manifest      *Manifest      // efficient map of *Fileop values
 	repo           *Repository
 	properties     *OrderedMap  // commit properties (extension)
 	attachments    []Event      // Tags and Resets pointing at this commit
@@ -4408,7 +4420,7 @@ func (commit *Commit) visible(argpath string) *Commit {
 // to Fileop structures. The map contents is shared as much as
 // possible with manifests from previous commits to keep working-set
 // size to a minimum.
-func (commit *Commit) manifest() *PathMap {
+func (commit *Commit) manifest() *Manifest {
 	// yeah, baby this operation is *so* memoized...
 	if commit._manifest != nil {
 		return commit._manifest
@@ -4448,14 +4460,15 @@ func (commit *Commit) manifest() *PathMap {
 	// that case the manifest inherited by the last commit is just empty.
 	manifest := ancestor._manifest
 	if manifest == nil {
-		manifest = newPathMap()
+		manifest = newManifest()
 	}
 	// Now loop over commitsToHandle, starting from the end. At the start of each iteration,
 	// manifest contains the manifest inherited from the first parent, if any.
 	for k := len(commitsToHandle) - 1; k >= 0; k-- {
 		// Take own fileops into account.
 		commit := commitsToHandle[k]
-		manifest = commit.applyFileOps(manifest.snapshot(), false, false).(*PathMap)
+		manifest = pmToManifest(
+			commit.applyFileOps(manifest.snapshot(), false, false).(*PathMap))
 		commit._manifest = manifest
 	}
 	return manifest
@@ -4520,38 +4533,41 @@ func (repo *Repository) walkManifests(
 // https://www.git-scm.com/book/en/v2/Git-Internals-Git-Objects
 // https://stackoverflow.com/questions/14790681/what-is-the-internal-format-of-a-git-tree-object
 
-// The gitHash method of PathMaps assumes it's a manifest (or subtree of one)
-func (pm *PathMap) gitHash() gitHashType {
+func (manifest *Manifest) gitHash() gitHashType {
 	type Element struct {
 		name string
 		mode string
 		hash gitHashType
 	}
-	elements := []Element{}
-	for name, subdir := range pm.dirs {
-		elements = append(elements, Element{
-			mode: "40000",
-			name: name,
-			hash: subdir.gitHash(),
+	var innerHash func(pm *PathMap) gitHashType
+	innerHash = func(pm *PathMap) gitHashType {
+		elements := []Element{}
+		for name, subdir := range pm.dirs {
+			elements = append(elements, Element{
+				mode: "40000",
+				name: name,
+				hash: innerHash(subdir),
+			})
+		}
+		for name, entry := range pm.blobs {
+			op := entry.(*FileOp)
+			elements = append(elements, Element{
+				mode: op.mode,
+				name: name,
+				hash: op.repo.markToEvent(op.ref).(*Blob).gitHash(),
+			})
+		}
+		sort.Slice(elements, func(i, j int) bool {
+			return elements[i].name < elements[j].name
 		})
+		var sb strings.Builder
+		for _, e := range elements {
+			fmt.Fprintf(&sb, "%s %s\x00%s", e.mode, e.name, e.hash)
+		}
+		body := sb.String()
+		return gitHash(fmt.Sprintf("tree %d\x00%s", len(body), body))
 	}
-	for name, entry := range pm.blobs {
-		op := entry.(*FileOp)
-		elements = append(elements, Element{
-			mode: op.mode,
-			name: name,
-			hash: op.repo.markToEvent(op.ref).(*Blob).gitHash(),
-		})
-	}
-	sort.Slice(elements, func(i, j int) bool {
-		return elements[i].name < elements[j].name
-	})
-	var sb strings.Builder
-	for _, e := range elements {
-		fmt.Fprintf(&sb, "%s %s\x00%s", e.mode, e.name, e.hash)
-	}
-	body := sb.String()
-	return gitHash(fmt.Sprintf("tree %d\x00%s", len(body), body))
+	return innerHash(&manifest.PathMap)
 }
 
 func (commit *Commit) gitHash() gitHashType {
