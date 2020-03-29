@@ -4541,6 +4541,9 @@ func (manifest *Manifest) gitHash() gitHashType {
 	}
 	var innerHash func(pm *PathMap) gitHashType
 	innerHash = func(pm *PathMap) gitHashType {
+		if hash, ok := pm.info.(gitHashType); ok {
+			return hash
+		}
 		elements := []Element{}
 		for name, subdir := range pm.dirs {
 			elements = append(elements, Element{
@@ -4565,7 +4568,11 @@ func (manifest *Manifest) gitHash() gitHashType {
 			fmt.Fprintf(&sb, "%s %s\x00%s", e.mode, e.name, e.hash)
 		}
 		body := sb.String()
-		return gitHash(fmt.Sprintf("tree %d\x00%s", len(body), body))
+		hash := gitHash(fmt.Sprintf("tree %d\x00%s", len(body), body))
+		if pm.shared { // The PathMap is immutable, we can cache its hash
+			pm.info = hash
+		}
+		return hash
 	}
 	return innerHash(&manifest.PathMap)
 }
@@ -5088,6 +5095,10 @@ type PathMap struct {
 	dirs   map[string]*PathMap
 	blobs  map[string]interface{}
 	shared bool
+	// The following member is not used by PathMap itself, but is available to
+	// users and/or wrapping structures as auxiliary storage. It is not copied
+	// when snaphotting, and is thus attached to a single PathMap instance.
+	info   interface{}
 }
 
 func newPathMap() *PathMap {
