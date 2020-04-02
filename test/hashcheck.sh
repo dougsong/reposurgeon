@@ -16,13 +16,6 @@ command -v git >/dev/null 2>&1 || ( echo "$0: git is not installed"; exit 1 )
 # > it might be easiest to just demonstrate how to construct a full commit
 # > hash using shell commands and comparing to what git reports, and doing
 # > so a couple different ways for each step:
-# 
-# Very good.  I've made a start on hash computation.  It's in the public repo
-# at https://gitlab.com/esr/reposurgeon
-# 
-# I was able to follow your steps for blob hash computation and adapt
-# them into a test for blob hashing.  The new file test/hascheck.sh
-# looks like this:
 
 git init --quiet "${repo}"
 cd "${repo}" >/dev/null
@@ -54,17 +47,6 @@ then
     exit 1
 fi
 
-# This test passes and demonstrates that I have replicated git blob hashing
-# correctly.
-# 
-# The new reposurgeon "hash" commant is intended to take a selection set and
-# return for each hashable event a line of the form n: xxxxxxxx where n is
-# an event number and xxxxxxxx is the normal hex representation of its
-# SHA-1 hash.
-# 
-# Unfortunately, right now it only works for blobs, because I don't
-# understand the tree hash computation yet.  You wrote this:
-#  
 # > $ # Ask git for the inner tree hash, two different ways, then duplicate
 # > $ git rev-parse $(git write-tree):some
 # > 08687c1be8a39bde242c31d308baa4aba277dc02
