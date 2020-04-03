@@ -1375,19 +1375,19 @@ func testify(source DumpfileSource) {
 }
 
 // Hack pathnames to obscure them.
-func obscure(source DumpfileSource, selection SubversionRange) {
+func obscure(seq NameSequence, source DumpfileSource, selection SubversionRange) {
 	pathMutator := func(s []byte) []byte {
 		parts := strings.Split(filepath.ToSlash(string(s)), "/")
 		for i := range parts {
 			if parts[i] != "trunk" && parts[i] != "tags" && parts[i] != "branches" && parts[i] != "" {
-				parts[i] = obscureString(parts[i])
+				parts[i] = seq.obscureString(parts[i])
 			}
 		}
 		return []byte(filepath.FromSlash(strings.Join(parts, "/")))
 	}
 
 	nameMutator := func(s string) string {
-		return strings.ToLower(obscureString(s))
+		return strings.ToLower(seq.obscureString(s))
 	}
 
 	mutatePaths(source, selection, pathMutator, nameMutator)
@@ -1614,7 +1614,7 @@ func main() {
 	case "testify":
 		testify(NewDumpfileSource(input, baton))
 	case "obscure":
-		obscure(NewDumpfileSource(input, baton), selection)
+		obscure(NewNameSequence(), NewDumpfileSource(input, baton), selection)
 	case "help":
 		if len(flag.Args()) == 1 {
 			os.Stdout.WriteString(doc)

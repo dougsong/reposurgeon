@@ -17777,8 +17777,9 @@ func (rs *Reposurgeon) DoSizeof(lineIn string) bool {
 	fmt.Fprintf(control.baton, "int:               %3d\n", unsafe.Sizeof(0))
 	fmt.Fprintf(control.baton, "map[string]string: %3d\n", unsafe.Sizeof(make(map[string]string)))
 	fmt.Fprintf(control.baton, "[]string:          %3d\n", unsafe.Sizeof(make([]string, 0)))
-	fmt.Fprintf(control.baton, "raw modulus:      %-5d\n", len(color)*len(item))
-	fmt.Fprintf(control.baton, "modulus/phi:      %-5d\n", int((float64(len(color)*len(item)))/phi))
+	seq := NewNameSequence()
+	fmt.Fprintf(control.baton, "raw modulus:      %-5d\n", len(seq.color)*len(seq.item))
+	fmt.Fprintf(control.baton, "modulus/phi:      %-5d\n", int((float64(len(seq.color)*len(seq.item)))/phi))
 	return false
 }
 

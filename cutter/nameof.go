@@ -14,15 +14,27 @@ import (
 	"math"
 )
 
-var color, item []string
-var ncolors, nitems, wheelsize int
 var phi float64
-var seenStrings map[string]string
+
+// A NameSequence is an infinite list of randomly-generated but stable
+// names. Use the fancyName method to get the nth name from the list,
+// or the obscureString method to replace an input string with the
+// next randomly-generated name. obscureString keeps a hash of input
+// strings so that it can produce the same output for the same input.
+type NameSequence struct {
+	color []string
+	item []string
+	seenStrings map[string]string
+	modulus int
+}
 
 func init() {
 	phi = (1 + math.Sqrt(5)) / 2
+}
 
-	color = []string{
+func NewNameSequence() NameSequence {
+	seq := NameSequence{}
+	seq.color = []string{
 		//  "Adamant",          // 3 syllables
 		"Amber",
 		"Argent",
@@ -120,7 +132,7 @@ func init() {
 		"Vitrine",
 	}
 
-	item = []string{
+	seq.item = []string{
 		"Angel",
 		"Axe",
 		"Bear",
@@ -275,40 +287,41 @@ func init() {
 	//    "Temple",          // collides with Shrine
 	//    "Unicorn",         // 3 syllables
 
-	ncolors = len(color)
-	nitems = len(item)
-	wheelsize = ncolors * nitems
-	seenStrings = make(map[string]string)
-}
+	seq.seenStrings = make(map[string]string)
 
-// Choose a prime close to (ncolors * nitems) / phi, where phi is the
-// Golden Section ratio.  This is supposed to give the scramble better
-// `randomness' properties.
-// Good primes are at https://en.wikipedia.org/wiki/List_of_prime_numbers
-const modulus = 5333
+	// Choose a prime close to (ncolors * nitems) / phi, where phi is the
+	// Golden Section ratio.  This is supposed to give the scramble better
+	// `randomness' properties.
+	// Good primes are at https://en.wikipedia.org/wiki/List_of_prime_numbers
+	seq.modulus = 5333
+	return seq
+}
 
 // scramble chooses a semi-random number in the wheel range
-func scramble(n int) int {
-	return (modulus * n) % (len(color) * len(item))
+func (seq *NameSequence) scramble(n int) int {
+	return (seq.modulus * n) % (len(seq.color) * len(seq.item))
 }
 
-// fancyName Return fanciful name corresponding to number n.
-func fancyName(n int) string {
+// fancyName returns the fanciful name corresponding to number n.
+func (seq *NameSequence) fancyName(n int) string {
+	ncolors := len(seq.color)
+	nitems := len(seq.item)
+	wheelsize := ncolors * nitems
 	m := int(n / wheelsize)
-	n = scramble(n % wheelsize)
-	name := color[int(n%ncolors)] + item[int(n/ncolors)%nitems]
+	n = seq.scramble(n % wheelsize)
+	name := seq.color[int(n%ncolors)] + seq.item[int(n/ncolors)%nitems]
 	if m > 0 {
 		name += fmt.Sprintf("%d", m)
 	}
 	return name
 }
 
-func obscureString(s string) string {
-	v, ok := seenStrings[s]
+func (seq *NameSequence) obscureString(s string) string {
+	v, ok := seq.seenStrings[s]
 	if ok {
 		return v
 	}
-	v = fancyName(len(seenStrings))
-	seenStrings[s] = v
+	v = seq.fancyName(len(seq.seenStrings))
+	seq.seenStrings[s] = v
 	return v
 }
