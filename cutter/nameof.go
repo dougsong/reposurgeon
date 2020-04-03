@@ -15,7 +15,7 @@ import (
 )
 
 var color, item []string
-var ncolors, nitems int
+var ncolors, nitems, wheelsize int
 var phi float64
 var seenStrings map[string]string
 
@@ -277,6 +277,7 @@ func init() {
 
 	ncolors = len(color)
 	nitems = len(item)
+	wheelsize = ncolors * nitems
 	seenStrings = make(map[string]string)
 }
 
@@ -293,8 +294,8 @@ func scramble(n int) int {
 
 // fancyName Return fanciful name corresponding to number n.
 func fancyName(n int) string {
-	n = scramble(n)
-	m := int(n / (ncolors * nitems))
+	n = scramble(n % wheelsize)
+	m := int(n / wheelsize)
 	name := color[int(n%ncolors)] + item[int(n/ncolors)%nitems]
 	if m > 0 {
 		name += fmt.Sprintf("%d", m)
@@ -307,7 +308,7 @@ func obscureString(s string) string {
 	if ok {
 		return v
 	}
-	v = fancyName(len(seenStrings) + 1)
+	v = fancyName(len(seenStrings))
 	seenStrings[s] = v
 	return v
 }
