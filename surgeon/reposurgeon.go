@@ -728,18 +728,10 @@ func (s orderedIntSet) String() string {
 // expense of space.
 type fastOrderedIntSet struct{ set *orderedset.Set }
 
-type fastOrderedIntSetIt struct{ it orderedset.Iterator }
-
-func (x *fastOrderedIntSetIt) Next() bool {
-	return x.it.Next()
-}
-
-func (x *fastOrderedIntSetIt) Index() int {
-	return x.it.Index()
-}
+type fastOrderedIntSetIt struct{ orderedset.Iterator }
 
 func (x *fastOrderedIntSetIt) Value() int {
-	return x.it.Value().(int)
+	return x.Iterator.Value().(int)
 }
 
 func newFastOrderedIntSet(x ...int) *fastOrderedIntSet {
@@ -755,7 +747,7 @@ func (s fastOrderedIntSet) Size() int {
 }
 
 func (s fastOrderedIntSet) Iterator() fastOrderedIntSetIt {
-	return fastOrderedIntSetIt{it: s.set.Iterator()}
+	return fastOrderedIntSetIt{Iterator: s.set.Iterator()}
 }
 
 func (s fastOrderedIntSet) Values() []int {
