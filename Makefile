@@ -72,6 +72,7 @@ get:
 
 test:
 	go test $(TESTOPTS) ./surgeon
+	go test $(TESTOPTS) ./cutter
 
 PYLINTOPTS = --rcfile=/dev/null --reports=n \
 	--msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" \

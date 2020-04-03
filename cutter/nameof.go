@@ -294,8 +294,8 @@ func scramble(n int) int {
 
 // fancyName Return fanciful name corresponding to number n.
 func fancyName(n int) string {
-	n = scramble(n % wheelsize)
 	m := int(n / wheelsize)
+	n = scramble(n % wheelsize)
 	name := color[int(n%ncolors)] + item[int(n/ncolors)%nitems]
 	if m > 0 {
 		name += fmt.Sprintf("%d", m)
