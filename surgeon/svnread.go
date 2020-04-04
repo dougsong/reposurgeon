@@ -185,8 +185,8 @@ func (h *History) apply(revision revidx, nodes []*NodeAction) {
 			//logit(logFILEMAP, "r%d-%d: deduced type for %s", node.revision, node.index, node)
 			// Snapshot the deleted paths before
 			// removing them.
-			node.fromSet = newPathMap()
-			node.fromSet.copyFrom(node.path, h.visibleHere, node.path)
+			node.fileSet = newPathMap()
+			node.fileSet.copyFrom(node.path, h.visibleHere, node.path)
 			h.visibleHere.remove(node.path)
 			logit(logFILEMAP, "r%d-%d: %s deleted",
 				node.revision, node.index, node.path)
@@ -199,9 +199,11 @@ func (h *History) apply(revision revidx, nodes []*NodeAction) {
 	h.visible[revision] = h.visibleHere.snapshot()
 
 	for _, node := range nodes {
+		// Remember the copied files at their new position in a dedicated map
+		// so we can later expand the copy node into multiple file creations.
 		if node.isCopy() {
-			node.fromSet = newPathMap()
-			node.fromSet.copyFrom(node.fromPath, h.visible[node.fromRev], node.fromPath)
+			node.fileSet = newPathMap()
+			node.fileSet.copyFrom(node.path, h.visible[node.fromRev], node.fromPath)
 		}
 		control.baton.twirl()
 	}
@@ -605,7 +607,7 @@ type NodeAction struct {
 	//fromHash    string
 	blob       *Blob
 	props      *OrderedMap
-	fromSet    *PathMap
+	fileSet    *PathMap
 	blobmark   markidx
 	revision   revidx
 	fromRev    revidx
@@ -625,8 +627,8 @@ func (action NodeAction) String() string {
 	if action.fromRev != 0 {
 		out += fmt.Sprintf(" from=%d", action.fromRev) + "~" + action.fromPath
 	}
-	//if action.fromSet != nil && !action.fromSet.isEmpty() {
-	//	out += " sources=" + action.fromSet.String()
+	//if action.fileSet != nil && !action.fileSet.isEmpty() {
+	//	out += " sources=" + action.fileSet.String()
 	//}
 	if action.hasProperties() && action.props.Len() > 0 {
 		out += " props=" + action.props.vcString()
@@ -1045,8 +1047,8 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 						// A delete or replace with no from set
 						// can occur if the directory is empty.
 						// We can just ignore that case. Otherwise...
-						if node.fromSet != nil {
-							node.fromSet.iter(func(child string, _ interface{}) {
+						if node.fileSet != nil {
+							node.fileSet.iter(func(child string, _ interface{}) {
 								logit(logEXTRACT, "r%d-%d~%s: deleting %s", node.revision, node.index, node.path, child)
 								newnode := new(NodeAction)
 								newnode.path = child
@@ -1066,12 +1068,12 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 					}
 					logit(logEXTRACT, "r%d-%d: %s copy to %s from r%d~%s",
 						node.revision, node.index, copyType, node.path, node.fromRev, node.fromPath)
-					// Now generate copies for all files in the
-					// copy source directory.
-					node.fromSet.iter(func(source string, copied interface{}) {
+					// Now generate nodes for all files that were actually copied
+					// fileSet contains nodes at their destination
+					node.fileSet.iter(func(dest string, copied interface{}) {
 						found := copied.(*NodeAction)
 						subnode := new(NodeAction)
-						subnode.path = node.path + source[len(node.fromPath):]
+						subnode.path = dest
 						subnode.revision = node.revision
 						subnode.fromPath = found.path
 						subnode.fromRev = found.revision
@@ -1088,8 +1090,8 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 						appendExpanded(subnode)
 					})
 				}
-				// Allow GC to reclaim fromSet storage, we no longer need it
-				node.fromSet = nil
+				// Allow GC to reclaim fileSet storage, we no longer need it
+				node.fileSet = nil
 			}
 		}
 		sp.revisions[ri].nodes = expandedNodes
