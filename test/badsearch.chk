@@ -1,0 +1,169 @@
+     3 2010-10-22T13:36:22Z     :2 2f4b80 The adventure begins.
+     5 2010-10-22T13:52:44Z     :4 4305dc Beginnings of core classes.
+     7 2010-10-22T14:50:14Z     :6 1a9cc0 Beginning of design notes.
+    10 2010-10-22T17:26:58Z     :9 9ed4e1 Sync data structures with design notes.
+    12 2010-10-24T11:18:27Z    :11 bab063 Skeleton of fast-import logic.
+    14 2010-10-24T13:09:49Z    :13 29f5f7 Fast-import reading except for commit objects.
+    16 2010-10-24T21:37:54Z    :15 beefc0 First commands are executing.
+    18 2010-10-25T07:30:09Z    :17 3bbbcb Options processing for subcommands.
+    20 2010-10-25T08:24:26Z    :19 b05bbe First parse of an entire dump.
+    22 2010-10-25T12:26:08Z    :21 7061b1 Typo fix and name change.
+    24 2010-10-25T12:26:32Z    :23 531f6a Upate theory of operation.
+    26 2010-10-25T18:37:24Z    :25 6c0ee9 First successful interpreted command.
+    29 2010-10-25T18:56:28Z    :28 e463ad Document limitations.
+    31 2010-10-25T19:11:45Z    :30 4b5e7a Fix a bug, add instrumentation.
+    33 2010-10-25T19:35:46Z    :32 b629b3 Partial fast-export (everything but blobs.
+    35 2010-10-25T23:24:52Z    :34 62d35e Blob dumping appears to work.
+    37 2010-10-26T01:43:01Z    :36 1de32e We interpret command-ine arguments now.
+    39 2010-10-26T01:57:57Z    :38 f52211 We're pretty close to round-tripping a git dump no
+    41 2010-10-26T04:40:11Z    :40 fc1f75 Checkpoint before tring to write only requred mark
+    43 2010-10-26T05:04:04Z    :42 1fb40e This round-trips everything except the lightweight
+    45 2010-10-26T08:33:51Z    :44 596d9f OK, now we have perfect round-tripping.
+    50 2010-10-26T09:02:25Z    :49 91fc97 Add and document a regression test.
+    52 2010-10-26T09:04:42Z    :51 604abb git-fast-export captures lightweight tags after al
+    54 2010-10-26T10:01:42Z    :53 e67555 Re-enable command interpretation.
+    56 2010-10-26T10:09:32Z    :55 7c7b81 repr -> str.
+    58 2010-10-26T10:10:32Z    :57 ae0543 Quiet the regression tests a little.
+    60 2010-10-26T10:13:30Z    :59 c65f20 Pass through mystery lines.
+    62 2010-10-26T11:24:30Z    :61 6d3928 Add do_shell and some help.
+    67 2010-10-26T11:39:45Z    :66 4b804d Add doccumentation, a makefile, help commands, and
+    70 2010-10-26T11:46:25Z    :69 dea6da Name change.
+    72 2010-10-26T11:48:48Z    :71 b86783 Avoid an aliasing problem.
+    76 2010-10-26T11:51:31Z    :75 d7fd27 Follow up on name change.
+    78 2010-10-26T11:53:18Z    :77 f4e42d There is no specfile.
+    81 2010-10-26T13:35:46Z    :80 c5055e Implemented 'prefer'.
+    83 2010-10-26T13:51:02Z    :82 659f41 Fix buggy implementation of "prefer".
+    85 2010-10-26T14:00:02Z    :84 174520 Set the write default type more intelligently.
+    88 2010-10-26T17:03:32Z    :87 bc52c5 Try to get the write and rebuild logic right.
+    90 2010-10-26T17:26:02Z    :89 ffc6f8 Add twirling-batob progress meters.
+    93 2010-10-26T17:58:00Z    :92 be4302 Cut verbosity, improve statistics.
+    96 2010-10-26T18:24:01Z    :95 580b5f Added the 'view' command.
+    99 2010-10-27T06:19:34Z    :98 7fdd05 Implement and document 'index'; document some plan
+   101 2010-10-27T10:00:15Z   :100 8aea65 First try at an expression language.
+   103 2010-10-27T11:41:58Z   :102 628510 Numbers, mark lookup, and $ are working.  Span pun
+   105 2010-10-27T12:07:32Z   :104 b1ae2c Span resolution is working.
+   107 2010-10-27T15:30:58Z   :106 463a0a New recursive evaluator almost working.
+   109 2010-10-27T15:42:45Z   :108 23a765 OK, thismakes the binary logical operators work.
+   111 2010-10-27T15:53:46Z   :110 6ecf0f No hang on commandless line.
+   114 2010-10-27T17:17:37Z   :113 8f3ff7 Document the new selection-set language.
+   116 2010-10-27T17:25:36Z   :115 f5d797 Documentation fixes.
+   118 2010-10-27T17:54:20Z   :117 4cc63d Minor refactoring step, and lower the debug level.
+   120 2010-10-27T18:01:02Z   :119 1b0e3f Fix brown-paper-bag bug that broke the round-trip 
+   122 2010-10-27T18:22:01Z   :121 b4f44c Document a failed attempt.
+   124 2010-10-27T18:30:05Z   :123 96e0f2 Cut down on expensive input editing.
+   127 2010-10-27T18:43:32Z   :126 d5067f Switch selection sets from prefix to postfix.
+   129 2010-10-27T19:03:05Z   :128 23b1c4 Compute the correct default set for the index comm
+Expect malformed text specifier message
+reposurgeon: malformed text search specifier
+First listing - should not be truncated
+     3 2010-10-22T13:36:22Z     :2 2f4b80 The adventure begins.
+     5 2010-10-22T13:52:44Z     :4 4305dc Beginnings of core classes.
+     7 2010-10-22T14:50:14Z     :6 1a9cc0 Beginning of design notes.
+    10 2010-10-22T17:26:58Z     :9 9ed4e1 Sync data structures with design notes.
+    12 2010-10-24T11:18:27Z    :11 bab063 Skeleton of fast-import logic.
+    14 2010-10-24T13:09:49Z    :13 29f5f7 Fast-import reading except for commit objects.
+    16 2010-10-24T21:37:54Z    :15 beefc0 First commands are executing.
+    18 2010-10-25T07:30:09Z    :17 3bbbcb Options processing for subcommands.
+    20 2010-10-25T08:24:26Z    :19 b05bbe First parse of an entire dump.
+    22 2010-10-25T12:26:08Z    :21 7061b1 Typo fix and name change.
+    24 2010-10-25T12:26:32Z    :23 531f6a Upate theory of operation.
+    26 2010-10-25T18:37:24Z    :25 6c0ee9 First successful interpreted command.
+    29 2010-10-25T18:56:28Z    :28 e463ad Document limitations.
+    31 2010-10-25T19:11:45Z    :30 4b5e7a Fix a bug, add instrumentation.
+    33 2010-10-25T19:35:46Z    :32 b629b3 Partial fast-export (everything but blobs.
+    35 2010-10-25T23:24:52Z    :34 62d35e Blob dumping appears to work.
+    37 2010-10-26T01:43:01Z    :36 1de32e We interpret command-ine arguments now.
+    39 2010-10-26T01:57:57Z    :38 f52211 We're pretty close to round-tripping a git dump no
+    41 2010-10-26T04:40:11Z    :40 fc1f75 Checkpoint before tring to write only requred mark
+    43 2010-10-26T05:04:04Z    :42 1fb40e This round-trips everything except the lightweight
+    45 2010-10-26T08:33:51Z    :44 596d9f OK, now we have perfect round-tripping.
+    50 2010-10-26T09:02:25Z    :49 91fc97 Add and document a regression test.
+    52 2010-10-26T09:04:42Z    :51 604abb git-fast-export captures lightweight tags after al
+    54 2010-10-26T10:01:42Z    :53 e67555 Re-enable command interpretation.
+    56 2010-10-26T10:09:32Z    :55 7c7b81 repr -> str.
+    58 2010-10-26T10:10:32Z    :57 ae0543 Quiet the regression tests a little.
+    60 2010-10-26T10:13:30Z    :59 c65f20 Pass through mystery lines.
+    62 2010-10-26T11:24:30Z    :61 6d3928 Add do_shell and some help.
+    67 2010-10-26T11:39:45Z    :66 4b804d Add doccumentation, a makefile, help commands, and
+    70 2010-10-26T11:46:25Z    :69 dea6da Name change.
+    72 2010-10-26T11:48:48Z    :71 b86783 Avoid an aliasing problem.
+    76 2010-10-26T11:51:31Z    :75 d7fd27 Follow up on name change.
+    78 2010-10-26T11:53:18Z    :77 f4e42d There is no specfile.
+    81 2010-10-26T13:35:46Z    :80 c5055e Implemented 'prefer'.
+    83 2010-10-26T13:51:02Z    :82 659f41 Fix buggy implementation of "prefer".
+    85 2010-10-26T14:00:02Z    :84 174520 Set the write default type more intelligently.
+    88 2010-10-26T17:03:32Z    :87 bc52c5 Try to get the write and rebuild logic right.
+    90 2010-10-26T17:26:02Z    :89 ffc6f8 Add twirling-batob progress meters.
+    93 2010-10-26T17:58:00Z    :92 be4302 Cut verbosity, improve statistics.
+    96 2010-10-26T18:24:01Z    :95 580b5f Added the 'view' command.
+    99 2010-10-27T06:19:34Z    :98 7fdd05 Implement and document 'index'; document some plan
+   101 2010-10-27T10:00:15Z   :100 8aea65 First try at an expression language.
+   103 2010-10-27T11:41:58Z   :102 628510 Numbers, mark lookup, and $ are working.  Span pun
+   105 2010-10-27T12:07:32Z   :104 b1ae2c Span resolution is working.
+   107 2010-10-27T15:30:58Z   :106 463a0a New recursive evaluator almost working.
+   109 2010-10-27T15:42:45Z   :108 23a765 OK, thismakes the binary logical operators work.
+   111 2010-10-27T15:53:46Z   :110 6ecf0f No hang on commandless line.
+   114 2010-10-27T17:17:37Z   :113 8f3ff7 Document the new selection-set language.
+   116 2010-10-27T17:25:36Z   :115 f5d797 Documentation fixes.
+   118 2010-10-27T17:54:20Z   :117 4cc63d Minor refactoring step, and lower the debug level.
+   120 2010-10-27T18:01:02Z   :119 1b0e3f Fix brown-paper-bag bug that broke the round-trip 
+   122 2010-10-27T18:22:01Z   :121 b4f44c Document a failed attempt.
+   124 2010-10-27T18:30:05Z   :123 96e0f2 Cut down on expensive input editing.
+   127 2010-10-27T18:43:32Z   :126 d5067f Switch selection sets from prefix to postfix.
+   129 2010-10-27T19:03:05Z   :128 23b1c4 Compute the correct default set for the index comm
+Second listing - should not be truncated
+     3 2010-10-22T13:36:22Z     :2 2f4b80 The adventure begins.
+     5 2010-10-22T13:52:44Z     :4 4305dc Beginnings of core classes.
+     7 2010-10-22T14:50:14Z     :6 1a9cc0 Beginning of design notes.
+    10 2010-10-22T17:26:58Z     :9 9ed4e1 Sync data structures with design notes.
+    12 2010-10-24T11:18:27Z    :11 bab063 Skeleton of fast-import logic.
+    14 2010-10-24T13:09:49Z    :13 29f5f7 Fast-import reading except for commit objects.
+    16 2010-10-24T21:37:54Z    :15 beefc0 First commands are executing.
+    18 2010-10-25T07:30:09Z    :17 3bbbcb Options processing for subcommands.
+    20 2010-10-25T08:24:26Z    :19 b05bbe First parse of an entire dump.
+    22 2010-10-25T12:26:08Z    :21 7061b1 Typo fix and name change.
+    24 2010-10-25T12:26:32Z    :23 531f6a Upate theory of operation.
+    26 2010-10-25T18:37:24Z    :25 6c0ee9 First successful interpreted command.
+    29 2010-10-25T18:56:28Z    :28 e463ad Document limitations.
+    31 2010-10-25T19:11:45Z    :30 4b5e7a Fix a bug, add instrumentation.
+    33 2010-10-25T19:35:46Z    :32 b629b3 Partial fast-export (everything but blobs.
+    35 2010-10-25T23:24:52Z    :34 62d35e Blob dumping appears to work.
+    37 2010-10-26T01:43:01Z    :36 1de32e We interpret command-ine arguments now.
+    39 2010-10-26T01:57:57Z    :38 f52211 We're pretty close to round-tripping a git dump no
+    41 2010-10-26T04:40:11Z    :40 fc1f75 Checkpoint before tring to write only requred mark
+    43 2010-10-26T05:04:04Z    :42 1fb40e This round-trips everything except the lightweight
+    45 2010-10-26T08:33:51Z    :44 596d9f OK, now we have perfect round-tripping.
+    50 2010-10-26T09:02:25Z    :49 91fc97 Add and document a regression test.
+    52 2010-10-26T09:04:42Z    :51 604abb git-fast-export captures lightweight tags after al
+    54 2010-10-26T10:01:42Z    :53 e67555 Re-enable command interpretation.
+    56 2010-10-26T10:09:32Z    :55 7c7b81 repr -> str.
+    58 2010-10-26T10:10:32Z    :57 ae0543 Quiet the regression tests a little.
+    60 2010-10-26T10:13:30Z    :59 c65f20 Pass through mystery lines.
+    62 2010-10-26T11:24:30Z    :61 6d3928 Add do_shell and some help.
+    67 2010-10-26T11:39:45Z    :66 4b804d Add doccumentation, a makefile, help commands, and
+    70 2010-10-26T11:46:25Z    :69 dea6da Name change.
+    72 2010-10-26T11:48:48Z    :71 b86783 Avoid an aliasing problem.
+    76 2010-10-26T11:51:31Z    :75 d7fd27 Follow up on name change.
+    78 2010-10-26T11:53:18Z    :77 f4e42d There is no specfile.
+    81 2010-10-26T13:35:46Z    :80 c5055e Implemented 'prefer'.
+    83 2010-10-26T13:51:02Z    :82 659f41 Fix buggy implementation of "prefer".
+    85 2010-10-26T14:00:02Z    :84 174520 Set the write default type more intelligently.
+    88 2010-10-26T17:03:32Z    :87 bc52c5 Try to get the write and rebuild logic right.
+    90 2010-10-26T17:26:02Z    :89 ffc6f8 Add twirling-batob progress meters.
+    93 2010-10-26T17:58:00Z    :92 be4302 Cut verbosity, improve statistics.
+    96 2010-10-26T18:24:01Z    :95 580b5f Added the 'view' command.
+    99 2010-10-27T06:19:34Z    :98 7fdd05 Implement and document 'index'; document some plan
+   101 2010-10-27T10:00:15Z   :100 8aea65 First try at an expression language.
+   103 2010-10-27T11:41:58Z   :102 628510 Numbers, mark lookup, and $ are working.  Span pun
+   105 2010-10-27T12:07:32Z   :104 b1ae2c Span resolution is working.
+   107 2010-10-27T15:30:58Z   :106 463a0a New recursive evaluator almost working.
+   109 2010-10-27T15:42:45Z   :108 23a765 OK, thismakes the binary logical operators work.
+   111 2010-10-27T15:53:46Z   :110 6ecf0f No hang on commandless line.
+   114 2010-10-27T17:17:37Z   :113 8f3ff7 Document the new selection-set language.
+   116 2010-10-27T17:25:36Z   :115 f5d797 Documentation fixes.
+   118 2010-10-27T17:54:20Z   :117 4cc63d Minor refactoring step, and lower the debug level.
+   120 2010-10-27T18:01:02Z   :119 1b0e3f Fix brown-paper-bag bug that broke the round-trip 
+   122 2010-10-27T18:22:01Z   :121 b4f44c Document a failed attempt.
+   124 2010-10-27T18:30:05Z   :123 96e0f2 Cut down on expensive input editing.
+   127 2010-10-27T18:43:32Z   :126 d5067f Switch selection sets from prefix to postfix.
+   129 2010-10-27T19:03:05Z   :128 23b1c4 Compute the correct default set for the index comm

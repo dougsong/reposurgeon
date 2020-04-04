@@ -32,6 +32,7 @@ func init() {
 	phi = (1 + math.Sqrt(5)) / 2
 }
 
+// NewNameSequence is a random - name generator object.
 func NewNameSequence() NameSequence {
 	seq := NameSequence{}
 	seq.color = []string{

@@ -2928,7 +2928,7 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 		if taggerdate := msg.getHeader("Tagger-Date"); taggerdate != "" {
 			date, err := newDate(taggerdate)
 			if err != nil {
-				panic(throw("msgbox", "Malformed date %s in tag message: %v",
+				panic(throw("msgbox", "malformed date %s in tag message: %v",
 					taggerdate, err))
 			}
 			if !t.tagger.date.isZero() && !date.timestamp.Equal(t.tagger.date.timestamp) {
@@ -10033,6 +10033,7 @@ func (rs *Reposurgeon) SetCore(k *kommandant.Kmdt) {
 		defer func(stop *bool) {
 			if e := catch("command", recover()); e != nil {
 				croak(e.message)
+				rs.selection = nil
 				*stop = false
 			}
 		}(&stop)
