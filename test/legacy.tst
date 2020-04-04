@@ -1,4 +1,5 @@
 ## Legacy-ID pattern-matching
+set testmode
 read <legacy.fi
 print Initially no sourcetype is set, so =N should be empty
 set interactive
