@@ -1068,13 +1068,8 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 						node.revision, node.index, copyType, node.path, node.fromRev, node.fromPath)
 					// Now generate copies for all files in the
 					// copy source directory.
-					node.fromSet.iter(func(source string, _ interface{}) {
-						found := sp.history.getActionNode(node.fromRev, source)
-						if found == nil {
-							logit(logSHOUT, "r%d-%d: can't find ancestor of %s at r%d",
-								node.revision, node.index, source, node.fromRev)
-							return
-						}
+					node.fromSet.iter(func(source string, copied interface{}) {
+						found := copied.(*NodeAction)
 						subnode := new(NodeAction)
 						subnode.path = node.path + source[len(node.fromPath):]
 						subnode.revision = node.revision
