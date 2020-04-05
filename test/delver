@@ -9,24 +9,36 @@
 # run reposurgeon, and its own terminal-emulator
 # window for controls.  The reason this is required
 # is that a non-headless delve instance messes with stdin,
-# which becomes unavailable to reposurgeon.
+# which becomes unavailable to the spawned program.
 #
 # To actually start reposurgeon, type 'continue' or 'c'
 # to the delve control window.
 
 # Set the terminal emulator to use here. It must execute
 # following arguments as a command within the terminal.
-# Another possibility here would be "gnome-terminal -x"
-TERMINAL="rxvt -rv -T Delve-controls -e"
+if command -v rxvt >/dev/null 2>&1
+then
+    TERMINAL="rxvt -rv -T Delve-controls -e"
+elif command -v gnome-terminal >/dev/null 2>&1
+then
+     TERMINAL="gnome-terminal -x"
+elif command -v xterm >/dev/null 2>&1
+then
+     TERMINAL="xterm -T Delve-controls -e"
+else
+    echo "delver: commot find a usable terminal emulator" >&2
+    exit 1
+fi
 
-# If this script is called from the test directory,
-# pop up to the top level
-case $PWD in *test) cd ..;; esac
+# If this script is called from the test or source code directories,
+# pop up to the top level so we resolve oaths from a known location.
+case $PWD in *test|*surgeon) cd ..;; esac
 
-# Factor out the name of the module to debug
+# Factor out the name of the module to debug.
+# This is the path that needs consistent resolution.
 MODULE=./surgeon
 
-# Mechanism starts here
+# Mechanism starts here.
 (sleep 1; ${TERMINAL} dlv connect 127.0.1:3100) &
 serverpid=$!
 trap 'kill ${serverpid} 2>/dev/null' EXIT HUP INT QUIT TERM
