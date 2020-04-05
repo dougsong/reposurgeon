@@ -4236,7 +4236,7 @@ func (commit *Commit) addParentCommit(newparent *Commit) {
 func (commit *Commit) addParentByMark(mark string) {
 	newparent := commit.repo.markToEvent(mark)
 	if newparent == nil {
-		panic("Ill-formed stream: cannot resolve " + mark)
+		panic(throw("parse", "Ill-formed stream: cannot resolve " + mark))
 	}
 	commit.addParentCommit(newparent.(*Commit))
 }
@@ -16902,7 +16902,8 @@ func (rs *Reposurgeon) DoVersion(line string) bool {
 			major = strings.TrimSpace(line)
 		}
 		if major != vmajor {
-			panic("major version mismatch, aborting.")
+			croak("major version mismatch, aborting.")
+			return true
 		} else if control.isInteractive() {
 			parse.respond("version check passed.")
 
