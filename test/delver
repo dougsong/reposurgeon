@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# delver - run Golang debugger on reposurgeon
+#
+# Based on this recipe:
+# https://github.com/go-delve/delve/issues/1982
+#
+# This script spawns a headless delve instance to
+# run reposurgeon, and its own terminal-emulator
+# window for controls.  The reason this is required
+# is that a non-headless delve instance messes with stdin,
+# which becomes unavailable to reposurgeon.
+#
+# To actually start reposurgeon, type 'continue' or 'c'
+# to the delve control window.
+
+# Set the terminal emulator to use here. It must execute
+# following arguments as a command within the terminal.
+# Another possibility here would be "gnome-terminal -x"
+TERMINAL="rxvt -rv -T Delve-controls -e"
+
+# If this script is called from the test directory,
+# pop up to the top level
+case $PWD in *test) cd ..;; esac
+
+# Factor out the name of the module to debug
+MODULE=./surgeon
+
+# Mechanism starts here
+(sleep 1; ${TERMINAL} dlv connect 127.0.1:3100) &
+serverpid=$!
+trap 'kill ${serverpid} 2>/dev/null' EXIT HUP INT QUIT TERM
+dlv debug "${MODULE}" --headless --listen 127.0.0.1:3100
+
+#end
+
