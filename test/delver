@@ -18,13 +18,15 @@
 # following arguments as a command within the terminal.
 if command -v rxvt >/dev/null 2>&1
 then
-    # This sets reverse video (black background). Forcing the terminal
-    # type to VT100 prevents delve from using dark-blue highlighting for
-    # source-line numbers, which doesn't play so well on a black background.
-    # A more elegant way to do this would be to source-list-line-color,
-    # but delve doesn't document how to do this or what the values are.
+    # This sets reverse video (black background). You'd expect forcing
+    # the terminal type to something like VT100 to prevent delve from
+    # using dark-blue highlighting for source-line numbers, which
+    # doesn't play so well on a black background.  That doesn't work.
+    # Insead, you must modify the configuration file at 
+    # ~/.config/dlv/config.yml and 3/4 with a setting line something
+    # like "source-list-line-color: 37", using foreground colors
+    # defined here: https://en.wikipedia.org/wiki/ANSI_escape_code#Color
     TERMINAL="rxvt -rv -T Delve-controls -e"
-    TERM=vt100
 elif command -v gnome-terminal >/dev/null 2>&1
 then
      TERMINAL="gnome-terminal -x"
@@ -32,13 +34,14 @@ elif command -v xterm >/dev/null 2>&1
 then
      TERMINAL="xterm -T Delve-controls -e"
 else
-    echo "delver: commot find a usable terminal emulator" >&2
+    echo "delver: cannot find a usable terminal emulator" >&2
     exit 1
 fi
 
 # If this script is called from the test or source code directories,
 # pop up to the top level so we resolve paths from a known location.
-case $PWD in *test|*surgeon) cd ..;; esac
+case $PWD in */test$|*/surgeon$) cd ..;; esac
+echo "At: $PWD"
 
 # Factor out the name of the module to debug.
 # This is the path that needs consistent resolution.
