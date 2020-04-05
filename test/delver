@@ -18,15 +18,7 @@
 # following arguments as a command within the terminal.
 if command -v rxvt >/dev/null 2>&1
 then
-    # This sets reverse video (black background). You'd expect forcing
-    # the terminal type to something like VT100 to prevent delve from
-    # using dark-blue highlighting for source-line numbers, which
-    # doesn't play so well on a black background.  That doesn't work.
-    # Insead, you must modify the configuration file at 
-    # ~/.config/dlv/config.yml and 3/4 with a setting line something
-    # like "source-list-line-color: 37", using foreground colors
-    # defined here: https://en.wikipedia.org/wiki/ANSI_escape_code#Color
-    TERMINAL="rxvt -rv -T Delve-controls -e"
+    TERMINAL="rxvt -T Delve-controls -e"
 elif command -v gnome-terminal >/dev/null 2>&1
 then
      TERMINAL="gnome-terminal -x"
@@ -51,6 +43,13 @@ MODULE=./surgeon
 serverpid=$!
 trap 'kill ${serverpid} 2>/dev/null' EXIT HUP INT QUIT TERM
 dlv debug "${MODULE}" --headless --listen 127.0.0.1:3100
+
+# By default delve uses dark-blue highlighting for source-line
+# numbers, which doesn't play so well on a black background.  To fix
+# this, modify the configuration file at ~/.config/dlv/config.yml and
+# 3/4 with a setting line something like "source-list-line-color: 37",
+# using foreground colors defined here:
+# https://en.wikipedia.org/wiki/ANSI_escape_code#Color
 
 #end
 
