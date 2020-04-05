@@ -78,7 +78,7 @@ options:
 
 # Show summary lines for all tests.
 testlist:
-	@grep --text '^##' *.tst
+	@grep --text '^##' *.tst *.sh
 	@grep --text '^ ##' *.svn
 listcheck:
 	@for f in *.tst *.svn; do \

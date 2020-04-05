@@ -40,7 +40,10 @@ of a Subversion stream:
    
 No output means that a compare-all showed no errors or warnings.
 
-To allow the code to emit a stack trace, set anny log bit.
+To allow the code to emit a stack trace, set any log bit.
+
+The script "delver" is available to run the Golang debugger,
+dlv, on reposurgeon.
 
 == Notes on the test machinery ==
 
@@ -433,22 +436,6 @@ You can use singlelift -o to dump a fast import stream made
 from a named Subversion dump.  In this more you can also use
 -l to set reposurgeon log flags.
 
-== Sporadic tests ==
-
-We have some scripts intended to check Subversion's behavior.
-
-svncheck0.sh:
-   General test of dump stream operations.
-
-svncheck1.sh:
-   Simple check that a file copy propagates the executable bit.
-
-svncheck2.sh:
-   A directory copy propagates it too.
-
-svncheck3.sh
-   Variant of previous test with different op order.
-
 == Tuning for speed ==
 
 The goal of moving the code to Golang is to improve conversion
@@ -556,7 +543,7 @@ library is used to add new regions to the trace file. Its first
 argument is a Context object from the Go context library, which needs
 to be passed down the call tree. The Context objects can have metadata
 associated with them which is supposed to show up in the trace viewer,
-but I haven't yet explored this feature.
+but this feature is not yet exploited.
 
 === Some references ===
 

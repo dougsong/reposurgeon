@@ -31,7 +31,7 @@ else
 fi
 
 # If this script is called from the test or source code directories,
-# pop up to the top level so we resolve oaths from a known location.
+# pop up to the top level so we resolve paths from a known location.
 case $PWD in *test|*surgeon) cd ..;; esac
 
 # Factor out the name of the module to debug.
