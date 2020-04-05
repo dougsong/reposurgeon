@@ -18,7 +18,13 @@
 # following arguments as a command within the terminal.
 if command -v rxvt >/dev/null 2>&1
 then
+    # This sets reverse video (black background). Forcing the terminal
+    # type to VT100 prevents delve from using dark-blue highlighting for
+    # source-line numbers, which doesn't play so well on a black background.
+    # A more elegant way to do this would be to source-list-line-color,
+    # but delve doesn't document how to do this or what the values are.
     TERMINAL="rxvt -rv -T Delve-controls -e"
+    TERM=vt100
 elif command -v gnome-terminal >/dev/null 2>&1
 then
      TERMINAL="gnome-terminal -x"
