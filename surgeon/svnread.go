@@ -429,12 +429,13 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 							node.blob = newBlob(sp.repo)
 							node.blob.setContent(text, start)
 							// Ugh - cope with strange undocumented Subversion
-							// format for storing links.  Apparently the dumper
-							// puts "link " in front of the path and the loader
-							// (or at least git-svn) removes it.  But the link
-							// op is only marked with property svn:special on
-							// creation, on modification.  So we have to track
-							// which paths are currently symlinks, && take off
+							// format for storing links.  On a symlink add, the dumper
+							// uses the link source as the node path; the link target
+							// pathname is put in the content blob with "link " in
+							// front of it. What's ugly is that the the link op is
+							// only marked with property svn:special on creation,
+							// not on modification.  So we have to track
+							// which paths are currently symlinks, and take off
 							// that mark when a path is deleted in case it
 							// later gets recreated as a non-sym link.
 							if bytes.HasPrefix(text, []byte("link ")) {
