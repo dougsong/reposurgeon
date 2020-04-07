@@ -9789,6 +9789,9 @@ func (rs *Reposurgeon) PreCmd(line string) string {
 	rs.logHighwater = control.logcounter
 	rs.buildPrompt()
 
+	if len(rs.callstack) == 0 {
+		control.setAbort(false)
+	}
 	return rest
 }
 
@@ -17223,9 +17226,6 @@ func (rs *Reposurgeon) DoScript(ctx context.Context, lineIn string) bool {
 	if len(lineIn) == 0 {
 		respond("script requires a file argument\n")
 		return false
-	}
-	if len(rs.callstack) == 0 {
-		control.setAbort(false)
 	}
 	words := strings.Split(lineIn, " ")
 	rs.callstack = append(rs.callstack, words)
