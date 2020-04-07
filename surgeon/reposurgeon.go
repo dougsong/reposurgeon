@@ -9695,7 +9695,6 @@ func (rs *Reposurgeon) SetCore(k *kommandant.Kmdt) {
 		defer func(stop *bool) {
 			if e := catch("command", recover()); e != nil {
 				croak(e.message)
-				rs.selection = nil
 				*stop = false
 			}
 		}(&stop)
@@ -9774,17 +9773,16 @@ func (rs *Reposurgeon) PreCmd(line string) string {
 		}
 	}(&line)
 
+	// nil means that the user specified no
+	// specific selection set. each command has a
+	// different notion of what to do in that
+	// case; some bail out, others operate on the
+	// whole repository, etc.
+	rs.selection = nil
 	machine, rest := rs.parseSelectionSet(line)
 	if rs.chosen() != nil {
 		if machine != nil {
 			rs.selection = rs.evalSelectionSet(machine, rs.chosen())
-		} else {
-			// nil means that the user specified no
-			// specific selection set. each command has a
-			// different notion of what to do in that
-			// case; some bail out, others operate on the
-			// whole repository, etc.
-			rs.selection = nil
 		}
 	}
 
