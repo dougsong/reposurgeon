@@ -1215,7 +1215,7 @@ func pop(source DumpfileSource, selection SubversionRange) {
 }
 
 // Hack paths by applying a specified transformation.
-func mutatePaths(source DumpfileSource, selection SubversionRange, pathMutator func([]byte) []byte, nameMutator func(string) string) {
+func mutatePaths(source DumpfileSource, selection SubversionRange, pathMutator func([]byte) []byte, nameMutator func(string) string, contentMutator func([]byte) []byte) {
 	revhook := func(props *Properties) {
 		if _, present := props.properties["svn:mergeinfo"]; present {
 			mergeinfo := string(props.properties["svn:mergeinfo"])
@@ -1256,6 +1256,9 @@ func mutatePaths(source DumpfileSource, selection SubversionRange, pathMutator f
 				header = append(header, after...)
 			}
 		}
+		if contentMutator != nil {
+			content = contentMutator(content)
+		}
 		all := make([]byte, 0)
 		all = append(all, header...)
 		all = append(all, properties...)
@@ -1272,7 +1275,7 @@ func pathrename(source DumpfileSource, selection SubversionRange, patterns []str
 		return r.ReplaceAll(s, []byte(patterns[1]))
 	}
 
-	mutatePaths(source, selection, mutator, nil)
+	mutatePaths(source, selection, mutator, nil, nil)
 }
 
 // Renumber all revisions.
@@ -1390,7 +1393,31 @@ func obscure(seq NameSequence, source DumpfileSource, selection SubversionRange)
 		return strings.ToLower(seq.obscureString(s))
 	}
 
-	mutatePaths(source, selection, pathMutator, nameMutator)
+	min := func(a, b int) int {
+		if a < b {
+			return a
+		}
+		return b
+	}
+
+	contentMutator := func(s []byte) []byte {
+		// Won't bijectively map link target names longer or
+		// shorter than the generated fancyname.  The problem
+		// here is that we can't change the length of this
+		// content - no way to patch the length headers. Note:
+		// ideally we'd also remove the content hashes, they
+		// become invalid after this transformation.
+		if bytes.HasPrefix(s, []byte("link ")) {
+			t := pathMutator(s[5:])
+			c := min(len(s)-5, len(t))
+			for i := 0; i < c; i++ {
+				s[5+i] = t[i]
+			}
+		}
+		return s
+	}
+
+	mutatePaths(source, selection, pathMutator, nameMutator, contentMutator)
 }
 
 // Strip out ops defined by a revision selection and a path regexp.
