@@ -12640,8 +12640,10 @@ func (rs *Reposurgeon) DoSetfield(line string) bool {
 	for _, ei := range rs.selection {
 		event := repo.events[ei]
 		if _, ok := getAttr(event, field); ok {
-			// FIXME: Uh oh, hash evaluation doesn'r get done here
 			setAttr(event, field, value)
+			if event.isCommit() {
+				event.(*Commit).hash.invalidate()
+			}
 		} else if commit, ok := event.(*Commit); ok {
 			if field == "author" {
 				attr := value
