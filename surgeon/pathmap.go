@@ -27,7 +27,7 @@ type PathMap struct {
 	// The following member is not used by PathMap itself, but is available to
 	// users and/or wrapping structures as auxiliary storage. It is not copied
 	// when snaphotting, and is thus attached to a single PathMap instance.
-	info   interface{}
+	info interface{}
 }
 
 func newPathMap() *PathMap {

@@ -22,10 +22,10 @@ var phi float64
 // next randomly-generated name. obscureString keeps a hash of input
 // strings so that it can produce the same output for the same input.
 type NameSequence struct {
-	color []string
-	item []string
+	color       []string
+	item        []string
 	seenStrings map[string]string
-	modulus int
+	modulus     int
 }
 
 func init() {

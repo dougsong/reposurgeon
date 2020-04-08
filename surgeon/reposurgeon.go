@@ -1872,7 +1872,7 @@ func newMessageBlock(bp *bufio.Reader) (*MessageBlock, error) {
 				}
 				// undo byte-stuffing *after* the delimiter check
 				if bytes.HasPrefix(line, []byte(".")) {
-					line = line[1 : len(line)]
+					line = line[1:len(line)]
 				}
 				msg.body += string(line)
 			}
@@ -2262,7 +2262,7 @@ func (attr *Attribution) remap(authors map[string]Contributor) {
 }
 
 /*
- * Hashing.  These twi functions are the only place in the code 
+ * Hashing.  These two functions are the only place in the code
  * that knows what hash Git actually uses.  Elsewhere hashes
  * are treated as uninterpreted cookies that can be formatted
  * as hex-quad pairs of an ubspecifued length.
@@ -2272,7 +2272,8 @@ func (attr *Attribution) remap(authors map[string]Contributor) {
  * be a dependency there.
  */
 type gitHashType [sha1.Size]byte
-var nullGitHash gitHashType	// Do not modify rthis!
+
+var nullGitHash gitHashType // Do not modify this!
 
 func gitHash(data string) gitHashType {
 	return sha1.Sum([]byte(data))
@@ -2343,9 +2344,9 @@ type Blob struct {
 	cookie       Cookie // CVS/SVN cookie analyzed out of this file
 	repo         *Repository
 	opset        map[*FileOp]bool // Fileops associated with this blob
-	opsetLock	 sync.Mutex
-	start        int64           // Seek start if this blob refers into a dump
-	size         int64           // length start if this blob refers into a dump
+	opsetLock    sync.Mutex
+	start        int64 // Seek start if this blob refers into a dump
+	size         int64 // length start if this blob refers into a dump
 	_expungehook *Blob
 	blobseq      blobidx
 	hash         gitHashType
@@ -3568,14 +3569,14 @@ type Commit struct {
 	authors        []Attribution // Authors of commit
 	committer      Attribution   // Person responsible for committing it.
 	fileops        []*FileOp     // blob and file operation list
-	_manifest      *Manifest      // efficient map of *Fileop values
+	_manifest      *Manifest     // efficient map of *Fileop values
 	repo           *Repository
 	properties     *OrderedMap  // commit properties (extension)
 	attachments    []Event      // Tags and Resets pointing at this commit
 	_parentNodes   []CommitLike // list of parent nodes
 	_childNodes    []CommitLike // list of child nodes
 	_expungehook   *Commit
-	hash	       gitHashType
+	hash           gitHashType
 	color          colorType // Scratch storage for graph-coloring
 	deleteme       bool      // Flag used during deletion operations
 	implicitParent bool      // Whether the first parent was implicit
@@ -4236,7 +4237,7 @@ func (commit *Commit) addParentCommit(newparent *Commit) {
 func (commit *Commit) addParentByMark(mark string) {
 	newparent := commit.repo.markToEvent(mark)
 	if newparent == nil {
-		panic(throw("parse", "Ill-formed stream: cannot resolve " + mark))
+		panic(throw("parse", "Ill-formed stream: cannot resolve "+mark))
 	}
 	commit.addParentCommit(newparent.(*Commit))
 }
@@ -4595,7 +4596,7 @@ func (commit *Commit) gitHash() gitHashType {
 		for _, parent := range commit.parents() {
 			switch parent.(type) {
 			case *Commit:
-				sb.WriteString("parent " + parent.(*Commit).gitHash().hexify()  + "\n")
+				sb.WriteString("parent " + parent.(*Commit).gitHash().hexify() + "\n")
 			case *Callout:
 				// Ignore this case
 			default:
