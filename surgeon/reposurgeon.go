@@ -15091,7 +15091,6 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 					blob.setContent([]byte(rs.preferred.dfltignores), noOffset)
 					blob.mark = ":insert"
 					repo.insertEvent(blob, repo.eventToIndex(earliest), "ignore-blob creation")
-					// FIXME: this does not force rebuild of the event map, Correct?
 					repo.declareSequenceMutation("ignore creation")
 					newop := newFileOp(rs.chosen())
 					newop.construct(opM, "100644", ":insert", rs.ignorename)
