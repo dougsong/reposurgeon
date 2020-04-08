@@ -828,6 +828,9 @@ func (p *SelectionParser) parseTerm() selEvaluator {
 
 func (p *SelectionParser) evalTermNegate(state selEvalState,
 	preselection *fastOrderedIntSet, op selEvaluator) *fastOrderedIntSet {
+	if op == nil {
+		panic(throw("command", "inner expression to be negated is invalid"))
+	}
 	negated := op(state, state.allItems())
 	remainder := newFastOrderedIntSet()
 	for i, n := 0, state.nItems(); i < n; i++ {
