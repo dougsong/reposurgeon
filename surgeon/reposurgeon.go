@@ -1476,14 +1476,6 @@ repositories. No effect if the edit input was a dump stream; in that
 case, reposurgeon doesn't make on-disk blob copies at all (it points
 into sections of the input stream instead).
 `},
-	{"defergc",
-		`Commands which might orphan blobs will run a garbage-collection pass in
-order to remove the orphans. This can add up to a long time if you run these
-commands frequently. Set this flag to skip the garbage collection, then clear
-it and run the dedup command at the end of your lift script to do the garbage
-collection all at once. Currently the "tag" and "dedup" commands are the only
-ones which do this garbage collection.
-`},
 	{"echo",
 		`Echo commands before executing them. Setting this in test scripts may
 +make the output easier to read.
@@ -17486,7 +17478,7 @@ func main() {
 	for _, arg := range os.Args[1:] {
 		for _, acmd := range strings.Split(arg, ";") {
 			if acmd == "-" {
-				// Next two conditionals are wrutten
+				// Next two conditionals are written
 				// this way so that, e,g. "set
 				// interactive" before "-" can force
 				// interactive mode.
