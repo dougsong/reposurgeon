@@ -46,6 +46,7 @@ import (
 )
 
 type svnReader struct {
+	branchify  map[int][][]string     // Parsed svn_branchify setting
 	revisions  []RevisionRecord       // Phases 1 to B
 	revmap     map[revidx]revidx      // Phases 1 to B
 	backfrom   map[revidx]revidx      // Phases 1 to 5
@@ -96,33 +97,40 @@ func trimSep(s string) string {
 
 // isDeclaredBranch returns true iff the user requested that this path be treated as a branch or tag.
 func (sp *StreamParser) isDeclaredBranch(path string) bool {
-	if path == "" {
+	np := trimSep(path)
+	if np == "" {
 		return false
 	}
-	np := trimSep(path)
-	maybeBranch := false
-	isNamespace := false
-	for _, trial := range control.listOptions["svn_branchify"] {
-		if trial == "*" {
-			// Replace it by rvnSepWithStar so that the next test will
-			// trim it to "", which is what containingDir() returns for
-			// paths without any separator.
-			trial = svnSepWithStar
-		}
-		l := len(trial)
-		if l >= 2 && trial[l-1] == '*' && trial[l-2] == os.PathSeparator {
-			trialBase := trial[:len(trial)-2]
-			if trialBase == np {
-				isNamespace = true
-			} else if trialBase == containingDir(np) {
-				maybeBranch = true
+	components := strings.Split(trimSep(path), svnSep)
+	L := len(components)
+	// When branchify contains an entry ending by /*, we say that everything
+	// up to the last /* is a namespace. Namespaces are not accepted as
+	// branches, even if another branchify entry would match.
+	// We only need to compare against entries with L+1 components.
+	for _, trial := range sp.branchify[L+1] {
+		if trial[L] == "*" {
+			// trial corresponds to a namespace, check if trial == path
+			for i := 0; i < L; i++ {
+				if trial[i] != "*" && trial[i] != components[i] {
+					goto nextNamespace
+				}
 			}
-		} else if (trial[l-1] == os.PathSeparator && trial[:l-1] == np) || trial == np {
-			// Exact match
-			return true
+			// the given path is a namespace
+			return false
 		}
+	nextNamespace:
 	}
-	return maybeBranch && !isNamespace
+	// We know this is not a namespace. Now check if some entry matches.
+	for _, trial := range sp.branchify[L] {
+		for i := 0; i < L; i++ {
+			if trial[i] != "*" && trial[i] != components[i] {
+				goto nextTrial
+			}
+		}
+		return true
+	nextTrial:
+	}
+	return false
 }
 
 // splitSVNBranchPath splits a node path into the part that identifies the branch and the rest, as determined by the current branch map
@@ -783,6 +791,16 @@ func nodePermissions(node NodeAction) string {
 	return "100644"
 }
 
+func (sp *StreamParser) initBranchify() {
+	// Parse branchify to speed up things later
+	sp.branchify = make(map[int][][]string)
+	for _, trial := range control.listOptions["svn_branchify"] {
+		split := strings.Split(trial, svnSep)
+		l := len(split)
+		sp.branchify[l] = append(sp.branchify[l], split)
+	}
+}
+
 func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton *Baton) {
 	// Subversion actions to import-stream commits.
 
@@ -847,6 +865,8 @@ func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton
 			baton.twirl()
 		}
 	}
+
+	sp.initBranchify()
 
 	sp.repo.addEvent(newPassthrough(sp.repo, "#reposurgeon sourcetype svn\n"))
 

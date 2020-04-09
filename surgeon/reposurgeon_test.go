@@ -1854,6 +1854,7 @@ func TestDeclaredBranch(t *testing.T) {
 	var branchsets = []orderedStringSet{
 		orderedStringSet{"trunk", "tags/*", "branches/*"},
 		orderedStringSet{"trunk", "tags/*", "branches/*", "*"},
+		orderedStringSet{"trunk", "tags/*/*", "branches/*"},
 	}
 	var testcases = [][]testcase{
 		{
@@ -1882,6 +1883,19 @@ func TestDeclaredBranch(t *testing.T) {
 			{"/", false},
 			{"", false},
 		},
+		{
+			{"trunk", true},
+			{"foobar", false},
+			{"branches/foobar", true},
+			{"branches/foobar/test", false},
+			{"tags/foobar", false},
+			{"tags/foobar/cetc", true},
+			{"tag/foobar", false},
+			{"tags", false},
+			{"branches", false},
+			{"/", false},
+			{"", false},
+		},
 	}
 	control.listOptions = make(map[string]orderedStringSet)
 	for idx, branchset := range branchsets {
@@ -1892,6 +1906,7 @@ func TestDeclaredBranch(t *testing.T) {
 				t.Run(fmt.Sprint(idx), func(t *testing.T) {
 					control.listOptions["svn_branchify"] = branchset
 					sp := new(StreamParser)
+					sp.initBranchify()
 					assertBool(t, sp.isDeclaredBranch(test.path), test.isDeclaredBranch)
 				})
 			}
@@ -1903,6 +1918,7 @@ func TestBranchSplit(t *testing.T) {
 	control.listOptions = make(map[string]orderedStringSet)
 	control.listOptions["svn_branchify"] = orderedStringSet{"trunk", "tags/*", "branches/*", "*"}
 	sp := new(StreamParser)
+	sp.initBranchify()
 	type splitTestEntry struct {
 		raw    string
 		branch string
