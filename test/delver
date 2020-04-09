@@ -32,7 +32,7 @@ fi
 
 # If this script is called from the test or source code directories,
 # pop up to the top level so we resolve paths from a known location.
-case $(basename $PWD) in
+case $(basename "$PWD") in
     reposurgeon) MODULE=./surgeon;;
     test) cd ..;  MODULE=./surgeon;;
     surgeon|cutter|mapper) cd ..; MODULE=./$(basename PWD);;
