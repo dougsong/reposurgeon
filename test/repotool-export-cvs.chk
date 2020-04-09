@@ -91,3 +91,4 @@ foo.c 1.2
 reset refs/heads/master
 from :8
 
+done
