@@ -95,7 +95,7 @@ func trimSep(s string) string {
 }
 
 // isDeclaredBranch returns true iff the user requested that this path be treated as a branch or tag.
-func isDeclaredBranch(path string) bool {
+func (sp *StreamParser) isDeclaredBranch(path string) bool {
 	if path == "" {
 		return false
 	}
@@ -126,7 +126,7 @@ func isDeclaredBranch(path string) bool {
 }
 
 // splitSVNBranchPath splits a node path into the part that identifies the branch and the rest, as determined by the current branch map
-func splitSVNBranchPath(path string) (string, string) {
+func (sp *StreamParser) splitSVNBranchPath(path string) (string, string) {
 	candidate := path
 	for {
 		split := strings.LastIndex(candidate, svnSep)
@@ -134,7 +134,7 @@ func splitSVNBranchPath(path string) (string, string) {
 			return "", path
 		}
 		candidate = path[:split]
-		if isDeclaredBranch(candidate) {
+		if sp.isDeclaredBranch(candidate) {
 			return candidate, path[split+1:]
 		}
 	}
@@ -1041,7 +1041,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 				// that are taken in all cases.  The reason we suppress expansion on a declared branch is that
 				// we are later going to turn this directory delete into a git deleteall for the branch.
 				if node.action == sdDELETE || node.action == sdREPLACE {
-					if !nobranch && isDeclaredBranch(node.path) {
+					if !nobranch && sp.isDeclaredBranch(node.path) {
 						logit(logEXTRACT, "r%d-%d~%s: declaring as sdNUKE", node.revision, node.index, node.path)
 						node.action = sdNUKE
 					} else {
@@ -1064,7 +1064,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 				// Handle directory copies.
 				if node.isCopy() {
 					copyType := "directory"
-					if isDeclaredBranch(node.path) && isDeclaredBranch(node.fromPath) {
+					if sp.isDeclaredBranch(node.path) && sp.isDeclaredBranch(node.fromPath) {
 						copyType = "branch"
 					}
 					logit(logEXTRACT, "r%d-%d: %s copy to %s from r%d~%s",
@@ -1426,10 +1426,10 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 			tooMany := false
 			for _, node := range record.nodes {
 				var branch string
-				if node.kind == sdDIR && isDeclaredBranch(node.path) {
+				if node.kind == sdDIR && sp.isDeclaredBranch(node.path) {
 					branch = node.path
 				} else {
-					branch, _ = splitSVNBranchPath(node.path)
+					branch, _ = sp.splitSVNBranchPath(node.path)
 				}
 				if branch != "" && foundbranch != "" && branch != foundbranch {
 					tooMany = true
@@ -1514,7 +1514,7 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 			// members, we avoid having to recompute these when we
 			// actually have to use them
 			for j, fileop := range commit.fileops {
-				commit.fileops[j].Source, commit.fileops[j].Target = splitSVNBranchPath(fileop.Path)
+				commit.fileops[j].Source, commit.fileops[j].Target = sp.splitSVNBranchPath(fileop.Path)
 				if j == 0 || commit.fileops[j].Source != oldbranch {
 					cliqueIndices = append([]int{j}, cliqueIndices...)
 					oldbranch = commit.fileops[j].Source
@@ -1597,13 +1597,13 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 				}
 				// Contiguity assumption
 				node := sp.revision(intToRevidx(n)).nodes[0]
-				if node.kind == sdDIR && isDeclaredBranch(node.path) {
+				if node.kind == sdDIR && sp.isDeclaredBranch(node.path) {
 					commit.Branch = node.path
 					if strings.HasSuffix(commit.Branch, svnSep) {
 						commit.Branch = commit.Branch[:len(commit.Branch)-1]
 					}
 				} else {
-					commit.Branch, _ = splitSVNBranchPath(node.path)
+					commit.Branch, _ = sp.splitSVNBranchPath(node.path)
 				}
 			} else {
 				// Normal case
@@ -1891,8 +1891,8 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 					if node.kind == sdDIR && node.fromRev != 0 &&
 						trimSep(node.path) == branch {
 						frombranch := node.fromPath
-						if !isDeclaredBranch(frombranch) {
-							frombranch, _ = splitSVNBranchPath(node.fromPath)
+						if !sp.isDeclaredBranch(frombranch) {
+							frombranch, _ = sp.splitSVNBranchPath(node.fromPath)
 						}
 						parent := lastRelevantCommit(sp, node.fromRev, frombranch)
 						if parent != nil {
@@ -1917,18 +1917,18 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 				maxfrom, minfrom := revidx(0), maxRev
 				var frombranch string
 				for _, node := range record.nodes {
-					// Don't check for isDeclaredBranch because we only use
+					// Don't check for sp.isDeclaredBranch because we only use
 					// file nodes (maybe expanded from a dir copy). If the
 					// branch dir creation node had a fromRev it would have
 					// been caught by the normal logic above.
-					destbranch, _ := splitSVNBranchPath(trimSep(node.path))
+					destbranch, _ := sp.splitSVNBranchPath(trimSep(node.path))
 					if node.kind == sdFILE && node.action == sdADD && destbranch == branch &&
 						!strings.HasSuffix(node.path, ".gitignore") {
 						if node.fromRev == 0 {
 							maxfrom = 0
 							break
 						}
-						newfrom, _ := splitSVNBranchPath(trimSep(node.fromPath))
+						newfrom, _ := sp.splitSVNBranchPath(trimSep(node.fromPath))
 						if frombranch == "" {
 							frombranch = newfrom
 						} else if frombranch != newfrom {
@@ -2136,7 +2136,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 			// corresponding to the revision on the branch whose
 			// mergeinfo has been modified
 			branch := trimSep(node.path)
-			if !isDeclaredBranch(branch) {
+			if !sp.isDeclaredBranch(branch) {
 				continue
 			}
 			commit := lastRelevantCommit(sp, revidx(revision), branch)
@@ -2169,7 +2169,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 			for fromPath, revs := range newMerges {
 				baton.twirl()
 				fromPath = trimSep(fromPath)
-				if !isDeclaredBranch(fromPath) {
+				if !sp.isDeclaredBranch(fromPath) {
 					continue
 				}
 				// Ranges were unified when parsing if they were
@@ -2450,7 +2450,7 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 			}
 			path := filepath.Join(trimSep(node.path), ".gitignore")
 			branch := ""
-			branch, path = splitSVNBranchPath(path)
+			branch, path = sp.splitSVNBranchPath(path)
 			if branch != mybranch {
 				continue
 			}
@@ -2463,7 +2463,7 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 				newvalue = node.props.get("svn:ignore")
 			}
 			if node.action == sdDELETE {
-				_, dirpath := splitSVNBranchPath(node.path)
+				_, dirpath := sp.splitSVNBranchPath(node.path)
 				// Also remove all subdirectory .gitignores
 				currentIgnores.iter(func(childPath string, _ interface{}) {
 					if strings.HasPrefix(childPath, dirpath) {

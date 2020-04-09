@@ -1891,7 +1891,8 @@ func TestDeclaredBranch(t *testing.T) {
 				test := test
 				t.Run(fmt.Sprint(idx), func(t *testing.T) {
 					control.listOptions["svn_branchify"] = branchset
-					assertBool(t, isDeclaredBranch(test.path), test.isDeclaredBranch)
+					sp := new(StreamParser)
+					assertBool(t, sp.isDeclaredBranch(test.path), test.isDeclaredBranch)
 				})
 			}
 		})
@@ -1901,6 +1902,7 @@ func TestDeclaredBranch(t *testing.T) {
 func TestBranchSplit(t *testing.T) {
 	control.listOptions = make(map[string]orderedStringSet)
 	control.listOptions["svn_branchify"] = orderedStringSet{"trunk", "tags/*", "branches/*", "*"}
+	sp := new(StreamParser)
 	type splitTestEntry struct {
 		raw    string
 		branch string
@@ -1916,7 +1918,7 @@ func TestBranchSplit(t *testing.T) {
 		{"branches/foo/bar/baz", "branches/foo", "bar/baz"},
 	}
 	for _, tst := range splitTestTable {
-		b, p := splitSVNBranchPath(tst.raw)
+		b, p := sp.splitSVNBranchPath(tst.raw)
 		assertEqual(t, b, tst.branch)
 		assertEqual(t, p, tst.path)
 	}
