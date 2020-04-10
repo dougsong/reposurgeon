@@ -3793,7 +3793,7 @@ Detected link from <__revision__> to <__revision__> might be dubious::
 
 This is
 
-`branchify` [ _path-set_ ]::
+`branchify` [ _glob_ ... ]::
    Specify the list of directories to be treated as potential
    branches (to become tags if there are no modifications after the
    creation copies) when analyzing a Subversion repo. This list is
@@ -3806,9 +3806,10 @@ escapes are interpreted when parsing the command line.
 +
 With no arguments, displays the current branchification set.
 +
-An asterisk at the end of a path in the set means '`__all immediate
-subdirectories of this path, unless they are part of another (longer)
-path in the branchify set__`'.
+List elements are old-fashioed path glob patterns; each * matches any
+path segment. In particular, one asterisk at the end of a path in the
+set means '`__all immediate subdirectories of this path, unless they
+are part of another (longer) path in the branchify set__`'.
 +
 Note that the branchify set is a property of the reposurgeon
 interpreter, not of any individual repository, and will persist across

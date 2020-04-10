@@ -107,6 +107,7 @@ func (sp *StreamParser) isDeclaredBranch(path string) bool {
 	// up to the last /* is a namespace. Namespaces are not accepted as
 	// branches, even if another branchify entry would match.
 	// We only need to compare against entries with L+1 components.
+	// FIXME: Reimplement using a full Golang fnmatch implementation?
 	for _, trial := range sp.branchify[L+1] {
 		if trial[L] == "*" {
 			// trial corresponds to a namespace, check if trial == path
