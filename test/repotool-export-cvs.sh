@@ -11,9 +11,12 @@ cp -r hack1.repo/ /tmp/test-repo$$
 
 case $1 in
     --regress)
-        diff --text -u "$2.chk" /tmp/out$$ || exit 1; ;;
+	# This line is a kludge to dea; with the fact that the git version
+	# running the tests may be old enough to DTRT
+	grep "^done" /tmp/out$$ >/dev/null 2>&1 || echo "done" >>/tmp/out$$
+        diff --text -u "repotool-export-cvs.chk" /tmp/out$$ || exit 1; ;;
     --rebuild)
-	cat /tmp/out$$ >"$2.chk";;
+	cat /tmp/out$$ >"repotool-export-cvs.chk";;
     --view)
 	cat /tmp/out$$;;
 esac
