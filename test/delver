@@ -1,6 +1,10 @@
 #!/bin/sh
 #
-# delver - run Golang debugger on reposurgeon
+# delver - run Golang debugger on a reposurgeon module
+#
+# Accepts an optional module argument, which is
+# only interpreted if it is not called inside
+# a module directory.
 #
 # Based on this recipe:
 # https://github.com/go-delve/delve/issues/1982
@@ -14,17 +18,33 @@
 # To actually start reposurgeon, type 'continue' or 'c'
 # to the delve control window.
 
-# Set the terminal emulator to use here. It must execute
-# following arguments as a command within the terminal.
-if command -v rxvt >/dev/null 2>&1
+# Set the terminal emulator to use here. It must execute following
+# arguments as a command within the terminal.  Note: we can't use the
+# magic x-terminal-emulator link in the Debian preferences system
+# because we don't have any way to know whwrher it needs its final
+# option to be -e or -x. Note when testing new enmulaters; setting
+# the title may fail unless you give it a command to run.
+config=~/.config/delver/delver.init
+if [ -f "$config" ]
+then
+    # Expect this, if present, to set TERMINAL
+    . $config
+elif command -v rxvt >/dev/null 2>&1
 then
     TERMINAL="rxvt -T Delve-controls -e"
+elif command -v xfce4-terminal >/dev/null 2>&1
+then
+    TERMINAL="xfce4-terminal -T Delve-controls -x"
 elif command -v gnome-terminal >/dev/null 2>&1
 then
-     TERMINAL="gnome-terminal -x"
+    # The -T option is not documented 
+    TERMINAL="gnome-terminal -T Delve-control -x"
+elif command -v konsole >/dev/null 2>&1
+then
+    TERMINAL="konsole -e"
 elif command -v xterm >/dev/null 2>&1
 then
-     TERMINAL="xterm -T Delve-controls -e"
+    TERMINAL="xterm -T Delve-controls -e"
 else
     echo "delver: cannot find a usable terminal emulator" >&2
     exit 1
@@ -33,13 +53,14 @@ fi
 # If this script is called from the test or source code directories,
 # pop up to the top level so we resolve paths from a known location.
 case $(basename "$PWD") in
-    reposurgeon) MODULE=./surgeon;;
-    test) cd ..;  MODULE=./surgeon;;
+    reposurgeon) MODULE=./${1:-surgeon};;
+    test) cd ..;  MODULE=./${1:-surgeon};;
     surgeon|cutter|mapper) cd ..; MODULE=./$(basename PWD);;
     *) echo "Where am I?" >&2; exit 1;;
 esac
 
 # Mechanism starts here.
+killall dlv 2>/dev/null
 (sleep 1; ${TERMINAL} dlv connect 127.0.1:3100) &
 serverpid=$!
 trap 'kill ${serverpid} 2>/dev/null' EXIT HUP INT QUIT TERM

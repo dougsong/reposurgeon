@@ -66,7 +66,7 @@ compare-all function.
 
 === fi-to-fi ===
 
-Builds a git repo from a fast-import stream on stdin, or streams an
+==ilds a git repo from a fast-import stream on stdin, or streams an
 existing repo to stdout.
 
 === hg-to-fi ===
@@ -99,6 +99,12 @@ from the repo root.
 
 Takes a named Subversion dump and compare a checkout of it with
 its git conversion at all tags and branches.
+
+=== delver ===
+
+Run delve, the Golang symbolic debugger, on reposurgeon. The wrapper
+is required to work around the problem that a p[rogram running under
+an ordinary delver instance loses access to stdin.
 
 == The tests ==
 
