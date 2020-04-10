@@ -37,8 +37,8 @@ then
     TERMINAL="xfce4-terminal -T Delve-controls -x"
 elif command -v gnome-terminal >/dev/null 2>&1
 then
-    # The -T option is not documented 
-    TERMINAL="gnome-terminal -T Delve-control -x"
+    # The --title option is not documented 
+    TERMINAL="gnome-terminal --title Delve-control -x"
 elif command -v konsole >/dev/null 2>&1
 then
     TERMINAL="konsole -e"
