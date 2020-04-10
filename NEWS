@@ -1,6 +1,6 @@
 = reposurgeon project news =
 
-Repository head::
+4.6: 2020-04-10::
      repocutter obscure command added.
      Expunge of fileops with inline data now works.
      Can now compute and display Git hashes for a loaded repository.
