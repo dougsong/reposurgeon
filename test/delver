@@ -28,6 +28,7 @@ config=~/.config/delver/delver.init
 if [ -f "$config" ]
 then
     # Expect this, if present, to set TERMINAL
+    # shellcheck disable=SC1090
     . $config
 elif command -v rxvt >/dev/null 2>&1
 then
