@@ -4006,9 +4006,10 @@ a couple of things you can do to make a resolution hore likely.
 
 2. Use repobench to see if you can identify a revision that triggers
    the stall.  The procedure for this is to use it to step your
-   readlimit up from zero intill you see the runtime spike.
+   readlimit up from zero until you see the runtime spike.
 
-3. As always, provide a stripped version of the repository for testing.
+3. As always, provide a stripped (and possibly obscured) dump of the
+   repository for testing.
 
 === How to report bugs
 
@@ -4018,7 +4019,7 @@ repositories.
 
 It is often extremely difficult or impossible to reproduce those bugs
 without a copy of the history on which they occurred. When you find a
-bug, please send te maintainers:
+bug, please send the maintainers:
 
 (a) An exact description of how observed behavior differed from expected
 behavior.  If reposurgeon died, include the backtrace.
@@ -4074,6 +4075,10 @@ If you are trying to maintain confidentiality about your code, sending
 me a stripped repo has the additional advantage that the code won't be
 disclosed!  The command preserves structure and metadata but replaces
 each content blob with a unique magic cookie.
+
+If you don't want to disclose even the metadata, you can do a
+repocutter "obscure" pass afte the strip. This will mask file paths
+and developer names.
 
 ==== Truncate the dump as much as possible
 
