@@ -299,7 +299,7 @@ def export():
     m = {
         "cvs": r"find . -name \*,v | cvs-fast-export -q --reposurgeon",
         "svn": "svnadmin -q dump .",
-        "git": "git fast-export --all",
+        "git": "git fast-export --all --use-done-feature",
         "bzr": "bzr fast-export --no-plain .",
         "hg": "reposurgeon 'read .' 'prefer git' 'write -'",
         "darcs": "darcs fastconvert export",

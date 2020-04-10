@@ -1,6 +1,11 @@
 --- simple.fi
 +++ repotool-export
-@@ -13317,7 +13317,8 @@
+@@ -1,3 +1,4 @@
++feature done
+ blob
+ mark :1
+ data 53
+@@ -13317,7 +13318,8 @@
  Name change.
  from :66
  M 100644 :67 Makefile
@@ -10,7 +15,7 @@
  M 100644 :68 test/Makefile
  
  blob
-@@ -13999,8 +14000,8 @@
+@@ -13999,8 +14001,8 @@
  Follow up on name change.
  from :71
  M 100644 :72 Makefile
@@ -20,7 +25,7 @@
  
  blob
  mark :76
-@@ -14704,8 +14705,8 @@
+@@ -14704,8 +14706,8 @@
  data 22
  Implemented 'prefer'.
  from :77
@@ -30,7 +35,7 @@
  
  blob
  mark :81
-@@ -16441,8 +16442,8 @@
+@@ -16441,8 +16443,8 @@
  data 46
  Try to get the write and rebuild logic right.
  from :84
@@ -40,7 +45,7 @@
  
  blob
  mark :88
-@@ -17886,8 +17887,8 @@
+@@ -17886,8 +17888,8 @@
  data 35
  Cut verbosity, improve statistics.
  from :89
@@ -50,7 +55,7 @@
  
  blob
  mark :93
-@@ -18739,8 +18740,8 @@
+@@ -18739,8 +18741,8 @@
  data 26
  Added the 'view' command.
  from :92
@@ -60,7 +65,7 @@
  
  blob
  mark :96
-@@ -19699,8 +19700,8 @@
+@@ -19699,8 +19701,8 @@
  data 53
  Implement and document 'index'; document some plans.
  from :95
@@ -70,7 +75,7 @@
  
  blob
  mark :99
-@@ -26300,8 +26301,8 @@
+@@ -26300,8 +26302,8 @@
  data 41
  Document the new selection-set language.
  from :110
@@ -80,7 +85,7 @@
  
  blob
  mark :114
-@@ -31754,8 +31755,8 @@
+@@ -31754,8 +31756,8 @@
  The prefix position what triggering some obscure bug in the Python cmd
  class; the symptom was that "$ verbose" wouldn't parse properly.
  from :123
@@ -90,3 +95,8 @@
  
  blob
  mark :127
+@@ -32702,3 +32704,4 @@
+ data 66
+ We want an anntated tag in the repo for regression-test purposes.
+ 
++done
