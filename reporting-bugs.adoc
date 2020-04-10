@@ -1,8 +1,0 @@
-= How to report bugs =
-
-This document has been folded into the "Troubleshooting and bug
-reports" chapter of
-http://www.catb.org/~esr/reposurgeon/repository-editing.html[Repository
-Editing and Conversion With Reposurgeon].
-
-//end

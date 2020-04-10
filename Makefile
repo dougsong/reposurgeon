@@ -7,40 +7,23 @@ mandir?=share/man
 target=$(DESTDIR)$(prefix)
 
 VERS=$(shell sed <surgeon/reposurgeon.go -n -e '/const *version *= *\"\(.*\)\"/s//\1/p')
-SOURCES = \
-	reposurgeon.adoc \
-	repotool repotool.adoc \
-	cutter/repocutter.go \
-	mapper/repomapper.go \
-	surgeon/reposurgeon.go \
-	surgeon/reposurgeon_test.go \
-	surgeon/baton.go \
-	surgeon/extractor.go \
-	surgeon/hgclient.go \
-	surgeon/reposurgeon.go \
-	surgeon/reposurgeon_test.go \
-	surgeon/selection.go \
-	surgeon/svnread.go \
-	repobench repobench.adoc \
-	repomapper.adoc repocutter.adoc \
-	reporting-bugs.adoc repository-editing.adoc oops.svg dvcs-migration-guide.adoc \
-	reposurgeon-mode.el \
-	go.mod go.sum
+
+META = README.adoc INSTALL.adoc NEWS AUTHORS COPYING
+PAGES = reposurgeon.adoc repocutter.adoc repomapper.adoc repotool.adoc repobench.adoc
+DOCS = $(PAGES) repository-editing.adoc oops.svg
+SOURCES = $(shell ls */*.go) repobench repotool reposurgeon-mode.el  go.mod go.sum
 SOURCES += Makefile control lintfilter reposturgeon.png reposurgeon-git-aliases
 SOURCES += Dockerfile ci/prepare.sh .gitlab-ci.yml
-DOCS = README.adoc INSTALL.adoc NEWS AUTHORS COPYING
-
-STOPOUT=1
+SOURCES += $(META) $(DOCS)
 
 .PHONY: all install clean uninstall version check release refresh \
     docker-build docker-check docker-check-noscm \
-    vet test fmt lint
+    get vet test fmt lint
 
-BINARIES = reposurgeon repotool repomapper repocutter repobench
-MANPAGES = reposurgeon.1 repotool.1 repomapper.1 repocutter.1 repobench.1
-HTMLFILES = $(MANPAGES:.1=.html) \
-            repository-editing.html dvcs-migration-guide.html reporting-bugs.html
-SHARED    = $(DOCS) reposurgeon-git-aliases $(HTMLFILES)
+BINARIES  = reposurgeon repotool repomapper repocutter repobench
+MANPAGES  = $(PAGES:.adoc=.1)
+HTMLFILES = $(DOCS:.adoc=.html)
+SHARED    = $(META) reposurgeon-git-aliases $(HTMLFILES)
 
 # The following would produce reproducible builds, but it breaks Gitlab CI.
 #GOFLAGS=-gcflags 'all=-N -l -trimpath $(GOPATH)/src' -asmflags 'all=-trimpath $(GOPATH)/src'
@@ -154,16 +137,16 @@ docker-check-noscm: docker-check-only-bzr docker-check-only-cvs \
 # Release shipping.
 #
 
-reposurgeon-$(VERS).tar.xz: $(SOURCES) $(DOCS)
-	tar --transform='s:^:reposurgeon-$(VERS)/:' --show-transformed-names -cJf reposurgeon-$(VERS).tar.xz $(SOURCES) $(DOCS) test
+reposurgeon-$(VERS).tar.xz: $(SOURCES) $(HTMLFILES:.html=.1)
+	tar --transform='s:^:reposurgeon-$(VERS)/:' --show-transformed-names -cJf reposurgeon-$(VERS).tar.xz $(SOURCES) $(HTMLFILES:.html=.1) test
 
-dist: reposurgeon-$(VERS).tar.xz reposurgeon.1 repocutter.1 repotool.1 repobench.1 repomapper.1
+dist: reposurgeon-$(VERS).tar.xz
 
 reposurgeon-$(VERS).md5: reposurgeon-$(VERS).tar.xz
 	@md5sum reposurgeon-$(VERS).tar.xz >reposurgeon-$(VERS).md5
 
-release: reposurgeon-$(VERS).tar.xz reposurgeon-$(VERS).md5 reposurgeon.html repocutter.html repomapper.html reporting-bugs.html repository-editing.html dvcs-migration-guide.html
+release: reposurgeon-$(VERS).tar.xz reposurgeon-$(VERS).md5 $(HTMLFILES)
 	shipper version=$(VERS) | sh -e -x
 
-refresh: reposurgeon.html repocutter.html repomapper.html reporting-bugs.html repository-editing.html dvcs-migration-guide.html
+refresh: $(HTMLFILES)
 	shipper -N -w version=$(VERS) | sh -e -x
