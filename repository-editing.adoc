@@ -21,6 +21,10 @@ authors read <<EOF
 fred = Fred Foonly <fred@foonly.net> America/Chicago
 jrh = J. Random Hacker <jrh@random.org> America/Los_Angeles
 esr = Eric S. Raymond <esr@thyrsus.com> America/New_York
+julien = Julien '_FrnchFrgg_' RIVAUD <julien@frnchfrgg.pw> Europe/Paris
+db48x = <Daniel Brooks <db48x@db48x.net> America/Los_Angeles
+ecree = Edward Cree <ecree@solarflare.com> Europe/London
+
 EOF
 
 # Massage comments into Git-like form (with a topic sentence and a
