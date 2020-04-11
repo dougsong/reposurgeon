@@ -8,6 +8,7 @@ apt-get update -qy && apt-get install -qy --no-install-recommends \
     mercurial \
     python2.7 \
     python3 \
+    shellcheck \
     subversion \
     time \
  && apt-get clean \
