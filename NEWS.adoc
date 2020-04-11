@@ -4,7 +4,7 @@
      repocutter obscure command added.
      Expunge of fileops with inline data now works.
      Can now compute and display Git hashes for a loaded repository.
-     brancify elements behave more like flob patterns; foo/*/* works.
+     branchify elements behave more like glob patterns; foo/*/* works.
      Numerous small speedups and a few bug fixes.
 
 4.5: 2020-03-09::
