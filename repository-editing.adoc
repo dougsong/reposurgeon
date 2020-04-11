@@ -4770,4 +4770,54 @@ GCC::
 	two core GCC developers. The 4.0 release came out of this.
 	Final cutover was on Jan 12th 2020.
 
+
+== Credits ==
+
+These are in roughly descending magnitude.
+
+Eric S. Raymond <esr@thyrsus.com>::
+   Designer and original author.
+
+Julien "_FrnchFrgg_" RIVAUD <frnchfrgg@free.fr>::
+   Lots of high-quality code cleanups and speed tuning. Responsible for at
+   least half of the massively revamped Subversion dump reader on the 4.0
+   releases. Ported the CoW filemaps from Python to Go.
+
+Daniel Brooks <db48x@db48x.net>::
+   Date unit testing, improvements for split and expunge
+   commands. Assistance on Python to Go port. Go profiling support.
+   Several significant reductions in total run time, total
+   allocations, and max heap usage.
+
+Greg Hudson <ghudson@MIT.EDU>::
+   Contributed copy-on-write filemaps, which both tremendously sped up
+   Subversion dumpfile parsing and squashed a nasty bug in the older
+   code. While his CoW implementation was eventually replaced with one
+   by Julien Rivaud, it busted the project out of a nearly two-year slump.
+
+Eric Sunshine <sunshine@sunshineco.com>::
+   Review of seldom-used features, test improvements, bug-fixing.
+   Generalized selection expression parser for use-cases other than events.
+   Converted selection parser, which evaluated an expression while parsing it,
+   to a compile/evaluate paradigm in which a selection expression can be
+   compiled once and evaluated many times.
+   Added 'attribution' command.
+   Added 'reorder' command.
+   Assist Python to Go port.
+
+Edward Cree <ec429@cantab.net>::
+   Wrote the Hg extractor class and its test.
+
+Chris Lemmons <alficles@gmail.com>::
+   Solved some problems with inline blobs, improved interoperability with
+   Mercurial, wrote the --prune option for graft.
+
+Richard Hansen <rhansen@rhansen.org>::
+   Selections as ordered rather than compulsorily sorted sets. The generalized reparent command.
+   Improvements in regression-test infrastructure.
+
+Peter Donis <peterdonis@alum.mit.edu>::
+   Python 3 port and Python2/3 interoperability. Historical: none
+   of this survived the port to Go.
+
 // end

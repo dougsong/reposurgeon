@@ -8,7 +8,7 @@ target=$(DESTDIR)$(prefix)
 
 VERS=$(shell sed <surgeon/reposurgeon.go -n -e '/const *version *= *\"\(.*\)\"/s//\1/p')
 
-META = README.adoc INSTALL.adoc NEWS AUTHORS COPYING
+META = README.adoc INSTALL.adoc NEWS COPYING
 PAGES = reposurgeon.adoc repocutter.adoc repomapper.adoc repotool.adoc repobench.adoc
 DOCS = $(PAGES) repository-editing.adoc oops.svg
 SOURCES = $(shell ls */*.go) repobench repotool reposurgeon-mode.el go.mod go.sum
