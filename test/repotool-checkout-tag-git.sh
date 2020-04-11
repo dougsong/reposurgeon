@@ -14,9 +14,9 @@ cd - >/dev/null || ( echo "$0: cd failed"; exit 1 )
 
 case $1 in
     --regress)
-        diff --text -u "$2.chk" /tmp/out$$ || exit 1; ;;
+        diff --text -u repotool-checkout-tag-git.chk /tmp/out$$ || exit 1; ;;
     --rebuild)
-	cat /tmp/out$$ >"$2.chk";;
+	cat /tmp/out$$ >repotool-checkout-tag-git.chk;;
     --view)
 	cat /tmp/out$$;;
 esac

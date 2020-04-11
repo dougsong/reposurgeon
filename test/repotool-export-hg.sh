@@ -12,9 +12,9 @@ trap 'rm -rf /tmp/test-repo$$ /tmp/out$$' EXIT HUP INT QUIT TERM
 
 case $1 in
     --regress)
-        diff --text -u "$2.chk" /tmp/out$$ || exit 1; ;;
+        diff --text -u repotool-export-hg.chk /tmp/out$$ || exit 1; ;;
     --rebuild)
-	cat /tmp/out$$ >"$2.chk";;
+	cat /tmp/out$$ >repotool-export-hg.chk;;
     --view)
 	cat /tmp/out$$;;
 esac

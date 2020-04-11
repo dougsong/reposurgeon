@@ -536,7 +536,7 @@ repotool-buildregress:
 	@REPOTOOL=$$REPOTOOL; export REPOTOOL; \
 	for file in $(TOOLTESTS); do \
 	    echo "Remaking $${file}.chk"; \
-	    $(SHELL) $${file}.sh --rebuild $${file} || exit $(STOPOUT); \
+	    $(SHELL) $${file}.sh --rebuild || exit $(STOPOUT); \
 	done
 repotool-regress:
 	@echo "=== Running repotool tests:"
@@ -544,7 +544,7 @@ repotool-regress:
 	status=0; \
 	for file in $(TOOLTESTS); do \
 	    ( $(ECHO) -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)') | sed -e '/ ##/s//:/'; \
-	    $(SHELL) $${file}.sh --regress $${file} || status=1; \
+	    $(SHELL) $${file}.sh --regress || status=1; \
 	done; \
 	exit $${status}
 

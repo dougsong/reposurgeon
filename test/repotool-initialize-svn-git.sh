@@ -7,9 +7,9 @@ mkdir /tmp/test-workdir$$
 
 case $1 in
     --regress)
-        diff --text -u "$2.chk" /tmp/out$$ || exit 1; ;;
+        diff --text -u repotool-initialize-svn-git.chk /tmp/out$$ || exit 1; ;;
     --rebuild)
-	cat /tmp/out$$ >"$2.chk";;
+	cat /tmp/out$$ >repotool-initialize-svn-git.chk;;
     --view)
 	cat /tmp/out$$;;
 esac

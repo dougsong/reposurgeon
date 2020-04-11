@@ -14,9 +14,9 @@ cd - >/dev/null || ( echo "$0: cd failed" >&2; exit 1 )
 
 case $1 in
     --regress)
-        diff --text -u "$2.chk" /tmp/out$$ || exit 1; ;;
+        diff --text -u repotool-checkout-svn.chk /tmp/out$$ || exit 1; ;;
     --rebuild)
-	cat /tmp/out$$ >"$2.chk";;
+	cat /tmp/out$$ >repotool-checkout-svn.chk;;
     --view)
 	cat /tmp/out$$;;
 esac

@@ -17,9 +17,9 @@ ${REPOTOOL:-repotool} compare-tags -x .svn -x .git /tmp/test-repo$$-svn /tmp/tes
 
 case $1 in
     --regress)
-        diff --text -u "$2.chk" /tmp/out$$ || exit 1; ;;
+        diff --text -u repotool-compare-tags-svn-git.chk /tmp/out$$ || exit 1; ;;
     --rebuild)
-	cat /tmp/out$$ >"$2.chk";;
+	cat /tmp/out$$ >repotool-compare-tags-svn-git.chk;;
     --view)
 	cat /tmp/out$$;;
 esac

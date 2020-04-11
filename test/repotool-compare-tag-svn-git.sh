@@ -18,13 +18,11 @@ trap 'rm -rf /tmp/test-repo$$-svn /tmp/test-repo$$-svn-checkout /tmp/test-repo$$
 reposurgeon "read <${stem}.svn" "prefer git" "rebuild /tmp/test-repo$$-git" >/tmp/out$$ 2>&1
 ${REPOTOOL:-repotool} compare ${cmpmode} ${cmploc} /tmp/test-repo$$-svn-checkout /tmp/test-repo$$-git | sed -e "s/$$/\$\$/"g >>/tmp/out$$ 2>&1
 
-
-
 case $1 in
     --regress)
-        diff --text -u "$2.chk" /tmp/out$$ || exit 1; ;;
+        diff --text -u repotool-compare-tag-svn-git.chk /tmp/out$$ || exit 1; ;;
     --rebuild)
-	cat /tmp/out$$ >"$2.chk";;
+	cat /tmp/out$$ >repotool-compare-tag-svn-git.chk;;
     --view)
 	cat /tmp/out$$;;
 esac
