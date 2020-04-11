@@ -11,7 +11,7 @@ VERS=$(shell sed <surgeon/reposurgeon.go -n -e '/const *version *= *\"\(.*\)\"/s
 META = README.adoc INSTALL.adoc NEWS AUTHORS COPYING
 PAGES = reposurgeon.adoc repocutter.adoc repomapper.adoc repotool.adoc repobench.adoc
 DOCS = $(PAGES) repository-editing.adoc oops.svg
-SOURCES = $(shell ls */*.go) repobench repotool reposurgeon-mode.el  go.mod go.sum
+SOURCES = $(shell ls */*.go) repobench repotool reposurgeon-mode.el go.mod go.sum
 SOURCES += Makefile control lintfilter reposturgeon.png reposurgeon-git-aliases
 SOURCES += Dockerfile ci/prepare.sh .gitlab-ci.yml
 SOURCES += $(META) $(DOCS)
@@ -34,7 +34,6 @@ build:  $(MANPAGES) $(HTMLFILES)
 	go build $(GOFLAGS) -o repomapper ./mapper
 	go build $(GOFLAGS) -o reposurgeon ./surgeon
 
-# Requires asciidoctor and xsltproc/docbook stylesheets.
 # Note: to suppress the footers with timestamps being generated in HTML,
 # we use "-a nofooter".
 # To debug asciidoc problems, you may need to run "xmllint" --nonet --noout --valid"
@@ -47,7 +46,7 @@ build:  $(MANPAGES) $(HTMLFILES)
 	asciidoctor -a webfonts! $<
 
 #
-# Auxilary Go tooling productions
+# Auxillary Go tooling productions
 #
 
 get:
@@ -60,12 +59,12 @@ test:
 PYLINTOPTS = --rcfile=/dev/null --reports=n \
 	--msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" \
 	--dummy-variables-rgx='^_'
-# W0612 is regrettable, but plying doesn't count %-substitutions
+# W0612 is regrettable, but pylint doesn't count %-substitutions
 PYSUPPRESSIONS = --disable="C0103,C0111,C0301,C0410,C1801,R0911,R0911,R0912,R0914,R0915,W0511,W0612,W0622"
 lint:
 	golint ./... | ./lintfilter 2>&1
-	-shellcheck -f gcc repobench lintfilter test/fi-to-fi test/liftcheck test/singlelift test/svn-to-git test/svn-to-svn test/delver test/*.sh test/*test
-	-pylint $(PYLINTOPTS) $(PYSUPPRESSIONS) repotool
+	shellcheck -f gcc repobench lintfilter test/fi-to-fi test/liftcheck test/singlelift test/svn-to-git test/svn-to-svn test/delver test/*.sh test/*test
+	pylint $(PYLINTOPTS) $(PYSUPPRESSIONS) repotool
 
 fmt:
 	gofmt -w .
@@ -137,8 +136,8 @@ docker-check-noscm: docker-check-only-bzr docker-check-only-cvs \
 # Release shipping.
 #
 
-reposurgeon-$(VERS).tar.xz: $(SOURCES) $(HTMLFILES:.html=.1)
-	tar --transform='s:^:reposurgeon-$(VERS)/:' --show-transformed-names -cJf reposurgeon-$(VERS).tar.xz $(SOURCES) $(HTMLFILES:.html=.1) test
+reposurgeon-$(VERS).tar.xz: $(SOURCES) $(MANPAGES)
+	tar --transform='s:^:reposurgeon-$(VERS)/:' --show-transformed-names -cJf reposurgeon-$(VERS).tar.xz $(SOURCES) $(MANPAGES) test
 
 dist: reposurgeon-$(VERS).tar.xz
 
