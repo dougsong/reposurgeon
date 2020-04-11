@@ -2,24 +2,22 @@
 
 == Quick recipe for systems using apt ==
 
---------------------------------------------
-sudo apt-get golang-1.12 asciidoctor shellcheck pylint
-sudo apt-get subversion mercurial gnuplot
-make get
-make
---------------------------------------------
+---------------------------------------------------------------------------
+sudo apt-get golang-1.12 asciidoctor                 # For running
+sudo apt-get shellcheck pylint subversion mercurial  # For testing
+sudo apt-get gnuplot                                 # For benchmarking
+make                                                 # Build the software
+make check                                           # Run the tests
+---------------------------------------------------------------------------
 
 == Prerequisites ==
 
 You will need 64-bit hardware. This code is not intended to
 run on 32-bit machines (which have an address space too small to be
-useful for repository surgery) and won't build on them.
+useful for surgwey on large repositories) and won't build on them.
 
 You will need the Go compiler at revision 1.12 or later.  Note, you
 may have to tweak your $PATH variable to make the Go tools visible.
-
-Once you have the Go tooling installed, invoke "make get" to download
-the Go modules this program uses.
 
 Some of the auxiliary tools are written in Python. They will run under
 Python 2 or Python 3.  Python is almost certainly already installed on
@@ -31,11 +29,11 @@ will work. Shell is almost certainly already installed on your system.
 
 You will need asciidoctor to format the documentation.
 
+shellcheck, pylint, subversion, and mercurial are required for the
+regression tests, but not for running the code.
+
 gnuplot is only required if you're planning to try performance-tuning
 with repobench.
-
-shellcheck and pylint are required for the regression tests, but not
-for running the code.
 
 == Building the software ==
 
@@ -45,9 +43,7 @@ also builds the suite documentation.
 == Testing the software ==
 
 There is an extensive regression-test suite in the `test/` directory.
-To run it, however, you will need to install Subversion and Mercurial.
-
-To test the correctness of this software once these prerequisites are
+To test the correctness of this software once its prerequisites are
 installed, invoke `make check`.
 
 == Note to packagers ==
