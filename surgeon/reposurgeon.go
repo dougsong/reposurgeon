@@ -1416,7 +1416,7 @@ var fileFilters = map[string]struct {
  * classes simple enough that it can be done ad-hoc for specific
  * debugging missions.  All you need to do to create a new class is
  * add a constant to the iota initializer and a corresponding entry to
- * logtags, then yoyu can use the constant in logit() and logEnable().
+ * logtags, then you can use the constant in logit() and logEnable().
  * To remove a class just delete its entry pair.
  */
 
@@ -1549,7 +1549,7 @@ func (ctx *Control) init() {
 	batonLogFunc := func(s string) {
 		// it took me about an hour to realize that the
 		// percent sign inside s was breaking this
-		logit(logBATON, "%s", s)
+		if logEnable(logBATON) {logit("%s", s)}
 	}
 	baton := newBaton(control.isInteractive(), batonLogFunc)
 	var b interface{} = baton
@@ -1637,20 +1637,18 @@ func croak(msg string, args ...interface{}) {
 	}
 }
 
-func logit(lvl uint, msg string, args ...interface{}) {
-	if logEnable(lvl) {
-		var leader string
-		content := fmt.Sprintf(msg, args...)
-		if _, ok := control.logfp.(*os.File); ok {
-			leader = rfc3339(time.Now())
-		} else {
-			leader = "reposurgeon"
-		}
-		control.logmutex.Lock()
-		control.logfp.Write([]byte(leader + ": " + content + "\n"))
-		control.logcounter++
-		control.logmutex.Unlock()
+func logit(msg string, args ...interface{}) {
+	var leader string
+	content := fmt.Sprintf(msg, args...)
+	if _, ok := control.logfp.(*os.File); ok {
+		leader = rfc3339(time.Now())
+	} else {
+		leader = "reposurgeon"
 	}
+	control.logmutex.Lock()
+	control.logfp.Write([]byte(leader + ": " + content + "\n"))
+	control.logcounter++
+	control.logmutex.Unlock()
 }
 
 // respond is to be used for console messages that shouldn't be logged
@@ -2615,8 +2613,7 @@ func (b *Blob) moveto(repo *Repository) {
 		oldloc := relpath(b.getBlobfile(false))
 		b.repo = repo
 		newloc := relpath(b.getBlobfile(true))
-		logit(logSHUFFLE,
-			"blob moveto calls os.rename(%s, %s)", oldloc, newloc)
+		if logEnable(logSHUFFLE) {logit("blob moveto calls os.rename(%s, %s)", oldloc, newloc)}
 		err := os.Rename(oldloc, newloc)
 		if err != nil {
 			panic(err)
@@ -2639,15 +2636,13 @@ func (b *Blob) clone(repo *Repository) *Blob {
 		// the relpath calls are fir readabiliyu if we error out
 		bpath := relpath(b.getBlobfile(false))
 		cpath := relpath(c.getBlobfile(false))
-		logit(logSHUFFLE,
-			"blob clone for %s calls os.Link(): %s -> %s", b.mark, bpath, cpath)
+		if logEnable(logSHUFFLE) {logit("blob clone for %s calls os.Link(): %s -> %s", b.mark, bpath, cpath)}
 		err := os.Link(bpath, cpath)
 		if err != nil {
 			panic(fmt.Errorf("Blob clone: %v", err))
 		}
 	} else {
-		logit(logSHUFFLE,
-			"blob %s is not materialized.", b.mark)
+		if logEnable(logSHUFFLE) {logit("blob %s is not materialized.", b.mark)}
 	}
 	b.hash.invalidate()
 	return c
@@ -2738,8 +2733,7 @@ func (b *Blob) emailIn(msg *MessageBlock, fill bool) bool {
 	modified := false
 	newcontent := msg.getPayload()
 	if newcontent != b.getComment() {
-		logit(logEMAILIN, "in %s, content is modified %q -> %q",
-			b.idMe(), b.getComment(), newcontent)
+		if logEnable(logEMAILIN) {logit("in %s, content is modified %q -> %q", b.idMe(), b.getComment(), newcontent)}
 		modified = true
 		b.setContent([]byte(newcontent), noOffset)
 		b.hash.invalidate()
@@ -2901,9 +2895,10 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 	}
 	modified := false
 	if t.getHumanName() != tagname {
-		logit(logEMAILIN,
-			"in tag %s, Tag-Name is modified %q -> %q",
-			msg.getHeader("Event-Number"), t.name, tagname)
+		if logEnable(logEMAILIN) {
+			logit("in tag %s, Tag-Name is modified %q -> %q",
+				msg.getHeader("Event-Number"), t.name, tagname)
+		}
 		t.setHumanName(tagname)
 		modified = true
 	}
@@ -2917,9 +2912,9 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 			panic(throw("msgbox", "Can't recognize address in Tagger: "+newtagger))
 		} else if t.tagger.fullname != newname || t.tagger.email != newemail {
 			t.tagger.fullname, t.tagger.email = newname, newemail
-			logit(logEMAILIN,
-				"in tag %s, Tagger is modified",
-				msg.getHeader("Event-Number"))
+			if logEnable(logEMAILIN) {
+				logit("in tag %s, Tagger is modified",msg.getHeader("Event-Number"))
+			}
 			modified = true
 		}
 		if taggerdate := msg.getHeader("Tagger-Date"); taggerdate != "" {
@@ -2933,10 +2928,10 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 				// in fields in a a new tag creation,
 				// so suppress the usual message.
 				if t.repo != nil {
-					logit(logSHOUT, "in %s, Tagger-Date is modified '%v' -> '%v' (delta %v)",
-						t.idMe(),
-						t.tagger.date, taggerdate,
-						date.timestamp.Sub(t.tagger.date.timestamp))
+					if logEnable(logSHOUT) {
+						logit("in %s, Tagger-Date is modified '%v' -> '%v' (delta %v)",
+							t.idMe(), t.tagger.date, taggerdate, date.timestamp.Sub(t.tagger.date.timestamp))
+					}
 				}
 				modified = true
 			}
@@ -2955,8 +2950,10 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 		newcomment += "\n"
 	}
 	if newcomment != t.Comment {
-		logit(logEMAILIN, "in tag %s, comment is modified %q -> %q",
-			msg.getHeader("Event-Number"), t.Comment, newcomment)
+		if logEnable(logEMAILIN) {
+			logit("in tag %s, comment is modified %q -> %q",
+				msg.getHeader("Event-Number"), t.Comment, newcomment)
+		}
 		modified = true
 		t.Comment = newcomment
 	}
@@ -3935,7 +3932,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 		if c.fullname != newfullname || c.email != newemail {
 			c.fullname, c.email = newfullname, newemail
 			if commit.repo != nil {
-				logit(logEMAILIN, "in %s, Committer is modified", commit.idMe())
+				if logEnable(logEMAILIN) {logit("in %s, Committer is modified", commit.idMe())}
 			}
 			modified = true
 		}
@@ -3948,10 +3945,12 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 		}
 		if !c.date.isZero() && !newcommitdate.Equal(c.date) {
 			if commit.repo != nil {
-				logit(logEMAILIN, "in %s, Committer-Date is modified '%s' -> '%s' (delta %d)",
-					commit.idMe(),
-					c.date, newcommitdate,
-					c.date.delta(newcommitdate))
+				if logEnable(logEMAILIN) {
+					logit("in %s, Committer-Date is modified '%s' -> '%s' (delta %d)",
+						commit.idMe(),
+						c.date, newcommitdate,
+						c.date.delta(newcommitdate))
+				}
 			}
 			modified = true
 		}
@@ -3989,9 +3988,10 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 			}
 			if c.fullname != newfullname || c.email != newemail {
 				c.fullname, c.email = newfullname, newemail
-				logit(logEMAILIN,
-					"in commit %s, Author #%d is modified",
-					msg.getHeader("Event-Number"), i+1)
+				if logEnable(logEMAILIN) {
+					logit("in commit %s, Author #%d is modified",
+						msg.getHeader("Event-Number"), i+1)
+				}
 				modified = true
 			}
 			newdate := msg.getHeader(hdr + "-Date")
@@ -4003,9 +4003,10 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 				if !c.date.isZero() && !date.Equal(c.date) {
 					eventnum := msg.getHeader("Event-Number")
 					if commit.repo != nil && eventnum != "" {
-						logit(logEMAILIN,
-							"in event %s, %s-Date #%d is modified",
-							eventnum, hdr, i+1)
+						if logEnable(logEMAILIN) {
+							logit("in event %s, %s-Date #%d is modified",
+								eventnum, hdr, i+1)
+						}
 					}
 					modified = true
 				}
@@ -4043,8 +4044,10 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 		newcomment += "\n"
 	}
 	if newcomment != commit.Comment {
-		logit(logEMAILIN, "in %s, comment is modified %q -> %q",
-			commit.idMe(), commit.Comment, newcomment)
+		if logEnable(logEMAILIN) {
+			logit("in %s, comment is modified %q -> %q",
+				commit.idMe(), commit.Comment, newcomment)
+		}
 		modified = true
 		commit.Comment = newcomment
 	}
@@ -5072,7 +5075,7 @@ func (p Passthrough) isCommit() bool {
 
 // capture runs a specified command, capturing the output.
 func captureFromProcess(command string) (string, error) {
-	logit(logCOMMANDS, "%s: capturing %s", rfc3339(time.Now()), command)
+	if logEnable(logCOMMANDS) {logit("%s: capturing %s", rfc3339(time.Now()), command)}
 	cmd := exec.Command("sh", "-c", command)
 	content, err := cmd.CombinedOutput()
 	if logEnable(logCOMMANDS) {
@@ -5131,12 +5134,12 @@ func (sp *StreamParser) errorLocation() string {
 
 func (sp *StreamParser) warn(msg string) {
 	// Display a parse warning associated with a line but don't error out.
-	logit(logWARN, sp.errorLocation()+msg)
+	if logEnable(logWARN) {logit(sp.errorLocation()+msg)}
 }
 
 func (sp *StreamParser) shout(msg string) {
 	// A gripe with line number
-	logit(logSHOUT, sp.errorLocation()+msg)
+	if logEnable(logSHOUT) {logit(sp.errorLocation()+msg)}
 
 }
 
@@ -5372,7 +5375,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 						// Generated by cvs-fast-export
 						if string(name) == "cvs-revisions" {
 							if !sp.repo.stronghint {
-								logit(logSHOUT, "cvs_revisions property hints at CVS.")
+								if logEnable(logSHOUT) {logit("cvs_revisions property hints at CVS.")}
 							}
 							sp.repo.hint("cvs", "", true)
 							scanner := bufio.NewScanner(bytes.NewReader(value))
@@ -5486,7 +5489,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				if commit, ok := sp.repo.markToEvent(committish).(*Commit); ok {
 					branchPosition[reset.ref] = commit
 				} else {
-					logit(logWARN, "non-mark committish in reset")
+					if logEnable(logWARN) {logit("non-mark committish in reset")}
 					delete(branchPosition, reset.ref)
 				}
 			} else {
@@ -5534,7 +5537,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 		}
 		baton.percentProgress(uint64(sp.ccount))
 		if control.readLimit > 0 && uint64(commitcount) >= control.readLimit {
-			logit(logSHOUT, "read limit %d reached", control.readLimit)
+			if logEnable(logSHOUT) {logit("read limit %d reached", control.readLimit)}
 			break
 		}
 	}
@@ -5940,7 +5943,7 @@ func (repo *Repository) fixupMarkToIndex(event Event, oldmark, newmark string) {
 		}
 	} else if index, ok := repo._markToIndex[oldmark]; ok {
 		if event != repo.events[index] {
-			logit(logSHOUT, "Multiple events with the same mark corrupted the cache")
+			if logEnable(logSHOUT) {logit("Multiple events with the same mark corrupted the cache")}
 			repo.invalidateMarkToIndex()
 			return
 		}
@@ -5960,7 +5963,7 @@ func (repo *Repository) newmark() string {
 
 func (repo *Repository) makedir() {
 	target := repo.subdir("")
-	logit(logSHUFFLE, "repository fast import creates "+target)
+	if logEnable(logSHUFFLE) {logit("repository fast import creates "+target)}
 	if _, err1 := os.Stat(target); os.IsNotExist(err1) {
 		err2 := os.Mkdir(target, userReadWriteSearchMode)
 		if err2 != nil {
@@ -5987,8 +5990,9 @@ func (repo *Repository) hint(clue1 string, clue2 string, strong bool) bool {
 		}
 	}
 	if newhint && repo.stronghint && strong {
-		logit(logSHOUT, "new hint %s conflicts with old %s",
-			clue1, repo.hintlist[len(repo.hintlist)-1])
+		if logEnable(logSHOUT) {
+			logit("new hint %s conflicts with old %s", clue1, repo.hintlist[len(repo.hintlist)-1])
+		}
 		return false
 	}
 	if !repo.stronghint && clue2 != "" {
@@ -6231,7 +6235,10 @@ func (repo *Repository) readAuthorMap(selection orderedIntSet, fp io.Reader) err
 	var principal Contributor
 	var currentLineNumber uint64
 	complain := func(msg string, args ...interface{}) {
-		logit(logSHOUT, "in readAuthorMap, while parsing line %d: "+msg, append([]interface{}{currentLineNumber}, args)...)
+		if logEnable(logSHOUT) {
+			logit("in readAuthorMap, while parsing line %d: "+msg,
+				append([]interface{}{currentLineNumber}, args)...)
+		}
 	}
 	for scanner.Scan() {
 		currentLineNumber++
@@ -6507,7 +6514,7 @@ func (repo *Repository) tagifyNoCheck(commit *Commit, name string, target string
 		if commit.legacyID != "" {
 			commitID += fmt.Sprintf(" <%s>", commit.legacyID)
 		}
-		logit(logSHOUT, fmt.Sprintf("tagifying: %s -> %s", commitID, name))
+		if logEnable(logSHOUT) {logit(fmt.Sprintf("tagifying: %s -> %s", commitID, name))}
 	}
 	var pref string
 	if commit.Comment == "" {
@@ -6841,7 +6848,7 @@ func (repo *Repository) fastExport(selection orderedIntSet,
 		}
 		if logEnable(logUNITE) {
 			if event.getMark() != "" {
-				logit(logSHOUT, fmt.Sprintf("writing %d %s", ei, event.getMark()))
+				if logEnable(logSHOUT) {logit(fmt.Sprintf("writing %d %s", ei, event.getMark()))}
 			}
 		}
 		event.Save(fp)
@@ -6882,7 +6889,9 @@ func (repo *Repository) preservable() orderedStringSet {
 func (repo *Repository) rename(newname string) error {
 	// Can fail if the target directory exists.
 	if exists(repo.subdir("")) {
-		logit(logSHUFFLE, fmt.Sprintf("repository rename %s->%s calls os.Rename(%q, %q)", repo.name, newname, repo.subdir(""), repo.subdir(newname)))
+		if logEnable(logSHUFFLE) {
+			logit("repository rename %s->%s calls os.Rename(%q, %q)", repo.name, newname, repo.subdir(""), repo.subdir(newname))
+		}
 		err := os.Rename(repo.subdir(""), repo.subdir(newname))
 		if err != nil {
 			return fmt.Errorf("repo rename %s -> %s failed: %s", repo.subdir(""), repo.subdir(newname), err)
@@ -7180,7 +7189,7 @@ var allPolicies = orderedStringSet{
 
 // Delete a set of events, or rearrange it forward or backwards.
 func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) error {
-	logit(logDELETE, "Deletion list is %v", selected)
+	if logEnable(logDELETE) {logit("Deletion list is %v", selected)}
 	for _, qualifier := range policy {
 		if !allPolicies.Contains(qualifier) {
 			return errors.New("no such deletion modifier as " + qualifier)
@@ -7216,10 +7225,10 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 			if delete {
 				speak := fmt.Sprintf("warning: commit %s to be deleted has ", commit.mark)
 				if strings.Contains(commit.Branch, "/") && !strings.Contains(commit.Branch, "/heads/") {
-					logit(logWARN, speak+fmt.Sprintf("non-head branch attribute %s", commit.Branch))
+					if logEnable(logWARN) {logit(speak+fmt.Sprintf("non-head branch attribute %s", commit.Branch))}
 				}
 				if !commit.alldeletes(opD, deleteall) {
-					logit(logWARN, speak+"non-delete fileops.")
+					if logEnable(logWARN) {logit(speak+"non-delete fileops.")}
 				}
 			}
 			if !delete {
@@ -7296,7 +7305,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 				}
 			}
 			if newTarget != nil {
-				logit(logDELETE, "new target for tags and resets is %s", newTarget.getMark())
+				if logEnable(logDELETE) {logit("new target for tags and resets is %s", newTarget.getMark())}
 			}
 			// Reparent each child.  Concatenate comments,
 			// ignoring empty-log-message markers.
@@ -7315,7 +7324,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 				}
 				return a + "\n" + b
 			}
-			//logit(logDELETE, "deleting %s requires %v to be reparented.", commit.getMark(), commit.childMarks())
+			//if logEnable(logDELETE) {logit("deleting %s requires %v to be reparented.", commit.getMark(), commit.childMarks())}
 			for _, cchild := range commit.childMarks() {
 				if isCallout(cchild) {
 					continue
@@ -7336,7 +7345,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 						break
 					}
 				}
-				//logit(logDELETE, "reparenting: %s", child.getMark())
+				//if logEnable(logDELETE) {logit("reparenting: %s", child.getMark())}
 				// Start with existing parents before us,
 				// including existing duplicates
 				newParents := make([]CommitLike, len(oldParents)-1+len(commit.parents()))
@@ -7379,8 +7388,10 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 				}
 				// Really set the parents to the newly
 				// constructed list
-				logit(logDELETE, "Parents of %s changed from %v to %v",
-					child.getMark(), listMarks(oldParents), listMarks(newParents))
+				if logEnable(logDELETE) {
+					logit("Parents of %s changed from %v to %v",
+						child.getMark(), listMarks(oldParents), listMarks(newParents))
+				}
 				child.setParents(newParents)
 				// If event was the first parent of
 				// child yet has no parents of its
@@ -7464,7 +7475,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 				}
 				needReset := true
 				for _, e := range attachmentsCopy {
-					logit(logDELETE, "moving attachment %s of %s to %s", commit.mark, e.idMe(), newTarget.getMark())
+					if logEnable(logDELETE) {logit("moving attachment %s of %s to %s", commit.mark, e.idMe(), newTarget.getMark())}
 					switch object := e.(type) {
 					case *Tag:
 						// object is already cast to Tag
@@ -7517,12 +7528,12 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 				continue
 			}
 			if logEnable(logDELETE) {
-				logit(logDELETE, "Before canonicalization:")
+				if logEnable(logDELETE) {logit("Before canonicalization:")}
 				commit.fileopDump()
 			}
 			commit.simplify()
 			if logEnable(logDELETE) {
-				logit(logDELETE, "After canonicalization:")
+				if logEnable(logDELETE) {logit("After canonicalization:")}
 				commit.fileopDump()
 			}
 		}
@@ -7871,7 +7882,7 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 		if !fileopSliceEqual(ops, c.operations()) {
 			c.setOperations(ops)
 			if !bequiet && len(ops) == 0 {
-				logit(logWARN, "%s no fileops remain after re-order", c.idMe())
+				if logEnable(logWARN) {logit("%s no fileops remain after re-order", c.idMe())}
 			}
 		}
 	}
@@ -7922,7 +7933,7 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
 			old = blob.mark
 			if old != "" {
 				newmark := remark(old, event.idMe())
-				logit(logUNITE, "renumbering %s -> %s in blob mark", old, newmark)
+				if logEnable(logUNITE) {logit("renumbering %s -> %s in blob mark", old, newmark)}
 				blob.mark = newmark
 				repo.events[idx] = blob
 			}
@@ -7931,7 +7942,7 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
 			old = commit.mark
 			if old != "" {
 				newmark := remark(old, event.idMe())
-				logit(logUNITE, "renumbering %s -> %s in commit mark", old, newmark)
+				if logEnable(logUNITE) {logit("renumbering %s -> %s in commit mark", old, newmark)}
 				commit.mark = newmark
 				repo.events[idx] = commit
 			}
@@ -7940,7 +7951,7 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
 			old = tag.committish
 			if old != "" {
 				newmark := remark(old, event.idMe())
-				logit(logUNITE, "renumbering %s -> %s in tag committish", old, newmark)
+				if logEnable(logUNITE) {logit("renumbering %s -> %s in tag committish", old, newmark)}
 				tag.committish = newmark
 				repo.events[idx] = tag
 			}
@@ -7949,7 +7960,7 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
 			old = reset.committish
 			if old != "" {
 				newmark := remark(old, event.idMe())
-				logit(logUNITE, "renumbering %s -> %s in reset committish", old, newmark)
+				if logEnable(logUNITE) {logit("renumbering %s -> %s in reset committish", old, newmark)}
 				reset.committish = newmark
 				repo.events[idx] = reset
 			}
@@ -7963,7 +7974,7 @@ func (repo *Repository) renumber(origin int, baton *Baton) {
 		for i, fileop := range commit.operations() {
 			if fileop.op == opM && strings.HasPrefix(fileop.ref, ":") {
 				newmark = remark(fileop.ref, "fileop")
-				logit(logUNITE, fmt.Sprintf("renumbering %s -> %s in fileop", fileop.ref, newmark))
+				if logEnable(logUNITE) {logit(fmt.Sprintf("renumbering %s -> %s in fileop", fileop.ref, newmark))}
 				commit.fileops[i].ref = newmark
 			}
 		}
@@ -8020,7 +8031,7 @@ func (repo *Repository) uniquify(color string, persist map[string]string) map[st
 			}
 		}
 		if newname != "" {
-			logit(logUNITE, "moving %s -> %s in %s.%s", oldname, newname, obj, fld)
+			if logEnable(logUNITE) {logit("moving %s -> %s in %s.%s", oldname, newname, obj, fld)}
 			if persist != nil {
 				persist[newname] = color
 			}
@@ -8036,8 +8047,7 @@ func (repo *Repository) uniquify(color string, persist map[string]string) map[st
 			panic("field not in mark format")
 		}
 		newname := oldname + "-" + color
-		logit(logUNITE, "moving %s -> %s in %s.%s",
-			oldname, newname, obj, fld)
+		if logEnable(logUNITE) {logit("moving %s -> %s in %s.%s", oldname, newname, obj, fld)}
 		return newname
 	}
 	for _, event := range repo.events {
@@ -8053,9 +8063,9 @@ func (repo *Repository) uniquify(color string, persist map[string]string) map[st
 			for i, fileop := range commit.fileops {
 				if fileop.op == opM && strings.HasPrefix(fileop.ref, ":") {
 					newname := fileop.ref + "-" + color
-					logit(logUNITE,
-						"moving %s -> %s in fileop",
-						fileop.ref, newname)
+					if logEnable(logUNITE) {
+						logit("moving %s -> %s in fileop", fileop.ref, newname)
+					}
 					commit.fileops[i].ref = newname
 				}
 			}
@@ -8387,7 +8397,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 		if extractor != nil {
 			legend = "extractor"
 		}
-		logit(logSHUFFLE, "found %s repository (%s)", vcs.name, legend)
+		if logEnable(logSHUFFLE) {logit("found %s repository (%s)", vcs.name, legend)}
 	}
 	repo := newRepository("")
 	repo.sourcedir = source
@@ -8395,10 +8405,10 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 	if err != nil {
 		return nil, fmt.Errorf("readRepo is disoriented: %v", err)
 	}
-	logit(logSHUFFLE, "current directory is %q", here)
+	if logEnable(logSHUFFLE) {logit("current directory is %q", here)}
 	chdir := func(directory string, legend string) {
 		os.Chdir(directory)
-		logit(logSHUFFLE, "changing directory to %s: %s", legend, directory)
+		if logEnable(logSHUFFLE) {logit("changing directory to %s: %s", legend, directory)}
 	}
 	defer chdir(here, "original")
 	chdir(repo.sourcedir, "repository directory")
@@ -8452,7 +8462,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 			control.flagOptions["progress"] = true
 		}
 		if repo.vcs.authormap != "" && exists(repo.vcs.authormap) {
-			logit(logSHOUT, "reading author map.")
+			if logEnable(logSHOUT) {logit("reading author map.")}
 			fp, err := os.Open(repo.vcs.authormap)
 			if err != nil {
 				return nil, err
@@ -8512,7 +8522,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 		// kluge: git-specific hook
 		if repo.vcs.name == "git" {
 			if exists(".git/cvs-revisions") {
-				logit(logSHOUT, "reading cvs-revisions map.")
+				if logEnable(logSHOUT) {logit("reading cvs-revisions map.")}
 				type pathRev struct {
 					path string
 					rev  string
@@ -8623,7 +8633,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 	}
 	chdir := func(directory string, legend string) {
 		os.Chdir(directory)
-		logit(logSHUFFLE, "changing directory to %s: %s", legend, directory)
+		if logEnable(logSHUFFLE) {logit("changing directory to %s: %s", legend, directory)}
 	}
 	// Create a new empty directory to do the rebuild in
 	var staging string
@@ -8737,7 +8747,7 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 	var savedir string
 	// This is how we clear away hooks directories in
 	// newly-created repos. May not be strictly necessary.
-	logit(logSHUFFLE, "Nuking %v from staging %s", vcs.prenuke, staging)
+	if logEnable(logSHUFFLE) {logit("Nuking %v from staging %s", vcs.prenuke, staging)}
 	if vcs.prenuke != nil {
 		for _, path := range vcs.prenuke {
 			os.RemoveAll(ljoin(staging, path))
@@ -8774,10 +8784,11 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		if err != nil {
 			return err
 		}
-		logit(logSHUFFLE, "Target %s to backup%s", target, savedir)
+		if logEnable(logSHUFFLE) {logit("Target %s to backup%s", target, savedir)}
 		for _, sub := range entries {
-			logit(logSHUFFLE, "%s -> %s", ljoin(target, sub.Name()),
-				ljoin(savedir, sub.Name()))
+			if logEnable(logSHUFFLE) {
+				logit("%s -> %s", ljoin(target, sub.Name()), ljoin(savedir, sub.Name()))
+			}
 			os.Rename(ljoin(target, sub.Name()),
 				ljoin(savedir, sub.Name()))
 		}
@@ -8786,11 +8797,11 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		if err != nil {
 			return err
 		}
-		logit(logSHUFFLE, "Copy staging %s to target %s", staging, target)
+		if logEnable(logSHUFFLE) {logit("Copy staging %s to target %s", staging, target)}
 		for _, sub := range entries {
-			logit(logSHUFFLE, "%s -> %s",
-				ljoin(staging, sub.Name()),
-				ljoin(target, sub.Name()))
+			if logEnable(logSHUFFLE) {
+				logit("%s -> %s", ljoin(staging, sub.Name()), ljoin(target, sub.Name()))
+			}
 			os.Rename(ljoin(staging, sub.Name()),
 				ljoin(target, sub.Name()))
 		}
@@ -8802,7 +8813,9 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		if repo.vcs.authormap != "" {
 			preserveMe = append(preserveMe, repo.vcs.authormap)
 		}
-		logit(logSHUFFLE, "Copy preservation set %v from backup %s to target %s", preserveMe, savedir, target)
+		if logEnable(logSHUFFLE) {
+			logit("Copy preservation set %v from backup %s to target %s", preserveMe, savedir, target)
+		}
 		for _, sub := range repo.preserveSet {
 			src := ljoin(savedir, sub)
 			dst := ljoin(target, sub)
@@ -8833,7 +8846,7 @@ func runProcess(dcmd string, legend string) error {
 	if legend != "" {
 		legend = " " + legend
 	}
-	logit(logCOMMANDS, "executing '%s'%s", dcmd, legend)
+	if logEnable(logCOMMANDS) {logit("executing '%s'%s", dcmd, legend)}
 	words, err := shlex.Split(dcmd, true)
 	if err != nil {
 		return fmt.Errorf("preparing %q for execution: %v", dcmd, err)
@@ -9275,7 +9288,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 		commit, ok := event.(*Commit)
 		if ok {
 			for i, fileop := range commit.operations() {
-				logit(logDELETE, fileop.String()+"\n")
+				if logEnable(logDELETE) {logit(fileop.String()+"\n")}
 				if fileop.op == opD || fileop.op == opM {
 					if expunge.MatchString(fileop.Path) {
 						deletia = append(deletia, i)
@@ -9285,7 +9298,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 					targetdelete := expunge.MatchString(fileop.Target)
 					if sourcedelete {
 						deletia = append(deletia, i)
-						//logit(logSHOUT, "following %s of %s to %s", fileop.op, fileop.Source, fileop.Target)
+						//if logEnable(logSHOUT) {logit("following %s of %s to %s", fileop.op, fileop.Source, fileop.Target)}
 						if fileop.op == opR {
 							newmatchers := make([]string, 0)
 							for _, m := range matchers {
@@ -9447,7 +9460,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 		}
 	}
 	// Now remove commits that no longer have fileops, and released blobs.
-	// Logit events that will be deleted.
+	// log events that will be deleted.
 	if logEnable(logDELETE) {
 		toDelete := make([]int, 0)
 		for i, event := range rl.repo.events {
@@ -9810,7 +9823,7 @@ func (rs *Reposurgeon) DoShell(line string) bool {
 	if shell == "" {
 		shell = "/bin/sh"
 	}
-	logit(logCOMMANDS, "Spawning %s -c %#v...", shell, line)
+	if logEnable(logCOMMANDS) {logit("Spawning %s -c %#v...", shell, line)}
 	cmd := exec.Command(shell, "-c", line)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -12505,13 +12518,13 @@ func (fc *filterCommand) do(content string, substitutions map[string]string) str
 		cmd.Stdin = strings.NewReader(content)
 		content, err := cmd.Output()
 		if err != nil {
-			logit(logWARN, "filter command failed")
+			if logEnable(logWARN) {logit("filter command failed")}
 		}
 		return string(content)
 	} else if fc.sub != nil {
 		return fc.sub(content)
 	} else {
-		logit(logWARN, "unknown mode in filter command")
+		if logEnable(logWARN) {logit("unknown mode in filter command")}
 	}
 	return content
 }
@@ -12578,7 +12591,7 @@ func (rs *Reposurgeon) DoTranscode(line string) bool {
 	transcode := func(txt string, _ map[string]string) string {
 		out, err := decoder.Bytes([]byte(txt))
 		if err != nil {
-			logit(logWARN, "decode error during transcoding: %v", err)
+			if logEnable(logWARN) {logit("decode error during transcoding: %v", err)}
 			rs.unchoose()
 		}
 		return string(out)
@@ -13913,7 +13926,7 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 	sourcePattern, line = popToken(line)
 	sourceRE, err1 := regexp.Compile(sourcePattern)
 	if err1 != nil {
-		logit(logWARN, "source path regexp compilation failed: %v", err1)
+		if logEnable(logWARN) {logit("source path regexp compilation failed: %v", err1)}
 		return false
 	}
 	var verb string
@@ -13924,7 +13937,7 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 		force := parse.options.Contains("--force")
 		targetPattern, _ := popToken(parse.line)
 		if targetPattern == "" {
-			logit(logWARN, "no target specified in rename")
+			if logEnable(logWARN) {logit("no target specified in rename")}
 			return false
 		}
 		actions := make([]pathAction, 0)
@@ -13936,10 +13949,10 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 						if ok && oldpath != "" && sourceRE.MatchString(oldpath) {
 							newpath := GoReplacer(sourceRE, oldpath, targetPattern)
 							if !force && commit.visible(newpath) != nil {
-								logit(logWARN, "rename of %s at %s failed, %s visible in ancestry", oldpath, commit.idMe(), newpath)
+								if logEnable(logWARN) {logit("rename of %s at %s failed, %s visible in ancestry", oldpath, commit.idMe(), newpath)}
 								return false
 							} else if !force && commit.paths(nil).Contains(newpath) {
-								logit(logWARN, "rename of %s at %s failed, %s exists there", oldpath, commit.idMe(), newpath)
+								if logEnable(logWARN) {logit("rename of %s at %s failed, %s exists there", oldpath, commit.idMe(), newpath)}
 								return false
 							} else {
 								actions = append(actions, pathAction{fileop, commit, attr, newpath})
@@ -13954,7 +13967,7 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 			setAttr(action.fileop, action.attr, action.newpath)
 		}
 	} else {
-		logit(logWARN, "unknown verb '%s' in path command.", verb)
+		if logEnable(logWARN) {logit("unknown verb '%s' in path command.", verb)}
 	}
 	return false
 }
@@ -14050,7 +14063,7 @@ paths matching it.  This command supports > redirection.
 // DoManifest prints all files (matching the regex) in the selected commits trees.
 func (rs *Reposurgeon) DoManifest(line string) bool {
 	if rs.chosen() == nil {
-		logit(logWARN, "no repo has been chosen")
+		if logEnable(logWARN) {logit("no repo has been chosen")}
 		return false
 	}
 	selection := rs.selection
@@ -14068,7 +14081,7 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 		}
 		filterRE, err := regexp.Compile(line[1 : len(line)-1])
 		if err != nil {
-			logit(logWARN, "invalid regular expression: %v", err)
+			if logEnable(logWARN) {logit("invalid regular expression: %v", err)}
 			return false
 		}
 		filterFunc = func(s string) bool {
@@ -14340,7 +14353,7 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 	}
 	selected := repo.commits(rs.selection)
 	if len(selected) == 0 || len(rs.selection) != len(selected) {
-		logit(logWARN, "reparent requires one or more selected commits")
+		if logEnable(logWARN) {logit("reparent requires one or more selected commits")}
 	}
 	child := selected[len(selected)-1]
 	parents := make([]CommitLike, len(rs.selection)-1)
@@ -14350,7 +14363,7 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 	if doResort {
 		for _, p := range parents {
 			if p.(*Commit).descendedFrom(child) {
-				logit(logWARN, "reparenting a commit to its own descendant would introduce a cycle")
+				if logEnable(logWARN) {logit("reparenting a commit to its own descendant would introduce a cycle")}
 				return false
 			}
 		}
@@ -15464,7 +15477,7 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 			// legend was matchobj.group(0) in Python
 			commit := getter(legend)
 			if commit == nil {
-				logit(logWARN, "no commit matches %q", legend)
+				if logEnable(logWARN) {logit("no commit matches %q", legend)}
 				return legend // no replacement
 			}
 			text := commit.actionStamp()
@@ -15676,13 +15689,13 @@ func (rs *Reposurgeon) DoDiff(line string) bool {
 	}
 	repo := rs.chosen()
 	if len(rs.selection) != 2 {
-		logit(logWARN, "a pair of commits is required.")
+		if logEnable(logWARN) {logit("a pair of commits is required.")}
 		return false
 	}
 	lower, ok1 := repo.events[rs.selection[0]].(*Commit)
 	upper, ok2 := repo.events[rs.selection[1]].(*Commit)
 	if !ok1 || !ok2 {
-		logit(logWARN, "a pair of commits is required.")
+		if logEnable(logWARN) {logit("a pair of commits is required.")}
 		return false
 	}
 	dir1 := newOrderedStringSet()
@@ -15722,7 +15735,7 @@ func (rs *Reposurgeon) DoDiff(line string) bool {
 		} else if dir2.Contains(path) {
 			fmt.Fprintf(parse.stdout, "%s: added\n", path)
 		} else {
-			logit(logWARN, "internal error - missing path in diff")
+			if logEnable(logWARN) {logit("internal error - missing path in diff")}
 			return false
 		}
 	}
@@ -15960,7 +15973,7 @@ func (rs *Reposurgeon) DoReadlimit(line string) bool {
 	}
 	lim, err := strconv.ParseUint(line, 10, 64)
 	if err != nil {
-		logit(logWARN, "ill-formed readlimit argument %q: %v.", line, err)
+		if logEnable(logWARN) {logit("ill-formed readlimit argument %q: %v.", line, err)}
 	}
 	control.readLimit = lim
 	return false
@@ -16527,8 +16540,9 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		// fast-import stream. Filter out bogons...
 		matches := addressRE.FindAllStringSubmatch(strings.TrimSpace(attribution), -1)
 		if matches == nil {
-			logit(logSHOUT, "invalid attribution %q in commit %s <%s>",
-				attribution, commit.mark, commit.legacyID)
+			if logEnable(logSHOUT) {
+				logit("invalid attribution %q in commit %s <%s>", attribution, commit.mark, commit.legacyID)
+			}
 			continue
 		}
 		cm++
@@ -16588,7 +16602,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 	sort.Slice(errlines, func(i, j int) bool { return errlines[i] < errlines[j] })
 	// Sort is requirs to make message order deterministic
 	for _, line := range errlines {
-		logit(logSHOUT, line)
+		if logEnable(logSHOUT) {logit(line)}
 	}
 	respond("fills %d of %d authorships, changing %d, from %d ChangeLogs.", cm, cc.value, cd, cl.value)
 	return false
@@ -16769,7 +16783,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		}
 		defer tarfile.Close()
 
-		logit(logSHUFFLE, "extracting %s into %s", tarpath, repo.subdir(""))
+		if logEnable(logSHUFFLE) {logit("extracting %s into %s", tarpath, repo.subdir(""))}
 		repo.makedir()
 		headers, err := extractTar(repo.subdir(""), tarfile)
 		if err != nil {
@@ -17322,9 +17336,9 @@ func (rs *Reposurgeon) DoScript(ctx context.Context, lineIn string) bool {
 		// script call.
 		if control.getAbort() {
 			if originalline != "" && !strings.Contains(originalline, "</tmp") {
-				logit(logSHOUT, "script abort on line %d %q", lineno, originalline)
+				if logEnable(logSHOUT) {logit("script abort on line %d %q", lineno, originalline)}
 			} else {
-				logit(logSHOUT, "script abort on line %d", lineno)
+				if logEnable(logSHOUT) {logit("script abort on line %d", lineno)}
 			}
 			break
 		}

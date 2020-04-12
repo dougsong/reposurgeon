@@ -173,13 +173,14 @@ func (h *History) apply(revision revidx, nodes []*NodeAction) {
 			//assert node.fromRev < revision
 			h.visibleHere.copyFrom(node.path, h.visible[node.fromRev],
 				node.fromPath)
-			logit(logFILEMAP, "r%d-%d: r%d~%s copied to %s",
-				node.revision, node.index, node.fromRev, node.fromPath, node.path)
+			if logEnable(logFILEMAP) {
+				logit("r%d-%d: r%d~%s copied to %s", node.revision, node.index, node.fromRev, node.fromPath, node.path)
+			}
 		}
 		// Mutate the filemap according to adds/deletes/changes
 		if node.action == sdADD && node.kind == sdFILE {
 			h.visibleHere.set(node.path, node)
-			logit(logFILEMAP, "r%d-%d: %s added", node.revision, node.index, node.path)
+			if logEnable(logFILEMAP) {logit("r%d-%d: %s added", node.revision, node.index, node.path)}
 		} else if node.action == sdDELETE || (node.action == sdREPLACE && node.kind == sdDIR) {
 			// This test can't be moved back further, because both
 			// directory and file deletion ops are sometimes issued
@@ -191,17 +192,16 @@ func (h *History) apply(revision revidx, nodes []*NodeAction) {
 					node.kind = sdDIR
 				}
 			}
-			//logit(logFILEMAP, "r%d-%d: deduced type for %s", node.revision, node.index, node)
+			//if logEnable(logFILEMAP) {logit("r%d-%d: deduced type for %s", node.revision, node.index, node)}
 			// Snapshot the deleted paths before
 			// removing them.
 			node.fileSet = newPathMap()
 			node.fileSet.copyFrom(node.path, h.visibleHere, node.path)
 			h.visibleHere.remove(node.path)
-			logit(logFILEMAP, "r%d-%d: %s deleted",
-				node.revision, node.index, node.path)
+			if logEnable(logFILEMAP) {logit("r%d-%d: %s deleted", node.revision, node.index, node.path)}
 		} else if (node.action == sdCHANGE || node.action == sdREPLACE) && node.kind == sdFILE {
 			h.visibleHere.set(node.path, node)
-			logit(logFILEMAP, "r%d-%d: %s changed", node.revision, node.index, node.path)
+			if logEnable(logFILEMAP) {logit("r%d-%d: %s changed", node.revision, node.index, node.path)}
 		}
 		control.baton.twirl()
 	}
@@ -218,13 +218,13 @@ func (h *History) apply(revision revidx, nodes []*NodeAction) {
 	}
 
 	h.revision = revision
-	logit(logFILEMAP, "Filemap at %d: %v", revision, h.visible[revision])
+	if logEnable(logFILEMAP) {logit("Filemap at %d: %v", revision, h.visible[revision])}
 }
 
 func (h *History) getActionNode(revision revidx, source string) *NodeAction {
 	p, _ := h.visible[revision].get(source)
 	if p != nil {
-		logit(logFILEMAP, "getActionNode(%d, %s) -> %s\n", revision, source, p.(*NodeAction))
+		if logEnable(logFILEMAP) {logit("getActionNode(%d, %s) -> %s\n", revision, source, p.(*NodeAction))}
 		return p.(*NodeAction)
 	}
 	return nil
@@ -309,8 +309,7 @@ func (sp *StreamParser) sdReadProps(target string, checklength int) *OrderedMap 
 	start := sp.ccount
 	for sp.ccount-start < int64(checklength) {
 		line := sp.readline()
-		logit(logSVNPARSE, "readprops, line %d: %q",
-			sp.importLine, line)
+		if logEnable(logSVNPARSE) {logit("readprops, line %d: %q", sp.importLine, line)}
 		if bytes.HasPrefix(line, []byte("PROPS-END")) {
 			// This test should be !=, but I get random
 			// off-by-ones from real dumpfiles - I don't
@@ -335,9 +334,9 @@ func (sp *StreamParser) sdReadProps(target string, checklength int) *OrderedMap 
 			}
 			value := string(sp.sdReadBlob(payloadLength(line)))
 			props.set(key, value)
-			logit(logSVNPARSE,
-				"readprops: on %s, setting %s = %q",
-				target, key, value)
+			if logEnable(logSVNPARSE) {
+				logit("readprops: on %s, setting %s = %q", target, key, value)
+			}
 		}
 	}
 	return &props
@@ -395,7 +394,7 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 			sp.repo.uuid = string(sdBody(line))
 		} else if bytes.HasPrefix(line, []byte("Revision-number: ")) {
 			// Begin Revision processing
-			logit(logSVNPARSE, "revision parsing, line %d: begins", sp.importLine)
+			if logEnable(logSVNPARSE) {logit("revision parsing, line %d: begins", sp.importLine)}
 			revint, rerr := strconv.Atoi(string(sdBody(line)))
 			if rerr != nil {
 				panic(throw("parse", "ill-formed revision number: "+string(line)))
@@ -418,8 +417,7 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 			// Node list parsing begins
 			for {
 				line = sp.readline()
-				logit(logSVNPARSE, "node list parsing, line %d: %q",
-					sp.importLine, line)
+				if logEnable(logSVNPARSE) {logit("node list parsing, line %d: %q", sp.importLine, line)}
 				if len(line) == 0 {
 					break
 				} else if len(bytes.TrimSpace(line)) == 0 {
@@ -483,15 +481,17 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 							node.props = propertyStash[node.path]
 						}
 						if !node.isBogon() {
-							logit(logSVNPARSE, "node parsing, line %d: node %s appended", sp.importLine, node)
+							if logEnable(logSVNPARSE) {
+								logit("node parsing, line %d: node %s appended", sp.importLine, node)
+							}
 							node.index = intToNodeidx(len(nodes) + 1)
 							nodes = append(nodes, node)
 							sp.streamview = append(sp.streamview, node)
 							if logEnable(logEXTRACT) {
-								logit(logEXTRACT, fmt.Sprintf("r%d-%d: %s", node.revision, node.index, node))
+								logit("r%d-%d: %s", node.revision, node.index, node)
 							} else if node.kind == sdDIR &&
 								node.action != sdCHANGE && logEnable(logTOPOLOGY) {
-								logit(logSHOUT, node.String())
+								if logEnable(logSHOUT) {logit(node.String())}
 							}
 						}
 						node = nil
@@ -568,7 +568,10 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 				} else if bytes.HasPrefix(line, []byte("Content-length: ")) {
 					continue
 				} else {
-					logit(logSVNPARSE, "node list parsing, line %d: uninterpreted line %q", sp.importLine, line)
+					if logEnable(logSVNPARSE) {
+						logit("node list parsing, line %d: uninterpreted line %q",
+							sp.importLine, line)
+					}
 					continue
 				}
 				// Node processing ends
@@ -576,7 +579,10 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 			}
 			// Node list parsing ends
 			newRecord := newRevisionRecord(nodes, props, revision)
-			logit(logSVNPARSE, "revision parsing, line %d: r%d ends with %d nodes", sp.importLine, newRecord.revision, len(newRecord.nodes))
+			if logEnable(logSVNPARSE) {
+				logit("revision parsing, line %d: r%d ends with %d nodes",
+					sp.importLine, newRecord.revision, len(newRecord.nodes))
+			}
 			sp.revisions = appendRevisionRecords(sp.revisions, *newRecord)
 			sp.repo.legacyCount++
 			if sp.repo.legacyCount == maxRevidx-1 {
@@ -585,16 +591,16 @@ func (sp *StreamParser) parseSubversion(ctx context.Context, options *stringSet,
 			// End Revision processing
 			baton.percentProgress(uint64(sp.ccount))
 			if control.readLimit > 0 && uint64(sp.repo.legacyCount) > control.readLimit {
-				logit(logSHOUT, "read limit %d reached.", control.readLimit)
+				if logEnable(logSHOUT) {logit("read limit %d reached.", control.readLimit)}
 				break
 			}
 		}
 	}
 	control.baton.endProgress()
 	if control.readLimit > 0 && uint64(sp.repo.legacyCount) <= control.readLimit {
-		logit(logSHOUT, "EOF before readlimit.")
+		if logEnable(logSHOUT) {logit("EOF before readlimit.")}
 	}
-	logit(logSVNPARSE, "revision parsing, line %d: ends with %d records", sp.importLine, sp.repo.legacyCount)
+	if logEnable(logSVNPARSE) {logit("revision parsing, line %d: ends with %d records", sp.importLine, sp.repo.legacyCount)}
 	sp.timeMark("parsing")
 	sp.svnProcess(ctx, *options, baton)
 }
@@ -661,29 +667,29 @@ func (action NodeAction) isBogon() bool {
 	if !((action.action == sdCHANGE || action.action == sdADD || action.action == sdDELETE || action.action == sdREPLACE) &&
 		(action.kind == sdFILE || action.kind == sdDIR || action.action == sdDELETE) &&
 		((action.fromRev == 0) == (action.fromPath == ""))) {
-		logit(logSHOUT, "forbidden operation in dump stream (versoin 7?) at r%d: %s", action.revision, action)
+		if logEnable(logSHOUT) {logit("forbidden operation in dump stream (versoin 7?) at r%d: %s", action.revision, action)}
 		return true
 	}
 
 	// This guard filters out the empty nodes produced by format 7
 	// dumps.  Not necessarily a bogon, actually/
 	if action.action == sdCHANGE && !action.hasProperties() && action.blob == nil && !action.isCopy() {
-		logit(logEXTRACT, "empty node rejected at r%d: %v", action.revision, action)
+		if logEnable(logEXTRACT) {logit("empty node rejected at r%d: %v", action.revision, action)}
 		return true
 	}
 
 	if !(action.blob != nil || action.hasProperties() ||
 		action.fromRev != 0 || action.action == sdADD || action.action == sdDELETE) {
-		logit(logSHOUT, "malformed node in dump stream at r%d: %s", action.revision, action)
+		if logEnable(logSHOUT) {logit("malformed node in dump stream at r%d: %s", action.revision, action)}
 		return true
 	}
 	if action.kind == sdNONE && action.action != sdDELETE {
-		logit(logSHOUT, "missing type on a non-delete node r%d: %s", action.revision, action)
+		if logEnable(logSHOUT) {logit("missing type on a non-delete node r%d: %s", action.revision, action)}
 		return true
 	}
 
 	if (action.action != sdADD && action.action != sdREPLACE) && action.isCopy() {
-		logit(logSHOUT, "invalid type in node with from revision r%d: %s", action.revision, action)
+		if logEnable(logSHOUT) {logit("invalid type in node with from revision r%d: %s", action.revision, action)}
 		return true
 	}
 
@@ -910,7 +916,7 @@ func svnFilterProperties(ctx context.Context, sp *StreamParser, options stringSe
 	// so we chose to to not incur additional code complexity here.
 	//
 	defer trace.StartRegion(ctx, "SVN Phase 2: filter properties").End()
-	logit(logEXTRACT, "SVN Phase 2: filter properties")
+	if logEnable(logEXTRACT) {logit("SVN Phase 2: filter properties")}
 	baton.startProgress("SVN phase 2: filter properties", uint64(len(sp.streamview)))
 	for si, node := range sp.streamview {
 		// Handle per-path properties.
@@ -943,9 +949,9 @@ func svnFilterProperties(ctx context.Context, sp *StreamParser, options stringSe
 				// them lots of places they're not
 				// necessary.
 				if len(tossThese) > 0 {
-					logit(logSHOUT, "r%d#%d~%s properties set:", node.revision, node.index, node.path)
+					if logEnable(logSHOUT) {logit("r%d#%d~%s properties set:", node.revision, node.index, node.path)}
 					for _, pair := range tossThese {
-						logit(logSHOUT, "\t%s = %q", pair[0], pair[1])
+						if logEnable(logSHOUT) {logit("\t%s = %q", pair[0], pair[1])}
 					}
 				}
 			}
@@ -980,7 +986,7 @@ func svnBuildFilemaps(ctx context.Context, sp *StreamParser, options stringSet, 
 	// and can be safely parallelized.
 	//
 	defer trace.StartRegion(ctx, "SVN Phase 3: build filemaps").End()
-	logit(logEXTRACT, "SVN Phase 3: build filemaps")
+	if logEnable(logEXTRACT) {logit("SVN Phase 3: build filemaps")}
 	baton.startProgress("SVN phase 3: build filemaps", uint64(len(sp.revisions)))
 	sp.history = newHistory()
 	for ri, record := range sp.revisions {
@@ -1028,7 +1034,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 	// for later redundancy checking.
 	//
 	defer trace.StartRegion(ctx, "SVN Phase 4: directory copy expansion").End()
-	logit(logEXTRACT, "SVN Phase 4: directory copy expansion")
+	if logEnable(logEXTRACT) {logit("SVN Phase 4: directory copy expansion")}
 
 	baton.startProgress("SVN phase 4a: directory copy expansion", uint64(len(sp.revisions)))
 	nobranch := options.Contains("--nobranch")
@@ -1063,7 +1069,9 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 				// we are later going to turn this directory delete into a git deleteall for the branch.
 				if node.action == sdDELETE || node.action == sdREPLACE {
 					if !nobranch && sp.isDeclaredBranch(node.path) {
-						logit(logEXTRACT, "r%d-%d~%s: declaring as sdNUKE", node.revision, node.index, node.path)
+						if logEnable(logEXTRACT) {
+							logit("r%d-%d~%s: declaring as sdNUKE", node.revision, node.index, node.path)
+						}
 						node.action = sdNUKE
 					} else {
 						// A delete or replace with no from set
@@ -1071,7 +1079,10 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 						// We can just ignore that case. Otherwise...
 						if node.fileSet != nil {
 							node.fileSet.iter(func(child string, _ interface{}) {
-								logit(logEXTRACT, "r%d-%d~%s: deleting %s", node.revision, node.index, node.path, child)
+								if logEnable(logEXTRACT) {
+									logit("r%d-%d~%s: deleting %s",
+										node.revision, node.index, node.path, child)
+								}
 								newnode := new(NodeAction)
 								newnode.path = child
 								newnode.revision = node.revision
@@ -1088,8 +1099,10 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 					if sp.isDeclaredBranch(node.path) && sp.isDeclaredBranch(node.fromPath) {
 						copyType = "branch"
 					}
-					logit(logEXTRACT, "r%d-%d: %s copy to %s from r%d~%s",
-						node.revision, node.index, copyType, node.path, node.fromRev, node.fromPath)
+					if logEnable(logEXTRACT) {
+						logit("r%d-%d: %s copy to %s from r%d~%s",
+							node.revision, node.index, copyType, node.path, node.fromRev, node.fromPath)
+					}
 					// Now generate nodes for all files that were actually copied
 					// fileSet contains nodes at their destination
 					node.fileSet.iter(func(dest string, copied interface{}) {
@@ -1105,7 +1118,7 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 						subnode.action = sdADD
 						subnode.kind = sdFILE
 						if logEnable(logTOPOLOGY) {
-							logit(logTOPOLOGY, "r%d-%d: %s %s copy r%d~%s -> %s %s",
+							logit("r%d-%d: %s %s copy r%d~%s -> %s %s",
 								node.revision, node.index, node.path, copyType,
 								subnode.fromRev, subnode.fromPath, subnode.path, subnode)
 						}
@@ -1134,8 +1147,8 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 			// the target of a directory copy that created
 			// the ancestor we are looking for
 			lookback = sp.history.getActionNode(node.fromRev, node.fromPath)
-			if lookback != nil {
-				logit(logTOPOLOGY, "r%d~%s -> %v (via filemap of %d)",
+			if lookback != nil && logEnable(logTOPOLOGY) {
+				logit("r%d~%s -> %v (via filemap of %d)",
 					node.revision, node.path, lookback, node.fromRev)
 			}
 		} else if node.action != sdADD {
@@ -1150,8 +1163,10 @@ func svnExpandCopies(ctx context.Context, sp *StreamParser, options stringSet, b
 
 		// We reach here with lookback still nil if the node is a non-copy add.
 		if lookback == nil && node.isCopy() && !strings.HasSuffix(node.path, ".gitignore") {
-			logit(logSHOUT, "r%d~%s: missing ancestor node for non-.gitignore",
-				node.revision, node.path)
+			if logEnable(logSHOUT) {
+				logit("r%d~%s: missing ancestor node for non-.gitignore",
+					node.revision, node.path)
+			}
 		}
 
 		return lookback
@@ -1212,7 +1227,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 	// being able to assign them to a branch later.
 	//
 	defer trace.StartRegion(ctx, "SVN Phase 5: build commits").End()
-	logit(logEXTRACT, "SVN Phase 5: build commits")
+	if logEnable(logEXTRACT) {logit("SVN Phase 5: build commits")}
 	baton.startProgress("SVN phase 5: build commits", uint64(len(sp.revisions)))
 
 	var lastcommit *Commit
@@ -1226,7 +1241,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 			continue
 		}
 
-		logit(logEXTRACT, "Revision %d:", record.revision)
+		if logEnable(logEXTRACT) {logit("Revision %d:", record.revision)}
 
 		commit := newCommit(sp.repo)
 		ad := record.date
@@ -1298,7 +1313,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 			}
 			var ancestor *NodeAction
 			if node.action == sdNUKE {
-				logit(logEXTRACT, "r%d: deleteall %s", record.revision, node.path)
+				if logEnable(logEXTRACT) {logit("r%d: deleteall %s", record.revision, node.path)}
 				// Generate a deleteall operation, but with a path, contrary to
 				// the git-fast-import specification. This is so that the pass
 				// splitting the commits and setting the branch from the paths
@@ -1324,8 +1339,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 				// the user a heads-up and expect these to be
 				// merged by hand.
 				if strings.HasSuffix(node.path, ".gitignore") && !options.Contains("--user-ignores") {
-					logit(logSHOUT, "r%d~%s: user-created .gitignore ignored.",
-						node.revision, node.path)
+					if logEnable(logSHOUT) {logit("r%d~%s: user-created .gitignore ignored.", node.revision, node.path)}
 					continue
 				}
 				if node.fromRev > 0 && node.fromIdx > 0 {
@@ -1339,7 +1353,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 					//assert node.blob == nil
 					fileop := newFileOp(sp.repo)
 					fileop.construct(opD, node.path)
-					logit(logEXTRACT, "%s turns off TRIVIAL", fileop)
+					if logEnable(logEXTRACT) {logit("%s turns off TRIVIAL", fileop)}
 					commit.appendOperation(fileop)
 				} else if node.action == sdADD || node.action == sdCHANGE || node.action == sdREPLACE {
 					if node.blob != nil {
@@ -1348,8 +1362,10 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 						// back there fall afoul of the way the hashmap is updated (see in particular
 						// the next conditional where new content is introduced).
 						if lookback, ok := sp.hashmap[node.contentHash]; ok {
-							logit(logEXTRACT, "r%d: blob of %s matches existing hash %s, assigning '%s' from %s",
-								record.revision, node, node.contentHash, lookback.blobmark.String(), lookback)
+							if logEnable(logEXTRACT) {
+								logit("r%d: blob of %s matches existing hash %s, assigning '%s' from %s",
+									record.revision, node, node.contentHash, lookback.blobmark.String(), lookback)
+							}
 							// Blob matches an existing one -
 							// node was created by a
 							// non-Subversion copy followed by
@@ -1364,8 +1380,9 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 						if node.blobmark == emptyMark {
 							// This is the normal way new blobs get created
 							node.blobmark = markNumber(node.blob.setMark(sp.repo.newmark()))
-							logit(logEXTRACT, "r%d: %s gets new blob '%s'",
-								record.revision, node, node.blobmark.String())
+							if logEnable(logEXTRACT) {
+								logit("r%d: %s gets new blob '%s'", record.revision, node, node.blobmark.String())
+							}
 							// Blobs generated by reposurgeon
 							// (e.g .gitignore content) have no
 							// content hash.  Don't record
@@ -1378,19 +1395,22 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 						}
 					} else if ancestor != nil {
 						node.blobmark = ancestor.blobmark
-						logit(logEXTRACT, "r%d: %s gets blob '%s' from ancestor %s",
-							record.revision, node, node.blobmark.String(), ancestor)
+						if logEnable(logEXTRACT) {
+							logit("r%d: %s gets blob '%s' from ancestor %s",
+								record.revision, node, node.blobmark.String(), ancestor)
+						}
 					} else {
 						// This should never happen. If we can't find an ancestor for any node
 						// it means the dumpfile is malformed.
-						logit(logSHOUT, "r%d~%s: ancestor node is missing.",
-							node.revision, node.path)
+						if logEnable(logSHOUT) {logit("r%d~%s: ancestor node is missing.", node.revision, node.path)}
 						continue
 					}
 					// This should never happen.  It indicates that file content is missing from the stream.
 					if node.blobmark == emptyMark {
-						logit(logSHOUT, "r%d: %s gets impossibly empty blob mark from ancestor %s, skipping",
-							record.revision, node, ancestor)
+						if logEnable(logSHOUT) {
+							logit("r%d: %s gets impossibly empty blob mark from ancestor %s, skipping",
+								record.revision, node, ancestor)
+						}
 						continue
 					}
 
@@ -1417,7 +1437,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 					// but new permissions.
 					if logEnable(logEXTRACT) {
 						if !(node.action == sdADD || (node.blob != nil) || node.propchange) {
-							logit(logEXTRACT, "r%d~%s: unmodified", node.revision, node.path)
+							logit("r%d~%s: unmodified", node.revision, node.path)
 						}
 					}
 				}
@@ -1458,8 +1478,10 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 				}
 			}
 			if tooMany {
-				logit(logEXTRACT, "pathological empty revision at <%d>, comment %q, skipping.",
-					ri, commit.Comment)
+				if logEnable(logEXTRACT) {
+					logit("pathological empty revision at <%d>, comment %q, skipping.",
+						ri, commit.Comment)
+				}
 				continue
 			}
 			// No fileops, just directory nodes in a single branch, pass it
@@ -1510,11 +1532,11 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 	// with the fileop path's branch and (sub-branch) filename.
 	//
 	if options.Contains("--nobranch") {
-		logit(logEXTRACT, "SVN Phase 6: split resolution (skipped due to --nobranch)")
+		if logEnable(logEXTRACT) {logit("SVN Phase 6: split resolution (skipped due to --nobranch)")}
 		return
 	}
 	defer trace.StartRegion(ctx, "SVN Phase 6: split resolution").End()
-	logit(logEXTRACT, "SVN Phase 6: split resolution")
+	if logEnable(logEXTRACT) {logit("SVN Phase 6: split resolution")}
 
 	type splitRequest struct {
 		loc    int
@@ -1560,8 +1582,10 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 	sort.Slice(splits, func(i, j int) bool { return splits[i].loc > splits[j].loc })
 	for i, split := range splits {
 		base := sp.repo.events[split.loc].(*Commit)
-		logit(logEXTRACT, "split commit at %s <%s> resolving to %d commits",
-			base.mark, base.legacyID, len(split.splits)+1)
+		if logEnable(logEXTRACT) {
+			logit("split commit at %s <%s> resolving to %d commits",
+				base.mark, base.legacyID, len(split.splits)+1)
+		}
 		for _, idx := range split.splits {
 			sp.repo.splitCommitByIndex(split.loc, idx)
 		}
@@ -1598,11 +1622,11 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 	// topology, but parent marks have not yet been fixed up.
 	//
 	if options.Contains("--nobranch") {
-		logit(logEXTRACT, "SVN Phase 7: branch renames (skipped due to --nobranch)")
+		if logEnable(logEXTRACT) {logit("SVN Phase 7: branch renames (skipped due to --nobranch)")}
 		return
 	}
 	defer trace.StartRegion(ctx, "SVN Phase 7: branch renames").End()
-	logit(logEXTRACT, "SVN Phase 7: branch renames")
+	if logEnable(logEXTRACT) {logit("SVN Phase 7: branch renames")}
 	baton.startProgress("SVN phase 7: branch renames", uint64(len(sp.repo.events)))
 	var maplock sync.Mutex
 	sp.markToSVNBranch = make(map[string]string)
@@ -1664,7 +1688,7 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 				} else {
 					// Uh oh
 					commit.setBranch(filepath.Join("refs", "heads", commit.Branch))
-					logit(logEXTRACT, "nonstandard branch %s at %s", commit.Branch, commit.idMe())
+					if logEnable(logEXTRACT) {logit("nonstandard branch %s at %s", commit.Branch, commit.idMe())}
 				}
 			}
 		}
@@ -1708,7 +1732,7 @@ func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSe
 	// is considered deleted when we encounter a commit with a single deleteall
 	// fileop.
 	defer trace.StartRegion(ctx, "SVN Phase 8: disambiguate deleted refs.").End()
-	logit(logEXTRACT, "SVN Phase 8: disambiguate deleted refs.")
+	if logEnable(logEXTRACT) {logit("SVN Phase 8: disambiguate deleted refs.")}
 	// First we build a map from branches to commits with that branch, to avoid
 	// an O(n^2) computation cost.
 	baton.startProgress("SVN phase 8a: precompute branch map.", uint64(len(sp.repo.events)))
@@ -1761,15 +1785,17 @@ func svnDisambiguateRefs(ctx context.Context, sp *StreamParser, options stringSe
 					commits[j].setBranch(newname)
 				}
 				lastFixed = i
-				logit(logTAGFIX, "r%s (%s): deleted ref %s renamed to %s.",
-					commit.legacyID, commit.mark, branch, newname)
+				if logEnable(logTAGFIX) {
+					logit("r%s (%s): deleted ref %s renamed to %s.",
+						commit.legacyID, commit.mark, branch, newname)
+				}
 				processed++
 			}
 			seen++
 			baton.percentProgress(uint64(seen) + 1)
 		}
 	}
-	logit(logTAGFIX, "%d deleted refs were put away.", processed)
+	if logEnable(logTAGFIX) {logit("%d deleted refs were put away.", processed)}
 	baton.endProgress()
 }
 
@@ -1827,7 +1853,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	// most likely source of bugs in the analyzer.
 	//
 	if options.Contains("--nobranch") {
-		logit(logEXTRACT, "SVN Phase 9: parent link fixups (skipped due to --nobranch)")
+		if logEnable(logEXTRACT) {logit("SVN Phase 9: parent link fixups (skipped due to --nobranch)")}
 		// There is only one branch root: the very first commit
 		sp.branchRoots = make(map[string][]*Commit)
 		for _, event := range sp.repo.events {
@@ -1839,7 +1865,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 		return
 	}
 	defer trace.StartRegion(ctx, "SVN Phase : parent link fixups").End()
-	logit(logEXTRACT, "SVN Phase 9a: make content-changing links")
+	if logEnable(logEXTRACT) {logit("SVN Phase 9a: make content-changing links")}
 	baton.startProgress("SVN phase 9a: make content-changing links",
 		uint64(len(sp.repo.events)))
 	sp.lastCommitOnBranchAt = make(map[string][]*Commit)
@@ -1887,7 +1913,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 		baton.percentProgress(uint64(index) + 1)
 	}
 	baton.endProgress()
-	logit(logEXTRACT, "SVN Phase 9b: find branch root parents")
+	if logEnable(logEXTRACT) {logit("SVN Phase 9b: find branch root parents")}
 	baton.startProgress("SVN phase 9b: find branch root parents", uint64(totalroots))
 	var parentlock sync.Mutex
 	reparent := func(commit, parent *Commit) {
@@ -1917,13 +1943,12 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 						}
 						parent := lastRelevantCommit(sp, node.fromRev, frombranch)
 						if parent != nil {
-							logit(logTOPOLOGY,
-								"Link from %s <%s> to %s <%s> found by copy-from",
-								parent.mark, parent.legacyID, commit.mark, commit.legacyID)
-							if strings.Split(parent.legacyID, ".")[0] != fmt.Sprintf("%d", node.fromRev) {
-								logit(logTOPOLOGY,
-									"(fromRev was r%d)",
-									node.fromRev)
+							if logEnable(logTOPOLOGY) {
+								logit("Link from %s <%s> to %s <%s> found by copy-from",
+									parent.mark, parent.legacyID, commit.mark, commit.legacyID)
+								if strings.Split(parent.legacyID, ".")[0] != fmt.Sprintf("%d", node.fromRev) {
+									logit("(fromRev was r%d)", node.fromRev)
+								}
 							}
 							reparent(commit, parent)
 							goto next
@@ -1953,9 +1978,10 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 						if frombranch == "" {
 							frombranch = newfrom
 						} else if frombranch != newfrom {
-							logit(logWARN,
-								"Link detection for %s <%s> failed: file copies from multiple branches",
-								commit.mark, commit.legacyID)
+							if logEnable(logWARN) {
+								logit("Link detection for %s <%s> failed: file copies from multiple branches",
+									commit.mark, commit.legacyID)
+							}
 							maxfrom = 0
 							break
 						}
@@ -1971,14 +1997,16 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 					parent := lastRelevantCommit(sp, maxfrom, frombranch)
 					if parent != nil {
 						if minfrom == maxfrom {
-							logit(logTOPOLOGY,
-								"Link from %s <%s> to %s <%s> found by file copies",
-								parent.mark, parent.legacyID, commit.mark, commit.legacyID)
+							if logEnable(logTOPOLOGY) {
+								logit("Link from %s <%s> to %s <%s> found by file copies",
+									parent.mark, parent.legacyID, commit.mark, commit.legacyID)
+							}
 						} else {
-							logit(logWARN,
-								"Detected link from %s <%s> to %s <%s> might be dubious (from-rev range %d:%d)",
-								parent.mark, parent.legacyID, commit.mark, commit.legacyID,
-								minfrom, maxfrom)
+							if logEnable(logWARN) {
+								logit("Detected link from %s <%s> to %s <%s> might be dubious (from-rev range %d:%d)",
+									parent.mark, parent.legacyID, commit.mark, commit.legacyID,
+									minfrom, maxfrom)
+							}
 						}
 						reparent(commit, parent)
 						goto next
@@ -1993,7 +2021,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	baton.endProgress()
 
 	if logEnable(logEXTRACT) {
-		logit(logEXTRACT, "after branch analysis")
+		logit("after branch analysis")
 		for _, event := range sp.repo.events {
 			commit, ok := event.(*Commit)
 			if !ok {
@@ -2010,7 +2038,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 			if commit.hasProperties() {
 				proplen = commit.properties.Len()
 			}
-			logit(logSHOUT, "r%-4s %4s %4s %2d %2d '%s'",
+			logit("r%-4s %4s %4s %2d %2d '%s'",
 				commit.legacyID,
 				commit.mark, ancestorID,
 				len(commit.operations()),
@@ -2033,7 +2061,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 	//  without one.
 	//
 	defer trace.StartRegion(ctx, "SVN Phase A: mergeinfo processing").End()
-	logit(logEXTRACT, "SVN Phase A: mergeinfo processing")
+	if logEnable(logEXTRACT) {logit("SVN Phase A: mergeinfo processing")}
 	baton.startProgress("SVN phase A: mergeinfo processing", uint64(len(sp.revisions)))
 
 	type RevRange struct {
@@ -2071,7 +2099,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 						continue
 					}
 				}
-				logit(logWARN, "Ignoring corrupt mergeinfo range '%s'", span)
+				if logEnable(logWARN) {logit("Ignoring corrupt mergeinfo range '%s'", span)}
 			}
 			if len(revs) > 0 {
 				mergeinfo[branch] = revs
@@ -2162,19 +2190,24 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 			}
 			commit := lastRelevantCommit(sp, revidx(revision), branch)
 			if commit == nil {
-				logit(logWARN,
-					"Cannot resolve mergeinfo for r%d which has no commit in branch %s",
-					revision, branch)
+				if logEnable(logWARN) {
+					logit("Cannot resolve mergeinfo for r%d which has no commit in branch %s",
+						revision, branch)
+				}
 				continue
 			}
 			realrev, _ := strconv.Atoi(strings.Split(commit.legacyID, ".")[0])
 			if realrev != revision {
-				logit(logWARN, "Resolving mergeinfo targeting r%d on %s <%s> instead",
-					revision, commit.mark, commit.legacyID)
+				if logEnable(logWARN) {
+					logit("Resolving mergeinfo targeting r%d on %s <%s> instead",
+						revision, commit.mark, commit.legacyID)
+				}
 			}
 			// Now parse the mergeinfo, and find commits for the merge points
-			logit(logTOPOLOGY, "mergeinfo for %s <%s> on %s is: %s",
-				commit.mark, commit.legacyID, branch, info)
+			if logEnable(logTOPOLOGY) {
+				logit("mergeinfo for %s <%s> on %s is: %s",
+					commit.mark, commit.legacyID, branch, info)
+			}
 			newMerges := parseMergeInfo(info)
 			mergeSources := make(map[int]bool, len(newMerges))
 			// SVN tends to not put in mergeinfo the revisions that
@@ -2302,7 +2335,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 					if lastrev < rng.min {
 						// Snapping the revisions to existing commits
 						// went past the minimum revision in the range
-						logit(logWARN, "Ignoring bogus mergeinfo with no valid commit in the range")
+						if logEnable(logWARN) {logit("Ignoring bogus mergeinfo with no valid commit in the range")}
 						continue
 					}
 					index := sp.repo.eventToIndex(last)
@@ -2311,11 +2344,12 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 						continue
 					}
 					seenMerges[desc] = true
-					logit(logTOPOLOGY,
-						"mergeinfo says %s is merged up to %s <%s> in %s <%s>",
-						fromPath, last.mark, last.legacyID, commit.mark, commit.legacyID)
+					if logEnable(logTOPOLOGY) {
+						logit("mergeinfo says %s is merged up to %s <%s> in %s <%s>",
+							fromPath, last.mark, last.legacyID, commit.mark, commit.legacyID)
+					}
 					if index >= destIndex {
-						logit(logWARN, "Ignoring bogus mergeinfo trying to create a forward merge")
+						if logEnable(logWARN) {logit("Ignoring bogus mergeinfo trying to create a forward merge")}
 						continue
 					}
 					mergeSources[index] = true
@@ -2373,8 +2407,10 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 						commit.prependOperation(fileop)
 						needDeleteAll = false
 					}
-					logit(logEXTRACT, "Merge found from %s <%s> to %s <%s>",
-						source.mark, source.legacyID, commit.mark, commit.legacyID)
+					if logEnable(logEXTRACT) {
+						logit("Merge found from %s <%s> to %s <%s>",
+							source.mark, source.legacyID, commit.mark, commit.legacyID)
+					}
 					commit.addParentCommit(source)
 					stack = append(stack, source)
 				}
@@ -2390,9 +2426,9 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
 	// Phase B: convert svn:ignore properties on directory nodes to .gitignore files
 	defer trace.StartRegion(ctx, "SVN Phase B: Conversion from svn:ignore to .gitignore").End()
-	logit(logEXTRACT, "SVN Phase B: Conversion from svn:ignore to .gitignore.")
+	if logEnable(logEXTRACT) {logit("SVN Phase B: Conversion from svn:ignore to .gitignore.")}
 	if options.Contains("--no-automatic-ignores") {
-		logit(logEXTRACT, "Skipped due to --no-automatic-ignores option.")
+		if logEnable(logEXTRACT) {logit("Skipped due to --no-automatic-ignores option.")}
 		return
 	}
 
@@ -2551,7 +2587,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	// alteration.
 	//
 	defer trace.StartRegion(ctx, "SVN Phase C: de-junking").End()
-	logit(logEXTRACT, "SVN Phase C: de-junking")
+	if logEnable(logEXTRACT) {logit("SVN Phase C: de-junking")}
 	// If asked to, purge commits on deleted refs, but remember the original
 	// branch for tagification purposes.
 	baton.startProgress("SVN phase C1: purge deleted refs", uint64(len(sp.repo.events)))
@@ -2712,13 +2748,13 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 	// There is probably not much to be gained here, anyway.
 	baton.startProgress("SVN phase C2: tagify empty commits", uint64(len(sp.repo.events)))
 	for index := range sp.repo.events {
-		//logit(logEXTRACT, "looking at %s", sp.repo.events[index].idMe())
+		//if logEnable(logEXTRACT) {logit("looking at %s", sp.repo.events[index].idMe())}
 		commit, ok := sp.repo.events[index].(*Commit)
 		if !ok {
 			continue
 		}
 		if tagifyable(commit) {
-			logit(logEXTRACT, "%s might be tag-eligible", commit.idMe())
+			if logEnable(logEXTRACT) {logit("%s might be tag-eligible", commit.idMe())}
 			if cvs2svnTagBranchRE.MatchString(commit.Comment) {
 				// Nothing to do, but we don't want to create an annotated tag
 				// because messages from cvs2svn are not useful.
@@ -2744,7 +2780,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 				} else {
 					msg += fmt.Sprintf("zero-op commit on %s.", commit.Branch)
 				}
-				logit(logEXTRACT, msg)
+				if logEnable(logEXTRACT) {logit(msg)}
 			}
 			commit.Comment = "" // avoid composing with the children
 			deletia = append(deletia, index)
@@ -2761,7 +2797,7 @@ func svnProcessRenumber(ctx context.Context, sp *StreamParser, options stringSet
 	// Phase D:
 	// Renumber all commits and add an end event.
 	defer trace.StartRegion(ctx, "SVN Phase D: renumber").End()
-	logit(logEXTRACT, "SVN Phase D: renumber")
+	if logEnable(logEXTRACT) {logit("SVN Phase D: renumber")}
 	sp.repo.renumber(1, baton)
 	//sp.repo.events = append(sp.repo.events, newPassthrough(sp.repo, "done\n"))
 }
