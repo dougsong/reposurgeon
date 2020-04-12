@@ -2611,9 +2611,10 @@ func (b Blob) isCommit() bool {
 // moveto changes the repo this blob is associated with."
 func (b *Blob) moveto(repo *Repository) {
 	if b.hasfile() {
-		oldloc := b.getBlobfile(false)
+		// the relpath calls are fir readabiliyu if we error out
+		oldloc := relpath(b.getBlobfile(false))
 		b.repo = repo
-		newloc := b.getBlobfile(true)
+		newloc := relpath(b.getBlobfile(true))
 		logit(logSHUFFLE,
 			"blob moveto calls os.rename(%s, %s)", oldloc, newloc)
 		err := os.Rename(oldloc, newloc)
@@ -2635,9 +2636,12 @@ func (b *Blob) clone(repo *Repository) *Blob {
 	c.opsetLock.Unlock()
 	c.colors.Clear()
 	if b.hasfile() {
+		// the relpath calls are fir readabiliyu if we error out
+		bpath := relpath(b.getBlobfile(false))
+		cpath := relpath(c.getBlobfile(false))
 		logit(logSHUFFLE,
-			"blob clone for %s calls os.Link(): %s -> %s", b.mark, b.getBlobfile(false), c.getBlobfile(false))
-		err := os.Link(b.getBlobfile(false), c.getBlobfile(true))
+			"blob clone for %s calls os.Link(): %s -> %s", b.mark, bpath, cpath)
+		err := os.Link(bpath, cpath)
 		if err != nil {
 			panic(fmt.Errorf("Blob clone: %v", err))
 		}
