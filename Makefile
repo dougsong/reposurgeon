@@ -85,7 +85,7 @@ clean:
 	rm -fr reposurgeon repocutter repomapper
 	rm -fr  *~ *.1 *.html *.tar.xz MANIFEST *.md5
 	rm -fr .rs .rs* test/.rs test/.rs*
-	rm -f typescript test/typescript *.pyc
+	rm -f typescript test/typescript
 
 # Uninstallation
 INSTALLED_BINARIES := $(BINARIES:%="$(target)/bin/%")
