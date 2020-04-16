@@ -4499,8 +4499,9 @@ func (commit *Commit) manifest() *Manifest {
 	for k := len(commitsToHandle) - 1; k >= 0; k-- {
 		// Take own fileops into account.
 		commit := commitsToHandle[k]
-		manifest = pmToManifest(
-			commit.applyFileOps(manifest.snapshot(), false, false).(*PathMap))
+		pm := manifest.snapshot()
+		commit.applyFileOps(pm, false, false)
+		manifest = pmToManifest(pm)
 		commit._manifest = manifest
 	}
 	return manifest
@@ -7121,7 +7122,8 @@ func (commit *Commit) simplify() {
 	commit.discardOpsBeforeLastDeleteAll()
 	// No need for a full PathMap here since no snapshot will ever be taken.
 	// Use a simple map-backed PathMapLike, which is faster.
-	visibleOps := commit.applyFileOps(&FlatPathMap{}, true, true)
+	visibleOps := &FlatPathMap{}
+	commit.applyFileOps(visibleOps, true, true)
 	// Re-create the simplified fileops, passing any deleteadd through
 	commit.remakeFileOps(visibleOps, true)
 }
@@ -7132,7 +7134,7 @@ func (commit *Commit) simplify() {
 // otherwise they are simply dropped. This removes any ordering dependency
 // between operations.
 func (commit *Commit) applyFileOps(presentOps PathMapLike,
-	keepUnresolvedOps bool, keepDeleteOps bool) PathMapLike {
+	keepUnresolvedOps bool, keepDeleteOps bool) {
 	myOps := commit.operations()
 	// lastDeleteall is the index of the last deleteall or -1
 	lastDeleteall := len(myOps) - 1
@@ -7179,7 +7181,6 @@ func (commit *Commit) applyFileOps(presentOps PathMapLike,
 			}
 		}
 	}
-	return presentOps
 }
 
 func (commit *Commit) remakeFileOps(visibleOps PathMapLike, withDeleteall bool) {
