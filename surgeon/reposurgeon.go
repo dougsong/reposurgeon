@@ -3145,7 +3145,6 @@ type FileOp struct {
 	ref        string
 	inline     []byte
 	op         rune
-	genflag    bool
 }
 
 func (fileop *FileOp) Equals(other *FileOp) bool {
@@ -3157,8 +3156,7 @@ func (fileop *FileOp) Equals(other *FileOp) bool {
 		fileop.Path == other.Path &&
 		fileop.ref == other.ref &&
 		bytes.Equal(fileop.inline, other.inline) &&
-		fileop.op == other.op &&
-		fileop.genflag == other.genflag
+		fileop.op == other.op
 }
 
 func newFileOp(repo *Repository) *FileOp {
@@ -3428,7 +3426,6 @@ func (fileop *FileOp) Copy() *FileOp {
 	newop.inline = make([]byte, len(fileop.inline))
 	copy(newop.inline, fileop.inline)
 	newop.op = fileop.op
-	newop.genflag = fileop.genflag
 	if newop.repo != nil && newop.ref != "inline" {
 		if blob, ok := newop.repo.markToEvent(newop.ref).(*Blob); ok {
 			blob.appendOperation(newop)
@@ -17447,6 +17444,7 @@ func (rs *Reposurgeon) DoSizeof(lineIn string) bool {
 	fmt.Fprintf(control.baton, "revidx:            %3d\n", unsafe.Sizeof(revidx(0)))
 	fmt.Fprintf(control.baton, "nodeidx:           %3d\n", unsafe.Sizeof(nodeidx(0)))
 	fmt.Fprintf(control.baton, "string:            %3d\n", unsafe.Sizeof("foo"))
+	fmt.Fprintf(control.baton, "[]byte:            %3d\n", unsafe.Sizeof(make([]byte, 0)))
 	fmt.Fprintf(control.baton, "pointer:           %3d\n", unsafe.Sizeof(new(Attribution)))
 	fmt.Fprintf(control.baton, "int:               %3d\n", unsafe.Sizeof(0))
 	fmt.Fprintf(control.baton, "map[string]string: %3d\n", unsafe.Sizeof(make(map[string]string)))
