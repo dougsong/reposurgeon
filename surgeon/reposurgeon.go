@@ -4678,7 +4678,7 @@ func (commit *Commit) canonicalize() {
 	}
 	// And our tree state
 	current := commit.manifest()
-	newops := &FlatPathMap{}
+	newops := newOrderedFlatPathMap()
 	// Generate needed D fileops.
 	if commit.fileops[0].op == deleteall {
 		// There was a deleteall, all paths in previous can disappear
@@ -7122,7 +7122,7 @@ func (commit *Commit) simplify() {
 	commit.discardOpsBeforeLastDeleteAll()
 	// No need for a full PathMap here since no snapshot will ever be taken.
 	// Use a simple map-backed PathMapLike, which is faster.
-	visibleOps := &FlatPathMap{}
+	visibleOps := newOrderedFlatPathMap()
 	commit.applyFileOps(visibleOps, true, true)
 	// Re-create the simplified fileops, passing any deleteadd through
 	commit.remakeFileOps(visibleOps, true)
