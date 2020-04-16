@@ -2331,7 +2331,7 @@ func intToMarkidx(markint int) markidx {
 type Blob struct {
 	mark         string
 	abspath      string
-	cookie       Cookie // CVS/SVN cookie analyzed out of this file
+	cookie       *Cookie // CVS/SVN cookie analyzed out of this file
 	repo         *Repository
 	opset        map[*FileOp]bool // Fileops associated with this blob
 	opsetLock    sync.Mutex
@@ -2668,26 +2668,31 @@ var dollarID = regexp.MustCompile(`\$Id *: *([^$]+) *\$`)
 var dollarRevision = regexp.MustCompile(`\$Rev(?:ision) *: *([^$]*) *\$`)
 var dollarLastChanged = regexp.MustCompile(`\$LastChangedRev *: *([^$]*) *\$`)
 
-func (b *Blob) parseCookie(content string) Cookie {
+func (b *Blob) parseCookie(content string) *Cookie {
 	// Parse CVS && Subversion $-headers
 	// There'd better not be more than one of these per blob.
+	var cookie Cookie
 	for _, m := range dollarID.FindAllStringSubmatch(content, 0) {
 		fields := strings.Fields(m[0])
 		if len(fields) == 2 {
 			if strings.HasSuffix(fields[1], ",v") {
-				b.cookie.path = fields[1][:len(fields[1])-2]
+				cookie.path = fields[1][:len(fields[1])-2]
 			} else {
-				b.cookie.path = stringCopy(fields[1])
+				cookie.path = stringCopy(fields[1])
 			}
-			b.cookie.rev = stringCopy(fields[2])
+			cookie.rev = stringCopy(fields[2])
 		}
 	}
 	for _, m := range dollarRevision.FindAllStringSubmatch(content, 0) {
-		b.cookie.rev = stringCopy(strings.TrimSpace(m[1]))
+		cookie.rev = stringCopy(strings.TrimSpace(m[1]))
 	}
 	for _, m := range dollarLastChanged.FindAllStringSubmatch(content, 0) {
-		b.cookie.rev = stringCopy(strings.TrimSpace(m[1]))
+		cookie.rev = stringCopy(strings.TrimSpace(m[1]))
 	}
+	if cookie.isEmpty() {
+		return nil
+	}
+	b.cookie = &cookie
 	return b.cookie
 }
 
@@ -5299,7 +5304,9 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				blob.setMark(strings.TrimSpace(string(line[5:])))
 				blobcontent, blobstart := sp.fiReadData([]byte{})
 				blob.setContent(blobcontent, blobstart)
-				sp.lastcookie = blob.parseCookie(string(blobcontent))
+				if cookie := blob.parseCookie(string(blobcontent)); cookie != nil {
+					sp.lastcookie = *cookie
+				}
 			} else {
 				sp.error("missing mark after blob")
 			}
@@ -6698,10 +6705,10 @@ func (repo *Repository) parseDollarCookies() {
 				croak("legacy property of %s overwritten",
 					commit.mark)
 			}
-			if blob.cookie.implies() == "SVN" {
+			if blob.cookie != nil && blob.cookie.implies() == "SVN" {
 				svnkey := "SVN:" + blob.cookie.rev
 				repo.dollarMap.LoadOrStore(svnkey, commit)
-			} else if !blob.cookie.isEmpty() {
+			} else if blob.cookie != nil {
 				if filepath.Base(fileop.Source) != blob.cookie.path {
 					// Usually the
 					// harmless result of
