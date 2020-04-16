@@ -1526,9 +1526,7 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 	// else havoc will ensue.
 	//
 	// The exit contract for this phase is that every commit has
-	// all its fileops on the same Subversion branch.  In addition,
-	// the Source and Target member of each file have been filled
-	// with the fileop path's branch and (sub-branch) filename.
+	// all its fileops on the same Subversion branch.
 	//
 	if options.Contains("--nobranch") {
 		if logEnable(logEXTRACT) {logit("SVN Phase 6: split resolution (skipped due to --nobranch)")}
@@ -1551,15 +1549,12 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 			cliqueIndices := make([]int, 0)
 			// We only generated M and D ops, or special deleteall
 			// ops with their path set, therefore every
-			// fileop has a Path member.  Wacky hack: by stashing
-			// the split components in the unused Source and Target
-			// members, we avoid having to recompute these when we
-			// actually have to use them
+			// fileop has a Path member.
 			for j, fileop := range commit.fileops {
-				commit.fileops[j].Source, commit.fileops[j].Target = sp.splitSVNBranchPath(fileop.Path)
-				if j == 0 || commit.fileops[j].Source != oldbranch {
+				newbranch, _ := sp.splitSVNBranchPath(fileop.Path)
+				if j == 0 || newbranch != oldbranch {
 					cliqueIndices = append([]int{j}, cliqueIndices...)
-					oldbranch = commit.fileops[j].Source
+					oldbranch = newbranch
 				}
 			}
 			if len(cliqueIndices) > 1 {
@@ -1639,7 +1634,6 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 					// commits on multiple branches are filtered out before this.
 					panic(fmt.Errorf("Unexpectedly ill-formed legacy-id %s", commit.legacyID))
 				}
-				// Contiguity assumption
 				node := sp.revision(intToRevidx(n)).nodes[0]
 				if node.kind == sdDIR && sp.isDeclaredBranch(node.path) {
 					commit.Branch = node.path
@@ -1652,6 +1646,9 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 			} else {
 				// Normal case
 				commit.simplify()
+				for j := range commit.fileops {
+					commit.fileops[j].Source, commit.fileops[j].Target = sp.splitSVNBranchPath(commit.fileops[j].Path)
+				}
 				for i := range commit.fileops {
 					fileop := commit.fileops[i]
 					commit.Branch = fileop.Source
