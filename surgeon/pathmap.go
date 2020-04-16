@@ -344,8 +344,66 @@ func (fpm *FlatPathMap) size() int {
 	return len(*fpm)
 }
 
-// PathMapLike is any structure that can be modified or queried like a PathMap
-// or a FlatPathMap.
+// OrderedFlatPathMap is a go map, with an interface similar to that of PathMap
+// where in addition iter() respects insertion order.
+type ofpmList struct {
+	head string
+	tail *ofpmList
+}
+type OrderedFlatPathMap struct {
+	*FlatPathMap
+	ordering, last *ofpmList
+}
+
+func newOrderedFlatPathMap() *OrderedFlatPathMap {
+	ofpm := new(OrderedFlatPathMap)
+	ofpm.FlatPathMap = new(FlatPathMap)
+	ofpm.clear()
+	return ofpm
+}
+
+func (ofpm *OrderedFlatPathMap) set(path string, value interface{}) {
+	if _, ok := ofpm.get(path); !ok {
+		ofpm.last.tail = &ofpmList{path, nil}
+		ofpm.last = ofpm.last.tail
+	}
+	ofpm.FlatPathMap.set(path, value)
+}
+
+func (ofpm *OrderedFlatPathMap) remove(path string) {
+	if _, ok := ofpm.get(path); !ok {
+		return
+	}
+	for e := ofpm.ordering; e.tail != nil; e = e.tail {
+		next := e.tail
+		if next.head == path {
+			e.tail = next.tail
+			if e.tail == nil {
+				ofpm.last = e
+			}
+			break
+		}
+	}
+	ofpm.FlatPathMap.remove(path)
+}
+
+func (ofpm *OrderedFlatPathMap) iter(hook func(string, interface{})) {
+	for e := ofpm.ordering.tail; e != nil; e = e.tail {
+		path := e.head
+		value, _ := ofpm.get(path)
+		hook(path, value)
+	}
+}
+
+func (ofpm *OrderedFlatPathMap) clear() {
+	ofpm.FlatPathMap.clear()
+	// initialize ordering and last to avoid testing for nilness at each set()
+	ofpm.ordering = &ofpmList{"", nil}
+	ofpm.last = ofpm.ordering
+}
+
+// PathMapLike is any structure that can be modified or queried like a PathMap,
+// a FlatPathMap or an OrderedFlatPathMap.
 type PathMapLike interface {
 	get(path string) (interface{}, bool)
 	set(path string, value interface{})
