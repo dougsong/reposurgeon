@@ -3134,6 +3134,8 @@ func (reset Reset) String() string {
 	return bld.String()
 }
 
+type optype byte
+
 // FileOp is a gitspace file modification attached to a commit
 type FileOp struct {
 	repo       *Repository
@@ -3143,7 +3145,7 @@ type FileOp struct {
 	mode       string
 	ref        string
 	inline     []byte
-	op         rune
+	op         optype
 }
 
 func (fileop *FileOp) Equals(other *FileOp) bool {
@@ -3163,7 +3165,7 @@ func newFileOp(repo *Repository) *FileOp {
 	return op
 }
 
-func (fileop *FileOp) setOp(op rune) {
+func (fileop *FileOp) setOp(op optype) {
 	fileop.op = op
 }
 
@@ -3179,7 +3181,7 @@ const opN = 'N'
 const opX = 'X' // used as a sentry value
 const deleteall = 'd'
 
-func (fileop *FileOp) construct(op rune, opargs ...string) *FileOp {
+func (fileop *FileOp) construct(op optype, opargs ...string) *FileOp {
 	fileop.op = op
 	if op == 'M' {
 		fileop.mode = opargs[0]
@@ -4694,9 +4696,9 @@ func (commit *Commit) canonicalize() {
 }
 
 // alldeletes is a predicate: is this an all-deletes commit?
-func (commit *Commit) alldeletes(killset ...rune) bool {
+func (commit *Commit) alldeletes(killset ...optype) bool {
 	if killset == nil {
-		killset = []rune{opD, deleteall}
+		killset = []optype{opD, deleteall}
 	}
 	for _, fileop := range commit.operations() {
 		match := false
@@ -12992,7 +12994,7 @@ func (rs *Reposurgeon) DoAdd(line string) bool {
 		croak("add requires an operation type and arguments")
 		return false
 	}
-	optype := fields[0][0]
+	optype := optype(fields[0][0])
 	var perms, argpath, mark, source, target string
 	if optype == opD {
 		argpath = fields[1]
@@ -13071,7 +13073,7 @@ func (rs *Reposurgeon) DoAdd(line string) bool {
 		} else if optype == opM {
 			fileop.construct(opM, perms, mark, argpath)
 		} else if optype == opR || optype == opC {
-			fileop.construct(rune(optype), source, target)
+			fileop.construct(optype, source, target)
 		}
 		commit.appendOperation(fileop)
 	}
