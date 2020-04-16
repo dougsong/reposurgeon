@@ -3,6 +3,14 @@
 
 command -v git >/dev/null 2>&1 || { echo "    Skipped, git missing."; exit 0; }
 
+set -- "$(git --version)"
+version="$3"
+if [ "$version" != "2.20.1" ]
+then
+    echo "SKIPPED - sensitive to Git version skew."
+   exit 0
+fi
+
 trap 'rm -rf /tmp/test-repo$$ /tmp/out$$' EXIT HUP INT QUIT TERM
 
 ./fi-to-fi -n /tmp/test-repo$$ < simple.fi
