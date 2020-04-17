@@ -829,7 +829,7 @@ func TestFileOp(t *testing.T) {
 	fileop4 := newFileOp(nil).construct('R', "DRINKME", "EATME")
 	assertOpEqual(t, 'R', fileop4.op)
 	assertEqual(t, "DRINKME", fileop4.Source)
-	assertEqual(t, "EATME", fileop4.Target)
+	assertEqual(t, "EATME", fileop4.Path)
 	if !fileop4.paths(nil).Equal(orderedStringSet{"EATME", "DRINKME"}) {
 		t.Error("fileop4 path extraction failed equality check")
 	}
@@ -837,7 +837,7 @@ func TestFileOp(t *testing.T) {
 	fileop5 := newFileOp(nil).construct('C', "DRINKME", "EATME")
 	assertOpEqual(t, 'C', fileop5.op)
 	assertEqual(t, "DRINKME", fileop5.Source)
-	assertEqual(t, "EATME", fileop5.Target)
+	assertEqual(t, "EATME", fileop5.Path)
 	if !fileop5.paths(nil).Equal(orderedStringSet{"EATME", "DRINKME"}) {
 		t.Error("fileop5 path extraction failed equality check")
 	}
@@ -882,14 +882,14 @@ func TestFileOp(t *testing.T) {
 	fileop11 := newFileOp(nil).parse(line11)
 	assertOpEqual(t, 'R', fileop11.op)
 	assertEqual(t, "DRINKME", fileop11.Source)
-	assertEqual(t, "EATME", fileop11.Target)
+	assertEqual(t, "EATME", fileop11.Path)
 	assertEqual(t, line11+"\n", fileop11.String())
 
 	line12 := `C "DRINKME" "EATME"`
 	fileop12 := newFileOp(nil).parse(line12)
 	assertOpEqual(t, 'C', fileop12.op)
 	assertEqual(t, "DRINKME", fileop12.Source)
-	assertEqual(t, "EATME", fileop12.Target)
+	assertEqual(t, "EATME", fileop12.Path)
 	assertEqual(t, line12+"\n", fileop12.String())
 
 	line13 := "N :6 EATME"

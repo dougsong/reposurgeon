@@ -1579,9 +1579,8 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 		if commit, ok := event.(*Commit); ok {
 			var oldbranch, newbranch string
 			cliques := make([]clique, 0)
-			// We only generated M and D ops, or special deleteall
-			// ops with their path set, therefore every
-			// fileop has a Path member.
+			// We only generated M and D ops, or special deleteall ops with
+			// their path set, therefore we only care about the Path member.
 			for j, fileop := range commit.fileops {
 				newbranch, commit.fileops[j].Path = sp.splitSVNBranchPath(fileop.Path)
 				if j == 0 || newbranch != oldbranch {

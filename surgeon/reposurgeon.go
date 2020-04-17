@@ -3146,7 +3146,6 @@ type FileOp struct {
 	repo       *Repository
 	committish string
 	Source     string
-	Target     string
 	mode       string
 	Path       string
 	ref        string
@@ -3158,7 +3157,6 @@ func (fileop *FileOp) Equals(other *FileOp) bool {
 	return fileop.repo == other.repo &&
 		fileop.committish == other.committish &&
 		fileop.Source == other.Source &&
-		fileop.Target == other.Target &&
 		fileop.mode == other.mode &&
 		fileop.Path == other.Path &&
 		fileop.ref == other.ref &&
@@ -3206,10 +3204,10 @@ func (fileop *FileOp) construct(op optype, opargs ...string) *FileOp {
 		fileop.Path = opargs[1]
 	} else if op == 'R' {
 		fileop.Source = opargs[0]
-		fileop.Target = opargs[1]
+		fileop.Path = opargs[1]
 	} else if op == 'C' {
 		fileop.Source = opargs[0]
-		fileop.Target = opargs[1]
+		fileop.Path = opargs[1]
 	} else if op == 'd' {
 	} else {
 		panic(throw("parse", "unexpected fileop "+string(op)))
@@ -3322,7 +3320,7 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 		}
 		fileop.op = opR
 		fileop.Source = fields[1]
-		fileop.Target = fields[2]
+		fileop.Path = fields[2]
 	} else if strings.HasPrefix(opline, "C ") {
 		fields := stringScan(opline, 3)
 		if len(fields) != 3 {
@@ -3330,7 +3328,7 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 		}
 		fileop.op = opC
 		fileop.Source = fields[1]
-		fileop.Target = fields[2]
+		fileop.Path = fields[2]
 	} else if strings.HasPrefix(opline, "deleteall") {
 		fileop.op = deleteall
 	} else {
@@ -3363,7 +3361,7 @@ func (fileop *FileOp) paths(pathtype orderedStringSet) orderedStringSet {
 		return orderedStringSet{fileop.Path}
 	}
 	if fileop.op == opR || fileop.op == opC {
-		return orderedStringSet{fileop.Source, fileop.Target}
+		return orderedStringSet{fileop.Source, fileop.Path}
 	}
 	// Ugh...this isn't right for deleteall, but since we don't expect
 	// to see that except at branch tips we'll ignore it for now.
@@ -3404,7 +3402,7 @@ func (fileop *FileOp) Save(w io.Writer) {
 	} else if fileop.op == opD {
 		fmt.Fprintf(w, "D %s\n", quotifyIfNeeded(fileop.Path))
 	} else if fileop.op == opR || fileop.op == opC {
-		fmt.Fprintf(w, "%c \"%s\" \"%s\"\n", fileop.op, fileop.Source, fileop.Target)
+		fmt.Fprintf(w, "%c \"%s\" \"%s\"\n", fileop.op, fileop.Source, fileop.Path)
 	} else if fileop.op == deleteall {
 		w.Write([]byte("deleteall\n"))
 	} else if fileop.op == 0 {
@@ -3426,7 +3424,6 @@ func (fileop *FileOp) Copy() *FileOp {
 	newop := newFileOp(fileop.repo)
 	newop.committish = stringCopy(fileop.committish)
 	newop.Source = stringCopy(fileop.Source)
-	newop.Target = stringCopy(fileop.Target)
 	newop.mode = stringCopy(fileop.mode)
 	newop.Path = stringCopy(fileop.Path)
 	newop.ref = stringCopy(fileop.ref)
@@ -4409,7 +4406,7 @@ func (commit *Commit) visible(argpath string) *Commit {
 					return nil
 				} else if fileop.op == opM && fileop.Path == argpath {
 					return ancestor
-				} else if (fileop.op == opR || fileop.op == opC) && fileop.Target == argpath {
+				} else if (fileop.op == opR || fileop.op == opC) && fileop.Path == argpath {
 					return ancestor
 				}
 			}
@@ -4684,7 +4681,7 @@ func (commit *Commit) canonicalize() {
 	for _, fileop := range ops {
 		cpath := ""
 		if fileop.op == opR || fileop.op == opC {
-			cpath = fileop.Target
+			cpath = fileop.Path
 		} else if fileop.op == opM {
 			cpath = fileop.Path
 		} else {
@@ -7082,11 +7079,11 @@ func (commit *Commit) applyFileOps(presentOps PathMapLike,
 		if prevop, ok := presentOps.get(fileop.Source); ok {
 			newop := prevop.(*FileOp).Copy()
 			if newop.op == opM || newop.op == opD {
-				newop.Path = fileop.Target
+				newop.Path = fileop.Path
 			} else {
-				newop.Target = fileop.Target
+				newop.Path = fileop.Path
 			}
-			presentOps.set(fileop.Target, newop)
+			presentOps.set(fileop.Path, newop)
 			return true
 		}
 		return false
@@ -7106,13 +7103,13 @@ func (commit *Commit) applyFileOps(presentOps PathMapLike,
 			}
 		case opC:
 			if !doCopy(fileop) && keepUnresolvedOps {
-				presentOps.set(fileop.Target, fileop)
+				presentOps.set(fileop.Path, fileop)
 			}
 		case opR:
 			if doCopy(fileop) {
 				presentOps.remove(fileop.Source)
 			} else if keepUnresolvedOps {
-				presentOps.set(fileop.Target, fileop)
+				presentOps.set(fileop.Path, fileop)
 			}
 		}
 	}
@@ -8198,11 +8195,11 @@ func (repo *Repository) pathWalk(selection orderedIntSet, hook func(string) stri
 						modified.Add(newpath)
 					}
 					fileop.Source = newpath
-					newpath = hook(fileop.Target)
-					if newpath != fileop.Target {
+					newpath = hook(fileop.Path)
+					if newpath != fileop.Path {
 						modified.Add(newpath)
 					}
-					commit.fileops[i].Target = newpath
+					commit.fileops[i].Path = newpath
 				}
 			}
 		}
@@ -8269,12 +8266,12 @@ func (repo *Repository) splitCommitByPrefix(where int, prefix string) error {
 				// in ops if
 				// !strings.HasPrefix(op.Path,
 				// prefix)],
-				// [op for op in ops if (op.Path || op.Target)
-				// and (op.Path || op.Target).startswith(prefix)]))
+				// [op for op in ops if (op.Path || op.Path)
+				// and (op.Path || op.Path).startswith(prefix)]))
 				if strings.HasPrefix(op.Path, prefix) {
 					with = append(with, op)
 					err = nil
-				} else if strings.HasPrefix(op.Target, prefix) {
+				} else if strings.HasPrefix(op.Path, prefix) {
 					with = append(with, op)
 				} else {
 					without = append(without, op)
@@ -9301,10 +9298,10 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 					}
 				} else if fileop.op == opR || fileop.op == opC {
 					sourcedelete := expunge.MatchString(fileop.Source)
-					targetdelete := expunge.MatchString(fileop.Target)
+					targetdelete := expunge.MatchString(fileop.Path)
 					if sourcedelete {
 						deletia = append(deletia, i)
-						//if logEnable(logSHOUT) {logit("following %s of %s to %s", fileop.op, fileop.Source, fileop.Target)}
+						//if logEnable(logSHOUT) {logit("following %s of %s to %s", fileop.op, fileop.Source, fileop.Path)}
 						if fileop.op == opR {
 							newmatchers := make([]string, 0)
 							for _, m := range matchers {
@@ -9314,7 +9311,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 							}
 							matchers = newmatchers
 						}
-						matchers = append(matchers, "^"+fileop.Target+"$")
+						matchers = append(matchers, "^"+fileop.Path+"$")
 						expunge, notagify = digest(matchers)
 					} else if targetdelete {
 						if fileop.op == opR {
@@ -9322,7 +9319,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 						} else if fileop.op == opC {
 							deletia = append(deletia, i)
 						}
-						matchers = append(matchers, "^"+fileop.Target+"$")
+						matchers = append(matchers, "^"+fileop.Path+"$")
 						expunge, notagify = digest(matchers)
 					}
 				}
@@ -13188,7 +13185,7 @@ func (rs *Reposurgeon) DoRemove(line string) bool {
 			if !strings.Contains(optypes, string(op.op)) {
 				continue
 			}
-			if op.Path == opindex || op.Source == opindex || op.Target == opindex {
+			if op.Path == opindex || op.Source == opindex {
 				ind = i
 				break
 			}
@@ -13854,7 +13851,7 @@ func (rs *Reposurgeon) DoDebranch(line string) bool {
 				fileop.Path = filepath.Join(pref, fileop.Path)
 			} else if fileop.op == opR || fileop.op == opC {
 				fileop.Source = filepath.Join(pref, fileop.Source)
-				fileop.Target = filepath.Join(pref, fileop.Target)
+				fileop.Path = filepath.Join(pref, fileop.Path)
 			}
 		}
 	}
