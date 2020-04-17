@@ -116,61 +116,63 @@ func (sp *StreamParser) isDeclaredBranch(path string) bool {
 		return isd
 	}
 
-	// Memo lookup failed
-	innerDeclared := func(path string) bool {
-		// This split operation is a huge hot spot in the profiles.
-		// THe main reason for memoization is to avoid it.
-		components := strings.Split(trimSep(path), svnSep)
-		L := len(components)
-		// When branchify contains an entry ending by /*, we say that everything
-		// up to the last /* is a namespace. Namespaces are not accepted as
-		// branches, even if another branchify entry would match.
-		// We only need to compare against entries with L+1 components.
-		for _, trial := range sp.branchify[L+1] {
-			if trial[L] == "*" {
-				// trial corresponds to a namespace, check if trial == path
-				for i := 0; i < L; i++ {
-					if trial[i] != "*" && trial[i] != components[i] {
-						goto nextNamespace
-					}
-				}
-				// the given path is a namespace
-				return false
-			}
-		nextNamespace:
-		}
-		// We know this is not a namespace. Now check if some entry matches.
-		for _, trial := range sp.branchify[L] {
-			for i := 0; i < L; i++ {
-				if trial[i] != "*" && trial[i] != components[i] {
-					goto nextTrial
-				}
-			}
-			return true
-		nextTrial:
-		}
-		return false
-	}
 
+	// This split operation is a huge hot spot in the profiles.
+	// THe main reason for memoization is to avoid it.
+	components := strings.Split(trimSep(path), svnSep)
 	// Memoize and return
-	isd := innerDeclared(path)
+	isd := sp.isDeclaredBranchComponents(components)
 	sp.isBranch[path] = isd
 	return isd
 }
 
+func (sp *StreamParser) isDeclaredBranchComponents (components []string) bool {
+	L := len(components)
+	// When branchify contains an entry ending by /*, we say that everything
+	// up to the last /* is a namespace. Namespaces are not accepted as
+	// branches, even if another branchify entry would match.
+	// We only need to compare against entries with L+1 components.
+	for _, trial := range sp.branchify[L+1] {
+		if trial[L] == "*" {
+			// trial corresponds to a namespace, check if trial == path
+			for i := 0; i < L; i++ {
+				if trial[i] != "*" && trial[i] != components[i] {
+					goto nextNamespace
+				}
+			}
+			// the given path is a namespace
+			return false
+		}
+		nextNamespace:
+	}
+	// We know this is not a namespace. Now check if some entry matches.
+	for _, trial := range sp.branchify[L] {
+		for i := 0; i < L; i++ {
+			if trial[i] != "*" && trial[i] != components[i] {
+				goto nextTrial
+			}
+		}
+		return true
+		nextTrial:
+	}
+	return false
+}
+
 // splitSVNBranchPath splits a node path into the part that identifies the branch and the rest, as determined by the current branch map
 func (sp *StreamParser) splitSVNBranchPath(path string) (string, string) {
-	candidate := path
-	for {
-		split := strings.LastIndex(candidate, svnSep)
-		if split == -1 {
-			return "", path
-		}
-		candidate = path[:split]
-		if sp.isDeclaredBranch(candidate) {
-			return candidate, path[split+1:]
+	components := strings.Split(path, svnSep)
+	if len(components) > 1 && components[0] == "" {
+		// Ignore any leading svnSep
+		components = components[1:]
+	}
+	split := len(path)
+	for l := len(components)-1; l > 0; l-- {
+		split -= len(components[l]) + 1
+		if sp.isDeclaredBranchComponents(components[:l]) {
+			return path[:split], path[split+1:]
 		}
 	}
+	return "", path
 }
 
 // History is a type to manage a collection of PathMaps used as a history of file visibility.
