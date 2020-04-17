@@ -4402,11 +4402,10 @@ func (commit *Commit) visible(argpath string) *Commit {
 			// M/C/R foo after D foo pairs. If this condition
 			// is violated it can throw false negatives.
 			for _, fileop := range ancestor.operations() {
-				if fileop.op == opD && fileop.Path == argpath {
-					return nil
-				} else if fileop.op == opM && fileop.Path == argpath {
-					return ancestor
-				} else if (fileop.op == opR || fileop.op == opC) && fileop.Path == argpath {
+				if fileop.Path == argpath {
+					if fileop.op == opD {
+						return nil
+					}
 					return ancestor
 				}
 			}
@@ -4679,14 +4678,10 @@ func (commit *Commit) canonicalize() {
 	// Generate needed M fileops. Only targets of R, C and M ops
 	// can be changed.
 	for _, fileop := range ops {
-		cpath := ""
-		if fileop.op == opR || fileop.op == opC {
-			cpath = fileop.Path
-		} else if fileop.op == opM {
-			cpath = fileop.Path
-		} else {
+		if fileop.op == opD {
 			continue
 		}
+		cpath := fileop.Path
 		ioe, oldok := previous.get(cpath)
 		ine, newok := current.get(cpath)
 		oe, _ := ioe.(*FileOp)
@@ -7078,11 +7073,7 @@ func (commit *Commit) applyFileOps(presentOps PathMapLike,
 	doCopy := func(fileop *FileOp) bool {
 		if prevop, ok := presentOps.get(fileop.Source); ok {
 			newop := prevop.(*FileOp).Copy()
-			if newop.op == opM || newop.op == opD {
-				newop.Path = fileop.Path
-			} else {
-				newop.Path = fileop.Path
-			}
+			newop.Path = fileop.Path
 			presentOps.set(fileop.Path, newop)
 			return true
 		}
@@ -8183,23 +8174,17 @@ func (repo *Repository) pathWalk(selection orderedIntSet, hook func(string) stri
 		event := repo.events[ei]
 		if commit, ok := event.(*Commit); ok {
 			for i, fileop := range commit.operations() {
-				if fileop.op == opM || fileop.op == opD {
-					newpath := hook(fileop.Path)
-					if newpath != fileop.Path {
-						modified.Add(newpath)
-					}
-					commit.fileops[i].Path = newpath
-				} else if fileop.op == opR || fileop.op == opC {
-					newpath := hook(fileop.Source)
+				newpath := hook(fileop.Path)
+				if newpath != fileop.Path {
+					modified.Add(newpath)
+				}
+				commit.fileops[i].Path = newpath
+				if fileop.op == opR || fileop.op == opC {
+					newpath = hook(fileop.Source)
 					if newpath != fileop.Source {
 						modified.Add(newpath)
 					}
 					fileop.Source = newpath
-					newpath = hook(fileop.Path)
-					if newpath != fileop.Path {
-						modified.Add(newpath)
-					}
-					commit.fileops[i].Path = newpath
 				}
 			}
 		}
@@ -8271,8 +8256,6 @@ func (repo *Repository) splitCommitByPrefix(where int, prefix string) error {
 				if strings.HasPrefix(op.Path, prefix) {
 					with = append(with, op)
 					err = nil
-				} else if strings.HasPrefix(op.Path, prefix) {
-					with = append(with, op)
 				} else {
 					without = append(without, op)
 				}
@@ -13847,11 +13830,9 @@ func (rs *Reposurgeon) DoDebranch(line string) bool {
 	for _, ci := range scommits {
 		for idx := range repo.events[ci].(*Commit).operations() {
 			fileop := repo.events[ci].(*Commit).fileops[idx]
-			if fileop.op == opD || fileop.op == opM {
-				fileop.Path = filepath.Join(pref, fileop.Path)
-			} else if fileop.op == opR || fileop.op == opC {
+			fileop.Path = filepath.Join(pref, fileop.Path)
+			if fileop.op == opR || fileop.op == opC {
 				fileop.Source = filepath.Join(pref, fileop.Source)
-				fileop.Path = filepath.Join(pref, fileop.Path)
 			}
 		}
 	}

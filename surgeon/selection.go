@@ -274,11 +274,8 @@ func (rs *Reposurgeon) evalPathsetFull(state selEvalState,
 			tree = parentTree.snapshot()
 		}
 		for _, fileop := range c.operations() {
-			if fileop.op == opM && match(fileop.Path) {
-				tree.set(fileop.Path, true)
-			} else if fileop.op == opC && match(fileop.Path) {
-				tree.set(fileop.Path, true)
-			} else if fileop.op == opR && match(fileop.Path) {
+			if (fileop.op == opM || fileop.op == opC || fileop.op == opR) &&
+					match(fileop.Path) {
 				tree.set(fileop.Path, true)
 			} else if fileop.op == opD && match(fileop.Path) {
 				tree.remove(fileop.Path)
