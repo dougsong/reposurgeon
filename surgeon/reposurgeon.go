@@ -2381,9 +2381,9 @@ func (b *Blob) paths(_pathtype orderedStringSet) orderedStringSet {
 	seen := make(map[string]bool)
 	for op := range b.opset {
 		// The fileop is necessarily a M fileop
-		if !seen[op.Source] {
-			lst = append(lst, op.Source)
-			seen[op.Source] = true
+		if !seen[op.Path] {
+			lst = append(lst, op.Path)
+			seen[op.Path] = true
 		}
 	}
 	sort.Strings(lst)
@@ -3145,9 +3145,10 @@ type optype byte
 type FileOp struct {
 	repo       *Repository
 	committish string
-	Source     string	// the path, for an M op
+	Source     string
 	Target     string
 	mode       string
+	Path       string
 	ref        string
 	inline     []byte
 	op         optype
@@ -3159,6 +3160,7 @@ func (fileop *FileOp) Equals(other *FileOp) bool {
 		fileop.Source == other.Source &&
 		fileop.Target == other.Target &&
 		fileop.mode == other.mode &&
+		fileop.Path == other.Path &&
 		fileop.ref == other.ref &&
 		bytes.Equal(fileop.inline, other.inline) &&
 		fileop.op == other.op
@@ -3191,17 +3193,17 @@ func (fileop *FileOp) construct(op optype, opargs ...string) *FileOp {
 	if op == 'M' {
 		fileop.mode = opargs[0]
 		fileop.ref = opargs[1]
-		fileop.Source = opargs[2]
+		fileop.Path = opargs[2]
 		if fileop.repo != nil && fileop.ref != "inline" {
 			if blob, ok := fileop.repo.markToEvent(fileop.ref).(*Blob); ok {
 				blob.appendOperation(fileop)
 			}
 		}
 	} else if op == 'D' {
-		fileop.Source = opargs[0]
+		fileop.Path = opargs[0]
 	} else if op == 'N' {
 		fileop.ref = opargs[0]
-		fileop.Source = opargs[1]
+		fileop.Path = opargs[1]
 	} else if op == 'R' {
 		fileop.Source = opargs[0]
 		fileop.Target = opargs[1]
@@ -3297,7 +3299,7 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 		fileop.op = opM
 		fileop.mode = string(fields[1])
 		fileop.ref = string(fields[2])
-		fileop.Source = string(fields[3])
+		fileop.Path = string(fields[3])
 	} else if strings.HasPrefix(opline, "N ") {
 		fields := stringScan(opline, 3)
 		if len(fields) != 3 {
@@ -3305,14 +3307,14 @@ func (fileop *FileOp) parse(opline string) *FileOp {
 		}
 		fileop.op = opN
 		fileop.ref = string(fields[1])
-		fileop.Source = string(fields[2])
+		fileop.Path = string(fields[2])
 	} else if strings.HasPrefix(opline, "D ") {
 		fields := stringScan(opline, 2)
 		if len(fields) != 2 {
 			panic(throw("parse", "Bad format of D line: %q", opline))
 		}
 		fileop.op = opD
-		fileop.Source = string(fields[1])
+		fileop.Path = string(fields[1])
 	} else if strings.HasPrefix(opline, "R ") {
 		fields := stringScan(opline, 3)
 		if len(fields) != 3 {
@@ -3358,7 +3360,7 @@ func (fileop *FileOp) paths(pathtype orderedStringSet) orderedStringSet {
 		return orderedStringSet{}
 	}
 	if fileop.op == opM || fileop.op == opD || fileop.op == opN {
-		return orderedStringSet{fileop.Source}
+		return orderedStringSet{fileop.Path}
 	}
 	if fileop.op == opR || fileop.op == opC {
 		return orderedStringSet{fileop.Source, fileop.Target}
@@ -3388,19 +3390,19 @@ func (fileop *FileOp) Save(w io.Writer) {
 		return cpath
 	}
 	if fileop.op == opM {
-		fmt.Fprintf(w, "M %s %s %s\n", fileop.mode, fileop.ref, quotifyIfNeeded(fileop.Source))
+		fmt.Fprintf(w, "M %s %s %s\n", fileop.mode, fileop.ref, quotifyIfNeeded(fileop.Path))
 		if fileop.ref == "inline" {
 			fmt.Fprintf(w, "data %d\n%s\n", len(fileop.inline), fileop.inline)
 		}
 		//return parts
 	} else if fileop.op == opN {
-		fmt.Fprintf(w, "N %s %s\n", fileop.ref, quotifyIfNeeded(fileop.Source))
+		fmt.Fprintf(w, "N %s %s\n", fileop.ref, quotifyIfNeeded(fileop.Path))
 		if fileop.ref == "inline" {
 			fmt.Fprintf(w, "data %d\n%s\n", len(fileop.inline), fileop.inline)
 		}
 		//return parts
 	} else if fileop.op == opD {
-		fmt.Fprintf(w, "D %s\n", quotifyIfNeeded(fileop.Source))
+		fmt.Fprintf(w, "D %s\n", quotifyIfNeeded(fileop.Path))
 	} else if fileop.op == opR || fileop.op == opC {
 		fmt.Fprintf(w, "%c \"%s\" \"%s\"\n", fileop.op, fileop.Source, fileop.Target)
 	} else if fileop.op == deleteall {
@@ -3426,6 +3428,7 @@ func (fileop *FileOp) Copy() *FileOp {
 	newop.Source = stringCopy(fileop.Source)
 	newop.Target = stringCopy(fileop.Target)
 	newop.mode = stringCopy(fileop.mode)
+	newop.Path = stringCopy(fileop.Path)
 	newop.ref = stringCopy(fileop.ref)
 	newop.inline = make([]byte, len(fileop.inline))
 	copy(newop.inline, fileop.inline)
@@ -4402,9 +4405,9 @@ func (commit *Commit) visible(argpath string) *Commit {
 			// M/C/R foo after D foo pairs. If this condition
 			// is violated it can throw false negatives.
 			for _, fileop := range ancestor.operations() {
-				if fileop.op == opD && fileop.Source == argpath {
+				if fileop.op == opD && fileop.Path == argpath {
 					return nil
-				} else if fileop.op == opM && fileop.Source == argpath {
+				} else if fileop.op == opM && fileop.Path == argpath {
 					return ancestor
 				} else if (fileop.op == opR || fileop.op == opC) && fileop.Target == argpath {
 					return ancestor
@@ -4663,7 +4666,7 @@ func (commit *Commit) canonicalize() {
 			if fileop.op == opR {
 				cpath = fileop.Source
 			} else if fileop.op == opD {
-				cpath = fileop.Source
+				cpath = fileop.Path
 			} else {
 				continue
 			}
@@ -4683,7 +4686,7 @@ func (commit *Commit) canonicalize() {
 		if fileop.op == opR || fileop.op == opC {
 			cpath = fileop.Target
 		} else if fileop.op == opM {
-			cpath = fileop.Source
+			cpath = fileop.Path
 		} else {
 			continue
 		}
@@ -6709,7 +6712,7 @@ func (repo *Repository) parseDollarCookies() {
 				svnkey := "SVN:" + blob.cookie.rev
 				repo.dollarMap.LoadOrStore(svnkey, commit)
 			} else if blob.cookie != nil {
-				if filepath.Base(fileop.Source) != blob.cookie.path {
+				if filepath.Base(fileop.Path) != blob.cookie.path {
 					// Usually the
 					// harmless result of
 					// a file move or copy
@@ -6717,9 +6720,9 @@ func (repo *Repository) parseDollarCookies() {
 					// git-svn didn't pick
 					// up on.
 					croak("mismatched CVS header path '%s' in %s vs '%s' in %s",
-						fileop.Source, commit.mark, blob.cookie.path, blob.mark)
+						fileop.Path, commit.mark, blob.cookie.path, blob.mark)
 				}
-				cvskey := fmt.Sprintf("CVS:%s:%s", fileop.Source, blob.cookie.path)
+				cvskey := fmt.Sprintf("CVS:%s:%s", fileop.Path, blob.cookie.path)
 				repo.dollarMap.LoadOrStore(cvskey, commit)
 			}
 		}
@@ -7022,7 +7025,7 @@ func (commit *Commit) ancestorCount(path string) int {
 	count := 0
 	for {
 		for _, fileop := range commit.operations() {
-			if fileop.op == opM && fileop.Source == path {
+			if fileop.op == opM && fileop.Path == path {
 				count++
 				break
 			}
@@ -7079,7 +7082,7 @@ func (commit *Commit) applyFileOps(presentOps PathMapLike,
 		if prevop, ok := presentOps.get(fileop.Source); ok {
 			newop := prevop.(*FileOp).Copy()
 			if newop.op == opM || newop.op == opD {
-				newop.Source = fileop.Target
+				newop.Path = fileop.Target
 			} else {
 				newop.Target = fileop.Target
 			}
@@ -7094,12 +7097,12 @@ func (commit *Commit) applyFileOps(presentOps PathMapLike,
 		fileop := myOps[i]
 		switch fileop.op {
 		case opM:
-			presentOps.set(fileop.Source, fileop)
+			presentOps.set(fileop.Path, fileop)
 		case opD:
 			if keepDeleteOps {
-				presentOps.set(fileop.Source, fileop)
+				presentOps.set(fileop.Path, fileop)
 			} else {
-				presentOps.remove(fileop.Source)
+				presentOps.remove(fileop.Path)
 			}
 		case opC:
 			if !doCopy(fileop) && keepUnresolvedOps {
@@ -7870,7 +7873,7 @@ func (repo *Repository) reorderCommits(v []int, bequiet bool) {
 		for _, op := range c.operations() {
 			var path string
 			if op.op == opD {
-				path = op.Source
+				path = op.Path
 			} else if op.op == opR || op.op == opC {
 				path = op.Source
 			}
@@ -8184,11 +8187,11 @@ func (repo *Repository) pathWalk(selection orderedIntSet, hook func(string) stri
 		if commit, ok := event.(*Commit); ok {
 			for i, fileop := range commit.operations() {
 				if fileop.op == opM || fileop.op == opD {
-					newpath := hook(fileop.Source)
-					if newpath != fileop.Source {
+					newpath := hook(fileop.Path)
+					if newpath != fileop.Path {
 						modified.Add(newpath)
 					}
-					commit.fileops[i].Source = newpath
+					commit.fileops[i].Path = newpath
 				} else if fileop.op == opR || fileop.op == opC {
 					newpath := hook(fileop.Source)
 					if newpath != fileop.Source {
@@ -8268,9 +8271,7 @@ func (repo *Repository) splitCommitByPrefix(where int, prefix string) error {
 				// prefix)],
 				// [op for op in ops if (op.Path || op.Target)
 				// and (op.Path || op.Target).startswith(prefix)]))
-				// The old Path member is now carried in Source
-				// to reduce structure size/
-				if strings.HasPrefix(op.Source, prefix) {
+				if strings.HasPrefix(op.Path, prefix) {
 					with = append(with, op)
 					err = nil
 				} else if strings.HasPrefix(op.Target, prefix) {
@@ -8298,7 +8299,7 @@ func (repo *Repository) blobAncestor(commit *Commit, path string) *Blob {
 			break // could be a callout
 		}
 		for _, op := range ancestor.operations() {
-			if op.Source == path {
+			if op.Path == path {
 				if op.op == opD {
 					// Path had no ancestor after
 					// last delete
@@ -9295,7 +9296,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 			for i, fileop := range commit.operations() {
 				if logEnable(logDELETE) {logit(fileop.String()+"\n")}
 				if fileop.op == opD || fileop.op == opM {
-					if expunge.MatchString(fileop.Source) {
+					if expunge.MatchString(fileop.Path) {
 						deletia = append(deletia, i)
 					}
 				} else if fileop.op == opR || fileop.op == opC {
@@ -9358,7 +9359,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 			if fileop.op == opD {
 				keepers = append(keepers, fileop)
 				respond("at %d, expunging D %s",
-					ei+1, fileop.Source)
+					ei+1, fileop.Path)
 			} else if fileop.op == opM {
 				keepers = append(keepers, fileop)
 				if fileop.ref != "inline" {
@@ -9368,7 +9369,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 					//assert(isinstance(blob, Blob))
 					blobs = append(blobs, blob)
 				}
-				respond("at %d, expunging M %s", ei+1, fileop.Source)
+				respond("at %d, expunging M %s", ei+1, fileop.Path)
 			} else if fileop.op == opR || fileop.op == opC {
 				//assert(sourcedelete || targetdelete)
 				if sourcedelete && targetdelete {
@@ -10065,7 +10066,7 @@ func (commit *Commit) findSuccessors(path string) []string {
 			continue
 		}
 		for _, fileop := range childCommit.operations() {
-			if fileop.op == opM && fileop.Source == path {
+			if fileop.op == opM && fileop.Path == path {
 				here = append(here, childCommit.mark)
 			}
 		}
@@ -10109,8 +10110,8 @@ func (rs *Reposurgeon) edit(selection orderedIntSet, line string) {
 			for _, commit := range rs.chosen().commits(nil) {
 				for _, fileop := range commit.operations() {
 					if fileop.op == opM && fileop.ref == singleton.getMark() {
-						if len(commit.findSuccessors(fileop.Source)) > 0 && !parse.options.Contains("--not-last") {
-							croak("beware: not the last 'M %s' on its branch", fileop.Source)
+						if len(commit.findSuccessors(fileop.Path)) > 0 && !parse.options.Contains("--not-last") {
+							croak("beware: not the last 'M %s' on its branch", fileop.Path)
 						}
 						break
 					}
@@ -11831,7 +11832,7 @@ func (rs *Reposurgeon) DoStrip(line string) bool {
 						if _, ok := direct.(*Callout); ok {
 							noAncestor = true
 						} else if commit, ok := direct.(*Commit); ok {
-							noAncestor = commit.ancestorCount(op.Source) == 0
+							noAncestor = commit.ancestorCount(op.Path) == 0
 						}
 						if op.op != opM || noAncestor {
 							interesting.Add(commit.mark)
@@ -12725,7 +12726,7 @@ func (rs *Reposurgeon) DoSetperm(line string) bool {
 	for _, ei := range rs.selection {
 		if commit, ok := rs.chosen().events[ei].(*Commit); ok {
 			for i, op := range commit.fileops {
-				if op.op == opM && paths.Contains(op.Source) {
+				if op.op == opM && paths.Contains(op.Path) {
 					commit.fileops[i].mode = perm
 				}
 			}
@@ -12902,7 +12903,7 @@ func (rs *Reposurgeon) DoCoalesce(line string) bool {
 		}
 	}
 	isChangelog := func(commit *Commit) bool {
-		return strings.Contains(commit.Comment, "empty log message") && len(commit.operations()) == 1 && commit.operations()[0].op == opM && strings.HasSuffix(commit.operations()[0].Source, "ChangeLog")
+		return strings.Contains(commit.Comment, "empty log message") && len(commit.operations()) == 1 && commit.operations()[0].op == opM && strings.HasSuffix(commit.operations()[0].Path, "ChangeLog")
 	}
 	coalesceMatch := func(cthis *Commit, cnext *Commit) bool {
 		croakOnFail := logEnable(logDELETE) || parse.options.Contains("--debug")
@@ -13187,7 +13188,7 @@ func (rs *Reposurgeon) DoRemove(line string) bool {
 			if !strings.Contains(optypes, string(op.op)) {
 				continue
 			}
-			if op.Source == opindex || op.Target == opindex {
+			if op.Path == opindex || op.Source == opindex || op.Target == opindex {
 				ind = i
 				break
 			}
@@ -13850,7 +13851,7 @@ func (rs *Reposurgeon) DoDebranch(line string) bool {
 		for idx := range repo.events[ci].(*Commit).operations() {
 			fileop := repo.events[ci].(*Commit).fileops[idx]
 			if fileop.op == opD || fileop.op == opM {
-				fileop.Source = filepath.Join(pref, fileop.Source)
+				fileop.Path = filepath.Join(pref, fileop.Path)
 			} else if fileop.op == opR || fileop.op == opC {
 				fileop.Source = filepath.Join(pref, fileop.Source)
 				fileop.Target = filepath.Join(pref, fileop.Target)
@@ -15068,7 +15069,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 			return false
 		}
 		for fop := range blob.opset {
-			if !strings.HasSuffix(fop.Source, rs.ignorename) {
+			if !strings.HasSuffix(fop.Path, rs.ignorename) {
 				return false
 			}
 		}
@@ -15096,7 +15097,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 				earliest := repo.earliestCommit()
 				hasIgnoreBlob := false
 				for _, fileop := range earliest.operations() {
-					if fileop.op == opM && strings.HasSuffix(fileop.Source, rs.ignorename) {
+					if fileop.op == opM && strings.HasSuffix(fileop.Path, rs.ignorename) {
 						hasIgnoreBlob = true
 					}
 				}
@@ -16441,7 +16442,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		// best not to re-attribute this.
 		notChangelog := false
 		for _, op := range commit.operations() {
-			if op.op != opM || !isChangeLog(op.Source) {
+			if op.op != opM || !isChangeLog(op.Path) {
 				notChangelog = true
 				break
 			}
@@ -16458,12 +16459,12 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 		// Else, skip the commit as the attribution would be ambiguous.  This
 		// is the case in merge commits: several changelogs are incorporated.
 		for _, op := range commit.operations() {
-			if op.op == opM && isChangeLog(op.Source) {
+			if op.op == opM && isChangeLog(op.Path) {
 				cl.bump()
 				// Figure out where we should look for changes in
 				// this blob by comparing it to its nearest ancestor.
 				then := make([]string, 0)
-				if ob := repo.blobAncestor(commit, op.Source); ob != nil {
+				if ob := repo.blobAncestor(commit, op.Path); ob != nil {
 					then = strings.Split(string(ob.getContent()), "\n")
 				}
 				newcontent := repo.markToEvent(op.ref).(*Blob).getContent()
@@ -16481,7 +16482,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 						for pos := difflines.J1; pos < difflines.J2; pos++ {
 							diffline := now[pos]
 							if strings.TrimSpace(diffline) != "" {
-								attribution := parseChangelogLine(diffline, commit, op.Source, pos)
+								attribution := parseChangelogLine(diffline, commit, op.Path, pos)
 								foundAt := 0
 								if attribution != "" {
 									// we found an active attribution line
@@ -16491,7 +16492,7 @@ func (rs *Reposurgeon) DoChangelogs(line string) bool {
 									// this is not an attribution line, search for
 									// the last one since we are in its block
 									for j := lastUnchanged.J2 - 1; j >= lastUnchanged.J1; j-- {
-										attribution = parseChangelogLine(now[j], commit, op.Source, j)
+										attribution = parseChangelogLine(now[j], commit, op.Path, j)
 										if attribution != "" {
 											// this is the active attribution
 											// corresponding to the added chunk

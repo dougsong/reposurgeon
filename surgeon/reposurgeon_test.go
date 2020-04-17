@@ -805,7 +805,7 @@ func TestFileOp(t *testing.T) {
 	assertOpEqual(t, 'M', fileop1.op)
 	assertEqual(t, "100644", fileop1.mode)
 	assertEqual(t, ":1", fileop1.ref)
-	assertEqual(t, "README", fileop1.Source)
+	assertEqual(t, "README", fileop1.Path)
 	if !fileop1.paths(nil).Equal(orderedStringSet{"README"}) {
 		t.Error("fileop1 path extraction failed equality check")
 	}
@@ -814,14 +814,14 @@ func TestFileOp(t *testing.T) {
 	assertOpEqual(t, 'M', fileop2.op)
 	assertEqual(t, "100755", fileop2.mode)
 	assertEqual(t, ":2", fileop2.ref)
-	assertEqual(t, "DRINKME", fileop2.Source)
+	assertEqual(t, "DRINKME", fileop2.Path)
 	if !fileop2.paths(nil).Equal(orderedStringSet{"DRINKME"}) {
 		t.Error("fileop2 path extraction failed equality check")
 	}
 
 	fileop3 := newFileOp(nil).construct('D', "DRINKME")
 	assertOpEqual(t, 'D', fileop3.op)
-	assertEqual(t, "DRINKME", fileop3.Source)
+	assertEqual(t, "DRINKME", fileop3.Path)
 	if !fileop3.paths(nil).Equal(orderedStringSet{"DRINKME"}) {
 		t.Error("fileop3 path extraction failed equality check")
 	}
@@ -845,7 +845,7 @@ func TestFileOp(t *testing.T) {
 	fileop6 := newFileOp(nil).construct('N', ":3", "EATME")
 	assertOpEqual(t, 'N', fileop6.op)
 	assertEqual(t, ":3", fileop6.ref)
-	assertEqual(t, "EATME", fileop6.Source)
+	assertEqual(t, "EATME", fileop6.Path)
 	if !fileop6.paths(nil).Equal(orderedStringSet{"EATME"}) {
 		t.Error("fileop6 path extraction failed equality check")
 	}
@@ -861,7 +861,7 @@ func TestFileOp(t *testing.T) {
 	assertOpEqual(t, 'M', fileop8.op)
 	assertEqual(t, "100644", fileop8.mode)
 	assertEqual(t, ":4", fileop8.ref)
-	assertEqual(t, "COPYING", fileop8.Source)
+	assertEqual(t, "COPYING", fileop8.Path)
 	assertEqual(t, line8+"\n", fileop8.String())
 
 	line9 := "M 100755 :5 runme.sh"
@@ -869,13 +869,13 @@ func TestFileOp(t *testing.T) {
 	assertOpEqual(t, 'M', fileop9.op)
 	assertEqual(t, "100755", fileop9.mode)
 	assertEqual(t, ":5", fileop9.ref)
-	assertEqual(t, "runme.sh", fileop9.Source)
+	assertEqual(t, "runme.sh", fileop9.Path)
 	assertEqual(t, line9+"\n", fileop9.String())
 
 	line10 := "D deleteme"
 	fileop10 := newFileOp(nil).parse(line10)
 	assertOpEqual(t, 'D', fileop10.op)
-	assertEqual(t, "deleteme", fileop10.Source)
+	assertEqual(t, "deleteme", fileop10.Path)
 	assertEqual(t, line10+"\n", fileop10.String())
 
 	line11 := `R "DRINKME" "EATME"`
@@ -896,7 +896,7 @@ func TestFileOp(t *testing.T) {
 	fileop13 := newFileOp(nil).parse(line13)
 	assertOpEqual(t, 'N', fileop13.op)
 	assertEqual(t, ":6", fileop13.ref)
-	assertEqual(t, "EATME", fileop13.Source)
+	assertEqual(t, "EATME", fileop13.Path)
 	assertEqual(t, line13+"\n", fileop13.String())
 
 	line14 := "deleteall"
@@ -928,7 +928,7 @@ func TestSimplify(t *testing.T) {
 		commit.simplify()
 		sorted := make([]string, len(as))
 		for i := range as {
-			sorted[i] = commit.fileops[i].Source
+			sorted[i] = commit.fileops[i].Path
 		}
 		if !reflect.DeepEqual(sorted, bs) {
 			t.Fatalf("fileops didn't get sorted correctly; expected %#v == %#v", sorted, bs)
@@ -960,7 +960,7 @@ func TestSimplify(t *testing.T) {
 		}
 		commit.simplify()
 		quasiEquals := func(a *FileOp, b *FileOp) bool {
-			return a.op == b.op && a.Source == b.Source
+			return a.op == b.op && a.Path == b.Path
 		}
 		if len(commit.fileops) != len(bs) {
 			t.Fatalf("sort test did not result in two slices of the same length")

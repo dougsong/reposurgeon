@@ -1347,7 +1347,7 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 				// then remove the spec-violating path.
 				fileop := newFileOp(sp.repo)
 				fileop.construct(deleteall)
-				fileop.Source = node.path
+				fileop.Path = node.path
 				commit.appendOperation(fileop)
 			} else if node.kind == sdFILE {
 				// All .cvsignores should be ignored as remnants from
@@ -1578,7 +1578,7 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 			// ops with their path set, therefore every
 			// fileop has a Path member.
 			for j, fileop := range commit.fileops {
-				newbranch, _ := sp.splitSVNBranchPath(fileop.Source)
+				newbranch, _ := sp.splitSVNBranchPath(fileop.Path)
 				if j == 0 || newbranch != oldbranch {
 					cliqueIndices = append([]int{j}, cliqueIndices...)
 					oldbranch = newbranch
@@ -1674,12 +1674,13 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 				// Normal case
 				commit.simplify()
 				for j := range commit.fileops {
-					commit.fileops[j].Source, commit.fileops[j].Target = sp.splitSVNBranchPath(commit.fileops[j].Source)
+					commit.fileops[j].Source, commit.fileops[j].Target = sp.splitSVNBranchPath(commit.fileops[j].Path)
 				}
 				for i := range commit.fileops {
 					fileop := commit.fileops[i]
 					commit.Branch = fileop.Source
-					fileop.Source = fileop.Target
+					fileop.Source = ""
+					fileop.Path = fileop.Target
 					fileop.Target = ""
 				}
 			}
@@ -2753,7 +2754,7 @@ func svnProcessJunk(ctx context.Context, sp *StreamParser, options stringSet, ba
 		if doignores && rootmarks.Contains(commit.mark) {
 			if len(commit.operations()) == 1 {
 				op := commit.operations()[0]
-				if op.Source == ".gitignore" {
+				if op.Path == ".gitignore" {
 					blob, ok := sp.repo.markToEvent(op.ref).(*Blob)
 					if ok && string(blob.getContent()) == subversionDefaultIgnores {
 						return true
