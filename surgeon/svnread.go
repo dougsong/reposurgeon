@@ -1553,8 +1553,9 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 	// else havoc will ensue.
 	//
 	// The exit contract for this phase is that every commit has
-	// all its fileops on the same Subversion branch.
-	//
+	// all its fileops on the same Subversion branch.  In addition,
+	// the Branch field of commits are set to the Subversion branch
+	// unless there was no fileop at all to devise a branch from.
 	if options.Contains("--nobranch") {
 		if logEnable(logEXTRACT) {logit("SVN Phase 6: split resolution (skipped due to --nobranch)")}
 		return
@@ -1562,9 +1563,13 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 	defer trace.StartRegion(ctx, "SVN Phase 6: split resolution").End()
 	if logEnable(logEXTRACT) {logit("SVN Phase 6: split resolution")}
 
+	type clique struct {
+		start int
+		branch string
+	}
 	type splitRequest struct {
 		loc    int
-		splits []int
+		cliques []clique
 	}
 	splits := make([]splitRequest, 0)
 	var reqlock sync.Mutex
@@ -1572,22 +1577,27 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 	baton.startProgress("SVN phase 6a: split detection", uint64(len(sp.repo.events)))
 	walkEvents(sp.repo.events, func(i int, event Event) {
 		if commit, ok := event.(*Commit); ok {
-			var oldbranch string
-			cliqueIndices := make([]int, 0)
+			var oldbranch, newbranch string
+			cliques := make([]clique, 0)
 			// We only generated M and D ops, or special deleteall
 			// ops with their path set, therefore every
 			// fileop has a Path member.
 			for j, fileop := range commit.fileops {
-				newbranch, _ := sp.splitSVNBranchPath(fileop.Path)
+				newbranch, commit.fileops[j].Path = sp.splitSVNBranchPath(fileop.Path)
 				if j == 0 || newbranch != oldbranch {
-					cliqueIndices = append([]int{j}, cliqueIndices...)
+					cliques = append([]clique{clique{j, newbranch}}, cliques...)
 					oldbranch = newbranch
 				}
 			}
-			if len(cliqueIndices) > 1 {
+			if len(cliques) > 1 {
 				reqlock.Lock()
-				splits = append(splits, splitRequest{i, cliqueIndices[:len(cliqueIndices)-1]})
+				splits = append(splits, splitRequest{i, cliques[:len(cliques)-1]})
 				reqlock.Unlock()
+			}
+			if len(cliques) > 0 {
+				// If there is no clique, there are no fileops and we will try to
+				// affect a branch in next phase.
+				commit.Branch = cliques[len(cliques)-1].branch
 			}
 		}
 		baton.percentProgress(uint64(i) + 1)
@@ -1605,21 +1615,22 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 		base := sp.repo.events[split.loc].(*Commit)
 		if logEnable(logEXTRACT) {
 			logit("split commit at %s <%s> resolving to %d commits",
-				base.mark, base.legacyID, len(split.splits)+1)
+				base.mark, base.legacyID, len(split.cliques)+1)
 		}
-		for _, idx := range split.splits {
-			sp.repo.splitCommitByIndex(split.loc, idx)
+		for _, clique := range split.cliques {
+			sp.repo.splitCommitByIndex(split.loc, clique.start)
 		}
 		baseID := base.legacyID
 		base.Comment += splitwarn
 		base.legacyID += ".1"
 		sp.repo.legacyMap["SVN:"+base.legacyID] = base
 		delete(sp.repo.legacyMap, "SVN:"+baseID)
-		for j := 1; j <= len(split.splits); j++ {
+		for j := 1; j <= len(split.cliques); j++ {
 			fragment := sp.repo.events[split.loc+j].(*Commit)
 			fragment.legacyID = baseID + "." + strconv.Itoa(j+1)
 			sp.repo.legacyMap["SVN:"+fragment.legacyID] = fragment
 			fragment.Comment += splitwarn
+			fragment.Branch = split.cliques[j-1].branch
 			baton.twirl()
 		}
 		baton.percentProgress(uint64(i) + 1)
@@ -1673,16 +1684,6 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 			} else {
 				// Normal case
 				commit.simplify()
-				for j := range commit.fileops {
-					commit.fileops[j].Source, commit.fileops[j].Target = sp.splitSVNBranchPath(commit.fileops[j].Path)
-				}
-				for i := range commit.fileops {
-					fileop := commit.fileops[i]
-					commit.Branch = fileop.Source
-					fileop.Source = ""
-					fileop.Path = fileop.Target
-					fileop.Target = ""
-				}
 			}
 			maplock.Lock()
 			sp.markToSVNBranch[commit.mark] = commit.Branch
