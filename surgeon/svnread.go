@@ -63,6 +63,8 @@ type svnReader struct {
 	// of branch deletions since the commit recreating the branch is also root)
 	// Filled in LinkFixups
 	branchRoots map[string][]*Commit // Phases 9 to C
+	// Memoization storage for isDeclaredBranch
+	//isBranch map[string]bool	 // Phases 4 to A
 }
 
 func (sp *svnReader) maxRev() revidx {
@@ -101,36 +103,59 @@ func (sp *StreamParser) isDeclaredBranch(path string) bool {
 	if np == "" {
 		return false
 	}
-	components := strings.Split(trimSep(path), svnSep)
-	L := len(components)
-	// When branchify contains an entry ending by /*, we say that everything
-	// up to the last /* is a namespace. Namespaces are not accepted as
-	// branches, even if another branchify entry would match.
-	// We only need to compare against entries with L+1 components.
-	for _, trial := range sp.branchify[L+1] {
-		if trial[L] == "*" {
-			// trial corresponds to a namespace, check if trial == path
+
+	//if sp.isBranch == nil {
+	//	sp.isBranch = make(map[string]bool)
+	//}
+
+	// Profiling revealed that this function is extremely expensive
+	// due to repeated calls (always on directory nodes). So we
+	// memoize.  RThis will cost storage proportionalto the number
+	// of distinct directory paths in the repository.
+	//if ok, isd := sp.isBranch[path]; ok {
+	//	return isd
+	//}
+
+	// Memo lookup failed
+	innerDeclared := func(path string) bool {
+		// This split operation is a huge hot spot in the profiles.
+		// THe main reason for memoization is to avoid it.
+		components := strings.Split(trimSep(path), svnSep)
+		L := len(components)
+		// When branchify contains an entry ending by /*, we say that everything
+		// up to the last /* is a namespace. Namespaces are not accepted as
+		// branches, even if another branchify entry would match.
+		// We only need to compare against entries with L+1 components.
+		for _, trial := range sp.branchify[L+1] {
+			if trial[L] == "*" {
+				// trial corresponds to a namespace, check if trial == path
+				for i := 0; i < L; i++ {
+					if trial[i] != "*" && trial[i] != components[i] {
+						goto nextNamespace
+					}
+				}
+				// the given path is a namespace
+				return false
+			}
+		nextNamespace:
+		}
+		// We know this is not a namespace. Now check if some entry matches.
+		for _, trial := range sp.branchify[L] {
 			for i := 0; i < L; i++ {
 				if trial[i] != "*" && trial[i] != components[i] {
-					goto nextNamespace
+					goto nextTrial
 				}
 			}
-			// the given path is a namespace
-			return false
+			return true
+		nextTrial:
 		}
-	nextNamespace:
+		return false
 	}
-	// We know this is not a namespace. Now check if some entry matches.
-	for _, trial := range sp.branchify[L] {
-		for i := 0; i < L; i++ {
-			if trial[i] != "*" && trial[i] != components[i] {
-				goto nextTrial
-			}
-		}
-		return true
-	nextTrial:
-	}
-	return false
+
+	// Memoize and return
+	isd := innerDeclared(path)
+	//sp.isBranch[path] = isd
+	return isd
 }
 
 // splitSVNBranchPath splits a node path into the part that identifies the branch and the rest, as determined by the current branch map
