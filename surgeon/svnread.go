@@ -64,7 +64,8 @@ type svnReader struct {
 	// Filled in LinkFixups
 	branchRoots map[string][]*Commit // Phases 9 to C
 	// Memoization storage for isDeclaredBranch
-	//isBranch map[string]bool	 // Phases 4 to A
+	isBranch map[string]bool	 // Phases 4 to A
+	branchlock sync.Mutex
 }
 
 func (sp *svnReader) maxRev() revidx {
@@ -104,17 +105,16 @@ func (sp *StreamParser) isDeclaredBranch(path string) bool {
 		return false
 	}
 
-	//if sp.isBranch == nil {
-	//	sp.isBranch = make(map[string]bool)
-	//}
+	sp.branchlock.Lock()
+	defer sp.branchlock.Unlock()
 
 	// Profiling revealed that this function is extremely expensive
 	// due to repeated calls (always on directory nodes). So we
 	// memoize.  RThis will cost storage proportionalto the number
 	// of distinct directory paths in the repository.
-	//if ok, isd := sp.isBranch[path]; ok {
-	//	return isd
-	//}
+	if ok, isd := sp.isBranch[path]; ok {
+		return isd
+	}
 
 	// Memo lookup failed
 	innerDeclared := func(path string) bool {
@@ -154,7 +154,7 @@ func (sp *StreamParser) isDeclaredBranch(path string) bool {
 
 	// Memoize and return
 	isd := innerDeclared(path)
-	//sp.isBranch[path] = isd
+	sp.isBranch[path] = isd
 	return isd
 }
 
@@ -830,6 +830,8 @@ func (sp *StreamParser) initBranchify() {
 		l := len(split)
 		sp.branchify[l] = append(sp.branchify[l], split)
 	}
+	// Set up for isDeclaredBranch memoization.
+	sp.isBranch = make(map[string]bool)
 }
 
 func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton *Baton) {
