@@ -1718,9 +1718,9 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 	})
 
 	// If we were going to add an end reset per branch, this would
-	// be the place to do it.  Current versions of git do not
-	// require this; they will automatically create tip references
-	// for each branch.
+	// be the place to do it.  Current versions of git (as of
+	// 2.20.1) do not require this; they will automatically create
+	// tip references for each branch.
 
 	baton.endProgress()
 }
@@ -1851,8 +1851,7 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	//
 	// 2. Subversion branch creation, followed by deletion,
 	// followed by recreation by a copy from a later revision
-	// under the same name. Due to the branch recoloring in
-	// Phase 2 the deleted branch can't cause confusion here.
+	// under the same name.
 	//
 	// 3. Branch or tag creations followed by partial updates.
 	// There's a case like this in tagpollute.svn in the test
@@ -2080,7 +2079,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 	// Phase A:
 	// Turn Subversion mergeinfo properties to gitspace branch merges.  We're only trying
 	// to deal with the newer style of mergeinfo that has a trunk part, not the older style
-	//  without one.
+	// without one.
 	//
 	defer trace.StartRegion(ctx, "SVN Phase A: mergeinfo processing").End()
 	if logEnable(logEXTRACT) {logit("SVN Phase A: mergeinfo processing")}
