@@ -63,9 +63,6 @@ type svnReader struct {
 	// of branch deletions since the commit recreating the branch is also root)
 	// Filled in LinkFixups
 	branchRoots map[string][]*Commit // Phases 9 to C
-	// Memoization storage for isDeclaredBranch
-	isBranch map[string]bool	 // Phases 4 to A
-	branchlock sync.Mutex
 }
 
 func (sp *svnReader) maxRev() revidx {
@@ -105,25 +102,17 @@ func (sp *StreamParser) isDeclaredBranch(path string) bool {
 		return false
 	}
 
-	sp.branchlock.Lock()
-	defer sp.branchlock.Unlock()
-
-	// Profiling revealed that this function is extremely expensive
-	// due to repeated calls (always on directory nodes). So we
-	// memoize.  RThis will cost storage proportionalto the number
-	// of distinct directory paths in the repository.
-	if ok, isd := sp.isBranch[path]; ok {
-		return isd
-	}
-
-
-	// This split operation is a huge hot spot in the profiles.
-	// THe main reason for memoization is to avoid it.
+	// This string-split operation looks like a hot spot in the
+	// profiles.  Unfortunately, memoization to avoid it doesn't
+	// work - instead of trading increased maximum working set for
+	// less runtime it actually increased both on a representative
+	// large repository we tested against. It is not clear whether
+	// there simply isn't much duplication to avoid or we lost the
+	// gains from deduplication to sync-locking overhead on the
+	// memoization map.
 	components := strings.Split(trimSep(path), svnSep)
-	// Memoize and return
-	isd := sp.isDeclaredBranchComponents(components)
-	sp.isBranch[path] = isd
-	return isd
+
+	return sp.isDeclaredBranchComponents(components)
 }
 
 func (sp *StreamParser) isDeclaredBranchComponents (components []string) bool {
@@ -832,8 +821,6 @@ func (sp *StreamParser) initBranchify() {
 		l := len(split)
 		sp.branchify[l] = append(sp.branchify[l], split)
 	}
-	// Set up for isDeclaredBranch memoization.
-	sp.isBranch = make(map[string]bool)
 }
 
 func (sp *StreamParser) svnProcess(ctx context.Context, options stringSet, baton *Baton) {
