@@ -1117,7 +1117,7 @@ func (rs *RepoStreamer) extract(repo *Repository, vcs *VCS) (_repo *Repository, 
 	}(&repo, &err)
 
 	rs.extractor.preExtract()
-	repo.makedir()
+	repo.makedir("extract")
 	front := fmt.Sprintf("#reposurgeon sourcetype %s\n", vcs.name)
 	repo.addEvent(newPassthrough(repo, front))
 
