@@ -58,6 +58,7 @@ then
     # granularity in offsets...
     # shellcheck disable=2094
     (
+	# shellcheck disable=SC2238
         try echo tail > tail
         try hg add tail
         try hg commit --user "$USER" --date "1456976347 18000" -m 'Tail' > /dev/null
