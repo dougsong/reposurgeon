@@ -1227,6 +1227,11 @@ commit numbers::
    preceded by `#` is interpreted as a 1-origin
    commit-sequence number.
 
+reset targets::
+   If the orecvious ways of interpreting an ame withing brackets don't
+   resolved, the name is cechked to see if it matches a reset. If so,
+   the expression resolves to the commit the reset is attached to.
+
 reset@ names::
    A name with the prefix '```reset@```' refers to the latest reset with a
    basename matching the part after the `@`. Usually there is only one such

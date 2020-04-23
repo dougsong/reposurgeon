@@ -1,5 +1,8 @@
 = reposurgeon project news =
 
+Repository head::
+     If "foo" names a reset, "<foo>" names the commit it points to.
+
 4.6: 2020-04-10::
      repocutter obscure command added.
      Expunge of fileops with inline data now works.

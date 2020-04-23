@@ -2642,7 +2642,7 @@ func (b *Blob) clone(repo *Repository) *Blob {
 			panic(fmt.Errorf("Blob clone: %v", err))
 		}
 	} else {
-		if logEnable(logSHUFFLE) {logit("blob %s is not materialized.", b.mark)}
+		if logEnable(logSHUFFLE) {logit("%s blob %s is not materialized.", repo.name, b.mark)}
 	}
 	b.hash.invalidate()
 	return c
@@ -4722,7 +4722,7 @@ func (commit *Commit) checkout(directory string) string {
 		directory = filepath.FromSlash(commit.repo.subdir("") + "/" + commit.mark)
 	}
 	if !exists(directory) {
-		commit.repo.makedir()
+		commit.repo.makedir("checkout")
 		os.Mkdir(directory, userReadWriteSearchMode)
 	}
 
@@ -5959,9 +5959,9 @@ func (repo *Repository) newmark() string {
 	return mark
 }
 
-func (repo *Repository) makedir() {
+func (repo *Repository) makedir(legend string) {
 	target := repo.subdir("")
-	if logEnable(logSHUFFLE) {logit("repository fast import creates "+target)}
+	if logEnable(logSHUFFLE) {logit("repository %s creates %s", legend, target)}
 	if _, err1 := os.Stat(target); os.IsNotExist(err1) {
 		err2 := os.Mkdir(target, userReadWriteSearchMode)
 		if err2 != nil {
@@ -6124,6 +6124,11 @@ func (repo *Repository) named(ref string) orderedIntSet {
 					if event.(*Commit).Branch == symbol {
 						loc = i
 					}
+				}
+			}
+			if loc == -1 {
+				if v, ok := repo._namecache["reset@"+ref]; ok {
+					loc = repo.markToIndex(repo.events[v[0]].(*Reset).committish)
 				}
 			}
 			if loc == -1 {
@@ -9313,7 +9318,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 	// Second pass: perform actual fileop expunges
 	expunged := newRepository(rl.repo.name + "-expunges")
 	expunged.seekstream = rl.repo.seekstream
-	expunged.makedir()
+	expunged.makedir("expunge")
 	for _, event := range rl.repo.events {
 		switch event.(type) {
 		case *Blob:
@@ -16768,7 +16773,7 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 		defer tarfile.Close()
 
 		if logEnable(logSHUFFLE) {logit("extracting %s into %s", tarpath, repo.subdir(""))}
-		repo.makedir()
+		repo.makedir("incorporate")
 		headers, err := extractTar(repo.subdir(""), tarfile)
 		if err != nil {
 			croak("error while extracting tarball %s: %s", tarpath, err.Error())
