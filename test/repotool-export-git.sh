@@ -8,8 +8,9 @@ mode=${1:---regress}
 # shellcheck disable=SC2046
 set -- $(git --version)
 version="$3"
-if [ "$version" != "2.20.1" ] && [ "$mode" = "--regress" ]
+if [ "$version" != "2.25.1" ] && [ "$mode" = "--regress" ]
 then
+    # 2.20.1 emits terminal resets that 2.25.1 does not.
     echo "SKIPPED - sensitive to Git version skew, seeing unsupported $version"
     exit 0
 fi
