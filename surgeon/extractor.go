@@ -162,7 +162,9 @@ func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
 	cm.childStamps = mc.gatherChildTimestamps(base)
 	if logEnable(logTOPOLOGY) {
 		for _, rev := range cm.base.revlist {
-			if logEnable(logSHOUT) {logit("Revision %s has branch '%s'\n", rev, cm.base.meta[rev].branch)}
+			if logEnable(logSHOUT) {
+				logit("Revision %s has branch '%s'\n", rev, cm.base.meta[rev].branch)
+			}
 		}
 	}
 	// Depends on the order of the revlist to be correct.
@@ -170,7 +172,9 @@ func (cm *ColorMixer) simulateGitColoring(mc MixerCapable, base *RepoStreamer) {
 	// not necessary id your VCS dumps branches in
 	// revlist-tip order.
 	for _, refname := range base.refs.keys {
-		if logEnable(logTOPOLOGY) {logit("outside branch coloring %s %s", base.refs.get(refname), refname)}
+		if logEnable(logTOPOLOGY) {
+			logit("outside branch coloring %s %s", base.refs.get(refname), refname)
+		}
 		cm._branchColor(base.refs.get(refname), refname)
 	}
 }
@@ -186,7 +190,9 @@ func (cm *ColorMixer) _branchColor(rev, color string) {
 	if cm.base.branchesAreColored && strings.HasPrefix(color, "refs/heads/") {
 		return
 	}
-	if logEnable(logTOPOLOGY) {logit("inside branch coloring %s %s", rev, color)}
+	if logEnable(logTOPOLOGY) {
+		logit("inside branch coloring %s %s", rev, color)
+	}
 	// This ensures that a branch tip rev never gets colored over
 	if _, ok := cm.childStamps[rev]; !ok {
 		cm.childStamps[rev] = farFuture
@@ -194,10 +200,14 @@ func (cm *ColorMixer) _branchColor(rev, color string) {
 	// This is used below to ensure that a branch color is never colored
 	// back to a tag
 	isBranchColor := strings.HasPrefix(color, "refs/heads/")
-	if logEnable(logTOPOLOGY) {logit("%s is-a-branch is %v", color, isBranchColor)}
+	if logEnable(logTOPOLOGY) {
+		logit("%s is-a-branch is %v", color, isBranchColor)
+	}
 	unassigned := func(rev string) bool {
 		u := (cm.base.meta[rev].branch == "")
-		if logEnable(logTOPOLOGY) {logit("%s unassigned is %v", rev, u)}
+		if logEnable(logTOPOLOGY) {
+			logit("%s unassigned is %v", rev, u)
+		}
 		return u
 	}
 	onTagBranch := func(rev string) bool {
@@ -219,13 +229,17 @@ func (cm *ColorMixer) _branchColor(rev, color string) {
 		// precedence over branches, so we never color back to a tag with
 		// a branch color
 		var parents []string
-		if logEnable(logTOPOLOGY) {logit("parents of %s (%s) before filtering %v", rev, timestamp.UTC(), cm.base.getParents(rev))}
+		if logEnable(logTOPOLOGY) {
+			logit("parents of %s (%s) before filtering %v", rev, timestamp.UTC(), cm.base.getParents(rev))
+		}
 		for _, p := range cm.base.getParents(rev) {
 			if unassigned(p) || ((!(isBranchColor && onTagBranch(p))) && (cm.childStamps[p].Before(timestamp))) {
 				parents = append(parents, p)
 			}
 		}
-		if logEnable(logTOPOLOGY) {logit("parents of %s are %v", rev, parents)}
+		if logEnable(logTOPOLOGY) {
+			logit("parents of %s are %v", rev, parents)
+		}
 
 		if len(parents) == 0 {
 			break
@@ -608,7 +622,9 @@ func (he *HgExtractor) capture(cmd ...string) (string, error) {
 	if he == nil || he.hgcl == nil {
 		return captureFromProcess(command)
 	}
-	if logEnable(logCOMMANDS) {logit("%s: capturing %s", rfc3339(time.Now()), command)}
+	if logEnable(logCOMMANDS) {
+		logit("%s: capturing %s", rfc3339(time.Now()), command)
+	}
 	stdout, stderr, err := he.hgcl.runcommand(cmd)
 	content := string(stdout) + string(stderr)
 	if logEnable(logCOMMANDS) {
@@ -620,7 +636,9 @@ func (he *HgExtractor) capture(cmd ...string) (string, error) {
 func (he *HgExtractor) mustCapture(cmd []string, errorclass string) string {
 	data, err := he.capture(cmd...)
 	if err != nil {
-		if logEnable(logSHOUT) {logit("%s", strings.TrimSpace(data))}
+		if logEnable(logSHOUT) {
+			logit("%s", strings.TrimSpace(data))
+		}
 		panic(throw(errorclass,
 			"In %s, command %s failed: %v",
 			errorclass, shellquote.Join(cmd...), err))
@@ -641,7 +659,9 @@ func (he *HgExtractor) byLine(rs *RepoStreamer, cmd []string, errfmt string,
 	}
 	stdout, stderr, err := he.hgcl.runcommand(cmd)
 	if err != nil {
-		if logEnable(logSHOUT) {logit("%s", strings.TrimSpace(string(stderr)))}
+		if logEnable(logSHOUT) {
+			logit("%s", strings.TrimSpace(string(stderr)))
+		}
 		return err
 	}
 	last := false
@@ -849,7 +869,9 @@ func (he *HgExtractor) gatherChildTimestamps(rs *RepoStreamer) map[string]time.T
 		// a tag will get the correct hg branch name, even if
 		// the hg branch coloring is not compatible with the
 		// git coloring algorithm
-		if logEnable(logTOPOLOGY) {logit("setting default branch of %s to %s", h, branch)}
+		if logEnable(logTOPOLOGY) {
+			logit("setting default branch of %s to %s", h, branch)
+		}
 		rs.meta[h].branch = branch
 		// Fill in the branch tips with child timestamps to
 		// ensure that they can't be over-colored (other
@@ -867,7 +889,9 @@ func (he *HgExtractor) gatherChildTimestamps(rs *RepoStreamer) map[string]time.T
 
 func (he *HgExtractor) _branchColorItems() *OrderedMap {
 	if !he.tagsFound && !he.bookmarksFound {
-		if logEnable(logEXTRACT) {logit("no tags or bookmarks.")}
+		if logEnable(logEXTRACT) {
+			logit("no tags or bookmarks.")
+		}
 		// If we didn't find any tags or bookmarks, we can
 		// safely color all commits using hg branch names,
 		// since hg stores them with commit metadata; note,
@@ -898,7 +922,9 @@ func (he *HgExtractor) colorBranches(rs *RepoStreamer) error {
 			if rs.meta[h] == nil {
 				rs.meta[h] = new(CommitMeta)
 			}
-			if logEnable(logTOPOLOGY) {logit("setting branch from color items, %s to %s", h, color)}
+			if logEnable(logTOPOLOGY) {
+				logit("setting branch from color items, %s to %s", h, color)
+			}
 			rs.meta[h].branch = color
 		}
 	} else {
@@ -935,7 +961,9 @@ func (he *HgExtractor) postExtract(repo *Repository) {
 func (he *HgExtractor) isClean() bool {
 	data, err := he.capture("hg", "status", "--modified")
 	if err != nil {
-		if logEnable(logSHOUT) {logit("%s", strings.TrimSpace(data))}
+		if logEnable(logSHOUT) {
+			logit("%s", strings.TrimSpace(data))
+		}
 		panic(throw("extractor", "Couldn't spawn hg status --modified: %v", err))
 	}
 	return data == ""
@@ -1000,7 +1028,9 @@ func (he HgExtractor) manifest(rev string) []manifestEntry {
 				dest := strings.ReplaceAll(tempFile.Name(), "%", "%%")
 				data, err = he.capture("hg", "cat", "-r", rev, me.pathname, "-o", dest)
 				if err != nil {
-					if logEnable(logSHOUT) {logit("%s", strings.TrimSpace(data))}
+					if logEnable(logSHOUT) {
+						logit("%s", strings.TrimSpace(data))
+					}
 					panic(throw("extractor", "Couldn't cat blob to hash it: %v", err))
 				}
 				hash := sha1.New()
@@ -1027,7 +1057,9 @@ func (he *HgExtractor) catFile(rev string, path string, dest string) error {
 	dest = strings.ReplaceAll(dest, "%", "%%")
 	data, err := he.capture("hg", "cat", "-r", rev, path, "-o", dest)
 	if err != nil {
-		if logEnable(logSHOUT) {logit("%s", strings.TrimSpace(data))}
+		if logEnable(logSHOUT) {
+			logit("%s", strings.TrimSpace(data))
+		}
 	}
 	return err
 }
@@ -1036,7 +1068,9 @@ func (he *HgExtractor) catFile(rev string, path string, dest string) error {
 func (he HgExtractor) getComment(rev string) string {
 	data, err := he.capture("hg", "log", "-r", rev, "--template", `{desc}\n`)
 	if err != nil {
-		if logEnable(logSHOUT) {logit("%s", strings.TrimSpace(data))}
+		if logEnable(logSHOUT) {
+			logit("%s", strings.TrimSpace(data))
+		}
 		panic(throw("extractor", "Couldn't spawn hg log: %v", err))
 	}
 	return data
