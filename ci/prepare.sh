@@ -1,6 +1,9 @@
 #!/bin/bash
 
+# tzdata needs to be installed first and expicitly
+# to avoid CI trying interactive configuration on it.
 apt-get update -qy && apt-get install -qy \
+    tzdata \
     asciidoctor \
     cvs \
     cvs-fast-export \
