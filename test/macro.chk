@@ -1,3 +1,4 @@
+set testmode
 read <simple.fi
 set interactive
 print Test that we can define and see macro definitions
@@ -19,20 +20,8 @@ print Test multiline macroexpansion
 Test multiline macroexpansion
 define fubaz {
 do fubaz :49
-inspect :49
-Event 50 ================================================================
-commit refs/tags/lightweight-sample
-mark :49
-author Eric S. Raymond <esr@thyrsus.com> 1288083745 -0400
-committer Eric S. Raymond <esr@thyrsus.com> 1288083745 -0400
-data 36
-Add and document a regression test.
-from :44
-M 100644 :45 READ[ME].txt
-M 100755 :46 rs
-M 100644 :47 test/Makefile
-M 100644 :48 test/simple.dump
-
+:49 list
+    50 2010-10-26T09:02:25Z    :49 91fc97 Add and document a regression test.
 undefine fubaz
 print Tests complete
 Tests complete

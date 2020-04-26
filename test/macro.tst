@@ -1,5 +1,6 @@
 ## Test the macro facility
 set echo
+set testmode
 read <simple.fi
 set interactive
 print Test that we can define and see macro definitions
@@ -12,7 +13,7 @@ undefine fubar
 define
 print Test multiline macroexpansion
 define fubaz {
-inspect {0}
+{0} list
 }
 do fubaz :49
 undefine fubaz
