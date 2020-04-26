@@ -4,7 +4,9 @@ apt-get update -qy && apt-get install -qy --no-install-recommends \
     asciidoctor \
     cvs \
     cvs-fast-export \
+    golang-1.13-go \
     golint \
+    make \
     mercurial \
     python2.7 \
     pylint \
