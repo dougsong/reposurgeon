@@ -4042,6 +4042,10 @@ revealed the bug.
 Please use the reposurgeon project's issue tracker and attach these
 files. It's helpful.
 
+Are you seeing git die with a complaint about an unknown
+--show-original-IDs option?  Upgrade your git; reposurgeon
+needs 1.19.2 or later.
+
 ==== Test case reduction
 
 If you know how to reproduce the error, the best possible test case

@@ -16,6 +16,10 @@ You will need 64-bit hardware. This code is not intended to
 run on 32-bit machines (which have an address space too small to be
 useful for surgwey on large repositories) and won't build on them.
 
+You will need git at version 2.19.2 or later.  Versions of reposurgeon
+after 4.6 assume the --show-original-ids option of git-fast-exoort is
+available.
+
 You will need the Go compiler at revision 1.12 or later.  Note, you
 may have to tweak your $PATH variable to make the Go tools visible.
 

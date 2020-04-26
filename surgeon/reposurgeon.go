@@ -984,7 +984,8 @@ func init() {
 		{
 			name:         "git",
 			subdirectory: ".git",
-			exporter:     "git fast-export --signed-tags=verbatim --tag-of-filtered-object=drop --all",
+			// Requires git 2.19.2 or later for --show-original-ids
+			exporter:     "git fast-export --show-original-ids --signed-tags=verbatim --tag-of-filtered-object=drop --all",
 			styleflags:   newOrderedStringSet(),
 			extensions:   newOrderedStringSet(),
 			initializer:  "git init --quiet",
@@ -1497,7 +1498,7 @@ anything up to and including making demons fly out of your nose.
 		`Disable parallelism in code. Use for generating test loads.
 `},
 	{"testmode",
-		`Disable some features that cause output to be vary depending on wall time, 
+		`Disable some features that cause output to be vary depending on wall time,
 screen width, and the ID of the invoking user. Use in regression-test loads.
 `},
 	{"quiet",
@@ -2260,6 +2261,24 @@ func (attr *Attribution) remap(authors map[string]Contributor) {
  * However, because the gitHash functions on Blob and Commit
  * objects depend on using these hashes internally there might
  * be a dependency there.
+ *
+ * The way hash computation works is a bit tricky in order to
+ * do the least work possible. On a read from a live repository
+ * the original-oid field of the export stream is interpreted
+ * so we don't have to do any hash computation.  On a read from
+ * a stream that does not include OIDs, the hash slots are left
+ * empty (invalid). Whenever a hash of an object is called for,
+ * the stored value is used if valid; otherwise the hash is computed,
+ * stored, and returned. Computation can trigger a cascade of hash
+ * computations back to the root.
+ *
+ * Finally, whenever a blob or commit is modified its hash slot is
+ * invalidated.  This is easy to guaranteed with blobs because there
+ * is only one method through which their content is altered. Commits
+ * are a different matter; in practice it's not easy to be sure of all
+ * the places where a commit is modified, and if we ever see buggy
+ * behavior around hashes it would be wise to suspect that there is
+ * a missing invalidation call somewhere.
  */
 type gitHashType [sha1.Size]byte
 
@@ -2706,7 +2725,11 @@ func (b *Blob) Save(w io.Writer) {
 	}
 	content := b.getContentStream()
 	defer content.Close()
-	fmt.Fprintf(w, "blob\nmark %s\ndata %d\n", b.mark, b.size)
+	fmt.Fprintf(w, "blob\nmark %s\n", b.mark)
+	if b.hash.isValid() {
+		fmt.Fprintf(w, "original-oid %s\n", b.hash.hexify())
+	}
+	fmt.Fprintf(w, "data %d\n", b.size)
 	io.Copy(w, content)
 	w.Write([]byte{'\n'})
 }
@@ -4919,6 +4942,9 @@ func (commit *Commit) Save(w io.Writer) {
 	if commit.mark != "" {
 		fmt.Fprintf(w, "mark %s\n", commit.mark)
 	}
+	if commit.hash.isValid() {
+		fmt.Fprintf(w, "original-oid %s\n", commit.hash.hexify())
+	}
 	if len(commit.authors) > 0 {
 		for _, author := range commit.authors {
 			fmt.Fprintf(w, "author %s\n", author)
@@ -5249,7 +5275,7 @@ func (sp *StreamParser) fiReadData(line []byte) ([]byte, int64) {
 		buf := sp.read(count)
 		data = append(line[nextws:], buf...)
 	} else {
-		sp.error("malformed data header")
+		sp.error(fmt.Sprintf("malformed data header %q", line))
 	}
 	line = sp.readline()
 	if string(line) != "\n" {
@@ -5297,13 +5323,19 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			if bytes.HasPrefix(line, []byte("mark")) {
 				sp.repo.markseq++
 				blob.setMark(strings.TrimSpace(string(line[5:])))
-				blobcontent, blobstart := sp.fiReadData([]byte{})
-				blob.setContent(blobcontent, blobstart)
-				if cookie := blob.parseCookie(string(blobcontent)); cookie != nil {
-					sp.lastcookie = *cookie
-				}
 			} else {
 				sp.error("missing mark after blob")
+			}
+			line = sp.fiReadline()
+			if bytes.HasPrefix(line, []byte("original-oid")) {
+				fmt.Sscan(string(bytes.Fields(line)[1]), "%x", blob.hash)
+			} else {
+				sp.pushback(line)
+			}
+			blobcontent, blobstart := sp.fiReadData([]byte{})
+			blob.setContent(blobcontent, blobstart)
+			if cookie := blob.parseCookie(string(blobcontent)); cookie != nil {
+				sp.lastcookie = *cookie
 			}
 			sp.repo.addEvent(blob)
 			baton.twirl()
@@ -5318,6 +5350,8 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 				line = sp.fiReadline()
 				if len(line) == 0 {
 					break
+				} else if bytes.HasPrefix(line, []byte("original-oid")) {
+					fmt.Sscan(string(bytes.Fields(line)[1]), "%x", commit.hash)
 				} else if bytes.HasPrefix(line, []byte("#legacy-id")) {
 					// reposurgeon extension, expected to
 					// be immediately after "commit" if present
@@ -10688,7 +10722,7 @@ func (rs *Reposurgeon) HelpTiming() {
 Report phase-timing results from repository analysis.
 
 If the command has following text, this creates a new, named time mark
-that will be visible in a later report; this may be useful during 
+that will be visible in a later report; this may be useful during
 long-running conversion recipes.
 `)
 }
@@ -11318,8 +11352,8 @@ func (rs *Reposurgeon) DoSourcetype(line string) bool {
 
 func (rs *Reposurgeon) HelpGc() {
 	rs.helpOutput(`
-Trigger a garbage collection. Scavenges and removes all blob objects 
-that no longer have references, e.g. as a result of delete operqtions 
+Trigger a garbage collection. Scavenges and removes all blob objects
+that no longer have references, e.g. as a result of delete operqtions
 on repositories. This is followed by a Go-runtime garbage collection.
 
 The optional argument, if present, is passed as a
@@ -16044,7 +16078,7 @@ func (rs *Reposurgeon) DoDefine(lineIn string) bool {
 func (rs *Reposurgeon) HelpDo() {
 	rs.helpOutput(`
 Expand and perform a macro.  The first whitespace-separated token is
-the name of the macro to be called; remaining tokens replace {0}, 
+the name of the macro to be called; remaining tokens replace {0},
 {1}... in the macro definition. Tokens may contain whitespace if they
 are string-quoted; string quotes are stripped. Macros can call macros.
 If the macro expansion does not itself begin with a selection set,
@@ -17083,8 +17117,8 @@ The following functions are available:
 
 @min()  create singleton set of the least element in the argument
 @max()  create singleton set of the greatest element in the argument
-@amp()  nomemty selection set becomes all objects, empty set is returned 
-@par()  all parents of commits in the argument set 
+@amp()  nomemty selection set becomes all objects, empty set is returned
+@par()  all parents of commits in the argument set
 @chn()  all children of commits in the argument set
 @dsc()  all commits descended from the argument set (argument set included)
 @anc()  all commits whom the argument set is descended from (set included)
@@ -17349,12 +17383,12 @@ func (rs *Reposurgeon) HelpHash() {
 hash [--tree] [>outfile]
 
 Takes a selection set, defaulting to all.  For each eligible object in the set,
-returns its index  and the same hash that Git would generate for its 
+returns its index  and the same hash that Git would generate for its
 representation of the object. Eligible objects are blobs and commits.
 
 With the option --bare, omit the event number; list only the hash.
 
-With the option --tree, generate a tree hash for the specified commit rather 
+With the option --tree, generate a tree hash for the specified commit rather
 than the commit hash. This option is not expected to be useful for anything
 but verifying the hash code itself.
 

@@ -8,6 +8,17 @@ trap 'rm -fr ${repo}' EXIT HUP INT QUIT TERM
 
 command -v git >/dev/null 2>&1 || ( echo "$0: git is not installed"; exit 1 )
 
+# shellcheck disable=SC2046
+set -- $(git --version)
+version="$3"
+if [ "$version" != "2.25.1" ]
+then
+    # This script will have mysterious failures if the local git chokes
+    # on --show-original-ids.
+    echo "SKIPPED - sensitive to Git version skew, seeing unsupported $version"
+    exit 0
+fi
+
 #  Elijah Newren <newren@gmail.com>> Most of this is explained at
 # > https://git-scm.com/book/en/v2/Git-Internals-Git-Objects, though they
 # > don't really cover the internals of tree objects.  You can learn
@@ -43,7 +54,7 @@ set -- $(reposurgeon 'read .' ':1 hash')
 
 if [ "${filehash}" != "$2" ]
 then
-    echo "hashcheck: FAILED - file and synthetic hash for some/file.txt do not match." >&2
+    echo "hashcheck: FAILED - file and synthetic hash for some/file.txt do not match ($filehash != $2)." >&2
     exit 1
 fi
 
