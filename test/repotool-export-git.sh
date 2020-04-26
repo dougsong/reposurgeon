@@ -3,7 +3,7 @@
 
 command -v git >/dev/null 2>&1 || { echo "    Skipped, git missing."; exit 0; }
 
-mode=$1
+mode=${1:---regress}
 
 # shellcheck disable=SC2046
 set -- $(git --version)
