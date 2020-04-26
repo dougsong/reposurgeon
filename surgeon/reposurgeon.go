@@ -17460,7 +17460,6 @@ func main() {
 	interpreter.EnableReadline(terminal.IsTerminal(0))
 
 	defer func() {
-		fmt.Fprintf(os.Stderr, "XXXX In defer hook\n")
 		maybePanic := recover()
 		control.baton.Sync()
 		saveAllProfiles()
