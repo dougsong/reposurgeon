@@ -2,6 +2,7 @@
 
 # tzdata needs to be installed first and expicitly
 # to avoid CI trying interactive configuration on it.
+export DEBIAN_FRONTEND=noninteractive
 apt-get update -qy && apt-get install -qy \
     tzdata \
     asciidoctor \
