@@ -17460,6 +17460,7 @@ func main() {
 	interpreter.EnableReadline(terminal.IsTerminal(0))
 
 	defer func() {
+		fmt.Fprintf(os.Stderr, "XXXX In defer hook\n")
 		maybePanic := recover()
 		control.baton.Sync()
 		saveAllProfiles()
@@ -17474,6 +17475,11 @@ func main() {
 		}
 		if maybePanic != nil {
 			panic(maybePanic)
+		}
+		if control.abortScript {
+			os.Exit(1)
+		} else {
+			os.Exit(0)
 		}
 	}()
 
@@ -17521,11 +17527,7 @@ func main() {
 	}
 	interpreter.PostLoop(ctx)
 	r.End()
-	if control.abortScript {
-		os.Exit(1)
-	} else {
-		os.Exit(0)
-	}
+	// Fall through to defer hook.
 }
 
 // end
