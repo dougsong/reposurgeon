@@ -2286,7 +2286,7 @@ type gitHashType [sha1.Size]byte
 
 var nullGitHash gitHashType // Do not modify this!
 
-func gitHash(data string) gitHashType {
+func gitHashString(data string) gitHashType {
 	return sha1.Sum([]byte(data))
 }
 
@@ -2678,7 +2678,7 @@ func (b *Blob) clone(repo *Repository) *Blob {
 func (b *Blob) gitHash() gitHashType {
 	if !b.hash.isValid() {
 		content := b.getContent()
-		b.hash = gitHash(fmt.Sprintf("blob %d\x00", len(content)) + string(content))
+		b.hash = gitHashString(fmt.Sprintf("blob %d\x00", len(content)) + string(content))
 	}
 	return b.hash
 }
@@ -4614,7 +4614,7 @@ func (manifest *Manifest) gitHash() gitHashType {
 			fmt.Fprintf(&sb, "%s %s\x00%s", e.mode, e.name, e.hash)
 		}
 		body := sb.String()
-		hash := gitHash(fmt.Sprintf("tree %d\x00%s", len(body), body))
+		hash := gitHashString(fmt.Sprintf("tree %d\x00%s", len(body), body))
 		if pm.shared { // The PathMap is immutable, we can cache its hash
 			pm.info = hash
 		}
@@ -4647,7 +4647,7 @@ func (commit *Commit) gitHash() gitHashType {
 		sb.WriteString("\n")
 		sb.WriteString(commit.Comment)
 		body := sb.String()
-		commit.hash = gitHash(fmt.Sprintf("commit %d\x00", len(body)) + body)
+		commit.hash = gitHashString(fmt.Sprintf("commit %d\x00", len(body)) + body)
 	}
 	return commit.hash
 }
