@@ -2524,7 +2524,7 @@ func (b *Blob) getContentStream() io.ReadCloser {
 
 // setContent sets the content of the blob from a string.
 // tell is the start offset of the data in the input source;
-// if it noOffset, there is no seek stream and creation of
+// if it is noOffset, there is no seek stream and creation of
 // an on-disk blob is forced.
 func (b *Blob) setContent(text []byte, tell int64) {
 	b.start = tell
@@ -2548,10 +2548,9 @@ func (b *Blob) setContent(text []byte, tell int64) {
 			panic(fmt.Errorf("Blob writer: %v", err))
 		}
 	}
-	b.hash.invalidate()
 }
 
-// setContent sets the content of the blob from a string.
+// setContentFromStream sets the content of the blob from a reader stream.
 func (b *Blob) setContentFromStream(s io.ReadCloser) {
 	// maybe the caller should close it?
 	defer s.Close()
