@@ -6147,6 +6147,10 @@ func (repo *Repository) _buildNamecache() {
 				addOrAppend(i, authorStamp)
 			}
 			addOrAppend(i, committerStamp)
+			// Ugh. We can't do this yet, it messes up roundtripping
+			// of streams that didn't have OIDS.
+			//addOrAppend(i, commit.gitHash().hexify())
+			//addOrAppend(i, commit.gitHash().short())
 		case *Tag:
 			repo._namecache[event.(*Tag).getHumanName()] = []int{i}
 		case *Reset:
