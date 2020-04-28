@@ -12508,7 +12508,7 @@ func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
 					replacer := func(s string) string {
 						replacecount--
 						if replacecount > -1 {
-							return parts[2]
+							return GoReplacer(fc.regexp, s, parts[2])
 						}
 						return s
 					}

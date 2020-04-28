@@ -1,0 +1,27 @@
+------------------------------------------------------------------------------
+Event-Number: 3
+Event-Mark: :2
+Branch: refs/heads/master
+Committer: Chris P. Bacon <cpb@example.com>
+Committer-Date: Tue, 28 Apr 2020 09:01:32 -0700
+Author: Chris P. Bacon <cpb@example.com>
+Author-Date: Tue, 28 Apr 2020 09:01:32 -0700
+Check-Text: rb:12345 s45678 s21456
+
+rb:12345 s45678 s21456
+
+blob
+mark :1
+data 14
+Example file.
+
+reset refs/heads/master
+commit refs/heads/master
+mark :2
+author Chris P. Bacon <cpb@example.com> 1588089692 -0700
+committer Chris P. Bacon <cpb@example.com> 1588089692 -0700
+data 24
+rb:12345 s45678 s21456
+
+M 100644 :1 README
+
