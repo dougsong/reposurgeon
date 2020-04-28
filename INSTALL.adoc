@@ -17,7 +17,7 @@ run on 32-bit machines (which have an address space too small to be
 useful for surgwey on large repositories) and won't build on them.
 
 You will need git at version 2.19.2 or later.  Versions of reposurgeon
-after 4.6 assume the --show-original-ids option of git-fast-exoort is
+after 4.7 assume the --show-original-ids option of git-fast-export is
 available.
 
 You will need the Go compiler at revision 1.12 or later.  Note, you
@@ -48,7 +48,7 @@ also builds the suite documentation.
 
 There is an extensive regression-test suite in the `test/` directory.
 To test the correctness of this software once its prerequisites are
-installed, invoke `make check`.
+installed, invoke `make check` in the main directory.
 
 == Note to packagers ==
 
