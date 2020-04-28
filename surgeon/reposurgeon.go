@@ -6119,6 +6119,13 @@ func (repo *Repository) _buildNamecache() {
 	// Avoid repeated O(n**2) lookups.
 	repo._namecache = make(map[string][]int)
 	commitcount := 0
+	addOrAppend := func (index int, id string) {
+		if _, ok := repo._namecache[id]; !ok {
+			repo._namecache[id] = []int{index}
+		} else {
+			repo._namecache[id] = append(repo._namecache[id], index)
+		}
+	}
 	for i, event := range repo.events {
 		switch event.(type) {
 		case *Commit:
@@ -6129,23 +6136,17 @@ func (repo *Repository) _buildNamecache() {
 			if legacyID != "" {
 				repo._namecache[legacyID] = []int{i}
 			}
+
 			committerStamp := commit.committer.actionStamp()
 			var authorStamp string
 			if len(commit.authors) > 0 {
 				authorStamp = commit.authors[0].actionStamp()
 				if authorStamp == committerStamp {
 					continue
-				} else if _, ok := repo._namecache[authorStamp]; !ok {
-					repo._namecache[authorStamp] = []int{i}
-				} else {
-					repo._namecache[authorStamp] = append(repo._namecache[authorStamp], i)
 				}
+				addOrAppend(i, authorStamp)
 			}
-			if _, ok := repo._namecache[committerStamp]; !ok {
-				repo._namecache[committerStamp] = []int{i}
-			} else {
-				repo._namecache[committerStamp] = append(repo._namecache[committerStamp], i)
-			}
+			addOrAppend(i, committerStamp)
 		case *Tag:
 			repo._namecache[event.(*Tag).getHumanName()] = []int{i}
 		case *Reset:
