@@ -2406,11 +2406,6 @@ them. By default each deleted commit is replaced with a tag of the form
 `--notagify` is specified as an argument. Commits with deleted
 fileops pointing both in and outside the path set are not deleted, but are
 cloned into the removal set.
-+
-The removal set is not discarded. It is assembled into a new
-repository named after the old one with the suffix '```-expunges```' added.
-Thus, this command can be used to carve a repository into sections by
-file path matches.
 
 `unite` [ `--prune` ] _reponame_...::
    Unite repositories. Name any number of loaded repositories; they will
@@ -4186,6 +4181,11 @@ non-linear, and the fix. You can easily tell the difference visually.
 
 [[changes]]
 === Incompatible language changes
+
+In versions before 4.8, the expunge command run on a repository named
+"foo" tried to keep deleted fileops in a new synthetic repository named
+"foo-expunges".  This feature has been replaces by the "~" negation
+operator on expunge selections.
 
 In versions before 3.23, '```prefer```' changed the
 repository type as well as the preferred output format.

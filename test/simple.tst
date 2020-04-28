@@ -14,11 +14,9 @@ paths
 101,103 manifest 
 116 manifest 
 116 manifest /^reposurgeon/
-choose simple-expunges
 paths sub foo
 paths sup
-:28 setfield comment "The quick brown fox jumped over the lazy dog.\n"
-:51 setperm 100755 theory.txt
-# Stream the repo
-write -
-
+:2 setfield comment "The quick brown fox jumped over the lazy dog.\n"
+:2 setperm 100755 rs
+# Stream enough parts to verify the last two operations
+:2 inspect

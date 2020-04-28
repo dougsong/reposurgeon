@@ -6,4 +6,4 @@ set quiet
 # This invocation would make the load work even without that.
 read --nobranch <expunge.svn
 1..$ expunge /^releases\/v1.0\/.*/
-choose
+write

@@ -2358,7 +2358,6 @@ type Blob struct {
 	opsetLock    sync.Mutex
 	start        int64 // Seek start if this blob refers into a dump
 	size         int64 // length start if this blob refers into a dump
-	_expungehook *Blob
 	blobseq      blobidx
 	hash         gitHashType
 	colors       colorSet // Scratch space for graph-coloring algorithms
@@ -3601,7 +3600,6 @@ type Commit struct {
 	attachments    []Event      // Tags and Resets pointing at this commit
 	_parentNodes   []CommitLike // list of parent nodes
 	_childNodes    []CommitLike // list of child nodes
-	_expungehook   *Commit
 	hash           gitHashType
 	color          colorType // Scratch storage for graph-coloring
 	deleteme       bool      // Flag used during deletion operations
@@ -9381,12 +9379,6 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 		return regexp.MustCompile(strings.Join(digested, "|")), notagify
 	}
 
-	// Save a copy of all parent-child relationships, we'll need it later
-	parentage := make(map[string][]string)
-	for _, commit := range rl.repo.commits(nil) {
-		parentage[commit.mark] = commit.parentMarks()
-	}
-
 	// First argument parsing - there might be a reparse later
 	delete := matchers[0] != "~" 
 	if !delete {
@@ -9441,19 +9433,6 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 		alterations = append(alterations, deletia)
 	}
 	// Second pass: perform actual fileop expunges
-	expunged := newRepository(rl.repo.name + "-expunges")
-	expunged.seekstream = rl.repo.seekstream
-	expunged.makedir("expunge")
-	for _, event := range rl.repo.events {
-		switch event.(type) {
-		case *Blob:
-			blob := event.(*Blob)
-			blob._expungehook = nil
-		case *Commit:
-			commit := event.(*Commit)
-			commit._expungehook = nil
-		}
-	}
 	for i, ei := range selection {
 		deletia := alterations[i]
 		if len(deletia) == 0 {
@@ -9496,76 +9475,6 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 			}
 		}
 		commit.setOperations(nondeletia)
-		// If there are any keeper fileops, hang them them and
-		// their blobs on keeps, cloning the commit() for them.
-		if len(keepers) > 0 {
-			newcommit := commit.clone(expunged)
-			newcommit.setOperations(keepers)
-			for _, blob := range blobs {
-				blob._expungehook = blob.clone(rl.repo)
-			}
-			commit._expungehook = newcommit
-		}
-	}
-	// Build the new repo and hook it into the load list
-	expunged.events = rl.repo.frontEvents()
-	expunged.declareSequenceMutation("expunge operation")
-	expungedBranches := expunged.branchset()
-	expungedMarks := orderedStringSet(nil)
-	for _, event := range rl.repo.events {
-		switch event.(type) {
-		case *Blob:
-			blob := event.(*Blob)
-			if blob._expungehook != nil {
-				blob._expungehook.materialize()
-				blob._expungehook.moveto(expunged)
-				expunged.addEvent(blob._expungehook)
-				blob._expungehook = nil
-				expungedMarks.Add(blob.mark)
-			}
-		case *Commit:
-			commit := event.(*Commit)
-			if commit._expungehook != nil {
-				expunged.addEvent(commit._expungehook)
-				commit._expungehook = nil
-				expungedMarks.Add(commit.mark)
-			}
-		case *Reset:
-			reset := event.(*Reset)
-			if expungedBranches.Contains(reset.ref) {
-				expunged.addEvent(reset)
-				reset.repo = expunged
-			}
-		case *Tag:
-			tag := event.(*Tag)
-			target := rl.repo.markToEvent(tag.committish).(*Commit)
-			if target._expungehook != nil {
-				expunged.addEvent(tag)
-				tag.repo = expunged
-			}
-		}
-	}
-	// Resrtore backrefs and patch together ancestry chains in the expunged repo
-	for _, commit := range expunged.commits(nil) {
-		for _, op := range commit.operations() {
-			if op.op == opM && op.ref != "inline" {
-				expunged.markToEvent(op.ref).(*Blob).appendOperation(op)
-			}
-		}
-		commit.setParents(nil)
-		oldparents := rl.repo.markToEvent(commit.mark).(*Commit).parentMarks()
-		for _, parent := range oldparents {
-			backto := parent
-			for len(parentage[backto]) > 0 {
-				// Could we preserve merge parent relationship here?
-				if expungedMarks.Contains(parentage[backto][0]) {
-					commit.addParentByMark(parentage[backto][0])
-					break
-				} else {
-					backto = parentage[backto][0]
-				}
-			}
-		}
 	}
 	backreferences := make(map[string]int)
 	for _, commit := range rl.repo.commits(nil) {
@@ -9614,8 +9523,6 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 	// And tell we changed the manifests and the event sequence.
 	//rl.repo.invalidateManifests()
 	rl.repo.declareSequenceMutation("expunge cleanup")
-	// At last, add the expunged repository to the loaded list.
-	rl.repolist = append(rl.repolist, expunged)
 	return errout
 }
 
@@ -13682,11 +13589,6 @@ emptycommit-<ident> on the preceding commit unless --notagify is
 specified as an argument.  Commits with deleted fileops pointing both
 in and outside the path set are not deleted, but are cloned into the
 removal set.
-
-The removal set is not discarded. It is assembled into a new
-repository named after the old one with the suffix "-expunges" added.
-Thus, this command can be used to carve a repository into sections by
-file path matches.
 `)
 }
 
