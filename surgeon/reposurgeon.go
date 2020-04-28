@@ -9380,14 +9380,22 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 		}
 		return regexp.MustCompile(strings.Join(digested, "|")), notagify
 	}
+
 	// Save a copy of all parent-child relationships, we'll need it later
 	parentage := make(map[string][]string)
 	for _, commit := range rl.repo.commits(nil) {
 		parentage[commit.mark] = commit.parentMarks()
 	}
+
+	// First argument parsing - there might be a reparse later
+	delete := matchers[0] != "~" 
+	if !delete {
+		matchers = matchers[1:]
+	}
+	expunge, notagify := digest(matchers)
+
 	// First pass: compute fileop deletions
 	alterations := make([][]int, 0)
-	expunge, notagify := digest(matchers)
 	for _, ei := range selection {
 		event := rl.repo.events[ei]
 		deletia := make([]int, 0)
@@ -9398,12 +9406,12 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 					logit(fileop.String() + "\n")
 				}
 				if fileop.op == opD || fileop.op == opM {
-					if expunge.MatchString(fileop.Path) {
+					if expunge.MatchString(fileop.Path) == delete {
 						deletia = append(deletia, i)
 					}
 				} else if fileop.op == opR || fileop.op == opC {
-					sourcedelete := expunge.MatchString(fileop.Source)
-					targetdelete := expunge.MatchString(fileop.Path)
+					sourcedelete := expunge.MatchString(fileop.Source) == delete
+					targetdelete := expunge.MatchString(fileop.Path) == delete
 					if sourcedelete {
 						deletia = append(deletia, i)
 						//if logEnable(logSHOUT) {logit("following %s of %s to %s", fileop.op, fileop.Source, fileop.Path)}
@@ -13652,6 +13660,11 @@ default is the entire history.  The arguments to this command may be
 paths or regular expressions matching paths (regexps must
 be marked by being surrounded with //).  String quotes and backslash
 escapes are interpreted when parsing the command line.
+
+Exceptionally, the first argument may be the token "~" which chooses
+all file paths other than those selected by the remaining arguments to
+ne expunged.  You may use this to sift out all file operations
+matching a pattern set rather than expunging them.
 
 All filemodify (M) operations and delete (D) operations involving a
 matched file in the selected set of events are disconnected from the
