@@ -12477,14 +12477,12 @@ func newFilterCommand(repo *Repository, filtercmd string) *filterCommand {
 			return nil
 		} else {
 			subcount := 1
-			for subflags != "" {
-				flag := subflags[0:1]
-				subflags = subflags[:len(subflags)-1]
-				if flag == "g" {
+			for _, flag := range subflags {
+				if flag == 'g' {
 					subcount = -1
-				} else if flag == "c" || flag == "a" || flag == "C" {
-					fc.attributes.Add(flag)
-				} else if i := strings.Index("0123456789", flag); i != -1 {
+				} else if flag == 'c' || flag == 'a' || flag == 'C' {
+					fc.attributes.Add(string(flag))
+				} else if i := strings.IndexRune("0123456789", flag); i != -1 {
 					subcount = i
 				} else {
 					croak("unknown filter flag")
