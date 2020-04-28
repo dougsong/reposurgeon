@@ -3,11 +3,11 @@
 == Quick recipe for systems using apt ==
 
 ---------------------------------------------------------------------------
-sudo apt-get golang-1.12 asciidoctor                 # For running
-sudo apt-get shellcheck pylint subversion mercurial  # For testing
-sudo apt-get gnuplot                                 # For benchmarking
-make                                                 # Build the software
-make check                                           # Run the tests
+sudo apt-get install golang-1.12 asciidoctor                 # For running
+sudo apt-get install shellcheck pylint subversion mercurial  # For testing
+sudo apt-get install gnuplot                                 # For benchmarking
+make                                                         # Build software
+make check                                                   # Run the tests
 ---------------------------------------------------------------------------
 
 == Prerequisites ==
