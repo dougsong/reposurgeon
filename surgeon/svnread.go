@@ -1624,6 +1624,14 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 		if logEnable(logEXTRACT) {
 			logit("SVN Phase 6: split resolution (skipped due to --nobranch)")
 		}
+		// There is only one branch root: the very first commit
+		sp.branchRoots = make(map[string][]*Commit)
+		for _, event := range sp.repo.events {
+			if commit, ok := event.(*Commit); ok {
+				sp.branchRoots[""] = []*Commit{commit}
+				break
+			}
+		}
 		return
 	}
 	defer trace.StartRegion(ctx, "SVN Phase 6: split resolution").End()
@@ -1704,6 +1712,51 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 			baton.twirl()
 		}
 		baton.percentProgress(uint64(i) + 1)
+	}
+	baton.endProgress()
+
+	baton.startProgress("SVN phase 6c: fix content-changing parent links",
+		uint64(len(sp.repo.events)))
+	sp.lastCommitOnBranchAt = make(map[string][]*Commit)
+	sp.branchRoots = make(map[string][]*Commit)
+	maxRev := sp.maxRev()
+	for index, event := range sp.repo.events {
+		if commit, ok := event.(*Commit); ok {
+			// Remember the last commit on every branch at each revision
+			rev, _ := strconv.Atoi(strings.Split(commit.legacyID, ".")[0])
+			list, found := sp.lastCommitOnBranchAt[commit.Branch]
+			lastrev := -1
+			var prev *Commit
+			if found {
+				lastrev = len(list) - 1
+				prev = list[lastrev]
+			} else {
+				// lastrev == -1, prev == nil
+				list = make([]*Commit, 0, maxRev+1)
+			}
+			list = list[:rev+1] // enlarge the list to go up to rev
+			for i := lastrev + 1; i < rev; i++ {
+				list[i] = prev
+			}
+			list[rev] = commit
+			sp.lastCommitOnBranchAt[commit.Branch] = list
+			// Set the commit parent to the last of the history chain
+			if prev != nil {
+				ops := prev.operations()
+				if len(ops) > 0 && ops[len(ops)-1].op == deleteall {
+					// The previous commit deletes its branch and is
+					// thus not part of the same history chain.
+					prev = nil
+				}
+			}
+			if prev != nil {
+				commit.setParents([]CommitLike{prev})
+			} else {
+				commit.setParents(nil)
+				sp.branchRoots[commit.Branch] = append(sp.branchRoots[commit.Branch], commit)
+			}
+		}
+		baton.percentProgress(uint64(index) + 1)
 	}
 	baton.endProgress()
 }
@@ -1937,74 +1990,21 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	//
 	if options.Contains("--nobranch") {
 		if logEnable(logEXTRACT) {
-			logit("SVN Phase 9: parent link fixups (skipped due to --nobranch)")
-		}
-		// There is only one branch root: the very first commit
-		sp.branchRoots = make(map[string][]*Commit)
-		for _, event := range sp.repo.events {
-			if commit, ok := event.(*Commit); ok {
-				sp.branchRoots[""] = []*Commit{commit}
-				break
-			}
+			logit("SVN Phase 9: find branch root parents (skipped due to --nobranch)")
 		}
 		return
 	}
-	defer trace.StartRegion(ctx, "SVN Phase : parent link fixups").End()
+	defer trace.StartRegion(ctx, "SVN Phase 9: find branch root parents").End()
 	if logEnable(logEXTRACT) {
-		logit("SVN Phase 9a: make content-changing links")
+		logit("SVN Phase 9: find branch root parents")
 	}
-	baton.startProgress("SVN phase 9a: make content-changing links",
-		uint64(len(sp.repo.events)))
-	sp.lastCommitOnBranchAt = make(map[string][]*Commit)
-	sp.branchRoots = make(map[string][]*Commit)
-	totalroots := 0
 	maxRev := sp.maxRev()
-	for index, event := range sp.repo.events {
-		if commit, ok := event.(*Commit); ok {
-			// Remember the last commit on every branch at each revision
-			rev, _ := strconv.Atoi(strings.Split(commit.legacyID, ".")[0])
-			branch := sp.markToSVNBranch[commit.mark]
-			list, found := sp.lastCommitOnBranchAt[branch]
-			lastrev := -1
-			var prev *Commit
-			if found {
-				lastrev = len(list) - 1
-				prev = list[lastrev]
-			} else {
-				// lastrev == -1, prev == nil
-				list = make([]*Commit, 0, maxRev+1)
-			}
-			list = list[:rev+1] // enlarge the list to go up to rev
-			for i := lastrev + 1; i < rev; i++ {
-				list[i] = prev
-			}
-			list[rev] = commit
-			sp.lastCommitOnBranchAt[branch] = list
-			// Set the commit parent to the last of the history chain
-			if prev != nil {
-				ops := prev.operations()
-				if len(ops) > 0 && ops[len(ops)-1].op == deleteall {
-					// The previous commit deletes its branch and is
-					// thus not part of the same history chain.
-					prev = nil
-				}
-			}
-			if prev != nil {
-				commit.setParents([]CommitLike{prev})
-			} else {
-				commit.setParents(nil)
-				sp.branchRoots[branch] = append(sp.branchRoots[branch], commit)
-				totalroots++
-			}
-		}
-		baton.percentProgress(uint64(index) + 1)
+	totalroots := 0
+	for _, roots := range sp.branchRoots {
+		totalroots += len(roots)
 	}
-	baton.endProgress()
-	if logEnable(logEXTRACT) {
-		logit("SVN Phase 9b: find branch root parents")
-	}
-	baton.startProgress("SVN phase 9b: find branch root parents", uint64(totalroots))
 	var parentlock sync.Mutex
+	baton.startProgress("SVN phase 9: find branch root parents", uint64(totalroots))
 	reparent := func(commit, parent *Commit) {
 		// Prepend a deleteall to avoid inheriting our new parent's content
 		parentlock.Lock()
