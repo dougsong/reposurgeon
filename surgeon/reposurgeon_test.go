@@ -2015,3 +2015,226 @@ func TestWalkManifests(t *testing.T) {
 	}
 	assertTrue(t, num == 0)
 }
+
+func TestFilterRegex(t *testing.T) {
+
+	// test 'filter --regex /orig/replace/[flags]'
+
+	// Repo repeats string 'o123' twice in each occurrence of
+	// filename, blob, tagger, tag-name, tag-comment, author,
+	// committer, and comment, . Replacement tested against repeat
+	// flags 0,1,2,g
+
+	rawdump := `
+blob
+mark :1
+data 14
+BLB o123-o123
+
+reset refs/heads/branch-o123-o123
+commit refs/heads/branch-o123-o123
+mark :2
+committer John Smith <com@o123-o123.com> 0 +0000
+author John Smith <aut@o123-o123.com> 0 +0000
+data 14
+CMT o123-o123
+M 100644 :1 o123-o123
+
+tag o123-o123
+from :2
+tagger John Smith <tgr@o123-o123.com> 20 +0000
+data 13
+TAG o123-o123
+
+`
+	control.init()
+
+	type testcase struct {
+		safety      bool
+		shouldAbort bool   // expect script abort
+		ss          string // selection-set
+		regex       string // regex to apply
+		descr       string // test description
+		expect      []string
+	}
+
+	const safetyOff = false
+	const safetyOn = true
+	const willAbort = true
+	const isValid = false
+
+	var cases = []testcase{
+
+		// Test Cases:
+		//   c=comment
+		//   C=committer
+		//   a=author
+		//   g=replaceall
+		//   N=replaceN
+		//   backreferences
+
+		// Attempt every object, with safety on, aborts
+		{safetyOn, willAbort, "(1..$)", "/o123/s456/", "safe-dft-sub-every-aborts",
+			[]string{},
+		},
+
+		// Apply to every object, with safety off, replacing first occurrance (default)
+		{safetyOff, isValid, "(1..$)", "/o123/s456/", "unsafe-dft-first-every",
+			[]string{
+				"BLB s456-o123\n",
+				"CMT s456-o123\n", "aut@s456-o123.com", "com@s456-o123.com",
+				"TAG s456-o123", "tgr@s456-o123.com",
+			},
+		},
+
+		// Replace every occurrence in every object, safety off
+		{safetyOff, isValid, "(1..$)", "/o123/s456/g", "unsafe-sub-every",
+			[]string{
+				"BLB s456-s456\n",
+				"CMT s456-s456\n", "aut@s456-s456.com", "com@s456-s456.com",
+				"TAG s456-s456", "tgr@s456-s456.com",
+			},
+		},
+
+		// default first in commit comments
+		{safetyOn, isValid, "(1..$ & =C)", "/o123/s456/c", "dft-first-in-comment",
+			[]string{
+				"BLB o123-o123\n",
+				"CMT s456-o123\n", "aut@o123-o123.com", "com@o123-o123.com",
+				"TAG o123-o123", "tgr@o123-o123.com",
+			},
+		},
+
+		// explicit first in commit comments "c1"
+		{safetyOn, isValid, "(1..$ & =C)", "/o123/s456/c1", "explicit-first-in-comment-c1",
+			[]string{
+				"BLB o123-o123\n",
+				"CMT s456-o123\n", "aut@o123-o123.com", "com@o123-o123.com",
+				"TAG o123-o123", "tgr@o123-o123.com",
+			},
+		},
+
+		// explicit first in commit comments "1c"
+		{safetyOn, isValid, "(1..$ & =C)", "/o123/s456/1c", "explicit-first-in-comment-1c",
+			[]string{
+				"BLB o123-o123\n",
+				"CMT s456-o123\n", "aut@o123-o123.com", "com@o123-o123.com",
+				"TAG o123-o123", "tgr@o123-o123.com",
+			},
+		},
+
+		// explicit two in commit comments "2c"
+		{safetyOn, isValid, "(1..$ & =C)", "/o123/s456/2c", "two-in-comment",
+			[]string{
+				"BLB o123-o123\n",
+				"CMT s456-s456\n", "aut@o123-o123.com", "com@o123-o123.com",
+				"TAG o123-o123", "tgr@o123-o123.com",
+			},
+		},
+
+		// default first in committer
+		{safetyOn, isValid, "(1..$ & =C)", "/o123/s456/C", "dft-first-in-committer",
+			[]string{
+				"BLB o123-o123\n",
+				"CMT o123-o123\n", "aut@o123-o123.com", "com@s456-o123.com",
+				"TAG o123-o123", "tgr@o123-o123.com",
+			},
+		},
+
+		// every in committer
+		{safetyOn, isValid, "(1..$ & =C)", "/o123/s456/gc", "committer-every",
+			[]string{
+				"BLB o123-o123\n",
+				"CMT s456-s456\n", "aut@o123-o123.com", "com@o123-o123.com",
+				"TAG o123-o123", "tgr@o123-o123.com",
+			},
+		},
+
+		// back-ref everywhere
+		{safetyOff, isValid, "(1..$)", "/o(123)/r\\1/g", "unsafe-bref-every",
+			[]string{
+				"BLB r123-r123\n",
+				"CMT r123-r123\n", "aut@r123-r123.com", "com@r123-r123.com",
+				"TAG r123-r123", "tgr@r123-r123.com",
+			},
+		},
+
+		// back-ref, default comment
+		{safetyOn, isValid, "(1..$ & =C)", "/o(123)/r\\1/cg", "bref-dft-comment",
+			[]string{
+				"BLB o123-o123\n",
+				"CMT r123-r123\n", "aut@o123-o123.com", "com@o123-o123.com",
+				"TAG o123-o123", "tgr@o123-o123.com",
+			},
+		},
+
+		// back-ref, commits, comment only, only first
+		{safetyOn, isValid, "(1..$ & =C)", "/o(123)/r\\1/1c", "bref-explicit-first",
+			[]string{
+				"BLB o123-o123\n",
+				"CMT r123-o123\n", "aut@o123-o123.com", "com@o123-o123.com",
+				"TAG o123-o123", "tgr@o123-o123.com",
+			},
+		},
+	}
+
+	for idx, test := range cases {
+
+		test := test
+
+		t.Run(fmt.Sprint(idx, "-", test.descr), func(t *testing.T) {
+
+			// t.Parallel() // doesn't work
+
+			control.setAbort(false)
+
+			// create repo and read
+			repo := newRepository("test")
+			defer repo.cleanup() // needed?
+			r := strings.NewReader(rawdump)
+			sp := newStreamParser(repo)
+			sp.fastImport(context.TODO(), r, nullStringSet, "synthetic test load")
+
+			// create surgeon, set repo and selection set
+			// control.listOptions = make(map[string]orderedStringSet)
+			rs := newReposurgeon()
+			rs.repolist = append(rs.repolist, repo)
+			rs.choose(repo)
+			rs.setSelectionSet(test.ss)
+
+			// all tests have valid --regex lines, not checking nil
+			fhook := newFilterCommand(repo, fmt.Sprint("--regex ", test.regex))
+
+			rs.dataTraverse("", fhook.do, fhook.attributes, test.safety, true)
+
+			// test results
+
+			if test.shouldAbort && control.getAbort() {
+				return
+			}
+
+			{ // Event 0 blob
+				ev := repo.events[0]
+				assertEqual(t, test.expect[0], ev.getComment())
+			}
+
+			{ // Event 2 commit
+				ev := repo.events[2]
+				assertTrue(t, ev.isCommit())
+				commit, _ := ev.(*Commit)
+
+				assertEqual(t, test.expect[1], commit.Comment)
+				assertEqual(t, test.expect[2], commit.authors[0].email)
+				assertEqual(t, test.expect[3], commit.committer.email)
+			}
+
+			{ // Event 4 tag
+				ev := repo.events[3]
+				tag, _ := ev.(*Tag)
+				assertEqual(t, test.expect[4], tag.Comment)
+				assertEqual(t, test.expect[5], tag.tagger.email)
+			}
+
+		})
+	}
+}
