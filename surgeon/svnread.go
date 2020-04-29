@@ -53,16 +53,16 @@ type svnReader struct {
 	streamview []*NodeAction          // Phases 1 to 2. All nodes in stream order
 	hashmap    map[string]*NodeAction // Phases 1 to 5
 	history    *History               // Phases 3 to 4.
-	// Filled in ProcessBranches
-	markToSVNBranch map[string]string // Phases 7 to B
+	// Filled in svnSplitResolve
+	markToSVNBranch map[string]string // Phases 6 to B
 	// a map from SVN branch names to a revision-indexed list of "last commits"
 	// (not to be used directly but through lastRelevantCommit)
-	// Filled in LinkFixups
-	lastCommitOnBranchAt map[string][]*Commit // Phases 9 to A
+	// Filled in svnSplitResolve
+	lastCommitOnBranchAt map[string][]*Commit // Phases 6 to A
 	// a map from SVN branch names to root commits (there can be several in case
 	// of branch deletions since the commit recreating the branch is also root)
-	// Filled in LinkFixups
-	branchRoots map[string][]*Commit // Phases 9 to C
+	// Filled in svnSplitResolve
+	branchRoots map[string][]*Commit // Phases 6 to C
 }
 
 func (sp *svnReader) maxRev() revidx {
