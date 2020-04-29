@@ -3489,7 +3489,8 @@ long-running conversion recipes.
     Profiling is enabled by default, but viewing the profile data
     requires either starting the http server with '```profile live```', or
     saving it to a file with '```profile save```'. When no arguments are
-    given it prints out the available types of profiles.
+    given it prints out the available types of profiles.  There is
+    more detailed documentation on this command in the embedded help.
 
 `exit` [ >__outfile__ ]::
    Exit, reporting the time. Included here because, while EOT will

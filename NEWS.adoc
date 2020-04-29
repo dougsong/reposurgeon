@@ -4,6 +4,7 @@ Repository head::
      Repository reads now use --show-original-ids.
      The ~ pattern-negation operator has been added to expunge.
      Expunges no longer create a synthetic repository for deleted fileops.
+     Minor bugfixes for filter --regexp option handling.
 
 4.7: 2020-04-26::
      If "foo" names a reset, "<foo>" names the commit it points to.
@@ -127,7 +128,7 @@ Repository head::
      The "timing" command reports free memory if the psutil module is installed.
      Repository reading now has an OOM guard - will bail out on low memory.
 
-3.42: 2017-03-06:
+3.42: 2017-03-06::
      Read/write support for BitKeeper (but BitKeeper's importer is flaky).
 
 3.41: 2017-02-10::

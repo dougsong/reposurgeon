@@ -10648,34 +10648,39 @@ func stopTracing() {
 // HelpProfile says "Shut up, golint!"
 func (rs *Reposurgeon) HelpProfile() {
 	rs.helpOutput(`
-DESCRIPTION
-    Manages profiling.
+Manages data collection for profiling. Usage is:
 
-SYNOPSIS
-    profile [<verb>] [<subject>]
+    profile [live|start|profile] [<subject>]
 
-VERBS
-    live
-	profile live [<port>]
-	    Starts an http server on the specified port which serves
-	    the profiling data. If no port is specified, it defaults
-	    to port 1234. Use in combination with pprof:
-		go tool pprof -http=":8080" http://localhost:1234/debug/pprof/<profile>
+Corresponding subcommands are these:
 
-    start
-	profile start <profile> <filename>
-	    Starts the named profiler, and tells it to save to the named
-	    file, which will be overwritten. Currently only the cpu and
-	    trace profilers require you to explicitly start them; all the
-	    others start automatically. For the others, the filename is
-	    stored and used to automatically save the profile before
-	    reposurgeon exits.
+    profile live [<port>]
 
-    save
-	profile save <profile> [<filename>]
-	    Saves the data from the named profiler to the named file, which
-	    will be overwritten. If no filename is specified, this will fall
-	    back to the filename previously stored by 'profile start'.
+	Starts an http server on the specified port which serves
+	the profiling data. If no port is specified, it defaults
+	to port 1234. Use in combination with pprof:
+
+	    go tool pprof -http=":8080" http://localhost:1234/debug/pprof/<subject>
+
+    profile start <subject> <filename>
+
+	Starts the named profiler, and tells it to save to the named
+	file, which will be overwritten. Currently only the cpu and
+	trace profilers require you to explicitly start them; all the
+	others start automatically. For the others, the filename is
+	stored and used to automatically save the profile before
+	reposurgeon exits.
+
+    profile save <subject> [<filename>]
+
+	Saves the data from the named profiler to the named file, which
+	will be overwritten. If no filename is specified, this will fall
+	back to the filename previously stored by 'profile start'.
+
+For a list of available profile subjects, call this commnd without arguments.
+The list is in part extracted from the Go runtime and is subject to change.
+
+For documentation, see https://github.com/google/pprof/blob/master/doc/README.md
 `)
 }
 
