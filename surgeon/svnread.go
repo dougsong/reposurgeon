@@ -1589,6 +1589,25 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 	sp.hashmap = nil
 }
 
+func branchOfEmptyCommit(sp *StreamParser, commit *Commit) string {
+	n, err := strconv.Atoi(commit.legacyID)
+	if err != nil {
+		// Has to be something weirder than a split commit going on - zero-op
+		// commits on multiple branches are filtered out before this.
+		panic(fmt.Errorf("Unexpectedly ill-formed legacy-id %s", commit.legacyID))
+	}
+	node := sp.revision(intToRevidx(n)).nodes[0]
+	branch := node.path
+	if node.kind == sdDIR && sp.isDeclaredBranch(branch) {
+		if strings.HasSuffix(branch, svnSep) {
+			branch = branch[:len(branch)-1]
+		}
+	} else {
+		branch, _ = sp.splitSVNBranchPath(branch)
+	}
+	return branch
+}
+
 func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, baton *Baton) {
 	// Phase 6:
 	// Split mixed commits (that is, commits with file paths on
@@ -1643,9 +1662,12 @@ func svnSplitResolve(ctx context.Context, sp *StreamParser, options stringSet, b
 				reqlock.Unlock()
 			}
 			if len(cliques) > 0 {
-				// If there is no clique, there are no fileops and we will try to
-				// affect a branch in next phase.
 				commit.Branch = cliques[len(cliques)-1].branch
+			} else {
+				// If there is no clique, there are no fileops. All such
+				// commits have been filtered out early except those with
+				// a single NodeAction: we can try to figure out a branch.
+				commit.Branch = branchOfEmptyCommit(sp, commit)
 			}
 		}
 		baton.percentProgress(uint64(i) + 1)
@@ -1716,27 +1738,7 @@ func svnProcessBranches(ctx context.Context, sp *StreamParser, options stringSet
 	sp.markToSVNBranch = make(map[string]string)
 	walkEvents(sp.repo.events, func(i int, event Event) {
 		if commit, ok := event.(*Commit); ok {
-			if len(commit.fileops) == 0 {
-				// Wacky special case -- corresponding revision has exactly one node
-				n, err := strconv.Atoi(commit.legacyID)
-				if err != nil {
-					// Has to be something weirder than a split commit going on - zero-op
-					// commits on multiple branches are filtered out before this.
-					panic(fmt.Errorf("Unexpectedly ill-formed legacy-id %s", commit.legacyID))
-				}
-				node := sp.revision(intToRevidx(n)).nodes[0]
-				if node.kind == sdDIR && sp.isDeclaredBranch(node.path) {
-					commit.Branch = node.path
-					if strings.HasSuffix(commit.Branch, svnSep) {
-						commit.Branch = commit.Branch[:len(commit.Branch)-1]
-					}
-				} else {
-					commit.Branch, _ = sp.splitSVNBranchPath(node.path)
-				}
-			} else {
-				// Normal case
-				commit.simplify()
-			}
+			commit.simplify()
 			maplock.Lock()
 			sp.markToSVNBranch[commit.mark] = commit.Branch
 			maplock.Unlock()
