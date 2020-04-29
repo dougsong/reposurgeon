@@ -2003,11 +2003,9 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 	for _, roots := range sp.branchRoots {
 		totalroots += len(roots)
 	}
-	var parentlock sync.Mutex
 	baton.startProgress("SVN phase 9: find branch root parents", uint64(totalroots))
 	reparent := func(commit, parent *Commit) {
 		// Prepend a deleteall to avoid inheriting our new parent's content
-		parentlock.Lock()
 		ops := commit.operations()
 		if len(ops) == 0 || ops[0].op != deleteall {
 			fileop := newFileOp(sp.repo)
@@ -2015,7 +2013,6 @@ func svnLinkFixups(ctx context.Context, sp *StreamParser, options stringSet, bat
 			commit.prependOperation(fileop)
 		}
 		commit.setParents([]CommitLike{parent})
-		parentlock.Unlock()
 	}
 	count := 0
 	for branch, roots := range sp.branchRoots {
