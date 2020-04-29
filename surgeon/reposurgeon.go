@@ -2350,17 +2350,17 @@ func intToMarkidx(markint int) markidx {
 
 // Blob represents a detached blob of data referenced by a mark.
 type Blob struct {
-	mark         string
-	abspath      string
-	cookie       *Cookie // CVS/SVN cookie analyzed out of this file
-	repo         *Repository
-	opset        map[*FileOp]bool // Fileops associated with this blob
-	opsetLock    sync.Mutex
-	start        int64 // Seek start if this blob refers into a dump
-	size         int64 // length start if this blob refers into a dump
-	blobseq      blobidx
-	hash         gitHashType
-	colors       colorSet // Scratch space for graph-coloring algorithms
+	mark      string
+	abspath   string
+	cookie    *Cookie // CVS/SVN cookie analyzed out of this file
+	repo      *Repository
+	opset     map[*FileOp]bool // Fileops associated with this blob
+	opsetLock sync.Mutex
+	start     int64 // Seek start if this blob refers into a dump
+	size      int64 // length start if this blob refers into a dump
+	blobseq   blobidx
+	hash      gitHashType
+	colors    colorSet // Scratch space for graph-coloring algorithms
 }
 
 const noOffset = -1
@@ -3452,7 +3452,7 @@ func (fileop FileOp) String() string {
 	return bld.String()
 }
 
-// Copy returns a clone of the FileOp that calls it 
+// Copy returns a clone of the FileOp that calls it
 func (fileop *FileOp) Copy() *FileOp {
 	newop := newFileOp(fileop.repo)
 	newop.committish = stringCopy(fileop.committish)
@@ -6121,7 +6121,7 @@ func (repo *Repository) _buildNamecache() {
 	// Avoid repeated O(n**2) lookups.
 	repo._namecache = make(map[string][]int)
 	commitcount := 0
-	addOrAppend := func (index int, id string) {
+	addOrAppend := func(index int, id string) {
 		if _, ok := repo._namecache[id]; !ok {
 			repo._namecache[id] = []int{index}
 		} else {
@@ -9389,7 +9389,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 	}
 
 	// First argument parsing - there might be a reparse later
-	delete := matchers[0] != "~" 
+	delete := matchers[0] != "~"
 	if !delete {
 		matchers = matchers[1:]
 	}
@@ -9653,7 +9653,7 @@ func (lp *LineParse) Tokens() []string {
 	return strings.Fields(lp.line)
 }
 
-// OptVal looks for an option flag on the line, returns value and presence 
+// OptVal looks for an option flag on the line, returns value and presence
 func (lp *LineParse) OptVal(opt string) (val string, present bool) {
 	for _, option := range lp.options {
 		if strings.Contains(option, "=") {
@@ -9764,7 +9764,6 @@ func (rs *Reposurgeon) inScript() bool {
 //
 // Command implementation begins here
 //
-
 
 // DoEOF is the handler for end of command input.
 func (rs *Reposurgeon) DoEOF(lineIn string) bool {
@@ -10514,7 +10513,7 @@ Dump your command list from this session so far.
 `)
 }
 
-// DoHistory is the handler for the "history" command, 
+// DoHistory is the handler for the "history" command,
 func (rs *Reposurgeon) DoHistory(_line string) bool {
 	for _, line := range rs.history {
 		control.baton.printLogString(line)
@@ -10892,6 +10891,7 @@ Report a count of items in the selection set. Default set is everything
 in the currently-selected repo. Supports > redirection.
 `)
 }
+
 // DoCount us the command handler for the "count" command.
 func (rs *Reposurgeon) DoCount(lineIn string) bool {
 	if rs.chosen() == nil {
@@ -11461,7 +11461,7 @@ With an argument, the command tab-completes on the above list.
 `)
 }
 
-// CompleteChoose as a completion hook across the set of repository names 
+// CompleteChoose as a completion hook across the set of repository names
 func (rs *Reposurgeon) CompleteChoose(text string) []string {
 	if rs.repolist == nil {
 		return nil
@@ -11517,6 +11517,7 @@ used for its metadata and deleting on-disk blobs. With no argument, drops the
 currently chosen repo. Tab-completes on the list of loaded repositories.
 `)
 }
+
 // CompleteDrop is a completion hook across the set of repository names
 func (rs *Reposurgeon) CompleteDrop(text string) []string {
 	return rs.CompleteChoose(text)
@@ -11879,6 +11880,7 @@ blobs. The 'reduce' mode always acts on the entire repository.
 This is intended for producing reduced test cases from large repositories.
 `)
 }
+
 // CompleteStrip is a completion hook across strip's modifiers.
 func (rs *Reposurgeon) CompleteStrip(text string) []string {
 	return []string{"blobs", "reduce"}
@@ -13546,6 +13548,7 @@ when eyeballing export streams.  Also accepts any other supported
 date format and converts to RFC3339.
 `)
 }
+
 // DoWhen uis thee command handler for the "when" command.
 func (rs *Reposurgeon) DoWhen(LineIn string) (StopOut bool) {
 	if LineIn == "" {
@@ -14350,6 +14353,7 @@ the lowest (source) and highest (target) members.  Creates a merge link
 from the highest member (child) to the lowest (parent).
 `)
 }
+
 // DoMerge is the command handler for the "merge" command.
 func (rs *Reposurgeon) DoMerge(_line string) bool {
 	if rs.chosen() == nil {
@@ -16327,8 +16331,6 @@ func (rs *Reposurgeon) CompleteUndefine(text string) []string {
 	sort.Strings(out)
 	return out
 }
-
-
 
 // DoUndefine is the handler for the "undefine" command.
 func (rs *Reposurgeon) DoUndefine(line string) bool {
