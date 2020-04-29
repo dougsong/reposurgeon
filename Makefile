@@ -12,7 +12,7 @@ META = README.adoc INSTALL.adoc NEWS.adoc COPYING
 PAGES = reposurgeon.adoc repocutter.adoc repomapper.adoc repotool.adoc repobench.adoc
 DOCS = $(PAGES) repository-editing.adoc oops.svg
 SOURCES = $(shell ls */*.go) repobench repotool reposurgeon-mode.el go.mod go.sum
-SOURCES += Makefile control lintfilter reposturgeon.png reposurgeon-git-aliases
+SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
 SOURCES += Dockerfile ci/prepare.sh .gitlab-ci.yml
 SOURCES += $(META) $(DOCS)
 
@@ -62,8 +62,8 @@ PYLINTOPTS = --rcfile=/dev/null --reports=n \
 # W0612 and W0641 are regrettable, but pylint doesn't count %-substitutions
 PYSUPPRESSIONS = --disable="C0103,C0111,C0301,C0410,C1801,R0205,R0911,R0911,R0912,R0914,R0915,R1705,W0511,W0612,W0622,W0641"
 lint:
-	golint ./... | ./lintfilter 2>&1
-	shellcheck -f gcc repobench lintfilter test/fi-to-fi test/liftcheck test/singlelift test/svn-to-git test/svn-to-svn test/delver test/*.sh test/*test
+	golint -set_exit_status ./...
+	shellcheck -f gcc repobench test/fi-to-fi test/liftcheck test/singlelift test/svn-to-git test/svn-to-svn test/delver test/*.sh test/*test
 	pylint $(PYLINTOPTS) $(PYSUPPRESSIONS) repotool
 
 fmt:

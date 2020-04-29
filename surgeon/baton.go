@@ -303,13 +303,7 @@ func (baton *Baton) endProgress() {
 	}
 }
 
-func (baton *Baton) WriteString(s string) (n int, err error) {
-	if baton != nil {
-		baton.printLog([]byte(s))
-	}
-	return len(s), nil
-}
-
+// Write ships a log message to be displayed by te baton
 func (baton *Baton) Write(b []byte) (n int, err error) {
 	if baton != nil {
 		baton.printLog(b)
@@ -317,10 +311,12 @@ func (baton *Baton) Write(b []byte) (n int, err error) {
 	return len(b), nil
 }
 
+// Close is a stub so Batons will satisfy Closer
 func (baton *Baton) Close() error {
 	return nil
 }
 
+// Sync forces ourt pending messages from a baton
 func (baton *Baton) Sync() {
 	if baton != nil {
 		baton.channel <- Message{SYNC, nil}

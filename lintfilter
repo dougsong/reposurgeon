@@ -1,7 +1,0 @@
-#!/bin/sh
-#
-# Some of golint's warnings are useful.  Some are just annoying.
-# Throw out the annoying ones
-
-sed \
-    -e "/exported method .* should have comment or be unexported/d"

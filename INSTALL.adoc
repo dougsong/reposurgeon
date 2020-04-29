@@ -3,11 +3,12 @@
 == Quick recipe for systems using apt ==
 
 ---------------------------------------------------------------------------
-sudo apt-get install golang-1.12 asciidoctor                 # For running
-sudo apt-get install shellcheck pylint subversion mercurial  # For testing
-sudo apt-get install gnuplot                                 # For benchmarking
-make                                                         # Build software
-make check                                                   # Run the tests
+sudo apt-get install golang-1.12 asciidoctor          # For running
+sudo apt-get install golint shellcheck pylint         # For testing
+sudo apt-get install subversion mercurial             # For testing
+sudo apt-get install gnuplot                          # For benchmarking
+make                                                  # Build it
+make check                                            # Run the tests
 ---------------------------------------------------------------------------
 
 == Prerequisites ==
@@ -33,7 +34,7 @@ will work. Shell is almost certainly already installed on your system.
 
 You will need asciidoctor to format the documentation.
 
-shellcheck, pylint, subversion, and mercurial are required for the
+golint, shellcheck, pylint, subversion, and mercurial are required for the
 regression tests, but not for running the code.
 
 gnuplot is only required if you're planning to try performance-tuning
@@ -53,7 +54,7 @@ installed, invoke `make check` in the main directory.
 == Note to packagers ==
 
 It probably is not necessary to package repobench, as it is
-a bencmarking tool only of interest to developers working
+a benchmarking tool only of interest to developers working
 with the source distribution.
 
 // end

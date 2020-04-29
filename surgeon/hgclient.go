@@ -53,6 +53,7 @@ func NewHgClient() *HgClient {
 	return me
 }
 
+// Close a client connection
 func (hgcl *HgClient) Close() error {
 	err := hgcl.pipeIn.Close()
 	if err != nil {
