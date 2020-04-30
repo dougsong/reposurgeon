@@ -344,12 +344,13 @@ func (fpm *FlatPathMap) size() int {
 	return len(*fpm)
 }
 
-// OrderedFlatPathMap is a go map, with an interface similar to that of PathMap
-// where in addition iter() respects insertion order.
 type ofpmList struct {
 	head string
 	tail *ofpmList
 }
+
+// OrderedFlatPathMap is a go map, with an interface similar to that of PathMap
+// where in addition iter() respects insertion order.
 type OrderedFlatPathMap struct {
 	*FlatPathMap
 	ordering, last *ofpmList
