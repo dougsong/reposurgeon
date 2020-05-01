@@ -2286,6 +2286,14 @@ type gitHashType [sha1.Size]byte
 
 var nullGitHash gitHashType // Do not modify this!
 
+func newGitHash(b []byte) gitHashType {
+	var h gitHashType
+	if b != nil {
+		fmt.Sscan(string(b), "%x", &h)
+	}
+	return h
+}
+
 func gitHashString(data string) gitHashType {
 	return sha1.Sum([]byte(data))
 }
@@ -5346,7 +5354,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 			}
 			line = sp.fiReadline()
 			if bytes.HasPrefix(line, []byte("original-oid")) {
-				fmt.Sscan(string(bytes.Fields(line)[1]), "%x", blob.hash)
+				blob.hash = newGitHash(bytes.Fields(line)[1])
 			} else {
 				sp.pushback(line)
 			}
