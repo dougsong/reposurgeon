@@ -444,17 +444,24 @@ from a named Subversion dump.  In this more you can also use
 
 == Tuning for speed ==
 
-The goal of moving the code to Golang is to improve conversion
-performance on large repositories by an order of magnitude or more,
-with the horrible example being the GCC subversion history.  Trial
-runs with the Python version were taking 9-10 hours!
+In the early 4.x releases reposurgeon achieved feature-completeness
+and correctness.  New version-control systems should be supported by
+writing front ends analogous to cvs-fast-export; the main things left
+to do to reposugeon itself are to speed it up and reduce its working
+set, so it will handle very large repostories more gracefully.
 
-If you are already a Go expert, you can help by tuning for speed.  The
-most important single operations to speed up are fast-import stream
-reads and Subversion dump stream reads.
+The most important single operations to speed up are fast-import
+stream reads and Subversion dump stream reads.  These tend to
+dominate processing time.
 
-First thing to do is make a test load.  The reposurgeon history itself is
-large enough to be a useful one.  So:
+Do not hesitate to buy shorter running time with a larger working set;
+conversely, we will resist changes that economize on memory usage but
+cost cycles. Following the end of Dennard scaling we can expect RAM
+costs to fall much faster than processor speeds rise; we want to be
+on the good side of those cost gradients.
+
+First thing to do when tuning is to make a test load.  The reposurgeon
+history itself is large enough to be a useful one.  So:
 
   $ reposurgeon "read ." "write >rs.fi"
 

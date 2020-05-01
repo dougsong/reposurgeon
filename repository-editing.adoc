@@ -4005,8 +4005,10 @@ made.
 === Dealing with stalled conversions
 
 Occasionally it will happen that a conversion on a particularly large
-or malformed repository seems to stall out, grinding endlessy without
+or malformed repository seems to stall out, grinding endlessly without
 completing a conversion phase.
+
+
 
 This kind of problem is difficult to troubleshoot, and is much more
 likely than an OOM to indicate an actual bug in reposurgeon. There are
