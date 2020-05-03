@@ -13,7 +13,7 @@ rm -rf /tmp/target$$/CVS/	# CVS internal use, and contents are different every t
 
 case $1 in
     --regress)
-        diff --text -u repotool-checkout-cvs.chk /tmp/out$$ || exit 1; ;;
+        diff --text -u repotool-checkout-cvs.chk /tmp/out$$ || ( echo "$0: FAILED"; exit 1 ); ;;
     --rebuild)
 	cat /tmp/out$$ >repotool-checkout-cvs.chk;;
     --view)

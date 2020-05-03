@@ -14,7 +14,7 @@ case $1 in
 	# This line is a kludge to dea; with the fact that the git version
 	# running the tests may be old enough to DTRT
 	grep "^done" /tmp/out$$ >/dev/null 2>&1 || echo "done" >>/tmp/out$$
-        diff --text -u repotool-export-cvs.chk /tmp/out$$ || exit 1; ;;
+        diff --text -u repotool-export-cvs.chk /tmp/out$$ || ( echo "$0: FAILED"; exit 1 ); ;;
     --rebuild)
 	cat /tmp/out$$ >repotool-export-cvs.chk;;
     --view)

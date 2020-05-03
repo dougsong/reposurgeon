@@ -18,7 +18,7 @@ ${REPOTOOL:-repotool} compare-tags -x .git -x .hg -x .hgtags /tmp/test-repo$$-gi
 
 case $1 in
     --regress)
-        diff --text -u "repotool-compare-tags-git-hg.chk" /tmp/out$$ || exit 1; ;;
+        diff --text -u "repotool-compare-tags-git-hg.chk" /tmp/out$$ || ( echo "$0: FAILED"; exit 1 ); ;;
     --rebuild)
 	cat /tmp/out$$ >"repotool-compare-tags-git-hg.chk";;
     --view)

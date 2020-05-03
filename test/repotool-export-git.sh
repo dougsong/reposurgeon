@@ -22,7 +22,7 @@ trap 'rm -rf /tmp/test-repo$$ /tmp/out$$' EXIT HUP INT QUIT TERM
 
 case $mode in
     --regress)
-        diff --text -u --label expected --label "seen ($version)" repotool-export-git.chk /tmp/out$$ || exit 1; ;;
+        diff --text -u --label expected --label "seen ($version)" repotool-export-git.chk /tmp/out$$ || ( echo "$0: FAILED"; exit 1 ); ;;
     --rebuild)
 	cat /tmp/out$$ >repotool-export-git.chk;;
     --view)

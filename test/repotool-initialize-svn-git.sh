@@ -7,7 +7,7 @@ mkdir /tmp/test-workdir$$
 
 case $1 in
     --regress)
-        diff --text -u repotool-initialize-svn-git.chk /tmp/out$$ || exit 1; ;;
+        diff --text -u repotool-initialize-svn-git.chk /tmp/out$$ || ( echo "$0: FAILED"; exit 1 ); ;;
     --rebuild)
 	cat /tmp/out$$ >repotool-initialize-svn-git.chk;;
     --view)

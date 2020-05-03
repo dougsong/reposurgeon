@@ -19,7 +19,7 @@ ${REPOTOOL:-repotool} compare /tmp/test-repo$$-svn-checkout /tmp/test-repo$$-git
 
 case $1 in
     --regress)
-        diff --text -u repotool-compare-svn-git.chk /tmp/out$$ || exit 1; ;;
+        diff --text -u repotool-compare-svn-git.chk /tmp/out$$ || ( echo "$0: FAILED"; exit 1 ); ;;
     --rebuild)
 	cat /tmp/out$$ >repotool-compare-svn-git.chk;;
     --view)

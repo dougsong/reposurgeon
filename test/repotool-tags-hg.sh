@@ -12,7 +12,7 @@ echo Return code: $? >>/tmp/out$$
 
 case $1 in
     --regress)
-        diff --text -u repotool-tags-hg.chk /tmp/out$$ || exit 1; ;;
+        diff --text -u repotool-tags-hg.chk /tmp/out$$ || ( echo "$0: FAILED"; exit 1 ); ;;
     --rebuild)
 	cat /tmp/out$$ >repotool-tags-hg.chk;;
     --view)

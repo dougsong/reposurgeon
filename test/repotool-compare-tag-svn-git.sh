@@ -20,7 +20,7 @@ ${REPOTOOL:-repotool} compare ${cmpmode} ${cmploc} /tmp/test-repo$$-svn-checkout
 
 case $1 in
     --regress)
-        diff --text -u repotool-compare-tag-svn-git.chk /tmp/out$$ || exit 1; ;;
+        diff --text -u repotool-compare-tag-svn-git.chk /tmp/out$$ || ( echo "$0: FAILED"; exit 1 ); ;;
     --rebuild)
 	cat /tmp/out$$ >repotool-compare-tag-svn-git.chk;;
     --view)

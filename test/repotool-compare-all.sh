@@ -17,7 +17,7 @@ ${REPOTOOL:-repotool} compare-all -e -root -x .svn -x .git /tmp/test-repo$$-svn 
 
 case $1 in
     --regress)
-        diff --text -u repotool-compare-all.chk /tmp/out$$ || exit 1; ;;
+        diff --text -u repotool-compare-all.chk /tmp/out$$ || ( echo "$0: FAILED"; exit 1 ); ;;
     --rebuild)
 	cat /tmp/out$$ >repotool-compare-all.chk;;
     --view)

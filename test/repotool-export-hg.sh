@@ -12,7 +12,7 @@ trap 'rm -rf /tmp/test-repo$$ /tmp/out$$' EXIT HUP INT QUIT TERM
 
 case $1 in
     --regress)
-        diff --text -u repotool-export-hg.chk /tmp/out$$ || exit 1; ;;
+        diff --text -u repotool-export-hg.chk /tmp/out$$ || ( echo "$0: FAILED"; exit 1 ); ;;
     --rebuild)
 	cat /tmp/out$$ >repotool-export-hg.chk;;
     --view)

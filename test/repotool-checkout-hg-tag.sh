@@ -15,7 +15,7 @@ cd - >/dev/null || ( echo "$0: cd failed"; exit 1 )
 
 case "$1" in
     --regress)
-        diff --text -u repotool-checkout-hg-tag.chk /tmp/out$$ || exit 1; ;;
+        diff --text -u repotool-checkout-hg-tag.chk /tmp/out$$ || ( echo "$0: FAILED"; exit 1 ); ;;
     --rebuild)
 	cat /tmp/out$$ >repotool-checkout-hg-tag.chk;;
     --view)
