@@ -63,6 +63,9 @@ The 'select' subcommand selects a range and permits
 only revisions in that range to pass to standard output.  A range
 beginning with 0 includes the dumpfile header.
 
+The 'deselect' subcommand selects a range and permits
+only revisions NOT in that range to pass to standard output.
+
 propset::
 Set a property to a value. May be restricted by a
 revision selection. You may specify multiple property settings. See

@@ -50,6 +50,7 @@ Available subcommands:
    renumber
    see
    select
+   deselect
    setlog
    sift
    pop
@@ -77,6 +78,7 @@ var oneliners = map[string]string{
 	"renumber":   "Renumber revisions so they're contiguous",
 	"see":        "Report only essential topological information",
 	"select":     "Selecting revisions",
+	"deselect":   "Deselecting revisions",
 	"setlog":     "Mutating log entries",
 	"sift":       "Sift for operations by Node-path header",
 	"strip":      "Replace content with unique cookies, preserving structure",
@@ -90,6 +92,11 @@ var helpdict = map[string]string{
 The 'select' subcommand selects a range and permits only revisions in
 that range to pass to standard output.  A range beginning with 0
 includes the dumpfile header.
+`,
+	"deselect": `deselect: usage: repocutter [-q] [-r SELECTION] deselect
+
+The 'deselect' subcommand selects a range and permits only revisions NOT in
+that range to pass to standard output.
 `,
 	"propdel": `propdel: usage: repocutter [-r SELECTION] propdel PROPNAME...
 
@@ -863,12 +870,11 @@ func payload(hd string, header []byte) []byte {
 	return header[offs : offs+end]
 }
 
-// Select a portion of the dump file defined by a revision selection.
-func sselect(source DumpfileSource, selection SubversionRange) {
+func doSelect(source DumpfileSource, selection SubversionRange, invert bool) {
 	if debug {
 		fmt.Fprintf(os.Stderr, "<entering sselect>")
 	}
-	emit := selection.Contains(0)
+	emit := (selection.Contains(0) != invert)
 	for {
 		stash := source.ReadUntilNext("Revision-number:", nil)
 		if debug {
@@ -883,18 +889,28 @@ func sselect(source DumpfileSource, selection SubversionRange) {
 		fields := bytes.Fields(source.Lbs.Linebuffer)
 		// Error already checked during source parsing
 		revision, _ := strconv.Atoi(string(fields[1]))
-		emit = selection.Contains(revision)
+		emit = (selection.Contains(revision) != invert)
 		if debug {
 			fmt.Fprintf(os.Stderr, "<%d:%t>\n", revision, emit)
 		}
 		if emit {
 			os.Stdout.Write(source.Lbs.Flush())
 		}
-		if revision > selection.Upperbound() {
+		if !invert && revision > selection.Upperbound() {
 			return
 		}
 		source.Lbs.Flush()
 	}
+}
+
+// Select a portion of the dump file not defined by a revision selection.
+func sselect(source DumpfileSource, selection SubversionRange) {
+	doSelect(source, selection, false)
+}
+
+// Select a portion of the dump file defined by a revision selection.
+func deselect(source DumpfileSource, selection SubversionRange) {
+	doSelect(source, selection, true)
 }
 
 func dumpall(header []byte, properties []byte, content []byte) []byte {
@@ -1603,6 +1619,8 @@ func main() {
 		proprename(NewDumpfileSource(input, baton), flag.Args()[1:], selection)
 	case "select":
 		sselect(NewDumpfileSource(input, baton), selection)
+	case "deselect":
+		deselect(NewDumpfileSource(input, baton), selection)
 	case "log":
 		log(NewDumpfileSource(input, baton), selection)
 	case "setlog":
