@@ -40,6 +40,7 @@ error; each turn means another revision has been filtered. The -q (or
 Type 'repocutter help <subcommand>' for help on a specific subcommand.
 
 Available subcommands:
+   deselect
    expunge
    log
    pathrename
@@ -66,6 +67,7 @@ var debug = false
 
 var oneliners = map[string]string{
 	//"squash":     "Squashing revisions",
+	"deselect":   "Deselecting revisions",
 	"expunge":    "Expunge operations by Node-path header",
 	"log":        "Extracting log entries",
 	"obscure":    "Obscure pathnames",
@@ -78,7 +80,6 @@ var oneliners = map[string]string{
 	"renumber":   "Renumber revisions so they're contiguous",
 	"see":        "Report only essential topological information",
 	"select":     "Selecting revisions",
-	"deselect":   "Deselecting revisions",
 	"setlog":     "Mutating log entries",
 	"sift":       "Sift for operations by Node-path header",
 	"strip":      "Replace content with unique cookies, preserving structure",
