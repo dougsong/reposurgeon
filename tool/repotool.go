@@ -496,12 +496,29 @@ func initialize(args []string) {
 	}
 }
 
-func mirror(args []string) {
-	croak("mirror is not yet supported")
+func export(args []string) {
+	// Export from the current working directory to standard output.
+	m := map[string]string{
+		"cvs": `find . -name \*,v | cvs-fast-export -q --reposurgeon`,
+		"svn": "svnadmin -q dump .",
+		"git": "git fast-export --all --use-done-feature",
+		"bzr": "bzr fast-export --no-plain .",
+		"hg": "reposurgeon 'read .' 'prefer git' 'write -'",
+		"darcs": "darcs fastconvert export",
+		"bk": "bk fast-export -q",
+	}
+	vcs := vcstype(".")
+	if e := m[vcs]; e == "" {
+		croak("can't export from directory of type %s.", vcs)
+	} else {
+		runShellProcessOrDie(e, " export command")
+	}
 }
 
-func export(args []string) {
-	croak("export is not yet supported")
+// Unimplemented stubs begin
+
+func mirror(args []string) {
+	croak("mirror is not yet supported")
 }
 
 func tags(args []string) {
