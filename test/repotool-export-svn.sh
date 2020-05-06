@@ -5,7 +5,9 @@ command -v svn >/dev/null 2>&1 || { echo "    Skipped, svn missing."; exit 0; }
 
 trap 'rm -rf /tmp/test-repo$$ /tmp/out$$' EXIT HUP INT QUIT TERM
 
+# Make a repository from a sample stream.
 ./svn-to-svn -q -n /tmp/test-repo$$ <vanilla.svn
+
 # This test can fail spuriously due to format skew.  Kevin Caswick
 # explains:
 # > Note: Test repotool export of svn repo fails on svnadmin, version
