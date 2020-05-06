@@ -3,6 +3,7 @@ module gitlab.com/esr/reposurgeon
 
 require (
 	github.com/anmitsu/go-shlex v0.0.0-20161002113705-648efa622239
+	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
 	github.com/cosiner/argv v0.0.1 // indirect
 	github.com/emirpasic/gods v1.12.0
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect

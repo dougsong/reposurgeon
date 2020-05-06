@@ -1,6 +1,7 @@
 reposurgeon
 repocutter
 repomapper
+gorepotool
 pkg
 *.1
 *.html

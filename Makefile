@@ -33,6 +33,7 @@ build:  $(MANPAGES) $(HTMLFILES)
 	go build $(GOFLAGS) -o repocutter ./cutter
 	go build $(GOFLAGS) -o repomapper ./mapper
 	go build $(GOFLAGS) -o reposurgeon ./surgeon
+	go build $(GOFLAGS) -o gorepotool ./tool
 
 # Note: to suppress the footers with timestamps being generated in HTML,
 # we use "-a nofooter".
