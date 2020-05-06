@@ -35,7 +35,9 @@ will work. Shell is almost certainly already installed on your system.
 You will need asciidoctor to format the documentation.
 
 golint, shellcheck, pylint, subversion, and mercurial are required for the
-regression tests, but not for running the code.
+regression tests, but not for running the code.  Very old versions of
+Subversion (certainly 1.6 or earlier, but not 1.9 or later) will cause
+one spurious test failure.
 
 gnuplot is only required if you're planning to try performance-tuning
 with repobench.

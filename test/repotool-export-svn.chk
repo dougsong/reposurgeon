@@ -80,10 +80,10 @@ PROPS-END
 Node-path: trunk/README
 Node-kind: file
 Node-action: add
-Prop-content-length: 10
-Text-content-length: 23
 Text-content-md5: a60319cd0397d5c9bcc0652f9a54c56c
 Text-content-sha1: 29cb70183455e46d32a129a75de9fb544c248c08
+Prop-content-length: 10
+Text-content-length: 23
 Content-length: 33
 
 PROPS-END
@@ -112,9 +112,9 @@ PROPS-END
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
-Text-content-length: 68
 Text-content-md5: 6beeadee983f7374617861c5e603d022
 Text-content-sha1: c7b0320947b6d07945a529d01abb22cebcbf799d
+Text-content-length: 68
 Content-length: 68
 
 This is a sample file.
@@ -144,9 +144,9 @@ PROPS-END
 Node-path: trunk/README
 Node-kind: file
 Node-action: change
-Text-content-length: 114
 Text-content-md5: 6b367fede2aa8d872192cbe7f184b0ce
 Text-content-sha1: 9b38d27fe0acb2c33072d195a1e05e4b360c9f21
+Text-content-length: 114
 Content-length: 114
 
 This is a sample file.
