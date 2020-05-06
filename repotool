@@ -290,7 +290,7 @@ def initialize(args):
     if os.path.exists(project + ".lift"):
         complain("a project lift file already exists here.")
     else:
-        print("repotool: generating a stub options file.")
+        print("repotool: generating a stub lift file.")
         with open(project + ".lift", "w") as wp:
             wp.write("# Lift commands for %s\n" % project)
 
