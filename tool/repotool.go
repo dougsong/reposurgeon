@@ -534,7 +534,7 @@ func mirror(args []string) {
 	var locald string
 	tillHash := regexp.MustCompile("^.*#")
 	isFullURL, badre := regexp.Match("svn://|svn\\+ssh://|https://|http://", []byte(operand))
-	if (badre == nil && isFullURL) || (strings.HasPrefix(operand, "file://") && isdir(filepath.Join(operand[7:], "locks"))) {
+	if (badre == nil && isFullURL) || (strings.HasPrefix(operand, "file://") && isdir(filepath.Join(operand[6:], "locks"))) {
 		if mirrordir == "" {
 			locald = filepath.Base(operand) + "-mirror"
 		} else if strings.HasPrefix(mirrordir, "/") {
@@ -571,17 +571,23 @@ func mirror(args []string) {
 			croak(operand + "/.cvssync is missing or unreadable")
 		}
 		runShellProcessOrDie("cvssync -c -o " + operand + " " + string(contents), "mirroring")
-	} else if strings.HasPrefix(operand, "git://") {
+	} else if strings.HasPrefix(operand, "git://") || (strings.HasPrefix(operand, "file://") && isdir(filepath.Join(operand[6:], ".git"))) {
+		if strings.HasPrefix(operand, "file://") {
+			operand = operand[6:]
+		}
 		if mirrordir != ""{
 			locald = mirrordir
 		} else {
 			locald = tillHash.ReplaceAllString(filepath.Base(operand), pwd)
 		}
-		runShellProcessOrDie(fmt.Sprintf("git clone %s %s", operand, locald), "mirroring")
+		runShellProcessOrDie(fmt.Sprintf("git clone -q %s %s", operand, locald), "mirroring")
 	} else if isdir(operand + "/.git") {
 		under(operand, func() {runShellProcessOrDie("git pull", "mirroring")})
 		runShellProcessOrDie(fmt.Sprintf("git clone %s %s", operand, mirrordir), "mirroring")
-	} else if strings.HasPrefix(operand, "hg://") {
+	} else if strings.HasPrefix(operand, "hg://") || (strings.HasPrefix(operand, "file://") && isdir(filepath.Join(operand[6:], ".hg"))) {
+		if strings.HasPrefix(operand, "file://") {
+			operand = operand[6:]
+		}
 		if mirrordir != ""{
 			locald = mirrordir
 		} else {

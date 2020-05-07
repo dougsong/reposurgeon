@@ -318,8 +318,7 @@ def mirror(operand, mirrordir):
     if verbose:
         print("mirror: operand=%s, mirrordir=%s" % (operand, mirrordir))
     pwd = os.getcwd()
-    if re.match("svn://|svn\\+ssh://|https://|http://", operand) \
-       or (operand.startswith("file://") and os.path.isdir(os.path.join(operand[7:], "locks"))):
+    if re.match("svn://|svn\\+ssh://|https://|http://", operand) or (operand.startswith("file://") and os.path.isdir(os.path.join(operand[6:], "locks"))):
         if mirrordir == "":
             locald = os.path.basename(operand) + "-mirror"
         elif mirrordir.startswith("/"):
@@ -356,17 +355,21 @@ def mirror(operand, mirrordir):
     elif os.path.exists(operand + "/.cvssync"):
         with open(operand + "/.cvssync") as rp:
             do_or_die("cvssync -c -o " + operand + " " + rp.read())
-    elif operand.startswith("git://"):
+    elif operand.startswith("git://") or (operand.startswith("file://") and os.path.isdir(os.path.join(operand[6:], ".git"))):
+        if operand.startswith("file://"):
+            operand = operand[6:]
         if mirrordir:
             locald = mirrordir
         else:
             locald = re.sub("^.*#", os.path.basename(operand), pwd)
-        do_or_die("git clone %s %s" % (operand, locald))
+        do_or_die("git clone -q %s %s" % (operand, locald))
     elif os.path.isdir(operand + "/.git"):
         with directory_context(operand):
             do_or_die("git pull")
         do_or_die("git clone %(operand)s %(mirrordir)s" % locals())
-    elif operand.startswith("hg://"):
+    elif operand.startswith("hg://")  or (operand.startswith("file://") and os.path.isdir(os.path.join(operand[6:], ".hg"))):
+        if operand.startswith("file://"):
+            operand = operand[6:]
         if mirrordir:
             locald = mirrordir
         else:
