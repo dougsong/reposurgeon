@@ -137,7 +137,8 @@ followed by a '#', followed by a module name.  URLs for git and hg
 should be in the form normally used for clone commands.
 Alternatively, a repository URL may be a "file://" URL, in which
 case the repository type is autodetected from the contents of
-the indicated directory.
+the indicated directory. Note: A Subversion file URL has *three*
+slashes after the "file:" prefix!
 
 [[environment]]
 == ENVIRONMENT VARIABLES ==

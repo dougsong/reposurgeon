@@ -318,7 +318,7 @@ def mirror(operand, mirrordir):
     if verbose:
         print("mirror: operand=%s, mirrordir=%s" % (operand, mirrordir))
     pwd = os.getcwd()
-    if re.match("svn://|svn\\+ssh://|https://|http://", operand) or (operand.startswith("file://") and os.path.isdir(os.path.join(operand[6:], "locks"))):
+    if re.match("svn://|svn\\+ssh://|https://|http://", operand) or (operand.startswith("file:///") and os.path.isdir(os.path.join(operand[7:], "locks"))):
         if mirrordir == "":
             locald = os.path.basename(operand) + "-mirror"
         elif mirrordir.startswith("/"):
@@ -339,10 +339,10 @@ def mirror(operand, mirrordir):
         # very sure you have not made any local changes to the repo
         # since rsyncing, or havoc will ensue.
         do_or_die("chmod a+x %s/hooks/pre-revprop-change" % locald)
-        do_or_die("svnsync init --allow-non-empty file://%(locald)s %(operand)s" % locals())
-        do_or_die("svnsync synchronize --steal-lock file://%(locald)s" % locals())
+        do_or_die("svnsync init -q --allow-non-empty file://%(locald)s %(operand)s" % locals())
+        do_or_die("svnsync synchronize -q --steal-lock file://%(locald)s" % locals())
     elif os.path.isdir(operand + "/locks"):
-        do_or_die("svnsync --steal-lock synchronize file://%(pwd)s/%(operand)s" % locals())
+        do_or_die("svnsync synchronize -q --steal-lock file://%(pwd)s/%(operand)s" % locals())
     elif operand.startswith("cvs://"):
         if mirrordir:
             locald = mirrordir
