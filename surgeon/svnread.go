@@ -23,6 +23,7 @@
 // Accordingly, this code will probably make your head hurt.  That is,
 // alas, a normal reaction.
 
+// Copyright by Eric S. Raymond
 // SPDX-License-Identifier: BSD-2-Clause
 
 package main

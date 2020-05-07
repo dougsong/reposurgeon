@@ -7,6 +7,7 @@
 #
 # This code runs under both Python 2 and Python 3: preserve this property!
 #
+# Copyright by Eric S. Raymond
 # SPDX-License-Identifier: BSD-2-Clause
 from __future__ import print_function
 

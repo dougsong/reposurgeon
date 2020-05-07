@@ -1,4 +1,4 @@
-// reposurgeon is an edito/converter for version-control histories.
+// reposurgeon is an editor/converter for version-control histories.
 package main
 
 // This code is intended to be hackable to support for special-purpose or
@@ -71,6 +71,7 @@ package main
 // there's an internal requirement that they be settable by the Go
 // reflection primitives.
 //
+// Copyright by Eric S. Raymond
 // SPDX-License-Identifier: BSD-2-Clause
 
 import (
@@ -2258,7 +2259,7 @@ func (attr *Attribution) remap(authors map[string]Contributor) {
  * Hashing.  These two functions are the only place in the code
  * that knows what hash Git actually uses.  Elsewhere hashes
  * are treated as uninterpreted cookies that can be formatted
- * as hex-quad pairs of an ubspecifued length.
+ * as hex-quad pairs of an unspecified length.
  *
  * However, because the gitHash functions on Blob and Commit
  * objects depend on using these hashes internally there might

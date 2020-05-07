@@ -3,6 +3,7 @@ package main
 // The event selector. Exports one class, which is used
 // to compile and evaluate selection expressions.
 //
+// Copyright by Eric S. Raymond
 // SPDX-License-Identifier: BSD-2-Clause
 
 import (

@@ -29,6 +29,7 @@
 // Everything in this module is implementation for RepoStreamer.
 // Extractor is also used outside of here, but only trivially.
 //
+// Copyright by Eric S. Raymond
 // SPDX-License-Identifier: BSD-2-Clause
 
 package main
