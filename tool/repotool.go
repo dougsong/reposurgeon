@@ -561,7 +561,7 @@ func mirror(args []string) {
 		} else {
 			locald = tillHash.ReplaceAllString(filepath.Base(operand), pwd)
 		}
-		os.Mkdir(locald, 0644)
+		os.MkdirAll(locald, 0755)	// Needs to be searchable all the way down.
 		runShellProcessOrDie(fmt.Sprintf("cvssync -c -o %s %s", locald, operand), "mirroring")
 		makeStub(locald + "/.cvssync", operand)
 	} else if exists(operand + "/.cvssync") {

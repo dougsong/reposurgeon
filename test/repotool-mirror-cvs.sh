@@ -4,7 +4,7 @@
 # This is how we detect we're in Gitlab CI.
 if [ -z "${USER}" ]
 then
-    echo "$0: SKIPPED - ssh is blocked in CI"
+    echo "SKIPPED - ssh is blocked in CI"
     exit 0
 fi
 
