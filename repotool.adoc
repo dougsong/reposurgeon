@@ -11,9 +11,9 @@ repotool - operate on a CVS, SVN, git, bzr, hg, or darcs repository in a uniform
 [[description]]
 == DESCRIPTION ==
 
-repotool is a script wrapper around repository operations that differ
-by version-control system.  It is little use by itself, existing
-mainly to generate and simplify a conversion makefile usable with
+repotool is a wrapper around repository operations that differ by
+version-control system.  It is little use by itself, existing mainly
+to generate and simplify a conversion makefile usable with
 reposurgeon(1).
 
 Not all actions are supported on all systems.  You will get an
@@ -134,7 +134,10 @@ directory name.
 Subversion URLs are as specified in the public documentation for
 Subversion.  CVS URLs must specify a host and repository path,
 followed by a '#', followed by a module name.  URLs for git and hg
-should be in the form normally used for clone commands
+should be in the form normally used for clone commands.
+Alternatively, a repository URL may be a "file://" URL, in which
+case the repository type is autodetected from the contents of
+the indicated directory.
 
 [[environment]]
 == ENVIRONMENT VARIABLES ==
