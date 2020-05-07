@@ -19,5 +19,6 @@ type go
 go version
 
 echo
-echo ============= Dependency install complete ============= 
+echo ============= Dependency install complete =============
+echo USER=$USER PWD=$PWD
 echo
