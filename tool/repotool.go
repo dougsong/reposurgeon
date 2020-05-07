@@ -268,8 +268,15 @@ gc: {{.Project}}-git
 	cd {{.Project}}-git; time git -c pack.threads=1 repack -AdF --window=1250 --depth=250
 `
 
-var verbose = false
+var acceptMissing = false
+var nobranch = false
 var quiet = true
+var verbose = false
+
+var branch string
+var revision string
+var basedir string
+var tag string
 
 func croak(msg string, args ...interface{}) {
 	content := fmt.Sprintf(msg, args...)
@@ -650,8 +657,153 @@ func branches() string {
 	return ""
 }
 
-func checkout(args []string) {
-	croak("checkout is not yet supported")
+func checkout(outdir string) string {
+	if verbose {
+		fmt.Printf("checkout: %s\n", outdir)
+	}
+	if nobranch {
+		branch = "" // nobranch will also prevent the automatic switch to "trunk"
+	}
+	if outdir[0] != os.PathSeparator {
+		croak("checkout requires absolute target path")
+	}
+	if basedir != "" {
+		os.Chdir(basedir)
+	}
+	var err error
+	if exists(outdir) {
+		outdir, err = filepath.EvalSymlinks(outdir)
+		if err != nil {
+			log.Fatal(fmt.Sprintf("chasing symlink: %v", err))
+		}
+	}
+	pwd, err2 := os.Getwd()
+	if err != nil {
+		log.Fatal(err2)
+	}
+	vcs := vcstype(".")
+	if vcs == "cvs" {
+		module := captureFromProcess("ls -1 | grep -v CVSROOT", " listing modules")
+		if revision != "" {
+			revision = "-r " + revision
+		}
+		// By choosing -kb we get binary files right, but won't
+		// suppress any expanded keywords that might be lurking
+		// in masters.
+		runShellProcessOrDie(fmt.Sprintf("cvs -Q -d:local:%s co -P %s %s %s -d %s -kb %s", pwd, branch, tag, revision, outdir, module), "checkout")
+		return outdir
+	} else if vcs == "cvs-checkout" {
+		runShellProcessOrDie(fmt.Sprintf("cvs -Q -d:local:%s co -P %s %s %s -kb", pwd, branch, tag, revision), "checkout")
+		return outdir
+	} else if vcs == "svn" {
+		if revision != "" {
+			revision = "-r " + revision
+		}
+		runShellProcessOrDie(fmt.Sprintf("svn co -q %s file://%s %s", revision, pwd, outdir), "checkout")
+		if nobranch {
+			; // flat repository
+		} else if tag != ""{
+			outdir = filepath.Join(outdir, "tags", tag)
+		} else if branch == "" || branch == "master" || branch == "trunk" {
+			outdir = filepath.Join(outdir, "trunk")
+		} else if branch != "" {
+			outdir = filepath.Join(outdir, "branches", branch)
+		}
+		return outdir
+	} else if vcs == "svn-checkout" {
+		if revision != "" {
+			revision = "-r " + revision
+			// Potentially dangerous assumption: User made a full checkout
+			// of HEAD and the update operation (which is hideously slow on
+			// large repositories) only needs to be done if an explicit revision
+			// was supplied.
+			runShellProcessOrDie("svn up -q " + revision, "checkout")
+		}
+		relpath := ""
+		if nobranch {
+			; // flat repository
+		} else if tag != "" && (acceptMissing || isdir("tags")) {
+			relpath = filepath.Join("tags", tag)
+		} else if (branch == "" || branch == "master" || branch == "trunk") && isdir("trunk") {
+			relpath = "trunk"
+		} else if branch != "" && isdir(filepath.Join("branches", branch)) {
+			relpath = filepath.Join("branches", branch)
+		} else if branch != "" && isdir(branch) {
+			complain("branch '%s' found at the root which is non-standard", branch)
+			relpath = branch
+		} else if (branch == "master" || branch == "trunk") && acceptMissing {
+			relpath = "trunk"
+		} else if branch != "" && acceptMissing {
+			relpath = filepath.Join("branches", branch)
+		} else {
+			croak("invalid branch or tag")
+		}
+		if exists(outdir) {
+			if islink(outdir) {
+				os.Remove(outdir)
+			} else {
+				croak("can't checkout to existing %s", outdir)
+			}
+		}
+		os.Symlink(outdir, filepath.Join(pwd, relpath))
+		return outdir
+	} else if vcs == "git" {
+		// Only one revision should be given to git checkout
+		// Use the passed-in arguments, in some order of specificity.
+		handleMissing := false
+		if revision == "" {
+			if tag != "" {
+				revision = tag
+			} else if branch != "" {
+				revision = branch
+			} else {
+				revision = "master"
+			}
+			handleMissing = acceptMissing &&
+				(captureFromProcess(fmt.Sprintf("git rev-parse --verify -q %s >/dev/null || echo no", revision), "checkout") != "")
+		}
+		var path string
+		if handleMissing {
+			path = pwd + ".git/this/path/does/not/exist"
+		} else {
+			runShellProcessOrDie(fmt.Sprintf("git checkout --quiet %s", revision), "checkout")
+			path = pwd
+		}
+		if exists(outdir) {
+			if islink(outdir) {
+				os.Remove(outdir)
+			}
+		}
+		os.Symlink(outdir, path)
+		return outdir
+	} else if vcs == "bzr" {
+		croak("checkout is not yet supported in bzr.")
+	} else if vcs == "hg" {
+		spec := ""
+		if revision != "" {
+			spec = "-r " + revision
+		} else if tag != "" {
+			spec = "-r " + tag
+		} else if branch != "" {
+			spec = "-r " + branch
+		}
+		runShellProcessOrDie(fmt.Sprintf("hg update -q %s", spec), "checkout")
+		if outdir == "." {
+			return pwd
+		} else if exists(outdir) {
+			if islink(outdir) {
+				os.Remove(outdir)
+			}
+		}
+		os.Symlink(outdir, pwd)
+		return outdir
+	} else if vcs == "darcs" {
+		croak("checkout is not yet supported for darcs.")
+	} else {
+		croak("checkout not supported for this repository type.")
+	}
+	// Empty return indicates error
+	return ""
 }
 
 func compareRevision(args []string) {
@@ -676,8 +828,16 @@ func main() {
 		TMPDIR = "/tmp"
 	}
 
-	flag.BoolVar(&verbose, "v", false, "show subcommands and diagnostics")
+	flag.BoolVar(&acceptMissing, "a", false, "accept missing trunk directory")
+	flag.BoolVar(&nobranch, "n", false, "compare raw structure, ignore SVN branching")
 	flag.BoolVar(&quiet, "q", false, "run as quietly as possible")
+	flag.BoolVar(&verbose, "v", false, "show subcommands and diagnostics")
+
+	flag.StringVar(&branch, "b", "", "select branch for checkout or comparison")
+	flag.StringVar(&basedir, "c", "", "chdir to the argument repository path before doing checkout")
+	flag.StringVar(&revision, "r", "", "select revision for checkout or comparison")
+	flag.StringVar(&tag, "t", "", "select tag for checkout or comparison")
+
 	flag.Parse()
 
 	if flag.NArg() == 0 {
@@ -699,7 +859,7 @@ func main() {
 	} else if operation == "branches" {
 		os.Stdout.WriteString(branches())
 	} else if operation == "checkout" {
-		checkout(args)
+		checkout(args[0])
 	} else if operation == "compare" {
 		compareRevision(args)
 	} else if operation == "compare-tags" {
