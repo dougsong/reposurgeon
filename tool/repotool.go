@@ -11,7 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	//"regexp"
+	"regexp"
 	"sort"
 	"strings"
 	"text/template"
@@ -518,7 +518,79 @@ func export(args []string) {
 // Unimplemented stubs begin
 
 func mirror(args []string) {
-	croak("mirror is not yet supported")
+	if verbose {
+		fmt.Printf("initialize args: %v\n", args)
+	}
+	operand := args[0]
+	mirrordir := ""
+	if len(args) >= 1 {
+		mirrordir = args[1]
+	}
+	pwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+	var locald string
+	tillHash := regexp.MustCompile("^.*#")
+	isFullURL, badre := regexp.Match("svn://|svn\\+ssh://|https://|http://", []byte(operand))
+	if (badre == nil && isFullURL) || (strings.HasPrefix(operand, "file://") && isdir(filepath.Join(operand[7:], "locks"))) {
+		if mirrordir != "" {
+			locald = mirrordir
+		} else {
+			locald = filepath.Base(operand) + "-mirror"
+		}
+		runShellProcessOrDie("svnadmin create " + locald, "mirror creation")
+		makeStub(locald + "/hooks/pre-revprop-change", "#!/bin/sh\nexit 0;\n")
+		os.Remove(locald + "/hooks/post-revprop-change")
+		// Note: The --allow-non-empty and --steal-lock options permit
+		// this to operate on a Subversion repository you have pulled
+		// in with rsync (which is very much faster than mirroring via
+		// SVN protocol), but they disable some safety checking.  Be
+		// very sure you have not made any local changes to the repo
+		// since rsyncing, or havoc will ensue.
+		runShellProcessOrDie(fmt.Sprintf("chmod a+x %s/hooks/pre-revprop-change", locald), "mirroring")
+		runShellProcessOrDie(fmt.Sprintf("svnsync init --allow-non-empty file://%s/%s %s", pwd, locald, operand), "mirroring")
+		runShellProcessOrDie(fmt.Sprintf("svnsync synchronize --steal-lock file://%s/%s", pwd, operand), "mirroring")
+	} else if isdir(operand + "/locks") {
+		runShellProcessOrDie(fmt.Sprintf("svnsync --steal-lock synchronize file://%s/%s", pwd, operand), "mirroring")
+	} else if strings.HasPrefix(operand, "cvs://") {
+		if mirrordir != "" {
+			locald = mirrordir
+		} else {
+			locald = tillHash.ReplaceAllString(filepath.Base(operand), pwd)
+		}
+		os.Mkdir(locald, 0644)
+		runShellProcessOrDie(fmt.Sprintf("cvssync -c -o %s %s", locald, operand), "mirroring")
+		makeStub(locald + "/.cvssync", operand)
+	} else if exists(operand + "/.cvssync") {
+		contents, err := ioutil.ReadFile(operand + "/.cvssync")
+		if err != nil {
+			croak(operand + "/.cvssync is missing or unreadable")
+		}
+		runShellProcessOrDie("cvssync -c -o " + operand + " " + string(contents), "mirroring")
+	} else if strings.HasPrefix(operand, "git://") {
+		if mirrordir != ""{
+			locald = mirrordir
+		} else {
+			locald = tillHash.ReplaceAllString(filepath.Base(operand), pwd)
+		}
+		runShellProcessOrDie(fmt.Sprintf("git clone %s %s", operand, locald), "mirroring")
+	} else if isdir(operand + "/.git") {
+		under(operand, func() {runShellProcessOrDie("git pull", "mirroring")})
+		runShellProcessOrDie(fmt.Sprintf("git clone %s %s", operand, mirrordir), "mirroring")
+	} else if strings.HasPrefix(operand, "hg://") {
+		if mirrordir != ""{
+			locald = mirrordir
+		} else {
+			locald = tillHash.ReplaceAllString(filepath.Base(operand), pwd)
+		}
+		runShellProcessOrDie(fmt.Sprintf("hg clone %s %s", operand, locald), "mirroring")
+	} else if isdir(operand + "/.hg") {
+		under(operand, func() {runShellProcessOrDie("hg update", "mirroring")})
+		runShellProcessOrDie(fmt.Sprintf("hg clone %s %s", operand, mirrordir), "mirroring")
+	} else {
+		croak(fmt.Sprintf("%s does not look like a repository mirror.", operand))
+	}
 }
 
 func tags(args []string) {
