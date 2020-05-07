@@ -9,6 +9,7 @@ apt-get update -qy && apt-get install -qy --no-install-recommends \
     mercurial \
     pylint \
     python3 \
+    rsync \
     shellcheck \
     subversion \
     time \
