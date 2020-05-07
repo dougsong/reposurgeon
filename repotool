@@ -374,7 +374,7 @@ def mirror(operand, mirrordir):
             locald = mirrordir
         else:
             locald = re.sub("^.*#", os.path.basename(operand), pwd)
-        do_or_die("hg clone %(operand)s %(locald)s" % locals())
+        do_or_die("hg clone -q %(operand)s %(locald)s" % locals())
     elif os.path.isdir(operand + "/.hg"):
         with directory_context(operand):
             do_or_die("hg update")

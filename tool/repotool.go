@@ -593,7 +593,7 @@ func mirror(args []string) {
 		} else {
 			locald = tillHash.ReplaceAllString(filepath.Base(operand), pwd)
 		}
-		runShellProcessOrDie(fmt.Sprintf("hg clone %s %s", operand, locald), "mirroring")
+		runShellProcessOrDie(fmt.Sprintf("hg clone -q %s %s", operand, locald), "mirroring")
 	} else if isdir(operand + "/.hg") {
 		under(operand, func() {runShellProcessOrDie("hg update", "mirroring")})
 		runShellProcessOrDie(fmt.Sprintf("hg clone %s %s", operand, mirrordir), "mirroring")
