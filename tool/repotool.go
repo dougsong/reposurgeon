@@ -598,20 +598,60 @@ func mirror(args []string) {
 		under(operand, func() {runShellProcessOrDie("hg update", "mirroring")})
 		runShellProcessOrDie(fmt.Sprintf("hg clone %s %s", operand, mirrordir), "mirroring")
 	} else {
-		croak(fmt.Sprintf("%s does not look like a repository mirror.", operand))
+		croak("%s does not look like a repository mirror.", operand)
 	}
 }
 
-func tags(args []string) {
-	croak("tags is not yet supported")
+func tags() string {
+	pwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// List tags from the current working directory to standard output.
+	var m = map[string]string{
+		// CVS code will screw up if any tag is not common to all files
+		"cvs": "module=`ls -1 | grep -v CVSROOT`; cvs -Q -d:local:${PWD} rlog -h $module 2>&1 | awk -F'[.:]' '/^\t/&&$(NF-1)!=0{print $1}' |awk '{print $1}' | sort -u",
+		"svn": fmt.Sprintf("svn ls 'file://%s/tags' | sed 's|/$||'", pwd),
+		"svn-checkout": "ls tags 2>/dev/null || exit 0",
+		"git": "git tag -l",
+		"bzr": "bzr tags",
+		"hg": "hg tags --quiet",
+		"darcs": "darcs show tags",
+		"bk": "bk tags | sed -n 's/ *TAG: *//p'",
+	}
+	vcs := vcstype(".")
+	if e, ok := m[vcs]; !ok {
+		croak("can't list tags from directory of type %s.", vcs)
+	} else {
+		return captureFromProcess(e, " tag-list command")
+	}
+	return ""
 }
 
-func branches(args []string) {
-	croak("initialize is not yet supported")
+func branches() string {
+	pwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+	var m = map[string]string{
+		"cvs": "module=`ls -1 | grep -v CVSROOT`; cvs -Q -d:local:${PWD} rlog -h $module 2>&1 | awk -F'[.:]' '/^\t/&&$(NF-1)==0{print $1}' | awk '{print $1}' | sort -u",
+		"svn": fmt.Sprintf("svn ls 'file://%s/branches' | sed 's|/$||'", pwd),
+		"svn-checkout": "ls branches 2>/dev/null || exit 0",
+		"git": "git branch -q --list 2>&1 | cut -c 3- | egrep -v 'detached|^master$' || exit 0",
+		"bzr": "bzr branches | cut -c 3-",
+		"hg": "hg branches --template '{branch}\n' | grep -v '^default$'",
+        }
+	vcs := vcstype(".")
+	if e, ok := m[vcs]; !ok {
+		croak("can't list branches from directory of type %s.", vcs)
+	} else {
+		return captureFromProcess(e, " branch-list command")
+	}
+	return ""
 }
 
 func checkout(args []string) {
-	croak("initialize is not yet supported")
+	croak("checkout is not yet supported")
 }
 
 func compareRevision(args []string) {
@@ -623,7 +663,7 @@ func compareTags(args []string) {
 }
 
 func compareBranches(args []string) {
-	croak("initialize is not yet supported")
+	croak("compare-branches is not yet supported")
 }
 
 func compareAll(args []string) {
@@ -655,9 +695,9 @@ func main() {
 	} else if operation == "mirror" {
 		mirror(args)
 	} else if operation == "tags" {
-		tags(args)
+		os.Stdout.WriteString(tags())
 	} else if operation == "branches" {
-		branches(args)
+		os.Stdout.WriteString(branches())
 	} else if operation == "checkout" {
 		checkout(args)
 	} else if operation == "compare" {
