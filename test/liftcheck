@@ -57,7 +57,7 @@ do
 	                                                # to something unrelated, because we rely on it
 	                                                # to know which dir to checkout in SVN.
 	v|q) repotoolopt="${repotoolopt} -${opt}";;
-	B) nobranch="--nobranch";;
+	B) nobranch="-n";;
 	*) echo "$0: unknown flag $opt" >&2; exit 1;;
     esac
 done
@@ -86,7 +86,7 @@ do
 
     if grep '^ *# reposurgeon-read-options:.*--nobranch' "${what}" >/dev/null
     then
-	nobranch=--nobranch
+	nobranch=-n
     fi
 
     stem=liftcheck$$
@@ -202,14 +202,14 @@ do
 		continue
 	    fi
 
-	    # Use --nobranch if asked to, or if there is no structure and
+	    # Use -n (nobranch) if asked to, or if there is no structure and
 	    # the asked branch is master
 	    # shellcheck disable=SC2166
 	    if [ -n "${nobranch}" -o "("                 \
 		   "(" "${ref}" = "heads/master" ")"     \
 		       -a "(" -z "${structured}" ")" ")" ]
 	    then
-		refopt=--nobranch
+		refopt=-n
 	    else
 		refopt=$(echo "${ref}" | sed 's!^deleted/r[^/]*/!!; s!^tags/!-t !; s!^heads/!-b !')
 	    fi
@@ -221,17 +221,17 @@ do
 	    # Compare the original with the lift
 	    # shellcheck disable=2086
 	    ../repotool ${repotoolopt} compare ${compareopt} \
-		--accept-missing ${refopt} -r ${intrev}:${sha} \
+		-a ${refopt} -r ${intrev}:${sha} \
 		${stem}-checkout ${stem}-git
 	done < "${stem}.info"
     else
 
 	if [ -z "${structured}" ]
 	then
-	    # No structure at all, use --nobranch to compare
-	    # --accept-missing is to use an empty dir if git has no master
+	    # No structure at all, use -n (nobranch) to compare
+	    # -a (accept-missing) is to use an empty dir if git has no master
 	    # (this will only succeed if the SVN repository has no files)
-	    compareopt="$compareopt --nobranch --accept-missing"
+	    compareopt="$compareopt -n -a"
 	fi
 
 	# Compare the original with the lift

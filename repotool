@@ -436,8 +436,7 @@ def checkout(args):
     # Other cases should error out.
     if verbose:
         print("checkout: %s" % args)
-    (options, arguments) = getopt.getopt(args, "b:c:r:t:", \
-                                        ["nobranch", "accept-missing"])
+    (options, arguments) = getopt.getopt(args, "ab:c:nr:t:")
     outdir = "."
     branch = ""
     tag = ""
@@ -447,9 +446,9 @@ def checkout(args):
     for (opt, val) in options:
         if opt == '-b':
             branch = val
-        elif opt == '--nobranch':
+        elif opt == '-n':
             nobranch = True
-        elif opt == '--accept-missing':
+        elif opt == '-a':
             accept_missing = True
         elif opt == '-c':
             os.chdir(val)
@@ -580,8 +579,7 @@ def compare(args):
     "Compare two repositories at a specified revision, defaulting to mainline tip."
     if verbose:
         print("compare: %s" % args)
-    (options, arguments) = getopt.getopt(args, "b:e:ir:st:ux:", \
-                                        ["nobranch", "accept-missing"])
+    (options, arguments) = getopt.getopt(args, "ab:e:inr:st:ux:")
     outdir = "."
     branch = ""
     tag = ""
@@ -609,9 +607,9 @@ def compare(args):
                     checkout2_args.append(vals[-1])
             else:
                 croak("incorrect value for compare -r option.")
-        elif opt == '--nobranch':
+        elif opt == '-n':
             checkout_args.append(opt)
-        elif opt == '--accept-missing':
+        elif opt == '-a':
             accept_missing = True
             checkout_args.append(opt)
         elif opt in ('-q', '-s', '-u'):
@@ -791,17 +789,17 @@ def compare_branches(args):
 
 def compare_all(args):
     "Compare two repos on mainline and at all tags and branches."
-    if "--nobranch" in args:
+    if "-n" in args:
         if verbose:
             print("Comparing the complete repository...")
         compare(args)
         return
     if verbose:
         print("Comparing master...")
-    # --accept-missing will compare against an empty directory if trunk does
+    # -a (accept-missing) will compare against an empty directory if trunk does
     # not exist, which will thus fail the comparison if it exists on one side
     # but not the other, but will succeed if both repositories have no trunk
-    compare(["--accept-missing", "-b", "master"] + args)
+    compare(["-a", "-b", "master"] + args)
     if verbose:
         print("Comparing tags...")
     compare_tags(args)
