@@ -534,10 +534,12 @@ func mirror(args []string) {
 	tillHash := regexp.MustCompile("^.*#")
 	isFullURL, badre := regexp.Match("svn://|svn\\+ssh://|https://|http://", []byte(operand))
 	if (badre == nil && isFullURL) || (strings.HasPrefix(operand, "file://") && isdir(filepath.Join(operand[7:], "locks"))) {
-		if mirrordir != "" {
+		if mirrordir == "" {
+			locald = filepath.Base(operand) + "-mirror"
+		} else if strings.HasPrefix(mirrordir, "/") {
 			locald = mirrordir
 		} else {
-			locald = filepath.Base(operand) + "-mirror"
+			locald = pwd + "/" + mirrordir
 		}
 		runShellProcessOrDie("svnadmin create " + locald, "mirror creation")
 		makeStub(locald + "/hooks/pre-revprop-change", "#!/bin/sh\nexit 0;\n")
@@ -549,8 +551,8 @@ func mirror(args []string) {
 		// very sure you have not made any local changes to the repo
 		// since rsyncing, or havoc will ensue.
 		runShellProcessOrDie(fmt.Sprintf("chmod a+x %s/hooks/pre-revprop-change", locald), "mirroring")
-		runShellProcessOrDie(fmt.Sprintf("svnsync init --allow-non-empty file://%s/%s %s", pwd, locald, operand), "mirroring")
-		runShellProcessOrDie(fmt.Sprintf("svnsync synchronize --steal-lock file://%s/%s", pwd, operand), "mirroring")
+		runShellProcessOrDie(fmt.Sprintf("svnsync init --allow-non-empty file://%s %s", locald, operand), "mirroring")
+		runShellProcessOrDie(fmt.Sprintf("svnsync synchronize --steal-lock file://%s", locald), "mirroring")
 	} else if isdir(operand + "/locks") {
 		runShellProcessOrDie(fmt.Sprintf("svnsync --steal-lock synchronize file://%s/%s", pwd, operand), "mirroring")
 	} else if strings.HasPrefix(operand, "cvs://") {
