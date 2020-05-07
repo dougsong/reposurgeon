@@ -42,7 +42,7 @@ AUXTOOLS = repocutter-regress repomapper-regress repotool-regress
 CONCURRENT_JOBS=$(shell getconf _NPROCESSORS_ONLN || getconf NPROCESSORS_ONLN || echo 4)
 
 # Exploit make parallelism
-PARALLEL_MAKE=make --output-sync --no-print-directory -j $(CONCURRENT_JOBS)
+PARALLEL_MAKE=$(MAKE) --output-sync --no-print-directory -j $(CONCURRENT_JOBS)
 
 # This should always be a full test
 check: clean disclose $(BASIC) $(FULLSUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXTOOLS)
@@ -338,7 +338,7 @@ svnload-buildregress:
 		    exit 1; \
 		fi; \
 		echo "Remaking $${test}.chk"; \
-		rm -f $${test}.chk && make --quiet $${test}.chk \
+		rm -f $${test}.chk && $(MAKE) --quiet $${test}.chk \
 			|| exit $(STOPOUT); \
 	done
 
@@ -494,7 +494,7 @@ legacy-buildregress:
 	for test in $(REFLOADS); \
 	do \
 	    echo "Remaking $${test}.map"; \
-	    rm -f $${test}.map && make --quiet $${test}.map 2>/dev/null \
+	    rm -f $${test}.map && $(MAKE) --quiet $${test}.map 2>/dev/null \
 		|| exit $(STOPOUT); \
 	done
 legacy-regress:

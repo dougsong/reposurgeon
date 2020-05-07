@@ -1064,13 +1064,14 @@ func strip(source DumpfileSource, selection SubversionRange, patterns []string) 
 
 		// first check against the patterns, if any are given
 		ok := true
-		nodepath := payload("Node-path: ", header)
+		nodepath := payload("Node-path", header)
 		if nodepath != nil {
 			for _, pattern := range patterns {
+				ok = false
 				re := regexp.MustCompile(pattern)
-				if !re.Match(nodepath) {
-					//os.Stderr.Write("strip skipping: %s\n", filepath)
-					ok = false
+				if re.Match(nodepath) {
+					//os.Stderr.Write("strip skipping: %s\n", nodepath)
+					ok = true
 					break
 				}
 			}
