@@ -1,6 +1,12 @@
 #!/bin/sh
 ## Test repotool mirror of CVS repo
 
+if [ -z "${PWD}" ]
+then
+    echo "$0: SKIPPED - ssh is blocked in CI"
+    exit 0
+fi
+
 command -v cvs >/dev/null 2>&1 || { echo "    Skipped, cvs missing."; exit 0; }
 command -v cvs-fast-export >/dev/null 2>&1 || { echo "    Skipped, cvs-fast-mirror missing."; exit 0; }
 
