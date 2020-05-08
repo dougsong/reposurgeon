@@ -834,26 +834,28 @@ func main() {
 		TMPDIR = "/tmp"
 	}
 
-	flag.BoolVar(&acceptMissing, "a", false, "accept missing trunk directory")
-	flag.BoolVar(&nobranch, "n", false, "compare raw structure, ignore SVN branching")
-	flag.BoolVar(&quiet, "q", false, "run as quietly as possible")
-	flag.BoolVar(&verbose, "v", false, "show subcommands and diagnostics")
-
-	flag.StringVar(&branch, "b", "", "select branch for checkout or comparison")
-	flag.StringVar(&basedir, "c", "", "chdir to the argument repository path before doing checkout")
-	flag.StringVar(&revision, "r", "", "select revision for checkout or comparison")
-	flag.StringVar(&tag, "t", "", "select tag for checkout or comparison")
-
-	flag.Parse()
-
-	if flag.NArg() == 0 {
+	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr,
 			"repotool requires an operation argument.\n")
 		os.Exit(1)
 	}
+	operation := os.Args[1]
 
-	operation, args := flag.Args()[0], flag.Args()[1:]
+	flags := flag.NewFlagSet("repotool", flag.ExitOnError)
 
+	flags.BoolVar(&acceptMissing, "a", false, "accept missing trunk directory")
+	flags.BoolVar(&nobranch, "n", false, "compare raw structure, ignore SVN branching")
+	flags.BoolVar(&quiet, "q", false, "run as quietly as possible")
+	flags.BoolVar(&verbose, "v", false, "show subcommands and diagnostics")
+
+	flags.StringVar(&branch, "b", "", "select branch for checkout or comparison")
+	flags.StringVar(&basedir, "c", "", "chdir to the argument repository path before doing checkout")
+	flags.StringVar(&revision, "r", "", "select revision for checkout or comparison")
+	flags.StringVar(&tag, "t", "", "select tag for checkout or comparison")
+
+	flags.Parse(os.Args[2:])
+
+	args := flags.Args()
 	if operation == "initialize" {
 		initialize(args)
 	} else if operation == "export" {
