@@ -774,9 +774,9 @@ func checkout(outdir string) string {
 				os.Remove(outdir)
 			}
 		}
-		err := os.Symlink(outdir, path)	// to, from
+		err := os.Symlink(path, outdir)	// to, from
 		if err != nil {
-			log.Fatal("while linking %s->%s: %v", path, outdir, err)
+			log.Fatal(err)
 		}
 		return outdir
 	} else if vcs == "bzr" {
@@ -798,7 +798,10 @@ func checkout(outdir string) string {
 				os.Remove(outdir)
 			}
 		}
-		os.Symlink(outdir, pwd)
+		err := os.Symlink(pwd, outdir)
+		if err != nil {
+			log.Fatal(err)
+		}
 		return outdir
 	} else if vcs == "darcs" {
 		croak("checkout is not yet supported for darcs.")
