@@ -834,13 +834,6 @@ func main() {
 		TMPDIR = "/tmp"
 	}
 
-	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr,
-			"repotool requires an operation argument.\n")
-		os.Exit(1)
-	}
-	operation := os.Args[1]
-
 	flags := flag.NewFlagSet("repotool", flag.ExitOnError)
 
 	flags.BoolVar(&acceptMissing, "a", false, "accept missing trunk directory")
@@ -852,6 +845,33 @@ func main() {
 	flags.StringVar(&basedir, "c", "", "chdir to the argument repository path before doing checkout")
 	flags.StringVar(&revision, "r", "", "select revision for checkout or comparison")
 	flags.StringVar(&tag, "t", "", "select tag for checkout or comparison")
+
+	explain := func () {
+		print(`
+repotool commands:
+
+initialize  - create Makefile and stub files for standard conversion workflow.
+export - export a stream dump of the source repository
+mirror [URL] localdir - create or update a mirror of the source repository
+branches - list repository branch names
+checkout [-r rev] [-t tag] [-b branch] - check out a working copy of the repo
+compare [-r rev] [-t tag] [-b branch] - compare head content of two repositories
+compare-tags - compare source and target repo content at all tags
+compare-branches - compare source and target repo content at all branches
+compare-all - compare repositories at head, all tags, and all branches
+
+repotool options:
+`)
+		flags.PrintDefaults()
+		os.Exit(1)
+	}
+
+	if len(os.Args) < 2 {
+		fmt.Fprintf(os.Stderr,
+			"repotool requires an operation argument.\n")
+		explain()
+	}
+	operation := os.Args[1]
 
 	flags.Parse(os.Args[2:])
 
@@ -877,20 +897,7 @@ func main() {
 	} else if operation == "compare-all" {
 		compareAll(args)
 	} else {
-		print(`
-repotool commands:
-
-initialize  - create Makefile and stub files for standard conversion workflow.
-export - export a stream dump of the source repository
-mirror [URL] localdir - create or update a mirror of the source repository
-branches - list repository branch names
-checkout [-r rev] [-t tag] [-b branch] - check out a working copy of the repo
-compare [-r rev] [-t tag] [-b branch] - compare head content of two repositories
-compare-tags - compare source and target repo content at all tags
-compare-branches - compare source and target repo content at all branches
-compare-all - compare repositories at head, all tags, and all branches
-`)
-		os.Exit(1)
+		explain()
 	}
 }
 
