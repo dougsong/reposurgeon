@@ -562,7 +562,7 @@ func mirror(args []string) {
 		runShellProcessOrDie(fmt.Sprintf("svnsync init -q --allow-non-empty file://%s %s", locald, operand), "mirroring")
 		runShellProcessOrDie(fmt.Sprintf("svnsync synchronize -q --steal-lock file://%s", locald), "mirroring")
 	} else if isdir(operand + "/locks") {
-		runShellProcessOrDie(fmt.Sprintf("svnsync synchronize -q --steal-lock file://%s/%s", pwd, operand), "mirroring")
+		runShellProcessOrDie(fmt.Sprintf("svnsync synchronize -q --steal-lock file://%s", locald), "mirroring")
 	} else if strings.HasPrefix(operand, "cvs://") {
 		if mirrordir != "" {
 			locald = mirrordir
@@ -774,7 +774,10 @@ func checkout(outdir string) string {
 				os.Remove(outdir)
 			}
 		}
-		os.Symlink(outdir, path)
+		err := os.Symlink(outdir, path)	// to, from
+		if err != nil {
+			log.Fatal("while linking %s->%s: %v", path, outdir, err)
+		}
 		return outdir
 	} else if vcs == "bzr" {
 		croak("checkout is not yet supported in bzr.")
