@@ -17,7 +17,7 @@ cd "$(readlink -f "$(dirname $0)")" || ( echo "$0: cd failed"; exit 1 )
 . ./common-setup.sh
 
 # Required because $PWD seems to be undefined in Gitlab's CI environment
-BIN=$(realpath ..)
+BIN="${BINDIR:-$(realpath ..)}"
 
 build=True
 stream=True

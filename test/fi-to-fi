@@ -27,7 +27,7 @@
 # The TESTOPT variable can be used to pass an early command or option setting
 # to reposurgeon.
 #
-BIN=${PWD}/..
+BIN="${BINDIR:-$(realpath ..)}"
 
 extract=True
 view=False0
