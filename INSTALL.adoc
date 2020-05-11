@@ -3,7 +3,8 @@
 == Quick recipe for systems using apt ==
 
 ---------------------------------------------------------------------------
-sudo apt-get install golang-1.12 asciidoctor          # For running
+sudo apt-get install golang-1.12 diffutils            # For running
+sudo apt-get install asciidoctor                      # To render docs
 sudo apt-get install golint shellcheck pylint         # For testing
 sudo apt-get install subversion mercurial rsync       # For testing
 sudo apt-get install gnuplot                          # For benchmarking
@@ -27,6 +28,8 @@ may have to tweak your $PATH variable to make the Go tools visible.
 Some of the auxiliary tools are written in Python. They will run under
 Python 2 or Python 3.  Python is almost certainly already installed on
 your system.
+
+diff is required for repotool to do repository.
 
 A few scripts are written in shell. Any Bourne-shell-like
 implementation will do. The restricted shell shipped on Debian/Ubuntu
