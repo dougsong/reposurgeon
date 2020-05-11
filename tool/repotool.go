@@ -271,7 +271,9 @@ gc: {{.Project}}-git
 var acceptMissing = false
 var nobranch = false
 var seeignores = false
-var quiet = true
+var quiet = false
+var same = false
+var unified = true
 var verbose = false
 
 var branch string
@@ -814,40 +816,46 @@ func checkout(outdir string, rev string) string {
 	return ""
 }
 
+func dirlist(top string, excl stringSet) stringSet {
+	outset := newStringSet()
+	filepath.Walk(top, func(path string, info os.FileInfo, err error) error {
+		clean := filepath.Clean(path)	// Remove leading ./ if any
+		if !excl.Contains(clean) {
+			outset.Add(clean)
+		}
+		return nil
+	})
+	return outset
+}
+
 // Compare two repositories at a specified revision, defaulting to mainline tip.
-func compareRevision(args []string, rev string) {
+func compareRevision(args []string, rev string) string {
 	if verbose {
 		fmt.Printf("compare: %s\n", args)
 	}
-/*
-	checkout1Args := make([]string, 0)
-	checkout2Args := make([]string, 0)
-	diffArgs := make([]string, 0)
+	var sourceRev, targetRev string
 
 	if revision != "" {
 		vals := strings.SplitN(revision, ":", 1)
-		if 1 <= len(vals) && len(vals) <= 2 {
-			if vals[0] != "" {
-				checkout1Args = append(checkout1Args, "")
-				checkout1Args = append(checkout1Args, vals[0])
-			}
-			if vals[len(vals)-1] != "" {
-				checkout2Args = append(checkout2Args, opt)
-				checkout2Args = append(checkout2Args, vals[len(vals)-1])
-			}
+		if len(vals) == 1 {
+			sourceRev = vals[0]
+			targetRev = vals[0]
+		} else if len(vals) == 2 {
+			sourceRev = vals[0]
+			targetRev = vals[1]			
 		} else {
 			croak("incorrect value for compare -r option.")
 		}
 	}
 	if verbose {
-		fmt.Printf("Checkout 1 arguments: %s\n", checkout1Args)
-		fmt.Printf("Checkout 2 arguments: %s\n", checkout2Args)
+		fmt.Printf("Checkout 1 revision: %s\n", sourceRev)
+		fmt.Printf("Checkout 2 revision: %s\n", targetRev)
 	}
-	if len(arguments) != 2 {
-		croak("compare requires exactly two repository-name arguments, but there are %v.", arguments)
+	if len(args) != 2 {
+		croak("compare requires exactly two repository-name args, but there are %v.", args)
 	}
-	target := arguments[0]
-	source := arguments[1]
+	target := args[0]
+	source := args[1]
 	if !isdir(source) || !isdir(target) {
 		croak("both repository directories must exist.")
 	}
@@ -865,7 +873,7 @@ func compareRevision(args []string, rev string) {
 				diffopts = append(diffopts, []string{"-x", f}...)
 			}
 		}
-		sourcedir = checkout(append(checkout1Args, rsource))
+		sourcedir = checkout(rtarget, sourceRev)
 		if sourcedir == "" {
 			panic("sourcedir unexpectedly nil")
 		}
@@ -878,11 +886,19 @@ func compareRevision(args []string, rev string) {
 				diffopts = append(diffopts, []string{"-x", f}...)
 			}
 		}
-		targetdir = checkout(append(checkout2Args, rtarget))
+		targetdir = checkout(rtarget, targetRev)
 		if targetdir == "" {
 			panic("sourcedir unexpectedly nil")
 		}
 	})
+	diffArgs := make([]string, 0)
+	// FIME: Implement -q
+	if same {
+		diffArgs = append(diffArgs, "-s")
+	}
+	if unified {
+		diffArgs = append(diffArgs, "-u")
+	}
 	diffoptStr := strings.Join(append(diffArgs, diffopts...), " ")
 	if acceptMissing {
 		if !exists(sourcedir) {
@@ -968,10 +984,7 @@ func compareRevision(args []string, rev string) {
 	}
 	os.RemoveAll(rsource)
 	os.RemoveAll(rtarget)
-	if diff != "" {
-		croak("Non-empty diff for %s %s:\n%s", source, target, diff)
-	}
-*/
+	return diff
 }
 
 func compareTags(args []string) {
@@ -995,8 +1008,11 @@ func main() {
 	flags := flag.NewFlagSet("repotool", flag.ExitOnError)
 
 	flags.BoolVar(&acceptMissing, "a", false, "accept missing trunk directory")
+	flags.BoolVar(&seeignores, "i", false, "do not suppress comparison of normally ignored do")
 	flags.BoolVar(&nobranch, "n", false, "compare raw structure, ignore SVN branching")
 	flags.BoolVar(&quiet, "q", false, "run as quietly as possible")
+	flags.BoolVar(&same, "s", false, "report when files are the same")
+	flags.BoolVar(&unified, "u", false, "emit unified diff")
 	flags.BoolVar(&verbose, "v", false, "show subcommands and diagnostics")
 
 	flags.StringVar(&branch, "b", "", "select branch for checkout or comparison")
@@ -1004,6 +1020,8 @@ func main() {
 	flags.StringVar(&revision, "r", "", "select revision for checkout or comparison")
 	flags.StringVar(&tag, "t", "", "select tag for checkout or comparison")
 
+	// FIXME: implement -x and -e diff options
+	
 	explain := func () {
 		print(`
 repotool commands:
@@ -1047,7 +1065,9 @@ repotool options:
 	} else if operation == "checkout" {
 		checkout(args[0], revision)
 	} else if operation == "compare" {
-		compareRevision(args, revision)
+		if diff := compareRevision(args, revision); diff != "" {
+			fmt.Printf("Non-empty diff for %s %s:\n%s", args[0], args[1], diff)
+		}
 	} else if operation == "compare-tags" {
 		compareTags(args)
 	} else if operation == "compare-branches" {
