@@ -23,7 +23,7 @@ SOURCES += $(META) $(DOCS)
     uninstall version check release refresh docker-build docker-check	\
     docker-check-noscm get vet test fmt lint
 
-BINARIES  = reposurgeon repotool repomapper repocutter repobench
+BINARIES  = reposurgeon repotool repomapper repocutter repobench gorepotool
 MANPAGES  = $(PAGES:.adoc=.1)
 HTMLFILES = $(DOCS:.adoc=.html)
 SHARED    = $(META) reposurgeon-git-aliases $(HTMLFILES)
@@ -32,6 +32,8 @@ SHARED    = $(META) reposurgeon-git-aliases $(HTMLFILES)
 #GOFLAGS=-gcflags 'all=-N -l -trimpath $(GOPATH)/src' -asmflags 'all=-trimpath $(GOPATH)/src'
 
 GOFLAGS=-gcflags '-N -l'
+
+build: $(BINARIES) $(MANPAGES) $(HTMLFILES)
 
 # Imitate old behavior of rebuilding bins. They have no dependencies
 # so *not* building them would be irritating if sources change.
@@ -45,7 +47,6 @@ repomapper:
 	cd $(MAKED) && go build $(GOFLAGS) -o $(CURDIR)/repomapper ./mapper
 gorepotool:
 	cd $(MAKED) && go build $(GOFLAGS) -o $(CURDIR)/gorepotool ./tool
-build: $(BINARIES) gorepotool $(MANPAGES) $(HTMLFILES)
 
 # Note: to suppress the footers with timestamps being generated in HTML,
 # we use "-a nofooter".
