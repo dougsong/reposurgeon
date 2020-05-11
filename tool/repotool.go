@@ -278,9 +278,11 @@ var verbose = false
 
 var branch string
 var comparemode string
+var refexclude string
 var revision string
 var basedir string
 var tag string
+var pathexclude string
 
 func croak(msg string, args ...interface{}) {
 	content := fmt.Sprintf(msg, args...)
@@ -892,12 +894,18 @@ func compareRevision(args []string, rev string) string {
 		}
 	})
 	diffArgs := make([]string, 0)
-	// FIME: Implement -q
+	// The following options are passed from the repotool command line to diff
+	if quiet {
+		diffArgs = append(diffArgs, "-q")
+	}
 	if same {
 		diffArgs = append(diffArgs, "-s")
 	}
 	if unified {
 		diffArgs = append(diffArgs, "-u")
+	}
+	if pathexclude != "" {
+		diffArgs = append(diffArgs, fmt.Sprintf("-x '%s'", pathexclude))
 	}
 	diffoptStr := strings.Join(append(diffArgs, diffopts...), " ")
 	if acceptMissing {
@@ -1017,11 +1025,11 @@ func main() {
 
 	flags.StringVar(&branch, "b", "", "select branch for checkout or comparison")
 	flags.StringVar(&basedir, "c", "", "chdir to the argument repository path before doing checkout")
+	flags.StringVar(&refexclude, "e", "", "exclude pattern for tag and branch names.")
 	flags.StringVar(&revision, "r", "", "select revision for checkout or comparison")
 	flags.StringVar(&tag, "t", "", "select tag for checkout or comparison")
+	flags.StringVar(&pathexclude, "x", "", "basename-exclude pattern for comparisons.")
 
-	// FIXME: implement -x and -e diff options
-	
 	explain := func () {
 		print(`
 repotool commands:

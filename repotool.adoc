@@ -6,7 +6,7 @@ repotool - operate on a CVS, SVN, git, bzr, hg, or darcs repository in a uniform
 
 == SYNOPSIS ==
 
-*repotool* [(-v |-q)] 'command' [args...]
+*repotool* 'command' [-v | -q] [args...]
 
 [[description]]
 == DESCRIPTION ==
@@ -75,51 +75,66 @@ order to select the repository directory.
 
 The 'compare' action takes two repository directories. It may
 optionally take a tag-branch-revision spec as for the checkout
-option. You can also pass two revisions separated by a colon to the
--r option, to have the first one checked out in the first repository
-and the second one in the second repository. That permits one to compare
+option. You can also pass two revisions separated by a colon to the -r
+option, to have the first one checked out in the first repository and
+the second one in the second repository. That permits one to compare
 two different revisions, or the same revision referenced differently
 in two VCS. You can leave one of the two revisions empty, then the -r
 option will not be passed to the corresponding repository checkout.
 This is useful to compare a git tag or branch to the corresponding tag
 or branch in SVN as seen at a particular revision (specifying both a
-branch and revision makes sense in SVN, but not in git).
-The --no-branch option is passed to the individual checkout commands
-which means that in cases where it makes sense the complete repository
-will be checked out flatly, treating branch and tag namespaces as simple
-directories. You can also use the --accept-missing option to use an
-empty directory as the checkout if the asked branch or tag cannot be
-found, instead of erroring out without any comparison. This is useful
-when if the other repository uses empty content for deleted refs.
-The selected versions are compared with diff -q -r, with noise
-due to SCCS/RCS/CVS keyword expansion ignored.  You can follow the
-command verb with one or more -x options followed by basenames of
-paths to exclude from comparison. You can get a context-diff report on
-file differences with the -u option. File permissions well as content
-are checked, any mismatches will be shown after the diff listing.
-The -e option sets exclude patterns for tag names and branches that
-should be ignored.
+branch and revision makes sense in SVN, but not in git).  The selected
+versions are compared with diff -r, with noise due to SCCS/RCS/CVS
+keyword expansion ignored.  File permissions well as
+content are checked, any mismatches will be shown after the diff
+listing.
 
-The 'compare-tags' action takes two repository directories,
-extracts a list of tags from the first, then compares the repository
-contents at each tag in the list, generating a compare report for
-each.  You can follow the command verb with one or more -x options
-followed by basenames of paths to exclude from comparison. You can get
-a context-diff report on file differences with the -u option.
+The compare operation accepts the following options:
+
+-n::
+	Passed to the individual checkout commands which means that
+	in cases where it makes sense the complete repository will be checked
+	out flatly, treating branch and tag namespaces as simple
+	directories.
+
+-a::
+	Use an empty directory
+	as the checkout if the asked branch or tag cannot be found, instead of
+	erroring out without any comparison. This is useful when if the other
+	repository uses empty content for deleted refs.
+
+-x::
+	May occur more than once.  Gives a pattern to match basenames
+	ofpaths to exclude from comparison.
+
+-u::
+	Emit unified diff (the default is a context diff).
+
+-q::
+	Makes the diff run as quietly as possible.
+
+-s::
+	Enables explicit reporting of identical files.
+
+The 'compare-tags' action takes two repository directories, extracts a
+list of tags from the first, then compares the repository contents at
+each tag in the list, generating a compare report for each.  Takes
+compare options.  Additionally the -e option sets exclude patterns for
+tag names that should be ignored.
 
 The 'compare-branches' action takes two repository directories,
-extracts a list of branches common to both, then compares the repository
-contents at each branch in the list, generating a compare report for
-each.  You can follow the command verb with one or more -x options
-followed by basenames of paths to exclude from comparison. You can get
-a context-diff report on file differences with the -u option.
+extracts a list of branches common to both, then compares the
+repository contents at each branch in the list, generating a compare
+report for each. Takes compare options.  Additionally the -e option
+sets exclude patterns for branch names that should be ignored.
 
-The 'compare-all' action takes two repository directories, and
-runs all three above compare actions on them. Even if the same name is a
+The 'compare-all' action takes two repository directories, and runs
+all three above compare actions on them. Even if the same name is a
 tag in one repository and a branch in the other, it will compare them
 against each other. Not distinguishing them is useful as CVS tags that
 are not applied to every file in the repository may get converted to
-branches.  The options are the same as 'compare-tags'.
+branches.  Takes compare options.  Additionally the -e option sets
+exclude patterns for tag and branch names that should be ignored.
 
 The 'mirror' action makes or updates a local mirror of a
 Subversion, CVS, git, or hg repo. It requires a single argument,
