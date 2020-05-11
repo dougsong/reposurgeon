@@ -270,10 +270,12 @@ gc: {{.Project}}-git
 
 var acceptMissing = false
 var nobranch = false
+var seeignores = false
 var quiet = true
 var verbose = false
 
 var branch string
+var comparemode string
 var revision string
 var basedir string
 var tag string
@@ -657,7 +659,7 @@ func branches() string {
 	return ""
 }
 
-func checkout(outdir string) string {
+func checkout(outdir string, rev string) string {
 	if verbose {
 		fmt.Printf("checkout: %s\n", outdir)
 	}
@@ -684,22 +686,22 @@ func checkout(outdir string) string {
 	vcs := vcstype(".")
 	if vcs == "cvs" {
 		module := captureFromProcess("ls -1 | grep -v CVSROOT", " listing modules")
-		if revision != "" {
-			revision = "-r " + revision
+		if rev != "" {
+			rev = "-r " + rev
 		}
 		// By choosing -kb we get binary files right, but won't
 		// suppress any expanded keywords that might be lurking
 		// in masters.
-		runShellProcessOrDie(fmt.Sprintf("cvs -Q -d:local:%s co -P %s %s %s -d %s -kb %s", pwd, branch, tag, revision, outdir, module), "checkout")
+		runShellProcessOrDie(fmt.Sprintf("cvs -Q -d:local:%s co -P %s %s %s -d %s -kb %s", pwd, branch, tag, rev, outdir, module), "checkout")
 		return outdir
 	} else if vcs == "cvs-checkout" {
-		runShellProcessOrDie(fmt.Sprintf("cvs -Q -d:local:%s co -P %s %s %s -kb", pwd, branch, tag, revision), "checkout")
+		runShellProcessOrDie(fmt.Sprintf("cvs -Q -d:local:%s co -P %s %s %s -kb", pwd, branch, tag, rev), "checkout")
 		return outdir
 	} else if vcs == "svn" {
-		if revision != "" {
-			revision = "-r " + revision
+		if rev != "" {
+			rev = "-r " + rev
 		}
-		runShellProcessOrDie(fmt.Sprintf("svn co -q %s file://%s %s", revision, pwd, outdir), "checkout")
+		runShellProcessOrDie(fmt.Sprintf("svn co -q %s file://%s %s", rev, pwd, outdir), "checkout")
 		if nobranch {
 			; // flat repository
 		} else if tag != ""{
@@ -711,13 +713,13 @@ func checkout(outdir string) string {
 		}
 		return outdir
 	} else if vcs == "svn-checkout" {
-		if revision != "" {
-			revision = "-r " + revision
+		if rev != "" {
+			rev = "-r " + rev
 			// Potentially dangerous assumption: User made a full checkout
 			// of HEAD and the update operation (which is hideously slow on
-			// large repositories) only needs to be done if an explicit revision
+			// large repositories) only needs to be done if an explicit rev
 			// was supplied.
-			runShellProcessOrDie("svn up -q " + revision, "checkout")
+			runShellProcessOrDie("svn up -q " + rev, "checkout")
 		}
 		relpath := ""
 		if nobranch {
@@ -748,25 +750,25 @@ func checkout(outdir string) string {
 		os.Symlink(outdir, filepath.Join(pwd, relpath))
 		return outdir
 	} else if vcs == "git" {
-		// Only one revision should be given to git checkout
+		// Only one rev should be given to git checkout
 		// Use the passed-in arguments, in some order of specificity.
 		handleMissing := false
-		if revision == "" {
+		if rev == "" {
 			if tag != "" {
-				revision = tag
+				rev = tag
 			} else if branch != "" {
-				revision = branch
+				rev = branch
 			} else {
-				revision = "master"
+				rev = "master"
 			}
 			handleMissing = acceptMissing &&
-				(captureFromProcess(fmt.Sprintf("git rev-parse --verify -q %s >/dev/null || echo no", revision), "checkout") != "")
+				(captureFromProcess(fmt.Sprintf("git rev-parse --verify -q %s >/dev/null || echo no", rev), "checkout") != "")
 		}
 		var path string
 		if handleMissing {
 			path = pwd + ".git/this/path/does/not/exist"
 		} else {
-			runShellProcessOrDie(fmt.Sprintf("git checkout --quiet %s", revision), "checkout")
+			runShellProcessOrDie(fmt.Sprintf("git checkout --quiet %s", rev), "checkout")
 			path = pwd
 		}
 		if exists(outdir) {
@@ -783,8 +785,8 @@ func checkout(outdir string) string {
 		croak("checkout is not yet supported in bzr.")
 	} else if vcs == "hg" {
 		spec := ""
-		if revision != "" {
-			spec = "-r " + revision
+		if rev != "" {
+			spec = "-r " + rev
 		} else if tag != "" {
 			spec = "-r " + tag
 		} else if branch != "" {
@@ -812,8 +814,164 @@ func checkout(outdir string) string {
 	return ""
 }
 
-func compareRevision(args []string) {
-	croak("compare is not yet supported")
+// Compare two repositories at a specified revision, defaulting to mainline tip.
+func compareRevision(args []string, rev string) {
+	if verbose {
+		fmt.Printf("compare: %s\n", args)
+	}
+/*
+	checkout1Args := make([]string, 0)
+	checkout2Args := make([]string, 0)
+	diffArgs := make([]string, 0)
+
+	if revision != "" {
+		vals := strings.SplitN(revision, ":", 1)
+		if 1 <= len(vals) && len(vals) <= 2 {
+			if vals[0] != "" {
+				checkout1Args = append(checkout1Args, "")
+				checkout1Args = append(checkout1Args, vals[0])
+			}
+			if vals[len(vals)-1] != "" {
+				checkout2Args = append(checkout2Args, opt)
+				checkout2Args = append(checkout2Args, vals[len(vals)-1])
+			}
+		} else {
+			croak("incorrect value for compare -r option.")
+		}
+	}
+	if verbose {
+		fmt.Printf("Checkout 1 arguments: %s\n", checkout1Args)
+		fmt.Printf("Checkout 2 arguments: %s\n", checkout2Args)
+	}
+	if len(arguments) != 2 {
+		croak("compare requires exactly two repository-name arguments, but there are %v.", arguments)
+	}
+	target := arguments[0]
+	source := arguments[1]
+	if !isdir(source) || !isdir(target) {
+		croak("both repository directories must exist.")
+	}
+	rsource := filepath.Join(TMPDIR, "source")
+	os.RemoveAll(rsource)
+	rtarget := filepath.Join(TMPDIR, "target")
+	os.RemoveAll(rtarget)
+	diffopts := make([]string, 0)
+	sourceignores := make([]string, 0)
+	var sourcedir, targetdir string
+	under(source, func() {
+		if isDvcsOrCheckout() && !seeignores {
+			sourceignores = vcsignores()
+			for _, f := range sourceignores {
+				diffopts = append(diffopts, []string{"-x", f}...)
+			}
+		}
+		sourcedir = checkout(append(checkout1Args, rsource))
+		if sourcedir == "" {
+			panic("sourcedir unexpectedly nil")
+		}
+	})
+	targetignores := make([]string, 0)
+	under(target, func() {
+		if isDvcsOrCheckout() && !seeignores {
+			targetignores = vcsignores()
+			for _, f := range targetignores {
+				diffopts = append(diffopts, []string{"-x", f}...)
+			}
+		}
+		targetdir = checkout(append(checkout2Args, rtarget))
+		if targetdir == "" {
+			panic("sourcedir unexpectedly nil")
+		}
+	})
+	diffoptStr := strings.Join(append(diffArgs, diffopts...), " ")
+	if acceptMissing {
+		if !exists(sourcedir) {
+			// replace by empty directory
+			os.Mkdir(sourcedir, 0644)
+		}
+		if !exists(targetdir) {
+			// replace by empty directory
+			os.Mkdir(targetdir, 0644)
+		}
+	}
+	// add missing empty directories in checkouts of VCSs that do not support them
+	dirsToNuke := make([]string, 0)
+	sourcetype := vcstype(source)
+	targettype := vcstype(target)
+	if (sourcetype != "git" && targettype != "hg") && (targettype == "git" || targettype == "hg") {
+		under(sourcedir, func() {
+			filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					fmt.Printf("error while tree-walking: %v\n", err)
+					return err
+				}
+				if isdir(path) {
+					matching := filepath.Join(targetdir, path)
+					if !exists(matching) {
+						dirsToNuke = append(dirsToNuke, matching)
+						os.Mkdir(matching, 0644)
+					}
+				}
+				return nil
+			})
+		})
+		under(targetdir, func() {
+			filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					fmt.Printf("error while tree-walking: %v\n", err)
+					return err
+				}
+				if isdir(path) {
+					matching := filepath.Join(sourcedir, path)
+					if !exists(matching) {
+						dirsToNuke = append(dirsToNuke, matching)
+						os.Mkdir(matching, 0644)
+					}
+				}
+				return nil
+			})
+		})
+	}
+	var diff string
+	under(TMPDIR, func() {
+		// FIXME: use difflib here?
+		silenceDiffErrors := "2>/dev/null" // for dangling symlinks or similar
+		if verbose {
+			fmt.Printf("Comparing %s to %s\n", sourcedir, targetdir)
+			silenceDiffErrors = ""
+		}
+		diff = captureFromProcess(fmt.Sprintf("diff -r %s --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %s %s %s || exit 0", diffoptStr, sourcedir, targetdir, silenceDiffErrors), "diffing")
+
+		// Check for permission match
+		common := dirlist(sourcedir, newStringSet(sourceignores...)).Intersection(dirlist(targetdir, newStringSet(targetignores...)))
+		commonList := common.Listify()
+		for _, path := range commonList {
+			sstat, err1 := os.Stat(filepath.Join(sourcedir, path))
+			tstat, err2 := os.Stat(filepath.Join(targetdir, path))
+			if err1 != nil {
+				log.Fatal(err1)
+			}
+			if err2 != nil {
+				log.Fatal(err2)
+			}
+			if sstat.Mode() != tstat.Mode() {
+				diff += fmt.Sprintf("%s: %0o -> %0o\n", path, sstat.Mode(), tstat.Mode())
+			}
+		}
+	})
+	// cleanup in case the checkouts were a symlink to an existing worktree
+	sort.Slice(dirsToNuke, func(i, j int) bool {
+		return len(dirsToNuke[i]) > len(dirsToNuke[j])
+	})
+	for _, d := range dirsToNuke {
+		os.Remove(d)
+	}
+	os.RemoveAll(rsource)
+	os.RemoveAll(rtarget)
+	if diff != "" {
+		croak("Non-empty diff for %s %s:\n%s", source, target, diff)
+	}
+*/
 }
 
 func compareTags(args []string) {
@@ -887,9 +1045,9 @@ repotool options:
 	} else if operation == "branches" {
 		os.Stdout.WriteString(branches())
 	} else if operation == "checkout" {
-		checkout(args[0])
+		checkout(args[0], revision)
 	} else if operation == "compare" {
-		compareRevision(args)
+		compareRevision(args, revision)
 	} else if operation == "compare-tags" {
 		compareTags(args)
 	} else if operation == "compare-branches" {
