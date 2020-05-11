@@ -88,6 +88,9 @@ M 100644 :7 foo.c
 property cvs-revisions 20 bar.c 1.3
 foo.c 1.2
 
+reset refs/tags/sampletag
+from :8
+
 reset refs/heads/master
 from :8
 
