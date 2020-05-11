@@ -456,7 +456,7 @@ liftcheck-regress:
 
 $(patsubst %,liftcheck-regress-%,$(wildcard *.svn)): liftcheck-regress-%: %
 	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
-	liftcheck -e emptycommit -e -root $< >/tmp/diff$$$$; \
+	liftcheck -e 'emptycommit|-root' $< >/tmp/diff$$$$; \
 	case $$? in \
 	    0) ;; \
 	    1) if [ $(QUIET) = 1 ]; then echo FAILED; else cat /tmp/diff$$$$; fi; if [ $(STOPOUT) = 1 ]; then exit 1; fi;; \

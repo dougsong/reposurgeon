@@ -13,7 +13,7 @@ trap 'rm -rf /tmp/test-repo$$-svn /tmp/test-repo$$-git /tmp/out$$' EXIT HUP INT 
 
 ./svn-to-svn -q -n /tmp/test-repo$$-svn <"$stem.svn"
 reposurgeon "read <${stem}.svn" "prefer git" "rebuild /tmp/test-repo$$-git" >/tmp/out$$ 2>&1
-${REPOTOOL:-repotool} compare-tags -x .svn -x .git /tmp/test-repo$$-svn /tmp/test-repo$$-git | sed -e "s/$$/\$\$/"g >/tmp/out$$ 2>&1
+${REPOTOOL:-repotool} compare-tags /tmp/test-repo$$-svn /tmp/test-repo$$-git | sed -e "s/$$/\$\$/"g >/tmp/out$$ 2>&1
 
 case $1 in
     --regress)
