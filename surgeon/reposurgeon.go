@@ -7927,9 +7927,9 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 			repo.readLegacyMap(rfp)
 			rfp.Close()
 		}
-		if vcs.lister != "" {
+		if vcs.pathlister != "" {
 			registered := newOrderedStringSet()
-			stdout, cmd, err := readFromProcess(vcs.lister)
+			stdout, cmd, err := readFromProcess(vcs.pathlister)
 			if err != nil {
 				return nil, err
 			}

@@ -57,7 +57,7 @@ type VCS struct {
 	styleflags   orderedStringSet
 	extensions   orderedStringSet
 	initializer  string
-	lister       string
+	pathlister   string
 	importer     string
 	checkout     string
 	preserve     orderedStringSet
@@ -92,7 +92,7 @@ func (vcs VCS) String() string {
 		fmt.Sprintf(" Export-Style: %s\n", vcs.styleflags.String()) +
 		fmt.Sprintf("   Extensions: %s\n", vcs.extensions.String()) +
 		fmt.Sprintf("  Initializer: %s\n", vcs.initializer) +
-		fmt.Sprintf("       Lister: %s\n", vcs.lister) +
+		fmt.Sprintf("   Pathlister: %s\n", vcs.pathlister) +
 		fmt.Sprintf("     Importer: %s\n", vcs.importer) +
 		fmt.Sprintf("     Checkout: %s\n", vcs.checkout) +
 		fmt.Sprintf("      Prenuke: %s\n", vcs.prenuke.String()) +
@@ -169,7 +169,7 @@ func init() {
 			initializer: "git init --quiet",
 			importer:    "git fast-import --quiet --export-marks=.git/marks",
 			checkout:    "git checkout",
-			lister:      "git ls-files",
+			pathlister:  "git ls-files",
 			prenuke:     newOrderedStringSet(".git/config", ".git/hooks"),
 			preserve:    newOrderedStringSet(".git/config", ".git/hooks"),
 			authormap:   ".git/cvs-authors",
@@ -191,7 +191,7 @@ func init() {
 				"empty-directories",
 				"multiple-authors", "commit-properties"),
 			initializer: "",
-			lister:      "",
+			pathlister:  "",
 			importer:    "bzr fast-import -",
 			checkout:    "bzr checkout",
 			prenuke:     newOrderedStringSet(".bzr/plugins"),
@@ -226,7 +226,7 @@ bzr-orphans
 				"export-progress"),
 			extensions:  newOrderedStringSet(),
 			initializer: "hg init",
-			lister:      "hg status -macn",
+			pathlister:  "hg status -macn",
 			importer:    "hg-git-fast-import",
 			checkout:    "hg checkout",
 			prenuke:     newOrderedStringSet(".hg/hgrc"),
@@ -250,7 +250,7 @@ branch is renamed to 'master'.
 			styleflags:   newOrderedStringSet(),
 			extensions:   newOrderedStringSet(),
 			initializer:  "",
-			lister:       "darcs show files",
+			pathlister:   "darcs show files",
 			importer:     "darcs fastconvert import",
 			checkout:     "",
 			prenuke:      newOrderedStringSet(),
@@ -368,7 +368,7 @@ core
 			styleflags:   newOrderedStringSet(),
 			extensions:   newOrderedStringSet(),
 			initializer:  "",
-			lister:       "mtn list known",
+			pathlister:   "mtn list known",
 			importer:     "",
 			checkout:     "",
 			prenuke:      newOrderedStringSet(),
@@ -426,7 +426,7 @@ _darcs
 			initializer:  "svnadmin create .",
 			importer:     "",
 			checkout:     "",
-			lister:       "",
+			pathlister:   "",
 			prenuke:      newOrderedStringSet(),
 			preserve:     newOrderedStringSet("hooks"),
 			authormap:    "",
@@ -445,7 +445,7 @@ _darcs
 			initializer:  "",
 			importer:     "",
 			checkout:     "",
-			lister:       "",
+			pathlister:   "",
 			prenuke:      newOrderedStringSet(),
 			preserve:     newOrderedStringSet(),
 			authormap:    "",
@@ -493,7 +493,7 @@ core
 			initializer:  "",
 			importer:     "",
 			checkout:     "",
-			lister:       "",
+			pathlister:   "",
 			preserve:     newOrderedStringSet(),
 			authormap:    "",
 			ignorename:   "",
@@ -511,7 +511,7 @@ core
 			initializer:  "src init",
 			importer:     "",
 			checkout:     "",
-			lister:       "src ls",
+			pathlister:   "src ls",
 			prenuke:      newOrderedStringSet(),
 			preserve:     newOrderedStringSet(),
 			authormap:    "",
@@ -529,7 +529,7 @@ core
 			styleflags:   newOrderedStringSet(),
 			extensions:   newOrderedStringSet(),
 			initializer:  "", // bk setup doesn't work here
-			lister:       "bk gfiles -U",
+			pathlister:   "bk gfiles -U",
 			importer:     "bk fast-import -q",
 			checkout:     "",
 			prenuke:      newOrderedStringSet(),
