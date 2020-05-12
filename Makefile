@@ -23,7 +23,7 @@ SOURCES += $(META) $(DOCS)
     uninstall version check release refresh docker-build docker-check	\
     docker-check-noscm get vet test fmt lint
 
-BINARIES  = reposurgeon repotool repomapper repocutter repobench gorepotool
+BINARIES  = reposurgeon repotool repomapper repocutter repobench repotool
 MANPAGES  = $(PAGES:.adoc=.1)
 HTMLFILES = $(DOCS:.adoc=.html)
 SHARED    = $(META) reposurgeon-git-aliases $(HTMLFILES)
@@ -37,7 +37,7 @@ build: $(BINARIES) $(MANPAGES) $(HTMLFILES)
 
 # Imitate old behavior of rebuilding bins. They have no dependencies
 # so *not* building them would be irritating if sources change.
-.PHONY: repocutter reposurgeon repomapper gorepotool
+.PHONY: repocutter reposurgeon repomapper repotool
 
 repocutter:
 	cd $(MAKED) && go build $(GOFLAGS) -o $(CURDIR)/repocutter ./cutter
@@ -45,8 +45,8 @@ reposurgeon:
 	cd $(MAKED) && go build $(GOFLAGS) -o $(CURDIR)/reposurgeon ./surgeon
 repomapper:
 	cd $(MAKED) && go build $(GOFLAGS) -o $(CURDIR)/repomapper ./mapper
-gorepotool:
-	cd $(MAKED) && go build $(GOFLAGS) -o $(CURDIR)/gorepotool ./tool
+repotool:
+	cd $(MAKED) && go build $(GOFLAGS) -o $(CURDIR)/repotool ./tool
 
 # Note: to suppress the footers with timestamps being generated in HTML,
 # we use "-a nofooter".
@@ -70,15 +70,9 @@ test:
 	cd $(MAKED) && go test $(TESTOPTS) ./surgeon
 	cd $(MAKED) && go test $(TESTOPTS) ./cutter
 
-PYLINTOPTS = --rcfile=/dev/null --reports=n \
-	--msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" \
-	--dummy-variables-rgx='^_'
-# W0612 and W0641 are regrettable, but pylint doesn't count %-substitutions
-PYSUPPRESSIONS = --disable="C0103,C0111,C0301,C0410,C1801,R0205,R0911,R0911,R0912,R0914,R0915,R1705,W0511,W0603,W0612,W0622,W0641"
 lint:
 	cd $(MAKED) && golint -set_exit_status ./...
 	cd $(MAKED) && shellcheck -f gcc repobench test/fi-to-fi test/liftcheck test/singlelift test/svn-to-git test/svn-to-svn test/delver test/*.sh test/*test
-	cd $(MAKED) && pylint $(PYLINTOPTS) $(PYSUPPRESSIONS) repotool
 
 fmt:
 	gofmt -w .
@@ -102,7 +96,7 @@ install_share: $(SHARED)
 install: install_bin install_man install_share
 
 clean:
-	rm -fr reposurgeon repocutter repomapper gorepotool
+	rm -fr reposurgeon repocutter repomapper repotool
 	rm -fr  *~ *.1 *.html *.tar.xz MANIFEST *.md5
 	rm -fr .rs .rs* test/.rs test/.rs*
 	rm -f typescript test/typescript

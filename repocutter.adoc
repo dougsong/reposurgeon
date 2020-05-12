@@ -100,13 +100,13 @@ particularly complex node structure.
 
 expunge::
 Delete all operations with Node-path headers matching
-specified Python regular expressions.  Any revision left with no Node
+specified Go regular expressions.  Any revision left with no Node
 records after this filtering has its Revision record removed as
 well.
 
 sift::
 Delete all operations with Node-path headers *not* matching specified
-Golang regular expressions (opposite of 'expunge').  Any revision left
+Go regular expressions (opposite of 'expunge').  Any revision left
 with no Node records after this filtering has its Revision record
 removed as well.
 
