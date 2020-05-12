@@ -933,11 +933,11 @@ func compareRevision(args []string, rev string) string {
 	if acceptMissing {
 		if !exists(sourcedir) {
 			// replace by empty directory
-			os.Mkdir(sourcedir, 0644)
+			os.MkdirAll(sourcedir, 0755)
 		}
 		if !exists(targetdir) {
 			// replace by empty directory
-			os.Mkdir(targetdir, 0644)
+			os.MkdirAll(targetdir, 0755)
 		}
 	}
 	// add missing empty directories in checkouts of VCSs that do not support them
@@ -955,7 +955,7 @@ func compareRevision(args []string, rev string) string {
 					matching := filepath.Join(targetdir, path)
 					if !exists(matching) {
 						dirsToNuke = append(dirsToNuke, matching)
-						os.Mkdir(matching, 0644)
+						os.MkdirAll(matching, 0755)
 					}
 				}
 				return nil
@@ -971,7 +971,7 @@ func compareRevision(args []string, rev string) string {
 					matching := filepath.Join(sourcedir, path)
 					if !exists(matching) {
 						dirsToNuke = append(dirsToNuke, matching)
-						os.Mkdir(matching, 0644)
+						os.MkdirAll(matching, 0755)
 					}
 				}
 				return nil
