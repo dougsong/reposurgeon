@@ -636,7 +636,7 @@ func tags() string {
 	if e, ok := m[vcs]; !ok {
 		croak("can't list tags from directory of type %s.", vcs)
 	} else {
-		return captureFromProcess(e, " tag-list command")
+		return captureFromProcess(e, " tag-list command in " + pwd)
 	}
 	return ""
 }
@@ -658,7 +658,7 @@ func branches() string {
 	if e, ok := m[vcs]; !ok {
 		croak("can't list branches from directory of type %s.", vcs)
 	} else {
-		return captureFromProcess(e, " branch-list command")
+		return captureFromProcess(e, " branch-list command  in " + pwd)
 	}
 	return ""
 }
@@ -995,16 +995,120 @@ func compareRevision(args []string, rev string) string {
 	return diff
 }
 
+func compareEngine(_singular string, plural string, lister func() string, args []string) string {
+	// Compare two repositories at all revisions implied by a specified command.
+	if len(args) != 2 {
+		croak("compareEngine requires exactly two repository-name arguments, but there are %d %v.", len(args), args)
+	}
+	source := args[0]
+	target := args[1]
+	if !isdir(source) || !isdir(target) {
+		croak("both repository directories must exist.")
+	}
+	var sourcerefs, targetrefs []string
+	under(source, func() {
+		sourcerefs = strings.Fields(strings.TrimSpace(lister()))
+	})
+	under(target, func() {
+		targetrefs = strings.Fields(strings.TrimSpace(lister()))
+	})
+	common := newStringSet(sourcerefs...).Intersection(newStringSet(targetrefs...))
+	sourceonly := newStringSet(sourcerefs...).Subtract(common)
+	targetonly := newStringSet(targetrefs...).Subtract(common)
+	if refexclude != "" {
+		re := regexp.MustCompile(refexclude)
+		for k := range sourceonly.store {
+			if re.MatchString(k) {
+				sourceonly.Remove(k)
+			}
+		}
+		for k := range targetonly.store {
+			if re.MatchString(k) {
+				targetonly.Remove(k)
+			}
+		}
+	}
+
+	compareResult := ""
+	if sourceonly.Len() > 0 {
+		compareResult += "----------------------------------------------------------------\n"
+		compareResult += fmt.Sprintf("%s only in source:\n", plural)
+		for _, item := range sourceonly.Listify() {
+			compareResult += item + "\n"
+		}
+	}
+	if targetonly.Len() > 0 {
+		compareResult += "----------------------------------------------------------------\n"
+		compareResult += fmt.Sprintf("%s only in target:\n", plural)
+		for _, item := range targetonly.Listify() {
+			compareResult += item + "\n"
+		}
+	}
+	if compareResult != "" {
+		croak(compareResult)
+	}
+	report := ""
+	if !common.Empty() {
+		for _, ref := range common.Listify() {
+			report += compareRevision([]string{source, target}, ref)
+		}
+	}
+	return report
+}
+
 func compareTags(args []string) {
-	croak("compare-tags is not yet supported")
+	diff := compareEngine("Tag", "Tags", tags, args)
+	if diff != "" {
+		fmt.Print(diff)
+		os.Exit(1)
+	} else {
+		os.Exit(0)
+	}
 }
 
 func compareBranches(args []string) {
-	croak("compare-branches is not yet supported")
+	diff := compareEngine("Branch", "Branches", branches, args)
+	if diff != "" {
+		fmt.Print(diff)
+		os.Exit(1)
+	} else {
+		os.Exit(0)
+	}
 }
 
 func compareAll(args []string) {
-	croak("compare-all is not yet supported")
+	if nobranch  {
+		if verbose {
+			fmt.Print("Comparing the complete repository...")
+		}
+		compareRevision(args, "")
+		return
+	}
+	if verbose {
+		fmt.Print("Comparing master...")
+	}
+	// -a will compare against an empty
+	// directory if trunk does not exist, which will thus fail the
+	// comparison if it exists on one side but not the other, but
+	// will succeed if both repositories have no trunk
+	acceptMissing = true
+	branch = "master" 
+	diff := compareRevision(args, "")
+	if verbose {
+		fmt.Print("Comparing tags...")
+	}
+	diff += compareEngine("Branch", "Branches", branches, args)
+	if verbose {
+		fmt.Print("Comparing branches...")
+	}
+	compareBranches(args)
+	diff += compareEngine("Branch", "Branches", branches, args)
+	if diff != "" {
+		fmt.Print(diff)
+		os.Exit(1)
+	} else {
+		os.Exit(0)
+	}
 }
 
 func main() {
