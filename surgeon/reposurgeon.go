@@ -192,7 +192,7 @@ func catch(accept string, x interface{}) *exception {
 		if err.class == accept {
 			return err
 		}
-		fmt.Fprintf(os.Stderr, "Somebody threw a %s eexception while we were awaiting a %s exception!\n", err.class, accept)
+		fmt.Fprintf(os.Stderr, "Somebody threw a %s exception while we were awaiting a %s exception!\n", err.class, accept)
 	}
 	panic(x)
 }

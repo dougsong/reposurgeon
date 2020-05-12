@@ -856,8 +856,8 @@ func compareRevision(args []string, rev string) string {
 	if len(args) != 2 {
 		croak("compare requires exactly two repository-name args, but there are %v.", args)
 	}
-	target := args[0]
-	source := args[1]
+	source := args[0]
+	target := args[1]
 	if !isdir(source) || !isdir(target) {
 		croak("both repository directories must exist.")
 	}
