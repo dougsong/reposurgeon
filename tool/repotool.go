@@ -553,10 +553,11 @@ func mirror(args []string) {
 	if (badre == nil && isFullURL) || (strings.HasPrefix(operand, "file:///") && isdir(filepath.Join(operand[7:], "locks"))) {
 		if mirrordir == "" {
 			locald = filepath.Base(operand) + "-mirror"
-		} else if strings.HasPrefix(mirrordir, "/") {
+		}
+		if mirrordir[0] == os.PathSeparator {
 			locald = mirrordir
 		} else {
-			locald = pwd + "/" + mirrordir
+			locald = filepath.Join(pwd, mirrordir)
 		}
 		runShellProcessOrDie("svnadmin create " + locald, "mirror creation")
 		makeStub(locald + "/hooks/pre-revprop-change", "#!/bin/sh\nexit 0;\n")
@@ -570,7 +571,12 @@ func mirror(args []string) {
 		runShellProcessOrDie(fmt.Sprintf("chmod a+x %s/hooks/pre-revprop-change", locald), "mirroring")
 		runShellProcessOrDie(fmt.Sprintf("svnsync init -q --allow-non-empty file://%s %s", locald, operand), "mirroring")
 		runShellProcessOrDie(fmt.Sprintf("svnsync synchronize -q --steal-lock file://%s", locald), "mirroring")
-	} else if isdir(operand + "/locks") {
+	} else if isdir(filepath.Join(operand, "locks")) {
+		if operand[0] == os.PathSeparator {
+			locald = operand
+		} else {
+			locald = filepath.Join(pwd, operand)
+		}
 		runShellProcessOrDie(fmt.Sprintf("svnsync synchronize -q --steal-lock file://%s", locald), "mirroring")
 	} else if strings.HasPrefix(operand, "cvs://") {
 		if mirrordir != "" {
