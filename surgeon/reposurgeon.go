@@ -899,7 +899,7 @@ func init() {
 			name:         "git",
 			subdirectory: ".git",
 			// Requires git 2.19.2 or later for --show-original-ids
-			exporter:    "git fast-export --show-original-ids --signed-tags=verbatim --tag-of-filtered-object=drop --all",
+			exporter:    "git fast-export --show-original-ids --signed-tags=verbatim --tag-of-filtered-object=drop --use-done-feature --all",
 			styleflags:  newOrderedStringSet(),
 			extensions:  newOrderedStringSet(),
 			initializer: "git init --quiet",
