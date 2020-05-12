@@ -220,7 +220,7 @@ do
 	    fi
 	    # Compare the original with the lift
 	    # shellcheck disable=2086
-	    ../repotool ${repotoolopt} compare ${compareopt} \
+	    ../repotool compare ${repotoolopt} ${compareopt} \
 		-a ${refopt} -r ${intrev}:${sha} \
 		${stem}-checkout ${stem}-git
 	done < "${stem}.info"

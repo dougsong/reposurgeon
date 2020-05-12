@@ -434,9 +434,10 @@ def checkout(args):
     #    then update to revision needed and add a qualifier
     # This can be very slow under Subversion, we want to avoid it if at all possible.
     # Other cases should error out.
+    global verbose, quiet
     if verbose:
         print("checkout: %s" % args)
-    (options, arguments) = getopt.getopt(args, "ab:c:nr:t:")
+    (options, arguments) = getopt.getopt(args, "ab:c:nqr:t:v")
     outdir = "."
     branch = ""
     tag = ""
@@ -456,6 +457,12 @@ def checkout(args):
             revision = val
         elif opt == '-t':
             tag = val
+        elif opt == '-v':
+            verbose = True
+            quiet = False
+        elif opt == '-q':
+            quiet = True
+            verbose = False
     if nobranch:
         branch = "" # nobranch will also prevent the automatic switch to "trunk"
     outdir = arguments[0]
@@ -577,9 +584,10 @@ def nuke(linkpath):
 
 def compare(args):
     "Compare two repositories at a specified revision, defaulting to mainline tip."
+    global verbose, quiet
     if verbose:
         print("compare: %s" % args)
-    (options, arguments) = getopt.getopt(args, "ab:e:inr:st:ux:")
+    (options, arguments) = getopt.getopt(args, "ab:e:inqr:st:uvx:")
     outdir = "."
     branch = ""
     tag = ""
@@ -619,6 +627,12 @@ def compare(args):
             diff_args.append(val)
         elif opt == '-i':
             seeignores = True
+        elif opt == '-v':
+            verbose = True
+            quiet = False
+        elif opt == '-q':
+            quiet = True
+            verbose = False
     checkout1_args = checkout_args + checkout1_args
     checkout2_args = checkout_args + checkout2_args
     if verbose:
@@ -719,10 +733,11 @@ def compare(args):
 
 def compare_engine(_singular, plural, lister, comparer, args):
     "Compare two repositories at all revisions implied by a specified command."
-    (options, arguments) = getopt.getopt(args, "e:isux:")
+    (options, arguments) = getopt.getopt(args, "e:iqsuvx:")
     diff_args = []
     excludes = []
     seeignores = False
+    global quiet, verbose
     for (opt, val) in options:
         if opt in ('-q', '-s', '-u'):
             diff_args.append(opt)
@@ -733,6 +748,12 @@ def compare_engine(_singular, plural, lister, comparer, args):
             seeignores = True
         elif opt == '-e':
             excludes.append(val)
+        elif opt == '-v':
+            verbose = True
+            quiet = False
+        elif opt == '-q':
+            quiet = True
+            verbose = False
     if len(arguments) != 2:
         croak("compare requires exactly two repository-name arguments.")
     args = args[:]
@@ -810,17 +831,7 @@ def compare_all(args):
         print("Done")
 
 if __name__ == "__main__":
-    (g_options, g_arguments) = getopt.getopt(sys.argv[1:], "vq")
-    verbose = False
-    quiet = False
-    for (g_opt, _val) in g_options:
-        if g_opt == '-v':
-            verbose = True
-            quiet = False
-        elif g_opt == '-q':
-            quiet = True
-            verbose = False
-
+    g_arguments = sys.argv[1:]
     if len(g_arguments) < 1:
         croak("requires an operation as first argument.")
     operation = g_arguments.pop(0)
