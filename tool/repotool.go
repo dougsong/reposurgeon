@@ -748,7 +748,7 @@ func checkout(outdir string, rev string) string {
 			if islink(outdir) {
 				os.Remove(outdir)
 			} else {
-				croak("can't checkout to existing %s", outdir)
+				croak("can't checkout SVN repo to existing %s", outdir)
 			}
 		}
 		os.Symlink(outdir, filepath.Join(pwd, relpath))
@@ -875,7 +875,7 @@ func compareRevision(args []string, rev string) string {
 				diffopts = append(diffopts, []string{"-x", f}...)
 			}
 		}
-		sourcedir = checkout(rtarget, sourceRev)
+		sourcedir = checkout(rsource, sourceRev)
 		if sourcedir == "" {
 			panic("sourcedir unexpectedly nil")
 		}
