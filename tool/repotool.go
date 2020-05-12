@@ -860,7 +860,7 @@ func compareRevision(args []string, rev string) string {
 	var sourceRev, targetRev string
 
 	if revision != "" {
-		vals := strings.SplitN(revision, ":", 1)
+		vals := strings.Split(revision, ":")
 		if len(vals) == 1 {
 			sourceRev = vals[0]
 			targetRev = vals[0]
