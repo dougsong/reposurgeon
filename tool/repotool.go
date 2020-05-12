@@ -754,7 +754,14 @@ func checkout(outdir string, rev string) string {
 				croak("can't checkout SVN repo to existing %s", outdir)
 			}
 		}
-		os.Symlink(outdir, filepath.Join(pwd, relpath))
+		part := filepath.Join(pwd, relpath)
+		err := os.Symlink(part, outdir)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if verbose {
+			fmt.Printf("Subversion inward link %s -> %s\n", outdir, part)
+		}
 		return outdir
 	} else if vcs == "git" {
 		// Only one rev should be given to git checkout
@@ -787,6 +794,9 @@ func checkout(outdir string, rev string) string {
 		if err != nil {
 			log.Fatal(err)
 		}
+		if verbose {
+			fmt.Printf("Git inward link %s -> %s\n", outdir, path)
+		}
 		return outdir
 	} else if vcs == "bzr" {
 		croak("checkout is not yet supported in bzr.")
@@ -807,9 +817,12 @@ func checkout(outdir string, rev string) string {
 				os.Remove(outdir)
 			}
 		}
-		err := os.Symlink(pwd, outdir)
+		err = os.Symlink(pwd, outdir)
 		if err != nil {
 			log.Fatal(err)
+		}
+		if verbose {
+			fmt.Printf("Hg inward link %s -> %s\n", outdir, pwd)
 		}
 		return outdir
 	} else if vcs == "darcs" {
