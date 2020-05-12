@@ -34,6 +34,8 @@ import (
 // * Default preserve set (e.g. config & hook files; parts can be directories).
 // * Likely location for an importer to drop an authormap file
 // * Command to list files under repository control.
+// * Command to list tags defined in the repository.
+// * Command to list branches defined in the repository.
 //
 // Note that some of the commands used here are plugins or extensions
 // that are not part of the basic VCS. Thus these may fail when called;
@@ -48,6 +50,8 @@ import (
 // won't have to wait for the tempfile I/O to complete.
 //
 // ${basename} is replaced with the basename of the repo directory.
+//
+// ${pwd} is replaced with the name of the present working directory.
 
 // VCS is a class representing a version-control system.
 type VCS struct {
@@ -58,6 +62,8 @@ type VCS struct {
 	extensions   orderedStringSet
 	initializer  string
 	pathlister   string
+	taglister    string
+	branchlister string
 	importer     string
 	checkout     string
 	preserve     orderedStringSet
@@ -93,6 +99,8 @@ func (vcs VCS) String() string {
 		fmt.Sprintf("   Extensions: %s\n", vcs.extensions.String()) +
 		fmt.Sprintf("  Initializer: %s\n", vcs.initializer) +
 		fmt.Sprintf("   Pathlister: %s\n", vcs.pathlister) +
+		fmt.Sprintf("    Taglister: %s\n", vcs.taglister) +
+		fmt.Sprintf(" Branchlister: %s\n", vcs.branchlister) +
 		fmt.Sprintf("     Importer: %s\n", vcs.importer) +
 		fmt.Sprintf("     Checkout: %s\n", vcs.checkout) +
 		fmt.Sprintf("      Prenuke: %s\n", vcs.prenuke.String()) +
@@ -170,6 +178,8 @@ func init() {
 			importer:    "git fast-import --quiet --export-marks=.git/marks",
 			checkout:    "git checkout",
 			pathlister:  "git ls-files",
+			taglister:   "git tag -l",
+			branchlister:"git branch -q --list 2>&1 | cut -c 3- | egrep -v 'detached|^master$' || exit 0",
 			prenuke:     newOrderedStringSet(".git/config", ".git/hooks"),
 			preserve:    newOrderedStringSet(".git/config", ".git/hooks"),
 			authormap:   ".git/cvs-authors",
@@ -192,6 +202,8 @@ func init() {
 				"multiple-authors", "commit-properties"),
 			initializer: "",
 			pathlister:  "",
+			taglister:   "bzr tags",
+			branchlister:"bzr branches | cut -c 3-",
 			importer:    "bzr fast-import -",
 			checkout:    "bzr checkout",
 			prenuke:     newOrderedStringSet(".bzr/plugins"),
@@ -227,6 +239,8 @@ bzr-orphans
 			extensions:  newOrderedStringSet(),
 			initializer: "hg init",
 			pathlister:  "hg status -macn",
+			taglister:   "hg tags --quiet",
+			branchlister:"hg branches --template '{branch}\n' | grep -v '^default$'",
 			importer:    "hg-git-fast-import",
 			checkout:    "hg checkout",
 			prenuke:     newOrderedStringSet(".hg/hgrc"),
@@ -251,6 +265,8 @@ branch is renamed to 'master'.
 			extensions:   newOrderedStringSet(),
 			initializer:  "",
 			pathlister:   "darcs show files",
+			taglister:    "darcs show tags",
+			branchlister: "",
 			importer:     "darcs fastconvert import",
 			checkout:     "",
 			prenuke:      newOrderedStringSet(),
@@ -369,6 +385,8 @@ core
 			extensions:   newOrderedStringSet(),
 			initializer:  "",
 			pathlister:   "mtn list known",
+			taglister:    "",
+			branchlister: "",
 			importer:     "",
 			checkout:     "",
 			prenuke:      newOrderedStringSet(),
@@ -427,6 +445,8 @@ _darcs
 			importer:     "",
 			checkout:     "",
 			pathlister:   "",
+			taglister:   "svn ls 'file://${pwd}/tags' | sed 's|/$||'",
+			branchlister:"svn ls 'file://${pwd}/branches' | sed 's|/$||'",
 			prenuke:      newOrderedStringSet(),
 			preserve:     newOrderedStringSet("hooks"),
 			authormap:    "",
@@ -446,6 +466,11 @@ _darcs
 			importer:     "",
 			checkout:     "",
 			pathlister:   "",
+			// CVS code will screw up if any tag is not common to all files
+			// FIXME: Hack at https://stackoverflow.com/questions/6174742/how-to-get-a-list-of-tags-created-in-cvs-repository
+			// might be better.
+			taglister:    "module=`ls -1 | grep -v CVSROOT`; cvs -Q -d:local:${pwd} rlog -h $module 2>&1 | awk -F'[.:]' '/^\t/&&$(NF-1)!=0{print $1}' |awk '{print $1}' | sort -u",
+			branchlister: "module=`ls -1 | grep -v CVSROOT`; cvs -Q -d:local:${pwd} rlog -h $module 2>&1 | awk -F'[.:]' '/^\t/&&$(NF-1)!=0{print $1}' |awk '{print $1}' | sort -u",
 			prenuke:      newOrderedStringSet(),
 			preserve:     newOrderedStringSet(),
 			authormap:    "",
@@ -530,6 +555,8 @@ core
 			extensions:   newOrderedStringSet(),
 			initializer:  "", // bk setup doesn't work here
 			pathlister:   "bk gfiles -U",
+			taglister:    "bk tags | sed -n 's/ *TAG: *//p'",
+			branchlister: "",
 			importer:     "bk fast-import -q",
 			checkout:     "",
 			prenuke:      newOrderedStringSet(),
@@ -584,6 +611,16 @@ var fileFilters = map[string]struct {
 	exporter string
 }{
 	"fossil": {"fossil export --git %s", "fossil import --git %s"},
+}
+
+// findVCS finds a VCS by name
+func findVCS(name string) *VCS {
+	for _, vcs := range vcstypes {
+		if vcs.name == name {
+			return &vcs
+		}
+	}
+	panic("reposurgeon: failed to find '" + name + "' in VCS types")
 }
 
 // end

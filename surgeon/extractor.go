@@ -264,15 +264,6 @@ func (cm *ColorMixer) _branchColor(rev, color string) {
 	}
 }
 
-func findVCS(name string) *VCS {
-	for _, vcs := range vcstypes {
-		if vcs.name == name {
-			return &vcs
-		}
-	}
-	panic("reposurgeon: failed to find '" + name + "' in VCS types")
-}
-
 func lineByLine(rs *RepoStreamer, command string, errfmt string,
 	hook func(string, *RepoStreamer) error) error {
 	stdout, cmd, err1 := readFromProcess(command)
