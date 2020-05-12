@@ -124,8 +124,8 @@ func (s stringSet) Len() int {
 	return len(s.store)
 }
 
-type squishyParts struct{
-	Project string
+type squishyParts struct {
+	Project   string
 	SourceVCS string
 	TargetVCS string
 }
@@ -312,7 +312,7 @@ func runShellProcessOrDie(dcmd string, legend string) {
 	if verbose {
 		announce("executing '%s'%s", dcmd, legend)
 	}
-	cmd := exec.Command("sh", "-c", "(" + dcmd + ")")
+	cmd := exec.Command("sh", "-c", "("+dcmd+")")
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -338,7 +338,6 @@ func captureFromProcess(command string, legend string) string {
 	return string(content)
 }
 
-
 func exists(pathname string) bool {
 	_, err := os.Stat(pathname)
 	return !os.IsNotExist(err)
@@ -355,7 +354,7 @@ func islink(pathname string) bool {
 }
 
 func under(target string, hook func()) {
-        if verbose {
+	if verbose {
 		fmt.Printf("repotool: in %s...\n", target)
 	}
 	source, err := os.Getwd()
@@ -388,28 +387,28 @@ func vcstype(d string) string {
 			return "cvs"
 		}
 	}
-        if isdir(filepath.Join(d, "CVS")) {
+	if isdir(filepath.Join(d, "CVS")) {
 		return "cvs-checkout"
 	}
-        if isdir(filepath.Join(d, "locks")) {
+	if isdir(filepath.Join(d, "locks")) {
 		return "svn"
 	}
-        if isdir(filepath.Join(d, ".svn")) {
+	if isdir(filepath.Join(d, ".svn")) {
 		return "svn-checkout"
 	}
-        if isdir(filepath.Join(d, ".git")) {
+	if isdir(filepath.Join(d, ".git")) {
 		return "git"
 	}
-        if isdir(filepath.Join(d, ".bzr")) {
+	if isdir(filepath.Join(d, ".bzr")) {
 		return "bzr"
 	}
-        if isdir(filepath.Join(d, ".hg")) {
+	if isdir(filepath.Join(d, ".hg")) {
 		return "hg"
 	}
-        if isdir(filepath.Join(d, "_darcs")) {
+	if isdir(filepath.Join(d, "_darcs")) {
 		return "darcs"
 	}
-        if isdir(filepath.Join(d, ".bk")) {
+	if isdir(filepath.Join(d, ".bk")) {
 		return "bk"
 	}
 	croak("%s does not look like a repository of known type.", d)
@@ -422,15 +421,15 @@ func isDvcsOrCheckout() bool {
 	return t != "cvs" && t != "svn"
 }
 
-func vcsignores() [] string {
-    // Return ignorable directories.
-    return []string{".svn",
-            "CVS", ".cvsignore",
-            ".git", ".gitignore",
-            ".hg", ".hgignore",
-            ".bzr", ".bzrignore",
-            ".bk", ".bkignore",
-            "_darcs"}
+func vcsignores() []string {
+	// Return ignorable directories.
+	return []string{".svn",
+		"CVS", ".cvsignore",
+		".git", ".gitignore",
+		".hg", ".hgignore",
+		".bzr", ".bzrignore",
+		".bk", ".bkignore",
+		"_darcs"}
 }
 
 func input(prompt string) string {
@@ -443,7 +442,7 @@ func input(prompt string) string {
 	return line
 }
 
-func makeStub (name string, contents string) {
+func makeStub(name string, contents string) {
 	fp, err := os.OpenFile(name, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
@@ -503,26 +502,26 @@ func initialize(args []string) {
 		complain("a project options file already exists here.")
 	} else {
 		fmt.Printf("repotool: generating a stub options file.\n")
-		makeStub(project + ".opts", "# Pre-read options for reposurgeon go here.\n")
+		makeStub(project+".opts", "# Pre-read options for reposurgeon go here.\n")
 	}
 	if exists(project + ".lift") {
 		complain("a project lift file already exists here.")
 	} else {
 		fmt.Printf("repotool: generating a stub lift file.\n")
-		makeStub(project + ".lift", fmt.Sprintf("# Lift commands for %s\n", project))
+		makeStub(project+".lift", fmt.Sprintf("# Lift commands for %s\n", project))
 	}
 }
 
 func export(args []string) {
 	// Export from the current working directory to standard output.
 	m := map[string]string{
-		"cvs": `find . -name \*,v | cvs-fast-export -q --reposurgeon`,
-		"svn": "svnadmin -q dump .",
-		"git": "git fast-export --all --use-done-feature",
-		"bzr": "bzr fast-export --no-plain .",
-		"hg": "reposurgeon 'read .' 'prefer git' 'write -'",
+		"cvs":   `find . -name \*,v | cvs-fast-export -q --reposurgeon`,
+		"svn":   "svnadmin -q dump .",
+		"git":   "git fast-export --all --use-done-feature",
+		"bzr":   "bzr fast-export --no-plain .",
+		"hg":    "reposurgeon 'read .' 'prefer git' 'write -'",
 		"darcs": "darcs fastconvert export",
-		"bk": "bk fast-export -q",
+		"bk":    "bk fast-export -q",
 	}
 	vcs := vcstype(".")
 	if e := m[vcs]; e == "" {
@@ -559,8 +558,8 @@ func mirror(args []string) {
 		} else {
 			locald = filepath.Join(pwd, mirrordir)
 		}
-		runShellProcessOrDie("svnadmin create " + locald, "mirror creation")
-		makeStub(locald + "/hooks/pre-revprop-change", "#!/bin/sh\nexit 0;\n")
+		runShellProcessOrDie("svnadmin create "+locald, "mirror creation")
+		makeStub(locald+"/hooks/pre-revprop-change", "#!/bin/sh\nexit 0;\n")
 		os.Remove(locald + "/hooks/post-revprop-change")
 		// Note: The --allow-non-empty and --steal-lock options permit
 		// this to operate on a Subversion repository you have pulled
@@ -584,40 +583,40 @@ func mirror(args []string) {
 		} else {
 			locald = tillHash.ReplaceAllString(filepath.Base(operand), pwd)
 		}
-		os.MkdirAll(locald, 0755)	// Needs to be searchable all the way down.
+		os.MkdirAll(locald, 0755) // Needs to be searchable all the way down.
 		runShellProcessOrDie(fmt.Sprintf("cvssync -c -o %s %s", locald, operand), "mirroring")
-		makeStub(locald + "/.cvssync", operand)
+		makeStub(locald+"/.cvssync", operand)
 	} else if exists(operand + "/.cvssync") {
 		contents, err := ioutil.ReadFile(operand + "/.cvssync")
 		if err != nil {
 			croak(operand + "/.cvssync is missing or unreadable")
 		}
-		runShellProcessOrDie("cvssync -c -o " + operand + " " + string(contents), "mirroring")
+		runShellProcessOrDie("cvssync -c -o "+operand+" "+string(contents), "mirroring")
 	} else if strings.HasPrefix(operand, "git://") || (strings.HasPrefix(operand, "file://") && isdir(filepath.Join(operand[6:], ".git"))) {
 		if strings.HasPrefix(operand, "file://") {
 			operand = operand[6:]
 		}
-		if mirrordir != ""{
+		if mirrordir != "" {
 			locald = mirrordir
 		} else {
 			locald = tillHash.ReplaceAllString(filepath.Base(operand), pwd)
 		}
 		runShellProcessOrDie(fmt.Sprintf("git clone -q %s %s", operand, locald), "mirroring")
 	} else if isdir(operand + "/.git") {
-		under(operand, func() {runShellProcessOrDie("git pull", "mirroring")})
+		under(operand, func() { runShellProcessOrDie("git pull", "mirroring") })
 		runShellProcessOrDie(fmt.Sprintf("git clone %s %s", operand, mirrordir), "mirroring")
 	} else if strings.HasPrefix(operand, "hg://") || (strings.HasPrefix(operand, "file://") && isdir(filepath.Join(operand[6:], ".hg"))) {
 		if strings.HasPrefix(operand, "file://") {
 			operand = operand[6:]
 		}
-		if mirrordir != ""{
+		if mirrordir != "" {
 			locald = mirrordir
 		} else {
 			locald = tillHash.ReplaceAllString(filepath.Base(operand), pwd)
 		}
 		runShellProcessOrDie(fmt.Sprintf("hg clone -q %s %s", operand, locald), "mirroring")
 	} else if isdir(operand + "/.hg") {
-		under(operand, func() {runShellProcessOrDie("hg update", "mirroring")})
+		under(operand, func() { runShellProcessOrDie("hg update", "mirroring") })
 		runShellProcessOrDie(fmt.Sprintf("hg clone %s %s", operand, mirrordir), "mirroring")
 	} else {
 		croak("%s does not look like a repository mirror.", operand)
@@ -632,20 +631,20 @@ func tags() string {
 	// List tags from the current working directory to standard output.
 	var m = map[string]string{
 		// CVS code will screw up if any tag is not common to all files
-		"cvs": "module=`ls -1 | grep -v CVSROOT`; cvs -Q -d:local:${PWD} rlog -h $module 2>&1 | awk -F'[.:]' '/^\t/&&$(NF-1)!=0{print $1}' |awk '{print $1}' | sort -u",
-		"svn": fmt.Sprintf("svn ls 'file://%s/tags' | sed 's|/$||'", pwd),
+		"cvs":          "module=`ls -1 | grep -v CVSROOT`; cvs -Q -d:local:${PWD} rlog -h $module 2>&1 | awk -F'[.:]' '/^\t/&&$(NF-1)!=0{print $1}' |awk '{print $1}' | sort -u",
+		"svn":          fmt.Sprintf("svn ls 'file://%s/tags' | sed 's|/$||'", pwd),
 		"svn-checkout": "ls tags 2>/dev/null || exit 0",
-		"git": "git tag -l",
-		"bzr": "bzr tags",
-		"hg": "hg tags --quiet",
-		"darcs": "darcs show tags",
-		"bk": "bk tags | sed -n 's/ *TAG: *//p'",
+		"git":          "git tag -l",
+		"bzr":          "bzr tags",
+		"hg":           "hg tags --quiet",
+		"darcs":        "darcs show tags",
+		"bk":           "bk tags | sed -n 's/ *TAG: *//p'",
 	}
 	vcs := vcstype(".")
 	if e, ok := m[vcs]; !ok {
 		croak("can't list tags from directory of type %s.", vcs)
 	} else {
-		return captureFromProcess(e, " tag-list command in " + pwd)
+		return captureFromProcess(e, " tag-list command in "+pwd)
 	}
 	return ""
 }
@@ -656,18 +655,18 @@ func branches() string {
 		log.Fatal(err)
 	}
 	var m = map[string]string{
-		"cvs": "module=`ls -1 | grep -v CVSROOT`; cvs -Q -d:local:${PWD} rlog -h $module 2>&1 | awk -F'[.:]' '/^\t/&&$(NF-1)==0{print $1}' | awk '{print $1}' | sort -u",
-		"svn": fmt.Sprintf("svn ls 'file://%s/branches' | sed 's|/$||'", pwd),
+		"cvs":          "module=`ls -1 | grep -v CVSROOT`; cvs -Q -d:local:${PWD} rlog -h $module 2>&1 | awk -F'[.:]' '/^\t/&&$(NF-1)==0{print $1}' | awk '{print $1}' | sort -u",
+		"svn":          fmt.Sprintf("svn ls 'file://%s/branches' | sed 's|/$||'", pwd),
 		"svn-checkout": "ls branches 2>/dev/null || exit 0",
-		"git": "git branch -q --list 2>&1 | cut -c 3- | egrep -v 'detached|^master$' || exit 0",
-		"bzr": "bzr branches | cut -c 3-",
-		"hg": "hg branches --template '{branch}\n' | grep -v '^default$'",
-        }
+		"git":          "git branch -q --list 2>&1 | cut -c 3- | egrep -v 'detached|^master$' || exit 0",
+		"bzr":          "bzr branches | cut -c 3-",
+		"hg":           "hg branches --template '{branch}\n' | grep -v '^default$'",
+	}
 	vcs := vcstype(".")
 	if e, ok := m[vcs]; !ok {
 		croak("can't list branches from directory of type %s.", vcs)
 	} else {
-		return captureFromProcess(e, " branch-list command  in " + pwd)
+		return captureFromProcess(e, " branch-list command  in "+pwd)
 	}
 	return ""
 }
@@ -716,8 +715,8 @@ func checkout(outdir string, rev string) string {
 		}
 		runShellProcessOrDie(fmt.Sprintf("svn co -q %s file://%s %s", rev, pwd, outdir), "checkout")
 		if nobranch {
-			; // flat repository
-		} else if tag != ""{
+			// flat repository
+		} else if tag != "" {
 			outdir = filepath.Join(outdir, "tags", tag)
 		} else if branch == "" || branch == "master" || branch == "trunk" {
 			outdir = filepath.Join(outdir, "trunk")
@@ -732,11 +731,11 @@ func checkout(outdir string, rev string) string {
 			// of HEAD and the update operation (which is hideously slow on
 			// large repositories) only needs to be done if an explicit rev
 			// was supplied.
-			runShellProcessOrDie("svn up -q " + rev, "checkout")
+			runShellProcessOrDie("svn up -q "+rev, "checkout")
 		}
 		relpath := ""
 		if nobranch {
-			; // flat repository
+			// flat repository
 		} else if tag != "" && (acceptMissing || isdir("tags")) {
 			relpath = filepath.Join("tags", tag)
 		} else if (branch == "" || branch == "master" || branch == "trunk") && isdir("trunk") {
@@ -796,7 +795,7 @@ func checkout(outdir string, rev string) string {
 				os.Remove(outdir)
 			}
 		}
-		err := os.Symlink(path, outdir)	// to, from
+		err := os.Symlink(path, outdir) // to, from
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -843,7 +842,7 @@ func checkout(outdir string, rev string) string {
 func dirlist(top string, excl stringSet) stringSet {
 	outset := newStringSet()
 	filepath.Walk(top, func(path string, info os.FileInfo, err error) error {
-		clean := filepath.Clean(path)	// Remove leading ./ if any
+		clean := filepath.Clean(path) // Remove leading ./ if any
 		if !excl.Contains(clean) {
 			outset.Add(clean)
 		}
@@ -866,7 +865,7 @@ func compareRevision(args []string, rev string) string {
 			targetRev = vals[0]
 		} else if len(vals) == 2 {
 			sourceRev = vals[0]
-			targetRev = vals[1]			
+			targetRev = vals[1]
 		} else {
 			croak("incorrect value for compare -r option.")
 		}
@@ -1099,7 +1098,7 @@ func compareBranches(args []string) {
 }
 
 func compareAll(args []string) {
-	if nobranch  {
+	if nobranch {
 		if verbose {
 			fmt.Print("Comparing the complete repository...")
 		}
@@ -1114,7 +1113,7 @@ func compareAll(args []string) {
 	// comparison if it exists on one side but not the other, but
 	// will succeed if both repositories have no trunk
 	acceptMissing = true
-	branch = "master" 
+	branch = "master"
 	diff := compareRevision(args, "")
 	if verbose {
 		fmt.Print("Comparing tags...")
@@ -1156,7 +1155,7 @@ func main() {
 	flags.StringVar(&tag, "t", "", "select tag for checkout or comparison")
 	flags.StringVar(&pathexclude, "x", "", "basename-exclude pattern for comparisons.")
 
-	explain := func () {
+	explain := func() {
 		print(`
 repotool commands:
 
@@ -1200,8 +1199,7 @@ repotool options:
 		checkout(args[0], revision)
 	} else if operation == "compare" {
 		if diff := compareRevision(args, revision); diff != "" {
-			// FIXME: Awkrd code emulates semi-broken pytrepotool, can go away when it does. 
-			fmt.Printf("repotool: Non-empty diff for :\n%s\n", diff)
+			fmt.Print(diff)
 		}
 	} else if operation == "compare-tags" {
 		compareTags(args)

@@ -1,6 +1,5 @@
 reposurgeon: r5#1~trunk/README properties set:
 reposurgeon: 	foo = "bar"
-repotool: Non-empty diff for :
 diff -r -x .svn -x CVS -x .cvsignore -x .git -x .gitignore -x .hg -x .hgignore -x .bzr -x .bzrignore -x .bk -x .bkignore -x _darcs -x .svn -x CVS -x .cvsignore -x .git -x .gitignore -x .hg -x .hgignore -x .bzr -x .bzrignore -x .bk -x .bkignore -x _darcs '--ignore-matching-lines= @(#) ' '--ignore-matching-lines=$Id.*$' '--ignore-matching-lines=$Header.*$' '--ignore-matching-lines=$Log.*$' /tmp/source/README /tmp/target/README
 1,5c1
 < This is a sample file.
@@ -10,4 +9,3 @@ diff -r -x .svn -x CVS -x .cvsignore -x .git -x .gitignore -x .hg -x .hgignore -
 < This is our second line of modified content.
 ---
 > This is deliberately corrupted data for a blob.
-
