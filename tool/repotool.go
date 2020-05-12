@@ -1194,7 +1194,8 @@ repotool options:
 		checkout(args[0], revision)
 	} else if operation == "compare" {
 		if diff := compareRevision(args, revision); diff != "" {
-			fmt.Printf("Non-empty diff for %s %s:\n%s", args[0], args[1], diff)
+			// FIXME: Awkrd code emulates semi-broken pytrepotool, can go away when it does. 
+			fmt.Printf("repotool: Non-empty diff for :\n%s\n", diff)
 		}
 	} else if operation == "compare-tags" {
 		compareTags(args)
