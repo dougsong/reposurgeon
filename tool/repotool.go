@@ -1178,7 +1178,7 @@ repotool options:
 
 	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr,
-			"repotool requires an operation argument.\n")
+			"repotool: requires an operation argument.\n")
 		explain()
 	}
 	operation := os.Args[1]
@@ -1210,6 +1210,7 @@ repotool options:
 	} else if operation == "compare-all" {
 		compareAll(args)
 	} else {
+		fmt.Fprintf(os.Stderr, "repotool: unknown operation %q\n", operation)
 		explain()
 	}
 }
