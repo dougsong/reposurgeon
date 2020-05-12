@@ -365,7 +365,10 @@ func under(target string, hook func()) {
 	if isdir(target) {
 		os.Chdir(target)
 	} else {
-		os.Chdir(filepath.Dir(target))
+		err = os.Chdir(filepath.Dir(target))
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	hook()
 	os.Chdir(source)
@@ -926,7 +929,7 @@ func compareRevision(args []string, rev string) string {
 		under(sourcedir, func() {
 			filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 				if err != nil {
-					fmt.Printf("error while tree-walking: %v\n", err)
+					fmt.Printf("error while tree-walking %s: %v\n", sourcedir, err)
 					return err
 				}
 				if isdir(path) {
@@ -942,7 +945,7 @@ func compareRevision(args []string, rev string) string {
 		under(targetdir, func() {
 			filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 				if err != nil {
-					fmt.Printf("error while tree-walking: %v\n", err)
+					fmt.Printf("error while tree-walking %s: %v\n", targetdir, err)
 					return err
 				}
 				if isdir(path) {
