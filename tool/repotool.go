@@ -1056,7 +1056,7 @@ func main() {
 	flags := flag.NewFlagSet("repotool", flag.ExitOnError)
 
 	flags.BoolVar(&acceptMissing, "a", false, "accept missing trunk directory")
-	flags.BoolVar(&seeignores, "i", false, "do not suppress comparison of normally ignored do")
+	flags.BoolVar(&seeignores, "i", false, "do not suppress comparison of normally ignored directories")
 	flags.BoolVar(&nobranch, "n", false, "compare raw structure, ignore SVN branching")
 	flags.BoolVar(&quiet, "q", false, "run as quietly as possible")
 	flags.BoolVar(&same, "s", false, "report when files are the same")
@@ -1074,7 +1074,7 @@ func main() {
 		print(`
 repotool commands:
 
-initialize  - create Makefile and stub files for standard conversion workflow.
+initialize  - create Makefile and stub files for standard conversion workflow
 export - export a stream dump of the source repository
 mirror [URL] localdir - create or update a mirror of the source repository
 branches - list repository branch names
