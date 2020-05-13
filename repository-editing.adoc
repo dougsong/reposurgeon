@@ -547,8 +547,7 @@ The only differences you should see are those due to keyword expansion
 and ignore-file lifting.  If this is not true, you may have found a
 serious bug in either reposurgeon or the front end it used, or you
 might just have a misassigned tag that can be manually fixed. Consult
-http://www.catb.org/~esr/reposurgeon/reporting-bugs.html[How to report
-bugs] for information on how to usefully report bugs.
+<<reporting-bugs>> for information on how to usefully report bugs.
 
 If you are converting from CVS, use reposurgeon's graph command to
 examine the conversion, looking (in particular) for misplaced tags or
@@ -565,10 +564,10 @@ You should now have a git repository, but it is likely to have a
 lot of cruft and conversion artifacts in it.  Here are some common
 forms of cruft:
 
-Commit comments and attributions containing non-UTF8 data:: You could
-    have metadata in your repository in an encoding incompatible with
-    UTF-8 (Latin-1 is the most common offender). You will probably
-    want to transcode the repo to UTF-8.
+Commit comments and attributions containing non-UTF8 data::
+    You could have metadata in your repository in an encoding
+    incompatible with UTF-8 (Latin-1 is the most common offender). You
+    will probably want to transcode the repo to UTF-8.
 
 Subversion and CVS commit references::
     Often Subversion references will be in the form 'r' followed by a
@@ -772,10 +771,8 @@ later is converting the declarations that tell the version-control
 system to ignore derived files. reposurgeon does this for
 you if you're using it for CVS- or Subversion-to-git conversion, both
 expressing Subversion svn:ignore properties as .gitignore files
-and lifting .cvsignore files to .gitignore files; see the
-http://www.catb.org/~esr/reposurgeon/reposurgeon.html#limitations[LIMITATIONS
-AND GUARANTEES section on its manpage] if other DVCSes are
-involved.
+and lifting .cvsignore files to .gitignore files; see <<limitations>>
+if other DVCSes are involved.
 
 Any .gitignore files found in a repository were almost ceryainly
 created by git-svn users ad hoc and should be discarded; it is up to
@@ -3665,6 +3662,7 @@ commits.
 
 * If '```trunk```' is eligible, it always becomes the master
 branch.
+
 * If an element of the branchify set ends with `+/*+`, it is considered
 a branch namespace: each immediate subdirectory of it is considered a
 potential branch, unless it itself appears in branchify as a namespace
@@ -4015,7 +4013,7 @@ your conversion completes in reasonable time before your memory usage
 incereases enough that reposurgeon gets killed by OOM, you win.
 Otherwise see previous section about adding RAM and swap space.
 
-A stallout is difficult to troubleshoot than an OOM, and more likely
+A stallout is more difficult to troubleshoot than an OOM, and more likely
 to indicate an actual bug or algorithmic problem in reposurgeon. There
 are a couple of things you can do to make a good resolution more
 likely:
@@ -4033,6 +4031,7 @@ likely:
 3. As always, provide a stripped (and possibly obscured) dump of the
    repository for testing.
 
+[[reporting-bugs]]
 === How to report bugs
 
 reposurgeon is an extremely algorithmically complex program.  It may
@@ -4066,11 +4065,11 @@ is a hand-crafted repository of minimal size with content that
 explains how it breaks the tool. Those are turned into regression tests
 instantly.
 
-When you don't know the cause of the error, ship me a dump file
-derived from the real repository that triggered it.  To speed up my
-debugging process so you can get an answer more quickly, there are
-some tactics you can use to reduce the bulk of the test case you send
-me. Also, a well-reduced dump can become a regression test to ensure
+When you don't know the cause of the error, ship the project a dump
+file derived from the real repository that triggered it.  To speed up
+the debugging process so you can get an answer more quickly, there are
+some tactics you can use to reduce the bulk of the test case you
+send. Also, a well-reduced dump can become a regression test to ensure
 the bug does not recur.
 
 How to make dumps in Git: cd to your git repository and capture the
@@ -4179,7 +4178,9 @@ a different readlimit each time, recording the run time and memory
 allocated at each iteration. Supply arguments specifying the svn dump
 file to read and the readlimit values to use like this:
 
+----
     ./repobench your-dump-file.svn 1000 2000 20000
+----
 
 This reads `your-dump-file.svn` 10 times, with the readlimit set first
 to 1,000, then 3,000, etc, stepping up until it reaches 20,000.
@@ -4694,7 +4695,7 @@ Nearly unique for this category of software in being closed-source.  Beyond
 an evaluation period, users have to register, possibly for a cost
 (it's supposed to be free-of-charge for certain uses: open source
 projects, education, and ``startups'' -- history with BitKeeper shows
-that these arrangements should not be trusted).
+that such exemptions should probably not be trusted).
 
 The intended outcome of this program is to provide a server with
 support for both Subversion and Git users to interact at once.  This
@@ -4796,7 +4797,6 @@ GCC::
 	history back to 1987, dwarfing Emacs. Converted by myself and
 	two core GCC developers. The 4.0 release came out of this.
 	Final cutover was on Jan 12th 2020.
-
 
 == Credits ==
 
