@@ -123,8 +123,6 @@ import (
 	ianaindex "golang.org/x/text/encoding/ianaindex"
 )
 
-const version = "4.7"
-
 // Tuning constants and types
 
 // Maximum number of 64-bit things (pointers) to allocate at once.

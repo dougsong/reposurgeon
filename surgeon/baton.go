@@ -1,7 +1,7 @@
 /*
  * Baton machinery
  *
-// Copyright by Eric S. Raymond
+ * Copyright by Eric S. Raymond
  * SPDX-License-Identifier: BSD-2-Clause
 */
 

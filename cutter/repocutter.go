@@ -58,6 +58,7 @@ Available subcommands:
    pop
    strip
    swap
+   version
 
 Translated from the 2017-12-13 version of repocutter,
 which began life as 'svncutter' in 2009.  The obsolete 
@@ -86,6 +87,7 @@ var oneliners = map[string]string{
 	"strip":      "Replace content with unique cookies, preserving structure",
 	"swap":       "Swap first two components of pathnames",
 	"testify":    "Massage a stream file into a neutralized test load",
+	"version":    "Report repocutter's version",
 }
 
 var helpdict = map[string]string{
@@ -212,6 +214,8 @@ compared.
 Replace path segments and committer IDs with arbitrary but consistent
 names in order to obscure them. The replacement algorithm is tuned to
 make the replacements readily distinguishable by eyeball.
+`,
+	"version": `report major and minor repocutter version
 `,
 }
 
@@ -1605,7 +1609,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "<command=%s>\n", flag.Arg(0))
 	}
 	var baton *Baton
-	if flag.Arg(0) != "help" {
+	if flag.Arg(0) != "help" && flag.Arg(0) != "version" {
 		if !quiet {
 			baton = NewBaton(oneliners[flag.Arg(0)], "done")
 		} else {
@@ -1614,6 +1618,8 @@ func main() {
 	}
 
 	switch flag.Arg(0) {
+	case "version":
+		fmt.Println(version)
 	case "propdel":
 		propdel(NewDumpfileSource(input, baton), flag.Args()[1:], selection)
 	case "propset":

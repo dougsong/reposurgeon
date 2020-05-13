@@ -154,6 +154,10 @@ case the repository type is autodetected from the contents of
 the indicated directory. Note: A Subversion file URL has *three*
 slashes after the "file:" prefix!
 
+The "version" command reports the version level of the software.
+
+The "help" command displays a summary of commands and options.
+
 [[environment]]
 == ENVIRONMENT VARIABLES ==
 

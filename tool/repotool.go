@@ -1083,6 +1083,7 @@ compare [-r rev] [-t tag] [-b branch] - compare head content of two repositories
 compare-tags - compare source and target repo content at all tags
 compare-branches - compare source and target repo content at all branches
 compare-all - compare repositories at head, all tags, and all branches
+version - report software version
 
 repotool options:
 `)
@@ -1100,7 +1101,9 @@ repotool options:
 	flags.Parse(os.Args[2:])
 
 	args := flags.Args()
-	if operation == "initialize" {
+	if operation == "help" {
+		explain()
+	} else if operation == "initialize" {
 		initialize(args)
 	} else if operation == "export" {
 		export()
@@ -1122,6 +1125,8 @@ repotool options:
 		compareBranches(args)
 	} else if operation == "compare-all" {
 		compareAll(args)
+	} else if operation == "version" {
+		fmt.Println(version)
 	} else {
 		fmt.Fprintf(os.Stderr, "repotool: unknown operation %q\n", operation)
 		explain()
