@@ -337,17 +337,6 @@ func isDvcsOrCheckout() bool {
 	return t != "cvs" && t != "svn"
 }
 
-func vcsignores() []string {
-	// Return ignorable directories.
-	return []string{".svn",
-		"CVS", ".cvsignore",
-		".git", ".gitignore",
-		".hg", ".hgignore",
-		".bzr", ".bzrignore",
-		".bk", ".bkignore",
-		"_darcs"}
-}
-
 func input(prompt string) string {
 	rl, err := readline.New(prompt)
 	if err != nil {
@@ -806,7 +795,7 @@ func compareRevision(args []string, rev string) string {
 	var sourcedir, targetdir string
 	under(source, func() {
 		if isDvcsOrCheckout() && !seeignores {
-			sourceignores = vcsignores()
+			sourceignores = vcsignores
 			for _, f := range sourceignores {
 				diffopts = append(diffopts, []string{"-x", f}...)
 			}
@@ -819,7 +808,7 @@ func compareRevision(args []string, rev string) string {
 	targetignores := make([]string, 0)
 	under(target, func() {
 		if isDvcsOrCheckout() && !seeignores {
-			targetignores = vcsignores()
+			targetignores = vcsignores
 			for _, f := range targetignores {
 				diffopts = append(diffopts, []string{"-x", f}...)
 			}

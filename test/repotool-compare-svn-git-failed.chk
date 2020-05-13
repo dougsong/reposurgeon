@@ -1,6 +1,6 @@
 reposurgeon: r5#1~trunk/README properties set:
 reposurgeon: 	foo = "bar"
-diff -r -x .svn -x CVS -x .cvsignore -x .git -x .gitignore -x .hg -x .hgignore -x .bzr -x .bzrignore -x .bk -x .bkignore -x _darcs -x .svn -x CVS -x .cvsignore -x .git -x .gitignore -x .hg -x .hgignore -x .bzr -x .bzrignore -x .bk -x .bkignore -x _darcs '--ignore-matching-lines= @(#) ' '--ignore-matching-lines=$Id.*$' '--ignore-matching-lines=$Header.*$' '--ignore-matching-lines=$Log.*$' /tmp/source/README /tmp/target/README
+diff -r -x CVS -x .svn -x .git -x .gitignore -x .bzr -x .bzrignore -x .hg -x .hgignore -x _darcs -x _darcs/prefs/boring -x _MTN -x .mtn_ignore -x locks -x CVSROOT -x RCS -x .src -x .bk -x BitKeeper/etc/ignore -x CVS -x .svn -x .git -x .gitignore -x .bzr -x .bzrignore -x .hg -x .hgignore -x _darcs -x _darcs/prefs/boring -x _MTN -x .mtn_ignore -x locks -x CVSROOT -x RCS -x .src -x .bk -x BitKeeper/etc/ignore '--ignore-matching-lines= @(#) ' '--ignore-matching-lines=$Id.*$' '--ignore-matching-lines=$Header.*$' '--ignore-matching-lines=$Log.*$' /tmp/source/README /tmp/target/README
 1,5c1
 < This is a sample file.
 < 

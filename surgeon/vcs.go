@@ -122,6 +122,7 @@ func (vcs VCS) hasReference(comment []byte) bool {
 }
 
 var vcstypes []VCS
+var vcsignores []string
 
 // This one is special because it's used directly in the Subversion
 // dump parser, as well as in the VCS capability table.
@@ -557,6 +558,18 @@ core
 			// No tag support, and a tendency to core-dump
 			notes: "Bitkeeper's importer is flaky and incomplete as of 7.3.1ce.",
 		},
+	}
+
+	// Compile a list of ignorable files and directories
+	// We have to begin with things that can occur in checkout directories
+	vcsignores = []string{"CVS", ".svn"}
+	for _, vcs := range vcstypes {
+		if vcs.subdirectory != "" {
+			vcsignores = append(vcsignores, vcs.subdirectory)
+		}
+		if vcs.ignorename != "" {
+			vcsignores = append(vcsignores, vcs.ignorename)
+		}
 	}
 }
 
