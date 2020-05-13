@@ -4835,6 +4835,10 @@ Eric Sunshine <sunshine@sunshineco.com>::
 Edward Cree <ec429@cantab.net>::
    Wrote the Hg extractor class and its test.
 
+Ian Bruene <ianbruene@gmail.com>::
+   Wrote the kommandant package and the Go port of Python difflib
+   in order to support this package.
+
 Chris Lemmons <alficles@gmail.com>::
    Solved some problems with inline blobs, improved interoperability with
    Mercurial, wrote the --prune option for graft.
