@@ -130,19 +130,7 @@ func (vcs VCS) hasReference(comment []byte) bool {
 	return false
 }
 
-// Importer is capabilities for an import path to some VCS.
-// A given VCS can have more than one importer.
-type Importer struct {
-	name    string    // importer name
-	visible bool      // should it be selectable?
-	engine  Extractor // Import engine, either a VCS or extractor class
-	basevcs *VCS      // Underlying VCS if engine is an extractor
-}
-
 var vcstypes []VCS
-var importers []Importer
-var nullStringSet stringSet
-var nullOrderedStringSet orderedStringSet
 
 // This one is special because it's used directly in the Subversion
 // dump parser, as well as in the VCS capability table.
@@ -165,7 +153,7 @@ const subversionDefaultIgnores = `# A simulation of Subversion default ignores, 
 # Simulated Subversion default ignores end here
 `
 
-func init() {
+func vcsInit() {
 	vcstypes = []VCS{
 		{
 			name:         "git",
@@ -570,31 +558,6 @@ core
 			notes: "Bitkeeper's importer is flaky and incomplete as of 7.3.1ce.",
 		},
 	}
-
-	for i := range vcstypes {
-		vcs := &vcstypes[i]
-		importers = append(importers, Importer{
-			name:    vcs.name,
-			visible: true,
-			engine:  nil,
-			basevcs: vcs,
-		})
-	}
-	// Append extractors to this list
-	importers = append(importers, Importer{
-		name:    "git-extractor",
-		visible: false,
-		engine:  newGitExtractor(),
-		basevcs: findVCS("git"),
-	})
-	importers = append(importers, Importer{
-		name:    "hg-extractor",
-		visible: true,
-		engine:  newHgExtractor(),
-		basevcs: findVCS("hg"),
-	})
-	nullStringSet = newStringSet()
-	nullOrderedStringSet = newOrderedStringSet()
 }
 
 // Import and export filter methods for VCSes that use magic files rather
@@ -620,7 +583,7 @@ func findVCS(name string) *VCS {
 			return &vcs
 		}
 	}
-	panic("reposurgeon: failed to find '" + name + "' in VCS types")
+	panic(fmt.Sprintf("reposurgeon: failed to find '%s' in VCS types (len %d)", name, len(vcstypes)))
 }
 
 // end

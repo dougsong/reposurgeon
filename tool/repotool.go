@@ -24,6 +24,11 @@ import (
 // TMPDIR is the temporary directory under which to perform checkouts
 var TMPDIR string
 
+func init() {
+	setInit()
+	vcsInit()
+}
+
 func (s stringSet) Listify() []string {
 	ordered := make([]string, len(s.store))
 	i := 0
@@ -539,23 +544,18 @@ func tags() string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// List tags from the current working directory to standard output.
-	var m = map[string]string{
-		// CVS code will screw up if any tag is not common to all files
-		"cvs":          "module=`ls -1 | grep -v CVSROOT`; cvs -Q -d:local:${PWD} rlog -h $module 2>&1 | awk -F'[.:]' '/^\t/&&$(NF-1)!=0{print $1}' |awk '{print $1}' | sort -u",
-		"svn":          fmt.Sprintf("svn ls 'file://%s/tags' | sed 's|/$||'", pwd),
-		"svn-checkout": "ls tags 2>/dev/null || exit 0",
-		"git":          "git tag -l",
-		"bzr":          "bzr tags",
-		"hg":           "hg tags --quiet",
-		"darcs":        "darcs show tags",
-		"bk":           "bk tags | sed -n 's/ *TAG: *//p'",
+	vcsname := vcstype(".")
+	var cmd string
+	if vcsname == "svn-checkout" {
+		cmd = "ls tags 2>/dev/null || exit 0"
+	} else if e := findVCS(vcsname); e != nil {
+		cmd = e.taglister
 	}
-	vcs := vcstype(".")
-	if e, ok := m[vcs]; !ok {
-		croak("can't list tags from directory of type %s.", vcs)
+	if cmd == "" {
+		croak("can't list tags from directory of type %s.", vcsname)
 	} else {
-		return captureFromProcess(e, " tag-list command in "+pwd)
+		cmd = strings.ReplaceAll(cmd, "${pwd}",pwd)
+		return captureFromProcess(cmd, " tag-list command in "+pwd)
 	}
 	return ""
 }
