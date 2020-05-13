@@ -1,6 +1,7 @@
 feature done
 blob
 mark :1
+original-oid a579432e2ef32a1946830dc77352740e11d8d395
 data 53
 #!/ysr/bin/env python
 #
@@ -9,6 +10,7 @@ data 53
 reset refs/tags/lightweight-sample
 commit refs/tags/lightweight-sample
 mark :2
+original-oid 2f4b8023a10339353f39abad3a4db8ee9bab892a
 author Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287754582 -0400
 data 22
@@ -17,6 +19,7 @@ M 100644 :1 rs
 
 blob
 mark :3
+original-oid f44ddf8fc8580a1aa321cb6f41bcc410f6f7bb2f
 data 621
 #!/usr/bin/env python
 #
@@ -45,6 +48,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :4
+original-oid 4305dc3181875df45615be97f428d1aa861363e7
 author Eric S. Raymond <esr@thyrsus.com> 1287755564 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287755564 -0400
 data 28
@@ -54,6 +58,7 @@ M 100755 :3 rs
 
 blob
 mark :5
+original-oid 20bc255a3563c14a2fccf807f7dff17018404c79
 data 1329
 = Reposurgeon Designer's Notes =
 Eric S. Raymond <esr@thyrsus.com>
@@ -94,6 +99,7 @@ they cannot.
 
 commit refs/tags/lightweight-sample
 mark :6
+original-oid 1a9cc00aaf986d70cf7658d7655fe07d3772f5ee
 author Eric S. Raymond <esr@thyrsus.com> 1287759014 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287759014 -0400
 data 27
@@ -103,6 +109,7 @@ M 100644 :5 theory.txt
 
 blob
 mark :7
+original-oid 5021e4c1f50dacdbd14efb414801f5288d73573b
 data 1022
 #!/usr/bin/env python
 #
@@ -138,6 +145,7 @@ if __name__ == '__main__':
 
 blob
 mark :8
+original-oid 665f22587972aa9fdd53c5eb96ba882b0ff7c22c
 data 1329
 = Reposurgeon Designer's Notes =
 Eric S. Raymond <esr@thyrsus.com>
@@ -178,6 +186,7 @@ they cannot.
 
 commit refs/tags/lightweight-sample
 mark :9
+original-oid 9ed4e187431f7f059050b0ff30375a78bd4fe558
 author Eric S. Raymond <esr@thyrsus.com> 1287768418 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287768418 -0400
 data 40
@@ -188,6 +197,7 @@ M 100644 :8 theory.txt
 
 blob
 mark :10
+original-oid bd0060fd878be4744cd0ba04ca2aa0d03fb309cf
 data 2339
 #!/usr/bin/env python
 #
@@ -256,6 +266,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :11
+original-oid bab06351a2344174b480cadd41f1113b3dd933aa
 author Eric S. Raymond <esr@thyrsus.com> 1287919107 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287919107 -0400
 data 31
@@ -265,6 +276,7 @@ M 100755 :10 rs
 
 blob
 mark :12
+original-oid 8b6f5ea5d1c4706c2269137b695e2491d4397284
 data 4234
 #!/usr/bin/env python
 #
@@ -379,6 +391,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :13
+original-oid 29f5f77c358733853b9ed062c4ddc7daa545e1d1
 author Eric S. Raymond <esr@thyrsus.com> 1287925789 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287925789 -0400
 data 47
@@ -388,6 +401,7 @@ M 100755 :12 rs
 
 blob
 mark :14
+original-oid 4f3396fb8b72eb278ffe5070a6d11b15a6532c50
 data 8457
 #!/usr/bin/env python
 #
@@ -612,6 +626,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :15
+original-oid beefc0b2d82d34c89e1093e63efb25f5c0b7f6a3
 author Eric S. Raymond <esr@thyrsus.com> 1287956274 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287956274 -0400
 data 30
@@ -621,6 +636,7 @@ M 100755 :14 rs
 
 blob
 mark :16
+original-oid fe70b0fd1ac9cb6d39ec33a7f0e44e6f08a5f620
 data 8874
 #!/usr/bin/env python
 #
@@ -856,6 +872,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :17
+original-oid 3bbbcbd4cbf810888d18b6feec0527885b0c4c2b
 author Eric S. Raymond <esr@thyrsus.com> 1287991809 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287991809 -0400
 data 36
@@ -865,6 +882,7 @@ M 100755 :16 rs
 
 blob
 mark :18
+original-oid 651f10695a9ab2a38e3acbc64a1224e1d4fdb79f
 data 9978
 #!/usr/bin/env python
 #
@@ -1134,6 +1152,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :19
+original-oid b05bbefe48c25969e5d33ddab9c00b6a92aef16c
 author Eric S. Raymond <esr@thyrsus.com> 1287995066 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1287995066 -0400
 data 31
@@ -1143,6 +1162,7 @@ M 100755 :18 rs
 
 blob
 mark :20
+original-oid 8b6c877576c8c2856dfb55967835df33e8589e78
 data 9975
 #!/usr/bin/env python
 #
@@ -1412,6 +1432,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :21
+original-oid 7061b12e77a7cb2a85ae20a93ed23155043af608
 author Eric S. Raymond <esr@thyrsus.com> 1288009568 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288009568 -0400
 data 26
@@ -1421,6 +1442,7 @@ M 100755 :20 rs
 
 blob
 mark :22
+original-oid 39b284af98c3fec8a0c37729df4fab127588de59
 data 1499
 = Reposurgeon Theory of Operation =
 Eric S. Raymond <esr@thyrsus.com>
@@ -1456,6 +1478,7 @@ that the dumps do not capture git lightweight tags.
 
 commit refs/tags/lightweight-sample
 mark :23
+original-oid 531f6a25a7304b744289aa1fcc2ac53b58ad37eb
 author Eric S. Raymond <esr@thyrsus.com> 1288009592 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288009592 -0400
 data 27
@@ -1465,6 +1488,7 @@ M 100644 :22 theory.txt
 
 blob
 mark :24
+original-oid ef2c296ecfbc92813fe79518f3b3b5ef1f330642
 data 12567
 #!/usr/bin/env python
 #
@@ -1803,6 +1827,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :25
+original-oid 6c0ee9e9e9bea3d40101bd2940f9d20d4fa36399
 author Eric S. Raymond <esr@thyrsus.com> 1288031844 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288031844 -0400
 data 38
@@ -1812,6 +1837,7 @@ M 100755 :24 rs
 
 blob
 mark :26
+original-oid 119b156bd74eeb2d7a56a733deda01d0eb850af3
 data 12575
 #!/usr/bin/env python
 #
@@ -2150,6 +2176,7 @@ if __name__ == '__main__':
 
 blob
 mark :27
+original-oid d1114642f48024bb4242940316fa8c1156f3501f
 data 2028
 = Reposurgeon Theory of Operation =
 Eric S. Raymond <esr@thyrsus.com>
@@ -2199,6 +2226,7 @@ fixed by this change), or (c) empty directories.
 
 commit refs/tags/lightweight-sample
 mark :28
+original-oid e463ad0b332c085d7ccd4b905166d3c3ad1e8477
 author Eric S. Raymond <esr@thyrsus.com> 1288032988 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288032988 -0400
 data 22
@@ -2209,6 +2237,7 @@ M 100644 :27 theory.txt
 
 blob
 mark :29
+original-oid bba17e7c44ee8df3b83fa3d8f43939598f0b9a92
 data 12893
 #!/usr/bin/env python
 #
@@ -2555,6 +2584,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :30
+original-oid 4b5e7a743df5417e0de6cbfeb019b0099edd3e24
 author Eric S. Raymond <esr@thyrsus.com> 1288033905 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288033905 -0400
 data 32
@@ -2564,6 +2594,7 @@ M 100755 :29 rs
 
 blob
 mark :31
+original-oid 36ac0dec2cb08a19d1876d7818daccf54a91eda5
 data 13693
 #!/usr/bin/env python
 #
@@ -2931,6 +2962,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :32
+original-oid b629b38523fb8c11a3e27cee35104f869af2eba4
 author Eric S. Raymond <esr@thyrsus.com> 1288035346 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288035346 -0400
 data 43
@@ -2940,6 +2972,7 @@ M 100755 :31 rs
 
 blob
 mark :33
+original-oid 657f34f4e3fdce639bf870eb65419996e3581b72
 data 14364
 #!/usr/bin/env python
 #
@@ -3321,6 +3354,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :34
+original-oid 62d35e0421c2e4edeffd01911abee19c62498817
 author Eric S. Raymond <esr@thyrsus.com> 1288049092 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288049092 -0400
 data 30
@@ -3330,6 +3364,7 @@ M 100755 :33 rs
 
 blob
 mark :35
+original-oid 86e71181874a6ed90c52edef3559dec8f4c23a80
 data 14865
 #!/usr/bin/env python
 #
@@ -3726,6 +3761,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :36
+original-oid 1de32e17432ae5d811285ea57bdd1a8d06364063
 author Eric S. Raymond <esr@thyrsus.com> 1288057381 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288057381 -0400
 data 40
@@ -3735,6 +3771,7 @@ M 100755 :35 rs
 
 blob
 mark :37
+original-oid 8825966f50ae91c60a36b7b60afc03a9b4619ac0
 data 15019
 #!/usr/bin/env python
 #
@@ -4133,6 +4170,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :38
+original-oid f52211c2dfe28d975dae449f52cee26de4f8d335
 author Eric S. Raymond <esr@thyrsus.com> 1288058277 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288058277 -0400
 data 53
@@ -4142,6 +4180,7 @@ M 100755 :37 rs
 
 blob
 mark :39
+original-oid 5bbfe4ad071bd6df763afc86d4cd1d26a7acb770
 data 15203
 #!/usr/bin/env python
 #
@@ -4543,6 +4582,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :40
+original-oid fc1f7520d4b8d5eed82492c196e350b02c57635a
 author Eric S. Raymond <esr@thyrsus.com> 1288068011 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288068011 -0400
 data 53
@@ -4552,6 +4592,7 @@ M 100755 :39 rs
 
 blob
 mark :41
+original-oid 70c93779ca6860e39a061da3182f746623505fb4
 data 15448
 #!/usr/bin/env python
 #
@@ -4957,6 +4998,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :42
+original-oid 1fb40e38dd6ec242668cb94471063d873f9ca7b2
 author Eric S. Raymond <esr@thyrsus.com> 1288069444 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288069444 -0400
 data 62
@@ -4966,6 +5008,7 @@ M 100755 :41 rs
 
 blob
 mark :43
+original-oid 1323ffc3dd66e1e2607c4e478af84f4bae7c59b5
 data 15549
 #!/usr/bin/env python
 #
@@ -5383,6 +5426,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :44
+original-oid 596d9f63dacaf804eef09e1abf1fd9c35df9b9ef
 author Eric S. Raymond <esr@thyrsus.com> 1288082031 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288082031 -0400
 data 40
@@ -5392,6 +5436,7 @@ M 100755 :43 rs
 
 blob
 mark :45
+original-oid 624e463794fb4a60c7f647a15da7c3296cf51d71
 data 465
 			rs - a repository surgeon
 
@@ -5407,6 +5452,7 @@ and type 'make'.
 
 blob
 mark :46
+original-oid 1540a1d0b433608a18cb4bc914de1d8b0c977c35
 data 15565
 #!/usr/bin/env python
 #
@@ -5824,6 +5870,7 @@ if __name__ == '__main__':
 
 blob
 mark :47
+original-oid aa825b4718d2b66629615bba84d1c0d543ce7632
 data 362
 # Test-suite makefile for rs
 
@@ -5841,6 +5888,7 @@ roundtrip:
 
 blob
 mark :48
+original-oid 5313c64ee1ac8d4d6f0f8d92ea04fd6acefec714
 data 183504
 blob
 mark :1
@@ -10816,6 +10864,7 @@ from :42
 
 commit refs/tags/lightweight-sample
 mark :49
+original-oid 91fc97c6bab012880e02f0811023b565fd54c50f
 author Eric S. Raymond <esr@thyrsus.com> 1288083745 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288083745 -0400
 data 36
@@ -10828,6 +10877,7 @@ M 100644 :48 test/simple.dump
 
 blob
 mark :50
+original-oid 52b22048d8cf25e9cdeffcc0dc6eb346b8703b70
 data 1969
 = Reposurgeon Theory of Operation =
 Eric S. Raymond <esr@thyrsus.com>
@@ -10875,6 +10925,7 @@ fixed by this change), or (c) empty directories.
 
 commit refs/tags/lightweight-sample
 mark :51
+original-oid 604abbb5489adfcf8cd62a7d61d8b67d6f4a4b41
 author Eric S. Raymond <esr@thyrsus.com> 1288083882 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288083882 -0400
 data 53
@@ -10884,6 +10935,7 @@ M 100644 :50 theory.txt
 
 blob
 mark :52
+original-oid 136d653651b46d56e3d1008084b3a679144f3b7f
 data 15686
 #!/usr/bin/env python
 #
@@ -11300,6 +11352,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :53
+original-oid e675556ea1cceb11ec74718992189ea7d1445056
 author Eric S. Raymond <esr@thyrsus.com> 1288087302 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288087302 -0400
 data 34
@@ -11309,6 +11362,7 @@ M 100755 :52 rs
 
 blob
 mark :54
+original-oid 4d5d931bf24dcf6cc5ec165c144025b15c6376a1
 data 15680
 #!/usr/bin/env python
 #
@@ -11725,6 +11779,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :55
+original-oid 7c7b8150cdacc5cb1b3b3b8f90c41389d095ebe5
 author Eric S. Raymond <esr@thyrsus.com> 1288087772 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288087772 -0400
 data 13
@@ -11734,6 +11789,7 @@ M 100755 :54 rs
 
 blob
 mark :56
+original-oid f46a54c80ee63118b910c466ac7432d541a3c19e
 data 364
 # Test-suite makefile for rs
 
@@ -11751,6 +11807,7 @@ roundtrip:
 
 commit refs/tags/lightweight-sample
 mark :57
+original-oid ae0543ddab85dc330008268ad4b30aed11647f7e
 author Eric S. Raymond <esr@thyrsus.com> 1288087832 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288087832 -0400
 data 37
@@ -11760,6 +11817,7 @@ M 100644 :56 test/Makefile
 
 blob
 mark :58
+original-oid 3871059d1635d5c6847d0b3c87d03a51ce7a73ba
 data 15311
 #!/usr/bin/env python
 #
@@ -12169,6 +12227,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :59
+original-oid c65f2015adcdbf6939a791dcb1914e9976272d98
 author Eric S. Raymond <esr@thyrsus.com> 1288088010 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288088010 -0400
 data 28
@@ -12178,6 +12237,7 @@ M 100755 :58 rs
 
 blob
 mark :60
+original-oid 528a6d7a858f19724bf07f4966f625a89df06d66
 data 16156
 #!/usr/bin/env python
 #
@@ -12611,6 +12671,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :61
+original-oid 6d392833d77c6929286cc2bc8504441c7779cafe
 author Eric S. Raymond <esr@thyrsus.com> 1288092270 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288092270 -0400
 data 28
@@ -12620,6 +12681,7 @@ M 100755 :60 rs
 
 blob
 mark :62
+original-oid fab9ae8debe53126b56244aae2d8b5d241f224ec
 data 20
 *.1
 *.html
@@ -12627,6 +12689,7 @@ MANIFEST
 
 blob
 mark :63
+original-oid a4ed127754c67e4deb9f15a36ddf8a274066c6fb
 data 717
 #
 # makefile for reposugeon
@@ -12659,6 +12722,7 @@ release: reposurgeon-$(VERS).tar.gz reposurgeon.html
 
 blob
 mark :64
+original-oid e20b50c2a4262f3f5963bb59d24bd1641b6e6273
 data 5972
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE refentry PUBLIC 
@@ -12807,6 +12871,7 @@ url='http://www.catb.org/~esr/reposurgeon'>http://www.catb.org/~esr/reposurgeon<
 
 blob
 mark :65
+original-oid e0964e4bdde20a654af0416d331eacf41e7d2fbf
 data 16419
 #!/usr/bin/env python
 #
@@ -13245,6 +13310,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :66
+original-oid 4b804d7e554cbd74aa96c3df86fa973425012541
 author Eric S. Raymond <esr@thyrsus.com> 1288093185 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288093185 -0400
 data 65
@@ -13257,6 +13323,7 @@ M 100755 :65 rs
 
 blob
 mark :67
+original-oid 0a05a5fdac5ea9008e3d24ba1f61f004eb82b48a
 data 823
 #
 # makefile for reposugeon
@@ -13295,6 +13362,7 @@ release: reposurgeon-$(VERS).tar.gz reposurgeon.html
 
 blob
 mark :68
+original-oid 9bf70ac40f683bb3e6d898f1b1bd8125ce2fe8df
 data 373
 # Test-suite makefile for rs
 
@@ -13312,6 +13380,7 @@ roundtrip:
 
 commit refs/tags/lightweight-sample
 mark :69
+original-oid dea6da6d5e2c89240be89092d024df67edc2198e
 author Eric S. Raymond <esr@thyrsus.com> 1288093585 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288093585 -0400
 data 13
@@ -13324,6 +13393,7 @@ M 100644 :68 test/Makefile
 
 blob
 mark :70
+original-oid 201045a04b7b3f119b05e849f7d49abf4d07e10a
 data 824
 #
 # makefile for reposugeon
@@ -13362,6 +13432,7 @@ release: reposurgeon-$(VERS).tar.gz reposurgeon.html
 
 commit refs/tags/lightweight-sample
 mark :71
+original-oid b867834c5003656021f91b04d4e0b79f092f9469
 author Eric S. Raymond <esr@thyrsus.com> 1288093728 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288093728 -0400
 data 27
@@ -13371,6 +13442,7 @@ M 100644 :70 Makefile
 
 blob
 mark :72
+original-oid 62d792b13a9690ee1ff1d55ca0cc8950a5bb2f1f
 data 825
 #
 # makefile for reposurgeon
@@ -13409,6 +13481,7 @@ release: reposurgeon-$(VERS).tar.gz reposurgeon.html
 
 blob
 mark :73
+original-oid 05eecf8d4a43a7e024e6556c423b9cd06443d5db
 data 16481
 #!/usr/bin/env python
 #
@@ -13847,6 +13920,7 @@ if __name__ == '__main__':
 
 blob
 mark :74
+original-oid 9847734c28eec26eb5e4500c9142555a1730b8f8
 data 5981
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE refentry PUBLIC 
@@ -13995,6 +14069,7 @@ url='http://www.catb.org/~esr/reposurgeon'>http://www.catb.org/~esr/reposurgeon<
 
 commit refs/tags/lightweight-sample
 mark :75
+original-oid d7fd276b01964bbc55e0d83de7c09a59c52b67d3
 author Eric S. Raymond <esr@thyrsus.com> 1288093891 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288093891 -0400
 data 26
@@ -14006,6 +14081,7 @@ M 100755 :73 reposurgeon
 
 blob
 mark :76
+original-oid 4c6406ab1e95bb65ecae2b2ecb5925099ccf526d
 data 808
 #
 # makefile for reposurgeon
@@ -14044,6 +14120,7 @@ release: reposurgeon-$(VERS).tar.gz reposurgeon.html
 
 commit refs/tags/lightweight-sample
 mark :77
+original-oid f4e42dbb524fd0d8b0cfe2e463a5368be0621e2a
 author Eric S. Raymond <esr@thyrsus.com> 1288093998 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288093998 -0400
 data 22
@@ -14053,6 +14130,7 @@ M 100644 :76 Makefile
 
 blob
 mark :78
+original-oid 0e950e83b481a977980e8948d3eb40016b2f8247
 data 18449
 #!/usr/bin/env python
 #
@@ -14533,6 +14611,7 @@ if __name__ == '__main__':
 
 blob
 mark :79
+original-oid 73316ba9ff37f2315c5bf0e0bfeccbbbd7f06be3
 data 6606
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE refentry PUBLIC 
@@ -14701,6 +14780,7 @@ url='http://www.catb.org/~esr/reposurgeon'>http://www.catb.org/~esr/reposurgeon<
 
 commit refs/tags/lightweight-sample
 mark :80
+original-oid c5055e6e510fbc59f690a02cb1ddba84e55cae59
 author Eric S. Raymond <esr@thyrsus.com> 1288100146 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288100146 -0400
 data 22
@@ -14711,6 +14791,7 @@ M 100755 :78 reposurgeon
 
 blob
 mark :81
+original-oid 5a3d841237fd5c5a70aa213553d7d08937a45fd8
 data 18498
 #!/usr/bin/env python
 #
@@ -15189,6 +15270,7 @@ if __name__ == '__main__':
 
 commit refs/tags/lightweight-sample
 mark :82
+original-oid 659f4129ed381c003b4e091a06c4c10c85fe09a7
 author Eric S. Raymond <esr@thyrsus.com> 1288101062 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288101062 -0400
 data 38
@@ -15198,6 +15280,7 @@ M 100755 :81 reposurgeon
 
 blob
 mark :83
+original-oid f214e0645c75bae58b1efdff71ed3a3f46fcfd00
 data 18416
 #!/usr/bin/env python
 #
@@ -15679,6 +15762,7 @@ if __name__ == '__main__':
 
 commit refs/tags/annotated-sample
 mark :84
+original-oid 174520f3074c91c1e46d371b4723bb8fc71c330e
 author Eric S. Raymond <esr@thyrsus.com> 1288101602 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288101602 -0400
 data 47
@@ -15688,6 +15772,7 @@ M 100755 :83 reposurgeon
 
 blob
 mark :85
+original-oid 7e8a5babed905ec4f269420052a6f1dcf2128c0a
 data 21562
 #!/usr/bin/env python
 #
@@ -16251,6 +16336,7 @@ if __name__ == '__main__':
 
 blob
 mark :86
+original-oid 461044538adff8aae7bfa45e0678c395cfba245d
 data 7339
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE refentry PUBLIC 
@@ -16438,6 +16524,7 @@ url='http://www.catb.org/~esr/reposurgeon'>http://www.catb.org/~esr/reposurgeon<
 
 commit refs/tags/annotated-sample
 mark :87
+original-oid bc52c5a097000da16724d18ac80e705e3b183eb3
 author Eric S. Raymond <esr@thyrsus.com> 1288112612 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288112612 -0400
 data 46
@@ -16448,6 +16535,7 @@ M 100755 :85 reposurgeon
 
 blob
 mark :88
+original-oid bb6eb14f91f032f1aab816c6ecc8f2342cd780bc
 data 23221
 #!/usr/bin/env python
 #
@@ -17059,6 +17147,7 @@ if __name__ == '__main__':
 
 commit refs/tags/annotated-sample
 mark :89
+original-oid ffc6f86cf2e7abbf313d98d79ca67e340d710594
 author Eric S. Raymond <esr@thyrsus.com> 1288113962 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288113962 -0400
 data 36
@@ -17068,6 +17157,7 @@ M 100755 :88 reposurgeon
 
 blob
 mark :90
+original-oid 918856d60a56e20d079c298a5fb28a57790834c4
 data 23623
 #!/usr/bin/env python
 #
@@ -17689,6 +17779,7 @@ if __name__ == '__main__':
 
 blob
 mark :91
+original-oid ad608c4b53de90456f67505be3433d5a7b7f3e4f
 data 7581
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE refentry PUBLIC 
@@ -17883,6 +17974,7 @@ url='http://www.catb.org/~esr/reposurgeon'>http://www.catb.org/~esr/reposurgeon<
 
 commit refs/tags/annotated-sample
 mark :92
+original-oid be4302df54c46d8034058475a88791aa7a728b39
 author Eric S. Raymond <esr@thyrsus.com> 1288115880 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288115880 -0400
 data 35
@@ -17893,6 +17985,7 @@ M 100755 :90 reposurgeon
 
 blob
 mark :93
+original-oid 61ea5247d1245af0fd8f2f05fcc2f46b2c957ec4
 data 24447
 #!/usr/bin/env python
 #
@@ -18533,6 +18626,7 @@ if __name__ == '__main__':
 
 blob
 mark :94
+original-oid 7ba90a09ddce5f084c672bb7bc574ff4058d1b38
 data 7922
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE refentry PUBLIC 
@@ -18736,6 +18830,7 @@ url='http://www.catb.org/~esr/reposurgeon'>http://www.catb.org/~esr/reposurgeon<
 
 commit refs/tags/annotated-sample
 mark :95
+original-oid 580b5f19fb6dec58a8bad6f9966c05ccd85166ac
 author Eric S. Raymond <esr@thyrsus.com> 1288117441 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288117441 -0400
 data 26
@@ -18746,6 +18841,7 @@ M 100755 :93 reposurgeon
 
 blob
 mark :96
+original-oid abc4871f9f70832bd3b1852042775af8cf7d4dda
 data 26358
 #!/usr/bin/env python
 #
@@ -19428,6 +19524,7 @@ if __name__ == '__main__':
 
 blob
 mark :97
+original-oid 3a5596834823fe95b42c858b725c397590758b76
 data 10897
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE refentry PUBLIC 
@@ -19696,6 +19793,7 @@ url='http://www.catb.org/~esr/reposurgeon'>http://www.catb.org/~esr/reposurgeon<
 
 commit refs/tags/annotated-sample
 mark :98
+original-oid 7fdd057574eb801d69f0bc56216690df6a06412f
 author Eric S. Raymond <esr@thyrsus.com> 1288160374 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288160374 -0400
 data 53
@@ -19706,6 +19804,7 @@ M 100755 :96 reposurgeon
 
 blob
 mark :99
+original-oid 0b1fb9bf6594850d8fe6d39cee27585c90e56a41
 data 32121
 #!/usr/bin/env python
 #
@@ -20531,6 +20630,7 @@ if __name__ == '__main__':
 
 commit refs/tags/annotated-sample
 mark :100
+original-oid 8aea6566d0341f46a17693742ea47be39a546188
 author Eric S. Raymond <esr@thyrsus.com> 1288173615 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288173615 -0400
 data 37
@@ -20540,6 +20640,7 @@ M 100755 :99 reposurgeon
 
 blob
 mark :101
+original-oid 4cdb77116361aaa18f28aaefc05eb16cbba84a26
 data 31908
 #!/usr/bin/env python
 #
@@ -21359,6 +21460,7 @@ if __name__ == '__main__':
 
 commit refs/tags/annotated-sample
 mark :102
+original-oid 62851009560bfc36de209ab408cf871a71af4e81
 author Eric S. Raymond <esr@thyrsus.com> 1288179718 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288179718 -0400
 data 67
@@ -21368,6 +21470,7 @@ M 100755 :101 reposurgeon
 
 blob
 mark :103
+original-oid a3cde6ece63603c42838a723a800428ce41b8da0
 data 32448
 #!/usr/bin/env python
 #
@@ -22201,6 +22304,7 @@ if __name__ == '__main__':
 
 commit refs/tags/annotated-sample
 mark :104
+original-oid b1ae2ce5ef8f43ae0e4cad697ddb6fcb2a9f1926
 author Eric S. Raymond <esr@thyrsus.com> 1288181252 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288181252 -0400
 data 28
@@ -22210,6 +22314,7 @@ M 100755 :103 reposurgeon
 
 blob
 mark :105
+original-oid 46c08814de4435ebcc4a12f34d8668b4d3e44d43
 data 35910
 #!/usr/bin/env python
 #
@@ -23125,6 +23230,7 @@ if __name__ == '__main__':
 
 commit refs/tags/annotated-sample
 mark :106
+original-oid 463a0a23f4e477f0c47fa6e8774fe369c4079f3a
 author Eric S. Raymond <esr@thyrsus.com> 1288193458 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288193458 -0400
 data 40
@@ -23134,6 +23240,7 @@ M 100755 :105 reposurgeon
 
 blob
 mark :107
+original-oid 32b7e18bfbd4c9905adeaf9338d5f4281f6772fb
 data 35992
 #!/usr/bin/env python
 #
@@ -24053,6 +24160,7 @@ if __name__ == '__main__':
 
 commit refs/tags/annotated-sample
 mark :108
+original-oid 23a765e77e5b458b330be93c617a358f948cfb44
 author Eric S. Raymond <esr@thyrsus.com> 1288194165 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288194165 -0400
 data 49
@@ -24062,6 +24170,7 @@ M 100755 :107 reposurgeon
 
 blob
 mark :109
+original-oid cb54c15b8f2aa4ba7e995e4c0a1ef3030ea5ab79
 data 36130
 #!/usr/bin/env python
 #
@@ -24982,6 +25091,7 @@ if __name__ == '__main__':
 
 commit refs/tags/annotated-sample
 mark :110
+original-oid 6ecf0fedec5eed1186629341788a2178a395de9d
 author Eric S. Raymond <esr@thyrsus.com> 1288194826 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288194826 -0400
 data 29
@@ -24991,6 +25101,7 @@ M 100755 :109 reposurgeon
 
 blob
 mark :111
+original-oid 0093c362ea6424410688e6cd039db019fa2f6b87
 data 36088
 #!/usr/bin/env python
 #
@@ -25911,6 +26022,7 @@ if __name__ == '__main__':
 
 blob
 mark :112
+original-oid d4ab5c924a77a69290a09904adf5c1815428bd74
 data 15009
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE refentry PUBLIC 
@@ -26297,6 +26409,7 @@ url='http://www.catb.org/~esr/reposurgeon'>http://www.catb.org/~esr/reposurgeon<
 
 commit refs/tags/annotated-sample
 mark :113
+original-oid 8f3ff752e691e9be4cd512449d3526cf8237ef98
 author Eric S. Raymond <esr@thyrsus.com> 1288199857 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288199857 -0400
 data 41
@@ -26307,6 +26420,7 @@ M 100755 :111 reposurgeon
 
 blob
 mark :114
+original-oid 98f67d2d9a2f25d947c06caff5f0ff8246544d09
 data 15054
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE refentry PUBLIC 
@@ -26695,6 +26809,7 @@ url='http://www.catb.org/~esr/reposurgeon'>http://www.catb.org/~esr/reposurgeon<
 
 commit refs/heads/master
 mark :115
+original-oid f5d79789cc581f147b96f67edcb8f1a2ae960fe1
 author Eric S. Raymond <esr@thyrsus.com> 1288200336 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288200336 -0400
 data 21
@@ -26704,6 +26819,7 @@ M 100644 :114 reposurgeon.xml
 
 blob
 mark :116
+original-oid 3b9199d49bba2fa0932703a6faaded74cd4a94d2
 data 35714
 #!/usr/bin/env python
 #
@@ -27623,6 +27739,7 @@ if __name__ == '__main__':
 
 commit refs/heads/master
 mark :117
+original-oid 4cc63d3da43c7d139a981d225f4987167a9a159d
 author Eric S. Raymond <esr@thyrsus.com> 1288202060 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288202060 -0400
 data 51
@@ -27632,6 +27749,7 @@ M 100755 :116 reposurgeon
 
 blob
 mark :118
+original-oid 9433e7f9f498ea945534d0cdf54b5b9c5c13429b
 data 35715
 #!/usr/bin/env python
 #
@@ -28551,6 +28669,7 @@ if __name__ == '__main__':
 
 commit refs/heads/master
 mark :119
+original-oid 1b0e3f6e67b7023b94dc8e40e4f66deafbb53dcc
 author Eric S. Raymond <esr@thyrsus.com> 1288202462 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288202462 -0400
 data 67
@@ -28560,6 +28679,7 @@ M 100755 :118 reposurgeon
 
 blob
 mark :120
+original-oid 90639cb38d25862355a98b82bd40bbfcbfb40aac
 data 35992
 #!/usr/bin/env python
 #
@@ -29484,6 +29604,7 @@ if __name__ == '__main__':
 
 commit refs/heads/master
 mark :121
+original-oid b4f44ca2a857c26700593fb677f362d5ac69ba83
 author Eric S. Raymond <esr@thyrsus.com> 1288203721 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288203721 -0400
 data 27
@@ -29493,6 +29614,7 @@ M 100755 :120 reposurgeon
 
 blob
 mark :122
+original-oid a3c9e029bd2dc3d070677f35e6a38188d09bada1
 data 36097
 #!/usr/bin/env python
 #
@@ -30419,6 +30541,7 @@ if __name__ == '__main__':
 
 commit refs/heads/master
 mark :123
+original-oid 96e0f248985a4a149972a54356dd4515c040000a
 author Eric S. Raymond <esr@thyrsus.com> 1288204205 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288204205 -0400
 data 37
@@ -30428,6 +30551,7 @@ M 100755 :122 reposurgeon
 
 blob
 mark :124
+original-oid 62c152768d4b153ec1bb108686e8475f128f2ead
 data 36129
 #!/usr/bin/env python
 #
@@ -31354,6 +31478,7 @@ if __name__ == '__main__':
 
 blob
 mark :125
+original-oid 66cbabad27c1b88582271294f47d6603c9580223
 data 15353
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE refentry PUBLIC 
@@ -31748,6 +31873,7 @@ url='http://www.catb.org/~esr/reposurgeon'>http://www.catb.org/~esr/reposurgeon<
 
 commit refs/heads/master
 mark :126
+original-oid d5067f6e00fe49ecb351f8dc377e77870b1dbf56
 author Eric S. Raymond <esr@thyrsus.com> 1288205012 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288205012 -0400
 data 183
@@ -31761,6 +31887,7 @@ M 100755 :124 reposurgeon
 
 blob
 mark :127
+original-oid 07e2efbd35b971cbfce30631fb24e9ab49dc5055
 data 36212
 #!/usr/bin/env python
 #
@@ -32688,6 +32815,7 @@ if __name__ == '__main__':
 
 commit refs/heads/master
 mark :128
+original-oid 23b1c471add0f5ae5611c2de972213eb8a8f54a4
 author Eric S. Raymond <esr@thyrsus.com> 1288206185 -0400
 committer Eric S. Raymond <esr@thyrsus.com> 1288206185 -0400
 data 55
@@ -32697,6 +32825,7 @@ M 100755 :127 reposurgeon
 
 tag annotated-sample
 from :113
+original-oid d2be661b8dda6a252be3796c656ca721cb529c59
 tagger Eric S. Raymond <esr@thyrsus.com> 1288206780 -0400
 data 66
 We want an anntated tag in the repo for regression-test purposes.

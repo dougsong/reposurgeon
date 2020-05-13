@@ -56,6 +56,7 @@ type VCS struct {
 	name         string
 	subdirectory string
 	exporter     string
+	quieter      string
 	styleflags   orderedStringSet
 	extensions   orderedStringSet
 	initializer  string
@@ -158,6 +159,7 @@ func vcsInit() {
 			subdirectory: ".git",
 			// Requires git 2.19.2 or later for --show-original-ids
 			exporter:    "git fast-export --show-original-ids --signed-tags=verbatim --tag-of-filtered-object=drop --use-done-feature --all",
+			quieter:     "",
 			styleflags:  newOrderedStringSet(),
 			extensions:  newOrderedStringSet(),
 			initializer: "git init --quiet",
@@ -179,6 +181,7 @@ func vcsInit() {
 			name:         "bzr",
 			subdirectory: ".bzr",
 			exporter:     "bzr fast-export --no-plain .",
+			quieter:      "",
 			styleflags: newOrderedStringSet(
 				"export-progress",
 				"no-nl-after-commit",
@@ -247,6 +250,7 @@ branch is renamed to 'master'.
 			name:         "darcs",
 			subdirectory: "_darcs",
 			exporter:     "darcs fastconvert export",
+			quieter:      "",
 			styleflags:   newOrderedStringSet(),
 			extensions:   newOrderedStringSet(),
 			initializer:  "",
@@ -367,6 +371,7 @@ core
 			name:         "mtn",
 			subdirectory: "_MTN",
 			exporter:     "mtn git_export",
+			quieter:      "",
 			styleflags:   newOrderedStringSet(),
 			extensions:   newOrderedStringSet(),
 			initializer:  "",
@@ -424,7 +429,8 @@ _darcs
 		{
 			name:         "svn",
 			subdirectory: "locks",
-			exporter:     "svnadmin dump .",
+			exporter:     "svnadmin dump  .",
+			quieter:      "--quiet",
 			styleflags:   newOrderedStringSet("import-defaults", "export-progress"),
 			extensions:   newOrderedStringSet(),
 			initializer:  "svnadmin create .",
@@ -446,6 +452,7 @@ _darcs
 			name:         "cvs",
 			subdirectory: "CVSROOT", // Can't be Attic, that doesn't always exist.
 			exporter:     "find . -name '*,v' -print | cvs-fast-export --reposurgeon",
+			quieter:      "",
 			styleflags:   newOrderedStringSet("import-defaults", "export-progress"),
 			extensions:   newOrderedStringSet(),
 			initializer:  "",
@@ -499,6 +506,7 @@ core
 			name:         "rcs",
 			subdirectory: "RCS",
 			exporter:     "find . -name '*,v' -print | cvs-fast-export --reposurgeon",
+			quieter:      "",
 			styleflags:   newOrderedStringSet("export-progress"),
 			extensions:   newOrderedStringSet(),
 			initializer:  "",
@@ -517,6 +525,7 @@ core
 			name:         "src",
 			subdirectory: ".src",
 			exporter:     "src fast-export",
+			quieter:      "",
 			styleflags:   newOrderedStringSet(),
 			extensions:   newOrderedStringSet(),
 			initializer:  "src init",
@@ -536,7 +545,8 @@ core
 			// Styleflags may need tweaking for round-tripping
 			name:         "bk",
 			subdirectory: ".bk",
-			exporter:     "bk fast-export -q --no-bk-keys",
+			exporter:     "bk fast-export --no-bk-keys",
+			quieter:      "-q",
 			styleflags:   newOrderedStringSet(),
 			extensions:   newOrderedStringSet(),
 			initializer:  "", // bk setup doesn't work here

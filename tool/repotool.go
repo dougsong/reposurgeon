@@ -428,22 +428,29 @@ func initialize(args []string) {
 	}
 }
 
-func export(args []string) {
-	// Export from the current working directory to standard output.
-	m := map[string]string{
-		"cvs":   `find . -name \*,v | cvs-fast-export -q --reposurgeon`,
-		"svn":   "svnadmin -q dump .",
-		"git":   "git fast-export --all --use-done-feature",
-		"bzr":   "bzr fast-export --no-plain .",
-		"hg":    "reposurgeon 'read .' 'prefer git' 'write -'",
-		"darcs": "darcs fastconvert export",
-		"bk":    "bk fast-export -q",
+
+func export() {
+	pwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
 	}
-	vcs := vcstype(".")
-	if e := m[vcs]; e == "" {
-		croak("can't export from directory of type %s.", vcs)
+	vcsname := vcstype(".")
+	var cmd string
+	// Grotty repotool-only special case that takes thje long way around
+	// through reposurgeon's extractor classes.  Remove when we have a
+	// real exporter for hg
+	if vcsname == "hg" {
+		cmd = "reposurgeon 'read .' 'prefer git' 'write -'"
+	} else if e := findVCS(vcsname); e != nil {
+		cmd = e.exporter
+		if e.quieter != "" {
+			cmd += " " + e.quieter
+		}
+	}
+	if cmd == "" {
+		croak("can't export from repository of type %s.", vcsname)
 	} else {
-		runShellProcessOrDie(e, " export command")
+		runShellProcessOrDie(cmd, " export command in "+pwd)
 	}
 }
 
@@ -550,7 +557,7 @@ func tags() string {
 		cmd = e.taglister
 	}
 	if cmd == "" {
-		croak("can't list tags from directory of type %s.", vcsname)
+		croak("can't list tags from repository or directory of type %s.", vcsname)
 	} else {
 		cmd = strings.ReplaceAll(cmd, "${pwd}",pwd)
 		return captureFromProcess(cmd, " tag-list command in "+pwd)
@@ -571,7 +578,7 @@ func branches() string {
 		cmd = e.branchlister
 	}
 	if cmd == "" {
-		croak("can't list branches from directory of type %s.", vcsname)
+		croak("can't list branches from repository or directory of type %s.", vcsname)
 	} else {
 		cmd = strings.ReplaceAll(cmd, "${pwd}",pwd)
 		return captureFromProcess(cmd, " branch-list command in "+pwd)
@@ -1096,7 +1103,7 @@ repotool options:
 	if operation == "initialize" {
 		initialize(args)
 	} else if operation == "export" {
-		export(args)
+		export()
 	} else if operation == "mirror" {
 		mirror(args)
 	} else if operation == "tags" {
