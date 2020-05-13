@@ -9,7 +9,7 @@ target=$(DESTDIR)$(prefix)
 MAKED := $(dir $(firstword $(MAKEFILE_LIST)))
 VPATH = $(MAKED)
 
-VERS=$(shell sed <$(MAKED)surgeon/reposurgeon.go -n -e '/const *version *= *\"\(.*\)\"/s//\1/p')
+VERS=$(shell sed <$(MAKED)surgeon/version.go -n -e '/const *version *= *\"\(.*\)\"/s//\1/p')
 
 META = README.adoc INSTALL.adoc NEWS.adoc COPYING
 PAGES = reposurgeon.adoc repocutter.adoc repomapper.adoc repotool.adoc repobench.adoc
