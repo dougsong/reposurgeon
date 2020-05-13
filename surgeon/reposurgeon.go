@@ -7742,32 +7742,13 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 			}
 			return sub
 		}
-		if strings.Contains(repo.vcs.exporter, "${tempfile}") {
-			tfdesc, err := ioutil.TempFile("", "rst")
-			if err != nil {
-				return nil, err
-			}
-			defer tfdesc.Close()
-			defer os.Remove(tfdesc.Name())
-			commandControl["tempfile"] = tfdesc.Name()
-			cmd := os.Expand(repo.vcs.exporter, mapper)
-			runProcess(cmd, "repository export")
-			tfdesc.Close()
-			tp, err := os.Open(tfdesc.Name())
-			if err != nil {
-				return nil, err
-			}
-			repo.fastImport(context.TODO(), tp, options, source)
-			tp.Close()
-		} else {
-			cmd := os.Expand(repo.vcs.exporter, mapper)
-			tp, _, err := readFromProcess(cmd)
-			if err != nil {
-				return nil, err
-			}
-			repo.fastImport(context.TODO(), tp, options, source)
-			tp.Close()
+		cmd := os.Expand(repo.vcs.exporter, mapper)
+		tp, _, err := readFromProcess(cmd)
+		if err != nil {
+			return nil, err
 		}
+		repo.fastImport(context.TODO(), tp, options, source)
+		tp.Close()
 		if suppressBaton {
 			control.flagOptions["progress"] = true
 		}
@@ -7993,29 +7974,14 @@ func (repo *Repository) rebuildRepo(target string, options stringSet,
 		}
 		return sub
 	}
-	if strings.Contains(vcs.importer, "${tempfile}") {
-		tfdesc, err := ioutil.TempFile("", "rst")
-		if err != nil {
-			return err
-		}
-		// Ship to the tempfile
-		repo.fastExport(nil, tfdesc, options, preferred)
-		tfdesc.Close()
-		// Pick up the tempfile
-		params["tempfile"] = tfdesc.Name()
-		cmd := os.Expand(repo.vcs.importer, mapper)
-		runProcess(cmd, "repository import")
-		os.Remove(tfdesc.Name())
-	} else {
-		cmd := os.Expand(vcs.importer, mapper)
-		tp, cls, err := writeToProcess(cmd)
-		if err != nil {
-			return err
-		}
-		repo.fastExport(nil, tp, options, preferred)
-		tp.Close()
-		cls.Wait()
+	cmd := os.Expand(vcs.importer, mapper)
+	tp, cls, err := writeToProcess(cmd)
+	if err != nil {
+		return err
 	}
+	repo.fastExport(nil, tp, options, preferred)
+	tp.Close()
+	cls.Wait()
 	if repo.writeLegacy {
 		legacyfile := filepath.FromSlash(vcs.subdirectory + "/legacy-map")
 		wfp, err := os.OpenFile(legacyfile,

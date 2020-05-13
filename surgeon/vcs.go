@@ -41,14 +41,6 @@ import (
 // that are not part of the basic VCS. Thus these may fail when called;
 // we need to be prepared to cope with that.
 //
-// ${tempfile} in a command gets substituted with the name of a
-// tempfile that the calling code will know to read or write from as
-// appropriate after the command is done.  If your exporter can simply
-// dump to stdout, or your importer read from stdin, leave out the
-// ${tempfile}; reposurgeon will popen(3) the command, and it will
-// actually be slightly faster (especially on large repos) because it
-// won't have to wait for the tempfile I/O to complete.
-//
 // ${pwd} is replaced with the name of the present working directory.
 
 // VCS is a class representing a version-control system.
