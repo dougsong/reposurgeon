@@ -49,8 +49,6 @@ import (
 // actually be slightly faster (especially on large repos) because it
 // won't have to wait for the tempfile I/O to complete.
 //
-// ${basename} is replaced with the basename of the repo directory.
-//
 // ${pwd} is replaced with the name of the present working directory.
 
 // VCS is a class representing a version-control system.
@@ -180,7 +178,7 @@ func vcsInit() {
 		{
 			name:         "bzr",
 			subdirectory: ".bzr",
-			exporter:     "bzr fast-export --no-plain ${basename}",
+			exporter:     "bzr fast-export --no-plain .",
 			styleflags: newOrderedStringSet(
 				"export-progress",
 				"no-nl-after-commit",
