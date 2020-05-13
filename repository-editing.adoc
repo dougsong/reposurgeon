@@ -4940,4 +4940,6 @@ http://esr.ibiblio.org/?p=8551[Missing documentation and the reproduction proble
 
 http://esr.ibiblio.org/?p=8607[Reposurgeon defeats all monsters!] (2020-02-21)
 
+http://esr.ibiblio.org/?p=8694[Two graceful finishes] (2020-05-13)
+
 // end
