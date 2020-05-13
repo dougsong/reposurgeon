@@ -4405,6 +4405,59 @@ Guarantee: As version-control systems add support for the
 fast-import format, their repositories will become editable by
 reposurgeon.
 
+== Credits ==
+
+These are in roughly descending magnitude.
+
+Eric S. Raymond <esr@thyrsus.com>::
+   Designer and original author.
+
+Julien "_FrnchFrgg_" RIVAUD <frnchfrgg@free.fr>::
+   Lots of high-quality code cleanups and speed tuning. Responsible for at
+   least half of the massively revamped Subversion dump reader on the 4.0
+   releases. Ported the CoW filemaps from Python to Go.
+
+Daniel Brooks <db48x@db48x.net>::
+   Date unit testing, improvements for split and expunge
+   commands. Assistance on Python to Go port. Go profiling support.
+   Several significant reductions in total run time, total
+   allocations, and max heap usage.
+
+Greg Hudson <ghudson@MIT.EDU>::
+   Contributed copy-on-write filemaps, which both tremendously sped up
+   Subversion dumpfile parsing and squashed a nasty bug in the older
+   code. While his CoW implementation was eventually replaced with one
+   by Julien Rivaud, it busted the project out of a nearly two-year slump.
+
+Eric Sunshine <sunshine@sunshineco.com>::
+   Review of seldom-used features, test improvements, bug-fixing.
+   Generalized selection expression parser for use-cases other than events.
+   Converted selection parser, which evaluated an expression while parsing it,
+   to a compile/evaluate paradigm in which a selection expression can be
+   compiled once and evaluated many times.
+   Added 'attribution' command.
+   Added 'reorder' command.
+   Assist Python to Go port.
+
+Edward Cree <ec429@cantab.net>::
+   Wrote the Hg extractor class and its test.
+
+Ian Bruene <ianbruene@gmail.com>::
+   Wrote the kommandant package and the Go port of Python difflib
+   in order to support this package.
+
+Chris Lemmons <alficles@gmail.com>::
+   Solved some problems with inline blobs, improved interoperability with
+   Mercurial, wrote the --prune option for graft.
+
+Richard Hansen <rhansen@rhansen.org>::
+   Selections as ordered rather than compulsorily sorted sets. The generalized reparent command.
+   Improvements in regression-test infrastructure.
+
+Peter Donis <peterdonis@alum.mit.edu>::
+   Python 3 port and Python2/3 interoperability. Historical: none
+   of this survived the port to Go.
+
 [appendix]
 == The ontological-mismatch problem and its consequences
 
@@ -4798,57 +4851,93 @@ GCC::
 	two core GCC developers. The 4.0 release came out of this.
 	Final cutover was on Jan 12th 2020.
 
-== Credits ==
+[appendix]
+== Development History
 
-These are in roughly descending magnitude.
+Links to notable blog posts during the development of reposurgeon.
+Trivial relesse announcements have been omitted.
 
-Eric S. Raymond <esr@thyrsus.com>::
-   Designer and original author.
+http://esr.ibiblio.org/?p=2718[Announcing reposurgeon -- a tool for the good new days] (2010-11-01)
 
-Julien "_FrnchFrgg_" RIVAUD <frnchfrgg@free.fr>::
-   Lots of high-quality code cleanups and speed tuning. Responsible for at
-   least half of the massively revamped Subversion dump reader on the 4.0
-   releases. Ported the CoW filemaps from Python to Go.
+// Recorded, not visible because trivial
+//http://esr.ibiblio.org/?p=3832[Return of the reposturgeon!] (2011-10-19)
 
-Daniel Brooks <db48x@db48x.net>::
-   Date unit testing, improvements for split and expunge
-   commands. Assistance on Python to Go port. Go profiling support.
-   Several significant reductions in total run time, total
-   allocations, and max heap usage.
+// Recorded, not visible because trivial
+//http://esr.ibiblio.org/?p=3844[Bride of the reposturgeon!] (2011-10-25)
 
-Greg Hudson <ghudson@MIT.EDU>::
-   Contributed copy-on-write filemaps, which both tremendously sped up
-   Subversion dumpfile parsing and squashed a nasty bug in the older
-   code. While his CoW implementation was eventually replaced with one
-   by Julien Rivaud, it busted the project out of a nearly two-year slump.
+http://esr.ibiblio.org/?p=3859[Repositories in Translation] (2011-10-29)
 
-Eric Sunshine <sunshine@sunshineco.com>::
-   Review of seldom-used features, test improvements, bug-fixing.
-   Generalized selection expression parser for use-cases other than events.
-   Converted selection parser, which evaluated an expression while parsing it,
-   to a compile/evaluate paradigm in which a selection expression can be
-   compiled once and evaluated many times.
-   Added 'attribution' command.
-   Added 'reorder' command.
-   Assist Python to Go port.
+http://esr.ibiblio.org/?p=3897[Revenge of the reposturgeon!] (2011-11-02)
 
-Edward Cree <ec429@cantab.net>::
-   Wrote the Hg extractor class and its test.
+// Recorded, not visible because trivial
+//http://esr.ibiblio.org/?p=3905[Son of the reposturgeon!] (2011-11-03)
 
-Ian Bruene <ianbruene@gmail.com>::
-   Wrote the kommandant package and the Go port of Python difflib
-   in order to support this package.
+http://esr.ibiblio.org/?p=2727[Lessons learned from reposurgeon] (2010-11-09)
 
-Chris Lemmons <alficles@gmail.com>::
-   Solved some problems with inline blobs, improved interoperability with
-   Mercurial, wrote the --prune option for graft.
+http://esr.ibiblio.org/?p=3839[Looking for reposurgeon test cases] (2011-10-23)
 
-Richard Hansen <rhansen@rhansen.org>::
-   Selections as ordered rather than compulsorily sorted sets. The generalized reparent command.
-   Improvements in regression-test infrastructure.
+http://esr.ibiblio.org/?p=4004[Coming soon: reposurgeon does Subversion] (2011-12-12)
 
-Peter Donis <peterdonis@alum.mit.edu>::
-   Python 3 port and Python2/3 interoperability. Historical: none
-   of this survived the port to Go.
+// Recorded, not visible because trivial
+//http://esr.ibiblio.org/?p=3912[Night of the living reposturgeon!] (2011-11-07)
+
+// Recorded, not visible because trivial
+//http://esr.ibiblio.org/?p=3920[Reposturgeon from the Black Lagoon!] ( 2011-11-10)
+
+// Recorded, not visible because trivial
+//http://esr.ibiblio.org/?p=3927[Attack of the 50-foot reposturgeon] (2011-11-14)
+
+// Recorded for completeness but not visible as SVN write support was later dropped
+//http://esr.ibiblio.org/?p=4721[Beware! The Reposturgeon!] (2012-12-02)
+
+http://esr.ibiblio.org/?p=4691[reposurgeon 2.0 announcement – the full-orchestra version] (2012-11-04)
+
+http://esr.ibiblio.org/?p=4735[The Reposturgeon That Ate Sheboygan!] (2012-12-16)
+
+http://esr.ibiblio.org/?p=4738[Reposturgeon Attacks Tokyo!] (2012-12-20)
+
+http://esr.ibiblio.org/?p=4748[Reposurgeon Killed The Radio Stars!] (2013-01-08)
+
+http://esr.ibiblio.org/?p=4071[Another bite of the reposturgeon] (2012-01-23)
+
+http://esr.ibiblio.org/?p=4810[The Reposturgeon from Beyond Space!] (2013-02-08)
+
+http://esr.ibiblio.org/?p=4854[Mode of the Reposturgeon!] (2013-02-26)
+
+http://esr.ibiblio.org/?p=5123[Reposurgeon Battles All Monsters!] (2013-12-01)
+
+http://esr.ibiblio.org/?p=5087[Your money or your spec] (2013-10-29)
+
+http://esr.ibiblio.org/?p=5135[Heads up: the reposturgeon is mutating!] (2013-12-05)
+
+http://esr.ibiblio.org/?p=5634[Ugliest...repository...conversion...ever] (2014-03-29)
+
+http://esr.ibiblio.org/?p=5185[Reposturgeon and Santa Claus Against The Martians!] (2014-01-05)
+
+http://esr.ibiblio.org/?p=6524[Emacs git conversion is done] (2014-11-12)
+
+http://esr.ibiblio.org/?p=6778[Don’t do svn-to-git repository conversions with git-svn!] (2015-05-28)
+
+http://esr.ibiblio.org/?p=6792[How to spot a high-quality repository conversion] (2015-06-23)
+
+http://esr.ibiblio.org/?p=6971[Cometary Contributors] (2016-01-10)
+
+http://esr.ibiblio.org/?p=7032[Automatons, judgment amplifiers, and DSLs] (2016-02-17)
+
+http://esr.ibiblio.org/?p=7792[You’re gonna need a bigger Beast] (2017-12-16)
+
+http://esr.ibiblio.org/?p=7403[Reposturgeon recruits the BitKeeper!] (2017-03-06) 
+
+http://esr.ibiblio.org/?p=7804[C, Python, Go, and the Generalized Greenspun Law] (2017-12-18)
+
+http://esr.ibiblio.org/?p=7959[Flight of the reposturgeon!] (2018-04-29)
+
+http://esr.ibiblio.org/?p=8161[Reposurgeon’s Excellent Journey and the Waning of Python] (2018-10-08)
+
+http://esr.ibiblio.org/?p=8543[30 Days in the Hole] (2020-01-24)
+
+http://esr.ibiblio.org/?p=8551[Missing documentation and the reproduction problem] (2020-01-26)
+
+http://esr.ibiblio.org/?p=8607[Reposurgeon defeats all monsters!] (2020-02-21)
 
 // end
