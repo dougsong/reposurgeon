@@ -417,7 +417,6 @@ func initialize(args []string) {
 	}
 }
 
-
 func export() {
 	pwd, err := os.Getwd()
 	if err != nil {
@@ -548,7 +547,7 @@ func tags() string {
 	if cmd == "" {
 		croak("can't list tags from repository or directory of type %s.", vcsname)
 	} else {
-		cmd = strings.ReplaceAll(cmd, "${pwd}",pwd)
+		cmd = strings.ReplaceAll(cmd, "${pwd}", pwd)
 		return captureFromProcess(cmd, " tag-list command in "+pwd)
 	}
 	return ""
@@ -569,7 +568,7 @@ func branches() string {
 	if cmd == "" {
 		croak("can't list branches from repository or directory of type %s.", vcsname)
 	} else {
-		cmd = strings.ReplaceAll(cmd, "${pwd}",pwd)
+		cmd = strings.ReplaceAll(cmd, "${pwd}", pwd)
 		return captureFromProcess(cmd, " branch-list command in "+pwd)
 	}
 	return ""

@@ -592,6 +592,7 @@ type Importer struct {
 	engine  Extractor // Import engine, either a VCS or extractor class
 	basevcs *VCS      // Underlying VCS if engine is an extractor
 }
+
 var importers []Importer
 
 func init() {
