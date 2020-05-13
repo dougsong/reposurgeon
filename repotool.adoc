@@ -49,7 +49,8 @@ returns a list of the repository's branch names.
 
 The 'checkout' option checks out a working copy of the
 repository. It must be called from within the repository. It takes one
-required argument - the checkout directory location.
+required argument - the checkout directory location.  The -c option
+changes to a specified repository directory for extraction.
 
 The checkout option may take a revision, tag, or branch
 specification, given with the -r, -t, or -b options.
@@ -114,6 +115,9 @@ The compare operation accepts the following options:
 
 -s::
 	Enables explicit reporting of identical files.
+
+-i::
+	Perform comparison of normally ignored dot directories
 
 The 'compare-tags' action takes two repository directories, extracts a
 list of tags from the first, then compares the repository contents at
@@ -191,7 +195,7 @@ this optimization and force updating, do "-r HEAD".
 
 The export action is a wrapper around either native export facilities
 or the following engines: cvs-fast-export(1) (for CVS), svnadmin(1)
-(for SVN), hg-fast-export.py(1) (for hg).  You must have the
+(for SVN), reposurgeon itself (for hg).  You must have the
 appropriate engine in your $PATH for whatever kind of repository you
 are streaming.
 
