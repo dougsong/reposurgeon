@@ -478,7 +478,7 @@ Sometimes Subversion developers use collections of per-file mergeinfo
 properties to express partial branch merges.  This does not map to
 the DVCS model at all well, and trying to promote these to full-branch
 merges by hand is actually dangerous.  An excellent essay,
-http://web.archive.org/web/20170104093332/https://plus.google.com/100357083629018071519/posts/jG7CN9R1SsZ
+http://web.archive.org/web/20170104093332/https://plus.google.com/100357083629018071519/posts/jG7CN9R1SsZ[Partial git merges -- just say no.]
 git merges -- just say no.] explores the problem in depth.
 
 The bottom line is that reposurgeon warns about per-file svn:mergeinfo
@@ -3477,7 +3477,7 @@ long-running conversion recipes.
    benchmarking. Without arguments, report the read limit; 0 means
    there is none.
 
-`memory`::
+`memory` [ >__outfile__ ]::
    Report memory usage.  Runs a garbage-collect before reporting so the
    figure will better reflect storage currently held in loaded repositories;
    this will not affect the reported high-water mark.

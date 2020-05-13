@@ -9972,11 +9972,13 @@ mark.
 
 // DoMemory is the handler for the "memory" command.
 func (rs *Reposurgeon) DoMemory(line string) bool {
+	parse := rs.newLineParse(line, orderedStringSet{"stdout"})
+	defer parse.Closem()
 	var memStats runtime.MemStats
 	debug.FreeOSMemory()
 	runtime.ReadMemStats(&memStats)
 	const MB = 1e6
-	fmt.Printf("Heap: %.2fMB  High water: %.2fMB\n",
+	fmt.Fprintf(parse.stdout, "Heap: %.2fMB  High water: %.2fMB\n",
 		float64(memStats.HeapAlloc)/MB, float64(memStats.TotalAlloc)/MB)
 	return false
 }
