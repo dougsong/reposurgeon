@@ -1812,17 +1812,6 @@ func (b Blob) getComment() string {
 	return string(b.getContent())
 }
 
-// sha returns the SHA-1 hash of the blob content. Used only for indexing,
-// does not need to be crypto-quality.
-// FIXME: redundant with gitHash?
-func (b *Blob) sha() string {
-	h := sha1.New()
-	content := b.getContentStream()
-	defer content.Close()
-	io.Copy(h, content)
-	return fmt.Sprintf("%x", h.Sum(nil))
-}
-
 // getMark returns the blob's identifying mark
 func (b Blob) getMark() string {
 	return b.mark
@@ -12624,7 +12613,7 @@ referencing them to instead reference the (kept) first blob.
 `)
 }
 
-// DoDedup deduplicates identical (up to SHA1) blobs within the selection set
+// DoDedup deduplicates identical (up to hash) blobs within the selection set
 func (rs *Reposurgeon) DoDedup(line string) bool {
 	if rs.chosen() == nil {
 		croak("no repo has been chosen.")
@@ -12639,7 +12628,7 @@ func (rs *Reposurgeon) DoDedup(line string) bool {
 	for _, ei := range selection {
 		event := rs.chosen().events[ei]
 		if blob, ok := event.(*Blob); ok {
-			sha := blob.sha()
+			sha := blob.gitHash().hexify()
 			if blobMap[sha] != "" {
 				dupMap[blob.mark] = blobMap[sha]
 			} else {

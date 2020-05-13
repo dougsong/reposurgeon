@@ -1,11 +1,13 @@
 /home/esr/WWW/reposurgeon/test/dedup
 blob
 mark :1
+original-oid 58dbf389f3f18185ecc5b3269044d169e797adbf
 data 75
 This is a toy repo intended as a correctness test for the dedup operation.
 
 blob
 mark :2
+original-oid 525bfb80f284daa7dd906e6c19262bb7b1b4144d
 data 50
 This is a file with content in a duplicate blob.
 
