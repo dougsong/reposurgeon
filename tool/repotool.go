@@ -447,8 +447,6 @@ func export(args []string) {
 	}
 }
 
-// Unimplemented stubs begin
-
 func mirror(args []string) {
 	if verbose {
 		fmt.Printf("initialize args: %v\n", args)
@@ -565,19 +563,18 @@ func branches() string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var m = map[string]string{
-		"cvs":          "module=`ls -1 | grep -v CVSROOT`; cvs -Q -d:local:${PWD} rlog -h $module 2>&1 | awk -F'[.:]' '/^\t/&&$(NF-1)==0{print $1}' | awk '{print $1}' | sort -u",
-		"svn":          fmt.Sprintf("svn ls 'file://%s/branches' | sed 's|/$||'", pwd),
-		"svn-checkout": "ls branches 2>/dev/null || exit 0",
-		"git":          "git branch -q --list 2>&1 | cut -c 3- | egrep -v 'detached|^master$' || exit 0",
-		"bzr":          "bzr branches | cut -c 3-",
-		"hg":           "hg branches --template '{branch}\n' | grep -v '^default$'",
+	vcsname := vcstype(".")
+	var cmd string
+	if vcsname == "svn-checkout" {
+		cmd = "ls branches 2>/dev/null || exit 0"
+	} else if e := findVCS(vcsname); e != nil {
+		cmd = e.branchlister
 	}
-	vcs := vcstype(".")
-	if e, ok := m[vcs]; !ok {
-		croak("can't list branches from directory of type %s.", vcs)
+	if cmd == "" {
+		croak("can't list branches from directory of type %s.", vcsname)
 	} else {
-		return captureFromProcess(e, " branch-list command  in "+pwd)
+		cmd = strings.ReplaceAll(cmd, "${pwd}",pwd)
+		return captureFromProcess(cmd, " branch-list command in "+pwd)
 	}
 	return ""
 }
