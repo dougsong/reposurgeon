@@ -498,24 +498,7 @@ func (rs *Reposurgeon) evalTextSearch(state selEvalState,
 	}
 	events := rs.chosen().events
 	it := preselection.Iterator()
-	for it.Next() {
-		e := events[it.Value()]
-		if checkBranch {
-			if t, ok := e.(*Tag); ok {
-				e = rs.repo.markToEvent(t.committish)
-			} else if b, ok := e.(*Blob); ok {
-				for ci := it.Value(); ci < len(events); ci++ {
-					possible := events[ci]
-					if c, ok := possible.(*Commit); ok &&
-						c.references(b.mark) {
-						// FIXME: Won't find multiple
-						// references
-						e = possible
-						break
-					}
-				}
-			}
-		}
+	conditionalMark := func(e Event) {
 		for _, searchable := range searchIn {
 			if _, ok := getAttr(e, searchable); ok {
 				key := extractors[searchable](e)
@@ -540,6 +523,23 @@ func (rs *Reposurgeon) evalTextSearch(state selEvalState,
 				matchers.Add(it.Value())
 			}
 		}
+	}
+	for it.Next() {
+		e := events[it.Value()]
+		if checkBranch {
+			if t, ok := e.(*Tag); ok {
+				e = rs.repo.markToEvent(t.committish)
+			} else if b, ok := e.(*Blob); ok {
+				for ci := it.Value(); ci < len(events); ci++ {
+					possible := events[ci]
+					if c, ok := possible.(*Commit); ok &&
+						c.references(b.mark) {
+						conditionalMark(possible)
+					}
+				}
+			}
+		}
+		conditionalMark(e)
 	}
 	return matchers
 }
