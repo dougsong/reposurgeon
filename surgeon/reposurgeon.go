@@ -9094,7 +9094,7 @@ func (rs *Reposurgeon) DoShell(line string) bool {
 }
 
 // walkEvents walks a selection applying a hook function.to the events
-// This metod needs to be ke[s in sync with the walkEvents function.
+// This method needs to be kept in sync with the walkEvents function.
 func (repo *Repository) walkEvents(selection orderedIntSet, hook func(i int, event Event)) {
 	if control.flagOptions["serial"] {
 		for i, e := range selection {
