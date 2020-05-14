@@ -412,6 +412,10 @@ the advantage is that it can do a comparison of the repository
 histories and identify problems for you to fix in your lift
 script.
 
+A CVS repository normally consists of a set of module subdirectories
+and a CVSROOT directory containing metadata. If yours has more than
+ne module, see <<CVS, this important caveat>>.
+
 Problems in CVS conversions generally arise from the fact that CVS's
 data model doesn't have real multi-file changesets, which are the
 fundamental unit of a commit in DVCSes.  It can be difficult to fully
@@ -1519,7 +1523,7 @@ probably read <<mercurial>> after this section.
     With a directory-name argument, this command attempts
     to read in the contents of a repository in any supported
     version-control system under that directory; read with no arguments
-    does this in the current directory. If output is redirected to a
+    does this in the current directory. If input is redirected from a
     plain file, it will be read in as a fast-import stream or Subversion
     dumpfile. With an argument of '```-```', this command reads a
     fast-import stream or Subversion dumpfile from standard input (this
@@ -3927,11 +3931,23 @@ projects.  This reposurgeon procedure handles those correctly.
 [[CVS]]
 == Working with CVS
 
-When you are lifting a CVS repository using reposurgeon, most of the
+When you are converting a CVS repository using reposurgeon, most of the
 heavy lifting will have been done by the importer - cvs-fast-export.
 In particular, it coalesces CVS per-file changes into changesets when
 it detects that they have identical comments and attributions and are
 close in time, and it converts .cvsignore files to .gitignores.
+
+A CVS repository normally consists of a set of module subdirectories
+and a CVSROOT directory containing metadata. cvs-fast-export ignores
+CVSROOT; thus you can run reposugeon at any level of a directory tree
+containing CVS master files and it will try to lift what it can see at
+and below the current directory it is run from.
+
+If you do this at the top level of the repository directory, your
+converted repository will have a subdirectory corresponding to each
+module. This is normally not the way you want to do things, as CVS
+tags are not likely to be consistent across all modules and thus won't
+lift correctly. You probably want to do individual module conversions.
 
 One issue to keep an eye on is whether the window defining "close in
 time" is wide enough.  If it's not, you may detect commit groups with

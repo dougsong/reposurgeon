@@ -54,10 +54,12 @@ option of the '```write```'. Ignore patterns are not
 translated in either direction.
 
 SVN and CVS are supported for read only, not write.  For CVS,
-reposurgeon must be run from within a repository
-directory (one with a CVSROOT subdirectory). Each module becomes
-a subdirectory in the the reposurgeon
-representation of the change history.
+reposurgeon must be run from within a repository directory (that is, a
+tree of CVS masters; a CVSROOT is not required). When reading from a
+CVS top-level directory each module becomes a subdirectory in the
+reposurgeon representation of the change history. It is also possible
+to read a repository from within a CVS module subdirectory and lift
+that individual module.
 
 In order to deal with version-control systems that do not have
 fast-export equivalents, reposurgeon can also host extractor code that
