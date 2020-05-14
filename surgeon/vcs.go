@@ -7,7 +7,10 @@ package main
 
 import (
 	"bufio"
+	"io/ioutil"
+	"path/filepath"
 	"fmt"
+	"log"
 	"regexp"
 	"strings"
 )
@@ -597,6 +600,30 @@ func findVCS(name string) *VCS {
 		}
 	}
 	panic(fmt.Sprintf("reposurgeon: failed to find '%s' in VCS types (len %d)", name, len(vcstypes)))
+}
+
+
+func identifyRepo(dirname string) *VCS {
+	for _, vcs := range vcstypes {
+		if vcs.subdirectory != "" {
+			subdir := filepath.Join(dirname, vcs.subdirectory)
+			subdir = filepath.FromSlash(subdir)
+			if exists(subdir) && isdir(subdir) {
+				return &vcs
+			}
+		}
+	}
+	// Could be a CVS repository without CVSROOT
+	files, err := ioutil.ReadDir(dirname)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, p := range files {
+		if strings.HasSuffix(p.Name(), ",v") {
+			return findVCS("cvs")
+		}
+	}
+	return nil
 }
 
 // end

@@ -291,28 +291,14 @@ func under(target string, hook func()) {
 
 // What repository type in this directory?
 func vcstype(d string) string {
-	if isdir(filepath.Join(d, "CVSROOT")) {
-		return "cvs"
-	}
-	files, err := ioutil.ReadDir(d)
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, p := range files {
-		if strings.HasSuffix(p.Name(), ",v") {
-			return "cvs"
-		}
-	}
 	if isdir(filepath.Join(d, "CVS")) {
 		return "cvs-checkout"
 	}
 	if isdir(filepath.Join(d, ".svn")) {
 		return "svn-checkout"
 	}
-	for _, vcs := range vcstypes {
-		if isdir(filepath.Join(d, vcs.subdirectory)) {
-			return vcs.name
-		}
+	if rt := identifyRepo(d); rt != nil {
+		return rt.name
 	}
 	croak("%s does not look like a repository of known type.", d)
 	return ""
