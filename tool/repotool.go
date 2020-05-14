@@ -24,9 +24,28 @@ import (
 // TMPDIR is the temporary directory under which to perform checkouts
 var TMPDIR string
 
+// Define a couplee of partial capability tables for querying
+// checkout directories.
+
+var cvsCheckout = VCS{
+	name:         "cvs-checkout",
+	subdirectory: "CVS",
+	taglister:    "",
+	branchlister: "",
+}
+
+var svnCheckout = VCS{
+	name:         "svn-checkout",
+	subdirectory: ".svn",
+	taglister:    "ls tags 2>/dev/null || exit 0",
+	branchlister: "ls branches 2>/dev/null || exit 0",
+}
+
 func init() {
 	setInit()
 	vcsInit()
+	vcstypes = append(vcstypes, cvsCheckout)
+	vcstypes = append(vcstypes, svnCheckout)
 }
 
 func (s stringSet) Listify() []string {
@@ -291,12 +310,6 @@ func under(target string, hook func()) {
 
 // What repository type in this directory?
 func vcstype(d string) string {
-	if isdir(filepath.Join(d, "CVS")) {
-		return "cvs-checkout"
-	}
-	if isdir(filepath.Join(d, ".svn")) {
-		return "svn-checkout"
-	}
 	if rt := identifyRepo(d); rt != nil {
 		return rt.name
 	}
@@ -512,16 +525,14 @@ func tags() string {
 	}
 	vcsname := vcstype(".")
 	var cmd string
-	if vcsname == "svn-checkout" {
-		cmd = "ls tags 2>/dev/null || exit 0"
-	} else if e := findVCS(vcsname); e != nil {
+	if e := findVCS(vcsname); e != nil {
 		cmd = e.taglister
-	}
-	if cmd == "" {
-		croak("can't list tags from repository or directory of type %s.", vcsname)
-	} else {
-		cmd = strings.ReplaceAll(cmd, "${pwd}", pwd)
-		return captureFromProcess(cmd, " tag-list command in "+pwd)
+		if cmd == "" {
+			croak("can't list tags from repository or directory of type %s.", vcsname)
+		} else {
+			cmd = strings.ReplaceAll(cmd, "${pwd}", pwd)
+			return captureFromProcess(cmd, " tag-list command in "+pwd)
+		}
 	}
 	return ""
 }
@@ -533,16 +544,14 @@ func branches() string {
 	}
 	vcsname := vcstype(".")
 	var cmd string
-	if vcsname == "svn-checkout" {
-		cmd = "ls branches 2>/dev/null || exit 0"
-	} else if e := findVCS(vcsname); e != nil {
+	if e := findVCS(vcsname); e != nil {
 		cmd = e.branchlister
-	}
-	if cmd == "" {
-		croak("can't list branches from repository or directory of type %s.", vcsname)
-	} else {
-		cmd = strings.ReplaceAll(cmd, "${pwd}", pwd)
-		return captureFromProcess(cmd, " branch-list command in "+pwd)
+		if cmd == "" {
+			croak("can't list branches from repository or directory of type %s.", vcsname)
+		} else {
+			cmd = strings.ReplaceAll(cmd, "${pwd}", pwd)
+			return captureFromProcess(cmd, " branch-list command in "+pwd)
+		}
 	}
 	return ""
 }
