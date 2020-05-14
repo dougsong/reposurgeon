@@ -306,26 +306,13 @@ func vcstype(d string) string {
 	if isdir(filepath.Join(d, "CVS")) {
 		return "cvs-checkout"
 	}
-	if isdir(filepath.Join(d, "locks")) {
-		return "svn"
-	}
 	if isdir(filepath.Join(d, ".svn")) {
 		return "svn-checkout"
 	}
-	if isdir(filepath.Join(d, ".git")) {
-		return "git"
-	}
-	if isdir(filepath.Join(d, ".bzr")) {
-		return "bzr"
-	}
-	if isdir(filepath.Join(d, ".hg")) {
-		return "hg"
-	}
-	if isdir(filepath.Join(d, "_darcs")) {
-		return "darcs"
-	}
-	if isdir(filepath.Join(d, ".bk")) {
-		return "bk"
+	for _, vcs := range vcstypes {
+		if isdir(filepath.Join(d, vcs.subdirectory)) {
+			return vcs.name
+		}
 	}
 	croak("%s does not look like a repository of known type.", d)
 	return ""
