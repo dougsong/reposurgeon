@@ -565,7 +565,7 @@ core
 
 	// Compile a list of ignorable files and directories
 	// We have to begin with things that can occur in checkout directories
-	vcsignores = []string{"CVS", ".svn"}
+	vcsignores = make([]string, 0)
 	for _, vcs := range vcstypes {
 		if vcs.subdirectory != "" {
 			vcsignores = append(vcsignores, vcs.subdirectory)

@@ -46,6 +46,11 @@ func init() {
 	vcsInit()
 	vcstypes = append(vcstypes, cvsCheckout)
 	vcstypes = append(vcstypes, svnCheckout)
+	vcsignores = append(vcsignores, []string{"CVS", ".svn"}...)
+	// Grotty repotool-only special case that takes the long way around
+	// through reposurgeon's extractor classes.  Remove if and when there
+	// is a real exporter for hg
+	findVCS("hg").exporter = "reposurgeon 'read .' 'prefer git' 'write -'"
 }
 
 type squishyParts struct {
@@ -297,19 +302,10 @@ func under(target string, hook func()) {
 	os.Chdir(source)
 }
 
-// What repository type in this directory?
-func vcstype(d string) string {
-	if rt := identifyRepo(d); rt != nil {
-		return rt.name
-	}
-	croak("%s does not look like a repository of known type.", d)
-	return ""
-}
-
 func isDvcsOrCheckout() bool {
 	// Is this a DVCS or checkout where we can compare files?
-	t := vcstype(".")
-	return t != "cvs" && t != "svn"
+	t := identifyRepo(".")
+	return t != nil && t.name != "cvs" && t.name != "svn"
 }
 
 func input(prompt string) string {
@@ -397,23 +393,14 @@ func export() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	vcsname := vcstype(".")
-	var cmd string
-	// Grotty repotool-only special case that takes thje long way around
-	// through reposurgeon's extractor classes.  Remove when we have a
-	// real exporter for hg
-	if vcsname == "hg" {
-		cmd = "reposurgeon 'read .' 'prefer git' 'write -'"
-	} else if e := findVCS(vcsname); e != nil {
-		cmd = e.exporter
-		if e.quieter != "" {
-			cmd += " " + e.quieter
-		}
+	rt := identifyRepo(".")
+	if rt == nil {
+		croak("unknown repository type")
 	}
-	if cmd == "" {
-		croak("can't export from repository of type %s.", vcsname)
+	if rt.exporter == "" {
+		croak("can't export from repository of type %s.", rt.name)
 	} else {
-		runShellProcessOrDie(cmd, " export command in "+pwd)
+		runShellProcessOrDie(rt.exporter, " export command in "+pwd)
 	}
 }
 
@@ -512,16 +499,15 @@ func tags() string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	vcsname := vcstype(".")
-	var cmd string
-	if e := findVCS(vcsname); e != nil {
-		cmd = e.taglister
-		if cmd == "" {
-			croak("can't list tags from repository or directory of type %s.", vcsname)
-		} else {
-			cmd = strings.ReplaceAll(cmd, "${pwd}", pwd)
-			return captureFromProcess(cmd, " tag-list command in "+pwd)
-		}
+	rt := identifyRepo(".")
+	if rt == nil {
+		croak("unknown repository type")
+	}
+	if rt.taglister == "" {
+		croak("can't list tags from repository or directory of type %s.", rt.name)
+	} else {
+		cmd := strings.ReplaceAll(rt.taglister, "${pwd}", pwd)
+		return captureFromProcess(cmd, " tag-list command in "+pwd)
 	}
 	return ""
 }
@@ -531,16 +517,15 @@ func branches() string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	vcsname := vcstype(".")
-	var cmd string
-	if e := findVCS(vcsname); e != nil {
-		cmd = e.branchlister
-		if cmd == "" {
-			croak("can't list branches from repository or directory of type %s.", vcsname)
-		} else {
-			cmd = strings.ReplaceAll(cmd, "${pwd}", pwd)
-			return captureFromProcess(cmd, " branch-list command in "+pwd)
-		}
+	rt := identifyRepo(".")
+	if rt == nil {
+		croak("unknown repository type")
+	}
+	if rt.branchlister == "" {
+		croak("can't list branches from repository or directory of type %s.", rt.name)
+	} else {
+		cmd := strings.ReplaceAll(rt.branchlister, "${pwd}", pwd)
+		return captureFromProcess(cmd, " branch-list command in "+pwd)
 	}
 	return ""
 }
@@ -569,8 +554,8 @@ func checkout(outdir string, rev string) string {
 	if err != nil {
 		log.Fatal(err2)
 	}
-	vcs := vcstype(".")
-	if vcs == "cvs" {
+	vcs := identifyRepo(".")
+	if vcs.name == "cvs" {
 		module := captureFromProcess("ls -1 | grep -v CVSROOT", " listing modules")
 		if rev != "" {
 			rev = "-r " + rev
@@ -580,10 +565,10 @@ func checkout(outdir string, rev string) string {
 		// in masters.
 		runShellProcessOrDie(fmt.Sprintf("cvs -Q -d:local:%s co -P %s %s %s -d %s -kb %s", pwd, branch, tag, rev, outdir, module), "checkout")
 		return outdir
-	} else if vcs == "cvs-checkout" {
+	} else if vcs.name == "cvs-checkout" {
 		runShellProcessOrDie(fmt.Sprintf("cvs -Q -d:local:%s co -P %s %s %s -kb", pwd, branch, tag, rev), "checkout")
 		return outdir
-	} else if vcs == "svn" {
+	} else if vcs.name == "svn" {
 		if rev != "" {
 			rev = "-r " + rev
 		}
@@ -598,7 +583,7 @@ func checkout(outdir string, rev string) string {
 			outdir = filepath.Join(outdir, "branches", branch)
 		}
 		return outdir
-	} else if vcs == "svn-checkout" {
+	} else if vcs.name == "svn-checkout" {
 		if rev != "" {
 			rev = "-r " + rev
 			// Potentially dangerous assumption: User made a full checkout
@@ -642,7 +627,7 @@ func checkout(outdir string, rev string) string {
 			fmt.Printf("Subversion inward link %s -> %s\n", outdir, part)
 		}
 		return outdir
-	} else if vcs == "git" {
+	} else if vcs.name == "git" {
 		// Only one rev should be given to git checkout
 		// Use the passed-in arguments, in some order of specificity.
 		handleMissing := false
@@ -677,9 +662,9 @@ func checkout(outdir string, rev string) string {
 			fmt.Printf("Git inward link %s -> %s\n", outdir, path)
 		}
 		return outdir
-	} else if vcs == "bzr" {
+	} else if vcs.name == "bzr" {
 		croak("checkout is not yet supported in bzr.")
-	} else if vcs == "hg" {
+	} else if vcs.name == "hg" {
 		spec := ""
 		if rev != "" {
 			spec = "-r " + rev
@@ -704,7 +689,7 @@ func checkout(outdir string, rev string) string {
 			fmt.Printf("Hg inward link %s -> %s\n", outdir, pwd)
 		}
 		return outdir
-	} else if vcs == "darcs" {
+	} else if vcs.name == "darcs" {
 		croak("checkout is not yet supported for darcs.")
 	} else {
 		croak("checkout not supported for this repository type.")
@@ -815,9 +800,9 @@ func compareRevision(args []string, rev string) string {
 	}
 	// add missing empty directories in checkouts of VCSs that do not support them
 	dirsToNuke := make([]string, 0)
-	sourcetype := vcstype(source)
-	targettype := vcstype(target)
-	if (sourcetype != "git" && targettype != "hg") && (targettype == "git" || targettype == "hg") {
+	sourcetype := identifyRepo(source)
+	targettype := identifyRepo(target)
+	if (sourcetype.name != "git" && targettype.name != "hg") && (targettype.name == "git" || targettype.name == "hg") {
 		under(sourcedir, func() {
 			filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 				if err != nil {
