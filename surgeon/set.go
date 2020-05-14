@@ -1,5 +1,5 @@
 /*
- * set is a simple string-set class.
+ * set is two simple string-set classes.
  *
 // Copyright by Eric S. Raymond
  * SPDX-License-Identifier: BSD-2-Clause
@@ -16,6 +16,10 @@ import (
 type stringSet struct {
 	store map[string]bool
 }
+
+// This representation optimizes for small memory footprint at the expense
+// of speed. See fastOrderedStringSet for the opposite choice.
+type orderedStringSet []string
 
 var nullStringSet stringSet
 var nullOrderedStringSet orderedStringSet
@@ -107,11 +111,6 @@ func (s stringSet) Empty() bool {
 func (s stringSet) Len() int {
 	return len(s.store)
 }
-
-// This representation optimizes for small memory footprint at the expense
-// of speed.  To make the opposite trade we would do the obvious thing with
-// map[string] bool.
-type orderedStringSet []string
 
 func newOrderedStringSet(elements ...string) orderedStringSet {
 	set := make([]string, 0)

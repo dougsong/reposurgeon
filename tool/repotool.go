@@ -48,17 +48,6 @@ func init() {
 	vcstypes = append(vcstypes, svnCheckout)
 }
 
-func (s stringSet) Listify() []string {
-	ordered := make([]string, len(s.store))
-	i := 0
-	for el := range s.store {
-		ordered[i] = el
-		i++
-	}
-	sort.Strings(ordered)
-	return ordered
-}
-
 type squishyParts struct {
 	Project   string
 	SourceVCS string
@@ -874,7 +863,7 @@ func compareRevision(args []string, rev string) string {
 
 		// Check for permission match
 		common := dirlist(sourcedir, newStringSet(sourceignores...)).Intersection(dirlist(targetdir, newStringSet(targetignores...)))
-		commonList := common.Listify()
+		commonList := common.Ordered()
 		for _, path := range commonList {
 			sstat, err1 := os.Stat(filepath.Join(sourcedir, path))
 			tstat, err2 := os.Stat(filepath.Join(targetdir, path))
@@ -939,14 +928,14 @@ func compareEngine(_singular string, plural string, lister func() string, args [
 	if sourceonly.Len() > 0 {
 		compareResult += "----------------------------------------------------------------\n"
 		compareResult += fmt.Sprintf("%s only in source:\n", plural)
-		for _, item := range sourceonly.Listify() {
+		for _, item := range sourceonly.Ordered() {
 			compareResult += item + "\n"
 		}
 	}
 	if targetonly.Len() > 0 {
 		compareResult += "----------------------------------------------------------------\n"
 		compareResult += fmt.Sprintf("%s only in target:\n", plural)
-		for _, item := range targetonly.Listify() {
+		for _, item := range targetonly.Ordered() {
 			compareResult += item + "\n"
 		}
 	}
@@ -955,7 +944,7 @@ func compareEngine(_singular string, plural string, lister func() string, args [
 	}
 	report := ""
 	if !common.Empty() {
-		for _, ref := range common.Listify() {
+		for _, ref := range common.Ordered() {
 			report += compareRevision([]string{source, target}, ref)
 		}
 	}
