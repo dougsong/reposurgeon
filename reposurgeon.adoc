@@ -70,10 +70,9 @@ not modified by it.  In particular, reposurgeon can be used to move a
 repository history from any VCS supported by an extractor to any VCS
 supported by a normal importer/exporter pair.
 
-Mercurial repository reading is implemented with an extractor
-class; writing is handled with the stock "hg fastimport" command.  A
-test extractor exists for git, but is normally disabled in favor of
-the regular exporter.
+Mercurial repository reading is implemented with an extractor class;
+writing is handled with hg-git-fast-import.  A test extractor exists
+for git, but is normally disabled in favor of the regular exporter.
 
 For details on how to operate reposurgeon, see the
 http://www.catb.org/esr/reposurgeon/repository-editing.html[Repository Editing and
@@ -92,8 +91,7 @@ bzr::
 Requires bzr plus the `bzr-fast-import` plugin.
 
 hg::
-Requires core hg, the `hg-git-fastimport` plugin, and (unless using reposurgeon's
-built-in hg-extractor) the third-party `hg-fast-export.py` script.
+Requires core hg and `hg-git-fast-import`.
 
 svn::
 Stock Subversion commands support export and import.
