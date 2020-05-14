@@ -47,10 +47,6 @@ func init() {
 	vcstypes = append(vcstypes, cvsCheckout)
 	vcstypes = append(vcstypes, svnCheckout)
 	vcsignores = append(vcsignores, []string{"CVS", ".svn"}...)
-	// Grotty repotool-only special case that takes the long way around
-	// through reposurgeon's extractor classes.  Remove if and when there
-	// is a real exporter for hg
-	findVCS("hg").exporter = "reposurgeon 'read .' 'prefer git' 'write -'"
 }
 
 type squishyParts struct {
@@ -397,10 +393,20 @@ func export() {
 	if rt == nil {
 		croak("unknown repository type")
 	}
-	if rt.exporter == "" {
+	cmd := rt.exporter
+	if rt.name == "hg" {
+		// Grotty repotool-only special case that takes the long way around
+		// through reposurgeon's extractor classes.  Remove if and when there
+		// is a real exporter for hg
+		cmd = "reposurgeon 'read .' 'prefer git' 'write -'"
+	}
+	if cmd == "" {
 		croak("can't export from repository of type %s.", rt.name)
 	} else {
-		runShellProcessOrDie(rt.exporter, " export command in "+pwd)
+		if rt.quieter != "" {
+			cmd += " " + rt.quieter
+		}
+		runShellProcessOrDie(cmd, " export command in "+pwd)
 	}
 }
 
