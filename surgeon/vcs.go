@@ -74,6 +74,29 @@ const suffixNumeric = `[0-9]+(\s|[.]\n)`
 const tokenNumeric = `\s` + suffixNumeric
 const dottedNumeric = `\s[0-9]+(\.[0-9]+)`
 
+// manages tells us if a directory might be managed by theis VCS 
+func (vcs VCS) manages(dirname string) bool {
+	if vcs.subdirectory != "" {
+		subdir := filepath.Join(dirname, vcs.subdirectory)
+		subdir = filepath.FromSlash(subdir)
+		if exists(subdir) && isdir(subdir) {
+			return true
+		}
+	}
+	// Could be a CVS repository without CVSROOT
+	if vcs.name == "cvs"{
+		files, err := ioutil.ReadDir(dirname)
+		if err != nil {
+			for _, p := range files {
+				if strings.HasSuffix(p.Name(), ",v") {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
 func (vcs VCS) String() string {
 	realignores := newOrderedStringSet()
 	scanner := bufio.NewScanner(strings.NewReader(vcs.dfltignores))
@@ -601,32 +624,12 @@ func findVCS(name string) *VCS {
 	panic(fmt.Sprintf("reposurgeon: failed to find '%s' in VCS types (len %d)", name, len(vcstypes)))
 }
 
-// isBareCVS can detect a CVS repository even with no CVSROOT.
-func isBareCVS(dirname string) bool {
-	files, err := ioutil.ReadDir(dirname)
-	if err != nil {
-		for _, p := range files {
-			if strings.HasSuffix(p.Name(), ",v") {
-				return true
-			}
-		}
-	}
-	return false
-}
-
+// identifyRepo finds what type of repo we're looking at.
 func identifyRepo(dirname string) *VCS {
 	for _, vcs := range vcstypes {
-		if vcs.subdirectory != "" {
-			subdir := filepath.Join(dirname, vcs.subdirectory)
-			subdir = filepath.FromSlash(subdir)
-			if exists(subdir) && isdir(subdir) {
-				return &vcs
-			}
+		if vcs.manages(dirname) {
+			return &vcs
 		}
-	}
-	// Could be a CVS repository without CVSROOT
-	if isBareCVS(dirname) {
-		return findVCS("cvs")
 	}
 	return nil
 }

@@ -7659,15 +7659,9 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 	// 1. extractor and preferred both non-nil.  Use the extractor if there's a matching repo here.
 	// 2. preferred is non-nil.  Use that type if there's a matching repo here.
 	// 3. extractor and preferred both nil. Look for anything we can read.
-	baseMatch := func(vcs *VCS) bool {
-		subdir := source + "/" + vcs.subdirectory
-		subdir = filepath.FromSlash(subdir)
-		return exists(subdir) && isdir(subdir)
-	}
-
 	var vcs *VCS
 	if extractor != nil || preferred != nil {
-		if baseMatch(preferred) {
+		if preferred.manages(source) {
 			vcs = preferred // if extractor is non-null it gets picked up below
 		} else {
 			return nil, fmt.Errorf("couldn't find a repo of desiret type %s under %s", preferred.name, abspath(source))
@@ -7675,7 +7669,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 	} else {
 		hitcount := 0
 		for i, possible := range vcstypes {
-			if baseMatch(&possible) {
+			if possible.manages(source) {
 				vcs = &vcstypes[i]
 				hitcount++
 			}
@@ -7688,7 +7682,7 @@ func readRepo(source string, options stringSet, preferred *VCS, extractor Extrac
 		// There's only one base match, and vcs is set.  Forward to a matching extractor if need be
 		if vcs.exporter == "" {
 			for _, possible := range importers {
-				if baseMatch(possible.basevcs) {
+				if possible.basevcs.manages(source) {
 					extractor = possible.engine
 				}
 			}
