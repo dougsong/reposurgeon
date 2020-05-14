@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"fmt"
-	"log"
 	"regexp"
 	"strings"
 )
@@ -602,6 +601,18 @@ func findVCS(name string) *VCS {
 	panic(fmt.Sprintf("reposurgeon: failed to find '%s' in VCS types (len %d)", name, len(vcstypes)))
 }
 
+// isBareCVS can detect a CVS repository even with no CVSROOT.
+func isBareCVS(dirname string) bool {
+	files, err := ioutil.ReadDir(dirname)
+	if err != nil {
+		for _, p := range files {
+			if strings.HasSuffix(p.Name(), ",v") {
+				return true
+			}
+		}
+	}
+	return false
+}
 
 func identifyRepo(dirname string) *VCS {
 	for _, vcs := range vcstypes {
@@ -614,14 +625,8 @@ func identifyRepo(dirname string) *VCS {
 		}
 	}
 	// Could be a CVS repository without CVSROOT
-	files, err := ioutil.ReadDir(dirname)
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, p := range files {
-		if strings.HasSuffix(p.Name(), ",v") {
-			return findVCS("cvs")
-		}
+	if isBareCVS(dirname) {
+		return findVCS("cvs")
 	}
 	return nil
 }
