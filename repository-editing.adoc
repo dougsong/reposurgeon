@@ -3311,7 +3311,7 @@ Scripts may call other scripts to arbitrary depth.
    Does nothing but ship its argument line to standard
    output. Useful in scripts for regression tests.
 
-Here are some more advanced examples of scrpting:
+Here are some more advanced examples of scripting:
 
 --------
 define lastchange {
