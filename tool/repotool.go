@@ -712,13 +712,16 @@ func checkout(outdir string, rev string) string {
 
 func dirlist(top string, excl stringSet) stringSet {
 	outset := newStringSet()
-	filepath.Walk(top, func(path string, info os.FileInfo, err error) error {
+	here, _ := os.Getwd()
+	os.Chdir(top)
+	filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 		clean := filepath.Clean(path) // Remove leading ./ if any
 		if !excl.Contains(clean) {
 			outset.Add(clean)
 		}
 		return nil
 	})
+	os.Chdir(here)
 	return outset
 }
 
@@ -856,13 +859,21 @@ func compareRevision(args []string, rev string) string {
 		common := dirlist(sourcedir, newStringSet(sourceignores...)).Intersection(dirlist(targetdir, newStringSet(targetignores...)))
 		commonList := common.Ordered()
 		for _, path := range commonList {
-			sstat, err1 := os.Stat(filepath.Join(sourcedir, path))
-			tstat, err2 := os.Stat(filepath.Join(targetdir, path))
-			if err1 != nil {
-				log.Fatal(err1)
+			sourcepath := filepath.Join(sourcedir, path)
+			targetpath := filepath.Join(targetdir, path)
+			if isdir(sourcepath) || isdir(targetpath) {
+				continue
 			}
+			// These error cases can be reached by symlink entries in Subversion files.
+			sstat, err1 := os.Stat(sourcepath)
+			if err1 != nil {
+				complain("source path stat: %s", err1)
+				continue
+			}
+			tstat, err2 := os.Stat(targetpath)
 			if err2 != nil {
-				log.Fatal(err2)
+				complain("target path stat: %s", err2)
+				continue
 			}
 			if sstat.Mode() != tstat.Mode() {
 				diff += fmt.Sprintf("%s: %0o -> %0o\n", path, sstat.Mode(), tstat.Mode())
