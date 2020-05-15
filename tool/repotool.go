@@ -574,6 +574,16 @@ func checkout(outdir string, rev string) string {
 		if rev != "" {
 			rev = "-r " + rev
 		}
+		// The reason for checkout's odd calling signature -
+		// pass it a checkout directory, get back a symlink
+		// toi what you actually wanted - is here. The problem
+		// is that Subversion checkoutd on large repositories
+		// are horribly slow.  In case we're doing a
+		// comparison on all tags and branches, we want to
+		// checlk out the full repo *once* and pass back
+		// symlinks to parts in the checkout directory,
+		// updating it only as needed. This is is much faster
+		// than doing a fresh checkout every time.
 		runShellProcessOrDie(fmt.Sprintf("svn co -q %s file://%s %s", rev, pwd, outdir), "checkout")
 		if nobranch {
 			// flat repository
