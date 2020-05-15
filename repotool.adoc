@@ -104,9 +104,6 @@ The compare operation accepts the following options:
 	erroring out without any comparison. This is useful when if the other
 	repository uses empty content for deleted refs.
 
--x::
-	Gives a pattern to match basenames of paths to exclude from comparison.
-
 -u::
 	Emit unified diff (the default is a ed-style diff).
 

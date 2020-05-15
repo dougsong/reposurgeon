@@ -154,16 +154,14 @@ stubmap: {{.Project}}.{{.SourceVCS}}
 
 # Compare the histories of the unconverted and converted repositories at head
 # and all tags.
-EXCLUDE = -x CVS -x .{{.SourceVCS}} -x .{{.TargetVCS}}
-EXCLUDE += -x .{{.SourceVCS}}ignore -x .{{.TargetVCS}}ignore
 headcompare: {{.Project}}-mirror {{.Project}}-{{.TargetVCS}}
-	repotool compare $(EXCLUDE) {{.Project}}-mirror {{.Project}}-{{.TargetVCS}}
+	repotool compare {{.Project}}-mirror {{.Project}}-{{.TargetVCS}}
 tagscompare: {{.Project}}-mirror {{.Project}}-{{.TargetVCS}}
-	repotool compare-tags $(EXCLUDE) {{.Project}}-mirror {{.Project}}-{{.TargetVCS}}
+	repotool compare-tags {{.Project}}-mirror {{.Project}}-{{.TargetVCS}}
 branchescompare: {{.Project}}-mirror {{.Project}}-{{.TargetVCS}}
-	repotool compare-branches $(EXCLUDE) {{.Project}}-mirror {{.Project}}-{{.TargetVCS}}
+	repotool compare-branches {{.Project}}-mirror {{.Project}}-{{.TargetVCS}}
 allcompare: {{.Project}}-mirror {{.Project}}-{{.TargetVCS}}
-	repotool compare-all $(EXCLUDE) {{.Project}}-mirror {{.Project}}-{{.TargetVCS}}
+	repotool compare-all {{.Project}}-mirror {{.Project}}-{{.TargetVCS}}
 
 # General cleanup and utility
 clean:
@@ -206,7 +204,6 @@ var refexclude string
 var revision string
 var basedir string
 var tag string
-var pathexclude string
 
 func croak(msg string, args ...interface{}) {
 	content := fmt.Sprintf(msg, args...)
@@ -786,9 +783,6 @@ func compareRevision(args []string, rev string) string {
 	if unified {
 		diffArgs = append(diffArgs, "-u")
 	}
-	if pathexclude != "" {
-		diffArgs = append(diffArgs, fmt.Sprintf("-x '%s'", pathexclude))
-	}
 	diffoptStr := strings.Join(append(diffArgs, diffopts...), " ")
 	if acceptMissing {
 		if !exists(sourcedir) {
@@ -1013,7 +1007,6 @@ func main() {
 	flags.StringVar(&refexclude, "e", "", "exclude pattern for tag and branch names.")
 	flags.StringVar(&revision, "r", "", "select revision for checkout or comparison")
 	flags.StringVar(&tag, "t", "", "select tag for checkout or comparison")
-	flags.StringVar(&pathexclude, "x", "", "basename-exclude pattern for comparisons.")
 
 	explain := func() {
 		print(`
