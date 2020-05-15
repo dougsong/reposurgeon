@@ -197,7 +197,6 @@ var acceptMissing = false
 var nobranch = false
 var seeignores = false
 var quiet = false
-var same = false
 var unified = true
 var verbose = false
 
@@ -784,9 +783,6 @@ func compareRevision(args []string, rev string) string {
 	if quiet {
 		diffArgs = append(diffArgs, "-q")
 	}
-	if same {
-		diffArgs = append(diffArgs, "-s")
-	}
 	if unified {
 		diffArgs = append(diffArgs, "-u")
 	}
@@ -1009,7 +1005,6 @@ func main() {
 	flags.BoolVar(&seeignores, "i", false, "do not suppress comparison of normally ignored directories")
 	flags.BoolVar(&nobranch, "n", false, "compare raw structure, ignore SVN branching")
 	flags.BoolVar(&quiet, "q", false, "run as quietly as possible")
-	flags.BoolVar(&same, "s", false, "report when files are the same")
 	flags.BoolVar(&unified, "u", false, "emit unified diff")
 	flags.BoolVar(&verbose, "v", false, "show subcommands and diagnostics")
 

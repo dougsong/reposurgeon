@@ -108,13 +108,10 @@ The compare operation accepts the following options:
 	Gives a pattern to match basenames of paths to exclude from comparison.
 
 -u::
-	Emit unified diff (the default is a context diff).
+	Emit unified diff (the default is a ed-style diff).
 
 -q::
 	Makes the diff run as quietly as possible.
-
--s::
-	Enables explicit reporting of identical files.
 
 -i::
 	Perform comparison of normally ignored dot directories
