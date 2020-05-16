@@ -7,6 +7,7 @@ sudo apt-get install golang hg-git-fast-import      # For running
 sudo apt-get install asciidoctor                    # To render docs
 sudo apt-get install golint shellcheck              # For testing
 sudo apt-get install subversion mercurial rsync cvs # For testing
+sudo apt-get install cvs-fast-export                # For testing
 sudo apt-get install gnuplot                        # For benchmarking
 make                                                # Build it
 make check                                          # Run the tests
@@ -34,10 +35,10 @@ will work. Shell is almost certainly already installed on your system.
 
 You will need asciidoctor to format the documentation.
 
-golint, shellcheck, subversion, mercurial, cvs, and rsync are required
-for the full regression tests, but not for running the code.  Very old
-versions of Subversion (certainly 1.6 or earlier, but not 1.9 or
-later) will cause one spurious test failure.
+golint, shellcheck, subversion, mercurial, cvs, cvs-fast-export and
+rsync are required for the full regression tests, but not for running
+the code.  Very old versions of Subversion (certainly 1.6 or earlier,
+but not 1.9 or later) will cause one spurious test failure.
 
 gnuplot is only required if you're planning to try performance-tuning
 with repobench.

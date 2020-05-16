@@ -7,8 +7,6 @@ apt-get update -qy && apt-get install -qy --no-install-recommends \
     golang \
     golint \
     mercurial \
-    pylint \
-    python3 \
     rsync \
     shellcheck \
     subversion \
