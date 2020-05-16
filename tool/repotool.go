@@ -816,6 +816,10 @@ func compareRevision(args []string, rev string) string {
 	sourcetype := identifyRepo(source)
 	targettype := identifyRepo(target)
 	var diff string
+	//dollarJunk := regexp.MustCompile(` @\(#\) |\$Id.*\$|\$Header.*\$|$Log.*\$`)
+	//isDollarLine := func(line string) bool {
+	//	return dollarJunk.MatchString(line)
+	//}
 	under(TMPDIR, func() {
 		sourcefiles := dirlist(sourcedir)
 		targetfiles := dirlist(targetdir)
@@ -846,6 +850,7 @@ func compareRevision(args []string, rev string) string {
 			// --ignore-matching-lines='$Id.*$'
 			// --ignore-matching-lines='$Header.*$'
 			// --ignore-matching-lines='$Log.*$'
+
 			if !bytes.Equal(sourceText, targetText) {
 				lines0 := difflib.SplitLines(string(sourceText))
 				lines1 := difflib.SplitLines(string(targetText))
