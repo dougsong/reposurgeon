@@ -325,6 +325,20 @@ func makeStub(name string, contents string) {
 }
 
 func initialize(args []string) {
+	WriteSupport := newStringSet()
+	for _, vcs := range vcstypes {
+		if vcs.importer != "" {
+			WriteSupport.Add(vcs.name)
+		}
+	}
+	ReadSupport := newStringSet()
+	for _, vcs := range vcstypes {
+		if vcs.exporter != "" {
+			ReadSupport.Add(vcs.name)
+		}
+	}
+	// Hacky special case implemented through extractor class
+	ReadSupport.Add("hg")
 	if verbose {
 		fmt.Printf("initialize args: %v\n", args)
 	}
@@ -339,7 +353,7 @@ func initialize(args []string) {
 	} else {
 		squishy.SourceVCS, args = args[0], args[1:]
 	}
-	if !newStringSet("cvs", "svn", "git", "bzr", "hg", "darcs", "bk").Contains(squishy.SourceVCS) {
+	if !ReadSupport.Contains(squishy.SourceVCS) {
 		croak("unknown source VCS type %s", squishy.SourceVCS)
 	}
 	if len(args) == 0 {
@@ -348,7 +362,7 @@ func initialize(args []string) {
 		squishy.TargetVCS = args[0]
 		args = args[1:]
 	}
-	if !newStringSet("git", "bzr", "hg", "darcs").Contains(squishy.TargetVCS) {
+	if !WriteSupport.Contains(squishy.TargetVCS) {
 		croak("unknown target VCS type %s", squishy.TargetVCS)
 	}
 	if exists("Makefile") {
