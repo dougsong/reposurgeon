@@ -1,7 +1,7 @@
 SVN-fs-dump-format-version: 2
- ## Test prefix stripping for creation/modification of symlinks
+ ## Test prefix stripping for creation/modification of symlink
 
-UUID: 358f30bb-a703-4d28-a611-601bfa3999e8
+UUID: d5796581-90f8-4bc1-bd66-6d98df38c23e
 
 Revision-number: 0
 Prop-content-length: 56
@@ -10,12 +10,12 @@ Content-length: 56
 K 8
 svn:date
 V 27
-2017-11-06T13:23:58.484208Z
+2020-05-16T09:15:37.413222Z
 PROPS-END
 
 Revision-number: 1
-Prop-content-length: 114
-Content-length: 114
+Prop-content-length: 122
+Content-length: 122
 
 K 10
 svn:author
@@ -24,11 +24,57 @@ esr
 K 8
 svn:date
 V 27
-2017-11-06T13:23:58.585362Z
+2020-05-16T09:18:01.703843Z
 K 7
 svn:log
-V 16
-Create a symlink
+V 24
+Create our link targets
+
+PROPS-END
+
+Node-path: bar
+Node-kind: file
+Node-action: add
+Text-content-md5: dd255f0a7f664bb0b6c30fe30d469919
+Text-content-sha1: e074390ecaa5a531ae136c802e2101c6b8401230
+Prop-content-length: 10
+Text-content-length: 43
+Content-length: 53
+
+PROPS-END
+This file also exists to be a link target.
+
+
+Node-path: foo
+Node-kind: file
+Node-action: add
+Text-content-md5: 90d951f1e04b44929eeabdafc5266c0b
+Text-content-sha1: bd8b8674e9f370bd5c7be6663d7fe20dd7e8307f
+Prop-content-length: 10
+Text-content-length: 38
+Content-length: 48
+
+PROPS-END
+This file exists to be a link target.
+
+
+Revision-number: 2
+Prop-content-length: 131
+Content-length: 131
+
+K 10
+svn:author
+V 3
+esr
+K 8
+svn:date
+V 27
+2020-05-16T09:19:34.650368Z
+K 7
+svn:log
+V 33
+Set up initial value od symlink.
+
 PROPS-END
 
 Node-path: symlink
@@ -47,9 +93,9 @@ V 1
 PROPS-END
 link foo
 
-Revision-number: 2
-Prop-content-length: 114
-Content-length: 114
+Revision-number: 3
+Prop-content-length: 118
+Content-length: 118
 
 K 10
 svn:author
@@ -58,11 +104,12 @@ esr
 K 8
 svn:date
 V 27
-2017-11-06T13:23:58.650927Z
+2020-05-16T09:21:27.333428Z
 K 7
 svn:log
-V 16
-Modify a symlink
+V 20
+Modify the symlink.
+
 PROPS-END
 
 Node-path: symlink

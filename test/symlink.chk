@@ -22,27 +22,47 @@ data 210
 
 blob
 mark :2
+data 43
+This file also exists to be a link target.
+
+blob
+mark :3
+data 38
+This file exists to be a link target.
+
+commit refs/heads/master
+#legacy-id 1
+mark :4
+committer esr <esr> 1589620681 +0000
+data 24
+Create our link targets
+M 100644 :1 .gitignore
+M 100644 :2 bar
+M 100644 :3 foo
+
+blob
+mark :5
 data 3
 foo
 commit refs/heads/master
-#legacy-id 1
-mark :3
-committer esr <esr> 1509974638 +0000
-data 17
-Create a symlink
-M 100644 :1 .gitignore
-M 120000 :2 symlink
+#legacy-id 2
+mark :6
+committer esr <esr> 1589620774 +0000
+data 33
+Set up initial value od symlink.
+from :4
+M 120000 :5 symlink
 
 blob
-mark :4
+mark :7
 data 3
 bar
 commit refs/heads/master
-#legacy-id 2
-mark :5
-committer esr <esr> 1509974638 +0000
-data 17
-Modify a symlink
-from :3
-M 120000 :4 symlink
+#legacy-id 3
+mark :8
+committer esr <esr> 1589620887 +0000
+data 20
+Modify the symlink.
+from :6
+M 120000 :7 symlink
 
