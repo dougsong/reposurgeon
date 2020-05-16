@@ -49,7 +49,6 @@ func init() {
 	vcsInit()
 	vcstypes = append(vcstypes, cvsCheckout)
 	vcstypes = append(vcstypes, svnCheckout)
-	vcsignores = append(vcsignores, []string{"CVS", ".svn"}...)
 }
 
 type squishyParts struct {
@@ -740,16 +739,14 @@ func dirlist(top string) stringSet {
 }
 
 // ignorable says whether the specified path
-func ignorable(filepath string) bool {
-	for _, ignorebase := range vcsignores {
-		// ignorable dotfile
-		if path.Base(filepath) == ignorebase {
-			return true
-		}
-		// ignorable metadata directory
-		if strings.HasPrefix(filepath, ignorebase + "/") {
-			return true
-		}
+func ignorable(filepath string, vcs *VCS) bool {
+	// ignorable dotfile
+	if path.Base(filepath) == vcs.ignorename {
+		return true
+	}
+	// ignorable metadata directory
+	if strings.HasPrefix(filepath, vcs.subdirectory + "/") {
+		return true
 	}
 	return false
 }
@@ -840,24 +837,28 @@ func compareRevision(args []string, rev string) string {
 		for _, path := range sourcefiles.Union(targetfiles).Ordered() {
 			sourcepath := filepath.Join(sourcedir, path)
 			targetpath := filepath.Join(targetdir, path)
-			if isdir(sourcepath) || isdir(targetpath) || ignorable(path) {
+			if isdir(sourcepath) || isdir(targetpath) || ignorable(path, sourcetype) || ignorable(path, targettype) {
 				continue
 			}
 			if !targetfiles.Contains(path) {
-				diff += fmt.Sprintf("%s: source only\n", path)
+				if !ignorable(path, sourcetype) {
+					diff += fmt.Sprintf("%s: source only\n", path)
+				}
 				continue
 			}
 			if !sourcefiles.Contains(path) {
-				diff += fmt.Sprintf("%s: target only\n", path)
+				if !ignorable(path, targettype) {
+					diff += fmt.Sprintf("%s: target only\n", path)
+				}
 				continue
 			}
 			sourceText, err := ioutil.ReadFile(sourcepath)
 			if err != nil {
-				fmt.Fprint(os.Stderr, "%s %s is unreadable", sourcetype.name, path)
+				complain("%s %s is unreadable", sourcetype.name, path)
 			}
 			targetText, err := ioutil.ReadFile(targetpath)
 			if err != nil {
-				fmt.Fprint(os.Stderr, "%s %s is unreadable", targettype.name, path)
+				complain("%s %s is unreadable", targettype.name, path)
 			}
 			// When this shelled out to diff it had these filters:
 			// --ignore-matching-lines=' @(#) '

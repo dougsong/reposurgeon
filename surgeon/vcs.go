@@ -584,18 +584,6 @@ core
 			notes: "Bitkeeper's importer is flaky and incomplete as of 7.3.1ce.",
 		},
 	}
-
-	// Compile a list of ignorable files and directories
-	// We have to begin with things that can occur in checkout directories
-	vcsignores = make([]string, 0)
-	for _, vcs := range vcstypes {
-		if vcs.subdirectory != "" {
-			vcsignores = append(vcsignores, vcs.subdirectory)
-		}
-		if vcs.ignorename != "" {
-			vcsignores = append(vcsignores, vcs.ignorename)
-		}
-	}
 }
 
 // Import and export filter methods for VCSes that use magic files rather
