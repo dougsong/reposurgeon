@@ -861,7 +861,11 @@ func compareRevision(args []string, rev string) string {
 			if isdir(sourcepath) || isdir(targetpath) {
 				continue
 			}
-			// These error cases can be reached by symlink entries in Subversion files.
+
+			// Check for permission mismatch,  We have to skip directories beccause
+			// of Go MkdirAll's behavior that requiring seek permission; this makes for
+			// spurious mismatches in the x permission bit. The error cases here
+			// can be reached by symlink entries in Subversion files.
 			sstat, err1 := os.Stat(sourcepath)
 			if err1 != nil {
 				complain("source path stat: %s", err1)
