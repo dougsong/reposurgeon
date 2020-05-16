@@ -6,7 +6,7 @@ repotool - operate on a CVS, SVN, git, bzr, hg, or darcs repository in a uniform
 
 == SYNOPSIS ==
 
-*repotool* 'command' [-v | -q] [args...]
+*repotool* 'command' [-d | -q | -v] [args...]
 
 [[description]]
 == DESCRIPTION ==
@@ -24,6 +24,10 @@ With the -v option, report the commands executed just before
 they are run. With the -q option, only fatal errors are printed
 instead of non-fatal grips. The -q and -v options also disable each
 other and only the last one will take effect.
+
+With the -d option, change to a specified directory before performing
+whatever operation was setlected. If the directoryt doesn't exist or
+can't be searched into, that's a fatal error.
 
 The "initialize" option takes a project name (and, optionally,
 following source and target VCS types) and generates a
@@ -49,8 +53,7 @@ returns a list of the repository's branch names.
 
 The 'checkout' option checks out a working copy of the
 repository. It must be called from within the repository. It takes one
-required argument - the checkout directory location.  The -c option
-changes to a specified repository directory for extraction.
+required argument - the checkout directory location.
 
 The checkout option may take a revision, tag, or branch
 specification, given with the -r, -t, or -b options.
@@ -70,7 +73,7 @@ symlink instead of stopping its execution when the asked branch or tag
 has not been found in the SVN namespace (this is currently the default
 for SVN repositories that are yet checked out).
 With most DVCS checkouts, the -r, -t, and -b options are essentially
-synonyms. If given a -c option, checkout is performed from the directory
+synonyms. If given a -d option, checkout is performed from the directory
 specified; this may be convenient when working with CVS or Subversion in
 order to select the repository directory.
 

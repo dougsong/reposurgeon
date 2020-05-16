@@ -542,9 +542,6 @@ func checkout(outdir string, rev string) string {
 	if outdir[0] != os.PathSeparator {
 		croak("checkout requires absolute target path")
 	}
-	if basedir != "" {
-		os.Chdir(basedir)
-	}
 	var err error
 	if exists(outdir) {
 		outdir, err = filepath.EvalSymlinks(outdir)
@@ -1024,7 +1021,7 @@ func main() {
 	flags.BoolVar(&verbose, "v", false, "show subcommands and diagnostics")
 
 	flags.StringVar(&branch, "b", "", "select branch for checkout or comparison")
-	flags.StringVar(&basedir, "c", "", "chdir to the argument repository path before doing checkout")
+	flags.StringVar(&basedir, "d", "", "chdir to the argument repository path before doing checkout")
 	flags.StringVar(&refexclude, "e", "", "exclude pattern for tag and branch names.")
 	flags.StringVar(&revision, "r", "", "select revision for checkout or comparison")
 	flags.StringVar(&tag, "t", "", "select tag for checkout or comparison")
@@ -1058,6 +1055,12 @@ repotool options:
 	operation := os.Args[1]
 
 	flags.Parse(os.Args[2:])
+
+	if basedir != "" {
+		if err := os.Chdir(basedir); err != nil {
+			croak("changing directory: ", err)
+		}
+	}
 
 	args := flags.Args()
 	if operation == "help" {
