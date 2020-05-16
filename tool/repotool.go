@@ -20,8 +20,8 @@ import (
 	"text/template"
 	"time"
 
-	difflib "github.com/ianbruene/go-difflib/difflib"
 	readline "github.com/chzyer/readline"
+	difflib "github.com/ianbruene/go-difflib/difflib"
 )
 
 // TMPDIR is the temporary directory under which to perform checkouts
@@ -745,7 +745,7 @@ func ignorable(filepath string, vcs *VCS) bool {
 		return true
 	}
 	// ignorable metadata directory
-	if strings.HasPrefix(filepath, vcs.subdirectory + "/") {
+	if strings.HasPrefix(filepath, vcs.subdirectory+"/") {
 		return true
 	}
 	return false

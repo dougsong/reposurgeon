@@ -7,9 +7,9 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
-	"fmt"
 	"regexp"
 	"strings"
 )
@@ -74,7 +74,7 @@ const suffixNumeric = `[0-9]+(\s|[.]\n)`
 const tokenNumeric = `\s` + suffixNumeric
 const dottedNumeric = `\s[0-9]+(\.[0-9]+)`
 
-// manages tells us if a directory might be managed by theis VCS 
+// manages tells us if a directory might be managed by theis VCS
 func (vcs VCS) manages(dirname string) bool {
 	if vcs.subdirectory != "" {
 		subdir := filepath.Join(dirname, vcs.subdirectory)
@@ -84,7 +84,7 @@ func (vcs VCS) manages(dirname string) bool {
 		}
 	}
 	// Could be a CVS repository without CVSROOT
-	if vcs.name == "cvs"{
+	if vcs.name == "cvs" {
 		files, err := ioutil.ReadDir(dirname)
 		if err != nil {
 			for _, p := range files {
