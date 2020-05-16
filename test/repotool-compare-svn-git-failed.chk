@@ -1,11 +1,12 @@
 reposurgeon: r5#1~trunk/README properties set:
 reposurgeon: 	foo = "bar"
-diff -r -x .git -x .gitignore -x .bzr -x .bzrignore -x .hg -x .hgignore -x _darcs -x _darcs/prefs/boring -x _MTN -x .mtn_ignore -x locks -x CVSROOT -x RCS -x .src -x .bk -x BitKeeper/etc/ignore -x CVS -x .svn -x .git -x .gitignore -x .bzr -x .bzrignore -x .hg -x .hgignore -x _darcs -x _darcs/prefs/boring -x _MTN -x .mtn_ignore -x locks -x CVSROOT -x RCS -x .src -x .bk -x BitKeeper/etc/ignore -x CVS -x .svn '--ignore-matching-lines= @(#) ' '--ignore-matching-lines=$Id.*$' '--ignore-matching-lines=$Header.*$' '--ignore-matching-lines=$Log.*$' /tmp/source/README /tmp/target/README
-1,5c1
-< This is a sample file.
-< 
-< This is our first line of modified content.
-< 
-< This is our second line of modified content.
----
-> This is deliberately corrupted data for a blob.
+--- README (svn-checkout)
++++ README (git)
+@@ -1,6 +1,2 @@
+-This is a sample file.
++This is deliberately corrupted data for a blob.
+ 
+-This is our first line of modified content.
+-
+-This is our second line of modified content.
+-

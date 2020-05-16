@@ -5,19 +5,22 @@ package main
 // SPDX-License-Identifier: BSD-2-Clause
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
-	"sort"
+	//"sort"
 	"strings"
 	"text/template"
 	"time"
 
+	difflib "github.com/ianbruene/go-difflib/difflib"
 	readline "github.com/chzyer/readline"
 )
 
@@ -191,12 +194,14 @@ gc: {{.Project}}-git
 	cd {{.Project}}-git; time git -c pack.threads=1 repack -AdF --window=1250 --depth=250
 `
 
-var acceptMissing = false
-var nobranch = false
-var seeignores = false
-var quiet = false
-var unified = true
-var verbose = false
+var acceptMissing bool
+var context bool
+var nobranch bool
+var seeignores bool
+var quiet bool
+var same bool
+var unified bool
+var verbose bool
 
 var branch string
 var comparemode string
@@ -707,19 +712,32 @@ func checkout(outdir string, rev string) string {
 	return ""
 }
 
-func dirlist(top string, excl stringSet) stringSet {
+// dirlist lists all files and directories under a sprcfief directory.
+func dirlist(top string) stringSet {
 	outset := newStringSet()
 	here, _ := os.Getwd()
 	os.Chdir(top)
 	filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
-		clean := filepath.Clean(path) // Remove leading ./ if any
-		if !excl.Contains(clean) {
-			outset.Add(clean)
-		}
+		outset.Add(filepath.Clean(path)) // Remove leading ./ if any
 		return nil
 	})
 	os.Chdir(here)
 	return outset
+}
+
+// ignorable says whether the specified path
+func ignorable(filepath string) bool {
+	for _, ignorebase := range vcsignores {
+		// ignorable dotfile
+		if path.Base(filepath) == ignorebase {
+			return true
+		}
+		// ignorable metadata directory
+		if strings.HasPrefix(filepath, ignorebase + "/") {
+			return true
+		}
+	}
+	return false
 }
 
 // Compare two repositories at a specified revision, defaulting to mainline tip.
@@ -785,15 +803,6 @@ func compareRevision(args []string, rev string) string {
 			panic("sourcedir unexpectedly nil")
 		}
 	})
-	diffArgs := make([]string, 0)
-	// The following options are passed from the repotool command line to diff
-	if quiet {
-		diffArgs = append(diffArgs, "-q")
-	}
-	if unified {
-		diffArgs = append(diffArgs, "-u")
-	}
-	diffoptStr := strings.Join(append(diffArgs, diffopts...), " ")
 	if acceptMissing {
 		if !exists(sourcedir) {
 			// replace by empty directory
@@ -804,62 +813,68 @@ func compareRevision(args []string, rev string) string {
 			os.MkdirAll(targetdir, 0755)
 		}
 	}
-	// add missing empty directories in checkouts of VCSs that do not support them
-	dirsToNuke := make([]string, 0)
 	sourcetype := identifyRepo(source)
 	targettype := identifyRepo(target)
-	if (sourcetype.name != "git" && targettype.name != "hg") && (targettype.name == "git" || targettype.name == "hg") {
-		under(sourcedir, func() {
-			filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
-				if err != nil {
-					fmt.Printf("error while tree-walking %s: %v\n", sourcedir, err)
-					return err
-				}
-				if isdir(path) {
-					matching := filepath.Join(targetdir, path)
-					if !exists(matching) {
-						dirsToNuke = append(dirsToNuke, matching)
-						os.MkdirAll(matching, 0755)
-					}
-				}
-				return nil
-			})
-		})
-		under(targetdir, func() {
-			filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
-				if err != nil {
-					fmt.Printf("error while tree-walking %s: %v\n", targetdir, err)
-					return err
-				}
-				if isdir(path) {
-					matching := filepath.Join(sourcedir, path)
-					if !exists(matching) {
-						dirsToNuke = append(dirsToNuke, matching)
-						os.MkdirAll(matching, 0755)
-					}
-				}
-				return nil
-			})
-		})
-	}
 	var diff string
 	under(TMPDIR, func() {
-		// FIXME: use difflib here?
-		silenceDiffErrors := "2>/dev/null" // for dangling symlinks or similar
-		if verbose {
-			fmt.Printf("Comparing %s to %s\n", sourcedir, targetdir)
-			silenceDiffErrors = ""
-		}
-		diff = captureFromProcess(fmt.Sprintf("diff -r %s --ignore-matching-lines=' @(#) ' --ignore-matching-lines='$Id.*$' --ignore-matching-lines='$Header.*$' --ignore-matching-lines='$Log.*$' %s %s %s || exit 0", diffoptStr, sourcedir, targetdir, silenceDiffErrors), "diffing")
-
-		// Check for permission match
-		common := dirlist(sourcedir, newStringSet(sourceignores...)).Intersection(dirlist(targetdir, newStringSet(targetignores...)))
-		commonList := common.Ordered()
-		for _, path := range commonList {
+		sourcefiles := dirlist(sourcedir)
+		targetfiles := dirlist(targetdir)
+		for _, path := range sourcefiles.Union(targetfiles).Ordered() {
 			sourcepath := filepath.Join(sourcedir, path)
 			targetpath := filepath.Join(targetdir, path)
-			if isdir(sourcepath) || isdir(targetpath) {
+			if isdir(sourcepath) || isdir(targetpath) || ignorable(path) {
 				continue
+			}
+			if !targetfiles.Contains(path) {
+				diff += fmt.Sprintf("%s: source only\n", path)
+				continue
+			}
+			if !sourcefiles.Contains(path) {
+				diff += fmt.Sprintf("%s: target only\n", path)
+				continue
+			}
+			sourceText, err := ioutil.ReadFile(sourcepath)
+			if err != nil {
+				fmt.Fprint(os.Stderr, "%s %s is unreadable", sourcetype.name, path)
+			}
+			targetText, err := ioutil.ReadFile(targetpath)
+			if err != nil {
+				fmt.Fprint(os.Stderr, "%s %s is unreadable", targettype.name, path)
+			}
+			// When this shelled out to diff it had these filters:
+			// --ignore-matching-lines=' @(#) '
+			// --ignore-matching-lines='$Id.*$'
+			// --ignore-matching-lines='$Header.*$'
+			// --ignore-matching-lines='$Log.*$'
+			if !bytes.Equal(sourceText, targetText) {
+				lines0 := difflib.SplitLines(string(sourceText))
+				lines1 := difflib.SplitLines(string(targetText))
+				file0 := path + " (" + sourcetype.name + ")"
+				file1 := path + " (" + targettype.name + ")"
+				var text string
+				if unified {
+					diffObj := difflib.UnifiedDiff{
+						A:        lines0,
+						B:        lines1,
+						FromFile: file0,
+						ToFile:   file1,
+						Context:  3,
+					}
+					text, _ = difflib.GetUnifiedDiffString(diffObj)
+				}
+				if context {
+					diffObj := difflib.ContextDiff{
+						A:        lines0,
+						B:        lines1,
+						FromFile: file0,
+						ToFile:   file1,
+						Context:  3,
+					}
+					text, _ = difflib.GetContextDiffString(diffObj)
+				}
+				diff += text
+			} else if same {
+				diff += fmt.Sprintf("Same: %s\n", path)
 			}
 
 			// Check for permission mismatch,  We have to skip directories beccause
@@ -881,13 +896,6 @@ func compareRevision(args []string, rev string) string {
 			}
 		}
 	})
-	// cleanup in case the checkouts were a symlink to an existing worktree
-	sort.Slice(dirsToNuke, func(i, j int) bool {
-		return len(dirsToNuke[i]) > len(dirsToNuke[j])
-	})
-	for _, d := range dirsToNuke {
-		os.Remove(d)
-	}
 	os.RemoveAll(rsource)
 	os.RemoveAll(rtarget)
 	return diff
@@ -1018,10 +1026,12 @@ func main() {
 	flags := flag.NewFlagSet("repotool", flag.ExitOnError)
 
 	flags.BoolVar(&acceptMissing, "a", false, "accept missing trunk directory")
+	flags.BoolVar(&context, "c", false, "emit context diff")
 	flags.BoolVar(&seeignores, "i", false, "do not suppress comparison of normally ignored directories")
 	flags.BoolVar(&nobranch, "n", false, "compare raw structure, ignore SVN branching")
 	flags.BoolVar(&quiet, "q", false, "run as quietly as possible")
-	flags.BoolVar(&unified, "u", false, "emit unified diff")
+	flags.BoolVar(&same, "s", false, "show same files")
+	flags.BoolVar(&unified, "u", true, "emit unified diff")
 	flags.BoolVar(&verbose, "v", false, "show subcommands and diagnostics")
 
 	flags.StringVar(&branch, "b", "", "select branch for checkout or comparison")

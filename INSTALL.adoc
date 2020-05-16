@@ -3,13 +3,13 @@
 == Quick recipe for systems using apt ==
 
 ---------------------------------------------------------------------------
-sudo apt-get install golang diffutils hg-git-fast-import  # For running
-sudo apt-get install asciidoctor                          # To render docs
-sudo apt-get install golint shellcheck                    # For testing
-sudo apt-get install subversion mercurial rsync cvs       # For testing
-sudo apt-get install gnuplot                              # For benchmarking
-make                                                      # Build it
-make check                                                # Run the tests
+sudo apt-get install golang hg-git-fast-import      # For running
+sudo apt-get install asciidoctor                    # To render docs
+sudo apt-get install golint shellcheck              # For testing
+sudo apt-get install subversion mercurial rsync cvs # For testing
+sudo apt-get install gnuplot                        # For benchmarking
+make                                                # Build it
+make check                                          # Run the tests
 ---------------------------------------------------------------------------
 
 == Prerequisites ==
@@ -27,8 +27,6 @@ may have to tweak your $PATH variable to make the Go tools visible.
 
 hg-git-fast-import is required if yiou want to write Mercurial
 repositories, but not to read them.
-
-diff is required for repotool to do repository comparisons.
 
 A few scripts are written in shell. Any Bourne-shell-like
 implementation will do. The restricted shell shipped on Debian/Ubuntu

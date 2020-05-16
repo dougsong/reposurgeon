@@ -108,10 +108,16 @@ The compare operation accepts the following options:
 	repository uses empty content for deleted refs.
 
 -u::
-	Emit unified diff (the default is a ed-style diff).
+	Emit unified diff (default).
+
+-c::
+	Emit context diff.
 
 -q::
-	Makes the diff run as quietly as possible.
+	Suppress nonfatal errors.
+
+-s::
+	List matching files.
 
 -i::
 	Perform comparison of normally ignored dot directories
@@ -174,6 +180,10 @@ necessarily indicate a clean comparison; only empty output does that.
 
 [[bugs]]
 == BUGS ==
+
+When a Subversion file is part of a mismatch, the displayed
+filename is missing its trunk/tag/branch location, which
+must be inferred from the way the comparison is invoked.
 
 Tag comparisons with git will not cope well with a branch
 name containing the string "detached".
