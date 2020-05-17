@@ -4,7 +4,7 @@ Repository head::
      Documentation has undergone a serious polishing pass.
      The 'memory' command supports output redirection.
      A CVSROOT subdirectory is no longer required to recognize a CVS repo.
-     The diff utility is no longer reqyired by repotool.
+     The diff utility is no longer required by repotool.
 
 4.8: 2020-05-13::
      Repository reads now use --show-original-ids.

@@ -553,6 +553,9 @@ serious bug in either reposurgeon or the front end it used, or you
 might just have a misassigned tag that can be manually fixed. Consult
 <<reporting-bugs>> for information on how to usefully report bugs.
 
+Use reposurgeon's '```lint```' command to find anomalies like detached
+branches that may need mabual correction.
+
 If you are converting from CVS, use reposurgeon's graph command to
 examine the conversion, looking (in particular) for misplaced tags or
 branch joins. Often these can be manually repaired with little
@@ -650,9 +653,11 @@ lift script.
 
 11. Use the transcode command to fix up metadata in non-UTF8 encoding,
 
-12. For the record, make a tag noting time and date of the repo lift.
+12. Run lint to detect remaining anomalies that might need to be patched.
 
-13. If your target was git, run  `git gc --aggressive`.
+13. For the record, make a tag noting time and date of the repo lift.
+
+14. If your target was git, run  `git gc --aggressive`.
 
 Most of the work will be in the comment-fixup and reference-lifting
 stages. These normally take only a couple of hours even on very large
@@ -875,6 +880,11 @@ to push the new history up to the public repo.
 6. Inform the public repo's users that it is available and remind
 them that they will need to re-clone it.
 
+On GitLab, you can get a similar effect by unprotecting all branches
+and doing a git push --force to unconditionally overwrite the
+public history.  It is good practice to re-protect the branches
+afterwards.
+
 === Step Five: Client Tools
 
 Developers who are already git fans and know how to use a git
@@ -981,7 +991,7 @@ repository history from any VCS supported by an extractor to any VCS
 supported by a normal importer/exporter pair.
 
 Mercurial repository reading is implemented with an extractor
-class; writing is handled with the stock "hg fastimport" command.  A
+class; writing is handled with the "hg-git-fast-import" command.  A
 test extractor exists for git, but is normally disabled in favor of
 the regular exporter.
 
@@ -996,7 +1006,7 @@ synthesizing a Subversion dump stream and feeding it to '```svnadmin
 load```'.  This feature was a cute stunt, but was abandoned during
 translation to Go for a couple of different reasons. Most importantly,
 there is zero demand for moving histories *to* Subversion - and
-supposing there were, moving content and metdate fom git's DAG
+supposing there were, moving content and metadate fom git's DAG
 representation to a Subversion stream is very lossy. Subversion to Git
 to Subversion wouldn't even have round-tripped well.
 
@@ -1101,7 +1111,7 @@ own change tracking.
 == Finding your way around
 
 In the remainder of this documewnt, imdividual commands are described
-by ganging paragraphs led by the command sequence.
+by hanging paragraphs led by the command sequence.
 
 Help is always available.
 
@@ -1129,10 +1139,15 @@ You don't need to exit the interpreter to run quick shall commands.
 [[general]]
 == General command syntax
 
-Commands to reposurgeon consist of a command keyword, sometimes
-preceded by a selection set, sometimes followed by
-whitespace-separated arguments. It is often possible to omit the
-selection-set argument and have it default to something reasonable.
+Commands to reposurgeon consist of a command keyword, usually preceded
+by a selection set, sometimes followed by whitespace-separated
+arguments. It is often possible to omit the selection-set argument and
+have it default to something reasonable.  For commands that are
+considered safe (no side effects) the default is all events; for risky
+commands the default is no events.
+
+When a command changes repository state, it will usually so indicate
+in a response.
 
 Here are some motivating examples.  The commands will be
 explained in more detail after the description of selection
@@ -1193,7 +1208,7 @@ to the beginning or end of the search space, when appropriate.
 === Selection syntax
 
 A selection set is ordered; that is, any given element may occur
-only one, and the set is ordered by when its members were first added.
+only once, and the set is ordered by when its members were first added.
 
 The selection-set specification syntax is an expression-oriented
 minilanguage.  The most basic term in this language is a
@@ -1202,7 +1217,8 @@ are supported:
 
 event numbers::
    A plain numeric literal is interpreted as a 1-origin
-   event-sequence number.
+   event-sequence number. It is not expected that you will
+   have to use this feature often.
 
 marks::
    A numeric literal preceded by a colon is interpreted
@@ -1230,7 +1246,7 @@ commit numbers::
 
 reset targets::
    If the orecvious ways of interpreting an ame withing brackets don't
-   resolved, the name is cechked to see if it matches a reset. If so,
+   resolved, the name is checked to see if it matches a reset. If so,
    the expression resolves to the commit the reset is attached to.
 
 reset@ names::
@@ -1423,8 +1439,7 @@ empty if the argument set includes the last event.
 Set expressions may be combined with the operators '```|```' and '```&```'
 which are, respectively, set union and intersection. The `|` has lower
 precedence than intersection, but you may use parentheses '```(```' and
-'```)```' to group expressions in case there is ambiguity (this replaces the
-curly brackets used in older versions of the syntax).
+'```)```' to group expressions in case there is ambiguity.
 
 Any set operation may be followed by '```?```' to add the set
 members' neighbors and referents.  This extends the set to include the
@@ -1496,9 +1511,10 @@ rules.
 
 Beware that while the reposurgeon CLI mimics simple shell features
 like redirection, many things you can do in a real shell won't work.
-String-quoting arguments will fail.  You can't redirect standard
-error (but see the '```log```' command for a rough equivalent). And
-you can't pipe input from a command or output to a command.
+String-quoting arguments will fail unless the specific, documented
+syntax of a command supports that.  You can't redirect standard error
+(but see the '```log```' command for a rough equivalent). And you
+can't pipe input from a command or output to a command.
 
 In general you should avoid getting cute with the command parser.
 It's stupider than it looks.
@@ -1634,11 +1650,6 @@ the preferred type rather than its original type (if it had one).
 If no preferred type has been explicitly selected, reading in a
 repository (but not a fast-import stream) will implicitly set the
 preferred type to the type of that repository.
-+
-In older versions of reposurgeon this
-command changed the type of the selected repository, if there is one.
-That behavior interacted badly with attempts to interpret legacy IDs
-and has been removed.
 
 `sourcetype` [ _repotype_ ]::
    Report (with no arguments) or select (with one argument) the current
@@ -1653,7 +1664,7 @@ preferred output type has been set, it may also change the output
 format of stream files made from the repository.
 +
 The source type is reliably set whenever a live repository is read, or
-when a Subversion stream or Fossil dump is interpreted but not
+when a Subversion stream or Fossil dump is interpreted - but not
 necessarily by other stream files. Streams generated by
 cvs-fast-export(1) using the `--reposurgeon` option are detected as CVS. In
 some other cases, the source system is detected from the presence of
@@ -3341,7 +3352,7 @@ shell that you then execute with the '```script```' command. Enabling this
 technique is the reason as many commands as possible support redirects.
 
 [[housekeeping]]
-=== Help and housekeeping
+=== Housekeeping
 
 None of these take a selection set:
 
@@ -3538,8 +3549,10 @@ surgical primitives after reading the history into reposurgeon.
 [[subversion]]
 == Working with Subversion
 
-reposurgeon can read Subversion dumpfiles. You must point it at a
-repository, not a checkout directory.
+reposurgeon can read Subversion dumpfiles or repositories. If you want
+it it read a repository, you must run it within the top-level
+directory of the repository itself, *not* in a checkout directory made
+from the repository.
 
 The transaction model of Subversion is nothing like that of the
 DVCSes (distributed version control systems) that followed it. Two of the more
@@ -3964,7 +3977,7 @@ clutter and can be removed.
 
 It's also worth paying careful attention to reference-lifting so that
 you can scrub useless CVS revision numbers out of comments.  This is a
-more pressing issue than it is with Subversion, where changesrtts map
+more pressing issue than it is with Subversion, where changesets map
 tp changesets and conversions have the option of marking each target
 changeset with its revision number.
 
@@ -4212,13 +4225,27 @@ non-linear, and the fix. You can easily tell the difference visually.
 [[changes]]
 === Incompatible language changes
 
+Reposurgeon scripts are effectively never reused. Thus, incompatible
+changes to the command language don't have a a high cost in pain to
+users and the maintainers feel free to make them whenever improvement
+seems possible.  But just in case, such changes are recorded here.
+
 In versions before 4.8, the expunge command run on a repository named
 "foo" tried to keep deleted fileops in a new synthetic repository named
-"foo-expunges".  This feature has been replaces by the "~" negation
+"foo-expunges".  This feature has been replaced by the "~" negation
 operator on expunge selections.
+
+In versions before 4.1, the `index` command did not see blobs by default.
+
+In versions before 4.0, `msgin` and `msgout` were named "mailbox_in"
+and "mailbox_out:"; `branchify` was "branchify_map". Previous
+versions used the Python variant of regular expressions; some of
+the more idiosyncratic features of these are not replicated in the
+Go implementation.
 
 In versions before 3.23, '```prefer```' changed the
 repository type as well as the preferred output format.
+Since then, do this with '```sourcetype```'.
 
 In versions before 3.0, the general command syntax put the
 command verb first, then the selection set (if any) then modifiers
@@ -4258,13 +4285,9 @@ what are now `msg{in|out}` was different (and `legacy` was
 `fossils`). They took plain filename arguments rather than using
 redirect < and >.
 
-In versions before 4.0, `msgin` and `msgout` were named "mailbox_in"
-and "mailbox_out:"; `branchify` was "branchify_map". Previous
-versions used the Python variant of regular expressions; some of
-the more idiosyncratic features of these are not replicated in the
-Go implementation.
+In versions so old that the changeover point is now lost in the mists
+of time, curly brackets (not parens) performed subexpression grouping.
 
-In versions before 4.1, the `index` command did not see blobs by default.
 
 [[emergency]]
 === Emergency help

@@ -28,8 +28,10 @@ available.
 You will need the Go compiler at revision 1.12 or later.  Note, you
 may have to tweak your $PATH variable to make the Go tools visible.
 
-hg-git-fast-import is required if yiou want to write Mercurial
-repositories, but not to read them.
+hg-git-fast-import is required if you want to write Mercurial
+repositories, but not to read them. Note that this is not part of
+stock Mercurial, but does a better job of handling odd cases than
+the stock 'hg-fastimport' plugin.
 
 A few scripts are written in shell. Any Bourne-shell-like
 implementation will do. The restricted shell shipped on Debian/Ubuntu
