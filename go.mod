@@ -8,7 +8,7 @@ require (
 	github.com/emirpasic/gods v1.12.0
 	github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
 	github.com/go-delve/delve v1.4.0 // indirect
-	github.com/ianbruene/go-difflib v1.1.2
+	github.com/ianbruene/go-difflib v1.2.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/mattn/go-colorable v0.1.6 // indirect

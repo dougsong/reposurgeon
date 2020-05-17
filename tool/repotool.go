@@ -827,10 +827,10 @@ func compareRevision(args []string, rev string) string {
 	sourcetype := identifyRepo(source)
 	targettype := identifyRepo(target)
 	var diff string
-	//dollarJunk := regexp.MustCompile(` @\(#\) |\$Id.*\$|\$Header.*\$|$Log.*\$`)
-	//isDollarLine := func(line string) bool {
-	//	return dollarJunk.MatchString(line)
-	//}
+	dollarJunk := regexp.MustCompile(` @\(#\) |\$Id.*\$|\$Header.*\$|$Log.*\$`)
+	isDollarLine := func(line string) bool {
+		return dollarJunk.MatchString(line)
+	}
 	under(TMPDIR, func() {
 		sourcefiles := dirlist(sourcedir)
 		targetfiles := dirlist(targetdir)
@@ -872,24 +872,18 @@ func compareRevision(args []string, rev string) string {
 				file0 := path + " (" + sourcetype.name + ")"
 				file1 := path + " (" + targettype.name + ")"
 				var text string
+				diffObj := difflib.LineDiffParams{
+					A:          lines0,
+					B:          lines1,
+					FromFile:   file0,
+					ToFile:     file1,
+					Context:    3,
+					IsJunkLine: isDollarLine,
+				}
 				if unified {
-					diffObj := difflib.UnifiedDiff{
-						A:        lines0,
-						B:        lines1,
-						FromFile: file0,
-						ToFile:   file1,
-						Context:  3,
-					}
 					text, _ = difflib.GetUnifiedDiffString(diffObj)
 				}
 				if context {
-					diffObj := difflib.ContextDiff{
-						A:        lines0,
-						B:        lines1,
-						FromFile: file0,
-						ToFile:   file1,
-						Context:  3,
-					}
 					text, _ = difflib.GetContextDiffString(diffObj)
 				}
 				diff += text
