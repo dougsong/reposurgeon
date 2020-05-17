@@ -30,4 +30,4 @@ XBS-VC-Tag-Template: %(version)s
 
 XBS-Validate: make check
 
-XBS-Destination: Anthony Fok <foka@debian.org>
+XBS-Destination: mailto:foka@debian.org, mailto:cicku@fedoraproject.org
