@@ -1,5 +1,8 @@
 = reposurgeon project news =
 
+Repository head::
+     Randomize temporary directories during repotool compare.
+
 4.9: 2020-05-17::
      This is a long-term-stable release. All packagers should update.
      Documentation has undergone a serious polishing pass.

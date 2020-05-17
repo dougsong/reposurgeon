@@ -24,9 +24,6 @@ import (
 	difflib "github.com/ianbruene/go-difflib/difflib"
 )
 
-// TMPDIR is the temporary directory under which to perform checkouts
-var TMPDIR string
-
 // Define a couplee of partial capability tables for querying
 // checkout directories.
 
@@ -782,9 +779,15 @@ func compareRevision(args []string, rev string) string {
 	if !isdir(source) || !isdir(target) {
 		croak("both repository directories must exist.")
 	}
-	rsource := filepath.Join(TMPDIR, "source")
+	rsource, err := ioutil.TempDir("", "reposource")
+	if err != nil {
+		log.Fatal(err)
+	}
 	os.RemoveAll(rsource)
-	rtarget := filepath.Join(TMPDIR, "target")
+	rtarget, err := ioutil.TempDir("", "repotarget")
+	if err != nil {
+		log.Fatal(err)
+	}
 	os.RemoveAll(rtarget)
 	diffopts := make([]string, 0)
 	sourceignores := make([]string, 0)
@@ -831,85 +834,83 @@ func compareRevision(args []string, rev string) string {
 	isDollarLine := func(line string) bool {
 		return dollarJunk.MatchString(line)
 	}
-	under(TMPDIR, func() {
-		sourcefiles := dirlist(sourcedir)
-		targetfiles := dirlist(targetdir)
-		for _, path := range sourcefiles.Union(targetfiles).Ordered() {
-			sourcepath := filepath.Join(sourcedir, path)
-			targetpath := filepath.Join(targetdir, path)
-			if isdir(sourcepath) || isdir(targetpath) || ignorable(path, sourcetype) || ignorable(path, targettype) {
-				continue
-			}
-			if !targetfiles.Contains(path) {
-				if !ignorable(path, sourcetype) {
-					diff += fmt.Sprintf("%s: source only\n", path)
-				}
-				continue
-			}
-			if !sourcefiles.Contains(path) {
-				if !ignorable(path, targettype) {
-					diff += fmt.Sprintf("%s: target only\n", path)
-				}
-				continue
-			}
-			sourceText, err := ioutil.ReadFile(sourcepath)
-			if err != nil {
-				complain("%s %s is unreadable", sourcetype.name, path)
-			}
-			targetText, err := ioutil.ReadFile(targetpath)
-			if err != nil {
-				complain("%s %s is unreadable", targettype.name, path)
-			}
-			// When this shelled out to diff it had these filters:
-			// --ignore-matching-lines=' @(#) '
-			// --ignore-matching-lines='$Id.*$'
-			// --ignore-matching-lines='$Header.*$'
-			// --ignore-matching-lines='$Log.*$'
-
-			if !bytes.Equal(sourceText, targetText) {
-				lines0 := difflib.SplitLines(string(sourceText))
-				lines1 := difflib.SplitLines(string(targetText))
-				file0 := path + " (" + sourcetype.name + ")"
-				file1 := path + " (" + targettype.name + ")"
-				var text string
-				diffObj := difflib.LineDiffParams{
-					A:          lines0,
-					B:          lines1,
-					FromFile:   file0,
-					ToFile:     file1,
-					Context:    3,
-					IsJunkLine: isDollarLine,
-				}
-				if unified {
-					text, _ = difflib.GetUnifiedDiffString(diffObj)
-				}
-				if context {
-					text, _ = difflib.GetContextDiffString(diffObj)
-				}
-				diff += text
-			} else if same {
-				diff += fmt.Sprintf("Same: %s\n", path)
-			}
-
-			// Check for permission mismatch,  We have to skip directories beccause
-			// of Go MkdirAll's behavior that requiring seek permission; this makes for
-			// spurious mismatches in the x permission bit. The error cases here
-			// can be reached by symlink entries in Subversion files.
-			sstat, err1 := os.Stat(sourcepath)
-			if err1 != nil {
-				complain("source path stat: %s", err1)
-				continue
-			}
-			tstat, err2 := os.Stat(targetpath)
-			if err2 != nil {
-				complain("target path stat: %s", err2)
-				continue
-			}
-			if sstat.Mode() != tstat.Mode() {
-				diff += fmt.Sprintf("%s: %0o -> %0o\n", path, sstat.Mode(), tstat.Mode())
-			}
+	sourcefiles := dirlist(sourcedir)
+	targetfiles := dirlist(targetdir)
+	for _, path := range sourcefiles.Union(targetfiles).Ordered() {
+		sourcepath := filepath.Join(sourcedir, path)
+		targetpath := filepath.Join(targetdir, path)
+		if isdir(sourcepath) || isdir(targetpath) || ignorable(path, sourcetype) || ignorable(path, targettype) {
+			continue
 		}
-	})
+		if !targetfiles.Contains(path) {
+			if !ignorable(path, sourcetype) {
+				diff += fmt.Sprintf("%s: source only\n", path)
+			}
+			continue
+		}
+		if !sourcefiles.Contains(path) {
+			if !ignorable(path, targettype) {
+				diff += fmt.Sprintf("%s: target only\n", path)
+			}
+			continue
+		}
+		sourceText, err := ioutil.ReadFile(sourcepath)
+		if err != nil {
+			complain("%s %s is unreadable", sourcetype.name, path)
+		}
+		targetText, err := ioutil.ReadFile(targetpath)
+		if err != nil {
+			complain("%s %s is unreadable", targettype.name, path)
+		}
+		// When this shelled out to diff it had these filters:
+		// --ignore-matching-lines=' @(#) '
+		// --ignore-matching-lines='$Id.*$'
+		// --ignore-matching-lines='$Header.*$'
+		// --ignore-matching-lines='$Log.*$'
+
+		if !bytes.Equal(sourceText, targetText) {
+			lines0 := difflib.SplitLines(string(sourceText))
+			lines1 := difflib.SplitLines(string(targetText))
+			file0 := path + " (" + sourcetype.name + ")"
+			file1 := path + " (" + targettype.name + ")"
+			var text string
+			diffObj := difflib.LineDiffParams{
+				A:          lines0,
+				B:          lines1,
+				FromFile:   file0,
+				ToFile:     file1,
+				Context:    3,
+				IsJunkLine: isDollarLine,
+			}
+			if unified {
+				text, _ = difflib.GetUnifiedDiffString(diffObj)
+			}
+			if context {
+				text, _ = difflib.GetContextDiffString(diffObj)
+			}
+			diff += text
+		} else if same {
+			diff += fmt.Sprintf("Same: %s\n", path)
+		}
+
+		// Check for permission mismatch,  We have to skip directories beccause
+		// of Go MkdirAll's behavior that requiring seek permission; this makes for
+		// spurious mismatches in the x permission bit. The error cases here
+		// can be reached by symlink entries in Subversion files.
+		sstat, err1 := os.Stat(sourcepath)
+		if err1 != nil {
+			complain("source path stat: %s", err1)
+			continue
+		}
+		tstat, err2 := os.Stat(targetpath)
+		if err2 != nil {
+			complain("target path stat: %s", err2)
+			continue
+		}
+		if sstat.Mode() != tstat.Mode() {
+			diff += fmt.Sprintf("%s: %0o -> %0o\n", path, sstat.Mode(), tstat.Mode())
+		}
+	}
 	os.RemoveAll(rsource)
 	os.RemoveAll(rtarget)
 	return diff
@@ -1032,11 +1033,6 @@ func compareAll(args []string) {
 }
 
 func main() {
-	TMPDIR = os.Getenv("TMPDIR")
-	if TMPDIR == "" {
-		TMPDIR = "/tmp"
-	}
-
 	flags := flag.NewFlagSet("repotool", flag.ExitOnError)
 
 	flags.BoolVar(&acceptMissing, "a", false, "accept missing trunk directory")
