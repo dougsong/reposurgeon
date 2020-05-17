@@ -1,6 +1,7 @@
 = reposurgeon project news =
 
-Repository head::
+4.9: 2020-05-17::
+     This is a long-term-stable release. All packagers should update.
      Documentation has undergone a serious polishing pass.
      The 'memory' command supports output redirection.
      A CVSROOT subdirectory is no longer required to recognize a CVS repo.
