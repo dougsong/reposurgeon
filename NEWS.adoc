@@ -17,7 +17,7 @@ Repository head::
      Minor bugfixes for filter --regexp option handling.
      Assed "deselect" command to repocutter.
      The last Python dependency is gone.
-     repocutter nd repotool have version commands.
+     repocutter and repotool have version commands.
 
 4.7: 2020-04-26::
      If "foo" names a reset, "<foo>" names the commit it points to.

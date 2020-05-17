@@ -1,7 +1,7 @@
 /*
  * Mercurial (hg) command server client, used by HgExtractor
  *
-// Copyright by Eric S. Raymond
+ * Copyright by Eric S. Raymond
  * SPDX-License-Identifier: BSD-2-Clause
  *
  * Based on gohg https://bitbucket.org/gohg/gohg, but simplified and
