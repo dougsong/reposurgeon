@@ -10547,9 +10547,9 @@ stream.
 // CompleteSourcetype is a completion hook across VCS source types
 func (rs *Reposurgeon) CompleteSourcetype(text string) []string {
 	out := make([]string, 0)
-	for _, x := range vcstypes {
-		if x.exporter != "" && strings.HasPrefix(x.name, text) {
-			out = append(out, x.name)
+	for _, x := range importers {
+		if x.visible && strings.HasPrefix(x.basevcs.name, text) {
+			out = append(out, x.basevcs.name)
 		}
 	}
 	sort.Strings(out)
