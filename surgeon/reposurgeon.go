@@ -11107,17 +11107,16 @@ func (rs *Reposurgeon) DoInspect(lineIn string) bool {
 }
 
 // HelpStrip says "Shut up, golint!"
-// FIXME: Odd syntax
 func (rs *Reposurgeon) HelpStrip() {
 	rs.helpOutput(`
-[*selection*] strip {blobs|reduce}
+[*selection*] strip {--blobs|--reduce}
 
 Replace the blobs in the selected repository with self-identifying stubs;
-and/or strip out topologically uninteresting commits.  The modifiers for
-this are 'blobs' and 'reduce' respectively; the default is 'blobs'.
+and/or strip out topologically uninteresting commits.  The options for
+this are '--blobs' and '--reduce' respectively; the default is '--blobs'.
 
-A selection set is effective only with the 'blobs' option, defaulting to all
-blobs. The 'reduce' mode always acts on the entire repository.
+A selection set is effective only with the '--blobs' option, defaulting to all
+blobs. The '--reduce' mode always acts on the entire repository.
 
 This is intended for producing reduced test cases from large repositories.
 `)
@@ -11125,7 +11124,7 @@ This is intended for producing reduced test cases from large repositories.
 
 // CompleteStrip is a completion hook across strip's modifiers.
 func (rs *Reposurgeon) CompleteStrip(text string) []string {
-	return []string{"blobs", "reduce"}
+	return []string{"--blobs", "--reduce"}
 }
 
 // DoStrip strips out content to produce a reduced test case.
@@ -11142,18 +11141,18 @@ func (rs *Reposurgeon) DoStrip(line string) bool {
 	var striptypes orderedStringSet
 	var oldlen int
 	if line == "" {
-		striptypes = orderedStringSet{"blobs"}
+		striptypes = orderedStringSet{"--blobs"}
 	} else {
 		striptypes = newOrderedStringSet(strings.Fields(line)...)
 	}
-	if striptypes.Contains("blobs") {
+	if striptypes.Contains("--blobs") {
 		for _, ei := range selection {
 			if blob, ok := repo.events[ei].(*Blob); ok {
 				blob.setContent([]byte(fmt.Sprintf("Blob at %s\n", blob.mark)), noOffset)
 			}
 		}
 	}
-	if striptypes.Contains("reduce") {
+	if striptypes.Contains("--reduce") {
 		interesting := newOrderedStringSet()
 		for _, event := range repo.events {
 			if tag, ok := event.(*Tag); ok {

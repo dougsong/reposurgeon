@@ -1,5 +1,5 @@
 read <roundup.fi
-strip blobs reduce
+strip --blobs --reduce
 write -
 blob
 mark :1

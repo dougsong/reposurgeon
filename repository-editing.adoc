@@ -2833,20 +2833,20 @@ the target branch, becoming the history of a subdirectory with the
 name of the source branch.  Any resets of the source branch are
 removed.
 
-`strip` [ `blobs` | `reduce` ]::
+`strip` [ `--blobs` | `--reduce` ]::
    Reduce the selected repository to make it a more tractable test
    case. Use this when reporting bugs.
 +
-With the modifier '```blobs```', replace each blob in the repository
+With the option '```--blobs```', replace each blob in the repository
 with a small, self-identifying stub, leaving all metadata and DAG
 topology intact. This is useful when you are reporting a bug, for
 reducing large repositories to test cases of manageable size.
 +
-A selection set is effective only with the '```blobs```' option,
-defaulting to all blobs. The '```reduce```' mode always acts on the entire
+A selection set is effective only with the '```--blobs```' option,
+defaulting to all blobs. The '```--reduce```' mode always acts on the entire
 repository.
 +
-With the modifier '```reduce```', perform a topological reduction that
+With the modifier '```--reduce```', perform a topological reduction that
 throws out uninteresting commits.  If a commit has all file
 modifications (no deletions or copies or renames) and has exactly one
 ancestor and one descendant, then it may be boring.  To be fully
@@ -4230,6 +4230,9 @@ Reposurgeon scripts are effectively never reused. Thus, incompatible
 changes to the command language don't have a a high cost in pain to
 users and the maintainers feel free to make them whenever improvement
 seems possible.  But just in case, such changes are recorded here.
+
+In versions before 4.10, the "reduce" and "blob" options were
+bare keywords.
 
 In versions before 4.8, the expunge command run on a repository named
 "foo" tried to keep deleted fileops in a new synthetic repository named
