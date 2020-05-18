@@ -8947,7 +8947,11 @@ func (rs *Reposurgeon) DoEOF(lineIn string) bool {
 
 // HelpQuit says "Shut up, golint!"
 func (rs *Reposurgeon) HelpQuit() {
-	rs.helpOutput("Terminate reposurgeon cleanly.\n")
+	rs.helpOutput(`
+quit
+
+Terminate reposurgeon cleanly.
+`)
 }
 
 // DoQuit is the handler for the "quit" command.
@@ -9030,6 +9034,8 @@ func (rs *Reposurgeon) PostCmd(stop bool, lineIn string) bool {
 // HelpShell says "Shut up, golint!"
 func (rs *Reposurgeon) HelpShell() {
 	rs.helpOutput(`
+shell [*command-text*]
+
 Run a shell command. Honors the $SHELL environment variable.
 `)
 }
@@ -9517,6 +9523,8 @@ func (rs *Reposurgeon) dataTraverse(prompt string, hook func(string, map[string]
 // HelpResolve says "Shut up, golint!"
 func (rs *Reposurgeon) HelpResolve() {
 	rs.helpOutput(`
+{*selection*} resolve
+
 Does nothing but resolve a selection-set expression
 and report the resulting event-number set to standard
 output. The remainder of the line after the command is used
@@ -9548,6 +9556,8 @@ func (rs *Reposurgeon) DoResolve(line string) bool {
 // HelpAssign says "Shut up, golint!"
 func (rs *Reposurgeon) HelpAssign() {
 	rs.helpOutput(`
+{*selection*} assign [--singleton] [*name*]
+
 Compute a leading selection set and assign it to a symbolic name,
 which must follow the assign keyword. It is an error to assign to a
 name that is already assigned, or to any existing branch name.
@@ -9610,6 +9620,8 @@ func (rs *Reposurgeon) DoAssign(line string) bool {
 // HelpUnassign says "Shut up, golint!"
 func (rs *Reposurgeon) HelpUnassign() {
 	rs.helpOutput(`
+unassign {*name*}
+
 Unassign a symbolic name.  Throws an error if the name is not assigned.
 Tab-completes on the list of defined names.
 `)
@@ -9652,6 +9664,8 @@ func (rs *Reposurgeon) DoUnassign(line string) bool {
 // HelpNames says "Shut up, golint!"
 func (rs *Reposurgeon) HelpNames() {
 	rs.helpOutput(`
+names
+
 List all known symbolic names of branches and tags. Supports > redirection.
 `)
 }
@@ -9681,6 +9695,8 @@ func (rs *Reposurgeon) DoNames(line string) bool {
 // HelpHistory says "Shut up, golint!"
 func (rs *Reposurgeon) HelpHistory() {
 	rs.helpOutput(`
+history
+
 Dump your command list from this session so far.
 `)
 }
@@ -9696,6 +9712,8 @@ func (rs *Reposurgeon) DoHistory(_line string) bool {
 // HelpIndex says "Shut up, golint!"
 func (rs *Reposurgeon) HelpIndex() {
 	rs.helpOutput(`
+[*selection*] index [>*outfile*]
+
 Display four columns of info on selected objects: their number, their
 type, the associate mark (or '-' if no mark) and a summary field
 varying by type.  For a branch or tag it's the reference; for a commit
@@ -9817,15 +9835,16 @@ func stopTracing() {
 }
 
 // HelpProfile says "Shut up, golint!"
+// FIXME: Odd syntax
 func (rs *Reposurgeon) HelpProfile() {
 	rs.helpOutput(`
-Manages data collection for profiling. Usage is:
+profile [live|start|profile] [*subject*]
 
-    profile [live|start|profile] [<subject>]
+Manages data collection for profiling.
 
 Corresponding subcommands are these:
 
-    profile live [<port>]
+    profile live [*port*]
 
 	Starts an http server on the specified port which serves
 	the profiling data. If no port is specified, it defaults
@@ -9833,7 +9852,7 @@ Corresponding subcommands are these:
 
 	    go tool pprof -http=":8080" http://localhost:1234/debug/pprof/<subject>
 
-    profile start <subject> <filename>
+    profile start *subject* *filename*
 
 	Starts the named profiler, and tells it to save to the named
 	file, which will be overwritten. Currently only the cpu and
@@ -9842,7 +9861,7 @@ Corresponding subcommands are these:
 	stored and used to automatically save the profile before
 	reposurgeon exits.
 
-    profile save <subject> [<filename>]
+    profile save *subject* [*filename*]
 
 	Saves the data from the named profiler to the named file, which
 	will be overwritten. If no filename is specified, this will fall
@@ -9932,11 +9951,15 @@ func (rs *Reposurgeon) DoProfile(line string) bool {
 // HelpTiming says "Shut up, golint!"
 func (rs *Reposurgeon) HelpTiming() {
 	rs.helpOutput(`
+timings [*mark-name*] [>*outfile*]
+
 Report phase-timing results from repository analysis.
 
 If the command has following text, this creates a new, named time mark
 that will be visible in a later report; this may be useful during
 long-running conversion recipes.
+
+Supports output redirection/
 `)
 }
 
@@ -9958,6 +9981,8 @@ func (rs *Reposurgeon) DoTiming(line string) bool {
 // HelpMemory says "Shut up, golint!"
 func (rs *Reposurgeon) HelpMemory() {
 	rs.helpOutput(`
+memory [>*outfile*]
+
 Report memory usage.  Runs a garbage-collect before reporting so the figure will better reflect
 storage currently held in loaded repositories; this will not affect the reported high-water
 mark.
@@ -9980,6 +10005,8 @@ func (rs *Reposurgeon) DoMemory(line string) bool {
 // HelpBench says "Shut up, golint!"
 func (rs *Reposurgeon) HelpBench() {
 	rs.helpOutput(`
+elapsed
+
 Report elapsed time and memory usage in the format expected by repobench. Note: this
 comment is not intended for interactive use or to be used by scripts other than repobench.  The
 output format may change as repobench does.
@@ -10008,6 +10035,8 @@ func (rs *Reposurgeon) DoBench(line string) bool {
 // HelpStats says "Shut up, golint!"
 func (rs *Reposurgeon) HelpStats() {
 	rs.helpOutput(`
+sizes [>*outfile*]
+
 Report size statistics and import/export method information of the
 currently chosen repository. Supports > redirection.
 `)
@@ -10061,6 +10090,8 @@ func (rs *Reposurgeon) DoStats(line string) bool {
 // HelpCount says "Shut up, golint!"
 func (rs *Reposurgeon) HelpCount() {
 	rs.helpOutput(`
+{*selection*} count [>*outfile*]
+
 Report a count of items in the selection set. Default set is everything
 in the currently-selected repo. Supports > redirection.
 `)
@@ -10085,6 +10116,8 @@ func (rs *Reposurgeon) DoCount(lineIn string) bool {
 // HelpList says "Shut up, golint!"
 func (rs *Reposurgeon) HelpList() {
 	rs.helpOutput(`
+[*selection*] list [>*outfile*]
+
 Display commits in a human-friendly format; the first column is raw
 event numbers, the second a timestamp in local time. If the repository
 has legacy IDs, they will be displayed in the third column. The
@@ -10112,6 +10145,8 @@ func (rs *Reposurgeon) DoList(lineIn string) bool {
 // HelpTip says "Shut up, golint!"
 func (rs *Reposurgeon) HelpTip() {
 	rs.helpOutput(`
+[*selection*] tip [>*outfile*]
+
 Display the branch tip names associated with commits in the selection
 set.  These will not necessarily be the same as their branch fields
 (which will often be tag names if the repo contains either annotated
@@ -10146,6 +10181,8 @@ func (rs *Reposurgeon) DoTip(lineIn string) bool {
 // HelpTags says "Shut up, golint!"
 func (rs *Reposurgeon) HelpTags() {
 	rs.helpOutput(`
+[*selection*] tags {>*outfile*]
+
 Display tags and resets: three fields, an event number and a type and a name.
 Branch tip commits associated with tags are also displayed with the type
 field 'commit'. Supports > redirection.
@@ -10178,6 +10215,8 @@ func (rs *Reposurgeon) DoTags(lineIn string) bool {
 // HelpStamp says "Shut up, golint!"
 func (rs *Reposurgeon) HelpStamp() {
 	rs.helpOutput(`
+[*selection*] stamp [>*outfile*]
+
 Display full action stamps corresponding to commits in a select.
 The stamp is followed by the first line of the commit message.
 Supports > redirection.
@@ -10208,6 +10247,8 @@ func (rs *Reposurgeon) DoStamp(lineIn string) bool {
 // HelpSizes says "Shut up, golint!"
 func (rs *Reposurgeon) HelpSizes() {
 	rs.helpOutput(`
+[*selection*] sizes [>*outfile*]
+
 Print a report on data volume per branch; takes a selection set,
 defaulting to all events. The numbers tally the size of uncompressed
 blobs, commit and tag comments, and other metadata strings (a blob is
@@ -10287,6 +10328,8 @@ func (rs *Reposurgeon) DoSizes(line string) bool {
 // HelpLint says "Shut up, golint!"
 func (rs *Reposurgeon) HelpLint() {
 	rs.helpOutput(`
+[*selection*] lint [--option...] [>*outfile*]
+
 Look for DAG and metadata configurations that may indicate a
 problem. Presently can check for: (1) Mid-branch deletes, (2)
 disconnected commits, (3) parentless commits, (4) the existence of
@@ -10449,6 +10492,8 @@ func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 // HelpPrefer says "Shut up, golint!"
 func (rs *Reposurgeon) HelpPrefer() {
 	rs.helpOutput(`
+prefer [*vcsname*]
+
 Report or set (with argument) the preferred type of repository. With
 no arguments, describe capabilities of all supported systems. With an
 argument (which must be the name of a supported version-control
@@ -10528,6 +10573,8 @@ func (rs *Reposurgeon) DoPrefer(line string) bool {
 // HelpSourcetype says "Shut up, golint!"
 func (rs *Reposurgeon) HelpSourcetype() {
 	rs.helpOutput(`
+sourcetype [*vcsname*]
+
 Report (with no arguments) or select (with one argument) the current
 repository's source type.  This type is normally set at
 repository-read time, but may remain unset if the source was a stream
@@ -10588,6 +10635,8 @@ func (rs *Reposurgeon) DoSourcetype(line string) bool {
 // HelpGc says "Shut up, golint!"
 func (rs *Reposurgeon) HelpGc() {
 	rs.helpOutput(`
+gc [*level*]
+
 Trigger a garbage collection. Scavenges and removes all blob objects
 that no longer have references, e.g. as a result of delete operqtions
 on repositories. This is followed by a Go-runtime garbage collection.
@@ -10621,6 +10670,8 @@ func (rs *Reposurgeon) DoGc(line string) bool {
 // HelpChoose says "Shut up, golint!"
 func (rs *Reposurgeon) HelpChoose() {
 	rs.helpOutput(`
+choose [*reponame*]
+
 Choose a named repo on which to operate.  The name of a repo is
 normally the basename of the directory or file it was loaded from, but
 repos loaded from standard input are 'unnamed'. The program will add
@@ -10686,6 +10737,8 @@ func (rs *Reposurgeon) DoChoose(line string) bool {
 // HelpDrop says "Shut up, golint!"
 func (rs *Reposurgeon) HelpDrop() {
 	rs.helpOutput(`
+drop [reponame]
+
 Drop a repo named by the argument from reposurgeon's list, freeing the memory
 used for its metadata and deleting on-disk blobs. With no argument, drops the
 currently chosen repo. Tab-completes on the list of loaded repositories.
@@ -10736,6 +10789,8 @@ func (rs *Reposurgeon) DoDrop(line string) bool {
 // HelpRename says "Shut up, golint!"
 func (rs *Reposurgeon) HelpRename() {
 	rs.helpOutput(`
+rename {*new-name*}
+
 Rename the currently chosen repo; requires an argument.  Won't do it
 if there is already one by the new name.
 `)
@@ -10761,6 +10816,8 @@ func (rs *Reposurgeon) DoRename(line string) bool {
 // HelpPreserve says "Shut up, golint!"
 func (rs *Reposurgeon) HelpPreserve() {
 	rs.helpOutput(`
+preserve [*path*...]
+
 Add (presumably untracked) files or directories to the repo's list of
 paths to be restored from the backup directory after a rebuild. Each
 argument, if any, is interpreted as a pathname.  The current preserve
@@ -10788,6 +10845,8 @@ func (rs *Reposurgeon) DoPreserve(line string) bool {
 // HelpUnpreserve says "Shut up, golint!"
 func (rs *Reposurgeon) HelpUnpreserve() {
 	rs.helpOutput(`
+unpreserve [*path*...]
+
 Remove (presumably untracked) files or directories to the repo's list
 of paths to be restored from the backup directory after a
 rebuild. Each argument, if any, is interpreted as a pathname.  The
@@ -10819,6 +10878,8 @@ func (rs *Reposurgeon) DoUnpreserve(line string) bool {
 // HelpRead says "Shut up, golint!"
 func (rs *Reposurgeon) HelpRead() {
 	rs.helpOutput(`
+read  [--option...] [<*file* | *directory*]
+
 A read command with no arguments is treated as 'read .', operating on the
 current directory.
 
@@ -10928,6 +10989,8 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 // HelpWrite says "Shut up, golint!"
 func (rs *Reposurgeon) HelpWrite() {
 	rs.helpOutput(`
+[*selection*] write [--legacy|--format=fossil|--noincremental|--callout]  >*outfile* | -]
+
 Dump a fast-import stream representing selected events to standard
 output (if second argument is empty or '-') or via > redirect to a file.
 Alternatively, if there ia no redirect and the argument names a
@@ -11004,6 +11067,8 @@ func (rs *Reposurgeon) DoWrite(line string) bool {
 // HelpInspect says "Shut up, golint!"
 func (rs *Reposurgeon) HelpInspect() {
 	rs.helpOutput(`
+[*selection*] inspect
+
 Dump a fast-import stream representing selected events to standard
 output or via > redirect to a file.  Just like a write, except (1) the
 progress meter is disabled, and (2) there is an identifying header
@@ -11042,8 +11107,11 @@ func (rs *Reposurgeon) DoInspect(lineIn string) bool {
 }
 
 // HelpStrip says "Shut up, golint!"
+// FIXME: Odd syntax
 func (rs *Reposurgeon) HelpStrip() {
 	rs.helpOutput(`
+[*selection*] strip {blobs|reduce}
+
 Replace the blobs in the selected repository with self-identifying stubs;
 and/or strip out topologically uninteresting commits.  The modifiers for
 this are 'blobs' and 'reduce' respectively; the default is 'blobs'.
@@ -11136,6 +11204,8 @@ func (rs *Reposurgeon) DoStrip(line string) bool {
 // HelpGraph says "Shut up, golint!"
 func (rs *Reposurgeon) HelpGraph() {
 	rs.helpOutput(`
+[*selection*] graph
+
 Dump a graph representing selected events to standard output in DOT markup
 for graphviz. Supports > redirection.
 `)
@@ -11209,6 +11279,8 @@ func (rs *Reposurgeon) DoGraph(line string) bool {
 // HelpRebuild says "Shut up, golint!"
 func (rs *Reposurgeon) HelpRebuild() {
 	rs.helpOutput(`
+rebuild {directory}
+
 Rebuild a repository from the state held by reposurgeon.  The argument
 specifies the target directory in which to do the rebuild; if the
 repository read was from a repo directory (and not a git-import stream), it
@@ -11243,6 +11315,8 @@ func (rs *Reposurgeon) DoRebuild(line string) bool {
 // HelpMsgout says "Shut up, golint!"
 func (rs *Reposurgeon) HelpMsgout() {
 	rs.helpOutput(`
+[select] msgout [--filter=/regexp/] [--blobs]]
+
 Emit a file of messages in RFC822 format representing the contents of
 repository metadata. Takes a selection set; members of the set other
 than commits, annotated tags, and passthroughs are ignored (that is,
@@ -11302,6 +11376,8 @@ func (rs *Reposurgeon) DoMsgout(lineIn string) bool {
 // HelpMsgin says "Shut up, golint!"
 func (rs *Reposurgeon) HelpMsgin() {
 	rs.helpOutput(`
+msgin [--create] [<infile]
+
 Accept a file of messages in RFC822 format representing the
 contents of the metadata in selected commits and annotated tags. Takes
 no selection set. If there is an argument it will be taken as the name
@@ -11605,6 +11681,8 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 // HelpEdit says "Shut up, golint!"
 func (rs *Reposurgeon) HelpEdit() {
 	rs.helpOutput(`
+[*selection*] edit [<infile] [>*outfile*]
+
 Report the selection set of events to a tempfile as msgout does,
 call an editor on it, and update from the result as msgin does.
 If you do not specify an editor name as second argument, it will be
@@ -11637,8 +11715,11 @@ func (rs *Reposurgeon) DoEdit(line string) bool {
 }
 
 // HelpFilter says "Shut up, golint!"
+//FIXME: Move dedos to transcode?
 func (rs *Reposurgeon) HelpFilter() {
 	rs.helpOutput(`
+[*selection*] filter [--dedos|--shell|--regexp|--replace] [text-or-regexp]
+
 Run blobs, commit comments and committer/author names, or tag comments
 and tag committer names in the selection set through the filter
 specified on the command line.
@@ -11671,7 +11752,7 @@ comment text only, 'C' for committer name only, 'a' for author names
 only.
 
 With --replace, the behavior is like --regexp but the expressions are
-not interpreted as regular expressions. (This is slighly faster).
+not interpreted as regular expressions. (This is slightly faster).
 
 With --dedos, DOS/Windows-style \r\n line terminators are replaced with \n.
 `)
@@ -11842,6 +11923,8 @@ func (rs *Reposurgeon) DoFilter(line string) (StopOut bool) {
 // HelpTranscode says "Shut up, golint!"
 func (rs *Reposurgeon) HelpTranscode() {
 	rs.helpOutput(`
+[*selection*] transcode {encoding}
+
 Transcode blobs, commit comments and committer/author names, or tag
 comments and tag committer names in the selection set to UTF-8 from
 the character encoding specified on the command line.
@@ -11857,7 +11940,6 @@ standard codecs library. In particular, 'latin-1' is a valid codec name.
 
 Errors in this command force the repository to be dropped, because an
 error may leave repository objects in a damaged state.
-
 `)
 }
 
@@ -11895,6 +11977,8 @@ func (rs *Reposurgeon) DoTranscode(line string) bool {
 // HelpSetfield says "Shut up, golint!"
 func (rs *Reposurgeon) HelpSetfield() {
 	rs.helpOutput(`
+[*selection*] setfield {*field*} {*value*}
+
 In the selected objects (defaulting to none) set every instance of a
 named field to a string value.  The string may be quoted to include
 whitespace, and use backslash escapes interpreted by Go's C-like
@@ -11974,6 +12058,8 @@ func (rs *Reposurgeon) DoSetfield(line string) bool {
 // HelpSetperm says "Shut up, golint!"
 func (rs *Reposurgeon) HelpSetperm() {
 	rs.helpOutput(`
+[*selection*] setperm {*perm*} [*path*...]
+
 For the selected objects (defaulting to none) take the first argument as an
 octal literal describing permissions.  All subsequent arguments are paths.
 For each M fileop in the selection set and exactly matching one of the
@@ -12025,6 +12111,8 @@ func (rs *Reposurgeon) DoSetperm(line string) bool {
 // HelpAppend says "Shut up, golint!"
 func (rs *Reposurgeon) HelpAppend() {
 	rs.helpOutput(`
+[*selection*] append [--rstrip] {*text*}
+
 Append text to the comments of commits and tags in the specified
 selection set. The text is the first token of the command and may
 be a quoted string. C-style escape sequences in the string are
@@ -12090,6 +12178,8 @@ func (rs *Reposurgeon) DoAppend(line string) bool {
 // HelpSquash says "Shut up, golint!"
 func (rs *Reposurgeon) HelpSquash() {
 	rs.helpOutput(`
+[*selection*] squash [*--policy*...]
+
 Combine a selection set of events; this may mean deleting them or
 pushing their content forward or back onto a target commit just
 outside the selection range, depending on policy flags.
@@ -12118,6 +12208,8 @@ func (rs *Reposurgeon) DoSquash(line string) bool {
 // HelpDelete says "Shut up, golint!"
 func (rs *Reposurgeon) HelpDelete() {
 	rs.helpOutput(`
+[*selection*] delete
+
 Delete a selection set of events.  The default selection set for this
 command is empty.  Tags, resets, and passthroughs are deleted with no
 side effects.  Blobs cannot be directly deleted with this command; they
@@ -12148,6 +12240,8 @@ func (rs *Reposurgeon) DoDelete(line string) bool {
 // HelpCoalesce says "Shut up, golint!"
 func (rs *Reposurgeon) HelpCoalesce() {
 	rs.helpOutput(`
+[selection] coalesce [--debug]
+
 Scan the selection set (defaulting to all) for runs of commits with
 identical comments close to each other in time (this is a common form
 of scar tissues in repository up-conversions from older file-oriented
@@ -12267,9 +12361,15 @@ func (rs *Reposurgeon) DoCoalesce(line string) bool {
 // HelpAdd says "Shut up, golint!"
 func (rs *Reposurgeon) HelpAdd() {
 	rs.helpOutput(`
-From a specified commit, add a specified fileop. The syntax is
+{selection} add M *perm* *mark* *path*
 
-     add {D path | M perm mark path | R source target | C source target}
+{selection} add D *path*
+
+{selection} add R *source* *target*
+
+{selection} add C *source* *target*
+
+From a specified commit, add a specified fileop.
 
 For a D operation to be valid there must be an M operation for the path
 in the commit's ancestry.  For an M operation to be valid, the 'perm'
@@ -12382,9 +12482,7 @@ func (rs *Reposurgeon) DoAdd(line string) bool {
 // HelpBlob says "Shut up, golint!"
 func (rs *Reposurgeon) HelpBlob() {
 	rs.helpOutput(`
-Syntax:
-
-     blob
+blob
 
 Create a blob at mark :1 after renumbering other marks starting from
 :2.  Data is taken from stdin, which may be a here-doc.  This can be
@@ -12417,13 +12515,14 @@ func (rs *Reposurgeon) DoBlob(line string) bool {
 }
 
 // HelpRemove says "Shut up, golint!"
+// FIXME: Odd syntax
 func (rs *Reposurgeon) HelpRemove() {
 	rs.helpOutput(`
-From a specified commit, remove a specified fileop. The syntax is:
+[selection] remove [DMRCN] *op* [to {selection}]
 
-     remove [DMRCN] OP [to COMMIT]
+From a specified commit, remove a specified fileop. The syntax:
 
-The OP must be one of (a) the keyword 'deletes', (b) a file path, (c)
+The *op* must be one of (a) the keyword 'deletes', (b) a file path, (c)
 a file path preceded by an op type set (some subset of the letters
 DMRCN), or (c) a 1-origin numeric index.  The 'deletes' keyword
 selects all D fileops in the commit; the others select one each.
@@ -12550,6 +12649,8 @@ func (rs *Reposurgeon) DoRemove(line string) bool {
 // HelpRenumber says "Shut up, golint!"
 func (rs *Reposurgeon) HelpRenumber() {
 	rs.helpOutput(`
+renumber
+
 Renumber the marks in a repository, from :1 up to <n> where <n> is the
 count of the last mark. Just in case an importer ever cares about mark
 ordering or gaps in the sequence.
@@ -12570,6 +12671,8 @@ func (rs *Reposurgeon) DoRenumber(line string) bool {
 // HelpDedup says "Shut up, golint!"
 func (rs *Reposurgeon) HelpDedup() {
 	rs.helpOutput(`
+[*selection*] dedup
+
 Deduplicate blobs in the selection set.  If multiple blobs in the selection
 set have the same SHA1, throw away all but the first, and change fileops
 referencing them to instead reference the (kept) first blob.
@@ -12607,6 +12710,8 @@ func (rs *Reposurgeon) DoDedup(line string) bool {
 // HelpTimeoffset says "Shut up, golint!"
 func (rs *Reposurgeon) HelpTimeoffset() {
 	rs.helpOutput(`
+[*dselection*] timeoffset {*offset*}
+
 Apply a time offset to all time/date stamps in the selected set.  An offset
 argument is required; it may be in the form [+-]ss, [+-]mm:ss or [+-]hh:mm:ss.
 The leading sign is optional. With no argument, the default is 1 second.
@@ -12717,6 +12822,8 @@ func (rs *Reposurgeon) DoTimeoffset(line string) bool {
 // HelpWhen says "Shut up, golint!"
 func (rs *Reposurgeon) HelpWhen() {
 	rs.helpOutput(`
+when {*timestamp*}
+
 Interconvert between git timestamps (integer Unix time plus TZ) and
 RFC3339 format.  Takes one argument, autodetects the format.  Useful
 when eyeballing export streams.  Also accepts any other supported
@@ -12744,6 +12851,8 @@ func (rs *Reposurgeon) DoWhen(LineIn string) (StopOut bool) {
 // HelpDivide says "Shut up, golint!"
 func (rs *Reposurgeon) HelpDivide() {
 	rs.helpOutput(`
+{selection} divide
+
 Attempt to partition a repo by cutting the parent-child link
 between two specified commits (they must be adjacent). Does not take a
 general selection-set argument.  It is only necessary to specify the
@@ -12841,6 +12950,8 @@ func (rs *Reposurgeon) DoDivide(_line string) bool {
 // HelpExpunge says "Shut up, golint!"
 func (rs *Reposurgeon) HelpExpunge() {
 	rs.helpOutput(`
+[*selection*] expunge [~] [*pattern*...]
+
 Expunge files from the selected portion of the repo history; the
 default is the entire history.  The arguments to this command may be
 paths or regular expressions matching paths (regexps must
@@ -12897,10 +13008,11 @@ func (rs *Reposurgeon) DoExpunge(line string) bool {
 // HelpSplit says "Shut up, golint!"
 func (rs *Reposurgeon) HelpSplit() {
 	rs.helpOutput(`
-Split a specified commit in two, the opposite of squash.
+[*selection*] split at {*M*}
 
-    split at M
-    split by PREFIX
+[*selection*] split by {*PREFIX*}
+
+Split a specified commit in two, the opposite of squash.
 
 The selection set is required to be a commit location; the modifier is
 a preposition which indicates which splitting method to use. If the
@@ -12979,6 +13091,8 @@ func (rs *Reposurgeon) DoSplit(line string) bool {
 // HelpUnite says "Shut up, golint!"
 func (rs *Reposurgeon) HelpUnite() {
 	rs.helpOutput(`
+unite [--prune] [*reponame*...]
+
 Unite repositories. Name any number of loaded repositories; they will
 be united into one union repo and removed from the load list.  The
 union repo will be selected.
@@ -13029,6 +13143,8 @@ func (rs *Reposurgeon) DoUnite(line string) bool {
 // HelpGraft says "Shut up, golint!"
 func (rs *Reposurgeon) HelpGraft() {
 	rs.helpOutput(`
+[*selection*] graft [--prune] *reponame*::
+
 For when unite doesn't give you enough control. This command may have
 either of two forms, selected by the size of the selection set.  The
 first argument is always required to be the name of a loaded repo.
@@ -13090,6 +13206,8 @@ func (rs *Reposurgeon) DoGraft(line string) bool {
 // HelpDebranch says "Shut up, golint!"
 func (rs *Reposurgeon) HelpDebranch() {
 	rs.helpOutput(`
+debranch {*source-branch*} [ {*target-branch*} ]::
+
 Takes one or two arguments which must be the names of source and target
 branches; if the second (target) argument is omitted it defaults to 'master'.
 The history of the source branch is merged into the history of the target
@@ -13192,8 +13310,11 @@ func (rs *Reposurgeon) DoDebranch(line string) bool {
 }
 
 // HelpPath says "Shut up, golint!"
+// FIXME: Odd syntax
 func (rs *Reposurgeon) HelpPath() {
 	rs.helpOutput(`
+path {*source*} rename --force] *target*::
+
 Rename a path in every fileop of every selected commit.  The
 default selection set is all commits. The first argument is interpreted as a
 Go regular expression to match against paths; the second may contain Go
@@ -13298,6 +13419,8 @@ func (rs *Reposurgeon) DoPath(line string) bool {
 // HelpPaths says "Shut up, golint!"
 func (rs *Reposurgeon) HelpPaths() {
 	rs.helpOutput(`
+paths [sub|sup] [*dirname*] [ >*outfile*]::
+
 Without a modifier, list all paths touched by fileops in
 the selection set (which defaults to the entire repo). This
 variant does > redirection.
@@ -13376,6 +13499,8 @@ func (rs *Reposurgeon) DoPaths(line string) bool {
 // HelpManifest says "Shut up, golint!"
 func (rs *Reposurgeon) HelpManifest() {
 	rs.helpOutput(`
+[*selection*] manifest [/regexp/]
+
 Print commit path lists. Takes an optional selection set argument
 defaulting to all commits, and an optional delimited Go regular
 expression.  For each commit in the selection set, print the mapping
@@ -13458,6 +13583,8 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 // HelpTagify says "Shut up, golint!"
 func (rs *Reposurgeon) HelpTagify() {
 	rs.helpOutput(`
+[*selection*] tagify [--tagify-merges|--canonicalize|--tipdeletes]
+
 Search for empty commits and turn them into tags. Takes an optional selection
 set argument defaulting to all commits. For each commit in the selection set,
 turn it into a tag with the same message and author information if it has no
@@ -13523,6 +13650,8 @@ func (rs *Reposurgeon) DoTagify(line string) bool {
 // HelpMerge says "Shut up, golint!"
 func (rs *Reposurgeon) HelpMerge() {
 	rs.helpOutput(`
+{*selection*} merge
+
 Create a merge link. Takes a selection set argument, ignoring all but
 the lowest (source) and highest (target) members.  Creates a merge link
 from the highest member (child) to the lowest (parent).
@@ -13555,6 +13684,8 @@ func (rs *Reposurgeon) DoMerge(_line string) bool {
 // HelpUnmerge says "Shut up, golint!"
 func (rs *Reposurgeon) HelpUnmerge() {
 	rs.helpOutput(`
+{*selection*} unmerge
+
 Linearizes a commit. Takes a selection set argument, which must resolve to a
 single commit, and removes all its parents except for the first. It is
 equivalent to reparent --rebase {first parent},{commit}, where {commit} is the
@@ -13584,8 +13715,11 @@ func (rs *Reposurgeon) DoUnmerge(_line string) bool {
 }
 
 // HelpReparent says "Shut up, golint!"
+//FIXME: Odd syntax
 func (rs *Reposurgeon) HelpReparent() {
 	rs.helpOutput(`
+reparent [ *options*... ] [*policy*]
+
 Changes the parent list of a commit.  Takes a selection set, zero or
 more option arguments, and an optional policy argument.
 
@@ -13738,6 +13872,8 @@ func (rs *Reposurgeon) DoReparent(line string) bool {
 // HelpReorder says "Shut up, golint!"
 func (rs *Reposurgeon) HelpReorder() {
 	rs.helpOutput(`
+[*selection*] reorder [--quiet]
+
 Re-order a contiguous range of commits.
 
 Older revision control systems tracked change history on a per-file basis,
@@ -13823,6 +13959,8 @@ func (rs *Reposurgeon) DoReorder(lineIn string) bool {
 // HelpBranch says "Shut up, golint!"
 func (rs *Reposurgeon) HelpBranch() {
 	rs.helpOutput(`
+branch {*branchname*} {rename|delete} [*arg*]
+
 Rename or delete a branch (and any associated resets).  First argument
 must be an existing branch name; second argument must one of the verbs
 'rename' or 'delete'.
@@ -13932,6 +14070,8 @@ func (rs *Reposurgeon) DoBranch(line string) bool {
 // HelpTag says "Shut up, golint!"
 func (rs *Reposurgeon) HelpTag() {
 	rs.helpOutput(`
+[*selection*] tag {*tagname*} {create|move|rename|delete} [*arg*]
+
 Create, move, rename, or delete a tag.
 
 Creation is a special case.  First argument is a name, which must not
@@ -14180,6 +14320,8 @@ func (rs *Reposurgeon) DoTag(line string) bool {
 // HelpReset says "Shut up, golint!"
 func (rs *Reposurgeon) HelpReset() {
 	rs.helpOutput(`
+[*selection*] reset *resetname* {create|move|rename|delete} [*arg*]
+
 Create, move, rename, or delete a reset. Create is a special case; it
 requires a singleton selection which is the associated commit for the
 reset, takes as a first argument the name of the reset (which must not
@@ -14361,8 +14503,11 @@ func (rs *Reposurgeon) DoReset(line string) bool {
 }
 
 // HelpIgnores says "Shut up, golint!"
+// FIXME: Odd syntax
 func (rs *Reposurgeon) HelpIgnores() {
 	rs.helpOutput(`
+ignores [rename] [translate] [defaults]::
+
 Intelligent handling of ignore-pattern files.
 
 This command fails if no repository has been selected or no preferred write
@@ -14498,8 +14643,11 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 }
 
 // HelpAttribution says "Shut up, golint!"
+//FIXME: Odd syntax
 func (rs *Reposurgeon) HelpAttribution() {
 	rs.helpOutput(`
+attribution {*subcommand*}
+
 Inspect, modify, add, and remove commit and tag attributions.
 
 Attributions upon which to operate are selected in much the same way as events
@@ -14681,6 +14829,10 @@ func (rs *Reposurgeon) DoAttribution(line string) bool {
 // HelpAuthors says "Shut up, golint!"
 func (rs *Reposurgeon) HelpAuthors() {
 	rs.helpOutput(`
+authors read <*infile*
+
+authors write >*outfile*
+
 Apply or dump author-map information for the specified selection
 set, defaulting to all events.
 
@@ -14753,6 +14905,10 @@ func (rs *Reposurgeon) DoAuthors(line string) bool {
 // HelpLegacy says "Shut up, golint!"
 func (rs *Reposurgeon) HelpLegacy() {
 	rs.helpOutput(`
+legacy read [<*infile*]
+
+legacy write [>*outfile*]
+
 Apply or list legacy-reference information. Does not take a
 selection set. The 'read' variant reads from standard input or a
 <-redirected filename; the 'write' variant writes to standard
@@ -14793,6 +14949,8 @@ func (rs *Reposurgeon) DoLegacy(line string) bool {
 // HelpReferences says "Shut up, golint!"
 func (rs *Reposurgeon) HelpReferences() {
 	rs.helpOutput(`
+[*selection*] references [list|edit|lift]
+
 With the 'list' modifier, produces a listing of events that may have
 Subversion or CVS commit references in them.  This version
 of the command supports >-redirection.  Equivalent to '=N list'.
@@ -14933,6 +15091,8 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 // HelpGitify says "Shut up, golint!"
 func (rs *Reposurgeon) HelpGitify() {
 	rs.helpOutput(`
+[*selection*] gitify
+
 Attempt to massage comments into a git-friendly form with a blank
 separator line after a summary line.  This code assumes it can insert
 a blank line if the first line of the comment ends with '.', ',', ':',
@@ -14998,6 +15158,8 @@ func (rs *Reposurgeon) DoGitify(_line string) bool {
 // HelpCheckout says "Shut up, golint!"
 func (rs *Reposurgeon) HelpCheckout() {
 	rs.helpOutput(`
+{*selection*} checkout
+
 Check out files for a specified commit into a directory.  The selection
 set must resolve to a singleton commit.
 `)
@@ -15032,6 +15194,8 @@ func (rs *Reposurgeon) DoCheckout(line string) bool {
 // HelpDiff says "Shut up, golint!"
 func (rs *Reposurgeon) HelpDiff() {
 	rs.helpOutput(`
+{*selection*} diff
+
 Display the difference between commits. Takes a selection-set argument which
 must resolve to exactly two commits. Supports > redirection.
 `)
@@ -15111,6 +15275,8 @@ func (rs *Reposurgeon) DoDiff(line string) bool {
 // HelpBranchify says "Shut up, golint!"
 func (rs *Reposurgeon) HelpBranchify() {
 	rs.helpOutput(`
+branchify [*directory*...]
+
 Specify the list of directories to be treated as potential branches (to
 become tags if there are no modifications after the creation copies)
 when analyzing a Subversion repo. This list is ignored when reading
@@ -15156,6 +15322,8 @@ func (rs *Reposurgeon) DoBranchify(line string) bool {
 // HelpBranchmap says "Shut up, golint!"
 func (rs *Reposurgeon) HelpBranchmap() {
 	rs.helpOutput(`
+branchmap /*regex1*/*branch1*/ /*regex2*/*branch2*/ ...
+
 Specify the list of regular expressions used for mapping the SVN branches that
 are detected by branchify. If none of the expressions match, the default behavior
 applies. This maps a branch to the name of the last directory, except for trunk
@@ -15163,8 +15331,6 @@ and '*' which are mapped to master and root.
 
 With no arguments the current regex replacement pairs are shown. Passing 'reset'
 will clear the mapping.
-
-Syntax: branchmap /regex1/branch1/ /regex2/branch2/ ...
 
 String quotes and backslash escapes are *not* interpreted when parsing
 the command line, this would clash with the use of backslashes as
@@ -15244,6 +15410,8 @@ func (rs *Reposurgeon) DoBranchmap(line string) bool {
 // HelpSet says "Shut up, golint!"
 func (rs *Reposurgeon) HelpSet() {
 	rs.helpOutput(`
+set [*option*]
+
 Set a (tab-completed) boolean option to control reposurgeon's
 behavior.  With no arguments, displays the state of all flags and
 options. The following flags and options are defined:
@@ -15302,6 +15470,8 @@ func (rs *Reposurgeon) DoSet(line string) bool {
 // HelpClear says "Shut up, golint!"
 func (rs *Reposurgeon) HelpClear() {
 	rs.helpOutput(`
+clear [*option*]
+
 Clear a (tab-completed) boolean option to control reposurgeon's
 behavior.  With no arguments, displays the state of all flags. The
 following flags and options are defined:
@@ -15333,6 +15503,8 @@ func (rs *Reposurgeon) DoClear(line string) bool {
 // HelpReadLimit says "Shut up, golint!"
 func (rs *Reposurgeon) HelpReadLimit() {
 	rs.helpOutput(`
+realimit {*N*}
+
 Set a maximum number of commits to read from a stream.  If the limit
 is reached before EOF it will be logged. Mainly useful for benchmarking.
 Without arguments, report the read limit; 0 means there is none.
@@ -15362,6 +15534,8 @@ func (rs *Reposurgeon) DoReadlimit(line string) bool {
 // HelpDefine says "Shut up, golint!"
 func (rs *Reposurgeon) HelpDefine() {
 	rs.helpOutput(`
+define [*name* [*text*]]
+
 Define a macro.  The first whitespace-separated token is the name; the
 remainder of the line is the body, unless it is '{', which begins a
 multi-line macro terminated by a line beginning with '}'.
@@ -15432,6 +15606,8 @@ func (rs *Reposurgeon) DoDefine(lineIn string) bool {
 // HelpDo says "Shut up, golint!"
 func (rs *Reposurgeon) HelpDo() {
 	rs.helpOutput(`
+do *macroname* [*arg*...]
+
 Expand and perform a macro.  The first whitespace-separated token is
 the name of the macro to be called; remaining tokens replace {0},
 {1}... in the macro definition. Tokens may contain whitespace if they
@@ -15490,6 +15666,8 @@ func (rs *Reposurgeon) DoDo(ctx context.Context, line string) bool {
 // HelpUndefine says "Shut up, golint!"
 func (rs *Reposurgeon) HelpUndefine() {
 	rs.helpOutput(`
+undef macroname
+
 Undefine the macro named in this command's first argument.
 `)
 }
@@ -15531,6 +15709,8 @@ func (rs *Reposurgeon) DoUndefine(line string) bool {
 // HelpTimequake says "Shut up, golint!"
 func (rs *Reposurgeon) HelpTimequake() {
 	rs.helpOutput(`
+[*selection*] timequake
+
 Attempt to hack committer and author time stamps to make all action
 stamps in the selection set (defaulting to all commits in the
 repository) to be unique.  Works by identifying collisions between parent
@@ -15589,6 +15769,8 @@ func (rs *Reposurgeon) DoTimequake(line string) bool {
 // HelpChangelogs says "Shut up, golint!"
 func (rs *Reposurgeon) HelpChangelogs() {
 	rs.helpOutput(`
+[*selection*] changelogs
+
 Mine ChangeLog files for authorship data.
 
 Takes a selection set.  If no set is specified, process all changelogs.
@@ -16034,8 +16216,10 @@ func extractTar(dst string, r io.Reader) ([]tar.Header, error) {
 // HelpIncorporate says "Shut up, golint!"
 func (rs *Reposurgeon) HelpIncorporate() {
 	rs.helpOutput(`
+{*selection*} incorporate [--date|--after|--firewall] [*tarball*...]
+
 Insert the contents of specified tarballs as commit.  The tarball
-names are given as arguments; if no arguments, a list is red from
+names are given as arguments; if no arguments, a list is read from
 stdin.  Tarballs may be gzipped or bzipped.  The initial segment of
 each path is assumed to be a version directory and stripped off.  The
 number of segments stripped off can be set with the option
@@ -16269,6 +16453,8 @@ func (rs *Reposurgeon) DoIncorporate(line string) bool {
 // HelpVersion says "Shut up, golint!"
 func (rs *Reposurgeon) HelpVersion() {
 	rs.helpOutput(`
+version [*expect*]
+
 With no argument, display the reposurgeon version and supported VCSes.
 With argument, declare the major version (single digit) or full
 version (major.minor) under which the enclosing script was developed.
@@ -16323,6 +16509,8 @@ func (rs *Reposurgeon) DoVersion(line string) bool {
 // HelpElapsed says "Shut up, golint!"
 func (rs *Reposurgeon) HelpElapsed() {
 	rs.helpOutput(`
+elapsed
+
 Display elapsed time since start. Accepts output redirection.
 `)
 }
@@ -16338,6 +16526,8 @@ func (rs *Reposurgeon) DoElapsed(line string) bool {
 // HelpExit says "Shut up, golint!"
 func (rs *Reposurgeon) HelpExit() {
 	rs.helpOutput(`
+exit
+
 Exit cleanly, emitting a goodbye message. Accepts output redirection.
 
 Typing EOT (usually Ctrl-D) will exit quietly.
@@ -16359,6 +16549,8 @@ func (rs *Reposurgeon) DoExit(line string) bool {
 // HelpPrompt says "Shut up, golint!"
 func (rs *Reposurgeon) HelpPrompt() {
 	rs.helpOutput(`
+prompt [*text*]
+
 Set the command prompt format to the value of the command line; with
 an empty command line, display it. The prompt format is evaluated
 after each command with the following substitutions:
@@ -16394,7 +16586,11 @@ func (rs *Reposurgeon) DoPrompt(lineIn string) bool {
 
 // HelpHelp says "Shut up, golint!"
 func (rs *Reposurgeon) HelpHelp() {
-	rs.helpOutput("Show help for a command. Follow with space and the command name.\n")
+	rs.helpOutput(`
+help [*command*]
+
+Show help for a command. Follow with space and the command name.
+`)
 }
 
 // HelpSelection says "Shut up, golint!"
@@ -16495,7 +16691,7 @@ The following functions are available:
 
 @min()  create singleton set of the least element in the argument
 @max()  create singleton set of the greatest element in the argument
-@amp()  nomemty selection set becomes all objects, empty set is returned
+@amp()  nonempty selection set becomes all objects, empty set is returned
 @par()  all parents of commits in the argument set
 @chn()  all children of commits in the argument set
 @dsc()  all commits descended from the argument set (argument set included)
@@ -16509,6 +16705,8 @@ The following functions are available:
 // HelpLog says "Shut up, golint!"
 func (rs *Reposurgeon) HelpLog() {
 	rs.helpOutput(`
+log [[+-]*logclass*]...
+
 Without an argument, list all log message classes, prepending a + if
 that class is enabled and a - if not.
 
@@ -16596,6 +16794,8 @@ breakout:
 // HelpLogfile says "Shut up, golint!"
 func (rs *Reposurgeon) HelpLogfile() {
 	rs.helpOutput(`
+logfile [*pathname*]
+
 Set the name of the file to which output will be redirected.
 Without an argument, this command reports what logfile is set.
 `)
@@ -16625,7 +16825,13 @@ func (rs *Reposurgeon) DoLogfile(lineIn string) bool {
 
 // HelpPrint says "Shut up, golint!"
 func (rs *Reposurgeon) HelpPrint() {
-	rs.helpOutput("Print a literal string.\n")
+	rs.helpOutput(`
+print *legend*... [>*outfile*]
+
+Ship a literal string to the terminal. All text on the command line,
+including whitespace, is sent.  Intended for scripting regression
+tests.  Output redirection is supported.
+`)
 }
 
 // DoPrint is the handler for the "print" command.
@@ -16638,7 +16844,18 @@ func (rs *Reposurgeon) DoPrint(lineIn string) bool {
 
 // HelpScript says "Shut up, golint!"
 func (rs *Reposurgeon) HelpScript() {
-	rs.helpOutput("Read and execute commands from a named file.\n")
+	rs.helpOutput(`
+script *filepath* [*arg*...]
+
+Read and execute commands from a named file.
+
+Takes a filename and optional following arguments.
+Reads each line from the file and executes it as a command.
+Text after # is ignored until end of line. The magic cookie
+$0 is expanded toi the script name; $1...$b expand to the
+positional arguments.  Scripts can call scripts.  A shell-
+like here-document syntax led with << is interpreted.
+`)
 }
 
 // DoScript is the handler for the "script" command.
@@ -16770,8 +16987,7 @@ func (rs *Reposurgeon) DoScript(ctx context.Context, lineIn string) bool {
 // HelpHash says "Shut up, golint!"
 func (rs *Reposurgeon) HelpHash() {
 	rs.helpOutput(`Report Git object hashes.  This command simulates Git hash generation.
-
-hash [--tree] [>outfile]
+hash [--tree] [>*outfile*]
 
 Takes a selection set, defaulting to all.  For each eligible object in the set,
 returns its index  and the same hash that Git would generate for its

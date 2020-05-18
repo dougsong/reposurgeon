@@ -1581,7 +1581,7 @@ option will mainly be useful for testing and debugging.
 +
 Note: this command does not take a selection set.
 
-`write` [ `--legacy` ] [ `--format=fossil` ] [ `--noincremental` ] [ `--callout` ] [ >__outfile__ | `-` ]::
+[ _selection_ ] `write` [ `--legacy` ] [ `--format=fossil` ] [ `--noincremental` ] [ `--callout` ] [ >__outfile__ | `-` ]::
    Dump selected events as a fast-import stream representing the
    edited repository; the default selection set is all events. Where to
    dump to is standard output if there is no argument or the argument is
@@ -1849,7 +1849,7 @@ for append rather than write.
 [[reports]]
 === Reports on the DAG
 
-`list` [ >__outfile__ ]::
+[ _selection_ ] `list` [ >__outfile__ ]::
    This is the main command for identifying the events
    you want to modify.  It lists commits in the selection set by event
    sequence number with summary information. The first column is raw
@@ -1857,18 +1857,18 @@ for append rather than write.
    has legacy IDs, they will be displayed in the third column. The
    leading portion of the comment follows.
 
-`index` [ >__outfile__ ]::
+[ _selection_ ] `index` [ >__outfile__ ]::
    Display four columns of info on objects in the selection set:
    their number, their type, the associate mark (or '```-```' if no mark) and a
    summary field varying by type.  For a branch or tag it's the
    reference; for a commit it's the commit branch; for a blob it's the
    repository path of the file in the blob.
 
-`stamp` [ >__outfile__ ]::
+[ _selection_ ] `stamp` [ >__outfile__ ]::
    Alternative form of listing that displays full action
    stamps, usable as references in selections.
 
-`tip` [ >__outfile__ ]::
+[ _selection_ ] `tip` [ >__outfile__ ]::
    Display the branch tip names associated with commits
    in the selection set.  These will not necessarily be the same as their
    branch fields (which will often be tag names if the repo contains
@@ -1880,17 +1880,17 @@ children, then if there is a child with a matching branch name its tip
 is the child's tip.  Otherwise this function throws a recoverable
 error.
 
-`tags` [>__outfile__ ]::
+[ _selection_ ] `tags` [>__outfile__ ]::
    Display tags and resets: three fields, an event number and a type and a name.
    Branch tip commits associated with tags are also displayed with the type
    field '```commit```'.
 
-`inspect` [>__outfile__ ]::
+[ _selection_ ] `inspect` [>__outfile__ ]::
    Dump a fast-import stream representing selected events to standard
    output.  Just like a write, except (1) the progress meter is disabled,
    and (2) there is an identifying header before each event dump.
 
-`graph` [>__outfile__ ]::
+[ _selection_ ] `graph` [>__outfile__ ]::
    Emit a visualization of the commit graph in the DOT markup language
    used by the graphviz tool suite.  This can be fed as input to the main
    graphviz rendering program dot(1), which will yield a viewable
@@ -1905,7 +1905,7 @@ shell dot </tmp/foo$$ -Tpng | display -; rm /tmp/foo$$
 +
 You can substitute in your own preferred image viewer, of course.
 
-`lint` [ options ] [>__outfile__ ]::
+[ _selection_ ] `lint` [ options ] [>__outfile__ ]::
    Look for DAG and metadata configurations that may indicate a
    problem. Presently checks for: (1) Mid-branch deletes, (2)
    disconnected commits, (3) parentless commits, (4) the existence of
@@ -1927,11 +1927,11 @@ change without notice as more sanity checks are added.
    Report size statistics and import/export method information about
    named repositories, or with no argument the currently chosen repository.
 
-`count` [>__outfile__ ]::
+[ _selection_ ] `count` [>__outfile__ ]::
    Report a count of items in the selection set. Default set is everything
    in the currently-selected repo.
 
-`sizes` [>__outfile__ ]::
+[ _selection_ ] `sizes` [>__outfile__ ]::
    Print a report on data volume per branch; takes a selection set,
    defaulting to all events. The numbers tally the size of uncompressed
    blobs, commit and tag comments, and other metadata strings (a blob is
@@ -1945,7 +1945,7 @@ unwieldy.
 [[examining-tree-states]]
 === Examining tree states
 
-`manifest` [ _/regular expression/_ ] [ >__outfile__ ]::
+[ _selection_ ] `manifest` [ _/regular expression/_ ] [ >__outfile__ ]::
    Takes an optional selection set argument defaulting to all commits, and
    an optional regular expression. For each commit in the selection set,
    print the mapping of all paths in that commit tree to the corresponding blob
@@ -1953,13 +1953,13 @@ unwieldy.
    delimited regular expression is given, only print "_path_ `+->+` _mark_"
    lines for paths matching it. This command supports > redirection.
 
-`checkout` _directory_::
+[ _selection_ ] `checkout` _directory_::
    Takes a selection set which must resolve to a single commit, and
    a second argument. The second argument is interpreted as a directory
    name.  The state of the code tree at that commit is materialized beneath
    the directory.
 
-`diff` [ >__outfile__ ]::
+[ _selection_ ] `diff` [ >__outfile__ ]::
    Display the difference between commits. Takes a selection-set
    argument which must resolve to exactly two commits. Supports output
    redirection.
@@ -1973,7 +1973,7 @@ to support.
 [[deletion]]
 === Commit deletion
 
-`squash` [ _policy..._ ]::
+[ _selection_ ] `squash` [ _*policy*..._ ]::
    Combine or delete commits in a selection set of events. The
    default selection set for this command is empty. Has no effect on
    events other than commits unless the `--delete` policy is selected;
@@ -2131,7 +2131,7 @@ policy flag. `--rebase`. That inhibits the default behavior—no
 `deleteall` is issued and the tree contents of all
 descendants can be modified as a result.
 
-`split` {`at`|`by`} _item_ ::
+{ _selection_ } `split` {`at`|`by`} _item_ ::
     The first argument is required to be a commit location; the second is
     a preposition which indicates which splitting method to use. If the
     preposition is '```at```', then the third argument must be an integer
@@ -2151,7 +2151,7 @@ indexed by the split argument — are moved forward from the original
 commit into the new one.  Legal indices are 2-n, where n is the number
 of file operations in the original commit.
 
-`add` { `D` _path_ | `M` _perm_ _mark_ _path_ | `R` _source_ _target_ | `C` _source_ _target_}::
+{ _selection_ } `add` { `D` _path_ | `M` _perm_ _mark_ _path_ | `R` _source_ _target_ | `C` _source_ _target_}::
    To a selected commit, add a specified fileop.
 +
 For a *D* operation to be valid there must be an *M* operation for
@@ -2161,7 +2161,7 @@ must refer to a blob that precedes the commit location.  For an *R* or *C*
 operation to be valid, there must be an *M* operation for the source in
 the commit's ancestry.
 
-`remove` [ _index_ | _path_ | `deletes` ] [ `to` _commit_ ]::
+{selection} `remove` [ _index_ | _path_ | `deletes` ] [ `to` _commit_ ]::
    From a selected commit, remove a specified fileop.  The op must
    be one of (a) the keyword '```deletes```', (b) a file path, (c)
    a file path preceded by an op type set (some subset of the letters
@@ -2177,7 +2177,7 @@ Note that this command does not attempt to scavenge blobs even
 if the deleted fileop might be the only reference to them. This
 behavior may change in a future release.
 
-`tagify` [ `--canonicalize` ] [ `--tipdeletes` ] [ `--tagify-merges` ]::
+[ _selection_ ] `tagify` [ `--canonicalize` ] [ `--tipdeletes` ] [ `--tagify-merges` ]::
    Search for empty commits and turn them into tags. Takes an optional
    selection set argument defaulting to all commits. For each commit in the
    selection set, turn it into a tag with the same message and author information
@@ -2206,7 +2206,7 @@ With the `--tagify-merges` option, `tagify` also tagifies merge
 commits that have no fileops. When this is done the merge link is move to the
 tagified commit's parent.
 
-`reorder` [ `--quiet` ]::
+[ _selection_ ] `reorder` [ `--quiet` ]::
    Re-order a contiguous range of commits.
 +
 Older revision control systems tracked change history on a per-file
@@ -2278,7 +2278,7 @@ deleted.  This is useful for mass deletion of branches.  Such deletions can be
 restricted by a selection set in the normal way.  No third argument is
 required.
 
-`tag` _tagname_ { `create` | `move` | `rename` | `delete` } [ _arg_ ]::
+[ _selection_ ] `tag` _tagname_ { `create` | `move` | `rename` | `delete` } [ _arg_ ]::
    Create, move, rename, or delete a tag.
 +
 Creation is a special case.  First argument is a name, which
@@ -2336,7 +2336,7 @@ labels can be safely reassigned in this case; rather than do
 something risky, `reposurgeon` throws a recoverable
 error.
 
-`reset` _resetname_  { `create` | `move` | `rename` | `delete` } [ _arg_ ]::
+[ _selection_ ] `reset` _resetname_  { `create` | `move` | `rename` | `delete` } [ _arg_ ]::
    Create, move, rename, or delete a reset. Create is a special case; it
    requires a singleton selection which is the associated commit for the
    reset, takes as a first argument the name of the reset (which must not
@@ -2373,7 +2373,7 @@ moved, no branch fields are changed.
 [[splitmerge]]
 === Repository splitting and merging
 
-`divide`::
+{selection} `divide`::
    Attempt to partition a repo by cutting the parent-child link
    between two specified commits (they must be adjacent). Does not take a
    general selection set.  It is only necessary to specify the
@@ -2389,7 +2389,7 @@ In this case, if the parent and child were on the same branch '`_qux_`',
 the branch segments are renamed '`_qux_-early`' and '`_qux_-late`' but
 the repo is not divided.
 
-`expunge` [ `--notagify` ] [~] [ _path_ | /__regexp__/ ]...::
+[ _selection_ ] `expunge` [ `--notagify` ] [~] [ _path_ | /__regexp__/ ]...::
    Expunge files from the selected portion of the repo history; the
    default is the entire history.  The arguments to this command may be
    paths or regular expressions matching paths (regexps must
@@ -2422,7 +2422,7 @@ cloned into the removal set.
 `unite` [ `--prune` ] _reponame_...::
    Unite repositories. Name any number of loaded repositories; they will
    be united into one union repo and removed from the load list.  The
-   union repo will be selected.
+   union repo will be chosen.
 +
 The root of each repo (other than the oldest repo) will be
 grafted as a child to the last commit in the dump with a preceding
@@ -2442,7 +2442,7 @@ will be canonicalized using the rules for squashing the effect will be
 that only files with properly matching *M*, *R*, and *C* operations in the
 root survive.
 
-`graft` [ `--prune` ] _reponame_::
+[ _selection_ ] `graft` [ `--prune` ] _reponame_::
    For when unite doesn't give you enough control. This command may have
    either of two forms, selected by the size of the selection set.  The
    first argument is always required to be the name of a loaded repo.
@@ -2464,7 +2464,7 @@ of the grafted repository.
 [[editing]]
 === Metadata editing
 
-`msgout` [ >__outfile__ ] [ ``--filter=``/__regex__/ ] [ `--blobs` ]::
+[ _selection_ ] `msgout` [ >__outfile__ ] [ ``--filter=``/__regex__/ ] [ `--blobs` ]::
    Emit a file of messages in RFC2822 format representing
    the contents of repository metadata. Takes a selection set; members of
    the set other than commits, annotated tags, and passthroughs are
@@ -2514,7 +2514,7 @@ If the option `--empty-only` is given, this command will
 throw a recoverable error if it tries to alter a message body that is neither
 empty nor consists of the CVS empty-comment marker.
 
-`setfield` _attribute_ _value_::
+[ _selection_ ] `setfield` _attribute_ _value_::
    In the selected objects (defaulting to none) set every instance
    of a named field to a string value.  The string may be quoted to
    include whitespace, and use C-style backslash escapes, such as `\n` and
@@ -2532,7 +2532,7 @@ the value can be parsed for both), copying the committer
 timestamp. The author's timezone may be deduced from the email
 address.
 
-`edit` [ `--blobs` | `--not-last` ] ::
+[ _selection_ ] `edit` [ `--blobs` | `--not-last` ] [<`infile`] [>`outfile`]::
    Report the selection set of events to a tempfile as `msgout` does,
    call an editor on it, and update from the result as `msgin` does.
    If you do not specify an editor name as second argument, it will be
@@ -2592,7 +2592,7 @@ _selection_ `set` [ _name_ ] [ _email_ ] [ _date_ ]:::
    mandatory committer and tagger attributions of commit and tag events,
    respectively.
 
-_selection_ `prepend` [ _name_ ] [ _email_ ] [ _date_ ]:::
+{ _selection_ } | `prepend` [ _name_ ] [ _email_ ] [ _date_ ]:::
    Insert a new attribution before the first attribution named by
    _selection_.  The new attribution has the same type (_committer_,
    _author_, or _tagger_) as the one before which it is being inserted.
@@ -2612,7 +2612,7 @@ It is presently an error to insert a new committer or tagger
 attribution.  To change a committer or tagger, use '```set```'
 instead.
 +
-_selection_ `append` [ _name_ ] [ _email_ ] [ _date_ ]:::
+{ _selection_ } `append` [ _name_ ] [ _email_ ] [ _date_ ]:::
    Insert a new attribution after the last attribution named by
    _selection_.  The new attribution has the same type (_committer_,
    _author_, or _tagger_) as the one after which it is being inserted.
@@ -2632,7 +2632,7 @@ It is presently an error to insert a new committer or tagger
 attribution.  To change a committer or tagger, use '```set```'
 instead.
 
-`append` [ `--rstrip` ] [__text__]::
+[ _selection_ ] `append` [ `--rstrip` ] [__text__]::
    Append text to the comments of commits and tags in the specified
    selection set. The text is the first token of the command and may
    be a quoted string. C-style escape sequences in the string are
@@ -2643,7 +2643,7 @@ the new text is appended. If the option `--legacy` is given, the string
 '```%LEGACY%```' in the append payload is replaced with the commit's legacy-ID
 before it is appended.
 
-`gitify`::
+[ _selection_ ] `gitify`::
    Attempt to massage comments into a git-friendly form with a blank
    separator line after a summary line.  This code assumes it can insert
    a blank line if the first line of the comment ends with '```.```', '```,```',
@@ -2652,7 +2652,7 @@ before it is appended.
 +
 Takes a selection set, defaulting to all commits and tags.
 
-`filter` [ `--shell` | `--regex` | `--replace` | `--dedos` ]::
+[ _selection_ ] `filter` [ `--shell` | `--regex` | `--replace` | `--dedos` ]::
    Run blobs, commit comments, or tag comments in the selection set
    through the filter specified on the command line.
 +
@@ -2696,7 +2696,7 @@ replaced with \n.
 [[oaths]]
 === Path modifications
 
-`path` _source_ `rename` [ `--force` ] _target_::
+[ _selection_ ] `path` _source_ `rename` [ `--force` ] _target_::
    Rename a path in every fileop of every selected commit.  The
    default selection set is all commits. The first argument is interpreted as a
    regular expression to match against paths; the second may contain
@@ -2707,7 +2707,7 @@ is visible in the ancestry of the commit, this command throws an
 error.  With the `--force` option, these checks
 are skipped.
 
-`paths` [ `sub` | `sup` ] [ _dirname_ ] [ >__outfile__ ]::
+[ _selection_ ] `paths` [ `sub` | `sup` ] [ _dirname_ ] [ >__outfile__ ]::
    Takes a selection set. Without a modifier, list all paths
    touched by fileops in the selection set (which defaults to the entire
    repo). This reporting variant does >-redirection.
@@ -2717,7 +2717,7 @@ directory name and prepend it to every path. With the '```sup```' modifier,
 strip any directory argument from the start of the path if it appears there;
 with no argument, strip the first directory component from every path.
 
-`setperm` {``100644``|``100755``|``120000``} _path..._::
+[ _selection_ ] `setperm` {``100644``|``100755``|``120000``} _path..._::
    For the selected objects (defaulting to none) take the first argument as an
    octal literal describing permissions.  All subsequent arguments are paths.
    For each *M* fileop in the selection set and exactly matching one of the
@@ -2733,7 +2733,7 @@ commands.
 
 The '```lint```' command will tell you if you have timrestamp collisions.
 
-`timequake`::
+[ _selection_ ] `timequake`::
    Attempt to hack committer and author time stamps in the
    selection set (defaulting to all commits in the repository) to be
    unique.  Works by identifying collisions between parent and child,
@@ -2748,7 +2748,7 @@ Any timestamp collisions left after this operation are probably
 cross-branch and have to be individually dealt with using '```timebump```'
 commands.
 
-`timeoffset` [ _offset_ [ _timezone_ ] ]::
+[ _selection_ ] `timeoffset` [ _offset_ [ _timezone_ ] ]::
    Apply a time offset to all time/date stamps in the selected set.
    An offset argument is required; it may be in the form ++[+-]++_ss_,
    ++[+-]++_mm_:__ss__ or ++[+-]++_hh_:__mm__:__ss__. The leading
@@ -2791,12 +2791,12 @@ passthroughs that may have entered the repository via `graft`
 operations.  After a renumber, the repository will have at most
 one "done" and it will be at the end of the events.
 
-`dedup`::
+[ _selection_ ] `dedup`::
    Deduplicate blobs in the selection set.  If multiple blobs in the
    selection set have the same SHA1, throw away all but the first, and change
    fileops referencing them to instead reference the (kept) first blob.
 
-`transcode` _codec_::
+[ _selection_ ] `transcode` _codec_::
    Transcode blobs, commit comments and committer/author names, or tag
    comments and tag committer names in the selection set to UTF-8 from
    the character encoding specified on the command line.
@@ -2865,7 +2865,7 @@ associated with repository conversions from older systems.
 [[attributions]]
 === Attributions
 
-`authors` [ `read` | `write` ] [ <__filename__ ] [ >__filename__ ]::
+[ _selection_ ] `authors` [ `read` | `write` ] [ <__filename__ ] [ >__filename__ ]::
    Apply or dump author-map information for the specified selection
    set, defaulting to all events.
 +
@@ -3169,7 +3169,7 @@ per-file changes that oughtvto be grouped into changesets.
 You won't need this for CVS because cvs-fast-export does
 clique coalesxence itself.
 
-`coalesce` [ `--debug` | `--changelog` ] [ _timefuzz_ ]::
+[ _selection_ ] `coalesce` [ `--debug` | `--changelog` ] [ _timefuzz_ ]::
    Scan the selection set for runs of commits with identical
    comments close to each other in time (this is a common form of scar
    tissues in repository up-conversions from older file-oriented
@@ -3208,7 +3208,7 @@ package that form so you don't need to do a lot of error-prone typing.
 For those occasions, reposurgeon supports simple
 forms of named variables and macro expansion.
 
-`assign` [ _name_ ]::
+{ _selection_ } `assign` [ _name_ ]::
    Compute a leading selection set and assign it to a symbolic name.
    It is an error to assign to a name that is already assigned, or to
    any existing branch name.  Assignments may be cleared by sequence
@@ -3322,9 +3322,10 @@ ignored.
 +
 Scripts may call other scripts to arbitrary depth.
 
-`print` _output-text..._::
+`print` _output-text..._ [>outfile]::
    Does nothing but ship its argument line to standard
    output. Useful in scripts for regression tests.
+   Outpurt redirection is supported.
 
 Here are some more advanced examples of scripting:
 
@@ -3399,7 +3400,7 @@ The output of most of these commands can individually be redirected to
 a named output file. Where indicated in the syntax, you can prefix the
 output filename with '```>```' and give it as a following argument.
 
-`resolve` [ _label-text..._ ]::
+`[ _selection_ ] resolve` [ _label-text..._ ]::
    Does nothing but resolve a selection-set expression
    and echo the resulting event-number set to standard
    output. The remainder of the line after the command is used
@@ -3459,7 +3460,7 @@ prompt corresponds to the format '```reposurgeon%% ```'. The format line is
 evaluated with shell quoting of tokens, so that spaces can be
 included.
 
-`hash [--tree|--bare]`::
+[ _selection_ ] `hash [--tree|--bare]`::
    Takes a selection set, defaulting to all.  For each eligible object in the set,
    returns its index  and the same hash that Git would generate for its
    representation of the object. Eligible objects are blobs and commits.
