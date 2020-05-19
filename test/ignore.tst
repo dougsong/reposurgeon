@@ -2,11 +2,11 @@
 read <min.fi
 set interactive
 prefer bzr
-ignores defaults
+ignores --defaults
 # Next line should reveal a generated ignore blob and its fileop
 :2,:3 inspect
 prefer hg
-ignores rename translate
+ignores --rename --translate
 clear interactive
 write -
 

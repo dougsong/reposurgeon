@@ -14500,32 +14500,31 @@ func (rs *Reposurgeon) DoReset(line string) bool {
 }
 
 // HelpIgnores says "Shut up, golint!"
-// FIXME: Odd syntax
 func (rs *Reposurgeon) HelpIgnores() {
 	rs.helpOutput(`
-ignores [rename] [translate] [defaults]
+ignores [--rename] [--translate] [--defaults]
 
 Intelligent handling of ignore-pattern files.
 
 This command fails if no repository has been selected or no preferred write
 type has been set for the repository.  It does not take a selection set.
 
-If the rename modifier is present, this command attempts to rename all
+If --rename is present, this command attempts to rename all
 ignore-pattern files to whatever is appropriate for the preferred type
-- e.g. .gitignore for git, .hgignore for hg, etc.  This option does not
-cause any translation of the ignore files it renames.
+- e.g. .gitignore for git, .hgignore for hg, etc.  This option does
+not cause any translation of the ignore files it renames.
 
-If the translate modifier is present, syntax translation of each ignore
-file is attempted. At present, the only transformation the code knows
-is to prepend a 'syntax: glob' header if the preferred type is hg.
+If --translate is present, syntax translation of each ignore file is
+attempted. At present, the only transformation the code knows is to
+prepend a 'syntax: glob' header if the preferred type is hg.
 
-If the defaults modifier is present, the command attempts to prepend
-these default patterns to all ignore files. If no ignore file is
-created by the first commit, it will be modified to create one
-containing the defaults.  This command will error out on prefer types
-that have no default ignore patterns (git and hg, in particular).  It
-will also error out when it knows the import tool has already set
-default patterns.
+If --defaults is present, the command attempts to prepend these
+default patterns to all ignore files. If no ignore file is created by
+the first commit, it will be modified to create one containing the
+defaults.  This command will error out on prefer types that have no
+default ignore patterns (git and hg, in particular).  It will also
+error out when it knows the import tool has already set default
+patterns.
 `)
 }
 
@@ -14559,7 +14558,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 		return true
 	}
 	for _, verb := range strings.Fields(line) {
-		if verb == "defaults" {
+		if verb == "--defaults" {
 			if rs.preferred.styleflags.Contains("import-defaults") {
 				croak("importer already set default ignores")
 				return false
@@ -14598,7 +14597,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 				}
 				respond(fmt.Sprintf("%d %s blobs modified.", changecount, rs.ignorename))
 			}
-		} else if verb == "rename" {
+		} else if verb == "--rename" {
 			changecount := 0
 			for _, commit := range repo.commits(nil) {
 				for idx, fileop := range commit.operations() {
@@ -14618,7 +14617,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 			respond("%d ignore files renamed (%s -> %s).",
 				changecount, rs.ignorename, rs.preferred.ignorename)
 			rs.ignorename = rs.preferred.ignorename
-		} else if verb == "translate" {
+		} else if verb == "--translate" {
 			changecount := 0
 			for _, event := range repo.events {
 				if blob, ok := event.(*Blob); ok && isIgnore(blob) {
@@ -14632,7 +14631,7 @@ func (rs *Reposurgeon) DoIgnores(line string) bool {
 			}
 			respond(fmt.Sprintf("%d %s blobs modified.", changecount, rs.ignorename))
 		} else {
-			croak("unknown verb %s in ignores line", verb)
+			croak("unknown option %s in ignores line", verb)
 			return false
 		}
 	}

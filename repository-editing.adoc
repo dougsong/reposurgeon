@@ -68,7 +68,7 @@ references lift
 1,$ expunge :documents/.*.pdf:
 
 # Process GNU Changelogs to get better attributions for changesets.
-# When a commit was derived from a patch nd checked in by someone
+# When a commit was derived from a patch and checked in by someone
 # other than its author this can often correct the commit attribution.
 changelogs
 
@@ -2960,21 +2960,21 @@ reposurgeon prepends to the output .hgignore a
 
 For dealing with unusual cases, there's this:
 
-`ignores` [ `rename` ] [ `translate` ] [ `defaults` ]::
+`ignores` [ `--rename` ] [ `--translate` ] [ `--defaults` ]::
    Intelligent handling of ignore-pattern files.
    This command fails if no repository has been selected or no preferred write
    type has been set for the repository.  It does not take a selection set.
 +
-If the rename modifier is present, this command attempts to rename all
+If --rename is present, this command attempts to rename all
 ignore-pattern files to whatever is appropriate for the preferred type -
 e.g. _.gitignore_ for git, _.hgignore_ for hg, etc.  This option does not
 cause any translation of the ignore files it renames.
 +
-If the translate modifier is present, syntax translation of each ignore
+If --translate is present, syntax translation of each ignore
 file is attempted. At present, the only transformation the code knows
 is to prepend a '```syntax: glob```' header if the preferred type is hg.
 +
-If the defaults modifier is present, the command attempts to prepend
+If --defaults is present, the command attempts to prepend
 these default patterns to all ignore files. If no ignore file is
 created by the first commit, it will be modified to create one
 containing the defaults.  This command will error out on prefer types
@@ -4231,8 +4231,9 @@ changes to the command language don't have a a high cost in pain to
 users and the maintainers feel free to make them whenever improvement
 seems possible.  But just in case, such changes are recorded here.
 
-In versions before 4.10, the "reduce" and "blob" options were
-bare keywords.
+In versions before 4.10, the "reduce" and "blob" options of the
+"strip" command were bare keywords. Also the options of the "ignores"
+command were bare keywords.
 
 In versions before 4.8, the expunge command run on a repository named
 "foo" tried to keep deleted fileops in a new synthetic repository named
