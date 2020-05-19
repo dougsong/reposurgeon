@@ -779,12 +779,13 @@ func compareRevision(args []string, rev string) string {
 	if !isdir(source) || !isdir(target) {
 		croak("both repository directories must exist.")
 	}
-	rsource, err := ioutil.TempDir("", "reposource")
+	TMPDIR := os.Getenv("TMPDIR")
+	rsource, err := ioutil.TempDir(TMPDIR, "reposource")
 	if err != nil {
 		log.Fatal(err)
 	}
 	os.RemoveAll(rsource)
-	rtarget, err := ioutil.TempDir("", "repotarget")
+	rtarget, err := ioutil.TempDir(TMPDIR, "repotarget")
 	if err != nil {
 		log.Fatal(err)
 	}

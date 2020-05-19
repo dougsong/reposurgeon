@@ -169,7 +169,8 @@ The "help" command displays a summary of commands and options.
 == ENVIRONMENT VARIABLES ==
 
 This program uses the $TMPDIR environment variable, defaulting
-to '/tmp' if it is not set.
+to '/tmp' if it is not set, to set where checkouts for repository
+comparisons are done.
 
 [[return-values]]
 == RETURN VALUES ==
