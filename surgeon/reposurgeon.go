@@ -13312,7 +13312,7 @@ func (rs *Reposurgeon) DoDebranch(line string) bool {
 // FIXME: Odd syntax
 func (rs *Reposurgeon) HelpPath() {
 	rs.helpOutput(`
-path {*source*} rename --force] *target*::
+path {*source*} rename [--force] *target*::
 
 Rename a path in every fileop of every selected commit.  The
 default selection set is all commits. The first argument is interpreted as a
@@ -13714,10 +13714,9 @@ func (rs *Reposurgeon) DoUnmerge(_line string) bool {
 }
 
 // HelpReparent says "Shut up, golint!"
-//FIXME: Odd syntax
 func (rs *Reposurgeon) HelpReparent() {
 	rs.helpOutput(`
-reparent [ *options*... ] [*policy*]
+{*selection*} reparent [--user-order] [--rebase]
 
 Changes the parent list of a commit.  Takes a selection set, zero or
 more option arguments, and an optional policy argument.
@@ -13776,15 +13775,13 @@ Options:
         cycle during the process, you must reparent the descendant
         commit first.
 
-Policy:
-
-    By default, the manifest of the reparented commit is computed
-    before modifying it; a 'deleteall' and some fileops are prepended
-    so that the manifest stays unchanged even when the first parent
-    has been changed.  This behavior can be changed by specifying a
-    policy flag:
-
     --rebase
+
+	By default, the manifest of the reparented commit is computed
+	before modifying it; a 'deleteall' and some fileops are prepended
+	so that the manifest stays unchanged even when the first parent
+	has been changed.  This behavior can be changed by specifying a
+	policy flag:
 
         Inhibits the default behavior -- no 'deleteall' is issued and
         the tree contents of all descendants can be modified as a
