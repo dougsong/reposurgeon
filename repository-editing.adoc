@@ -7,7 +7,7 @@
 == Quick start
 
 As a motivating example, here are commands to do a Subversion-to
-Git lift on a repository mamed _project_ just under the current directory:
+Git lift on a repository named _project_ just under the current directory:
 
 --------
 # Load the project into main memory
