@@ -12671,7 +12671,8 @@ func (rs *Reposurgeon) DoTimeoffset(line string) bool {
 		noffset = 1
 		offset = time.Second
 	} else {
-		noffset, err := offsetOf(args[0])
+		var err error
+		noffset, err = offsetOf(args[0])
 		if err != nil {
 			return false
 		}
