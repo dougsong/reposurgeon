@@ -1,9 +1,10 @@
 = reposurgeon project news =
 
 Repository head::
+     Bug fix for timequake and timeoffset commands.
      Randomize temporary directories during repotool compare.
-     The strip command nw uses the regularr option syntax.
-     All command help tems now begin with a syntax summary
+     The ignores and strip commands now use the regular option syntax.
+     All command help items now begin with a syntax summary
 
 4.9: 2020-05-17::
      This is a long-term-stable release. All packagers should update.
