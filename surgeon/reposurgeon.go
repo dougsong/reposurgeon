@@ -12661,7 +12661,7 @@ func (rs *Reposurgeon) DoTimeoffset(line string) bool {
 			croak("bad literal in seconds field")
 			return 0, err2
 		}
-		return hn*360 + mn*60 + sn, nil
+		return hn*3600 + mn*60 + sn, nil
 	}
 	args := strings.Fields(line)
 	var loc *time.Location
