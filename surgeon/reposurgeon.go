@@ -12028,19 +12028,19 @@ func (rs *Reposurgeon) DoSetfield(line string) bool {
 				event.(*Commit).hash.invalidate()
 			}
 		} else if commit, ok := event.(*Commit); ok {
-			if field == "author" {
+			if field == "Author" {
 				attr := value
 				attr += " " + commit.committer.date.String()
 				newattr, _ := newAttribution("")
 				commit.authors = append(commit.authors, *newattr)
-			} else if field == "commitdate" {
+			} else if field == "Commitdate" {
 				newdate, err := newDate(value)
 				if err != nil {
 					croak(err.Error())
 					return false
 				}
 				commit.committer.date = newdate
-			} else if field == "authdate" {
+			} else if field == "Authdate" {
 				newdate, err := newDate(value)
 				if err != nil {
 					croak(err.Error())
