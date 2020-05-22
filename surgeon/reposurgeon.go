@@ -2972,9 +2972,9 @@ func (commit *Commit) discardOpsBeforeLastDeleteAll() {
 // bump increments the timestamps on this commit to avoid time collisions.
 func (commit *Commit) bump(i int) {
 	delta := time.Second * time.Duration(i)
-	commit.committer.date.timestamp.Add(delta)
+	commit.committer.date.timestamp = commit.committer.date.timestamp.Add(delta)
 	for _, author := range commit.authors {
-		author.date.timestamp.Add(delta)
+		author.date.timestamp = author.date.timestamp.Add(delta)
 	}
 	commit.hash.invalidate()
 }
@@ -12694,7 +12694,7 @@ func (rs *Reposurgeon) DoTimeoffset(line string) bool {
 		event := rs.chosen().events[ei]
 		if tag, ok := event.(*Tag); ok {
 			if tag.tagger != nil {
-				tag.tagger.date.timestamp.Add(offset)
+				tag.tagger.date.timestamp = tag.tagger.date.timestamp.Add(offset)
 				if len(args) > 1 {
 					tag.tagger.date.timestamp = tag.tagger.date.timestamp.In(loc)
 				}
