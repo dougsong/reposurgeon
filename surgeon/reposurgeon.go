@@ -14646,7 +14646,7 @@ func (rs *Reposurgeon) HelpAttribution() {
 Inspect, modify, add, and remove commit and tag attributions.
 
 Attributions upon which to operate are selected in much the same way as events
-are selected. The <selection> argument of each action is an expression
+are selected. The ATTR-SELECTION argument of each action is an expression
 composed of 1-origin attribution-sequence numbers, '$' for last attribution,
 '..' ranges, comma-separated items, '(...)' grouping, set operations '|'
 union, '&' intersection, and '~' negation, and function calls @min(), @max(),
@@ -14664,15 +14664,15 @@ upon which to operate.
 
 Available actions are:
 
-[SELECTION] attribution [SELECTION] [show] [>file]
+[SELECTION] attribution [ATTR-SELECTION] [show] [>file]
     Inspect the selected attributions of the specified events (commits and
     tags). The 'show' keyword is optional. If no attribution selection
     expression is given, defaults to all attributions. If no event selection
     is specified, defaults to all events. Supports > redirection.
 
-{SELECTION} attribution {SELECTION} set {NAME} [EMAIL] [DATE]
-{SELECTION} attribution {SELECTION} set [NAME] {EMAIL} [DATE]
-{SELECTION} attribution {SELECTION} set [NAME] [EMAIL] {DATE}
+{SELECTION} attribution {ATTR-SELECTION} set {NAME} [EMAIL] [DATE]
+{SELECTION} attribution {ATTR-SELECTION} set [NAME] {EMAIL} [DATE]
+{SELECTION} attribution {ATTR-SELECTION} set [NAME] [EMAIL] {DATE}
     Assign NAME, EMAIL, DATE to the selected attributions. As a
     convenience, if only some fields need to be changed, the others can be
     omitted. Arguments NAME, EMAIL, and DATE can be given in any order.
@@ -14682,8 +14682,8 @@ Available actions are:
     <selection> is not given. It is an error to delete the mandatory committer
     and tagger attributions of commit and tag events, respectively.
 
-{SELECTION} attribution prepend {NAME} [EMAIL] [DATE]
-{SELECTION} attribution prepend [NAME] {EMAIL} [DATE]
+{SELECTION} attribution [ATTR-SELECTION] prepend {NAME} [EMAIL] [DATE]
+{SELECTION} attribution [ATTR-SELECTION] prepend [NAME] {EMAIL} [DATE]
     Insert a new attribution before the first attribution named by SELECTION.
     The new attribution has the same type ('committer', 'author', or 'tagger')
     as the one before which it is being inserted. Arguments NAME, EMAIL,
@@ -14695,14 +14695,14 @@ Available actions are:
     being inserted. Similarly, EMAIL is inferred from an existing matching
     NAME. Likewise, for DATE.
 
-    As a convenience, if SELECTION is empty or not specified a new author is
+    As a convenience, if ATTR-SELECTION is empty or not specified a new author is
     prepended to the author list.
 
     It is presently an error to insert a new committer or tagger attribution.
     To change a committer or tagger, use 'set' instead.
 
-{SELECTION} attribution append {NAME} [EMAIL] [DATE]
-{SELECTION} attribution append [NAME] {EMAIL} [DATE]
+{SELECTION} attribution [ATTR-SELECTION] append {NAME} [EMAIL] [DATE]
+{SELECTION} attribution [ATTR-SELECTION] append [NAME] {EMAIL} [DATE]
     Insert a new attribution after the last attribution named by SELECTION.
     The new attribution has the same type ('committer', 'author', or 'tagger')
     as the one after which it is being inserted. Arguments NAME, EMAIL,
@@ -14720,7 +14720,7 @@ Available actions are:
     It is presently an error to insert a new committer or tagger attribution.
     To change a committer or tagger, use 'set' instead.
 
-{SELECTION} attribution resolve [>file] [LABEL-TEXT...]
+{SELECTION} attribution {ATTR-SELECTION} resolve [>file] [LABEL-TEXT...]
     Does nothing but resolve an attribution selection-set expression for the
     selected events and echo the resulting attribution-number set to standard
     output. The remainder of the line after the command is used as a label for
