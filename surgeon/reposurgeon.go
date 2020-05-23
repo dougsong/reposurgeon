@@ -9835,7 +9835,6 @@ func stopTracing() {
 }
 
 // HelpProfile says "Shut up, golint!"
-// FIXME: Odd syntax
 func (rs *Reposurgeon) HelpProfile() {
 	rs.helpOutput(`
 profile [live|start|save] [SUBJECT]
@@ -14665,63 +14664,63 @@ upon which to operate.
 
 Available actions are:
 
-[<selection>] [show] [>file]
+[SELECTION] attribution [SELECTION] [show] [>file]
     Inspect the selected attributions of the specified events (commits and
     tags). The 'show' keyword is optional. If no attribution selection
     expression is given, defaults to all attributions. If no event selection
     is specified, defaults to all events. Supports > redirection.
 
-<selection> set <name> [<email>] [<date>]
-<selection> set [<name>] <email> [<date>]
-<selection> set [<name>] [<email>] <date>
-    Assign <name>, <email>, <date> to the selected attributions. As a
+{SELECTION} attribution {SELECTION} set {NAME} [EMAIL] [DATE]
+{SELECTION} attribution {SELECTION} set [NAME] {EMAIL} [DATE]
+{SELECTION} attribution {SELECTION} set [NAME] [EMAIL] {DATE}
+    Assign NAME, EMAIL, DATE to the selected attributions. As a
     convenience, if only some fields need to be changed, the others can be
-    omitted. Arguments <name>, <email>, and <date> can be given in any order.
+    omitted. Arguments NAME, EMAIL, and DATE can be given in any order.
 
-[<selection>] delete
+{SELECTION} attribution delete
     Delete the selected attributions. As a convenience, deletes all authors if
     <selection> is not given. It is an error to delete the mandatory committer
     and tagger attributions of commit and tag events, respectively.
 
-[<selection>] prepend <name> [<email>] [<date>]
-[<selection>] prepend [<name>] <email> [<date>]
-    Insert a new attribution before the first attribution named by <selection>.
+{SELECTION} attribution prepend {NAME} [EMAIL] [DATE]
+{SELECTION} attribution prepend [NAME] {EMAIL} [DATE]
+    Insert a new attribution before the first attribution named by SELECTION.
     The new attribution has the same type ('committer', 'author', or 'tagger')
-    as the one before which it is being inserted. Arguments <name>, <email>,
-    and <date> can be given in any order.
+    as the one before which it is being inserted. Arguments NAME, EMAIL,
+    and DATE can be given in any order.
 
-    If <name> is omitted, an attempt is made to infer it from <email> by
-    trying to match <email> against an existing attribution of the event, with
+    If NAME is omitted, an attempt is made to infer it from EMAIL by
+    trying to match EMAIL against an existing attribution of the event, with
     preference given to the attribution before which the new attribution is
-    being inserted. Similarly, <email> is inferred from an existing matching
-    <name>. Likewise, for <date>.
+    being inserted. Similarly, EMAIL is inferred from an existing matching
+    NAME. Likewise, for DATE.
 
-    As a convenience, if <selection> is empty or not specified a new author is
+    As a convenience, if SELECTION is empty or not specified a new author is
     prepended to the author list.
 
     It is presently an error to insert a new committer or tagger attribution.
     To change a committer or tagger, use 'set' instead.
 
-[<selection>] append <name> [<email>] [<date>]
-[<selection>] append [<name>] <email> [<date>]
-    Insert a new attribution after the last attribution named by <selection>.
+{SELECTION} attribution append {NAME} [EMAIL] [DATE]
+{SELECTION} attribution append [NAME] {EMAIL} [DATE]
+    Insert a new attribution after the last attribution named by SELECTION.
     The new attribution has the same type ('committer', 'author', or 'tagger')
-    as the one after which it is being inserted. Arguments <name>, <email>,
-    and <date> can be given in any order.
+    as the one after which it is being inserted. Arguments NAME, EMAIL,
+    and DATE can be given in any order.
 
-    If <name> is omitted, an attempt is made to infer it from <email> by
-    trying to match <email> against an existing attribution of the event, with
+    If NAME is omitted, an attempt is made to infer it from EMAIL by
+    trying to match EMAIL against an existing attribution of the event, with
     preference given to the attribution after which the new attribution is
-    being inserted. Similarly, <email> is inferred from an existing matching
-    <name>. Likewise, for <date>.
+    being inserted. Similarly, EMAIL is inferred from an existing matching
+    NAME. Likewise, for DATE.
 
-    As a convenience, if <selection> is empty or not specified a new author is
+    As a convenience, if SELECTION is empty or not specified a new author is
     appended to the author list.
 
     It is presently an error to insert a new committer or tagger attribution.
     To change a committer or tagger, use 'set' instead.
 
-<selection> resolve [>file] [label-text...]
+{SELECTION} attribution resolve [>file] [LABEL-TEXT...]
     Does nothing but resolve an attribution selection-set expression for the
     selected events and echo the resulting attribution-number set to standard
     output. The remainder of the line after the command is used as a label for
