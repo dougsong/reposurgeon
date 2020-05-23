@@ -22,6 +22,7 @@ type Contributor struct {
 	fullname string
 	email    string
 	tz       string
+	definite bool
 }
 
 // Does this entry need completion?
@@ -77,6 +78,7 @@ func NewContribMap(fn string) ContribMap {
 			email:    firstmatch[3],
 			tz:       firstmatch[4],
 		}
+		v.definite = strings.Contains(v.email, "@")
 		cm[v.name] = v
 	}
 	bylines(fn, digest)
@@ -200,6 +202,7 @@ func main() {
 				} else if obj.fullname == name {
 					item := contribmap[name]
 					item.fullname = passwd[name]
+					item.definite = true
 					contribmap[name] = item
 				} else {
 					fmt.Fprintf(os.Stderr,
@@ -217,7 +220,7 @@ func main() {
 				if err == nil {
 					if e.Name != "" && e.Name != e.Address {
 						userid := strings.Split(e.Address, "@")[0]
-						if item, ok := contribmap[userid]; ok {
+						if item, ok := contribmap[userid]; ok && (!strings.Contains(e.Address, "@") || !item.definite) {
 							item.fullname = e.Name
 							item.email = e.Address
 							contribmap[userid] = item

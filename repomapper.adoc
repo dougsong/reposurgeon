@@ -90,6 +90,13 @@ committer (which might not be the case if inactive committer accounts
 were ever removed), -p mode combined with an -h option can produce
 an entire, valid contributor map.
 
+If an argument file begins with "From " it is interpreted as a Unix
+mailbox file - this mode is intended for mining a project's email
+archive.  The headers are scamnned for names.  When a name with a
+user-id part matching an incomplete entry is found, that email address
+is used to fill in the entry. If there are multiple matches the lat is
+kept.
+
 Output from this tool is always a contribution map sorted by
 username.
 
