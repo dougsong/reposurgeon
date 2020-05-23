@@ -3,7 +3,7 @@
  *
  * Copyright by Eric S. Raymond and Julien Rivaud
  * SPDX-License-Identifier: BSD-2-Clause
-*/
+ */
 
 package main
 

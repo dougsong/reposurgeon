@@ -6,7 +6,7 @@
  *
  * Based on gohg https://bitbucket.org/gohg/gohg, but simplified and
  * adapted to reposurgeon's needs
-*/
+ */
 
 package main
 
