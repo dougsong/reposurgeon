@@ -9,6 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/mail"
 	"os"
 	"regexp"
 	"sort"
@@ -208,9 +209,41 @@ func main() {
 			}
 			continue
 		}
+
+		// Is this a mailbox file?
+		mineAddresses := func(line string) {
+			for _, fld := range strings.Split(line, ",") {
+				e, err := mail.ParseAddress(fld)
+				if err == nil {
+					if e.Name != "" && e.Name != e.Address {
+						userid := strings.Split(e.Address, "@")[0]
+						if item, ok := contribmap[userid]; ok {
+							item.fullname = e.Name
+							item.email = e.Address
+							contribmap[userid] = item
+						}
+					}
+				}
+			}
+		}
+		if strings.HasPrefix(firstline, "From ") {
+			for scanner.Scan() {
+				line := scanner.Text()
+				if strings.Contains(line, ":") {
+					body := strings.Split(line, ":")[1]
+					mineAddresses(body)
+				} else if len(line) > 0 && (line[0] == ' ' || line[0] == '\t') {
+					mineAddresses(strings.TrimSpace(line))
+				}
+			}
+
+			if err := scanner.Err(); err != nil {
+				log.Fatal(err)
+			}
+		}
 	}
 
-	// By default, report on incomplete entries
+	// By default, report all entries
 	contribmap.Write(os.Stdout, incomplete)
 }
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-## Test default mode of repomapper
+## Test incomplete (-i) mode of repomapper
 
 trap 'rm -f /tmp/contrib$$' EXIT HUP INT QUIT TERM
 
