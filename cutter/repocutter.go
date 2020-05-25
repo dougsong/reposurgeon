@@ -1247,7 +1247,7 @@ func mutatePaths(source DumpfileSource, selection SubversionRange, pathMutator f
 				for _, line := range strings.Split(strings.TrimSuffix(mergeinfo, "\n"), "\n") {
 					if strings.Contains(line, ":") {
 						lastidx := strings.LastIndex(line, ":")
-						path, revrange := line[:lastidx-1], line[lastidx+1:]
+						path, revrange := line[:lastidx], line[lastidx+1:]
 						buffer.Write(pathMutator([]byte(path)))
 						buffer.WriteString(":")
 						buffer.WriteString(revrange)
