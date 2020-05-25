@@ -26,7 +26,8 @@ operations very specific to Subversion, and enhanced repocutter to do
 those.)
 
 In all commands, the -r (or --range) option limits the selection
-of revisions over which an operation will be performed. A selection
+of revisions over which an operation will be performed. Usually it
+behaves like an implied select on the revioon output range. A selection
 consists of one or more comma-separated ranges. A range may consist of
 an integer revision number or the special name HEAD for the head
 revision. Or it may be a colon-separated pair of integers, or an
