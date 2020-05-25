@@ -703,7 +703,7 @@ replaced with Cr-LF and CR-LF is appended.
 	{"crlf",
 		`If set, expect CR-LF line endings on text input and emit them on
 output. Comment canonicalization will map LF to CR-LF.
-`},		
+`},
 	{"compressblobs",
 		`Use compression for on-disk copies of blobs. Accepts an increase
 in repository read and write time in order to reduce the amount of
