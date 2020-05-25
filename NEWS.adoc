@@ -1,6 +1,7 @@
 = reposurgeon project news =
 
 Repository head::
+     New crlf operation allows editing comments with Windows line endings.
      Bug fix for timequake and timeoffset commands.
      Randomize temporary directories during repotool compare.
      The ignores and strip commands now use the regular option syntax.
