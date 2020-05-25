@@ -1,17 +1,13 @@
-read <tag-comments.fi
-tags
      2	reset	refs/heads/master
      8	tag	refs/tags/root
      9	tag	refs/tags/emptycommit-5
     10	tag	refs/tags/no-comment
     11	tag	refs/tags/with-comment
-names
 branch refs/heads/master
 tag    refs/tags/root
 tag    refs/tags/emptycommit-5
 tag    refs/tags/no-comment
 tag    refs/tags/with-comment
-write -
 blob
 mark :1
 data 23
