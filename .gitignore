@@ -2,6 +2,7 @@ reposurgeon
 repocutter
 repomapper
 repotool
+options.adoc
 pkg
 *.1
 *.html

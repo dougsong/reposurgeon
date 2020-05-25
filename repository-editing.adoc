@@ -3244,7 +3244,26 @@ content, and will coalesce with it if the committer matches and the
 commit separation is small enough.  This option handles a convention
 used by Free Software Foundation projects.
 
-[[scirpting-debugging]]
+[[control-options]]
+== Control Options
+
+The following options change reposurgeon's behavior:
+
+include::options.adoc[]
+
+Most options are described in conjunction with the specific
+operations that they modify. 
+
+Here are the commands to manipulate them.
+None of these take a selection set:
+
+`set` [ _option_ ]::
+   Turn on an option flag.  With no arguments, list all options.
+
+`clear` [ _option_ ]::
+   Turn off an option flag.  With no arguments, list all options.
+
+[[scripting-debugging]]
 == Scripting and debugging support
 
 [[macros]]
@@ -3400,24 +3419,9 @@ Mass-rename tags, replacing "sample" on the basename with
 shell that you then execute with the '```script```' command. Enabling this
 technique is the reason as many commands as possible support redirects.
 
+
 [[housekeeping]]
 === Housekeeping
-
-None of these take a selection set:
-
-`set` [ _option_ ]::
-   Turn on an option flag.  With no arguments, list all options.
-+
-Most options are described in conjunction with the specific
-operations that they modify. One of general interest is
-'```compressblobs```'; this enables compression on the blob
-files in the internal representation reposurgeon uses for editing
-repositories. With this option, reading and writing of repositories is
-slower, but editing a repository requires less (sometimes much less)
-disk space.
-
-`clear` [ _option_ ]::
-   Turn off an option flag.  With no arguments, list all options.
 
 `gc` [ _percent_ ]::
    Trigger a garbage collection. Scavenges and removes all blob objects

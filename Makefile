@@ -33,7 +33,8 @@ SHARED    = $(META) reposurgeon-git-aliases $(HTMLFILES)
 
 GOFLAGS=-gcflags '-N -l'
 
-build: $(BINARIES) $(MANPAGES) $(HTMLFILES)
+# Must force options.adoc to be built earky so it will be available for inclusion. 
+build: $(BINARIES) $(MANPAGES) options.adoc $(HTMLFILES)
 
 # Imitate old behavior of rebuilding bins. They have no dependencies
 # so *not* building them would be irritating if sources change.
@@ -47,6 +48,11 @@ repomapper:
 	cd $(MAKED) && go build $(GOFLAGS) -o $(CURDIR)/repomapper ./mapper
 repotool:
 	cd $(MAKED) && go build $(GOFLAGS) -o $(CURDIR)/repotool ./tool
+
+# Generated documentation parts:
+
+options.adoc: reposurgeon
+	reposurgeon "help options" | sed '/:/s//::/' >options.adoc
 
 # Note: to suppress the footers with timestamps being generated in HTML,
 # we use "-a nofooter".
@@ -97,6 +103,7 @@ install: install_bin install_man install_share
 
 clean:
 	rm -fr reposurgeon repocutter repomapper repotool
+	rm -f options.adoc
 	rm -fr  *~ *.1 *.html *.tar.xz MANIFEST *.md5
 	rm -fr .rs .rs* test/.rs test/.rs*
 	rm -f typescript test/typescript

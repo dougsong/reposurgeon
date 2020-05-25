@@ -713,8 +713,8 @@ case, reposurgeon doesn't make on-disk blob copies at all (it points
 into sections of the input stream instead).
 `},
 	{"echo",
-		`Echo commands before executing them. Setting this in test scripts may
-+make the output easier to read.
+		`Echo commands before executing them. Setting this in test scripts may 
+make the output easier to read.
 `},
 	{"experimental",
 		`This flag is reserved for developer use.  If you set it, it could do
@@ -15430,6 +15430,13 @@ func (rs *Reposurgeon) DoBranchmap(line string) bool {
 //
 // Setting options
 //
+
+// HelpOptions says "Shut up, golint!"
+func (rs *Reposurgeon) HelpOptions() {
+	for _, opt := range optionFlags {
+		fmt.Fprintf(control.baton, "%s:\n%s\n", opt[0], opt[1])
+	}
+}
 
 // HelpSet says "Shut up, golint!"
 func (rs *Reposurgeon) HelpSet() {
