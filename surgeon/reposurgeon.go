@@ -584,6 +584,22 @@ func max(a, b int) int {
 	return b
 }
 
+// An assumption qbout line endings: we presently assume that only
+// commit comments ever need to be corrected for whether crlf is
+// enabled - that is, portions of fast-import streams other than
+// comment text always have Unix-style lime endings.
+
+func canonicalizeComment(text string) string {
+	text = strings.TrimSpace(text)
+	if control.lineSep == "\n" {
+		text = strings.Replace(text, "\r\n", control.lineSep, 1)
+	} else if control.lineSep == "\r\n" {
+		text = strings.Replace(text, "\n", control.lineSep, 1)
+	}
+	text += control.lineSep
+	return text
+}
+
 // Importer is capabilities for an import path to some VCS.
 // A given VCS can have more than one importer.
 type Importer struct {
@@ -681,8 +697,13 @@ developers.
 	{"canonicalize",
 		`If set, import stream reads and msgin and edit will canonicalize
 comments by replacing CR-LF with LF, stripping leading and trailing whitespace,
-and then appending a LF.
+and then appending a LF. This behavior inverts of the crlf option is on - LF is
+replaced with Cr-LF and CR-LF is appended.
 `},
+	{"crlf",
+		`If set, expect CR-LF line endings on text input and emit them on
+output. Comment canonicalization will map LF to CR-LF.
+`},		
 	{"compressblobs",
 		`Use compression for on-disk copies of blobs. Accepts an increase
 in repository read and write time in order to reduce the amount of
@@ -740,6 +761,7 @@ type Control struct {
 	readLimit      uint64
 	profileNames   map[string]string
 	startTime      time.Time
+	lineSep        string
 }
 
 func (ctx *Control) isInteractive() bool {
@@ -781,6 +803,7 @@ func (ctx *Control) init() {
 		}
 	}()
 	ctx.startTime = time.Now()
+	control.lineSep = "\n"
 }
 
 var control Control
@@ -848,7 +871,7 @@ func nuke(directory string, legend string) {
 
 func croak(msg string, args ...interface{}) {
 	content := fmt.Sprintf(msg, args...)
-	control.baton.printLogString("reposurgeon: " + content + "\n")
+	control.baton.printLogString("reposurgeon: " + content + control.lineSep)
 	if !control.flagOptions["relax"] {
 		control.setAbort(true)
 	}
@@ -863,7 +886,7 @@ func logit(msg string, args ...interface{}) {
 		leader = "reposurgeon"
 	}
 	control.logmutex.Lock()
-	control.logfp.Write([]byte(leader + ": " + content + "\n"))
+	control.logfp.Write([]byte(leader + ": " + content + control.lineSep))
 	control.logcounter++
 	control.logmutex.Unlock()
 }
@@ -872,7 +895,7 @@ func logit(msg string, args ...interface{}) {
 func respond(msg string, args ...interface{}) {
 	if control.isInteractive() {
 		content := fmt.Sprintf(msg, args...)
-		control.baton.printLogString("reposurgeon: " + content + "\n")
+		control.baton.printLogString("reposurgeon: " + content + control.lineSep)
 	}
 }
 
@@ -2197,9 +2220,7 @@ func (t *Tag) emailIn(msg *MessageBlock, fill bool) bool {
 	}
 	newcomment := msg.getPayload()
 	if control.flagOptions["canonicalize"] {
-		newcomment = strings.TrimSpace(newcomment)
-		newcomment = strings.Replace(newcomment, "\r\n", "\n", 1)
-		newcomment += "\n"
+		newcomment = canonicalizeComment(newcomment)
 	}
 	if newcomment != t.Comment {
 		if logEnable(logEMAILIN) {
@@ -2261,7 +2282,7 @@ func (t *Tag) Save(w io.Writer) {
 	comment := t.Comment
 	if t.repo.writeOptions.Contains("--legacy") && t.legacyID != "" {
 		if comment != "" {
-			comment += "\n"
+			comment += control.lineSep
 		}
 		comment += fmt.Sprintf("Legacy-ID: %s\n", t.legacyID)
 	}
@@ -3101,6 +3122,7 @@ func (commit *Commit) emailOut(modifiers orderedStringSet,
 			}
 			value := commit.properties.get(name)
 			value = strings.Replace(value, "\n", `\n`, -1)
+			value = strings.Replace(value, "\r", `\r`, -1)
 			value = strings.Replace(value, "\t", `\t`, -1)
 			msg.setHeader("Property-"+hdr, value)
 		}
@@ -3290,9 +3312,7 @@ func (commit *Commit) emailIn(msg *MessageBlock, fill bool) bool {
 	}
 	newcomment := msg.getPayload()
 	if control.flagOptions["canonicalize"] {
-		newcomment = strings.TrimSpace(newcomment)
-		newcomment = strings.Replace(newcomment, "\r\n", "\n", 1)
-		newcomment += "\n"
+		newcomment = canonicalizeComment(newcomment)
 	}
 	if newcomment != commit.Comment {
 		if logEnable(logEMAILIN) {
@@ -3842,6 +3862,9 @@ func (manifest *Manifest) gitHash() gitHashType {
 func (commit *Commit) gitHash() gitHashType {
 	if !commit.hash.isValid() {
 		var sb strings.Builder
+		// Assumptin: Git running under DOS still uses plain \n as a
+		// line separator. If this isn't true these "\n"s need to be
+		// replaced by control.lineSep.
 		sb.WriteString("tree " + commit.manifest().gitHash().hexify() + "\n")
 		for _, parent := range commit.parents() {
 			switch parent.(type) {
@@ -4187,7 +4210,7 @@ func (commit *Commit) Save(w io.Writer) {
 	comment := commit.Comment
 	if commit.repo.writeOptions.Contains("--legacy") && commit.legacyID != "" {
 		if comment != "" {
-			comment += "\n"
+			comment += control.lineSep
 		}
 		comment += fmt.Sprintf("Legacy-ID: %s\n", commit.legacyID)
 	}
@@ -4626,14 +4649,14 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 						value := bytes.Join(fields[3:], []byte(" "))
 						if len(value) < length {
 							value = append(value, sp.read(length-len(value))...)
-							if string(sp.read(1)) != "\n" {
+							if sp.read(1)[0] != control.lineSep[0] {
 								sp.error("trailing junk on property value")
 							}
 						} else if len(value) == length+1 {
 							value = value[:len(value)-1] // Trim '\n'
 						} else {
 							value = append(value, sp.read(length-len(value))...)
-							if string(sp.read(1)) != "\n" {
+							if sp.read(1)[0] != control.lineSep[0] {
 								sp.error("newline not found where expected")
 							}
 						}
@@ -4659,7 +4682,7 @@ func (sp *StreamParser) parseFastImport(options stringSet, baton *Baton, filesiz
 					d, _ := sp.fiReadData(line)
 					commit.Comment = string(d)
 					if control.flagOptions["canonicalize"] {
-						commit.Comment = strings.Replace(strings.TrimSpace(commit.Comment), "\r\n", "\n", -1) + "\n"
+						commit.Comment = canonicalizeComment(commit.Comment)
 					}
 				} else if bytes.HasPrefix(line, []byte("from")) || bytes.HasPrefix(line, []byte("merge")) {
 					mark := string(bytes.Fields(line)[1])
@@ -5809,8 +5832,8 @@ func (repo *Repository) tagifyNoCheck(commit *Commit, name string, target string
 		pref = ""
 	} else {
 		pref = commit.Comment
-		if legend != "" || !strings.HasSuffix(pref, "\n") {
-			pref += "\n"
+		if legend != "" || !strings.HasSuffix(pref, control.lineSep) {
+			pref += control.lineSep
 		}
 	}
 	tag := newTag(commit.repo, name, target, &commit.committer, pref+legend)
@@ -6616,7 +6639,7 @@ func (repo *Repository) squash(selected orderedIntSet, policy orderedStringSet) 
 				} else if !aEmpty && bEmpty {
 					return a
 				}
-				return a + "\n" + b
+				return a + control.lineSep + b
 			}
 			//if logEnable(logDELETE) {logit("deleting %s requires %v to be reparented.", commit.getMark(), commit.childMarks())}
 			for _, cchild := range commit.childMarks() {
@@ -8581,7 +8604,7 @@ func (rl *RepositoryList) expunge(selection orderedIntSet, matchers []string) er
 		if ok {
 			for i, fileop := range commit.operations() {
 				if logEnable(logDELETE) {
-					logit(fileop.String() + "\n")
+					logit(fileop.String() + control.lineSep)
 				}
 				if fileop.op == opD || fileop.op == opM {
 					if expunge.MatchString(fileop.Path) == delete {
@@ -8872,7 +8895,7 @@ func (lp *LineParse) Closem() {
 // respond is to be used for console messages that shouldn't be logged
 func (lp *LineParse) respond(msg string, args ...interface{}) {
 	content := fmt.Sprintf(msg, args...)
-	control.baton.printLogString(content + "\n")
+	control.baton.printLogString(content + control.lineSep)
 }
 
 // Reposurgeon tells Kommandant what our local commands are
@@ -8945,7 +8968,7 @@ func (rs *Reposurgeon) inScript() bool {
 // DoEOF is the handler for end of command input.
 func (rs *Reposurgeon) DoEOF(lineIn string) bool {
 	if rs.inputIsStdin {
-		respond("\n")
+		respond(control.lineSep)
 	}
 	return true
 }
@@ -8991,7 +9014,7 @@ func (rs *Reposurgeon) PreCmd(line string) string {
 		rs.history = append(rs.history, trimmed)
 	}
 	if control.flagOptions["echo"] {
-		control.baton.printLogString(trimmed + "\n")
+		control.baton.printLogString(trimmed + control.lineSep)
 	}
 	if strings.HasPrefix(line, "#") {
 		return ""
@@ -9245,7 +9268,7 @@ func (rs *Reposurgeon) reportSelect(parse *LineParse, display func(*LineParse, i
 	for _, eventid := range selection {
 		summary := display(parse, eventid, repo.events[eventid])
 		if summary != "" {
-			if strings.HasSuffix(summary, "\n") {
+			if strings.HasSuffix(summary, control.lineSep) {
 				fmt.Fprint(parse.stdout, summary)
 			} else {
 				fmt.Fprintln(parse.stdout, summary)
@@ -10086,7 +10109,7 @@ func (rs *Reposurgeon) DoStats(line string) bool {
 			fmt.Fprintf(parse.stdout, "  Loaded from %s\n", repo.sourcedir)
 		}
 		//if repo.vcs {
-		//    parse.stdout.WriteString(polystr(repo.vcs) + "\n")
+		//    parse.stdout.WriteString(polystr(repo.vcs) + control.lineSep)
 	}
 	return false
 }
@@ -10483,7 +10506,7 @@ func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 	}
 	if parse.options.Empty() || parse.options.Contains("--uniqueness") || parse.options.Contains("-u") {
 		rs.chosen().checkUniqueness(true, func(s string) {
-			fmt.Fprint(parse.stdout, "reposurgeon: "+s+"\n")
+			fmt.Fprint(parse.stdout, "reposurgeon: "+s+control.lineSep)
 		})
 	}
 	return false
@@ -10533,7 +10556,7 @@ func (rs *Reposurgeon) CompletePrefer(text string) []string {
 func (rs *Reposurgeon) DoPrefer(line string) bool {
 	if line == "" {
 		for _, vcs := range vcstypes {
-			control.baton.printLogString(vcs.String() + "\n")
+			control.baton.printLogString(vcs.String() + control.lineSep)
 		}
 		for option := range fileFilters {
 			control.baton.printLogString(fmt.Sprintf("read and write have a --format=%s option that supports %s files.\n", option, strings.ToTitle(option)))
@@ -11674,7 +11697,7 @@ func (rs *Reposurgeon) DoMsgin(line string) bool {
 	if parse.stdout != os.Stdout {
 		if parse.options.Contains("--changed") {
 			for _, update := range changers {
-				fmt.Fprint(parse.stdout, string(MessageBlockDivider)+"\n"+update.String())
+				fmt.Fprint(parse.stdout, string(MessageBlockDivider)+control.lineSep+update.String())
 			}
 		}
 	}
@@ -13454,7 +13477,7 @@ func (rs *Reposurgeon) DoPaths(line string) bool {
 			allpaths = allpaths.Union(commit.paths(nil))
 		}
 		sort.Strings(allpaths)
-		fmt.Fprint(parse.stdout, strings.Join(allpaths, "\n")+"\n")
+		fmt.Fprint(parse.stdout, strings.Join(allpaths, control.lineSep)+control.lineSep)
 		return false
 	}
 	fields := strings.Fields(line)
@@ -13466,7 +13489,7 @@ func (rs *Reposurgeon) DoPaths(line string) bool {
 		prefix := fields[1]
 		modified := rs.chosen().pathWalk(selection,
 			func(f string) string { return prefix + string(os.PathSeparator) + f })
-		fmt.Fprint(parse.stdout, strings.Join(modified, "\n")+"\n")
+		fmt.Fprint(parse.stdout, strings.Join(modified, control.lineSep)+control.lineSep)
 	} else if fields[0] == "sup" {
 		if len(fields) == 1 {
 			modified := rs.chosen().pathWalk(selection,
@@ -13478,7 +13501,7 @@ func (rs *Reposurgeon) DoPaths(line string) bool {
 					return f[slash+1:]
 				})
 			sort.Strings(modified)
-			fmt.Fprint(parse.stdout, strings.Join(modified, "\n")+"\n")
+			fmt.Fprint(parse.stdout, strings.Join(modified, control.lineSep)+control.lineSep)
 		} else {
 			prefix := fields[1]
 			if !strings.HasSuffix(prefix, "/") {
@@ -13492,7 +13515,7 @@ func (rs *Reposurgeon) DoPaths(line string) bool {
 					return f
 				})
 			sort.Strings(modified)
-			fmt.Fprint(parse.stdout, strings.Join(modified, "\n")+"\n")
+			fmt.Fprint(parse.stdout, strings.Join(modified, control.lineSep)+control.lineSep)
 			return false
 		}
 	}
@@ -13555,7 +13578,7 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 		}
 		header := fmt.Sprintf("Event %d, ", ei+1)
 		header = header[:len(header)-2]
-		header += " " + strings.Repeat("=", 72-len(header)) + "\n"
+		header += " " + strings.Repeat("=", 72-len(header)) + control.lineSep
 		fmt.Fprint(parse.stdout, header)
 		if commit.legacyID != "" {
 			fmt.Fprintf(parse.stdout, "# Legacy-ID: %s\n", commit.legacyID)
@@ -13564,7 +13587,7 @@ func (rs *Reposurgeon) DoManifest(line string) bool {
 		if commit.mark != "" {
 			fmt.Fprintf(parse.stdout, "mark %s\n", commit.mark)
 		}
-		fmt.Fprint(parse.stdout, "\n")
+		fmt.Fprint(parse.stdout, control.lineSep)
 		type ManifestItem struct {
 			path  string
 			entry *FileOp
@@ -15080,7 +15103,7 @@ func (rs *Reposurgeon) DoReferences(line string) bool {
 						//	summary = tag.lister(nil, ei, w)
 					}
 					if summary != "" {
-						fmt.Fprint(parse.stdout, summary+"\n")
+						fmt.Fprint(parse.stdout, summary+control.lineSep)
 					}
 				}
 			}
@@ -15118,7 +15141,7 @@ func (rs *Reposurgeon) DoGitify(_line string) bool {
 	control.baton.startProgress("gitifying comments", uint64(len(selection)))
 	rs.chosen().walkEvents(selection, func(idx int, event Event) {
 		if commit, ok := event.(*Commit); ok {
-			commit.Comment = strings.TrimSpace(commit.Comment) + "\n"
+			commit.Comment = canonicalizeComment(commit.Comment)
 			if strings.Count(commit.Comment, "\n") < 2 {
 				return
 			}
@@ -15438,6 +15461,9 @@ func (rs *Reposurgeon) CompleteSet(text string) []string {
 func performOptionSideEffect(opt string, val bool) {
 	if opt == "progress" {
 		control.baton.setInteractivity(val)
+	}
+	if opt == "crlf" {
+		control.lineSep = "\r\n"
 	}
 }
 

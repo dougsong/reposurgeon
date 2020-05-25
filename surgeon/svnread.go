@@ -1320,8 +1320,8 @@ func svnGenerateCommits(ctx context.Context, sp *StreamParser, options stringSet
 		}
 		if record.log != "" {
 			commit.Comment = record.log
-			if !strings.HasSuffix(commit.Comment, "\n") {
-				commit.Comment += "\n"
+			if !strings.HasSuffix(commit.Comment, control.lineSep) {
+				commit.Comment += control.lineSep
 			}
 		}
 		attribution := ""
@@ -2160,7 +2160,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 
 	parseMergeInfo := func(info string) map[string][]RevRange {
 		mergeinfo := make(map[string][]RevRange)
-		for _, line := range strings.Split(info, "\n") {
+		for _, line := range strings.Split(info, control.lineSep) {
 			fields := strings.Split(line, ":")
 			if len(fields) != 2 {
 				continue
@@ -2267,7 +2267,7 @@ func svnProcessMergeinfos(ctx context.Context, sp *StreamParser, options stringS
 			if info == "" {
 				info = info2
 			} else if info2 != "" {
-				info = info + "\n" + info2
+				info = info + control.lineSep + info2
 			}
 			if info == "" {
 				continue
@@ -2547,7 +2547,7 @@ func svnProcessIgnores(ctx context.Context, sp *StreamParser, options stringSet,
 		if nodepath == ".gitignore" {
 			buf.WriteString(subversionDefaultIgnores)
 		}
-		for _, line := range strings.SplitAfter(explicit, "\n") {
+		for _, line := range strings.SplitAfter(explicit, control.lineSep) {
 			if line != "" {
 				buf.WriteByte(svnSep[0])
 				buf.WriteString(line)
