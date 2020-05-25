@@ -1032,13 +1032,18 @@ func newMessageBlock(bp *bufio.Reader) (*MessageBlock, error) {
 	msg.hdnames = make([]string, 0)
 	msg.header = make(map[string]string)
 
+	isLineEnder := func(data string) bool {
+		// Second case handles WSL
+		return data == "\n" || data == "\r\n"
+	}
+
 	headerize := func(data string) bool {
-		if data == "\n" {
+		if isLineEnder(data) {
 			return false
 		}
 		colon := strings.Index(data, ":")
 		if colon == -1 {
-			panic(throw("msgbox", "Ill-formed line in mail message"))
+			panic(throw("msgbox", "Ill-formed line %q in mail message", data))
 		}
 		key := data[0:colon]
 		payload := strings.TrimSpace(data[colon+1:])
