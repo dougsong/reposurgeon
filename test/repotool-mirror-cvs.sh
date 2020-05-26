@@ -9,7 +9,7 @@ then
 fi
 
 command -v cvs >/dev/null 2>&1 || { echo "    Skipped, cvs missing."; exit 0; }
-command -v cvs-fast-export >/dev/null 2>&1 || { echo "    Skipped, cvs-fast-mirror missing."; exit 0; }
+command -v cvs-fast-export >/dev/null 2>&1 || { echo "    Skipped, cvs-fast-export missing."; exit 0; }
 
 trap 'rm -rf /tmp/mirror$$ /tmp/out$$' EXIT HUP INT QUIT TERM
 
