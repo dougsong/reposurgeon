@@ -1,14 +1,17 @@
 repotool: generating Makefile, some variables in it need to be set.
 repotool: generating a stub options file.
 repotool: generating a stub lift file.
+repotool: generating a stub map file.
 Return code: 0
 
 Directory contents:
 Makefile
 xyzzy.lift
+xyzzy.map
 xyzzy.opts
 
 Checksums to make sure file contents correct:
 a66839ba6bc97e9888efa064ef3dea2b  ./Makefile
 8f44c96b9942ad7655b17fec218e75f7  ./xyzzy.lift
+91c78d0cfe552dbe6de5ea8d17b726b8  ./xyzzy.map
 4b72635a7976f13fbd51a7c79a142733  ./xyzzy.opts

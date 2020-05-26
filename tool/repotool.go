@@ -389,6 +389,12 @@ func initialize(args []string) {
 		fmt.Printf("repotool: generating a stub lift file.\n")
 		makeStub(project+".lift", fmt.Sprintf("# Lift commands for %s\n", project))
 	}
+	if exists(project + ".map") {
+		complain("a project map file already exists here.")
+	} else {
+		fmt.Printf("repotool: generating a stub map file.\n")
+		makeStub(project+".map", fmt.Sprintf("# Author map for %s\n", project))
+	}
 }
 
 func export() {
@@ -398,7 +404,7 @@ func export() {
 	}
 	rt := identifyRepo(".")
 	if rt == nil {
-		croak("unknown repository type")
+		croak("unknown repository type at %s", pwd)
 	}
 	cmd := rt.exporter
 	if rt.name == "hg" {

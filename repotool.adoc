@@ -22,7 +22,7 @@ action.
 
 With the -v option, report the commands executed just before
 they are run. With the -q option, only fatal errors are printed
-instead of non-fatal grips. The -q and -v options also disable each
+instead of non-fatal gripes. The -q and -v options also disable each
 other and only the last one will take effect.
 
 With the -d option, change to a specified directory before performing
