@@ -86,7 +86,7 @@ func (vcs VCS) manages(dirname string) bool {
 	// Could be a CVS repository without CVSROOT
 	if vcs.name == "cvs" {
 		files, err := ioutil.ReadDir(dirname)
-		if err != nil {
+		if err == nil {
 			for _, p := range files {
 				if strings.HasSuffix(p.Name(), ",v") {
 					return true
