@@ -3494,24 +3494,6 @@ It is good practice to start your lift script with a version
 requirement, especially if you are going to archive it for later
 reference.
 
-`prompt` [ _format..._ ]::
-   Set the command prompt format to the value of the command line; with
-   an empty command line, display it. The prompt format is evaluated in
-   after each command with the following dictionary substitutions:
-+
---
-[horizontal]
-chosen::: The name of the selected repository, or None if none is currently
-selected.
---
-+
-Thus, one useful format might be '```rs[%(chosen)s]%% ```'.
-+
-More format items may be added in the future.  The default
-prompt corresponds to the format '```reposurgeon%% ```'. The format line is
-evaluated with shell quoting of tokens, so that spaces can be
-included.
-
 [ _selection_ ] `hash [--tree|--bare]`::
    Takes a selection set, defaulting to all.  For each eligible object in the set,
    returns its index  and the same hash that Git would generate for its

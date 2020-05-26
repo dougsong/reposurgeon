@@ -8911,7 +8911,6 @@ type Reposurgeon struct {
 	preferred    *VCS
 	extractor    Extractor
 	startTime    time.Time
-	promptFormat string
 	logHighwater int
 	ignorename   string
 }
@@ -8924,7 +8923,6 @@ func newReposurgeon() *Reposurgeon {
 	rs.startTime = time.Now()
 	rs.definitions = make(map[string][]string)
 	rs.inputIsStdin = true
-	rs.promptFormat = "reposurgeon% "
 	// These are globals and should probably be set in init().
 	for _, option := range optionFlags {
 		control.listOptions[option[0]] = newOrderedStringSet()
@@ -8993,13 +8991,7 @@ func (rs *Reposurgeon) DoQuit(lineIn string) bool {
 var inlineCommentRE = regexp.MustCompile(`\s+#`)
 
 func (rs *Reposurgeon) buildPrompt() {
-	var chosenName string
-	if rs.chosen() != nil {
-		chosenName = rs.chosen().name
-	}
-
-	replacer := strings.NewReplacer("{chosen}", chosenName)
-	rs.cmd.SetPrompt(replacer.Replace(rs.promptFormat))
+	rs.cmd.SetPrompt("reposurgeon% ")
 }
 
 // PreLoop is the hook run before the first command prompt is issued
@@ -16574,44 +16566,6 @@ func (rs *Reposurgeon) DoExit(line string) bool {
 	defer parse.Closem()
 	parse.respond("exiting, elapsed time %v.", time.Now().Sub(rs.startTime))
 	return true
-}
-
-//
-// Prompt customization
-//
-
-// HelpPrompt says "Shut up, golint!"
-func (rs *Reposurgeon) HelpPrompt() {
-	rs.helpOutput(`
-prompt [TEXT]
-
-Set the command prompt format to the value of the command line; with
-an empty command line, display it. The prompt format is evaluated
-after each command with the following substitutions:
-
-{chosen}: The name of the selected repository, or the empty string if
-          no repository is currently selected.
-
-Thus, one useful format might be 'rs[{chosen}]% '.
-
-More format items may be added in the future.  The default prompt
-corresponds to the format 'reposurgeon% '. The format line is
-evaluated with shell quoting of tokens, so that spaces can be
-included.
-`)
-}
-
-// DoPrompt is the handler for the "prompt" command.
-func (rs *Reposurgeon) DoPrompt(lineIn string) bool {
-	if lineIn != "" {
-		words, err := shlex.Split(lineIn, true)
-		if err != nil {
-			croak("failed to parse your prompt string: %s", err.Error())
-			return false
-		}
-		rs.promptFormat = strings.Join(words, " ")
-	}
-	return false
 }
 
 //
