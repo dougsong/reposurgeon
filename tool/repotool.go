@@ -1093,7 +1093,7 @@ repotool options:
 
 	if basedir != "" {
 		if err := os.Chdir(basedir); err != nil {
-			croak("changing directory: ", err)
+			croak("changing directory: %v", err)
 		}
 	}
 
