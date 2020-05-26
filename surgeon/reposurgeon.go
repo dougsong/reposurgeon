@@ -1497,7 +1497,7 @@ func (attr *Attribution) remap(authors map[string]Contributor) {
 }
 
 /*
- * Hashing.  These two functions are the only place in the code
+ * Hashing.  These functions are the only place in the code
  * that knows what hash Git actually uses.  Elsewhere hashes
  * are treated as uninterpreted cookies that can be formatted
  * as hex-quad pairs of an unspecified length.
@@ -9584,7 +9584,7 @@ func (rs *Reposurgeon) DoResolve(line string) bool {
 // HelpAssign says "Shut up, golint!"
 func (rs *Reposurgeon) HelpAssign() {
 	rs.helpOutput(`
-{SELECTION} assign [--singleton] [*name*]
+{SELECTION} assign [--singleton] [NAME]
 
 Compute a leading selection set and assign it to a symbolic name,
 which must follow the assign keyword. It is an error to assign to a
@@ -10519,7 +10519,7 @@ func (rs *Reposurgeon) DoLint(line string) (StopOut bool) {
 // HelpPrefer says "Shut up, golint!"
 func (rs *Reposurgeon) HelpPrefer() {
 	rs.helpOutput(`
-prefer [VCSNAME]
+prefer [VCS-NAME]
 
 Report or set (with argument) the preferred type of repository. With
 no arguments, describe capabilities of all supported systems. With an
@@ -10600,7 +10600,7 @@ func (rs *Reposurgeon) DoPrefer(line string) bool {
 // HelpSourcetype says "Shut up, golint!"
 func (rs *Reposurgeon) HelpSourcetype() {
 	rs.helpOutput(`
-sourcetype [VCSNAME]
+sourcetype [VCS-NAME]
 
 Report (with no arguments) or select (with one argument) the current
 repository's source type.  This type is normally set at
@@ -11016,7 +11016,7 @@ func (rs *Reposurgeon) DoRead(line string) bool {
 // HelpWrite says "Shut up, golint!"
 func (rs *Reposurgeon) HelpWrite() {
 	rs.helpOutput(`
-[SELECTION] write [--legacy|--format=fossil|--noincremental|--callout]  [>OUTFILE|-]
+[SELECTION] write [--legacy] [--format=fossil] [--noincremental] [--callout]  [>OUTFILE|-]
 
 Dump a fast-import stream representing selected events to standard
 output (if second argument is empty or '-') or via > redirect to a file.
@@ -12976,7 +12976,7 @@ func (rs *Reposurgeon) DoDivide(_line string) bool {
 // HelpExpunge says "Shut up, golint!"
 func (rs *Reposurgeon) HelpExpunge() {
 	rs.helpOutput(`
-[SELECTION] expunge [~] [PATTERN...]
+[SELECTION] expunge [~] [/PATTERN/...]
 
 Expunge files from the selected portion of the repo history; the
 default is the entire history.  The arguments to this command may be
@@ -13526,7 +13526,7 @@ func (rs *Reposurgeon) DoPaths(line string) bool {
 // HelpManifest says "Shut up, golint!"
 func (rs *Reposurgeon) HelpManifest() {
 	rs.helpOutput(`
-[SELECTION] manifest [/REGEXP/]
+[SELECTION] manifest [/REGEXP/] [>OUTFILE]
 
 Print commit path lists. Takes an optional selection set argument
 defaulting to all commits, and an optional delimited Go regular
@@ -16560,7 +16560,7 @@ func (rs *Reposurgeon) DoElapsed(line string) bool {
 // HelpExit says "Shut up, golint!"
 func (rs *Reposurgeon) HelpExit() {
 	rs.helpOutput(`
-exit
+exit [>OUTFILE]
 
 Exit cleanly, emitting a goodbye message. Accepts output redirection.
 
@@ -16701,7 +16701,7 @@ precedence than & | but lower than ?.
 // HelpSyntax says "Shut up, golint!"
 func (rs *Reposurgeon) HelpSyntax() {
 	rs.helpOutput(`
-Each command description begins with a syntax summary.  Mandator parts are
+Each command description begins with a syntax summary.  Mandatory parts are
 in {}, optional in [], and ... says the element just before it may be repeated.
 Parts in ALL-CAPS are expected to be filled in by the user.
 
