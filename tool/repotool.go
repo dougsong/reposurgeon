@@ -436,10 +436,18 @@ func mirror(args []string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// Identifies local repositories of a specified type
+	localrepo := func(operand string, prefix string, vcs string) bool {
+		if !strings.HasPrefix(operand, prefix) {
+			return false
+		}
+		vtype := identifyRepo(operand[len(prefix)-1:])
+		return vtype != nil  && vtype.name == vcs
+	}
 	var locald string
 	tillHash := regexp.MustCompile("^.*#")
 	isFullURL, badre := regexp.Match("svn://|svn\\+ssh://|https://|http://", []byte(operand))
-	if (badre == nil && isFullURL) || (strings.HasPrefix(operand, "file:///") && isdir(filepath.Join(operand[7:], "locks"))) {
+	if (badre == nil && isFullURL) || localrepo(operand, "file:///", "svn") {
 		if mirrordir == "" {
 			locald = filepath.Base(operand) + "-mirror"
 		}
@@ -467,7 +475,7 @@ func mirror(args []string) {
 			locald = filepath.Join(pwd, operand)
 		}
 		runShellProcessOrDie(fmt.Sprintf("svnsync synchronize -q --steal-lock file://%s", locald), "mirroring")
-	} else if strings.HasPrefix(operand, "cvs://") {
+	} else if strings.HasPrefix(operand, "cvs://") || localrepo(operand, "file://", "cvs") {
 		if mirrordir != "" {
 			locald = mirrordir
 		} else {
@@ -482,7 +490,7 @@ func mirror(args []string) {
 			croak(operand + "/.cvssync is missing or unreadable")
 		}
 		runShellProcessOrDie("cvssync -c -o "+operand+" "+string(contents), "mirroring")
-	} else if strings.HasPrefix(operand, "git://") || (strings.HasPrefix(operand, "file://") && isdir(filepath.Join(operand[6:], ".git"))) {
+	} else if strings.HasPrefix(operand, "git://") || localrepo(operand, "file://", "git") {
 		if strings.HasPrefix(operand, "file://") {
 			operand = operand[6:]
 		}
@@ -495,7 +503,7 @@ func mirror(args []string) {
 	} else if isdir(operand + "/.git") {
 		under(operand, func() { runShellProcessOrDie("git pull", "mirroring") })
 		runShellProcessOrDie(fmt.Sprintf("git clone %s %s", operand, mirrordir), "mirroring")
-	} else if strings.HasPrefix(operand, "hg://") || (strings.HasPrefix(operand, "file://") && isdir(filepath.Join(operand[6:], ".hg"))) {
+	} else if strings.HasPrefix(operand, "hg://") || localrepo(operand, "file://", "hg") {
 		if strings.HasPrefix(operand, "file://") {
 			operand = operand[6:]
 		}
