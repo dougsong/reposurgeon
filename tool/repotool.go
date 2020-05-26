@@ -115,15 +115,11 @@ LOGFILE = conversion.log
 
 default: {{.Project}}-{{.TargetVCS}}
 
-# Build the converted repo from the second-stage fast-import stream
-{{.Project}}-{{.TargetVCS}}: {{.Project}}.fi
-	rm -fr {{.Project}}-{{.TargetVCS}}; $(REPOSURGEON) $(VERBOSITY) 'read <{{.Project}}.fi' 'prefer {{.TargetVCS}}' 'rebuild {{.Project}}-{{.TargetVCS}}'
+# Build the repository from the stream dump
+{{.Project}}-{{.TargetVCS}}: {{.Project}}.{{.SourceVCS}} {{.Project}}.opts {{.Project}}.lift {{.Project}}.map $(EXTRAS)
+	$(REPOSURGEON) $(VERBOSITY) 'logfile $(LOGFILE)' 'script {{.Project}}.opts' "read $(READ_OPTIONS) <{{.Project}}.{{.SourceVCS}}" 'authors read <{{.Project}}.map' 'sourcetype {{.SourceVCS}}' 'prefer git' 'script {{.Project}}.lift' 'legacy write >{{.Project}}.fo' 'rebuild {{.Project}}-{{.TargetVCS}}'
 
-# Build the second-stage fast-import stream from the first-stage stream dump
-{{.Project}}.fi: {{.Project}}.{{.SourceVCS}} {{.Project}}.opts {{.Project}}.lift {{.Project}}.map $(EXTRAS)
-	$(REPOSURGEON) $(VERBOSITY) 'logfile $(LOGFILE)' 'script {{.Project}}.opts' "read $(READ_OPTIONS) <{{.Project}}.{{.SourceVCS}}" 'authors read <{{.Project}}.map' 'sourcetype {{.SourceVCS}}' 'prefer git' 'script {{.Project}}.lift' 'legacy write >{{.Project}}.fo' 'write >{{.Project}}.fi'
-
-# Build the first-stage stream dump from the local mirror
+# Build a stream dump from the local mirror
 {{.Project}}.{{.SourceVCS}}: {{.Project}}-mirror
 	(cd {{.Project}}-mirror/ >/dev/null; repotool export) | $(DUMPFILTER) >{{.Project}}.{{.SourceVCS}}
 
