@@ -836,11 +836,11 @@ func compareRevision(args []string, rev string) string {
 		}
 	}
 	// Ugh.  These are the types of the original repository
-	// directories, which in particulat do not impy the ignorables
+	// directories, which in particulat do not imply the ignorables
 	// of any corresponding checkout directories.  The obvious way
 	// to fix this - run identifyRepo() on the checkout
 	// directories sourcedir and targetdir - works for the CVS
-	// case but not for the Subversion case.  The problem isd that
+	// case but not for the Subversion case.  The problem is that
 	// the checkout diectory is a *subdirectory* of the top-level
 	// directory where we can expect to find a .svn file.
 	sourcetype := identifyRepo(source)
@@ -1022,7 +1022,7 @@ func compareAll(args []string) {
 		return
 	}
 	if verbose {
-		fmt.Print("Comparing master...")
+		fmt.Print("Comparing master...\n")
 	}
 	// -a will compare against an empty
 	// directory if trunk does not exist, which will thus fail the
