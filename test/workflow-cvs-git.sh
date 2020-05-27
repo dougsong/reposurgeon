@@ -25,6 +25,6 @@ make --silent -e REMOTE_URL="cvs://localhost${here}/hack1.repo#module" VERBOSITY
 # FIXME: Should be compare-all, but that function is busted.
 repotool compare hack1-mirror hack1-git || echo "FAILED: Repositories do not compare equal."
 
-echo "workflow-cvs-git: PASSED"
+# No output is good news
 
 #end

@@ -45,11 +45,7 @@ CONCURRENT_JOBS=$(shell getconf _NPROCESSORS_ONLN || getconf NPROCESSORS_ONLN ||
 PARALLEL_MAKE=$(MAKE) --output-sync --no-print-directory -j $(CONCURRENT_JOBS)
 
 # This should always be a full test
-check: clean disclose $(BASIC) $(FULLSUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXTOOLS)
-	@echo "=== Sporadic tests:"
-	@sh hashcheck.sh
-	@sh workflow-cvs-git.sh
-	@sh workflow-svn-git.sh
+check: clean disclose $(BASIC) $(FULLSUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXTOOLS) sporadic
 	@echo "=== No diff output is good news ==="
 
 disclose:
@@ -592,6 +588,15 @@ svncheck-regress:
 	fi; \
 	exit $${status}
 	@rm -f /tmp/regress$$$$
+
+SPORADIC = hashcheck.sh workflow-cvs-git.sh workflow-svn-git.sh
+sporadic:
+	@echo "=== Sporadic tests:"
+	@for file in $(SPORADIC); \
+	do \
+		( $(ECHO) -n "  $${file} "; grep --text '##' $${file}  || echo ' ## (no description)' ) | sed -e '/ ##/s//:/' ; \
+		sh $$file ; \
+	done
 
 # Test productions end here.
 

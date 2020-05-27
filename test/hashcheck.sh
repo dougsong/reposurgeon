@@ -144,6 +144,6 @@ fi
 # >     between the tree and the author.  Use 'git cat-file -p' on any commit
 # >     in a repo of your choosing to see an example.
 
-echo "hashcheck: PASSED"
+# No output is good news
  
 # end
