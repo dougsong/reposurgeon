@@ -3,6 +3,83 @@
 :author: Eric S. Raymond
 :toc:
 
+[[howto]]
+== How to use this manual
+
+Everybody should read the Introduction (immediately after this
+section) to be sure rgeposurgeon is the tool you actually want.
+
+Then read the Quick Start section (immediately following the
+Introduction) to get a feeling for the syntax and style of reposurgeon
+commaands.
+
+Assuming you're trying to do a repository lift, you should probably
+continue by by reading A Guide to Repository Conversion.  It is not
+necessary to read the entire main body of the manual after that (the
+command reference) straignt through, but keep it handy for when you
+need to learn more about a particular command or group of commands.
+
+If you're doing someting more unusual than a conversion, you'll
+probably have to read through the command reference until
+you discover the commands you need.
+
+Help is available within reposurgon using the "help" command.
+Type "help" alone for a list of help topics.
+
+[[introduction]]
+== Introduction
+
+The purpose of reposurgeon is to enable risky operations that VCSes
+(version-control systems) don't want to let you do, such as (a)
+editing past comments and metadata, (b) excising commits, (c)
+coalescing and splitting commits, (d) removing files and subtrees from
+repo history, (e) merging or grafting two or more repos, and (f)
+cutting a repo in two by cutting a parent-child link, preserving the
+branch structure of both child repos.
+
+A major use of reposurgeon is to assist a human operator to perform
+higher-quality conversions among version control systems than can be
+achieved with fully automated converters. Another application is when
+code needs to be removed from a repository from repositories for legal
+or policy reasons.
+
+Fully supported systems (those for which reposurgeon can both read and
+write repositories) include git, hg, bzr, darcs, bk, RCS, and SRC.
+For a complete list, with dependencies and technical notes, type
+"prefer" to the reposurgeon prompt.
+
+Writing to the file-oriented systems RCS and SRC has some serious
+limitations because those systems cannot represent all the metadata in
+a git-fast-export stream. They require rcs-fast-import as a back end;
+consult that tool's documentation for details and partial workarounds.
+
+Fossil repository files can be read in using the `--format=fossil`
+option of the '```read```' command and written out with the
+`--format=fossil` option of the '```write```'. Ignore patterns are not
+translated in either direction.
+
+SVN and CVS are supported for read only, not write.  For CVS,
+reposurgeon must be run from within a repository directory (one with a
+CVSROOT subdirectory), not a checkout. Each module becomes a
+subdirectory in the reposurgeon representation of the change history.
+
+Note that reposurgeon is a sharp enough tool to cut you.  It takes
+care not to ever write a repository in an actually inconsistent state,
+and will terminate with an error message rather than proceed when its
+internal data structures are confused.  However, there are lots of
+things you can do with it - like altering stored commit timestamps so
+they no longer match the commit sequence - that are likely to cause
+havoc after you're done.  Proceed with caution and check your work.
+
+Also note that, if your DVCS does the usual thing of making
+commit IDs a cryptographic hash of content and parent links, editing a
+publicly-accessible repository with this tool would be a bad idea. All
+of the surgical operations in reposurgeon will
+modify the hash chains.
+
+Please also see the notes on system-specific issues under
+<<limitations>>.
+
 [[quickstart]]
 == Quick start
 
@@ -91,60 +168,6 @@ rebuild project-git
 Typically you'd have these commands in a script that you evolved by
 experimenting until you got a conversion that suited your tastes and
 needs.
-
-[[introduction]]
-== Introduction
-
-The purpose of reposurgeon is to enable risky operations that VCSes
-(version-control systems) don't want to let you do, such as (a)
-editing past comments and metadata, (b) excising commits, (c)
-coalescing and splitting commits, (d) removing files and subtrees from
-repo history, (e) merging or grafting two or more repos, and (f)
-cutting a repo in two by cutting a parent-child link, preserving the
-branch structure of both child repos.
-
-A major use of reposurgeon is to assist a human operator to perform
-higher-quality conversions among version control systems than can be
-achieved with fully automated converters. Another application is when
-code needs to be removed from a repository from repositories for legal
-or policy reasons.
-
-Fully supported systems (those for which reposurgeon can both read and
-write repositories) include git, hg, bzr, darcs, bk, RCS, and SRC.
-For a complete list, with dependencies and technical notes, type
-"prefer" to the reposurgeon prompt.
-
-Writing to the file-oriented systems RCS and SRC has some serious
-limitations because those systems cannot represent all the metadata in
-a git-fast-export stream. They require rcs-fast-import as a back end;
-consult that tool's documentation for details and partial workarounds.
-
-Fossil repository files can be read in using the `--format=fossil`
-option of the '```read```' command and written out with the
-`--format=fossil` option of the '```write```'. Ignore patterns are not
-translated in either direction.
-
-SVN and CVS are supported for read only, not write.  For CVS,
-reposurgeon must be run from within a repository directory (one with a
-CVSROOT subdirectory), not a checkout. Each module becomes a
-subdirectory in the reposurgeon representation of the change history.
-
-Note that reposurgeon is a sharp enough tool to cut you.  It takes
-care not to ever write a repository in an actually inconsistent state,
-and will terminate with an error message rather than proceed when its
-internal data structures are confused.  However, there are lots of
-things you can do with it - like altering stored commit timestamps so
-they no longer match the commit sequence - that are likely to cause
-havoc after you're done.  Proceed with caution and check your work.
-
-Also note that, if your DVCS does the usual thing of making
-commit IDs a cryptographic hash of content and parent links, editing a
-publicly-accessible repository with this tool would be a bad idea. All
-of the surgical operations in reposurgeon will
-modify the hash chains.
-
-Please also see the notes on system-specific issues under
-<<limitations>>.
 
 [[conversion]]
 == A Guide to Repository Conversion
