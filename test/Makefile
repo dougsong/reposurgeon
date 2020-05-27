@@ -49,6 +49,7 @@ check: clean disclose $(BASIC) $(FULLSUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR
 	@echo "=== Sporadic tests:"
 	@sh hashcheck.sh
 	@sh workflow-cvs-git.sh
+	@sh workflow-svn-git.sh
 	@echo "=== No diff output is good news ==="
 
 disclose:
