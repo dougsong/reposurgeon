@@ -52,7 +52,7 @@ repotool:
 # Generated documentation parts:
 
 options.adoc: reposurgeon
-	reposurgeon "help options" | sed '/:/s//::/' >options.adoc
+	./reposurgeon "help options" | sed '/:/s//::/' >options.adoc
 
 # Note: to suppress the footers with timestamps being generated in HTML,
 # we use "-a nofooter".
