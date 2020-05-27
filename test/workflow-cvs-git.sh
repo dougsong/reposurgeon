@@ -1,6 +1,13 @@
 #!/bin/sh
 ## Test standard CVS to Git workflow
 
+# This is how we detect we're in Gitlab CI.
+if [ -z "${USER}" ]
+then
+    echo "SKIPPED - ssh is blocked in CI, so rsync will fail"
+    exit 0
+fi
+
 command -v cvs >/dev/null 2>&1 || { echo "    Skipped, cvs missing."; exit 0; }
 command -v cvs-fast-export >/dev/null 2>&1 || { echo "    Skipped, cvs-fast-export missing."; exit 0; }
 
