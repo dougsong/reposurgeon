@@ -147,7 +147,6 @@ func (vcs VCS) hasReference(comment []byte) bool {
 }
 
 var vcstypes []VCS
-var vcsignores []string
 
 // This one is special because it's used directly in the Subversion
 // dump parser, as well as in the VCS capability table.

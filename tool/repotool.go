@@ -360,7 +360,9 @@ func initialize(args []string) {
 	if exists("Makefile") {
 		complain("a Makefile already exists here.")
 	} else {
-		fmt.Printf("repotool: generating Makefile, some variables in it need to be set.\n")
+		if !quiet {
+			fmt.Printf("repotool: generating Makefile, some variables in it need to be set.\n")
+		}
 		instructions := makefileTemplate
 		if squishy.TargetVCS == "git" {
 			instructions += gitTemplateAdditions
@@ -380,19 +382,25 @@ func initialize(args []string) {
 	if exists(project + ".opts") {
 		complain("a project options file already exists here.")
 	} else {
-		fmt.Printf("repotool: generating a stub options file.\n")
+		if !quiet {
+			fmt.Printf("repotool: generating a stub options file.\n")
+		}
 		makeStub(project+".opts", "# Pre-read options for reposurgeon go here.\n")
 	}
 	if exists(project + ".lift") {
 		complain("a project lift file already exists here.")
 	} else {
-		fmt.Printf("repotool: generating a stub lift file.\n")
+		if !quiet {
+			fmt.Printf("repotool: generating a stub lift file.\n")
+		}
 		makeStub(project+".lift", fmt.Sprintf("# Lift commands for %s\n", project))
 	}
 	if exists(project + ".map") {
 		complain("a project map file already exists here.")
 	} else {
-		fmt.Printf("repotool: generating a stub map file.\n")
+		if !quiet {
+			fmt.Printf("repotool: generating a stub map file.\n")
+		}
 		makeStub(project+".map", fmt.Sprintf("# Author map for %s\n", project))
 	}
 }
@@ -800,29 +808,14 @@ func compareRevision(args []string, rev string) string {
 		log.Fatal(err)
 	}
 	os.RemoveAll(rtarget)
-	diffopts := make([]string, 0)
-	sourceignores := make([]string, 0)
 	var sourcedir, targetdir string
 	under(source, func() {
-		if isDvcsOrCheckout() && !seeignores {
-			sourceignores = vcsignores
-			for _, f := range sourceignores {
-				diffopts = append(diffopts, []string{"-x", f}...)
-			}
-		}
 		sourcedir = checkout(rsource, sourceRev)
 		if sourcedir == "" {
 			panic("sourcedir unexpectedly nil")
 		}
 	})
-	targetignores := make([]string, 0)
 	under(target, func() {
-		if isDvcsOrCheckout() && !seeignores {
-			targetignores = vcsignores
-			for _, f := range targetignores {
-				diffopts = append(diffopts, []string{"-x", f}...)
-			}
-		}
 		targetdir = checkout(rtarget, targetRev)
 		if targetdir == "" {
 			panic("sourcedir unexpectedly nil")
