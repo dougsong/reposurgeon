@@ -802,12 +802,12 @@ func compareRevision(args []string, rev string) string {
 		croak("both repository directories must exist.")
 	}
 	TMPDIR := os.Getenv("TMPDIR")
-	rsource, err := ioutil.TempDir(TMPDIR, "reposource")
+	rsource, err := ioutil.TempDir(TMPDIR, "sourcecheckout")
 	if err != nil {
 		log.Fatal(err)
 	}
 	os.RemoveAll(rsource)
-	rtarget, err := ioutil.TempDir(TMPDIR, "repotarget")
+	rtarget, err := ioutil.TempDir(TMPDIR, "targetcheckout")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -859,15 +859,11 @@ func compareRevision(args []string, rev string) string {
 			continue
 		}
 		if !targetfiles.Contains(path) {
-			if !ignorable(path, sourcetype) {
-				diff += fmt.Sprintf("%s: source only\n", path)
-			}
+			diff += fmt.Sprintf("%s: source only\n", path)
 			continue
 		}
 		if !sourcefiles.Contains(path) {
-			if !ignorable(path, targettype) {
-				diff += fmt.Sprintf("%s: target only\n", path)
-			}
+			diff += fmt.Sprintf("%s: target only\n", path)
 			continue
 		}
 		sourceText, err := ioutil.ReadFile(sourcepath)
