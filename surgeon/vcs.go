@@ -67,6 +67,8 @@ type VCS struct {
 	cookies      []regexp.Regexp
 	project      string
 	notes        string
+	// hidden
+	checkignore  string
 }
 
 // Constants needed in VCS class methods
@@ -464,6 +466,7 @@ _darcs
 			cookies:      reMake(`\sr?\d+([.])?\s`),
 			project:      "http://subversion.apache.org/",
 			notes:        "Run from the repository, not a checkout directory.",
+			checkignore: ".svn",
 		},
 		{
 			name:         "cvs",
@@ -518,6 +521,7 @@ core
 			cookies: reMake(dottedNumeric, dottedNumeric+`\w`),
 			project: "http://www.catb.org/~esr/cvs-fast-export",
 			notes:   "Requires cvs-fast-export.",
+			checkignore: "CVS",
 		},
 		{
 			name:         "rcs",

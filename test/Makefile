@@ -48,6 +48,7 @@ PARALLEL_MAKE=$(MAKE) --output-sync --no-print-directory -j $(CONCURRENT_JOBS)
 check: clean disclose $(BASIC) $(FULLSUBVERSION) $(GIT_EXTRACTOR) $(HG_EXTRACTOR) $(AUXTOOLS)
 	@echo "=== Sporadic tests:"
 	@sh hashcheck.sh
+	@sh workflow-cvs-git.sh
 	@echo "=== No diff output is good news ==="
 
 disclose:

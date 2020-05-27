@@ -759,6 +759,10 @@ func ignorable(filepath string, vcs *VCS) bool {
 	if path.Base(filepath) == vcs.ignorename {
 		return true
 	}
+	// ignorable checkout subdirectory
+	if vcs.checkignore != "" && strings.HasPrefix(filepath, vcs.checkignore+"/") {
+		return true
+	}
 	// ignorable metadata directory
 	if strings.HasPrefix(filepath, vcs.subdirectory+"/") {
 		return true
@@ -831,6 +835,14 @@ func compareRevision(args []string, rev string) string {
 			os.MkdirAll(targetdir, 0755)
 		}
 	}
+	// Ugh.  These are the types of the original repository
+	// directories, which in particulat do not impy the ignorables
+	// of any corresponding checkout directories.  The obvious way
+	// to fix this - run identifyRepo() on the checkout
+	// directories sourcedir and targetdir - works for the CVS
+	// case but not for the Subversion case.  The problem isd that
+	// the checkout diectory is a *subdirectory* of the top-level
+	// directory where we can expect to find a .svn file.
 	sourcetype := identifyRepo(source)
 	targettype := identifyRepo(target)
 	var diff string
