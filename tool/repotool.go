@@ -1095,6 +1095,12 @@ repotool options:
 	if !strings.HasPrefix(operation, "compare") && (acceptMissing || context || seeignores || same) {
 		croak("compare option with non-compare operation, bailing out.")
 	}
+	if operation != "tag" && operation != "branches" && operation != "checkout" && !strings.HasPrefix(operation, "compare") && refexclude != "" {
+		croak("exclusion option with an operation %s that does not accept it", operation)
+	}
+	if (operation != "checkout" && !strings.HasPrefix(operation, "compare")) && (revision != "" || branch != "" || tag != "") {
+		croak("selection option with an operation that is not checkout or compare")
+	}
 
 	if basedir != "" {
 		if err := os.Chdir(basedir); err != nil {
