@@ -4292,7 +4292,8 @@ seems possible.  But just in case, such changes are recorded here.
 
 In versions before 4.10, the "reduce" and "blob" options of the
 "strip" command were bare keywords. Also the options of the "ignores"
-command were bare keywords.
+command were bare keywords. There was a command to set the prompt
+string that has been retired.
 
 In versions before 4.8, the expunge command run on a repository named
 "foo" tried to keep deleted fileops in a new synthetic repository named

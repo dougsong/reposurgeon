@@ -182,7 +182,7 @@ necessarily indicate a clean comparison; only empty output does that.
 [[bugs]]
 == BUGS ==
 
-CVS repostories have an unnamed default branch.  This is not
+CVS repositories have an unnamed default branch.  This is not
 listed by "repotool branches"; if there are no named branches the
 output is empty.
 
