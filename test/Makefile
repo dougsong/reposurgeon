@@ -120,10 +120,10 @@ messagebox:
 $(RULES_MESSAGE_BOX): messagebox-%: %
 	@echo "  $${file}";\
 	$(REPOSURGEON) "$(TESTOPT)" "read <$<" "edit echo>/dev/null" "write -" \
-	>/tmp/regress$$$$ || exit $(STOPOUT); \
-	[ -s /tmp/regress$$$$ ] && diff --text -u $< /tmp/regress$$$$ \
-	|| exit $(STOPOUT); \
-	rm -f /tmp/regress$$$$
+	>/tmp/regress-a$$$$ || exit $(STOPOUT); \
+	[ -s /tmp/regress-a$$$$ ] && diff --text -u $< /tmp/regress-a$$$$ \
+	|| ( rm -f /tmp/regress-a$$$$; exit $(STOPOUT); ) \
+	rm -f /tmp/regress-a$$$$
 
 # General regression testing of commands and output; look at the *.tst and
 # corresponding *.chk files to see which tests this runs.
@@ -147,15 +147,15 @@ multigen.svn: multigen.sh
 $(TESTLOADS:%=fi-regress-%): fi-regress-%: %.tst
 	@file=$(<:.tst=); \
 	( $(ECHO) -n "  $${file} "; grep --text '##' $${file}.tst  || echo ' ## (no description)' ) | sed -e '/ ##/s//:/' ; \
-	    $(REPOSURGEON) "$(TESTOPT)" "script $${file}.tst testing123" >/tmp/regress$$$$ 2>&1 \
+	    $(REPOSURGEON) "$(TESTOPT)" "script $${file}.tst testing123" >/tmp/regress-b$$$$ 2>&1 \
 		|| (echo "*** Nonzero return status on $${file}!"; exit $(STOPOUT) ); \
-	    diff --text -u $${file}.chk /tmp/regress$$$$ >/tmp/diff$$$$; \
+	    diff --text -u $${file}.chk /tmp/regress-b$$$$ >/tmp/diff$$$$; \
 	    case $$? in \
 	    0) ;; \
-	    1) if [ $(QUIET) = 1 ]; then echo FAILED; else cat /tmp/diff$$$$; fi; if [ $(STOPOUT) = 1 ]; then exit 1; fi;; \
-	    *) echo "*** diff had trouble, status $$?"; exit $(STOPOUT);; \
+	    1) if [ $(QUIET) = 1 ]; then echo FAILED; else cat /tmp/diff$$$$; fi; if [ $(STOPOUT) = 1 ]; then ( rm -f /tmp/regress-b$$$$ .tmp/diff$$$$; exit 1 ); fi;; \
+	    *) echo "*** diff had trouble, status $$?"; (rm -f /tmp/regress-b$$$$ /tmp/diff$$$$; exit $(STOPOUT));; \
 	    esac ; \
-	rm -f /tmp/regress$$$$ /tmp/diff$$$$
+	rm -f /tmp/regress-b$$$$ /tmp/diff$$$$
 
 # Test the git extractor
 GITLOADS = bs
@@ -204,10 +204,10 @@ $(RULES_GIT_REGRESS): git-regress-test-%: %.fi
 	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT;\
 	test=$(<:.fi=); \
 		if (echo "  $${test}.fi" >&2; \
-		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
-		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi; \
-	rm -f /tmp/regress$$$$
+		./fi-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress-c$$$$; \
+		then diff --text -u $${test}.fi /tmp/regress-c$$$$ || ( rm -f /tmp/regress-c$$$$; exit $(STOPOUT) ); \
+		else echo "*** Nonzero return status on $${test}!"; ( rm -f /tmp/regress-c$$$$; exit $(STOPOUT) ); fi; \
+	rm -f /tmp/regress-c$$$$
 
 
 # Test the hg extractor
@@ -219,13 +219,13 @@ hg-regress:
 	then \
 	    for test in $(HGLOADS); do \
 		if (echo "  $${test}.fi" >&2; \
-		./hg-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
-		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
+		./hg-to-fi) <$${test}.fi | sed -e 1d -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >/tmp/regress-d$$$$; \
+		then diff --text -u $${test}.fi /tmp/regress-d$$$$ || ( rm -f /tmp/regress-d$$$$; exit $(STOPOUT) ); \
+		else echo "*** Nonzero return status on $${test}!"; ( rm -f /tmp/regress-d$$$$; exit $(STOPOUT) ); fi \
 	    done; \
 	else echo "    Skipped, hg or git missing."; exit 0; \
-	fi
-	@rm -f /tmp/regress$$$$
+	fi; \
+	rm -f /tmp/regress-d$$$$
 
 # Test the hg extractor with multiple hg branches
 # NOTE: the bb-alt test demonstrates an hg repo with coloring that git cannot reproduce
@@ -244,13 +244,13 @@ hg-regress-branches:
 	then \
 	    for test in $(HGBRANCHES); do \
 		if (echo "  $${test}" >&2; \
-		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
-		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
+		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress-e$$$$; \
+		then diff --text -u $${test}.fi /tmp/regress-e$$$$ || ( rm -f /tmp/regress-e$$$$; exit $(STOPOUT) ); \
+		else echo "*** Nonzero return status on $${test}!"; ( rm -f /tmp/regress-e$$$$; exit $(STOPOUT) ); fi \
 	    done; \
 	else echo "    Skipped, hg missing."; exit 0; \
-	fi
-	@rm -f /tmp/regress$$$$
+	fi; \
+	rm -f /tmp/regress-e$$$$
 
 # Test the hg extractor with merges
 HGMERGES = be2 be3 be4 be5 be6
@@ -268,13 +268,13 @@ hg-regress-merges:
 	then \
 	    for test in $(HGMERGES); do \
 		if (echo "  $${test}" >&2; \
-		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
-		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
+		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress-f$$$$; \
+		then diff --text -u $${test}.fi /tmp/regress-f$$$$ || ( rm -f /tmp/regress-f$$$$; exit $(STOPOUT) ); \
+		else echo "*** Nonzero return status on $${test}!"; ( rm -f /tmp/regress-f$$$$; exit $(STOPOUT) ); fi \
 	    done; \
 	else echo "    Skipped, hg missing."; exit 0; \
-	fi
-	@rm -f /tmp/regress$$$$
+	fi; \
+	rm -f /tmp/regress-f$$$$
 
 # Test the hg extractor with tags
 HGTAGS = bt bt2
@@ -292,13 +292,13 @@ hg-regress-tags:
 	then \
 	    for test in $(HGTAGS); do \
 		if (echo "  $${test}" >&2; \
-		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
-		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
+		./hg-$${test}-test) | sed -e 1d -e '/^#legacy-id/d' >/tmp/regress-g$$$$; \
+		then diff --text -u $${test}.fi /tmp/regress-g$$$$ || ( rm -f /tmp/regress-g$$$$; exit $(STOPOUT) ); \
+		else echo "*** Nonzero return status on $${test}!"; ( rm -f /tmp/regress-g$$$$; exit $(STOPOUT) ); fi \
 	    done; \
 	else echo "    Skipped, hg missing."; exit 0; \
-	fi
-	@rm -f /tmp/regress$$$$
+	fi; \
+	rm -f /tmp/regress-g$$$$
 
 # Test the hg extractor with pathological loads
 HGPATHO = be-subrepo be-subrepo2
@@ -316,13 +316,13 @@ hg-regress-patho:
 	then \
 	    for test in $(HGPATHO); do \
 		if (echo "  $${test}" >&2; \
-		./hg-$${test}-test 2>/dev/null) | sed -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >/tmp/regress$$$$; \
-		then diff --text -u $${test}.fi /tmp/regress$$$$ || exit $(STOPOUT); \
-		else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi \
+		./hg-$${test}-test 2>/dev/null) | sed -e '/^#legacy-id/d' | sed -e '/^#reposurgeon sourcetype/d' >/tmp/regress-h$$$$; \
+		then diff --text -u $${test}.fi /tmp/regress-h$$$$ || ( rm -f /tmp/regress-h$$$$; exit $(STOPOUT) ); \
+		else echo "*** Nonzero return status on $${test}!"; ( rm -f /tmp/regress-h$$$$; exit $(STOPOUT) ); fi \
 	    done; \
 	else echo "    Skipped, hg missing."; exit 0; \
-	fi
-	@rm -f /tmp/regress$$$$
+	fi; \
+	rm -f /tmp/regress-h$$$$
 
 # Test loading from Subversion
 SVN_AND_TST_FILES := $(sort $(wildcard *.svn *.tst))
@@ -348,9 +348,9 @@ $(SVNLOADS:%=svnload-regress-%): svnload-regress-%: %.svn
 	@REPOSURGEON=$(REPOSURGEON); export REPOSURGEON; TESTOPT="$(TESTOPT)"; export TESTOPT; BUILDOPT=$(BUILDOPT); export BUILDOPT;\
 	test=$(<:.svn=); \
 		{ $(ECHO) -n "  $${test}.svn"; grep --text '^ ##' $${test}.svn || echo ' ## (no description)'; } | sed -e '/ ##/s//:/' >&2; \
-		$(REPOSURGEON) "$(TESTOPT)" "$(TESTOPT)" "read <$${test}.svn" "prefer git" "write -" >/tmp/regress$$$$ 2>&1 \
+		$(REPOSURGEON) "$(TESTOPT)" "$(TESTOPT)" "read <$${test}.svn" "prefer git" "write -" >/tmp/regress-i$$$$ 2>&1 \
 		    || (echo "*** Nonzero return status on $${file}!"; exit $(STOPOUT) ); \
-		diff --text -u $${test}.chk /tmp/regress$$$$ >/tmp/diff$$$$; \
+		diff --text -u $${test}.chk /tmp/regress-i$$$$ >/tmp/diff$$$$; \
 		case $$? in \
 		0) ;; \
 		1) if [ $(QUIET) = 1 ]; then echo FAILED; else cat /tmp/diff$$$$; fi; if [ $(STOPOUT) = 1 ]; then exit 1; fi;; \
@@ -361,13 +361,13 @@ $(SVNLOADS:%=svnload-regress-%): svnload-regress-%: %.svn
 		    mkdir /tmp/reposurgeon$$$$ || exit $(STOPOUT); \
 		    (cd /tmp/reposurgeon$$$$ || exit $(STOPOUT); \
 			git init --quiet || exit $(STOPOUT); \
-			grep --text -v 'reposurgeon:' /tmp/regress$$$$ | git fast-import --quiet) \
-			    || exit $(STOPOUT); \
+			grep --text -v 'reposurgeon:' /tmp/regress-i$$$$ | git fast-import --quiet) \
+			    || ( rm -f /tmp/regress-i$$$$ .tmp/diff$$$$; exit $(STOPOUT) ); \
 		    rm -fr /tmp/reposurgeon$$$$\
 		else \
 		    echo "    Skipped, git missing."; \
 	    fi; \
-	rm -f /tmp/regress$$$$ /tmp/diff$$$$
+	    rm -f /tmp/regress-i$$$$ /tmp/diff$$$$
 
 # Perform full regression on SVN streams that have clean conversions -
 # that is, no messages due to branch surgery or whatever.
@@ -501,11 +501,11 @@ legacy-regress:
 	for test in $(REFLOADS); \
 	do \
 	    if echo "  $${test}.svn" >&2; \
-	    $(REPOSURGEON) "$(TESTOPT)" "read <$${test}.svn" "legacy write -" | grep -v '^reposurgeon:' >/tmp/regress$$$$ 2>/dev/null; \
-	    then diff --text -u $${test}.map /tmp/regress$$$$ || exit $(STOPOUT); \
+	    $(REPOSURGEON) "$(TESTOPT)" "read <$${test}.svn" "legacy write -" | grep -v '^reposurgeon:' >/tmp/regress-j$$$$ 2>/dev/null; \
+	    then diff --text -u $${test}.map /tmp/regress-j$$$$ || exit $(STOPOUT); \
 	    else echo "*** Nonzero return status on $${test}!"; exit $(STOPOUT); fi; \
-	done
-	@rm -f /tmp/regress$$$$
+	done; \
+	rm -f /tmp/regress-j$$$$
 
 # Regression-testing of repomapper; look at the *.sh and
 # corresponding *.chk files to see which tests this runs.
@@ -524,8 +524,7 @@ repomapper-regress:
 	    ( $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)') | sed -e '/ ##/s//:/'; \
 	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || status=1; \
 	done; \
-	exit $${status}
-	@rm -f /tmp/regress$$$$
+	exit $${status};
 
 # Regression-testing of repotool; look at the *.sh and
 # corresponding *.chk files to see which tests this runs.
@@ -544,7 +543,7 @@ repotool-regress:
 	    ( $(ECHO) -n "  $${file} "; grep '##' $${file}.sh  || echo ' ## (no description)') | sed -e '/ ##/s//:/'; \
 	    $(SHELL) $${file}.sh --regress || status=1; \
 	done; \
-	exit $${status}
+	exit $${status};
 
 
 # Regression-testing of repocutter; look at the *.sh and
@@ -564,8 +563,7 @@ repocutter-regress:
 	    ( $(ECHO) -n "  $${file} "; grep --text '##' $${file}.sh  || echo ' ## (no description)') | sed -e '/ ##/s//:/'; \
 	    $(SHELL) $${file}.sh | diff --text -u $${file}.chk - || status=1; \
 	done; \
-	exit $${status}
-	@rm -f /tmp/regress$$$$
+	exit $${status};
 
 # Regression-testing of Subversion permission-bit and other exceptional cases; look at the *.sh and
 # corresponding *.chk files to see which tests this runs.
@@ -586,8 +584,7 @@ svncheck-regress:
 	    done; \
 	else echo "    Skipped, svn missing."; exit 0; \
 	fi; \
-	exit $${status}
-	@rm -f /tmp/regress$$$$
+	exit $${status};
 
 SPORADIC = hashcheck.sh workflow-cvs-git.sh workflow-svn-git.sh
 sporadic:

@@ -15,10 +15,12 @@ then
     exit 0
 fi
 
+trap 'rm -rf /tmp/test-mirror-repo$$ /tmp/mirror$$ /tmp/out$$' EXIT HUP INT QUIT TERM
+
 # Build an example repo
-./fi-to-fi -n /tmp/test-repo$$ < simple.fi
+./fi-to-fi -n /tmp/test-mirror-repo$$ < simple.fi
 # Then exercise the mirror code to make a copy of it, and dump it.
-${REPOTOOL:-repotool} mirror "file://tmp/test-repo$$" /tmp/mirror$$
+${REPOTOOL:-repotool} mirror "file://tmp/test-mirror-repo$$" /tmp/mirror$$
 (cd /tmp/mirror$$ >/dev/null || (echo "$0: cd failed" >&2; exit 1); ${REPOTOOL:-repotool} export) >/tmp/out$$ 2>&1
 
 case $mode in

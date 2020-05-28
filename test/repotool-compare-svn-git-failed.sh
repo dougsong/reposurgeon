@@ -17,7 +17,7 @@ EOF
 command -v svn >/dev/null 2>&1 || { echo "    Skipped, svn missing."; exit 0; }
 command -v git >/dev/null 2>&1 || { echo "    Skipped, git missing."; exit 0; }
 
-trap 'rm -rf /tmp/test-repo$$-svn /tmp/test-repo$$-git /tmp/test-repo$$-svn-checkout /tmp/out$$ /tmp/altered' EXIT HUP INT QUIT TERM
+trap 'rm -rf /tmp/test-repo$$-svn /tmp/test-repo$$-git /tmp/test-repo$$-svn-checkout /tmp/out$$ /tmp/altered$$' EXIT HUP INT QUIT TERM
 
 ./svn-to-svn -q -c /tmp/test-repo$$-svn /tmp/test-repo$$-svn-checkout <${stem}.svn
 reposurgeon "read <${stem}.svn" "msgin --blobs </tmp/altered$$" "prefer git" "rebuild /tmp/test-repo$$-git" >/tmp/out$$ 2>&1

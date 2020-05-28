@@ -15,10 +15,10 @@ then
     exit 0
 fi
 
-trap 'rm -rf /tmp/test-repo$$ /tmp/out$$' EXIT HUP INT QUIT TERM
+trap 'rm -rf /tmp/test-export-repo$$ /tmp/out$$' EXIT HUP INT QUIT TERM
 
-./fi-to-fi -n /tmp/test-repo$$ < simple.fi
-(cd /tmp/test-repo$$ >/dev/null || (echo "$0: cd failed" >&2; exit 1); ${REPOTOOL:-repotool} export 2>&1) >/tmp/out$$ 2>&1
+./fi-to-fi -n /tmp/test-export-repo$$ < simple.fi
+(cd /tmp/test-export-repo$$ >/dev/null || (echo "$0: cd failed" >&2; exit 1); ${REPOTOOL:-repotool} export 2>&1) >/tmp/out$$ 2>&1
 
 case $mode in
     --regress)

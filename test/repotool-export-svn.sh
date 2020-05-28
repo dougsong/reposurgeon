@@ -3,10 +3,10 @@
 
 command -v svn >/dev/null 2>&1 || { echo "    Skipped, svn missing."; exit 0; }
 
-trap 'rm -rf /tmp/test-repo$$ /tmp/out$$' EXIT HUP INT QUIT TERM
+trap 'rm -rf /tmp/test-export-repo$$ /tmp/out$$' EXIT HUP INT QUIT TERM
 
 # Make a repository from a sample stream.
-./svn-to-svn -q -n /tmp/test-repo$$ <vanilla.svn
+./svn-to-svn -q -n /tmp/test-export-repo$$ <vanilla.svn
 
 # This test can fail spuriously due to format skew.  Kevin Caswick
 # explains:
@@ -14,7 +14,7 @@ trap 'rm -rf /tmp/test-repo$$ /tmp/out$$' EXIT HUP INT QUIT TERM
 # > 1.6.11 as the dump is sorted differently, moving svn:log before
 # > svn:author instead of after svn:date. It works fine on svnadmin,
 # > version 1.8.10.
-(cd /tmp/test-repo$$ >/dev/null || (echo "$0: cd failed" >&2; exit 1); ${REPOTOOL:-repotool} export) >/tmp/out$$
+(cd /tmp/test-export-repo$$ >/dev/null || (echo "$0: cd failed" >&2; exit 1); ${REPOTOOL:-repotool} export) >/tmp/out$$
 
 case $1 in
     --regress)

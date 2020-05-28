@@ -15,12 +15,12 @@ set -e
 
 TMPDIR=${TMPDIR:-/tmp}
 
-trap 'rm -rf ${TMPDIR}/scratch$$ ${TMPDIR}/ref$$ ${TMPDIR}/out$$' EXIT HUP INT QUIT TERM
+trap 'rm -rf ${TMPDIR}/cvs-scratch$$ ${TMPDIR}/ref$$ ${TMPDIR}/out$$' EXIT HUP INT QUIT TERM
 
 # Go to our sandbox
 here=$(realpath .)
-mkdir "${TMPDIR}/scratch$$"
-cd "${TMPDIR}/scratch$$" >/dev/null || (echo "$0: cd failed" >&2; exit 1)
+mkdir "${TMPDIR}/cvs-scratch$$"
+cd "${TMPDIR}/cvs-scratch$$" >/dev/null || (echo "$0: cd failed" >&2; exit 1)
 
 # Make the workflow file.
 repotool initialize -q hack1 cvs git

@@ -8,15 +8,15 @@ set -e
 
 TMPDIR=${TMPDIR:-/tmp}
 
-trap 'rm -rf ${TMPDIR}/scratch$$ vanilla-prime$$' EXIT HUP INT QUIT TERM
+trap 'rm -rf ${TMPDIR}/svn-scratch$$ ${testdir}/vanilla-prime$$' EXIT HUP INT QUIT TERM
 
 # Make a repository from a sample stream.
 ./svn-to-svn -q -n "vanilla-prime$$" <vanilla.svn
 
 # Go to our sandbox
 testdir=$(realpath .)
-mkdir "${TMPDIR}/scratch$$"
-cd "${TMPDIR}/scratch$$" >/dev/null || (echo "$0: cd failed" >&2; exit 1)
+mkdir "${TMPDIR}/svn-scratch$$"
+cd "${TMPDIR}/svn-scratch$$" >/dev/null || (echo "$0: cd failed" >&2; exit 1)
 
 # Make the workflow file.
 repotool initialize -q vanilla-secundus svn git
