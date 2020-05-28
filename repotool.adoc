@@ -182,6 +182,10 @@ necessarily indicate a clean comparison; only empty output does that.
 [[bugs]]
 == BUGS ==
 
+CVS repostories have an unnamed default branch.  This is not
+listed by "repotool branches"; if there are no named branches the
+output is empty.
+
 When a Subversion file is part of a mismatch, the displayed
 filename is missing its trunk/tag/branch location, which
 must be inferred from the way the comparison is invoked.

@@ -450,7 +450,7 @@ func mirror(args []string) {
 			return false
 		}
 		vtype := identifyRepo(operand[len(prefix)-1:])
-		return vtype != nil  && vtype.name == vcs
+		return vtype != nil && vtype.name == vcs
 	}
 	var locald string
 	tillHash := regexp.MustCompile("^.*#")
@@ -1091,6 +1091,10 @@ repotool options:
 	operation := os.Args[1]
 
 	flags.Parse(os.Args[2:])
+
+	if !strings.HasPrefix(operation, "compare") && (acceptMissing || context || seeignores || same) {
+		croak("compare option with non-compare operation, bailing out.")
+	}
 
 	if basedir != "" {
 		if err := os.Chdir(basedir); err != nil {
