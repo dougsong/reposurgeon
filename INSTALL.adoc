@@ -17,9 +17,13 @@ make check                                  # Run the tests
 
 == Prerequisites ==
 
+This code is developed under Linux and expected to work under any
+other Unix, including OS X. Full function has been confirmed under
+MS-Windows/WSL, but native MS-Windows is not supported.
+
 You will need 64-bit hardware. This code is not intended to run on
 32-bit machines (which have an address space too small to be useful
-for surgwey on large repositories) and may not even build on them.
+for surgery on large repositories) and may not even build on them.
 
 You will need git at version 2.19.2 or later.  Versions of reposurgeon
 after 4.7 assume the --show-original-ids option of git-fast-export is
