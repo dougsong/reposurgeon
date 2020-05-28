@@ -566,8 +566,10 @@ func branches() string {
 }
 
 func checkout(outdir string, rev string) string {
-	if verbose {
-		fmt.Printf("checkout: %s\n", outdir)
+	var err error
+	pwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
 	}
 	if nobranch {
 		branch = "" // nobranch will also prevent the automatic switch to "trunk"
@@ -575,16 +577,14 @@ func checkout(outdir string, rev string) string {
 	if outdir[0] != os.PathSeparator {
 		croak("checkout requires absolute target path")
 	}
-	var err error
 	if exists(outdir) {
 		outdir, err = filepath.EvalSymlinks(outdir)
 		if err != nil {
 			log.Fatal(fmt.Sprintf("chasing symlink: %v", err))
 		}
 	}
-	pwd, err2 := os.Getwd()
-	if err != nil {
-		log.Fatal(err2)
+	if verbose {
+		fmt.Printf("checkout: from %s to %s\n", pwd, outdir)
 	}
 	vcs := identifyRepo(".")
 	if vcs.name == "cvs" {
@@ -1025,7 +1025,7 @@ func compareAll(args []string) {
 	// comparison if it exists on one side but not the other, but
 	// will succeed if both repositories have no trunk
 	acceptMissing = true
-	branch = "master"
+	branch = ""
 	diff := compareRevision(args, "")
 	if verbose {
 		fmt.Print("Comparing tags...")

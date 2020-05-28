@@ -29,8 +29,7 @@ repotool initialize -q hack1 cvs git
 make --silent -e REMOTE_URL="cvs://localhost${here}/hack1.repo#module" VERBOSITY="" 2>&1 | sed "/ no commitids before/"d
 
 # Compare the results
-# FIXME: Should be compare-all, but that function is busted.
-repotool compare hack1-mirror hack1-git || echo "FAILED: Repositories do not compare equal."
+repotool compare-all hack1-mirror hack1-git || echo "FAILED: Repositories do not compare equal."
 
 # No output is good news
 
