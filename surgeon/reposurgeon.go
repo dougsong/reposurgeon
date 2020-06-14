@@ -6065,7 +6065,7 @@ func (repo *Repository) checkUniqueness(chatty bool, logHook func(string)) {
 		for k := range timeCollisions {
 			reps = append(reps, k)
 		}
-		logHook("These timestamps have multiple commits: %s" +
+		logHook("These timestamps have multiple commits: " +
 			strings.Join(reps, " "))
 	}
 	stampCollisions := newOrderedStringSet()
