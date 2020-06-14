@@ -11229,6 +11229,9 @@ for graphviz. Supports > redirection.
 `)
 }
 
+// Most comment characters we want to fit in a commit box
+const graphCaptionLength = 32
+
 // DoGraph dumps a commit graph.
 func (rs *Reposurgeon) DoGraph(line string) bool {
 	if rs.chosen() == nil {
@@ -11286,7 +11289,10 @@ func (rs *Reposurgeon) DoGraph(line string) bool {
 		}
 		if tag, ok := event.(*Tag); ok {
 			firstLine, _ := splitRuneFirst(tag.Comment, '\n')
-			summary := html.EscapeString(firstLine[:32])
+			if len(firstLine) >= graphCaptionLength {
+				firstLine = firstLine[:graphCaptionLength]
+			}
+			summary := html.EscapeString(firstLine)
 			fmt.Fprintf(parse.stdout, "\t\"%s\" [label=<<table cellspacing=\"0\" border=\"0\" cellborder=\"0\"><tr><td><font color=\"blue\">%s</font></td><td>%s</td></tr></table>>];\n", tag.name, tag.name, summary)
 		}
 	}
