@@ -56,7 +56,7 @@ options.adoc: reposurgeon
 
 # Note: to suppress the footers with timestamps being generated in HTML,
 # we use "-a nofooter".
-# To debug asciidoc problems, you may need to run "xmllint" --nonet --noout --valid"
+# To debug asciidoc problems, you may need to run "xmllint --nonet --noout --valid"
 # on the intermediate XML.
 .SUFFIXES: .html .adoc .1
 
