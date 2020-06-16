@@ -1,5 +1,8 @@
 = reposurgeon project news =
 
+4.11: 2020-06-16::
+     Minor bugfixes for lint and graph commands.
+
 4.10: 2020-05-28::
      The default conversion worklow has been simplified and sped up.
      New crlf operation allows editing comments with Windows line endings.
