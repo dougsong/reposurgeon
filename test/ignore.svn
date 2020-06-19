@@ -1,0 +1,94 @@
+SVN-fs-dump-format-version: 2
+ ## svn:ignore property-setting example
+
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+1970-01-01T00:00:00.000000Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 131
+Content-length: 131
+
+K 10
+svn:author
+V 4
+fred
+K 8
+svn:date
+V 27
+1970-01-01T00:00:10.000000Z
+K 7
+svn:log
+V 33
+Test svn:global-ignores property.
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 37
+Content-length: 37
+
+K 10
+svn:ignore
+V 6
+*.foo
+
+PROPS-END
+
+
+Node-path: trunk/keepme.txt
+Node-kind: file
+Node-action: add
+Text-content-md5: 46504d3e92e63872e91fb18dc87de79c
+Text-content-sha1: 9f11579d69326d862cf93eb840ac59750c439c40
+Prop-content-length: 10
+Text-content-length: 30
+Content-length: 40
+
+PROPS-END
+this file should be versioned
+
+
+Node-path: trunk/subdir
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Node-path: trunk/subdir/ignoreme.foo
+Node-kind: file
+Node-action: add
+Text-content-md5: 2115bd1ebd631c07196deda1baaa77e5
+Text-content-sha1: 95f3ba45e95d2a2384d9f8df0c676df95ac33a1a
+Prop-content-length: 10
+Text-content-length: 33
+Content-length: 43
+
+PROPS-END
+this file should also be ignored
+
+
+Node-path: trunk/subdir/keepme2.txt
+Node-kind: file
+Node-action: add
+Text-content-md5: 60119ba04daf94c03f155893d7af97eb
+Text-content-sha1: 52537fd4c9bf381408239afced56d4a700b75d2c
+Prop-content-length: 10
+Text-content-length: 35
+Content-length: 45
+
+PROPS-END
+this file should also be versioned
+
+
