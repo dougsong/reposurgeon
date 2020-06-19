@@ -8,25 +8,23 @@ set -e
 
 TMPDIR=${TMPDIR:-/tmp}
 
-trap 'rm -rf ${TMPDIR}/svn-scratch$$ ${testdir}/vanilla-prime$$' EXIT HUP INT QUIT TERM
-
-# Make a repository from a sample stream.
-./svn-to-svn -q -n "vanilla-prime$$" <vanilla.svn
+trap 'rm -rf ${TMPDIR}/scratch$$ ${TMPDIR}/ref$$ ${TMPDIR}/out$$' EXIT HUP INT QUIT TERM
 
 # Go to our sandbox
 testdir=$(realpath .)
-mkdir "${TMPDIR}/svn-scratch$$"
-cd "${TMPDIR}/svn-scratch$$" >/dev/null || (echo "$0: cd failed" >&2; exit 1)
+mkdir "${TMPDIR}/scratch$$"
+cd "${TMPDIR}/scratch$$" >/dev/null || (echo "$0: cd failed" >&2; exit 1)
+
+# Make a repository from a sample stream.
+"${testdir}/svn-to-svn" -q -n vanilla-prime <"${testdir}/vanilla.svn"
 
 # Make the workflow file.
 repotool initialize -q vanilla-secundus svn git
 
 # Mirror vanilla-prime into vanilla-secundus and invoke standard workflow
-make --silent -e REMOTE_URL="file://${testdir}/vanilla-prime$$" VERBOSITY="" 2>&1
+make --silent -e REMOTE_URL="file://${TMPDIR}/scratch$$/vanilla-prime" VERBOSITY="" 2>&1
 
 # Compare the results
 repotool compare-all vanilla-secundus-mirror vanilla-secundus-git || echo "FAILED: Repositories do not compare equal."
-
-# No output is good news
 
 #end
