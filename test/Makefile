@@ -142,7 +142,6 @@ fi-regress: multigen.svn
 # A generated test load
 multigen.svn: multigen.sh
 	sh multigen.sh -d >multigen.svn
-	sh singlelift -b multigen
 
 $(TESTLOADS:%=fi-regress-%): fi-regress-%: %.tst
 	@file=$(<:.tst=); \
