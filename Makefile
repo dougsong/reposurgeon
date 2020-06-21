@@ -6,15 +6,12 @@ prefix?=/usr/local
 mandir?=share/man
 target=$(DESTDIR)$(prefix)
 
-MAKED := $(dir $(firstword $(MAKEFILE_LIST)))
-VPATH = $(MAKED)
-
-VERS=$(shell sed <$(MAKED)surgeon/version.go -n -e '/const *version *= *\"\(.*\)\"/s//\1/p')
+VERS=$(shell sed <surgeon/version.go -n -e '/const *version *= *\"\(.*\)\"/s//\1/p')
 
 META = README.adoc INSTALL.adoc NEWS.adoc COPYING
 PAGES = reposurgeon.adoc repocutter.adoc repomapper.adoc repotool.adoc repobench.adoc
 DOCS = $(PAGES) repository-editing.adoc oops.svg
-SOURCES = $(shell cd $(MAKED) && ls */*.go) repobench repotool reposurgeon-mode.el go.mod go.sum
+SOURCES = $(shell ls */*.go) repobench reposurgeon-mode.el go.mod go.sum
 SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
 SOURCES += Dockerfile ci/prepare.sh .gitlab-ci.yml
 SOURCES += $(META) $(DOCS)
@@ -23,7 +20,7 @@ SOURCES += $(META) $(DOCS)
     uninstall version check release refresh docker-build docker-check	\
     docker-check-noscm get vet test fmt lint
 
-BINARIES  = reposurgeon repotool repomapper repocutter repobench repotool
+BINARIES  = reposurgeon repotool repomapper repocutter repobench
 MANPAGES  = $(PAGES:.adoc=.1)
 HTMLFILES = $(DOCS:.adoc=.html)
 SHARED    = $(META) reposurgeon-git-aliases $(HTMLFILES)
@@ -41,13 +38,13 @@ build: $(BINARIES) $(MANPAGES) options.adoc $(HTMLFILES)
 .PHONY: repocutter reposurgeon repomapper repotool
 
 repocutter:
-	cd $(MAKED) && go build $(GOFLAGS) -o $(CURDIR)/repocutter ./cutter
+	go build $(GOFLAGS) -o $(CURDIR)/repocutter ./cutter
 reposurgeon:
-	cd $(MAKED) && go build $(GOFLAGS) -o $(CURDIR)/reposurgeon ./surgeon
+	go build $(GOFLAGS) -o $(CURDIR)/reposurgeon ./surgeon
 repomapper:
-	cd $(MAKED) && go build $(GOFLAGS) -o $(CURDIR)/repomapper ./mapper
+	go build $(GOFLAGS) -o $(CURDIR)/repomapper ./mapper
 repotool:
-	cd $(MAKED) && go build $(GOFLAGS) -o $(CURDIR)/repotool ./tool
+	go build $(GOFLAGS) -o $(CURDIR)/repotool ./tool
 
 # Generated documentation parts:
 
@@ -57,7 +54,7 @@ options.adoc: reposurgeon
 # Note: to suppress the footers with timestamps being generated in HTML,
 # we use "-a nofooter".
 # To debug asciidoc problems, you may need to run "xmllint --nonet --noout --valid"
-# on the intermediate XML.
+# on the intermediate XML that throws an error.
 .SUFFIXES: .html .adoc .1
 
 .adoc.1:
@@ -73,12 +70,12 @@ get:
 	go get -u ./...	# go get -u=patch for patch releases
 
 test:
-	cd $(MAKED) && go test $(TESTOPTS) ./surgeon
-	cd $(MAKED) && go test $(TESTOPTS) ./cutter
+	go test $(TESTOPTS) ./surgeon
+	go test $(TESTOPTS) ./cutter
 
 lint:
-	cd $(MAKED) && golint -set_exit_status ./...
-	cd $(MAKED) && shellcheck -f gcc repobench test/fi-to-fi test/liftcheck test/singlelift test/svn-to-git test/svn-to-svn test/delver test/*.sh test/*test
+	golint -set_exit_status ./...
+	shellcheck -f gcc repobench test/fi-to-fi test/liftcheck test/singlelift test/svn-to-git test/svn-to-svn test/delver test/*.sh test/*test
 
 fmt:
 	gofmt -w .
@@ -127,7 +124,7 @@ version:
 #
 
 check: lint build test
-	$(MAKE) -C $(MAKED)test --quiet check BINDIR=$(realpath $(CURDIR))
+	$(MAKE) -C test --quiet check BINDIR=$(realpath $(CURDIR))
 #
 # Continuous integration.  More specifics are in the ci/ directory
 #
@@ -157,7 +154,7 @@ docker-check-noscm: docker-check-only-bzr docker-check-only-cvs \
 #
 
 reposurgeon-$(VERS).tar.xz: $(SOURCES) $(MANPAGES)
-	tar -P --transform='s:$(MAKED)::S;s:^:reposurgeon-$(VERS)/:S' --show-transformed-names -cJf reposurgeon-$(VERS).tar.xz $^ $(MAKED)test
+	tar --transform='s:^:reposurgeon-$(VERS)/:' --show-transformed-names -cJf reposurgeon-$(VERS).tar.xz $(SOURCES) $(MANPAGES) test
 
 dist: reposurgeon-$(VERS).tar.xz
 
