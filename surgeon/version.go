@@ -5,6 +5,6 @@
 
 package main
 
-const version = "4.11"
+const version = "4.12"
 
 // end
