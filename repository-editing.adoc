@@ -7,23 +7,23 @@
 == How to use this manual
 
 Everybody should read the Introduction (immediately after this
-section) to be sure rgeposurgeon is the tool you actually want.
+section) to be sure reposurgeon is the tool you actually want.
 
 Then read the Quick Start section (immediately following the
 Introduction) to get a feeling for the syntax and style of reposurgeon
-commaands.
+commands.
 
 Assuming you're trying to do a repository lift, you should probably
 continue by by reading A Guide to Repository Conversion.  It is not
 necessary to read the entire main body of the manual after that (the
-command reference) straignt through, but keep it handy for when you
+command reference) straight through, but keep it handy for when you
 need to learn more about a particular command or group of commands.
 
-If you're doing someting more unusual than a conversion, you'll
+If you're doing something more unusual than a conversion, you'll
 probably have to read through the command reference until
 you discover the commands you need.
 
-Help is available within reposurgon using the "help" command.
+Help is available within reposurgeon using the "help" command.
 Type "help" alone for a list of help topics.
 
 [[introduction]]
@@ -174,7 +174,7 @@ needs.
 
 One of the main uses for reposurgeon is converting repositories
 between different version-control systems. In the year 2020,
-this usually means convering from something else to Git.
+this usually means converting from something else to Git.
 
 This section is a guide to up-converting your repository, and adopting
 practices that will reduce process friction to a minimum.  It is meant
@@ -217,7 +217,7 @@ intelligible in whatever your new one is.
 As another example, git has a convention about the form of change comments;
 they're supposed to consist of a standalone summary line, followed
 optionally by a spacer blank line and running text.  Git relies on
-this convention to produce log summeries that are easy to take in at a
+this convention to produce log summaries that are easy to take in at a
 glance.
 
 Older version-control systems don't have this convention.  An ideal
@@ -397,7 +397,7 @@ mailing list, grepping out all the From addresses may suggest some
 obvious matches with otherwise unknown usernames. You may also
 be able to get timezone offsets from the date stamps on the mail.
 The repomapper tool can mine matching addresses from mailbox files
-automatiucally, though it does not extract timezones.
+automatically, though it does not extract timezones.
 
 If you are converting the repository for an open-source project, it is
 good courtesy and good practice after the above first step to email
@@ -414,7 +414,7 @@ identifications in parallel with the rest of the work.
 
 === Step Two: Conversion
 
-Install whatever front end repsurgeon needs to read your
+Install whatever front end reposurgeon needs to read your
 repository.  That will be
 http://www.catb.org/~esr/cvs-fast-export[cvs-fast-export] for CVS, or
 the Subversion tools themselves for Subversion.
@@ -453,7 +453,7 @@ and reposurgeon, warn you of problems and help you recover.
 [[zombie]]
 There are two kinds of non-serious CVS conversion glitches: file
 content mismatches due to keyword fields in masters, and 'zombie'
-files deleted in CVS that get resurrected in Git revuions
+files deleted in CVS that get resurrected in Git revisions
 associated with tags.
 
 You can spot content mismatches due to keyword expansion easily.  They
@@ -585,7 +585,7 @@ https://stackoverflow.com/questions/31051732/perforce-to-git-migration[this
 Stack Overflow answer], the magic incantation is something like `git
 p4 clone --import-labels --detect-branches //depot/path/project@all`.
 This will create a live Git repository capturing your Perforce
-bistory.  This recipe is included for completeness; it is unknown
+history.  This recipe is included for completeness; it is unknown
 to the author what (if any) reposurgeon cleanup operations might be
 required, but a skim of Perforce documentation suggests that mapping
 Perforce user IDs to a Git-style name/address pair will be desirable.
@@ -618,7 +618,7 @@ might just have a misassigned tag that can be manually fixed. Consult
 <<reporting-bugs>> for information on how to usefully report bugs.
 
 Use reposurgeon's '```lint```' command to find anomalies like detached
-branches that may need mabual correction.
+branches that may need manual correction.
 
 If you are converting from CVS, use reposurgeon's graph command to
 examine the conversion, looking (in particular) for misplaced tags or
@@ -655,12 +655,12 @@ Subversion and CVS commit references::
     clean conversion should turn all these into VCS-independent commit
     references, which will be described later in this document.
 
-Multiline contents with no summary::
+Multi-line contents with no summary::
     git and hg both encourage comments to begin with a summary line
     that can stand alone as a short description of the change; this
     practice produces more readable output from `git log`
     and `hg log`. For a really high-quality conversion,
-    multiline comments should be edited into this form.
+    milting comments should be edited into this form.
 
 Tags from Subversion no-fileop commits::
     Commits with no fileops are automatically transformed into tags
@@ -753,7 +753,7 @@ See the documentation of the `references` command; for
 details on how fix up Subversion and CVS changeset references in
 comments so they're still meaningful.
 
-The command `=L edit` is good for fixing up multiline comments.
+The command `=L edit` is good for fixing up multi-line comments.
 
 The reposurgeon command `inspect =H` will
 show you tip commits which may contain only deletes and
@@ -854,7 +854,7 @@ expressing Subversion svn:ignore properties as .gitignore files
 and lifting .cvsignore files to .gitignore files; see <<limitations>>
 if other DVCSes are involved.
 
-Any .gitignore files found in a repository were almost ceryainly
+Any .gitignore files found in a repository were almost certainly
 created by git-svn users ad hoc and should be discarded; it is up to
 the human doing the conversion to look through them and rescue any
 ignore patterns that should be merged into the converted repository.
@@ -1072,7 +1072,7 @@ unique dump format supported by Subversion. Reposurgeon contains
 an interpreter for this stream format.
 
 As a matter of historical interest, some old versions of reposurgeon
-had tha ability to build a Subversion repository on output by
+had the ability to build a Subversion repository on output by
 synthesizing a Subversion dump stream and feeding it to '```svnadmin
 load```'.  This feature was a cute stunt, but was abandoned during
 translation to Go for a couple of different reasons. Most importantly,
@@ -1197,7 +1197,7 @@ History is always available.
    List the commands you have entered this session.
 
 You can do Ctrl-P or up-arrow to scroll back through the command
-history list, and Ctrl-N or down-arrow to scroll forwad in it.
+history list, and Ctrl-N or down-arrow to scroll forwrad in it.
 
 Tab-completion on command keywords is available.
 
@@ -1316,7 +1316,7 @@ commit numbers::
    commit-sequence number.
 
 reset targets::
-   If the orecvious ways of interpreting an ame withing brackets don't
+   If the previous ways of interpreting a name within brackets don't
    resolved, the name is checked to see if it matches a reset. If so,
    the expression resolves to the commit the reset is attached to.
 
