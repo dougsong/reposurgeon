@@ -31,7 +31,7 @@ SHARED    = $(META) reposurgeon-git-aliases $(HTMLFILES)
 GOFLAGS=-gcflags '-N -l'
 
 # Must force options.adoc to be built earky so it will be available for inclusion. 
-build: $(BINARIES) $(MANPAGES) options.adoc $(HTMLFILES)
+build: $(BINARIES) options.adoc $(MANPAGES) $(HTMLFILES)
 
 # Imitate old behavior of rebuilding bins. They have no dependencies
 # so *not* building them would be irritating if sources change.
