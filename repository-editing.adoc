@@ -1077,7 +1077,7 @@ synthesizing a Subversion dump stream and feeding it to '```svnadmin
 load```'.  This feature was a cute stunt, but was abandoned during
 translation to Go for a couple of different reasons. Most importantly,
 there is zero demand for moving histories *to* Subversion - and
-supposing there were, moving content and metadate from git's DAG
+supposing there were, moving content and metadata from git's DAG
 representation to a Subversion stream is very lossy. Subversion to Git
 to Subversion wouldn't even have round-tripped well.
 
