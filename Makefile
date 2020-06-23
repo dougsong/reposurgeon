@@ -62,6 +62,9 @@ options.adoc: reposurgeon
 .adoc.html:
 	asciidoctor -D. -a webfonts! $<
 
+spellcheck:
+	aspell check -d vocabulary repository-editing.adoc
+
 #
 # Auxillary Go tooling productions
 #

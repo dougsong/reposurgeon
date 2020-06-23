@@ -1077,7 +1077,7 @@ synthesizing a Subversion dump stream and feeding it to '```svnadmin
 load```'.  This feature was a cute stunt, but was abandoned during
 translation to Go for a couple of different reasons. Most importantly,
 there is zero demand for moving histories *to* Subversion - and
-supposing there were, moving content and metadate fom git's DAG
+supposing there were, moving content and metadate from git's DAG
 representation to a Subversion stream is very lossy. Subversion to Git
 to Subversion wouldn't even have round-tripped well.
 
@@ -1090,7 +1090,7 @@ attributes on their nodes.
 
 To get a feel for what that graph is like, it's helpful to have seen a
 git-fast-import stream file.  Here is a trivial example from the
-reposurgeon testv suite, describing a history with a two commit to a
+reposurgeon test suite, describing a history with a two commit to a
 single file:
 
 --------
@@ -1142,8 +1142,8 @@ part of the version commit; there are a couple of other special fileop
 types of lesser importance.
 
 Reposurgeon's internal representation of a repository history is
-basically a deserialized git fast-omport stream.  A few extra
-attributes are supported; most notavly, commits and resets have a
+basically a deserialized git fast-import stream.  A few extra
+attributes are supported; most notably, commits and resets have a
 legacy-id attribute that carries over the object's ID from whatever
 version-control system exported the stream, in particular a Subversion
 or CVS revision number.
@@ -1181,7 +1181,7 @@ own change tracking.
 [[wayfinding]]
 == Finding your way around
 
-In the remainder of this documewnt, imdividual commands are described
+In the remainder of this document, individual commands are described
 by hanging paragraphs led by the command sequence.
 
 Help is always available.
@@ -1197,7 +1197,7 @@ History is always available.
    List the commands you have entered this session.
 
 You can do Ctrl-P or up-arrow to scroll back through the command
-history list, and Ctrl-N or down-arrow to scroll forwrad in it.
+history list, and Ctrl-N or down-arrow to scroll forward in it.
 
 Tab-completion on command keywords is available.
 
@@ -1433,7 +1433,7 @@ on matching branches, and tags which point to commits on matching branches.
 +
 Multiple qualifier letters can add more search scopes.
 +
-(The "b" qualifier replaces the branchset syntax
+(The "b" qualifier replaces the branch-set syntax
 in earlier versions of reposurgeon.)
 
 paths::
@@ -1532,12 +1532,12 @@ whitespace-separated subcommand name, and possibly
 following arguments.
 
 The syntax of following arguments is variable according to the
-requrements of individual commands, but there are a couple of general
+requirements of individual commands, but there are a couple of general
 rules.
 
 * You can have comments in a script, let by the character "#".  Both
   whole-line and "winged" comments following command arguments are
-  suppotrted.  Note that reposurgeon's command paeser is fairly
+  supported.  Note that reposurgeon's command parser is fairly
   primitive and will be confused by a literal # in a command argument.
 
 * Many commands interpret C/Go style backslash escapes like \n in
@@ -1547,25 +1547,25 @@ rules.
 * Some commands support option flags.  These are led with a --, so if
   there is an option flag named "foo" you would write it as "--foo".
   Option flags are parsed out of the command line before any other
-  interpretation is performed, and can be anywhwere on the line.  The
+  interpretation is performed, and can be anywhere on the line.  The
   order of option flags is never significant.
 
-* When an option flag "foo" sets a value, the sayntax is --foo=xxx
+* When an option flag "foo" sets a value, the syntax is --foo=xxx
   with no spaces around the equal sign.
 
 * All commands that expect data to be presented on standard input support
   input redirection.  You may write "<myfile" to take input from the
-  file named "myfile".  Reirectioons are parsed out early, before
-  the command arguments proprt arte interpreted, and can be anywhere
+  file named "myfile".  Redirections are parsed out early, before
+  the command arguments proper are interpreted, and can be anywhere
   on the line
 
 * All commands that expect data to be presented on standard input also
-  accept a here-document, just lthe shell syntax for here-documents
+  accept a here-document, just the shell syntax for here-documents
   with a leading "<<". There are two here-documents in the quick-start
   example.
 
 * Most commands that normally ship data to standard output accept
-  output redirection.  As in the shell, you can weite ">outfile" to
+  output redirection.  As in the shell, you can write ">outfile" to
   send the command output to "outfile", and ">>outfile2" to append
   to outfile2.
 
@@ -1598,10 +1598,10 @@ name.  At any given time, one may be selected for editing. Commands in
 this group import repositories, export them, and manipulate the
 in-core list and the selection.
 
-If you are planning a conversion from Subversion, yout should
+If you are planning a conversion from Subversion, you should
 probably read <<subversion>> after this section.
 
-If you are planning a conversion from Mercurial, yout should
+If you are planning a conversion from Mercurial, out should
 probably read <<mercurial>> after this section.
 
 === Reading and writing repositories
@@ -1819,11 +1819,11 @@ ignored.
 === File preservation
 
 When the repository type you are working with has a "lister" method,
-it can tell which files in a repository directory arte not checked in
+it can tell which files in a repository directory are not checked in
 and will copy them into the edited repository made by a rebuild.
 
 The following commands are required only if there is no lister
-method and you have to set presrrvations by hand.
+method and you have to set preservations by hand.
 
 `preserve` [ _file..._ ]::
    Add (presumably untracked) files or directories to the repo's
@@ -1883,7 +1883,7 @@ content from leaking forward.
 === The repository list
 
 Reposurgeon can have several repositories loaded at once.
-The following commands operae on the repository list.
+The following commands operate on the repository list.
 
 `choose` [ _reponame_ ]::
    Choose a named repo on which to operate.  The name of a repo is
@@ -2802,7 +2802,7 @@ timestamp is often a useful thing to do, in order for every commit has
 a unique action stamp that can be referred to in surgical
 commands.
 
-The '```lint```' command will tell you if you have timrestamp collisions.
+The '```lint```' command will tell you if you have timestamp collisions.
 
 [ _selection_ ] `timequake`::
    Attempt to hack committer and author time stamps in the
@@ -3233,12 +3233,12 @@ The command reports statistics on how many commits were altered.
 [[coalescence]]
 === Clique coalescence
 
-When lifting a history from a version-control system that lacls
-changesets, it is useful to have a way to recognize cliwues of
-per-file changes that oughtvto be grouped into changesets.
+When lifting a history from a version-control system that lacks
+changesets, it is useful to have a way to recognize cliques of
+per-file changes that ought to be grouped into changesets.
 
 You won't need this for CVS because cvs-fast-export does
-clique coalesxence itself.
+clique coalescence itself.
 
 [ _selection_ ] `coalesce` [ `--debug` | `--changelog` ] [ _timefuzz_ ]::
    Scan the selection set for runs of commits with identical
@@ -3557,7 +3557,7 @@ long-running conversion recipes.
 
 `profile` [ `live` | `start` | `save` ] [ _args..._ ]::
     Profiling is enabled by default, but viewing the profile data
-    requires either starting the http server with '```profile live```', or
+    requires either starting the HTTP server with '```profile live```', or
     saving it to a file with '```profile save```'. When no arguments are
     given it prints out the available types of profiles.  There is
     more detailed documentation on this command in the embedded help.
@@ -4010,7 +4010,7 @@ close in time, and it converts .cvsignore files to .gitignores.
 
 A CVS repository normally consists of a set of module subdirectories
 and a CVSROOT directory containing metadata. cvs-fast-export ignores
-CVSROOT; thus you can run reposugeon at any level of a directory tree
+CVSROOT; thus you can run reposurgeon at any level of a directory tree
 containing CVS master files and it will try to lift what it can see at
 and below the current directory it is run from.
 
@@ -4030,13 +4030,13 @@ with a larger -w option and read in the generated stream.
 One step in cleaning up a CVS conversion that is unique to that
 system is deleting root tags - tags which have "-root" as a name
 suffix and mark the beginning of a branch,  CVS uses these for
-bookeeping, but later sysrems don't need them.  They're just
+bookkeeping, but later systems don't need them.  They're just
 clutter and can be removed.
 
 It's also worth paying careful attention to reference-lifting so that
 you can scrub useless CVS revision numbers out of comments.  This is a
 more pressing issue than it is with Subversion, where changesets map
-tp changesets and conversions have the option of marking each target
+to changesets and conversions have the option of marking each target
 changeset with its revision number.
 
 [[troubleshooting]]
@@ -4097,7 +4097,7 @@ Reposurgeon's execution time is dominated by cycles spent in the
 memory allocator and garbage collector.  Thus, you can pay RAM to
 decrease running time - push GOGC *up* from its default of 100.  If
 your conversion completes in reasonable time before your memory usage
-incereases enough that reposurgeon gets killed by OOM, you win.
+increases enough that reposurgeon gets killed by OOM, you win.
 Otherwise see previous section about adding RAM and swap space.
 
 A stallout is more difficult to troubleshoot than an OOM, and more likely
@@ -4109,7 +4109,7 @@ likely:
    aware that there is a known O(n**2) problem in phase C2 of the
    Subversion dump reader tat really thrashes the allocator; that's
    not reducible and we're just going to tell you you have to throw
-   more RAM at the poblem.
+   more RAM at the problem.
 
 2. Use repobench to see if you can identify a revision that triggers
    the stall.  The procedure for this is to use it to step your
@@ -4132,11 +4132,11 @@ behavior.  If reposurgeon died, include the backtrace.
 were operating on, or a pointer to where it can be pulled from.
 
 (c) A script containing the sequence of reposurgeon commands that
-revealed the bug.  If youi were exploring interactively, remember
-that the "history" command exists and can dump yor command history
+revealed the bug.  If you were exploring interactively, remember
+that the "history" command exists and can dump your command history
 to a file.
 
-(c) If you were usin the standard-workflow Makefile generated by
+(c) If you were using the standard-workflow Makefile generated by
 "repotool initialize", mention that in your bug report.  If you
 modified the Makefile, include a copy with the bug report.
 
@@ -4191,7 +4191,7 @@ disclosed!  The command preserves structure and metadata but replaces
 each content blob with a unique magic cookie.
 
 If you don't want to disclose even the metadata, you can do a
-repocutter "obscure" pass afte the strip. This will mask file paths
+repocutter "obscure" pass after the strip. This will mask file paths
 and developer names.
 
 ==== Truncate the dump as much as possible
@@ -4686,7 +4686,7 @@ fast and can thus be productively used even on huge repositories.
 http://www.catb.org/~esr/cvsps
 
 Don't use this.  Just plain don't.  The author maintained version 3.x
-until endof-of-lifing it in favor of cvs-fast-export due to
+until end-of-lifing it in favor of cvs-fast-export due to
 fundamental, unfixable problems.  It gets branch topology wrong in
 ways that are difficult to detect.
 
@@ -4959,7 +4959,7 @@ GCC::
 == Development History
 
 Links to notable blog posts during the development of reposurgeon.
-Trivial relesse announcements have been omitted.
+Trivial release announcements have been omitted.
 
 http://esr.ibiblio.org/?p=2718[Announcing reposurgeon -- a tool for the good new days] (2010-11-01)
 
