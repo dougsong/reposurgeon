@@ -31,7 +31,7 @@ repobench [-h] [-c cmd] [-p datafiles] [-o datafiles] [-s runtime|heap|highwater
 == DESCRIPTION ==
 
 This script has two modes; generate or display.  They're
-separateds so that the expensive result fom generate mode
+separated so that the expensive result from generate mode
 can be capt around for repeated visualization.
 
 === GENERATE MODE
@@ -69,20 +69,20 @@ amount of time, followed by runs with smaller step values, such as
 Generate mode uses sudo to instruct the kernel to drop everything
 from the file system cache between runs.
 
-To change the befhavior oidf reposurgeon you can user the -c option
+To change the behavior of reposurgeon you can user the -c option
 to pass it a command-line argument.
 
 === DISPLAY MODE
 
 Display mode with a single file argument takes a previously generated
 datafile and renders it as a graph. Curve fitting is attempted. Use
-the -p option for interactive GNUPLOT, or the -o option to ship an SVG
+the -p option for interactive gnuplot, or the -o option to ship an SVG
 to stdout.  The -s option can be used to choose which statistic to
 graph.
 
 Giving multiple files with display mode suppresses curve fitting
 and produces a comparative graph. The -o, -p, and -s options
-are interpreted.  This mode is useful in checking for prerformance
+are interpreted.  This mode is useful in checking for performance
 regressions.
 
 [[see_also]]

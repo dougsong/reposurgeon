@@ -4,10 +4,10 @@
     Snap release to fix broken tarball production (revised).
 
 4.11: 2020-06-16::
-     Minor bugfixes for lint and graph commands.
+     Minor bug fixes for lint and graph commands.
 
 4.10: 2020-05-28::
-     The default conversion worklow has been simplified and sped up.
+     The default conversion workflow has been simplified and sped up.
      New crlf operation allows editing comments with Windows line endings.
      Bug fix for timequake and timeoffset commands.
      Randomize temporary directories during repotool compare.
@@ -28,7 +28,7 @@
      The ~ pattern-negation operator has been added to expunge.
      Expunges no longer create a synthetic repository for deleted fileops.
      Minor bugfixes for filter --regexp option handling.
-     Assed "deselect" command to repocutter.
+     Added "deselect" command to repocutter.
      The last Python dependency is gone.
      repocutter and repotool have version commands.
 
@@ -144,7 +144,7 @@
      Fix "filter --shell" never invoking shell command.
      Fix "mailbox_in" crash when mailbox adds an author.
      Fix event selection expression parser hanging forever on mistyped "..".
-     Fix "squash --pushback" utter brokeness when handed multiple events.
+     Fix "squash --pushback" utter brokenness when handed multiple events.
      Fix mailbox not roundtripping correctly (added newline and munged date).
      Fix "squash" not always garbage-collecting unreferenced blobs.
      Fix "write" crashing with "prefer svn" when parent not in selection.
@@ -361,7 +361,7 @@
 
 3.4: 2014-02-14::
      @amp() function useful for logic-gating in conjunctive expressions.
-     New 'assign' command allows precomputation of expensive selections.
+     New 'assign' command allows pre computation of expensive selections.
      There's an 'unassign' as well.
      exec/eval facility for custom Python extensions.
      path rename has a --relax and --force options to deal with path collisions
@@ -534,7 +534,7 @@
 2.12: 2012-12-30::
      Support for reading RCS repositories.
      Now handling three-field authormap files with timezone offsets.
-     Dump fileops in the stype of the output VCS, not the input.
+     Dump fileops in the type of the output VCS, not the input.
      Synchronized with cvsps 3.3 release.
 
 2.11: 2012-12-20::
@@ -700,7 +700,7 @@
      being consecutive.
      Allow Passthrough events to be merged.
      After a cut operation, option and feature events in the original
-     repo will be duplicated onto the late fragment as well as remaing
+     repo will be duplicated onto the late fragment as well as reaming
      on the early one.
 
 0.7: 2010-11-15::

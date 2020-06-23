@@ -26,7 +26,7 @@ instead of non-fatal gripes. The -q and -v options also disable each
 other and only the last one will take effect.
 
 With the -d option, change to a specified directory before performing
-whatever operation was setlected. If the directoryt doesn't exist or
+whatever operation was selected. If the directory doesn't exist or
 can't be searched into, that's a fatal error.
 
 The "initialize" option takes a project name (and, optionally,
