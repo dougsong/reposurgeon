@@ -3,7 +3,7 @@
 == Quick recipe for systems using apt ==
 
 ---------------------------------------------------------------------
-sodo apt-get install golang                 # To build it
+sudo apt-get install golang                 # To build it
 sudo apt-get install cvs-fast-export        # For importing CVS repos
 sudo apt-get install subversion             # For importing SVN ropos
 sudo apt-get install hg-git-fast-import     # For exporting hg repos
