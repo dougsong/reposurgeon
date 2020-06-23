@@ -25,13 +25,18 @@ MANPAGES  = $(PAGES:.adoc=.1)
 HTMLFILES = $(DOCS:.adoc=.html)
 SHARED    = $(META) reposurgeon-git-aliases $(HTMLFILES)
 
+# Binaries need to be built before generated documentation parts can be made.
+# Must force options.adoc to be built earky so it will be available for inclusion.
+all: build options.adoc $(MANPAGES) $(HTMLFILES)
+
 # The following would produce reproducible builds, but it breaks Gitlab CI.
 #GOFLAGS=-gcflags 'all=-N -l -trimpath $(GOPATH)/src' -asmflags 'all=-trimpath $(GOPATH)/src'
-
 GOFLAGS=-gcflags '-N -l'
-
-# Must force options.adoc to be built earky so it will be available for inclusion. 
-build: $(BINARIES) options.adoc $(MANPAGES) $(HTMLFILES)
+build:
+	go build $(GOFLAGS) -o repocutter ./cutter
+	go build $(GOFLAGS) -o repomapper ./mapper
+	go build $(GOFLAGS) -o reposurgeon ./surgeon
+	go build $(GOFLAGS) -o repotool ./tool
 
 # Imitate old behavior of rebuilding bins. They have no dependencies
 # so *not* building them would be irritating if sources change.
@@ -46,7 +51,9 @@ repomapper:
 repotool:
 	go build $(GOFLAGS) -o $(CURDIR)/repotool ./tool
 
-# Generated documentation parts:
+#
+# Documentation
+#
 
 options.adoc: reposurgeon
 	./reposurgeon "help options" | sed '/:/s//::/' >options.adoc
@@ -84,23 +91,8 @@ fmt:
 	gofmt -w .
 
 #
-# Installation
+# Cleaning
 #
-
-install_bin: $(BINARIES)
-	$(INSTALL) -d "$(target)/bin"
-	$(INSTALL) -m 755 $^ "$(target)/bin"
-
-install_man: $(MANPAGES)
-	$(INSTALL) -d "$(target)/$(mandir)/man1"
-	$(INSTALL) -m 644 $^ "$(target)/$(mandir)/man1"
-
-install_share: $(SHARED)
-	$(INSTALL) -d "$(target)/share/doc/reposurgeon"
-	$(INSTALL) -m 644 $^ "$(target)/share/doc/reposurgeon"
-
-install: install_bin install_man install_share
-
 clean:
 	rm -fr reposurgeon repocutter repomapper repotool
 	rm -f options.adoc
@@ -108,7 +100,22 @@ clean:
 	rm -fr .rs .rs* test/.rs test/.rs*
 	rm -f typescript test/typescript
 
+#
+# Installation
+#
+
+install: all
+	$(INSTALL) -d "$(target)/bin"
+	$(INSTALL) -d "$(target)/share/doc/reposurgeon"
+	$(INSTALL) -d "$(target)/$(mandir)/man1"
+	$(INSTALL) -m 755 $(BINARIES) "$(target)/bin"
+	$(INSTALL) -m 644 $(SHARED) "$(target)/share/doc/reposurgeon"
+	$(INSTALL) -m 644 $(MANPAGES) "$(target)/$(mandir)/man1"
+
+#
 # Uninstallation
+#
+
 INSTALLED_BINARIES := $(BINARIES:%="$(target)/bin/%")
 INSTALLED_SHARED   := $(SHARED:%="$(target)/share/doc/reposurgeon/%")
 INSTALLED_MANPAGES := $(MANPAGES:%="$(target)/$(mandir)/man1/%")
