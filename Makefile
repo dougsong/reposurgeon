@@ -6,12 +6,10 @@ prefix?=/usr/local
 mandir?=share/man
 target=$(DESTDIR)$(prefix)
 
-VERS=$(shell sed <surgeon/version.go -n -e '/const *version *= *\"\(.*\)\"/s//\1/p')
-
 META = README.adoc INSTALL.adoc NEWS.adoc COPYING
 PAGES = reposurgeon.adoc repocutter.adoc repomapper.adoc repotool.adoc repobench.adoc
 DOCS = $(PAGES) repository-editing.adoc oops.svg
-SOURCES = $(shell ls */*.go) repobench reposurgeon-mode.el go.mod go.sum
+SOURCES = $(shell ls */*.go) repobench reposurgeon-mode.el go.mod go.sum extractversion.sh
 SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
 SOURCES += Dockerfile ci/prepare.sh .gitlab-ci.yml
 SOURCES += $(META) $(DOCS)
@@ -33,6 +31,7 @@ all: build options.adoc $(MANPAGES) $(HTMLFILES)
 #GOFLAGS=-gcflags 'all=-N -l -trimpath $(GOPATH)/src' -asmflags 'all=-trimpath $(GOPATH)/src'
 GOFLAGS=-gcflags '-N -l'
 build:
+	sh extractversion.sh -g <NEWS.adoc >surgeon/version.go
 	go build $(GOFLAGS) -o repocutter ./cutter
 	go build $(GOFLAGS) -o repomapper ./mapper
 	go build $(GOFLAGS) -o reposurgeon ./surgeon
@@ -85,7 +84,7 @@ test:
 
 lint:
 	golint -set_exit_status ./...
-	shellcheck -f gcc repobench test/fi-to-fi test/liftcheck test/singlelift test/svn-to-git test/svn-to-svn test/delver test/*.sh test/*test
+	shellcheck -f gcc extractversion.sh repobench test/fi-to-fi test/liftcheck test/singlelift test/svn-to-git test/svn-to-svn test/delver test/*.sh test/*test
 
 fmt:
 	gofmt -w .
@@ -95,7 +94,7 @@ fmt:
 #
 clean:
 	rm -fr reposurgeon repocutter repomapper repotool
-	rm -f options.adoc
+	rm -f options.adoc surgeon/version.go
 	rm -fr  *~ *.1 *.html *.tar.xz MANIFEST *.md5
 	rm -fr .rs .rs* test/.rs test/.rs*
 	rm -f typescript test/typescript
@@ -125,6 +124,8 @@ uninstall:
 	rm -f $(INSTALLED_MANPAGES)
 	rm -f $(INSTALLED_SHARED)
 	rmdir "$(target)/share/doc/reposurgeon"
+
+VERS=$(shell sh ./extractversion.sh <NEWS.adoc)
 
 version:
 	@echo $(VERS)
