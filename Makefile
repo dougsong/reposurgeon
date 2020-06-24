@@ -37,19 +37,6 @@ build:
 	go build $(GOFLAGS) -o reposurgeon ./surgeon
 	go build $(GOFLAGS) -o repotool ./tool
 
-# Imitate old behavior of rebuilding bins. They have no dependencies
-# so *not* building them would be irritating if sources change.
-.PHONY: repocutter reposurgeon repomapper repotool
-
-repocutter:
-	go build $(GOFLAGS) -o $(CURDIR)/repocutter ./cutter
-reposurgeon:
-	go build $(GOFLAGS) -o $(CURDIR)/reposurgeon ./surgeon
-repomapper:
-	go build $(GOFLAGS) -o $(CURDIR)/repomapper ./mapper
-repotool:
-	go build $(GOFLAGS) -o $(CURDIR)/repotool ./tool
-
 #
 # Documentation
 #
