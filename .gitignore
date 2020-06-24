@@ -3,6 +3,7 @@ repocutter
 repomapper
 repotool
 options.adoc
+surgeon/version.go
 pkg
 *.1
 *.html
