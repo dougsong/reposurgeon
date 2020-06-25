@@ -1,7 +1,8 @@
 = reposurgeon project news =
 
-Repository head::
+4.13: 2020-06-24::
     Now interprets and translates svn:global-ignores properties.
+    Numerous small improvements to documentation.
 
 4.12: 2020-06-21::
     Snap release to fix broken tarball production (revised).
