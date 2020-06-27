@@ -41,7 +41,7 @@ build:
 # Documentation
 #
 
-options.adoc: reposurgeon
+options.adoc: build
 	./reposurgeon "help options" | sed '/:/s//::/' >options.adoc
 
 # Note: to suppress the footers with timestamps being generated in HTML,
