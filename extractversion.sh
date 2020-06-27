@@ -6,18 +6,9 @@
 
 mode=$1
 
-while read -r line
-do
-    if expr "$line" : "^[0-9]" 1>/dev/null
-    then
-	break
-    fi
+while IFS=: read -r version _; do
+    case $version in [0-9]*) break ;; esac
 done
-
-# shellcheck disable=2086
-IFS=: set -- $line
-# shellcheck disable=2086,2116
-version=$(echo $1)
 
 case $mode in
     -g)
@@ -34,7 +25,7 @@ const version = "$version"
 // end
 EOF
 	;;
-    *)  echo "$version"
+    *)  printf '%s\n' "$version"
 	;;
 esac
 
