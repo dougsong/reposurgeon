@@ -8,8 +8,7 @@ mode=$1
 
 while read -r line
 do
-    # shellcheck disable=2003,2162,2046
-    if [ $(expr match "$line" "[0-9]") != "0" ]
+    if expr "$line" : "[0-9]" 1>/dev/null
     then
 	break
     fi
