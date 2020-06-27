@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Extract the version file from NEWS.adoc, presented on standard input
+# Extract the version from NEWS.adoc, presented on standard input
 # so there's a single authority for it.  Ship it to standard output
 # bare or in a Go wrapper.
 
@@ -8,7 +8,7 @@ mode=$1
 
 while read -r line
 do
-    if expr "$line" : "[0-9]" 1>/dev/null
+    if expr "$line" : "^[0-9]" 1>/dev/null
     then
 	break
     fi
