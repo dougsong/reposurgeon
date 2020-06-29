@@ -86,8 +86,12 @@ clean:
 #
 # Installation
 #
-
-install: all
+# Note that this does not run a build, so it will error out (harmlessly) if you 
+# have not done "make all" or "make build" first.  There's a conflict between
+# Go's preference for Rebuilding All The Things and the traditional makefile
+# attempt to do as little build work as possible at any given time.
+#
+install:
 	$(INSTALL) -d "$(target)/bin"
 	$(INSTALL) -d "$(target)/share/doc/reposurgeon"
 	$(INSTALL) -d "$(target)/$(mandir)/man1"
