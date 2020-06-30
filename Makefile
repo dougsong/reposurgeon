@@ -152,8 +152,13 @@ docker-check-noscm: docker-check-only-bzr docker-check-only-cvs \
 # Release shipping.
 #
 
-reposurgeon-$(VERS).tar.xz: $(SOURCES) $(MANPAGES)
-	tar --transform='s:^:reposurgeon-$(VERS)/:' --show-transformed-names -cJf reposurgeon-$(VERS).tar.xz $(SOURCES) $(MANPAGES) test
+b# Don't try using tar --transform, it tries to get too clever with symlinks 
+SHIPPABLE = $(SOURCES) $(MANPAGES)
+reposurgeon-$(VERS).tar.xz: $(SHIPPABLE)
+	@ls $(SHIPPABLE) | sed s:^:reposurgeon-$(VERS)/: >MANIFEST
+	@(cd ..; ln -s reposurgeon reposurgeon-$(VERS))
+	@(cd ..; tar -cJf reposurgeon/reposurgeon-$(VERS).tar.xz `cat reposurgeon/MANIFEST`)
+	@(cd ..; rm reposurgeon-$(VERS) reposurgeon/MANIFEST)
 
 dist: reposurgeon-$(VERS).tar.xz
 
