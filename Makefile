@@ -14,9 +14,8 @@ SOURCES += Makefile control reposturgeon.png reposurgeon-git-aliases
 SOURCES += Dockerfile ci/prepare.sh .gitlab-ci.yml
 SOURCES += $(META) $(DOCS)
 
-.PHONY: all build install install_bin install_man install_share clean		\
-    uninstall version check release refresh docker-build docker-check	\
-    docker-check-noscm get vet test fmt lint
+.PHONY: all build install uninstall version check release refresh \
+	docker-build docker-check docker-check-noscm get test fmt lint
 
 BINARIES  = reposurgeon repotool repomapper repocutter repobench
 MANPAGES  = $(PAGES:.adoc=.1)
@@ -77,8 +76,7 @@ fmt:
 # Cleaning
 #
 clean:
-	rm -fr reposurgeon repocutter repomapper repotool
-	rm -f options.adoc surgeon/version.go
+	rm -f $(BINARIES) options.adoc surgeon/version.go
 	rm -fr  *~ *.1 *.html *.tar.xz MANIFEST *.md5
 	rm -fr .rs .rs* test/.rs test/.rs*
 	rm -f typescript test/typescript
@@ -170,3 +168,5 @@ release: reposurgeon-$(VERS).tar.xz reposurgeon-$(VERS).md5 $(HTMLFILES)
 
 refresh: $(HTMLFILES)
 	shipper -N -w version=$(VERS) | sh -e -x
+
+# end
