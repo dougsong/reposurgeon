@@ -1,4 +1,6 @@
 #!/bin/sh
+#
+# singlelift - run a single Subversion conversion test
 
 # shellcheck disable=SC1091
 . ./common-setup.sh
@@ -73,3 +75,5 @@ done
 # Otherwise you'll typically get the exit status
 # of reposurgeon. 
 exit $?
+
+# end

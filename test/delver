@@ -22,7 +22,7 @@
 # arguments as a command within the terminal.  Note: we can't use the
 # magic x-terminal-emulator link in the Debian preferences system
 # because we don't have any way to know whwrher it needs its final
-# option to be -e or -x. Note when testing new enmulaters; setting
+# option to be -e or -x. Note when testing new emulaters; setting
 # the title may fail unless you give it a command to run.
 config=~/.config/delver/delver.init
 if [ -f "$config" ]

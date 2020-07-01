@@ -28,7 +28,9 @@ of success/fail status.
 
 To run a single test:
 
-   cd test; ./singletest foo
+------------------------------------------------------
+$ cd test; ./singletest foo
+------------------------------------------------------
 
 will check the actual result of the script in foo.tst against its expected
 output in foo.chk.  No output other than the test notice is good.
@@ -36,7 +38,9 @@ output in foo.chk.  No output other than the test notice is good.
 The "liftcheck" script is useful for testing the conversion correctness
 of a Subversion stream:
 
-   cd test; ./liftcheck foo.svn
+------------------------------------------------------
+$ cd test; ./liftcheck foo.svn
+------------------------------------------------------
    
 No output means that a compare-all showed no errors or warnings.
 
@@ -52,11 +56,13 @@ A .svn extension means it's a Subversion repo dump.
 A .chk extension means it's expected output from a test.
 A .tst extension means it's a test driver script.
 
-The "singletest" script takes the stem of a .tst file name, captures stdout
-and stderr, and diffs the result against the corresponding check file.
+The "singletest" script takes the stem of a .tst file name, captures
+stdout and stderr, and diffs the result against the corresponding
+check (.chk) file.
 
-The "singlelift" script takes the stem of a .svn file name, captures stdout
-and stderr, and diffs the resultihg Subversion and git repos.
+The "singlelift" script normally takes the stem of a .svn file name,
+captures stdout and stderr, and diffs the result against the
+corresponding check (.chk) file.
 
 The "liftcheck" script takes a Subversion stream file, builds a Git
 repository from it, and checks for differences using repotool's
@@ -90,8 +96,10 @@ and svn2git.
 
 To add a new tool for comparison, do something like:
 
-   git submodule add GIT-URL/foobar externals/foobar
-   git update submodules
+------------------------------------------------------
+$ git submodule add GIT-URL/foobar externals/foobar
+$ git update submodules
+------------------------------------------------------
 
 from the repo root.
 
@@ -215,8 +223,10 @@ outputs:
 
 	    Initial import.
 
-We now handle this case properly by renaming the earlier creation of
-the tag.
+We now handle this case properly by detecting and ignoring the prior creation of
+the tag. This produces a version of the history that is correct when
+viewed from the head revision, but may not reproduce exactly the
+states of tagged releases at all times past.
 
 == The tagretract test case ==
 
@@ -251,7 +261,8 @@ with the second tagging message 'Fixed release 1.0'.
 
 This was produced from the NUT Subversion repo as follows:
 
-svncutter -q -r 0:4,6,8,56,58,61,65,350,355,356,543:546 select <nut.svn \
+------------------------------------------------------
+$ svncutter -q -r 0:4,6,8,56,58,61,65,350,355,356,543:546 select <nut.svn \
     | svncutter -q expunge 'tags/' \
         'branches/regex_branch' \
         'branches/Tripp_Lite_Omni' \
@@ -394,6 +405,7 @@ svncutter -q -r 0:4,6,8,56,58,61,65,350,355,356,543:546 select <nut.svn \
         '.*/upsd.users' \
     | svncutter -q renumber \
 >reduced.svn
+------------------------------------------------------
 
 Later it was stripped and renumbered.  Later still, a 0 revision and
 an 89 revision were added to make the revision sequence 0-origin
@@ -408,14 +420,23 @@ but it makes a good stability test. Any change that breaks the
 Subversion analyzer even subtly is likely to produce a diff on this
 test.
 
+== Generated ignore tests
+
+ignoregen.sh can be used to regenerate the ignore.svn and
+global-ignores.svn stream files by running generated sequences of
+Subversion commands. Besides documernting the semantics of the
+stream better than the stream itself does, this is a canary in
+case the Subversion dump format ever changes incompatibly.
+
 == Troubleshooting incorrect conversions ==
 
-Test loads that convert incorrectly arge tagged with "BUG:" in the 
-list above.  These seem to reveal bugs in reposurgeon's interpretation
-of dump stream semantics. It is a safe bet that these have to do with 
-odd combinations of branch-copy operations.
+There is at present no known case of a valid Subversion stream file that
+reposurgeon fails to convert in a version that can be verified correct.
+In the past, such bugs have pretty much always to do with odd combinations of
+branch-copy operations.  It is a safe bet that if there are future
+bugs they will be in that context.
 
-Start by reading this:
+If you encounter such a bug, start by reading this:
 
 https://svn.apache.org/repos/asf/subversion/trunk/notes/dump-load-format.txt
 
@@ -425,7 +446,7 @@ Then read a simple dumpfile - like, say, samplebranch.svn - to see how
 dump streams look in practice. Next run
 
 -----------------------------------------------------------
-repocutter -q see <samplebranch.svn
+$ repocutter -q see <samplebranch.svn
 -----------------------------------------------------------
 
 for a condensed version of the structure that leaves out the blobs.
@@ -433,8 +454,7 @@ The "M-N" at the left margin expands to "Revision M, node N"; copy
 is just add with a copy source.
 
 You can use liftcheck to see exactly how a conversion goes wrong;
-you'll get a diff. Try this on a member of the awkward squad, like
-emptyfrom.svn.  By default liftcheck examines the head revision;
+you'll get a diff. By default liftcheck examines the head revision;
 with the -r option you can check correctness at a specified 
 esrtlier one.
 
