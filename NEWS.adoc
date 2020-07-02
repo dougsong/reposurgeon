@@ -1,5 +1,9 @@
 = reposurgeon project news =
 
+Repository head::
+     Documentation polishing.
+     Fix buggy handling of symlinks in the tarball-maker production.
+
 4.14: 2020-06-27::
      Build fixes for Mac OS X (Darwin).
 
