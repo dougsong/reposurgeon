@@ -4959,6 +4959,12 @@ GCC::
 	two core GCC developers. The 4.0 release came out of this.
 	Final cutover was on Jan 12th 2020.
 
+Here are some other some other field reports on successful uses:
+
+https://blog.runtux.com/posts/2014/04/18/233/[Migrating to GIT with Reposurgeon (2014)]
+
+https://blogs.ed.ac.uk/timc/2017/11/24/migrating-from-svn-to-git-while-splitting-repository/[Migrating from SVN to Git while Splitting Repository (2017)]
+
 [appendix]
 == Development History
 
