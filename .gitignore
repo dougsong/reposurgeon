@@ -17,3 +17,5 @@ pkg
 *.log
 *.svg
 *.dat
+
+.idea
