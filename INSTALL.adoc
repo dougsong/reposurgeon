@@ -11,6 +11,7 @@ sudo apt-get install asciidoctor            # To render docs
 sudo apt-get install golint shellcheck      # For testing
 sudo apt-get install mercurial rsync cvs    # For testing
 sudo apt-get install gnuplot                # For benchmarking
+unset GOFLAGS
 make                                        # Build it
 make check                                  # Run the tests
 ---------------------------------------------------------------------
